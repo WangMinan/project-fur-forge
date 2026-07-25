@@ -1,0 +1,22 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Env & secrets（安全红线：禁止提交凭据/token/连接串）
+.env
+.env.*
+!.env.example
+*.secret
+*.key
+
+# Logs
+*.log
+
+# 依赖目录与技术栈相关项待确定后补充
