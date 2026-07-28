@@ -1,0 +1,178 @@
+{
+  "source": "D:\\code\\project-fur-forge\\景宸的毛毛.png",
+  "original_size": {
+    "width": 4173,
+    "height": 5902
+  },
+  "sampled_size": {
+    "width": 724,
+    "height": 1024
+  },
+  "sampled_opaque_pixels": 741376,
+  "matched_blue_pixels": 307268,
+  "matched_blue_share": 41.4456,
+  "mask": {
+    "hue_degrees": [
+      195,
+      250
+    ],
+    "minimum_saturation": 0.08,
+    "minimum_value": 0.12,
+    "minimum_blue_minus_red": 8,
+    "minimum_blue_minus_green": 2
+  },
+  "palette": [
+    {
+      "hex": "#ced3e5",
+      "rgb": [
+        206,
+        211,
+        229
+      ],
+      "blue_pixel_share": 21.9554,
+      "image_pixel_share": 9.0996
+    },
+    {
+      "hex": "#3e4d80",
+      "rgb": [
+        62,
+        77,
+        128
+      ],
+      "blue_pixel_share": 15.5327,
+      "image_pixel_share": 6.4376
+    },
+    {
+      "hex": "#6274bb",
+      "rgb": [
+        98,
+        116,
+        187
+      ],
+      "blue_pixel_share": 13.5878,
+      "image_pixel_share": 5.6316
+    },
+    {
+      "hex": "#5b649f",
+      "rgb": [
+        91,
+        100,
+        159
+      ],
+      "blue_pixel_share": 8.8522,
+      "image_pixel_share": 3.6689
+    },
+    {
+      "hex": "#a9aec6",
+      "rgb": [
+        169,
+        174,
+        198
+      ],
+      "blue_pixel_share": 8.5378,
+      "image_pixel_share": 3.5386
+    },
+    {
+      "hex": "#a6afd5",
+      "rgb": [
+        166,
+        175,
+        213
+      ],
+      "blue_pixel_share": 7.1387,
+      "image_pixel_share": 2.9587
+    },
+    {
+      "hex": "#6e799f",
+      "rgb": [
+        110,
+        121,
+        159
+      ],
+      "blue_pixel_share": 6.3144,
+      "image_pixel_share": 2.617
+    },
+    {
+      "hex": "#2c3f87",
+      "rgb": [
+        44,
+        63,
+        135
+      ],
+      "blue_pixel_share": 4.9816,
+      "image_pixel_share": 2.0647
+    },
+    {
+      "hex": "#40519a",
+      "rgb": [
+        64,
+        81,
+        154
+      ],
+      "blue_pixel_share": 3.6359,
+      "image_pixel_share": 1.5069
+    },
+    {
+      "hex": "#324daf",
+      "rgb": [
+        50,
+        77,
+        175
+      ],
+      "blue_pixel_share": 3.5835,
+      "image_pixel_share": 1.4852
+    },
+    {
+      "hex": "#2d2f3a",
+      "rgb": [
+        45,
+        47,
+        58
+      ],
+      "blue_pixel_share": 3.1663,
+      "image_pixel_share": 1.3123
+    },
+    {
+      "hex": "#1d2d5a",
+      "rgb": [
+        29,
+        45,
+        90
+      ],
+      "blue_pixel_share": 2.7136,
+      "image_pixel_share": 1.1247
+    }
+  ],
+  "anchors": [
+    {
+      "requested": "#1e3981",
+      "nearest_sampled_color": "#263a83",
+      "nearest_sampled_delta_e_76": 1.468,
+      "nearest_cluster": "#2c3f87",
+      "delta_e_76": 3.063,
+      "delta_e_76_neighborhood": 5,
+      "neighborhood_mean": "#293c84",
+      "neighborhood_blue_pixel_share": 3.593
+    },
+    {
+      "requested": "#637cc7",
+      "nearest_sampled_color": "#6579c2",
+      "nearest_sampled_delta_e_76": 1.839,
+      "nearest_cluster": "#6274bb",
+      "delta_e_76": 3.812,
+      "delta_e_76_neighborhood": 5,
+      "neighborhood_mean": "#6577bf",
+      "neighborhood_blue_pixel_share": 7.4284
+    },
+    {
+      "requested": "#c9cfe7",
+      "nearest_sampled_color": "#c8cfea",
+      "nearest_sampled_delta_e_76": 1.541,
+      "nearest_cluster": "#ced3e5",
+      "delta_e_76": 3.477,
+      "delta_e_76_neighborhood": 5,
+      "neighborhood_mean": "#ccd1e5",
+      "neighborhood_blue_pixel_share": 16.5579
+    }
+  ]
+}

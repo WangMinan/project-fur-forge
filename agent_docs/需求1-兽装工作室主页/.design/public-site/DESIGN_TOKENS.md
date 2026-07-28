@@ -1,6 +1,6 @@
 # Design Tokens：公开站
 
-> **性质**：阶段 3 的视觉实现契约，不是最终 CSS。阶段 4 将其翻译为 Tailwind/CSS 自定义属性，并在正式 Logo 与授权作品图到位后进行一次受控校准。
+> **性质**：阶段 3 的视觉实现契约，不是最终 CSS。阶段 4 将其翻译为 Tailwind/CSS 自定义属性；当前蓝色阶来自景宸例图的可复现聚类，正式 Logo 与授权作品图到位后只做受控校准。
 > **设计哲学**：白底编辑型摄影作品集。
 
 ## Skill Deviation
@@ -9,29 +9,29 @@ design-tokens skill 默认同时生成明暗主题。本项目一期已锁定白
 
 ## Color
 
-以下数值为生产设计的初始校准值，不是不可修改的品牌色。正式品牌资产到位后可调整色值，但语义和使用比例保持不变。
+以下蓝色阶来自 `../../materials/景宸品牌例图_2026-07-29/blue-palette.json`：深蓝 `#293C84`、主行动蓝 `#324DAF`、中蓝 `#6274BB`、浅蓝 `#CED3E5`、海军蓝 `#1D2D5A`。它们是一期生产基础色，不再使用“雾蓝/淡粉/鼠尾草绿”这类无数值描述；正式 Logo 到位后如需改值，必须保留语义、对比和使用比例并重新视觉审查。
 
 ```text
 --public-bg-primary:          #FFFFFF
 --public-bg-secondary:        #F7F8FA
 --public-bg-tertiary:         #F1F3F6
---public-bg-inverse:          #20242B
+--public-bg-inverse:          #1D2D5A
 
 --public-text-primary:        #20242B
 --public-text-secondary:      #626A75
 --public-text-tertiary:       #8B929C
 --public-text-inverse:        #FFFFFF
---public-text-link:           #5968A8
+--public-text-link:           #324DAF
 
 --public-border-primary:      #DDE1E7
 --public-border-secondary:    #ECEEF2
---public-border-focus:        #5968A8
+--public-border-focus:        #324DAF
 
---public-accent-primary:      #7482C4
---public-accent-primary-soft: #EEF0FA
---public-accent-sage:         #DDEBE5
---public-accent-blush:        #F3E5E8
---public-accent-fog:          #E6ECF4
+--public-accent-primary:      #324DAF
+--public-accent-hover:        #293C84
+--public-accent-active:       #1D2D5A
+--public-accent-mid:          #6274BB
+--public-accent-soft:         #CED3E5
 
 --public-status-open:         #2F7B5C
 --public-status-paused:       #8A5A2B
@@ -40,13 +40,14 @@ design-tokens skill 默认同时生成明暗主题。本项目一期已锁定白
 
 --public-overlay-soft:        rgba(17, 20, 25, 0.18)
 --public-overlay-strong:      rgba(17, 20, 25, 0.62)
---public-focus-ring:          rgba(89, 104, 168, 0.32)
+--public-focus-ring:          rgba(50, 77, 175, 0.32)
 ```
 
 使用规则：
 
-- 页面大面积区域只能使用白色或极浅中性色；三种低饱和辅助色合计不超过单页视觉面积的约 15%。
+- 页面大面积区域只能使用白色或极浅中性色；中蓝与浅蓝合计不超过单页视觉面积的约 15%。
 - 品牌强调色主要用于当前导航、可见焦点、少量状态和主行动，不铺满大区块。
+- `#6274BB` 和 `#CED3E5` 不承担白底小字号正文；深色文字与背景组合必须逐项通过对比检查。
 - 状态不得只靠颜色；必须有中文文字。
 - 图片上的白字只在受控遮罩和逐图对比复核后使用。
 

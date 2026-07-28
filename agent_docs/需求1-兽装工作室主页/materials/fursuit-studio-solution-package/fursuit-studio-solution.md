@@ -1,6 +1,6 @@
 # 兽装工作室官网与管理端技术方案
 
-> **资料边界**：这是 2026-07-28 外部讨论形成的技术方案输入，不是本仓库的实施契约。当前有效范围、页面、数据、OSS 安全边界、URL、媒体发布和运维策略一律以 `requirements/SPEC.md`、`planning/PLAN.md` 与 `STATE.md` 为准；本文中的联系表单、公告、Nuxt UI、CDN 私有回源或其他未被正式文档接纳的建议不得直接进入 TASKS/实现。
+> **资料边界**：这是 2026-07-28 外部讨论形成的技术方案输入，不是本仓库的实施契约。当前有效范围、页面、数据、OSS 安全边界、URL、媒体发布和运维策略一律以 [`requirements/SPEC.md`](../../requirements/SPEC.md)、[`planning/PLAN.md`](../../planning/PLAN.md)、[`implementation/TASKS.md`](../../implementation/TASKS.md) 与 [`STATE.md`](../../STATE.md) 为准；生产设计细化见 [`.design/README.md`](../../.design/README.md)。本文中的联系表单、公告、Nuxt UI、CDN 私有回源或其他未被正式文档接纳的建议不得直接进入 TASKS/实现。
 
 ## 1. 结论
 

@@ -13,7 +13,7 @@
 --admin-bg-primary:          #FFFFFF
 --admin-bg-workspace:        #F5F7FA
 --admin-bg-subtle:           #EEF1F5
---admin-bg-inverse:          #252A33
+--admin-bg-inverse:          #1D2D5A
 
 --admin-text-primary:        #20242B
 --admin-text-secondary:      #626A75
@@ -22,11 +22,12 @@
 
 --admin-border-primary:      #D9DEE6
 --admin-border-secondary:    #E9ECF1
---admin-border-focus:        #5968A8
+--admin-border-focus:        #324DAF
 
---admin-accent-primary:      #5968A8
---admin-accent-hover:        #4C5A96
---admin-accent-soft:         #E9ECF8
+--admin-accent-primary:      #324DAF
+--admin-accent-hover:        #293C84
+--admin-accent-mid:          #6274BB
+--admin-accent-soft:         #CED3E5
 
 --admin-status-success:      #2F7B5C
 --admin-status-success-soft: #E5F2EC
@@ -39,11 +40,12 @@
 
 --admin-danger:              #A63D40
 --admin-danger-hover:        #8F3034
---admin-focus-ring:          rgba(89, 104, 168, 0.30)
+--admin-focus-ring:          rgba(50, 77, 175, 0.30)
 --admin-overlay:             rgba(24, 28, 35, 0.55)
 ```
 
 - 侧栏默认使用白色或极浅工作区色；若为层级使用反向表面，只能占据窄导航区域，不能让管理端整体变成深色 Dashboard。
+- 管理端与公开站共享从景宸例图提取的主行动蓝/深蓝/浅蓝，不自行再造另一套“品牌蓝”；状态色仍按语义独立。
 - 发布、READY、草稿、失败、已下架使用稳定语义，不随机按页面换颜色。
 - 危险色只用于不可逆或高影响动作，不用于普通保存。
 

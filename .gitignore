@@ -19,4 +19,27 @@ desktop.ini
 # Logs
 *.log
 
-# 依赖目录与技术栈相关项待确定后补充
+# Nuxt / Node
+node_modules/
+.nuxt/
+.output/
+.data/
+.nitro/
+.cache/
+dist/
+coverage/
+playwright-report/
+test-results/
+
+# Local databases and runtime data
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# TypeScript
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]

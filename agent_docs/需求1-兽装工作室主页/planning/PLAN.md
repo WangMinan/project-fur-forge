@@ -6,7 +6,7 @@
 
 ## 状态与执行结论
 
-- 日期：2026-07-28。
+- 日期：2026-07-29。
 - 2026-07-28 的新决策替换此前的 Java/Spring/MySQL 方案：一期采用 **单仓库、单 Nuxt 4 应用、单 Docker 镜像、单 Node.js 进程**。
 - 公开站由 Nuxt SSR 输出可索引 HTML；后台仍是独立子域名和独立布局，但页面实现位于同一 Nuxt 工程的 `/admin/**`，采用 CSR；Nitro Server API 承担认证、内容 CRUD、发布、OSS 签名、图片处理编排、导出、邮件找回和轻量统计。
 - 一期数据层采用 **SQLite + Drizzle ORM + `better-sqlite3`**。数据库文件位于本地持久卷，首版只运行一个应用实例；出现多实例、复杂事务或真实订单/支付业务后，再评估 PostgreSQL/RDS 或独立 API。
@@ -17,7 +17,8 @@
 - 用户和景宸已经锁定“简洁、图片为主、Logo/文字/符号只作辅助”的公开端原则；白底、全幅作品首屏、作品优先动线和现有 v5 快速原型继续有效。远端方案中的暖灰/黑底、联系表单、公告、后台看板等建议不覆盖 SPEC。
 - 2026-07-28 复审补齐统一作品 canonical、发布后 slug 稳定、草稿媒体私有、OSS 条件写与内容摘要、EXIF 坐标系、OSS 环境前置检查及人工失败恢复；相关决策登记为 `OQ-019–023`。
 - 2026-07-28 本轮修订后的无上下文 Reader Test 最终通过：blocker、P1、P2、P3 均为 0；OQ、索引、路径与模板状态已复核一致。
-- `OQ-018–023` 已获用户确认，PLAN OQ 门禁已通过。用户于 2026-07-28 明确授权阶段 3，公开端/管理端的生产设计输入已写入 `.design/`，正式 `implementation/TASKS.md` 已完成；当前尚未获阶段 4 授权，不开始业务编码。
+- `OQ-018–023` 已获用户确认，PLAN OQ 门禁已通过。用户于 2026-07-28 明确授权阶段 3，公开端/管理端的生产设计输入已写入 `.design/`，正式 `implementation/TASKS.md` 已完成；同日用户进一步授权阶段 4 并要求从 T01 开始，当前 T01 已完成。
+- 2026-07-29 同步新业务与品牌事实：正式中文名为“有点小狗工作室”，英文暂用 `dite dog`；狗头加闪电不是正式 Logo；公开端一期显示适用领养/掉落作品的人民币价格和该作品自己的短属性；永久私有原图上限调整为 30,000,000 字节，并新增 OSS 图片处理源图配额达到该值的外部门禁。
 
 ## 迁移边界
 
@@ -35,7 +36,7 @@
 - 不增加站内委托表单、联系消息箱、公告/动态页面、订单、支付、排期、合同或客户生命周期管理。
 - 不增加多管理员、复杂 RBAC、仪表盘、Redis、消息队列、微服务、Nuxt Studio 或 Git 驱动发布。
 - 不改变 SPEC 已锁定的作品聚合、三类图片、营业状态、领养方式/状态、发布状态、回收站、永久原图档案、CSV 导出和唯一管理员边界。
-- 不用远端方案的通用 UI Token 覆盖 v5：公开端仍以白色为主底，低饱和雾蓝/淡粉/鼠尾草绿只作少量层次，禁止大面积黑色、米色、赛博朋克和通用 SaaS 卡片风格。
+- 不用远端方案的通用 UI Token 覆盖 v5：公开端仍以白色为主底；从景宸例图提取的 `#1D2D5A`、`#293C84`、`#324DAF`、`#6274BB`、`#CED3E5` 作为一期蓝色基础色阶，禁止凭“笼统的蓝色”继续扩色，也禁止大面积黑色、米色、赛博朋克和通用 SaaS 卡片风格。
 
 ## 总体架构
 
@@ -82,18 +83,19 @@ flowchart LR
 
 ### 域名与本地路由
 
-- 配置项至少包括 `PUBLIC_BASE_URL`、`ADMIN_BASE_URL`、`MEDIA_BASE_URL`、`OSS_UPLOAD_BASE_URL`、`DATABASE_FILE`、OSS region/bucket/endpoint、Session secret 和 SMTP 参数；上传域名与公开媒体域名不得复用为一个含义不清的配置。数据库只保存相对 Object Key 和稳定业务标识，不保存环境相关完整 URL。
+- 配置项至少包括 `PUBLIC_BASE_URL`、`ADMIN_BASE_URL`、`MEDIA_BASE_URL`、`OSS_UPLOAD_BASE_URL`、`DATABASE_FILE`、OSS region/bucket/endpoint、Session secret 和 SMTP 参数；上传域名与公开媒体域名不得复用为一个含义不清的配置。应用内原图上限固定为 30,000,000 字节，部署/测试记录必须另行证明目标 OSS 图片处理源图配额不低于该值，不能用环境变量静默降低产品契约。数据库只保存相对 Object Key 和稳定业务标识，不保存环境相关完整 URL。
 - 本地默认 `http://127.0.0.1:3000` 运行 Nuxt。开发中通过 Host 模拟或两个明确 origin 验证公开/后台隔离；OSS CORS 必须列出实际使用的完整 origin，而不是只写模糊主机名。
 - 正式公开 Host 只允许公开页面和必要公开 API；正式后台 Host 的 `/` 重定向到 `/admin/login`，并允许 `/admin/**`、`/api/admin/**`、`/api/auth/**`、`/preview/**`。
 - Nitro Host 校验中间件重复执行同一隔离规则，避免反向代理误配时公开 Host 直接访问后台页面/API；健康检查等明确例外必须逐项列出。
 - 未配置可在线预览的媒体自定义域名前，开发环境可提供受限 `/__dev/media/{assetId}/{variant}`：按数据库 ID 校验该 READY 衍生图正被已发布内容引用后才允许匿名读取，拒绝任意 Object Key、草稿/已下架衍生图和原图；管理员预览草稿仍使用短时签名 GET。生产环境不注册该开发路由。
-- 媒体地基先验证当前 OSS 账号能否从两个开发 origin 通过 `OSS_UPLOAD_BASE_URL` 完成 V4 条件 PUT。若中国内地默认外网 Endpoint 因账号开通时间受到数据 API 限制，则必须由用户提供已正确绑定的 OSS 上传 CNAME 后继续；不为绕过该前置条件临时改成 Nitro 代理上传。杭州 Bucket 的正式公开媒体域名按阿里云要求完成绑定、CNAME、HTTPS 和 ICP 备案后再切换；CDN 属于上线阶段，不改变数据库内相对键。
+- 媒体地基先验证当前 OSS 账号能否从两个开发 origin 通过 `OSS_UPLOAD_BASE_URL` 完成 V4 条件 PUT，并读取目标 Bucket 所在地域的图片处理源图大小配额。若配额低于 30,000,000 字节，必须先由用户在阿里云配额中心申请并完成复验；不得静默压缩原图或把产品上限退回 20 MB。若中国内地默认外网 Endpoint 因账号开通时间受到数据 API 限制，则必须由用户提供已正确绑定的 OSS 上传 CNAME 后继续；不为绕过该前置条件临时改成 Nitro 代理上传。杭州 Bucket 的正式公开媒体域名按阿里云要求完成绑定、CNAME、HTTPS 和 ICP 备案后再切换；CDN 属于上线阶段，不改变数据库内相对键。
 
 ## 产品体验与界面规划
 
 ### 视觉与内容原则
 
 - **最高原则**：景宸确认“就是要简洁，以图片为主，Logo、文字介绍以及一些符号都是为兽装展示做辅助的”。公开页面按“作品图片 > 品牌/页名 > 必要事实与行动 > 装饰”组织。
+- **品牌事实**：公开中文名固定为“有点小狗工作室”，英文暂用 `dite dog` 并保留后续整体替换能力；例图中的狗头加闪电只作方向参考，不得当作正式 Logo 提取或发布。
 - **首页**：一张获授权代表作品图铺满首个可用视口；导航、名称、最多一句短口号、一个“作品展示”行动和向下提示叠加在安全区。禁止回到文字与图片等权的左右分栏。
 - **下滑动线**：首屏后立即进入 3–6 件精选作品，再出现图片式自设委托/角色领养入口，之后才是营业状态和辅助信息。
 - **内页**：页头紧凑，作品展示与角色领养直接进入大图；返图墙使用真实不等高照片墙或真实空状态；委托页以作品宽图、营业状态、邮件入口与 FAQ 组成。
@@ -106,9 +108,9 @@ flowchart LR
 | 页面 | 路由 | 核心内容与行动 |
 | --- | --- | --- |
 | 首页 | `/` | 全幅作品首屏、精选作品、图片式委托/领养入口、营业状态、当前领养推荐 |
-| 作品展示 | `/works`、`/works/{slug}` | 等大 3:4 人工排序网格；作品用途 × 装型交集筛选；稳定详情 URL 和有序图集 |
+| 作品展示 | `/works`、`/works/{slug}` | 等大 3:4 人工排序网格；作品用途 × 装型交集筛选；稳定详情 URL、有序图集、适用的作品短属性与人民币价格 |
 | 自设委托 | `/commission` | 代表作品宽图、全装/半装、营业状态、邮件行动、可复制邮箱、内嵌 FAQ；无站内表单 |
-| 角色领养 | `/adoptions`；卡片进入 `/works/{slug}` | 水印设定图/作品图、方式、状态、当前展会和邮件/线下后续；无价格、登记、支付；不建立第二套领养详情 |
+| 角色领养 | `/adoptions`；卡片进入 `/works/{slug}` | 水印设定图/作品图、方式、状态、当前展会、适用的作品短属性、人民币价格和邮件/线下后续；无登记、支付；不建立第二套领养详情 |
 | 返图墙 | `/returns` | 不等高照片墙；零内容时真实空状态与短骨架，不伪造返图 |
 | 关于我们 | `/about` | 工作室事实、制作范围、官方渠道与七类基本约定 |
 | 联系 | `/contact` | 邮箱、QQ、抖音、反诈提示；邮件是唯一业务 CTA |
@@ -123,6 +125,7 @@ flowchart LR
 
 - 原型入口：[prototype-v1/index.html](./prototype-v1/index.html)；说明与后台直达链接：[prototype-v1/README.md](./prototype-v1/README.md)。
 - v5 已覆盖七个公开一级页面、全幅首页首屏、精选横向浏览、图片式业务分流、作品双筛选、自设委托 FAQ、返图空状态，以及后台登录、新建、快速编辑、返图上传、首页/页面内容和完整导出。
+- v5 中的占位工作室名、隐藏价格、20 MB 上限和旧辅助色只属于历史原型内容，已被 2026-07-29 契约覆盖；原型继续只锁定页面职责、内容顺序和关键交互。
 - 已完成 `1440 × 900` 和 `390 × 844` 的原型视觉/交互检查；这些结果只证明快速原型，不代替生产代码 E2E。
 - `OQ-018` 已确认，v5 只作为页面职责、内容顺序和关键交互基线；它的几何插画、字体、间距、组件造型、后台弹窗布局和完成度不进入生产。若要改变页面职责、首屏层级、CTA 或关键交互，先更新 PLAN；生产视觉则按 `.design/` 和 T04–T08 重新建立。
 
@@ -220,13 +223,14 @@ PRAGMA synchronous = FULL;
 ```
 
 - 首版运行单应用实例、单写入者。写事务必须短小；上传图片二进制和邮件发送不在数据库事务中执行。
-- 数据表按 SPEC 建模，至少包括：`users`、`password_reset_tokens`、`works`、`slug_redirects`、`assets`、`work_assets`、`publication_operations`、`events`、`commission_faqs`、`site_content`、`business_statuses`、`trash_entries`、`audit_logs`、`page_view_daily`、`referrer_daily`、`device_daily`。
+- 数据表按 SPEC 建模，至少包括：`users`、`password_reset_tokens`、`works`、`work_feature_tags`、`slug_redirects`、`assets`、`work_assets`、`publication_operations`、`events`、`commission_faqs`、`site_content`、`business_statuses`、`trash_entries`、`audit_logs`、`page_view_daily`、`referrer_daily`、`device_daily`。
 - `works` 仍是一件作品/一个角色的统一聚合；不拆委托、领养或展示作品表。发布状态固定为草稿/已发布/已下架；业务状态和领养方式使用 SPEC 的独立枚举。作品展示顺序、角色领养列表顺序和首页精选顺序独立保存，互不覆盖。
-- 人民币价格以明确币种和最小货币单位保存；美元字段独立保留但一期禁用。未来启用美元字段或增加语言内容时不得改变作品 ID、slug 或现有关系，也不得把不同语言内容混进同一不可区分文本。
+- 人民币价格以明确币种和最小货币单位保存；一期仅对已填写价格的领养/掉落作品公开，未填写时整个价格区域不渲染，委托继续人工估价。美元字段独立保留但一期禁用。未来启用美元字段或增加语言内容时不得改变作品 ID、slug 或现有关系，也不得把不同语言内容混进同一不可区分文本。
+- `work_feature_tags` 是固定语义的有序子表，只保存每件作品 0–8 条短属性及位置；单条去首尾空白后 1–24 个字符，同一作品内不得重复。它不是通用 EAV，也不得把“纯海绵头、内置风扇、即买即穿”等单件作品事实提升为工作室级承诺。“全装掉落”由 `works` 的装型与领养方式组合表达，不重复写入短属性，避免同一事实双源漂移。
 - `works.slug` 在首次发布后默认冻结。显式纠错改址时，同一事务写入新的唯一 slug 和 `slug_redirects(old_slug, work_id, created_at)`；解析旧 slug 时永久 301 到当前 `/works/{slug}`。`/adoptions/{slug}` 也只解析作品后重定向到该 canonical，不产生领养详情记录。
 - `assets` 保存相对 Object Key、源类型、原文件名、MIME、字节数、宽高、校验值、焦点/裁切、处理配方版本、处理状态、创建/删除时间；不保存 Bucket 域名和完整公网 URL。
 - `work_assets` 保存设定图/出厂照/返图来源、人工顺序和主图关系；数据库约束和服务端校验共同保证每类数量上限及互斥关系。
-- 公开查询使用显式公开投影，类型上排除人民币价格、领养人联系方式、定金/付款备注、原图键、管理员邮箱、密码派生数据和找回令牌。
+- 公开查询使用显式公开投影：包含已发布作品的有序短属性；仅为已填写价格的领养/掉落作品包含人民币金额和币种。类型上排除领养人联系方式、定金/付款备注、原图键、管理员邮箱、密码派生数据和找回令牌。
 - SQLite 迁移使用 expand/contract 思路；迁移前先执行一致性备份。镜像回滚不等于数据库回滚，禁止依赖破坏性 down migration 作为常规回退。
 - 未来迁移到 PostgreSQL/RDS 时，通过导出/导入和双读验证实施，不为了“方言兼容”提前牺牲 SQLite 约束或把 SQL 写成最低公分母。
 
@@ -260,7 +264,7 @@ prod/public/web/{asset-id}/{recipe-version}/{crop}/{content-hash}.{ext}
 
 ### 上传与处理链路
 
-1. 管理员选择 JPG/PNG/WebP；浏览器先检查不超过 20,000,000 字节、12,000 像素和数量上限，并基于同一文件字节计算 SHA-256 与 `Content-MD5`，但服务端仍执行最终校验。
+1. 管理员选择 JPG/PNG/WebP；浏览器先检查不超过 30,000,000 字节、12,000 像素和数量上限，并基于同一文件字节计算 SHA-256 与 `Content-MD5`，但服务端仍执行最终校验。
 2. `POST /api/admin/v1/assets/presign` 校验登录、所属作品、图片类型、MIME、大小、数量、SHA-256 与 MD5，创建绑定资产、目标 Key、期望字节数和摘要的上传会话，生成不可预测的私有原图 Key 与 5 分钟 V4 PUT URL。
 3. V4 签名固定 `Content-Type`、`Content-MD5`、`x-oss-forbid-overwrite: true` 和 `x-oss-meta-sha256`；浏览器带完全相同的签名请求头直接 PUT 到 OSS 并显示进度。AccessKey 不进入浏览器，上传流量不经过 Nitro，同一 URL 也不得覆盖已经存在的 Object。
 4. `POST /api/admin/v1/assets/complete` 携带上传会话 ID、ETag 和客户端读取的宽高；Nitro 通过 HEAD 和 OSS 图片信息复核 Object Key、字节数、Content-Type、MD5/ETag、SHA-256 元数据、实际格式与像素边界。验证失败时资产进入 `FAILED`，服务端尝试删除无效对象；删除失败只记录待人工清理项，不自动循环重试。
@@ -271,7 +275,7 @@ prod/public/web/{asset-id}/{recipe-version}/{crop}/{content-hash}.{ext}
 
 ### 输出与安全
 
-- 一期原图上限改为 20,000,000 字节（等于上限可接受，UI 显示 20 MB），确保不超过 OSS IMG 当前 20 MB 源图限制；最长边仍为 12,000，低于一般图片处理的 30,000 像素单边上限。旋转/自动方向使用更低的独立限制，必须按前述“先安全缩放、再显式旋转与换算坐标”配方处理，不能只用一般上限判断可处理性。
+- 一期永久私有原图上限为 30,000,000 字节（等于上限可接受，UI 显示 30 MB），最长边仍为 12,000。OSS 图片处理默认源图限制不足以覆盖该产品上限，因此 T18 前必须取得目标地域源图配额不低于 30,000,000 字节的证据，并用无个人信息的 20–30 MB 合成图片完成 `sys/saveas` 冒烟；门禁未通过时停止，不静默重压缩原图。旋转/自动方向仍使用更低的独立限制，必须按前述“先安全缩放、再显式旋转与换算坐标”配方处理，不能只用一般上限判断可处理性。
 - 一期输出 WebP + JPEG/PNG fallback；AVIF 只有在目标浏览器、实际作品画质、OSS/CDN 成本和缓存命中有证据后再启用。
 - 公开衍生组最大 1,920px；响应式候选宽度为 320/480/640/960/1280/1600/1920。具体质量参数使用固定 `recipe-version`，在正式素材上视觉确认后锁定；实现可按页面用途裁减不可能命中的宽度，不能缺少手机/桌面两档。
 - CDN 上线前，`@nuxt/image`/`<picture>` 直接使用数据库记录的预生成衍生 URL 构造 `srcset`；Aliyun provider 明确面向阿里云 CDN 图片编辑，只在 CDN 图片编辑、缓存键和回源安全通过专项验证后启用。公开站永不以原图 Key 作为 `src`。
@@ -297,7 +301,7 @@ prod/public/web/{asset-id}/{recipe-version}/{crop}/{content-hash}.{ext}
 ## SEO、缓存与统计
 
 - 首页、所有一级页面和每件作品详情由 SSR 输出独立 `title`、description、canonical、Open Graph、正常 `<a href>` 和图片 `alt`。
-- `@nuxtjs/sitemap` 从 SQLite 公开投影生成页面/作品 URL 和图片项；`@nuxtjs/robots` 同时保护后台、预览、API、开发环境；`nuxt-schema-org` 首版只实现 `Organization`、`BreadcrumbList` 和适合的作品展示实体，不虚构评价、价格或库存。
+- `@nuxtjs/sitemap` 从 SQLite 公开投影生成页面/作品 URL 和图片项；`@nuxtjs/robots` 同时保护后台、预览、API、开发环境；`nuxt-schema-org` 首版只实现 `Organization`、`BreadcrumbList` 和适合的作品展示实体。结构化数据中的价格只能来自同页可见的实际人民币金额，不能虚构评价、库存或可在线购买能力。
 - 首屏主图不懒加载并提供明确宽高/比例；首屏以下图片按视口懒加载，`srcset/sizes` 不请求原图。动效不阻塞正文和链接发现。
 - 带内容哈希的 JS/CSS/字体使用 immutable 长缓存；公开网页母版键包含内容/配方版本，可长缓存。动态 HTML 一期不做共享缓存。
 - CDN 上线前先用 OSS 自定义媒体域名；CDN 配置、缓存键、图片处理参数、刷新/预热和防盗链必须做专项验证，不能仅凭域名可访问宣称完成。
@@ -325,11 +329,11 @@ prod/public/web/{asset-id}/{recipe-version}/{crop}/{content-hash}.{ext}
 ## 测试与质量门禁
 
 - **静态门禁**：TypeScript strict、ESLint、Vue/Nuxt 类型检查、依赖安全审计、Drizzle 迁移一致性。
-- **单元测试**：作品/领养状态矩阵、发布校验、首次发布后 slug 冻结、显式改址与 redirect 冲突、公开投影、访问统计归一化、Object Key、配方版本、认证锁定与找回令牌。
+- **单元测试**：作品/领养状态矩阵、作品短属性边界、价格适用性/缺省隐藏、发布校验、首次发布后 slug 冻结、显式改址与 redirect 冲突、公开投影、访问统计归一化、Object Key、配方版本、认证锁定与找回令牌。
 - **SQLite 集成测试**：每套件独立临时数据库，执行全部迁移；覆盖 WAL/外键、事务、唯一约束、回收站、导出和备份恢复。
 - **Nitro 集成测试**：认证、同源写保护、管理 CRUD、发布、预览、公开投影、管理员初始化、邮件 mock 和错误响应。
-- **OSS 契约测试**：真实杭州 Bucket 测试前缀覆盖上传 Endpoint 可用性、V4 PUT、签名 `Content-Type`/`Content-MD5`/禁止覆盖/SHA-256 元数据、重复 PUT 被拒、HEAD、图片信息、`sys/saveas`、水印、账号级与 Bucket 级 Block Public Access、草稿衍生匿名拒绝、发布后匿名 GET、下架后匿名拒绝、原图匿名拒绝、短时签名 GET、精确 CORS 和清理。
-- **图片夹具**：JPG/PNG/WebP、EXIF Orientation 1–8（含镜像方向）、透明通道、20 MB/12,000 边界、最长边大于 4,096 且带旋转/镜像方向的图片、错误魔数、管理员手动处理重试、水印、归一化焦点和 3:4/16:9/1:1。
+- **OSS 契约测试**：真实杭州 Bucket 测试前缀覆盖上传 Endpoint 可用性、图片处理源图配额不低于 30,000,000 字节、V4 PUT、签名 `Content-Type`/`Content-MD5`/禁止覆盖/SHA-256 元数据、重复 PUT 被拒、HEAD、图片信息、20–30 MB 合成图片 `sys/saveas`、水印、账号级与 Bucket 级 Block Public Access、草稿衍生匿名拒绝、发布后匿名 GET、下架后匿名拒绝、原图匿名拒绝、短时签名 GET、精确 CORS 和清理。
+- **图片夹具**：JPG/PNG/WebP、EXIF Orientation 1–8（含镜像方向）、透明通道、30,000,000 字节/12,000 像素边界、最长边大于 4,096 且带旋转/镜像方向的图片、错误魔数、管理员手动处理重试、水印、归一化焦点和 3:4/16:9/1:1；大文件 OSS 冒烟只使用不含个人信息的合成图片。
 - **浏览器 E2E**：后台登录 → 新建/编辑作品 → 直传 → 处理 → 裁切/排序 → 预览 → 发布 → 公开 SSR 展示；另覆盖返图、领养/展会状态、营业状态、回收站、导出、原图授权下载和密码找回 mock。
 - **SEO 门禁**：关闭 JavaScript仍有关键标题/正文/链接；所有领养卡片也链接 `/works/{slug}`，`/adoptions/{slug}` 和旧作品 slug 永久 301；canonical、Sitemap、robots、结构化数据和图片 `alt` 可验证；后台/预览/API 不可索引。
 - **视觉回归**：按 v5 在 `390 × 844`、`768 × 1024`、`1440 × 900` 检查首屏裁切、导航、图片密度、文字遮挡、横向溢出和减少动效；使用正式素材后必须重跑。
@@ -339,9 +343,9 @@ prod/public/web/{asset-id}/{recipe-version}/{crop}/{content-hash}.{ext}
 
 1. **PLAN 门禁（已完成）**：用户已确认 `OQ-018–023`；v5、本轮文档一致性检查和无上下文 Reader Test 均通过。
 2. **任务与设计输入（已完成）**：公开端/管理端 Design Brief、IA、Token 已写入 `.design/`；`implementation/TASKS.md` 已把工作映射到 SPEC 验收、迁移、API、UI 视口和测试证据。
-3. **工程与生产设计门禁（待阶段 4 授权）**：先建立 Node 24、pnpm、Nuxt 4、TypeScript strict、环境配置、健康检查和测试壳，再完成公开端/管理端生产视觉样张及 T08 用户确认；不得直接翻版 v5。
+3. **工程与生产设计门禁（阶段 4 实施中）**：T01 已建立 Node 24、pnpm、Nuxt 4、TypeScript strict、健康检查和测试壳；继续完成环境配置与公开端/管理端生产视觉样张，并取得 T08 用户确认；不得直接翻版 v5。
 4. **SQLite 与认证**：Drizzle Schema/迁移、唯一管理员初始化、登录/改密/找回、锁定、Session、审计和备份恢复冒烟。
-5. **OSS 媒体底座**：上传 Endpoint 与 Block Public Access 人工前置检查、V4 条件直传、上传会话、MD5/SHA-256、HEAD/图片信息、EXIF 坐标转换、OSS 另存处理、网页母版、水印、草稿/发布/下架 ACL、管理员手动处理重试、dev 媒体显示和原图授权下载。
+5. **OSS 媒体底座**：上传 Endpoint、图片处理 30 MB 源图配额与 Block Public Access 人工前置检查、V4 条件直传、上传会话、MD5/SHA-256、HEAD/图片信息、EXIF 坐标转换、OSS 另存处理、网页母版、水印、草稿/发布/下架 ACL、管理员手动处理重试、dev 媒体显示和原图授权下载。
 6. **后台内容流**：作品列表、四步新建、快速编辑、图片管理、返图上传、营业状态、委托 FAQ、关于/联系、首页精选、回收站、原图档案和 CSV 导出。
 7. **公开 SSR**：按 v5 实现首页、作品、委托、领养、返图、关于我们和联系；公开 DTO 与后台 DTO 分离。
 8. **SEO 与响应式**：Meta、canonical、Sitemap、robots、结构化数据、响应式图片、轻量动效、桌面/手机裁切与浏览器兼容。
@@ -378,7 +382,8 @@ prod/public/web/{asset-id}/{recipe-version}/{crop}/{content-hash}.{ext}
 - [Nuxt Sitemap](https://nuxt.com/modules/sitemap)、[Nuxt Robots](https://nuxt.com/modules/robots)、[Nuxt Schema.org](https://nuxt.com/modules/schema-org)：用于动态 Sitemap、抓取控制和结构化数据。
 - [OSS Node.js V4 预签名上传](https://help.aliyun.com/en/oss/developer-reference/upload-objects-using-a-signed-url-generated-with-oss-sdk-for-node-js)：`ali-oss` 支持 `signatureUrlV4`，浏览器无需 AccessKey 即可 PUT。
 - [OSS PutObject](https://help.aliyun.com/en/oss/developer-reference/putobject)：可使用 `Content-MD5` 校验上传完整性，并通过 `x-oss-forbid-overwrite` 阻止覆盖同名 Object。
-- [OSS 图片处理限制](https://help.aliyun.com/en/oss/user-guide/limits)：当前源图最大 20 MB；一般处理单边最大 30,000 像素。
+- [OSS 图片处理限制](https://help.aliyun.com/zh/oss/user-guide/limits)：默认源图最大 20 MB；一般处理单边最大 30,000 像素。
+- [OSS 图片缩放与配额调整](https://help.aliyun.com/zh/oss/user-guide/resize-images-4/)：源图大小属于可在配额中心申请调整的图片处理配额；本项目必须在 T18 前证明目标地域达到 30,000,000 字节。
 - [OSS 图片旋转 FAQ](https://help.aliyun.com/en/oss/user-guide/faq-2)：大尺寸源图的自动方向可能触发独立旋转限制，需要关闭自动方向、先缩放再显式旋转。
 - [OSS 图片样式](https://help.aliyun.com/zh/oss/user-guide/image-styles/)：支持缩放、裁切、方向、质量、格式和水印组合。
 - [OSS `sys/saveas`](https://help.aliyun.com/zh/oss/user-guide/sys-or-saveas)：可把处理结果保存为同地域 Object，便于建立公开网页母版。
@@ -396,7 +401,7 @@ prod/public/web/{asset-id}/{recipe-version}/{crop}/{content-hash}.{ext}
 | 编号 | 状态 | 问题 | 影响范围 | 提问日期 | 解答 |
 | --- | --- | --- | --- | --- | --- |
 | OQ-001 | 已答 | 正式上线部署地域、备案和公开/后台域名如何安排？ | 域名、备案、SEO、隔离 | 2026-07-26 | 最终完成中国大陆 ICP 备案并部署境内；此前先部署境外。备案后切换解析到境内 ECS。公开站和后台使用同一正式域名下不同子域名。 |
-| OQ-002 | 已答 | 已有哪些基础设施？ | 资源与成本 | 2026-07-26 | 境内/境外阿里云 ECS 各 2C/2GB/40GB，可升级；OSS 可扩容；已有前期域名，正式名称确定后申请新域名；邮件复用 QQ SMTP。 |
+| OQ-002 | 已答 | 已有哪些基础设施？ | 资源与成本 | 2026-07-26 | 境内/境外阿里云 ECS 各 2C/2GB/40GB，可升级；OSS 可扩容；已有前期域名，后续按已确认中文名和最终英文名申请新域名；邮件复用 QQ SMTP。 |
 | OQ-003 | 已答 | 一期预算和扩容态度？ | 架构复杂度 | 2026-07-26 | 当前 Demo 优先复用已有资源；增加投入前说明必要性、选项与成本，由用户和景宸讨论。 |
 | OQ-004 | 已答 | 谁负责运维和内容？ | 运维模型 | 2026-07-26 | 用户承担全部技术与 Docker 部署；景宸只使用后台维护业务内容。 |
 | OQ-005 | 已答 | 用户熟悉和愿意维护的技术栈？ | 开发效率 | 2026-07-26 | 用户完全熟悉 Java/Spring/MySQL/Vue/Vite，也有 JS 基础；经过对 SEO、视觉迭代、资源与后台边界的再次比较，接受 Nuxt/Node 全栈路线。 |
@@ -416,5 +421,5 @@ prod/public/web/{asset-id}/{recipe-version}/{crop}/{content-hash}.{ext}
 | OQ-019 | 已答 | 领养作品是否同时拥有 `/works/{slug}` 与 `/adoptions/{slug}` 两份详情？ | canonical、Sitemap、内部链接 | 2026-07-28 | 用户接受统一 canonical：所有作品只在 `/works/{slug}` 输出详情正文；角色领养列表链接该地址，`/adoptions/{slug}` 永久 301 到对应作品，不进入 Sitemap。 |
 | OQ-020 | 已答 | 草稿、已发布、已下架三个阶段的网页衍生图如何控制匿名访问？ | 草稿隐私、对象 ACL、CDN | 2026-07-28 | 用户接受草稿/预览衍生图保持私有并通过管理员短时签名 URL 预览；发布成功后才设为 `public-read`；下架后设回私有，启用 CDN 时同时清理对应缓存。 |
 | OQ-021 | 已答 | 作品首次发布后是否允许修改 slug？ | 稳定链接、外部分享、SEO | 2026-07-28 | 用户接受首次发布后默认冻结 slug；确需纠错时执行显式改址并保存永久 301，canonical、内部链接、分享元数据和 Sitemap 只使用新地址。 |
-| OQ-022 | 已答 | 杭州 OSS 直传和对象级公开依赖哪些环境前置条件？ | 上传 Endpoint、CORS、Block Public Access | 2026-07-28 | 不假设当前阿里云账号状态。媒体地基先验证 `OSS_UPLOAD_BASE_URL`、两个完整开发 origin、签名请求头及账号级/Bucket 级 Block Public Access；需要账号级配置或上传 CNAME 时由用户手动完成，应用不得自动修改账号级安全设置，也不回退为 Nitro 代理上传。 |
+| OQ-022 | 已答 | 杭州 OSS 直传、30 MB 图片处理和对象级公开依赖哪些环境前置条件？ | 上传 Endpoint、图片处理配额、CORS、Block Public Access | 2026-07-28 | 不假设当前阿里云账号状态。媒体地基先验证 `OSS_UPLOAD_BASE_URL`、目标地域图片处理源图配额不低于 30,000,000 字节、两个完整开发 origin、签名请求头及账号级/Bucket 级 Block Public Access；需要配额申请、账号级配置或上传 CNAME 时由用户手动完成，应用不得自动修改账号级安全设置，也不回退为 Nitro 代理上传或静默压缩原图。 |
 | OQ-023 | 已答 | 媒体处理失败或容器中断后是否建设自动重试与恢复？ | 运维复杂度、处理状态 | 2026-07-28 | 不建设消息队列、后台 worker、租约、退避重试、定时扫描或容器重启自动续跑；保存可读失败/未完成状态，由用户在后台手动检查和重试。重新上传必须创建新会话和新 Object Key。 |

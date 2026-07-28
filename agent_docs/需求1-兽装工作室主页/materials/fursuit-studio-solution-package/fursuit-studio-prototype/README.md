@@ -1,5 +1,7 @@
 # 兽装工作室网站概念原型
 
+> **资料边界**：这是外部方案包附带的历史低/中保真输入，不是当前实施契约或生产设计。当前范围以 [`requirements/SPEC.md`](../../../requirements/SPEC.md)、[`planning/PLAN.md`](../../../planning/PLAN.md)、[`implementation/TASKS.md`](../../../implementation/TASKS.md) 和 [`STATE.md`](../../../STATE.md) 为准；生产视觉输入见 [`.design/README.md`](../../../.design/README.md)。
+
 - `client-home-concept.svg`：客户端首页，1440×1000，可直接导入 Figma。
 - `admin-work-editor-concept.svg`：管理端作品编辑页，1440×1000，可直接导入 Figma。
 - `prototype-preview.html`：本地浏览两个界面。

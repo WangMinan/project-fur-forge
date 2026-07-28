@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目简介
 
-project-fur-paws —— 为朋友的兽装（fursuit）工作室制作的主页网站。
+project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 3 TASKS 已完成，仍无业务源码。** 技术路线已确定为单 Nuxt 4 全栈应用、Nitro、SQLite/Drizzle 与阿里云 OSS；公开端与管理端的生产设计输入已分别沉淀在 `.design/`，`implementation/TASKS.md` 已形成正式任务清单。规划原型 v5 只锁定页面职责、内容顺序和关键交互，不代表生产视觉完成度。**在用户明确授权进入阶段 4 前，不要搭建项目或编写业务代码。**
+> **当前阶段：阶段 4 IMPLEMENTATION，T01 已完成。** 单 Nuxt 4 全栈应用的公开 SSR、后台 CSR、Nitro 健康检查、TypeScript strict、pnpm 锁文件和测试/构建入口已经建立；SQLite/Drizzle、认证与阿里云 OSS 尚未开始。公开端与管理端的生产设计输入位于 `.design/`，规划原型 v5 只锁定页面职责、内容顺序和关键交互，不代表生产视觉完成度。**继续严格按 `implementation/TASKS.md` 的依赖推进，下一项为 T02。**
 
 ## 网站核心原则（景宸确认）
 
@@ -36,8 +36,21 @@ project-fur-paws —— 为朋友的兽装（fursuit）工作室制作的主页�
 
 ## 常用命令
 
-业务工程尚未创建，因此暂无 Nuxt 构建命令。当前规划原型的验证入口与命令见 `agent_docs/需求1-兽装工作室主页/planning/prototype-v1/README.md`；阶段 4 从 `implementation/TASKS.md` 的 T01 开始时建立正式构建/测试命令。
+Node.js 24 LTS 与 pnpm 10.33 为当前基线：
+
+```bash
+pnpm install --frozen-lockfile
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm test:integration
+pnpm test:e2e
+pnpm build
+pnpm verify:production
+```
+
+当前规划原型的独立验证入口仍见 `agent_docs/需求1-兽装工作室主页/planning/prototype-v1/README.md`，不得把原型样式复制进生产应用。
 
 ## 当前仓库状态
 
-仅有文档脚手架、阶段 2 规划原型和阶段 3 的 `.design/`/`TASKS.md` 产物：`CLAUDE.md`、`AGENTS.md`（软链接）、`agent_docs/`、`.gitignore`。无业务源码、无生产构建产物。
+根目录现含 Nuxt 4 工程、`app/`、`server/`、`shared/`、`tests/` 与阶段文档。T01 只提供访问面和质量门禁最小切片；暂无 SQLite Schema、管理员认证、OSS 接入或生产视觉页面。
