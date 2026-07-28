@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="景宸的兽装工作室主页交互原型。">
+  <title>景宸的兽装工作室 · PLAN 原型 v5</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%237f82bd'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='15' fill='%23ffffff'%3E%E7%88%AA%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div id="public-shell" class="site-shell">
+    <header class="site-header">
+      <a class="wordmark" href="#home" data-route="home" aria-label="返回首页">
+        <span class="wordmark-mark" aria-hidden="true">爪</span>
+        <span>景宸的兽装工作室<small>FURSUIT ATELIER</small></span>
+      </a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="public-nav">菜单</button>
+      <nav id="public-nav" class="public-nav" aria-label="公开站导航">
+        <a href="#home" data-route="home">首页</a>
+        <a href="#works" data-route="works">作品展示</a>
+        <a href="#commission" data-route="commission">自设委托</a>
+        <a href="#adoptions" data-route="adoptions">角色领养</a>
+        <a href="#returns" data-route="returns">返图墙</a>
+        <a href="#studio" data-route="studio">关于我们</a>
+      </nav>
+      <a class="header-contact" href="#contact" data-route="contact">联系 ↗</a>
+    </header>
+
+    <main id="public-main">
+      <section class="view is-active" data-view="home">
+        <div class="hero hero-cinematic">
+          <div class="hero-background" aria-hidden="true">
+            <img src="assets/work-mint.svg" alt="">
+          </div>
+          <div class="hero-copy">
+            <p class="eyebrow">HANDMADE IN HANGZHOU</p>
+            <h1>景宸的兽装工作室</h1>
+            <p class="hero-tagline">让设定真正站起来。</p>
+          </div>
+          <a class="button button-light hero-primary-action" href="#works" data-route="works">作品展示 <span>↗</span></a>
+          <p class="hero-feature-label"><span>FEATURED / 001</span><strong>青团</strong> · 半装</p>
+          <a class="hero-scroll" href="#home-selected">向下浏览 <span>↓</span></a>
+        </div>
+
+        <section class="section frame home-selected" id="home-selected">
+          <header class="section-heading split-heading">
+            <div>
+              <p class="eyebrow">SELECTED WORKS · 01</p>
+              <h2>最近完成</h2>
+            </div>
+            <div class="collection-intro">
+              <div class="collection-controls" aria-label="精选作品切换">
+                <button type="button" data-carousel-prev aria-label="上一组作品">←</button>
+                <button type="button" data-carousel-next aria-label="下一组作品">→</button>
+              </div>
+            </div>
+          </header>
+          <div class="work-carousel-viewport" data-carousel-viewport>
+            <div class="work-carousel-track" data-work-grid="featured"></div>
+          </div>
+          <div class="section-end">
+            <a class="line-link" href="#works" data-route="works">浏览全部作品 <span>查看完整作品集</span></a>
+          </div>
+        </section>
+
+        <section class="business-bridge frame" aria-label="委托与领养入口">
+          <div class="path-grid">
+            <a href="#commission" data-route="commission" class="path-card path-commission">
+              <img src="assets/work-coral.svg" alt="珊瑚色兽装作品规划占位插画">
+              <span class="path-shade" aria-hidden="true"></span>
+              <span class="path-kicker">01 / COMMISSION</span>
+              <div>
+                <h3>自设委托</h3>
+                <small>全装与半装 · 邮件人工估价</small>
+              </div>
+              <b>查看委托 <i>→</i></b>
+            </a>
+            <a href="#adoptions" data-route="adoptions" class="path-card path-adoption">
+              <img src="assets/design-sheet.svg" alt="角色领养设定图规划占位插画">
+              <span class="path-shade" aria-hidden="true"></span>
+              <span class="path-kicker">02 / ADOPTION</span>
+              <div>
+                <h3>角色领养</h3>
+                <small>常规领养与展会掉落</small>
+              </div>
+              <b>浏览角色 <i>→</i></b>
+            </a>
+          </div>
+        </section>
+
+        <div class="status-strip" aria-label="当前业务状态">
+          <span>当前动态</span>
+          <strong><i aria-hidden="true"></i> 委托咨询开放</strong>
+          <strong><i aria-hidden="true"></i> 2 件角色可领养</strong>
+        </div>
+
+        <section class="adoption-callout">
+          <div class="adoption-art">
+            <img src="assets/design-sheet.svg" alt="角色正反面设定图规划占位插画">
+            <span class="watermark">工作室水印公开版</span>
+          </div>
+          <div class="adoption-copy">
+            <p class="eyebrow">AVAILABLE CHARACTER · 04</p>
+            <span class="status-tag status-open">可领养</span>
+            <h2>灰烬 / ASH</h2>
+            <p>一只夜色与珊瑚色交错的龙。网站展示角色、当前状态与所属展会，不在站内付款或签约。</p>
+            <dl class="fact-list">
+              <div><dt>方式</dt><dd>常规领养</dd></div>
+              <div><dt>装型</dt><dd>全装</dd></div>
+              <div><dt>后续</dt><dd>邮件沟通</dd></div>
+            </dl>
+            <button class="button button-dark" type="button" data-adoption-id="ash">查看角色资料 <span>↗</span></button>
+          </div>
+        </section>
+
+      </section>
+
+      <section class="view" data-view="works">
+        <header class="compact-page-head frame">
+          <p class="eyebrow">OUR WORKS</p>
+          <h1>作品展示</h1>
+          <div class="work-filter-groups" aria-label="作品筛选">
+            <div class="work-filter-group" data-filter-group="purpose">
+              <span>作品用途</span>
+              <button class="is-active" type="button" data-filter-purpose="all">全部作品</button>
+              <button type="button" data-filter-purpose="commission">委托作品</button>
+              <button type="button" data-filter-purpose="adoption">领养作品</button>
+              <button type="button" data-filter-purpose="display">展示作品</button>
+            </div>
+            <div class="work-filter-group" data-filter-group="suit">
+              <span>装型</span>
+              <button class="is-active" type="button" data-filter-suit="all">全部装型</button>
+              <button type="button" data-filter-suit="全装">全装</button>
+              <button type="button" data-filter-suit="半装">半装</button>
+            </div>
+          </div>
+        </header>
+        <section class="frame gallery-body">
+          <div class="collection-meta collection-meta-solo"><strong data-work-result-count>6 件作品</strong></div>
+          <div class="work-grid work-grid-equal" data-work-grid="all"></div>
+        </section>
+      </section>
+
+      <section class="view" data-view="commission">
+        <header class="compact-page-head frame">
+          <p class="eyebrow">COMMISSION / 自设委托</p>
+          <span class="business-state"><i></i> 当前接受邮件咨询</span>
+          <h1>自设委托</h1>
+        </header>
+        <section class="commission-showcase frame">
+          <img src="assets/work-coral.svg" alt="珊瑚色全装兽装作品规划占位插画">
+          <div>
+            <p class="eyebrow">FULL SUIT / PARTIAL SUIT</p>
+            <h2>从角色设定出发。</h2>
+            <a class="line-link" href="mailto:3114559925@qq.com?subject=%E5%85%BD%E8%A3%85%E5%A7%94%E6%89%98%E4%BC%B0%E4%BB%B7%E5%92%A8%E8%AF%A2">邮件咨询 →</a>
+          </div>
+        </section>
+        <section class="commission-layout frame page-body">
+          <div class="commission-main">
+            <p class="section-number">01 / 制作范围</p>
+            <div class="service-row"><strong>全装</strong><span>头部、身体、手爪、脚爪、尾巴</span></div>
+            <div class="service-row"><strong>半装</strong><span>头部、手爪、尾巴</span></div>
+            <p class="section-number">02 / 开始联系</p>
+            <ol class="plain-steps">
+              <li><b>看看作品</b><span>确认工作室现有风格是否适合你的角色。</span></li>
+              <li><b>整理设定</b><span>在邮件中简述角色、希望制作的装型和你的问题。</span></li>
+              <li><b>人工沟通</b><span>景宸看过资料后回复可行性与后续安排。</span></li>
+            </ol>
+          </div>
+          <aside class="mail-card">
+            <p class="eyebrow">NO FORM. REAL EMAIL.</p>
+            <h2>请求人工估价</h2>
+            <p>点击会打开你的邮件客户端，不会在网站提交任何资料。</p>
+            <a class="button button-accent" href="mailto:3114559925@qq.com?subject=%E5%85%BD%E8%A3%85%E5%A7%94%E6%89%98%E4%BC%B0%E4%BB%B7%E5%92%A8%E8%AF%A2&body=%E8%A7%92%E8%89%B2%E5%90%8D%EF%BC%9A%0A%E5%B8%8C%E6%9C%9B%E8%A3%85%E5%9E%8B%EF%BC%9A%E5%85%A8%E8%A3%85%20%2F%20%E5%8D%8A%E8%A3%85%0A%E9%9C%80%E6%B1%82%E7%AE%80%E8%BF%B0%EF%BC%9A">打开邮件客户端 ↗</a>
+            <button class="copy-mail" type="button" data-copy-email>复制邮箱：3114559925@qq.com</button>
+          </aside>
+        </section>
+        <section class="commission-faq">
+          <div class="frame commission-faq-inner">
+            <header>
+              <p class="eyebrow">FAQ / 常见问题</p>
+              <h2>委托前可以先看看这里。</h2>
+            </header>
+            <div class="faq-list">
+              <details open>
+                <summary>如何开始自设委托？<span aria-hidden="true"></span></summary>
+                <p>先浏览作品与制作范围，再通过邮件说明角色名称、希望制作的装型和需求简述。景宸查看资料后会回复可行性与后续安排。</p>
+              </details>
+              <details>
+                <summary>目前可以委托哪些装型？<span aria-hidden="true"></span></summary>
+                <p>目前提供全装与半装。半装由头部、手爪和尾巴组成；其他配件或服务不在当前公开范围内。</p>
+              </details>
+              <details>
+                <summary>网站会直接报价或接收委托吗？<span aria-hidden="true"></span></summary>
+                <p>不会。网站不公开价格，也不保存委托表单；点击邮件入口后，由工作室根据实际角色资料人工沟通和估价。</p>
+              </details>
+              <details>
+                <summary>如何确认工作室的官方渠道？<span aria-hidden="true"></span></summary>
+                <p>请以本站列出的邮箱 3114559925@qq.com、QQ 3114559925 与抖音 to3114559925 为准。</p>
+              </details>
+              <details>
+                <summary>可以申请不公开自己的作品吗？<span aria-hidden="true"></span></summary>
+                <p>可以在完工前通过书面方式提出不公开请求，具体展示安排由双方逐单确认。</p>
+              </details>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" data-view="adoptions">
+        <header class="compact-page-head frame">
+          <p class="eyebrow">CHARACTER ADOPTION / 角色领养</p>
+          <span class="business-state"><i></i> 当前营业</span>
+          <h1>角色领养</h1>
+        </header>
+        <section class="frame page-body">
+          <div class="truth-banner"><strong>交易边界</strong><span>常规领养通过邮件继续；展会掉落在线下完成定金与签约。</span></div>
+          <div class="adoption-grid" data-adoption-grid></div>
+        </section>
+      </section>
+
+      <section class="view" data-view="returns">
+        <header class="compact-page-head frame">
+          <p class="eyebrow">OWNER PHOTOS / 返图墙</p>
+          <h1>返图墙</h1>
+        </header>
+        <section class="returns-preview frame">
+          <div class="returns-masonry-skeleton" aria-label="返图瀑布流骨架屏预览" aria-busy="true">
+            <span class="return-skeleton-card return-skeleton-tall"></span>
+            <span class="return-skeleton-card return-skeleton-short"></span>
+            <span class="return-skeleton-card return-skeleton-mid"></span>
+            <span class="return-skeleton-card return-skeleton-short"></span>
+            <span class="return-skeleton-card return-skeleton-tall"></span>
+            <span class="return-skeleton-card return-skeleton-mid"></span>
+            <span class="return-skeleton-card return-skeleton-short"></span>
+            <span class="return-skeleton-card return-skeleton-tall"></span>
+          </div>
+          <div class="returns-empty-copy">
+            <h2>第一张返图还在路上</h2>
+            <p>目前还没有公开返图，先看看已经完成的作品。</p>
+            <a class="line-link" href="#works" data-route="works">先看出厂作品 →</a>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" data-view="studio">
+        <header class="compact-page-head frame">
+          <p class="eyebrow">ABOUT & AGREEMENT</p>
+          <h1>关于我们</h1>
+        </header>
+        <section class="frame compact-page-body studio-grid">
+          <article><span>01</span><h2>我们制作什么</h2><p>全装与半装。半装由头、手爪和尾巴组成。</p></article>
+          <article><span>02</span><h2>如何开始</h2><p>先浏览作品，再通过邮件说明角色和需求。</p></article>
+          <article><span>03</span><h2>如何确认官方渠道</h2><p>本站、QQ 3114559925 与抖音 to3114559925。</p></article>
+        </section>
+        <section class="terms-section" id="terms">
+          <header class="terms-section-head frame">
+            <p class="eyebrow">BASIC AGREEMENT / 基本约定</p>
+            <h2>基本约定</h2>
+          </header>
+          <div class="terms-page terms-page-full frame">
+          <div class="terms-list">
+            <article><span>01</span><div><h2>工作室与制作范围</h2><p>工作室制作全装与半装；具体设定是否可制作，按实际角色资料沟通。</p></div></article>
+            <article><span>02</span><div><h2>逐单沟通</h2><p>报价、排期、付款、修改、量体、运输和异常处理以邮件或官方社交媒体的逐单沟通为准。</p></div></article>
+            <article><span>03</span><div><h2>版权、实体所有权与使用</h2><p>工作室保留作品著作权；客户取得实体兽装所有权与个人展示、摄影、表演等非商业使用权，商业用途另行沟通。</p></div></article>
+            <article><span>04</span><div><h2>作品展示与不公开请求</h2><p>工作室可在约定范围内展示作品；客户可在完工前通过书面方式提出不公开请求。</p></div></article>
+            <article><span>05</span><div><h2>二次转让与反炒卖</h2><p>二次转让前应通知工作室，并禁止明显高价炒卖；具体情况通过官方渠道沟通。</p></div></article>
+            <article><span>06</span><div><h2>基本售后</h2><p>遇到需要调整或维修的情况，请携带作品信息联系工作室，由双方逐单确认处理方式。</p></div></article>
+            <article><span>07</span><div><h2>官方联系与防诈骗</h2><p>只以本站列出的邮箱、QQ 与抖音账号为官方渠道；付款或签约前请再次核验身份。</p></div></article>
+          </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" data-view="contact">
+        <header class="compact-page-head frame">
+          <p class="eyebrow">CONTACT / 联系</p>
+          <h1>联系我们</h1>
+        </header>
+        <section class="contact-page frame">
+          <a class="contact-mail-cta" href="mailto:3114559925@qq.com">写一封邮件 <span>↗</span></a>
+          <div class="contact-grid">
+            <div><span>邮箱</span><strong>3114559925@qq.com</strong></div>
+            <div><span>QQ</span><strong>3114559925</strong></div>
+            <div><span>抖音</span><strong>to3114559925</strong></div>
+          </div>
+          <p class="fraud-note">请只通过本站列出的账号确认工作室身份与业务信息。</p>
+        </section>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wordmark footer-mark"><span class="wordmark-mark">爪</span><span>景宸的兽装工作室<small>FURSUIT ATELIER</small></span></div>
+      <p>作品展示 · 自设委托 · 角色领养 · 返图墙</p>
+    </footer>
+  </div>
+
+  <div id="admin-login-shell" class="admin-login-shell" hidden>
+    <a class="login-back-link" href="#home" data-admin-public>← 返回公开站</a>
+    <main class="login-layout">
+      <section class="login-brand-panel">
+        <div class="login-brand">
+          <span>爪</span>
+          <div><strong>景宸的兽装工作室</strong><small>STUDIO CONTENT SYSTEM</small></div>
+        </div>
+        <div class="login-brand-copy">
+          <p>WORKS · RETURNS · ADOPTIONS</p>
+          <h1>让作品更新<br>保持简单。</h1>
+        </div>
+      </section>
+      <section class="login-form-panel">
+        <div class="login-card" data-login-card>
+          <p class="eyebrow">ADMIN SIGN IN</p>
+          <h2>登录工作室后台</h2>
+          <p>使用管理员用户名或邮箱继续。</p>
+          <form data-admin-login-form novalidate>
+            <label>用户名或邮箱<input name="identity" autocomplete="username" required placeholder="请输入用户名或邮箱"></label>
+            <label>密码<input name="password" type="password" autocomplete="current-password" required placeholder="请输入密码"></label>
+            <p class="login-error" data-login-error hidden>请填写用户名或邮箱和密码。</p>
+            <button class="admin-primary login-submit" type="submit">登录 <span>→</span></button>
+          </form>
+          <button class="forgot-password" type="button" data-open-password-help>忘记密码？</button>
+        </div>
+        <div class="login-card password-help-card" data-password-help hidden>
+          <p class="eyebrow">PASSWORD RESET</p>
+          <h2>找回密码</h2>
+          <p>输入已维护的管理员邮箱，我们会发送一封 30 分钟内有效的单次找回邮件。</p>
+          <label>管理员邮箱<input type="email" data-reset-email placeholder="name@example.com"></label>
+          <button class="admin-primary login-submit" type="button" data-send-reset>发送找回邮件 <span>→</span></button>
+          <button class="forgot-password" type="button" data-close-password-help>返回登录</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="admin-shell" class="admin-shell" hidden>
+    <aside class="admin-sidebar">
+      <div class="admin-brand"><span>爪</span><strong>工作室后台<small>CONTENT STUDIO</small></strong></div>
+      <nav aria-label="后台导航">
+        <button class="is-active" type="button" data-admin-route="works"><span>01</span>作品管理</button>
+        <button type="button" data-admin-route="returns"><span>02</span>返图管理</button>
+        <button type="button" data-admin-route="business"><span>03</span>营业状态</button>
+        <button type="button" data-admin-route="content"><span>04</span>首页与页面</button>
+        <button type="button" data-admin-route="export"><span>05</span>完整导出</button>
+      </nav>
+      <button class="back-public" type="button" data-admin-public>← 打开公开站</button>
+    </aside>
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <div><span class="admin-mobile-label">工作室后台</span><strong>内容工作台</strong><small>唯一管理员 · 景宸</small></div>
+        <div class="admin-top-actions"><button type="button" data-preview-public>预览公开站</button><span>JC</span></div>
+      </header>
+
+      <section class="admin-view is-active" data-admin-view="works">
+        <div class="admin-page-head">
+          <div><p>WORKS / 作品</p><h1>作品管理。</h1><span>新建作品经过完整门禁；编辑现有作品直接进入状态与图片管理，不重复走新建流程。</span></div>
+          <button class="admin-primary" type="button" data-open-wizard>＋ 新建作品</button>
+        </div>
+        <div class="admin-toolbar">
+          <strong>全部作品 <span>6</span></strong>
+          <div><button class="is-active" type="button">全部</button><button type="button">草稿</button><button type="button">已发布</button><button type="button">已下架</button></div>
+        </div>
+        <div class="admin-table" role="table" aria-label="作品列表">
+          <div class="admin-table-row admin-table-head" role="row"><span>作品</span><span>用途 / 状态</span><span>图片</span><span>公开状态</span><span>更新</span><span></span></div>
+          <div class="admin-table-row" role="row">
+            <span class="work-cell"><img src="assets/work-mint.svg" alt=""><b>青团<small>狼 · 半装</small></b></span><span>普通作品</span><span>出厂照 4</span><span><i class="publish-dot"></i> 已发布</span><span>今天 14:20</span><button type="button" data-edit-work="mint">编辑</button>
+          </div>
+          <div class="admin-table-row" role="row">
+            <span class="work-cell"><img src="assets/design-sheet.svg" alt=""><b>灰烬<small>龙 · 全装</small></b></span><span>常规领养 · 可领养</span><span>设定图 1</span><span><i class="publish-dot"></i> 已发布</span><span>今天 11:05</span><button type="button" data-edit-work="ash">编辑</button>
+          </div>
+          <div class="admin-table-row" role="row">
+            <span class="work-cell"><img src="assets/work-coral.svg" alt=""><b>赤陶<small>狐 · 全装</small></b></span><span>普通作品</span><span>出厂照 5</span><span><i class="publish-dot"></i> 已发布</span><span>07-23</span><button type="button" data-edit-work="coral">编辑</button>
+          </div>
+          <div class="admin-table-row" role="row">
+            <span class="work-cell"><img src="assets/work-night.svg" alt=""><b>夜航<small>犬 · 半装</small></b></span><span>展会掉落 · 准备中</span><span>设定图 1</span><span><i class="draft-dot"></i> 草稿</span><span>07-21</span><button type="button" data-edit-work="night">编辑</button>
+          </div>
+          <div class="admin-table-row" role="row">
+            <span class="work-cell"><img src="assets/work-mint.svg" alt=""><b>云岬<small>猫 · 半装</small></b></span><span>委托作品</span><span>出厂照 3</span><span><i class="publish-dot"></i> 已发布</span><span>07-18</span><button type="button" data-edit-work="cloud">编辑</button>
+          </div>
+          <div class="admin-table-row" role="row">
+            <span class="work-cell"><img src="assets/work-coral.svg" alt=""><b>莓雨<small>兔 · 全装</small></b></span><span>普通作品</span><span>出厂照 4</span><span><i class="publish-dot"></i> 已发布</span><span>07-15</span><button type="button" data-edit-work="berry">编辑</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="admin-view" data-admin-view="returns">
+        <div class="admin-page-head">
+          <div><p>RETURN PHOTOS / 返图</p><h1>返图是独立内容入口。</h1><span>先关联已有作品，再批量上传、补充可选署名信息并发布；返图不会混入出厂照。</span></div>
+          <button class="admin-primary" type="button" data-open-return-upload>＋ 上传返图</button>
+        </div>
+        <div class="return-admin-flow" aria-label="返图发布流程">
+          <span><b>01</b>关联已有作品</span><i>→</i><span><b>02</b>上传与排序</span><i>→</i><span><b>03</b>填写署名信息</span><i>→</i><span><b>04</b>预览并发布</span>
+        </div>
+        <div class="return-admin-empty">
+          <div class="returns-masonry-skeleton returns-masonry-compact" aria-hidden="true">
+            <span class="return-skeleton-card return-skeleton-tall"></span>
+            <span class="return-skeleton-card return-skeleton-short"></span>
+            <span class="return-skeleton-card return-skeleton-mid"></span>
+            <span class="return-skeleton-card return-skeleton-short"></span>
+          </div>
+          <div><p class="eyebrow">0 PUBLISHED</p><h2>还没有返图</h2><p>收到角色主人的授权图片后，从这里开始上传。单件作品最多 5 张返图，可批量上传、拖动排序、重试和删除。</p><button type="button" data-open-return-upload>上传第一组返图 →</button></div>
+        </div>
+      </section>
+
+      <section class="admin-view" data-admin-view="business">
+        <div class="admin-page-head"><div><p>BUSINESS STATUS / 营业状态</p><h1>两种业务，两个开关。</h1><span>营业状态不会覆盖单件作品的领养或制作状态。</span></div></div>
+        <div class="status-editor-grid">
+          <article><div><p>自设委托</p><label class="switch"><input type="checkbox" checked><span></span></label></div><h2>接受邮件咨询</h2><textarea rows="4">当前接受全装与半装的邮件咨询，具体可行性与排期将在查看设定后回复。</textarea><button type="button">保存并发布</button></article>
+          <article><div><p>领养 / 掉落</p><label class="switch"><input type="checkbox" checked><span></span></label></div><h2>当前营业</h2><textarea rows="4">现有 2 件角色可查看。常规领养通过邮件沟通，展会掉落在线下确认。</textarea><button type="button">保存并发布</button></article>
+        </div>
+      </section>
+
+      <section class="admin-view" data-admin-view="content">
+        <div class="admin-page-head"><div><p>HOMEPAGE & PAGES / 首页与页面</p><h1>维护不属于单件作品的站点内容。</h1><span>这里对应首页配置、自设委托说明与 FAQ、角色领养与展会说明、关于我们与基本约定，以及联系方式与 SEO。</span></div></div>
+        <div class="content-list">
+          <button type="button"><span>首页配置</span><small>主视觉、精选作品 6 件、当前营业状态</small><b>编辑 →</b></button>
+          <button type="button"><span>自设委托说明与 FAQ</span><small>制作范围、联系步骤、邮件提示、5 个常见问题</small><b>编辑 →</b></button>
+          <button type="button"><span>角色领养与展会</span><small>领养方式、业务状态、当前展会</small><b>编辑 →</b></button>
+          <button type="button"><span>关于我们与基本约定</span><small>工作室简介、7 个公开约定主题</small><b>编辑 →</b></button>
+          <button type="button"><span>联系方式与 SEO</span><small>邮箱、QQ、抖音和页面搜索摘要</small><b>编辑 →</b></button>
+        </div>
+      </section>
+
+      <section class="admin-view" data-admin-view="export">
+        <div class="admin-page-head"><div><p>COMPLETE EXPORT / 完整导出</p><h1>把工作室数据带走。</h1><span>一个统一出口覆盖业务数据、图片清单与原图下载；导出不依赖公开站页面。</span></div></div>
+        <div class="export-scope">
+          <article>
+            <span>01 / BUSINESS DATA</span>
+            <h2>业务数据 CSV</h2>
+            <p>作品/角色、业务类型与状态、展会、人民币价格、领养人昵称/主页/联系方式、定金与付款备注等最低业务字段。</p>
+            <button type="button" data-export-action="业务数据 CSV">生成 CSV</button>
+          </article>
+          <article>
+            <span>02 / IMAGE MANIFEST</span>
+            <h2>图片清单 CSV</h2>
+            <p>设定图、出厂照与返图的原文件名、图片类型、所属作品和上传时间；不包含图片二进制或对象存储内部键。</p>
+            <button type="button" data-export-action="图片清单 CSV">生成图片清单</button>
+          </article>
+          <article>
+            <span>03 / ORIGINAL FILES</span>
+            <h2>原图选择下载</h2>
+            <p>按作品、返图或图片类型复选原图，生成独立下载任务。公开衍生图不会替代原图。</p>
+            <button type="button" data-export-action="原图下载任务">选择原图</button>
+          </article>
+        </div>
+        <div class="export-boundary"><strong>导出边界</strong><span>不导出管理员凭据；业务 CSV 不内嵌图片；原图通过单独下载任务获取。</span></div>
+        <div class="archive-operations">
+          <div><span>PERMANENT ORIGINAL ARCHIVE</span><h2>永久原图档案</h2><p>按原文件名、上传时间、原作品与图片类型检索；支持下载、重新关联，以及仅在误传、返图撤回或合法删除请求下执行二次确认删除。</p></div>
+          <button type="button" data-export-action="永久原图档案检索">检索与重新关联 →</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="work-dialog" class="detail-dialog">
+    <button class="dialog-close" type="button" aria-label="关闭详情">×</button>
+    <div class="detail-media"><img data-detail-image src="assets/work-mint.svg" alt=""><div class="detail-thumbs" data-detail-thumbs></div></div>
+    <div class="detail-copy">
+      <p class="eyebrow">WORK ARCHIVE</p>
+      <h2 data-detail-name>青团</h2>
+      <span data-detail-meta>狼 · 半装 · 2026</span>
+      <p data-detail-description>薄荷绿与奶油白组成的轻快角色。</p>
+      <dl class="fact-list" data-detail-facts></dl>
+      <button class="button button-dark" type="button" data-dialog-next>下一件作品 →</button>
+    </div>
+  </dialog>
+
+  <dialog id="adoption-dialog" class="adoption-dialog">
+    <button class="dialog-close" type="button" aria-label="关闭详情">×</button>
+    <div class="adoption-dialog-image"><img src="assets/design-sheet.svg" alt="角色设定图规划占位插画"><span>公开版必须带工作室水印</span></div>
+    <div class="adoption-dialog-copy">
+      <p class="eyebrow">ADOPTION FILE</p>
+      <span class="status-tag status-open" data-adoption-status>可领养</span>
+      <h2 data-adoption-name>灰烬 / ASH</h2>
+      <p data-adoption-description>一只夜色与珊瑚色交错的龙。</p>
+      <dl class="fact-list" data-adoption-facts></dl>
+      <div class="boundary-note"><strong>网站不会替你完成领养</strong><span>确认状态与基本约定后，请通过邮件继续沟通。</span></div>
+      <a class="button button-accent" href="mailto:3114559925@qq.com?subject=%E9%A2%86%E5%85%BB%E8%A7%92%E8%89%B2%E5%92%A8%E8%AF%A2">邮件询问这个角色 ↗</a>
+    </div>
+  </dialog>
+
+  <dialog id="wizard-dialog" class="wizard-dialog">
+    <header>
+      <div><p>NEW WORK / 新建作品</p><h2>上传一件过去的作品</h2></div>
+      <button class="dialog-close" type="button" aria-label="关闭上传流程">×</button>
+    </header>
+    <div class="wizard-steps" aria-label="上传步骤">
+      <button class="is-active" type="button" data-step-indicator="1"><span>1</span>基础信息</button>
+      <button type="button" data-step-indicator="2"><span>2</span>图片上传</button>
+      <button type="button" data-step-indicator="3"><span>3</span>主图与状态</button>
+      <button type="button" data-step-indicator="4"><span>4</span>预览发布</button>
+    </div>
+    <div class="wizard-body">
+      <section class="wizard-panel is-active" data-wizard-step="1">
+        <div class="field-grid">
+          <label>角色名称<input type="text" value="新角色" data-work-name></label>
+          <label>物种<input type="text" value="狼"></label>
+          <label>装型<select><option>半装</option><option>全装</option></select></label>
+          <label>角色主人展示<select><option>不公开</option><option>填写昵称</option></select></label>
+          <label class="field-wide">作品用途
+            <span class="segmented"><button class="is-active" type="button">普通作品</button><button type="button">委托作品</button><button type="button">常规领养</button><button type="button">展会掉落</button></span>
+          </label>
+          <label>初始业务状态<select><option>准备中</option><option>可领养</option><option>展会出售中</option><option>排期中</option><option>制作中</option><option>已完成交付</option></select></label>
+          <label>当前展会（出售中必填）<select><option>不关联</option><option>示例：杭州某展会</option></select></label>
+          <label>人民币价格（仅后台）<input type="number" min="0" placeholder="不在公开站展示"></label>
+          <label>美元价格（一期禁用）<input type="text" value="一期不启用" disabled></label>
+        </div>
+        <div class="wizard-hint"><strong>先创建作品，再给它图片。</strong><span>普通作品至少需要一张出厂照；领养作品必须有一份可生成水印公开版的设定图。</span></div>
+      </section>
+      <section class="wizard-panel" data-wizard-step="2">
+        <div class="media-tabs"><button class="is-active" type="button">出厂照 <span>0/5</span></button><button type="button">设定图 <span>0/1</span></button></div>
+        <label class="drop-zone">
+          <input type="file" accept=".jpg,.jpeg,.png,.webp" multiple data-file-input>
+          <span class="drop-icon">＋</span>
+          <strong>拖入 JPG、PNG 或 WebP</strong>
+          <small>单张不超过 20 MB，最长边不超过 12,000 px</small>
+          <b>选择图片</b>
+        </label>
+        <button class="simulate-upload" type="button" data-simulate-upload>没有本地素材？使用示例图模拟上传</button>
+        <div class="upload-queue" data-upload-queue hidden></div>
+        <div class="processing-note"><span>上传原图</span><span>生成兼容母版</span><span>生成公开衍生图</span><span>校验后可发布</span></div>
+      </section>
+      <section class="wizard-panel" data-wizard-step="3">
+        <div class="crop-layout">
+          <div class="crop-preview"><img src="assets/work-coral.svg" alt="裁切预览"><span class="crop-box"></span><i class="focus-point"></i></div>
+          <div class="crop-controls">
+            <p>公开主图裁切</p>
+            <div class="segmented"><button class="is-active" type="button">3:4</button><button type="button">16:9</button><button type="button">1:1</button></div>
+            <label>主体焦点<input type="range" min="0" max="100" value="52"></label>
+            <label>内容状态<select><option>草稿</option><option>已发布</option><option>已下架</option></select></label>
+            <p class="microcopy">重新裁切只生成新衍生图，不覆盖原图。</p>
+          </div>
+        </div>
+      </section>
+      <section class="wizard-panel" data-wizard-step="4">
+        <div class="publish-review">
+          <img src="assets/work-coral.svg" alt="新作品公开卡片预览">
+          <div><p class="eyebrow">PUBLIC PREVIEW</p><h3 data-preview-name>新角色</h3><span>狼 · 半装</span><dl><div><dt>必填字段</dt><dd>已完成</dd></div><div><dt>图片处理</dt><dd>READY</dd></div><div><dt>公开状态</dt><dd>草稿</dd></div></dl></div>
+        </div>
+        <label class="publish-check"><input type="checkbox" data-publish-check> 我已检查主图、角色资料和公开状态</label>
+      </section>
+    </div>
+    <footer>
+      <button class="wizard-back" type="button" data-wizard-back disabled>上一步</button>
+      <span>原型只模拟流程，不会上传到 OSS。</span>
+      <button class="admin-primary" type="button" data-wizard-next>继续</button>
+    </footer>
+  </dialog>
+
+  <dialog id="edit-dialog" class="edit-dialog">
+    <header>
+      <div><p>QUICK EDIT / 编辑作品</p><h2 data-edit-title>青团</h2><span>不经过新建门禁；只处理高频的状态和图片变更。</span></div>
+      <button class="dialog-close" type="button" aria-label="关闭编辑">×</button>
+    </header>
+    <div class="edit-tabs" role="tablist" aria-label="作品编辑区域">
+      <button class="is-active" type="button" data-edit-tab="status">状态与发布</button>
+      <button type="button" data-edit-tab="images">图片管理</button>
+    </div>
+    <section class="edit-panel is-active" data-edit-panel="status">
+      <div class="edit-status-grid">
+        <label>公开状态<select><option>已发布</option><option>草稿</option><option>已下架</option></select></label>
+        <label>业务状态<select><option>准备中</option><option>可领养</option><option>展会出售中</option><option>排期中</option><option>制作中</option><option>已完成交付</option></select></label>
+        <label>领养方式<select><option>不适用</option><option>常规领养</option><option>展会掉落</option></select></label>
+        <label>当前展会<select><option>不关联</option><option>示例：杭州某展会</option></select></label>
+        <label>首页精选<select><option>保持当前设置</option><option>加入精选</option><option>移出精选</option></select></label>
+      </div>
+      <p class="status-rule-note">切换为“展会出售中”必须关联当前展会；从“已完成交付”重新打开时需要二次确认。</p>
+      <div class="edit-save-note"><span><i class="publish-dot"></i> 当前公开可见</span><button class="admin-primary" type="button" data-save-edit>保存状态</button></div>
+    </section>
+    <section class="edit-panel" data-edit-panel="images">
+      <div class="image-buckets">
+        <article><img src="assets/work-mint.svg" alt=""><div><b>出厂照</b><span>4 / 5 · 主图已设置</span></div><button type="button">管理与排序</button></article>
+        <article><img src="assets/design-sheet.svg" alt=""><div><b>设定图</b><span>0 / 1 · 可选</span></div><button type="button">添加图片</button></article>
+        <article><span class="image-placeholder">＋</span><div><b>返图</b><span>0 / 5 · 独立发布</span></div><button type="button" data-jump-returns>去返图管理</button></article>
+      </div>
+      <p class="edit-boundary">编辑图片支持替换主图、补充、删除与排序；原图不会因重新裁切被覆盖。</p>
+    </section>
+  </dialog>
+
+  <dialog id="return-upload-dialog" class="return-upload-dialog">
+    <header>
+      <div><p>UPLOAD RETURN PHOTOS / 上传返图</p><h2>关联作品，再上传图片。</h2><span>返图入口独立于新建作品，符合“一件作品持续更新”的记录方式。</span></div>
+      <button class="dialog-close" type="button" aria-label="关闭返图上传">×</button>
+    </header>
+    <div class="return-upload-layout">
+      <div class="return-upload-form">
+        <label>关联已有作品<select data-return-work><option value="">请选择作品</option><option>青团 · 狼 · 半装</option><option>赤陶 · 狐 · 全装</option><option>灰烬 · 龙 · 全装</option><option>夜航 · 犬 · 半装</option></select></label>
+        <label class="drop-zone return-drop-zone">
+          <input type="file" accept=".jpg,.jpeg,.png,.webp" multiple data-return-file>
+          <span class="drop-icon">＋</span>
+          <strong>拖入 1–5 张已获授权的返图</strong>
+          <small>JPG、PNG、WebP · 单张不超过 20 MB</small>
+          <b>选择返图</b>
+        </label>
+        <button class="simulate-upload" type="button" data-simulate-return>使用骨架卡片模拟 3 张返图</button>
+      </div>
+      <div class="return-meta-form">
+        <p>公开信息（可选）</p>
+        <label>角色主人昵称<input type="text" placeholder="例如：阿橘"></label>
+        <label>拍摄日期<input type="date"></label>
+        <label>可点击的主页链接<input type="url" placeholder="https://"></label>
+        <label>发布状态<select data-return-publication><option>草稿</option><option>已发布</option></select></label>
+        <p class="return-consent-note">按已锁定规则，角色主人主动提供返图即视为愿意展示；后台不增加授权勾选、来源或证明材料字段。</p>
+        <button class="admin-primary" type="button" data-save-return>保存返图</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="toast" role="status" aria-live="polite" data-toast></div>
+</body>
+</html>

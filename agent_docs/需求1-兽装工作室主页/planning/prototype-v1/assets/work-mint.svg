@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-labelledby="title desc">
+  <title id="title">薄荷色兽装占位插画</title>
+  <desc id="desc">原创几何插画，仅用于规划阶段模拟竖版作品照片。</desc>
+  <rect width="800" height="1000" fill="#eef5f1"/>
+  <circle cx="640" cy="190" r="118" fill="#d6e4dd"/>
+  <path d="M88 858h624v78H88z" fill="#34363c"/>
+  <path d="M219 278 130 88l212 124zm362 0L670 88 458 212z" fill="#34363c"/>
+  <path d="M185 274c0-112 96-202 215-202s215 90 215 202v160c0 122-96 221-215 221s-215-99-215-221z" fill="#fbfaf6" stroke="#34363c" stroke-width="18"/>
+  <path d="M185 316c65-27 109-84 127-169l88 99 88-99c18 85 62 142 127 169v118c0 122-96 221-215 221s-215-99-215-221z" fill="#78968d"/>
+  <path d="M238 338c44-41 97-54 158-36-26 72-75 113-148 119z" fill="#fbfaf6" stroke="#34363c" stroke-width="12"/>
+  <path d="M562 338c-44-41-97-54-158-36 26 72 75 113 148 119z" fill="#fbfaf6" stroke="#34363c" stroke-width="12"/>
+  <ellipse cx="314" cy="361" rx="28" ry="39" fill="#34363c"/>
+  <ellipse cx="486" cy="361" rx="28" ry="39" fill="#34363c"/>
+  <path d="m349 461 51-43 51 43-51 50z" fill="#d6e4dd" stroke="#34363c" stroke-width="12"/>
+  <path d="M302 542c44 35 152 35 196 0" fill="none" stroke="#34363c" stroke-width="14" stroke-linecap="round"/>
+  <path d="M249 615c-48 47-73 132-70 243h442c3-111-22-196-70-243-69 61-233 61-302 0z" fill="#fbfaf6" stroke="#34363c" stroke-width="18"/>
+  <path d="M239 724c65 37 120 56 161 56s96-19 161-56v134H239z" fill="#78968d"/>
+  <path d="M327 640h146l-73 105z" fill="#d6e4dd" stroke="#34363c" stroke-width="12"/>
+  <circle cx="116" cy="116" r="17" fill="#d7a7a1"/>
+  <path d="M105 178h92" stroke="#34363c" stroke-width="12"/>
+</svg>

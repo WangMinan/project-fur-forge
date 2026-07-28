@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-labelledby="title desc">
+  <title id="title">领养设定图占位插画</title>
+  <desc id="desc">原创角色正反面与色板示意，仅用于规划阶段原型。</desc>
+  <rect width="1200" height="900" fill="#f5f3ef"/>
+  <rect x="36" y="36" width="1128" height="828" fill="none" stroke="#34363c" stroke-width="7"/>
+  <path d="M92 90h316v16H92zm0 31h194v10H92z" fill="#34363c"/>
+  <g transform="translate(80 150)">
+    <path d="m186 147-63-128 140 84zm184 0 63-128-140 84z" fill="#d6a3a6" stroke="#34363c" stroke-width="12"/>
+    <ellipse cx="278" cy="179" rx="147" ry="137" fill="#fcfbf7" stroke="#34363c" stroke-width="14"/>
+    <path d="M134 179c74-18 112-73 144-150 32 77 70 132 144 150v74c0 81-64 147-144 147s-144-66-144-147z" fill="#7885ac"/>
+    <ellipse cx="222" cy="210" rx="20" ry="29" fill="#d8e5df"/>
+    <ellipse cx="334" cy="210" rx="20" ry="29" fill="#d8e5df"/>
+    <path d="m242 276 36-34 36 34-36 31z" fill="#d6a3a6"/>
+    <path d="M162 386c-55 58-79 158-59 287h350c20-129-4-229-59-287-66 48-166 48-232 0z" fill="#7885ac" stroke="#34363c" stroke-width="14"/>
+    <path d="M196 409h164l-82 154z" fill="#fcfbf7"/>
+    <path d="M103 507 23 596m430-89 80 89" stroke="#34363c" stroke-width="54" stroke-linecap="round"/>
+    <path d="M142 672v79m272-79v79" stroke="#34363c" stroke-width="62" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(600 150)">
+    <path d="m186 147-63-128 140 84zm184 0 63-128-140 84z" fill="#d6a3a6" stroke="#34363c" stroke-width="12"/>
+    <ellipse cx="278" cy="179" rx="147" ry="137" fill="#7885ac" stroke="#34363c" stroke-width="14"/>
+    <path d="M162 386c-55 58-79 158-59 287h350c20-129-4-229-59-287-66 48-166 48-232 0z" fill="#7885ac" stroke="#34363c" stroke-width="14"/>
+    <path d="m166 398 112 181 112-181" fill="#d6a3a6"/>
+    <path d="M103 507 23 596m430-89 80 89" stroke="#34363c" stroke-width="54" stroke-linecap="round"/>
+    <path d="M142 672v79m272-79v79" stroke="#34363c" stroke-width="62" stroke-linecap="round"/>
+    <path d="M422 511c112 9 123 123 61 177-38 34-74 22-92-5 51-10 67-67 31-172z" fill="#d6a3a6" stroke="#34363c" stroke-width="12"/>
+  </g>
+  <g transform="translate(1000 122)">
+    <rect width="92" height="92" fill="#7885ac" stroke="#34363c" stroke-width="6"/>
+    <rect y="116" width="92" height="92" fill="#d6a3a6" stroke="#34363c" stroke-width="6"/>
+    <rect y="232" width="92" height="92" fill="#d8e5df" stroke="#34363c" stroke-width="6"/>
+    <rect y="348" width="92" height="92" fill="#fcfbf7" stroke="#34363c" stroke-width="6"/>
+  </g>
+</svg>

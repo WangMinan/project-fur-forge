@@ -1,0 +1,157 @@
+# Design Tokens：管理端
+
+> **性质**：阶段 3 的管理端视觉/交互密度契约，不是最终 Nuxt UI 主题代码。
+> **设计哲学**：Quiet Editorial Tool。
+
+## Skill Deviation
+
+一期后台固定为白色工作区，没有主题切换需求。按已锁定范围只定义亮色主题和少量反向高对比表面，不生成可切换暗色主题；这也避免管理端与公开站出现额外视觉维护矩阵。
+
+## Color
+
+```text
+--admin-bg-primary:          #FFFFFF
+--admin-bg-workspace:        #F5F7FA
+--admin-bg-subtle:           #EEF1F5
+--admin-bg-inverse:          #252A33
+
+--admin-text-primary:        #20242B
+--admin-text-secondary:      #626A75
+--admin-text-tertiary:       #8B929C
+--admin-text-inverse:        #FFFFFF
+
+--admin-border-primary:      #D9DEE6
+--admin-border-secondary:    #E9ECF1
+--admin-border-focus:        #5968A8
+
+--admin-accent-primary:      #5968A8
+--admin-accent-hover:        #4C5A96
+--admin-accent-soft:         #E9ECF8
+
+--admin-status-success:      #2F7B5C
+--admin-status-success-soft: #E5F2EC
+--admin-status-warning:      #946124
+--admin-status-warning-soft: #F8EEDC
+--admin-status-error:        #A63D40
+--admin-status-error-soft:   #F8E6E7
+--admin-status-info:         #426C9A
+--admin-status-info-soft:    #E5EEF7
+
+--admin-danger:              #A63D40
+--admin-danger-hover:        #8F3034
+--admin-focus-ring:          rgba(89, 104, 168, 0.30)
+--admin-overlay:             rgba(24, 28, 35, 0.55)
+```
+
+- 侧栏默认使用白色或极浅工作区色；若为层级使用反向表面，只能占据窄导航区域，不能让管理端整体变成深色 Dashboard。
+- 发布、READY、草稿、失败、已下架使用稳定语义，不随机按页面换颜色。
+- 危险色只用于不可逆或高影响动作，不用于普通保存。
+
+## Typography
+
+```text
+--font-admin:
+  "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif
+--font-admin-mono:
+  ui-monospace, "SFMono-Regular", Consolas, monospace
+
+--admin-font-xs:   0.75rem
+--admin-font-sm:   0.875rem
+--admin-font-base: 1rem
+--admin-font-md:   1.125rem
+--admin-font-lg:   1.375rem
+--admin-font-xl:   1.75rem
+--admin-font-2xl:  2.25rem
+
+--admin-line-tight:  1.2
+--admin-line-normal: 1.5
+--admin-line-dense:  1.35
+```
+
+- 管理端只使用无衬线字体；作品名预览可复用公开站展示字体，但编辑控件不使用。
+- 错误、帮助和元数据不得压缩到难以阅读的小字号。
+
+## Spacing and Density
+
+4px 为控件密度基准，8px 为区块节奏。
+
+```text
+--admin-space-0: 0
+--admin-space-1: 0.25rem
+--admin-space-2: 0.5rem
+--admin-space-3: 0.75rem
+--admin-space-4: 1rem
+--admin-space-5: 1.25rem
+--admin-space-6: 1.5rem
+--admin-space-7: 2rem
+--admin-space-8: 3rem
+--admin-space-9: 4rem
+
+--admin-control-height-sm: 2rem
+--admin-control-height:    2.75rem
+--admin-control-height-lg: 3rem
+--admin-touch-target:      2.75rem
+```
+
+- PC 表格可紧凑，但主要按钮、上传、状态切换和移动控件保持至少 44px 触控目标。
+- 表单按业务分组，不用大面积空白模拟营销页面。
+
+## Layout
+
+```text
+--admin-sidebar-width:           15rem
+--admin-sidebar-collapsed:       4.5rem
+--admin-content-max:             100rem
+--admin-reading-max:             48rem
+--admin-editor-main-min:         38rem
+--admin-editor-preview-width:    24rem
+
+--admin-radius-sm: 0.375rem
+--admin-radius-md: 0.625rem
+--admin-radius-lg: 0.875rem
+
+--admin-shadow-popover: 0 0.75rem 2.5rem rgba(25, 31, 42, 0.12)
+--admin-shadow-modal:   0 1.5rem 4rem rgba(25, 31, 42, 0.22)
+```
+
+- 常规编辑使用页面，不使用全屏弹窗。
+- 圆角用于控件和明确分组，不把每个表格行、字段和页面都包成大圆角卡片。
+- 桌面预览栏可粘性定位，但不得压缩主表单到不可用宽度。
+
+## Forms and State
+
+```text
+--admin-error-border-width: 1px
+--admin-focus-width:        3px
+--admin-progress-height:    0.5rem
+--admin-table-row-min:      3.25rem
+```
+
+- 字段状态必须同时提供图标/文字/边框，不只用颜色。
+- 发布检查采用分组清单：已满足、缺失、处理中、阻断。
+- 长任务状态保留在页面内；Toast 只作为补充。
+
+## Motion
+
+```text
+--admin-duration-instant: 50ms
+--admin-duration-fast:    120ms
+--admin-duration-normal:  180ms
+--admin-duration-slow:    250ms
+--admin-easing:           cubic-bezier(0.22, 1, 0.36, 1)
+```
+
+- 管理端不使用装饰入场动画。
+- 动效只解释菜单、步骤、上传进度、排序和对话框状态。
+- 减少动效设置下取消排序位移过渡与非必要缩放。
+
+## Breakpoints and Test Viewports
+
+```text
+--admin-breakpoint-mobile:  390px
+--admin-breakpoint-tablet:  768px
+--admin-breakpoint-desktop: 1280px
+--admin-breakpoint-wide:    1536px
+```
+
+固定视觉回归至少覆盖 `390 × 844`、`768 × 1024`、`1440 × 900`。复杂裁切/批量操作只在桌面门禁中要求完整；手机门禁以 SPEC 已列轻量能力为准。

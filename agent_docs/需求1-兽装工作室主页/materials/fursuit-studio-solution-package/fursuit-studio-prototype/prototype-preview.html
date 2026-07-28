@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>兽装工作室网站概念原型</title>
+<style>
+  :root{font-family:Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:#151821;background:#e9eaed}
+  *{box-sizing:border-box} body{margin:0;padding:28px}.head{max-width:1440px;margin:0 auto 18px;display:flex;justify-content:space-between;align-items:end;gap:20px}.head h1{margin:0;font-size:24px}.head p{margin:6px 0 0;color:#676d78;font-size:14px}.tabs{display:flex;gap:8px}.tabs button{border:1px solid #cfd2d8;background:#fff;border-radius:999px;padding:9px 15px;font-weight:700;cursor:pointer}.tabs button.active{background:#151821;color:#fff;border-color:#151821}.board{max-width:1440px;margin:auto;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 15px 45px rgba(17,19,24,.12)}object{display:block;width:100%;height:auto;aspect-ratio:1.44}.note{max-width:1440px;margin:16px auto 0;color:#727780;font-size:13px;line-height:1.7}.hide{display:none}
+</style>
+</head>
+<body>
+<div class="head"><div><h1>兽装工作室网站概念原型</h1><p>客户端采用编辑型作品集语言；管理端采用高密度、低干扰的内容工具语言。</p></div><div class="tabs"><button class="active" data-target="client">客户端首页</button><button data-target="admin">管理端编辑页</button></div></div>
+<div class="board" id="client"><object type="image/svg+xml" data="client-home-concept.svg"></object></div>
+<div class="board hide" id="admin"><object type="image/svg+xml" data="admin-work-editor-concept.svg"></object></div>
+<div class="note">这是一份方向性原型，不使用第三方工作室照片。两个 SVG 都可以直接拖入 Figma，作为可编辑矢量图层继续调整；正式设计时应替换为工作室 Logo、真实作品照片、品牌强调色和实际文案。</div>
+<script>document.querySelectorAll('button[data-target]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.board').forEach(x=>x.classList.add('hide'));document.getElementById(b.dataset.target).classList.remove('hide')}))</script>
+</body></html>
