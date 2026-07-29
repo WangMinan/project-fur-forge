@@ -1,35 +1,41 @@
 # 产物索引
 
-> **角色**：收敛节点——把本需求所有文档产物和外部资料登记成册（对应 spec-kit `/converge`）。
-> **写入时机**：阶段 6 闭环时整理；此后每次新增产物即更新。
-> **闭环检查**：确认下表每个阶段产物都已产出、路径正确、状态为定稿。
+> **角色**：登记当前权威文档、历史证据和实施产物。
 
-## 文档产物
+## 当前权威文档
 
-| 阶段 | 产物 | 路径 | 状态 | 说明 |
-| --- | --- | --- | --- | --- |
-| 0 地基 | 地基 | `foundation/README.md` | 已同步 | 模块边界、公开页面与业务硬约束 |
-| 1 规格 | 需求规格 | `requirements/SPEC.md` | 已锁定 | 118 项 OQ 已收敛；2026-07-29 同步正式名称、临时英文名、单件公开人民币价格、有序作品短属性、30 MB 原图与 OSS 配额门禁 |
-| 2 计划 | 实施计划 | `planning/PLAN.md` | 已锁定 | Nuxt 4/Nitro/SQLite/OSS 单体技术路线；23 项 PLAN OQ 已收敛，并于 2026-07-29 补齐公开投影、品牌色阶与 30 MB 媒体前置条件 |
-| 2 计划 | UI/交互原型 v5 | `planning/prototype-v1/index.html` | 已确认 | 全幅作品首屏、首屏后精选、图片式委托/领养入口、自设委托作品宽图、7 个公开一级页面与独立后台 |
-| 2 计划 | 原型说明与审查清单 v5 | `planning/prototype-v1/README.md` | 已确认 | 图片主导原则、参考站动线映射、正式版禁用内容、交互边界、OSS 界面约束与验证结果 |
-| 2 计划 | 景宸品牌例图证据与蓝色聚类 | `materials/景宸品牌例图_2026-07-29/README.md`、`blue-palette.json`、`blue-palette.png` | 已记录 | 例图只作品牌/业务证据和配色输入；不使用狗头闪电、旧 `5600` 或景宸个人 QQ 二维码 |
-| 2 计划 | 原型 SPEC 自审 v5 | `planning/prototype-v1/SPEC-REVIEW-v5.md` | 已完成 | 图片层级、全幅首页、页面顺序、委托图片引导与既有公开/后台契约复核 |
-| 2 计划 | 原型 SPEC 自审 v4 | `planning/prototype-v1/SPEC-REVIEW-v4.md` | 历史 | 上一轮公开文案、FAQ 与独立后台登录复核记录 |
-| 2 计划 | 原型 SPEC 自审 v3 | `planning/prototype-v1/SPEC-REVIEW-v3.md` | 历史 | 上一轮页面合并、筛选与页头复核记录 |
-| 2 计划 | 原型 SPEC 自审 v2 | `planning/prototype-v1/SPEC-REVIEW-v2.md` | 历史 | 早期八页面、30 MB 输入与后台流程记录；当前契约以 v5/SPEC/PLAN 为准 |
-| 3 设计 | 设计流程路由 | `.design/README.md` | 已完成 | 公开端/管理端分轨，明确 v5 仅为职责与交互基线，TASKS 为唯一任务源 |
-| 3 设计 | 公开端 Design Brief / IA / Token | `.design/public-site/` | 已完成 | 图片第一层级、编辑型摄影作品集、路由与导航、响应式/动效/禁用风格 |
-| 3 设计 | 管理端 Design Brief / IA / Token | `.design/admin-console/` | 已完成 | 安静内容工具、对象化导航、发布确定性、PC 完整/手机轻量 |
-| 3 任务 | 任务清单 | `implementation/TASKS.md` | 已完成 | T01–T53 已正式拆解并建立依赖、验证、SPEC 覆盖和部署后置项；经 doc-coauthoring 三路无上下文 Reader Test 修订。当前 T01–T03 已完成，下一项为 T04 |
-| 4 实施 | 实施备注 | `implementation/notes/README.md` | 进行中 | T01 及 T02/T03 实施记录与验证证据已归档；用户当前要求不碰视觉设计，T04 尚未开始 |
-| 1–3 模型 | 模型说明 | `models/README.md` | 已同步 | 记录当前统一作品聚合、slug 重定向、媒体资产和后续阶段写入边界 |
-| 5 评审 | 评审记录 | `review/REVIEW.md` | 未开始 | 文件仅保留阶段模板 |
-| 6 闭环 | 状态 | `STATE.md` | 持续更新 | 当前阶段、验证记录、约束与 OQ 汇总 |
+| 层级 | 路径 | 状态 | 说明 |
+| --- | --- | --- | --- |
+| 地基 | `foundation/README.md` | 2026-07-29 已校准 | P0/P1/P2、双 Bucket、字段与视觉硬边界 |
+| 规格 | `requirements/SPEC.md` | 2026-07-29 整理版 | 旧 118 项 OQ 讨论保留于 Git 历史；当前结论已收敛 |
+| 计划 | `planning/PLAN.md` | 2026-07-29 已校准 | 视觉前置、第一件作品垂直切片、双 Bucket 与受限 recipe |
+| 设计路由 | `.design/README.md` | 已校准 | 公开站/管理端分轨、蓝色比例和阶段可见性 |
+| 公开设计 | `.design/public-site/` | 已校准 | 图片大底/白底、A/B 精选、OSS 预生成图片 |
+| 管理设计 | `.design/admin-console/` | 已校准 | P0/P1/P2 导航、可选授权记录、无 ACL 文案 |
+| 模型 | `models/README.md` | 已校准 | 删除付款备注/美元预留，增加可选授权记录 |
+| 任务 | `implementation/TASKS.md` | 已重排 | T01–T03 已完成；T04–T08 视觉；T09–T21 第一垂直切片 |
+| 本轮校准记录 | `implementation/notes/DOCS-REALIGNMENT-2026-07-29.md` | 已记录 | 字段、双 Bucket、图片配方、阶段范围和任务顺序变更证据 |
+| 状态 | `STATE.md` | 持续更新 | 当前决策、外部门禁和下一步 |
 
-## 外部资料
+## 历史与证据
 
-| 类型 | 路径 | 用途 |
+| 类型 | 路径 | 当前效力 |
 | --- | --- | --- |
-| 竞品调研 | `materials/兽装工作室主页调研_2026-07-26/` | 只读参考信息架构、页面密度与用户动线；不复制资产 |
-| 技术方案输入 | `materials/fursuit-studio-solution-package/fursuit-studio-solution.md` | 2026-07-28 Nuxt 单体技术路线输入；采用前已按当前 SPEC、同 Bucket OSS 契约和官方文档校正 |
+| 竞品调研 | `materials/兽装工作室主页调研_2026-07-26/` | 只读参考，不复制资产 |
+| 景宸品牌例图 | `materials/景宸品牌例图_2026-07-29/` | 品牌事实与色值证据；不复制海报构图、旧价格、二维码或非正式 Logo |
+| 技术方案输入 | `materials/fursuit-studio-solution-package/` | 历史输入；单 Bucket 内容已被当前 PLAN 覆盖 |
+| 快速原型 v5 | `planning/prototype-v1/` | 只保留页面职责、顺序和关键交互；视觉与旧业务字段不再权威 |
+| 实施记录 | `implementation/notes/` | 记录当时事实，不回写成当前架构；T03 旧字段由 T09 修正 |
+| Git 历史 | commit `7b01cba966f0a9049a4af0de08f7cc4ce993760d` 及以前 | 保存旧 SPEC/OQ/PLAN 全文，供追溯而非实施 |
+
+## 当前实施产物
+
+- T01：应用底座与质量脚本；
+- T02：运行配置、Host 边界和日志脱敏工具；
+- T03：共享 Schema/DTO 初版，已登记 T09 修订债务；
+- T04 尚未开始。
+
+## 外部门禁产物
+
+- EXT-01：正式素材 manifest、授权范围、焦点和文字安全区；
+- EXT-02：双 Bucket 地域/CORS/BPA/权限/30 MB 配额与跨 Bucket `sys/saveas` 测试记录。
