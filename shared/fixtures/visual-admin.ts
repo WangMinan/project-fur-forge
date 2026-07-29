@@ -5,8 +5,7 @@ import { workCatalog } from './visual-works'
 /**
  * T07 管理端作品工作台的统一类型化夹具。
  *
- * - `dto` 受 `adminWorkDtoSchema` 校验；`private.depositNote/paymentNote` 为 T03 旧契约
- *   字段，夹具一律置 `null`，界面不提供定金/付款备注控件（T09 将删除该契约字段）；
+ * - `dto` 受 `adminWorkDtoSchema` 校验；私有区只包含后台联系人；
  * - 媒体资产是夹具本地类型 `AdminAssetFixture`，浏览器只见 `assetId` 业务标识，
  *   不含任何私有 Object Key；`thumb` 为 `null` 表示尚无可用衍生图，界面显示状态占位；
  * - 上传、保存、发布等动作不在夹具中模拟成功，只提供状态展示数据；
@@ -128,11 +127,11 @@ export const adminWorkFixtures: AdminWorkFixture[] = [
       businessStatus: 'available',
       priceCnyMinor: 1_560_000,
       publicationStatus: 'published',
+      assetIds: [
+        'f2c9a1b4-3d5e-4f6a-8b7c-9d0e1f2a3b4c',
+      ],
       private: {
         ownerContact: '领养沟通群管理员（示例私有联系人）',
-        depositNote: null,
-        paymentNote: null,
-        originalObjectKeys: [],
       },
     },
     sortOrder: 1,
@@ -147,11 +146,11 @@ export const adminWorkFixtures: AdminWorkFixture[] = [
       ...baseDto('zhima'),
       purpose: 'commission',
       publicationStatus: 'published',
+      assetIds: [
+        'a1b2c3d4-e5f6-47a8-b9c0-d1e2f3a4b5c6',
+      ],
       private: {
         ownerContact: '阿灰（QQ 示例私有联系人）',
-        depositNote: null,
-        paymentNote: null,
-        originalObjectKeys: [],
       },
     },
     sortOrder: 2,
@@ -166,19 +165,20 @@ export const adminWorkFixtures: AdminWorkFixture[] = [
       ...baseDto('doudou'),
       purpose: 'commission',
       publicationStatus: 'draft',
+      assetIds: [
+        'b2c3d4e5-f6a7-48b9-a0d1-e2f3a4b5c6d7',
+        'c3d4e5f6-a7b8-49c0-b1e2-f3a4b5c6d7e8',
+      ],
       private: {
         ownerContact: null,
-        depositNote: null,
-        paymentNote: null,
-        originalObjectKeys: [],
       },
     },
     sortOrder: 3,
     isFeatured: true,
     thumb: doudou.card,
     assets: [
-      readyAsset('b2c3d4e5-f6a7-48b9-c0d1-e2f3a4b5c6d7', doudou.gallery[0]!, 1, true),
-      inflightAsset('c3d4e5f6-a7b8-49c0-d1e2-f3a4b5c6d7e8', 'validating', 2),
+      readyAsset('b2c3d4e5-f6a7-48b9-a0d1-e2f3a4b5c6d7', doudou.gallery[0]!, 1, true),
+      inflightAsset('c3d4e5f6-a7b8-49c0-b1e2-f3a4b5c6d7e8', 'validating', 2),
     ],
   },
   {
@@ -186,18 +186,18 @@ export const adminWorkFixtures: AdminWorkFixture[] = [
       ...baseDto('keke'),
       purpose: 'showcase',
       publicationStatus: 'published',
+      assetIds: [
+        'd4e5f6a7-b8c9-4ad0-a1f2-a3b4c5d6e7f8',
+      ],
       private: {
         ownerContact: null,
-        depositNote: null,
-        paymentNote: null,
-        originalObjectKeys: [],
       },
     },
     sortOrder: 4,
     isFeatured: true,
     thumb: keke.card,
     assets: [
-      readyAsset('d4e5f6a7-b8c9-4ad0-e1f2-a3b4c5d6e7f8', keke.gallery[0]!, 1, true),
+      readyAsset('d4e5f6a7-b8c9-4ad0-a1f2-a3b4c5d6e7f8', keke.gallery[0]!, 1, true),
     ],
   },
   {
@@ -205,18 +205,19 @@ export const adminWorkFixtures: AdminWorkFixture[] = [
       ...baseDto('lizi'),
       purpose: 'showcase',
       publicationStatus: 'draft',
+      assetIds: [
+        'e5f6a7b8-c9d0-4be1-b2a3-b4c5d6e7f8a9',
+        'f6a7b8c9-d0e1-4cf2-a3b4-c5d6e7f8a9b0',
+      ],
       private: {
         ownerContact: '果核（邮箱示例私有联系人）',
-        depositNote: null,
-        paymentNote: null,
-        originalObjectKeys: [],
       },
     },
     sortOrder: 5,
     isFeatured: false,
     thumb: lizi.card,
     assets: [
-      readyAsset('e5f6a7b8-c9d0-4be1-f2a3-b4c5d6e7f8a9', lizi.gallery[0]!, 1, true),
+      readyAsset('e5f6a7b8-c9d0-4be1-b2a3-b4c5d6e7f8a9', lizi.gallery[0]!, 1, true),
       inflightAsset('f6a7b8c9-d0e1-4cf2-a3b4-c5d6e7f8a9b0', 'failed', 2, '校验'),
     ],
   },
@@ -225,11 +226,14 @@ export const adminWorkFixtures: AdminWorkFixture[] = [
       ...baseDto('naigai'),
       purpose: 'showcase',
       publicationStatus: 'unpublished',
+      assetIds: [
+        '0a1b2c3d-4e5f-4a6b-8c9d-0e1f2a3b4c50',
+        '0a1b2c3d-4e5f-4a6b-8c9d-0e1f2a3b4c51',
+        '0a1b2c3d-4e5f-4a6b-8c9d-0e1f2a3b4c52',
+        '0a1b2c3d-4e5f-4a6b-8c9d-0e1f2a3b4c53',
+      ],
       private: {
         ownerContact: null,
-        depositNote: null,
-        paymentNote: null,
-        originalObjectKeys: [],
       },
     },
     sortOrder: 6,

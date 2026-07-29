@@ -1,4 +1,60 @@
+import { randomUUID } from 'node:crypto'
 import { apiErrorSchema } from '../shared/schemas/api'
+import { safeLog } from './utils/safe-log'
+
+const requestIdPattern = /^[A-Za-z0-9._:-]{8,128}$/
+
+function isApiPath(pathname: string) {
+  return pathname === '/api' || pathname.startsWith('/api/')
+}
+
+function requestIdFor(event: Parameters<Parameters<
+  typeof defineNitroErrorHandler
+>[0]>[1]) {
+  const incoming = getHeader(event, 'x-request-id')
+  const requestId = incoming && requestIdPattern.test(incoming)
+    ? incoming
+    : randomUUID()
+
+  setResponseHeader(event, 'x-request-id', requestId)
+  return requestId
+}
+
+async function renderNuxtErrorPage(
+  event: Parameters<Parameters<typeof defineNitroErrorHandler>[0]>[1],
+  statusCode: number,
+  requestId: string,
+) {
+  const statusMessage = statusCode === 404
+    ? 'Page Not Found'
+    : 'Internal Server Error'
+  const query = new URLSearchParams({
+    url: getRequestURL(event).pathname,
+    status: String(statusCode),
+    statusCode: String(statusCode),
+    statusMessage,
+    message: statusMessage,
+  })
+  const response = await useNitroApp().localFetch(
+    `/__nuxt_error?${query}`,
+    {
+      headers: {
+        accept: 'text/html',
+        host: getRequestHost(event),
+      },
+    },
+  )
+
+  const headers = new Headers(response.headers)
+  headers.set('cache-control', 'no-cache')
+  headers.set('x-request-id', requestId)
+
+  return sendWebResponse(event, new Response(response.body, {
+    headers,
+    status: statusCode,
+    statusText: statusMessage,
+  }))
+}
 
 function defaultErrorCode(statusCode: number) {
   if (statusCode === 400 || statusCode === 422) {
@@ -42,6 +98,8 @@ export default defineNitroErrorHandler(async (
   { defaultHandler },
 ) => {
   const fallback = await defaultHandler(error, event, { silent: true })
+  const pathname = getRequestURL(event).pathname
+  const requestId = requestIdFor(event)
   const data = error.data && typeof error.data === 'object'
     ? error.data as Record<string, unknown>
     : {}
@@ -64,7 +122,25 @@ export default defineNitroErrorHandler(async (
     },
   })
 
+  if (fallback.status >= 500) {
+    safeLog('error', 'Server request failed.', {
+      requestId,
+      method: event.method,
+      path: pathname,
+      statusCode: fallback.status,
+      errorCode: code,
+      errorClassification: parsedCode?.success
+        ? 'handled-server-error'
+        : 'unhandled-server-error',
+    })
+  }
+
+  if (!isApiPath(pathname)) {
+    return renderNuxtErrorPage(event, fallback.status, requestId)
+  }
+
   setResponseHeaders(event, fallback.headers)
+  setResponseHeader(event, 'content-type', 'application/json; charset=utf-8')
   setResponseStatus(event, fallback.status, fallback.statusText)
 
   return send(event, JSON.stringify(body))

@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-T03 已建立共享 Zod Schema、DTO 与 mapper，但尚未创建 Drizzle Schema。2026-07-29 的文档校准废止了部分 T03 字段；T09 必须先修正共享契约，数据库不得照搬旧 DTO。
+T03 已建立共享 Zod Schema、DTO 与 mapper，但尚未创建 Drizzle Schema。2026-07-30 的 T09 工程核心已删除废止字段、增加返图授权记录 Schema，并收紧公开/管理投影；数据库仍不得把 DTO 当作表定义照搬。
 
 ## P0 模型
 
@@ -49,6 +49,10 @@ P2 不得提前污染 P0 表或导航。
 - 联系人可保留在管理员投影中；
 - 不保存 `depositNote`、`paymentNote` 或等价字段；
 - 联系人不进入公开 DTO、日志、导出默认视图或 URL。
+
+### 角色主人公开值
+
+`ownerDisplay` 当前共享 Schema 仍为非空公开显示值。管理端样张中的“留空表示工作室作品”没有得到 foundation、SPEC、PLAN 或 `.design/` 支持，已登记 OQ-119。T12 前必须先确认工作室自有角色的公开显示与存储语义，不得据当前 DTO 直接创建 `owner_display` 列、空值规则或默认值。
 
 ### 返图授权记录
 

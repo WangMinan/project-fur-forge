@@ -13,6 +13,8 @@ import {
 } from '../../shared/schemas/api'
 import {
   adminWorkDtoSchema,
+  publicWorkDtoSchema,
+  returnPhotoConsentSchema,
   workFeatureTagsSchema,
 } from '../../shared/schemas/work'
 import {
@@ -39,8 +41,9 @@ const baseRecord: WorkRecord = {
   businessStatus: 'event_sale',
   priceCnyMinor: 1_560_000,
   ownerContact: 'private-contact',
-  depositNote: 'private-deposit',
-  paymentNote: 'private-payment',
+  assetIds: [
+    'be9c4a94-32cd-4d17-9050-f7f57fed9742',
+  ],
   originalObjectKeys: ['private/original/secret.jpg'],
 }
 
@@ -103,9 +106,42 @@ describe('work feature tags', () => {
   })
 })
 
+describe('return photo consent records', () => {
+  it('keeps every consent field nullable and private from work DTOs', () => {
+    expect(returnPhotoConsentSchema.parse({
+      consentSource: null,
+      consentConfirmedAt: null,
+      consentNote: null,
+    })).toEqual({
+      consentSource: null,
+      consentConfirmedAt: null,
+      consentNote: null,
+    })
+    expect(returnPhotoConsentSchema.parse({
+      consentSource: 'qq',
+      consentConfirmedAt: '2026-07-30T12:00:00+08:00',
+      consentNote: '已在聊天中确认',
+    })).toMatchObject({
+      consentSource: 'qq',
+    })
+    expect(returnPhotoConsentSchema.safeParse({
+      consentSource: 'chat',
+      consentConfirmedAt: null,
+      consentNote: null,
+    }).success).toBe(false)
+  })
+})
+
 describe('work DTO mapping', () => {
   it('publishes adoption price and ordered tags without private fields', () => {
-    const publicDto = toPublicWorkDto(baseRecord)
+    const publicDto = toPublicWorkDto({
+      ...baseRecord,
+      signedUrl: 'https://oss.test/private.jpg?signature=test-signature',
+      consentNote: 'private-consent',
+    } as WorkRecord & {
+      signedUrl: string
+      consentNote: string
+    })
     const serialized = JSON.stringify(publicDto)
 
     expect(publicDto).toMatchObject({
@@ -119,11 +155,13 @@ describe('work DTO mapping', () => {
       ],
     })
     expect(serialized).not.toContain('private-contact')
-    expect(serialized).not.toContain('private-deposit')
-    expect(serialized).not.toContain('private-payment')
+    expect(serialized).not.toContain('private-consent')
+    expect(serialized).not.toContain('test-signature')
     expect(serialized).not.toContain('secret.jpg')
     expect(serialized).not.toContain('ownerContact')
     expect(serialized).not.toContain('originalObjectKeys')
+    expect(serialized).not.toContain('signedUrl')
+    expect(serialized).not.toContain('consentNote')
   })
 
   it('does not project price for non-adoption work', () => {
@@ -153,11 +191,26 @@ describe('work DTO mapping', () => {
       publicationStatus: 'draft',
     })).toBeNull()
 
-    expect(toAdminWorkDto(baseRecord).private).toEqual({
+    const adminDto = toAdminWorkDto(baseRecord)
+    expect(adminDto.private).toEqual({
       ownerContact: 'private-contact',
-      depositNote: 'private-deposit',
-      paymentNote: 'private-payment',
-      originalObjectKeys: ['private/original/secret.jpg'],
     })
+    expect(adminDto.assetIds).toEqual(baseRecord.assetIds)
+    expect(JSON.stringify(adminDto)).not.toContain('secret.jpg')
+    expect(adminWorkDtoSchema.safeParse({
+      ...adminDto,
+      originalObjectKeys: ['private/original/secret.jpg'],
+    }).success).toBe(false)
+  })
+
+  it('rejects non-CNY public prices', () => {
+    const publicDto = toPublicWorkDto(baseRecord)!
+    expect(publicWorkDtoSchema.safeParse({
+      ...publicDto,
+      price: {
+        currency: 'USD',
+        minorUnits: 1_560_000,
+      },
+    }).success).toBe(false)
   })
 })

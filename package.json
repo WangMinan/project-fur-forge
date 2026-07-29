@@ -10,7 +10,7 @@
   },
   "scripts": {
     "dev": "nuxt dev",
-    "build": "nuxt build",
+    "build": "nuxt build && node scripts/guard-production-content.mjs .output",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint app server shared scripts tests nuxt.config.ts vitest.config.ts vitest.integration.config.ts playwright.config.ts eslint.config.mjs",

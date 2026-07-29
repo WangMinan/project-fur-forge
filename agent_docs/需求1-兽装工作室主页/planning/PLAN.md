@@ -1,7 +1,7 @@
 # 计划：兽装工作室主页
 
 > **角色**：把 SPEC 翻译成有序、可验证的技术实施计划。
-> **状态**：2026-07-30 执行版。T01–T08 已完成，下一项为 T09。
+> **状态**：2026-07-30 执行版。T01–T08 已完成；T09 工程核心已实现，待 Kimi 界面修补和最终复核后收口。
 
 ## 1. 执行结论
 
@@ -153,6 +153,7 @@ P1 再增加 `return_photos`、`events`、`slug_redirects`、`trash_entries` 和
 - 价格使用 `price_amount_minor` + `price_currency`，一期非空时固定 `CNY`；不预留美元列。
 - 返图授权记录三字段均 nullable，不作为发布校验条件。
 - 管理 DTO 不返回私有 Object Key；服务端通过 `assetId` 解析。
+- `ownerDisplay` 的空值是否表示“工作室作品”尚无上游事实支持，已登记 OQ-119；T12 前不得据当前 DTO 直接确定数据库列、空值或默认值约束。
 
 ## 7. 双 Bucket 媒体方案
 
@@ -277,4 +278,4 @@ OSS 图片处理是唯一像素转换权威。Node 不运行 Sharp/FFmpeg 作为
 
 - T01–T03 的代码作为已完成工程底座保留，但 T09 按新规格修订 DTO 和错误边界。
 - 历史原型和实施备注保留，不回写成“当时就是双 Bucket”；当前契约从本版起生效。
-- root `CLAUDE.md`、代码注释或测试若引用旧字段/单 Bucket，T09 同步修正；本轮只改 `agent_docs/`。
+- root `CLAUDE.md`、代码注释或测试若引用旧字段/单 Bucket，T09 同步修正。

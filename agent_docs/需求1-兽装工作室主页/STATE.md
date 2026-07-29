@@ -4,12 +4,12 @@
 
 ## 当前阶段
 
-阶段 4 · IMPLEMENTATION 进行中。T01–T08 已完成。用户于 2026-07-30 完成 T08 最终验收：首页选定横向精选轨道，T06/T07 视觉基线通过，C1、C3–C5 接受现状，`must-fix = 0`；落选的编辑型网格和实验开关已删除。详情主图 PC 端限高一屏可见、首屏 slogan「不只做小狗毛」均已固化进设计文档。**当前下一项为 T09：修正 T03 契约与已知代码审查问题。**
+阶段 4 · IMPLEMENTATION 进行中。T01–T08 已完成；T09 工程核心候选已于 2026-07-30 在 `fix/t09-contracts-sol` 实现，当前等待 Kimi 界面修补和工程侧最终复核。**T09 保持未勾选，不得提前进入 T10。**
 
 ## 当前执行分工
 
-- Kimi K3 继续作为 `UI_PRIMARY`，在后续接口稳定后承接前端切片；T06/T07 已完成并通过 T08。
-- 当前批次为 T09，由 `ENGINEERING_PRIMARY` 主责共享契约、错误分流、安全日志和泄漏守卫修正。
+- Kimi K3 继续作为 `UI_PRIMARY`；当前按 `implementation/notes/T09-UI-HANDOFF.md` 承接 T09 界面修补。
+- 当前批次仍为 T09；`ENGINEERING_PRIMARY` 已形成共享契约、错误分流、安全日志、泄漏守卫和配置修订候选，Kimi 合入后再做最终复核。
 - 独立审查者提供证据复核与建议；TASKS 指定的用户门禁仍由用户作最终确认。
 - 数据库、认证、安全、OSS、事务和运维仍由 `ENGINEERING_PRIMARY` 主责，具体模型不写入产品契约。
 - 后续全栈任务采用“工程侧先锁定 Schema/API/错误/权限与集成测试，Kimi 再实现前端切片”的交接方式。
@@ -61,16 +61,23 @@
 - 禁止连续蓝底区块、蓝色卡片墙、蓝色渐变大按钮，以及“半张图片 + 半张蓝色说明面板”的通用营销构图。
 - T05 已通过真实截图比较“横向精选轨道”和“编辑型图片网格”；T08 最终选定横向轨道，不把组件名当作不可变需求。
 
-## 当前实现债务
+## T09 工程核心状态
 
-T03 已落地的共享 DTO 仍含本轮废止字段或旧媒体暴露方式。T09 必须在数据库建模前完成以下修正：
+T03 遗留工程问题已在候选分支完成以下修正：
 
-- 删除 `depositNote`、`paymentNote` 和禁用美元字段；
-- 增加可选返图授权记录 Schema；
-- 管理端媒体 DTO 只暴露 `assetId` 等业务标识，不直接返回私有 Object Key；
+- 废止付款类字段和禁用美元字段已从 Schema、类型、mapper、fixture 与测试删除；
+- 已增加三字段全部可空、不阻断发布且不进入公开投影的返图授权记录 Schema；
+- 管理端媒体 DTO 只暴露 `assetId` 等业务标识；公开 mapper 逐字段投影；
+- 单 Bucket 运行配置已拆为私有/公开 Bucket，旧字段显式报弃用错误；
 - API 错误保持 JSON，普通页面错误交给 Nuxt `error.vue`；
-- 把安全日志工具接入实际错误路径；
-- 增加生产占位文案泄漏守卫。
+- 安全日志已接入 500 路径，并对 message 与结构化 context 做泄漏回归；
+- production 构建产物会阻断占位文案和 `/fixtures/samples/`。
+
+工程记录见 `implementation/notes/T09-ENGINEERING-CORE-2026-07-30.md`。界面仍需按 `implementation/notes/T09-UI-HANDOFF.md` 修补管理布局、文字对比度、参数响应、dirty、金额校验、reduced-motion 和任务阶段文案。
+
+## 开放问题
+
+- `OQ-119`（开放，T12 前必须回答）：管理端样张声称 `ownerDisplay` 留空表示工作室作品，但上游权威材料未定义该空值语义。T09 保持非空 Schema；T12 不得据当前 DTO 直接创建相关数据库列或约束。
 
 ## 外部门禁
 
@@ -80,9 +87,10 @@ T03 已落地的共享 DTO 仍含本轮废止字段或旧媒体暴露方式。T0
 
 ## 最近验证
 
+- 2026-07-30：T09 工程核心候选完成。冻结安装、lint、typecheck、58 项单测、4 项集成测试、86 项 E2E、Nuxt 构建与生产运行验证全部通过；`APP_ENV=production` 产物守卫按预期阻断当前占位文案和样张素材。契约、配置、错误、日志、生产守卫与 OQ-119 记录见 `implementation/notes/T09-ENGINEERING-CORE-2026-07-30.md`；T09 仍未勾选。
 - 2026-07-30：用户完成 T08 最终验收，确认 T06/T07 视觉基线通过，首页最终采用横向轨道，C1、C3–C5 接受现状，`must-fix = 0`；落选网格与 `?featured=grid` 实验开关已删除。收口后 lint、typecheck、51 项单测、3 项集成测试、84 项 E2E、生产构建与生产验证全绿；最终结论见 `implementation/notes/t06-t07/T08-REVIEW-PREP.md` 第 7 节。
 - 2026-07-30：T08 第一轮用户反馈已落实（F1 轨道默认 / F2 详情主图限高 / F3 slogan「不只做小狗毛」），lint、typecheck、单测与 E2E 全绿，首页与详情截图已重采；处理记录见 `implementation/notes/t06-t07/T08-REVIEW-PREP.md` 第 6 节。
-- 2026-07-29：Kimi 完成 T06/T07（`feature/t06-t07-kimi`）。lint、typecheck、51 项单测、3 项集成测试、86 项 E2E、生产构建与生产验证全部通过；T08 自动化自查 23 项通过（三视口溢出、对比度、reduce 动效、CLS、键盘、SSR/CSR 边界）。实现记录见 `implementation/notes/T06-T07-2026-07-29.md`，评审包见 `implementation/notes/t06-t07/T08-REVIEW-PREP.md`。本机 `.env` 已按用户指示补齐 OSS 组（region `oss-cn-hangzhou`、endpoint、私有 Bucket 名），仅用于本地启动校验，秘密不入仓。
+- 2026-07-29：Kimi 完成 T06/T07（`feature/t06-t07-kimi`）。lint、typecheck、51 项单测、3 项集成测试、86 项 E2E、生产构建与生产验证全部通过；T08 自动化自查 23 项通过（三视口溢出、对比度、reduce 动效、CLS、键盘、SSR/CSR 边界）。实现记录见 `implementation/notes/T06-T07-2026-07-29.md`，评审包见 `implementation/notes/t06-t07/T08-REVIEW-PREP.md`。本机 `.env` 的 OSS 配置随后已在 T09 迁移为明确的私有/公开 Bucket 名；仅用于本地启动校验，秘密不入仓。
 - 2026-07-29：新增 `implementation/EXECUTION_ROUTING.md`，把 Kimi 的 UI 主责、T06–T07 当前批次、T08 独立门禁及后续前后端交接从产品任务定义中分离；TASKS、STATE、产物索引和 `agent_docs` 入口已同步。
 - 2026-07-29：Kimi T04–T05 候选获用户选中并进入主线；`pnpm install --frozen-lockfile`、lint、typecheck、20 项单测、3 项集成测试、19 项 E2E、生产构建与生产验证全部通过。实现与三视口证据见 `implementation/notes/T04-T05-2026-07-29.md`。
 - 2026-07-29：完成 foundation、SPEC、PLAN、模型、公开/管理设计、TASKS、产物索引与实施备注的跨文件校准；T01–T53 唯一连续，Markdown 围栏与相对链接检查通过。详细记录见 `implementation/notes/DOCS-REALIGNMENT-2026-07-29.md`。
@@ -90,4 +98,4 @@ T03 已落地的共享 DTO 仍含本轮废止字段或旧媒体暴露方式。T0
 
 ## 下一步
 
-按 `implementation/EXECUTION_ROUTING.md` 进入 T09，由工程侧先修正 T03 遗留字段、返图授权 Schema、管理 DTO 私有 Key 暴露、API/页面错误分流、安全日志接入和生产占位文案泄漏守卫。T09 完成前不得进入 T10，也不得提前恢复旧的单 Bucket ACL 方案。
+按 `implementation/notes/T09-UI-HANDOFF.md` 由 Kimi 完成 UI-01 至 UI-07；合入后由工程侧重跑全门禁并复核泄漏边界，再决定是否勾选 T09。OQ-119 最迟在 T12 前回答。当前不得进入 T10，也不得提前实现 SQLite、认证或 OSS 业务能力。

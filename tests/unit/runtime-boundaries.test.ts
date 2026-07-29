@@ -15,6 +15,7 @@ import {
   describe,
   expect,
   it,
+  vi,
 } from 'vitest'
 import { ORIGINAL_IMAGE_MAX_BYTES } from '../../shared/constants/project'
 import { decideHostAccess } from '../../server/utils/host-policy'
@@ -23,7 +24,11 @@ import {
   RUNTIME_CONFIG_ENV,
   RUNTIME_CONFIG_TYPES,
 } from '../../server/utils/runtime-config'
-import { redactLogValue } from '../../server/utils/safe-log'
+import {
+  redactLogText,
+  redactLogValue,
+  safeLog,
+} from '../../server/utils/safe-log'
 
 const projectRoot = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -155,12 +160,59 @@ describe('runtime configuration', () => {
       env: {
         ...productionBase,
         OSS_REGION: 'oss-cn-hangzhou',
-        OSS_BUCKET: 'test-bucket',
+        OSS_PRIVATE_BUCKET: 'test-private-bucket',
+        OSS_PUBLIC_BUCKET: 'test-public-bucket',
         OSS_ENDPOINT: 'https://oss-cn-hangzhou.aliyuncs.com',
         OSS_ACCESS_KEY_ID: 'test-access-key-id',
         OSS_ACCESS_KEY_SECRET: 'test-access-key-secret',
       },
     })).toThrowError(/sessionSecret/)
+  })
+
+  it('requires distinct private and public buckets and rejects OSS_BUCKET', () => {
+    const cwd = temporaryDirectory()
+    const ossBase = {
+      APP_ENV: 'test',
+      OSS_REGION: 'oss-cn-hangzhou',
+      OSS_ENDPOINT: 'https://oss-cn-hangzhou.aliyuncs.com',
+      OSS_ACCESS_KEY_ID: 'test-access-key-id',
+      OSS_ACCESS_KEY_SECRET: 'test-access-key-secret',
+    }
+
+    expect(() => loadRuntimeConfig({
+      cwd,
+      env: {
+        ...ossBase,
+        OSS_PRIVATE_BUCKET: 'test-private-bucket',
+      },
+    })).toThrowError(/ossRegion/)
+
+    expect(() => loadRuntimeConfig({
+      cwd,
+      env: {
+        ...ossBase,
+        OSS_PRIVATE_BUCKET: 'same-bucket',
+        OSS_PUBLIC_BUCKET: 'same-bucket',
+      },
+    })).toThrowError(/ossPublicBucket/)
+
+    expect(() => loadRuntimeConfig({
+      cwd,
+      env: {
+        APP_ENV: 'test',
+        OSS_BUCKET: 'legacy-bucket',
+      },
+    })).toThrowError(
+      /OSS_BUCKET is no longer supported; use OSS_PRIVATE_BUCKET and OSS_PUBLIC_BUCKET/,
+    )
+
+    expect(() => loadRuntimeConfig({
+      cwd,
+      env: { APP_ENV: 'test' },
+      filePath: writeRuntimeFile(cwd, {
+        ossBucket: 'legacy-bucket',
+      }),
+    })).toThrowError(/ossBucket\/OSS_BUCKET is no longer supported/)
   })
 
   it('keeps the tracked template aligned and hard limits out of config', () => {
@@ -175,6 +227,9 @@ describe('runtime configuration', () => {
 
     expect(template.env).toEqual(RUNTIME_CONFIG_ENV)
     expect(template.types).toEqual(RUNTIME_CONFIG_TYPES)
+    expect(template.values).toHaveProperty('ossPrivateBucket', '')
+    expect(template.values).toHaveProperty('ossPublicBucket', '')
+    expect(template.values).not.toHaveProperty('ossBucket')
     expect(template.values).not.toHaveProperty('originalImageMaxBytes')
     expect(ORIGINAL_IMAGE_MAX_BYTES).toBe(30_000_000)
   })
@@ -231,20 +286,63 @@ describe('host boundary', () => {
 })
 
 describe('safe logging', () => {
-  it('redacts secrets, customer fields and signed query strings', () => {
+  it('redacts sensitive keys and sensitive strings in structured context', () => {
     const redacted = JSON.stringify(redactLogValue({
       password: 'plain-password',
       ownerContact: 'private-contact',
       target: 'https://oss.test/object?Signature=private-signature',
+      detail: 'Cookie: session=test-session owner@example.invalid',
+      message: 'AccessKeyId=test-key-id AccessKeySecret=test-key-secret',
       nested: {
         originalObjectKeys: ['private/object.jpg'],
+        note: 'prod/original/asset/private.jpg',
       },
     }))
 
     expect(redacted).not.toContain('plain-password')
     expect(redacted).not.toContain('private-contact')
     expect(redacted).not.toContain('private-signature')
+    expect(redacted).not.toContain('test-session')
+    expect(redacted).not.toContain('owner@example.invalid')
+    expect(redacted).not.toContain('test-key-id')
+    expect(redacted).not.toContain('test-key-secret')
     expect(redacted).not.toContain('private/object.jpg')
+    expect(redacted).not.toContain('prod/original/asset/private.jpg')
     expect(redacted).toContain('[REDACTED]')
+  })
+
+  it('redacts message strings before logging', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const message = [
+      'request failed',
+      'password=plain-password',
+      'Bearer test-session',
+      'Cookie: browser-session',
+      'AccessKeyId=test-key-id',
+      'AccessKeySecret=test-key-secret',
+      'owner@example.invalid',
+      'https://oss.test/prod/original/private.jpg?Signature=test-signature',
+    ].join(' ')
+
+    expect(redactLogText(message)).not.toContain('plain-password')
+    safeLog('error', message, {
+      detail: 'ownerContact=private-contact',
+      requestBody: {
+        characterName: 'private-name',
+      },
+    })
+
+    const output = JSON.stringify(error.mock.calls)
+    expect(output).not.toContain('plain-password')
+    expect(output).not.toContain('test-session')
+    expect(output).not.toContain('browser-session')
+    expect(output).not.toContain('test-key-id')
+    expect(output).not.toContain('test-key-secret')
+    expect(output).not.toContain('owner@example.invalid')
+    expect(output).not.toContain('test-signature')
+    expect(output).not.toContain('private-contact')
+    expect(output).not.toContain('private-name')
+    expect(output).toContain('[REDACTED]')
+    error.mockRestore()
   })
 })

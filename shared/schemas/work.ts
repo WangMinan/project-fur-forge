@@ -35,11 +35,26 @@ export const BUSINESS_STATUS_VALUES = [
   'delivered',
 ] as const
 
+export const RETURN_PHOTO_CONSENT_SOURCE_VALUES = [
+  'qq',
+  'email',
+  'other',
+] as const
+
 export const workPurposeSchema = z.enum(WORK_PURPOSE_VALUES)
 export const suitTypeSchema = z.enum(SUIT_TYPE_VALUES)
 export const publicationStatusSchema = z.enum(PUBLICATION_STATUS_VALUES)
 export const adoptionMethodSchema = z.enum(ADOPTION_METHOD_VALUES)
 export const businessStatusSchema = z.enum(BUSINESS_STATUS_VALUES)
+export const returnPhotoConsentSourceSchema = z.enum(
+  RETURN_PHOTO_CONSENT_SOURCE_VALUES,
+)
+
+export const returnPhotoConsentSchema = z.object({
+  consentSource: returnPhotoConsentSourceSchema.nullable(),
+  consentConfirmedAt: z.string().datetime({ offset: true }).nullable(),
+  consentNote: z.string().trim().max(500).nullable(),
+}).strict()
 
 export const workFeatureTagSchema = z.string()
   .trim()
@@ -108,13 +123,11 @@ export const publicWorkDtoSchema = z.discriminatedUnion('purpose', [
 
 const privateWorkFieldsSchema = z.object({
   ownerContact: z.string().max(500).nullable(),
-  depositNote: z.string().max(2_000).nullable(),
-  paymentNote: z.string().max(2_000).nullable(),
-  originalObjectKeys: z.array(z.string().min(1).max(1_024)).max(11),
 }).strict()
 
 const adminWorkBaseSchema = publicWorkBaseSchema.extend({
   publicationStatus: publicationStatusSchema,
+  assetIds: z.array(resourceIdSchema).max(11),
   private: privateWorkFieldsSchema,
 })
 
