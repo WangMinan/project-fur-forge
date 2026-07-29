@@ -1,0 +1,201 @@
+/* 公开站生产设计 Token 与基础样式。
+   契约来源：agent_docs/需求1-兽装工作室主页/.design/public-site/DESIGN_TOKENS.md
+   原则：白底、摄影优先；明显蓝色常态 5%–10%，硬上限 15%。 */
+
+:root {
+  --public-bg-primary: #ffffff;
+  --public-bg-secondary: #f7f8fa;
+  --public-bg-tertiary: #f1f3f6;
+  --public-bg-inverse: #1d2d5a;
+
+  --public-text-primary: #20242b;
+  --public-text-secondary: #626a75;
+  --public-text-tertiary: #8b929c;
+  --public-text-inverse: #ffffff;
+  --public-text-link: #324daf;
+
+  --public-border-primary: #dde1e7;
+  --public-border-secondary: #eceef2;
+  --public-border-focus: #324daf;
+
+  --public-accent-primary: #324daf;
+  --public-accent-hover: #293c84;
+  --public-accent-active: #1d2d5a;
+  --public-accent-decorative: #6274bb;
+  --public-accent-tint: #ced3e5;
+
+  --public-status-open: #2f7b5c;
+  --public-status-paused: #8a5a2b;
+  --public-status-neutral: #626a75;
+  --public-status-error: #a63d40;
+
+  --public-overlay-soft: rgb(17 20 25 / 0.18);
+  --public-overlay-strong: rgb(17 20 25 / 0.62);
+  --public-focus-ring: rgb(50 77 175 / 0.32);
+
+  --font-public-display:
+    "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+  --font-public-body:
+    "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+  --font-public-mono:
+    ui-monospace, "SFMono-Regular", Consolas, monospace;
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-md: 1.125rem;
+  --font-size-lg: clamp(1.25rem, 1.6vw, 1.5rem);
+  --font-size-xl: clamp(1.75rem, 3vw, 2.75rem);
+  --font-size-2xl: clamp(2.5rem, 6vw, 5.5rem);
+  --font-size-hero: clamp(2.5rem, 7vw, 6.75rem);
+
+  --line-height-tight: 1.08;
+  --line-height-heading: 1.18;
+  --line-height-normal: 1.55;
+  --line-height-relaxed: 1.72;
+
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-label: 0.08em;
+
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+  --space-10: 8rem;
+  --space-11: 12rem;
+
+  --public-content-reading: 44rem;
+  --public-content-wide: 90rem;
+  --public-page-padding-mobile: 1rem;
+  --public-page-padding-tablet: 1.5rem;
+  --public-page-padding-desktop: clamp(2rem, 4vw, 4.5rem);
+
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-full: 999px;
+
+  --shadow-raised: 0 0.75rem 2.5rem rgb(25 31 42 / 0.1);
+  --shadow-overlay: 0 1.5rem 4rem rgb(25 31 42 / 0.18);
+
+  --ratio-work-card: 3 / 4;
+  --ratio-work-hero: 16 / 9;
+  --hero-min-height: 100svh;
+  --image-placeholder: #f1f3f6;
+  --image-hover-scale: 1.02;
+
+  --duration-instant: 50ms;
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-section: 400ms;
+  --duration-hero: 750ms;
+  --easing-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --easing-exit: cubic-bezier(0.4, 0, 1, 1);
+  --distance-subtle: 0.75rem;
+
+  --breakpoint-sm: 390px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+
+  --public-page-padding: var(--public-page-padding-mobile);
+
+  @media (min-width: 768px) {
+    --public-page-padding: var(--public-page-padding-tablet);
+  }
+
+  @media (min-width: 1024px) {
+    --public-page-padding: var(--public-page-padding-desktop);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--public-text-primary);
+  background: var(--public-bg-primary);
+  font-family: var(--font-public-body);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+img,
+picture,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--public-text-link);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--public-accent-hover);
+}
+
+button {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--public-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 100;
+  top: var(--space-3);
+  left: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  color: var(--public-text-inverse);
+  background: var(--public-accent-primary);
+  border-radius: var(--radius-sm);
+  transform: translateY(-300%);
+  transition: transform var(--duration-fast) var(--easing-standard);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

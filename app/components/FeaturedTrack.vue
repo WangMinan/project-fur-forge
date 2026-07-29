@@ -1,0 +1,167 @@
+<script setup lang="ts">
+import type { VisualWorkFixture } from '~~/shared/fixtures/visual-home'
+
+defineProps<{
+  works: VisualWorkFixture[]
+}>()
+
+const TRACK_SIZES = '(min-width: 1024px) 24rem, (min-width: 768px) 40vw, 68vw'
+
+const trackRef = ref<HTMLElement | null>(null)
+const canPrev = ref(false)
+const canNext = ref(true)
+
+function updateEdges() {
+  const track = trackRef.value
+  if (!track) {
+    return
+  }
+  const maxScroll = track.scrollWidth - track.clientWidth
+  canPrev.value = track.scrollLeft > 4
+  canNext.value = track.scrollLeft < maxScroll - 4
+}
+
+function step() {
+  const track = trackRef.value
+  return track ? track.clientWidth * 0.72 : 320
+}
+
+function scrollPrev() {
+  trackRef.value?.scrollBy({ left: -step(), behavior: 'smooth' })
+}
+
+function scrollNext() {
+  trackRef.value?.scrollBy({ left: step(), behavior: 'smooth' })
+}
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault()
+    scrollPrev()
+  }
+  else if (event.key === 'ArrowRight') {
+    event.preventDefault()
+    scrollNext()
+  }
+}
+
+onMounted(() => {
+  updateEdges()
+  window.addEventListener('resize', updateEdges)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateEdges)
+})
+</script>
+
+<template>
+  <div class="featured-track" data-testid="featured-track">
+    <div class="featured-track__controls">
+      <button
+        type="button"
+        class="featured-track__button"
+        aria-label="上一批作品"
+        :disabled="!canPrev"
+        @click="scrollPrev"
+      >
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+          <path d="M11.5 3.5L6 9l5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="featured-track__button"
+        aria-label="下一批作品"
+        :disabled="!canNext"
+        @click="scrollNext"
+      >
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+          <path d="M6.5 3.5L12 9l-5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+    </div>
+
+    <div
+      ref="trackRef"
+      class="featured-track__rail"
+      role="group"
+      aria-label="精选作品横向轨道"
+      tabindex="0"
+      @scroll.passive="updateEdges"
+      @keydown="onKeydown"
+    >
+      <FeaturedWorkItem
+        v-for="work in works"
+        :key="work.dto.id"
+        :work="work"
+        :sizes="TRACK_SIZES"
+        class="featured-track__item"
+      />
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.featured-track__controls {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  margin-bottom: var(--space-4);
+}
+
+.featured-track__button {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  color: var(--public-text-primary);
+  background: var(--public-bg-primary);
+  border: 1px solid var(--public-border-primary);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  place-items: center;
+  transition: border-color var(--duration-fast) var(--easing-standard);
+}
+
+.featured-track__button:hover:not(:disabled) {
+  border-color: var(--public-text-primary);
+}
+
+.featured-track__button:disabled {
+  color: var(--public-text-tertiary);
+  cursor: default;
+  opacity: 0.6;
+}
+
+.featured-track__rail {
+  display: flex;
+  gap: var(--space-4);
+  padding-bottom: var(--space-2);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-left: var(--space-1);
+  scrollbar-width: none;
+}
+
+.featured-track__rail::-webkit-scrollbar {
+  display: none;
+}
+
+.featured-track__item {
+  flex: 0 0 68%;
+  scroll-snap-align: start;
+}
+
+@media (min-width: 768px) {
+  .featured-track__item {
+    flex-basis: 40%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .featured-track__item {
+    flex-basis: 24rem;
+  }
+}
+</style>

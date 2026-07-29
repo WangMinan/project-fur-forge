@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01–T03 已完成。** 单 Nuxt 4 全栈应用、文件化运行配置与环境变量映射、Host 隔离、安全日志、共享 Zod 契约和公开/管理 DTO 已建立并通过完整质量门禁；SQLite/Drizzle、认证与阿里云 OSS 尚未开始。公开端与管理端的生产设计输入位于 `.design/`，规划原型 v5 只锁定页面职责、内容顺序和关键交互，不代表生产视觉完成度。**下一项为 T04；用户当前明确要求不碰视觉设计，因此 T04 尚未开始。**
+> **当前阶段：阶段 4 IMPLEMENTATION，T01–T05 已完成。** 单 Nuxt 4 全栈应用、文件化运行配置与环境变量映射、Host 隔离、安全日志、共享 Zod 契约和公开/管理 DTO 已建立；公开站设计系统、导航壳与首页生产视觉样张已经实现并通过完整质量门禁。用户于 2026-07-29 选定 Kimi 候选作为后续生产视觉基线，首页默认采用编辑型精选网格，同时保留横向轨道供 T08 最终审查。SQLite/Drizzle、认证与阿里云 OSS 尚未开始。**下一项为 T06 与 T07；二者完成后进入 T08 用户视觉确认。**
 
 ## 网站核心原则（景宸确认）
 
@@ -53,4 +53,4 @@ pnpm verify:production
 
 ## 当前仓库状态
 
-根目录现含 Nuxt 4 工程、`app/`、`server/`、`shared/`、`tests/` 与阶段文档。T01–T03 已提供双访问面、质量门禁、文件化运行配置、Host/安全日志边界、共享 Zod 契约及公开/管理 DTO；暂无 SQLite Schema、管理员认证、OSS 接入或生产视觉页面。下一位 agent 必须从 `implementation/TASKS.md` 的 T04 继续，并遵守当前“不碰视觉设计”的暂停边界，除非用户重新授权。
+根目录现含 Nuxt 4 工程、`app/`、`server/`、`shared/`、`tests/` 与阶段文档。T01–T05 已提供双访问面、质量门禁、文件化运行配置、Host/安全日志边界、共享 Zod 契约、公开/管理 DTO，以及公开站 Token、导航、全幅首屏、精选作品、图片式业务入口与营业状态。下一位 agent 从 `implementation/TASKS.md` 的 T06 或 T07 继续；不得跳过 T08 用户视觉确认，也不得提前进入 T09。
