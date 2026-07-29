@@ -115,9 +115,37 @@ test.describe('T06 作品详情页', () => {
     expect(box!.height).toBeLessThanOrEqual(661)
   })
 
-  test('未知 slug 返回 404', async ({ page }) => {
+  test('未知 slug 返回完整的 HTML 404 页面', async ({ page }) => {
     const response = await page.goto('/works/not-exist')
+
     expect(response?.status()).toBe(404)
+    expect(response?.headers()['content-type']).toContain('text/html')
+    await expect(page).toHaveTitle(/404 · 页面未找到/)
+    await expect(page.getByRole('heading', {
+      level: 1,
+      name: '页面未找到',
+    })).toBeVisible()
+    await expect(page.getByText(
+      '访问的页面不存在、尚未发布或已经下架。',
+    )).toBeVisible()
+  })
+
+  test('页面异常返回完整的 HTML 500 页面且不回显内部异常', async ({
+    page,
+  }) => {
+    const response = await page.goto('/__test__/page-error')
+
+    expect(response?.status()).toBe(500)
+    expect(response?.headers()['content-type']).toContain('text/html')
+    await expect(page).toHaveTitle(/500 · 页面暂时无法显示/)
+    await expect(page.getByRole('heading', {
+      level: 1,
+      name: '页面暂时无法显示',
+    })).toBeVisible()
+    await expect(page.getByText(
+      '服务器暂时无法完成请求，请稍后重试。',
+    )).toBeVisible()
+    expect(await page.content()).not.toContain('test-contact@example.invalid')
   })
 
   test('SSR 直出包含详情内容与 SEO 描述', async ({ request }) => {

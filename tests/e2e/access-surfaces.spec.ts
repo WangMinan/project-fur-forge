@@ -32,15 +32,51 @@ test('admin login is client rendered', async ({ page, request }) => {
 })
 
 test('public host cannot reach the admin surface', async ({ request }) => {
-  const response = await request.get('/admin/login')
+  const response = await request.get('/admin/login', {
+    headers: {
+      accept: 'text/html',
+    },
+  })
 
   expect(response.status()).toBe(404)
-  await expect(response.json()).resolves.toEqual({
+  expect(response.headers()['content-type']).toContain('text/html')
+  expect(await response.text()).toContain('<title>')
+})
+
+test('API failures keep the JSON envelope without internal details', async ({
+  request,
+}) => {
+  const notFoundResponse = await request.get('/api/not-exist')
+  const failureResponse = await request.get('/api/__test__/error')
+
+  expect(notFoundResponse.status()).toBe(404)
+  expect(notFoundResponse.headers()['content-type']).toContain(
+    'application/json',
+  )
+  await expect(notFoundResponse.json()).resolves.toEqual({
     error: {
       code: 'NOT_FOUND',
       message: 'Resource was not found.',
     },
   })
+
+  expect(failureResponse.status()).toBe(500)
+  expect(failureResponse.headers()['content-type']).toContain(
+    'application/json',
+  )
+  expect(failureResponse.headers()['x-request-id']).toMatch(
+    /^[A-Za-z0-9._:-]{8,128}$/,
+  )
+  const failureBody = await failureResponse.json()
+  expect(failureBody).toEqual({
+    error: {
+      code: 'INTERNAL_ERROR',
+      message: 'Internal server error.',
+    },
+  })
+  expect(JSON.stringify(failureBody)).not.toContain(
+    'test-contact@example.invalid',
+  )
 })
 
 test('health endpoint is reachable', async ({ request }) => {

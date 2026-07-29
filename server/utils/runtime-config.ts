@@ -18,7 +18,8 @@ export const RUNTIME_CONFIG_ENV = {
   ossUploadBaseUrl: 'OSS_UPLOAD_BASE_URL',
   databaseFile: 'DATABASE_FILE',
   ossRegion: 'OSS_REGION',
-  ossBucket: 'OSS_BUCKET',
+  ossPrivateBucket: 'OSS_PRIVATE_BUCKET',
+  ossPublicBucket: 'OSS_PUBLIC_BUCKET',
   ossEndpoint: 'OSS_ENDPOINT',
   ossAccessKeyId: 'OSS_ACCESS_KEY_ID',
   ossAccessKeySecret: 'OSS_ACCESS_KEY_SECRET',
@@ -38,7 +39,8 @@ export const RUNTIME_CONFIG_TYPES = {
   ossUploadBaseUrl: 'origin',
   databaseFile: 'filesystem-path',
   ossRegion: 'string',
-  ossBucket: 'string',
+  ossPrivateBucket: 'string',
+  ossPublicBucket: 'string',
   ossEndpoint: 'origin',
   ossAccessKeyId: 'string',
   ossAccessKeySecret: 'string',
@@ -122,7 +124,8 @@ export const runtimeConfigSchema = z.object({
   ossUploadBaseUrl: originSchema,
   databaseFile: z.string().trim().min(1).max(1_024),
   ossRegion: optionalText(100),
-  ossBucket: optionalText(255),
+  ossPrivateBucket: optionalText(255),
+  ossPublicBucket: optionalText(255),
   ossEndpoint: z.preprocess(
     emptyToUndefined,
     originSchema.optional(),
@@ -155,7 +158,8 @@ export const runtimeConfigSchema = z.object({
 
   const ossConfig = [
     config.ossRegion,
-    config.ossBucket,
+    config.ossPrivateBucket,
+    config.ossPublicBucket,
     config.ossEndpoint,
     config.ossAccessKeyId,
     config.ossAccessKeySecret,
@@ -170,6 +174,17 @@ export const runtimeConfigSchema = z.object({
       code: 'custom',
       message: 'OSS 配置必须成组提供',
       path: ['ossRegion'],
+    })
+  }
+
+  if (
+    config.ossPrivateBucket
+    && config.ossPrivateBucket === config.ossPublicBucket
+  ) {
+    context.addIssue({
+      code: 'custom',
+      message: 'OSS 私有 Bucket 与公开 Bucket 必须不同',
+      path: ['ossPublicBucket'],
     })
   }
 
@@ -221,7 +236,8 @@ export const runtimeConfigSchema = z.object({
 
     for (const key of [
       'ossRegion',
-      'ossBucket',
+      'ossPrivateBucket',
+      'ossPublicBucket',
       'ossEndpoint',
       'ossAccessKeyId',
       'ossAccessKeySecret',
@@ -280,6 +296,15 @@ function readConfigFile(filePath: string) {
     throw new RuntimeConfigError('Runtime config file shape is invalid.')
   }
 
+  if (
+    Object.hasOwn(parsed.data.values, 'ossBucket')
+    || parsed.data.env.ossBucket === 'OSS_BUCKET'
+  ) {
+    throw new RuntimeConfigError(
+      'ossBucket/OSS_BUCKET is no longer supported; use separate private and public Bucket settings.',
+    )
+  }
+
   const expectedEntries = Object.entries(RUNTIME_CONFIG_ENV)
   const expectedTypes = Object.entries(RUNTIME_CONFIG_TYPES)
 
@@ -312,6 +337,13 @@ export function loadRuntimeConfig(
 ): RuntimeConfig {
   const cwd = options.cwd ?? process.cwd()
   const env = options.env ?? process.env
+
+  if (nonEmpty(env.OSS_BUCKET)) {
+    throw new RuntimeConfigError(
+      'OSS_BUCKET is no longer supported; use OSS_PRIVATE_BUCKET and OSS_PUBLIC_BUCKET.',
+    )
+  }
+
   const explicitFile = options.filePath ?? nonEmpty(env.APP_CONFIG_FILE)
   const defaultLocalFile = resolve(cwd, 'config/runtime.local.json')
   const filePath = explicitFile

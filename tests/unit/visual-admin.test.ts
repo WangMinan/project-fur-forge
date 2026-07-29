@@ -72,13 +72,16 @@ describe('visual-admin 夹具', () => {
     }
   })
 
-  it('资产不含私有 Object Key，deprecated 私有字段保持 null', () => {
+  it('资产只暴露业务 ID，不含私有 Object Key 或签名 URL', () => {
     for (const work of adminWorkFixtures) {
-      expect(work.dto.private.originalObjectKeys).toEqual([])
-      expect(work.dto.private.depositNote).toBeNull()
-      expect(work.dto.private.paymentNote).toBeNull()
+      expect(work.dto.assetIds).toEqual(
+        work.assets.map(asset => asset.assetId),
+      )
       for (const asset of work.assets) {
-        expect(Object.keys(asset)).not.toContain('objectKey')
+        const keys = Object.keys(asset)
+        expect(keys).not.toContain('objectKey')
+        expect(keys).not.toContain('originalObjectKey')
+        expect(keys).not.toContain('signedUrl')
       }
     }
   })

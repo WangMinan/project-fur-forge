@@ -1,7 +1,7 @@
 # 任务清单：兽装工作室主页
 
 > **角色**：PLAN 的唯一可勾选实施分解。
-> **状态**：T01–T08 已完成。用户于 2026-07-30 通过 T08：横向精选轨道为首页最终方案，T06/T07 视觉基线通过，C1、C3–C5 接受现状，`must-fix = 0`。证据见 `notes/T06-T07-2026-07-29.md` 与 `notes/t06-t07/T08-REVIEW-PREP.md`；下一项为 T09。任务编号保留 T01–T53，T09 之后按垂直切片排序。
+> **状态**：T01–T08 已完成。用户于 2026-07-30 通过 T08：横向精选轨道为首页最终方案，T06/T07 视觉基线通过，C1、C3–C5 接受现状，`must-fix = 0`。T09 工程核心已在短分支实现，仍待 Kimi 按 `notes/T09-UI-HANDOFF.md` 完成界面修补和最终复核，因此本轮不勾选 T09。任务编号保留 T01–T53，T09 之后按垂直切片排序。
 
 ## 当前目标
 
@@ -89,6 +89,8 @@ flowchart LR
 ## B. 第一件作品垂直切片
 
 - [ ] **T09 · 修正 T03 契约与已知代码审查问题**：删除 `depositNote`、`paymentNote`、禁用美元字段；增加可选返图授权 Schema；管理 DTO 不返回私有 Object Key；API/页面错误分流；接入安全日志；增加生产占位文案守卫；同步配置、测试与 root 摘要。_依赖：T08；验证：泄漏守卫与页面 404/500 HTML 测试。_
+  - 工程核心候选已完成：见 `notes/T09-ENGINEERING-CORE-2026-07-30.md`。
+  - 保持未勾选：Kimi 界面修补、OQ-119 的 T12 前业务确认和最终复核仍未完成；不得提前进入 T10。
 - [ ] **T10 · 双 Bucket 早期可行性预检与最小权限说明**：在数据库/认证大规模实现前，向用户说明 AK/SK 最小权限与本地写入位置；验证 region、endpoint、Bucket 名、BPA、CORS、匿名读取边界、`sys/saveas` 目标和测试前缀，不修改账号级安全状态；协助完成 EXT-02 证据。_依赖：T09。_
 - [ ] **T11 · SQLite 运行底座与迁移框架**：Drizzle、`better-sqlite3`、WAL/外键/busy timeout/FULL、迁移命令、临时测试库和一致性备份工具。_依赖：T09。_
 - [ ] **T12 · P0 最小 Schema 与公开投影**：`users`、`works`、`work_feature_tags`、`assets`、`asset_variants`、`work_assets`、`publication_operations`、最小内容/营业状态；联系人私有，价格固定 CNY；公开投影硬排除私有字段。_依赖：T11。_

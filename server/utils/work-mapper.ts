@@ -27,22 +27,9 @@ export interface WorkRecord {
   businessStatus: BusinessStatus | null
   priceCnyMinor: number | null
   ownerContact: string | null
-  depositNote: string | null
-  paymentNote: string | null
+  assetIds: string[]
+  /** Service-only storage identities. DTO mappers must never project these. */
   originalObjectKeys: string[]
-}
-
-function commonFields(record: WorkRecord) {
-  return {
-    id: record.id,
-    version: record.version,
-    slug: record.slug,
-    characterName: record.characterName,
-    species: record.species,
-    suitType: record.suitType,
-    ownerDisplay: record.ownerDisplay,
-    featureTags: [...record.featureTags],
-  }
 }
 
 export function toPublicWorkDto(
@@ -52,61 +39,92 @@ export function toPublicWorkDto(
     return null
   }
 
-  const common = commonFields(record)
-
   if (record.purpose === 'adoption') {
+    if (record.priceCnyMinor === null) {
+      return publicWorkDtoSchema.parse({
+        id: record.id,
+        version: record.version,
+        slug: record.slug,
+        characterName: record.characterName,
+        species: record.species,
+        suitType: record.suitType,
+        ownerDisplay: record.ownerDisplay,
+        featureTags: [...record.featureTags],
+        purpose: 'adoption',
+        adoptionMethod: record.adoptionMethod,
+        businessStatus: record.businessStatus,
+      })
+    }
+
     return publicWorkDtoSchema.parse({
-      ...common,
-      purpose: record.purpose,
+      id: record.id,
+      version: record.version,
+      slug: record.slug,
+      characterName: record.characterName,
+      species: record.species,
+      suitType: record.suitType,
+      ownerDisplay: record.ownerDisplay,
+      featureTags: [...record.featureTags],
+      purpose: 'adoption',
       adoptionMethod: record.adoptionMethod,
       businessStatus: record.businessStatus,
-      ...(record.priceCnyMinor === null
-        ? {}
-        : {
-            price: {
-              currency: 'CNY',
-              minorUnits: record.priceCnyMinor,
-            },
-          }),
+      price: {
+        currency: 'CNY',
+        minorUnits: record.priceCnyMinor,
+      },
     })
   }
 
   return publicWorkDtoSchema.parse({
-    ...common,
+    id: record.id,
+    version: record.version,
+    slug: record.slug,
+    characterName: record.characterName,
+    species: record.species,
+    suitType: record.suitType,
+    ownerDisplay: record.ownerDisplay,
+    featureTags: [...record.featureTags],
     purpose: record.purpose,
   })
 }
 
 export function toAdminWorkDto(record: WorkRecord): AdminWorkDto {
-  const common = {
-    ...commonFields(record),
-    publicationStatus: record.publicationStatus,
-    private: {
-      ownerContact: record.ownerContact,
-      depositNote: record.depositNote,
-      paymentNote: record.paymentNote,
-      originalObjectKeys: [...record.originalObjectKeys],
-    },
-  }
-
   if (record.purpose === 'adoption') {
     return adminWorkDtoSchema.parse({
-      ...common,
-      purpose: record.purpose,
-      ...(record.adoptionMethod === null
-        ? {}
-        : { adoptionMethod: record.adoptionMethod }),
-      ...(record.businessStatus === null
-        ? {}
-        : { businessStatus: record.businessStatus }),
-      ...(record.priceCnyMinor === null
-        ? {}
-        : { priceCnyMinor: record.priceCnyMinor }),
+      id: record.id,
+      version: record.version,
+      slug: record.slug,
+      characterName: record.characterName,
+      species: record.species,
+      suitType: record.suitType,
+      ownerDisplay: record.ownerDisplay,
+      featureTags: [...record.featureTags],
+      purpose: 'adoption',
+      publicationStatus: record.publicationStatus,
+      assetIds: [...record.assetIds],
+      private: {
+        ownerContact: record.ownerContact,
+      },
+      adoptionMethod: record.adoptionMethod ?? undefined,
+      businessStatus: record.businessStatus ?? undefined,
+      priceCnyMinor: record.priceCnyMinor ?? undefined,
     })
   }
 
   return adminWorkDtoSchema.parse({
-    ...common,
+    id: record.id,
+    version: record.version,
+    slug: record.slug,
+    characterName: record.characterName,
+    species: record.species,
+    suitType: record.suitType,
+    ownerDisplay: record.ownerDisplay,
+    featureTags: [...record.featureTags],
     purpose: record.purpose,
+    publicationStatus: record.publicationStatus,
+    assetIds: [...record.assetIds],
+    private: {
+      ownerContact: record.ownerContact,
+    },
   })
 }

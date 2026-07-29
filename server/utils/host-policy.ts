@@ -24,6 +24,7 @@ const adminAllowedPrefixes = [
   '/api/health',
   '/_nuxt',
   '/__nuxt',
+  '/__nuxt_error',
   '/@vite',
   '/_loading',
 ] as const
