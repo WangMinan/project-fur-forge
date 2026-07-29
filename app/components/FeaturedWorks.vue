@@ -1,0 +1,72 @@
+<script setup lang="ts">
+import { featuredWorkSlugs, visualWorkFixtures } from '~~/shared/fixtures/visual-home'
+
+/**
+ * T05 对比开关：默认编辑型网格；`?featured=track` 切换横向轨道。
+ * 两方案的三视口截图对比与最终选择记录在 implementation/notes/；
+ * T08 确认后删除落选组件与本开关。
+ */
+const route = useRoute()
+const variant = computed(() =>
+  route.query.featured === 'track' ? 'track' : 'grid',
+)
+
+const works = featuredWorkSlugs
+  .map(slug => visualWorkFixtures.find(work => work.dto.slug === slug))
+  .filter((work): work is (typeof visualWorkFixtures)[number] => Boolean(work))
+</script>
+
+<template>
+  <section
+    class="featured-works"
+    aria-labelledby="featured-works-title"
+    data-testid="featured-works"
+  >
+    <header class="featured-works__header">
+      <h2 id="featured-works-title" class="featured-works__title">
+        精选作品
+      </h2>
+      <NuxtLink to="/works" class="featured-works__more">
+        查看全部作品
+        <span aria-hidden="true">→</span>
+      </NuxtLink>
+    </header>
+
+    <FeaturedTrack v-if="variant === 'track'" :works="works" />
+    <FeaturedGrid v-else :works="works" />
+  </section>
+</template>
+
+<style scoped>
+.featured-works {
+  max-width: var(--public-content-wide);
+  margin: 0 auto;
+  padding: var(--space-9) var(--public-page-padding) 0;
+}
+
+.featured-works__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.featured-works__title {
+  font-family: var(--font-public-display);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  line-height: var(--line-height-heading);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+.featured-works__more {
+  flex-shrink: 0;
+  font-size: var(--font-size-sm);
+}
+
+.featured-works__more:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+</style>
