@@ -87,7 +87,7 @@ T03 遗留工程问题已在候选分支完成以下修正：
 
 ## 最近验证
 
-- 2026-07-30：T09 工程核心候选完成。冻结安装、lint、typecheck、58 项单测、4 项集成测试、86 项 E2E、Nuxt 构建与生产运行验证全部通过；`APP_ENV=production` 产物守卫按预期阻断当前占位文案和样张素材。契约、配置、错误、日志、生产守卫与 OQ-119 记录见 `implementation/notes/T09-ENGINEERING-CORE-2026-07-30.md`；T09 仍未勾选。
+- 2026-07-30：T09 工程核心候选完成。冻结安装、lint、typecheck、61 项单测、4 项集成测试、86 项 E2E、Nuxt 构建与生产运行验证全部通过；`APP_ENV=production` 产物守卫按预期阻断当前占位文案和样张素材。契约、配置、错误、日志、生产守卫与 OQ-119 记录见 `implementation/notes/T09-ENGINEERING-CORE-2026-07-30.md`；T09 仍未勾选。
 - 2026-07-30：用户完成 T08 最终验收，确认 T06/T07 视觉基线通过，首页最终采用横向轨道，C1、C3–C5 接受现状，`must-fix = 0`；落选网格与 `?featured=grid` 实验开关已删除。收口后 lint、typecheck、51 项单测、3 项集成测试、84 项 E2E、生产构建与生产验证全绿；最终结论见 `implementation/notes/t06-t07/T08-REVIEW-PREP.md` 第 7 节。
 - 2026-07-30：T08 第一轮用户反馈已落实（F1 轨道默认 / F2 详情主图限高 / F3 slogan「不只做小狗毛」），lint、typecheck、单测与 E2E 全绿，首页与详情截图已重采；处理记录见 `implementation/notes/t06-t07/T08-REVIEW-PREP.md` 第 6 节。
 - 2026-07-29：Kimi 完成 T06/T07（`feature/t06-t07-kimi`）。lint、typecheck、51 项单测、3 项集成测试、86 项 E2E、生产构建与生产验证全部通过；T08 自动化自查 23 项通过（三视口溢出、对比度、reduce 动效、CLS、键盘、SSR/CSR 边界）。实现记录见 `implementation/notes/T06-T07-2026-07-29.md`，评审包见 `implementation/notes/t06-t07/T08-REVIEW-PREP.md`。本机 `.env` 的 OSS 配置随后已在 T09 迁移为明确的私有/公开 Bucket 名；仅用于本地启动校验，秘密不入仓。

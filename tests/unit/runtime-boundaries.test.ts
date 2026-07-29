@@ -208,6 +208,16 @@ describe('runtime configuration', () => {
 
     expect(() => loadRuntimeConfig({
       cwd,
+      env: {
+        APP_ENV: 'test',
+        OSS_BUCKET: '',
+      },
+    })).toThrowError(
+      /OSS_BUCKET is no longer supported; use OSS_PRIVATE_BUCKET and OSS_PUBLIC_BUCKET/,
+    )
+
+    expect(() => loadRuntimeConfig({
+      cwd,
       env: { APP_ENV: 'test' },
       filePath: writeRuntimeFile(cwd, {
         ossBucket: 'legacy-bucket',
@@ -216,6 +226,15 @@ describe('runtime configuration', () => {
   })
 
   it('keeps the tracked template aligned and hard limits out of config', () => {
+    const envTemplateNames = readFileSync(
+      resolve(projectRoot, '.env.example'),
+      'utf8',
+    )
+      .split(/\r?\n/u)
+      .flatMap((line) => {
+        const match = line.match(/^([A-Z][A-Z0-9_]*)=/u)
+        return match?.[1] ? [match[1]] : []
+      })
     const template = JSON.parse(readFileSync(
       resolve(projectRoot, 'config/runtime.example.json'),
       'utf8',
@@ -227,6 +246,11 @@ describe('runtime configuration', () => {
 
     expect(template.env).toEqual(RUNTIME_CONFIG_ENV)
     expect(template.types).toEqual(RUNTIME_CONFIG_TYPES)
+    expect(envTemplateNames).toEqual([
+      'APP_CONFIG_FILE',
+      ...Object.values(RUNTIME_CONFIG_ENV),
+    ])
+    expect(new Set(envTemplateNames).size).toBe(envTemplateNames.length)
     expect(template.values).toHaveProperty('ossPrivateBucket', '')
     expect(template.values).toHaveProperty('ossPublicBucket', '')
     expect(template.values).not.toHaveProperty('ossBucket')

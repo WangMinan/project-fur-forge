@@ -338,7 +338,7 @@ export function loadRuntimeConfig(
   const cwd = options.cwd ?? process.cwd()
   const env = options.env ?? process.env
 
-  if (nonEmpty(env.OSS_BUCKET)) {
+  if (Object.hasOwn(env, 'OSS_BUCKET')) {
     throw new RuntimeConfigError(
       'OSS_BUCKET is no longer supported; use OSS_PRIVATE_BUCKET and OSS_PUBLIC_BUCKET.',
     )
