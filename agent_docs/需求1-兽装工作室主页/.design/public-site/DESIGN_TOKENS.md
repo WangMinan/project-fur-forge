@@ -1,55 +1,48 @@
 # Design Tokens：公开站
 
-> **性质**：阶段 3 的视觉实现契约，不是最终 CSS。阶段 4 将其翻译为 Tailwind/CSS 自定义属性；当前蓝色阶来自景宸例图的可复现聚类，正式 Logo 与授权作品图到位后只做受控校准。
-> **设计哲学**：白底编辑型摄影作品集。
-
-## Skill Deviation
-
-design-tokens skill 默认同时生成明暗主题。本项目一期已锁定白色主底，且没有主题切换需求；为避免扩大范围，本文件只定义一期亮色主题和图片覆盖所需的 inverse token，不实现暗色模式。未来增加暗色主题必须重新评估作品摄影、Logo 与可读性。
+> **设计哲学**：白底、摄影优先、品牌蓝克制使用。OSS 预生成图片是唯一媒体来源。
 
 ## Color
 
-以下蓝色阶来自 `../../materials/景宸品牌例图_2026-07-29/blue-palette.json`：深蓝 `#293C84`、主行动蓝 `#324DAF`、中蓝 `#6274BB`、浅蓝 `#CED3E5`、海军蓝 `#1D2D5A`。它们是一期生产基础色，不再使用“雾蓝/淡粉/鼠尾草绿”这类无数值描述；正式 Logo 到位后如需改值，必须保留语义、对比和使用比例并重新视觉审查。
-
 ```text
---public-bg-primary:          #FFFFFF
---public-bg-secondary:        #F7F8FA
---public-bg-tertiary:         #F1F3F6
---public-bg-inverse:          #1D2D5A
+--public-bg-primary:       #FFFFFF
+--public-bg-secondary:     #F7F8FA
+--public-bg-tertiary:      #F1F3F6
+--public-bg-inverse:       #1D2D5A
 
---public-text-primary:        #20242B
---public-text-secondary:      #626A75
---public-text-tertiary:       #8B929C
---public-text-inverse:        #FFFFFF
---public-text-link:           #324DAF
+--public-text-primary:     #20242B
+--public-text-secondary:   #626A75
+--public-text-tertiary:    #8B929C
+--public-text-inverse:     #FFFFFF
+--public-text-link:        #324DAF
 
---public-border-primary:      #DDE1E7
---public-border-secondary:    #ECEEF2
---public-border-focus:        #324DAF
+--public-border-primary:   #DDE1E7
+--public-border-secondary: #ECEEF2
+--public-border-focus:     #324DAF
 
---public-accent-primary:      #324DAF
---public-accent-hover:        #293C84
---public-accent-active:       #1D2D5A
---public-accent-mid:          #6274BB
---public-accent-soft:         #CED3E5
+--public-accent-primary:   #324DAF
+--public-accent-hover:     #293C84
+--public-accent-active:    #1D2D5A
+--public-accent-decorative: #6274BB
+--public-accent-tint:      #CED3E5
 
---public-status-open:         #2F7B5C
---public-status-paused:       #8A5A2B
---public-status-neutral:      #626A75
---public-status-error:        #A63D40
+--public-status-open:      #2F7B5C
+--public-status-paused:    #8A5A2B
+--public-status-neutral:   #626A75
+--public-status-error:     #A63D40
 
---public-overlay-soft:        rgba(17, 20, 25, 0.18)
---public-overlay-strong:      rgba(17, 20, 25, 0.62)
---public-focus-ring:          rgba(50, 77, 175, 0.32)
+--public-overlay-soft:     rgba(17, 20, 25, 0.18)
+--public-overlay-strong:   rgba(17, 20, 25, 0.62)
+--public-focus-ring:       rgba(50, 77, 175, 0.32)
 ```
 
-使用规则：
+使用比例：
 
-- 页面大面积区域只能使用白色或极浅中性色；中蓝与浅蓝合计不超过单页视觉面积的约 15%。
-- 品牌强调色主要用于当前导航、可见焦点、少量状态和主行动，不铺满大区块。
-- `#6274BB` 和 `#CED3E5` 不承担白底小字号正文；深色文字与背景组合必须逐项通过对比检查。
-- 状态不得只靠颜色；必须有中文文字。
-- 图片上的白字只在受控遮罩和逐图对比复核后使用。
+- 白色、极浅中性色和作品图承担至少约 85% 的页面面积；
+- 明显蓝色常态 5%–10%，硬上限 15%；
+- `#6274BB` 与 `#CED3E5` 不承担白底小字号正文；
+- 不使用蓝色渐变，不连续堆叠蓝底区块，不给每张卡片铺浅蓝底；
+- 图片上的白字只在受控遮罩和逐图对比检查后使用。
 
 ## Typography
 
@@ -80,13 +73,9 @@ design-tokens skill 默认同时生成明暗主题。本项目一期已锁定白
 --letter-spacing-label:  0.08em
 ```
 
-- 展示衬线只用于品牌名、角色名和少数一级标题；筛选、状态、正文和按钮使用无衬线。
-- 不从中国大陆访问不稳定的远程字体服务加载字体；若选定品牌字体，必须自托管并确认许可与子集体积。
-- 英文小标签只能辅助中文信息，不成为主要导航含义。
+展示衬线只用于少数标题；T05 必须与一套亲近的无衬线展示方案比较。正式字体不得仅凭空白原型锁定。
 
 ## Spacing
-
-8px 为主要节奏，4px 只用于紧密控件内部。
 
 ```text
 --space-0:  0
@@ -103,8 +92,7 @@ design-tokens skill 默认同时生成明暗主题。本项目一期已锁定白
 --space-11: 12rem
 ```
 
-- 桌面图片区块可使用较大垂直节奏，内页标题区必须保持紧凑。
-- 规整作品网格的间距统一；返图墙可使用更小间距形成连续摄影感。
+8px 为主要节奏，4px 只用于紧密控件内部。图片网格间距统一；返图墙可更紧密。
 
 ## Layout
 
@@ -115,56 +103,62 @@ design-tokens skill 默认同时生成明暗主题。本项目一期已锁定白
 --public-page-padding-tablet: 1.5rem
 --public-page-padding-desktop: clamp(2rem, 4vw, 4.5rem)
 
---radius-xs:  0.25rem
---radius-sm:  0.5rem
---radius-md:  0.75rem
---radius-lg:  1rem
+--radius-xs: 0.25rem
+--radius-sm: 0.5rem
+--radius-md: 0.75rem
+--radius-lg: 1rem
 --radius-full: 999px
 
 --shadow-raised: 0 0.75rem 2.5rem rgba(25, 31, 42, 0.10)
 --shadow-overlay: 0 1.5rem 4rem rgba(25, 31, 42, 0.18)
 ```
 
-- 作品图不强制统一大圆角；圆角用于保护图片边界而不是制造通用卡片感。
-- `radius-full` 仅用于状态、筛选和圆形控制，不用于所有按钮和容器。
-- 默认无阴影；只对覆盖层、悬浮导航或需要明确层级的控件使用。
+- 作品图不强制统一大圆角；
+- `radius-full` 只用于状态、筛选和圆形控制；
+- 默认无阴影，覆盖层或悬浮控件才使用。
 
-## Image Tokens
+## Image Presentation
 
 ```text
---ratio-work-card:    3 / 4
---ratio-work-hero:    16 / 9
+--ratio-work-card: 3 / 4
+--ratio-work-hero: 16 / 9
 --ratio-design-sheet: auto
---ratio-avatar:       1 / 1
-
---image-hover-scale:  1.02
---hero-min-height:    100svh
---image-placeholder:  #F1F3F6
+--hero-min-height: 100svh
+--image-placeholder: #F1F3F6
+--image-hover-scale: 1.02
 ```
 
-- 主体焦点和裁切来自 EXIF 修正后的归一化坐标。
-- 首页、作品详情和委托宽图分别校准桌面/手机安全区；不共用一个居中裁切假设。
-- 图片容器预留宽高/比例，避免 CLS。
+对应 OSS `recipe-v1`：
+
+```text
+card:   3:4, 480 / 768 / 1200
+hero:   16:9, 768 / 1280 / 1920
+detail: original ratio, 960 / 1600 / 2400
+format: WebP + one source-compatible fallback
+```
+
+- 组件只选择已有 variant；不得添加转换查询参数；
+- 默认使用原生 `<picture>`；`@nuxt/image` 只有在测试证明 URL 与像素均不被改写时才可使用，否则不引入；
+- 只生成实际用途，不默认生成所有比例；
+- 容器预留比例，避免 CLS；
+- 焦点/安全区分别保存桌面与手机数据。
 
 ## Motion
 
 ```text
---duration-instant:  50ms
---duration-fast:     150ms
---duration-normal:   250ms
---duration-section:  400ms
---duration-hero:     750ms
-
+--duration-instant: 50ms
+--duration-fast: 150ms
+--duration-normal: 250ms
+--duration-section: 400ms
+--duration-hero: 750ms
 --easing-standard: cubic-bezier(0.22, 1, 0.36, 1)
---easing-exit:     cubic-bezier(0.4, 0, 1, 1)
+--easing-exit: cubic-bezier(0.4, 0, 1, 1)
 --distance-subtle: 0.75rem
 ```
 
-- 一般反馈 150–300ms，区块进入 250–450ms，首屏 600–900ms。
-- 同一视口只保留一个主要运动焦点；优先 `transform` 与 `opacity`。
-- 减少动效时将位移、缩放和自动过渡归零，保留必要状态反馈。
+同一视口只保留一个主要运动焦点；减少动效时归零非必要位移、缩放和自动过渡。
 
-## Breakpoints and Test Viewports
+## Breakpoints and Review Viewports
 
 ```text
 --breakpoint-sm:  390px
@@ -174,4 +168,4 @@ design-tokens skill 默认同时生成明暗主题。本项目一期已锁定白
 --breakpoint-2xl: 1536px
 ```
 
-视觉回归固定使用 `390 × 844`、`768 × 1024`、`1440 × 900`；Windows 1080p/2K/4K 另记录实际 CSS viewport。
+固定视觉回归：390 × 844、768 × 1024、1440 × 900。蓝色面积采用截图人工审查，不要求实现脆弱的自动像素百分比测试。
