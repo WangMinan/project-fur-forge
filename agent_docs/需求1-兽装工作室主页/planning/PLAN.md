@@ -351,7 +351,7 @@ prod/public/web/{asset-id}/{recipe-version}/{crop}/{content-hash}.{ext}
 
 1. **PLAN 门禁（已完成）**：用户已确认 `OQ-018–023`；v5、本轮文档一致性检查和无上下文 Reader Test 均通过。
 2. **任务与设计输入（已完成）**：公开端/管理端 Design Brief、IA、Token 已写入 `.design/`；`implementation/TASKS.md` 已把工作映射到 SPEC 验收、迁移、API、UI 视口和测试证据。
-3. **工程与生产设计门禁（阶段 4 实施中）**：T01 已建立 Node 24、pnpm、Nuxt 4、TypeScript strict、健康检查和测试壳；继续完成环境配置与公开端/管理端生产视觉样张，并取得 T08 用户确认；不得直接翻版 v5。
+3. **工程与生产设计门禁（阶段 4 实施中）**：T01–T03 已建立 Node 24、pnpm、Nuxt 4、TypeScript strict、健康检查、文件化运行配置、Host/安全日志边界及共享 Zod 契约；下一项为 T04，继续完成公开端/管理端生产视觉样张并取得 T08 用户确认。用户当前明确要求不碰视觉设计，因此 T04 尚未开始；恢复后仍不得直接翻版 v5。
 4. **SQLite 与认证**：Drizzle Schema/迁移、唯一管理员初始化、登录/改密/找回、锁定、Session、审计和备份恢复冒烟。
 5. **OSS 媒体底座**：上传 Endpoint、图片处理 30 MB 源图配额与 Block Public Access 人工前置检查、V4 条件直传、上传会话、MD5/SHA-256、HEAD/图片信息、EXIF 坐标转换、OSS 另存处理、网页母版、水印、草稿/发布/下架 ACL、管理员手动处理重试、dev 媒体显示和原图授权下载。
 6. **后台内容流**：作品列表、四步新建、快速编辑、图片管理、返图上传、营业状态、委托 FAQ、关于/联系、首页精选、回收站、原图档案和 CSV 导出。

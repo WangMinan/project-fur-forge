@@ -53,4 +53,4 @@ pnpm verify:production
 
 ## 当前仓库状态
 
-根目录现含 Nuxt 4 工程、`app/`、`server/`、`shared/`、`tests/` 与阶段文档。T01 只提供访问面和质量门禁最小切片；暂无 SQLite Schema、管理员认证、OSS 接入或生产视觉页面。
+根目录现含 Nuxt 4 工程、`app/`、`server/`、`shared/`、`tests/` 与阶段文档。T01–T03 已提供双访问面、质量门禁、文件化运行配置、Host/安全日志边界、共享 Zod 契约及公开/管理 DTO；暂无 SQLite Schema、管理员认证、OSS 接入或生产视觉页面。下一位 agent 必须从 `implementation/TASKS.md` 的 T04 继续，并遵守当前“不碰视觉设计”的暂停边界，除非用户重新授权。
