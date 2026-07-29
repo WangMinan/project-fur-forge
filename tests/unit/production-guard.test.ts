@@ -32,21 +32,36 @@ afterEach(() => {
 })
 
 describe('production content guard', () => {
-  it('allows honest development fixtures but blocks them in production', async () => {
+  it.each([
+    ['unimplemented capability copy', '接口尚未接入（T17）'],
+    ['fixture/demo copy', '夹具演示'],
+    ['unapproved sample media', '/fixtures/samples/example.jpg'],
+  ])('blocks %s in production', async (_label, content) => {
+    const directory = temporaryDirectory()
+    writeFileSync(
+      resolve(directory, 'client.js'),
+      content,
+    )
+
+    await expect(guardProductionContent({
+      appEnv: 'production',
+      roots: [directory],
+    })).rejects.toThrow(/Production content guard blocked/)
+  })
+
+  it('allows honest fixture warnings in development and test', async () => {
     const directory = temporaryDirectory()
     writeFileSync(
       resolve(directory, 'client.js'),
       '夹具演示 /fixtures/samples/example.jpg 接口尚未接入（T17）',
     )
 
-    await expect(guardProductionContent({
-      appEnv: 'development',
-      roots: [directory],
-    })).resolves.toEqual([])
-    await expect(guardProductionContent({
-      appEnv: 'production',
-      roots: [directory],
-    })).rejects.toThrow(/Production content guard blocked/)
+    for (const appEnv of ['development', 'test']) {
+      await expect(guardProductionContent({
+        appEnv,
+        roots: [directory],
+      })).resolves.toEqual([])
+    }
   })
 
   it('allows production output without fixture or placeholder markers', async () => {

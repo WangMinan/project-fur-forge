@@ -30,7 +30,7 @@
 
 1. 公开 mapper 逐字段构造，禁止把服务端记录对象展开到公开 DTO；`originalObjectKeys` 只保留在服务端记录层。
 2. 管理 DTO 只返回 `assetIds` 与获准的后台联系人；不返回私有 Object Key、签名 URL或其他存储身份。
-3. 旧 `OSS_BUCKET` / `ossBucket` 不做静默兼容。配置加载发现旧字段时直接给出弃用错误，测试锁定该行为。
+3. 旧 `OSS_BUCKET` / `ossBucket` 不做静默兼容。配置加载只要发现旧名字（包括空值环境变量）就直接给出弃用错误，测试锁定该行为。
 4. 私有与公开 Bucket 必须成组配置且名称不同；production 必须完整提供。
 5. 页面错误不复用 API JSON 输出：Nuxt `error.vue` 只显示稳定的 404/500 访问者文案。API 仍使用统一 `{ error: { code, message, requestId } }`。
 6. 500 日志只保留请求 ID、方法、无查询串路径、状态码、错误代码和静态分类；内部异常不回显。
@@ -45,7 +45,7 @@
 | `pnpm install --frozen-lockfile` | 通过；lockfile 无变化，pnpm 10.33.0 |
 | `pnpm lint` | 通过，0 问题 |
 | `pnpm typecheck` | 通过 |
-| `pnpm test` | 9 文件、58 项单测通过 |
+| `pnpm test` | 9 文件、61 项单测通过 |
 | `pnpm test:integration` | 1 文件、4 项通过 |
 | `pnpm test:e2e` | 86 项通过，约 2.3 分钟 |
 | `pnpm build` | Nuxt 4.5.1 node-server 构建通过；development 诚实提示允许保留 |
@@ -55,7 +55,9 @@
 
 开发期第一次完整单测发现 T07 夹具中数个非规范 UUID；修正为有效 UUID 后全部通过。错误分流的集成测试先暴露了 Nitro error handler 直接返回 `Response` 未结束事件的问题，改为通过 Nuxt `__nuxt_error` 渲染并由 `sendWebResponse` 发送后，页面 404/500 HTML 与 API JSON 均通过。
 
-E2E 输出含既有未实施 `/commission`、`/adoptions`、`/returns`、`/about`、`/contact` 的 Vue Router warning；测试无失败，本轮没有提前创建这些路由。视觉证据用例会重采既有 PNG，最终已将 6 张自动生成差异精确恢复，分支不包含视觉基线漂移。
+E2E 输出含既有未实施 `/commission`、`/adoptions`、`/returns`、`/about`、`/contact` 的 Vue Router warning；测试无失败，本轮没有提前创建这些路由。视觉证据用例会重采既有 PNG，最终已将自动生成差异精确恢复，分支不包含视觉基线漂移。
+
+完成审计后另以 `pnpm exec playwright test tests/e2e/access-surfaces.spec.ts tests/e2e/public-works.spec.ts` 复核错误夹具的 production 排除条件，18 项通过；随后仍以表中八条标准命令作为最终结论。
 
 ## 5. 未收口项
 
