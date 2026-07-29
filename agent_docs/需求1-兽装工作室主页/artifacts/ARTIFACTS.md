@@ -21,8 +21,8 @@
 | 3 设计 | 设计流程路由 | `.design/README.md` | 已完成 | 公开端/管理端分轨，明确 v5 仅为职责与交互基线，TASKS 为唯一任务源 |
 | 3 设计 | 公开端 Design Brief / IA / Token | `.design/public-site/` | 已完成 | 图片第一层级、编辑型摄影作品集、路由与导航、响应式/动效/禁用风格 |
 | 3 设计 | 管理端 Design Brief / IA / Token | `.design/admin-console/` | 已完成 | 安静内容工具、对象化导航、发布确定性、PC 完整/手机轻量 |
-| 3 任务 | 任务清单 | `implementation/TASKS.md` | 已完成 | T01–T53 已正式拆解并建立依赖、验证、SPEC 覆盖和部署后置项；经 doc-coauthoring 三路无上下文 Reader Test 修订。当前 T01 已完成，下一项为 T02 |
-| 4 实施 | 实施备注 | `implementation/notes/README.md` | 进行中 | T01 实施记录与验证证据已归档；后续严格按 TASKS 依赖继续 |
+| 3 任务 | 任务清单 | `implementation/TASKS.md` | 已完成 | T01–T53 已正式拆解并建立依赖、验证、SPEC 覆盖和部署后置项；经 doc-coauthoring 三路无上下文 Reader Test 修订。当前 T01–T03 已完成，下一项为 T04 |
+| 4 实施 | 实施备注 | `implementation/notes/README.md` | 进行中 | T01 及 T02/T03 实施记录与验证证据已归档；用户当前要求不碰视觉设计，T04 尚未开始 |
 | 1–3 模型 | 模型说明 | `models/README.md` | 已同步 | 记录当前统一作品聚合、slug 重定向、媒体资产和后续阶段写入边界 |
 | 5 评审 | 评审记录 | `review/REVIEW.md` | 未开始 | 文件仅保留阶段模板 |
 | 6 闭环 | 状态 | `STATE.md` | 持续更新 | 当前阶段、验证记录、约束与 OQ 汇总 |

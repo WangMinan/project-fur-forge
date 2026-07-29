@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01 已完成。** 单 Nuxt 4 全栈应用的公开 SSR、后台 CSR、Nitro 健康检查、TypeScript strict、pnpm 锁文件和测试/构建入口已经建立；SQLite/Drizzle、认证与阿里云 OSS 尚未开始。公开端与管理端的生产设计输入位于 `.design/`，规划原型 v5 只锁定页面职责、内容顺序和关键交互，不代表生产视觉完成度。**继续严格按 `implementation/TASKS.md` 的依赖推进，下一项为 T02。**
+> **当前阶段：阶段 4 IMPLEMENTATION，T01–T03 已完成。** 单 Nuxt 4 全栈应用、文件化运行配置与环境变量映射、Host 隔离、安全日志、共享 Zod 契约和公开/管理 DTO 已建立并通过完整质量门禁；SQLite/Drizzle、认证与阿里云 OSS 尚未开始。公开端与管理端的生产设计输入位于 `.design/`，规划原型 v5 只锁定页面职责、内容顺序和关键交互，不代表生产视觉完成度。**下一项为 T04；用户当前明确要求不碰视觉设计，因此 T04 尚未开始。**
 
 ## 网站核心原则（景宸确认）
 

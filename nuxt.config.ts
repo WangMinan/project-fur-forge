@@ -7,6 +7,7 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
   ],
   nitro: {
+    errorHandler: './server/error.ts',
     preset: 'node-server',
   },
   routeRules: {

@@ -17,7 +17,7 @@
 - 用户和景宸已经锁定“简洁、图片为主、Logo/文字/符号只作辅助”的公开端原则；白底、全幅作品首屏、作品优先动线和现有 v5 快速原型继续有效。远端方案中的暖灰/黑底、联系表单、公告、后台看板等建议不覆盖 SPEC。
 - 2026-07-28 复审补齐统一作品 canonical、发布后 slug 稳定、草稿媒体私有、OSS 条件写与内容摘要、EXIF 坐标系、OSS 环境前置检查及人工失败恢复；相关决策登记为 `OQ-019–023`。
 - 2026-07-28 本轮修订后的无上下文 Reader Test 最终通过：blocker、P1、P2、P3 均为 0；OQ、索引、路径与模板状态已复核一致。
-- `OQ-018–023` 已获用户确认，PLAN OQ 门禁已通过。用户于 2026-07-28 明确授权阶段 3，公开端/管理端的生产设计输入已写入 `.design/`，正式 `implementation/TASKS.md` 已完成；同日用户进一步授权阶段 4 并要求从 T01 开始，当前 T01 已完成。
+- `OQ-018–023` 已获用户确认，PLAN OQ 门禁已通过。用户于 2026-07-28 明确授权阶段 3，公开端/管理端的生产设计输入已写入 `.design/`，正式 `implementation/TASKS.md` 已完成；同日用户进一步授权阶段 4 并要求从 T01 开始，当前 T01–T03 已完成。
 - 2026-07-29 同步新业务与品牌事实：正式中文名为“有点小狗工作室”，英文暂用 `dite dog`；狗头加闪电不是正式 Logo；公开端一期显示适用领养/掉落作品的人民币价格和该作品自己的短属性；永久私有原图上限调整为 30,000,000 字节，并新增 OSS 图片处理源图配额达到该值的外部门禁。
 
 ## 迁移边界
@@ -83,12 +83,20 @@ flowchart LR
 
 ### 域名与本地路由
 
-- 配置项至少包括 `PUBLIC_BASE_URL`、`ADMIN_BASE_URL`、`MEDIA_BASE_URL`、`OSS_UPLOAD_BASE_URL`、`DATABASE_FILE`、OSS region/bucket/endpoint、Session secret 和 SMTP 参数；上传域名与公开媒体域名不得复用为一个含义不清的配置。应用内原图上限固定为 30,000,000 字节，部署/测试记录必须另行证明目标 OSS 图片处理源图配额不低于该值，不能用环境变量静默降低产品契约。数据库只保存相对 Object Key 和稳定业务标识，不保存环境相关完整 URL。
+- 配置项至少包括 `PUBLIC_BASE_URL`、`ADMIN_BASE_URL`、`MEDIA_BASE_URL`、`OSS_UPLOAD_BASE_URL`、`DATABASE_FILE`、OSS region/bucket/endpoint、Session secret 和 SMTP 参数；上传域名与公开媒体域名不得复用为一个含义不清的配置。上述键、类型及环境变量映射由版本化配置模板统一声明，并由服务端单一入口解析，不允许页面、API 或脚本各自读取环境变量。应用内原图上限固定为 30,000,000 字节，部署/测试记录必须另行证明目标 OSS 图片处理源图配额不低于该值，不能用环境变量静默降低产品契约。数据库只保存相对 Object Key 和稳定业务标识，不保存环境相关完整 URL。
 - 本地默认 `http://127.0.0.1:3000` 运行 Nuxt。开发中通过 Host 模拟或两个明确 origin 验证公开/后台隔离；OSS CORS 必须列出实际使用的完整 origin，而不是只写模糊主机名。
 - 正式公开 Host 只允许公开页面和必要公开 API；正式后台 Host 的 `/` 重定向到 `/admin/login`，并允许 `/admin/**`、`/api/admin/**`、`/api/auth/**`、`/preview/**`。
 - Nitro Host 校验中间件重复执行同一隔离规则，避免反向代理误配时公开 Host 直接访问后台页面/API；健康检查等明确例外必须逐项列出。
 - 未配置可在线预览的媒体自定义域名前，开发环境可提供受限 `/__dev/media/{assetId}/{variant}`：按数据库 ID 校验该 READY 衍生图正被已发布内容引用后才允许匿名读取，拒绝任意 Object Key、草稿/已下架衍生图和原图；管理员预览草稿仍使用短时签名 GET。生产环境不注册该开发路由。
 - 媒体地基先验证当前 OSS 账号能否从两个开发 origin 通过 `OSS_UPLOAD_BASE_URL` 完成 V4 条件 PUT，并读取目标 Bucket 所在地域的图片处理源图大小配额。若配额低于 30,000,000 字节，必须先由用户在阿里云配额中心申请并完成复验；不得静默压缩原图或把产品上限退回 20 MB。若中国内地默认外网 Endpoint 因账号开通时间受到数据 API 限制，则必须由用户提供已正确绑定的 OSS 上传 CNAME 后继续；不为绕过该前置条件临时改成 Nitro 代理上传。杭州 Bucket 的正式公开媒体域名按阿里云要求完成绑定、CNAME、HTTPS 和 ICP 备案后再切换；CDN 属于上线阶段，不改变数据库内相对键。
+
+### 运行配置与秘密注入
+
+- T02 建立唯一的服务端配置加载器。仓库提交 `config/runtime.example.json` 作为完整配置契约与文件模板，并保留不含真实值的 `.env.example`；活动配置文件路径由 `APP_CONFIG_FILE` 指定，本地调试使用已忽略的 `config/runtime.local.json`，容器中使用只读挂载文件。模板中的环境变量映射必须可机械检查，新增配置先改模板和 Schema，再改调用方。
+- 每个运行时配置项严格按“环境变量 > 活动配置文件 > fallback 默认值”解析。fallback 只提供无敏感性的本地安全默认值；生产地址和 OSS AccessKey、QQ SMTP 授权码、Session secret、管理员初始凭据等秘密不提供默认值，目标环境缺失或类型/格式非法时在启动阶段快速失败。
+- 配置加载和校验只发生在服务端；客户端公开 runtime config、构建产物、日志、错误响应和健康检查不得包含秘密、完整签名 URL 或本地配置文件内容。业务代码只读取校验后的类型化配置对象，不直接读取 `process.env` 或重复解析文件。
+- 产品与安全硬契约不得被运行配置降级，包括 30,000,000 字节原图上限、Host/Origin 隔离、后台访问控制和日志脱敏。确需变更时先修改 SPEC/PLAN/TASKS，不把一次部署覆盖当作契约变更。
+- 本地真实值只允许写入 `.env.local` 或 `config/runtime.local.json`，两者均由 `.gitignore` 排除；仓库、文档、夹具、测试快照、镜像和业务导出中只保留变量名或明确假值。T02 不需要真实 AK/SK；到 T17 只读 OSS 预检前，必须先向用户说明所需最小权限、使用范围和本地写入位置，取得值后也不得回显或提交。
 
 ## 产品体验与界面规划
 
@@ -319,7 +327,7 @@ prod/public/web/{asset-id}/{recipe-version}/{crop}/{content-hash}.{ext}
 
 - 日常开发在 Windows 宿主机运行 Node.js 24/pnpm/Nuxt，直接连接杭州 OSS 和 QQ SMTP；不引入 MinIO、Mailpit、MySQL 或 Redis。
 - 开发数据库为 `.data/dev.db`；自动化测试每次创建独立临时 SQLite 文件并使用独立 OSS `test/<run-id>/` 前缀。清理任务必须验证前缀包含当前 run-id，禁止作用于 `dev/` 或生产前缀。
-- 仓库提供 `.env.example`，真实 OSS AccessKey、QQ SMTP 授权码、Session secret 和管理员初始凭据不提交。管理员由受保护、幂等的 CLI/一次性命令初始化。
+- 仓库提供 `config/runtime.example.json` 和 `.env.example`，由同一 Schema 校验并按“环境变量 > 活动配置文件 > fallback 默认值”解析；本地真实值只进入已忽略的 `.env.local` 或 `config/runtime.local.json`。真实 OSS AccessKey、QQ SMTP 授权码、Session secret 和管理员初始凭据不提交。管理员由受保护、幂等的 CLI/一次性命令初始化。
 - 开发机执行 `pnpm install --frozen-lockfile`、类型检查、测试、`pnpm build` 和 Docker 多阶段构建。运行镜像基于 Debian slim，避免 `better-sqlite3` 在 musl 上增加兼容成本。
 - 运行镜像只包含 `.output`、数据库迁移和必要运行文件；使用非 root 用户、只读根文件系统、`/tmp` tmpfs、`/app/data` 持久卷、`no-new-privileges` 和 capability drop。
 - 生产入口为 `node .output/server/index.mjs`，设置 `NODE_ENV=production`、`NITRO_HOST=0.0.0.0`、`NITRO_PORT=3000`。生产机不安装 pnpm、不执行 Nuxt 构建。

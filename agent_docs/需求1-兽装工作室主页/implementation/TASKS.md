@@ -2,7 +2,7 @@
 
 > **角色**：PLAN 的可勾选分解（对应 spec-kit `/tasks`）；每个 `[ ]` 都是可独立完成、可验证、可留下证据的实施单元。
 > **写入日期**：2026-07-29。
-> **当前状态**：阶段 4 已于 2026-07-28 获用户明确授权；T01 已完成，下一项为 T02。
+> **当前状态**：阶段 4 已于 2026-07-28 获用户明确授权；T01–T03 已完成，下一项为 T04。用户当前明确要求不碰视觉设计，因此 T04 尚未开始。
 > **权威顺序**：`foundation/README.md` → `requirements/SPEC.md` → `planning/PLAN.md` → 本文件。发现契约缺口时回到对应阶段登记 OQ，禁止在代码中猜答案。
 
 ## 当前目标
@@ -77,8 +77,8 @@ flowchart LR
 ## A. 工程底座与生产设计门禁
 
 - [x] **T01 · 建立可运行的双访问面最小切片**：创建单 Nuxt 4/Vue 3/TypeScript strict 工程，固定 Node 24、Corepack/pnpm、`pnpm-lock.yaml`、`pnpm-workspace.yaml` 的依赖构建许可和六个标准脚本；交付一个 SSR 首页占位、一个 `/admin/login` CSR 页面、一个 `/api/health`，并确认 `app/`/`server/`/`shared/` 根界限。_创建：应用壳、公开/后台 layout、测试入口；依赖：GATE-06；验证：执行 `pnpm install --frozen-lockfile` 及 `pnpm lint`、`pnpm typecheck`、`pnpm test`、`pnpm test:integration`、`pnpm test:e2e`、`pnpm build`，全部退出码为 0；SSR HTML 非空，`/admin/**` 不做 SSR。证据：[`notes/T01-2026-07-28.md`](./notes/T01-2026-07-28.md)。_
-- [ ] **T02 · 收敛运行配置、Host 与安全日志边界**：用服务端 Schema 校验 `PUBLIC_BASE_URL`、`ADMIN_BASE_URL`、`MEDIA_BASE_URL`、`OSS_UPLOAD_BASE_URL`、`DATABASE_FILE`、OSS、Session、SMTP 等配置，提供不含真实值的 `.env.example`；建立公开/后台 Host allowlist、开发 Host 映射和敏感字段日志脱敏。_创建：runtime-config Schema、Host 中间件、日志工具；依赖：T01；验证：缺失/非法配置快速失败；公开 Host 精确拒绝 `/admin/**`、`/api/admin/**`、`/api/auth/**` 与 `/preview/**`，后台 Host 隔离规则符合 PLAN，`/api/health` 的允许 Host 有显式测试；日志不出现凭据、签名查询串或客户敏感字段。_
-- [ ] **T03 · 建立共享契约与错误语义**：建立 Zod 枚举、请求/响应 Schema、公开 DTO、管理员 DTO、资源版本/幂等键和统一错误格式；数据库行对象禁止直接跨到客户端。公开 DTO 允许已发布领养/掉落作品的人民币价格与有序短属性，其他作品不得误投影价格。_创建：`shared/schemas`、`shared/types`、服务端 mapper；依赖：T01；验证：类型检查、短属性 0–8 条/1–24 字/去重 Schema 单测、价格适用性单测，以及“公开 DTO 不含联系方式/付款备注/原图键/认证字段”泄漏守卫。_
+- [x] **T02 · 收敛运行配置、Host 与安全日志边界**：建立唯一的服务端 runtime-config Schema/加载器，以版本化 `config/runtime.example.json` 声明完整键、类型和环境变量映射，提供不含真实值的 `.env.example`，活动文件通过 `APP_CONFIG_FILE` 选择；每项严格按“环境变量 > 活动配置文件 > fallback 默认值”解析，业务代码不得直接读取 `process.env`。校验 `PUBLIC_BASE_URL`、`ADMIN_BASE_URL`、`MEDIA_BASE_URL`、`OSS_UPLOAD_BASE_URL`、`DATABASE_FILE`、OSS、Session、SMTP 等配置；建立公开/后台 Host allowlist、开发 Host 映射和敏感字段日志脱敏。真实值只允许进入已忽略的 `.env.local` 或 `config/runtime.local.json`；本任务使用假值/测试值，不需要用户提供 AK/SK。_创建：版本化配置模板、runtime-config Schema/加载器、Host 中间件、日志工具；依赖：T01；验证：分别证明环境变量覆盖活动文件、活动文件覆盖 fallback、仅 fallback 三条路径；缺失/非法的必需配置快速失败，秘密和生产地址无 fallback，30,000,000 字节原图上限等硬契约不可被配置降低；公开 Host 精确拒绝 `/admin/**`、`/api/admin/**`、`/api/auth/**` 与 `/preview/**`，后台 Host 隔离规则符合 PLAN，`/api/health` 的允许 Host 有显式测试；客户端 runtime config、日志、错误和健康检查不出现凭据、签名查询串、本地配置内容或客户敏感字段；git 跟踪文件与构建产物 secret scan 无真实值。证据：[`notes/T02-T03-2026-07-29.md`](./notes/T02-T03-2026-07-29.md)。_
+- [x] **T03 · 建立共享契约与错误语义**：建立 Zod 枚举、请求/响应 Schema、公开 DTO、管理员 DTO、资源版本/幂等键和统一错误格式；数据库行对象禁止直接跨到客户端。公开 DTO 允许已发布领养/掉落作品的人民币价格与有序短属性，其他作品不得误投影价格。_创建：`shared/schemas`、`shared/types`、服务端 mapper；依赖：T01；验证：类型检查、短属性 0–8 条/1–24 字/去重 Schema 单测、价格适用性单测，以及“公开 DTO 不含联系方式/付款备注/原图键/认证字段”泄漏守卫。证据：[`notes/T02-T03-2026-07-29.md`](./notes/T02-T03-2026-07-29.md)。_
 - [ ] **T04 · 实现公开站视觉系统与导航壳**：把 `../.design/public-site/DESIGN_TOKENS.md` 翻译为实际 CSS/Tailwind Token，使用 `#1D2D5A`、`#293C84`、`#324DAF`、`#6274BB`、`#CED3E5` 的受控蓝色阶，创建 `PublicHeader`、`PublicMobileNav`、`PageIntro`、`ResponsiveAsset`、`PublicFooter`；首页覆盖态与内页白底态、390/768/1440 响应式、键盘焦点和减少动效同时完成。_创建：公开基础组件；依赖：T01–T03；验证：三视口截图、Token 值检查、公开站无后台入口/内部文案/横向溢出，公开组件 Bundle 不包含后台组件。_
 - [ ] **T05 · 用类型化夹具完成首页生产级视觉样张**：按设计简报实现使用用户授权开发夹具（非生产素材）的全幅作品首屏、3–6 件精选轨道、图片式委托/领养入口、营业状态和可选领养推荐；完成箭头、触控滑动、键盘浏览、主图安全区与减少动效。_创建：`HeroMedia`、`FeaturedWorkRail`、`ImageRouteCard`、`BusinessStatus`；依赖：T04；验证：390/768/1440 截图、首屏后第一个区块为精选作品、无自动轮播、文字不遮挡夹具主体焦点。_
 - [ ] **T06 · 用类型化夹具完成作品列表与详情视觉样张**：实现用途 × 装型交集筛选、结果数、人工顺序、等大 3:4 网格、空结果和 `/works/{slug}` 详情图集；详情是独立路由，灯箱只服务图集。样张覆盖有/无人民币价格、有/无作品短属性两种状态，并使用全装掉落 `¥15,600` 作为已确认示例。_创建：`WorkFilterBar`、`WorkGrid`、`WorkCard`、`WorkDetailGallery`；依赖：T04；验证：1440 × 900 四列、768 × 1024 三列、390 × 844 两列，筛选不改变人工顺序，缺省价格不留下空标签/占位，普通链接在关闭 JavaScript时仍进入详情。_
@@ -98,7 +98,7 @@ flowchart LR
 
 ## C. 阿里云 OSS 媒体底座
 
-- [ ] **T17 · 执行 OSS 预检、授权配置与复验门禁**：第一步只读验证杭州 Bucket/region/上传 Endpoint、图片处理源图大小配额、两个完整开发 origin、CORS 方法/请求头、账号级与 Bucket 级 Block Public Access、已发布衍生图 `public-read` 能力、原图 `private` 和 `test/<run-id>/` 前缀隔离；报告逐项记录期望值、实测值和 PASS/FAIL。任一 FAIL 均保持 T17 未完成并停止：配额申请、账号级变更与上传 CNAME 只由用户在控制台处理；Bucket CORS/BPA 等变更必须由用户另行明确授权精确目标后执行或由用户手工完成，随后重新运行只读复验。_创建：preflight/config 命令与脱敏记录模板；依赖：T16；验证：除独立 EXT-02 实测外的预检项目全部 PASS 后才能勾选 T17；不上传生产素材、不静默修改任何设置、不以 Nitro 代理、双 Bucket 或压缩原图绕过。_
+- [ ] **T17 · 执行 OSS 预检、授权配置与复验门禁**：第一步只读验证杭州 Bucket/region/上传 Endpoint、图片处理源图大小配额、两个完整开发 origin、CORS 方法/请求头、账号级与 Bucket 级 Block Public Access、已发布衍生图 `public-read` 能力、原图 `private` 和 `test/<run-id>/` 前缀隔离；报告逐项记录期望值、实测值和 PASS/FAIL。开始前如确需用户提供 AK/SK，先说明只读预检所需的最小权限、使用范围及 `.env.local` 或 `config/runtime.local.json` 本地写入位置，不得写入其他文件、回显或提交；用户未提供时保持 T17 未完成。任一 FAIL 均保持 T17 未完成并停止：配额申请、账号级变更与上传 CNAME 只由用户在控制台处理；Bucket CORS/BPA 等变更必须由用户另行明确授权精确目标后执行或由用户手工完成，随后重新运行只读复验。_创建：preflight/config 命令与脱敏记录模板；依赖：T16；验证：除独立 EXT-02 实测外的预检项目全部 PASS 后才能勾选 T17；不上传生产素材、不静默修改任何设置、不以 Nitro 代理、双 Bucket 或压缩原图绕过。_
 - [ ] **T18 · 实现 V4 条件直传会话与浏览器上传**：浏览器校验格式/字节/数量/像素并计算 SHA-256、Content-MD5；服务端创建 5 分钟会话和不可预测私有 Key，签名固定 `Content-Type`、MD5、SHA-256 metadata 与禁止覆盖；客户端直接 PUT 并显示进度。_创建：presign API、上传 composable、`MediaUploader`/`UploadItem`；依赖：T17、EXT-02；验证：30,000,000 字节接受、30,000,001 字节拒绝、错误格式/数量、请求头篡改、重复 PUT/Key 覆盖拒绝，图片二进制不经过 Nitro。_
 - [ ] **T19 · 实现上传完成校验与无效对象处理**：完成回调携带会话、ETag 和客户端宽高；服务端 HEAD/图片信息复核 Key、字节、MIME、MD5/ETag、SHA-256、魔数和像素，成功进入待处理，失败保留可读状态并尽力删除无效对象。_创建：complete API、上传会话状态；依赖：T18；验证：伪造 ETag/MIME/元数据、超过 12,000px、错误魔数、删除失败待人工处理清单。_
 - [ ] **T20 · 锁定 EXIF 显示坐标与衍生身份算法**：实现 Orientation 1–8（含镜像方向）的显示画布换算、归一化焦点和 3:4/16:9/1:1 裁切；公开衍生 Key 身份覆盖原图摘要、裁切/焦点、尺寸、格式、质量、方向、水印摘要和 recipe version。_创建：纯函数/Schema/夹具；依赖：T19；验证：Orientation 1–8、同一输入确定性、像素变更产生新 Key、长边 >4096 且带旋转/镜像方向的安全缩放与坐标测试。_
@@ -181,6 +181,6 @@ flowchart LR
 
 ## 闭环结论
 
-- 阶段 4 已获授权；T01 已完成，T02–T53 按依赖顺序继续实施。
-- 下一步为 T02 运行配置、Host 与安全日志边界；T08 仍是第一次生产视觉确认点，未通过前不得开始 T25–T46。
+- 阶段 4 已获授权；T01–T03 已完成，T04–T53 按依赖顺序继续实施。
+- 下一步为 T04 公开站视觉系统与导航壳；用户当前明确要求不碰视觉设计，因此本轮停在 T03。T08 仍是第一次生产视觉确认点，未通过前不得开始 T25–T46。
 - 正式 Logo/其余授权素材、英文名最终确认、基本约定法律/适用性审阅和真实设备可达性属于最终验收门禁；中文正式名“有点小狗工作室”与临时英文名 `dite dog` 已可进入实现，不再继续使用占位工作室名。
