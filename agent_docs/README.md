@@ -1,21 +1,25 @@
 # agent_docs
 
-本目录是 spec-driven 开发的工作区，流程对齐 `D:\code\spec.template`（[github/spec-kit](https://github.com/github/spec-kit)）。
+本目录是项目的 spec-driven 工作区。当前唯一活动需求为 [`需求1-兽装工作室主页/`](./需求1-兽装工作室主页/)。
 
-## 开新需求
+## 权威顺序
 
-```bash
-cp -r agent_docs/_template/ agent_docs/需求N-<短描述>/
-```
+1. `foundation/README.md`：产品边界与不可违背的原则；
+2. `requirements/SPEC.md`：业务需求、数据边界与验收结果；
+3. `planning/PLAN.md`：技术路线、阶段优先级与实施策略；
+4. `.design/`：公开站与管理端的体验、信息架构和视觉契约；
+5. `implementation/TASKS.md`：唯一可勾选任务清单；
+6. `STATE.md`：当前状态、最近决策和下一步入口。
 
-复制后，让 agent 先读该需求文件夹下的 `STATE.md` 与 `foundation/README.md`，按 [`D:\code\spec.template\AGENTS.md`](../../spec.template/AGENTS.md) 推进七阶段直到闭环。
+`materials/`、`planning/prototype-v1/` 与 `implementation/notes/` 是证据或历史记录；出现冲突时不得覆盖上述当前契约。
 
-## 目录约定
+## 当前状态
 
-- `_template/` —— 可复制的需求骨架（**不要直接在里面写需求**，复制出去再写）。
-- `需求N-<描述>/` —— 每个需求一个文件夹，内含 `STATE.md`（状态机）与 `foundation/ requirements/ planning/ implementation/ models/ review/ artifacts/`。
+截至 2026-07-29，T01–T03 已完成，下一项为 T04。T04–T08 先完成公开站与管理端的生产视觉基线；T09 之后按垂直切片先跑通“一件作品从后台录入、上传、发布到公开站展示”的完整链路，再扩展其余一期能力。当前这轮只校准文档，不实施 T04；恢复视觉编码仍以用户后续明确指令为准。
 
-## 当前需求
+当前技术主线为单 Nuxt 4 全栈应用、Node.js 24 LTS、Nitro、SQLite/Drizzle、单镜像/单进程，以及已创建的两个 OSS Bucket：
 
-- [`需求1-兽装工作室主页/`](./需求1-兽装工作室主页/)：阶段 4 已于 2026-07-28 获授权，T01–T03 已完成。正式中文名已确认为“有点小狗工作室”，英文暂用 `dite dog`；适用领养/掉落作品一期公开人民币价格与作品短属性，永久私有原图上限为 30,000,000 字节并新增 OSS 配额门禁。当前已建立单 Nuxt 4 全栈应用、文件化运行配置与环境变量映射、Host 隔离、安全日志、共享 Zod 契约和公开/管理 DTO；SQLite/Drizzle、认证与 OSS 尚未开始。下一项为 T04，但用户当前明确要求不碰视觉设计，故尚未开始；SPEC/PLAN 待答 OQ 均为 0。
-- [`需求1-兽装工作室主页/materials/兽装工作室主页调研_2026-07-26/`](./需求1-兽装工作室主页/materials/兽装工作室主页调研_2026-07-26/)：只读竞品调研证据。
+- `project-furry-forge-private`：永久原图、草稿衍生图、临时对象和受控预览；
+- `project-furry-forge-public`：仅保存已发布的网页衍生图。
+
+一期不建设站内委托表单、交易、支付、订单、多管理员、万能 CMS、消息队列或自动媒体 worker。
