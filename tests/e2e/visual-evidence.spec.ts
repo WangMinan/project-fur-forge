@@ -6,7 +6,7 @@ import {
 } from '@playwright/test'
 
 /**
- * T05 视觉证据采集：固定三视口截图，供 T08 审查与横向轨道/编辑型网格对比。
+ * T05/T08 视觉证据采集：固定三视口截图，保留最终选定的横向轨道方案。
  * 产物写入 agent_docs/需求1-兽装工作室主页/implementation/notes/t04-t05/screenshots/。
  */
 const evidenceDir = join(
@@ -28,25 +28,14 @@ const VIEWPORTS = [
 ] as const
 
 for (const viewport of VIEWPORTS) {
-  test(`capture grid home at ${viewport.name}`, async ({ page }) => {
+  test(`capture selected track home at ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height })
     await page.goto('/')
     await page.waitForLoadState('networkidle')
 
     await page.screenshot({
-      path: join(evidenceDir, `home-grid-${viewport.name}-hero.png`),
+      path: join(evidenceDir, `home-track-${viewport.name}-hero.png`),
     })
-    await page.screenshot({
-      path: join(evidenceDir, `home-grid-${viewport.name}-full.png`),
-      fullPage: true,
-    })
-  })
-
-  test(`capture track home at ${viewport.name}`, async ({ page }) => {
-    await page.setViewportSize({ width: viewport.width, height: viewport.height })
-    await page.goto('/?featured=track')
-    await page.waitForLoadState('networkidle')
-
     await page.screenshot({
       path: join(evidenceDir, `home-track-${viewport.name}-full.png`),
       fullPage: true,

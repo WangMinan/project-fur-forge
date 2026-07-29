@@ -2,6 +2,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-07-28',
   css: [
     '~/assets/css/public-base.css',
+    '~/assets/css/admin-base.css',
   ],
   devtools: {
     enabled: false,

@@ -57,12 +57,12 @@
 | --- | --- |
 | `PublicHeader` / `PublicMobileNav` | 首页图片覆盖态与内页白底态；七个一级页面可达 |
 | `HeroMedia` | 全视口代表作品图、独立桌面/手机焦点、安全区、一个主行动 |
-| `FeaturedWorks` | T05 比较横向轨道与编辑型网格后确定，不自动轮播 |
+| `FeaturedWorks` | 横向轨道（用户 2026-07-30 T08 最终验收确认），不自动轮播 |
 | `ImageRouteCard` | 委托/领养图片入口；短标题、短事实、真实行动 |
 | `ResponsiveAsset` | 只消费 OSS 预生成公开衍生图；输出 picture/srcset/sizes、尺寸与 alt |
 | `WorkFilterBar` | 作品用途 × 装型交集、结果数、清楚选中态 |
 | `WorkGrid` / `WorkCard` | 3:4 图片网格；不把整页包成同款重卡片 |
-| `WorkDetailGallery` | 主图、原比例图集、必要事实、短属性、适用 CNY 价格 |
+| `WorkDetailGallery` | 主图、原比例图集、必要事实、短属性、适用 CNY 价格；PC 端主图限高，纵向图片一屏内完整可见、不裁切 |
 | `BusinessStatus` | 委托/领养营业状态，不与单件作品状态混用 |
 | `FaqAccordion` | 只展示已确认事实，支持键盘和焦点恢复 |
 | `ReturnMasonry` / `ReturnEmptyState` | 真实照片墙或真实空状态 |

@@ -1,16 +1,6 @@
 <script setup lang="ts">
 import { featuredWorkSlugs, visualWorkFixtures } from '~~/shared/fixtures/visual-home'
 
-/**
- * T05 对比开关：默认编辑型网格；`?featured=track` 切换横向轨道。
- * 两方案的三视口截图对比与最终选择记录在 implementation/notes/；
- * T08 确认后删除落选组件与本开关。
- */
-const route = useRoute()
-const variant = computed(() =>
-  route.query.featured === 'track' ? 'track' : 'grid',
-)
-
 const works = featuredWorkSlugs
   .map(slug => visualWorkFixtures.find(work => work.dto.slug === slug))
   .filter((work): work is (typeof visualWorkFixtures)[number] => Boolean(work))
@@ -32,8 +22,7 @@ const works = featuredWorkSlugs
       </NuxtLink>
     </header>
 
-    <FeaturedTrack v-if="variant === 'track'" :works="works" />
-    <FeaturedGrid v-else :works="works" />
+    <FeaturedTrack :works="works" />
   </section>
 </template>
 
