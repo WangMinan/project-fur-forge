@@ -17,7 +17,7 @@ test('home SSR ships hero, featured works and business statuses', async ({ reque
   expect(html).toContain('data-testid="public-hero"')
   expect(html).toContain('有点小狗工作室')
   expect(html).toContain('dite dog')
-  expect(html).toContain('data-testid="featured-grid"')
+  expect(html).toContain('data-testid="featured-track"')
   expect(html).toContain('精选作品')
   expect(html).toContain('自设委托')
   expect(html).toContain('角色领养')
@@ -39,23 +39,20 @@ test('hero image reserves dimensions and loads eagerly', async ({ page }) => {
 })
 
 for (const viewport of VIEWPORTS) {
-  test(`no horizontal overflow at ${viewport.name} (grid and track)`, async ({ page }) => {
+  test(`no horizontal overflow at ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height })
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
 
-    for (const url of ['/', '/?featured=track']) {
-      await page.goto(url)
-      await page.waitForLoadState('networkidle')
+    const metrics = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      clientWidth: document.documentElement.clientWidth,
+    }))
 
-      const metrics = await page.evaluate(() => ({
-        scrollWidth: document.documentElement.scrollWidth,
-        clientWidth: document.documentElement.clientWidth,
-      }))
-
-      expect(
-        metrics.scrollWidth,
-        `${url} should not overflow horizontally at ${viewport.name}`,
-      ).toBeLessThanOrEqual(metrics.clientWidth + 1)
-    }
+    expect(
+      metrics.scrollWidth,
+      `home should not overflow horizontally at ${viewport.name}`,
+    ).toBeLessThanOrEqual(metrics.clientWidth + 1)
   })
 }
 
@@ -83,7 +80,7 @@ test('mobile nav manages focus, escape and aria state', async ({ page }) => {
 
 test('featured track scrolls with controls and keyboard', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto('/?featured=track')
+  await page.goto('/')
 
   const track = page.getByTestId('featured-track')
   await expect(track).toBeVisible()

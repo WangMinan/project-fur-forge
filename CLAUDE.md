@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01–T05 已完成。** 单 Nuxt 4 全栈应用、文件化运行配置与环境变量映射、Host 隔离、安全日志、共享 Zod 契约和公开/管理 DTO 已建立；公开站设计系统、导航壳与首页生产视觉样张已经实现并通过完整质量门禁。用户于 2026-07-29 选定 Kimi 候选作为后续生产视觉基线，首页默认采用编辑型精选网格，同时保留横向轨道供 T08 最终审查。SQLite/Drizzle、认证与阿里云 OSS 尚未开始。**下一项为 T06 与 T07；二者完成后进入 T08 用户视觉确认。**
+> **当前阶段：阶段 4 IMPLEMENTATION，T01–T08 已完成。** 单 Nuxt 4 全栈应用、文件化运行配置与环境变量映射、Host 隔离、安全日志、共享 Zod 契约和公开/管理 DTO 已建立；公开站设计系统、导航壳、首页、作品列表/详情页与管理端登录/列表/编辑工作台生产视觉样张均已实现。用户于 2026-07-30 完成 T08 验收：横向精选轨道成为首页最终方案，C1、C3–C5 接受现状，`must-fix = 0`；评审记录和截图见 `agent_docs/需求1-兽装工作室主页/implementation/notes/t06-t07/`。SQLite/Drizzle、认证与阿里云 OSS 尚未开始。**下一项为 T09 契约与已知代码审查问题修正。**
 
 ## 网站核心原则（景宸确认）
 
@@ -53,4 +53,4 @@ pnpm verify:production
 
 ## 当前仓库状态
 
-根目录现含 Nuxt 4 工程、`app/`、`server/`、`shared/`、`tests/` 与阶段文档。T01–T05 已提供双访问面、质量门禁、文件化运行配置、Host/安全日志边界、共享 Zod 契约、公开/管理 DTO，以及公开站 Token、导航、全幅首屏、精选作品、图片式业务入口与营业状态。下一位 agent 从 `implementation/TASKS.md` 的 T06 或 T07 继续；不得跳过 T08 用户视觉确认，也不得提前进入 T09。
+根目录现含 Nuxt 4 工程、`app/`、`server/`、`shared/`、`tests/` 与阶段文档。T01–T08 已提供双访问面、质量门禁、文件化运行配置、Host/安全日志边界、共享 Zod 契约、公开/管理 DTO，以及公开站 Token、导航、全幅首屏、横向精选轨道、图片式业务入口、营业状态、作品列表/详情页（含筛选、空态、图集、事实、CNY 价格）与管理端登录/作品列表/编辑工作台（图片状态、发布检查，fixture 驱动、诚实提示）。下一位 agent 应从 T09 开始修正 T03 遗留契约和错误/日志边界，不得跳过任务依赖或提前实现 T10 之后的能力。

@@ -56,7 +56,7 @@ const fixtureMedia = (
 export const heroFixture = {
   studioName: PROJECT_NAME,
   englishName: 'dite dog',
-  tagline: '为每一个角色，做一件认真的兽装。',
+  tagline: '不只做小狗毛',
   action: {
     label: '浏览作品展示',
     href: '/works',

@@ -5,7 +5,13 @@ const baseURL = 'http://127.0.0.1:3100'
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: false,
+  // dev 服务器按页编译 Vue chunk，并行 worker 会放大首次编译延迟；串行执行换取确定性。
+  workers: 1,
   timeout: 30_000,
+  expect: {
+    // CSR 页面在 dev 下需要等待 chunk 编译与水合。
+    timeout: 10_000,
+  },
   use: {
     baseURL,
     channel: 'chrome',

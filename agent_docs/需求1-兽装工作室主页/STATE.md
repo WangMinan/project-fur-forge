@@ -4,7 +4,16 @@
 
 ## 当前阶段
 
-阶段 4 · IMPLEMENTATION 进行中。T01–T05 已完成；用户于 2026-07-29 从 A/B 候选中选定 Kimi 方案作为后续生产视觉基线。公开站 Token、导航壳、全幅首屏、精选作品、图片式业务入口和营业状态已经实现，首页默认采用编辑型精选网格；横向轨道作为 T08 对照资产暂时保留。下一项为 T06 与 T07，二者完成并获得 T08 用户确认后，才进入 T09 之后的真实业务垂直切片。
+阶段 4 · IMPLEMENTATION 进行中。T01–T08 已完成。用户于 2026-07-30 完成 T08 最终验收：首页选定横向精选轨道，T06/T07 视觉基线通过，C1、C3–C5 接受现状，`must-fix = 0`；落选的编辑型网格和实验开关已删除。详情主图 PC 端限高一屏可见、首屏 slogan「不只做小狗毛」均已固化进设计文档。**当前下一项为 T09：修正 T03 契约与已知代码审查问题。**
+
+## 当前执行分工
+
+- Kimi K3 继续作为 `UI_PRIMARY`，在后续接口稳定后承接前端切片；T06/T07 已完成并通过 T08。
+- 当前批次为 T09，由 `ENGINEERING_PRIMARY` 主责共享契约、错误分流、安全日志和泄漏守卫修正。
+- 独立审查者提供证据复核与建议；TASKS 指定的用户门禁仍由用户作最终确认。
+- 数据库、认证、安全、OSS、事务和运维仍由 `ENGINEERING_PRIMARY` 主责，具体模型不写入产品契约。
+- 后续全栈任务采用“工程侧先锁定 Schema/API/错误/权限与集成测试，Kimi 再实现前端切片”的交接方式。
+- 完整的当前批次、后续默认路由、交付清单和分支策略见 [`implementation/EXECUTION_ROUTING.md`](./implementation/EXECUTION_ROUTING.md)。该文件只记录可变执行安排，不改变 TASKS 的范围与依赖。
 
 本轮文档校准于 2026-07-29 生效，覆盖此前文档中的以下旧口径：
 
@@ -50,7 +59,7 @@
 - 明显蓝色面积以 5%–10% 为常态，15% 是单页硬上限；作品图、白色和中性文字承担主要视觉面积。
 - `#324DAF` 用于主要行动和焦点，`#293C84` 用于 Hover/深强调，`#1D2D5A` 用于极少量反白表面，`#6274BB` 只作大字或装饰，`#CED3E5` 只作弱背景和边界。
 - 禁止连续蓝底区块、蓝色卡片墙、蓝色渐变大按钮，以及“半张图片 + 半张蓝色说明面板”的通用营销构图。
-- T05 应至少比较一次“横向精选轨道”和“编辑型图片网格”，由真实截图决定，不把组件名当作不可变需求。
+- T05 已通过真实截图比较“横向精选轨道”和“编辑型图片网格”；T08 最终选定横向轨道，不把组件名当作不可变需求。
 
 ## 当前实现债务
 
@@ -71,10 +80,14 @@ T03 已落地的共享 DTO 仍含本轮废止字段或旧媒体暴露方式。T0
 
 ## 最近验证
 
+- 2026-07-30：用户完成 T08 最终验收，确认 T06/T07 视觉基线通过，首页最终采用横向轨道，C1、C3–C5 接受现状，`must-fix = 0`；落选网格与 `?featured=grid` 实验开关已删除。收口后 lint、typecheck、51 项单测、3 项集成测试、84 项 E2E、生产构建与生产验证全绿；最终结论见 `implementation/notes/t06-t07/T08-REVIEW-PREP.md` 第 7 节。
+- 2026-07-30：T08 第一轮用户反馈已落实（F1 轨道默认 / F2 详情主图限高 / F3 slogan「不只做小狗毛」），lint、typecheck、单测与 E2E 全绿，首页与详情截图已重采；处理记录见 `implementation/notes/t06-t07/T08-REVIEW-PREP.md` 第 6 节。
+- 2026-07-29：Kimi 完成 T06/T07（`feature/t06-t07-kimi`）。lint、typecheck、51 项单测、3 项集成测试、86 项 E2E、生产构建与生产验证全部通过；T08 自动化自查 23 项通过（三视口溢出、对比度、reduce 动效、CLS、键盘、SSR/CSR 边界）。实现记录见 `implementation/notes/T06-T07-2026-07-29.md`，评审包见 `implementation/notes/t06-t07/T08-REVIEW-PREP.md`。本机 `.env` 已按用户指示补齐 OSS 组（region `oss-cn-hangzhou`、endpoint、私有 Bucket 名），仅用于本地启动校验，秘密不入仓。
+- 2026-07-29：新增 `implementation/EXECUTION_ROUTING.md`，把 Kimi 的 UI 主责、T06–T07 当前批次、T08 独立门禁及后续前后端交接从产品任务定义中分离；TASKS、STATE、产物索引和 `agent_docs` 入口已同步。
 - 2026-07-29：Kimi T04–T05 候选获用户选中并进入主线；`pnpm install --frozen-lockfile`、lint、typecheck、20 项单测、3 项集成测试、19 项 E2E、生产构建与生产验证全部通过。实现与三视口证据见 `implementation/notes/T04-T05-2026-07-29.md`。
 - 2026-07-29：完成 foundation、SPEC、PLAN、模型、公开/管理设计、TASKS、产物索引与实施备注的跨文件校准；T01–T53 唯一连续，Markdown 围栏与相对链接检查通过。详细记录见 `implementation/notes/DOCS-REALIGNMENT-2026-07-29.md`。
 - 2026-07-29 文档校准轮没有修改 `.vue`、TypeScript、运行配置、数据库或 OSS 资源；随后完成的 T04–T05 只新增公开站视觉实现与类型化夹具，两个 Bucket 的真实权限与配额仍由 EXT-02 验证。
 
 ## 下一步
 
-从 `implementation/TASKS.md` 的 T06 或 T07 继续。完成两项样张后进入 T08；用户确认首页精选方向且 must-fix 为 0 前，不得进入 T09，也不得提前恢复旧的单 Bucket ACL 方案。
+按 `implementation/EXECUTION_ROUTING.md` 进入 T09，由工程侧先修正 T03 遗留字段、返图授权 Schema、管理 DTO 私有 Key 暴露、API/页面错误分流、安全日志接入和生产占位文案泄漏守卫。T09 完成前不得进入 T10，也不得提前恢复旧的单 Bucket ACL 方案。
