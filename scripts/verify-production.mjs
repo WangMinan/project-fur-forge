@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process'
 const host = '127.0.0.1'
 const port = '3101'
 const baseURL = `http://${host}:${port}`
+const adminBaseURL = `http://localhost:${port}`
 
 const server = spawn(
   process.execPath,
@@ -12,8 +13,13 @@ const server = spawn(
   {
     env: {
       ...process.env,
-      NITRO_HOST: host,
+      ADMIN_BASE_URL: adminBaseURL,
+      APP_ENV: 'test',
+      MEDIA_BASE_URL: 'https://media.test.invalid',
+      NITRO_HOST: '0.0.0.0',
       NITRO_PORT: port,
+      OSS_UPLOAD_BASE_URL: 'https://upload.test.invalid',
+      PUBLIC_BASE_URL: baseURL,
     },
     stdio: [
       'ignore',
@@ -68,7 +74,7 @@ try {
   const [healthResponse, publicResponse, adminResponse] = await Promise.all([
     fetch(`${baseURL}/api/health`),
     fetch(`${baseURL}/`),
-    fetch(`${baseURL}/admin/login`),
+    fetch(`${adminBaseURL}/admin/login`),
   ])
 
   const [health, publicHtml, adminHtml] = await Promise.all([

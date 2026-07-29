@@ -7,3 +7,5 @@ export const ACCESS_SURFACES = [
 ] as const
 
 export type AccessSurface = typeof ACCESS_SURFACES[number]
+
+export const ORIGINAL_IMAGE_MAX_BYTES = 30_000_000

@@ -13,6 +13,7 @@ desktop.ini
 .env
 .env.*
 !.env.example
+config/runtime.local.json
 *.secret
 *.key
 
