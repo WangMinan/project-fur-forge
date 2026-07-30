@@ -12,8 +12,8 @@
 
 | 设计轨 | 目标 | 产物 |
 | --- | --- | --- |
-| 公开站 | 图片大底/白底、可索引、连续浏览的编辑型摄影作品集 | `public-site/DESIGN_BRIEF.md`、`public-site/INFORMATION_ARCHITECTURE.md`、`public-site/DESIGN_TOKENS.md` |
-| 管理端 | 安静、可靠、对象化的内容工具；只显示已实现能力 | `admin-console/DESIGN_BRIEF.md`、`admin-console/INFORMATION_ARCHITECTURE.md`、`admin-console/DESIGN_TOKENS.md` |
+| 公开站 | 图片大底/白底、可索引、连续浏览的编辑型摄影作品集；首页横竖双源轮播；设定图/出厂照/返图角色分离 | `public-site/DESIGN_BRIEF.md`、`public-site/INFORMATION_ARCHITECTURE.md`、`public-site/DESIGN_TOKENS.md` |
+| 管理端 | 安静、可靠、对象化的内容工具；专用首页轮播编辑器；按媒体角色分区；只显示已实现能力 | `admin-console/DESIGN_BRIEF.md`、`admin-console/INFORMATION_ARCHITECTURE.md`、`admin-console/DESIGN_TOKENS.md` |
 
 ## 当前设计门禁
 
@@ -22,12 +22,17 @@
 3. T06 完成作品列表/详情样张；
 4. T07 完成管理端作品工作台样张；
 5. T08 在 390 × 844、768 × 1024、1440 × 900 截图下由用户确认方向；
-6. T51 使用正式 Logo 和授权作品进行第二次校准。
+6. T20 实现并截图验证首页 1–5 项横版/竖版双源轮播及后台专用编辑器；
+7. T24–T25 验证设定图、出厂照在管理端和公开端的分区、比例与水印；T36 验证返图布局与轻量水印；
+8. T30 接入 favicon/触控图标；T51 使用正式 Logo 和授权作品进行品牌、水印、焦点和安全区二次校准。
 
 ## 共通原则
 
 - 图片是公开站第一视觉层级；品牌装饰不得与作品争夺注意力。
 - 白色与摄影承担主要面积，明显蓝色常态 5%–10%，硬上限 15%。
+- 首页横屏与竖屏使用独立图片，不把同一张图的 `object-position` 当作双源配置。
+- 横版设定图、竖版出厂照和原比例返图不共用一个不透明的“主图”概念；后台和公开端都必须按角色表达。
+- 私有原图无水印；公开衍生图使用烘焙水印。完整组合标用于页头，图形标用于水印和小尺寸站点图标。
 - 不以组件名锁死最终构图；真实截图优先于原型和代码抽象。
 - 未实现的 P1/P2 管理能力不出现在导航、按钮或假成功状态中。
 - 公开站和管理端共享品牌色语义，但不共享摄影叠加、大字排版或装饰组件。

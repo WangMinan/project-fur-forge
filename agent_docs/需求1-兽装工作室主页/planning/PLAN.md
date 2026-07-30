@@ -1,20 +1,20 @@
 # 计划：兽装工作室主页
 
 > **角色**：把 SPEC 翻译成有序、可验证的技术实施计划。
-> **状态**：2026-07-31 执行版。T01–T09 已完成；T09 界面修补已通过用户验收和工程侧完整门禁复核。下一项为 T10，本轮未启动。
+> **状态**：2026-07-31 执行版。T01–T09 已完成；首页横竖双源轮播、媒体角色、水印与站点图标契约已补齐。下一项仍为 T10，本轮未启动。
 
 ## 1. 执行结论
 
-一期采用单仓库、单 Nuxt 4 全栈应用、单 Docker 镜像和单 Node.js 进程。公开站 SSR，后台 `/admin/**` CSR，Nitro 提供 API；SQLite/Drizzle 负责持久化；阿里云 OSS 负责原图保存与全部像素转换。
+一期采用单仓库、单 Nuxt 4 全栈应用、单 Docker 镜像和单 Node.js 进程。公开站 SSR，后台 `/admin/**` CSR，Nitro 提供 API；SQLite/Drizzle 负责持久化；阿里云 OSS 负责原图保存、全部像素转换和水印烘焙。
 
 实施顺序不再按“先把所有基础设施做完，再做页面”横向推进，而是：
 
 1. T04–T08：先锁定生产视觉方向；
-2. T09–T21：跑通第一件作品的端到端垂直切片；
+2. T09–T21：跑通第一件作品的端到端垂直切片，并建立首页横竖双源轮播与基础品牌水印；
 3. T22–T34：完成 P0 可部署核心；
 4. T35–T42：完成 P1，形成一期功能闭环；
 5. T43–T50：按价值选择 P2 和上线前质量工作；
-6. T51–T53：正式素材、部署与闭环。
+6. T51–T53：正式素材、品牌衍生校准、部署与闭环。
 
 ## 2. 范围优先级
 
@@ -23,15 +23,16 @@
 - 公开站与管理端生产视觉基线；
 - 唯一管理员登录、退出、改密和受保护命令重置；
 - 作品 CRUD、联系人私有字段、短属性和人民币价格；
-- 私有原图直传、最小裁切/焦点、公开衍生图生成；
+- 私有原图直传、媒体角色校验、最小裁切/焦点、公开衍生图和基础水印；
+- 首页 1–5 项横版/竖版配对轮播的管理、发布和 SSR 展示；
 - 发布/下架、首页、作品列表/详情、委托、领养、关于、联系；
-- 基础营业状态、SEO、SQLite 备份恢复和全链 E2E。
+- 基础营业状态、favicon/触控图标、SEO、SQLite 备份恢复和全链 E2E。
 
 ### P1 · 一期完整增强
 
-- 多图、完整页面用途和水印；
+- 多图、完整页面用途和返图轻量水印；
 - 返图及可选授权记录；
-- 展会关联、站点内容维护、回收站、slug 改址；
+- 展会关联、受限文字内容维护、回收站、slug 改址；
 - 手机轻量维护。
 
 ### P2 · 独立后置
@@ -56,7 +57,7 @@ flowchart LR
     adminui --> api
     api --> db[SQLite + Drizzle]
     adminui -->|V4 条件 PUT| private[project-furry-forge-private]
-    api -->|HEAD / IMG / sys/saveas / 签名 GET| private
+    api -->|HEAD / IMG / watermark / sys/saveas / 签名 GET| private
     api -->|sys/saveas / HEAD / DELETE| publicbucket[project-furry-forge-public]
     visitor -->|公开网页衍生图| media[媒体域名]
     media --> publicbucket
@@ -80,7 +81,7 @@ flowchart LR
 | `/preview/**` | 认证 SSR 预览，noindex |
 | `/api/admin/**`、`/api/auth/**` | 不缓存、不可索引 |
 
-一期不启用共享 HTML 缓存，确保发布后下一次正常请求读取最新 SQLite 公开投影。
+一期不启用共享 HTML 缓存，确保发布后下一次正常请求读取最新 SQLite 公开投影。首页 SSR 直出第一项轮播及两种方向的 `<source>`；客户端只负责后续切换，不能把首屏内容延迟到水合后。
 
 ## 4. 技术基线
 
@@ -95,10 +96,10 @@ flowchart LR
 | 数据 | SQLite + Drizzle + `better-sqlite3` | 单实例、版本化迁移 |
 | 鉴权 | `nuxt-auth-utils` | 密封 HttpOnly Cookie |
 | 安全 | `nuxt-security` + 自定义中间件 | Host/Origin/CSRF/限流按路由验证 |
-| OSS | `ali-oss` | V4 PUT/GET、HEAD、IMG、跨 Bucket `sys/saveas`、DELETE |
-| 图片呈现 | 默认原生 `<picture>`/`srcset`；`@nuxt/image` 仅在验证不会改写 URL/像素时可选 | OSS 是唯一转换权威 |
-| SEO | Sitemap、robots、Meta、有限 Schema.org | 只输出可见事实 |
-| 测试 | Vitest、Nuxt Test Utils、Playwright | 单元、集成、OSS 契约、E2E |
+| OSS | `ali-oss` | V4 PUT/GET、HEAD、IMG、水印、跨 Bucket `sys/saveas`、DELETE |
+| 图片呈现 | 原生 `<picture>`/`source`/`srcset`/`sizes`；`@nuxt/image` 仅在验证不会改写 URL/像素时可选 | OSS 是唯一转换权威；横竖资源不得重复下载 |
+| SEO | Sitemap、robots、Meta、有限 Schema.org、favicon/Touch Icon | 只输出可见事实与品牌源衍生物 |
+| 测试 | Vitest、Nuxt Test Utils、Playwright | 单元、集成、OSS 契约、E2E、三视口媒体请求 |
 
 ## 5. 运行配置
 
@@ -121,7 +122,8 @@ SMTP_*                 # P2 前可以不启用
 ```
 
 - Bucket 名、地域、Endpoint 和域名不写入数据库；数据库只保存相对 Key。
-- 产品硬契约不能通过配置降低：30,000,000 字节、Host 隔离、私有 Bucket 匿名拒绝、公开 Bucket 禁止原图、日志脱敏。
+- 水印 Logo、profile 参数和站点图标属于版本化部署资产，不由环境变量或万能 CMS 任意替换；正式源与摘要由 EXT-01 manifest 固定。
+- 产品硬契约不能通过配置降低：30,000,000 字节、Host 隔离、私有 Bucket 匿名拒绝、公开 Bucket 禁止原图、日志脱敏、原图无水印且禁止覆盖。
 - T02 已有配置模板；T09 修订 Schema 和旧字段时同步更新模板、测试和 root 摘要。
 
 ## 6. 数据与迁移
@@ -143,9 +145,13 @@ PRAGMA synchronous = FULL;
 
 ### 6.2 P0 表
 
-`users`、`works`、`work_feature_tags`、`assets`、`asset_variants`、`work_assets`、`publication_operations`、`business_statuses`、`site_content`、`audit_logs`。
+`users`、`works`、`work_feature_tags`、`assets`、`asset_variants`、`work_assets`、`site_hero_slides`、`publication_operations`、`business_statuses`、`site_content`、`audit_logs`。
 
-P1 再增加 `return_photos`、`events`、`slug_redirects`、`trash_entries` 和完整 FAQ/内容表；P2 再增加 `password_reset_tokens`、统计或导出相关结构。
+- `site_hero_slides` 只保存横版/竖版 `assetId`、alt、排序、启用状态、版本和可选作品关联；自动轮播是站点级受限设置。
+- `work_assets.role` 在 P0 只允许 `design_sheet | studio_photo`；P1 的返图由 `return_photos` 关联独立资产。
+- Logo 与水印源不存成可由页面编辑器替换的数据库内容；variant 保存所用 profile 版本和摘要。
+
+P1 再增加 `return_photos`、`events`、`slug_redirects`、`trash_entries` 和完整 FAQ/文字内容表；P2 再增加 `password_reset_tokens`、统计或导出相关结构。
 
 ### 6.3 字段修正
 
@@ -154,6 +160,7 @@ P1 再增加 `return_photos`、`events`、`slug_redirects`、`trash_entries` 和
 - 返图授权记录三字段均 nullable，不作为发布校验条件。
 - 管理 DTO 不返回私有 Object Key；服务端通过 `assetId` 解析。
 - OQ-119 已回答：`ownerDisplay` 始终非空；工作室作品使用“有点小狗工作室”，隐私作品使用“不公开”；一期不增加 `ownerType`。T12 将其建模为非空公开显示值，不设置把漏填作品静默归类为工作室作品的默认值。
+- 媒体关系保存角色、顺序、主图语义、EXIF 修正后的焦点/裁切和水印锚点；“作品主图”不替代首页横竖配对或领养设定图语义。
 
 ## 7. 双 Bucket 媒体方案
 
@@ -176,43 +183,50 @@ project-furry-forge-public
 
 - 私有 Bucket 开启 Block Public Access，Bucket/Object 匿名读取均失败。
 - 公开 Bucket 只保存已发布衍生图；不得出现 `original/`、联系人、文件原名或可识别私有信息。
-- 两 Bucket 必须同账号、同地域；跨 Bucket `sys/saveas` 与 CORS 在 T10/EXT-02 提前实测，避免完成数据库与认证后才发现外部能力不可用。
+- 两 Bucket 必须同账号、同地域；跨 Bucket `sys/saveas`、图片处理、水印与 CORS 在 T10/EXT-02 提前实测，避免完成数据库与认证后才发现外部能力不可用。
 - 不自动修改账号级安全设置；需要控制台动作时明确暂停。
 
-### 7.2 上传
+### 7.2 上传与角色校验
 
-1. 浏览器检查文件类型、30,000,000 字节、12,000 像素和数量上限，并计算 SHA-256 与 `Content-MD5`。
-2. Nitro 创建上传会话和不可预测私有 Key，签发 5 分钟 V4 条件 PUT；固定 `Content-Type`、`Content-MD5`、`x-oss-forbid-overwrite: true`、摘要元数据。
-3. 浏览器直传私有 Bucket。
-4. 完成接口通过 HEAD/图片信息复核 Key、大小、MIME、摘要、真实格式和像素边界；失败对象进入可读状态并尝试精确清理。
+1. 管理端在申请上传会话时明确媒体角色和归属：作品设定图、作品出厂照、首页横版、首页竖版，P1 再增加返图。
+2. 浏览器检查文件类型、30,000,000 字节、12,000 像素和数量上限，并计算 SHA-256 与 `Content-MD5`。
+3. Nitro 创建上传会话和不可预测私有 Key，签发 5 分钟 V4 条件 PUT；固定 `Content-Type`、`Content-MD5`、`x-oss-forbid-overwrite: true`、摘要元数据。
+4. 浏览器直传私有 Bucket。
+5. 完成接口通过 HEAD/图片信息复核 Key、大小、MIME、摘要、真实格式、像素边界和角色方向：首页横版要求宽大于高，首页竖版要求高大于宽；设定图以横版为推荐并保留完整画布。失败对象进入可读状态并尝试精确清理。
+6. 角色不是文件自身可随意改写的标签。改变用途必须经过服务端校验和重新生成相应用途的 variant，不能把同一关系静默从设定图改成返图。
 
-### 7.3 图片处理唯一权威
+### 7.3 图片处理与水印唯一权威
 
 OSS 图片处理是唯一像素转换权威。Node 不运行 Sharp/FFmpeg 作为第二套生产转换链。应用只负责：
 
-- 保存 EXIF 修正后的归一化焦点/裁切；
-- 计算完整 recipe identity；
-- 调用 OSS IMG 与 `sys/saveas`；
+- 保存 EXIF 修正后的归一化焦点/裁切和水印安全角；
+- 计算覆盖原图摘要、角色、用途、裁切、格式、质量、Logo 摘要、profile 版本与锚点的完整 recipe identity；
+- 调用 OSS IMG、水印与 `sys/saveas`；
 - 验证输出并写数据库。
 
-默认使用原生 `<picture>`/`srcset/sizes` 选择已生成 URL。若使用 `@nuxt/image`，必须先证明它不会改写 URL 或追加裁切、质量、宽度、格式参数；无法证明时不引入。
+私有原图保持无水印。首页横竖图、设定图和出厂照的公开 variant 使用 `brand-standard-v1`；返图在 P1 使用 `brand-subtle-v1`。具体透明度、比例和边距由 T51 用正式素材校准，但 profile 名、Logo 摘要和锚点必须进入 identity。改变任一参数都生成新 Key，不原位覆盖旧图。
+
+默认使用原生 `<picture>`/`srcset/sizes` 选择已生成 URL。若使用 `@nuxt/image`，必须先证明它不会改写 URL或追加裁切、质量、宽度、格式参数；无法证明时不引入。
 
 ### 7.4 `recipe-v1`
 
-| 用途 | 比例 | 宽度 | 格式 |
-| --- | --- | --- | --- |
-| `card` | 3:4 | 480 / 768 / 1200 | WebP + fallback |
-| `hero` | 16:9 | 768 / 1280 / 1920 | WebP + fallback |
-| `detail` | 原比例 | 960 / 1600 / 2400 | WebP + fallback |
+| 用途 | 比例/构图 | 宽度 | 格式 | 水印 |
+| --- | --- | --- | --- | --- |
+| `work-card` | 3:4 | 480 / 768 / 1200 | WebP + fallback | `brand-standard-v1` |
+| `home-hero-landscape` | 16:9 | 768 / 1280 / 1920 | WebP + fallback | `brand-standard-v1` |
+| `home-hero-portrait` | 9:16 | 480 / 768 / 1080 | WebP + fallback | `brand-standard-v1` |
+| `design-sheet` | 完整横版画布，必要时 contain | 960 / 1600 / 2400 | WebP + fallback | `brand-standard-v1` |
+| `detail` | 原比例 | 960 / 1600 / 2400 | WebP + fallback | `brand-standard-v1` |
+| `return` | 原比例，P1 | 960 / 1600 / 2400 | WebP + fallback | `brand-subtle-v1` |
 
 - fallback：透明度确有需要时 PNG，否则 JPEG。
-- 只为该资产实际使用的用途生成，不默认生成全部 18 个组合。
-- 领养设定图在相关用途链路追加正式工作室水印。
+- 只为该资产实际使用的用途生成，不默认生成全部组合。
+- 领养设定图的 3:4 fallback 使用完整画布置入安全背景，不做破坏性中心裁切。
 - 1:1、AVIF 或新宽度需新 recipe 版本和真实页面需求，不直接扩写 `recipe-v1`。
 
 ### 7.5 草稿、发布和下架
 
-草稿预览：在私有 Bucket 生成需要的草稿衍生图，通过短时签名 GET 展示，不修改公开 Bucket。
+草稿预览：在私有 Bucket 生成需要的草稿衍生图，通过短时签名 GET 展示，不修改公开 Bucket。首页编辑器必须分别预览横屏和竖屏结果，并显示当前水印锚点。
 
 发布：
 
@@ -221,6 +235,8 @@ OSS 图片处理是唯一像素转换权威。Node 不运行 Sharp/FFmpeg 作为
 3. HEAD/图片信息/匿名 GET 验证；
 4. SQLite 事务提交公开状态和公开 variant 引用；
 5. 失败时保留阶段和错误，未引用公开对象进入精确清理列表。
+
+首页轮播发布还必须验证：启用项数量 1–5、每项横竖资产均 READY、alt 非空、排序无冲突、可选关联作品已发布。发布失败时继续使用上一版完整公开投影，不出现半套横竖资源。
 
 下架：
 
@@ -237,15 +253,19 @@ OSS 图片处理是唯一像素转换权威。Node 不运行 Sharp/FFmpeg 作为
 - 明显蓝色常态 5%–10%，硬上限约 15%。
 - `#324DAF`：主要行动、链接、焦点；`#293C84`：Hover/深强调；`#1D2D5A`：极少量反白；`#6274BB`：大字/装饰；`#CED3E5`：弱背景/边界。
 - 禁止连续蓝底、蓝色卡片墙、渐变大按钮、同款圆角功能卡和视觉噪声。
-- T05 已比较横向精选轨道与编辑型网格；T08 用户验收选定横向轨道为最终组件，且不自动轮播。
+- 首页首屏使用 1–5 项双源轮播；手动控制始终存在，自动轮播默认关闭。横屏与竖屏使用独立资产，不能仅切 `object-position`。
+- T05 已比较横向精选轨道与编辑型网格；T08 用户验收选定横向轨道为精选组件，且不自动轮播。精选轨道不承担首页首屏轮播职责。
+- `/adoptions` 使用横版设定图；`/works` 使用竖版 3:4 出厂照；详情页把设定图和出厂照分区；`/returns` 使用原比例照片墙。
+- 完整组合标用于页头，图形标用于 favicon/触控图标/水印；不得把完整纵向组合标直接缩成不可读的 16px 标签图标。
 - 字体在正式 Logo/作品图下校准；宋体只是候选，不是强制品牌字体。
 
 ### 8.2 管理端
 
 - 白色/浅灰工作区，主行动蓝只用于当前动作、焦点和少量导航状态。
 - 无 Dashboard、KPI、消息中心或未实现导航。
-- P0 导航只显示已实现能力；P1/P2 页面实现后才出现。
-- PC 完成复杂图片操作；手机只承诺登录、查看、状态、文字、单图和发布。
+- P0 在能力接通后显示“作品”“营业状态”“首页内容”“账号”；首页内容包含专用轮播编辑器，不是万能 CMS。
+- 作品编辑器按“设定图”“出厂照”分组，P1 再增加“返图”；每组显示比例指导、公开用途、水印状态和对应预览。
+- PC 完成横竖配对、复杂裁切、水印安全角和批量排序；手机只承诺登录、查看、状态、文字、单图和发布。
 
 ## 9. 安全
 
@@ -255,12 +275,14 @@ OSS 图片处理是唯一像素转换权威。Node 不运行 Sharp/FFmpeg 作为
 - 写请求执行精确 Host/Origin、CSRF、体积限制和分层限流。
 - 日志只记录 requestId、方法、归一化路径、状态、错误码和耗时；不记录正文、联系人、授权备注、私有 Key 或签名 URL。
 - 私有媒体 URL 不进入公开 HTML、Sitemap、OG 或公开 API。
+- 水印不构成访问控制；私有原图安全仍只依赖私有 Bucket、认证与短时签名 URL。
 
 ## 10. SEO、性能与备份
 
 - 所有公开页面 SSR 输出独立 title、description、canonical、普通链接和 alt。
 - 结构化数据只输出同页可见事实；价格不能暗示在线购买或库存。
-- 首屏图不懒加载，提供尺寸；下方图片按视口懒加载。
+- 首屏第一项横/竖图不懒加载，提供尺寸；非当前轮播项按需加载，禁止启动时请求全部大图。
+- Nuxt head 显式声明 favicon、32/16 像素图标和 Apple Touch Icon；文件由 EXT-01 确认的 Logo 图形标确定性生成。
 - 内容哈希静态资源和公开衍生图长缓存；动态 HTML P0 不共享缓存。
 - SQLite 使用 Backup API 或 `VACUUM INTO`；禁止 WAL 活跃时只复制主 `.db`。
 - 本地至少验证“空库迁移 → 夹具 → 发布 → 备份 → 新路径恢复 → 核心关联校验”。
@@ -268,14 +290,16 @@ OSS 图片处理是唯一像素转换权威。Node 不运行 Sharp/FFmpeg 作为
 ## 11. 质量门禁
 
 - 静态：lint、typecheck、依赖与配置检查、迁移一致性。
-- 单元：枚举/状态矩阵、短属性、CNY 价格、可选授权记录、recipe identity、公开 DTO 泄漏守卫。
-- 集成：SQLite、Session、Host、私有上传、跨 Bucket `sys/saveas`、发布/下架和清理失败。
-- E2E：管理员创建一件作品并发布，公开访客浏览首页/列表/详情；三视口无横向溢出。
-- 视觉：T08 已于 2026-07-30 经用户确认；T51 使用正式素材二次校准。
-- 安全：私有 Bucket 匿名拒绝；公开 Bucket 不含原图；日志和构建产物 secret scan。
+- 单元：枚举/状态矩阵、短属性、CNY 价格、可选授权记录、媒体角色、首页横竖配对、recipe/watermark identity、公开 DTO 泄漏守卫。
+- 集成：SQLite、Session、Host、角色化私有上传、OSS 水印、跨 Bucket `sys/saveas`、发布/下架和清理失败。
+- E2E：管理员创建一件作品并发布；配置一组首页横竖轮播；公开访客在三视口浏览首页/列表/详情；竖屏只请求竖版首屏，横屏只请求横版首屏。
+- 视觉：T08 已于 2026-07-30 经用户确认；新增首页轮播、设定图横版布局、媒体分区、水印和 favicon 在对应任务留截图，T51 使用正式素材二次校准。
+- 无障碍：轮播控制可命名、可键盘操作、状态可播报；自动播放可暂停，减少动效下停止。
+- 安全：私有 Bucket 匿名拒绝；公开 Bucket 不含原图；水印只存在于公开衍生图；日志和构建产物 secret scan。
 
 ## 12. 迁移与历史边界
 
 - T01–T03 的代码作为已完成工程底座保留，但 T09 按新规格修订 DTO 和错误边界。
-- 历史原型和实施备注保留，不回写成“当时就是双 Bucket”；当前契约从本版起生效。
-- root `CLAUDE.md`、代码注释或测试若引用旧字段/单 Bucket，T09 同步修正。
+- T04–T09 的当前代码仍是单首屏夹具、单 `src` 图片组件和通用媒体样张；本轮只修正文档，不把未实现的横竖轮播、角色化上传、水印或 favicon 记为已完成。
+- 历史原型和实施备注保留，不回写成“当时就是双 Bucket/双源轮播”；当前契约从本版起生效。
+- root `CLAUDE.md`、代码注释或测试若引用旧字段/单 Bucket，T09 已同步修正；后续实现若仍把所有图片压成同一角色，应按 T12–T25 逐步迁移。
