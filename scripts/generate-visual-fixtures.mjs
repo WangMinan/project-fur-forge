@@ -119,11 +119,6 @@ const fixtures = [
     backdrop: ['#edeae3', '#dcd7ca'],
     fur: { base: '#e4d9c8', marking: '#b9a68c', cream: '#f4eee2' },
   }],
-  ['hero-naigai.svg', {
-    width: 1920, height: 1080, seed: 71, cx: 0.66, cy: 0.62, scale: 0.8,
-    backdrop: ['#e3ddd0', '#c8bfa9'],
-    fur: { base: '#e4d9c8', marking: '#b9a68c', cream: '#f4eee2' },
-  }],
   ['route-commission.svg', {
     width: 1800, height: 1200, seed: 83, cx: 0.62, cy: 0.62, scale: 0.76,
     backdrop: ['#e8e5de', '#d3cfc4'],

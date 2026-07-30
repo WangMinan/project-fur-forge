@@ -22,6 +22,13 @@ watch(() => route.fullPath, () => {
       class="public-header__brand"
       aria-label="有点小狗工作室 · 回首页"
     >
+      <img
+        class="public-header__logo"
+        :src="overlay ? '/brand/logo-mark-light.png' : '/brand/logo-mark-dark.png'"
+        alt=""
+        width="578"
+        height="384"
+      >
       <span class="public-header__brand-name">有点小狗工作室</span>
       <span class="public-header__brand-sub">dite dog</span>
     </NuxtLink>
@@ -99,13 +106,28 @@ watch(() => route.fullPath, () => {
 
 .public-header__brand {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-2);
   color: inherit;
 }
 
 .public-header__brand:hover {
   color: inherit;
+}
+
+.public-header__logo {
+  width: auto;
+  height: 2rem;
+  align-self: center;
+}
+
+/* 覆盖态（首页图片大底）文字必须满透明度：半透明反白在图片上无法保证对比度。 */
+.public-header--overlay .public-header__brand-sub {
+  opacity: 1;
+}
+
+.public-header--overlay .public-header__link {
+  opacity: 1;
 }
 
 .public-header__brand-name {

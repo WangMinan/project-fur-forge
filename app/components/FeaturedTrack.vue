@@ -11,6 +11,19 @@ const trackRef = ref<HTMLElement | null>(null)
 const canPrev = ref(false)
 const canNext = ref(true)
 
+// prefers-reduced-motion: reduce 时按钮与键盘路径改用即时滚动；其余保持 smooth。
+// JS scrollBy 的 behavior 参数会覆盖 CSS scroll-behavior，必须在调用侧处理。
+const reduceMotion = ref(false)
+let motionQuery: MediaQueryList | null = null
+
+function onMotionChange(event: MediaQueryListEvent) {
+  reduceMotion.value = event.matches
+}
+
+function scrollBehavior(): ScrollBehavior {
+  return reduceMotion.value ? 'auto' : 'smooth'
+}
+
 function updateEdges() {
   const track = trackRef.value
   if (!track) {
@@ -27,11 +40,11 @@ function step() {
 }
 
 function scrollPrev() {
-  trackRef.value?.scrollBy({ left: -step(), behavior: 'smooth' })
+  trackRef.value?.scrollBy({ left: -step(), behavior: scrollBehavior() })
 }
 
 function scrollNext() {
-  trackRef.value?.scrollBy({ left: step(), behavior: 'smooth' })
+  trackRef.value?.scrollBy({ left: step(), behavior: scrollBehavior() })
 }
 
 function onKeydown(event: KeyboardEvent) {
@@ -46,11 +59,15 @@ function onKeydown(event: KeyboardEvent) {
 }
 
 onMounted(() => {
+  motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+  reduceMotion.value = motionQuery.matches
+  motionQuery.addEventListener('change', onMotionChange)
   updateEdges()
   window.addEventListener('resize', updateEdges)
 })
 
 onBeforeUnmount(() => {
+  motionQuery?.removeEventListener('change', onMotionChange)
   window.removeEventListener('resize', updateEdges)
 })
 </script>

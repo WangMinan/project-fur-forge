@@ -80,7 +80,7 @@ function onSubmit() {
         </form>
 
         <footer class="login__footer">
-          <p>T07 视觉样张：不校验真实凭据、不产生会话。找回密码等 P2 能力将在实现后加入。</p>
+          <p>认证能力尚未接入（T13）：当前不校验真实凭据、不产生会话。找回密码等 P2 能力将在实现后加入。</p>
         </footer>
       </div>
     </main>

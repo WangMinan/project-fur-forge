@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { AdoptionMethod, BusinessStatus, SuitType, WorkPurpose } from '~~/shared/types/contracts'
+import type { AdminAssetFixture, AdminMediaFailureStage } from '~~/shared/fixtures/visual-admin'
 import { findAdminWorkById } from '~~/shared/fixtures/visual-admin'
 import { buildPublicationChecklist } from '~/utils/publication-checklist'
+import { parseCnyYuanInput } from '~/utils/price'
 import {
   ADOPTION_METHOD_LABELS,
   BUSINESS_STATUS_LABELS,
@@ -11,6 +13,9 @@ import {
 import { SUIT_TYPE_VALUES, WORK_PURPOSE_VALUES } from '~~/shared/schemas/work'
 
 definePageMeta({
+  layout: 'admin',
+  // 同组件实例内切换作品 ID 时按路径重建页面：表单、dirty 基线与发布检查整体重置。
+  key: route => route.path,
   ssr: false,
 })
 
@@ -26,6 +31,7 @@ useSeoMeta({
   title: work ? `编辑 ${work.dto.characterName}` : '作品不存在',
 })
 
+// 基线与编辑态必须是两份独立数组：共享引用会让 v-model 就地改写基线，dirty 永远为 false。
 const initialTags = work ? [...work.dto.featureTags] : []
 
 const form = reactive({
@@ -43,50 +49,81 @@ const form = reactive({
     : '',
 })
 
-const tags = ref<string[]>(initialTags)
+// 领养字段的 dirty 基线：随页面重建（切换作品）而重置；保存接口未接入，不存在"已保存即清除"语义。
+const baseline = {
+  adoptionMethod: form.adoptionMethod,
+  businessStatus: form.businessStatus,
+  priceYuan: form.priceYuan,
+}
+
+const tags = ref<string[]>([...initialTags])
 const notice = ref<string | null>(null)
 
 function announce(message: string) {
   notice.value = message
 }
 
-const parsedPriceMinor = computed(() => {
-  const yuan = Number.parseFloat(form.priceYuan)
-  if (!Number.isFinite(yuan) || yuan < 0) {
-    return undefined
-  }
-  return Math.round(yuan * 100)
-})
+const RETRY_STAGE_TASKS: Record<AdminMediaFailureStage, string> = {
+  私有上传: 'T14',
+  校验: 'T15',
+  公开生成: 'T16',
+}
+
+function retryNotice(asset: AdminAssetFixture) {
+  const task = asset.failureStage ? RETRY_STAGE_TASKS[asset.failureStage] : 'T14–T16'
+  return `重试接口尚未接入（${task}）：失败素材需要真实 OSS 链路才能重试。`
+}
+
+const priceParse = computed(() => parseCnyYuanInput(form.priceYuan))
+const priceError = computed(() => (form.purpose === 'adoption' ? priceParse.value.error : null))
 
 // 发布检查求值基于当前表单（而非夹具快照），让检查项随编辑即时变化；仍然不会持久化。
 const checklist = computed(() => {
   if (!work) {
     return null
   }
-  return buildPublicationChecklist({
+  const result = buildPublicationChecklist({
     ...work,
     dto: {
       ...work.dto,
       purpose: form.purpose,
       adoptionMethod: form.purpose === 'adoption' && form.adoptionMethod ? form.adoptionMethod : undefined,
       businessStatus: form.purpose === 'adoption' && form.businessStatus ? form.businessStatus : undefined,
-      priceCnyMinor: form.purpose === 'adoption' ? parsedPriceMinor.value : undefined,
+      priceCnyMinor: form.purpose === 'adoption' ? priceParse.value.minorUnits : undefined,
     } as typeof work.dto,
   })
+  // 非法价格输入不能按"未录入"放行：价格项标记阻塞，发布同步禁用。
+  if (priceError.value) {
+    const items = result.items.map(item =>
+      item.id === 'price'
+        ? { ...item, state: 'blocked' as const, detail: `价格未通过校验：${priceError.value}` }
+        : item,
+    )
+    return { items, publishable: false }
+  }
+  return result
 })
 
 const isDirty = computed(() => {
   if (!work) {
     return false
   }
-  return form.characterName !== work.dto.characterName
+  const baseDirty = form.characterName !== work.dto.characterName
     || form.slug !== work.dto.slug
     || form.species !== work.dto.species
     || form.ownerDisplay !== (work.dto.ownerDisplay ?? '')
     || form.suitType !== work.dto.suitType
     || form.purpose !== work.dto.purpose
     || form.ownerContact !== (work.dto.private.ownerContact ?? '')
-    || tags.value.join('') !== initialTags.join('')
+  // 用途非领养时领养字段被隐藏，其保留值不参与 dirty（避免隐藏字段被误当作待提交更改）；
+  // 切回领养时与基线逐项比较。
+  const adoptionDirty = form.purpose === 'adoption'
+    && (form.adoptionMethod !== baseline.adoptionMethod
+      || form.businessStatus !== baseline.businessStatus
+      || form.priceYuan !== baseline.priceYuan)
+  const tagsDirty = tags.value.length !== initialTags.length
+    || tags.value.some((tag, index) => tag !== initialTags[index])
+  return baseDirty || adoptionDirty || tagsDirty
 })
 
 const duplicateTag = computed(() => {
@@ -179,9 +216,9 @@ function removeTag(index: number) {
                 <input id="f-species" v-model="form.species" class="field__input" type="text" maxlength="24" required>
               </div>
               <div class="field">
-                <label class="field__label" for="f-owner">角色主人公开值</label>
-                <input id="f-owner" v-model="form.ownerDisplay" class="field__input" type="text" maxlength="24">
-                <p class="field__hint">留空表示工作室作品 · 最多 24 字</p>
+                <label class="field__label" for="f-owner">角色主人公开值 <span aria-hidden="true">*</span></label>
+                <input id="f-owner" v-model="form.ownerDisplay" class="field__input" type="text" maxlength="24" required>
+                <p class="field__hint">必填 · 工作室作品填“有点小狗工作室”，隐私作品填“不公开” · 最多 24 字</p>
               </div>
               <div class="field">
                 <label class="field__label" for="f-suit">装型</label>
@@ -273,11 +310,15 @@ function removeTag(index: number) {
                   id="f-price"
                   v-model="form.priceYuan"
                   class="field__input"
+                  :class="{ 'field__input--invalid': priceError }"
                   type="text"
                   inputmode="decimal"
                   placeholder="例如 15600"
+                  :aria-invalid="priceError ? 'true' : undefined"
+                  :aria-describedby="priceError ? 'f-price-hint f-price-error' : 'f-price-hint'"
                 >
-                <p class="field__hint">可留空；留空时公开端整区隐藏价格。网站不接受登记、定金或付款。</p>
+                <p id="f-price-hint" class="field__hint">可留空；留空时公开端整区隐藏价格。最多两位小数，网站不接受登记、定金或付款。</p>
+                <p v-if="priceError" id="f-price-error" class="field__error" role="alert">{{ priceError }}</p>
               </div>
             </div>
           </section>
@@ -293,7 +334,7 @@ function removeTag(index: number) {
               <li v-for="asset in work.assets" :key="asset.assetId">
                 <AdminMediaAssetCard
                   :asset="asset"
-                  @retry="announce('重试接口尚未接入（T16）：失败素材需要真实 OSS 链路才能重试。')"
+                  @retry="announce(retryNotice(asset))"
                   @remove="announce('删除接口尚未接入（T17）：夹具素材不会被移除。')"
                   @set-primary="announce('设主图与排序接口尚未接入（T17）：不会改变夹具中的主图设定。')"
                 />
@@ -302,7 +343,7 @@ function removeTag(index: number) {
             <button
               type="button"
               class="editor__button editor__button--secondary"
-              @click="announce('上传接口尚未接入（T14–T16）：不会打开文件选择，也不会写入 OSS。')"
+              @click="announce('上传接口尚未接入（T14–T15）：不会打开文件选择，也不会写入 OSS。')"
             >上传出厂照</button>
           </section>
         </div>
@@ -323,7 +364,7 @@ function removeTag(index: number) {
             </div>
             <p class="preview-card__name">{{ work.dto.characterName }}</p>
             <p class="preview-card__meta">{{ work.dto.species }} · {{ SUIT_TYPE_LABELS[form.suitType] }}</p>
-            <p class="preview-card__note">本地样张预览 · 公开端实际衍生图由 OSS 生成（T11–T12）</p>
+            <p class="preview-card__note">本地样张预览 · 公开端实际衍生图由 OSS 生成（T16）</p>
           </section>
         </aside>
       </div>
@@ -548,6 +589,22 @@ function removeTag(index: number) {
   margin: var(--admin-space-1) 0 0;
   font-size: var(--admin-font-xs);
   color: var(--admin-text-tertiary);
+}
+
+.field__input--invalid {
+  border-color: var(--admin-status-error);
+}
+
+.field__input--invalid:focus {
+  border-color: var(--admin-status-error);
+  box-shadow: 0 0 0 3px var(--admin-status-error-soft);
+}
+
+.field__error {
+  margin: var(--admin-space-1) 0 0;
+  font-size: var(--admin-font-xs);
+  color: var(--admin-status-error);
+  line-height: var(--admin-line-normal);
 }
 
 .tags {
