@@ -18,7 +18,7 @@
 | T04–T05 实施记录 | `implementation/notes/T04-T05-2026-07-29.md` | 已验证 | Kimi 入选方案、两种首页精选对比、三视口截图与质量门禁 |
 | T06–T07 实施记录 | `implementation/notes/T06-T07-2026-07-29.md` | 已验证 | 作品列表/详情、管理端工作台、三视口证据与自动化自查 |
 | T08 验收记录 | `implementation/notes/t06-t07/T08-REVIEW-PREP.md` | 2026-07-30 已通过 | 横向轨道定稿、T06/T07 基线通过、`must-fix = 0` |
-| T09 工程核心记录 | `implementation/notes/T09-ENGINEERING-CORE-2026-07-30.md` | 候选已验证 | 契约、双 Bucket 配置、错误分流、安全日志与生产守卫 |
+| T09 工程核心记录 | `implementation/notes/T09-ENGINEERING-CORE-2026-07-30.md` | 已验证并合入 `main` | 契约、双 Bucket 配置、错误分流、安全日志与生产守卫 |
 | T09 界面交接 | `implementation/notes/T09-UI-HANDOFF.md` | 待 Kimi | 管理壳、对比度、参数响应、dirty、金额、reduce 动效与任务阶段文案 |
 | 状态 | `STATE.md` | 持续更新 | 当前决策、外部门禁和下一步 |
 
@@ -26,7 +26,7 @@
 
 | 类型 | 路径 | 当前效力 |
 | --- | --- | --- |
-| 执行责任路由 | `implementation/EXECUTION_ROUTING.md` | 2026-07-30 当前生效；记录 T09 工程核心候选、Kimi 界面修补及后续前后端交接，不属于产品契约 |
+| 执行责任路由 | `implementation/EXECUTION_ROUTING.md` | 2026-07-30 当前生效；记录 T09 工程核心已合入、Kimi 界面修补及后续前后端交接，不属于产品契约 |
 
 ## 历史与证据
 
