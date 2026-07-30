@@ -13,20 +13,21 @@
 | 公开设计 | `.design/public-site/` | 已校准 | 图片大底/白底、A/B 精选、OSS 预生成图片 |
 | 管理设计 | `.design/admin-console/` | 已校准 | P0/P1/P2 导航、可选授权记录、无 ACL 文案 |
 | 模型 | `models/README.md` | 已校准 | 删除付款备注/美元预留，增加可选授权记录 |
-| 任务 | `implementation/TASKS.md` | 已重排 | T01–T08 已完成；T09 工程核心候选已完成但保持未勾选；T09–T21 第一垂直切片 |
+| 任务 | `implementation/TASKS.md` | 已重排 | T01–T09 已完成；T10 为下一项；T09–T21 第一垂直切片 |
 | 本轮校准记录 | `implementation/notes/DOCS-REALIGNMENT-2026-07-29.md` | 已记录 | 字段、双 Bucket、图片配方、阶段范围和任务顺序变更证据 |
 | T04–T05 实施记录 | `implementation/notes/T04-T05-2026-07-29.md` | 已验证 | Kimi 入选方案、两种首页精选对比、三视口截图与质量门禁 |
 | T06–T07 实施记录 | `implementation/notes/T06-T07-2026-07-29.md` | 已验证 | 作品列表/详情、管理端工作台、三视口证据与自动化自查 |
 | T08 验收记录 | `implementation/notes/t06-t07/T08-REVIEW-PREP.md` | 2026-07-30 已通过 | 横向轨道定稿、T06/T07 基线通过、`must-fix = 0` |
 | T09 工程核心记录 | `implementation/notes/T09-ENGINEERING-CORE-2026-07-30.md` | 已验证并合入 `main` | 契约、双 Bucket 配置、错误分流、安全日志与生产守卫 |
-| T09 界面交接 | `implementation/notes/T09-UI-HANDOFF.md` | 待 Kimi | 管理壳、对比度、参数响应、dirty、金额、reduce 动效与任务阶段文案 |
+| T09 界面交接 | `implementation/notes/T09-UI-HANDOFF.md` | 已完成 | 管理壳、对比度、参数响应、dirty、金额、reduce 动效与任务阶段文案 |
+| T09 界面实施与收口 | `implementation/notes/T09-UI-2026-07-30.md`、`implementation/notes/T09-CLOSURE-2026-07-31.md` | 2026-07-31 已通过 | 用户验收、完整门禁复核和最终任务收口 |
 | 状态 | `STATE.md` | 持续更新 | 当前决策、外部门禁和下一步 |
 
 ## 当前执行文档
 
 | 类型 | 路径 | 当前效力 |
 | --- | --- | --- |
-| 执行责任路由 | `implementation/EXECUTION_ROUTING.md` | 2026-07-30 当前生效；记录 T09 工程核心已合入、Kimi 界面修补及后续前后端交接，不属于产品契约 |
+| 执行责任路由 | `implementation/EXECUTION_ROUTING.md` | 2026-07-31 当前生效；记录 T09 已收口及后续前后端交接，不属于产品契约 |
 
 ## 历史与证据
 
@@ -49,7 +50,7 @@
 - T06：作品列表、筛选、详情图集、事实、价格和空状态生产视觉样张；
 - T07：管理端登录、作品列表、编辑工作台、媒体状态和发布检查生产视觉样张；
 - T08：用户完成视觉验收，横向轨道定稿，T06/T07 基线通过，`must-fix = 0`；
-- T09：工程核心候选已完成，OQ-119 已回答；等待 Kimi 界面修补与最终复核，不勾选任务。
+- T09：工程核心与界面修补均已完成，OQ-119 已回答，用户验收和工程侧完整门禁复核通过。
 
 ## 外部门禁产物
 

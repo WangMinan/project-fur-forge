@@ -1,7 +1,7 @@
 # T09 界面交接：Kimi 修补清单
 
 > **接收角色**：Kimi K3（`UI_PRIMARY`）
-> **状态**：待实现并交回 `ENGINEERING_PRIMARY` 最终复核
+> **状态**：已由 Kimi 实现、用户验收并通过 `ENGINEERING_PRIMARY` 最终复核
 > **范围**：只修补既有公开站与管理端界面，不进入 T10、SQLite、认证或 OSS 业务实现
 
 ## 1. 硬边界
