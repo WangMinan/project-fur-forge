@@ -90,7 +90,8 @@ flowchart LR
 
 - [ ] **T09 · 修正 T03 契约与已知代码审查问题**：删除 `depositNote`、`paymentNote`、禁用美元字段；增加可选返图授权 Schema；管理 DTO 不返回私有 Object Key；API/页面错误分流；接入安全日志；增加生产占位文案守卫；同步配置、测试与 root 摘要。_依赖：T08；验证：泄漏守卫与页面 404/500 HTML 测试。_
   - 工程核心候选已完成：见 `notes/T09-ENGINEERING-CORE-2026-07-30.md`。
-  - 保持未勾选：Kimi 界面修补、OQ-119 的 T12 前业务确认和最终复核仍未完成；不得提前进入 T10。
+  - OQ-119 已回答：`ownerDisplay` 始终非空，工作室作品显示“有点小狗工作室”，隐私作品显示“不公开”，不增加 `ownerType`。
+  - 保持未勾选：Kimi 界面修补和最终复核仍未完成；不得提前进入 T10。
 - [ ] **T10 · 双 Bucket 早期可行性预检与最小权限说明**：在数据库/认证大规模实现前，向用户说明 AK/SK 最小权限与本地写入位置；验证 region、endpoint、Bucket 名、BPA、CORS、匿名读取边界、`sys/saveas` 目标和测试前缀，不修改账号级安全状态；协助完成 EXT-02 证据。_依赖：T09。_
 - [ ] **T11 · SQLite 运行底座与迁移框架**：Drizzle、`better-sqlite3`、WAL/外键/busy timeout/FULL、迁移命令、临时测试库和一致性备份工具。_依赖：T09。_
 - [ ] **T12 · P0 最小 Schema 与公开投影**：`users`、`works`、`work_feature_tags`、`assets`、`asset_variants`、`work_assets`、`publication_operations`、最小内容/营业状态；联系人私有，价格固定 CNY；公开投影硬排除私有字段。_依赖：T11。_

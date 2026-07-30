@@ -1,0 +1,6 @@
+# Keep text files deterministic across Windows, macOS, and Linux.
+* text=auto eol=lf
+
+# Preserve native line endings for Windows command scripts.
+*.bat text eol=crlf
+*.cmd text eol=crlf

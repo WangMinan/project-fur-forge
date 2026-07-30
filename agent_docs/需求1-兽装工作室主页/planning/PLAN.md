@@ -153,7 +153,7 @@ P1 再增加 `return_photos`、`events`、`slug_redirects`、`trash_entries` 和
 - 价格使用 `price_amount_minor` + `price_currency`，一期非空时固定 `CNY`；不预留美元列。
 - 返图授权记录三字段均 nullable，不作为发布校验条件。
 - 管理 DTO 不返回私有 Object Key；服务端通过 `assetId` 解析。
-- `ownerDisplay` 的空值是否表示“工作室作品”尚无上游事实支持，已登记 OQ-119；T12 前不得据当前 DTO 直接确定数据库列、空值或默认值约束。
+- OQ-119 已回答：`ownerDisplay` 始终非空；工作室作品使用“有点小狗工作室”，隐私作品使用“不公开”；一期不增加 `ownerType`。T12 将其建模为非空公开显示值，不设置把漏填作品静默归类为工作室作品的默认值。
 
 ## 7. 双 Bucket 媒体方案
 
