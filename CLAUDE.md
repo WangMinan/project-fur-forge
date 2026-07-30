@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01–T08 已完成，T09 工程核心候选已完成。** T09 已修正共享契约、双 Bucket 运行配置、API/页面错误分流、安全日志与生产占位文案守卫；SQLite/Drizzle、认证与阿里云 OSS 业务实现尚未开始。OQ-119 已回答：`ownerDisplay` 始终非空，工作室作品显示“有点小狗工作室”，隐私作品显示“不公开”，不增加 `ownerType`。T09 仍保持未勾选，需 Kimi 按 `implementation/notes/T09-UI-HANDOFF.md` 完成界面修补并通过最终复核。**不得提前进入 T10。**
+> **当前阶段：阶段 4 IMPLEMENTATION，T01–T09 已完成。** T09 已修正共享契约、双 Bucket 运行配置、API/页面错误分流、安全日志、生产占位文案守卫和已知界面问题；OQ-119 已按非空 `ownerDisplay` 规则收口。用户于 2026-07-31 验收 Kimi 界面修补，工程侧完整门禁复核通过。SQLite/Drizzle、认证与阿里云 OSS 业务实现尚未开始。**下一项为 T10，本轮未启动。**
 
 ## 网站核心原则（景宸确认）
 
@@ -53,4 +53,4 @@ pnpm verify:production
 
 ## 当前仓库状态
 
-根目录现含 Nuxt 4 工程、`app/`、`server/`、`shared/`、`tests/` 与阶段文档。T09 工程核心候选已合入 `main`：共享契约只保留 CNY、返图授权记录全部可空、管理 DTO 只输出业务标识、公开 mapper 显式投影；运行配置显式拆分私有/公开 Bucket；API 错误维持 JSON，页面错误由 Nuxt HTML 错误页处理；500 走安全日志；生产构建有占位文案和样张素材守卫。下一步只允许完成 `T09-UI-HANDOFF.md` 中的界面修补与最终复核，不得进入 T10、SQLite、认证或 OSS 业务实现。
+根目录现含 Nuxt 4 工程、`app/`、`server/`、`shared/`、`tests/` 与阶段文档。T09 已完整合入 `main`：共享契约只保留 CNY、返图授权记录全部可空、管理 DTO 只输出业务标识、公开 mapper 显式投影；运行配置显式拆分私有/公开 Bucket；API 错误维持 JSON，页面错误由 Nuxt HTML 错误页处理；500 走安全日志；生产构建有占位文案和样张素材守卫；界面侧已完成管理布局、文字对比度、参数响应、dirty、金额校验、reduced-motion 和任务阶段文案修补。下一项是 T10 双 Bucket 早期可行性预检，本轮没有实现 T10、SQLite、认证或 OSS 业务能力。

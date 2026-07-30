@@ -4,12 +4,12 @@
 
 ## 当前阶段
 
-阶段 4 · IMPLEMENTATION 进行中。T01–T08 已完成；T09 工程核心候选已于 2026-07-30 从 `fix/t09-contracts-sol` 合入 `main`，当前等待 Kimi 界面修补和工程侧最终复核。**T09 保持未勾选，不得提前进入 T10。**
+阶段 4 · IMPLEMENTATION 进行中。T01–T09 已完成；用户于 2026-07-31 验收 Kimi 的 T09 界面修补，工程侧完整门禁复核通过并收口 T09。**下一项为 T10，本轮未启动。**
 
 ## 当前执行分工
 
-- Kimi K3 继续作为 `UI_PRIMARY`；当前按 `implementation/notes/T09-UI-HANDOFF.md` 承接 T09 界面修补。
-- 当前批次仍为 T09；`ENGINEERING_PRIMARY` 已形成共享契约、错误分流、安全日志、泄漏守卫和配置修订候选，Kimi 合入后再做最终复核。
+- Kimi K3 继续作为后续前端切片的 `UI_PRIMARY`；T09 界面修补已完成并通过用户验收。
+- T09 已完成工程与界面双侧收口；下一项 T10 仍由 `ENGINEERING_PRIMARY` 主责，但本轮没有启动外部 OSS 预检或任何后续实现。
 - 独立审查者提供证据复核与建议；TASKS 指定的用户门禁仍由用户作最终确认。
 - 数据库、认证、安全、OSS、事务和运维仍由 `ENGINEERING_PRIMARY` 主责，具体模型不写入产品契约。
 - 后续全栈任务采用“工程侧先锁定 Schema/API/错误/权限与集成测试，Kimi 再实现前端切片”的交接方式。
@@ -62,7 +62,7 @@
 - 禁止连续蓝底区块、蓝色卡片墙、蓝色渐变大按钮，以及“半张图片 + 半张蓝色说明面板”的通用营销构图。
 - T05 已通过真实截图比较“横向精选轨道”和“编辑型图片网格”；T08 最终选定横向轨道，不把组件名当作不可变需求。
 
-## T09 工程核心状态
+## T09 完成状态
 
 T03 遗留工程问题已在 `main` 完成以下修正：
 
@@ -74,7 +74,7 @@ T03 遗留工程问题已在 `main` 完成以下修正：
 - 安全日志已接入 500 路径，并对 message 与结构化 context 做泄漏回归；
 - production 构建产物会阻断占位文案和 `/fixtures/samples/`。
 
-工程记录见 `implementation/notes/T09-ENGINEERING-CORE-2026-07-30.md`。界面仍需按 `implementation/notes/T09-UI-HANDOFF.md` 修补管理布局、文字对比度、参数响应、dirty、金额校验、reduced-motion 和任务阶段文案。
+工程记录见 `implementation/notes/T09-ENGINEERING-CORE-2026-07-30.md`；界面实施记录见 `implementation/notes/T09-UI-2026-07-30.md`；最终复核见 `implementation/notes/T09-CLOSURE-2026-07-31.md`。管理布局、文字对比度、参数响应、dirty、金额校验、reduced-motion 和任务阶段文案均已修补并通过自动化验证。
 
 ## 开放问题
 
@@ -88,6 +88,7 @@ T03 遗留工程问题已在 `main` 完成以下修正：
 
 ## 最近验证
 
+- 2026-07-31：用户验收 Kimi 的 T09 界面修补；工程侧复跑冻结安装、lint、typecheck、70 项单测、4 项集成测试、112 项 E2E、Nuxt 构建与生产运行验证，全部通过；`APP_ENV=production` 继续按预期阻断占位文案和 `/fixtures/samples/`。T09 已勾选完成，T10 尚未启动。
 - 2026-07-30：用户回答 OQ-119，确认 `ownerDisplay` 的非空显示规则及“不增加 ownerType”；foundation、SPEC、PLAN、设计、模型、TASKS、STATE 与 T09 界面交接已同步。
 - 2026-07-30：根目录新增 `.gitattributes`，跨平台文本统一为 LF，`.bat`/`.cmd` 保留 CRLF；`git add --renormalize` 仅涉及本轮 14 个预期文件，没有触发全仓库换行重写。
 - 2026-07-30：T09 工程核心候选完成。冻结安装、lint、typecheck、61 项单测、4 项集成测试、86 项 E2E、Nuxt 构建与生产运行验证全部通过；`APP_ENV=production` 产物守卫按预期阻断当前占位文案和样张素材。契约、配置、错误、日志、生产守卫与 OQ-119 记录见 `implementation/notes/T09-ENGINEERING-CORE-2026-07-30.md`；T09 仍未勾选。
@@ -101,4 +102,4 @@ T03 遗留工程问题已在 `main` 完成以下修正：
 
 ## 下一步
 
-按 `implementation/notes/T09-UI-HANDOFF.md` 由 Kimi 完成 UI-01 至 UI-07，并落实已回答的 OQ-119 显示规则；合入后由工程侧重跑全门禁并复核泄漏边界，再决定是否勾选 T09。当前不得进入 T10，也不得提前实现 SQLite、认证或 OSS 业务能力。
+T09 已完成。下一项为 T10 双 Bucket 早期可行性预检与最小权限说明；本轮只登记该入口，没有启动 T10，也没有实现 SQLite、认证或 OSS 业务能力。

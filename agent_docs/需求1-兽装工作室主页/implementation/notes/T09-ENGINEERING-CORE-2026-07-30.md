@@ -3,7 +3,7 @@
 > **分支**：`fix/t09-contracts-sol`
 > **日期**：2026-07-30
 > **角色**：`ENGINEERING_PRIMARY`
-> **状态**：工程核心候选已完成；T09 保持未勾选，等待 Kimi 界面修补与最终复核
+> **状态**：工程核心已完成；Kimi 界面修补于 2026-07-31 通过用户验收和工程侧最终复核，T09 已收口
 
 ## 1. 范围与边界
 
@@ -59,11 +59,12 @@ E2E 输出含既有未实施 `/commission`、`/adoptions`、`/returns`、`/about
 
 完成审计后另以 `pnpm exec playwright test tests/e2e/access-surfaces.spec.ts tests/e2e/public-works.spec.ts` 复核错误夹具的 production 排除条件，18 项通过；随后仍以表中八条标准命令作为最终结论。
 
-## 5. 未收口项
+## 5. 最终收口
 
-- Kimi 需完成 `T09-UI-HANDOFF.md` 的 UI-01 至 UI-07。
 - OQ-119 已在工程核心完成后由用户确认；结论见下方补充记录。
-- Kimi 修改合入并完成工程侧最终复核前，T09 不勾选，也不进入 T10。
+- Kimi 已完成 `T09-UI-HANDOFF.md` 的 UI-01 至 UI-07，并于 2026-07-31 通过用户验收。
+- 工程侧完整门禁复核通过，结果见 `T09-CLOSURE-2026-07-31.md`。
+- T09 已勾选完成；下一项 T10 本轮未启动。
 
 ## 6. OQ-119 后续确认
 
