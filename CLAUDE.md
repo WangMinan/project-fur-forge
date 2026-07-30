@@ -53,4 +53,4 @@ pnpm verify:production
 
 ## 当前仓库状态
 
-根目录现含 Nuxt 4 工程、`app/`、`server/`、`shared/`、`tests/` 与阶段文档。T09 工程核心候选位于短分支：共享契约只保留 CNY、返图授权记录全部可空、管理 DTO 只输出业务标识、公开 mapper 显式投影；运行配置显式拆分私有/公开 Bucket；API 错误维持 JSON，页面错误由 Nuxt HTML 错误页处理；500 走安全日志；生产构建有占位文案和样张素材守卫。下一步只允许完成 `T09-UI-HANDOFF.md` 中的界面修补与最终复核，不得进入 T10、SQLite、认证或 OSS 业务实现。
+根目录现含 Nuxt 4 工程、`app/`、`server/`、`shared/`、`tests/` 与阶段文档。T09 工程核心候选已合入 `main`：共享契约只保留 CNY、返图授权记录全部可空、管理 DTO 只输出业务标识、公开 mapper 显式投影；运行配置显式拆分私有/公开 Bucket；API 错误维持 JSON，页面错误由 Nuxt HTML 错误页处理；500 走安全日志；生产构建有占位文案和样张素材守卫。下一步只允许完成 `T09-UI-HANDOFF.md` 中的界面修补与最终复核，不得进入 T10、SQLite、认证或 OSS 业务实现。
