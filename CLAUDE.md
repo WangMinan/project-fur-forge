@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01–T08 已完成，T09 工程核心候选已完成。** T09 已修正共享契约、双 Bucket 运行配置、API/页面错误分流、安全日志与生产占位文案守卫；SQLite/Drizzle、认证与阿里云 OSS 业务实现尚未开始。T09 仍保持未勾选，需 Kimi 按 `implementation/notes/T09-UI-HANDOFF.md` 完成界面修补并通过最终复核；OQ-119 必须在 T12 前回答。**不得提前进入 T10。**
+> **当前阶段：阶段 4 IMPLEMENTATION，T01–T08 已完成，T09 工程核心候选已完成。** T09 已修正共享契约、双 Bucket 运行配置、API/页面错误分流、安全日志与生产占位文案守卫；SQLite/Drizzle、认证与阿里云 OSS 业务实现尚未开始。OQ-119 已回答：`ownerDisplay` 始终非空，工作室作品显示“有点小狗工作室”，隐私作品显示“不公开”，不增加 `ownerType`。T09 仍保持未勾选，需 Kimi 按 `implementation/notes/T09-UI-HANDOFF.md` 完成界面修补并通过最终复核。**不得提前进入 T10。**
 
 ## 网站核心原则（景宸确认）
 
