@@ -24,10 +24,10 @@ watch(() => route.fullPath, () => {
     >
       <img
         class="public-header__logo"
-        :src="overlay ? '/brand/logo-mark-light.png' : '/brand/logo-mark-dark.png'"
+        :src="overlay ? '/brand/logo-full-light.png' : '/brand/logo-full-dark.png'"
         alt=""
-        width="578"
-        height="384"
+        width="473"
+        height="512"
       >
       <span class="public-header__brand-name">有点小狗工作室</span>
       <span class="public-header__brand-sub">dite dog</span>
@@ -116,8 +116,9 @@ watch(() => route.fullPath, () => {
 }
 
 .public-header__logo {
+  /* 完整堆叠 Logo 与品牌文字行高等高（18px 字号 × 1.55 行高 ≈ 28px）。 */
   width: auto;
-  height: 2rem;
+  height: 1.75rem;
   align-self: center;
 }
 
