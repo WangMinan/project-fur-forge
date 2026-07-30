@@ -3,10 +3,14 @@ import { findWorkBySlug, workCatalog } from '~~/shared/fixtures/visual-works'
 import { PROJECT_NAME } from '~~/shared/constants/project'
 
 const route = useRoute()
+// 响应式派生：同组件实例内 slug 变化（继续浏览直达另一详情）时，
+// 作品选择、图集、价格、SEO 与 related works 全部随之更新。
 const slug = computed(() => String(route.params.slug ?? ''))
-const work = findWorkBySlug(slug.value)
+const work = computed(() => findWorkBySlug(slug.value))
 
-if (!work) {
+// 首次直达（SSR）：不存在立即抛出 fatal 404，由 HTML 错误页处理（契约不变）；
+// 客户端同组件内切换到不存在 slug 时由下方 watch 经 showError 进入同一错误页。
+if (!work.value) {
   throw createError({
     statusCode: 404,
     statusMessage: '作品不存在或尚未发布',
@@ -14,39 +18,49 @@ if (!work) {
   })
 }
 
-const dto = work.dto
+watch(work, (entry) => {
+  if (!entry) {
+    showError({
+      statusCode: 404,
+      statusMessage: '作品不存在或尚未发布',
+      fatal: true,
+    })
+  }
+})
+
+const dto = computed(() => work.value!.dto)
 
 useSeoMeta({
-  title: `${dto.characterName} · 作品展示 · ${PROJECT_NAME}`,
-  description: `${dto.characterName}：${dto.species}，${SUIT_TYPE_LABELS[dto.suitType]}。有点小狗工作室兽装作品档案。`,
-  ogTitle: `${dto.characterName} · ${PROJECT_NAME}`,
-  ogDescription: `${dto.species} · ${SUIT_TYPE_LABELS[dto.suitType]} · 兽装作品档案`,
+  title: computed(() => `${dto.value.characterName} · 作品展示 · ${PROJECT_NAME}`),
+  description: computed(() => `${dto.value.characterName}：${dto.value.species}，${SUIT_TYPE_LABELS[dto.value.suitType]}。有点小狗工作室兽装作品档案。`),
+  ogTitle: computed(() => `${dto.value.characterName} · ${PROJECT_NAME}`),
+  ogDescription: computed(() => `${dto.value.species} · ${SUIT_TYPE_LABELS[dto.value.suitType]} · 兽装作品档案`),
   ogType: 'article',
 })
 
 const priceLabel = computed(() => {
-  if (dto.purpose !== 'adoption') {
+  if (dto.value.purpose !== 'adoption') {
     return ''
   }
-  return dto.adoptionMethod === 'event_drop' ? '掉落价格' : '领养价格'
+  return dto.value.adoptionMethod === 'event_drop' ? '掉落价格' : '领养价格'
 })
 
 const priceText = computed(() => {
-  if (dto.purpose !== 'adoption' || !dto.price) {
+  if (dto.value.purpose !== 'adoption' || !dto.value.price) {
     return null
   }
-  return formatCnyMinorUnits(dto.price.minorUnits)
+  return formatCnyMinorUnits(dto.value.price.minorUnits)
 })
 
 const relatedWorks = computed(() =>
-  workCatalog.filter(entry => entry.dto.slug !== dto.slug).slice(0, 4),
+  workCatalog.filter(entry => entry.dto.slug !== dto.value.slug).slice(0, 4),
 )
 
 const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
 </script>
 
 <template>
-  <article class="work-detail" data-testid="work-detail" :data-work-slug="dto.slug">
+  <article v-if="work" class="work-detail" data-testid="work-detail" :data-work-slug="dto.slug">
     <nav class="work-detail__back" aria-label="返回">
       <NuxtLink to="/works" class="work-detail__back-link">
         <span aria-hidden="true">←</span> 返回作品展示

@@ -71,13 +71,21 @@ const hero = heroFixture
 .hero-media__scrim {
   position: absolute;
   inset: 0;
+  /* 确定性对比度保护：顶部导航区与左下文字安全区各自一条受控渐变，
+     对任意正式图片成立（最不利纯白底图上白字仍 ≥ 4.5:1），不做整页黑蒙版。 */
   background:
     linear-gradient(
       to bottom,
-      rgb(17 20 25 / 0.32) 0%,
-      rgb(17 20 25 / 0) 26%,
-      rgb(17 20 25 / 0) 52%,
-      var(--public-overlay-strong) 100%
+      rgb(17 20 25 / 0.64) 0%,
+      rgb(17 20 25 / 0.62) 6%,
+      rgb(17 20 25 / 0.3) 12%,
+      rgb(17 20 25 / 0) 19%
+    ),
+    linear-gradient(
+      to bottom,
+      rgb(17 20 25 / 0) 40%,
+      rgb(17 20 25 / 0.62) 52%,
+      rgb(17 20 25 / 0.68) 100%
     );
 }
 
@@ -93,7 +101,6 @@ const hero = heroFixture
   font-size: var(--font-size-sm);
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  opacity: 0.86;
 }
 
 .hero-media__title {
@@ -110,7 +117,6 @@ const hero = heroFixture
   margin-top: var(--space-4);
   font-size: var(--font-size-md);
   line-height: var(--line-height-normal);
-  opacity: 0.92;
 }
 
 .hero-media__action {
@@ -140,7 +146,6 @@ const hero = heroFixture
   gap: var(--space-3);
   font-size: var(--font-size-xs);
   letter-spacing: var(--letter-spacing-label);
-  opacity: 0.78;
 }
 
 .hero-media__scroll-line {

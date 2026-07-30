@@ -62,12 +62,14 @@ export const heroFixture = {
     href: '/works',
   },
   scrollHint: '向下浏览',
+  // 内部开发样张（materials/picture-examples/领养/小狗/小狗-2-横版.jpg 的 16:9 衍生，
+  // scripts/prepare-visual-assets.py 生成）；EXT-01 通过前不代表正式上线授权。
   media: fixtureMedia(
-    '/fixtures/works/hero-naigai.svg',
-    '奶油色猫咪全装「奶盖」的工作室出厂照',
+    '/fixtures/samples/hero-dog-overhead.jpg',
+    '白色小狗全装角色趴在浅色地板上的俯视照片（内部开发样张）',
     1920,
     1080,
-    { desktop: '64% 40%', mobile: '50% 36%' },
+    { desktop: '50% 46%', mobile: '45% 40%' },
   ),
 } as const
 

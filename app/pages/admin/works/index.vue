@@ -9,6 +9,7 @@ import {
 import { formatCnyMinorUnits } from '~/utils/format'
 
 definePageMeta({
+  layout: 'admin',
   ssr: false,
 })
 

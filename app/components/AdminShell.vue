@@ -24,7 +24,7 @@ withDefaults(defineProps<{
       </nav>
       <NuxtLink to="/admin/login" class="admin-shell__exit">退出登录</NuxtLink>
     </header>
-    <main id="admin-main" class="admin-shell__main">
+    <main id="admin-main" class="admin-shell__main" tabindex="-1">
       <slot />
     </main>
   </div>
