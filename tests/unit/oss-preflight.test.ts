@@ -1,0 +1,170 @@
+import { describe, expect, it } from 'vitest'
+import {
+  compressPngForOss,
+  OSS_IMAGE_PROCESSING_MAX_BYTES,
+} from '../../scripts/embedded-ffmpeg.mjs'
+import {
+  assertExactObjectScope,
+  contentDigests,
+  createLargeSyntheticPng,
+  createRunId,
+  createSyntheticWatermarkPng,
+  evaluateCorsRules,
+  EXPECTED_PRIVATE_BUCKET,
+  ORIGINAL_IMAGE_MAX_BYTES,
+  PREFLIGHT_IMAGE_MIN_BYTES,
+  REQUIRED_PUT_HEADERS,
+  testPrefixFor,
+  urlSafeBase64,
+} from '../../scripts/oss-preflight-core.mjs'
+
+describe('T10 OSS preflight scope', () => {
+  it('uses a unique, auditable test prefix', () => {
+    const runId = createRunId(
+      new Date('2026-07-31T12:34:56.000Z'),
+      Buffer.from('01020304', 'hex'),
+    )
+
+    expect(runId).toBe('t10-20260731T123456Z-01020304')
+    expect(testPrefixFor(runId)).toBe(
+      'test/t10-20260731T123456Z-01020304/',
+    )
+  })
+
+  it('allows only an exact object below the run prefix', () => {
+    const prefix = 'test/t10-20260731T123456Z-01020304/'
+    const valid = {
+      bucket: EXPECTED_PRIVATE_BUCKET,
+      expectedBucket: EXPECTED_PRIVATE_BUCKET,
+      key: `${prefix}private/source.png`,
+      prefix,
+    }
+
+    expect(() => assertExactObjectScope(valid)).not.toThrow()
+    expect(() => assertExactObjectScope({
+      ...valid,
+      bucket: 'other-bucket',
+    })).toThrow(/bucket/u)
+    expect(() => assertExactObjectScope({
+      ...valid,
+      key: 'test/another-run/private/source.png',
+    })).toThrow(/prefix/u)
+    expect(() => assertExactObjectScope({
+      ...valid,
+      key: `${prefix}../source.png`,
+    })).toThrow(/prefix/u)
+  })
+})
+
+describe('T10 synthetic media', () => {
+  it('generates a deterministic 20–30 MB PNG within the product limit', () => {
+    const first = createLargeSyntheticPng()
+    const second = createLargeSyntheticPng()
+
+    expect(first.subarray(0, 8)).toEqual(Buffer.from([
+      0x89,
+      0x50,
+      0x4e,
+      0x47,
+      0x0d,
+      0x0a,
+      0x1a,
+      0x0a,
+    ]))
+    expect(first.length).toBeGreaterThanOrEqual(PREFLIGHT_IMAGE_MIN_BYTES)
+    expect(first.length).toBeLessThanOrEqual(ORIGINAL_IMAGE_MAX_BYTES)
+    expect(contentDigests(first).sha256).toBe(
+      contentDigests(second).sha256,
+    )
+    const compressed = compressPngForOss(first)
+
+    expect(compressed.content.length).toBeLessThanOrEqual(
+      OSS_IMAGE_PROCESSING_MAX_BYTES,
+    )
+    expect(compressed.content.subarray(1, 4).toString('ascii')).toBe('PNG')
+    expect(compressed.contentType).toBe('image/png')
+    expect(compressed.dimensions).toEqual({
+      width: 4096,
+      height: 444,
+    })
+    expect(compressed.binary).toMatchObject({
+      provider: 'ffmpeg-static',
+      usedPathLookup: false,
+    })
+    expect(compressed.binary.version).toContain('ffmpeg version 6.1.1')
+    expect(compressed.binary.sha256).toMatch(/^[a-f0-9]{64}$/u)
+  }, 30_000)
+
+  it('generates a separate deterministic PNG watermark source', () => {
+    const watermark = createSyntheticWatermarkPng()
+
+    expect(watermark.subarray(1, 4).toString('ascii')).toBe('PNG')
+    expect(watermark.length).toBeLessThan(100_000)
+    expect(contentDigests(watermark).sha256).toMatch(/^[a-f0-9]{64}$/u)
+  })
+
+  it('uses URL-safe unpadded Base64 for OSS processing parameters', () => {
+    const encoded = urlSafeBase64('test/路径/watermark logo.png')
+
+    expect(encoded).not.toMatch(/[+/=]/u)
+    expect(encoded).toBe(
+      Buffer.from('test/路径/watermark logo.png')
+        .toString('base64url'),
+    )
+  })
+})
+
+describe('T10 CORS capability check', () => {
+  const browserOrigin = 'https://admin.example.test'
+
+  it('accepts a rule covering the exact conditional PUT surface', () => {
+    const result = evaluateCorsRules([
+      {
+        allowedOrigin: browserOrigin,
+        allowedMethod: ['PUT'],
+        allowedHeader: REQUIRED_PUT_HEADERS,
+      },
+    ], { origin: browserOrigin })
+
+    expect(result).toMatchObject({
+      sufficient: true,
+      matchingRuleIndex: 0,
+      broadOrigin: false,
+      broadHeaders: false,
+    })
+  })
+
+  it('reports a missing signed header or wrong origin', () => {
+    expect(evaluateCorsRules([
+      {
+        allowedOrigin: 'https://other.example.test',
+        allowedMethod: ['PUT'],
+        allowedHeader: REQUIRED_PUT_HEADERS,
+      },
+    ], { origin: browserOrigin }).sufficient).toBe(false)
+
+    expect(evaluateCorsRules([
+      {
+        allowedOrigin: browserOrigin,
+        allowedMethod: ['PUT'],
+        allowedHeader: REQUIRED_PUT_HEADERS.filter(
+          header => header !== 'content-md5',
+        ),
+      },
+    ], { origin: browserOrigin }).sufficient).toBe(false)
+  })
+
+  it('identifies broad wildcard rules without hiding capability', () => {
+    expect(evaluateCorsRules([
+      {
+        allowedOrigin: '*',
+        allowedMethod: ['PUT'],
+        allowedHeader: ['*'],
+      },
+    ], { origin: browserOrigin })).toMatchObject({
+      sufficient: true,
+      broadOrigin: true,
+      broadHeaders: true,
+    })
+  })
+})
