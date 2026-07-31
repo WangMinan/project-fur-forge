@@ -95,6 +95,10 @@ describe('runtime configuration', () => {
     const cwd = temporaryDirectory()
     const filePath = writeRuntimeFile(cwd, {
       databaseFile: 'file.db',
+      publicBaseUrl: 'http://public.test',
+      adminBaseUrl: 'http://admin.test',
+      mediaBaseUrl: 'https://media.test',
+      ossUploadBaseUrl: 'https://upload.test',
     })
     const config = loadRuntimeConfig({
       cwd,
@@ -103,17 +107,30 @@ describe('runtime configuration', () => {
     })
 
     expect(config.databaseFile).toBe('file.db')
-    expect(config.publicBaseUrl).toBe('http://localhost:3000')
+    expect(config.publicBaseUrl).toBe('http://public.test')
   })
 
   it('uses safe fallback without an active file', () => {
     const config = loadRuntimeConfig({
       cwd: temporaryDirectory(),
-      env: { APP_ENV: 'test' },
+      env: {
+        APP_ENV: 'test',
+        PUBLIC_BASE_URL: 'http://public.test',
+        ADMIN_BASE_URL: 'http://admin.test',
+        MEDIA_BASE_URL: 'https://media.test',
+        OSS_UPLOAD_BASE_URL: 'https://upload.test',
+      },
     })
 
     expect(config.databaseFile).toBe('.data/dev.db')
     expect(config.sessionSecret).toBeUndefined()
+  })
+
+  it('requires explicit origins outside tests', () => {
+    expect(() => loadRuntimeConfig({
+      cwd: temporaryDirectory(),
+      env: { APP_ENV: 'development' },
+    })).toThrowError(/publicBaseUrl/)
   })
 
   it('fails safely without leaking invalid values', () => {
@@ -217,6 +234,10 @@ describe('runtime configuration', () => {
     const cwd = temporaryDirectory()
     const ossBase = {
       APP_ENV: 'test',
+      PUBLIC_BASE_URL: 'http://public.test',
+      ADMIN_BASE_URL: 'http://admin.test',
+      MEDIA_BASE_URL: 'https://media.test',
+      OSS_UPLOAD_BASE_URL: 'https://upload.test',
       OSS_REGION: 'oss-cn-hangzhou',
       OSS_ENDPOINT: 'https://oss-cn-hangzhou.aliyuncs.com',
       OSS_ACCESS_KEY_ID: 'test-access-key-id',
@@ -301,6 +322,12 @@ describe('runtime configuration', () => {
     expect(new Set(envTemplateNames).size).toBe(envTemplateNames.length)
     expect(template.values).toHaveProperty('ossPrivateBucket', '')
     expect(template.values).toHaveProperty('ossPublicBucket', '')
+    expect(template.values).toMatchObject({
+      publicBaseUrl: '',
+      adminBaseUrl: '',
+      mediaBaseUrl: '',
+      ossUploadBaseUrl: '',
+    })
     expect(template.values).not.toHaveProperty('ossBucket')
     expect(template.values).not.toHaveProperty('originalImageMaxBytes')
     expect(nuxtConfig).not.toContain('process.env.SESSION_SECRET')

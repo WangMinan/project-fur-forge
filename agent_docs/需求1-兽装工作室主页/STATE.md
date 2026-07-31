@@ -42,6 +42,8 @@
 - 一期价格只支持人民币。采用最小货币单位与固定 `CNY` 约束；未来需要其他币种时通过正常迁移扩展，不提前保存禁用美元字段。
 - P0 先形成可部署的核心作品链路；P1 补齐一期增强能力；P2 是可独立后置的运维增强。只有 P0 + P1 完成后才称为“一期功能闭环”；正式上线仍需 T51–T53。
 - production 必须显式提供 URL、数据库、双 Bucket、OSS AccessKey 和 `SESSION_SECRET`；P2/T43 前 SMTP 五项可以全部缺失，但只要提供任一项就必须完整提供全组，不生成占位凭据。
+- development/production 的公开、后台、媒体与 OSS 上传 origin 均不提供硬编码域名 fallback；本机值只保存在被 Git 忽略的 `.env`，部署时显式注入真实域名。
+- 全局配置门禁：除测试文件中的隔离值外，任何配置项的具体值都不得硬编码在应用代码、脚本或版本化文档/模板中，只能由 `.env`、进程环境变量或不入库的活动配置文件提供。
 
 ### 首页轮播
 
@@ -122,6 +124,7 @@ T03 遗留工程问题已在 `main` 完成以下修正：
 
 ## 最近验证
 
+- 2026-07-31：收口 T02 非测试 origin 配置，并将“测试之外不得硬编码任何配置具体值”固化为全局工程门禁。版本化模板与 OSS 预检已移除 `localhost` / `127.0.0.1` 域名 fallback，本机 origin 写入 `.env`；86 项单测、34 项集成测试、78 项 E2E、lint、typecheck、构建和生产验证通过。证据见 `implementation/notes/T02-ORIGIN-ENV-CLOSURE-2026-07-31.md`。
 - 2026-07-31：完成 T11–T13 S2 Review 修补。production SMTP 可选组、auth/admin/preview no-store、认证命令显式迁移前置与隐藏 TTY 输入、媒体 role/usage 与 `source_variant_id`、Hero 完整 recipe 发布条件均通过；新迁移为 `0002_puzzling_malcolm_colcord.sql`。完整门禁为 85 项单测、34 项集成测试、78 项 E2E、构建和生产验证；证据见 `implementation/notes/S2-REVIEW-CLOSURE-2026-07-31.md`。
 - 2026-07-31：完成 T13 唯一管理员服务端认证。密封 Host-only Cookie、scrypt 密码哈希、8 小时无操作过期、5 次失败锁定 30 分钟、SessionVersion、管理员 active、Host/Origin/CSRF、资源版本、日志脱敏和受保护重置均通过；完整门禁为 84 项单测、27 项集成测试、112 项 E2E、构建和生产验证。用户要求前端由 Kimi 实现，`app/` 保持零差异；证据见 `implementation/notes/T13-AUTH-2026-07-31.md`。
 - 2026-07-31：完成 T12 P0 Schema 与投影。`0000_sparkling_absorbing_man.sql` 建立 11 张 P0 表；ownerDisplay/CNY/短属性、媒体角色/数量、原图与 variant identity、首页 1–5 READY 横竖配对、发布步骤、公开/管理泄漏守卫均通过。完整门禁为 81 项单测、18 项集成测试、构建和生产验证；证据见 `implementation/notes/T12-P0-SCHEMA-2026-07-31.md`。
