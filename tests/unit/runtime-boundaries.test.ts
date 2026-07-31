@@ -286,10 +286,26 @@ describe('host boundary', () => {
       statusCode: 404,
     })
     expect(decideHostAccess(
+      'public.test',
+      '/api/_auth/session',
+      config,
+    )).toMatchObject({
+      action: 'reject',
+      statusCode: 404,
+    })
+    expect(decideHostAccess(
       'admin.test',
       '/admin/login',
       config,
     )).toEqual({ action: 'allow' })
+    expect(decideHostAccess(
+      'admin.test',
+      '/api/_auth/session',
+      config,
+    )).toMatchObject({
+      action: 'reject',
+      statusCode: 404,
+    })
     expect(decideHostAccess(
       'admin.test',
       '/works',

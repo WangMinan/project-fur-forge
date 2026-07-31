@@ -13,7 +13,7 @@
 | 公开设计 | `.design/public-site/` | 2026-07-31 已校准 | 首页双源轮播、横版领养设定图、竖版作品图、返图墙、水印和站点图标 |
 | 管理设计 | `.design/admin-console/` | 2026-07-31 已校准 | `/admin/site/home`、横竖配对、角色化媒体区、水印预览和 P0/P1/P2 导航 |
 | 模型 | `models/README.md` | 2026-07-31 已实施校准 | T12 已实现 `site_hero_slides`、媒体角色、无水印原图和版本化水印 identity |
-| 任务 | `implementation/TASKS.md` | 2026-07-31 已更新 | T01–T12 与 EXT-02 已完成；下一项为 T13 |
+| 任务 | `implementation/TASKS.md` | 2026-07-31 已更新 | T01–T13 与 EXT-02 已完成；本批次结束，T14 未启动 |
 | 首页媒体校准记录 | `implementation/notes/DOCS-HOME-MEDIA-REALIGNMENT-2026-07-31.md` | 已记录 | 对代码与文档做交叉确认，说明三类缺口、决策、修改范围和未实现边界 |
 | 第一轮校准记录 | `implementation/notes/DOCS-REALIGNMENT-2026-07-29.md` | 已记录 | 字段、双 Bucket、图片配方、阶段范围和任务顺序变更证据 |
 | T04–T05 实施记录 | `implementation/notes/T04-T05-2026-07-29.md` | 已验证 | Kimi 入选方案、两种首页精选对比、三视口截图与质量门禁；当时 Hero 仍为单图夹具 |
@@ -26,13 +26,14 @@
 | T10/EXT-02 证据 | `implementation/notes/T10-OSS-PREFLIGHT-2026-07-31.md` | 已通过 | 30 MB 原图、内嵌 FFmpeg 私有处理源、双 Bucket、水印与跨桶处理完整通过 |
 | T11 SQLite 证据 | `implementation/notes/T11-SQLITE-2026-07-31.md` | 已通过 | Drizzle、版本化迁移、PRAGMA、路径隔离和 SQLite Backup API |
 | T12 Schema 证据 | `implementation/notes/T12-P0-SCHEMA-2026-07-31.md` | 已通过 | 11 张 P0 表、媒体/首页约束、variant identity 和投影泄漏守卫 |
-| 状态 | `STATE.md` | 2026-07-31 已更新 | 当前决策、外部门禁与 T12 收口 |
+| T13 认证证据 | `implementation/notes/T13-AUTH-2026-07-31.md` | 已通过 | 唯一管理员、密封 Cookie Session、锁定、改密/重置和 Host/Origin/CSRF |
+| 状态 | `STATE.md` | 2026-07-31 已更新 | 当前决策、外部门禁与 T11–T13 批次收口 |
 
 ## 当前执行文档
 
 | 类型 | 路径 | 当前效力 |
 | --- | --- | --- |
-| 执行责任路由 | `implementation/EXECUTION_ROUTING.md` | 2026-07-31 当前生效；记录 T11–T12 已收口、T13 当前任务和后续默认分工，不属于产品契约 |
+| 执行责任路由 | `implementation/EXECUTION_ROUTING.md` | 2026-07-31 当前生效；记录 T11–T13 已收口、前端交接和后续默认分工，不属于产品契约 |
 
 ## 历史与证据
 
@@ -60,6 +61,7 @@
 - T10：确定性 OSS 预检、内嵌 FFmpeg 私有预处理、最小权限与秘密说明均已实现，完整外部能力有实测证据。
 - T11：SQLite/Drizzle 运行底座、版本化迁移、强制 PRAGMA、环境路径隔离、临时测试库和一致性备份底座已实现。
 - T12：11 张 P0 表、媒体角色与数量约束、首页横竖 READY 配对、完整 variant identity 和显式公开/管理投影已实现。
+- T13：唯一管理员服务端认证、幂等初始化、登录/退出/改密/受保护重置、SessionVersion、锁定和 Host/Origin/CSRF 已实现；前端接入按用户要求交给 Kimi。
 
 尚未实施：后台首页轮播、横竖双源切换、媒体角色分区、正式媒体编排中的 OSS 水印、favicon/Touch Icon。它们已进入后续任务契约，但不得写入当前完成产物。
 

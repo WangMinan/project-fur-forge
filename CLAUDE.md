@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01–T12 与 EXT-02 已完成。** T12 已实现 11 张 P0 表、媒体角色/数量/方向约束、首页横竖 READY 配对、完整 variant identity 和显式公开/管理投影。**下一项为 T13；完成后停止，不进入 T14。**
+> **当前阶段：阶段 4 IMPLEMENTATION，T01–T13 与 EXT-02 已完成。** T11–T13 已建立 SQLite/Drizzle、P0 Schema/投影和唯一管理员服务端认证；前端仍由 Kimi 主责。**本批次已停止，T14 未启动。**
 
 ## 网站核心原则（景宸确认）
 
@@ -53,4 +53,4 @@ pnpm verify:production
 
 ## 当前仓库状态
 
-根目录现含 Nuxt 4 工程、`app/`、`server/`、`shared/`、`scripts/`、`tests/` 与阶段文档。T10/EXT-02 已验证双 Bucket 与大原图处理链；T11–T12 已增加 SQLite/Drizzle、迁移/备份、P0 Schema、媒体角色和投影。认证、作品 CRUD、正式上传页、正式媒体处理编排与最终水印参数尚未开始。
+根目录现含 Nuxt 4 工程、`app/`、`server/`、`shared/`、`scripts/`、`tests/` 与阶段文档。T10/EXT-02 已验证双 Bucket 与大原图处理链；T11–T13 已增加 SQLite/Drizzle、迁移/备份、P0 Schema/投影和唯一管理员服务端认证。认证前端接入由 Kimi 负责；作品 CRUD、正式上传页、正式媒体处理编排与最终水印参数尚未开始。
