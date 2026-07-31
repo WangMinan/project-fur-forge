@@ -1,4 +1,6 @@
 import { request } from 'node:http'
+import { tmpdir } from 'node:os'
+import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   setup,
@@ -49,6 +51,10 @@ await setup({
   port,
   env: {
     APP_ENV: 'test',
+    DATABASE_FILE: resolve(
+      tmpdir(),
+      `fur-forge-health-${process.pid}.db`,
+    ),
     PUBLIC_BASE_URL: publicBaseUrl,
     ADMIN_BASE_URL: adminBaseUrl,
     MEDIA_BASE_URL: 'https://media.test.invalid',

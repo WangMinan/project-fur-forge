@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01–T10 与 EXT-02 已完成。** T10 已实现确定性双 Bucket 预检、最小权限说明和内嵌 FFmpeg 大原图预处理；29,360,568 字节原图保留在私有 Bucket，生成 4,791,024 字节私有处理源后，CORS、BPA、V4 条件 PUT、匿名边界、水印和跨 Bucket `sys/saveas` 全部实测通过。**下一项为 T11，本轮未启动。**
+> **当前阶段：阶段 4 IMPLEMENTATION，T01–T11 与 EXT-02 已完成。** T11 已建立 SQLite/Drizzle 运行底座、版本化迁移、强制 PRAGMA、开发/生产/测试路径隔离和一致性备份底座。**下一项为 T12；当前批次完成 T13 后停止，不进入 T14。**
 
 ## 网站核心原则（景宸确认）
 
@@ -53,4 +53,4 @@ pnpm verify:production
 
 ## 当前仓库状态
 
-根目录现含 Nuxt 4 工程、`app/`、`server/`、`shared/`、`scripts/`、`tests/` 与阶段文档。T10 已增加 `pnpm preflight:oss`、确定性合成媒体、内嵌固定版本 FFmpeg、最小权限与秘密说明；EXT-02 已通过。SQLite、认证、作品 CRUD、正式上传页、正式媒体处理编排与最终水印参数尚未开始。
+根目录现含 Nuxt 4 工程、`app/`、`server/`、`shared/`、`scripts/`、`tests/` 与阶段文档。T10/EXT-02 已验证双 Bucket 与大原图处理链；T11 已增加 SQLite/Drizzle、迁移、备份和测试库隔离。P0 Schema、认证、作品 CRUD、正式上传页、正式媒体处理编排与最终水印参数尚未开始。

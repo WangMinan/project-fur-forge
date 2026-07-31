@@ -1,4 +1,6 @@
 import { defineConfig } from '@playwright/test'
+import { tmpdir } from 'node:os'
+import { resolve } from 'node:path'
 
 const baseURL = 'http://127.0.0.1:3100'
 
@@ -21,6 +23,10 @@ export default defineConfig({
     command: 'pnpm dev --host 0.0.0.0 --port 3100',
     env: {
       APP_ENV: 'test',
+      DATABASE_FILE: resolve(
+        tmpdir(),
+        `fur-forge-e2e-${process.pid}.db`,
+      ),
       PUBLIC_BASE_URL: baseURL,
       ADMIN_BASE_URL: 'http://localhost:3100',
       MEDIA_BASE_URL: 'https://media.test.invalid',
