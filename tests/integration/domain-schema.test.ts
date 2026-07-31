@@ -250,7 +250,7 @@ afterEach(() => {
 })
 
 describe('P0 schema boundary', () => {
-  it('creates only the P0 tables and keeps banned fields out of works', () => {
+  it('adds only the authorized T14 table and keeps banned fields out of works', () => {
     const tables = sqlite.prepare(`
       SELECT name
       FROM sqlite_master
@@ -270,6 +270,7 @@ describe('P0 schema boundary', () => {
       'publication_operations',
       'site_content',
       'site_hero_slides',
+      'upload_sessions',
       'users',
       'work_assets',
       'work_feature_tags',

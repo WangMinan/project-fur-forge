@@ -21,6 +21,13 @@ import type {
   suitTypeSchema,
   workPurposeSchema,
 } from '../schemas/work'
+import type {
+  conditionalPutDtoSchema,
+  uploadFailureCodeSchema,
+  uploadOwnerSchema,
+  uploadSessionDtoSchema,
+  uploadSessionStatusSchema,
+} from '../schemas/upload'
 
 export type ApiError = z.infer<typeof apiErrorSchema>
 export type ErrorCode = z.infer<typeof errorCodeSchema>
@@ -40,3 +47,8 @@ export type ReturnPhotoConsentSource = z.infer<
 export type ReturnPhotoConsent = z.infer<typeof returnPhotoConsentSchema>
 export type PublicWorkDto = z.infer<typeof publicWorkDtoSchema>
 export type AdminWorkDto = z.infer<typeof adminWorkDtoSchema>
+export type UploadOwner = z.infer<typeof uploadOwnerSchema>
+export type UploadSessionStatus = z.infer<typeof uploadSessionStatusSchema>
+export type UploadFailureCode = z.infer<typeof uploadFailureCodeSchema>
+export type UploadSessionDto = z.infer<typeof uploadSessionDtoSchema>
+export type ConditionalPutDto = z.infer<typeof conditionalPutDtoSchema>
