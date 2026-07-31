@@ -4,6 +4,7 @@ import type {
   MediaStorage,
   PrivateImageInfo,
   PrivateObjectPutInput,
+  PublicProcessInput,
 } from '../../server/utils/media-storage'
 
 interface FakeObject {
@@ -25,13 +26,17 @@ function pngInfo(content: Buffer): PrivateImageInfo {
 
 export class FakeMediaStorage implements MediaStorage {
   readonly deletedPrivateKeys: string[] = []
+  readonly deletedPublicKeys: string[] = []
   readonly objects = new Map<string, FakeObject>()
+  readonly publicObjects = new Map<string, FakeObject>()
   readonly privatePuts: PrivateObjectPutInput[] = []
+  readonly processCalls: PublicProcessInput[] = []
   readonly signedPuts: ConditionalPutInput[] = []
   failDelete = false
   failGet = false
   failImageInfo = false
   failPut = false
+  failProcess = false
   failSign = false
 
   seedPrivate(
@@ -76,7 +81,15 @@ export class FakeMediaStorage implements MediaStorage {
   }
 
   async headPrivate(objectKey: string) {
-    const object = this.objects.get(objectKey)
+    return this.head(this.objects, objectKey)
+  }
+
+  async headPublic(objectKey: string) {
+    return this.head(this.publicObjects, objectKey)
+  }
+
+  private async head(objects: Map<string, FakeObject>, objectKey: string) {
+    const object = objects.get(objectKey)
     if (!object) {
       throw Object.assign(new Error('fake object missing'), {
         code: 'NoSuchKey',
@@ -119,6 +132,17 @@ export class FakeMediaStorage implements MediaStorage {
     return { ...object.imageInfo }
   }
 
+  async imageInfoPublic(objectKey: string) {
+    const object = this.publicObjects.get(objectKey)
+    if (!object) {
+      throw Object.assign(new Error('fake public object missing'), {
+        code: 'NoSuchKey',
+        status: 404,
+      })
+    }
+    return { ...object.imageInfo }
+  }
+
   async putPrivateConditional(input: PrivateObjectPutInput) {
     if (this.failPut) {
       throw new Error('fake put failure')
@@ -132,5 +156,57 @@ export class FakeMediaStorage implements MediaStorage {
         input.sha256,
       )
     }
+  }
+
+  async processPrivateToPublic(input: PublicProcessInput) {
+    if (this.failProcess) {
+      throw new Error('fake process failure')
+    }
+    const source = this.objects.get(input.sourceObjectKey)
+    if (!source) {
+      throw new Error('fake process source missing')
+    }
+    this.processCalls.push(input)
+    const width = Number(/(?:^|,)w_(\d+)/u.exec(input.process)?.[1]
+      ?? source.imageInfo.width)
+    const height = Number(/(?:^|,)h_(\d+)/u.exec(input.process)?.[1]
+      ?? Math.round(width * source.imageInfo.height / source.imageInfo.width))
+    const format = /format,(webp|jpg|png)/u.exec(input.process)?.[1] ?? 'webp'
+    const contentType = format === 'jpg' ? 'image/jpeg' : `image/${format}`
+    const content = createHash('sha256')
+      .update(source.content)
+      .update(input.process)
+      .digest()
+    this.publicObjects.set(input.objectKey, {
+      content,
+      contentType,
+      imageInfo: {
+        fileSize: content.length,
+        format,
+        height,
+        orientation: 1,
+        width,
+      },
+      sha256Metadata: null,
+    })
+  }
+
+  async getPublicAnonymous(objectKey: string) {
+    const object = this.publicObjects.get(objectKey)
+    if (!object) {
+      throw new Error('fake anonymous public object missing')
+    }
+    return {
+      content: Buffer.from(object.content),
+      contentType: object.contentType,
+    }
+  }
+
+  async deletePublic(objectKey: string) {
+    if (this.failDelete) {
+      throw new Error('fake public delete failure')
+    }
+    this.deletedPublicKeys.push(objectKey)
+    this.publicObjects.delete(objectKey)
   }
 }

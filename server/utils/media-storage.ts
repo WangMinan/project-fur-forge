@@ -33,11 +33,27 @@ export interface PrivateObjectPutInput {
   sha256: string
 }
 
+export interface PublicProcessInput {
+  objectKey: string
+  process: string
+  sourceObjectKey: string
+}
+
+export interface AnonymousPublicObject {
+  content: Buffer
+  contentType: string
+}
+
 export interface MediaStorage {
   deletePrivate(objectKey: string): Promise<void>
+  deletePublic(objectKey: string): Promise<void>
   getPrivate(objectKey: string): Promise<Buffer>
+  getPublicAnonymous(objectKey: string): Promise<AnonymousPublicObject>
   headPrivate(objectKey: string): Promise<PrivateObjectHead>
+  headPublic(objectKey: string): Promise<PrivateObjectHead>
   imageInfoPrivate(objectKey: string): Promise<PrivateImageInfo>
+  imageInfoPublic(objectKey: string): Promise<PrivateImageInfo>
+  processPrivateToPublic(input: PublicProcessInput): Promise<void>
   putPrivateConditional(input: PrivateObjectPutInput): Promise<void>
   signConditionalPut(input: ConditionalPutInput): Promise<ConditionalPutDto>
 }
@@ -50,6 +66,12 @@ interface OssClient {
     objectKey: string,
     content: Buffer,
     options: { headers: Record<string, string> },
+  ): Promise<unknown>
+  processObjectSave(
+    sourceObjectKey: string,
+    objectKey: string,
+    process: string,
+    bucket: string,
   ): Promise<unknown>
   signatureUrlV4(
     method: string,
@@ -84,6 +106,7 @@ function requiredOssConfig(config: RuntimeConfig) {
     accessKeyId: config.ossAccessKeyId,
     accessKeySecret: config.ossAccessKeySecret,
     bucket: config.ossPrivateBucket,
+    publicBucket: config.ossPublicBucket,
     endpoint: config.ossEndpoint,
     region: config.ossRegion,
   }
@@ -109,13 +132,28 @@ function imageInfoValue(
 
 export class AliOssMediaStorage implements MediaStorage {
   private readonly privateClient: Promise<OssClient>
+  private readonly publicBucket: string
+  private readonly publicClient: Promise<OssClient>
+  private readonly publicMediaBaseUrl: string
 
   constructor(config: RuntimeConfig) {
     const oss = requiredOssConfig(config)
+    this.publicBucket = oss.publicBucket
+    this.publicMediaBaseUrl = config.mediaBaseUrl
     this.privateClient = createOssClient({
       region: oss.region,
       endpoint: oss.endpoint,
       bucket: oss.bucket,
+      accessKeyId: oss.accessKeyId,
+      accessKeySecret: oss.accessKeySecret,
+      authorizationV4: true,
+      secure: true,
+      timeout: 120_000,
+    })
+    this.publicClient = createOssClient({
+      region: oss.region,
+      endpoint: oss.endpoint,
+      bucket: oss.publicBucket,
       accessKeyId: oss.accessKeyId,
       accessKeySecret: oss.accessKeySecret,
       authorizationV4: true,
@@ -151,7 +189,15 @@ export class AliOssMediaStorage implements MediaStorage {
   }
 
   async headPrivate(objectKey: string) {
-    const result = await (await this.privateClient).head(objectKey)
+    return this.head(await this.privateClient, objectKey)
+  }
+
+  async headPublic(objectKey: string) {
+    return this.head(await this.publicClient, objectKey)
+  }
+
+  private async head(client: OssClient, objectKey: string) {
+    const result = await client.head(objectKey)
     return {
       byteSize: Number(responseHeader(result, 'content-length')),
       contentType: responseHeader(result, 'content-type') ?? '',
@@ -173,7 +219,15 @@ export class AliOssMediaStorage implements MediaStorage {
   }
 
   async imageInfoPrivate(objectKey: string) {
-    const result = await (await this.privateClient).get(objectKey, {
+    return this.imageInfo(await this.privateClient, objectKey)
+  }
+
+  async imageInfoPublic(objectKey: string) {
+    return this.imageInfo(await this.publicClient, objectKey)
+  }
+
+  private async imageInfo(client: OssClient, objectKey: string) {
+    const result = await client.get(objectKey, {
       process: 'image/info',
     })
     const parsed = JSON.parse(Buffer.isBuffer(result.content)
@@ -214,9 +268,46 @@ export class AliOssMediaStorage implements MediaStorage {
     }
   }
 
+  async processPrivateToPublic(input: PublicProcessInput) {
+    await (await this.privateClient).processObjectSave(
+      input.sourceObjectKey,
+      input.objectKey,
+      input.process,
+      this.publicBucket,
+    )
+  }
+
+  async getPublicAnonymous(objectKey: string) {
+    const base = new URL(this.publicMediaBaseUrl)
+    base.pathname = `${base.pathname.replace(/\/$/u, '')}/${objectKey
+      .split('/')
+      .map(encodeURIComponent)
+      .join('/')}`
+    const response = await fetch(base)
+    if (!response.ok) {
+      throw new Error('Anonymous public object read failed.')
+    }
+    return {
+      content: Buffer.from(await response.arrayBuffer()),
+      contentType: response.headers.get('content-type') ?? '',
+    }
+  }
+
   async deletePrivate(objectKey: string) {
     try {
       await (await this.privateClient).delete(objectKey)
+    }
+    catch (error) {
+      const candidate = error as { code?: string, status?: number }
+      if (candidate.code !== 'NoSuchKey' && candidate.status !== 404) {
+        throw error
+      }
+    }
+  }
+
+  async deletePublic(objectKey: string) {
+    try {
+      await (await this.publicClient).delete(objectKey)
     }
     catch (error) {
       const candidate = error as { code?: string, status?: number }
