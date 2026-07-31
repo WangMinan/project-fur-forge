@@ -63,7 +63,7 @@ T06/T07 已由 Kimi K3 完成，用户于 2026-07-30 通过 T08；实现和验�
 
 ## 4. 当前批次：T11–T13
 
-`ENGINEERING_PRIMARY` 从最新 `main` 创建 `feature/t11-t13-core-sol`，严格按 T11 → T12 → T13 执行，每项使用独立提交和实施记录。T11 的 SQLite/Drizzle 运行底座已通过自身门禁；当前进入 T12。T12 未通过前不开始 T13；T13 完成后停止，不进入 T14。
+`ENGINEERING_PRIMARY` 从最新 `main` 创建 `feature/t11-t13-core-sol`，严格按 T11 → T12 → T13 执行，每项使用独立提交和实施记录。T11 SQLite/Drizzle 运行底座和 T12 P0 Schema/投影均已通过自身门禁并独立收口；当前进入 T13。T13 完成后停止，不进入 T14。
 
 ## 5. 后续默认路由
 

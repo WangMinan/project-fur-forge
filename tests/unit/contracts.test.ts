@@ -138,9 +138,17 @@ describe('work DTO mapping', () => {
       ...baseRecord,
       signedUrl: 'https://oss.test/private.jpg?signature=test-signature',
       consentNote: 'private-consent',
+      passwordHash: 'private-password-hash',
+      sessionToken: 'private-session-token',
+      internalErrorMessage: 'private-error-detail',
+      draftVariantUrl: 'https://oss.test/private-draft.jpg',
     } as WorkRecord & {
       signedUrl: string
       consentNote: string
+      passwordHash: string
+      sessionToken: string
+      internalErrorMessage: string
+      draftVariantUrl: string
     })
     const serialized = JSON.stringify(publicDto)
 
@@ -162,6 +170,10 @@ describe('work DTO mapping', () => {
     expect(serialized).not.toContain('originalObjectKeys')
     expect(serialized).not.toContain('signedUrl')
     expect(serialized).not.toContain('consentNote')
+    expect(serialized).not.toContain('private-password-hash')
+    expect(serialized).not.toContain('private-session-token')
+    expect(serialized).not.toContain('private-error-detail')
+    expect(serialized).not.toContain('private-draft')
   })
 
   it('does not project price for non-adoption work', () => {
