@@ -489,36 +489,50 @@ async function generateOne(
 
     const id = deterministicUuid(identity.hash)
     try {
-      sqlite.prepare(`
-        INSERT INTO asset_variants (
+      const stale = sqlite.prepare(`
+        SELECT id FROM asset_variants WHERE object_key = ?
+      `).get(objectKey) as { id: string } | undefined
+      if (stale) {
+        sqlite.prepare(`
+          UPDATE asset_variants
+          SET status = 'READY', sha256 = ?, byte_size = ?,
+              internal_error_code = NULL, version = version + 1,
+              updated_at = ?
+          WHERE id = ?
+        `).run(sha256, head.byteSize, now, stale.id)
+      }
+      else {
+        sqlite.prepare(`
+          INSERT INTO asset_variants (
           id, asset_id, source_variant_id, storage_scope, status,
           object_key, input_sha256, media_role, usage, width, height,
           format, quality, crop_identity, recipe_version,
           watermark_profile, logo_digest, watermark_anchor,
           sha256, byte_size, created_at, updated_at
-        ) VALUES (?, ?, ?, 'PUBLIC', 'READY', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        id,
-        sourceAsset.id,
-        source.sourceVariantId,
-        objectKey,
-        source.inputSha256,
-        sourceAsset.role,
-        usage,
-        info.width,
-        info.height,
-        format,
-        format === 'webp' ? 82 : format === 'jpeg' ? 86 : 100,
-        identity.hash,
-        PUBLIC_RECIPE_VERSION,
-        STANDARD_WATERMARK_PROFILE,
-        logo.sha256,
-        sourceAsset.watermarkAnchor,
-        sha256,
-        head.byteSize,
-        now,
-        now,
-      )
+          ) VALUES (?, ?, ?, 'PUBLIC', 'READY', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          id,
+          sourceAsset.id,
+          source.sourceVariantId,
+          objectKey,
+          source.inputSha256,
+          sourceAsset.role,
+          usage,
+          info.width,
+          info.height,
+          format,
+          format === 'webp' ? 82 : format === 'jpeg' ? 86 : 100,
+          identity.hash,
+          PUBLIC_RECIPE_VERSION,
+          STANDARD_WATERMARK_PROFILE,
+          logo.sha256,
+          sourceAsset.watermarkAnchor,
+          sha256,
+          head.byteSize,
+          now,
+          now,
+        )
+      }
     }
     catch (error) {
       const raced = existingVariant(sqlite, objectKey)

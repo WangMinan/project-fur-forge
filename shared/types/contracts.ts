@@ -7,6 +7,13 @@ import type {
   publicVariantDtoSchema,
 } from '../schemas/media'
 import type {
+  publicationBlockerSchema,
+  publicationFailureStageSchema,
+  publicationOperationDtoSchema,
+  publicationOperationStatusSchema,
+  workPublicationCheckDtoSchema,
+} from '../schemas/publication'
+import type {
   apiErrorSchema,
   errorCodeSchema,
 } from '../schemas/api'
@@ -48,6 +55,19 @@ export type AssetStatus = z.infer<typeof assetStatusSchema>
 export type AdminAssetDto = z.infer<typeof adminAssetDtoSchema>
 export type PublicVariantDto = z.infer<typeof publicVariantDtoSchema>
 export type PublicHeroSlideDto = z.infer<typeof publicHeroSlideDtoSchema>
+export type PublicationOperationStatus = z.infer<
+  typeof publicationOperationStatusSchema
+>
+export type PublicationFailureStage = z.infer<
+  typeof publicationFailureStageSchema
+>
+export type PublicationBlocker = z.infer<typeof publicationBlockerSchema>
+export type PublicationOperationDto = z.infer<
+  typeof publicationOperationDtoSchema
+>
+export type WorkPublicationCheckDto = z.infer<
+  typeof workPublicationCheckDtoSchema
+>
 export type ReturnPhotoConsentSource = z.infer<
   typeof returnPhotoConsentSourceSchema
 >
