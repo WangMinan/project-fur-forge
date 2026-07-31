@@ -489,6 +489,7 @@ export const siteHeroSlides = sqliteTable('site_hero_slides', {
 
 export const publicationOperations = sqliteTable('publication_operations', {
   id: text('id').primaryKey(),
+  operationType: text('operation_type').notNull().default('PUBLISH'),
   entityType: text('entity_type').notNull(),
   entityId: text('entity_id').notNull(),
   requestedVersion: integer('requested_version').notNull(),
@@ -496,12 +497,18 @@ export const publicationOperations = sqliteTable('publication_operations', {
   cleanupObjectKeysJson: text('cleanup_object_keys_json').notNull().default('[]'),
   internalErrorCode: text('internal_error_code'),
   internalErrorMessage: text('internal_error_message'),
+  failureStage: text('failure_stage'),
+  version: integer('version').notNull().default(1),
   startedAt: integer('started_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
   completedAt: integer('completed_at'),
 }, table => [
   index('publication_operations_entity_idx')
     .on(table.entityType, table.entityId, table.startedAt),
+  check(
+    'publication_operations_operation_type',
+    sql`${table.operationType} IN ('PUBLISH', 'UNPUBLISH')`,
+  ),
   check(
     'publication_operations_entity_type',
     sql`${table.entityType} IN ('WORK', 'HOME')`,
@@ -514,6 +521,15 @@ export const publicationOperations = sqliteTable('publication_operations', {
     'publication_operations_requested_version',
     sql`${table.requestedVersion} > 0`,
   ),
+  check(
+    'publication_operations_failure_stage',
+    sql`${table.failureStage} IS NULL OR ${table.failureStage} IN ('VALIDATING', 'GENERATING_PUBLIC', 'APPLYING_WATERMARK', 'VERIFYING_PUBLIC', 'COMMITTING', 'CLEANING_PUBLIC')`,
+  ),
+  check(
+    'publication_operations_failure_state',
+    sql`(${table.status} = 'FAILED' AND ${table.internalErrorCode} IS NOT NULL AND ${table.failureStage} IS NOT NULL) OR (${table.status} != 'FAILED' AND ${table.internalErrorCode} IS NULL AND ${table.failureStage} IS NULL)`,
+  ),
+  check('publication_operations_version_positive', sql`${table.version} > 0`),
 ])
 
 export const businessStatuses = sqliteTable('business_statuses', {

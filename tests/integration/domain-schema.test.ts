@@ -736,11 +736,19 @@ describe('P0 schema boundary', () => {
       'VERIFYING_PUBLIC',
       'COMMITTING',
       'CLEANING_PUBLIC',
-      'FAILED',
       'DONE',
     ]) {
       insertOperation.run(`operation-${status}`, status, now, now)
     }
+    sqlite.prepare(`
+      INSERT INTO publication_operations (
+        id, entity_type, entity_id, requested_version, status,
+        internal_error_code, failure_stage, started_at, updated_at
+      ) VALUES (
+        'operation-FAILED', 'HOME', 'site', 1, 'FAILED',
+        'TEST_FAILURE', 'VALIDATING', ?, ?
+      )
+    `).run(now, now)
     expect(() => insertOperation.run(
       'operation-acl',
       'SWITCHING_ACL',

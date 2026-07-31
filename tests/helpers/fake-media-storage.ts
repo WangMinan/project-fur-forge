@@ -167,9 +167,10 @@ export class FakeMediaStorage implements MediaStorage {
       throw new Error('fake process source missing')
     }
     this.processCalls.push(input)
-    const width = Number(/(?:^|,)w_(\d+)/u.exec(input.process)?.[1]
+    const resize = /resize,[^/]+/u.exec(input.process)?.[0] ?? ''
+    const width = Number(/(?:^|,)w_(\d+)/u.exec(resize)?.[1]
       ?? source.imageInfo.width)
-    const height = Number(/(?:^|,)h_(\d+)/u.exec(input.process)?.[1]
+    const height = Number(/(?:^|,)h_(\d+)/u.exec(resize)?.[1]
       ?? Math.round(width * source.imageInfo.height / source.imageInfo.width))
     const format = /format,(webp|jpg|png)/u.exec(input.process)?.[1] ?? 'webp'
     const contentType = format === 'jpg' ? 'image/jpeg' : `image/${format}`
