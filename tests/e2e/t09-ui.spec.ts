@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 /**
- * T09 界面修补回归（UI-01 至 UI-07，见 implementation/notes/T09-UI-HANDOFF.md）：
+ * T09 界面修补回归（UI-01 至 UI-07，见 implementation/notes/T09-UI-2026-07-30.md）：
  * - UI-01 管理端独立布局：单一 main landmark、无公开 Header/Footer、后台 skip link
  * - UI-02 首页 Hero 确定性对比度：真实样张与最不利纯白底图双测量，不再用 /works 替代首页
  * - UI-03 动态参数：详情→详情、后台 id→id 同组件实例切换

@@ -74,6 +74,10 @@ describe('media DTO mapping', () => {
       ...publicVariant,
       status: 'PENDING',
     }, 'https://media.example.com')).toBeNull()
+    expect(() => toPublicVariantDto({
+      ...publicVariant,
+      objectKey: 'prod/web/../private.webp',
+    }, 'https://media.example.com')).toThrow(/dot segments/)
   })
 
   it('requires enabled slides with complete public pairs', () => {

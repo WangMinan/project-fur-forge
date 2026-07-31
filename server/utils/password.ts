@@ -3,6 +3,11 @@ import {
   scrypt as scryptCallback,
   timingSafeEqual,
 } from 'node:crypto'
+import type {
+  BinaryLike,
+  ScryptOptions,
+} from 'node:crypto'
+import { promisify } from 'node:util'
 
 const SCRYPT_COST = 131_072
 const SCRYPT_BLOCK_SIZE = 8
@@ -12,6 +17,12 @@ const SCRYPT_MAX_MEMORY = 256 * 1024 * 1024
 const PASSWORD_HASH_VERSION = 1
 const PASSWORD_SALT_LENGTH = 16
 const DUMMY_SALT = Buffer.from('fur-forge-dummy-login-salt')
+const scrypt = promisify(scryptCallback) as (
+  password: BinaryLike,
+  salt: BinaryLike,
+  keyLength: number,
+  options: ScryptOptions,
+) => Promise<Buffer>
 
 export function validateNewPassword(password: string) {
   if (password.length < 12 || password.length > 256) {
@@ -20,20 +31,12 @@ export function validateNewPassword(password: string) {
 }
 
 async function derive(password: string, salt: Buffer) {
-  return new Promise<Buffer>((resolve, reject) => {
-    scryptCallback(password, salt, SCRYPT_KEY_LENGTH, {
-      N: SCRYPT_COST,
-      r: SCRYPT_BLOCK_SIZE,
-      p: SCRYPT_PARALLELIZATION,
-      maxmem: SCRYPT_MAX_MEMORY,
-    }, (error, derivedKey) => {
-      if (error) {
-        reject(error)
-        return
-      }
-      resolve(derivedKey)
-    })
-  })
+  return scrypt(password, salt, SCRYPT_KEY_LENGTH, {
+    N: SCRYPT_COST,
+    r: SCRYPT_BLOCK_SIZE,
+    p: SCRYPT_PARALLELIZATION,
+    maxmem: SCRYPT_MAX_MEMORY,
+  }) as Promise<Buffer>
 }
 
 export async function hashAdminPassword(password: string) {

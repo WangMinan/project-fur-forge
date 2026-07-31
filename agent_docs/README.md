@@ -17,7 +17,7 @@
 
 当前模型分工、短分支批次、全栈任务交接和独立门禁安排见 [`需求1-兽装工作室主页/implementation/EXECUTION_ROUTING.md`](./需求1-兽装工作室主页/implementation/EXECUTION_ROUTING.md)。
 
-该文件只记录可变的执行安排，不属于产品契约，也不改变 `TASKS.md` 的任务范围、依赖或完成定义。Kimi K3 继续担任后续前端切片的 `UI_PRIMARY`；T06–T13 与 EXT-02 已完成。
+该文件只记录可变的执行安排，不属于产品契约，也不改变 `TASKS.md` 的任务范围、依赖或完成定义。Kimi K3 继续担任后续前端切片的 `UI_PRIMARY`；T01–T13 与 EXT-02 已完成。
 
 ## 当前状态
 

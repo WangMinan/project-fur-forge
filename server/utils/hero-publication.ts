@@ -1,9 +1,5 @@
 import type Database from 'better-sqlite3'
 
-export class HeroPublicationValidationError extends Error {
-  override name = 'HeroPublicationValidationError'
-}
-
 export function validateHeroSlidesForPublication(
   sqlite: Database.Database,
 ) {
@@ -35,7 +31,7 @@ export function validateHeroSlidesForPublication(
   }>
 
   if (rows.length < 1 || rows.length > 5) {
-    throw new HeroPublicationValidationError(
+    throw new Error(
       'Enabled hero slides must contain 1 to 5 items.',
     )
   }
@@ -52,7 +48,7 @@ export function validateHeroSlidesForPublication(
       || (row.linkedWorkStatus !== null
         && row.linkedWorkStatus !== 'published')
     ) {
-      throw new HeroPublicationValidationError(
+      throw new Error(
         `Hero slide ${row.id} is not publication-ready.`,
       )
     }
