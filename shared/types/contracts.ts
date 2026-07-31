@@ -14,11 +14,15 @@ import type {
   adminWorkDtoSchema,
   adoptionMethodSchema,
   businessStatusSchema,
+  managedStudioPhotoDtoSchema,
+  managedWorkDtoSchema,
   publicationStatusSchema,
   publicWorkDtoSchema,
+  publicSafeWorkPreviewDtoSchema,
   returnPhotoConsentSchema,
   returnPhotoConsentSourceSchema,
   suitTypeSchema,
+  workListItemDtoSchema,
   workPurposeSchema,
 } from '../schemas/work'
 import type {
@@ -50,6 +54,12 @@ export type ReturnPhotoConsentSource = z.infer<
 export type ReturnPhotoConsent = z.infer<typeof returnPhotoConsentSchema>
 export type PublicWorkDto = z.infer<typeof publicWorkDtoSchema>
 export type AdminWorkDto = z.infer<typeof adminWorkDtoSchema>
+export type ManagedStudioPhotoDto = z.infer<typeof managedStudioPhotoDtoSchema>
+export type ManagedWorkDto = z.infer<typeof managedWorkDtoSchema>
+export type WorkListItemDto = z.infer<typeof workListItemDtoSchema>
+export type PublicSafeWorkPreviewDto = z.infer<
+  typeof publicSafeWorkPreviewDtoSchema
+>
 export type UploadOwner = z.infer<typeof uploadOwnerSchema>
 export type UploadSessionStatus = z.infer<typeof uploadSessionStatusSchema>
 export type UploadFailureCode = z.infer<typeof uploadFailureCodeSchema>
