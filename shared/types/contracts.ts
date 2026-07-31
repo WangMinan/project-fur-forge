@@ -24,9 +24,12 @@ import type {
 import type {
   conditionalPutDtoSchema,
   uploadFailureCodeSchema,
+  uploadFailureStageSchema,
   uploadOwnerSchema,
   uploadSessionDtoSchema,
   uploadSessionStatusSchema,
+  verifiedAssetDtoSchema,
+  watermarkAnchorSchema,
 } from '../schemas/upload'
 
 export type ApiError = z.infer<typeof apiErrorSchema>
@@ -50,5 +53,8 @@ export type AdminWorkDto = z.infer<typeof adminWorkDtoSchema>
 export type UploadOwner = z.infer<typeof uploadOwnerSchema>
 export type UploadSessionStatus = z.infer<typeof uploadSessionStatusSchema>
 export type UploadFailureCode = z.infer<typeof uploadFailureCodeSchema>
+export type UploadFailureStage = z.infer<typeof uploadFailureStageSchema>
 export type UploadSessionDto = z.infer<typeof uploadSessionDtoSchema>
 export type ConditionalPutDto = z.infer<typeof conditionalPutDtoSchema>
+export type WatermarkAnchor = z.infer<typeof watermarkAnchorSchema>
+export type VerifiedAssetDto = z.infer<typeof verifiedAssetDtoSchema>

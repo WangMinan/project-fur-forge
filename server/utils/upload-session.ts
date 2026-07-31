@@ -8,6 +8,7 @@ import type {
   ConditionalPutDto,
   MediaRole,
   UploadFailureCode,
+  UploadFailureStage,
   UploadOwner,
   UploadSessionDto,
   UploadSessionStatus,
@@ -18,7 +19,7 @@ import { ServiceError } from './service-error'
 
 export const UPLOAD_SESSION_TTL_MS = 5 * 60 * 1_000
 
-interface UploadSessionRow {
+export interface UploadSessionRow {
   id: string
   ownerType: 'work' | 'site'
   ownerId: string
@@ -36,6 +37,7 @@ interface UploadSessionRow {
   assetId: string | null
   version: number
   failureCode: UploadFailureCode | null
+  failureStage: UploadFailureStage | null
   createdAt: number
   expiresAt: number
   updatedAt: number
@@ -80,6 +82,7 @@ const selectUploadSession = `
     asset_id AS assetId,
     version,
     failure_code AS failureCode,
+    failure_stage AS failureStage,
     created_at AS createdAt,
     expires_at AS expiresAt,
     updated_at AS updatedAt
@@ -102,7 +105,7 @@ function extensionFor(contentType: CreateUploadSessionInput['expected']['content
   return contentType === 'image/png' ? 'png' : 'webp'
 }
 
-function sessionDto(row: UploadSessionRow): UploadSessionDto {
+export function uploadSessionDto(row: UploadSessionRow): UploadSessionDto {
   return uploadSessionDtoSchema.parse({
     uploadSessionId: row.id,
     owner: {
@@ -123,32 +126,33 @@ function sessionDto(row: UploadSessionRow): UploadSessionDto {
     status: row.status,
     version: row.version,
     failureCode: row.failureCode,
+    failureStage: row.failureStage,
     assetId: row.assetId,
     createdAt: new Date(row.createdAt).toISOString(),
     expiresAt: new Date(row.expiresAt).toISOString(),
   })
 }
 
-function findSession(sqlite: Database.Database, id: string) {
+export function findUploadSession(sqlite: Database.Database, id: string) {
   return sqlite.prepare(`${selectUploadSession} WHERE id = ?`)
     .get(id) as UploadSessionRow | undefined
 }
 
-function requireSession(sqlite: Database.Database, id: string) {
-  const row = findSession(sqlite, id)
+export function requireUploadSession(sqlite: Database.Database, id: string) {
+  const row = findUploadSession(sqlite, id)
   if (!row) {
     throw new ServiceError(404, 'NOT_FOUND', 'Upload session was not found.')
   }
   return row
 }
 
-function assertVersion(row: UploadSessionRow, expectedVersion: number) {
+export function assertUploadSessionVersion(row: UploadSessionRow, expectedVersion: number) {
   if (row.version !== expectedVersion) {
     throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
   }
 }
 
-function assertOwner(
+export function assertUploadOwner(
   sqlite: Database.Database,
   owner: UploadOwner,
   mediaRole: MediaRole,
@@ -200,6 +204,7 @@ async function cleanupExactObject(
       SET
         status = 'FAILED',
         failure_code = 'UPLOAD_CLEANUP_FAILED',
+        failure_stage = 'CLEANUP',
         version = version + 1,
         updated_at = ?
       WHERE id = ? AND asset_id IS NULL
@@ -216,7 +221,7 @@ export async function createUploadSession(
   input: CreateUploadSessionInput,
   options: UploadSessionOptions = {},
 ): Promise<{ session: UploadSessionDto, upload: ConditionalPutDto }> {
-  assertOwner(sqlite, input.owner, input.mediaRole)
+  assertUploadOwner(sqlite, input.owner, input.mediaRole)
   const id = options.id ?? randomUUID()
   const now = options.now ?? Date.now()
   const expiresAt = now + UPLOAD_SESSION_TTL_MS
@@ -278,7 +283,7 @@ export async function createUploadSession(
   }
 
   return {
-    session: sessionDto(requireSession(sqlite, id)),
+    session: uploadSessionDto(requireUploadSession(sqlite, id)),
     upload,
   }
 }
@@ -289,18 +294,18 @@ export async function getUploadSession(
   id: string,
   now = Date.now(),
 ) {
-  let row = requireSession(sqlite, id)
+  let row = requireUploadSession(sqlite, id)
   if (row.status === 'AWAITING_UPLOAD' && row.expiresAt <= now) {
     sqlite.prepare(`
       UPDATE upload_sessions
       SET status = 'EXPIRED', version = version + 1, updated_at = ?
       WHERE id = ? AND status = 'AWAITING_UPLOAD' AND version = ?
     `).run(now, row.id, row.version)
-    row = requireSession(sqlite, id)
+    row = requireUploadSession(sqlite, id)
     await cleanupExactObject(sqlite, storage, row, now)
-    row = requireSession(sqlite, id)
+    row = requireUploadSession(sqlite, id)
   }
-  return sessionDto(row)
+  return uploadSessionDto(row)
 }
 
 export async function cancelUploadSession(
@@ -310,8 +315,8 @@ export async function cancelUploadSession(
   expectedVersion: number,
   now = Date.now(),
 ) {
-  const row = requireSession(sqlite, id)
-  assertVersion(row, expectedVersion)
+  const row = requireUploadSession(sqlite, id)
+  assertUploadSessionVersion(row, expectedVersion)
   if (row.status === 'COMPLETED' || row.status === 'VALIDATING') {
     throw new ServiceError(409, 'CONFLICT', 'Upload session cannot be cancelled.')
   }
@@ -319,16 +324,16 @@ export async function cancelUploadSession(
     sqlite.prepare(`
       UPDATE upload_sessions
       SET
-        status = 'CANCELLED', failure_code = NULL,
+        status = 'CANCELLED', failure_code = NULL, failure_stage = NULL,
         version = version + 1, updated_at = ?
       WHERE id = ? AND version = ? AND asset_id IS NULL
     `).run(now, id, expectedVersion)
   }
-  const updated = requireSession(sqlite, id)
+  const updated = requireUploadSession(sqlite, id)
   if (!await cleanupExactObject(sqlite, storage, updated, now)) {
     throw new ServiceError(500, 'INTERNAL_ERROR', 'Upload cleanup failed.')
   }
-  return sessionDto(requireSession(sqlite, id))
+  return uploadSessionDto(requireUploadSession(sqlite, id))
 }
 
 export async function retryUploadSession(
@@ -340,11 +345,11 @@ export async function retryUploadSession(
   expectedVersion: number,
   now = Date.now(),
 ) {
-  let row = requireSession(sqlite, id)
-  assertVersion(row, expectedVersion)
+  let row = requireUploadSession(sqlite, id)
+  assertUploadSessionVersion(row, expectedVersion)
   if (row.status === 'AWAITING_UPLOAD' && row.expiresAt <= now) {
     await getUploadSession(sqlite, storage, id, now)
-    row = requireSession(sqlite, id)
+    row = requireUploadSession(sqlite, id)
   }
   if (!['FAILED', 'CANCELLED', 'EXPIRED'].includes(row.status)) {
     throw new ServiceError(409, 'CONFLICT', 'Upload session is not retryable.')
