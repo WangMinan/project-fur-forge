@@ -34,6 +34,10 @@ type PublicFormat = 'webp' | 'jpeg' | 'png'
 
 interface AssetSource {
   byteSize: number
+  cropHeight: number
+  cropWidth: number
+  cropX: number
+  cropY: number
   focalX: number
   focalY: number
   id: string
@@ -43,6 +47,8 @@ interface AssetSource {
   sha256: string
   status: string
   watermarkAnchor: WatermarkAnchor
+  width: number
+  height: number
 }
 
 interface ProcessingSource {
@@ -125,11 +131,20 @@ function contentMd5(content: Buffer) {
 function asset(sqlite: Database.Database, assetId: string) {
   const row = sqlite.prepare(`
     SELECT
-      id, role, status, private_object_key AS privateObjectKey,
-      sha256, byte_size AS byteSize, mime_type AS mimeType,
-      focal_x AS focalX, focal_y AS focalY,
-      watermark_anchor AS watermarkAnchor
-    FROM assets WHERE id = ?
+      asset.id, asset.role, asset.status,
+      asset.private_object_key AS privateObjectKey,
+      asset.sha256, asset.byte_size AS byteSize, asset.mime_type AS mimeType,
+      asset.width, asset.height,
+      COALESCE(relation.focal_x, asset.focal_x) AS focalX,
+      COALESCE(relation.focal_y, asset.focal_y) AS focalY,
+      COALESCE(relation.crop_x, 0) AS cropX,
+      COALESCE(relation.crop_y, 0) AS cropY,
+      COALESCE(relation.crop_width, 1) AS cropWidth,
+      COALESCE(relation.crop_height, 1) AS cropHeight,
+      COALESCE(relation.watermark_anchor, asset.watermark_anchor) AS watermarkAnchor
+    FROM assets AS asset
+    LEFT JOIN work_assets AS relation ON relation.asset_id = asset.id
+    WHERE asset.id = ?
   `).get(assetId) as AssetSource | undefined
   if (!row) {
     throw new ServiceError(404, 'NOT_FOUND', 'Asset was not found.')
@@ -277,10 +292,20 @@ function resizeOperation(
   if (height === null) {
     return `resize,m_lfit,w_${width}`
   }
+  const cropped = usage === 'work-card'
+    && (
+      sourceAsset.cropX !== 0
+      || sourceAsset.cropY !== 0
+      || sourceAsset.cropWidth !== 1
+      || sourceAsset.cropHeight !== 1
+    )
+  const crop = cropped
+    ? `crop,w_${Math.round(sourceAsset.width * sourceAsset.cropWidth)},h_${Math.round(sourceAsset.height * sourceAsset.cropHeight)},x_${Math.round(sourceAsset.width * sourceAsset.cropX)},y_${Math.round(sourceAsset.height * sourceAsset.cropY)}/`
+    : ''
   if (sourceAsset.role === 'design_sheet') {
-    return `resize,m_pad,w_${width},h_${height},color_F7F7F7`
+    return `${crop}resize,m_pad,w_${width},h_${height},color_F7F7F7`
   }
-  return `resize,m_fill,w_${width},h_${height},g_${gravity(
+  return `${crop}resize,m_fill,w_${width},h_${height},g_${gravity(
     sourceAsset.focalX,
     sourceAsset.focalY,
   )}`
@@ -308,6 +333,14 @@ function recipeIdentity(
       : sourceAsset.role === 'design_sheet' ? 'pad' : 'cover',
     focalX: sourceAsset.focalX,
     focalY: sourceAsset.focalY,
+    crop: usage === 'work-card'
+      ? {
+          x: sourceAsset.cropX,
+          y: sourceAsset.cropY,
+          width: sourceAsset.cropWidth,
+          height: sourceAsset.cropHeight,
+        }
+      : null,
     background: sourceAsset.role === 'design_sheet' ? 'F7F7F7' : null,
     format,
     quality: format === 'webp' ? 82 : format === 'jpeg' ? 86 : 100,

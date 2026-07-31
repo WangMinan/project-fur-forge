@@ -411,6 +411,7 @@ export const workAssets = sqliteTable('work_assets', {
   assetId: text('asset_id').notNull()
     .references(() => assets.id),
   role: text('role').notNull(),
+  altText: text('alt_text'),
   position: integer('position').notNull(),
   primary: integer('is_primary', { mode: 'boolean' }).notNull().default(false),
   focalX: real('focal_x').notNull().default(0.5),
@@ -431,6 +432,10 @@ export const workAssets = sqliteTable('work_assets', {
   check(
     'work_assets_role',
     sql`${table.role} IN ('design_sheet', 'studio_photo')`,
+  ),
+  check(
+    'work_assets_alt_text',
+    sql`${table.altText} IS NULL OR (${table.altText} = trim(${table.altText}) AND length(${table.altText}) BETWEEN 1 AND 500)`,
   ),
   check(
     'work_assets_position',
