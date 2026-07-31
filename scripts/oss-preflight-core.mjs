@@ -2,7 +2,10 @@ import {
   createHash,
   randomBytes,
 } from 'node:crypto'
-import { deflateSync } from 'node:zlib'
+import {
+  crc32,
+  deflateSync,
+} from 'node:zlib'
 
 export const EXPECTED_PRIVATE_BUCKET = 'project-furry-forge-private'
 export const EXPECTED_PUBLIC_BUCKET = 'project-furry-forge-public'
@@ -15,38 +18,8 @@ export const REQUIRED_PUT_HEADERS = [
   'x-oss-meta-sha256',
 ]
 
-const PNG_SIGNATURE = Buffer.from([
-  0x89,
-  0x50,
-  0x4e,
-  0x47,
-  0x0d,
-  0x0a,
-  0x1a,
-  0x0a,
-])
+const PNG_SIGNATURE = Buffer.from('89504e470d0a1a0a', 'hex')
 const RUN_ID_PATTERN = /^t10-\d{8}T\d{6}Z-[a-f0-9]{8}$/u
-const CRC32_TABLE = Array.from({ length: 256 }, (_, index) => {
-  let value = index
-
-  for (let bit = 0; bit < 8; bit += 1) {
-    value = (value & 1) === 1
-      ? 0xedb88320 ^ (value >>> 1)
-      : value >>> 1
-  }
-
-  return value >>> 0
-})
-
-function crc32(buffer) {
-  let value = 0xffffffff
-
-  for (const byte of buffer) {
-    value = CRC32_TABLE[(value ^ byte) & 0xff] ^ (value >>> 8)
-  }
-
-  return (value ^ 0xffffffff) >>> 0
-}
 
 function pngChunk(type, data) {
   const typeBytes = Buffer.from(type, 'ascii')
@@ -170,11 +143,7 @@ export function sha256(content) {
 }
 
 export function urlSafeBase64(value) {
-  return Buffer.from(value, 'utf8')
-    .toString('base64')
-    .replaceAll('+', '-')
-    .replaceAll('/', '_')
-    .replace(/=+$/u, '')
+  return Buffer.from(value, 'utf8').toString('base64url')
 }
 
 export function createRunId(now = new Date(), entropy = randomBytes(4)) {

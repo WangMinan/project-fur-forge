@@ -61,16 +61,9 @@ describe('T10 synthetic media', () => {
     const first = createLargeSyntheticPng()
     const second = createLargeSyntheticPng()
 
-    expect(first.subarray(0, 8)).toEqual(Buffer.from([
-      0x89,
-      0x50,
-      0x4e,
-      0x47,
-      0x0d,
-      0x0a,
-      0x1a,
-      0x0a,
-    ]))
+    expect(first.subarray(0, 8)).toEqual(
+      Buffer.from('89504e470d0a1a0a', 'hex'),
+    )
     expect(first.length).toBeGreaterThanOrEqual(PREFLIGHT_IMAGE_MIN_BYTES)
     expect(first.length).toBeLessThanOrEqual(ORIGINAL_IMAGE_MAX_BYTES)
     expect(contentDigests(first).sha256).toBe(

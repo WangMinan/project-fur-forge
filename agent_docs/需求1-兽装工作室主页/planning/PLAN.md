@@ -5,7 +5,7 @@
 
 ## 1. 执行结论
 
-一期采用单仓库、单 Nuxt 4 全栈应用、单 Docker 镜像和单 Node.js 进程。公开站 SSR，后台 `/admin/**` CSR，Nitro 提供 API；SQLite/Drizzle 负责持久化；阿里云 OSS 负责原图保存、全部像素转换和水印烘焙。
+一期采用单仓库、单 Nuxt 4 全栈应用、单 Docker 镜像和单 Node.js 进程。公开站 SSR，后台 `/admin/**` CSR，Nitro 提供 API；SQLite/Drizzle 负责持久化；阿里云 OSS 负责原图保存以及公开衍生图的最终像素转换和水印烘焙，内嵌 FFmpeg 只为超过 20 MB 的原图生成私有处理源。
 
 实施顺序不再按“先把所有基础设施做完，再做页面”横向推进，而是：
 

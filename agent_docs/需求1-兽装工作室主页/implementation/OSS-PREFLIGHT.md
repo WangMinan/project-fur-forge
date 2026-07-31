@@ -34,10 +34,7 @@
     {
       "Effect": "Allow",
       "Action": [
-        "oss:GetBucketInfo",
-        "oss:GetBucketAcl",
-        "oss:GetBucketCors",
-        "oss:GetBucketPublicAccessBlock"
+        "oss:GetBucketInfo"
       ],
       "Resource": [
         "acs:oss:*:*:project-furry-forge-private",
@@ -47,9 +44,26 @@
     {
       "Effect": "Allow",
       "Action": [
-        "oss:PutObject",
-        "oss:GetObject",
+        "oss:GetBucketCors"
+      ],
+      "Resource": [
+        "acs:oss:*:*:project-furry-forge-private"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
         "oss:PostProcessTask"
+      ],
+      "Resource": [
+        "acs:oss:*:*:project-furry-forge-private"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "oss:PutObject",
+        "oss:GetObject"
       ],
       "Resource": [
         "acs:oss:*:*:project-furry-forge-private/<env>/original/*"
@@ -60,7 +74,6 @@
       "Action": [
         "oss:PutObject",
         "oss:GetObject",
-        "oss:PostProcessTask",
         "oss:DeleteObject"
       ],
       "Resource": [
@@ -82,7 +95,7 @@
 }
 ```
 
-`GetObject` 覆盖对象 HEAD、`image/info`、受控图片处理、服务端读取大原图和必要的签名 GET；`PostProcessTask` 只作用于私有源前缀。内嵌 FFmpeg 的结果只能 `PutObject` 到私有 `<env>/processing/*`，且只按已知 Key 删除；OSS `sys/saveas` 只能写公开 `<env>/web/*`。公开对象的 HEAD/验证使用 `GetObject`，下架清理使用精确 Key 的 `DeleteObject`。
+`GetBucketInfo` 同时返回 Bucket 身份、地域、Endpoint、ACL 和 BPA，因此不再重复授予单独的 ACL/BPA 读取动作；浏览器条件 PUT 只涉及私有 Bucket，所以 `GetBucketCors` 也只授予私有 Bucket。`GetObject` 覆盖对象 HEAD、`image/info`、服务端读取大原图和必要的签名 GET。阿里云将 `PostProcessTask` 定义为源 Bucket 级权限，不能缩到对象前缀；这里保留这一项必要的 Bucket 级动作，其他对象动作仍限制在单一环境前缀。若未来需要在同一 Bucket 内隔离互不信任的处理身份，应拆分 Bucket，而不是扩大对象通配权限。内嵌 FFmpeg 的结果只能 `PutObject` 到私有 `<env>/processing/*`，且只按已知 Key 删除；OSS `sys/saveas` 只能写公开 `<env>/web/*`。公开对象的 HEAD/验证使用 `GetObject`，下架清理使用精确 Key 的 `DeleteObject`。
 
 ### 2.2 单次 T10 临时增量
 
@@ -93,9 +106,17 @@
     {
       "Effect": "Allow",
       "Action": [
+        "oss:PostProcessTask"
+      ],
+      "Resource": [
+        "acs:oss:*:*:project-furry-forge-private"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
         "oss:PutObject",
         "oss:GetObject",
-        "oss:PostProcessTask",
         "oss:DeleteObject"
       ],
       "Resource": [
@@ -136,9 +157,11 @@ pnpm preflight:oss
 可选参数：
 
 ```powershell
-pnpm preflight:oss -- --origin https://admin.example.com
-pnpm preflight:oss -- --env-file .env.preflight
+pnpm preflight:oss --origin https://admin.example.com
+node --env-file=.env.preflight scripts/oss-preflight.mjs
 ```
+
+自定义 `--env-file` 必须像上例一样放在脚本路径之前，由项目基线 Node.js 24 原生读取；脚本只解析自身的 `--origin`、`--evidence` 和 `--run-id`，不读取或回显秘密参数。
 
 执行顺序：
 

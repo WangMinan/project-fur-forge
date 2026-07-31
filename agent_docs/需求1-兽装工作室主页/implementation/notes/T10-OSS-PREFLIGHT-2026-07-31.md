@@ -26,9 +26,10 @@
 
 完整策略见 [`../OSS-PREFLIGHT.md`](../OSS-PREFLIGHT.md)。正式应用身份只需要：
 
-- 两个固定 Bucket 的 `GetBucketInfo`、`GetBucketAcl`、`GetBucketCors`、`GetBucketPublicAccessBlock`；
-- 私有 `<env>/original/*` 的条件 `PutObject`、`GetObject` 与必要 `PostProcessTask`；
-- 私有 `<env>/processing/*` 的 `PutObject`、`GetObject`、`PostProcessTask` 与精确 `DeleteObject`；
+- 两个固定 Bucket 的 `GetBucketInfo`（覆盖身份、地域、Endpoint、ACL 与 BPA）和私有 Bucket 的 `GetBucketCors`；
+- 私有 Bucket 的必要 `PostProcessTask`；该动作按阿里云权限模型只能授予源 Bucket；
+- 私有 `<env>/original/*` 的条件 `PutObject` 与 `GetObject`；
+- 私有 `<env>/processing/*` 的 `PutObject`、`GetObject` 与精确 `DeleteObject`；
 - 公开 `<env>/web/*` 的 `PutObject`、`GetObject` 与精确 `DeleteObject`；
 - 单次 `test/<run-id>/*` 的等价对象权限，验证后撤销。
 
@@ -105,6 +106,10 @@ AK/SK 只存在本机 Git 忽略的 `.env` 或 `config/runtime.local.json`，不
 | `pnpm preflight:oss` | 27/27 外部检查通过 |
 
 E2E 有既有的未实现后续页面路由警告，但 112 项均通过；T10 没有实现这些页面。
+
+合并前使用无上下文 `ponytail-review` 独立复核并完成多轮“审查—修复—复审”。最终结论为 `Lean already. Ship.` 和 `Docs/code consistent.`；代码与测试修复净减少 69 行，并将 `PostProcessTask`、Bucket 只读权限、杭州 Region/Endpoint 门禁与当前代码对齐。
+
+修复后再次运行外部预检：运行 ID `t10-20260731T034911Z-abbdcd83`，前缀 `test/t10-20260731T034911Z-abbdcd83/`，27/27 通过，`consoleActions = []`，秘密未记录。四个确定性对象仍使用 `private/limit-29360568.png`、`private/processing-source.png`、`private/watermark-logo.png` 和 `web/processed-watermarked.webp`；全部生成、验证并按精确 Key 清理，未枚举 Bucket。脱敏证据保存在 Git 忽略的 `test-results/oss-preflight/t10-20260731T034911Z-abbdcd83.json`。
 
 ## 8. 用户控制台动作与遗留风险
 
