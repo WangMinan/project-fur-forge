@@ -29,31 +29,20 @@ BEGIN
 END;--> statement-breakpoint
 CREATE TRIGGER `asset_variants_role_usage_insert`
 BEFORE INSERT ON `asset_variants`
-WHEN NOT (
-  (NEW.`media_role` = 'studio_photo'
-    AND NEW.`usage` IN ('preprocess', 'work-card', 'detail'))
-  OR (NEW.`media_role` = 'design_sheet'
-    AND NEW.`usage` IN ('preprocess', 'work-card', 'design-sheet', 'detail'))
-  OR (NEW.`media_role` = 'home_hero_landscape'
-    AND NEW.`usage` IN ('preprocess', 'home-hero-landscape'))
-  OR (NEW.`media_role` = 'home_hero_portrait'
-    AND NEW.`usage` IN ('preprocess', 'home-hero-portrait'))
-)
-BEGIN
-  SELECT RAISE(ABORT, 'variant role and usage are incompatible');
-END;--> statement-breakpoint
-CREATE TRIGGER `asset_variants_role_usage_update`
-BEFORE UPDATE OF `media_role`, `usage` ON `asset_variants`
-WHEN NOT (
-  (NEW.`media_role` = 'studio_photo'
-    AND NEW.`usage` IN ('preprocess', 'work-card', 'detail'))
-  OR (NEW.`media_role` = 'design_sheet'
-    AND NEW.`usage` IN ('preprocess', 'work-card', 'design-sheet', 'detail'))
-  OR (NEW.`media_role` = 'home_hero_landscape'
-    AND NEW.`usage` IN ('preprocess', 'home-hero-landscape'))
-  OR (NEW.`media_role` = 'home_hero_portrait'
-    AND NEW.`usage` IN ('preprocess', 'home-hero-portrait'))
-)
+WHEN
+  NEW.`media_role` != (
+    SELECT `role` FROM `assets` WHERE `id` = NEW.`asset_id`
+  )
+  OR NOT (
+    (NEW.`media_role` = 'studio_photo'
+      AND NEW.`usage` IN ('preprocess', 'work-card', 'detail'))
+    OR (NEW.`media_role` = 'design_sheet'
+      AND NEW.`usage` IN ('preprocess', 'work-card', 'design-sheet', 'detail'))
+    OR (NEW.`media_role` = 'home_hero_landscape'
+      AND NEW.`usage` IN ('preprocess', 'home-hero-landscape'))
+    OR (NEW.`media_role` = 'home_hero_portrait'
+      AND NEW.`usage` IN ('preprocess', 'home-hero-portrait'))
+  )
 BEGIN
   SELECT RAISE(ABORT, 'variant role and usage are incompatible');
 END;--> statement-breakpoint
@@ -61,6 +50,14 @@ CREATE TRIGGER `asset_variants_source_insert`
 BEFORE INSERT ON `asset_variants`
 WHEN
   (NEW.`usage` = 'preprocess' AND NEW.`source_variant_id` IS NOT NULL)
+  OR (
+    NEW.`usage` = 'preprocess'
+    AND (
+      NEW.`width` > 4096
+      OR NEW.`height` > 4096
+      OR (NEW.`status` = 'READY' AND NEW.`byte_size` > 20000000)
+    )
+  )
   OR (
     NEW.`source_variant_id` IS NULL
     AND NEW.`input_sha256` != (
@@ -77,7 +74,11 @@ WHEN
         AND source.`storage_scope` = 'PRIVATE'
         AND source.`status` = 'READY'
         AND source.`usage` = 'preprocess'
+        AND source.`media_role` = NEW.`media_role`
         AND source.`sha256` = NEW.`input_sha256`
+        AND source.`byte_size` <= 20000000
+        AND source.`width` <= 4096
+        AND source.`height` <= 4096
     )
   )
   OR (
@@ -89,6 +90,15 @@ WHEN
   )
 BEGIN
   SELECT RAISE(ABORT, 'variant processing source is invalid');
+END;--> statement-breakpoint
+CREATE TRIGGER `asset_variants_preprocess_limit_update`
+BEFORE UPDATE OF `status`, `byte_size` ON `asset_variants`
+WHEN
+  NEW.`usage` = 'preprocess'
+  AND NEW.`status` = 'READY'
+  AND NEW.`byte_size` > 20000000
+BEGIN
+  SELECT RAISE(ABORT, 'preprocess variant exceeds OSS input limits');
 END;--> statement-breakpoint
 CREATE TRIGGER `asset_variants_preserve_source`
 BEFORE UPDATE OF `status`, `sha256`, `byte_size` ON `asset_variants`

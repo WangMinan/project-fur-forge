@@ -427,6 +427,12 @@ describe('P0 schema boundary', () => {
       'home_hero_portrait',
       'home-hero-landscape',
     )).toThrow(/variant role and usage are incompatible/)
+    expect(() => insertVariant(
+      'landscape-as-studio',
+      'matrix-landscape',
+      'studio_photo',
+      'detail',
+    )).toThrow(/variant role and usage are incompatible/)
   })
 
   it('enforces direct-original and FFmpeg preprocess lineage', () => {
@@ -462,6 +468,26 @@ describe('P0 schema boundary', () => {
         storageScope: 'PRIVATE',
       },
     )
+    expect(() => insertVariant(
+      'oversized-preprocess',
+      'large-source',
+      'studio_photo',
+      'preprocess',
+      {
+        byteSize: 20_000_001,
+        storageScope: 'PRIVATE',
+      },
+    )).toThrow(/variant processing source is invalid/)
+    expect(() => insertVariant(
+      'overlong-preprocess',
+      'large-source',
+      'studio_photo',
+      'preprocess',
+      {
+        height: 4097,
+        storageScope: 'PRIVATE',
+      },
+    )).toThrow(/variant processing source is invalid/)
     expect(() => insertVariant(
       'large-public',
       'large-source',
@@ -506,6 +532,11 @@ describe('P0 schema boundary', () => {
         sourceVariantId: 'pending-preprocess',
       },
     )).toThrow(/variant processing source is invalid/)
+    expect(() => sqlite.prepare(`
+      UPDATE asset_variants
+      SET status = 'READY', sha256 = ?, byte_size = 20000001
+      WHERE id = 'pending-preprocess'
+    `).run(SHA_C)).toThrow(/preprocess variant exceeds OSS input limits/)
     expect(() => insertVariant(
       'digest-mismatch',
       'large-source',

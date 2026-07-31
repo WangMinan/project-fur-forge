@@ -29,10 +29,10 @@ import {
   resetAdminPasswordCommand,
 } from '../../server/utils/auth-commands'
 import {
+  assertDatabaseMigrated,
   DATABASE_MIGRATIONS_FOLDER,
   migrateDatabase,
   openDatabase,
-  readDatabaseMigrationStatus,
 } from '../../server/utils/database'
 import { loadRuntimeConfig } from '../../server/utils/runtime-config'
 
@@ -255,10 +255,8 @@ describe('single administrator commands and lockout', () => {
       before.sqlite.close()
     }
 
-    expect(readDatabaseMigrationStatus(pendingDatabaseFile)).toMatchObject({
-      pending: 1,
-      ready: false,
-    })
+    expect(() => assertDatabaseMigrated(pendingDatabaseFile))
+      .toThrow(/1 pending migration/)
     await expect(resetAdminPasswordCommand(config(pendingDatabaseFile), {
       username: 'admin',
       password: 'replacement admin password',

@@ -16,6 +16,7 @@ export interface HeroVariantCandidate {
   usage: string
   watermarkAnchor: string
   watermarkProfile: string
+  height: number
   width: number
 }
 
@@ -55,7 +56,12 @@ export function completeHeroVariants<T extends HeroVariantCandidate>(
     && digestPattern.test(variant.sha256)
     && variant.byteSize !== null
     && variant.byteSize > 0
-    && (recipe.widths as readonly number[]).includes(variant.width),
+    && (recipe.widths as readonly number[]).includes(variant.width)
+    && variant.height === Math.round(
+      variant.width * (
+        role === 'home_hero_landscape' ? 9 / 16 : 16 / 9
+      ),
+    ),
   )
 
   for (const width of recipe.widths) {
@@ -125,6 +131,7 @@ export function validateHeroSlidesForPublication(
       media_role AS mediaRole,
       usage,
       width,
+      height,
       format,
       recipe_version AS recipeVersion,
       watermark_profile AS watermarkProfile,
