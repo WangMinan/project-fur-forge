@@ -4,7 +4,7 @@
 
 ## 当前备注
 
-- 阶段 4 已于 2026-07-28 获授权；T01–T13、`GATE-06` 与 EXT-02 已完成，T11–T13 的 S2 Review 修补已收口；`GATE-06` 已于 2026-08-01 通过用户验收，T14 未启动。
+- 阶段 4 已于 2026-07-28 获授权；T01–T13、`GATE-06` 与 EXT-02 已完成。T14–T18 后端工程已按独立提交交付，`app/` 保持零差异；五项任务继续未勾选，等待 Kimi 前端接线、浏览器证据和联合验收。
 - [`T01-2026-07-28.md`](./T01-2026-07-28.md)：Nuxt 双访问面最小切片与质量门禁。
 - [`T02-T03-2026-07-29.md`](./T02-T03-2026-07-29.md)：当时的运行配置、Host/日志工具、共享 Schema/DTO 和验证记录。该文件是历史实施证据，其中旧字段和单 Bucket 假设由当前文档及 T09 修订任务覆盖。
 - [`T02-ORIGIN-ENV-CLOSURE-2026-07-31.md`](./T02-ORIGIN-ENV-CLOSURE-2026-07-31.md)：非测试 origin 移除硬编码 fallback、本机 `.env` 落点及完整回归证据。
@@ -20,5 +20,11 @@
 - [`T13-AUTH-2026-07-31.md`](./T13-AUTH-2026-07-31.md)：唯一管理员初始化、登录/退出/改密/重置、SessionVersion、锁定和 Host/Origin/CSRF 证据。
 - [`S2-REVIEW-CLOSURE-2026-07-31.md`](./S2-REVIEW-CLOSURE-2026-07-31.md)：production SMTP、私有响应缓存、认证命令迁移边界、隐藏秘密输入、媒体来源谱系和 Hero 完整发布条件的独立 Review 闭环。
 - [`T13-AUTH-UI-2026-07-31.md`](./T13-AUTH-UI-2026-07-31.md)：Kimi 的 `GATE-06` 认证前端接线：内存 Session/CSRF、登录/退出/改密界面、路由保护、真实浏览器 Cookie/CSRF/锁定/Host 隔离 22 项证据与三视口截图。
+- [`T14-UPLOAD-ENGINEERING-2026-07-31.md`](./T14-UPLOAD-ENGINEERING-2026-07-31.md)：角色化私有原图条件直传、上传会话、精确清理和新会话重试。
+- [`T15-MEDIA-VALIDATION-2026-07-31.md`](./T15-MEDIA-VALIDATION-2026-07-31.md)：服务端媒体核验、20–30 MB 私有预处理源、失败保留和处理重试。
+- [`T16-RECIPE-WATERMARK-2026-07-31.md`](./T16-RECIPE-WATERMARK-2026-07-31.md)：确定性 `recipe-v1`、基础水印、跨桶保存、公开验证和来源谱系。
+- [`T17-WORK-CRUD-ENGINEERING-2026-07-31.md`](./T17-WORK-CRUD-ENGINEERING-2026-07-31.md)：最小非领养作品 CRUD、出厂照关系、公开安全预览和乐观锁。
+- [`T18-PUBLICATION-ENGINEERING-2026-07-31.md`](./T18-PUBLICATION-ENGINEERING-2026-07-31.md)：发布检查、发布/下架状态机、幂等、竞态保护与精确补偿清理。
+- [`T14-T18-UI-HANDOFF.md`](./T14-T18-UI-HANDOFF.md)：Kimi 接线所需的路由、请求样例、版本语义、上传/asset/发布状态、错误恢复、敏感字段边界和可复现 fixture。
 
-T11、T12、T13、其 S2 Review 与 `GATE-06` 已收口；`GATE-06` 已通过用户验收，T14 未启动。已吸收到当前契约的临时校准稿、完成后的交接稿和重复视觉截图只保留在 Git 历史。
+T14–T18 后端工程已交接给 Kimi；最终工程门禁为 lint、typecheck、86 项单测、56 项集成测试、100 项既有 Chrome E2E、构建、生产运行验证和 27 项真实 OSS 预检，全部通过。联合任务完成前保持未勾选，工程侧不进入 T19/T20。已吸收到当前契约的临时校准稿和重复视觉截图只保留在 Git 历史。

@@ -4,15 +4,15 @@
 
 ## 当前阶段
 
-阶段 4 · IMPLEMENTATION 进行中。T01–T13、`GATE-06` 与 EXT-02 已完成。T11–T13 已建立 SQLite/Drizzle 运行底座、11 张 P0 表、媒体/投影约束和唯一管理员服务端认证；S2 Review 修补已补齐运行配置、私有响应、认证运维、媒体来源谱系和 Hero 完整发布边界。**`GATE-06` 认证前端接线已于 2026-08-01 通过用户验收；T14 未启动。**
+阶段 4 · IMPLEMENTATION 进行中。T01–T13、`GATE-06` 与 EXT-02 已完成。T14–T18 的后端工程已按顺序完成：私有原图条件直传、服务端核验/大图预处理、`recipe-v1`/基础水印、最小非领养作品 CRUD 和双 Bucket 发布/下架补偿均已锁定接口与集成测试。**该批次未修改 `app/`，T14–T18 保持未勾选，当前交给 Kimi 完成前端接线、浏览器证据与联合验收；T19 未启动。**
 
 ## 当前执行分工
 
-- Kimi K3 继续作为后续前端切片的 `UI_PRIMARY`；T09 界面修补已完成并通过用户验收。
-- `ENGINEERING_PRIMARY` 已在 `feature/t11-t13-core-sol` 完成 T11 → T12 → T13，并在 `fix/s2-review-closure-sol` 完成独立 Review 修补；工程批次停止，不进入 T14。
+- Kimi K3 继续作为 `UI_PRIMARY`；当前接手 T14–T18 的真实接口接线，交接清单见 `implementation/notes/T14-T18-UI-HANDOFF.md`。
+- `ENGINEERING_PRIMARY` 已在 `feature/t14-t18-engineering-sol` 严格完成 T14 → T15 → T16 → T17 → T18 后端工程并停止，不进入 T19/T20。
 - 数据库、认证、安全、OSS、事务、媒体角色、recipe/watermark identity 和运维由 `ENGINEERING_PRIMARY` 主责。
 - Kimi 已完成 `GATE-06`：既有管理界面已接入 T13 认证接口，真实浏览器 Cookie、CSRF、Session 和 no-store 边界验证通过；该门禁不新增 TASKS 编号，已由用户验收并勾选完成。
-- 后续全栈任务采用“工程侧先锁定 Schema/API/错误/权限与集成测试，Kimi 再实现前端切片”的交接方式；T20 首页轮播属于联合任务。
+- 当前联合任务采用“工程侧已锁定 Schema/API/错误/权限与集成测试，Kimi 再实现前端切片”的交接方式；T20 首页轮播仍属于后续联合任务。
 - 独立审查者提供证据复核与建议；TASKS 指定的用户门禁仍由用户作最终确认。
 - 完整的当前批次、后续默认路由、交付清单和分支策略见 [`implementation/EXECUTION_ROUTING.md`](./implementation/EXECUTION_ROUTING.md)。该文件只记录可变执行安排，不改变 TASKS 的范围与依赖。
 
@@ -124,7 +124,8 @@ T03 遗留工程问题已在 `main` 完成以下修正：
 
 ## 最近验证
 
-- 2026-08-01：用户完成 `GATE-06` 认证前端验收并确认通过；门禁已勾选完成，T14 仍未启动。
+- 2026-08-01：T14–T18 后端工程按五个独立提交完成；lint、typecheck、86 项单测、56 项集成测试、100 项既有 Chrome E2E、构建和生产运行验证通过，`app/` 相对 `main` 零差异。真实 OSS 预检 `test/t10-20260731T174230Z-858b6bdd/` 的 27 项检查全部通过并完成精确清理，未记录秘密。任务框保持未勾选，前端交接见 `implementation/notes/T14-T18-UI-HANDOFF.md`。
+- 2026-08-01：用户完成 `GATE-06` 认证前端验收并确认通过；门禁已勾选完成。其后的 T14–T18 后端状态见上一条。
 - 2026-07-31：Kimi 完成 `GATE-06` 认证前端接线。内存态 Session/CSRF、真实登录/退出/改密、无闪现路由保护、统一 401 提示、锁定不揭示、真实 Chrome `__Host-` Cookie/CSRF/Host 隔离/no-store 共 22 项新 E2E 通过；完整门禁为 lint、typecheck、86 项单测、34 项集成测试、100 项 E2E、构建和生产验证；证据见 `implementation/notes/T13-AUTH-UI-2026-07-31.md`。
 - 2026-07-31：收口 T02 非测试 origin 配置，并将“测试之外不得硬编码任何配置具体值”固化为全局工程门禁。版本化模板与 OSS 预检已移除 `localhost` / `127.0.0.1` 域名 fallback，本机 origin 写入 `.env`；86 项单测、34 项集成测试、78 项 E2E、lint、typecheck、构建和生产验证通过。证据见 `implementation/notes/T02-ORIGIN-ENV-CLOSURE-2026-07-31.md`。
 - 2026-07-31：完成 T11–T13 S2 Review 修补。production SMTP 可选组、auth/admin/preview no-store、认证命令显式迁移前置与隐藏 TTY 输入、媒体 role/usage 与 `source_variant_id`、Hero 完整 recipe 发布条件均通过；新迁移为 `0002_puzzling_malcolm_colcord.sql`。完整门禁为 85 项单测、34 项集成测试、78 项 E2E、构建和生产验证；证据见 `implementation/notes/S2-REVIEW-CLOSURE-2026-07-31.md`。
@@ -140,4 +141,4 @@ T03 遗留工程问题已在 `main` 完成以下修正：
 
 ## 下一步
 
-T11–T13、其 S2 Review 与 `GATE-06` 已收口并通过用户验收。**T14 未启动**，后续启动必须由新的执行批次从最新 `main` 进入。
+T14–T18 后端工程已完成，下一责任人为 Kimi `UI_PRIMARY`：按 `implementation/notes/T14-T18-UI-HANDOFF.md` 接入真实作品保存、OSS 直传、媒体状态、关系编辑、预览、发布/下架与失败恢复，并补浏览器 E2E/三视口证据。联合验收前不勾选 T14–T18；工程侧停止在 T18，不进入 T19/T20。

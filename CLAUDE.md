@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01–T13、GATE-06 与 EXT-02 已完成。** SQLite/Drizzle、P0 Schema/投影和唯一管理员认证前后端已落地，GATE-06 已通过用户验收。**T14 未启动。**
+> **当前阶段：阶段 4 IMPLEMENTATION，T01–T13、GATE-06 与 EXT-02 已完成。** T14–T18 的后端工程已完成并保持任务未勾选，等待 Kimi 完成前端接线、浏览器证据和联合验收；T19 未启动。
 
 ## 网站核心原则（景宸确认）
 
@@ -53,4 +53,4 @@ pnpm verify:production
 
 ## 当前仓库状态
 
-根目录现含 Nuxt 4 工程、`app/`、`server/`、`shared/`、`scripts/`、`tests/` 与阶段文档。T10/EXT-02 已验证双 Bucket 与大原图处理链；T11–T13 已增加 SQLite/Drizzle、迁移/备份、P0 Schema/投影和唯一管理员服务端认证。认证前端接入由 Kimi 负责；作品 CRUD、正式上传页、正式媒体处理编排与最终水印参数尚未开始。
+根目录现含 Nuxt 4 工程、`app/`、`server/`、`shared/`、`scripts/`、`tests/` 与阶段文档。T10/EXT-02 已验证双 Bucket 与大原图处理链；T11–T13 已落地 SQLite/Drizzle、P0 Schema/投影和唯一管理员认证；T14–T18 后端已落地条件直传、媒体核验/大图预处理、`recipe-v1`/基础水印、非领养作品 CRUD 与发布/下架补偿。`app/` 未由该工程批次改动，Kimi 的 T14–T18 前端接线仍待完成；T51 负责最终水印参数校准。
