@@ -4,12 +4,12 @@
 
 ## 当前阶段
 
-阶段 4 · IMPLEMENTATION 进行中。T01–T10 与 EXT-02 已完成。T10 已形成可重复预检、最小权限说明和内嵌 FFmpeg 私有预处理：29,360,568 字节合成原图的 V4 PUT、HEAD 与 `image/info` 通过，生成 4,791,024 字节私有处理源后，OSS 水印、跨 Bucket `sys/saveas`、公开匿名 GET 与精确清理全部通过。**下一项为 T11，本轮未启动。**
+阶段 4 · IMPLEMENTATION 进行中。T01–T11 与 EXT-02 已完成。T11 已建立 SQLite/Drizzle 运行底座、版本化迁移、强制 PRAGMA、环境路径隔离和 SQLite Backup API 一致性备份。**下一项为 T12，本批次不进入 T14。**
 
 ## 当前执行分工
 
 - Kimi K3 继续作为后续前端切片的 `UI_PRIMARY`；T09 界面修补已完成并通过用户验收。
-- T10/EXT-02 已由 `ENGINEERING_PRIMARY` 收口；下一批次应从最新 `main` 开始 T11，本轮不继续数据库或页面开发。
+- `ENGINEERING_PRIMARY` 正在 `feature/t11-t13-core-sol` 严格按 T11 → T12 → T13 推进；T11 已独立收口，当前只进入 T12。
 - 数据库、认证、安全、OSS、事务、媒体角色、recipe/watermark identity 和运维由 `ENGINEERING_PRIMARY` 主责。
 - 后续全栈任务采用“工程侧先锁定 Schema/API/错误/权限与集成测试，Kimi 再实现前端切片”的交接方式；T20 首页轮播属于联合任务。
 - 独立审查者提供证据复核与建议；TASKS 指定的用户门禁仍由用户作最终确认。
@@ -120,6 +120,7 @@ T03 遗留工程问题已在 `main` 完成以下修正：
 
 ## 最近验证
 
+- 2026-07-31：完成 T11 SQLite 运行底座。Drizzle/`better-sqlite3`、WAL、外键、5 秒 busy timeout、FULL synchronous、开发/生产/测试路径边界、空库与重复迁移、独立临时库和 SQLite Backup API 一致性备份均已验证；证据见 `implementation/notes/T11-SQLITE-2026-07-31.md`。
 - 2026-07-31：完成 T10 双 Bucket 真实预检。两个 Bucket 同账号同杭州地域，Region/Endpoint/名称、私有 ACL/BPA/匿名拒绝、公开 ACL/匿名读取、CORS OPTIONS、V4 条件 PUT、MD5/SHA-256/禁止覆盖均通过；内嵌 FFmpeg 不经宿主 PATH，把 29,360,568 字节原图生成 4,791,024 字节、4096×444 私有处理源，随后 OSS 水印、WebP、跨 Bucket `sys/saveas`、公开 HEAD/图片信息/匿名 GET、私有原件不变和四对象精确清理全部通过。证据见 `implementation/notes/T10-OSS-PREFLIGHT-2026-07-31.md`；T10/EXT-02 已勾选。
 - 2026-07-31：交叉检查 `main` 的首页、`ResponsiveAsset`、管理端作品编辑、Logo/Head 配置、媒体夹具与 T09 后文档，确认单 Hero/单 `src`、无首页轮播管理、媒体角色未进入界面、无显式 favicon、水印只在部分文档中模糊出现。完成 foundation、SPEC、PLAN、公开/管理设计、模型、TASKS、执行路由、STATE 与产物索引的同步校准；仅修改 `agent_docs`，T10 未启动。记录见 `implementation/notes/DOCS-HOME-MEDIA-REALIGNMENT-2026-07-31.md`。
 - 2026-07-31：用户验收 Kimi 的 T09 界面修补；工程侧复跑冻结安装、lint、typecheck、70 项单测、4 项集成测试、112 项 E2E、Nuxt 构建与生产运行验证，全部通过；`APP_ENV=production` 继续按预期阻断占位文案和 `/fixtures/samples/`。T09 已勾选完成。
@@ -129,4 +130,4 @@ T03 遗留工程问题已在 `main` 完成以下修正：
 
 ## 下一步
 
-T10/EXT-02 已完成并停止。下一项是 **T11 SQLite 运行底座与迁移框架**，应另开短分支开始；本轮不执行 T11，也不提前进入 T16。
+T11 已完成。下一项是 **T12 P0 最小 Schema、媒体角色与公开投影**；T12 自身门禁通过后才进入 T13，本批次完成 T13 后停止，不进入 T14。

@@ -1,4 +1,6 @@
 import { spawn } from 'node:child_process'
+import { tmpdir } from 'node:os'
+import { resolve } from 'node:path'
 
 const host = '127.0.0.1'
 const port = '3101'
@@ -15,6 +17,10 @@ const server = spawn(
       ...process.env,
       ADMIN_BASE_URL: adminBaseURL,
       APP_ENV: 'test',
+      DATABASE_FILE: resolve(
+        tmpdir(),
+        `fur-forge-production-verify-${process.pid}.db`,
+      ),
       MEDIA_BASE_URL: 'https://media.test.invalid',
       NITRO_HOST: '0.0.0.0',
       NITRO_PORT: port,
