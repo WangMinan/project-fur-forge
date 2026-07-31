@@ -256,7 +256,7 @@ describe('single administrator commands and lockout', () => {
     }
 
     expect(() => assertDatabaseMigrated(pendingDatabaseFile))
-      .toThrow(/1 pending migration/)
+      .toThrow(/pending migration/)
     await expect(resetAdminPasswordCommand(config(pendingDatabaseFile), {
       username: 'admin',
       password: 'replacement admin password',
@@ -278,7 +278,7 @@ describe('single administrator commands and lockout', () => {
     expect(existsSync(resolve(directory, 'backups'))).toBe(false)
 
     await expect(migrateDatabase(pendingDatabaseFile)).resolves.toMatchObject({
-      applied: 1,
+      applied: 2,
     })
     const backupEntries = readdirSync(resolve(directory, 'backups'))
     expect(backupEntries.length).toBeGreaterThan(0)

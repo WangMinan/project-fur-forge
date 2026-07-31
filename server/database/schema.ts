@@ -182,6 +182,95 @@ export const assets = sqliteTable('assets', {
   check('assets_version_positive', sql`${table.version} > 0`),
 ])
 
+export const uploadSessions = sqliteTable('upload_sessions', {
+  id: text('id').primaryKey(),
+  ownerType: text('owner_type').notNull(),
+  ownerId: text('owner_id').notNull(),
+  ownerVersion: integer('owner_version').notNull(),
+  mediaRole: text('media_role').notNull(),
+  privateObjectKey: text('private_object_key').notNull(),
+  expectedContentType: text('expected_content_type').notNull(),
+  expectedBytes: integer('expected_bytes').notNull(),
+  expectedContentMd5: text('expected_content_md5').notNull(),
+  expectedSha256: text('expected_sha256').notNull(),
+  expectedWidth: integer('expected_width').notNull(),
+  expectedHeight: integer('expected_height').notNull(),
+  createdBy: text('created_by').notNull()
+    .references(() => users.id),
+  status: text('status').notNull().default('AWAITING_UPLOAD'),
+  assetId: text('asset_id')
+    .references(() => assets.id),
+  version: integer('version').notNull().default(1),
+  failureCode: text('failure_code'),
+  createdAt: integer('created_at').notNull(),
+  expiresAt: integer('expires_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
+}, table => [
+  uniqueIndex('upload_sessions_private_object_key_unique')
+    .on(table.privateObjectKey),
+  index('upload_sessions_owner_idx')
+    .on(table.ownerType, table.ownerId, table.createdAt),
+  index('upload_sessions_expiry_idx')
+    .on(table.status, table.expiresAt),
+  check(
+    'upload_sessions_owner_type',
+    sql`${table.ownerType} IN ('work', 'site')`,
+  ),
+  check(
+    'upload_sessions_owner_id',
+    sql`length(trim(${table.ownerId})) > 0 AND (${table.ownerType} != 'site' OR ${table.ownerId} = 'home')`,
+  ),
+  check(
+    'upload_sessions_owner_version',
+    sql`${table.ownerVersion} >= 0`,
+  ),
+  check(
+    'upload_sessions_media_role',
+    sql`(${table.ownerType} = 'work' AND ${table.mediaRole} IN ('design_sheet', 'studio_photo')) OR (${table.ownerType} = 'site' AND ${table.mediaRole} IN ('home_hero_landscape', 'home_hero_portrait'))`,
+  ),
+  check(
+    'upload_sessions_private_key_relative',
+    sql`length(trim(${table.privateObjectKey})) > 0 AND instr(${table.privateObjectKey}, '://') = 0 AND substr(${table.privateObjectKey}, 1, 1) != '/'`,
+  ),
+  check(
+    'upload_sessions_content_type',
+    sql`${table.expectedContentType} IN ('image/jpeg', 'image/png', 'image/webp')`,
+  ),
+  check(
+    'upload_sessions_expected_bytes',
+    sql`${table.expectedBytes} BETWEEN 1 AND 30000000`,
+  ),
+  check(
+    'upload_sessions_expected_md5',
+    sql`length(${table.expectedContentMd5}) = 24`,
+  ),
+  check(
+    'upload_sessions_expected_sha256',
+    sql`length(${table.expectedSha256}) = 64 AND ${table.expectedSha256} = lower(${table.expectedSha256}) AND ${table.expectedSha256} NOT GLOB '*[^0-9a-f]*'`,
+  ),
+  check(
+    'upload_sessions_expected_dimensions',
+    sql`${table.expectedWidth} BETWEEN 1 AND 12000 AND ${table.expectedHeight} BETWEEN 1 AND 12000`,
+  ),
+  check(
+    'upload_sessions_status',
+    sql`${table.status} IN ('AWAITING_UPLOAD', 'VALIDATING', 'COMPLETED', 'FAILED', 'CANCELLED', 'EXPIRED')`,
+  ),
+  check(
+    'upload_sessions_asset_state',
+    sql`(${table.status} = 'COMPLETED' AND ${table.assetId} IS NOT NULL) OR (${table.status} != 'COMPLETED' AND ${table.assetId} IS NULL)`,
+  ),
+  check(
+    'upload_sessions_failure_state',
+    sql`(${table.status} = 'FAILED' AND ${table.failureCode} IS NOT NULL) OR (${table.status} != 'FAILED' AND ${table.failureCode} IS NULL)`,
+  ),
+  check(
+    'upload_sessions_expiry',
+    sql`${table.expiresAt} = ${table.createdAt} + 300000`,
+  ),
+  check('upload_sessions_version_positive', sql`${table.version} > 0`),
+])
+
 export const assetVariants = sqliteTable('asset_variants', {
   id: text('id').primaryKey(),
   assetId: text('asset_id').notNull()

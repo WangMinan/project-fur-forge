@@ -1,0 +1,128 @@
+import { z } from 'zod'
+import {
+  apiSuccessSchema,
+  resourceIdSchema,
+  resourceVersionSchema,
+  versionedRequestSchema,
+} from './api'
+import { mediaRoleSchema } from './media'
+
+export const UPLOAD_SESSION_STATUS_VALUES = [
+  'AWAITING_UPLOAD',
+  'VALIDATING',
+  'COMPLETED',
+  'FAILED',
+  'CANCELLED',
+  'EXPIRED',
+] as const
+
+export const UPLOAD_FAILURE_CODE_VALUES = [
+  'UPLOAD_OBJECT_MISSING',
+  'UPLOAD_METADATA_MISMATCH',
+  'UPLOAD_IMAGE_INVALID',
+  'UPLOAD_DIMENSIONS_INVALID',
+  'UPLOAD_STORAGE_FAILURE',
+  'UPLOAD_PREPROCESS_FAILURE',
+  'UPLOAD_CLEANUP_FAILED',
+] as const
+
+export const uploadSessionStatusSchema = z.enum(
+  UPLOAD_SESSION_STATUS_VALUES,
+)
+export const uploadFailureCodeSchema = z.enum(UPLOAD_FAILURE_CODE_VALUES)
+
+export const imageContentTypeSchema = z.enum([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+])
+
+const workUploadOwnerSchema = z.object({
+  type: z.literal('work'),
+  id: resourceIdSchema,
+  expectedVersion: resourceVersionSchema,
+}).strict()
+
+const siteUploadOwnerSchema = z.object({
+  type: z.literal('site'),
+  id: z.literal('home'),
+  expectedVersion: resourceVersionSchema,
+}).strict()
+
+export const uploadOwnerSchema = z.discriminatedUnion('type', [
+  workUploadOwnerSchema,
+  siteUploadOwnerSchema,
+])
+
+export const uploadOwnerDtoSchema = z.discriminatedUnion('type', [
+  workUploadOwnerSchema.omit({ expectedVersion: true }),
+  siteUploadOwnerSchema.omit({ expectedVersion: true }),
+])
+
+export const expectedUploadSchema = z.object({
+  contentType: imageContentTypeSchema,
+  byteSize: z.number().int().min(1).max(30_000_000),
+  contentMd5: z.string().regex(/^[A-Za-z0-9+/]{22}==$/u),
+  sha256: z.string().regex(/^[0-9a-f]{64}$/u),
+  width: z.number().int().min(1).max(12_000),
+  height: z.number().int().min(1).max(12_000),
+}).strict()
+
+export const createUploadSessionRequestSchema = z.object({
+  owner: uploadOwnerSchema,
+  mediaRole: mediaRoleSchema,
+  expected: expectedUploadSchema,
+}).strict().superRefine((input, context) => {
+  const workRole = input.mediaRole === 'design_sheet'
+    || input.mediaRole === 'studio_photo'
+  if ((input.owner.type === 'work') !== workRole) {
+    context.addIssue({
+      code: 'custom',
+      message: '媒体角色与归属类型不匹配',
+      path: ['mediaRole'],
+    })
+  }
+})
+
+export const uploadSessionDtoSchema = z.object({
+  uploadSessionId: resourceIdSchema,
+  owner: uploadOwnerDtoSchema,
+  ownerVersion: resourceVersionSchema,
+  mediaRole: mediaRoleSchema,
+  expected: expectedUploadSchema,
+  createdBy: resourceIdSchema,
+  status: uploadSessionStatusSchema,
+  version: resourceVersionSchema,
+  failureCode: uploadFailureCodeSchema.nullable(),
+  assetId: resourceIdSchema.nullable(),
+  createdAt: z.string().datetime({ offset: true }),
+  expiresAt: z.string().datetime({ offset: true }),
+}).strict()
+
+export const conditionalPutDtoSchema = z.object({
+  method: z.literal('PUT'),
+  url: z.string().url(),
+  expiresAt: z.string().datetime({ offset: true }),
+  headers: z.object({
+    'Content-Type': imageContentTypeSchema,
+    'Content-MD5': z.string().regex(/^[A-Za-z0-9+/]{22}==$/u),
+    'x-oss-meta-sha256': z.string().regex(/^[0-9a-f]{64}$/u),
+    'x-oss-forbid-overwrite': z.literal('true'),
+  }).strict(),
+}).strict()
+
+export const createUploadSessionResponseSchema = apiSuccessSchema(z.object({
+  session: uploadSessionDtoSchema,
+  upload: conditionalPutDtoSchema,
+}).strict())
+
+export const uploadSessionResponseSchema = apiSuccessSchema(
+  uploadSessionDtoSchema,
+)
+
+export const uploadSessionMutationRequestSchema = versionedRequestSchema(
+  z.object({}).strict(),
+)
+
+export const retryUploadSessionResponseSchema
+  = createUploadSessionResponseSchema
