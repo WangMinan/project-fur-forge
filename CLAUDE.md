@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01–T13 与 EXT-02 已完成。** T11–T13 已建立 SQLite/Drizzle、P0 Schema/投影和唯一管理员服务端认证；前端仍由 Kimi 主责。**本批次已停止，T14 未启动。**
+> **当前阶段：阶段 4 IMPLEMENTATION，T01–T13、GATE-06 与 EXT-02 已完成。** SQLite/Drizzle、P0 Schema/投影和唯一管理员认证前后端已落地，GATE-06 已通过用户验收。**T14 未启动。**
 
 ## 网站核心原则（景宸确认）
 
