@@ -15,7 +15,7 @@
 | 公开设计 | `.design/public-site/` | 2026-07-31 已校准 | 首页双源轮播、横版领养设定图、竖版作品图、返图墙、水印和站点图标 |
 | 管理设计 | `.design/admin-console/` | 2026-07-31 已校准 | `/admin/site/home`、横竖配对、角色化媒体区、水印预览和 P0/P1/P2 导航 |
 | 模型投影 | `models/README.md` | 2026-07-31 已实施校准 | T12 与 S2 Review 已实现 `site_hero_slides`、媒体角色/用途矩阵、处理来源谱系、无水印原图和版本化水印 identity |
-| 任务 | `implementation/TASKS.md` | 2026-08-01 已更新 | T01–T13、GATE-06 与 EXT-02 已完成；T14 未启动 |
+| 任务 | `implementation/TASKS.md` | 2026-08-01 当前 | T01–T13、GATE-06 与 EXT-02 已完成；T14–T18 后端已交付但任务保持未勾选，等待 Kimi 联合完成 |
 | T04–T05 实施记录 | `implementation/notes/T04-T05-2026-07-29.md` | 已验证 | Kimi 入选方案、两种首页精选对比、三视口截图与质量门禁；当时 Hero 仍为单图夹具 |
 | T02 origin 配置收口 | `implementation/notes/T02-ORIGIN-ENV-CLOSURE-2026-07-31.md` | 已验证 | 非测试 origin 无硬编码域名 fallback，本机值只保存在 `.env`，完整质量门禁通过 |
 | T06–T07 实施记录 | `implementation/notes/T06-T07-2026-07-29.md` | 已验证 | 作品列表/详情、管理端工作台、三视口证据与自动化自查；当时媒体仍为通用样张 |
@@ -29,13 +29,15 @@
 | T13 认证证据 | `implementation/notes/T13-AUTH-2026-07-31.md` | 已通过 | 唯一管理员、密封 Cookie Session、锁定、改密/重置和 Host/Origin/CSRF |
 | S2 Review 收口 | `implementation/notes/S2-REVIEW-CLOSURE-2026-07-31.md` | 已通过 | production SMTP、私有响应、认证运维、媒体来源谱系和 Hero 完整发布条件 |
 | GATE-06 认证前端证据 | `implementation/notes/T13-AUTH-UI-2026-07-31.md` | 2026-08-01 已通过 | Kimi 接线登录/Session/退出/改密，真实浏览器 Cookie/CSRF/锁定/Host 隔离 22 项用例、三视口截图与用户验收 |
-| 状态 | `STATE.md` | 2026-08-01 已更新 | 当前决策、T11–T13 Review 与 GATE-06 均已收口，T14 未启动 |
+| T14–T18 后端证据 | `implementation/notes/T14-UPLOAD-ENGINEERING-2026-07-31.md` 至 `T18-PUBLICATION-ENGINEERING-2026-07-31.md` | 2026-08-01 已验证 | 条件直传、媒体核验/预处理、公开配方/水印、作品 CRUD 和发布/下架补偿 |
+| T14–T18 Kimi 交接 | `implementation/notes/T14-T18-UI-HANDOFF.md` | 2026-08-01 当前 | 登录、保存、直传、完成核验、重试、关系删除/主图/排序、预览、发布/下架、冲突和全状态清单 |
+| 状态 | `STATE.md` | 2026-08-01 已更新 | T14–T18 后端工程已完成，下一责任人为 Kimi；任务保持未勾选 |
 
 ## 当前执行文档
 
 | 类型 | 路径 | 当前效力 |
 | --- | --- | --- |
-| 执行责任路由 | `implementation/EXECUTION_ROUTING.md` | 2026-08-01 当前生效；记录 T11–T13/S2 Review 与 GATE-06 已收口及后续默认分工，不属于产品契约 |
+| 执行责任路由 | `implementation/EXECUTION_ROUTING.md` | 2026-08-01 当前生效；记录 T14–T18 后端已交付、Kimi 当前接线与后续默认分工，不属于产品契约 |
 
 ## 历史与证据
 
@@ -65,8 +67,13 @@
 - T12：11 张 P0 表、媒体角色与数量约束、首页横竖配对、完整 variant identity 和显式公开/管理投影已实现；S2 Review 增量迁移补齐 role/usage、`source_variant_id` 和大原图处理来源约束。
 - T13：唯一管理员服务端认证、幂等初始化、登录/退出/改密/受保护重置、SessionVersion、锁定和 Host/Origin/CSRF 已实现；S2 Review 补齐私有响应 no-store、显式迁移前置和隐藏 TTY 输入，前端接入按用户要求交给 Kimi。
 - GATE-06（门禁，非任务编号）：T13 认证前端接线已由 Kimi 完成——内存态 Session/CSRF composable、真实登录页、路由保护、AdminShell 退出、`/admin/account` 改密和 22 项真实浏览器认证用例；2026-08-01 用户验收通过。
+- T14：独立上传会话、角色化私有原图 5 分钟 V4 条件 PUT、版本/归属门禁、精确取消/过期/重试和安全 DTO 已实现；前端未接线。
+- T15：服务端 HEAD/摘要/签名/图片信息核验、20–30 MB 内嵌 FFmpeg 私有预处理源、asset 状态和处理重试已实现；前端未接线。
+- T16：确定性 `recipe-v1`、`brand-standard-v1` 基础水印、跨 Bucket 保存、公开对象核验和来源谱系已实现；最终参数留给 T51/EXT-01。
+- T17：最小非领养作品 CRUD、出厂照全量关系替换、主图/排序/alt/焦点/裁切/水印角和公开安全预览已实现；前端未接线。
+- T18：发布检查、发布/下架操作、幂等与竞态保护、先移除公开投影再清理和精确补偿重试已实现；前端未接线。
 
-尚未实施：后台首页轮播、横竖双源切换、媒体角色分区、正式媒体编排中的 OSS 水印、favicon/Touch Icon。它们已进入后续任务契约，但不得写入当前完成产物。
+尚未实施：T14–T18 的 Kimi 前端接线、后台首页轮播、横竖双源切换、领养/返图媒体区、favicon/Touch Icon 和正式水印参数校准。它们已进入后续任务契约，不得写成当前联合任务已完成。
 
 ## 外部门禁产物
 

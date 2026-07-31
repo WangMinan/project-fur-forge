@@ -40,6 +40,11 @@
 - `pnpm typecheck`：通过。
 - `pnpm test`：13 个文件、86 项通过。
 - `pnpm test:integration`：10 个文件、56 项通过。
+- `pnpm test:e2e`：100 项既有 Chrome 用例通过；该批次未新增或改写前端页面。
+- `pnpm build`：通过，生产内容守卫通过。
+- `pnpm verify:production`：health、公开 SSR 和管理端 CSR 通过。
+- 最终门禁发现开发态曾把仓库外的 FFmpeg 模块保留为错误相对引用；已用 Nitro 原生 `externals.inline` 打包现有模块，未复制实现、未增加依赖，开发健康检查、E2E 和生产产物均已验证。
+- 真实 OSS 预检 `test/t10-20260731T174230Z-858b6bdd/`：27 项通过，覆盖条件 PUT、30 MB 级原图、内嵌 FFmpeg、私有处理源、水印/跨桶保存、公开匿名读取、私有匿名拒绝和精确清理；`secretsRecorded=false`。
 - 新增覆盖：发布检查、12 个实际出厂照规格生成、正确水印 identity、发布幂等、已发布版本保护、提交竞态回滚与 12 Key 补偿、下架先隐藏、清理失败/重试、adoption 阻断、operation/审计泄漏扫描。
 
 ## 交接边界
