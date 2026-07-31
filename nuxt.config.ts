@@ -13,6 +13,9 @@ const runtimeApiErrorFixture = fileURLToPath(
 const runtimePageErrorFixture = fileURLToPath(
   new URL('./tests/fixtures/runtime/page-error.vue', import.meta.url),
 ).replaceAll('\\', '/')
+const embeddedFfmpegRuntime = fileURLToPath(
+  new URL('./scripts/embedded-ffmpeg.mjs', import.meta.url),
+).replaceAll('\\', '/')
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-07-28',
@@ -45,6 +48,9 @@ export default defineNuxtConfig({
   },
   nitro: {
     errorHandler: './server/error.ts',
+    externals: {
+      inline: [embeddedFfmpegRuntime],
+    },
     handlers: includeRuntimeErrorFixtures
       ? [
           {
