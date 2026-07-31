@@ -17,7 +17,7 @@
 
 当前模型分工、短分支批次、全栈任务交接和独立门禁安排见 [`需求1-兽装工作室主页/implementation/EXECUTION_ROUTING.md`](./需求1-兽装工作室主页/implementation/EXECUTION_ROUTING.md)。
 
-该文件只记录可变的执行安排，不属于产品契约，也不改变 `TASKS.md` 的任务范围、依赖或完成定义。Kimi K3 继续担任后续前端切片的 `UI_PRIMARY`；T01–T13、其 S2 Review 修补与 EXT-02 已完成，下一批先做 T13 认证前端接线。
+该文件只记录可变的执行安排，不属于产品契约，也不改变 `TASKS.md` 的任务范围、依赖或完成定义。Kimi K3 继续担任后续前端切片的 `UI_PRIMARY`；T01–T13、其 S2 Review 修补与 EXT-02 已完成，下一批先完成 `GATE-06` 认证前端接线。
 
 ## 当前状态
 
@@ -30,7 +30,7 @@
 - 私有原图无水印、公开衍生图 OSS 烘焙水印；
 - 当前 Logo 图形标衍生 favicon、Touch Icon 与水印。
 
-这些后续界面与媒体链路尚未实现。认证页面接入按用户要求交给 Kimi，下一批只完成既有 T13 接口的真实浏览器接线与边界验证；T14 未启动。
+这些后续界面与媒体链路尚未实现。认证页面接入按用户要求交给 Kimi，下一批只完成 `GATE-06`：既有 T13 接口的真实浏览器接线与边界验证；T14 未启动。
 
 当前技术主线为单 Nuxt 4 全栈应用、Node.js 24 LTS、Nitro、SQLite/Drizzle、单镜像/单进程，以及已创建的两个 OSS Bucket：
 

@@ -67,12 +67,12 @@ T06/T07 已由 Kimi K3 完成，用户于 2026-07-30 通过 T08；实现和验�
 
 随后 `ENGINEERING_PRIMARY` 从 `main@5629943a267d763f9f5426605e1f8c5db33f999a` 创建 `fix/s2-review-closure-sol`，只修补 production SMTP、私有响应缓存、认证命令迁移边界、CLI 秘密输入、媒体来源谱系和 Hero 完整发布条件。新迁移只增加 `0002`，没有改写 `0000`/`0001`；完整证据见 `notes/S2-REVIEW-CLOSURE-2026-07-31.md`。T11–T13 的完成状态保持不变，T14 未启动。
 
-用户明确要求前端继续由 Kimi 实现，因此上述工程批次没有修改 `app/`。下一批固定为 Kimi 的 T13 认证前端接线，不新增 TASKS 编号，也不启动 T14：
+用户明确要求前端继续由 Kimi 实现，因此上述工程批次没有修改 `app/`。下一批固定为 Kimi 完成 `TASKS.md` 中可勾选的 `GATE-06` 认证前端接线；它是门禁而非新增 TASKS 编号，完成前不启动 T14：
 
 1. 接入登录、Session、退出和改密四个既有接口；
 2. CSRF token 只保存在页面内存，覆盖 401、403、409；
 3. 未认证管理界面只显示登录入口；
-4. 在真实浏览器验证 Host-only/Secure/SameSite Cookie、公开域与管理域隔离、Session 恢复、退出/改密失效，以及成功和错误响应的 no-store；
+4. 在真实浏览器验证 Host-only/Secure/SameSite Cookie、公开域与管理域隔离、Session 恢复、退出/改密失效，以及成功和错误响应的 `no-store` / `noindex`；
 5. 保持已锁定的 Host/Origin/CSRF/资源版本语义，发现冲突先回到契约处理。
 
 ## 5. 后续默认路由
@@ -130,17 +130,16 @@ Kimi 若认为接口不利于界面实现，只提交变更建议；契约变更
 
 ## 6. 分支与批次策略
 
-不建立从 T06 延续到上线的长期 Kimi 分支。每个前端批次必须从已合并、已验证的最新 `main` 创建，并在对应依赖稳定后尽快合并：
+不建立从 T06 延续到上线的长期 Kimi 分支。历史已收口分支为 `feature/t06-t07-kimi`；未来每个前端批次必须从已合并、已验证的最新 `main` 创建，并在对应依赖稳定后尽快合并：
 
 ```text
-feature/t06-t07-kimi
 feature/t19-t20-kimi
 feature/t24-t30-kimi
 feature/t36-t41-kimi
 feature/t51-kimi
 ```
 
-在任何 T14 分支前，先从包含 T13 S2 Review 的最新 `main` 创建 Kimi 认证接线短分支；该分支只修改认证相关前端与浏览器测试，不混入上传、CRUD 或媒体处理。
+在任何 T14 分支前，先从包含 T13 S2 Review 的最新 `main` 创建 Kimi 认证接线短分支并完成 `GATE-06`；该分支只修改认证相关前端与浏览器测试，不混入上传、CRUD 或媒体处理。
 
 批次之间不得依赖长期未合并的 mock 或过期 DTO。若候选实现需要比较，不直接合并两套完整视觉系统；以选定方案为主，只移植另一方案中边界清楚、确有优势的局部组件，并统一 Token、命名和间距。
 

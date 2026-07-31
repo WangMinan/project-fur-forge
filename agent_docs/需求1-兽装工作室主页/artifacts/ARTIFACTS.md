@@ -1,8 +1,10 @@
 # 产物索引
 
-> **角色**：登记当前权威文档、历史证据和实施产物。
+> **角色**：登记当前契约、状态路由、历史证据和实施产物。
 
-## 当前权威文档
+## 当前契约与状态文档
+
+权威顺序仍以 `foundation/README.md` 和 `agent_docs/README.md` 为准；`models/README.md` 是 SPEC/PLAN 的实施投影，不构成额外上游权威层级。
 
 | 层级 | 路径 | 状态 | 说明 |
 | --- | --- | --- | --- |
@@ -12,8 +14,8 @@
 | 设计路由 | `.design/README.md` | 2026-07-31 已校准 | 公开站/管理端分轨、双源轮播、媒体角色、蓝色比例和阶段可见性 |
 | 公开设计 | `.design/public-site/` | 2026-07-31 已校准 | 首页双源轮播、横版领养设定图、竖版作品图、返图墙、水印和站点图标 |
 | 管理设计 | `.design/admin-console/` | 2026-07-31 已校准 | `/admin/site/home`、横竖配对、角色化媒体区、水印预览和 P0/P1/P2 导航 |
-| 模型 | `models/README.md` | 2026-07-31 已实施校准 | T12 与 S2 Review 已实现 `site_hero_slides`、媒体角色/用途矩阵、处理来源谱系、无水印原图和版本化水印 identity |
-| 任务 | `implementation/TASKS.md` | 2026-07-31 已更新 | T01–T13 与 EXT-02 已完成；下一批为 T13 认证前端接线，T14 未启动 |
+| 模型投影 | `models/README.md` | 2026-07-31 已实施校准 | T12 与 S2 Review 已实现 `site_hero_slides`、媒体角色/用途矩阵、处理来源谱系、无水印原图和版本化水印 identity |
+| 任务 | `implementation/TASKS.md` | 2026-07-31 已更新 | T01–T13 与 EXT-02 已完成；下一批为 `GATE-06` 认证前端接线，T14 未启动 |
 | T04–T05 实施记录 | `implementation/notes/T04-T05-2026-07-29.md` | 已验证 | Kimi 入选方案、两种首页精选对比、三视口截图与质量门禁；当时 Hero 仍为单图夹具 |
 | T06–T07 实施记录 | `implementation/notes/T06-T07-2026-07-29.md` | 已验证 | 作品列表/详情、管理端工作台、三视口证据与自动化自查；当时媒体仍为通用样张 |
 | T08 验收记录 | `implementation/notes/t06-t07/T08-REVIEW-PREP.md` | 2026-07-30 已通过 | 精选横向轨道定稿、T06/T07 基线通过、`must-fix = 0` |
@@ -42,8 +44,7 @@
 | 领养设定例图 | `materials/picture-examples/领养/` | 横版设定图、色板与完整画布的产品证据；不代表已获正式上线授权 |
 | 技术方案输入 | `materials/fursuit-studio-solution-package/` | 历史输入；单 Bucket 内容已被当前 PLAN 覆盖 |
 | 快速原型 v5 | `planning/prototype-v1/` | 只保留页面职责、顺序和关键交互；视觉与旧业务字段不再权威 |
-| 实施记录 | `implementation/notes/` | 记录当时事实，不回写成当前架构；仍需追溯的旧文档移入 `implementation/notes/archive/`，不再引用的重复截图只保留在 Git 历史 |
-| 历史实施文档 | `implementation/notes/archive/` | 历史证据 | 保存已被当前契约覆盖的文档；效力见目录内 README |
+| 实施记录 | `implementation/notes/` | 记录当时事实，不回写成当前架构；已吸收且不再引用的临时稿、交接稿和重复截图只保留在 Git 历史 |
 | Git 历史 | commit `7b01cba966f0a9049a4af0de08f7cc4ce993760d` 及以前 | 保存旧 SPEC/OQ/PLAN 全文，供追溯而非实施 |
 
 ## 当前实施产物

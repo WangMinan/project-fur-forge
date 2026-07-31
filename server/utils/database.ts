@@ -157,25 +157,11 @@ function migrationState(
   }
 }
 
-export function readDatabaseMigrationStatus(
-  databaseFile: string,
-  options: {
-    migrationsFolder?: string
-  } = {},
-) {
-  const migrationsFolder = options.migrationsFolder
-    ?? DATABASE_MIGRATIONS_FOLDER
-  const migrations = readMigrationFiles({ migrationsFolder })
-  const exists = existsSync(databaseFile) && statSync(databaseFile).size > 0
-
-  if (!exists) {
-    return {
-      applied: 0,
-      exists: false,
-      pending: migrations.length,
-      ready: false,
-      total: migrations.length,
-    }
+export function assertDatabaseMigrated(databaseFile: string) {
+  if (!existsSync(databaseFile) || statSync(databaseFile).size === 0) {
+    throw new Error(
+      'Database is missing; run pnpm db:migrate first.',
+    )
   }
 
   const sqlite = new Database(databaseFile, {
@@ -184,31 +170,20 @@ export function readDatabaseMigrationStatus(
   })
 
   try {
-    const state = migrationState(sqlite, migrationsFolder)
+    const pending = migrationState(
+      sqlite,
+      DATABASE_MIGRATIONS_FOLDER,
+    ).pending.length
 
-    return {
-      applied: state.migrations.length - state.pending.length,
-      exists: true,
-      pending: state.pending.length,
-      ready: state.pending.length === 0,
-      total: state.migrations.length,
+    if (pending > 0) {
+      throw new Error(
+        `Database has ${pending} pending migration(s); run pnpm db:migrate first.`,
+      )
     }
   }
   finally {
     sqlite.close()
   }
-}
-
-export function assertDatabaseMigrated(databaseFile: string) {
-  const status = readDatabaseMigrationStatus(databaseFile)
-
-  if (!status.ready) {
-    throw new Error(
-      `Database is missing or has ${status.pending} pending migration(s); run pnpm db:migrate first.`,
-    )
-  }
-
-  return status
 }
 
 function backupName(databaseFile: string, now: Date) {

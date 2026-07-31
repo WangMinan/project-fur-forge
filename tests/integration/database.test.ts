@@ -11,13 +11,13 @@ import {
   it,
 } from 'vitest'
 import {
+  assertDatabaseMigrated,
   backupDatabase,
   DATABASE_BUSY_TIMEOUT_MS,
   DEVELOPMENT_DATABASE_FILE,
   migrateDatabase,
   openDatabase,
   PRODUCTION_DATABASE_FILE,
-  readDatabaseMigrationStatus,
   readSqlitePragmas,
   resolveDatabaseFile,
 } from '../../server/utils/database'
@@ -44,21 +44,13 @@ describe('SQLite foundation', () => {
   it('migrates an empty database and repeated migration is idempotent', async () => {
     const databaseFile = temporaryDatabase()
 
-    expect(readDatabaseMigrationStatus(databaseFile)).toMatchObject({
-      exists: false,
-      ready: false,
-    })
+    expect(() => assertDatabaseMigrated(databaseFile))
+      .toThrow(/run pnpm db:migrate first/)
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
       applied: 3,
       backupFile: undefined,
     })
-    expect(readDatabaseMigrationStatus(databaseFile)).toEqual({
-      applied: 3,
-      exists: true,
-      pending: 0,
-      ready: true,
-      total: 3,
-    })
+    expect(() => assertDatabaseMigrated(databaseFile)).not.toThrow()
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
       applied: 0,
       backupFile: undefined,

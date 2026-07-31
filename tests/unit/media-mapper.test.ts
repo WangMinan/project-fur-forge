@@ -69,6 +69,9 @@ function heroVariants(
     objectKey: `prod/web/asset/${role}/${width}.${format}`,
     usage,
     width,
+    height: role === 'home_hero_landscape'
+      ? Math.round(width * 9 / 16)
+      : Math.round(width * 16 / 9),
   })))
 }
 
@@ -161,6 +164,13 @@ describe('media DTO mapping', () => {
         logoDigest: 'none',
         watermarkAnchor: 'none',
         watermarkProfile: 'none',
+      })),
+    }, 'https://media.example.com')).toThrow(/requires WebP and fallback/)
+    expect(() => toPublicHeroSlideDto({
+      ...record,
+      landscapeVariants: record.landscapeVariants.map(variant => ({
+        ...variant,
+        height: 1,
       })),
     }, 'https://media.example.com')).toThrow(/requires WebP and fallback/)
   })

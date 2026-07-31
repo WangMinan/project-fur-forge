@@ -4,14 +4,14 @@
 
 ## 当前阶段
 
-阶段 4 · IMPLEMENTATION 进行中。T01–T13 与 EXT-02 已完成。T11–T13 已建立 SQLite/Drizzle 运行底座、11 张 P0 表、媒体/投影约束和唯一管理员服务端认证；S2 Review 修补已补齐运行配置、私有响应、认证运维、媒体来源谱系和 Hero 完整发布边界。**下一批先进行 T13 认证前端接线，T14 未启动。**
+阶段 4 · IMPLEMENTATION 进行中。T01–T13 与 EXT-02 已完成。T11–T13 已建立 SQLite/Drizzle 运行底座、11 张 P0 表、媒体/投影约束和唯一管理员服务端认证；S2 Review 修补已补齐运行配置、私有响应、认证运维、媒体来源谱系和 Hero 完整发布边界。**下一批先完成 `GATE-06` 认证前端接线，T14 未启动。**
 
 ## 当前执行分工
 
 - Kimi K3 继续作为后续前端切片的 `UI_PRIMARY`；T09 界面修补已完成并通过用户验收。
 - `ENGINEERING_PRIMARY` 已在 `feature/t11-t13-core-sol` 完成 T11 → T12 → T13，并在 `fix/s2-review-closure-sol` 完成独立 Review 修补；工程批次停止，不进入 T14。
 - 数据库、认证、安全、OSS、事务、媒体角色、recipe/watermark identity 和运维由 `ENGINEERING_PRIMARY` 主责。
-- 下一批由 Kimi 把既有管理界面接入 T13 认证接口，并完成真实浏览器 Cookie、CSRF、Session 和 no-store 边界验证；该交接不新增 TASKS 编号，不启动 T14。
+- 下一批由 Kimi 完成 `GATE-06`：把既有管理界面接入 T13 认证接口，并完成真实浏览器 Cookie、CSRF、Session 和 no-store 边界验证；该门禁不新增 TASKS 编号，完成前不启动 T14。
 - 后续全栈任务采用“工程侧先锁定 Schema/API/错误/权限与集成测试，Kimi 再实现前端切片”的交接方式；T20 首页轮播属于联合任务。
 - 独立审查者提供证据复核与建议；TASKS 指定的用户门禁仍由用户作最终确认。
 - 完整的当前批次、后续默认路由、交付清单和分支策略见 [`implementation/EXECUTION_ROUTING.md`](./implementation/EXECUTION_ROUTING.md)。该文件只记录可变执行安排，不改变 TASKS 的范围与依赖。
@@ -63,7 +63,7 @@
 ### 品牌、站点图标与水印
 
 - `agent_docs/materials` 中的 Logo 是当前品牌源；完整组合标已用于页头，图形标将用于 favicon、Apple Touch Icon、水印和必要社交分享标。
-- 站点目前没有显式 favicon 契约/实现；T30 负责从 EXT-01 确认的图形标确定性生成并声明站点图标。
+- favicon 契约已锁定；运行时声明与实现尚未开始，T30 负责从 EXT-01 确认的图形标确定性生成并声明站点图标。
 - 私有原图永久无水印、不可覆盖。水印只由 OSS 烘焙进公开衍生图，不使用 CSS 叠层冒充发布结果。
 - P0 的首页横竖图、设定图和出厂照使用 `brand-standard-v1`；P1 的返图使用 `brand-subtle-v1`。
 - Logo 摘要、profile 版本、比例/透明度/边距和四角锚点进入 recipe identity；改变参数生成新 Key，不原位覆盖。
@@ -116,7 +116,7 @@ T03 遗留工程问题已在 `main` 完成以下修正：
 
 ## 外部门禁
 
-- `EXT-01`：确认当前 Logo 源的来源/可使用范围和最终导出，形成完整组合标、图形标、favicon/Touch Icon 与两个水印 profile 的 manifest；同时确认正式作品图和返图可公开范围、桌面/手机焦点、文字/水印安全区。通过后执行 T51。
+- `EXT-01`：确认当前 Logo 源的来源/可使用范围和最终导出，形成完整组合标、图形标、favicon/Touch Icon 与两个水印 profile 的 manifest；同时确认正式作品图和返图可公开范围、桌面/手机焦点、文字/水印安全区。通过后解除 T30 与 T51 的素材门禁。
 - `EXT-02`：已通过。双 Bucket、30 MB 私有原图、内嵌 FFmpeg 私有处理源、OSS 水印、跨 Bucket `sys/saveas`、匿名边界和精确清理均已实测。
 - 用户已完成两端 CORS 与公开 Bucket `public-read`；预检确认私有 Bucket BPA 开启且匿名 GET 失败、公开衍生对象匿名 GET 成功。私有 Bucket 未为图片处理限制放宽。
 
@@ -135,4 +135,4 @@ T03 遗留工程问题已在 `main` 完成以下修正：
 
 ## 下一步
 
-T11–T13 及其 S2 Review 已收口。下一批由 Kimi 完成 T13 认证前端接线和真实浏览器验证；完成该交接前后均不得据此勾选 T14。**T14 未启动**，后续启动必须由新的执行批次从最新 `main` 进入。
+T11–T13 及其 S2 Review 已收口。下一批由 Kimi 完成 `GATE-06` 认证前端接线和真实浏览器验证；门禁完成前不得启动或勾选 T14。**T14 未启动**，后续启动必须由新的执行批次从最新 `main` 进入。
