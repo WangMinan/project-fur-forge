@@ -1,11 +1,11 @@
 # 任务清单：兽装工作室主页
 
 > **角色**：PLAN 的唯一可勾选实施分解。
-> **状态**：T01–T13 与 EXT-02 已完成，T11–T13 的 S2 Review 修补已收口；下一批先完成 `GATE-06` 认证前端接线，T14 未启动。任务编号保留 T01–T53，T09 之后按垂直切片排序。
+> **状态**：T01–T13、`GATE-06` 与 EXT-02 已完成，T11–T13 的 S2 Review 修补已收口；T14 未启动。任务编号保留 T01–T53，T09 之后按垂直切片排序。
 
 ## 当前目标
 
-T01–T13 与 EXT-02 已完成；下一批先由 Kimi 完成 `GATE-06`，把既有管理界面接入 T13 认证接口并完成真实浏览器边界验证。`GATE-06` 是门禁而非新增任务编号，完成前不得启动 T14。之后才从 T14 开始，以 T14–T21 跑通“一件作品从后台创建、角色化私有上传、OSS 水印处理、发布到公开 SSR，并配置一组首页横竖双源轮播”的完整链路。随后完成其余 P0、P1；P2 不阻塞核心上线。
+T01–T13、`GATE-06` 与 EXT-02 已完成。下一批从 T14 开始，以 T14–T21 跑通“一件作品从后台创建、角色化私有上传、OSS 水印处理、发布到公开 SSR，并配置一组首页横竖双源轮播”的完整链路。随后完成其余 P0、P1；P2 不阻塞核心上线。
 
 ## 门禁
 
@@ -16,7 +16,7 @@ T01–T13 与 EXT-02 已完成；下一批先由 Kimi 完成 `GATE-06`，把既�
 - [x] **GATE-05 · 阶段 4 已授权**。
 - [ ] **EXT-01 · 正式素材与品牌衍生门禁**：确认 `agent_docs/materials` 中当前 Logo 源的来源、可使用范围和最终导出；形成完整组合标、图形标、favicon/Touch Icon、水印 profile 的轻量 manifest；同时确认正式作品图和返图的可公开使用范围、桌面/手机焦点、文字/水印安全区。Logo 已存在不等于门禁通过，但不得再记为“尚未交付”。通过后解除 T30 与 T51 的素材门禁。
 - [x] **EXT-02 · 双 Bucket 30 MB 媒体门禁**：确认两个 Bucket 同账号同地域；私有 Bucket 匿名拒绝且 Block Public Access 开启；公开 Bucket 只用于网页衍生图；接受不超过 30,000,000 字节的永久私有原图；对超过 OSS 20 MB 图片处理上限的合规原图使用应用内固定版本 FFmpeg 生成私有处理源；使用无个人信息的 20–30 MB 合成图完成私有 V4 PUT、图片信息、OSS 水印、跨 Bucket `sys/saveas`、公开匿名 GET 与精确清理。已解除 T16 的外部能力门禁，T16 仍依赖 T15。_2026-07-31：29,360,568 字节原图、4,791,024 字节私有处理源和完整 OSS 处理链实测通过，见 `notes/T10-OSS-PREFLIGHT-2026-07-31.md`。_
-- [ ] **GATE-06 · T13 认证前端接线**：Kimi 接入登录、Session、退出和改密接口；CSRF token 只保存在页面内存；未认证时管理界面只显示登录；在真实浏览器验证 Host-only/Secure/SameSite Cookie、公开/管理域隔离、Session 恢复、退出/改密失效，以及成功和错误响应的 `no-store`/`noindex`。只修改认证相关前端与浏览器测试，不进入上传、CRUD 或媒体处理。_依赖：T13。完成后才可启动 T14。_
+- [x] **GATE-06 · T13 认证前端接线**：Kimi 接入登录、Session、退出和改密接口；CSRF token 只保存在页面内存；未认证时管理界面只显示登录；在真实浏览器验证 Host-only/Secure/SameSite Cookie、公开/管理域隔离、Session 恢复、退出/改密失效，以及成功和错误响应的 `no-store`/`noindex`。只修改认证相关前端与浏览器测试，不进入上传、CRUD 或媒体处理。_依赖：T13。2026-08-01：用户验收通过，见 `notes/T13-AUTH-UI-2026-07-31.md`。_
 
 ## 执行规则
 
@@ -99,7 +99,7 @@ flowchart LR
 - [x] **T10 · 双 Bucket 早期可行性预检与最小权限说明**：在数据库/认证大规模实现前，向用户说明 AK/SK 最小权限与本地写入位置；验证 region、endpoint、Bucket 名、BPA、CORS、匿名读取边界、OSS 图片水印、`sys/saveas` 目标和测试前缀，不修改账号级安全状态；协助完成 EXT-02 证据。_依赖：T09。2026-07-31 已完成可重复预检、最小权限说明、内嵌 FFmpeg 大原图预处理和完整 EXT-02 实测，证据见 `notes/T10-OSS-PREFLIGHT-2026-07-31.md`。_
 - [x] **T11 · SQLite 运行底座与迁移框架**：Drizzle、`better-sqlite3`、WAL/外键/busy timeout/FULL、迁移命令、临时测试库和一致性备份工具。_依赖：T09。_ _2026-07-31：空库/重复迁移、PRAGMA、临时库隔离、SQLite Backup API 和启动路径校验通过，见 `notes/T11-SQLITE-2026-07-31.md`。_
 - [x] **T12 · P0 最小 Schema、媒体角色与公开投影**：`users`、`works`、`work_feature_tags`、`assets`、`asset_variants`、`work_assets`、`site_hero_slides`、`publication_operations`、最小内容/营业状态；定义 `design_sheet`、`studio_photo`、`home_hero_landscape`、`home_hero_portrait`，横竖轮播 1–5 项配对约束，联系人私有，价格固定 CNY；公开投影硬排除私有字段。_依赖：T11。_ _2026-07-31：初始两项领域迁移通过；S2 Review 增量迁移补齐 role/usage、处理来源和完整首页 recipe 发布条件，仍保持 T12 完成，见 `notes/T12-P0-SCHEMA-2026-07-31.md` 与 `notes/S2-REVIEW-CLOSURE-2026-07-31.md`。_
-- [x] **T13 · 唯一管理员最小认证**：幂等初始化、登录、退出、改密、受保护命令重置、SessionVersion、锁定、Host/Origin/CSRF 和集成测试；不做邮件找回。_依赖：T12。2026-07-31：唯一管理员服务端认证通过；S2 Review 补齐私有响应 no-store、显式迁移前置和隐藏 TTY 密码输入，前端仍按用户要求保留给 Kimi，见 `notes/T13-AUTH-2026-07-31.md` 与 `notes/S2-REVIEW-CLOSURE-2026-07-31.md`。_
+- [x] **T13 · 唯一管理员最小认证**：幂等初始化、登录、退出、改密、受保护命令重置、SessionVersion、锁定、Host/Origin/CSRF 和集成测试；不做邮件找回。_依赖：T12。2026-07-31：唯一管理员服务端认证通过；S2 Review 补齐私有响应 no-store、显式迁移前置和隐藏 TTY 密码输入；前端接线随后由 GATE-06 收口，见 `notes/T13-AUTH-2026-07-31.md`、`notes/S2-REVIEW-CLOSURE-2026-07-31.md` 与 `notes/T13-AUTH-UI-2026-07-31.md`。_
 - [ ] **T14 · 角色化私有原图条件直传**：上传会话必须声明作品/站点归属与媒体角色；不可预测 Key、5 分钟 V4 PUT、固定 MD5/SHA-256/Content-Type/禁止覆盖，浏览器直传 `project-furry-forge-private`；同一关系不得静默变更角色。_依赖：T10、T13、GATE-06。_
 - [ ] **T15 · 上传完成校验与用途预览数据**：HEAD/图片信息验证大小、格式、摘要与像素；首页横版校验宽大于高、竖版校验高大于宽；保存 EXIF 修正后的焦点、3:4/16:9/9:16/原比例或 contain 参数及水印安全角；失败可读并精确清理。_依赖：T14。_
 - [ ] **T16 · `recipe-v1` 跨 Bucket 衍生图与基础水印**：对超过 OSS 20 MB 输入上限的合规原图先用内嵌 FFmpeg 生成私有处理源，再生成 work-card、home-hero-landscape、home-hero-portrait、design-sheet、detail 的受限宽度，WebP + 一种 fallback；使用 OSS 烘焙 `brand-standard-v1` 水印并 `sys/saveas` 到 `project-furry-forge-public`；Logo 摘要/profile/锚点进入 identity，私有原图保持无水印，验证 OSS 为公开 variant、最终格式和水印的唯一配方权威。_依赖：T15、EXT-02。_
