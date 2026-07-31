@@ -11,6 +11,22 @@ export const OSS_IMAGE_PROCESSING_MAX_BYTES = 20_000_000
 
 const PNG_SIGNATURE = Buffer.from('89504e470d0a1a0a', 'hex')
 
+function inputCodec(content) {
+  if (content.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)) {
+    return 'png'
+  }
+  if (content.subarray(0, 3).equals(Buffer.from('ffd8ff', 'hex'))) {
+    return 'mjpeg'
+  }
+  if (
+    content.subarray(0, 4).toString('ascii') === 'RIFF'
+    && content.subarray(8, 12).toString('ascii') === 'WEBP'
+  ) {
+    return 'webp'
+  }
+  throw new Error('Embedded FFmpeg input is not a supported image Buffer.')
+}
+
 function embeddedEnvironment() {
   const environment = {
     ...process.env,
@@ -51,14 +67,11 @@ function runEmbeddedFfmpeg(arguments_, options = {}) {
   return result
 }
 
-export function compressPngForOss(content) {
-  if (
-    !Buffer.isBuffer(content)
-    || !content.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)
-  ) {
-    throw new Error('Embedded FFmpeg preflight input must be a PNG Buffer.')
+export function preprocessImageForOss(content) {
+  if (!Buffer.isBuffer(content)) {
+    throw new Error('Embedded FFmpeg input must be an image Buffer.')
   }
-
+  const codec = inputCodec(content)
   const result = runEmbeddedFfmpeg([
     '-hide_banner',
     '-loglevel',
@@ -66,7 +79,7 @@ export function compressPngForOss(content) {
     '-f',
     'image2pipe',
     '-c:v',
-    'png',
+    codec,
     '-i',
     'pipe:0',
     '-frames:v',
@@ -120,4 +133,11 @@ export function compressPngForOss(content) {
       usedPathLookup: false,
     },
   }
+}
+
+export function compressPngForOss(content) {
+  if (!Buffer.isBuffer(content) || inputCodec(content) !== 'png') {
+    throw new Error('Embedded FFmpeg preflight input must be a PNG Buffer.')
+  }
+  return preprocessImageForOss(content)
 }

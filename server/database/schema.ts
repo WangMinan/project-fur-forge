@@ -141,6 +141,11 @@ export const assets = sqliteTable('assets', {
   mimeType: text('mime_type').notNull(),
   width: integer('width').notNull(),
   height: integer('height').notNull(),
+  exifOrientation: integer('exif_orientation').notNull().default(1),
+  focalX: real('focal_x').notNull().default(0.5),
+  focalY: real('focal_y').notNull().default(0.5),
+  fitMode: text('fit_mode').notNull().default('cover'),
+  watermarkAnchor: text('watermark_anchor').notNull().default('top-left'),
   version: integer('version').notNull().default(1),
   internalErrorCode: text('internal_error_code'),
   ...timestampColumns(),
@@ -170,6 +175,22 @@ export const assets = sqliteTable('assets', {
   check(
     'assets_dimensions',
     sql`${table.width} BETWEEN 1 AND 12000 AND ${table.height} BETWEEN 1 AND 12000`,
+  ),
+  check(
+    'assets_exif_orientation',
+    sql`${table.exifOrientation} BETWEEN 1 AND 8`,
+  ),
+  check(
+    'assets_focus',
+    sql`${table.focalX} BETWEEN 0 AND 1 AND ${table.focalY} BETWEEN 0 AND 1`,
+  ),
+  check(
+    'assets_fit_mode',
+    sql`${table.fitMode} IN ('cover', 'contain')`,
+  ),
+  check(
+    'assets_watermark_anchor',
+    sql`${table.watermarkAnchor} IN ('top-left', 'top-right', 'bottom-left', 'bottom-right')`,
   ),
   check(
     'assets_hero_orientation',
@@ -202,6 +223,7 @@ export const uploadSessions = sqliteTable('upload_sessions', {
     .references(() => assets.id),
   version: integer('version').notNull().default(1),
   failureCode: text('failure_code'),
+  failureStage: text('failure_stage'),
   createdAt: integer('created_at').notNull(),
   expiresAt: integer('expires_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
@@ -262,7 +284,11 @@ export const uploadSessions = sqliteTable('upload_sessions', {
   ),
   check(
     'upload_sessions_failure_state',
-    sql`(${table.status} = 'FAILED' AND ${table.failureCode} IS NOT NULL) OR (${table.status} != 'FAILED' AND ${table.failureCode} IS NULL)`,
+    sql`(${table.status} = 'FAILED' AND ${table.failureCode} IS NOT NULL AND ${table.failureStage} IS NOT NULL) OR (${table.status} != 'FAILED' AND ${table.failureCode} IS NULL AND ${table.failureStage} IS NULL)`,
+  ),
+  check(
+    'upload_sessions_failure_stage',
+    sql`${table.failureStage} IS NULL OR ${table.failureStage} IN ('HEAD', 'DIGEST', 'IMAGE_INFO', 'PREPROCESS', 'DATABASE', 'CLEANUP')`,
   ),
   check(
     'upload_sessions_expiry',

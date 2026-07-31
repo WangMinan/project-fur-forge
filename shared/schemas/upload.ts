@@ -26,10 +26,20 @@ export const UPLOAD_FAILURE_CODE_VALUES = [
   'UPLOAD_CLEANUP_FAILED',
 ] as const
 
+export const UPLOAD_FAILURE_STAGE_VALUES = [
+  'HEAD',
+  'DIGEST',
+  'IMAGE_INFO',
+  'PREPROCESS',
+  'DATABASE',
+  'CLEANUP',
+] as const
+
 export const uploadSessionStatusSchema = z.enum(
   UPLOAD_SESSION_STATUS_VALUES,
 )
 export const uploadFailureCodeSchema = z.enum(UPLOAD_FAILURE_CODE_VALUES)
+export const uploadFailureStageSchema = z.enum(UPLOAD_FAILURE_STAGE_VALUES)
 
 export const imageContentTypeSchema = z.enum([
   'image/jpeg',
@@ -94,10 +104,69 @@ export const uploadSessionDtoSchema = z.object({
   status: uploadSessionStatusSchema,
   version: resourceVersionSchema,
   failureCode: uploadFailureCodeSchema.nullable(),
+  failureStage: uploadFailureStageSchema.nullable(),
   assetId: resourceIdSchema.nullable(),
   createdAt: z.string().datetime({ offset: true }),
   expiresAt: z.string().datetime({ offset: true }),
 }).strict()
+
+export const WATERMARK_ANCHOR_VALUES = [
+  'top-left',
+  'top-right',
+  'bottom-left',
+  'bottom-right',
+] as const
+
+export const watermarkAnchorSchema = z.enum(WATERMARK_ANCHOR_VALUES)
+export const fitModeSchema = z.enum(['cover', 'contain'])
+export const previewAspectSchema = z.enum([
+  '3:4',
+  '16:9',
+  '9:16',
+  'original',
+])
+
+export const completeUploadSessionRequestSchema = versionedRequestSchema(
+  z.object({
+    focalX: z.number().min(0).max(1),
+    focalY: z.number().min(0).max(1),
+    watermarkAnchor: watermarkAnchorSchema,
+  }).strict(),
+)
+
+export const verifiedAssetDtoSchema = z.object({
+  assetId: resourceIdSchema,
+  version: resourceVersionSchema,
+  role: mediaRoleSchema,
+  status: z.enum(['PENDING', 'READY', 'FAILED']),
+  mimeType: imageContentTypeSchema,
+  byteSize: z.number().int().min(1).max(30_000_000),
+  width: z.number().int().min(1).max(12_000),
+  height: z.number().int().min(1).max(12_000),
+  exifOrientation: z.number().int().min(1).max(8),
+  focalX: z.number().min(0).max(1),
+  focalY: z.number().min(0).max(1),
+  fitMode: fitModeSchema,
+  watermarkAnchor: watermarkAnchorSchema,
+  processingFailureCode: uploadFailureCodeSchema.nullable(),
+  processingFailureStage: z.literal('PREPROCESS').nullable(),
+  previews: z.array(z.object({
+    usage: z.enum([
+      'work-card',
+      'detail',
+      'design-sheet',
+      'home-hero-landscape',
+      'home-hero-portrait',
+    ]),
+    aspect: previewAspectSchema,
+    fitMode: fitModeSchema,
+  }).strict()).min(1),
+}).strict()
+
+export const completeUploadSessionResponseSchema = apiSuccessSchema(z.object({
+  session: uploadSessionDtoSchema,
+  asset: verifiedAssetDtoSchema,
+}).strict())
 
 export const conditionalPutDtoSchema = z.object({
   method: z.literal('PUT'),
@@ -122,6 +191,11 @@ export const uploadSessionResponseSchema = apiSuccessSchema(
 
 export const uploadSessionMutationRequestSchema = versionedRequestSchema(
   z.object({}).strict(),
+)
+
+export const retryAssetProcessingRequestSchema = uploadSessionMutationRequestSchema
+export const retryAssetProcessingResponseSchema = apiSuccessSchema(
+  verifiedAssetDtoSchema,
 )
 
 export const retryUploadSessionResponseSchema
