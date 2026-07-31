@@ -25,7 +25,26 @@ export default defineNuxtConfig({
   },
   modules: [
     '@nuxt/eslint',
+    'nuxt-auth-utils',
   ],
+  auth: {
+    loadStrategy: 'none',
+  },
+  runtimeConfig: {
+    session: {
+      name: '__Host-fur-forge-session',
+      password: process.env.NUXT_SESSION_PASSWORD
+        || process.env.SESSION_SECRET
+        || 'development-only-session-secret-32-chars',
+      maxAge: 8 * 60 * 60,
+      cookie: {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict',
+        path: '/',
+      },
+    },
+  },
   nitro: {
     errorHandler: './server/error.ts',
     handlers: includeRuntimeErrorFixtures

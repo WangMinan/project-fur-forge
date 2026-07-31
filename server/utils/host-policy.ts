@@ -13,6 +13,7 @@ const publicBlockedPrefixes = [
   '/admin',
   '/api/admin',
   '/api/auth',
+  '/api/_auth',
   '/preview',
 ] as const
 
