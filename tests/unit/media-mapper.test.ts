@@ -28,6 +28,7 @@ const asset: AssetRecord = {
 }
 
 const publicVariant: VariantRecord = {
+  byteSize: 2_048,
   id: '550e8400-e29b-41d4-a716-446655440001',
   storageScope: 'PUBLIC',
   status: 'READY',
@@ -37,6 +38,38 @@ const publicVariant: VariantRecord = {
   format: 'webp',
   inputSha256: 'a'.repeat(64),
   internalErrorCode: null,
+  logoDigest: 'b'.repeat(64),
+  mediaRole: 'studio_photo',
+  recipeVersion: 'recipe-v1',
+  sha256: 'c'.repeat(64),
+  usage: 'work-card',
+  watermarkAnchor: 'top-left',
+  watermarkProfile: 'brand-standard-v1',
+}
+
+let variantSequence = 10
+
+function heroVariants(
+  role: 'home_hero_landscape' | 'home_hero_portrait',
+) {
+  const widths = role === 'home_hero_landscape'
+    ? [768, 1280, 1920]
+    : [480, 768, 1080]
+  const usage = role === 'home_hero_landscape'
+    ? 'home-hero-landscape'
+    : 'home-hero-portrait'
+
+  return widths.flatMap(width => (['webp', 'jpeg'] as const).map(format => ({
+    ...publicVariant,
+    format,
+    id: `550e8400-e29b-41d4-a716-${String(
+      variantSequence++,
+    ).padStart(12, '0')}`,
+    mediaRole: role,
+    objectKey: `prod/web/asset/${role}/${width}.${format}`,
+    usage,
+    width,
+  })))
 }
 
 describe('media DTO mapping', () => {
@@ -80,19 +113,15 @@ describe('media DTO mapping', () => {
     }, 'https://media.example.com')).toThrow(/dot segments/)
   })
 
-  it('requires enabled slides with complete public pairs', () => {
+  it('maps complete hero recipes and rejects incomplete publication data', () => {
     const record: HeroSlideRecord = {
       id: '550e8400-e29b-41d4-a716-446655440002',
       version: 1,
       enabled: true,
       altText: '蓝白犬兽装站在浅色背景前',
       sortOrder: 0,
-      landscapeVariants: [publicVariant],
-      portraitVariants: [{
-        ...publicVariant,
-        id: '550e8400-e29b-41d4-a716-446655440003',
-        objectKey: 'prod/web/asset/portrait.webp',
-      }],
+      landscapeVariants: heroVariants('home_hero_landscape'),
+      portraitVariants: heroVariants('home_hero_portrait'),
       linkedWork: {
         publicationStatus: 'published',
         slug: 'blue-dog',
@@ -111,12 +140,28 @@ describe('media DTO mapping', () => {
       ...record,
       enabled: false,
     }, 'https://media.example.com')).toBeNull()
-    expect(toPublicHeroSlideDto({
+    expect(() => toPublicHeroSlideDto({
       ...record,
-      portraitVariants: [{
-        ...publicVariant,
+      portraitVariants: record.portraitVariants.map(variant => ({
+        ...variant,
         storageScope: 'PRIVATE',
-      }],
-    }, 'https://media.example.com')).toBeNull()
+      })),
+    }, 'https://media.example.com')).toThrow(/requires WebP and fallback/)
+    expect(() => toPublicHeroSlideDto({
+      ...record,
+      landscapeVariants: record.landscapeVariants.map(variant => ({
+        ...variant,
+        usage: 'detail',
+      })),
+    }, 'https://media.example.com')).toThrow(/requires WebP and fallback/)
+    expect(() => toPublicHeroSlideDto({
+      ...record,
+      portraitVariants: record.portraitVariants.map(variant => ({
+        ...variant,
+        logoDigest: 'none',
+        watermarkAnchor: 'none',
+        watermarkProfile: 'none',
+      })),
+    }, 'https://media.example.com')).toThrow(/requires WebP and fallback/)
   })
 })

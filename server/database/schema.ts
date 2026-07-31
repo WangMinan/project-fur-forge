@@ -9,6 +9,7 @@ import {
   text,
   uniqueIndex,
 } from 'drizzle-orm/sqlite-core'
+import type { AnySQLiteColumn } from 'drizzle-orm/sqlite-core'
 
 const timestampColumns = () => ({
   createdAt: integer('created_at').notNull(),
@@ -185,6 +186,8 @@ export const assetVariants = sqliteTable('asset_variants', {
   id: text('id').primaryKey(),
   assetId: text('asset_id').notNull()
     .references(() => assets.id, { onDelete: 'cascade' }),
+  sourceVariantId: text('source_variant_id')
+    .references((): AnySQLiteColumn => assetVariants.id),
   storageScope: text('storage_scope').notNull(),
   status: text('status').notNull().default('PENDING'),
   objectKey: text('object_key').notNull(),

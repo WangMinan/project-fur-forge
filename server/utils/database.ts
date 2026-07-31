@@ -141,22 +141,74 @@ function migrationState(
     FROM sqlite_master
     WHERE type = 'table' AND name = '__drizzle_migrations'
   `).pluck().get() === 1
-  const latestApplied = tableExists
+  const applied = tableExists
     ? sqlite.prepare(`
         SELECT created_at
         FROM __drizzle_migrations
-        ORDER BY created_at DESC
-        LIMIT 1
-      `).pluck().get() as number | undefined
-    : undefined
+      `).pluck().all().map(Number)
+    : []
+  const appliedTimestamps = new Set(applied)
 
   return {
     migrations,
     pending: migrations.filter(
-      migration => latestApplied === undefined
-        || migration.folderMillis > Number(latestApplied),
+      migration => !appliedTimestamps.has(migration.folderMillis),
     ),
   }
+}
+
+export function readDatabaseMigrationStatus(
+  databaseFile: string,
+  options: {
+    migrationsFolder?: string
+  } = {},
+) {
+  const migrationsFolder = options.migrationsFolder
+    ?? DATABASE_MIGRATIONS_FOLDER
+  const migrations = readMigrationFiles({ migrationsFolder })
+  const exists = existsSync(databaseFile) && statSync(databaseFile).size > 0
+
+  if (!exists) {
+    return {
+      applied: 0,
+      exists: false,
+      pending: migrations.length,
+      ready: false,
+      total: migrations.length,
+    }
+  }
+
+  const sqlite = new Database(databaseFile, {
+    fileMustExist: true,
+    readonly: true,
+  })
+
+  try {
+    const state = migrationState(sqlite, migrationsFolder)
+
+    return {
+      applied: state.migrations.length - state.pending.length,
+      exists: true,
+      pending: state.pending.length,
+      ready: state.pending.length === 0,
+      total: state.migrations.length,
+    }
+  }
+  finally {
+    sqlite.close()
+  }
+}
+
+export function assertDatabaseMigrated(databaseFile: string) {
+  const status = readDatabaseMigrationStatus(databaseFile)
+
+  if (!status.ready) {
+    throw new Error(
+      `Database is missing or has ${status.pending} pending migration(s); run pnpm db:migrate first.`,
+    )
+  }
+
+  return status
 }
 
 function backupName(databaseFile: string, now: Date) {

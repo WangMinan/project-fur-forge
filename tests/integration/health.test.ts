@@ -115,6 +115,31 @@ describe('runtime request boundaries', () => {
     })
   })
 
+  it('marks previews private without changing public SSR headers', async () => {
+    const [preview, homepage] = await Promise.all([
+      fetch(`${publicBaseUrl}/preview/work/missing`, {
+        headers: { accept: 'text/html' },
+      }),
+      fetch(publicBaseUrl, {
+        headers: { accept: 'text/html' },
+      }),
+    ])
+
+    expect(preview.status).toBe(404)
+    expect(preview.headers.get('cache-control')).toBe(
+      'no-store, max-age=0',
+    )
+    expect(preview.headers.get('pragma')).toBe('no-cache')
+    expect(preview.headers.get('x-robots-tag')).toBe(
+      'noindex, nofollow, noarchive',
+    )
+    expect(homepage.status).toBe(200)
+    expect(homepage.headers.get('x-robots-tag')).toBeNull()
+    expect(homepage.headers.get('cache-control')).not.toBe(
+      'no-store, max-age=0',
+    )
+  })
+
   it('renders page 404/500 HTML and keeps API 404/500 envelopes', async () => {
     const [pageNotFound, pageFailure, apiNotFound, apiFailure] =
       await Promise.all([

@@ -1,9 +1,13 @@
 import {
+  PassThrough,
+} from 'node:stream'
+import {
   describe,
   expect,
   it,
   vi,
 } from 'vitest'
+import { readAdminCredentials } from '../../scripts/auth-input'
 import {
   isSessionIdleExpired,
   logAuthEvent,
@@ -15,6 +19,45 @@ import {
 } from '../../server/utils/password'
 
 describe('authentication primitives', () => {
+  it('keeps interactive passwords off stdout', async () => {
+    const input = new PassThrough() as PassThrough & {
+      isRaw: boolean
+      isTTY: boolean
+      setRawMode: (mode: boolean) => void
+    }
+    const output = new PassThrough() as PassThrough & {
+      isTTY: boolean
+    }
+    let stdout = ''
+
+    input.isRaw = false
+    input.isTTY = true
+    input.setRawMode = (mode) => {
+      input.isRaw = mode
+    }
+    output.isTTY = true
+    output.on('data', chunk => stdout += chunk.toString())
+
+    const credentials = readAdminCredentials(
+      'Admin password: ',
+      {},
+      input,
+      output,
+    )
+    input.write('admin\r')
+    await new Promise<void>(resolve => setImmediate(resolve))
+    input.write('hidden admin password\r')
+
+    await expect(credentials).resolves.toEqual({
+      password: 'hidden admin password',
+      username: 'admin',
+    })
+    expect(stdout).toContain('admin')
+    expect(stdout).not.toContain('hidden admin password')
+    expect(input.isRaw).toBe(false)
+    expect(input.isPaused()).toBe(true)
+  })
+
   it('hashes passwords with scrypt and verifies without plaintext storage', async () => {
     const password = 'correct horse battery staple'
     const hash = await hashAdminPassword(password)

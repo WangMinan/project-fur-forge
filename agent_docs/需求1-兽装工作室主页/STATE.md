@@ -4,13 +4,14 @@
 
 ## 当前阶段
 
-阶段 4 · IMPLEMENTATION 进行中。T01–T13 与 EXT-02 已完成。T11–T13 已建立 SQLite/Drizzle 运行底座、11 张 P0 表、媒体/投影约束和唯一管理员服务端认证。**本批次已停止，T14 未启动。**
+阶段 4 · IMPLEMENTATION 进行中。T01–T13 与 EXT-02 已完成。T11–T13 已建立 SQLite/Drizzle 运行底座、11 张 P0 表、媒体/投影约束和唯一管理员服务端认证；S2 Review 修补已补齐运行配置、私有响应、认证运维、媒体来源谱系和 Hero 完整发布边界。**下一批先进行 T13 认证前端接线，T14 未启动。**
 
 ## 当前执行分工
 
 - Kimi K3 继续作为后续前端切片的 `UI_PRIMARY`；T09 界面修补已完成并通过用户验收。
-- `ENGINEERING_PRIMARY` 已在 `feature/t11-t13-core-sol` 严格按 T11 → T12 → T13 完成三个独立收口；本批次停止，不进入 T14。
+- `ENGINEERING_PRIMARY` 已在 `feature/t11-t13-core-sol` 完成 T11 → T12 → T13，并在 `fix/s2-review-closure-sol` 完成独立 Review 修补；工程批次停止，不进入 T14。
 - 数据库、认证、安全、OSS、事务、媒体角色、recipe/watermark identity 和运维由 `ENGINEERING_PRIMARY` 主责。
+- 下一批由 Kimi 把既有管理界面接入 T13 认证接口，并完成真实浏览器 Cookie、CSRF、Session 和 no-store 边界验证；该交接不新增 TASKS 编号，不启动 T14。
 - 后续全栈任务采用“工程侧先锁定 Schema/API/错误/权限与集成测试，Kimi 再实现前端切片”的交接方式；T20 首页轮播属于联合任务。
 - 独立审查者提供证据复核与建议；TASKS 指定的用户门禁仍由用户作最终确认。
 - 完整的当前批次、后续默认路由、交付清单和分支策略见 [`implementation/EXECUTION_ROUTING.md`](./implementation/EXECUTION_ROUTING.md)。该文件只记录可变执行安排，不改变 TASKS 的范围与依赖。
@@ -40,6 +41,7 @@
 - 返图可以保存可选授权记录：授权来源、确认时间和简短备注。三者均可为空，不作为发布阻断项，也不进入公开投影。
 - 一期价格只支持人民币。采用最小货币单位与固定 `CNY` 约束；未来需要其他币种时通过正常迁移扩展，不提前保存禁用美元字段。
 - P0 先形成可部署的核心作品链路；P1 补齐一期增强能力；P2 是可独立后置的运维增强。只有 P0 + P1 完成后才称为“一期功能闭环”；正式上线仍需 T51–T53。
+- production 必须显式提供 URL、数据库、双 Bucket、OSS AccessKey 和 `SESSION_SECRET`；P2/T43 前 SMTP 五项可以全部缺失，但只要提供任一项就必须完整提供全组，不生成占位凭据。
 
 ### 首页轮播
 
@@ -120,6 +122,7 @@ T03 遗留工程问题已在 `main` 完成以下修正：
 
 ## 最近验证
 
+- 2026-07-31：完成 T11–T13 S2 Review 修补。production SMTP 可选组、auth/admin/preview no-store、认证命令显式迁移前置与隐藏 TTY 输入、媒体 role/usage 与 `source_variant_id`、Hero 完整 recipe 发布条件均通过；新迁移为 `0002_puzzling_malcolm_colcord.sql`。完整门禁为 85 项单测、34 项集成测试、78 项 E2E、构建和生产验证；证据见 `implementation/notes/S2-REVIEW-CLOSURE-2026-07-31.md`。
 - 2026-07-31：完成 T13 唯一管理员服务端认证。密封 Host-only Cookie、scrypt 密码哈希、8 小时无操作过期、5 次失败锁定 30 分钟、SessionVersion、管理员 active、Host/Origin/CSRF、资源版本、日志脱敏和受保护重置均通过；完整门禁为 84 项单测、27 项集成测试、112 项 E2E、构建和生产验证。用户要求前端由 Kimi 实现，`app/` 保持零差异；证据见 `implementation/notes/T13-AUTH-2026-07-31.md`。
 - 2026-07-31：完成 T12 P0 Schema 与投影。`0000_sparkling_absorbing_man.sql` 建立 11 张 P0 表；ownerDisplay/CNY/短属性、媒体角色/数量、原图与 variant identity、首页 1–5 READY 横竖配对、发布步骤、公开/管理泄漏守卫均通过。完整门禁为 81 项单测、18 项集成测试、构建和生产验证；证据见 `implementation/notes/T12-P0-SCHEMA-2026-07-31.md`。
 - 2026-07-31：完成 T11 SQLite 运行底座。Drizzle/`better-sqlite3`、WAL、外键、5 秒 busy timeout、FULL synchronous、开发/生产/测试路径边界、空库与重复迁移、独立临时库和 SQLite Backup API 一致性备份均已验证；证据见 `implementation/notes/T11-SQLITE-2026-07-31.md`。
@@ -132,4 +135,4 @@ T03 遗留工程问题已在 `main` 完成以下修正：
 
 ## 下一步
 
-T11–T13 已完成并分别独立收口。本批次结束，**T14 未启动**；后续启动 T14 必须由新的执行批次从最新 `main` 进入。
+T11–T13 及其 S2 Review 已收口。下一批由 Kimi 完成 T13 认证前端接线和真实浏览器验证；完成该交接前后均不得据此勾选 T14。**T14 未启动**，后续启动必须由新的执行批次从最新 `main` 进入。

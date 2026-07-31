@@ -55,6 +55,17 @@ function cookieFrom(response: Response) {
   return response.headers.get('set-cookie')?.split(';', 1)[0] ?? ''
 }
 
+function expectPrivateResponseHeaders(response: Response) {
+  expect(response.headers.get('cache-control')).toBe(
+    'no-store, max-age=0',
+  )
+  expect(response.headers.get('pragma')).toBe('no-cache')
+  expect(response.headers.get('x-robots-tag')).toBe(
+    'noindex, nofollow, noarchive',
+  )
+  expect(response.headers.get('vary')).toBe('Cookie, Origin')
+}
+
 async function login(
   username = 'admin',
   password = originalPassword,
@@ -111,6 +122,7 @@ describe('authentication API', () => {
     const setCookie = response.headers.get('set-cookie') ?? ''
 
     expect(response.status).toBe(200)
+    expectPrivateResponseHeaders(response)
     expect(body).toMatchObject({
       data: {
         user: {
@@ -139,6 +151,7 @@ describe('authentication API', () => {
       headers: { cookie },
     })
     expect(session.status).toBe(200)
+    expectPrivateResponseHeaders(session)
     await expect(session.json()).resolves.toMatchObject({
       data: {
         user: {
@@ -154,6 +167,8 @@ describe('authentication API', () => {
 
     expect(wrongPassword.response.status).toBe(401)
     expect(unknownUser.response.status).toBe(401)
+    expectPrivateResponseHeaders(wrongPassword.response)
+    expectPrivateResponseHeaders(unknownUser.response)
     expect(wrongPassword.body).toEqual(unknownUser.body)
 
     for (let attempt = 1; attempt < 5; attempt += 1) {
@@ -193,6 +208,8 @@ describe('authentication API', () => {
     )
     expect(missingOrigin.response.status).toBe(403)
     expect(publicHost.response.status).toBe(404)
+    expectPrivateResponseHeaders(missingOrigin.response)
+    expectPrivateResponseHeaders(publicHost.response)
 
     const authenticated = await login()
     const passwordRequest = {
@@ -215,6 +232,7 @@ describe('authentication API', () => {
       passwordRequest,
     )
     expect(missingCsrf.status).toBe(403)
+    expectPrivateResponseHeaders(missingCsrf)
 
     const wrongOrigin = await fetch(
       `${adminBaseUrl}/api/admin/account/password`,
@@ -228,6 +246,33 @@ describe('authentication API', () => {
       },
     )
     expect(wrongOrigin.status).toBe(403)
+    expectPrivateResponseHeaders(wrongOrigin)
+
+    const conflict = await fetch(
+      `${adminBaseUrl}/api/admin/account/password`,
+      {
+        ...passwordRequest,
+        headers: {
+          ...passwordRequest.headers,
+          'x-csrf-token': authenticated.body.data.csrfToken,
+        },
+        body: JSON.stringify({
+          expectedVersion: 99,
+          payload: {
+            currentPassword: originalPassword,
+            newPassword: 'replacement admin password',
+          },
+        }),
+      },
+    )
+    expect(conflict.status).toBe(409)
+    expectPrivateResponseHeaders(conflict)
+
+    const failure = await fetch(
+      `${adminBaseUrl}/api/auth/__test__/error`,
+    )
+    expect(failure.status).toBe(500)
+    expectPrivateResponseHeaders(failure)
   }, 20_000)
 
   it('changes password and invalidates every old SessionVersion', async () => {
@@ -253,6 +298,7 @@ describe('authentication API', () => {
     )
 
     expect(changed.status).toBe(200)
+    expectPrivateResponseHeaders(changed)
     await expect(changed.json()).resolves.toEqual({
       data: {
         version: 2,
@@ -266,6 +312,7 @@ describe('authentication API', () => {
       },
     )
     expect(staleSession.status).toBe(401)
+    expectPrivateResponseHeaders(staleSession)
     expect((await login()).response.status).toBe(401)
     expect((await login(
       'admin',
@@ -302,6 +349,7 @@ describe('authentication API', () => {
       headers: { cookie: authenticated.cookie },
     })
     expect(session.status).toBe(401)
+    expectPrivateResponseHeaders(session)
   }, 20_000)
 
   it('logs out through Origin and CSRF validation', async () => {
@@ -316,6 +364,7 @@ describe('authentication API', () => {
     })
 
     expect(logout.status).toBe(200)
+    expectPrivateResponseHeaders(logout)
     await expect(logout.json()).resolves.toEqual({
       data: {
         cleared: true,
@@ -328,5 +377,6 @@ describe('authentication API', () => {
       },
     )
     expect(staleSession.status).toBe(401)
+    expectPrivateResponseHeaders(staleSession)
   }, 20_000)
 })

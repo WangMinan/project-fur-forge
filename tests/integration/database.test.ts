@@ -17,6 +17,7 @@ import {
   migrateDatabase,
   openDatabase,
   PRODUCTION_DATABASE_FILE,
+  readDatabaseMigrationStatus,
   readSqlitePragmas,
   resolveDatabaseFile,
 } from '../../server/utils/database'
@@ -43,9 +44,20 @@ describe('SQLite foundation', () => {
   it('migrates an empty database and repeated migration is idempotent', async () => {
     const databaseFile = temporaryDatabase()
 
+    expect(readDatabaseMigrationStatus(databaseFile)).toMatchObject({
+      exists: false,
+      ready: false,
+    })
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 2,
+      applied: 3,
       backupFile: undefined,
+    })
+    expect(readDatabaseMigrationStatus(databaseFile)).toEqual({
+      applied: 3,
+      exists: true,
+      pending: 0,
+      ready: true,
+      total: 3,
     })
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
       applied: 0,
@@ -62,7 +74,7 @@ describe('SQLite foundation', () => {
       `).pluck().get()).toBe(1)
       expect(database.sqlite.prepare(`
         SELECT COUNT(*) FROM __drizzle_migrations
-      `).pluck().get()).toBe(2)
+      `).pluck().get()).toBe(3)
     }
     finally {
       database.sqlite.close()

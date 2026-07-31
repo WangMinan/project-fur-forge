@@ -74,6 +74,7 @@ function insertAsset(
     width: number
     height: number
     sha256: string
+    byteSize: number
   }> = {},
 ) {
   const portrait = role === 'home_hero_portrait'
@@ -83,7 +84,7 @@ function insertAsset(
       id, role, status, private_object_key, sha256, byte_size,
       mime_type, width, height, created_at, updated_at
     ) VALUES (
-      @id, @role, @status, @key, @sha256, 1024,
+      @id, @role, @status, @key, @sha256, @byteSize,
       'image/png', @width, @height, @now, @now
     )
   `).run({
@@ -92,17 +93,133 @@ function insertAsset(
     status: fields.status ?? 'READY',
     key: `test/original/${id}.png`,
     sha256: fields.sha256 ?? SHA_A,
+    byteSize: fields.byteSize ?? 1024,
     width: fields.width ?? (portrait ? 900 : 1600),
     height: fields.height ?? (portrait ? 1600 : 900),
     now,
   })
 }
 
-function insertHeroPair(index: number, linkedWorkId: string | null = null) {
+function insertVariant(
+  id: string,
+  assetId: string,
+  role: string,
+  usage: string,
+  fields: Partial<{
+    byteSize: number | null
+    format: 'webp' | 'jpeg' | 'png'
+    inputSha256: string
+    logoDigest: string
+    outputSha256: string | null
+    sourceVariantId: string | null
+    status: string
+    storageScope: string
+    watermarkAnchor: string
+    watermarkProfile: string
+    width: number
+    height: number
+  }> = {},
+) {
+  const storageScope = fields.storageScope
+    ?? (usage === 'preprocess' ? 'PRIVATE' : 'PUBLIC')
+  const isPublic = storageScope === 'PUBLIC'
+
+  sqlite.prepare(`
+    INSERT INTO asset_variants (
+      id, asset_id, source_variant_id, storage_scope, status, object_key,
+      input_sha256, media_role, usage, width, height, format, quality,
+      crop_identity, recipe_version, watermark_profile,
+      logo_digest, watermark_anchor, sha256, byte_size,
+      created_at, updated_at
+    ) VALUES (
+      @id, @assetId, @sourceVariantId, @storageScope, @status, @key,
+      @inputSha256, @role, @usage, @width, @height, @format, 82,
+      @cropIdentity, 'recipe-v1', @watermarkProfile,
+      @logoDigest, @watermarkAnchor, @outputSha256, @byteSize,
+      @now, @now
+    )
+  `).run({
+    id,
+    assetId,
+    sourceVariantId: fields.sourceVariantId ?? null,
+    storageScope,
+    status: fields.status ?? 'READY',
+    key: `${isPublic ? 'prod/web' : 'prod/draft'}/${assetId}/${id}.${fields.format ?? 'webp'}`,
+    inputSha256: fields.inputSha256 ?? SHA_A,
+    role,
+    usage,
+    width: fields.width ?? 768,
+    height: fields.height ?? 1024,
+    format: fields.format ?? 'webp',
+    cropIdentity: `crop:${id}`,
+    watermarkProfile: fields.watermarkProfile
+      ?? (isPublic ? 'brand-standard-v1' : 'none'),
+    logoDigest: fields.logoDigest ?? (isPublic ? SHA_B : 'none'),
+    watermarkAnchor: fields.watermarkAnchor
+      ?? (isPublic ? 'top-left' : 'none'),
+    outputSha256: fields.outputSha256 === undefined
+      ? SHA_C
+      : fields.outputSha256,
+    byteSize: fields.byteSize === undefined ? 2048 : fields.byteSize,
+    now,
+  })
+}
+
+function insertHeroRecipe(
+  assetId: string,
+  role: 'home_hero_landscape' | 'home_hero_portrait',
+  formats: readonly ('webp' | 'jpeg' | 'png')[] = ['webp', 'jpeg'],
+  overrides: Partial<{
+    logoDigest: string
+    storageScope: string
+    usage: string
+    watermarkAnchor: string
+    watermarkProfile: string
+  }> = {},
+) {
+  const widths = role === 'home_hero_landscape'
+    ? [768, 1280, 1920]
+    : [480, 768, 1080]
+  const usage = role === 'home_hero_landscape'
+    ? 'home-hero-landscape'
+    : 'home-hero-portrait'
+
+  for (const width of widths) {
+    for (const format of formats) {
+      insertVariant(
+        `${assetId}-${width}-${format}`,
+        assetId,
+        role,
+        overrides.usage ?? usage,
+        {
+          format,
+          height: role === 'home_hero_landscape'
+            ? Math.round(width * 9 / 16)
+            : Math.round(width * 16 / 9),
+          logoDigest: overrides.logoDigest,
+          storageScope: overrides.storageScope,
+          watermarkAnchor: overrides.watermarkAnchor,
+          watermarkProfile: overrides.watermarkProfile,
+          width,
+        },
+      )
+    }
+  }
+}
+
+function insertHeroPair(
+  index: number,
+  linkedWorkId: string | null = null,
+  withVariants = true,
+) {
   const landscapeId = `landscape-${index}`
   const portraitId = `portrait-${index}`
   insertAsset(landscapeId, 'home_hero_landscape')
   insertAsset(portraitId, 'home_hero_portrait')
+  if (withVariants) {
+    insertHeroRecipe(landscapeId, 'home_hero_landscape')
+    insertHeroRecipe(portraitId, 'home_hero_portrait')
+  }
   sqlite.prepare(`
     INSERT INTO site_hero_slides (
       id, landscape_asset_id, portrait_asset_id, alt_text,
@@ -273,6 +390,156 @@ describe('P0 schema boundary', () => {
     `).run()).toThrow(/work_assets_position/)
   })
 
+  it('enforces the media role and usage matrix', () => {
+    insertAsset('matrix-studio', 'studio_photo')
+    insertAsset('matrix-design', 'design_sheet')
+    insertAsset('matrix-landscape', 'home_hero_landscape')
+    insertAsset('matrix-portrait', 'home_hero_portrait')
+
+    expect(() => insertVariant(
+      'studio-detail',
+      'matrix-studio',
+      'studio_photo',
+      'detail',
+    )).not.toThrow()
+    expect(() => insertVariant(
+      'design-card-fallback',
+      'matrix-design',
+      'design_sheet',
+      'work-card',
+    )).not.toThrow()
+    expect(() => insertVariant(
+      'landscape-public',
+      'matrix-landscape',
+      'home_hero_landscape',
+      'home-hero-landscape',
+    )).not.toThrow()
+
+    expect(() => insertVariant(
+      'studio-design-sheet',
+      'matrix-studio',
+      'studio_photo',
+      'design-sheet',
+    )).toThrow(/variant role and usage are incompatible/)
+    expect(() => insertVariant(
+      'portrait-landscape',
+      'matrix-portrait',
+      'home_hero_portrait',
+      'home-hero-landscape',
+    )).toThrow(/variant role and usage are incompatible/)
+  })
+
+  it('enforces direct-original and FFmpeg preprocess lineage', () => {
+    insertAsset('small-source', 'studio_photo')
+    insertAsset('large-source', 'studio_photo', {
+      byteSize: 25_000_000,
+    })
+    insertAsset('other-source', 'studio_photo', {
+      sha256: SHA_B,
+    })
+
+    expect(() => insertVariant(
+      'small-direct',
+      'small-source',
+      'studio_photo',
+      'detail',
+    )).not.toThrow()
+    expect(() => insertVariant(
+      'large-direct',
+      'large-source',
+      'studio_photo',
+      'detail',
+    )).toThrow(/variant processing source is invalid/)
+
+    insertVariant(
+      'large-preprocess',
+      'large-source',
+      'studio_photo',
+      'preprocess',
+      {
+        byteSize: 4_000_000,
+        outputSha256: SHA_B,
+        storageScope: 'PRIVATE',
+      },
+    )
+    expect(() => insertVariant(
+      'large-public',
+      'large-source',
+      'studio_photo',
+      'detail',
+      {
+        inputSha256: SHA_B,
+        sourceVariantId: 'large-preprocess',
+      },
+    )).not.toThrow()
+
+    expect(() => insertVariant(
+      'cross-asset',
+      'other-source',
+      'studio_photo',
+      'detail',
+      {
+        inputSha256: SHA_B,
+        sourceVariantId: 'large-preprocess',
+      },
+    )).toThrow(/variant processing source is invalid/)
+
+    insertVariant(
+      'pending-preprocess',
+      'small-source',
+      'studio_photo',
+      'preprocess',
+      {
+        byteSize: null,
+        outputSha256: null,
+        status: 'PENDING',
+        storageScope: 'PRIVATE',
+      },
+    )
+    expect(() => insertVariant(
+      'pending-downstream',
+      'small-source',
+      'studio_photo',
+      'detail',
+      {
+        inputSha256: SHA_C,
+        sourceVariantId: 'pending-preprocess',
+      },
+    )).toThrow(/variant processing source is invalid/)
+    expect(() => insertVariant(
+      'digest-mismatch',
+      'large-source',
+      'studio_photo',
+      'detail',
+      {
+        inputSha256: SHA_C,
+        sourceVariantId: 'large-preprocess',
+      },
+    )).toThrow(/variant processing source is invalid/)
+    expect(() => insertVariant(
+      'chained-preprocess',
+      'large-source',
+      'studio_photo',
+      'preprocess',
+      {
+        inputSha256: SHA_B,
+        sourceVariantId: 'large-preprocess',
+        storageScope: 'PRIVATE',
+      },
+    )).toThrow(/variant processing source is invalid/)
+
+    expect(() => sqlite.prepare(`
+      UPDATE asset_variants
+      SET source_variant_id = NULL
+      WHERE id = 'large-public'
+    `).run()).toThrow(/asset variant identity is immutable/)
+    expect(() => sqlite.prepare(`
+      UPDATE asset_variants
+      SET sha256 = ?
+      WHERE id = 'large-preprocess'
+    `).run(SHA_C)).toThrow(/referenced processing source is immutable/)
+  })
+
   it('locks complete variant identity and separates private/public output', () => {
     insertAsset('variant-source', 'studio_photo')
     const insert = sqlite.prepare(`
@@ -345,6 +612,61 @@ describe('P0 schema boundary', () => {
       UPDATE works SET publication_status = 'unpublished'
       WHERE id = 'published-link'
     `).run()).toThrow(/published work is linked/)
+  })
+
+  it('requires both directions and every WebP/fallback hero width', () => {
+    insertHeroPair(0, null, false)
+
+    expect(() => validateHeroSlidesForPublication(sqlite))
+      .toThrow(/complete public recipe/)
+    insertHeroRecipe('landscape-0', 'home_hero_landscape')
+    expect(() => validateHeroSlidesForPublication(sqlite))
+      .toThrow(/complete public recipe/)
+    insertHeroRecipe(
+      'portrait-0',
+      'home_hero_portrait',
+      ['webp'],
+    )
+    expect(() => validateHeroSlidesForPublication(sqlite))
+      .toThrow(/complete public recipe/)
+    insertHeroRecipe(
+      'portrait-0',
+      'home_hero_portrait',
+      ['jpeg'],
+    )
+    expect(validateHeroSlidesForPublication(sqlite)).toBe(1)
+  })
+
+  it('rejects hero variants with wrong usage or watermark identity', () => {
+    insertHeroPair(0, null, false)
+    sqlite.pragma('ignore_check_constraints = ON')
+    try {
+      insertHeroRecipe(
+        'landscape-0',
+        'home_hero_landscape',
+        ['webp', 'jpeg'],
+        {
+          storageScope: 'PUBLIC',
+          usage: 'preprocess',
+        },
+      )
+      insertHeroRecipe(
+        'portrait-0',
+        'home_hero_portrait',
+        ['webp', 'jpeg'],
+        {
+          logoDigest: 'none',
+          watermarkAnchor: 'none',
+          watermarkProfile: 'none',
+        },
+      )
+    }
+    finally {
+      sqlite.pragma('ignore_check_constraints = OFF')
+    }
+
+    expect(() => validateHeroSlidesForPublication(sqlite))
+      .toThrow(/complete public recipe/)
   })
 
   it('rejects incomplete hero pairs and ACL publication states', () => {

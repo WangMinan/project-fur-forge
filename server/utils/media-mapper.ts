@@ -10,6 +10,9 @@ import type {
   PublicHeroSlideDto,
   PublicVariantDto,
 } from '../../shared/types/contracts'
+import {
+  completeHeroVariants,
+} from './hero-publication'
 
 export interface AssetRecord {
   id: string
@@ -26,6 +29,7 @@ export interface AssetRecord {
 }
 
 export interface VariantRecord {
+  byteSize: number | null
   id: string
   storageScope: 'PRIVATE' | 'PUBLIC'
   status: AssetStatus
@@ -36,6 +40,13 @@ export interface VariantRecord {
   /** Service-only fields. */
   inputSha256: string
   internalErrorCode: string | null
+  logoDigest: string
+  mediaRole: MediaRole
+  recipeVersion: string
+  sha256: string | null
+  usage: string
+  watermarkAnchor: string
+  watermarkProfile: string
 }
 
 export interface HeroSlideRecord {
@@ -101,16 +112,25 @@ export function toPublicHeroSlideDto(
     return null
   }
 
-  const landscape = record.landscapeVariants
-    .map(variant => toPublicVariantDto(variant, mediaBaseUrl))
-    .filter(variant => variant !== null)
-  const portrait = record.portraitVariants
-    .map(variant => toPublicVariantDto(variant, mediaBaseUrl))
-    .filter(variant => variant !== null)
-
-  if (landscape.length === 0 || portrait.length === 0) {
-    return null
+  if (
+    record.linkedWork
+    && record.linkedWork.publicationStatus !== 'published'
+  ) {
+    throw new Error('Enabled hero slide links to an unpublished work.')
   }
+
+  const landscape = completeHeroVariants(
+    'home_hero_landscape',
+    record.landscapeVariants,
+  )
+    .map(variant => toPublicVariantDto(variant, mediaBaseUrl))
+    .filter(variant => variant !== null)
+  const portrait = completeHeroVariants(
+    'home_hero_portrait',
+    record.portraitVariants,
+  )
+    .map(variant => toPublicVariantDto(variant, mediaBaseUrl))
+    .filter(variant => variant !== null)
 
   return publicHeroSlideDtoSchema.parse({
     id: record.id,
@@ -119,8 +139,6 @@ export function toPublicHeroSlideDto(
     sortOrder: record.sortOrder,
     landscape,
     portrait,
-    linkedWorkSlug: record.linkedWork?.publicationStatus === 'published'
-      ? record.linkedWork.slug
-      : null,
+    linkedWorkSlug: record.linkedWork?.slug ?? null,
   })
 }

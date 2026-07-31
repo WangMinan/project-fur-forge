@@ -167,6 +167,50 @@ describe('runtime configuration', () => {
         OSS_ACCESS_KEY_SECRET: 'test-access-key-secret',
       },
     })).toThrowError(/sessionSecret/)
+
+    const productionRequired = {
+      ...productionBase,
+      OSS_REGION: 'oss-cn-hangzhou',
+      OSS_PRIVATE_BUCKET: 'test-private-bucket',
+      OSS_PUBLIC_BUCKET: 'test-public-bucket',
+      OSS_ENDPOINT: 'https://oss-cn-hangzhou.aliyuncs.com',
+      OSS_ACCESS_KEY_ID: 'test-access-key-id',
+      OSS_ACCESS_KEY_SECRET: 'test-access-key-secret',
+      SESSION_SECRET: 'production-session-secret-at-least-32-characters',
+    }
+
+    const productionWithoutSmtp = loadRuntimeConfig({
+      cwd: productionCwd,
+      env: productionRequired,
+    })
+    expect(productionWithoutSmtp).toMatchObject({
+      appEnv: 'production',
+    })
+    expect(productionWithoutSmtp.smtpHost).toBeUndefined()
+    expect(productionWithoutSmtp.smtpPassword).toBeUndefined()
+    expect(() => loadRuntimeConfig({
+      cwd: productionCwd,
+      env: {
+        ...productionRequired,
+        SMTP_HOST: 'smtp.example.test',
+      },
+    })).toThrowError(/smtpHost/)
+    expect(loadRuntimeConfig({
+      cwd: productionCwd,
+      env: {
+        ...productionRequired,
+        SMTP_HOST: 'smtp.example.test',
+        SMTP_PORT: '465',
+        SMTP_SECURE: 'true',
+        SMTP_USER: 'mailer@example.test',
+        SMTP_PASSWORD: 'test-smtp-password',
+      },
+    })).toMatchObject({
+      smtpHost: 'smtp.example.test',
+      smtpPort: 465,
+      smtpSecure: true,
+      smtpUser: 'mailer@example.test',
+    })
   })
 
   it('requires distinct private and public buckets and rejects OSS_BUCKET', () => {

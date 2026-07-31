@@ -3,7 +3,7 @@ import {
   resetAdminPassword,
 } from './auth'
 import {
-  migrateDatabase,
+  assertDatabaseMigrated,
   openDatabase,
   resolveDatabaseFile,
 } from './database'
@@ -11,12 +11,12 @@ import type { RuntimeConfig } from './runtime-config'
 
 export const RESET_CONFIRMATION = 'RESET_SINGLE_ADMIN_PASSWORD'
 
-async function withMigratedDatabase<T>(
+async function withReadyDatabase<T>(
   config: RuntimeConfig,
   action: (sqlite: ReturnType<typeof openDatabase>['sqlite']) => Promise<T>,
 ) {
   const databaseFile = resolveDatabaseFile(config)
-  await migrateDatabase(databaseFile)
+  assertDatabaseMigrated(databaseFile)
   const database = openDatabase(databaseFile)
 
   try {
@@ -34,7 +34,7 @@ export function initializeAdminCommand(
     password: string
   },
 ) {
-  return withMigratedDatabase(config, sqlite =>
+  return withReadyDatabase(config, sqlite =>
     initializeAdmin(sqlite, input))
 }
 
@@ -52,7 +52,7 @@ export function resetAdminPasswordCommand(
     )
   }
 
-  return withMigratedDatabase(config, sqlite =>
+  return withReadyDatabase(config, sqlite =>
     resetAdminPassword(sqlite, {
       username: input.username,
       newPassword: input.password,
