@@ -1,41 +1,37 @@
 import { expect, test } from '@playwright/test'
-
-const adminBaseURL = 'http://localhost:3100'
+import { adminBaseURL, loginAsAdmin } from './helpers/auth'
 
 const BLUEBERRY_ID = 'b943ee7e-0e9a-4944-a36b-ed61b8b9a640'
 const LIZI_ID = '3cb1db83-c2c5-42a1-8e5e-a61cb97d2422'
 
-test.describe('T07 管理端登录页', () => {
+test.describe('管理端登录页', () => {
   test('/admin 重定向到登录页', async ({ page }) => {
     await page.goto(`${adminBaseURL}/admin`)
-    await expect(page).toHaveURL(/\/admin\/login$/)
+    await expect(page).toHaveURL(/\/admin\/login/)
   })
 
-  test('登录表单：字段、可达性与提交后的诚实提示', async ({ page }) => {
+  test('登录表单：字段、可达性与真实接口提交', async ({ page }) => {
     await page.goto(`${adminBaseURL}/admin/login`)
     await expect(page.getByRole('heading', { level: 1, name: '管理端登录' })).toBeVisible()
 
-    await page.getByLabel('用户名或邮箱').fill('tester')
-    await page.getByLabel('密码').fill('secret')
+    await page.getByLabel('用户名').fill('tester')
+    await page.getByLabel('密码', { exact: true }).fill('secret')
     await page.getByRole('button', { name: '登录' }).click()
 
-    await expect(page.getByRole('alert')).toContainText('认证接口尚未接入（T13）')
+    await expect(page.getByRole('alert')).toHaveText('用户名或密码不正确。')
   })
 
-  test('登录错误样张：?state=error 与 ?state=locked', async ({ page }) => {
-    await page.goto(`${adminBaseURL}/admin/login?state=error`)
-    await expect(page.getByRole('alert')).toContainText('用户名或密码不正确')
-
-    await page.goto(`${adminBaseURL}/admin/login?state=locked`)
-    await expect(page.getByRole('alert')).toContainText('登录已临时锁定')
+  test('改密成功提示：?state=password-changed', async ({ page }) => {
+    await page.goto(`${adminBaseURL}/admin/login?state=password-changed`)
+    await expect(page.getByRole('status')).toContainText('密码已修改，请使用新密码重新登录。')
   })
 
   test('键盘 Tab 顺序：用户名 → 密码 → 登录按钮', async ({ page }) => {
     await page.goto(`${adminBaseURL}/admin/login`)
-    await page.getByLabel('用户名或邮箱').focus()
-    await expect(page.getByLabel('用户名或邮箱')).toBeFocused()
+    await page.getByLabel('用户名').focus()
+    await expect(page.getByLabel('用户名')).toBeFocused()
     await page.keyboard.press('Tab')
-    await expect(page.getByLabel('密码')).toBeFocused()
+    await expect(page.getByLabel('密码', { exact: true })).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(page.getByRole('button', { name: '登录' })).toBeFocused()
   })
@@ -49,7 +45,11 @@ test.describe('T07 管理端登录页', () => {
   })
 })
 
-test.describe('T07 后台作品列表页', () => {
+test.describe('后台作品列表页', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAsAdmin(page)
+  })
+
   test('展示 6 件作品、状态徽章与编辑入口，无 P1/P2 导航项', async ({ page }) => {
     await page.goto(`${adminBaseURL}/admin/works`)
 
@@ -57,7 +57,7 @@ test.describe('T07 后台作品列表页', () => {
     await expect(page.getByText(/共 6 件 · 夹具演示数据/)).toBeVisible()
 
     const nav = page.getByRole('navigation', { name: '管理导航' })
-    await expect(nav.getByRole('link')).toHaveCount(1)
+    await expect(nav.getByRole('link')).toHaveCount(2)
     await expect(nav.getByRole('link', { name: '作品' })).toHaveAttribute('aria-current', 'page')
 
     for (const name of ['蓝莓', '芝麻', '豆豆', '可可', '栗子', '奶盖']) {
@@ -91,7 +91,11 @@ test.describe('T07 后台作品列表页', () => {
   })
 })
 
-test.describe('T07 后台作品编辑页', () => {
+test.describe('后台作品编辑页', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAsAdmin(page)
+  })
+
   test('蓝莓（已发布领养）：表单、领养字段、媒体与发布检查齐备', async ({ page }) => {
     await page.goto(`${adminBaseURL}/admin/works/${BLUEBERRY_ID}`)
 

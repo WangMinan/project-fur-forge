@@ -75,6 +75,10 @@ T06/T07 已由 Kimi K3 完成，用户于 2026-07-30 通过 T08；实现和验�
 4. 在真实浏览器验证 Host-only/Secure/SameSite Cookie、公开域与管理域隔离、Session 恢复、退出/改密失效，以及成功和错误响应的 `no-store` / `noindex`；
 5. 保持已锁定的 Host/Origin/CSRF/资源版本语义，发现冲突先回到契约处理。
 
+### 4.1 GATE-06 已由 Kimi 完成（待用户验收）
+
+2026-07-31，Kimi K3 从 `main@0c67ab8` 创建 `feature/t13-auth-ui-kimi`，完成上述五项交接：内存态认证 composable、真实登录/退出/改密界面、无闪现路由保护、22 项真实浏览器认证用例与三视口截图；既有 T07–T09 管理端 E2E 已适配真实认证。lint、typecheck、86 项单测、34 项集成测试、100 项 E2E、构建与生产验证全部通过；未改动数据库、服务端认证、Cookie、Origin/CSRF、资源版本或 API 错误语义，无接口冲突。完整证据见 `notes/T13-AUTH-UI-2026-07-31.md`。`TASKS.md` 的 `GATE-06` 复选框保持未勾选，待用户验收；T14 未启动。
+
 ## 5. 后续默认路由
 
 以下安排只说明未来任务达到依赖条件后的默认主责，不构成提前实施授权。

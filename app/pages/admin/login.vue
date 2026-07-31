@@ -9,30 +9,55 @@ useSeoMeta({
 })
 
 const route = useRoute()
+const { login } = useAdminAuth()
 
 const username = ref('')
 const password = ref('')
 const submitting = ref(false)
-const submitNotice = ref<string | null>(null)
+const loginError = ref<string | null>(null)
 
-const stateError = computed(() => {
-  if (route.query.state === 'error') {
-    return '用户名或密码不正确。'
-  }
-  if (route.query.state === 'locked') {
-    return '登录已临时锁定，请 15 分钟后再试。'
-  }
-  return null
-})
+const passwordChangedNotice = computed(() =>
+  route.query.state === 'password-changed'
+    ? '密码已修改，请使用新密码重新登录。'
+    : null,
+)
 
-function onSubmit() {
-  submitNotice.value = null
+async function onSubmit() {
+  if (submitting.value) {
+    return
+  }
+
+  loginError.value = null
   submitting.value = true
-  // 只呈现真实 UI 的提交/加载序列；认证接口在 T13 接入，这里不校验凭据、不创建会话。
-  window.setTimeout(() => {
+
+  try {
+    const result = await login({
+      username: username.value,
+      password: password.value,
+    })
+
+    password.value = ''
+
+    if (result.ok) {
+      await navigateTo(safeAdminRedirectTarget(route.query.redirect), {
+        replace: true,
+      })
+      return
+    }
+
+    if (result.kind === 'credentials') {
+      loginError.value = '用户名或密码不正确。'
+    }
+    else if (result.kind === 'forbidden') {
+      loginError.value = '请求被安全校验拒绝，请刷新页面后重试。'
+    }
+    else {
+      loginError.value = '登录服务暂时不可用，请稍后重试。'
+    }
+  }
+  finally {
     submitting.value = false
-    submitNotice.value = '认证接口尚未接入（T13）：当前为视觉样张，不校验真实凭据，也不会创建会话。'
-  }, 600)
+  }
 }
 </script>
 
@@ -46,12 +71,21 @@ function onSubmit() {
           <h1 class="login__title">管理端登录</h1>
         </header>
 
-        <p v-if="stateError" class="login__alert" role="alert">{{ stateError }}</p>
-        <p v-if="submitNotice" class="login__alert" role="alert">{{ submitNotice }}</p>
+        <p
+          v-if="passwordChangedNotice"
+          class="login__notice"
+          role="status"
+        >{{ passwordChangedNotice }}</p>
+        <p
+          v-if="loginError"
+          id="login-error"
+          class="login__alert"
+          role="alert"
+        >{{ loginError }}</p>
 
         <form class="login__form" :aria-busy="submitting" @submit.prevent="onSubmit">
           <div class="login__field">
-            <label class="login__label" for="login-username">用户名或邮箱</label>
+            <label class="login__label" for="login-username">用户名</label>
             <input
               id="login-username"
               v-model="username"
@@ -60,6 +94,8 @@ function onSubmit() {
               autocomplete="username"
               required
               :disabled="submitting"
+              :aria-invalid="loginError ? 'true' : undefined"
+              :aria-describedby="loginError ? 'login-error' : undefined"
             >
           </div>
           <div class="login__field">
@@ -72,16 +108,14 @@ function onSubmit() {
               autocomplete="current-password"
               required
               :disabled="submitting"
+              :aria-invalid="loginError ? 'true' : undefined"
+              :aria-describedby="loginError ? 'login-error' : undefined"
             >
           </div>
           <button class="login__submit" type="submit" :disabled="submitting">
             {{ submitting ? '登录中…' : '登录' }}
           </button>
         </form>
-
-        <footer class="login__footer">
-          <p>认证能力尚未接入（T13）：当前不校验真实凭据、不产生会话。找回密码等 P2 能力将在实现后加入。</p>
-        </footer>
       </div>
     </main>
   </div>
@@ -136,6 +170,16 @@ function onSubmit() {
   line-height: var(--admin-line-tight);
 }
 
+.login__notice {
+  margin: 0 0 var(--admin-space-4);
+  padding: var(--admin-space-3) var(--admin-space-4);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-status-info-soft);
+  color: var(--admin-status-info);
+  font-size: var(--admin-font-sm);
+  line-height: var(--admin-line-normal);
+}
+
 .login__alert {
   margin: 0 0 var(--admin-space-4);
   padding: var(--admin-space-3) var(--admin-space-4);
@@ -175,6 +219,10 @@ function onSubmit() {
   box-shadow: 0 0 0 3px var(--admin-focus-ring);
 }
 
+.login__input[aria-invalid='true'] {
+  border-color: var(--admin-status-error);
+}
+
 .login__submit {
   min-height: var(--admin-control-height);
   border: none;
@@ -194,16 +242,5 @@ function onSubmit() {
 .login__submit:disabled {
   opacity: 0.65;
   cursor: default;
-}
-
-.login__footer {
-  margin-top: var(--admin-space-6);
-  font-size: var(--admin-font-xs);
-  color: var(--admin-text-tertiary);
-  line-height: var(--admin-line-normal);
-}
-
-.login__footer p {
-  margin: 0;
 }
 </style>

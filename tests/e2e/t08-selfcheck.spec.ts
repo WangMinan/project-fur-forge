@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { loginAsAdmin } from './helpers/auth'
 
 /**
  * T08 评审自查（自动化部分）：
@@ -30,6 +31,9 @@ for (const viewport of VIEWPORTS) {
   for (const target of PAGES) {
     test(`无横向溢出：${target.name} @ ${viewport.name}`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height })
+      if (target.host === 'admin') {
+        await loginAsAdmin(page)
+      }
       await page.goto(target.url)
       if (target.host === 'admin') {
         await page.waitForSelector('.admin-shell, [data-testid="admin-login"]')
@@ -108,6 +112,7 @@ test.describe('对比度抽查（AA 4.5:1）', () => {
   })
 
   test('管理端：正文/次要文字/徽章文字', async ({ page }) => {
+    await loginAsAdmin(page)
     await page.goto(`${adminBaseURL}/admin/works`)
     await page.waitForSelector('.works-page__header')
 
