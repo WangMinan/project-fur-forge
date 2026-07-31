@@ -54,6 +54,9 @@ export interface HeroSlideRecord {
 
 function publicMediaUrl(mediaBaseUrl: string, objectKey: string) {
   const base = new URL(mediaBaseUrl)
+  if (objectKey.split('/').some(part => part === '.' || part === '..')) {
+    throw new Error('Public object key must not contain dot segments.')
+  }
   base.pathname = `${base.pathname.replace(/\/$/, '')}/${objectKey
     .split('/')
     .map(encodeURIComponent)

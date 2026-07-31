@@ -5,7 +5,7 @@
 
 ## 当前目标
 
-先用 T04–T08 锁定生产视觉，再以 T09–T21 跑通“一件作品从后台创建、角色化私有上传、OSS 水印处理、发布到公开 SSR，并配置一组首页横竖双源轮播”的完整链路。随后完成 P0、P1；P2 不阻塞核心上线。
+T01–T13 与 EXT-02 已完成；下一项从 T14 开始，继续以 T14–T21 跑通“一件作品从后台创建、角色化私有上传、OSS 水印处理、发布到公开 SSR，并配置一组首页横竖双源轮播”的完整链路。随后完成其余 P0、P1；P2 不阻塞核心上线。
 
 ## 门禁
 
@@ -96,7 +96,7 @@ flowchart LR
   - Kimi 界面修补已由用户验收，工程侧完整门禁复核通过：见 `notes/T09-UI-2026-07-30.md` 与 `notes/T09-CLOSURE-2026-07-31.md`。
 - [x] **T10 · 双 Bucket 早期可行性预检与最小权限说明**：在数据库/认证大规模实现前，向用户说明 AK/SK 最小权限与本地写入位置；验证 region、endpoint、Bucket 名、BPA、CORS、匿名读取边界、OSS 图片水印、`sys/saveas` 目标和测试前缀，不修改账号级安全状态；协助完成 EXT-02 证据。_依赖：T09。2026-07-31 已完成可重复预检、最小权限说明、内嵌 FFmpeg 大原图预处理和完整 EXT-02 实测，证据见 `notes/T10-OSS-PREFLIGHT-2026-07-31.md`。_
 - [x] **T11 · SQLite 运行底座与迁移框架**：Drizzle、`better-sqlite3`、WAL/外键/busy timeout/FULL、迁移命令、临时测试库和一致性备份工具。_依赖：T09。_ _2026-07-31：空库/重复迁移、PRAGMA、临时库隔离、SQLite Backup API 和启动路径校验通过，见 `notes/T11-SQLITE-2026-07-31.md`。_
-- [x] **T12 · P0 最小 Schema、媒体角色与公开投影**：`users`、`works`、`work_feature_tags`、`assets`、`asset_variants`、`work_assets`、`site_hero_slides`、`publication_operations`、最小内容/营业状态；定义 `design_sheet`、`studio_photo`、`home_hero_landscape`、`home_hero_portrait`，横竖轮播 1–5 项配对约束，联系人私有，价格固定 CNY；公开投影硬排除私有字段。_依赖：T11。_ _2026-07-31：首个领域迁移、SQLite 约束/触发器、首页发布校验和公开/管理泄漏守卫通过，见 `notes/T12-P0-SCHEMA-2026-07-31.md`。_
+- [x] **T12 · P0 最小 Schema、媒体角色与公开投影**：`users`、`works`、`work_feature_tags`、`assets`、`asset_variants`、`work_assets`、`site_hero_slides`、`publication_operations`、最小内容/营业状态；定义 `design_sheet`、`studio_photo`、`home_hero_landscape`、`home_hero_portrait`，横竖轮播 1–5 项配对约束，联系人私有，价格固定 CNY；公开投影硬排除私有字段。_依赖：T11。_ _2026-07-31：两项领域迁移、SQLite 约束/触发器、首页发布校验和公开/管理泄漏守卫通过，见 `notes/T12-P0-SCHEMA-2026-07-31.md`。_
 - [x] **T13 · 唯一管理员最小认证**：幂等初始化、登录、退出、改密、受保护命令重置、SessionVersion、锁定、Host/Origin/CSRF 和集成测试；不做邮件找回。_依赖：T12。2026-07-31：唯一管理员服务端认证、密封 Host-only Cookie、8 小时无操作过期、5 次失败锁定、旧 Session 失效和完整安全回归通过，前端按用户要求保留给 Kimi，见 `notes/T13-AUTH-2026-07-31.md`。_
 - [ ] **T14 · 角色化私有原图条件直传**：上传会话必须声明作品/站点归属与媒体角色；不可预测 Key、5 分钟 V4 PUT、固定 MD5/SHA-256/Content-Type/禁止覆盖，浏览器直传 `project-furry-forge-private`；同一关系不得静默变更角色。_依赖：T10、T13。_
 - [ ] **T15 · 上传完成校验与用途预览数据**：HEAD/图片信息验证大小、格式、摘要与像素；首页横版校验宽大于高、竖版校验高大于宽；保存 EXIF 修正后的焦点、3:4/16:9/9:16/原比例或 contain 参数及水印安全角；失败可读并精确清理。_依赖：T14。_

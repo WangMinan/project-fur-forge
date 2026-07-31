@@ -21,9 +21,9 @@
 | 编辑器·蓝莓（可发布） | `admin-editor-blueberry-390x844-full.png` | `admin-editor-blueberry-768x1024-full.png` | `admin-editor-blueberry-1440x900-full.png` |
 | 编辑器·栗子（阻塞） | — | — | `admin-editor-lizi-blocked-1440x900-full.png` |
 
-首页：`notes/t04-t05/screenshots/`。**2026-07-30 起横向轨道为最终方案**（`home-track-*-hero/full.png` 为当前首页）；`home-grid-*.png` 只保留为 T05/T08 方案比较的历史截图，编辑型网格组件与实验开关已删除。首屏 slogan 已更新为「不只做小狗毛」，截图已同步重采。
+首页：`notes/t04-t05/screenshots/`。**2026-07-30 起横向轨道为最终方案**（`home-track-*-hero/full.png` 为当前首页）；编辑型网格组件、实验开关和落选截图已删除，落选证据仍可从 Git 历史恢复。首屏 slogan 已更新为「不只做小狗毛」。
 
-本地复看：`pnpm dev --host 0.0.0.0 --port 3000`（公开 `http://localhost:3000`，后台 `http://127.0.0.1:3000`）；重新采集截图：`pnpm exec playwright test tests/e2e/visual-evidence-t06-t07.spec.ts`。
+本地复看：`pnpm dev --host 0.0.0.0 --port 3000`（公开 `http://localhost:3000`，后台 `http://127.0.0.1:3000`）。视觉门禁已通过，纯截图采集脚本不再属于标准 E2E。
 
 ## 2. 自动化自查结果（`tests/e2e/t08-selfcheck.spec.ts`，23 项全绿）
 
@@ -74,7 +74,7 @@
 | F2 | PC 端详情主图过大，纵向图片一屏看不全、需上下滑动 | ✅ `WorkDetailGallery.vue` ≥1024px 主图限高 `clamp(20rem, calc(100vh - 15rem), 46rem)`，宽度按原比例自适应、水平居中、不裁切；移动/平板不变。实证 `work-detail-naigai-1440x900-viewport.png`（实测主图 440×660），回归断言已并入 `public-works.spec.ts` |
 | F3 | slogan 由「为每一个角色，做一件认真的兽装。」改为「不只做小狗毛」 | ✅ `heroFixture.tagline` 已更新；已固化进 IA 命名约定表（2026-07-30 景宸确认） |
 
-截图已重新采集：首页（`notes/t04-t05/screenshots/home-track-*`、`home-grid-*`）与详情（`work-detail-*-1440x900-full.png`）反映上述改动。
+截图已重新采集：首页当前保留 `notes/t04-t05/screenshots/home-track-*`，详情保留 `work-detail-*-1440x900-full.png`；落选网格只留在 Git 历史。
 
 ## 7. 2026-07-30 最终验收与门禁结论
 

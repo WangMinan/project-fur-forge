@@ -22,7 +22,7 @@
 | `scripts/guard-production-content.mjs`、`package.json` | production 构建产物扫描占位文案和 `/fixtures/samples/`；development/test 保留诚实提示 |
 | `tests/unit/`、`tests/integration/`、`tests/e2e/`、`tests/fixtures/runtime/` | 增加契约、配置漂移、泄漏、错误内容类型/标题/正文/状态码/API 结构和生产守卫回归 |
 | `requirements/SPEC.md`、`planning/PLAN.md`、`models/README.md` | 登记 OQ-119，并明确 T12 前不得据 DTO 直接建列 |
-| `implementation/notes/T09-UI-HANDOFF.md` | 锁定 Kimi 后续界面修补范围 |
+| `implementation/notes/T09-UI-2026-07-30.md` | 记录 Kimi 后续完成的界面修补范围与结果 |
 
 本机 `.env` 只把已知非秘密 Bucket 配置迁移成私有/公开两个名称；没有读取、打印或提交 AccessKey、秘密或真实凭据。
 
@@ -62,7 +62,7 @@ E2E 输出含既有未实施 `/commission`、`/adoptions`、`/returns`、`/about
 ## 5. 最终收口
 
 - OQ-119 已在工程核心完成后由用户确认；结论见下方补充记录。
-- Kimi 已完成 `T09-UI-HANDOFF.md` 的 UI-01 至 UI-07，并于 2026-07-31 通过用户验收。
+- Kimi 已完成 UI-01 至 UI-07，并于 2026-07-31 通过用户验收；实施范围见 `T09-UI-2026-07-30.md`。
 - 工程侧完整门禁复核通过，结果见 `T09-CLOSURE-2026-07-31.md`。
 - T09 已勾选完成；下一项 T10 本轮未启动。
 

@@ -234,6 +234,10 @@ describe('P0 schema boundary', () => {
       INSERT INTO work_assets (work_id, asset_id, role, position)
       VALUES ('adoption-work', 'design', 'design_sheet', 0)
     `).run()
+    expect(() => sqlite.prepare(`
+      UPDATE works SET purpose = 'commission'
+      WHERE id = 'adoption-work'
+    `).run()).toThrow(/design sheet requires an adoption work/)
     insertAsset('design-second', 'design_sheet')
     expect(() => sqlite.prepare(`
       INSERT INTO work_assets (work_id, asset_id, role, position)

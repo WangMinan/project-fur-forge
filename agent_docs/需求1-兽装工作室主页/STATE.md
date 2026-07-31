@@ -124,7 +124,7 @@ T03 遗留工程问题已在 `main` 完成以下修正：
 - 2026-07-31：完成 T12 P0 Schema 与投影。`0000_sparkling_absorbing_man.sql` 建立 11 张 P0 表；ownerDisplay/CNY/短属性、媒体角色/数量、原图与 variant identity、首页 1–5 READY 横竖配对、发布步骤、公开/管理泄漏守卫均通过。完整门禁为 81 项单测、18 项集成测试、构建和生产验证；证据见 `implementation/notes/T12-P0-SCHEMA-2026-07-31.md`。
 - 2026-07-31：完成 T11 SQLite 运行底座。Drizzle/`better-sqlite3`、WAL、外键、5 秒 busy timeout、FULL synchronous、开发/生产/测试路径边界、空库与重复迁移、独立临时库和 SQLite Backup API 一致性备份均已验证；证据见 `implementation/notes/T11-SQLITE-2026-07-31.md`。
 - 2026-07-31：完成 T10 双 Bucket 真实预检。两个 Bucket 同账号同杭州地域，Region/Endpoint/名称、私有 ACL/BPA/匿名拒绝、公开 ACL/匿名读取、CORS OPTIONS、V4 条件 PUT、MD5/SHA-256/禁止覆盖均通过；内嵌 FFmpeg 不经宿主 PATH，把 29,360,568 字节原图生成 4,791,024 字节、4096×444 私有处理源，随后 OSS 水印、WebP、跨 Bucket `sys/saveas`、公开 HEAD/图片信息/匿名 GET、私有原件不变和四对象精确清理全部通过。证据见 `implementation/notes/T10-OSS-PREFLIGHT-2026-07-31.md`；T10/EXT-02 已勾选。
-- 2026-07-31：交叉检查 `main` 的首页、`ResponsiveAsset`、管理端作品编辑、Logo/Head 配置、媒体夹具与 T09 后文档，确认单 Hero/单 `src`、无首页轮播管理、媒体角色未进入界面、无显式 favicon、水印只在部分文档中模糊出现。完成 foundation、SPEC、PLAN、公开/管理设计、模型、TASKS、执行路由、STATE 与产物索引的同步校准；仅修改 `agent_docs`，T10 未启动。记录见 `implementation/notes/DOCS-HOME-MEDIA-REALIGNMENT-2026-07-31.md`。
+- 2026-07-31：交叉检查 `main` 的首页、`ResponsiveAsset`、管理端作品编辑、Logo/Head 配置、媒体夹具与 T09 后文档，确认单 Hero/单 `src`、无首页轮播管理、媒体角色未进入界面、无显式 favicon、水印只在部分文档中模糊出现；校准结论已直接吸收到 foundation、SPEC、PLAN、设计、模型、TASKS、执行路由、STATE 与产物索引。
 - 2026-07-31：用户验收 Kimi 的 T09 界面修补；工程侧复跑冻结安装、lint、typecheck、70 项单测、4 项集成测试、112 项 E2E、Nuxt 构建与生产运行验证，全部通过；`APP_ENV=production` 继续按预期阻断占位文案和 `/fixtures/samples/`。T09 已勾选完成。
 - 2026-07-30：用户回答 OQ-119，确认 `ownerDisplay` 的非空显示规则及“不增加 ownerType”；foundation、SPEC、PLAN、设计、模型、TASKS、STATE 与 T09 界面交接已同步。
 - 2026-07-30：用户完成 T08 最终验收，确认 T06/T07 视觉基线通过，首页精选采用横向轨道，`must-fix = 0`；落选网格与实验开关已删除。

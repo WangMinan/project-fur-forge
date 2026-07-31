@@ -226,6 +226,10 @@ describe('runtime configuration', () => {
   })
 
   it('keeps the tracked template aligned and hard limits out of config', () => {
+    const nuxtConfig = readFileSync(
+      resolve(projectRoot, 'nuxt.config.ts'),
+      'utf8',
+    )
     const envTemplateNames = readFileSync(
       resolve(projectRoot, '.env.example'),
       'utf8',
@@ -255,6 +259,7 @@ describe('runtime configuration', () => {
     expect(template.values).toHaveProperty('ossPublicBucket', '')
     expect(template.values).not.toHaveProperty('ossBucket')
     expect(template.values).not.toHaveProperty('originalImageMaxBytes')
+    expect(nuxtConfig).not.toContain('process.env.SESSION_SECRET')
     expect(ORIGINAL_IMAGE_MAX_BYTES).toBe(30_000_000)
   })
 })

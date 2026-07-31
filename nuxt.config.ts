@@ -33,9 +33,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     session: {
       name: '__Host-fur-forge-session',
-      password: process.env.NUXT_SESSION_PASSWORD
-        || process.env.SESSION_SECRET
-        || 'development-only-session-secret-32-chars',
+      password: 'development-only-session-secret-32-chars',
       maxAge: 8 * 60 * 60,
       cookie: {
         httpOnly: true,

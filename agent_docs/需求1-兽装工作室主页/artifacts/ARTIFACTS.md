@@ -14,18 +14,15 @@
 | 管理设计 | `.design/admin-console/` | 2026-07-31 已校准 | `/admin/site/home`、横竖配对、角色化媒体区、水印预览和 P0/P1/P2 导航 |
 | 模型 | `models/README.md` | 2026-07-31 已实施校准 | T12 已实现 `site_hero_slides`、媒体角色、无水印原图和版本化水印 identity |
 | 任务 | `implementation/TASKS.md` | 2026-07-31 已更新 | T01–T13 与 EXT-02 已完成；本批次结束，T14 未启动 |
-| 首页媒体校准记录 | `implementation/notes/DOCS-HOME-MEDIA-REALIGNMENT-2026-07-31.md` | 已记录 | 对代码与文档做交叉确认，说明三类缺口、决策、修改范围和未实现边界 |
-| 第一轮校准记录 | `implementation/notes/DOCS-REALIGNMENT-2026-07-29.md` | 已记录 | 字段、双 Bucket、图片配方、阶段范围和任务顺序变更证据 |
 | T04–T05 实施记录 | `implementation/notes/T04-T05-2026-07-29.md` | 已验证 | Kimi 入选方案、两种首页精选对比、三视口截图与质量门禁；当时 Hero 仍为单图夹具 |
 | T06–T07 实施记录 | `implementation/notes/T06-T07-2026-07-29.md` | 已验证 | 作品列表/详情、管理端工作台、三视口证据与自动化自查；当时媒体仍为通用样张 |
 | T08 验收记录 | `implementation/notes/t06-t07/T08-REVIEW-PREP.md` | 2026-07-30 已通过 | 精选横向轨道定稿、T06/T07 基线通过、`must-fix = 0` |
 | T09 工程核心记录 | `implementation/notes/T09-ENGINEERING-CORE-2026-07-30.md` | 已验证并合入 `main` | 契约、双 Bucket 配置、错误分流、安全日志与生产守卫 |
-| T09 界面交接 | `implementation/notes/T09-UI-HANDOFF.md` | 已完成 | 管理壳、对比度、参数响应、dirty、金额、reduce 动效与任务阶段文案 |
 | T09 界面实施与收口 | `implementation/notes/T09-UI-2026-07-30.md`、`implementation/notes/T09-CLOSURE-2026-07-31.md` | 2026-07-31 已通过 | 用户验收、完整门禁复核和最终任务收口 |
 | T10 预检说明 | `implementation/OSS-PREFLIGHT.md` | 已实现 | 最小权限、秘密放置、确定性预检、控制台与水印边界 |
 | T10/EXT-02 证据 | `implementation/notes/T10-OSS-PREFLIGHT-2026-07-31.md` | 已通过 | 30 MB 原图、内嵌 FFmpeg 私有处理源、双 Bucket、水印与跨桶处理完整通过 |
 | T11 SQLite 证据 | `implementation/notes/T11-SQLITE-2026-07-31.md` | 已通过 | Drizzle、版本化迁移、PRAGMA、路径隔离和 SQLite Backup API |
-| T12 Schema 证据 | `implementation/notes/T12-P0-SCHEMA-2026-07-31.md` | 已通过 | 11 张 P0 表、媒体/首页约束、variant identity 和投影泄漏守卫 |
+| T12 Schema 证据 | `implementation/notes/T12-P0-SCHEMA-2026-07-31.md` | 已通过 | 11 张 P0 表、两项领域迁移、媒体/首页约束、variant identity 和投影泄漏守卫 |
 | T13 认证证据 | `implementation/notes/T13-AUTH-2026-07-31.md` | 已通过 | 唯一管理员、密封 Cookie Session、锁定、改密/重置和 Host/Origin/CSRF |
 | 状态 | `STATE.md` | 2026-07-31 已更新 | 当前决策、外部门禁与 T11–T13 批次收口 |
 
@@ -44,7 +41,7 @@
 | 领养设定例图 | `materials/picture-examples/领养/` | 横版设定图、色板与完整画布的产品证据；不代表已获正式上线授权 |
 | 技术方案输入 | `materials/fursuit-studio-solution-package/` | 历史输入；单 Bucket 内容已被当前 PLAN 覆盖 |
 | 快速原型 v5 | `planning/prototype-v1/` | 只保留页面职责、顺序和关键交互；视觉与旧业务字段不再权威 |
-| 实施记录 | `implementation/notes/` | 记录当时事实，不回写成当前架构；T04–T09 的单 Hero/通用媒体样张不能冒充新契约已实现 |
+| 实施记录 | `implementation/notes/` | 记录当时事实，不回写成当前架构；已吸收的临时校准稿、交接稿和重复截图只保留在 Git 历史 |
 | Git 历史 | commit `7b01cba966f0a9049a4af0de08f7cc4ce993760d` 及以前 | 保存旧 SPEC/OQ/PLAN 全文，供追溯而非实施 |
 
 ## 当前实施产物

@@ -26,10 +26,6 @@ export const DATABASE_MIGRATIONS_FOLDER = resolve(
   'server/database/migrations',
 )
 
-export class DatabaseConfigurationError extends Error {
-  override name = 'DatabaseConfigurationError'
-}
-
 function isInside(parent: string, child: string) {
   const path = relative(parent, child)
   return path !== ''
@@ -43,14 +39,14 @@ export function resolveDatabaseFile(
   temporaryRoot = tmpdir(),
 ) {
   if (config.databaseFile === ':memory:') {
-    throw new DatabaseConfigurationError(
+    throw new Error(
       'Application databases must use a durable file.',
     )
   }
 
   if (config.appEnv === 'production') {
     if (config.databaseFile.replaceAll('\\', '/') !== PRODUCTION_DATABASE_FILE) {
-      throw new DatabaseConfigurationError(
+      throw new Error(
         `Production DATABASE_FILE must be ${PRODUCTION_DATABASE_FILE}.`,
       )
     }
@@ -62,7 +58,7 @@ export function resolveDatabaseFile(
 
   if (config.appEnv === 'development') {
     if (databaseFile !== resolve(cwd, DEVELOPMENT_DATABASE_FILE)) {
-      throw new DatabaseConfigurationError(
+      throw new Error(
         `Development DATABASE_FILE must be ${DEVELOPMENT_DATABASE_FILE}.`,
       )
     }
@@ -77,7 +73,7 @@ export function resolveDatabaseFile(
     || extname(databaseFile).toLowerCase() !== '.db'
     || !isInside(resolvedTemporaryRoot, databaseFile)
   ) {
-    throw new DatabaseConfigurationError(
+    throw new Error(
       'Test DATABASE_FILE must be an absolute .db path inside the system temporary directory.',
     )
   }
@@ -108,7 +104,7 @@ function configureSqlite(sqlite: Database.Database) {
     || pragmas.busyTimeout !== DATABASE_BUSY_TIMEOUT_MS
     || pragmas.synchronous !== 2
   ) {
-    throw new DatabaseConfigurationError(
+    throw new Error(
       'SQLite PRAGMA verification failed.',
     )
   }
@@ -268,7 +264,7 @@ export function getDatabase() {
     applicationDatabase
     && applicationDatabase.databaseFile !== databaseFile
   ) {
-    throw new DatabaseConfigurationError(
+    throw new Error(
       'Database configuration changed after startup.',
     )
   }
