@@ -48,16 +48,18 @@ T06/T07 已由 Kimi K3 完成，用户于 2026-07-30 通过 T08；实现和验�
 
 工程核心与命令证据见 `notes/T09-ENGINEERING-CORE-2026-07-30.md`；界面实施见 `notes/T09-UI-2026-07-30.md`；最终复核见 `notes/T09-CLOSURE-2026-07-31.md`。T09 已完成。
 
-## 3. 2026-07-31 媒体契约校准后的当前入口
+## 3. 已收口批次：T10
 
-本轮只修改 `agent_docs`，补齐以下后续契约，不代表能力已实现：
+2026-07-31 已启动 T10，由 `ENGINEERING_PRIMARY` 完成以下实现与实测：
 
-- 首页 1–5 项横版/竖版双源轮播及 `/admin/site/home` 专用编辑器；
-- `design_sheet`、`studio_photo`、`return_photo` 与站点级 hero 资产角色；
-- OSS 烘焙品牌水印、私有原图无水印、favicon/Touch Icon；
-- T12–T25、T30、T33、T36、T51 的交付与门禁。
+- 可重复 `pnpm preflight:oss`、合成媒体和精确前缀清理；
+- 双 Bucket Region/Endpoint/账号/地域、ACL/BPA/CORS 与匿名边界；
+- V4 条件 PUT、MD5、SHA-256 元数据、禁止覆盖；
+- 内嵌固定版本 FFmpeg 的绝对路径执行、宿主 PATH 隔离和大原图私有预处理；
+- 独立合成原图与 Logo 的水印、缩放、WebP、跨 Bucket `sys/saveas`；
+- 应用身份、单次测试身份的最小权限和 AK/SK 本地放置说明。
 
-**下一项仍为 T10**，由 `ENGINEERING_PRIMARY` 主责。不得因为文档已定义轮播和水印而跳过 T10、EXT-02、数据库、认证或接口锁定。
+29,360,568 字节永久原图的 V4 PUT、HEAD 与图片信息通过；内嵌 FFmpeg 生成 4,791,024 字节、4096×444 私有处理源后，OSS 水印、缩放、WebP、跨桶保存、公开 GET、私有原件不变和精确清理全部通过。T10/EXT-02 已勾选，完整证据见 `notes/T10-OSS-PREFLIGHT-2026-07-31.md`。下一项为 T11，本轮未启动。
 
 ## 4. 后续默认路由
 

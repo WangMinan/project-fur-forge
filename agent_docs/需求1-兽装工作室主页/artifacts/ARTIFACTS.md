@@ -12,8 +12,8 @@
 | 设计路由 | `.design/README.md` | 2026-07-31 已校准 | 公开站/管理端分轨、双源轮播、媒体角色、蓝色比例和阶段可见性 |
 | 公开设计 | `.design/public-site/` | 2026-07-31 已校准 | 首页双源轮播、横版领养设定图、竖版作品图、返图墙、水印和站点图标 |
 | 管理设计 | `.design/admin-console/` | 2026-07-31 已校准 | `/admin/site/home`、横竖配对、角色化媒体区、水印预览和 P0/P1/P2 导航 |
-| 模型 | `models/README.md` | 2026-07-31 已校准 | `site_hero_slides`、媒体角色、无水印原图、版本化水印 identity |
-| 任务 | `implementation/TASKS.md` | 2026-07-31 已重排措辞，编号不变 | T01–T09 已完成；T10 为下一项；T12–T25/T30/T33/T36/T51 已补齐新契约 |
+| 模型 | `models/README.md` | 2026-07-31 已校准 | `site_hero_slides`、媒体角色、无水印原图、FFmpeg 私有处理源、版本化水印 identity |
+| 任务 | `implementation/TASKS.md` | 2026-07-31 已更新 | T01–T10 与 EXT-02 已完成；下一项为 T11 |
 | 首页媒体校准记录 | `implementation/notes/DOCS-HOME-MEDIA-REALIGNMENT-2026-07-31.md` | 已记录 | 对代码与文档做交叉确认，说明三类缺口、决策、修改范围和未实现边界 |
 | 第一轮校准记录 | `implementation/notes/DOCS-REALIGNMENT-2026-07-29.md` | 已记录 | 字段、双 Bucket、图片配方、阶段范围和任务顺序变更证据 |
 | T04–T05 实施记录 | `implementation/notes/T04-T05-2026-07-29.md` | 已验证 | Kimi 入选方案、两种首页精选对比、三视口截图与质量门禁；当时 Hero 仍为单图夹具 |
@@ -22,13 +22,15 @@
 | T09 工程核心记录 | `implementation/notes/T09-ENGINEERING-CORE-2026-07-30.md` | 已验证并合入 `main` | 契约、双 Bucket 配置、错误分流、安全日志与生产守卫 |
 | T09 界面交接 | `implementation/notes/T09-UI-HANDOFF.md` | 已完成 | 管理壳、对比度、参数响应、dirty、金额、reduce 动效与任务阶段文案 |
 | T09 界面实施与收口 | `implementation/notes/T09-UI-2026-07-30.md`、`implementation/notes/T09-CLOSURE-2026-07-31.md` | 2026-07-31 已通过 | 用户验收、完整门禁复核和最终任务收口 |
-| 状态 | `STATE.md` | 2026-07-31 已更新 | 当前决策、外部门禁和下一步；T10 仍未启动 |
+| T10 预检说明 | `implementation/OSS-PREFLIGHT.md` | 已实现 | 最小权限、秘密放置、确定性预检、控制台与水印边界 |
+| T10/EXT-02 证据 | `implementation/notes/T10-OSS-PREFLIGHT-2026-07-31.md` | 已通过 | 30 MB 原图、内嵌 FFmpeg 私有处理源、双 Bucket、水印与跨桶处理完整通过 |
+| 状态 | `STATE.md` | 2026-07-31 已更新 | 当前决策、外部门禁与 T10 收口 |
 
 ## 当前执行文档
 
 | 类型 | 路径 | 当前效力 |
 | --- | --- | --- |
-| 执行责任路由 | `implementation/EXECUTION_ROUTING.md` | 2026-07-31 当前生效；记录 T09 已收口、T10 当前入口及双源轮播/媒体角色的后续前后端交接，不属于产品契约 |
+| 执行责任路由 | `implementation/EXECUTION_ROUTING.md` | 2026-07-31 当前生效；记录 T10 已收口和后续默认分工，不属于产品契约 |
 
 ## 历史与证据
 
@@ -53,10 +55,11 @@
 - T07：管理端登录、作品列表、编辑工作台、通用媒体状态和发布检查生产视觉样张；
 - T08：用户完成视觉验收，精选横向轨道定稿，T06/T07 基线通过，`must-fix = 0`；
 - T09：工程核心与界面修补均已完成，OQ-119 已回答，用户验收和工程侧完整门禁复核通过。
+- T10：确定性 OSS 预检、内嵌 FFmpeg 私有预处理、最小权限与秘密说明均已实现，完整外部能力有实测证据。
 
 尚未实施：后台首页轮播、横竖双源切换、媒体角色分区、OSS 水印、favicon/Touch Icon。它们已进入后续任务契约，但不得写入当前完成产物。
 
 ## 外部门禁产物
 
 - EXT-01：Logo 来源与使用范围、完整组合标/图形标/favicon/Touch Icon/水印 profile manifest、正式作品/返图授权范围、焦点和文字/水印安全区；
-- EXT-02：双 Bucket 地域/CORS/BPA/权限/30 MB 配额、OSS 水印与跨 Bucket `sys/saveas` 测试记录。
+- EXT-02：双 Bucket 地域/CORS/BPA/权限、30 MB 私有原图、内嵌 FFmpeg 处理源、OSS 水印与跨 Bucket `sys/saveas` 已验证通过。
