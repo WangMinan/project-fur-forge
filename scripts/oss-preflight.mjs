@@ -39,7 +39,6 @@ const projectRoot = resolve(
   dirname(fileURLToPath(import.meta.url)),
   '..',
 )
-const DEFAULT_ADMIN_ORIGIN = 'http://127.0.0.1:3000'
 const EXPECTED_ENDPOINT = 'https://oss-cn-hangzhou.aliyuncs.com'
 const EXPECTED_REGION = 'oss-cn-hangzhou'
 const PNG_CONTENT_TYPE = 'image/png'
@@ -115,7 +114,7 @@ function loadPreflightConfig(arguments_) {
       'ossAccessKeySecret',
     ),
     browserOrigin: arguments_.origin
-      ?? value('ADMIN_BASE_URL', 'adminBaseUrl', DEFAULT_ADMIN_ORIGIN),
+      ?? value('ADMIN_BASE_URL', 'adminBaseUrl'),
   }
   const missing = Object.entries(config)
     .filter(([, configured]) => !configured)

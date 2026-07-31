@@ -161,6 +161,8 @@ pnpm preflight:oss --origin https://admin.example.com
 node --env-file=.env.preflight scripts/oss-preflight.mjs
 ```
 
+未传 `--origin` 时必须由 `.env`、进程环境变量或活动配置文件提供 `ADMIN_BASE_URL`；脚本不再回退到硬编码本机 origin。
+
 自定义 `--env-file` 必须像上例一样放在脚本路径之前，由项目基线 Node.js 24 原生读取；脚本只解析自身的 `--origin`、`--evidence` 和 `--run-id`，不读取或回显秘密参数。
 
 执行顺序：

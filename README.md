@@ -13,8 +13,12 @@
 ```bash
 corepack enable
 pnpm install --frozen-lockfile
+Copy-Item .env.example .env
+# 在 .env 中填写 PUBLIC_BASE_URL、ADMIN_BASE_URL、MEDIA_BASE_URL、OSS_UPLOAD_BASE_URL
 pnpm dev
 ```
+
+非测试环境不提供域名 fallback；四个 origin 必须由 `.env`、进程环境变量或活动配置文件显式提供。Nuxt 原生加载 `.env`，已有进程环境变量优先于文件值。
 
 质量门禁：
 

@@ -81,7 +81,8 @@ OQ-119 已由用户回答：`ownerDisplay` 始终为去首尾空白后非空的�
 
 - 私有 Bucket 保存原图、草稿、临时与预览；公开 Bucket 只保存发布衍生图。
 - 超过 OSS 20 MB 图片处理上限的合规原图保留在 `assets`；内嵌固定版本 FFmpeg 生成的私有处理源记录为不可公开的 `asset_variants`，identity 至少覆盖原图摘要、FFmpeg 版本、最长边、格式与参数版本。
-- `assets` 不把 Bucket 域名写入数据库；环境配置决定 Bucket 与媒体域名。
+- `assets` 不把 Bucket 域名写入数据库；环境配置决定 Bucket 与媒体域名，非测试环境不提供硬编码 origin fallback。
+- 模型层只引用配置键或解析后的配置，不保存、复制或硬编码具体配置值；测试夹具中的隔离值除外。
 - role/usage 矩阵固定为：`studio_photo` 允许 preprocess/work-card/detail；`design_sheet` 允许 preprocess/design-sheet/detail/work-card fallback；首页横竖角色分别只允许 preprocess 和自身 hero usage。
 - `preprocess` 不得引用另一个 preprocess，且输入摘要必须等于永久原图摘要；任何 `source_variant_id` 都必须指向同一资产下 READY 的 PRIVATE preprocess，其输出摘要等于下游输入摘要。大于 20,000,000 字节的原图生成 PUBLIC variant 时必须使用该来源。
 - 管理端浏览器以 `assetId` 操作媒体；私有 Key 只在服务端和数据库中使用。

@@ -17,6 +17,7 @@
 | 模型投影 | `models/README.md` | 2026-07-31 已实施校准 | T12 与 S2 Review 已实现 `site_hero_slides`、媒体角色/用途矩阵、处理来源谱系、无水印原图和版本化水印 identity |
 | 任务 | `implementation/TASKS.md` | 2026-07-31 已更新 | T01–T13 与 EXT-02 已完成；下一批为 `GATE-06` 认证前端接线，T14 未启动 |
 | T04–T05 实施记录 | `implementation/notes/T04-T05-2026-07-29.md` | 已验证 | Kimi 入选方案、两种首页精选对比、三视口截图与质量门禁；当时 Hero 仍为单图夹具 |
+| T02 origin 配置收口 | `implementation/notes/T02-ORIGIN-ENV-CLOSURE-2026-07-31.md` | 已验证 | 非测试 origin 无硬编码域名 fallback，本机值只保存在 `.env`，完整质量门禁通过 |
 | T06–T07 实施记录 | `implementation/notes/T06-T07-2026-07-29.md` | 已验证 | 作品列表/详情、管理端工作台、三视口证据与自动化自查；当时媒体仍为通用样张 |
 | T08 验收记录 | `implementation/notes/t06-t07/T08-REVIEW-PREP.md` | 2026-07-30 已通过 | 精选横向轨道定稿、T06/T07 基线通过、`must-fix = 0` |
 | T09 工程核心记录 | `implementation/notes/T09-ENGINEERING-CORE-2026-07-30.md` | 已验证并合入 `main` | 契约、双 Bucket 配置、错误分流、安全日志与生产守卫 |
@@ -50,7 +51,7 @@
 ## 当前实施产物
 
 - T01：应用底座与质量脚本；
-- T02：运行配置、Host 边界和日志脱敏工具；
+- T02：运行配置、Host 边界和日志脱敏工具；非测试 origin 已移除硬编码域名 fallback，本机值只保存在 `.env`。
 - T03：共享 Schema/DTO 初版；遗留契约已由 T09 工程核心修订；
 - T04：公开站设计系统、导航壳与当前单 `src` 响应式图片组件；
 - T05：首页单图全幅首屏、编辑型精选网格/横向轨道对比、图片式业务入口和营业状态；Kimi 方案获用户选中；
