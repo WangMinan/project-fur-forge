@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01–T09 已完成。** T09 已修正共享契约、双 Bucket 运行配置、API/页面错误分流、安全日志、生产占位文案守卫和已知界面问题；OQ-119 已按非空 `ownerDisplay` 规则收口。用户于 2026-07-31 验收 Kimi 界面修补，工程侧完整门禁复核通过。SQLite/Drizzle、认证与阿里云 OSS 业务实现尚未开始。**下一项为 T10，本轮未启动。**
+> **当前阶段：阶段 4 IMPLEMENTATION，T01–T10 与 EXT-02 已完成。** T10 已实现确定性双 Bucket 预检、最小权限说明和内嵌 FFmpeg 大原图预处理；29,360,568 字节原图保留在私有 Bucket，生成 4,791,024 字节私有处理源后，CORS、BPA、V4 条件 PUT、匿名边界、水印和跨 Bucket `sys/saveas` 全部实测通过。**下一项为 T11，本轮未启动。**
 
 ## 网站核心原则（景宸确认）
 
@@ -53,4 +53,4 @@ pnpm verify:production
 
 ## 当前仓库状态
 
-根目录现含 Nuxt 4 工程、`app/`、`server/`、`shared/`、`tests/` 与阶段文档。T09 已完整合入 `main`：共享契约只保留 CNY、返图授权记录全部可空、管理 DTO 只输出业务标识、公开 mapper 显式投影；运行配置显式拆分私有/公开 Bucket；API 错误维持 JSON，页面错误由 Nuxt HTML 错误页处理；500 走安全日志；生产构建有占位文案和样张素材守卫；界面侧已完成管理布局、文字对比度、参数响应、dirty、金额校验、reduced-motion 和任务阶段文案修补。下一项是 T10 双 Bucket 早期可行性预检，本轮没有实现 T10、SQLite、认证或 OSS 业务能力。
+根目录现含 Nuxt 4 工程、`app/`、`server/`、`shared/`、`scripts/`、`tests/` 与阶段文档。T10 已增加 `pnpm preflight:oss`、确定性合成媒体、内嵌固定版本 FFmpeg、最小权限与秘密说明；EXT-02 已通过。SQLite、认证、作品 CRUD、正式上传页、正式媒体处理编排与最终水印参数尚未开始。
