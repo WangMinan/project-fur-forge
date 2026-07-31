@@ -121,6 +121,7 @@ SESSION_SECRET
 SMTP_*                 # P2 前可以不启用
 ```
 
+- production 仍要求 URL、数据库、OSS、AccessKey 和 `SESSION_SECRET` 显式完整；五项 SMTP 全部缺失合法，任一项存在时必须整组完整，且缺失时不生成 fallback 凭据。
 - Bucket 名、地域、Endpoint 和域名不写入数据库；数据库只保存相对 Key。
 - 水印 Logo、profile 参数和站点图标属于版本化部署资产，不由环境变量或万能 CMS 任意替换；正式源与摘要由 EXT-01 manifest 固定。
 - 产品硬契约不能通过配置降低：30,000,000 字节、Host 隔离、私有 Bucket 匿名拒绝、公开 Bucket 禁止原图、日志脱敏、原图无水印且禁止覆盖。
@@ -150,6 +151,7 @@ PRAGMA synchronous = FULL;
 - `site_hero_slides` 只保存横版/竖版 `assetId`、alt、排序、启用状态、版本和可选作品关联；自动轮播是站点级受限设置。
 - `work_assets.role` 在 P0 只允许 `design_sheet | studio_photo`；P1 的返图由 `return_photos` 关联独立资产。
 - Logo 与水印源不存成可由页面编辑器替换的数据库内容；variant 保存所用 profile 版本和摘要。
+- `asset_variants.source_variant_id` 记录可验证的处理来源：`preprocess` 直接来自同一资产永久原图；公开 variant 可直接来自不超过 OSS 上限的原图，超过上限时必须引用同一资产下 READY 的 PRIVATE preprocess，且源输出摘要等于下游输入摘要。角色与 usage 按明确矩阵约束。
 
 P1 再增加 `return_photos`、`events`、`slug_redirects`、`trash_entries` 和完整 FAQ/文字内容表；P2 再增加 `password_reset_tokens`、统计或导出相关结构。
 
@@ -243,7 +245,7 @@ OSS 是公开 variant、最终格式和水印的唯一配方权威。应用负�
 4. SQLite 事务提交公开状态和公开 variant 引用；
 5. 失败时保留阶段和错误，未引用公开对象进入精确清理列表。
 
-首页轮播发布还必须验证：启用项数量 1–5、每项横竖资产均 READY、alt 非空、排序无冲突、可选关联作品已发布。发布失败时继续使用上一版完整公开投影，不出现半套横竖资源。
+首页轮播发布还必须验证：启用项数量 1–5、每项横竖资产均 READY、alt 非空、排序无冲突、可选关联作品已发布；两个方向都具备 `recipe-v1` 全部宽度的 PUBLIC READY WebP + fallback，usage、`brand-standard-v1`、Logo 摘要、水印锚点、输出摘要和字节数完整。发布失败时继续使用上一版完整公开投影，不出现半套横竖资源。
 
 下架：
 

@@ -51,6 +51,10 @@ export default defineNuxtConfig({
             route: '/api/__test__/error',
             handler: runtimeApiErrorFixture,
           },
+          {
+            route: '/api/auth/__test__/error',
+            handler: runtimeApiErrorFixture,
+          },
         ]
       : [],
     preset: 'node-server',

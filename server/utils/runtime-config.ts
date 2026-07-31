@@ -242,11 +242,6 @@ export const runtimeConfigSchema = z.object({
       'ossAccessKeyId',
       'ossAccessKeySecret',
       'sessionSecret',
-      'smtpHost',
-      'smtpPort',
-      'smtpSecure',
-      'smtpUser',
-      'smtpPassword',
     ] as const) {
       if (config[key] === undefined) {
         context.addIssue({

@@ -1,6 +1,12 @@
 import {
+  copyFileSync,
+  existsSync,
   mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
   rmSync,
+  writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
@@ -13,6 +19,7 @@ import {
 } from 'vitest'
 import {
   authenticateAdmin,
+  initializeAdmin,
   LOGIN_FAILURE_LIMIT,
   LOGIN_LOCK_MS,
 } from '../../server/utils/auth'
@@ -21,18 +28,54 @@ import {
   RESET_CONFIRMATION,
   resetAdminPasswordCommand,
 } from '../../server/utils/auth-commands'
-import { openDatabase } from '../../server/utils/database'
+import {
+  DATABASE_MIGRATIONS_FOLDER,
+  migrateDatabase,
+  openDatabase,
+  readDatabaseMigrationStatus,
+} from '../../server/utils/database'
 import { loadRuntimeConfig } from '../../server/utils/runtime-config'
 
 const originalPassword = 'initial admin password'
 let directory: string
 let databaseFile: string
 
-function config() {
+function legacyMigrationsFolder() {
+  const folder = resolve(directory, 'legacy-migrations')
+  const meta = resolve(folder, 'meta')
+  mkdirSync(meta, { recursive: true })
+
+  for (const migration of [
+    '0000_sparkling_absorbing_man.sql',
+    '0001_preserve_design_sheet_purpose.sql',
+  ]) {
+    copyFileSync(
+      resolve(DATABASE_MIGRATIONS_FOLDER, migration),
+      resolve(folder, migration),
+    )
+  }
+
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as {
+    entries: unknown[]
+  }
+  writeFileSync(
+    resolve(meta, '_journal.json'),
+    JSON.stringify({
+      ...journal,
+      entries: journal.entries.slice(0, 2),
+    }),
+  )
+  return folder
+}
+
+function config(file = databaseFile) {
   return loadRuntimeConfig({
     env: {
       APP_ENV: 'test',
-      DATABASE_FILE: databaseFile,
+      DATABASE_FILE: file,
       PUBLIC_BASE_URL: 'http://127.0.0.1:3200',
       ADMIN_BASE_URL: 'http://localhost:3200',
       MEDIA_BASE_URL: 'https://media.test.invalid',
@@ -42,9 +85,10 @@ function config() {
   })
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   directory = mkdtempSync(resolve(tmpdir(), 'fur-forge-auth-core-'))
   databaseFile = resolve(directory, 'auth.db')
+  await migrateDatabase(databaseFile)
 })
 
 afterEach(() => {
@@ -52,6 +96,16 @@ afterEach(() => {
 })
 
 describe('single administrator commands and lockout', () => {
+  it('requires an explicitly migrated database before initialization', async () => {
+    const missingDatabase = resolve(directory, 'missing.db')
+
+    await expect(initializeAdminCommand(config(missingDatabase), {
+      username: 'admin',
+      password: originalPassword,
+    })).rejects.toThrow(/run pnpm db:migrate first/)
+    expect(existsSync(missingDatabase)).toBe(false)
+  })
+
   it('initializes idempotently without replacing the first password', async () => {
     const first = await initializeAdminCommand(config(), {
       username: 'admin',
@@ -174,5 +228,69 @@ describe('single administrator commands and lockout', () => {
     finally {
       database.sqlite.close()
     }
+  }, 20_000)
+
+  it('never migrates or backs up while resetting a password', async () => {
+    const pendingDatabaseFile = resolve(directory, 'pending.db')
+    await migrateDatabase(pendingDatabaseFile, {
+      migrationsFolder: legacyMigrationsFolder(),
+    })
+    const before = openDatabase(pendingDatabaseFile)
+    await initializeAdmin(before.sqlite, {
+      username: 'admin',
+      password: originalPassword,
+    })
+    let migrationCount: number
+    let userVersion: number
+
+    try {
+      migrationCount = before.sqlite.prepare(`
+        SELECT COUNT(*) FROM __drizzle_migrations
+      `).pluck().get() as number
+      userVersion = before.sqlite.prepare(`
+        SELECT version FROM users
+      `).pluck().get() as number
+    }
+    finally {
+      before.sqlite.close()
+    }
+
+    expect(readDatabaseMigrationStatus(pendingDatabaseFile)).toMatchObject({
+      pending: 1,
+      ready: false,
+    })
+    await expect(resetAdminPasswordCommand(config(pendingDatabaseFile), {
+      username: 'admin',
+      password: 'replacement admin password',
+      confirmation: RESET_CONFIRMATION,
+    })).rejects.toThrow(/run pnpm db:migrate first/)
+
+    const afterRejectedReset = openDatabase(pendingDatabaseFile)
+    try {
+      expect(afterRejectedReset.sqlite.prepare(`
+        SELECT COUNT(*) FROM __drizzle_migrations
+      `).pluck().get()).toBe(migrationCount)
+      expect(afterRejectedReset.sqlite.prepare(`
+        SELECT version FROM users
+      `).pluck().get()).toBe(userVersion)
+    }
+    finally {
+      afterRejectedReset.sqlite.close()
+    }
+    expect(existsSync(resolve(directory, 'backups'))).toBe(false)
+
+    await expect(migrateDatabase(pendingDatabaseFile)).resolves.toMatchObject({
+      applied: 1,
+    })
+    const backupEntries = readdirSync(resolve(directory, 'backups'))
+    expect(backupEntries.length).toBeGreaterThan(0)
+    await expect(resetAdminPasswordCommand(config(pendingDatabaseFile), {
+      username: 'admin',
+      password: 'replacement admin password',
+      confirmation: RESET_CONFIRMATION,
+    })).resolves.toMatchObject({
+      version: userVersion + 1,
+    })
+    expect(readdirSync(resolve(directory, 'backups'))).toEqual(backupEntries)
   }, 20_000)
 })

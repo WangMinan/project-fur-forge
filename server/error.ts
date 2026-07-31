@@ -1,5 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import { apiErrorSchema } from '../shared/schemas/api'
+import {
+  isPrivateResponsePath,
+  PRIVATE_RESPONSE_HEADERS,
+} from './utils/private-response'
 import { safeLog } from './utils/safe-log'
 
 const requestIdPattern = /^[A-Za-z0-9._:-]{8,128}$/
@@ -48,6 +52,11 @@ async function renderNuxtErrorPage(
   const headers = new Headers(response.headers)
   headers.set('cache-control', 'no-cache')
   headers.set('x-request-id', requestId)
+  if (isPrivateResponsePath(getRequestURL(event).pathname)) {
+    for (const [name, value] of Object.entries(PRIVATE_RESPONSE_HEADERS)) {
+      headers.set(name, value)
+    }
+  }
 
   return sendWebResponse(event, new Response(response.body, {
     headers,
@@ -140,6 +149,9 @@ export default defineNitroErrorHandler(async (
   }
 
   setResponseHeaders(event, fallback.headers)
+  if (isPrivateResponsePath(pathname)) {
+    setResponseHeaders(event, PRIVATE_RESPONSE_HEADERS)
+  }
   setResponseHeader(event, 'content-type', 'application/json; charset=utf-8')
   setResponseStatus(event, fallback.status, fallback.statusText)
 

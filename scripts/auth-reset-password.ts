@@ -3,6 +3,7 @@ import {
   resetAdminPasswordCommand,
 } from '../server/utils/auth-commands'
 import { loadRuntimeConfig } from '../server/utils/runtime-config'
+import { readAdminCredentials } from './auth-input'
 
 const { values } = parseArgs({
   options: {
@@ -11,14 +12,9 @@ const { values } = parseArgs({
     },
   },
 })
-const username = process.env.ADMIN_USERNAME?.trim()
-const password = process.env.ADMIN_PASSWORD
-
-if (!username || !password) {
-  throw new Error(
-    'ADMIN_USERNAME and ADMIN_PASSWORD are required.',
-  )
-}
+const { password, username } = await readAdminCredentials(
+  'New admin password: ',
+)
 
 const result = await resetAdminPasswordCommand(
   loadRuntimeConfig(),

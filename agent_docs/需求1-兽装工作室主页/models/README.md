@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-T12 已于 2026-07-31 建立 P0 Drizzle Schema、两项版本化领域迁移、SQLite 约束/触发器和显式公开/管理媒体投影。表结构依据本文件与上游契约建模，没有照搬既有 DTO 或视觉夹具；正式媒体上传、处理和发布编排仍未实现。
+T12 已于 2026-07-31 建立 P0 Drizzle Schema、两项初始领域迁移、SQLite 约束/触发器和显式公开/管理媒体投影；S2 Review 收口新增第三项增量迁移，补齐媒体 role/usage 矩阵与 `source_variant_id` 处理来源关系。表结构依据本文件与上游契约建模，没有照搬既有 DTO 或视觉夹具；正式媒体上传、处理和发布编排仍未实现。
 
 ## P0 模型
 
@@ -12,7 +12,7 @@ T12 已于 2026-07-31 建立 P0 Drizzle Schema、两项版本化领域迁移、S
 - `works`：统一作品聚合；委托、领养和展示不拆表。
 - `work_feature_tags`：每件作品 0–8 条有序短属性，不是 EAV。
 - `assets`：永久私有原图元数据、摘要、尺寸、处理状态和不可预测私有 Key；原图无水印且禁止覆盖。
-- `asset_variants`：FFmpeg 私有处理源、草稿私有衍生图与公开衍生图的相对 Key、用途、宽度、格式、摘要、recipe 版本和水印 profile 身份。
+- `asset_variants`：FFmpeg 私有处理源、草稿私有衍生图与公开衍生图的相对 Key、用途、宽度、格式、摘要、recipe 版本和水印 profile 身份；可选 `source_variant_id` 记录同一资产内的 READY PRIVATE preprocess 来源。
 - `work_assets`：作品与 `design_sheet` / `studio_photo` 的关系、顺序、主图角色、焦点/裁切和水印锚点。
 - `site_hero_slides`：站点级首页轮播；每项通过两个 assetId 关联一张 `assets.role = home_hero_landscape` 与一张 `assets.role = home_hero_portrait` 的资产，保存 alt、顺序、启用、版本和可选已发布作品关联；停用草稿仍须横竖 ID、alt 和排序完整，但资产可以暂未 READY。
 - `publication_operations`：记录跨 SQLite 与双 Bucket 的生成、水印、验证、提交和清理进度；不记录 ACL 切换，不充当队列。
@@ -59,6 +59,7 @@ OQ-119 已由用户回答：`ownerDisplay` 始终为去首尾空白后非空的�
 
 - 每项都必须同时拥有非空 `landscape_asset_id` 与 `portrait_asset_id`，两者不能相同；启用项还要求两侧资产 READY；
 - 每项的 `alt_text` 去首尾空白后非空，排序值完整且非负；仅启用项要求排序唯一且位于 0–4，数据库因此持续约束最多 5 个启用项，发布函数另要求至少 1 个启用项，空库和仅含停用草稿的库合法；
+- 提交公开状态前，横版必须有 768 / 1280 / 1920、竖版必须有 480 / 768 / 1080 的 `recipe-v1` PUBLIC READY WebP + fallback；usage、`brand-standard-v1`、非空 Logo 摘要、有效水印锚点、输出摘要和字节数全部进入同一发布校验，公开 mapper 复用该条件；
 - 可选 `linked_work_id` 只允许指向已发布作品。作品下架时不得级联删除轮播图，应显式清空关联或阻止并说明影响；
 - 自动轮播开关与不短于 6 秒的间隔保存在单例 `site_content`，默认关闭；不为每个 slide 保存任意脚本、HTML 或独立动画配置；
 - 公开投影只返回已发布横竖 variant、alt、顺序和安全作品链接。
@@ -81,6 +82,8 @@ OQ-119 已由用户回答：`ownerDisplay` 始终为去首尾空白后非空的�
 - 私有 Bucket 保存原图、草稿、临时与预览；公开 Bucket 只保存发布衍生图。
 - 超过 OSS 20 MB 图片处理上限的合规原图保留在 `assets`；内嵌固定版本 FFmpeg 生成的私有处理源记录为不可公开的 `asset_variants`，identity 至少覆盖原图摘要、FFmpeg 版本、最长边、格式与参数版本。
 - `assets` 不把 Bucket 域名写入数据库；环境配置决定 Bucket 与媒体域名。
+- role/usage 矩阵固定为：`studio_photo` 允许 preprocess/work-card/detail；`design_sheet` 允许 preprocess/design-sheet/detail/work-card fallback；首页横竖角色分别只允许 preprocess 和自身 hero usage。
+- `preprocess` 不得引用另一个 preprocess，且输入摘要必须等于永久原图摘要；任何 `source_variant_id` 都必须指向同一资产下 READY 的 PRIVATE preprocess，其输出摘要等于下游输入摘要。大于 20,000,000 字节的原图生成 PUBLIC variant 时必须使用该来源。
 - 管理端浏览器以 `assetId` 操作媒体；私有 Key 只在服务端和数据库中使用。
 - 原图不保存水印像素。`asset_variants` 的 identity 覆盖原图摘要、媒体角色、裁切/焦点、用途、宽度、格式、质量、Logo 摘要、水印 profile 版本、锚点和 `recipe-version`，不得原位覆盖。
 - P0 的 `home_hero_*`、`design_sheet`、`studio_photo` 使用 `brand-standard-v1`；P1 的 `return_photo` 使用 `brand-subtle-v1`。具体比例、透明度与边距由 T51 校准，但 profile 名和摘要从首次实现起进入 identity。
