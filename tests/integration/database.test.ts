@@ -44,7 +44,7 @@ describe('SQLite foundation', () => {
     const databaseFile = temporaryDatabase()
 
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 0,
+      applied: 1,
       backupFile: undefined,
     })
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
@@ -62,7 +62,7 @@ describe('SQLite foundation', () => {
       `).pluck().get()).toBe(1)
       expect(database.sqlite.prepare(`
         SELECT COUNT(*) FROM __drizzle_migrations
-      `).pluck().get()).toBe(0)
+      `).pluck().get()).toBe(1)
     }
     finally {
       database.sqlite.close()
