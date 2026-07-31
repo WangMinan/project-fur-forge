@@ -1,7 +1,7 @@
 # 任务清单：兽装工作室主页
 
 > **角色**：PLAN 的唯一可勾选实施分解。
-> **状态**：T01–T09 已完成。用户于 2026-07-31 验收 Kimi 的 T09 界面修补，工程侧完整门禁复核通过；本轮仅补齐首页横竖双源轮播、媒体角色、水印与站点图标契约，没有勾选新任务。下一项仍为 T10。任务编号保留 T01–T53，T09 之后按垂直切片排序。
+> **状态**：T01–T10 与 EXT-02 已完成。29,360,568 字节合成原图保留在私有 Bucket，内嵌 FFmpeg 生成 4,791,024 字节私有处理源后，OSS 水印、跨桶保存、匿名边界和精确清理全部实测通过。未开始 T11。任务编号保留 T01–T53，T09 之后按垂直切片排序。
 
 ## 当前目标
 
@@ -15,7 +15,7 @@
 - [x] **GATE-04 · 原型边界已锁定**：v5 只保留页面职责、顺序和关键交互，不直接进入生产。
 - [x] **GATE-05 · 阶段 4 已授权**。
 - [ ] **EXT-01 · 正式素材与品牌衍生门禁**：确认 `agent_docs/materials` 中当前 Logo 源的来源、可使用范围和最终导出；形成完整组合标、图形标、favicon/Touch Icon、水印 profile 的轻量 manifest；同时确认正式作品图和返图的可公开使用范围、桌面/手机焦点、文字/水印安全区。Logo 已存在不等于门禁通过，但不得再记为“尚未交付”。通过后开始 T51。
-- [ ] **EXT-02 · 双 Bucket 30 MB 媒体门禁**：确认两个 Bucket 同账号同地域；私有 Bucket 匿名拒绝且 Block Public Access 开启；公开 Bucket 只用于网页衍生图；目标地域 IMG 源图配额不低于 30,000,000 字节；使用无个人信息的 20–30 MB 合成图完成私有 V4 PUT、图片信息、OSS 水印、跨 Bucket `sys/saveas`、公开匿名 GET 与精确清理。通过后开始 T16。
+- [x] **EXT-02 · 双 Bucket 30 MB 媒体门禁**：确认两个 Bucket 同账号同地域；私有 Bucket 匿名拒绝且 Block Public Access 开启；公开 Bucket 只用于网页衍生图；接受不超过 30,000,000 字节的永久私有原图；对超过 OSS 20 MB 图片处理上限的合规原图使用应用内固定版本 FFmpeg 生成私有处理源；使用无个人信息的 20–30 MB 合成图完成私有 V4 PUT、图片信息、OSS 水印、跨 Bucket `sys/saveas`、公开匿名 GET 与精确清理。通过后开始 T16。_2026-07-31：29,360,568 字节原图、4,791,024 字节私有处理源和完整 OSS 处理链实测通过，见 `notes/T10-OSS-PREFLIGHT-2026-07-31.md`。_
 
 ## 执行规则
 
@@ -24,7 +24,7 @@
 - 不在代码中猜业务事实；发现冲突先更新上游文档。
 - 自动化只使用临时 SQLite 和 `test/<run-id>/`；清理前验证环境、Bucket 与完整前缀。
 - 私有 Bucket 和公开 Bucket 是硬边界，不得临时退回单 Bucket ACL 方案。
-- OSS 是唯一像素转换与水印权威；不得同时引入 Sharp、Nuxt Image 动态 provider 或另一套转换参数。
+- 内嵌 FFmpeg 只把超过 OSS 20 MB 输入上限的合规原图归一化为私有处理源；OSS 是公开 variant、最终格式和水印的唯一配方权威。不得引入 Sharp、Nuxt Image 动态 provider 或第二套公开 recipe。
 - 私有原图无水印且禁止覆盖；水印只进入公开衍生图。Logo 摘要、profile 版本和锚点必须进入 recipe identity。
 - 首页横版/竖版是两个独立资产；设定图、出厂照、返图是三个独立角色。不得用同一 `src` + 两个焦点或一个通用“图片”列表宣称完成。
 - P1/P2 页面未实现前不得出现在可点击导航中。
@@ -94,13 +94,13 @@ flowchart LR
   - 工程核心已完成：见 `notes/T09-ENGINEERING-CORE-2026-07-30.md`。
   - OQ-119 已回答：`ownerDisplay` 始终非空，工作室作品显示“有点小狗工作室”，隐私作品显示“不公开”，不增加 `ownerType`。
   - Kimi 界面修补已由用户验收，工程侧完整门禁复核通过：见 `notes/T09-UI-2026-07-30.md` 与 `notes/T09-CLOSURE-2026-07-31.md`。
-- [ ] **T10 · 双 Bucket 早期可行性预检与最小权限说明**：在数据库/认证大规模实现前，向用户说明 AK/SK 最小权限与本地写入位置；验证 region、endpoint、Bucket 名、BPA、CORS、匿名读取边界、OSS 图片水印、`sys/saveas` 目标和测试前缀，不修改账号级安全状态；协助完成 EXT-02 证据。_依赖：T09。_
+- [x] **T10 · 双 Bucket 早期可行性预检与最小权限说明**：在数据库/认证大规模实现前，向用户说明 AK/SK 最小权限与本地写入位置；验证 region、endpoint、Bucket 名、BPA、CORS、匿名读取边界、OSS 图片水印、`sys/saveas` 目标和测试前缀，不修改账号级安全状态；协助完成 EXT-02 证据。_依赖：T09。2026-07-31 已完成可重复预检、最小权限说明、内嵌 FFmpeg 大原图预处理和完整 EXT-02 实测，证据见 `notes/T10-OSS-PREFLIGHT-2026-07-31.md`。_
 - [ ] **T11 · SQLite 运行底座与迁移框架**：Drizzle、`better-sqlite3`、WAL/外键/busy timeout/FULL、迁移命令、临时测试库和一致性备份工具。_依赖：T09。_
 - [ ] **T12 · P0 最小 Schema、媒体角色与公开投影**：`users`、`works`、`work_feature_tags`、`assets`、`asset_variants`、`work_assets`、`site_hero_slides`、`publication_operations`、最小内容/营业状态；定义 `design_sheet`、`studio_photo`、`home_hero_landscape`、`home_hero_portrait`，横竖轮播 1–5 项配对约束，联系人私有，价格固定 CNY；公开投影硬排除私有字段。_依赖：T11。_
 - [ ] **T13 · 唯一管理员最小认证**：幂等初始化、登录、退出、改密、受保护命令重置、SessionVersion、锁定、Host/Origin/CSRF 和集成测试；不做邮件找回。_依赖：T12。_
 - [ ] **T14 · 角色化私有原图条件直传**：上传会话必须声明作品/站点归属与媒体角色；不可预测 Key、5 分钟 V4 PUT、固定 MD5/SHA-256/Content-Type/禁止覆盖，浏览器直传 `project-furry-forge-private`；同一关系不得静默变更角色。_依赖：T10、T13。_
 - [ ] **T15 · 上传完成校验与用途预览数据**：HEAD/图片信息验证大小、格式、摘要与像素；首页横版校验宽大于高、竖版校验高大于宽；保存 EXIF 修正后的焦点、3:4/16:9/9:16/原比例或 contain 参数及水印安全角；失败可读并精确清理。_依赖：T14。_
-- [ ] **T16 · `recipe-v1` 跨 Bucket 衍生图与基础水印**：EXT-02 通过后，生成 work-card、home-hero-landscape、home-hero-portrait、design-sheet、detail 的受限宽度，WebP + 一种 fallback；使用 OSS 烘焙 `brand-standard-v1` 水印并 `sys/saveas` 到 `project-furry-forge-public`；Logo 摘要/profile/锚点进入 identity，私有原图保持无水印，验证 OSS 为唯一转换权威。_依赖：T15、EXT-02。_
+- [ ] **T16 · `recipe-v1` 跨 Bucket 衍生图与基础水印**：对超过 OSS 20 MB 输入上限的合规原图先用内嵌 FFmpeg 生成私有处理源，再生成 work-card、home-hero-landscape、home-hero-portrait、design-sheet、detail 的受限宽度，WebP + 一种 fallback；使用 OSS 烘焙 `brand-standard-v1` 水印并 `sys/saveas` 到 `project-furry-forge-public`；Logo 摘要/profile/锚点进入 identity，私有原图保持无水印，验证 OSS 为公开 variant、最终格式和水印的唯一配方权威。_依赖：T15、EXT-02。_
 - [ ] **T17 · 最小作品创建与编辑**：后台创建一件非领养作品，维护基础信息、联系人、短属性、出厂照和草稿；联系人不出现在公开投影；媒体区明确为“出厂照”，不使用通用图片角色。_依赖：T16、T08。_
 - [ ] **T18 · 双 Bucket 发布与下架操作**：记录操作意图，生成并验证带水印公开衍生对象，提交 SQLite 公开引用；下架先隐藏公开投影再删公开对象；不修改 Object ACL。_依赖：T17。_
 - [ ] **T19 · 作品详情 SSR**：`/works/{slug}` 输出主图、出厂照图集、事实、短属性和适用 CNY 价格；为后续领养作品预留“设定图/出厂照”分区；404/500 为 HTML 错误页；公开页面不含私有 Key/联系人。_依赖：T18。_

@@ -4,12 +4,12 @@
 
 ## 当前阶段
 
-阶段 4 · IMPLEMENTATION 进行中。T01–T09 已完成；用户于 2026-07-31 验收 Kimi 的 T09 界面修补，工程侧完整门禁复核通过并收口 T09。2026-07-31 已完成首页横竖双源轮播、媒体角色、水印和品牌图标的文档校准，**没有实现新业务能力，也没有勾选新任务。下一项仍为 T10，本轮未启动。**
+阶段 4 · IMPLEMENTATION 进行中。T01–T10 与 EXT-02 已完成。T10 已形成可重复预检、最小权限说明和内嵌 FFmpeg 私有预处理：29,360,568 字节合成原图的 V4 PUT、HEAD 与 `image/info` 通过，生成 4,791,024 字节私有处理源后，OSS 水印、跨 Bucket `sys/saveas`、公开匿名 GET 与精确清理全部通过。**下一项为 T11，本轮未启动。**
 
 ## 当前执行分工
 
 - Kimi K3 继续作为后续前端切片的 `UI_PRIMARY`；T09 界面修补已完成并通过用户验收。
-- T10 由 `ENGINEERING_PRIMARY` 主责，先做双 Bucket、图片处理、水印与 `sys/saveas` 的早期可行性预检；不得直接跳到页面开发。
+- T10/EXT-02 已由 `ENGINEERING_PRIMARY` 收口；下一批次应从最新 `main` 开始 T11，本轮不继续数据库或页面开发。
 - 数据库、认证、安全、OSS、事务、媒体角色、recipe/watermark identity 和运维由 `ENGINEERING_PRIMARY` 主责。
 - 后续全栈任务采用“工程侧先锁定 Schema/API/错误/权限与集成测试，Kimi 再实现前端切片”的交接方式；T20 首页轮播属于联合任务。
 - 独立审查者提供证据复核与建议；TASKS 指定的用户门禁仍由用户作最终确认。
@@ -71,7 +71,7 @@
 
 - 已创建 `project-furry-forge-private` 与 `project-furry-forge-public` 两个 Bucket。
 - 私有 Bucket 永久拒绝匿名读取；公开 Bucket 只保存发布后的网页衍生图，不保存原图、联系人或其他私有资料。
-- 浏览器只向私有 Bucket 直传原图。OSS 图片处理是唯一像素转换与水印权威；发布时使用 `sys/saveas` 把确定性衍生结果写入公开 Bucket。
+- 浏览器只向私有 Bucket 直传永久原图。超过 OSS 20 MB 图片处理上限的合规原图由服务端使用随应用安装的固定版本 FFmpeg 生成私有处理源；OSS 是公开 variant、最终格式和水印的唯一配方权威，并使用 `sys/saveas` 把结果写入公开 Bucket。
 - 发布/下架不再切换 Object ACL。发布验证公开对象后提交数据库引用；下架先移除公开投影，再删除公开 Bucket 对象并记录未完成清理。
 - `@nuxt/image` 若使用，只负责组件封装和 `picture/srcset/sizes` 表达，不发起第二套动态裁切、缩放或转码。
 
@@ -115,11 +115,12 @@ T03 遗留工程问题已在 `main` 完成以下修正：
 ## 外部门禁
 
 - `EXT-01`：确认当前 Logo 源的来源/可使用范围和最终导出，形成完整组合标、图形标、favicon/Touch Icon 与两个水印 profile 的 manifest；同时确认正式作品图和返图可公开范围、桌面/手机焦点、文字/水印安全区。通过后执行 T51。
-- `EXT-02`：确认目标地域图片处理源图配额不低于 30,000,000 字节，并用无个人信息的 20–30 MB 合成图片验证私有上传、OSS 水印与跨 Bucket `sys/saveas`；通过后才能执行 T16。
-- 两个 Bucket 已创建不等于门禁通过；仍需只读核对地域、CORS、Block Public Access、公开读取边界、最小权限和跨 Bucket 处理能力。
+- `EXT-02`：已通过。双 Bucket、30 MB 私有原图、内嵌 FFmpeg 私有处理源、OSS 水印、跨 Bucket `sys/saveas`、匿名边界和精确清理均已实测。
+- 用户已完成两端 CORS 与公开 Bucket `public-read`；预检确认私有 Bucket BPA 开启且匿名 GET 失败、公开衍生对象匿名 GET 成功。私有 Bucket 未为图片处理限制放宽。
 
 ## 最近验证
 
+- 2026-07-31：完成 T10 双 Bucket 真实预检。两个 Bucket 同账号同杭州地域，Region/Endpoint/名称、私有 ACL/BPA/匿名拒绝、公开 ACL/匿名读取、CORS OPTIONS、V4 条件 PUT、MD5/SHA-256/禁止覆盖均通过；内嵌 FFmpeg 不经宿主 PATH，把 29,360,568 字节原图生成 4,791,024 字节、4096×444 私有处理源，随后 OSS 水印、WebP、跨 Bucket `sys/saveas`、公开 HEAD/图片信息/匿名 GET、私有原件不变和四对象精确清理全部通过。证据见 `implementation/notes/T10-OSS-PREFLIGHT-2026-07-31.md`；T10/EXT-02 已勾选。
 - 2026-07-31：交叉检查 `main` 的首页、`ResponsiveAsset`、管理端作品编辑、Logo/Head 配置、媒体夹具与 T09 后文档，确认单 Hero/单 `src`、无首页轮播管理、媒体角色未进入界面、无显式 favicon、水印只在部分文档中模糊出现。完成 foundation、SPEC、PLAN、公开/管理设计、模型、TASKS、执行路由、STATE 与产物索引的同步校准；仅修改 `agent_docs`，T10 未启动。记录见 `implementation/notes/DOCS-HOME-MEDIA-REALIGNMENT-2026-07-31.md`。
 - 2026-07-31：用户验收 Kimi 的 T09 界面修补；工程侧复跑冻结安装、lint、typecheck、70 项单测、4 项集成测试、112 项 E2E、Nuxt 构建与生产运行验证，全部通过；`APP_ENV=production` 继续按预期阻断占位文案和 `/fixtures/samples/`。T09 已勾选完成。
 - 2026-07-30：用户回答 OQ-119，确认 `ownerDisplay` 的非空显示规则及“不增加 ownerType”；foundation、SPEC、PLAN、设计、模型、TASKS、STATE 与 T09 界面交接已同步。
@@ -128,4 +129,4 @@ T03 遗留工程问题已在 `main` 完成以下修正：
 
 ## 下一步
 
-下一项为 **T10 双 Bucket 早期可行性预检与最小权限说明**。先验证现有两个 Bucket 的地域、Endpoint、BPA/CORS、匿名边界、图片处理水印和跨 Bucket `sys/saveas`；本轮文档变更没有实现 SQLite、认证、上传、轮播、水印或 favicon 业务能力。
+T10/EXT-02 已完成并停止。下一项是 **T11 SQLite 运行底座与迁移框架**，应另开短分支开始；本轮不执行 T11，也不提前进入 T16。

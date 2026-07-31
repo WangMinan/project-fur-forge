@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-T03 已建立共享 Zod Schema、DTO 与 mapper，但尚未创建 Drizzle Schema。2026-07-30 的 T09 工程核心已删除废止字段、增加返图授权记录 Schema，并收紧公开/管理投影。2026-07-31 又补齐首页横竖双源轮播、图片角色、水印和品牌衍生契约；这些能力均未实现，数据库仍不得把现有 DTO 或视觉夹具当作表定义照搬。
+T03 已建立共享 Zod Schema、DTO 与 mapper，但尚未创建 Drizzle Schema。2026-07-30 的 T09 工程核心已删除废止字段、增加返图授权记录 Schema，并收紧公开/管理投影。2026-07-31 又补齐首页横竖双源轮播、图片角色、水印、品牌衍生和超 20 MB 原图私有预处理契约；T10 只完成能力预检，数据库与正式媒体编排仍未实现，不得把现有 DTO 或视觉夹具当作表定义照搬。
 
 ## P0 模型
 
@@ -12,7 +12,7 @@ T03 已建立共享 Zod Schema、DTO 与 mapper，但尚未创建 Drizzle Schema
 - `works`：统一作品聚合；委托、领养和展示不拆表。
 - `work_feature_tags`：每件作品 0–8 条有序短属性，不是 EAV。
 - `assets`：永久私有原图元数据、摘要、尺寸、处理状态和不可预测私有 Key；原图无水印且禁止覆盖。
-- `asset_variants`：草稿私有衍生图与公开衍生图的相对 Key、用途、宽度、格式、摘要、recipe 版本和水印 profile 身份。
+- `asset_variants`：FFmpeg 私有处理源、草稿私有衍生图与公开衍生图的相对 Key、用途、宽度、格式、摘要、recipe 版本和水印 profile 身份。
 - `work_assets`：作品与 `design_sheet` / `studio_photo` 的关系、顺序、主图角色、焦点/裁切和水印锚点。
 - `site_hero_slides`：站点级首页轮播；每项关联一张 `home_hero_landscape` 与一张 `home_hero_portrait` 资产，保存 alt、顺序、启用、版本和可选已发布作品关联。
 - `publication_operations`：记录跨 SQLite 与双 Bucket 的生成、水印、验证、提交和清理进度；不记录 ACL 切换，不充当队列。
@@ -78,6 +78,7 @@ OQ-119 已由用户回答：`ownerDisplay` 始终为去首尾空白后非空的�
 ### 媒体与水印
 
 - 私有 Bucket 保存原图、草稿、临时与预览；公开 Bucket 只保存发布衍生图。
+- 超过 OSS 20 MB 图片处理上限的合规原图保留在 `assets`；内嵌固定版本 FFmpeg 生成的私有处理源记录为不可公开的 `asset_variants`，identity 至少覆盖原图摘要、FFmpeg 版本、最长边、格式与参数版本。
 - `assets` 不把 Bucket 域名写入数据库；环境配置决定 Bucket 与媒体域名。
 - 管理端浏览器以 `assetId` 操作媒体；私有 Key 只在服务端和数据库中使用。
 - 原图不保存水印像素。`asset_variants` 的 identity 覆盖原图摘要、媒体角色、裁切/焦点、用途、宽度、格式、质量、Logo 摘要、水印 profile 版本、锚点和 `recipe-version`，不得原位覆盖。

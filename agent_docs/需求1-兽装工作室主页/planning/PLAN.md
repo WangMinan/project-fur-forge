@@ -1,11 +1,11 @@
 # 计划：兽装工作室主页
 
 > **角色**：把 SPEC 翻译成有序、可验证的技术实施计划。
-> **状态**：2026-07-31 执行版。T01–T09 已完成；首页横竖双源轮播、媒体角色、水印与站点图标契约已补齐。下一项仍为 T10，本轮未启动。
+> **状态**：2026-07-31 执行版。T01–T10 与 EXT-02 已完成；首页横竖双源轮播、媒体角色、水印、站点图标和大原图私有预处理契约已补齐。未开始 T11。
 
 ## 1. 执行结论
 
-一期采用单仓库、单 Nuxt 4 全栈应用、单 Docker 镜像和单 Node.js 进程。公开站 SSR，后台 `/admin/**` CSR，Nitro 提供 API；SQLite/Drizzle 负责持久化；阿里云 OSS 负责原图保存、全部像素转换和水印烘焙。
+一期采用单仓库、单 Nuxt 4 全栈应用、单 Docker 镜像和单 Node.js 进程。公开站 SSR，后台 `/admin/**` CSR，Nitro 提供 API；SQLite/Drizzle 负责持久化；阿里云 OSS 负责原图保存以及公开衍生图的最终像素转换和水印烘焙，内嵌 FFmpeg 只为超过 20 MB 的原图生成私有处理源。
 
 实施顺序不再按“先把所有基础设施做完，再做页面”横向推进，而是：
 
@@ -97,7 +97,7 @@ flowchart LR
 | 鉴权 | `nuxt-auth-utils` | 密封 HttpOnly Cookie |
 | 安全 | `nuxt-security` + 自定义中间件 | Host/Origin/CSRF/限流按路由验证 |
 | OSS | `ali-oss` | V4 PUT/GET、HEAD、IMG、水印、跨 Bucket `sys/saveas`、DELETE |
-| 图片呈现 | 原生 `<picture>`/`source`/`srcset`/`sizes`；`@nuxt/image` 仅在验证不会改写 URL/像素时可选 | OSS 是唯一转换权威；横竖资源不得重复下载 |
+| 图片呈现 | 原生 `<picture>`/`source`/`srcset`/`sizes`；`@nuxt/image` 仅在验证不会改写 URL/像素时可选 | FFmpeg 只做超 20 MB 私有预处理；OSS 负责公开 recipe；横竖资源不得重复下载 |
 | SEO | Sitemap、robots、Meta、有限 Schema.org、favicon/Touch Icon | 只输出可见事实与品牌源衍生物 |
 | 测试 | Vitest、Nuxt Test Utils、Playwright | 单元、集成、OSS 契约、E2E、三视口媒体请求 |
 
@@ -195,9 +195,16 @@ project-furry-forge-public
 5. 完成接口通过 HEAD/图片信息复核 Key、大小、MIME、摘要、真实格式、像素边界和角色方向：首页横版要求宽大于高，首页竖版要求高大于宽；设定图以横版为推荐并保留完整画布。失败对象进入可读状态并尝试精确清理。
 6. 角色不是文件自身可随意改写的标签。改变用途必须经过服务端校验和重新生成相应用途的 variant，不能把同一关系静默从设定图改成返图。
 
-### 7.3 图片处理与水印唯一权威
+### 7.3 大原图预处理、OSS 图片处理与水印权威
 
-OSS 图片处理是唯一像素转换权威。Node 不运行 Sharp/FFmpeg 作为第二套生产转换链。应用只负责：
+OSS 图片处理原图不能超过 20 MB，但产品永久原图上限为 30,000,000 字节。完成接口验证永久原图后：
+
+- 不超过 20,000,000 字节时，直接以永久原图作为 OSS 处理源；
+- 大于 20,000,000 字节时，Node 使用随应用安装且按绝对路径启动的固定版本 FFmpeg，生成最长边不超过 4,096 px、大小不超过 20,000,000 字节的私有处理中间件；
+- 子进程不得从宿主机 `PATH` 查找 FFmpeg；预处理源 Key/identity 覆盖原图摘要、FFmpeg 版本和预处理参数，且不得公开或加水印；
+- 预处理失败必须保留永久原图并给出可读错误，不得以降低原图保管上限或放宽 Bucket 边界静默兜底。
+
+OSS 是公开 variant、最终格式和水印的唯一配方权威。应用负责：
 
 - 保存 EXIF 修正后的归一化焦点/裁切和水印安全角；
 - 计算覆盖原图摘要、角色、用途、裁切、格式、质量、Logo 摘要、profile 版本与锚点的完整 recipe identity；
