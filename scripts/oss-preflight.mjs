@@ -9,6 +9,7 @@ import {
 import { dirname, resolve } from 'node:path'
 import { loadEnvFile } from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { parseArgs } from 'node:util'
 import OSS from 'ali-oss'
 import {
   compressPngForOss,
@@ -39,34 +40,21 @@ const projectRoot = resolve(
   '..',
 )
 const DEFAULT_ADMIN_ORIGIN = 'http://127.0.0.1:3000'
+const EXPECTED_ENDPOINT = 'https://oss-cn-hangzhou.aliyuncs.com'
+const EXPECTED_REGION = 'oss-cn-hangzhou'
 const PNG_CONTENT_TYPE = 'image/png'
 const PROCESS_OUTPUT_TYPE = 'image/webp'
 
 function parseArguments(argv) {
-  const options = {}
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const name = argv[index]
-    const value = argv[index + 1]
-
-    if (
-      ![
-        '--env-file',
-        '--evidence',
-        '--origin',
-        '--run-id',
-      ].includes(name)
-      || !value
-      || value.startsWith('--')
-    ) {
-      throw new Error(`Unsupported or incomplete argument: ${name}`)
-    }
-
-    options[name.slice(2)] = value
-    index += 1
-  }
-
-  return options
+  return parseArgs({
+    args: argv,
+    options: {
+      evidence: { type: 'string' },
+      origin: { type: 'string' },
+      'run-id': { type: 'string' },
+    },
+    strict: true,
+  }).values
 }
 
 function nonEmpty(value) {
@@ -104,10 +92,7 @@ function loadLocalValues() {
 }
 
 function loadPreflightConfig(arguments_) {
-  const envFile = resolve(
-    projectRoot,
-    arguments_['env-file'] ?? '.env',
-  )
+  const envFile = resolve(projectRoot, '.env')
 
   if (existsSync(envFile)) {
     loadEnvFile(envFile)
@@ -148,6 +133,10 @@ function loadPreflightConfig(arguments_) {
     throw new Error('OSS_PUBLIC_BUCKET does not match the T10 public Bucket.')
   }
 
+  if (config.region !== EXPECTED_REGION) {
+    throw new Error('OSS_REGION does not match the T10 Hangzhou Region.')
+  }
+
   if (config.privateBucket === config.publicBucket) {
     throw new Error('T10 requires two distinct OSS Buckets.')
   }
@@ -164,6 +153,10 @@ function loadPreflightConfig(arguments_) {
     || endpoint.password
   ) {
     throw new Error('OSS_ENDPOINT must be a credential-free HTTPS origin.')
+  }
+
+  if (endpoint.origin !== EXPECTED_ENDPOINT) {
+    throw new Error('OSS_ENDPOINT does not match the T10 Hangzhou endpoint.')
   }
 
   if (origin.username || origin.password || origin.pathname !== '/') {
@@ -196,23 +189,6 @@ function addCheck(evidence, name, status, summary = {}) {
     name,
     status,
   })
-}
-
-async function getBucketPublicAccessBlock(client, bucket) {
-  const params = client._bucketRequestParams(
-    'GET',
-    bucket,
-    'publicAccessBlock',
-  )
-  params.successStatuses = [200]
-  params.xmlResponse = true
-  const result = await client.request(params)
-
-  return {
-    enabled: result.data?.BlockPublicAccess === 'true',
-    requestId: requestIdOf(result),
-    status: result.status,
-  }
 }
 
 async function getCors(client, bucket) {
@@ -265,6 +241,12 @@ async function readOnlyGate({
     privateBucket.ExtranetEndpoint,
     publicBucket.ExtranetEndpoint,
   ].every(endpoint => endpoint === endpointHost)
+  const privateBlockEnabled = String(
+    privateBucket.BlockPublicAccess,
+  ) === 'true'
+  const publicBlockEnabled = String(
+    publicBucket.BlockPublicAccess,
+  ) === 'true'
 
   addCheck(evidence, 'bucket-identities', (
     privateBucket.Name === config.privateBucket
@@ -305,31 +287,27 @@ async function readOnlyGate({
     },
   )
 
-  const [privateBlock, publicBlock, privateCors] = await Promise.all([
-    getBucketPublicAccessBlock(privateClient, config.privateBucket),
-    getBucketPublicAccessBlock(publicClient, config.publicBucket),
-    getCors(privateClient, config.privateBucket),
-  ])
+  const privateCors = await getCors(privateClient, config.privateBucket)
 
   addCheck(
     evidence,
     'private-block-public-access',
-    privateBlock.enabled ? 'pass' : 'fail',
+    privateBlockEnabled ? 'pass' : 'fail',
     {
-      enabled: privateBlock.enabled,
-      responseStatus: privateBlock.status,
-      requestId: privateBlock.requestId,
+      enabled: privateBlockEnabled,
+      responseStatus: privateInfo.res?.status,
+      requestId: requestIdOf(privateInfo),
     },
   )
   addCheck(
     evidence,
     'public-anonymous-read-prerequisite',
-    publicBlock.enabled ? 'fail' : 'pass',
+    publicBlockEnabled ? 'fail' : 'pass',
     {
-      enabled: publicBlock.enabled,
-      responseStatus: publicBlock.status,
-      requestId: publicBlock.requestId,
-      note: publicBlock.enabled
+      enabled: publicBlockEnabled,
+      responseStatus: publicInfo.res?.status,
+      requestId: requestIdOf(publicInfo),
+      note: publicBlockEnabled
         ? 'Bucket-level Block Public Access prevents the required anonymous derivative GET.'
         : 'The generated object still must pass an anonymous GET after sys/saveas.',
     },
