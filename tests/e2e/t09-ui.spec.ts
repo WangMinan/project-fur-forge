@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { loginAsAdmin } from './helpers/auth'
 
 /**
  * T09 界面修补回归（UI-01 至 UI-07，见 implementation/notes/T09-UI-2026-07-30.md）：
@@ -17,6 +18,7 @@ const LIZI_ID = '3cb1db83-c2c5-42a1-8e5e-a61cb97d2422'
 
 test.describe('UI-01 管理端布局边界', () => {
   test('作品列表：单一 main、无公开 Header/Footer、后台 skip link 焦点顺序正确', async ({ page }) => {
+    await loginAsAdmin(page)
     await page.goto(`${adminBaseURL}/admin/works`)
     await page.waitForSelector('.admin-shell')
 
@@ -44,6 +46,7 @@ test.describe('UI-01 管理端布局边界', () => {
   })
 
   test('作品编辑：单一 main、无公开 Header/Footer', async ({ page }) => {
+    await loginAsAdmin(page)
     await page.goto(`${adminBaseURL}/admin/works/${BLUEBERRY_ID}`)
     await page.waitForSelector('.editor-card')
 
@@ -236,6 +239,7 @@ test.describe('UI-03 动态参数响应', () => {
   })
 
   test('后台编辑 id→id：表单重建、dirty 基线重置、发布检查随作品更新', async ({ page }) => {
+    await loginAsAdmin(page)
     await page.goto(`${adminBaseURL}/admin/works/${BLUEBERRY_ID}`)
     await page.waitForSelector('.editor-card')
     await expect(page.getByLabel(/公开人民币价格/)).toHaveValue('15600')
@@ -276,6 +280,10 @@ test.describe('UI-03 动态参数响应', () => {
 })
 
 test.describe('UI-04 dirty 覆盖全部可编辑字段', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAsAdmin(page)
+  })
+
   const dirtyBadge = (page: import('@playwright/test').Page) => page.getByText('有未保存更改')
 
   test('领养方式、业务状态与价格修改均影响 dirty', async ({ page }) => {
@@ -343,6 +351,7 @@ test.describe('UI-04 dirty 覆盖全部可编辑字段', () => {
 
 test.describe('UI-05 金额严格校验', () => {
   test('非法集合：字段错误、程序化关联与发布同步阻断；合法与留空恢复', async ({ page }) => {
+    await loginAsAdmin(page)
     await page.goto(`${adminBaseURL}/admin/works/${BLUEBERRY_ID}`)
     await page.waitForSelector('.editor-card')
     const price = page.getByLabel(/公开人民币价格/)
@@ -434,6 +443,7 @@ test.describe('UI-06 reduced-motion 轨道', () => {
 
 test.describe('UI-07 真实任务阶段文案', () => {
   test('编辑页引用真实任务编号：T14–T15 上传、T16 衍生图与失败重试、T17 保存、T18 发布', async ({ page }) => {
+    await loginAsAdmin(page)
     await page.goto(`${adminBaseURL}/admin/works/${LIZI_ID}`)
     await page.waitForSelector('.editor-card')
 
@@ -451,10 +461,11 @@ test.describe('UI-07 真实任务阶段文案', () => {
     await expect(page.getByRole('status').last()).toContainText('保存接口尚未接入（T17）')
   })
 
-  test('登录页不再引用过期任务编号', async ({ page }) => {
+  test('登录页已接入真实认证，不再保留占位文案', async ({ page }) => {
     await page.goto(`${adminBaseURL}/admin/login`)
     await page.waitForSelector('[data-testid="admin-login"]')
-    await expect(page.getByText(/认证能力尚未接入（T13）/)).toBeVisible()
-    await expect(page.getByText(/T07 视觉样张/)).toHaveCount(0)
+    await expect(page.getByText(/尚未接入/)).toHaveCount(0)
+    await expect(page.getByText(/视觉样张/)).toHaveCount(0)
+    await expect(page.getByText(/T07|T13/)).toHaveCount(0)
   })
 })

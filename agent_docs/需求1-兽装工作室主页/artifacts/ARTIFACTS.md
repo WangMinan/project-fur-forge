@@ -28,13 +28,14 @@
 | T12 Schema 证据 | `implementation/notes/T12-P0-SCHEMA-2026-07-31.md` | 已通过 | 11 张 P0 表、两项领域迁移、媒体/首页约束、variant identity 和投影泄漏守卫 |
 | T13 认证证据 | `implementation/notes/T13-AUTH-2026-07-31.md` | 已通过 | 唯一管理员、密封 Cookie Session、锁定、改密/重置和 Host/Origin/CSRF |
 | S2 Review 收口 | `implementation/notes/S2-REVIEW-CLOSURE-2026-07-31.md` | 已通过 | production SMTP、私有响应、认证运维、媒体来源谱系和 Hero 完整发布条件 |
-| 状态 | `STATE.md` | 2026-07-31 已更新 | 当前决策、T11–T13 Review 收口与 Kimi 认证前端交接 |
+| GATE-06 认证前端证据 | `implementation/notes/T13-AUTH-UI-2026-07-31.md` | 待用户验收 | Kimi 接线登录/Session/退出/改密，真实浏览器 Cookie/CSRF/锁定/Host 隔离 22 项用例与三视口截图 |
+| 状态 | `STATE.md` | 2026-07-31 已更新 | 当前决策、T11–T13 Review 收口与 GATE-06 前端接线完成待验收 |
 
 ## 当前执行文档
 
 | 类型 | 路径 | 当前效力 |
 | --- | --- | --- |
-| 执行责任路由 | `implementation/EXECUTION_ROUTING.md` | 2026-07-31 当前生效；记录 T11–T13/S2 Review 已收口、Kimi 认证前端交接和后续默认分工，不属于产品契约 |
+| 执行责任路由 | `implementation/EXECUTION_ROUTING.md` | 2026-07-31 当前生效；记录 T11–T13/S2 Review 已收口、GATE-06 前端接线完成待验收和后续默认分工，不属于产品契约 |
 
 ## 历史与证据
 
@@ -63,6 +64,7 @@
 - T11：SQLite/Drizzle 运行底座、版本化迁移、强制 PRAGMA、环境路径隔离、临时测试库和一致性备份底座已实现。
 - T12：11 张 P0 表、媒体角色与数量约束、首页横竖配对、完整 variant identity 和显式公开/管理投影已实现；S2 Review 增量迁移补齐 role/usage、`source_variant_id` 和大原图处理来源约束。
 - T13：唯一管理员服务端认证、幂等初始化、登录/退出/改密/受保护重置、SessionVersion、锁定和 Host/Origin/CSRF 已实现；S2 Review 补齐私有响应 no-store、显式迁移前置和隐藏 TTY 输入，前端接入按用户要求交给 Kimi。
+- GATE-06（门禁，非任务编号）：T13 认证前端接线已由 Kimi 完成——内存态 Session/CSRF composable、真实登录页、路由保护、AdminShell 退出、`/admin/account` 改密和 22 项真实浏览器认证用例；待用户验收。
 
 尚未实施：后台首页轮播、横竖双源切换、媒体角色分区、正式媒体编排中的 OSS 水印、favicon/Touch Icon。它们已进入后续任务契约，但不得写入当前完成产物。
 

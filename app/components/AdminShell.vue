@@ -1,11 +1,39 @@
 <script setup lang="ts">
 // 管理端壳：窄屏为顶栏 + 横向导航，≥1280px 为固定侧栏。
-// P0 仅包含已实现的作品管理入口；P1/P2 项目（业务状态、站点内容、账号等）在对应任务实现前不出现。
+// P0 仅包含已实现的作品与账号入口；P1/P2 项目在对应任务实现前不出现。
 withDefaults(defineProps<{
-  current?: 'works' | 'none'
+  current?: 'works' | 'account' | 'none'
 }>(), {
   current: 'none',
 })
+
+const { user, logout } = useAdminAuth()
+
+const logoutPending = ref(false)
+const logoutError = ref<string | null>(null)
+
+async function onLogout() {
+  if (logoutPending.value) {
+    return
+  }
+
+  logoutError.value = null
+  logoutPending.value = true
+
+  try {
+    const result = await logout()
+
+    if (result.ok) {
+      await navigateTo('/admin/login', { replace: true })
+      return
+    }
+
+    logoutError.value = '退出失败，请稍后重试。若持续失败，可直接关闭页面。'
+  }
+  finally {
+    logoutPending.value = false
+  }
+}
 </script>
 
 <template>
@@ -21,10 +49,28 @@ withDefaults(defineProps<{
           class="admin-shell__nav-link"
           :aria-current="current === 'works' ? 'page' : undefined"
         >作品</NuxtLink>
+        <NuxtLink
+          to="/admin/account"
+          class="admin-shell__nav-link"
+          :aria-current="current === 'account' ? 'page' : undefined"
+        >账号</NuxtLink>
       </nav>
-      <NuxtLink to="/admin/login" class="admin-shell__exit">退出登录</NuxtLink>
+      <div class="admin-shell__session">
+        <span v-if="user" class="admin-shell__user">{{ user.username }}</span>
+        <button
+          type="button"
+          class="admin-shell__exit"
+          :disabled="logoutPending"
+          @click="onLogout"
+        >
+          {{ logoutPending ? '退出中…' : '退出登录' }}
+        </button>
+      </div>
     </header>
     <main id="admin-main" class="admin-shell__main" tabindex="-1">
+      <p v-if="logoutError" class="admin-shell__alert" role="alert">
+        {{ logoutError }}
+      </p>
       <slot />
     </main>
   </div>
@@ -38,7 +84,8 @@ withDefaults(defineProps<{
 .admin-shell__bar {
   display: flex;
   align-items: center;
-  gap: var(--admin-space-4);
+  flex-wrap: wrap;
+  gap: var(--admin-space-2) var(--admin-space-4);
   padding: 0 var(--admin-space-4);
   background: var(--admin-bg-primary);
   border-bottom: 1px solid var(--admin-border-secondary);
@@ -92,17 +139,57 @@ withDefaults(defineProps<{
   color: var(--admin-accent-primary);
 }
 
-.admin-shell__exit {
+.admin-shell__session {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--admin-space-3);
+}
+
+.admin-shell__user {
+  display: none;
+  font-size: var(--admin-font-xs);
+  color: var(--admin-text-tertiary);
+  white-space: nowrap;
+}
+
+.admin-shell__exit {
+  border: none;
+  background: none;
+  padding: 0 var(--admin-space-2);
+  font: inherit;
   font-size: var(--admin-font-sm);
   color: var(--admin-text-secondary);
   min-height: var(--admin-touch-target);
   display: inline-flex;
   align-items: center;
+  cursor: pointer;
+  border-radius: var(--admin-radius-md);
 }
 
-.admin-shell__exit:hover {
+.admin-shell__exit:hover:not(:disabled) {
   color: var(--admin-text-primary);
+  background: var(--admin-bg-subtle);
+}
+
+.admin-shell__exit:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--admin-focus-ring);
+}
+
+.admin-shell__exit:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.admin-shell__alert {
+  margin: 0 0 var(--admin-space-4);
+  padding: var(--admin-space-3) var(--admin-space-4);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-status-error-soft);
+  color: var(--admin-status-error);
+  font-size: var(--admin-font-sm);
+  line-height: var(--admin-line-normal);
 }
 
 .admin-shell__main {
@@ -138,8 +225,20 @@ withDefaults(defineProps<{
     flex-direction: column;
   }
 
-  .admin-shell__exit {
+  .admin-shell__session {
     margin: auto 0 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--admin-space-2);
+  }
+
+  .admin-shell__user {
+    display: block;
+    padding: 0 var(--admin-space-3);
+  }
+
+  .admin-shell__exit {
+    justify-content: flex-start;
     padding: 0 var(--admin-space-3);
   }
 
