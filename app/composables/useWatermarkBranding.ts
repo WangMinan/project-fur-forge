@@ -12,8 +12,8 @@ import { AdminApiError } from './useAdminApi'
 
 // GATE-07 站点品牌（居中水印）页面状态：branding 快照为唯一状态基线，
 // 所有写操作带 expectedVersion；409 一律重新 GET，不自行递增或猜测版本。
-// 预览/应用/重试均为服务端同步完成，但 UI 只按返回 status 渲染；
-// 页面重载后通过 lastOperationId 恢复最近操作并继续轮询未完成状态。
+// 应用接口先返回持久化操作记录，UI 按 status 轮询真实进度；页面重载后
+// 通过 lastOperationId 恢复最近操作并继续轮询未完成状态。
 
 const IN_PROGRESS_STATUSES: readonly WatermarkOperationStatus[] = [
   'GENERATING_PUBLIC',
@@ -120,7 +120,11 @@ export function useWatermarkBranding() {
 
   async function onConflict(message: string) {
     conflictNotice.value = message
-    await refreshBranding()
+    const latest = await refreshBranding()
+    if (latest?.lastOperationId) {
+      await fetchOperation(latest.lastOperationId)
+      ensurePolling()
+    }
   }
 
   // 返回 null 表示成功；否则为可展示的中文错误。
@@ -144,6 +148,7 @@ export function useWatermarkBranding() {
         schema: watermarkProfileResponseSchema,
       })
       await refreshBranding()
+      conflictNotice.value = null
       return null
     }
     catch (error) {
@@ -186,6 +191,7 @@ export function useWatermarkBranding() {
         },
       )
       operation.value = result.data
+      conflictNotice.value = null
       ensurePolling()
       if (!isInProgress(result.data.status)) {
         await refreshBranding()
@@ -227,6 +233,7 @@ export function useWatermarkBranding() {
         },
       )
       operation.value = result.data
+      conflictNotice.value = null
       ensurePolling()
       if (!isInProgress(result.data.status)) {
         await refreshBranding()

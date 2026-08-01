@@ -30,7 +30,7 @@ const e2eOutputDir = process.env.E2E_OUTPUT_DIR
 
 export default defineNuxtConfig({
   ...(e2eBuildDir ? { buildDir: e2eBuildDir } : {}),
-  compatibilityDate: '2026-07-28',
+  compatibilityDate: '2026-08-01',
   css: [
     '~/assets/css/public-base.css',
     '~/assets/css/admin-base.css',

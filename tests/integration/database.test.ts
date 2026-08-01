@@ -1,9 +1,16 @@
 import {
+  copyFileSync,
   mkdtempSync,
+  mkdirSync,
+  readFileSync,
   rmSync,
+  writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { resolve } from 'node:path'
+import {
+  dirname,
+  resolve,
+} from 'node:path'
 import {
   afterEach,
   describe,
@@ -14,6 +21,7 @@ import {
   assertDatabaseMigrated,
   backupDatabase,
   DATABASE_BUSY_TIMEOUT_MS,
+  DATABASE_MIGRATIONS_FOLDER,
   DEVELOPMENT_DATABASE_FILE,
   migrateDatabase,
   openDatabase,
@@ -28,6 +36,27 @@ function temporaryDatabase(name = 'studio.db') {
   const directory = mkdtempSync(resolve(tmpdir(), 'fur-forge-db-'))
   temporaryDirectories.push(directory)
   return resolve(directory, name)
+}
+
+function migrationsBeforeGate07(databaseFile: string) {
+  const folder = resolve(dirname(databaseFile), 'pre-gate07-migrations')
+  const meta = resolve(folder, 'meta')
+  mkdirSync(meta, { recursive: true })
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  for (const { tag } of journal.entries.slice(0, 7)) {
+    copyFileSync(
+      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
+      resolve(folder, `${tag}.sql`),
+    )
+  }
+  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
+    ...journal,
+    entries: journal.entries.slice(0, 7),
+  }))
+  return folder
 }
 
 afterEach(() => {
@@ -70,6 +99,72 @@ describe('SQLite foundation', () => {
     }
     finally {
       database.sqlite.close()
+    }
+  })
+
+  it('upgrades existing self-referencing variants without losing integrity', async () => {
+    const databaseFile = temporaryDatabase()
+    await migrateDatabase(databaseFile, {
+      migrationsFolder: migrationsBeforeGate07(databaseFile),
+    })
+    const legacy = openDatabase(databaseFile)
+
+    try {
+      const now = Date.UTC(2026, 7, 1)
+      const assetSha = 'a'.repeat(64)
+      const sourceSha = 'b'.repeat(64)
+      legacy.sqlite.prepare(`
+        INSERT INTO assets (
+          id, role, status, private_object_key, sha256, byte_size,
+          mime_type, width, height, created_at, updated_at
+        ) VALUES (
+          'asset', 'studio_photo', 'READY', 'dev/original/asset.png',
+          ?, 1024, 'image/png', 1600, 900, ?, ?
+        )
+      `).run(assetSha, now, now)
+      legacy.sqlite.prepare(`
+        INSERT INTO asset_variants (
+          id, asset_id, source_variant_id, storage_scope, status, object_key,
+          input_sha256, media_role, usage, width, height, format, quality,
+          crop_identity, recipe_version, watermark_profile, logo_digest,
+          watermark_anchor, sha256, byte_size, created_at, updated_at
+        ) VALUES (
+          'source', 'asset', NULL, 'PRIVATE', 'READY',
+          'dev/processing/source.png', ?, 'studio_photo', 'preprocess',
+          1600, 900, 'png', 82, 'source-crop', 'recipe-v1', 'none',
+          'none', 'none', ?, 2048, ?, ?
+        )
+      `).run(assetSha, sourceSha, now, now)
+      legacy.sqlite.prepare(`
+        INSERT INTO asset_variants (
+          id, asset_id, source_variant_id, storage_scope, status, object_key,
+          input_sha256, media_role, usage, width, height, format, quality,
+          crop_identity, recipe_version, watermark_profile, logo_digest,
+          watermark_anchor, sha256, byte_size, created_at, updated_at
+        ) VALUES (
+          'public', 'asset', 'source', 'PUBLIC', 'READY',
+          'dev/web/public.webp', ?, 'studio_photo', 'detail',
+          1280, 720, 'webp', 82, 'public-crop', 'recipe-v1',
+          'brand-standard-v1', ?, 'top-left', ?, 1024, ?, ?
+        )
+      `).run(sourceSha, 'c'.repeat(64), 'd'.repeat(64), now, now)
+    }
+    finally {
+      legacy.sqlite.close()
+    }
+
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
+      applied: 1,
+    })
+    const upgraded = openDatabase(databaseFile)
+    try {
+      expect(upgraded.sqlite.pragma('foreign_key_check')).toEqual([])
+      expect(upgraded.sqlite.prepare(`
+        SELECT source_variant_id FROM asset_variants WHERE id = 'public'
+      `).pluck().get()).toBe('source')
+    }
+    finally {
+      upgraded.sqlite.close()
     }
   })
 

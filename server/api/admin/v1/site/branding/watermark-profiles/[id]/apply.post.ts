@@ -8,7 +8,10 @@ import { getDatabase } from '../../../../../../../utils/database'
 import { getMediaStorage } from '../../../../../../../utils/media-storage'
 import { readAdminJsonBody } from '../../../../../../../utils/request-body'
 import { asSafeApiError } from '../../../../../../../utils/service-error'
-import { applyWatermarkProfile } from '../../../../../../../utils/watermark-branding'
+import {
+  runWatermarkProfileApplication,
+  startWatermarkProfileApplication,
+} from '../../../../../../../utils/watermark-branding'
 
 export default defineEventHandler(async (event) => {
   const id = resourceIdSchema.safeParse(getRouterParam(event, 'id'))
@@ -19,14 +22,26 @@ export default defineEventHandler(async (event) => {
     throw createApiError(400, 'VALIDATION_ERROR', 'Request is invalid.')
   }
   try {
+    const sqlite = getDatabase().sqlite
+    const operation = startWatermarkProfileApplication(
+      sqlite,
+      id.data,
+      body.data.expectedVersion,
+      body.data.payload.brandingVersion,
+    )
+    if (operation.status !== 'DONE') {
+      event.waitUntil(
+        runWatermarkProfileApplication(
+          sqlite,
+          getMediaStorage(),
+          operation.operationId,
+        ).catch(error => event.captureError(error, {
+          tags: ['watermark-application'],
+        })),
+      )
+    }
     return watermarkOperationResponseSchema.parse({
-      data: await applyWatermarkProfile(
-        getDatabase().sqlite,
-        getMediaStorage(),
-        id.data,
-        body.data.expectedVersion,
-        body.data.payload.brandingVersion,
-      ),
+      data: operation,
     })
   }
   catch (error) {

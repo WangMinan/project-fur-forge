@@ -429,10 +429,14 @@ function previewSamples(sqlite: Database.Database) {
   `).get(role) as { assetId: string, privateObjectKey: string } | undefined
   const landscape = sampleFor('home_hero_landscape')
   const portrait = sampleFor('home_hero_portrait')
-  if (!work || !landscape || !portrait) {
+  if (!work) {
     throw new ServiceError(409, 'CONFLICT', 'Representative preview assets are unavailable.')
   }
-  return { work, landscape, portrait }
+  return {
+    work,
+    landscape: landscape ?? work,
+    portrait: portrait ?? work,
+  }
 }
 
 function previewPrefix(privateObjectKey: string, operationId: string) {
@@ -450,23 +454,23 @@ async function runPreview(
   now: number,
 ) {
   const operation = requireOperation(sqlite, operationId)
-  const samples = previewSamples(sqlite)
-  const prefix = previewPrefix(samples.work.privateObjectKey, operation.id)
-  const specifications = [
-    { kind: 'work-card', assetId: samples.work.assetId, usage: 'work-card', width: 480 },
-    { kind: 'detail', assetId: samples.work.assetId, usage: 'detail', width: 960 },
-    { kind: 'home-hero-landscape', assetId: samples.landscape.assetId, usage: 'home-hero-landscape', width: 768 },
-    { kind: 'home-hero-portrait', assetId: samples.portrait.assetId, usage: 'home-hero-portrait', width: 480 },
-  ] as const
   const manifest: PreviewManifestEntry[] = []
-  updateOperation(sqlite, operationId, 'GENERATING_PUBLIC', now, {
-    target: specifications.length,
-    generated: 0,
-    verified: 0,
-    preview: [],
-    cleanup: [],
-  })
   try {
+    const samples = previewSamples(sqlite)
+    const prefix = previewPrefix(samples.work.privateObjectKey, operation.id)
+    const specifications = [
+      { kind: 'work-card', assetId: samples.work.assetId, usage: 'work-card', width: 480 },
+      { kind: 'detail', assetId: samples.work.assetId, usage: 'detail', width: 960 },
+      { kind: 'home-hero-landscape', assetId: samples.landscape.assetId, usage: 'home-hero-landscape', width: 768 },
+      { kind: 'home-hero-portrait', assetId: samples.portrait.assetId, usage: 'home-hero-portrait', width: 480 },
+    ] as const
+    updateOperation(sqlite, operationId, 'GENERATING_PUBLIC', now, {
+      target: specifications.length,
+      generated: 0,
+      verified: 0,
+      preview: [],
+      cleanup: [],
+    })
     for (const specification of specifications) {
       const objectKey = `${prefix}/${specification.kind}.webp`
       const result = await generatePrivateWatermarkPreview(
@@ -562,23 +566,23 @@ async function runRebuild(
   now: number,
 ) {
   const operation = requireOperation(sqlite, operationId)
-  const targets = watermarkTargets(sqlite)
-  const counts = impact(sqlite, targets)
-  sqlite.prepare(`
-    UPDATE watermark_operations
-    SET affected_work_count = ?, affected_hero_slide_count = ?,
-        target_variant_count = ?, generated_variant_count = 0,
-        verified_variant_count = 0, version = version + 1, updated_at = ?
-    WHERE id = ?
-  `).run(
-    counts.publishedWorkCount,
-    counts.enabledHeroSlideCount,
-    counts.targetVariantCount,
-    now,
-    operationId,
-  )
   let generated = 0
   try {
+    const targets = watermarkTargets(sqlite)
+    const counts = impact(sqlite, targets)
+    sqlite.prepare(`
+      UPDATE watermark_operations
+      SET affected_work_count = ?, affected_hero_slide_count = ?,
+          target_variant_count = ?, generated_variant_count = 0,
+          verified_variant_count = 0, version = version + 1, updated_at = ?
+      WHERE id = ?
+    `).run(
+      counts.publishedWorkCount,
+      counts.enabledHeroSlideCount,
+      counts.targetVariantCount,
+      now,
+      operationId,
+    )
     for (const target of targets) {
       const variants = await generatePublicVariantsForProfile(
         sqlite,
@@ -737,9 +741,8 @@ async function runRebuild(
   return requireOperation(sqlite, operationId)
 }
 
-export async function applyWatermarkProfile(
+export function startWatermarkProfileApplication(
   sqlite: Database.Database,
-  storage: MediaStorage,
   profileId: string,
   expectedProfileVersion: number,
   expectedBrandingVersion: number,
@@ -787,12 +790,41 @@ export async function applyWatermarkProfile(
     SET status = 'APPLYING', version = version + 1, updated_at = ?
     WHERE id = ? AND status IN ('DRAFT', 'FAILED')
   `).run(now, profileId)
+  return operationDto(operation)
+}
+
+export async function runWatermarkProfileApplication(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  operationId: string,
+  now = Date.now(),
+) {
   return operationDto(await runRebuild(
     sqlite,
     storage,
-    operation.id,
+    operationId,
     now,
   ))
+}
+
+export async function applyWatermarkProfile(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  profileId: string,
+  expectedProfileVersion: number,
+  expectedBrandingVersion: number,
+  now = Date.now(),
+) {
+  const operation = startWatermarkProfileApplication(
+    sqlite,
+    profileId,
+    expectedProfileVersion,
+    expectedBrandingVersion,
+    now,
+  )
+  return operation.status === 'DONE'
+    ? operation
+    : runWatermarkProfileApplication(sqlite, storage, operation.operationId, now)
 }
 
 export function getWatermarkOperation(

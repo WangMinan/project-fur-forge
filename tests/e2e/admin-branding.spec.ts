@@ -238,6 +238,9 @@ test('应用确认、影响摘要、原子切换与防重复', async ({ page }) 
   await expect(dialog.getByRole('button', { name: '确认应用' })).toBeFocused()
   await page.keyboard.press('Enter')
 
+  await expect(operationRegion(page).getByRole('progressbar', {
+    name: /全站水印应用进度/,
+  })).toBeVisible()
   await expect(operationRegion(page)).toContainText('已完成')
   await expect(operationRegion(page)).toContainText('待清理 0')
   const active = page.locator('.branding-active')

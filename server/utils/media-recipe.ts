@@ -648,11 +648,8 @@ export async function generatePrivateWatermarkPreview(
   },
 ) {
   const sourceAsset = asset(sqlite, input.assetId)
-  if (
-    !recipes[input.usage].roles.includes(sourceAsset.role as never)
-    || !recipes[input.usage].widths.includes(input.width as never)
-  ) {
-    throw new ServiceError(400, 'VALIDATION_ERROR', 'Preview usage does not match asset role.')
+  if (!recipes[input.usage].widths.includes(input.width as never)) {
+    throw new ServiceError(400, 'VALIDATION_ERROR', 'Preview width is invalid.')
   }
   const source = processingSource(sqlite, sourceAsset)
   const profile = requireWatermarkProfile(sqlite, input.profileId)

@@ -331,6 +331,12 @@ export function loadRuntimeConfig(
   options: LoadRuntimeConfigOptions = {},
 ): RuntimeConfig {
   const cwd = options.cwd ?? process.cwd()
+  const dotenvFile = resolve(cwd, '.env')
+
+  if (!options.env && existsSync(dotenvFile)) {
+    process.loadEnvFile(dotenvFile)
+  }
+
   const env = options.env ?? process.env
 
   if (Object.hasOwn(env, 'OSS_BUCKET')) {

@@ -33,6 +33,30 @@ const operationBusy = computed(() => {
     || status === 'CLEANING_PUBLIC'
 })
 
+const rebuildOperation = computed(() =>
+  props.operation?.operationType === 'WATERMARK_REBUILD'
+    ? props.operation
+    : null,
+)
+
+const progressMax = computed(() =>
+  Math.max((rebuildOperation.value?.targetVariantCount ?? 0) * 2, 1),
+)
+
+const progressValue = computed(() => {
+  const current = rebuildOperation.value
+  if (!current || current.targetVariantCount === 0) {
+    return undefined
+  }
+  return Math.min(current.generatedVariantCount, current.targetVariantCount)
+    + Math.min(current.verifiedVariantCount, current.targetVariantCount)
+})
+
+const progressPercent = computed(() => progressValue.value === undefined
+  ? null
+  : Math.round(progressValue.value / progressMax.value * 100),
+)
+
 const canApply = computed(() =>
   props.previewReady
   && !props.mutating
@@ -139,6 +163,20 @@ function onConfirmApply() {
         · 已核验 {{ operation.verifiedVariantCount }}/{{ operation.targetVariantCount }}
         · 待清理 {{ operation.cleanupPendingCount }}
       </p>
+      <div v-if="rebuildOperation" class="branding-apply__progress">
+        <p class="branding-apply__progress-label">
+          <span>公开图生成与核验进度</span>
+          <span>{{ progressPercent === null ? '正在统计…' : `${progressPercent}%` }}</span>
+        </p>
+        <progress
+          class="branding-apply__progress-bar"
+          :max="progressMax"
+          :value="progressValue"
+          :aria-label="progressPercent === null
+            ? '正在统计全站水印应用进度'
+            : `全站水印应用进度：${progressPercent}%`"
+        />
+      </div>
       <template v-if="operation.status === 'FAILED'">
         <p class="branding-apply__failure" role="alert">
           {{ watermarkFailureHint(operation.failureCode) }}
@@ -268,6 +306,26 @@ function onConfirmApply() {
   margin: 0;
   font-size: var(--admin-font-sm);
   color: var(--admin-text-secondary);
+}
+
+.branding-apply__progress {
+  width: 100%;
+}
+
+.branding-apply__progress-label {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--admin-space-3);
+  margin: 0 0 var(--admin-space-2);
+  font-size: var(--admin-font-xs);
+  color: var(--admin-text-secondary);
+}
+
+.branding-apply__progress-bar {
+  display: block;
+  width: 100%;
+  height: 0.5rem;
+  accent-color: var(--admin-accent-primary);
 }
 
 .branding-apply__failure {
