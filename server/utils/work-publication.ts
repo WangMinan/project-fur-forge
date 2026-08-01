@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { setTimeout as delay } from 'node:timers/promises'
 import type Database from 'better-sqlite3'
 import { publicationOperationDtoSchema } from '../../shared/schemas/publication'
 import type {
@@ -479,13 +480,27 @@ export async function publishWork(
     failureCode = 'PUBLIC_MEDIA_GENERATION_FAILED'
     updateOperation(sqlite, operation.id, 'APPLYING_WATERMARK', [], now)
     for (const photo of photos(sqlite, workId)) {
-      await generatePublicVariants(
-        sqlite,
-        storage,
-        photo.assetId,
-        ['work-card', 'detail'],
-        now,
-      )
+      try {
+        await generatePublicVariants(
+          sqlite,
+          storage,
+          photo.assetId,
+          ['work-card', 'detail'],
+          now,
+        )
+      }
+      catch {
+        // ponytail: one bounded retry absorbs OSS cold-read/transient failures;
+        // add a worker only if publication volume requires asynchronous jobs.
+        await delay(1_000)
+        await generatePublicVariants(
+          sqlite,
+          storage,
+          photo.assetId,
+          ['work-card', 'detail'],
+          now,
+        )
+      }
     }
     const generatedKeys = newlyCreatedKeys(sqlite, workId, before)
     stage = 'VERIFYING_PUBLIC'

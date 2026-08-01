@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-T12 已于 2026-07-31 建立 P0 Drizzle Schema、两项初始领域迁移、SQLite 约束/触发器和显式公开/管理媒体投影；S2 Review 收口新增第三项增量迁移，补齐媒体 role/usage 矩阵与 `source_variant_id` 处理来源关系。表结构依据本文件与上游契约建模，没有照搬既有 DTO 或视觉夹具；正式媒体上传、处理和发布编排仍未实现。
+T12 已于 2026-07-31 建立 P0 Drizzle Schema、两项初始领域迁移、SQLite 约束/触发器和显式公开/管理媒体投影；S2 Review 收口新增第三项增量迁移，补齐媒体 role/usage 矩阵与 `source_variant_id` 处理来源关系。表结构依据本文件与上游契约建模，没有照搬既有 DTO 或视觉夹具；T14–T18 的正式媒体上传、处理和发布编排已落地，任务状态等待联合验收。
 
 ## P0 模型
 
@@ -15,7 +15,7 @@ T12 已于 2026-07-31 建立 P0 Drizzle Schema、两项初始领域迁移、SQLi
 - `asset_variants`：FFmpeg 私有处理源、草稿私有衍生图与公开衍生图的相对 Key、用途、宽度、格式、摘要、recipe 版本和水印 profile 身份；可选 `source_variant_id` 记录同一资产内的 READY PRIVATE preprocess 来源。
 - `work_assets`：作品与 `design_sheet` / `studio_photo` 的关系、顺序、主图角色、焦点/裁切和水印锚点。
 - `site_hero_slides`：站点级首页轮播；每项通过两个 assetId 关联一张 `assets.role = home_hero_landscape` 与一张 `assets.role = home_hero_portrait` 的资产，保存 alt、顺序、启用、版本和可选已发布作品关联；停用草稿仍须横竖 ID、alt 和排序完整，但资产可以暂未 READY。
-- `publication_operations`：记录跨 SQLite 与双 Bucket 的生成、水印、验证、提交和清理进度；不记录 ACL 切换，不充当队列。
+- `publication_operations`：记录跨 SQLite 与双 Bucket 的生成、水印、验证、提交和清理进度及稳定内部失败码；管理端以发布检查的 `missingVariantCount` 展示进度，不另建队列或进度表。不保存 OSS 对象 Key/响应正文，不记录 ACL 切换。OSS requestId 与服务错误码只进入脱敏运行日志。
 - `business_statuses`、`site_content`：受限的营业状态与必要文字内容；首页轮播媒体不塞进通用 `site_content` JSON。
 - `audit_logs`：最小操作人、时间、对象和结果，不保存请求正文或敏感字段。
 

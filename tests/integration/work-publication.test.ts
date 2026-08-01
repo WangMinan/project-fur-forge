@@ -181,6 +181,35 @@ describe('dual-bucket work publication operations', () => {
     expect(storage.processCalls).toHaveLength(12)
   })
 
+  it('absorbs one transient OSS generation failure inside one publish request', async () => {
+    const work = createWorkWithPhoto()
+    const process = storage.processPrivateToPublic.bind(storage)
+    let attempts = 0
+    storage.processPrivateToPublic = async (input) => {
+      attempts += 1
+      if (attempts === 1) {
+        throw new Error('transient OSS generation failure')
+      }
+      await process(input)
+    }
+
+    const result = await publishWork(
+      sqlite,
+      storage,
+      work.id,
+      work.version,
+      USER_ID,
+      NOW + 3_000,
+    )
+
+    expect(result).toMatchObject({
+      operation: { status: 'DONE' },
+      work: { publicationStatus: 'published' },
+    })
+    expect(attempts).toBe(13)
+    expect(storage.processCalls).toHaveLength(12)
+  })
+
   it('keeps the current published projection when a new publish request fails', async () => {
     const work = createWorkWithPhoto()
     const published = await publishWork(

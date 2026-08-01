@@ -12,6 +12,7 @@ import type {
   WatermarkAnchor,
 } from '../../shared/types/contracts'
 import type { MediaStorage } from './media-storage'
+import { safeLog } from './safe-log'
 import { ServiceError } from './service-error'
 
 export const PUBLIC_RECIPE_VERSION = 'recipe-v1'
@@ -19,8 +20,8 @@ export const STANDARD_WATERMARK_PROFILE = 'brand-standard-v1'
 
 const WATERMARK = {
   marginPx: 24,
-  scalePercent: 15,
   transparency: 70,
+  widthPercent: 18,
 } as const
 
 export type PublicMediaUsage =
@@ -346,7 +347,7 @@ function recipeIdentity(
     quality: format === 'webp' ? 82 : format === 'jpeg' ? 86 : 100,
     watermarkProfile: STANDARD_WATERMARK_PROFILE,
     logoDigest,
-    watermarkScalePercent: WATERMARK.scalePercent,
+    watermarkWidthPercent: WATERMARK.widthPercent,
     watermarkTransparency: WATERMARK.transparency,
     watermarkMarginPx: WATERMARK.marginPx,
     watermarkAnchor: sourceAsset.watermarkAnchor,
@@ -389,12 +390,16 @@ function processString(
   width: number,
   format: PublicFormat,
 ) {
+  const watermarkWidth = Math.max(
+    1,
+    Math.round(width * WATERMARK.widthPercent / 100),
+  )
+  const resizedLogo = `${logoKey}?x-oss-process=image/resize,w_${watermarkWidth}`
   return [
     `image/${resizeOperation(sourceAsset, usage, width)}`,
     [
-      `watermark,image_${urlSafeBase64(logoKey)}`,
+      `watermark,image_${urlSafeBase64(resizedLogo)}`,
       `t_${WATERMARK.transparency}`,
-      `P_${WATERMARK.scalePercent}`,
       `g_${ossAnchor(sourceAsset.watermarkAnchor)}`,
       `x_${WATERMARK.marginPx}`,
       `y_${WATERMARK.marginPx}`,
@@ -544,6 +549,24 @@ async function generateOne(
     return existingVariant(sqlite, objectKey)!
   }
   catch (error) {
+    const candidate = error as {
+      code?: unknown
+      data?: { Code?: unknown }
+      name?: unknown
+      requestId?: unknown
+      status?: unknown
+    }
+    safeLog('error', 'Public media variant generation failed.', {
+      assetId: sourceAsset.id,
+      errorCode: candidate.code,
+      errorName: candidate.name,
+      format,
+      requestId: candidate.requestId,
+      serviceCode: candidate.data?.Code,
+      status: candidate.status,
+      usage,
+      width,
+    })
     try {
       await storage.deletePublic(objectKey)
     }

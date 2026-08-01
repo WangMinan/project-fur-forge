@@ -58,9 +58,21 @@ test('发布成功：状态翻转、编辑锁定、公开预览媒体就绪', as
   await gotoEditor(page, work.id)
   await makePublishable(page)
 
+  let releasePublish!: () => void
+  const publishGate = new Promise<void>((resolve) => {
+    releasePublish = resolve
+  })
+  await page.route(`**/api/admin/v1/works/${work.id}/publish`, async (route) => {
+    await publishGate
+    await route.continue()
+  })
   await page.getByRole('button', { name: '发布', exact: true }).click()
   const panel = page.getByTestId('publication-panel')
+  await expect(panel.getByRole('progressbar')).toBeVisible()
+  await expect(panel).toContainText('已生成 0 / 12，剩余 12 张')
+  releasePublish()
   await expect(panel).toContainText('发布成功', { timeout: 60_000 })
+  await expect(panel.getByRole('progressbar')).toHaveCount(0)
   await expect(panel).toContainText('已发布')
   await expect(page.getByText(/已发布：基础信息与出厂照为只读/)).toBeVisible()
   await expect(page.getByLabel(/角色名/)).toBeDisabled()

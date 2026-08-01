@@ -44,6 +44,8 @@ const pending = ref<'cleanup' | 'publish' | 'unpublish' | null>(null)
 const feedback = ref<Feedback | null>(null)
 const lastOperation = ref<PublicationOperationDto | null>(null)
 const confirmUnpublish = ref(false)
+const publishProgress = ref<{ remaining: number, total: number } | null>(null)
+let publishProgressTimer: ReturnType<typeof setInterval> | null = null
 
 const STATUS_TONES = {
   draft: 'warning',
@@ -57,6 +59,45 @@ const canPublish = computed(() =>
   && !props.busy
   && props.work.publicationStatus !== 'published',
 )
+
+const publishCompleted = computed(() => publishProgress.value
+  ? Math.max(0, publishProgress.value.total - publishProgress.value.remaining)
+  : 0,
+)
+
+async function refreshPublishProgress() {
+  try {
+    const result = await adminApi(
+      `/api/admin/v1/works/${props.work.id}/publication-check`,
+      { schema: workPublicationCheckResponseSchema },
+    )
+    check.value = result.data
+    if (publishProgress.value) {
+      publishProgress.value.remaining = Math.min(
+        publishProgress.value.total,
+        result.data.missingVariantCount,
+      )
+    }
+  }
+  catch {
+    // The publish response remains authoritative; a missed progress poll is harmless.
+  }
+}
+
+function startPublishProgress() {
+  const total = check.value?.missingVariantCount ?? 0
+  publishProgress.value = { remaining: total, total }
+  publishProgressTimer = setInterval(() => {
+    void refreshPublishProgress()
+  }, 1_000)
+}
+
+function stopPublishProgress() {
+  if (publishProgressTimer) {
+    clearInterval(publishProgressTimer)
+    publishProgressTimer = null
+  }
+}
 
 async function loadCheck() {
   checkLoading.value = true
@@ -115,6 +156,7 @@ async function publish() {
   }
   feedback.value = null
   pending.value = 'publish'
+  startPublishProgress()
   try {
     const result = await adminApi(
       `/api/admin/v1/works/${props.work.id}/publish`,
@@ -124,6 +166,9 @@ async function publish() {
         schema: publicationActionResponseSchema,
       },
     )
+    if (result.data.operation.status === 'DONE' && publishProgress.value) {
+      publishProgress.value.remaining = 0
+    }
     handleOperationOutcome(result.data.operation, result.data.work.publicationStatus)
     emit('mutated')
   }
@@ -147,6 +192,7 @@ async function publish() {
     }
   }
   finally {
+    stopPublishProgress()
     pending.value = null
   }
 }
@@ -255,6 +301,10 @@ watch(() => props.work.version, () => {
 onMounted(() => {
   void loadCheck()
 })
+
+onUnmounted(() => {
+  stopPublishProgress()
+})
 </script>
 
 <template>
@@ -315,9 +365,18 @@ onMounted(() => {
       >刷新检查</button>
     </div>
 
-    <p v-if="pending === 'publish'" class="publication__state" role="status">
-      正在生成并校验公开图片，请勿重复提交或关闭页面…
-    </p>
+    <div v-if="pending === 'publish'" class="publication__progress" role="status">
+      <p class="publication__state">正在生成并校验公开图片，请勿关闭页面…</p>
+      <template v-if="publishProgress && publishProgress.total > 0">
+        <p class="publication__progress-label">已生成 {{ publishCompleted }} / {{ publishProgress.total }}，剩余 {{ publishProgress.remaining }} 张</p>
+        <progress
+          class="publication__progress-bar"
+          :value="publishCompleted"
+          :max="publishProgress.total"
+          :aria-label="`公开图片生成进度：${publishCompleted}/${publishProgress.total}`"
+        />
+      </template>
+    </div>
     <p v-else-if="pending === 'unpublish'" class="publication__state" role="status">
       正在下架并清理公开文件…
     </p>
@@ -356,6 +415,27 @@ onMounted(() => {
   margin: 0 0 var(--admin-space-3);
   font-size: var(--admin-font-sm);
   color: var(--admin-text-secondary);
+}
+
+.publication__progress {
+  margin: var(--admin-space-3) 0 0;
+}
+
+.publication__progress .publication__state {
+  margin-bottom: var(--admin-space-2);
+}
+
+.publication__progress-label {
+  margin: 0 0 var(--admin-space-2);
+  font-size: var(--admin-font-xs);
+  color: var(--admin-text-secondary);
+}
+
+.publication__progress-bar {
+  display: block;
+  width: 100%;
+  height: 0.5rem;
+  accent-color: var(--admin-accent-primary);
 }
 
 .publication__ok {
