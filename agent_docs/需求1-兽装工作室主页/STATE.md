@@ -6,13 +6,13 @@
 
 阶段 4 · IMPLEMENTATION 进行中。T01–T18、GATE-06 与 EXT-02 已完成。景宸在 S4 开始前追加“可由管理端选择 Logo 候选的大尺寸居中水印”要求，现有四角小水印不再是目标结果。
 
-**下一项为 GATE-07 · 可配置居中水印迁移。T19 尚未启动，必须等待 GATE-07 通过。**
+**GATE-07 工程侧已在 `feature/gate07-watermark-engineering-sol` 完成并等待合入；管理 UI、三视口视觉证据和最终确认仍未完成。T19/T20 尚未启动，必须等待 GATE-07 通过。**
 
 ## 当前执行分工
 
-- GPT 5.6 Sol 作为 `ENGINEERING_PRIMARY` 执行更新后的 S4：先实现 GATE-07 数据/接口/OSS/原子切换，再锁定 T19/T20 服务端交接。
-- Kimi K3 作为 `UI_PRIMARY` 在 S4 合入后实现 `/admin/site/branding`、T19 和 T20 页面/浏览器证据。
-- 随后由 GPT 5.6 Sol 执行 S5 工程收口，独立 GPT 5.6 Sol 会话执行 T21 门禁；用户作最终批准。
+- GPT 5.6 Sol 作为 `ENGINEERING_PRIMARY` 已完成更新后的 S4：GATE-07 数据/接口/OSS/原子切换与 UI 契约；本批没有提前实现 T19/T20。
+- Kimi K3 作为 `UI_PRIMARY` 在 S4 合入后只先实现 `/admin/site/branding`、移除 v1 四角控件并提供三视口浏览器证据。
+- 随后由 GPT 5.6 Sol 执行 S5 的 GATE-07 工程收口；用户确认通过后，才重新路由 T19/T20 和后续 T21 门禁。
 - 完整批次与分支见 [`implementation/EXECUTION_ROUTING.md`](./implementation/EXECUTION_ROUTING.md)。
 
 ## 已完成基础
@@ -73,7 +73,8 @@ T14–T18 的完成状态保持有效。新要求是后续增量门禁，不把�
 - 2026-08-01：完成 T14–T18 用户联合验收并合入 `main`。
 - 2026-08-01：景宸要求将左上小水印改为大型居中水印，并允许管理端选择后续 Logo；用户建议默认 50% 不透明度和居中。
 - 2026-08-01：完成水印 v2 跨层文档校准；保留 T14–T18 完成状态，新增 GATE-07 并阻断 T19。
+- 2026-08-01：在 `feature/gate07-watermark-engineering-sol` 完成 GATE-07 工程侧：迁移、种子、候选/profile API、四比例真实 OSS 预览、完整再生成、原子切换、精确清理、发布门禁和自动化测试；GATE-07 仍待 UI 与用户确认。
 
 ## 下一步
 
-从最新 `main` 创建 `feature/gate07-t19-t20-engineering-sol`，按更新后的 S4 提示词执行。不得直接启动旧版 T19/T20 Kimi 分支。
+先合入 `feature/gate07-watermark-engineering-sol`。Kimi 依据 `implementation/notes/GATE07-UI-HANDOFF.md` 完成 `/admin/site/branding` 和 v1 四角控件移除；工程复核、三视口视觉确认和用户确认完成前，不得启动 T19/T20，也不得勾选 GATE-07。

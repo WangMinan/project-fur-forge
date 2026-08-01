@@ -33,6 +33,7 @@ export const PUBLICATION_BLOCKER_VALUES = [
   'PRIMARY_STUDIO_PHOTO_REQUIRED',
   'STUDIO_PHOTO_NOT_READY',
   'STUDIO_PHOTO_ALT_REQUIRED',
+  'WATERMARK_PROFILE_REQUIRED',
 ] as const
 
 export const publicationOperationStatusSchema = z.enum(

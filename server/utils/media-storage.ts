@@ -47,15 +47,22 @@ export interface AnonymousPublicObject {
   contentType: string
 }
 
+export interface PrivateSignedObject {
+  content: Buffer
+  contentType: string
+}
+
 export interface MediaStorage {
   deletePrivate(objectKey: string): Promise<void>
   deletePublic(objectKey: string): Promise<void>
   getPrivate(objectKey: string): Promise<Buffer>
+  getPrivateSigned(objectKey: string, expiresAt: number): Promise<PrivateSignedObject>
   getPublicAnonymous(objectKey: string): Promise<AnonymousPublicObject>
   headPrivate(objectKey: string): Promise<PrivateObjectHead>
   headPublic(objectKey: string): Promise<PrivateObjectHead>
   imageInfoPrivate(objectKey: string): Promise<PrivateImageInfo>
   imageInfoPublic(objectKey: string): Promise<PrivateImageInfo>
+  processPrivateToPrivate(input: PublicProcessInput): Promise<void>
   processPrivateToPublic(input: PublicProcessInput): Promise<void>
   putPrivateConditional(input: PrivateObjectPutInput): Promise<void>
   signConditionalPut(input: ConditionalPutInput): Promise<ConditionalPutDto>
@@ -135,6 +142,7 @@ function imageInfoValue(
 }
 
 export class AliOssMediaStorage implements MediaStorage {
+  private readonly privateBucket: string
   private readonly privateClient: Promise<OssClient>
   private readonly publicBucket: string
   private readonly publicClient: Promise<OssClient>
@@ -142,6 +150,7 @@ export class AliOssMediaStorage implements MediaStorage {
 
   constructor(config: RuntimeConfig) {
     const oss = requiredOssConfig(config)
+    this.privateBucket = oss.bucket
     this.publicBucket = oss.publicBucket
     this.publicMediaBaseUrl = config.mediaBaseUrl
     this.privateClient = createOssClient({
@@ -238,6 +247,18 @@ export class AliOssMediaStorage implements MediaStorage {
       : Buffer.from(result.content)
   }
 
+  async getPrivateSigned(objectKey: string, expiresAt: number) {
+    const { url } = await this.signPrivateGet(objectKey, expiresAt)
+    const response = await fetch(url, { redirect: 'error' })
+    if (!response.ok) {
+      throw new Error('Signed private object read failed.')
+    }
+    return {
+      content: Buffer.from(await response.arrayBuffer()),
+      contentType: response.headers.get('content-type') ?? '',
+    }
+  }
+
   async imageInfoPrivate(objectKey: string) {
     return this.imageInfo(await this.privateClient, objectKey)
   }
@@ -294,6 +315,15 @@ export class AliOssMediaStorage implements MediaStorage {
       input.objectKey,
       input.process,
       this.publicBucket,
+    )
+  }
+
+  async processPrivateToPrivate(input: PublicProcessInput) {
+    await (await this.privateClient).processObjectSave(
+      input.sourceObjectKey,
+      input.objectKey,
+      input.process,
+      this.privateBucket,
     )
   }
 

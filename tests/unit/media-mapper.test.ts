@@ -43,8 +43,12 @@ const publicVariant: VariantRecord = {
   recipeVersion: 'recipe-v1',
   sha256: 'c'.repeat(64),
   usage: 'work-card',
-  watermarkAnchor: 'top-left',
-  watermarkProfile: 'brand-standard-v1',
+  watermarkAnchor: 'center',
+  watermarkConfigDigest: 'd'.repeat(64),
+  watermarkOpacityPercent: 50,
+  watermarkProfile: 'brand-centered-v2',
+  watermarkProfileId: '550e8400-e29b-41d4-a716-446655440009',
+  watermarkScalePercent: 60,
 }
 
 let variantSequence = 10
@@ -118,6 +122,7 @@ describe('media DTO mapping', () => {
 
   it('maps complete hero recipes and rejects incomplete publication data', () => {
     const record: HeroSlideRecord = {
+      activeWatermarkProfileId: publicVariant.watermarkProfileId!,
       id: '550e8400-e29b-41d4-a716-446655440002',
       version: 1,
       enabled: true,
@@ -163,7 +168,11 @@ describe('media DTO mapping', () => {
         ...variant,
         logoDigest: 'none',
         watermarkAnchor: 'none',
+        watermarkConfigDigest: 'none',
+        watermarkOpacityPercent: null,
         watermarkProfile: 'none',
+        watermarkProfileId: null,
+        watermarkScalePercent: null,
       })),
     }, 'https://media.example.com')).toThrow(/requires WebP and fallback/)
     expect(() => toPublicHeroSlideDto({

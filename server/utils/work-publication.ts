@@ -12,6 +12,8 @@ import type {
 import type { MediaStorage } from './media-storage'
 import { generatePublicVariants } from './media-recipe'
 import { ServiceError } from './service-error'
+import { activeWatermarkProfileId } from './watermark-branding'
+import { requireWatermarkProfile } from './watermark-profile'
 
 interface OperationRow {
   cleanupObjectKeysJson: string
@@ -154,14 +156,20 @@ function missingVariantCount(
   sqlite: Database.Database,
   publicationPhotos: readonly PublicationPhoto[],
 ) {
+  const profileId = activeWatermarkProfileId(sqlite)
+  if (!profileId) {
+    return publicationPhotos.length * 12
+  }
+  const profile = requireWatermarkProfile(sqlite, profileId)
   const formats = sqlite.prepare(`
     SELECT format FROM asset_variants
     WHERE asset_id = ? AND storage_scope = 'PUBLIC' AND status = 'READY'
       AND media_role = 'studio_photo' AND usage = ? AND width = ?
       AND recipe_version = 'recipe-v1'
-      AND watermark_profile = 'brand-standard-v1'
-      AND logo_digest NOT GLOB '*[^0-9a-f]*' AND length(logo_digest) = 64
-      AND watermark_anchor = ?
+      AND watermark_profile = 'brand-centered-v2'
+      AND watermark_profile_id = ? AND watermark_config_digest = ?
+      AND logo_digest = ? AND watermark_anchor = 'center'
+      AND watermark_opacity_percent = ? AND watermark_scale_percent = ?
       AND sha256 NOT GLOB '*[^0-9a-f]*' AND length(sha256) = 64
       AND byte_size > 0
   `)
@@ -176,7 +184,11 @@ function missingVariantCount(
           photo.assetId,
           usage,
           width,
-          photo.watermarkAnchor,
+          profile.id,
+          profile.configDigest,
+          profile.logoDigest,
+          profile.opacityPercent,
+          profile.scalePercent,
         ) as string[])
         if (!values.has('webp')) {
           missing += 1
@@ -220,6 +232,9 @@ export function checkWorkPublication(
   }
   if (publicationPhotos.some(photo => !photo.alt || photo.alt.trim() === '')) {
     blockers.push('STUDIO_PHOTO_ALT_REQUIRED')
+  }
+  if (!activeWatermarkProfileId(sqlite)) {
+    blockers.push('WATERMARK_PROFILE_REQUIRED')
   }
   return {
     workId,

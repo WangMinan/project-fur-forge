@@ -130,6 +130,20 @@ export function createSyntheticWatermarkPng() {
   })
 }
 
+export function createSyntheticSourcePng(width, height) {
+  return createPng({
+    width,
+    height,
+    channels: 3,
+    colorType: 2,
+    pixel(output, offset, x, y) {
+      output[offset] = (x * 17 + y * 3) & 0xff
+      output[offset + 1] = (x * 5 + y * 11) & 0xff
+      output[offset + 2] = (x * 7 + y * 13) & 0xff
+    },
+  })
+}
+
 export function contentDigests(content) {
   return {
     md5Base64: createHash('md5').update(content).digest('base64'),

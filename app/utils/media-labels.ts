@@ -59,6 +59,7 @@ export const PUBLICATION_BLOCKER_LABELS: Record<PublicationBlocker, string> = {
   PRIMARY_STUDIO_PHOTO_REQUIRED: '需要设置唯一一张主图',
   STUDIO_PHOTO_NOT_READY: '有出厂照尚未 READY',
   STUDIO_PHOTO_ALT_REQUIRED: '有出厂照缺少图片说明（alt）',
+  WATERMARK_PROFILE_REQUIRED: '需要先初始化并启用站点水印',
 }
 
 export const PUBLICATION_OPERATION_STATUS_LABELS

@@ -25,7 +25,7 @@ interface CompleteUploadInput {
   expectedVersion: number
   focalX: number
   focalY: number
-  watermarkAnchor: WatermarkAnchor
+  watermarkAnchor?: WatermarkAnchor | undefined
 }
 
 interface AssetRow {
@@ -75,6 +75,9 @@ function requireAsset(sqlite: Database.Database, id: string) {
 }
 
 function previewsFor(role: AssetRow['role']): VerifiedAssetDto['previews'] {
+  if (role === 'watermark_logo') {
+    return []
+  }
   if (role === 'design_sheet') {
     return [
       { usage: 'design-sheet', aspect: 'original', fitMode: 'contain' },
@@ -149,6 +152,31 @@ function mimeFromImageInfo(format: string) {
     return `image/${normalized}`
   }
   return null
+}
+
+export function pngHasTransparency(content: Buffer) {
+  if (
+    content.length < 33
+    || !content.subarray(0, 8).equals(Buffer.from('89504e470d0a1a0a', 'hex'))
+  ) {
+    return false
+  }
+  const colorType = content[25]
+  if (colorType === 4 || colorType === 6) {
+    return true
+  }
+  for (let offset = 8; offset + 12 <= content.length;) {
+    const length = content.readUInt32BE(offset)
+    const end = offset + 12 + length
+    if (end > content.length) {
+      return false
+    }
+    if (content.toString('ascii', offset + 4, offset + 8) === 'tRNS') {
+      return true
+    }
+    offset = end
+  }
+  return false
 }
 
 function correctedDimensions(info: PrivateImageInfo) {
@@ -304,6 +332,14 @@ async function verifyOriginal(
     || Math.max(dimensions.width, dimensions.height) > 12_000
     || !directionValid
     || !portraitValid
+    || (
+      row.mediaRole === 'watermark_logo'
+      && (
+        row.expectedContentType !== 'image/png'
+        || row.expectedBytes > PREPROCESS_THRESHOLD_BYTES
+        || !pngHasTransparency(content)
+      )
+    )
   ) {
     return failValidation(
       sqlite,
@@ -391,7 +427,7 @@ function insertAsset(
     input.focalX,
     input.focalY,
     row.mediaRole === 'design_sheet' ? 'contain' : 'cover',
-    input.watermarkAnchor,
+    input.watermarkAnchor ?? 'top-left',
     status === 'FAILED' ? 'UPLOAD_PREPROCESS_FAILURE' : null,
     now,
     now,

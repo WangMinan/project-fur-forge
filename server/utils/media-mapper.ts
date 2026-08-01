@@ -46,10 +46,15 @@ export interface VariantRecord {
   sha256: string | null
   usage: string
   watermarkAnchor: string
+  watermarkConfigDigest: string
+  watermarkOpacityPercent: number | null
   watermarkProfile: string
+  watermarkProfileId: string | null
+  watermarkScalePercent: number | null
 }
 
 export interface HeroSlideRecord {
+  activeWatermarkProfileId: string
   id: string
   version: number
   enabled: boolean
@@ -122,12 +127,14 @@ export function toPublicHeroSlideDto(
   const landscape = completeHeroVariants(
     'home_hero_landscape',
     record.landscapeVariants,
+    record.activeWatermarkProfileId,
   )
     .map(variant => toPublicVariantDto(variant, mediaBaseUrl))
     .filter(variant => variant !== null)
   const portrait = completeHeroVariants(
     'home_hero_portrait',
     record.portraitVariants,
+    record.activeWatermarkProfileId,
   )
     .map(variant => toPublicVariantDto(variant, mediaBaseUrl))
     .filter(variant => variant !== null)

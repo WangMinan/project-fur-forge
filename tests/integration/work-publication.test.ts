@@ -32,6 +32,7 @@ import {
   unpublishWork,
 } from '../../server/utils/work-publication'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
+import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
 
 const USER_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const ASSET_ID = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
@@ -126,6 +127,9 @@ beforeEach(async () => {
   sqlite = openDatabase(databaseFile).sqlite
   storage = new FakeMediaStorage()
   insertUser()
+  insertActiveWatermarkProfile(sqlite, NOW, {
+    environmentPrefix: 'test/t18-fixture',
+  })
 })
 
 afterEach(() => {

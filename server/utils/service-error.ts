@@ -23,3 +23,10 @@ export function asApiError(error: unknown): never {
 
   throw error
 }
+
+export function asSafeApiError(error: unknown): never {
+  if (error instanceof ServiceError) {
+    asApiError(error)
+  }
+  throw createApiError(500, 'INTERNAL_ERROR', 'Service is unavailable.')
+}

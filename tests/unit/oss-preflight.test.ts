@@ -8,6 +8,7 @@ import {
   contentDigests,
   createLargeSyntheticPng,
   createRunId,
+  createSyntheticSourcePng,
   createSyntheticWatermarkPng,
   evaluateCorsRules,
   EXPECTED_PRIVATE_BUCKET,
@@ -94,6 +95,14 @@ describe('T10 synthetic media', () => {
     expect(watermark.subarray(1, 4).toString('ascii')).toBe('PNG')
     expect(watermark.length).toBeLessThan(100_000)
     expect(contentDigests(watermark).sha256).toMatch(/^[a-f0-9]{64}$/u)
+  })
+
+  it('generates representative source ratios for watermark previews', () => {
+    const source = createSyntheticSourcePng(1200, 1600)
+
+    expect(source.readUInt32BE(16)).toBe(1200)
+    expect(source.readUInt32BE(20)).toBe(1600)
+    expect(contentDigests(source).sha256).toMatch(/^[a-f0-9]{64}$/u)
   })
 
   it('uses URL-safe unpadded Base64 for OSS processing parameters', () => {
