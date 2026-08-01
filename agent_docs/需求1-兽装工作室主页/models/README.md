@@ -19,6 +19,8 @@ T12 已于 2026-07-31 建立 P0 Drizzle Schema、两项初始领域迁移、SQLi
 - `business_statuses`、`site_content`：受限的营业状态与必要文字内容；首页轮播媒体不塞进通用 `site_content` JSON。
 - `audit_logs`：最小操作人、时间、对象和结果，不保存请求正文或敏感字段。
 
+P0 删除未发布作品时，`work_feature_tags` / `work_assets` 随作品聚合移除，关联 `assets` 继续作为永久私有原图档案保留；作品已有的公开 `asset_variants` 必须先完成对象与记录清理。已发布作品必须先下架，T40 再引入 `trash_entries` 恢复语义。
+
 ## P1 模型
 
 - `return_photos`：返图公开元数据、独立资产关联、轻量水印 profile 及可选私有授权记录。

@@ -101,6 +101,71 @@
   border-radius: var(--admin-radius-sm);
 }
 
+.admin-surface .editor-card {
+  padding: var(--admin-space-5);
+  background: var(--admin-bg-primary);
+  border: 1px solid var(--admin-border-secondary);
+  border-radius: var(--admin-radius-lg);
+}
+
+.admin-surface .editor-card__title {
+  margin: 0 0 var(--admin-space-4);
+  font-size: var(--admin-font-md);
+  font-weight: 600;
+}
+
+.admin-surface .editor-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--admin-space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--admin-space-3);
+}
+
+.admin-surface .editor-card__head .editor-card__title {
+  margin: 0;
+}
+
+.admin-surface .editor-card__hint {
+  margin: 0 0 0 auto;
+  font-size: var(--admin-font-xs);
+  color: var(--admin-text-tertiary);
+}
+
+.admin-surface .editor__button {
+  min-height: var(--admin-control-height);
+  padding: 0 var(--admin-space-5);
+  border-radius: var(--admin-radius-md);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-surface .editor__button--primary {
+  color: var(--admin-text-inverse);
+  background: var(--admin-accent-primary);
+  border: none;
+}
+
+.admin-surface .editor__button--primary:hover:not(:disabled) {
+  background: var(--admin-accent-hover);
+}
+
+.admin-surface .editor__button--secondary {
+  color: var(--admin-text-primary);
+  background: var(--admin-bg-primary);
+  border: 1px solid var(--admin-border-primary);
+}
+
+.admin-surface .editor__button--secondary:hover:not(:disabled) {
+  background: var(--admin-bg-subtle);
+}
+
+.admin-surface .editor__button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .admin-surface *,
   .admin-surface *::before,

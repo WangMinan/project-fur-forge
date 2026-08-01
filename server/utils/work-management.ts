@@ -11,6 +11,7 @@ import type {
   WatermarkAnchor,
   WorkListItemDto,
 } from '../../shared/types/contracts'
+import type { MediaStorage } from './media-storage'
 import { ServiceError } from './service-error'
 
 interface NonAdoptionWorkInput {
@@ -293,6 +294,71 @@ export function updateManagedWork(
     translateConstraint(error)
   }
   return getManagedWork(sqlite, id)
+}
+
+export async function deleteManagedWork(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  id: string,
+  expectedVersion: number,
+  actorUserId: string,
+  now = Date.now(),
+) {
+  const current = requireWork(sqlite, id)
+  if (current.version !== expectedVersion) {
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+  }
+  if (current.publicationStatus === 'published') {
+    throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before deleting it.')
+  }
+
+  const claimed = sqlite.prepare(`
+    UPDATE works SET version = version + 1, updated_at = ?
+    WHERE id = ? AND version = ? AND publication_status != 'published'
+  `).run(now, id, expectedVersion)
+  if (claimed.changes !== 1) {
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+  }
+
+  const publicKeys = sqlite.prepare(`
+    SELECT variant.object_key
+    FROM asset_variants AS variant
+    JOIN work_assets AS relation ON relation.asset_id = variant.asset_id
+    WHERE relation.work_id = ? AND variant.storage_scope = 'PUBLIC'
+  `).pluck().all(id) as string[]
+
+  try {
+    for (const key of publicKeys) {
+      await storage.deletePublic(key)
+      sqlite.prepare(`
+        DELETE FROM asset_variants
+        WHERE storage_scope = 'PUBLIC' AND object_key = ?
+      `).run(key)
+    }
+
+    sqlite.transaction(() => {
+      const deleted = sqlite.prepare(`
+        DELETE FROM works
+        WHERE id = ? AND version = ? AND publication_status != 'published'
+      `).run(id, expectedVersion + 1)
+      if (deleted.changes !== 1) {
+        throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+      }
+      sqlite.prepare(`
+        INSERT INTO audit_logs (
+          id, actor_user_id, action, entity_type, entity_id, result, created_at
+        ) VALUES (?, ?, 'WORK_DELETE', 'WORK', ?, 'SUCCESS', ?)
+      `).run(randomUUID(), actorUserId, id, now)
+    })()
+  }
+  catch (error) {
+    if (error instanceof ServiceError) {
+      throw error
+    }
+    throw new ServiceError(500, 'INTERNAL_ERROR', 'Work deletion failed.')
+  }
+
+  return { id }
 }
 
 function assertStudioPhotoAssets(

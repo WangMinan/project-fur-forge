@@ -1,19 +1,26 @@
-import { tmpdir } from 'node:os'
-import { resolve } from 'node:path'
 import { expect } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { resetAdminPassword } from '../../../server/utils/auth'
 import { openFixtureDatabase } from './fixture-db'
 
-export const adminBaseURL = 'http://localhost:3100'
-export const publicBaseURL = 'http://127.0.0.1:3100'
+function requiredEnvironment(name: string) {
+  const value = process.env[name]
+  if (!value) {
+    throw new Error(`${name} must be set by playwright.config.ts.`)
+  }
+  return value
+}
+
+export const adminBaseURL = requiredEnvironment('E2E_ADMIN_BASE_URL')
+export const publicBaseURL = requiredEnvironment('E2E_PUBLIC_BASE_URL')
+export const E2E_RUN_DIRECTORY = requiredEnvironment('E2E_RUN_DIRECTORY')
 
 export const E2E_ADMIN = {
   username: 'e2e-admin',
   password: 'e2e-admin-password-2026',
 } as const
 
-export const E2E_DATABASE_FILE = resolve(tmpdir(), 'fur-forge-e2e.db')
+export const E2E_DATABASE_FILE = requiredEnvironment('E2E_DATABASE_FILE')
 
 interface AdminSessionData {
   user: {

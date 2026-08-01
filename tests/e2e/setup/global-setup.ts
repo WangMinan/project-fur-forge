@@ -1,3 +1,6 @@
+import { rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { basename, dirname, resolve } from 'node:path'
 import {
   initializeAdmin,
   resetAdminPassword,
@@ -5,15 +8,30 @@ import {
 import {
   E2E_ADMIN,
   E2E_DATABASE_FILE,
+  E2E_RUN_DIRECTORY,
 } from '../helpers/auth'
 import {
   migrateFixtureDatabase,
   openFixtureDatabase,
 } from '../helpers/fixture-db'
 
-// E2E 认证夹具：webServer 使用固定测试库路径，globalSetup 在其启动后运行，
-// 保证本次运行（含复用旧服务器的情况）都落到同一个已迁移、已知凭据的库。
+function resetE2EDatabase() {
+  const runDirectory = resolve(E2E_RUN_DIRECTORY)
+  if (
+    dirname(runDirectory) !== resolve(tmpdir())
+    || !basename(runDirectory).startsWith('fur-forge-e2e-')
+    || resolve(E2E_DATABASE_FILE) !== resolve(runDirectory, 'database.db')
+  ) {
+    throw new Error('Refusing to reset an E2E database outside its run directory.')
+  }
+
+  for (const suffix of ['', '-shm', '-wal']) {
+    rmSync(`${E2E_DATABASE_FILE}${suffix}`, { force: true })
+  }
+}
+
 export default async function globalSetup() {
+  resetE2EDatabase()
   migrateFixtureDatabase(E2E_DATABASE_FILE)
   const sqlite = openFixtureDatabase(E2E_DATABASE_FILE)
 

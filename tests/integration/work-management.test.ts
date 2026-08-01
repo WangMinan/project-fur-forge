@@ -22,12 +22,16 @@ import {
 } from '../../server/utils/database'
 import {
   createManagedWork,
+  deleteManagedWork,
   getManagedWork,
   getPublicSafeWorkPreview,
   listManagedWorks,
   replaceManagedStudioPhotos,
   updateManagedWork,
 } from '../../server/utils/work-management'
+import { generatePublicVariants } from '../../server/utils/media-recipe'
+import { createSyntheticWatermarkPng } from '../../scripts/oss-preflight-core.mjs'
+import { FakeMediaStorage } from '../helpers/fake-media-storage'
 
 const USER_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const NOW = Date.UTC(2026, 7, 1)
@@ -87,6 +91,7 @@ function insertReadyPhoto(workId: string, workVersion: number, assetId: string) 
     NOW + 300_000,
     NOW + 1_000,
   )
+  return key
 }
 
 function photo(assetId: string, primary: boolean, alt: string) {
@@ -162,6 +167,62 @@ describe('minimal non-adoption work management', () => {
       1,
       workInput,
     )).toThrow(/stale/u)
+  })
+
+  it('deletes only a non-published work, cleans public variants and retains private originals', async () => {
+    const storage = new FakeMediaStorage()
+    const work = createManagedWork(sqlite, workInput, NOW)
+    const assetId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+    const privateKey = insertReadyPhoto(work.id, work.version, assetId)
+    storage.seedPrivate(privateKey, createSyntheticWatermarkPng(), 'image/png')
+    const attached = replaceManagedStudioPhotos(
+      sqlite,
+      work.id,
+      work.version,
+      [photo(assetId, true, '待删除作品出厂照')],
+      NOW + 1_000,
+    )
+    await generatePublicVariants(
+      sqlite,
+      storage,
+      assetId,
+      ['work-card'],
+      NOW + 2_000,
+    )
+
+    await expect(deleteManagedWork(
+      sqlite,
+      storage,
+      work.id,
+      attached.version,
+      USER_ID,
+      NOW + 3_000,
+    )).resolves.toEqual({ id: work.id })
+    expect(listManagedWorks(sqlite)).toEqual([])
+    expect(sqlite.prepare('SELECT count(*) FROM assets WHERE id = ?')
+      .pluck().get(assetId)).toBe(1)
+    expect(sqlite.prepare(`
+      SELECT count(*) FROM asset_variants
+      WHERE asset_id = ? AND storage_scope = 'PUBLIC'
+    `).pluck().get(assetId)).toBe(0)
+    expect(storage.deletedPublicKeys).toHaveLength(6)
+  })
+
+  it('requires a published work to be unpublished before deletion', async () => {
+    const storage = new FakeMediaStorage()
+    const work = createManagedWork(sqlite, workInput, NOW)
+    sqlite.prepare(`
+      UPDATE works SET publication_status = 'published' WHERE id = ?
+    `).run(work.id)
+
+    await expect(deleteManagedWork(
+      sqlite,
+      storage,
+      work.id,
+      work.version,
+      USER_ID,
+    )).rejects.toMatchObject({ statusCode: 409, code: 'CONFLICT' })
+    expect(getManagedWork(sqlite, work.id).publicationStatus).toBe('published')
   })
 
   it('replaces the ordered studio-photo aggregate and removes only relations', () => {

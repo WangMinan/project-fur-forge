@@ -170,6 +170,12 @@ export const createWorkRequestSchema = nonAdoptionWorkFieldsSchema
 export const updateWorkRequestSchema = versionedRequestSchema(
   nonAdoptionWorkFieldsSchema,
 )
+export const deleteWorkRequestSchema = versionedRequestSchema(
+  z.object({}).strict(),
+)
+export const deleteWorkResponseSchema = apiSuccessSchema(
+  z.object({ id: resourceIdSchema }).strict(),
+)
 
 export const studioPhotoInputSchema = z.object({
   assetId: resourceIdSchema,

@@ -1,7 +1,6 @@
 // 管理端客户端路由保护：/admin/** 全部为 CSR（routeRules ssr:false）。
-// 非登录管理路由不阻塞渲染——布局门禁在 Session 确认前只呈现克制的加载态，
-// 受保护内容不会先渲染再跳转；guest 由布局 watcher 送往登录页，
-// error 由布局呈现持久错误而非误判为未登录。
+// 非登录管理路由等待 Session 结论后再放行；guest 直接进入登录页，
+// error 仍由布局呈现持久错误而非误判为未登录。
 // 登录页则先确认 Session：已登录直接回作品区，避免表单闪现。
 export default defineNuxtRouteMiddleware(async (to) => {
   if (import.meta.server) {
@@ -25,5 +24,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   // ensureSession 内部捕获全部错误，不会 reject；竞态由会话内去重吸收。
-  void ensureSession({ revalidate: true })
+  const resolved = await ensureSession({ revalidate: true })
+  if (resolved === 'guest') {
+    return navigateTo(
+      {
+        path: '/admin/login',
+        query: { redirect: to.fullPath },
+      },
+      { replace: true },
+    )
+  }
 })

@@ -70,8 +70,17 @@ export function decideHostAccess(
       }
     }
 
+    // E2E fake OSS 端点只在 test 环境存在（handler 仅在 test 构建注册）；
+    // 生产与开发环境保持 404。
+    const e2eFakeAllowed = config.appEnv === 'test'
+      && (
+        isAtOrBelow(pathname, '/api/e2e-fake-oss')
+        || isAtOrBelow(pathname, '/api/e2e-fake-media-control')
+      )
+
     return (
       pathname === '/favicon.ico'
+      || e2eFakeAllowed
       || adminAllowedPrefixes.some(prefix => isAtOrBelow(pathname, prefix))
     )
       ? { action: 'allow' }

@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import type { AdoptionMethod, BusinessStatus, SuitType, WorkPurpose } from '~~/shared/types/contracts'
-import type { AdminAssetFixture, AdminMediaFailureStage } from '~~/shared/fixtures/visual-admin'
-import { findAdminWorkById } from '~~/shared/fixtures/visual-admin'
-import { buildPublicationChecklist } from '~/utils/publication-checklist'
-import { parseCnyYuanInput } from '~/utils/price'
 import {
-  ADOPTION_METHOD_LABELS,
-  BUSINESS_STATUS_LABELS,
+  managedWorkResponseSchema,
+  publicSafeWorkPreviewResponseSchema,
+} from '~~/shared/schemas/work'
+import type {
+  ManagedWorkDto,
+  PublicSafeWorkPreviewDto,
+} from '~~/shared/types/contracts'
+import { AdminApiError } from '~/composables/useAdminApi'
+import type { WorkBasicsForm } from '~/components/admin/WorkBasicsFields.vue'
+import {
   SUIT_TYPE_LABELS,
   WORK_PURPOSE_LABELS,
 } from '~/utils/work-labels'
-import { SUIT_TYPE_VALUES, WORK_PURPOSE_VALUES } from '~~/shared/schemas/work'
 
 definePageMeta({
   layout: 'admin',
@@ -25,346 +27,370 @@ useSeoMeta({
 })
 
 const route = useRoute()
-const work = findAdminWorkById(String(route.params.id))
+const workId = String(route.params.id)
+const adminApi = useAdminApi()
+const { status: authStatus } = useAdminAuth()
 
-useSeoMeta({
-  title: work ? `编辑 ${work.dto.characterName}` : '作品不存在',
+const pageStatus = ref<'error' | 'loading' | 'not-found' | 'ready'>('loading')
+const work = ref<ManagedWorkDto | null>(null)
+const form = ref<WorkBasicsForm>({
+  characterName: '',
+  featureTags: [],
+  ownerContact: '',
+  ownerDisplay: '有点小狗工作室',
+  purpose: 'commission',
+  slug: '',
+  species: '',
+  suitType: 'full',
 })
+const baseline = ref('')
 
-// 基线与编辑态必须是两份独立数组：共享引用会让 v-model 就地改写基线，dirty 永远为 false。
-const initialTags = work ? [...work.dto.featureTags] : []
+const saving = ref(false)
+const saveError = ref<string | null>(null)
+const savedNotice = ref<string | null>(null)
+const conflictOpen = ref(false)
 
-const form = reactive({
-  characterName: work?.dto.characterName ?? '',
-  slug: work?.dto.slug ?? '',
-  species: work?.dto.species ?? '',
-  ownerDisplay: work?.dto.ownerDisplay ?? '',
-  suitType: (work?.dto.suitType ?? 'full') as SuitType,
-  purpose: (work?.dto.purpose ?? 'showcase') as WorkPurpose,
-  ownerContact: work?.dto.private.ownerContact ?? '',
-  adoptionMethod: (work?.dto.purpose === 'adoption' ? work.dto.adoptionMethod : '') as AdoptionMethod | '',
-  businessStatus: (work?.dto.purpose === 'adoption' ? work?.dto.businessStatus : '') as BusinessStatus | '',
-  priceYuan: work?.dto.purpose === 'adoption' && work?.dto.priceCnyMinor != null
-    ? String(work.dto.priceCnyMinor / 100)
-    : '',
-})
+const preview = ref<PublicSafeWorkPreviewDto | null>(null)
+const previewError = ref<string | null>(null)
 
-// 领养字段的 dirty 基线：随页面重建（切换作品）而重置；保存接口未接入，不存在"已保存即清除"语义。
-const baseline = {
-  adoptionMethod: form.adoptionMethod,
-  businessStatus: form.businessStatus,
-  priceYuan: form.priceYuan,
-}
+const photoState = ref({ busy: false, dirty: false })
 
-const tags = ref<string[]>([...initialTags])
-const notice = ref<string | null>(null)
-
-function announce(message: string) {
-  notice.value = message
-}
-
-const RETRY_STAGE_TASKS: Record<AdminMediaFailureStage, string> = {
-  私有上传: 'T14',
-  校验: 'T15',
-  公开生成: 'T16',
-}
-
-function retryNotice(asset: AdminAssetFixture) {
-  const task = asset.failureStage ? RETRY_STAGE_TASKS[asset.failureStage] : 'T14–T16'
-  return `重试接口尚未接入（${task}）：失败素材需要真实 OSS 链路才能重试。`
-}
-
-const priceParse = computed(() => parseCnyYuanInput(form.priceYuan))
-const priceError = computed(() => (form.purpose === 'adoption' ? priceParse.value.error : null))
-
-// 发布检查求值基于当前表单（而非夹具快照），让检查项随编辑即时变化；仍然不会持久化。
-const checklist = computed(() => {
-  if (!work) {
-    return null
-  }
-  const result = buildPublicationChecklist({
-    ...work,
-    dto: {
-      ...work.dto,
-      purpose: form.purpose,
-      adoptionMethod: form.purpose === 'adoption' && form.adoptionMethod ? form.adoptionMethod : undefined,
-      businessStatus: form.purpose === 'adoption' && form.businessStatus ? form.businessStatus : undefined,
-      priceCnyMinor: form.purpose === 'adoption' ? priceParse.value.minorUnits : undefined,
-    } as typeof work.dto,
+function snapshotOf(value: WorkBasicsForm) {
+  return JSON.stringify({
+    characterName: value.characterName.trim(),
+    featureTags: value.featureTags.map(tag => tag.trim()),
+    ownerContact: value.ownerContact.trim(),
+    ownerDisplay: value.ownerDisplay,
+    purpose: value.purpose,
+    slug: value.slug.trim(),
+    species: value.species.trim(),
+    suitType: value.suitType,
   })
-  // 非法价格输入不能按"未录入"放行：价格项标记阻塞，发布同步禁用。
-  if (priceError.value) {
-    const items = result.items.map(item =>
-      item.id === 'price'
-        ? { ...item, state: 'blocked' as const, detail: `价格未通过校验：${priceError.value}` }
-        : item,
-    )
-    return { items, publishable: false }
-  }
-  return result
-})
+}
 
-const isDirty = computed(() => {
-  if (!work) {
-    return false
+function applyWork(next: ManagedWorkDto) {
+  work.value = next
+  form.value = {
+    characterName: next.characterName,
+    featureTags: [...next.featureTags],
+    ownerContact: next.private.ownerContact ?? '',
+    ownerDisplay: next.ownerDisplay,
+    purpose: next.purpose,
+    slug: next.slug,
+    species: next.species,
+    suitType: next.suitType,
   }
-  const baseDirty = form.characterName !== work.dto.characterName
-    || form.slug !== work.dto.slug
-    || form.species !== work.dto.species
-    || form.ownerDisplay !== (work.dto.ownerDisplay ?? '')
-    || form.suitType !== work.dto.suitType
-    || form.purpose !== work.dto.purpose
-    || form.ownerContact !== (work.dto.private.ownerContact ?? '')
-  // 用途非领养时领养字段被隐藏，其保留值不参与 dirty（避免隐藏字段被误当作待提交更改）；
-  // 切回领养时与基线逐项比较。
-  const adoptionDirty = form.purpose === 'adoption'
-    && (form.adoptionMethod !== baseline.adoptionMethod
-      || form.businessStatus !== baseline.businessStatus
-      || form.priceYuan !== baseline.priceYuan)
-  const tagsDirty = tags.value.length !== initialTags.length
-    || tags.value.some((tag, index) => tag !== initialTags[index])
-  return baseDirty || adoptionDirty || tagsDirty
-})
+  baseline.value = snapshotOf(form.value)
+}
 
-const duplicateTag = computed(() => {
-  const seen = new Set<string>()
-  for (const tag of tags.value) {
-    const normalized = tag.trim()
-    if (normalized && seen.has(normalized)) {
-      return normalized
+const locked = computed(() => work.value?.publicationStatus === 'published')
+
+const isDirty = computed(() =>
+  work.value !== null && snapshotOf(form.value) !== baseline.value,
+)
+
+const leaveGuardActive = computed(() =>
+  isDirty.value || photoState.value.dirty || photoState.value.busy,
+)
+
+async function loadWork(options: { initial?: boolean } = {}) {
+  // 初次进入显示整页加载；发布/冲突后的后台刷新保持当前界面（不重建面板）。
+  if (options.initial || pageStatus.value !== 'ready') {
+    pageStatus.value = 'loading'
+  }
+  conflictOpen.value = false
+  saveError.value = null
+  try {
+    const result = await adminApi(`/api/admin/v1/works/${workId}`, {
+      schema: managedWorkResponseSchema,
+    })
+    applyWork(result.data)
+    pageStatus.value = 'ready'
+    void loadPreview()
+  }
+  catch (error) {
+    if (error instanceof AdminApiError && error.status === 401) {
+      return
     }
-    seen.add(normalized)
+    pageStatus.value = error instanceof AdminApiError && error.status === 404
+      ? 'not-found'
+      : 'error'
+  }
+}
+
+async function loadPreview() {
+  previewError.value = null
+  try {
+    const result = await adminApi(`/api/admin/v1/works/${workId}/public-preview`, {
+      schema: publicSafeWorkPreviewResponseSchema,
+    })
+    preview.value = result.data
+  }
+  catch (error) {
+    if (error instanceof AdminApiError && error.status === 401) {
+      return
+    }
+    previewError.value = '公开预览加载失败。'
+  }
+}
+
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+function validate(): string | null {
+  const value = form.value
+  if (!value.characterName.trim() || !value.species.trim()) {
+    return '角色名与物种为必填项。'
+  }
+  if (!SLUG_PATTERN.test(value.slug.trim())) {
+    return '链接别名只能使用小写字母、数字与连字符，且不能以连字符开头或结尾。'
+  }
+  const tags = value.featureTags.map(tag => tag.trim())
+  if (tags.some(tag => tag.length === 0) && value.featureTags.length > 0) {
+    return '作品属性不能为空条目，请删除空行。'
+  }
+  if (new Set(tags).size !== tags.length) {
+    return '作品属性不得重复。'
   }
   return null
-})
+}
 
-function addTag() {
-  if (tags.value.length < 8) {
-    tags.value.push('')
+async function saveWork() {
+  if (saving.value || !work.value || locked.value) {
+    return
+  }
+  saveError.value = validate()
+  savedNotice.value = null
+  if (saveError.value) {
+    return
+  }
+  saving.value = true
+  try {
+    const value = form.value
+    const result = await adminApi(`/api/admin/v1/works/${workId}`, {
+      method: 'PUT',
+      body: {
+        expectedVersion: work.value.version,
+        payload: {
+          slug: value.slug.trim(),
+          characterName: value.characterName.trim(),
+          species: value.species.trim(),
+          suitType: value.suitType,
+          purpose: value.purpose,
+          ownerDisplay: value.ownerDisplay,
+          ownerContact: value.ownerContact.trim() === '' ? null : value.ownerContact.trim(),
+          featureTags: value.featureTags.map(tag => tag.trim()),
+        },
+      },
+      schema: managedWorkResponseSchema,
+    })
+    applyWork(result.data)
+    savedNotice.value = '已保存。'
+    void loadPreview()
+  }
+  catch (error) {
+    if (error instanceof AdminApiError && error.status === 401) {
+      return
+    }
+    if (error instanceof AdminApiError && error.status === 409) {
+      conflictOpen.value = true
+      saveError.value = '作品数据已在其他地方变化，本次修改未保存。'
+      return
+    }
+    if (error instanceof AdminApiError && error.status === 400) {
+      saveError.value = '填写内容未通过校验，请检查标星字段后重试。'
+      return
+    }
+    saveError.value = '保存失败，请稍后重试；已填写的内容不会丢失。'
+  }
+  finally {
+    saving.value = false
   }
 }
 
-function removeTag(index: number) {
-  tags.value.splice(index, 1)
+function onPhotosSaved(next: ManagedWorkDto) {
+  // 出厂照保存会递增作品版本：同步本地版本与基线，避免后续保存误报 409。
+  applyWork(next)
+  savedNotice.value = '出厂照已保存。'
+  void loadPreview()
 }
+
+function onPublicationMutated() {
+  void loadWork()
+}
+
+function onConflictReload() {
+  conflictOpen.value = false
+  void loadWork()
+}
+
+function onBeforeUnload(event: BeforeUnloadEvent) {
+  if (leaveGuardActive.value) {
+    event.preventDefault()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('beforeunload', onBeforeUnload)
+  void loadWork({ initial: true })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('beforeunload', onBeforeUnload)
+})
+
+onBeforeRouteLeave(() => {
+  // 会话失效时必须放行：表单已无法保存，继续拦截会把用户困在失效页面。
+  if (!leaveGuardActive.value || authStatus.value === 'guest') {
+    return true
+  }
+  return window.confirm('有未保存的更改或正在进行的上传，确定离开此页面吗？')
+})
+
+useSeoMeta({
+  title: computed(() =>
+    work.value ? `编辑 ${work.value.characterName}` : '编辑作品',
+  ),
+})
 </script>
 
 <template>
   <AdminShell current="works">
-    <div v-if="!work" class="editor-missing">
-      <p class="editor-missing__title">未找到该作品</p>
-      <p class="editor-missing__text">当前为夹具演示数据，仅包含 6 件示例作品。</p>
-      <NuxtLink to="/admin/works" class="editor-missing__back">返回作品列表</NuxtLink>
+    <div v-if="pageStatus === 'loading'" class="editor-state" role="status">
+      正在加载作品…
     </div>
 
-    <div v-else class="editor">
+    <div v-else-if="pageStatus === 'not-found'" class="editor-state editor-state--missing">
+      <p class="editor-state__title">未找到该作品</p>
+      <p class="editor-state__text">作品可能已被移除，或链接有误。</p>
+      <NuxtLink to="/admin/works" class="editor-state__back">返回作品列表</NuxtLink>
+    </div>
+
+    <div v-else-if="pageStatus === 'error'" class="editor-state editor-state--missing">
+      <p class="editor-state__title" role="alert">作品加载失败</p>
+      <p class="editor-state__text">请检查网络连接后重试。</p>
+      <button type="button" class="editor-state__retry" @click="loadWork()">重试</button>
+    </div>
+
+    <div v-else-if="work" class="editor">
       <header class="editor__header">
         <div class="editor__heading">
           <NuxtLink to="/admin/works" class="editor__back">← 作品</NuxtLink>
-          <h1 class="editor__title">{{ work.dto.characterName }}</h1>
+          <h1 class="editor__title">{{ work.characterName }}</h1>
           <AdminStatusBadge
-            :tone="isDirty ? 'warning' : 'neutral'"
-            :label="isDirty ? '有未保存更改' : '未更改'"
+            :tone="isDirty || photoState.dirty ? 'warning' : 'neutral'"
+            :label="isDirty || photoState.dirty ? '有未保存更改' : '未更改'"
           />
         </div>
         <div class="editor__actions">
           <button
             type="button"
             class="editor__button editor__button--secondary"
-            @click="announce('保存接口尚未接入（T17）：修改不会持久化，刷新后还原为夹具数据。')"
-          >保存草稿</button>
-          <button
-            type="button"
-            class="editor__button editor__button--primary"
-            :disabled="!checklist?.publishable"
-            :title="checklist?.publishable ? undefined : '请先完成发布检查中的所有待办项'"
-            @click="announce('发布接口尚未接入（T18）：不会生成公开图片，也不会改变发布状态。')"
-          >发布</button>
+            :disabled="!isDirty || saving || locked"
+            @click="saveWork"
+          >{{ saving ? '保存中…' : '保存' }}</button>
         </div>
       </header>
 
-      <p v-if="notice" class="editor__notice" role="status">{{ notice }}</p>
+      <div v-if="conflictOpen" class="editor__conflict" role="alert">
+        <p class="editor__conflict-text">
+          作品已在其他地方被修改（版本冲突）。重新加载会放弃当前未保存的编辑；
+          继续编辑则保留本地内容，下次保存仍可能冲突。
+        </p>
+        <div class="editor__conflict-actions">
+          <button
+            type="button"
+            class="editor__button editor__button--secondary"
+            @click="onConflictReload"
+          >重新加载（放弃本地更改）</button>
+          <button
+            type="button"
+            class="editor__button editor__button--secondary"
+            @click="conflictOpen = false"
+          >继续编辑</button>
+        </div>
+      </div>
+
+      <p v-if="locked" class="editor__locked" role="status">
+        作品已发布：基础信息与出厂照为只读。如需修改，请先在右侧下架。
+      </p>
+
+      <p v-if="saveError && !conflictOpen" class="editor__notice editor__notice--error" role="alert">
+        {{ saveError }}
+      </p>
+      <p v-else-if="savedNotice" class="editor__notice" role="status">{{ savedNotice }}</p>
 
       <div class="editor__layout">
         <div class="editor__main">
-          <section class="editor-card" aria-labelledby="basics-title">
-            <h2 id="basics-title" class="editor-card__title">基础信息</h2>
-            <div class="editor-card__grid">
-              <div class="field">
-                <label class="field__label" for="f-name">角色名 <span aria-hidden="true">*</span></label>
-                <input id="f-name" v-model="form.characterName" class="field__input" type="text" maxlength="32" required>
-                <p class="field__hint">公开端展示 · 最多 32 字</p>
-              </div>
-              <div class="field">
-                <label class="field__label" for="f-slug">链接别名（slug） <span aria-hidden="true">*</span></label>
-                <div class="field__affix">
-                  <span class="field__prefix" aria-hidden="true">/works/</span>
-                  <input
-                    id="f-slug"
-                    v-model="form.slug"
-                    class="field__input field__input--affixed"
-                    type="text"
-                    maxlength="64"
-                    pattern="[a-z0-9-]+"
-                    required
-                  >
-                </div>
-                <p class="field__hint">小写字母、数字与连字符 · 公开详情页地址</p>
-              </div>
-              <div class="field">
-                <label class="field__label" for="f-species">物种 <span aria-hidden="true">*</span></label>
-                <input id="f-species" v-model="form.species" class="field__input" type="text" maxlength="24" required>
-              </div>
-              <div class="field">
-                <label class="field__label" for="f-owner">角色主人公开值 <span aria-hidden="true">*</span></label>
-                <input id="f-owner" v-model="form.ownerDisplay" class="field__input" type="text" maxlength="24" required>
-                <p class="field__hint">必填 · 工作室作品填“有点小狗工作室”，隐私作品填“不公开” · 最多 24 字</p>
-              </div>
-              <div class="field">
-                <label class="field__label" for="f-suit">装型</label>
-                <select id="f-suit" v-model="form.suitType" class="field__input">
-                  <option v-for="value in SUIT_TYPE_VALUES" :key="value" :value="value">
-                    {{ SUIT_TYPE_LABELS[value] }}
-                  </option>
-                </select>
-              </div>
-              <div class="field">
-                <label class="field__label" for="f-purpose">用途</label>
-                <select id="f-purpose" v-model="form.purpose" class="field__input">
-                  <option v-for="value in WORK_PURPOSE_VALUES" :key="value" :value="value">
-                    {{ WORK_PURPOSE_LABELS[value] }}
-                  </option>
-                </select>
-                <p class="field__hint">切换为“领养”后将出现领养信息与价格字段</p>
-              </div>
-              <div class="field field--wide">
-                <label class="field__label" for="f-contact">
-                  联系人 <span class="field__private">仅后台可见</span>
-                </label>
-                <textarea
-                  id="f-contact"
-                  v-model="form.ownerContact"
-                  class="field__input field__textarea"
-                  rows="2"
-                  maxlength="200"
-                />
-                <p class="field__hint">T03 契约私有字段，任何公开接口与页面都不会输出 · 最多 200 字</p>
-              </div>
-            </div>
-          </section>
-
-          <section class="editor-card" aria-labelledby="tags-title">
-            <div class="editor-card__head">
-              <h2 id="tags-title" class="editor-card__title">作品属性</h2>
-              <p class="editor-card__hint">短标签 {{ tags.length }}/8 · 每条最多 24 字</p>
-            </div>
-            <ul class="tags" role="list">
-              <li v-for="(tag, index) in tags" :key="index" class="tags__item">
-                <input
-                  v-model="tags[index]"
-                  class="field__input tags__input"
-                  type="text"
-                  maxlength="24"
-                  :aria-label="`作品属性第 ${index + 1} 条`"
-                >
-                <button type="button" class="tags__remove" :aria-label="`删除第 ${index + 1} 条属性`" @click="removeTag(index)">
-                  删除
-                </button>
-              </li>
-            </ul>
-            <p v-if="duplicateTag" class="tags__warning" role="status">
-              “{{ duplicateTag }}”重复出现，请合并或删除其一。
-            </p>
-            <button
-              type="button"
-              class="editor__button editor__button--secondary"
-              :disabled="tags.length >= 8"
-              @click="addTag"
-            >添加属性</button>
-          </section>
-
-          <section v-if="form.purpose === 'adoption'" class="editor-card" aria-labelledby="adoption-title">
-            <h2 id="adoption-title" class="editor-card__title">领养信息</h2>
-            <div class="editor-card__grid">
-              <div class="field">
-                <label class="field__label" for="f-method">领养方式 <span aria-hidden="true">*</span></label>
-                <select id="f-method" v-model="form.adoptionMethod" class="field__input">
-                  <option value="" disabled>请选择</option>
-                  <option v-for="(label, value) in ADOPTION_METHOD_LABELS" :key="value" :value="value">
-                    {{ label }}
-                  </option>
-                </select>
-              </div>
-              <div class="field">
-                <label class="field__label" for="f-status">业务状态 <span aria-hidden="true">*</span></label>
-                <select id="f-status" v-model="form.businessStatus" class="field__input">
-                  <option value="" disabled>请选择</option>
-                  <option v-for="(label, value) in BUSINESS_STATUS_LABELS" :key="value" :value="value">
-                    {{ label }}
-                  </option>
-                </select>
-              </div>
-              <div class="field">
-                <label class="field__label" for="f-price">公开人民币价格（元）</label>
-                <input
-                  id="f-price"
-                  v-model="form.priceYuan"
-                  class="field__input"
-                  :class="{ 'field__input--invalid': priceError }"
-                  type="text"
-                  inputmode="decimal"
-                  placeholder="例如 15600"
-                  :aria-invalid="priceError ? 'true' : undefined"
-                  :aria-describedby="priceError ? 'f-price-hint f-price-error' : 'f-price-hint'"
-                >
-                <p id="f-price-hint" class="field__hint">可留空；留空时公开端整区隐藏价格。最多两位小数，网站不接受登记、定金或付款。</p>
-                <p v-if="priceError" id="f-price-error" class="field__error" role="alert">{{ priceError }}</p>
-              </div>
-            </div>
-          </section>
-
-          <section class="editor-card" aria-labelledby="media-title">
-            <div class="editor-card__head">
-              <h2 id="media-title" class="editor-card__title">图片</h2>
-              <p class="editor-card__hint">
-                原图进私有 Bucket，公开端只展示生成的衍生图；浏览器不会出现私有 Key
-              </p>
-            </div>
-            <ul class="media" role="list">
-              <li v-for="asset in work.assets" :key="asset.assetId">
-                <AdminMediaAssetCard
-                  :asset="asset"
-                  @retry="announce(retryNotice(asset))"
-                  @remove="announce('删除接口尚未接入（T17）：夹具素材不会被移除。')"
-                  @set-primary="announce('设主图与排序接口尚未接入（T17）：不会改变夹具中的主图设定。')"
-                />
-              </li>
-            </ul>
-            <button
-              type="button"
-              class="editor__button editor__button--secondary"
-              @click="announce('上传接口尚未接入（T14–T15）：不会打开文件选择，也不会写入 OSS。')"
-            >上传出厂照</button>
-          </section>
+          <AdminWorkBasicsFields v-model="form" :disabled="locked || saving" />
+          <AdminStudioPhotoSection
+            :work="work"
+            :locked="locked"
+            @saved="onPhotosSaved"
+            @conflict="conflictOpen = true"
+            @state-change="photoState = $event"
+          />
         </div>
 
         <aside class="editor__aside">
-          <PublicationChecklist v-if="checklist" :checklist="checklist" />
-          <section class="preview-card" aria-labelledby="preview-title">
-            <h2 id="preview-title" class="editor-card__title">公开预览</h2>
-            <div class="preview-card__thumb">
-              <img
-                v-if="work.thumb"
-                :src="work.thumb.src"
-                :alt="work.thumb.alt"
-                width="300"
-                height="400"
-                loading="lazy"
-              >
+          <AdminPublicationPanel
+            :work="work"
+            :busy="saving || photoState.busy"
+            @mutated="onPublicationMutated"
+            @conflict="conflictOpen = true"
+          />
+
+          <section class="preview-card" aria-labelledby="preview-title" data-testid="public-preview">
+            <div class="editor-card__head">
+              <h2 id="preview-title" class="editor-card__title">公开预览</h2>
+              <button type="button" class="preview-card__refresh" @click="loadPreview">刷新</button>
             </div>
-            <p class="preview-card__name">{{ work.dto.characterName }}</p>
-            <p class="preview-card__meta">{{ work.dto.species }} · {{ SUIT_TYPE_LABELS[form.suitType] }}</p>
-            <p class="preview-card__note">本地样张预览 · 公开端实际衍生图由 OSS 生成（T16）</p>
+            <p v-if="previewError" class="preview-card__error" role="alert">{{ previewError }}</p>
+            <template v-else-if="preview">
+              <dl class="preview-card__facts">
+                <div class="preview-card__fact">
+                  <dt>角色名</dt>
+                  <dd>{{ preview.characterName }}</dd>
+                </div>
+                <div class="preview-card__fact">
+                  <dt>物种 / 装型</dt>
+                  <dd>{{ preview.species }} · {{ SUIT_TYPE_LABELS[preview.suitType] }}</dd>
+                </div>
+                <div class="preview-card__fact">
+                  <dt>用途</dt>
+                  <dd>{{ WORK_PURPOSE_LABELS[preview.purpose] }}</dd>
+                </div>
+                <div class="preview-card__fact">
+                  <dt>角色主人</dt>
+                  <dd>{{ preview.ownerDisplay }}</dd>
+                </div>
+                <div class="preview-card__fact">
+                  <dt>公开地址</dt>
+                  <dd class="preview-card__slug">/works/{{ preview.slug }}</dd>
+                </div>
+                <div class="preview-card__fact">
+                  <dt>属性</dt>
+                  <dd>{{ preview.featureTags.length > 0 ? preview.featureTags.join('、') : '无' }}</dd>
+                </div>
+                <div class="preview-card__fact">
+                  <dt>出厂照</dt>
+                  <dd>
+                    {{ preview.studioPhotos.length }} 张
+                    <span
+                      :class="preview.mediaReady
+                        ? 'preview-card__ready'
+                        : 'preview-card__not-ready'"
+                    >
+                      {{ preview.mediaReady ? '· 媒体就绪' : '· 媒体未就绪' }}
+                    </span>
+                  </dd>
+                </div>
+              </dl>
+              <p class="preview-card__note">
+                以上为公开安全数据：不含联系人、私有 Key 或签名 URL。
+                公开详情页真实投影由 T19 接入。
+              </p>
+            </template>
+            <p v-else class="preview-card__loading" role="status">正在加载公开预览…</p>
           </section>
         </aside>
       </div>
@@ -375,6 +401,50 @@ function removeTag(index: number) {
 <style scoped>
 .editor {
   max-width: var(--admin-content-max);
+}
+
+.editor-state {
+  max-width: var(--admin-reading-max);
+  margin: var(--admin-space-8) auto;
+  text-align: center;
+  background: var(--admin-bg-primary);
+  border: 1px solid var(--admin-border-secondary);
+  border-radius: var(--admin-radius-lg);
+  padding: var(--admin-space-8);
+  color: var(--admin-text-secondary);
+  font-size: var(--admin-font-sm);
+}
+
+.editor-state--missing {
+  border-style: dashed;
+}
+
+.editor-state__title {
+  margin: 0;
+  font-size: var(--admin-font-md);
+  font-weight: 600;
+  color: var(--admin-text-primary);
+}
+
+.editor-state__text {
+  margin: var(--admin-space-2) 0 var(--admin-space-4);
+}
+
+.editor-state__back {
+  color: var(--admin-accent-primary);
+  font-weight: 600;
+}
+
+.editor-state__retry {
+  min-height: var(--admin-control-height);
+  padding: 0 var(--admin-space-5);
+  border: 1px solid var(--admin-border-primary);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-bg-primary);
+  color: var(--admin-accent-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .editor__header {
@@ -394,7 +464,7 @@ function removeTag(index: number) {
 }
 
 .editor__back {
-  font-size: var(--admin-font-sm);
+  font-size: var(--admin-font-base);
   color: var(--admin-text-secondary);
   min-height: var(--admin-touch-target);
   display: inline-flex;
@@ -407,9 +477,14 @@ function removeTag(index: number) {
 
 .editor__title {
   margin: 0;
-  font-size: var(--admin-font-xl);
+  font-size: var(--admin-font-base);
   font-weight: 600;
   line-height: var(--admin-line-tight);
+}
+
+.editor__heading :deep(.admin-badge) {
+  min-height: var(--admin-control-height-sm);
+  font-size: var(--admin-font-base);
 }
 
 .editor__actions {
@@ -417,44 +492,35 @@ function removeTag(index: number) {
   gap: var(--admin-space-2);
 }
 
-.editor__button {
-  min-height: var(--admin-control-height);
-  padding: 0 var(--admin-space-5);
+.editor__conflict {
+  margin: 0 0 var(--admin-space-5);
+  padding: var(--admin-space-4);
   border-radius: var(--admin-radius-md);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background var(--admin-duration-fast) var(--admin-easing);
+  background: var(--admin-status-warning-soft);
+  display: grid;
+  gap: var(--admin-space-3);
 }
 
-.editor__button--primary {
-  border: none;
-  background: var(--admin-accent-primary);
-  color: var(--admin-text-inverse);
+.editor__conflict-text {
+  margin: 0;
+  font-size: var(--admin-font-sm);
+  color: var(--admin-status-warning);
+  line-height: var(--admin-line-normal);
 }
 
-.editor__button--primary:hover:not(:disabled) {
-  background: var(--admin-accent-hover);
+.editor__conflict-actions {
+  display: flex;
+  gap: var(--admin-space-2);
+  flex-wrap: wrap;
 }
 
-.editor__button--primary:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-
-.editor__button--secondary {
-  border: 1px solid var(--admin-border-primary);
-  background: var(--admin-bg-primary);
-  color: var(--admin-text-primary);
-}
-
-.editor__button--secondary:hover:not(:disabled) {
-  background: var(--admin-bg-subtle);
-}
-
-.editor__button--secondary:disabled {
-  opacity: 0.55;
-  cursor: default;
+.editor__locked {
+  margin: 0 0 var(--admin-space-5);
+  padding: var(--admin-space-3) var(--admin-space-4);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-status-info-soft);
+  color: var(--admin-status-info);
+  font-size: var(--admin-font-sm);
 }
 
 .editor__notice {
@@ -464,6 +530,11 @@ function removeTag(index: number) {
   background: var(--admin-status-info-soft);
   color: var(--admin-status-info);
   font-size: var(--admin-font-sm);
+}
+
+.editor__notice--error {
+  background: var(--admin-status-error-soft);
+  color: var(--admin-status-error);
 }
 
 .editor__layout {
@@ -484,244 +555,76 @@ function removeTag(index: number) {
   align-content: start;
 }
 
-.editor-card {
+.preview-card {
   background: var(--admin-bg-primary);
   border: 1px solid var(--admin-border-secondary);
   border-radius: var(--admin-radius-lg);
   padding: var(--admin-space-5);
 }
 
-.editor-card__title {
-  margin: 0 0 var(--admin-space-4);
-  font-size: var(--admin-font-md);
-  font-weight: 600;
-}
-
-.editor-card__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--admin-space-3);
-  flex-wrap: wrap;
-  margin-bottom: var(--admin-space-4);
-}
-
-.editor-card__head .editor-card__title {
-  margin: 0;
-}
-
-.editor-card__hint {
-  margin: 0;
-  font-size: var(--admin-font-xs);
-  color: var(--admin-text-tertiary);
-}
-
-.editor-card__grid {
-  display: grid;
-  gap: var(--admin-space-4);
-}
-
-.field__label {
-  display: block;
-  font-size: var(--admin-font-sm);
-  font-weight: 600;
-  margin-bottom: var(--admin-space-2);
-}
-
-.field__private {
-  display: inline-block;
-  margin-left: var(--admin-space-2);
-  font-size: var(--admin-font-xs);
-  font-weight: 600;
-  color: var(--admin-status-warning);
-  background: var(--admin-status-warning-soft);
-  border-radius: 999px;
-  padding: 0.05rem 0.5rem;
-}
-
-.field__input {
-  width: 100%;
-  min-height: var(--admin-control-height);
-  padding: 0 var(--admin-space-3);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-md);
+.preview-card__refresh {
+  border: none;
+  background: none;
+  padding: 0 var(--admin-space-2);
+  min-height: var(--admin-touch-target);
   font: inherit;
-  color: var(--admin-text-primary);
-  background: var(--admin-bg-primary);
-}
-
-.field__input:focus {
-  border-color: var(--admin-border-focus);
-  outline: none;
-  box-shadow: 0 0 0 3px var(--admin-focus-ring);
-}
-
-.field__textarea {
-  min-height: auto;
-  padding: var(--admin-space-2) var(--admin-space-3);
-  resize: vertical;
-}
-
-.field__affix {
-  display: flex;
-  align-items: stretch;
-}
-
-.field__prefix {
-  display: inline-flex;
-  align-items: center;
-  padding: 0 var(--admin-space-2) 0 var(--admin-space-3);
-  border: 1px solid var(--admin-border-primary);
-  border-right: none;
-  border-radius: var(--admin-radius-md) 0 0 var(--admin-radius-md);
-  background: var(--admin-bg-subtle);
-  color: var(--admin-text-tertiary);
   font-size: var(--admin-font-sm);
-  font-family: var(--font-admin-mono);
-}
-
-.field__input--affixed {
-  border-start-start-radius: 0;
-  border-end-start-radius: 0;
-}
-
-.field__hint {
-  margin: var(--admin-space-1) 0 0;
-  font-size: var(--admin-font-xs);
-  color: var(--admin-text-tertiary);
-}
-
-.field__input--invalid {
-  border-color: var(--admin-status-error);
-}
-
-.field__input--invalid:focus {
-  border-color: var(--admin-status-error);
-  box-shadow: 0 0 0 3px var(--admin-status-error-soft);
-}
-
-.field__error {
-  margin: var(--admin-space-1) 0 0;
-  font-size: var(--admin-font-xs);
-  color: var(--admin-status-error);
-  line-height: var(--admin-line-normal);
-}
-
-.tags {
-  list-style: none;
-  margin: 0 0 var(--admin-space-3);
-  padding: 0;
-  display: grid;
-  gap: var(--admin-space-2);
-}
-
-.tags__item {
-  display: flex;
-  gap: var(--admin-space-2);
-  align-items: center;
-}
-
-.tags__input {
-  max-width: 20rem;
-}
-
-.tags__remove {
-  min-height: var(--admin-control-height-sm);
-  padding: 0 var(--admin-space-3);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-sm);
-  background: var(--admin-bg-primary);
-  color: var(--admin-text-secondary);
-  font-size: var(--admin-font-xs);
+  color: var(--admin-accent-primary);
   cursor: pointer;
 }
 
-.tags__remove:hover {
-  color: var(--admin-danger);
-  border-color: var(--admin-danger);
-}
-
-.tags__warning {
-  margin: 0 0 var(--admin-space-3);
-  font-size: var(--admin-font-sm);
-  color: var(--admin-status-warning);
-}
-
-.media {
-  list-style: none;
-  margin: 0 0 var(--admin-space-4);
-  padding: 0;
-  display: grid;
-  gap: var(--admin-space-3);
-}
-
-.preview-card__thumb {
-  border-radius: var(--admin-radius-md);
-  overflow: hidden;
-  background: var(--admin-bg-subtle);
-  margin-bottom: var(--admin-space-3);
-}
-
-.preview-card__thumb img {
-  width: 100%;
-  height: auto;
-  display: block;
-  aspect-ratio: 3 / 4;
-  object-fit: cover;
-}
-
-.preview-card__name {
+.preview-card__error {
   margin: 0;
-  font-weight: 600;
+  font-size: var(--admin-font-sm);
+  color: var(--admin-status-error);
 }
 
-.preview-card__meta {
-  margin: 0.1rem 0 0;
+.preview-card__loading {
+  margin: 0;
   font-size: var(--admin-font-sm);
   color: var(--admin-text-secondary);
 }
 
-.preview-card__note {
-  margin: var(--admin-space-2) 0 0;
-  font-size: var(--admin-font-xs);
+.preview-card__facts {
+  margin: 0;
+  display: grid;
+  gap: var(--admin-space-2);
+}
+
+.preview-card__fact {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: var(--admin-space-2);
+  font-size: var(--admin-font-sm);
+}
+
+.preview-card__fact dt {
   color: var(--admin-text-tertiary);
 }
 
-.editor-missing {
-  max-width: var(--admin-reading-max);
-  margin: var(--admin-space-8) auto;
-  text-align: center;
-  background: var(--admin-bg-primary);
-  border: 1px dashed var(--admin-border-primary);
-  border-radius: var(--admin-radius-lg);
-  padding: var(--admin-space-8);
-}
-
-.editor-missing__title {
+.preview-card__fact dd {
   margin: 0;
-  font-size: var(--admin-font-md);
-  font-weight: 600;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
-.editor-missing__text {
-  margin: var(--admin-space-2) 0 var(--admin-space-4);
-  font-size: var(--admin-font-sm);
-  color: var(--admin-text-secondary);
+.preview-card__slug {
+  font-family: var(--font-admin-mono);
 }
 
-.editor-missing__back {
-  color: var(--admin-accent-primary);
-  font-weight: 600;
+.preview-card__ready {
+  color: var(--admin-status-success);
 }
 
-@media (min-width: 768px) {
-  .editor-card__grid {
-    grid-template-columns: 1fr 1fr;
-  }
+.preview-card__not-ready {
+  color: var(--admin-status-warning);
+}
 
-  .field--wide {
-    grid-column: 1 / -1;
-  }
+.preview-card__note {
+  margin: var(--admin-space-4) 0 0;
+  font-size: var(--admin-font-xs);
+  color: var(--admin-text-tertiary);
+  line-height: var(--admin-line-normal);
 }
 
 @media (min-width: 1280px) {

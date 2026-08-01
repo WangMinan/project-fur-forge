@@ -1,8 +1,44 @@
 import { defineConfig } from '@playwright/test'
+import { mkdtempSync } from 'node:fs'
+import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
-import { resolve } from 'node:path'
+import { basename, resolve } from 'node:path'
 
-const baseURL = 'http://127.0.0.1:3100'
+const inheritedPort = Number(process.env.E2E_PORT)
+const inheritRun = Boolean(process.env.E2E_RUN_DIRECTORY)
+  && Number.isInteger(inheritedPort)
+  && inheritedPort > 0
+  && inheritedPort < 65_536
+const port = inheritRun
+  ? inheritedPort
+  : await new Promise<number>((resolvePort, reject) => {
+      const server = createServer()
+      server.once('error', reject)
+      server.listen(0, '127.0.0.1', () => {
+        const address = server.address()
+        if (!address || typeof address === 'string') {
+          server.close()
+          reject(new Error('Playwright failed to allocate an E2E port.'))
+          return
+        }
+        server.close(error => error ? reject(error) : resolvePort(address.port))
+      })
+    })
+const runDirectory = inheritRun
+  ? process.env.E2E_RUN_DIRECTORY!
+  : mkdtempSync(resolve(tmpdir(), 'fur-forge-e2e-'))
+const runName = basename(runDirectory)
+const databaseFile = resolve(runDirectory, 'database.db')
+const baseURL = `http://127.0.0.1:${port}`
+const adminBaseURL = `http://localhost:${port}`
+
+Object.assign(process.env, {
+  E2E_ADMIN_BASE_URL: adminBaseURL,
+  E2E_DATABASE_FILE: databaseFile,
+  E2E_PUBLIC_BASE_URL: baseURL,
+  E2E_PORT: String(port),
+  E2E_RUN_DIRECTORY: runDirectory,
+})
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -21,19 +57,24 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   webServer: {
-    command: 'pnpm dev --host 0.0.0.0 --port 3100',
+    // 生产构建产物：dev 服务器按页/按路由编译，串行套件下首击抖动大；
+    // 构建一次约 80s，换来 128 例的确定性页面加载。E2E_SKIP_BUILD=1 可跳过重建。
+    command: 'node scripts/e2e-server.mjs',
     env: {
       APP_ENV: 'test',
-      // 固定测试库路径：端口 3100 已保证同一时刻只有一个 E2E 服务器，
-      // globalSetup 与可能复用的旧服务器因此始终操作同一个库。
-      DATABASE_FILE: resolve(tmpdir(), 'fur-forge-e2e.db'),
+      DATABASE_FILE: databaseFile,
+      E2E_BUILD_DIR: `.nuxt/${runName}`,
+      E2E_OUTPUT_DIR: `.output/${runName}`,
       PUBLIC_BASE_URL: baseURL,
-      ADMIN_BASE_URL: 'http://localhost:3100',
+      ADMIN_BASE_URL: adminBaseURL,
       MEDIA_BASE_URL: 'https://media.test.invalid',
       OSS_UPLOAD_BASE_URL: 'https://upload.test.invalid',
+      PORT: String(port),
+      HOST: '0.0.0.0',
     },
     url: `${baseURL}/api/health`,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    reuseExistingServer: false,
+    // 含一次冷构建（约 80s）的启动预算。
+    timeout: 300_000,
   },
 })
