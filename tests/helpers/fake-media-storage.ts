@@ -43,7 +43,7 @@ export class FakeMediaStorage implements MediaStorage {
     objectKey: string,
     content: Buffer,
     contentType: string,
-    sha256Metadata = createHash('sha256').update(content).digest('hex'),
+    sha256Metadata: string | null = createHash('sha256').update(content).digest('hex'),
     imageInfo = pngInfo(content),
   ) {
     this.objects.set(objectKey, {
@@ -69,6 +69,16 @@ export class FakeMediaStorage implements MediaStorage {
         'x-oss-meta-sha256': input.sha256,
         'x-oss-forbid-overwrite': 'true' as const,
       },
+    }
+  }
+
+  async signPrivateGet(objectKey: string, expiresAt: number) {
+    if (this.failSign) {
+      throw new Error('fake sign failure')
+    }
+    return {
+      url: `https://private-download.test/${encodeURIComponent(objectKey)}`,
+      expiresAt: new Date(expiresAt).toISOString(),
     }
   }
 

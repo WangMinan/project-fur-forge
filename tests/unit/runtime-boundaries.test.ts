@@ -399,6 +399,46 @@ describe('host boundary', () => {
       statusCode: 421,
     })
   })
+
+  it('allows E2E fake OSS endpoints only in test environment', () => {
+    expect(decideHostAccess(
+      'admin.test',
+      '/api/e2e-fake-oss/test/run/original/id/token.png',
+      config,
+    )).toEqual({ action: 'allow' })
+    expect(decideHostAccess(
+      'admin.test',
+      '/api/e2e-fake-media-control',
+      config,
+    )).toEqual({ action: 'allow' })
+
+    const productionConfig = loadRuntimeConfig({
+      cwd: temporaryDirectory(),
+      env: {
+        APP_ENV: 'production',
+        PUBLIC_BASE_URL: 'https://public.example',
+        ADMIN_BASE_URL: 'https://admin.example',
+        MEDIA_BASE_URL: 'https://media.example',
+        OSS_UPLOAD_BASE_URL: 'https://upload.example',
+        DATABASE_FILE: '/srv/app/data.db',
+        OSS_REGION: 'oss-cn-hangzhou',
+        OSS_PRIVATE_BUCKET: 'private-bucket',
+        OSS_PUBLIC_BUCKET: 'public-bucket',
+        OSS_ENDPOINT: 'https://oss-cn-hangzhou.aliyuncs.com',
+        OSS_ACCESS_KEY_ID: 'test-access-key-id',
+        OSS_ACCESS_KEY_SECRET: 'test-access-key-secret',
+        SESSION_SECRET: 'test-only-session-secret-with-32-chars',
+      },
+    })
+    expect(decideHostAccess(
+      'admin.example',
+      '/api/e2e-fake-oss/test/run/original/id/token.png',
+      productionConfig,
+    )).toMatchObject({
+      action: 'reject',
+      statusCode: 404,
+    })
+  })
 })
 
 describe('safe logging', () => {

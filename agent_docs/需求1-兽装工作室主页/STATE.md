@@ -8,7 +8,7 @@
 
 ## 当前执行分工
 
-- Kimi K3 继续作为 `UI_PRIMARY`；当前接手 T14–T18 的真实接口接线，交接清单见 `implementation/notes/T14-T18-UI-HANDOFF.md`。
+- Kimi K3 继续作为 `UI_PRIMARY`；当前接手 T14–T18 的真实接口接线，交接清单见 `implementation/notes/T14-T18-UI-HANDOFF.md`。2026-08-01 用户另行授权 Codex 处理该分支上的六项阻塞修复，不构成后续分工转移。
 - `ENGINEERING_PRIMARY` 已在 `feature/t14-t18-engineering-sol` 严格完成 T14 → T15 → T16 → T17 → T18 后端工程并停止，不进入 T19/T20。
 - 数据库、认证、安全、OSS、事务、媒体角色、recipe/watermark identity 和运维由 `ENGINEERING_PRIMARY` 主责。
 - Kimi 已完成 `GATE-06`：既有管理界面已接入 T13 认证接口，真实浏览器 Cookie、CSRF、Session 和 no-store 边界验证通过；该门禁不新增 TASKS 编号，已由用户验收并勾选完成。
@@ -124,6 +124,7 @@ T03 遗留工程问题已在 `main` 完成以下修正：
 
 ## 最近验证
 
+- 2026-08-01：T14–T18 前端阻塞修复完成：刷新后以 `assetId` 换取短时签名 GET 显示私有原图；共享按钮样式与两步上传控件生效；真实作品两张照片均补齐 12 个公开 variant 并恢复“可以发布”；现有 Logo 接入 favicon；未发布作品具备受限永久删除；编辑页字号与发布状态横排已修正。任务框保持未勾选，证据见 `implementation/notes/t14-t18-ui/T14-T18-UI-REPAIR-2026-08-01.md`。
 - 2026-08-01：T14–T18 后端工程按五个独立提交完成；lint、typecheck、86 项单测、56 项集成测试、100 项既有 Chrome E2E、构建和生产运行验证通过，`app/` 相对 `main` 零差异。真实 OSS 预检 `test/t10-20260731T174230Z-858b6bdd/` 的 27 项检查全部通过并完成精确清理，未记录秘密。任务框保持未勾选，前端交接见 `implementation/notes/T14-T18-UI-HANDOFF.md`。
 - 2026-08-01：用户完成 `GATE-06` 认证前端验收并确认通过；门禁已勾选完成。其后的 T14–T18 后端状态见上一条。
 - 2026-07-31：Kimi 完成 `GATE-06` 认证前端接线。内存态 Session/CSRF、真实登录/退出/改密、无闪现路由保护、统一 401 提示、锁定不揭示、真实 Chrome `__Host-` Cookie/CSRF/Host 隔离/no-store 共 22 项新 E2E 通过；完整门禁为 lint、typecheck、86 项单测、34 项集成测试、100 项 E2E、构建和生产验证；证据见 `implementation/notes/T13-AUTH-UI-2026-07-31.md`。
@@ -141,4 +142,4 @@ T03 遗留工程问题已在 `main` 完成以下修正：
 
 ## 下一步
 
-T14–T18 后端工程已完成，下一责任人为 Kimi `UI_PRIMARY`：按 `implementation/notes/T14-T18-UI-HANDOFF.md` 接入真实作品保存、OSS 直传、媒体状态、关系编辑、预览、发布/下架与失败恢复，并补浏览器 E2E/三视口证据。联合验收前不勾选 T14–T18；工程侧停止在 T18，不进入 T19/T20。
+T14–T18 后端工程与本次前端阻塞修复已完成；Kimi `UI_PRIMARY` 继续收口剩余接线和浏览器证据。联合验收前不勾选 T14–T18；工程侧停止在 T18，不进入 T19/T20。

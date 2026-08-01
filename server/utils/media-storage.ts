@@ -1,4 +1,7 @@
-import type { ConditionalPutDto } from '../../shared/types/contracts'
+import type {
+  ConditionalPutDto,
+  PrivateAssetPreviewDto,
+} from '../../shared/types/contracts'
 import type { RuntimeConfig } from './runtime-config'
 import { getRuntimeConfig } from './runtime-config'
 
@@ -56,6 +59,7 @@ export interface MediaStorage {
   processPrivateToPublic(input: PublicProcessInput): Promise<void>
   putPrivateConditional(input: PrivateObjectPutInput): Promise<void>
   signConditionalPut(input: ConditionalPutInput): Promise<ConditionalPutDto>
+  signPrivateGet(objectKey: string, expiresAt: number): Promise<PrivateAssetPreviewDto>
 }
 
 interface OssClient {
@@ -185,6 +189,22 @@ export class AliOssMediaStorage implements MediaStorage {
       url,
       expiresAt: new Date(input.expiresAt).toISOString(),
       headers,
+    }
+  }
+
+  async signPrivateGet(objectKey: string, expiresAt: number) {
+    const expiresSeconds = Math.max(
+      1,
+      Math.ceil((expiresAt - Date.now()) / 1_000),
+    )
+    return {
+      url: await (await this.privateClient).signatureUrlV4(
+        'GET',
+        expiresSeconds,
+        {},
+        objectKey,
+      ),
+      expiresAt: new Date(expiresAt).toISOString(),
     }
   }
 
@@ -323,4 +343,13 @@ let mediaStorage: MediaStorage | undefined
 export function getMediaStorage() {
   mediaStorage ??= new AliOssMediaStorage(getRuntimeConfig())
   return mediaStorage
+}
+
+// 仅限 APP_ENV=test：E2E fake 适配器在服务器启动时替换单例，生产与开发环境
+// 调用会直接抛错，浏览器 E2E 因此可以走真实 HTTP 链路而不访问真实 Bucket。
+export function setMediaStorageForTesting(storage: MediaStorage | undefined) {
+  if (getRuntimeConfig().appEnv !== 'test') {
+    throw new Error('Media storage override requires APP_ENV=test.')
+  }
+  mediaStorage = storage
 }

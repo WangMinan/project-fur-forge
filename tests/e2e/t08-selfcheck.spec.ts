@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
-import { loginAsAdmin } from './helpers/auth'
+import { adminBaseURL, loginAsAdmin } from './helpers/auth'
+import { createWorkViaApi } from './helpers/admin-work'
 
 /**
  * T08 评审自查（自动化部分）：
@@ -10,7 +11,6 @@ import { loginAsAdmin } from './helpers/auth'
  * - 键盘：skip link 为首焦点，图集缩略图可 Tab 到达
  */
 
-const adminBaseURL = 'http://localhost:3100'
 const BLUEBERRY_ID = 'b943ee7e-0e9a-4944-a36b-ed61b8b9a640'
 
 const VIEWPORTS = [
@@ -154,8 +154,9 @@ test.describe('对比度抽查（AA 4.5:1）', () => {
       results.push([key, contrastRatio(parseRgb(sample.color), parseRgb(sample.background))])
     }
 
-    // 编辑器页补充失败（error）与阻塞提示徽章取样。
-    await page.goto(`${adminBaseURL}/admin/works/3cb1db83-c2c5-42a1-8e5e-a61cb97d2422`)
+    // 编辑器页补充失败（error）与阻塞提示徽章取样（真实接口数据）。
+    const work = await createWorkViaApi(page, { characterName: '对比度验证' })
+    await page.goto(`${adminBaseURL}/admin/works/${work.id}`)
     await page.waitForSelector('.editor-card')
     const editorSamples = await page.evaluate(() => {
       const effectiveBackground = (element: Element) => {

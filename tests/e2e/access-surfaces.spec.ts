@@ -2,8 +2,7 @@ import {
   expect,
   test,
 } from '@playwright/test'
-
-const adminBaseURL = 'http://localhost:3100'
+import { adminBaseURL } from './helpers/auth'
 
 test('public homepage is server rendered', async ({ page, request }) => {
   const response = await request.get('/')

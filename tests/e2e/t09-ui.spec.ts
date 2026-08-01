@@ -1,20 +1,19 @@
 import { expect, test } from '@playwright/test'
-import { loginAsAdmin } from './helpers/auth'
+import { adminBaseURL, loginAsAdmin } from './helpers/auth'
+import { createWorkViaApi } from './helpers/admin-work'
 
 /**
  * T09 界面修补回归（UI-01 至 UI-07，见 implementation/notes/T09-UI-2026-07-30.md）：
  * - UI-01 管理端独立布局：单一 main landmark、无公开 Header/Footer、后台 skip link
  * - UI-02 首页 Hero 确定性对比度：真实样张与最不利纯白底图双测量，不再用 /works 替代首页
- * - UI-03 动态参数：详情→详情、后台 id→id 同组件实例切换
+ * - UI-03 动态参数：详情→详情、后台 id→id 同组件实例切换（T14–T18 起改为真实接口数据）
  * - UI-04 dirty 覆盖全部可编辑字段（含短属性 join('') 冲突用例）
- * - UI-05 金额严格校验与服务端接受集合一致，非法输入发布同步阻断
  * - UI-06 reduced-motion 轨道即时滚动
- * - UI-07 真实任务阶段文案
+ * - UI-07 登录页无占位文案
+ *
+ * 2026-08-01：管理端作品编辑已接入 T14–T18 真实接口，夹具版本用例（含 UI-05 金额校验）
+ * 随夹具删除；CNY 价格输入将随 T22/T25 领养字段回归。
  */
-
-const adminBaseURL = 'http://localhost:3100'
-const BLUEBERRY_ID = 'b943ee7e-0e9a-4944-a36b-ed61b8b9a640'
-const LIZI_ID = '3cb1db83-c2c5-42a1-8e5e-a61cb97d2422'
 
 test.describe('UI-01 管理端布局边界', () => {
   test('作品列表：单一 main、无公开 Header/Footer、后台 skip link 焦点顺序正确', async ({ page }) => {
@@ -47,7 +46,8 @@ test.describe('UI-01 管理端布局边界', () => {
 
   test('作品编辑：单一 main、无公开 Header/Footer', async ({ page }) => {
     await loginAsAdmin(page)
-    await page.goto(`${adminBaseURL}/admin/works/${BLUEBERRY_ID}`)
+    const work = await createWorkViaApi(page)
+    await page.goto(`${adminBaseURL}/admin/works/${work.id}`)
     await page.waitForSelector('.editor-card')
 
     await expect(page.locator('main')).toHaveCount(1)
@@ -238,14 +238,17 @@ test.describe('UI-03 动态参数响应', () => {
     await expect(page.getByTestId('work-detail')).toHaveAttribute('data-work-slug', 'naigai')
   })
 
-  test('后台编辑 id→id：表单重建、dirty 基线重置、发布检查随作品更新', async ({ page }) => {
+  test('后台编辑 id→id：表单重建、dirty 基线重置（真实接口数据）', async ({ page }) => {
     await loginAsAdmin(page)
-    await page.goto(`${adminBaseURL}/admin/works/${BLUEBERRY_ID}`)
+    const first = await createWorkViaApi(page, { characterName: '切换甲' })
+    const second = await createWorkViaApi(page, { characterName: '切换乙' })
+
+    await page.goto(`${adminBaseURL}/admin/works/${first.id}`)
     await page.waitForSelector('.editor-card')
-    await expect(page.getByLabel(/公开人民币价格/)).toHaveValue('15600')
+    await expect(page.getByLabel(/角色名/)).toHaveValue('切换甲')
 
     // 弄脏当前表单，验证切换后不会残留
-    await page.getByLabel(/角色名/).fill('蓝莓改')
+    await page.getByLabel(/角色名/).fill('切换甲改')
     await expect(page.getByText('有未保存更改')).toBeVisible()
 
     // CSR 页面经 popstate 制造同组件实例 ID 切换
@@ -254,27 +257,22 @@ test.describe('UI-03 动态参数响应', () => {
       window.dispatchEvent(new PopStateEvent('popstate'))
     }, id)
 
-    await switchTo(LIZI_ID)
-    await expect(page).toHaveURL(new RegExp(`/admin/works/${LIZI_ID}$`))
-    await expect(page.getByRole('heading', { level: 1, name: '栗子' })).toBeVisible()
-    await expect(page.getByLabel(/角色名/)).toHaveValue('栗子')
+    await switchTo(second.id)
+    await expect(page).toHaveURL(new RegExp(`/admin/works/${second.id}$`))
+    await expect(page.getByRole('heading', { level: 1, name: '切换乙' })).toBeVisible()
+    await expect(page.getByLabel(/角色名/)).toHaveValue('切换乙')
     // dirty 基线随作品重建：上一个作品的未保存输入不残留
     await expect(page.getByText('未更改')).toBeVisible()
     await expect(page.getByText('有未保存更改')).toHaveCount(0)
-    // 栗子为展示作品：领养字段隐藏；失败素材继续阻断发布
-    await expect(page.getByLabel('领养方式')).toHaveCount(0)
-    await expect(page.getByText('暂不可发布')).toBeVisible()
-    await expect(page.getByRole('button', { name: '发布', exact: true })).toBeDisabled()
 
     // id→不存在：进入缺失分支而非崩溃
     await switchTo('00000000-0000-4000-8000-000000000000')
     await expect(page.getByText('未找到该作品')).toBeVisible()
 
     // 不存在→有效 id：表单按新作品重建
-    await switchTo(BLUEBERRY_ID)
-    await expect(page.getByRole('heading', { level: 1, name: '蓝莓' })).toBeVisible()
-    await expect(page.getByLabel(/角色名/)).toHaveValue('蓝莓')
-    await expect(page.getByLabel(/公开人民币价格/)).toHaveValue('15600')
+    await switchTo(first.id)
+    await expect(page.getByRole('heading', { level: 1, name: '切换甲' })).toBeVisible()
+    await expect(page.getByLabel(/角色名/)).toHaveValue('切换甲')
     await expect(page.getByText('未更改')).toBeVisible()
   })
 })
@@ -286,29 +284,46 @@ test.describe('UI-04 dirty 覆盖全部可编辑字段', () => {
 
   const dirtyBadge = (page: import('@playwright/test').Page) => page.getByText('有未保存更改')
 
-  test('领养方式、业务状态与价格修改均影响 dirty', async ({ page }) => {
-    await page.goto(`${adminBaseURL}/admin/works/${BLUEBERRY_ID}`)
+  test('基础字段修改与还原均影响 dirty', async ({ page }) => {
+    const work = await createWorkViaApi(page, {
+      characterName: '脏值验证',
+      ownerContact: null,
+    })
+    await page.goto(`${adminBaseURL}/admin/works/${work.id}`)
     await page.waitForSelector('.editor-card')
     await expect(dirtyBadge(page)).toHaveCount(0)
 
-    await page.getByLabel('领养方式').selectOption('regular')
+    await page.getByLabel(/角色名/).fill('脏值验证改')
     await expect(dirtyBadge(page)).toBeVisible()
-    await page.getByLabel('领养方式').selectOption('event_drop')
+    await page.getByLabel(/角色名/).fill('脏值验证')
     await expect(dirtyBadge(page)).toHaveCount(0)
 
-    await page.getByLabel('业务状态').selectOption('scheduled')
+    await page.getByLabel('装型').selectOption('partial')
     await expect(dirtyBadge(page)).toBeVisible()
-    await page.getByLabel('业务状态').selectOption('available')
+    await page.getByLabel('装型').selectOption('full')
     await expect(dirtyBadge(page)).toHaveCount(0)
 
-    await page.getByLabel(/公开人民币价格/).fill('16800')
+    await page.getByLabel('用途').selectOption('showcase')
     await expect(dirtyBadge(page)).toBeVisible()
-    await page.getByLabel(/公开人民币价格/).fill('15600')
+    await page.getByLabel('用途').selectOption('commission')
+    await expect(dirtyBadge(page)).toHaveCount(0)
+
+    await page.getByLabel('角色主人公开值').selectOption('有点小狗工作室')
+    await expect(dirtyBadge(page)).toBeVisible()
+    await page.getByLabel('角色主人公开值').selectOption('不公开')
+    await expect(dirtyBadge(page)).toHaveCount(0)
+
+    await page.getByLabel(/联系人/).fill('新联系方式')
+    await expect(dirtyBadge(page)).toBeVisible()
+    await page.getByLabel(/联系人/).fill('')
     await expect(dirtyBadge(page)).toHaveCount(0)
   })
 
   test('短属性：join(‘’) 冲突、增删与内容修改均影响 dirty', async ({ page }) => {
-    await page.goto(`${adminBaseURL}/admin/works/${BLUEBERRY_ID}`)
+    const work = await createWorkViaApi(page, {
+      featureTags: ['纯海绵头', '内置风扇'],
+    })
+    await page.goto(`${adminBaseURL}/admin/works/${work.id}`)
     await page.waitForSelector('.editor-card')
 
     // join('') 冲突用例：['纯海绵头','内置风扇'] → ['纯海绵头内','置风扇']
@@ -325,62 +340,10 @@ test.describe('UI-04 dirty 覆盖全部可编辑字段', () => {
     // 增删：新增一条（含空值）即 dirty；删除新增的空条目后回到基线
     await page.getByRole('button', { name: '添加属性' }).click()
     await expect(dirtyBadge(page)).toBeVisible()
-    await page.getByLabel('作品属性第 5 条').fill('新属性')
+    await page.getByLabel('作品属性第 3 条').fill('新属性')
     await expect(dirtyBadge(page)).toBeVisible()
-    await page.getByRole('button', { name: '删除第 5 条属性' }).click()
+    await page.getByRole('button', { name: '删除第 3 条属性' }).click()
     await expect(dirtyBadge(page)).toHaveCount(0)
-  })
-
-  test('用途切换：隐藏的领养字段不产生隐藏脏值，切回后原值保留', async ({ page }) => {
-    await page.goto(`${adminBaseURL}/admin/works/${BLUEBERRY_ID}`)
-    await page.waitForSelector('.editor-card')
-
-    // 蓝莓 → 委托：领养字段隐藏，dirty 仅来自用途本身
-    await page.getByLabel('用途').selectOption('commission')
-    await expect(page.getByLabel('领养方式')).toHaveCount(0)
-    await expect(dirtyBadge(page)).toBeVisible()
-
-    // 切回领养：隐藏期间保留的值等于基线，不形成隐藏脏值
-    await page.getByLabel('用途').selectOption('adoption')
-    await expect(page.getByLabel('领养方式')).toHaveValue('event_drop')
-    await expect(page.getByLabel('业务状态')).toHaveValue('available')
-    await expect(page.getByLabel(/公开人民币价格/)).toHaveValue('15600')
-    await expect(dirtyBadge(page)).toHaveCount(0)
-  })
-})
-
-test.describe('UI-05 金额严格校验', () => {
-  test('非法集合：字段错误、程序化关联与发布同步阻断；合法与留空恢复', async ({ page }) => {
-    await loginAsAdmin(page)
-    await page.goto(`${adminBaseURL}/admin/works/${BLUEBERRY_ID}`)
-    await page.waitForSelector('.editor-card')
-    const price = page.getByLabel(/公开人民币价格/)
-    const publish = page.getByRole('button', { name: '发布', exact: true })
-    await expect(publish).toBeEnabled()
-
-    // 零、负值、指数、尾随字符、两位以上小数：全部拒绝且阻断发布
-    for (const bad of ['0', '-1', '1e4', '12abc', '1.234']) {
-      await price.fill(bad)
-      await expect(page.locator('#f-price-error')).toBeVisible()
-      await expect(price).toHaveAttribute('aria-invalid', 'true')
-      await expect(price).toHaveAttribute('aria-describedby', /f-price-error/)
-      await expect(page.getByText('价格未通过校验')).toBeVisible()
-      await expect(publish).toBeDisabled()
-      await expect(page.getByText('暂不可发布')).toBeVisible()
-    }
-
-    // 合法两位小数：错误清除，发布检查恢复
-    await price.fill('8800.50')
-    await expect(page.locator('#f-price-error')).toHaveCount(0)
-    await expect(price).not.toHaveAttribute('aria-invalid', 'true')
-    await expect(page.getByText('¥8,800.50 将展示在公开端')).toBeVisible()
-    await expect(publish).toBeEnabled()
-
-    // 留空 = 不公开价格：无错误、可发布
-    await price.fill('')
-    await expect(page.locator('#f-price-error')).toHaveCount(0)
-    await expect(page.getByText('未录入价格，公开端整区隐藏')).toBeVisible()
-    await expect(publish).toBeEnabled()
   })
 })
 
@@ -441,26 +404,7 @@ test.describe('UI-06 reduced-motion 轨道', () => {
   })
 })
 
-test.describe('UI-07 真实任务阶段文案', () => {
-  test('编辑页引用真实任务编号：T14–T15 上传、T16 衍生图与失败重试、T17 保存、T18 发布', async ({ page }) => {
-    await loginAsAdmin(page)
-    await page.goto(`${adminBaseURL}/admin/works/${LIZI_ID}`)
-    await page.waitForSelector('.editor-card')
-
-    await expect(page.getByText(/公开端实际衍生图由 OSS 生成（T16）/)).toBeVisible()
-    await expect(page.getByText(/T11–T12/)).toHaveCount(0)
-
-    // 栗子含“校验”环节失败素材：重试指向 T15
-    await page.getByRole('button', { name: '重试' }).click()
-    await expect(page.getByRole('status').last()).toContainText('重试接口尚未接入（T15）')
-
-    await page.getByRole('button', { name: '上传出厂照' }).click()
-    await expect(page.getByRole('status').last()).toContainText('上传接口尚未接入（T14–T15）')
-
-    await page.getByRole('button', { name: '保存草稿' }).click()
-    await expect(page.getByRole('status').last()).toContainText('保存接口尚未接入（T17）')
-  })
-
+test.describe('UI-07 登录页无占位文案', () => {
   test('登录页已接入真实认证，不再保留占位文案', async ({ page }) => {
     await page.goto(`${adminBaseURL}/admin/login`)
     await page.waitForSelector('[data-testid="admin-login"]')
