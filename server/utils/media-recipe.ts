@@ -466,7 +466,10 @@ async function generateOne(
       throw new Error('Public variant verification failed.')
     }
 
-    const id = deterministicUuid(identity.hash)
+    const id = deterministicUuid(digest(
+      'sha256',
+      Buffer.from(`${sourceAsset.id}:${identity.hash}`),
+    ))
     try {
       const stale = sqlite.prepare(`
         SELECT id FROM asset_variants WHERE object_key = ?
