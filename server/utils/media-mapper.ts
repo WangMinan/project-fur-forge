@@ -1,6 +1,8 @@
 import {
   adminAssetDtoSchema,
+  publicAltSchema,
   publicHeroSlideDtoSchema,
+  publicSourceSetDtoSchema,
   publicVariantDtoSchema,
 } from '../../shared/schemas/media'
 import type {
@@ -8,10 +10,12 @@ import type {
   AssetStatus,
   MediaRole,
   PublicHeroSlideDto,
+  PublicSourceSetDto,
   PublicVariantDto,
 } from '../../shared/types/contracts'
 import {
   completeHeroVariants,
+  HERO_RECIPE,
 } from './hero-publication'
 
 export interface AssetRecord {
@@ -101,12 +105,49 @@ export function toPublicVariantDto(
   }
 
   return publicVariantDtoSchema.parse({
-    variantId: record.id,
     src: publicMediaUrl(mediaBaseUrl, record.objectKey),
     width: record.width,
     height: record.height,
     format: record.format,
   })
+}
+
+export function toSafePublicAlt(value: string | null, fallback: string) {
+  for (const candidate of [value, fallback, '兽装作品照片']) {
+    const parsed = publicAltSchema.safeParse(candidate)
+    if (parsed.success) {
+      return parsed.data
+    }
+  }
+  return '兽装作品照片'
+}
+
+export function toPublicSourceSetDto(
+  records: readonly VariantRecord[],
+  mediaBaseUrl: string,
+  expectedWidths: readonly number[],
+): PublicSourceSetDto {
+  const variants = records
+    .map(record => toPublicVariantDto(record, mediaBaseUrl))
+    .filter(variant => variant !== null)
+  const webp = variants
+    .filter(variant => variant.format === 'webp')
+    .sort((left, right) => left.width - right.width)
+  const fallback = variants
+    .filter(variant => variant.format !== 'webp')
+    .sort((left, right) => left.width - right.width)
+  const widthsMatch = (values: readonly PublicVariantDto[]) => (
+    values.length === expectedWidths.length
+    && values.every((value, index) => value.width === expectedWidths[index])
+  )
+  if (
+    !widthsMatch(webp)
+    || !widthsMatch(fallback)
+    || new Set(fallback.map(variant => variant.format)).size !== 1
+  ) {
+    throw new Error('Public srcset is incomplete.')
+  }
+  return publicSourceSetDtoSchema.parse({ webp, fallback })
 }
 
 export function toPublicHeroSlideDto(
@@ -129,23 +170,27 @@ export function toPublicHeroSlideDto(
     record.landscapeVariants,
     record.activeWatermarkProfileId,
   )
-    .map(variant => toPublicVariantDto(variant, mediaBaseUrl))
-    .filter(variant => variant !== null)
   const portrait = completeHeroVariants(
     'home_hero_portrait',
     record.portraitVariants,
     record.activeWatermarkProfileId,
   )
-    .map(variant => toPublicVariantDto(variant, mediaBaseUrl))
-    .filter(variant => variant !== null)
 
   return publicHeroSlideDtoSchema.parse({
-    id: record.id,
-    version: record.version,
-    alt: record.altText,
+    alt: toSafePublicAlt(record.altText, '首页代表作品'),
     sortOrder: record.sortOrder,
-    landscape,
-    portrait,
-    linkedWorkSlug: record.linkedWork?.slug ?? null,
+    landscape: toPublicSourceSetDto(
+      landscape,
+      mediaBaseUrl,
+      HERO_RECIPE.home_hero_landscape.widths,
+    ),
+    portrait: toPublicSourceSetDto(
+      portrait,
+      mediaBaseUrl,
+      HERO_RECIPE.home_hero_portrait.widths,
+    ),
+    linkedWorkHref: record.linkedWork
+      ? `/works/${record.linkedWork.slug}`
+      : null,
   })
 }

@@ -69,7 +69,14 @@ export interface MediaStorage {
   signPrivateGet(objectKey: string, expiresAt: number): Promise<PrivateAssetPreviewDto>
 }
 
+export const PUBLIC_MEDIA_CACHE_CONTROL = 'public, max-age=31536000, immutable'
+
 interface OssClient {
+  copy(
+    objectKey: string,
+    sourceObjectKey: string,
+    options: { headers: Record<string, string> },
+  ): Promise<unknown>
   delete(objectKey: string): Promise<unknown>
   get(objectKey: string, options?: Record<string, unknown>): Promise<OssResult>
   head(objectKey: string): Promise<OssResult>
@@ -315,6 +322,27 @@ export class AliOssMediaStorage implements MediaStorage {
       input.objectKey,
       input.process,
       this.publicBucket,
+    )
+    const extension = input.objectKey.split('.').at(-1)?.toLowerCase()
+    const contentType = extension === 'jpg' || extension === 'jpeg'
+      ? 'image/jpeg'
+      : extension === 'png'
+        ? 'image/png'
+        : extension === 'webp'
+          ? 'image/webp'
+          : null
+    if (!contentType) {
+      throw new Error('Public media object extension is unsupported.')
+    }
+    await (await this.publicClient).copy(
+      input.objectKey,
+      input.objectKey,
+      {
+        headers: {
+          'Cache-Control': PUBLIC_MEDIA_CACHE_CONTROL,
+          'Content-Type': contentType,
+        },
+      },
     )
   }
 

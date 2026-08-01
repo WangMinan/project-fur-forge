@@ -22,6 +22,18 @@ export const ASSET_STATUS_VALUES = [
 export const mediaRoleSchema = z.enum(MEDIA_ROLE_VALUES)
 export const assetStatusSchema = z.enum(ASSET_STATUS_VALUES)
 
+const publicAltContactPattern = /(?:https?:\/\/|mailto:|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|(?:QQ|微信|VX|电话|手机)\s*[:：]?\s*[A-Z0-9_-]{5,})/iu
+
+export const publicAltSchema = z.string()
+  .trim()
+  .min(1)
+  .max(500)
+  .refine(value => Array.from(value).every((character) => {
+    const code = character.codePointAt(0) ?? 0
+    return code > 31 && code !== 127
+  }))
+  .refine(value => !publicAltContactPattern.test(value))
+
 export const adminAssetDtoSchema = z.object({
   assetId: resourceIdSchema,
   version: resourceVersionSchema,
@@ -42,19 +54,29 @@ export const privateAssetPreviewResponseSchema = apiSuccessSchema(
 )
 
 export const publicVariantDtoSchema = z.object({
-  variantId: resourceIdSchema,
   src: z.string().url(),
   width: z.number().int().positive(),
   height: z.number().int().positive(),
   format: z.enum(['webp', 'jpeg', 'png']),
 }).strict()
 
+const publicWebpVariantDtoSchema = publicVariantDtoSchema.extend({
+  format: z.literal('webp'),
+})
+
+const publicFallbackVariantDtoSchema = publicVariantDtoSchema.extend({
+  format: z.enum(['jpeg', 'png']),
+})
+
+export const publicSourceSetDtoSchema = z.object({
+  webp: z.array(publicWebpVariantDtoSchema).min(1),
+  fallback: z.array(publicFallbackVariantDtoSchema).min(1),
+}).strict()
+
 export const publicHeroSlideDtoSchema = z.object({
-  id: resourceIdSchema,
-  version: resourceVersionSchema,
-  alt: z.string().trim().min(1).max(500),
+  alt: publicAltSchema,
   sortOrder: z.number().int().min(0).max(4),
-  landscape: z.array(publicVariantDtoSchema).min(1),
-  portrait: z.array(publicVariantDtoSchema).min(1),
-  linkedWorkSlug: z.string().min(1).max(120).nullable(),
+  landscape: publicSourceSetDtoSchema,
+  portrait: publicSourceSetDtoSchema,
+  linkedWorkHref: z.string().regex(/^\/works\/[a-z0-9]+(?:-[a-z0-9]+)*$/).nullable(),
 }).strict()

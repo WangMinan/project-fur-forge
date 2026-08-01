@@ -11,7 +11,9 @@
 - [`GATE07-WATERMARK-ENGINEERING-2026-08-01.md`](./GATE07-WATERMARK-ENGINEERING-2026-08-01.md) 记录迁移、种子、API、真实 OSS、原子切换、E2E 排查和工程验证。
 - [`GATE07-UI-HANDOFF.md`](./GATE07-UI-HANDOFF.md) 是 Kimi 实现 `/admin/site/branding` 的唯一工程交接。
 - [`GATE07-WATERMARK-UI-2026-08-01.md`](./GATE07-WATERMARK-UI-2026-08-01.md) 记录管理 UI、三视口和浏览器 E2E。
-- [`GATE07-CLOSURE-2026-08-02.md`](./GATE07-CLOSURE-2026-08-02.md) 记录联调修复、全站应用进度、质量规则和用户人工验收。T19/T20 未启动。
+- [`GATE07-CLOSURE-2026-08-02.md`](./GATE07-CLOSURE-2026-08-02.md) 记录联调修复、全站应用进度、质量规则和用户人工验收。
+- [`T19-T20-ENGINEERING-2026-08-01.md`](./T19-T20-ENGINEERING-2026-08-01.md) 记录公开读取、首页发布、缓存与安全契约。
+- [`T19-T20-UI-HANDOFF.md`](./T19-T20-UI-HANDOFF.md) 是 Kimi 接入公开页和首页管理页的工程交接；T19/T20 仍未勾选。
 
 ## 主要实施记录
 
@@ -34,8 +36,8 @@
 - [`T14-T18-UI-HANDOFF.md`](./T14-T18-UI-HANDOFF.md)：T14–T18 UI 交接。
 - [`t14-t18-ui/T14-T18-UI-REPAIR-2026-08-01.md`](./t14-t18-ui/T14-T18-UI-REPAIR-2026-08-01.md)：管理端接线、阻塞修复和用户联合验收。
 
-## 下一批记录要求
+## 当前批记录要求
 
-从最新 `main` 重新路由 T19 后再建立对应实施记录；不得沿用 GATE-07 分支提前生成 T19/T20 完成记录。后续记录必须说明长耗时任务的进度证据，以及 E2E 实际覆盖的用户路径和页面风险，不能只登记用例数量。
+当前工程分支只锁定 T19/T20 服务端契约；最终 Vue 页面、浏览器视觉证据和联合验收尚未完成。后续收口记录必须说明长耗时任务的进度证据，以及 E2E 实际覆盖的用户路径和页面风险，不能只登记用例数量。
 
 旧 `brand-standard-v1` 和四角水印记录仍是历史事实，不得回写成当时已经实现居中可配置水印。

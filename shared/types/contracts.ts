@@ -5,8 +5,24 @@ import type {
   mediaRoleSchema,
   privateAssetPreviewDtoSchema,
   publicHeroSlideDtoSchema,
+  publicSourceSetDtoSchema,
   publicVariantDtoSchema,
 } from '../schemas/media'
+import type {
+  adminHeroAssetDtoSchema,
+  adminHeroSlideDtoSchema,
+  adminHomeDtoSchema,
+  publicHomeDtoSchema,
+} from '../schemas/home'
+import type {
+  publicFeaturedWorksDtoSchema,
+  publicWorkCardDtoSchema,
+  publicWorkDetailDtoSchema,
+  publicWorkFilterStateSchema,
+  publicWorkGalleryItemDtoSchema,
+  publicWorkListDtoSchema,
+  publicWorkSummaryDtoSchema,
+} from '../schemas/public-content'
 import type {
   publicationBlockerSchema,
   publicationFailureStageSchema,
@@ -68,7 +84,23 @@ export type PrivateAssetPreviewDto = z.infer<
   typeof privateAssetPreviewDtoSchema
 >
 export type PublicVariantDto = z.infer<typeof publicVariantDtoSchema>
+export type PublicSourceSetDto = z.infer<typeof publicSourceSetDtoSchema>
 export type PublicHeroSlideDto = z.infer<typeof publicHeroSlideDtoSchema>
+export type AdminHeroAssetDto = z.infer<typeof adminHeroAssetDtoSchema>
+export type AdminHeroSlideDto = z.infer<typeof adminHeroSlideDtoSchema>
+export type AdminHomeDto = z.infer<typeof adminHomeDtoSchema>
+export type PublicHomeDto = z.infer<typeof publicHomeDtoSchema>
+export type PublicWorkCardDto = z.infer<typeof publicWorkCardDtoSchema>
+export type PublicWorkGalleryItemDto = z.infer<
+  typeof publicWorkGalleryItemDtoSchema
+>
+export type PublicWorkSummaryDto = z.infer<typeof publicWorkSummaryDtoSchema>
+export type PublicWorkDetailDto = z.infer<typeof publicWorkDetailDtoSchema>
+export type PublicWorkFilterState = z.infer<typeof publicWorkFilterStateSchema>
+export type PublicWorkListDto = z.infer<typeof publicWorkListDtoSchema>
+export type PublicFeaturedWorksDto = z.infer<
+  typeof publicFeaturedWorksDtoSchema
+>
 export type PublicationOperationStatus = z.infer<
   typeof publicationOperationStatusSchema
 >

@@ -6,13 +6,13 @@
 
 阶段 4 · IMPLEMENTATION 进行中。T01–T18、GATE-06、GATE-07 与 EXT-02 已完成。景宸在 S4 开始前追加的“可由管理端选择 Logo 候选的大尺寸居中水印”已完成工程、管理 UI、真实 OSS、三视口和用户验收。
 
-**GATE-07 已于 2026-08-02 通过用户人工验收。T19/T20 尚未启动，本批只收口并发布 GATE-07；下一批必须重新路由后再开始 T19。**
+**GATE-07 已于 2026-08-02 通过用户人工验收并发布到 `main`。当前批次已重新路由，GPT 5.6 Sol 正在 `feature/t19-t20-engineering-sol` 锁定 T19/T20 服务端契约；T19/T20 保持未勾选，等待 Kimi 页面接线和联合验收。**
 
 ## 当前执行分工
 
 - GPT 5.6 Sol 作为 `ENGINEERING_PRIMARY` 完成 GATE-07 数据/接口/OSS/原子切换、联调故障修复、进度补齐与工程收口。
 - Kimi K3 作为 `UI_PRIMARY` 完成 `/admin/site/branding`、移除 v1 四角控件并提供三视口浏览器证据。
-- 用户已完成实际页面人工验收；T19/T20 和后续 T21 门禁等待下一批重新路由。
+- 用户已完成 GATE-07 实际页面人工验收；当前工程批次只实现 T19/T20 repository、API、公开投影、fixture/fake adapter 和 UI 交接，不实现最终 Vue 页面。
 - 完整批次与分支见 [`implementation/EXECUTION_ROUTING.md`](./implementation/EXECUTION_ROUTING.md)。
 
 ## 已完成基础
@@ -81,4 +81,4 @@ T14–T18 的完成状态保持有效。新要求是后续增量门禁，不把�
 
 ## 下一步
 
-完成 `feature/gate07-watermark-ui-kimi` 的提交、推送、合并与分支清理。随后从最新 `main` 为 T19 建立新批次和短分支；本轮不启动 T19/T20。
+在 `feature/t19-t20-engineering-sol` 完成服务端契约与完整工程门禁，保持 T19/T20 未勾选；随后由 Kimi 按交接实现最终 Vue 页面，再进行独立工程复核和用户验收。

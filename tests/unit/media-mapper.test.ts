@@ -140,8 +140,16 @@ describe('media DTO mapping', () => {
 
     expect(dto).toMatchObject({
       alt: record.altText,
-      linkedWorkSlug: 'blue-dog',
+      linkedWorkHref: '/works/blue-dog',
     })
+    expect(dto).not.toHaveProperty('id')
+    expect(dto?.landscape.webp.map(variant => variant.width)).toEqual([
+      768,
+      1280,
+      1920,
+    ])
+    expect(serialized).not.toContain('variantId')
+    expect(serialized).not.toContain('version')
     expect(serialized).not.toContain('PRIVATE')
     expect(serialized).not.toContain('internalErrorCode')
     expect(toPublicHeroSlideDto({
@@ -154,14 +162,14 @@ describe('media DTO mapping', () => {
         ...variant,
         storageScope: 'PRIVATE',
       })),
-    }, 'https://media.example.com')).toThrow(/requires WebP and fallback/)
+    }, 'https://media.example.com')).toThrow(/requires complete WebP/)
     expect(() => toPublicHeroSlideDto({
       ...record,
       landscapeVariants: record.landscapeVariants.map(variant => ({
         ...variant,
         usage: 'detail',
       })),
-    }, 'https://media.example.com')).toThrow(/requires WebP and fallback/)
+    }, 'https://media.example.com')).toThrow(/requires complete WebP/)
     expect(() => toPublicHeroSlideDto({
       ...record,
       portraitVariants: record.portraitVariants.map(variant => ({
@@ -174,13 +182,13 @@ describe('media DTO mapping', () => {
         watermarkProfileId: null,
         watermarkScalePercent: null,
       })),
-    }, 'https://media.example.com')).toThrow(/requires WebP and fallback/)
+    }, 'https://media.example.com')).toThrow(/requires complete WebP/)
     expect(() => toPublicHeroSlideDto({
       ...record,
       landscapeVariants: record.landscapeVariants.map(variant => ({
         ...variant,
         height: 1,
       })),
-    }, 'https://media.example.com')).toThrow(/requires WebP and fallback/)
+    }, 'https://media.example.com')).toThrow(/requires complete WebP/)
   })
 })

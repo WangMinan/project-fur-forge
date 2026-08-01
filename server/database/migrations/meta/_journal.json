@@ -57,6 +57,13 @@
       "when": 1785568328132,
       "tag": "0007_fearless_bucky",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1785603600000,
+      "tag": "0008_seed_site_content",
+      "breakpoints": true
     }
   ]
 }

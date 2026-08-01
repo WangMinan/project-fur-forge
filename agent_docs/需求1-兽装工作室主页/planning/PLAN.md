@@ -1,7 +1,7 @@
 # 计划：兽装工作室主页
 
 > **角色**：把 SPEC 翻译成有序、可验证的技术实施计划。
-> **状态**：2026-08-01 执行版。T01–T18、GATE-06 与 EXT-02 已完成；角色化上传、媒体处理、水印、作品 CRUD、发布/下架及管理端接线已通过用户联合验收，T19 未启动。
+> **状态**：2026-08-02 执行版。T01–T18、GATE-06、GATE-07 与 EXT-02 已完成；当前在独立分支实施 T19/T20 服务端契约，最终 Vue 页面和任务勾选留给后续 UI 批次。
 
 ## 1. 执行结论
 
@@ -215,7 +215,7 @@ OSS 是公开 variant、最终格式和水印的唯一配方权威。应用负�
 - 调用 OSS IMG、水印与 `sys/saveas`；
 - 验证输出并写数据库。
 
-私有原图保持无水印。首页横竖图、设定图和出厂照的公开 variant 使用 `brand-standard-v1`；返图在 P1 使用 `brand-subtle-v1`。T51 正式校准前，标准水印图按最终输出宽度的 18% 显式缩放，避免按高分辨率处理源放大；具体透明度、比例和边距仍由 T51 用正式素材校准。profile 名、Logo 摘要和锚点必须进入 identity，改变任一参数都生成新 Key，不原位覆盖旧图。
+私有原图保持无水印。首页横竖图、设定图和出厂照的公开 variant 使用当前活动 `brand-centered-v2`；返图在 P1 使用 `brand-subtle-v1`。当前公开选择必须匹配活动 profile ID、配置摘要、Logo 摘要、居中位置、不透明度和缩放；改变任一参数都生成新 Key，不原位覆盖旧图。
 
 默认使用原生 `<picture>`/`srcset/sizes` 选择已生成 URL。若使用 `@nuxt/image`，必须先证明它不会改写 URL或追加裁切、质量、宽度、格式参数；无法证明时不引入。
 
@@ -223,11 +223,11 @@ OSS 是公开 variant、最终格式和水印的唯一配方权威。应用负�
 
 | 用途 | 比例/构图 | 宽度 | 格式 | 水印 |
 | --- | --- | --- | --- | --- |
-| `work-card` | 3:4 | 480 / 768 / 1200 | WebP + fallback | `brand-standard-v1` |
-| `home-hero-landscape` | 16:9 | 768 / 1280 / 1920 | WebP + fallback | `brand-standard-v1` |
-| `home-hero-portrait` | 9:16 | 480 / 768 / 1080 | WebP + fallback | `brand-standard-v1` |
-| `design-sheet` | 完整横版画布，必要时 contain | 960 / 1600 / 2400 | WebP + fallback | `brand-standard-v1` |
-| `detail` | 原比例 | 960 / 1600 / 2400 | WebP + fallback | `brand-standard-v1` |
+| `work-card` | 3:4 | 480 / 768 / 1200 | WebP + fallback | 活动 `brand-centered-v2` |
+| `home-hero-landscape` | 16:9 | 768 / 1280 / 1920 | WebP + fallback | 活动 `brand-centered-v2` |
+| `home-hero-portrait` | 9:16 | 480 / 768 / 1080 | WebP + fallback | 活动 `brand-centered-v2` |
+| `design-sheet` | 完整横版画布，必要时 contain | 960 / 1600 / 2400 | WebP + fallback | 活动 `brand-centered-v2` |
+| `detail` | 原比例 | 960 / 1600 / 2400 | WebP + fallback | 活动 `brand-centered-v2` |
 | `return` | 原比例，P1 | 960 / 1600 / 2400 | WebP + fallback | `brand-subtle-v1` |
 
 - fallback：透明度确有需要时 PNG，否则 JPEG。
@@ -251,7 +251,7 @@ OSS 是公开 variant、最终格式和水印的唯一配方权威。应用负�
 
 这一模式适用于后续所有长耗时操作：先建立可查询的服务端操作状态，再尽快向浏览器返回操作标识；页面持续轮询或订阅真实阶段与计数。总量未知时显示不定进度，总量确定后显示完成量/总量；失败状态持久化并给出下一步，刷新后能够恢复。单进程阶段不引入队列或 worker，但不得以同步等待整个 HTTP 请求替代进度反馈。
 
-首页轮播发布还必须验证：启用项数量 1–5、每项横竖资产均 READY、alt 非空、排序无冲突、可选关联作品已发布；两个方向都具备 `recipe-v1` 全部宽度的 PUBLIC READY WebP + fallback，usage、`brand-standard-v1`、Logo 摘要、水印锚点、输出摘要和字节数完整。发布失败时继续使用上一版完整公开投影，不出现半套横竖资源。
+首页轮播启用即为原子发布，不另建一套重复的“已发布”布尔值。启用前必须验证：启用项数量 1–5、每项横竖资产均 READY、alt 非空、排序无冲突、可选关联作品已发布；两个方向都具备 `recipe-v1` 全部宽度的 PUBLIC READY WebP + fallback，usage、活动 `brand-centered-v2` profile、配置与 Logo 摘要、居中参数、输出摘要和字节数完整。生成期间旧公开投影不变，全部验证后才启用；失败不出现半套横竖资源。
 
 下架：
 

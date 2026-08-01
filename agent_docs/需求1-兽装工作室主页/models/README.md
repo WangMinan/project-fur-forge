@@ -62,7 +62,7 @@ OQ-119 已由用户回答：`ownerDisplay` 始终为去首尾空白后非空的�
 
 - 每项都必须同时拥有非空 `landscape_asset_id` 与 `portrait_asset_id`，两者不能相同；启用项还要求两侧资产 READY；
 - 每项的 `alt_text` 去首尾空白后非空，排序值完整且非负；仅启用项要求排序唯一且位于 0–4，数据库因此持续约束最多 5 个启用项，发布函数另要求至少 1 个启用项，空库和仅含停用草稿的库合法；
-- 提交公开状态前，横版必须有 768 / 1280 / 1920、竖版必须有 480 / 768 / 1080 的 `recipe-v1` PUBLIC READY WebP + fallback；usage、`brand-standard-v1`、非空 Logo 摘要、有效水印锚点、输出摘要和字节数全部进入同一发布校验，公开 mapper 复用该条件；
+- 提交公开状态前，横版必须有 768 / 1280 / 1920、竖版必须有 480 / 768 / 1080 的 `recipe-v1` PUBLIC READY WebP + fallback；usage、当前活动 `brand-centered-v2` profile、配置与 Logo 摘要、居中参数、输出摘要和字节数全部进入同一发布校验，公开 mapper 复用该条件；
 - 可选 `linked_work_id` 只允许指向已发布作品。作品下架时不得级联删除轮播图，应显式清空关联或阻止并说明影响；
 - 自动轮播开关与不短于 6 秒的间隔保存在单例 `site_content`，默认关闭；不为每个 slide 保存任意脚本、HTML 或独立动画配置；
 - 公开投影只返回已发布横竖 variant、alt、顺序和安全作品链接。
@@ -90,8 +90,8 @@ OQ-119 已由用户回答：`ownerDisplay` 始终为去首尾空白后非空的�
 - `preprocess` 不得引用另一个 preprocess，且输入摘要必须等于永久原图摘要；任何 `source_variant_id` 都必须指向同一资产下 READY 的 PRIVATE preprocess，其输出摘要等于下游输入摘要。大于 20,000,000 字节的原图生成 PUBLIC variant 时必须使用该来源。
 - 管理端浏览器以 `assetId` 操作媒体；私有 Key 只在服务端和数据库中使用。
 - 原图不保存水印像素。`asset_variants` 的 identity 覆盖原图摘要、媒体角色、裁切/焦点、用途、宽度、格式、质量、Logo 摘要、水印 profile 版本、锚点和 `recipe-version`，不得原位覆盖。
-- P0 的 `home_hero_*`、`design_sheet`、`studio_photo` 使用 `brand-standard-v1`；P1 的 `return_photo` 使用 `brand-subtle-v1`。具体比例、透明度与边距由 T51 校准，但 profile 名和摘要从首次实现起进入 identity。
-- 水印锚点允许 `top-left | top-right | bottom-left | bottom-right`；默认 `top-left`。管理员可以改安全角，不能关闭强制水印。
+- P0 的 `home_hero_*`、`design_sheet`、`studio_photo` 使用当前活动 `brand-centered-v2`；P1 的 `return_photo` 使用 `brand-subtle-v1`。profile ID、配置与 Logo 摘要、居中位置、不透明度和缩放进入 identity。
+- `top-left | top-right | bottom-left | bottom-right` 只保留历史 v1 身份；v2 固定 `center`，管理员可以在受限范围调整透明度和缩放，不能关闭强制水印。
 - `publication_operations` 的状态应描述 `GENERATING_PUBLIC`、`APPLYING_WATERMARK`、`VERIFYING_PUBLIC`、`COMMITTING`、`CLEANING_PUBLIC`、`FAILED`、`DONE` 等实际步骤，不再出现逐对象 ACL 进度。
 
 ## 约束

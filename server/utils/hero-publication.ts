@@ -24,7 +24,7 @@ export interface HeroVariantCandidate {
   width: number
 }
 
-const heroRecipe = {
+export const HERO_RECIPE = {
   home_hero_landscape: {
     usage: 'home-hero-landscape',
     widths: [768, 1280, 1920],
@@ -35,13 +35,14 @@ const heroRecipe = {
   },
 } as const
 const digestPattern = /^[0-9a-f]{64}$/
-export function completeHeroVariants<T extends HeroVariantCandidate>(
+
+function eligibleHeroVariants<T extends HeroVariantCandidate>(
   role: HeroMediaRole,
   variants: readonly T[],
   activeProfileId: string,
 ) {
-  const recipe = heroRecipe[role]
-  const eligible = variants.filter(variant =>
+  const recipe = HERO_RECIPE[role]
+  return variants.filter(variant =>
     variant.storageScope === 'PUBLIC'
     && variant.status === 'READY'
     && variant.mediaRole === role
@@ -69,6 +70,16 @@ export function completeHeroVariants<T extends HeroVariantCandidate>(
       ),
     ),
   )
+}
+
+export function missingHeroVariantCount(
+  role: HeroMediaRole,
+  variants: readonly HeroVariantCandidate[],
+  activeProfileId: string,
+) {
+  const recipe = HERO_RECIPE[role]
+  const eligible = eligibleHeroVariants(role, variants, activeProfileId)
+  let missing = 0
 
   for (const width of recipe.widths) {
     const formats = new Set(
@@ -76,15 +87,26 @@ export function completeHeroVariants<T extends HeroVariantCandidate>(
         .filter(variant => variant.width === width)
         .map(variant => variant.format),
     )
-
-    if (
-      !formats.has('webp')
-      || (!formats.has('jpeg') && !formats.has('png'))
-    ) {
-      throw new Error(
-        `${role} requires WebP and fallback variants at width ${width}.`,
-      )
+    if (!formats.has('webp')) {
+      missing += 1
     }
+    if (!formats.has('jpeg') && !formats.has('png')) {
+      missing += 1
+    }
+  }
+
+  return missing
+}
+
+export function completeHeroVariants<T extends HeroVariantCandidate>(
+  role: HeroMediaRole,
+  variants: readonly T[],
+  activeProfileId: string,
+) {
+  const eligible = eligibleHeroVariants(role, variants, activeProfileId)
+
+  if (missingHeroVariantCount(role, variants, activeProfileId) !== 0) {
+    throw new Error(`${role} requires complete WebP and fallback variants.`)
   }
 
   return eligible
