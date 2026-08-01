@@ -46,6 +46,7 @@ test.describe('出厂照上传链路', () => {
 
     const content = smallStudioPng()
     await uploadFileToEditor(page, content, 'front.png')
+    await expect(page.getByRole('button', { name: '处理中…' })).toBeVisible()
     await expect(page.getByText(/私有上传中/)).toBeVisible()
     await expect(page.getByRole('progressbar')).toBeVisible()
     releasePut()
@@ -71,6 +72,7 @@ test.describe('出厂照上传链路', () => {
     await photoCards(page).first().getByLabel(/图片说明/).fill('正面全身，自然光')
     await page.getByRole('button', { name: '保存出厂照' }).click()
     await expect(page.getByText('出厂照已保存。')).toBeVisible()
+    await expect(page.getByText('出厂照有未保存更改')).toHaveCount(0)
 
     // 刷新后通过 assetId 换取短时签名 GET，继续显示私有原图预览。
     await page.reload()

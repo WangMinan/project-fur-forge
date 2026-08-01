@@ -268,6 +268,7 @@ async function savePhotos() {
         schema: managedWorkResponseSchema,
       },
     )
+    resetFromWork(result.data)
     emit('saved', result.data)
   }
   catch (error) {
@@ -303,21 +304,6 @@ async function savePhotos() {
     <p v-if="locked" class="photo-section__locked" role="status">
       作品已发布，出厂照为只读；如需调整请先下架。
     </p>
-
-    <ul v-if="uploads.items.value.length > 0" class="photo-section__uploads" role="list">
-      <li v-for="item in uploads.items.value" :key="item.id">
-        <AdminUploadSessionCard
-          :item="item"
-          @cancel="uploads.cancelUpload(item)"
-          @dismiss="uploads.dismiss(item)"
-          @retry-processing="uploads.retryProcessing(item)"
-          @retry-upload="uploads.retryUpload(item, {
-            workId: work.id,
-            workVersion: work.version,
-          })"
-        />
-      </li>
-    </ul>
 
     <ul v-if="entries.length > 0" class="photo-section__list" role="list">
       <li v-for="(entry, index) in entries" :key="entry.assetId">
@@ -363,8 +349,23 @@ async function savePhotos() {
         class="editor__button editor__button--primary"
         :disabled="!selectedFile || locked || uploadSlotsFull || busyUploads > 0"
         @click="uploadSelectedFile"
-      >上传出厂照</button>
+      >{{ busyUploads > 0 ? '处理中…' : '上传出厂照' }}</button>
     </div>
+
+    <ul v-if="uploads.items.value.length > 0" class="photo-section__uploads" role="list">
+      <li v-for="item in uploads.items.value" :key="item.id">
+        <AdminUploadSessionCard
+          :item="item"
+          @cancel="uploads.cancelUpload(item)"
+          @dismiss="uploads.dismiss(item)"
+          @retry-processing="uploads.retryProcessing(item)"
+          @retry-upload="uploads.retryUpload(item, {
+            workId: work.id,
+            workVersion: work.version,
+          })"
+        />
+      </li>
+    </ul>
 
     <div v-if="isDirty" class="photo-section__actions">
       <button

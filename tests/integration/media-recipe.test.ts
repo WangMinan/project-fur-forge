@@ -113,11 +113,17 @@ describe('recipe-v1 public media generation', () => {
       && !variant.objectKey.includes('/original/'),
     )).toBe(true)
     expect(storage.processCalls).toHaveLength(12)
-    expect(storage.processCalls.every(call =>
-      call.process.includes('/watermark,image_')
-      && call.process.includes(',t_70,P_15,g_se,x_24,y_24/')
-      && call.sourceObjectKey.includes('/original/'),
-    )).toBe(true)
+    expect(storage.processCalls.every((call) => {
+      const encodedLogo = /\/watermark,image_([^,]+)/u.exec(call.process)?.[1]
+      const width = Number(/\/recipe-v1\/[^/]+\/(\d+)\//u.exec(call.objectKey)?.[1])
+      return encodedLogo
+        && Buffer.from(encodedLogo, 'base64url').toString('utf8').endsWith(
+          `?x-oss-process=image/resize,w_${Math.round(width * 0.18)}`,
+        )
+        && call.process.includes(',t_70,g_se,x_24,y_24/')
+        && !call.process.includes(',P_')
+        && call.sourceObjectKey.includes('/original/')
+    })).toBe(true)
 
     const second = await generatePublicVariants(
       sqlite,

@@ -4,13 +4,14 @@ import { openDatabase } from '../server/utils/database.ts'
 import { generatePublicVariants } from '../server/utils/media-recipe.ts'
 import { AliOssMediaStorage } from '../server/utils/media-storage.ts'
 import { getRuntimeConfig } from '../server/utils/runtime-config.ts'
+import { ossErrorSummary } from './oss-preflight-core.mjs'
 
 const WORK_ID = '018896d6-d4af-4e5e-be67-ef32ff613d23'
 
 const config = getRuntimeConfig()
-console.log('mediaBaseUrl:', config.mediaBaseUrl)
-console.log('ossUploadBaseUrl:', config.ossUploadBaseUrl)
-console.log('publicBucket:', config.ossPublicBucket)
+console.log('OSS runtime configuration loaded:', Boolean(
+  config.ossPrivateBucket && config.ossPublicBucket && config.ossEndpoint,
+))
 
 const storage = new AliOssMediaStorage(config)
 for (const name of [
@@ -24,9 +25,7 @@ for (const name of [
 ]) {
   const original = storage[name].bind(storage)
   storage[name] = async (...args) => {
-    const label = name === 'processPrivateToPublic'
-      ? `${name} ${JSON.stringify(args[0])}`
-      : `${name} ${args[0]}`
+    const label = name
     try {
       const result = await original(...args)
       console.log(`OK   ${label}`)
@@ -34,7 +33,7 @@ for (const name of [
     }
     catch (error) {
       console.error(`FAIL ${label}`)
-      console.error('  underlying error:', error)
+      console.error('  OSS error:', ossErrorSummary(error))
       throw error
     }
   }
@@ -43,8 +42,17 @@ for (const name of [
 const { sqlite } = openDatabase('.data/dev.db')
 try {
   const photos = sqlite.prepare(`
-    SELECT asset_id AS assetId FROM work_assets
-    WHERE work_id = ? AND role = 'studio_photo' ORDER BY position
+    SELECT relation.asset_id AS assetId,
+           count(variant.id) AS readyPublicVariants
+    FROM work_assets AS relation
+    LEFT JOIN asset_variants AS variant
+      ON variant.asset_id = relation.asset_id
+      AND variant.storage_scope = 'PUBLIC'
+      AND variant.status = 'READY'
+    WHERE relation.work_id = ? AND relation.role = 'studio_photo'
+    GROUP BY relation.asset_id
+    HAVING count(variant.id) < 12
+    ORDER BY relation.position
   `).all(WORK_ID)
   for (const photo of photos) {
     console.log(`\n=== generatePublicVariants for asset ${photo.assetId} ===`)
@@ -56,7 +64,6 @@ try {
         ['work-card', 'detail'],
       )
       console.log('generated', variants.length, 'variants')
-      break
     }
     catch (error) {
       console.error('generatePublicVariants threw:', error?.message ?? error)
