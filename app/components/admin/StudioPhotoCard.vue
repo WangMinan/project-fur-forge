@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import type { WatermarkAnchor } from '~~/shared/types/contracts'
 import {
   ASSET_STATUS_LABELS,
-  WATERMARK_ANCHOR_LABELS,
 } from '~/utils/media-labels'
 
 export interface StudioPhotoEntry {
@@ -17,7 +15,6 @@ export interface StudioPhotoEntry {
   publicVariantCount: number
   status: 'PENDING' | 'READY' | 'FAILED'
   version: number
-  watermarkAnchor: WatermarkAnchor
   width: number
 }
 
@@ -34,7 +31,7 @@ const emit = defineEmits<{
   retryProcessing: []
   setPrimary: []
   update: [fields: Partial<Pick<StudioPhotoEntry,
-    'alt' | 'focalX' | 'focalY' | 'watermarkAnchor'>>]
+    'alt' | 'focalX' | 'focalY'>>]
 }>()
 
 const previewAspect = ref<'original' | 'card'>('original')
@@ -138,6 +135,7 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
         <span v-if="entry.publicVariantCount > 0" class="photo-card__public">
           公开衍生图 {{ entry.publicVariantCount }} 张
         </span>
+        <span v-else class="photo-card__not-public">公开衍生图未生成</span>
       </p>
 
       <p v-if="entry.status === 'FAILED'" class="photo-card__failure" role="alert">
@@ -185,26 +183,6 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
           :disabled="locked"
           @input="onFocalInput('y', $event)"
         >
-      </div>
-
-      <div class="photo-card__field">
-        <label class="photo-card__label" :for="`anchor-${entry.assetId}`">水印安全角</label>
-        <select
-          :id="`anchor-${entry.assetId}`"
-          class="photo-card__input"
-          :value="entry.watermarkAnchor"
-          :disabled="locked"
-          @change="emit('update', {
-            watermarkAnchor: ($event.target as HTMLSelectElement).value as WatermarkAnchor,
-          })"
-        >
-          <option
-            v-for="(label, value) in WATERMARK_ANCHOR_LABELS"
-            :key="value"
-            :value="value"
-          >{{ label }}</option>
-        </select>
-        <p class="photo-card__hint">水印避开所选角以外的画面主体；正式参数由 T51 校准</p>
       </div>
     </div>
 
@@ -392,6 +370,10 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
 
 .photo-card__public {
   color: var(--admin-status-success);
+}
+
+.photo-card__not-public {
+  color: var(--admin-text-tertiary);
 }
 
 .photo-card__failure {

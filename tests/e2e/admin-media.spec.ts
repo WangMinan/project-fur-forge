@@ -220,7 +220,7 @@ test.describe('出厂照关系编辑', () => {
     await expect(photoCards(page)).toHaveCount(2)
   }
 
-  test('主图、排序、alt、焦点与水印角保存并持久化', async ({ page }) => {
+  test('主图、排序、alt 与焦点保存并持久化', async ({ page }) => {
     const work = await createWorkViaApi(page, { characterName: '关系验证' })
     await gotoEditor(page, work.id)
     await uploadTwoPhotos(page)
@@ -240,10 +240,9 @@ test.describe('出厂照关系编辑', () => {
     await head.getByLabel(/图片说明/).fill('新的首图说明')
     await photoCards(page).nth(1).getByLabel(/图片说明/).fill('次图说明')
 
-    // 焦点滑杆与水印角。
+    // 焦点滑杆。
     await head.getByLabel(/焦点水平/).fill('25')
     await head.getByLabel(/焦点垂直/).fill('75')
-    await head.getByLabel('水印安全角').selectOption('top-left')
 
     await page.getByRole('button', { name: '保存出厂照' }).click()
     await expect(page.getByText('出厂照已保存。')).toBeVisible()
@@ -255,7 +254,6 @@ test.describe('出厂照关系编辑', () => {
     await expect(persistedHead.getByLabel(/图片说明/)).toHaveValue('新的首图说明')
     await expect(persistedHead.getByLabel(/焦点水平/)).toHaveValue('25')
     await expect(persistedHead.getByLabel(/焦点垂直/)).toHaveValue('75')
-    await expect(persistedHead.getByLabel('水印安全角')).toHaveValue('top-left')
     await expect(photoCards(page).nth(1).getByLabel(/图片说明/)).toHaveValue('次图说明')
   })
 

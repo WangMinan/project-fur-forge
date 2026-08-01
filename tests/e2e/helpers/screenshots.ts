@@ -7,11 +7,11 @@ const SCREENSHOT_DIR = resolve(
   'agent_docs/需求1-兽装工作室主页/implementation/notes/t14-t18-ui/screenshots',
 )
 
-export async function capture(page: Page, name: string) {
+export async function capture(page: Page, name: string, directory?: string) {
   const content = await page.screenshot({
     fullPage: false,
   })
-  const path = resolve(SCREENSHOT_DIR, `${name}.png`)
+  const path = resolve(directory ?? SCREENSHOT_DIR, `${name}.png`)
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
       await writeFile(path, content)

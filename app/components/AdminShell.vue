@@ -1,8 +1,8 @@
 <script setup lang="ts">
 // 管理端壳：窄屏为顶栏 + 横向导航，≥1280px 为固定侧栏。
-// P0 仅包含已实现的作品与账号入口；P1/P2 项目在对应任务实现前不出现。
+// 仅包含已实现入口（作品、站点品牌、账号）；未实现的项目不提前出现。
 withDefaults(defineProps<{
-  current?: 'works' | 'account' | 'none'
+  current?: 'account' | 'branding' | 'works' | 'none'
 }>(), {
   current: 'none',
 })
@@ -49,6 +49,11 @@ async function onLogout() {
           class="admin-shell__nav-link"
           :aria-current="current === 'works' ? 'page' : undefined"
         >作品</NuxtLink>
+        <NuxtLink
+          to="/admin/site/branding"
+          class="admin-shell__nav-link"
+          :aria-current="current === 'branding' ? 'page' : undefined"
+        >站点品牌</NuxtLink>
         <NuxtLink
           to="/admin/account"
           class="admin-shell__nav-link"

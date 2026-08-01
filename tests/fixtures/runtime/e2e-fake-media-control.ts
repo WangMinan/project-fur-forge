@@ -3,10 +3,16 @@ import {
   readBody,
   setResponseStatus,
 } from 'h3'
-import { createHash } from 'node:crypto'
+import {
+  createHash,
+  randomBytes,
+  randomUUID,
+} from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { getDatabase } from '../../../server/utils/database'
+import { generatePublicVariants } from '../../../server/utils/media-recipe'
+import { createSyntheticWatermarkPng } from '../../../scripts/oss-preflight-core.mjs'
 import { getE2eFakeMediaStorage } from './e2e-fake-media'
 
 interface ControlBody {
@@ -93,6 +99,96 @@ export default defineEventHandler(async (event) => {
   if (body?.action === 'reset') {
     fake.resetKnobs()
     restoreBundledWatermarkCandidate(fake)
+    return { data: { ok: true } }
+  }
+
+  // GATE-07 品牌页 E2E：预览/应用需要已发布作品照与启用的横竖首页图作为代表资产，
+  // 并预生成当前活动 profile 的公开 variant（旧对象，供切换后清理）。
+  // 首页轮播管理 API 属于 T20，这里直接落库 + fake 存储，不走被测接口。
+  if (body?.action === 'seedBrandingStage') {
+    const sqlite = getDatabase().sqlite
+    const now = Date.now()
+    const suffix = randomUUID()
+
+    // 自清理：reset 会清空 fake 对象但保留 DB 行；上一轮的舞台资产对象已不存在，
+    // 继续作为发布目标会让本轮生成失败。按 key 前缀移除旧舞台数据。
+    const staleAssetIds = sqlite.prepare(`
+      SELECT id FROM assets WHERE private_object_key LIKE 'test/e2e-branding/%'
+    `).pluck().all() as string[]
+    if (staleAssetIds.length > 0) {
+      const placeholders = staleAssetIds.map(() => '?').join(', ')
+      sqlite.prepare(`
+        DELETE FROM site_hero_slides
+        WHERE landscape_asset_id IN (${placeholders})
+           OR portrait_asset_id IN (${placeholders})
+      `).run(...staleAssetIds, ...staleAssetIds)
+      sqlite.prepare(`
+        DELETE FROM works WHERE slug LIKE 'e2e-branding-%'
+      `).run()
+      sqlite.prepare(`
+        DELETE FROM asset_variants WHERE asset_id IN (${placeholders})
+      `).run(...staleAssetIds)
+      sqlite.prepare(`
+        DELETE FROM work_assets WHERE asset_id IN (${placeholders})
+      `).run(...staleAssetIds)
+      sqlite.prepare(`
+        DELETE FROM assets WHERE id IN (${placeholders})
+      `).run(...staleAssetIds)
+    }
+
+    const insertSource = (id: string, role: string, width: number, height: number) => {
+      const content = Buffer.concat([
+        createSyntheticWatermarkPng() as Buffer,
+        randomBytes(16),
+      ])
+      const sha256 = createHash('sha256').update(content).digest('hex')
+      const objectKey = `test/e2e-branding/original/${id}/source.png`
+      sqlite.prepare(`
+        INSERT INTO assets (
+          id, role, status, private_object_key, sha256, byte_size,
+          mime_type, width, height, created_at, updated_at
+        ) VALUES (?, ?, 'READY', ?, ?, ?, 'image/png', ?, ?, ?, ?)
+      `).run(id, role, objectKey, sha256, content.length, width, height, now, now)
+      fake.seedPrivate(objectKey, content, 'image/png', sha256, {
+        fileSize: content.length,
+        format: 'png',
+        height,
+        orientation: 1,
+        width,
+      })
+    }
+
+    const photoId = randomUUID()
+    const landscapeId = randomUUID()
+    const portraitId = randomUUID()
+    insertSource(photoId, 'studio_photo', 3200, 2400)
+    insertSource(landscapeId, 'home_hero_landscape', 3200, 1800)
+    insertSource(portraitId, 'home_hero_portrait', 1800, 3200)
+    const workId = randomUUID()
+    sqlite.prepare(`
+      INSERT INTO works (
+        id, slug, character_name, species, suit_type, purpose,
+        owner_display, publication_status, published_at, created_at, updated_at
+      ) VALUES (?, ?, '品牌舞台', '犬科', 'full', 'showcase',
+                '不公开', 'published', ?, ?, ?)
+    `).run(workId, `e2e-branding-${suffix.slice(0, 8)}`, now, now, now)
+    sqlite.prepare(`
+      INSERT INTO work_assets (
+        work_id, asset_id, role, alt_text, position, is_primary,
+        crop_x, crop_y, crop_width, crop_height, watermark_anchor
+      ) VALUES (?, ?, 'studio_photo', '品牌舞台出厂照', 0, 1,
+                0, 0, 1, 1, 'top-left')
+    `).run(workId, photoId)
+    sqlite.prepare(`
+      INSERT INTO site_hero_slides (
+        id, landscape_asset_id, portrait_asset_id, alt_text,
+        sort_order, enabled, created_at, updated_at
+      ) VALUES (?, ?, ?, '品牌舞台首页图', 0, 1, ?, ?)
+    `).run(randomUUID(), landscapeId, portraitId, now, now)
+
+    for (const assetId of [photoId, landscapeId, portraitId]) {
+      await generatePublicVariants(sqlite, fake, assetId, undefined, now)
+    }
     return { data: { ok: true } }
   }
 
