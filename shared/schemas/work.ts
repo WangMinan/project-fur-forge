@@ -177,7 +177,7 @@ export const deleteWorkResponseSchema = apiSuccessSchema(
   z.object({ id: resourceIdSchema }).strict(),
 )
 
-export const studioPhotoInputSchema = z.object({
+const studioPhotoBaseSchema = z.object({
   assetId: resourceIdSchema,
   alt: z.string().trim().min(1).max(500),
   primary: z.boolean(),
@@ -196,7 +196,11 @@ export const studioPhotoInputSchema = z.object({
       })
     }
   }),
-  watermarkAnchor: watermarkAnchorSchema,
+}).strict()
+
+export const studioPhotoInputSchema = studioPhotoBaseSchema.extend({
+  /** @deprecated brand-centered-v2 ignores per-image corners. */
+  watermarkAnchor: watermarkAnchorSchema.optional(),
 }).strict()
 
 export const studioPhotoCollectionSchema = z.array(studioPhotoInputSchema)
@@ -220,7 +224,9 @@ export const replaceStudioPhotosRequestSchema = versionedRequestSchema(
   z.object({ photos: studioPhotoCollectionSchema }).strict(),
 )
 
-export const managedStudioPhotoDtoSchema = studioPhotoInputSchema.extend({
+export const managedStudioPhotoDtoSchema = studioPhotoBaseSchema.extend({
+  /** Historical v1 identity only; brand-centered-v2 always uses center. */
+  watermarkAnchor: watermarkAnchorSchema,
   version: resourceVersionSchema,
   status: z.enum(['PENDING', 'READY', 'FAILED']),
   width: z.number().int().positive().max(12_000),

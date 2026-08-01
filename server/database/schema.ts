@@ -154,7 +154,7 @@ export const assets = sqliteTable('assets', {
     .on(table.privateObjectKey),
   check(
     'assets_role',
-    sql`${table.role} IN ('design_sheet', 'studio_photo', 'home_hero_landscape', 'home_hero_portrait')`,
+    sql`${table.role} IN ('design_sheet', 'studio_photo', 'home_hero_landscape', 'home_hero_portrait', 'watermark_logo')`,
   ),
   check(
     'assets_status',
@@ -200,7 +200,56 @@ export const assets = sqliteTable('assets', {
     'assets_mime_type',
     sql`${table.mimeType} IN ('image/jpeg', 'image/png', 'image/webp')`,
   ),
+  check(
+    'assets_watermark_logo_png',
+    sql`${table.role} != 'watermark_logo' OR (${table.mimeType} = 'image/png' AND ${table.byteSize} <= 20000000)`,
+  ),
   check('assets_version_positive', sql`${table.version} > 0`),
+])
+
+export const watermarkProfiles = sqliteTable('watermark_profiles', {
+  id: text('id').primaryKey(),
+  profileName: text('profile_name').notNull(),
+  sourceAssetId: text('source_asset_id').notNull()
+    .references(() => assets.id, { onDelete: 'restrict' }),
+  logoDigest: text('logo_digest').notNull(),
+  position: text('position').notNull().default('center'),
+  opacityPercent: integer('opacity_percent').notNull().default(50),
+  scalePercent: integer('scale_percent').notNull().default(60),
+  configDigest: text('config_digest').notNull(),
+  status: text('status').notNull().default('DRAFT'),
+  version: integer('version').notNull().default(1),
+  ...timestampColumns(),
+}, table => [
+  index('watermark_profiles_config_digest_idx')
+    .on(table.configDigest),
+  index('watermark_profiles_source_asset_idx').on(table.sourceAssetId),
+  check(
+    'watermark_profiles_name',
+    sql`${table.profileName} = 'brand-centered-v2'`,
+  ),
+  check('watermark_profiles_position', sql`${table.position} = 'center'`),
+  check(
+    'watermark_profiles_opacity',
+    sql`${table.opacityPercent} BETWEEN 10 AND 90`,
+  ),
+  check(
+    'watermark_profiles_scale',
+    sql`${table.scalePercent} BETWEEN 20 AND 90`,
+  ),
+  check(
+    'watermark_profiles_logo_digest',
+    sql`length(${table.logoDigest}) = 64 AND ${table.logoDigest} = lower(${table.logoDigest}) AND ${table.logoDigest} NOT GLOB '*[^0-9a-f]*'`,
+  ),
+  check(
+    'watermark_profiles_config_digest',
+    sql`length(${table.configDigest}) = 64 AND ${table.configDigest} = lower(${table.configDigest}) AND ${table.configDigest} NOT GLOB '*[^0-9a-f]*'`,
+  ),
+  check(
+    'watermark_profiles_status',
+    sql`${table.status} IN ('DRAFT', 'APPLYING', 'ACTIVE', 'RETIRED', 'FAILED')`,
+  ),
+  check('watermark_profiles_version_positive', sql`${table.version} > 0`),
 ])
 
 export const uploadSessions = sqliteTable('upload_sessions', {
@@ -240,7 +289,7 @@ export const uploadSessions = sqliteTable('upload_sessions', {
   ),
   check(
     'upload_sessions_owner_id',
-    sql`length(trim(${table.ownerId})) > 0 AND (${table.ownerType} != 'site' OR ${table.ownerId} = 'home')`,
+    sql`length(trim(${table.ownerId})) > 0 AND (${table.ownerType} != 'site' OR ${table.ownerId} IN ('home', 'branding'))`,
   ),
   check(
     'upload_sessions_owner_version',
@@ -248,7 +297,7 @@ export const uploadSessions = sqliteTable('upload_sessions', {
   ),
   check(
     'upload_sessions_media_role',
-    sql`(${table.ownerType} = 'work' AND ${table.mediaRole} IN ('design_sheet', 'studio_photo')) OR (${table.ownerType} = 'site' AND ${table.mediaRole} IN ('home_hero_landscape', 'home_hero_portrait'))`,
+    sql`(${table.ownerType} = 'work' AND ${table.mediaRole} IN ('design_sheet', 'studio_photo')) OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'home' AND ${table.mediaRole} IN ('home_hero_landscape', 'home_hero_portrait')) OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'branding' AND ${table.mediaRole} = 'watermark_logo')`,
   ),
   check(
     'upload_sessions_private_key_relative',
@@ -257,6 +306,10 @@ export const uploadSessions = sqliteTable('upload_sessions', {
   check(
     'upload_sessions_content_type',
     sql`${table.expectedContentType} IN ('image/jpeg', 'image/png', 'image/webp')`,
+  ),
+  check(
+    'upload_sessions_watermark_logo_png',
+    sql`${table.mediaRole} != 'watermark_logo' OR (${table.expectedContentType} = 'image/png' AND ${table.expectedBytes} <= 20000000)`,
   ),
   check(
     'upload_sessions_expected_bytes',
@@ -316,8 +369,13 @@ export const assetVariants = sqliteTable('asset_variants', {
   cropIdentity: text('crop_identity').notNull(),
   recipeVersion: text('recipe_version').notNull(),
   watermarkProfile: text('watermark_profile').notNull(),
+  watermarkProfileId: text('watermark_profile_id')
+    .references(() => watermarkProfiles.id, { onDelete: 'restrict' }),
+  watermarkConfigDigest: text('watermark_config_digest').notNull().default('none'),
   logoDigest: text('logo_digest').notNull(),
   watermarkAnchor: text('watermark_anchor').notNull(),
+  watermarkOpacityPercent: integer('watermark_opacity_percent'),
+  watermarkScalePercent: integer('watermark_scale_percent'),
   sha256: text('sha256'),
   byteSize: integer('byte_size'),
   version: integer('version').notNull().default(1),
@@ -325,7 +383,7 @@ export const assetVariants = sqliteTable('asset_variants', {
   ...timestampColumns(),
 }, table => [
   uniqueIndex('asset_variants_object_key_unique').on(table.objectKey),
-  uniqueIndex('asset_variants_identity_unique').on(
+  uniqueIndex('asset_variants_legacy_identity_unique').on(
     table.assetId,
     table.inputSha256,
     table.mediaRole,
@@ -339,7 +397,25 @@ export const assetVariants = sqliteTable('asset_variants', {
     table.watermarkProfile,
     table.logoDigest,
     table.watermarkAnchor,
-  ),
+  ).where(sql`${table.watermarkProfileId} IS NULL`),
+  uniqueIndex('asset_variants_profile_identity_unique').on(
+    table.assetId,
+    table.inputSha256,
+    table.mediaRole,
+    table.usage,
+    table.width,
+    table.height,
+    table.format,
+    table.quality,
+    table.cropIdentity,
+    table.recipeVersion,
+    table.watermarkProfileId,
+    table.watermarkConfigDigest,
+    table.logoDigest,
+    table.watermarkAnchor,
+    table.watermarkOpacityPercent,
+    table.watermarkScalePercent,
+  ).where(sql`${table.watermarkProfileId} IS NOT NULL`),
   index('asset_variants_public_lookup_idx')
     .on(table.assetId, table.storageScope, table.status, table.usage),
   check(
@@ -388,15 +464,19 @@ export const assetVariants = sqliteTable('asset_variants', {
   ),
   check(
     'asset_variants_watermark_anchor',
-    sql`${table.watermarkAnchor} IN ('none', 'top-left', 'top-right', 'bottom-left', 'bottom-right')`,
+    sql`${table.watermarkAnchor} IN ('none', 'top-left', 'top-right', 'bottom-left', 'bottom-right', 'center')`,
+  ),
+  check(
+    'asset_variants_watermark_config_digest',
+    sql`${table.watermarkConfigDigest} = 'none' OR (length(${table.watermarkConfigDigest}) = 64 AND ${table.watermarkConfigDigest} = lower(${table.watermarkConfigDigest}) AND ${table.watermarkConfigDigest} NOT GLOB '*[^0-9a-f]*')`,
   ),
   check(
     'asset_variants_public_watermark',
-    sql`${table.storageScope} != 'PUBLIC' OR (${table.watermarkProfile} = 'brand-standard-v1' AND ${table.logoDigest} != 'none' AND ${table.watermarkAnchor} != 'none')`,
+    sql`${table.storageScope} != 'PUBLIC' OR ((${table.watermarkProfile} = 'brand-standard-v1' AND ${table.watermarkProfileId} IS NULL AND ${table.watermarkConfigDigest} = 'none' AND ${table.logoDigest} != 'none' AND ${table.watermarkAnchor} IN ('top-left', 'top-right', 'bottom-left', 'bottom-right') AND ${table.watermarkOpacityPercent} IS NULL AND ${table.watermarkScalePercent} IS NULL) OR (${table.watermarkProfile} = 'brand-centered-v2' AND ${table.watermarkProfileId} IS NOT NULL AND ${table.watermarkConfigDigest} != 'none' AND ${table.logoDigest} != 'none' AND ${table.watermarkAnchor} = 'center' AND ${table.watermarkOpacityPercent} BETWEEN 10 AND 90 AND ${table.watermarkScalePercent} BETWEEN 20 AND 90))`,
   ),
   check(
     'asset_variants_preprocess_private',
-    sql`${table.usage} != 'preprocess' OR (${table.storageScope} = 'PRIVATE' AND ${table.watermarkProfile} = 'none' AND ${table.logoDigest} = 'none' AND ${table.watermarkAnchor} = 'none')`,
+    sql`${table.usage} != 'preprocess' OR (${table.storageScope} = 'PRIVATE' AND ${table.watermarkProfile} = 'none' AND ${table.watermarkProfileId} IS NULL AND ${table.watermarkConfigDigest} = 'none' AND ${table.logoDigest} = 'none' AND ${table.watermarkAnchor} = 'none' AND ${table.watermarkOpacityPercent} IS NULL AND ${table.watermarkScalePercent} IS NULL)`,
   ),
   check(
     'asset_variants_ready_output',
@@ -485,6 +565,67 @@ export const siteHeroSlides = sqliteTable('site_hero_slides', {
     sql`${table.sortOrder} >= 0 AND (${table.enabled} = 0 OR ${table.sortOrder} <= 4)`,
   ),
   check('site_hero_slides_version_positive', sql`${table.version} > 0`),
+])
+
+export const watermarkOperations = sqliteTable('watermark_operations', {
+  id: text('id').primaryKey(),
+  operationType: text('operation_type').notNull(),
+  profileId: text('profile_id').notNull()
+    .references(() => watermarkProfiles.id, { onDelete: 'restrict' }),
+  brandingVersion: integer('branding_version').notNull(),
+  status: text('status').notNull(),
+  affectedWorkCount: integer('affected_work_count').notNull().default(0),
+  affectedHeroSlideCount: integer('affected_hero_slide_count').notNull().default(0),
+  targetVariantCount: integer('target_variant_count').notNull().default(0),
+  generatedVariantCount: integer('generated_variant_count').notNull().default(0),
+  verifiedVariantCount: integer('verified_variant_count').notNull().default(0),
+  previewManifestJson: text('preview_manifest_json').notNull().default('[]'),
+  cleanupObjectKeysJson: text('cleanup_object_keys_json').notNull().default('[]'),
+  internalErrorCode: text('internal_error_code'),
+  failureStage: text('failure_stage'),
+  version: integer('version').notNull().default(1),
+  startedAt: integer('started_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
+  completedAt: integer('completed_at'),
+}, table => [
+  index('watermark_operations_profile_idx')
+    .on(table.profileId, table.startedAt),
+  check(
+    'watermark_operations_type',
+    sql`${table.operationType} IN ('WATERMARK_PREVIEW', 'WATERMARK_REBUILD')`,
+  ),
+  check(
+    'watermark_operations_status',
+    sql`${table.status} IN ('GENERATING_PUBLIC', 'VERIFYING_PUBLIC', 'SWITCHING_PROFILE', 'CLEANING_PUBLIC', 'FAILED', 'DONE')`,
+  ),
+  check(
+    'watermark_operations_counts',
+    sql`${table.brandingVersion} >= 0 AND ${table.affectedWorkCount} >= 0 AND ${table.affectedHeroSlideCount} >= 0 AND ${table.targetVariantCount} >= 0 AND ${table.generatedVariantCount} >= 0 AND ${table.verifiedVariantCount} >= 0`,
+  ),
+  check(
+    'watermark_operations_failure_state',
+    sql`(${table.status} = 'FAILED' AND ${table.internalErrorCode} IS NOT NULL AND ${table.failureStage} IS NOT NULL) OR (${table.status} != 'FAILED' AND ${table.internalErrorCode} IS NULL AND ${table.failureStage} IS NULL)`,
+  ),
+  check('watermark_operations_version_positive', sql`${table.version} > 0`),
+])
+
+export const siteBranding = sqliteTable('site_branding', {
+  id: text('id').primaryKey().default('site'),
+  activeWatermarkProfileId: text('active_watermark_profile_id')
+    .references(() => watermarkProfiles.id, { onDelete: 'restrict' }),
+  draftWatermarkProfileId: text('draft_watermark_profile_id')
+    .references(() => watermarkProfiles.id, { onDelete: 'restrict' }),
+  lastWatermarkOperationId: text('last_watermark_operation_id')
+    .references(() => watermarkOperations.id, { onDelete: 'set null' }),
+  version: integer('version').notNull().default(1),
+  ...timestampColumns(),
+}, table => [
+  check('site_branding_singleton', sql`${table.id} = 'site'`),
+  check(
+    'site_branding_profile_distinct',
+    sql`${table.activeWatermarkProfileId} IS NULL OR ${table.draftWatermarkProfileId} IS NULL OR ${table.activeWatermarkProfileId} != ${table.draftWatermarkProfileId}`,
+  ),
+  check('site_branding_version_positive', sql`${table.version} > 0`),
 ])
 
 export const publicationOperations = sqliteTable('publication_operations', {

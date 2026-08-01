@@ -16,6 +16,7 @@
     "db:backup": "tsx scripts/db-backup.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/db-migrate.ts",
+    "watermark:seed": "tsx scripts/watermark-seed.ts",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint app server shared scripts tests drizzle.config.ts nuxt.config.ts vitest.config.ts vitest.integration.config.ts playwright.config.ts eslint.config.mjs",
@@ -24,6 +25,7 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "playwright test",
     "preflight:oss": "node scripts/oss-preflight.mjs",
+    "preflight:watermark": "node scripts/oss-watermark-centered-v2.mjs",
     "verify:production": "node scripts/verify-production.mjs"
   },
   "dependencies": {

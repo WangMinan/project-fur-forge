@@ -63,8 +63,8 @@ export default defineConfig({
     env: {
       APP_ENV: 'test',
       DATABASE_FILE: databaseFile,
-      E2E_BUILD_DIR: `.nuxt/${runName}`,
-      E2E_OUTPUT_DIR: `.output/${runName}`,
+      E2E_BUILD_DIR: `.cache/e2e-build/${runName}`,
+      E2E_OUTPUT_DIR: `.cache/e2e-output/${runName}`,
       PUBLIC_BASE_URL: baseURL,
       ADMIN_BASE_URL: adminBaseURL,
       MEDIA_BASE_URL: 'https://media.test.invalid',

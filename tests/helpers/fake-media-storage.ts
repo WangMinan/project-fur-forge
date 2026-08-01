@@ -128,6 +128,14 @@ export class FakeMediaStorage implements MediaStorage {
     return Buffer.from(object.content)
   }
 
+  async getPrivateSigned(objectKey: string, _expiresAt: number) {
+    const content = await this.getPrivate(objectKey)
+    return {
+      content,
+      contentType: this.objects.get(objectKey)?.contentType ?? '',
+    }
+  }
+
   async imageInfoPrivate(objectKey: string) {
     if (this.failImageInfo) {
       throw new Error('fake image info failure')
@@ -168,7 +176,10 @@ export class FakeMediaStorage implements MediaStorage {
     }
   }
 
-  async processPrivateToPublic(input: PublicProcessInput) {
+  private process(
+    input: PublicProcessInput,
+    output: Map<string, FakeObject>,
+  ) {
     if (this.failProcess) {
       throw new Error('fake process failure')
     }
@@ -188,7 +199,7 @@ export class FakeMediaStorage implements MediaStorage {
       .update(source.content)
       .update(input.process)
       .digest()
-    this.publicObjects.set(input.objectKey, {
+    output.set(input.objectKey, {
       content,
       contentType,
       imageInfo: {
@@ -200,6 +211,14 @@ export class FakeMediaStorage implements MediaStorage {
       },
       sha256Metadata: null,
     })
+  }
+
+  async processPrivateToPrivate(input: PublicProcessInput) {
+    this.process(input, this.objects)
+  }
+
+  async processPrivateToPublic(input: PublicProcessInput) {
+    this.process(input, this.publicObjects)
   }
 
   async getPublicAnonymous(objectKey: string) {

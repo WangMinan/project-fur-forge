@@ -37,7 +37,7 @@ interface StudioPhotoInput {
   focalX: number
   focalY: number
   primary: boolean
-  watermarkAnchor: WatermarkAnchor
+  watermarkAnchor?: WatermarkAnchor | undefined
 }
 
 interface WorkRow {
@@ -104,6 +104,10 @@ function studioPhotos(sqlite: Database.Database, workId: string) {
         WHERE variant.asset_id = asset.id
           AND variant.storage_scope = 'PUBLIC'
           AND variant.status = 'READY'
+          AND variant.watermark_profile_id = (
+            SELECT active_watermark_profile_id
+            FROM site_branding WHERE id = 'site'
+          )
       ) AS publicVariantCount
     FROM work_assets AS relation
     JOIN assets AS asset ON asset.id = relation.asset_id
@@ -451,12 +455,12 @@ export function replaceManagedStudioPhotos(
           photo.crop.y,
           photo.crop.width,
           photo.crop.height,
-          photo.watermarkAnchor,
+          'top-left',
         )
         updateAssetPresentation.run(
           photo.focalX,
           photo.focalY,
-          photo.watermarkAnchor,
+          'top-left',
           now,
           photo.assetId,
         )

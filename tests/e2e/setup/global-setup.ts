@@ -14,6 +14,8 @@ import {
   migrateFixtureDatabase,
   openFixtureDatabase,
 } from '../helpers/fixture-db'
+import { seedBundledWatermark } from '../../../server/utils/watermark-seed'
+import { FakeMediaStorage } from '../../helpers/fake-media-storage'
 
 function resetE2EDatabase() {
   const runDirectory = resolve(E2E_RUN_DIRECTORY)
@@ -45,6 +47,12 @@ export default async function globalSetup() {
       username: E2E_ADMIN.username,
       newPassword: E2E_ADMIN.password,
     })
+    await seedBundledWatermark(
+      sqlite,
+      new FakeMediaStorage(),
+      { appEnv: 'test' },
+      { keyPrefix: 'test/e2e-watermark' },
+    )
   }
   finally {
     sqlite.close()

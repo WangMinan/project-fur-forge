@@ -15,7 +15,11 @@ export interface HeroVariantCandidate {
   storageScope: string
   usage: string
   watermarkAnchor: string
+  watermarkConfigDigest: string
+  watermarkOpacityPercent: number | null
   watermarkProfile: string
+  watermarkProfileId: string | null
+  watermarkScalePercent: number | null
   height: number
   width: number
 }
@@ -31,16 +35,10 @@ const heroRecipe = {
   },
 } as const
 const digestPattern = /^[0-9a-f]{64}$/
-const watermarkAnchors = new Set([
-  'top-left',
-  'top-right',
-  'bottom-left',
-  'bottom-right',
-])
-
 export function completeHeroVariants<T extends HeroVariantCandidate>(
   role: HeroMediaRole,
   variants: readonly T[],
+  activeProfileId: string,
 ) {
   const recipe = heroRecipe[role]
   const eligible = variants.filter(variant =>
@@ -49,9 +47,17 @@ export function completeHeroVariants<T extends HeroVariantCandidate>(
     && variant.mediaRole === role
     && variant.usage === recipe.usage
     && variant.recipeVersion === 'recipe-v1'
-    && variant.watermarkProfile === 'brand-standard-v1'
+    && variant.watermarkProfile === 'brand-centered-v2'
+    && variant.watermarkProfileId === activeProfileId
+    && digestPattern.test(variant.watermarkConfigDigest)
     && digestPattern.test(variant.logoDigest)
-    && watermarkAnchors.has(variant.watermarkAnchor)
+    && variant.watermarkAnchor === 'center'
+    && variant.watermarkOpacityPercent !== null
+    && variant.watermarkOpacityPercent >= 10
+    && variant.watermarkOpacityPercent <= 90
+    && variant.watermarkScalePercent !== null
+    && variant.watermarkScalePercent >= 20
+    && variant.watermarkScalePercent <= 90
     && variant.sha256 !== null
     && digestPattern.test(variant.sha256)
     && variant.byteSize !== null
@@ -87,6 +93,12 @@ export function completeHeroVariants<T extends HeroVariantCandidate>(
 export function validateHeroSlidesForPublication(
   sqlite: Database.Database,
 ) {
+  const activeProfileId = sqlite.prepare(`
+    SELECT active_watermark_profile_id FROM site_branding WHERE id = 'site'
+  `).pluck().get() as string | null | undefined
+  if (!activeProfileId) {
+    throw new Error('An active watermark profile is required.')
+  }
   const rows = sqlite.prepare(`
     SELECT
       slide.id,
@@ -135,8 +147,12 @@ export function validateHeroSlidesForPublication(
       format,
       recipe_version AS recipeVersion,
       watermark_profile AS watermarkProfile,
+      watermark_profile_id AS watermarkProfileId,
+      watermark_config_digest AS watermarkConfigDigest,
       logo_digest AS logoDigest,
       watermark_anchor AS watermarkAnchor,
+      watermark_opacity_percent AS watermarkOpacityPercent,
+      watermark_scale_percent AS watermarkScalePercent,
       sha256,
       byte_size AS byteSize
     FROM asset_variants
@@ -164,10 +180,12 @@ export function validateHeroSlidesForPublication(
       completeHeroVariants(
         'home_hero_landscape',
         selectVariants.all(row.landscapeAssetId) as HeroVariantCandidate[],
+        activeProfileId,
       )
       completeHeroVariants(
         'home_hero_portrait',
         selectVariants.all(row.portraitAssetId) as HeroVariantCandidate[],
+        activeProfileId,
       )
     }
     catch {

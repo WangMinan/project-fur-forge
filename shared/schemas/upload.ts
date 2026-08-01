@@ -55,7 +55,7 @@ const workUploadOwnerSchema = z.object({
 
 const siteUploadOwnerSchema = z.object({
   type: z.literal('site'),
-  id: z.literal('home'),
+  id: z.enum(['home', 'branding']),
   expectedVersion: resourceVersionSchema,
 }).strict()
 
@@ -85,11 +85,28 @@ export const createUploadSessionRequestSchema = z.object({
 }).strict().superRefine((input, context) => {
   const workRole = input.mediaRole === 'design_sheet'
     || input.mediaRole === 'studio_photo'
-  if ((input.owner.type === 'work') !== workRole) {
+  const siteRoleMatches = input.owner.type === 'site'
+    && (
+      (input.owner.id === 'home' && input.mediaRole.startsWith('home_hero_'))
+      || (input.owner.id === 'branding' && input.mediaRole === 'watermark_logo')
+    )
+  if ((input.owner.type === 'work') !== workRole || (
+    input.owner.type === 'site' && !siteRoleMatches
+  )) {
     context.addIssue({
       code: 'custom',
       message: '媒体角色与归属类型不匹配',
       path: ['mediaRole'],
+    })
+  }
+  if (
+    input.mediaRole === 'watermark_logo'
+    && input.expected.contentType !== 'image/png'
+  ) {
+    context.addIssue({
+      code: 'custom',
+      message: '水印候选只接受透明 PNG',
+      path: ['expected', 'contentType'],
     })
   }
 })
@@ -130,7 +147,7 @@ export const completeUploadSessionRequestSchema = versionedRequestSchema(
   z.object({
     focalX: z.number().min(0).max(1),
     focalY: z.number().min(0).max(1),
-    watermarkAnchor: watermarkAnchorSchema,
+    watermarkAnchor: watermarkAnchorSchema.optional(),
   }).strict(),
 )
 
@@ -160,7 +177,7 @@ export const verifiedAssetDtoSchema = z.object({
     ]),
     aspect: previewAspectSchema,
     fitMode: fitModeSchema,
-  }).strict()).min(1),
+  }).strict()),
 }).strict()
 
 export const completeUploadSessionResponseSchema = apiSuccessSchema(z.object({

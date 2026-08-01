@@ -17,6 +17,10 @@ import {
   openDatabase,
 } from '../../server/utils/database'
 import { validateHeroSlidesForPublication } from '../../server/utils/hero-publication'
+import {
+  insertActiveWatermarkProfile,
+  TEST_WATERMARK_PROFILE_ID,
+} from '../helpers/watermark-fixture'
 
 const SHA_A = 'a'.repeat(64)
 const SHA_B = 'b'.repeat(64)
@@ -25,6 +29,8 @@ const now = Date.UTC(2026, 6, 31)
 
 let directory: string
 let sqlite: Database.Database
+let activeWatermarkConfigDigest: string
+let activeWatermarkLogoDigest: string
 
 function insertWork(
   id: string,
@@ -123,18 +129,25 @@ function insertVariant(
   const storageScope = fields.storageScope
     ?? (usage === 'preprocess' ? 'PRIVATE' : 'PUBLIC')
   const isPublic = storageScope === 'PUBLIC'
+  const watermarkProfile = fields.watermarkProfile
+    ?? (isPublic ? 'brand-centered-v2' : 'none')
+  const managedProfile = isPublic && watermarkProfile === 'brand-centered-v2'
 
   sqlite.prepare(`
     INSERT INTO asset_variants (
       id, asset_id, source_variant_id, storage_scope, status, object_key,
       input_sha256, media_role, usage, width, height, format, quality,
       crop_identity, recipe_version, watermark_profile,
+      watermark_profile_id, watermark_config_digest,
+      watermark_opacity_percent, watermark_scale_percent,
       logo_digest, watermark_anchor, sha256, byte_size,
       created_at, updated_at
     ) VALUES (
       @id, @assetId, @sourceVariantId, @storageScope, @status, @key,
       @inputSha256, @role, @usage, @width, @height, @format, 82,
       @cropIdentity, 'recipe-v1', @watermarkProfile,
+      @watermarkProfileId, @watermarkConfigDigest,
+      @watermarkOpacityPercent, @watermarkScalePercent,
       @logoDigest, @watermarkAnchor, @outputSha256, @byteSize,
       @now, @now
     )
@@ -152,11 +165,15 @@ function insertVariant(
     height: fields.height ?? 1024,
     format: fields.format ?? 'webp',
     cropIdentity: `crop:${id}`,
-    watermarkProfile: fields.watermarkProfile
-      ?? (isPublic ? 'brand-standard-v1' : 'none'),
-    logoDigest: fields.logoDigest ?? (isPublic ? SHA_B : 'none'),
+    watermarkProfile,
+    watermarkProfileId: managedProfile ? TEST_WATERMARK_PROFILE_ID : null,
+    watermarkConfigDigest: managedProfile ? activeWatermarkConfigDigest : 'none',
+    watermarkOpacityPercent: managedProfile ? 50 : null,
+    watermarkScalePercent: managedProfile ? 60 : null,
+    logoDigest: fields.logoDigest
+      ?? (managedProfile ? activeWatermarkLogoDigest : (isPublic ? SHA_B : 'none')),
     watermarkAnchor: fields.watermarkAnchor
-      ?? (isPublic ? 'top-left' : 'none'),
+      ?? (managedProfile ? 'center' : (isPublic ? 'top-left' : 'none')),
     outputSha256: fields.outputSha256 === undefined
       ? SHA_C
       : fields.outputSha256,
@@ -242,6 +259,11 @@ beforeEach(async () => {
   const databaseFile = resolve(directory, 'domain.db')
   await migrateDatabase(databaseFile)
   sqlite = openDatabase(databaseFile).sqlite
+  const watermark = insertActiveWatermarkProfile(sqlite, now, {
+    environmentPrefix: 'test',
+  })
+  activeWatermarkConfigDigest = watermark.configDigest
+  activeWatermarkLogoDigest = watermark.logoDigest
 })
 
 afterEach(() => {
@@ -250,7 +272,16 @@ afterEach(() => {
 })
 
 describe('P0 schema boundary', () => {
-  it('adds only the authorized T14 table and keeps banned fields out of works', () => {
+  it('keeps activated watermark profile identity immutable', () => {
+    expect(() => sqlite.prepare(`
+      UPDATE watermark_profiles
+      SET opacity_percent = 55, updated_at = ?
+      WHERE id = ?
+    `).run(now + 1, TEST_WATERMARK_PROFILE_ID))
+      .toThrow(/watermark profile identity is immutable/)
+  })
+
+  it('contains the authorized application tables and keeps banned fields out of works', () => {
     const tables = sqlite.prepare(`
       SELECT name
       FROM sqlite_master
@@ -268,10 +299,13 @@ describe('P0 schema boundary', () => {
       'audit_logs',
       'business_statuses',
       'publication_operations',
+      'site_branding',
       'site_content',
       'site_hero_slides',
       'upload_sessions',
       'users',
+      'watermark_operations',
+      'watermark_profiles',
       'work_assets',
       'work_feature_tags',
       'works',

@@ -94,6 +94,35 @@ async function createSession(
   return { key, result }
 }
 
+async function createWatermarkSession(id: string, content: Buffer) {
+  await createUploadSession(
+    sqlite,
+    storage,
+    { appEnv: 'test' },
+    USER_ID,
+    {
+      owner: { type: 'site', id: 'branding', expectedVersion: 1 },
+      mediaRole: 'watermark_logo',
+      expected: {
+        contentType: 'image/png',
+        byteSize: content.length,
+        ...digests(content),
+        width: 160,
+        height: 64,
+      },
+    },
+    {
+      id,
+      keyPrefix: 'test/gate07-upload',
+      now: NOW,
+      objectToken: id.replaceAll('-', '').slice(0, 48).padEnd(48, 'a'),
+    },
+  )
+  const key = storage.signedPuts.at(-1)!.objectKey
+  storage.seedPrivate(key, content, 'image/png')
+  return key
+}
+
 beforeEach(async () => {
   directory = mkdtempSync(resolve(tmpdir(), 'fur-forge-completion-'))
   const databaseFile = resolve(directory, 'completion.db')
@@ -109,6 +138,34 @@ afterEach(() => {
 })
 
 describe('verified upload completion', () => {
+  it('accepts transparent watermark PNGs and rejects opaque candidates', async () => {
+    const transparent = createSyntheticWatermarkPng()
+    const acceptedId = '11111111-1111-4111-8111-111111111111'
+    await createWatermarkSession(acceptedId, transparent)
+    await expect(completeUploadSession(
+      sqlite,
+      storage,
+      acceptedId,
+      { expectedVersion: 1, focalX: 0.5, focalY: 0.5 },
+      NOW + 1_000,
+    )).resolves.toMatchObject({
+      asset: { role: 'watermark_logo', status: 'READY', previews: [] },
+    })
+
+    const opaque = Buffer.from(transparent)
+    opaque[25] = 2
+    const rejectedId = '22222222-2222-4222-8222-222222222222'
+    const rejectedKey = await createWatermarkSession(rejectedId, opaque)
+    await expect(completeUploadSession(
+      sqlite,
+      storage,
+      rejectedId,
+      { expectedVersion: 1, focalX: 0.5, focalY: 0.5 },
+      NOW + 1_000,
+    )).rejects.toMatchObject({ statusCode: 400 })
+    expect(storage.deletedPrivateKeys).toContain(rejectedKey)
+  })
+
   it('verifies the actual object and completes idempotently without leaking its key', async () => {
     const content = createSyntheticWatermarkPng()
     const id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'

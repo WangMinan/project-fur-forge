@@ -1,3 +1,4 @@
+import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import type { Page } from '@playwright/test'
 
@@ -7,8 +8,21 @@ const SCREENSHOT_DIR = resolve(
 )
 
 export async function capture(page: Page, name: string) {
-  await page.screenshot({
-    path: resolve(SCREENSHOT_DIR, `${name}.png`),
+  const content = await page.screenshot({
     fullPage: false,
   })
+  const path = resolve(SCREENSHOT_DIR, `${name}.png`)
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await writeFile(path, content)
+      return
+    }
+    catch (error) {
+      const code = (error as NodeJS.ErrnoException).code
+      if (attempt === 2 || !['EBUSY', 'EPERM', 'UNKNOWN'].includes(code ?? '')) {
+        throw error
+      }
+      await new Promise(resolveDelay => setTimeout(resolveDelay, 100))
+    }
+  }
 }

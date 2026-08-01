@@ -10,6 +10,7 @@ export const MEDIA_ROLE_VALUES = [
   'studio_photo',
   'home_hero_landscape',
   'home_hero_portrait',
+  'watermark_logo',
 ] as const
 
 export const ASSET_STATUS_VALUES = [

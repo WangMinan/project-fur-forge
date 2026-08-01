@@ -26,13 +26,15 @@
 
 ### S4 · GPT 5.6 Sol
 
-分支建议：
+实际分支：
 
 ```text
-feature/gate07-t19-t20-engineering-sol
+feature/gate07-watermark-engineering-sol
 ```
 
 职责：
+
+状态：工程侧已完成，等待合入 `main`。本批职责：
 
 1. 复核 T14–T18 当前 `main` 的业务、安全、OSS 和事务边界；只修复会阻塞后续的工程问题，不重做已验收 UI。
 2. 完成 GATE-07 工程侧：
@@ -44,8 +46,8 @@ feature/gate07-t19-t20-engineering-sol
    - 已发布作品/首页目标 variant 完整再生成、验证、原子切换和精确清理；
    - 旧 v1 不再满足当前发布检查；
    - 删除服务端唯一硬编码 Logo 路径和单图四角业务依赖。
-3. 锁定 T19/T20 服务端 repository、公开 DTO、首页轮播管理 API 和 SSR 数据接口。
-4. 输出 `GATE07-T20-UI-HANDOFF.md`，不得实现 Kimi 的最终页面。
+3. 输出 `GATE07-UI-HANDOFF.md`，不得实现 Kimi 的最终页面。
+4. T19/T20 保持未启动；其服务端/页面批次在 GATE-07 通过后另行路由。
 5. 工程侧完成不等于 GATE-07 通过；GATE-07 保持未勾选，等待 Kimi UI 和最终复核。
 
 ### K2 · Kimi K3
@@ -53,7 +55,7 @@ feature/gate07-t19-t20-engineering-sol
 分支建议：
 
 ```text
-feature/gate07-t19-t20-kimi
+feature/gate07-watermark-kimi
 ```
 
 依赖：S4 已合入最新 `main`，接口和 fake/test adapter 已锁定。
@@ -61,29 +63,27 @@ feature/gate07-t19-t20-kimi
 执行顺序：
 
 1. `/admin/site/branding`：候选上传/选择、50/60 默认参数、固定居中、真实 OSS 四比例预览、影响摘要、应用进度和失败恢复；移除作品编辑器四角安全角控件。
-2. T19：真实作品详情 SSR 页面和三视口证据。
-3. T20：真实作品列表、首页精选、首页横竖双源轮播、`/admin/site/home` 和浏览器请求证据。
-4. 不得在 Kimi 分支内发明 profile 字段、Object Key、处理参数或原子切换规则。
-5. GATE-07、T19、T20 的最终勾选交给后续工程复核。
+2. 不得启动 T19/T20，不得实现 `/admin/site/home`。
+3. 不得在 Kimi 分支内发明 profile 字段、Object Key、处理参数或原子切换规则。
+4. GATE-07 的最终勾选交给后续工程复核与用户确认。
 
 ### S5 · GPT 5.6 Sol
 
 分支建议：
 
 ```text
-review/gate07-t19-t20-closure-sol
+review/gate07-watermark-closure-sol
 ```
 
 职责：
 
 1. 复核并收口 GATE-07：真实 OSS、默认视觉、更换候选、参数变化、旧 profile 保持、完整切换、泄漏、三视口和清理；
-2. 复核并收口 T19/T20：SSR、公开投影、横竖请求、缓存、错误、无障碍和安全；
-3. 只有完整定义满足时才勾选 GATE-07、T19、T20；
-4. 形成 `T21-REVIEW-PREP.md`；不自行通过 T21。
+2. 只有完整定义满足且用户确认时才勾选 GATE-07；
+3. GATE-07 通过后更新本路由，单独安排 T19/T20；不在本轮形成虚假的 T19/T20 或 T21 完成记录。
 
 ### R1 · 独立 GPT 5.6 Sol
 
-使用全新会话和干净环境执行 T21，从空库完成：管理员初始化、作品创建、私有上传、居中水印发布、首页双源轮播、公开浏览、Logo 候选切换/原子再生成、下架和精确清理。用户拥有最终批准权。
+T19/T20 和 GATE-07 完成后，使用全新会话和干净环境执行 T21。用户拥有最终批准权。
 
 ## 4. 联合任务交接规则
 
@@ -121,9 +121,9 @@ Kimi 再提供：
 每个批次从已经合并并验证的最新 `main` 创建短分支；不得依赖长期 mock、过期 DTO 或未合并 profile。当前推荐：
 
 ```text
-feature/gate07-t19-t20-engineering-sol
-feature/gate07-t19-t20-kimi
-review/gate07-t19-t20-closure-sol
+feature/gate07-watermark-engineering-sol
+feature/gate07-watermark-kimi
+review/gate07-watermark-closure-sol
 ```
 
 模型或订阅变化只更新本文件；业务、数据、接口和体验变化必须先更新上游契约。

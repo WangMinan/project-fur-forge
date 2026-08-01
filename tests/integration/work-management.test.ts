@@ -32,6 +32,7 @@ import {
 import { generatePublicVariants } from '../../server/utils/media-recipe'
 import { createSyntheticWatermarkPng } from '../../scripts/oss-preflight-core.mjs'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
+import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
 
 const USER_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const NOW = Date.UTC(2026, 7, 1)
@@ -112,6 +113,9 @@ beforeEach(async () => {
   await migrateDatabase(databaseFile)
   sqlite = openDatabase(databaseFile).sqlite
   insertUser()
+  insertActiveWatermarkProfile(sqlite, NOW, {
+    environmentPrefix: 'test/t17-fixture',
+  })
 })
 
 afterEach(() => {
@@ -264,7 +268,7 @@ describe('minimal non-adoption work management', () => {
     `).get(firstId)).toEqual({
       focalX: 0.25,
       focalY: 0.75,
-      watermarkAnchor: 'bottom-right',
+      watermarkAnchor: 'top-left',
     })
 
     const replaced = replaceManagedStudioPhotos(
@@ -281,7 +285,9 @@ describe('minimal non-adoption work management', () => {
         position: 0,
       }),
     ])
-    expect(sqlite.prepare('SELECT count(*) FROM assets').pluck().get()).toBe(2)
+    expect(sqlite.prepare(`
+      SELECT count(*) FROM assets WHERE role = 'studio_photo'
+    `).pluck().get()).toBe(2)
     expect(sqlite.prepare(`
       SELECT count(*) FROM work_assets WHERE asset_id = ?
     `).pluck().get(firstId)).toBe(0)

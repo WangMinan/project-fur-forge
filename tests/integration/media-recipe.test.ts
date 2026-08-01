@@ -19,11 +19,15 @@ import {
   openDatabase,
 } from '../../server/utils/database'
 import {
+  CENTERED_WATERMARK_PROFILE,
   generatePublicVariants,
   PUBLIC_RECIPE_VERSION,
-  STANDARD_WATERMARK_PROFILE,
 } from '../../server/utils/media-recipe'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
+import {
+  insertActiveWatermarkProfile,
+  TEST_WATERMARK_PROFILE_ID,
+} from '../helpers/watermark-fixture'
 
 const NOW = Date.UTC(2026, 7, 1)
 const ASSET_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
@@ -78,6 +82,9 @@ beforeEach(async () => {
   await migrateDatabase(databaseFile)
   sqlite = openDatabase(databaseFile).sqlite
   storage = new FakeMediaStorage()
+  insertActiveWatermarkProfile(sqlite, NOW, {
+    environmentPrefix: 'test/t16-fixture',
+  })
 })
 
 afterEach(() => {
@@ -85,7 +92,7 @@ afterEach(() => {
   rmSync(directory, { force: true, recursive: true })
 })
 
-describe('recipe-v1 public media generation', () => {
+describe('brand-centered-v2 public media generation', () => {
   it('generates only the role usages with OSS-baked watermark identity and is idempotent', async () => {
     insertReadyAsset()
 
@@ -106,8 +113,11 @@ describe('recipe-v1 public media generation', () => {
     )
     expect(first.every(variant =>
       variant.recipeVersion === PUBLIC_RECIPE_VERSION
-      && variant.watermarkProfile === STANDARD_WATERMARK_PROFILE
-      && variant.watermarkAnchor === 'bottom-right'
+      && variant.watermarkProfile === CENTERED_WATERMARK_PROFILE
+      && variant.watermarkProfileId === TEST_WATERMARK_PROFILE_ID
+      && variant.watermarkAnchor === 'center'
+      && variant.watermarkOpacityPercent === 50
+      && variant.watermarkScalePercent === 60
       && /^[0-9a-f]{64}$/u.test(variant.logoDigest)
       && variant.objectKey.includes('/web/')
       && !variant.objectKey.includes('/original/'),
@@ -118,10 +128,12 @@ describe('recipe-v1 public media generation', () => {
       const width = Number(/\/recipe-v1\/[^/]+\/(\d+)\//u.exec(call.objectKey)?.[1])
       return encodedLogo
         && Buffer.from(encodedLogo, 'base64url').toString('utf8').endsWith(
-          `?x-oss-process=image/resize,w_${Math.round(width * 0.18)}`,
+          '?x-oss-process=image/resize,P_60',
         )
-        && call.process.includes(',t_70,g_se,x_24,y_24/')
-        && !call.process.includes(',P_')
+        && width > 0
+        && call.process.includes(',t_50,g_center/')
+        && !call.process.includes(',x_')
+        && !call.process.includes(',y_')
         && call.sourceObjectKey.includes('/original/')
     })).toBe(true)
 
@@ -182,7 +194,7 @@ describe('recipe-v1 public media generation', () => {
     )).toBe(true)
   })
 
-  it('uses a new deterministic key when a watermark parameter changes', async () => {
+  it('uses a new deterministic key when the active profile changes', async () => {
     insertReadyAsset()
     const first = await generatePublicVariants(
       sqlite,
@@ -191,9 +203,11 @@ describe('recipe-v1 public media generation', () => {
       ['work-card'],
       NOW,
     )
-    sqlite.prepare(`
-      UPDATE assets SET watermark_anchor = 'top-left', updated_at = ? WHERE id = ?
-    `).run(NOW + 1_000, ASSET_ID)
+    insertActiveWatermarkProfile(sqlite, NOW + 1_000, {
+      environmentPrefix: 'test/t16-fixture',
+      opacityPercent: 55,
+      profileId: '77777777-7777-4777-8777-777777777777',
+    })
     const second = await generatePublicVariants(
       sqlite,
       storage,
@@ -205,7 +219,8 @@ describe('recipe-v1 public media generation', () => {
       new Set(first.map(variant => variant.objectKey)),
     )
     expect(second.every(
-      variant => variant.watermarkAnchor === 'top-left',
+      variant => variant.watermarkAnchor === 'center'
+        && variant.watermarkOpacityPercent === 55,
     )).toBe(true)
   })
 
@@ -228,5 +243,20 @@ describe('recipe-v1 public media generation', () => {
     expect(sqlite.prepare(`
       SELECT count(*) FROM asset_variants WHERE storage_scope = 'PUBLIC'
     `).pluck().get()).toBe(0)
+  })
+
+  it('uses the configured private logo across isolated test-run prefixes', async () => {
+    insertReadyAsset({
+      id: '66666666-6666-4666-8666-666666666666',
+      objectKey: 'test/another-scope/original/source/source.png',
+    })
+
+    await expect(generatePublicVariants(
+      sqlite,
+      storage,
+      '66666666-6666-4666-8666-666666666666',
+      ['work-card'],
+      NOW,
+    )).resolves.toHaveLength(6)
   })
 })
