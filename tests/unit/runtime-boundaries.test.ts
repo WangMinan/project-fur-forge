@@ -68,6 +68,52 @@ afterEach(() => {
 })
 
 describe('runtime configuration', () => {
+  it('loads .env for CLI callers without overriding process environment', () => {
+    const cwd = temporaryDirectory()
+    const keys = [
+      'APP_ENV',
+      'PUBLIC_BASE_URL',
+      'ADMIN_BASE_URL',
+      'MEDIA_BASE_URL',
+      'OSS_UPLOAD_BASE_URL',
+      'DATABASE_FILE',
+    ] as const
+    const previous = Object.fromEntries(
+      keys.map(key => [key, process.env[key]]),
+    )
+
+    writeFileSync(resolve(cwd, '.env'), [
+      'APP_ENV=test',
+      'PUBLIC_BASE_URL=http://dotenv-public.test',
+      'ADMIN_BASE_URL=http://dotenv-admin.test',
+      'MEDIA_BASE_URL=https://dotenv-media.test',
+      'OSS_UPLOAD_BASE_URL=https://dotenv-upload.test',
+      'DATABASE_FILE=dotenv.db',
+    ].join('\n'))
+
+    try {
+      keys.forEach(key => Reflect.deleteProperty(process.env, key))
+      process.env.PUBLIC_BASE_URL = 'http://process-public.test'
+
+      const config = loadRuntimeConfig({ cwd })
+
+      expect(config.publicBaseUrl).toBe('http://process-public.test')
+      expect(config.adminBaseUrl).toBe('http://dotenv-admin.test')
+      expect(config.databaseFile).toBe('dotenv.db')
+    }
+    finally {
+      keys.forEach((key) => {
+        const value = previous[key]
+        if (value === undefined) {
+          Reflect.deleteProperty(process.env, key)
+        }
+        else {
+          process.env[key] = value
+        }
+      })
+    }
+  })
+
   it('uses environment over the active file', () => {
     const cwd = temporaryDirectory()
     const filePath = writeRuntimeFile(cwd, {

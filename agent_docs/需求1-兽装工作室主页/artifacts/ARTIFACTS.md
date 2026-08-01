@@ -13,8 +13,8 @@
 | 计划 | `planning/PLAN.md` | `planning/WATERMARK-CENTERED-V2.md` |
 | 模型投影 | `models/README.md` | `models/WATERMARK-CENTERED-V2.md` |
 | 设计 | `.design/` | `.design/WATERMARK-CENTERED-V2.md` |
-| 任务 | `implementation/TASKS.md` | GATE-07 为下一项，T19 被阻断 |
-| 状态 | `STATE.md` | 2026-08-01 水印 v2 校准后 |
+| 任务 | `implementation/TASKS.md` | GATE-07 已完成，T19 尚未启动 |
+| 状态 | `STATE.md` | 2026-08-02 GATE-07 用户验收后 |
 
 ## 当前实施与证据
 
@@ -26,17 +26,18 @@
 | T14–T18 后端记录 | 已完成 | `implementation/notes/T14-UPLOAD-ENGINEERING-2026-07-31.md` 至 `T18-PUBLICATION-ENGINEERING-2026-07-31.md` |
 | T14–T18 UI/修复记录 | 已完成 | `implementation/notes/t14-t18-ui/T14-T18-UI-REPAIR-2026-08-01.md` |
 | 水印 v2 校准记录 | 当前 | `implementation/notes/DOCS-WATERMARK-CENTERED-V2-2026-08-01.md` |
-| GATE-07 工程记录 | 工程完成、待合入 | `implementation/notes/GATE07-WATERMARK-ENGINEERING-2026-08-01.md`：迁移、种子、API、真实 OSS、原子切换、清理和自动化验证 |
+| GATE-07 工程记录 | 已完成 | `implementation/notes/GATE07-WATERMARK-ENGINEERING-2026-08-01.md`：迁移、种子、API、真实 OSS、原子切换、清理和自动化验证 |
 | GATE-07 UI 交接 | 已锁定 | `implementation/notes/GATE07-UI-HANDOFF.md`：Kimi 页面接线、版本、状态、失败恢复与证据契约 |
-| GATE-07 | 待 UI/视觉/用户确认 | 工程侧完成不等于门禁通过；任务保持未勾选 |
-| T19–T21 | 未开始 | 依赖 GATE-07 |
+| GATE-07 UI 记录 | 已完成 | `implementation/notes/GATE07-WATERMARK-UI-2026-08-01.md`：品牌管理页、三视口和浏览器 E2E |
+| GATE-07 收口 | 已通过 | `implementation/notes/GATE07-CLOSURE-2026-08-02.md`：联调修复、进度补齐、质量规则和用户验收 |
+| T19–T21 | 未开始 | GATE-07 前置已解除，等待重新路由 |
 
 ## 当前执行文档
 
 | 类型 | 路径 | 当前效力 |
 | --- | --- | --- |
-| 执行责任路由 | `implementation/EXECUTION_ROUTING.md` | S4 工程完成待合入 → K2 仅 GATE-07 UI → S5 门禁收口；T19/T20 后置 |
-| 任务清单 | `implementation/TASKS.md` | 唯一可勾选清单；T14–T18 保持完成，GATE-07 下一项 |
+| 执行责任路由 | `implementation/EXECUTION_ROUTING.md` | GATE-07 已验收待发布；T19 下一批重新路由 |
+| 任务清单 | `implementation/TASKS.md` | 唯一可勾选清单；GATE-07 已完成，T19 尚未启动 |
 | 状态机 | `STATE.md` | 当前决定、门禁和下一步 |
 
 ## 历史证据
@@ -54,9 +55,4 @@
 
 ## 下一批预期产物
 
-K2 应新增：
-
-- `/admin/site/branding` 三视口与真实预览证据；
-- v1 四角控件移除、版本冲突、生成失败和清理重试证据。
-
-S5 应新增 GATE-07 独立收口记录。T19/T20 产物只在 GATE-07 通过并重新路由后创建。
+T19/T20 产物只在从最新 `main` 重新路由并创建新短分支后产生。所有后续长耗时操作必须留下真实进度证据；E2E 记录必须说明用户路径和页面风险覆盖，不能只登记通过数量。

@@ -270,7 +270,23 @@ export async function migrateDatabase(
         )
       : undefined
 
-    migrate(database.orm, { migrationsFolder })
+    // SQLite ignores PRAGMA foreign_keys changes inside Drizzle's migration
+    // transaction. Apply the generated table rebuilds with checks disabled,
+    // then validate the completed schema before restoring enforcement.
+    database.sqlite.pragma('foreign_keys = OFF')
+    try {
+      migrate(database.orm, { migrationsFolder })
+
+      const foreignKeyViolations = database.sqlite.pragma(
+        'foreign_key_check',
+      ) as unknown[]
+      if (foreignKeyViolations.length > 0) {
+        throw new Error('Database migration produced foreign key violations.')
+      }
+    }
+    finally {
+      database.sqlite.pragma('foreign_keys = ON')
+    }
 
     return {
       applied: before.pending.length,

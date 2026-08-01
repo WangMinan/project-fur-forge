@@ -23,7 +23,10 @@ import {
   applyWatermarkProfile,
   createWatermarkPreview,
   getWatermarkBranding,
+  getWatermarkOperation,
+  runWatermarkProfileApplication,
   retryWatermarkOperation,
+  startWatermarkProfileApplication,
 } from '../../server/utils/watermark-branding'
 import {
   createWatermarkProfile,
@@ -255,6 +258,89 @@ describe('GATE-07 watermark branding lifecycle', () => {
       0,
       NOW + 4_000,
     )).resolves.toEqual(applied)
+  })
+
+  it('persists an application operation before rebuilding public variants', async () => {
+    const { draft } = await createPreviewedDraft()
+    const started = startWatermarkProfileApplication(
+      sqlite,
+      draft.id,
+      draft.version,
+      requireSiteBranding(sqlite).version,
+      NOW + 3_000,
+    )
+
+    expect(started).toMatchObject({
+      operationType: 'WATERMARK_REBUILD',
+      status: 'GENERATING_PUBLIC',
+      targetVariantCount: 0,
+    })
+    expect(getWatermarkOperation(sqlite, started.operationId).status)
+      .toBe('GENERATING_PUBLIC')
+
+    const completed = await runWatermarkProfileApplication(
+      sqlite,
+      storage,
+      started.operationId,
+      NOW + 3_000,
+    )
+    expect(completed).toMatchObject({
+      status: 'DONE',
+      generatedVariantCount: 24,
+      verifiedVariantCount: 24,
+    })
+  })
+
+  it('previews all four ratios before homepage hero assets exist', async () => {
+    sqlite.prepare('DELETE FROM site_hero_slides').run()
+    sqlite.prepare(`
+      DELETE FROM assets
+      WHERE role IN ('home_hero_landscape', 'home_hero_portrait')
+    `).run()
+
+    const { preview } = await createPreviewedDraft()
+
+    expect(preview).toMatchObject({
+      status: 'DONE',
+      targetVariantCount: 4,
+      generatedVariantCount: 4,
+      verifiedVariantCount: 4,
+    })
+    expect(preview.previews.map(item => item.kind)).toEqual([
+      'work-card',
+      'detail',
+      'home-hero-landscape',
+      'home-hero-portrait',
+    ])
+  })
+
+  it('records a retryable failure instead of leaving a preview active', async () => {
+    sqlite.prepare('DELETE FROM site_hero_slides').run()
+    sqlite.prepare('DELETE FROM work_assets').run()
+    sqlite.prepare(`
+      DELETE FROM assets WHERE role != 'watermark_logo'
+    `).run()
+
+    const branding = requireSiteBranding(sqlite)
+    const active = requireWatermarkProfile(sqlite, seededProfileId)
+    const draft = createWatermarkProfile(sqlite, branding.version, {
+      sourceAssetId: active.sourceAssetId,
+      opacityPercent: 55,
+      scalePercent: 60,
+    }, NOW + 1_000)
+    const failed = await createWatermarkPreview(
+      sqlite,
+      storage,
+      draft.id,
+      draft.version,
+      requireSiteBranding(sqlite).version,
+      NOW + 2_000,
+    )
+
+    expect(failed).toMatchObject({
+      status: 'FAILED',
+      failureCode: 'WATERMARK_PREVIEW_FAILED',
+    })
   })
 
   it('keeps the old active profile and public objects when regeneration fails', async () => {

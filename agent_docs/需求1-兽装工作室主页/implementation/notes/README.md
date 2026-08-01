@@ -4,13 +4,14 @@
 
 ## 当前状态
 
-- T01–T18、GATE-06 与 EXT-02 已完成。
+- T01–T18、GATE-06、GATE-07 与 EXT-02 已完成。
 - T14–T18 的后端、管理端、真实浏览器和 OSS 证据已收口。
 - 景宸随后要求把小型四角水印改为可由管理端选择 Logo 的大型居中水印。
 - [`DOCS-WATERMARK-CENTERED-V2-2026-08-01.md`](./DOCS-WATERMARK-CENTERED-V2-2026-08-01.md) 记录代码/文档 Review、阿里云参数核对、产品决定、同步路径和任务映射。
 - [`GATE07-WATERMARK-ENGINEERING-2026-08-01.md`](./GATE07-WATERMARK-ENGINEERING-2026-08-01.md) 记录迁移、种子、API、真实 OSS、原子切换、E2E 排查和工程验证。
 - [`GATE07-UI-HANDOFF.md`](./GATE07-UI-HANDOFF.md) 是 Kimi 实现 `/admin/site/branding` 的唯一工程交接。
-- GATE-07 工程侧已完成并等待合入；管理 UI、三视口视觉证据和用户确认尚未完成。T19/T20 未启动。
+- [`GATE07-WATERMARK-UI-2026-08-01.md`](./GATE07-WATERMARK-UI-2026-08-01.md) 记录管理 UI、三视口和浏览器 E2E。
+- [`GATE07-CLOSURE-2026-08-02.md`](./GATE07-CLOSURE-2026-08-02.md) 记录联调修复、全站应用进度、质量规则和用户人工验收。T19/T20 未启动。
 
 ## 主要实施记录
 
@@ -35,6 +36,6 @@
 
 ## 下一批记录要求
 
-K2 只新增 GATE-07 管理 UI 实施记录及三视口截图；不得提前生成 T19/T20 完成记录。S5 在独立复核和用户确认后新增 GATE-07 收口记录，再决定 T19/T20 的批次与记录名称。
+从最新 `main` 重新路由 T19 后再建立对应实施记录；不得沿用 GATE-07 分支提前生成 T19/T20 完成记录。后续记录必须说明长耗时任务的进度证据，以及 E2E 实际覆盖的用户路径和页面风险，不能只登记用例数量。
 
 旧 `brand-standard-v1` 和四角水印记录仍是历史事实，不得回写成当时已经实现居中可配置水印。

@@ -4,15 +4,15 @@
 
 ## 当前阶段
 
-阶段 4 · IMPLEMENTATION 进行中。T01–T18、GATE-06 与 EXT-02 已完成。景宸在 S4 开始前追加“可由管理端选择 Logo 候选的大尺寸居中水印”要求，现有四角小水印不再是目标结果。
+阶段 4 · IMPLEMENTATION 进行中。T01–T18、GATE-06、GATE-07 与 EXT-02 已完成。景宸在 S4 开始前追加的“可由管理端选择 Logo 候选的大尺寸居中水印”已完成工程、管理 UI、真实 OSS、三视口和用户验收。
 
-**GATE-07 工程侧已在 `feature/gate07-watermark-engineering-sol` 完成并等待合入；管理 UI、三视口视觉证据和最终确认仍未完成。T19/T20 尚未启动，必须等待 GATE-07 通过。**
+**GATE-07 已于 2026-08-02 通过用户人工验收。T19/T20 尚未启动，本批只收口并发布 GATE-07；下一批必须重新路由后再开始 T19。**
 
 ## 当前执行分工
 
-- GPT 5.6 Sol 作为 `ENGINEERING_PRIMARY` 已完成更新后的 S4：GATE-07 数据/接口/OSS/原子切换与 UI 契约；本批没有提前实现 T19/T20。
-- Kimi K3 作为 `UI_PRIMARY` 在 S4 合入后只先实现 `/admin/site/branding`、移除 v1 四角控件并提供三视口浏览器证据。
-- 随后由 GPT 5.6 Sol 执行 S5 的 GATE-07 工程收口；用户确认通过后，才重新路由 T19/T20 和后续 T21 门禁。
+- GPT 5.6 Sol 作为 `ENGINEERING_PRIMARY` 完成 GATE-07 数据/接口/OSS/原子切换、联调故障修复、进度补齐与工程收口。
+- Kimi K3 作为 `UI_PRIMARY` 完成 `/admin/site/branding`、移除 v1 四角控件并提供三视口浏览器证据。
+- 用户已完成实际页面人工验收；T19/T20 和后续 T21 门禁等待下一批重新路由。
 - 完整批次与分支见 [`implementation/EXECUTION_ROUTING.md`](./implementation/EXECUTION_ROUTING.md)。
 
 ## 已完成基础
@@ -21,7 +21,7 @@
 - 双 Bucket、30 MB 永久原图、内嵌 FFmpeg 私有处理源和 OSS 跨桶水印能力；
 - SQLite/Drizzle、P0 Schema、唯一管理员认证和真实浏览器认证接线；
 - 角色化上传、服务端媒体核验、`recipe-v1`、非领养作品 CRUD、发布/下架和管理端媒体工作流；
-- 当前 `brand-standard-v1` 已能生成 18% 宽度、70% 不透明度、四角定位的公开水印 variant。
+- 当前活动目标为可配置的 `brand-centered-v2`；`brand-standard-v1` 只保留历史身份，不再满足当前发布检查。
 
 T14–T18 的完成状态保持有效。新要求是后续增量门禁，不把既有验收改写为失败。
 
@@ -40,7 +40,7 @@ T14–T18 的完成状态保持有效。新要求是后续增量门禁，不把�
 - 旧 v1 variant 保留历史身份，但切换后不能满足当前发布检查；
 - 作品编辑器中的四角“水印安全角”是 v1 遗留 UI，GATE-07 后移除。
 
-## GATE-07 完成条件
+## GATE-07 完成证据
 
 - 新迁移表达 `watermark_logo`、不可变 profile、站点活动/草稿引用和操作进度；
 - `/api/admin/v1/site/branding/**` 完成候选、草稿、真实预览、应用、进度和重试；
@@ -51,6 +51,7 @@ T14–T18 的完成状态保持有效。新要求是后续增量门禁，不把�
 - 失败保持旧活动 profile；
 - 私有 Logo 源不进入公开 DTO、HTML、日志或错误；
 - 390×844、768×1024、1440×900 通过用户视觉确认。
+- “应用到全站”先返回持久化操作 ID，页面按真实生成/核验计数持续显示进度，完成后再展示最终状态。
 
 ## 仍然有效的边界
 
@@ -75,7 +76,9 @@ T14–T18 的完成状态保持有效。新要求是后续增量门禁，不把�
 - 2026-08-01：完成水印 v2 跨层文档校准；保留 T14–T18 完成状态，新增 GATE-07 并阻断 T19。
 - 2026-08-01：在 `feature/gate07-watermark-engineering-sol` 完成 GATE-07 工程侧：迁移、种子、候选/profile API、四比例真实 OSS 预览、完整再生成、原子切换、精确清理、发布门禁和自动化测试；GATE-07 仍待 UI 与用户确认。
 - 2026-08-01：Kimi K3 在 `feature/gate07-watermark-ui-kimi` 完成 GATE-07 管理 UI：`/admin/site/branding`（活动水印、候选上传/选择、受限参数、四比例真实预览、影响摘要、应用/进度/重试与重载恢复）、作品编辑器四角控件移除与只读水印摘要、13 例真实浏览器 E2E 与三视口证据（`implementation/notes/GATE07-WATERMARK-UI-2026-08-01.md`）。候选删除与编辑器公开 variant 预览两处接口缺口已记录并交回工程侧。GATE-07 仍未勾选，待工程复核与用户确认。
+- 2026-08-02：联调修复 `.env` 装载、迁移外键、Nuxt 入口、预览样张依赖/失败恢复和“应用到全站”真实进度；用户在 `/admin/site/branding` 完成人工验收并确认 GATE-07 通过。
+- 2026-08-02：新增通用门禁：所有长耗时操作必须显示真实、可恢复的任务进度；E2E 必须认真验证用户路径和页面结果，不得以通过数量、HTTP 状态或元素数量代替页面质量。
 
 ## 下一步
 
-先合入 `feature/gate07-watermark-engineering-sol`。Kimi 依据 `implementation/notes/GATE07-UI-HANDOFF.md` 完成 `/admin/site/branding` 和 v1 四角控件移除；工程复核、三视口视觉确认和用户确认完成前，不得启动 T19/T20，也不得勾选 GATE-07。
+完成 `feature/gate07-watermark-ui-kimi` 的提交、推送、合并与分支清理。随后从最新 `main` 为 T19 建立新批次和短分支；本轮不启动 T19/T20。
