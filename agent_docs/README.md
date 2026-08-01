@@ -5,36 +5,37 @@
 ## 权威顺序
 
 1. `foundation/README.md`：产品边界与不可违背的原则；
-2. `requirements/SPEC.md`：业务需求、数据边界与验收结果；
-3. `planning/PLAN.md`：技术路线、阶段优先级与实施策略；
-4. `.design/`：公开站与管理端的体验、信息架构和视觉契约；
-5. `implementation/TASKS.md`：唯一可勾选任务清单；
-6. `STATE.md`：当前状态、最近决策和下一步入口。
+2. `foundation/WATERMARK-CENTERED-V2.md`：2026-08-01 居中可配置水印地基增量；仅在水印条款冲突时覆盖上一文件；
+3. `requirements/SPEC.md` 与 `requirements/WATERMARK-CENTERED-V2.md`：业务需求、数据边界与水印增量规格；
+4. `planning/PLAN.md` 与 `planning/WATERMARK-CENTERED-V2.md`：技术路线、阶段优先级与水印迁移计划；
+5. `.design/`：公开站、管理端及 `.design/WATERMARK-CENTERED-V2.md` 的体验与视觉契约；
+6. `implementation/TASKS.md`：唯一可勾选任务清单；
+7. `STATE.md`：当前状态、最近决策和下一步入口。
 
-`materials/`、`planning/prototype-v1/` 与 `implementation/notes/` 是证据或历史记录；出现冲突时不得覆盖上述当前契约。
+`models/README.md` 与 `models/WATERMARK-CENTERED-V2.md` 是上游规格/计划的实施投影，不构成额外权威层级。`materials/`、`planning/prototype-v1/` 与 `implementation/notes/` 是证据或历史记录，不得覆盖当前契约。
 
 ## 执行责任路由
 
-当前模型分工、短分支批次、全栈任务交接和独立门禁安排见 [`需求1-兽装工作室主页/implementation/EXECUTION_ROUTING.md`](./需求1-兽装工作室主页/implementation/EXECUTION_ROUTING.md)。
+当前模型分工、短分支批次、全栈任务交接和独立门禁见 [`需求1-兽装工作室主页/implementation/EXECUTION_ROUTING.md`](./需求1-兽装工作室主页/implementation/EXECUTION_ROUTING.md)。
 
-该文件只记录可变的执行安排，不属于产品契约，也不改变 `TASKS.md` 的任务范围、依赖或完成定义。Kimi K3 继续担任后续前端切片的 `UI_PRIMARY`；T01–T18、`GATE-06`、S2 Review 修补与 EXT-02 已完成，下一项为 T19。
+Kimi K3 继续担任 `UI_PRIMARY`，GPT 5.6 Sol 担任阶段 B 的 `ENGINEERING_PRIMARY`。联合任务必须由工程侧先锁定 Schema/API/权限/错误/事务/媒体配方，再由 Kimi 实现页面和浏览器证据。
 
 ## 当前状态
 
-截至 2026-08-01，T01–T18、`GATE-06` 与 EXT-02 已完成。T10 的双 Bucket、水印和跨桶能力完整通过；T11–T13 建立 SQLite/P0 Schema/投影和唯一管理员认证；T14–T18 已完成角色化上传、媒体核验与预处理、公开配方与水印、非领养作品 CRUD、发布/下架、管理端接线和用户联合验收。
+截至 2026-08-01，T01–T18、GATE-06 与 EXT-02 已完成。T14–T18 已跑通角色化上传、媒体核验与大图私有预处理、OSS 公开配方与水印、非领养作品 CRUD、发布/下架和管理端接线。
 
-同日根据用户提供的渔屋参考截图、横版领养设定例图和现有代码交叉检查，已把以下后续契约同步到 foundation、SPEC、PLAN、设计、模型、TASKS 和 STATE：
+景宸随后确认水印方向变更：
 
-- 首页 1–5 项横版/竖版双源轮播及后台专用编辑器；
-- 领养设定图、出厂照、返图和首页图的媒体角色与比例；
-- 私有原图无水印、公开衍生图 OSS 烘焙水印；
-- 当前 Logo 图形标衍生 favicon、Touch Icon 与水印。
+- 从小型四角角标升级为大尺寸居中水印；
+- 新目标 profile 为 `brand-centered-v2`，默认 50% 不透明度、60% 缩放；
+- 水印 Logo 候选可以在管理端上传和选择，不再由服务端硬编码唯一文件路径；
+- 配置变化必须生成新 variant 并原子切换，不能覆盖旧对象或混用 profile。
 
-上述媒体链路与管理端接线已经实现；尚未实施的是 T19 作品详情 SSR、T20 首页双源轮播和后续角色化页面。`brand-standard-v1` 当前开发基线为最终输出宽度 18%，T51 仍负责最终跨素材校准。
+因此 T14–T18 的历史完成状态保持不变，但 T19 被 `GATE-07 · 可配置居中水印迁移` 阻断。下一步由 GPT 5.6 Sol 执行更新后的 S4，先实现 GATE-07 工程侧与 T19/T20 服务端交接；随后 Kimi 完成品牌配置和 T19/T20 UI。
 
-当前技术主线为单 Nuxt 4 全栈应用、Node.js 24 LTS、Nitro、SQLite/Drizzle、单镜像/单进程，以及已创建的两个 OSS Bucket：
+当前技术主线仍为单 Nuxt 4 全栈应用、Node.js 24 LTS、Nitro、SQLite/Drizzle、单镜像/单进程和两个 OSS Bucket：
 
-- `project-furry-forge-private`：永久原图、草稿衍生图、临时对象和受控预览；
-- `project-furry-forge-public`：仅保存已发布的网页衍生图。
+- `project-furry-forge-private`：永久原图、私有处理源、品牌候选、草稿和受控预览；
+- `project-furry-forge-public`：只保存已经发布并验证的网页衍生图。
 
-一期不建设站内委托表单、交易、支付、订单、多管理员、万能 CMS、消息队列或自动媒体 worker。
+一期不建设站内交易、支付、订单、多管理员、万能 CMS、消息队列或自动媒体 worker。
