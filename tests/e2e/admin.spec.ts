@@ -56,8 +56,12 @@ test.describe('后台作品列表页', () => {
     await expect(page.getByText(/共 \d+ 件/)).toBeVisible()
 
     const nav = page.getByRole('navigation', { name: '管理导航' })
-    await expect(nav.getByRole('link')).toHaveCount(2)
+    await expect(nav.getByRole('link')).toHaveCount(3)
     await expect(nav.getByRole('link', { name: '作品' })).toHaveAttribute('aria-current', 'page')
+    await expect(nav.getByRole('link', { name: '站点品牌' })).toHaveAttribute(
+      'href',
+      '/admin/site/branding',
+    )
 
     await expect(
       page.getByRole('link', { name: '列表验证', exact: true }).first(),

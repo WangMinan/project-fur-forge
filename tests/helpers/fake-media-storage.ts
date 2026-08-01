@@ -24,6 +24,23 @@ function pngInfo(content: Buffer): PrivateImageInfo {
   }
 }
 
+// 处理结果使用真实可解码的 8×8 图片字节（按格式），让 E2E 浏览器能真实加载
+// 预览/公开图；尺寸元数据仍按 process 参数推导，与内容解耦。
+const PROCESSED_CONTENT: Record<string, Buffer> = {
+  jpg: Buffer.from(
+    '/9j//gAQTGF2YzYwLjMxLjEwMgD/2wBDAAgEBAQEBAUFBQUFBQYGBgYGBgYGBgYGBgYHBwcICAgHBwcGBgcHCAgICAkJCQgICAgJCQoKCgwMCwsODg4RERT/xABaAAEBAAAAAAAAAAAAAAAAAAAFBwEBAQAAAAAAAAAAAAAAAAAAAwQQAAICAwEAAAAAAAAAAAAAAAAGIjJBUYFCEQACAgMBAAAAAAAAAAAAAAAABQQDIWFCMv/AABEIAAgACAMBEgACEgADEgD/2gAMAwEAAhEDEQA/AJ6rq9IawPq/jgtkXRRYMlZ+ckCXk//Z',
+    'base64',
+  ),
+  png: Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAA00lEQVR4AQHIADf/AAAAABEFByIKDjMPFUQUHFUZI2YeKncjMQADCw0UEBQlFRs2GiJHHylYJDBpKTd6Lj4ABhYaFxshKCAoOSUvSio2Wy89bDREfTlLAAkhJxomLisrNTwwPE01Q146Sm8/UYBEWAAMLDQdMTsuNkI/O0lQQFBhRVdySl6DT2UADzdBIDxIMUFPQkZWU0tdZFBkdVVrhlpyABJCTiNHVTRMXEVRY1ZWamdbcXhgeIllfwAVTVsmUmI3V2lIXHBZYXdqZn57a4WMcIw9iTEB6V6ZkwAAAABJRU5ErkJggg==',
+    'base64',
+  ),
+  webp: Buffer.from(
+    'UklGRjwAAABXRUJQVlA4IDAAAADQAQCdASoIAAgAAgA0JYgCdAD0rsGCwAD+/XQR+KrD5JCNB+YG398X4C95B20AAAA=',
+    'base64',
+  ),
+}
+
 export class FakeMediaStorage implements MediaStorage {
   readonly deletedPrivateKeys: string[] = []
   readonly deletedPublicKeys: string[] = []
@@ -195,10 +212,7 @@ export class FakeMediaStorage implements MediaStorage {
       ?? Math.round(width * source.imageInfo.height / source.imageInfo.width))
     const format = /format,(webp|jpg|png)/u.exec(input.process)?.[1] ?? 'webp'
     const contentType = format === 'jpg' ? 'image/jpeg' : `image/${format}`
-    const content = createHash('sha256')
-      .update(source.content)
-      .update(input.process)
-      .digest()
+    const content = Buffer.from(PROCESSED_CONTENT[format] ?? PROCESSED_CONTENT.webp!)
     output.set(input.objectKey, {
       content,
       contentType,

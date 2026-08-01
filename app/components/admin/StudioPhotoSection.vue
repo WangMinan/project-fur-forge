@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { managedWorkResponseSchema } from '~~/shared/schemas/work'
 import { privateAssetPreviewResponseSchema } from '~~/shared/schemas/media'
+import { watermarkBrandingResponseSchema } from '~~/shared/schemas/watermark'
 import type {
   ManagedStudioPhotoDto,
   ManagedWorkDto,
-  WatermarkAnchor,
 } from '~~/shared/types/contracts'
 import { retryAssetProcessingResponseSchema } from '~~/shared/schemas/upload'
 import { AdminApiError } from '~/composables/useAdminApi'
@@ -32,6 +32,27 @@ const emit = defineEmits<{
 
 const adminApi = useAdminApi()
 
+// v2 居中水印为站点级配置：编辑器只读展示当前公开水印摘要，不再提供四角选择。
+const watermarkSummary = ref<string | null>(null)
+
+async function loadWatermarkSummary() {
+  try {
+    const result = await adminApi('/api/admin/v1/site/branding/watermark', {
+      schema: watermarkBrandingResponseSchema,
+    })
+    const active = result.data.activeProfile
+    watermarkSummary.value = active
+      ? `当前公开水印：居中 · 不透明度 ${active.opacityPercent}% · 缩放 ${active.scalePercent}%`
+      : '当前公开水印：尚未配置活动水印'
+  }
+  catch (error) {
+    if (error instanceof AdminApiError && error.status === 401) {
+      return
+    }
+    watermarkSummary.value = null
+  }
+}
+
 function toEntry(
   photo: ManagedStudioPhotoDto,
   previous?: SectionEntry,
@@ -49,7 +70,6 @@ function toEntry(
     publicVariantCount: photo.publicVariantCount,
     status: photo.status,
     version: photo.version,
-    watermarkAnchor: photo.watermarkAnchor,
     width: photo.width,
   }
 }
@@ -73,7 +93,6 @@ function payloadOf(source: SectionEntry[]) {
     focalX: entry.focalX,
     focalY: entry.focalY,
     crop: entry.crop,
-    watermarkAnchor: entry.watermarkAnchor as WatermarkAnchor,
   }))
 }
 
@@ -114,6 +133,7 @@ watch(() => props.work, (work) => {
 
 onMounted(() => {
   void loadPreviewUrls()
+  void loadWatermarkSummary()
 })
 
 const uploads = useStudioPhotoUpload({
@@ -131,7 +151,6 @@ const uploads = useStudioPhotoUpload({
       publicVariantCount: 0,
       status: asset.status,
       version: asset.version,
-      watermarkAnchor: asset.watermarkAnchor,
       width: asset.width,
     })
     uploads.dismiss(item, { keepPreview: true })
@@ -301,6 +320,10 @@ async function savePhotos() {
       </p>
     </div>
 
+    <p v-if="watermarkSummary" class="photo-section__watermark" data-testid="watermark-summary">
+      {{ watermarkSummary }}（站点品牌页配置）
+    </p>
+
     <p v-if="locked" class="photo-section__locked" role="status">
       作品已发布，出厂照为只读；如需调整请先下架。
     </p>
@@ -419,6 +442,12 @@ async function savePhotos() {
   background: var(--admin-status-info-soft);
   color: var(--admin-status-info);
   font-size: var(--admin-font-sm);
+}
+
+.photo-section__watermark {
+  margin: 0 0 var(--admin-space-4);
+  font-size: var(--admin-font-xs);
+  color: var(--admin-text-tertiary);
 }
 
 .photo-section__actions {

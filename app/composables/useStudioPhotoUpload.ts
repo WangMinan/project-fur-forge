@@ -14,6 +14,7 @@ import {
   UPLOAD_FAILURE_CODE_LABELS,
   UPLOAD_FAILURE_STAGE_LABELS,
 } from '~/utils/media-labels'
+import { putFileToSignedUrl } from '~/utils/signed-put'
 import {
   buildUploadDeclaration,
   DECLARATION_FAILURE_LABELS,
@@ -71,24 +72,7 @@ function putFile(
   onProgress: (ratio: number) => void,
   registerXhr: (xhr: XMLHttpRequest | null) => void,
 ) {
-  return new Promise<number>((resolvePromise, rejectPromise) => {
-    const xhr = new XMLHttpRequest()
-    registerXhr(xhr)
-    xhr.open('PUT', upload.url)
-    // 逐字复制服务端给出的条件头；不附加 Session/CSRF 或业务 JSON。
-    for (const [name, value] of Object.entries(upload.headers)) {
-      xhr.setRequestHeader(name, value)
-    }
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable && event.total > 0) {
-        onProgress(event.loaded / event.total)
-      }
-    }
-    xhr.onload = () => resolvePromise(xhr.status)
-    xhr.onerror = () => rejectPromise(new Error('upload network failure'))
-    xhr.onabort = () => rejectPromise(new Error('upload aborted'))
-    xhr.send(file)
-  })
+  return putFileToSignedUrl(upload, file, onProgress, registerXhr)
 }
 
 // 出厂照上传状态机：预检查/摘要 → 会话 → 条件 PUT（带进度）→ 服务端核验 →
@@ -194,7 +178,6 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
             payload: {
               focalX: 0.5,
               focalY: 0.5,
-              watermarkAnchor: 'bottom-right',
             },
           },
           schema: completeUploadSessionResponseSchema,
