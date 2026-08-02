@@ -89,7 +89,7 @@ test('未认证访问被重定向到登录页，品牌 API 返回 401', async ({
 test('初始状态：活动水印、默认 50/60、固定居中、无关闭与四角', async ({ page }) => {
   await gotoBranding(page)
 
-  await expect(page.getByRole('link', { name: '站点品牌' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: '全局水印' })).toHaveAttribute(
     'aria-current',
     'page',
   )
@@ -408,8 +408,8 @@ test('键盘可达：导航 Tab 顺序与主要控件聚焦', async ({ page }) =
     }
   }
   expect(
-    seen.some(text => text.includes('站点品牌')),
-    `键盘焦点应到达站点品牌导航（实际路径：${seen.join(' → ')}）`,
+    seen.some(text => text.includes('全局水印')),
+    `键盘焦点应到达全局水印导航（实际路径：${seen.join(' → ')}）`,
   ).toBe(true)
 
   // 主要控件均可聚焦（原生可聚焦元素、非禁用、可见）。
@@ -417,7 +417,7 @@ test('键盘可达：导航 Tab 顺序与主要控件聚焦', async ({ page }) =
   await generatePreview(page)
   await opacityRange(page).fill('65')
   for (const locator of [
-    page.getByRole('link', { name: '站点品牌' }),
+    page.getByRole('link', { name: '全局水印' }),
     page.getByRole('button', { name: '选择 PNG' }),
     page.locator('.branding-candidate input[type=radio]').first(),
     opacityRange(page),

@@ -706,6 +706,8 @@ export const businessStatuses = sqliteTable('business_statuses', {
 export const siteContent = sqliteTable('site_content', {
   id: text('id').primaryKey().default('site'),
   heroTagline: text('hero_tagline'),
+  contactEmail: text('contact_email'),
+  contactQq: text('contact_qq'),
   heroAutoRotate: integer('hero_auto_rotate', { mode: 'boolean' })
     .notNull().default(false),
   heroAutoRotateIntervalMs: integer('hero_auto_rotate_interval_ms')

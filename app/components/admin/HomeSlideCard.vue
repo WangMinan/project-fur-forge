@@ -301,11 +301,15 @@ function onLinkedWorkChange(event: Event) {
         >下移</button>
 
         <button
+          v-if="!slide.enabled"
           type="button"
           class="slide-card__action"
           :disabled="mutating || previewPending"
           @click="emit('loadPreview')"
         >{{ previewPending ? '生成预览中…' : '活动水印预览' }}</button>
+        <span v-else class="slide-card__active-preview-note">
+          当前公开图已使用活动水印
+        </span>
 
         <button
           v-if="!slide.enabled"
@@ -506,6 +510,12 @@ function onLinkedWorkChange(event: Event) {
 .slide-card__action--danger {
   color: var(--admin-danger);
   border-color: var(--admin-danger);
+}
+
+.slide-card__active-preview-note {
+  align-self: center;
+  font-size: var(--admin-font-xs);
+  color: var(--admin-text-tertiary);
 }
 
 .slide-card__progress {

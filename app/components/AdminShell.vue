@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // 管理端壳：窄屏为顶栏 + 横向导航，≥1280px 为固定侧栏。
-// 仅包含已实现入口（作品、首页、站点品牌、账号）；未实现的项目不提前出现。
+// 仅包含已实现入口（首页管理、全局水印、作品管理、修改密码）；未实现的项目不提前出现。
 withDefaults(defineProps<{
   current?: 'account' | 'branding' | 'home' | 'works' | 'none'
 }>(), {
@@ -45,25 +45,25 @@ async function onLogout() {
       </p>
       <nav class="admin-shell__nav" aria-label="管理导航">
         <NuxtLink
-          to="/admin/works"
-          class="admin-shell__nav-link"
-          :aria-current="current === 'works' ? 'page' : undefined"
-        >作品</NuxtLink>
-        <NuxtLink
           to="/admin/site/home"
           class="admin-shell__nav-link"
           :aria-current="current === 'home' ? 'page' : undefined"
-        >首页</NuxtLink>
+        >首页管理</NuxtLink>
         <NuxtLink
           to="/admin/site/branding"
           class="admin-shell__nav-link"
           :aria-current="current === 'branding' ? 'page' : undefined"
-        >站点品牌</NuxtLink>
+        >全局水印</NuxtLink>
+        <NuxtLink
+          to="/admin/works"
+          class="admin-shell__nav-link"
+          :aria-current="current === 'works' ? 'page' : undefined"
+        >作品管理</NuxtLink>
         <NuxtLink
           to="/admin/account"
           class="admin-shell__nav-link"
           :aria-current="current === 'account' ? 'page' : undefined"
-        >账号</NuxtLink>
+        >修改密码</NuxtLink>
       </nav>
       <div class="admin-shell__session">
         <span v-if="user" class="admin-shell__user">{{ user.username }}</span>

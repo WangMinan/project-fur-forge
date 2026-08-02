@@ -83,7 +83,7 @@ onMounted(() => {
   <AdminShell current="works">
     <div class="works-page">
       <header class="works-page__header">
-        <h1 class="works-page__title">作品</h1>
+        <h1 class="works-page__title">作品管理</h1>
         <p v-if="status === 'ready'" class="works-page__meta">
           共 {{ works.length }} 件
         </p>

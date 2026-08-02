@@ -43,6 +43,8 @@ export interface SeedHomeSlide {
 
 export interface SeedHomeSettings {
   tagline?: string
+  contactEmail?: string
+  contactQq?: string
   autoRotate?: boolean
   autoRotateIntervalMs?: number
 }

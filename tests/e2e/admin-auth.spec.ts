@@ -122,7 +122,7 @@ test.describe('登录与 Session 恢复', () => {
 
     await expect(page).toHaveURL(/\/admin\/works$/)
     await expect(
-      page.getByRole('heading', { level: 1, name: '作品' }),
+      page.getByRole('heading', { level: 1, name: '作品管理' }),
     ).toBeVisible()
     await expect(page.getByTestId('admin-shell')).toContainText(E2E_ADMIN.username)
   })
@@ -149,13 +149,13 @@ test.describe('登录与 Session 恢复', () => {
     await loginAsAdmin(page)
     await page.goto(`${adminBaseURL}/admin/works`)
     await expect(
-      page.getByRole('heading', { level: 1, name: '作品' }),
+      page.getByRole('heading', { level: 1, name: '作品管理' }),
     ).toBeVisible()
 
     await page.reload()
     await expect(page).toHaveURL(/\/admin\/works$/)
     await expect(
-      page.getByRole('heading', { level: 1, name: '作品' }),
+      page.getByRole('heading', { level: 1, name: '作品管理' }),
     ).toBeVisible()
     await expect(page.getByTestId('admin-shell')).toContainText(E2E_ADMIN.username)
   })
@@ -173,7 +173,7 @@ test.describe('登录与 Session 恢复', () => {
     await loginViaUi(page)
     await expect(page).toHaveURL(/\/admin\/account$/)
     await expect(
-      page.getByRole('heading', { level: 1, name: '账号' }),
+      page.getByRole('heading', { level: 1, name: '修改密码' }),
     ).toBeVisible()
 
     await page.context().clearCookies()
@@ -221,7 +221,7 @@ test.describe('未认证访问保护', () => {
     await page.unroute('**/api/auth/session')
     await page.getByRole('button', { name: '重试' }).click()
     await expect(
-      page.getByRole('heading', { level: 1, name: '作品' }),
+      page.getByRole('heading', { level: 1, name: '作品管理' }),
     ).toBeVisible()
   })
 })

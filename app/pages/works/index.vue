@@ -123,8 +123,12 @@ const emptyKind = computed<EmptyKind | null>(() => {
 
 <style scoped>
 .works-page {
+  max-width: var(--public-content-wide);
+  margin: 0 auto;
   padding-top: var(--space-8);
-  padding-bottom: var(--space-16);
+  padding-right: var(--public-page-padding);
+  padding-bottom: var(--space-10);
+  padding-left: var(--public-page-padding);
 }
 
 .works-page__title {
@@ -159,9 +163,9 @@ const emptyKind = computed<EmptyKind | null>(() => {
 
 .works-empty {
   margin-top: var(--space-8);
-  padding: var(--space-16) var(--space-6);
+  padding: var(--space-10) var(--space-6);
   text-align: center;
-  background: var(--public-surface-subtle);
+  background: var(--public-bg-secondary);
   border-radius: var(--radius-md);
 }
 
@@ -179,13 +183,13 @@ const emptyKind = computed<EmptyKind | null>(() => {
   display: inline-block;
   margin-top: var(--space-4);
   padding: var(--space-2) var(--space-5);
-  border: 1px solid var(--public-border-strong);
+  border: 1px solid var(--public-border-primary);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);
 }
 
 .works-empty__reset:hover {
-  background: var(--public-surface-strong);
+  background: var(--public-bg-inverse);
   color: var(--public-text-inverse);
 }
 </style>

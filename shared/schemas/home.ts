@@ -13,6 +13,8 @@ import { publicationOperationDtoSchema } from './publication'
 import { publicationStatusSchema, slugSchema } from './work'
 
 export const homeTaglineSchema = z.string().trim().min(1).max(120)
+export const contactEmailSchema = z.string().trim().email().max(254)
+export const contactQqSchema = z.string().trim().regex(/^[1-9]\d{4,11}$/u)
 
 export const adminHeroAssetDtoSchema = z.object({
   assetId: resourceIdSchema,
@@ -40,6 +42,8 @@ export const adminHeroSlideDtoSchema = z.object({
 export const adminHomeDtoSchema = z.object({
   version: resourceVersionSchema,
   tagline: homeTaglineSchema,
+  contactEmail: contactEmailSchema,
+  contactQq: contactQqSchema,
   autoRotate: z.boolean(),
   autoRotateIntervalMs: z.number().int().min(6_000).max(300_000),
   slides: z.array(adminHeroSlideDtoSchema),
@@ -61,6 +65,8 @@ export const adminHeroPreviewDtoSchema = z.object({
 
 export const publicHomeDtoSchema = z.object({
   tagline: homeTaglineSchema,
+  contactEmail: contactEmailSchema,
+  contactQq: contactQqSchema,
   autoRotate: z.boolean(),
   autoRotateIntervalMs: z.number().int().min(6_000).max(300_000),
   slides: z.array(publicHeroSlideDtoSchema).max(5),
@@ -86,6 +92,8 @@ export const mutateHomeRequestSchema = versionedRequestSchema(
 export const updateHomeSettingsRequestSchema = versionedRequestSchema(
   z.object({
     tagline: homeTaglineSchema,
+    contactEmail: contactEmailSchema,
+    contactQq: contactQqSchema,
     autoRotate: z.boolean(),
     autoRotateIntervalMs: z.number().int().min(6_000).max(300_000),
   }).strict(),

@@ -325,7 +325,7 @@ onBeforeUnmount(() => {
   width: 100%;
   max-width: var(--public-content-wide);
   margin: 0 auto;
-  padding: var(--space-16) var(--public-page-padding) var(--space-9);
+  padding: var(--space-8) var(--public-page-padding) var(--space-9);
 }
 
 .home-hero__eyebrow {

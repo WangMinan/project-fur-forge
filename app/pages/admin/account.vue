@@ -5,7 +5,7 @@ definePageMeta({
 })
 
 useSeoMeta({
-  title: '账号',
+  title: '修改密码',
   robots: 'noindex, nofollow',
 })
 
@@ -167,7 +167,7 @@ async function refreshSession() {
   <AdminShell current="account">
     <div class="account-page">
       <header class="account-page__header">
-        <h1 class="account-page__title">账号</h1>
+        <h1 class="account-page__title">修改密码</h1>
       </header>
 
       <section class="account-card" aria-labelledby="account-profile-title">

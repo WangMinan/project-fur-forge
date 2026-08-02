@@ -42,12 +42,16 @@ const actionError = ref<string | null>(null)
 const showDraft = ref(false)
 
 const tagline = ref('')
+const contactEmail = ref('')
+const contactQq = ref('')
 const autoRotate = ref(false)
 const intervalSeconds = ref(6)
 
 function settingsSnapshot() {
   return JSON.stringify({
     tagline: tagline.value,
+    contactEmail: contactEmail.value,
+    contactQq: contactQq.value,
     autoRotate: autoRotate.value,
     intervalSeconds: intervalSeconds.value,
   })
@@ -61,6 +65,8 @@ function syncSettings() {
     return
   }
   tagline.value = current.tagline
+  contactEmail.value = current.contactEmail
+  contactQq.value = current.contactQq
   autoRotate.value = current.autoRotate
   intervalSeconds.value = Math.round(current.autoRotateIntervalMs / 1_000)
   settingsBaseline.value = settingsSnapshot()
@@ -73,6 +79,9 @@ const settingsDirty = computed(() =>
 const settingsValid = computed(() => {
   const text = tagline.value.trim()
   return text.length >= 1 && text.length <= 120
+    && /^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(contactEmail.value.trim())
+    && contactEmail.value.trim().length <= 254
+    && /^[1-9]\d{4,11}$/u.test(contactQq.value.trim())
     && Number.isInteger(intervalSeconds.value)
     && intervalSeconds.value >= 6 && intervalSeconds.value <= 300
 })
@@ -89,6 +98,8 @@ watch(home, (value) => {
     // 自己保存成功时服务端值与表单一致，基线推进后自然回到非 dirty。
     settingsBaseline.value = JSON.stringify({
       tagline: value.tagline,
+      contactEmail: value.contactEmail,
+      contactQq: value.contactQq,
       autoRotate: value.autoRotate,
       intervalSeconds: Math.round(value.autoRotateIntervalMs / 1_000),
     })
@@ -115,6 +126,8 @@ async function onSaveSettings() {
   }
   actionError.value = await saveSettings({
     tagline: tagline.value.trim(),
+    contactEmail: contactEmail.value.trim(),
+    contactQq: contactQq.value.trim(),
     autoRotate: autoRotate.value,
     autoRotateIntervalMs: intervalSeconds.value * 1_000,
   })
@@ -208,7 +221,7 @@ onMounted(() => {
         <section class="home-admin__card" aria-labelledby="home-settings-title">
           <h2 id="home-settings-title" class="home-admin__card-title">首屏设置</h2>
           <div class="home-admin__settings">
-            <div class="home-admin__field">
+            <div class="home-admin__field home-admin__field--wide">
               <label class="home-admin__label" for="home-tagline">首页口号</label>
               <input
                 id="home-tagline"
@@ -216,6 +229,31 @@ onMounted(() => {
                 class="home-admin__input"
                 type="text"
                 maxlength="120"
+                :disabled="mutating"
+              >
+            </div>
+            <div class="home-admin__field">
+              <label class="home-admin__label" for="home-contact-email">业务邮箱</label>
+              <input
+                id="home-contact-email"
+                v-model="contactEmail"
+                class="home-admin__input"
+                type="email"
+                maxlength="254"
+                autocomplete="email"
+                :disabled="mutating"
+              >
+            </div>
+            <div class="home-admin__field">
+              <label class="home-admin__label" for="home-contact-qq">QQ</label>
+              <input
+                id="home-contact-qq"
+                v-model="contactQq"
+                class="home-admin__input"
+                type="text"
+                inputmode="numeric"
+                pattern="[1-9][0-9]{4,11}"
+                maxlength="12"
                 :disabled="mutating"
               >
             </div>
@@ -382,8 +420,17 @@ onMounted(() => {
 
 @media (min-width: 768px) {
   .home-admin__settings {
-    grid-template-columns: minmax(0, 2fr) auto minmax(0, 1fr) auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: end;
+  }
+
+  .home-admin__field--wide,
+  .home-admin__settings-actions {
+    grid-column: 1 / -1;
+  }
+
+  .home-admin__settings-actions {
+    justify-content: flex-end;
   }
 }
 

@@ -27,6 +27,8 @@ export interface HeroSlideInput {
 
 export interface HomeSettingsInput {
   tagline: string
+  contactEmail: string
+  contactQq: string
   autoRotate: boolean
   autoRotateIntervalMs: number
 }

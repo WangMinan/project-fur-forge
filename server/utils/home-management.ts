@@ -48,12 +48,16 @@ export interface HeroSlideInput {
 export interface HomeSettingsInput {
   autoRotate: boolean
   autoRotateIntervalMs: number
+  contactEmail: string
+  contactQq: string
   tagline: string
 }
 
 interface HomeRow {
   autoRotate: number
   autoRotateIntervalMs: number
+  contactEmail: string
+  contactQq: string
   tagline: string
   version: number
 }
@@ -132,11 +136,12 @@ function requireHome(sqlite: Database.Database) {
   const row = sqlite.prepare(`
     SELECT
       version, hero_tagline AS tagline,
+      contact_email AS contactEmail, contact_qq AS contactQq,
       hero_auto_rotate AS autoRotate,
       hero_auto_rotate_interval_ms AS autoRotateIntervalMs
     FROM site_content WHERE id = 'site'
   `).get() as HomeRow | undefined
-  if (!row || !row.tagline) {
+  if (!row || !row.tagline || !row.contactEmail || !row.contactQq) {
     throw new ServiceError(500, 'INTERNAL_ERROR', 'Home settings are unavailable.')
   }
   return row
@@ -251,6 +256,8 @@ export function getAdminHome(sqlite: Database.Database): AdminHomeDto {
   return adminHomeDtoSchema.parse({
     version: home.version,
     tagline: home.tagline,
+    contactEmail: home.contactEmail,
+    contactQq: home.contactQq,
     autoRotate: home.autoRotate === 1,
     autoRotateIntervalMs: home.autoRotateIntervalMs,
     slides: slides(sqlite).map(slide => adminSlide(sqlite, slide, profileId)),
@@ -431,6 +438,8 @@ export function getPublicHome(
   })
   return publicHomeDtoSchema.parse({
     tagline: home.tagline,
+    contactEmail: home.contactEmail,
+    contactQq: home.contactQq,
     autoRotate: home.autoRotate === 1,
     autoRotateIntervalMs: home.autoRotateIntervalMs,
     slides: projected,
@@ -653,12 +662,15 @@ export function updateHomeSettings(
 ) {
   const result = sqlite.prepare(`
     UPDATE site_content
-    SET hero_tagline = ?, hero_auto_rotate = ?,
+    SET hero_tagline = ?, contact_email = ?, contact_qq = ?,
+        hero_auto_rotate = ?,
         hero_auto_rotate_interval_ms = ?, version = version + 1,
         updated_at = ?
     WHERE id = 'site' AND version = ?
   `).run(
     input.tagline,
+    input.contactEmail,
+    input.contactQq,
     input.autoRotate ? 1 : 0,
     input.autoRotateIntervalMs,
     now,
