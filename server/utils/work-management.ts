@@ -9,21 +9,11 @@ import type {
   ManagedWorkDto,
   PublicSafeWorkPreviewDto,
   WatermarkAnchor,
+  WorkFields,
   WorkListItemDto,
 } from '../../shared/types/contracts'
 import type { MediaStorage } from './media-storage'
 import { ServiceError } from './service-error'
-
-interface NonAdoptionWorkInput {
-  characterName: string
-  featureTags: string[]
-  ownerContact: string | null
-  ownerDisplay: '有点小狗工作室' | '不公开'
-  purpose: 'commission' | 'showcase'
-  slug: string
-  species: string
-  suitType: 'full' | 'partial'
-}
 
 interface StudioPhotoInput {
   alt: string
@@ -41,13 +31,20 @@ interface StudioPhotoInput {
 }
 
 interface WorkRow {
+  adoptionMethod: 'regular' | 'event_drop' | null
+  businessStatus: 'preparing' | 'available' | 'event_sale' | 'scheduled' | 'in_production' | 'delivered' | null
   characterName: string
+  currentEventName: string | null
+  featured: number
   id: string
   ownerContact: string | null
-  ownerDisplay: '有点小狗工作室' | '不公开'
+  ownerDisplay: string
+  priceAmountMinor: number | null
+  priceCurrency: 'CNY' | null
   publicationStatus: 'draft' | 'published' | 'unpublished'
-  purpose: 'commission' | 'showcase'
+  purpose: 'commission' | 'adoption' | 'showcase'
   slug: string
+  sortOrder: number
   species: string
   suitType: 'full' | 'partial'
   version: number
@@ -57,16 +54,20 @@ const selectWork = `
   SELECT
     id, version, slug, character_name AS characterName,
     species, suit_type AS suitType, purpose,
+    adoption_method AS adoptionMethod,
+    business_status AS businessStatus,
+    current_event_name AS currentEventName,
     owner_display AS ownerDisplay, owner_contact AS ownerContact,
-    publication_status AS publicationStatus
+    price_amount_minor AS priceAmountMinor,
+    price_currency AS priceCurrency,
+    publication_status AS publicationStatus,
+    sort_order AS sortOrder, featured
   FROM works
 `
 
 function findWork(sqlite: Database.Database, id: string) {
-  return sqlite.prepare(`
-    ${selectWork}
-    WHERE id = ? AND purpose IN ('commission', 'showcase')
-  `).get(id) as WorkRow | undefined
+  return sqlite.prepare(`${selectWork} WHERE id = ?`)
+    .get(id) as WorkRow | undefined
 }
 
 function requireWork(sqlite: Database.Database, id: string) {
@@ -142,7 +143,7 @@ function managedWork(
   sqlite: Database.Database,
   row: WorkRow,
 ): ManagedWorkDto {
-  return managedWorkDtoSchema.parse({
+  const base = {
     id: row.id,
     version: row.version,
     slug: row.slug,
@@ -152,12 +153,25 @@ function managedWork(
     purpose: row.purpose,
     ownerDisplay: row.ownerDisplay,
     featureTags: featureTags(sqlite, row.id),
+    sortOrder: row.sortOrder,
+    featured: Boolean(row.featured),
     publicationStatus: row.publicationStatus,
     studioPhotos: studioPhotos(sqlite, row.id),
     private: {
       ownerContact: row.ownerContact,
     },
-  })
+  }
+  return managedWorkDtoSchema.parse(row.purpose === 'adoption'
+    ? {
+        ...base,
+        adoptionMethod: row.adoptionMethod,
+        businessStatus: row.businessStatus,
+        currentEventName: row.currentEventName,
+        priceCnyMinor: row.priceCurrency === 'CNY'
+          ? row.priceAmountMinor
+          : null,
+      }
+    : base)
 }
 
 function translateConstraint(error: unknown): never {
@@ -195,18 +209,54 @@ export function listManagedWorks(
       work.id, work.version, work.slug,
       work.character_name AS characterName,
       work.species, work.suit_type AS suitType, work.purpose,
+      work.adoption_method AS adoptionMethod,
+      work.business_status AS businessStatus,
+      work.current_event_name AS currentEventName,
       work.owner_display AS ownerDisplay,
+      work.price_amount_minor AS priceAmountMinor,
+      work.price_currency AS priceCurrency,
       work.publication_status AS publicationStatus,
+      work.sort_order AS sortOrder, work.featured,
       count(photo.asset_id) AS studioPhotoCount,
       max(CASE WHEN photo.is_primary = 1 THEN photo.asset_id END) AS primaryAssetId
     FROM works AS work
     LEFT JOIN work_assets AS photo
       ON photo.work_id = work.id AND photo.role = 'studio_photo'
-    WHERE work.purpose IN ('commission', 'showcase')
     GROUP BY work.id
-    ORDER BY work.updated_at DESC, work.id
+    ORDER BY work.sort_order, work.id
   `).all()
-  return rows.map(row => workListItemDtoSchema.parse(row))
+  return rows.map((value) => {
+    const row = value as WorkRow & {
+      primaryAssetId: string | null
+      studioPhotoCount: number
+    }
+    const base = {
+      id: row.id,
+      version: row.version,
+      slug: row.slug,
+      characterName: row.characterName,
+      species: row.species,
+      suitType: row.suitType,
+      purpose: row.purpose,
+      ownerDisplay: row.ownerDisplay,
+      publicationStatus: row.publicationStatus,
+      sortOrder: row.sortOrder,
+      featured: Boolean(row.featured),
+      studioPhotoCount: row.studioPhotoCount,
+      primaryAssetId: row.primaryAssetId,
+    }
+    return workListItemDtoSchema.parse(row.purpose === 'adoption'
+      ? {
+          ...base,
+          adoptionMethod: row.adoptionMethod,
+          businessStatus: row.businessStatus,
+          currentEventName: row.currentEventName,
+          priceCnyMinor: row.priceCurrency === 'CNY'
+            ? row.priceAmountMinor
+            : null,
+        }
+      : base)
+  })
 }
 
 export function getManagedWork(
@@ -218,7 +268,7 @@ export function getManagedWork(
 
 export function createManagedWork(
   sqlite: Database.Database,
-  input: NonAdoptionWorkInput,
+  input: WorkFields,
   now = Date.now(),
 ) {
   const id = randomUUID()
@@ -227,9 +277,10 @@ export function createManagedWork(
       sqlite.prepare(`
         INSERT INTO works (
           id, slug, character_name, species, suit_type, purpose,
-          owner_display, owner_contact, publication_status,
-          created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?)
+          adoption_method, business_status, current_event_name,
+          owner_display, owner_contact, price_amount_minor, price_currency,
+          publication_status, sort_order, featured, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, 'draft', ?, ?, ?, ?)
       `).run(
         id,
         input.slug,
@@ -237,8 +288,16 @@ export function createManagedWork(
         input.species,
         input.suitType,
         input.purpose,
+        input.purpose === 'adoption' ? input.adoptionMethod : null,
+        input.purpose === 'adoption' ? input.businessStatus : null,
         input.ownerDisplay,
         input.ownerContact,
+        input.purpose === 'adoption' ? input.priceCnyMinor : null,
+        input.purpose === 'adoption' && input.priceCnyMinor !== null
+          ? 'CNY'
+          : null,
+        input.sortOrder,
+        input.featured ? 1 : 0,
         now,
         now,
       )
@@ -255,7 +314,7 @@ export function updateManagedWork(
   sqlite: Database.Database,
   id: string,
   expectedVersion: number,
-  input: NonAdoptionWorkInput,
+  input: WorkFields,
   now = Date.now(),
 ) {
   const current = requireWork(sqlite, id)
@@ -265,12 +324,29 @@ export function updateManagedWork(
   if (current.publicationStatus === 'published') {
     throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before editing it.')
   }
+  if (current.purpose === 'adoption' && input.purpose !== 'adoption') {
+    const designSheetCount = sqlite.prepare(`
+      SELECT count(*) FROM work_assets
+      WHERE work_id = ? AND role = 'design_sheet'
+    `).pluck().get(id) as number
+    if (designSheetCount > 0) {
+      throw new ServiceError(
+        409,
+        'CONFLICT',
+        'Remove the design sheet before changing the work purpose.',
+      )
+    }
+  }
   try {
     sqlite.transaction(() => {
       const result = sqlite.prepare(`
         UPDATE works
         SET slug = ?, character_name = ?, species = ?, suit_type = ?,
-            purpose = ?, owner_display = ?, owner_contact = ?,
+            purpose = ?, adoption_method = ?, business_status = ?,
+            current_event_name = NULL,
+            owner_display = ?, owner_contact = ?,
+            price_amount_minor = ?, price_currency = ?,
+            sort_order = ?, featured = ?,
             version = version + 1, updated_at = ?
         WHERE id = ? AND version = ? AND publication_status != 'published'
       `).run(
@@ -279,8 +355,16 @@ export function updateManagedWork(
         input.species,
         input.suitType,
         input.purpose,
+        input.purpose === 'adoption' ? input.adoptionMethod : null,
+        input.purpose === 'adoption' ? input.businessStatus : null,
         input.ownerDisplay,
         input.ownerContact,
+        input.purpose === 'adoption' ? input.priceCnyMinor : null,
+        input.purpose === 'adoption' && input.priceCnyMinor !== null
+          ? 'CNY'
+          : null,
+        input.sortOrder,
+        input.featured ? 1 : 0,
         now,
         id,
         expectedVersion,

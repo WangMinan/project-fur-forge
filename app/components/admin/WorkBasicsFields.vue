@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SuitType } from '~~/shared/types/contracts'
+import type { SuitType, WorkPurpose } from '~~/shared/types/contracts'
 import { SUIT_TYPE_VALUES } from '~~/shared/schemas/work'
 import { SUIT_TYPE_LABELS, WORK_PURPOSE_LABELS } from '~/utils/work-labels'
 
@@ -7,8 +7,8 @@ export interface WorkBasicsForm {
   characterName: string
   featureTags: string[]
   ownerContact: string
-  ownerDisplay: '不公开' | '有点小狗工作室'
-  purpose: 'commission' | 'showcase'
+  ownerDisplay: string
+  purpose: WorkPurpose
   slug: string
   species: string
   suitType: SuitType

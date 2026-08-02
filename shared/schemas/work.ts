@@ -38,6 +38,14 @@ export const BUSINESS_STATUS_VALUES = [
   'delivered',
 ] as const
 
+export const REGULAR_ADOPTION_BUSINESS_STATUS_VALUES = [
+  'preparing',
+  'available',
+  'scheduled',
+  'in_production',
+  'delivered',
+] as const
+
 export const RETURN_PHOTO_CONSENT_SOURCE_VALUES = [
   'qq',
   'email',
@@ -49,6 +57,9 @@ export const suitTypeSchema = z.enum(SUIT_TYPE_VALUES)
 export const publicationStatusSchema = z.enum(PUBLICATION_STATUS_VALUES)
 export const adoptionMethodSchema = z.enum(ADOPTION_METHOD_VALUES)
 export const businessStatusSchema = z.enum(BUSINESS_STATUS_VALUES)
+export const regularAdoptionBusinessStatusSchema = z.enum(
+  REGULAR_ADOPTION_BUSINESS_STATUS_VALUES,
+)
 export const returnPhotoConsentSourceSchema = z.enum(
   RETURN_PHOTO_CONSENT_SOURCE_VALUES,
 )
@@ -137,17 +148,59 @@ const adminWorkBaseSchema = publicWorkBaseSchema.extend({
 export const adminWorkDtoSchema = z.discriminatedUnion('purpose', [
   adminWorkBaseSchema.extend({
     purpose: z.literal('adoption'),
-    adoptionMethod: adoptionMethodSchema.optional(),
-    businessStatus: businessStatusSchema.optional(),
-    priceCnyMinor: z.number().int().positive().optional(),
+    adoptionMethod: adoptionMethodSchema.nullable(),
+    businessStatus: businessStatusSchema.nullable(),
+    currentEventName: z.string().nullable(),
+    priceCnyMinor: z.number().int().positive().nullable(),
+    sortOrder: z.number().int().nonnegative(),
+    featured: z.boolean(),
   }),
   adminWorkBaseSchema.extend({
     purpose: z.literal('commission'),
     adoptionMethod: z.never().optional(),
     businessStatus: z.never().optional(),
+    currentEventName: z.never().optional(),
     priceCnyMinor: z.never().optional(),
+    sortOrder: z.number().int().nonnegative(),
+    featured: z.boolean(),
   }),
   adminWorkBaseSchema.extend({
+    purpose: z.literal('showcase'),
+    adoptionMethod: z.never().optional(),
+    businessStatus: z.never().optional(),
+    currentEventName: z.never().optional(),
+    priceCnyMinor: z.never().optional(),
+    sortOrder: z.number().int().nonnegative(),
+    featured: z.boolean(),
+  }),
+])
+
+const mutableWorkBaseSchema = z.object({
+  slug: slugSchema,
+  characterName: z.string().trim().min(1).max(100),
+  species: z.string().trim().min(1).max(100),
+  suitType: suitTypeSchema,
+  ownerDisplay: z.string().trim().min(1).max(100),
+  ownerContact: z.string().trim().min(1).max(500).nullable(),
+  featureTags: workFeatureTagsSchema,
+  sortOrder: z.number().int().nonnegative(),
+  featured: z.boolean(),
+}).strict()
+
+export const workFieldsSchema = z.discriminatedUnion('purpose', [
+  mutableWorkBaseSchema.extend({
+    purpose: z.literal('adoption'),
+    adoptionMethod: z.literal('regular'),
+    businessStatus: regularAdoptionBusinessStatusSchema,
+    priceCnyMinor: z.number().int().positive().nullable(),
+  }),
+  mutableWorkBaseSchema.extend({
+    purpose: z.literal('commission'),
+    adoptionMethod: z.never().optional(),
+    businessStatus: z.never().optional(),
+    priceCnyMinor: z.never().optional(),
+  }),
+  mutableWorkBaseSchema.extend({
     purpose: z.literal('showcase'),
     adoptionMethod: z.never().optional(),
     businessStatus: z.never().optional(),
@@ -155,20 +208,9 @@ export const adminWorkDtoSchema = z.discriminatedUnion('purpose', [
   }),
 ])
 
-export const nonAdoptionWorkFieldsSchema = z.object({
-  slug: slugSchema,
-  characterName: z.string().trim().min(1).max(100),
-  species: z.string().trim().min(1).max(100),
-  suitType: suitTypeSchema,
-  purpose: z.enum(['commission', 'showcase']),
-  ownerDisplay: z.enum(['有点小狗工作室', '不公开']),
-  ownerContact: z.string().trim().min(1).max(500).nullable(),
-  featureTags: workFeatureTagsSchema,
-}).strict()
-
-export const createWorkRequestSchema = nonAdoptionWorkFieldsSchema
+export const createWorkRequestSchema = workFieldsSchema
 export const updateWorkRequestSchema = versionedRequestSchema(
-  nonAdoptionWorkFieldsSchema,
+  workFieldsSchema,
 )
 export const deleteWorkRequestSchema = versionedRequestSchema(
   z.object({}).strict(),
@@ -235,7 +277,7 @@ export const managedStudioPhotoDtoSchema = studioPhotoBaseSchema.extend({
   publicVariantCount: z.number().int().nonnegative(),
 }).strict()
 
-export const managedWorkDtoSchema = nonAdoptionWorkFieldsSchema.omit({
+const managedWorkBaseSchema = mutableWorkBaseSchema.omit({
   ownerContact: true,
 }).extend({
   id: resourceIdSchema,
@@ -243,28 +285,92 @@ export const managedWorkDtoSchema = nonAdoptionWorkFieldsSchema.omit({
   publicationStatus: publicationStatusSchema,
   studioPhotos: z.array(managedStudioPhotoDtoSchema).max(5),
   private: privateWorkFieldsSchema,
-}).strict()
+})
 
-export const workListItemDtoSchema = managedWorkDtoSchema.pick({
-  id: true,
-  version: true,
-  slug: true,
-  characterName: true,
-  species: true,
-  suitType: true,
-  purpose: true,
-  ownerDisplay: true,
-  publicationStatus: true,
+export const managedWorkDtoSchema = z.discriminatedUnion('purpose', [
+  managedWorkBaseSchema.extend({
+    purpose: z.literal('adoption'),
+    adoptionMethod: adoptionMethodSchema.nullable(),
+    businessStatus: businessStatusSchema.nullable(),
+    currentEventName: z.string().nullable(),
+    priceCnyMinor: z.number().int().positive().nullable(),
+  }),
+  managedWorkBaseSchema.extend({
+    purpose: z.literal('commission'),
+    adoptionMethod: z.never().optional(),
+    businessStatus: z.never().optional(),
+    currentEventName: z.never().optional(),
+    priceCnyMinor: z.never().optional(),
+  }),
+  managedWorkBaseSchema.extend({
+    purpose: z.literal('showcase'),
+    adoptionMethod: z.never().optional(),
+    businessStatus: z.never().optional(),
+    currentEventName: z.never().optional(),
+    priceCnyMinor: z.never().optional(),
+  }),
+])
+
+const workListItemBaseSchema = managedWorkBaseSchema.omit({
+  featureTags: true,
+  studioPhotos: true,
+  private: true,
 }).extend({
   studioPhotoCount: z.number().int().min(0).max(5),
   primaryAssetId: resourceIdSchema.nullable(),
-}).strict()
+})
 
-export const publicSafeWorkPreviewDtoSchema = managedWorkDtoSchema.omit({
+export const workListItemDtoSchema = z.discriminatedUnion('purpose', [
+  workListItemBaseSchema.extend({
+    purpose: z.literal('adoption'),
+    adoptionMethod: adoptionMethodSchema.nullable(),
+    businessStatus: businessStatusSchema.nullable(),
+    currentEventName: z.string().nullable(),
+    priceCnyMinor: z.number().int().positive().nullable(),
+  }),
+  workListItemBaseSchema.extend({
+    purpose: z.literal('commission'),
+    adoptionMethod: z.never().optional(),
+    businessStatus: z.never().optional(),
+    currentEventName: z.never().optional(),
+    priceCnyMinor: z.never().optional(),
+  }),
+  workListItemBaseSchema.extend({
+    purpose: z.literal('showcase'),
+    adoptionMethod: z.never().optional(),
+    businessStatus: z.never().optional(),
+    currentEventName: z.never().optional(),
+    priceCnyMinor: z.never().optional(),
+  }),
+])
+
+const publicSafeWorkPreviewBaseSchema = managedWorkBaseSchema.omit({
   private: true,
-}).extend({
-  mediaReady: z.boolean(),
-}).strict()
+}).extend({ mediaReady: z.boolean() })
+
+export const publicSafeWorkPreviewDtoSchema = z.discriminatedUnion('purpose', [
+  publicSafeWorkPreviewBaseSchema.extend({
+    purpose: z.literal('adoption'),
+    adoptionMethod: adoptionMethodSchema.nullable(),
+    businessStatus: businessStatusSchema.nullable(),
+    currentEventName: z.string().nullable(),
+    priceCnyMinor: z.number().int().positive().nullable(),
+  }),
+  publicSafeWorkPreviewBaseSchema.extend({
+    purpose: z.literal('commission'),
+    adoptionMethod: z.never().optional(),
+    businessStatus: z.never().optional(),
+    currentEventName: z.never().optional(),
+    priceCnyMinor: z.never().optional(),
+  }),
+  publicSafeWorkPreviewBaseSchema.extend({
+    purpose: z.literal('showcase'),
+    adoptionMethod: z.never().optional(),
+    businessStatus: z.never().optional(),
+    currentEventName: z.never().optional(),
+    priceCnyMinor: z.never().optional(),
+  }),
+])
 
 export const managedWorkResponseSchema = apiSuccessSchema(managedWorkDtoSchema)
 export const workListResponseSchema = apiSuccessSchema(

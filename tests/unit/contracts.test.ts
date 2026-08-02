@@ -13,8 +13,10 @@ import {
 } from '../../shared/schemas/api'
 import {
   adminWorkDtoSchema,
+  createWorkRequestSchema,
   publicWorkDtoSchema,
   returnPhotoConsentSchema,
+  updateWorkRequestSchema,
   workFeatureTagsSchema,
 } from '../../shared/schemas/work'
 import {
@@ -43,7 +45,10 @@ const baseRecord: WorkRecord = {
   ],
   adoptionMethod: 'event_drop',
   businessStatus: 'event_sale',
+  currentEventName: '测试展会',
+  featured: true,
   priceCnyMinor: 1_560_000,
+  sortOrder: 4,
   ownerContact: 'private-contact',
   assetIds: [
     'be9c4a94-32cd-4d17-9050-f7f57fed9742',
@@ -146,6 +151,81 @@ describe('work feature tags', () => {
   })
 })
 
+describe('T22 work mutation contracts', () => {
+  const common = {
+    slug: 'new-work',
+    characterName: ' 新角色 ',
+    species: '犬科',
+    suitType: 'partial' as const,
+    ownerDisplay: ' 公开角色主 ',
+    ownerContact: null,
+    featureTags: [' 柔软 ', '大尾巴'],
+    sortOrder: 7,
+    featured: true,
+  }
+
+  it('uses a strict purpose union for commission, showcase and regular adoption', () => {
+    for (const purpose of ['commission', 'showcase'] as const) {
+      expect(createWorkRequestSchema.parse({ ...common, purpose })).toMatchObject({
+        purpose,
+        ownerDisplay: '公开角色主',
+        featureTags: ['柔软', '大尾巴'],
+        sortOrder: 7,
+        featured: true,
+      })
+    }
+    expect(createWorkRequestSchema.parse({
+      ...common,
+      purpose: 'adoption',
+      adoptionMethod: 'regular',
+      businessStatus: 'available',
+      priceCnyMinor: 1,
+    })).toMatchObject({
+      purpose: 'adoption',
+      adoptionMethod: 'regular',
+      businessStatus: 'available',
+      priceCnyMinor: 1,
+    })
+    expect(updateWorkRequestSchema.parse({
+      expectedVersion: 3,
+      payload: { ...common, purpose: 'showcase' },
+    }).expectedVersion).toBe(3)
+  })
+
+  it('rejects cross-purpose fields, event management and invalid CNY minor units', () => {
+    expect(createWorkRequestSchema.safeParse({
+      ...common,
+      purpose: 'showcase',
+      adoptionMethod: 'regular',
+    }).success).toBe(false)
+    expect(createWorkRequestSchema.safeParse({
+      ...common,
+      purpose: 'adoption',
+      adoptionMethod: 'event_drop',
+      businessStatus: 'event_sale',
+      currentEventName: '未建模展会',
+      priceCnyMinor: 100,
+    }).success).toBe(false)
+    for (const priceCnyMinor of [0, -1, 1.5]) {
+      expect(createWorkRequestSchema.safeParse({
+        ...common,
+        purpose: 'adoption',
+        adoptionMethod: 'regular',
+        businessStatus: 'available',
+        priceCnyMinor,
+      }).success).toBe(false)
+    }
+    expect(createWorkRequestSchema.safeParse({
+      ...common,
+      purpose: 'adoption',
+      adoptionMethod: 'regular',
+      businessStatus: 'available',
+      priceCnyMinor: 100,
+      priceCurrency: 'USD',
+    }).success).toBe(false)
+  })
+})
+
 describe('return photo consent records', () => {
   it('keeps every consent field nullable and private from work DTOs', () => {
     expect(returnPhotoConsentSchema.parse({
@@ -214,6 +294,10 @@ describe('work DTO mapping', () => {
     expect(serialized).not.toContain('private-session-token')
     expect(serialized).not.toContain('private-error-detail')
     expect(serialized).not.toContain('private-draft')
+    expect(publicWorkDtoSchema.safeParse({
+      ...publicDto,
+      ownerContact: 'private-contact',
+    }).success).toBe(false)
   })
 
   it('does not project price for non-adoption work', () => {

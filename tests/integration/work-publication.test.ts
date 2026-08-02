@@ -64,6 +64,8 @@ function createWorkWithPhoto(width = 3200, height = 2400) {
     ownerDisplay: '不公开',
     ownerContact: '不会进入日志或公开 DTO',
     featureTags: ['软萌'],
+    sortOrder: 0,
+    featured: false,
   }, NOW)
   const content = createSyntheticWatermarkPng()
   const key = `test/t18-fixture/original/${ASSET_ID}/source.png`

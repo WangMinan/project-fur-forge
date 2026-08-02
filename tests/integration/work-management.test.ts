@@ -49,6 +49,8 @@ const workInput = {
   ownerDisplay: '不公开' as const,
   ownerContact: '仅后台联系人',
   featureTags: ['软萌', '大尾巴'],
+  sortOrder: 10,
+  featured: false,
 }
 
 function insertUser() {
@@ -123,7 +125,7 @@ afterEach(() => {
   rmSync(directory, { force: true, recursive: true })
 })
 
-describe('minimal non-adoption work management', () => {
+describe('T22 work management', () => {
   it('creates, lists, reads and updates a private draft with optimistic versions', () => {
     const created = createManagedWork(sqlite, workInput, NOW)
     expect(created).toMatchObject({
@@ -133,6 +135,8 @@ describe('minimal non-adoption work management', () => {
       featureTags: ['软萌', '大尾巴'],
       private: { ownerContact: '仅后台联系人' },
       studioPhotos: [],
+      sortOrder: 10,
+      featured: false,
     })
     expect(listManagedWorks(sqlite)).toEqual([
       expect.objectContaining({
@@ -154,6 +158,8 @@ describe('minimal non-adoption work management', () => {
         ownerContact: null,
         purpose: 'commission',
         featureTags: ['大尾巴'],
+        sortOrder: 2,
+        featured: true,
       },
       NOW + 1_000,
     )
@@ -164,6 +170,8 @@ describe('minimal non-adoption work management', () => {
       ownerDisplay: '有点小狗工作室',
       featureTags: ['大尾巴'],
       private: { ownerContact: null },
+      sortOrder: 2,
+      featured: true,
     })
     expect(() => updateManagedWork(
       sqlite,
@@ -171,6 +179,158 @@ describe('minimal non-adoption work management', () => {
       1,
       workInput,
     )).toThrow(/stale/u)
+  })
+
+  it('creates and updates all purposes while preserving the adoption matrix', () => {
+    const commission = createManagedWork(sqlite, {
+      ...workInput,
+      slug: 'commission-work',
+      purpose: 'commission',
+      ownerDisplay: '公开角色主',
+    }, NOW)
+    const adoption = createManagedWork(sqlite, {
+      ...workInput,
+      slug: 'adoption-work',
+      purpose: 'adoption',
+      adoptionMethod: 'regular',
+      businessStatus: 'available',
+      priceCnyMinor: 1,
+      sortOrder: 1,
+      featured: true,
+    }, NOW + 1)
+
+    expect(commission).toMatchObject({
+      purpose: 'commission',
+      ownerDisplay: '公开角色主',
+    })
+    expect(adoption).toMatchObject({
+      purpose: 'adoption',
+      adoptionMethod: 'regular',
+      businessStatus: 'available',
+      priceCnyMinor: 1,
+      sortOrder: 1,
+      featured: true,
+    })
+    expect(listManagedWorks(sqlite).map(work => work.slug)).toEqual([
+      'adoption-work',
+      'commission-work',
+    ])
+
+    const showcased = updateManagedWork(sqlite, adoption.id, 1, {
+      ...workInput,
+      slug: 'adoption-became-showcase',
+      purpose: 'showcase',
+      sortOrder: 3,
+    }, NOW + 2)
+    expect(showcased).toMatchObject({
+      version: 2,
+      purpose: 'showcase',
+      sortOrder: 3,
+    })
+    expect(showcased).not.toHaveProperty('adoptionMethod')
+    expect(sqlite.prepare(`
+      SELECT adoption_method, business_status, current_event_name,
+             price_amount_minor, price_currency
+      FROM works WHERE id = ?
+    `).get(adoption.id)).toEqual({
+      adoption_method: null,
+      business_status: null,
+      current_event_name: null,
+      price_amount_minor: null,
+      price_currency: null,
+    })
+
+    const adoptedAgain = updateManagedWork(sqlite, adoption.id, 2, {
+      ...workInput,
+      slug: 'showcase-became-adoption',
+      purpose: 'adoption',
+      adoptionMethod: 'regular',
+      businessStatus: 'preparing',
+      priceCnyMinor: null,
+      sortOrder: 4,
+    }, NOW + 3)
+    expect(adoptedAgain).toMatchObject({
+      version: 3,
+      purpose: 'adoption',
+      adoptionMethod: 'regular',
+      businessStatus: 'preparing',
+      priceCnyMinor: null,
+    })
+  })
+
+  it('keeps historical event values admin-readable and migrates them explicitly', () => {
+    const id = crypto.randomUUID()
+    sqlite.prepare(`
+      INSERT INTO works (
+        id, slug, character_name, species, suit_type, purpose,
+        adoption_method, business_status, current_event_name,
+        owner_display, owner_contact, price_amount_minor, price_currency,
+        publication_status, sort_order, featured, created_at, updated_at
+      ) VALUES (?, 'legacy-event-drop', '旧展会角色', '犬科', 'partial',
+                'adoption', 'event_drop', 'event_sale', '旧展会文本',
+                '不公开', '旧联系人', 100, 'CNY', 'draft', 8, 0, ?, ?)
+    `).run(id, NOW, NOW)
+
+    expect(getManagedWork(sqlite, id)).toMatchObject({
+      purpose: 'adoption',
+      adoptionMethod: 'event_drop',
+      businessStatus: 'event_sale',
+      currentEventName: '旧展会文本',
+      priceCnyMinor: 100,
+      private: { ownerContact: '旧联系人' },
+    })
+
+    const migrated = updateManagedWork(sqlite, id, 1, {
+      ...workInput,
+      slug: 'legacy-event-drop',
+      purpose: 'adoption',
+      adoptionMethod: 'regular',
+      businessStatus: 'available',
+      priceCnyMinor: 100,
+      sortOrder: 8,
+    }, NOW + 1)
+    expect(migrated).toMatchObject({
+      version: 2,
+      adoptionMethod: 'regular',
+      businessStatus: 'available',
+      currentEventName: null,
+    })
+  })
+
+  it('returns a readable conflict before leaving an adoption design sheet behind', () => {
+    const work = createManagedWork(sqlite, {
+      ...workInput,
+      slug: 'adoption-with-design',
+      purpose: 'adoption',
+      adoptionMethod: 'regular',
+      businessStatus: 'preparing',
+      priceCnyMinor: null,
+    }, NOW)
+    const assetId = crypto.randomUUID()
+    sqlite.prepare(`
+      INSERT INTO assets (
+        id, role, status, private_object_key, sha256, byte_size,
+        mime_type, width, height, created_at, updated_at
+      ) VALUES (?, 'design_sheet', 'READY', ?, ?, 1024,
+                'image/png', 1600, 900, ?, ?)
+    `).run(
+      assetId,
+      `test/t22/original/${assetId}.png`,
+      'a'.repeat(64),
+      NOW,
+      NOW,
+    )
+    sqlite.prepare(`
+      INSERT INTO work_assets (work_id, asset_id, role, position)
+      VALUES (?, ?, 'design_sheet', 0)
+    `).run(work.id, assetId)
+
+    expect(() => updateManagedWork(sqlite, work.id, 1, {
+      ...workInput,
+      slug: 'adoption-with-design',
+      purpose: 'showcase',
+    })).toThrow(/Remove the design sheet/u)
+    expect(getManagedWork(sqlite, work.id).purpose).toBe('adoption')
   })
 
   it('deletes only a non-published work, cleans public variants and retains private originals', async () => {
