@@ -60,13 +60,19 @@ export function useAdminHome() {
   const previews = ref<Record<string, AdminHeroPreviewDto>>({})
   const previewPending = ref<Record<string, boolean>>({})
 
-  let pollTimer: ReturnType<typeof setTimeout> | null = null
+  const pollTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
-  function stopPolling() {
-    if (pollTimer !== null) {
-      clearTimeout(pollTimer)
-      pollTimer = null
+  function stopPolling(slideId?: string) {
+    if (slideId) {
+      const timer = pollTimers.get(slideId)
+      if (timer) {
+        clearTimeout(timer)
+        pollTimers.delete(slideId)
+      }
+      return
     }
+    pollTimers.forEach(clearTimeout)
+    pollTimers.clear()
   }
 
   function setFeedback(slideId: string, value: SlideFeedback | null) {
@@ -77,12 +83,33 @@ export function useAdminHome() {
         )
   }
 
-  async function refreshHome() {
+  function restorePublicationOperations(snapshot: AdminHomeDto) {
+    for (const slide of snapshot.slides) {
+      const operation = slide.publicationOperation
+      if (!operation) {
+        continue
+      }
+      operations.value = { ...operations.value, [slide.id]: operation }
+      if (IN_PROGRESS_STATUSES.has(operation.status)) {
+        if (!pollTimers.has(slide.id)) {
+          void pollOperation(slide.id, operation.operationId)
+        }
+      }
+      else {
+        setFeedback(slide.id, operationFeedback(operation))
+      }
+    }
+  }
+
+  async function refreshHome(restoreOperations = true) {
     try {
       const result = await adminApi('/api/admin/v1/site/home', {
         schema: adminHomeResponseSchema,
       })
       home.value = result.data
+      if (restoreOperations) {
+        restorePublicationOperations(result.data)
+      }
       return result.data
     }
     catch (error) {
@@ -101,6 +128,7 @@ export function useAdminHome() {
         schema: adminHomeResponseSchema,
       })
       home.value = result.data
+      restorePublicationOperations(result.data)
       pageStatus.value = 'ready'
     }
     catch (error) {
@@ -135,7 +163,7 @@ export function useAdminHome() {
   }
 
   async function pollOperation(slideId: string, operationId: string) {
-    stopPolling()
+    stopPolling(slideId)
     const tick = async () => {
       let current: PublicationOperationDto | null = null
       try {
@@ -145,6 +173,7 @@ export function useAdminHome() {
         )
         current = result.data
         operations.value = { ...operations.value, [slideId]: current }
+        await refreshHome(false)
       }
       catch (error) {
         if (error instanceof AdminApiError && error.status === 401) {
@@ -158,9 +187,10 @@ export function useAdminHome() {
         await refreshHome()
         return
       }
-      pollTimer = setTimeout(() => {
+      pollTimers.set(slideId, setTimeout(() => {
+        pollTimers.delete(slideId)
         void tick()
-      }, POLL_INTERVAL_MS)
+      }, POLL_INTERVAL_MS))
     }
     await tick()
   }

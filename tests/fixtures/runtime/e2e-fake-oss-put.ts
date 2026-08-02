@@ -13,7 +13,10 @@ const ROUTE_PREFIX = '/api/e2e-fake-oss/'
 
 // 模拟 OSS 条件 PUT：校验 Content-MD5 与禁止覆盖，按真实头元数据落库到内存 fake。
 export default defineEventHandler(async (event) => {
-  const objectKey = getRequestURL(event).pathname.slice(ROUTE_PREFIX.length)
+  const pathname = getRequestURL(event).pathname
+  const objectKey = pathname.startsWith(ROUTE_PREFIX)
+    ? pathname.slice(ROUTE_PREFIX.length)
+    : pathname.slice(1)
   if (!objectKey) {
     setResponseStatus(event, 400)
     return { error: 'object key missing' }
@@ -21,7 +24,7 @@ export default defineEventHandler(async (event) => {
 
   const fake = getE2eFakeMediaStorage()
   if (event.method === 'GET') {
-    const object = fake.objects.get(objectKey)
+    const object = fake.objects.get(objectKey) ?? fake.publicObjects.get(objectKey)
     if (!object) {
       setResponseStatus(event, 404)
       return { error: 'NoSuchKey' }

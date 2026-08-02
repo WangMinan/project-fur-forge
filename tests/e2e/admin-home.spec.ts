@@ -2,9 +2,11 @@ import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { adminBaseURL, loginAsAdmin, publicBaseURL } from './helpers/auth'
 import { createWorkViaApi } from './helpers/admin-work'
+import { capture } from './helpers/screenshots'
 import {
   heroPng,
   resetFakeMedia,
+  seedHomePublicationOperation,
   setWatermarkProfileActive,
 } from './helpers/fake-media'
 import { seedHomeSlides, seedPublicCatalog } from './helpers/public-catalog'
@@ -18,6 +20,9 @@ const DEFAULT_SETTINGS = {
   autoRotate: false,
   autoRotateIntervalMs: 6_000,
 }
+
+const SCREENSHOT_DIR =
+  'agent_docs/需求1-兽装工作室主页/implementation/notes/t19-t20/screenshots'
 
 async function gotoHomeAdmin(page: Page) {
   await page.goto(`${adminBaseURL}/admin/site/home`)
@@ -165,6 +170,25 @@ test('启用后公开首页可见，停用后移除；启用过程有进度与�
   expect(await publicHomeAlts(page)).toEqual(['常驻首页图'])
 })
 
+test('启用任务刷新后恢复真实阶段与公开衍生图计数', async ({ page }) => {
+  await seedHomeSlides(page, [
+    { alt: '恢复中的首页图', sortOrder: 0, enabled: false },
+  ], DEFAULT_SETTINGS)
+  await seedHomePublicationOperation(page, '恢复中的首页图')
+
+  await gotoHomeAdmin(page)
+  const card = page.locator('article.slide-card').first()
+  await expect(card.getByLabel(/图片说明/)).toHaveValue('恢复中的首页图')
+  await expect(card.getByRole('status')).toContainText('正在生成公开图片')
+  await expect(card.getByRole('progressbar', {
+    name: '首页公开衍生图已就绪 0 / 12',
+  })).toHaveAttribute('value', '0')
+
+  await page.reload()
+  await page.waitForSelector('[data-testid="home-admin"]')
+  await expect(card.getByRole('status')).toContainText('当前活动 profile 已就绪 0 / 12')
+})
+
 test('已启用轮播项可上移/下移，公开首页顺序同步', async ({ page }) => {
   await gotoHomeAdmin(page)
   const first = await createSlideViaUi(page, { alt: '第一项首页图', sortOrder: 0 })
@@ -300,8 +324,8 @@ test('响应式：390/768/1440 均无横向溢出', async ({ page }) => {
     { alt: '溢出验证二', sortOrder: 1, enabled: false },
   ])
   await gotoHomeAdmin(page)
-  for (const width of [390, 768, 1440]) {
-    await page.setViewportSize({ width, height: 800 })
+  for (const [width, height] of [[390, 844], [768, 1024], [1440, 900]]) {
+    await page.setViewportSize({ width, height })
     await expect(page.locator('article.slide-card').first()).toBeVisible()
     const metrics = await page.evaluate(() => ({
       scrollWidth: document.documentElement.scrollWidth,
@@ -309,5 +333,6 @@ test('响应式：390/768/1440 均无横向溢出', async ({ page }) => {
     }))
     expect(metrics.scrollWidth, `视口 ${width} 不应横向溢出`)
       .toBeLessThanOrEqual(metrics.clientWidth + 1)
+    await capture(page, `admin-home-${width}x${height}`, SCREENSHOT_DIR)
   }
 })

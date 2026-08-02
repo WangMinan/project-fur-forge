@@ -457,6 +457,21 @@ describe('host boundary', () => {
       '/api/e2e-fake-media-control',
       config,
     )).toEqual({ action: 'allow' })
+    expect(decideHostAccess(
+      'media.test',
+      '/api/e2e-fake-oss/test/run/web/id/image.webp',
+      config,
+    )).toEqual({ action: 'allow' })
+    expect(decideHostAccess(
+      'media.test',
+      '/test/run/web/id/image.webp',
+      config,
+    )).toEqual({ action: 'allow' })
+    expect(decideHostAccess(
+      'media.test',
+      '/works',
+      config,
+    )).toMatchObject({ action: 'reject', statusCode: 404 })
 
     const productionConfig = loadRuntimeConfig({
       cwd: temporaryDirectory(),
@@ -484,6 +499,11 @@ describe('host boundary', () => {
       action: 'reject',
       statusCode: 404,
     })
+    expect(decideHostAccess(
+      'media.example',
+      '/api/e2e-fake-oss/test/run/web/id/image.webp',
+      productionConfig,
+    )).toMatchObject({ action: 'reject', statusCode: 404 })
   })
 })
 

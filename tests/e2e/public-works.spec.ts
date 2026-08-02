@@ -3,6 +3,10 @@ import type { SeedWork } from './helpers/public-catalog'
 import { seedPublicCatalog } from './helpers/public-catalog'
 import { createWorkViaApi } from './helpers/admin-work'
 import { loginAsAdmin } from './helpers/auth'
+import { capture } from './helpers/screenshots'
+
+const SCREENSHOT_DIR =
+  'agent_docs/需求1-兽装工作室主页/implementation/notes/t19-t20/screenshots'
 
 /**
  * T19/T20 公开作品页：真实已发布投影（种子经控制面直写 SQLite + fake OSS），
@@ -163,6 +167,34 @@ test.describe('T20 作品列表页', () => {
     expect(overflow).toBeLessThanOrEqual(1)
   })
 
+  test('三视口图片真实解码、无横向溢出并留存列表与详情证据', async ({ page }) => {
+    test.setTimeout(120_000)
+    await seedCatalog(page)
+    for (const [width, height] of [[390, 844], [768, 1024], [1440, 900]]) {
+      await page.setViewportSize({ width, height })
+      for (const [path, name] of [
+        ['/works', `works-${width}x${height}`],
+        ['/works/e2e-public-lanmei', `work-detail-${width}x${height}`],
+      ] as const) {
+        await page.goto(path)
+        await page.waitForLoadState('networkidle')
+        const coreImage = path === '/works'
+          ? page.locator('[data-work-slug="e2e-public-lanmei"] img')
+          : page.locator('.work-gallery__stage img')
+        await expect(coreImage).toHaveJSProperty('complete', true)
+        expect(await coreImage.evaluate(
+          (node: HTMLImageElement) => node.naturalWidth,
+        )).toBeGreaterThan(0)
+        const overflow = await page.evaluate(() =>
+          document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        )
+        expect(overflow).toBeLessThanOrEqual(1)
+        await page.evaluate(() => window.scrollTo(0, 0))
+        await capture(page, name, SCREENSHOT_DIR)
+      }
+    }
+  })
+
   test('SSR 直出包含列表内容且不含私有字段', async ({ page, request }) => {
     await seedCatalog(page)
     const response = await request.get('/works')
@@ -174,10 +206,12 @@ test.describe('T20 作品列表页', () => {
       expect(html).toContain(`href="/works/${work.slug}"`)
     }
     // 卡片图片为公开衍生图 srcset，不含私有对象键或签名 URL
-    expect(html).toContain('media.test.invalid')
+    expect(html).toContain('http://127.0.0.2:')
     expect(html).not.toContain('test/e2e-public/original')
     expect(html).not.toContain('private-download.test')
     expect(html).not.toContain('e2e-private-contact')
+    expect(html).not.toContain('mailto:')
+    expect(html).not.toContain('3114559925')
   })
 })
 

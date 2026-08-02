@@ -306,6 +306,21 @@ describe('T19/T20 public repository contracts', () => {
     })
     expect(fake.listFeaturedWorks().items[0]?.work.slug).toBe('second-work')
     expect(fake.listWorks({ suitType: 'full' }).resultCount).toBe(1)
+
+    await createPublishedWork({
+      slug: 'published-after-first-read',
+      sortOrder: 3,
+      featured: false,
+      ownerContact: 'later-private@example.test',
+    })
+    expect(repository.listWorks().items.map(item => item.work.slug))
+      .toContain('published-after-first-read')
+    sqlite.prepare(`
+      UPDATE works SET publication_status = 'unpublished' WHERE id = ?
+    `).run(second.workId)
+    expect(repository.getWorkBySlug('second-work')).toBeNull()
+    expect(repository.listWorks().items.map(item => item.work.slug))
+      .not.toContain('second-work')
   })
 
   it('publishes complete hero pairs atomically and exposes only safe public fields', async () => {
@@ -379,6 +394,10 @@ describe('T19/T20 public repository contracts', () => {
       created.version,
       NOW + sequence++,
     )
+    expect(getAdminHome(sqlite).slides[0]?.publicationOperation).toMatchObject({
+      operationId: operation.operationId,
+      status: 'GENERATING_PUBLIC',
+    })
     storage.failProcess = true
     const failed = await runHeroSlidePublication(
       sqlite,
@@ -391,6 +410,10 @@ describe('T19/T20 public repository contracts', () => {
       status: 'FAILED',
       failureStage: 'APPLYING_WATERMARK',
       failureCode: 'PUBLIC_MEDIA_GENERATION_FAILED',
+    })
+    expect(getAdminHome(sqlite).slides[0]?.publicationOperation).toMatchObject({
+      operationId: operation.operationId,
+      status: 'FAILED',
     })
     expect(getAdminHome(sqlite).slides[0]?.enabled).toBe(false)
 
@@ -414,6 +437,7 @@ describe('T19/T20 public repository contracts', () => {
     expect(enabledHome.slides[0]).toMatchObject({
       enabled: true,
       missingVariantCount: 0,
+      publicationOperation: null,
     })
 
     const secondLandscape = createHeroAsset(

@@ -51,6 +51,7 @@ export function decideHostAccess(
   const normalizedHost = normalizeHost(host)
   const publicHost = new URL(config.publicBaseUrl).host.toLowerCase()
   const adminHost = new URL(config.adminBaseUrl).host.toLowerCase()
+  const mediaHost = new URL(config.mediaBaseUrl).host.toLowerCase()
 
   if (normalizedHost === publicHost) {
     return publicBlockedPrefixes.some(prefix => isAtOrBelow(pathname, prefix))
@@ -83,6 +84,20 @@ export function decideHostAccess(
       || e2eFakeAllowed
       || adminAllowedPrefixes.some(prefix => isAtOrBelow(pathname, prefix))
     )
+      ? { action: 'allow' }
+      : {
+          action: 'reject',
+          code: 'NOT_FOUND',
+          statusCode: 404,
+        }
+  }
+
+  if (normalizedHost === mediaHost) {
+    return config.appEnv === 'test'
+      && (
+        isAtOrBelow(pathname, '/api/e2e-fake-oss')
+        || isAtOrBelow(pathname, '/test')
+      )
       ? { action: 'allow' }
       : {
           action: 'reject',

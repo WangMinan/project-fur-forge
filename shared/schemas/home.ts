@@ -10,6 +10,7 @@ import {
   publicAltSchema,
   publicHeroSlideDtoSchema,
 } from './media'
+import { publicationOperationDtoSchema } from './publication'
 import { publicationStatusSchema, slugSchema } from './work'
 
 export const homeTaglineSchema = z.string().trim().min(1).max(120)
@@ -34,6 +35,7 @@ export const adminHeroSlideDtoSchema = z.object({
     publicationStatus: publicationStatusSchema,
   }).strict().nullable(),
   missingVariantCount: z.number().int().min(0).max(12),
+  publicationOperation: publicationOperationDtoSchema.nullable(),
 }).strict()
 
 export const adminHomeDtoSchema = z.object({

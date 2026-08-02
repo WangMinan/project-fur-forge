@@ -31,6 +31,7 @@ const runName = basename(runDirectory)
 const databaseFile = resolve(runDirectory, 'database.db')
 const baseURL = `http://127.0.0.1:${port}`
 const adminBaseURL = `http://localhost:${port}`
+const mediaBaseURL = `http://127.0.0.2:${port}`
 
 Object.assign(process.env, {
   E2E_ADMIN_BASE_URL: adminBaseURL,
@@ -67,7 +68,7 @@ export default defineConfig({
       E2E_OUTPUT_DIR: `.cache/e2e-output/${runName}`,
       PUBLIC_BASE_URL: baseURL,
       ADMIN_BASE_URL: adminBaseURL,
-      MEDIA_BASE_URL: 'https://media.test.invalid',
+      MEDIA_BASE_URL: mediaBaseURL,
       OSS_UPLOAD_BASE_URL: 'https://upload.test.invalid',
       PORT: String(port),
       HOST: '0.0.0.0',

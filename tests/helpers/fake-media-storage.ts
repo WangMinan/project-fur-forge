@@ -36,7 +36,7 @@ const PROCESSED_CONTENT: Record<string, Buffer> = {
     'base64',
   ),
   webp: Buffer.from(
-    'UklGRjwAAABXRUJQVlA4IDAAAADQAQCdASoIAAgAAgA0JYgCdAD0rsGCwAD+/XQR+KrD5JCNB+YG398X4C95B20AAAA=',
+    'UklGRkIAAABXRUJQVlA4TDUAAAAvv8OzAAfQnJI0qf8BIUHi//cmIvqf8Z///Oc///nPf/7zn//85z//+c9//vOf//znP/+fAAA=',
     'base64',
   ),
 }

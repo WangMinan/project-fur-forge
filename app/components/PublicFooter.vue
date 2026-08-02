@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { contactChannels } from '~~/shared/fixtures/visual-home'
-
 const year = new Date().getFullYear()
 </script>
 
@@ -27,13 +25,6 @@ const year = new Date().getFullYear()
         </NuxtLink>
       </nav>
 
-      <address class="public-footer__contact">
-        <p>
-          业务邮箱
-          <a :href="`mailto:${contactChannels.email}`">{{ contactChannels.email }}</a>
-        </p>
-        <p>QQ {{ contactChannels.qq }} · 抖音 {{ contactChannels.douyin }}</p>
-      </address>
     </div>
 
     <p class="public-footer__legal">
@@ -84,14 +75,6 @@ const year = new Date().getFullYear()
   color: var(--public-accent-primary);
 }
 
-.public-footer__contact {
-  display: grid;
-  gap: var(--space-2);
-  color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
-  font-style: normal;
-}
-
 .public-footer__legal {
   max-width: var(--public-content-wide);
   margin: var(--space-7) auto 0;
@@ -103,7 +86,7 @@ const year = new Date().getFullYear()
 
 @media (min-width: 768px) {
   .public-footer__inner {
-    grid-template-columns: 1.2fr 1fr 1fr;
+    grid-template-columns: 1.2fr 1fr;
     align-items: start;
   }
 }

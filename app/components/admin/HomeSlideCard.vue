@@ -115,6 +115,10 @@ const operationProgress = computed(() => {
   return status ? OPERATION_PROGRESS_LABELS[status] ?? null : null
 })
 
+const readyVariantCount = computed(() =>
+  props.slide ? 12 - props.slide.missingVariantCount : 0,
+)
+
 const linkedWorkOptions = computed(() => props.works)
 
 function payload(): HeroSlideInput {
@@ -313,9 +317,14 @@ function onLinkedWorkChange(event: Event) {
       </template>
     </div>
 
-    <p v-if="operationProgress" class="slide-card__progress" role="status">
-      {{ operationProgress }}
-    </p>
+    <div v-if="operationProgress" class="slide-card__progress" role="status">
+      <p>{{ operationProgress }} 当前活动 profile 已就绪 {{ readyVariantCount }} / 12</p>
+      <progress
+        :value="readyVariantCount"
+        max="12"
+        :aria-label="`首页公开衍生图已就绪 ${readyVariantCount} / 12`"
+      />
+    </div>
 
     <div
       v-if="feedback"
@@ -500,9 +509,15 @@ function onLinkedWorkChange(event: Event) {
 }
 
 .slide-card__progress {
+  display: grid;
+  gap: var(--admin-space-2);
   margin: 0;
   font-size: var(--admin-font-sm);
   color: var(--admin-text-secondary);
+}
+
+.slide-card__progress progress {
+  width: min(100%, 28rem);
 }
 
 .slide-card__feedback {
