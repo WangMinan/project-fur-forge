@@ -81,7 +81,8 @@ T14–T18 的完成状态保持有效。新要求是后续增量门禁，不把�
 - 2026-08-02：Kimi 发现首页轮播缺少启用前活动水印真实预览；用户授权不新建分支，工程侧在 `feature/t19-t20-kimi` 补齐私有横竖预览 API、共享 Schema、集成测试和交接契约。
 - 2026-08-02：T19/T20 最终工程审查删除残留生产 fixture 与公开联系方式，补齐公开页服务错误 HTML、真实图片解码、活动 profile 任务进度/重载恢复和同 repository 新鲜读取；完整门禁、真实 OSS、空库迁移、发布/下架、泄漏扫描与精确清理通过，T19/T20 勾选。
 - 2026-08-02：T21 独立审查判定 NOT PASS，登记 3 个 must-fix 与 1 个 should-fix；实现者随后完成同源私有预览、轮播预览持久清单/精确清理、固定配方尺寸 409 门禁，以及启用轮播关联下架 409 与异常 FAILED 收口。lint、typecheck、69 单元、77 集成、165 E2E、生产 build/verify 通过；T21 保持未勾选等待独立真实 OSS 复审。
+- 2026-08-02：T19/T20 最终复核重新执行空库 10 个迁移、真实 OSS 双 Bucket/水印预检和作品—首页—下架纵向链，确认活动 profile 完整性、横竖独立、同 repository 新鲜读取、关联下架阻断、公开投影消失、泄漏为 0 与确切 key 清理；同时修复生产内容守卫 CLI 的默认跳过缺口。T19/T20 完成状态保持，T21 仍未勾选。
 
 ## 下一步
 
-按 [`implementation/notes/T21-REVIEW-2026-08-01.md`](./implementation/notes/T21-REVIEW-2026-08-01.md) 的复审条件，由未参与本轮修复的审查者重新执行 T21 真实 OSS、泄漏扫描、三视口与精确清理。T21 在独立证据与用户验收完成前保持未勾选；不得进入 T22。
+按 [`implementation/notes/T21-REVIEW-2026-08-01.md`](./implementation/notes/T21-REVIEW-2026-08-01.md) 的复审条件和 [`implementation/notes/T21-REVIEW-PREP.md`](./implementation/notes/T21-REVIEW-PREP.md) 的重放清单，由未参与本轮修复的审查者重新执行 T21 真实 OSS、泄漏扫描、三视口与精确清理。T21 在独立证据与用户验收完成前保持未勾选；不得进入 T22。

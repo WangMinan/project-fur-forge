@@ -89,7 +89,7 @@ const isEntrypoint = process.argv[1]
 if (isEntrypoint) {
   const roots = process.argv.slice(2)
   await guardProductionContent({
-    appEnv: process.env.APP_ENV,
+    appEnv: 'production',
     roots: roots.length > 0 ? roots : ['.output'],
   })
 }

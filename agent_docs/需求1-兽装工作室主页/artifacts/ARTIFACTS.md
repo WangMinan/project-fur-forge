@@ -14,7 +14,7 @@
 | 模型投影 | `models/README.md` | `models/WATERMARK-CENTERED-V2.md` |
 | 设计 | `.design/` | `.design/WATERMARK-CENTERED-V2.md` |
 | 任务 | `implementation/TASKS.md` | T19/T20 已完成，T21 未勾选 |
-| 状态 | `STATE.md` | 2026-08-02 T19/T20 工程收口后 |
+| 状态 | `STATE.md` | 2026-08-02 T21 findings 修复与 T19/T20 最终复核后 |
 
 ## 当前实施与证据
 
@@ -31,7 +31,8 @@
 | GATE-07 UI 记录 | 已完成 | `implementation/notes/GATE07-WATERMARK-UI-2026-08-01.md`：品牌管理页、三视口和浏览器 E2E |
 | GATE-07 收口 | 已通过 | `implementation/notes/GATE07-CLOSURE-2026-08-02.md`：联调修复、进度补齐、质量规则和用户验收 |
 | T19/T20 工程与 UI | 已完成 | `implementation/notes/T19-T20-ENGINEERING-2026-08-01.md`、`T19-T20-UI-2026-08-01.md` 与 `T19-T20-CLOSURE-2026-08-01.md` |
-| T21 独立审查准备 | 已准备、未执行 | `implementation/notes/T21-REVIEW-PREP.md`；不得作为 T21 通过证据 |
+| T21 首次独立审查 | NOT PASS | `implementation/notes/T21-REVIEW-2026-08-01.md`；3 个 must-fix 与 1 个 should-fix 已完成实现者侧修复 |
+| T21 独立复审准备 | 已准备、未执行 | `implementation/notes/T21-REVIEW-PREP.md`；必须由未参与修复的审查者重放，不得作为 T21 通过证据 |
 
 ## 当前执行文档
 
