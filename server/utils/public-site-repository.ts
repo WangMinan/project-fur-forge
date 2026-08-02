@@ -40,6 +40,7 @@ interface PublishedWorkRow {
   adoptionMethod: 'regular' | 'event_drop' | null
   businessStatus: 'preparing' | 'available' | 'event_sale' | 'scheduled' | 'in_production' | 'delivered' | null
   characterName: string
+  currentEventName: string | null
   featured: number
   id: string
   ownerDisplay: string
@@ -118,6 +119,7 @@ function loadPublishedWorks(sqlite: Database.Database) {
       species, suit_type AS suitType, purpose,
       adoption_method AS adoptionMethod,
       business_status AS businessStatus,
+      current_event_name AS currentEventName,
       owner_display AS ownerDisplay,
       price_amount_minor AS priceAmountMinor,
       price_currency AS priceCurrency,
@@ -221,6 +223,8 @@ function snapshot(
       priceCnyMinor: row.priceCurrency === 'CNY'
         ? row.priceAmountMinor
         : null,
+      featured: row.featured === 1,
+      sortOrder: row.sortOrder,
       ownerContact: null,
       assetIds: [],
       originalObjectKeys: [],
@@ -360,6 +364,7 @@ export function createSqlitePublicSiteRepository(
     listFeaturedWorks() {
       const items = snapshot(sqlite, mediaBaseUrl)
         .filter(entry => entry.featured)
+        .slice(0, 6)
         .map(entry => entry.summary)
       return publicFeaturedWorksDtoSchema.parse({
         items,
@@ -421,7 +426,7 @@ export function createFakePublicSiteRepository(
       const items = seed.featuredSlugs.flatMap((slug) => {
         const detail = bySlug.get(slug)
         return detail ? [summaryFor(detail)] : []
-      })
+      }).slice(0, 6)
       return publicFeaturedWorksDtoSchema.parse({
         items,
         resultCount: items.length,

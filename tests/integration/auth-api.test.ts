@@ -379,4 +379,121 @@ describe('authentication API', () => {
     expect(staleSession.status).toBe(401)
     expectPrivateResponseHeaders(staleSession)
   }, 20_000)
+
+  it('applies T22 work schemas through authenticated no-store routes', async () => {
+    const authenticated = await login()
+    const suffix = crypto.randomUUID().replaceAll('-', '')
+    const headers = {
+      'content-type': 'application/json',
+      cookie: authenticated.cookie,
+      origin: adminBaseUrl,
+      'x-csrf-token': authenticated.body.data.csrfToken,
+    }
+    const common = {
+      characterName: '接口角色',
+      species: '犬科',
+      suitType: 'full',
+      ownerDisplay: '公开角色主',
+      ownerContact: 'private-contact',
+      featureTags: ['柔软', '大尾巴'],
+      sortOrder: 2,
+      featured: true,
+    }
+    const create = (payload: Record<string, unknown>) => fetch(
+      `${adminBaseUrl}/api/admin/v1/works`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      },
+    )
+
+    for (const purpose of ['commission', 'showcase'] as const) {
+      const response = await create({
+        ...common,
+        slug: `${purpose}-${suffix}`,
+        purpose,
+      })
+      expect(response.status).toBe(201)
+      expectPrivateResponseHeaders(response)
+      await expect(response.json()).resolves.toMatchObject({
+        data: { purpose, sortOrder: 2, featured: true, version: 1 },
+      })
+    }
+
+    const adoptionResponse = await create({
+      ...common,
+      slug: `adoption-${suffix}`,
+      purpose: 'adoption',
+      adoptionMethod: 'regular',
+      businessStatus: 'available',
+      priceCnyMinor: 1,
+    })
+    expect(adoptionResponse.status).toBe(201)
+    expectPrivateResponseHeaders(adoptionResponse)
+    const adoption = await adoptionResponse.json()
+    expect(adoption).toMatchObject({
+      data: {
+        purpose: 'adoption',
+        adoptionMethod: 'regular',
+        businessStatus: 'available',
+        priceCnyMinor: 1,
+        private: { ownerContact: 'private-contact' },
+      },
+    })
+
+    const invalid = await create({
+      ...common,
+      slug: `invalid-${suffix}`,
+      purpose: 'showcase',
+      adoptionMethod: 'regular',
+    })
+    expect(invalid.status).toBe(400)
+    expectPrivateResponseHeaders(invalid)
+    await expect(invalid.json()).resolves.toEqual({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'Work fields are invalid for the selected purpose.',
+      },
+    })
+
+    const update = await fetch(
+      `${adminBaseUrl}/api/admin/v1/works/${adoption.data.id}`,
+      {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          expectedVersion: 1,
+          payload: {
+            ...common,
+            slug: `adoption-${suffix}`,
+            purpose: 'showcase',
+          },
+        }),
+      },
+    )
+    expect(update.status).toBe(200)
+    expectPrivateResponseHeaders(update)
+    await expect(update.json()).resolves.toMatchObject({
+      data: { purpose: 'showcase', version: 2 },
+    })
+
+    const stale = await fetch(
+      `${adminBaseUrl}/api/admin/v1/works/${adoption.data.id}`,
+      {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          expectedVersion: 1,
+          payload: {
+            ...common,
+            slug: `adoption-${suffix}`,
+            purpose: 'showcase',
+          },
+        }),
+      },
+    )
+    expect(stale.status).toBe(409)
+    expectPrivateResponseHeaders(stale)
+  }, 30_000)
 })

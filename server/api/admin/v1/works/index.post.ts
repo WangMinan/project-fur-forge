@@ -11,7 +11,11 @@ import { createManagedWork } from '../../../../utils/work-management'
 export default defineEventHandler(async (event) => {
   const body = createWorkRequestSchema.safeParse(await readAdminJsonBody(event))
   if (!body.success) {
-    throw createApiError(400, 'VALIDATION_ERROR', 'Request body is invalid.')
+    throw createApiError(
+      400,
+      'VALIDATION_ERROR',
+      'Work fields are invalid for the selected purpose.',
+    )
   }
   try {
     setResponseStatus(event, 201)

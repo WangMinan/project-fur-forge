@@ -35,6 +35,8 @@ try {
     ownerDisplay: '不公开',
     ownerContact: null,
     featureTags: ['测试'],
+    sortOrder: 0,
+    featured: false,
   }, NOW)
 
   const content = createSyntheticWatermarkPng()

@@ -53,8 +53,8 @@ export const publicWorkListDtoSchema = z.object({
 }).strict()
 
 export const publicFeaturedWorksDtoSchema = z.object({
-  items: z.array(publicWorkSummaryDtoSchema),
-  resultCount: z.number().int().nonnegative(),
+  items: z.array(publicWorkSummaryDtoSchema).max(6),
+  resultCount: z.number().int().min(0).max(6),
 }).strict()
 
 export const publicWorkListQuerySchema = z.object({

@@ -25,7 +25,10 @@ export interface WorkRecord {
   featureTags: string[]
   adoptionMethod: AdoptionMethod | null
   businessStatus: BusinessStatus | null
+  currentEventName: string | null
+  featured: boolean
   priceCnyMinor: number | null
+  sortOrder: number
   ownerContact: string | null
   assetIds: string[]
   /** Service-only storage identities. DTO mappers must never project these. */
@@ -40,6 +43,9 @@ export function toPublicWorkDto(
   }
 
   if (record.purpose === 'adoption') {
+    if (record.adoptionMethod === null || record.businessStatus === null) {
+      return null
+    }
     if (record.priceCnyMinor === null) {
       return publicWorkDtoSchema.parse({
         id: record.id,
@@ -105,9 +111,12 @@ export function toAdminWorkDto(record: WorkRecord): AdminWorkDto {
       private: {
         ownerContact: record.ownerContact,
       },
-      adoptionMethod: record.adoptionMethod ?? undefined,
-      businessStatus: record.businessStatus ?? undefined,
-      priceCnyMinor: record.priceCnyMinor ?? undefined,
+      adoptionMethod: record.adoptionMethod,
+      businessStatus: record.businessStatus,
+      currentEventName: record.currentEventName,
+      priceCnyMinor: record.priceCnyMinor,
+      sortOrder: record.sortOrder,
+      featured: record.featured,
     })
   }
 
@@ -126,5 +135,7 @@ export function toAdminWorkDto(record: WorkRecord): AdminWorkDto {
     private: {
       ownerContact: record.ownerContact,
     },
+    sortOrder: record.sortOrder,
+    featured: record.featured,
   })
 }

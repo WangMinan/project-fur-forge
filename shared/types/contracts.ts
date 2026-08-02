@@ -47,6 +47,7 @@ import type {
   returnPhotoConsentSourceSchema,
   suitTypeSchema,
   workListItemDtoSchema,
+  workFieldsSchema,
   workPurposeSchema,
 } from '../schemas/work'
 import type {
@@ -118,6 +119,7 @@ export type ReturnPhotoConsentSource = z.infer<
 export type ReturnPhotoConsent = z.infer<typeof returnPhotoConsentSchema>
 export type PublicWorkDto = z.infer<typeof publicWorkDtoSchema>
 export type AdminWorkDto = z.infer<typeof adminWorkDtoSchema>
+export type WorkFields = z.infer<typeof workFieldsSchema>
 export type ManagedStudioPhotoDto = z.infer<typeof managedStudioPhotoDtoSchema>
 export type ManagedWorkDto = z.infer<typeof managedWorkDtoSchema>
 export type WorkListItemDto = z.infer<typeof workListItemDtoSchema>

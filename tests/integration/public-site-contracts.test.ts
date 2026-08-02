@@ -111,6 +111,7 @@ function insertCompletedUpload(
 async function createPublishedWork(input: {
   featured: boolean
   ownerContact: string
+  purpose?: 'adoption' | 'commission' | 'showcase'
   slug: string
   sortOrder: number
 }) {
@@ -119,10 +120,12 @@ async function createPublishedWork(input: {
     characterName: input.slug === 'first-work' ? '团子' : '雪球',
     species: '犬科',
     suitType: input.slug === 'first-work' ? 'full' : 'partial',
-    purpose: 'showcase',
+    purpose: input.purpose === 'commission' ? 'commission' : 'showcase',
     ownerDisplay: '不公开',
     ownerContact: input.ownerContact,
     featureTags: ['软萌'],
+    sortOrder: input.sortOrder,
+    featured: input.featured,
   }, NOW + sequence++)
   const assetId = randomUUID()
   const content = createSyntheticWatermarkPng()
@@ -159,9 +162,15 @@ async function createPublishedWork(input: {
     NOW + sequence++,
   )
   expect(published.work.publicationStatus).toBe('published')
-  sqlite.prepare(`
-    UPDATE works SET sort_order = ?, featured = ? WHERE id = ?
-  `).run(input.sortOrder, input.featured ? 1 : 0, work.id)
+  if (input.purpose === 'adoption') {
+    sqlite.prepare(`
+      UPDATE works
+      SET purpose = 'adoption', adoption_method = 'regular',
+          business_status = 'available', price_amount_minor = 100,
+          price_currency = 'CNY'
+      WHERE id = ?
+    `).run(work.id)
+  }
   return { assetId, assetSha256: digest(content), workId: work.id }
 }
 
@@ -252,6 +261,8 @@ describe('T19/T20 public repository contracts', () => {
       ownerDisplay: '不公开',
       ownerContact: 'draft-private@example.test',
       featureTags: [],
+      sortOrder: 0,
+      featured: false,
     }, NOW + sequence++)
     sqlite.prepare(`
       INSERT INTO asset_variants (
@@ -328,6 +339,25 @@ describe('T19/T20 public repository contracts', () => {
     expect(fake.listFeaturedWorks().items[0]?.work.slug).toBe('second-work')
     expect(fake.listWorks({ suitType: 'full' }).resultCount).toBe(1)
 
+    for (let index = 0; index < 6; index += 1) {
+      await createPublishedWork({
+        slug: `featured-extra-${index}`,
+        sortOrder: 30 + index,
+        featured: true,
+        ownerContact: `private-extra-${index}@example.test`,
+      })
+    }
+    expect(repository.listFeaturedWorks().items.map(item => item.work.slug))
+      .toEqual([
+        'first-work',
+        'second-work',
+        'featured-extra-0',
+        'featured-extra-1',
+        'featured-extra-2',
+        'featured-extra-3',
+      ])
+    expect(repository.listFeaturedWorks().resultCount).toBe(6)
+
     await createPublishedWork({
       slug: 'published-after-first-read',
       sortOrder: 3,
@@ -342,6 +372,52 @@ describe('T19/T20 public repository contracts', () => {
     expect(repository.getWorkBySlug('second-work')).toBeNull()
     expect(repository.listWorks().items.map(item => item.work.slug))
       .not.toContain('second-work')
+  })
+
+  it('projects all three published purposes without private fields', async () => {
+    const emptyRepository = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
+    expect(emptyRepository.listFeaturedWorks()).toEqual({
+      items: [],
+      resultCount: 0,
+    })
+    await createPublishedWork({
+      slug: 'commission-purpose',
+      sortOrder: 1,
+      featured: false,
+      ownerContact: 'private-commission@example.test',
+      purpose: 'commission',
+    })
+    await createPublishedWork({
+      slug: 'adoption-purpose',
+      sortOrder: 2,
+      featured: false,
+      ownerContact: 'private-adoption@example.test',
+      purpose: 'adoption',
+    })
+    await createPublishedWork({
+      slug: 'showcase-purpose',
+      sortOrder: 3,
+      featured: false,
+      ownerContact: 'private-showcase@example.test',
+      purpose: 'showcase',
+    })
+
+    const repository = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
+    expect(repository.listWorks().items.map(item => item.work.purpose)).toEqual([
+      'commission',
+      'adoption',
+      'showcase',
+    ])
+    expect(repository.getWorkBySlug('adoption-purpose')?.work).toMatchObject({
+      purpose: 'adoption',
+      adoptionMethod: 'regular',
+      businessStatus: 'available',
+      price: { currency: 'CNY', minorUnits: 100 },
+    })
+    const serialized = JSON.stringify(repository.listWorks())
+    expect(serialized).not.toContain('private-adoption@example.test')
+    expect(serialized).not.toContain('/original/')
+    expect(serialized).not.toContain('currentEventName')
   })
 
   it('publishes complete hero pairs atomically and exposes only safe public fields', async () => {
