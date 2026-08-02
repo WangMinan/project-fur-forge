@@ -16,22 +16,15 @@
 
 ## 执行责任路由
 
-当前模型分工、短分支批次、全栈任务交接和独立门禁见 [`需求1-兽装工作室主页/implementation/EXECUTION_ROUTING.md`](./需求1-兽装工作室主页/implementation/EXECUTION_ROUTING.md)。
+当前模型分工、main 直推、串行交接和独立门禁见 [`需求1-兽装工作室主页/implementation/EXECUTION_ROUTING.md`](./需求1-兽装工作室主页/implementation/EXECUTION_ROUTING.md)。
 
-Kimi K3 继续担任 `UI_PRIMARY`，GPT 5.6 Sol 担任阶段 B 的 `ENGINEERING_PRIMARY`。联合任务必须由工程侧先锁定 Schema/API/权限/错误/事务/媒体配方，再由 Kimi 实现页面和浏览器证据。
+GPT-5.6 Sol 固定担任 `BACKEND_PRIMARY` 和新上下文中的 `REVIEW`；`FRONTEND_PRIMARY` 由用户按任务在 Kimi K3、Claude Opus 5、GPT-5.6 Sol 中选择。联合任务按后端 → 前端 → Review 串行直接提交 `main`。
 
 ## 当前状态
 
-截至 2026-08-02，T01–T18、GATE-06、GATE-07 与 EXT-02 已完成。T14–T18 已跑通角色化上传、媒体核验与大图私有预处理、OSS 公开配方与水印、非领养作品 CRUD、发布/下架和管理端接线；GATE-07 已完成可配置居中水印、品牌管理页、真实进度与用户人工验收。
+截至 2026-08-03，T01–T21、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T22 后端已完成三用途共享 Schema、管理 API/service、历史展会兼容、人工排序/精选和公开精选 6 项上限；现有数据库结构已满足约束，没有新增迁移。T22 仍等待前端接线、独立浏览器 Review 和用户验收，保持未勾选，不得进入 T23。
 
-景宸随后确认水印方向变更：
-
-- 从小型四角角标升级为大尺寸居中水印；
-- 新目标 profile 为 `brand-centered-v2`，默认 50% 不透明度、60% 缩放；
-- 水印 Logo 候选可以在管理端上传和选择，不再由服务端硬编码唯一文件路径；
-- 配置变化必须生成新 variant 并原子切换，不能覆盖旧对象或混用 profile。
-
-T14–T18 的历史完成状态保持不变，GATE-07 已解除 T19 的前置阻断；T19/T20 尚未启动，须从最新 `main` 单独重新路由。
+当前活动水印为 `brand-centered-v2`，默认 50% 不透明度、60% 缩放；旧 `brand-standard-v1` 只保留为历史身份。
 
 项目新增两项通用质量门禁：所有长耗时操作必须展示基于真实服务端状态、可恢复的任务进度；E2E 必须验证有意义的用户路径和实际页面结果，不能以用例数量、状态码或元素数量自证页面质量。
 

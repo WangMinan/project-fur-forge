@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-T12 已于 2026-07-31 建立 P0 Drizzle Schema、两项初始领域迁移、SQLite 约束/触发器和显式公开/管理媒体投影；S2 Review 收口新增第三项增量迁移，补齐媒体 role/usage 矩阵与 `source_variant_id` 处理来源关系。表结构依据本文件与上游契约建模，没有照搬既有 DTO 或视觉夹具；T14–T18 与 GATE-07 的媒体、发布和站点水印编排均已通过用户验收。
+T12 已于 2026-07-31 建立 P0 Drizzle Schema、两项初始领域迁移、SQLite 约束/触发器和显式公开/管理媒体投影；S2 Review 收口新增第三项增量迁移，补齐媒体 role/usage 矩阵与 `source_variant_id` 处理来源关系。T22 后端已于 2026-08-03 把预留作品列接入三用途共享联合类型、管理 service/API 和公开投影；现有 11 项迁移已经覆盖所需列与约束，因此没有新增无意义迁移。T22 仍等待前端接线和验收。
 
 ## P0 模型
 
@@ -46,7 +46,16 @@ P2 不得提前污染 P0 表或导航。
 - `price_amount_minor INTEGER NULL`；
 - `price_currency TEXT NULL`，一期非空时只允许 `CNY`；
 - 仅领养/掉落作品允许填写；
+- T22 新写入只开放常规领养；金额可为空，非空时必须是正整数最小货币单位，币种由服务端固定为 `CNY`；
 - 不创建任何禁用外币字段；未来多币种通过迁移放宽约束。
+
+### T22 领养与历史展会兼容
+
+- 新建/更新使用 `purpose` discriminated union；非领养请求不能携带领养方式、业务状态或价格；
+- T22 的 adoption 写入固定为 `adoptionMethod = regular`，不接受 `event_sale` 或 `currentEventName`；
+- 已有 `event_drop` / `event_sale` / `current_event_name` 继续在认证管理投影中可读；提交完整常规领养 payload 时显式转换并清空历史展会文本；
+- 历史领养若方式或状态缺失，管理端可读但不进入公开投影；不按默认值猜测用途、主人或展会；
+- T37 再新增 `events` 实体、正式关联和完整展会掉落写入体验。
 
 ### 私有联系人
 

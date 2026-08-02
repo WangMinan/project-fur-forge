@@ -2,7 +2,7 @@
 
 > **角色**：记录模型、人员与工作轨道的可变执行安排。
 > **效力**：本文件不改变 foundation、SPEC/增量、PLAN/增量、`.design` 或 `TASKS.md` 的产品范围和完成定义。
-> **生效日期**：2026-08-02（T21 用户确认收口，阶段 C / T22 可启动）。
+> **生效日期**：2026-08-03（T22 后端完成，等待前端接线）。
 
 ## 1. 当前角色
 
@@ -19,7 +19,8 @@ GPT-5.6 Sol 可以同时承担后端实现与后续 Review，但 Review 必须�
 
 ## 2. 当前状态
 
-- T01–T21、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成；下一任务为 T22。
+- T01–T21、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成；T22 后端已完成，任务仍未勾选。
+- 当前写入权下一步交给用户选定的 `FRONTEND_PRIMARY`；接口、历史兼容和必做状态见 [`notes/T22-BACKEND-2026-08-03.md`](./notes/T22-BACKEND-2026-08-03.md)。
 - T21 首次 NOT PASS、findings 修复、人工验收回归和用户最终确认均保留为分层历史事实。
 - 正式素材输入与角色映射见 [`../materials/MATERIAL-MANIFEST.md`](../materials/MATERIAL-MANIFEST.md)。T30/T51 负责生成与校准衍生物，不再等待外部素材交付。
 - 阶段 C 启动基线、执行波次与验收方法见 [`notes/P0-C-STAGE-READINESS-2026-08-02.md`](./notes/P0-C-STAGE-READINESS-2026-08-02.md)。
@@ -28,8 +29,8 @@ GPT-5.6 Sol 可以同时承担后端实现与后续 Review，但 Review 必须�
 
 ### C1 · T22 完整作品字段与约束
 
-1. `BACKEND_PRIMARY` 先核对现有 Drizzle 列、共享 Schema、管理 API、公开投影和迁移差异；
-2. 完成用途、装型、基础领养、排序、精选、CNY 和短属性的服务端契约及定向测试；
+1. [已完成] `BACKEND_PRIMARY` 核对现有 Drizzle 列、共享 Schema、管理 API、公开投影和迁移差异；
+2. [已完成] 用途、装型、基础领养、排序、精选、CNY 和短属性的服务端契约及定向测试；
 3. 用户选择本任务的 `FRONTEND_PRIMARY`，接入创建、编辑、列表与状态；
 4. `REVIEW` 使用管理 Host 和公开 Host 实际创建、编辑、冲突、筛选、精选和浏览；
 5. 用户确认后勾选 T22，才能进入 T23。

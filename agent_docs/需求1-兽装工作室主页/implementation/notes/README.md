@@ -5,9 +5,10 @@
 
 ## 1. 当前执行入口
 
+- [`T22-BACKEND-2026-08-03.md`](./T22-BACKEND-2026-08-03.md)：T22 差异审计、三用途 Schema/API、无迁移决定、历史展会兼容、公开精选与前端交接；状态为后端完成，等待前端/Review/用户验收。
 - [`P0-C-STAGE-READINESS-2026-08-02.md`](./P0-C-STAGE-READINESS-2026-08-02.md)：阶段 C 启动条件、T22 边界、四个执行波次、main 直推纪律、自动化与 GPT-5.6 Sol 浏览器/视觉 Review 方法。
 - [`../EXECUTION_ROUTING.md`](../EXECUTION_ROUTING.md)：前端模型池、GPT-5.6 Sol 后端/Review、串行交接和测试策略。
-- [`../TASKS.md`](../TASKS.md)：唯一可勾选任务清单；下一任务为 T22。
+- [`../TASKS.md`](../TASKS.md)：唯一可勾选任务清单；T22 仍为 `[ ]`，当前等待前端接线。
 - [`../../materials/MATERIAL-MANIFEST.md`](../../materials/MATERIAL-MANIFEST.md)：Logo、出厂照、横版设定图、返图与首页候选的正式输入清单；EXT-01 已完成。
 
 当前新任务只在本节增加一个“启动/交接/收口”主记录，不再为同一小修补创建多个相互重叠的状态文件。需要保留详细失败证据时，在主记录内分节或放入对应截图/trace 子目录。
