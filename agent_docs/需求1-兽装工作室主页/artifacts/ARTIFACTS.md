@@ -1,6 +1,6 @@
 # 产物索引
 
-> **角色**：登记当前契约、状态路由、历史证据和实施产物。
+> **角色**：登记当前契约、状态路由、正式素材、历史证据和实施产物。
 
 ## 当前契约
 
@@ -13,49 +13,58 @@
 | 计划 | `planning/PLAN.md` | `planning/WATERMARK-CENTERED-V2.md` |
 | 模型投影 | `models/README.md` | `models/WATERMARK-CENTERED-V2.md` |
 | 设计 | `.design/` | `.design/WATERMARK-CENTERED-V2.md` |
-| 任务 | `implementation/TASKS.md` | T19–T21 已完成，下一任务 T22 |
-| 状态 | `STATE.md` | 2026-08-02 T21 用户确认收口后 |
+| 任务 | `implementation/TASKS.md` | T01–T21、EXT-01/02 与 GATE-06/07 已完成；下一任务 T22 |
+| 状态 | `STATE.md` | 阶段 C 已解锁，main 直推和浏览器 Review 已生效 |
 
-## 当前实施与证据
+## 当前执行入口
+
+| 产物 | 状态 | 说明 |
+| --- | --- | --- |
+| `implementation/notes/P0-C-STAGE-READINESS-2026-08-02.md` | 当前 | 阶段 C 启动条件、T22 边界、执行波次、main 纪律和验收方法 |
+| `implementation/EXECUTION_ROUTING.md` | 当前 | 前端模型池、GPT-5.6 Sol 后端/Review、串行交接、定向自动化与真实浏览器 Review |
+| `implementation/TASKS.md` | 当前 | 唯一可勾选清单；T22 是唯一下一任务 |
+| `materials/MATERIAL-MANIFEST.md` | 已确认 | Logo、作品、横版设定图、返图与页面候选的正式输入和衍生职责；EXT-01 完成 |
+| `implementation/notes/README.md` | 当前 | 按当前/收口/历史/截图整理全部实施记录，不移动已被引用的旧路径 |
+
+## 已完成实施与证据
 
 | 产物 | 状态 | 说明 |
 | --- | --- | --- |
 | T01–T13 | 已完成 | 应用底座、配置/Host/日志、共享契约、视觉基线、SQLite/P0 Schema、唯一管理员认证 |
-| GATE-06 | 已完成 | Kimi 接入真实登录/Session/退出/改密和浏览器安全证据 |
+| GATE-06 | 已完成 | 登录/Session/退出/改密和浏览器安全证据 |
 | T10/EXT-02 | 已完成 | 双 Bucket、30 MB 原图、FFmpeg 私有处理源、OSS 水印和跨桶保存实测 |
 | T14–T18 后端记录 | 已完成 | `implementation/notes/T14-UPLOAD-ENGINEERING-2026-07-31.md` 至 `T18-PUBLICATION-ENGINEERING-2026-07-31.md` |
 | T14–T18 UI/修复记录 | 已完成 | `implementation/notes/t14-t18-ui/T14-T18-UI-REPAIR-2026-08-01.md` |
-| 水印 v2 校准记录 | 当前 | `implementation/notes/DOCS-WATERMARK-CENTERED-V2-2026-08-01.md` |
-| GATE-07 工程记录 | 已完成 | `implementation/notes/GATE07-WATERMARK-ENGINEERING-2026-08-01.md`：迁移、种子、API、真实 OSS、原子切换、清理和自动化验证 |
-| GATE-07 UI 交接 | 已锁定 | `implementation/notes/GATE07-UI-HANDOFF.md`：Kimi 页面接线、版本、状态、失败恢复与证据契约 |
-| GATE-07 UI 记录 | 已完成 | `implementation/notes/GATE07-WATERMARK-UI-2026-08-01.md`：品牌管理页、三视口和浏览器 E2E |
-| GATE-07 收口 | 已通过 | `implementation/notes/GATE07-CLOSURE-2026-08-02.md`：联调修复、进度补齐、质量规则和用户验收 |
-| T19/T20 工程与 UI | 已完成 | `implementation/notes/T19-T20-ENGINEERING-2026-08-01.md`、`T19-T20-UI-2026-08-01.md` 与 `T19-T20-CLOSURE-2026-08-01.md` |
-| T21 首次独立审查 | NOT PASS | `implementation/notes/T21-REVIEW-2026-08-01.md`；3 个 must-fix 与 1 个 should-fix 已完成实现者侧修复 |
-| T21 独立复审准备 | 历史清单 | `implementation/notes/T21-REVIEW-PREP.md`；T21 收口后不再作为当前路由 |
-| T21 人工验收与收口 | 已完成 | `implementation/notes/T21-MANUAL-UI-FIX-2026-08-02.md`；记录回归修复、完整门禁与用户明确确认 |
+| 水印 v2 文档校准 | 已完成 | `implementation/notes/DOCS-WATERMARK-CENTERED-V2-2026-08-01.md` |
+| GATE-07 工程/UI/收口 | 已完成 | 迁移、管理 API/UI、真实 OSS、原子切换、持续进度、三视口和用户验收 |
+| T19/T20 工程/UI/收口 | 已完成 | 真实作品详情/列表/首页 SSR、双源轮播、首页管理、真实浏览器和泄漏/清理证据 |
+| T21 首次独立审查 | NOT PASS（历史） | `implementation/notes/T21-REVIEW-2026-08-01.md`；findings 已完成修复 |
+| T21 人工验收与收口 | 已完成 | `implementation/notes/T21-MANUAL-UI-FIX-2026-08-02.md`；用户明确确认 |
+| EXT-01 正式素材 | 已完成 | `materials/MATERIAL-MANIFEST.md`；文件交付和角色映射完成，T30/T51 继续生成/校准衍生物 |
 
-## 当前执行文档
+## 历史证据边界
 
-| 类型 | 路径 | 当前效力 |
-| --- | --- | --- |
-| 执行责任路由 | `implementation/EXECUTION_ROUTING.md` | T19–T21 已收口；下一任务 T22 |
-| 任务清单 | `implementation/TASKS.md` | 唯一可勾选清单；T19–T21 已完成 |
-| 状态机 | `STATE.md` | 当前决定、门禁和下一步 |
-
-## 历史证据
-
-- `materials/`：竞品截图、景宸品牌/Logo/设定图证据，只读参考，不复制竞品资产；
+- `materials/`：用户/景宸提供的项目素材与竞品参考并存；只有 `MATERIAL-MANIFEST.md` 登记的项目输入可进入公开内容，竞品截图只读参考；
 - `planning/prototype-v1/`：只保留页面职责和交互参考；
-- `implementation/notes/`：记录当时事实；
+- `implementation/notes/`：记录当时事实，既有路径不批量迁移；
 - `brand-standard-v1`：18% 宽度、70% 不透明度、四角水印的历史实现；
-- `brand-centered-v2`：新目标，居中、默认 50% 不透明度、60% 缩放，可选 Logo 候选。
+- `brand-centered-v2`：当前目标，居中、默认 50% 不透明度、60% 缩放、可选私有 Logo 候选。
 
-## 外部门禁
+## 当前质量口径
 
-- EXT-01：正式 Logo 使用范围、完整组合标/图形标/favicon/Touch Icon、正式水印候选和跨素材安全区；
-- EXT-02：已通过。
+- 每个任务运行与改动风险直接相关的 lint/typecheck、build、unit/integration/E2E；
+- 完整自动化和 `verify:production` 主要放在 T31–T34、跨层高风险修复和明确总门禁；
+- 含 UI、公开投影、媒体或用户操作的任务，GPT-5.6 Sol 必须实际使用浏览器和视觉模拟点击，检查成功、失败、恢复、重载、图片解码、三视口、console/network、截图或 trace；
+- 测试总数、HTTP 200、元素数量和选择器存在不能单独证明任务完成。
 
 ## 下一批预期产物
 
-下一批预期产物为 T22 的完整作品字段与约束实施记录。所有长耗时操作必须留下真实进度证据；E2E 记录必须说明用户路径和页面风险覆盖，不能只登记通过数量。T22 完成前不得进入 T23。
+T22 预期形成一份主记录，至少覆盖：
+
+- 现有 Drizzle 列与共享 Schema/API/UI 的差异；
+- 用途、装型、常规领养基础字段、排序、精选、CNY 和短属性；
+- 迁移/backfill、资源版本冲突、私有联系人隔离和公开投影；
+- 后端定向测试、前端接线、GPT-5.6 Sol 真实浏览器/视觉 Review；
+- 用户验收与 T23 非范围。
+
+T22 完成前不得进入 T23。
