@@ -2,34 +2,35 @@
 
 > **角色**：记录模型、人员与工作轨道的可变执行安排。
 > **效力**：本文件不改变 foundation、SPEC/增量、PLAN/增量、`.design` 或 `TASKS.md` 的产品范围和完成定义。
-> **生效日期**：2026-08-02（T21 findings 修复后）。
+> **生效日期**：2026-08-02（T21 用户确认收口，下一任务 T22）。
 
 ## 1. 当前角色
 
 | 角色 | 当前责任 | 当前安排 |
 | --- | --- | --- |
-| `UI_PRIMARY` | Vue 页面/组件、响应式、浏览器状态、交互、无障碍与视觉证据 | T19/T20 已交付，Kimi K3 |
-| `ENGINEERING_PRIMARY` | 数据库、迁移、认证、安全、OSS、事务、服务端契约、公开投影与运维验证 | T21 findings 修复已交付，GPT 5.6 Sol |
-| `REVIEW` | 对代码、截图、性能、安全、媒体和任务证据做独立复核 | T21 下一执行者，必须未参与本轮修复 |
-| `ACCEPTANCE` | 业务和视觉结果最终确认 | T21 独立证据后由用户确认 |
+| `UI_PRIMARY` | Vue 页面/组件、响应式、浏览器状态、交互、无障碍与视觉证据 | T21 UI 与人工验收回归已交付；T22 尚未分配 |
+| `ENGINEERING_PRIMARY` | 数据库、迁移、认证、安全、OSS、事务、服务端契约、公开投影与运维验证 | T21 findings 与 `site_content` 联系配置增量已交付；T22 尚未分配 |
+| `REVIEW` | 对代码、截图、性能、安全、媒体和任务证据做独立复核 | T21 历史审查与修复证据已归档；当前无活动复审批次 |
+| `ACCEPTANCE` | 业务和视觉结果最终确认 | 用户已于 2026-08-02 明确确认 T21 收口 |
 
 `UI_PRIMARY` 无权自行修改数据库、API、权限、profile identity、发布事务或产品事实。发现接口冲突时应停止相关实现并交回工程侧。
 
 ## 2. 已收口状态
 
-- T01–T20、GATE-06、GATE-07 与 EXT-02 已完成；GATE-07 已发布回 `main`。
+- T01–T21、GATE-06、GATE-07 与 EXT-02 已完成；GATE-07 已发布回 `main`。
 - T14–T18 已完成条件直传、媒体核验/私有预处理、`recipe-v1`、`brand-standard-v1`、作品 CRUD、发布/下架和管理端接线。
 - 景宸在 S4 前追加的大型居中、可配置 Logo 水印已通过 GATE-07 用户验收；旧 v1 完成状态继续作为历史事实保留。
 - T19/T20 的服务端契约、最终 Vue 页面、管理任务进度、真实图片浏览器证据与工程门禁已收口并位于 `main`；记录见 `implementation/notes/T19-T20-CLOSURE-2026-08-01.md`。
+- T21 首次独立审查 findings、实现者修复、人工验收回归和用户确认已分层归档；最终收口记录见 `implementation/notes/T21-MANUAL-UI-FIX-2026-08-02.md`。
 
 ## 3. 当前批次顺序
 
-### T21 · findings 修复后的独立复审
+### T22 · 可启动，尚未实施
 
-1. 首次独立审查结论及复审条件见 `implementation/notes/T21-REVIEW-2026-08-01.md`；
-2. 实现者已修复 3 个 must-fix 与 1 个 should-fix，并完成 lint、typecheck、单元、集成、全量 E2E、生产 build/verify；
-3. 未参与本轮修复的 `REVIEW` 从空库和真实 OSS 重放完整链路，复核小图 409、同源预览、下架冲突/失败状态和精确清理；
-4. 独立审查通过后再交用户 `ACCEPTANCE`，其前不得勾选 T21 或进入 T22。
+1. T21 已由用户明确确认收口，首次 NOT PASS 报告继续作为历史事实保留；
+2. T22 范围仅为完整作品字段与约束，不提前实现 T23 的多图关系；
+3. 启动编码前重新核对 `STATE.md`、`foundation/README.md`、SPEC/PLAN 与全部 OQ；
+4. T22 完成并留存验证证据前不得进入 T23。
 
 ## 4. 联合任务交接规则
 
@@ -73,4 +74,4 @@ feature/gate07-watermark-engineering-sol
 feature/gate07-watermark-ui-kimi
 ```
 
-当前待审基线为 `main`：T19/T20 收口提交 `6c7b84d`，T21 findings 修复提交 `60a2bb8`，以及本次最终复核差异。历史 `feature/t19-t20-kimi` 不再是当前执行分支。模型或订阅变化只更新本文件；业务、数据、接口和体验变化必须先更新上游契约。
+当前发布基线为 `main`：T19/T20 收口提交 `6c7b84d`、T21 findings 修复提交 `60a2bb8`、T21 审查状态提交 `5a8742b` 及本次收口差异。历史 `feature/t19-t20-kimi` 不再是当前执行分支。模型或订阅变化只更新本文件；业务、数据、接口和体验变化必须先更新上游契约。

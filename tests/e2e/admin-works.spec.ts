@@ -298,7 +298,7 @@ test.describe('公开预览与泄漏边界', () => {
     ] as const) {
       await page.setViewportSize({ width, height })
       await page.goto(`${adminBaseURL}/admin/works`)
-      await expect(page.getByRole('heading', { level: 1, name: '作品' })).toBeVisible()
+      await expect(page.getByRole('heading', { level: 1, name: '作品管理' })).toBeVisible()
       await capture(page, `works-list-${label}`)
       const overflow = await page.evaluate(() =>
         document.scrollingElement!.scrollWidth - document.documentElement.clientWidth,

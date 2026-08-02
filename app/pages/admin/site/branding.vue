@@ -16,7 +16,7 @@ definePageMeta({
 })
 
 useSeoMeta({
-  title: '站点品牌 · 水印',
+  title: '全局水印',
   robots: 'noindex, nofollow',
 })
 
@@ -177,7 +177,7 @@ onMounted(() => {
 
     <div v-else-if="branding" class="branding">
       <header class="branding__header">
-        <h1 class="branding__title">站点品牌</h1>
+        <h1 class="branding__title">全局水印</h1>
         <p class="branding__subtitle">
           全站公开图的居中水印配置；Logo 与参数变更会生成新的草稿，应用后原子切换。
         </p>

@@ -83,6 +83,24 @@ test.describe('T20 作品列表页', () => {
     await expect(page.getByRole('link', { name: '全部用途' })).toHaveAttribute('aria-current', 'true')
     await expect(page.getByRole('link', { name: '全部装型' })).toHaveAttribute('aria-current', 'true')
 
+    const filterAppearance = await page.getByRole('group', { name: '按用途筛选' }).evaluate((group) => {
+      const active = group.querySelector<HTMLElement>('[aria-current="true"]')!
+      const groupStyle = getComputedStyle(group)
+      const activeStyle = getComputedStyle(active)
+      return {
+        groupBorderStyle: groupStyle.borderStyle,
+        groupShadow: groupStyle.boxShadow,
+        activeBackground: activeStyle.backgroundColor,
+        activeBorderStyle: activeStyle.borderStyle,
+        activeShadow: activeStyle.boxShadow,
+      }
+    })
+    expect(filterAppearance.groupBorderStyle).toBe('solid')
+    expect(filterAppearance.groupShadow).not.toBe('none')
+    expect(filterAppearance.activeBackground).not.toBe('rgba(0, 0, 0, 0)')
+    expect(filterAppearance.activeBorderStyle).toBe('solid')
+    expect(filterAppearance.activeShadow).not.toBe('none')
+
     const slugs = await page.locator('[data-work-slug]').evaluateAll(
       cards => cards.map(card => card.getAttribute('data-work-slug')),
     )
@@ -210,8 +228,8 @@ test.describe('T20 作品列表页', () => {
     expect(html).not.toContain('test/e2e-public/original')
     expect(html).not.toContain('private-download.test')
     expect(html).not.toContain('e2e-private-contact')
-    expect(html).not.toContain('mailto:')
-    expect(html).not.toContain('3114559925')
+    expect(html).toContain('mailto:3114559925@qq.com')
+    expect(html).toContain('QQ 3114559925')
   })
 })
 

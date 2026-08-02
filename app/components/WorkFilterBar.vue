@@ -102,28 +102,36 @@ const suitLink = (suitType: SuitType | null) => optionLink(props.filter.purpose,
 .work-filter__group {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: 0;
+  padding: var(--space-1);
+  background: var(--public-bg-secondary);
+  border: 1px solid var(--public-border-primary);
+  border-radius: var(--radius-full);
+  box-shadow: 0 0.25rem 0.75rem rgb(25 31 42 / 0.08);
 }
 
 .work-filter__chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
   padding: var(--space-2) var(--space-4);
-  border: 1px solid var(--public-border-subtle);
-  border-radius: 999px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
   color: var(--public-text-secondary);
   font-size: var(--font-size-sm);
   line-height: 1.4;
 }
 
 .work-filter__chip:hover {
-  border-color: var(--public-border-strong);
   color: var(--public-text-primary);
 }
 
 .work-filter__chip--active,
 .work-filter__chip--active:hover {
-  background: var(--public-surface-strong);
-  border-color: var(--public-surface-strong);
-  color: var(--public-text-inverse);
+  background: var(--public-bg-primary);
+  border-color: var(--public-border-primary);
+  color: var(--public-text-primary);
+  box-shadow: 0 0.125rem 0.5rem rgb(25 31 42 / 0.12);
 }
 
 .work-filter__count {

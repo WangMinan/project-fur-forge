@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01–T20、GATE-06、GATE-07 与 EXT-02 已完成。** T21 首次独立审查为 NOT PASS；findings 已完成实现者侧修复，等待未参与修复的审查者重新执行真实 OSS 门禁，T21 保持未勾选。
+> **当前阶段：阶段 4 IMPLEMENTATION，T01–T21、GATE-06、GATE-07 与 EXT-02 已完成。** T21 首次独立审查 findings、用户人工验收回归和完整门禁均已收口；用户于 2026-08-02 明确确认 T21 完成，下一任务为 T22。
 
 ## 网站核心原则（景宸确认）
 
@@ -31,6 +31,7 @@ project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`
 - **OQ 门禁（硬性，最高优先级）**：阶段 1（规格）与阶段 2（计划）的开放问题 `OQ-NNN` 必须全部「已答/已搁置」才能进入下一阶段或编码。遇到无法自答的问题 → 登记 OQ → 停下等用户解答，**绝不假设答案推进**。
 - 契约先行：编码前 SPEC 锁定接口/数据/存储契约；代码偏离契约即 bug。契约变更先改 SPEC 再改代码。
 - 完整流程与分工矩阵见 `D:\code\spec.template\AGENTS.md`。
+- 不允许删除或者清空 .env 文件
 
 `AGENTS.md`（项目根）为指向本文件的软链接，供其他 coding agent 复用同一套指令。
 
@@ -47,6 +48,27 @@ pnpm test:integration
 pnpm test:e2e
 pnpm build
 pnpm verify:production
+```
+
+### 本地查看前端与人工验收
+
+先迁移开发数据库，再启动同时监听公开端与管理端 Host 的 Nuxt 开发服务：
+
+```powershell
+cd D:\code\project-fur-forge
+pnpm db:migrate
+pnpm dev --host 0.0.0.0 --port 3000
+```
+
+- 管理端使用 `http://localhost:3000`：重点查看 `/admin/works`、`/admin/site/home` 与 `/admin/site/branding`。
+- 公开端使用 `http://127.0.0.1:3000`：重点查看 `/`、`/works` 与 `/works/{slug}`；不要混用两个 Host。
+- 首页轮播验收素材：横版至少 `1920×1080`，竖版至少 `1080×1920`，否则固定配方尺寸门禁会阻止启用。
+- 三个固定验收视口：`390×844`、`768×1024`、`1440×900`。
+
+忘记本地管理员密码时，停止开发服务后执行：
+
+```powershell
+pnpm auth:reset-password --confirm RESET_SINGLE_ADMIN_PASSWORD
 ```
 
 当前规划原型的独立验证入口仍见 `agent_docs/需求1-兽装工作室主页/planning/prototype-v1/README.md`，不得把原型样式复制进生产应用。

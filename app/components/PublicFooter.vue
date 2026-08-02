@@ -1,5 +1,12 @@
 <script setup lang="ts">
+import { publicHomeResponseSchema } from '~~/shared/schemas/home'
+
 const year = new Date().getFullYear()
+const { data: home } = await useFetch('/api/public/v1/home', {
+  key: 'public-home',
+  headers: useRequestHeaders(['host']),
+  transform: raw => publicHomeResponseSchema.parse(raw).data,
+})
 </script>
 
 <template>
@@ -25,6 +32,13 @@ const year = new Date().getFullYear()
         </NuxtLink>
       </nav>
 
+      <address v-if="home" class="public-footer__contact">
+        <p>
+          业务邮箱
+          <a :href="`mailto:${home.contactEmail}`">{{ home.contactEmail }}</a>
+        </p>
+        <p>QQ {{ home.contactQq }}</p>
+      </address>
     </div>
 
     <p class="public-footer__legal">
@@ -75,6 +89,14 @@ const year = new Date().getFullYear()
   color: var(--public-accent-primary);
 }
 
+.public-footer__contact {
+  display: grid;
+  gap: var(--space-2);
+  color: var(--public-text-secondary);
+  font-size: var(--font-size-sm);
+  font-style: normal;
+}
+
 .public-footer__legal {
   max-width: var(--public-content-wide);
   margin: var(--space-7) auto 0;
@@ -86,7 +108,7 @@ const year = new Date().getFullYear()
 
 @media (min-width: 768px) {
   .public-footer__inner {
-    grid-template-columns: 1.2fr 1fr;
+    grid-template-columns: 1.2fr 1fr 1fr;
     align-items: start;
   }
 }

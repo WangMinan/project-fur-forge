@@ -62,6 +62,8 @@ interface ControlBody {
     tagline?: string
     autoRotate?: boolean
     autoRotateIntervalMs?: number
+    contactEmail?: string
+    contactQq?: string
   }
   active?: boolean
   slideAlt?: string
@@ -451,18 +453,23 @@ export default defineEventHandler(async (event) => {
         SELECT
           version, hero_tagline AS tagline,
           hero_auto_rotate AS autoRotate,
-          hero_auto_rotate_interval_ms AS autoRotateIntervalMs
+          hero_auto_rotate_interval_ms AS autoRotateIntervalMs,
+          contact_email AS contactEmail,
+          contact_qq AS contactQq
         FROM site_content WHERE id = 'site'
       `).get() as {
         version: number
         tagline: string | null
         autoRotate: number
         autoRotateIntervalMs: number
+        contactEmail: string | null
+        contactQq: string | null
       }
       sqlite.prepare(`
         UPDATE site_content
         SET hero_tagline = ?, hero_auto_rotate = ?,
-            hero_auto_rotate_interval_ms = ?, version = version + 1,
+            hero_auto_rotate_interval_ms = ?, contact_email = ?,
+            contact_qq = ?, version = version + 1,
             updated_at = ?
         WHERE id = 'site' AND version = ?
       `).run(
@@ -471,6 +478,8 @@ export default defineEventHandler(async (event) => {
           ? current.autoRotate
           : (body.settings.autoRotate ? 1 : 0),
         body.settings.autoRotateIntervalMs ?? current.autoRotateIntervalMs,
+        body.settings.contactEmail ?? current.contactEmail,
+        body.settings.contactQq ?? current.contactQq,
         now,
         current.version,
       )

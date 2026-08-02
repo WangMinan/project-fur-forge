@@ -48,24 +48,52 @@ test.describe('后台作品列表页', () => {
     await loginAsAdmin(page)
   })
 
+  test('四个管理入口的导航、一级标题和标签页标题一致', async ({ page }) => {
+    for (const entry of [
+      { label: '首页管理', path: '/admin/site/home' },
+      { label: '全局水印', path: '/admin/site/branding' },
+      { label: '作品管理', path: '/admin/works' },
+      { label: '修改密码', path: '/admin/account' },
+    ]) {
+      await page.goto(`${adminBaseURL}${entry.path}`)
+      await expect(page.getByRole('navigation', { name: '管理导航' })
+        .getByRole('link', { name: entry.label }))
+        .toHaveAttribute('aria-current', 'page')
+      await expect(page.getByRole('heading', { level: 1, name: entry.label }))
+        .toBeVisible()
+      await expect(page).toHaveTitle(entry.label)
+    }
+  })
+
   test('展示真实作品、发布状态与编辑入口，无 P1/P2 导航项', async ({ page }) => {
     const work = await createWorkViaApi(page, { characterName: '列表验证' })
     await page.goto(`${adminBaseURL}/admin/works`)
 
-    await expect(page.getByRole('heading', { level: 1, name: '作品' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: '作品管理' })).toBeVisible()
+    await expect(page).toHaveTitle(/作品管理/u)
     await expect(page.getByText(/共 \d+ 件/)).toBeVisible()
 
     const nav = page.getByRole('navigation', { name: '管理导航' })
-    // T20 起导航新增「首页」入口：作品 / 首页 / 站点品牌 / 账号。
+    // T21 人工验收确认管理导航顺序与完整页名。
     await expect(nav.getByRole('link')).toHaveCount(4)
-    await expect(nav.getByRole('link', { name: '作品' })).toHaveAttribute('aria-current', 'page')
-    await expect(nav.getByRole('link', { name: '首页' })).toHaveAttribute(
+    expect(await nav.getByRole('link').allTextContents()).toEqual([
+      '首页管理',
+      '全局水印',
+      '作品管理',
+      '修改密码',
+    ])
+    await expect(nav.getByRole('link', { name: '作品管理' })).toHaveAttribute('aria-current', 'page')
+    await expect(nav.getByRole('link', { name: '首页管理' })).toHaveAttribute(
       'href',
       '/admin/site/home',
     )
-    await expect(nav.getByRole('link', { name: '站点品牌' })).toHaveAttribute(
+    await expect(nav.getByRole('link', { name: '全局水印' })).toHaveAttribute(
       'href',
       '/admin/site/branding',
+    )
+    await expect(nav.getByRole('link', { name: '修改密码' })).toHaveAttribute(
+      'href',
+      '/admin/account',
     )
 
     await expect(

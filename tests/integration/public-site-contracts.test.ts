@@ -318,6 +318,8 @@ describe('T19/T20 public repository contracts', () => {
       featuredSlugs: ['second-work'],
       home: {
         tagline: '不只做小狗毛',
+        contactEmail: 'studio@example.test',
+        contactQq: '123456789',
         autoRotate: false,
         autoRotateIntervalMs: 6000,
         slides: [],
@@ -353,6 +355,8 @@ describe('T19/T20 public repository contracts', () => {
     expect(initial).toMatchObject({
       version: 1,
       tagline: '不只做小狗毛',
+      contactEmail: '3114559925@qq.com',
+      contactQq: '3114559925',
       autoRotate: false,
       autoRotateIntervalMs: 6000,
     })
@@ -530,6 +534,8 @@ describe('T19/T20 public repository contracts', () => {
     home = getAdminHome(sqlite)
     home = updateHomeSettings(sqlite, home.version, {
       tagline: '只让作品说话',
+      contactEmail: 'hello@example.test',
+      contactQq: '123456789',
       autoRotate: true,
       autoRotateIntervalMs: 6000,
     }, NOW + sequence++)
@@ -548,6 +554,8 @@ describe('T19/T20 public repository contracts', () => {
     const projection = getPublicHome(sqlite, MEDIA_BASE_URL)
     expect(projection).toMatchObject({
       tagline: '只让作品说话',
+      contactEmail: 'hello@example.test',
+      contactQq: '123456789',
       autoRotate: true,
       autoRotateIntervalMs: 6000,
     })
@@ -613,6 +621,8 @@ describe('T19/T20 public repository contracts', () => {
     expect(home.slides).toHaveLength(1)
     expect(() => updateHomeSettings(sqlite, 1, {
       tagline: 'stale',
+      contactEmail: 'stale@example.test',
+      contactQq: '123456789',
       autoRotate: false,
       autoRotateIntervalMs: 6000,
     })).toThrow(/stale/)

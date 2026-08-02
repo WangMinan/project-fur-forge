@@ -128,8 +128,9 @@ test.describe('T20 首页双源轮播', () => {
     expect(markup).not.toContain('芝麻的首页展示照')
     // 关联作品链接只信 linkedWorkHref
     expect(markup).toContain('href="/works/e2e-public-home-naigai"')
-    expect(markup).not.toContain('mailto:')
-    expect(markup).not.toContain('3114559925')
+    expect(markup).toContain('mailto:3114559925@qq.com')
+    expect(markup).toContain('QQ 3114559925')
+    expect(markup).not.toContain('e2e-private-contact')
     expect(markup).not.toContain('/fixtures/')
   })
 
@@ -238,7 +239,8 @@ test.describe('T20 首页双源轮播', () => {
     const viewport = hero(page).locator('.home-hero__viewport')
     const box = await viewport.boundingBox()
     expect(box).not.toBeNull()
-    const y = box!.y + box!.height / 2
+    // 避开随当前轮播项变化的作品链接和底部分页控件，固定从纯媒体区发起手势。
+    const y = box!.y + box!.height * 0.25
     const startX = box!.x + box!.width * 0.8
 
     // 向左滑 → 下一张
@@ -376,6 +378,18 @@ test.describe('T20 首页双源轮播', () => {
         document.documentElement.scrollWidth - document.documentElement.clientWidth,
       )
       expect(overflow).toBeLessThanOrEqual(1)
+      const spacing = await hero(page).evaluate((node) => {
+        const content = node.querySelector<HTMLElement>('.home-hero__content')!
+        const action = node.querySelector<HTMLElement>('.home-hero__action')!
+        const heroRect = node.getBoundingClientRect()
+        const actionRect = action.getBoundingClientRect()
+        return {
+          contentPaddingLeft: Number.parseFloat(getComputedStyle(content).paddingLeft),
+          actionBottomGap: heroRect.bottom - actionRect.bottom,
+        }
+      })
+      expect(spacing.contentPaddingLeft).toBeGreaterThanOrEqual(16)
+      expect(spacing.actionBottomGap).toBeGreaterThanOrEqual(64)
       await capture(page, `home-${width}x${height}`, SCREENSHOT_DIR)
     }
   })

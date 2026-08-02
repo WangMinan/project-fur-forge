@@ -6,7 +6,7 @@ import type {
 import type { HeroSlot } from '~/composables/useHeroAssetUpload'
 
 // T20 首页横/竖槽位：固定比例预览框 + 文件选择上传（选中即传）。
-// 已保存资产只展示尺寸信息（私有原图不下发 URL）；新上传用本地 objectURL 预览。
+// 已保存资产通过同源鉴权接口预览；新上传用本地 objectURL 预览。
 const props = defineProps<{
   disabled: boolean
   homeVersion: number | null
@@ -81,14 +81,23 @@ function onFileChange(event: Event) {
         class="hero-slot__image"
         referrerpolicy="no-referrer"
       >
-      <p v-else-if="savedAsset" class="hero-slot__saved">
-        已保存原图 {{ savedAsset.width }}×{{ savedAsset.height }}<br>
-        <span class="hero-slot__saved-note">私有库存储，不在此直接展示</span>
-      </p>
+      <img
+        v-else-if="savedAsset"
+        :src="`/api/admin/v1/media/assets/${savedAsset.assetId}/preview`"
+        :alt="`${SLOT_LABEL[orientation]}已上传原图预览`"
+        class="hero-slot__image"
+        :data-testid="`hero-slot-saved-image-${orientation}`"
+        decoding="async"
+        referrerpolicy="no-referrer"
+      >
       <p v-else class="hero-slot__empty">
         未上传
       </p>
     </div>
+
+    <p v-if="savedAsset && !upload.item.previewUrl" class="hero-slot__saved">
+      已保存原图 {{ savedAsset.width }}×{{ savedAsset.height }}
+    </p>
 
     <p v-if="unsavedAssetId && upload.item.state === 'completed'" class="hero-slot__unsaved" role="status">
       新图已上传（{{ upload.item.asset?.width }}×{{ upload.item.asset?.height }}），保存轮播项后生效
@@ -167,7 +176,6 @@ function onFileChange(event: Event) {
   object-fit: cover;
 }
 
-.hero-slot__saved,
 .hero-slot__empty {
   margin: 0;
   padding: var(--admin-space-3);
@@ -177,7 +185,9 @@ function onFileChange(event: Event) {
   line-height: var(--admin-line-normal);
 }
 
-.hero-slot__saved-note {
+.hero-slot__saved {
+  margin: 0;
+  font-size: var(--admin-font-xs);
   color: var(--admin-text-tertiary);
 }
 

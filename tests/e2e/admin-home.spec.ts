@@ -17,6 +17,8 @@ import { seedHomeSlides, seedPublicCatalog } from './helpers/public-catalog'
 
 const DEFAULT_SETTINGS = {
   tagline: '不只做小狗毛',
+  contactEmail: '3114559925@qq.com',
+  contactQq: '3114559925',
   autoRotate: false,
   autoRotateIntervalMs: 6_000,
 }
@@ -97,10 +99,14 @@ test.afterEach(async ({ page }) => {
 test('首屏设置：加载、修改保存、刷新后保持', async ({ page }) => {
   await gotoHomeAdmin(page)
   await expect(page.locator('#home-tagline')).toHaveValue('不只做小狗毛')
+  await expect(page.locator('#home-contact-email')).toHaveValue('3114559925@qq.com')
+  await expect(page.locator('#home-contact-qq')).toHaveValue('3114559925')
   await expect(page.locator('#home-auto-rotate')).not.toBeChecked()
   await expect(page.locator('#home-interval')).toBeDisabled()
 
   await page.locator('#home-tagline').fill('只做小狗毛（测试）')
+  await page.locator('#home-contact-email').fill('hello@example.test')
+  await page.locator('#home-contact-qq').fill('123456789')
   await page.locator('#home-auto-rotate').check()
   await page.locator('#home-interval').fill('8')
   await page.getByRole('button', { name: '保存设置' }).click()
@@ -109,8 +115,18 @@ test('首屏设置：加载、修改保存、刷新后保持', async ({ page }) 
   await page.reload()
   await page.waitForSelector('[data-testid="home-admin"]')
   await expect(page.locator('#home-tagline')).toHaveValue('只做小狗毛（测试）')
+  await expect(page.locator('#home-contact-email')).toHaveValue('hello@example.test')
+  await expect(page.locator('#home-contact-qq')).toHaveValue('123456789')
   await expect(page.locator('#home-auto-rotate')).toBeChecked()
   await expect(page.locator('#home-interval')).toHaveValue('8')
+
+  await page.goto(publicBaseURL)
+  const footer = page.getByTestId('public-footer')
+  await expect(footer.getByRole('link', { name: 'hello@example.test' })).toHaveAttribute(
+    'href',
+    'mailto:hello@example.test',
+  )
+  await expect(footer).toContainText('QQ 123456789')
 })
 
 test('轮播项 CRUD：横竖上传创建、编辑保存、删除确认', async ({ page }) => {
@@ -126,6 +142,16 @@ test('轮播项 CRUD：横竖上传创建、编辑保存、删除确认', async 
   await page.waitForSelector('[data-testid="home-admin"]')
   const persisted = page.locator('article.slide-card', { hasText: '轮播项 · 顺位 0' })
   await expect(persisted.getByLabel(/图片说明/)).toHaveValue('蓝湄的首页展示照（改）')
+  const savedImages = persisted.locator('[data-testid^="hero-slot-saved-image-"]')
+  await expect(savedImages).toHaveCount(2)
+  for (const image of await savedImages.all()) {
+    await expect(image).toHaveJSProperty('complete', true)
+    expect(await image.evaluate((img: HTMLImageElement) => img.naturalWidth))
+      .toBeGreaterThan(0)
+    expect(await image.getAttribute('src')).toMatch(
+      /^\/api\/admin\/v1\/media\/assets\/[0-9a-f-]+\/preview$/u,
+    )
+  }
 
   await persisted.getByRole('button', { name: '删除' }).click()
   await page.getByRole('dialog').getByRole('button', { name: '确认删除' }).click()
@@ -159,14 +185,17 @@ test('启用后公开首页可见，停用后移除；启用过程有进度与�
   await card.getByRole('button', { name: '启用' }).click()
   await expect(card.getByText('已启用', { exact: true })).toBeVisible({ timeout: 15_000 })
   await expect(card.getByText(/启用成功/)).toBeVisible()
+  await expect(card.getByRole('button', { name: '活动水印预览' })).toHaveCount(0)
+  await expect(card.getByText('当前公开图已使用活动水印')).toBeVisible()
   expect(await publicHomeAlts(page)).toEqual(['常驻首页图', '芝麻的首页展示照'])
 
-  // 启用后字段锁定，只能停用/预览/排序。
+  // 启用后字段锁定，只能停用/排序；公开结果本身就是当前水印结果。
   await expect(card.getByLabel(/图片说明/)).toBeDisabled()
   await expect(card.getByRole('button', { name: '保存修改' })).toBeDisabled()
 
   await card.getByRole('button', { name: '停用' }).click()
   await expect(card.getByText('未启用')).toBeVisible()
+  await expect(card.getByRole('button', { name: '活动水印预览' })).toBeVisible()
   expect(await publicHomeAlts(page)).toEqual(['常驻首页图'])
 })
 
@@ -250,6 +279,8 @@ test('保存冲突：其他地方修改后提交，提示冲突并重新加载',
         expectedVersion: version,
         payload: {
           tagline: '别处修改的口号',
+          contactEmail: DEFAULT_SETTINGS.contactEmail,
+          contactQq: DEFAULT_SETTINGS.contactQq,
           autoRotate: false,
           autoRotateIntervalMs: 6_000,
         },
