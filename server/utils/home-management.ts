@@ -1,11 +1,13 @@
 import { randomUUID } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import {
+  adminHeroPreviewDtoSchema,
   adminHeroSlideDtoSchema,
   adminHomeDtoSchema,
   publicHomeDtoSchema,
 } from '../../shared/schemas/home'
 import type {
+  AdminHeroPreviewDto,
   AdminHeroSlideDto,
   AdminHomeDto,
   PublicationFailureStage,
@@ -26,7 +28,10 @@ import type {
   VariantRecord,
 } from './media-mapper'
 import type { MediaStorage } from './media-storage'
-import { generatePublicVariants } from './media-recipe'
+import {
+  generatePrivateWatermarkPreview,
+  generatePublicVariants,
+} from './media-recipe'
 import { ServiceError } from './service-error'
 import { activeWatermarkProfileId } from './watermark-branding'
 import { getPublicationOperation } from './work-publication'
@@ -67,12 +72,14 @@ interface SlideRow {
   id: string
   landscapeAssetId: string
   landscapeHeight: number
+  landscapePrivateObjectKey: string
   landscapeWidth: number
   linkedWorkId: string | null
   linkedWorkSlug: string | null
   linkedWorkStatus: 'draft' | 'published' | 'unpublished' | null
   portraitAssetId: string
   portraitHeight: number
+  portraitPrivateObjectKey: string
   portraitWidth: number
   sortOrder: number
   version: number
@@ -100,9 +107,11 @@ const selectSlides = `
     slide.landscape_asset_id AS landscapeAssetId,
     landscape.width AS landscapeWidth,
     landscape.height AS landscapeHeight,
+    landscape.private_object_key AS landscapePrivateObjectKey,
     slide.portrait_asset_id AS portraitAssetId,
     portrait.width AS portraitWidth,
     portrait.height AS portraitHeight,
+    portrait.private_object_key AS portraitPrivateObjectKey,
     slide.linked_work_id AS linkedWorkId,
     linked.slug AS linkedWorkSlug,
     linked.publication_status AS linkedWorkStatus
@@ -221,6 +230,90 @@ export function getAdminHome(sqlite: Database.Database): AdminHomeDto {
     autoRotateIntervalMs: home.autoRotateIntervalMs,
     slides: slides(sqlite).map(slide => adminSlide(sqlite, slide, profileId)),
   })
+}
+
+const HERO_PREVIEW_TTL_MS = 5 * 60 * 1_000
+
+function heroPreviewKey(
+  privateObjectKey: string,
+  slideId: string,
+  orientation: 'landscape' | 'portrait',
+) {
+  const marker = privateObjectKey.indexOf('/original/')
+  if (marker < 1) {
+    throw new Error('Hero asset has no environment prefix.')
+  }
+  return `${privateObjectKey.slice(0, marker)}/preview/home/${slideId}/${orientation}.webp`
+}
+
+export async function createHeroSlidePreview(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  slideId: string,
+  expectedVersion: number,
+  now = Date.now(),
+): Promise<AdminHeroPreviewDto> {
+  requireHomeVersion(sqlite, expectedVersion)
+  const slide = requireSlide(sqlite, slideId)
+  assertAssetPair(sqlite, {
+    landscapeAssetId: slide.landscapeAssetId,
+    portraitAssetId: slide.portraitAssetId,
+  }, slide.id)
+  const profileId = activeWatermarkProfileId(sqlite)
+  if (!profileId) {
+    throw new ServiceError(409, 'CONFLICT', 'Active watermark profile is unavailable.')
+  }
+  const expiresAt = now + HERO_PREVIEW_TTL_MS
+  const preview = async (input: {
+    assetId: string
+    orientation: 'landscape' | 'portrait'
+    privateObjectKey: string
+    usage: 'home-hero-landscape' | 'home-hero-portrait'
+    width: 480 | 768
+  }) => {
+    const objectKey = heroPreviewKey(
+      input.privateObjectKey,
+      slide.id,
+      input.orientation,
+    )
+    const dimensions = await generatePrivateWatermarkPreview(
+      sqlite,
+      storage,
+      {
+        assetId: input.assetId,
+        objectKey,
+        profileId,
+        usage: input.usage,
+        width: input.width,
+      },
+    )
+    return {
+      ...await storage.signPrivateGet(objectKey, expiresAt),
+      width: dimensions.width,
+      height: dimensions.height,
+    }
+  }
+  const [landscape, portrait] = await Promise.all([
+    preview({
+      assetId: slide.landscapeAssetId,
+      orientation: 'landscape',
+      privateObjectKey: slide.landscapePrivateObjectKey,
+      usage: 'home-hero-landscape',
+      width: 768,
+    }),
+    preview({
+      assetId: slide.portraitAssetId,
+      orientation: 'portrait',
+      privateObjectKey: slide.portraitPrivateObjectKey,
+      usage: 'home-hero-portrait',
+      width: 480,
+    }),
+  ])
+  requireHomeVersion(sqlite, expectedVersion)
+  if (activeWatermarkProfileId(sqlite) !== profileId) {
+    throw new ServiceError(409, 'CONFLICT', 'Active watermark profile changed.')
+  }
+  return adminHeroPreviewDtoSchema.parse({ landscape, portrait })
 }
 
 export function getPublicHome(

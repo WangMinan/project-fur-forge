@@ -20,16 +20,16 @@
 - T01–T18、GATE-06、GATE-07 与 EXT-02 已完成；GATE-07 已发布回 `main`。
 - T14–T18 已完成条件直传、媒体核验/私有预处理、`recipe-v1`、`brand-standard-v1`、作品 CRUD、发布/下架和管理端接线。
 - 景宸在 S4 前追加的大型居中、可配置 Logo 水印已通过 GATE-07 用户验收；旧 v1 完成状态继续作为历史事实保留。
-- T19/T20 的服务端工程批次已启动；最终 Vue 页面仍未启动。
+- T19/T20 服务端工程批次已随 `ecf2cfb` 进入 `main`；最终 Vue 页面在 `feature/t19-t20-kimi` 接线中。
 
 ## 3. 当前批次顺序
 
-### T19/T20 · 工程契约
+### T19/T20 · UI 接线与预览补丁
 
-1. GPT 5.6 Sol 在 `feature/t19-t20-engineering-sol` 实现公开作品 repository/service、列表/精选投影和 fake adapter；
-2. 同一分支实现 `/api/admin/v1/site/home/**`、首页启用发布校验、公开首页投影与稳定错误；
-3. 工程侧提供请求/响应、版本、srcset、SSR 和 fixture 交接并运行完整门禁；
-4. 本批不实现最终 Vue 页面、不勾选 T19/T20、不合并 `main`；Kimi 后续在独立 UI 批次接线。
+1. Kimi K3 在 `feature/t19-t20-kimi` 按既有交接实现最终 Vue 页面与浏览器证据；
+2. Kimi 反馈首页轮播缺少启用前活动水印真实预览，工程侧经用户授权直接在当前分支补齐该单一服务端契约，不另建分支；
+3. 预览补丁只生成私有横竖代表图和短时签名 URL，不放宽 Host 边界、不提前生成公开 variant；
+4. 完成页面、工程门禁与联合验收前不勾选 T19/T20、不合并 `main`。
 
 ## 4. 联合任务交接规则
 
@@ -73,4 +73,4 @@ feature/gate07-watermark-engineering-sol
 feature/gate07-watermark-ui-kimi
 ```
 
-下一批分支名在路由 T19 时确定。模型或订阅变化只更新本文件；业务、数据、接口和体验变化必须先更新上游契约。
+当前批次分支为 `feature/t19-t20-kimi`；用户已明确授权真实预览服务端补丁留在该分支。模型或订阅变化只更新本文件；业务、数据、接口和体验变化必须先更新上游契约。

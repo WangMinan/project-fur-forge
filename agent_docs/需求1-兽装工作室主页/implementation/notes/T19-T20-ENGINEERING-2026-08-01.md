@@ -10,6 +10,7 @@
 - `server/utils/public-site-repository.ts` 提供 SSR 可直接调用的 SQLite repository 和 fake adapter；每次调用都读取当前 SQLite，不保存共享数据快照或 HTML。
 - `server/utils/home-management.ts` 复用既有 `site_content`、`site_hero_slides`、`publication_operations`、媒体处理与审计链，实现首页设置、轮播项 CRUD、停用、排序和原子启用。
 - `server/api/public/v1/**` 提供公开 JSON 投影；`server/api/admin/v1/site/home/**` 提供管理接口。
+- 2026-08-02 在 `feature/t19-t20-kimi` 补齐 `POST /api/admin/v1/site/home/slides/{id}/preview`：使用当前活动 profile 在私有 Bucket 生成横版 768 px、竖版 480 px 真实 WebP，返回 5 分钟签名 URL，不改变启用状态或公开投影。
 - `0008_seed_site_content.sql` 只补齐站点单例和口号/轮播默认值，不新增业务表。
 
 ## 2. T19 公开作品 repository
@@ -79,7 +80,7 @@ fake adapter 为 `createFakePublicSiteRepository(seed)`。seed 只接受已经�
 
 ## 7. 验证边界
 
-新增集成检查覆盖公开作品/精选/筛选/相关浏览、草稿隔离、active profile 选择、私有信息不泄漏、fake adapter，以及首页发布失败清理、retry、原子启用、设置、排序、停用、删除和版本冲突。最终 Vue 页面、浏览器视觉验收与 T19/T20 勾选留给 Kimi 接线和联合收口。
+新增集成检查覆盖公开作品/精选/筛选/相关浏览、草稿隔离、active profile 选择、私有信息不泄漏、fake adapter，以及首页真实私有水印预览、发布失败清理、retry、原子启用、设置、排序、停用、删除和版本冲突。2026-08-02 预览补丁通过 lint、typecheck、77 项单元测试、74 项集成测试、build 和 production verify；最终 Vue 页面、浏览器视觉验收与 T19/T20 勾选留给 Kimi 接线和联合收口。
 
 完整门禁结果：
 

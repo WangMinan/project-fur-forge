@@ -6,13 +6,13 @@
 
 阶段 4 · IMPLEMENTATION 进行中。T01–T18、GATE-06、GATE-07 与 EXT-02 已完成。景宸在 S4 开始前追加的“可由管理端选择 Logo 候选的大尺寸居中水印”已完成工程、管理 UI、真实 OSS、三视口和用户验收。
 
-**GATE-07 已于 2026-08-02 通过用户人工验收并发布到 `main`。当前批次已重新路由，GPT 5.6 Sol 正在 `feature/t19-t20-engineering-sol` 锁定 T19/T20 服务端契约；T19/T20 保持未勾选，等待 Kimi 页面接线和联合验收。**
+**GATE-07 已于 2026-08-02 通过用户人工验收并发布到 `main`。T19/T20 服务端契约已随 `ecf2cfb` 进入 `main`；当前在 `feature/t19-t20-kimi` 接线页面，并按用户授权在当前分支补齐首页轮播启用前真实水印预览。T19/T20 保持未勾选，等待页面证据和联合验收。**
 
 ## 当前执行分工
 
 - GPT 5.6 Sol 作为 `ENGINEERING_PRIMARY` 完成 GATE-07 数据/接口/OSS/原子切换、联调故障修复、进度补齐与工程收口。
 - Kimi K3 作为 `UI_PRIMARY` 完成 `/admin/site/branding`、移除 v1 四角控件并提供三视口浏览器证据。
-- 用户已完成 GATE-07 实际页面人工验收；当前工程批次只实现 T19/T20 repository、API、公开投影、fixture/fake adapter 和 UI 交接，不实现最终 Vue 页面。
+- 用户已完成 GATE-07 实际页面人工验收；T19/T20 repository、API、公开投影、fixture/fake adapter 和 UI 交接已进入 `main`，当前由 Kimi 接线最终 Vue 页面；工程侧只在同一分支补齐已确认的真实预览漏项。
 - 完整批次与分支见 [`implementation/EXECUTION_ROUTING.md`](./implementation/EXECUTION_ROUTING.md)。
 
 ## 已完成基础
@@ -78,7 +78,8 @@ T14–T18 的完成状态保持有效。新要求是后续增量门禁，不把�
 - 2026-08-01：Kimi K3 在 `feature/gate07-watermark-ui-kimi` 完成 GATE-07 管理 UI：`/admin/site/branding`（活动水印、候选上传/选择、受限参数、四比例真实预览、影响摘要、应用/进度/重试与重载恢复）、作品编辑器四角控件移除与只读水印摘要、13 例真实浏览器 E2E 与三视口证据（`implementation/notes/GATE07-WATERMARK-UI-2026-08-01.md`）。候选删除与编辑器公开 variant 预览两处接口缺口已记录并交回工程侧。GATE-07 仍未勾选，待工程复核与用户确认。
 - 2026-08-02：联调修复 `.env` 装载、迁移外键、Nuxt 入口、预览样张依赖/失败恢复和“应用到全站”真实进度；用户在 `/admin/site/branding` 完成人工验收并确认 GATE-07 通过。
 - 2026-08-02：新增通用门禁：所有长耗时操作必须显示真实、可恢复的任务进度；E2E 必须认真验证用户路径和页面结果，不得以通过数量、HTTP 状态或元素数量代替页面质量。
+- 2026-08-02：Kimi 发现首页轮播缺少启用前活动水印真实预览；用户授权不新建分支，工程侧在 `feature/t19-t20-kimi` 补齐私有横竖预览 API、共享 Schema、集成测试和交接契约。
 
 ## 下一步
 
-在 `feature/t19-t20-engineering-sol` 完成服务端契约与完整工程门禁，保持 T19/T20 未勾选；随后由 Kimi 按交接实现最终 Vue 页面，再进行独立工程复核和用户验收。
+在 `feature/t19-t20-kimi` 完成首页轮播启用前真实水印预览补丁和最终 Vue 页面，保持 T19/T20 未勾选；随后进行独立工程复核和用户验收。

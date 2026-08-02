@@ -1,66 +1,102 @@
 <script setup lang="ts">
-import { findWorkBySlug, workCatalog } from '~~/shared/fixtures/visual-works'
+import { publicWorkDetailResponseSchema } from '~~/shared/schemas/public-content'
 import { PROJECT_NAME } from '~~/shared/constants/project'
 
+/**
+ * T19 真实作品详情：SSR 消费 GET /api/public/v1/works/{slug}。
+ * 只渲染公开 DTO；404/500 走 Nuxt 原生 HTML 错误页（error.vue）。
+ * 响应式 slug：同组件实例内切换（继续浏览直达另一详情）时重新拉取。
+ */
 const route = useRoute()
-// 响应式派生：同组件实例内 slug 变化（继续浏览直达另一详情）时，
-// 作品选择、图集、价格、SEO 与 related works 全部随之更新。
 const slug = computed(() => String(route.params.slug ?? ''))
-const work = computed(() => findWorkBySlug(slug.value))
 
-// 首次直达（SSR）：不存在立即抛出 fatal 404，由 HTML 错误页处理（契约不变）；
-// 客户端同组件内切换到不存在 slug 时由下方 watch 经 showError 进入同一错误页。
-if (!work.value) {
-  throw createError({
-    statusCode: 404,
-    statusMessage: '作品不存在或尚未发布',
+// 不提供显式 key：Nuxt 4 中静态 key 会让重挂载的详情页复用旧 slug 的缓存
+// （status === 'success' 时跳过 initialFetch）。自动 key 含 URL，slug 变化即
+// 生成新 key 并重新拉取，组件复用与重挂载两种路径都覆盖。
+const { data: detail, error } = await useFetch(
+  () => `/api/public/v1/works/${slug.value}`,
+  {
+    headers: useRequestHeaders(['host']),
+    transform: raw => publicWorkDetailResponseSchema.parse(raw).data,
+  },
+)
+
+// useFetch 的错误可能是 FetchError（statusCode 为原型 getter，序列化后丢失）、
+// H3Error 或普通对象，这里对三种表示做防御性提取。
+function resolveErrorStatus(err: unknown): number {
+  if (!err || typeof err !== 'object') {
+    return 500
+  }
+  const record = err as Record<string, unknown>
+  for (const key of ['statusCode', 'status'] as const) {
+    if (typeof record[key] === 'number') {
+      return record[key]
+    }
+  }
+  const response = record.response as { status?: number } | undefined
+  return typeof response?.status === 'number' ? response.status : 500
+}
+
+function toPageError(err: unknown) {
+  const statusCode = resolveErrorStatus(err) === 404 ? 404 : 500
+  return createError({
+    statusCode,
+    statusMessage: statusCode === 404 ? '作品不存在或尚未发布' : '作品暂时无法打开',
     fatal: true,
   })
 }
 
-watch(work, (entry) => {
-  if (!entry) {
-    showError({
-      statusCode: 404,
-      statusMessage: '作品不存在或尚未发布',
-      fatal: true,
-    })
+// 首次直达（SSR）：API 404/500 立即抛出 fatal 错误，由 HTML 错误页处理；
+// 客户端同组件内切换 slug 失败时由下方 watch 经 showError 进入同一错误页。
+if (error.value) {
+  throw toPageError(error.value)
+}
+
+watch(error, (err) => {
+  if (err) {
+    showError(toPageError(err))
   }
 })
 
-const dto = computed(() => work.value!.dto)
+const dto = computed(() => detail.value?.work)
+const gallery = computed(() => detail.value?.media.gallery ?? [])
+const relatedWorks = computed(() => detail.value?.related ?? [])
 
 useSeoMeta({
-  title: computed(() => `${dto.value.characterName} · 作品展示 · ${PROJECT_NAME}`),
-  description: computed(() => `${dto.value.characterName}：${dto.value.species}，${SUIT_TYPE_LABELS[dto.value.suitType]}。有点小狗工作室兽装作品档案。`),
-  ogTitle: computed(() => `${dto.value.characterName} · ${PROJECT_NAME}`),
-  ogDescription: computed(() => `${dto.value.species} · ${SUIT_TYPE_LABELS[dto.value.suitType]} · 兽装作品档案`),
+  title: computed(() => (dto.value
+    ? `${dto.value.characterName} · 作品展示 · ${PROJECT_NAME}`
+    : `作品展示 · ${PROJECT_NAME}`)),
+  description: computed(() => (dto.value
+    ? `${dto.value.characterName}：${dto.value.species}，${SUIT_TYPE_LABELS[dto.value.suitType]}。有点小狗工作室兽装作品档案。`
+    : '有点小狗工作室兽装作品档案。')),
+  ogTitle: computed(() => (dto.value
+    ? `${dto.value.characterName} · ${PROJECT_NAME}`
+    : `作品展示 · ${PROJECT_NAME}`)),
+  ogDescription: computed(() => (dto.value
+    ? `${dto.value.species} · ${SUIT_TYPE_LABELS[dto.value.suitType]} · 兽装作品档案`
+    : '有点小狗工作室兽装作品档案。')),
   ogType: 'article',
 })
 
 const priceLabel = computed(() => {
-  if (dto.value.purpose !== 'adoption') {
+  if (dto.value?.purpose !== 'adoption') {
     return ''
   }
   return dto.value.adoptionMethod === 'event_drop' ? '掉落价格' : '领养价格'
 })
 
 const priceText = computed(() => {
-  if (dto.value.purpose !== 'adoption' || !dto.value.price) {
+  if (dto.value?.purpose !== 'adoption' || !dto.value.price) {
     return null
   }
   return formatCnyMinorUnits(dto.value.price.minorUnits)
 })
 
-const relatedWorks = computed(() =>
-  workCatalog.filter(entry => entry.dto.slug !== dto.value.slug).slice(0, 4),
-)
-
 const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
 </script>
 
 <template>
-  <article v-if="work" class="work-detail" data-testid="work-detail" :data-work-slug="dto.slug">
+  <article v-if="dto" class="work-detail" data-testid="work-detail" :data-work-slug="dto.slug">
     <nav class="work-detail__back" aria-label="返回">
       <NuxtLink to="/works" class="work-detail__back-link">
         <span aria-hidden="true">←</span> 返回作品展示
@@ -77,7 +113,20 @@ const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
     </header>
 
     <div class="work-detail__layout">
-      <WorkDetailGallery :gallery="work.gallery" :work-name="dto.characterName" />
+      <!-- 领养作品分区：设定图（design_sheet）契约扩展后在出厂照分区之前渲染真实设定图；
+           当前公开 DTO 不含设定图媒体，不为它渲染占位内容或假数据。 -->
+      <section
+        v-if="dto.purpose === 'adoption'"
+        class="work-detail__gallery-section"
+        aria-label="出厂照"
+      >
+        <WorkDetailGallery :gallery="gallery" :work-name="dto.characterName" />
+      </section>
+      <WorkDetailGallery
+        v-else
+        :gallery="gallery"
+        :work-name="dto.characterName"
+      />
 
       <div class="work-detail__aside">
         <WorkFacts :dto="dto" />
@@ -120,7 +169,11 @@ const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
       </div>
     </div>
 
-    <section class="work-detail__related" aria-labelledby="work-related-title">
+    <section
+      v-if="relatedWorks.length > 0"
+      class="work-detail__related"
+      aria-labelledby="work-related-title"
+    >
       <div class="work-detail__related-header">
         <h2 id="work-related-title" class="work-detail__section-title">
           继续浏览
@@ -132,7 +185,7 @@ const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
       <div class="work-detail__related-grid">
         <WorkCard
           v-for="entry in relatedWorks"
-          :key="entry.dto.id"
+          :key="entry.work.id"
           :work="entry"
           :sizes="RELATED_SIZES"
         />
@@ -164,7 +217,7 @@ const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
 .work-detail__header {
   max-width: var(--public-content-wide);
   margin: 0 auto;
-  padding: var(--space-4) var(--public-page-padding) var(--space-6);
+  padding: 0 var(--public-page-padding) var(--space-6);
 }
 
 .work-detail__name {
@@ -272,7 +325,7 @@ const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
 
 @media (min-width: 768px) {
   .work-detail__related-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-6) var(--space-5);
   }
 }

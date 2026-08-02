@@ -10,6 +10,7 @@ import type {
 } from '../schemas/media'
 import type {
   adminHeroAssetDtoSchema,
+  adminHeroPreviewDtoSchema,
   adminHeroSlideDtoSchema,
   adminHomeDtoSchema,
   publicHomeDtoSchema,
@@ -87,6 +88,7 @@ export type PublicVariantDto = z.infer<typeof publicVariantDtoSchema>
 export type PublicSourceSetDto = z.infer<typeof publicSourceSetDtoSchema>
 export type PublicHeroSlideDto = z.infer<typeof publicHeroSlideDtoSchema>
 export type AdminHeroAssetDto = z.infer<typeof adminHeroAssetDtoSchema>
+export type AdminHeroPreviewDto = z.infer<typeof adminHeroPreviewDtoSchema>
 export type AdminHeroSlideDto = z.infer<typeof adminHeroSlideDtoSchema>
 export type AdminHomeDto = z.infer<typeof adminHomeDtoSchema>
 export type PublicHomeDto = z.infer<typeof publicHomeDtoSchema>

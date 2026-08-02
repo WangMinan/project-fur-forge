@@ -656,7 +656,7 @@ export async function generatePrivateWatermarkPreview(
   }
   const source = processingSource(sqlite, sourceAsset)
   const profile = requireWatermarkProfile(sqlite, input.profileId)
-  if (!['DRAFT', 'FAILED'].includes(profile.status)) {
+  if (!['DRAFT', 'FAILED', 'ACTIVE'].includes(profile.status)) {
     throw new ServiceError(409, 'CONFLICT', 'Watermark profile cannot be previewed.')
   }
   const logo = watermarkSource(sqlite, profile)

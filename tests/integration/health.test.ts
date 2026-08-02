@@ -10,6 +10,7 @@ import {
   expect,
   it,
 } from 'vitest'
+import { migrateDatabase } from '../../server/utils/database'
 
 const port = 3102
 const publicBaseUrl = `http://127.0.0.1:${port}`
@@ -44,6 +45,13 @@ function requestWithHost(path: string, host: string) {
   })
 }
 
+// T19 起公开详情页 SSR 真实查询 works 表：健康边界用例需要已迁移的库。
+const databaseFile = resolve(
+  tmpdir(),
+  `fur-forge-health-${process.pid}.db`,
+)
+await migrateDatabase(databaseFile)
+
 await setup({
   rootDir: fileURLToPath(new URL('../..', import.meta.url)),
   browser: false,
@@ -51,10 +59,7 @@ await setup({
   port,
   env: {
     APP_ENV: 'test',
-    DATABASE_FILE: resolve(
-      tmpdir(),
-      `fur-forge-health-${process.pid}.db`,
-    ),
+    DATABASE_FILE: databaseFile,
     PUBLIC_BASE_URL: publicBaseUrl,
     ADMIN_BASE_URL: adminBaseUrl,
     MEDIA_BASE_URL: 'https://media.test.invalid',

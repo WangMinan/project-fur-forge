@@ -6,6 +6,7 @@ import {
   versionedRequestSchema,
 } from './api'
 import {
+  privateAssetPreviewDtoSchema,
   publicAltSchema,
   publicHeroSlideDtoSchema,
 } from './media'
@@ -41,6 +42,16 @@ export const adminHomeDtoSchema = z.object({
   autoRotate: z.boolean(),
   autoRotateIntervalMs: z.number().int().min(6_000).max(300_000),
   slides: z.array(adminHeroSlideDtoSchema),
+}).strict()
+
+const adminHeroPreviewImageDtoSchema = privateAssetPreviewDtoSchema.extend({
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+})
+
+export const adminHeroPreviewDtoSchema = z.object({
+  landscape: adminHeroPreviewImageDtoSchema,
+  portrait: adminHeroPreviewImageDtoSchema,
 }).strict()
 
 export const publicHomeDtoSchema = z.object({
@@ -89,4 +100,7 @@ export const reorderHeroSlidesRequestSchema = versionedRequestSchema(
 )
 
 export const adminHomeResponseSchema = apiSuccessSchema(adminHomeDtoSchema)
+export const adminHeroPreviewResponseSchema = apiSuccessSchema(
+  adminHeroPreviewDtoSchema,
+)
 export const publicHomeResponseSchema = apiSuccessSchema(publicHomeDtoSchema)

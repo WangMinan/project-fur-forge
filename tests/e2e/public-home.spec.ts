@@ -1,118 +1,383 @@
-import {
-  expect,
-  test,
-} from '@playwright/test'
+import { expect, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import { seedHomeSlides, seedPublicCatalog } from './helpers/public-catalog'
+import type { SeedHomeSlide, SeedHomeSettings, SeedWork } from './helpers/public-catalog'
 
-const VIEWPORTS = [
-  { width: 390, height: 844, name: '390x844' },
-  { width: 768, height: 1024, name: '768x1024' },
-  { width: 1440, height: 900, name: '1440x900' },
-] as const
+/**
+ * T20 首页：双源轮播 + 精选轨道，全部消费真实公开投影。
+ * 轮播图片 URL 路径含 usage（home-hero-landscape / home-hero-portrait），
+ * 用于断言方向性请求与“隐藏项不下载”。
+ */
 
-test('home SSR ships hero, featured works and business statuses', async ({ request }) => {
-  const response = await request.get('/')
-  const html = await response.text()
+const WORKS: SeedWork[] = [
+  {
+    slug: 'e2e-public-home-naigai',
+    characterName: '奶盖',
+    species: '布偶猫',
+    suitType: 'full',
+    purpose: 'showcase',
+    featured: true,
+    sortOrder: 0,
+    photos: [{ alt: '奶盖的出厂照' }],
+  },
+  {
+    slug: 'e2e-public-home-lanmei',
+    characterName: '蓝湄',
+    species: '北极狐',
+    suitType: 'full',
+    purpose: 'adoption',
+    adoptionMethod: 'event_drop',
+    businessStatus: 'available',
+    priceMinorUnits: 1_560_000,
+    featured: true,
+    sortOrder: 1,
+    photos: [{ alt: '蓝湄的出厂照' }],
+  },
+  {
+    slug: 'e2e-public-home-zhima',
+    characterName: '芝麻',
+    species: '哈士奇',
+    suitType: 'full',
+    purpose: 'commission',
+    featured: true,
+    sortOrder: 2,
+    photos: [{ alt: '芝麻的出厂照' }],
+  },
+  {
+    slug: 'e2e-public-home-doudou',
+    characterName: '豆豆',
+    species: '柴犬',
+    suitType: 'partial',
+    purpose: 'commission',
+    featured: false,
+    sortOrder: 3,
+    photos: [{ alt: '豆豆的出厂照' }],
+  },
+]
 
-  expect(response.ok()).toBe(true)
-  expect(html).toContain('data-testid="public-hero"')
-  expect(html).toContain('有点小狗工作室')
-  expect(html).toContain('dite dog')
-  expect(html).toContain('data-testid="featured-track"')
-  expect(html).toContain('精选作品')
-  expect(html).toContain('自设委托')
-  expect(html).toContain('角色领养')
-  expect(html).toContain('营业状态')
+const SLIDES: SeedHomeSlide[] = [
+  {
+    alt: '奶盖的首页展示照',
+    sortOrder: 0,
+    enabled: true,
+    linkedWorkSlug: 'e2e-public-home-naigai',
+  },
+  {
+    alt: '蓝湄的首页展示照',
+    sortOrder: 1,
+    enabled: true,
+    linkedWorkSlug: 'e2e-public-home-lanmei',
+  },
+  {
+    alt: '芝麻的首页展示照',
+    sortOrder: 2,
+    enabled: true,
+    linkedWorkSlug: null,
+  },
+]
 
-  const workLinks = [...html.matchAll(/href="\/works\/([a-z0-9-]+)"/g)]
-  expect(workLinks.length).toBeGreaterThanOrEqual(6)
-})
+async function seedHome(
+  page: Page,
+  settings?: SeedHomeSettings,
+  slides: SeedHomeSlide[] = SLIDES,
+) {
+  await seedPublicCatalog(page, WORKS)
+  await seedHomeSlides(page, slides, settings)
+}
 
-test('hero image reserves dimensions and loads eagerly', async ({ page }) => {
-  await page.goto('/')
-  const heroImage = page.getByTestId('public-hero').locator('img')
+/** 记录公开媒体请求（fake OSS 域名不可达，请求会失败但仍可观测方向）。 */
+function observeMediaRequests(page: Page) {
+  const requested: string[] = []
+  page.on('request', (request) => {
+    if (request.url().includes('media.test.invalid')) {
+      requested.push(request.url())
+    }
+  })
+  return requested
+}
 
-  await expect(heroImage).toHaveAttribute('width', '1920')
-  await expect(heroImage).toHaveAttribute('height', '1080')
-  await expect(heroImage).toHaveAttribute('loading', 'eager')
-  await expect(heroImage).toHaveAttribute('fetchpriority', 'high')
-  await expect(heroImage).toHaveAttribute('alt', /.+/)
-})
+const hero = (page: Page) => page.getByTestId('public-hero')
+const liveStatus = (page: Page) => hero(page).getByRole('status')
 
-for (const viewport of VIEWPORTS) {
-  test(`no horizontal overflow at ${viewport.name}`, async ({ page }) => {
-    await page.setViewportSize({ width: viewport.width, height: viewport.height })
+test.describe('T20 首页双源轮播', () => {
+  test('SSR 直出首项：首屏 HTML 含第一张的横竖 srcset 与口号，不含后续项图片', async ({
+    page,
+    request,
+  }) => {
+    await seedHome(page, { tagline: '不只做小狗毛（测试）' })
+    const response = await request.get('/')
+    expect(response.status()).toBe(200)
+    const html = await response.text()
+    // 只断言渲染标记：__NUXT_DATA__ 负载含全部轮播数据属正常，不代表图片下载。
+    const markup = html.split('<script type="application/json"')[0]!
+
+    expect(markup).toContain('不只做小狗毛（测试）')
+    expect(markup).toContain('奶盖的首页展示照')
+    // 首项横竖双源均 SSR 直出
+    expect(markup).toContain('home-hero-landscape')
+    expect(markup).toContain('home-hero-portrait')
+    expect(markup).toContain('(orientation: portrait)')
+    // 首项高优先级
+    expect(markup).toContain('fetchpriority="high"')
+    // 后续项不渲染图片标记（隐藏项不下载由方向性请求用例覆盖）
+    expect(markup).not.toContain('蓝湄的首页展示照')
+    expect(markup).not.toContain('芝麻的首页展示照')
+    // 关联作品链接只信 linkedWorkHref
+    expect(markup).toContain('href="/works/e2e-public-home-naigai"')
+  })
+
+  test('横屏视口只请求横版图片', async ({ page }) => {
+    await seedHome(page)
+    const requested = observeMediaRequests(page)
+    await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
     await page.waitForLoadState('networkidle')
 
-    const metrics = await page.evaluate(() => ({
-      scrollWidth: document.documentElement.scrollWidth,
-      clientWidth: document.documentElement.clientWidth,
-    }))
-
-    expect(
-      metrics.scrollWidth,
-      `home should not overflow horizontally at ${viewport.name}`,
-    ).toBeLessThanOrEqual(metrics.clientWidth + 1)
+    const heroRequests = requested.filter(url => url.includes('home-hero'))
+    expect(heroRequests.length).toBeGreaterThan(0)
+    expect(heroRequests.every(url => url.includes('home-hero-landscape'))).toBe(true)
+    expect(heroRequests.some(url => url.includes('home-hero-portrait'))).toBe(false)
   })
-}
 
-test('mobile nav manages focus, escape and aria state', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/')
+  test('竖屏视口只请求竖版图片', async ({ page }) => {
+    await seedHome(page)
+    const requested = observeMediaRequests(page)
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
 
-  const trigger = page.getByRole('button', { name: '打开导航' })
-  const dialog = page.getByRole('dialog', { name: '站点导航' })
-  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    const heroRequests = requested.filter(url => url.includes('home-hero'))
+    expect(heroRequests.length).toBeGreaterThan(0)
+    expect(heroRequests.every(url => url.includes('home-hero-portrait'))).toBe(true)
+    expect(heroRequests.some(url => url.includes('home-hero-landscape'))).toBe(false)
+  })
 
-  // 开发模式水合需要时间；打开动作幂等，允许在水合完成前重试点击。
-  await expect(async () => {
-    await trigger.click()
-    await expect(dialog).toBeVisible({ timeout: 1_000 })
-  }).toPass({ timeout: 20_000 })
+  test('隐藏轮播项不下载，切换到第二张后按需加载', async ({ page }) => {
+    await seedHome(page)
+    const requested = observeMediaRequests(page)
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
 
-  await expect(trigger).toHaveAttribute('aria-expanded', 'true')
-  await expect(dialog.getByRole('button', { name: '关闭导航' })).toBeFocused()
+    const firstSlideUrls = requested.filter(url => url.includes('home-hero'))
+    const firstAssetIds = new Set(
+      firstSlideUrls.map(url => url.match(/\/web\/([0-9a-f-]{36})\//)?.[1]),
+    )
+    expect(firstAssetIds.size).toBe(1)
 
-  await page.keyboard.press('Escape')
-  await expect(dialog).toBeHidden()
-  await expect(trigger).toBeFocused()
+    await hero(page).getByRole('button', { name: '下一张' }).click()
+    await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张')
+    await page.waitForLoadState('networkidle')
+
+    const secondSlideUrls = requested
+      .filter(url => url.includes('home-hero'))
+      .filter(url => !firstAssetIds.has(url.match(/\/web\/([0-9a-f-]{36})\//)?.[1]))
+    expect(secondSlideUrls.length).toBeGreaterThan(0)
+  })
+
+  test('手动轮播：箭头回绕、圆点直达、键盘方向键', async ({ page }) => {
+    await seedHome(page)
+    await page.goto('/')
+
+    const next = hero(page).getByRole('button', { name: '下一张' })
+    const prev = hero(page).getByRole('button', { name: '上一张' })
+
+    await next.click()
+    await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张')
+    await expect(hero(page).getByRole('img', { name: '蓝湄的首页展示照' })).toBeVisible()
+    // 关联作品链接随当前项切换
+    await expect(hero(page).getByRole('link', { name: '查看这套作品' }))
+      .toHaveAttribute('href', '/works/e2e-public-home-lanmei')
+
+    await prev.click()
+    await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
+
+    // 回绕：第一张上一张 → 最后一张
+    await prev.click()
+    await expect(liveStatus(page)).toHaveText('第 3 张，共 3 张')
+    // 第三张无关联作品：行动回退到作品列表
+    await expect(hero(page).getByRole('link', { name: '浏览作品展示' }))
+      .toHaveAttribute('href', '/works')
+
+    // 圆点直达
+    await hero(page).getByRole('button', { name: '第 1 张，共 3 张' }).click()
+    await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
+    await expect(
+      hero(page).getByRole('button', { name: '第 1 张，共 3 张' }),
+    ).toHaveAttribute('aria-current', 'true')
+
+    // 键盘：焦点在轮播内时方向键切换
+    await next.focus()
+    await page.keyboard.press('ArrowRight')
+    await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张')
+    await page.keyboard.press('ArrowLeft')
+    await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
+  })
+
+  test('触控滑动切换轮播项', async ({ page }) => {
+    await seedHome(page)
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+
+    const viewport = hero(page).locator('.home-hero__viewport')
+    const box = await viewport.boundingBox()
+    expect(box).not.toBeNull()
+    const y = box!.y + box!.height / 2
+    const startX = box!.x + box!.width * 0.8
+
+    // 向左滑 → 下一张
+    await page.mouse.move(startX, y)
+    await page.mouse.down()
+    await page.mouse.move(box!.x + box!.width * 0.2, y, { steps: 8 })
+    await page.mouse.up()
+    await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张')
+
+    // 向右滑 → 上一张
+    await page.mouse.move(box!.x + box!.width * 0.2, y)
+    await page.mouse.down()
+    await page.mouse.move(startX, y, { steps: 8 })
+    await page.mouse.up()
+    await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
+  })
+
+  test('自动轮播默认关闭：无暂停按钮且停留首项', async ({ page }) => {
+    await seedHome(page, { autoRotate: false, autoRotateIntervalMs: 6_000 })
+    await page.goto('/')
+
+    await expect(hero(page).getByRole('button', { name: /自动轮播/ })).toHaveCount(0)
+    await page.waitForTimeout(2_000)
+    await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
+  })
+
+  test('自动轮播开启：按间隔切换、可见暂停、悬停暂停', async ({ page }) => {
+    test.setTimeout(60_000)
+    await seedHome(page, { autoRotate: true, autoRotateIntervalMs: 6_000 })
+    await page.goto('/')
+
+    const pause = hero(page).getByRole('button', { name: '暂停自动轮播' })
+    await expect(pause).toBeVisible()
+
+    // 悬停暂停：停留在第一张
+    await hero(page).hover()
+    await page.waitForTimeout(7_000)
+    await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
+
+    // 移开后按间隔自动切换
+    await page.mouse.move(10, 10)
+    await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张', {
+      timeout: 8_000,
+    })
+
+    // 可见暂停：点击后不再自动切换
+    await pause.click()
+    await expect(hero(page).getByRole('button', { name: '继续自动轮播' }))
+      .toHaveAttribute('aria-pressed', 'true')
+    await page.waitForTimeout(7_000)
+    await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张')
+  })
+
+  test('reduced-motion 下自动轮播不启动', async ({ page }) => {
+    await seedHome(page, { autoRotate: true, autoRotateIntervalMs: 6_000 })
+    const session = await page.context().newCDPSession(page)
+    await session.send('Emulation.setEmulatedMedia', {
+      features: [{ name: 'prefers-reduced-motion', value: 'reduce' }],
+    })
+
+    await page.goto('/')
+    await page.waitForTimeout(7_000)
+    await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
+  })
+
+  test('无 JS 时第一项完整可用', async ({ browser, page }) => {
+    await seedHome(page, { tagline: '不只做小狗毛（测试）' })
+    const context = await browser.newContext({ javaScriptEnabled: false })
+    const plainPage = await context.newPage()
+    try {
+      await plainPage.goto('/')
+      const img = plainPage.getByRole('img', { name: '奶盖的首页展示照' })
+      await expect(img).toBeVisible()
+      await expect(plainPage.getByRole('heading', { level: 1 })).toBeVisible()
+      await expect(plainPage.getByText('不只做小狗毛（测试）')).toBeVisible()
+      await expect(
+        plainPage.getByRole('link', { name: '查看这套作品' }),
+      ).toHaveAttribute('href', '/works/e2e-public-home-naigai')
+    }
+    finally {
+      await context.close()
+    }
+  })
+
+  test('无启用轮播项时首屏退化为文字区，不出控件', async ({ page }) => {
+    await seedHome(page, { tagline: '安静的工作室' }, [])
+    await page.goto('/')
+
+    await expect(hero(page).getByRole('heading', { level: 1, name: '有点小狗工作室' }))
+      .toBeVisible()
+    await expect(hero(page).getByText('安静的工作室')).toBeVisible()
+    await expect(hero(page).getByRole('button', { name: '下一张' })).toHaveCount(0)
+    await expect(hero(page).locator('img')).toHaveCount(0)
+  })
+
+  test('首页 CLS < 0.1', async ({ page }) => {
+    await seedHome(page)
+    await page.goto('/')
+    const cls = await page.evaluate(() => new Promise<number>((resolve) => {
+      let value = 0
+      const observer = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          const shift = entry as PerformanceEntry & { hadRecentInput?: boolean, value?: number }
+          if (!shift.hadRecentInput && typeof shift.value === 'number') {
+            value += shift.value
+          }
+        }
+      })
+      observer.observe({ type: 'layout-shift', buffered: true })
+      window.setTimeout(() => {
+        observer.disconnect()
+        resolve(value)
+      }, 2_500)
+    }))
+    expect(cls).toBeLessThan(0.1)
+  })
 })
 
-test('featured track scrolls with controls and keyboard', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto('/')
+test.describe('T20 首页精选轨道', () => {
+  test('真实精选按人工顺序展示，非精选不出现，不自动播放', async ({ page }) => {
+    await seedHome(page)
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
 
-  const track = page.getByTestId('featured-track')
-  await expect(track).toBeVisible()
+    const track = page.getByTestId('featured-track')
+    await expect(track).toBeVisible()
 
-  const rail = track.getByRole('group', { name: '精选作品横向轨道' })
-  const nextButton = track.getByRole('button', { name: '下一批作品' })
+    const slugs = await track.locator('[data-work-slug]').evaluateAll(
+      cards => cards.map(card => card.getAttribute('data-work-slug')),
+    )
+    expect(slugs).toEqual([
+      'e2e-public-home-naigai',
+      'e2e-public-home-lanmei',
+      'e2e-public-home-zhima',
+    ])
 
-  // 等待水合完成后，下一批按钮应把轨道推离起点。
-  await expect(async () => {
-    await nextButton.click()
-    await page.waitForTimeout(500)
-    const scrolled = await rail.evaluate(element => element.scrollLeft)
-    expect(scrolled).toBeGreaterThan(0)
-  }).toPass({ timeout: 20_000 })
+    // 不自动播放：无交互时滚动位置保持为 0
+    await page.waitForTimeout(1_500)
+    const scrollLeft = await track.locator('.featured-track__rail').evaluate(
+      rail => rail.scrollLeft,
+    )
+    expect(scrollLeft).toBe(0)
 
-  const scrolled = await rail.evaluate(element => element.scrollLeft)
+    // 箭头与键盘可用（T08 交互保留）
+    await expect(track.getByRole('button', { name: '上一批作品' })).toBeVisible()
+    await expect(track.getByRole('button', { name: '下一批作品' })).toBeVisible()
+  })
 
-  await rail.focus()
-  await page.keyboard.press('ArrowLeft')
-  await page.waitForTimeout(600)
+  test('无精选作品时整个精选区隐藏', async ({ page }) => {
+    await seedPublicCatalog(page, WORKS.map(work => ({ ...work, featured: false })))
+    await seedHomeSlides(page, SLIDES)
+    await page.goto('/')
 
-  const returned = await rail.evaluate(element => element.scrollLeft)
-  expect(returned).toBeLessThan(scrolled)
-})
-
-test('featured links are plain work links without autoplay', async ({ page }) => {
-  await page.goto('/')
-
-  const featured = page.getByTestId('featured-works')
-  const links = featured.locator('a[href^="/works/"]')
-  expect(await links.count()).toBe(6)
-
-  const firstHref = await links.first().getAttribute('href')
-  expect(firstHref).toMatch(/^\/works\/[a-z0-9-]+$/)
+    await expect(page.getByTestId('featured-works')).toHaveCount(0)
+    await expect(page.getByTestId('featured-track')).toHaveCount(0)
+  })
 })
