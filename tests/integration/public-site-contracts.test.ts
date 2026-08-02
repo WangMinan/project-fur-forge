@@ -24,6 +24,7 @@ import {
 } from '../../server/utils/database'
 import {
   createHeroSlide,
+  createHeroSlidePreview,
   deleteHeroSlide,
   disableHeroSlide,
   getAdminHome,
@@ -332,6 +333,31 @@ describe('T19/T20 public repository contracts', () => {
     }, NOW + sequence++)
     const slide = created.slides[0]!
     expect(slide).toMatchObject({ enabled: false, missingVariantCount: 12 })
+    const publicObjectCount = storage.publicObjects.size
+    const processCallCount = storage.processCalls.length
+    const preview = await createHeroSlidePreview(
+      sqlite,
+      storage,
+      slide.id,
+      created.version,
+      NOW + sequence++,
+    )
+    expect(preview).toMatchObject({
+      landscape: { width: 768, height: 432 },
+      portrait: { width: 480, height: 853 },
+    })
+    expect(preview.landscape.url).toMatch(/^https:\/\/private-download\.test\//u)
+    expect(preview.portrait.expiresAt).toBe(preview.landscape.expiresAt)
+    expect(storage.processCalls.slice(processCallCount)).toHaveLength(2)
+    expect(storage.processCalls.slice(processCallCount).every(
+      call => call.process.includes('g_center')
+        && call.objectKey.includes('/preview/home/'),
+    )).toBe(true)
+    expect(storage.publicObjects.size).toBe(publicObjectCount)
+    expect(getAdminHome(sqlite).slides[0]).toMatchObject({
+      enabled: false,
+      missingVariantCount: 12,
+    })
     sqlite.prepare(`
       UPDATE works SET publication_status = 'unpublished' WHERE id = ?
     `).run(linked.workId)

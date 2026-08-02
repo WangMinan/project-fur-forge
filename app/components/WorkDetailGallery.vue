@@ -1,32 +1,28 @@
 <script setup lang="ts">
-import type { FixtureMedia } from '~~/shared/fixtures/visual-home'
+import type { PublicWorkGalleryItemDto } from '~~/shared/types/contracts'
 
 /**
- * 作品详情图集：主图 + 有序缩略图。
+ * 作品详情图集：主图 + 有序缩略图，只消费公开 detail 衍生图。
  * SSR 直接渲染第一张；切换仅替换主图，不自动播放、不引入覆盖层。
  */
 const props = defineProps<{
-  gallery: FixtureMedia[]
+  gallery: PublicWorkGalleryItemDto[]
   workName: string
 }>()
 
 const activeIndex = ref(0)
-const activeMedia = computed(() => props.gallery[activeIndex.value] ?? props.gallery[0])
+const activeItem = computed(() => props.gallery[activeIndex.value] ?? props.gallery[0])
 </script>
 
 <template>
   <div class="work-gallery" data-testid="work-gallery">
     <div class="work-gallery__stage">
-      <ResponsiveAsset
-        v-if="activeMedia"
-        :key="activeMedia.src"
+      <ResponsivePicture
+        v-if="activeItem"
+        :key="activeItem.assetId"
         class="work-gallery__image"
-        :src="activeMedia.src"
-        :alt="activeMedia.alt"
-        :width="activeMedia.width"
-        :height="activeMedia.height"
-        :focal-desktop="activeMedia.focal.desktop"
-        :focal-mobile="activeMedia.focal.mobile"
+        :sources="activeItem.sources"
+        :alt="activeItem.alt"
         loading="eager"
         fetchpriority="high"
         sizes="(min-width: 1024px) 58vw, 100vw"
@@ -41,20 +37,16 @@ const activeMedia = computed(() => props.gallery[activeIndex.value] ?? props.gal
     >
       <button
         v-for="(media, index) in gallery"
-        :key="media.src"
+        :key="media.assetId"
         type="button"
         class="work-gallery__thumb"
         :aria-pressed="index === activeIndex"
         :aria-label="`查看第 ${index + 1} 张，共 ${gallery.length} 张`"
         @click="activeIndex = index"
       >
-        <ResponsiveAsset
-          :src="media.src"
+        <ResponsivePicture
+          :sources="media.sources"
           :alt="index === activeIndex ? media.alt : ''"
-          :width="media.width"
-          :height="media.height"
-          :focal-desktop="media.focal.desktop"
-          :focal-mobile="media.focal.mobile"
           sizes="96px"
         />
       </button>
@@ -68,10 +60,6 @@ const activeMedia = computed(() => props.gallery[activeIndex.value] ?? props.gal
   overflow: hidden;
 }
 
-.work-gallery__image {
-  width: 100%;
-}
-
 /*
  * PC 端限制主图高度：纵向作品图应在一屏内完整可见，
  * 宽度随原始纵横比自适应、水平居中，不做裁切。
@@ -82,8 +70,14 @@ const activeMedia = computed(() => props.gallery[activeIndex.value] ?? props.gal
     justify-content: center;
   }
 
-  .work-gallery__image {
+  .work-gallery__stage :deep(.work-gallery__image) {
     width: auto;
+    max-width: 100%;
+  }
+
+  .work-gallery__stage :deep(.responsive-picture__image) {
+    width: auto;
+    height: auto;
     max-width: 100%;
     max-height: clamp(20rem, calc(100vh - 15rem), 46rem);
     margin: 0 auto;
@@ -107,9 +101,14 @@ const activeMedia = computed(() => props.gallery[activeIndex.value] ?? props.gal
   overflow: hidden;
 }
 
-.work-gallery__thumb :deep(.responsive-asset) {
+.work-gallery__thumb :deep(.responsive-picture) {
   aspect-ratio: 1;
   height: 100%;
+}
+
+.work-gallery__thumb :deep(.responsive-picture__image) {
+  height: 100%;
+  object-fit: cover;
 }
 
 .work-gallery__thumb:hover {

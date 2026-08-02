@@ -1,6 +1,93 @@
 import { expect, test } from '@playwright/test'
 import { adminBaseURL, loginAsAdmin } from './helpers/auth'
 import { createWorkViaApi } from './helpers/admin-work'
+import { seedHomeSlides, seedPublicCatalog } from './helpers/public-catalog'
+import type { SeedWork } from './helpers/public-catalog'
+
+/** T09 公开页用例的种子目录：真实已发布投影，经控制面落库。 */
+const T09_WORKS: SeedWork[] = [
+  {
+    slug: 'e2e-public-t09-naigai',
+    characterName: '奶盖',
+    species: '布偶猫',
+    suitType: 'full',
+    purpose: 'showcase',
+    featured: true,
+    sortOrder: 0,
+    photos: [
+      { alt: '奶盖的出厂照一' },
+      { alt: '奶盖的出厂照二' },
+      { alt: '奶盖的出厂照三' },
+      { alt: '奶盖的出厂照四' },
+    ],
+  },
+  {
+    slug: 'e2e-public-t09-lanmei',
+    characterName: '蓝湄',
+    species: '北极狐',
+    suitType: 'full',
+    purpose: 'adoption',
+    adoptionMethod: 'event_drop',
+    businessStatus: 'available',
+    priceMinorUnits: 1_560_000,
+    featured: true,
+    sortOrder: 1,
+    photos: [{ alt: '蓝湄的出厂照' }],
+  },
+  {
+    slug: 'e2e-public-t09-zhima',
+    characterName: '芝麻',
+    species: '哈士奇',
+    suitType: 'full',
+    purpose: 'commission',
+    ownerDisplay: '阿灰',
+    featured: true,
+    sortOrder: 2,
+    photos: [{ alt: '芝麻的出厂照' }],
+  },
+  {
+    slug: 'e2e-public-t09-doudou',
+    characterName: '豆豆',
+    species: '柴犬',
+    suitType: 'partial',
+    purpose: 'commission',
+    featured: true,
+    sortOrder: 3,
+    photos: [{ alt: '豆豆的出厂照' }],
+  },
+  {
+    slug: 'e2e-public-t09-lizi',
+    characterName: '栗子',
+    species: '小熊',
+    suitType: 'partial',
+    purpose: 'showcase',
+    featured: true,
+    sortOrder: 4,
+    photos: [{ alt: '栗子的出厂照' }],
+  },
+]
+
+function seedT09Catalog(page: import('@playwright/test').Page) {
+  return seedPublicCatalog(page, T09_WORKS)
+}
+
+/** 首页轮播种子：两张启用项，第二张关联蓝湄。 */
+function seedT09Home(page: import('@playwright/test').Page) {
+  return seedHomeSlides(page, [
+    {
+      alt: '奶盖的首页展示照',
+      sortOrder: 0,
+      enabled: true,
+      linkedWorkSlug: 'e2e-public-t09-naigai',
+    },
+    {
+      alt: '蓝湄的首页展示照',
+      sortOrder: 1,
+      enabled: true,
+      linkedWorkSlug: 'e2e-public-t09-lanmei',
+    },
+  ])
+}
 
 /**
  * T09 界面修补回归（UI-01 至 UI-07，见 implementation/notes/T09-UI-2026-07-30.md）：
@@ -75,16 +162,15 @@ test.describe('UI-02 首页 Hero 确定性对比度', () => {
 
   const HERO_TARGETS: ContrastTarget[] = [
     { selector: '.public-header__brand', label: '头部品牌' },
-    { selector: '.hero-media__eyebrow', label: '英文眉标' },
-    { selector: '.hero-media__title', label: '主标题', largeText: true },
-    { selector: '.hero-media__tagline', label: '口号' },
-    { selector: '.hero-media__action', label: '主行动' },
+    { selector: '.home-hero__eyebrow', label: '英文眉标' },
+    { selector: '.home-hero__title', label: '主标题', largeText: true },
+    { selector: '.home-hero__tagline', label: '口号' },
+    { selector: '.home-hero__action', label: '主行动' },
   ]
 
-  // 仅桌面可见的目标（移动视口下桌面导航与滚动提示隐藏，改测菜单按钮）。
+  // 仅桌面可见的目标（移动视口下桌面导航隐藏，改测菜单按钮）。
   const DESKTOP_ONLY_TARGETS: ContrastTarget[] = [
     { selector: '.public-header__nav a[href="/works"]', label: '导航链接' },
-    { selector: '.hero-media__scroll-hint', label: '向下浏览提示' },
   ]
 
   /**
@@ -147,31 +233,41 @@ test.describe('UI-02 首页 Hero 确定性对比度', () => {
     }
   }
 
-  test('真实样张：桌面与手机视口的导航、口号与行动附近均满足 AA', async ({ page }) => {
+  test('真实轮播图：桌面与手机视口的导航、口号与行动附近均满足 AA', async ({ page }) => {
+    await seedT09Catalog(page)
+    await seedT09Home(page)
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
     await page.waitForLoadState('networkidle')
-    await expectHeroContrast(page, '1440×900 真实样张', DESKTOP_ONLY_TARGETS)
+    await expectHeroContrast(page, '1440×900 真实轮播', DESKTOP_ONLY_TARGETS)
 
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/')
     await page.waitForLoadState('networkidle')
-    await expectHeroContrast(page, '390×844 真实样张')
+    await expectHeroContrast(page, '390×844 真实轮播')
     // 手机菜单按钮为图形控件，按非文本 3:1 验收
     const menuRatio = await measureContrast(page, '.public-header__menu')
     expect(menuRatio, `手机菜单按钮对比度 ${menuRatio.toFixed(2)}`).toBeGreaterThanOrEqual(3)
   })
 
-  test('最不利纯白底图：替换 Hero 图片后白字仍满足 AA', async ({ page }) => {
+  test('最不利纯白底图：替换首项轮播图片后白字仍满足 AA', async ({ page }) => {
+    await seedT09Catalog(page)
+    await seedT09Home(page)
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
     await page.waitForLoadState('networkidle')
 
-    await page.locator('.hero-media__image').evaluate((image: HTMLImageElement) => {
+    // <picture> 的 <source> srcset 优先于 img.src，必须先移除 source 再替换。
+    await page.locator('.home-hero__slide picture').evaluate((picture: HTMLPictureElement) => {
+      for (const source of Array.from(picture.querySelectorAll('source'))) {
+        source.remove()
+      }
+      const image = picture.querySelector('img')!
+      image.removeAttribute('srcset')
       image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"><rect width="1920" height="1080" fill="%23ffffff"/></svg>'
     })
     await page.waitForFunction(() => {
-      const image = document.querySelector<HTMLImageElement>('.hero-media__image')
+      const image = document.querySelector<HTMLImageElement>('.home-hero__slide img')
       return image?.complete && image.naturalWidth > 0
     })
     await page.waitForTimeout(150)
@@ -182,45 +278,47 @@ test.describe('UI-02 首页 Hero 确定性对比度', () => {
 
 test.describe('UI-03 动态参数响应', () => {
   test('详情→详情：内容、图集、价格、SEO 与 related works 全部更新', async ({ page }) => {
-    await page.goto('/works/naigai')
+    await seedT09Catalog(page)
+    await page.goto('/works/e2e-public-t09-naigai')
     await page.waitForLoadState('networkidle')
-    await expect(page.getByTestId('work-detail')).toHaveAttribute('data-work-slug', 'naigai')
+    await expect(page.getByTestId('work-detail')).toHaveAttribute('data-work-slug', 'e2e-public-t09-naigai')
     await expect(page.getByRole('button', { name: /查看第 \d 张，共 4 张/ })).toHaveCount(4)
     await expect(page.getByTestId('work-price')).toHaveCount(0)
 
-    const target = page.locator('.work-detail__related-grid a[href="/works/blueberry"]')
+    const target = page.locator('.work-detail__related-grid a[href="/works/e2e-public-t09-lanmei"]')
     await expect(target).toBeVisible()
     await target.click()
 
-    await expect(page).toHaveURL(/\/works\/blueberry$/)
-    await expect(page).toHaveTitle(/蓝莓 · 作品展示 · 有点小狗工作室/)
-    await expect(page.getByRole('heading', { level: 1, name: '蓝莓' })).toBeVisible()
-    await expect(page.getByTestId('work-detail')).toHaveAttribute('data-work-slug', 'blueberry')
-    // 奶盖无价格、蓝莓有 CNY 价格：价格区随作品切换出现
+    await expect(page).toHaveURL(/\/works\/e2e-public-t09-lanmei$/)
+    await expect(page).toHaveTitle(/蓝湄 · 作品展示 · 有点小狗工作室/)
+    await expect(page.getByRole('heading', { level: 1, name: '蓝湄' })).toBeVisible()
+    await expect(page.getByTestId('work-detail')).toHaveAttribute('data-work-slug', 'e2e-public-t09-lanmei')
+    // 奶盖无价格、蓝湄有 CNY 价格：价格区随作品切换出现
     await expect(page.getByTestId('work-price')).toBeVisible()
     await expect(page.getByText('¥15,600')).toBeVisible()
-    // 蓝莓为单图作品：缩略图行整体消失
+    // 蓝湄为单图作品：缩略图行整体消失
     await expect(page.getByRole('button', { name: /查看第 \d 张，共 \d 张/ })).toHaveCount(0)
     // related works 不再包含当前作品自身
-    await expect(page.locator('.work-detail__related-grid a[href="/works/blueberry"]')).toHaveCount(0)
+    await expect(page.locator('.work-detail__related-grid a[href="/works/e2e-public-t09-lanmei"]')).toHaveCount(0)
     // SEO 元信息同步更新
-    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /蓝莓/)
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /蓝湄/)
 
     // 再从 related works 进入芝麻（委托、无价格）：价格区随之消失
-    await page.locator('.work-detail__related-grid a[href="/works/zhima"]').click()
-    await expect(page).toHaveURL(/\/works\/zhima$/)
+    await page.locator('.work-detail__related-grid a[href="/works/e2e-public-t09-zhima"]').click()
+    await expect(page).toHaveURL(/\/works\/e2e-public-t09-zhima$/)
     await expect(page).toHaveTitle(/芝麻 · 作品展示/)
     await expect(page.getByRole('heading', { level: 1, name: '芝麻' })).toBeVisible()
-    await expect(page.getByTestId('work-detail')).toHaveAttribute('data-work-slug', 'zhima')
+    await expect(page.getByTestId('work-detail')).toHaveAttribute('data-work-slug', 'e2e-public-t09-zhima')
     await expect(page.getByTestId('work-price')).toHaveCount(0)
-    await expect(page.locator('.work-detail__related-grid a[href="/works/zhima"]')).toHaveCount(0)
+    await expect(page.locator('.work-detail__related-grid a[href="/works/e2e-public-t09-zhima"]')).toHaveCount(0)
   })
 
   test('详情→不存在 slug 进入 404 错误页，再进有效 slug 完整恢复', async ({ page }) => {
-    await page.goto('/works/blueberry')
+    await seedT09Catalog(page)
+    await page.goto('/works/e2e-public-t09-lanmei')
     await page.waitForLoadState('networkidle')
 
-    // dev 下通过应用内 router 制造同组件实例参数切换（不经整页刷新）
+    // 通过应用内 router 制造同组件实例参数切换（不经整页刷新）
     const push = (to: string) => page.evaluate((path) => {
       const root = document.querySelector('#__nuxt') as HTMLElement & {
         __vue_app__: { config: { globalProperties: { $router: { push: (to: string) => void } } } }
@@ -232,10 +330,10 @@ test.describe('UI-03 动态参数响应', () => {
     await expect(page).toHaveTitle(/404 · 页面未找到/)
     await expect(page.getByRole('heading', { level: 1, name: '页面未找到' })).toBeVisible()
 
-    await push('/works/naigai')
+    await push('/works/e2e-public-t09-naigai')
     await expect(page).toHaveTitle(/奶盖 · 作品展示/)
     await expect(page.getByRole('heading', { level: 1, name: '奶盖' })).toBeVisible()
-    await expect(page.getByTestId('work-detail')).toHaveAttribute('data-work-slug', 'naigai')
+    await expect(page.getByTestId('work-detail')).toHaveAttribute('data-work-slug', 'e2e-public-t09-naigai')
   })
 
   test('后台编辑 id→id：表单重建、dirty 基线重置（真实接口数据）', async ({ page }) => {
@@ -376,6 +474,7 @@ test.describe('UI-06 reduced-motion 轨道', () => {
       features: [{ name: 'prefers-reduced-motion', value: 'reduce' }],
     })
 
+    await seedT09Catalog(page)
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
     const track = page.getByTestId('featured-track')
@@ -393,6 +492,7 @@ test.describe('UI-06 reduced-motion 轨道', () => {
 
   test('正常动效偏好保持 smooth 滚动', async ({ page }) => {
     await recordScrollBehaviors(page)
+    await seedT09Catalog(page)
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
     const next = page.getByTestId('featured-track').getByRole('button', { name: '下一批作品' })

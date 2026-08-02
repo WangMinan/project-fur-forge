@@ -1,12 +1,9 @@
-import type { PublicWorkDto } from '../types/contracts'
-import { PROJECT_NAME } from '../constants/project'
-
 /**
- * T05 首页生产视觉样张的统一类型化夹具。
+ * 首页静态内容夹具：业务入口路由卡与营业状态行。
  *
- * 业务字段通过 `PublicWorkDto` 契约校验（见 tests/unit/visual-fixtures.test.ts）；
- * 媒体字段描述仓库内确定性夹具图片（public/fixtures/），不引入任何网络素材。
- * EXT-01 正式素材门禁通过后，由真实公开投影替换本模块。
+ * T20 起，首屏轮播与精选轨道改由公开投影（/api/public/v1/home、
+ * /api/public/v1/works/featured）直出；本模块只保留尚未接入后台的
+ * 静态文案区块。路由卡插图为仓库内确定性 SVG，不引入网络素材。
  */
 
 export interface FixtureFocalPoint {
@@ -21,12 +18,6 @@ export interface FixtureMedia {
   width: number
   height: number
   focal: FixtureFocalPoint
-}
-
-export interface VisualWorkFixture {
-  dto: PublicWorkDto
-  /** recipe-v1 `card`：3:4。 */
-  card: FixtureMedia
 }
 
 export interface BusinessStatusFixture {
@@ -52,162 +43,6 @@ const fixtureMedia = (
   height: number,
   focal: FixtureFocalPoint = { desktop: '50% 42%', mobile: '50% 38%' },
 ): FixtureMedia => ({ src, alt, width, height, focal })
-
-export const heroFixture = {
-  studioName: PROJECT_NAME,
-  englishName: 'dite dog',
-  tagline: '不只做小狗毛',
-  action: {
-    label: '浏览作品展示',
-    href: '/works',
-  },
-  scrollHint: '向下浏览',
-  // 内部开发样张（materials/picture-examples/领养/小狗/小狗-2-横版.jpg 的 16:9 衍生，
-  // scripts/prepare-visual-assets.py 生成）；EXT-01 通过前不代表正式上线授权。
-  media: fixtureMedia(
-    '/fixtures/samples/hero-dog-overhead.jpg',
-    '白色小狗全装角色趴在浅色地板上的俯视照片（内部开发样张）',
-    1920,
-    1080,
-    { desktop: '50% 46%', mobile: '45% 40%' },
-  ),
-} as const
-
-export const visualWorkFixtures: VisualWorkFixture[] = [
-  {
-    dto: {
-      id: 'b943ee7e-0e9a-4944-a36b-ed61b8b9a640',
-      version: 1,
-      slug: 'blueberry',
-      characterName: '蓝莓',
-      species: '北极狐',
-      suitType: 'full',
-      ownerDisplay: '不公开',
-      featureTags: ['纯海绵头', '内置风扇', '全装掉落', '即买即穿'],
-      purpose: 'adoption',
-      adoptionMethod: 'event_drop',
-      businessStatus: 'available',
-      price: {
-        currency: 'CNY',
-        minorUnits: 1_560_000,
-      },
-    },
-    card: fixtureMedia(
-      '/fixtures/works/card-blueberry.svg',
-      '蓝白北极狐全装「蓝莓」出厂照',
-      1200,
-      1600,
-    ),
-  },
-  {
-    dto: {
-      id: 'd12df17a-fbc0-451b-a3b5-1f401342a91b',
-      version: 1,
-      slug: 'zhima',
-      characterName: '芝麻',
-      species: '哈士奇',
-      suitType: 'full',
-      ownerDisplay: '阿灰',
-      featureTags: ['可动颚', '磁吸尾'],
-      purpose: 'commission',
-    },
-    card: fixtureMedia(
-      '/fixtures/works/card-zhima.svg',
-      '深灰哈士奇全装「芝麻」出厂照',
-      1200,
-      1600,
-      { desktop: '50% 36%', mobile: '50% 34%' },
-    ),
-  },
-  {
-    dto: {
-      id: '8a6fee91-4ae0-40ea-86cb-8357f47ecb2f',
-      version: 1,
-      slug: 'doudou',
-      characterName: '豆豆',
-      species: '柴犬',
-      suitType: 'partial',
-      ownerDisplay: '不公开',
-      featureTags: ['半装', '含头爪尾'],
-      purpose: 'commission',
-    },
-    card: fixtureMedia(
-      '/fixtures/works/card-doudou.svg',
-      '赤色柴犬半装「豆豆」出厂照',
-      1200,
-      1600,
-    ),
-  },
-  {
-    dto: {
-      id: '55fcae22-d514-42e5-8d59-037ae214f8b5',
-      version: 1,
-      slug: 'keke',
-      characterName: '可可',
-      species: '贵宾犬',
-      suitType: 'full',
-      ownerDisplay: '不公开',
-      featureTags: ['卷毛造型', '轻量内衬'],
-      purpose: 'showcase',
-    },
-    card: fixtureMedia(
-      '/fixtures/works/card-keke.svg',
-      '巧克力色贵宾犬全装「可可」出厂照',
-      1200,
-      1600,
-      { desktop: '50% 40%', mobile: '50% 40%' },
-    ),
-  },
-  {
-    dto: {
-      id: '3cb1db83-c2c5-42a1-8e5e-a61cb97d2422',
-      version: 1,
-      slug: 'lizi',
-      characterName: '栗子',
-      species: '小熊',
-      suitType: 'partial',
-      ownerDisplay: '果核',
-      featureTags: ['半装', '圆耳造型'],
-      purpose: 'showcase',
-    },
-    card: fixtureMedia(
-      '/fixtures/works/card-lizi.svg',
-      '栗棕色小熊半装「栗子」出厂照',
-      1200,
-      1600,
-    ),
-  },
-  {
-    dto: {
-      id: 'dcb346e1-a5e7-4333-95b2-830284c4097e',
-      version: 1,
-      slug: 'naigai',
-      characterName: '奶盖',
-      species: '布偶猫',
-      suitType: 'full',
-      ownerDisplay: '不公开',
-      featureTags: ['蓬松尾', '可拆围脖'],
-      purpose: 'showcase',
-    },
-    card: fixtureMedia(
-      '/fixtures/works/card-naigai.svg',
-      '奶油色布偶猫全装「奶盖」出厂照',
-      1200,
-      1600,
-      { desktop: '50% 38%', mobile: '50% 36%' },
-    ),
-  },
-]
-
-/** 首页精选：3–6 件、人工顺序，不自动播放。 */
-export const featuredWorkSlugs = [
-  'blueberry',
-  'zhima',
-  'doudou',
-  'keke',
-  'lizi',
-  'naigai',
-] as const
 
 export const businessStatusFixtures: BusinessStatusFixture[] = [
   {

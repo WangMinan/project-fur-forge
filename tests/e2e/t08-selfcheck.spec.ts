@@ -1,17 +1,59 @@
 import { expect, test } from '@playwright/test'
 import { adminBaseURL, loginAsAdmin } from './helpers/auth'
 import { createWorkViaApi } from './helpers/admin-work'
+import { seedHomeSlides, seedPublicCatalog } from './helpers/public-catalog'
 
 /**
  * T08 评审自查（自动化部分）：
- * - 三视口 × 五个关键页面无横向溢出
+ * - 三视口 × 关键页面无横向溢出
  * - 关键文本颜色对比度 ≥ 4.5:1
  * - prefers-reduced-motion 生效（管理端控件动效归零、公开卡片悬停不放大）
  * - /works 与详情页 CLS < 0.1
  * - 键盘：skip link 为首焦点，图集缩略图可 Tab 到达
+ *
+ * T19/T20 起公开页消费真实投影：公开页面用例先经控制面落库种子数据。
  */
 
-const BLUEBERRY_ID = 'b943ee7e-0e9a-4944-a36b-ed61b8b9a640'
+const DETAIL_SLUG = 'e2e-public-t08-lanmei'
+
+async function seedPublicPages(page: import('@playwright/test').Page) {
+  await seedPublicCatalog(page, [
+    {
+      slug: 'e2e-public-t08-lanmei',
+      characterName: '蓝湄',
+      species: '北极狐',
+      suitType: 'full',
+      purpose: 'adoption',
+      adoptionMethod: 'event_drop',
+      businessStatus: 'available',
+      priceMinorUnits: 1_560_000,
+      featured: true,
+      sortOrder: 0,
+      photos: [
+        { alt: '蓝湄的出厂照一', width: 3200, height: 2400 },
+        { alt: '蓝湄的出厂照二', width: 2400, height: 3200 },
+      ],
+    },
+    {
+      slug: 'e2e-public-t08-zhima',
+      characterName: '芝麻',
+      species: '哈士奇',
+      suitType: 'full',
+      purpose: 'commission',
+      featured: true,
+      sortOrder: 1,
+      photos: [{ alt: '芝麻的出厂照' }],
+    },
+  ])
+  await seedHomeSlides(page, [
+    {
+      alt: '蓝湄的首页横版展示照',
+      sortOrder: 0,
+      enabled: true,
+      linkedWorkSlug: 'e2e-public-t08-lanmei',
+    },
+  ])
+}
 
 const VIEWPORTS = [
   { width: 390, height: 844, name: '390x844' },
@@ -22,15 +64,15 @@ const VIEWPORTS = [
 const PAGES = [
   { name: 'home', url: '/', host: 'public' },
   { name: 'works-list', url: '/works', host: 'public' },
-  { name: 'work-detail', url: '/works/blueberry', host: 'public' },
+  { name: 'work-detail', url: `/works/${DETAIL_SLUG}`, host: 'public' },
   { name: 'admin-works', url: `${adminBaseURL}/admin/works`, host: 'admin' },
-  { name: 'admin-editor', url: `${adminBaseURL}/admin/works/${BLUEBERRY_ID}`, host: 'admin' },
 ] as const
 
 for (const viewport of VIEWPORTS) {
   for (const target of PAGES) {
     test(`无横向溢出：${target.name} @ ${viewport.name}`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height })
+      await seedPublicPages(page)
       if (target.host === 'admin') {
         await loginAsAdmin(page)
       }
@@ -46,6 +88,20 @@ for (const viewport of VIEWPORTS) {
       expect(overflow).toBeLessThanOrEqual(1)
     })
   }
+
+  test(`无横向溢出：admin-editor @ ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height })
+    await loginAsAdmin(page)
+    const work = await createWorkViaApi(page, { characterName: '溢出验证' })
+    await page.goto(`${adminBaseURL}/admin/works/${work.id}`)
+    await page.waitForSelector('.editor-card')
+    await page.waitForLoadState('networkidle')
+
+    const overflow = await page.evaluate(() =>
+      document.scrollingElement!.scrollWidth - document.documentElement.clientWidth,
+    )
+    expect(overflow).toBeLessThanOrEqual(1)
+  })
 }
 
 function relativeLuminance(rgb: [number, number, number]) {
@@ -72,6 +128,7 @@ function parseRgb(value: string): [number, number, number] {
 
 test.describe('对比度抽查（AA 4.5:1）', () => {
   test('公开站：正文/次要文字/页脚/筛选文字', async ({ page }) => {
+    await seedPublicPages(page)
     await page.goto('/works')
     await page.waitForLoadState('networkidle')
 
@@ -222,6 +279,7 @@ test.describe('减少动态效果', () => {
 
   test('公开卡片悬停不放大', async ({ page }) => {
     await emulateReducedMotion(page)
+    await seedPublicPages(page)
     await page.goto('/works')
     await page.waitForLoadState('networkidle')
 
@@ -238,9 +296,10 @@ test.describe('减少动态效果', () => {
 test.describe('CLS', () => {
   for (const target of [
     { name: 'works-list', url: '/works' },
-    { name: 'work-detail', url: '/works/naigai' },
+    { name: 'work-detail', url: `/works/${DETAIL_SLUG}` },
   ]) {
     test(`${target.name} CLS < 0.1`, async ({ page }) => {
+      await seedPublicPages(page)
       await page.goto(target.url)
       const cls = await page.evaluate(() => new Promise<number>((resolve) => {
         let value = 0
@@ -265,6 +324,7 @@ test.describe('CLS', () => {
 
 test.describe('键盘可达性', () => {
   test('公开站首焦点为跳到主要内容，随后进入导航', async ({ page }) => {
+    await seedPublicPages(page)
     await page.goto('/works')
     await page.keyboard.press('Tab')
     await expect(page.getByRole('link', { name: '跳到主要内容' })).toBeFocused()
@@ -274,10 +334,11 @@ test.describe('键盘可达性', () => {
   })
 
   test('详情页图集缩略图可 Tab 到达并响应 Enter', async ({ page }) => {
-    await page.goto('/works/naigai')
+    await seedPublicPages(page)
+    await page.goto(`/works/${DETAIL_SLUG}`)
     await page.waitForLoadState('networkidle')
 
-    const secondThumb = page.getByRole('button', { name: '查看第 2 张，共 4 张' })
+    const secondThumb = page.getByRole('button', { name: '查看第 2 张，共 2 张' })
     await secondThumb.focus()
     await expect(secondThumb).toBeFocused()
     await page.keyboard.press('Enter')

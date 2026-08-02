@@ -1,8 +1,8 @@
 <script setup lang="ts">
 // 管理端壳：窄屏为顶栏 + 横向导航，≥1280px 为固定侧栏。
-// 仅包含已实现入口（作品、站点品牌、账号）；未实现的项目不提前出现。
+// 仅包含已实现入口（作品、首页、站点品牌、账号）；未实现的项目不提前出现。
 withDefaults(defineProps<{
-  current?: 'account' | 'branding' | 'works' | 'none'
+  current?: 'account' | 'branding' | 'home' | 'works' | 'none'
 }>(), {
   current: 'none',
 })
@@ -49,6 +49,11 @@ async function onLogout() {
           class="admin-shell__nav-link"
           :aria-current="current === 'works' ? 'page' : undefined"
         >作品</NuxtLink>
+        <NuxtLink
+          to="/admin/site/home"
+          class="admin-shell__nav-link"
+          :aria-current="current === 'home' ? 'page' : undefined"
+        >首页</NuxtLink>
         <NuxtLink
           to="/admin/site/branding"
           class="admin-shell__nav-link"

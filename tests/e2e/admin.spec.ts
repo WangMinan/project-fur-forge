@@ -56,8 +56,13 @@ test.describe('后台作品列表页', () => {
     await expect(page.getByText(/共 \d+ 件/)).toBeVisible()
 
     const nav = page.getByRole('navigation', { name: '管理导航' })
-    await expect(nav.getByRole('link')).toHaveCount(3)
+    // T20 起导航新增「首页」入口：作品 / 首页 / 站点品牌 / 账号。
+    await expect(nav.getByRole('link')).toHaveCount(4)
     await expect(nav.getByRole('link', { name: '作品' })).toHaveAttribute('aria-current', 'page')
+    await expect(nav.getByRole('link', { name: '首页' })).toHaveAttribute(
+      'href',
+      '/admin/site/home',
+    )
     await expect(nav.getByRole('link', { name: '站点品牌' })).toHaveAttribute(
       'href',
       '/admin/site/branding',

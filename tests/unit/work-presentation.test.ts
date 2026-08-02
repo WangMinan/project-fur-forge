@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { formatCnyMinorUnits } from '../../app/utils/format'
 import {
-  filterWorks,
+  EMPTY_WORK_FILTER,
   isWorkFilterEmpty,
-  parseWorkFilter,
 } from '../../app/utils/work-filters'
 import {
   ADOPTION_METHOD_LABELS,
@@ -20,7 +19,6 @@ import {
   SUIT_TYPE_VALUES,
   WORK_PURPOSE_VALUES,
 } from '../../shared/schemas/work'
-import { workCatalog } from '../../shared/fixtures/visual-works'
 
 describe('formatCnyMinorUnits', () => {
   it('formats whole yuan with grouping and no decimals', () => {
@@ -34,56 +32,11 @@ describe('formatCnyMinorUnits', () => {
   })
 })
 
-describe('parseWorkFilter', () => {
-  it('parses valid purpose and suit values', () => {
-    expect(parseWorkFilter({ purpose: 'adoption', suit: 'full' })).toEqual({
-      purpose: 'adoption',
-      suitType: 'full',
-    })
-  })
-
-  it('treats missing, unknown and array values as unset', () => {
-    expect(parseWorkFilter({})).toEqual({ purpose: null, suitType: null })
-    expect(parseWorkFilter({ purpose: 'unknown', suit: 'cape' })).toEqual({
-      purpose: null,
-      suitType: null,
-    })
-    expect(parseWorkFilter({ purpose: ['adoption', 'commission'] })).toEqual({
-      purpose: 'adoption',
-      suitType: null,
-    })
-    expect(isWorkFilterEmpty(parseWorkFilter({}))).toBe(true)
-  })
-})
-
-describe('filterWorks', () => {
-  it('returns the full manual order when no filter is set', () => {
-    const result = filterWorks(workCatalog, { purpose: null, suitType: null })
-    expect(result.map(work => work.dto.slug)).toEqual(
-      workCatalog.map(work => work.dto.slug),
-    )
-  })
-
-  it('applies purpose and suit type as an intersection', () => {
-    const adoptionFull = filterWorks(workCatalog, {
-      purpose: 'adoption',
-      suitType: 'full',
-    })
-    expect(adoptionFull.map(work => work.dto.slug)).toEqual(['blueberry'])
-
-    const showcasePartial = filterWorks(workCatalog, {
-      purpose: 'showcase',
-      suitType: 'partial',
-    })
-    expect(showcasePartial.map(work => work.dto.slug)).toEqual(['lizi'])
-  })
-
-  it('has a real empty combination for the empty state', () => {
-    const result = filterWorks(workCatalog, {
-      purpose: 'adoption',
-      suitType: 'partial',
-    })
-    expect(result).toEqual([])
+describe('isWorkFilterEmpty', () => {
+  it('detects empty and active server-echoed filters', () => {
+    expect(isWorkFilterEmpty(EMPTY_WORK_FILTER)).toBe(true)
+    expect(isWorkFilterEmpty({ purpose: 'adoption', suitType: null })).toBe(false)
+    expect(isWorkFilterEmpty({ purpose: null, suitType: 'full' })).toBe(false)
   })
 })
 

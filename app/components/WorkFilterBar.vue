@@ -1,102 +1,87 @@
 <script setup lang="ts">
-import type { WorkFilter } from '~/utils/work-filters'
-import {
-  SUIT_TYPE_VALUES,
-  WORK_PURPOSE_VALUES,
-} from '~~/shared/schemas/work'
+import type { SuitType, WorkPurpose } from '~~/shared/types/contracts'
+import { SUIT_TYPE_VALUES, WORK_PURPOSE_VALUES } from '~~/shared/schemas/work'
 
 /**
- * 用途 × 装型交集筛选：每组选项都是带 query 的普通链接，
- * SSR 直接渲染筛选结果，键盘与无 JS 场景完整可用。
+ * 作品列表筛选条：普通链接（NuxtLink）切换 query，无 JS 也可用。
+ * 选中态来自服务端回显的 filter（非法参数已被服务端复位为 null）。
  */
 const props = defineProps<{
-  filter: WorkFilter
+  filter: { purpose: WorkPurpose | null, suitType: SuitType | null }
   resultCount: number
 }>()
 
-interface FilterOption {
-  value: string | null
-  label: string
-  to: string
-  current: boolean
-}
-
-function buildQuery(overrides: { purpose?: string | null, suit?: string | null }) {
-  const query: Record<string, string> = {}
-  const purpose = overrides.purpose === undefined ? props.filter.purpose : overrides.purpose
-  const suit = overrides.suit === undefined ? props.filter.suitType : overrides.suit
-
-  if (purpose) {
-    query.purpose = purpose
-  }
-  if (suit) {
-    query.suit = suit
-  }
-
-  const params = new URLSearchParams(query)
-  const serialized = params.toString()
-  return serialized ? `/works?${serialized}` : '/works'
-}
-
-const purposeOptions = computed<FilterOption[]>(() => [
-  {
-    value: null,
-    label: '全部用途',
-    to: buildQuery({ purpose: null }),
-    current: props.filter.purpose === null,
-  },
+const purposeOptions = computed(() => [
+  { value: null, label: '全部用途' },
   ...WORK_PURPOSE_VALUES.map(value => ({
     value,
     label: WORK_PURPOSE_FILTER_LABELS[value],
-    to: buildQuery({ purpose: value }),
-    current: props.filter.purpose === value,
   })),
 ])
 
-const suitOptions = computed<FilterOption[]>(() => [
-  {
-    value: null,
-    label: '全部装型',
-    to: buildQuery({ suit: null }),
-    current: props.filter.suitType === null,
-  },
+const suitOptions = computed(() => [
+  { value: null, label: '全部装型' },
   ...SUIT_TYPE_VALUES.map(value => ({
     value,
     label: SUIT_TYPE_LABELS[value],
-    to: buildQuery({ suit: value }),
-    current: props.filter.suitType === value,
   })),
 ])
+
+function buildQuery(purpose: WorkPurpose | null, suitType: SuitType | null) {
+  const query: Record<string, string> = {}
+  if (purpose) {
+    query.purpose = purpose
+  }
+  if (suitType) {
+    query.suitType = suitType
+  }
+  return query
+}
+
+function optionLink(purpose: WorkPurpose | null, suitType: SuitType | null) {
+  return { path: '/works', query: buildQuery(purpose, suitType) }
+}
+
+const purposeLink = (purpose: WorkPurpose | null) => optionLink(purpose, props.filter.suitType)
+const suitLink = (suitType: SuitType | null) => optionLink(props.filter.purpose, suitType)
 </script>
 
 <template>
-  <div class="work-filter" data-testid="work-filter">
-    <div class="work-filter__groups">
-      <div class="work-filter__group" role="group" aria-label="按用途筛选">
+  <div class="work-filter">
+    <div class="work-filter__row">
+      <div
+        class="work-filter__group"
+        role="group"
+        aria-label="按用途筛选"
+      >
         <NuxtLink
           v-for="option in purposeOptions"
           :key="option.value ?? 'all'"
-          :to="option.to"
-          class="work-filter__option"
-          :aria-current="option.current ? 'true' : undefined"
+          :to="purposeLink(option.value)"
+          class="work-filter__chip"
+          :class="{ 'work-filter__chip--active': filter.purpose === option.value }"
+          :aria-current="filter.purpose === option.value ? 'true' : undefined"
         >
           {{ option.label }}
         </NuxtLink>
       </div>
-
-      <div class="work-filter__group" role="group" aria-label="按装型筛选">
+      <div
+        class="work-filter__group"
+        role="group"
+        aria-label="按装型筛选"
+      >
         <NuxtLink
           v-for="option in suitOptions"
           :key="option.value ?? 'all'"
-          :to="option.to"
-          class="work-filter__option"
-          :aria-current="option.current ? 'true' : undefined"
+          :to="suitLink(option.value)"
+          class="work-filter__chip"
+          :class="{ 'work-filter__chip--active': filter.suitType === option.value }"
+          :aria-current="filter.suitType === option.value ? 'true' : undefined"
         >
           {{ option.label }}
         </NuxtLink>
       </div>
     </div>
-
     <p class="work-filter__count" role="status">
       共 {{ resultCount }} 件作品
     </p>
@@ -105,54 +90,44 @@ const suitOptions = computed<FilterOption[]>(() => [
 
 <style scoped>
 .work-filter {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3) var(--space-5);
-  max-width: var(--public-content-wide);
-  margin: 0 auto;
-  padding: 0 var(--public-page-padding);
+  margin-top: var(--space-6);
 }
 
-.work-filter__groups {
+.work-filter__row {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3) var(--space-5);
+  gap: var(--space-3) var(--space-6);
 }
 
 .work-filter__group {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
-.work-filter__option {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.5rem;
+.work-filter__chip {
   padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--public-border-subtle);
+  border-radius: 999px;
   color: var(--public-text-secondary);
   font-size: var(--font-size-sm);
-  border: 1px solid var(--public-border-primary);
-  border-radius: var(--radius-full);
-  transition:
-    color var(--duration-fast) var(--easing-standard),
-    border-color var(--duration-fast) var(--easing-standard);
+  line-height: 1.4;
 }
 
-.work-filter__option:hover {
-  color: var(--public-accent-primary);
-  border-color: var(--public-accent-primary);
+.work-filter__chip:hover {
+  border-color: var(--public-border-strong);
+  color: var(--public-text-primary);
 }
 
-.work-filter__option[aria-current='true'] {
+.work-filter__chip--active,
+.work-filter__chip--active:hover {
+  background: var(--public-surface-strong);
+  border-color: var(--public-surface-strong);
   color: var(--public-text-inverse);
-  background: var(--public-accent-primary);
-  border-color: var(--public-accent-primary);
 }
 
 .work-filter__count {
+  margin-top: var(--space-4);
   color: var(--public-text-secondary);
   font-size: var(--font-size-sm);
 }

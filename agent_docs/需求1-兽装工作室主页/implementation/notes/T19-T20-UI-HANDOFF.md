@@ -105,6 +105,7 @@ const home = repository.getHome()
 | PUT | `/api/admin/v1/site/home/settings` | 设置 | 口号、自动轮播、间隔 |
 | POST | `/api/admin/v1/site/home/slides` | 轮播项 | 新建为停用态，201 |
 | PUT | `/api/admin/v1/site/home/slides/{id}` | 轮播项 | 仅停用项可编辑 |
+| POST | `/api/admin/v1/site/home/slides/{id}/preview` | `{}` | 用活动 profile 生成私有横竖真实水印预览 |
 | DELETE | `/api/admin/v1/site/home/slides/{id}` | `{}` | 仅停用项可删除 |
 | PUT | `/api/admin/v1/site/home/slides/order` | `{ slideIds }` | 必须提交全部启用项 |
 | POST | `/api/admin/v1/site/home/slides/{id}/enable` | `{}` | 启动异步发布，返回操作 |
@@ -143,6 +144,8 @@ const home = repository.getHome()
 ```
 
 排序 payload：`{ "slideIds": ["按目标顺序排列的全部启用项 UUID"] }`。
+
+预览使用相同版本外壳和空 payload。响应为 `{ data: AdminHeroPreviewDto }`，其中 `landscape`、`portrait` 均只含 `url`、`expiresAt`、`width`、`height`；固定代表尺寸分别为 768 × 432 与 480 × 853，URL 5 分钟后失效。预览使用当前活动 profile 的真实 OSS 配方，但保持轮播项停用、`missingVariantCount` 不变且不创建公开 variant。
 
 ## 6. 版本与发布状态
 
@@ -183,6 +186,7 @@ API 错误固定为：
 以下规则不可由 Kimi 自行推导或改写：
 
 - active profile 只能由服务端选择，当前必须是 `brand-centered-v2`；
+- 活动水印预览只使用 `/api/admin/v1/site/home/slides/{id}/preview`；不得用 CSS 叠层、启用后回滚或管理 Host 访问 `/api/public/**` 代替；
 - WebP/fallback 是否完整、SHA-256/byte size 是否有效，只信服务端；
 - 启用等于发布，不能直接切换 `enabled`；
 - 横竖资产必须独立、角色和方向必须对应；

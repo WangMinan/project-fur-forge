@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { WorkCatalogEntry } from '~~/shared/fixtures/visual-works'
+import type { PublicWorkSummaryDto } from '~~/shared/types/contracts'
 
 const props = withDefaults(defineProps<{
-  work: WorkCatalogEntry
+  work: PublicWorkSummaryDto
   sizes?: string | undefined
   loading?: 'lazy' | 'eager'
 }>(), {
@@ -11,30 +11,26 @@ const props = withDefaults(defineProps<{
 })
 
 const meta = computed(
-  () => `${props.work.dto.species} · ${SUIT_TYPE_LABELS[props.work.dto.suitType]}`,
+  () => `${props.work.work.species} · ${SUIT_TYPE_LABELS[props.work.work.suitType]}`,
 )
 </script>
 
 <template>
   <NuxtLink
-    :to="`/works/${work.dto.slug}`"
+    :to="work.href"
     class="work-card"
-    :data-work-slug="work.dto.slug"
+    :data-work-slug="work.work.slug"
   >
     <span class="work-card__frame">
-      <ResponsiveAsset
+      <ResponsivePicture
         class="work-card__image"
-        :src="work.card.src"
+        :sources="work.card.sources"
         :alt="work.card.alt"
-        :width="work.card.width"
-        :height="work.card.height"
-        :focal-desktop="work.card.focal.desktop"
-        :focal-mobile="work.card.focal.mobile"
         :sizes="sizes"
         :loading="loading"
       />
     </span>
-    <span class="work-card__name">{{ work.dto.characterName }}</span>
+    <span class="work-card__name">{{ work.work.characterName }}</span>
     <span class="work-card__meta">{{ meta }}</span>
   </NuxtLink>
 </template>
@@ -56,8 +52,13 @@ const meta = computed(
   overflow: hidden;
 }
 
-.work-card__frame :deep(.responsive-asset) {
+.work-card__frame :deep(.responsive-picture) {
   height: 100%;
+}
+
+.work-card__frame :deep(.responsive-picture__image) {
+  height: 100%;
+  object-fit: cover;
 }
 
 .work-card__image {

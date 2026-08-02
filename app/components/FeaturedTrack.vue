@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { VisualWorkFixture } from '~~/shared/fixtures/visual-home'
+import type { PublicWorkSummaryDto } from '~~/shared/types/contracts'
 
 defineProps<{
-  works: VisualWorkFixture[]
+  works: PublicWorkSummaryDto[]
 }>()
 
 const TRACK_SIZES = '(min-width: 1024px) 24rem, (min-width: 768px) 40vw, 68vw'
@@ -108,9 +108,9 @@ onBeforeUnmount(() => {
       @scroll.passive="updateEdges"
       @keydown="onKeydown"
     >
-      <FeaturedWorkItem
+      <WorkCard
         v-for="work in works"
-        :key="work.dto.id"
+        :key="work.work.id"
         :work="work"
         :sizes="TRACK_SIZES"
         class="featured-track__item"
