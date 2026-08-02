@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import {
-  apiSuccessSchema,
   resourceIdSchema,
   resourceVersionSchema,
 } from './api'
@@ -43,15 +42,6 @@ export const adminAssetDtoSchema = z.object({
   width: z.number().int().positive().max(12_000),
   height: z.number().int().positive().max(12_000),
 }).strict()
-
-export const privateAssetPreviewDtoSchema = z.object({
-  url: z.string().url(),
-  expiresAt: z.string().datetime({ offset: true }),
-}).strict()
-
-export const privateAssetPreviewResponseSchema = apiSuccessSchema(
-  privateAssetPreviewDtoSchema,
-)
 
 export const publicVariantDtoSchema = z.object({
   src: z.string().url(),

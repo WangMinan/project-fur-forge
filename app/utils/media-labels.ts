@@ -58,6 +58,7 @@ export const PUBLICATION_BLOCKER_LABELS: Record<PublicationBlocker, string> = {
   STUDIO_PHOTO_REQUIRED: '至少需要一张出厂照',
   PRIMARY_STUDIO_PHOTO_REQUIRED: '需要设置唯一一张主图',
   STUDIO_PHOTO_NOT_READY: '有出厂照尚未 READY',
+  STUDIO_PHOTO_SOURCE_TOO_SMALL: '有出厂照尺寸不足，原图至少需支持 2400 px 详情图与 1200 × 1600 卡片图',
   STUDIO_PHOTO_ALT_REQUIRED: '有出厂照缺少图片说明（alt）',
   WATERMARK_PROFILE_REQUIRED: '需要先初始化并启用站点水印',
 }
@@ -89,6 +90,7 @@ const PUBLICATION_FAILURE_CODE_LABELS: Record<string, string> = {
   PUBLIC_MEDIA_VERIFICATION_FAILED: '公开图片校验失败，请稍后重试',
   PUBLICATION_COMMIT_FAILED: '发布提交失败，请刷新状态后重试',
   UNPUBLICATION_VALIDATION_FAILED: '下架校验未通过，请刷新状态后重试',
+  UNPUBLICATION_COMMIT_FAILED: '下架提交失败，请刷新状态后重试',
   PUBLIC_CLEANUP_FAILED: '公开文件清理失败',
 }
 

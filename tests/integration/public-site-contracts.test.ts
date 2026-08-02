@@ -44,7 +44,7 @@ import {
   createManagedWork,
   replaceManagedStudioPhotos,
 } from '../../server/utils/work-management'
-import { publishWork } from '../../server/utils/work-publication'
+import { publishWork, unpublishWork } from '../../server/utils/work-publication'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
 
@@ -168,12 +168,13 @@ async function createPublishedWork(input: {
 function createHeroAsset(
   role: 'home_hero_landscape' | 'home_hero_portrait',
   ownerVersion: number,
+  dimensions?: { height: number, width: number },
 ) {
   const assetId = randomUUID()
   const content = createSyntheticWatermarkPng()
   const landscape = role === 'home_hero_landscape'
-  const width = landscape ? 3200 : 1800
-  const height = landscape ? 1800 : 3200
+  const width = dimensions?.width ?? (landscape ? 3200 : 1800)
+  const height = dimensions?.height ?? (landscape ? 1800 : 3200)
   const key = `test/t20/original/${assetId}/source.png`
   sqlite.prepare(`
     INSERT INTO assets (
@@ -211,6 +212,24 @@ afterEach(() => {
 })
 
 describe('T19/T20 public repository contracts', () => {
+  it('rejects READY hero sources that cannot satisfy recipe-v1', () => {
+    const initial = getAdminHome(sqlite)
+    const landscape = createHeroAsset(
+      'home_hero_landscape',
+      initial.version,
+      { width: 320, height: 180 },
+    )
+    const portrait = createHeroAsset('home_hero_portrait', initial.version)
+
+    expect(() => createHeroSlide(sqlite, initial.version, {
+      alt: '尺寸不足的首页图',
+      sortOrder: 0,
+      landscapeAssetId: landscape,
+      portraitAssetId: portrait,
+      linkedWorkId: null,
+    })).toThrow(/dimensions/u)
+  })
+
   it('returns current-profile published works in manual, filtered and featured order', async () => {
     const second = await createPublishedWork({
       slug: 'second-work',
@@ -361,8 +380,27 @@ describe('T19/T20 public repository contracts', () => {
       landscape: { width: 768, height: 432 },
       portrait: { width: 480, height: 853 },
     })
-    expect(preview.landscape.url).toMatch(/^https:\/\/private-download\.test\//u)
+    expect(preview.landscape.url).toBe(
+      `/api/admin/v1/site/home/slides/${slide.id}/preview/landscape`,
+    )
+    expect(preview.portrait.url).toBe(
+      `/api/admin/v1/site/home/slides/${slide.id}/preview/portrait`,
+    )
     expect(preview.portrait.expiresAt).toBe(preview.landscape.expiresAt)
+    const previewManifest = sqlite.prepare(`
+      SELECT
+        landscape_preview_object_key AS landscapeKey,
+        portrait_preview_object_key AS portraitKey,
+        preview_expires_at AS expiresAt
+      FROM site_hero_slides WHERE id = ?
+    `).get(slide.id) as {
+      expiresAt: number
+      landscapeKey: string
+      portraitKey: string
+    }
+    expect(previewManifest).toMatchObject({ expiresAt: expect.any(Number) })
+    expect(previewManifest.landscapeKey).toContain('/preview/home/')
+    expect(previewManifest.portraitKey).toContain('/preview/home/')
     expect(storage.processCalls.slice(processCallCount)).toHaveLength(2)
     expect(storage.processCalls.slice(processCallCount).every(
       call => call.process.includes('g_center')
@@ -433,6 +471,19 @@ describe('T19/T20 public repository contracts', () => {
       NOW + sequence++,
     )
     expect(completed.status).toBe('DONE')
+    expect(storage.deletedPrivateKeys).toEqual(expect.arrayContaining([
+      previewManifest.landscapeKey,
+      previewManifest.portraitKey,
+    ]))
+    expect(sqlite.prepare(`
+      SELECT landscape_preview_object_key, portrait_preview_object_key,
+             preview_expires_at
+      FROM site_hero_slides WHERE id = ?
+    `).get(slide.id)).toEqual({
+      landscape_preview_object_key: null,
+      portrait_preview_object_key: null,
+      preview_expires_at: null,
+    })
     const enabledHome = getAdminHome(sqlite)
     expect(enabledHome.slides[0]).toMatchObject({
       enabled: true,
@@ -456,7 +507,7 @@ describe('T19/T20 public repository contracts', () => {
       linkedWorkId: null,
     }, NOW + sequence++)
     const secondSlide = home.slides.find(item => !item.enabled)!
-    home = updateHeroSlide(sqlite, secondSlide.id, home.version, {
+    home = await updateHeroSlide(sqlite, storage, secondSlide.id, home.version, {
       alt: '第二项首页横竖照片',
       sortOrder: 1,
       landscapeAssetId: secondLandscape,
@@ -519,22 +570,42 @@ describe('T19/T20 public repository contracts', () => {
     expect(visible).not.toContain('enabled')
     expect(visible).not.toContain('watermark')
 
-    home = disableHeroSlide(
+    const linkedVersion = sqlite.prepare(`
+      SELECT version FROM works WHERE id = ?
+    `).pluck().get(linked.workId) as number
+    await expect(unpublishWork(
       sqlite,
+      storage,
+      linked.workId,
+      linkedVersion,
+      USER_ID,
+      NOW + sequence++,
+    )).rejects.toThrow(/Disable or unlink/u)
+    expect(sqlite.prepare(`
+      SELECT count(*) FROM publication_operations
+      WHERE entity_type = 'WORK' AND entity_id = ?
+        AND operation_type = 'UNPUBLISH'
+    `).pluck().get(linked.workId)).toBe(0)
+
+    home = await disableHeroSlide(
+      sqlite,
+      storage,
       secondSlide.id,
       home.version,
       USER_ID,
       NOW + sequence++,
     )
-    expect(() => disableHeroSlide(
+    await expect(disableHeroSlide(
       sqlite,
+      storage,
       slide.id,
       home.version,
       USER_ID,
       NOW + sequence++,
-    )).toThrow(/At least one/)
-    home = deleteHeroSlide(
+    )).rejects.toThrow(/At least one/)
+    home = await deleteHeroSlide(
       sqlite,
+      storage,
       secondSlide.id,
       home.version,
       NOW + sequence++,

@@ -220,7 +220,7 @@ async function unpublish() {
     if (error instanceof AdminApiError && error.status === 409) {
       feedback.value = {
         cleanupRetry: false,
-        text: '作品数据已在其他地方变化，下架未执行。请刷新后重试。',
+        text: '作品数据已变化，或仍被启用的首页轮播关联。请先停用或解除关联，刷新后重试。',
         tone: 'error',
       }
       emit('conflict')

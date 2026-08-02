@@ -3,7 +3,6 @@ import type {
   adminAssetDtoSchema,
   assetStatusSchema,
   mediaRoleSchema,
-  privateAssetPreviewDtoSchema,
   publicHeroSlideDtoSchema,
   publicSourceSetDtoSchema,
   publicVariantDtoSchema,
@@ -81,9 +80,6 @@ export type BusinessStatus = z.infer<typeof businessStatusSchema>
 export type MediaRole = z.infer<typeof mediaRoleSchema>
 export type AssetStatus = z.infer<typeof assetStatusSchema>
 export type AdminAssetDto = z.infer<typeof adminAssetDtoSchema>
-export type PrivateAssetPreviewDto = z.infer<
-  typeof privateAssetPreviewDtoSchema
->
 export type PublicVariantDto = z.infer<typeof publicVariantDtoSchema>
 export type PublicSourceSetDto = z.infer<typeof publicSourceSetDtoSchema>
 export type PublicHeroSlideDto = z.infer<typeof publicHeroSlideDtoSchema>

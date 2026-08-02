@@ -33,6 +33,13 @@ export type PublicMediaUsage =
 
 type PublicFormat = 'webp' | 'jpeg' | 'png'
 
+export interface PublicRecipeSourceGeometry {
+  cropHeight?: number
+  cropWidth?: number
+  height: number
+  width: number
+}
+
 interface AssetSource {
   byteSize: number
   cropHeight: number
@@ -228,6 +235,24 @@ export function urlSafeBase64(value: string) {
 function outputHeight(usage: PublicMediaUsage, width: number) {
   const aspect = recipes[usage].aspect
   return aspect ? Math.round(width * aspect[1] / aspect[0]) : null
+}
+
+export function sourceSupportsPublicUsages(
+  source: PublicRecipeSourceGeometry,
+  usages: readonly PublicMediaUsage[],
+) {
+  return usages.every((usage) => {
+    const width = recipes[usage].widths.at(-1)!
+    const height = outputHeight(usage, width)
+    const availableWidth = usage === 'work-card'
+      ? Math.round(source.width * (source.cropWidth ?? 1))
+      : source.width
+    const availableHeight = usage === 'work-card'
+      ? Math.round(source.height * (source.cropHeight ?? 1))
+      : source.height
+    return availableWidth >= width
+      && (height === null || availableHeight >= height)
+  })
 }
 
 function formatOperation(format: PublicFormat) {
@@ -590,6 +615,9 @@ export async function generatePublicVariantsForProfile(
     )
   ) {
     throw new ServiceError(400, 'VALIDATION_ERROR', 'Media usage does not match asset role.')
+  }
+  if (!sourceSupportsPublicUsages(sourceAsset, selectedUsages)) {
+    throw new ServiceError(409, 'CONFLICT', 'Media source does not meet public recipe dimensions.')
   }
   const source = processingSource(sqlite, sourceAsset)
   const profile = requireWatermarkProfile(sqlite, profileId)

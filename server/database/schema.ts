@@ -546,6 +546,9 @@ export const siteHeroSlides = sqliteTable('site_hero_slides', {
   enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
   linkedWorkId: text('linked_work_id')
     .references(() => works.id, { onDelete: 'set null' }),
+  landscapePreviewObjectKey: text('landscape_preview_object_key'),
+  portraitPreviewObjectKey: text('portrait_preview_object_key'),
+  previewExpiresAt: integer('preview_expires_at'),
   version: integer('version').notNull().default(1),
   ...timestampColumns(),
 }, table => [

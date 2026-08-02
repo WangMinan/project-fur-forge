@@ -289,11 +289,17 @@ test('活动水印预览：横竖真实私有预览图可加载，DOM 不泄漏�
     await expect(image).toHaveJSProperty('complete', true)
     expect(await image.evaluate((img: HTMLImageElement) => img.naturalWidth))
       .toBeGreaterThan(0)
+    expect(await image.getAttribute('src')).toMatch(
+      /^\/api\/admin\/v1\/site\/home\/slides\/[0-9a-f-]+\/preview\/(?:landscape|portrait)$/u,
+    )
   }
 
   const dom = await page.content()
   expect(dom).not.toContain('/original/')
+  expect(dom).not.toContain('/preview/home/')
   expect(dom).not.toContain('private_object_key')
+  expect(dom).not.toContain('x-oss-')
+  expect(dom).not.toContain('Signature=')
 })
 
 test('水印 profile 阻断：无活动水印时预览与启用都被拒绝', async ({ page }) => {

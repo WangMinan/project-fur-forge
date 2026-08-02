@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01–T18、GATE-06 与 EXT-02 已完成。** T14–T18 的后端、管理端接线、浏览器证据与用户联合验收已收口；T19 未启动。
+> **当前阶段：阶段 4 IMPLEMENTATION，T01–T20、GATE-06、GATE-07 与 EXT-02 已完成。** T21 首次独立审查为 NOT PASS；findings 已完成实现者侧修复，等待未参与修复的审查者重新执行真实 OSS 门禁，T21 保持未勾选。
 
 ## 网站核心原则（景宸确认）
 

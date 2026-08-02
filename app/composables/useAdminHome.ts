@@ -378,7 +378,7 @@ export function useAdminHome() {
     }
   }
 
-  // 活动居中水印真实私有预览：横版 768×432、竖版 480×853，签名 URL 5 分钟。
+  // 活动居中水印真实私有预览：横版 768×432、竖版 480×853，同源地址 5 分钟。
   async function loadPreview(id: string): Promise<string | null> {
     if (!home.value || previewPending.value[id]) {
       return null

@@ -6,6 +6,7 @@ import {
 import { createApiError } from '../../../../../../utils/api-error'
 import { getDatabase } from '../../../../../../utils/database'
 import { updateHeroSlide } from '../../../../../../utils/home-management'
+import { getMediaStorage } from '../../../../../../utils/media-storage'
 import { readAdminJsonBody } from '../../../../../../utils/request-body'
 import { asSafeApiError } from '../../../../../../utils/service-error'
 
@@ -19,8 +20,9 @@ export default defineEventHandler(async (event) => {
   }
   try {
     return adminHomeResponseSchema.parse({
-      data: updateHeroSlide(
+      data: await updateHeroSlide(
         getDatabase().sqlite,
+        getMediaStorage(),
         id.data,
         body.data.expectedVersion,
         body.data.payload,

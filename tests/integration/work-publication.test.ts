@@ -54,7 +54,7 @@ function insertUser() {
   `).run(USER_ID, NOW, NOW, NOW)
 }
 
-function createWorkWithPhoto() {
+function createWorkWithPhoto(width = 3200, height = 2400) {
   const work = createManagedWork(sqlite, {
     slug: 'publication-work',
     characterName: '团子',
@@ -72,8 +72,8 @@ function createWorkWithPhoto() {
       id, role, status, private_object_key, sha256, byte_size,
       mime_type, width, height, created_at, updated_at
     ) VALUES (?, 'studio_photo', 'READY', ?, ?, ?,
-              'image/png', 3200, 2400, ?, ?)
-  `).run(ASSET_ID, key, sha256(content), content.length, NOW, NOW)
+              'image/png', ?, ?, ?, ?)
+  `).run(ASSET_ID, key, sha256(content), content.length, width, height, NOW, NOW)
   sqlite.prepare(`
     INSERT INTO upload_sessions (
       id, owner_type, owner_id, owner_version, media_role,
@@ -82,7 +82,7 @@ function createWorkWithPhoto() {
       expected_height, created_by, status, asset_id, version,
       created_at, expires_at, updated_at
     ) VALUES (?, 'work', ?, 1, 'studio_photo', ?, 'image/png', ?,
-              ?, ?, 3200, 2400, ?, 'COMPLETED', ?, 3, ?, ?, ?)
+              ?, ?, ?, ?, ?, 'COMPLETED', ?, 3, ?, ?, ?)
   `).run(
     randomUUID(),
     work.id,
@@ -90,6 +90,8 @@ function createWorkWithPhoto() {
     content.length,
     createHash('md5').update(content).digest('base64'),
     sha256(content),
+    width,
+    height,
     USER_ID,
     ASSET_ID,
     NOW,
@@ -99,9 +101,9 @@ function createWorkWithPhoto() {
   storage.seedPrivate(key, content, 'image/png', sha256(content), {
     fileSize: content.length,
     format: 'png',
-    height: 2_400,
+    height,
     orientation: 1,
-    width: 3_200,
+    width,
   })
   return replaceManagedStudioPhotos(
     sqlite,
@@ -138,6 +140,27 @@ afterEach(() => {
 })
 
 describe('dual-bucket work publication operations', () => {
+  it('blocks READY source images that cannot satisfy the fixed public recipe', async () => {
+    const work = createWorkWithPhoto(480, 640)
+
+    expect(checkWorkPublication(sqlite, work.id)).toMatchObject({
+      canPublish: false,
+      blockers: ['STUDIO_PHOTO_SOURCE_TOO_SMALL'],
+    })
+    await expect(publishWork(
+      sqlite,
+      storage,
+      work.id,
+      work.version,
+      USER_ID,
+      NOW + 3_000,
+    )).rejects.toThrow(/Resolve publication blockers/u)
+    expect(storage.processCalls).toHaveLength(0)
+    expect(sqlite.prepare(`
+      SELECT count(*) FROM publication_operations WHERE entity_id = ?
+    `).pluck().get(work.id)).toBe(0)
+  })
+
   it('checks, generates, commits and reuses one idempotent publication', async () => {
     const work = createWorkWithPhoto()
     expect(checkWorkPublication(sqlite, work.id)).toMatchObject({
@@ -300,6 +323,47 @@ describe('dual-bucket work publication operations', () => {
     `).pluck().get()).toBe(0)
   })
 
+  it('records an unexpected unpublish commit error as FAILED', async () => {
+    const work = createWorkWithPhoto()
+    const published = await publishWork(
+      sqlite,
+      storage,
+      work.id,
+      work.version,
+      USER_ID,
+      NOW + 3_000,
+    )
+    sqlite.exec(`
+      CREATE TRIGGER test_abort_unpublish
+      BEFORE UPDATE OF publication_status ON works
+      WHEN NEW.publication_status = 'unpublished'
+      BEGIN
+        SELECT RAISE(ABORT, 'test unpublish commit failure');
+      END;
+    `)
+
+    const result = await unpublishWork(
+      sqlite,
+      storage,
+      work.id,
+      published.work.version,
+      USER_ID,
+      NOW + 4_000,
+    )
+    expect(result).toMatchObject({
+      operation: {
+        status: 'FAILED',
+        failureStage: 'COMMITTING',
+        failureCode: 'UNPUBLICATION_COMMIT_FAILED',
+      },
+      work: { publicationStatus: 'published' },
+    })
+    expect(sqlite.prepare(`
+      SELECT count(*) FROM publication_operations
+      WHERE entity_id = ? AND status NOT IN ('FAILED', 'DONE')
+    `).pluck().get(work.id)).toBe(0)
+  })
+
   it('rolls back a commit race and cleans every newly generated object', async () => {
     const work = createWorkWithPhoto()
     const process = storage.processPrivateToPublic.bind(storage)
@@ -350,21 +414,17 @@ describe('dual-bucket work publication operations', () => {
       'ADOPTION_FLOW_NOT_READY',
     )
 
-    const result = await publishWork(
+    await expect(publishWork(
       sqlite,
       storage,
       id,
       1,
       USER_ID,
       NOW + 1_000,
-    )
-    expect(result).toMatchObject({
-      operation: {
-        status: 'FAILED',
-        failureStage: 'VALIDATING',
-      },
-      work: { publicationStatus: 'draft' },
-    })
+    )).rejects.toThrow(/Resolve publication blockers/u)
+    expect(sqlite.prepare(`
+      SELECT count(*) FROM publication_operations WHERE entity_id = ?
+    `).pluck().get(id)).toBe(0)
   })
 
   it('keeps audit and browser-visible operation data free of private values', async () => {
