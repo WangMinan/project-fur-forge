@@ -406,9 +406,19 @@ test.describe('UI-04 dirty 覆盖全部可编辑字段', () => {
     await page.getByLabel('用途').selectOption('commission')
     await expect(dirtyBadge(page)).toHaveCount(0)
 
-    await page.getByLabel('角色主人公开值').selectOption('有点小狗工作室')
+    await page.getByLabel('角色主人公开值').fill('有点小狗工作室')
     await expect(dirtyBadge(page)).toBeVisible()
-    await page.getByLabel('角色主人公开值').selectOption('不公开')
+    await page.getByLabel('角色主人公开值').fill('不公开')
+    await expect(dirtyBadge(page)).toHaveCount(0)
+
+    await page.getByLabel('人工排序').fill('3')
+    await expect(dirtyBadge(page)).toBeVisible()
+    await page.getByLabel('人工排序').fill('0')
+    await expect(dirtyBadge(page)).toHaveCount(0)
+
+    await page.getByLabel('加入首页精选作品').check()
+    await expect(dirtyBadge(page)).toBeVisible()
+    await page.getByLabel('加入首页精选作品').uncheck()
     await expect(dirtyBadge(page)).toHaveCount(0)
 
     await page.getByLabel(/联系人/).fill('新联系方式')

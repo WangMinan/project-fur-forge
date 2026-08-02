@@ -3,12 +3,19 @@ import type { ErrorCode } from '~~/shared/types/contracts'
 
 export class AdminApiError extends Error {
   readonly code: ErrorCode | null
+  /** 服务端 `error.message` 原文；同一状态码下用于区分冲突原因。 */
+  readonly serverMessage: string | null
   readonly status: number | null
 
-  constructor(status: number | null, code: ErrorCode | null) {
+  constructor(
+    status: number | null,
+    code: ErrorCode | null,
+    serverMessage: string | null = null,
+  ) {
     super(`Admin API request failed (${status ?? 'network'}).`)
     this.name = 'AdminApiError'
     this.code = code
+    this.serverMessage = serverMessage
     this.status = status
   }
 }
@@ -28,6 +35,12 @@ function errorCodeOf(error: unknown): ErrorCode | null {
   const data = (error as { data?: { error?: { code?: unknown } } })?.data
   const code = data?.error?.code
   return typeof code === 'string' ? code as ErrorCode : null
+}
+
+function errorMessageOf(error: unknown): string | null {
+  const data = (error as { data?: { error?: { message?: unknown } } })?.data
+  const message = data?.error?.message
+  return typeof message === 'string' ? message : null
 }
 
 // 管理端 v1 接口统一入口：同源凭据、内存 CSRF、Zod 响应校验与错误规整。
@@ -65,7 +78,11 @@ export function useAdminApi() {
         // 复用认证失效流程：重检会话，确认 401 后清空内存态并置 guest。
         void ensureSession({ revalidate: true })
       }
-      throw new AdminApiError(status, errorCodeOf(error))
+      throw new AdminApiError(
+        status,
+        errorCodeOf(error),
+        errorMessageOf(error),
+      )
     }
 
     const parsed = options.schema.safeParse(raw)

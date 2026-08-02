@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { managedWorkResponseSchema } from '~~/shared/schemas/work'
 import { AdminApiError } from '~/composables/useAdminApi'
-import type { WorkBasicsForm } from '~/components/admin/WorkBasicsFields.vue'
+import {
+  emptyWorkForm,
+  hasWorkFormError,
+  toWorkFieldsPayload,
+  validateWorkForm,
+} from '~/utils/work-form'
+import { workApiErrorText } from '~/utils/work-errors'
 
 definePageMeta({
   layout: 'admin',
@@ -15,63 +21,29 @@ useSeoMeta({
 
 const adminApi = useAdminApi()
 
-const form = ref<WorkBasicsForm>({
-  characterName: '',
-  featureTags: [],
-  ownerContact: '',
-  ownerDisplay: '有点小狗工作室',
-  purpose: 'commission',
-  slug: '',
-  species: '',
-  suitType: 'full',
-})
-
+const form = ref(emptyWorkForm())
+const submitted = ref(false)
 const saving = ref(false)
 const saveError = ref<string | null>(null)
 
-const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
-
-function validate(): string | null {
-  const value = form.value
-  if (!value.characterName.trim() || !value.species.trim()) {
-    return '角色名与物种为必填项。'
-  }
-  if (!SLUG_PATTERN.test(value.slug)) {
-    return '链接别名只能使用小写字母、数字与连字符，且不能以连字符开头或结尾。'
-  }
-  const tags = value.featureTags.map(tag => tag.trim())
-  if (tags.some(tag => tag.length === 0) && value.featureTags.length > 0) {
-    return '作品属性不能为空条目，请删除空行。'
-  }
-  if (new Set(tags).size !== tags.length) {
-    return '作品属性不得重复。'
-  }
-  return null
-}
+const errors = computed(() => validateWorkForm(form.value))
+const invalid = computed(() => hasWorkFormError(errors.value))
 
 async function createWork() {
   if (saving.value) {
     return
   }
-  saveError.value = validate()
-  if (saveError.value) {
+  submitted.value = true
+  saveError.value = null
+  if (invalid.value) {
+    saveError.value = '填写内容未通过校验，请修正下方标注的字段后重试。'
     return
   }
   saving.value = true
   try {
-    const value = form.value
     const result = await adminApi('/api/admin/v1/works', {
       method: 'POST',
-      body: {
-        slug: value.slug.trim(),
-        characterName: value.characterName.trim(),
-        species: value.species.trim(),
-        suitType: value.suitType,
-        purpose: value.purpose,
-        ownerDisplay: value.ownerDisplay,
-        ownerContact: value.ownerContact.trim() === '' ? null : value.ownerContact.trim(),
-        featureTags: value.featureTags.map(tag => tag.trim()),
-      },
+      body: toWorkFieldsPayload(form.value),
       schema: managedWorkResponseSchema,
     })
     await navigateTo(`/admin/works/${result.data.id}`)
@@ -80,15 +52,10 @@ async function createWork() {
     if (error instanceof AdminApiError && error.status === 401) {
       return
     }
-    if (error instanceof AdminApiError && error.status === 409) {
-      saveError.value = '该链接别名已被使用，请更换后重试。'
-      return
-    }
-    if (error instanceof AdminApiError && error.status === 400) {
-      saveError.value = '填写内容未通过校验，请检查标星字段后重试。'
-      return
-    }
-    saveError.value = '创建失败，请稍后重试；已填写的内容不会丢失。'
+    saveError.value = workApiErrorText(
+      error,
+      '创建失败，请稍后重试；已填写的内容不会丢失。',
+    )
   }
   finally {
     saving.value = false
@@ -114,10 +81,17 @@ async function createWork() {
 
       <p v-if="saveError" class="new-work__error" role="alert">{{ saveError }}</p>
 
-      <AdminWorkBasicsFields v-model="form" />
+      <div class="new-work__fields">
+        <AdminWorkBasicsFields
+          v-model="form"
+          :errors="errors"
+          :show-errors="submitted"
+        />
+      </div>
 
       <p class="new-work__note">
         创建后进入编辑页上传出厂照；作品保存为草稿，发布前不会出现在公开端。
+        领养作品的完整发布流程属于 T25，本阶段只维护字段。
       </p>
     </div>
   </AdminShell>
@@ -193,9 +167,16 @@ async function createWork() {
   font-size: var(--admin-font-sm);
 }
 
+.new-work__fields {
+  display: grid;
+  gap: var(--admin-space-5);
+  min-width: 0;
+}
+
 .new-work__note {
   margin: var(--admin-space-4) 0 0;
   font-size: var(--admin-font-xs);
   color: var(--admin-text-tertiary);
+  line-height: var(--admin-line-normal);
 }
 </style>

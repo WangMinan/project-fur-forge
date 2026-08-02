@@ -10,9 +10,15 @@ const props = withDefaults(defineProps<{
   loading: 'lazy',
 })
 
-const meta = computed(
-  () => `${props.work.work.species} · ${SUIT_TYPE_LABELS[props.work.work.suitType]}`,
-)
+// 只列适用事实：非领养作品不出现业务状态或价格占位。
+const meta = computed(() => {
+  const dto = props.work.work
+  const facts = [dto.species, SUIT_TYPE_LABELS[dto.suitType]]
+  if (dto.purpose === 'adoption') {
+    facts.push(BUSINESS_STATUS_LABELS[dto.businessStatus])
+  }
+  return facts.join(' · ')
+})
 </script>
 
 <template>

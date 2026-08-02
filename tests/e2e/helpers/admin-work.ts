@@ -23,35 +23,53 @@ async function currentCsrfToken(page: Page) {
   return body.data.csrfToken
 }
 
+export interface CreateWorkOverrides {
+  adoptionMethod?: 'regular'
+  businessStatus?: 'preparing' | 'available' | 'scheduled' | 'in_production' | 'delivered'
+  characterName?: string
+  featured?: boolean
+  featureTags?: string[]
+  ownerContact?: string | null
+  ownerDisplay?: string
+  priceCnyMinor?: number | null
+  purpose?: 'adoption' | 'commission' | 'showcase'
+  slug?: string
+  sortOrder?: number
+  species?: string
+  suitType?: 'full' | 'partial'
+}
+
 export async function createWorkViaApi(
   page: Page,
-  overrides: Partial<{
-    characterName: string
-    featureTags: string[]
-    ownerContact: string | null
-    ownerDisplay: '不公开' | '有点小狗工作室'
-    purpose: 'commission' | 'showcase'
-    slug: string
-    species: string
-    suitType: 'full' | 'partial'
-  }> = {},
+  overrides: CreateWorkOverrides = {},
 ): Promise<CreatedWork> {
   const csrfToken = await currentCsrfToken(page)
   slugCounter += 1
   const slug = overrides.slug ?? `e2e-work-${Date.now().toString(36)}-${slugCounter}`
+  const purpose = overrides.purpose ?? 'commission'
+  const base = {
+    slug,
+    characterName: overrides.characterName ?? `测试作品${slugCounter}`,
+    species: overrides.species ?? '犬',
+    suitType: overrides.suitType ?? 'full',
+    ownerDisplay: overrides.ownerDisplay ?? '不公开',
+    ownerContact: overrides.ownerContact === undefined
+      ? `e2e-private-contact-${slugCounter}`
+      : overrides.ownerContact,
+    featureTags: overrides.featureTags ?? ['测试属性'],
+    sortOrder: overrides.sortOrder ?? 0,
+    featured: overrides.featured ?? false,
+  }
   const response = await page.request.post(`${adminBaseURL}/api/admin/v1/works`, {
-    data: {
-      slug,
-      characterName: overrides.characterName ?? `测试作品${slugCounter}`,
-      species: overrides.species ?? '犬',
-      suitType: overrides.suitType ?? 'full',
-      purpose: overrides.purpose ?? 'commission',
-      ownerDisplay: overrides.ownerDisplay ?? '不公开',
-      ownerContact: overrides.ownerContact === undefined
-        ? `e2e-private-contact-${slugCounter}`
-        : overrides.ownerContact,
-      featureTags: overrides.featureTags ?? ['测试属性'],
-    },
+    data: purpose === 'adoption'
+      ? {
+          ...base,
+          purpose,
+          adoptionMethod: overrides.adoptionMethod ?? 'regular',
+          businessStatus: overrides.businessStatus ?? 'preparing',
+          priceCnyMinor: overrides.priceCnyMinor ?? null,
+        }
+      : { ...base, purpose },
     headers: {
       'Origin': adminBaseURL,
       'x-csrf-token': csrfToken,
@@ -72,30 +90,45 @@ export async function bumpWorkViaApi(
   const detail = await page.request.get(`${adminBaseURL}/api/admin/v1/works/${work.id}`)
   const current = (await detail.json() as {
     data: {
+      adoptionMethod?: 'event_drop' | 'regular' | null
+      businessStatus?: string | null
       characterName: string
+      featured: boolean
       featureTags: string[]
-      ownerDisplay: '不公开' | '有点小狗工作室'
+      ownerDisplay: string
+      priceCnyMinor?: number | null
       private: { ownerContact: string | null }
-      purpose: 'commission' | 'showcase'
+      purpose: 'adoption' | 'commission' | 'showcase'
       slug: string
+      sortOrder: number
       species: string
       suitType: 'full' | 'partial'
       version: number
     }
   }).data
+  const base = {
+    slug: current.slug,
+    characterName: fields.characterName ?? `${current.characterName}改`,
+    species: current.species,
+    suitType: current.suitType,
+    ownerDisplay: current.ownerDisplay,
+    ownerContact: current.private.ownerContact,
+    featureTags: current.featureTags,
+    sortOrder: current.sortOrder,
+    featured: current.featured,
+  }
   const response = await page.request.put(`${adminBaseURL}/api/admin/v1/works/${work.id}`, {
     data: {
       expectedVersion: current.version,
-      payload: {
-        slug: current.slug,
-        characterName: fields.characterName ?? `${current.characterName}改`,
-        species: current.species,
-        suitType: current.suitType,
-        purpose: current.purpose,
-        ownerDisplay: current.ownerDisplay,
-        ownerContact: current.private.ownerContact,
-        featureTags: current.featureTags,
-      },
+      payload: current.purpose === 'adoption'
+        ? {
+            ...base,
+            purpose: current.purpose,
+            adoptionMethod: 'regular',
+            businessStatus: current.businessStatus ?? 'preparing',
+            priceCnyMinor: current.priceCnyMinor ?? null,
+          }
+        : { ...base, purpose: current.purpose },
     },
     headers: {
       'Origin': adminBaseURL,
