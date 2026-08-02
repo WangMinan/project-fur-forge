@@ -6,7 +6,7 @@
 
 - Node.js 24 LTS
 - Corepack
-- pnpm 10.33
+- pnpm 11.18
 
 ## 本地命令
 

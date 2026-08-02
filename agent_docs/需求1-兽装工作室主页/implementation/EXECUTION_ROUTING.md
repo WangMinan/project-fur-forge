@@ -20,7 +20,7 @@
 - T01–T20、GATE-06、GATE-07 与 EXT-02 已完成；GATE-07 已发布回 `main`。
 - T14–T18 已完成条件直传、媒体核验/私有预处理、`recipe-v1`、`brand-standard-v1`、作品 CRUD、发布/下架和管理端接线。
 - 景宸在 S4 前追加的大型居中、可配置 Logo 水印已通过 GATE-07 用户验收；旧 v1 完成状态继续作为历史事实保留。
-- T19/T20 的服务端契约、最终 Vue 页面、管理任务进度、真实图片浏览器证据与工程门禁已在 `feature/t19-t20-kimi` 收口；记录见 `implementation/notes/T19-T20-CLOSURE-2026-08-01.md`。
+- T19/T20 的服务端契约、最终 Vue 页面、管理任务进度、真实图片浏览器证据与工程门禁已收口并位于 `main`；记录见 `implementation/notes/T19-T20-CLOSURE-2026-08-01.md`。
 
 ## 3. 当前批次顺序
 
@@ -73,4 +73,4 @@ feature/gate07-watermark-engineering-sol
 feature/gate07-watermark-ui-kimi
 ```
 
-当前批次分支为 `feature/t19-t20-kimi`；用户已明确授权真实预览服务端补丁留在该分支。模型或订阅变化只更新本文件；业务、数据、接口和体验变化必须先更新上游契约。
+当前待审基线为 `main`：T19/T20 收口提交 `6c7b84d`，T21 findings 修复提交 `60a2bb8`，以及本次最终复核差异。历史 `feature/t19-t20-kimi` 不再是当前执行分支。模型或订阅变化只更新本文件；业务、数据、接口和体验变化必须先更新上游契约。

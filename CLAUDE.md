@@ -36,7 +36,7 @@ project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`
 
 ## 常用命令
 
-Node.js 24 LTS 与 pnpm 10.33 为当前基线：
+Node.js 24 LTS 与 pnpm 11.18 为当前基线：
 
 ```bash
 pnpm install --frozen-lockfile
