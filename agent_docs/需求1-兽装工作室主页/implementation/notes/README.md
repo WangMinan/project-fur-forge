@@ -6,6 +6,7 @@
 ## 1. 当前执行入口
 
 - [`T22-BACKEND-2026-08-03.md`](./T22-BACKEND-2026-08-03.md)：T22 差异审计、三用途 Schema/API、无迁移决定、历史展会兼容、公开精选与前端交接；状态为后端完成，等待前端/Review/用户验收。
+- [`T22-FRONTEND-2026-08-03.md`](./T22-FRONTEND-2026-08-03.md)：T22 管理端三用途表单、领养基础字段、价格、排序/精选、属性错误、历史展会只读转换与公开端同步；含接口 blocker（已发布作品不可改排序/精选、领养仍不可发布）和尚未执行完的浏览器步骤。T22 仍未勾选。
 - [`P0-C-STAGE-READINESS-2026-08-02.md`](./P0-C-STAGE-READINESS-2026-08-02.md)：阶段 C 启动条件、T22 边界、四个执行波次、main 直推纪律、自动化与 GPT-5.6 Sol 浏览器/视觉 Review 方法。
 - [`../EXECUTION_ROUTING.md`](../EXECUTION_ROUTING.md)：前端模型池、GPT-5.6 Sol 后端/Review、串行交接和测试策略。
 - [`../TASKS.md`](../TASKS.md)：唯一可勾选任务清单；T22 仍为 `[ ]`，当前等待前端接线。

@@ -37,3 +37,13 @@ export function parseCnyYuanInput(raw: string): CnyInputParse {
   }
   return { minorUnits: Number(minorUnits), error: null }
 }
+
+/**
+ * 已保存的最小货币单位回填为输入框可再次提交的元文本，
+ * 保证「读取 → 编辑 → 提交」在同一接受集合内往返不失真。
+ */
+export function toCnyYuanInput(minorUnits: number): string {
+  return minorUnits % 100 === 0
+    ? String(minorUnits / 100)
+    : (minorUnits / 100).toFixed(2)
+}

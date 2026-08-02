@@ -8,11 +8,24 @@ import type {
   PublicSafeWorkPreviewDto,
 } from '~~/shared/types/contracts'
 import { AdminApiError } from '~/composables/useAdminApi'
-import type { WorkBasicsForm } from '~/components/admin/WorkBasicsFields.vue'
+import type { WorkBasicsForm } from '~/utils/work-form'
 import {
+  emptyWorkForm,
+  hasWorkFormError,
+  historicalEventAdoption,
+  toWorkFieldsPayload,
+  validateWorkForm,
+  workFormFromDto,
+  workFormSnapshot,
+} from '~/utils/work-form'
+import { workApiErrorText } from '~/utils/work-errors'
+import {
+  ADOPTION_METHOD_LABELS,
+  BUSINESS_STATUS_LABELS,
   SUIT_TYPE_LABELS,
   WORK_PURPOSE_LABELS,
 } from '~/utils/work-labels'
+import { formatCnyMinorUnits } from '~/utils/format'
 
 definePageMeta({
   layout: 'admin',
@@ -33,60 +46,45 @@ const { status: authStatus } = useAdminAuth()
 
 const pageStatus = ref<'error' | 'loading' | 'not-found' | 'ready'>('loading')
 const work = ref<ManagedWorkDto | null>(null)
-const form = ref<WorkBasicsForm>({
-  characterName: '',
-  featureTags: [],
-  ownerContact: '',
-  ownerDisplay: '有点小狗工作室',
-  purpose: 'commission',
-  slug: '',
-  species: '',
-  suitType: 'full',
-})
+const form = ref<WorkBasicsForm>(emptyWorkForm())
 const baseline = ref('')
 
+const submitted = ref(false)
 const saving = ref(false)
 const saveError = ref<string | null>(null)
 const savedNotice = ref<string | null>(null)
 const conflictOpen = ref(false)
+const convertOpen = ref(false)
+/** 历史展会记录已在本次会话中转换：转换只有随保存成功才真正落库。 */
+const convertedFromEvent = ref(false)
 
 const preview = ref<PublicSafeWorkPreviewDto | null>(null)
 const previewError = ref<string | null>(null)
 
 const photoState = ref({ busy: false, dirty: false })
 
-function snapshotOf(value: WorkBasicsForm) {
-  return JSON.stringify({
-    characterName: value.characterName.trim(),
-    featureTags: value.featureTags.map(tag => tag.trim()),
-    ownerContact: value.ownerContact.trim(),
-    ownerDisplay: value.ownerDisplay,
-    purpose: value.purpose,
-    slug: value.slug.trim(),
-    species: value.species.trim(),
-    suitType: value.suitType,
-  })
-}
-
 function applyWork(next: ManagedWorkDto) {
   work.value = next
-  form.value = {
-    characterName: next.characterName,
-    featureTags: [...next.featureTags],
-    ownerContact: next.private.ownerContact ?? '',
-    ownerDisplay: next.ownerDisplay,
-    purpose: next.purpose,
-    slug: next.slug,
-    species: next.species,
-    suitType: next.suitType,
-  }
-  baseline.value = snapshotOf(form.value)
+  form.value = workFormFromDto(next)
+  baseline.value = workFormSnapshot(form.value)
+  submitted.value = false
+  convertedFromEvent.value = false
 }
 
 const locked = computed(() => work.value?.publicationStatus === 'published')
 
+const errors = computed(() => validateWorkForm(form.value))
+const invalid = computed(() => hasWorkFormError(errors.value))
+
+/** 已保存的展会记录；本次会话确认转换后不再阻断编辑与保存。 */
+const historical = computed(() => (
+  convertedFromEvent.value || work.value === null
+    ? null
+    : historicalEventAdoption(work.value)
+))
+
 const isDirty = computed(() =>
-  work.value !== null && snapshotOf(form.value) !== baseline.value,
+  work.value !== null && workFormSnapshot(form.value) !== baseline.value,
 )
 
 const leaveGuardActive = computed(() =>
@@ -134,52 +132,24 @@ async function loadPreview() {
   }
 }
 
-const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
-
-function validate(): string | null {
-  const value = form.value
-  if (!value.characterName.trim() || !value.species.trim()) {
-    return '角色名与物种为必填项。'
-  }
-  if (!SLUG_PATTERN.test(value.slug.trim())) {
-    return '链接别名只能使用小写字母、数字与连字符，且不能以连字符开头或结尾。'
-  }
-  const tags = value.featureTags.map(tag => tag.trim())
-  if (tags.some(tag => tag.length === 0) && value.featureTags.length > 0) {
-    return '作品属性不能为空条目，请删除空行。'
-  }
-  if (new Set(tags).size !== tags.length) {
-    return '作品属性不得重复。'
-  }
-  return null
-}
-
 async function saveWork() {
-  if (saving.value || !work.value || locked.value) {
+  if (saving.value || !work.value || locked.value || historical.value) {
     return
   }
-  saveError.value = validate()
+  submitted.value = true
   savedNotice.value = null
-  if (saveError.value) {
+  if (invalid.value) {
+    saveError.value = '填写内容未通过校验，请修正下方标注的字段后重试。'
     return
   }
+  saveError.value = null
   saving.value = true
   try {
-    const value = form.value
     const result = await adminApi(`/api/admin/v1/works/${workId}`, {
       method: 'PUT',
       body: {
         expectedVersion: work.value.version,
-        payload: {
-          slug: value.slug.trim(),
-          characterName: value.characterName.trim(),
-          species: value.species.trim(),
-          suitType: value.suitType,
-          purpose: value.purpose,
-          ownerDisplay: value.ownerDisplay,
-          ownerContact: value.ownerContact.trim() === '' ? null : value.ownerContact.trim(),
-          featureTags: value.featureTags.map(tag => tag.trim()),
-        },
+        payload: toWorkFieldsPayload(form.value),
       },
       schema: managedWorkResponseSchema,
     })
@@ -191,20 +161,30 @@ async function saveWork() {
     if (error instanceof AdminApiError && error.status === 401) {
       return
     }
-    if (error instanceof AdminApiError && error.status === 409) {
+    saveError.value = workApiErrorText(
+      error,
+      '保存失败，请稍后重试；已填写的内容不会丢失。',
+    )
+    if (
+      error instanceof AdminApiError
+      && error.status === 409
+      && error.serverMessage === 'Resource version is stale.'
+    ) {
       conflictOpen.value = true
-      saveError.value = '作品数据已在其他地方变化，本次修改未保存。'
-      return
     }
-    if (error instanceof AdminApiError && error.status === 400) {
-      saveError.value = '填写内容未通过校验，请检查标星字段后重试。'
-      return
-    }
-    saveError.value = '保存失败，请稍后重试；已填写的内容不会丢失。'
   }
   finally {
     saving.value = false
   }
+}
+
+function onConvertConfirmed() {
+  convertOpen.value = false
+  convertedFromEvent.value = true
+  form.value.purpose = 'adoption'
+  form.value.regularBusinessStatus = 'preparing'
+  saveError.value = null
+  savedNotice.value = '已切换为常规领养编辑：请选择业务状态，保存后才会写入服务端并清空展会名称。'
 }
 
 function onPhotosSaved(next: ManagedWorkDto) {
@@ -285,7 +265,7 @@ useSeoMeta({
           <button
             type="button"
             class="editor__button editor__button--secondary"
-            :disabled="!isDirty || saving || locked"
+            :disabled="!isDirty || saving || locked || historical !== null"
             @click="saveWork"
           >{{ saving ? '保存中…' : '保存' }}</button>
         </div>
@@ -311,7 +291,10 @@ useSeoMeta({
       </div>
 
       <p v-if="locked" class="editor__locked" role="status">
-        作品已发布：基础信息与出厂照为只读。如需修改，请先在右侧下架。
+        作品已发布：基础信息、排序、精选与出厂照为只读。如需修改，请先在右侧下架。
+      </p>
+      <p v-else-if="historical" class="editor__locked" role="status">
+        该作品保留着历史展会领养记录：为避免静默丢弃展会事实，保存前需要先在下方明确转为常规领养。
       </p>
 
       <p v-if="saveError && !conflictOpen" class="editor__notice editor__notice--error" role="alert">
@@ -321,7 +304,15 @@ useSeoMeta({
 
       <div class="editor__layout">
         <div class="editor__main">
-          <AdminWorkBasicsFields v-model="form" :disabled="locked || saving" />
+          <AdminWorkBasicsFields
+            v-model="form"
+            :disabled="locked || saving"
+            :errors="errors"
+            :historical="historical"
+            :saved-purpose="work.purpose"
+            :show-errors="submitted"
+            @convert-to-regular="convertOpen = true"
+          />
           <AdminStudioPhotoSection
             :work="work"
             :locked="locked"
@@ -363,6 +354,36 @@ useSeoMeta({
                   <dt>角色主人</dt>
                   <dd>{{ preview.ownerDisplay }}</dd>
                 </div>
+                <template v-if="preview.purpose === 'adoption'">
+                  <div class="preview-card__fact">
+                    <dt>领养方式</dt>
+                    <dd>
+                      {{ preview.adoptionMethod
+                        ? ADOPTION_METHOD_LABELS[preview.adoptionMethod]
+                        : '未记录（公开端不会显示该作品）' }}
+                    </dd>
+                  </div>
+                  <div class="preview-card__fact">
+                    <dt>业务状态</dt>
+                    <dd>
+                      {{ preview.businessStatus
+                        ? BUSINESS_STATUS_LABELS[preview.businessStatus]
+                        : '未记录（公开端不会显示该作品）' }}
+                    </dd>
+                  </div>
+                  <div class="preview-card__fact">
+                    <dt>价格</dt>
+                    <dd>
+                      {{ preview.priceCnyMinor === null
+                        ? '不公开价格'
+                        : formatCnyMinorUnits(preview.priceCnyMinor) }}
+                    </dd>
+                  </div>
+                </template>
+                <div class="preview-card__fact">
+                  <dt>排序 / 精选</dt>
+                  <dd>{{ preview.sortOrder }} · {{ preview.featured ? '首页精选' : '不精选' }}</dd>
+                </div>
                 <div class="preview-card__fact">
                   <dt>公开地址</dt>
                   <dd class="preview-card__slug">/works/{{ preview.slug }}</dd>
@@ -394,6 +415,19 @@ useSeoMeta({
           </section>
         </aside>
       </div>
+
+      <AdminConfirmDialog
+        :open="convertOpen"
+        title="转为常规领养？"
+        confirm-label="转为常规领养"
+        @confirm="onConvertConfirmed"
+        @cancel="convertOpen = false"
+      >
+        <p>
+          保存后领养方式改为「常规领养」，展会名称会被清空，业务状态需要重新选择。
+          展会实体与完整展会掉落管理属于 T37，本页不会保留展会字段。
+        </p>
+      </AdminConfirmDialog>
     </div>
   </AdminShell>
 </template>

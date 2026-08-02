@@ -1,11 +1,24 @@
 <script setup lang="ts">
 import {
   deleteWorkResponseSchema,
+  managedWorkResponseSchema,
   workListResponseSchema,
 } from '~~/shared/schemas/work'
 import type { WorkListItemDto } from '~~/shared/types/contracts'
 import { AdminApiError } from '~/composables/useAdminApi'
-import { PUBLICATION_STATUS_LABELS, SUIT_TYPE_LABELS, WORK_PURPOSE_LABELS } from '~/utils/work-labels'
+import {
+  BUSINESS_STATUS_LABELS,
+  PUBLICATION_STATUS_LABELS,
+  SUIT_TYPE_LABELS,
+  WORK_PURPOSE_LABELS,
+} from '~/utils/work-labels'
+import { formatCnyMinorUnits } from '~/utils/format'
+import { workApiErrorText } from '~/utils/work-errors'
+import {
+  PUBLIC_FEATURED_LIMIT,
+  toWorkFieldsPayload,
+  workFormFromDto,
+} from '~/utils/work-form'
 
 definePageMeta({
   layout: 'admin',
@@ -24,11 +37,32 @@ const deleteTarget = ref<WorkListItemDto | null>(null)
 const deleting = ref(false)
 const deleteError = ref<string | null>(null)
 
+const orderingPendingId = ref<string | null>(null)
+const orderingErrors = ref<Record<string, string>>({})
+
 const PUBLICATION_TONES = {
   draft: 'warning',
   published: 'success',
   unpublished: 'neutral',
 } as const
+
+/** 公开首页只消费已发布的精选，超出上限时给出可核对的提示。 */
+const publishedFeaturedCount = computed(() => works.value.filter(
+  work => work.featured && work.publicationStatus === 'published',
+).length)
+
+function adoptionSummary(work: WorkListItemDto) {
+  if (work.purpose !== 'adoption') {
+    return null
+  }
+  const status = work.businessStatus
+    ? BUSINESS_STATUS_LABELS[work.businessStatus]
+    : '状态未记录'
+  const price = work.priceCnyMinor === null
+    ? '不公开价格'
+    : formatCnyMinorUnits(work.priceCnyMinor)
+  return `${status} · ${price}`
+}
 
 async function loadWorks() {
   status.value = 'loading'
@@ -41,6 +75,56 @@ async function loadWorks() {
   }
   catch {
     status.value = 'error'
+  }
+}
+
+/**
+ * 列表内改排序或精选：先读当前完整字段，再带列表持有的资源版本提交。
+ * 版本过期时由服务端返回 409，不在客户端伪造成功。
+ */
+async function updateOrdering(
+  work: WorkListItemDto,
+  patch: { featured?: boolean, sortOrder?: number },
+) {
+  if (orderingPendingId.value !== null) {
+    return
+  }
+  orderingPendingId.value = work.id
+  orderingErrors.value = Object.fromEntries(
+    Object.entries(orderingErrors.value).filter(([id]) => id !== work.id),
+  )
+  try {
+    const current = await adminApi(`/api/admin/v1/works/${work.id}`, {
+      schema: managedWorkResponseSchema,
+    })
+    const form = workFormFromDto(current.data)
+    if (patch.sortOrder !== undefined) {
+      form.sortOrder = String(patch.sortOrder)
+    }
+    if (patch.featured !== undefined) {
+      form.featured = patch.featured
+    }
+    await adminApi(`/api/admin/v1/works/${work.id}`, {
+      method: 'PUT',
+      body: {
+        expectedVersion: work.version,
+        payload: toWorkFieldsPayload(form),
+      },
+      schema: managedWorkResponseSchema,
+    })
+    await loadWorks()
+  }
+  catch (error) {
+    if (error instanceof AdminApiError && error.status === 401) {
+      return
+    }
+    orderingErrors.value = {
+      ...orderingErrors.value,
+      [work.id]: workApiErrorText(error, '保存失败，请刷新后重试。'),
+    }
+  }
+  finally {
+    orderingPendingId.value = null
   }
 }
 
@@ -103,19 +187,29 @@ onMounted(() => {
         {{ deleteError }}
       </p>
 
-      <div v-else-if="works.length === 0" class="works-page__empty">
+      <p
+        v-if="status === 'ready' && publishedFeaturedCount > PUBLIC_FEATURED_LIMIT"
+        class="works-page__featured-warning"
+        role="status"
+      >
+        已发布精选 {{ publishedFeaturedCount }} 件，首页精选轨道只显示排序最前的
+        {{ PUBLIC_FEATURED_LIMIT }} 件；正式内容建议保持 3–{{ PUBLIC_FEATURED_LIMIT }} 件。
+      </p>
+
+      <div v-if="status === 'ready' && works.length === 0" class="works-page__empty">
         <p class="works-page__empty-title">暂无作品</p>
         <p class="works-page__empty-text">创建第一件作品，上传出厂照后即可发布。</p>
         <NuxtLink to="/admin/works/new" class="works-page__create">创建第一件作品</NuxtLink>
       </div>
 
-      <template v-else>
+      <template v-else-if="status === 'ready'">
         <table class="works-table">
           <caption class="sr-only">作品列表</caption>
           <thead>
             <tr>
               <th scope="col">作品</th>
               <th scope="col">用途</th>
+              <th scope="col">排序 / 精选</th>
               <th scope="col">发布状态</th>
               <th scope="col">出厂照</th>
               <th scope="col"><span class="sr-only">操作</span></th>
@@ -135,7 +229,21 @@ onMounted(() => {
                   </span>
                 </div>
               </td>
-              <td>{{ WORK_PURPOSE_LABELS[work.purpose] }}</td>
+              <td>
+                <span class="works-table__purpose">{{ WORK_PURPOSE_LABELS[work.purpose] }}</span>
+                <span v-if="adoptionSummary(work)" class="works-table__adoption">
+                  {{ adoptionSummary(work) }}
+                </span>
+              </td>
+              <td>
+                <AdminWorkOrderingControls
+                  scope="table"
+                  :work="work"
+                  :pending="orderingPendingId === work.id"
+                  :error="orderingErrors[work.id] ?? null"
+                  @update="updateOrdering(work, $event)"
+                />
+              </td>
               <td>
                 <AdminStatusBadge
                   :tone="PUBLICATION_TONES[work.publicationStatus]"
@@ -174,6 +282,16 @@ onMounted(() => {
                   :label="PUBLICATION_STATUS_LABELS[work.publicationStatus]"
                 />
               </p>
+              <p v-if="adoptionSummary(work)" class="works-card__row works-card__row--muted">
+                {{ adoptionSummary(work) }}
+              </p>
+              <AdminWorkOrderingControls
+                scope="card"
+                :work="work"
+                :pending="orderingPendingId === work.id"
+                :error="orderingErrors[work.id] ?? null"
+                @update="updateOrdering(work, $event)"
+              />
               <p class="works-card__row works-card__row--muted">
                 出厂照 {{ work.studioPhotoCount }}/5
               </p>
@@ -266,6 +384,27 @@ onMounted(() => {
 
 .works-page__notice--error p {
   margin: 0;
+}
+
+.works-page__featured-warning {
+  margin: 0 0 var(--admin-space-4);
+  padding: var(--admin-space-3) var(--admin-space-4);
+  border-radius: var(--admin-radius-md);
+  color: var(--admin-status-warning);
+  background: var(--admin-status-warning-soft);
+  font-size: var(--admin-font-sm);
+  line-height: var(--admin-line-normal);
+}
+
+.works-table__purpose {
+  display: block;
+}
+
+.works-table__adoption {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: var(--admin-font-xs);
+  color: var(--admin-text-tertiary);
 }
 
 .works-page__delete-error {

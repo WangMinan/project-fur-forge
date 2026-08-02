@@ -43,6 +43,7 @@ import type {
   publicationStatusSchema,
   publicWorkDtoSchema,
   publicSafeWorkPreviewDtoSchema,
+  regularAdoptionBusinessStatusSchema,
   returnPhotoConsentSchema,
   returnPhotoConsentSourceSchema,
   suitTypeSchema,
@@ -78,6 +79,9 @@ export type SuitType = z.infer<typeof suitTypeSchema>
 export type PublicationStatus = z.infer<typeof publicationStatusSchema>
 export type AdoptionMethod = z.infer<typeof adoptionMethodSchema>
 export type BusinessStatus = z.infer<typeof businessStatusSchema>
+export type RegularAdoptionBusinessStatus = z.infer<
+  typeof regularAdoptionBusinessStatusSchema
+>
 export type MediaRole = z.infer<typeof mediaRoleSchema>
 export type AssetStatus = z.infer<typeof assetStatusSchema>
 export type AdminAssetDto = z.infer<typeof adminAssetDtoSchema>
