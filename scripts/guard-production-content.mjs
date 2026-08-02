@@ -15,8 +15,8 @@ export const PRODUCTION_BLOCKED_CONTENT = [
     pattern: /(?:夹具演示|夹具数据|内部开发样张|视觉样张)/u,
   },
   {
-    label: 'unapproved sample media',
-    pattern: /\/fixtures\/samples\//u,
+    label: 'unapproved fixture media',
+    pattern: /\/fixtures\//u,
   },
 ]
 

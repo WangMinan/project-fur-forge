@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
+import { capture } from './helpers/screenshots'
 import { seedHomeSlides, seedPublicCatalog } from './helpers/public-catalog'
 import type { SeedHomeSlide, SeedHomeSettings, SeedWork } from './helpers/public-catalog'
 
@@ -76,6 +77,9 @@ const SLIDES: SeedHomeSlide[] = [
   },
 ]
 
+const SCREENSHOT_DIR =
+  'agent_docs/需求1-兽装工作室主页/implementation/notes/t19-t20/screenshots'
+
 async function seedHome(
   page: Page,
   settings?: SeedHomeSettings,
@@ -85,11 +89,11 @@ async function seedHome(
   await seedHomeSlides(page, slides, settings)
 }
 
-/** 记录公开媒体请求（fake OSS 域名不可达，请求会失败但仍可观测方向）。 */
+/** 记录公开媒体请求；test-only 同源 fake OSS 返回真实可解码图片。 */
 function observeMediaRequests(page: Page) {
   const requested: string[] = []
   page.on('request', (request) => {
-    if (request.url().includes('media.test.invalid')) {
+    if (request.url().includes('127.0.0.2:')) {
       requested.push(request.url())
     }
   })
@@ -124,6 +128,9 @@ test.describe('T20 首页双源轮播', () => {
     expect(markup).not.toContain('芝麻的首页展示照')
     // 关联作品链接只信 linkedWorkHref
     expect(markup).toContain('href="/works/e2e-public-home-naigai"')
+    expect(markup).not.toContain('mailto:')
+    expect(markup).not.toContain('3114559925')
+    expect(markup).not.toContain('/fixtures/')
   })
 
   test('横屏视口只请求横版图片', async ({ page }) => {
@@ -137,6 +144,10 @@ test.describe('T20 首页双源轮播', () => {
     expect(heroRequests.length).toBeGreaterThan(0)
     expect(heroRequests.every(url => url.includes('home-hero-landscape'))).toBe(true)
     expect(heroRequests.some(url => url.includes('home-hero-portrait'))).toBe(false)
+    const image = hero(page).getByRole('img', { name: '奶盖的首页展示照' })
+    await expect(image).toHaveJSProperty('complete', true)
+    expect(await image.evaluate((node: HTMLImageElement) => node.naturalWidth))
+      .toBeGreaterThan(0)
   })
 
   test('竖屏视口只请求竖版图片', async ({ page }) => {
@@ -150,6 +161,10 @@ test.describe('T20 首页双源轮播', () => {
     expect(heroRequests.length).toBeGreaterThan(0)
     expect(heroRequests.every(url => url.includes('home-hero-portrait'))).toBe(true)
     expect(heroRequests.some(url => url.includes('home-hero-landscape'))).toBe(false)
+    const image = hero(page).getByRole('img', { name: '奶盖的首页展示照' })
+    await expect(image).toHaveJSProperty('complete', true)
+    expect(await image.evaluate((node: HTMLImageElement) => node.naturalWidth))
+      .toBeGreaterThan(0)
   })
 
   test('隐藏轮播项不下载，切换到第二张后按需加载', async ({ page }) => {
@@ -250,7 +265,7 @@ test.describe('T20 首页双源轮播', () => {
     await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
   })
 
-  test('自动轮播开启：按间隔切换、可见暂停、悬停暂停', async ({ page }) => {
+  test('自动轮播开启：按间隔切换、可见暂停、悬停与焦点暂停', async ({ page }) => {
     test.setTimeout(60_000)
     await seedHome(page, { autoRotate: true, autoRotateIntervalMs: 6_000 })
     await page.goto('/')
@@ -263,8 +278,14 @@ test.describe('T20 首页双源轮播', () => {
     await page.waitForTimeout(7_000)
     await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
 
-    // 移开后按间隔自动切换
+    // 移开但焦点仍在轮播内：继续暂停
     await page.mouse.move(10, 10)
+    await hero(page).getByRole('button', { name: '下一张' }).focus()
+    await page.waitForTimeout(7_000)
+    await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
+
+    // 焦点离开后按间隔自动切换
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
     await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张', {
       timeout: 8_000,
     })
@@ -339,6 +360,24 @@ test.describe('T20 首页双源轮播', () => {
       }, 2_500)
     }))
     expect(cls).toBeLessThan(0.1)
+  })
+
+  test('三视口图片真实解码、无横向溢出并留存首页证据', async ({ page }) => {
+    test.setTimeout(90_000)
+    await seedHome(page)
+    for (const [width, height] of [[390, 844], [768, 1024], [1440, 900]]) {
+      await page.setViewportSize({ width, height })
+      await page.goto('/')
+      await page.waitForLoadState('networkidle')
+      const image = hero(page).getByRole('img', { name: '奶盖的首页展示照' })
+      expect(await image.evaluate((node: HTMLImageElement) => node.naturalWidth))
+        .toBeGreaterThan(0)
+      const overflow = await page.evaluate(() =>
+        document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      )
+      expect(overflow).toBeLessThanOrEqual(1)
+      await capture(page, `home-${width}x${height}`, SCREENSHOT_DIR)
+    }
   })
 })
 

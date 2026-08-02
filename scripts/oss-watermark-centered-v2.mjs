@@ -13,7 +13,6 @@ import { fileURLToPath } from 'node:url'
 import OSS from 'ali-oss'
 import {
   contentDigests,
-  createSyntheticSourcePng,
   EXPECTED_PRIVATE_BUCKET,
   EXPECTED_PUBLIC_BUCKET,
   ossErrorSummary,
@@ -33,6 +32,10 @@ const prefix = `test/${runId}/`
 const evidencePath = resolve(
   projectRoot,
   `test-results/oss-watermark/${runId}.json`,
+)
+const visualEvidenceDirectory = resolve(
+  projectRoot,
+  `test-results/oss-watermark/${runId}`,
 )
 
 function configuredValue(environmentName, fileValues, fileKey) {
@@ -149,7 +152,7 @@ async function putPrivate(oss, object, content) {
   const result = await oss.put(object.key, content, {
     headers: {
       'Content-MD5': digests.md5Base64,
-      'Content-Type': 'image/png',
+      'Content-Type': object.contentType,
       'x-oss-forbid-overwrite': 'true',
       'x-oss-meta-sha256': digests.sha256,
     },
@@ -161,7 +164,7 @@ async function putPrivate(oss, object, content) {
   if (
     result.res?.status !== 200
     || Number(responseHeader(head, 'content-length')) !== content.length
-    || responseHeader(head, 'content-type') !== 'image/png'
+    || responseHeader(head, 'content-type') !== object.contentType
     || head.meta?.sha256 !== digests.sha256
     || sha256(preview) !== digests.sha256
     || info.fileSize !== content.length
@@ -183,6 +186,7 @@ async function processPreview({
   source,
   watermarkKey,
   output,
+  visualEvidenceDirectory,
 }) {
   const watermarkReference = urlSafeBase64(
     `${watermarkKey}?x-oss-process=image/resize,P_60`,
@@ -222,6 +226,18 @@ async function processPreview({
   ) {
     throw new Error(`OSS centered watermark preview failed for ${output.kind}.`)
   }
+  await Promise.all([
+    writeFile(
+      resolve(visualEvidenceDirectory, `${output.kind}.webp`),
+      anonymous.content,
+      { flag: 'wx' },
+    ),
+    writeFile(
+      resolve(visualEvidenceDirectory, `${output.kind}-unwatermarked.webp`),
+      unwatermarked.content,
+      { flag: 'wx' },
+    ),
+  ])
   return {
     anonymousPublicReadVerified: true,
     bytes,
@@ -232,6 +248,10 @@ async function processPreview({
     position: 'center',
     requestIds: [requestIdOf(result), requestIdOf(head), anonymous.requestId],
     scalePercent: 60,
+    visualEvidence: [
+      `${output.kind}.webp`,
+      `${output.kind}-unwatermarked.webp`,
+    ],
   }
 }
 
@@ -294,18 +314,30 @@ async function main() {
   const sources = [
     {
       kind: 'studio',
-      key: `${prefix}original/studio/source.png`,
-      content: createSyntheticSourcePng(1200, 1600),
+      key: `${prefix}original/studio/source.jpg`,
+      content: readFileSync(resolve(
+        projectRoot,
+        'agent_docs/需求1-兽装工作室主页/materials/picture-examples/领养/小狗/小狗-1.jpg',
+      )),
+      contentType: 'image/jpeg',
     },
     {
       kind: 'landscape',
-      key: `${prefix}original/landscape/source.png`,
-      content: createSyntheticSourcePng(1600, 900),
+      key: `${prefix}original/landscape/source.jpg`,
+      content: readFileSync(resolve(
+        projectRoot,
+        'agent_docs/需求1-兽装工作室主页/materials/picture-examples/领养/小狗/小狗-2-横版.jpg',
+      )),
+      contentType: 'image/jpeg',
     },
     {
       kind: 'portrait',
-      key: `${prefix}original/portrait/source.png`,
-      content: createSyntheticSourcePng(900, 1600),
+      key: `${prefix}original/portrait/source.jpg`,
+      content: readFileSync(resolve(
+        projectRoot,
+        'agent_docs/需求1-兽装工作室主页/materials/picture-examples/领养/小狗/小狗-1.jpg',
+      )),
+      contentType: 'image/jpeg',
     },
   ].map(source => ({
     ...source,
@@ -319,6 +351,7 @@ async function main() {
     created: false,
     key: `${prefix}original/watermark/logo.png`,
     content: readFileSync(resolve(projectRoot, 'public/brand/logo-full-light.png')),
+    contentType: 'image/png',
     kind: 'watermark-logo',
   }
   const outputs = [
@@ -328,7 +361,7 @@ async function main() {
     },
     {
       kind: 'detail-original-ratio', source: sources[0],
-      resize: 'resize,m_lfit,w_960', width: 960, height: 1280,
+      resize: 'resize,m_lfit,w_960', width: 960, height: 1440,
     },
     {
       kind: 'home-hero-landscape', source: sources[1],
@@ -347,9 +380,8 @@ async function main() {
   }))
   const objects = [...sources, watermark, ...outputs]
   evidence.objects = objects.map(object => ({
-    bucket: object.bucket,
-    key: object.key,
     kind: object.kind,
+    scope: object.bucket === settings.privateBucket ? 'PRIVATE' : 'PUBLIC',
   }))
   let executionPassed = false
   try {
@@ -364,6 +396,7 @@ async function main() {
     ) {
       throw new Error('OSS bucket identity or private ACL verification failed.')
     }
+    await mkdir(visualEvidenceDirectory, { recursive: true })
     for (const source of [...sources, watermark]) {
       evidence.checks.push({
         name: `private-${source.kind}`,
@@ -392,6 +425,7 @@ async function main() {
           source: output.source,
           watermarkKey: watermark.key,
           output,
+          visualEvidenceDirectory,
         }),
       })
     }

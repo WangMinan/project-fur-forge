@@ -31,12 +31,16 @@ const filterQuery = computed(() => ({
   suitType: firstQueryValue(route.query.suitType),
 }))
 
-const { data: list } = await useFetch('/api/public/v1/works', {
+const { data: list, error: listError } = await useFetch('/api/public/v1/works', {
   key: 'public-works-list',
   headers: useRequestHeaders(['host']),
   query: filterQuery,
   transform: raw => publicWorkListResponseSchema.parse(raw).data,
 })
+
+if (listError.value) {
+  throw createError({ statusCode: 500, statusMessage: '作品列表暂时无法显示' })
+}
 
 const items = computed(() => list.value?.items ?? [])
 const filter = computed(() => list.value?.filter ?? { purpose: null, suitType: null, valid: true as const })

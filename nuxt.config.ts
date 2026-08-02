@@ -90,6 +90,10 @@ export default defineNuxtConfig({
             handler: e2eFakeOssPutFixture,
           },
           {
+            route: '/test/**',
+            handler: e2eFakeOssPutFixture,
+          },
+          {
             route: '/api/e2e-fake-media-control',
             handler: e2eFakeMediaControlFixture,
           },

@@ -13,8 +13,8 @@
 | 计划 | `planning/PLAN.md` | `planning/WATERMARK-CENTERED-V2.md` |
 | 模型投影 | `models/README.md` | `models/WATERMARK-CENTERED-V2.md` |
 | 设计 | `.design/` | `.design/WATERMARK-CENTERED-V2.md` |
-| 任务 | `implementation/TASKS.md` | GATE-07 已完成，T19 尚未启动 |
-| 状态 | `STATE.md` | 2026-08-02 GATE-07 用户验收后 |
+| 任务 | `implementation/TASKS.md` | T19/T20 已完成，T21 未勾选 |
+| 状态 | `STATE.md` | 2026-08-02 T19/T20 工程收口后 |
 
 ## 当前实施与证据
 
@@ -30,14 +30,15 @@
 | GATE-07 UI 交接 | 已锁定 | `implementation/notes/GATE07-UI-HANDOFF.md`：Kimi 页面接线、版本、状态、失败恢复与证据契约 |
 | GATE-07 UI 记录 | 已完成 | `implementation/notes/GATE07-WATERMARK-UI-2026-08-01.md`：品牌管理页、三视口和浏览器 E2E |
 | GATE-07 收口 | 已通过 | `implementation/notes/GATE07-CLOSURE-2026-08-02.md`：联调修复、进度补齐、质量规则和用户验收 |
-| T19–T21 | 未开始 | GATE-07 前置已解除，等待重新路由 |
+| T19/T20 工程与 UI | 已完成 | `implementation/notes/T19-T20-ENGINEERING-2026-08-01.md`、`T19-T20-UI-2026-08-01.md` 与 `T19-T20-CLOSURE-2026-08-01.md` |
+| T21 独立审查准备 | 已准备、未执行 | `implementation/notes/T21-REVIEW-PREP.md`；不得作为 T21 通过证据 |
 
 ## 当前执行文档
 
 | 类型 | 路径 | 当前效力 |
 | --- | --- | --- |
-| 执行责任路由 | `implementation/EXECUTION_ROUTING.md` | GATE-07 已验收待发布；T19 下一批重新路由 |
-| 任务清单 | `implementation/TASKS.md` | 唯一可勾选清单；GATE-07 已完成，T19 尚未启动 |
+| 执行责任路由 | `implementation/EXECUTION_ROUTING.md` | T19/T20 已收口；T21 路由给独立审查者 |
+| 任务清单 | `implementation/TASKS.md` | 唯一可勾选清单；T19/T20 已完成，T21 未勾选 |
 | 状态机 | `STATE.md` | 当前决定、门禁和下一步 |
 
 ## 历史证据
@@ -55,4 +56,4 @@
 
 ## 下一批预期产物
 
-T19/T20 产物只在从最新 `main` 重新路由并创建新短分支后产生。所有后续长耗时操作必须留下真实进度证据；E2E 记录必须说明用户路径和页面风险覆盖，不能只登记通过数量。
+T21 由未参与 T19/T20 实现的审查者按 `implementation/notes/T21-REVIEW-PREP.md` 重放第一垂直切片。所有长耗时操作必须留下真实进度证据；E2E 记录必须说明用户路径和页面风险覆盖，不能只登记通过数量。T21 独立审查与用户验收完成前不勾选任务，也不生成阶段结论。

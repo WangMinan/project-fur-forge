@@ -104,10 +104,6 @@ onBeforeUnmount(() => {
           {{ item.label }}
         </NuxtLink>
       </nav>
-
-      <p class="mobile-nav__contact">
-        业务邮箱 <a href="mailto:3114559925@qq.com">3114559925@qq.com</a>
-      </p>
     </div>
   </Transition>
 </template>
@@ -181,12 +177,6 @@ onBeforeUnmount(() => {
   margin-top: var(--space-3);
   border-top: 1px solid var(--public-border-secondary);
   border-radius: 0;
-}
-
-.mobile-nav__contact {
-  margin-top: auto;
-  color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
 }
 
 .mobile-nav-enter-active,

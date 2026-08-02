@@ -64,6 +64,7 @@ interface ControlBody {
     autoRotateIntervalMs?: number
   }
   active?: boolean
+  slideAlt?: string
 }
 
 let suspendedProfileId: string | null = null
@@ -475,6 +476,29 @@ export default defineEventHandler(async (event) => {
       )
     }
     return { data: { ok: true } }
+  }
+
+  if (body?.action === 'seedHomePublicationOperation') {
+    const sqlite = getDatabase().sqlite
+    const slide = sqlite.prepare(`
+      SELECT id FROM site_hero_slides WHERE alt_text = ? AND enabled = 0
+    `).get(body.slideAlt) as { id: string } | undefined
+    if (!slide) {
+      setResponseStatus(event, 404)
+      return { error: 'disabled slide not found' }
+    }
+    const id = randomUUID()
+    const now = Date.now()
+    const version = sqlite.prepare(`
+      SELECT version FROM site_content WHERE id = 'site'
+    `).pluck().get() as number
+    sqlite.prepare(`
+      INSERT INTO publication_operations (
+        id, operation_type, entity_type, entity_id, requested_version,
+        status, started_at, updated_at
+      ) VALUES (?, 'PUBLISH', 'HOME', ?, ?, 'GENERATING_PUBLIC', ?, ?)
+    `).run(id, slide.id, version, now, now)
+    return { data: { id } }
   }
 
   // T20 首页管理 E2E：临时悬空/恢复活动水印 profile 指向，验证预览与启用的

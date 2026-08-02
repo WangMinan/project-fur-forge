@@ -257,7 +257,7 @@ onBeforeUnmount(() => {
       </button>
     </div>
 
-    <p class="home-hero__live" role="status" aria-live="polite">
+    <p v-if="slides.length > 0" class="home-hero__live" role="status" aria-live="polite">
       第 {{ activeIndex + 1 }} 张，共 {{ slides.length }} 张
     </p>
   </section>

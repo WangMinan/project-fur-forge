@@ -35,7 +35,7 @@ describe('production content guard', () => {
   it.each([
     ['unimplemented capability copy', '接口尚未接入（T17）'],
     ['fixture/demo copy', '夹具演示'],
-    ['unapproved sample media', '/fixtures/samples/example.jpg'],
+    ['unapproved fixture media', '/fixtures/example.jpg'],
   ])('blocks %s in production', async (_label, content) => {
     const directory = temporaryDirectory()
     writeFileSync(

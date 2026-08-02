@@ -1,4 +1,6 @@
-import { spawn } from 'node:child_process'
+import { spawn, spawnSync } from 'node:child_process'
+import { once } from 'node:events'
+import { rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
@@ -6,6 +8,38 @@ const host = '127.0.0.1'
 const port = '3101'
 const baseURL = `http://${host}:${port}`
 const adminBaseURL = `http://localhost:${port}`
+const databaseFile = resolve(
+  tmpdir(),
+  `fur-forge-production-verify-${process.pid}.db`,
+)
+const verificationEnv = {
+  ...process.env,
+  ADMIN_BASE_URL: adminBaseURL,
+  APP_ENV: 'test',
+  DATABASE_FILE: databaseFile,
+  MEDIA_BASE_URL: 'https://media.test.invalid',
+  OSS_UPLOAD_BASE_URL: 'https://upload.test.invalid',
+  PUBLIC_BASE_URL: baseURL,
+}
+
+function cleanupDatabase() {
+  for (const file of [databaseFile, `${databaseFile}-shm`, `${databaseFile}-wal`]) {
+    rmSync(file, { force: true })
+  }
+}
+
+const migration = spawnSync(
+  process.execPath,
+  ['node_modules/tsx/dist/cli.mjs', 'scripts/db-migrate.ts'],
+  {
+    encoding: 'utf8',
+    env: verificationEnv,
+  },
+)
+if (migration.status !== 0) {
+  cleanupDatabase()
+  throw new Error(`Production verification migration failed.\n${migration.stderr}`)
+}
 
 const server = spawn(
   process.execPath,
@@ -14,18 +48,9 @@ const server = spawn(
   ],
   {
     env: {
-      ...process.env,
-      ADMIN_BASE_URL: adminBaseURL,
-      APP_ENV: 'test',
-      DATABASE_FILE: resolve(
-        tmpdir(),
-        `fur-forge-production-verify-${process.pid}.db`,
-      ),
-      MEDIA_BASE_URL: 'https://media.test.invalid',
+      ...verificationEnv,
       NITRO_HOST: '0.0.0.0',
       NITRO_PORT: port,
-      OSS_UPLOAD_BASE_URL: 'https://upload.test.invalid',
-      PUBLIC_BASE_URL: baseURL,
     },
     stdio: [
       'ignore',
@@ -91,7 +116,10 @@ try {
 
   assert(healthResponse.ok, 'Health endpoint did not return 2xx.')
   assert(health.status === 'ok', 'Health endpoint did not report ok.')
-  assert(publicResponse.ok, 'Public homepage did not return 2xx.')
+  assert(
+    publicResponse.ok,
+    `Public homepage returned ${publicResponse.status}.\n${serverOutput}`,
+  )
   assert(
     publicHtml.includes('data-testid="public-home"')
     && publicHtml.includes('有点小狗工作室')
@@ -113,5 +141,9 @@ try {
   console.log('Production verification passed: health, public SSR, admin CSR.')
 }
 finally {
-  server.kill()
+  if (server.exitCode === null) {
+    server.kill()
+    await once(server, 'exit')
+  }
+  cleanupDatabase()
 }

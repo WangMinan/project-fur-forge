@@ -68,6 +68,10 @@ export async function seedBrandingStage(page: Page) {
   await control(page, { action: 'seedBrandingStage' })
 }
 
+export async function seedHomePublicationOperation(page: Page, slideAlt: string) {
+  await control(page, { action: 'seedHomePublicationOperation', slideAlt })
+}
+
 // 公开衍生图按配方身份哈希决定 asset_variants.id（不含资产 ID），E2E 库跨用例、
 // 跨运行复用；固定内容会让两次上传得到相同身份并在发布时触发 UNIQUE 冲突。
 // 追加随机尾字节（PNG 解码器在 IEND 后停止读取）使每次上传内容唯一。

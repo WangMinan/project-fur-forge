@@ -177,6 +177,23 @@ function variantsForAsset(sqlite: Database.Database, assetId: string) {
   `).all(assetId) as HeroVariantRow[]
 }
 
+function latestHomePublicationOperation(
+  sqlite: Database.Database,
+  slideId: string,
+) {
+  const id = sqlite.prepare(`
+    SELECT id FROM publication_operations
+    WHERE entity_type = 'HOME' AND entity_id = ?
+      AND operation_type = 'PUBLISH'
+    ORDER BY started_at DESC LIMIT 1
+  `).pluck().get(slideId) as string | undefined
+  if (!id) {
+    return null
+  }
+  const operation = getPublicationOperation(sqlite, id)
+  return operation.status === 'DONE' ? null : operation
+}
+
 function adminSlide(
   sqlite: Database.Database,
   row: SlideRow,
@@ -217,6 +234,7 @@ function adminSlide(
         }
       : null,
     missingVariantCount,
+    publicationOperation: latestHomePublicationOperation(sqlite, row.id),
   })
 }
 
