@@ -84,17 +84,27 @@ export function smallStudioPng(): Buffer {
   return uniquePng(createSyntheticWatermarkPng() as Buffer)
 }
 
+let publishableStudioSource: Buffer | null = null
+
+export function publishableStudioPng(): Buffer {
+  publishableStudioSource ??= createSyntheticSourcePng(2400, 1600) as Buffer
+  return uniquePng(publishableStudioSource)
+}
+
 // 9500×1030、约 29 MB 噪点 PNG：触发内嵌 FFmpeg 私有处理源。
 export function largeStudioPng(): Buffer {
   return uniquePng(createLargeSyntheticPng() as Buffer)
 }
 
 // T20 首页横/竖槽位上传：横版必须宽大于高、竖版必须高大于宽（服务端配对校验）。
+const heroSources: Partial<Record<'landscape' | 'portrait', Buffer>> = {}
+
 export function heroPng(orientation: 'landscape' | 'portrait'): Buffer {
-  return uniquePng(createSyntheticSourcePng(
-    orientation === 'landscape' ? 320 : 180,
-    orientation === 'landscape' ? 180 : 320,
-  ) as Buffer)
+  heroSources[orientation] ??= createSyntheticSourcePng(
+    orientation === 'landscape' ? 1920 : 1080,
+    orientation === 'landscape' ? 1080 : 1920,
+  ) as Buffer
+  return uniquePng(heroSources[orientation])
 }
 
 // T20 首页管理 E2E：临时停用/恢复活动水印 profile（验证预览与启用阻断）。

@@ -3,6 +3,7 @@ import { adminBaseURL, loginAsAdmin } from './helpers/auth'
 import { bumpWorkViaApi, createWorkViaApi } from './helpers/admin-work'
 import {
   fakeMediaState,
+  publishableStudioPng,
   resetFakeMedia,
   setFakeMediaFlags,
   smallStudioPng,
@@ -20,7 +21,7 @@ async function gotoEditor(page: import('@playwright/test').Page, workId: string)
 
 // 上传一张出厂照、填写说明并保存关系，使作品满足发布条件。
 async function makePublishable(page: import('@playwright/test').Page) {
-  await uploadFileToEditor(page, smallStudioPng(), 'publish.png')
+  await uploadFileToEditor(page, publishableStudioPng(), 'publish.png')
   await expect(photoCards(page)).toHaveCount(1)
   await photoCards(page).first().getByLabel(/图片说明/).fill('发布用出厂照')
   await page.getByRole('button', { name: '保存出厂照' }).click()
@@ -51,6 +52,20 @@ test('发布检查阻断项中文映射与发布按钮禁用', async ({ page }) 
   await expect(panel).toContainText('可以发布')
   await expect(panel).toContainText(/发布时将生成 12 张带水印公开衍生图/)
   await expect(panel.getByRole('button', { name: '发布', exact: true })).toBeEnabled()
+})
+
+test('READY 小图在发布前给出尺寸阻断', async ({ page }) => {
+  const work = await createWorkViaApi(page, { characterName: '小图阻断' })
+  await gotoEditor(page, work.id)
+  await uploadFileToEditor(page, smallStudioPng(), 'small.png')
+  await expect(photoCards(page)).toHaveCount(1)
+  await photoCards(page).first().getByLabel(/图片说明/).fill('尺寸不足的出厂照')
+  await page.getByRole('button', { name: '保存出厂照' }).click()
+  await expect(page.getByText('出厂照已保存。')).toBeVisible()
+
+  const panel = page.getByTestId('publication-panel')
+  await expect(panel).toContainText('有出厂照尺寸不足')
+  await expect(panel.getByRole('button', { name: '发布', exact: true })).toBeDisabled()
 })
 
 test('发布成功：状态翻转、编辑锁定、公开预览媒体就绪', async ({ page }) => {

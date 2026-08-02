@@ -14,7 +14,7 @@ T12 已于 2026-07-31 建立 P0 Drizzle Schema、两项初始领域迁移、SQLi
 - `assets`：永久私有原图元数据、摘要、尺寸、处理状态和不可预测私有 Key；原图无水印且禁止覆盖。
 - `asset_variants`：FFmpeg 私有处理源、草稿私有衍生图与公开衍生图的相对 Key、用途、宽度、格式、摘要、recipe 版本和水印 profile 身份；可选 `source_variant_id` 记录同一资产内的 READY PRIVATE preprocess 来源。
 - `work_assets`：作品与 `design_sheet` / `studio_photo` 的关系、顺序、主图角色、焦点/裁切和水印锚点。
-- `site_hero_slides`：站点级首页轮播；每项通过两个 assetId 关联一张 `assets.role = home_hero_landscape` 与一张 `assets.role = home_hero_portrait` 的资产，保存 alt、顺序、启用、版本和可选已发布作品关联；停用草稿仍须横竖 ID、alt 和排序完整，但资产可以暂未 READY。
+- `site_hero_slides`：站点级首页轮播；每项通过两个 assetId 关联一张 `assets.role = home_hero_landscape` 与一张 `assets.role = home_hero_portrait` 的资产，保存 alt、顺序、启用、版本、可选已发布作品关联，以及启用前私有预览的横竖精确 Key/到期时间；停用草稿仍须横竖 ID、alt 和排序完整，但资产可以暂未 READY。
 - `publication_operations`：记录跨 SQLite 与双 Bucket 的生成、水印、验证、提交和清理进度及稳定内部失败码；管理端以发布检查的 `missingVariantCount` 展示进度，不另建队列或进度表。不保存 OSS 对象 Key/响应正文，不记录 ACL 切换。OSS requestId 与服务错误码只进入脱敏运行日志。
 - 后续新增的长耗时业务操作必须复用现有操作记录，或建立同等可查询、可恢复的持久状态；至少表达阶段、真实完成量/总量（可知时）、失败码、资源版本和完成时间。不得为了页面进度伪造客户端计时，也不得仅靠一个长连接 HTTP 响应保存任务状态。
 - `business_statuses`、`site_content`：受限的营业状态与必要文字内容；首页轮播媒体不塞进通用 `site_content` JSON。
@@ -63,7 +63,9 @@ OQ-119 已由用户回答：`ownerDisplay` 始终为去首尾空白后非空的�
 - 每项都必须同时拥有非空 `landscape_asset_id` 与 `portrait_asset_id`，两者不能相同；启用项还要求两侧资产 READY；
 - 每项的 `alt_text` 去首尾空白后非空，排序值完整且非负；仅启用项要求排序唯一且位于 0–4，数据库因此持续约束最多 5 个启用项，发布函数另要求至少 1 个启用项，空库和仅含停用草稿的库合法；
 - 提交公开状态前，横版必须有 768 / 1280 / 1920、竖版必须有 480 / 768 / 1080 的 `recipe-v1` PUBLIC READY WebP + fallback；usage、当前活动 `brand-centered-v2` profile、配置与 Logo 摘要、居中参数、输出摘要和字节数全部进入同一发布校验，公开 mapper 复用该条件；
+- READY 横竖资产还必须在生成前满足最大配方宽高；固定配方不上采样，尺寸不足返回 409；
 - 可选 `linked_work_id` 只允许指向已发布作品。作品下架时不得级联删除轮播图，应显式清空关联或阻止并说明影响；
+- 启用前私有预览通过 `landscape_preview_object_key`、`portrait_preview_object_key`、`preview_expires_at` 形成可审计清单；编辑、删除、启用或停用时精确清理，浏览器只接收同源管理地址；
 - 自动轮播开关与不短于 6 秒的间隔保存在单例 `site_content`，默认关闭；不为每个 slide 保存任意脚本、HTML 或独立动画配置；
 - 公开投影只返回已发布横竖 variant、alt、顺序和安全作品链接。
 

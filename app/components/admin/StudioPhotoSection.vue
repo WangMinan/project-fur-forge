@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { managedWorkResponseSchema } from '~~/shared/schemas/work'
-import { privateAssetPreviewResponseSchema } from '~~/shared/schemas/media'
 import { watermarkBrandingResponseSchema } from '~~/shared/schemas/watermark'
 import type {
   ManagedStudioPhotoDto,
@@ -65,7 +64,8 @@ function toEntry(
     focalY: photo.focalY,
     height: photo.height,
     position: photo.position,
-    previewUrl: previous?.previewUrl ?? null,
+    previewUrl: previous?.previewUrl
+      ?? `/api/admin/v1/media/assets/${photo.assetId}/preview`,
     primary: photo.primary,
     publicVariantCount: photo.publicVariantCount,
     status: photo.status,
@@ -98,41 +98,15 @@ function payloadOf(source: SectionEntry[]) {
 
 resetFromWork(props.work)
 
-async function loadPreviewUrls() {
-  await Promise.all(entries.value
-    .filter(entry => entry.previewUrl === null)
-    .map(async (entry) => {
-      try {
-        const result = await adminApi(
-          `/api/admin/v1/media/assets/${entry.assetId}/preview`,
-          { schema: privateAssetPreviewResponseSchema },
-        )
-        const current = entries.value.find(
-          candidate => candidate.assetId === entry.assetId,
-        )
-        if (current) {
-          current.previewUrl = result.data.url
-        }
-      }
-      catch (error) {
-        if (error instanceof AdminApiError && error.status === 401) {
-          return
-        }
-      }
-    }))
-}
-
 // 页面在保存/发布/冲突重载后传入新 work：本地无未保存更改时跟随重建，
 // 有未保存更改时保留本地编辑（版本冲突由页面横幅处理）。
 watch(() => props.work, (work) => {
   if (!isDirty.value) {
     resetFromWork(work)
-    void loadPreviewUrls()
   }
 })
 
 onMounted(() => {
-  void loadPreviewUrls()
   void loadWatermarkSummary()
 })
 

@@ -1,6 +1,5 @@
 import type {
   ConditionalPutDto,
-  PrivateAssetPreviewDto,
 } from '../../shared/types/contracts'
 import type { RuntimeConfig } from './runtime-config'
 import { getRuntimeConfig } from './runtime-config'
@@ -52,6 +51,11 @@ export interface PrivateSignedObject {
   contentType: string
 }
 
+interface PrivateSignedUrl {
+  expiresAt: string
+  url: string
+}
+
 export interface MediaStorage {
   deletePrivate(objectKey: string): Promise<void>
   deletePublic(objectKey: string): Promise<void>
@@ -66,7 +70,7 @@ export interface MediaStorage {
   processPrivateToPublic(input: PublicProcessInput): Promise<void>
   putPrivateConditional(input: PrivateObjectPutInput): Promise<void>
   signConditionalPut(input: ConditionalPutInput): Promise<ConditionalPutDto>
-  signPrivateGet(objectKey: string, expiresAt: number): Promise<PrivateAssetPreviewDto>
+  signPrivateGet(objectKey: string, expiresAt: number): Promise<PrivateSignedUrl>
 }
 
 export const PUBLIC_MEDIA_CACHE_CONTROL = 'public, max-age=31536000, immutable'

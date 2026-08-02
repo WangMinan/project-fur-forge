@@ -68,7 +68,7 @@ function insertReadyPhoto(workId: string, workVersion: number, assetId: string) 
       id, role, status, private_object_key, sha256, byte_size,
       mime_type, width, height, created_at, updated_at
     ) VALUES (?, 'studio_photo', 'READY', ?, ?, 1024,
-              'image/png', 1600, 1200, ?, ?)
+              'image/png', 3000, 2400, ?, ?)
   `).run(assetId, key, sha, NOW, NOW)
   sqlite.prepare(`
     INSERT INTO upload_sessions (
@@ -78,7 +78,7 @@ function insertReadyPhoto(workId: string, workVersion: number, assetId: string) 
       expected_height, created_by, status, asset_id, version,
       created_at, expires_at, updated_at
     ) VALUES (?, 'work', ?, ?, 'studio_photo', ?, 'image/png', 1024,
-              'AAAAAAAAAAAAAAAAAAAAAA==', ?, 1600, 1200, ?, 'COMPLETED', ?, 3,
+              'AAAAAAAAAAAAAAAAAAAAAA==', ?, 3000, 2400, ?, 'COMPLETED', ?, 3,
               ?, ?, ?)
   `).run(
     crypto.randomUUID(),

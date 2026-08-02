@@ -1,7 +1,7 @@
 # 计划：兽装工作室主页
 
 > **角色**：把 SPEC 翻译成有序、可验证的技术实施计划。
-> **状态**：2026-08-02 执行版。T01–T18、GATE-06、GATE-07 与 EXT-02 已完成；T19/T20 服务端契约已进入 `main`，当前在 `feature/t19-t20-kimi` 接线最终 Vue 页面，并在同一分支补齐启用前真实水印预览契约。
+> **状态**：2026-08-02 执行版。T01–T20、GATE-06、GATE-07 与 EXT-02 已完成；T21 独立审查为 NOT PASS，当前按 findings 修复并等待再次独立复审。
 
 ## 1. 执行结论
 
@@ -57,7 +57,7 @@ flowchart LR
     adminui --> api
     api --> db[SQLite + Drizzle]
     adminui -->|V4 条件 PUT| private[project-furry-forge-private]
-    api -->|HEAD / IMG / watermark / sys/saveas / 签名 GET| private
+    api -->|HEAD / IMG / watermark / sys/saveas / 服务端读取| private
     api -->|sys/saveas / HEAD / DELETE| publicbucket[project-furry-forge-public]
     visitor -->|公开网页衍生图| media[媒体域名]
     media --> publicbucket
@@ -150,7 +150,7 @@ PRAGMA synchronous = FULL;
 
 `users`、`works`、`work_feature_tags`、`assets`、`asset_variants`、`work_assets`、`site_hero_slides`、`publication_operations`、`business_statuses`、`site_content`、`audit_logs`。
 
-- `site_hero_slides` 只保存横版/竖版 `assetId`、alt、排序、启用状态、版本和可选作品关联；自动轮播是站点级受限设置。
+- `site_hero_slides` 保存横版/竖版 `assetId`、alt、排序、启用状态、版本、可选作品关联，以及启用前私有预览的两份精确 Key 和到期时间；自动轮播是站点级受限设置。
 - `work_assets.role` 在 P0 只允许 `design_sheet | studio_photo`；P1 的返图由 `return_photos` 关联独立资产。
 - Logo 与水印源不存成可由页面编辑器替换的数据库内容；variant 保存所用 profile 版本和摘要。
 - `asset_variants.source_variant_id` 记录可验证的处理来源：`preprocess` 直接来自同一资产永久原图；公开 variant 可直接来自不超过 OSS 上限的原图，超过上限时必须引用同一资产下 READY 的 PRIVATE preprocess，且源输出摘要等于下游输入摘要。角色与 usage 按明确矩阵约束。
@@ -237,11 +237,11 @@ OSS 是公开 variant、最终格式和水印的唯一配方权威。应用负�
 
 ### 7.5 草稿、发布和下架
 
-草稿预览：在私有 Bucket 生成需要的草稿衍生图，通过短时签名 GET 展示，不修改公开 Bucket。首页编辑器必须分别预览横屏和竖屏结果，并显示当前水印锚点。
+草稿预览：在私有 Bucket 生成需要的草稿衍生图，通过同源认证、`no-store` 的管理 API 展示，不修改公开 Bucket，也不向浏览器返回签名 URL 或私有 Key。首页编辑器必须分别预览横屏和竖屏结果，并显示当前水印锚点。
 
 发布：
 
-1. 写入 `publication_operations` 意图；
+1. 先验证当前版本、业务阻断项和源图是否足以生成固定配方；通过后才写入 `publication_operations` 意图；
 2. 从私有原图生成缺失的公开衍生图到公开 Bucket；
 3. HEAD/图片信息/匿名 GET 验证；
 4. SQLite 事务提交公开状态和公开 variant 引用；
@@ -253,7 +253,7 @@ OSS 是公开 variant、最终格式和水印的唯一配方权威。应用负�
 
 首页轮播启用即为原子发布，不另建一套重复的“已发布”布尔值。启用前必须验证：启用项数量 1–5、每项横竖资产均 READY、alt 非空、排序无冲突、可选关联作品已发布；两个方向都具备 `recipe-v1` 全部宽度的 PUBLIC READY WebP + fallback，usage、活动 `brand-centered-v2` profile、配置与 Logo 摘要、居中参数、输出摘要和字节数完整。生成期间旧公开投影不变，全部验证后才启用；失败不出现半套横竖资源。
 
-停用轮播项可在启用前请求一次同步的真实水印预览：服务端复用活动 profile 与公开配方，在私有 `preview/` 前缀生成横版 768 px、竖版 480 px WebP，并返回 5 分钟签名 GET。该预览不建立公开 variant、不改变轮播状态，也不允许管理 Host 绕过边界访问 `/api/public/**`。
+停用轮播项可在启用前请求一次同步的真实水印预览：服务端复用活动 profile 与公开配方，在私有 `preview/` 前缀生成横版 768 px、竖版 480 px WebP，持久化两份精确 Key 与 5 分钟到期时间，并返回同源认证地址。编辑、删除、启用或停用时按清单精确删除。该预览不建立公开 variant、不改变轮播状态，也不允许管理 Host 绕过边界访问 `/api/public/**`。
 
 下架：
 
@@ -261,6 +261,8 @@ OSS 是公开 variant、最终格式和水印的唯一配方权威。应用负�
 2. 删除公开 Bucket 中该发布版本的衍生对象；
 3. 有 CDN 时执行精确失效；
 4. 删除失败保留可重试清理记录。已经被访客保存的副本无法远程召回，不作绝对销毁承诺。
+
+仍被启用首页轮播关联的作品先返回 409，要求停用或解除关联；下架事务异常写入 `FAILED/COMMITTING/UNPUBLICATION_COMMIT_FAILED`，不得留下活动操作。
 
 P0 删除作品：只接受未发布作品的当前版本；逐项清理其公开 variant 对象与记录后删除作品聚合，永久私有原图资产不随作品删除。T40 上线后再由 30 天回收站替换这条受限永久删除流程。
 
@@ -295,7 +297,7 @@ P0 删除作品：只接受未发布作品的当前版本；逐项清理其公�
 - 登录写请求执行精确 Host/Origin，不要求尚未建立的 Session/CSRF；其余受保护写请求执行 Session、精确 Host/Origin 和 CSRF。T13 已完成这些认证边界，体积限制和分层限流由 T32 收口。
 - 日志只记录 requestId、方法、归一化路径、状态、错误码和耗时；不记录正文、联系人、授权备注、私有 Key 或签名 URL。
 - 私有媒体 URL 不进入公开 HTML、Sitemap、OG 或公开 API。
-- 水印不构成访问控制；私有原图安全仍只依赖私有 Bucket、认证与短时签名 URL。
+- 水印不构成访问控制；私有原图安全依赖私有 Bucket、认证、服务端同源代理与最小权限；浏览器签名 URL 仅限当前上传所需的条件 PUT。
 
 ## 10. SEO、性能与备份
 

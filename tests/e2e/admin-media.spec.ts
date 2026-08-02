@@ -74,7 +74,7 @@ test.describe('出厂照上传链路', () => {
     await expect(page.getByText('出厂照已保存。')).toBeVisible()
     await expect(page.getByText('出厂照有未保存更改')).toHaveCount(0)
 
-    // 刷新后通过 assetId 换取短时签名 GET，继续显示私有原图预览。
+    // 刷新后通过 assetId 的同源认证路由继续显示私有原图预览。
     await page.reload()
     await page.waitForSelector('.editor-card')
     await expect(photoCards(page)).toHaveCount(1)
@@ -83,7 +83,7 @@ test.describe('出厂照上传链路', () => {
     await expect(photoCards(page).first().getByTestId('photo-preview')).toBeVisible()
     await expect(photoCards(page).first().locator('img')).toHaveAttribute(
       'src',
-      /\/api\/e2e-fake-oss\//,
+      /\/api\/admin\/v1\/media\/assets\/[0-9a-f-]+\/preview$/u,
     )
     await expect(page.getByText('未更改')).toBeVisible()
   })
@@ -305,9 +305,18 @@ test.describe('出厂照区域：泄漏边界与三视口', () => {
     await page.getByLabel(/图片说明/).fill('边界图')
     await page.getByRole('button', { name: '保存出厂照' }).click()
     await expect(page.getByText('出厂照已保存。')).toBeVisible()
+    await page.reload()
+    await page.waitForSelector('.editor-card')
+    const persistedPreview = photoCards(page).first().locator('img')
+    await expect(persistedPreview).toHaveAttribute(
+      'src',
+      new RegExp(`/api/admin/v1/media/assets/[0-9a-f-]+/preview$`, 'u'),
+    )
     const domAfterSave = await page.content()
     expect(domAfterSave).not.toContain('/original/')
     expect(domAfterSave).not.toContain('/api/e2e-fake-oss/')
+    expect(domAfterSave).not.toContain('x-oss-')
+    expect(domAfterSave).not.toContain('Signature=')
   })
 
   test('编辑器出厂照区域三视口截图与横向溢出检查', async ({ page }) => {

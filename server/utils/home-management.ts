@@ -31,6 +31,7 @@ import type { MediaStorage } from './media-storage'
 import {
   generatePrivateWatermarkPreview,
   generatePublicVariants,
+  sourceSupportsPublicUsages,
 } from './media-recipe'
 import { ServiceError } from './service-error'
 import { activeWatermarkProfileId } from './watermark-branding'
@@ -73,6 +74,7 @@ interface SlideRow {
   landscapeAssetId: string
   landscapeHeight: number
   landscapePrivateObjectKey: string
+  landscapePreviewObjectKey: string | null
   landscapeWidth: number
   linkedWorkId: string | null
   linkedWorkSlug: string | null
@@ -80,8 +82,10 @@ interface SlideRow {
   portraitAssetId: string
   portraitHeight: number
   portraitPrivateObjectKey: string
+  portraitPreviewObjectKey: string | null
   portraitWidth: number
   sortOrder: number
+  previewExpiresAt: number | null
   version: number
 }
 
@@ -108,10 +112,13 @@ const selectSlides = `
     landscape.width AS landscapeWidth,
     landscape.height AS landscapeHeight,
     landscape.private_object_key AS landscapePrivateObjectKey,
+    slide.landscape_preview_object_key AS landscapePreviewObjectKey,
     slide.portrait_asset_id AS portraitAssetId,
     portrait.width AS portraitWidth,
     portrait.height AS portraitHeight,
     portrait.private_object_key AS portraitPrivateObjectKey,
+    slide.portrait_preview_object_key AS portraitPreviewObjectKey,
+    slide.preview_expires_at AS previewExpiresAt,
     slide.linked_work_id AS linkedWorkId,
     linked.slug AS linkedWorkSlug,
     linked.publication_status AS linkedWorkStatus
@@ -273,6 +280,9 @@ export async function createHeroSlidePreview(
 ): Promise<AdminHeroPreviewDto> {
   requireHomeVersion(sqlite, expectedVersion)
   const slide = requireSlide(sqlite, slideId)
+  if (slide.enabled === 1) {
+    throw new ServiceError(409, 'CONFLICT', 'Disable the hero slide before previewing it.')
+  }
   assertAssetPair(sqlite, {
     landscapeAssetId: slide.landscapeAssetId,
     portraitAssetId: slide.portraitAssetId,
@@ -282,18 +292,31 @@ export async function createHeroSlidePreview(
     throw new ServiceError(409, 'CONFLICT', 'Active watermark profile is unavailable.')
   }
   const expiresAt = now + HERO_PREVIEW_TTL_MS
+  const landscapeObjectKey = heroPreviewKey(
+    slide.landscapePrivateObjectKey,
+    slide.id,
+    'landscape',
+  )
+  const portraitObjectKey = heroPreviewKey(
+    slide.portraitPrivateObjectKey,
+    slide.id,
+    'portrait',
+  )
+  sqlite.prepare(`
+    UPDATE site_hero_slides
+    SET landscape_preview_object_key = ?, portrait_preview_object_key = ?,
+        preview_expires_at = ?
+    WHERE id = ? AND enabled = 0
+  `).run(landscapeObjectKey, portraitObjectKey, expiresAt, slide.id)
   const preview = async (input: {
     assetId: string
     orientation: 'landscape' | 'portrait'
-    privateObjectKey: string
     usage: 'home-hero-landscape' | 'home-hero-portrait'
     width: 480 | 768
   }) => {
-    const objectKey = heroPreviewKey(
-      input.privateObjectKey,
-      slide.id,
-      input.orientation,
-    )
+    const objectKey = input.orientation === 'landscape'
+      ? landscapeObjectKey
+      : portraitObjectKey
     const dimensions = await generatePrivateWatermarkPreview(
       sqlite,
       storage,
@@ -306,7 +329,8 @@ export async function createHeroSlidePreview(
       },
     )
     return {
-      ...await storage.signPrivateGet(objectKey, expiresAt),
+      url: `/api/admin/v1/site/home/slides/${slide.id}/preview/${input.orientation}`,
+      expiresAt: new Date(expiresAt).toISOString(),
       width: dimensions.width,
       height: dimensions.height,
     }
@@ -315,14 +339,12 @@ export async function createHeroSlidePreview(
     preview({
       assetId: slide.landscapeAssetId,
       orientation: 'landscape',
-      privateObjectKey: slide.landscapePrivateObjectKey,
       usage: 'home-hero-landscape',
       width: 768,
     }),
     preview({
       assetId: slide.portraitAssetId,
       orientation: 'portrait',
-      privateObjectKey: slide.portraitPrivateObjectKey,
       usage: 'home-hero-portrait',
       width: 480,
     }),
@@ -332,6 +354,46 @@ export async function createHeroSlidePreview(
     throw new ServiceError(409, 'CONFLICT', 'Active watermark profile changed.')
   }
   return adminHeroPreviewDtoSchema.parse({ landscape, portrait })
+}
+
+export async function getHeroSlidePreviewContent(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  slideId: string,
+  orientation: 'landscape' | 'portrait',
+  now = Date.now(),
+) {
+  const slide = requireSlide(sqlite, slideId)
+  const objectKey = orientation === 'landscape'
+    ? slide.landscapePreviewObjectKey
+    : slide.portraitPreviewObjectKey
+  if (!objectKey || !slide.previewExpiresAt || slide.previewExpiresAt <= now) {
+    throw new ServiceError(404, 'NOT_FOUND', 'Hero preview was not found.')
+  }
+  return await storage.getPrivate(objectKey)
+}
+
+async function clearHeroSlidePreviews(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  slide: SlideRow,
+) {
+  const keys = [
+    slide.landscapePreviewObjectKey,
+    slide.portraitPreviewObjectKey,
+  ].filter((key): key is string => key !== null)
+  for (const key of new Set(keys)) {
+    await storage.deletePrivate(key)
+  }
+  if (keys.length > 0 || slide.previewExpiresAt !== null) {
+    sqlite.prepare(`
+      UPDATE site_hero_slides
+      SET landscape_preview_object_key = NULL,
+          portrait_preview_object_key = NULL,
+          preview_expires_at = NULL
+      WHERE id = ?
+    `).run(slide.id)
+  }
 }
 
 export function getPublicHome(
@@ -434,6 +496,12 @@ function assertAssetPair(
   ) {
     throw new ServiceError(409, 'CONFLICT', 'Hero assets are not publication-ready.')
   }
+  if (
+    !sourceSupportsPublicUsages(landscape, ['home-hero-landscape'])
+    || !sourceSupportsPublicUsages(portrait, ['home-hero-portrait'])
+  ) {
+    throw new ServiceError(409, 'CONFLICT', 'Hero assets do not meet public recipe dimensions.')
+  }
   const used = sqlite.prepare(`
     SELECT 1 FROM site_hero_slides
     WHERE id != COALESCE(?, '')
@@ -514,8 +582,9 @@ export function createHeroSlide(
   return getAdminHome(sqlite)
 }
 
-export function updateHeroSlide(
+export async function updateHeroSlide(
   sqlite: Database.Database,
+  storage: MediaStorage,
   id: string,
   expectedVersion: number,
   input: HeroSlideInput,
@@ -528,6 +597,7 @@ export function updateHeroSlide(
   }
   assertAssetPair(sqlite, input, id)
   assertLinkedWork(sqlite, input.linkedWorkId)
+  await clearHeroSlidePreviews(sqlite, storage, current)
   try {
     sqlite.transaction(() => {
       claimHomeVersion(sqlite, expectedVersion, now)
@@ -554,16 +624,19 @@ export function updateHeroSlide(
   return getAdminHome(sqlite)
 }
 
-export function deleteHeroSlide(
+export async function deleteHeroSlide(
   sqlite: Database.Database,
+  storage: MediaStorage,
   id: string,
   expectedVersion: number,
   now = Date.now(),
 ) {
   requireHomeVersion(sqlite, expectedVersion)
-  if (requireSlide(sqlite, id).enabled === 1) {
+  const slide = requireSlide(sqlite, id)
+  if (slide.enabled === 1) {
     throw new ServiceError(409, 'CONFLICT', 'Disable the hero slide before deleting it.')
   }
+  await clearHeroSlidePreviews(sqlite, storage, slide)
   sqlite.transaction(() => {
     claimHomeVersion(sqlite, expectedVersion, now)
     sqlite.prepare('DELETE FROM site_hero_slides WHERE id = ? AND enabled = 0')
@@ -634,8 +707,9 @@ export function reorderEnabledHeroSlides(
   return getAdminHome(sqlite)
 }
 
-export function disableHeroSlide(
+export async function disableHeroSlide(
   sqlite: Database.Database,
+  storage: MediaStorage,
   id: string,
   expectedVersion: number,
   actorUserId: string,
@@ -652,6 +726,7 @@ export function disableHeroSlide(
   if (enabledCount <= 1) {
     throw new ServiceError(409, 'CONFLICT', 'At least one hero slide must remain enabled.')
   }
+  await clearHeroSlidePreviews(sqlite, storage, slide)
   sqlite.transaction(() => {
     claimHomeVersion(sqlite, expectedVersion, now)
     sqlite.prepare(`
@@ -860,6 +935,7 @@ export async function runHeroSlidePublication(
     code = 'PUBLIC_MEDIA_VERIFICATION_FAILED'
     setOperationStatus(sqlite, operationId, 'VERIFYING_PUBLIC', now)
     assertCompleteHeroPair(sqlite, slide)
+    await clearHeroSlidePreviews(sqlite, storage, slide)
     stage = 'COMMITTING'
     code = 'HOME_PUBLICATION_COMMIT_FAILED'
     setOperationStatus(sqlite, operationId, 'COMMITTING', now)

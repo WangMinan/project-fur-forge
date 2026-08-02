@@ -346,7 +346,7 @@ function onLinkedWorkChange(event: Event) {
 
     <div v-if="preview" class="slide-card__preview" data-testid="hero-watermark-preview">
       <p class="slide-card__preview-note">
-        活动居中水印真实预览（私有签名 URL，5 分钟内有效）
+        活动居中水印真实预览（同源私有预览，5 分钟内有效）
       </p>
       <div class="slide-card__preview-grid">
         <img

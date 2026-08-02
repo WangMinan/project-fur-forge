@@ -6,7 +6,6 @@ import {
   versionedRequestSchema,
 } from './api'
 import {
-  privateAssetPreviewDtoSchema,
   publicAltSchema,
   publicHeroSlideDtoSchema,
 } from './media'
@@ -46,10 +45,14 @@ export const adminHomeDtoSchema = z.object({
   slides: z.array(adminHeroSlideDtoSchema),
 }).strict()
 
-const adminHeroPreviewImageDtoSchema = privateAssetPreviewDtoSchema.extend({
+const adminHeroPreviewImageDtoSchema = z.object({
+  url: z.string().regex(
+    /^\/api\/admin\/v1\/site\/home\/slides\/[0-9a-f-]+\/preview\/(?:landscape|portrait)$/u,
+  ),
+  expiresAt: z.string().datetime({ offset: true }),
   width: z.number().int().positive(),
   height: z.number().int().positive(),
-})
+}).strict()
 
 export const adminHeroPreviewDtoSchema = z.object({
   landscape: adminHeroPreviewImageDtoSchema,
