@@ -323,6 +323,10 @@ onUnmounted(() => {
     </div>
 
     <template v-else-if="check">
+      <p class="publication__summary">
+        设定图 {{ check.designSheetCount }}/1 · 出厂照 {{ check.studioPhotoCount }}/5 ·
+        公开 variant {{ check.requiredVariantCount - check.missingVariantCount }}/{{ check.requiredVariantCount }}
+      </p>
       <div v-if="!check.canPublish" class="publication__blocked">
         <p class="publication__blocked-title">暂不可发布，请先完成：</p>
         <ul class="publication__blockers" role="list">
@@ -366,7 +370,9 @@ onUnmounted(() => {
     </div>
 
     <div v-if="pending === 'publish'" class="publication__progress" role="status">
-      <p class="publication__state">正在生成并校验公开图片，请勿关闭页面…</p>
+      <p class="publication__state">
+        正在生成公开 variant、应用活动居中水印并由服务端校验，请勿关闭页面…
+      </p>
       <template v-if="publishProgress && publishProgress.total > 0">
         <p class="publication__progress-label">已生成 {{ publishCompleted }} / {{ publishProgress.total }}，剩余 {{ publishProgress.remaining }} 张</p>
         <progress
@@ -443,6 +449,12 @@ onUnmounted(() => {
   font-size: var(--admin-font-sm);
   color: var(--admin-status-success);
   font-weight: 600;
+}
+
+.publication__summary {
+  margin: 0 0 var(--admin-space-3);
+  color: var(--admin-text-secondary);
+  font-size: var(--admin-font-xs);
 }
 
 .publication__blocked {

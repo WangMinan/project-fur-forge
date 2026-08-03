@@ -43,6 +43,11 @@ interface ControlBody {
     businessStatus?: 'preparing' | 'available' | 'event_sale' | 'scheduled' | 'in_production' | 'delivered'
     currentEventName?: string
     priceMinorUnits?: number
+    designSheet?: {
+      alt: string
+      width?: number
+      height?: number
+    }
     photos: Array<{
       alt: string
       width?: number
@@ -313,10 +318,15 @@ export default defineEventHandler(async (event) => {
         `).run(workId, position, tag)
       }
 
-      for (const [position, photo] of work.photos.entries()) {
+      const seedWorkMedia = async (
+        role: 'design_sheet' | 'studio_photo',
+        media: { alt: string, width?: number, height?: number },
+        position: number,
+        primary: boolean,
+      ) => {
         const assetId = randomUUID()
-        const width = photo.width ?? 3200
-        const height = photo.height ?? 2400
+        const width = media.width ?? 3200
+        const height = media.height ?? 2400
         const content = Buffer.concat([
           createSyntheticWatermarkPng() as Buffer,
           randomBytes(16),
@@ -327,8 +337,8 @@ export default defineEventHandler(async (event) => {
           INSERT INTO assets (
             id, role, status, private_object_key, sha256, byte_size,
             mime_type, width, height, created_at, updated_at
-          ) VALUES (?, 'studio_photo', 'READY', ?, ?, ?, 'image/png', ?, ?, ?, ?)
-        `).run(assetId, objectKey, sha256, content.length, width, height, now, now)
+          ) VALUES (?, ?, 'READY', ?, ?, ?, 'image/png', ?, ?, ?, ?)
+        `).run(assetId, role, objectKey, sha256, content.length, width, height, now, now)
         fake.seedPrivate(objectKey, content, 'image/png', sha256, {
           fileSize: content.length,
           format: 'png',
@@ -340,9 +350,16 @@ export default defineEventHandler(async (event) => {
           INSERT INTO work_assets (
             work_id, asset_id, role, alt_text, position, is_primary,
             crop_x, crop_y, crop_width, crop_height, watermark_anchor
-          ) VALUES (?, ?, 'studio_photo', ?, ?, ?, 0, 0, 1, 1, 'top-left')
-        `).run(workId, assetId, photo.alt, position, position === 0 ? 1 : 0)
+          ) VALUES (?, ?, ?, ?, ?, ?, 0, 0, 1, 1, 'top-left')
+        `).run(workId, assetId, role, media.alt, position, primary ? 1 : 0)
         await generatePublicVariants(sqlite, fake, assetId, undefined, now)
+      }
+
+      if (work.designSheet) {
+        await seedWorkMedia('design_sheet', work.designSheet, 0, false)
+      }
+      for (const [position, photo] of work.photos.entries()) {
+        await seedWorkMedia('studio_photo', photo, position, position === 0)
       }
       seeded.push(work.slug)
     }

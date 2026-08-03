@@ -59,7 +59,8 @@ watch(error, (err) => {
 })
 
 const dto = computed(() => detail.value?.work)
-const gallery = computed(() => detail.value?.media.gallery ?? [])
+const designSheet = computed(() => detail.value?.media.designSheet)
+const studioPhotos = computed(() => detail.value?.media.studioPhotos ?? [])
 const relatedWorks = computed(() => detail.value?.related ?? [])
 
 useSeoMeta({
@@ -113,20 +114,31 @@ const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
     </header>
 
     <div class="work-detail__layout">
-      <!-- 领养作品分区：设定图（design_sheet）契约扩展后在出厂照分区之前渲染真实设定图；
-           当前公开 DTO 不含设定图媒体，不为它渲染占位内容或假数据。 -->
-      <section
-        v-if="dto.purpose === 'adoption'"
-        class="work-detail__gallery-section"
-        aria-label="出厂照"
-      >
-        <WorkDetailGallery :gallery="gallery" :work-name="dto.characterName" />
-      </section>
-      <WorkDetailGallery
-        v-else
-        :gallery="gallery"
-        :work-name="dto.characterName"
-      />
+      <div class="work-detail__media">
+        <section
+          v-if="designSheet"
+          class="work-detail__media-section"
+          aria-labelledby="design-sheet-title"
+        >
+          <h2 id="design-sheet-title" class="work-detail__media-title">设定图</h2>
+          <AdoptionDesignSheet :design-sheet="designSheet" />
+        </section>
+
+        <section
+          v-if="dto.purpose === 'adoption' && studioPhotos.length > 0"
+          class="work-detail__media-section"
+          aria-label="出厂照"
+        >
+          <h2 id="studio-photos-title" class="work-detail__media-title">出厂照 / 作品图集</h2>
+          <WorkDetailGallery :gallery="studioPhotos" :work-name="dto.characterName" />
+        </section>
+
+        <WorkDetailGallery
+          v-else-if="dto.purpose !== 'adoption'"
+          :gallery="studioPhotos"
+          :work-name="dto.characterName"
+        />
+      </div>
 
       <div class="work-detail__aside">
         <WorkFacts :dto="dto" />
@@ -246,6 +258,25 @@ const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
   display: grid;
   gap: var(--space-6);
   align-content: start;
+}
+
+.work-detail__media {
+  display: grid;
+  gap: var(--space-8);
+  min-width: 0;
+  align-content: start;
+}
+
+.work-detail__media-section {
+  min-width: 0;
+}
+
+.work-detail__media-title {
+  margin: 0 0 var(--space-3);
+  color: var(--public-text-tertiary);
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  letter-spacing: var(--letter-spacing-label);
 }
 
 .work-detail__section-title {

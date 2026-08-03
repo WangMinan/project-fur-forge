@@ -7,6 +7,7 @@ import {
   resetFakeMedia,
   setFakeMediaFlags,
   smallStudioPng,
+  uploadDesignSheetToEditor,
   uploadFileToEditor,
 } from './helpers/fake-media'
 import { capture } from './helpers/screenshots'
@@ -54,6 +55,33 @@ test('发布检查阻断项中文映射与发布按钮禁用', async ({ page }) 
   await expect(panel.getByRole('button', { name: '发布', exact: true })).toBeEnabled()
 })
 
+test('常规领养缺设定图被阻断，关系完整后可发布', async ({ page }) => {
+  const work = await createWorkViaApi(page, {
+    characterName: '常规领养发布验证',
+    purpose: 'adoption',
+    businessStatus: 'available',
+    priceCnyMinor: 12_800_00,
+  })
+  await gotoEditor(page, work.id)
+
+  const panel = page.getByTestId('publication-panel')
+  await expect(panel).toContainText('常规领养必须保存一张设定图')
+  await expect(panel.getByRole('button', { name: '发布', exact: true })).toBeDisabled()
+
+  await uploadDesignSheetToEditor(page, publishableStudioPng(), 'adoption-design.png')
+  const designSheet = page.locator('.design-sheet__entry')
+  await expect(designSheet).toHaveCount(1)
+  await designSheet.getByLabel(/图片说明/).fill('常规领养完整设定图')
+  await page.getByRole('button', { name: '保存设定图' }).click()
+  await expect(page.getByText('设定图已保存。')).toBeVisible()
+
+  await makePublishable(page)
+  await expect(panel).toContainText('可以发布')
+  await panel.getByRole('button', { name: '发布', exact: true }).click()
+  await expect(panel).toContainText('发布成功', { timeout: 60_000 })
+  await expect(page.getByTestId('public-preview')).toContainText(`/works/${work.slug}`)
+})
+
 test('READY 小图在发布前给出尺寸阻断', async ({ page }) => {
   const work = await createWorkViaApi(page, { characterName: '小图阻断' })
   await gotoEditor(page, work.id)
@@ -89,7 +117,7 @@ test('发布成功：状态翻转、编辑锁定、公开预览媒体就绪', as
   await expect(panel).toContainText('发布成功', { timeout: 60_000 })
   await expect(panel.getByRole('progressbar')).toHaveCount(0)
   await expect(panel).toContainText('已发布')
-  await expect(page.getByText(/已发布：基础信息与出厂照为只读/)).toBeVisible()
+  await expect(page.getByText(/作品已发布：基础信息、领养设定图与出厂照为只读/)).toBeVisible()
   await expect(page.getByLabel(/角色名/)).toBeDisabled()
   await expect(page.getByTestId('public-preview')).toContainText('媒体就绪')
 

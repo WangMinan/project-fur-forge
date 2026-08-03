@@ -4,13 +4,13 @@
 
 ## 当前阶段
 
-阶段 4 · IMPLEMENTATION 进行中。T01–T22、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。用户于 2026-08-03 授权同一后端轮次依次完成 T23 工程和 T25 服务端交接：T23 等待独立 Review，T25 等待前端接线、独立 Review 与用户验收，二者均未勾选；T24 Vue 管理界面未实现。
+阶段 4 · IMPLEMENTATION 进行中。T01–T22、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T23–T25 实现与自动化自检已完成；真实浏览器已经创建常规领养并确认缺设定图发布阻断，正式素材上传仍被浏览器扩展的本地文件访问权限阻断。T23、T24、T25 均保持未勾选，后续还需补齐正式素材全链、独立 Review 与用户验收。
 
 T21 首次独立审查的 3 个 must-fix 与 1 个 should-fix、用户人工验收发现的管理入口命名、Hero 安全边距、作品筛选视觉、页脚联系方式配置、已保存首页轮播原图预览及启用态预览按钮错配均已修复并验证。用户于 2026-08-02 明确确认 T21 收口；首次 NOT PASS 报告继续保留为历史事实，不虚构第二份独立复审报告。
 
 阶段 C 启动说明见 [`implementation/notes/P0-C-STAGE-READINESS-2026-08-02.md`](./implementation/notes/P0-C-STAGE-READINESS-2026-08-02.md)。
 T22 后端、前端与独立 Review 证据分别见 [`implementation/notes/t19-t22/T22-BACKEND-2026-08-03.md`](./implementation/notes/t19-t22/T22-BACKEND-2026-08-03.md)、[`implementation/notes/t19-t22/T22-FRONTEND-2026-08-03.md`](./implementation/notes/t19-t22/T22-FRONTEND-2026-08-03.md) 和 [`implementation/notes/t19-t22/T22-INDEPENDENT-REVIEW-2026-08-03.md`](./implementation/notes/t19-t22/T22-INDEPENDENT-REVIEW-2026-08-03.md)。
-T23 工程和 T25 服务端交接分别见 [`implementation/notes/t23-t25/T23-ENGINEERING-2026-08-03.md`](./implementation/notes/t23-t25/T23-ENGINEERING-2026-08-03.md) 与 [`implementation/notes/t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md`](./implementation/notes/t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md)。
+T23 工程、T25 服务端交接和本轮前端检查点分别见 [`implementation/notes/t23-t25/T23-ENGINEERING-2026-08-03.md`](./implementation/notes/t23-t25/T23-ENGINEERING-2026-08-03.md)、[`implementation/notes/t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md`](./implementation/notes/t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md) 与 [`implementation/notes/t23-t25/T24-T25-FRONTEND-CHECKPOINT-2026-08-03.md`](./implementation/notes/t23-t25/T24-T25-FRONTEND-CHECKPOINT-2026-08-03.md)。
 
 ## 当前执行分工
 
@@ -52,6 +52,8 @@ T23 工程和 T25 服务端交接分别见 [`implementation/notes/t23-t25/T23-EN
 - T22 三用途写入联合类型、完整管理读写、人工排序/精选、历史展会只读兼容、公开精选 6 项上限和用户人工验收；
 - T23 服务端设定图/出厂照关系、数量/主图/顺序、按需 recipe、活动 profile 原子切换和 T21 迁移兼容；
 - T25 regular adoption 发布检查、公开 adoption 列表和统一详情媒体分区服务端契约；
+- T24 管理端设定图/出厂照分区、同源原图与活动水印预览、上传恢复、媒体摘要和分区直达；
+- T25 `/adoptions` 横版设定图列表、真实空状态和统一详情两类媒体分区；
 - 当前活动目标 `brand-centered-v2`：可配置 Logo、固定居中、默认 50% 不透明度、60% 缩放、原子全站切换和失败恢复。
 
 T14–T22 的完成状态保持有效。后续扩展不能把既有验收改写为失败，也不能用旧 `brand-standard-v1` 或四角锚点回退当前发布要求。
@@ -107,11 +109,12 @@ EXT-01 现在只表示“正式素材输入已经到位并完成角色映射”�
 - 2026-08-03：T22 后端完成；现有 11 项迁移已满足列与约束，未制造新迁移。
 - 2026-08-03：T22 前端接线、独立浏览器 Review 和用户人工确认全部完成；T22 收口，下一任务切换为 T23。
 - 2026-08-03：用户调整 C2 后端顺序为 T23 → T25、明确跳过 T24 Vue 管理界面；T23 工程和 T25 服务端交接完成，任务勾选状态保持不变。
+- 2026-08-03：用户启动 T24/T25 前端与真实素材全链；实现和自动化自检完成，真实浏览器已创建常规领养并验证缺设定图阻断，但本地素材选择仍等待浏览器扩展文件权限。T23–T25 均未勾选。
 
 ## 下一步
 
 当前交接门禁：
 
-1. 在新的 GPT-5.6 Sol 上下文中独立 Review T23 服务端、迁移、媒体配方和 profile 原子切换，决定是否勾选 T23；
-2. 后续前端模型接入 T24 角色化管理体验和 T25 `/adoptions`/统一详情媒体分区，必须呈现真实上传、发布进度、冲突和恢复状态；
-3. T25 完成浏览器/视觉 Review 与用户验收前保持未勾选；T29 重定向和 T37 展会实体仍不得提前实现。
+1. 开启浏览器扩展的本地文件访问权限，使用正式横版设定图和多张出厂照完成保存、重载、发布与公开三视口全链；
+2. 在新的 GPT-5.6 Sol 上下文中独立 Review T23–T25 的契约、媒体配方、管理交互和公开页面；
+3. T25 完成独立 Review 与用户验收前保持未勾选；T29 重定向和 T37 展会实体仍不得提前实现。

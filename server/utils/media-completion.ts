@@ -119,6 +119,13 @@ function assetDto(row: AssetRow): VerifiedAssetDto {
   })
 }
 
+export function getVerifiedAsset(
+  sqlite: Database.Database,
+  assetId: string,
+) {
+  return assetDto(requireAsset(sqlite, assetId))
+}
+
 function md5HexFromBase64(value: string) {
   return Buffer.from(value, 'base64').toString('hex')
 }

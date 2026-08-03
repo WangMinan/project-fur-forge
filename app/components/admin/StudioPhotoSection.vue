@@ -108,10 +108,19 @@ watch(() => props.work, (work) => {
 
 onMounted(() => {
   void loadWatermarkSummary()
+  void uploads.restore({
+    workId: props.work.id,
+    workVersion: props.work.version,
+  })
 })
 
 const uploads = useStudioPhotoUpload({
+  mediaRole: 'studio_photo',
   onAssetReady(item, asset) {
+    if (entries.value.some(entry => entry.assetId === asset.assetId)) {
+      uploads.dismiss(item)
+      return
+    }
     entries.value.push({
       alt: '',
       assetId: asset.assetId,
@@ -120,14 +129,14 @@ const uploads = useStudioPhotoUpload({
       focalY: asset.focalY,
       height: asset.height,
       position: entries.value.length,
-      previewUrl: item.previewUrl,
+      previewUrl: `/api/admin/v1/media/assets/${asset.assetId}/preview`,
       primary: entries.value.length === 0,
       publicVariantCount: 0,
       status: asset.status,
       version: asset.version,
       width: asset.width,
     })
-    uploads.dismiss(item, { keepPreview: true })
+    uploads.dismiss(item)
   },
   onWorkConflict() {
     emit('conflict')
@@ -136,7 +145,7 @@ const uploads = useStudioPhotoUpload({
 
 const saving = ref(false)
 const saveError = ref<string | null>(null)
-const fileInput = ref<HTMLInputElement | null>(null)
+const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 const selectedFile = ref<File | null>(null)
 
 const isDirty = computed(() =>
@@ -155,6 +164,11 @@ const uploadSlotsFull = computed(() =>
 
 const altMissing = computed(() =>
   entries.value.some(entry => entry.alt.trim() === ''),
+)
+
+const emptyText = computed(() => props.work.purpose === 'adoption'
+  ? '还没有出厂照。常规领养可只用设定图发布；添加后将显示在统一作品详情的作品图集中。'
+  : '还没有出厂照。发布前至少需要一张 READY 的出厂照并设为主图。',
 )
 
 watchEffect(() => {
@@ -286,7 +300,7 @@ async function savePhotos() {
 </script>
 
 <template>
-  <section class="editor-card" aria-labelledby="media-title">
+  <section id="studio-photos" class="editor-card" aria-labelledby="media-title">
     <div class="editor-card__head">
       <h2 id="media-title" class="editor-card__title">出厂照</h2>
       <p class="editor-card__hint">
@@ -295,7 +309,7 @@ async function savePhotos() {
     </div>
 
     <p v-if="watermarkSummary" class="photo-section__watermark" data-testid="watermark-summary">
-      {{ watermarkSummary }}（站点品牌页配置）
+      {{ watermarkSummary }} · 活动 profile 为 brand-centered-v2（站点品牌页配置）
     </p>
 
     <p v-if="locked" class="photo-section__locked" role="status">
@@ -319,7 +333,7 @@ async function savePhotos() {
     </ul>
 
     <p v-else-if="uploads.items.value.length === 0" class="photo-section__empty">
-      还没有出厂照。发布前至少需要一张 READY 的出厂照并设为主图。
+      {{ emptyText }}
     </p>
 
     <input
