@@ -1,4 +1,3 @@
-import { expect } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { adminBaseURL } from './auth'
 
@@ -29,7 +28,7 @@ export interface SeedWork {
   currentEventName?: string
   priceMinorUnits?: number
   designSheet?: SeedWorkPhoto
-  photos: [SeedWorkPhoto, ...SeedWorkPhoto[]]
+  photos: SeedWorkPhoto[]
 }
 
 export interface SeedHomeSlide {
@@ -56,7 +55,9 @@ async function control(page: Page, body: Record<string, unknown>) {
     `${adminBaseURL}/api/e2e-fake-media-control`,
     { data: body },
   )
-  expect(response.ok(), 'E2E fake 控制端点应可用').toBeTruthy()
+  if (!response.ok()) {
+    throw new Error(`E2E fake 控制端点返回 ${response.status()}：${await response.text()}`)
+  }
   return response.json()
 }
 

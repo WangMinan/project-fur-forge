@@ -20,7 +20,9 @@ import type {
   WatermarkSource,
 } from './watermark-profile'
 
-export const PUBLIC_RECIPE_VERSION = 'recipe-v1'
+export const PUBLIC_RECIPE_VERSION = 'recipe-v2'
+export const LEGACY_PUBLIC_RECIPE_VERSION = 'recipe-v1'
+const WATERMARK_SIZE_MULTIPLIER = 1.6
 /** Historical identity only. */
 export const STANDARD_WATERMARK_PROFILE = 'brand-standard-v1'
 export const CENTERED_WATERMARK_PROFILE = WATERMARK_PROFILE_NAME
@@ -358,6 +360,8 @@ function recipeIdentity(
     watermarkPosition: profile.position,
     watermarkOpacityPercent: profile.opacityPercent,
     watermarkScalePercent: profile.scalePercent,
+    watermarkSizeMultiplier: WATERMARK_SIZE_MULTIPLIER,
+    watermarkLayout: usage === 'design-sheet' ? 'west-east' : 'center',
   })
   return {
     hash: digest('sha256', Buffer.from(identity)),
@@ -390,7 +394,7 @@ function publicObjectKey(
   return `${environmentPrefix(sourceAsset.privateObjectKey)}/web/${sourceAsset.id}/${PUBLIC_RECIPE_VERSION}/${usage}/${width}/${identityHash}.${extension}`
 }
 
-export function buildCenteredWatermarkProcess(
+export function buildWatermarkProcess(
   sourceAsset: AssetSource,
   logo: WatermarkSource,
   profile: WatermarkProfileRow,
@@ -398,14 +402,20 @@ export function buildCenteredWatermarkProcess(
   width: number,
   format: PublicFormat,
 ) {
-  const resizedLogo = `${logo.objectKey}?x-oss-process=image/resize,P_${profile.scalePercent}`
+  const watermarkWidth = Math.round(
+    logo.width * profile.scalePercent * WATERMARK_SIZE_MULTIPLIER / 100,
+  )
+  const resizedLogo = `${logo.objectKey}?x-oss-process=image/resize,w_${watermarkWidth},limit_0`
+  const watermark = (position: 'center' | 'east' | 'west') => [
+    `watermark,image_${urlSafeBase64(resizedLogo)}`,
+    `t_${profile.opacityPercent}`,
+    `g_${position}`,
+  ].join(',')
   return [
     `image/${resizeOperation(sourceAsset, usage, width)}`,
-    [
-      `watermark,image_${urlSafeBase64(resizedLogo)}`,
-      `t_${profile.opacityPercent}`,
-      'g_center',
-    ].join(','),
+    ...(usage === 'design-sheet'
+      ? [watermark('west'), watermark('east')]
+      : [watermark('center')]),
     formatOperation(format),
   ].join('/')
 }
@@ -487,7 +497,7 @@ async function generateOne(
     await storage.processPrivateToPublic({
       sourceObjectKey: source.objectKey,
       objectKey,
-      process: buildCenteredWatermarkProcess(
+      process: buildWatermarkProcess(
         sourceAsset,
         logo,
         profile,
@@ -714,7 +724,7 @@ export async function generatePrivateWatermarkPreview(
     throw new ServiceError(409, 'CONFLICT', 'Watermark profile cannot be previewed.')
   }
   const logo = watermarkSource(sqlite, profile)
-  const process = buildCenteredWatermarkProcess(
+  const process = buildWatermarkProcess(
     sourceAsset,
     logo,
     profile,

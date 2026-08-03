@@ -1,4 +1,8 @@
 import type Database from 'better-sqlite3'
+import {
+  LEGACY_PUBLIC_RECIPE_VERSION,
+  PUBLIC_RECIPE_VERSION,
+} from './media-recipe'
 
 export type HeroMediaRole =
   | 'home_hero_landscape'
@@ -40,6 +44,7 @@ function eligibleHeroVariants<T extends HeroVariantCandidate>(
   role: HeroMediaRole,
   variants: readonly T[],
   activeProfileId: string,
+  recipeVersion = PUBLIC_RECIPE_VERSION,
 ) {
   const recipe = HERO_RECIPE[role]
   return variants.filter(variant =>
@@ -47,7 +52,7 @@ function eligibleHeroVariants<T extends HeroVariantCandidate>(
     && variant.status === 'READY'
     && variant.mediaRole === role
     && variant.usage === recipe.usage
-    && variant.recipeVersion === 'recipe-v1'
+    && variant.recipeVersion === recipeVersion
     && variant.watermarkProfile === 'brand-centered-v2'
     && variant.watermarkProfileId === activeProfileId
     && digestPattern.test(variant.watermarkConfigDigest)
@@ -110,6 +115,36 @@ export function completeHeroVariants<T extends HeroVariantCandidate>(
   }
 
   return eligible
+}
+
+export function completePublicHeroVariants<T extends HeroVariantCandidate>(
+  role: HeroMediaRole,
+  variants: readonly T[],
+  activeProfileId: string,
+) {
+  try {
+    return completeHeroVariants(role, variants, activeProfileId)
+  }
+  catch {
+    const eligible = eligibleHeroVariants(
+      role,
+      variants,
+      activeProfileId,
+      LEGACY_PUBLIC_RECIPE_VERSION,
+    )
+    const recipe = HERO_RECIPE[role]
+    const complete = recipe.widths.every(width => (
+      eligible.some(variant => variant.width === width && variant.format === 'webp')
+      && eligible.some(variant => (
+        variant.width === width
+        && (variant.format === 'jpeg' || variant.format === 'png')
+      ))
+    ))
+    if (!complete) {
+      throw new Error(`${role} requires complete WebP and fallback variants.`)
+    }
+    return eligible
+  }
 }
 
 export function validateHeroSlidesForPublication(

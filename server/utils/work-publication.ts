@@ -12,6 +12,7 @@ import type {
 import type { MediaStorage } from './media-storage'
 import {
   generatePublicVariants,
+  PUBLIC_RECIPE_VERSION,
   publicRecipeWidths,
   publicVariantCountForUsages,
   sourceSupportsPublicUsages,
@@ -218,7 +219,7 @@ function missingVariantCount(
     SELECT format FROM asset_variants
     WHERE asset_id = ? AND storage_scope = 'PUBLIC' AND status = 'READY'
       AND media_role = ? AND usage = ? AND width = ?
-      AND recipe_version = 'recipe-v1'
+      AND recipe_version = ?
       AND watermark_profile = 'brand-centered-v2'
       AND watermark_profile_id = ? AND watermark_config_digest = ?
       AND logo_digest = ? AND watermark_anchor = 'center'
@@ -235,6 +236,7 @@ function missingVariantCount(
           target.asset.role,
           usage,
           width,
+          PUBLIC_RECIPE_VERSION,
           profile.id,
           profile.configDigest,
           profile.logoDigest,
