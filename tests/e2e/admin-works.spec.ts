@@ -182,6 +182,7 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
       await expect(page.getByRole('alert')).toContainText('请修正下方标注的字段')
       await expect(page.getByText(expected)).toBeVisible()
       await expect(page.getByLabel(/领养价格/)).toHaveAttribute('aria-invalid', 'true')
+      await page.getByRole('button', { name: '知道了' }).click()
     }
 
     await page.getByLabel(/领养价格/).fill('15600')
@@ -202,6 +203,7 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
     await page.getByLabel('作品属性第 3 条').fill('蓝白')
     await page.getByRole('button', { name: '保存', exact: true }).click()
     await expect(page.getByText('与第 1 条重复')).toBeVisible()
+    await page.getByRole('button', { name: '知道了' }).click()
 
     await page.getByLabel('作品属性第 3 条').fill('   ')
     await expect(page.getByText('属性不能为空')).toBeVisible()
@@ -529,8 +531,9 @@ test.describe('编辑与保存', () => {
     })
     await page.getByLabel(/角色名/).fill('错误验证改')
     await page.getByRole('button', { name: '保存', exact: true }).click()
-    await expect(page.getByRole('alert')).toContainText('未通过校验')
+    await expect(page.getByRole('alert')).toContainText('未通过服务端校验')
     await expect(page.getByLabel(/角色名/)).toHaveValue('错误验证改')
+    await page.getByRole('button', { name: '知道了' }).click()
 
     await page.unrouteAll()
     await page.route(`**/api/admin/v1/works/${work.id}`, async (route) => {
@@ -548,6 +551,7 @@ test.describe('编辑与保存', () => {
     })
     await page.getByRole('button', { name: '保存', exact: true }).click()
     await expect(page.getByRole('alert')).toContainText('保存失败，请稍后重试')
+    await page.getByRole('button', { name: '知道了' }).click()
 
     await page.unrouteAll()
     await page.getByRole('button', { name: '保存', exact: true }).click()
