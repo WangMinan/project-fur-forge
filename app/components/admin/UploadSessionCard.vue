@@ -55,14 +55,20 @@ const inFlight = computed(() =>
 )
 
 const retryable = computed(() =>
-  ['failed', 'cancelled', 'expired'].includes(props.item.state),
+  props.item.file !== null
+  && ['failed', 'cancelled', 'expired'].includes(props.item.state),
 )
 </script>
 
 <template>
   <article class="upload-card" :data-state="item.state">
     <div class="upload-card__thumb">
-      <img :src="item.previewUrl" :alt="`${item.fileName} 本地预览`">
+      <img
+        v-if="item.previewUrl"
+        :src="item.previewUrl"
+        :alt="`${item.fileName} 预览`"
+      >
+      <span v-else aria-hidden="true">图</span>
     </div>
     <div class="upload-card__body">
       <p class="upload-card__name">{{ item.fileName }}</p>
@@ -86,6 +92,9 @@ const retryable = computed(() =>
       <p v-if="item.failureText" class="upload-card__failure" role="alert">
         {{ item.failureText }}
         <template v-if="item.failureStage">（失败于{{ item.failureStage }}环节）</template>
+      </p>
+      <p v-if="item.file === null && retryable === false && item.state !== 'completed'" class="upload-card__failure">
+        页面已恢复该会话；如需重新直传，请重新选择原文件。
       </p>
       <p v-if="item.asset?.status === 'FAILED' && !item.failureText" class="upload-card__failure" role="alert">
         私有处理源生成失败，可重试处理；原图仍在私有库中。
@@ -143,6 +152,10 @@ const retryable = computed(() =>
   border-radius: var(--admin-radius-sm);
   overflow: hidden;
   background: var(--admin-bg-subtle);
+  display: grid;
+  place-items: center;
+  color: var(--admin-text-tertiary);
+  font-size: var(--admin-font-xs);
 }
 
 .upload-card__thumb img {

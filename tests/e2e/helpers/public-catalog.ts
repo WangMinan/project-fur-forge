@@ -28,6 +28,7 @@ export interface SeedWork {
   businessStatus?: 'preparing' | 'available' | 'event_sale' | 'scheduled' | 'in_production' | 'delivered'
   currentEventName?: string
   priceMinorUnits?: number
+  designSheet?: SeedWorkPhoto
   photos: [SeedWorkPhoto, ...SeedWorkPhoto[]]
 }
 

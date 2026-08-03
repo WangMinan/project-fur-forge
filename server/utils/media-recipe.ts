@@ -1,5 +1,6 @@
 import {
   createHash,
+  randomUUID,
 } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import { WATERMARK_PROFILE_NAME } from '../../shared/schemas/watermark'
@@ -748,5 +749,33 @@ export async function generatePrivateWatermarkPreview(
     format: 'webp' as const,
     height: info.height,
     width: info.width,
+  }
+}
+
+export async function renderActiveWatermarkPreview(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  assetId: string,
+  usage: 'design-sheet' | 'detail' | 'work-card',
+) {
+  const sourceAsset = asset(sqlite, assetId)
+  const marker = sourceAsset.privateObjectKey.indexOf('/original/')
+  if (marker < 1) {
+    throw new ServiceError(409, 'CONFLICT', 'Media asset cannot be previewed.')
+  }
+  const width = usage === 'work-card' ? 480 : 960
+  const objectKey = `${sourceAsset.privateObjectKey.slice(0, marker)}/preview/work/${assetId}/${randomUUID()}.webp`
+  try {
+    await generatePrivateWatermarkPreview(sqlite, storage, {
+      assetId,
+      objectKey,
+      profileId: requireActiveWatermarkProfile(sqlite).id,
+      usage,
+      width,
+    })
+    return await storage.getPrivate(objectKey)
+  }
+  finally {
+    await storage.deletePrivate(objectKey)
   }
 }

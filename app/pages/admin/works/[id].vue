@@ -61,6 +61,7 @@ const convertedFromEvent = ref(false)
 const preview = ref<PublicSafeWorkPreviewDto | null>(null)
 const previewError = ref<string | null>(null)
 
+const designSheetState = ref({ busy: false, dirty: false })
 const photoState = ref({ busy: false, dirty: false })
 
 function applyWork(next: ManagedWorkDto) {
@@ -69,6 +70,17 @@ function applyWork(next: ManagedWorkDto) {
   baseline.value = workFormSnapshot(form.value)
   submitted.value = false
   convertedFromEvent.value = false
+}
+
+function applyMediaWork(next: ManagedWorkDto) {
+  const preserveBasics = isDirty.value
+  work.value = next
+  if (!preserveBasics) {
+    form.value = workFormFromDto(next)
+    baseline.value = workFormSnapshot(form.value)
+    submitted.value = false
+    convertedFromEvent.value = false
+  }
 }
 
 const locked = computed(() => work.value?.publicationStatus === 'published')
@@ -89,7 +101,19 @@ const isDirty = computed(() =>
 )
 
 const leaveGuardActive = computed(() =>
-  isDirty.value || photoState.value.dirty || photoState.value.busy,
+  isDirty.value
+  || designSheetState.value.dirty
+  || designSheetState.value.busy
+  || photoState.value.dirty
+  || photoState.value.busy,
+)
+
+const mediaBusy = computed(() =>
+  designSheetState.value.busy || photoState.value.busy,
+)
+
+const mediaDirty = computed(() =>
+  designSheetState.value.dirty || photoState.value.dirty,
 )
 
 async function loadWork(options: { initial?: boolean } = {}) {
@@ -201,9 +225,15 @@ function onConvertConfirmed() {
 }
 
 function onPhotosSaved(next: ManagedWorkDto) {
-  // 出厂照保存会递增作品版本：同步本地版本与基线，避免后续保存误报 409。
-  applyWork(next)
+  // 媒体保存使用服务端新版本，同时保留其他分区尚未保存的输入。
+  applyMediaWork(next)
   savedNotice.value = '出厂照已保存。'
+  void loadPreview()
+}
+
+function onDesignSheetSaved(next: ManagedWorkDto) {
+  applyMediaWork(next)
+  savedNotice.value = '领养设定图已保存。'
   void loadPreview()
 }
 
@@ -270,8 +300,8 @@ useSeoMeta({
           <NuxtLink to="/admin/works" class="editor__back">← 作品</NuxtLink>
           <h1 class="editor__title">{{ work.characterName }}</h1>
           <AdminStatusBadge
-            :tone="isDirty || photoState.dirty ? 'warning' : 'neutral'"
-            :label="isDirty || photoState.dirty ? '有未保存更改' : '未更改'"
+            :tone="isDirty || mediaDirty ? 'warning' : 'neutral'"
+            :label="isDirty || mediaDirty ? '有未保存更改' : '未更改'"
           />
         </div>
         <div class="editor__actions">
@@ -285,7 +315,7 @@ useSeoMeta({
       </header>
 
       <p v-if="locked" class="editor__locked" role="status">
-        作品已发布：基础信息与出厂照为只读；排序和精选仍可编辑，保存后会立即更新公开列表与首页精选。
+        作品已发布：基础信息、领养设定图与出厂照为只读；排序和精选仍可编辑，保存后会立即更新公开列表与首页精选。
       </p>
       <p v-else-if="historical" class="editor__locked" role="status">
         该作品保留着历史展会领养记录：为避免静默丢弃展会事实，保存前需要先在下方明确转为常规领养。
@@ -305,6 +335,14 @@ useSeoMeta({
             :show-errors="submitted"
             @convert-to-regular="convertOpen = true"
           />
+          <AdminDesignSheetSection
+            v-if="work.purpose === 'adoption'"
+            :work="work"
+            :locked="locked"
+            @saved="onDesignSheetSaved"
+            @conflict="conflictOpen = true"
+            @state-change="designSheetState = $event"
+          />
           <AdminStudioPhotoSection
             :work="work"
             :locked="locked"
@@ -317,7 +355,7 @@ useSeoMeta({
         <aside class="editor__aside">
           <AdminPublicationPanel
             :work="work"
-            :busy="saving || photoState.busy"
+            :busy="saving || mediaBusy"
             @mutated="onPublicationMutated"
             @conflict="conflictOpen = true"
           />
@@ -383,6 +421,13 @@ useSeoMeta({
                 <div class="preview-card__fact">
                   <dt>属性</dt>
                   <dd>{{ preview.featureTags.length > 0 ? preview.featureTags.join('、') : '无' }}</dd>
+                </div>
+                <div class="preview-card__fact">
+                  <dt>领养设定图</dt>
+                  <dd v-if="preview.purpose === 'adoption'">
+                    {{ preview.designSheet ? '1 张' : '未保存' }}
+                  </dd>
+                  <dd v-else>不适用</dd>
                 </div>
                 <div class="preview-card__fact">
                   <dt>出厂照</dt>

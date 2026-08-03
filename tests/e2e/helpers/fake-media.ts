@@ -132,3 +132,16 @@ export async function uploadFileToEditor(
   })
   await page.getByRole('button', { name: '上传出厂照' }).click()
 }
+
+export async function uploadDesignSheetToEditor(
+  page: Page,
+  content: Buffer,
+  name = 'design-sheet.png',
+) {
+  await page.getByLabel('选择领养设定图文件').setInputFiles({
+    name,
+    mimeType: 'image/png',
+    buffer: content,
+  })
+  await page.getByRole('button', { name: '上传设定图' }).click()
+}

@@ -4,9 +4,11 @@ import { createWorkViaApi } from './helpers/admin-work'
 import {
   fakeMediaState,
   largeStudioPng,
+  publishableStudioPng,
   resetFakeMedia,
   setFakeMediaFlags,
   smallStudioPng,
+  uploadDesignSheetToEditor,
   uploadFileToEditor,
 } from './helpers/fake-media'
 import { capture } from './helpers/screenshots'
@@ -257,6 +259,28 @@ test.describe('出厂照关系编辑', () => {
     await expect(photoCards(page).nth(1).getByLabel(/图片说明/)).toHaveValue('次图说明')
   })
 
+  test('保存媒体关系采用服务端新版本且保留基础信息未保存输入', async ({ page }) => {
+    const work = await createWorkViaApi(page, { characterName: '跨分区基线' })
+    await gotoEditor(page, work.id)
+
+    await page.getByLabel(/角色名/).fill('跨分区输入保留')
+    await uploadFileToEditor(page, smallStudioPng(), 'baseline.png')
+    await expect(photoCards(page)).toHaveCount(1)
+    await photoCards(page).getByLabel(/图片说明/).fill('基线验证出厂照')
+    await page.getByRole('button', { name: '保存出厂照' }).click()
+
+    await expect(page.getByText('出厂照已保存。')).toBeVisible()
+    await expect(page.getByLabel(/角色名/)).toHaveValue('跨分区输入保留')
+    await expect(page.getByText('有未保存更改')).toBeVisible()
+
+    await page.getByRole('button', { name: '保存', exact: true }).click()
+    await expect(page.getByText('已保存。')).toBeVisible()
+    await page.reload()
+    await page.waitForSelector('.editor-card')
+    await expect(page.getByLabel(/角色名/)).toHaveValue('跨分区输入保留')
+    await expect(photoCards(page)).toHaveCount(1)
+  })
+
   test('移除关系后保存生效，原图不从私有库删除', async ({ page }) => {
     const work = await createWorkViaApi(page)
     await gotoEditor(page, work.id)
@@ -358,5 +382,112 @@ test.describe('出厂照区域：泄漏边界与三视口', () => {
     await expect(photoCards(page)).toHaveCount(1)
     await expect(photoCards(page).first()).toContainText('READY')
     await capture(page, 'work-editor-mobile-upload-390x844')
+  })
+})
+
+test.describe('T24 领养设定图与角色化列表', () => {
+  const designEntry = (page: import('@playwright/test').Page) =>
+    page.locator('article.design-sheet__entry')
+
+  test('设定图完整画布、同源原图、活动水印预览与保存重载', async ({ page }) => {
+    test.setTimeout(90_000)
+    const work = await createWorkViaApi(page, {
+      purpose: 'adoption',
+      characterName: '设定图验证',
+    })
+    await gotoEditor(page, work.id)
+
+    await expect(page.getByRole('heading', { level: 2, name: '领养设定图' })).toBeVisible()
+    await expect(page.getByText(/用于.*\/adoptions.*统一作品详情/)).toBeVisible()
+    await uploadDesignSheetToEditor(page, publishableStudioPng(), 'design.png')
+    await expect(designEntry(page)).toHaveCount(1)
+    await expect(designEntry(page)).toContainText('READY')
+    await expect(designEntry(page)).toContainText('公开 variant 未生成')
+
+    const original = page.getByTestId('design-sheet-original-preview').locator('img')
+    await expect(original).toHaveAttribute(
+      'src',
+      /\/api\/admin\/v1\/media\/assets\/[0-9a-f-]+\/preview$/u,
+    )
+    expect(await original.evaluate(node => getComputedStyle(node).objectFit)).toBe('contain')
+
+    await designEntry(page).getByLabel(/图片说明/).fill('完整正侧背三视图与色板')
+    await page.getByRole('button', { name: '保存设定图' }).click()
+    await expect(page.getByText('领养设定图已保存。')).toBeVisible()
+    await expect(page.getByText('设定图有未保存更改')).toHaveCount(0)
+
+    await page.getByTestId('watermarked-media-preview').first()
+      .getByRole('button', { name: '生成预览' }).click()
+    const publicPreview = page.getByTestId('watermarked-media-preview').first().locator('img')
+    await expect(publicPreview).toBeVisible({ timeout: 60_000 })
+    await expect(publicPreview).toHaveJSProperty('complete', true)
+
+    await page.reload()
+    await page.waitForSelector('.editor-card')
+    await expect(designEntry(page).getByLabel(/图片说明/)).toHaveValue('完整正侧背三视图与色板')
+    await expect(page.getByText('未更改')).toBeVisible()
+    const dom = await page.content()
+    expect(dom).not.toContain('/original/')
+    expect(dom).not.toContain('Signature=')
+  })
+
+  test('刷新后从服务端上传会话恢复已 PUT 的设定图', async ({ page }) => {
+    const work = await createWorkViaApi(page, {
+      purpose: 'adoption',
+      characterName: '恢复验证',
+    })
+    await gotoEditor(page, work.id)
+
+    let abortFirstComplete = true
+    await page.route('**/api/admin/v1/media/upload-sessions/*/complete', async (route) => {
+      if (abortFirstComplete) {
+        abortFirstComplete = false
+        await route.abort()
+        return
+      }
+      await route.continue()
+    })
+    await uploadDesignSheetToEditor(page, publishableStudioPng(), 'recover.png')
+    await expect(page.getByRole('alert')).toContainText('服务端处理失败')
+
+    await page.reload()
+    await page.waitForSelector('.editor-card')
+    await expect(designEntry(page)).toHaveCount(1, { timeout: 60_000 })
+    await expect(designEntry(page)).toContainText('READY')
+    await expect(page.getByText('设定图有未保存更改')).toBeVisible()
+  })
+
+  test('列表显示设定图、出厂照、主图缩略图、发布阻断和分区直达', async ({ page }) => {
+    test.setTimeout(90_000)
+    const work = await createWorkViaApi(page, {
+      purpose: 'adoption',
+      characterName: '列表媒体验证',
+    })
+    await gotoEditor(page, work.id)
+
+    await uploadDesignSheetToEditor(page, publishableStudioPng(), 'list-design.png')
+    await designEntry(page).getByLabel(/图片说明/).fill('列表设定图')
+    await page.getByRole('button', { name: '保存设定图' }).click()
+    await expect(page.getByText('领养设定图已保存。')).toBeVisible()
+
+    await uploadFileToEditor(page, publishableStudioPng(), 'list-photo.png')
+    await expect(photoCards(page)).toHaveCount(1)
+    await photoCards(page).getByLabel(/图片说明/).fill('列表主图')
+    await page.getByRole('button', { name: '保存出厂照' }).click()
+    await expect(page.getByText('出厂照已保存。')).toBeVisible()
+
+    await page.goto(`${adminBaseURL}/admin/works`)
+    const row = page.getByRole('row').filter({ hasText: '列表媒体验证' })
+    await expect(row).toContainText('设定图 有 · 出厂照 1/5')
+    await expect(row).toContainText('无发布阻断')
+    await expect(row.locator('.works-table__thumb img')).toHaveCount(1)
+    await expect(row.getByRole('link', { name: '设定图' })).toHaveAttribute(
+      'href',
+      `/admin/works/${work.id}#design-sheet`,
+    )
+    await expect(row.getByRole('link', { name: '出厂照' })).toHaveAttribute(
+      'href',
+      `/admin/works/${work.id}#studio-photos`,
+    )
   })
 })

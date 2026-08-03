@@ -47,6 +47,10 @@ const focalPercent = computed(() => ({
   y: Math.round(props.entry.focalY * 100),
 }))
 
+const publicPreviewUsage = computed(() =>
+  previewAspect.value === 'card' ? 'work-card' as const : 'detail' as const,
+)
+
 function onPreviewPointer(event: PointerEvent) {
   if (props.locked || previewAspect.value !== 'original') {
     return
@@ -121,8 +125,12 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
         >3:4 卡片</button>
       </div>
       <p class="photo-card__preview-note">
-        本地原图预览，不含水印；水印在发布时由 OSS 烘焙进公开衍生图
+        私有原图预览：仅通过 assetId 的同源认证地址读取，不含水印。
       </p>
+      <AdminWatermarkedMediaPreview
+        :asset-id="entry.assetId"
+        :usage="publicPreviewUsage"
+      />
     </div>
 
     <div class="photo-card__body">
@@ -136,6 +144,9 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
           公开衍生图 {{ entry.publicVariantCount }} 张
         </span>
         <span v-else class="photo-card__not-public">公开衍生图未生成</span>
+      </p>
+      <p class="photo-card__recipe-note">
+        详情使用原比例 detail；仅主图额外生成作品卡 3:4 recipe。焦点只影响对应卡片 recipe。
       </p>
 
       <p v-if="entry.status === 'FAILED'" class="photo-card__failure" role="alert">
@@ -380,6 +391,13 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
   margin: 0;
   font-size: var(--admin-font-xs);
   color: var(--admin-status-error);
+  line-height: var(--admin-line-normal);
+}
+
+.photo-card__recipe-note {
+  margin: 0;
+  color: var(--admin-text-tertiary);
+  font-size: var(--admin-font-xs);
   line-height: var(--admin-line-normal);
 }
 

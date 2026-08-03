@@ -206,14 +206,16 @@ export const uploadSessionResponseSchema = apiSuccessSchema(
   uploadSessionDtoSchema,
 )
 
+export const verifiedAssetResponseSchema = apiSuccessSchema(
+  verifiedAssetDtoSchema,
+)
+
 export const uploadSessionMutationRequestSchema = versionedRequestSchema(
   z.object({}).strict(),
 )
 
 export const retryAssetProcessingRequestSchema = uploadSessionMutationRequestSchema
-export const retryAssetProcessingResponseSchema = apiSuccessSchema(
-  verifiedAssetDtoSchema,
-)
+export const retryAssetProcessingResponseSchema = verifiedAssetResponseSchema
 
 export const retryUploadSessionResponseSchema
   = createUploadSessionResponseSchema

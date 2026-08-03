@@ -4,7 +4,11 @@ import {
   managedWorkResponseSchema,
   workListResponseSchema,
 } from '~~/shared/schemas/work'
-import type { WorkListItemDto } from '~~/shared/types/contracts'
+import type {
+  WorkListItemDto,
+  WorkPublicationCheckDto,
+} from '~~/shared/types/contracts'
+import { workPublicationCheckResponseSchema } from '~~/shared/schemas/publication'
 import { AdminApiError } from '~/composables/useAdminApi'
 import {
   BUSINESS_STATUS_LABELS,
@@ -15,6 +19,7 @@ import {
 import { formatCnyMinorUnits } from '~/utils/format'
 import { workApiErrorText } from '~/utils/work-errors'
 import { PUBLIC_FEATURED_LIMIT } from '~/utils/work-form'
+import { PUBLICATION_BLOCKER_LABELS } from '~/utils/media-labels'
 
 definePageMeta({
   layout: 'admin',
@@ -29,6 +34,7 @@ useSeoMeta({
 const adminApi = useAdminApi()
 const status = ref<'error' | 'loading' | 'ready'>('loading')
 const works = ref<WorkListItemDto[]>([])
+const publicationChecks = ref<Record<string, WorkPublicationCheckDto | null>>({})
 const deleteTarget = ref<WorkListItemDto | null>(null)
 const deleting = ref(false)
 const actionError = ref<{ message: string, title: string } | null>(null)
@@ -59,6 +65,23 @@ function adoptionSummary(work: WorkListItemDto) {
   return `${status} · ${price}`
 }
 
+function blockerSummary(work: WorkListItemDto) {
+  if (work.publicationStatus === 'published') {
+    return '当前已发布'
+  }
+  const check = publicationChecks.value[work.id]
+  if (!check) {
+    return '发布检查暂不可用'
+  }
+  if (check.canPublish) {
+    return '无发布阻断'
+  }
+  const labels = check.blockers.slice(0, 2).map(
+    blocker => PUBLICATION_BLOCKER_LABELS[blocker],
+  )
+  return `${labels.join('；')}${check.blockers.length > 2 ? `；另 ${check.blockers.length - 2} 项` : ''}`
+}
+
 async function loadWorks() {
   status.value = 'loading'
   try {
@@ -66,6 +89,19 @@ async function loadWorks() {
       schema: workListResponseSchema,
     })
     works.value = result.data
+    const checks = await Promise.all(result.data.map(async (work) => {
+      try {
+        const response = await adminApi(
+          `/api/admin/v1/works/${work.id}/publication-check`,
+          { schema: workPublicationCheckResponseSchema },
+        )
+        return [work.id, response.data] as const
+      }
+      catch {
+        return [work.id, null] as const
+      }
+    }))
+    publicationChecks.value = Object.fromEntries(checks)
     status.value = 'ready'
   }
   catch {
@@ -194,7 +230,8 @@ onMounted(() => {
               <th scope="col">用途</th>
               <th scope="col">排序 / 精选</th>
               <th scope="col">发布状态</th>
-              <th scope="col">出厂照</th>
+              <th scope="col">媒体</th>
+              <th scope="col">发布阻断</th>
               <th scope="col"><span class="sr-only">操作</span></th>
             </tr>
           </thead>
@@ -202,6 +239,16 @@ onMounted(() => {
             <tr v-for="work in works" :key="work.id">
               <td>
                 <div class="works-table__work">
+                  <span class="works-table__thumb">
+                    <img
+                      v-if="work.primaryAssetId"
+                      :src="`/api/admin/v1/media/assets/${work.primaryAssetId}/preview`"
+                      alt=""
+                      loading="lazy"
+                      referrerpolicy="same-origin"
+                    >
+                    <span v-else aria-hidden="true">无主图</span>
+                  </span>
                   <span class="works-table__name">
                     <NuxtLink :to="`/admin/works/${work.id}`" class="works-table__link">
                       {{ work.characterName }}
@@ -233,7 +280,20 @@ onMounted(() => {
                 />
               </td>
               <td>
-                <span class="works-table__media">{{ work.studioPhotoCount }}/5</span>
+                <span class="works-table__media">
+                  设定图 {{ work.purpose === 'adoption' && work.designSheetAssetId ? '有' : work.purpose === 'adoption' ? '无' : '—' }}
+                  · 出厂照 {{ work.studioPhotoCount }}/5
+                </span>
+                <span class="works-table__media-links">
+                  <NuxtLink
+                    v-if="work.purpose === 'adoption'"
+                    :to="`/admin/works/${work.id}#design-sheet`"
+                  >设定图</NuxtLink>
+                  <NuxtLink :to="`/admin/works/${work.id}#studio-photos`">出厂照</NuxtLink>
+                </span>
+              </td>
+              <td>
+                <span class="works-table__blockers">{{ blockerSummary(work) }}</span>
               </td>
               <td>
                 <div class="works-table__actions">
@@ -252,6 +312,16 @@ onMounted(() => {
 
         <ul class="works-cards" role="list">
           <li v-for="work in works" :key="work.id" class="works-card">
+            <span class="works-card__thumb">
+              <img
+                v-if="work.primaryAssetId"
+                :src="`/api/admin/v1/media/assets/${work.primaryAssetId}/preview`"
+                alt=""
+                loading="lazy"
+                referrerpolicy="same-origin"
+              >
+              <span v-else aria-hidden="true">无主图</span>
+            </span>
             <div class="works-card__body">
               <p class="works-card__name">
                 {{ work.characterName }}
@@ -274,7 +344,16 @@ onMounted(() => {
                 @update="updateOrdering(work, $event)"
               />
               <p class="works-card__row works-card__row--muted">
-                出厂照 {{ work.studioPhotoCount }}/5
+                设定图 {{ work.purpose === 'adoption' && work.designSheetAssetId ? '有' : work.purpose === 'adoption' ? '无' : '—' }}
+                · 出厂照 {{ work.studioPhotoCount }}/5
+              </p>
+              <p class="works-card__row works-card__row--muted">{{ blockerSummary(work) }}</p>
+              <p class="works-card__row works-card__quick-links">
+                <NuxtLink
+                  v-if="work.purpose === 'adoption'"
+                  :to="`/admin/works/${work.id}#design-sheet`"
+                >编辑设定图</NuxtLink>
+                <NuxtLink :to="`/admin/works/${work.id}#studio-photos`">编辑出厂照</NuxtLink>
               </p>
             </div>
             <div class="works-card__actions">
@@ -484,6 +563,25 @@ onMounted(() => {
   gap: var(--admin-space-3);
 }
 
+.works-table__thumb {
+  flex: none;
+  width: 3rem;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-bg-subtle);
+  color: var(--admin-text-tertiary);
+  font-size: 0.625rem;
+}
+
+.works-table__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .works-table__name {
   display: flex;
   flex-direction: column;
@@ -505,8 +603,24 @@ onMounted(() => {
 }
 
 .works-table__media {
+  display: block;
   white-space: nowrap;
   color: var(--admin-text-secondary);
+}
+
+.works-table__media-links {
+  display: flex;
+  gap: var(--admin-space-2);
+  margin-top: var(--admin-space-1);
+  font-size: var(--admin-font-xs);
+}
+
+.works-table__blockers {
+  display: block;
+  max-width: 18rem;
+  color: var(--admin-text-secondary);
+  font-size: var(--admin-font-xs);
+  line-height: var(--admin-line-normal);
 }
 
 .works-table__edit {
@@ -562,6 +676,25 @@ onMounted(() => {
   gap: var(--admin-space-2);
 }
 
+.works-card__thumb {
+  flex: none;
+  width: 4rem;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-bg-subtle);
+  color: var(--admin-text-tertiary);
+  font-size: 0.625rem;
+}
+
+.works-card__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .works-card__name {
   margin: 0;
   font-weight: 600;
@@ -586,6 +719,10 @@ onMounted(() => {
 .works-card__row--muted {
   font-size: var(--admin-font-xs);
   color: var(--admin-text-secondary);
+}
+
+.works-card__quick-links a {
+  color: var(--admin-accent-primary);
 }
 
 .works-card__edit {

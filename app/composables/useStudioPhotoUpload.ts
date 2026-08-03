@@ -4,6 +4,7 @@ import {
   retryAssetProcessingResponseSchema,
   retryUploadSessionResponseSchema,
   uploadSessionResponseSchema,
+  verifiedAssetResponseSchema,
 } from '~~/shared/schemas/upload'
 import type {
   ConditionalPutDto,
@@ -34,10 +35,10 @@ export interface StudioUploadItem {
   asset: VerifiedAssetDto | null
   failureStage: string | null
   failureText: string | null
-  file: File
+  file: File | null
   fileName: string
   id: string
-  previewUrl: string
+  previewUrl: string | null
   progress: number | null
   session: UploadSessionDto | null
   state: StudioUploadState
@@ -51,8 +52,14 @@ export interface StudioUploadContext {
 }
 
 interface StudioPhotoUploadOptions {
+  mediaRole: 'design_sheet' | 'studio_photo'
   onAssetReady: (item: StudioUploadItem, asset: VerifiedAssetDto) => void
   onWorkConflict: () => void
+}
+
+interface PersistedUpload {
+  fileName: string
+  uploadSessionId: string
 }
 
 function sessionFailureText(session: UploadSessionDto) {
@@ -81,6 +88,75 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
   const adminApi = useAdminApi()
   const items = ref<StudioUploadItem[]>([])
   const activeXhrs = new Map<string, XMLHttpRequest>()
+  let disposed = false
+
+  function persistenceKey(workId: string) {
+    return `project-fur-forge:work-upload:${workId}:${options.mediaRole}`
+  }
+
+  function readPersisted(workId: string): PersistedUpload[] {
+    if (!import.meta.client) {
+      return []
+    }
+    try {
+      const raw = sessionStorage.getItem(persistenceKey(workId))
+      const value = raw ? JSON.parse(raw) : []
+      return Array.isArray(value)
+        ? value.filter(record =>
+            typeof record?.fileName === 'string'
+            && typeof record?.uploadSessionId === 'string',
+          )
+        : []
+    }
+    catch {
+      return []
+    }
+  }
+
+  function writePersisted(workId: string, records: PersistedUpload[]) {
+    if (!import.meta.client) {
+      return
+    }
+    try {
+      if (records.length === 0) {
+        sessionStorage.removeItem(persistenceKey(workId))
+      }
+      else {
+        sessionStorage.setItem(persistenceKey(workId), JSON.stringify(records))
+      }
+    }
+    catch {
+      // Upload recovery is best effort when browser storage is unavailable.
+    }
+  }
+
+  function remember(item: StudioUploadItem, context: StudioUploadContext) {
+    const session = item.session
+    if (!session) {
+      return
+    }
+    const records = readPersisted(context.workId).filter(
+      record => record.uploadSessionId !== session.uploadSessionId,
+    )
+    records.push({
+      fileName: item.fileName,
+      uploadSessionId: session.uploadSessionId,
+    })
+    writePersisted(context.workId, records)
+  }
+
+  function forget(item: StudioUploadItem) {
+    const session = item.session
+    if (!session || session.owner.type !== 'work') {
+      return
+    }
+    writePersisted(
+      session.owner.id,
+      readPersisted(session.owner.id).filter(
+        record => record.uploadSessionId !== session.uploadSessionId,
+      ),
+    )
+  }
 
   function failItem(item: StudioUploadItem, text: string, stage: string | null = null) {
     // 取消竞态：abort 引发的 PUT 失败不得覆盖已取消状态。
@@ -118,7 +194,8 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
   async function putThenComplete(item: StudioUploadItem) {
     const upload = item.upload
     const session = item.session
-    if (!upload || !session) {
+    const file = item.file
+    if (!upload || !session || !file) {
       failItem(item, '上传会话缺少签名信息，请重新上传')
       return
     }
@@ -127,7 +204,7 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
     item.progress = 0
     let putStatus: number
     try {
-      putStatus = await putFile(upload, item.file, (ratio) => {
+      putStatus = await putFile(upload, file, (ratio) => {
         item.progress = ratio
       }, (xhr) => {
         if (xhr) {
@@ -260,7 +337,7 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
             id: context.workId,
             expectedVersion: context.workVersion,
           },
-          mediaRole: 'studio_photo',
+          mediaRole: options.mediaRole,
           expected: declaration.declaration,
         },
         schema: createUploadSessionResponseSchema,
@@ -281,6 +358,7 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
 
     item.session = created.data.session
     item.upload = created.data.upload
+    remember(item, context)
     await putThenComplete(item)
   }
 
@@ -315,8 +393,12 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
   // 失败/取消/过期会话的重传：服务端返回全新会话与签名 URL，必须用新 URL 重传。
   async function retryUpload(item: StudioUploadItem, context: StudioUploadContext) {
     const session = item.session
+    const file = item.file
+    if (!file) {
+      failItem(item, '刷新后需要重新选择原文件并重新上传')
+      return
+    }
     if (!session) {
-      const file = item.file
       dismiss(item)
       await startUpload(file, context)
       return
@@ -330,8 +412,10 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
           schema: retryUploadSessionResponseSchema,
         },
       )
+      forget(item)
       item.session = result.data.session
       item.upload = result.data.upload
+      remember(item, context)
       item.failureText = null
       item.failureStage = null
       await putThenComplete(item)
@@ -387,14 +471,143 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
   }
 
   function dismiss(item: StudioUploadItem, options: { keepPreview?: boolean } = {}) {
-    if (!options.keepPreview) {
+    forget(item)
+    if (!options.keepPreview && item.previewUrl?.startsWith('blob:')) {
       URL.revokeObjectURL(item.previewUrl)
     }
     items.value = items.value.filter(candidate => candidate.id !== item.id)
   }
 
+  async function recoverCompleted(item: StudioUploadItem) {
+    const assetId = item.session?.assetId
+    if (!assetId) {
+      failItem(item, '服务端会话已完成，但没有可恢复的媒体资产')
+      return
+    }
+    try {
+      const result = await adminApi(`/api/admin/v1/media/assets/${assetId}`, {
+        schema: verifiedAssetResponseSchema,
+      })
+      item.asset = result.data
+      item.previewUrl = `/api/admin/v1/media/assets/${assetId}/preview`
+      item.state = 'completed'
+      if (result.data.status === 'READY') {
+        options.onAssetReady(item, result.data)
+      }
+      else if (result.data.status === 'FAILED') {
+        item.failureText = '大原图私有处理源生成失败，可重试处理'
+        item.failureStage = '私有处理源'
+      }
+    }
+    catch (error) {
+      if (error instanceof AdminApiError && error.status === 401) {
+        return
+      }
+      failItem(item, '无法恢复已完成的媒体资产，请稍后重试')
+    }
+  }
+
+  async function restore(context: StudioUploadContext) {
+    const records = readPersisted(context.workId)
+    for (const record of records) {
+      if (disposed || items.value.some(item =>
+        item.session?.uploadSessionId === record.uploadSessionId,
+      )) {
+        continue
+      }
+      let session: UploadSessionDto
+      try {
+        const result = await adminApi(
+          `/api/admin/v1/media/upload-sessions/${record.uploadSessionId}`,
+          { schema: uploadSessionResponseSchema },
+        )
+        session = result.data
+      }
+      catch (error) {
+        if (error instanceof AdminApiError && error.status === 401) {
+          return
+        }
+        writePersisted(
+          context.workId,
+          readPersisted(context.workId).filter(
+            candidate => candidate.uploadSessionId !== record.uploadSessionId,
+          ),
+        )
+        continue
+      }
+      if (
+        session.owner.type !== 'work'
+        || session.owner.id !== context.workId
+        || session.mediaRole !== options.mediaRole
+      ) {
+        writePersisted(
+          context.workId,
+          readPersisted(context.workId).filter(
+            candidate => candidate.uploadSessionId !== record.uploadSessionId,
+          ),
+        )
+        continue
+      }
+      const item = reactive({
+        asset: null,
+        failureStage: null,
+        failureText: null,
+        file: null,
+        fileName: record.fileName,
+        id: crypto.randomUUID(),
+        previewUrl: null,
+        progress: null,
+        session,
+        state: session.status === 'AWAITING_UPLOAD' || session.status === 'VALIDATING'
+          ? 'validating'
+          : session.status === 'COMPLETED'
+            ? 'completed'
+            : session.status === 'CANCELLED'
+              ? 'cancelled'
+              : session.status === 'EXPIRED'
+                ? 'expired'
+                : 'failed',
+        upload: null,
+      }) as StudioUploadItem
+      items.value.push(item)
+
+      if (session.status === 'AWAITING_UPLOAD') {
+        await completeItem(item)
+      }
+      else {
+        while (!disposed && item.session?.status === 'VALIDATING') {
+          await new Promise(resolve => setTimeout(resolve, 1_000))
+          const fresh = await refreshSession(item)
+          if (!fresh) {
+            break
+          }
+        }
+        const current = item.session
+        if (current?.status === 'COMPLETED') {
+          await recoverCompleted(item)
+        }
+        else if (current?.status === 'FAILED') {
+          const failure = sessionFailureText(current)
+          failItem(item, failure.text, failure.stage)
+        }
+        else if (current?.status === 'CANCELLED') {
+          item.state = 'cancelled'
+          item.failureText = '上传会话已取消，请重新选择文件'
+        }
+        else if (current?.status === 'EXPIRED') {
+          expireItem(item)
+        }
+      }
+    }
+  }
+
   onScopeDispose(() => {
-    items.value.forEach(item => URL.revokeObjectURL(item.previewUrl))
+    disposed = true
+    items.value.forEach((item) => {
+      if (item.previewUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(item.previewUrl)
+      }
+    })
   })
 
   return {
@@ -404,5 +617,6 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
     retryUpload,
     retryProcessing,
     dismiss,
+    restore,
   }
 }
