@@ -165,14 +165,14 @@ async function retryEntryProcessing() {
   }
 }
 
-async function saveDesignSheet() {
+async function saveDesignSheet(): Promise<boolean> {
   if (saving.value || props.locked) {
-    return
+    return false
   }
   saveError.value = null
   if (entry.value && entry.value.alt.trim() === '') {
-    saveError.value = '设定图需要填写图片说明（alt）后才能保存。'
-    return
+    saveError.value = '设定图需要填写图片说明后才能保存。'
+    return false
   }
   saving.value = true
   try {
@@ -189,24 +189,28 @@ async function saveDesignSheet() {
     )
     resetFromWork(result.data)
     emit('saved', result.data)
+    return true
   }
   catch (error) {
     if (error instanceof AdminApiError && error.status === 401) {
-      return
+      return false
     }
     if (error instanceof AdminApiError && error.status === 409) {
       emit('conflict')
       saveError.value = '作品数据已在其他地方变化，本次设定图未保存。'
-      return
+      return false
     }
     saveError.value = error instanceof AdminApiError && error.status === 400
       ? '设定图内容未通过校验，请检查图片说明。'
       : '保存设定图失败，请稍后重试。'
+    return false
   }
   finally {
     saving.value = false
   }
 }
+
+defineExpose({ save: saveDesignSheet })
 </script>
 
 <template>
@@ -216,12 +220,6 @@ async function saveDesignSheet() {
       <p class="editor-card__hint">{{ entry ? '1/1' : '0/1' }} · 仅领养作品</p>
     </div>
 
-    <p class="design-sheet__purpose">
-      用于 <code>/adoptions</code> 与统一作品详情。公开 design-sheet recipe 保持横版完整画布并 contain，不做 3:4 破坏性裁切。
-    </p>
-    <p class="design-sheet__watermark">
-      活动水印：brand-centered-v2 · 固定居中；本页不提供四角位置控件。
-    </p>
     <p v-if="locked" class="design-sheet__locked" role="status">
       作品已发布，设定图为只读；如需替换请先下架。
     </p>
@@ -241,7 +239,7 @@ async function saveDesignSheet() {
           >
         </div>
         <p class="design-sheet__note">
-          {{ entry.width }}×{{ entry.height }} · 仅通过 assetId 同源认证读取 · 无水印
+          {{ entry.width }}×{{ entry.height }} · 完整原图 · 无水印 · 仅管理员可查看
         </p>
         <AdminWatermarkedMediaPreview
           :asset-id="entry.assetId"
@@ -256,12 +254,12 @@ async function saveDesignSheet() {
             :label="ASSET_STATUS_LABELS[entry.status]"
           />
           <span v-if="entry.publicVariantCount > 0" class="design-sheet__public">
-            公开 variant {{ entry.publicVariantCount }} 张
+            公开图片 {{ entry.publicVariantCount }} 张
           </span>
-          <span v-else>公开 variant 未生成</span>
+          <span v-else>尚未生成公开图片</span>
         </p>
         <label class="design-sheet__label" :for="`design-alt-${entry.assetId}`">
-          图片说明（alt）<span aria-hidden="true"> *</span>
+          图片说明<span aria-hidden="true"> *</span>
         </label>
         <input
           :id="`design-alt-${entry.assetId}`"
@@ -295,7 +293,7 @@ async function saveDesignSheet() {
     </article>
 
     <p v-else-if="uploads.items.value.length === 0" class="design-sheet__empty">
-      还没有设定图。常规领养在保存一张 READY 横版设定图前会被发布检查阻断。
+      还没有设定图。请先上传并保存一张横版设定图。
     </p>
 
     <input
@@ -358,17 +356,11 @@ async function saveDesignSheet() {
 </template>
 
 <style scoped>
-.design-sheet__purpose,
-.design-sheet__watermark,
 .design-sheet__note {
   margin: 0 0 var(--admin-space-3);
   color: var(--admin-text-tertiary);
   font-size: var(--admin-font-xs);
   line-height: var(--admin-line-normal);
-}
-
-.design-sheet__purpose code {
-  font-family: var(--font-admin-mono);
 }
 
 .design-sheet__locked {

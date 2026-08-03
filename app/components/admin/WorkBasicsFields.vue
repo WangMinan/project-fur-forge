@@ -131,7 +131,7 @@ function moveTag(index: number, offset: number) {
         </p>
       </div>
       <div class="field">
-        <label class="field__label" for="f-slug">链接别名（slug） <span aria-hidden="true">*</span></label>
+        <label class="field__label" for="f-slug">链接别名 <span aria-hidden="true">*</span></label>
         <div class="field__affix">
           <span class="field__prefix" aria-hidden="true">/works/</span>
           <input
@@ -268,7 +268,7 @@ function moveTag(index: number, offset: number) {
       </div>
     </dl>
     <p class="historical__note">
-      展会实体与完整展会掉落管理属于 T37，本页不提供展会编辑器。
+      当前页面暂不支持修改展会信息。
       转为常规领养后，展会名称会被清空、方式改为常规领养，并需要重新选择业务状态。
     </p>
     <button
@@ -297,7 +297,7 @@ function moveTag(index: number, offset: number) {
           readonly
           aria-describedby="f-adoption-method-hint"
         >
-        <p id="f-adoption-method-hint" class="field__hint">P0 只开放常规领养；展会掉落留到 T37</p>
+        <p id="f-adoption-method-hint" class="field__hint">当前仅支持常规领养；展会掉落将在后续提供专门管理。</p>
       </div>
       <div class="field">
         <label class="field__label" for="f-business-status">业务状态</label>
@@ -375,7 +375,7 @@ function moveTag(index: number, offset: number) {
           <span>加入首页精选作品</span>
         </label>
         <p id="f-featured-hint" class="field__hint">
-          首页精选轨道最多展示前 {{ PUBLIC_FEATURED_LIMIT }} 件已发布精选；与首页 Hero 轮播是两套内容
+          首页精选最多展示前 {{ PUBLIC_FEATURED_LIMIT }} 件已发布作品；与首页轮播是两套内容
         </p>
       </div>
     </div>

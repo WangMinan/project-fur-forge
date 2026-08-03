@@ -18,6 +18,8 @@ import { AdminApiError } from '~/composables/useAdminApi'
 
 const props = defineProps<{
   busy: boolean
+  dirty: boolean
+  saveBeforePublish: () => Promise<boolean>
   work: {
     id: string
     publicationStatus: 'draft' | 'published' | 'unpublished'
@@ -53,8 +55,8 @@ const STATUS_TONES = {
   unpublished: 'neutral',
 } as const
 
-const canPublish = computed(() =>
-  check.value?.canPublish === true
+const canStartPublish = computed(() =>
+  (check.value?.canPublish === true || props.dirty)
   && pending.value === null
   && !props.busy
   && props.work.publicationStatus !== 'published',
@@ -99,7 +101,7 @@ function stopPublishProgress() {
   }
 }
 
-async function loadCheck() {
+async function loadCheck(): Promise<boolean> {
   checkLoading.value = true
   checkError.value = null
   try {
@@ -108,12 +110,14 @@ async function loadCheck() {
       { schema: workPublicationCheckResponseSchema },
     )
     check.value = result.data
+    return true
   }
   catch (error) {
     if (error instanceof AdminApiError && error.status === 401) {
-      return
+      return false
     }
     checkError.value = '发布检查加载失败，请重试。'
+    return false
   }
   finally {
     checkLoading.value = false
@@ -151,13 +155,38 @@ function handleOperationOutcome(
 }
 
 async function publish() {
-  if (!canPublish.value) {
+  if (!canStartPublish.value) {
     return
   }
   feedback.value = null
   pending.value = 'publish'
-  startPublishProgress()
   try {
+    if (!(await props.saveBeforePublish())) {
+      feedback.value = {
+        cleanupRetry: false,
+        text: '页面修改未保存，请先处理页面中的提示后重试。',
+        tone: 'error',
+      }
+      return
+    }
+    await nextTick()
+    if (!(await loadCheck())) {
+      feedback.value = {
+        cleanupRetry: false,
+        text: '页面修改已保存，但发布检查未完成，请重试。',
+        tone: 'error',
+      }
+      return
+    }
+    if (!check.value?.canPublish) {
+      feedback.value = {
+        cleanupRetry: false,
+        text: '页面修改已保存，请先完成上方列出的待办项。',
+        tone: 'error',
+      }
+      return
+    }
+    startPublishProgress()
     const result = await adminApi(
       `/api/admin/v1/works/${props.work.id}/publish`,
       {
@@ -295,7 +324,9 @@ async function retryCleanup() {
 watch(() => props.work.version, () => {
   // 发布/下架成功后页面会刷新作品（版本递增）：反馈必须持久显示，
   // 只刷新发布检查，不清空上一次操作的结果。
-  void loadCheck()
+  if (pending.value !== 'publish') {
+    void loadCheck()
+  }
 })
 
 onMounted(() => {
@@ -325,7 +356,7 @@ onUnmounted(() => {
     <template v-else-if="check">
       <p class="publication__summary">
         设定图 {{ check.designSheetCount }}/1 · 出厂照 {{ check.studioPhotoCount }}/5 ·
-        公开 variant {{ check.requiredVariantCount - check.missingVariantCount }}/{{ check.requiredVariantCount }}
+        公开图片 {{ check.requiredVariantCount - check.missingVariantCount }}/{{ check.requiredVariantCount }}
       </p>
       <div v-if="!check.canPublish" class="publication__blocked">
         <p class="publication__blocked-title">暂不可发布，请先完成：</p>
@@ -336,7 +367,7 @@ onUnmounted(() => {
         </ul>
       </div>
       <p v-if="check.missingVariantCount > 0" class="publication__variants">
-        发布时将生成 {{ check.missingVariantCount }} 张带水印公开衍生图，请求可能需要较长时间。
+        发布时将生成 {{ check.missingVariantCount }} 张带水印公开图片，可能需要较长时间。
       </p>
     </template>
 
@@ -350,10 +381,10 @@ onUnmounted(() => {
         v-if="work.publicationStatus !== 'published'"
         type="button"
         class="editor__button editor__button--primary"
-        :disabled="!canPublish"
-        :title="check?.canPublish ? undefined : '请先完成发布检查中的所有待办项'"
+        :disabled="!canStartPublish"
+        :title="dirty ? '将先保存页面修改，再检查并发布' : check?.canPublish ? undefined : '请先完成发布检查中的所有待办项'"
         @click="publish"
-      >{{ pending === 'publish' ? '发布中…' : '发布' }}</button>
+      >{{ pending === 'publish' ? '保存并发布中…' : '发布' }}</button>
       <button
         v-if="work.publicationStatus === 'published'"
         type="button"
@@ -371,7 +402,7 @@ onUnmounted(() => {
 
     <div v-if="pending === 'publish'" class="publication__progress" role="status">
       <p class="publication__state">
-        正在生成公开 variant、应用活动居中水印并由服务端校验，请勿关闭页面…
+        正在生成带水印的公开图片并检查图片是否可用，请勿关闭页面…
       </p>
       <template v-if="publishProgress && publishProgress.total > 0">
         <p class="publication__progress-label">已生成 {{ publishCompleted }} / {{ publishProgress.total }}，剩余 {{ publishProgress.remaining }} 张</p>
@@ -411,7 +442,7 @@ onUnmounted(() => {
       @confirm="unpublish"
       @cancel="confirmUnpublish = false"
     >
-      <p>下架后公开页面立即对访客不可见，公开 Bucket 中的衍生图会被删除；私有原图与作品内容保留，可随时重新发布。</p>
+      <p>下架后公开页面立即对访客不可见，公开图片文件会被删除；完整原图与作品内容保留，可随时重新发布。</p>
     </AdminConfirmDialog>
   </section>
 </template>

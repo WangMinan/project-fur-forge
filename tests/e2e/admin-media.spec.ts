@@ -55,7 +55,7 @@ test.describe('出厂照上传链路', () => {
 
     // READY 后进入出厂照关系列表。
     await expect(photoCards(page)).toHaveCount(1)
-    await expect(photoCards(page).first()).toContainText('READY')
+    await expect(photoCards(page).first()).toContainText('已就绪')
     await expect(photoCards(page).first()).toContainText('主图')
     await expect(page.getByText('出厂照有未保存更改')).toBeVisible()
 
@@ -80,7 +80,7 @@ test.describe('出厂照上传链路', () => {
     await page.reload()
     await page.waitForSelector('.editor-card')
     await expect(photoCards(page)).toHaveCount(1)
-    await expect(photoCards(page).first()).toContainText('READY')
+    await expect(photoCards(page).first()).toContainText('已就绪')
     await expect(photoCards(page).first().getByLabel(/图片说明/)).toHaveValue('正面全身，自然光')
     await expect(photoCards(page).first().getByTestId('photo-preview')).toBeVisible()
     await expect(photoCards(page).first().locator('img')).toHaveAttribute(
@@ -128,7 +128,7 @@ test.describe('出厂照上传链路', () => {
 
     await page.getByRole('button', { name: '重新上传' }).click()
     await expect(photoCards(page)).toHaveCount(1)
-    await expect(photoCards(page).first()).toContainText('READY')
+    await expect(photoCards(page).first()).toContainText('已就绪')
   })
 
   test('图片格式/尺寸核验失败：显示安全失败文案与阶段', async ({ page }) => {
@@ -189,7 +189,7 @@ test.describe('大原图私有处理源', () => {
     await expect(page.getByText(/服务端校验中/)).toBeVisible()
     await expect(photoCards(page)).toHaveCount(1)
     const card = photoCards(page).first()
-    await expect(card).toContainText('READY', { timeout: 90_000 })
+    await expect(card).toContainText('已就绪', { timeout: 90_000 })
 
     await card.getByLabel(/图片说明/).fill('大尺寸全身照')
     await page.getByRole('button', { name: '保存出厂照' }).click()
@@ -210,7 +210,7 @@ test.describe('大原图私有处理源', () => {
     await setFakeMediaFlags(page, { failPut: false })
     await uploadCard.getByRole('button', { name: '重试处理' }).click()
     await expect(photoCards(page)).toHaveCount(1, { timeout: 90_000 })
-    await expect(photoCards(page).first()).toContainText('READY')
+    await expect(photoCards(page).first()).toContainText('已就绪')
   })
 })
 
@@ -324,7 +324,7 @@ test.describe('出厂照区域：泄漏边界与三视口', () => {
     expect(dom).not.toContain('/api/e2e-fake-oss/')
     expect(dom).not.toContain('x-oss-')
     expect(dom).not.toContain('Signature=')
-    await expect(photoCards(page).first()).toContainText('不含水印')
+    await expect(photoCards(page).first()).toContainText('无水印')
 
     await page.getByLabel(/图片说明/).fill('边界图')
     await page.getByRole('button', { name: '保存出厂照' }).click()
@@ -380,7 +380,7 @@ test.describe('出厂照区域：泄漏边界与三视口', () => {
 
     await uploadFileToEditor(page, smallStudioPng(), 'mobile.png')
     await expect(photoCards(page)).toHaveCount(1)
-    await expect(photoCards(page).first()).toContainText('READY')
+    await expect(photoCards(page).first()).toContainText('已就绪')
     await capture(page, 'work-editor-mobile-upload-390x844')
   })
 })
@@ -398,11 +398,23 @@ test.describe('T24 领养设定图与角色化列表', () => {
     await gotoEditor(page, work.id)
 
     await expect(page.getByRole('heading', { level: 2, name: '领养设定图' })).toBeVisible()
-    await expect(page.getByText(/用于.*\/adoptions.*统一作品详情/)).toBeVisible()
+    await expect(page.getByText('还没有设定图。请先上传并保存一张横版设定图。')).toBeVisible()
+    await expect(page.getByText('还没有出厂照。常规领养可只用设定图发布；添加出厂照后将显示在统一作品详情的作品图集中。')).toBeVisible()
+    await expect(page.getByTestId('publication-panel')).toContainText('公开图片 0/0')
+    const editorText = await page.locator('.editor__main').innerText()
+    expect(editorText).not.toContain('design-sheet recipe')
+    expect(editorText).not.toContain('brand-centered-v2')
+    expect(editorText).not.toContain('私有 Bucket')
+    expect(editorText).not.toContain('P0')
+    expect(editorText).not.toContain('T37')
+    expect(editorText).not.toContain('Hero')
+    expect(editorText).not.toContain('（slug）')
+    expect(editorText).not.toContain('（alt）')
+    expect(await page.getByTestId('publication-panel').innerText()).not.toContain('variant')
     await uploadDesignSheetToEditor(page, publishableStudioPng(), 'design.png')
     await expect(designEntry(page)).toHaveCount(1)
-    await expect(designEntry(page)).toContainText('READY')
-    await expect(designEntry(page)).toContainText('公开 variant 未生成')
+    await expect(designEntry(page)).toContainText('已就绪')
+    await expect(designEntry(page)).toContainText('尚未生成公开图片')
 
     const original = page.getByTestId('design-sheet-original-preview').locator('img')
     await expect(original).toHaveAttribute(
@@ -453,7 +465,7 @@ test.describe('T24 领养设定图与角色化列表', () => {
     await page.reload()
     await page.waitForSelector('.editor-card')
     await expect(designEntry(page)).toHaveCount(1, { timeout: 60_000 })
-    await expect(designEntry(page)).toContainText('READY')
+    await expect(designEntry(page)).toContainText('已就绪')
     await expect(page.getByText('设定图有未保存更改')).toBeVisible()
   })
 

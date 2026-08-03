@@ -41,7 +41,7 @@ export const UPLOAD_FAILURE_CODE_LABELS: Record<UploadFailureCode, string> = {
 
 export const ASSET_STATUS_LABELS: Record<AssetStatus, string> = {
   PENDING: '处理中',
-  READY: 'READY',
+  READY: '已就绪',
   FAILED: '处理失败',
 }
 
@@ -53,17 +53,17 @@ export const WATERMARK_ANCHOR_LABELS: Record<WatermarkAnchor, string> = {
 }
 
 export const PUBLICATION_BLOCKER_LABELS: Record<PublicationBlocker, string> = {
-  EVENT_DROP_NOT_READY: '展会掉落发布留到 T37',
+  EVENT_DROP_NOT_READY: '暂不支持发布展会掉落作品',
   WORK_FIELDS_INVALID: '基础信息不完整，请检查必填字段',
   DESIGN_SHEET_REQUIRED: '常规领养必须保存一张设定图',
   DESIGN_SHEET_NOT_READY: '设定图尚未完成服务端校验',
-  DESIGN_SHEET_SOURCE_TOO_SMALL: '设定图尺寸不足以生成固定公开配方',
-  DESIGN_SHEET_ALT_REQUIRED: '设定图缺少图片说明（alt）',
+  DESIGN_SHEET_SOURCE_TOO_SMALL: '设定图尺寸不足，无法生成公开图片',
+  DESIGN_SHEET_ALT_REQUIRED: '设定图缺少图片说明',
   STUDIO_PHOTO_REQUIRED: '至少需要一张出厂照',
   PRIMARY_STUDIO_PHOTO_REQUIRED: '需要设置唯一一张主图',
-  STUDIO_PHOTO_NOT_READY: '有出厂照尚未 READY',
-  STUDIO_PHOTO_SOURCE_TOO_SMALL: '有出厂照尺寸不足，原图至少需支持 2400 px 详情图与 1200 × 1600 卡片图',
-  STUDIO_PHOTO_ALT_REQUIRED: '有出厂照缺少图片说明（alt）',
+  STUDIO_PHOTO_NOT_READY: '有出厂照尚未处理完成',
+  STUDIO_PHOTO_SOURCE_TOO_SMALL: '有出厂照尺寸不足，原图至少需支持 2400 像素详情图与 1200 × 1600 卡片图',
+  STUDIO_PHOTO_ALT_REQUIRED: '有出厂照缺少图片说明',
   WATERMARK_PROFILE_REQUIRED: '需要先初始化并启用站点水印',
 }
 
@@ -90,7 +90,7 @@ export const PUBLICATION_FAILURE_STAGE_LABELS
 
 const PUBLICATION_FAILURE_CODE_LABELS: Record<string, string> = {
   PUBLICATION_VALIDATION_FAILED: '发布检查未通过，请根据待办项修正后重试',
-  PUBLIC_MEDIA_GENERATION_FAILED: '公开图片生成失败（OSS 处理），请稍后重试',
+  PUBLIC_MEDIA_GENERATION_FAILED: '公开图片生成失败，请稍后重试',
   PUBLIC_MEDIA_VERIFICATION_FAILED: '公开图片校验失败，请稍后重试',
   PUBLICATION_COMMIT_FAILED: '发布提交失败，请刷新状态后重试',
   UNPUBLICATION_VALIDATION_FAILED: '下架校验未通过，请刷新状态后重试',

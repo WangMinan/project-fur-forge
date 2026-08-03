@@ -332,15 +332,13 @@ test('DOM 与图片 URL 不含私有 Key、Bucket、签名 URL 或完整摘要',
   }
 })
 
-test('作品编辑器：四角控件移除，只读水印摘要，保存不依赖 watermarkAnchor', async ({ page }) => {
+test('作品编辑器：四角控件与开发说明移除，保存不依赖旧水印位置', async ({ page }) => {
   const work = await createWorkViaApi(page, { characterName: '水印摘要验证' })
   await page.goto(`${adminBaseURL}/admin/works/${work.id}`)
   await page.waitForSelector('.editor-card')
 
   await expect(page.getByLabel('水印安全角')).toHaveCount(0)
-  await expect(page.getByTestId('watermark-summary')).toContainText(
-    /当前公开水印：居中 · 不透明度\s*\d+% · 缩放\s*\d+%/,
-  )
+  await expect(page.getByTestId('watermark-summary')).toHaveCount(0)
 
   const input = page.getByLabel('选择出厂照文件')
   await input.setInputFiles({
@@ -350,7 +348,7 @@ test('作品编辑器：四角控件移除，只读水印摘要，保存不依�
   })
   await page.getByRole('button', { name: '上传出厂照' }).click()
   const card = page.locator('article.photo-card').first()
-  await expect(card).toContainText('READY')
+  await expect(card).toContainText('已就绪')
   await expect(card).toContainText('公开衍生图未生成')
   await card.getByLabel(/图片说明/).fill('摘要验证图')
   await page.getByRole('button', { name: '保存出厂照' }).click()
