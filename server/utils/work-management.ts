@@ -1,11 +1,13 @@
 import { randomUUID } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import {
+  managedDesignSheetDtoSchema,
   managedWorkDtoSchema,
   publicSafeWorkPreviewDtoSchema,
   workListItemDtoSchema,
 } from '../../shared/schemas/work'
 import type {
+  ManagedDesignSheetDto,
   ManagedWorkDto,
   PublicSafeWorkPreviewDto,
   WatermarkAnchor,
@@ -28,6 +30,11 @@ interface StudioPhotoInput {
   focalY: number
   primary: boolean
   watermarkAnchor?: WatermarkAnchor | undefined
+}
+
+interface DesignSheetInput {
+  alt: string
+  assetId: string
 }
 
 interface WorkRow {
@@ -139,6 +146,33 @@ function studioPhotos(sqlite: Database.Database, workId: string) {
   })
 }
 
+function designSheet(
+  sqlite: Database.Database,
+  workId: string,
+): ManagedDesignSheetDto | null {
+  const row = sqlite.prepare(`
+    SELECT
+      relation.asset_id AS assetId,
+      relation.alt_text AS alt,
+      relation.position,
+      asset.version, asset.status, asset.width, asset.height,
+      (
+        SELECT count(*) FROM asset_variants AS variant
+        WHERE variant.asset_id = asset.id
+          AND variant.storage_scope = 'PUBLIC'
+          AND variant.status = 'READY'
+          AND variant.watermark_profile_id = (
+            SELECT active_watermark_profile_id
+            FROM site_branding WHERE id = 'site'
+          )
+      ) AS publicVariantCount
+    FROM work_assets AS relation
+    JOIN assets AS asset ON asset.id = relation.asset_id
+    WHERE relation.work_id = ? AND relation.role = 'design_sheet'
+  `).get(workId)
+  return row ? managedDesignSheetDtoSchema.parse(row) : null
+}
+
 function managedWork(
   sqlite: Database.Database,
   row: WorkRow,
@@ -164,6 +198,7 @@ function managedWork(
   return managedWorkDtoSchema.parse(row.purpose === 'adoption'
     ? {
         ...base,
+        designSheet: designSheet(sqlite, row.id),
         adoptionMethod: row.adoptionMethod,
         businessStatus: row.businessStatus,
         currentEventName: row.currentEventName,
@@ -218,7 +253,11 @@ export function listManagedWorks(
       work.publication_status AS publicationStatus,
       work.sort_order AS sortOrder, work.featured,
       count(photo.asset_id) AS studioPhotoCount,
-      max(CASE WHEN photo.is_primary = 1 THEN photo.asset_id END) AS primaryAssetId
+      max(CASE WHEN photo.is_primary = 1 THEN photo.asset_id END) AS primaryAssetId,
+      (
+        SELECT asset_id FROM work_assets
+        WHERE work_id = work.id AND role = 'design_sheet'
+      ) AS designSheetAssetId
     FROM works AS work
     LEFT JOIN work_assets AS photo
       ON photo.work_id = work.id AND photo.role = 'studio_photo'
@@ -228,6 +267,7 @@ export function listManagedWorks(
   return rows.map((value) => {
     const row = value as WorkRow & {
       primaryAssetId: string | null
+      designSheetAssetId: string | null
       studioPhotoCount: number
     }
     const base = {
@@ -248,6 +288,7 @@ export function listManagedWorks(
     return workListItemDtoSchema.parse(row.purpose === 'adoption'
       ? {
           ...base,
+          designSheetAssetId: row.designSheetAssetId,
           adoptionMethod: row.adoptionMethod,
           businessStatus: row.businessStatus,
           currentEventName: row.currentEventName,
@@ -491,10 +532,11 @@ export async function deleteManagedWork(
   return { id }
 }
 
-function assertStudioPhotoAssets(
+function assertReadyWorkAsset(
   sqlite: Database.Database,
   workId: string,
-  photos: readonly StudioPhotoInput[],
+  assetId: string,
+  role: 'design_sheet' | 'studio_photo',
 ) {
   const select = sqlite.prepare(`
     SELECT
@@ -511,27 +553,85 @@ function assertStudioPhotoAssets(
     LEFT JOIN work_assets AS relation ON relation.asset_id = asset.id
     WHERE asset.id = ?
   `)
-  for (const photo of photos) {
-    const row = select.get(workId, photo.assetId) as {
-      linkedWorkId: string | null
-      ownedByWork: number
-      role: string
-      status: string
-    } | undefined
-    if (!row) {
-      throw new ServiceError(404, 'NOT_FOUND', 'Studio photo asset was not found.')
-    }
-    if (
-      row.role !== 'studio_photo'
-      || row.status !== 'READY'
-      || row.ownedByWork !== 1
-    ) {
-      throw new ServiceError(409, 'CONFLICT', 'Asset is not a ready studio photo for this work.')
-    }
-    if (row.linkedWorkId !== null && row.linkedWorkId !== workId) {
-      throw new ServiceError(409, 'CONFLICT', 'Asset is already linked to a work.')
-    }
+  const row = select.get(workId, assetId) as {
+    linkedWorkId: string | null
+    ownedByWork: number
+    role: string
+    status: string
+  } | undefined
+  if (!row) {
+    throw new ServiceError(404, 'NOT_FOUND', 'Work media asset was not found.')
   }
+  if (row.role !== role || row.status !== 'READY' || row.ownedByWork !== 1) {
+    throw new ServiceError(409, 'CONFLICT', 'Asset role, status or work ownership is invalid.')
+  }
+  if (row.linkedWorkId !== null && row.linkedWorkId !== workId) {
+    throw new ServiceError(409, 'CONFLICT', 'Asset is already linked to a work.')
+  }
+}
+
+function assertStudioPhotoAssets(
+  sqlite: Database.Database,
+  workId: string,
+  photos: readonly StudioPhotoInput[],
+) {
+  photos.forEach(photo => assertReadyWorkAsset(
+    sqlite,
+    workId,
+    photo.assetId,
+    'studio_photo',
+  ))
+}
+
+export function replaceManagedDesignSheet(
+  sqlite: Database.Database,
+  workId: string,
+  expectedVersion: number,
+  input: DesignSheetInput | null,
+  now = Date.now(),
+) {
+  const current = requireWork(sqlite, workId)
+  if (current.version !== expectedVersion) {
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+  }
+  if (current.purpose !== 'adoption') {
+    throw new ServiceError(409, 'CONFLICT', 'Design sheets require an adoption work.')
+  }
+  if (current.publicationStatus === 'published') {
+    throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before editing media.')
+  }
+  if (input) {
+    assertReadyWorkAsset(sqlite, workId, input.assetId, 'design_sheet')
+  }
+  try {
+    sqlite.transaction(() => {
+      sqlite.prepare(`
+        DELETE FROM work_assets
+        WHERE work_id = ? AND role = 'design_sheet'
+      `).run(workId)
+      if (input) {
+        sqlite.prepare(`
+          INSERT INTO work_assets (
+            work_id, asset_id, role, alt_text, position, is_primary
+          ) VALUES (?, ?, 'design_sheet', ?, 0, 0)
+        `).run(workId, input.assetId, input.alt)
+      }
+      const result = sqlite.prepare(`
+        UPDATE works SET version = version + 1, updated_at = ?
+        WHERE id = ? AND version = ? AND publication_status != 'published'
+      `).run(now, workId, expectedVersion)
+      if (result.changes !== 1) {
+        throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+      }
+    })()
+  }
+  catch (error) {
+    if (error instanceof ServiceError) {
+      throw error
+    }
+    translateConstraint(error)
+  }
+  return getManagedWork(sqlite, workId)
 }
 
 export function replaceManagedStudioPhotos(
@@ -619,8 +719,16 @@ export function getPublicSafeWorkPreview(
   )
   return publicSafeWorkPreviewDtoSchema.parse({
     ...safeWork,
-    mediaReady: work.studioPhotos.length > 0
-      && work.studioPhotos.filter(photo => photo.primary).length === 1
+    mediaReady: (work.purpose === 'adoption'
+      ? work.designSheet !== null
+        && work.designSheet.status === 'READY'
+        && Boolean(work.designSheet.alt?.trim())
+        && (
+          work.studioPhotos.length === 0
+          || work.studioPhotos.filter(photo => photo.primary).length === 1
+        )
+      : work.studioPhotos.length > 0
+        && work.studioPhotos.filter(photo => photo.primary).length === 1)
       && work.studioPhotos.every(photo =>
         photo.status === 'READY' && photo.alt.trim() !== '',
       ),

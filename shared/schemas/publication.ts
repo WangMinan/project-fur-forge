@@ -27,8 +27,12 @@ export const PUBLICATION_FAILURE_STAGE_VALUES = [
 ] as const
 
 export const PUBLICATION_BLOCKER_VALUES = [
-  'ADOPTION_FLOW_NOT_READY',
+  'EVENT_DROP_NOT_READY',
   'WORK_FIELDS_INVALID',
+  'DESIGN_SHEET_REQUIRED',
+  'DESIGN_SHEET_NOT_READY',
+  'DESIGN_SHEET_SOURCE_TOO_SMALL',
+  'DESIGN_SHEET_ALT_REQUIRED',
   'STUDIO_PHOTO_REQUIRED',
   'PRIMARY_STUDIO_PHOTO_REQUIRED',
   'STUDIO_PHOTO_NOT_READY',
@@ -65,7 +69,9 @@ export const workPublicationCheckDtoSchema = z.object({
   version: resourceVersionSchema,
   canPublish: z.boolean(),
   blockers: z.array(publicationBlockerSchema),
+  designSheetCount: z.number().int().min(0).max(1),
   studioPhotoCount: z.number().int().min(0).max(5),
+  requiredVariantCount: z.number().int().nonnegative(),
   missingVariantCount: z.number().int().nonnegative(),
 }).strict()
 

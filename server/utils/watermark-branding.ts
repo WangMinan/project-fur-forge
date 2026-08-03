@@ -15,6 +15,7 @@ import {
   generatePrivateWatermarkPreview,
   generatePublicVariantsForProfile,
   publicVariantCountForUsages,
+  workAssetPublicUsages,
 } from './media-recipe'
 import type { PublicMediaUsage } from './media-recipe'
 import { ServiceError } from './service-error'
@@ -157,12 +158,13 @@ function operationDto(row: WatermarkOperationRow): WatermarkOperationDto {
   })
 }
 
-function targetUsages(role: string): PublicMediaUsage[] {
-  if (role === 'studio_photo') {
-    return ['work-card', 'detail']
-  }
-  if (role === 'design_sheet') {
-    return ['design-sheet', 'work-card', 'detail']
+function targetUsages(
+  role: string,
+  primary = false,
+  hasPrimaryStudioPhoto = false,
+): PublicMediaUsage[] {
+  if (role === 'studio_photo' || role === 'design_sheet') {
+    return workAssetPublicUsages(role, primary, hasPrimaryStudioPhoto)
   }
   if (role === 'home_hero_landscape') {
     return ['home-hero-landscape']
@@ -175,13 +177,26 @@ function targetUsages(role: string): PublicMediaUsage[] {
 
 function watermarkTargets(sqlite: Database.Database) {
   const workRows = sqlite.prepare(`
-    SELECT DISTINCT asset.id AS assetId, asset.role
+    SELECT DISTINCT
+      asset.id AS assetId, asset.role,
+      relation.is_primary AS "primary",
+      EXISTS (
+        SELECT 1 FROM work_assets AS primary_photo
+        WHERE primary_photo.work_id = work.id
+          AND primary_photo.role = 'studio_photo'
+          AND primary_photo.is_primary = 1
+      ) AS hasPrimaryStudioPhoto
     FROM works AS work
     JOIN work_assets AS relation ON relation.work_id = work.id
     JOIN assets AS asset ON asset.id = relation.asset_id
     WHERE work.publication_status = 'published' AND asset.status = 'READY'
       AND relation.role IN ('studio_photo', 'design_sheet')
-  `).all() as Array<{ assetId: string, role: string }>
+  `).all() as Array<{
+    assetId: string
+    hasPrimaryStudioPhoto: number
+    primary: number
+    role: string
+  }>
   const heroRows = sqlite.prepare(`
     SELECT DISTINCT asset.id AS assetId, asset.role
     FROM site_hero_slides AS slide
@@ -193,7 +208,11 @@ function watermarkTargets(sqlite: Database.Database) {
   const targets = new Map<string, Set<PublicMediaUsage>>()
   for (const row of [...workRows, ...heroRows]) {
     const usages = targets.get(row.assetId) ?? new Set<PublicMediaUsage>()
-    targetUsages(row.role).forEach(usage => usages.add(usage))
+    targetUsages(
+      row.role,
+      'primary' in row && row.primary === 1,
+      'hasPrimaryStudioPhoto' in row && row.hasPrimaryStudioPhoto === 1,
+    ).forEach(usage => usages.add(usage))
     targets.set(row.assetId, usages)
   }
   return [...targets].map(([assetId, usages]): WatermarkTarget => ({

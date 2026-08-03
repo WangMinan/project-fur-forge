@@ -22,6 +22,7 @@ import {
   CENTERED_WATERMARK_PROFILE,
   generatePublicVariants,
   PUBLIC_RECIPE_VERSION,
+  workAssetPublicUsages,
 } from '../../server/utils/media-recipe'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 import {
@@ -44,7 +45,7 @@ function insertReadyAsset(options: {
   byteSize?: number
   id?: string
   objectKey?: string
-  role?: 'studio_photo' | 'home_hero_landscape'
+  role?: 'design_sheet' | 'studio_photo' | 'home_hero_landscape'
 } = {}) {
   const content = createSyntheticWatermarkPng()
   const id = options.id ?? ASSET_ID
@@ -148,6 +149,56 @@ describe('brand-centered-v2 public media generation', () => {
       first.map(variant => variant.id),
     )
     expect(storage.processCalls).toHaveLength(12)
+  })
+
+  it('keeps design sheets complete and uses a safe contain canvas for card fallback', async () => {
+    insertReadyAsset({ role: 'design_sheet' })
+    const usages = workAssetPublicUsages('design_sheet', false, false)
+    expect(usages).toEqual(['design-sheet', 'work-card'])
+    expect(workAssetPublicUsages('design_sheet', false, true))
+      .toEqual(['design-sheet'])
+    expect(workAssetPublicUsages('studio_photo', false, true))
+      .toEqual(['detail'])
+    expect(workAssetPublicUsages('studio_photo', true, true))
+      .toEqual(['work-card', 'detail'])
+
+    const defaults = await generatePublicVariants(
+      sqlite,
+      storage,
+      ASSET_ID,
+      undefined,
+      NOW,
+    )
+    expect(defaults).toHaveLength(6)
+    expect(defaults.every(variant => variant.usage === 'design-sheet'))
+      .toBe(true)
+
+    const variants = await generatePublicVariants(
+      sqlite,
+      storage,
+      ASSET_ID,
+      usages,
+      NOW,
+    )
+    expect(variants).toHaveLength(12)
+    const designProcesses = storage.processCalls.filter(
+      call => call.objectKey.includes('/design-sheet/'),
+    )
+    const fallbackProcesses = storage.processCalls.filter(
+      call => call.objectKey.includes('/work-card/'),
+    )
+    expect(designProcesses).toHaveLength(6)
+    expect(designProcesses.every(call => (
+      call.process.includes('resize,m_lfit')
+      && !call.process.includes('crop,')
+      && !call.process.includes('resize,m_fill')
+    ))).toBe(true)
+    expect(fallbackProcesses).toHaveLength(6)
+    expect(fallbackProcesses.every(call => (
+      call.process.includes('resize,m_pad')
+      && call.process.includes('color_F7F7F7')
+      && !call.process.includes('resize,m_fill')
+    ))).toBe(true)
   })
 
   it('uses the READY private preprocess as the only source above 20 MB', async () => {

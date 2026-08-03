@@ -59,6 +59,27 @@ function migrationsBeforeGate07(databaseFile: string) {
   return folder
 }
 
+function migrationsBeforeT23(databaseFile: string) {
+  const folder = resolve(dirname(databaseFile), 'pre-t23-migrations')
+  const meta = resolve(folder, 'meta')
+  mkdirSync(meta, { recursive: true })
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  for (const { tag } of journal.entries.slice(0, 11)) {
+    copyFileSync(
+      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
+      resolve(folder, `${tag}.sql`),
+    )
+  }
+  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
+    ...journal,
+    entries: journal.entries.slice(0, 11),
+  }))
+  return folder
+}
+
 afterEach(() => {
   temporaryDirectories.splice(0).forEach(directory => rmSync(
     directory,
@@ -76,7 +97,7 @@ describe('SQLite foundation', () => {
     expect(() => assertDatabaseMigrated(databaseFile))
       .toThrow(/run pnpm db:migrate first/)
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 11,
+      applied: 12,
       backupFile: undefined,
     })
     expect(() => assertDatabaseMigrated(databaseFile)).not.toThrow()
@@ -95,7 +116,7 @@ describe('SQLite foundation', () => {
       `).pluck().get()).toBe(1)
       expect(database.sqlite.prepare(`
         SELECT COUNT(*) FROM __drizzle_migrations
-      `).pluck().get()).toBe(11)
+      `).pluck().get()).toBe(12)
     }
     finally {
       database.sqlite.close()
@@ -154,7 +175,7 @@ describe('SQLite foundation', () => {
     }
 
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 4,
+      applied: 5,
     })
     const upgraded = openDatabase(databaseFile)
     try {
@@ -162,6 +183,73 @@ describe('SQLite foundation', () => {
       expect(upgraded.sqlite.prepare(`
         SELECT source_variant_id FROM asset_variants WHERE id = 'public'
       `).pluck().get()).toBe('source')
+    }
+    finally {
+      upgraded.sqlite.close()
+    }
+  })
+
+  it('migrates an existing published studio-photo relation without touching its private original', async () => {
+    const databaseFile = temporaryDatabase()
+    await migrateDatabase(databaseFile, {
+      migrationsFolder: migrationsBeforeT23(databaseFile),
+    })
+    const legacy = openDatabase(databaseFile)
+    const privateKey = 'prod/original/t21/source.png'
+    try {
+      const now = Date.UTC(2026, 7, 2)
+      legacy.sqlite.prepare(`
+        INSERT INTO works (
+          id, slug, character_name, species, suit_type, purpose,
+          owner_display, publication_status, created_at, updated_at
+        ) VALUES (
+          't21-work', 't21-work', '旧作品', '犬科', 'full', 'showcase',
+          '不公开', 'published', ?, ?
+        )
+      `).run(now, now)
+      legacy.sqlite.prepare(`
+        INSERT INTO assets (
+          id, role, status, private_object_key, sha256, byte_size,
+          mime_type, width, height, created_at, updated_at
+        ) VALUES (
+          't21-photo', 'studio_photo', 'READY', ?, ?, 1024,
+          'image/png', 3200, 2400, ?, ?
+        )
+      `).run(privateKey, 'a'.repeat(64), now, now)
+      legacy.sqlite.prepare(`
+        INSERT INTO work_assets (
+          work_id, asset_id, role, alt_text, position, is_primary
+        ) VALUES (
+          't21-work', 't21-photo', 'studio_photo', '旧作品出厂照', 0, 1
+        )
+      `).run()
+    }
+    finally {
+      legacy.sqlite.close()
+    }
+
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
+      applied: 1,
+    })
+    const upgraded = openDatabase(databaseFile)
+    try {
+      expect(upgraded.sqlite.prepare(`
+        SELECT
+          work.publication_status AS publicationStatus,
+          relation.position,
+          relation.is_primary AS "primary",
+          asset.private_object_key AS privateObjectKey
+        FROM works AS work
+        JOIN work_assets AS relation ON relation.work_id = work.id
+        JOIN assets AS asset ON asset.id = relation.asset_id
+        WHERE work.id = 't21-work'
+      `).get()).toEqual({
+        publicationStatus: 'published',
+        position: 0,
+        primary: 1,
+        privateObjectKey: privateKey,
+      })
+      expect(upgraded.sqlite.pragma('foreign_key_check')).toEqual([])
     }
     finally {
       upgraded.sqlite.close()

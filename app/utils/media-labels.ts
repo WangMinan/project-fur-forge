@@ -53,8 +53,12 @@ export const WATERMARK_ANCHOR_LABELS: Record<WatermarkAnchor, string> = {
 }
 
 export const PUBLICATION_BLOCKER_LABELS: Record<PublicationBlocker, string> = {
-  ADOPTION_FLOW_NOT_READY: '领养作品发布流程尚未开放',
+  EVENT_DROP_NOT_READY: '展会掉落发布留到 T37',
   WORK_FIELDS_INVALID: '基础信息不完整，请检查必填字段',
+  DESIGN_SHEET_REQUIRED: '常规领养必须保存一张设定图',
+  DESIGN_SHEET_NOT_READY: '设定图尚未完成服务端校验',
+  DESIGN_SHEET_SOURCE_TOO_SMALL: '设定图尺寸不足以生成固定公开配方',
+  DESIGN_SHEET_ALT_REQUIRED: '设定图缺少图片说明（alt）',
   STUDIO_PHOTO_REQUIRED: '至少需要一张出厂照',
   PRIMARY_STUDIO_PHOTO_REQUIRED: '需要设置唯一一张主图',
   STUDIO_PHOTO_NOT_READY: '有出厂照尚未 READY',

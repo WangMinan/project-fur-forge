@@ -23,6 +23,7 @@ import {
 } from '../../server/utils/database'
 import {
   createManagedWork,
+  replaceManagedDesignSheet,
   replaceManagedStudioPhotos,
 } from '../../server/utils/work-management'
 import {
@@ -36,6 +37,7 @@ import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
 
 const USER_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const ASSET_ID = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+const DESIGN_ASSET_ID = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd'
 const NOW = Date.UTC(2026, 7, 1)
 
 let directory: string
@@ -122,6 +124,85 @@ function createWorkWithPhoto(width = 3200, height = 2400) {
     }],
     NOW + 2_000,
   )
+}
+
+function createRegularAdoption() {
+  return createManagedWork(sqlite, {
+    slug: 'regular-adoption',
+    characterName: '待领养小狗',
+    species: '犬科',
+    suitType: 'partial',
+    purpose: 'adoption',
+    adoptionMethod: 'regular',
+    businessStatus: 'available',
+    ownerDisplay: '不公开',
+    ownerContact: 'private-adoption@example.test',
+    priceCnyMinor: 100,
+    featureTags: ['轻量'],
+    sortOrder: 0,
+    featured: false,
+  }, NOW)
+}
+
+function attachDesignSheet(
+  work: ReturnType<typeof createRegularAdoption>,
+  width = 3200,
+  height = 1800,
+) {
+  const content = createSyntheticWatermarkPng()
+  const key = `test/t18-fixture/original/${DESIGN_ASSET_ID}/source.png`
+  sqlite.prepare(`
+    INSERT INTO assets (
+      id, role, status, private_object_key, sha256, byte_size,
+      mime_type, width, height, created_at, updated_at
+    ) VALUES (?, 'design_sheet', 'READY', ?, ?, ?,
+              'image/png', ?, ?, ?, ?)
+  `).run(
+    DESIGN_ASSET_ID,
+    key,
+    sha256(content),
+    content.length,
+    width,
+    height,
+    NOW,
+    NOW,
+  )
+  sqlite.prepare(`
+    INSERT INTO upload_sessions (
+      id, owner_type, owner_id, owner_version, media_role,
+      private_object_key, expected_content_type, expected_bytes,
+      expected_content_md5, expected_sha256, expected_width,
+      expected_height, created_by, status, asset_id, version,
+      created_at, expires_at, updated_at
+    ) VALUES (?, 'work', ?, ?, 'design_sheet', ?, 'image/png', ?,
+              ?, ?, ?, ?, ?, 'COMPLETED', ?, 3, ?, ?, ?)
+  `).run(
+    randomUUID(),
+    work.id,
+    work.version,
+    key,
+    content.length,
+    createHash('md5').update(content).digest('base64'),
+    sha256(content),
+    width,
+    height,
+    USER_ID,
+    DESIGN_ASSET_ID,
+    NOW,
+    NOW + 300_000,
+    NOW + 1_000,
+  )
+  storage.seedPrivate(key, content, 'image/png', sha256(content), {
+    fileSize: content.length,
+    format: 'png',
+    height,
+    orientation: 1,
+    width,
+  })
+  return replaceManagedDesignSheet(sqlite, work.id, work.version, {
+    assetId: DESIGN_ASSET_ID,
+    alt: '待领养小狗完整设定图',
+  }, NOW + 2_000)
 }
 
 beforeEach(async () => {
@@ -403,17 +484,95 @@ describe('dual-bucket work publication operations', () => {
     expect(storage.deletedPublicKeys).toHaveLength(12)
   })
 
-  it('blocks the not-yet-authorized adoption publication path', async () => {
+  it('requires a complete design sheet before publishing a regular adoption', async () => {
+    const work = createRegularAdoption()
+    expect(checkWorkPublication(sqlite, work.id)).toMatchObject({
+      canPublish: false,
+      blockers: ['DESIGN_SHEET_REQUIRED'],
+      designSheetCount: 0,
+      studioPhotoCount: 0,
+    })
+
+    await expect(publishWork(
+      sqlite,
+      storage,
+      work.id,
+      work.version,
+      USER_ID,
+      NOW + 1_000,
+    )).rejects.toThrow(/Resolve publication blockers/u)
+    expect(sqlite.prepare(`
+      SELECT count(*) FROM publication_operations WHERE entity_id = ?
+    `).pluck().get(work.id)).toBe(0)
+
+    const ready = attachDesignSheet(work)
+    expect(checkWorkPublication(sqlite, work.id)).toMatchObject({
+      canPublish: true,
+      blockers: [],
+      designSheetCount: 1,
+      studioPhotoCount: 0,
+      requiredVariantCount: 12,
+      missingVariantCount: 12,
+    })
+    const published = await publishWork(
+      sqlite,
+      storage,
+      work.id,
+      ready.version,
+      USER_ID,
+      NOW + 3_000,
+    )
+    expect(published.work.publicationStatus).toBe('published')
+    expect(storage.processCalls).toHaveLength(12)
+    const variants = sqlite.prepare(`
+      SELECT usage, watermark_profile AS watermarkProfile
+      FROM asset_variants
+      WHERE asset_id = ? AND storage_scope = 'PUBLIC'
+    `).all(DESIGN_ASSET_ID) as Array<{
+      usage: string
+      watermarkProfile: string
+    }>
+    expect(new Set(variants.map(variant => variant.usage)))
+      .toEqual(new Set(['design-sheet', 'work-card']))
+    expect(variants.every(variant => (
+      variant.watermarkProfile === 'brand-centered-v2'
+    ))).toBe(true)
+  })
+
+  it('returns a stable blocker before writing an operation for a small design sheet', async () => {
+    const work = createRegularAdoption()
+    const ready = attachDesignSheet(work, 959, 600)
+    expect(checkWorkPublication(sqlite, work.id)).toMatchObject({
+      canPublish: false,
+      blockers: ['DESIGN_SHEET_SOURCE_TOO_SMALL'],
+    })
+    await expect(publishWork(
+      sqlite,
+      storage,
+      work.id,
+      ready.version,
+      USER_ID,
+      NOW + 3_000,
+    )).rejects.toThrow(/Resolve publication blockers/u)
+    expect(storage.processCalls).toHaveLength(0)
+    expect(sqlite.prepare(`
+      SELECT count(*) FROM publication_operations WHERE entity_id = ?
+    `).pluck().get(work.id)).toBe(0)
+  })
+
+  it('keeps event-drop adoption publication behind the T37 boundary', async () => {
     const id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
     sqlite.prepare(`
       INSERT INTO works (
         id, slug, character_name, species, suit_type, purpose,
+        adoption_method, business_status, current_event_name,
         owner_display, publication_status, created_at, updated_at
-      ) VALUES (?, 'adoption-draft', '待领养', '犬科', 'partial',
-                'adoption', '不公开', 'draft', ?, ?)
+      ) VALUES (?, 'event-adoption-draft', '展会待领养', '犬科', 'partial',
+                'adoption', 'event_drop', 'event_sale', '未来展会',
+                '不公开', 'draft', ?, ?)
     `).run(id, NOW, NOW)
     expect(checkWorkPublication(sqlite, id).blockers).toContain(
-      'ADOPTION_FLOW_NOT_READY',
+      'EVENT_DROP_NOT_READY',
     )
 
     await expect(publishWork(

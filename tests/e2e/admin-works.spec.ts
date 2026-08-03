@@ -159,8 +159,8 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
     await page.reload()
     await expect(page.getByLabel(/领养价格/)).toHaveValue('8800.50')
     await expect(page.getByLabel('业务状态')).toHaveValue('available')
-    // 领养作品的发布仍由 T25 负责，这里必须看到明确阻断而不是假成功。
-    await expect(page.getByTestId('publication-panel')).toContainText('领养作品发布流程尚未开放')
+    // T25 后端已开放 regular adoption；缺少 T23 设定图时必须明确阻断。
+    await expect(page.getByTestId('publication-panel')).toContainText('常规领养必须保存一张设定图')
   })
 
   test('非法价格在客户端阻断并给出关联错误', async ({ page }) => {

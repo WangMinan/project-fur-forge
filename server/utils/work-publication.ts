@@ -12,8 +12,12 @@ import type {
 import type { MediaStorage } from './media-storage'
 import {
   generatePublicVariants,
+  publicRecipeWidths,
+  publicVariantCountForUsages,
   sourceSupportsPublicUsages,
+  workAssetPublicUsages,
 } from './media-recipe'
+import type { PublicMediaUsage } from './media-recipe'
 import { ServiceError } from './service-error'
 import { activeWatermarkProfileId } from './watermark-branding'
 import { requireWatermarkProfile } from './watermark-profile'
@@ -39,6 +43,9 @@ interface WorkState {
   characterName: string
   id: string
   ownerDisplay: string
+  currentEventName: string | null
+  priceAmountMinor: number | null
+  priceCurrency: string | null
   publicationStatus: 'draft' | 'published' | 'unpublished'
   purpose: 'commission' | 'adoption' | 'showcase'
   slug: string
@@ -47,16 +54,22 @@ interface WorkState {
   version: number
 }
 
-interface PublicationPhoto {
+interface PublicationAsset {
   alt: string | null
   assetId: string
   cropHeight: number
   cropWidth: number
   height: number
   primary: number
+  role: 'design_sheet' | 'studio_photo'
   status: string
   watermarkAnchor: string
   width: number
+}
+
+interface PublicationTarget {
+  asset: PublicationAsset
+  usages: PublicMediaUsage[]
 }
 
 const selectOperation = `
@@ -75,7 +88,11 @@ const selectWork = `
   SELECT
     id, version, slug, character_name AS characterName, species,
     suit_type AS suitType, purpose, adoption_method AS adoptionMethod,
-    business_status AS businessStatus, owner_display AS ownerDisplay,
+    business_status AS businessStatus,
+    current_event_name AS currentEventName,
+    price_amount_minor AS priceAmountMinor,
+    price_currency AS priceCurrency,
+    owner_display AS ownerDisplay,
     publication_status AS publicationStatus
   FROM works
 `
@@ -144,36 +161,63 @@ function workState(row: WorkState) {
   }
 }
 
-function photos(sqlite: Database.Database, workId: string) {
+function mediaAssets(sqlite: Database.Database, workId: string) {
   return sqlite.prepare(`
     SELECT
       relation.asset_id AS assetId,
       relation.alt_text AS alt,
       relation.is_primary AS "primary",
+      relation.role,
       relation.watermark_anchor AS watermarkAnchor,
       relation.crop_width AS cropWidth,
       relation.crop_height AS cropHeight,
       asset.status, asset.width, asset.height
     FROM work_assets AS relation
     JOIN assets AS asset ON asset.id = relation.asset_id
-    WHERE relation.work_id = ? AND relation.role = 'studio_photo'
-    ORDER BY relation.position
-  `).all(workId) as PublicationPhoto[]
+    WHERE relation.work_id = ?
+      AND relation.role IN ('design_sheet', 'studio_photo')
+    ORDER BY relation.role, relation.position
+  `).all(workId) as PublicationAsset[]
+}
+
+function publicationTargets(
+  sqlite: Database.Database,
+  workId: string,
+) {
+  const assets = mediaAssets(sqlite, workId)
+  const hasPrimaryStudioPhoto = assets.some(asset => (
+    asset.role === 'studio_photo' && asset.primary === 1
+  ))
+  return assets.map((asset): PublicationTarget => ({
+    asset,
+    usages: workAssetPublicUsages(
+      asset.role,
+      asset.primary === 1,
+      hasPrimaryStudioPhoto,
+    ),
+  }))
+}
+
+function requiredVariantCount(targets: readonly PublicationTarget[]) {
+  return targets.reduce(
+    (count, target) => count + publicVariantCountForUsages(target.usages),
+    0,
+  )
 }
 
 function missingVariantCount(
   sqlite: Database.Database,
-  publicationPhotos: readonly PublicationPhoto[],
+  targets: readonly PublicationTarget[],
 ) {
   const profileId = activeWatermarkProfileId(sqlite)
   if (!profileId) {
-    return publicationPhotos.length * 12
+    return requiredVariantCount(targets)
   }
   const profile = requireWatermarkProfile(sqlite, profileId)
   const formats = sqlite.prepare(`
     SELECT format FROM asset_variants
     WHERE asset_id = ? AND storage_scope = 'PUBLIC' AND status = 'READY'
-      AND media_role = 'studio_photo' AND usage = ? AND width = ?
+      AND media_role = ? AND usage = ? AND width = ?
       AND recipe_version = 'recipe-v1'
       AND watermark_profile = 'brand-centered-v2'
       AND watermark_profile_id = ? AND watermark_config_digest = ?
@@ -183,14 +227,12 @@ function missingVariantCount(
       AND byte_size > 0
   `)
   let missing = 0
-  for (const photo of publicationPhotos) {
-    for (const [usage, widths] of [
-      ['work-card', [480, 768, 1200]],
-      ['detail', [960, 1600, 2400]],
-    ] as const) {
-      for (const width of widths) {
+  for (const target of targets) {
+    for (const usage of target.usages) {
+      for (const width of publicRecipeWidths(usage)) {
         const values = new Set(formats.pluck().all(
-          photo.assetId,
+          target.asset.assetId,
+          target.asset.role,
           usage,
           width,
           profile.id,
@@ -216,11 +258,14 @@ export function checkWorkPublication(
   workId: string,
 ): WorkPublicationCheckDto {
   const work = requireWork(sqlite, workId)
-  const publicationPhotos = photos(sqlite, workId)
+  const targets = publicationTargets(sqlite, workId)
+  const publicationPhotos = targets
+    .map(target => target.asset)
+    .filter(asset => asset.role === 'studio_photo')
+  const designSheets = targets
+    .map(target => target.asset)
+    .filter(asset => asset.role === 'design_sheet')
   const blockers: PublicationBlocker[] = []
-  if (work.purpose === 'adoption') {
-    blockers.push('ADOPTION_FLOW_NOT_READY')
-  }
   if (
     work.slug.trim() === ''
     || work.characterName.trim() === ''
@@ -230,18 +275,59 @@ export function checkWorkPublication(
   ) {
     blockers.push('WORK_FIELDS_INVALID')
   }
-  if (publicationPhotos.length === 0) {
+  if (work.purpose === 'adoption') {
+    if (work.adoptionMethod === 'event_drop') {
+      blockers.push('EVENT_DROP_NOT_READY')
+    }
+    else if (
+      work.adoptionMethod !== 'regular'
+      || ![
+        'preparing',
+        'available',
+        'scheduled',
+        'in_production',
+        'delivered',
+      ].includes(work.businessStatus ?? '')
+      || work.currentEventName !== null
+      || (
+        work.priceAmountMinor === null
+          ? work.priceCurrency !== null
+          : work.priceAmountMinor <= 0 || work.priceCurrency !== 'CNY'
+      )
+    ) {
+      blockers.push('WORK_FIELDS_INVALID')
+    }
+    if (work.adoptionMethod === 'regular' && designSheets.length === 0) {
+      blockers.push('DESIGN_SHEET_REQUIRED')
+    }
+    if (designSheets.some(sheet => sheet.status !== 'READY')) {
+      blockers.push('DESIGN_SHEET_NOT_READY')
+    }
+    if (targets.some(target => (
+      target.asset.role === 'design_sheet'
+      && !sourceSupportsPublicUsages(target.asset, target.usages)
+    ))) {
+      blockers.push('DESIGN_SHEET_SOURCE_TOO_SMALL')
+    }
+    if (designSheets.some(sheet => !sheet.alt?.trim())) {
+      blockers.push('DESIGN_SHEET_ALT_REQUIRED')
+    }
+  }
+  else if (publicationPhotos.length === 0) {
     blockers.push('STUDIO_PHOTO_REQUIRED')
   }
-  if (publicationPhotos.filter(photo => photo.primary === 1).length !== 1) {
+  if (
+    publicationPhotos.length > 0
+    && publicationPhotos.filter(photo => photo.primary === 1).length !== 1
+  ) {
     blockers.push('PRIMARY_STUDIO_PHOTO_REQUIRED')
   }
   if (publicationPhotos.some(photo => photo.status !== 'READY')) {
     blockers.push('STUDIO_PHOTO_NOT_READY')
   }
-  if (publicationPhotos.some(photo => !sourceSupportsPublicUsages(
-    photo,
-    ['work-card', 'detail'],
+  if (targets.some(target => (
+    target.asset.role === 'studio_photo'
+    && !sourceSupportsPublicUsages(target.asset, target.usages)
   ))) {
     blockers.push('STUDIO_PHOTO_SOURCE_TOO_SMALL')
   }
@@ -256,8 +342,10 @@ export function checkWorkPublication(
     version: work.version,
     canPublish: blockers.length === 0,
     blockers,
+    designSheetCount: designSheets.length,
     studioPhotoCount: publicationPhotos.length,
-    missingVariantCount: missingVariantCount(sqlite, publicationPhotos),
+    requiredVariantCount: requiredVariantCount(targets),
+    missingVariantCount: missingVariantCount(sqlite, targets),
   }
 }
 
@@ -516,13 +604,13 @@ export async function publishWork(
     stage = 'APPLYING_WATERMARK'
     failureCode = 'PUBLIC_MEDIA_GENERATION_FAILED'
     updateOperation(sqlite, operation.id, 'APPLYING_WATERMARK', [], now)
-    for (const photo of photos(sqlite, workId)) {
+    for (const target of publicationTargets(sqlite, workId)) {
       try {
         await generatePublicVariants(
           sqlite,
           storage,
-          photo.assetId,
-          ['work-card', 'detail'],
+          target.asset.assetId,
+          target.usages,
           now,
         )
       }
@@ -533,8 +621,8 @@ export async function publishWork(
         await generatePublicVariants(
           sqlite,
           storage,
-          photo.assetId,
-          ['work-card', 'detail'],
+          target.asset.assetId,
+          target.usages,
           now,
         )
       }

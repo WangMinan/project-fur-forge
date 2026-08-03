@@ -6,7 +6,7 @@ import { loginAsAdmin } from './helpers/auth'
 import { capture } from './helpers/screenshots'
 
 const SCREENSHOT_DIR =
-  'agent_docs/需求1-兽装工作室主页/implementation/notes/t19-t20/screenshots'
+  'agent_docs/需求1-兽装工作室主页/implementation/notes/t19-t22/t19-t20/screenshots'
 
 /**
  * T19/T20 公开作品页：真实已发布投影（种子经控制面直写 SQLite + fake OSS），
