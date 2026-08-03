@@ -496,4 +496,240 @@ describe('authentication API', () => {
     expect(stale.status).toBe(409)
     expectPrivateResponseHeaders(stale)
   }, 30_000)
+
+  it('secures versioned site content and refreshes safe public projections', async () => {
+    const privateContact = 'owner-private-site-content@example.test'
+    const database = openDatabase(databaseFile)
+    try {
+      database.sqlite.transaction(() => {
+        database.sqlite.prepare('DELETE FROM business_statuses').run()
+        database.sqlite.prepare(`
+          UPDATE site_content
+          SET contact_douyin = 'to3114559925', commission_intro = NULL,
+              commission_estimate_note = NULL, commission_email_action = NULL,
+              commission_faq_json = NULL, about_studio_facts = NULL,
+              about_making_scope = NULL, basic_terms = NULL,
+              contact_anti_scam = NULL, version = 1
+          WHERE id = 'site'
+        `).run()
+        database.sqlite.prepare(`
+          INSERT INTO works (
+            id, slug, character_name, species, suit_type, purpose,
+            owner_display, owner_contact, publication_status,
+            created_at, updated_at
+          ) VALUES (?, ?, '隐私守卫', '犬科', 'full', 'showcase',
+            '不公开', ?, 'draft', ?, ?)
+        `).run(
+          crypto.randomUUID(),
+          `site-content-private-${crypto.randomUUID()}`,
+          privateContact,
+          Date.now(),
+          Date.now(),
+        )
+      })()
+    }
+    finally {
+      database.sqlite.close()
+    }
+
+    const authenticated = await login()
+    const headers = {
+      'content-type': 'application/json',
+      cookie: authenticated.cookie,
+      origin: adminBaseUrl,
+      'x-csrf-token': authenticated.body.data.csrfToken as string,
+    }
+    const adminContentUrl = `${adminBaseUrl}/api/admin/v1/site/home/content`
+    const content = await fetch(adminContentUrl, {
+      headers: { cookie: authenticated.cookie },
+    })
+    expect(content.status).toBe(200)
+    expectPrivateResponseHeaders(content)
+    const initial = await content.json()
+    expect(initial).toMatchObject({
+      data: {
+        version: 1,
+        statuses: { commission: null, adoption: null },
+        commission: {
+          intro: null,
+          estimateNote: null,
+          emailAction: null,
+          faqs: [],
+        },
+        about: {
+          studioFacts: null,
+          makingScope: null,
+          basicTerms: null,
+        },
+        contact: {
+          email: '3114559925@qq.com',
+          qq: '3114559925',
+          douyin: 'to3114559925',
+          antiScam: null,
+        },
+      },
+    })
+
+    const publicHostAdmin = await fetch(
+      `${publicBaseUrl}/api/admin/v1/site/home/content`,
+    )
+    const adminHostPublic = await fetch(
+      `${adminBaseUrl}/api/public/v1/site-content`,
+    )
+    expect(publicHostAdmin.status).toBe(404)
+    expect(adminHostPublic.status).toBe(404)
+
+    const payload = {
+      commission: {
+        intro: '委托说明由工作室确认后填写。',
+        estimateNote: '每件作品通过邮件人工估价。',
+        emailAction: '发送邮件或复制业务邮箱。',
+        faqs: [{ question: '如何估价？', answer: '通过业务邮箱逐件沟通。' }],
+      },
+      about: {
+        studioFacts: null,
+        makingScope: null,
+        basicTerms: null,
+      },
+      contact: {
+        douyin: 'to3114559925',
+        antiScam: null,
+      },
+    }
+    const missingCsrf = await fetch(adminContentUrl, {
+      method: 'PUT',
+      headers: {
+        'content-type': 'application/json',
+        cookie: authenticated.cookie,
+        origin: adminBaseUrl,
+      },
+      body: JSON.stringify({ expectedVersion: 1, payload }),
+    })
+    const wrongOrigin = await fetch(adminContentUrl, {
+      method: 'PUT',
+      headers: { ...headers, origin: publicBaseUrl },
+      body: JSON.stringify({ expectedVersion: 1, payload }),
+    })
+    expect(missingCsrf.status).toBe(403)
+    expect(wrongOrigin.status).toBe(403)
+    expectPrivateResponseHeaders(missingCsrf)
+    expectPrivateResponseHeaders(wrongOrigin)
+
+    const invalidChannels = await fetch(
+      `${adminBaseUrl}/api/admin/v1/site/home/settings`,
+      {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          expectedVersion: 1,
+          payload: {
+            tagline: '不只做小狗毛',
+            contactEmail: 'invalid',
+            contactQq: '0123',
+            autoRotate: false,
+            autoRotateIntervalMs: 6000,
+          },
+        }),
+      },
+    )
+    const invalidContent = await fetch(adminContentUrl, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({
+        expectedVersion: 1,
+        payload: {
+          ...payload,
+          commission: { ...payload.commission, intro: '<script>x</script>' },
+          contact: { ...payload.contact, douyin: '@bad handle' },
+        },
+      }),
+    })
+    expect(invalidChannels.status).toBe(400)
+    expect(invalidContent.status).toBe(400)
+
+    const updatedContent = await fetch(adminContentUrl, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ expectedVersion: 1, payload }),
+    })
+    expect(updatedContent.status).toBe(200)
+    expectPrivateResponseHeaders(updatedContent)
+    await expect(updatedContent.json()).resolves.toMatchObject({
+      data: { version: 2, commission: payload.commission },
+    })
+
+    const updateStatus = (
+      kind: 'commission' | 'adoption',
+      expectedVersion: number,
+      tone: 'open' | 'limited' | 'closed',
+      label: string,
+    ) => fetch(
+      `${adminBaseUrl}/api/admin/v1/site/home/business-statuses/${kind}`,
+      {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          expectedVersion,
+          payload: { tone, label, detail: `${label}的公开说明。` },
+        }),
+      },
+    )
+    expect((await updateStatus('commission', 0, 'limited', '委托有限开放')).status)
+      .toBe(200)
+    const adoption = await updateStatus('adoption', 0, 'open', '领养开放')
+    expect(adoption.status).toBe(200)
+    await expect(adoption.json()).resolves.toMatchObject({
+      data: {
+        version: 2,
+        statuses: {
+          commission: { version: 1, tone: 'limited' },
+          adoption: { version: 1, tone: 'open' },
+        },
+      },
+    })
+    expect((await updateStatus('commission', 0, 'closed', '陈旧更新')).status)
+      .toBe(409)
+
+    const firstPublic = await fetch(`${publicBaseUrl}/api/public/v1/site-content`)
+    expect(firstPublic.status).toBe(200)
+    expect(firstPublic.headers.get('cache-control')).toBe('no-store')
+    const firstProjection = await firstPublic.json()
+    expect(firstProjection).toMatchObject({
+      data: {
+        statuses: {
+          commission: { tone: 'limited', href: '/commission' },
+          adoption: { tone: 'open', href: '/adoptions' },
+        },
+        commission: {
+          ...payload.commission,
+          email: '3114559925@qq.com',
+          termsHref: '/about#terms',
+        },
+        about: {
+          studioFacts: null,
+          makingScope: null,
+          basicTerms: null,
+          officialChannels: {
+            email: '3114559925@qq.com',
+            qq: '3114559925',
+            douyin: 'to3114559925',
+          },
+        },
+      },
+    })
+    expect(JSON.stringify(firstProjection)).not.toContain('version')
+    expect(JSON.stringify(firstProjection)).not.toContain(privateContact)
+
+    expect((await updateStatus('commission', 1, 'closed', '委托关闭')).status)
+      .toBe(200)
+    const refreshed = await fetch(`${publicBaseUrl}/api/public/v1/site-content`)
+    await expect(refreshed.json()).resolves.toMatchObject({
+      data: {
+        statuses: {
+          commission: { tone: 'closed', label: '委托关闭' },
+          adoption: { tone: 'open', label: '领养开放' },
+        },
+      },
+    })
+  }, 30_000)
 })
