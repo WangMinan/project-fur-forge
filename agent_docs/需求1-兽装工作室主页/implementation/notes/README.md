@@ -1,83 +1,94 @@
 # 实施备注索引
 
 > **角色**：记录阶段 4 的执行事实、浏览器操作和验证证据。正式契约由 foundation、SPEC/增量、PLAN/增量、`.design`、TASKS 和 STATE 决定，本目录不作为需求来源。
-> **整理原则**：既有记录和截图路径已经被多个文档引用，因此不为“目录好看”批量移动或改名；本索引把它们按当前、收口、历史和截图分组。后续新记录使用 `Txx-<意图>-YYYY-MM-DD.md`，截图放入 `notes/txx-<意图>/screenshots/`。
+> **整理原则**：记录按任务阶段归入稳定子目录，移动时同步修正全仓引用并执行链接检查；历史内容不因目录整理而改写。后续新记录使用 `Txx-<意图>-YYYY-MM-DD.md`，截图放在对应任务组内的证据子目录。
 
 ## 1. 当前执行入口
 
-- [`T22-BACKEND-2026-08-03.md`](./T22-BACKEND-2026-08-03.md)：T22 差异审计、三用途 Schema/API、无迁移决定、历史展会兼容、公开精选与前端交接；状态为后端完成，等待前端/Review/用户验收。
-- [`T22-FRONTEND-2026-08-03.md`](./T22-FRONTEND-2026-08-03.md)：T22 管理端三用途表单、领养基础字段、价格、排序/精选、属性错误、历史展会只读转换与公开端同步；含接口 blocker（已发布作品不可改排序/精选、领养仍不可发布）和尚未执行完的浏览器步骤。T22 仍未勾选。
 - [`P0-C-STAGE-READINESS-2026-08-02.md`](./P0-C-STAGE-READINESS-2026-08-02.md)：阶段 C 启动条件、T22 边界、四个执行波次、main 直推纪律、自动化与 GPT-5.6 Sol 浏览器/视觉 Review 方法。
 - [`../EXECUTION_ROUTING.md`](../EXECUTION_ROUTING.md)：前端模型池、GPT-5.6 Sol 后端/Review、串行交接和测试策略。
-- [`../TASKS.md`](../TASKS.md)：唯一可勾选任务清单；T22 仍为 `[ ]`，当前等待前端接线。
+- [`../TASKS.md`](../TASKS.md)：唯一可勾选任务清单；T22 已完成，当前唯一下一任务为 T23。
 - [`../../materials/MATERIAL-MANIFEST.md`](../../materials/MATERIAL-MANIFEST.md)：Logo、出厂照、横版设定图、返图与首页候选的正式输入清单；EXT-01 已完成。
 
 当前新任务只在本节增加一个“启动/交接/收口”主记录，不再为同一小修补创建多个相互重叠的状态文件。需要保留详细失败证据时，在主记录内分节或放入对应截图/trace 子目录。
 
+当前目录分组：
+
+- `t01-t09/`：应用、配置、生产视觉方向和 T09 工程收口；
+- `t10-t13/`：OSS 预检、SQLite、P0 Schema、认证和 S2 Review；
+- `t14-t18/`：上传、媒体核验、配方、作品 CRUD、发布与管理 UI；
+- `gate07-watermark/`：可配置居中水印的文档、工程、UI、收口与截图；
+- `t19-t22/`：公开站、首页、T21 门禁、T22 完整字段与独立 Review；
+- 根目录只保留本索引和仍作为阶段 C 当前基线的 `P0-C-STAGE-READINESS-2026-08-02.md`。
+
 ## 2. 最近收口记录
 
-### T19–T21 与首页/公开站
+### T19–T22 与首页/公开站
 
-- [`T19-T20-ENGINEERING-2026-08-01.md`](./T19-T20-ENGINEERING-2026-08-01.md)：公开读取、首页发布、缓存与安全契约。
-- [`T19-T20-UI-HANDOFF.md`](./T19-T20-UI-HANDOFF.md)：公开页与首页管理的工程交接。
-- [`T19-T20-UI-2026-08-01.md`](./T19-T20-UI-2026-08-01.md)：前端实现和浏览器证据。
-- [`T19-T20-CLOSURE-2026-08-01.md`](./T19-T20-CLOSURE-2026-08-01.md)：最终工程审查、完整门禁、真实 OSS、空库迁移、泄漏扫描和精确清理。
-- [`T21-REVIEW-2026-08-01.md`](./T21-REVIEW-2026-08-01.md)：首次独立审查 NOT PASS 与 findings 修复历史。
-- [`T21-REVIEW-PREP.md`](./T21-REVIEW-PREP.md)：首次复审准备清单；T21 收口后仅作历史证据，不再作为当前执行路由。
-- [`T21-MANUAL-UI-FIX-2026-08-02.md`](./T21-MANUAL-UI-FIX-2026-08-02.md)：用户人工验收回归、完整门禁和最终确认。
+- [`T19-T20-ENGINEERING-2026-08-01.md`](./t19-t22/T19-T20-ENGINEERING-2026-08-01.md)：公开读取、首页发布、缓存与安全契约。
+- [`T19-T20-UI-HANDOFF.md`](./t19-t22/T19-T20-UI-HANDOFF.md)：公开页与首页管理的工程交接。
+- [`T19-T20-UI-2026-08-01.md`](./t19-t22/T19-T20-UI-2026-08-01.md)：前端实现和浏览器证据。
+- [`T19-T20-CLOSURE-2026-08-01.md`](./t19-t22/T19-T20-CLOSURE-2026-08-01.md)：最终工程审查、完整门禁、真实 OSS、空库迁移、泄漏扫描和精确清理。
+- [`T21-REVIEW-2026-08-01.md`](./t19-t22/T21-REVIEW-2026-08-01.md)：首次独立审查 NOT PASS 与 findings 修复历史。
+- [`T21-REVIEW-PREP.md`](./t19-t22/T21-REVIEW-PREP.md)：首次复审准备清单；T21 收口后仅作历史证据，不再作为当前执行路由。
+- [`T21-MANUAL-UI-FIX-2026-08-02.md`](./t19-t22/T21-MANUAL-UI-FIX-2026-08-02.md)：用户人工验收回归、完整门禁和最终确认。
+- [`T22-BACKEND-2026-08-03.md`](./t19-t22/T22-BACKEND-2026-08-03.md)：三用途 Schema/API、迁移决定、历史展会兼容和公开精选交接。
+- [`T22-FRONTEND-2026-08-03.md`](./t19-t22/T22-FRONTEND-2026-08-03.md)：三用途管理 UI、价格、排序/精选、用途切换和公开端接线的实施阶段记录。
+- [`T22-INDEPENDENT-REVIEW-2026-08-03.md`](./t19-t22/T22-INDEPENDENT-REVIEW-2026-08-03.md)：初始 findings、真实浏览器/三视口/泄漏/恢复证据、`PASS WITH FOLLOW-UP` 与用户最终确认。
 
 ### GATE-07 可配置居中水印
 
-- [`DOCS-WATERMARK-CENTERED-V2-2026-08-01.md`](./DOCS-WATERMARK-CENTERED-V2-2026-08-01.md)：代码/文档 Review、阿里云参数、产品决定和任务映射。
-- [`GATE07-WATERMARK-ENGINEERING-2026-08-01.md`](./GATE07-WATERMARK-ENGINEERING-2026-08-01.md)：迁移、种子、API、真实 OSS、原子切换、清理和工程验证。
-- [`GATE07-UI-HANDOFF.md`](./GATE07-UI-HANDOFF.md)：管理 UI 工程交接。
-- [`GATE07-WATERMARK-UI-2026-08-01.md`](./GATE07-WATERMARK-UI-2026-08-01.md)：管理页面、三视口和浏览器 E2E。
-- [`GATE07-CLOSURE-2026-08-02.md`](./GATE07-CLOSURE-2026-08-02.md)：联调修复、全站应用进度、失败恢复、质量规则和用户验收。
+- [`DOCS-WATERMARK-CENTERED-V2-2026-08-01.md`](./gate07-watermark/DOCS-WATERMARK-CENTERED-V2-2026-08-01.md)：代码/文档 Review、阿里云参数、产品决定和任务映射。
+- [`GATE07-WATERMARK-ENGINEERING-2026-08-01.md`](./gate07-watermark/GATE07-WATERMARK-ENGINEERING-2026-08-01.md)：迁移、种子、API、真实 OSS、原子切换、清理和工程验证。
+- [`GATE07-UI-HANDOFF.md`](./gate07-watermark/GATE07-UI-HANDOFF.md)：管理 UI 工程交接。
+- [`GATE07-WATERMARK-UI-2026-08-01.md`](./gate07-watermark/GATE07-WATERMARK-UI-2026-08-01.md)：管理页面、三视口和浏览器 E2E。
+- [`GATE07-CLOSURE-2026-08-02.md`](./gate07-watermark/GATE07-CLOSURE-2026-08-02.md)：联调修复、全站应用进度、失败恢复、质量规则和用户验收。
 
 ## 3. 已完成工程记录
 
 ### T01–T09 应用与视觉底座
 
-- [`T01-2026-07-28.md`](./T01-2026-07-28.md)：Nuxt 双访问面最小切片。
-- [`T02-T03-2026-07-29.md`](./T02-T03-2026-07-29.md)：配置、Host/日志和共享契约初版。
-- [`T02-ORIGIN-ENV-CLOSURE-2026-07-31.md`](./T02-ORIGIN-ENV-CLOSURE-2026-07-31.md)：非测试 origin 与配置硬编码收口。
-- [`T04-T05-2026-07-29.md`](./T04-T05-2026-07-29.md)：公开设计系统和首页精选方案。
-- [`T06-T07-2026-07-29.md`](./T06-T07-2026-07-29.md)：作品页面和管理工作台视觉样张。
-- [`t06-t07/T08-REVIEW-PREP.md`](./t06-t07/T08-REVIEW-PREP.md)：T08 用户视觉门禁。
-- [`T09-ENGINEERING-CORE-2026-07-30.md`](./T09-ENGINEERING-CORE-2026-07-30.md)：T09 工程契约修正。
-- [`T09-UI-2026-07-30.md`](./T09-UI-2026-07-30.md)：T09 UI 与三视口证据。
-- [`T09-CLOSURE-2026-07-31.md`](./T09-CLOSURE-2026-07-31.md)：T09 最终收口。
+- [`T01-2026-07-28.md`](./t01-t09/T01-2026-07-28.md)：Nuxt 双访问面最小切片。
+- [`T02-T03-2026-07-29.md`](./t01-t09/T02-T03-2026-07-29.md)：配置、Host/日志和共享契约初版。
+- [`T02-ORIGIN-ENV-CLOSURE-2026-07-31.md`](./t01-t09/T02-ORIGIN-ENV-CLOSURE-2026-07-31.md)：非测试 origin 与配置硬编码收口。
+- [`T04-T05-2026-07-29.md`](./t01-t09/T04-T05-2026-07-29.md)：公开设计系统和首页精选方案。
+- [`T06-T07-2026-07-29.md`](./t01-t09/T06-T07-2026-07-29.md)：作品页面和管理工作台视觉样张。
+- [`t06-t07/T08-REVIEW-PREP.md`](./t01-t09/t06-t07/T08-REVIEW-PREP.md)：T08 用户视觉门禁。
+- [`T09-ENGINEERING-CORE-2026-07-30.md`](./t01-t09/T09-ENGINEERING-CORE-2026-07-30.md)：T09 工程契约修正。
+- [`T09-UI-2026-07-30.md`](./t01-t09/T09-UI-2026-07-30.md)：T09 UI 与三视口证据。
+- [`T09-CLOSURE-2026-07-31.md`](./t01-t09/T09-CLOSURE-2026-07-31.md)：T09 最终收口。
 
 ### T10–T13 媒体、数据与认证底座
 
-- [`T10-OSS-PREFLIGHT-2026-07-31.md`](./T10-OSS-PREFLIGHT-2026-07-31.md)：双 Bucket、30 MB、FFmpeg、OSS 水印和跨桶实测。
-- [`T11-SQLITE-2026-07-31.md`](./T11-SQLITE-2026-07-31.md)：SQLite/Drizzle 和备份底座。
-- [`T12-P0-SCHEMA-2026-07-31.md`](./T12-P0-SCHEMA-2026-07-31.md)：P0 Schema、媒体角色和投影。
-- [`T13-AUTH-2026-07-31.md`](./T13-AUTH-2026-07-31.md)：唯一管理员认证工程。
-- [`S2-REVIEW-CLOSURE-2026-07-31.md`](./S2-REVIEW-CLOSURE-2026-07-31.md)：阶段 2 工程 Review 收口。
-- [`T13-AUTH-UI-2026-07-31.md`](./T13-AUTH-UI-2026-07-31.md)：认证前端和 GATE-06。
+- [`T10-OSS-PREFLIGHT-2026-07-31.md`](./t10-t13/T10-OSS-PREFLIGHT-2026-07-31.md)：双 Bucket、30 MB、FFmpeg、OSS 水印和跨桶实测。
+- [`T11-SQLITE-2026-07-31.md`](./t10-t13/T11-SQLITE-2026-07-31.md)：SQLite/Drizzle 和备份底座。
+- [`T12-P0-SCHEMA-2026-07-31.md`](./t10-t13/T12-P0-SCHEMA-2026-07-31.md)：P0 Schema、媒体角色和投影。
+- [`T13-AUTH-2026-07-31.md`](./t10-t13/T13-AUTH-2026-07-31.md)：唯一管理员认证工程。
+- [`S2-REVIEW-CLOSURE-2026-07-31.md`](./t10-t13/S2-REVIEW-CLOSURE-2026-07-31.md)：阶段 2 工程 Review 收口。
+- [`T13-AUTH-UI-2026-07-31.md`](./t10-t13/T13-AUTH-UI-2026-07-31.md)：认证前端和 GATE-06。
 
 ### T14–T18 第一作品写链
 
-- [`T14-UPLOAD-ENGINEERING-2026-07-31.md`](./T14-UPLOAD-ENGINEERING-2026-07-31.md)：条件直传。
-- [`T15-MEDIA-VALIDATION-2026-07-31.md`](./T15-MEDIA-VALIDATION-2026-07-31.md)：媒体核验和私有预处理源。
-- [`T16-RECIPE-WATERMARK-2026-07-31.md`](./T16-RECIPE-WATERMARK-2026-07-31.md)：`recipe-v1` 与历史 `brand-standard-v1`。
-- [`T17-WORK-CRUD-ENGINEERING-2026-07-31.md`](./T17-WORK-CRUD-ENGINEERING-2026-07-31.md)：最小非领养作品 CRUD。
-- [`T18-PUBLICATION-ENGINEERING-2026-07-31.md`](./T18-PUBLICATION-ENGINEERING-2026-07-31.md)：发布/下架和补偿。
-- [`T14-T18-UI-HANDOFF.md`](./T14-T18-UI-HANDOFF.md)：管理端接线交接。
-- [`t14-t18-ui/T14-T18-UI-REPAIR-2026-08-01.md`](./t14-t18-ui/T14-T18-UI-REPAIR-2026-08-01.md)：UI 修复和用户联合验收。
+- [`T14-UPLOAD-ENGINEERING-2026-07-31.md`](./t14-t18/T14-UPLOAD-ENGINEERING-2026-07-31.md)：条件直传。
+- [`T15-MEDIA-VALIDATION-2026-07-31.md`](./t14-t18/T15-MEDIA-VALIDATION-2026-07-31.md)：媒体核验和私有预处理源。
+- [`T16-RECIPE-WATERMARK-2026-07-31.md`](./t14-t18/T16-RECIPE-WATERMARK-2026-07-31.md)：`recipe-v1` 与历史 `brand-standard-v1`。
+- [`T17-WORK-CRUD-ENGINEERING-2026-07-31.md`](./t14-t18/T17-WORK-CRUD-ENGINEERING-2026-07-31.md)：最小非领养作品 CRUD。
+- [`T18-PUBLICATION-ENGINEERING-2026-07-31.md`](./t14-t18/T18-PUBLICATION-ENGINEERING-2026-07-31.md)：发布/下架和补偿。
+- [`T14-T18-UI-HANDOFF.md`](./t14-t18/T14-T18-UI-HANDOFF.md)：管理端接线交接。
+- [`t14-t18-ui/T14-T18-UI-REPAIR-2026-08-01.md`](./t14-t18/t14-t18-ui/T14-T18-UI-REPAIR-2026-08-01.md)：UI 修复和用户联合验收。
 
 ## 4. 截图与二进制证据目录
 
-以下目录保留原路径，不在当前整理中迁移：
+截图与二进制证据跟随所属任务组：
 
-- `t06-t07/screenshots/`：T06–T08 生产视觉样张；
-- `t09-ui/screenshots/`：T09 三视口；
-- `t14-t18-ui/screenshots/`：作品管理、上传、发布/下架和失败状态；
+- `t01-t09/t04-t05/screenshots/`、`t01-t09/t06-t07/screenshots/`、`t01-t09/t09-ui/screenshots/`：T04–T09 生产视觉样张；
+- `t10-t13/t13-auth-ui/screenshots/`：认证与管理入口三视口；
+- `t14-t18/t14-t18-ui/screenshots/`：作品管理、上传、发布/下架和失败状态；
 - `gate07-watermark/screenshots/`：全局水印管理、预览、应用和三视口；
-- `t19-t20/screenshots/`：首页、作品列表、作品详情和首页管理。
+- `t19-t22/t19-t20/screenshots/`：首页、作品列表、作品详情和首页管理；
+- `t19-t22/t22-independent-review/screenshots/`：T22 管理端、公开首页与作品列表三视口。
 
-新任务的截图目录使用小写任务号，例如 `t22-complete-work-fields/screenshots/`。截图文件名包含页面、状态和视口，例如 `admin-work-adoption-conflict-1440x900.png`。
+新任务的截图目录放在对应任务组下，例如 `t23-t25/t23-role-media/screenshots/`。截图文件名包含页面、状态和视口，例如 `admin-work-design-sheet-1440x900.png`。
 
 ## 5. 后续记录模板
 

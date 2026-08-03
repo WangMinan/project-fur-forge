@@ -1,7 +1,7 @@
 # GATE-07 水印管理 UI 实现记录（2026-08-01）
 
 > 执行人：Kimi K3（UI_PRIMARY）。分支 `feature/gate07-watermark-ui-kimi`。
-> 依据 `implementation/notes/GATE07-UI-HANDOFF.md`；不勾选 GATE-07，不启动 T19/T20。
+> 依据 `implementation/notes/gate07-watermark/GATE07-UI-HANDOFF.md`；不勾选 GATE-07，不启动 T19/T20。
 
 ## 范围与边界
 

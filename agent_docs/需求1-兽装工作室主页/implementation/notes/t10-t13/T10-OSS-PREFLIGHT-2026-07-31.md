@@ -24,7 +24,7 @@
 
 ## 3. 最小权限与秘密
 
-完整策略见 [`../OSS-PREFLIGHT.md`](../OSS-PREFLIGHT.md)。正式应用身份只需要：
+完整策略见 [`../OSS-PREFLIGHT.md`](../../OSS-PREFLIGHT.md)。正式应用身份只需要：
 
 - 两个固定 Bucket 的 `GetBucketInfo`（覆盖身份、地域、Endpoint、ACL 与 BPA）和私有 Bucket 的 `GetBucketCors`；
 - 私有 Bucket 的必要 `PostProcessTask`；该动作按阿里云权限模型只能授予源 Bucket；

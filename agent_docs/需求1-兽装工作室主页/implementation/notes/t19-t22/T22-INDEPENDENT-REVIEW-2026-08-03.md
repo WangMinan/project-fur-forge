@@ -41,7 +41,7 @@
 - 原始失败 trace 保存在首轮 `test-results/.../trace.zip`；修复后先定向复跑 3 项得到 2 通过、1 项精确文案断言失败，再单独复跑 400/500 恢复路径 1/1 通过。
 - 最终完整 `admin-works.spec.ts`：26/26 通过。实际路径包含：匿名访问回登录；创建 commission/showcase/regular adoption；必填与非法 slug；价格 0/负数/三位小数；短属性重复/空白/超长/排序；用途切换隐藏字段不提交；列表与内层 presentation；两个页面陈旧版本 409；历史展会显式转常规；400/500 失败、确认、恢复；公开预览泄漏守卫；no-store/noindex；三视口、键盘、焦点、reduced-motion、console/network。
 - 公开端定向浏览器：三视口真实图片解码与无横向溢出 2/2 通过；首页精选有数据顺序和 0 项整区隐藏 2/2 通过；详情 HTML/API 不含联系人、私有 Key、签名 URL 或草稿对象 1/1 通过。
-- 三视口证据已另存至 `implementation/notes/t22-independent-review/screenshots/`，没有覆盖 T14–T20 的历史截图；Playwright trace 保存在本地 `test-results/`。
+- 三视口证据已另存至 `implementation/notes/t19-t22/t22-independent-review/screenshots/`，没有覆盖 T14–T20 的历史截图；Playwright trace 保存在本地 `test-results/`。
 
 ## 自动化结果
 
@@ -73,3 +73,9 @@
 - T22 范围内 must-fix = 0；should-fix 的 E2E 恢复路径已修复并全量复测。
 - follow-up：常规领养真实发布仍归 T25；缺失的公开导航目的页归 T26–T29；这些边界没有被本 Review 伪装为 T22 已完成。
 - T22 仍保持 `[ ]`，等待用户实际管理体验验收；本 Review 不代替 USER_GATE，也不授权进入 T23。
+
+## 用户验收闭环追加（2026-08-03）
+
+- 用户在完成实际管理体验确认后明确批准 T22 收口。
+- `implementation/TASKS.md` 据此勾选 T22，当前唯一下一任务切换为 T23。
+- 上述 `PASS WITH FOLLOW-UP` 原结论和 T25、T26–T29 边界保持不变；本追加不改写初始 findings、首次浏览器失败或修复历史。

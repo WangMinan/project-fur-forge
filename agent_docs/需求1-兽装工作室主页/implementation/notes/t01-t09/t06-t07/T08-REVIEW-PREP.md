@@ -4,7 +4,7 @@
 > **范围**：T05 首页 + T06 作品列表/详情 + T07 管理端工作台。
 > **最终结论**：横向精选轨道为首页最终方案；T06/T07 视觉基线通过；C1、C3–C5 接受现状；C2 已修复。
 
-## 1. 三视口截图索引（`notes/t06-t07/screenshots/`）
+## 1. 三视口截图索引（`notes/t01-t09/t06-t07/screenshots/`）
 
 视口固定为 390×844 / 768×1024 / 1440×900；`full` 为整页截图。
 
@@ -21,7 +21,7 @@
 | 编辑器·蓝莓（可发布） | `admin-editor-blueberry-390x844-full.png` | `admin-editor-blueberry-768x1024-full.png` | `admin-editor-blueberry-1440x900-full.png` |
 | 编辑器·栗子（阻塞） | — | — | `admin-editor-lizi-blocked-1440x900-full.png` |
 
-首页：`notes/t04-t05/screenshots/`。**2026-07-30 起横向轨道为最终方案**（`home-track-*-hero/full.png` 为当前首页）；编辑型网格组件、实验开关和落选截图已删除，落选证据仍可从 Git 历史恢复。首屏 slogan 已更新为「不只做小狗毛」。
+首页：`notes/t01-t09/t04-t05/screenshots/`。**2026-07-30 起横向轨道为最终方案**（`home-track-*-hero/full.png` 为当前首页）；编辑型网格组件、实验开关和落选截图已删除，落选证据仍可从 Git 历史恢复。首屏 slogan 已更新为「不只做小狗毛」。
 
 本地复看：`pnpm dev --host 0.0.0.0 --port 3000`（公开 `http://localhost:3000`，后台 `http://127.0.0.1:3000`）。视觉门禁已通过，纯截图采集脚本不再属于标准 E2E。
 
@@ -74,7 +74,7 @@
 | F2 | PC 端详情主图过大，纵向图片一屏看不全、需上下滑动 | ✅ `WorkDetailGallery.vue` ≥1024px 主图限高 `clamp(20rem, calc(100vh - 15rem), 46rem)`，宽度按原比例自适应、水平居中、不裁切；移动/平板不变。实证 `work-detail-naigai-1440x900-viewport.png`（实测主图 440×660），回归断言已并入 `public-works.spec.ts` |
 | F3 | slogan 由「为每一个角色，做一件认真的兽装。」改为「不只做小狗毛」 | ✅ `heroFixture.tagline` 已更新；已固化进 IA 命名约定表（2026-07-30 景宸确认） |
 
-截图已重新采集：首页当前保留 `notes/t04-t05/screenshots/home-track-*`，详情保留 `work-detail-*-1440x900-full.png`；落选网格只留在 Git 历史。
+截图已重新采集：首页当前保留 `notes/t01-t09/t04-t05/screenshots/home-track-*`，详情保留 `work-detail-*-1440x900-full.png`；落选网格只留在 Git 历史。
 
 ## 7. 2026-07-30 最终验收与门禁结论
 
