@@ -24,7 +24,11 @@ import {
 } from './media-mapper'
 import type { VariantRecord } from './media-mapper'
 import { getPublicHome } from './home-management'
-import { publicRecipeWidths } from './media-recipe'
+import {
+  LEGACY_PUBLIC_RECIPE_VERSION,
+  PUBLIC_RECIPE_VERSION,
+  publicRecipeWidths,
+} from './media-recipe'
 import { getRuntimeConfig } from './runtime-config'
 import { toPublicWorkDto } from './work-mapper'
 
@@ -107,25 +111,34 @@ function sourceSet(
   mediaBaseUrl: string,
   usage: 'design-sheet' | 'detail' | 'work-card',
 ) {
-  try {
-    const sources = toPublicSourceSetDto(
-      variants.filter(variant => variant.usage === usage),
-      mediaBaseUrl,
-      publicRecipeWidths(usage),
-    )
-    if (
-      usage === 'work-card'
-      && [...sources.webp, ...sources.fallback].some(variant => (
-        variant.height !== Math.round(variant.width * 4 / 3)
-      ))
-    ) {
-      return null
+  for (const recipeVersion of [
+    PUBLIC_RECIPE_VERSION,
+    LEGACY_PUBLIC_RECIPE_VERSION,
+  ]) {
+    try {
+      const sources = toPublicSourceSetDto(
+        variants.filter(variant => (
+          variant.usage === usage
+          && variant.recipeVersion === recipeVersion
+        )),
+        mediaBaseUrl,
+        publicRecipeWidths(usage),
+      )
+      if (
+        usage === 'work-card'
+        && [...sources.webp, ...sources.fallback].some(variant => (
+          variant.height !== Math.round(variant.width * 4 / 3)
+        ))
+      ) {
+        continue
+      }
+      return sources
     }
-    return sources
+    catch {
+      // A complete previous recipe remains visible until v2 is complete.
+    }
   }
-  catch {
-    return null
-  }
+  return null
 }
 
 function loadPublishedWorks(sqlite: Database.Database) {
@@ -205,7 +218,7 @@ function loadCurrentPublicVariants(sqlite: Database.Database) {
       AND variant.status = 'READY'
       AND variant.media_role IN ('design_sheet', 'studio_photo')
       AND variant.usage IN ('work-card', 'detail', 'design-sheet')
-      AND variant.recipe_version = 'recipe-v1'
+      AND variant.recipe_version IN ('recipe-v2', 'recipe-v1')
       AND variant.watermark_profile = 'brand-centered-v2'
       AND variant.watermark_profile_id = profile.id
       AND variant.watermark_config_digest = profile.config_digest
@@ -405,6 +418,7 @@ export function createSqlitePublicSiteRepository(
         })
       }
       const items = snapshot(sqlite, mediaBaseUrl)
+        .filter(entry => entry.studioPhotos.length > 0)
         .filter(entry => (
           (!parsed.data.purpose || entry.purpose === parsed.data.purpose)
           && (!parsed.data.suitType || entry.suitType === parsed.data.suitType)
@@ -483,7 +497,8 @@ export function createFakePublicSiteRepository(
       const parsed = publicWorkListQuerySchema.safeParse(query)
       const filtered = parsed.success
         ? details.filter(detail => (
-            (!parsed.data.purpose || detail.work.purpose === parsed.data.purpose)
+            detail.media.studioPhotos.length > 0
+            && (!parsed.data.purpose || detail.work.purpose === parsed.data.purpose)
             && (!parsed.data.suitType || detail.work.suitType === parsed.data.suitType)
           ))
         : []

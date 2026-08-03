@@ -88,6 +88,27 @@ test('普通委托详情不渲染空设定图区', async ({ page }) => {
   await expect(page.getByTestId('work-gallery')).toBeVisible()
 })
 
+test('只有设定图的领养保留在领养页与统一详情，但不进入作品展示', async ({ page }) => {
+  const slug = 'e2e-public-design-only-adoption'
+  await seedPublicCatalog(page, [{
+    slug,
+    characterName: '纸飞机',
+    purpose: 'adoption',
+    adoptionMethod: 'regular',
+    businessStatus: 'available',
+    designSheet: { alt: '纸飞机完整横版设定图' },
+    photos: [],
+  }])
+
+  await page.goto('/works')
+  await expect(page.locator(`[data-work-slug="${slug}"]`)).toHaveCount(0)
+  await page.goto('/adoptions')
+  await expect(page.locator(`[data-work-slug="${slug}"]`)).toBeVisible()
+  await page.goto(`/works/${slug}`)
+  await expect(page.getByTestId('public-design-sheet')).toBeVisible()
+  await expect(page.getByTestId('work-gallery')).toHaveCount(0)
+})
+
 test('没有已发布 regular adoption 时展示真实空状态', async ({ page }) => {
   await seedPublicCatalog(page, [])
   await page.goto('/adoptions')

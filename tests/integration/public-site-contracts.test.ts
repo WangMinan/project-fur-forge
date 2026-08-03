@@ -263,7 +263,7 @@ afterEach(() => {
 })
 
 describe('T19/T20 public repository contracts', () => {
-  it('rejects READY hero sources that cannot satisfy recipe-v1', () => {
+  it('rejects READY hero sources that cannot satisfy the current recipe', () => {
     const initial = getAdminHome(sqlite)
     const landscape = createHeroAsset(
       'home_hero_landscape',
@@ -518,6 +518,7 @@ describe('T19/T20 public repository contracts', () => {
     })
     expect(detail?.media.card.assetId).toBe(created.designAssetId)
     expect(detail?.media.designSheet?.assetId).toBe(created.designAssetId)
+    expect(repository.listWorks().items).toHaveLength(0)
     expect(JSON.stringify({ detail, listItem }))
       .not.toContain('design-only-private@example.test')
   })

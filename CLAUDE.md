@@ -6,7 +6,7 @@ This file provides guidance to coding agents working with code in this repositor
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01–T22、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。** T23–T25 实现与自动化自检已完成；正式素材真实浏览器验收仍被浏览器扩展的本地文件权限阻断，随后还需独立 Review 与用户验收。T23、T24、T25 均未勾选。
+> **当前阶段：阶段 4 IMPLEMENTATION，T01–T22、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。** T23–T25 实现、自动化自检和用户 2026-08-04 人工核验已通过；独立 Review 尚未执行。T23、T24、T25 均未勾选。
 
 ## 网站核心原则（景宸确认）
 
@@ -18,6 +18,7 @@ project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`
 - **Logo、文字和符号均为辅助。** 只承担品牌识别、必要说明、导航和状态提示；不得遮挡图片或形成比作品更强的视觉焦点。
 - **文字简短且必要。** 能由作品图片表达的内容不重复堆砌文案。
 - **以是否有助于兽装展示作为取舍标准。** 无法说明价值的非图片元素应删除或弱化。
+- **景宸是兽装制作者而非开发人员** 所有文案的编写都需要考虑简洁易懂，不能使用中英混杂或者内部编号。
 
 ## 工作流：spec-driven 开发（agent_docs）
 
@@ -105,12 +106,12 @@ pnpm auth:reset-password --confirm RESET_SINGLE_ADMIN_PASSWORD
 - 双访问面、公开/管理视觉基线；
 - SQLite/Drizzle、唯一管理员认证；
 - 双 Bucket、30 MB 原图、FFmpeg 私有处理源；
-- 角色化上传、媒体核验、`recipe-v1`、发布/下架；
-- 活动 `brand-centered-v2` 可配置居中水印和原子全站切换；
+- 角色化上传、媒体核验、`recipe-v2`（完整 v1 集合兼容回退）、发布/下架；
+- 活动 `brand-centered-v2` 可配置水印与原子全站切换；普通图片居中，横版设定图为 1.6 倍左右双水印；
 - 真实作品详情/列表、首页双源轮播、首页管理和联系方式投影；
 - T21 第一作品垂直切片完整用户验收；
 - T22 三用途共享 Schema、管理 API/service、管理 UI、公开投影、历史展会兼容、精选 6 项上限和完整用户验收；
 - T24 设定图/出厂照管理分区、同源原图与活动水印预览、上传恢复、列表媒体摘要；
-- T25 `/adoptions` 横版设定图列表和统一详情媒体分区。
+- T25 `/adoptions` 横版设定图列表和统一详情媒体分区；只有设定图的领养不进入 `/works`。
 
-`brand-standard-v1` 只保留为历史身份，当前发布必须匹配活动 `brand-centered-v2`。当前下一门禁是先完成 T24/T25 正式素材真实浏览器验收，再以新上下文独立 Review T23–T25；不提前进入 T29 重定向或 T37 展会完整矩阵。
+`brand-standard-v1` 只保留为历史身份，当前发布必须匹配活动 `brand-centered-v2` 和 `recipe-v2`。当前下一门禁是在新上下文独立 Review T23–T25，并复核正式素材管理全链；不提前进入 T29 重定向或 T37 展会完整矩阵。

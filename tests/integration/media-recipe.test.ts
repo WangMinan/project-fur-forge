@@ -126,10 +126,10 @@ describe('brand-centered-v2 public media generation', () => {
     expect(storage.processCalls).toHaveLength(12)
     expect(storage.processCalls.every((call) => {
       const encodedLogo = /\/watermark,image_([^,]+)/u.exec(call.process)?.[1]
-      const width = Number(/\/recipe-v1\/[^/]+\/(\d+)\//u.exec(call.objectKey)?.[1])
+      const width = Number(/\/recipe-v2\/[^/]+\/(\d+)\//u.exec(call.objectKey)?.[1])
       return encodedLogo
         && Buffer.from(encodedLogo, 'base64url').toString('utf8').endsWith(
-          '?x-oss-process=image/resize,P_60',
+          '?x-oss-process=image/resize,w_492,limit_0',
         )
         && width > 0
         && call.process.includes(',t_50,g_center/')
@@ -192,6 +192,10 @@ describe('brand-centered-v2 public media generation', () => {
       call.process.includes('resize,m_lfit')
       && !call.process.includes('crop,')
       && !call.process.includes('resize,m_fill')
+      && (call.process.match(/\/watermark,/gu)?.length ?? 0) === 2
+      && call.process.includes(',t_50,g_west/')
+      && call.process.includes(',t_50,g_east/')
+      && !call.process.includes('g_center')
     ))).toBe(true)
     expect(fallbackProcesses).toHaveLength(6)
     expect(fallbackProcesses.every(call => (
@@ -289,7 +293,7 @@ describe('brand-centered-v2 public media generation', () => {
 
     expect(storage.deletedPublicKeys).toHaveLength(1)
     expect(storage.deletedPublicKeys[0]).toMatch(
-      /^test\/t16-fixture\/web\/[^/]+\/recipe-v1\/detail\/960\/[0-9a-f]{64}\.webp$/u,
+      /^test\/t16-fixture\/web\/[^/]+\/recipe-v2\/detail\/960\/[0-9a-f]{64}\.webp$/u,
     )
     expect(sqlite.prepare(`
       SELECT count(*) FROM asset_variants WHERE storage_scope = 'PUBLIC'

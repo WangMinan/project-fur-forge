@@ -65,7 +65,7 @@
 | `FeaturedWorks` | 横向轨道（用户 2026-07-30 T08 最终验收确认），不自动轮播；与首屏轮播分离 |
 | `ImageRouteCard` | 委托/领养图片入口；短标题、短事实、真实行动 |
 | `WorkFilterBar` | 作品用途 × 装型交集、结果数、清楚选中态 |
-| `WorkGrid` / `WorkCard` | 3:4 出厂照图片网格；领养作品无出厂照时以完整设定图置入安全画布 fallback |
+| `WorkGrid` / `WorkCard` | 只使用 3:4 出厂照图片网格；只有设定图、没有出厂照的领养作品不进入 `/works` |
 | `AdoptionDesignCard` | 横版设定图、完整画布、水印、状态与价格；不复用竖版作品卡 |
 | `WorkDetailGallery` | 设定图与出厂照分区；设定图完整横版，出厂照原比例；PC 端纵向主图一屏内完整可见 |
 | `BusinessStatus` | 委托/领养营业状态，不与单件作品状态混用 |

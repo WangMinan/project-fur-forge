@@ -50,7 +50,7 @@
 
 - 公开水印 variant 必须引用 `watermark_profile_id` 或等价不可变 profile identity；
 - `brand-centered-v2` 的位置记录为 `center`，旧 `top-left | top-right | bottom-left | bottom-right` 只为 v1 历史记录保留；
-- identity 覆盖 profile ID/config digest、Logo digest、position、opacity、scale、输入来源、用途、宽高、格式、质量和 recipe 版本；
+- identity 覆盖 profile ID/config digest、Logo digest、position、opacity、scale、输入来源、用途、宽高、格式、质量、recipe 版本和角色化水印布局；
 - 任一身份字段改变都生成新记录和新 Object Key；
 - 当前公开 mapper、作品发布检查和首页发布检查只接受 `site_branding.active_watermark_profile_id` 对应的 `PUBLIC + READY` variant；
 - 旧 profile 的 READY 记录不能因用途/宽度/格式匹配而被误计为当前完整配方。

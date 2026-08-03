@@ -7,9 +7,10 @@
 
 - [`P0-C-STAGE-READINESS-2026-08-02.md`](./P0-C-STAGE-READINESS-2026-08-02.md)：阶段 C 启动条件、T22 边界、四个执行波次、main 直推纪律、自动化与 GPT-5.6 Sol 浏览器/视觉 Review 方法。
 - [`../EXECUTION_ROUTING.md`](../EXECUTION_ROUTING.md)：前端模型池、GPT-5.6 Sol 后端/Review、串行交接和测试策略。
-- [`../TASKS.md`](../TASKS.md)：唯一可勾选任务清单；T23 工程与 T25 服务端交接已就绪，但两项均保持未勾选，T24 UI 未实现。
+- [`../TASKS.md`](../TASKS.md)：唯一可勾选任务清单；T23–T25 实现、自动化和用户人工核验已通过，独立 Review 前均保持未勾选。
 - [`T23-ENGINEERING-2026-08-03.md`](./t23-t25/T23-ENGINEERING-2026-08-03.md)：T23 多图关系、角色约束、按需 recipe、迁移兼容和活动 profile 原子切换工程记录；等待独立 Review。
-- [`T25-BACKEND-HANDOFF-2026-08-03.md`](./t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md)：用户授权的 T25 regular adoption 发布与公开读取服务端交接；T24 UI 未实现，T25 保持未勾选。
+- [`T25-BACKEND-HANDOFF-2026-08-03.md`](./t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md)：用户授权的 T25 regular adoption 发布与公开读取服务端交接。
+- [`T23-T25-USER-ACCEPTANCE-2026-08-04.md`](./t23-t25/T23-T25-USER-ACCEPTANCE-2026-08-04.md)：用户人工核验、`/works` 出厂照边界、`recipe-v2` 左右双水印、真实 OSS 与剩余独立 Review 门禁。
 - [`../../materials/MATERIAL-MANIFEST.md`](../../materials/MATERIAL-MANIFEST.md)：Logo、出厂照、横版设定图、返图与首页候选的正式输入清单；EXT-01 已完成。
 
 当前新任务只在本节增加一个“启动/交接/收口”主记录，不再为同一小修补创建多个相互重叠的状态文件。需要保留详细失败证据时，在主记录内分节或放入对应截图/trace 子目录。
@@ -21,7 +22,7 @@
 - `t14-t18/`：上传、媒体核验、配方、作品 CRUD、发布与管理 UI；
 - `gate07-watermark/`：可配置居中水印的文档、工程、UI、收口与截图；
 - `t19-t22/`：公开站、首页、T21 门禁、T22 完整字段与独立 Review；
-- `t23-t25/`：T23 服务端工程与 T25 后端读取/发布交接；任务勾选仍由各自 Review 和验收决定；
+- `t23-t25/`：T23–T25 工程、前端检查点、用户人工核验与独立 Review 交接；任务勾选仍由独立 Review 决定；
 - 根目录只保留本索引和仍作为阶段 C 当前基线的 `P0-C-STAGE-READINESS-2026-08-02.md`。
 
 ## 2. 最近收口记录
@@ -30,6 +31,8 @@
 
 - [`T23-ENGINEERING-2026-08-03.md`](./t23-t25/T23-ENGINEERING-2026-08-03.md)：设定图/出厂照关系、数量/顺序/主图、按需 variant、迁移和 profile 切换；T23 未勾选。
 - [`T25-BACKEND-HANDOFF-2026-08-03.md`](./t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md)：regular adoption 发布检查、公开 adoption 列表、统一详情媒体分区和前端恢复契约；T25 未勾选。
+- [`T24-T25-FRONTEND-CHECKPOINT-2026-08-03.md`](./t23-t25/T24-T25-FRONTEND-CHECKPOINT-2026-08-03.md)：管理媒体分区、公开领养页、自动保存发布与浏览器检查点。
+- [`T23-T25-USER-ACCEPTANCE-2026-08-04.md`](./t23-t25/T23-T25-USER-ACCEPTANCE-2026-08-04.md)：用户人工核验通过与 `recipe-v2` 正式素材真实 OSS 证据；独立 Review 待执行。
 
 ### T19–T22 与首页/公开站
 

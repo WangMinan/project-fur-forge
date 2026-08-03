@@ -185,16 +185,23 @@ async function processPreview({
   publicBucket,
   source,
   watermarkKey,
+  watermarkWidth,
   output,
   visualEvidenceDirectory,
 }) {
+  const sizeMultiplier = 1.6
+  const resizedWidth = Math.round(watermarkWidth * 60 * sizeMultiplier / 100)
   const watermarkReference = urlSafeBase64(
-    `${watermarkKey}?x-oss-process=image/resize,P_60`,
+    `${watermarkKey}?x-oss-process=image/resize,w_${resizedWidth},limit_0`,
   )
-  const watermarkOperation = `watermark,image_${watermarkReference},t_50,g_center`
+  const watermarkOperation = position => (
+    `watermark,image_${watermarkReference},t_50,g_${position}`
+  )
   const process = [
     `image/${output.resize}`,
-    watermarkOperation,
+    ...(output.kind === 'design-sheet'
+      ? [watermarkOperation('west'), watermarkOperation('east')]
+      : [watermarkOperation('center')]),
     'format,webp',
   ].join('/')
   if (process.includes(',x_') || process.includes(',y_')) {
@@ -245,9 +252,10 @@ async function processPreview({
     differsFromUnwatermarked: true,
     kind: output.kind,
     opacityPercent: 50,
-    position: 'center',
+    position: output.kind === 'design-sheet' ? 'west-east' : 'center',
     requestIds: [requestIdOf(result), requestIdOf(head), anonymous.requestId],
     scalePercent: 60,
+    sizeMultiplier,
     visualEvidence: [
       `${output.kind}.webp`,
       `${output.kind}-unwatermarked.webp`,
@@ -339,6 +347,15 @@ async function main() {
       )),
       contentType: 'image/jpeg',
     },
+    {
+      kind: 'design',
+      key: `${prefix}original/design/source.jpeg`,
+      content: readFileSync(resolve(
+        projectRoot,
+        'agent_docs/需求1-兽装工作室主页/materials/picture-examples/领养/常规领养-横版设定图/领养-1.jpeg',
+      )),
+      contentType: 'image/jpeg',
+    },
   ].map(source => ({
     ...source,
     bucket: settings.privateBucket,
@@ -362,6 +379,10 @@ async function main() {
     {
       kind: 'detail-original-ratio', source: sources[0],
       resize: 'resize,m_lfit,w_960', width: 960, height: 1440,
+    },
+    {
+      kind: 'design-sheet', source: sources[3],
+      resize: 'resize,m_lfit,w_960', width: 960, height: 533,
     },
     {
       kind: 'home-hero-landscape', source: sources[1],
@@ -398,10 +419,12 @@ async function main() {
     }
     await mkdir(visualEvidenceDirectory, { recursive: true })
     for (const source of [...sources, watermark]) {
+      const result = await putPrivate(privateClient, source, source.content)
+      source.dimensions = result.dimensions
       evidence.checks.push({
         name: `private-${source.kind}`,
         status: 'pass',
-        ...await putPrivate(privateClient, source, source.content),
+        ...result,
       })
     }
     const anonymousPrivate = await anonymousGet(privateClient, sources[0].key)
@@ -424,6 +447,7 @@ async function main() {
           publicBucket: settings.publicBucket,
           source: output.source,
           watermarkKey: watermark.key,
+          watermarkWidth: watermark.dimensions.width,
           output,
           visualEvidenceDirectory,
         }),

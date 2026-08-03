@@ -14,7 +14,7 @@ import type {
   PublicVariantDto,
 } from '../../shared/types/contracts'
 import {
-  completeHeroVariants,
+  completePublicHeroVariants,
   HERO_RECIPE,
 } from './hero-publication'
 
@@ -165,12 +165,12 @@ export function toPublicHeroSlideDto(
     throw new Error('Enabled hero slide links to an unpublished work.')
   }
 
-  const landscape = completeHeroVariants(
+  const landscape = completePublicHeroVariants(
     'home_hero_landscape',
     record.landscapeVariants,
     record.activeWatermarkProfileId,
   )
-  const portrait = completeHeroVariants(
+  const portrait = completePublicHeroVariants(
     'home_hero_portrait',
     record.portraitVariants,
     record.activeWatermarkProfileId,

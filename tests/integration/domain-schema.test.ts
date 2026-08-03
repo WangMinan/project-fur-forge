@@ -117,6 +117,7 @@ function insertVariant(
     inputSha256: string
     logoDigest: string
     outputSha256: string | null
+    recipeVersion: string
     sourceVariantId: string | null
     status: string
     storageScope: string
@@ -145,7 +146,7 @@ function insertVariant(
     ) VALUES (
       @id, @assetId, @sourceVariantId, @storageScope, @status, @key,
       @inputSha256, @role, @usage, @width, @height, @format, 82,
-      @cropIdentity, 'recipe-v1', @watermarkProfile,
+      @cropIdentity, @recipeVersion, @watermarkProfile,
       @watermarkProfileId, @watermarkConfigDigest,
       @watermarkOpacityPercent, @watermarkScalePercent,
       @logoDigest, @watermarkAnchor, @outputSha256, @byteSize,
@@ -177,6 +178,7 @@ function insertVariant(
     outputSha256: fields.outputSha256 === undefined
       ? SHA_C
       : fields.outputSha256,
+    recipeVersion: fields.recipeVersion ?? 'recipe-v2',
     byteSize: fields.byteSize === undefined ? 2048 : fields.byteSize,
     now,
   })

@@ -269,18 +269,25 @@ export default defineEventHandler(async (event) => {
 
     const seeded: string[] = []
     for (const [index, work] of (body.works ?? []).entries()) {
+      const purpose = work.purpose ?? 'showcase'
+      const adoption = purpose === 'adoption'
       if (!work.slug.startsWith('e2e-public-')) {
         setResponseStatus(event, 400)
         return { error: 'seeded work slugs must start with e2e-public-' }
       }
-      if (!work.photos || work.photos.length < 1 || work.photos.length > 5) {
+      if (
+        !work.photos
+        || work.photos.length > 5
+        || (
+          work.photos.length === 0
+          && !(adoption && work.adoptionMethod !== 'event_drop' && work.designSheet)
+        )
+      ) {
         setResponseStatus(event, 400)
-        return { error: 'seeded works need 1 to 5 photos' }
+        return { error: 'seeded works need valid role media' }
       }
 
       const workId = randomUUID()
-      const purpose = work.purpose ?? 'showcase'
-      const adoption = purpose === 'adoption'
       const publicationStatus = work.publicationStatus ?? 'published'
       sqlite.prepare(`
         INSERT INTO works (
@@ -352,7 +359,15 @@ export default defineEventHandler(async (event) => {
             crop_x, crop_y, crop_width, crop_height, watermark_anchor
           ) VALUES (?, ?, ?, ?, ?, ?, 0, 0, 1, 1, 'top-left')
         `).run(workId, assetId, role, media.alt, position, primary ? 1 : 0)
-        await generatePublicVariants(sqlite, fake, assetId, undefined, now)
+        await generatePublicVariants(
+          sqlite,
+          fake,
+          assetId,
+          role === 'design_sheet' && work.photos.length === 0
+            ? ['design-sheet', 'work-card']
+            : undefined,
+          now,
+        )
       }
 
       if (work.designSheet) {
