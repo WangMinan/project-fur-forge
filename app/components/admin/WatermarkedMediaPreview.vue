@@ -30,10 +30,10 @@ watch(() => [props.assetId, props.usage], () => {
       >{{ state === 'loading' ? '生成中…' : src ? '重新生成' : '生成预览' }}</button>
     </div>
     <p class="watermarked-preview__note">
-      使用当前活动 brand-centered-v2；位置固定居中。此图与私有原图预览相互独立。
+      使用当前站点水印，位置固定居中；与上方原图预览互不影响。
     </p>
     <p v-if="state === 'loading'" class="watermarked-preview__state" role="status">
-      正在由服务端应用公开 recipe 与活动水印…
+      正在生成带水印的公开预览…
     </p>
     <p v-else-if="state === 'error'" class="watermarked-preview__error" role="alert">
       公开水印预览生成失败，请确认素材尺寸和活动水印后重试。

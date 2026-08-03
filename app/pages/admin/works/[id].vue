@@ -63,6 +63,8 @@ const previewError = ref<string | null>(null)
 
 const designSheetState = ref({ busy: false, dirty: false })
 const photoState = ref({ busy: false, dirty: false })
+const designSheetSection = useTemplateRef<{ save: () => Promise<boolean> }>('designSheetSection')
+const studioPhotoSection = useTemplateRef<{ save: () => Promise<boolean> }>('studioPhotoSection')
 
 function applyWork(next: ManagedWorkDto) {
   work.value = next
@@ -157,15 +159,15 @@ async function loadPreview() {
   }
 }
 
-async function saveWork() {
+async function saveWork(): Promise<boolean> {
   if (saving.value || !work.value || (!locked.value && historical.value)) {
-    return
+    return false
   }
   submitted.value = true
   savedNotice.value = null
   if (invalid.value) {
     saveError.value = '填写内容未通过校验，请修正下方标注的字段后重试。'
-    return
+    return false
   }
   saveError.value = null
   saving.value = true
@@ -192,10 +194,11 @@ async function saveWork() {
       ? '排序与精选已保存，公开端已更新。'
       : '已保存。'
     void loadPreview()
+    return true
   }
   catch (error) {
     if (error instanceof AdminApiError && error.status === 401) {
-      return
+      return false
     }
     saveError.value = workApiErrorText(
       error,
@@ -209,10 +212,26 @@ async function saveWork() {
       saveError.value = null
       conflictOpen.value = true
     }
+    return false
   }
   finally {
     saving.value = false
   }
+}
+
+async function saveBeforePublish(): Promise<boolean> {
+  if (isDirty.value && !(await saveWork())) {
+    return false
+  }
+  await nextTick()
+  if (designSheetState.value.dirty && !(await designSheetSection.value?.save())) {
+    return false
+  }
+  await nextTick()
+  if (photoState.value.dirty && !(await studioPhotoSection.value?.save())) {
+    return false
+  }
+  return true
 }
 
 function onConvertConfirmed() {
@@ -337,6 +356,7 @@ useSeoMeta({
           />
           <AdminDesignSheetSection
             v-if="work.purpose === 'adoption'"
+            ref="designSheetSection"
             :work="work"
             :locked="locked"
             @saved="onDesignSheetSaved"
@@ -344,6 +364,7 @@ useSeoMeta({
             @state-change="designSheetState = $event"
           />
           <AdminStudioPhotoSection
+            ref="studioPhotoSection"
             :work="work"
             :locked="locked"
             @saved="onPhotosSaved"
@@ -356,6 +377,8 @@ useSeoMeta({
           <AdminPublicationPanel
             :work="work"
             :busy="saving || mediaBusy"
+            :dirty="isDirty || mediaDirty"
+            :save-before-publish="saveBeforePublish"
             @mutated="onPublicationMutated"
             @conflict="conflictOpen = true"
           />
@@ -443,10 +466,6 @@ useSeoMeta({
                   </dd>
                 </div>
               </dl>
-              <p class="preview-card__note">
-                以上为公开安全数据：不含联系人、私有 Key 或签名 URL。
-                公开详情页真实投影由 T19 接入。
-              </p>
             </template>
             <p v-else class="preview-card__loading" role="status">正在加载公开预览…</p>
           </section>
@@ -462,7 +481,7 @@ useSeoMeta({
       >
         <p>
           保存后领养方式改为「常规领养」，展会名称会被清空，业务状态需要重新选择。
-          展会实体与完整展会掉落管理属于 T37，本页不会保留展会字段。
+          当前页面暂不支持展会掉落；转为常规领养后不会保留原展会名称。
         </p>
       </AdminConfirmDialog>
 

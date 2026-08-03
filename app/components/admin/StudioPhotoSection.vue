@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { managedWorkResponseSchema } from '~~/shared/schemas/work'
-import { watermarkBrandingResponseSchema } from '~~/shared/schemas/watermark'
 import type {
   ManagedStudioPhotoDto,
   ManagedWorkDto,
@@ -30,27 +29,6 @@ const emit = defineEmits<{
 }>()
 
 const adminApi = useAdminApi()
-
-// v2 居中水印为站点级配置：编辑器只读展示当前公开水印摘要，不再提供四角选择。
-const watermarkSummary = ref<string | null>(null)
-
-async function loadWatermarkSummary() {
-  try {
-    const result = await adminApi('/api/admin/v1/site/branding/watermark', {
-      schema: watermarkBrandingResponseSchema,
-    })
-    const active = result.data.activeProfile
-    watermarkSummary.value = active
-      ? `当前公开水印：居中 · 不透明度 ${active.opacityPercent}% · 缩放 ${active.scalePercent}%`
-      : '当前公开水印：尚未配置活动水印'
-  }
-  catch (error) {
-    if (error instanceof AdminApiError && error.status === 401) {
-      return
-    }
-    watermarkSummary.value = null
-  }
-}
 
 function toEntry(
   photo: ManagedStudioPhotoDto,
@@ -107,7 +85,6 @@ watch(() => props.work, (work) => {
 })
 
 onMounted(() => {
-  void loadWatermarkSummary()
   void uploads.restore({
     workId: props.work.id,
     workVersion: props.work.version,
@@ -167,8 +144,8 @@ const altMissing = computed(() =>
 )
 
 const emptyText = computed(() => props.work.purpose === 'adoption'
-  ? '还没有出厂照。常规领养可只用设定图发布；添加后将显示在统一作品详情的作品图集中。'
-  : '还没有出厂照。发布前至少需要一张 READY 的出厂照并设为主图。',
+  ? '还没有出厂照。常规领养可只用设定图发布；添加出厂照后将显示在统一作品详情的作品图集中。'
+  : '还没有出厂照。发布前至少需要一张处理完成的出厂照并设为主图。',
 )
 
 watchEffect(() => {
@@ -253,14 +230,14 @@ async function retryEntryProcessing(entry: SectionEntry) {
   }
 }
 
-async function savePhotos() {
+async function savePhotos(): Promise<boolean> {
   if (saving.value || props.locked) {
-    return
+    return false
   }
   saveError.value = null
   if (entries.value.length > 0 && altMissing.value) {
-    saveError.value = '每张出厂照都需要填写图片说明（alt）后才能保存。'
-    return
+    saveError.value = '每张出厂照都需要填写图片说明后才能保存。'
+    return false
   }
   saving.value = true
   try {
@@ -277,40 +254,38 @@ async function savePhotos() {
     )
     resetFromWork(result.data)
     emit('saved', result.data)
+    return true
   }
   catch (error) {
     if (error instanceof AdminApiError && error.status === 401) {
-      return
+      return false
     }
     if (error instanceof AdminApiError && error.status === 409) {
       emit('conflict')
       saveError.value = '作品数据已在其他地方变化，本次出厂照未保存。'
-      return
+      return false
     }
     if (error instanceof AdminApiError && error.status === 400) {
       saveError.value = '出厂照内容未通过校验，请检查图片说明与主图设置。'
-      return
+      return false
     }
     saveError.value = '保存出厂照失败，请稍后重试。'
+    return false
   }
   finally {
     saving.value = false
   }
 }
+
+defineExpose({ save: savePhotos })
 </script>
 
 <template>
   <section id="studio-photos" class="editor-card" aria-labelledby="media-title">
     <div class="editor-card__head">
       <h2 id="media-title" class="editor-card__title">出厂照</h2>
-      <p class="editor-card__hint">
-        {{ entries.length }}/5 · 原图进私有 Bucket，公开端只展示 OSS 生成的衍生图
-      </p>
+      <p class="editor-card__hint">{{ entries.length }}/5</p>
     </div>
-
-    <p v-if="watermarkSummary" class="photo-section__watermark" data-testid="watermark-summary">
-      {{ watermarkSummary }} · 活动 profile 为 brand-centered-v2（站点品牌页配置）
-    </p>
 
     <p v-if="locked" class="photo-section__locked" role="status">
       作品已发布，出厂照为只读；如需调整请先下架。
@@ -430,12 +405,6 @@ async function savePhotos() {
   background: var(--admin-status-info-soft);
   color: var(--admin-status-info);
   font-size: var(--admin-font-sm);
-}
-
-.photo-section__watermark {
-  margin: 0 0 var(--admin-space-4);
-  font-size: var(--admin-font-xs);
-  color: var(--admin-text-tertiary);
 }
 
 .photo-section__actions {

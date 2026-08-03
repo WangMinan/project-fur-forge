@@ -51,11 +51,11 @@ test('发布检查阻断项中文映射与发布按钮禁用', async ({ page }) 
 
   await makePublishable(page)
   await expect(panel).toContainText('可以发布')
-  await expect(panel).toContainText(/发布时将生成 12 张带水印公开衍生图/)
+  await expect(panel).toContainText(/发布时将生成 12 张带水印公开图片/)
   await expect(panel.getByRole('button', { name: '发布', exact: true })).toBeEnabled()
 })
 
-test('常规领养缺设定图被阻断，关系完整后可发布', async ({ page }) => {
+test('发布会先自动保存基础信息、设定图和出厂照，再完成常规领养发布', async ({ page }) => {
   const work = await createWorkViaApi(page, {
     characterName: '常规领养发布验证',
     purpose: 'adoption',
@@ -72,14 +72,25 @@ test('常规领养缺设定图被阻断，关系完整后可发布', async ({ pa
   const designSheet = page.locator('.design-sheet__entry')
   await expect(designSheet).toHaveCount(1)
   await designSheet.getByLabel(/图片说明/).fill('常规领养完整设定图')
-  await page.getByRole('button', { name: '保存设定图' }).click()
-  await expect(page.getByText('设定图已保存。')).toBeVisible()
+  await uploadFileToEditor(page, publishableStudioPng(), 'adoption-photo.png')
+  await expect(photoCards(page)).toHaveCount(1)
+  await photoCards(page).getByLabel(/图片说明/).fill('常规领养出厂照')
+  await page.getByLabel(/角色名/).fill('常规领养自动保存验证')
 
-  await makePublishable(page)
-  await expect(panel).toContainText('可以发布')
+  await expect(page.getByText('有未保存更改', { exact: true })).toBeVisible()
+  await expect(panel.getByRole('button', { name: '发布', exact: true })).toBeEnabled()
   await panel.getByRole('button', { name: '发布', exact: true }).click()
   await expect(panel).toContainText('发布成功', { timeout: 60_000 })
+  await expect(page.getByLabel(/角色名/)).toHaveValue('常规领养自动保存验证')
+  await expect(designSheet.getByLabel(/图片说明/)).toHaveValue('常规领养完整设定图')
+  await expect(photoCards(page).getByLabel(/图片说明/)).toHaveValue('常规领养出厂照')
   await expect(page.getByTestId('public-preview')).toContainText(`/works/${work.slug}`)
+
+  await page.reload()
+  await page.waitForSelector('.editor-card')
+  await expect(page.getByLabel(/角色名/)).toHaveValue('常规领养自动保存验证')
+  await expect(page.locator('.design-sheet__entry').getByLabel(/图片说明/)).toHaveValue('常规领养完整设定图')
+  await expect(photoCards(page).getByLabel(/图片说明/)).toHaveValue('常规领养出厂照')
 })
 
 test('READY 小图在发布前给出尺寸阻断', async ({ page }) => {
@@ -163,7 +174,7 @@ test('下架确认、公开影响说明与下架后恢复可编辑', async ({ pa
   await page.getByRole('button', { name: '下架', exact: true }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog).toContainText('下架后公开页面立即对访客不可见')
-  await expect(dialog).toContainText('私有原图与作品内容保留')
+  await expect(dialog).toContainText('完整原图与作品内容保留')
   await dialog.getByRole('button', { name: '确认下架' }).click()
 
   const panel = page.getByTestId('publication-panel')

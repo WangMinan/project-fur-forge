@@ -125,7 +125,7 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
         >3:4 卡片</button>
       </div>
       <p class="photo-card__preview-note">
-        私有原图预览：仅通过 assetId 的同源认证地址读取，不含水印。
+        完整原图 · 无水印 · 仅管理员可查看。
       </p>
       <AdminWatermarkedMediaPreview
         :asset-id="entry.assetId"
@@ -146,7 +146,7 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
         <span v-else class="photo-card__not-public">公开衍生图未生成</span>
       </p>
       <p class="photo-card__recipe-note">
-        详情使用原比例 detail；仅主图额外生成作品卡 3:4 recipe。焦点只影响对应卡片 recipe。
+        作品详情展示原比例图片；只有主图会生成 3:4 作品卡图片，焦点仅影响作品卡图片。
       </p>
 
       <p v-if="entry.status === 'FAILED'" class="photo-card__failure" role="alert">
@@ -155,7 +155,7 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
 
       <div class="photo-card__field">
         <label class="photo-card__label" :for="`alt-${entry.assetId}`">
-          图片说明（alt）<span aria-hidden="true"> *</span>
+          图片说明<span aria-hidden="true"> *</span>
         </label>
         <input
           :id="`alt-${entry.assetId}`"
