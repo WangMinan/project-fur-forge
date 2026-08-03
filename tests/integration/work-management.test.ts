@@ -28,6 +28,7 @@ import {
   listManagedWorks,
   replaceManagedStudioPhotos,
   updateManagedWork,
+  updateManagedWorkPresentation,
 } from '../../server/utils/work-management'
 import { generatePublicVariants } from '../../server/utils/media-recipe'
 import { createSyntheticWatermarkPng } from '../../scripts/oss-preflight-core.mjs'
@@ -179,6 +180,40 @@ describe('T22 work management', () => {
       1,
       workInput,
     )).toThrow(/stale/u)
+  })
+
+  it('updates presentation fields on a published work without opening full editing', () => {
+    createManagedWork(sqlite, {
+      ...workInput,
+      slug: 'occupied-featured-order',
+      sortOrder: 0,
+      featured: true,
+    }, NOW - 1)
+    const work = createManagedWork(sqlite, workInput, NOW)
+    sqlite.prepare(`
+      UPDATE works SET publication_status = 'published' WHERE id = ?
+    `).run(work.id)
+
+    const updated = updateManagedWorkPresentation(sqlite, work.id, 1, {
+      sortOrder: 0,
+      featured: true,
+    }, NOW + 1)
+    expect(updated).toMatchObject({
+      version: 2,
+      publicationStatus: 'published',
+      sortOrder: 1,
+      featured: true,
+    })
+    expect(() => updateManagedWorkPresentation(sqlite, work.id, 1, {
+      sortOrder: 4,
+      featured: false,
+    })).toThrow(/stale/u)
+    expect(() => updateManagedWork(
+      sqlite,
+      work.id,
+      updated.version,
+      { ...workInput, characterName: '不应写入' },
+    )).toThrow(/Unpublish the work before editing/u)
   })
 
   it('creates and updates all purposes while preserving the adoption matrix', () => {

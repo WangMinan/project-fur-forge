@@ -225,6 +225,7 @@ describe('sort order and price input helpers', () => {
   it('accepts only non-negative integers for sort order', () => {
     expect(parseSortOrderInput('0').value).toBe(0)
     expect(parseSortOrderInput('12').value).toBe(12)
+    expect(parseSortOrderInput(4).value).toBe(4)
     expect(parseSortOrderInput('').error).toBeTruthy()
     expect(parseSortOrderInput('1.5').error).toBeTruthy()
     expect(parseSortOrderInput('-2').error).toBeTruthy()

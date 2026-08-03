@@ -5,10 +5,9 @@ import { parseSortOrderInput } from '~/utils/work-form'
 /**
  * 列表内的人工排序与首页精选编辑。
  * 当前数据量下用数字输入 + 勾选即可可靠维护顺序，不引入拖拽库。
- * 已发布作品在服务端不可更新，这里直接禁用并说明原因。
+ * 展示设置使用独立接口，已发布作品也可直接更新。
  */
 const props = defineProps<{
-  error: string | null
   pending: boolean
   /** 表格与卡片两套布局同时存在于 DOM，用作用域前缀保证控件 id 唯一。 */
   scope: string
@@ -27,16 +26,11 @@ watch(() => props.work.sortOrder, (value) => {
   localError.value = null
 })
 
-const locked = computed(() => props.work.publicationStatus === 'published')
-const lockedHint = computed(() =>
-  locked.value ? '已发布作品需先下架才能修改排序与精选' : undefined,
-)
-
 const sortInputId = computed(() => `${props.scope}-sort-${props.work.id}`)
 const featuredInputId = computed(() => `${props.scope}-featured-${props.work.id}`)
 const messageId = computed(() => `${props.scope}-ordering-message-${props.work.id}`)
 
-const message = computed(() => localError.value ?? props.error)
+const message = computed(() => localError.value)
 
 function commitSortOrder() {
   const parsed = parseSortOrderInput(draft.value)
@@ -68,8 +62,7 @@ function commitFeatured(event: Event) {
         type="number"
         min="0"
         step="1"
-        :disabled="locked || pending"
-        :title="lockedHint"
+        :disabled="pending"
         :aria-invalid="message ? 'true' : undefined"
         :aria-describedby="message ? messageId : undefined"
         @change="commitSortOrder"
@@ -81,8 +74,7 @@ function commitFeatured(event: Event) {
         class="ordering__checkbox"
         type="checkbox"
         :checked="work.featured"
-        :disabled="locked || pending"
-        :title="lockedHint"
+        :disabled="pending"
         @change="commitFeatured"
       >
       <label class="ordering__label" :for="featuredInputId">精选</label>
@@ -91,7 +83,6 @@ function commitFeatured(event: Event) {
     <p v-else-if="message" :id="messageId" class="ordering__error" role="alert">
       {{ message }}
     </p>
-    <p v-else-if="locked" class="ordering__status">已发布 · 需先下架</p>
   </div>
 </template>
 

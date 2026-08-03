@@ -33,21 +33,54 @@ export const DECLARATION_FAILURE_LABELS: Record<DeclarationFailure, string> = {
   'dimensions': '图片边长不能超过 12,000 像素',
 }
 
+function contentTypeFromBytes(bytes: Uint8Array): DeclarableContentType | null {
+  if (
+    bytes.length >= 8
+    && bytes[0] === 0x89
+    && bytes[1] === 0x50
+    && bytes[2] === 0x4E
+    && bytes[3] === 0x47
+    && bytes[4] === 0x0D
+    && bytes[5] === 0x0A
+    && bytes[6] === 0x1A
+    && bytes[7] === 0x0A
+  ) {
+    return 'image/png'
+  }
+  if (bytes.length >= 3 && bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) {
+    return 'image/jpeg'
+  }
+  if (
+    bytes.length >= 12
+    && String.fromCharCode(...bytes.subarray(0, 4)) === 'RIFF'
+    && String.fromCharCode(...bytes.subarray(8, 12)) === 'WEBP'
+  ) {
+    return 'image/webp'
+  }
+  return null
+}
+
 export async function buildUploadDeclaration(
   file: File,
 ): Promise<
   | { declaration: UploadDeclaration, ok: true }
   | { ok: false, reason: DeclarationFailure }
 > {
-  const contentType = file.type as DeclarableContentType
-  if (!DECLARABLE_CONTENT_TYPES.includes(contentType)) {
-    return { ok: false, reason: 'content-type' }
-  }
   if (file.size < 1 || file.size > 30_000_000) {
     return { ok: false, reason: 'byte-size' }
   }
 
   const bytes = new Uint8Array(await file.arrayBuffer())
+  const declaredContentType = file.type as DeclarableContentType
+  const contentType = contentTypeFromBytes(bytes)
+  if (!contentType) {
+    return {
+      ok: false,
+      reason: DECLARABLE_CONTENT_TYPES.includes(declaredContentType)
+        ? 'decode'
+        : 'content-type',
+    }
+  }
   const digest = await crypto.subtle.digest('SHA-256', bytes)
   const sha256 = Array.from(
     new Uint8Array(digest),

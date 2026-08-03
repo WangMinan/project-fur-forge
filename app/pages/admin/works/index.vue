@@ -14,11 +14,7 @@ import {
 } from '~/utils/work-labels'
 import { formatCnyMinorUnits } from '~/utils/format'
 import { workApiErrorText } from '~/utils/work-errors'
-import {
-  PUBLIC_FEATURED_LIMIT,
-  toWorkFieldsPayload,
-  workFormFromDto,
-} from '~/utils/work-form'
+import { PUBLIC_FEATURED_LIMIT } from '~/utils/work-form'
 
 definePageMeta({
   layout: 'admin',
@@ -35,10 +31,9 @@ const status = ref<'error' | 'loading' | 'ready'>('loading')
 const works = ref<WorkListItemDto[]>([])
 const deleteTarget = ref<WorkListItemDto | null>(null)
 const deleting = ref(false)
-const deleteError = ref<string | null>(null)
+const actionError = ref<{ message: string, title: string } | null>(null)
 
 const orderingPendingId = ref<string | null>(null)
-const orderingErrors = ref<Record<string, string>>({})
 
 const PUBLICATION_TONES = {
   draft: 'warning',
@@ -78,10 +73,7 @@ async function loadWorks() {
   }
 }
 
-/**
- * 列表内改排序或精选：先读当前完整字段，再带列表持有的资源版本提交。
- * 版本过期时由服务端返回 409，不在客户端伪造成功。
- */
+/** 已发布作品也走展示设置接口；完整作品字段仍保留下架门禁。 */
 async function updateOrdering(
   work: WorkListItemDto,
   patch: { featured?: boolean, sortOrder?: number },
@@ -90,25 +82,14 @@ async function updateOrdering(
     return
   }
   orderingPendingId.value = work.id
-  orderingErrors.value = Object.fromEntries(
-    Object.entries(orderingErrors.value).filter(([id]) => id !== work.id),
-  )
   try {
-    const current = await adminApi(`/api/admin/v1/works/${work.id}`, {
-      schema: managedWorkResponseSchema,
-    })
-    const form = workFormFromDto(current.data)
-    if (patch.sortOrder !== undefined) {
-      form.sortOrder = String(patch.sortOrder)
-    }
-    if (patch.featured !== undefined) {
-      form.featured = patch.featured
-    }
-    await adminApi(`/api/admin/v1/works/${work.id}`, {
+    const featured = patch.featured ?? work.featured
+    const sortOrder = patch.sortOrder ?? work.sortOrder
+    await adminApi(`/api/admin/v1/works/${work.id}/presentation`, {
       method: 'PUT',
       body: {
         expectedVersion: work.version,
-        payload: toWorkFieldsPayload(form),
+        payload: { featured, sortOrder },
       },
       schema: managedWorkResponseSchema,
     })
@@ -118,9 +99,9 @@ async function updateOrdering(
     if (error instanceof AdminApiError && error.status === 401) {
       return
     }
-    orderingErrors.value = {
-      ...orderingErrors.value,
-      [work.id]: workApiErrorText(error, '保存失败，请刷新后重试。'),
+    actionError.value = {
+      title: '排序或精选未保存',
+      message: workApiErrorText(error, '保存失败，请刷新后重试。'),
     }
   }
   finally {
@@ -134,7 +115,6 @@ async function deleteWork() {
     return
   }
   deleting.value = true
-  deleteError.value = null
   try {
     await adminApi(`/api/admin/v1/works/${target.id}`, {
       method: 'DELETE',
@@ -149,9 +129,12 @@ async function deleteWork() {
       return
     }
     deleteTarget.value = null
-    deleteError.value = error instanceof AdminApiError && error.status === 409
-      ? '作品已发布或版本发生变化，请先刷新；已发布作品需先下架。'
-      : '删除失败，请稍后重试。作品内容未被删除。'
+    actionError.value = {
+      title: '作品未删除',
+      message: error instanceof AdminApiError && error.status === 409
+        ? '作品已发布或版本发生变化，请先刷新；已发布作品需先下架。'
+        : '删除失败，请稍后重试。作品内容未被删除。',
+    }
   }
   finally {
     deleting.value = false
@@ -183,8 +166,8 @@ onMounted(() => {
         <button type="button" class="works-page__retry" @click="loadWorks">重试</button>
       </div>
 
-      <p v-if="deleteError" class="works-page__delete-error" role="alert">
-        {{ deleteError }}
+      <p v-if="status === 'ready'" class="works-page__ordering-hint">
+        数字越小越靠前；相同数字允许并保持稳定顺序。勾选精选时若顺位重复，会自动使用下一个空闲顺位。
       </p>
 
       <p
@@ -240,7 +223,6 @@ onMounted(() => {
                   scope="table"
                   :work="work"
                   :pending="orderingPendingId === work.id"
-                  :error="orderingErrors[work.id] ?? null"
                   @update="updateOrdering(work, $event)"
                 />
               </td>
@@ -289,7 +271,6 @@ onMounted(() => {
                 scope="card"
                 :work="work"
                 :pending="orderingPendingId === work.id"
-                :error="orderingErrors[work.id] ?? null"
                 @update="updateOrdering(work, $event)"
               />
               <p class="works-card__row works-card__row--muted">
@@ -318,6 +299,17 @@ onMounted(() => {
         @cancel="deleteTarget = null"
       >
         <p>作品资料与媒体关联将删除，公开衍生图会先清理；私有原图保留。已发布作品必须先下架。此操作无法撤销。</p>
+      </AdminConfirmDialog>
+
+      <AdminConfirmDialog
+        :open="actionError !== null"
+        :title="actionError?.title ?? '操作未完成'"
+        confirm-label="知道了"
+        :show-cancel="false"
+        @confirm="actionError = null"
+        @cancel="actionError = null"
+      >
+        <p role="alert">{{ actionError?.message }}</p>
       </AdminConfirmDialog>
     </div>
   </AdminShell>
@@ -407,13 +399,10 @@ onMounted(() => {
   color: var(--admin-text-tertiary);
 }
 
-.works-page__delete-error {
+.works-page__ordering-hint {
   margin: 0 0 var(--admin-space-4);
-  padding: var(--admin-space-3) var(--admin-space-4);
-  border-radius: var(--admin-radius-md);
-  color: var(--admin-status-error);
-  background: var(--admin-status-error-soft);
-  font-size: var(--admin-font-sm);
+  color: var(--admin-text-tertiary);
+  font-size: var(--admin-font-xs);
 }
 
 .works-page__retry {

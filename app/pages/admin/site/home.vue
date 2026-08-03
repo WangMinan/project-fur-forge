@@ -40,12 +40,18 @@ const {
 const works = ref<WorkListItemDto[]>([])
 const actionError = ref<string | null>(null)
 const showDraft = ref(false)
+const errorDialogOpen = computed(() => Boolean(actionError.value || conflictNotice.value))
 
 const tagline = ref('')
 const contactEmail = ref('')
 const contactQq = ref('')
 const autoRotate = ref(false)
 const intervalSeconds = ref(6)
+
+function closeErrorDialog() {
+  actionError.value = null
+  conflictNotice.value = null
+}
 
 function settingsSnapshot() {
   return JSON.stringify({
@@ -111,6 +117,10 @@ const enabledSlides = computed(() =>
   slides.value.filter(slide => slide.enabled)
     .sort((a, b) => a.sortOrder - b.sortOrder),
 )
+const nextEnabledSortOrder = computed(() => {
+  const used = new Set(enabledSlides.value.map(slide => slide.sortOrder))
+  return [0, 1, 2, 3, 4].find(order => !used.has(order)) ?? 5
+})
 
 function moveStateFor(slideId: string) {
   const index = enabledSlides.value.findIndex(slide => slide.id === slideId)
@@ -202,13 +212,6 @@ onMounted(() => {
           首页轮播最多启用 5 项；启用时会按当前活动水印生成公开衍生图。
         </p>
       </header>
-
-      <p v-if="conflictNotice" class="home-admin__conflict" role="alert">
-        {{ conflictNotice }}
-      </p>
-      <p v-if="actionError" class="home-admin__error" role="alert">
-        {{ actionError }}
-      </p>
 
       <div v-if="pageStatus === 'loading'" class="home-admin__state" role="status">
         正在加载首页配置…
@@ -337,6 +340,7 @@ onMounted(() => {
               :slide="null"
               :works="works"
               :home-version="home.version"
+              :default-sort-order="nextEnabledSortOrder"
               :mutating="mutating"
               @create="onCreate"
               @conflict="load()"
@@ -344,6 +348,18 @@ onMounted(() => {
           </div>
         </section>
       </template>
+
+      <AdminConfirmDialog
+        :open="errorDialogOpen"
+        title="操作未完成"
+        confirm-label="知道了"
+        :show-cancel="false"
+        @confirm="closeErrorDialog"
+        @cancel="closeErrorDialog"
+      >
+        <p v-if="actionError" role="alert">{{ actionError }}</p>
+        <p v-if="conflictNotice" role="alert">{{ conflictNotice }}</p>
+      </AdminConfirmDialog>
     </div>
   </AdminShell>
 </template>
@@ -370,25 +386,6 @@ onMounted(() => {
   margin: 0;
   font-size: var(--admin-font-sm);
   color: var(--admin-text-secondary);
-}
-
-.home-admin__conflict,
-.home-admin__error {
-  margin: 0;
-  padding: var(--admin-space-3) var(--admin-space-4);
-  border-radius: var(--admin-radius-md);
-  font-size: var(--admin-font-sm);
-  line-height: var(--admin-line-normal);
-}
-
-.home-admin__conflict {
-  background: var(--admin-status-warning-soft);
-  color: var(--admin-status-warning);
-}
-
-.home-admin__error {
-  background: var(--admin-status-error-soft);
-  color: var(--admin-status-error);
 }
 
 .home-admin__state {

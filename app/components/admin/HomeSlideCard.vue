@@ -13,6 +13,7 @@ import { PUBLICATION_STATUS_LABELS } from '~/utils/work-labels'
 const props = defineProps<{
   canMoveDown?: boolean
   canMoveUp?: boolean
+  defaultSortOrder?: number
   feedback?: SlideFeedback | null
   homeVersion: number | null
   mutating: boolean
@@ -36,7 +37,7 @@ const emit = defineEmits<{
 }>()
 
 const alt = ref(props.slide?.alt ?? '')
-const sortOrder = ref(props.slide?.sortOrder ?? 0)
+const sortOrder = ref(props.slide?.sortOrder ?? props.defaultSortOrder ?? 0)
 const linkedWorkId = ref<string | null>(props.slide?.linkedWork?.id ?? null)
 const landscapeAssetId = ref<string | null>(null)
 const portraitAssetId = ref<string | null>(null)
@@ -56,7 +57,7 @@ const baseline = ref(snapshotOf())
 
 function syncFromSlide(slide: AdminHeroSlideDto | null) {
   alt.value = slide?.alt ?? ''
-  sortOrder.value = slide?.sortOrder ?? 0
+  sortOrder.value = slide?.sortOrder ?? props.defaultSortOrder ?? 0
   linkedWorkId.value = slide?.linkedWork?.id ?? null
   landscapeAssetId.value = null
   portraitAssetId.value = null
@@ -74,7 +75,7 @@ watch(() => props.slide, (slide) => {
     // 表单有未保存修改时只更新基线中的资产引用，避免覆盖输入。
     baseline.value = JSON.stringify({
       alt: slide?.alt ?? '',
-      sortOrder: slide?.sortOrder ?? 0,
+      sortOrder: slide?.sortOrder ?? props.defaultSortOrder ?? 0,
       linkedWorkId: slide?.linkedWork?.id ?? null,
       landscapeAssetId: null,
       portraitAssetId: null,
@@ -216,7 +217,7 @@ function onLinkedWorkChange(event: Event) {
 
         <div class="slide-card__field">
           <label class="slide-card__label" :for="`hero-order-${slide?.id ?? 'draft'}`">
-            顺位（0–4 可启用）
+            顺位（0–4 可启用，不可重复）
           </label>
           <input
             :id="`hero-order-${slide?.id ?? 'draft'}`"

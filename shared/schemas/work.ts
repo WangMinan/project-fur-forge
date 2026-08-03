@@ -212,6 +212,12 @@ export const createWorkRequestSchema = workFieldsSchema
 export const updateWorkRequestSchema = versionedRequestSchema(
   workFieldsSchema,
 )
+export const updateWorkPresentationRequestSchema = versionedRequestSchema(
+  z.object({
+    sortOrder: z.number().int().nonnegative(),
+    featured: z.boolean(),
+  }).strict(),
+)
 export const deleteWorkRequestSchema = versionedRequestSchema(
   z.object({}).strict(),
 )

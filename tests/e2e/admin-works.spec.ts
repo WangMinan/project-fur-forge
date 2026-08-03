@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
-import { adminBaseURL, fetchSession, loginAsAdmin } from './helpers/auth'
+import { adminBaseURL, fetchSession, loginAsAdmin, publicBaseURL } from './helpers/auth'
 import { bumpWorkViaApi, createWorkViaApi } from './helpers/admin-work'
+import { seedPublicCatalog } from './helpers/public-catalog'
 import { capture } from './helpers/screenshots'
 
 test.describe('未登录访问保护', () => {
@@ -253,7 +254,7 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
 
   test('列表显示排序、精选与领养状态，并可内联编辑', async ({ page }) => {
     const suffix = Date.now().toString(36)
-    await createWorkViaApi(page, {
+    const work = await createWorkViaApi(page, {
       characterName: `列表领养-${suffix}`,
       purpose: 'adoption',
       businessStatus: 'available',
@@ -265,7 +266,13 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
     await expect(row).toContainText('可领养')
     await expect(row).toContainText('¥15,600')
 
+    const sortSaved = page.waitForResponse(response =>
+      response.url().endsWith(`/api/admin/v1/works/${work.id}/presentation`)
+      && response.request().method() === 'PUT',
+    )
     await row.getByLabel('排序').fill('7')
+    await row.getByLabel('排序').press('Tab')
+    expect((await sortSaved).status()).toBe(200)
     await expect(page.getByRole('row').filter({ hasText: `列表领养-${suffix}` })
       .getByLabel('排序')).toHaveValue('7')
 
@@ -279,6 +286,96 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
     const reloaded = page.getByRole('row').filter({ hasText: `列表领养-${suffix}` })
     await expect(reloaded.getByLabel('排序')).toHaveValue('7')
     await expect(reloaded.getByLabel('精选')).toBeChecked()
+  })
+
+  test('已发布作品可直接精选，重复精选顺位自动避让并进入公开首页', async ({ page }) => {
+    const suffix = Date.now().toString(36)
+    const firstName = `已精选-${suffix}`
+    const secondName = `待精选-${suffix}`
+    const firstSlug = `e2e-public-featured-${suffix}` as const
+    const secondSlug = `e2e-public-featured-next-${suffix}` as const
+    await seedPublicCatalog(page, [
+      {
+        slug: firstSlug,
+        characterName: firstName,
+        featured: true,
+        sortOrder: 0,
+        publicationStatus: 'published',
+        photos: [{ alt: `${firstName}出厂照` }],
+      },
+      {
+        slug: secondSlug,
+        characterName: secondName,
+        featured: false,
+        sortOrder: 0,
+        publicationStatus: 'published',
+        photos: [{ alt: `${secondName}出厂照` }],
+      },
+    ])
+
+    await page.goto(`${adminBaseURL}/admin/works`)
+    const row = page.getByRole('row').filter({ hasText: secondName })
+    await expect(row.getByLabel('排序')).toBeEnabled()
+    const saved = page.waitForResponse(response =>
+      response.url().endsWith('/presentation')
+      && response.request().method() === 'PUT',
+    )
+    await row.getByLabel('精选', { exact: true }).check()
+    expect((await saved).status()).toBe(200)
+
+    const updated = page.getByRole('row').filter({ hasText: secondName })
+    await expect(updated.getByLabel('精选', { exact: true })).toBeChecked()
+    await expect(updated.getByLabel('排序')).toHaveValue('1')
+
+    await page.goto(publicBaseURL)
+    const featured = page.getByTestId('featured-works')
+    await expect(featured).toContainText(firstName)
+    await expect(featured).toContainText(secondName)
+  })
+
+  test('已发布作品在内层编辑页仍可保存排序与精选', async ({ page }) => {
+    const suffix = Date.now().toString(36)
+    const firstName = `详情优先-${suffix}`
+    const secondName = `详情候选-${suffix}`
+    await seedPublicCatalog(page, [
+      {
+        slug: `e2e-public-detail-featured-${suffix}`,
+        characterName: firstName,
+        featured: true,
+        sortOrder: 0,
+        publicationStatus: 'published',
+        photos: [{ alt: `${firstName}出厂照` }],
+      },
+      {
+        slug: `e2e-public-detail-next-${suffix}`,
+        characterName: secondName,
+        featured: false,
+        sortOrder: 0,
+        publicationStatus: 'published',
+        photos: [{ alt: `${secondName}出厂照` }],
+      },
+    ])
+
+    await page.goto(`${adminBaseURL}/admin/works`)
+    await page.getByRole('link', { name: secondName, exact: true }).click()
+    await expect(page.getByLabel('人工排序')).toBeEnabled()
+    await expect(page.getByLabel('加入首页精选作品')).toBeEnabled()
+
+    const saved = page.waitForResponse(response =>
+      response.url().endsWith('/presentation')
+      && response.request().method() === 'PUT',
+    )
+    await page.getByLabel('加入首页精选作品').check()
+    await page.getByRole('button', { name: '保存排序 / 精选' }).click()
+    expect((await saved).status()).toBe(200)
+    await expect(page.getByText('排序与精选已保存，公开端已更新。')).toBeVisible()
+    await expect(page.getByLabel('人工排序')).toHaveValue('1')
+    await expect(page.getByLabel('加入首页精选作品')).toBeChecked()
+
+    await page.goto(publicBaseURL)
+    const featured = page.getByTestId('featured-works')
+    await expect(featured).toContainText(firstName)
+    await expect(featured).toContainText(secondName)
   })
 
   test('列表内联编辑遇到过期版本显示服务端冲突', async ({ page }) => {
@@ -327,6 +424,7 @@ test.describe('编辑与保存', () => {
     await page.waitForSelector('.editor-card')
 
     await page.getByLabel(/角色名/).fill('保存验证改')
+    await page.getByLabel('人工排序').fill('5')
     await expect(page.getByText('有未保存更改')).toBeVisible()
     await page.getByRole('button', { name: '保存', exact: true }).click()
 
@@ -336,6 +434,39 @@ test.describe('编辑与保存', () => {
 
     await page.reload()
     await expect(page.getByLabel(/角色名/)).toHaveValue('保存验证改')
+    await expect(page.getByLabel('人工排序')).toHaveValue('5')
+    await expect(page.getByText('未更改')).toBeVisible()
+  })
+
+  test('历史展会作品确认转换后可保存为常规领养', async ({ page }) => {
+    const characterName = `历史展会转换-${Date.now().toString(36)}`
+    await seedPublicCatalog(page, [{
+      slug: `e2e-public-event-${Date.now().toString(36)}`,
+      characterName,
+      purpose: 'adoption',
+      adoptionMethod: 'event_drop',
+      businessStatus: 'event_sale',
+      currentEventName: '历史展会',
+      publicationStatus: 'draft',
+      photos: [{ alt: '历史展会作品照' }],
+    }])
+    await page.goto(`${adminBaseURL}/admin/works`)
+    await page.getByRole('link', { name: characterName, exact: true }).click()
+
+    await page.getByRole('button', { name: '转为常规领养…' }).click()
+    await page.getByRole('dialog', { name: '转为常规领养？' })
+      .getByRole('button', { name: '转为常规领养' })
+      .click()
+
+    await expect(page.getByText('有未保存更改')).toBeVisible()
+    await expect(page.getByRole('button', { name: '保存', exact: true })).toBeEnabled()
+    await page.getByRole('button', { name: '保存', exact: true }).click()
+    await expect(page.getByText('已保存。')).toBeVisible()
+
+    await page.reload()
+    await expect(page.getByTestId('historical-adoption')).toHaveCount(0)
+    await expect(page.getByLabel('领养方式')).toHaveValue('常规领养')
+    await expect(page.getByLabel('业务状态')).toHaveValue('preparing')
     await expect(page.getByText('未更改')).toBeVisible()
   })
 
