@@ -4,9 +4,11 @@ import { adminBaseURL, loginAsAdmin, publicBaseURL } from './helpers/auth'
 import { createWorkViaApi } from './helpers/admin-work'
 import { capture } from './helpers/screenshots'
 import {
+  fakeMediaState,
   heroPng,
   resetFakeMedia,
   seedHomePublicationOperation,
+  setFakeMediaFlags,
   setWatermarkProfileActive,
 } from './helpers/fake-media'
 import { seedHomeSlides, seedPublicCatalog } from './helpers/public-catalog'
@@ -173,6 +175,71 @@ test('横竖配对约束：只上传一版时创建按钮保持禁用', async ({
   await expect(draft.getByRole('button', { name: '创建轮播项' })).toBeDisabled()
 })
 
+test('首页图按真实文件字节声明格式，不受扩展名或浏览器 MIME 误报影响', async ({ page }) => {
+  await gotoHomeAdmin(page)
+  await page.getByRole('button', { name: '新增轮播项' }).click()
+  const draft = page.locator('[data-testid="home-slide-draft"]')
+
+  await draft.getByLabel('选择横版（16:9）首页图文件').setInputFiles({
+    name: 'landscape.jpg',
+    mimeType: 'image/jpeg',
+    buffer: heroPng('landscape'),
+  })
+
+  await expect(draft.getByText(/新图已上传/)).toHaveCount(1)
+  const state = await fakeMediaState(page)
+  expect(state.putRecords.at(-1)?.contentType).toBe('image/png')
+})
+
+test('首页图服务端核验失败时显示具体原因与阶段', async ({ page }) => {
+  await gotoHomeAdmin(page)
+  await page.getByRole('button', { name: '新增轮播项' }).click()
+  const draft = page.locator('[data-testid="home-slide-draft"]')
+  await setFakeMediaFlags(page, { omitSha256OnNextPut: true })
+
+  await draft.getByLabel('选择横版（16:9）首页图文件').setInputFiles({
+    name: 'digest.png',
+    mimeType: 'image/png',
+    buffer: heroPng('landscape'),
+  })
+
+  await expect(draft.getByRole('alert')).toContainText('文件摘要或元数据与声明不一致')
+  await expect(draft.getByRole('alert')).toContainText('对象检查')
+  await expect(draft.getByRole('alert')).not.toContainText('上传未通过服务端核验')
+})
+
+test('新项使用空闲顺位，重复顺位启用时提示真实原因并可修正', async ({ page }) => {
+  await seedHomeSlides(page, [
+    { alt: '已启用首页图', sortOrder: 0, enabled: true },
+  ], DEFAULT_SETTINGS)
+  await gotoHomeAdmin(page)
+
+  await page.getByRole('button', { name: '新增轮播项' }).click()
+  const draft = page.locator('[data-testid="home-slide-draft"]')
+  await expect(draft.getByLabel(/顺位/)).toHaveValue('1')
+  await uploadHeroPair(page, draft)
+  await draft.getByLabel(/图片说明/).fill('待启用首页图')
+  await draft.getByLabel(/顺位/).fill('0')
+  await draft.getByRole('button', { name: '创建轮播项' }).click()
+
+  const card = page.locator('article.slide-card', { hasText: '未启用' })
+  await expect(card.getByLabel(/图片说明/)).toHaveValue('待启用首页图')
+  await card.getByRole('button', { name: '启用' }).click()
+  await expect(page.getByRole('alert').filter({ hasText: '顺位 0 已被其他启用项占用' }))
+    .toBeVisible()
+  await expect(page.getByText('首页数据已在其他地方变化')).toHaveCount(0)
+  await page.getByRole('alertdialog').getByRole('button', { name: '知道了' }).click()
+
+  await card.getByLabel(/顺位/).fill('1')
+  await card.getByRole('button', { name: '保存修改' }).click()
+  await expect(card.getByRole('button', { name: '保存修改' })).toBeDisabled()
+
+  const corrected = page.locator('article.slide-card', { hasText: '轮播项 · 顺位 1' })
+  await corrected.getByRole('button', { name: '启用' }).click()
+  await expect(corrected.getByText('已启用', { exact: true })).toBeVisible({ timeout: 15_000 })
+  await expect(corrected.getByText(/启用成功/)).toBeVisible()
+})
+
 test('启用后公开首页可见，停用后移除；启用过程有进度与成功反馈', async ({ page }) => {
   // 服务端契约要求至少保留一项启用轮播：预置常驻项后，新建项才能被停用。
   await seedHomeSlides(page, [
@@ -197,6 +264,23 @@ test('启用后公开首页可见，停用后移除；启用过程有进度与�
   await expect(card.getByText('未启用')).toBeVisible()
   await expect(card.getByRole('button', { name: '活动水印预览' })).toBeVisible()
   expect(await publicHomeAlts(page)).toEqual(['常驻首页图'])
+})
+
+test('最后一个启用轮播项不可停用时显示业务门禁，而非版本冲突', async ({ page }) => {
+  await seedHomeSlides(page, [
+    { alt: '唯一启用的首页图', sortOrder: 0, enabled: true },
+  ], DEFAULT_SETTINGS)
+  await gotoHomeAdmin(page)
+
+  const card = page.locator('article.slide-card').first()
+  await expect(card.getByLabel(/图片说明/)).toHaveValue('唯一启用的首页图')
+  await card.getByRole('button', { name: '停用' }).click()
+
+  await expect(page.getByRole('alert').filter({
+    hasText: '首页至少需要保留一个启用的轮播项',
+  })).toBeVisible()
+  await expect(page.getByText('首页数据已在其他地方变化')).toHaveCount(0)
+  await expect(card.getByText('已启用', { exact: true })).toBeVisible()
 })
 
 test('启用任务刷新后恢复真实阶段与公开衍生图计数', async ({ page }) => {
@@ -298,6 +382,7 @@ test('保存冲突：其他地方修改后提交，提示冲突并重新加载',
   await expect(page.getByRole('alert').filter({
     hasText: '首页数据已在其他地方变化',
   })).toBeVisible()
+  await page.getByRole('alertdialog').getByRole('button', { name: '知道了' }).click()
   // 冲突后版本基线已推进但保留用户输入：确认内容后可重试并成功。
   await expect(page.locator('#home-tagline')).toHaveValue('页面侧的口号')
   await page.getByRole('button', { name: '保存设置' }).click()
@@ -343,6 +428,7 @@ test('水印 profile 阻断：无活动水印时预览与启用都被拒绝', as
     await expect(page.getByRole('alert').filter({
       hasText: '首页数据或活动水印已变化',
     })).toBeVisible()
+    await page.getByRole('alertdialog').getByRole('button', { name: '知道了' }).click()
 
     await card.getByRole('button', { name: '启用' }).click()
     await expect(page.getByRole('alert').filter({

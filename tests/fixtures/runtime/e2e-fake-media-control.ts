@@ -38,6 +38,7 @@ interface ControlBody {
     featureTags?: string[]
     featured?: boolean
     sortOrder?: number
+    publicationStatus?: 'draft' | 'published'
     adoptionMethod?: 'regular' | 'event_drop'
     businessStatus?: 'preparing' | 'available' | 'event_sale' | 'scheduled' | 'in_production' | 'delivered'
     currentEventName?: string
@@ -275,6 +276,7 @@ export default defineEventHandler(async (event) => {
       const workId = randomUUID()
       const purpose = work.purpose ?? 'showcase'
       const adoption = purpose === 'adoption'
+      const publicationStatus = work.publicationStatus ?? 'published'
       sqlite.prepare(`
         INSERT INTO works (
           id, slug, character_name, species, suit_type, purpose,
@@ -282,7 +284,7 @@ export default defineEventHandler(async (event) => {
           owner_display, price_amount_minor, price_currency,
           publication_status, sort_order, featured,
           published_at, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'published', ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         workId,
         work.slug,
@@ -296,9 +298,10 @@ export default defineEventHandler(async (event) => {
         work.ownerDisplay ?? '不公开',
         adoption && work.priceMinorUnits ? work.priceMinorUnits : null,
         adoption && work.priceMinorUnits ? 'CNY' : null,
+        publicationStatus,
         work.sortOrder ?? index,
         work.featured ? 1 : 0,
-        now,
+        publicationStatus === 'published' ? now : null,
         now,
         now,
       )

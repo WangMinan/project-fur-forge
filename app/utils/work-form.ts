@@ -23,7 +23,7 @@ export interface WorkBasicsForm {
   purpose: WorkPurpose
   regularBusinessStatus: RegularAdoptionBusinessStatus
   slug: string
-  sortOrder: string
+  sortOrder: string | number
   species: string
   suitType: SuitType
 }
@@ -122,8 +122,8 @@ export function historicalEventAdoption(
     : null
 }
 
-export function parseSortOrderInput(raw: string) {
-  const input = raw.trim()
+export function parseSortOrderInput(raw: string | number) {
+  const input = String(raw).trim()
   if (input === '') {
     return { error: '排序值不能为空，最小为 0', value: undefined }
   }
@@ -245,7 +245,7 @@ export function workFormSnapshot(form: WorkBasicsForm) {
     ownerDisplay: form.ownerDisplay.trim(),
     purpose: form.purpose,
     slug: form.slug.trim(),
-    sortOrder: sortOrder.value ?? form.sortOrder.trim(),
+    sortOrder: sortOrder.value ?? String(form.sortOrder).trim(),
     species: form.species.trim(),
     suitType: form.suitType,
   }

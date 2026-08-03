@@ -384,6 +384,48 @@ export function updateManagedWork(
   return getManagedWork(sqlite, id)
 }
 
+/** 展示设置不改作品事实或媒体，因此已发布作品也可安全调整。 */
+export function updateManagedWorkPresentation(
+  sqlite: Database.Database,
+  id: string,
+  expectedVersion: number,
+  input: { featured: boolean, sortOrder: number },
+  now = Date.now(),
+) {
+  const current = requireWork(sqlite, id)
+  if (current.version !== expectedVersion) {
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+  }
+  const usedFeaturedOrders = new Set(input.featured
+    ? sqlite.prepare(`
+        SELECT sort_order FROM works
+        WHERE id != ? AND featured = 1
+      `).pluck().all(id) as number[]
+    : [])
+  let sortOrder = input.sortOrder
+  if (usedFeaturedOrders.has(sortOrder)) {
+    sortOrder = 0
+    while (usedFeaturedOrders.has(sortOrder)) {
+      sortOrder += 1
+    }
+  }
+  const result = sqlite.prepare(`
+    UPDATE works
+    SET sort_order = ?, featured = ?, version = version + 1, updated_at = ?
+    WHERE id = ? AND version = ?
+  `).run(
+    sortOrder,
+    input.featured ? 1 : 0,
+    now,
+    id,
+    expectedVersion,
+  )
+  if (result.changes !== 1) {
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+  }
+  return getManagedWork(sqlite, id)
+}
+
 export async function deleteManagedWork(
   sqlite: Database.Database,
   storage: MediaStorage,

@@ -1,10 +1,16 @@
 <script setup lang="ts">
-const props = defineProps<{
+const props = withDefaults(defineProps<{
+  cancelLabel?: string
   confirmLabel: string
   open: boolean
+  showCancel?: boolean
   title: string
   tone?: 'danger' | 'primary'
-}>()
+}>(), {
+  cancelLabel: '取消',
+  showCancel: true,
+  tone: 'primary',
+})
 
 const emit = defineEmits<{
   confirm: []
@@ -44,7 +50,7 @@ function onKeydown(event: KeyboardEvent) {
       <div
         ref="dialog"
         class="confirm-dialog admin-surface"
-        role="dialog"
+        :role="showCancel ? 'dialog' : 'alertdialog'"
         aria-modal="true"
         :aria-labelledby="'confirm-dialog-title'"
       >
@@ -54,10 +60,11 @@ function onKeydown(event: KeyboardEvent) {
         </div>
         <div class="confirm-dialog__actions">
           <button
+            v-if="showCancel"
             type="button"
             class="confirm-dialog__button confirm-dialog__button--secondary"
             @click="emit('cancel')"
-          >取消</button>
+          >{{ cancelLabel }}</button>
           <button
             type="button"
             class="confirm-dialog__button"

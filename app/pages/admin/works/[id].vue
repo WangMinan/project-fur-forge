@@ -84,7 +84,8 @@ const historical = computed(() => (
 ))
 
 const isDirty = computed(() =>
-  work.value !== null && workFormSnapshot(form.value) !== baseline.value,
+  work.value !== null
+  && (convertedFromEvent.value || workFormSnapshot(form.value) !== baseline.value),
 )
 
 const leaveGuardActive = computed(() =>
@@ -133,7 +134,7 @@ async function loadPreview() {
 }
 
 async function saveWork() {
-  if (saving.value || !work.value || locked.value || historical.value) {
+  if (saving.value || !work.value || (!locked.value && historical.value)) {
     return
   }
   submitted.value = true
@@ -145,16 +146,27 @@ async function saveWork() {
   saveError.value = null
   saving.value = true
   try {
-    const result = await adminApi(`/api/admin/v1/works/${workId}`, {
-      method: 'PUT',
-      body: {
-        expectedVersion: work.value.version,
-        payload: toWorkFieldsPayload(form.value),
+    const payload = toWorkFieldsPayload(form.value)
+    const presentationOnly = locked.value
+    const result = await adminApi(
+      presentationOnly
+        ? `/api/admin/v1/works/${workId}/presentation`
+        : `/api/admin/v1/works/${workId}`,
+      {
+        method: 'PUT',
+        body: {
+          expectedVersion: work.value.version,
+          payload: presentationOnly
+            ? { featured: payload.featured, sortOrder: payload.sortOrder }
+            : payload,
+        },
+        schema: managedWorkResponseSchema,
       },
-      schema: managedWorkResponseSchema,
-    })
+    )
     applyWork(result.data)
-    savedNotice.value = '已保存。'
+    savedNotice.value = presentationOnly
+      ? '排序与精选已保存，公开端已更新。'
+      : '已保存。'
     void loadPreview()
   }
   catch (error) {
@@ -170,6 +182,7 @@ async function saveWork() {
       && error.status === 409
       && error.serverMessage === 'Resource version is stale.'
     ) {
+      saveError.value = null
       conflictOpen.value = true
     }
   }
@@ -265,48 +278,27 @@ useSeoMeta({
           <button
             type="button"
             class="editor__button editor__button--secondary"
-            :disabled="!isDirty || saving || locked || historical !== null"
+            :disabled="!isDirty || saving || (!locked && historical !== null)"
             @click="saveWork"
-          >{{ saving ? '保存中…' : '保存' }}</button>
+          >{{ saving ? '保存中…' : locked ? '保存排序 / 精选' : '保存' }}</button>
         </div>
       </header>
 
-      <div v-if="conflictOpen" class="editor__conflict" role="alert">
-        <p class="editor__conflict-text">
-          作品已在其他地方被修改（版本冲突）。重新加载会放弃当前未保存的编辑；
-          继续编辑则保留本地内容，下次保存仍可能冲突。
-        </p>
-        <div class="editor__conflict-actions">
-          <button
-            type="button"
-            class="editor__button editor__button--secondary"
-            @click="onConflictReload"
-          >重新加载（放弃本地更改）</button>
-          <button
-            type="button"
-            class="editor__button editor__button--secondary"
-            @click="conflictOpen = false"
-          >继续编辑</button>
-        </div>
-      </div>
-
       <p v-if="locked" class="editor__locked" role="status">
-        作品已发布：基础信息、排序、精选与出厂照为只读。如需修改，请先在右侧下架。
+        作品已发布：基础信息与出厂照为只读；排序和精选仍可编辑，保存后会立即更新公开列表与首页精选。
       </p>
       <p v-else-if="historical" class="editor__locked" role="status">
         该作品保留着历史展会领养记录：为避免静默丢弃展会事实，保存前需要先在下方明确转为常规领养。
       </p>
 
-      <p v-if="saveError && !conflictOpen" class="editor__notice editor__notice--error" role="alert">
-        {{ saveError }}
-      </p>
-      <p v-else-if="savedNotice" class="editor__notice" role="status">{{ savedNotice }}</p>
+      <p v-if="savedNotice" class="editor__notice" role="status">{{ savedNotice }}</p>
 
       <div class="editor__layout">
         <div class="editor__main">
           <AdminWorkBasicsFields
             v-model="form"
             :disabled="locked || saving"
+            :ordering-disabled="saving"
             :errors="errors"
             :historical="historical"
             :saved-purpose="work.purpose"
@@ -428,6 +420,31 @@ useSeoMeta({
           展会实体与完整展会掉落管理属于 T37，本页不会保留展会字段。
         </p>
       </AdminConfirmDialog>
+
+      <AdminConfirmDialog
+        :open="conflictOpen"
+        title="作品版本已变化"
+        confirm-label="重新加载（放弃本地更改）"
+        cancel-label="继续编辑"
+        @confirm="onConflictReload"
+        @cancel="conflictOpen = false"
+      >
+        <p role="alert">
+          作品已在其他地方被修改（版本冲突）。重新加载会放弃当前未保存的编辑；
+          继续编辑则保留本地内容，下次保存仍可能冲突。
+        </p>
+      </AdminConfirmDialog>
+
+      <AdminConfirmDialog
+        :open="saveError !== null && !conflictOpen"
+        title="保存未完成"
+        confirm-label="知道了"
+        :show-cancel="false"
+        @confirm="saveError = null"
+        @cancel="saveError = null"
+      >
+        <p role="alert">{{ saveError }}</p>
+      </AdminConfirmDialog>
     </div>
   </AdminShell>
 </template>
@@ -526,28 +543,6 @@ useSeoMeta({
   gap: var(--admin-space-2);
 }
 
-.editor__conflict {
-  margin: 0 0 var(--admin-space-5);
-  padding: var(--admin-space-4);
-  border-radius: var(--admin-radius-md);
-  background: var(--admin-status-warning-soft);
-  display: grid;
-  gap: var(--admin-space-3);
-}
-
-.editor__conflict-text {
-  margin: 0;
-  font-size: var(--admin-font-sm);
-  color: var(--admin-status-warning);
-  line-height: var(--admin-line-normal);
-}
-
-.editor__conflict-actions {
-  display: flex;
-  gap: var(--admin-space-2);
-  flex-wrap: wrap;
-}
-
 .editor__locked {
   margin: 0 0 var(--admin-space-5);
   padding: var(--admin-space-3) var(--admin-space-4);
@@ -564,11 +559,6 @@ useSeoMeta({
   background: var(--admin-status-info-soft);
   color: var(--admin-status-info);
   font-size: var(--admin-font-sm);
-}
-
-.editor__notice--error {
-  background: var(--admin-status-error-soft);
-  color: var(--admin-status-error);
 }
 
 .editor__layout {

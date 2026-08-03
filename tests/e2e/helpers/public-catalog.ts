@@ -23,6 +23,7 @@ export interface SeedWork {
   featureTags?: string[]
   featured?: boolean
   sortOrder?: number
+  publicationStatus?: 'draft' | 'published'
   adoptionMethod?: 'regular' | 'event_drop'
   businessStatus?: 'preparing' | 'available' | 'event_sale' | 'scheduled' | 'in_production' | 'delivered'
   currentEventName?: string

@@ -217,6 +217,11 @@ export function useAdminHome() {
         return null
       }
       if (error instanceof AdminApiError && error.status === 409) {
+        if (error.serverMessage === 'At least one hero slide must remain enabled.') {
+          conflictNotice.value = null
+          await refreshHome()
+          return '停用未提交：首页至少需要保留一个启用的轮播项。请先启用另一个轮播项，再停用当前项。'
+        }
         await onConflict('首页数据已在其他地方变化，已重新加载，请确认后重试。')
         return '未提交：版本已变化，请确认当前内容后重试。'
       }
@@ -329,6 +334,22 @@ export function useAdminHome() {
         return null
       }
       if (error instanceof AdminApiError && error.status === 409) {
+        if (error.serverMessage === 'Enabled hero slides must have 1 to 5 unique positions.') {
+          const slide = home.value.slides.find(item => item.id === id)
+          const orderOccupied = slide && home.value.slides.some(item =>
+            item.enabled && item.sortOrder === slide.sortOrder,
+          )
+          conflictNotice.value = null
+          await refreshHome()
+          return orderOccupied
+            ? `启用未提交：顺位 ${slide.sortOrder} 已被其他启用项占用，请改为未使用的顺位并保存后重试。`
+            : '启用未提交：首页最多启用 5 个轮播项。'
+        }
+        if (error.serverMessage === 'Enabled hero slide order must be between 0 and 4.') {
+          conflictNotice.value = null
+          await refreshHome()
+          return '启用未提交：顺位必须是 0–4，请修改并保存后重试。'
+        }
         await onConflict('首页数据已在其他地方变化，已重新加载，请确认后重试。')
         return '启用未提交：版本或轮播状态已变化，请确认后重试。'
       }

@@ -1,6 +1,7 @@
 import {
   completeUploadSessionResponseSchema,
   createUploadSessionResponseSchema,
+  uploadSessionResponseSchema,
 } from '~~/shared/schemas/upload'
 import type {
   ConditionalPutDto,
@@ -12,6 +13,10 @@ import {
   buildUploadDeclaration,
   DECLARATION_FAILURE_LABELS,
 } from '~/utils/upload-declaration'
+import {
+  UPLOAD_FAILURE_CODE_LABELS,
+  UPLOAD_FAILURE_STAGE_LABELS,
+} from '~/utils/media-labels'
 import { AdminApiError } from './useAdminApi'
 
 // T20 首页横/竖槽位上传：digest → 会话（owner 为 site/home）→ 条件 PUT
@@ -72,6 +77,15 @@ export function useHeroAssetUpload(options: HeroAssetUploadOptions) {
       URL.revokeObjectURL(item.previewUrl)
       item.previewUrl = null
     }
+  }
+
+  function sessionFailureText(currentSession: UploadSessionDto) {
+    const text = currentSession.failureCode
+      ? UPLOAD_FAILURE_CODE_LABELS[currentSession.failureCode]
+      : '上传未通过服务端核验，请重新上传'
+    return currentSession.failureStage
+      ? `${text}（${UPLOAD_FAILURE_STAGE_LABELS[currentSession.failureStage]}）`
+      : text
   }
 
   async function startUpload(file: File) {
@@ -179,15 +193,39 @@ export function useHeroAssetUpload(options: HeroAssetUploadOptions) {
       }
     }
     catch (error) {
-      if (error instanceof AdminApiError && error.status === 401) {
+      if (!(error instanceof AdminApiError)) {
+        fail('网络异常，请稍后重试')
         return
       }
-      if (error instanceof AdminApiError && error.status === 409) {
+      if (error.status === 401) {
+        return
+      }
+      if (error.status === 400 || error.status === 409) {
+        const fresh = await adminApi(
+          `/api/admin/v1/media/upload-sessions/${currentSession.uploadSessionId}`,
+          { schema: uploadSessionResponseSchema },
+        ).catch(() => null)
+        if (fresh?.data.status === 'FAILED') {
+          fail(sessionFailureText(fresh.data))
+          return
+        }
+        if (fresh?.data.status === 'EXPIRED') {
+          fail('上传会话已过期，请重新上传')
+          return
+        }
+        if (fresh?.data.status === 'CANCELLED') {
+          fail('上传会话已取消，请重新上传')
+          return
+        }
+      }
+      if (error.status === 409) {
         fail('首页数据已在其他地方变化，请刷新后重试')
         options.onConflict()
         return
       }
-      fail('上传未通过服务端核验，请重新上传')
+      fail(error.status === 400
+        ? '上传未通过服务端核验，请重新上传'
+        : '服务端处理失败，请稍后重试')
     }
   }
 

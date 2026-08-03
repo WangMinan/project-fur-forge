@@ -25,6 +25,7 @@ import {
 const props = withDefaults(defineProps<{
   disabled?: boolean
   errors: WorkFormErrors
+  orderingDisabled?: boolean
   /** 服务端已保存的历史展会领养事实；存在时领养字段只读。 */
   historical?: HistoricalEventAdoption | null
   /** 已保存的用途，用于说明切换用途会清空哪些字段。 */
@@ -33,6 +34,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   disabled: false,
   historical: null,
+  orderingDisabled: false,
   savedPurpose: null,
   showErrors: false,
 })
@@ -349,11 +351,13 @@ function moveTag(index: number, offset: number) {
           type="number"
           min="0"
           step="1"
-          :disabled="disabled"
+          :disabled="orderingDisabled"
           :aria-invalid="errorFor('sortOrder') ? 'true' : undefined"
           :aria-describedby="describedBy('f-sort-order-hint', 'f-sort-order-error', Boolean(errorFor('sortOrder')))"
         >
-        <p id="f-sort-order-hint" class="field__hint">数值越小越靠前；公开列表与精选轨道都按此顺序</p>
+        <p id="f-sort-order-hint" class="field__hint">
+          数值越小越靠前；精选顺位重复时，保存后自动使用下一个空闲顺位
+        </p>
         <p v-if="errorFor('sortOrder')" id="f-sort-order-error" class="field__error">
           {{ errorFor('sortOrder') }}
         </p>
@@ -365,7 +369,7 @@ function moveTag(index: number, offset: number) {
             v-model="form.featured"
             type="checkbox"
             class="checkbox__input"
-            :disabled="disabled"
+            :disabled="orderingDisabled"
             aria-describedby="f-featured-hint"
           >
           <span>加入首页精选作品</span>
