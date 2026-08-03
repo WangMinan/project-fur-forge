@@ -114,13 +114,15 @@ const publicWorkBaseSchema = z.object({
   featureTags: workFeatureTagsSchema,
 }).strict()
 
+export const publicAdoptionWorkDtoSchema = publicWorkBaseSchema.extend({
+  purpose: z.literal('adoption'),
+  adoptionMethod: adoptionMethodSchema,
+  businessStatus: businessStatusSchema,
+  price: cnyPriceSchema.optional(),
+})
+
 export const publicWorkDtoSchema = z.discriminatedUnion('purpose', [
-  publicWorkBaseSchema.extend({
-    purpose: z.literal('adoption'),
-    adoptionMethod: adoptionMethodSchema,
-    businessStatus: businessStatusSchema,
-    price: cnyPriceSchema.optional(),
-  }),
+  publicAdoptionWorkDtoSchema,
   publicWorkBaseSchema.extend({
     purpose: z.literal('commission'),
     adoptionMethod: z.never().optional(),
@@ -272,6 +274,27 @@ export const replaceStudioPhotosRequestSchema = versionedRequestSchema(
   z.object({ photos: studioPhotoCollectionSchema }).strict(),
 )
 
+export const designSheetInputSchema = z.object({
+  assetId: resourceIdSchema,
+  alt: z.string().trim().min(1).max(500),
+}).strict()
+
+export const replaceDesignSheetRequestSchema = versionedRequestSchema(
+  z.object({
+    designSheet: designSheetInputSchema.nullable(),
+  }).strict(),
+)
+
+export const managedDesignSheetDtoSchema = designSheetInputSchema.extend({
+  alt: z.string().trim().min(1).max(500).nullable(),
+  version: resourceVersionSchema,
+  status: z.enum(['PENDING', 'READY', 'FAILED']),
+  width: z.number().int().positive().max(12_000),
+  height: z.number().int().positive().max(12_000),
+  position: z.literal(0),
+  publicVariantCount: z.number().int().nonnegative(),
+}).strict()
+
 export const managedStudioPhotoDtoSchema = studioPhotoBaseSchema.extend({
   /** Historical v1 identity only; brand-centered-v2 always uses center. */
   watermarkAnchor: watermarkAnchorSchema,
@@ -296,6 +319,7 @@ const managedWorkBaseSchema = mutableWorkBaseSchema.omit({
 export const managedWorkDtoSchema = z.discriminatedUnion('purpose', [
   managedWorkBaseSchema.extend({
     purpose: z.literal('adoption'),
+    designSheet: managedDesignSheetDtoSchema.nullable(),
     adoptionMethod: adoptionMethodSchema.nullable(),
     businessStatus: businessStatusSchema.nullable(),
     currentEventName: z.string().nullable(),
@@ -329,6 +353,7 @@ const workListItemBaseSchema = managedWorkBaseSchema.omit({
 export const workListItemDtoSchema = z.discriminatedUnion('purpose', [
   workListItemBaseSchema.extend({
     purpose: z.literal('adoption'),
+    designSheetAssetId: resourceIdSchema.nullable(),
     adoptionMethod: adoptionMethodSchema.nullable(),
     businessStatus: businessStatusSchema.nullable(),
     currentEventName: z.string().nullable(),
@@ -357,6 +382,7 @@ const publicSafeWorkPreviewBaseSchema = managedWorkBaseSchema.omit({
 export const publicSafeWorkPreviewDtoSchema = z.discriminatedUnion('purpose', [
   publicSafeWorkPreviewBaseSchema.extend({
     purpose: z.literal('adoption'),
+    designSheet: managedDesignSheetDtoSchema.nullable(),
     adoptionMethod: adoptionMethodSchema.nullable(),
     businessStatus: businessStatusSchema.nullable(),
     currentEventName: z.string().nullable(),

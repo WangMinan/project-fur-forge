@@ -387,6 +387,14 @@ describe('P0 schema boundary', () => {
       VALUES ('adoption-work', 'design', 'design_sheet', 0)
     `).run()
     expect(() => sqlite.prepare(`
+      UPDATE work_assets SET is_primary = 1
+      WHERE work_id = 'adoption-work' AND asset_id = 'design'
+    `).run()).toThrow(/design sheet cannot be a studio-photo primary/)
+    expect(() => sqlite.prepare(`
+      UPDATE work_assets SET role = 'studio_photo'
+      WHERE work_id = 'adoption-work' AND asset_id = 'design'
+    `).run()).toThrow(/role changes require relation replacement/)
+    expect(() => sqlite.prepare(`
       UPDATE works SET purpose = 'commission'
       WHERE id = 'adoption-work'
     `).run()).toThrow(/design sheet requires an adoption work/)
@@ -399,6 +407,19 @@ describe('P0 schema boundary', () => {
       INSERT INTO work_assets (work_id, asset_id, role, position)
       VALUES ('commission-work', 'studio-0', 'design_sheet', 0)
     `).run()).toThrow(/work asset role is invalid/)
+    sqlite.prepare(`
+      INSERT INTO work_assets (
+        work_id, asset_id, role, position, is_primary
+      ) VALUES ('adoption-work', 'studio-0', 'studio_photo', 0, 1)
+    `).run()
+    insertAsset('studio-primary-second', 'studio_photo')
+    expect(() => sqlite.prepare(`
+      INSERT INTO work_assets (
+        work_id, asset_id, role, position, is_primary
+      ) VALUES (
+        'adoption-work', 'studio-primary-second', 'studio_photo', 1, 1
+      )
+    `).run()).toThrow(/UNIQUE constraint failed/)
     expect(() => insertAsset('return', 'return_photo'))
       .toThrow(/assets_role/)
     expect(() => insertAsset('wrong-landscape', 'home_hero_landscape', {

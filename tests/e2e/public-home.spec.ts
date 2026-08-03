@@ -78,7 +78,7 @@ const SLIDES: SeedHomeSlide[] = [
 ]
 
 const SCREENSHOT_DIR =
-  'agent_docs/需求1-兽装工作室主页/implementation/notes/t19-t20/screenshots'
+  'agent_docs/需求1-兽装工作室主页/implementation/notes/t19-t22/t19-t20/screenshots'
 
 async function seedHome(
   page: Page,

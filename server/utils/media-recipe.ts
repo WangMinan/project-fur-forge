@@ -37,6 +37,7 @@ export interface PublicRecipeSourceGeometry {
   cropHeight?: number
   cropWidth?: number
   height: number
+  role?: MediaRole
   width: number
 }
 
@@ -118,6 +119,10 @@ const recipes = {
   widths: readonly number[]
   aspect: readonly [number, number] | null
 }>
+
+export function publicRecipeWidths(usage: PublicMediaUsage) {
+  return recipes[usage].widths
+}
 
 const selectReadyVariant = `
   SELECT
@@ -212,7 +217,7 @@ function defaultUsages(role: MediaRole): PublicMediaUsage[] {
     return ['work-card', 'detail']
   }
   if (role === 'design_sheet') {
-    return ['design-sheet', 'work-card', 'detail']
+    return ['design-sheet']
   }
   if (role === 'watermark_logo') {
     return []
@@ -220,6 +225,19 @@ function defaultUsages(role: MediaRole): PublicMediaUsage[] {
   return role === 'home_hero_landscape'
     ? ['home-hero-landscape']
     : ['home-hero-portrait']
+}
+
+export function workAssetPublicUsages(
+  role: 'design_sheet' | 'studio_photo',
+  primary: boolean,
+  hasPrimaryStudioPhoto: boolean,
+): PublicMediaUsage[] {
+  if (role === 'studio_photo') {
+    return primary ? ['work-card', 'detail'] : ['detail']
+  }
+  return hasPrimaryStudioPhoto
+    ? ['design-sheet']
+    : ['design-sheet', 'work-card']
 }
 
 function gravity(focalX: number, focalY: number) {
@@ -250,8 +268,13 @@ export function sourceSupportsPublicUsages(
     const availableHeight = usage === 'work-card'
       ? Math.round(source.height * (source.cropHeight ?? 1))
       : source.height
-    return availableWidth >= width
-      && (height === null || availableHeight >= height)
+    if (height === null) {
+      return availableWidth >= width
+    }
+    if (source.role === 'design_sheet') {
+      return availableWidth >= width || availableHeight >= height
+    }
+    return availableWidth >= width && availableHeight >= height
   })
 }
 
@@ -322,7 +345,9 @@ function recipeIdentity(
           height: sourceAsset.cropHeight,
         }
       : null,
-    background: sourceAsset.role === 'design_sheet' ? 'F7F7F7' : null,
+    background: sourceAsset.role === 'design_sheet' && height !== null
+      ? 'F7F7F7'
+      : null,
     format,
     quality: format === 'webp' ? 82 : format === 'jpeg' ? 86 : 100,
     watermarkProfile: profile.profileName,

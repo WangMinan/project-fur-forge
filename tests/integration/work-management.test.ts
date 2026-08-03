@@ -14,6 +14,7 @@ import {
 } from 'vitest'
 import {
   createWorkRequestSchema,
+  replaceDesignSheetRequestSchema,
   replaceStudioPhotosRequestSchema,
 } from '../../shared/schemas/work'
 import {
@@ -26,6 +27,7 @@ import {
   getManagedWork,
   getPublicSafeWorkPreview,
   listManagedWorks,
+  replaceManagedDesignSheet,
   replaceManagedStudioPhotos,
   updateManagedWork,
   updateManagedWorkPresentation,
@@ -62,7 +64,12 @@ function insertUser() {
   `).run(USER_ID, NOW, NOW, NOW)
 }
 
-function insertReadyPhoto(workId: string, workVersion: number, assetId: string) {
+function insertReadyWorkAsset(
+  workId: string,
+  workVersion: number,
+  assetId: string,
+  role: 'design_sheet' | 'studio_photo',
+) {
   const sha = assetId.replaceAll('-', '').padEnd(64, 'a').slice(0, 64)
     .replaceAll(/[^0-9a-f]/gu, 'a')
   const key = `test/t17-fixture/original/${assetId}/source.png`
@@ -70,9 +77,9 @@ function insertReadyPhoto(workId: string, workVersion: number, assetId: string) 
     INSERT INTO assets (
       id, role, status, private_object_key, sha256, byte_size,
       mime_type, width, height, created_at, updated_at
-    ) VALUES (?, 'studio_photo', 'READY', ?, ?, 1024,
+    ) VALUES (?, ?, 'READY', ?, ?, 1024,
               'image/png', 3000, 2400, ?, ?)
-  `).run(assetId, key, sha, NOW, NOW)
+  `).run(assetId, role, key, sha, NOW, NOW)
   sqlite.prepare(`
     INSERT INTO upload_sessions (
       id, owner_type, owner_id, owner_version, media_role,
@@ -80,13 +87,14 @@ function insertReadyPhoto(workId: string, workVersion: number, assetId: string) 
       expected_content_md5, expected_sha256, expected_width,
       expected_height, created_by, status, asset_id, version,
       created_at, expires_at, updated_at
-    ) VALUES (?, 'work', ?, ?, 'studio_photo', ?, 'image/png', 1024,
+    ) VALUES (?, 'work', ?, ?, ?, ?, 'image/png', 1024,
               'AAAAAAAAAAAAAAAAAAAAAA==', ?, 3000, 2400, ?, 'COMPLETED', ?, 3,
               ?, ?, ?)
   `).run(
     crypto.randomUUID(),
     workId,
     workVersion,
+    role,
     key,
     sha,
     USER_ID,
@@ -96,6 +104,15 @@ function insertReadyPhoto(workId: string, workVersion: number, assetId: string) 
     NOW + 1_000,
   )
   return key
+}
+
+function insertReadyPhoto(workId: string, workVersion: number, assetId: string) {
+  return insertReadyWorkAsset(
+    workId,
+    workVersion,
+    assetId,
+    'studio_photo',
+  )
 }
 
 function photo(assetId: string, primary: boolean, alt: string) {
@@ -488,6 +505,88 @@ describe('T22 work management', () => {
     `).pluck().get(firstId)).toBe(0)
   })
 
+  it('saves, replaces and deletes one design sheet with optimistic versions', () => {
+    const work = createManagedWork(sqlite, {
+      ...workInput,
+      slug: 'design-sheet-work',
+      purpose: 'adoption',
+      adoptionMethod: 'regular',
+      businessStatus: 'preparing',
+      priceCnyMinor: null,
+    }, NOW)
+    const firstId = '11111111-1111-4111-8111-111111111111'
+    const secondId = '22222222-2222-4222-8222-222222222222'
+    insertReadyWorkAsset(work.id, work.version, firstId, 'design_sheet')
+    insertReadyWorkAsset(work.id, work.version, secondId, 'design_sheet')
+
+    const saved = replaceManagedDesignSheet(
+      sqlite,
+      work.id,
+      work.version,
+      { assetId: firstId, alt: '角色完整设定图' },
+      NOW + 1,
+    )
+    expect(saved).toMatchObject({
+      version: 2,
+      designSheet: {
+        assetId: firstId,
+        alt: '角色完整设定图',
+        position: 0,
+        status: 'READY',
+      },
+    })
+    expect(() => replaceManagedDesignSheet(
+      sqlite,
+      work.id,
+      work.version,
+      { assetId: secondId, alt: '过期版本替换' },
+    )).toThrow(/stale/u)
+
+    const replaced = replaceManagedDesignSheet(
+      sqlite,
+      work.id,
+      saved.version,
+      { assetId: secondId, alt: '新版完整设定图' },
+      NOW + 2,
+    )
+    expect(replaced.designSheet).toMatchObject({ assetId: secondId })
+    expect(replaceManagedDesignSheet(
+      sqlite,
+      work.id,
+      replaced.version,
+      null,
+      NOW + 3,
+    )).toMatchObject({ version: 4, designSheet: null })
+    expect(sqlite.prepare(`
+      SELECT count(*) FROM assets WHERE role = 'design_sheet'
+    `).pluck().get()).toBe(2)
+    expect(JSON.stringify(saved)).not.toContain('/original/')
+  })
+
+  it('rejects a design sheet on a non-adoption work', () => {
+    const work = createManagedWork(sqlite, workInput, NOW)
+    const assetId = '33333333-3333-4333-8333-333333333333'
+    sqlite.prepare(`
+      INSERT INTO assets (
+        id, role, status, private_object_key, sha256, byte_size,
+        mime_type, width, height, created_at, updated_at
+      ) VALUES (?, 'design_sheet', 'READY', ?, ?, 1024,
+                'image/png', 3000, 2400, ?, ?)
+    `).run(
+      assetId,
+      `test/t17-fixture/original/${assetId}/source.png`,
+      'a'.repeat(64),
+      NOW,
+      NOW,
+    )
+    expect(() => replaceManagedDesignSheet(
+      sqlite,
+      work.id,
+      work.version,
+      { assetId, alt: '不应关联的设定图' },
+    )).toThrow(/adoption work/u)
+  })
+
   it('returns a contact-free, key-free public preview', () => {
     const work = createManagedWork(sqlite, workInput, NOW)
     const assetId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd'
@@ -529,6 +628,19 @@ describe('T22 work management', () => {
         ],
       },
     }).success).toBe(false)
+    expect(replaceStudioPhotosRequestSchema.safeParse({
+      expectedVersion: 1,
+      payload: {
+        photos: [
+          photo('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', true, '重复一'),
+          photo('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', false, '重复二'),
+        ],
+      },
+    }).success).toBe(false)
+    expect(replaceDesignSheetRequestSchema.safeParse({
+      expectedVersion: 1,
+      payload: { designSheet: null },
+    }).success).toBe(true)
 
     const work = createManagedWork(sqlite, workInput, NOW)
     const other = createManagedWork(sqlite, {
@@ -542,6 +654,6 @@ describe('T22 work management', () => {
       work.id,
       work.version,
       [photo(assetId, true, '错误归属照片')],
-    )).toThrow(/ready studio photo/u)
+    )).toThrow(/role, status or work ownership/u)
   })
 })

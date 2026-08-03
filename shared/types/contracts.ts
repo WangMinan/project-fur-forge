@@ -15,6 +15,9 @@ import type {
   publicHomeDtoSchema,
 } from '../schemas/home'
 import type {
+  publicAdoptionListDtoSchema,
+  publicAdoptionListItemDtoSchema,
+  publicDesignSheetDtoSchema,
   publicFeaturedWorksDtoSchema,
   publicWorkCardDtoSchema,
   publicWorkDetailDtoSchema,
@@ -38,10 +41,12 @@ import type {
   adminWorkDtoSchema,
   adoptionMethodSchema,
   businessStatusSchema,
+  managedDesignSheetDtoSchema,
   managedStudioPhotoDtoSchema,
   managedWorkDtoSchema,
   publicationStatusSchema,
   publicWorkDtoSchema,
+  publicAdoptionWorkDtoSchema,
   publicSafeWorkPreviewDtoSchema,
   regularAdoptionBusinessStatusSchema,
   returnPhotoConsentSchema,
@@ -94,6 +99,11 @@ export type AdminHeroSlideDto = z.infer<typeof adminHeroSlideDtoSchema>
 export type AdminHomeDto = z.infer<typeof adminHomeDtoSchema>
 export type PublicHomeDto = z.infer<typeof publicHomeDtoSchema>
 export type PublicWorkCardDto = z.infer<typeof publicWorkCardDtoSchema>
+export type PublicDesignSheetDto = z.infer<typeof publicDesignSheetDtoSchema>
+export type PublicAdoptionListItemDto = z.infer<
+  typeof publicAdoptionListItemDtoSchema
+>
+export type PublicAdoptionListDto = z.infer<typeof publicAdoptionListDtoSchema>
 export type PublicWorkGalleryItemDto = z.infer<
   typeof publicWorkGalleryItemDtoSchema
 >
@@ -122,8 +132,10 @@ export type ReturnPhotoConsentSource = z.infer<
 >
 export type ReturnPhotoConsent = z.infer<typeof returnPhotoConsentSchema>
 export type PublicWorkDto = z.infer<typeof publicWorkDtoSchema>
+export type PublicAdoptionWorkDto = z.infer<typeof publicAdoptionWorkDtoSchema>
 export type AdminWorkDto = z.infer<typeof adminWorkDtoSchema>
 export type WorkFields = z.infer<typeof workFieldsSchema>
+export type ManagedDesignSheetDto = z.infer<typeof managedDesignSheetDtoSchema>
 export type ManagedStudioPhotoDto = z.infer<typeof managedStudioPhotoDtoSchema>
 export type ManagedWorkDto = z.infer<typeof managedWorkDtoSchema>
 export type WorkListItemDto = z.infer<typeof workListItemDtoSchema>

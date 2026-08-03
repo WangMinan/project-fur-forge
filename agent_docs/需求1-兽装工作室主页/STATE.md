@@ -4,12 +4,13 @@
 
 ## 当前阶段
 
-阶段 4 · IMPLEMENTATION 进行中。T01–T22、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T22 独立 Review 结论为 `PASS WITH FOLLOW-UP`，用户于 2026-08-03 完成人工确认；当前下一任务为 T23。
+阶段 4 · IMPLEMENTATION 进行中。T01–T22、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。用户于 2026-08-03 授权同一后端轮次依次完成 T23 工程和 T25 服务端交接：T23 等待独立 Review，T25 等待前端接线、独立 Review 与用户验收，二者均未勾选；T24 Vue 管理界面未实现。
 
 T21 首次独立审查的 3 个 must-fix 与 1 个 should-fix、用户人工验收发现的管理入口命名、Hero 安全边距、作品筛选视觉、页脚联系方式配置、已保存首页轮播原图预览及启用态预览按钮错配均已修复并验证。用户于 2026-08-02 明确确认 T21 收口；首次 NOT PASS 报告继续保留为历史事实，不虚构第二份独立复审报告。
 
 阶段 C 启动说明见 [`implementation/notes/P0-C-STAGE-READINESS-2026-08-02.md`](./implementation/notes/P0-C-STAGE-READINESS-2026-08-02.md)。
 T22 后端、前端与独立 Review 证据分别见 [`implementation/notes/t19-t22/T22-BACKEND-2026-08-03.md`](./implementation/notes/t19-t22/T22-BACKEND-2026-08-03.md)、[`implementation/notes/t19-t22/T22-FRONTEND-2026-08-03.md`](./implementation/notes/t19-t22/T22-FRONTEND-2026-08-03.md) 和 [`implementation/notes/t19-t22/T22-INDEPENDENT-REVIEW-2026-08-03.md`](./implementation/notes/t19-t22/T22-INDEPENDENT-REVIEW-2026-08-03.md)。
+T23 工程和 T25 服务端交接分别见 [`implementation/notes/t23-t25/T23-ENGINEERING-2026-08-03.md`](./implementation/notes/t23-t25/T23-ENGINEERING-2026-08-03.md) 与 [`implementation/notes/t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md`](./implementation/notes/t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md)。
 
 ## 当前执行分工
 
@@ -49,6 +50,8 @@ T22 后端、前端与独立 Review 证据分别见 [`implementation/notes/t19-t
 - 角色化上传、服务端媒体核验、`recipe-v1`、非领养作品 CRUD、发布/下架和管理端媒体工作流；
 - 真实作品详情、作品列表、首页双源轮播、首页管理和站点联系方式投影；
 - T22 三用途写入联合类型、完整管理读写、人工排序/精选、历史展会只读兼容、公开精选 6 项上限和用户人工验收；
+- T23 服务端设定图/出厂照关系、数量/主图/顺序、按需 recipe、活动 profile 原子切换和 T21 迁移兼容；
+- T25 regular adoption 发布检查、公开 adoption 列表和统一详情媒体分区服务端契约；
 - 当前活动目标 `brand-centered-v2`：可配置 Logo、固定居中、默认 50% 不透明度、60% 缩放、原子全站切换和失败恢复。
 
 T14–T22 的完成状态保持有效。后续扩展不能把既有验收改写为失败，也不能用旧 `brand-standard-v1` 或四角锚点回退当前发布要求。
@@ -103,11 +106,12 @@ EXT-01 现在只表示“正式素材输入已经到位并完成角色映射”�
 - 2026-08-02：阶段 C 准备文档、执行路由和任务边界同步完成，T22 可启动。
 - 2026-08-03：T22 后端完成；现有 11 项迁移已满足列与约束，未制造新迁移。
 - 2026-08-03：T22 前端接线、独立浏览器 Review 和用户人工确认全部完成；T22 收口，下一任务切换为 T23。
+- 2026-08-03：用户调整 C2 后端顺序为 T23 → T25、明确跳过 T24 Vue 管理界面；T23 工程和 T25 服务端交接完成，任务勾选状态保持不变。
 
 ## 下一步
 
-启动 T23 · 多图关系、角色约束与配方按需生成：
+当前交接门禁：
 
-1. `BACKEND_PRIMARY` 从最新 `main` 审计 `work_assets`、媒体角色、现有迁移与 `recipe-v1` 差异；
-2. 只实现最多 5 张出厂照、1 张领养设定图的关系、顺序、主图、完整画布和页面实际需要的配方，并继续绑定活动 `brand-centered-v2`；
-3. 完成定向自动化和独立 Review 后再进入 T24；不提前实现 T24 管理快速编辑、T25 常规领养发布或 T37 展会矩阵。
+1. 在新的 GPT-5.6 Sol 上下文中独立 Review T23 服务端、迁移、媒体配方和 profile 原子切换，决定是否勾选 T23；
+2. 后续前端模型接入 T24 角色化管理体验和 T25 `/adoptions`/统一详情媒体分区，必须呈现真实上传、发布进度、冲突和恢复状态；
+3. T25 完成浏览器/视觉 Review 与用户验收前保持未勾选；T29 重定向和 T37 展会实体仍不得提前实现。

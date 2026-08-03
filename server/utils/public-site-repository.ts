@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3'
 import { publicHomeDtoSchema } from '../../shared/schemas/home'
 import {
+  publicAdoptionListDtoSchema,
   publicFeaturedWorksDtoSchema,
   publicWorkDetailDtoSchema,
   publicWorkListDtoSchema,
@@ -8,8 +9,10 @@ import {
   publicWorkSummaryDtoSchema,
 } from '../../shared/schemas/public-content'
 import type {
+  PublicAdoptionListDto,
   PublicFeaturedWorksDto,
   PublicHomeDto,
+  PublicSourceSetDto,
   PublicWorkDetailDto,
   PublicWorkListDto,
   PublicWorkSummaryDto,
@@ -21,6 +24,7 @@ import {
 } from './media-mapper'
 import type { VariantRecord } from './media-mapper'
 import { getPublicHome } from './home-management'
+import { publicRecipeWidths } from './media-recipe'
 import { getRuntimeConfig } from './runtime-config'
 import { toPublicWorkDto } from './work-mapper'
 
@@ -31,6 +35,7 @@ export interface PublicWorksQuery {
 
 export interface PublicSiteRepository {
   getWorkBySlug(slug: string): PublicWorkDetailDto | null
+  listAdoptions(): PublicAdoptionListDto
   listWorks(query?: PublicWorksQuery): PublicWorkListDto
   listFeaturedWorks(): PublicFeaturedWorksDto
   getHome(): PublicHomeDto
@@ -55,11 +60,12 @@ interface PublishedWorkRow {
   version: number
 }
 
-interface PhotoRow {
+interface WorkMediaRow {
   alt: string | null
   assetId: string
   position: number
   primary: number
+  role: 'design_sheet' | 'studio_photo'
   workId: string
 }
 
@@ -68,14 +74,24 @@ interface PublicVariantRow extends VariantRecord {
 }
 
 interface SnapshotEntry {
+  designSheet: {
+    alt: string
+    assetId: string
+    sources: PublicSourceSetDto
+  } | null
   featured: boolean
   purpose: PublishedWorkRow['purpose']
+  studioPhotos: Array<{
+    alt: string
+    assetId: string
+    card: PublicSourceSetDto | null
+    position: number
+    primary: number
+    sources: PublicSourceSetDto
+  }>
   suitType: PublishedWorkRow['suitType']
   summary: PublicWorkSummaryDto
 }
-
-const WORK_CARD_WIDTHS = [480, 768, 1200] as const
-const DETAIL_WIDTHS = [960, 1600, 2400] as const
 
 function groupBy<T, K>(values: readonly T[], keyFor: (value: T) => K) {
   const grouped = new Map<K, T[]>()
@@ -89,13 +105,13 @@ function groupBy<T, K>(values: readonly T[], keyFor: (value: T) => K) {
 function sourceSet(
   variants: readonly PublicVariantRow[],
   mediaBaseUrl: string,
-  usage: 'work-card' | 'detail',
+  usage: 'design-sheet' | 'detail' | 'work-card',
 ) {
   try {
     const sources = toPublicSourceSetDto(
       variants.filter(variant => variant.usage === usage),
       mediaBaseUrl,
-      usage === 'work-card' ? WORK_CARD_WIDTHS : DETAIL_WIDTHS,
+      publicRecipeWidths(usage),
     )
     if (
       usage === 'work-card'
@@ -141,23 +157,24 @@ function loadTags(sqlite: Database.Database) {
   `).all() as Array<{ value: string, workId: string }>
 }
 
-function loadPhotos(sqlite: Database.Database) {
+function loadWorkMedia(sqlite: Database.Database) {
   return sqlite.prepare(`
     SELECT
       relation.work_id AS workId,
       relation.asset_id AS assetId,
       relation.alt_text AS alt,
       relation.position,
-      relation.is_primary AS "primary"
+      relation.is_primary AS "primary",
+      relation.role
     FROM work_assets AS relation
     JOIN works AS work ON work.id = relation.work_id
     JOIN assets AS asset ON asset.id = relation.asset_id
     WHERE work.publication_status = 'published'
-      AND relation.role = 'studio_photo'
-      AND asset.role = 'studio_photo'
+      AND relation.role IN ('design_sheet', 'studio_photo')
+      AND asset.role = relation.role
       AND asset.status = 'READY'
     ORDER BY relation.work_id, relation.position
-  `).all() as PhotoRow[]
+  `).all() as WorkMediaRow[]
 }
 
 function loadCurrentPublicVariants(sqlite: Database.Database) {
@@ -186,8 +203,8 @@ function loadCurrentPublicVariants(sqlite: Database.Database) {
       ON profile.id = branding.active_watermark_profile_id
     WHERE variant.storage_scope = 'PUBLIC'
       AND variant.status = 'READY'
-      AND variant.media_role = 'studio_photo'
-      AND variant.usage IN ('work-card', 'detail')
+      AND variant.media_role IN ('design_sheet', 'studio_photo')
+      AND variant.usage IN ('work-card', 'detail', 'design-sheet')
       AND variant.recipe_version = 'recipe-v1'
       AND variant.watermark_profile = 'brand-centered-v2'
       AND variant.watermark_profile_id = profile.id
@@ -209,7 +226,7 @@ function snapshot(
   mediaBaseUrl: string,
 ): SnapshotEntry[] {
   const tagsByWork = groupBy(loadTags(sqlite), tag => tag.workId)
-  const photosByWork = groupBy(loadPhotos(sqlite), photo => photo.workId)
+  const mediaByWork = groupBy(loadWorkMedia(sqlite), media => media.workId)
   const variantsByAsset = groupBy(
     loadCurrentPublicVariants(sqlite),
     variant => variant.assetId,
@@ -232,39 +249,77 @@ function snapshot(
     if (!facts) {
       continue
     }
-    const photos = (photosByWork.get(row.id) ?? []).flatMap((photo) => {
-      const variants = variantsByAsset.get(photo.assetId) ?? []
-      const detail = sourceSet(variants, mediaBaseUrl, 'detail')
-      if (!detail) {
-        return []
-      }
-      return [{
-        ...photo,
-        alt: toSafePublicAlt(
-          photo.alt,
-          `${row.characterName}的出厂照`,
-        ),
-        detail,
-        card: sourceSet(variants, mediaBaseUrl, 'work-card'),
-      }]
-    })
+    const media = mediaByWork.get(row.id) ?? []
+    const designSheet = media
+      .filter(item => item.role === 'design_sheet')
+      .flatMap((item) => {
+        const sources = sourceSet(
+          variantsByAsset.get(item.assetId) ?? [],
+          mediaBaseUrl,
+          'design-sheet',
+        )
+        return sources ? [{
+          assetId: item.assetId,
+          alt: toSafePublicAlt(
+            item.alt,
+            `${row.characterName}的完整设定图`,
+          ),
+          sources,
+        }] : []
+      })[0] ?? null
+    const photos = media
+      .filter(item => item.role === 'studio_photo')
+      .flatMap((photo) => {
+        const variants = variantsByAsset.get(photo.assetId) ?? []
+        const detail = sourceSet(variants, mediaBaseUrl, 'detail')
+        if (!detail) {
+          return []
+        }
+        return [{
+          ...photo,
+          alt: toSafePublicAlt(
+            photo.alt,
+            `${row.characterName}的出厂照`,
+          ),
+          sources: detail,
+          card: sourceSet(variants, mediaBaseUrl, 'work-card'),
+        }]
+      })
     const primary = photos.find(photo => photo.primary === 1 && photo.card)
-    if (!primary) {
+    const designCard = designSheet
+      ? sourceSet(
+          variantsByAsset.get(designSheet.assetId) ?? [],
+          mediaBaseUrl,
+          'work-card',
+        )
+      : null
+    const card = primary?.card
+      ? { assetId: primary.assetId, alt: primary.alt, sources: primary.card }
+      : designSheet && designCard
+        ? { assetId: designSheet.assetId, alt: designSheet.alt, sources: designCard }
+        : null
+    if (
+      !card
+      || (
+        row.purpose === 'adoption'
+        && row.adoptionMethod === 'regular'
+        && !designSheet
+      )
+      || (row.purpose !== 'adoption' && !primary)
+    ) {
       continue
     }
     entries.push({
       featured: row.featured === 1,
+      designSheet,
       purpose: row.purpose,
       suitType: row.suitType,
       summary: publicWorkSummaryDtoSchema.parse({
         work: facts,
         href: `/works/${row.slug}`,
-        card: {
-          assetId: primary.assetId,
-          alt: primary.alt,
-          sources: primary.card,
-        },
+        card,
       }),
+      studioPhotos: photos,
     })
   }
 
@@ -296,42 +351,47 @@ export function createSqlitePublicSiteRepository(
       if (!match) {
         return null
       }
-      const photos = loadPhotos(sqlite)
-        .filter(photo => photo.workId === match.current.summary.work.id)
-      const variantsByAsset = groupBy(
-        loadCurrentPublicVariants(sqlite),
-        variant => variant.assetId,
-      )
-      const gallery = photos.flatMap((photo) => {
-        const sources = sourceSet(
-          variantsByAsset.get(photo.assetId) ?? [],
-          mediaBaseUrl,
-          'detail',
-        )
-        return sources ? [{
-          assetId: photo.assetId,
-          alt: toSafePublicAlt(
-            photo.alt,
-            `${match.current.summary.work.characterName}的出厂照`,
-          ),
-          position: photo.position,
-          sources,
-        }] : []
-      })
-      if (!gallery.some(item => (
-        item.assetId === match.current.summary.card.assetId
-      ))) {
-        return null
-      }
+      const primaryStudioPhotoAssetId = match.current.studioPhotos.find(
+        photo => photo.primary === 1,
+      )?.assetId ?? null
+      const studioPhotos = match.current.studioPhotos.map(photo => ({
+        assetId: photo.assetId,
+        alt: photo.alt,
+        position: photo.position,
+        sources: photo.sources,
+      }))
       return publicWorkDetailDtoSchema.parse({
         work: match.current.summary.work,
         href: match.current.summary.href,
         media: {
-          primaryAssetId: match.current.summary.card.assetId,
+          primaryAssetId: primaryStudioPhotoAssetId,
+          primaryStudioPhotoAssetId,
           card: match.current.summary.card,
-          gallery,
+          gallery: studioPhotos,
+          studioPhotos,
+          ...(match.current.designSheet
+            ? { designSheet: match.current.designSheet }
+            : {}),
         },
         related: match.related.map(entry => entry.summary),
+      })
+    },
+
+    listAdoptions() {
+      const items = snapshot(sqlite, mediaBaseUrl).flatMap(entry => (
+        entry.summary.work.purpose === 'adoption'
+        && entry.summary.work.adoptionMethod === 'regular'
+        && entry.designSheet
+          ? [{
+              work: entry.summary.work,
+              href: entry.summary.href,
+              designSheet: entry.designSheet,
+            }]
+          : []
+      ))
+      return publicAdoptionListDtoSchema.parse({
+        items,
+        resultCount: items.length,
       })
     },
 
@@ -401,6 +461,23 @@ export function createFakePublicSiteRepository(
     getWorkBySlug(slug) {
       const detail = bySlug.get(slug)
       return detail ? publicWorkDetailDtoSchema.parse(detail) : null
+    },
+    listAdoptions() {
+      const items = details.flatMap(detail => (
+        detail.work.purpose === 'adoption'
+        && detail.work.adoptionMethod === 'regular'
+        && detail.media.designSheet
+          ? [{
+              work: detail.work,
+              href: detail.href,
+              designSheet: detail.media.designSheet,
+            }]
+          : []
+      ))
+      return publicAdoptionListDtoSchema.parse({
+        items,
+        resultCount: items.length,
+      })
     },
     listWorks(query = {}) {
       const parsed = publicWorkListQuerySchema.safeParse(query)

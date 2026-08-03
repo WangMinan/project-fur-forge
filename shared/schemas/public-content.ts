@@ -5,6 +5,7 @@ import {
   publicSourceSetDtoSchema,
 } from './media'
 import {
+  publicAdoptionWorkDtoSchema,
   publicWorkDtoSchema,
   suitTypeSchema,
   workPurposeSchema,
@@ -23,6 +24,12 @@ export const publicWorkGalleryItemDtoSchema = z.object({
   sources: publicSourceSetDtoSchema,
 }).strict()
 
+export const publicDesignSheetDtoSchema = z.object({
+  assetId: resourceIdSchema,
+  alt: publicAltSchema,
+  sources: publicSourceSetDtoSchema,
+}).strict()
+
 export const publicWorkSummaryDtoSchema = z.object({
   work: publicWorkDtoSchema,
   href: z.string().regex(/^\/works\/[a-z0-9]+(?:-[a-z0-9]+)*$/),
@@ -33,9 +40,12 @@ export const publicWorkDetailDtoSchema = z.object({
   work: publicWorkDtoSchema,
   href: z.string().regex(/^\/works\/[a-z0-9]+(?:-[a-z0-9]+)*$/),
   media: z.object({
-    primaryAssetId: resourceIdSchema,
+    primaryAssetId: resourceIdSchema.nullable(),
+    primaryStudioPhotoAssetId: resourceIdSchema.nullable(),
     card: publicWorkCardDtoSchema,
-    gallery: z.array(publicWorkGalleryItemDtoSchema).min(1).max(5),
+    gallery: z.array(publicWorkGalleryItemDtoSchema).max(5),
+    designSheet: publicDesignSheetDtoSchema.optional(),
+    studioPhotos: z.array(publicWorkGalleryItemDtoSchema).max(5),
   }).strict(),
   related: z.array(publicWorkSummaryDtoSchema).max(3),
 }).strict()
@@ -57,6 +67,19 @@ export const publicFeaturedWorksDtoSchema = z.object({
   resultCount: z.number().int().min(0).max(6),
 }).strict()
 
+export const publicAdoptionListItemDtoSchema = z.object({
+  work: publicAdoptionWorkDtoSchema.extend({
+    adoptionMethod: z.literal('regular'),
+  }),
+  href: z.string().regex(/^\/works\/[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  designSheet: publicDesignSheetDtoSchema,
+}).strict()
+
+export const publicAdoptionListDtoSchema = z.object({
+  items: z.array(publicAdoptionListItemDtoSchema),
+  resultCount: z.number().int().nonnegative(),
+}).strict()
+
 export const publicWorkListQuerySchema = z.object({
   purpose: workPurposeSchema.optional(),
   suitType: suitTypeSchema.optional(),
@@ -70,4 +93,7 @@ export const publicWorkListResponseSchema = apiSuccessSchema(
 )
 export const publicFeaturedWorksResponseSchema = apiSuccessSchema(
   publicFeaturedWorksDtoSchema,
+)
+export const publicAdoptionListResponseSchema = apiSuccessSchema(
+  publicAdoptionListDtoSchema,
 )

@@ -4,7 +4,7 @@ import type { Page } from '@playwright/test'
 
 const SCREENSHOT_DIR = resolve(
   process.cwd(),
-  'agent_docs/需求1-兽装工作室主页/implementation/notes/t14-t18-ui/screenshots',
+  'agent_docs/需求1-兽装工作室主页/implementation/notes/t14-t18/t14-t18-ui/screenshots',
 )
 
 export async function capture(page: Page, name: string, directory?: string) {

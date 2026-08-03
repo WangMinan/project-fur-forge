@@ -260,6 +260,55 @@ describe('GATE-07 watermark branding lifecycle', () => {
     )).resolves.toEqual(applied)
   })
 
+  it('includes published design-sheet usages in the atomic profile switch', async () => {
+    insertSource('adoption-design', 'design_sheet', 3200, 1800)
+    sqlite.prepare(`
+      INSERT INTO works (
+        id, slug, character_name, species, suit_type, purpose,
+        adoption_method, business_status, owner_display,
+        publication_status, published_at, created_at, updated_at
+      ) VALUES (
+        'adoption-work', 'adoption-work', '待领养角色', '犬科', 'partial',
+        'adoption', 'regular', 'available', '不公开',
+        'published', ?, ?, ?
+      )
+    `).run(NOW, NOW, NOW)
+    sqlite.prepare(`
+      INSERT INTO work_assets (
+        work_id, asset_id, role, alt_text, position, is_primary
+      ) VALUES (
+        'adoption-work', 'adoption-design', 'design_sheet',
+        '待领养角色完整设定图', 0, 0
+      )
+    `).run()
+    await generatePublicVariants(
+      sqlite,
+      storage,
+      'adoption-design',
+      ['design-sheet', 'work-card'],
+      NOW,
+    )
+    const { draft } = await createPreviewedDraft(56)
+
+    const applied = await applyDraft(draft.id, draft.version)
+    expect(applied).toMatchObject({
+      status: 'DONE',
+      affectedWorkCount: 2,
+      affectedHeroSlideCount: 1,
+      targetVariantCount: 36,
+      generatedVariantCount: 36,
+      verifiedVariantCount: 36,
+    })
+    expect(sqlite.prepare(`
+      SELECT count(*) FROM asset_variants
+      WHERE asset_id = 'adoption-design'
+        AND storage_scope = 'PUBLIC' AND status = 'READY'
+        AND watermark_profile_id = ?
+        AND watermark_profile = 'brand-centered-v2'
+        AND watermark_anchor = 'center'
+    `).pluck().get(draft.id)).toBe(12)
+  })
+
   it('persists an application operation before rebuilding public variants', async () => {
     const { draft } = await createPreviewedDraft()
     const started = startWatermarkProfileApplication(
