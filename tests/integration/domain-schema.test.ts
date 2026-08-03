@@ -813,4 +813,47 @@ describe('P0 schema boundary', () => {
       now,
     )).toThrow(/publication_operations_status/)
   })
+
+  it('constrains independent site statuses and restricted content columns', () => {
+    expect(sqlite.prepare(`
+      SELECT contact_douyin FROM site_content WHERE id = 'site'
+    `).pluck().get()).toBe('to3114559925')
+    const insertStatus = sqlite.prepare(`
+      INSERT INTO business_statuses (
+        kind, tone, label, detail, href, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `)
+    insertStatus.run(
+      'commission',
+      'limited',
+      '委托有限开放',
+      '以当前公开说明为准。',
+      '/commission',
+      now,
+      now,
+    )
+    insertStatus.run(
+      'adoption',
+      'open',
+      '领养开放',
+      '请查看当前角色。',
+      '/adoptions',
+      now,
+      now,
+    )
+    expect(sqlite.prepare('SELECT count(*) FROM business_statuses').pluck().get())
+      .toBe(2)
+    expect(() => sqlite.prepare(`
+      UPDATE business_statuses SET tone = 'busy'
+      WHERE kind = 'adoption'
+    `).run()).toThrow(/business_statuses_tone/)
+    expect(() => sqlite.prepare(`
+      UPDATE business_statuses SET href = '/adoptions'
+      WHERE kind = 'commission'
+    `).run()).toThrow(/business_statuses_href/)
+    expect(() => sqlite.prepare(`
+      UPDATE site_content SET basic_terms = '<script>x</script>'
+      WHERE id = 'site'
+    `).run()).toThrow(/site_content_basic_terms/)
+  })
 })

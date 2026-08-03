@@ -6,7 +6,7 @@ This file provides guidance to coding agents working with code in this repositor
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01–T22、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。** T23–T25 实现、自动化自检和用户 2026-08-04 人工核验已通过；独立 Review 尚未执行。T23、T24、T25 均未勾选。
+> **当前阶段：阶段 4 IMPLEMENTATION，T01–T25、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。** T23–T25 已于 2026-08-04 收口；T26–T27 服务端契约、迁移、管理 API、公开投影和自动化已完成，任务仍待前端与独立 Review，保持未勾选。
 
 ## 网站核心原则（景宸确认）
 
@@ -113,5 +113,7 @@ pnpm auth:reset-password --confirm RESET_SINGLE_ADMIN_PASSWORD
 - T22 三用途共享 Schema、管理 API/service、管理 UI、公开投影、历史展会兼容、精选 6 项上限和完整用户验收；
 - T24 设定图/出厂照管理分区、同源原图与活动水印预览、上传恢复、列表媒体摘要；
 - T25 `/adoptions` 横版设定图列表和统一详情媒体分区；只有设定图的领养不进入 `/works`。
+- T23–T25 已完成独立 Agent Review 与用户确认，任务清单和阶段文档已同步收口。
+- T26–T27 已落地受限固定字段、委托/领养独立营业状态、版本冲突、管理 Host/Origin/CSRF/no-store 和无版本/无私有联系人的公开投影；未经确认的文案保持空值。
 
-`brand-standard-v1` 只保留为历史身份，当前发布必须匹配活动 `brand-centered-v2` 和 `recipe-v2`。当前下一门禁是在新上下文独立 Review T23–T25，并复核正式素材管理全链；不提前进入 T29 重定向或 T37 展会完整矩阵。
+`brand-standard-v1` 只保留为历史身份，当前发布必须匹配活动 `brand-centered-v2` 和 `recipe-v2`。当前下一交接是 T26–T27 前端接入现有“首页管理”以及 `/commission`、`/about`、`/contact`，随后独立 Review；不建设万能 CMS，也不提前进入 T29 重定向或 T37 展会完整矩阵。

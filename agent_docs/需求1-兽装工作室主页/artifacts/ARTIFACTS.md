@@ -13,8 +13,8 @@
 | 计划 | `planning/PLAN.md` | `planning/WATERMARK-CENTERED-V2.md` |
 | 模型投影 | `models/README.md` | `models/WATERMARK-CENTERED-V2.md` |
 | 设计 | `.design/` | `.design/WATERMARK-CENTERED-V2.md` |
-| 任务 | `implementation/TASKS.md` | T01–T22、EXT-01/02 与 GATE-06/07 已完成；下一任务 T23 |
-| 状态 | `STATE.md` | 阶段 C 已解锁，main 直推和浏览器 Review 已生效 |
+| 任务 | `implementation/TASKS.md` | T01–T25、EXT-01/02 与 GATE-06/07 已完成；T26–T27 服务端完成但未勾选 |
+| 状态 | `STATE.md` | 阶段 C 的 T26–T27 前端/Review 交接，main 直推和浏览器 Review 继续生效 |
 
 ## 当前执行入口
 
@@ -22,7 +22,7 @@
 | --- | --- | --- |
 | `implementation/notes/P0-C-STAGE-READINESS-2026-08-02.md` | 当前 | 阶段 C 启动条件、T22 边界、执行波次、main 纪律和验收方法 |
 | `implementation/EXECUTION_ROUTING.md` | 当前 | 前端模型池、GPT-5.6 Sol 后端/Review、串行交接、定向自动化与真实浏览器 Review |
-| `implementation/TASKS.md` | 当前 | 唯一可勾选清单；T23 是唯一下一任务 |
+| `implementation/TASKS.md` | 当前 | 唯一可勾选清单；T26–T27 服务端完成，下一步是真实内容确认、前端与独立 Review |
 | `materials/MATERIAL-MANIFEST.md` | 已确认 | Logo、作品、横版设定图、返图与页面候选的正式输入和衍生职责；EXT-01 完成 |
 | `implementation/notes/README.md` | 当前 | 按当前/收口/历史/截图整理全部实施记录，不移动已被引用的旧路径 |
 
@@ -41,6 +41,8 @@
 | T21 首次独立审查 | NOT PASS（历史） | `implementation/notes/t19-t22/T21-REVIEW-2026-08-01.md`；findings 已完成修复 |
 | T21 人工验收与收口 | 已完成 | `implementation/notes/t19-t22/T21-MANUAL-UI-FIX-2026-08-02.md`；用户明确确认 |
 | T22 后端/前端/独立 Review/用户验收 | 已完成 | `implementation/notes/t19-t22/T22-BACKEND-2026-08-03.md`、`T22-FRONTEND-2026-08-03.md`、`T22-INDEPENDENT-REVIEW-2026-08-03.md` |
+| T23–T25 角色化媒体与常规领养 | 已完成 | `implementation/notes/t23-t25/T23-T25-CLOSURE-2026-08-04.md` 及同目录工程、前端、人工验收证据 |
+| T26–T27 服务端 | 已完成待前端/Review | `implementation/notes/t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md`；任务未勾选 |
 | EXT-01 正式素材 | 已完成 | `materials/MATERIAL-MANIFEST.md`；文件交付和角色映射完成，T30/T51 继续生成/校准衍生物 |
 
 ## 历史证据边界
@@ -60,12 +62,11 @@
 
 ## 下一批预期产物
 
-T23 预期形成一份主记录，至少覆盖：
+T26–T27 前端与独立 Review 预期补齐：
 
-- 现有 `work_assets`、媒体角色、迁移与共享 Schema/service 的差异；
-- 最多 5 张出厂照、1 张领养设定图的数量、顺序、主图和完整画布约束；
-- 同一资产不得冒充多个角色、用途变化阻断和活动 `brand-centered-v2` 身份；
-- 页面实际需要的 recipe、来源关系、清理与公开投影边界；
-- 定向测试、独立 Review，以及 T24/T25/T37 非范围。
+- 现有“首页管理”中的营业状态、委托 FAQ、关于/约定和联系固定区块，不增加第五导航；
+- `/commission`、`/about`、`/contact` SSR 对公开安全投影的消费和空值隐藏；
+- 双 Host、三视口、成功/校验/409/刷新、键盘/焦点、console/network 与 ownerContact 泄漏复核；
+- 用户确认后的真实文案登记和最终验收结论。
 
-T23 完成前不得进入 T24 或 T25。
+T26、T27 在前端与独立 Review 前保持未勾选；不提前进入 T29 或 T37。

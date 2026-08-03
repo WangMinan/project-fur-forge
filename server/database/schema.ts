@@ -699,8 +699,9 @@ export const businessStatuses = sqliteTable('business_statuses', {
   ),
   check(
     'business_statuses_href',
-    sql`${table.href} IN ('/commission', '/adoptions')`,
+    sql`(${table.kind} = 'commission' AND ${table.href} = '/commission') OR (${table.kind} = 'adoption' AND ${table.href} = '/adoptions')`,
   ),
+  check('business_statuses_version_positive', sql`${table.version} > 0`),
 ])
 
 export const siteContent = sqliteTable('site_content', {
@@ -708,6 +709,15 @@ export const siteContent = sqliteTable('site_content', {
   heroTagline: text('hero_tagline'),
   contactEmail: text('contact_email'),
   contactQq: text('contact_qq'),
+  contactDouyin: text('contact_douyin'),
+  commissionIntro: text('commission_intro'),
+  commissionEstimateNote: text('commission_estimate_note'),
+  commissionEmailAction: text('commission_email_action'),
+  commissionFaqJson: text('commission_faq_json'),
+  aboutStudioFacts: text('about_studio_facts'),
+  aboutMakingScope: text('about_making_scope'),
+  basicTerms: text('basic_terms'),
+  contactAntiScam: text('contact_anti_scam'),
   heroAutoRotate: integer('hero_auto_rotate', { mode: 'boolean' })
     .notNull().default(false),
   heroAutoRotateIntervalMs: integer('hero_auto_rotate_interval_ms')
@@ -723,6 +733,42 @@ export const siteContent = sqliteTable('site_content', {
   check(
     'site_content_rotation_interval',
     sql`${table.heroAutoRotateIntervalMs} >= 6000`,
+  ),
+  check(
+    'site_content_commission_intro',
+    sql`${table.commissionIntro} IS NULL OR (length(trim(${table.commissionIntro})) BETWEEN 1 AND 240 AND ${table.commissionIntro} NOT GLOB '*[<>]*')`,
+  ),
+  check(
+    'site_content_contact_douyin',
+    sql`${table.contactDouyin} IS NULL OR (${table.contactDouyin} = trim(${table.contactDouyin}) AND length(${table.contactDouyin}) BETWEEN 2 AND 30 AND ${table.contactDouyin} NOT GLOB '*[ <>]*')`,
+  ),
+  check(
+    'site_content_commission_estimate_note',
+    sql`${table.commissionEstimateNote} IS NULL OR (length(trim(${table.commissionEstimateNote})) BETWEEN 1 AND 600 AND ${table.commissionEstimateNote} NOT GLOB '*[<>]*')`,
+  ),
+  check(
+    'site_content_commission_email_action',
+    sql`${table.commissionEmailAction} IS NULL OR (length(trim(${table.commissionEmailAction})) BETWEEN 1 AND 240 AND ${table.commissionEmailAction} NOT GLOB '*[<>]*')`,
+  ),
+  check(
+    'site_content_commission_faq_json',
+    sql`${table.commissionFaqJson} IS NULL OR (json_valid(${table.commissionFaqJson}) AND json_type(${table.commissionFaqJson}) = 'array' AND length(${table.commissionFaqJson}) <= 12000)`,
+  ),
+  check(
+    'site_content_about_studio_facts',
+    sql`${table.aboutStudioFacts} IS NULL OR (length(trim(${table.aboutStudioFacts})) BETWEEN 1 AND 1200 AND ${table.aboutStudioFacts} NOT GLOB '*[<>]*')`,
+  ),
+  check(
+    'site_content_about_making_scope',
+    sql`${table.aboutMakingScope} IS NULL OR (length(trim(${table.aboutMakingScope})) BETWEEN 1 AND 1200 AND ${table.aboutMakingScope} NOT GLOB '*[<>]*')`,
+  ),
+  check(
+    'site_content_basic_terms',
+    sql`${table.basicTerms} IS NULL OR (length(trim(${table.basicTerms})) BETWEEN 1 AND 8000 AND ${table.basicTerms} NOT GLOB '*[<>]*')`,
+  ),
+  check(
+    'site_content_contact_anti_scam',
+    sql`${table.contactAntiScam} IS NULL OR (length(trim(${table.contactAntiScam})) BETWEEN 1 AND 600 AND ${table.contactAntiScam} NOT GLOB '*[<>]*')`,
   ),
   check('site_content_version_positive', sql`${table.version} > 0`),
 ])

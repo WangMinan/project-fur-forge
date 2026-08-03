@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-T12 已于 2026-07-31 建立 P0 Drizzle Schema、两项初始领域迁移、SQLite 约束/触发器和显式公开/管理媒体投影；S2 Review 收口新增第三项增量迁移，补齐媒体 role/usage 矩阵与 `source_variant_id` 处理来源关系。T22 已于 2026-08-03 把预留作品列接入三用途共享联合类型、管理 service/API/UI 和公开投影；现有 11 项迁移已经覆盖所需列与约束，因此没有新增无意义迁移。T22 独立 Review 与用户验收已完成，下一任务 T23 继续补齐多图关系、角色约束与按需配方。
+T12 已于 2026-07-31 建立 P0 Drizzle Schema、两项初始领域迁移、SQLite 约束/触发器和显式公开/管理媒体投影；S2 Review 收口新增第三项增量迁移，补齐媒体 role/usage 矩阵与 `source_variant_id` 处理来源关系。T22 已于 2026-08-03 把预留作品列接入三用途共享联合类型、管理 service/API/UI 和公开投影；T23–T25 已于 2026-08-04 收口。T26–T27 服务端使用第 13 项迁移补齐营业状态映射约束和受限站点内容列，任务仍待前端与独立 Review。
 
 ## P0 模型
 
@@ -17,7 +17,8 @@ T12 已于 2026-07-31 建立 P0 Drizzle Schema、两项初始领域迁移、SQLi
 - `site_hero_slides`：站点级首页轮播；每项通过两个 assetId 关联一张 `assets.role = home_hero_landscape` 与一张 `assets.role = home_hero_portrait` 的资产，保存 alt、顺序、启用、版本、可选已发布作品关联，以及启用前私有预览的横竖精确 Key/到期时间；停用草稿仍须横竖 ID、alt 和排序完整，但资产可以暂未 READY。
 - `publication_operations`：记录跨 SQLite 与双 Bucket 的生成、水印、验证、提交和清理进度及稳定内部失败码；管理端以发布检查的 `missingVariantCount` 展示进度，不另建队列或进度表。不保存 OSS 对象 Key/响应正文，不记录 ACL 切换。OSS requestId 与服务错误码只进入脱敏运行日志。
 - 后续新增的长耗时业务操作必须复用现有操作记录，或建立同等可查询、可恢复的持久状态；至少表达阶段、真实完成量/总量（可知时）、失败码、资源版本和完成时间。不得为了页面进度伪造客户端计时，也不得仅靠一个长连接 HTTP 响应保存任务状态。
-- `business_statuses`、`site_content`：受限的营业状态与必要文字内容；首页轮播媒体不塞进通用 `site_content` JSON。
+- `business_statuses`：只允许 `commission | adoption`，各自独立保存 `open | limited | closed`、短标签、短说明、固定 href 和版本；kind/href 必须匹配，不保存排期、客户或经营数据。
+- `site_content`：在既有首页设置上增加明确 nullable 字段：委托短说明、人工估价说明、邮件行动、受限 FAQ、工作室事实、制作范围、基本约定纯文本、公开抖音和防诈骗文字。FAQ JSON 只接受固定 `{ question, answer }[]`；其他页面内容不是自由 JSON，首页轮播媒体和水印 profile 也不进入该表。
 - `audit_logs`：最小操作人、时间、对象和结果，不保存请求正文或敏感字段。
 
 P0 删除未发布作品时，`work_feature_tags` / `work_assets` 随作品聚合移除，关联 `assets` 继续作为永久私有原图档案保留；作品已有的公开 `asset_variants` 必须先完成对象与记录清理。已发布作品必须先下架，T40 再引入 `trash_entries` 恢复语义。
@@ -62,7 +63,15 @@ P2 不得提前污染 P0 表或导航。
 - 联系人可保留在管理员投影中；
 - 不保存 `depositNote`、`paymentNote` 或等价字段；
 - 联系人不进入公开 DTO、日志、导出默认视图或 URL。
-- 工作室官方邮箱 `3114559925@qq.com` 与 QQ `3114559925` 是版本化公开站点常量，不属于 `works` 私有联系人字段；页脚可直接渲染，公开投影仍不得读取或返回作品私有联系人。
+- 工作室官方邮箱 `3114559925@qq.com`、QQ `3114559925` 与抖音 `to3114559925` 是版本化 `site_content` 公开渠道，不属于 `works` 私有联系人字段；页脚或固定页面可渲染适用渠道，公开投影仍不得读取或返回作品私有联系人。
+
+### T26–T27 营业状态与固定内容
+
+- 委托与领养状态按 kind 独立创建/更新；不存在时以 `expectedVersion = 0` 创建，存在后按行版本更新，陈旧版本返回 409；href 由 kind 固定映射。
+- 固定内容共用 `site_content.version`；委托/关于/约定/防诈骗未确认时保持 nullable，FAQ 为空数组。除已登记的工作室公开渠道外不写 seed 文案。
+- 所有文本只按纯文本输出；服务端拒绝超长值、HTML 标签、iframe、脚本协议和 Markdown 脚本链接。基本约定使用可换行纯文本，不解析 Markdown 或富文本。
+- 管理接口位于既有 `/api/admin/v1/site/home/**` 聚合下，供现有“首页管理”页面接入；不新增后台主导航。
+- 公开投影不含任何 version、草稿标识或内部备注，每次请求从 SQLite 读取并使用 `no-store`；它只返回固定页面字段、营业状态和工作室公开渠道。
 
 ### 角色主人公开值
 

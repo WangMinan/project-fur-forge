@@ -27,6 +27,14 @@ import type {
   publicWorkSummaryDtoSchema,
 } from '../schemas/public-content'
 import type {
+  adminSiteBusinessStatusDtoSchema,
+  adminSiteContentDtoSchema,
+  publicSiteBusinessStatusDtoSchema,
+  publicSiteContentDtoSchema,
+  siteBusinessStatusKindSchema,
+  siteBusinessStatusToneSchema,
+} from '../schemas/site-content'
+import type {
   publicationBlockerSchema,
   publicationFailureStageSchema,
   publicationOperationDtoSchema,
@@ -98,6 +106,20 @@ export type AdminHeroPreviewDto = z.infer<typeof adminHeroPreviewDtoSchema>
 export type AdminHeroSlideDto = z.infer<typeof adminHeroSlideDtoSchema>
 export type AdminHomeDto = z.infer<typeof adminHomeDtoSchema>
 export type PublicHomeDto = z.infer<typeof publicHomeDtoSchema>
+export type SiteBusinessStatusKind = z.infer<
+  typeof siteBusinessStatusKindSchema
+>
+export type SiteBusinessStatusTone = z.infer<
+  typeof siteBusinessStatusToneSchema
+>
+export type AdminSiteBusinessStatusDto = z.infer<
+  typeof adminSiteBusinessStatusDtoSchema
+>
+export type PublicSiteBusinessStatusDto = z.infer<
+  typeof publicSiteBusinessStatusDtoSchema
+>
+export type AdminSiteContentDto = z.infer<typeof adminSiteContentDtoSchema>
+export type PublicSiteContentDto = z.infer<typeof publicSiteContentDtoSchema>
 export type PublicWorkCardDto = z.infer<typeof publicWorkCardDtoSchema>
 export type PublicDesignSheetDto = z.infer<typeof publicDesignSheetDtoSchema>
 export type PublicAdoptionListItemDto = z.infer<

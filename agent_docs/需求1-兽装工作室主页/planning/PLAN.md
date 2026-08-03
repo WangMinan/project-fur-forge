@@ -150,12 +150,14 @@ PRAGMA synchronous = FULL;
 
 `users`、`works`、`work_feature_tags`、`assets`、`asset_variants`、`work_assets`、`site_hero_slides`、`publication_operations`、`business_statuses`、`site_content`、`audit_logs`。
 
-- `site_hero_slides` 保存横版/竖版 `assetId`、alt、排序、启用状态、版本、可选作品关联，以及启用前私有预览的两份精确 Key 和到期时间；`site_content` 保存首页口号、公开业务邮箱、公开 QQ 和自动轮播设置，统一使用站点版本做乐观并发控制。
+- `site_hero_slides` 保存横版/竖版 `assetId`、alt、排序、启用状态、版本、可选作品关联，以及启用前私有预览的两份精确 Key 和到期时间。
+- `business_statuses` 只保留 `commission | adoption` 两个 kind；每行独立保存 `open | limited | closed`、短标签、短说明、固定 href 和版本。kind 与 href 由服务端/数据库成对约束，两个状态分别乐观并发更新。
+- `site_content` 保存首页口号、公开业务邮箱/QQ/抖音、自动轮播设置，以及委托短说明、人工估价说明、邮件行动、关于页工作室事实、制作范围、基本约定纯文本和防诈骗文字；共用站点版本做乐观并发控制。FAQ 只使用专用 `commission_faq_json` 列保存经 Zod 严格校验的有序 `{ question, answer }` 纯文本数组，不作为通用 JSON 页面树。
 - `work_assets.role` 在 P0 只允许 `design_sheet | studio_photo`；P1 的返图由 `return_photos` 关联独立资产。
 - Logo 与水印源不存成可由页面编辑器替换的数据库内容；variant 保存所用 profile 版本和摘要。
 - `asset_variants.source_variant_id` 记录可验证的处理来源：`preprocess` 直接来自同一资产永久原图；公开 variant 可直接来自不超过 OSS 上限的原图，超过上限时必须引用同一资产下 READY 的 PRIVATE preprocess，且源输出摘要等于下游输入摘要。角色与 usage 按明确矩阵约束。
 
-P1 再增加 `return_photos`、`events`、`slug_redirects`、`trash_entries` 和完整 FAQ/文字内容表；P2 再增加 `password_reset_tokens`、统计或导出相关结构。
+P1 再增加 `return_photos`、`events`、`slug_redirects`、`trash_entries`，并仅在真实维护需求超过 P0 固定字段时增加完整 FAQ 排序/文字内容表；P2 再增加 `password_reset_tokens`、统计或导出相关结构。
 
 ### 6.3 字段修正
 
@@ -287,7 +289,7 @@ P0 删除作品：只接受未发布作品的当前版本；逐项清理其公�
 
 - 白色/浅灰工作区，主行动蓝只用于当前动作、焦点和少量导航状态。
 - 无 Dashboard、KPI、消息中心或未实现导航。
-- 当前管理导航固定为“首页管理 → 全局水印 → 作品管理 → 修改密码”，四个入口的导航、一级标题和标签页标题同名；首页管理包含口号、公开邮箱/QQ 和专用轮播编辑器，不建设万能 CMS 或账号列表。
+- 当前管理导航固定为“首页管理 → 全局水印 → 作品管理 → 修改密码”，四个入口的导航、一级标题和标签页标题同名；首页管理包含口号、公开邮箱/QQ/抖音、委托/领养营业状态、T26–T27 固定内容区和专用轮播编辑器，不建设第五个内容导航、万能 CMS 或账号列表。
 - 作品编辑器按“设定图”“出厂照”分组，P1 再增加“返图”；每组显示比例指导、公开用途、水印状态和对应预览。
 - 出厂照上传进度卡紧邻当前上传控件，区分摘要、PUT 百分比和服务端校验；关系保存成功后用响应中的新作品版本重建 dirty 基线。
 - 点击“发布”先顺序保存基础信息、设定图和出厂照的当前修改，再使用最终服务端版本重新执行发布检查；保存或检查失败时不发起发布。
@@ -300,6 +302,7 @@ P0 删除作品：只接受未发布作品的当前版本；逐项清理其公�
 - P0 密码重置使用受保护命令；P2 邮件找回 token 只存哈希并单次有效。
 - 登录写请求执行精确 Host/Origin，不要求尚未建立的 Session/CSRF；其余受保护写请求执行 Session、精确 Host/Origin 和 CSRF。T13 已完成这些认证边界，体积限制和分层限流由 T32 收口。
 - 日志只记录 requestId、方法、归一化路径、状态、错误码和耗时；不记录正文、作品私有联系人、授权备注、私有 Key 或签名 URL。公开页脚使用 `site_content` 的邮箱与 QQ 公开投影，不来自作品 DTO。
+- T26–T27 管理 API 复用现有后台 Host/Session/Origin/CSRF 中间件并返回 `no-store`；公开站点内容 API 显式 `no-store`，每次查询 SQLite，只投影受限页面字段和工作室公开渠道，不返回资源版本、草稿标识、内部备注或任何作品联系人。
 - 私有媒体 URL 不进入公开 HTML、Sitemap、OG 或公开 API。
 - 水印不构成访问控制；私有原图安全依赖私有 Bucket、认证、服务端同源代理与最小权限；浏览器签名 URL 仅限当前上传所需的条件 PUT。
 
@@ -316,8 +319,8 @@ P0 删除作品：只接受未发布作品的当前版本；逐项清理其公�
 ## 11. 质量门禁
 
 - 静态：lint、typecheck、依赖与配置检查、迁移一致性。
-- 单元：枚举/状态矩阵、短属性、CNY 价格、可选授权记录、媒体角色、首页横竖配对、recipe/watermark identity、公开 DTO 泄漏守卫。
-- 集成：SQLite、Session、Host、角色化私有上传、OSS 水印、跨 Bucket `sys/saveas`、发布/下架和清理失败。
+- 单元：枚举/状态矩阵、站点纯文本/FAQ/邮箱/QQ/抖音校验、短属性、CNY 价格、可选授权记录、媒体角色、首页横竖配对、recipe/watermark identity、公开 DTO 泄漏守卫。
+- 集成：SQLite、Session、Host/Origin/CSRF、委托/领养状态独立版本冲突、站点内容空值/草稿和即时公开投影、角色化私有上传、OSS 水印、跨 Bucket `sys/saveas`、发布/下架和清理失败。
 - E2E：管理员创建一件作品并发布；配置一组首页横竖轮播；公开访客在三视口浏览首页/列表/详情；竖屏只请求竖版首屏，横屏只请求横版首屏。每条用例按“前置状态 → 用户操作 → 可见中间状态 → 成功/失败/重载结果”写断言，并检查图片真实解码、布局溢出、焦点/键盘和关键请求；不得用用例数量、HTTP 成功、元素数量或选择器存在代替页面质量审查。失败时必须打开浏览器日志、截图或 trace 定位实际页面问题。
 - 视觉：T08 已于 2026-07-30 经用户确认；新增首页轮播、设定图横版布局、媒体分区、水印和 favicon 在对应任务留截图，T51 使用正式素材二次校准。
 - 无障碍：轮播控制可命名、可键盘操作、状态可播报；自动播放可暂停，减少动效下停止。

@@ -7,8 +7,9 @@
 
 - [`P0-C-STAGE-READINESS-2026-08-02.md`](./P0-C-STAGE-READINESS-2026-08-02.md)：阶段 C 启动条件、T22 边界、四个执行波次、main 直推纪律、自动化与 GPT-5.6 Sol 浏览器/视觉 Review 方法。
 - [`../EXECUTION_ROUTING.md`](../EXECUTION_ROUTING.md)：前端模型池、GPT-5.6 Sol 后端/Review、串行交接和测试策略。
-- [`../TASKS.md`](../TASKS.md)：唯一可勾选任务清单；T23–T25 实现、自动化和用户人工核验已通过，独立 Review 前均保持未勾选。
-- [`T23-ENGINEERING-2026-08-03.md`](./t23-t25/T23-ENGINEERING-2026-08-03.md)：T23 多图关系、角色约束、按需 recipe、迁移兼容和活动 profile 原子切换工程记录；等待独立 Review。
+- [`../TASKS.md`](../TASKS.md)：唯一可勾选任务清单；T23–T25 已收口，T26–T27 服务端完成但保持未勾选。
+- [`T26-T27-BACKEND-HANDOFF-2026-08-04.md`](./t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md)：受限固定字段、独立营业状态、管理/公开 API、迁移、自动化和前端前置确认清单。
+- [`T23-T25-CLOSURE-2026-08-04.md`](./t23-t25/T23-T25-CLOSURE-2026-08-04.md)：用户确认独立 Agent Review 完成后的三任务最终收口。
 - [`T25-BACKEND-HANDOFF-2026-08-03.md`](./t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md)：用户授权的 T25 regular adoption 发布与公开读取服务端交接。
 - [`T23-T25-USER-ACCEPTANCE-2026-08-04.md`](./t23-t25/T23-T25-USER-ACCEPTANCE-2026-08-04.md)：用户人工核验、`/works` 出厂照边界、`recipe-v2` 左右双水印、真实 OSS 与剩余独立 Review 门禁。
 - [`../../materials/MATERIAL-MANIFEST.md`](../../materials/MATERIAL-MANIFEST.md)：Logo、出厂照、横版设定图、返图与首页候选的正式输入清单；EXT-01 已完成。
@@ -22,7 +23,8 @@
 - `t14-t18/`：上传、媒体核验、配方、作品 CRUD、发布与管理 UI；
 - `gate07-watermark/`：可配置居中水印的文档、工程、UI、收口与截图；
 - `t19-t22/`：公开站、首页、T21 门禁、T22 完整字段与独立 Review；
-- `t23-t25/`：T23–T25 工程、前端检查点、用户人工核验与独立 Review 交接；任务勾选仍由独立 Review 决定；
+- `t23-t25/`：T23–T25 工程、前端检查点、用户人工核验与最终收口；
+- `t26-t27/`：T26–T27 服务端交接、后续前端/Review 与收口记录；
 - 根目录只保留本索引和仍作为阶段 C 当前基线的 `P0-C-STAGE-READINESS-2026-08-02.md`。
 
 ## 2. 最近收口记录
@@ -33,6 +35,11 @@
 - [`T25-BACKEND-HANDOFF-2026-08-03.md`](./t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md)：regular adoption 发布检查、公开 adoption 列表、统一详情媒体分区和前端恢复契约；T25 未勾选。
 - [`T24-T25-FRONTEND-CHECKPOINT-2026-08-03.md`](./t23-t25/T24-T25-FRONTEND-CHECKPOINT-2026-08-03.md)：管理媒体分区、公开领养页、自动保存发布与浏览器检查点。
 - [`T23-T25-USER-ACCEPTANCE-2026-08-04.md`](./t23-t25/T23-T25-USER-ACCEPTANCE-2026-08-04.md)：用户人工核验通过与 `recipe-v2` 正式素材真实 OSS 证据；独立 Review 待执行。
+- [`T23-T25-CLOSURE-2026-08-04.md`](./t23-t25/T23-T25-CLOSURE-2026-08-04.md)：用户确认 Agent Review 已完成后解除门禁，T23–T25 勾选收口。
+
+### T26–T27 固定内容与营业状态
+
+- [`T26-T27-BACKEND-HANDOFF-2026-08-04.md`](./t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md)：0012 迁移、受限纯文本/FAQ、独立状态版本、现有首页管理聚合 API、公开投影、全量测试与用户确认清单；T26/T27 未勾选。
 
 ### T19–T22 与首页/公开站
 
