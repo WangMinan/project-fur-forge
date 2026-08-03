@@ -13,7 +13,7 @@
 | 计划 | `planning/PLAN.md` | `planning/WATERMARK-CENTERED-V2.md` |
 | 模型投影 | `models/README.md` | `models/WATERMARK-CENTERED-V2.md` |
 | 设计 | `.design/` | `.design/WATERMARK-CENTERED-V2.md` |
-| 任务 | `implementation/TASKS.md` | T01–T21、EXT-01/02 与 GATE-06/07 已完成；下一任务 T22 |
+| 任务 | `implementation/TASKS.md` | T01–T22、EXT-01/02 与 GATE-06/07 已完成；下一任务 T23 |
 | 状态 | `STATE.md` | 阶段 C 已解锁，main 直推和浏览器 Review 已生效 |
 
 ## 当前执行入口
@@ -22,7 +22,7 @@
 | --- | --- | --- |
 | `implementation/notes/P0-C-STAGE-READINESS-2026-08-02.md` | 当前 | 阶段 C 启动条件、T22 边界、执行波次、main 纪律和验收方法 |
 | `implementation/EXECUTION_ROUTING.md` | 当前 | 前端模型池、GPT-5.6 Sol 后端/Review、串行交接、定向自动化与真实浏览器 Review |
-| `implementation/TASKS.md` | 当前 | 唯一可勾选清单；T22 是唯一下一任务 |
+| `implementation/TASKS.md` | 当前 | 唯一可勾选清单；T23 是唯一下一任务 |
 | `materials/MATERIAL-MANIFEST.md` | 已确认 | Logo、作品、横版设定图、返图与页面候选的正式输入和衍生职责；EXT-01 完成 |
 | `implementation/notes/README.md` | 当前 | 按当前/收口/历史/截图整理全部实施记录，不移动已被引用的旧路径 |
 
@@ -33,13 +33,14 @@
 | T01–T13 | 已完成 | 应用底座、配置/Host/日志、共享契约、视觉基线、SQLite/P0 Schema、唯一管理员认证 |
 | GATE-06 | 已完成 | 登录/Session/退出/改密和浏览器安全证据 |
 | T10/EXT-02 | 已完成 | 双 Bucket、30 MB 原图、FFmpeg 私有处理源、OSS 水印和跨桶保存实测 |
-| T14–T18 后端记录 | 已完成 | `implementation/notes/T14-UPLOAD-ENGINEERING-2026-07-31.md` 至 `T18-PUBLICATION-ENGINEERING-2026-07-31.md` |
-| T14–T18 UI/修复记录 | 已完成 | `implementation/notes/t14-t18-ui/T14-T18-UI-REPAIR-2026-08-01.md` |
-| 水印 v2 文档校准 | 已完成 | `implementation/notes/DOCS-WATERMARK-CENTERED-V2-2026-08-01.md` |
+| T14–T18 后端记录 | 已完成 | `implementation/notes/t14-t18/T14-UPLOAD-ENGINEERING-2026-07-31.md` 至 `T18-PUBLICATION-ENGINEERING-2026-07-31.md` |
+| T14–T18 UI/修复记录 | 已完成 | `implementation/notes/t14-t18/t14-t18-ui/T14-T18-UI-REPAIR-2026-08-01.md` |
+| 水印 v2 文档校准 | 已完成 | `implementation/notes/gate07-watermark/DOCS-WATERMARK-CENTERED-V2-2026-08-01.md` |
 | GATE-07 工程/UI/收口 | 已完成 | 迁移、管理 API/UI、真实 OSS、原子切换、持续进度、三视口和用户验收 |
 | T19/T20 工程/UI/收口 | 已完成 | 真实作品详情/列表/首页 SSR、双源轮播、首页管理、真实浏览器和泄漏/清理证据 |
-| T21 首次独立审查 | NOT PASS（历史） | `implementation/notes/T21-REVIEW-2026-08-01.md`；findings 已完成修复 |
-| T21 人工验收与收口 | 已完成 | `implementation/notes/T21-MANUAL-UI-FIX-2026-08-02.md`；用户明确确认 |
+| T21 首次独立审查 | NOT PASS（历史） | `implementation/notes/t19-t22/T21-REVIEW-2026-08-01.md`；findings 已完成修复 |
+| T21 人工验收与收口 | 已完成 | `implementation/notes/t19-t22/T21-MANUAL-UI-FIX-2026-08-02.md`；用户明确确认 |
+| T22 后端/前端/独立 Review/用户验收 | 已完成 | `implementation/notes/t19-t22/T22-BACKEND-2026-08-03.md`、`T22-FRONTEND-2026-08-03.md`、`T22-INDEPENDENT-REVIEW-2026-08-03.md` |
 | EXT-01 正式素材 | 已完成 | `materials/MATERIAL-MANIFEST.md`；文件交付和角色映射完成，T30/T51 继续生成/校准衍生物 |
 
 ## 历史证据边界
@@ -59,12 +60,12 @@
 
 ## 下一批预期产物
 
-T22 预期形成一份主记录，至少覆盖：
+T23 预期形成一份主记录，至少覆盖：
 
-- 现有 Drizzle 列与共享 Schema/API/UI 的差异；
-- 用途、装型、常规领养基础字段、排序、精选、CNY 和短属性；
-- 迁移/backfill、资源版本冲突、私有联系人隔离和公开投影；
-- 后端定向测试、前端接线、GPT-5.6 Sol 真实浏览器/视觉 Review；
-- 用户验收与 T23 非范围。
+- 现有 `work_assets`、媒体角色、迁移与共享 Schema/service 的差异；
+- 最多 5 张出厂照、1 张领养设定图的数量、顺序、主图和完整画布约束；
+- 同一资产不得冒充多个角色、用途变化阻断和活动 `brand-centered-v2` 身份；
+- 页面实际需要的 recipe、来源关系、清理与公开投影边界；
+- 定向测试、独立 Review，以及 T24/T25/T37 非范围。
 
-T22 完成前不得进入 T23。
+T23 完成前不得进入 T24 或 T25。

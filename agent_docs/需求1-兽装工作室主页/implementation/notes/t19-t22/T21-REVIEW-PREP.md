@@ -7,8 +7,8 @@
 
 - 契约：`foundation/README.md`、`requirements/SPEC.md`、`planning/PLAN.md` 及 `WATERMARK-CENTERED-V2.md` 增量。
 - 实现边界：`implementation/TASKS.md` 的 T21、`implementation/EXECUTION_ROUTING.md`。
-- 首次审查与复审条件：`implementation/notes/T21-REVIEW-2026-08-01.md`。
-- 实现者证据：`implementation/notes/T19-T20-CLOSURE-2026-08-01.md`、T19/T20 工程/UI 记录和 `t19-t20/screenshots/`；这些材料只能作为输入，不能替代独立证据。
+- 首次审查与复审条件：`implementation/notes/t19-t22/T21-REVIEW-2026-08-01.md`。
+- 实现者证据：`implementation/notes/t19-t22/T19-T20-CLOSURE-2026-08-01.md`、T19/T20 工程/UI 记录和 `t19-t20/screenshots/`；这些材料只能作为输入，不能替代独立证据。
 - 审查对象：最终待审工作树/提交差异，不仅是实现者记录或测试通过数量。
 
 ## 首次 findings 必须逐项重放

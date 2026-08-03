@@ -22,7 +22,7 @@
 | `scripts/guard-production-content.mjs`、`package.json` | production 构建产物扫描占位文案和 `/fixtures/samples/`；development/test 保留诚实提示 |
 | `tests/unit/`、`tests/integration/`、`tests/e2e/`、`tests/fixtures/runtime/` | 增加契约、配置漂移、泄漏、错误内容类型/标题/正文/状态码/API 结构和生产守卫回归 |
 | `requirements/SPEC.md`、`planning/PLAN.md`、`models/README.md` | 登记 OQ-119，并明确 T12 前不得据 DTO 直接建列 |
-| `implementation/notes/T09-UI-2026-07-30.md` | 记录 Kimi 后续完成的界面修补范围与结果 |
+| `implementation/notes/t01-t09/T09-UI-2026-07-30.md` | 记录 Kimi 后续完成的界面修补范围与结果 |
 
 本机 `.env` 只把已知非秘密 Bucket 配置迁移成私有/公开两个名称；没有读取、打印或提交 AccessKey、秘密或真实凭据。
 
