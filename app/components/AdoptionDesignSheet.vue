@@ -1,16 +1,21 @@
 <script setup lang="ts">
 import type { PublicDesignSheetDto } from '~~/shared/types/contracts'
 
-defineProps<{
+const props = defineProps<{
   designSheet: PublicDesignSheetDto
 }>()
+
+const previewMatchedSources = computed(() => ({
+  webp: props.designSheet.sources.webp.slice(0, 1),
+  fallback: props.designSheet.sources.fallback.slice(0, 1),
+}))
 </script>
 
 <template>
   <div class="design-sheet" data-testid="public-design-sheet">
     <ResponsivePicture
-      :sources="designSheet.sources"
-      :alt="designSheet.alt"
+      :sources="previewMatchedSources"
+      :alt="props.designSheet.alt"
       loading="eager"
       fetchpriority="high"
       sizes="(min-width: 1024px) 58vw, 100vw"
