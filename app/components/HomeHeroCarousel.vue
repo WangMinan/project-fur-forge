@@ -274,6 +274,10 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
+.home-hero--empty {
+  background: var(--public-bg-inverse);
+}
+
 .home-hero__viewport {
   position: relative;
   grid-area: 1 / 1;

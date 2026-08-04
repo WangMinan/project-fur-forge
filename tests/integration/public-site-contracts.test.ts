@@ -466,6 +466,13 @@ describe('T19/T20 public repository contracts', () => {
       2400,
     ])
     expect(detail.related[0]?.work.slug).toBe('second-work')
+    expect(detail.navigation).toEqual({
+      previous: null,
+      next: {
+        characterName: '雪球',
+        href: '/works/second-work',
+      },
+    })
     const visible = JSON.stringify(detail)
     expect(visible).not.toContain('private-first@example.test')
     expect(visible).not.toContain('legacy-contact@example.test')

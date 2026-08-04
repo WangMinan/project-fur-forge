@@ -228,12 +228,36 @@ test.describe('T20 作品列表页', () => {
     expect(html).not.toContain('test/e2e-public/original')
     expect(html).not.toContain('private-download.test')
     expect(html).not.toContain('e2e-private-contact')
-    expect(html).toContain('mailto:3114559925@qq.com')
-    expect(html).toContain('QQ 3114559925')
+    expect(html).not.toContain('mailto:3114559925@qq.com')
+    expect(html).not.toContain('QQ 3114559925')
   })
 })
 
 test.describe('T19 作品详情页', () => {
+  test('按人工顺序前后浏览，领养旧路径永久跳到统一详情', async ({ page, request }) => {
+    await seedCatalog(page)
+    await page.goto('/works/e2e-public-zhima')
+
+    const navigation = page.getByTestId('work-detail-navigation')
+    await expect(navigation.getByRole('link', { name: /上一件\s*蓝湄/u })).toHaveAttribute(
+      'href',
+      '/works/e2e-public-lanmei',
+    )
+    await expect(navigation.getByRole('link', { name: /下一件\s*豆豆/u })).toHaveAttribute(
+      'href',
+      '/works/e2e-public-doudou',
+    )
+    await navigation.getByRole('link', { name: /下一件\s*豆豆/u }).click()
+    await expect(page).toHaveURL(/\/works\/e2e-public-doudou$/u)
+    await expect(page.getByRole('heading', { level: 1, name: '豆豆' })).toBeVisible()
+
+    const redirected = await request.get('/adoptions/e2e-public-lanmei', {
+      maxRedirects: 0,
+    })
+    expect(redirected.status()).toBe(301)
+    expect(redirected.headers().location).toBe('/works/e2e-public-lanmei')
+  })
+
   test('核心内容齐备：事实、短属性、图集切换与相关浏览', async ({ page }) => {
     await seedCatalog(page)
     await page.goto('/works')

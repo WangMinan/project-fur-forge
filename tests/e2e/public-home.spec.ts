@@ -79,6 +79,8 @@ const SLIDES: SeedHomeSlide[] = [
 
 const SCREENSHOT_DIR =
   'agent_docs/需求1-兽装工作室主页/implementation/notes/t19-t22/t19-t20/screenshots'
+const T28_SCREENSHOT_DIR =
+  'agent_docs/需求1-兽装工作室主页/implementation/notes/t28-t34/screenshots'
 
 async function seedHome(
   page: Page,
@@ -128,8 +130,8 @@ test.describe('T20 首页双源轮播', () => {
     expect(markup).not.toContain('芝麻的首页展示照')
     // 关联作品链接只信 linkedWorkHref
     expect(markup).toContain('href="/works/e2e-public-home-naigai"')
-    expect(markup).toContain('mailto:3114559925@qq.com')
-    expect(markup).toContain('QQ 3114559925')
+    expect(markup).not.toContain('mailto:3114559925@qq.com')
+    expect(markup).not.toContain('QQ 3114559925')
     expect(markup).not.toContain('e2e-private-contact')
     expect(markup).not.toContain('/fixtures/')
   })
@@ -340,6 +342,7 @@ test.describe('T20 首页双源轮播', () => {
     await expect(hero(page).getByText('安静的工作室')).toBeVisible()
     await expect(hero(page).getByRole('button', { name: '下一张' })).toHaveCount(0)
     await expect(hero(page).locator('img')).toHaveCount(0)
+    await expect(page.getByTestId('public-header')).toHaveClass(/public-header--overlay/u)
   })
 
   test('首页 CLS < 0.1', async ({ page }) => {
@@ -392,6 +395,99 @@ test.describe('T20 首页双源轮播', () => {
       expect(spacing.actionBottomGap).toBeGreaterThanOrEqual(64)
       await capture(page, `home-${width}x${height}`, SCREENSHOT_DIR)
     }
+  })
+})
+
+test.describe('T28 首页完整内容顺序', () => {
+  test('只用真实数据依次显示图片入口、营业状态和当前领养', async ({ page }) => {
+    await seedPublicCatalog(page, [
+      ...WORKS,
+      {
+        slug: 'e2e-public-home-adoption',
+        characterName: '云朵',
+        species: '萨摩耶',
+        suitType: 'partial',
+        purpose: 'adoption',
+        adoptionMethod: 'regular',
+        businessStatus: 'available',
+        sortOrder: 4,
+        designSheet: { alt: '云朵的完整设定图' },
+        photos: [],
+      },
+    ])
+    await seedHomeSlides(page, SLIDES)
+    await seedHomeSlides(page, [
+      { alt: '委托页独立代表作品', sortOrder: 0, enabled: true },
+    ], undefined, 'commission')
+    await page.goto('/')
+
+    const order = await page.locator([
+      '[data-testid="public-hero"]',
+      '[data-testid="featured-works"]',
+      '[data-testid="home-image-entries"]',
+      '[data-testid="home-business-statuses"]',
+      '[data-testid="home-current-adoptions"]',
+      '[data-testid="public-footer"]',
+    ].join(',')).evaluateAll(elements => elements.map(element =>
+      element.getAttribute('data-testid'),
+    ))
+    expect(order).toEqual([
+      'public-hero',
+      'featured-works',
+      'home-image-entries',
+      'home-business-statuses',
+      'home-current-adoptions',
+      'public-footer',
+    ])
+
+    const entries = page.getByTestId('home-image-entries')
+    await expect(entries.getByRole('link', { name: /自设委托/u })).toHaveAttribute(
+      'href',
+      '/commission',
+    )
+    await expect(entries.getByRole('link', { name: /角色领养/u })).toHaveAttribute(
+      'href',
+      '/adoptions',
+    )
+    await expect(page.getByTestId('home-current-adoptions')).toContainText('云朵')
+
+    for (const [width, height] of [[390, 844], [768, 1024], [1440, 900]]) {
+      await page.setViewportSize({ width, height })
+      await page.goto('/')
+      const imageEntries = page.getByTestId('home-image-entries')
+      await imageEntries.scrollIntoViewIfNeeded()
+      await expect(imageEntries.getByRole('img')).toHaveCount(2)
+      expect(await page.evaluate(() =>
+        document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      )).toBeLessThanOrEqual(1)
+      await capture(page, `t28-home-continuation-${width}x${height}`, T28_SCREENSHOT_DIR)
+    }
+  })
+
+  test('没有真实图片或领养时不渲染对应模块', async ({ page }) => {
+    await seedHome(page)
+    await seedHomeSlides(page, [], undefined, 'commission')
+    await page.goto('/')
+
+    await expect(page.getByTestId('home-image-entries')).toHaveCount(0)
+    await expect(page.getByTestId('home-current-adoptions')).toHaveCount(0)
+    await expect(page.getByTestId('home-business-statuses')).toBeVisible()
+  })
+
+  test('只有一个真实图片入口时在桌面占满整行', async ({ page }) => {
+    await seedHome(page)
+    await seedHomeSlides(page, [
+      { alt: '委托页独立代表作品', sortOrder: 0, enabled: true },
+    ], undefined, 'commission')
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+
+    const widths = await page.getByTestId('home-image-entries').evaluate((section) => {
+      const entry = section.querySelector('a')!
+      return [section.getBoundingClientRect().width, entry.getBoundingClientRect().width]
+    })
+    expect(Math.abs(widths[0]! - widths[1]!)).toBeLessThanOrEqual(1)
+    await expect(page.getByTestId('home-image-entries').getByRole('link')).toHaveCount(1)
   })
 })
 

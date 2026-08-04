@@ -62,6 +62,10 @@ const dto = computed(() => detail.value?.work)
 const designSheet = computed(() => detail.value?.media.designSheet)
 const studioPhotos = computed(() => detail.value?.media.studioPhotos ?? [])
 const relatedWorks = computed(() => detail.value?.related ?? [])
+const navigation = computed(() => detail.value?.navigation ?? {
+  previous: null,
+  next: null,
+})
 
 useSeoMeta({
   title: computed(() => (dto.value
@@ -78,6 +82,26 @@ useSeoMeta({
     : '有点小狗工作室兽装作品档案。')),
   ogType: 'article',
 })
+
+useHead(() => ({
+  script: dto.value && detail.value
+    ? [{
+        key: 'work-json-ld',
+        type: 'application/ld+json',
+        textContent: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'CreativeWork',
+          name: dto.value.characterName,
+          description: `${dto.value.species} · ${SUIT_TYPE_LABELS[dto.value.suitType]} · ${WORK_PURPOSE_LABELS[dto.value.purpose]}`,
+          image: detail.value.media.card.sources.fallback.at(-1)?.src,
+          creator: {
+            '@type': 'Organization',
+            name: PROJECT_NAME,
+          },
+        }),
+      }]
+    : [],
+}))
 
 const priceLabel = computed(() => {
   if (dto.value?.purpose !== 'adoption') {
@@ -180,6 +204,30 @@ const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
         </section>
       </div>
     </div>
+
+    <nav
+      v-if="navigation.previous || navigation.next"
+      class="work-detail__navigation"
+      aria-label="前后浏览作品"
+      data-testid="work-detail-navigation"
+    >
+      <NuxtLink
+        v-if="navigation.previous"
+        :to="navigation.previous.href"
+        class="work-detail__navigation-link"
+      >
+        <span class="work-detail__navigation-direction"><span aria-hidden="true">←</span> 上一件</span>
+        <span>{{ navigation.previous.characterName }}</span>
+      </NuxtLink>
+      <NuxtLink
+        v-if="navigation.next"
+        :to="navigation.next.href"
+        class="work-detail__navigation-link work-detail__navigation-link--next"
+      >
+        <span class="work-detail__navigation-direction">下一件 <span aria-hidden="true">→</span></span>
+        <span>{{ navigation.next.characterName }}</span>
+      </NuxtLink>
+    </nav>
 
     <section
       v-if="relatedWorks.length > 0"
@@ -321,6 +369,39 @@ const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
   max-width: var(--public-content-wide);
   margin: var(--space-9) auto 0;
   padding: 0 var(--public-page-padding);
+}
+
+.work-detail__navigation {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  max-width: var(--public-content-wide);
+  margin: var(--space-9) auto 0;
+  padding: 0 var(--public-page-padding);
+}
+
+.work-detail__navigation-link {
+  display: grid;
+  gap: var(--space-1);
+  min-height: 4.5rem;
+  padding: var(--space-4) var(--space-5);
+  color: var(--public-text-primary);
+  background: var(--public-bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.work-detail__navigation-link--next {
+  grid-column: 2;
+  text-align: right;
+}
+
+.work-detail__navigation-link:hover {
+  color: var(--public-accent-primary);
+}
+
+.work-detail__navigation-direction {
+  color: var(--public-text-tertiary);
+  font-size: var(--font-size-xs);
 }
 
 .work-detail__related-header {
