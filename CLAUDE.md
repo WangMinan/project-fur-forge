@@ -116,7 +116,7 @@ pnpm auth:reset-password --confirm RESET_SINGLE_ADMIN_PASSWORD
 - SQLite/Drizzle、唯一管理员认证；
 - 双 Bucket、30 MB 原图、FFmpeg 私有处理源；
 - 角色化上传、媒体核验、`recipe-v2`（完整 v1 集合兼容回退）、发布/下架；
-- 活动 `brand-centered-v2` 可配置水印与原子全站切换；普通图片居中，横版设定图为 1.6 倍左右双水印；
+- 活动 `brand-centered-v2` 可配置水印与原子全站切换；出厂照及站点竖版大图为单个居中水印，横版设定图及站点横版大图为左右双水印，站点大图复用对应作品图的视觉比例；
 - 真实作品详情/列表、首页双源轮播、大图管理和联系方式投影；
 - T21 第一作品垂直切片完整用户验收；
 - T22 三用途共享 Schema、管理 API/service、管理 UI、公开投影、历史展会兼容、精选 6 项上限和完整用户验收；

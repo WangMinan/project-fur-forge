@@ -6,7 +6,7 @@
 
 - 保留 `brand-standard-v1` 历史 variant，不修改既有 migration 或对象。
 - `brand-centered-v2` 继续保存 Logo、透明度和受限缩放参数；`recipe-v2` 将水印预处理宽度计算为上一版 `P_<scale>` 结果的 1.6 倍，并在需要放大源图时显式使用 `limit_0`。
-- OSS 处理顺序固定为：先把主图生成目标输出尺寸，再对水印图预处理；普通用途用 `g_center` 叠加 1 次，`design-sheet` 按 `g_west`、`g_east` 连续叠加两枚等大水印，最后转换格式。
+- OSS 处理顺序固定为：先把主图生成目标输出尺寸，再对水印图预处理；`studio_photo` 与首页/委托页竖版大图用 `g_center` 叠加 1 次，`design-sheet` 与首页/委托页横版大图按 `g_west`、`g_east` 连续叠加两枚等大水印，最后转换格式。横版大图按 960 px 设定图基准等比放大水印，竖版大图按 480 px 作品卡基准等比放大水印。
 - 居中 profile 不发送无意义的 `x`、`y` 角落边距；需要视觉微调时只能在新 profile 版本中增加受控中线偏移，不能复用旧四角字段。
 - OSS 图片水印源必须位于处理源所在的私有 Bucket。管理端上传的 Logo 候选先经过现有 V4 条件直传和服务端核验，再作为水印源。
 
@@ -87,7 +87,7 @@ profile 内容一经用于生成 variant 即不可原位修改；修改配置应
 
 ## 4. OSS 处理字符串
 
-水印源 Object 完整名称使用 URL-safe Base64 编码。`recipe-v2` 的普通图片应形成等价于以下语义的处理：
+水印源 Object 完整名称使用 URL-safe Base64 编码。`recipe-v2` 的出厂照应形成等价于以下语义的处理：
 
 ```text
 image/<目标图 resize/crop>
@@ -95,7 +95,7 @@ image/<目标图 resize/crop>
 /<最终 format/quality>
 ```
 
-设定图在 resize 后连续追加两个相同 `watermark` 操作，位置分别为 `g_west` 与 `g_east`。同一用途的新版本 WebP 与 fallback 未全部齐备时继续返回完整 `recipe-v1`，不得把两版拼成一个 srcset。
+设定图以及首页/委托页横版大图在 resize 后连续追加两个相同 `watermark` 操作，位置分别为 `g_west` 与 `g_east`；竖版大图追加一个 `g_center` 水印。同一用途的新版本 WebP 与 fallback 未全部齐备时继续返回完整 `recipe-v1`，不得把两版拼成一个 srcset。
 
 实现必须通过真实 OSS 契约测试确认嵌套水印预处理编码、透明度和居中位置。若 `P` 在当前 OSS 区域/链路的实际输出与预期不一致，可以由服务端根据最终输出尺寸计算等价的受控宽度，但数据库和管理端仍以统一的 `scale_percent` 表达，不能把高分辨率处理源尺寸误当成最终输出尺寸。
 

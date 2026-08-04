@@ -653,10 +653,20 @@ describe('T19/T20 public repository contracts', () => {
     expect(previewManifest.landscapeKey).toContain('/preview/home/')
     expect(previewManifest.portraitKey).toContain('/preview/home/')
     expect(storage.processCalls.slice(processCallCount)).toHaveLength(2)
-    expect(storage.processCalls.slice(processCallCount).every(
-      call => call.process.includes('g_center')
-        && call.objectKey.includes('/preview/home/'),
-    )).toBe(true)
+    const previewCalls = storage.processCalls.slice(processCallCount)
+    const landscapePreview = previewCalls.find(
+      call => call.objectKey.endsWith('/landscape.webp'),
+    )!
+    const portraitPreview = previewCalls.find(
+      call => call.objectKey.endsWith('/portrait.webp'),
+    )!
+    expect(landscapePreview.objectKey).toContain('/preview/home/')
+    expect(landscapePreview.process.match(/\/watermark,/gu)).toHaveLength(2)
+    expect(landscapePreview.process).toContain('g_west')
+    expect(landscapePreview.process).toContain('g_east')
+    expect(portraitPreview.objectKey).toContain('/preview/home/')
+    expect(portraitPreview.process.match(/\/watermark,/gu)).toHaveLength(1)
+    expect(portraitPreview.process).toContain(',t_50,g_center/')
     expect(storage.publicObjects.size).toBe(publicObjectCount)
     expect(getAdminHome(sqlite).slides[0]).toMatchObject({
       enabled: false,

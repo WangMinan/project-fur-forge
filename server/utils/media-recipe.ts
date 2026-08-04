@@ -25,6 +25,8 @@ export const PUBLIC_RECIPE_VERSION = 'recipe-v2'
 export const LEGACY_PUBLIC_RECIPE_VERSION = 'recipe-v1'
 export const HERO_UPSCALE_RECIPE_VERSION = 'hero-upscale-lanczos-v1'
 const WATERMARK_SIZE_MULTIPLIER = 1.6
+const HERO_LANDSCAPE_WATERMARK_REFERENCE_WIDTH = 960
+const HERO_PORTRAIT_WATERMARK_REFERENCE_WIDTH = 480
 /** Historical identity only. */
 export const STANDARD_WATERMARK_PROFILE = 'brand-standard-v1'
 export const CENTERED_WATERMARK_PROFILE = WATERMARK_PROFILE_NAME
@@ -530,12 +532,30 @@ function recipeIdentity(
     watermarkOpacityPercent: profile.opacityPercent,
     watermarkScalePercent: profile.scalePercent,
     watermarkSizeMultiplier: WATERMARK_SIZE_MULTIPLIER,
-    watermarkLayout: usage === 'design-sheet' ? 'west-east' : 'center',
+    watermarkLayout: watermarkLayout(usage),
+    watermarkSizingReferenceWidth: watermarkSizingReferenceWidth(usage),
   })
   return {
     hash: digest('sha256', Buffer.from(identity)),
     identity,
   }
+}
+
+function watermarkLayout(usage: PublicMediaUsage) {
+  return usage === 'design-sheet'
+    || usage === 'home-hero-landscape'
+    ? 'west-east' as const
+    : 'center' as const
+}
+
+function watermarkSizingReferenceWidth(usage: PublicMediaUsage) {
+  if (usage === 'home-hero-landscape') {
+    return HERO_LANDSCAPE_WATERMARK_REFERENCE_WIDTH
+  }
+  if (usage === 'home-hero-portrait') {
+    return HERO_PORTRAIT_WATERMARK_REFERENCE_WIDTH
+  }
+  return null
 }
 
 function deterministicUuid(hash: string) {
@@ -571,9 +591,14 @@ export function buildWatermarkProcess(
   width: number,
   format: PublicFormat,
 ) {
-  const watermarkWidth = Math.round(
+  const layout = watermarkLayout(usage)
+  const configuredWatermarkWidth = Math.round(
     logo.width * profile.scalePercent * WATERMARK_SIZE_MULTIPLIER / 100,
   )
+  const referenceWidth = watermarkSizingReferenceWidth(usage)
+  const watermarkWidth = referenceWidth === null
+    ? configuredWatermarkWidth
+    : Math.round(configuredWatermarkWidth * width / referenceWidth)
   const resizedLogo = `${logo.objectKey}?x-oss-process=image/resize,w_${watermarkWidth},limit_0`
   const watermark = (position: 'center' | 'east' | 'west') => [
     `watermark,image_${urlSafeBase64(resizedLogo)}`,
@@ -582,7 +607,7 @@ export function buildWatermarkProcess(
   ].join(',')
   return [
     `image/${resizeOperation(sourceAsset, usage, width)}`,
-    ...(usage === 'design-sheet'
+    ...(layout === 'west-east'
       ? [watermark('west'), watermark('east')]
       : [watermark('center')]),
     formatOperation(format),

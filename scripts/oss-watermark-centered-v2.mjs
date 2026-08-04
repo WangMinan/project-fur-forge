@@ -189,8 +189,18 @@ async function processPreview({
   output,
   visualEvidenceDirectory,
 }) {
+  const usesTwinWatermarks = [
+    'design-sheet',
+    'home-hero-landscape',
+  ].includes(output.kind)
   const sizeMultiplier = 1.6
-  const resizedWidth = Math.round(watermarkWidth * 60 * sizeMultiplier / 100)
+  const configuredWidth = Math.round(watermarkWidth * 60 * sizeMultiplier / 100)
+  const referenceWidth = output.kind === 'home-hero-landscape'
+    ? 960
+    : output.kind === 'home-hero-portrait' ? 480 : null
+  const resizedWidth = referenceWidth === null
+    ? configuredWidth
+    : Math.round(configuredWidth * output.width / referenceWidth)
   const watermarkReference = urlSafeBase64(
     `${watermarkKey}?x-oss-process=image/resize,w_${resizedWidth},limit_0`,
   )
@@ -199,7 +209,7 @@ async function processPreview({
   )
   const process = [
     `image/${output.resize}`,
-    ...(output.kind === 'design-sheet'
+    ...(usesTwinWatermarks
       ? [watermarkOperation('west'), watermarkOperation('east')]
       : [watermarkOperation('center')]),
     'format,webp',
@@ -252,7 +262,7 @@ async function processPreview({
     differsFromUnwatermarked: true,
     kind: output.kind,
     opacityPercent: 50,
-    position: output.kind === 'design-sheet' ? 'west-east' : 'center',
+    position: usesTwinWatermarks ? 'west-east' : 'center',
     requestIds: [requestIdOf(result), requestIdOf(head), anonymous.requestId],
     scalePercent: 60,
     sizeMultiplier,
