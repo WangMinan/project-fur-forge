@@ -429,6 +429,32 @@ describe('SQLite foundation', () => {
     await expect(restoreDatabase(staleBackup, staleOutput))
       .rejects.toThrow(/current migrations/)
     expect(existsSync(staleOutput)).toBe(false)
+
+    const driftedDatabase = temporaryDatabase('drifted.db')
+    const driftedBackup = temporaryDatabase('drifted-backup.db')
+    const driftedOutput = temporaryDatabase('drifted-output.db')
+    await migrateDatabase(driftedDatabase)
+    const drifted = openDatabase(driftedDatabase)
+    try {
+      drifted.sqlite.prepare(`
+        UPDATE __drizzle_migrations SET hash = ?
+        WHERE created_at = (
+          SELECT min(created_at) FROM __drizzle_migrations
+        )
+      `).run('0'.repeat(64))
+    }
+    finally {
+      drifted.sqlite.close()
+    }
+
+    expect(() => assertDatabaseMigrated(driftedDatabase))
+      .toThrow(/history does not match/)
+    await expect(migrateDatabase(driftedDatabase))
+      .rejects.toThrow(/history does not match/)
+    await backupDatabase(driftedDatabase, driftedBackup)
+    await expect(restoreDatabase(driftedBackup, driftedOutput))
+      .rejects.toThrow(/current migrations/)
+    expect(existsSync(driftedOutput)).toBe(false)
   })
 })
 

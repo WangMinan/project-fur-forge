@@ -144,18 +144,22 @@ function migrationState(
   `).pluck().get() === 1
   const applied = tableExists
     ? sqlite.prepare(`
-        SELECT created_at
+        SELECT created_at AS createdAt, hash
         FROM __drizzle_migrations
-      `).pluck().all().map(Number)
+        ORDER BY created_at, id
+      `).all() as { createdAt: number, hash: string }[]
     : []
-  const appliedTimestamps = new Set(applied)
+  const historyMatches = applied.every((migration, index) => (
+    migration.createdAt === migrations[index]?.folderMillis
+    && migration.hash === migrations[index]?.hash
+  ))
 
   return {
     applied,
+    complete: historyMatches && applied.length === migrations.length,
+    historyMatches,
     migrations,
-    pending: migrations.filter(
-      migration => !appliedTimestamps.has(migration.folderMillis),
-    ),
+    pending: migrations.slice(applied.length),
   }
 }
 
@@ -172,14 +176,7 @@ function assertRestorableDatabase(
   }
 
   const state = migrationState(sqlite, migrationsFolder)
-  const currentTimestamps = new Set(
-    state.migrations.map(migration => migration.folderMillis),
-  )
-  if (
-    state.pending.length > 0
-    || state.applied.length !== state.migrations.length
-    || state.applied.some(timestamp => !currentTimestamps.has(timestamp))
-  ) {
+  if (!state.complete) {
     throw new Error(`${label} does not match the current migrations.`)
   }
 }
@@ -197,14 +194,17 @@ export function assertDatabaseMigrated(databaseFile: string) {
   })
 
   try {
-    const pending = migrationState(
+    const state = migrationState(
       sqlite,
       DATABASE_MIGRATIONS_FOLDER,
-    ).pending.length
+    )
 
-    if (pending > 0) {
+    if (!state.historyMatches) {
+      throw new Error('Database migration history does not match current files.')
+    }
+    if (state.pending.length > 0) {
       throw new Error(
-        `Database has ${pending} pending migration(s); run pnpm db:migrate first.`,
+        `Database has ${state.pending.length} pending migration(s); run pnpm db:migrate first.`,
       )
     }
   }
@@ -357,6 +357,9 @@ export async function migrateDatabase(
 
   try {
     const before = migrationState(database.sqlite, migrationsFolder)
+    if (!before.historyMatches) {
+      throw new Error('Database migration history does not match current files.')
+    }
     const backupFile = existed && before.pending.length > 0
       ? await backupOpenDatabase(
           database.sqlite,
