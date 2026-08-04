@@ -1,6 +1,7 @@
 import {
   existsSync,
   mkdirSync,
+  rmSync,
   statSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -150,10 +151,36 @@ function migrationState(
   const appliedTimestamps = new Set(applied)
 
   return {
+    applied,
     migrations,
     pending: migrations.filter(
       migration => !appliedTimestamps.has(migration.folderMillis),
     ),
+  }
+}
+
+function assertRestorableDatabase(
+  sqlite: Database.Database,
+  label: string,
+  migrationsFolder: string,
+) {
+  if (sqlite.pragma('integrity_check', { simple: true }) !== 'ok') {
+    throw new Error(`${label} integrity check failed.`)
+  }
+  if ((sqlite.pragma('foreign_key_check') as unknown[]).length > 0) {
+    throw new Error(`${label} has foreign key violations.`)
+  }
+
+  const state = migrationState(sqlite, migrationsFolder)
+  const currentTimestamps = new Set(
+    state.migrations.map(migration => migration.folderMillis),
+  )
+  if (
+    state.pending.length > 0
+    || state.applied.length !== state.migrations.length
+    || state.applied.some(timestamp => !currentTimestamps.has(timestamp))
+  ) {
+    throw new Error(`${label} does not match the current migrations.`)
   }
 }
 
@@ -247,6 +274,73 @@ export async function backupDatabase(
   finally {
     database.sqlite.close()
   }
+}
+
+export async function restoreDatabase(
+  backupFile: string,
+  outputFile: string,
+  options: {
+    activeDatabaseFile?: string
+    migrationsFolder?: string
+  } = {},
+) {
+  const sourceFile = resolve(backupFile)
+  const destinationFile = resolve(outputFile)
+  const activeDatabaseFile = options.activeDatabaseFile
+    ? resolve(options.activeDatabaseFile)
+    : undefined
+  const migrationsFolder = options.migrationsFolder
+    ?? DATABASE_MIGRATIONS_FOLDER
+
+  if (sourceFile === destinationFile) {
+    throw new Error('Restore destination must differ from the backup file.')
+  }
+  if (destinationFile === activeDatabaseFile) {
+    throw new Error('Restore destination must not be the active database.')
+  }
+  if (existsSync(destinationFile)) {
+    throw new Error('Restore destination already exists.')
+  }
+  if (!existsSync(sourceFile) || statSync(sourceFile).size === 0) {
+    throw new Error('Restore source database does not exist or is empty.')
+  }
+
+  const source = new Database(sourceFile, {
+    fileMustExist: true,
+    readonly: true,
+  })
+
+  try {
+    assertRestorableDatabase(source, 'Restore source', migrationsFolder)
+    mkdirSync(dirname(destinationFile), { recursive: true })
+    await source.backup(destinationFile)
+  }
+  catch (error) {
+    rmSync(destinationFile, { force: true })
+    throw error
+  }
+  finally {
+    source.close()
+  }
+
+  try {
+    const restored = new Database(destinationFile, {
+      fileMustExist: true,
+      readonly: true,
+    })
+    try {
+      assertRestorableDatabase(restored, 'Restored database', migrationsFolder)
+    }
+    finally {
+      restored.close()
+    }
+  }
+  catch (error) {
+    rmSync(destinationFile, { force: true })
+    throw error
+  }
+
+  return destinationFile
 }
 
 export async function migrateDatabase(

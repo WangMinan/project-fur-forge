@@ -15,6 +15,7 @@ import { migrateDatabase } from '../../server/utils/database'
 const port = 3102
 const publicBaseUrl = `http://127.0.0.1:${port}`
 const adminBaseUrl = `http://localhost:${port}`
+const mediaBaseUrl = `http://127.0.0.2:${port}`
 
 function requestWithHost(path: string, host: string) {
   return new Promise<{
@@ -62,7 +63,7 @@ await setup({
     DATABASE_FILE: databaseFile,
     PUBLIC_BASE_URL: publicBaseUrl,
     ADMIN_BASE_URL: adminBaseUrl,
-    MEDIA_BASE_URL: 'https://media.test.invalid',
+    MEDIA_BASE_URL: mediaBaseUrl,
     OSS_UPLOAD_BASE_URL: 'https://upload.test.invalid',
   },
 })
@@ -118,6 +119,22 @@ describe('runtime request boundaries', () => {
         message: 'Resource was not found.',
       },
     })
+  })
+
+  it('returns media-host failures without recursing into the HTML renderer', async () => {
+    const mediaResponse = await requestWithHost(
+      '/dev/web/missing.webp',
+      new URL(mediaBaseUrl).host,
+    )
+
+    expect(mediaResponse.status).toBe(404)
+    expect(mediaResponse.body).toEqual({
+      error: {
+        code: 'NOT_FOUND',
+        message: 'Resource was not found.',
+      },
+    })
+    expect((await fetch(`${publicBaseUrl}/api/health`)).status).toBe(200)
   })
 
   it('marks previews private without changing public SSR headers', async () => {
