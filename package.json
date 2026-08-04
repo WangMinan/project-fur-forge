@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "nuxt dev",
     "build": "nuxt build && node scripts/guard-production-content.mjs .output",
+    "brand:generate": "node scripts/generate-brand-assets.mjs",
     "auth:init": "tsx scripts/auth-init.ts",
     "auth:reset-password": "tsx scripts/auth-reset-password.ts",
     "db:backup": "tsx scripts/db-backup.ts",
