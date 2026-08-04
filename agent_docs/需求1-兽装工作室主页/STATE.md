@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-阶段 4 · IMPLEMENTATION 进行中。T01–T29、T31–T32、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T26-F1/T27-F1 等待用户验收；T30 工程与新上下文独立 Review 已完成，结论 `PASS WITH FOLLOW-UP`，保持未勾选并等待品牌图标用户验收。T31 迁移 hash finding 与 T32 请求中断/日志用户名 findings 均已关闭，两项最终 `PASS`。**OQ-120 已由用户整批确认，0014/0015 已登记正式默认值。**当前进入 T33。
+阶段 4 · IMPLEMENTATION 进行中。T01–T29、T31–T33、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T26-F1/T27-F1 等待用户验收；T30 工程与新上下文独立 Review 已完成，结论 `PASS WITH FOLLOW-UP`，保持未勾选并等待品牌图标用户验收。T33 初始 Hero N+1、加载属性、方向固有尺寸和触控命中区 findings 均已关闭，最终 `PASS WITH FOLLOW-UP`。**OQ-120 已由用户整批确认，0014/0015 已登记正式默认值。**当前进入 T34。
 
 T21 首次独立审查的 3 个 must-fix 与 1 个 should-fix、用户人工验收发现的管理入口命名、Hero 安全边距、作品筛选视觉、页脚联系方式配置、已保存首页轮播原图预览及启用态预览按钮错配均已修复并验证。用户于 2026-08-02 明确确认 T21 收口；首次 NOT PASS 报告继续保留为历史事实，不虚构第二份独立复审报告。
 
@@ -54,6 +54,7 @@ T32 初始 findings、统一请求边界、限流、脱敏、真实 OSS/secret s
 - [ ] T30 SEO/品牌衍生物技术 Review 已通过；等待用户视觉验收。
 - [x] T31 备份、恢复、迁移精确匹配、失败清理与恢复库 production Chrome 已通过独立 Review。
 - [x] T32 Session/CSRF/Host/DTO、64 KiB JSON、分层限流、双 Bucket、日志脱敏与 secret scan 已通过独立 Review。
+- [x] T33 性能基线、Hero 批量查询、按需加载、横竖请求、三视口解码/CLS/溢出、键盘与减少动效已通过独立 Review。
 
 当前无阻断 OQ。最终小图标与部署参数仍分别在 T30、T34/T52 前确认。
 
@@ -148,11 +149,12 @@ EXT-01 现在只表示“正式素材输入已经到位并完成角色映射”�
 - 2026-08-05：用户追加 T27-F1 视觉收口：关于二级导航改为完整圆角矩形；文案配置 FAQ 新增按钮与最后一项增加间距；页脚压缩高度，并追加链接至 `https://github.com/wangminan` 的 `Design by Arktouros` 彩蛋署名。
 - 2026-08-05：T25 水印比例缺陷与 T27-F1 视觉追加完成实现方验证：当前开发库新活动 profile 真实 OSS 生成/核验 60/60，公开领养三视口通过；页头/页脚真实浏览器通过，定向生产 Playwright 4/4 PASS。T27-F1 仍等待独立 Review/用户验收。
 - 2026-08-05：T26-F1/T27-F1 新上下文独立 Review 在基线先冻结 3 个 must-fix、3 个 should-fix，修复复核又发现 1 个陈旧 E2E 契约；持久 UPSCALE 操作、文档冲突、0015 版本、持续风险、移动菜单焦点/inert、重复链接和页脚断言均已关闭，最终 `PASS WITH FOLLOW-UP`。用户验收与真实 OSS 安全前缀新写入仍保留为独立边界。
+- 2026-08-05：T33 新上下文独立 Review 初审冻结 Hero 投影 N+1、后续项 eager、方向固有尺寸和 10 px 命中区 4 个 findings；修复后 2–5 项 public/admin 查询恒定为 5/6，独立集成 6/6、Chrome 18/18 与 production 三视口通过，最终 `PASS WITH FOLLOW-UP`。Follow-up 仅是当前真实库单项和无管理凭据的证据边界。
 
 ## 下一步
 
 当前交接：
 
-1. 按 TASKS 串行完成 T28–T34，不提前实现 T35/T37 等 P1 能力。
+1. 按 TASKS 串行完成 T34 P0 总门禁，不提前实现 T35/T37 等 P1 能力。
 2. T26-F1、T27-F1 与 T34 最终勾选等待用户验收；Review 初始 findings 保持可追溯。
 3. 用户可按 [`T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md) 补验 T26-F1/T27-F1；该 follow-up 不回退已通过的工程 Review。

@@ -6,7 +6,7 @@
 
 ## 评审对象
 
-尚未进入正式阶段 5；阶段 4 进行中。T01–T29、T31–T32、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T26-F1/T27-F1 等待用户验收；T30 工程与独立 Review 为 `PASS WITH FOLLOW-UP`，等待品牌图标用户验收。当前进入 T33。**OQ-120 已关闭。**
+尚未进入正式阶段 5；阶段 4 进行中。T01–T29、T31–T33、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T26-F1/T27-F1 等待用户验收；T30 工程与独立 Review 为 `PASS WITH FOLLOW-UP`，等待品牌图标用户验收。当前进入 T34。**OQ-120 已关闭。**
 
 T21 首次独立审查、findings 修复、人工验收回归和用户最终确认已收口；首次 NOT PASS 报告继续作为历史事实保留。阶段 C 启动和 Review 方法见 `implementation/notes/P0-C-STAGE-READINESS-2026-08-02.md`。
 
@@ -28,6 +28,7 @@ T21 首次独立审查、findings 修复、人工验收回归和用户最终确�
 - T28 首页完整顺序与 T29 筛选/详情导航/301 的独立 Review 为 `PASS`；T30 SEO/品牌衍生物为 `PASS WITH FOLLOW-UP`，只保留用户视觉门禁。证据见 `implementation/notes/t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md`。
 - T31 独立 Review 初审为 `NOT PASS`；迁移 hash MUST-FIX 修复后，验证恢复、非空短属性/媒体/大图/profile 一致性、失败清理与恢复库 Chrome 最终 `PASS`。证据见 `implementation/notes/t28-t34/T31-BACKUP-RESTORE-2026-08-05.md`。
 - T32 独立 Review 初审为 `NOT PASS`；请求中断与日志明文用户名 2 个 MUST-FIX 在共享边界修复后，安全负路径、真实 OSS、secret scan、production build/verify 与 Chrome 最终 `PASS`。证据见 `implementation/notes/t28-t34/T32-SECURITY-GATE-2026-08-05.md`。
+- T33 独立 Review 初审为 `NOT PASS`；Hero 投影 N+1、后续项 eager、方向固有尺寸与轮播命中区 4 个 findings 在共享投影和原生 HTML/CSS 边界关闭。2–5 项查询恒定，独立集成、Chrome E2E 与 production 三视口通过，最终 `PASS WITH FOLLOW-UP`。证据见 `implementation/notes/t28-t34/T33-PERFORMANCE-VISUAL-2026-08-05.md`。
 - EXT-01 已根据用户确认收口：Logo、作品、领养设定图和返图来源登记在 `materials/MATERIAL-MANIFEST.md`；T30/T51 负责衍生与校准，不再等待外部文件。
 - 后续写入全部直接在 `main` 串行完成；前端按任务选择 Kimi K3、Claude Opus 5 或 GPT-5.6 Sol，后端和 Review 使用 GPT-5.6 Sol。
 
