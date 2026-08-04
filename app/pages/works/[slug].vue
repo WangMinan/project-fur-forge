@@ -175,7 +175,7 @@ const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
             {{ priceText }}
           </p>
           <p class="work-detail__price-note">
-            公开人民币价格；后续沟通通过邮件或线下完成，网站不接受登记、定金或付款。
+            如需领养，请访问"关于我们"获取联系方式，网站不接受登记、定金或付款。
           </p>
         </section>
       </div>
