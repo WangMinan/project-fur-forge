@@ -13,6 +13,7 @@
 - [`T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md`](./t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md)：首页完整顺序、详情导航/301、SEO、品牌图标、初始 findings、修复与独立 Chrome 复验。
 - [`T31-BACKUP-RESTORE-2026-08-05.md`](./t28-t34/T31-BACKUP-RESTORE-2026-08-05.md)：验证恢复命令、迁移 hash、数据一致性、失败清理和恢复库 production Chrome，独立 Review 最终 `PASS`。
 - [`T32-SECURITY-GATE-2026-08-05.md`](./t28-t34/T32-SECURITY-GATE-2026-08-05.md)：64 KiB JSON、请求级限流、Host/Origin/CSRF/DTO、日志脱敏、真实 OSS/secret scan、初始 findings 与独立复验，最终 `PASS`。
+- [`T33-PERFORMANCE-VISUAL-2026-08-05.md`](./t28-t34/T33-PERFORMANCE-VISUAL-2026-08-05.md)：production SSR 基线、媒体方向/缓存/解码、三视口截图、交互/无障碍与 trace；当前等待独立 Review。
 - [`T25-DESIGN-SHEET-WATERMARK-FOLLOW-UP-2026-08-05.md`](./t23-t25/T25-DESIGN-SHEET-WATERMARK-FOLLOW-UP-2026-08-05.md)：高分辨率设定图水印固定像素根因、960 px 基准修复、当前活动 profile 原子重建与真实 OSS/浏览器证据。
 - [`T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`](./t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md)：委托页独立大图的规格、最小复用方案、低分辨率追加实现与验证证据。
 - [`T26-F1-HERO-WATERMARK-FOLLOW-UP-2026-08-04.md`](./t26-t27/T26-F1-HERO-WATERMARK-FOLLOW-UP-2026-08-04.md)：首页/委托页大图复用作品媒体水印布局与视觉比例、现有公开对象原子重建和真实浏览器复核。
