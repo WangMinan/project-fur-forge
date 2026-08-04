@@ -19,6 +19,7 @@ export interface SiteContentPayload {
     studioFacts: string | null
     makingScope: string | null
     basicTerms: string | null
+    privacyPolicy: string | null
   }
   contact: {
     douyin: string | null

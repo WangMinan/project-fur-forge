@@ -108,7 +108,7 @@ const mailtoHref = computed(() => props.email
 .commission-lead__status {
   padding: var(--space-2) var(--space-3);
   border: 1px solid rgb(255 255 255 / 0.38);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-lg);
   background: rgb(17 20 25 / 0.48);
 }
 

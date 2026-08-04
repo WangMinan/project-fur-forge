@@ -49,6 +49,7 @@ test('只展示 regular adoption 的完整横版设定图、状态、属性和�
   await page.goto('/adoptions')
 
   await expect(page.getByRole('heading', { level: 1, name: '角色领养' })).toBeVisible()
+  await expect(page.getByTestId('adoption-status')).toContainText('领养')
   await expect(page.getByRole('status')).toContainText('共 1 个可浏览角色')
   const card = page.locator(`[data-work-slug="${regularSlug}"]`)
   await expect(card).toContainText('星糖')
@@ -112,6 +113,7 @@ test('只有设定图的领养保留在领养页与统一详情，但不进入�
 test('没有已发布 regular adoption 时展示真实空状态', async ({ page }) => {
   await seedPublicCatalog(page, [])
   await page.goto('/adoptions')
+  await expect(page.getByTestId('adoption-status')).toContainText('领养')
   const empty = page.getByTestId('public-empty-state')
   await expect(empty).toContainText('当前没有已发布的常规领养')
   await expect(empty).toContainText('浏览作品展示')

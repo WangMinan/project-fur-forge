@@ -74,6 +74,7 @@ const aboutContentSchema = z.object({
   studioFacts: plainTextSchema(1_200).nullable(),
   makingScope: plainTextSchema(1_200).nullable(),
   basicTerms: plainTextSchema(8_000).nullable(),
+  privacyPolicy: plainTextSchema(8_000).nullable(),
 }).strict()
 
 const mutableContactContentSchema = z.object({
@@ -119,7 +120,7 @@ export const publicSiteContentDtoSchema = z.object({
   statuses: statusPairSchema(publicSiteBusinessStatusDtoSchema),
   commission: commissionContentSchema.extend({
     email: contactEmailSchema,
-    termsHref: z.literal('/about#terms'),
+    termsHref: z.literal('/service'),
   }).strict(),
   about: aboutContentSchema.extend({
     officialChannels: publicContactContentSchema.omit({ antiScam: true }),

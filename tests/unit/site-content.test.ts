@@ -18,6 +18,7 @@ const emptyContent = {
     studioFacts: null,
     makingScope: null,
     basicTerms: null,
+    privacyPolicy: null,
   },
   contact: {
     douyin: null,
@@ -98,7 +99,7 @@ describe('restricted site content contracts', () => {
       commission: {
         ...emptyContent.commission,
         email: 'studio@example.test',
-        termsHref: '/about#terms',
+        termsHref: '/service',
       },
       about: {
         ...emptyContent.about,

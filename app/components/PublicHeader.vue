@@ -1,10 +1,16 @@
 <script setup lang="ts">
+import type { PublicNavItem } from '~/utils/public-nav'
+
 const route = useRoute()
 const navOpen = ref(false)
 
 /** 首页图片覆盖态；内页白底态。 */
 const overlay = computed(() => route.path === '/')
 const triggerId = 'public-nav-trigger'
+
+function isActive(item: PublicNavItem) {
+  return route.path === item.href || item.children?.some(child => route.path === child.href)
+}
 
 watch(() => route.fullPath, () => {
   navOpen.value = false
@@ -34,16 +40,46 @@ watch(() => route.fullPath, () => {
     </NuxtLink>
 
     <nav class="public-header__nav" aria-label="主导航">
-      <NuxtLink
+      <div
         v-for="item in PUBLIC_NAV_ITEMS"
         :key="item.href"
-        :to="item.href"
-        class="public-header__link"
-        :class="{ 'public-header__link--emphasized': item.emphasized }"
-        :aria-current="route.path === item.href ? 'page' : undefined"
+        class="public-header__nav-item"
+        :class="{ 'public-header__nav-item--active': isActive(item) }"
       >
-        {{ item.label }}
-      </NuxtLink>
+        <NuxtLink
+          :to="item.href"
+          class="public-header__link"
+          :aria-current="route.path === item.href ? 'page' : undefined"
+          :aria-haspopup="item.children ? 'true' : undefined"
+        >
+          {{ item.label }}
+          <svg
+            v-if="item.children"
+            class="public-header__chevron"
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path d="m3 4.5 3 3 3-3" stroke="currentColor" stroke-width="1.2" />
+          </svg>
+        </NuxtLink>
+
+        <div v-if="item.children" class="public-header__subnav">
+          <nav class="public-header__subnav-panel" :aria-label="`${item.label}二级导航`">
+            <NuxtLink
+              v-for="child in item.children"
+              :key="child.href"
+              :to="child.href"
+              class="public-header__subnav-link"
+              :aria-current="route.path === child.href ? 'page' : undefined"
+            >
+              {{ child.label }}
+            </NuxtLink>
+          </nav>
+        </div>
+      </div>
     </nav>
 
     <button
@@ -150,7 +186,14 @@ watch(() => route.fullPath, () => {
   gap: var(--space-5);
 }
 
+.public-header__nav-item {
+  position: relative;
+}
+
 .public-header__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   color: inherit;
   font-size: var(--font-size-sm);
   opacity: 0.86;
@@ -161,21 +204,74 @@ watch(() => route.fullPath, () => {
   opacity: 1;
 }
 
-.public-header__link[aria-current='page'] {
+.public-header__link[aria-current='page'],
+.public-header__nav-item--active > .public-header__link {
   opacity: 1;
   text-decoration: underline;
   text-underline-offset: 0.4em;
 }
 
-.public-header:not(.public-header--overlay) .public-header__link[aria-current='page'] {
+.public-header:not(.public-header--overlay) .public-header__link[aria-current='page'],
+.public-header:not(.public-header--overlay) .public-header__nav-item--active > .public-header__link {
   color: var(--public-accent-primary);
 }
 
-.public-header__link--emphasized {
-  padding: var(--space-2) var(--space-4);
-  border: 1px solid currentcolor;
-  border-radius: var(--radius-full);
+.public-header__chevron {
+  transition: transform var(--duration-fast) var(--easing-standard);
+}
+
+.public-header__subnav {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: max-content;
+  min-width: 10rem;
+  padding-top: var(--space-2);
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-0.25rem);
+  transition:
+    opacity var(--duration-fast) var(--easing-standard),
+    transform var(--duration-fast) var(--easing-standard),
+    visibility var(--duration-fast) var(--easing-standard);
+}
+
+.public-header__subnav-panel {
+  display: grid;
+  padding: var(--space-2);
+  color: var(--public-text-primary);
+  background: var(--public-bg-primary);
+  border: 1px solid var(--public-border-secondary);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  box-shadow: 0 1rem 2rem rgb(17 20 25 / 0.12);
+}
+
+.public-header__subnav-link {
+  padding: var(--space-3) var(--space-4);
+  color: inherit;
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  border-radius: var(--radius-sm);
+}
+
+.public-header__subnav-link:hover,
+.public-header__subnav-link[aria-current='page'] {
+  color: var(--public-accent-primary);
+  background: var(--public-bg-secondary);
+}
+
+.public-header__nav-item:hover .public-header__subnav,
+.public-header__nav-item:focus-within .public-header__subnav {
+  visibility: visible;
   opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.public-header__nav-item:hover .public-header__chevron,
+.public-header__nav-item:focus-within .public-header__chevron {
+  transform: rotate(180deg);
 }
 
 .public-header__menu {
@@ -202,6 +298,13 @@ watch(() => route.fullPath, () => {
 
   .public-header__menu {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-header__chevron,
+  .public-header__subnav {
+    transition: none;
   }
 }
 </style>

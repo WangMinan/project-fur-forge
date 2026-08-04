@@ -31,6 +31,7 @@ const faqs = ref<FaqRow[]>(props.content.commission.faqs.map(faq => ({ ...faq })
 const studioFacts = ref(props.content.about.studioFacts ?? '')
 const makingScope = ref(props.content.about.makingScope ?? '')
 const basicTerms = ref(props.content.about.basicTerms ?? '')
+const privacyPolicy = ref(props.content.about.privacyPolicy ?? '')
 const douyin = ref(props.content.contact.douyin ?? '')
 const antiScam = ref(props.content.contact.antiScam ?? '')
 
@@ -43,6 +44,7 @@ function snapshotOf() {
     studioFacts: studioFacts.value,
     makingScope: makingScope.value,
     basicTerms: basicTerms.value,
+    privacyPolicy: privacyPolicy.value,
     douyin: douyin.value,
     antiScam: antiScam.value,
   })
@@ -58,6 +60,7 @@ function syncFromContent(dto: AdminSiteContentDto) {
   studioFacts.value = dto.about.studioFacts ?? ''
   makingScope.value = dto.about.makingScope ?? ''
   basicTerms.value = dto.about.basicTerms ?? ''
+  privacyPolicy.value = dto.about.privacyPolicy ?? ''
   douyin.value = dto.contact.douyin ?? ''
   antiScam.value = dto.contact.antiScam ?? ''
   baseline.value = snapshotOf()
@@ -79,6 +82,7 @@ watch(() => props.content, (dto) => {
       studioFacts: dto.about.studioFacts ?? '',
       makingScope: dto.about.makingScope ?? '',
       basicTerms: dto.about.basicTerms ?? '',
+      privacyPolicy: dto.about.privacyPolicy ?? '',
       douyin: dto.contact.douyin ?? '',
       antiScam: dto.contact.antiScam ?? '',
     })
@@ -93,6 +97,7 @@ const issues = computed(() => siteContentFieldIssues({
   studioFacts: studioFacts.value,
   makingScope: makingScope.value,
   basicTerms: basicTerms.value,
+  privacyPolicy: privacyPolicy.value,
   douyin: douyin.value,
   antiScam: antiScam.value,
 }))
@@ -131,6 +136,7 @@ function onSave() {
       studioFacts: normalizeNullableText(studioFacts.value),
       makingScope: normalizeNullableText(makingScope.value),
       basicTerms: normalizeNullableText(basicTerms.value),
+      privacyPolicy: normalizeNullableText(privacyPolicy.value),
     },
     contact: {
       douyin: normalizeNullableText(douyin.value),
@@ -145,7 +151,7 @@ function onSave() {
     <header class="site-content__head">
       <h2 id="site-content-title" class="site-content__card-title">页面内容</h2>
       <p class="site-content__meta">
-        委托、关于、联系页的固定文字。所有字段留空即不在公开页显示对应区块；
+        委托、关于、服务条款、隐私政策与联系区的固定文字。所有字段留空即不在公开页显示对应区块；
         邮箱（{{ content.contact.email }}）与 QQ（{{ content.contact.qq }}）继续在“大图管理”的“首屏设置”维护。
       </p>
     </header>
@@ -252,7 +258,7 @@ function onSave() {
     </div>
 
     <div class="site-content__group" aria-labelledby="site-content-about">
-      <h3 id="site-content-about" class="site-content__group-title">关于页</h3>
+      <h3 id="site-content-about" class="site-content__group-title">关于我们页</h3>
 
       <div class="site-content__field">
         <label class="site-content__label" for="sc-facts">
@@ -286,9 +292,14 @@ function onSave() {
         <p v-if="issues.makingScope" class="site-content__issue" role="alert">{{ issues.makingScope }}</p>
       </div>
 
+    </div>
+
+    <div class="site-content__group" aria-labelledby="site-content-legal">
+      <h3 id="site-content-legal" class="site-content__group-title">服务条款与隐私政策</h3>
+
       <div class="site-content__field">
         <label class="site-content__label" for="sc-terms">
-          基本约定（{{ basicTerms.trim().length }}/{{ SITE_CONTENT_LIMITS.basicTerms }}）
+          服务条款（{{ basicTerms.trim().length }}/{{ SITE_CONTENT_LIMITS.basicTerms }}）
         </label>
         <textarea
           id="sc-terms"
@@ -298,13 +309,29 @@ function onSave() {
           :maxlength="SITE_CONTENT_LIMITS.basicTerms"
           :disabled="mutating"
         />
-        <p class="site-content__hint">显示在关于页“基本约定”区；空行分段，逐条换行书写。</p>
+        <p class="site-content__hint">单独显示在“服务条款”页；空行分段，逐条换行书写。</p>
         <p v-if="issues.basicTerms" class="site-content__issue" role="alert">{{ issues.basicTerms }}</p>
+      </div>
+
+      <div class="site-content__field">
+        <label class="site-content__label" for="sc-privacy">
+          隐私政策（{{ privacyPolicy.trim().length }}/{{ SITE_CONTENT_LIMITS.privacyPolicy }}）
+        </label>
+        <textarea
+          id="sc-privacy"
+          v-model="privacyPolicy"
+          class="site-content__textarea site-content__textarea--tall"
+          rows="10"
+          :maxlength="SITE_CONTENT_LIMITS.privacyPolicy"
+          :disabled="mutating"
+        />
+        <p class="site-content__hint">单独显示在“隐私政策”页；内容应与网站实际收集和使用信息的方式一致。</p>
+        <p v-if="issues.privacyPolicy" class="site-content__issue" role="alert">{{ issues.privacyPolicy }}</p>
       </div>
     </div>
 
     <div class="site-content__group" aria-labelledby="site-content-contact">
-      <h3 id="site-content-contact" class="site-content__group-title">联系页</h3>
+      <h3 id="site-content-contact" class="site-content__group-title">联系区</h3>
 
       <div class="site-content__field">
         <label class="site-content__label" for="sc-douyin">抖音号</label>

@@ -51,7 +51,7 @@ onMounted(() => void load())
       <header class="content-admin__header">
         <h1 class="content-admin__title">文案配置</h1>
         <p class="content-admin__meta">
-          维护委托与领养状态，以及自设委托、关于我们、联系我们三个公开页的固定文案。
+          维护委托与领养状态，以及自设委托、关于我们、服务条款、隐私政策的固定文案。
         </p>
       </header>
 

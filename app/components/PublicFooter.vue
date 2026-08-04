@@ -1,12 +1,5 @@
 <script setup lang="ts">
-import { publicHomeResponseSchema } from '~~/shared/schemas/home'
-
 const year = new Date().getFullYear()
-const { data: home } = await useFetch('/api/public/v1/home', {
-  key: 'public-footer-home',
-  headers: useRequestHeaders(['host']),
-  transform: raw => publicHomeResponseSchema.parse(raw).data,
-})
 </script>
 
 <template>
@@ -32,18 +25,17 @@ const { data: home } = await useFetch('/api/public/v1/home', {
         </NuxtLink>
       </nav>
 
-      <address v-if="home" class="public-footer__contact">
-        <p>
-          业务邮箱
-          <a :href="`mailto:${home.contactEmail}`">{{ home.contactEmail }}</a>
+      <div class="public-footer__legal">
+        <p>© {{ year }} 有点小狗工作室</p>
+        <p class="public-footer__legal-links">
+          <NuxtLink to="/service">服务条款</NuxtLink>
+          <span aria-hidden="true">|</span>
+          <NuxtLink to="/privacy">隐私政策</NuxtLink>
+          <span aria-hidden="true">|</span>
+          <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">ICP备案</a>
         </p>
-        <p>QQ {{ home.contactQq }}</p>
-      </address>
+      </div>
     </div>
-
-    <p class="public-footer__legal">
-      © {{ year }} 有点小狗工作室 · 网站内容以工作室官方渠道确认为准
-    </p>
   </footer>
 </template>
 
@@ -89,27 +81,37 @@ const { data: home } = await useFetch('/api/public/v1/home', {
   color: var(--public-accent-primary);
 }
 
-.public-footer__contact {
+.public-footer__legal {
   display: grid;
   gap: var(--space-2);
   color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
-  font-style: normal;
+  font-size: var(--font-size-xs);
 }
 
-.public-footer__legal {
-  max-width: var(--public-content-wide);
-  margin: var(--space-7) auto 0;
-  padding-top: var(--space-4);
-  color: var(--public-text-tertiary);
-  font-size: var(--font-size-xs);
-  border-top: 1px solid var(--public-border-secondary);
+.public-footer__legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+}
+
+.public-footer__legal a {
+  color: inherit;
+}
+
+.public-footer__legal a:hover {
+  color: var(--public-accent-primary);
 }
 
 @media (min-width: 768px) {
   .public-footer__inner {
     grid-template-columns: 1.2fr 1fr 1fr;
-    align-items: start;
+    align-items: stretch;
+  }
+
+  .public-footer__legal {
+    align-self: end;
+    justify-items: end;
+    text-align: right;
   }
 }
 </style>

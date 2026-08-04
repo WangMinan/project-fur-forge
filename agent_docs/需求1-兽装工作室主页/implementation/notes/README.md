@@ -7,7 +7,8 @@
 
 - [`P0-C-STAGE-READINESS-2026-08-02.md`](./P0-C-STAGE-READINESS-2026-08-02.md)：阶段 C 启动条件、T22 边界、四个执行波次、main 直推纪律、自动化与 GPT-5.6 Sol 浏览器/视觉 Review 方法。
 - [`../EXECUTION_ROUTING.md`](../EXECUTION_ROUTING.md)：前端模型池、GPT-5.6 Sol 后端/Review、串行交接和测试策略。
-- [`../TASKS.md`](../TASKS.md)：唯一可勾选任务清单；T23–T27 已收口，T26-F1 实现方自测完成并等待独立 Review/用户验收。
+- [`../TASKS.md`](../TASKS.md)：唯一可勾选任务清单；T23–T27 已收口，T26-F1、T27-F1 实现方自测完成并等待独立 Review/用户验收。
+- [`T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md`](./t26-t27/T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md)：公开信息架构、0015、服务/隐私页、导航/页脚、状态呈现和实现方自动化/浏览器证据。
 - [`T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`](./t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md)：委托页独立大图的规格、最小复用方案、低分辨率追加实现与验证证据。
 - [`T26-F1-HERO-WATERMARK-FOLLOW-UP-2026-08-04.md`](./t26-t27/T26-F1-HERO-WATERMARK-FOLLOW-UP-2026-08-04.md)：首页/委托页大图复用作品媒体水印布局与视觉比例、现有公开对象原子重建和真实浏览器复核。
 - [`T26-T27-OQ120-SEED-UX-FOLLOW-UP-2026-08-04.md`](./t26-t27/T26-T27-OQ120-SEED-UX-FOLLOW-UP-2026-08-04.md)：OQ-120 正式默认值、0014 迁移、当前库注入、“大图管理”统一命名、委托锚点修复与返图墙任务边界。
@@ -46,6 +47,7 @@
 
 ### T26–T27 固定内容与营业状态
 
+- [`T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md`](./t26-t27/T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md)：关于/联系合并、服务条款/隐私政策独立页、0015、导航/页脚、营业状态与双 Host 三视口实现方自测；独立 Review/用户验收待执行。
 - [`T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`](./t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md)：委托页独立大图管理、公开投影、迁移、低分辨率适配和实现方验证；统一的独立 Review/验收待执行。
 - [`T26-F1-HERO-WATERMARK-FOLLOW-UP-2026-08-04.md`](./t26-t27/T26-F1-HERO-WATERMARK-FOLLOW-UP-2026-08-04.md)：共享 `recipe-v2` 将横版大图改为设定图式左右双水印，竖版大图保持作品卡式单个居中水印；当前库已原子切换。
 - [`T26-T27-OQ120-SEED-UX-FOLLOW-UP-2026-08-04.md`](./t26-t27/T26-T27-OQ120-SEED-UX-FOLLOW-UP-2026-08-04.md)：用户确认 OQ-120 后的默认值迁移与当前库注入，以及“大图管理”命名和锚点遮挡跟进。
@@ -121,6 +123,7 @@
 - `t19-t22/t22-independent-review/screenshots/`：T22 管理端、公开首页与作品列表三视口。
 - `t26-t27/screenshots/visual-follow-up-*`：T26–T27 追加委托引导区三视口、后台作品查找与独立文案配置。
 - `t26-t27/screenshots/independent-review-*`：T26–T27 独立 Review 的委托页双视口、关于页与联系页最终视觉证据。
+- `t26-t27/screenshots/t27-f1-*`：T27-F1 关于二级导航、政策页、页脚、后台法律字段、领养状态与委托移动端圆角状态框。
 
 新任务的截图目录放在对应任务组下，例如 `t23-t25/t23-role-media/screenshots/`。截图文件名包含页面、状态和视口，例如 `admin-work-design-sheet-1440x900.png`。
 

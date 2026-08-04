@@ -32,6 +32,7 @@ export const SITE_CONTENT_LIMITS = {
   studioFacts: 1_200,
   makingScope: 1_200,
   basicTerms: 8_000,
+  privacyPolicy: 8_000,
   antiScam: 600,
   statusLabel: 40,
   statusDetail: 240,
@@ -60,7 +61,7 @@ export function isValidDouyin(value: string): boolean {
     && douyinPattern.test(value)
 }
 
-/** 基本约定等长纯文本按空行拆段渲染；输入已保证无 HTML，逐段 trim 后丢弃空段。 */
+/** 服务条款等长纯文本按空行拆段渲染；输入已保证无 HTML，逐段 trim 后丢弃空段。 */
 export function splitPlainTextParagraphs(value: string): string[] {
   return value
     .split(/\r?\n(?:\s*\r?\n)+/u)
@@ -76,6 +77,7 @@ export interface SiteContentFormFields {
   studioFacts: string
   makingScope: string
   basicTerms: string
+  privacyPolicy: string
   douyin: string
   antiScam: string
 }
@@ -95,6 +97,7 @@ export function siteContentFieldIssues(form: SiteContentFormFields): Record<stri
     ['studioFacts', form.studioFacts, SITE_CONTENT_LIMITS.studioFacts],
     ['makingScope', form.makingScope, SITE_CONTENT_LIMITS.makingScope],
     ['basicTerms', form.basicTerms, SITE_CONTENT_LIMITS.basicTerms],
+    ['privacyPolicy', form.privacyPolicy, SITE_CONTENT_LIMITS.privacyPolicy],
     ['antiScam', form.antiScam, SITE_CONTENT_LIMITS.antiScam],
   ] as const
   for (const [field, raw, max] of nullableTextFields) {
