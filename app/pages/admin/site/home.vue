@@ -46,6 +46,7 @@ const {
   retryPublication,
   saveSettings,
   updateSlide,
+  upscaling,
 } = useAdminHome(placement)
 
 const works = ref<WorkListItemDto[]>([])
@@ -181,8 +182,8 @@ async function onDisable(id: string) {
   actionError.value = await disableSlide(id)
 }
 
-async function onEnable(id: string) {
-  actionError.value = await enableSlide(id)
+async function onEnable(id: string, allowUpscale: boolean) {
+  actionError.value = await enableSlide(id, allowUpscale)
 }
 
 async function onRetry(id: string) {
@@ -370,11 +371,12 @@ onMounted(() => {
               :feedback="feedback[slide.id] ?? null"
               :preview="previews[slide.id] ?? null"
               :preview-pending="previewPending[slide.id] ?? false"
+              :upscaling="upscaling[slide.id] ?? false"
               :can-move-up="moveStateFor(slide.id).canMoveUp"
               :can-move-down="moveStateFor(slide.id).canMoveDown"
               @save="payload => onSave(slide.id, payload)"
               @delete="onDelete(slide.id)"
-              @enable="onEnable(slide.id)"
+              @enable="allowUpscale => onEnable(slide.id, allowUpscale)"
               @disable="onDisable(slide.id)"
               @move="direction => onMove(slide.id, direction)"
               @load-preview="onPreview(slide.id)"

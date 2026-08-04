@@ -13,8 +13,8 @@
 | 计划 | `planning/PLAN.md` | `planning/WATERMARK-CENTERED-V2.md` |
 | 模型投影 | `models/README.md` | `models/WATERMARK-CENTERED-V2.md` |
 | 设计 | `.design/` | `.design/WATERMARK-CENTERED-V2.md` |
-| 任务 | `implementation/TASKS.md` | T01–T27、EXT-01/02 与 GATE-06/07 已完成；T26-F1 工程完成，独立 Review/验收待执行 |
-| 状态 | `STATE.md` | 阶段 C：先收口 T26-F1，再进入 T28；OQ-120 继续作为正式内容门禁；main 直推继续生效 |
+| 任务 | `implementation/TASKS.md` | T01–T27、EXT-01/02 与 GATE-06/07 已完成；T26-F1 实现方自测完成，独立 Review/用户验收待执行 |
+| 状态 | `STATE.md` | 阶段 C：先完成 T26-F1 独立 Review/用户验收，再进入 T28；OQ-120 继续作为正式内容门禁；main 直推继续生效 |
 
 ## 当前执行入口
 
@@ -22,7 +22,7 @@
 | --- | --- | --- |
 | `implementation/notes/P0-C-STAGE-READINESS-2026-08-02.md` | 当前 | 阶段 C 启动条件、T22 边界、执行波次、main 纪律和验收方法 |
 | `implementation/EXECUTION_ROUTING.md` | 当前 | 前端模型池、GPT-5.6 Sol 后端/Review、串行交接、定向自动化与真实浏览器 Review |
-| `implementation/TASKS.md` | 当前 | 唯一可勾选清单；T26–T27 已勾选，T26-F1 保持未勾选并等待独立 Review/验收 |
+| `implementation/TASKS.md` | 当前 | 唯一可勾选清单；T26–T27 已勾选，T26-F1 保持未勾选并追加低分辨率大图适配 |
 | `materials/MATERIAL-MANIFEST.md` | 已确认 | Logo、作品、横版设定图、返图与页面候选的正式输入和衍生职责；EXT-01 完成 |
 | `implementation/notes/README.md` | 当前 | 按当前/收口/历史/截图整理全部实施记录，不移动已被引用的旧路径 |
 
@@ -45,7 +45,7 @@
 | T26–T27 服务端 | 已完成 | `implementation/notes/t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md` |
 | T26–T27 前端与追加跟进 | 已完成 | `implementation/notes/t26-t27/T26-T27-FRONTEND-2026-08-04.md` 与 `T26-T27-VISUAL-FOLLOW-UP-2026-08-04.md` |
 | T26–T27 独立 Review | PASS WITH FOLLOW-UP | `implementation/notes/t26-t27/T26-T27-INDEPENDENT-REVIEW-2026-08-04.md`；初始 findings、最小修复、44 项定向测试、SSR/Host/DTO/私有 Bucket、真实图片、三视口、键盘和截图证据 |
-| T26-F1 委托页独立大图 | 工程完成，待 Review/验收 | `implementation/notes/t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`；复用首页上传/排序/发布链，独立公开投影，无图不回退首页 |
+| T26-F1 委托页独立大图 | 实现方自测完成 | `implementation/notes/t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`；复用首页上传/排序/发布链，独立公开投影，并完成低分辨率确认与 FFmpeg 私有适配；独立 Review/用户验收待执行 |
 | T26/T27 回家人工核对 | 当前 | `implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md`；双 Host、文案/状态、委托独立大图、三公开页和可选 409 复核 |
 | EXT-01 正式素材 | 已完成 | `materials/MATERIAL-MANIFEST.md`；文件交付和角色映射完成，T30/T51 继续生成/校准衍生物 |
 
@@ -66,7 +66,7 @@
 
 ## 下一批预期产物
 
-- T26-F1 新上下文独立 Review 与用户验收记录；
+- T26-F1 统一后的新上下文独立 Review 与用户验收记录；
 - T28 首页完整内容顺序的后端/前端/Review 记录；
 - 用户确认 **OQ-120** 后的正式内容录入记录（不得沿用验证临时库文案）；
 - 用户如愿意补充的后台双上下文 409 与完整文案投影人工证据。

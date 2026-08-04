@@ -28,7 +28,7 @@ const SLOT_LABEL: Record<HeroSlot, string> = {
 }
 const pageLabel = computed(() => props.placement === 'home' ? '首页' : '委托页')
 
-const fileInput = ref<HTMLInputElement | null>(null)
+const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 
 const upload = useHeroAssetUpload({
   slot: props.orientation,
@@ -51,6 +51,19 @@ const stateText = computed(() => {
     case 'validating': return '正在核验…'
     default: return null
   }
+})
+
+const recommendedSize = computed(() => props.orientation === 'landscape'
+  ? { width: 1920, height: 1080 }
+  : { width: 1080, height: 1920 },
+)
+const visibleAsset = computed(() => upload.item.asset ?? props.savedAsset)
+const belowRecommendedSize = computed(() => {
+  const asset = visibleAsset.value
+  return asset !== null && (
+    asset.width < recommendedSize.value.width
+    || asset.height < recommendedSize.value.height
+  )
 })
 
 function pickFile() {
@@ -105,6 +118,10 @@ function onFileChange(event: Event) {
 
     <p v-if="unsavedAssetId && upload.item.state === 'completed'" class="hero-slot__unsaved" role="status">
       新图已上传（{{ upload.item.asset?.width }}×{{ upload.item.asset?.height }}），保存{{ placement === 'home' ? '轮播项' : '大图项' }}后生效
+    </p>
+
+    <p v-if="belowRecommendedSize" class="hero-slot__warning" role="status">
+      当前 {{ visibleAsset?.width }}×{{ visibleAsset?.height }}，低于推荐 {{ recommendedSize.width }}×{{ recommendedSize.height }}。可以保存；启用时需确认 FFmpeg 放大适配，清晰度不会因此恢复。
     </p>
 
     <input
@@ -199,6 +216,16 @@ function onFileChange(event: Event) {
   margin: 0;
   font-size: var(--admin-font-xs);
   color: var(--admin-status-success);
+}
+
+.hero-slot__warning {
+  margin: 0;
+  padding: var(--admin-space-2);
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-status-warning-soft);
+  color: var(--admin-status-warning);
+  font-size: var(--admin-font-xs);
+  line-height: var(--admin-line-normal);
 }
 
 .hero-slot__actions {

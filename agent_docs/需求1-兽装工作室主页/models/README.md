@@ -82,7 +82,7 @@ OQ-119 已由用户回答：`ownerDisplay` 始终为去首尾空白后非空的�
 - 每项都必须同时拥有非空 `landscape_asset_id` 与 `portrait_asset_id`，两者不能相同；启用项还要求两侧资产 READY；
 - 每项的 `alt_text` 去首尾空白后非空，排序值完整且非负；启用项在各自 `placement` 内要求排序唯一且位于 0–4，因此首页与委托页各自最多 5 项；首页发布至少保留 1 项，委托页允许 0 项；
 - 提交公开状态前，横版必须有 768 / 1280 / 1920、竖版必须有 480 / 768 / 1080 的当前 `recipe-v2` PUBLIC READY WebP + fallback（完整历史 v1 集合仅兼容读取）；usage、当前活动 `brand-centered-v2` profile、配置与 Logo 摘要、居中参数、输出摘要和字节数全部进入同一发布校验，公开 mapper 复用该条件；
-- READY 横竖资产还必须在生成前满足最大配方宽高；固定配方不上采样，尺寸不足返回 409；
+- READY 横竖资产方向校验仍为硬门禁。原图小于横版 `1920×1080` 或竖版 `1080×1920` 时允许保存草稿，但启用前必须经管理员确认并生成同一资产下可追溯的 READY PRIVATE `preprocess`；没有该源时返回 409。作品媒体仍不上采样；
 - 可选 `linked_work_id` 只允许指向已发布作品。作品下架时不得级联删除轮播图，应显式清空关联或阻止并说明影响；
 - 启用前私有预览通过 `landscape_preview_object_key`、`portrait_preview_object_key`、`preview_expires_at` 形成可审计清单；编辑、删除、启用或停用时精确清理，浏览器只接收同源管理地址；
 - 管理 DTO 的横竖已保存资产只下发 `assetId` 与尺寸；编辑器用通用同源鉴权媒体接口按 `assetId` 读取私有原图，不下发 Object Key、Bucket 地址或签名 URL；该原图预览不等同于前一条活动水印烘焙预览，后者只对未启用项开放；
@@ -105,11 +105,11 @@ OQ-119 已由用户回答：`ownerDisplay` 始终为去首尾空白后非空的�
 ### 媒体与水印
 
 - 私有 Bucket 保存原图、草稿、临时与预览；公开 Bucket 只保存发布衍生图。
-- 超过 OSS 20 MB 图片处理上限的合规原图保留在 `assets`；内嵌固定版本 FFmpeg 生成的私有处理源记录为不可公开的 `asset_variants`，identity 至少覆盖原图摘要、FFmpeg 版本、最长边、格式与参数版本。
+- 超过 OSS 20 MB 图片处理上限的合规原图保留在 `assets`；经管理员确认的低分辨率首页/委托页大图也保留永久原图，并使用内嵌固定版本 FFmpeg 生成不可公开的 `asset_variants` 私有处理源。identity 至少覆盖原图摘要、FFmpeg 版本与二进制摘要、目标尺寸、滤镜、格式和参数版本。
 - `assets` 不把 Bucket 域名写入数据库；环境配置决定 Bucket 与媒体域名，非测试环境不提供硬编码 origin fallback。
 - 模型层只引用配置键或解析后的配置，不保存、复制或硬编码具体配置值；测试夹具中的隔离值除外。
 - role/usage 矩阵固定为：`studio_photo` 允许 preprocess/work-card/detail；`design_sheet` 允许 preprocess/design-sheet/detail/work-card fallback；首页横竖角色分别只允许 preprocess 和自身 hero usage。
-- `preprocess` 不得引用另一个 preprocess，且输入摘要必须等于永久原图摘要；任何 `source_variant_id` 都必须指向同一资产下 READY 的 PRIVATE preprocess，其输出摘要等于下游输入摘要。大于 20,000,000 字节的原图生成 PUBLIC variant 时必须使用该来源。
+- `preprocess` 不得引用另一个 preprocess，且输入摘要必须等于永久原图摘要；任何 `source_variant_id` 都必须指向同一资产下 READY 的 PRIVATE preprocess，其输出摘要等于下游输入摘要。大于 20,000,000 字节的原图或已确认适配的低分辨率大图生成 PUBLIC variant 时必须使用该来源；横版适配源为 `1920×1080`，竖版为 `1080×1920`，且不超过 20,000,000 字节。
 - 管理端浏览器以 `assetId` 操作媒体；私有 Key 只在服务端和数据库中使用。
 - 原图不保存水印像素。`asset_variants` 的 identity 覆盖原图摘要、媒体角色、裁切/焦点、用途、宽度、格式、质量、Logo 摘要、水印 profile 版本、锚点和 `recipe-version`，不得原位覆盖。
 - P0 的 `home_hero_*`、`design_sheet`、`studio_photo` 使用当前活动 `brand-centered-v2`；P1 的 `return_photo` 使用 `brand-subtle-v1`。profile ID、配置与 Logo 摘要、居中位置、不透明度和缩放进入 identity。

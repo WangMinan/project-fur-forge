@@ -76,6 +76,7 @@ export function useAdminHome(
   const feedback = ref<Record<string, SlideFeedback>>({})
   const previews = ref<Record<string, AdminHeroPreviewDto>>({})
   const previewPending = ref<Record<string, boolean>>({})
+  const upscaling = ref<Record<string, boolean>>({})
 
   const pollTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
@@ -324,13 +325,33 @@ export function useAdminHome(
   }
 
   // 启用为异步发布：返回错误文案或 null；进度经 operations/feedback 呈现。
-  async function enableSlide(id: string): Promise<string | null> {
+  async function enableSlide(
+    id: string,
+    allowUpscale = false,
+  ): Promise<string | null> {
     if (!home.value || mutating.value) {
       return null
     }
     mutating.value = true
     setFeedback(id, null)
+    let stage: 'publication' | 'upscale' = allowUpscale
+      ? 'upscale'
+      : 'publication'
     try {
+      if (allowUpscale) {
+        upscaling.value = { ...upscaling.value, [id]: true }
+        const prepared = await adminApi(
+          heroUrl(`/slides/${id}/upscale`),
+          {
+            method: 'POST',
+            body: versionedBody({}),
+            schema: adminHomeResponseSchema,
+          },
+        )
+        home.value = prepared.data
+        upscaling.value = { ...upscaling.value, [id]: false }
+        stage = 'publication'
+      }
       const result = await adminApi(
         heroUrl(`/slides/${id}/enable`),
         {
@@ -368,9 +389,13 @@ export function useAdminHome(
         await onConflict(`${conflictSubject()}已在其他地方变化，已重新加载，请确认后重试。`)
         return '启用未提交：版本或大图状态已变化，请确认后重试。'
       }
+      if (stage === 'upscale') {
+        return 'FFmpeg 放大适配失败，私有原图已保留，请稍后重试。'
+      }
       return '启用请求失败，请稍后重试。'
     }
     finally {
+      upscaling.value = { ...upscaling.value, [id]: false }
       mutating.value = false
     }
   }
@@ -484,5 +509,6 @@ export function useAdminHome(
     retryPublication,
     saveSettings,
     updateSlide,
+    upscaling,
   }
 }

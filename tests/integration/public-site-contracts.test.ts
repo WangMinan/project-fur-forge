@@ -30,6 +30,7 @@ import {
   getAdminHome,
   getPublicCommissionHero,
   getPublicHome,
+  prepareHeroSlideUpscale,
   reorderEnabledHeroSlides,
   retryHeroSlidePublication,
   runHeroSlidePublication,
@@ -264,22 +265,88 @@ afterEach(() => {
 })
 
 describe('T19/T20 public repository contracts', () => {
-  it('rejects READY hero sources that cannot satisfy the current recipe', () => {
+  it('saves low-resolution hero sources but requires confirmed private upscale before enabling', async () => {
     const initial = getAdminHome(sqlite)
     const landscape = createHeroAsset(
       'home_hero_landscape',
       initial.version,
       { width: 320, height: 180 },
     )
-    const portrait = createHeroAsset('home_hero_portrait', initial.version)
+    const portrait = createHeroAsset(
+      'home_hero_portrait',
+      initial.version,
+      { width: 180, height: 320 },
+    )
 
-    expect(() => createHeroSlide(sqlite, initial.version, {
+    const created = createHeroSlide(sqlite, initial.version, {
       alt: '尺寸不足的首页图',
       sortOrder: 0,
       landscapeAssetId: landscape,
       portraitAssetId: portrait,
       linkedWorkId: null,
-    })).toThrow(/dimensions/u)
+    })
+    const slide = created.slides[0]!
+
+    expect(() => startHeroSlidePublication(
+      sqlite,
+      slide.id,
+      created.version,
+      NOW + sequence++,
+    )).toThrow(/confirmed upscale/u)
+
+    await prepareHeroSlideUpscale(
+      sqlite,
+      storage,
+      slide.id,
+      created.version,
+      NOW + sequence++,
+    )
+    expect(storage.privatePuts).toHaveLength(2)
+    for (const put of storage.privatePuts) {
+      expect(put.contentMd5).toBe(
+        createHash('md5').update(put.content).digest('base64'),
+      )
+    }
+    const preprocess = sqlite.prepare(`
+      SELECT
+        source_variant_id AS sourceVariantId, storage_scope AS storageScope,
+        usage, width, height, recipe_version AS recipeVersion,
+        input_sha256 AS inputSha256, sha256, object_key AS objectKey
+      FROM asset_variants
+      WHERE asset_id = ? AND usage = 'preprocess'
+    `).get(landscape) as Record<string, unknown>
+    expect(preprocess).toMatchObject({
+      sourceVariantId: null,
+      storageScope: 'PRIVATE',
+      usage: 'preprocess',
+      width: 1920,
+      height: 1080,
+      recipeVersion: 'hero-upscale-lanczos-v1',
+    })
+    expect(preprocess.inputSha256).not.toBe(preprocess.sha256)
+    expect(String(preprocess.objectKey)).toContain('/hero-upscale-lanczos-v1/')
+
+    const operation = startHeroSlidePublication(
+      sqlite,
+      slide.id,
+      created.version,
+      NOW + sequence++,
+    )
+    await runHeroSlidePublication(
+      sqlite,
+      storage,
+      operation.operationId,
+      USER_ID,
+      NOW + sequence++,
+    )
+    expect(getAdminHome(sqlite).slides[0]?.enabled).toBe(true)
+    expect(storage.processCalls.filter(call =>
+      call.objectKey.includes('/home-hero-landscape/'),
+    ).every(call => call.sourceObjectKey === preprocess.objectKey)).toBe(true)
+    const originalKey = sqlite.prepare(`
+      SELECT private_object_key FROM assets WHERE id = ?
+    `).pluck().get(landscape) as string
+    expect(storage.objects.has(originalKey)).toBe(true)
   })
 
   it('returns current-profile published works in manual, filtered and featured order', async () => {
