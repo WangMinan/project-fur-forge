@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-阶段 4 · IMPLEMENTATION 进行中。T01–T29、T31、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T26-F1/T27-F1 等待用户验收；T30 工程与新上下文独立 Review 已完成，结论 `PASS WITH FOLLOW-UP`，保持未勾选并等待品牌图标用户验收。T31 独立 Review 初审的迁移 hash finding 已关闭，最终 `PASS`。**OQ-120 已由用户整批确认，0014/0015 已登记正式默认值。**当前进入 T32。
+阶段 4 · IMPLEMENTATION 进行中。T01–T29、T31–T32、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T26-F1/T27-F1 等待用户验收；T30 工程与新上下文独立 Review 已完成，结论 `PASS WITH FOLLOW-UP`，保持未勾选并等待品牌图标用户验收。T31 迁移 hash finding 与 T32 请求中断/日志用户名 findings 均已关闭，两项最终 `PASS`。**OQ-120 已由用户整批确认，0014/0015 已登记正式默认值。**当前进入 T33。
 
 T21 首次独立审查的 3 个 must-fix 与 1 个 should-fix、用户人工验收发现的管理入口命名、Hero 安全边距、作品筛选视觉、页脚联系方式配置、已保存首页轮播原图预览及启用态预览按钮错配均已修复并验证。用户于 2026-08-02 明确确认 T21 收口；首次 NOT PASS 报告继续保留为历史事实，不虚构第二份独立复审报告。
 
@@ -17,6 +17,7 @@ T26-F1 工程交接与低分辨率追加设计见 [`implementation/notes/t26-t27
 T27-F1 实现、迁移、自动化、浏览器与截图证据见 [`implementation/notes/t26-t27/T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md`](./implementation/notes/t26-t27/T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md)。
 T28–T30 实现、初始 findings、修复和独立 Chrome Review 见 [`implementation/notes/t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md`](./implementation/notes/t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md)。
 T31 验证恢复命令、初始 findings、迁移 hash 修复、数据一致性和恢复库 Chrome 证据见 [`implementation/notes/t28-t34/T31-BACKUP-RESTORE-2026-08-05.md`](./implementation/notes/t28-t34/T31-BACKUP-RESTORE-2026-08-05.md)。
+T32 初始 findings、统一请求边界、限流、脱敏、真实 OSS/secret scan 与新上下文复验见 [`implementation/notes/t28-t34/T32-SECURITY-GATE-2026-08-05.md`](./implementation/notes/t28-t34/T32-SECURITY-GATE-2026-08-05.md)。
 
 ## 当前执行分工
 
@@ -52,6 +53,7 @@ T31 验证恢复命令、初始 findings、迁移 hash 修复、数据一致性�
 - [x] T28 首页完整顺序与 T29 筛选/导航/301 已通过独立 Review并收口。
 - [ ] T30 SEO/品牌衍生物技术 Review 已通过；等待用户视觉验收。
 - [x] T31 备份、恢复、迁移精确匹配、失败清理与恢复库 production Chrome 已通过独立 Review。
+- [x] T32 Session/CSRF/Host/DTO、64 KiB JSON、分层限流、双 Bucket、日志脱敏与 secret scan 已通过独立 Review。
 
 当前无阻断 OQ。最终小图标与部署参数仍分别在 T30、T34/T52 前确认。
 

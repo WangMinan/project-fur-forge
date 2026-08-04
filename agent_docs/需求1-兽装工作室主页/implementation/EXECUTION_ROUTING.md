@@ -2,7 +2,7 @@
 
 > **角色**：记录模型、人员与工作轨道的可变执行安排。
 > **效力**：本文件不改变 foundation、SPEC/增量、PLAN/增量、`.design` 或 `TASKS.md` 的产品范围和完成定义。
-> **生效日期**：2026-08-05（T28/T29/T31 已收口；T26-F1、T27-F1、T30 等待用户验收；当前进入 T32）。
+> **生效日期**：2026-08-05（T28/T29/T31/T32 已收口；T26-F1、T27-F1、T30 等待用户验收；当前进入 T33）。
 
 ## 1. 当前角色
 
@@ -23,6 +23,7 @@ GPT-5.6 Sol 可以同时承担后端实现与后续 Review，但 Review 必须�
 - T26-F1/T27-F1 新上下文独立 Review 已完成，结论 `PASS WITH FOLLOW-UP`；两项等待用户验收。
 - T28/T29 独立 Chrome Review 为 `PASS` 并已收口；T30 为 `PASS WITH FOLLOW-UP`，仅保留品牌图标用户视觉门禁。
 - T31 独立 Review 初审的 migration hash MUST-FIX 已关闭；验证恢复、失败清理、恢复库 production Chrome 与媒体 Host 健康最终 `PASS`。
+- T32 独立 Review 初审的请求中断与日志用户名 MUST-FIX 已在共享边界关闭；安全负路径、真实 OSS、secret scan、production build/verify 与 Chrome 最终 `PASS`。
 - **OQ-120** 已由用户整批确认，0014 迁移只补空字段或缺失状态；后台双上下文 409 与完整文案投影可由用户下班后补验。
 - T37 展会矩阵未提前进入。
 - T22 最终 Review 与用户验收追加见 [`notes/t19-t22/T22-INDEPENDENT-REVIEW-2026-08-03.md`](./notes/t19-t22/T22-INDEPENDENT-REVIEW-2026-08-03.md)。
@@ -58,8 +59,8 @@ T22 不提前实现 T23 多图关系，也不提前实现 T37 的展会实体和
 
 - 用户授权 T28–T34 作为单一长程批次连续实施；中间用户门禁统一延后至本批次末尾人工验收。批量继续执行不等于相应用户验收已经发生。
 - T31：[已完成] 新路径验证恢复、迁移 hash、非空短属性/媒体/大图/profile 一致性、失败清理与恢复库 Chrome；
-- T32：[当前] GPT-5.6 Sol 主导完整 P0 安全门禁；
-- T33 由前端执行者与 GPT-5.6 Sol Review 联合完成三视口、媒体请求、性能和视觉回归；
+- T32：[已完成] GPT-5.6 Sol 完整 P0 安全门禁与新上下文独立复验；
+- T33：[当前] 由前端执行者与 GPT-5.6 Sol Review 联合完成三视口、媒体请求、性能和视觉回归；
 - T34 由 GPT-5.6 Sol 执行完整自动化、真实浏览器全链和部署版本复核，用户做最终 P0 验收。
 
 ## 4. 直接在 main 上的策略

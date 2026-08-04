@@ -43,3 +43,13 @@
 - 复用现有 `safeLog` 根边界，把所有 `username` 键统一替换为 `[REDACTED]`，未逐调用点打补丁。真实 Chrome 输出只出现脱敏值。
 
 修复后：安全单元 6 项、认证/Host/CSRF/body 集成 17 项、真实 Chrome 27 项、lint、typecheck、production build/content guard 和 `verify:production` 均通过。等待同一独立审查上下文复验两项 finding 后再给 T32 最终结论。
+
+## 新上下文独立复验
+
+基线 `ea43425` 最终结论为 `PASS`，两项 MUST-FIX 均已关闭，无新增 finding：
+
+- 独立 EventEmitter 复现覆盖 `aborted`、未完整 `close`、正常结束和超限，分别得到 400、400、成功和 413；四条出口的 `data/end/error/aborted/close` 监听器均归零。安全单元 18 项、定向集成 17 项通过。
+- `safeLog` 对根层、嵌套、大小写和派生 `username` 键均输出 `[REDACTED]`；真实 Chrome 27 项通过，日志不再包含测试用户名。
+- 标准 production build/content guard 与 `verify:production` 通过；本机秘密逐值扫描和跟踪文件/`.output` 通用扫描均为 0 命中。
+
+复验期间首次 build 因 T33 临时生产进程占用 `.output` 得到 `EPERM`；精确停止该进程后标准命令通过，不属于产品 finding。T32 可以收口并进入 T33。
