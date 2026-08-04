@@ -1,5 +1,6 @@
 import {
   copyFileSync,
+  existsSync,
   mkdtempSync,
   mkdirSync,
   readFileSync,
@@ -28,6 +29,7 @@ import {
   PRODUCTION_DATABASE_FILE,
   readSqlitePragmas,
   resolveDatabaseFile,
+  restoreDatabase,
 } from '../../server/utils/database'
 
 const temporaryDirectories: string[] = []
@@ -367,6 +369,66 @@ describe('SQLite foundation', () => {
 
     await expect(backupDatabase(databaseFile, backupFile))
       .rejects.toThrow(/does not exist or is empty/)
+  })
+
+  it('restores a current online backup only to a new non-active path', async () => {
+    const databaseFile = temporaryDatabase('source.db')
+    const backupFile = temporaryDatabase('backup.db')
+    const restoredFile = temporaryDatabase('restored.db')
+    await migrateDatabase(databaseFile)
+    const source = openDatabase(databaseFile)
+
+    try {
+      source.sqlite.prepare(`
+        UPDATE site_content SET hero_tagline = '恢复冒烟', version = version + 1
+        WHERE id = 'site'
+      `).run()
+      await backupDatabase(databaseFile, backupFile)
+    }
+    finally {
+      source.sqlite.close()
+    }
+
+    await expect(restoreDatabase(backupFile, restoredFile, {
+      activeDatabaseFile: databaseFile,
+    })).resolves.toBe(restoredFile)
+    const restored = openDatabase(restoredFile)
+    try {
+      expect(restored.sqlite.prepare(`
+        SELECT hero_tagline FROM site_content WHERE id = 'site'
+      `).pluck().get()).toBe('恢复冒烟')
+      expect(restored.sqlite.pragma('foreign_key_check')).toEqual([])
+    }
+    finally {
+      restored.sqlite.close()
+    }
+
+    await expect(restoreDatabase(backupFile, restoredFile))
+      .rejects.toThrow(/destination already exists/)
+    await expect(restoreDatabase(backupFile, databaseFile, {
+      activeDatabaseFile: databaseFile,
+    })).rejects.toThrow(/active database/)
+  })
+
+  it('rejects invalid or stale backups without leaving a target database', async () => {
+    const invalidBackup = temporaryDatabase('invalid.db')
+    const invalidOutput = temporaryDatabase('invalid-output.db')
+    writeFileSync(invalidBackup, 'not a sqlite database')
+
+    await expect(restoreDatabase(invalidBackup, invalidOutput)).rejects.toThrow()
+    expect(existsSync(invalidOutput)).toBe(false)
+
+    const staleDatabase = temporaryDatabase('stale.db')
+    const staleBackup = temporaryDatabase('stale-backup.db')
+    const staleOutput = temporaryDatabase('stale-output.db')
+    await migrateDatabase(staleDatabase, {
+      migrationsFolder: migrationsBeforeT23(staleDatabase),
+    })
+    await backupDatabase(staleDatabase, staleBackup)
+
+    await expect(restoreDatabase(staleBackup, staleOutput))
+      .rejects.toThrow(/current migrations/)
+    expect(existsSync(staleOutput)).toBe(false)
   })
 })
 

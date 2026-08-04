@@ -4,12 +4,23 @@ import {
   isPrivateResponsePath,
   PRIVATE_RESPONSE_HEADERS,
 } from './utils/private-response'
+import { getRuntimeConfig } from './utils/runtime-config'
 import { safeLog } from './utils/safe-log'
 
 const requestIdPattern = /^[A-Za-z0-9._:-]{8,128}$/
 
 function isApiPath(pathname: string) {
   return pathname === '/api' || pathname.startsWith('/api/')
+}
+
+function supportsHtmlErrorPage(event: Parameters<Parameters<
+  typeof defineNitroErrorHandler
+>[0]>[1]) {
+  const host = getRequestHost(event).toLowerCase()
+  const config = getRuntimeConfig()
+
+  return [config.publicBaseUrl, config.adminBaseUrl]
+    .some(url => new URL(url).host.toLowerCase() === host)
 }
 
 function requestIdFor(event: Parameters<Parameters<
@@ -144,7 +155,7 @@ export default defineNitroErrorHandler(async (
     })
   }
 
-  if (!isApiPath(pathname)) {
+  if (!isApiPath(pathname) && supportsHtmlErrorPage(event)) {
     return renderNuxtErrorPage(event, fallback.status, requestId)
   }
 

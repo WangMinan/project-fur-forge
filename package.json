@@ -17,6 +17,7 @@
     "db:backup": "tsx scripts/db-backup.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/db-migrate.ts",
+    "db:restore": "tsx scripts/db-restore.ts",
     "watermark:seed": "tsx scripts/watermark-seed.ts",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
