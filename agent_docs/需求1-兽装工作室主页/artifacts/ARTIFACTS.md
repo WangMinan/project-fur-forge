@@ -42,12 +42,13 @@
 | T21 人工验收与收口 | 已完成 | `implementation/notes/t19-t22/T21-MANUAL-UI-FIX-2026-08-02.md`；用户明确确认 |
 | T22 后端/前端/独立 Review/用户验收 | 已完成 | `implementation/notes/t19-t22/T22-BACKEND-2026-08-03.md`、`T22-FRONTEND-2026-08-03.md`、`T22-INDEPENDENT-REVIEW-2026-08-03.md` |
 | T23–T25 角色化媒体与常规领养 | 已完成 | `implementation/notes/t23-t25/T23-T25-CLOSURE-2026-08-04.md` 及同目录工程、前端、人工验收证据 |
+| T25 高分辨率设定图水印跟进 | 已完成实现方验证 | `implementation/notes/t23-t25/T25-DESIGN-SHEET-WATERMARK-FOLLOW-UP-2026-08-05.md`；960 px 基准同比缩放、活动 profile 原子重建、真实 OSS 与三视口证据 |
 | T26–T27 服务端 | 已完成 | `implementation/notes/t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md` |
 | T26–T27 前端与追加跟进 | 已完成 | `implementation/notes/t26-t27/T26-T27-FRONTEND-2026-08-04.md` 与 `T26-T27-VISUAL-FOLLOW-UP-2026-08-04.md` |
 | T26–T27 独立 Review | PASS WITH FOLLOW-UP | `implementation/notes/t26-t27/T26-T27-INDEPENDENT-REVIEW-2026-08-04.md`；初始 findings、最小修复、44 项定向测试、SSR/Host/DTO/私有 Bucket、真实图片、三视口、键盘和截图证据 |
 | T26–T27 OQ-120 与界面跟进 | 已完成 | `implementation/notes/t26-t27/T26-T27-OQ120-SEED-UX-FOLLOW-UP-2026-08-04.md`；0014 默认值、当前库注入、“大图管理”与锚点修复 |
 | T26-F1 委托页独立大图 | 实现方自测完成 | `implementation/notes/t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`；复用首页上传/排序/发布链，独立公开投影，并完成低分辨率确认与 FFmpeg 私有适配；独立 Review/用户验收待执行 |
-| T27-F1 公开信息架构与政策页 | 实现方自测完成 | `implementation/notes/t26-t27/T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md`；0015、管理/公开投影、独立法律页、导航/页脚、合并联系、营业状态与双 Host 三视口证据；独立 Review/用户验收待执行 |
+| T27-F1 公开信息架构与政策页 | 实现方自测完成 | `implementation/notes/t26-t27/T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md`；0015、管理/公开投影、独立法律页、圆角二级导航、紧凑页脚与署名链接、后台 FAQ 间距、营业状态及双 Host 三视口证据；独立 Review/用户验收待执行 |
 | 首页/委托页大图水印跟进 | 已完成 | `implementation/notes/t26-t27/T26-F1-HERO-WATERMARK-FOLLOW-UP-2026-08-04.md`；共享配方按作品媒体规则生成横版左右双水印、竖版单个居中水印，并完成现有公开对象原子重建与浏览器复核 |
 | T26/T27 回家人工核对 | 当前 | `implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md`；双 Host、文案/状态、委托独立大图、三公开页和可选 409 复核 |
 | EXT-01 正式素材 | 已完成 | `materials/MATERIAL-MANIFEST.md`；文件交付和角色映射完成，T30/T51 继续生成/校准衍生物 |

@@ -243,7 +243,7 @@ watch(() => route.fullPath, () => {
   color: var(--public-text-primary);
   background: var(--public-bg-primary);
   border: 1px solid var(--public-border-secondary);
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  border-radius: var(--radius-lg);
   box-shadow: 0 1rem 2rem rgb(17 20 25 / 0.12);
 }
 

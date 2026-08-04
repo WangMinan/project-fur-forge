@@ -77,6 +77,11 @@ test('管理导航提供独立文案配置页', async ({ page }) => {
     .toHaveAttribute('aria-current', 'page')
   await expect(page.getByRole('heading', { name: '营业状态', exact: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: '页面内容' })).toBeVisible()
+  const addFaq = page.getByRole('button', { name: '新增问题' })
+  await expect(addFaq).toBeVisible()
+  expect(await addFaq.evaluate(element => Number.parseFloat(
+    getComputedStyle(element).marginTop,
+  ))).toBeGreaterThanOrEqual(8)
   await capture(page, 'visual-follow-up-admin-content-1440x900', SCREENSHOT_DIR)
 
   for (const [width, height] of [[390, 844], [768, 1024], [1440, 900]] as const) {

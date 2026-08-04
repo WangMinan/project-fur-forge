@@ -32,6 +32,12 @@ const year = new Date().getFullYear()
           <span aria-hidden="true">|</span>
           <NuxtLink to="/privacy">隐私政策</NuxtLink>
           <span aria-hidden="true">|</span>
+          <span>
+            Design by
+            <a href="https://github.com/wangminan" target="_blank" rel="noopener noreferrer">Arktouros</a>
+          </span>
+        </p>
+        <p>
           <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">ICP备案</a>
         </p>
       </div>
@@ -42,14 +48,14 @@ const year = new Date().getFullYear()
 <style scoped>
 .public-footer {
   margin-top: var(--space-9);
-  padding: var(--space-8) var(--public-page-padding) var(--space-6);
+  padding: var(--space-4) var(--public-page-padding);
   background: var(--public-bg-secondary);
   border-top: 1px solid var(--public-border-secondary);
 }
 
 .public-footer__inner {
   display: grid;
-  gap: var(--space-6);
+  gap: var(--space-4);
   max-width: var(--public-content-wide);
   margin: 0 auto;
 }

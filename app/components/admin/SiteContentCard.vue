@@ -250,7 +250,7 @@ function onSave() {
         <button
           v-if="faqs.length < SITE_CONTENT_LIMITS.faqMaxCount"
           type="button"
-          class="site-content__button"
+          class="site-content__button site-content__button--add-faq"
           :disabled="mutating"
           @click="addFaq"
         >新增问题</button>
@@ -541,6 +541,10 @@ function onSave() {
   border-color: var(--admin-accent-primary);
   color: var(--admin-text-inverse);
   font-weight: 600;
+}
+
+.site-content__button--add-faq {
+  margin-top: var(--admin-space-2);
 }
 
 .site-content__button--primary:hover:not(:disabled) {

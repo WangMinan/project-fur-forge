@@ -200,6 +200,15 @@ describe('brand-centered-v2 public media generation', () => {
       && call.process.includes(',t_50,g_west/')
       && call.process.includes(',t_50,g_east/')
       && !call.process.includes('g_center')
+      && Number(/resize,w_(\d+),limit_0/u.exec(
+        Buffer.from(
+          /\/watermark,image_([^,]+)/u.exec(call.process)![1]!,
+          'base64url',
+        ).toString('utf8'),
+      )![1])
+      === Math.round(492 * Number(
+        /\/recipe-v2\/[^/]+\/(\d+)\//u.exec(call.objectKey)![1],
+      ) / 960)
     ))).toBe(true)
     expect(fallbackProcesses).toHaveLength(6)
     expect(fallbackProcesses.every(call => (
