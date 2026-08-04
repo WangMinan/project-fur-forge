@@ -10,6 +10,7 @@
 - [`../TASKS.md`](../TASKS.md)：唯一可勾选任务清单；T23–T27 已收口，T26-F1、T27-F1 独立 Review 为 `PASS WITH FOLLOW-UP`，等待用户验收。
 - [`T26-F1-T27-F1-INDEPENDENT-REVIEW-2026-08-05.md`](./t26-t27/T26-F1-T27-F1-INDEPENDENT-REVIEW-2026-08-05.md)：保留初始 FAIL、7 个 findings、持久适配/移动菜单/测试契约修复和独立复测证据。
 - [`T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md`](./t26-t27/T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md)：公开信息架构、0015、服务/隐私页、导航/页脚、状态呈现和实现方自动化/浏览器证据。
+- [`T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md`](./t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md)：首页完整顺序、详情导航/301、SEO、品牌图标、初始 findings、修复与独立 Chrome 复验。
 - [`T25-DESIGN-SHEET-WATERMARK-FOLLOW-UP-2026-08-05.md`](./t23-t25/T25-DESIGN-SHEET-WATERMARK-FOLLOW-UP-2026-08-05.md)：高分辨率设定图水印固定像素根因、960 px 基准修复、当前活动 profile 原子重建与真实 OSS/浏览器证据。
 - [`T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`](./t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md)：委托页独立大图的规格、最小复用方案、低分辨率追加实现与验证证据。
 - [`T26-F1-HERO-WATERMARK-FOLLOW-UP-2026-08-04.md`](./t26-t27/T26-F1-HERO-WATERMARK-FOLLOW-UP-2026-08-04.md)：首页/委托页大图复用作品媒体水印布局与视觉比例、现有公开对象原子重建和真实浏览器复核。
@@ -35,6 +36,7 @@
 - `t19-t22/`：公开站、首页、T21 门禁、T22 完整字段与独立 Review；
 - `t23-t25/`：T23–T25 工程、前端检查点、用户人工核验与最终收口；
 - `t26-t27/`：T26–T27 服务端/前端交接、独立 Review、截图与收口记录；
+- `t28-t34/`：阶段 C 长程批次的公开核心、恢复、安全、性能和 P0 总门禁证据；
 - 根目录只保留本索引和仍作为阶段 C 当前基线的 `P0-C-STAGE-READINESS-2026-08-02.md`。
 
 ## 2. 最近收口记录

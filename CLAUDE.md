@@ -6,7 +6,7 @@ This file provides guidance to coding agents working with code in this repositor
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01–T27、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。** T26-F1 委托页独立大图/持久低分辨率适配与 T27-F1 公开信息架构/政策页增量已完成新上下文独立 Review，7 个 findings 修复后结论为 `PASS WITH FOLLOW-UP`；两项等待用户验收。当前按授权进入 T28–T34。**OQ-120 已由用户整批确认，并由 0014/0015 登记默认值。**
+> **当前阶段：阶段 4 IMPLEMENTATION，T01–T29、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。** T26-F1/T27-F1 等待用户验收；T30 工程与独立 Review 为 `PASS WITH FOLLOW-UP`，等待品牌图标用户验收。当前进入 T31 备份、恢复与迁移冒烟。**OQ-120 已由用户整批确认，并由 0014/0015 登记默认值。**
 
 ## 网站核心原则（景宸确认）
 
@@ -125,5 +125,6 @@ pnpm auth:reset-password --confirm RESET_SINGLE_ADMIN_PASSWORD
 - T23–T25 已完成独立 Agent Review 与用户确认，任务清单和阶段文档已同步收口。
 - T26–T27 已落地受限固定字段、委托/领养独立营业状态、版本冲突、管理 Host/Origin/CSRF/no-store 和无版本/无私有联系人的公开投影；固定内容位于独立“文案配置”，OQ-120 正式默认值已由 0014 迁移注入，委托背景引导区、公开标题和作品列表跟进完成独立 Review。
 - T26-F1 已完成委托页独立大图和可刷新恢复的低分辨率 FFmpeg 私有适配；T27-F1 已完成关于/联系合并、政策页、二级导航、页脚法律区与营业状态呈现；两项独立 Review 为 `PASS WITH FOLLOW-UP`，等待用户验收。
+- T28 首页完整内容顺序与 T29 筛选/详情导航/301 已通过独立 Chrome Review；T30 canonical、结构化数据、Sitemap/robots 和品牌图标技术 Review 已通过，等待用户视觉验收。
 
-`brand-standard-v1` 只保留为历史身份，当前发布必须匹配活动 `brand-centered-v2` 和 `recipe-v2`。当前下一交接为 T28 首页完整内容顺序；OQ-120 已关闭，后续文案修改继续通过“文案配置”完成。不建设万能 CMS，也不提前进入 T37 展会完整矩阵。
+`brand-standard-v1` 只保留为历史身份，当前发布必须匹配活动 `brand-centered-v2` 和 `recipe-v2`。当前下一交接为 T31 备份、恢复与迁移冒烟；OQ-120 已关闭，后续文案修改继续通过“文案配置”完成。不建设万能 CMS，也不提前进入 T37 展会完整矩阵。
