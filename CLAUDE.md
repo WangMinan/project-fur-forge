@@ -6,7 +6,7 @@ This file provides guidance to coding agents working with code in this repositor
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01–T25、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。** T23–T25 已于 2026-08-04 收口；T26–T27 服务端、首版前端与用户追加的标题/作品管理/委托引导区/独立“文案配置”实现方跟进已完成。**OQ-120-5 的删改方向与 OQ-120-7 的业务原则已答，其余内容和最终文字仍待用户确认**，独立 Review 与用户验收前 T26/T27 保持未勾选，候选文案不得自动写入数据库或被宣布为正式内容。
+> **当前阶段：阶段 4 IMPLEMENTATION，T01–T27、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。** T26–T27 已于 2026-08-04 完成新上下文独立 Review，3 个 findings 修复后结论为 `PASS WITH FOLLOW-UP`；本轮 `USER_GATE：否`，两项任务已勾选。**OQ-120 最终文字仍待用户确认**，候选文案不得自动写入数据库或被宣布为正式内容。
 
 ## 网站核心原则（景宸确认）
 
@@ -114,6 +114,6 @@ pnpm auth:reset-password --confirm RESET_SINGLE_ADMIN_PASSWORD
 - T24 设定图/出厂照管理分区、同源原图与活动水印预览、上传恢复、列表媒体摘要；
 - T25 `/adoptions` 横版设定图列表和统一详情媒体分区；只有设定图的领养不进入 `/works`。
 - T23–T25 已完成独立 Agent Review 与用户确认，任务清单和阶段文档已同步收口。
-- T26–T27 已落地受限固定字段、委托/领养独立营业状态、版本冲突、管理 Host/Origin/CSRF/no-store 和无版本/无私有联系人的公开投影；固定内容已迁入独立“文案配置”，委托背景引导区、公开标题和作品列表跟进已完成实现方浏览器复核；未经确认的文案保持当前库值或空值。
+- T26–T27 已落地受限固定字段、委托/领养独立营业状态、版本冲突、管理 Host/Origin/CSRF/no-store 和无版本/无私有联系人的公开投影；固定内容已迁入独立“文案配置”，委托背景引导区、公开标题和作品列表跟进完成独立 Review；未经确认的文案保持当前库值或空值。
 
-`brand-standard-v1` 只保留为历史身份，当前发布必须匹配活动 `brand-centered-v2` 和 `recipe-v2`。当前下一交接是用户确认 **OQ-120 候选稿 v2 的最终文字与其余 8 项内容**并在“文案配置”录入，随后新上下文独立 Review 与用户验收；不建设万能 CMS，也不提前进入 T29 重定向或 T37 展会完整矩阵。
+`brand-standard-v1` 只保留为历史身份，当前发布必须匹配活动 `brand-centered-v2` 和 `recipe-v2`。当前下一工程交接为 T28 首页完整内容顺序；**OQ-120 候选稿 v2 的最终文字与其余 8 项内容**继续等待用户确认后再录入“文案配置”。不建设万能 CMS，也不提前进入 T37 展会完整矩阵。

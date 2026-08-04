@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-阶段 4 · IMPLEMENTATION 进行中。T01–T25、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T23–T25 已全部收口。T26–T27 服务端、首版前端与 2026-08-04 用户追加的标题/作品管理/委托背景引导区/独立“文案配置”实现方跟进已完成，定向自动化与 Chrome 三视口视觉复核通过。**OQ-120-5 的删改方向与 OQ-120-7 的业务原则已答，其余内容及修订稿最终文字仍开放**；独立 Review 与用户验收尚未执行，因此 T26、T27 保持未勾选，页面不得宣布最终收口。
+阶段 4 · IMPLEMENTATION 进行中。T01–T27、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T26–T27 于 2026-08-04 完成新上下文独立 Review，3 个 findings 修复并复测，结论为 `PASS WITH FOLLOW-UP`；本轮 `USER_GATE：否`，两项任务已勾选。**OQ-120 最终文字仍开放**，正式库继续保持当前值或空值，候选稿不得自动入库；后台双上下文 409 与完整文案投影的浏览器补验为可选 follow-up，不阻断工程收口。
 
 T21 首次独立审查的 3 个 must-fix 与 1 个 should-fix、用户人工验收发现的管理入口命名、Hero 安全边距、作品筛选视觉、页脚联系方式配置、已保存首页轮播原图预览及启用态预览按钮错配均已修复并验证。用户于 2026-08-02 明确确认 T21 收口；首次 NOT PASS 报告继续保留为历史事实，不虚构第二份独立复审报告。
 
@@ -12,7 +12,7 @@ T21 首次独立审查的 3 个 must-fix 与 1 个 should-fix、用户人工验�
 T22 后端、前端与独立 Review 证据分别见 [`implementation/notes/t19-t22/T22-BACKEND-2026-08-03.md`](./implementation/notes/t19-t22/T22-BACKEND-2026-08-03.md)、[`implementation/notes/t19-t22/T22-FRONTEND-2026-08-03.md`](./implementation/notes/t19-t22/T22-FRONTEND-2026-08-03.md) 和 [`implementation/notes/t19-t22/T22-INDEPENDENT-REVIEW-2026-08-03.md`](./implementation/notes/t19-t22/T22-INDEPENDENT-REVIEW-2026-08-03.md)。
 T23 工程、T25 服务端交接和本轮前端检查点分别见 [`implementation/notes/t23-t25/T23-ENGINEERING-2026-08-03.md`](./implementation/notes/t23-t25/T23-ENGINEERING-2026-08-03.md)、[`implementation/notes/t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md`](./implementation/notes/t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md) 与 [`implementation/notes/t23-t25/T24-T25-FRONTEND-CHECKPOINT-2026-08-03.md`](./implementation/notes/t23-t25/T24-T25-FRONTEND-CHECKPOINT-2026-08-03.md)。
 T23–T25 最终收口见 [`implementation/notes/t23-t25/T23-T25-CLOSURE-2026-08-04.md`](./implementation/notes/t23-t25/T23-T25-CLOSURE-2026-08-04.md)。
-T26–T27 服务端契约见 [`implementation/notes/t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md)；前端交接与截图见 [`implementation/notes/t26-t27/T26-T27-FRONTEND-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-FRONTEND-2026-08-04.md)。
+T26–T27 服务端契约见 [`implementation/notes/t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md)；前端交接见 [`implementation/notes/t26-t27/T26-T27-FRONTEND-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-FRONTEND-2026-08-04.md)；独立 findings、修复、浏览器与安全证据见 [`implementation/notes/t26-t27/T26-T27-INDEPENDENT-REVIEW-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-INDEPENDENT-REVIEW-2026-08-04.md)。
 
 ## 当前执行分工
 
@@ -35,15 +35,16 @@ T26–T27 服务端契约见 [`implementation/notes/t26-t27/T26-T27-BACKEND-HAND
 ## 阶段 C 进入状态
 
 - [x] T21 用户验收完成；
-- [x] OQ-119 已答；**OQ-120-5 的删改方向与 OQ-120-7 的业务原则已答，OQ-120 其余内容及最终文字仍开放并阻断页面最终收口**；
+- [x] OQ-119 已答；**OQ-120 最终文字仍开放并阻止候选稿成为正式内容，但不再阻断 T26/T27 工程任务状态**；
 - [x] 双 Bucket、30 MB 原图、FFmpeg 私有处理源和真实 OSS 水印链已通过；
 - [x] 包括 Logo 在内的素材已登记到 [`materials/MATERIAL-MANIFEST.md`](./materials/MATERIAL-MANIFEST.md)，EXT-01 不再等待外部文件；
 - [x] 模型分工、main 直推和浏览器/视觉 Review 方法已锁定；
 - [x] T22 范围已明确，不提前实现多图或展会完整矩阵。
 - [x] T22 后端、前端、独立 Review 和用户人工验收已收口。
 - [x] T23–T25 实现、自动化、独立 Agent Review 与用户人工核验全部收口，三项任务已勾选。
+- [x] T26–T27 实现、独立 Review 与 findings 修复已收口；本轮 USER_GATE 为否，两项任务已勾选。
 
-进入阶段 C 时无阻断 OQ；当前 **OQ-120** 阻断 T26/T27 最终收口。最终小图标与部署参数仍分别在 T30、T34/T52 前确认。
+进入阶段 C 时无阻断 OQ；当前 **OQ-120** 只约束正式内容录入，不阻断已完成的 T26/T27 工程能力。最终小图标与部署参数仍分别在 T30、T34/T52 前确认。
 
 ## 已完成基础
 
@@ -123,16 +124,17 @@ EXT-01 现在只表示“正式素材输入已经到位并完成角色映射”�
 - 2026-08-04：用户追加视觉跟进：`/works` 标题与 `/commission` 同尺度；作品管理移除可见 caption/表格外框并增加查找、筛选、分页；委托页改为单张双源背景引导；后台新增独立“文案配置”入口。参考渔屋只提炼布局和信息组织，OQ-120 候选稿不自动入库。
 - 2026-08-04：上述跟进已完成实现方自测；`pnpm typecheck` / `pnpm lint` / `pnpm build` 、列表单测与定向 Playwright 通过，新增五张视觉证据。该结论不代替新上下文独立 Review。
 - 2026-08-04：用户要求删除关于页的防御性隐私说明，并确认基本约定中的逐单报价、邮件协商周期与付款比例、工作室著作权和签收后一年非人为损坏保修原则；OQ-120 候选稿据此修订为 v2，未写入数据库，T26/T27 状态不变。
+- 2026-08-04：T26–T27 新上下文独立 Review 初始登记 2 个 must-fix，修复后键盘复测补充 1 个 should-fix；共享异步数据键、未经确认的公开事实和跳转焦点均完成最小修复。自动化、SSR/Host/DTO/私有 Bucket、真实图片、三视口和公开端键盘复测通过，结论 `PASS WITH FOLLOW-UP`；按本轮 USER_GATE 否的授权勾选 T26/T27。
 
 ## 下一步
 
-当前交接门禁：
+当前交接：
 
-1. 用户确认或修改 **OQ-120 候选稿 v2 的最终文字与其余 8 项内容**（见 `requirements/SPEC.md` §6.7）；
-2. 在管理端「文案配置」录入已确认正式文案（验证用临时库文案不得当作生产内容）；
-3. 新上下文 GPT-5.6 Sol 独立 Review（双 Host、三视口、真实点击、409/空值/泄漏）；用户验收后再勾选 T26、T27；不提前实现 T29/T37。
+1. 按 TASKS 进入 T28 首页完整内容顺序；T29 可在其后串行推进，不提前实现 T37。
+2. 用户确认或修改 **OQ-120 候选稿 v2 的最终文字与其余 8 项内容**后，再在「文案配置」录入正式内容；验证临时文案不得进入正式库。
+3. 用户下班后如愿意，可补验后台双上下文 409 与完整文案投影；该 follow-up 不回退 T26/T27 当前完成状态。
 
-### OQ-120 缺失清单（阻断最终收口）
+### OQ-120 缺失清单（正式内容门禁）
 
 | 项 | 字段 |
 | --- | --- |

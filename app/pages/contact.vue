@@ -9,7 +9,7 @@ import { publicSiteContentResponseSchema } from '~~/shared/schemas/site-content'
  */
 useSeoMeta({
   title: `联系 · ${PROJECT_NAME}`,
-  description: `通过业务邮箱、QQ 或抖音联系${PROJECT_NAME}；委托与领养均由工作室人工逐单确认。`,
+  description: `通过业务邮箱、QQ 或抖音联系${PROJECT_NAME}。`,
   ogTitle: `联系 · ${PROJECT_NAME}`,
   ogDescription: `通过业务邮箱、QQ 或抖音联系${PROJECT_NAME}。`,
 })
@@ -34,7 +34,7 @@ const antiScamParagraphs = computed(() =>
   <div class="contact-page" data-testid="contact-page">
     <PublicPageIntro
       title="联系"
-      description="委托、领养与补全都通过以下官方渠道人工沟通；本站不提供站内留言或在线提交。"
+      description="委托与领养通过以下官方渠道人工沟通；本站不提供站内留言或在线提交。"
     />
 
     <div v-if="contact" class="contact-page__body">
