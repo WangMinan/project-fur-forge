@@ -36,10 +36,14 @@ import {
   ensureHeroUpscaleSource,
   generatePrivateWatermarkPreview,
   generatePublicVariants,
+  HERO_UPSCALE_RECIPE_VERSION,
 } from './media-recipe'
 import { ServiceError } from './service-error'
 import { activeWatermarkProfileId } from './watermark-branding'
-import { getPublicationOperation } from './work-publication'
+import {
+  getLatestPublicationOperations,
+  getPublicationOperation,
+} from './work-publication'
 
 export interface HeroSlideInput {
   alt: string
@@ -83,6 +87,7 @@ interface SlideRow {
   landscapeHeight: number
   landscapePrivateObjectKey: string
   landscapePreviewObjectKey: string | null
+  landscapeSha256: string
   landscapeWidth: number
   linkedWorkId: string | null
   linkedWorkSlug: string | null
@@ -91,6 +96,7 @@ interface SlideRow {
   portraitHeight: number
   portraitPrivateObjectKey: string
   portraitPreviewObjectKey: string | null
+  portraitSha256: string
   portraitWidth: number
   placement: HeroPlacement
   sortOrder: number
@@ -121,11 +127,13 @@ const selectSlides = `
     slide.landscape_asset_id AS landscapeAssetId,
     landscape.width AS landscapeWidth,
     landscape.height AS landscapeHeight,
+    landscape.sha256 AS landscapeSha256,
     landscape.private_object_key AS landscapePrivateObjectKey,
     slide.landscape_preview_object_key AS landscapePreviewObjectKey,
     slide.portrait_asset_id AS portraitAssetId,
     portrait.width AS portraitWidth,
     portrait.height AS portraitHeight,
+    portrait.sha256 AS portraitSha256,
     portrait.private_object_key AS portraitPrivateObjectKey,
     slide.portrait_preview_object_key AS portraitPreviewObjectKey,
     slide.preview_expires_at AS previewExpiresAt,
@@ -182,9 +190,8 @@ function requireSlide(
   return slide
 }
 
-function variantsForAsset(sqlite: Database.Database, assetId: string) {
-  return sqlite.prepare(`
-    SELECT
+const selectHeroVariants = `
+  SELECT
       id, asset_id AS assetId, byte_size AS byteSize,
       storage_scope AS storageScope, status, object_key AS objectKey,
       width, height, format, input_sha256 AS inputSha256,
@@ -197,87 +204,108 @@ function variantsForAsset(sqlite: Database.Database, assetId: string) {
       watermark_profile AS watermarkProfile,
       watermark_profile_id AS watermarkProfileId,
       watermark_scale_percent AS watermarkScalePercent
-    FROM asset_variants WHERE asset_id = ?
-    ORDER BY usage, width, format
-  `).all(assetId) as HeroVariantRow[]
+    FROM asset_variants
+`
+
+function variantsForAssets(
+  sqlite: Database.Database,
+  assetIds: readonly string[],
+) {
+  const ids = [...new Set(assetIds)]
+  const grouped = new Map(ids.map(id => [id, [] as HeroVariantRow[]]))
+  if (ids.length === 0) {
+    return grouped
+  }
+  const placeholders = ids.map(() => '?').join(', ')
+  const rows = sqlite.prepare(`
+    ${selectHeroVariants}
+    WHERE asset_id IN (${placeholders})
+    ORDER BY asset_id, usage, width, format
+  `).all(...ids) as HeroVariantRow[]
+  for (const row of rows) {
+    grouped.get(row.assetId)!.push(row)
+  }
+  return grouped
 }
 
-function latestHomePublicationOperation(
-  sqlite: Database.Database,
-  slideId: string,
-) {
-  const id = sqlite.prepare(`
-    SELECT id FROM publication_operations
-    WHERE entity_type = 'HOME' AND entity_id = ?
-      AND operation_type = 'PUBLISH'
-    ORDER BY started_at DESC LIMIT 1
-  `).pluck().get(slideId) as string | undefined
-  if (!id) {
-    return null
-  }
-  const operation = getPublicationOperation(sqlite, id)
-  return operation.status === 'DONE' ? null : operation
+function variantsForAsset(sqlite: Database.Database, assetId: string) {
+  return variantsForAssets(sqlite, [assetId]).get(assetId) ?? []
 }
 
-function latestHomeUpscaleOperation(
-  sqlite: Database.Database,
-  slideId: string,
+function hasUpscaleVariant(
+  variants: readonly HeroVariantRow[],
+  inputSha256: string,
+  width: number,
+  height: number,
 ) {
-  const id = sqlite.prepare(`
-    SELECT id FROM publication_operations
-    WHERE entity_type = 'HOME' AND entity_id = ?
-      AND operation_type = 'UPSCALE'
-    ORDER BY started_at DESC LIMIT 1
-  `).pluck().get(slideId) as string | undefined
-  if (!id) {
-    return null
-  }
-  return getPublicationOperation(sqlite, id)
+  return variants.some(variant => (
+    variant.storageScope === 'PRIVATE'
+    && variant.status === 'READY'
+    && variant.usage === 'preprocess'
+    && variant.recipeVersion === HERO_UPSCALE_RECIPE_VERSION
+    && variant.inputSha256 === inputSha256
+    && variant.byteSize !== null
+    && variant.byteSize <= 20_000_000
+    && variant.width === width
+    && variant.height === height
+  ))
+}
+
+function assetUpscaleReadyFromVariants(
+  asset: Pick<SlideRow,
+    | 'landscapeAssetId' | 'landscapeHeight' | 'landscapeSha256' | 'landscapeWidth'
+    | 'portraitAssetId' | 'portraitHeight' | 'portraitSha256' | 'portraitWidth'>,
+  variants: ReadonlyMap<string, readonly HeroVariantRow[]>,
+) {
+  const landscapeReady = (
+    asset.landscapeWidth >= 1920 && asset.landscapeHeight >= 1080
+  ) || hasUpscaleVariant(
+    variants.get(asset.landscapeAssetId) ?? [],
+    asset.landscapeSha256,
+    1920,
+    1080,
+  )
+  const portraitReady = (
+    asset.portraitWidth >= 1080 && asset.portraitHeight >= 1920
+  ) || hasUpscaleVariant(
+    variants.get(asset.portraitAssetId) ?? [],
+    asset.portraitSha256,
+    1080,
+    1920,
+  )
+  return landscapeReady && portraitReady
 }
 
 function assetUpscaleReady(
   sqlite: Database.Database,
-  asset: Pick<SlideRow, 'landscapeAssetId' | 'landscapeHeight' | 'landscapeWidth' | 'portraitAssetId' | 'portraitHeight' | 'portraitWidth'>,
+  asset: SlideRow,
 ) {
-  const requiresUpscale = asset.landscapeWidth < 1920
-    || asset.landscapeHeight < 1080
-    || asset.portraitWidth < 1080
-    || asset.portraitHeight < 1920
-  if (!requiresUpscale) {
-    return true
-  }
-  try {
-    return assetSupportsPublicUsages(
-      sqlite,
-      asset.landscapeAssetId,
-      ['home-hero-landscape'],
-    ) && assetSupportsPublicUsages(
-      sqlite,
-      asset.portraitAssetId,
-      ['home-hero-portrait'],
-    )
-  }
-  catch {
-    return false
-  }
+  return assetUpscaleReadyFromVariants(asset, variantsForAssets(sqlite, [
+    asset.landscapeAssetId,
+    asset.portraitAssetId,
+  ]))
 }
 
 function adminSlide(
-  sqlite: Database.Database,
   row: SlideRow,
   profileId: string | null,
+  variants: ReadonlyMap<string, readonly HeroVariantRow[]>,
+  operations: ReadonlyMap<string, PublicationOperationDto>,
 ): AdminHeroSlideDto {
+  const landscapeVariants = variants.get(row.landscapeAssetId) ?? []
+  const portraitVariants = variants.get(row.portraitAssetId) ?? []
   const missingVariantCount = profileId
     ? missingHeroVariantCount(
         'home_hero_landscape',
-        variantsForAsset(sqlite, row.landscapeAssetId),
+        landscapeVariants,
         profileId,
       ) + missingHeroVariantCount(
         'home_hero_portrait',
-        variantsForAsset(sqlite, row.portraitAssetId),
+        portraitVariants,
         profileId,
       )
     : 12
+  const publicationOperation = operations.get(`${row.id}:PUBLISH`) ?? null
   return adminHeroSlideDtoSchema.parse({
     id: row.id,
     version: row.version,
@@ -301,10 +329,12 @@ function adminSlide(
           publicationStatus: row.linkedWorkStatus,
         }
       : null,
-    upscaleReady: assetUpscaleReady(sqlite, row),
-    upscaleOperation: latestHomeUpscaleOperation(sqlite, row.id),
+    upscaleReady: assetUpscaleReadyFromVariants(row, variants),
+    upscaleOperation: operations.get(`${row.id}:UPSCALE`) ?? null,
     missingVariantCount,
-    publicationOperation: latestHomePublicationOperation(sqlite, row.id),
+    publicationOperation: publicationOperation?.status === 'DONE'
+      ? null
+      : publicationOperation,
   })
 }
 
@@ -314,6 +344,22 @@ export function getAdminHome(
 ): AdminHomeDto {
   const home = requireHome(sqlite)
   const profileId = activeWatermarkProfileId(sqlite)
+  const currentSlides = slides(sqlite, placement)
+  const variants = variantsForAssets(
+    sqlite,
+    currentSlides.flatMap(slide => [
+      slide.landscapeAssetId,
+      slide.portraitAssetId,
+    ]),
+  )
+  const operations = new Map(getLatestPublicationOperations(
+    sqlite,
+    'HOME',
+    currentSlides.map(slide => slide.id),
+  ).map(operation => [
+    `${operation.entityId}:${operation.operationType}`,
+    operation,
+  ]))
   return adminHomeDtoSchema.parse({
     version: home.version,
     tagline: home.tagline,
@@ -321,7 +367,12 @@ export function getAdminHome(
     contactQq: home.contactQq,
     autoRotate: home.autoRotate === 1,
     autoRotateIntervalMs: home.autoRotateIntervalMs,
-    slides: slides(sqlite, placement).map(slide => adminSlide(sqlite, slide, profileId)),
+    slides: currentSlides.map(slide => adminSlide(
+      slide,
+      profileId,
+      variants,
+      operations,
+    )),
   })
 }
 
@@ -651,6 +702,13 @@ function publicHeroSlides(
   if (enabled.length > 0 && !profileId) {
     throw new Error('Active watermark profile is unavailable.')
   }
+  const variants = variantsForAssets(
+    sqlite,
+    enabled.flatMap(slide => [
+      slide.landscapeAssetId,
+      slide.portraitAssetId,
+    ]),
+  )
   const projected = enabled.map((slide) => {
     const record: HeroSlideRecord = {
       activeWatermarkProfileId: profileId!,
@@ -659,8 +717,8 @@ function publicHeroSlides(
       enabled: true,
       altText: slide.alt,
       sortOrder: slide.sortOrder,
-      landscapeVariants: variantsForAsset(sqlite, slide.landscapeAssetId),
-      portraitVariants: variantsForAsset(sqlite, slide.portraitAssetId),
+      landscapeVariants: variants.get(slide.landscapeAssetId) ?? [],
+      portraitVariants: variants.get(slide.portraitAssetId) ?? [],
       linkedWork: slide.linkedWorkId
         ? {
             publicationStatus: slide.linkedWorkStatus!,

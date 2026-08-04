@@ -22,6 +22,9 @@ const props = withDefaults(defineProps<{
 })
 
 const fallbackImg = computed(() => pickFallbackImg(props.sources))
+const portraitFallbackImg = computed(() =>
+  props.portraitSources ? pickFallbackImg(props.portraitSources) : undefined,
+)
 const webpSrcset = computed(() => buildSrcset(props.sources.webp))
 const fallbackSrcset = computed(() => buildSrcset(props.sources.fallback))
 const portraitWebpSrcset = computed(() =>
@@ -40,17 +43,23 @@ const portraitFallbackSrcset = computed(() =>
         media="(orientation: portrait)"
         :srcset="portraitWebpSrcset"
         :sizes="sizes"
+        :width="portraitFallbackImg?.width"
+        :height="portraitFallbackImg?.height"
       >
       <source
         media="(orientation: portrait)"
         :srcset="portraitFallbackSrcset"
         :sizes="sizes"
+        :width="portraitFallbackImg?.width"
+        :height="portraitFallbackImg?.height"
       >
     </template>
     <source
       type="image/webp"
       :srcset="webpSrcset"
       :sizes="sizes"
+      :width="fallbackImg.width"
+      :height="fallbackImg.height"
     >
     <img
       class="responsive-picture__image"

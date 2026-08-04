@@ -125,6 +125,7 @@ test.describe('T20 首页双源轮播', () => {
     expect(markup).toContain('(orientation: portrait)')
     // 首项高优先级
     expect(markup).toContain('fetchpriority="high"')
+    expect(markup).toContain('loading="eager"')
     // 后续项不渲染图片标记（隐藏项不下载由方向性请求用例覆盖）
     expect(markup).not.toContain('蓝湄的首页展示照')
     expect(markup).not.toContain('芝麻的首页展示照')
@@ -148,6 +149,11 @@ test.describe('T20 首页双源轮播', () => {
     expect(heroRequests.every(url => url.includes('home-hero-landscape'))).toBe(true)
     expect(heroRequests.some(url => url.includes('home-hero-portrait'))).toBe(false)
     const image = hero(page).getByRole('img', { name: '奶盖的首页展示照' })
+    const portraitSource = hero(page)
+      .locator('source[media="(orientation: portrait)"]')
+      .first()
+    await expect(portraitSource).toHaveAttribute('width', '1080')
+    await expect(portraitSource).toHaveAttribute('height', '1920')
     await expect(image).toHaveJSProperty('complete', true)
     expect(await image.evaluate((node: HTMLImageElement) => node.naturalWidth))
       .toBeGreaterThan(0)
@@ -185,6 +191,8 @@ test.describe('T20 首页双源轮播', () => {
 
     await hero(page).getByRole('button', { name: '下一张' }).click()
     await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张')
+    await expect(hero(page).getByRole('img', { name: '蓝湄的首页展示照' }))
+      .toHaveAttribute('loading', 'lazy')
     await page.waitForLoadState('networkidle')
 
     const secondSlideUrls = requested
@@ -199,6 +207,10 @@ test.describe('T20 首页双源轮播', () => {
 
     const next = hero(page).getByRole('button', { name: '下一张' })
     const prev = hero(page).getByRole('button', { name: '上一张' })
+    const firstDot = hero(page).getByRole('button', { name: '第 1 张，共 3 张' })
+    const dotBox = await firstDot.boundingBox()
+    expect(dotBox?.width).toBeGreaterThanOrEqual(24)
+    expect(dotBox?.height).toBeGreaterThanOrEqual(24)
 
     await next.click()
     await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张')

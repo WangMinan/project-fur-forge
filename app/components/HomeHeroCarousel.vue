@@ -173,7 +173,7 @@ onBeforeUnmount(() => {
             :portrait-sources="activeSlide.portrait"
             :alt="activeSlide.alt"
             sizes="100vw"
-            loading="eager"
+            :loading="activeIndex === 0 ? 'eager' : 'lazy'"
             :fetchpriority="activeIndex === 0 ? 'high' : 'auto'"
           />
         </div>
@@ -406,16 +406,26 @@ onBeforeUnmount(() => {
 }
 
 .home-hero__dot {
-  width: 0.625rem;
-  height: 0.625rem;
+  display: grid;
+  width: 1.5rem;
+  height: 1.5rem;
   padding: 0;
-  background: rgb(255 255 255 / 0.45);
+  background: transparent;
   border: none;
   border-radius: var(--radius-full);
   cursor: pointer;
+  place-items: center;
 }
 
-.home-hero__dot--active {
+.home-hero__dot::before {
+  width: 0.625rem;
+  height: 0.625rem;
+  content: '';
+  background: rgb(255 255 255 / 0.45);
+  border-radius: var(--radius-full);
+}
+
+.home-hero__dot--active::before {
   background: var(--public-text-inverse);
 }
 
