@@ -9,10 +9,11 @@ import {
   endAdminSession,
 } from '../../../utils/auth-session'
 import { getDatabase } from '../../../utils/database'
+import { readAdminJsonBody } from '../../../utils/request-body'
 
 export default defineEventHandler(async (event) => {
   const parsed = changePasswordRequestSchema.safeParse(
-    await readBody(event),
+    await readAdminJsonBody(event),
   )
   if (!parsed.success) {
     throw createApiError(

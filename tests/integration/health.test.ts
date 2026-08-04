@@ -11,22 +11,35 @@ import {
   it,
 } from 'vitest'
 import { migrateDatabase } from '../../server/utils/database'
+import { ADMIN_JSON_BODY_MAX_BYTES } from '../../server/utils/request-body'
+import { LOGIN_RATE_LIMIT } from '../../server/utils/request-rate-limit'
 
 const port = 3102
 const publicBaseUrl = `http://127.0.0.1:${port}`
 const adminBaseUrl = `http://localhost:${port}`
 const mediaBaseUrl = `http://127.0.0.2:${port}`
 
-function requestWithHost(path: string, host: string) {
+function requestWithHost(
+  path: string,
+  host: string,
+  options: {
+    body?: string
+    headers?: Record<string, string>
+    method?: string
+  } = {},
+) {
   return new Promise<{
     body: unknown
+    retryAfter: string | undefined
     status: number
   }>((resolve, reject) => {
     const clientRequest = request({
       host: '127.0.0.1',
       port,
       path,
+      method: options.method,
       headers: {
+        ...options.headers,
         host,
       },
     }, (response) => {
@@ -36,13 +49,21 @@ function requestWithHost(path: string, host: string) {
       response.on('end', () => {
         resolve({
           body: JSON.parse(Buffer.concat(chunks).toString('utf8')),
+          retryAfter: response.headers['retry-after'],
           status: response.statusCode ?? 0,
         })
       })
     })
 
     clientRequest.on('error', reject)
-    clientRequest.end()
+    if (options.body) {
+      const middle = Math.ceil(options.body.length / 2)
+      clientRequest.write(options.body.slice(0, middle))
+      clientRequest.end(options.body.slice(middle))
+    }
+    else {
+      clientRequest.end()
+    }
   })
 }
 
@@ -135,6 +156,65 @@ describe('runtime request boundaries', () => {
       },
     })
     expect((await fetch(`${publicBaseUrl}/api/health`)).status).toBe(200)
+  })
+
+  it('rejects oversized chunked login JSON while streaming', async () => {
+    const response = await requestWithHost(
+      '/api/auth/login',
+      new URL(adminBaseUrl).host,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'origin': adminBaseUrl,
+          'transfer-encoding': 'chunked',
+        },
+        body: JSON.stringify({
+          username: 'admin',
+          password: 'x'.repeat(ADMIN_JSON_BODY_MAX_BYTES),
+        }),
+      },
+    )
+
+    expect(response.status).toBe(413)
+    expect(response.body).toEqual({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'Request body is too large.',
+      },
+    })
+  })
+
+  it('rate limits login requests before password verification', async () => {
+    let limited: Awaited<ReturnType<typeof requestWithHost>> | undefined
+
+    for (let attempt = 0; attempt <= LOGIN_RATE_LIMIT; attempt += 1) {
+      const response = await requestWithHost(
+        '/api/auth/login',
+        new URL(adminBaseUrl).host,
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            origin: adminBaseUrl,
+          },
+          body: '{}',
+        },
+      )
+      if (response.status === 429) {
+        limited = response
+        break
+      }
+      expect(response.status).toBe(400)
+    }
+
+    expect(limited?.retryAfter).toMatch(/^\d+$/)
+    expect(limited?.body).toEqual({
+      error: {
+        code: 'RATE_LIMITED',
+        message: 'Too many requests. Try again later.',
+      },
+    })
   })
 
   it('marks previews private without changing public SSR headers', async () => {

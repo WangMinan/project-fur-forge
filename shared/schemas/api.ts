@@ -6,6 +6,7 @@ export const ERROR_CODE_VALUES = [
   'FORBIDDEN',
   'NOT_FOUND',
   'CONFLICT',
+  'RATE_LIMITED',
   'HOST_NOT_ALLOWED',
   'INTERNAL_ERROR',
 ] as const

@@ -13,6 +13,7 @@ import {
   migrateDatabase,
   openDatabase,
 } from '../../server/utils/database'
+import { ADMIN_WRITE_RATE_LIMIT } from '../../server/utils/request-rate-limit'
 
 const port = 3103
 const publicBaseUrl = `http://127.0.0.1:${port}`
@@ -733,6 +734,40 @@ describe('authentication API', () => {
           commission: { tone: 'closed', label: '委托关闭' },
           adoption: { tone: 'open', label: '领养开放' },
         },
+      },
+    })
+  }, 30_000)
+
+  it('rate limits authenticated admin writes', async () => {
+    const authenticated = await login()
+    expect(authenticated.response.status).toBe(200)
+    let limited: Response | undefined
+
+    for (let attempt = 0; attempt <= ADMIN_WRITE_RATE_LIMIT; attempt += 1) {
+      const response = await fetch(`${adminBaseUrl}/api/admin/v1/works`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          cookie: authenticated.cookie,
+          origin: adminBaseUrl,
+          'x-csrf-token': authenticated.body.data.csrfToken,
+        },
+        body: '{}',
+      })
+      if (response.status === 429) {
+        limited = response
+        break
+      }
+      expect(response.status).toBe(400)
+    }
+
+    expect(limited).toBeDefined()
+    expectPrivateResponseHeaders(limited!)
+    expect(limited!.headers.get('retry-after')).toMatch(/^\d+$/)
+    await expect(limited!.json()).resolves.toEqual({
+      error: {
+        code: 'RATE_LIMITED',
+        message: 'Too many requests. Try again later.',
       },
     })
   }, 30_000)

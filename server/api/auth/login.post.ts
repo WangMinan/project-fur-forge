@@ -6,9 +6,10 @@ import { createApiError } from '../../utils/api-error'
 import { authenticateAdmin } from '../../utils/auth'
 import { startAdminSession } from '../../utils/auth-session'
 import { getDatabase } from '../../utils/database'
+import { readAdminJsonBody } from '../../utils/request-body'
 
 export default defineEventHandler(async (event) => {
-  const parsed = loginRequestSchema.safeParse(await readBody(event))
+  const parsed = loginRequestSchema.safeParse(await readAdminJsonBody(event))
   if (!parsed.success) {
     throw createApiError(
       400,
