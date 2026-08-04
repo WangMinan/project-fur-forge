@@ -13,8 +13,8 @@
 | 计划 | `planning/PLAN.md` | `planning/WATERMARK-CENTERED-V2.md` |
 | 模型投影 | `models/README.md` | `models/WATERMARK-CENTERED-V2.md` |
 | 设计 | `.design/` | `.design/WATERMARK-CENTERED-V2.md` |
-| 任务 | `implementation/TASKS.md` | T01–T25、EXT-01/02 与 GATE-06/07 已完成；T26–T27 前后端接线完成但未勾选（OQ-120） |
-| 状态 | `STATE.md` | 阶段 C：OQ-120 → 正式文案录入 → 独立 Review → 用户验收；main 直推继续生效 |
+| 任务 | `implementation/TASKS.md` | T01–T25、EXT-01/02 与 GATE-06/07 已完成；T26–T27 实现方跟进完成但未勾选（OQ-120/Review/验收） |
+| 状态 | `STATE.md` | 阶段 C：OQ-120 确认 → 正式文案录入 → 独立 Review → 用户验收；main 直推继续生效 |
 
 ## 当前执行入口
 
@@ -22,7 +22,7 @@
 | --- | --- | --- |
 | `implementation/notes/P0-C-STAGE-READINESS-2026-08-02.md` | 当前 | 阶段 C 启动条件、T22 边界、执行波次、main 纪律和验收方法 |
 | `implementation/EXECUTION_ROUTING.md` | 当前 | 前端模型池、GPT-5.6 Sol 后端/Review、串行交接、定向自动化与真实浏览器 Review |
-| `implementation/TASKS.md` | 当前 | 唯一可勾选清单；T26–T27 前后端接线完成，下一步是 OQ-120 正式文案、独立 Review 与用户验收 |
+| `implementation/TASKS.md` | 当前 | 唯一可勾选清单；T26–T27 实现方跟进完成，下一步是 OQ-120 确认/录入、独立 Review 与用户验收 |
 | `materials/MATERIAL-MANIFEST.md` | 已确认 | Logo、作品、横版设定图、返图与页面候选的正式输入和衍生职责；EXT-01 完成 |
 | `implementation/notes/README.md` | 当前 | 按当前/收口/历史/截图整理全部实施记录，不移动已被引用的旧路径 |
 
@@ -43,7 +43,7 @@
 | T22 后端/前端/独立 Review/用户验收 | 已完成 | `implementation/notes/t19-t22/T22-BACKEND-2026-08-03.md`、`T22-FRONTEND-2026-08-03.md`、`T22-INDEPENDENT-REVIEW-2026-08-03.md` |
 | T23–T25 角色化媒体与常规领养 | 已完成 | `implementation/notes/t23-t25/T23-T25-CLOSURE-2026-08-04.md` 及同目录工程、前端、人工验收证据 |
 | T26–T27 服务端 | 已完成 | `implementation/notes/t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md` |
-| T26–T27 前端 | 已完成待 OQ/Review | `implementation/notes/t26-t27/T26-T27-FRONTEND-2026-08-04.md`；截图在同目录 `screenshots/`；任务未勾选 |
+| T26–T27 前端与追加跟进 | 已完成待 OQ/Review | `implementation/notes/t26-t27/T26-T27-FRONTEND-2026-08-04.md` 与 `T26-T27-VISUAL-FOLLOW-UP-2026-08-04.md`；截图在同目录 `screenshots/`；任务未勾选 |
 | EXT-01 正式素材 | 已完成 | `materials/MATERIAL-MANIFEST.md`；文件交付和角色映射完成，T30/T51 继续生成/校准衍生物 |
 
 ## 历史证据边界
@@ -65,7 +65,7 @@
 
 T26–T27 收口前仍需：
 
-- 用户逐项回答 **OQ-120** 并在首页管理录入正式文案（不得沿用验证临时库文案）；
+- 用户逐项确认 **OQ-120** 并在“文案配置”录入正式文案（不得沿用验证临时库文案）；
 - 新上下文独立 Review：双 Host、三视口、成功/校验/409/刷新、键盘/焦点、console/network 与 ownerContact 泄漏复核；
 - 用户最终验收结论后勾选 T26、T27。
 

@@ -7,9 +7,10 @@
 
 - [`P0-C-STAGE-READINESS-2026-08-02.md`](./P0-C-STAGE-READINESS-2026-08-02.md)：阶段 C 启动条件、T22 边界、四个执行波次、main 直推纪律、自动化与 GPT-5.6 Sol 浏览器/视觉 Review 方法。
 - [`../EXECUTION_ROUTING.md`](../EXECUTION_ROUTING.md)：前端模型池、GPT-5.6 Sol 后端/Review、串行交接和测试策略。
-- [`../TASKS.md`](../TASKS.md)：唯一可勾选任务清单；T23–T25 已收口，T26–T27 前后端接线完成但因 OQ-120 保持未勾选。
+- [`../TASKS.md`](../TASKS.md)：唯一可勾选任务清单；T23–T25 已收口，T26–T27 实现方跟进完成但因 OQ-120/独立 Review/用户验收保持未勾选。
 - [`T26-T27-BACKEND-HANDOFF-2026-08-04.md`](./t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md)：受限固定字段、独立营业状态、管理/公开 API、迁移与自动化。
 - [`T26-T27-FRONTEND-2026-08-04.md`](./t26-t27/T26-T27-FRONTEND-2026-08-04.md)：首页管理固定区块、三公开页、空值隐藏、浏览器自测与 OQ-120 缺失清单。
+- [`T26-T27-VISUAL-FOLLOW-UP-2026-08-04.md`](./t26-t27/T26-T27-VISUAL-FOLLOW-UP-2026-08-04.md)：公开标题、作品查找/筛选/分页、委托背景引导区、独立文案配置与五张视觉证据。
 - [`T23-T25-CLOSURE-2026-08-04.md`](./t23-t25/T23-T25-CLOSURE-2026-08-04.md)：用户确认独立 Agent Review 完成后的三任务最终收口。
 - [`T25-BACKEND-HANDOFF-2026-08-03.md`](./t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md)：用户授权的 T25 regular adoption 发布与公开读取服务端交接。
 - [`T23-T25-USER-ACCEPTANCE-2026-08-04.md`](./t23-t25/T23-T25-USER-ACCEPTANCE-2026-08-04.md)：用户人工核验、`/works` 出厂照边界、`recipe-v2` 左右双水印、真实 OSS 与剩余独立 Review 门禁。
@@ -42,6 +43,7 @@
 
 - [`T26-T27-BACKEND-HANDOFF-2026-08-04.md`](./t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md)：0012 迁移、受限纯文本/FAQ、独立状态版本、现有首页管理聚合 API、公开投影与全量测试。
 - [`T26-T27-FRONTEND-2026-08-04.md`](./t26-t27/T26-T27-FRONTEND-2026-08-04.md)：管理固定区块、`/commission` `/about` `/contact`、实现方浏览器自测与截图；**OQ-120 开放，T26/T27 未勾选**。
+- [`T26-T27-VISUAL-FOLLOW-UP-2026-08-04.md`](./t26-t27/T26-T27-VISUAL-FOLLOW-UP-2026-08-04.md)：用户追加视觉/管理体验的实现、自动化与 Chrome 证据；**不代替独立 Review**。
 
 ### T19–T22 与首页/公开站
 
@@ -107,6 +109,7 @@
 - `gate07-watermark/screenshots/`：全局水印管理、预览、应用和三视口；
 - `t19-t22/t19-t20/screenshots/`：首页、作品列表、作品详情和首页管理；
 - `t19-t22/t22-independent-review/screenshots/`：T22 管理端、公开首页与作品列表三视口。
+- `t26-t27/screenshots/visual-follow-up-*`：T26–T27 追加委托引导区三视口、后台作品查找与独立文案配置。
 
 新任务的截图目录放在对应任务组下，例如 `t23-t25/t23-role-media/screenshots/`。截图文件名包含页面、状态和视口，例如 `admin-work-design-sheet-1440x900.png`。
 

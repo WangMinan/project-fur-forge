@@ -53,12 +53,12 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
   <div class="commission-page" data-testid="commission-page">
     <PublicPageIntro
       title="自设委托"
-      :description="introText"
+      :description="heroSlide ? undefined : introText"
     />
 
     <div class="commission-page__body">
       <section
-        v-if="status"
+        v-if="status && !heroSlide"
         class="commission-page__status"
         aria-label="当前委托营业状态"
         data-testid="commission-status"
@@ -66,38 +66,20 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
         <PublicBusinessStatus :status="status" />
       </section>
 
-      <section
+      <CommissionLead
         v-if="heroSlide"
-        class="commission-page__hero"
-        aria-label="代表作品"
+        :slide="heroSlide"
+        :status="status"
+        :email="commission?.email"
+        :description="introText"
         data-testid="commission-hero"
-      >
-        <NuxtLink
-          v-if="heroSlide.linkedWorkHref"
-          :to="heroSlide.linkedWorkHref"
-          class="commission-page__hero-link"
-        >
-          <ResponsivePicture
-            :sources="heroSlide.landscape"
-            :portrait-sources="heroSlide.portrait"
-            :alt="heroSlide.alt"
-            sizes="(min-width: 1440px) 1440px, calc(100vw - 2rem)"
-            loading="eager"
-            fetchpriority="high"
-          />
-        </NuxtLink>
-        <ResponsivePicture
-          v-else
-          :sources="heroSlide.landscape"
-          :portrait-sources="heroSlide.portrait"
-          :alt="heroSlide.alt"
-          sizes="(min-width: 1440px) 1440px, calc(100vw - 2rem)"
-          loading="eager"
-          fetchpriority="high"
-        />
-      </section>
+      />
 
-      <section class="commission-page__section" aria-labelledby="commission-scope-title">
+      <section
+        id="commission-details"
+        class="commission-page__section"
+        aria-labelledby="commission-scope-title"
+      >
         <h2 id="commission-scope-title" class="commission-page__section-title">制作范围</h2>
         <ul class="commission-page__scope" role="list">
           <li class="commission-page__scope-item">
@@ -181,16 +163,6 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
   padding: var(--space-4) var(--space-5);
   background: var(--public-bg-secondary);
   border-radius: var(--radius-md);
-}
-
-.commission-page__hero {
-  overflow: hidden;
-  border-radius: var(--radius-md);
-  background: var(--image-placeholder);
-}
-
-.commission-page__hero-link {
-  display: block;
 }
 
 .commission-page__section {
