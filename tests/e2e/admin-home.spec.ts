@@ -14,7 +14,7 @@ import {
 } from './helpers/fake-media'
 import { seedHomeSlides, seedPublicCatalog } from './helpers/public-catalog'
 
-// T20 首页管理 E2E：设置、轮播项 CRUD、横竖配对、启停与公开投影、排序、
+// T20 大图管理 E2E：设置、轮播项 CRUD、横竖配对、启停与公开投影、排序、
 // 关联作品、保存冲突、活动水印真实预览、水印 profile 阻断、响应式无横向溢出。
 // 每个用例以 seedHomeSlides([]) 清空轮播并重置设置，保证互相隔离。
 
@@ -32,7 +32,8 @@ const SCREENSHOT_DIR =
 async function gotoHomeAdmin(page: Page) {
   await page.goto(`${adminBaseURL}/admin/site/home`)
   await page.waitForSelector('[data-testid="home-admin"]')
-  await expect(page.getByRole('heading', { name: '首页管理' })).toBeVisible()
+  await expect(page).toHaveTitle(/大图管理/u)
+  await expect(page.getByRole('heading', { name: '大图管理' })).toBeVisible()
 }
 
 async function csrfToken(page: Page) {

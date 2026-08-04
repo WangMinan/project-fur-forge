@@ -122,7 +122,7 @@ test.describe('UI-01 管理端布局边界', () => {
     // 随后进入管理导航，再进入主内容之前的动作区
     await page.keyboard.press('Tab')
     await expect(
-      page.getByRole('navigation', { name: '管理导航' }).getByRole('link', { name: '首页管理' }),
+      page.getByRole('navigation', { name: '管理导航' }).getByRole('link', { name: '大图管理' }),
     ).toBeFocused()
 
     // 激活 skip link 后焦点落入主内容

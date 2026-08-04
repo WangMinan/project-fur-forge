@@ -97,7 +97,7 @@ describe('SQLite foundation', () => {
     expect(() => assertDatabaseMigrated(databaseFile))
       .toThrow(/run pnpm db:migrate first/)
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 14,
+      applied: 15,
       backupFile: undefined,
     })
     expect(() => assertDatabaseMigrated(databaseFile)).not.toThrow()
@@ -116,7 +116,44 @@ describe('SQLite foundation', () => {
       `).pluck().get()).toBe(1)
       expect(database.sqlite.prepare(`
         SELECT COUNT(*) FROM __drizzle_migrations
-      `).pluck().get()).toBe(14)
+      `).pluck().get()).toBe(15)
+      const siteContent = database.sqlite.prepare(`
+        SELECT commission_intro AS commissionIntro,
+               commission_faq_json AS commissionFaqJson,
+               about_studio_facts AS aboutStudioFacts,
+               basic_terms AS basicTerms,
+               contact_anti_scam AS contactAntiScam
+        FROM site_content WHERE id = 'site'
+      `).get() as {
+        aboutStudioFacts: string
+        basicTerms: string
+        commissionFaqJson: string
+        commissionIntro: string
+        contactAntiScam: string
+      }
+      expect(siteContent.commissionIntro).toContain('逐单估价')
+      expect(JSON.parse(siteContent.commissionFaqJson)).toHaveLength(5)
+      expect(siteContent.aboutStudioFacts).not.toContain('私人联系方式')
+      expect(siteContent.basicTerms).toContain('著作权均归有点小狗工作室所有')
+      expect(siteContent.basicTerms).toContain('签收之日起一年')
+      expect(siteContent.contactAntiScam).toContain('交叉核验')
+      expect(database.sqlite.prepare(`
+        SELECT kind, tone, label, href
+        FROM business_statuses ORDER BY kind
+      `).all()).toEqual([
+        {
+          kind: 'adoption',
+          tone: 'limited',
+          label: '领养信息以页面为准',
+          href: '/adoptions',
+        },
+        {
+          kind: 'commission',
+          tone: 'limited',
+          label: '委托咨询开放',
+          href: '/commission',
+        },
+      ])
     }
     finally {
       database.sqlite.close()
@@ -175,7 +212,7 @@ describe('SQLite foundation', () => {
     }
 
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 7,
+      applied: 8,
     })
     const upgraded = openDatabase(databaseFile)
     try {
@@ -229,7 +266,7 @@ describe('SQLite foundation', () => {
     }
 
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 3,
+      applied: 4,
     })
     const upgraded = openDatabase(databaseFile)
     try {

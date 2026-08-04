@@ -549,7 +549,7 @@ export default defineEventHandler(async (event) => {
     return { data: { id } }
   }
 
-  // T20 首页管理 E2E：临时悬空/恢复活动水印 profile 指向，验证预览与启用的
+  // T20 大图管理 E2E：临时悬空/恢复活动水印 profile 指向，验证预览与启用的
   // 服务端阻断。RETIRED→ACTIVE 被状态机触发器禁止，因此改为置空
   // site_branding.active_watermark_profile_id；模块级记录原指向用于恢复。
   if (body?.action === 'setWatermarkProfileActive') {

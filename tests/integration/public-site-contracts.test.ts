@@ -600,7 +600,7 @@ describe('T19/T20 public repository contracts', () => {
     })
     const initial = getAdminHome(sqlite)
     expect(initial).toMatchObject({
-      version: 1,
+      version: 2,
       tagline: '不只做小狗毛',
       contactEmail: '3114559925@qq.com',
       contactQq: '3114559925',
