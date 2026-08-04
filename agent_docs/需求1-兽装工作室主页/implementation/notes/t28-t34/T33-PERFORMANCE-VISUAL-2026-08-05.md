@@ -80,3 +80,14 @@
 - 最终实现方结果：6 个改动文件定向 ESLint 通过；`pnpm typecheck` 通过；`pnpm exec vitest run tests/integration/public-site-contracts.test.ts` 6/6 通过；`pnpm exec playwright test tests/e2e/public-home.spec.ts` 18/18 通过；`pnpm build` 通过。构建只有既有 plugin timing 提示。
 
 当前状态：修复已完成，等待同一新上下文 Reviewer 复核；在独立结论前仍为 `NOT PASS`。
+
+## 新上下文独立复核
+
+最终结论：`PASS WITH FOLLOW-UP`。初始 1 个 MUST-FIX 与 3 个 SHOULD-FIX 全部 `CLOSED`，无新增 finding。
+
+- Reviewer 在内存副本中构造 2/3/4/5 个启用项，公开投影始终 5 条查询、管理投影始终 6 条。
+- 独立集成测试 6/6、Chrome E2E 18/18 通过；首项 `eager/high`、第二项 `lazy`、隐藏项按需进入、横竖 `<source>` 固有尺寸和分页按钮 `24×24` 均由浏览器断言覆盖。
+- production 的 `390×844`、`768×1024`、`1440×900` 分别只请求 portrait、portrait、landscape；全部真实解码，`requestfailed=0`、正常页面 console error 0、横向溢出 0、CLS 0，视觉无回归。
+- FOLLOW-UP 仅为证据边界：Reviewer 无当前真实库管理凭据且不得修改真实库，未重放认证后的 production 管理页；真实库只有 1 个启用项且自动轮播关闭，因此多项交互由独立 E2E 覆盖。该边界不回退四项 finding 的关闭结论。
+
+T33 工程、自动化与独立 Review 已收口；T34 总门禁从 `6b2da66` 后的最新 `main` 启动。
