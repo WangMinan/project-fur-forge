@@ -25,6 +25,7 @@ function cleanForm() {
     studioFacts: '',
     makingScope: '',
     basicTerms: '',
+    privacyPolicy: '',
     douyin: '',
     antiScam: '',
   }
@@ -88,9 +89,11 @@ describe('siteContentFieldIssues', () => {
     const form = cleanForm()
     form.intro = 'x'.repeat(SITE_CONTENT_LIMITS.intro + 1)
     form.basicTerms = '含有 <b> 标记'
+    form.privacyPolicy = 'javascript:alert(1)'
     const issues = siteContentFieldIssues(form)
     expect(issues.intro).toBeTruthy()
     expect(issues.basicTerms).toBeTruthy()
+    expect(issues.privacyPolicy).toBeTruthy()
     expect(issues.estimateNote).toBeUndefined()
   })
 

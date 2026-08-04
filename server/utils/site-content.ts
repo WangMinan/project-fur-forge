@@ -24,6 +24,7 @@ interface SiteContentRow {
   contactDouyin: string | null
   contactEmail: string
   contactQq: string
+  privacyPolicy: string | null
   version: number
 }
 
@@ -53,6 +54,7 @@ function siteContentRow(sqlite: Database.Database) {
       about_studio_facts AS aboutStudioFacts,
       about_making_scope AS aboutMakingScope,
       basic_terms AS basicTerms,
+      privacy_policy AS privacyPolicy,
       contact_anti_scam AS contactAntiScam
     FROM site_content WHERE id = 'site'
   `).get() as SiteContentRow | undefined
@@ -98,6 +100,7 @@ function content(sqlite: Database.Database): AdminSiteContentDto {
       studioFacts: row.aboutStudioFacts,
       makingScope: row.aboutMakingScope,
       basicTerms: row.basicTerms,
+      privacyPolicy: row.privacyPolicy,
     },
     contact: {
       email: row.contactEmail,
@@ -129,7 +132,7 @@ export function getPublicSiteContent(sqlite: Database.Database) {
     commission: {
       ...current.commission,
       email: current.contact.email,
-      termsHref: '/about#terms',
+      termsHref: '/service',
     },
     about: {
       ...current.about,
@@ -157,6 +160,7 @@ export function updateSiteContent(
       studioFacts: string | null
       makingScope: string | null
       basicTerms: string | null
+      privacyPolicy: string | null
     }
     contact: {
       douyin: string | null
@@ -172,6 +176,7 @@ export function updateSiteContent(
       SET commission_intro = ?, commission_estimate_note = ?,
           commission_email_action = ?, commission_faq_json = ?,
           about_studio_facts = ?, about_making_scope = ?, basic_terms = ?,
+          privacy_policy = ?,
           contact_douyin = ?, contact_anti_scam = ?,
           version = version + 1, updated_at = ?
       WHERE id = 'site' AND version = ?
@@ -183,6 +188,7 @@ export function updateSiteContent(
       input.about.studioFacts,
       input.about.makingScope,
       input.about.basicTerms,
+      input.about.privacyPolicy,
       input.contact.douyin,
       input.contact.antiScam,
       now,

@@ -4,14 +4,14 @@ import { publicSiteContentResponseSchema } from '~~/shared/schemas/site-content'
 
 /**
  * T27 关于页：SSR 消费 /api/public/v1/site-content。
- * 工作室事实、制作范围、基本约定为 null 时整区隐藏或显示真实未发布状态；
- * 官方渠道（邮箱/QQ/抖音）为已确认登记值。不虚构品牌故事。
+ * 工作室事实、制作范围与联系区均来自公开安全投影；
+ * 联系区合并原 /contact 页面，不虚构品牌故事或联系方式。
  */
 useSeoMeta({
   title: `关于我们 · ${PROJECT_NAME}`,
-  description: `${PROJECT_NAME}的工作室事实、制作范围、官方渠道与基本约定。`,
+  description: `${PROJECT_NAME}的工作室事实、制作范围与官方联系方式。`,
   ogTitle: `关于我们 · ${PROJECT_NAME}`,
-  ogDescription: `${PROJECT_NAME}的工作室事实、制作范围、官方渠道与基本约定。`,
+  ogDescription: `${PROJECT_NAME}的工作室事实、制作范围与官方联系方式。`,
 })
 
 const { data: site, error } = await useFetch('/api/public/v1/site-content', {
@@ -25,7 +25,7 @@ if (error.value) {
 }
 
 const about = computed(() => site.value?.about ?? null)
-const channels = computed(() => about.value?.officialChannels ?? null)
+const contact = computed(() => site.value?.contact ?? null)
 
 function paragraphs(value: string | null | undefined) {
   return value ? splitPlainTextParagraphs(value) : []
@@ -33,12 +33,12 @@ function paragraphs(value: string | null | undefined) {
 
 const factParagraphs = computed(() => paragraphs(about.value?.studioFacts))
 const scopeParagraphs = computed(() => paragraphs(about.value?.makingScope))
-const termsParagraphs = computed(() => paragraphs(about.value?.basicTerms))
+const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
 </script>
 
 <template>
   <div class="about-page" data-testid="about-page">
-    <PublicPageIntro title="关于我们" />
+    <PublicPageIntro title="关于我们" description="了解工作室、制作范围与官方联系方式。" />
 
     <div class="about-page__body">
       <section
@@ -66,45 +66,37 @@ const termsParagraphs = computed(() => paragraphs(about.value?.basicTerms))
       </section>
 
       <section
-        v-if="channels"
-        class="about-page__section"
-        aria-labelledby="about-channels-title"
-        data-testid="about-channels"
+        v-if="contact"
+        id="contact"
+        class="about-page__section about-page__contact"
+        aria-labelledby="about-contact-title"
+        data-testid="about-contact"
       >
-        <h2 id="about-channels-title" class="about-page__section-title">官方渠道</h2>
+        <h2 id="about-contact-title" class="about-page__section-title">联系</h2>
+        <p class="about-page__text about-page__text--muted">
+          委托与领养通过以下官方渠道人工沟通；本站不提供站内留言或在线提交。
+        </p>
+        <ContactEmailActions :email="contact.email" />
         <ul class="about-page__channels" role="list">
           <li>
-            <span class="about-page__channel-label">业务邮箱</span>
-            <a :href="`mailto:${channels.email}`" class="about-page__channel-link">
-              {{ channels.email }}
-            </a>
-          </li>
-          <li>
             <span class="about-page__channel-label">QQ</span>
-            <span class="about-page__channel-value">{{ channels.qq }}</span>
+            <span class="about-page__channel-value">{{ contact.qq }}</span>
           </li>
-          <li v-if="channels.douyin">
+          <li v-if="contact.douyin">
             <span class="about-page__channel-label">抖音</span>
-            <span class="about-page__channel-value">{{ channels.douyin }}</span>
+            <span class="about-page__channel-value">{{ contact.douyin }}</span>
           </li>
         </ul>
-      </section>
-
-      <section
-        id="terms"
-        class="about-page__section about-page__terms"
-        aria-labelledby="about-terms-title"
-        data-testid="about-terms"
-      >
-        <h2 id="about-terms-title" class="about-page__section-title">基本约定</h2>
-        <template v-if="termsParagraphs.length > 0">
-          <p v-for="(paragraph, index) in termsParagraphs" :key="index" class="about-page__text">
+        <div v-if="antiScamParagraphs.length > 0" class="about-page__antiscam">
+          <h3 class="about-page__subsection-title">防诈骗提示</h3>
+          <p
+            v-for="(paragraph, index) in antiScamParagraphs"
+            :key="index"
+            class="about-page__text"
+          >
             {{ paragraph }}
           </p>
-        </template>
-        <p v-else class="about-page__text about-page__text--muted">
-          基本约定尚未发布；委托或领养前，请通过官方渠道与工作室确认具体安排。
-        </p>
+        </div>
       </section>
     </div>
   </div>
@@ -114,7 +106,7 @@ const termsParagraphs = computed(() => paragraphs(about.value?.basicTerms))
 .about-page__body {
   display: grid;
   gap: var(--space-8);
-  max-width: var(--public-content-reading);
+  max-width: var(--public-content-article);
   margin: 0 auto;
   padding: 0 var(--public-page-padding) var(--space-9);
 }
@@ -131,7 +123,7 @@ const termsParagraphs = computed(() => paragraphs(about.value?.basicTerms))
   line-height: var(--line-height-heading);
 }
 
-.about-page__terms {
+.about-page__contact {
   scroll-margin-top: var(--space-8);
 }
 
@@ -153,6 +145,19 @@ const termsParagraphs = computed(() => paragraphs(about.value?.basicTerms))
   list-style: none;
 }
 
+.about-page__antiscam {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  background: var(--public-bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.about-page__subsection-title {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+}
+
 .about-page__channels li {
   display: flex;
   align-items: baseline;
@@ -170,12 +175,4 @@ const termsParagraphs = computed(() => paragraphs(about.value?.basicTerms))
   overflow-wrap: anywhere;
 }
 
-.about-page__channel-link {
-  overflow-wrap: anywhere;
-}
-
-.about-page__channel-link:hover {
-  text-decoration: underline;
-  text-underline-offset: 0.3em;
-}
 </style>

@@ -93,16 +93,30 @@ onBeforeUnmount(() => {
       </div>
 
       <nav class="mobile-nav__links" aria-label="主导航">
-        <NuxtLink
+        <div
           v-for="item in PUBLIC_NAV_ITEMS"
           :key="item.href"
-          :to="item.href"
-          class="mobile-nav__link"
-          :class="{ 'mobile-nav__link--emphasized': item.emphasized }"
-          :aria-current="route.path === item.href ? 'page' : undefined"
+          class="mobile-nav__item"
         >
-          {{ item.label }}
-        </NuxtLink>
+          <NuxtLink
+            :to="item.href"
+            class="mobile-nav__link"
+            :aria-current="route.path === item.href ? 'page' : undefined"
+          >
+            {{ item.label }}
+          </NuxtLink>
+          <div v-if="item.children" class="mobile-nav__sublinks">
+            <NuxtLink
+              v-for="child in item.children"
+              :key="child.href"
+              :to="child.href"
+              class="mobile-nav__sublink"
+              :aria-current="route.path === child.href ? 'page' : undefined"
+            >
+              {{ child.label }}
+            </NuxtLink>
+          </div>
+        </div>
       </nav>
     </div>
   </Transition>
@@ -155,6 +169,10 @@ onBeforeUnmount(() => {
   margin-top: var(--space-6);
 }
 
+.mobile-nav__item {
+  display: grid;
+}
+
 .mobile-nav__link {
   padding: var(--space-3) var(--space-2);
   color: var(--public-text-primary);
@@ -173,10 +191,24 @@ onBeforeUnmount(() => {
   color: var(--public-accent-primary);
 }
 
-.mobile-nav__link--emphasized {
-  margin-top: var(--space-3);
-  border-top: 1px solid var(--public-border-secondary);
-  border-radius: 0;
+.mobile-nav__sublinks {
+  display: grid;
+  margin: 0 0 var(--space-2) var(--space-4);
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--public-border-secondary);
+}
+
+.mobile-nav__sublink {
+  padding: var(--space-2);
+  color: var(--public-text-secondary);
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-sm);
+}
+
+.mobile-nav__sublink:hover,
+.mobile-nav__sublink[aria-current='page'] {
+  color: var(--public-accent-primary);
+  background: var(--public-bg-secondary);
 }
 
 .mobile-nav-enter-active,

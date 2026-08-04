@@ -509,6 +509,7 @@ describe('authentication API', () => {
               commission_estimate_note = NULL, commission_email_action = NULL,
               commission_faq_json = NULL, about_studio_facts = NULL,
               about_making_scope = NULL, basic_terms = NULL,
+              privacy_policy = NULL,
               contact_anti_scam = NULL, version = 1
           WHERE id = 'site'
         `).run()
@@ -560,6 +561,7 @@ describe('authentication API', () => {
           studioFacts: null,
           makingScope: null,
           basicTerms: null,
+          privacyPolicy: null,
         },
         contact: {
           email: '3114559925@qq.com',
@@ -590,6 +592,7 @@ describe('authentication API', () => {
         studioFacts: null,
         makingScope: null,
         basicTerms: null,
+        privacyPolicy: '本站不提供访客账号，不使用营销分析 Cookie。',
       },
       contact: {
         douyin: 'to3114559925',
@@ -703,12 +706,13 @@ describe('authentication API', () => {
         commission: {
           ...payload.commission,
           email: '3114559925@qq.com',
-          termsHref: '/about#terms',
+          termsHref: '/service',
         },
         about: {
           studioFacts: null,
           makingScope: null,
           basicTerms: null,
+          privacyPolicy: payload.about.privacyPolicy,
           officialChannels: {
             email: '3114559925@qq.com',
             qq: '3114559925',

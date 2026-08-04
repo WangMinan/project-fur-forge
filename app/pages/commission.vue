@@ -122,7 +122,7 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
 
         <p class="commission-page__more-contact">
           邮箱之外的联系方式见
-          <NuxtLink to="/contact" class="commission-page__inline-link">联系页</NuxtLink>。
+          <NuxtLink to="/about#contact" class="commission-page__inline-link">关于我们页</NuxtLink>。
         </p>
       </section>
 
@@ -143,7 +143,7 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
 
       <p v-if="commission" class="commission-page__terms">
         <NuxtLink :to="commission.termsHref" class="commission-page__terms-link">
-          查看基本约定 <span aria-hidden="true">→</span>
+          查看服务条款 <span aria-hidden="true">→</span>
         </NuxtLink>
       </p>
     </div>

@@ -722,6 +722,7 @@ export const siteContent = sqliteTable('site_content', {
   aboutStudioFacts: text('about_studio_facts'),
   aboutMakingScope: text('about_making_scope'),
   basicTerms: text('basic_terms'),
+  privacyPolicy: text('privacy_policy'),
   contactAntiScam: text('contact_anti_scam'),
   heroAutoRotate: integer('hero_auto_rotate', { mode: 'boolean' })
     .notNull().default(false),
@@ -770,6 +771,10 @@ export const siteContent = sqliteTable('site_content', {
   check(
     'site_content_basic_terms',
     sql`${table.basicTerms} IS NULL OR (length(trim(${table.basicTerms})) BETWEEN 1 AND 8000 AND ${table.basicTerms} NOT GLOB '*[<>]*')`,
+  ),
+  check(
+    'site_content_privacy_policy',
+    sql`${table.privacyPolicy} IS NULL OR (length(trim(${table.privacyPolicy})) BETWEEN 1 AND 8000 AND ${table.privacyPolicy} NOT GLOB '*[<>]*')`,
   ),
   check(
     'site_content_contact_anti_scam',
