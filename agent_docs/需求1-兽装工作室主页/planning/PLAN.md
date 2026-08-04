@@ -307,7 +307,7 @@ P0 删除作品：只接受未发布作品的当前版本；逐项清理其公�
 - Session：HttpOnly、Secure、SameSite=Strict、后台 Host-only、8 小时无操作过期；每次 API 校验管理员仍有效和 `sessionVersion`。
 - 登录失败 5 次锁定 30 分钟；错误不泄露账号存在性。
 - P0 密码重置使用受保护命令；P2 邮件找回 token 只存哈希并单次有效。
-- 登录写请求执行精确 Host/Origin，不要求尚未建立的 Session/CSRF；其余受保护写请求执行 Session、精确 Host/Origin 和 CSRF。T13 已完成这些认证边界；T32 使用 H3 流式 64 KiB JSON 上限，并按当前单进程单管理员架构执行登录 30 次/分钟、已认证管理写入 60 次/分钟的两层全局限流，超限返回 `429 RATE_LIMITED` 与 `Retry-After`。
+- 登录写请求执行精确 Host/Origin，不要求尚未建立的 Session/CSRF；其余受保护写请求执行 Session、精确 Host/Origin 和 CSRF。T13 已完成这些认证边界；T32 使用 Nitro Node 请求流的 64 KiB JSON 上限，并按当前单进程单管理员架构执行登录 30 次/分钟、已认证管理写入 60 次/分钟的两层全局限流，超限返回 `429 RATE_LIMITED` 与 `Retry-After`。
 - 日志只记录 requestId、方法、归一化路径、状态、错误码和耗时；不记录正文、作品私有联系人、授权备注、私有 Key 或签名 URL。公开页脚使用 `site_content` 的邮箱与 QQ 公开投影，不来自作品 DTO。
 - T26–T27 管理 API 复用现有后台 Host/Session/Origin/CSRF 中间件并返回 `no-store`；公开站点内容 API 显式 `no-store`，每次查询 SQLite，只投影受限页面字段和工作室公开渠道，不返回资源版本、草稿标识、内部备注或任何作品联系人。
 - 私有媒体 URL 不进入公开 HTML、Sitemap、OG 或公开 API。

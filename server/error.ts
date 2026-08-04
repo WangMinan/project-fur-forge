@@ -77,7 +77,11 @@ async function renderNuxtErrorPage(
 }
 
 function defaultErrorCode(statusCode: number) {
-  if (statusCode === 400 || statusCode === 422) {
+  if (
+    statusCode === 400
+    || statusCode === 413
+    || statusCode === 422
+  ) {
     return 'VALIDATION_ERROR' as const
   }
 
@@ -97,12 +101,20 @@ function defaultErrorCode(statusCode: number) {
     return 'CONFLICT' as const
   }
 
+  if (statusCode === 429) {
+    return 'RATE_LIMITED' as const
+  }
+
   return 'INTERNAL_ERROR' as const
 }
 
 function defaultErrorMessage(statusCode: number) {
   if (statusCode === 404) {
     return 'Resource was not found.'
+  }
+
+  if (statusCode === 413) {
+    return 'Request body is too large.'
   }
 
   if (statusCode >= 500) {
