@@ -151,8 +151,7 @@ function onSave() {
     <header class="site-content__head">
       <h2 id="site-content-title" class="site-content__card-title">页面内容</h2>
       <p class="site-content__meta">
-        委托、关于、服务条款、隐私政策与联系区的固定文字。所有字段留空即不在公开页显示对应区块；
-        邮箱（{{ content.contact.email }}）与 QQ（{{ content.contact.qq }}）继续在“大图管理”的“首屏设置”维护。
+        委托、关于、服务条款、隐私政策与联系区的固定文字。所有字段留空即不在公开页显示对应区块。
       </p>
     </header>
 
@@ -171,7 +170,7 @@ function onSave() {
           :maxlength="SITE_CONTENT_LIMITS.intro"
           :disabled="mutating"
         />
-        <p class="site-content__hint">显示在委托页页名下；不写价格和排期。</p>
+        <p class="site-content__hint">显示在委托页页名下。</p>
         <p v-if="issues.intro" class="site-content__issue" role="alert">{{ issues.intro }}</p>
       </div>
 

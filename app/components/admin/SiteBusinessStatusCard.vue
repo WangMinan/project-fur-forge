@@ -138,7 +138,6 @@ function onSave() {
           :maxlength="SITE_CONTENT_LIMITS.statusDetail"
           :disabled="mutating"
         />
-        <p class="status-card__hint">一句话说明当前安排；不填写排期、价格或未确认信息。</p>
         <p v-if="issues.detail" class="status-card__issue" role="alert">{{ issues.detail }}</p>
       </div>
     </div>
