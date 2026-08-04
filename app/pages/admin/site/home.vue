@@ -1,17 +1,9 @@
 <script setup lang="ts">
 import { workListResponseSchema } from '~~/shared/schemas/work'
-import type {
-  SiteBusinessStatusKind,
-  WorkListItemDto,
-} from '~~/shared/types/contracts'
+import type { WorkListItemDto } from '~~/shared/types/contracts'
 import type { HeroSlideInput } from '~/composables/useAdminHome'
-import type {
-  SiteContentPayload,
-  SiteStatusPayload,
-} from '~/composables/useAdminSiteContent'
 
 // T20 首页管理：口号/自动轮播设置 + 轮播项 CRUD/排序/启停 + 活动水印预览。
-// T26–T27 追加固定区块：委托/领养营业状态与委托/关于/联系页面内容。
 // 所有写操作携带 expectedVersion；409 统一重载并提示。
 definePageMeta({
   layout: 'admin',
@@ -49,19 +41,8 @@ const works = ref<WorkListItemDto[]>([])
 const actionError = ref<string | null>(null)
 const showDraft = ref(false)
 
-const {
-  conflictNotice: siteConflictNotice,
-  content: siteContent,
-  load: loadSiteContent,
-  mutating: siteMutating,
-  pageStatus: sitePageStatus,
-  savedSection,
-  saveContent,
-  saveStatus,
-} = useAdminSiteContent()
-
 const errorDialogOpen = computed(() =>
-  Boolean(actionError.value || conflictNotice.value || siteConflictNotice.value),
+  Boolean(actionError.value || conflictNotice.value),
 )
 
 const tagline = ref('')
@@ -73,15 +54,6 @@ const intervalSeconds = ref(6)
 function closeErrorDialog() {
   actionError.value = null
   conflictNotice.value = null
-  siteConflictNotice.value = null
-}
-
-async function onSaveStatus(kind: SiteBusinessStatusKind, payload: SiteStatusPayload) {
-  actionError.value = await saveStatus(kind, payload)
-}
-
-async function onSaveContent(payload: SiteContentPayload) {
-  actionError.value = await saveContent(payload)
 }
 
 function settingsSnapshot() {
@@ -231,7 +203,6 @@ async function loadWorks() {
 onMounted(() => {
   void load()
   void loadWorks()
-  void loadSiteContent()
 })
 </script>
 
@@ -241,7 +212,7 @@ onMounted(() => {
       <header class="home-admin__header">
         <h1 class="home-admin__title">首页管理</h1>
         <p class="home-admin__meta">
-          首页轮播最多启用 5 项；启用时会按当前活动水印生成公开衍生图。营业状态与页面内容在下方固定区块维护。
+          首页轮播最多启用 5 项；启用时会按当前活动水印生成公开衍生图。
         </p>
       </header>
 
@@ -380,46 +351,6 @@ onMounted(() => {
           </div>
         </section>
 
-        <section class="home-admin__card" aria-labelledby="business-statuses-title">
-          <h2 id="business-statuses-title" class="home-admin__card-title">营业状态</h2>
-          <p class="home-admin__section-meta">
-            委托与领养各自独立保存；状态链接由系统固定指向自设委托页与角色领养页。
-          </p>
-          <div v-if="sitePageStatus === 'loading'" class="home-admin__state" role="status">
-            正在加载营业状态…
-          </div>
-          <div v-else-if="sitePageStatus === 'error'" class="home-admin__state" role="alert">
-            营业状态加载失败，请刷新重试。
-          </div>
-          <div v-else-if="siteContent" class="home-admin__statuses">
-            <AdminSiteBusinessStatusCard
-              kind="commission"
-              :status="siteContent.statuses.commission"
-              :mutating="siteMutating"
-              :saved="savedSection === 'commission'"
-              @save="payload => onSaveStatus('commission', payload)"
-            />
-            <AdminSiteBusinessStatusCard
-              kind="adoption"
-              :status="siteContent.statuses.adoption"
-              :mutating="siteMutating"
-              :saved="savedSection === 'adoption'"
-              @save="payload => onSaveStatus('adoption', payload)"
-            />
-          </div>
-        </section>
-
-        <div
-          v-if="siteContent && sitePageStatus === 'ready'"
-          class="home-admin__card"
-        >
-          <AdminSiteContentCard
-            :content="siteContent"
-            :mutating="siteMutating"
-            :saved="savedSection === 'content'"
-            @save="onSaveContent"
-          />
-        </div>
       </template>
 
       <AdminConfirmDialog
@@ -432,7 +363,6 @@ onMounted(() => {
       >
         <p v-if="actionError" role="alert">{{ actionError }}</p>
         <p v-if="conflictNotice" role="alert">{{ conflictNotice }}</p>
-        <p v-if="siteConflictNotice" role="alert">{{ siteConflictNotice }}</p>
       </AdminConfirmDialog>
     </div>
   </AdminShell>
@@ -594,24 +524,6 @@ onMounted(() => {
   margin: 0;
   font-size: var(--admin-font-sm);
   color: var(--admin-text-tertiary);
-}
-
-.home-admin__section-meta {
-  margin: 0;
-  font-size: var(--admin-font-xs);
-  color: var(--admin-text-secondary);
-}
-
-.home-admin__statuses {
-  display: grid;
-  gap: var(--admin-space-3);
-}
-
-@media (min-width: 1024px) {
-  .home-admin__statuses {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
-  }
 }
 
 .home-admin__slides {

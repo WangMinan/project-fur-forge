@@ -34,6 +34,21 @@ useSeoMeta({
 const adminApi = useAdminApi()
 const status = ref<'error' | 'loading' | 'ready'>('loading')
 const works = ref<WorkListItemDto[]>([])
+const {
+  filteredWorks,
+  filtersActive,
+  page,
+  pageCount,
+  pageSize,
+  publicationStatus,
+  purpose,
+  query,
+  resetFilters,
+  suitType,
+  visibleFrom,
+  visibleTo,
+  visibleWorks,
+} = useAdminWorkListView(works)
 const publicationChecks = ref<Record<string, WorkPublicationCheckDto | null>>({})
 const deleteTarget = ref<WorkListItemDto | null>(null)
 const deleting = ref(false)
@@ -215,15 +230,35 @@ onMounted(() => {
         {{ PUBLIC_FEATURED_LIMIT }} 件；正式内容建议保持 3–{{ PUBLIC_FEATURED_LIMIT }} 件。
       </p>
 
+      <AdminWorkListToolbar
+        v-if="status === 'ready' && works.length > 0"
+        v-model:query="query"
+        v-model:purpose="purpose"
+        v-model:suit-type="suitType"
+        v-model:publication-status="publicationStatus"
+        :filters-active="filtersActive"
+        :result-count="filteredWorks.length"
+        :total-count="works.length"
+        @reset="resetFilters"
+      />
+
       <div v-if="status === 'ready' && works.length === 0" class="works-page__empty">
         <p class="works-page__empty-title">暂无作品</p>
         <p class="works-page__empty-text">创建第一件作品，上传出厂照后即可发布。</p>
         <NuxtLink to="/admin/works/new" class="works-page__create">创建第一件作品</NuxtLink>
       </div>
 
+      <div
+        v-else-if="status === 'ready' && filteredWorks.length === 0"
+        class="works-page__empty"
+      >
+        <p class="works-page__empty-title">没有符合条件的作品</p>
+        <p class="works-page__empty-text">换一个关键词或筛选条件后再试。</p>
+        <button type="button" class="works-page__reset" @click="resetFilters">清除查找与筛选</button>
+      </div>
+
       <template v-else-if="status === 'ready'">
-        <table class="works-table">
-          <caption class="sr-only">作品列表</caption>
+        <table class="works-table" aria-label="作品管理表格">
           <thead>
             <tr>
               <th scope="col">作品</th>
@@ -232,11 +267,11 @@ onMounted(() => {
               <th scope="col">发布状态</th>
               <th scope="col">媒体</th>
               <th scope="col">发布阻断</th>
-              <th scope="col"><span class="sr-only">操作</span></th>
+              <th scope="col">操作</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="work in works" :key="work.id">
+            <tr v-for="work in visibleWorks" :key="work.id">
               <td>
                 <div class="works-table__work">
                   <span class="works-table__thumb">
@@ -311,7 +346,7 @@ onMounted(() => {
         </table>
 
         <ul class="works-cards" role="list">
-          <li v-for="work in works" :key="work.id" class="works-card">
+          <li v-for="work in visibleWorks" :key="work.id" class="works-card">
             <span class="works-card__thumb">
               <img
                 v-if="work.primaryAssetId"
@@ -367,6 +402,15 @@ onMounted(() => {
             </div>
           </li>
         </ul>
+
+        <AdminPagination
+          v-model:page="page"
+          v-model:page-size="pageSize"
+          :page-count="pageCount"
+          :result-count="filteredWorks.length"
+          :visible-from="visibleFrom"
+          :visible-to="visibleTo"
+        />
       </template>
 
       <AdminConfirmDialog
@@ -496,6 +540,22 @@ onMounted(() => {
   cursor: pointer;
 }
 
+.works-page__reset {
+  min-height: var(--admin-control-height);
+  padding: 0 var(--admin-space-5);
+  border: 1px solid var(--admin-border-primary);
+  border-radius: var(--admin-radius-md);
+  color: var(--admin-text-primary);
+  background: var(--admin-bg-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.works-page__reset:hover {
+  background: var(--admin-bg-subtle);
+}
+
 .works-page__empty {
   background: var(--admin-bg-primary);
   border: 1px dashed var(--admin-border-primary);
@@ -528,8 +588,8 @@ onMounted(() => {
   width: 100%;
   border-collapse: collapse;
   background: var(--admin-bg-primary);
-  border: 1px solid var(--admin-border-secondary);
-  border-radius: var(--admin-radius-lg);
+  border: 0;
+  border-radius: 0;
 }
 
 .works-table th {

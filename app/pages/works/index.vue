@@ -64,16 +64,12 @@ const emptyKind = computed<EmptyKind | null>(() => {
 
 <template>
   <div class="public-page">
-    <div class="public-container works-page">
-      <header class="works-page__header">
-        <h1 class="works-page__title">
-          作品展示
-        </h1>
-        <p class="works-page__intro">
-          每一套兽装都是独一无二的作品。
-        </p>
-      </header>
+    <PublicPageIntro
+      title="作品展示"
+      description="每一套兽装都是独一无二的作品。"
+    />
 
+    <div class="public-container works-page">
       <WorkFilterBar
         :filter="filter"
         :result-count="resultCount"
@@ -125,22 +121,10 @@ const emptyKind = computed<EmptyKind | null>(() => {
 .works-page {
   max-width: var(--public-content-wide);
   margin: 0 auto;
-  padding-top: var(--space-8);
+  padding-top: 0;
   padding-right: var(--public-page-padding);
   padding-bottom: var(--space-10);
   padding-left: var(--public-page-padding);
-}
-
-.works-page__title {
-  font-family: var(--font-public-display);
-  font-size: var(--font-size-2xl);
-  line-height: var(--line-height-heading);
-}
-
-.works-page__intro {
-  margin-top: var(--space-2);
-  color: var(--public-text-secondary);
-  font-size: var(--font-size-base);
 }
 
 .works-grid {

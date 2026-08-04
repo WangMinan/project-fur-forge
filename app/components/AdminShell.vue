@@ -1,8 +1,8 @@
 <script setup lang="ts">
 // 管理端壳：窄屏为顶栏 + 横向导航，≥1280px 为固定侧栏。
-// 仅包含已实现入口（首页管理、全局水印、作品管理、修改密码）；未实现的项目不提前出现。
+// 仅包含已实现入口（首页管理、文案配置、全局水印、作品管理、修改密码）；未实现的项目不提前出现。
 withDefaults(defineProps<{
-  current?: 'account' | 'branding' | 'home' | 'works' | 'none'
+  current?: 'account' | 'branding' | 'content' | 'home' | 'works' | 'none'
 }>(), {
   current: 'none',
 })
@@ -49,6 +49,11 @@ async function onLogout() {
           class="admin-shell__nav-link"
           :aria-current="current === 'home' ? 'page' : undefined"
         >首页管理</NuxtLink>
+        <NuxtLink
+          to="/admin/site/content"
+          class="admin-shell__nav-link"
+          :aria-current="current === 'content' ? 'page' : undefined"
+        >文案配置</NuxtLink>
         <NuxtLink
           to="/admin/site/branding"
           class="admin-shell__nav-link"
