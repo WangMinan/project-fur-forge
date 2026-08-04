@@ -23,6 +23,8 @@ function readLimitedRawBody(event: H3Event) {
       request.off('data', onData)
       request.off('end', onEnd)
       request.off('error', onError)
+      request.off('aborted', onInterrupted)
+      request.off('close', onClose)
     }
     const onData = (chunk: Buffer | string) => {
       const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
@@ -43,15 +45,26 @@ function readLimitedRawBody(event: H3Event) {
       cleanup()
       reject(bodyError(400))
     }
+    const onInterrupted = () => {
+      cleanup()
+      reject(bodyError(400))
+    }
+    const onClose = () => {
+      if (!request.complete) {
+        onInterrupted()
+      }
+    }
 
     request.on('data', onData)
     request.on('end', onEnd)
     request.on('error', onError)
+    request.on('aborted', onInterrupted)
+    request.on('close', onClose)
   })
 }
 
 export async function readAdminJsonBody(event: H3Event): Promise<unknown> {
-  const contentLength = Number(getHeader(event, 'content-length'))
+  const contentLength = Number(event.node.req.headers['content-length'])
   if (Number.isFinite(contentLength) && contentLength > ADMIN_JSON_BODY_MAX_BYTES) {
     throw bodyError(413)
   }

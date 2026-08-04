@@ -1,5 +1,5 @@
 const REDACTED = '[REDACTED]'
-const sensitiveKey = /(?:authorization|cookie|headers?|request.?body|body|session|token|secret|password|access.?key|signature|signed.?url|contact|email|phone|consent|deposit|payment|object.?key|original.?url)/i
+const sensitiveKey = /(?:authorization|cookie|headers?|request.?body|body|session|token|secret|password|username|access.?key|signature|signed.?url|contact|email|phone|consent|deposit|payment|object.?key|original.?url)/i
 const urlPattern = /https?:\/\/[^\s"'<>]+/g
 const bearerPattern = /\bBearer\s+[A-Za-z0-9._~+/=-]+/gi
 const emailPattern = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi

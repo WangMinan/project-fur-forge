@@ -78,14 +78,21 @@ describe('authentication primitives', () => {
     expect(isSessionIdleExpired(now + 1, now)).toBe(true)
   })
 
-  it('security logs contain only the event and sanitized username', () => {
+  it('security logs contain only the event and a redacted username', () => {
     const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
     logAuthEvent('LOGIN_FAILED', 'admin password=do-not-log')
 
     const serialized = JSON.stringify(consoleWarn.mock.calls)
+    const context = JSON.parse(
+      consoleWarn.mock.calls[0]![1] as string,
+    )
     expect(serialized).toContain('LOGIN_FAILED')
-    expect(serialized).toContain('username')
+    expect(context).toEqual({
+      event: 'LOGIN_FAILED',
+      username: '[REDACTED]',
+    })
+    expect(serialized).not.toContain('admin')
     expect(serialized).not.toContain('do-not-log')
     expect(serialized).not.toContain('cookie')
     expect(serialized).not.toContain('session')
