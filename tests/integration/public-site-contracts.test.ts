@@ -15,6 +15,7 @@ import {
   describe,
   expect,
   it,
+  vi,
 } from 'vitest'
 import { createSyntheticWatermarkPng } from '../../scripts/oss-preflight-core.mjs'
 import { createHeroSlideRequestSchema } from '../../shared/schemas/home'
@@ -61,6 +62,21 @@ let directory: string
 let sqlite: Database.Database
 let storage: FakeMediaStorage
 let sequence = 1
+
+function capturePreparedQueries<T>(action: () => T) {
+  const queries: string[] = []
+  const prepare = sqlite.prepare.bind(sqlite)
+  const spy = vi.spyOn(sqlite, 'prepare').mockImplementation(((source: string) => {
+    queries.push(source)
+    return prepare(source)
+  }) as typeof sqlite.prepare)
+  try {
+    return { queries, result: action() }
+  }
+  finally {
+    spy.mockRestore()
+  }
+}
 
 function digest(content: Buffer) {
   return createHash('sha256').update(content).digest('hex')
@@ -856,7 +872,12 @@ describe('T19/T20 public repository contracts', () => {
       [secondSlide.id, slide.id],
       NOW + sequence++,
     )
-    const projection = getPublicHome(sqlite, MEDIA_BASE_URL)
+    const publicRead = capturePreparedQueries(() =>
+      getPublicHome(sqlite, MEDIA_BASE_URL))
+    const projection = publicRead.result
+    expect(publicRead.queries).toHaveLength(5)
+    const adminRead = capturePreparedQueries(() => getAdminHome(sqlite))
+    expect(adminRead.queries).toHaveLength(6)
     expect(projection).toMatchObject({
       tagline: '只让作品说话',
       contactEmail: 'hello@example.test',

@@ -73,8 +73,7 @@ interface PublicationTarget {
   usages: PublicMediaUsage[]
 }
 
-const selectOperation = `
-  SELECT
+const operationColumns = `
     id, operation_type AS operationType, entity_id AS entityId,
     requested_version AS requestedVersion, status,
     cleanup_object_keys_json AS cleanupObjectKeysJson,
@@ -82,6 +81,10 @@ const selectOperation = `
     failure_stage AS failureStage, version,
     started_at AS startedAt, updated_at AS updatedAt,
     completed_at AS completedAt
+`
+
+const selectOperation = `
+  SELECT ${operationColumns}
   FROM publication_operations
 `
 
@@ -814,6 +817,31 @@ export function getPublicationOperation(
   operationId: string,
 ) {
   return operationDto(requireOperation(sqlite, operationId))
+}
+
+export function getLatestPublicationOperations(
+  sqlite: Database.Database,
+  entityType: 'HOME' | 'WORK',
+  entityIds: readonly string[],
+) {
+  const ids = [...new Set(entityIds)]
+  if (ids.length === 0) {
+    return []
+  }
+  const placeholders = ids.map(() => '?').join(', ')
+  const rows = sqlite.prepare(`
+    SELECT * FROM (
+      SELECT ${operationColumns},
+        row_number() OVER (
+          PARTITION BY entity_id, operation_type
+          ORDER BY started_at DESC, id DESC
+        ) AS operationRank
+      FROM publication_operations
+      WHERE entity_type = ? AND entity_id IN (${placeholders})
+    )
+    WHERE operationRank = 1
+  `).all(entityType, ...ids) as OperationRow[]
+  return rows.map(operationDto)
 }
 
 export async function retryPublicationCleanup(

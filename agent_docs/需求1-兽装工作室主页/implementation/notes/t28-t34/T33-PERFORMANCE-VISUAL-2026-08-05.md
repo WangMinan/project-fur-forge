@@ -70,3 +70,13 @@
 独立审查其余证据：7 个公开路径 × 3 视口均为 0 requestfailed、0 console error、0 overflow、0 解码失败和 0 缺失 alt/size；390/768 只请求 portrait，1440 只请求 landscape，`/contact` 到达 `/about#contact`。管理、键盘/触控、reduced-motion、404/500、OSS header 和水印视觉未发现额外 finding。
 
 修复后须由同一独立上下文重新验证以上四项；最终 `PASS` 前不得勾选 T33。
+
+## 修复与实现方复测
+
+- 复用现有 Hero 投影，在一次资产变体 `IN` 查询和一次窗口函数查询中批量读取全部项所需的变体与最新操作；2 项回归中公开投影固定 5 条 prepared SQL、管理投影固定 6 条，不再随项数逐项查询。
+- 首项保持 `eager/high`，后续项进入 DOM 时为 `lazy`；`ResponsivePicture` 直接使用原生 `<source width height>` 声明横竖方向固有尺寸，没有增加客户端方向状态。
+- 保持 10 px 圆点外观，将原生 button 命中区扩到 `24×24` CSS px；既有颜色、圆角和切换动效不变。
+- 首次集成测试暴露共享校验函数 import 遗漏，3 项因 `ReferenceError` 失败；补回 import 后又由查询计数断言发现公开投影还包含 2 条活动 profile 查询，将准确基线由 4 改为 5。最终 6/6 通过，初次失败未作为通过证据删除。
+- 最终实现方结果：6 个改动文件定向 ESLint 通过；`pnpm typecheck` 通过；`pnpm exec vitest run tests/integration/public-site-contracts.test.ts` 6/6 通过；`pnpm exec playwright test tests/e2e/public-home.spec.ts` 18/18 通过；`pnpm build` 通过。构建只有既有 plugin timing 提示。
+
+当前状态：修复已完成，等待同一新上下文 Reviewer 复核；在独立结论前仍为 `NOT PASS`。
