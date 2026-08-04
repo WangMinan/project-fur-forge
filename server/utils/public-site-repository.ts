@@ -348,7 +348,8 @@ function snapshot(
 }
 
 function detailFor(entries: readonly SnapshotEntry[], slug: string) {
-  const current = entries.find(entry => entry.summary.work.slug === slug)
+  const currentIndex = entries.findIndex(entry => entry.summary.work.slug === slug)
+  const current = entries[currentIndex]
   if (!current) {
     return null
   }
@@ -358,7 +359,12 @@ function detailFor(entries: readonly SnapshotEntry[], slug: string) {
   const others = entries.filter(entry => (
     entry !== current && entry.purpose !== current.purpose
   ))
-  return { current, related: [...samePurpose, ...others].slice(0, 3) }
+  return {
+    current,
+    next: entries[currentIndex + 1]?.summary ?? null,
+    previous: entries[currentIndex - 1]?.summary ?? null,
+    related: [...samePurpose, ...others].slice(0, 3),
+  }
 }
 
 export function createSqlitePublicSiteRepository(
@@ -393,6 +399,20 @@ export function createSqlitePublicSiteRepository(
           ...(match.current.designSheet
             ? { designSheet: match.current.designSheet }
             : {}),
+        },
+        navigation: {
+          previous: match.previous
+            ? {
+                characterName: match.previous.work.characterName,
+                href: match.previous.href,
+              }
+            : null,
+          next: match.next
+            ? {
+                characterName: match.next.work.characterName,
+                href: match.next.href,
+              }
+            : null,
         },
         related: match.related.map(entry => entry.summary),
       })

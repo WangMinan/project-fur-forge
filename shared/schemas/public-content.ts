@@ -47,6 +47,16 @@ export const publicWorkDetailDtoSchema = z.object({
     designSheet: publicDesignSheetDtoSchema.optional(),
     studioPhotos: z.array(publicWorkGalleryItemDtoSchema).max(5),
   }).strict(),
+  navigation: z.object({
+    previous: z.object({
+      characterName: z.string().trim().min(1).max(120),
+      href: z.string().regex(/^\/works\/[a-z0-9]+(?:-[a-z0-9]+)*$/),
+    }).strict().nullable(),
+    next: z.object({
+      characterName: z.string().trim().min(1).max(120),
+      href: z.string().regex(/^\/works\/[a-z0-9]+(?:-[a-z0-9]+)*$/),
+    }).strict().nullable(),
+  }).strict().default({ previous: null, next: null }),
   related: z.array(publicWorkSummaryDtoSchema).max(3),
 }).strict()
 
