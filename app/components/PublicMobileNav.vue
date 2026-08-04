@@ -10,6 +10,8 @@ const emit = defineEmits<{
 
 const route = useRoute()
 const panelRef = ref<HTMLElement | null>(null)
+const inertedElements: HTMLElement[] = []
+let previousOverflow = ''
 
 function close() {
   emit('close')
@@ -19,6 +21,51 @@ function onKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     event.preventDefault()
     close()
+    return
+  }
+  if (event.key !== 'Tab') {
+    return
+  }
+  const focusable = Array.from(panelRef.value?.querySelectorAll<HTMLElement>(
+    'a[href], button:not(:disabled)',
+  ) ?? [])
+  const first = focusable[0]
+  const last = focusable.at(-1)
+  if (!first || !last) {
+    return
+  }
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault()
+    last.focus()
+  }
+  else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault()
+    first.focus()
+  }
+}
+
+function setBackgroundInert(inert: boolean) {
+  if (!import.meta.client) {
+    return
+  }
+  if (!inert) {
+    inertedElements.splice(0).forEach(element => (element.inert = false))
+    return
+  }
+  const candidates = [
+    ...Array.from(panelRef.value?.parentElement?.children ?? []),
+    document.querySelector('main'),
+    document.querySelector('footer'),
+  ]
+  for (const candidate of candidates) {
+    if (
+      candidate instanceof HTMLElement
+      && candidate !== panelRef.value
+      && !candidate.inert
+    ) {
+      candidate.inert = true
+      inertedElements.push(candidate)
+    }
   }
 }
 
@@ -28,14 +75,17 @@ watch(() => props.open, async (isOpen) => {
   }
 
   if (isOpen) {
+    previousOverflow = document.documentElement.style.overflow
     document.documentElement.style.overflow = 'hidden'
     await nextTick()
+    setBackgroundInert(true)
     const firstLink = panelRef.value?.querySelector<HTMLElement>('a, button')
     firstLink?.focus()
     document.addEventListener('keydown', onKeydown)
   }
   else {
-    document.documentElement.style.overflow = ''
+    document.documentElement.style.overflow = previousOverflow
+    setBackgroundInert(false)
     document.removeEventListener('keydown', onKeydown)
     document.getElementById(props.triggerId)?.focus()
   }
@@ -49,7 +99,8 @@ watch(() => route.fullPath, () => {
 
 onBeforeUnmount(() => {
   if (import.meta.client) {
-    document.documentElement.style.overflow = ''
+    document.documentElement.style.overflow = previousOverflow
+    setBackgroundInert(false)
     document.removeEventListener('keydown', onKeydown)
   }
 })
@@ -99,13 +150,14 @@ onBeforeUnmount(() => {
           class="mobile-nav__item"
         >
           <NuxtLink
+            v-if="!item.children"
             :to="item.href"
             class="mobile-nav__link"
             :aria-current="route.path === item.href ? 'page' : undefined"
           >
             {{ item.label }}
           </NuxtLink>
-          <div v-if="item.children" class="mobile-nav__sublinks">
+          <div v-else class="mobile-nav__sublinks mobile-nav__sublinks--top-level">
             <NuxtLink
               v-for="child in item.children"
               :key="child.href"
@@ -196,6 +248,20 @@ onBeforeUnmount(() => {
   margin: 0 0 var(--space-2) var(--space-4);
   padding-left: var(--space-3);
   border-left: 1px solid var(--public-border-secondary);
+}
+
+.mobile-nav__sublinks--top-level {
+  margin-left: 0;
+  padding-left: 0;
+  border-left: 0;
+}
+
+.mobile-nav__sublinks--top-level .mobile-nav__sublink {
+  padding: var(--space-3) var(--space-2);
+  color: var(--public-text-primary);
+  font-family: var(--font-public-display);
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-heading);
 }
 
 .mobile-nav__sublink {

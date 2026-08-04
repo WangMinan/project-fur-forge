@@ -42,6 +42,7 @@ export interface SlideFeedback {
 }
 
 const IN_PROGRESS_STATUSES = new Set([
+  'PREPARING_SOURCE',
   'GENERATING_PUBLIC',
   'APPLYING_WATERMARK',
   'VERIFYING_PUBLIC',
@@ -76,7 +77,6 @@ export function useAdminHome(
   const feedback = ref<Record<string, SlideFeedback>>({})
   const previews = ref<Record<string, AdminHeroPreviewDto>>({})
   const previewPending = ref<Record<string, boolean>>({})
-  const upscaling = ref<Record<string, boolean>>({})
 
   const pollTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
@@ -103,8 +103,11 @@ export function useAdminHome(
 
   function restorePublicationOperations(snapshot: AdminHomeDto) {
     for (const slide of snapshot.slides) {
-      const operation = slide.publicationOperation
+      const operation = slide.publicationOperation ?? slide.upscaleOperation
       if (!operation) {
+        continue
+      }
+      if (slide.enabled && operation.operationType === 'UPSCALE') {
         continue
       }
       operations.value = { ...operations.value, [slide.id]: operation }
@@ -164,6 +167,13 @@ export function useAdminHome(
 
   function operationFeedback(operation: PublicationOperationDto): SlideFeedback {
     if (operation.status === 'DONE') {
+      if (operation.operationType === 'UPSCALE') {
+        return {
+          retryOperationId: null,
+          text: '放大适配完成，私有原图已保留；可以继续启用。',
+          tone: 'success',
+        }
+      }
       return {
         retryOperationId: null,
         text: `启用成功：公开图片已生成并通过校验，${placementLabel()}大图已更新。`,
@@ -200,6 +210,18 @@ export function useAdminHome(
         // 轮询失败不阻塞：保留已有状态，下一轮继续。
       }
       if (current && !IN_PROGRESS_STATUSES.has(current.status)) {
+        if (current.operationType === 'UPSCALE' && current.status === 'DONE') {
+          await refreshHome()
+          const error = await startPublication(slideId)
+          if (error) {
+            setFeedback(slideId, {
+              retryOperationId: null,
+              text: error,
+              tone: 'error',
+            })
+          }
+          return
+        }
         setFeedback(slideId, operationFeedback(current))
         // 提交会递增 home 版本：无论成败都重新加载，保证版本基线新鲜。
         await refreshHome()
@@ -324,34 +346,13 @@ export function useAdminHome(
     }, '停用失败，请稍后重试。')
   }
 
-  // 启用为异步发布：返回错误文案或 null；进度经 operations/feedback 呈现。
-  async function enableSlide(
-    id: string,
-    allowUpscale = false,
-  ): Promise<string | null> {
+  async function startPublication(id: string): Promise<string | null> {
     if (!home.value || mutating.value) {
       return null
     }
     mutating.value = true
     setFeedback(id, null)
-    let stage: 'publication' | 'upscale' = allowUpscale
-      ? 'upscale'
-      : 'publication'
     try {
-      if (allowUpscale) {
-        upscaling.value = { ...upscaling.value, [id]: true }
-        const prepared = await adminApi(
-          heroUrl(`/slides/${id}/upscale`),
-          {
-            method: 'POST',
-            body: versionedBody({}),
-            schema: adminHomeResponseSchema,
-          },
-        )
-        home.value = prepared.data
-        upscaling.value = { ...upscaling.value, [id]: false }
-        stage = 'publication'
-      }
       const result = await adminApi(
         heroUrl(`/slides/${id}/enable`),
         {
@@ -389,26 +390,66 @@ export function useAdminHome(
         await onConflict(`${conflictSubject()}已在其他地方变化，已重新加载，请确认后重试。`)
         return '启用未提交：版本或大图状态已变化，请确认后重试。'
       }
-      if (stage === 'upscale') {
-        return 'FFmpeg 放大适配失败，私有原图已保留，请稍后重试。'
-      }
       return '启用请求失败，请稍后重试。'
     }
     finally {
-      upscaling.value = { ...upscaling.value, [id]: false }
       mutating.value = false
     }
   }
 
-  async function retryPublication(slideId: string): Promise<string | null> {
+  // 低分辨率确认与启用共用持久操作：适配完成后再启动原有公开发布。
+  async function enableSlide(
+    id: string,
+    allowUpscale = false,
+  ): Promise<string | null> {
+    if (!allowUpscale) {
+      return await startPublication(id)
+    }
+    if (!home.value || mutating.value) {
+      return null
+    }
+    mutating.value = true
+    setFeedback(id, null)
+    try {
+      const result = await adminApi(
+        heroUrl(`/slides/${id}/upscale`),
+        {
+          method: 'POST',
+          body: versionedBody({}),
+          schema: publicationOperationResponseSchema,
+        },
+      )
+      operations.value = { ...operations.value, [id]: result.data }
+      void pollOperation(id, result.data.operationId)
+      return null
+    }
+    catch (error) {
+      if (error instanceof AdminApiError && error.status === 401) {
+        return null
+      }
+      if (error instanceof AdminApiError && error.status === 409) {
+        await onConflict(`${conflictSubject()}已在其他地方变化，已重新加载，请确认后重试。`)
+        return '适配未开始：版本或大图状态已变化，请确认后重试。'
+      }
+      return 'FFmpeg 放大适配未开始，私有原图已保留，请稍后重试。'
+    }
+    finally {
+      mutating.value = false
+    }
+  }
+
+  async function retryOperation(slideId: string): Promise<string | null> {
     const operation = operations.value[slideId]
     if (!home.value || !operation || operation.status !== 'FAILED' || mutating.value) {
       return null
     }
     mutating.value = true
     try {
+      const retryUrl = operation.operationType === 'UPSCALE'
+        ? `/api/admin/v1/site/home/upscale-operations/${operation.operationId}/retry`
+        : `/api/admin/v1/site/home/publication-operations/${operation.operationId}/retry`
       const result = await adminApi(
-        `/api/admin/v1/site/home/publication-operations/${operation.operationId}/retry`,
+        retryUrl,
         {
           method: 'POST',
           body: { expectedVersion: operation.version, payload: {} },
@@ -506,9 +547,8 @@ export function useAdminHome(
     previewPending,
     previews,
     reorderEnabled,
-    retryPublication,
+    retryOperation,
     saveSettings,
     updateSlide,
-    upscaling,
   }
 }

@@ -113,6 +113,13 @@
       "when": 1785861553064,
       "tag": "0015_t27_f1_privacy_policy",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1785891600000,
+      "tag": "0016_t26_f1_upscale_operation",
+      "breakpoints": true
     }
   ]
 }

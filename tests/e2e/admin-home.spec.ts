@@ -139,13 +139,17 @@ test('首屏设置：加载、修改保存、刷新后保持', async ({ page }) 
   await expect(page.locator('#home-auto-rotate')).toBeChecked()
   await expect(page.locator('#home-interval')).toHaveValue('8')
 
-  await page.goto(publicBaseURL)
-  const footer = page.getByTestId('public-footer')
-  await expect(footer.getByRole('link', { name: 'hello@example.test' })).toHaveAttribute(
+  await page.goto(`${publicBaseURL}/about#contact`)
+  const contact = page.getByTestId('about-contact')
+  await expect(contact.getByRole('link', { name: 'hello@example.test' })).toHaveAttribute(
     'href',
     'mailto:hello@example.test',
   )
-  await expect(footer).toContainText('QQ 123456789')
+  await expect(contact.getByText('123456789', { exact: true })).toBeVisible()
+
+  const footer = page.getByTestId('public-footer')
+  await expect(footer).not.toContainText('hello@example.test')
+  await expect(footer).not.toContainText('QQ 123456789')
 })
 
 test('轮播项 CRUD：横竖上传创建、编辑保存、删除确认', async ({ page }) => {
@@ -259,12 +263,22 @@ test('低分辨率大图：保存后提示，取消不处理，确认后 FFmpeg 
     key.includes('/hero-upscale-lanczos-v1/'),
   )).toBe(false)
 
+  await setFakeMediaFlags(page, { failGet: true })
   await card.getByRole('button', { name: '启用' }).click()
   await dialog.getByRole('button', { name: '确认并继续启用' }).click()
-  await expect(card.getByText(/正在用 FFmpeg 放大适配/)).toBeVisible()
+  await expect(card.getByRole('alert')).toContainText('大图适配失败', {
+    timeout: 30_000,
+  })
+
+  await page.reload()
+  await expect(card.getByRole('alert')).toContainText('大图适配失败')
+  await expect(card.getByText(/插值只补足尺寸/)).toBeVisible()
+  await setFakeMediaFlags(page, { failGet: false })
+  await card.getByRole('button', { name: '重试适配' }).click()
   await expect(card.getByText('已启用', { exact: true })).toBeVisible({
     timeout: 30_000,
   })
+  await expect(card.getByText(/已生成私有适配源/)).toBeVisible()
   const state = await fakeMediaState(page)
   expect(state.objects.filter(key =>
     key.includes('/hero-upscale-lanczos-v1/'),

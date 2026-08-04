@@ -69,6 +69,7 @@ export const PUBLICATION_BLOCKER_LABELS: Record<PublicationBlocker, string> = {
 
 export const PUBLICATION_OPERATION_STATUS_LABELS
   : Record<PublicationOperationStatus, string> = {
+    PREPARING_SOURCE: '生成私有适配源中',
     GENERATING_PUBLIC: '生成公开图片中',
     APPLYING_WATERMARK: '烘焙水印中',
     VERIFYING_PUBLIC: '校验公开图片中',
@@ -80,6 +81,7 @@ export const PUBLICATION_OPERATION_STATUS_LABELS
 
 export const PUBLICATION_FAILURE_STAGE_LABELS
   : Record<PublicationFailureStage, string> = {
+    PREPARING_SOURCE: '生成私有适配源',
     VALIDATING: '发布检查',
     GENERATING_PUBLIC: '生成公开图片',
     APPLYING_WATERMARK: '烘焙水印',
@@ -89,6 +91,7 @@ export const PUBLICATION_FAILURE_STAGE_LABELS
   }
 
 const PUBLICATION_FAILURE_CODE_LABELS: Record<string, string> = {
+  HERO_UPSCALE_FAILED: '大图适配失败，私有原图已保留，请重试',
   PUBLICATION_VALIDATION_FAILED: '发布检查未通过，请根据待办项修正后重试',
   PUBLIC_MEDIA_GENERATION_FAILED: '公开图片生成失败，请稍后重试',
   PUBLIC_MEDIA_VERIFICATION_FAILED: '公开图片校验失败，请稍后重试',

@@ -23,7 +23,6 @@ const props = defineProps<{
   preview?: AdminHeroPreviewDto | null
   previewPending?: boolean
   slide: AdminHeroSlideDto | null
-  upscaling?: boolean
   works: WorkListItemDto[]
 }>()
 
@@ -35,7 +34,7 @@ const emit = defineEmits<{
   enable: [allowUpscale: boolean]
   loadPreview: []
   move: [direction: -1 | 1]
-  retryPublication: []
+  retryOperation: []
   save: [payload: HeroSlideInput]
 }>()
 
@@ -124,6 +123,7 @@ const canSubmit = computed(() => {
 })
 
 const OPERATION_PROGRESS_LABELS: Record<string, string> = {
+  PREPARING_SOURCE: '正在用 FFmpeg 放大适配（Lanczos 插值）…',
   GENERATING_PUBLIC: '正在生成公开图片…',
   APPLYING_WATERMARK: '正在烘焙活动水印…',
   VERIFYING_PUBLIC: '正在校验公开图片…',
@@ -132,9 +132,6 @@ const OPERATION_PROGRESS_LABELS: Record<string, string> = {
 }
 
 const operationProgress = computed(() => {
-  if (props.upscaling) {
-    return '正在用 FFmpeg 放大适配（Lanczos 插值）…'
-  }
   const status = props.operation?.status
   return status ? OPERATION_PROGRESS_LABELS[status] ?? null : null
 })
@@ -178,7 +175,7 @@ function onLinkedWorkChange(event: Event) {
 }
 
 function requestEnable() {
-  if (requiresUpscale.value) {
+  if (requiresUpscale.value && !props.slide?.upscaleReady) {
     confirmUpscale.value = true
     return
   }
@@ -210,8 +207,10 @@ function requestEnable() {
       已启用的{{ itemLabel }}需先停用才能编辑内容或删除。
     </p>
 
-    <p v-if="requiresUpscale && !locked" class="slide-card__upscale-warning" role="status">
-      {{ lowResolutionSources.join('；') }}。启用前需要确认放大适配；插值只补足尺寸，不会恢复原图细节。
+    <p v-if="requiresUpscale" class="slide-card__upscale-warning" role="status">
+      {{ lowResolutionSources.join('；') }}。{{ slide?.upscaleReady
+        ? '已生成私有适配源；原图仍保留，放大不会恢复原图细节。'
+        : '启用前需要确认放大适配；插值只补足尺寸，不会恢复原图细节。' }}
     </p>
 
     <div class="slide-card__grid">
@@ -360,9 +359,9 @@ function requestEnable() {
     </div>
 
     <div v-if="operationProgress" class="slide-card__progress" role="status">
-      <p>{{ operationProgress }}<template v-if="!upscaling"> 当前活动 profile 已就绪 {{ readyVariantCount }} / 12</template></p>
+      <p>{{ operationProgress }}<template v-if="operation?.operationType !== 'UPSCALE'"> 当前活动 profile 已就绪 {{ readyVariantCount }} / 12</template></p>
       <progress
-        v-if="upscaling"
+        v-if="operation?.operationType === 'UPSCALE'"
         :aria-label="`${pageLabel}大图正在用 FFmpeg 放大适配`"
       />
       <progress
@@ -387,8 +386,8 @@ function requestEnable() {
         type="button"
         class="slide-card__action"
         :disabled="mutating"
-        @click="emit('retryPublication')"
-      >重试启用</button>
+        @click="emit('retryOperation')"
+      >{{ operation?.operationType === 'UPSCALE' ? '重试适配' : '重试启用' }}</button>
     </div>
 
     <div v-if="preview" class="slide-card__preview" data-testid="hero-watermark-preview">

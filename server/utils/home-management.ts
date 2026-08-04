@@ -219,6 +219,49 @@ function latestHomePublicationOperation(
   return operation.status === 'DONE' ? null : operation
 }
 
+function latestHomeUpscaleOperation(
+  sqlite: Database.Database,
+  slideId: string,
+) {
+  const id = sqlite.prepare(`
+    SELECT id FROM publication_operations
+    WHERE entity_type = 'HOME' AND entity_id = ?
+      AND operation_type = 'UPSCALE'
+    ORDER BY started_at DESC LIMIT 1
+  `).pluck().get(slideId) as string | undefined
+  if (!id) {
+    return null
+  }
+  return getPublicationOperation(sqlite, id)
+}
+
+function assetUpscaleReady(
+  sqlite: Database.Database,
+  asset: Pick<SlideRow, 'landscapeAssetId' | 'landscapeHeight' | 'landscapeWidth' | 'portraitAssetId' | 'portraitHeight' | 'portraitWidth'>,
+) {
+  const requiresUpscale = asset.landscapeWidth < 1920
+    || asset.landscapeHeight < 1080
+    || asset.portraitWidth < 1080
+    || asset.portraitHeight < 1920
+  if (!requiresUpscale) {
+    return true
+  }
+  try {
+    return assetSupportsPublicUsages(
+      sqlite,
+      asset.landscapeAssetId,
+      ['home-hero-landscape'],
+    ) && assetSupportsPublicUsages(
+      sqlite,
+      asset.portraitAssetId,
+      ['home-hero-portrait'],
+    )
+  }
+  catch {
+    return false
+  }
+}
+
 function adminSlide(
   sqlite: Database.Database,
   row: SlideRow,
@@ -258,6 +301,8 @@ function adminSlide(
           publicationStatus: row.linkedWorkStatus,
         }
       : null,
+    upscaleReady: assetUpscaleReady(sqlite, row),
+    upscaleOperation: latestHomeUpscaleOperation(sqlite, row.id),
     missingVariantCount,
     publicationOperation: latestHomePublicationOperation(sqlite, row.id),
   })
@@ -383,14 +428,13 @@ export async function createHeroSlidePreview(
   return adminHeroPreviewDtoSchema.parse({ landscape, portrait })
 }
 
-export async function prepareHeroSlideUpscale(
+export function startHeroSlideUpscale(
   sqlite: Database.Database,
-  storage: MediaStorage,
   slideId: string,
   expectedVersion: number,
   now = Date.now(),
   placement: HeroPlacement = 'home',
-) {
+): PublicationOperationDto {
   requireHomeVersion(sqlite, expectedVersion)
   const slide = requireSlide(sqlite, slideId, placement)
   if (slide.enabled === 1) {
@@ -400,10 +444,144 @@ export async function prepareHeroSlideUpscale(
     landscapeAssetId: slide.landscapeAssetId,
     portraitAssetId: slide.portraitAssetId,
   }, slide.id)
-  await ensureHeroUpscaleSource(sqlite, storage, slide.landscapeAssetId, now)
-  await ensureHeroUpscaleSource(sqlite, storage, slide.portraitAssetId, now)
-  requireHomeVersion(sqlite, expectedVersion)
-  return getAdminHome(sqlite, placement)
+  if (assetUpscaleReady(sqlite, slide)) {
+    throw new ServiceError(409, 'CONFLICT', 'Hero assets are already ready.')
+  }
+  const active = sqlite.prepare(`
+    SELECT 1 FROM publication_operations
+    WHERE entity_type = 'HOME' AND entity_id = ?
+      AND status NOT IN ('FAILED', 'DONE')
+    LIMIT 1
+  `).pluck().get(slideId)
+  if (active) {
+    throw new ServiceError(409, 'CONFLICT', 'A home operation is already active.')
+  }
+  const id = randomUUID()
+  sqlite.prepare(`
+    INSERT INTO publication_operations (
+      id, operation_type, entity_type, entity_id, requested_version,
+      status, started_at, updated_at
+    ) VALUES (?, 'UPSCALE', 'HOME', ?, ?, 'PREPARING_SOURCE', ?, ?)
+  `).run(id, slideId, expectedVersion, now, now)
+  return getPublicationOperation(sqlite, id)
+}
+
+function upscaleOperation(sqlite: Database.Database, id: string) {
+  const operationType = sqlite.prepare(`
+    SELECT operation_type FROM publication_operations
+    WHERE id = ? AND entity_type = 'HOME'
+  `).pluck().get(id)
+  if (operationType !== 'UPSCALE') {
+    throw new ServiceError(404, 'NOT_FOUND', 'Hero upscale operation was not found.')
+  }
+  return getPublicationOperation(sqlite, id)
+}
+
+function failUpscaleOperation(
+  sqlite: Database.Database,
+  id: string,
+  code: string,
+  now: number,
+) {
+  sqlite.prepare(`
+    UPDATE publication_operations
+    SET status = 'FAILED', failure_stage = 'PREPARING_SOURCE',
+        internal_error_code = ?, internal_error_message = 'Hero upscale failed.',
+        cleanup_object_keys_json = '[]', version = version + 1,
+        updated_at = ?, completed_at = ?
+    WHERE id = ? AND operation_type = 'UPSCALE'
+  `).run(code, now, now, id)
+}
+
+export async function runHeroSlideUpscale(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  operationId: string,
+  actorUserId: string,
+  now = Date.now(),
+) {
+  const operation = upscaleOperation(sqlite, operationId)
+  if (operation.status === 'DONE' || operation.status === 'FAILED') {
+    return operation
+  }
+  const slide = requireSlide(sqlite, operation.entityId)
+  try {
+    requireHomeVersion(sqlite, operation.requestedVersion)
+    if (slide.enabled === 1) {
+      throw new ServiceError(409, 'CONFLICT', 'Enabled hero slides cannot be upscaled.')
+    }
+    assertAssetPair(sqlite, {
+      landscapeAssetId: slide.landscapeAssetId,
+      portraitAssetId: slide.portraitAssetId,
+    }, slide.id)
+    await ensureHeroUpscaleSource(sqlite, storage, slide.landscapeAssetId, now)
+    setOperationStatus(sqlite, operationId, 'PREPARING_SOURCE', Date.now())
+    await ensureHeroUpscaleSource(sqlite, storage, slide.portraitAssetId, now)
+    requireHomeVersion(sqlite, operation.requestedVersion)
+    sqlite.transaction(() => {
+      sqlite.prepare(`
+        UPDATE publication_operations
+        SET status = 'DONE', failure_stage = NULL,
+            internal_error_code = NULL, internal_error_message = NULL,
+            version = version + 1, updated_at = ?, completed_at = ?
+        WHERE id = ? AND status = 'PREPARING_SOURCE'
+      `).run(Date.now(), Date.now(), operationId)
+      sqlite.prepare(`
+        INSERT INTO audit_logs (
+          id, actor_user_id, action, entity_type, entity_id, result, created_at
+        ) VALUES (?, ?, ?, 'HOME', ?, 'SUCCESS', ?)
+      `).run(
+        randomUUID(),
+        actorUserId,
+        slide.placement === 'home'
+          ? 'HOME_HERO_UPSCALE'
+          : 'COMMISSION_HERO_UPSCALE',
+        slide.id,
+        Date.now(),
+      )
+    })()
+  }
+  catch {
+    failUpscaleOperation(sqlite, operationId, 'HERO_UPSCALE_FAILED', Date.now())
+    sqlite.prepare(`
+      INSERT INTO audit_logs (
+        id, actor_user_id, action, entity_type, entity_id, result, created_at
+      ) VALUES (?, ?, ?, 'HOME', ?, 'FAILURE', ?)
+    `).run(
+      randomUUID(),
+      actorUserId,
+      slide.placement === 'home'
+        ? 'HOME_HERO_UPSCALE'
+        : 'COMMISSION_HERO_UPSCALE',
+      slide.id,
+      Date.now(),
+    )
+  }
+  return getPublicationOperation(sqlite, operationId)
+}
+
+export function retryHeroSlideUpscale(
+  sqlite: Database.Database,
+  operationId: string,
+  expectedVersion: number,
+  now = Date.now(),
+) {
+  const operation = upscaleOperation(sqlite, operationId)
+  if (operation.version !== expectedVersion) {
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+  }
+  if (operation.status !== 'FAILED') {
+    throw new ServiceError(409, 'CONFLICT', 'Hero upscale is not retryable.')
+  }
+  requireHomeVersion(sqlite, operation.requestedVersion)
+  sqlite.prepare(`
+    UPDATE publication_operations
+    SET status = 'PREPARING_SOURCE', failure_stage = NULL,
+        internal_error_code = NULL, internal_error_message = NULL,
+        completed_at = NULL, version = version + 1, updated_at = ?
+    WHERE id = ? AND version = ? AND status = 'FAILED'
+  `).run(now, operationId, expectedVersion)
+  return getPublicationOperation(sqlite, operationId)
 }
 
 export async function getHeroSlidePreviewContent(
