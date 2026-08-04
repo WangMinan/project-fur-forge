@@ -25,12 +25,20 @@ export function createFixedWindowLimiter(limit: number, windowMs: number) {
 
 // ponytail: global windows match the current single-process, single-admin
 // contract; use a shared per-subject store before adding replicas or admins.
-const limiters = {
-  login: createFixedWindowLimiter(LOGIN_RATE_LIMIT, RATE_LIMIT_WINDOW_MS),
-  adminWrite: createFixedWindowLimiter(
-    ADMIN_WRITE_RATE_LIMIT,
-    RATE_LIMIT_WINDOW_MS,
-  ),
+function createRequestLimiters() {
+  return {
+    login: createFixedWindowLimiter(LOGIN_RATE_LIMIT, RATE_LIMIT_WINDOW_MS),
+    adminWrite: createFixedWindowLimiter(
+      ADMIN_WRITE_RATE_LIMIT,
+      RATE_LIMIT_WINDOW_MS,
+    ),
+  }
+}
+
+let limiters = createRequestLimiters()
+
+export function resetRequestRateLimits() {
+  limiters = createRequestLimiters()
 }
 
 export function assertRequestRateLimit(

@@ -12,6 +12,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { getDatabase } from '../../../server/utils/database'
 import { generatePublicVariants } from '../../../server/utils/media-recipe'
+import { resetRequestRateLimits } from '../../../server/utils/request-rate-limit'
 import { createSyntheticWatermarkPng } from '../../../scripts/oss-preflight-core.mjs'
 import { getE2eFakeMediaStorage } from './e2e-fake-media'
 
@@ -146,6 +147,11 @@ export default defineEventHandler(async (event) => {
   if (body?.action === 'reset') {
     fake.resetKnobs()
     restoreBundledWatermarkCandidate(fake)
+    return { data: { ok: true } }
+  }
+
+  if (body?.action === 'resetRateLimits') {
+    resetRequestRateLimits()
     return { data: { ok: true } }
   }
 

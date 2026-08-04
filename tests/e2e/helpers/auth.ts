@@ -32,6 +32,12 @@ interface AdminSessionData {
 }
 
 export async function loginAsAdmin(page: Page): Promise<AdminSessionData> {
+  const reset = await page.request.post(
+    `${adminBaseURL}/api/e2e-fake-media-control`,
+    { data: { action: 'resetRateLimits' } },
+  )
+  expect(reset.ok(), 'E2E 限流窗口应在用例边界重置').toBeTruthy()
+
   const response = await page.request.post(`${adminBaseURL}/api/auth/login`, {
     data: {
       username: E2E_ADMIN.username,
