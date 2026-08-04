@@ -27,3 +27,19 @@
 - `pnpm preflight:oss`：运行 `t10-20260804T203740Z-4682338f` 共 27 项通过；私有匿名 GET 为 403，公开水印衍生图可读，4 个对象均从精确 `test/<run-id>/` 前缀删除，证据未记录凭据。
 
 当前为实现方自测通过，等待新上下文独立 Review；不得用本节代替最终结论。
+
+## 新上下文独立初审
+
+基线 `aa557c3` 结论为 `NOT PASS`；以下 findings 已在修复前冻结：
+
+1. **MUST-FIX · 中断正文不收口**：统一读取器仅监听 `data/end/error`。独立 EventEmitter 复现触发 `aborted` 后 200 ms 仍保持未决，且三个监听器都未移除。
+2. **MUST-FIX · 认证日志写明文用户名**：真实 Chrome 输出包含 `e2e-admin` 与 `no-such-admin`；通用日志脱敏未把 `username` 视为敏感键，违背本轮“不记录用户名”边界。
+
+其余独立证据：安全单元 37 项、认证/Host/CSRF/body 集成 17 项、真实 Chrome 27 项均通过；隔离 production build/content guard 通过；本机秘密逐值扫描和通用模式扫描均为 0 命中；真实 OSS 证据 27 项及 4 个对象精确清理通过。
+
+## 独立 findings 修复
+
+- 统一读取器同时监听 `aborted` 与未完整请求的 `close`，所有成功、错误、超限和中断出口都移除 `data/end/error/aborted/close` 监听器；新增无文件回归检查，验证中断后返回 400 且监听器归零。
+- 复用现有 `safeLog` 根边界，把所有 `username` 键统一替换为 `[REDACTED]`，未逐调用点打补丁。真实 Chrome 输出只出现脱敏值。
+
+修复后：安全单元 6 项、认证/Host/CSRF/body 集成 17 项、真实 Chrome 27 项、lint、typecheck、production build/content guard 和 `verify:production` 均通过。等待同一独立审查上下文复验两项 finding 后再给 T32 最终结论。
