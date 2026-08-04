@@ -6,7 +6,7 @@ This file provides guidance to coding agents working with code in this repositor
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01–T27、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。** T26–T27 已于 2026-08-04 完成新上下文独立 Review，3 个 findings 修复后结论为 `PASS WITH FOLLOW-UP`；本轮 `USER_GATE：否`，两项任务已勾选。**OQ-120 最终文字仍待用户确认**，候选文案不得自动写入数据库或被宣布为正式内容。
+> **当前阶段：阶段 4 IMPLEMENTATION，T01–T27、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。** T26–T27 已于 2026-08-04 完成新上下文独立 Review，3 个 findings 修复后结论为 `PASS WITH FOLLOW-UP`；本轮 `USER_GATE：否`，两项任务已勾选。T26-F1 委托页独立大图的工程实现和实现方自测已完成，独立 Review/用户验收待执行。**OQ-120 最终文字仍待用户确认**，候选文案不得自动写入数据库或被宣布为正式内容。
 
 ## 网站核心原则（景宸确认）
 
@@ -22,9 +22,17 @@ project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`
 
 ## 工作流：spec-driven 开发（agent_docs）
 
-本项目遵循 `D:\code\spec.template` 的 spec-driven 开发流程。所有需求文档放在 `agent_docs/` 下，每个需求一个文件夹。
+本项目遵循 `D:\code\spec.template` 的 spec-driven 开发流程。所有需求文档放在 `agent_docs/` 下，每个需求一个文件夹。`CLAUDE.md` / `AGENTS.md` 只提供入口和稳定纪律，**不得代替对 `agent_docs/` 当前权威文档的阅读**。
 
-- **编码前先读** `agent_docs/需求1-兽装工作室主页/STATE.md` 与 `foundation/README.md`。
+- **每次编码前必须从 `agent_docs/` 获取当前项目背景和阶段信息**，至少完整阅读：
+  1. `agent_docs/需求1-兽装工作室主页/STATE.md`：当前阶段、已完成能力、开放问题和下一步；
+  2. `agent_docs/需求1-兽装工作室主页/foundation/README.md`：产品目标、范围与不可突破的基础边界；
+  3. `agent_docs/需求1-兽装工作室主页/requirements/SPEC.md`：当前需求和验收契约；
+  4. `agent_docs/需求1-兽装工作室主页/planning/PLAN.md`：当前技术方案与实施顺序；
+  5. `agent_docs/需求1-兽装工作室主页/implementation/TASKS.md`：唯一任务、依赖和勾选权威；
+  6. `agent_docs/需求1-兽装工作室主页/implementation/EXECUTION_ROUTING.md`：模型分工、main 写入和 Review 方法；
+  7. `agent_docs/需求1-兽装工作室主页/artifacts/ARTIFACTS.md` 与 `implementation/notes/README.md`：当前产物和证据入口。
+- 不能只依据聊天摘要、历史记忆、旧 commit 或本文件中的“当前仓库状态”开始编码；发现文档互相冲突时，先停止写代码并按七阶段职责校准文档。
 - 当前任务、依赖和完成定义只以 `implementation/TASKS.md` 为准。
 - 当前模型分工、main 直推和 Review 方法见 `implementation/EXECUTION_ROUTING.md`。
 - 阶段 C 启动基线见 `implementation/notes/P0-C-STAGE-READINESS-2026-08-02.md`。
@@ -88,6 +96,7 @@ pnpm dev --host 0.0.0.0 --port 3000
 
 - 管理端使用 `http://localhost:3000`：重点查看 `/admin/works`、`/admin/site/home` 与 `/admin/site/branding`。
 - 公开端使用 `http://127.0.0.1:3000`：重点查看 `/`、`/works` 与 `/works/{slug}`；不要混用两个 Host。
+- T26/T27 下班后人工核对步骤见 `agent_docs/需求1-兽装工作室主页/implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md`。
 - 首页轮播验收素材：横版至少 `1920×1080`，竖版至少 `1080×1920`，否则固定配方尺寸门禁会阻止启用。
 - 三个固定验收视口：`390×844`、`768×1024`、`1440×900`。
 
@@ -115,5 +124,6 @@ pnpm auth:reset-password --confirm RESET_SINGLE_ADMIN_PASSWORD
 - T25 `/adoptions` 横版设定图列表和统一详情媒体分区；只有设定图的领养不进入 `/works`。
 - T23–T25 已完成独立 Agent Review 与用户确认，任务清单和阶段文档已同步收口。
 - T26–T27 已落地受限固定字段、委托/领养独立营业状态、版本冲突、管理 Host/Origin/CSRF/no-store 和无版本/无私有联系人的公开投影；固定内容已迁入独立“文案配置”，委托背景引导区、公开标题和作品列表跟进完成独立 Review；未经确认的文案保持当前库值或空值。
+- T26-F1 已完成委托页独立大图的工程实现和实现方自测：“首页管理”以 Tab 隔离首页/委托页集合，并复用既有双源上传、排序、水印预览与发布链；独立 Review/用户验收仍待执行。
 
-`brand-standard-v1` 只保留为历史身份，当前发布必须匹配活动 `brand-centered-v2` 和 `recipe-v2`。当前下一工程交接为 T28 首页完整内容顺序；**OQ-120 候选稿 v2 的最终文字与其余 8 项内容**继续等待用户确认后再录入“文案配置”。不建设万能 CMS，也不提前进入 T37 展会完整矩阵。
+`brand-standard-v1` 只保留为历史身份，当前发布必须匹配活动 `brand-centered-v2` 和 `recipe-v2`。当前下一交接为 T26-F1 新上下文独立 Review，收口后进入 T28 首页完整内容顺序；**OQ-120 候选稿 v2 的最终文字与其余 8 项内容**继续等待用户确认后再录入“文案配置”。不建设万能 CMS，也不提前进入 T37 展会完整矩阵。

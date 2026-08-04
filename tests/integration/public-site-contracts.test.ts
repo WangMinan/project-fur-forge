@@ -28,6 +28,7 @@ import {
   deleteHeroSlide,
   disableHeroSlide,
   getAdminHome,
+  getPublicCommissionHero,
   getPublicHome,
   reorderEnabledHeroSlides,
   retryHeroSlidePublication,
@@ -815,5 +816,130 @@ describe('T19/T20 public repository contracts', () => {
         linkedWorkId: null,
       },
     }).success).toBe(false)
+  })
+
+  it('keeps commission hero ordering independent and allows an empty commission hero', async () => {
+    let version = getAdminHome(sqlite).version
+    const commissionLandscape = createHeroAsset('home_hero_landscape', version)
+    const commissionPortrait = createHeroAsset('home_hero_portrait', version)
+    let commission = createHeroSlide(sqlite, version, {
+      alt: '委托页独立背景图',
+      sortOrder: 0,
+      landscapeAssetId: commissionLandscape,
+      portraitAssetId: commissionPortrait,
+      linkedWorkId: null,
+    }, NOW + sequence++, 'commission')
+    const commissionSlide = commission.slides[0]!
+    const commissionOperation = startHeroSlidePublication(
+      sqlite,
+      commissionSlide.id,
+      commission.version,
+      NOW + sequence++,
+      'commission',
+    )
+    await runHeroSlidePublication(
+      sqlite,
+      storage,
+      commissionOperation.operationId,
+      USER_ID,
+      NOW + sequence++,
+    )
+
+    version = getAdminHome(sqlite, 'commission').version
+    const homeLandscape = createHeroAsset('home_hero_landscape', version)
+    const homePortrait = createHeroAsset('home_hero_portrait', version)
+    const home = createHeroSlide(sqlite, version, {
+      alt: '首页独立背景图',
+      sortOrder: 0,
+      landscapeAssetId: homeLandscape,
+      portraitAssetId: homePortrait,
+      linkedWorkId: null,
+    }, NOW + sequence++)
+    const homeSlide = home.slides[0]!
+    const homeOperation = startHeroSlidePublication(
+      sqlite,
+      homeSlide.id,
+      home.version,
+      NOW + sequence++,
+    )
+    await runHeroSlidePublication(
+      sqlite,
+      storage,
+      homeOperation.operationId,
+      USER_ID,
+      NOW + sequence++,
+    )
+
+    expect(getPublicHome(sqlite, MEDIA_BASE_URL).slides[0]?.alt)
+      .toBe('首页独立背景图')
+    expect(getPublicCommissionHero(sqlite, MEDIA_BASE_URL).slide?.alt)
+      .toBe('委托页独立背景图')
+    expect(getAdminHome(sqlite).slides).toHaveLength(1)
+    expect(getAdminHome(sqlite, 'commission').slides).toHaveLength(1)
+
+    version = getAdminHome(sqlite, 'commission').version
+    const spareLandscape = createHeroAsset('home_hero_landscape', version)
+    const sparePortrait = createHeroAsset('home_hero_portrait', version)
+    commission = createHeroSlide(sqlite, version, {
+      alt: '委托页备选背景图',
+      sortOrder: 1,
+      landscapeAssetId: spareLandscape,
+      portraitAssetId: sparePortrait,
+      linkedWorkId: null,
+    }, NOW + sequence++, 'commission')
+    const spareSlide = commission.slides.find(slide => slide.alt === '委托页备选背景图')!
+    const spareOperation = startHeroSlidePublication(
+      sqlite,
+      spareSlide.id,
+      commission.version,
+      NOW + sequence++,
+      'commission',
+    )
+    await runHeroSlidePublication(
+      sqlite,
+      storage,
+      spareOperation.operationId,
+      USER_ID,
+      NOW + sequence++,
+    )
+    commission = getAdminHome(sqlite, 'commission')
+    commission = reorderEnabledHeroSlides(
+      sqlite,
+      commission.version,
+      [spareSlide.id, commissionSlide.id],
+      NOW + sequence++,
+      'commission',
+    )
+    expect(getPublicCommissionHero(sqlite, MEDIA_BASE_URL).slide?.alt)
+      .toBe('委托页备选背景图')
+
+    await disableHeroSlide(
+      sqlite,
+      storage,
+      spareSlide.id,
+      commission.version,
+      USER_ID,
+      NOW + sequence++,
+      'commission',
+    )
+    commission = getAdminHome(sqlite, 'commission')
+    expect(commission.slides).toHaveLength(2)
+    expect(getPublicCommissionHero(sqlite, MEDIA_BASE_URL).slide?.alt)
+      .toBe('委托页独立背景图')
+
+    commission = await disableHeroSlide(
+      sqlite,
+      storage,
+      commissionSlide.id,
+      commission.version,
+      USER_ID,
+      NOW + sequence++,
+      'commission',
+    )
+    expect(commission.slides.every(slide => !slide.enabled)).toBe(true)
+    expect(getPublicCommissionHero(sqlite, MEDIA_BASE_URL)).toEqual({
+      slide: null,
+    })
+    expect(getPublicHome(sqlite, MEDIA_BASE_URL).slides).toHaveLength(1)
   })
 })

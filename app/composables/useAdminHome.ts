@@ -6,8 +6,10 @@ import { publicationOperationResponseSchema } from '~~/shared/schemas/publicatio
 import type {
   AdminHeroPreviewDto,
   AdminHomeDto,
+  HeroPlacement,
   PublicationOperationDto,
 } from '~~/shared/types/contracts'
+import type { MaybeRefOrGetter } from 'vue'
 import {
   PUBLICATION_FAILURE_STAGE_LABELS,
   publicationFailureLabel,
@@ -49,8 +51,21 @@ const IN_PROGRESS_STATUSES = new Set([
 
 const POLL_INTERVAL_MS = 1_000
 
-export function useAdminHome() {
+export function useAdminHome(
+  placement: MaybeRefOrGetter<HeroPlacement> = 'home',
+) {
   const adminApi = useAdminApi()
+
+  const currentPlacement = () => toValue(placement)
+  const placementLabel = () => currentPlacement() === 'home'
+    ? '首页'
+    : '委托页'
+  const conflictSubject = () => currentPlacement() === 'home'
+    ? '首页数据'
+    : '委托页大图'
+  const heroUrl = (path = '') => (
+    `/api/admin/v1/site/home${path}${currentPlacement() === 'commission' ? '?placement=commission' : ''}`
+  )
 
   const home = ref<AdminHomeDto | null>(null)
   const pageStatus = ref<'error' | 'loading' | 'ready'>('loading')
@@ -105,7 +120,7 @@ export function useAdminHome() {
 
   async function refreshHome(restoreOperations = true) {
     try {
-      const result = await adminApi('/api/admin/v1/site/home', {
+      const result = await adminApi(heroUrl(), {
         schema: adminHomeResponseSchema,
       })
       home.value = result.data
@@ -126,7 +141,7 @@ export function useAdminHome() {
     pageStatus.value = 'loading'
     conflictNotice.value = null
     try {
-      const result = await adminApi('/api/admin/v1/site/home', {
+      const result = await adminApi(heroUrl(), {
         schema: adminHomeResponseSchema,
       })
       home.value = result.data
@@ -150,7 +165,7 @@ export function useAdminHome() {
     if (operation.status === 'DONE') {
       return {
         retryOperationId: null,
-        text: '启用成功：公开图片已生成并通过校验，首页轮播已更新。',
+        text: `启用成功：公开图片已生成并通过校验，${placementLabel()}大图已更新。`,
         tone: 'success',
       }
     }
@@ -222,7 +237,7 @@ export function useAdminHome() {
           await refreshHome()
           return '停用未提交：首页至少需要保留一个启用的轮播项。请先启用另一个轮播项，再停用当前项。'
         }
-        await onConflict('首页数据已在其他地方变化，已重新加载，请确认后重试。')
+        await onConflict(`${conflictSubject()}已在其他地方变化，已重新加载，请确认后重试。`)
         return '未提交：版本已变化，请确认当前内容后重试。'
       }
       if (error instanceof AdminApiError && error.status === 400) {
@@ -252,40 +267,40 @@ export function useAdminHome() {
 
   async function createSlide(input: HeroSlideInput) {
     return await runHomeMutation(async () => {
-      const result = await adminApi('/api/admin/v1/site/home/slides', {
+      const result = await adminApi(heroUrl('/slides'), {
         method: 'POST',
         body: versionedBody(input),
         schema: adminHomeResponseSchema,
       })
       return result.data
-    }, '新增轮播项失败，请稍后重试。')
+    }, `新增${placementLabel()}大图失败，请稍后重试。`)
   }
 
   async function updateSlide(id: string, input: HeroSlideInput) {
     return await runHomeMutation(async () => {
-      const result = await adminApi(`/api/admin/v1/site/home/slides/${id}`, {
+      const result = await adminApi(heroUrl(`/slides/${id}`), {
         method: 'PUT',
         body: versionedBody(input),
         schema: adminHomeResponseSchema,
       })
       return result.data
-    }, '保存轮播项失败，请稍后重试。')
+    }, `保存${placementLabel()}大图失败，请稍后重试。`)
   }
 
   async function deleteSlide(id: string) {
     return await runHomeMutation(async () => {
-      const result = await adminApi(`/api/admin/v1/site/home/slides/${id}`, {
+      const result = await adminApi(heroUrl(`/slides/${id}`), {
         method: 'DELETE',
         body: versionedBody({}),
         schema: adminHomeResponseSchema,
       })
       return result.data
-    }, '删除轮播项失败，请稍后重试。')
+    }, `删除${placementLabel()}大图失败，请稍后重试。`)
   }
 
   async function reorderEnabled(slideIds: string[]) {
     return await runHomeMutation(async () => {
-      const result = await adminApi('/api/admin/v1/site/home/slides/order', {
+      const result = await adminApi(heroUrl('/slides/order'), {
         method: 'PUT',
         body: versionedBody({ slideIds }),
         schema: adminHomeResponseSchema,
@@ -297,7 +312,7 @@ export function useAdminHome() {
   async function disableSlide(id: string) {
     return await runHomeMutation(async () => {
       const result = await adminApi(
-        `/api/admin/v1/site/home/slides/${id}/disable`,
+        heroUrl(`/slides/${id}/disable`),
         {
           method: 'POST',
           body: versionedBody({}),
@@ -317,7 +332,7 @@ export function useAdminHome() {
     setFeedback(id, null)
     try {
       const result = await adminApi(
-        `/api/admin/v1/site/home/slides/${id}/enable`,
+        heroUrl(`/slides/${id}/enable`),
         {
           method: 'POST',
           body: versionedBody({}),
@@ -343,15 +358,15 @@ export function useAdminHome() {
           await refreshHome()
           return orderOccupied
             ? `启用未提交：顺位 ${slide.sortOrder} 已被其他启用项占用，请改为未使用的顺位并保存后重试。`
-            : '启用未提交：首页最多启用 5 个轮播项。'
+            : `启用未提交：${placementLabel()}最多启用 5 个大图项。`
         }
         if (error.serverMessage === 'Enabled hero slide order must be between 0 and 4.') {
           conflictNotice.value = null
           await refreshHome()
           return '启用未提交：顺位必须是 0–4，请修改并保存后重试。'
         }
-        await onConflict('首页数据已在其他地方变化，已重新加载，请确认后重试。')
-        return '启用未提交：版本或轮播状态已变化，请确认后重试。'
+        await onConflict(`${conflictSubject()}已在其他地方变化，已重新加载，请确认后重试。`)
+        return '启用未提交：版本或大图状态已变化，请确认后重试。'
       }
       return '启用请求失败，请稍后重试。'
     }
@@ -391,7 +406,7 @@ export function useAdminHome() {
         return null
       }
       if (error instanceof AdminApiError && error.status === 409) {
-        await onConflict('首页数据已在其他地方变化，已重新加载，请确认后重试。')
+        await onConflict(`${conflictSubject()}已在其他地方变化，已重新加载，请确认后重试。`)
         return '操作状态已变化，请按最新状态继续。'
       }
       return '重试失败，请稍后重试。'
@@ -409,7 +424,7 @@ export function useAdminHome() {
     previewPending.value = { ...previewPending.value, [id]: true }
     try {
       const result = await adminApi(
-        `/api/admin/v1/site/home/slides/${id}/preview`,
+        heroUrl(`/slides/${id}/preview`),
         {
           method: 'POST',
           body: versionedBody({}),
@@ -425,7 +440,7 @@ export function useAdminHome() {
         return null
       }
       if (error instanceof AdminApiError && error.status === 409) {
-        await onConflict('首页数据或活动水印已变化，已重新加载，请确认后重试。')
+        await onConflict(`${conflictSubject()}或活动水印已变化，已重新加载，请确认后重试。`)
         return '预览未生成：版本或活动水印已变化，请确认后重试。'
       }
       return '预览生成失败，请稍后重试。'
@@ -434,6 +449,19 @@ export function useAdminHome() {
       previewPending.value = { ...previewPending.value, [id]: false }
     }
   }
+
+  watch(
+    () => toValue(placement),
+    () => {
+      stopPolling()
+      home.value = null
+      operations.value = {}
+      feedback.value = {}
+      previews.value = {}
+      previewPending.value = {}
+      void load()
+    },
+  )
 
   onScopeDispose(stopPolling)
 

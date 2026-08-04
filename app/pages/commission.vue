@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { PROJECT_NAME } from '~~/shared/constants/project'
-import { publicHomeResponseSchema } from '~~/shared/schemas/home'
+import { publicCommissionHeroResponseSchema } from '~~/shared/schemas/home'
 import { publicSiteContentResponseSchema } from '~~/shared/schemas/site-content'
 
 /**
  * T26 自设委托页：SSR 消费 /api/public/v1/site-content（固定内容 + 委托营业状态）
- * 与 /api/public/v1/home（站点级代表作品宽图）。自由文案为 null 时整区隐藏；
+ * 与 /api/public/v1/commission-hero（委托页独立代表作品宽图）。自由文案为 null 时整区隐藏；
  * 制作范围、人工逐单估价机制与邮件行动为已确认结构性事实，不编造业务文案。
  */
 useSeoMeta({
@@ -25,19 +25,19 @@ if (siteError.value) {
   throw createError({ statusCode: 500, statusMessage: '自设委托暂时无法显示' })
 }
 
-const { data: home, error: homeError } = await useFetch('/api/public/v1/home', {
-  key: 'public-home',
+const { data: hero, error: heroError } = await useFetch('/api/public/v1/commission-hero', {
+  key: 'public-commission-hero',
   headers: useRequestHeaders(['host']),
-  transform: raw => publicHomeResponseSchema.parse(raw).data,
+  transform: raw => publicCommissionHeroResponseSchema.parse(raw).data,
 })
 
-if (homeError.value) {
+if (heroError.value) {
   throw createError({ statusCode: 500, statusMessage: '自设委托暂时无法显示' })
 }
 
 const commission = computed(() => site.value?.commission ?? null)
 const status = computed(() => site.value?.statuses.commission ?? null)
-const heroSlide = computed(() => home.value?.slides[0] ?? null)
+const heroSlide = computed(() => hero.value?.slide ?? null)
 const faqs = computed(() => commission.value?.faqs ?? [])
 
 function paragraphs(value: string | null | undefined) {

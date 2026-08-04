@@ -41,6 +41,7 @@ export interface HeroUploadItem {
 }
 
 interface HeroAssetUploadOptions {
+  contextLabel?: () => string
   getHomeVersion: () => number | null
   onAssetReady: (slot: HeroSlot, asset: VerifiedAssetDto) => void
   onConflict: () => void
@@ -62,6 +63,10 @@ export function useHeroAssetUpload(options: HeroAssetUploadOptions) {
     progress: null,
     state: 'idle',
   })
+  const contextLabel = () => options.contextLabel?.() ?? '首页'
+  const conflictSubject = () => contextLabel() === '首页'
+    ? '首页数据'
+    : '委托页大图'
 
   let session: UploadSessionDto | null = null
   let upload: ConditionalPutDto | null = null
@@ -129,7 +134,7 @@ export function useHeroAssetUpload(options: HeroAssetUploadOptions) {
         return
       }
       if (error instanceof AdminApiError && error.status === 409) {
-        fail('首页数据已在其他地方变化，请刷新后重试')
+        fail(`${conflictSubject()}已在其他地方变化，请刷新后重试`)
         options.onConflict()
         return
       }
@@ -219,7 +224,7 @@ export function useHeroAssetUpload(options: HeroAssetUploadOptions) {
         }
       }
       if (error.status === 409) {
-        fail('首页数据已在其他地方变化，请刷新后重试')
+        fail(`${conflictSubject()}已在其他地方变化，请刷新后重试`)
         options.onConflict()
         return
       }

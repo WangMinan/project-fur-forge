@@ -4,14 +4,17 @@ import {
   adminHeroPreviewDtoSchema,
   adminHeroSlideDtoSchema,
   adminHomeDtoSchema,
+  publicCommissionHeroDtoSchema,
   publicHomeDtoSchema,
 } from '../../shared/schemas/home'
 import type {
   AdminHeroPreviewDto,
   AdminHeroSlideDto,
   AdminHomeDto,
+  HeroPlacement,
   PublicationFailureStage,
   PublicationOperationDto,
+  PublicCommissionHeroDto,
   PublicHomeDto,
 } from '../../shared/types/contracts'
 import {
@@ -88,6 +91,7 @@ interface SlideRow {
   portraitPrivateObjectKey: string
   portraitPreviewObjectKey: string | null
   portraitWidth: number
+  placement: HeroPlacement
   sortOrder: number
   previewExpiresAt: number | null
   version: number
@@ -111,6 +115,7 @@ interface HeroVariantRow extends VariantRecord {
 const selectSlides = `
   SELECT
     slide.id, slide.version, slide.alt_text AS alt,
+    slide.placement,
     slide.sort_order AS sortOrder, slide.enabled,
     slide.landscape_asset_id AS landscapeAssetId,
     landscape.width AS landscapeWidth,
@@ -155,14 +160,21 @@ function requireHomeVersion(sqlite: Database.Database, expectedVersion: number) 
   return home
 }
 
-function slides(sqlite: Database.Database) {
-  return sqlite.prepare(`${selectSlides} ORDER BY slide.enabled DESC, slide.sort_order, slide.id`)
-    .all() as SlideRow[]
+function slides(
+  sqlite: Database.Database,
+  placement: HeroPlacement = 'home',
+) {
+  return sqlite.prepare(`${selectSlides} WHERE slide.placement = ? ORDER BY slide.enabled DESC, slide.sort_order, slide.id`)
+    .all(placement) as SlideRow[]
 }
 
-function requireSlide(sqlite: Database.Database, id: string) {
-  const slide = sqlite.prepare(`${selectSlides} WHERE slide.id = ?`)
-    .get(id) as SlideRow | undefined
+function requireSlide(
+  sqlite: Database.Database,
+  id: string,
+  placement?: HeroPlacement,
+) {
+  const slide = sqlite.prepare(`${selectSlides} WHERE slide.id = ?${placement ? ' AND slide.placement = ?' : ''}`)
+    .get(...(placement ? [id, placement] : [id])) as SlideRow | undefined
   if (!slide) {
     throw new ServiceError(404, 'NOT_FOUND', 'Hero slide was not found.')
   }
@@ -250,7 +262,10 @@ function adminSlide(
   })
 }
 
-export function getAdminHome(sqlite: Database.Database): AdminHomeDto {
+export function getAdminHome(
+  sqlite: Database.Database,
+  placement: HeroPlacement = 'home',
+): AdminHomeDto {
   const home = requireHome(sqlite)
   const profileId = activeWatermarkProfileId(sqlite)
   return adminHomeDtoSchema.parse({
@@ -260,7 +275,7 @@ export function getAdminHome(sqlite: Database.Database): AdminHomeDto {
     contactQq: home.contactQq,
     autoRotate: home.autoRotate === 1,
     autoRotateIntervalMs: home.autoRotateIntervalMs,
-    slides: slides(sqlite).map(slide => adminSlide(sqlite, slide, profileId)),
+    slides: slides(sqlite, placement).map(slide => adminSlide(sqlite, slide, profileId)),
   })
 }
 
@@ -269,13 +284,14 @@ const HERO_PREVIEW_TTL_MS = 5 * 60 * 1_000
 function heroPreviewKey(
   privateObjectKey: string,
   slideId: string,
+  placement: HeroPlacement,
   orientation: 'landscape' | 'portrait',
 ) {
   const marker = privateObjectKey.indexOf('/original/')
   if (marker < 1) {
     throw new Error('Hero asset has no environment prefix.')
   }
-  return `${privateObjectKey.slice(0, marker)}/preview/home/${slideId}/${orientation}.webp`
+  return `${privateObjectKey.slice(0, marker)}/preview/${placement}/${slideId}/${orientation}.webp`
 }
 
 export async function createHeroSlidePreview(
@@ -284,9 +300,10 @@ export async function createHeroSlidePreview(
   slideId: string,
   expectedVersion: number,
   now = Date.now(),
+  placement: HeroPlacement = 'home',
 ): Promise<AdminHeroPreviewDto> {
   requireHomeVersion(sqlite, expectedVersion)
-  const slide = requireSlide(sqlite, slideId)
+  const slide = requireSlide(sqlite, slideId, placement)
   if (slide.enabled === 1) {
     throw new ServiceError(409, 'CONFLICT', 'Disable the hero slide before previewing it.')
   }
@@ -302,11 +319,13 @@ export async function createHeroSlidePreview(
   const landscapeObjectKey = heroPreviewKey(
     slide.landscapePrivateObjectKey,
     slide.id,
+    placement,
     'landscape',
   )
   const portraitObjectKey = heroPreviewKey(
     slide.portraitPrivateObjectKey,
     slide.id,
+    placement,
     'portrait',
   )
   sqlite.prepare(`
@@ -336,7 +355,7 @@ export async function createHeroSlidePreview(
       },
     )
     return {
-      url: `/api/admin/v1/site/home/slides/${slide.id}/preview/${input.orientation}`,
+      url: `/api/admin/v1/site/home/slides/${slide.id}/preview/${input.orientation}${placement === 'commission' ? '?placement=commission' : ''}`,
       expiresAt: new Date(expiresAt).toISOString(),
       width: dimensions.width,
       height: dimensions.height,
@@ -369,8 +388,9 @@ export async function getHeroSlidePreviewContent(
   slideId: string,
   orientation: 'landscape' | 'portrait',
   now = Date.now(),
+  placement: HeroPlacement = 'home',
 ) {
-  const slide = requireSlide(sqlite, slideId)
+  const slide = requireSlide(sqlite, slideId, placement)
   const objectKey = orientation === 'landscape'
     ? slide.landscapePreviewObjectKey
     : slide.portraitPreviewObjectKey
@@ -408,7 +428,23 @@ export function getPublicHome(
   mediaBaseUrl: string,
 ): PublicHomeDto {
   const home = requireHome(sqlite)
-  const enabled = slides(sqlite).filter(slide => slide.enabled === 1)
+  const projected = publicHeroSlides(sqlite, mediaBaseUrl, 'home')
+  return publicHomeDtoSchema.parse({
+    tagline: home.tagline,
+    contactEmail: home.contactEmail,
+    contactQq: home.contactQq,
+    autoRotate: home.autoRotate === 1,
+    autoRotateIntervalMs: home.autoRotateIntervalMs,
+    slides: projected,
+  })
+}
+
+function publicHeroSlides(
+  sqlite: Database.Database,
+  mediaBaseUrl: string,
+  placement: HeroPlacement,
+) {
+  const enabled = slides(sqlite, placement).filter(slide => slide.enabled === 1)
   const profileId = activeWatermarkProfileId(sqlite)
   if (enabled.length > 0 && !profileId) {
     throw new Error('Active watermark profile is unavailable.')
@@ -436,14 +472,15 @@ export function getPublicHome(
     }
     return dto
   })
-  return publicHomeDtoSchema.parse({
-    tagline: home.tagline,
-    contactEmail: home.contactEmail,
-    contactQq: home.contactQq,
-    autoRotate: home.autoRotate === 1,
-    autoRotateIntervalMs: home.autoRotateIntervalMs,
-    slides: projected,
-  })
+  return projected
+}
+
+export function getPublicCommissionHero(
+  sqlite: Database.Database,
+  mediaBaseUrl: string,
+): PublicCommissionHeroDto {
+  const slides = publicHeroSlides(sqlite, mediaBaseUrl, 'commission')
+  return publicCommissionHeroDtoSchema.parse({ slide: slides[0] ?? null })
 }
 
 function claimHomeVersion(
@@ -560,6 +597,7 @@ export function createHeroSlide(
   expectedVersion: number,
   input: HeroSlideInput,
   now = Date.now(),
+  placement: HeroPlacement = 'home',
 ) {
   requireHomeVersion(sqlite, expectedVersion)
   assertAssetPair(sqlite, input)
@@ -569,12 +607,13 @@ export function createHeroSlide(
       claimHomeVersion(sqlite, expectedVersion, now)
       sqlite.prepare(`
         INSERT INTO site_hero_slides (
-          id, landscape_asset_id, portrait_asset_id, alt_text,
+          id, placement, landscape_asset_id, portrait_asset_id, alt_text,
           sort_order, enabled, linked_work_id, version,
           created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, 0, ?, 1, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, 0, ?, 1, ?, ?)
       `).run(
         randomUUID(),
+        placement,
         input.landscapeAssetId,
         input.portraitAssetId,
         input.alt,
@@ -588,7 +627,7 @@ export function createHeroSlide(
   catch (error) {
     translateHomeConstraint(error)
   }
-  return getAdminHome(sqlite)
+  return getAdminHome(sqlite, placement)
 }
 
 export async function updateHeroSlide(
@@ -598,9 +637,10 @@ export async function updateHeroSlide(
   expectedVersion: number,
   input: HeroSlideInput,
   now = Date.now(),
+  placement: HeroPlacement = 'home',
 ) {
   requireHomeVersion(sqlite, expectedVersion)
-  const current = requireSlide(sqlite, id)
+  const current = requireSlide(sqlite, id, placement)
   if (current.enabled === 1) {
     throw new ServiceError(409, 'CONFLICT', 'Disable the hero slide before editing it.')
   }
@@ -615,7 +655,7 @@ export async function updateHeroSlide(
         SET landscape_asset_id = ?, portrait_asset_id = ?, alt_text = ?,
             sort_order = ?, linked_work_id = ?, version = version + 1,
             updated_at = ?
-        WHERE id = ? AND enabled = 0
+        WHERE id = ? AND enabled = 0 AND placement = ?
       `).run(
         input.landscapeAssetId,
         input.portraitAssetId,
@@ -624,13 +664,14 @@ export async function updateHeroSlide(
         input.linkedWorkId,
         now,
         id,
+        placement,
       )
     })()
   }
   catch (error) {
     translateHomeConstraint(error)
   }
-  return getAdminHome(sqlite)
+  return getAdminHome(sqlite, placement)
 }
 
 export async function deleteHeroSlide(
@@ -639,19 +680,22 @@ export async function deleteHeroSlide(
   id: string,
   expectedVersion: number,
   now = Date.now(),
+  placement: HeroPlacement = 'home',
 ) {
   requireHomeVersion(sqlite, expectedVersion)
-  const slide = requireSlide(sqlite, id)
+  const slide = requireSlide(sqlite, id, placement)
   if (slide.enabled === 1) {
     throw new ServiceError(409, 'CONFLICT', 'Disable the hero slide before deleting it.')
   }
   await clearHeroSlidePreviews(sqlite, storage, slide)
   sqlite.transaction(() => {
     claimHomeVersion(sqlite, expectedVersion, now)
-    sqlite.prepare('DELETE FROM site_hero_slides WHERE id = ? AND enabled = 0')
-      .run(id)
+    sqlite.prepare(`
+      DELETE FROM site_hero_slides
+      WHERE id = ? AND enabled = 0 AND placement = ?
+    `).run(id, placement)
   })()
-  return getAdminHome(sqlite)
+  return getAdminHome(sqlite, placement)
 }
 
 export function updateHomeSettings(
@@ -687,9 +731,10 @@ export function reorderEnabledHeroSlides(
   expectedVersion: number,
   slideIds: readonly string[],
   now = Date.now(),
+  placement: HeroPlacement = 'home',
 ) {
   requireHomeVersion(sqlite, expectedVersion)
-  const enabledIds = slides(sqlite)
+  const enabledIds = slides(sqlite, placement)
     .filter(slide => slide.enabled === 1)
     .map(slide => slide.id)
   if (
@@ -703,20 +748,24 @@ export function reorderEnabledHeroSlides(
   }
   sqlite.transaction(() => {
     claimHomeVersion(sqlite, expectedVersion, now)
-    sqlite.prepare('UPDATE site_hero_slides SET enabled = 0 WHERE enabled = 1').run()
+    sqlite.prepare(`
+      UPDATE site_hero_slides SET enabled = 0
+      WHERE enabled = 1 AND placement = ?
+    `).run(placement)
     const update = sqlite.prepare(`
       UPDATE site_hero_slides
       SET sort_order = ?, version = version + 1, updated_at = ?
-      WHERE id = ? AND enabled = 0
+      WHERE id = ? AND enabled = 0 AND placement = ?
     `)
-    slideIds.forEach((id, index) => update.run(index, now, id))
+    slideIds.forEach((id, index) => update.run(index, now, id, placement))
     const enable = sqlite.prepare(`
-      UPDATE site_hero_slides SET enabled = 1 WHERE id = ?
+      UPDATE site_hero_slides SET enabled = 1
+      WHERE id = ? AND placement = ?
     `)
-    slideIds.forEach(id => enable.run(id))
-    validateHeroSlidesForPublication(sqlite)
+    slideIds.forEach(id => enable.run(id, placement))
+    validateHeroSlidesForPublication(sqlite, placement)
   })()
-  return getAdminHome(sqlite)
+  return getAdminHome(sqlite, placement)
 }
 
 export async function disableHeroSlide(
@@ -726,16 +775,18 @@ export async function disableHeroSlide(
   expectedVersion: number,
   actorUserId: string,
   now = Date.now(),
+  placement: HeroPlacement = 'home',
 ) {
   requireHomeVersion(sqlite, expectedVersion)
-  const slide = requireSlide(sqlite, id)
+  const slide = requireSlide(sqlite, id, placement)
   if (slide.enabled !== 1) {
     throw new ServiceError(409, 'CONFLICT', 'Hero slide is already disabled.')
   }
   const enabledCount = Number(sqlite.prepare(`
-    SELECT count(*) FROM site_hero_slides WHERE enabled = 1
-  `).pluck().get())
-  if (enabledCount <= 1) {
+    SELECT count(*) FROM site_hero_slides
+    WHERE enabled = 1 AND placement = ?
+  `).pluck().get(placement))
+  if (placement === 'home' && enabledCount <= 1) {
     throw new ServiceError(409, 'CONFLICT', 'At least one hero slide must remain enabled.')
   }
   await clearHeroSlidePreviews(sqlite, storage, slide)
@@ -744,18 +795,28 @@ export async function disableHeroSlide(
     sqlite.prepare(`
       UPDATE site_hero_slides
       SET enabled = 0, version = version + 1, updated_at = ?
-      WHERE id = ? AND enabled = 1
-    `).run(now, id)
+      WHERE id = ? AND enabled = 1 AND placement = ?
+    `).run(now, id, placement)
     sqlite.prepare(`
       INSERT INTO audit_logs (
         id, actor_user_id, action, entity_type, entity_id, result, created_at
-      ) VALUES (?, ?, 'HOME_HERO_DISABLE', 'HOME', ?, 'SUCCESS', ?)
-    `).run(randomUUID(), actorUserId, id, now)
+      ) VALUES (?, ?, ?, 'HOME', ?, 'SUCCESS', ?)
+    `).run(
+      randomUUID(),
+      actorUserId,
+      placement === 'home' ? 'HOME_HERO_DISABLE' : 'COMMISSION_HERO_DISABLE',
+      id,
+      now,
+    )
   })()
-  return getAdminHome(sqlite)
+  return getAdminHome(sqlite, placement)
 }
 
-function assertSlideCanEnable(sqlite: Database.Database, slide: SlideRow) {
+function assertSlideCanEnable(
+  sqlite: Database.Database,
+  slide: SlideRow,
+  placement: HeroPlacement,
+) {
   if (slide.enabled === 1) {
     throw new ServiceError(409, 'CONFLICT', 'Hero slide is already enabled.')
   }
@@ -763,12 +824,13 @@ function assertSlideCanEnable(sqlite: Database.Database, slide: SlideRow) {
     throw new ServiceError(409, 'CONFLICT', 'Enabled hero slide order must be between 0 and 4.')
   }
   const enabledCount = Number(sqlite.prepare(`
-    SELECT count(*) FROM site_hero_slides WHERE enabled = 1
-  `).pluck().get())
+    SELECT count(*) FROM site_hero_slides
+    WHERE enabled = 1 AND placement = ?
+  `).pluck().get(placement))
   const orderConflict = sqlite.prepare(`
     SELECT 1 FROM site_hero_slides
-    WHERE enabled = 1 AND sort_order = ? LIMIT 1
-  `).pluck().get(slide.sortOrder)
+    WHERE enabled = 1 AND placement = ? AND sort_order = ? LIMIT 1
+  `).pluck().get(placement, slide.sortOrder)
   if (enabledCount >= 5 || orderConflict) {
     throw new ServiceError(409, 'CONFLICT', 'Enabled hero slides must have 1 to 5 unique positions.')
   }
@@ -802,9 +864,10 @@ export function startHeroSlidePublication(
   slideId: string,
   expectedVersion: number,
   now = Date.now(),
+  placement: HeroPlacement = 'home',
 ): PublicationOperationDto {
   requireHomeVersion(sqlite, expectedVersion)
-  assertSlideCanEnable(sqlite, requireSlide(sqlite, slideId))
+  assertSlideCanEnable(sqlite, requireSlide(sqlite, slideId, placement), placement)
   const active = sqlite.prepare(`
     SELECT 1 FROM publication_operations
     WHERE entity_type = 'HOME' AND entity_id = ?
@@ -925,7 +988,7 @@ export async function runHeroSlidePublication(
   let code = 'HOME_PUBLICATION_VALIDATION_FAILED'
   try {
     requireHomeVersion(sqlite, operation.requestedVersion)
-    assertSlideCanEnable(sqlite, slide)
+    assertSlideCanEnable(sqlite, slide, slide.placement)
     stage = 'APPLYING_WATERMARK'
     code = 'PUBLIC_MEDIA_GENERATION_FAILED'
     setOperationStatus(sqlite, operationId, 'APPLYING_WATERMARK', now)
@@ -953,14 +1016,18 @@ export async function runHeroSlidePublication(
     setOperationStatus(sqlite, operationId, 'COMMITTING', now)
     sqlite.transaction(() => {
       requireHomeVersion(sqlite, operation.requestedVersion)
-      assertSlideCanEnable(sqlite, requireSlide(sqlite, slide.id))
+      assertSlideCanEnable(
+        sqlite,
+        requireSlide(sqlite, slide.id, slide.placement),
+        slide.placement,
+      )
       claimHomeVersion(sqlite, operation.requestedVersion, now)
       sqlite.prepare(`
         UPDATE site_hero_slides
         SET enabled = 1, version = version + 1, updated_at = ?
-        WHERE id = ? AND enabled = 0
-      `).run(now, slide.id)
-      validateHeroSlidesForPublication(sqlite)
+        WHERE id = ? AND enabled = 0 AND placement = ?
+      `).run(now, slide.id, slide.placement)
+      validateHeroSlidesForPublication(sqlite, slide.placement)
       sqlite.prepare(`
         UPDATE publication_operations
         SET status = 'DONE', failure_stage = NULL,
@@ -972,8 +1039,16 @@ export async function runHeroSlidePublication(
       sqlite.prepare(`
         INSERT INTO audit_logs (
           id, actor_user_id, action, entity_type, entity_id, result, created_at
-        ) VALUES (?, ?, 'HOME_HERO_ENABLE', 'HOME', ?, 'SUCCESS', ?)
-      `).run(randomUUID(), actorUserId, slide.id, now)
+        ) VALUES (?, ?, ?, 'HOME', ?, 'SUCCESS', ?)
+      `).run(
+        randomUUID(),
+        actorUserId,
+        slide.placement === 'home'
+          ? 'HOME_HERO_ENABLE'
+          : 'COMMISSION_HERO_ENABLE',
+        slide.id,
+        now,
+      )
     })()
   }
   catch {

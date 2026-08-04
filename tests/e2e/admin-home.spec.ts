@@ -54,14 +54,27 @@ async function publicHomeAlts(page: Page) {
   return body.data.slides.map(slide => slide.alt)
 }
 
-async function uploadHeroPair(page: Page, card: ReturnType<Page['locator']>) {
-  await card.getByLabel('选择横版（16:9）首页图文件').setInputFiles({
+async function publicCommissionHeroAlt(page: Page) {
+  const response = await page.request.get(
+    `${publicBaseURL}/api/public/v1/commission-hero`,
+  )
+  expect(response.status(), '公开委托页大图投影应可用').toBe(200)
+  const body = await response.json() as { data: { slide: { alt: string } | null } }
+  return body.data.slide?.alt ?? null
+}
+
+async function uploadHeroPair(
+  page: Page,
+  card: ReturnType<Page['locator']>,
+  pageLabel = '首页',
+) {
+  await card.getByLabel(`选择横版（16:9）${pageLabel}图文件`).setInputFiles({
     name: 'landscape.png',
     mimeType: 'image/png',
     buffer: heroPng('landscape'),
   })
   await expect(card.getByText(/新图已上传/)).toHaveCount(1)
-  await card.getByLabel('选择竖版（9:16）首页图文件').setInputFiles({
+  await card.getByLabel(`选择竖版（9:16）${pageLabel}图文件`).setInputFiles({
     name: 'portrait.png',
     mimeType: 'image/png',
     buffer: heroPng('portrait'),
@@ -90,11 +103,13 @@ test.beforeEach(async ({ page }) => {
   await loginAsAdmin(page)
   await resetFakeMedia(page)
   await seedHomeSlides(page, [], DEFAULT_SETTINGS)
+  await seedHomeSlides(page, [], undefined, 'commission')
 })
 
 test.afterEach(async ({ page }) => {
   await setWatermarkProfileActive(page, true)
   await seedHomeSlides(page, [], DEFAULT_SETTINGS)
+  await seedHomeSlides(page, [], undefined, 'commission')
   await resetFakeMedia(page)
 })
 
@@ -159,6 +174,44 @@ test('轮播项 CRUD：横竖上传创建、编辑保存、删除确认', async 
   await page.getByRole('dialog').getByRole('button', { name: '确认删除' }).click()
   await expect(page.locator('article.slide-card')).toHaveCount(0)
   await expect(page.getByText('还没有轮播项')).toBeVisible()
+})
+
+test('委托页 Tab：独立上传、启用和全部停用不影响首页', async ({ page }) => {
+  await seedHomeSlides(page, [
+    { alt: '保留的首页图', sortOrder: 0, enabled: true },
+  ], DEFAULT_SETTINGS)
+  await gotoHomeAdmin(page)
+  await page.getByRole('link', { name: '委托页大图' }).click()
+  await expect(page).toHaveURL(/tab=commission/u)
+  await expect(page.getByRole('link', { name: '委托页大图' }))
+    .toHaveAttribute('aria-current', 'page')
+  await expect(page.locator('#home-tagline')).toHaveCount(0)
+
+  await page.getByRole('button', { name: '新增大图项' }).click()
+  const draft = page.locator('[data-testid="home-slide-draft"]')
+  await uploadHeroPair(page, draft, '委托页')
+  await draft.getByLabel(/图片说明/).fill('独立委托页背景')
+  await draft.getByRole('button', { name: '创建大图项' }).click()
+  const card = page.locator('article.slide-card', { hasText: '大图项 · 顺位 0' })
+  await expect(card).toBeVisible()
+  await card.getByRole('button', { name: '启用' }).click()
+  await expect(card.getByText('已启用', { exact: true })).toBeVisible({
+    timeout: 15_000,
+  })
+  expect(await publicCommissionHeroAlt(page)).toBe('独立委托页背景')
+  expect(await publicHomeAlts(page)).toEqual(['保留的首页图'])
+
+  await page.goto(`${publicBaseURL}/commission`)
+  await expect(page.getByTestId('commission-hero')
+    .getByRole('img', { name: '独立委托页背景' })).toBeVisible()
+
+  await page.goto(`${adminBaseURL}/admin/site/home?tab=commission`)
+  await page.waitForSelector('[data-testid="home-admin"]')
+  const persisted = page.locator('article.slide-card', { hasText: '大图项 · 顺位 0' })
+  await persisted.getByRole('button', { name: '停用' }).click()
+  await expect(persisted.getByText('未启用', { exact: true })).toBeVisible()
+  expect(await publicCommissionHeroAlt(page)).toBeNull()
+  expect(await publicHomeAlts(page)).toEqual(['保留的首页图'])
 })
 
 test('横竖配对约束：只上传一版时创建按钮保持禁用', async ({ page }) => {

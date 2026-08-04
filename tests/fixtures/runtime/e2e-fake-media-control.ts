@@ -386,11 +386,13 @@ export default defineEventHandler(async (event) => {
   if (body?.action === 'seedHomeSlides') {
     const sqlite = getDatabase().sqlite
     const now = Date.now()
+    const placement = body.placement === 'commission' ? 'commission' : 'home'
 
     const staleAssetIds = sqlite.prepare(`
-      SELECT id FROM assets WHERE private_object_key LIKE 'test/e2e-home/%'
-    `).pluck().all() as string[]
-    sqlite.prepare('DELETE FROM site_hero_slides').run()
+      SELECT id FROM assets WHERE private_object_key LIKE ?
+    `).pluck().all(`test/e2e-${placement}/%`) as string[]
+    sqlite.prepare('DELETE FROM site_hero_slides WHERE placement = ?')
+      .run(placement)
     if (staleAssetIds.length > 0) {
       const placeholders = staleAssetIds.map(() => '?').join(', ')
       sqlite.prepare(`
@@ -412,7 +414,7 @@ export default defineEventHandler(async (event) => {
         randomBytes(16),
       ])
       const sha256 = createHash('sha256').update(content).digest('hex')
-      const objectKey = `test/e2e-home/original/${assetId}/source.png`
+      const objectKey = `test/e2e-${placement}/original/${assetId}/source.png`
       sqlite.prepare(`
         INSERT INTO assets (
           id, role, status, private_object_key, sha256, byte_size,
@@ -451,11 +453,12 @@ export default defineEventHandler(async (event) => {
       }
       sqlite.prepare(`
         INSERT INTO site_hero_slides (
-          id, landscape_asset_id, portrait_asset_id, alt_text,
+          id, placement, landscape_asset_id, portrait_asset_id, alt_text,
           sort_order, enabled, linked_work_id, version, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
       `).run(
         randomUUID(),
+        placement,
         landscapeAssetId,
         portraitAssetId,
         slide.alt,
@@ -525,7 +528,8 @@ export default defineEventHandler(async (event) => {
   if (body?.action === 'seedHomePublicationOperation') {
     const sqlite = getDatabase().sqlite
     const slide = sqlite.prepare(`
-      SELECT id FROM site_hero_slides WHERE alt_text = ? AND enabled = 0
+      SELECT id FROM site_hero_slides
+      WHERE placement = 'home' AND alt_text = ? AND enabled = 0
     `).get(body.slideAlt) as { id: string } | undefined
     if (!slide) {
       setResponseStatus(event, 404)

@@ -1,4 +1,5 @@
 import type Database from 'better-sqlite3'
+import type { HeroPlacement } from '../../shared/types/contracts'
 import {
   LEGACY_PUBLIC_RECIPE_VERSION,
   PUBLIC_RECIPE_VERSION,
@@ -149,6 +150,7 @@ export function completePublicHeroVariants<T extends HeroVariantCandidate>(
 
 export function validateHeroSlidesForPublication(
   sqlite: Database.Database,
+  placement: HeroPlacement = 'home',
 ) {
   const activeProfileId = sqlite.prepare(`
     SELECT active_watermark_profile_id FROM site_branding WHERE id = 'site'
@@ -172,9 +174,9 @@ export function validateHeroSlidesForPublication(
     JOIN assets AS landscape ON landscape.id = slide.landscape_asset_id
     JOIN assets AS portrait ON portrait.id = slide.portrait_asset_id
     LEFT JOIN works AS linked ON linked.id = slide.linked_work_id
-    WHERE slide.enabled = 1
+    WHERE slide.enabled = 1 AND slide.placement = ?
     ORDER BY slide.sort_order
-  `).all() as Array<{
+  `).all(placement) as Array<{
     id: string
     altText: string
     sortOrder: number

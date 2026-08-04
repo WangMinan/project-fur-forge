@@ -3,6 +3,7 @@ import { resourceIdSchema } from '../../../../../../../../../shared/schemas/api'
 import { createApiError } from '../../../../../../../../utils/api-error'
 import { getDatabase } from '../../../../../../../../utils/database'
 import { getHeroSlidePreviewContent } from '../../../../../../../../utils/home-management'
+import { readHeroPlacement } from '../../../../../../../../utils/hero-placement'
 import { getMediaStorage } from '../../../../../../../../utils/media-storage'
 import { asSafeApiError } from '../../../../../../../../utils/service-error'
 
@@ -22,6 +23,8 @@ export default defineEventHandler(async (event) => {
       getMediaStorage(),
       id.data,
       orientation.data,
+      Date.now(),
+      readHeroPlacement(event),
     )
     setResponseHeader(event, 'content-type', 'image/webp')
     return content

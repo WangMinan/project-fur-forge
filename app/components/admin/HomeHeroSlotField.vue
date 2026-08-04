@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type {
   AdminHeroAssetDto,
+  HeroPlacement,
   VerifiedAssetDto,
 } from '~~/shared/types/contracts'
 import type { HeroSlot } from '~/composables/useHeroAssetUpload'
@@ -12,6 +13,7 @@ const props = defineProps<{
   homeVersion: number | null
   savedAsset: AdminHeroAssetDto | null
   orientation: HeroSlot
+  placement: HeroPlacement
   unsavedAssetId: string | null
 }>()
 
@@ -24,6 +26,7 @@ const SLOT_LABEL: Record<HeroSlot, string> = {
   landscape: '横版（16:9）',
   portrait: '竖版（9:16）',
 }
+const pageLabel = computed(() => props.placement === 'home' ? '首页' : '委托页')
 
 const fileInput = ref<HTMLInputElement | null>(null)
 
@@ -32,6 +35,7 @@ const upload = useHeroAssetUpload({
   getHomeVersion: () => props.homeVersion,
   onAssetReady: (_slot, asset) => emit('uploaded', asset),
   onConflict: () => emit('conflict'),
+  contextLabel: () => pageLabel.value,
 })
 
 const busy = computed(() =>
@@ -100,7 +104,7 @@ function onFileChange(event: Event) {
     </p>
 
     <p v-if="unsavedAssetId && upload.item.state === 'completed'" class="hero-slot__unsaved" role="status">
-      新图已上传（{{ upload.item.asset?.width }}×{{ upload.item.asset?.height }}），保存轮播项后生效
+      新图已上传（{{ upload.item.asset?.width }}×{{ upload.item.asset?.height }}），保存{{ placement === 'home' ? '轮播项' : '大图项' }}后生效
     </p>
 
     <input
@@ -108,7 +112,7 @@ function onFileChange(event: Event) {
       type="file"
       accept="image/jpeg,image/png,image/webp"
       hidden
-      :aria-label="`选择${SLOT_LABEL[orientation]}首页图文件`"
+      :aria-label="`选择${SLOT_LABEL[orientation]}${pageLabel}图文件`"
       @change="onFileChange"
     >
 

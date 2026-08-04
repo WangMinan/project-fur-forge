@@ -13,6 +13,7 @@ T22 后端、前端与独立 Review 证据分别见 [`implementation/notes/t19-t
 T23 工程、T25 服务端交接和本轮前端检查点分别见 [`implementation/notes/t23-t25/T23-ENGINEERING-2026-08-03.md`](./implementation/notes/t23-t25/T23-ENGINEERING-2026-08-03.md)、[`implementation/notes/t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md`](./implementation/notes/t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md) 与 [`implementation/notes/t23-t25/T24-T25-FRONTEND-CHECKPOINT-2026-08-03.md`](./implementation/notes/t23-t25/T24-T25-FRONTEND-CHECKPOINT-2026-08-03.md)。
 T23–T25 最终收口见 [`implementation/notes/t23-t25/T23-T25-CLOSURE-2026-08-04.md`](./implementation/notes/t23-t25/T23-T25-CLOSURE-2026-08-04.md)。
 T26–T27 服务端契约见 [`implementation/notes/t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md)；前端交接见 [`implementation/notes/t26-t27/T26-T27-FRONTEND-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-FRONTEND-2026-08-04.md)；独立 findings、修复、浏览器与安全证据见 [`implementation/notes/t26-t27/T26-T27-INDEPENDENT-REVIEW-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-INDEPENDENT-REVIEW-2026-08-04.md)。
+T26-F1 工程交接见 [`implementation/notes/t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`](./implementation/notes/t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md)；用户下班后补验步骤见 [`implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md)。
 
 ## 当前执行分工
 
@@ -43,6 +44,7 @@ T26–T27 服务端契约见 [`implementation/notes/t26-t27/T26-T27-BACKEND-HAND
 - [x] T22 后端、前端、独立 Review 和用户人工验收已收口。
 - [x] T23–T25 实现、自动化、独立 Agent Review 与用户人工核验全部收口，三项任务已勾选。
 - [x] T26–T27 实现、独立 Review 与 findings 修复已收口；本轮 USER_GATE 为否，两项任务已勾选。
+- [ ] T26-F1 委托页独立大图的文档、工程实现和实现方自测已完成；独立 Review/验收不由实现方代签。
 
 进入阶段 C 时无阻断 OQ；当前 **OQ-120** 只约束正式内容录入，不阻断已完成的 T26/T27 工程能力。最终小图标与部署参数仍分别在 T30、T34/T52 前确认。
 
@@ -125,14 +127,16 @@ EXT-01 现在只表示“正式素材输入已经到位并完成角色映射”�
 - 2026-08-04：上述跟进已完成实现方自测；`pnpm typecheck` / `pnpm lint` / `pnpm build` 、列表单测与定向 Playwright 通过，新增五张视觉证据。该结论不代替新上下文独立 Review。
 - 2026-08-04：用户要求删除关于页的防御性隐私说明，并确认基本约定中的逐单报价、邮件协商周期与付款比例、工作室著作权和签收后一年非人为损坏保修原则；OQ-120 候选稿据此修订为 v2，未写入数据库，T26/T27 状态不变。
 - 2026-08-04：T26–T27 新上下文独立 Review 初始登记 2 个 must-fix，修复后键盘复测补充 1 个 should-fix；共享异步数据键、未经确认的公开事实和跳转焦点均完成最小修复。自动化、SSR/Host/DTO/私有 Bucket、真实图片、三视口和公开端键盘复测通过，结论 `PASS WITH FOLLOW-UP`；按本轮 USER_GATE 否的授权勾选 T26/T27。
+- 2026-08-04：用户启动 T26-F1：委托页大图不再复用首页第一项；“首页管理”增加首页/委托页大图 Tab，复用既有双源上传、排序与水印发布。公开委托页保持单张背景，只取独立集合排序第一项；无图隐藏且不回退首页。
+- 2026-08-04：T26-F1 文档、迁移、管理/公开契约、复用式 Tab、实现方自动化和浏览器自测完成；任务保持未勾选，等待新上下文独立 Review 与用户验收。
 
 ## 下一步
 
 当前交接：
 
-1. 按 TASKS 进入 T28 首页完整内容顺序；T29 可在其后串行推进，不提前实现 T37。
+1. 先对 T26-F1 委托页独立大图执行新上下文独立 Review 与用户验收，再按 TASKS 进入 T28；T29 可在其后串行推进，不提前实现 T37。
 2. 用户确认或修改 **OQ-120 候选稿 v2 的最终文字与其余 8 项内容**后，再在「文案配置」录入正式内容；验证临时文案不得进入正式库。
-3. 用户下班后如愿意，可补验后台双上下文 409 与完整文案投影；该 follow-up 不回退 T26/T27 当前完成状态。
+3. 用户下班后可按 [`T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md) 补验双 Host、完整文案投影、T26-F1 独立大图与可选双上下文 409；该 follow-up 不回退 T26/T27 当前完成状态。
 
 ### OQ-120 缺失清单（正式内容门禁）
 
