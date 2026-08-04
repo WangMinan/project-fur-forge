@@ -4,7 +4,7 @@
 
 首轮生产浏览器启动时错误地把 `MEDIA_BASE_URL` 指向应用 Host，图片请求得到 JSON 404 和 ORB。该结果属于测试环境配置错误，不能作为产品 finding 或通过证据；恢复当前 `.env` 的公开 OSS Origin 后，从头重跑以下检查。
 
-当前实现方结论为 `PASS`，等待新上下文 GPT-5.6 Sol 独立 Review。没有为本轮指标新增缓存、图片组件或视觉分支。
+实现方自测结论为 `PASS`，不能代替下方新上下文独立 Review。没有为本轮指标新增缓存、图片组件或视觉分支。
 
 ## 环境与方法
 
@@ -58,6 +58,15 @@
 - Chrome 操作 trace：[`t33-public-390.trace`](./trace/t33-public-390.trace)，包含首页 → 作品 → 返回 → 领养的动作记录；资源快照未入库，图片与请求结论分别由上方 PNG 和脱敏 network 摘要承载。
 - trace 共 210,677 bytes，SHA-256 `7d6fa67db76caa5aa5778377a8e0c16e5a9a45dd4570007df87f73acf3ba2107`；敏感关键词扫描 0 命中。
 
-## 待独立 Review
+## 新上下文独立初审
 
-独立审查必须重新启动 production 应用，复核性能方法和结果、公开/管理三视口、真实图片解码与方向请求、首项/隐藏项加载、焦点/键盘/reduced-motion、console/network，以及大型居中/左右双水印的视觉边界。初审记录不得删除；独立结论为 `PASS` 后才勾选 T33。
+基线 `925f772` 结论为 `NOT PASS`。以下初始 findings 已在代码修复前冻结，后续不得删除：
+
+1. **MUST-FIX · Hero 公开与管理投影存在 N+1**：公开 `publicHeroSlides()` 为每项横/竖资产各查一次变体；管理 `getAdminHome()` 还会为每项分别读取横/竖变体、最新发布/适配操作，低分辨率资产另行查询处理源。当前真实库只有 1 项，掩盖了 0–5 项规模增长；实现方“批量查询/无 N+1”结论不成立。应在共享 Hero 投影边界批量加载变体、处理源和最新操作，并留下多项查询数回归。
+2. **SHOULD-FIX · 后续项仍声明 eager**：隐藏项虽不在 DOM 且未提前下载，但切换到第 2 项后仍输出 `loading=eager`；首项应为 eager/high，后续项按需进入后应为 lazy/auto。
+3. **SHOULD-FIX · art direction 缺少方向固有尺寸**：竖屏实际选择 9:16 图片，但 portrait `<source>` 没有自己的 `width/height`，后备 `<img>` 仍声明横版 1920×1080。固定 Hero 容器使当前 CLS 为 0，不能代替真实 intrinsic size。应复用 HTML 原生 `<source width height>`，不新增客户端方向状态。
+4. **SHOULD-FIX · 轮播圆点命中区过小**：分页 button 约 10×10 CSS px、间距 8 px，24 px 判定圆相交，不满足 WCAG 2.2 SC 2.5.8。视觉圆点可保持 10 px，按钮命中区至少扩大到 24×24 px。
+
+独立审查其余证据：7 个公开路径 × 3 视口均为 0 requestfailed、0 console error、0 overflow、0 解码失败和 0 缺失 alt/size；390/768 只请求 portrait，1440 只请求 landscape，`/contact` 到达 `/about#contact`。管理、键盘/触控、reduced-motion、404/500、OSS header 和水印视觉未发现额外 finding。
+
+修复后须由同一独立上下文重新验证以上四项；最终 `PASS` 前不得勾选 T33。
