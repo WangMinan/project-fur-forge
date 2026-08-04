@@ -79,3 +79,11 @@
 ## 当前结论
 
 实现方结论：`PASS，等待独立 Review`。初始 Docker MUST-FIX、全量 E2E MUST-FIX 与两个 SHOULD-FIX 均已保留并关闭；T34 在独立 Review 和用户最终验收前继续保持未勾选。
+
+## 独立 Review 初始 finding
+
+独立 Reviewer 基线：`8215c58`；初始结论：`NOT PASS`。
+
+1. **MUST-FIX · 最终镜像缺少 Nitro 运行时动态依赖**：production 容器的公开页、数据库和无 OSS 路径正常，但真实 Chrome 打开后台作品列表时，私有原图预览接口返回 500；容器日志为 `ERR_MODULE_NOT_FOUND: Cannot find package 'ali-oss' imported from /app/.output/server/chunks/nitro/nitro.mjs`。根因是镜像仅复制 `.output`，而当前 Nitro production 输出仍把 `ali-oss` 留为动态 import，`.output/server/package.json` 又未登记该依赖；本机 build/verify 因仓库根 `node_modules` 存在而掩盖。必须让现有 Nitro production 输出自带该运行时依赖，并在最终镜像真实私有预览路径复测；不得通过把本地完整 `node_modules`、`.env` 或测试目录复制进镜像规避。
+
+该 finding 已在任何修复前冻结。T34 保持未勾选。
