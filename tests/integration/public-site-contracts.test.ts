@@ -30,10 +30,12 @@ import {
   getAdminHome,
   getPublicCommissionHero,
   getPublicHome,
-  prepareHeroSlideUpscale,
   reorderEnabledHeroSlides,
+  retryHeroSlideUpscale,
   retryHeroSlidePublication,
+  runHeroSlideUpscale,
   runHeroSlidePublication,
+  startHeroSlideUpscale,
   startHeroSlidePublication,
   updateHeroSlide,
   updateHomeSettings,
@@ -294,13 +296,52 @@ describe('T19/T20 public repository contracts', () => {
       NOW + sequence++,
     )).toThrow(/confirmed upscale/u)
 
-    await prepareHeroSlideUpscale(
+    const upscale = startHeroSlideUpscale(
       sqlite,
-      storage,
       slide.id,
       created.version,
       NOW + sequence++,
     )
+    expect(upscale).toMatchObject({
+      operationType: 'UPSCALE',
+      status: 'PREPARING_SOURCE',
+    })
+    storage.failGet = true
+    await runHeroSlideUpscale(
+      sqlite,
+      storage,
+      upscale.operationId,
+      USER_ID,
+      NOW + sequence++,
+    )
+    const failed = getAdminHome(sqlite).slides[0]?.upscaleOperation
+    expect(failed).toMatchObject({
+      operationType: 'UPSCALE',
+      status: 'FAILED',
+      failureStage: 'PREPARING_SOURCE',
+      failureCode: 'HERO_UPSCALE_FAILED',
+    })
+    storage.failGet = false
+    const retried = retryHeroSlideUpscale(
+      sqlite,
+      upscale.operationId,
+      failed!.version,
+      NOW + sequence++,
+    )
+    await runHeroSlideUpscale(
+      sqlite,
+      storage,
+      retried.operationId,
+      USER_ID,
+      NOW + sequence++,
+    )
+    expect(getAdminHome(sqlite).slides[0]).toMatchObject({
+      upscaleReady: true,
+      upscaleOperation: {
+        operationType: 'UPSCALE',
+        status: 'DONE',
+      },
+    })
     expect(storage.privatePuts).toHaveLength(2)
     for (const put of storage.privatePuts) {
       expect(put.contentMd5).toBe(
@@ -600,7 +641,7 @@ describe('T19/T20 public repository contracts', () => {
     })
     const initial = getAdminHome(sqlite)
     expect(initial).toMatchObject({
-      version: 2,
+      version: 3,
       tagline: '不只做小狗毛',
       contactEmail: '3114559925@qq.com',
       contactQq: '3114559925',

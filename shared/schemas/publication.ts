@@ -8,6 +8,7 @@ import {
 import { publicationStatusSchema } from './work'
 
 export const PUBLICATION_OPERATION_STATUS_VALUES = [
+  'PREPARING_SOURCE',
   'GENERATING_PUBLIC',
   'APPLYING_WATERMARK',
   'VERIFYING_PUBLIC',
@@ -18,6 +19,7 @@ export const PUBLICATION_OPERATION_STATUS_VALUES = [
 ] as const
 
 export const PUBLICATION_FAILURE_STAGE_VALUES = [
+  'PREPARING_SOURCE',
   'VALIDATING',
   'GENERATING_PUBLIC',
   'APPLYING_WATERMARK',
@@ -51,7 +53,7 @@ export const publicationBlockerSchema = z.enum(PUBLICATION_BLOCKER_VALUES)
 
 export const publicationOperationDtoSchema = z.object({
   operationId: resourceIdSchema,
-  operationType: z.enum(['PUBLISH', 'UNPUBLISH']),
+  operationType: z.enum(['PUBLISH', 'UNPUBLISH', 'UPSCALE']),
   entityId: resourceIdSchema,
   requestedVersion: resourceVersionSchema,
   status: publicationOperationStatusSchema,

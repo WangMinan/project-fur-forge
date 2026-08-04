@@ -43,10 +43,9 @@ const {
   previewPending,
   previews,
   reorderEnabled,
-  retryPublication,
+  retryOperation,
   saveSettings,
   updateSlide,
-  upscaling,
 } = useAdminHome(placement)
 
 const works = ref<WorkListItemDto[]>([])
@@ -187,7 +186,7 @@ async function onEnable(id: string, allowUpscale: boolean) {
 }
 
 async function onRetry(id: string) {
-  actionError.value = await retryPublication(id)
+  actionError.value = await retryOperation(id)
 }
 
 async function onMove(id: string, direction: -1 | 1) {
@@ -371,7 +370,6 @@ onMounted(() => {
               :feedback="feedback[slide.id] ?? null"
               :preview="previews[slide.id] ?? null"
               :preview-pending="previewPending[slide.id] ?? false"
-              :upscaling="upscaling[slide.id] ?? false"
               :can-move-up="moveStateFor(slide.id).canMoveUp"
               :can-move-down="moveStateFor(slide.id).canMoveDown"
               @save="payload => onSave(slide.id, payload)"
@@ -380,7 +378,7 @@ onMounted(() => {
               @disable="onDisable(slide.id)"
               @move="direction => onMove(slide.id, direction)"
               @load-preview="onPreview(slide.id)"
-              @retry-publication="onRetry(slide.id)"
+              @retry-operation="onRetry(slide.id)"
               @conflict="load()"
             />
             <AdminHomeSlideCard

@@ -656,7 +656,7 @@ export const publicationOperations = sqliteTable('publication_operations', {
     .on(table.entityType, table.entityId, table.startedAt),
   check(
     'publication_operations_operation_type',
-    sql`${table.operationType} IN ('PUBLISH', 'UNPUBLISH')`,
+    sql`${table.operationType} IN ('PUBLISH', 'UNPUBLISH', 'UPSCALE')`,
   ),
   check(
     'publication_operations_entity_type',
@@ -664,7 +664,7 @@ export const publicationOperations = sqliteTable('publication_operations', {
   ),
   check(
     'publication_operations_status',
-    sql`${table.status} IN ('GENERATING_PUBLIC', 'APPLYING_WATERMARK', 'VERIFYING_PUBLIC', 'COMMITTING', 'CLEANING_PUBLIC', 'FAILED', 'DONE')`,
+    sql`${table.status} IN ('PREPARING_SOURCE', 'GENERATING_PUBLIC', 'APPLYING_WATERMARK', 'VERIFYING_PUBLIC', 'COMMITTING', 'CLEANING_PUBLIC', 'FAILED', 'DONE')`,
   ),
   check(
     'publication_operations_requested_version',
@@ -672,7 +672,7 @@ export const publicationOperations = sqliteTable('publication_operations', {
   ),
   check(
     'publication_operations_failure_stage',
-    sql`${table.failureStage} IS NULL OR ${table.failureStage} IN ('VALIDATING', 'GENERATING_PUBLIC', 'APPLYING_WATERMARK', 'VERIFYING_PUBLIC', 'COMMITTING', 'CLEANING_PUBLIC')`,
+    sql`${table.failureStage} IS NULL OR ${table.failureStage} IN ('PREPARING_SOURCE', 'VALIDATING', 'GENERATING_PUBLIC', 'APPLYING_WATERMARK', 'VERIFYING_PUBLIC', 'COMMITTING', 'CLEANING_PUBLIC')`,
   ),
   check(
     'publication_operations_failure_state',

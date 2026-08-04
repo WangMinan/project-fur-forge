@@ -1,11 +1,15 @@
 import { resourceIdSchema } from '../../../../../../../../shared/schemas/api'
 import {
-  adminHomeResponseSchema,
   mutateHomeRequestSchema,
 } from '../../../../../../../../shared/schemas/home'
+import { publicationOperationResponseSchema } from '../../../../../../../../shared/schemas/publication'
 import { createApiError } from '../../../../../../../utils/api-error'
+import { adminSessionFor } from '../../../../../../../utils/auth-session'
 import { getDatabase } from '../../../../../../../utils/database'
-import { prepareHeroSlideUpscale } from '../../../../../../../utils/home-management'
+import {
+  runHeroSlideUpscale,
+  startHeroSlideUpscale,
+} from '../../../../../../../utils/home-management'
 import { readHeroPlacement } from '../../../../../../../utils/hero-placement'
 import { getMediaStorage } from '../../../../../../../utils/media-storage'
 import { readAdminJsonBody } from '../../../../../../../utils/request-body'
@@ -18,16 +22,23 @@ export default defineEventHandler(async (event) => {
     throw createApiError(400, 'VALIDATION_ERROR', 'Request is invalid.')
   }
   try {
-    return adminHomeResponseSchema.parse({
-      data: await prepareHeroSlideUpscale(
-        getDatabase().sqlite,
-        getMediaStorage(),
-        id.data,
-        body.data.expectedVersion,
-        Date.now(),
-        readHeroPlacement(event),
-      ),
-    })
+    const sqlite = getDatabase().sqlite
+    const operation = startHeroSlideUpscale(
+      sqlite,
+      id.data,
+      body.data.expectedVersion,
+      Date.now(),
+      readHeroPlacement(event),
+    )
+    event.waitUntil(runHeroSlideUpscale(
+      sqlite,
+      getMediaStorage(),
+      operation.operationId,
+      adminSessionFor(event).user.id,
+    ).catch(error => event.captureError(error, {
+      tags: ['home-hero-upscale'],
+    })))
+    return publicationOperationResponseSchema.parse({ data: operation })
   }
   catch (error) {
     asSafeApiError(error)

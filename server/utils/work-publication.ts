@@ -30,7 +30,7 @@ interface OperationRow {
   failureStage: PublicationFailureStage | null
   id: string
   internalErrorCode: string | null
-  operationType: 'PUBLISH' | 'UNPUBLISH'
+  operationType: 'PUBLISH' | 'UNPUBLISH' | 'UPSCALE'
   requestedVersion: number
   startedAt: number
   status: PublicationOperationStatus
@@ -355,7 +355,7 @@ function createOperation(
   sqlite: Database.Database,
   workId: string,
   requestedVersion: number,
-  type: OperationRow['operationType'],
+  type: 'PUBLISH' | 'UNPUBLISH',
   now: number,
 ) {
   const active = sqlite.prepare(`
@@ -550,7 +550,7 @@ function repeatedOperation(
   sqlite: Database.Database,
   workId: string,
   expectedVersion: number,
-  type: OperationRow['operationType'],
+  type: 'PUBLISH' | 'UNPUBLISH',
 ) {
   return sqlite.prepare(`
     ${selectOperation}

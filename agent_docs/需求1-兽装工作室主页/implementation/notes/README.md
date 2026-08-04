@@ -7,7 +7,8 @@
 
 - [`P0-C-STAGE-READINESS-2026-08-02.md`](./P0-C-STAGE-READINESS-2026-08-02.md)：阶段 C 启动条件、T22 边界、四个执行波次、main 直推纪律、自动化与 GPT-5.6 Sol 浏览器/视觉 Review 方法。
 - [`../EXECUTION_ROUTING.md`](../EXECUTION_ROUTING.md)：前端模型池、GPT-5.6 Sol 后端/Review、串行交接和测试策略。
-- [`../TASKS.md`](../TASKS.md)：唯一可勾选任务清单；T23–T27 已收口，T26-F1、T27-F1 实现方自测完成并等待独立 Review/用户验收。
+- [`../TASKS.md`](../TASKS.md)：唯一可勾选任务清单；T23–T27 已收口，T26-F1、T27-F1 独立 Review 为 `PASS WITH FOLLOW-UP`，等待用户验收。
+- [`T26-F1-T27-F1-INDEPENDENT-REVIEW-2026-08-05.md`](./t26-t27/T26-F1-T27-F1-INDEPENDENT-REVIEW-2026-08-05.md)：保留初始 FAIL、7 个 findings、持久适配/移动菜单/测试契约修复和独立复测证据。
 - [`T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md`](./t26-t27/T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md)：公开信息架构、0015、服务/隐私页、导航/页脚、状态呈现和实现方自动化/浏览器证据。
 - [`T25-DESIGN-SHEET-WATERMARK-FOLLOW-UP-2026-08-05.md`](./t23-t25/T25-DESIGN-SHEET-WATERMARK-FOLLOW-UP-2026-08-05.md)：高分辨率设定图水印固定像素根因、960 px 基准修复、当前活动 profile 原子重建与真实 OSS/浏览器证据。
 - [`T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`](./t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md)：委托页独立大图的规格、最小复用方案、低分辨率追加实现与验证证据。
@@ -49,6 +50,7 @@
 
 ### T26–T27 固定内容与营业状态
 
+- [`T26-F1-T27-F1-INDEPENDENT-REVIEW-2026-08-05.md`](./t26-t27/T26-F1-T27-F1-INDEPENDENT-REVIEW-2026-08-05.md)：T26-F1/T27-F1 新上下文独立 Review；初始 `FAIL` 后 7 个 findings 全部关闭，最终 `PASS WITH FOLLOW-UP`，用户验收待执行。
 - [`T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md`](./t26-t27/T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md)：关于/联系合并、服务条款/隐私政策独立页、0015、导航/页脚、营业状态与双 Host 三视口实现方自测；独立 Review/用户验收待执行。
 - [`T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`](./t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md)：委托页独立大图管理、公开投影、迁移、低分辨率适配和实现方验证；统一的独立 Review/验收待执行。
 - [`T26-F1-HERO-WATERMARK-FOLLOW-UP-2026-08-04.md`](./t26-t27/T26-F1-HERO-WATERMARK-FOLLOW-UP-2026-08-04.md)：共享 `recipe-v2` 将横版大图改为设定图式左右双水印，竖版大图保持作品卡式单个居中水印；当前库已原子切换。
