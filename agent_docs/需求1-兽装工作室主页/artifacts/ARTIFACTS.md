@@ -14,7 +14,7 @@
 | 模型投影 | `models/README.md` | `models/WATERMARK-CENTERED-V2.md` |
 | 设计 | `.design/` | `.design/WATERMARK-CENTERED-V2.md` |
 | 任务 | `implementation/TASKS.md` | T01–T29、EXT-01/02 与 GATE-06/07 已完成；T26-F1、T27-F1、T30 用户验收待执行 |
-| 状态 | `STATE.md` | 阶段 C：T31 已完成，当前进入 T32；T26-F1、T27-F1、T30 与 T34 的用户门禁保持独立；main 直推继续生效 |
+| 状态 | `STATE.md` | 阶段 C：T31–T32 已完成，当前进入 T33；T26-F1、T27-F1、T30 与 T34 的用户门禁保持独立；main 直推继续生效 |
 
 ## 当前执行入口
 
@@ -22,7 +22,7 @@
 | --- | --- | --- |
 | `implementation/notes/P0-C-STAGE-READINESS-2026-08-02.md` | 当前 | 阶段 C 启动条件、T22 边界、执行波次、main 纪律和验收方法 |
 | `implementation/EXECUTION_ROUTING.md` | 当前 | 前端模型池、GPT-5.6 Sol 后端/Review、串行交接、定向自动化与真实浏览器 Review |
-| `implementation/TASKS.md` | 当前 | 唯一可勾选清单；T31 已完成，当前进入 T32；T26-F1、T27-F1、T30 保持未勾选并等待用户验收 |
+| `implementation/TASKS.md` | 当前 | 唯一可勾选清单；T31–T32 已完成，当前进入 T33；T26-F1、T27-F1、T30 保持未勾选并等待用户验收 |
 | `materials/MATERIAL-MANIFEST.md` | 已确认 | Logo、作品、横版设定图、返图与页面候选的正式输入和衍生职责；EXT-01 完成 |
 | `implementation/notes/README.md` | 当前 | 按当前/收口/历史/截图整理全部实施记录，不移动已被引用的旧路径 |
 
@@ -52,6 +52,7 @@
 | T27-F1 公开信息架构与政策页 | Review 通过，待用户验收 | `implementation/notes/t26-t27/T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md`；0015、管理/公开投影、政策页、二级导航、紧凑页脚和营业状态 |
 | T28–T30 公开核心 Review | PASS / PASS WITH FOLLOW-UP | `implementation/notes/t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md`；首页顺序、详情导航/301、SEO、品牌衍生物、初始 findings 与 Chrome 复验；T30 待用户验收 |
 | T31 备份恢复与迁移冒烟 | PASS | `implementation/notes/t28-t34/T31-BACKUP-RESTORE-2026-08-05.md`；验证恢复命令、迁移 hash、非空短属性/媒体/大图/profile 一致性、失败清理和恢复库 Chrome |
+| T32 P0 安全门禁 | PASS | `implementation/notes/t28-t34/T32-SECURITY-GATE-2026-08-05.md`；初始 findings、64 KiB JSON、分层限流、请求中断收口、用户名脱敏、真实 OSS/secret scan 与独立复验 |
 | 首页/委托页大图水印跟进 | 已完成 | `implementation/notes/t26-t27/T26-F1-HERO-WATERMARK-FOLLOW-UP-2026-08-04.md`；共享配方按作品媒体规则生成横版左右双水印、竖版单个居中水印，并完成现有公开对象原子重建与浏览器复核 |
 | T26/T27 回家人工核对 | 当前 | `implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md`；双 Host、文案/状态、委托独立大图、三公开页和可选 409 复核 |
 | EXT-01 正式素材 | 已完成 | `materials/MATERIAL-MANIFEST.md`；文件交付和角色映射完成，T30/T51 继续生成/校准衍生物 |
