@@ -3,7 +3,7 @@ import { publicHomeResponseSchema } from '~~/shared/schemas/home'
 
 const year = new Date().getFullYear()
 const { data: home } = await useFetch('/api/public/v1/home', {
-  key: 'public-home',
+  key: 'public-footer-home',
   headers: useRequestHeaders(['host']),
   transform: raw => publicHomeResponseSchema.parse(raw).data,
 })

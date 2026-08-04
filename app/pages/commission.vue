@@ -84,7 +84,7 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
         <ul class="commission-page__scope" role="list">
           <li class="commission-page__scope-item">
             <h3 class="commission-page__scope-name">全装</h3>
-            <p class="commission-page__scope-detail">覆盖头、身体、爪与尾巴的完整套装。</p>
+            <p class="commission-page__scope-detail">完整兽装制作。</p>
           </li>
           <li class="commission-page__scope-item">
             <h3 class="commission-page__scope-name">半装</h3>
