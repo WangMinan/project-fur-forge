@@ -15,6 +15,22 @@ export function preprocessImageForOss(content: Buffer): {
   }
 }
 
+export function upscaleHeroImage(
+  content: Buffer,
+  orientation: 'landscape' | 'portrait',
+): {
+  content: Buffer
+  contentType: 'image/png'
+  dimensions: { width: number, height: number }
+  filter: string
+  binary: {
+    provider: 'ffmpeg-static'
+    version: string
+    sha256: string
+    usedPathLookup: false
+  }
+}
+
 export function compressPngForOss(content: Buffer): {
   content: Buffer
   contentType: 'image/png'

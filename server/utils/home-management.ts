@@ -32,9 +32,10 @@ import type {
 } from './media-mapper'
 import type { MediaStorage } from './media-storage'
 import {
+  assetSupportsPublicUsages,
+  ensureHeroUpscaleSource,
   generatePrivateWatermarkPreview,
   generatePublicVariants,
-  sourceSupportsPublicUsages,
 } from './media-recipe'
 import { ServiceError } from './service-error'
 import { activeWatermarkProfileId } from './watermark-branding'
@@ -382,6 +383,29 @@ export async function createHeroSlidePreview(
   return adminHeroPreviewDtoSchema.parse({ landscape, portrait })
 }
 
+export async function prepareHeroSlideUpscale(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  slideId: string,
+  expectedVersion: number,
+  now = Date.now(),
+  placement: HeroPlacement = 'home',
+) {
+  requireHomeVersion(sqlite, expectedVersion)
+  const slide = requireSlide(sqlite, slideId, placement)
+  if (slide.enabled === 1) {
+    throw new ServiceError(409, 'CONFLICT', 'Enabled hero slides cannot be upscaled.')
+  }
+  assertAssetPair(sqlite, {
+    landscapeAssetId: slide.landscapeAssetId,
+    portraitAssetId: slide.portraitAssetId,
+  }, slide.id)
+  await ensureHeroUpscaleSource(sqlite, storage, slide.landscapeAssetId, now)
+  await ensureHeroUpscaleSource(sqlite, storage, slide.portraitAssetId, now)
+  requireHomeVersion(sqlite, expectedVersion)
+  return getAdminHome(sqlite, placement)
+}
+
 export async function getHeroSlidePreviewContent(
   sqlite: Database.Database,
   storage: MediaStorage,
@@ -541,12 +565,6 @@ function assertAssetPair(
     || portrait.uploadedForHome !== 1
   ) {
     throw new ServiceError(409, 'CONFLICT', 'Hero assets are not publication-ready.')
-  }
-  if (
-    !sourceSupportsPublicUsages(landscape, ['home-hero-landscape'])
-    || !sourceSupportsPublicUsages(portrait, ['home-hero-portrait'])
-  ) {
-    throw new ServiceError(409, 'CONFLICT', 'Hero assets do not meet public recipe dimensions.')
   }
   const used = sqlite.prepare(`
     SELECT 1 FROM site_hero_slides
@@ -838,6 +856,20 @@ function assertSlideCanEnable(
     landscapeAssetId: slide.landscapeAssetId,
     portraitAssetId: slide.portraitAssetId,
   }, slide.id)
+  if (
+    !assetSupportsPublicUsages(
+      sqlite,
+      slide.landscapeAssetId,
+      ['home-hero-landscape'],
+    )
+    || !assetSupportsPublicUsages(
+      sqlite,
+      slide.portraitAssetId,
+      ['home-hero-portrait'],
+    )
+  ) {
+    throw new ServiceError(409, 'CONFLICT', 'Hero assets require confirmed upscale.')
+  }
   assertLinkedWork(sqlite, slide.linkedWorkId)
   if (!activeWatermarkProfileId(sqlite)) {
     throw new ServiceError(409, 'CONFLICT', 'Active watermark profile is unavailable.')

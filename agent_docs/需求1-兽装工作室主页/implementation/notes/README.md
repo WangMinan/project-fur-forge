@@ -7,8 +7,8 @@
 
 - [`P0-C-STAGE-READINESS-2026-08-02.md`](./P0-C-STAGE-READINESS-2026-08-02.md)：阶段 C 启动条件、T22 边界、四个执行波次、main 直推纪律、自动化与 GPT-5.6 Sol 浏览器/视觉 Review 方法。
 - [`../EXECUTION_ROUTING.md`](../EXECUTION_ROUTING.md)：前端模型池、GPT-5.6 Sol 后端/Review、串行交接和测试策略。
-- [`../TASKS.md`](../TASKS.md)：唯一可勾选任务清单；T23–T27 已收口，T26-F1 工程完成并等待独立 Review/验收。
-- [`T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`](./t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md)：委托页独立大图的规格、最小复用方案、实现与自测交接。
+- [`../TASKS.md`](../TASKS.md)：唯一可勾选任务清单；T23–T27 已收口，T26-F1 实现方自测完成并等待独立 Review/用户验收。
+- [`T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`](./t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md)：委托页独立大图的规格、最小复用方案、低分辨率追加实现与验证证据。
 - [`T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md`](./t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md)：用户下班后可直接照做的双 Host 人工核对步骤，含 T26-F1 独立大图与可选 409 复核。
 - [`T26-T27-BACKEND-HANDOFF-2026-08-04.md`](./t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md)：受限固定字段、独立营业状态、管理/公开 API、迁移与自动化。
 - [`T26-T27-FRONTEND-2026-08-04.md`](./t26-t27/T26-T27-FRONTEND-2026-08-04.md)：首页管理固定区块、三公开页、空值隐藏、浏览器自测与 OQ-120 缺失清单。
@@ -44,7 +44,7 @@
 
 ### T26–T27 固定内容与营业状态
 
-- [`T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`](./t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md)：委托页独立大图管理、公开投影、迁移和实现方验证；独立 Review/验收待执行。
+- [`T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`](./t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md)：委托页独立大图管理、公开投影、迁移、低分辨率适配和实现方验证；统一的独立 Review/验收待执行。
 - [`T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md`](./t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md)：T26/T27 页面、状态、文案、邮件操作、委托独立大图及冲突恢复的人工验收清单。
 - [`T26-T27-BACKEND-HANDOFF-2026-08-04.md`](./t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md)：0012 迁移、受限纯文本/FAQ、独立状态版本、现有首页管理聚合 API、公开投影与全量测试。
 - [`T26-T27-FRONTEND-2026-08-04.md`](./t26-t27/T26-T27-FRONTEND-2026-08-04.md)：管理固定区块、`/commission` `/about` `/contact`、实现方浏览器自测与截图；**OQ-120 开放，T26/T27 未勾选**。

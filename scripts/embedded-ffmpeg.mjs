@@ -67,6 +67,20 @@ function runEmbeddedFfmpeg(arguments_, options = {}) {
   return result
 }
 
+function embeddedBinaryIdentity() {
+  const version = runEmbeddedFfmpeg(['-version'], {
+    encoding: 'utf8',
+  }).stdout.split(/\r?\n/u)[0]
+  return {
+    provider: 'ffmpeg-static',
+    version,
+    sha256: createHash('sha256')
+      .update(readFileSync(ffmpegPath))
+      .digest('hex'),
+    usedPathLookup: false,
+  }
+}
+
 export function preprocessImageForOss(content) {
   if (!Buffer.isBuffer(content)) {
     throw new Error('Embedded FFmpeg input must be an image Buffer.')
@@ -113,10 +127,6 @@ export function preprocessImageForOss(content) {
     throw new Error('Embedded FFmpeg output is not an OSS-processable PNG.')
   }
 
-  const version = runEmbeddedFfmpeg(['-version'], {
-    encoding: 'utf8',
-  }).stdout.split(/\r?\n/u)[0]
-
   return {
     content: output,
     contentType: 'image/png',
@@ -124,14 +134,65 @@ export function preprocessImageForOss(content) {
       width: output.readUInt32BE(16),
       height: output.readUInt32BE(20),
     },
-    binary: {
-      provider: 'ffmpeg-static',
-      version,
-      sha256: createHash('sha256')
-        .update(readFileSync(ffmpegPath))
-        .digest('hex'),
-      usedPathLookup: false,
-    },
+    binary: embeddedBinaryIdentity(),
+  }
+}
+
+export function upscaleHeroImage(content, orientation) {
+  if (!Buffer.isBuffer(content)) {
+    throw new Error('Embedded FFmpeg input must be an image Buffer.')
+  }
+  if (orientation !== 'landscape' && orientation !== 'portrait') {
+    throw new Error('Hero upscale orientation is invalid.')
+  }
+  const width = orientation === 'landscape' ? 1920 : 1080
+  const height = orientation === 'landscape' ? 1080 : 1920
+  const filter = `scale=w=${width}:h=${height}:force_original_aspect_ratio=increase:flags=lanczos,crop=${width}:${height}`
+  const result = runEmbeddedFfmpeg([
+    '-hide_banner',
+    '-loglevel',
+    'error',
+    '-f',
+    'image2pipe',
+    '-c:v',
+    inputCodec(content),
+    '-i',
+    'pipe:0',
+    '-frames:v',
+    '1',
+    '-map_metadata',
+    '-1',
+    '-vf',
+    filter,
+    '-threads',
+    '1',
+    '-c:v',
+    'png',
+    '-compression_level',
+    '9',
+    '-pred',
+    'mixed',
+    '-f',
+    'image2pipe',
+    'pipe:1',
+  ], { input: content })
+  const output = result.stdout
+  if (
+    output.length === 0
+    || output.length < 24
+    || output.length > OSS_IMAGE_PROCESSING_MAX_BYTES
+    || !output.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)
+    || output.readUInt32BE(16) !== width
+    || output.readUInt32BE(20) !== height
+  ) {
+    throw new Error('Embedded FFmpeg hero upscale output is invalid.')
+  }
+  return {
+    content: output,
+    contentType: 'image/png',
+    dimensions: { width, height },
+    filter,
+    binary: embeddedBinaryIdentity(),
   }
 }
 

@@ -107,6 +107,15 @@ export function heroPng(orientation: 'landscape' | 'portrait'): Buffer {
   return uniquePng(heroSources[orientation])
 }
 
+export function lowResolutionHeroPng(
+  orientation: 'landscape' | 'portrait',
+): Buffer {
+  return uniquePng(createSyntheticSourcePng(
+    orientation === 'landscape' ? 960 : 540,
+    orientation === 'landscape' ? 540 : 960,
+  ) as Buffer)
+}
+
 // T20 首页管理 E2E：临时停用/恢复活动水印 profile（验证预览与启用阻断）。
 export async function setWatermarkProfileActive(page: Page, active: boolean) {
   await control(page, { action: 'setWatermarkProfileActive', active })

@@ -23,6 +23,7 @@ const props = defineProps<{
   preview?: AdminHeroPreviewDto | null
   previewPending?: boolean
   slide: AdminHeroSlideDto | null
+  upscaling?: boolean
   works: WorkListItemDto[]
 }>()
 
@@ -31,7 +32,7 @@ const emit = defineEmits<{
   create: [payload: HeroSlideInput]
   delete: []
   disable: []
-  enable: []
+  enable: [allowUpscale: boolean]
   loadPreview: []
   move: [direction: -1 | 1]
   retryPublication: []
@@ -44,6 +45,7 @@ const linkedWorkId = ref<string | null>(props.slide?.linkedWork?.id ?? null)
 const landscapeAssetId = ref<string | null>(null)
 const portraitAssetId = ref<string | null>(null)
 const confirmDelete = ref(false)
+const confirmUpscale = shallowRef(false)
 const itemLabel = computed(() => props.placement === 'home' ? '轮播项' : '大图项')
 const pageLabel = computed(() => props.placement === 'home' ? '首页' : '委托页')
 
@@ -99,6 +101,20 @@ const sortOrderValid = computed(() =>
   Number.isInteger(sortOrder.value) && sortOrder.value >= 0 && sortOrder.value <= 9_999,
 )
 const pairReady = computed(() => effectiveLandscapeId.value !== null && effectivePortraitId.value !== null)
+const lowResolutionSources = computed(() => {
+  if (!props.slide) {
+    return []
+  }
+  return [
+    props.slide.landscape.width < 1920 || props.slide.landscape.height < 1080
+      ? `横版 ${props.slide.landscape.width}×${props.slide.landscape.height}（推荐 1920×1080）`
+      : null,
+    props.slide.portrait.width < 1080 || props.slide.portrait.height < 1920
+      ? `竖版 ${props.slide.portrait.width}×${props.slide.portrait.height}（推荐 1080×1920）`
+      : null,
+  ].filter((value): value is string => value !== null)
+})
+const requiresUpscale = computed(() => lowResolutionSources.value.length > 0)
 
 const canSubmit = computed(() => {
   if (props.mutating || locked.value || !altValid.value || !sortOrderValid.value || !pairReady.value) {
@@ -116,6 +132,9 @@ const OPERATION_PROGRESS_LABELS: Record<string, string> = {
 }
 
 const operationProgress = computed(() => {
+  if (props.upscaling) {
+    return '正在用 FFmpeg 放大适配（Lanczos 插值）…'
+  }
   const status = props.operation?.status
   return status ? OPERATION_PROGRESS_LABELS[status] ?? null : null
 })
@@ -157,6 +176,14 @@ function onLinkedWorkChange(event: Event) {
   const value = (event.target as HTMLSelectElement).value
   linkedWorkId.value = value === '' ? null : value
 }
+
+function requestEnable() {
+  if (requiresUpscale.value) {
+    confirmUpscale.value = true
+    return
+  }
+  emit('enable', false)
+}
 </script>
 
 <template>
@@ -181,6 +208,10 @@ function onLinkedWorkChange(event: Event) {
 
     <p v-if="locked" class="slide-card__locked-hint">
       已启用的{{ itemLabel }}需先停用才能编辑内容或删除。
+    </p>
+
+    <p v-if="requiresUpscale && !locked" class="slide-card__upscale-warning" role="status">
+      {{ lowResolutionSources.join('；') }}。启用前需要确认放大适配；插值只补足尺寸，不会恢复原图细节。
     </p>
 
     <div class="slide-card__grid">
@@ -280,7 +311,7 @@ function onLinkedWorkChange(event: Event) {
           type="button"
           class="slide-card__action"
           :disabled="mutating || operationProgress !== null"
-          @click="emit('enable')"
+          @click="requestEnable"
         >{{ operationProgress ? '启用中…' : '启用' }}</button>
         <button
           v-else
@@ -329,8 +360,13 @@ function onLinkedWorkChange(event: Event) {
     </div>
 
     <div v-if="operationProgress" class="slide-card__progress" role="status">
-      <p>{{ operationProgress }} 当前活动 profile 已就绪 {{ readyVariantCount }} / 12</p>
+      <p>{{ operationProgress }}<template v-if="!upscaling"> 当前活动 profile 已就绪 {{ readyVariantCount }} / 12</template></p>
       <progress
+        v-if="upscaling"
+        :aria-label="`${pageLabel}大图正在用 FFmpeg 放大适配`"
+      />
+      <progress
+        v-else
         :value="readyVariantCount"
         max="12"
         :aria-label="`${pageLabel}公开衍生图已就绪 ${readyVariantCount} / 12`"
@@ -374,6 +410,17 @@ function onLinkedWorkChange(event: Event) {
         >
       </div>
     </div>
+
+    <AdminConfirmDialog
+      :open="confirmUpscale"
+      title="确认放大适配这组图片？"
+      confirm-label="确认并继续启用"
+      @confirm="confirmUpscale = false; emit('enable', true)"
+      @cancel="confirmUpscale = false"
+    >
+      <p>{{ lowResolutionSources.join('；') }}。</p>
+      <p>服务端会用 FFmpeg Lanczos 插值生成私有适配源，再继续水印与公开图片流程。放大不会恢复原图不存在的细节，永久原图会保留不变。</p>
+    </AdminConfirmDialog>
 
     <AdminConfirmDialog
       :open="confirmDelete"
@@ -424,6 +471,16 @@ function onLinkedWorkChange(event: Event) {
   margin: 0;
   font-size: var(--admin-font-xs);
   color: var(--admin-text-tertiary);
+}
+
+.slide-card__upscale-warning {
+  margin: 0;
+  padding: var(--admin-space-3);
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-status-warning-soft);
+  color: var(--admin-status-warning);
+  font-size: var(--admin-font-xs);
+  line-height: var(--admin-line-normal);
 }
 
 .slide-card__grid {

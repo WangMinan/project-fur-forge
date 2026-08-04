@@ -3,6 +3,7 @@ import {
   randomUUID,
 } from 'node:crypto'
 import type Database from 'better-sqlite3'
+import { upscaleHeroImage } from '../../scripts/embedded-ffmpeg.mjs'
 import { WATERMARK_PROFILE_NAME } from '../../shared/schemas/watermark'
 import type {
   MediaRole,
@@ -22,6 +23,7 @@ import type {
 
 export const PUBLIC_RECIPE_VERSION = 'recipe-v2'
 export const LEGACY_PUBLIC_RECIPE_VERSION = 'recipe-v1'
+export const HERO_UPSCALE_RECIPE_VERSION = 'hero-upscale-lanczos-v1'
 const WATERMARK_SIZE_MULTIPLIER = 1.6
 /** Historical identity only. */
 export const STANDARD_WATERMARK_PROFILE = 'brand-standard-v1'
@@ -63,9 +65,11 @@ interface AssetSource {
 }
 
 interface ProcessingSource {
+  height: number
   inputSha256: string
   objectKey: string
   sourceVariantId: string | null
+  width: number
 }
 
 export interface ReadyPublicVariant {
@@ -177,15 +181,50 @@ function processingSource(
   sqlite: Database.Database,
   sourceAsset: AssetSource,
 ): ProcessingSource {
+  const target = heroUpscaleTarget(sourceAsset.role)
+  if (target) {
+    const upscaled = sqlite.prepare(`
+      SELECT id, object_key AS objectKey, sha256, width, height
+      FROM asset_variants
+      WHERE asset_id = ? AND storage_scope = 'PRIVATE'
+        AND status = 'READY' AND usage = 'preprocess'
+        AND recipe_version = ? AND input_sha256 = ?
+        AND byte_size <= 20000000 AND width = ? AND height = ?
+      ORDER BY created_at DESC LIMIT 1
+    `).get(
+      sourceAsset.id,
+      HERO_UPSCALE_RECIPE_VERSION,
+      sourceAsset.sha256,
+      target.width,
+      target.height,
+    ) as {
+      height: number
+      id: string
+      objectKey: string
+      sha256: string
+      width: number
+    } | undefined
+    if (upscaled) {
+      return {
+        height: upscaled.height,
+        inputSha256: upscaled.sha256,
+        objectKey: upscaled.objectKey,
+        sourceVariantId: upscaled.id,
+        width: upscaled.width,
+      }
+    }
+  }
   if (sourceAsset.byteSize <= 20_000_000) {
     return {
+      height: sourceAsset.height,
       inputSha256: sourceAsset.sha256,
       objectKey: sourceAsset.privateObjectKey,
       sourceVariantId: null,
+      width: sourceAsset.width,
     }
   }
   const row = sqlite.prepare(`
-    SELECT id, object_key AS objectKey, sha256
+    SELECT id, object_key AS objectKey, sha256, width, height
     FROM asset_variants
     WHERE asset_id = ? AND storage_scope = 'PRIVATE'
       AND status = 'READY' AND usage = 'preprocess'
@@ -193,17 +232,21 @@ function processingSource(
       AND width <= 4096 AND height <= 4096
     ORDER BY created_at DESC LIMIT 1
   `).get(sourceAsset.id, sourceAsset.sha256) as {
+    height: number
     id: string
     objectKey: string
     sha256: string
+    width: number
   } | undefined
   if (!row) {
     throw new ServiceError(409, 'CONFLICT', 'Asset has no ready private processing source.')
   }
   return {
+    height: row.height,
     inputSha256: row.sha256,
     objectKey: row.objectKey,
     sourceVariantId: row.id,
+    width: row.width,
   }
 }
 
@@ -213,6 +256,132 @@ function environmentPrefix(privateObjectKey: string) {
     throw new Error('Original object key has no environment prefix.')
   }
   return privateObjectKey.slice(0, marker)
+}
+
+function heroUpscaleTarget(role: MediaRole) {
+  if (role === 'home_hero_landscape') {
+    return { height: 1080, orientation: 'landscape' as const, width: 1920 }
+  }
+  if (role === 'home_hero_portrait') {
+    return { height: 1920, orientation: 'portrait' as const, width: 1080 }
+  }
+  return null
+}
+
+export async function ensureHeroUpscaleSource(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  assetId: string,
+  now = Date.now(),
+) {
+  const sourceAsset = asset(sqlite, assetId)
+  const target = heroUpscaleTarget(sourceAsset.role)
+  if (!target) {
+    throw new ServiceError(400, 'VALIDATION_ERROR', 'Asset is not a hero image.')
+  }
+  if (sourceAsset.width >= target.width && sourceAsset.height >= target.height) {
+    return processingSource(sqlite, sourceAsset)
+  }
+  const existing = processingSource(sqlite, sourceAsset)
+  if (existing.sourceVariantId !== null
+    && existing.width === target.width
+    && existing.height === target.height) {
+    return existing
+  }
+
+  let objectKey: string | null = null
+  try {
+    const output = upscaleHeroImage(
+      await storage.getPrivate(sourceAsset.privateObjectKey),
+      target.orientation,
+    )
+    const identity = JSON.stringify({
+      recipeVersion: HERO_UPSCALE_RECIPE_VERSION,
+      sourceSha256: sourceAsset.sha256,
+      target: output.dimensions,
+      filter: output.filter,
+      binary: output.binary,
+      format: 'png',
+    })
+    const identityHash = digest('sha256', Buffer.from(identity))
+    const outputSha256 = digest('sha256', output.content)
+    objectKey = `${environmentPrefix(sourceAsset.privateObjectKey)}/processing/${sourceAsset.id}/${HERO_UPSCALE_RECIPE_VERSION}/${identityHash}.png`
+    await storage.putPrivateConditional({
+      content: output.content,
+      contentMd5: createHash('md5').update(output.content).digest('base64'),
+      contentType: 'image/png',
+      objectKey,
+      sha256: outputSha256,
+    })
+    const [head, info, saved] = await Promise.all([
+      storage.headPrivate(objectKey),
+      storage.imageInfoPrivate(objectKey),
+      storage.getPrivate(objectKey),
+    ])
+    if (
+      head.byteSize !== output.content.length
+      || head.byteSize !== saved.length
+      || head.byteSize > 20_000_000
+      || head.contentType !== 'image/png'
+      || head.etagMd5Hex !== digest('md5', saved)
+      || head.sha256Metadata !== outputSha256
+      || info.fileSize !== head.byteSize
+      || normalizedFormat(info.format) !== 'png'
+      || info.width !== target.width
+      || info.height !== target.height
+      || digest('sha256', saved) !== outputSha256
+    ) {
+      throw new Error('Hero upscale verification failed.')
+    }
+    sqlite.prepare(`
+      INSERT OR IGNORE INTO asset_variants (
+        id, asset_id, storage_scope, status, object_key, input_sha256,
+        media_role, usage, width, height, format, quality, crop_identity,
+        recipe_version, watermark_profile, logo_digest, watermark_anchor,
+        sha256, byte_size, created_at, updated_at
+      ) VALUES (?, ?, 'PRIVATE', 'READY', ?, ?, ?, 'preprocess', ?, ?,
+                'png', 100, ?, ?, 'none', 'none', 'none', ?, ?, ?, ?)
+    `).run(
+      randomUUID(),
+      sourceAsset.id,
+      objectKey,
+      sourceAsset.sha256,
+      sourceAsset.role,
+      target.width,
+      target.height,
+      identityHash,
+      HERO_UPSCALE_RECIPE_VERSION,
+      outputSha256,
+      output.content.length,
+      now,
+      now,
+    )
+    return processingSource(sqlite, sourceAsset)
+  }
+  catch (error) {
+    if (objectKey) {
+      await storage.deletePrivate(objectKey).catch(() => {})
+    }
+    safeLog('error', 'Hero image upscale failed.', {
+      assetId: sourceAsset.id,
+      errorCode: (error as { code?: unknown }).code,
+    })
+    throw new ServiceError(500, 'INTERNAL_ERROR', 'Hero image upscale failed.')
+  }
+}
+
+export function assetSupportsPublicUsages(
+  sqlite: Database.Database,
+  assetId: string,
+  usages: readonly PublicMediaUsage[],
+) {
+  const sourceAsset = asset(sqlite, assetId)
+  const source = processingSource(sqlite, sourceAsset)
+  return sourceSupportsPublicUsages({
+    ...sourceAsset,
+    height: source.height,
+    width: source.width,
+  }, usages)
 }
 
 function defaultUsages(role: MediaRole): PublicMediaUsage[] {
@@ -652,10 +821,14 @@ export async function generatePublicVariantsForProfile(
   ) {
     throw new ServiceError(400, 'VALIDATION_ERROR', 'Media usage does not match asset role.')
   }
-  if (!sourceSupportsPublicUsages(sourceAsset, selectedUsages)) {
+  const source = processingSource(sqlite, sourceAsset)
+  if (!sourceSupportsPublicUsages({
+    ...sourceAsset,
+    height: source.height,
+    width: source.width,
+  }, selectedUsages)) {
     throw new ServiceError(409, 'CONFLICT', 'Media source does not meet public recipe dimensions.')
   }
-  const source = processingSource(sqlite, sourceAsset)
   const profile = requireWatermarkProfile(sqlite, profileId)
   if (!['APPLYING', 'ACTIVE'].includes(profile.status)) {
     throw new ServiceError(409, 'CONFLICT', 'Watermark profile is not usable.')

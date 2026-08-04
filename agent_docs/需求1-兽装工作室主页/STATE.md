@@ -13,7 +13,7 @@ T22 后端、前端与独立 Review 证据分别见 [`implementation/notes/t19-t
 T23 工程、T25 服务端交接和本轮前端检查点分别见 [`implementation/notes/t23-t25/T23-ENGINEERING-2026-08-03.md`](./implementation/notes/t23-t25/T23-ENGINEERING-2026-08-03.md)、[`implementation/notes/t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md`](./implementation/notes/t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md) 与 [`implementation/notes/t23-t25/T24-T25-FRONTEND-CHECKPOINT-2026-08-03.md`](./implementation/notes/t23-t25/T24-T25-FRONTEND-CHECKPOINT-2026-08-03.md)。
 T23–T25 最终收口见 [`implementation/notes/t23-t25/T23-T25-CLOSURE-2026-08-04.md`](./implementation/notes/t23-t25/T23-T25-CLOSURE-2026-08-04.md)。
 T26–T27 服务端契约见 [`implementation/notes/t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md)；前端交接见 [`implementation/notes/t26-t27/T26-T27-FRONTEND-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-FRONTEND-2026-08-04.md)；独立 findings、修复、浏览器与安全证据见 [`implementation/notes/t26-t27/T26-T27-INDEPENDENT-REVIEW-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-INDEPENDENT-REVIEW-2026-08-04.md)。
-T26-F1 工程交接见 [`implementation/notes/t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`](./implementation/notes/t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md)；用户下班后补验步骤见 [`implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md)。
+T26-F1 工程交接与低分辨率追加设计见 [`implementation/notes/t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`](./implementation/notes/t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md)；用户下班后补验步骤见 [`implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md)。
 
 ## 当前执行分工
 
@@ -44,14 +44,14 @@ T26-F1 工程交接见 [`implementation/notes/t26-t27/T26-F1-COMMISSION-HERO-CHA
 - [x] T22 后端、前端、独立 Review 和用户人工验收已收口。
 - [x] T23–T25 实现、自动化、独立 Agent Review 与用户人工核验全部收口，三项任务已勾选。
 - [x] T26–T27 实现、独立 Review 与 findings 修复已收口；本轮 USER_GATE 为否，两项任务已勾选。
-- [ ] T26-F1 委托页独立大图的文档、工程实现和实现方自测已完成；独立 Review/验收不由实现方代签。
+- [ ] T26-F1 委托页独立大图及低分辨率提示、确认、FFmpeg 私有适配已完成实现方自测；统一的独立 Review/用户验收待执行。
 
 进入阶段 C 时无阻断 OQ；当前 **OQ-120** 只约束正式内容录入，不阻断已完成的 T26/T27 工程能力。最终小图标与部署参数仍分别在 T30、T34/T52 前确认。
 
 ## 已完成基础
 
 - 双访问面、公开设计系统和管理视觉基线；
-- 双 Bucket、30 MB 永久原图、内嵌 FFmpeg 私有处理源和 OSS 跨桶水印能力；
+- 双 Bucket、30 MB 永久原图、内嵌 FFmpeg 私有处理源和 OSS 跨桶水印能力；站点大图低分辨率适配已完成实现方自测；
 - SQLite/Drizzle、P0 Schema、唯一管理员认证和真实浏览器认证接线；
 - 角色化上传、服务端媒体核验、`recipe-v2`（兼容读取完整 v1 集合）、非领养作品 CRUD、发布/下架和管理端媒体工作流；
 - 真实作品详情、作品列表、首页双源轮播、首页管理和站点联系方式投影；
@@ -129,12 +129,14 @@ EXT-01 现在只表示“正式素材输入已经到位并完成角色映射”�
 - 2026-08-04：T26–T27 新上下文独立 Review 初始登记 2 个 must-fix，修复后键盘复测补充 1 个 should-fix；共享异步数据键、未经确认的公开事实和跳转焦点均完成最小修复。自动化、SSR/Host/DTO/私有 Bucket、真实图片、三视口和公开端键盘复测通过，结论 `PASS WITH FOLLOW-UP`；按本轮 USER_GATE 否的授权勾选 T26/T27。
 - 2026-08-04：用户启动 T26-F1：委托页大图不再复用首页第一项；“首页管理”增加首页/委托页大图 Tab，复用既有双源上传、排序与水印发布。公开委托页保持单张背景，只取独立集合排序第一项；无图隐藏且不回退首页。
 - 2026-08-04：T26-F1 文档、迁移、管理/公开契约、复用式 Tab、实现方自动化和浏览器自测完成；任务保持未勾选，等待新上下文独立 Review 与用户验收。
+- 2026-08-04：用户追加 T26-F1 大图尺寸策略：低于横版 `1920×1080` / 竖版 `1080×1920` 不再直接阻断保存；页面提示清晰度风险，启用前确认后由内嵌 FFmpeg Lanczos 生成私有适配源。该处理不宣称 AI 恢复细节，原图保留，作品媒体不扩展。
+- 2026-08-04：T26-F1 低分辨率追加实现与实现方验证完成：尺寸不足可保存、取消无副作用、确认后生成可追溯私有适配源并继续既有 OSS 发布；unit 102、integration 95、定向真实 Chromium 1 项及 lint/typecheck/build 通过。任务仍待统一的独立 Review/用户验收。
 
 ## 下一步
 
 当前交接：
 
-1. 先对 T26-F1 委托页独立大图执行新上下文独立 Review 与用户验收，再按 TASKS 进入 T28；T29 可在其后串行推进，不提前实现 T37。
+1. 对统一后的 T26-F1 委托页独立大图与低分辨率适配执行新上下文独立 Review 和用户验收；之后按 TASKS 进入 T28，T29 可在其后串行推进，不提前实现 T37。
 2. 用户确认或修改 **OQ-120 候选稿 v2 的最终文字与其余 8 项内容**后，再在「文案配置」录入正式内容；验证临时文案不得进入正式库。
 3. 用户下班后可按 [`T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md) 补验双 Host、完整文案投影、T26-F1 独立大图与可选双上下文 409；该 follow-up 不回退 T26/T27 当前完成状态。
 

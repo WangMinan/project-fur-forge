@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   compressPngForOss,
   OSS_IMAGE_PROCESSING_MAX_BYTES,
+  upscaleHeroImage,
 } from '../../scripts/embedded-ffmpeg.mjs'
 import {
   assertExactObjectScope,
@@ -104,6 +105,21 @@ describe('T10 synthetic media', () => {
     expect(source.readUInt32BE(20)).toBe(1600)
     expect(contentDigests(source).sha256).toMatch(/^[a-f0-9]{64}$/u)
   })
+
+  it('uses deterministic Lanczos sizing for confirmed low-resolution hero images', () => {
+    const source = createSyntheticSourcePng(320, 180)
+    const landscape = upscaleHeroImage(source, 'landscape')
+    const portrait = upscaleHeroImage(source, 'portrait')
+
+    expect(landscape.dimensions).toEqual({ width: 1920, height: 1080 })
+    expect(portrait.dimensions).toEqual({ width: 1080, height: 1920 })
+    expect(landscape.filter).toContain('flags=lanczos')
+    expect(landscape.content.length).toBeLessThanOrEqual(
+      OSS_IMAGE_PROCESSING_MAX_BYTES,
+    )
+    expect(source.readUInt32BE(16)).toBe(320)
+    expect(source.readUInt32BE(20)).toBe(180)
+  }, 30_000)
 
   it('uses URL-safe unpadded Base64 for OSS processing parameters', () => {
     const encoded = urlSafeBase64('test/路径/watermark logo.png')

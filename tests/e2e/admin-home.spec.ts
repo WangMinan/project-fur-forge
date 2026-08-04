@@ -6,6 +6,7 @@ import { capture } from './helpers/screenshots'
 import {
   fakeMediaState,
   heroPng,
+  lowResolutionHeroPng,
   resetFakeMedia,
   seedHomePublicationOperation,
   setFakeMediaFlags,
@@ -226,6 +227,48 @@ test('横竖配对约束：只上传一版时创建按钮保持禁用', async ({
   await expect(draft.getByText(/新图已上传/)).toHaveCount(1)
   await draft.getByLabel(/图片说明/).fill('只有横版的首页图')
   await expect(draft.getByRole('button', { name: '创建轮播项' })).toBeDisabled()
+})
+
+test('低分辨率大图：保存后提示，取消不处理，确认后 FFmpeg 适配并启用', async ({ page }) => {
+  await gotoHomeAdmin(page)
+  await page.getByRole('button', { name: '新增轮播项' }).click()
+  const draft = page.locator('[data-testid="home-slide-draft"]')
+  await draft.getByLabel('选择横版（16:9）首页图文件').setInputFiles({
+    name: 'landscape-small.png',
+    mimeType: 'image/png',
+    buffer: lowResolutionHeroPng('landscape'),
+  })
+  await draft.getByLabel('选择竖版（9:16）首页图文件').setInputFiles({
+    name: 'portrait-small.png',
+    mimeType: 'image/png',
+    buffer: lowResolutionHeroPng('portrait'),
+  })
+  await expect(draft.getByText(/低于推荐/)).toHaveCount(2)
+  await draft.getByLabel(/图片说明/).fill('低分辨率适配首页图')
+  await draft.getByRole('button', { name: '创建轮播项' }).click()
+
+  const card = page.locator('article.slide-card', { hasText: '轮播项 · 顺位 0' })
+  await expect(card.getByText(/插值只补足尺寸/)).toBeVisible()
+  await card.getByRole('button', { name: '启用' }).click()
+  const dialog = page.getByRole('dialog', { name: '确认放大适配这组图片？' })
+  await expect(dialog).toContainText('不会恢复原图不存在的细节')
+  await dialog.getByRole('button', { name: '取消' }).click()
+  await expect(card.getByText('未启用', { exact: true })).toBeVisible()
+  expect((await fakeMediaState(page)).objects.some(key =>
+    key.includes('/hero-upscale-lanczos-v1/'),
+  )).toBe(false)
+
+  await card.getByRole('button', { name: '启用' }).click()
+  await dialog.getByRole('button', { name: '确认并继续启用' }).click()
+  await expect(card.getByText(/正在用 FFmpeg 放大适配/)).toBeVisible()
+  await expect(card.getByText('已启用', { exact: true })).toBeVisible({
+    timeout: 30_000,
+  })
+  const state = await fakeMediaState(page)
+  expect(state.objects.filter(key =>
+    key.includes('/hero-upscale-lanczos-v1/'),
+  )).toHaveLength(2)
+  expect(await publicHomeAlts(page)).toEqual(['低分辨率适配首页图'])
 })
 
 test('首页图按真实文件字节声明格式，不受扩展名或浏览器 MIME 误报影响', async ({ page }) => {
