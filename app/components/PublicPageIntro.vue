@@ -2,7 +2,7 @@
 /** 内页紧凑页名区：页名 + 一句必要说明，不与作品图争夺层级。 */
 defineProps<{
   title: string
-  description?: string
+  description?: string | undefined
 }>()
 </script>
 
