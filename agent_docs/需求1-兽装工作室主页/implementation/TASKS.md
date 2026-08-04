@@ -1,11 +1,11 @@
 # 任务清单：兽装工作室主页
 
 > **角色**：PLAN 的唯一可勾选实施分解。
-> **状态**：T01–T29、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T26-F1、T27-F1、T30 的独立 Review 已通过并等待用户验收；当前按授权进入 T31。**OQ-120 已整批确认并登记为数据库初始化默认值。**任务编号保留 T01–T53，任务后缀用于用户确认后的同主题增量。
+> **状态**：T01–T29、T31、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T26-F1、T27-F1、T30 的独立 Review 已通过并等待用户验收；当前按授权进入 T32。**OQ-120 已整批确认并登记为数据库初始化默认值。**任务编号保留 T01–T53，任务后缀用于用户确认后的同主题增量。
 
 ## 当前目标
 
-从已经收口的作品、角色化媒体与常规领养链扩展到 P0 可部署核心。T26-F1/T27-F1 与 T28–T30 Review 分别见 [`notes/t26-t27/T26-F1-T27-F1-INDEPENDENT-REVIEW-2026-08-05.md`](./notes/t26-t27/T26-F1-T27-F1-INDEPENDENT-REVIEW-2026-08-05.md)、[`notes/t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md`](./notes/t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md)。当前依次实现 T31–T34；T26-F1、T27-F1、T30 和 T34 的最终勾选仍以用户验收为准。T37 展会矩阵不提前实现。
+从已经收口的作品、角色化媒体与常规领养链扩展到 P0 可部署核心。T26-F1/T27-F1 与 T28–T30 Review 分别见 [`notes/t26-t27/T26-F1-T27-F1-INDEPENDENT-REVIEW-2026-08-05.md`](./notes/t26-t27/T26-F1-T27-F1-INDEPENDENT-REVIEW-2026-08-05.md)、[`notes/t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md`](./notes/t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md)。T31 备份恢复与独立 Review 见 [`notes/t28-t34/T31-BACKUP-RESTORE-2026-08-05.md`](./notes/t28-t34/T31-BACKUP-RESTORE-2026-08-05.md)。当前依次实现 T32–T34；T26-F1、T27-F1、T30 和 T34 的最终勾选仍以用户验收为准。T37 展会矩阵不提前实现。
 
 ## 门禁
 
@@ -150,7 +150,7 @@ T43–T48 在 T34 后可按价值串行选择，不阻塞 T42。main 直推阶�
 - [x] **T28 · 首页完整内容顺序**：Hero → 3–6 件精选 → 图片式委托/领养入口 → 营业状态 → 有真实数据时的当前领养/辅助信息 → 页脚；没有数据的模块不渲染假内容或空白轨道。**实现、定向自动化与独立 Chrome Review 已完成，结论 `PASS`。** _依赖：T25–T27-F1。_
 - [x] **T29 · 作品筛选、详情导航和重定向基础**：用途 × 装型交集筛选、结果数、详情前后浏览；`/adoptions/{slug}` 基础 301；不重复实现 T27-F1 已落地的 `/contact`、`/terms` 兼容跳转，不提前实现 T39 的显式 slug 改址历史。**实现、定向自动化与独立 Chrome Review 已完成，结论 `PASS`。** _依赖：T25。_
 - [ ] **T30 · 基础 SEO、Sitemap 与品牌图标**：从 EXT-01 素材清单中的同一品牌源生成 favicon 16/32、Apple Touch Icon 和必要分享图；页面 title/description/canonical/alt/Sitemap/robots 可核对；不得把完整纵向组合标或任意水印候选直接缩成站点小图标。**工程与独立 Chrome Review 已完成，结论 `PASS WITH FOLLOW-UP`；工程 findings 已关闭，等待用户最终图标/视觉验收。** _依赖：T28–T29、EXT-01。_
-- [ ] **T31 · 备份、恢复与迁移冒烟**：覆盖作品、短属性、多图关系、首页轮播、站点内容、品牌 profile 和活动引用；验证空库迁移 → 夹具/真实数据 → 发布 → 一致性备份 → 新路径恢复 → 核心关联/公开投影。_依赖：T30。_
+- [x] **T31 · 备份、恢复与迁移冒烟**：新增只写新路径的验证恢复命令，覆盖作品、非空短属性、多图关系、首页/委托大图、站点内容、品牌 profile 和活动引用；验证空库/当前迁移、真实数据在线备份、新路径恢复、完整性/FK、迁移 hash、失败清理与恢复库 production Chrome。独立 Review 初审 1 个 migration hash MUST-FIX 已关闭，最终 `PASS`。_依赖：T30。_
 - [ ] **T32 · P0 安全门禁**：覆盖 Session、CSRF、Host、DTO、限流/体积边界、双 Bucket、私有水印源、profile API、日志脱敏和 secret scan；实际验证公开 Host 无后台、匿名私有读取失败、公开 Bucket 无原图。_依赖：T31。_
 - [ ] **T33 · P0 性能与三视口媒体回归**：轮播按需加载、横竖请求、首屏尺寸/CLS、SSR P95、图片真实解码、无溢出、焦点/键盘/减少动效；大型居中水印可辨识且不破坏关键内容。_依赖：T32。_
 - [ ] **T34 · P0 全链、完整自动化与可部署版本**：公开 P0、后台核心、品牌 profile、首页轮播、角色化媒体、常规领养、发布/下架、错误/恢复、备份恢复、生产 build/verify 和真实浏览器全链全部通过；形成首个可部署镜像与用户验收记录。_依赖：T33。_

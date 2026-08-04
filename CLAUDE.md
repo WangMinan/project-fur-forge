@@ -6,7 +6,7 @@ This file provides guidance to coding agents working with code in this repositor
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01–T29、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。** T26-F1/T27-F1 等待用户验收；T30 工程与独立 Review 为 `PASS WITH FOLLOW-UP`，等待品牌图标用户验收。当前进入 T31 备份、恢复与迁移冒烟。**OQ-120 已由用户整批确认，并由 0014/0015 登记默认值。**
+> **当前阶段：阶段 4 IMPLEMENTATION，T01–T29、T31、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。** T26-F1/T27-F1 等待用户验收；T30 工程与独立 Review 为 `PASS WITH FOLLOW-UP`，等待品牌图标用户验收。T31 独立 Review 初审的迁移 hash finding 已修复，最终 `PASS`；当前进入 T32 安全门禁。**OQ-120 已由用户整批确认，并由 0014/0015 登记默认值。**
 
 ## 网站核心原则（景宸确认）
 
