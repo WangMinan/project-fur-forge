@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-阶段 4 · IMPLEMENTATION 进行中。T01–T25、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T23–T25 已全部收口。T26–T27 的受限站点内容、独立营业状态、版本化管理 API、公开安全投影和自动化已完成；公开页面与首页管理前端、独立 Review 和用户验收尚未执行，因此 T26、T27 保持未勾选。
+阶段 4 · IMPLEMENTATION 进行中。T01–T25、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T23–T25 已全部收口。T26–T27 服务端与前端接线均已落地（现有首页管理固定区块、`/commission`、`/about`、`/contact`），自动化与实现方双 Host/三视口浏览器自测通过；**OQ-120（10 项真实文案）仍开放**，独立 Review 与用户验收尚未执行，因此 T26、T27 保持未勾选，页面不得宣布最终收口。
 
 T21 首次独立审查的 3 个 must-fix 与 1 个 should-fix、用户人工验收发现的管理入口命名、Hero 安全边距、作品筛选视觉、页脚联系方式配置、已保存首页轮播原图预览及启用态预览按钮错配均已修复并验证。用户于 2026-08-02 明确确认 T21 收口；首次 NOT PASS 报告继续保留为历史事实，不虚构第二份独立复审报告。
 
@@ -12,7 +12,7 @@ T21 首次独立审查的 3 个 must-fix 与 1 个 should-fix、用户人工验�
 T22 后端、前端与独立 Review 证据分别见 [`implementation/notes/t19-t22/T22-BACKEND-2026-08-03.md`](./implementation/notes/t19-t22/T22-BACKEND-2026-08-03.md)、[`implementation/notes/t19-t22/T22-FRONTEND-2026-08-03.md`](./implementation/notes/t19-t22/T22-FRONTEND-2026-08-03.md) 和 [`implementation/notes/t19-t22/T22-INDEPENDENT-REVIEW-2026-08-03.md`](./implementation/notes/t19-t22/T22-INDEPENDENT-REVIEW-2026-08-03.md)。
 T23 工程、T25 服务端交接和本轮前端检查点分别见 [`implementation/notes/t23-t25/T23-ENGINEERING-2026-08-03.md`](./implementation/notes/t23-t25/T23-ENGINEERING-2026-08-03.md)、[`implementation/notes/t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md`](./implementation/notes/t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md) 与 [`implementation/notes/t23-t25/T24-T25-FRONTEND-CHECKPOINT-2026-08-03.md`](./implementation/notes/t23-t25/T24-T25-FRONTEND-CHECKPOINT-2026-08-03.md)。
 T23–T25 最终收口见 [`implementation/notes/t23-t25/T23-T25-CLOSURE-2026-08-04.md`](./implementation/notes/t23-t25/T23-T25-CLOSURE-2026-08-04.md)。
-T26–T27 服务端契约、验证与前端确认清单见 [`implementation/notes/t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md)。
+T26–T27 服务端契约见 [`implementation/notes/t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md)；前端交接与截图见 [`implementation/notes/t26-t27/T26-T27-FRONTEND-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-FRONTEND-2026-08-04.md)。
 
 ## 当前执行分工
 
@@ -35,7 +35,7 @@ T26–T27 服务端契约、验证与前端确认清单见 [`implementation/note
 ## 阶段 C 进入状态
 
 - [x] T21 用户验收完成；
-- [x] 当前无开放 OQ，OQ-119 已答；
+- [x] OQ-119 已答；**OQ-120（T26–T27 真实文案批次）开放，阻断页面最终收口**；
 - [x] 双 Bucket、30 MB 原图、FFmpeg 私有处理源和真实 OSS 水印链已通过；
 - [x] 包括 Logo 在内的素材已登记到 [`materials/MATERIAL-MANIFEST.md`](./materials/MATERIAL-MANIFEST.md)，EXT-01 不再等待外部文件；
 - [x] 模型分工、main 直推和浏览器/视觉 Review 方法已锁定；
@@ -43,7 +43,7 @@ T26–T27 服务端契约、验证与前端确认清单见 [`implementation/note
 - [x] T22 后端、前端、独立 Review 和用户人工验收已收口。
 - [x] T23–T25 实现、自动化、独立 Agent Review 与用户人工核验全部收口，三项任务已勾选。
 
-进入阶段 C 前没有仍需用户回答的阻断项。委托文案、基本约定、最终小图标选择和部署参数分别在对应任务前确认。
+进入阶段 C 时无阻断 OQ；当前 **OQ-120** 阻断 T26/T27 最终收口。最终小图标与部署参数仍分别在 T30、T34/T52 前确认。
 
 ## 已完成基础
 
@@ -58,6 +58,7 @@ T26–T27 服务端契约、验证与前端确认清单见 [`implementation/note
 - T24 管理端设定图/出厂照分区、同源原图与活动水印预览、上传恢复、媒体摘要和分区直达；
 - T25 `/adoptions` 横版设定图列表、真实空状态和统一详情两类媒体分区；
 - T26–T27 受限固定字段、委托/领养独立营业状态、版本化管理 API、即时公开投影和 ownerContact 泄漏守卫服务端能力；
+- T26–T27 前端：首页管理内营业状态/页面内容固定区块、公开 `/commission` `/about` `/contact`、邮件行动与空值隐藏（正式文案待 OQ-120）；
 - 当前活动目标 `brand-centered-v2`：可配置 Logo、默认 50% 不透明度；`recipe-v2` 使用 1.6 倍图形，普通图片居中、横版设定图左右双水印，并保留原子全站切换和失败恢复。
 
 T14–T22 的完成状态保持有效。后续扩展不能把既有验收改写为失败，也不能用旧 `brand-standard-v1` 或四角锚点回退当前发布要求。
@@ -118,11 +119,29 @@ EXT-01 现在只表示“正式素材输入已经到位并完成角色映射”�
 - 2026-08-04：用户确认 T23–T25 其他功能没有问题；完成“只有设定图不进入 `/works`”和 `recipe-v2` 左右双水印后，按用户反馈把水印从 2.0 倍回调为不重叠的 1.6 倍。正式素材真实 OSS、公开 E2E 与全套自动化通过，用户人工核验记为通过；独立 Review 尚未执行，任务框保持未勾选。
 - 2026-08-04：用户确认独立 Agent Review 已完成且 T23–T25 已完成并收口；三项任务勾选，阶段状态、执行路由、评审与产物索引同步切换到 T26–T27 服务端批次。
 - 2026-08-04：T26–T27 服务端完成 0012 迁移、严格站点内容/营业状态 Schema、现有首页管理聚合 API、公开 `no-store` 投影和定向/全量验证；未确认文案未写 seed，T26/T27 未勾选。
+- 2026-08-04：登记 **OQ-120**（10 项未确认文案）；前端完成首页管理固定区块与三公开页接线、自动化与实现方浏览器自测；公开页对空值整区隐藏，不编造文案；T26/T27 仍未勾选。
 
 ## 下一步
 
 当前交接门禁：
 
-1. 用户按 T26–T27 handoff 的精确清单确认真实委托文案、工作室事实、基本约定、防诈骗文字和两类营业状态；
-2. 前端把固定区块接入现有“首页管理”，并实现 `/commission`、`/about`、`/contact` 对公开安全投影的 SSR 消费；不增加第五导航；
-3. 新上下文完成真实双 Host/三视口独立 Review；T26、T27 是否勾选由该批次与用户验收决定，T29/T37 不提前实现。
+1. 用户逐项回答 **OQ-120**（见 `requirements/SPEC.md` §6.7）：委托短说明/估价说明/邮件行动/FAQ、关于事实与制作范围、基本约定、防诈骗、委托与领养营业状态；
+2. 在管理端「首页管理」录入已确认正式文案（验证用临时库文案不得当作生产内容）；
+3. 新上下文 GPT-5.6 Sol 独立 Review（双 Host、三视口、真实点击、409/空值/泄漏）；用户验收后再勾选 T26、T27；不提前实现 T29/T37。
+
+### OQ-120 缺失清单（阻断最终收口）
+
+| 项 | 字段 |
+| --- | --- |
+| 委托页短说明 | `commission.intro` |
+| 人工逐单估价说明 | `commission.estimateNote` |
+| 邮件行动说明 | `commission.emailAction` |
+| 委托 FAQ（≤8） | `commission.faqs` |
+| 关于页工作室事实 | `about.studioFacts` |
+| 关于页制作范围 | `about.makingScope` |
+| 基本约定完整纯文本 | `about.basicTerms` |
+| 联系页防诈骗文字 | `contact.antiScam` |
+| 委托营业状态 tone/标签/说明 | `business_statuses.commission` |
+| 领养营业状态 tone/标签/说明 | `business_statuses.adoption` |
+
+已确认可公开：邮箱 `3114559925@qq.com`、QQ `3114559925`、抖音 `to3114559925`；结构性制作范围事实不依赖 OQ。
