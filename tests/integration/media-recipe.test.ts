@@ -45,7 +45,9 @@ function insertReadyAsset(options: {
   byteSize?: number
   id?: string
   objectKey?: string
-  role?: 'design_sheet' | 'studio_photo' | 'home_hero_landscape'
+  height?: number
+  role?: 'design_sheet' | 'studio_photo' | 'home_hero_landscape' | 'home_hero_portrait'
+  width?: number
 } = {}) {
   const content = createSyntheticWatermarkPng()
   const id = options.id ?? ASSET_ID
@@ -56,7 +58,7 @@ function insertReadyAsset(options: {
       id, role, status, private_object_key, sha256, byte_size, mime_type,
       width, height, focal_x, focal_y, watermark_anchor,
       created_at, updated_at
-    ) VALUES (?, ?, 'READY', ?, ?, ?, 'image/png', 3200, 2400,
+    ) VALUES (?, ?, 'READY', ?, ?, ?, 'image/png', ?, ?,
               0.2, 0.8, 'bottom-right', ?, ?)
   `).run(
     id,
@@ -64,15 +66,17 @@ function insertReadyAsset(options: {
     objectKey,
     sha256(content),
     options.byteSize ?? content.length,
+    options.width ?? 3_200,
+    options.height ?? 2_400,
     NOW,
     NOW,
   )
   storage.seedPrivate(objectKey, content, 'image/png', sha256(content), {
     fileSize: options.byteSize ?? content.length,
     format: 'png',
-    height: 2_400,
+    height: options.height ?? 2_400,
     orientation: 1,
-    width: 3_200,
+    width: options.width ?? 3_200,
   })
   return { content, id, objectKey }
 }
@@ -202,6 +206,64 @@ describe('brand-centered-v2 public media generation', () => {
       call.process.includes('resize,m_pad')
       && call.process.includes('color_F7F7F7')
       && !call.process.includes('resize,m_fill')
+    ))).toBe(true)
+  })
+
+  it('uses design-sheet twin watermarks for landscape heroes and work-card center watermarks for portrait heroes', async () => {
+    insertReadyAsset({ role: 'home_hero_landscape' })
+    insertReadyAsset({
+      height: 3_200,
+      id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+      role: 'home_hero_portrait',
+      width: 2_400,
+    })
+
+    await generatePublicVariants(sqlite, storage, ASSET_ID, undefined, NOW)
+    await generatePublicVariants(
+      sqlite,
+      storage,
+      'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+      undefined,
+      NOW,
+    )
+
+    const landscape = storage.processCalls.filter(
+      call => call.objectKey.includes('/home-hero-landscape/'),
+    )
+    const portrait = storage.processCalls.filter(
+      call => call.objectKey.includes('/home-hero-portrait/'),
+    )
+    expect(landscape).toHaveLength(6)
+    expect(landscape.every(call => (
+      (call.process.match(/\/watermark,/gu)?.length ?? 0) === 2
+      && call.process.includes(',t_50,g_west/')
+      && call.process.includes(',t_50,g_east/')
+      && !call.process.includes(',t_50,g_center')
+      && Number(/resize,w_(\d+),limit_0/u.exec(
+        Buffer.from(
+          /\/watermark,image_([^,]+)/u.exec(call.process)![1]!,
+          'base64url',
+        ).toString('utf8'),
+      )![1])
+      === Math.round(492 * Number(
+        /\/recipe-v2\/[^/]+\/(\d+)\//u.exec(call.objectKey)![1],
+      ) / 960)
+    ))).toBe(true)
+    expect(portrait).toHaveLength(6)
+    expect(portrait.every(call => (
+      (call.process.match(/\/watermark,/gu)?.length ?? 0) === 1
+      && call.process.includes(',t_50,g_center/')
+      && !call.process.includes(',t_50,g_west')
+      && !call.process.includes(',t_50,g_east')
+      && Number(/resize,w_(\d+),limit_0/u.exec(
+        Buffer.from(
+          /\/watermark,image_([^,]+)/u.exec(call.process)![1]!,
+          'base64url',
+        ).toString('utf8'),
+      )![1])
+      === Math.round(492 * Number(
+        /\/recipe-v2\/[^/]+\/(\d+)\//u.exec(call.objectKey)![1],
+      ) / 480)
     ))).toBe(true)
   })
 

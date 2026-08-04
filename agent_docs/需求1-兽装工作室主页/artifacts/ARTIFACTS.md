@@ -47,6 +47,7 @@
 | T26–T27 独立 Review | PASS WITH FOLLOW-UP | `implementation/notes/t26-t27/T26-T27-INDEPENDENT-REVIEW-2026-08-04.md`；初始 findings、最小修复、44 项定向测试、SSR/Host/DTO/私有 Bucket、真实图片、三视口、键盘和截图证据 |
 | T26–T27 OQ-120 与界面跟进 | 已完成 | `implementation/notes/t26-t27/T26-T27-OQ120-SEED-UX-FOLLOW-UP-2026-08-04.md`；0014 默认值、当前库注入、“大图管理”与锚点修复 |
 | T26-F1 委托页独立大图 | 实现方自测完成 | `implementation/notes/t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`；复用首页上传/排序/发布链，独立公开投影，并完成低分辨率确认与 FFmpeg 私有适配；独立 Review/用户验收待执行 |
+| 首页/委托页大图水印跟进 | 已完成 | `implementation/notes/t26-t27/T26-F1-HERO-WATERMARK-FOLLOW-UP-2026-08-04.md`；共享配方按作品媒体规则生成横版左右双水印、竖版单个居中水印，并完成现有公开对象原子重建与浏览器复核 |
 | T26/T27 回家人工核对 | 当前 | `implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md`；双 Host、文案/状态、委托独立大图、三公开页和可选 409 复核 |
 | EXT-01 正式素材 | 已完成 | `materials/MATERIAL-MANIFEST.md`；文件交付和角色映射完成，T30/T51 继续生成/校准衍生物 |
 
@@ -56,7 +57,7 @@
 - `planning/prototype-v1/`：只保留页面职责和交互参考；
 - `implementation/notes/`：记录当时事实，既有路径不批量迁移；
 - `brand-standard-v1`：18% 宽度、70% 不透明度、四角水印的历史实现；
-- `brand-centered-v2`：当前目标，居中、默认 50% 不透明度、60% 缩放、可选私有 Logo 候选。
+- `brand-centered-v2`：当前目标，默认 50% 不透明度、60% 缩放、可选私有 Logo 候选；出厂照/站点竖图单个居中，设定图/站点横图左右双水印。
 
 ## 当前质量口径
 

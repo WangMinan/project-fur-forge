@@ -13,6 +13,8 @@ import type {
 } from '../../shared/types/contracts'
 import { ServiceError } from './service-error'
 
+const WATERMARK_RENDER_REVISION = 'hero-by-work-role-v1'
+
 export interface WatermarkProfileRow {
   configDigest: string
   createdAt: number
@@ -121,6 +123,7 @@ export function watermarkConfigDigest(input: {
     position: 'center',
     opacityPercent: input.opacityPercent,
     scalePercent: input.scalePercent,
+    renderRevision: WATERMARK_RENDER_REVISION,
   })).digest('hex')
 }
 
