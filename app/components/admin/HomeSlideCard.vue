@@ -2,6 +2,7 @@
 import type {
   AdminHeroPreviewDto,
   AdminHeroSlideDto,
+  HeroPlacement,
   PublicationOperationDto,
   WorkListItemDto,
 } from '~~/shared/types/contracts'
@@ -18,6 +19,7 @@ const props = defineProps<{
   homeVersion: number | null
   mutating: boolean
   operation?: PublicationOperationDto | null
+  placement: HeroPlacement
   preview?: AdminHeroPreviewDto | null
   previewPending?: boolean
   slide: AdminHeroSlideDto | null
@@ -42,6 +44,8 @@ const linkedWorkId = ref<string | null>(props.slide?.linkedWork?.id ?? null)
 const landscapeAssetId = ref<string | null>(null)
 const portraitAssetId = ref<string | null>(null)
 const confirmDelete = ref(false)
+const itemLabel = computed(() => props.placement === 'home' ? '轮播项' : '大图项')
+const pageLabel = computed(() => props.placement === 'home' ? '首页' : '委托页')
 
 function snapshotOf() {
   return JSON.stringify({
@@ -163,7 +167,7 @@ function onLinkedWorkChange(event: Event) {
   >
     <header class="slide-card__head">
       <h3 class="slide-card__title">
-        {{ slide ? `轮播项 · 顺位 ${slide.sortOrder}` : '新增轮播项' }}
+        {{ slide ? `${itemLabel} · 顺位 ${slide.sortOrder}` : `新增${itemLabel}` }}
       </h3>
       <AdminStatusBadge
         v-if="slide"
@@ -176,12 +180,13 @@ function onLinkedWorkChange(event: Event) {
     </header>
 
     <p v-if="locked" class="slide-card__locked-hint">
-      已启用的轮播项需先停用才能编辑内容或删除。
+      已启用的{{ itemLabel }}需先停用才能编辑内容或删除。
     </p>
 
     <div class="slide-card__grid">
       <AdminHomeHeroSlotField
         orientation="landscape"
+        :placement="placement"
         :saved-asset="slide?.landscape ?? null"
         :unsaved-asset-id="landscapeAssetId"
         :disabled="locked || mutating"
@@ -191,6 +196,7 @@ function onLinkedWorkChange(event: Event) {
       />
       <AdminHomeHeroSlotField
         orientation="portrait"
+        :placement="placement"
         :saved-asset="slide?.portrait ?? null"
         :unsaved-asset-id="portraitAssetId"
         :disabled="locked || mutating"
@@ -211,7 +217,7 @@ function onLinkedWorkChange(event: Event) {
             type="text"
             maxlength="500"
             :disabled="locked || mutating"
-            placeholder="例如：蓝湄的首页展示照"
+            :placeholder="`例如：蓝湄的${pageLabel}展示照`"
           >
         </div>
 
@@ -266,7 +272,7 @@ function onLinkedWorkChange(event: Event) {
         class="slide-card__action slide-card__action--primary"
         :disabled="!canSubmit"
         @click="submit"
-      >{{ slide ? (mutating ? '保存中…' : '保存修改') : (mutating ? '创建中…' : '创建轮播项') }}</button>
+      >{{ slide ? (mutating ? '保存中…' : '保存修改') : (mutating ? '创建中…' : `创建${itemLabel}`) }}</button>
 
       <template v-if="slide">
         <button
@@ -289,7 +295,7 @@ function onLinkedWorkChange(event: Event) {
           type="button"
           class="slide-card__action"
           :disabled="mutating || !canMoveUp"
-          :aria-label="`上移轮播项（当前顺位 ${slide.sortOrder}）`"
+          :aria-label="`上移${itemLabel}（当前顺位 ${slide.sortOrder}）`"
           @click="emit('move', -1)"
         >上移</button>
         <button
@@ -297,7 +303,7 @@ function onLinkedWorkChange(event: Event) {
           type="button"
           class="slide-card__action"
           :disabled="mutating || !canMoveDown"
-          :aria-label="`下移轮播项（当前顺位 ${slide.sortOrder}）`"
+          :aria-label="`下移${itemLabel}（当前顺位 ${slide.sortOrder}）`"
           @click="emit('move', 1)"
         >下移</button>
 
@@ -327,7 +333,7 @@ function onLinkedWorkChange(event: Event) {
       <progress
         :value="readyVariantCount"
         max="12"
-        :aria-label="`首页公开衍生图已就绪 ${readyVariantCount} / 12`"
+        :aria-label="`${pageLabel}公开衍生图已就绪 ${readyVariantCount} / 12`"
       />
     </div>
 
@@ -356,13 +362,13 @@ function onLinkedWorkChange(event: Event) {
       <div class="slide-card__preview-grid">
         <img
           :src="preview.landscape.url"
-          :alt="`${alt || '首页图'}横版水印预览`"
+          :alt="`${alt || `${pageLabel}图`}横版水印预览`"
           class="slide-card__preview-image slide-card__preview-image--landscape"
           referrerpolicy="no-referrer"
         >
         <img
           :src="preview.portrait.url"
-          :alt="`${alt || '首页图'}竖版水印预览`"
+          :alt="`${alt || `${pageLabel}图`}竖版水印预览`"
           class="slide-card__preview-image slide-card__preview-image--portrait"
           referrerpolicy="no-referrer"
         >
@@ -371,13 +377,13 @@ function onLinkedWorkChange(event: Event) {
 
     <AdminConfirmDialog
       :open="confirmDelete"
-      title="删除该轮播项？"
+      :title="`删除该${itemLabel}？`"
       confirm-label="确认删除"
       tone="danger"
       @confirm="confirmDelete = false; emit('delete')"
       @cancel="confirmDelete = false"
     >
-      <p>删除后该轮播项的横竖槽位关联会被移除；已上传的私有原图保留在私有库中。</p>
+      <p>删除后该{{ itemLabel }}的横竖槽位关联会被移除；已上传的私有原图保留在私有库中。</p>
     </AdminConfirmDialog>
   </article>
 </template>

@@ -15,6 +15,7 @@ import { publicationStatusSchema, slugSchema } from './work'
 export const homeTaglineSchema = z.string().trim().min(1).max(120)
 export const contactEmailSchema = z.string().trim().email().max(254)
 export const contactQqSchema = z.string().trim().regex(/^[1-9]\d{4,11}$/u)
+export const heroPlacementSchema = z.enum(['home', 'commission'])
 
 export const adminHeroAssetDtoSchema = z.object({
   assetId: resourceIdSchema,
@@ -51,7 +52,7 @@ export const adminHomeDtoSchema = z.object({
 
 const adminHeroPreviewImageDtoSchema = z.object({
   url: z.string().regex(
-    /^\/api\/admin\/v1\/site\/home\/slides\/[0-9a-f-]+\/preview\/(?:landscape|portrait)$/u,
+    /^\/api\/admin\/v1\/site\/home\/slides\/[0-9a-f-]+\/preview\/(?:landscape|portrait)(?:\?placement=commission)?$/u,
   ),
   expiresAt: z.string().datetime({ offset: true }),
   width: z.number().int().positive(),
@@ -70,6 +71,10 @@ export const publicHomeDtoSchema = z.object({
   autoRotate: z.boolean(),
   autoRotateIntervalMs: z.number().int().min(6_000).max(300_000),
   slides: z.array(publicHeroSlideDtoSchema).max(5),
+}).strict()
+
+export const publicCommissionHeroDtoSchema = z.object({
+  slide: publicHeroSlideDtoSchema.nullable(),
 }).strict()
 
 const heroSlideInputSchema = z.object({
@@ -117,3 +122,6 @@ export const adminHeroPreviewResponseSchema = apiSuccessSchema(
   adminHeroPreviewDtoSchema,
 )
 export const publicHomeResponseSchema = apiSuccessSchema(publicHomeDtoSchema)
+export const publicCommissionHeroResponseSchema = apiSuccessSchema(
+  publicCommissionHeroDtoSchema,
+)

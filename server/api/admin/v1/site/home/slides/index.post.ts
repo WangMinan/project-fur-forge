@@ -5,6 +5,7 @@ import {
 import { createApiError } from '../../../../../../utils/api-error'
 import { getDatabase } from '../../../../../../utils/database'
 import { createHeroSlide } from '../../../../../../utils/home-management'
+import { readHeroPlacement } from '../../../../../../utils/hero-placement'
 import { readAdminJsonBody } from '../../../../../../utils/request-body'
 import { asSafeApiError } from '../../../../../../utils/service-error'
 
@@ -22,6 +23,8 @@ export default defineEventHandler(async (event) => {
         getDatabase().sqlite,
         body.data.expectedVersion,
         body.data.payload,
+        Date.now(),
+        readHeroPlacement(event),
       ),
     })
   }

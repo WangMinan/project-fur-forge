@@ -677,6 +677,27 @@ describe('P0 schema boundary', () => {
     `).run()).toThrow(/asset variant identity is immutable/)
   })
 
+  it('isolates enabled hero order by home and commission placement', () => {
+    insertHeroPair(0)
+    expect(() => sqlite.prepare(`
+      UPDATE site_hero_slides SET placement = 'unknown' WHERE id = 'slide-0'
+    `).run()).toThrow(/CHECK constraint failed/u)
+
+    insertAsset('commission-landscape', 'home_hero_landscape')
+    insertAsset('commission-portrait', 'home_hero_portrait')
+    insertHeroRecipe('commission-landscape', 'home_hero_landscape')
+    insertHeroRecipe('commission-portrait', 'home_hero_portrait')
+    sqlite.prepare(`
+      INSERT INTO site_hero_slides (
+        id, placement, landscape_asset_id, portrait_asset_id, alt_text,
+        sort_order, enabled, created_at, updated_at
+      ) VALUES ('commission-slide', 'commission', ?, ?, '委托页背景', 0, 1, ?, ?)
+    `).run('commission-landscape', 'commission-portrait', now, now)
+
+    expect(validateHeroSlidesForPublication(sqlite)).toBe(1)
+    expect(validateHeroSlidesForPublication(sqlite, 'commission')).toBe(1)
+  })
+
   it('requires 1–5 READY landscape/portrait pairs for hero publication', () => {
     expect(() => validateHeroSlidesForPublication(sqlite))
       .toThrow(/1 to 5/)

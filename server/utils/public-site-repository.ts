@@ -1,5 +1,8 @@
 import type Database from 'better-sqlite3'
-import { publicHomeDtoSchema } from '../../shared/schemas/home'
+import {
+  publicCommissionHeroDtoSchema,
+  publicHomeDtoSchema,
+} from '../../shared/schemas/home'
 import {
   publicAdoptionListDtoSchema,
   publicFeaturedWorksDtoSchema,
@@ -10,6 +13,7 @@ import {
 } from '../../shared/schemas/public-content'
 import type {
   PublicAdoptionListDto,
+  PublicCommissionHeroDto,
   PublicFeaturedWorksDto,
   PublicHomeDto,
   PublicSourceSetDto,
@@ -23,7 +27,10 @@ import {
   toSafePublicAlt,
 } from './media-mapper'
 import type { VariantRecord } from './media-mapper'
-import { getPublicHome } from './home-management'
+import {
+  getPublicCommissionHero,
+  getPublicHome,
+} from './home-management'
 import {
   LEGACY_PUBLIC_RECIPE_VERSION,
   PUBLIC_RECIPE_VERSION,
@@ -42,6 +49,7 @@ export interface PublicSiteRepository {
   listAdoptions(): PublicAdoptionListDto
   listWorks(query?: PublicWorksQuery): PublicWorkListDto
   listFeaturedWorks(): PublicFeaturedWorksDto
+  getCommissionHero(): PublicCommissionHeroDto
   getHome(): PublicHomeDto
 }
 
@@ -449,6 +457,9 @@ export function createSqlitePublicSiteRepository(
     getHome() {
       return getPublicHome(sqlite, mediaBaseUrl)
     },
+    getCommissionHero() {
+      return getPublicCommissionHero(sqlite, mediaBaseUrl)
+    },
   }
 }
 
@@ -456,6 +467,7 @@ export interface FakePublicSiteSeed {
   details: PublicWorkDetailDto[]
   featuredSlugs: string[]
   home: PublicHomeDto
+  commissionHero?: PublicCommissionHeroDto
 }
 
 export function createFakePublicSiteRepository(
@@ -463,6 +475,9 @@ export function createFakePublicSiteRepository(
 ): PublicSiteRepository {
   const details = seed.details.map(detail => publicWorkDetailDtoSchema.parse(detail))
   const home = publicHomeDtoSchema.parse(seed.home)
+  const commissionHero = publicCommissionHeroDtoSchema.parse(
+    seed.commissionHero ?? { slide: null },
+  )
   const bySlug = new Map(details.map(detail => [detail.work.slug, detail]))
   const summaryFor = (detail: PublicWorkDetailDto) => (
     publicWorkSummaryDtoSchema.parse({
@@ -526,6 +541,9 @@ export function createFakePublicSiteRepository(
     },
     getHome() {
       return publicHomeDtoSchema.parse(home)
+    },
+    getCommissionHero() {
+      return publicCommissionHeroDtoSchema.parse(commissionHero)
     },
   }
 }

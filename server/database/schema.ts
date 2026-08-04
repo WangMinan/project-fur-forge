@@ -537,6 +537,7 @@ export const workAssets = sqliteTable('work_assets', {
 
 export const siteHeroSlides = sqliteTable('site_hero_slides', {
   id: text('id').primaryKey(),
+  placement: text('placement').notNull().default('home'),
   landscapeAssetId: text('landscape_asset_id').notNull()
     .references(() => assets.id),
   portraitAssetId: text('portrait_asset_id').notNull()
@@ -553,8 +554,12 @@ export const siteHeroSlides = sqliteTable('site_hero_slides', {
   ...timestampColumns(),
 }, table => [
   uniqueIndex('site_hero_slides_enabled_sort_unique')
-    .on(table.sortOrder)
+    .on(table.placement, table.sortOrder)
     .where(sql`${table.enabled} = 1`),
+  check(
+    'site_hero_slides_placement',
+    sql`${table.placement} IN ('home', 'commission')`,
+  ),
   check(
     'site_hero_slides_pair_distinct',
     sql`${table.landscapeAssetId} != ${table.portraitAssetId}`,

@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { workListResponseSchema } from '~~/shared/schemas/work'
-import type { WorkListItemDto } from '~~/shared/types/contracts'
+import type {
+  HeroPlacement,
+  WorkListItemDto,
+} from '~~/shared/types/contracts'
 import type { HeroSlideInput } from '~/composables/useAdminHome'
 
 // T20 首页管理：口号/自动轮播设置 + 轮播项 CRUD/排序/启停 + 活动水印预览。
@@ -16,6 +19,14 @@ useSeoMeta({
 })
 
 const adminApi = useAdminApi()
+const route = useRoute()
+const placement = computed<HeroPlacement>(() => (
+  route.query.tab === 'commission' ? 'commission' : 'home'
+))
+const isHomePlacement = computed(() => placement.value === 'home')
+const placementLabel = computed(() => (
+  isHomePlacement.value ? '首页' : '委托页'
+))
 const {
   conflictNotice,
   createSlide,
@@ -35,11 +46,16 @@ const {
   retryPublication,
   saveSettings,
   updateSlide,
-} = useAdminHome()
+} = useAdminHome(placement)
 
 const works = ref<WorkListItemDto[]>([])
 const actionError = ref<string | null>(null)
 const showDraft = ref(false)
+
+watch(placement, () => {
+  showDraft.value = false
+  actionError.value = null
+})
 
 const errorDialogOpen = computed(() =>
   Boolean(actionError.value || conflictNotice.value),
@@ -212,19 +228,41 @@ onMounted(() => {
       <header class="home-admin__header">
         <h1 class="home-admin__title">首页管理</h1>
         <p class="home-admin__meta">
-          首页轮播最多启用 5 项；启用时会按当前活动水印生成公开衍生图。
+          {{ isHomePlacement
+            ? '首页轮播最多启用 5 项；启用时会按当前活动水印生成公开衍生图。'
+            : '委托页可准备最多 5 项；公开页只显示排序最前的已启用大图，全部停用时隐藏。' }}
         </p>
       </header>
 
+      <nav class="home-admin__tabs" aria-label="大图设置">
+        <NuxtLink
+          id="home-hero-tab"
+          class="home-admin__tab"
+          to="/admin/site/home"
+          :aria-current="isHomePlacement ? 'page' : undefined"
+        >首页大图</NuxtLink>
+        <NuxtLink
+          id="commission-hero-tab"
+          class="home-admin__tab"
+          :to="{ path: '/admin/site/home', query: { tab: 'commission' } }"
+          :aria-current="!isHomePlacement ? 'page' : undefined"
+        >委托页大图</NuxtLink>
+      </nav>
+
       <div v-if="pageStatus === 'loading'" class="home-admin__state" role="status">
-        正在加载首页配置…
+        正在加载{{ placementLabel }}大图…
       </div>
       <div v-else-if="pageStatus === 'error'" class="home-admin__state" role="alert">
-        首页配置加载失败，请刷新重试。
+        {{ placementLabel }}大图加载失败，请刷新重试。
       </div>
 
-      <template v-else-if="home">
-        <section class="home-admin__card" aria-labelledby="home-settings-title">
+      <div
+        v-else-if="home"
+        id="hero-settings-panel"
+        :aria-labelledby="isHomePlacement ? 'home-hero-tab' : 'commission-hero-tab'"
+        class="home-admin__panel"
+      >
+        <section v-if="isHomePlacement" class="home-admin__card" aria-labelledby="home-settings-title">
           <h2 id="home-settings-title" class="home-admin__card-title">首屏设置</h2>
           <div class="home-admin__settings">
             <div class="home-admin__field home-admin__field--wide">
@@ -298,7 +336,9 @@ onMounted(() => {
 
         <section class="home-admin__card" aria-labelledby="home-slides-title">
           <div class="home-admin__slides-head">
-            <h2 id="home-slides-title" class="home-admin__card-title">轮播项</h2>
+            <h2 id="home-slides-title" class="home-admin__card-title">
+              {{ isHomePlacement ? '首页轮播项' : '委托页大图项' }}
+            </h2>
             <p class="home-admin__slides-meta" role="status">
               已启用 {{ enabledSlides.length }} / 5
             </p>
@@ -308,11 +348,13 @@ onMounted(() => {
               class="home-admin__button"
               :disabled="mutating"
               @click="showDraft = true"
-            >新增轮播项</button>
+            >新增{{ isHomePlacement ? '轮播项' : '大图项' }}</button>
           </div>
 
           <p v-if="slides.length === 0 && !showDraft" class="home-admin__empty">
-            还没有轮播项。新增一项并上传横竖两版图片后，即可启用到首页。
+            {{ isHomePlacement
+              ? '还没有轮播项。新增一项并上传横竖两版图片后，即可启用到首页。'
+              : '还没有委托页大图。新增一项并上传横竖两版图片后，即可作为委托页背景。' }}
           </p>
 
           <div class="home-admin__slides">
@@ -320,6 +362,7 @@ onMounted(() => {
               v-for="slide in slides"
               :key="slide.id"
               :slide="slide"
+              :placement="placement"
               :works="works"
               :home-version="home.version"
               :mutating="mutating"
@@ -341,6 +384,7 @@ onMounted(() => {
             <AdminHomeSlideCard
               v-if="showDraft"
               :slide="null"
+              :placement="placement"
               :works="works"
               :home-version="home.version"
               :default-sort-order="nextEnabledSortOrder"
@@ -351,7 +395,7 @@ onMounted(() => {
           </div>
         </section>
 
-      </template>
+      </div>
 
       <AdminConfirmDialog
         :open="errorDialogOpen"
@@ -390,6 +434,45 @@ onMounted(() => {
   margin: 0;
   font-size: var(--admin-font-sm);
   color: var(--admin-text-secondary);
+}
+
+.home-admin__tabs {
+  display: flex;
+  gap: var(--admin-space-1);
+  padding: var(--admin-space-1);
+  width: fit-content;
+  max-width: 100%;
+  background: var(--admin-bg-subtle);
+  border-radius: var(--admin-radius-md);
+}
+
+.home-admin__tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--admin-touch-target);
+  padding: 0 var(--admin-space-4);
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-text-secondary);
+  font-size: var(--admin-font-sm);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.home-admin__tab[aria-current='page'] {
+  background: var(--admin-bg-primary);
+  color: var(--admin-text-primary);
+  box-shadow: 0 1px 3px rgb(25 31 42 / 0.1);
+}
+
+.home-admin__tab:focus-visible {
+  outline: 2px solid var(--admin-border-focus);
+  outline-offset: 2px;
+}
+
+.home-admin__panel {
+  display: grid;
+  gap: var(--admin-space-4);
 }
 
 .home-admin__state {

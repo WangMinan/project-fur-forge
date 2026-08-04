@@ -13,7 +13,7 @@ test('作品与自设委托页名字号一致，委托首图提供引导行动',
     contactEmail: 'hello@example.test',
     contactQq: '123456789',
     tagline: '让角色成为真实作品',
-  })
+  }, 'commission')
 
   await page.goto('/works')
   const worksTitleStyle = await page.getByRole('heading', {

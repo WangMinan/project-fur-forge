@@ -97,7 +97,7 @@ describe('SQLite foundation', () => {
     expect(() => assertDatabaseMigrated(databaseFile))
       .toThrow(/run pnpm db:migrate first/)
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 13,
+      applied: 14,
       backupFile: undefined,
     })
     expect(() => assertDatabaseMigrated(databaseFile)).not.toThrow()
@@ -116,7 +116,7 @@ describe('SQLite foundation', () => {
       `).pluck().get()).toBe(1)
       expect(database.sqlite.prepare(`
         SELECT COUNT(*) FROM __drizzle_migrations
-      `).pluck().get()).toBe(13)
+      `).pluck().get()).toBe(14)
     }
     finally {
       database.sqlite.close()
@@ -175,7 +175,7 @@ describe('SQLite foundation', () => {
     }
 
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 6,
+      applied: 7,
     })
     const upgraded = openDatabase(databaseFile)
     try {
@@ -229,7 +229,7 @@ describe('SQLite foundation', () => {
     }
 
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 2,
+      applied: 3,
     })
     const upgraded = openDatabase(databaseFile)
     try {

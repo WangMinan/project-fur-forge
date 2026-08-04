@@ -12,6 +12,8 @@ import type {
   adminHeroPreviewDtoSchema,
   adminHeroSlideDtoSchema,
   adminHomeDtoSchema,
+  heroPlacementSchema,
+  publicCommissionHeroDtoSchema,
   publicHomeDtoSchema,
 } from '../schemas/home'
 import type {
@@ -105,6 +107,10 @@ export type AdminHeroAssetDto = z.infer<typeof adminHeroAssetDtoSchema>
 export type AdminHeroPreviewDto = z.infer<typeof adminHeroPreviewDtoSchema>
 export type AdminHeroSlideDto = z.infer<typeof adminHeroSlideDtoSchema>
 export type AdminHomeDto = z.infer<typeof adminHomeDtoSchema>
+export type HeroPlacement = z.infer<typeof heroPlacementSchema>
+export type PublicCommissionHeroDto = z.infer<
+  typeof publicCommissionHeroDtoSchema
+>
 export type PublicHomeDto = z.infer<typeof publicHomeDtoSchema>
 export type SiteBusinessStatusKind = z.infer<
   typeof siteBusinessStatusKindSchema

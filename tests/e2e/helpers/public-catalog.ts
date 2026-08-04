@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test'
+import type { HeroPlacement } from '../../../shared/types/contracts'
 import { adminBaseURL } from './auth'
 
 /**
@@ -69,6 +70,7 @@ export async function seedHomeSlides(
   page: Page,
   slides: SeedHomeSlide[],
   settings?: SeedHomeSettings,
+  placement: HeroPlacement = 'home',
 ) {
-  await control(page, { action: 'seedHomeSlides', slides, settings })
+  await control(page, { action: 'seedHomeSlides', placement, slides, settings })
 }
