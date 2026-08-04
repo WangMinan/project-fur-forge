@@ -13,8 +13,8 @@
 | 计划 | `planning/PLAN.md` | `planning/WATERMARK-CENTERED-V2.md` |
 | 模型投影 | `models/README.md` | `models/WATERMARK-CENTERED-V2.md` |
 | 设计 | `.design/` | `.design/WATERMARK-CENTERED-V2.md` |
-| 任务 | `implementation/TASKS.md` | T01–T27、EXT-01/02 与 GATE-06/07 已完成；T26-F1、T27-F1 独立 Review 已通过，用户验收待执行 |
-| 状态 | `STATE.md` | 阶段 C：当前进入 T28–T34；T26-F1、T27-F1 与 T34 勾选等待用户验收；main 直推继续生效 |
+| 任务 | `implementation/TASKS.md` | T01–T29、EXT-01/02 与 GATE-06/07 已完成；T26-F1、T27-F1、T30 用户验收待执行 |
+| 状态 | `STATE.md` | 阶段 C：当前进入 T31；T26-F1、T27-F1、T30 与 T34 的用户门禁保持独立；main 直推继续生效 |
 
 ## 当前执行入口
 
@@ -50,6 +50,7 @@
 | T26-F1/T27-F1 独立 Review | PASS WITH FOLLOW-UP | `implementation/notes/t26-t27/T26-F1-T27-F1-INDEPENDENT-REVIEW-2026-08-05.md`；保留初始 FAIL，7 个 findings 修复与独立复测通过，用户验收待执行 |
 | T26-F1 委托页独立大图 | Review 通过，待用户验收 | `implementation/notes/t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`；复用首页上传/排序/发布链，独立公开投影，并完成可刷新恢复的低分辨率 FFmpeg 私有适配 |
 | T27-F1 公开信息架构与政策页 | Review 通过，待用户验收 | `implementation/notes/t26-t27/T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md`；0015、管理/公开投影、政策页、二级导航、紧凑页脚和营业状态 |
+| T28–T30 公开核心 Review | PASS / PASS WITH FOLLOW-UP | `implementation/notes/t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md`；首页顺序、详情导航/301、SEO、品牌衍生物、初始 findings 与 Chrome 复验；T30 待用户验收 |
 | 首页/委托页大图水印跟进 | 已完成 | `implementation/notes/t26-t27/T26-F1-HERO-WATERMARK-FOLLOW-UP-2026-08-04.md`；共享配方按作品媒体规则生成横版左右双水印、竖版单个居中水印，并完成现有公开对象原子重建与浏览器复核 |
 | T26/T27 回家人工核对 | 当前 | `implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md`；双 Host、文案/状态、委托独立大图、三公开页和可选 409 复核 |
 | EXT-01 正式素材 | 已完成 | `materials/MATERIAL-MANIFEST.md`；文件交付和角色映射完成，T30/T51 继续生成/校准衍生物 |
@@ -71,8 +72,8 @@
 
 ## 下一批预期产物
 
-- T28 首页完整内容顺序的后端/前端/Review 记录；
+- T31 备份、恢复、迁移与恢复库浏览器冒烟记录；
 - T26-F1、T27-F1 用户验收记录；
 - 用户如愿意补充的后台双上下文 409 与完整文案投影人工证据。
 
-T29 在 T28 后串行推进；不提前进入 T37。
+T31–T34 继续串行推进；不提前进入 T37。

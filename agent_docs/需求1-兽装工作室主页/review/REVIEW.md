@@ -6,7 +6,7 @@
 
 ## 评审对象
 
-尚未进入正式阶段 5；阶段 4 进行中。T01–T27、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T26–T27 新上下文独立 Review 结论为 `PASS WITH FOLLOW-UP`；T26-F1 委托页独立大图的工程实现与实现方自测完成，但尚未取得新上下文独立 Review 或用户验收结论。**OQ-120 开放**但只作为正式内容门禁继续跟踪。
+尚未进入正式阶段 5；阶段 4 进行中。T01–T29、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T26-F1/T27-F1 等待用户验收；T30 工程与独立 Review 为 `PASS WITH FOLLOW-UP`，等待品牌图标用户验收。**OQ-120 已关闭。**
 
 T21 首次独立审查、findings 修复、人工验收回归和用户最终确认已收口；首次 NOT PASS 报告继续作为历史事实保留。阶段 C 启动和 Review 方法见 `implementation/notes/P0-C-STAGE-READINESS-2026-08-02.md`。
 
@@ -24,7 +24,8 @@ T21 首次独立审查、findings 修复、人工验收回归和用户最终确�
 - T22 已完成三用途字段与约束、管理 UI、公开投影、独立浏览器 Review；`PASS WITH FOLLOW-UP` 的 T25/T26–T29 边界保留，用户于 2026-08-03 完成人工确认。
 - T23–T25 已完成角色化媒体、常规领养、正式素材验证、独立 Agent Review 与用户人工确认，并于 2026-08-04 勾选收口。
 - T26–T27 新上下文独立 Review 初始登记 2 个 must-fix，修复后补充 1 个 should-fix；共享异步数据键、未经确认的公开事实和跳转焦点均完成最小修复。自动化、SSR/Host/DTO/私有 Bucket、真实图片、三视口和公开端键盘复测通过，结论 `PASS WITH FOLLOW-UP`；本轮 USER_GATE 为否，任务已勾选。完整证据见 `implementation/notes/t26-t27/T26-T27-INDEPENDENT-REVIEW-2026-08-04.md`。
-- T26-F1 已以 `site_hero_slides.placement` 隔离首页/委托页集合，并复用既有上传、排序、活动水印和发布链；实现方自动化与浏览器用例通过。该事实只表示工程交接完成，不能写成独立 Review `PASS`，T26-F1 保持未勾选。
+- T26-F1/T27-F1 新上下文独立 Review 初始 7 个 findings 已关闭，最终 `PASS WITH FOLLOW-UP`；两项保持未勾选并等待用户验收。
+- T28 首页完整顺序与 T29 筛选/详情导航/301 的独立 Review 为 `PASS`；T30 SEO/品牌衍生物为 `PASS WITH FOLLOW-UP`，只保留用户视觉门禁。证据见 `implementation/notes/t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md`。
 - EXT-01 已根据用户确认收口：Logo、作品、领养设定图和返图来源登记在 `materials/MATERIAL-MANIFEST.md`；T30/T51 负责衍生与校准，不再等待外部文件。
 - 后续写入全部直接在 `main` 串行完成；前端按任务选择 Kimi K3、Claude Opus 5 或 GPT-5.6 Sol，后端和 Review 使用 GPT-5.6 Sol。
 
@@ -54,7 +55,7 @@ GPT-5.6 Sol 即使参与后端实现，也要使用新的审查上下文从最�
 
 - T26–T27 follow-up：按 `implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md` 补验后台双上下文 409 与完整文案投影；OQ-120 确认后再录入正式内容，不回退已完成任务；
 - T26-F1：从最新 `main` 新开审查上下文，重放独立上传、排序、启停、无回退、双 Host 与三视口后再决定是否勾选；
-- T28–T30：首页顺序、筛选/重定向、SEO 与品牌图标；
+- T30 follow-up：用户确认 favicon 16/32、Apple Touch Icon、浏览器标签与分享图；
 - T31–T34：迁移/恢复、安全、性能、三视口和 P0 可部署总门禁；
 - 阶段 5：再执行完整 SPEC ↔ PLAN ↔ TASKS ↔ 代码 ↔ 浏览器结果总评审。
 
