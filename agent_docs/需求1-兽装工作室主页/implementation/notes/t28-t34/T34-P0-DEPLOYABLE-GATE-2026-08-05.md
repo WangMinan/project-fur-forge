@@ -87,3 +87,13 @@
 1. **MUST-FIX · 最终镜像缺少 Nitro 运行时动态依赖**：production 容器的公开页、数据库和无 OSS 路径正常，但真实 Chrome 打开后台作品列表时，私有原图预览接口返回 500；容器日志为 `ERR_MODULE_NOT_FOUND: Cannot find package 'ali-oss' imported from /app/.output/server/chunks/nitro/nitro.mjs`。根因是镜像仅复制 `.output`，而当前 Nitro production 输出仍把 `ali-oss` 留为动态 import，`.output/server/package.json` 又未登记该依赖；本机 build/verify 因仓库根 `node_modules` 存在而掩盖。必须让现有 Nitro production 输出自带该运行时依赖，并在最终镜像真实私有预览路径复测；不得通过把本地完整 `node_modules`、`.env` 或测试目录复制进镜像规避。
 
 该 finding 已在任何修复前冻结。T34 保持未勾选。
+
+### 独立 Review finding 修复与复测
+
+- 先验证 Nitro `externals.inline`、字面量 dynamic import 与 `traceInclude`：`ali-oss` 发布包包含会被 Rollup 继续解析的 TypeScript 源，前两种方案不能形成可构建且可运行的输出；实验均已撤销，没有把构建器特例写入产品配置。
+- 最终复用 frozen lock 和 pnpm 已安装依赖树：Docker build 从 `ali-oss` 节点收集 89 个实际运行包，发现 0 个同名版本冲突，只复制该闭包；镜像内 `RUN node -e "import('ali-oss')"` 作为构建自检。不复制完整 `node_modules`，不新增依赖或业务分支。
+- `project-fur-forge:t34-runtime-fix` 构建 PASS，镜像 123,557,774 bytes；最终容器仍为 `USER=node`，继续复用 `/app/data` 数据卷。
+- 真实 production 容器复测：管理登录 200；同一私有素材预览 200、`image/png`、23,088,256 bytes；production 测试控制路由 404；日志无 `ERR_MODULE_NOT_FOUND` 或未处理异常。
+- 容器精确重启后再次登录 200、同一私有预览 200 且字节数一致。宿主门禁 `lint`、`typecheck`、`build`、`verify:production` 全部 PASS；一次并行 pnpm 门禁触发本地依赖 hoist 竞态，仅删除可再生的 `node_modules` 并按 frozen lock 重建后恢复，源码、锁文件、`.env` 与数据均未改写。
+
+实现方已关闭该 MUST-FIX，等待原独立 Reviewer 对同一 finding 复核。T34 继续保持未勾选。
