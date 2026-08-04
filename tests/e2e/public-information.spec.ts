@@ -28,6 +28,10 @@ test('关于二级导航、独立条款页、页脚与兼容跳转连通', async
     'href',
     'https://beian.miit.gov.cn/',
   )
+  await expect(footer.getByRole('link', { name: 'Arktouros' })).toHaveAttribute(
+    'href',
+    'https://github.com/wangminan',
+  )
   await expect(footer).not.toContainText('业务邮箱')
   await expect(footer).not.toContainText('QQ 3114559925')
 

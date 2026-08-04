@@ -62,3 +62,17 @@
 ## 6. 后续门禁
 
 实现方自动化和浏览器点检不能代替独立 Review。后续新上下文需重新核对代码/迁移/API、双 Host SSR、桌面 Hover 与键盘路径、移动导航、三视口、console/network、真实图片、公开 DTO 泄漏和当前开发库页面；用户保留最终视觉与文案验收权。
+
+## 7. 2026-08-05 视觉收口追加
+
+- `PublicHeader` 二级导航面板从仅底部圆角改为完整 `16px` 圆角矩形，Hover 与 `:focus-within` 行为不变。
+- `SiteContentCard` 的“新增问题”按钮增加 8px 顶部间距，不改变 FAQ 数量、表单状态或保存链。
+- `PublicFooter` 的上下 padding 从 64px / 32px 压缩为 16px / 16px，桌面实测高度为 105px；右下区按版权、服务/隐私/署名、ICP备案三行排列。
+- 新增 `Design by Arktouros`，仅 `Arktouros` 链接至 `https://github.com/wangminan`，新窗口打开并带 `noopener noreferrer`。
+- 真实开发页视觉检查：二级面板四角 16px、页脚 105px、外链目标正确，console 0 error / 0 warning。
+- 提交前 `pnpm lint`、`pnpm typecheck` 通过；隔离生产构建后的定向 Playwright 为 4 / 4 PASS，覆盖公开下拉/页脚、移动导航、委托视觉和后台按钮真实计算间距。首次命令因多传 `--` 误跑全套，结果不作为本次门禁；纠正后的目标文件独立通过。
+
+追加截图：
+
+- `screenshots/t27-f1-rounded-subnav-1440x900.png`
+- `screenshots/t27-f1-compact-footer-1440x900.png`

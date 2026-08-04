@@ -13,7 +13,7 @@ import type {
 } from '../../shared/types/contracts'
 import { ServiceError } from './service-error'
 
-const WATERMARK_RENDER_REVISION = 'hero-by-work-role-v1'
+const WATERMARK_RENDER_REVISION = 'responsive-design-sheet-v2'
 
 export interface WatermarkProfileRow {
   configDigest: string

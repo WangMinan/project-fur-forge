@@ -9,6 +9,7 @@
 - [`../EXECUTION_ROUTING.md`](../EXECUTION_ROUTING.md)：前端模型池、GPT-5.6 Sol 后端/Review、串行交接和测试策略。
 - [`../TASKS.md`](../TASKS.md)：唯一可勾选任务清单；T23–T27 已收口，T26-F1、T27-F1 实现方自测完成并等待独立 Review/用户验收。
 - [`T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md`](./t26-t27/T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md)：公开信息架构、0015、服务/隐私页、导航/页脚、状态呈现和实现方自动化/浏览器证据。
+- [`T25-DESIGN-SHEET-WATERMARK-FOLLOW-UP-2026-08-05.md`](./t23-t25/T25-DESIGN-SHEET-WATERMARK-FOLLOW-UP-2026-08-05.md)：高分辨率设定图水印固定像素根因、960 px 基准修复、当前活动 profile 原子重建与真实 OSS/浏览器证据。
 - [`T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`](./t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md)：委托页独立大图的规格、最小复用方案、低分辨率追加实现与验证证据。
 - [`T26-F1-HERO-WATERMARK-FOLLOW-UP-2026-08-04.md`](./t26-t27/T26-F1-HERO-WATERMARK-FOLLOW-UP-2026-08-04.md)：首页/委托页大图复用作品媒体水印布局与视觉比例、现有公开对象原子重建和真实浏览器复核。
 - [`T26-T27-OQ120-SEED-UX-FOLLOW-UP-2026-08-04.md`](./t26-t27/T26-T27-OQ120-SEED-UX-FOLLOW-UP-2026-08-04.md)：OQ-120 正式默认值、0014 迁移、当前库注入、“大图管理”统一命名、委托锚点修复与返图墙任务边界。
@@ -44,6 +45,7 @@
 - [`T24-T25-FRONTEND-CHECKPOINT-2026-08-03.md`](./t23-t25/T24-T25-FRONTEND-CHECKPOINT-2026-08-03.md)：管理媒体分区、公开领养页、自动保存发布与浏览器检查点。
 - [`T23-T25-USER-ACCEPTANCE-2026-08-04.md`](./t23-t25/T23-T25-USER-ACCEPTANCE-2026-08-04.md)：用户人工核验通过与 `recipe-v2` 正式素材真实 OSS 证据；独立 Review 待执行。
 - [`T23-T25-CLOSURE-2026-08-04.md`](./t23-t25/T23-T25-CLOSURE-2026-08-04.md)：用户确认 Agent Review 已完成后解除门禁，T23–T25 勾选收口。
+- [`T25-DESIGN-SHEET-WATERMARK-FOLLOW-UP-2026-08-05.md`](./t23-t25/T25-DESIGN-SHEET-WATERMARK-FOLLOW-UP-2026-08-05.md)：T25 收口后高分辨率设定图水印比例缺陷修复；不改写历史结论。
 
 ### T26–T27 固定内容与营业状态
 

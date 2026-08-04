@@ -549,7 +549,7 @@ function watermarkLayout(usage: PublicMediaUsage) {
 }
 
 function watermarkSizingReferenceWidth(usage: PublicMediaUsage) {
-  if (usage === 'home-hero-landscape') {
+  if (usage === 'design-sheet' || usage === 'home-hero-landscape') {
     return HERO_LANDSCAPE_WATERMARK_REFERENCE_WIDTH
   }
   if (usage === 'home-hero-portrait') {

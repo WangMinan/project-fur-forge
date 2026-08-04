@@ -112,7 +112,7 @@ OQ-119 已由用户回答：`ownerDisplay` 始终为去首尾空白后非空的�
 - `preprocess` 不得引用另一个 preprocess，且输入摘要必须等于永久原图摘要；任何 `source_variant_id` 都必须指向同一资产下 READY 的 PRIVATE preprocess，其输出摘要等于下游输入摘要。大于 20,000,000 字节的原图或已确认适配的低分辨率大图生成 PUBLIC variant 时必须使用该来源；横版适配源为 `1920×1080`，竖版为 `1080×1920`，且不超过 20,000,000 字节。
 - 管理端浏览器以 `assetId` 操作媒体；私有 Key 只在服务端和数据库中使用。
 - 原图不保存水印像素。`asset_variants` 的 identity 覆盖原图摘要、媒体角色、裁切/焦点、用途、宽度、格式、质量、Logo 摘要、水印 profile 版本、锚点和 `recipe-version`，不得原位覆盖。
-- P0 的 `home_hero_*`、`design_sheet`、`studio_photo` 使用当前活动 `brand-centered-v2`；其中 `home_hero_landscape` 与 `design_sheet` 固定为左右双水印，`home_hero_portrait` 与 `studio_photo` 固定为单个居中水印。横版与竖版大图分别复用 960 px 设定图和 480 px 作品卡的水印视觉比例。P1 的 `return_photo` 使用 `brand-subtle-v1`。profile ID、配置与 Logo 摘要、受控布局、不透明度和缩放进入 identity。
+- P0 的 `home_hero_*`、`design_sheet`、`studio_photo` 使用当前活动 `brand-centered-v2`；其中 `home_hero_landscape` 与 `design_sheet` 固定为左右双水印，`home_hero_portrait` 与 `studio_photo` 固定为单个居中水印。`design_sheet` 的全部输出宽度及横版大图按 960 px 设定图基准等比缩放水印，竖版大图按 480 px 作品卡基准保持相同视觉比例。P1 的 `return_photo` 使用 `brand-subtle-v1`。profile ID、配置与 Logo 摘要、受控布局、不透明度和缩放进入 identity。
 - `top-left | top-right | bottom-left | bottom-right` 只保留历史 v1 身份；v2 固定 `center`，管理员可以在受限范围调整透明度和缩放，不能关闭强制水印。
 - `publication_operations` 的状态应描述 `GENERATING_PUBLIC`、`APPLYING_WATERMARK`、`VERIFYING_PUBLIC`、`COMMITTING`、`CLEANING_PUBLIC`、`FAILED`、`DONE` 等实际步骤，不再出现逐对象 ACL 进度。
 
