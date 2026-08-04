@@ -43,6 +43,7 @@ test.describe('创建作品', () => {
 
     // 列表包含新作品，且不出现联系人。
     await page.goto(`${adminBaseURL}/admin/works`)
+    await page.getByRole('searchbox', { name: '查找作品' }).fill('雪团')
     await expect(page.getByRole('link', { name: '雪团', exact: true }).first()).toBeVisible()
     await expect(page.getByText(/QQ 123456/)).toHaveCount(0)
   })
@@ -264,6 +265,8 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
       sortOrder: 1,
     })
     await page.goto(`${adminBaseURL}/admin/works`)
+    await page.getByRole('searchbox', { name: '查找作品' })
+      .fill(`列表领养-${suffix}`)
     const row = page.getByRole('row').filter({ hasText: `列表领养-${suffix}` })
     await expect(row).toContainText('可领养')
     await expect(row).toContainText('¥15,600')
@@ -285,6 +288,8 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
       .getByLabel('精选')).toBeChecked()
 
     await page.reload()
+    await page.getByRole('searchbox', { name: '查找作品' })
+      .fill(`列表领养-${suffix}`)
     const reloaded = page.getByRole('row').filter({ hasText: `列表领养-${suffix}` })
     await expect(reloaded.getByLabel('排序')).toHaveValue('7')
     await expect(reloaded.getByLabel('精选')).toBeChecked()
@@ -611,7 +616,7 @@ test.describe('公开预览与泄漏边界', () => {
     await expect(preview).toContainText(`/works/${work.slug}`)
     await expect(preview).toContainText('长毛、蓝白')
     await expect(preview).toContainText('媒体未就绪')
-    await expect(preview).toContainText('不含联系人')
+    await expect(preview).toContainText('不公开')
 
     // 编辑页详情允许显示联系人（仅后台）；公开预览面板与列表不得出现。
     await expect(page.getByLabel(/联系人/)).toHaveValue(contact)

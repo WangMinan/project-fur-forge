@@ -489,6 +489,8 @@ test.describe('T24 领养设定图与角色化列表', () => {
     await expect(page.getByText('出厂照已保存。')).toBeVisible()
 
     await page.goto(`${adminBaseURL}/admin/works`)
+    await page.getByRole('searchbox', { name: '查找作品' })
+      .fill('列表媒体验证')
     const row = page.getByRole('row').filter({ hasText: '列表媒体验证' })
     await expect(row).toContainText('设定图 有 · 出厂照 1/5')
     await expect(row).toContainText('无发布阻断')
