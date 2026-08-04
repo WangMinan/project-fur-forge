@@ -54,7 +54,7 @@ test.describe('后台作品列表页', () => {
 
   test('五个管理入口的导航、一级标题和标签页标题一致', async ({ page }) => {
     for (const entry of [
-      { label: '首页管理', path: '/admin/site/home' },
+      { label: '大图管理', path: '/admin/site/home' },
       { label: '文案配置', path: '/admin/site/content' },
       { label: '全局水印', path: '/admin/site/branding' },
       { label: '作品管理', path: '/admin/works' },
@@ -82,14 +82,14 @@ test.describe('后台作品列表页', () => {
     // T21 人工验收确认管理导航顺序与完整页名。
     await expect(nav.getByRole('link')).toHaveCount(5)
     expect(await nav.getByRole('link').allTextContents()).toEqual([
-      '首页管理',
+      '大图管理',
       '文案配置',
       '全局水印',
       '作品管理',
       '修改密码',
     ])
     await expect(nav.getByRole('link', { name: '作品管理' })).toHaveAttribute('aria-current', 'page')
-    await expect(nav.getByRole('link', { name: '首页管理' })).toHaveAttribute(
+    await expect(nav.getByRole('link', { name: '大图管理' })).toHaveAttribute(
       'href',
       '/admin/site/home',
     )

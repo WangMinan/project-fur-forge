@@ -146,7 +146,7 @@ function onSave() {
       <h2 id="site-content-title" class="site-content__card-title">页面内容</h2>
       <p class="site-content__meta">
         委托、关于、联系页的固定文字。所有字段留空即不在公开页显示对应区块；
-        邮箱（{{ content.contact.email }}）与 QQ（{{ content.contact.qq }}）继续在“首页管理”的“首屏设置”维护。
+        邮箱（{{ content.contact.email }}）与 QQ（{{ content.contact.qq }}）继续在“大图管理”的“首屏设置”维护。
       </p>
     </header>
 

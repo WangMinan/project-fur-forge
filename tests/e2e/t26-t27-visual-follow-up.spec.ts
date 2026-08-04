@@ -35,10 +35,18 @@ test('作品与自设委托页名字号一致，委托首图提供引导行动',
   const hero = page.getByTestId('commission-hero')
   await expect(hero).toBeVisible()
   await expect(hero.getByRole('heading', { name: '从角色设定出发' })).toBeVisible()
-  await expect(hero.getByRole('link', { name: '了解制作范围' })).toHaveAttribute(
+  const detailsLink = hero.getByRole('link', { name: '了解制作范围' })
+  await expect(detailsLink).toHaveAttribute(
     'href',
     '#commission-details',
   )
+  await detailsLink.click()
+  await expect(page).toHaveURL(/#commission-details$/u)
+  await expect.poll(async () => {
+    const header = await page.getByTestId('public-header').boundingBox()
+    const details = await page.locator('#commission-details').boundingBox()
+    return header && details ? details.y - header.height : -1
+  }).toBeGreaterThanOrEqual(0)
   await expect(hero.getByRole('link', { name: '邮件咨询估价' })).toHaveAttribute(
     'href',
     /^mailto:hello@example\.test/u,

@@ -171,6 +171,10 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
   max-width: var(--public-content-reading);
 }
 
+#commission-details {
+  scroll-margin-top: calc(var(--space-8) + var(--space-4));
+}
+
 .commission-page__section-title {
   font-family: var(--font-public-display);
   font-size: var(--font-size-lg);

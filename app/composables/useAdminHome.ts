@@ -16,7 +16,7 @@ import {
 } from '~/utils/media-labels'
 import { AdminApiError } from './useAdminApi'
 
-// T20 首页管理状态：home 快照为唯一状态基线，所有写操作带 expectedVersion；
+// T20/T26-F1 大图管理状态：当前 placement 快照为唯一状态基线，所有写操作带 expectedVersion；
 // 409 一律重新 GET，不自行递增或猜测版本。启用为异步发布操作：先返回操作
 // 记录，UI 轮询至 DONE/FAILED 后重新加载 home（版本随提交递增）。
 export interface HeroSlideInput {

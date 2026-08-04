@@ -6,7 +6,7 @@ import type {
 } from '~~/shared/types/contracts'
 import type { HeroSlideInput } from '~/composables/useAdminHome'
 
-// T20 首页管理：口号/自动轮播设置 + 轮播项 CRUD/排序/启停 + 活动水印预览。
+// T20/T26-F1 大图管理：首页轮播与委托页大图共用上传、排序、启停和水印预览链路。
 // 所有写操作携带 expectedVersion；409 统一重载并提示。
 definePageMeta({
   layout: 'admin',
@@ -14,7 +14,7 @@ definePageMeta({
 })
 
 useSeoMeta({
-  title: '首页管理',
+  title: '大图管理',
   robots: 'noindex, nofollow',
 })
 
@@ -227,7 +227,7 @@ onMounted(() => {
   <AdminShell current="home">
     <div class="home-admin" data-testid="home-admin">
       <header class="home-admin__header">
-        <h1 class="home-admin__title">首页管理</h1>
+        <h1 class="home-admin__title">大图管理</h1>
         <p class="home-admin__meta">
           {{ isHomePlacement
             ? '首页轮播最多启用 5 项；启用时会按当前活动水印生成公开衍生图。'
