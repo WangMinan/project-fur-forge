@@ -6,7 +6,7 @@
 
 ## 评审对象
 
-尚未进入正式阶段 5；阶段 4 进行中。T01–T29、T31–T33、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T26-F1/T27-F1 等待用户验收；T30 工程与独立 Review 为 `PASS WITH FOLLOW-UP`，等待品牌图标用户验收。当前进入 T34。**OQ-120 已关闭。**
+尚未进入正式阶段 5；阶段 4 进行中。T01–T29、T31–T33、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T26-F1/T27-F1、T30、T34 的工程与独立 Review 均已通过，等待用户统一验收。**OQ-120 已关闭。**
 
 T21 首次独立审查、findings 修复、人工验收回归和用户最终确认已收口；首次 NOT PASS 报告继续作为历史事实保留。阶段 C 启动和 Review 方法见 `implementation/notes/P0-C-STAGE-READINESS-2026-08-02.md`。
 
@@ -29,6 +29,7 @@ T21 首次独立审查、findings 修复、人工验收回归和用户最终确�
 - T31 独立 Review 初审为 `NOT PASS`；迁移 hash MUST-FIX 修复后，验证恢复、非空短属性/媒体/大图/profile 一致性、失败清理与恢复库 Chrome 最终 `PASS`。证据见 `implementation/notes/t28-t34/T31-BACKUP-RESTORE-2026-08-05.md`。
 - T32 独立 Review 初审为 `NOT PASS`；请求中断与日志明文用户名 2 个 MUST-FIX 在共享边界修复后，安全负路径、真实 OSS、secret scan、production build/verify 与 Chrome 最终 `PASS`。证据见 `implementation/notes/t28-t34/T32-SECURITY-GATE-2026-08-05.md`。
 - T33 独立 Review 初审为 `NOT PASS`；Hero 投影 N+1、后续项 eager、方向固有尺寸与轮播命中区 4 个 findings 在共享投影和原生 HTML/CSS 边界关闭。2–5 项查询恒定，独立集成、Chrome E2E 与 production 三视口通过，最终 `PASS WITH FOLLOW-UP`。证据见 `implementation/notes/t28-t34/T33-PERFORMANCE-VISUAL-2026-08-05.md`。
+- T34 初始缺少 Docker 定义、全量 E2E 18 项失败与最终镜像漏带 `ali-oss` runtime 的 findings 均在既有测试边界和部署镜像根因处关闭。完整自动化、真实双 Bucket、恢复/发布链、非 root 持久卷、Host/secret、真 Chrome 私有图解码与重启复测通过，最终独立 Review `PASS`；任务等待用户验收。证据见 `implementation/notes/t28-t34/T34-P0-DEPLOYABLE-GATE-2026-08-05.md`。
 - EXT-01 已根据用户确认收口：Logo、作品、领养设定图和返图来源登记在 `materials/MATERIAL-MANIFEST.md`；T30/T51 负责衍生与校准，不再等待外部文件。
 - 后续写入全部直接在 `main` 串行完成；前端按任务选择 Kimi K3、Claude Opus 5 或 GPT-5.6 Sol，后端和 Review 使用 GPT-5.6 Sol。
 
@@ -56,10 +57,10 @@ GPT-5.6 Sol 即使参与后端实现，也要使用新的审查上下文从最�
 
 ## 后续评审点
 
-- T26–T27 follow-up：按 `implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md` 补验后台双上下文 409 与完整文案投影；OQ-120 确认后再录入正式内容，不回退已完成任务；
-- T26-F1：从最新 `main` 新开审查上下文，重放独立上传、排序、启停、无回退、双 Host 与三视口后再决定是否勾选；
+- T26–T27 follow-up：用户如愿意可按 `implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md` 补验后台双上下文 409；不回退已完成任务；
+- T26-F1/T27-F1：用户核对独立大图、低分辨率确认/恢复、公开信息架构与政策页后决定是否勾选；
 - T30 follow-up：用户确认 favicon 16/32、Apple Touch Icon、浏览器标签与分享图；
-- T32–T34：安全、性能、三视口和 P0 可部署总门禁；
+- T34：用户确认 P0 公开/管理核心和可部署结果后决定是否勾选；
 - 阶段 5：再执行完整 SPEC ↔ PLAN ↔ TASKS ↔ 代码 ↔ 浏览器结果总评审。
 
 ## 子代理评审记录

@@ -2,7 +2,7 @@
 
 > **角色**：记录模型、人员与工作轨道的可变执行安排。
 > **效力**：本文件不改变 foundation、SPEC/增量、PLAN/增量、`.design` 或 `TASKS.md` 的产品范围和完成定义。
-> **生效日期**：2026-08-05（T28/T29/T31–T33 已收口；T26-F1、T27-F1、T30 等待用户验收；当前进入 T34）。
+> **生效日期**：2026-08-05（T28/T29/T31–T33 已收口；T34 工程与独立 Review 完成；T26-F1、T27-F1、T30、T34 等待用户统一验收）。
 
 ## 1. 当前角色
 
@@ -24,6 +24,7 @@ GPT-5.6 Sol 可以同时承担后端实现与后续 Review，但 Review 必须�
 - T28/T29 独立 Chrome Review 为 `PASS` 并已收口；T30 为 `PASS WITH FOLLOW-UP`，仅保留品牌图标用户视觉门禁。
 - T31 独立 Review 初审的 migration hash MUST-FIX 已关闭；验证恢复、失败清理、恢复库 production Chrome 与媒体 Host 健康最终 `PASS`。
 - T32 独立 Review 初审的请求中断与日志用户名 MUST-FIX 已在共享边界关闭；安全负路径、真实 OSS、secret scan、production build/verify 与 Chrome 最终 `PASS`。
+- T33 独立 Review 初审 4 个 findings 已关闭，最终 `PASS WITH FOLLOW-UP`；T34 初始 Docker、全量 E2E 与 runtime findings 已关闭，独立 Review 最终 `PASS`，等待用户验收。
 - **OQ-120** 已由用户整批确认，0014 迁移只补空字段或缺失状态；后台双上下文 409 与完整文案投影可由用户下班后补验。
 - T37 展会矩阵未提前进入。
 - T22 最终 Review 与用户验收追加见 [`notes/t19-t22/T22-INDEPENDENT-REVIEW-2026-08-03.md`](./notes/t19-t22/T22-INDEPENDENT-REVIEW-2026-08-03.md)。
@@ -50,8 +51,8 @@ T22 不提前实现 T23 多图关系，也不提前实现 T37 的展会实体和
 ### C3 · T26–T30 完整公开站
 
 - T26/T27：[已完成] 服务端、前端、独立 Review 与 findings 修复收口；OQ-120 正式默认值已登记；
-- T26-F1：[实现方自测完成] 委托页独立大图管理、公开投影和站点大图低分辨率适配；下一门禁为独立 Review/用户验收；
-- T27-F1：[实现方自测完成] 关于/联系合并、服务条款/隐私政策独立页、页头二级导航、页脚法律区、委托状态形状和领养状态呈现；下一门禁为独立 Review/用户验收；
+- T26-F1：[工程与独立 Review 完成] 委托页独立大图管理、公开投影和站点大图低分辨率适配；等待用户验收；
+- T27-F1：[工程与独立 Review 完成] 关于/联系合并、服务条款/隐私政策独立页、页头二级导航、页脚法律区、委托状态形状和领养状态呈现；等待用户验收；
 - T28/T29：[已完成] 首页内容顺序、作品筛选、详情导航、公开投影与 301；独立 Review 均为 `PASS`；
 - T30：[工程与独立 Review 完成] SEO、Sitemap、favicon/Touch Icon 均通过，等待用户视觉验收。
 
@@ -61,7 +62,7 @@ T22 不提前实现 T23 多图关系，也不提前实现 T37 的展会实体和
 - T31：[已完成] 新路径验证恢复、迁移 hash、非空短属性/媒体/大图/profile 一致性、失败清理与恢复库 Chrome；
 - T32：[已完成] GPT-5.6 Sol 完整 P0 安全门禁与新上下文独立复验；
 - T33：[已完成] 初始 1 个 MUST-FIX 与 3 个 SHOULD-FIX 已关闭；Hero 批量投影、三视口、媒体请求、性能、交互和视觉独立复验最终 `PASS WITH FOLLOW-UP`；
-- T34：[当前] 由 GPT-5.6 Sol 执行完整自动化、真实浏览器全链和部署版本复核，用户做最终 P0 验收。
+- T34：[工程与独立 Review 完成] 完整自动化、真实双 Bucket、恢复、Docker 非 root/持久卷、Host/secret 边界和真 Chrome 重启复测均通过；等待用户最终 P0 验收。
 
 ## 4. 直接在 main 上的策略
 
