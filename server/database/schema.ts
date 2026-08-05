@@ -756,9 +756,26 @@ export const siteContent = sqliteTable('site_content', {
   heroAutoRotateIntervalMs: integer('hero_auto_rotate_interval_ms')
     .notNull().default(6_000),
   version: integer('version').notNull().default(1),
+  // T34-F3：每个文案分区独立并发域，首屏 Hero 的 version 不再承担全部文案。
+  commissionContentVersion: integer('commission_content_version')
+    .notNull().default(1),
+  commissionFaqVersion: integer('commission_faq_version')
+    .notNull().default(1),
+  aboutContentVersion: integer('about_content_version')
+    .notNull().default(1),
+  termsContentVersion: integer('terms_content_version')
+    .notNull().default(1),
+  privacyContentVersion: integer('privacy_content_version')
+    .notNull().default(1),
+  contactContentVersion: integer('contact_content_version')
+    .notNull().default(1),
   ...timestampColumns(),
 }, table => [
   check('site_content_singleton', sql`${table.id} = 'site'`),
+  check(
+    'site_content_section_versions_positive',
+    sql`${table.commissionContentVersion} > 0 AND ${table.commissionFaqVersion} > 0 AND ${table.aboutContentVersion} > 0 AND ${table.termsContentVersion} > 0 AND ${table.privacyContentVersion} > 0 AND ${table.contactContentVersion} > 0`,
+  ),
   check(
     'site_content_tagline',
     sql`${table.heroTagline} IS NULL OR (length(trim(${table.heroTagline})) BETWEEN 1 AND 120)`,

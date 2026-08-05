@@ -5,26 +5,24 @@ import type {
 } from '~~/shared/types/contracts'
 import { AdminApiError } from './useAdminApi'
 
-// T26–T27 站点内容与营业状态管理：content 快照为唯一状态基线，所有写操作带
-// expectedVersion；409 一律重新 GET，不自行递增或猜测版本。表单本地状态在卡片内，
-// 冲突重载后由卡片按 dirty 规则保留输入、仅推进基线。
-export interface SiteContentPayload {
-  commission: {
-    intro: string | null
-    estimateNote: string | null
-    emailAction: string | null
-    faqs: Array<{ question: string, answer: string }>
-  }
-  about: {
-    studioFacts: string | null
-    makingScope: string | null
-    basicTerms: string | null
-    privacyPolicy: string | null
-  }
-  contact: {
-    douyin: string | null
-    antiScam: string | null
-  }
+/**
+ * T34-F3 分区文案管理：每个分区独立版本、独立保存、独立冲突。
+ * 409 时保留本地草稿，只刷新服务端最新值供管理员对比，不自动把旧草稿套上新版本重发。
+ */
+export type SiteContentSection =
+  | 'about'
+  | 'commission'
+  | 'commission-faq'
+  | 'contact'
+  | 'privacy'
+  | 'terms'
+
+export type SiteSaveSection = SiteBusinessStatusKind | SiteContentSection
+
+export interface SiteContentFaqRow {
+  id: string
+  question: string
+  answer: string
 }
 
 export interface SiteStatusPayload {
@@ -33,15 +31,28 @@ export interface SiteStatusPayload {
   detail: string
 }
 
+const SECTION_VERSION_KEYS = {
+  'commission': 'commission',
+  'commission-faq': 'commissionFaq',
+  'about': 'about',
+  'terms': 'terms',
+  'privacy': 'privacy',
+  'contact': 'contact',
+} as const satisfies Record<
+  SiteContentSection,
+  keyof AdminSiteContentDto['sectionVersions']
+>
+
 export function useAdminSiteContent() {
   const adminApi = useAdminApi()
 
   const content = ref<AdminSiteContentDto | null>(null)
   const pageStatus = ref<'error' | 'loading' | 'ready'>('loading')
-  const mutating = ref(false)
-  const conflictNotice = ref<string | null>(null)
-  /** 最近一次成功保存的区块；卡片内表单再次变脏后由卡片自行隐藏提示。 */
-  const savedSection = ref<'adoption' | 'commission' | 'content' | null>(null)
+  /** 每个分区独立的保存中状态：一个 Card 保存时其它 Card 不被禁用。 */
+  const savingSection = ref<SiteSaveSection | null>(null)
+  const savedSection = ref<SiteSaveSection | null>(null)
+  /** 分区级冲突：值为发生冲突的分区，Card 内展示服务端最新值供对比。 */
+  const conflictSection = ref<SiteSaveSection | null>(null)
 
   async function refresh(): Promise<AdminSiteContentDto | null> {
     try {
@@ -61,7 +72,7 @@ export function useAdminSiteContent() {
 
   async function load() {
     pageStatus.value = 'loading'
-    conflictNotice.value = null
+    conflictSection.value = null
     try {
       await refresh()
       pageStatus.value = 'ready'
@@ -73,16 +84,18 @@ export function useAdminSiteContent() {
 
   async function runMutation(
     request: () => Promise<AdminSiteContentDto>,
-    section: 'adoption' | 'commission' | 'content',
+    section: SiteSaveSection,
     errorText: string,
   ): Promise<string | null> {
-    if (!content.value || mutating.value) {
+    if (!content.value || savingSection.value) {
       return null
     }
-    mutating.value = true
+    savingSection.value = section
     try {
       content.value = await request()
-      conflictNotice.value = null
+      if (conflictSection.value === section) {
+        conflictSection.value = null
+      }
       savedSection.value = section
       return null
     }
@@ -91,9 +104,10 @@ export function useAdminSiteContent() {
         return null
       }
       if (error instanceof AdminApiError && error.status === 409) {
-        conflictNotice.value = '站点内容已在其他地方变化，已重新加载最新值；请确认当前内容后重试。'
+        conflictSection.value = section
+        // 只刷新服务端值；Card 保留本地草稿，由管理员选择采用最新值或重试。
         await refresh()
-        return '未提交：版本已变化，请确认当前内容后重试。'
+        return null
       }
       if (error instanceof AdminApiError && error.status === 400) {
         return '内容未通过服务端校验，请检查各字段后重试。'
@@ -101,20 +115,27 @@ export function useAdminSiteContent() {
       return errorText
     }
     finally {
-      mutating.value = false
+      savingSection.value = null
     }
   }
 
-  async function saveContent(payload: SiteContentPayload): Promise<string | null> {
-    const expectedVersion = content.value?.version ?? 0
-    return await runMutation(async () => {
-      const result = await adminApi('/api/admin/v1/site/home/content', {
-        method: 'PUT',
-        body: { expectedVersion, payload },
-        schema: adminSiteContentResponseSchema,
-      })
+  function saveSection(
+    section: SiteContentSection,
+    payload: Record<string, unknown>,
+  ): Promise<string | null> {
+    const expectedVersion = content.value
+      ?.sectionVersions[SECTION_VERSION_KEYS[section]] ?? 0
+    return runMutation(async () => {
+      const result = await adminApi(
+        `/api/admin/v1/site/home/content/${section}`,
+        {
+          method: 'PUT',
+          body: { expectedVersion, payload },
+          schema: adminSiteContentResponseSchema,
+        },
+      )
       return result.data
-    }, 'content', '保存站点内容失败，请稍后重试。')
+    }, section, '保存失败，请稍后重试。')
   }
 
   async function saveStatus(
@@ -133,13 +154,13 @@ export function useAdminSiteContent() {
   }
 
   return {
-    conflictNotice,
+    conflictSection,
     content,
     load,
-    mutating,
     pageStatus,
     savedSection,
-    saveContent,
+    saveSection,
     saveStatus,
+    savingSection,
   }
 }

@@ -1,0 +1,168 @@
+import { expect, test } from '@playwright/test'
+import { adminBaseURL, loginAsAdmin } from './helpers/auth'
+import { capture } from './helpers/screenshots'
+
+const SCREENSHOT_DIR
+  = 'agent_docs/需求1-兽装工作室主页/implementation/notes/t34-c1/screenshots'
+
+/**
+ * T34-F3 文案分区 Card：独立保存、分区并发、分区级 409 与草稿保留。
+ * 使用真实管理 Host 与真实点击，不直接改数据库。
+ */
+const CONTENT_PATH = '/admin/site/content'
+
+async function openContentAdmin(page: import('@playwright/test').Page) {
+  await loginAsAdmin(page)
+  await page.goto(`${adminBaseURL}${CONTENT_PATH}`)
+  await expect(page.getByTestId('content-admin')).toBeVisible()
+}
+
+function card(page: import('@playwright/test').Page, section: string) {
+  return page.locator(`[data-testid="site-section-card"][data-section="${section}"]`)
+}
+
+test('六个文案分区各自独立保存，互不禁用', async ({ page }) => {
+  await openContentAdmin(page)
+
+  const sections = [
+    'commission',
+    'commission-faq',
+    'about',
+    'terms',
+    'privacy',
+    'contact',
+  ]
+  for (const section of sections) {
+    await expect(card(page, section)).toBeVisible()
+  }
+
+  const commission = card(page, 'commission')
+  const about = card(page, 'about')
+
+  // 初始都不脏，保存按钮禁用。
+  await expect(commission.getByTestId('site-section-save')).toBeDisabled()
+
+  await commission.locator('#site-field-intro').fill('委托简介：先聊角色设定。')
+  await expect(commission.getByTestId('site-section-dirty')).toBeVisible()
+  // 一个 Card 变脏不影响其它 Card。
+  await expect(about).toHaveAttribute('data-dirty', 'false')
+  await expect(about.getByTestId('site-section-save')).toBeDisabled()
+
+  await commission.getByTestId('site-section-save').click()
+  await expect(commission.getByTestId('site-section-saved')).toBeVisible()
+  await expect(commission).toHaveAttribute('data-dirty', 'false')
+
+  // 另一个分区随后独立保存也成功。
+  await about.locator('#site-field-studioFacts').fill('工作室介绍：只做兽装。')
+  await about.getByTestId('site-section-save').click()
+  await expect(about.getByTestId('site-section-saved')).toBeVisible()
+
+  // 重载后两个分区的内容都在，没有互相覆盖。
+  await page.reload()
+  await expect(card(page, 'commission').locator('#site-field-intro'))
+    .toHaveValue('委托简介：先聊角色设定。')
+  await expect(card(page, 'about').locator('#site-field-studioFacts'))
+    .toHaveValue('工作室介绍：只做兽装。')
+})
+
+test('同一分区并发保存：第二个上下文得到分区级冲突且保留本地草稿', async ({ browser }) => {
+  const first = await browser.newContext()
+  const second = await browser.newContext()
+  const pageA = await first.newPage()
+  const pageB = await second.newPage()
+
+  try {
+    await openContentAdmin(pageA)
+    await openContentAdmin(pageB)
+
+    // 两个上下文都基于同一份 commission 分区基线。
+    await card(pageA, 'commission').locator('#site-field-intro').fill('A 的委托简介')
+    await card(pageB, 'commission').locator('#site-field-intro').fill('B 的委托简介')
+
+    await card(pageA, 'commission').getByTestId('site-section-save').click()
+    await expect(card(pageA, 'commission').getByTestId('site-section-saved'))
+      .toBeVisible()
+
+    // B 用陈旧版本保存同一分区：分区级冲突，不是整页报错。
+    await card(pageB, 'commission').getByTestId('site-section-save').click()
+    const conflictB = card(pageB, 'commission')
+    await expect(conflictB.getByTestId('site-section-conflict')).toBeVisible()
+    await expect(conflictB).toHaveAttribute('data-conflict', 'true')
+    // 本地草稿仍然保留，没有被服务端值直接顶掉。
+    await expect(conflictB.locator('#site-field-intro')).toHaveValue('B 的委托简介')
+    // 冲突面板展示服务端最新内容供对比。
+    await expect(conflictB.getByTestId('site-section-conflict'))
+      .toContainText('A 的委托简介')
+    // 其它分区不受影响，仍可正常保存。
+    await expect(card(pageB, 'about')).toHaveAttribute('data-conflict', 'false')
+    await expect(card(pageB, 'about').getByTestId('site-section-save'))
+      .toBeDisabled()
+
+    // 采用最新内容后草稿被替换，冲突可以重新保存。
+    await conflictB.getByTestId('site-section-adopt-latest').click()
+    await expect(conflictB.locator('#site-field-intro')).toHaveValue('A 的委托简介')
+
+    await capture(pageB, 't34-f3-section-conflict', SCREENSHOT_DIR)
+  }
+  finally {
+    await first.close()
+    await second.close()
+  }
+})
+
+test('FAQ 稳定 ID：新增、删除、重排不串行为', async ({ page }) => {
+  await openContentAdmin(page)
+  const faq = card(page, 'commission-faq')
+
+  // 数据库自带种子 FAQ；先清空到 0 项，专注验证新增两项的行为，
+  // 不假设初始条数。
+  await expect(faq.getByTestId('site-section-save')).toBeVisible()
+  let remaining = await faq.locator('[data-faq-id]').count()
+  while (remaining > 0) {
+    await faq.getByLabel('删除第 1 项').click()
+    remaining -= 1
+  }
+  await faq.getByTestId('site-section-save').click()
+  await expect(faq.getByTestId('site-section-saved')).toBeVisible()
+  await expect(faq.locator('[data-faq-id]')).toHaveCount(0)
+
+  await faq.getByTestId('site-faq-add').click()
+  await faq.getByLabel('第 1 项问题').fill('交期多久')
+  await faq.getByLabel('第 1 项回答').fill('约三个月')
+  await faq.getByTestId('site-faq-add').click()
+  await faq.getByLabel('第 2 项问题').fill('可以改设定吗')
+  await faq.getByLabel('第 2 项回答').fill('定稿前可以')
+  await faq.getByTestId('site-section-save').click()
+  await expect(faq.getByTestId('site-section-saved')).toBeVisible()
+
+  const idsBefore = await faq.locator('[data-faq-id]').evaluateAll(
+    rows => rows.map(row => row.getAttribute('data-faq-id')),
+  )
+  expect(idsBefore).toHaveLength(2)
+  expect(new Set(idsBefore).size).toBe(2)
+
+  // 重排：顺序变化但 ID 与内容跟随各自的行，不发生错位。
+  await faq.getByLabel('下移第 1 项').click()
+  await expect(faq.getByLabel('第 1 项问题')).toHaveValue('可以改设定吗')
+  await expect(faq.getByLabel('第 2 项问题')).toHaveValue('交期多久')
+  const idsAfterMove = await faq.locator('[data-faq-id]').evaluateAll(
+    rows => rows.map(row => row.getAttribute('data-faq-id')),
+  )
+  expect(idsAfterMove).toEqual([idsBefore[1], idsBefore[0]])
+
+  await faq.getByTestId('site-section-save').click()
+  await expect(faq.getByTestId('site-section-saved')).toBeVisible()
+
+  // 删除第一项后，剩下那项仍是原来的 ID 和内容。
+  await faq.getByLabel('删除第 1 项').click()
+  await expect(faq.getByLabel('第 1 项问题')).toHaveValue('交期多久')
+  await faq.getByTestId('site-section-save').click()
+  await expect(faq.getByTestId('site-section-saved')).toBeVisible()
+
+  await page.reload()
+  const reloaded = card(page, 'commission-faq')
+  await expect(reloaded.locator('[data-faq-id]')).toHaveCount(1)
+  await expect(reloaded.getByLabel('第 1 项问题')).toHaveValue('交期多久')
+  expect(await reloaded.locator('[data-faq-id]').getAttribute('data-faq-id'))
+    .toBe(idsBefore[0])
+})
