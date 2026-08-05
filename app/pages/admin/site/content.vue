@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { SiteBusinessStatusKind } from '~~/shared/types/contracts'
 import type {
-  SiteContentPayload,
+  SiteContentSection,
   SiteStatusPayload,
 } from '~/composables/useAdminSiteContent'
 
@@ -15,31 +15,36 @@ useSeoMeta({
   robots: 'noindex, nofollow',
 })
 
+/**
+ * T34-F3：页面只负责布局、初次加载和全局错误边界。
+ * 每个分区 Card 自己管理草稿、校验、保存和冲突，互不影响。
+ */
 const {
-  conflictNotice,
+  conflictSection,
   content,
   load,
-  mutating,
   pageStatus,
   savedSection,
-  saveContent,
+  saveSection,
   saveStatus,
+  savingSection,
 } = useAdminSiteContent()
 
 const actionError = ref<string | null>(null)
-const errorDialogOpen = computed(() => Boolean(actionError.value || conflictNotice.value))
 
 function closeErrorDialog() {
   actionError.value = null
-  conflictNotice.value = null
 }
 
 async function onSaveStatus(kind: SiteBusinessStatusKind, payload: SiteStatusPayload) {
   actionError.value = await saveStatus(kind, payload)
 }
 
-async function onSaveContent(payload: SiteContentPayload) {
-  actionError.value = await saveContent(payload)
+async function onSaveSection(
+  section: SiteContentSection,
+  payload: Record<string, unknown>,
+) {
+  actionError.value = await saveSection(section, payload)
 }
 
 onMounted(() => void load())
@@ -51,7 +56,7 @@ onMounted(() => void load())
       <header class="content-admin__header">
         <h1 class="content-admin__title">文案配置</h1>
         <p class="content-admin__meta">
-          维护委托与领养状态，以及自设委托、关于我们、服务条款、隐私政策的固定文案。
+          每一部分单独保存，互不影响。改完一部分点它自己的保存按钮就行。
         </p>
       </header>
 
@@ -64,8 +69,8 @@ onMounted(() => void load())
       </div>
 
       <template v-else-if="content">
-        <section class="content-admin__card" aria-labelledby="business-statuses-title">
-          <h2 id="business-statuses-title" class="content-admin__card-title">营业状态</h2>
+        <section class="content-admin__group" aria-labelledby="business-statuses-title">
+          <h2 id="business-statuses-title" class="content-admin__group-title">营业状态</h2>
           <p class="content-admin__meta">
             委托与领养各自独立保存；状态链接由系统固定指向对应公开页。
           </p>
@@ -73,32 +78,73 @@ onMounted(() => void load())
             <AdminSiteBusinessStatusCard
               kind="commission"
               :status="content.statuses.commission"
-              :mutating="mutating"
+              :mutating="savingSection === 'commission'"
               :saved="savedSection === 'commission'"
               @save="payload => onSaveStatus('commission', payload)"
             />
             <AdminSiteBusinessStatusCard
               kind="adoption"
               :status="content.statuses.adoption"
-              :mutating="mutating"
+              :mutating="savingSection === 'adoption'"
               :saved="savedSection === 'adoption'"
               @save="payload => onSaveStatus('adoption', payload)"
             />
           </div>
         </section>
 
-        <div class="content-admin__card">
-          <AdminSiteContentCard
-            :content="content"
-            :mutating="mutating"
-            :saved="savedSection === 'content'"
-            @save="onSaveContent"
-          />
-        </div>
+        <section class="content-admin__group" aria-labelledby="content-sections-title">
+          <h2 id="content-sections-title" class="content-admin__group-title">页面文案</h2>
+          <div class="content-admin__sections">
+            <AdminSiteCommissionContentCard
+              :content="content"
+              :conflict-section="conflictSection"
+              :saved-section="savedSection"
+              :saving-section="savingSection"
+              @save="payload => onSaveSection('commission', payload)"
+            />
+            <AdminSiteCommissionFaqCard
+              :content="content"
+              :conflict-section="conflictSection"
+              :saved-section="savedSection"
+              :saving-section="savingSection"
+              @save="payload => onSaveSection('commission-faq', payload)"
+            />
+            <AdminSiteAboutContentCard
+              :content="content"
+              :conflict-section="conflictSection"
+              :saved-section="savedSection"
+              :saving-section="savingSection"
+              @save="payload => onSaveSection('about', payload)"
+            />
+            <AdminSiteLegalContentCard
+              section="terms"
+              :content="content"
+              :conflict-section="conflictSection"
+              :saved-section="savedSection"
+              :saving-section="savingSection"
+              @save="payload => onSaveSection('terms', payload)"
+            />
+            <AdminSiteLegalContentCard
+              section="privacy"
+              :content="content"
+              :conflict-section="conflictSection"
+              :saved-section="savedSection"
+              :saving-section="savingSection"
+              @save="payload => onSaveSection('privacy', payload)"
+            />
+            <AdminSiteOfficialChannelsCard
+              :content="content"
+              :conflict-section="conflictSection"
+              :saved-section="savedSection"
+              :saving-section="savingSection"
+              @save="payload => onSaveSection('contact', payload)"
+            />
+          </div>
+        </section>
       </template>
 
       <AdminConfirmDialog
-        :open="errorDialogOpen"
+        :open="Boolean(actionError)"
         title="操作未完成"
         confirm-label="知道了"
         :show-cancel="false"
@@ -106,7 +152,6 @@ onMounted(() => void load())
         @cancel="closeErrorDialog"
       >
         <p v-if="actionError" role="alert">{{ actionError }}</p>
-        <p v-if="conflictNotice" role="alert">{{ conflictNotice }}</p>
       </AdminConfirmDialog>
     </div>
   </AdminShell>
@@ -119,13 +164,14 @@ onMounted(() => void load())
   max-width: 72rem;
 }
 
-.content-admin__header {
+.content-admin__header,
+.content-admin__group {
   display: grid;
-  gap: var(--admin-space-1);
+  gap: var(--admin-space-2);
 }
 
 .content-admin__title,
-.content-admin__card-title,
+.content-admin__group-title,
 .content-admin__meta,
 .content-admin__state p {
   margin: 0;
@@ -136,39 +182,31 @@ onMounted(() => void load())
   font-weight: 700;
 }
 
+.content-admin__group-title {
+  font-size: var(--admin-font-md);
+  font-weight: 600;
+}
+
 .content-admin__meta {
   color: var(--admin-text-secondary);
   font-size: var(--admin-font-sm);
   line-height: var(--admin-line-normal);
 }
 
-.content-admin__state,
-.content-admin__card {
-  padding: var(--admin-space-4);
-  background: var(--admin-bg-primary);
-  border: 1px solid var(--admin-border-secondary);
-  border-radius: var(--admin-radius-md);
-}
-
 .content-admin__state {
   display: grid;
   justify-items: start;
   gap: var(--admin-space-3);
+  padding: var(--admin-space-4);
+  background: var(--admin-bg-primary);
+  border: 1px solid var(--admin-border-secondary);
+  border-radius: var(--admin-radius-md);
   color: var(--admin-text-secondary);
   font-size: var(--admin-font-sm);
 }
 
-.content-admin__card {
-  display: grid;
-  gap: var(--admin-space-3);
-}
-
-.content-admin__card-title {
-  font-size: var(--admin-font-md);
-  font-weight: 600;
-}
-
-.content-admin__statuses {
+.content-admin__statuses,
+.content-admin__sections {
   display: grid;
   gap: var(--admin-space-3);
 }

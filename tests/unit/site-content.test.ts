@@ -3,8 +3,11 @@ import { updateHomeSettingsRequestSchema } from '../../shared/schemas/home'
 import {
   contactDouyinSchema,
   publicSiteContentDtoSchema,
+  updateAboutContentRequestSchema,
+  updateCommissionContentRequestSchema,
+  updateCommissionFaqRequestSchema,
+  updateContactContentRequestSchema,
   updateSiteBusinessStatusRequestSchema,
-  updateSiteContentRequestSchema,
 } from '../../shared/schemas/site-content'
 
 const emptyContent = {
@@ -26,12 +29,33 @@ const emptyContent = {
   },
 }
 
+const FAQ_ID_A = '11111111-1111-4111-8111-111111111111'
+const FAQ_ID_B = '22222222-2222-4222-8222-222222222222'
+
 describe('restricted site content contracts', () => {
-  it('accepts empty drafts and validates official channels', () => {
-    expect(updateSiteContentRequestSchema.safeParse({
+  it('accepts empty drafts per section and validates official channels', () => {
+    // T34-F3：每个分区独立请求，只携带自己的字段。
+    expect(updateCommissionContentRequestSchema.safeParse({
       expectedVersion: 1,
-      payload: emptyContent,
+      payload: { intro: null, estimateNote: null, emailAction: null },
     }).success).toBe(true)
+    expect(updateCommissionFaqRequestSchema.safeParse({
+      expectedVersion: 1,
+      payload: { faqs: [] },
+    }).success).toBe(true)
+    expect(updateAboutContentRequestSchema.safeParse({
+      expectedVersion: 1,
+      payload: { studioFacts: null, makingScope: null },
+    }).success).toBe(true)
+    expect(updateContactContentRequestSchema.safeParse({
+      expectedVersion: 1,
+      payload: { douyin: null, antiScam: null },
+    }).success).toBe(true)
+    // 分区请求不接受其它分区字段，避免整包覆盖复活。
+    expect(updateCommissionContentRequestSchema.safeParse({
+      expectedVersion: 1,
+      payload: { intro: null, estimateNote: null, emailAction: null, studioFacts: 'x' },
+    }).success).toBe(false)
     expect(contactDouyinSchema.safeParse('to3114559925').success).toBe(true)
     expect(contactDouyinSchema.safeParse('@invalid handle').success).toBe(false)
     expect(updateHomeSettingsRequestSchema.safeParse({
@@ -53,27 +77,43 @@ describe('restricted site content contracts', () => {
       '[打开](javascript:alert(1))',
       '<iframe src="https://example.test"></iframe>',
     ]) {
-      expect(updateSiteContentRequestSchema.safeParse({
+      expect(updateCommissionContentRequestSchema.safeParse({
         expectedVersion: 1,
-        payload: {
-          ...emptyContent,
-          commission: { ...emptyContent.commission, intro },
-        },
+        payload: { intro, estimateNote: null, emailAction: null },
       }).success).toBe(false)
     }
-    expect(updateSiteContentRequestSchema.safeParse({
+    expect(updateCommissionFaqRequestSchema.safeParse({
       expectedVersion: 1,
       payload: {
-        ...emptyContent,
-        commission: {
-          ...emptyContent.commission,
-          faqs: [
-            { question: '怎么联系？', answer: '通过邮件联系。' },
-            { question: '怎么联系？', answer: '通过公开渠道联系。' },
-          ],
-        },
+        faqs: [
+          { id: FAQ_ID_A, question: '怎么联系？', answer: '通过邮件联系。' },
+          { id: FAQ_ID_B, question: '怎么联系？', answer: '通过公开渠道联系。' },
+        ],
       },
     }).success).toBe(false)
+    // 稳定 ID：缺失或重复都不接受。
+    expect(updateCommissionFaqRequestSchema.safeParse({
+      expectedVersion: 1,
+      payload: { faqs: [{ question: '问', answer: '答' }] },
+    }).success).toBe(false)
+    expect(updateCommissionFaqRequestSchema.safeParse({
+      expectedVersion: 1,
+      payload: {
+        faqs: [
+          { id: FAQ_ID_A, question: '问一', answer: '答一' },
+          { id: FAQ_ID_A, question: '问二', answer: '答二' },
+        ],
+      },
+    }).success).toBe(false)
+    expect(updateCommissionFaqRequestSchema.safeParse({
+      expectedVersion: 1,
+      payload: {
+        faqs: [
+          { id: FAQ_ID_A, question: '问一', answer: '答一' },
+          { id: FAQ_ID_B, question: '问二', answer: '答二' },
+        ],
+      },
+    }).success).toBe(true)
   })
 
   it('keeps business status values enumerated and public DTOs strict', () => {

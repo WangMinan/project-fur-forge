@@ -13,18 +13,24 @@ import type {
 import { ServiceError } from './service-error'
 
 interface SiteContentRow {
+  aboutContentVersion: number
   aboutMakingScope: string | null
   aboutStudioFacts: string | null
   basicTerms: string | null
+  commissionContentVersion: number
   commissionEmailAction: string | null
   commissionEstimateNote: string | null
   commissionFaqJson: string | null
+  commissionFaqVersion: number
   commissionIntro: string | null
   contactAntiScam: string | null
+  contactContentVersion: number
   contactDouyin: string | null
   contactEmail: string
   contactQq: string
+  privacyContentVersion: number
   privacyPolicy: string | null
+  termsContentVersion: number
   version: number
 }
 
@@ -55,7 +61,13 @@ function siteContentRow(sqlite: Database.Database) {
       about_making_scope AS aboutMakingScope,
       basic_terms AS basicTerms,
       privacy_policy AS privacyPolicy,
-      contact_anti_scam AS contactAntiScam
+      contact_anti_scam AS contactAntiScam,
+      commission_content_version AS commissionContentVersion,
+      commission_faq_version AS commissionFaqVersion,
+      about_content_version AS aboutContentVersion,
+      terms_content_version AS termsContentVersion,
+      privacy_content_version AS privacyContentVersion,
+      contact_content_version AS contactContentVersion
     FROM site_content WHERE id = 'site'
   `).get() as SiteContentRow | undefined
   if (!row || !row.contactEmail || !row.contactQq) {
@@ -89,6 +101,14 @@ function content(sqlite: Database.Database): AdminSiteContentDto {
   const row = siteContentRow(sqlite)
   return adminSiteContentDtoSchema.parse({
     version: row.version,
+    sectionVersions: {
+      commission: row.commissionContentVersion,
+      commissionFaq: row.commissionFaqVersion,
+      about: row.aboutContentVersion,
+      terms: row.termsContentVersion,
+      privacy: row.privacyContentVersion,
+      contact: row.contactContentVersion,
+    },
     statuses: businessStatuses(sqlite),
     commission: {
       intro: row.commissionIntro,
@@ -146,62 +166,80 @@ export function getPublicSiteContent(sqlite: Database.Database) {
   })
 }
 
-export function updateSiteContent(
-  sqlite: Database.Database,
-  expectedVersion: number,
-  input: {
-    commission: {
-      intro: string | null
-      estimateNote: string | null
-      emailAction: string | null
-      faqs: Array<{ question: string, answer: string }>
-    }
-    about: {
-      studioFacts: string | null
-      makingScope: string | null
-      basicTerms: string | null
-      privacyPolicy: string | null
-    }
-    contact: {
-      douyin: string | null
-      antiScam: string | null
-    }
+export type SiteContentSection =
+  | 'about'
+  | 'commission'
+  | 'commission-faq'
+  | 'contact'
+  | 'privacy'
+  | 'terms'
+
+/**
+ * T34-F3：每个分区只更新自己的列和自己的版本列。
+ * 一个分区保存时不携带、也不覆盖其它分区的值，因此并发编辑不同分区都能成功。
+ */
+const SECTION_UPDATES = {
+  'commission': {
+    versionColumn: 'commission_content_version',
+    action: 'SITE_COMMISSION_CONTENT_UPDATE',
+    assignments: 'commission_intro = @intro, commission_estimate_note = @estimateNote, commission_email_action = @emailAction',
   },
+  'commission-faq': {
+    versionColumn: 'commission_faq_version',
+    action: 'SITE_COMMISSION_FAQ_UPDATE',
+    assignments: 'commission_faq_json = @faqJson',
+  },
+  'about': {
+    versionColumn: 'about_content_version',
+    action: 'SITE_ABOUT_CONTENT_UPDATE',
+    assignments: 'about_studio_facts = @studioFacts, about_making_scope = @makingScope',
+  },
+  'terms': {
+    versionColumn: 'terms_content_version',
+    action: 'SITE_TERMS_CONTENT_UPDATE',
+    assignments: 'basic_terms = @basicTerms',
+  },
+  'privacy': {
+    versionColumn: 'privacy_content_version',
+    action: 'SITE_PRIVACY_CONTENT_UPDATE',
+    assignments: 'privacy_policy = @privacyPolicy',
+  },
+  'contact': {
+    versionColumn: 'contact_content_version',
+    action: 'SITE_CONTACT_CONTENT_UPDATE',
+    assignments: 'contact_douyin = @douyin, contact_anti_scam = @antiScam',
+  },
+} as const satisfies Record<SiteContentSection, {
+  action: string
+  assignments: string
+  versionColumn: string
+}>
+
+export function updateSiteContentSection(
+  sqlite: Database.Database,
+  section: SiteContentSection,
+  expectedVersion: number,
+  values: Record<string, string | null>,
   actorUserId: string,
   now = Date.now(),
 ) {
+  const definition = SECTION_UPDATES[section]
   sqlite.transaction(() => {
     const result = sqlite.prepare(`
       UPDATE site_content
-      SET commission_intro = ?, commission_estimate_note = ?,
-          commission_email_action = ?, commission_faq_json = ?,
-          about_studio_facts = ?, about_making_scope = ?, basic_terms = ?,
-          privacy_policy = ?,
-          contact_douyin = ?, contact_anti_scam = ?,
-          version = version + 1, updated_at = ?
-      WHERE id = 'site' AND version = ?
-    `).run(
-      input.commission.intro,
-      input.commission.estimateNote,
-      input.commission.emailAction,
-      JSON.stringify(input.commission.faqs),
-      input.about.studioFacts,
-      input.about.makingScope,
-      input.about.basicTerms,
-      input.about.privacyPolicy,
-      input.contact.douyin,
-      input.contact.antiScam,
-      now,
-      expectedVersion,
-    )
+      SET ${definition.assignments},
+          ${definition.versionColumn} = ${definition.versionColumn} + 1,
+          updated_at = @now
+      WHERE id = 'site' AND ${definition.versionColumn} = @expectedVersion
+    `).run({ ...values, now, expectedVersion })
     if (result.changes !== 1) {
       throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
     }
     sqlite.prepare(`
       INSERT INTO audit_logs (
         id, actor_user_id, action, entity_type, entity_id, result, created_at
-      ) VALUES (?, ?, 'SITE_CONTENT_UPDATE', 'SITE', 'site', 'SUCCESS', ?)
-    `).run(randomUUID(), actorUserId, now)
+      ) VALUES (?, ?, ?, 'SITE', 'site', 'SUCCESS', ?)
+    `).run(randomUUID(), actorUserId, definition.action, now)
   })()
   return content(sqlite)
 }

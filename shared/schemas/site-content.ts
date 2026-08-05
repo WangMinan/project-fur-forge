@@ -25,7 +25,12 @@ export const contactDouyinSchema = z.string().trim()
   .max(30)
   .regex(/^[\p{L}\p{N}._-]+$/u)
 
+/**
+ * T34-F3：FAQ 项拥有稳定 ID，排序与身份分离。
+ * 前端 key 用该 ID，不再用数组下标，新增/删除/重排不会复用错误组件状态。
+ */
 export const commissionFaqSchema = z.object({
+  id: z.string().uuid(),
   question: plainTextSchema(120),
   answer: plainTextSchema(1_000),
 }).strict()
@@ -34,6 +39,7 @@ export const commissionFaqListSchema = z.array(commissionFaqSchema)
   .max(8)
   .superRefine((items, context) => {
     const questions = new Set<string>()
+    const ids = new Set<string>()
     for (const [index, item] of items.entries()) {
       if (questions.has(item.question)) {
         context.addIssue({
@@ -43,6 +49,14 @@ export const commissionFaqListSchema = z.array(commissionFaqSchema)
         })
       }
       questions.add(item.question)
+      if (ids.has(item.id)) {
+        context.addIssue({
+          code: 'custom',
+          message: 'FAQ 标识不得重复',
+          path: [index, 'id'],
+        })
+      }
+      ids.add(item.id)
     }
   })
 
@@ -63,19 +77,35 @@ export const publicSiteBusinessStatusDtoSchema = z.object(
   siteBusinessStatusFields,
 ).strict()
 
-const commissionContentSchema = z.object({
+/** 委托基础文案（不含 FAQ，FAQ 为独立并发分区）。 */
+export const commissionBasicContentSchema = z.object({
   intro: plainTextSchema(240).nullable(),
   estimateNote: plainTextSchema(600).nullable(),
   emailAction: plainTextSchema(240).nullable(),
+}).strict()
+
+const commissionContentSchema = commissionBasicContentSchema.extend({
   faqs: commissionFaqListSchema,
 }).strict()
 
-const aboutContentSchema = z.object({
+/** 关于工作室与制作范围。 */
+export const aboutBasicContentSchema = z.object({
   studioFacts: plainTextSchema(1_200).nullable(),
   makingScope: plainTextSchema(1_200).nullable(),
+}).strict()
+
+export const termsContentSchema = z.object({
   basicTerms: plainTextSchema(8_000).nullable(),
+}).strict()
+
+export const privacyContentSchema = z.object({
   privacyPolicy: plainTextSchema(8_000).nullable(),
 }).strict()
+
+const aboutContentSchema = aboutBasicContentSchema
+  .extend(termsContentSchema.shape)
+  .extend(privacyContentSchema.shape)
+  .strict()
 
 const mutableContactContentSchema = z.object({
   douyin: contactDouyinSchema.nullable(),
@@ -92,14 +122,6 @@ const statusPairSchema = <T extends z.ZodType>(status: T) => z.object({
   adoption: status.nullable(),
 }).strict()
 
-export const updateSiteContentRequestSchema = versionedRequestSchema(
-  z.object({
-    commission: commissionContentSchema,
-    about: aboutContentSchema,
-    contact: mutableContactContentSchema,
-  }).strict(),
-)
-
 export const updateSiteBusinessStatusRequestSchema = versionedRequestSchema(
   z.object({
     tone: siteBusinessStatusToneSchema,
@@ -108,13 +130,54 @@ export const updateSiteBusinessStatusRequestSchema = versionedRequestSchema(
   }).strict(),
 )
 
+/** T34-F3：六个文案分区各自的乐观并发版本。 */
+export const siteContentSectionVersionsSchema = z.object({
+  commission: resourceVersionSchema,
+  commissionFaq: resourceVersionSchema,
+  about: resourceVersionSchema,
+  terms: resourceVersionSchema,
+  privacy: resourceVersionSchema,
+  contact: resourceVersionSchema,
+}).strict()
+
+export const SITE_CONTENT_SECTIONS = [
+  'commission',
+  'commission-faq',
+  'about',
+  'terms',
+  'privacy',
+  'contact',
+] as const
+
+export const siteContentSectionSchema = z.enum(SITE_CONTENT_SECTIONS)
+
 export const adminSiteContentDtoSchema = z.object({
   version: resourceVersionSchema,
+  sectionVersions: siteContentSectionVersionsSchema,
   statuses: statusPairSchema(adminSiteBusinessStatusDtoSchema),
   commission: commissionContentSchema,
   about: aboutContentSchema,
   contact: publicContactContentSchema,
 }).strict()
+
+export const updateCommissionContentRequestSchema = versionedRequestSchema(
+  commissionBasicContentSchema,
+)
+export const updateCommissionFaqRequestSchema = versionedRequestSchema(
+  z.object({ faqs: commissionFaqListSchema }).strict(),
+)
+export const updateAboutContentRequestSchema = versionedRequestSchema(
+  aboutBasicContentSchema,
+)
+export const updateTermsContentRequestSchema = versionedRequestSchema(
+  termsContentSchema,
+)
+export const updatePrivacyContentRequestSchema = versionedRequestSchema(
+  privacyContentSchema,
+)
+export const updateContactContentRequestSchema = versionedRequestSchema(
+  mutableContactContentSchema,
+)
 
 export const publicSiteContentDtoSchema = z.object({
   statuses: statusPairSchema(publicSiteBusinessStatusDtoSchema),
