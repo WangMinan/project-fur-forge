@@ -23,12 +23,24 @@ jobs:
           node-version: 24
       - run: corepack enable && corepack prepare pnpm@11.18.0 --activate
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm typecheck
-      - run: pnpm test
-      - run: pnpm test:integration
-      - run: pnpm build
-      - run: pnpm verify:production
+      - name: Run all quality gates
+        shell: bash
+        run: |
+          failure=0
+          run_gate() {
+            name="$1"
+            shift
+            echo "::group::$name"
+            "$@" || failure=1
+            echo "::endgroup::"
+          }
+          run_gate lint pnpm lint
+          run_gate typecheck pnpm typecheck
+          run_gate unit pnpm test
+          run_gate integration pnpm test:integration
+          run_gate build pnpm build
+          run_gate production-verify pnpm verify:production
+          exit "$failure"
 
   core-browser:
     runs-on: ubuntu-24.04
