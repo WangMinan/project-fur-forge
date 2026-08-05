@@ -35,6 +35,10 @@ jobs:
             | gzip --decompress \
             > "$RUNNER_TEMP/changes.patch"
           git apply --whitespace=fix "$RUNNER_TEMP/changes.patch"
+          # The ephemeral Actions token cannot create workflows. The GitHub
+          # connector adds the two reviewed CI workflows immediately after
+          # this product commit lands.
+          rm -f .github/workflows/ci.yml .github/workflows/full-e2e.yml
           rm -rf .agent
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
