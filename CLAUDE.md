@@ -6,7 +6,7 @@ This file provides guidance to coding agents working with code in this repositor
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01–T29、T31–T33、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。** T26-F1/T27-F1、T30、T34 的工程与新上下文独立 Review 均已通过，四项保持未勾选并等待用户统一验收。T34 初始 Docker、全量 E2E 与 `ali-oss` runtime findings 已关闭，最终 `PASS`。**OQ-120 已由用户整批确认，并由 0014/0015 登记默认值。**
+> **当前阶段：阶段 C.1 · P0 收口修复。** T01–T29、T31–T33、GATE-06、GATE-07、EXT-01 与 EXT-02 保持历史完成状态；T26-F1、T27-F1、T30、T34 的工程事实保留，但上线就绪结论由 C.1 新门禁取代，统一并入 T34-F8 验收。当前按 T34-F1 → T34-F7 串行收口，**T34-F8 由用户执行，GATE-C1 未通过**。阶段和任务权威始终以 `agent_docs/需求1-兽装工作室主页/STATE.md` 与 `implementation/TASKS.md` 为准。
 
 ## 网站核心原则（景宸确认）
 
@@ -116,7 +116,8 @@ pnpm auth:reset-password --confirm RESET_SINGLE_ADMIN_PASSWORD
 - SQLite/Drizzle、唯一管理员认证；
 - 双 Bucket、30 MB 原图、FFmpeg 私有处理源；
 - 角色化上传、媒体核验、`recipe-v2`（完整 v1 集合兼容回退）、发布/下架；
-- 活动 `brand-centered-v2` 可配置水印与原子全站切换；出厂照及站点竖版大图为单个居中水印，横版设定图及站点横版大图为左右双水印，站点大图复用对应作品图的视觉比例；
+- 活动 `brand-centered-v2` 可配置水印与原子全站切换，只作用于作品保护展示位；
+- T34-F1 起站点展示位（首页/委托页 Hero、首页两个业务入口）使用无水印 `site-display-v1`，与作品水印图按 `protection_mode` 严格区分。**媒体公开与保护的唯一事实源是 [`agent_docs/需求1-兽装工作室主页/requirements/MEDIA-PUBLICATION-POLICY.md`](agent_docs/需求1-兽装工作室主页/requirements/MEDIA-PUBLICATION-POLICY.md)，本文不复制策略正文；**
 - 真实作品详情/列表、首页双源轮播、大图管理和联系方式投影；
 - T21 第一作品垂直切片完整用户验收；
 - T22 三用途共享 Schema、管理 API/service、管理 UI、公开投影、历史展会兼容、精选 6 项上限和完整用户验收；
@@ -127,6 +128,10 @@ pnpm auth:reset-password --confirm RESET_SINGLE_ADMIN_PASSWORD
 - T26-F1 已完成委托页独立大图和可刷新恢复的低分辨率 FFmpeg 私有适配；T27-F1 已完成关于/联系合并、政策页、二级导航、页脚法律区与营业状态呈现；两项独立 Review 为 `PASS WITH FOLLOW-UP`，等待用户验收。
 - T28 首页完整内容顺序与 T29 筛选/详情导航/301 已通过独立 Chrome Review；T30 canonical、结构化数据、Sitemap/robots 和品牌图标技术 Review 已通过，等待用户视觉验收。
 - T31 备份恢复、T32 安全门禁与 T33 性能/三视口媒体回归均已通过新上下文独立 Review；T33 的 Hero 查询已批量化，横竖固有尺寸、按需加载和触控命中区已复核。
-- T34 完整自动化、真实双 Bucket、恢复/发布链、Docker 非 root/持久卷、Host/secret 边界和真 Chrome 重启复测已通过；镜像只带 `ali-oss` 的 frozen 89 包运行闭包。
+- T34 历史工程与独立 Review 事实保留，但现有镜像与页面不再视为正式上线候选，上线就绪由 GATE-C1 重新判定。
 
-`brand-standard-v1` 只保留为历史身份，当前发布必须匹配活动 `brand-centered-v2` 和 `recipe-v2`。当前下一交接为 T26-F1、T27-F1、T30、T34 用户统一验收；OQ-120 已关闭，后续文案修改继续通过“文案配置”完成。用户验收前不建设万能 CMS，也不提前进入 T37 展会完整矩阵。
+`brand-standard-v1` 只保留为历史身份，作品发布必须匹配活动 `brand-centered-v2` 与 `recipe-v2`；站点展示位匹配无水印 `site-display-v1`。
+
+阶段 C.1 的部署纪律：**T34-F6 只准备 Dockerfile、Compose、Nginx 与运维文件，不在本地执行 Docker 构建或容器验收**；镜像构建验证与发布由 T34-F7 的 GitHub Actions 承担（Secrets 仅 `DOCKERHUB_USERNAME`、`DOCKERHUB_TOKEN`，本轮不创建 tag、不触发发布）。正式域名、TLS 与线上 Compose 验收延期到用户部署阶段。运行镜像不得手工复制 `ali-oss` 或任何单个依赖闭包，必须使用 pnpm 正式的 production deploy/install 机制。
+
+OQ-120 已关闭，后续文案修改继续通过“文案配置”完成。用户验收前不建设万能 CMS，也不提前进入 T35 及之后的 P1/P2 功能。

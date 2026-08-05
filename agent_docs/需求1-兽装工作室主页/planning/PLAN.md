@@ -360,23 +360,31 @@ OSS 生命周期只针对临时或会话前缀，永久 `original` 路径需要�
 
 OSS 媒体域名和上传域名由阿里云侧配置，不经应用 Nginx 反代大文件。
 
-### 9.5 部署演练
+### 9.5 本轮范围与延期项
 
-必须从空目录和空数据卷执行：
+**用户明确要求：本轮 T34-F6 只准备交付文件，不在本地构建或运行容器。**
+
+本轮完成：
+
+- Dockerfile、`compose.yaml`、Nginx 模板、环境示例、容器内运维命令与部署说明；
+- 不依赖 Docker daemon 的静态检查：YAML 解析、Shell 语法、环境变量引用、路径与 package script 对应关系。
+
+本轮禁止：`docker build`、`docker compose build/up`、`docker run`、本地空卷演练、本地 Nginx 容器验收、本地镜像升级/回滚/恢复演练。
+
+镜像构建验证改由 T34-F7 的 GitHub Actions 执行。
+
+延期到用户后续部署阶段（不属于 GATE-C1）：
 
 ```text
-pull image
-compose run migrate
-compose run init-admin
-compose up
-ready
-登录并发布作品/大图
-backup
-restart
-upgrade
-rollback
-restore verify
+正式域名
+真实 TLS 证书
+线上 Compose 运行
+空数据卷部署演练
+升级 / 回滚 / 恢复演练
+远程服务器部署
 ```
+
+当前无正式域名：Nginx、Compose 和环境模板统一使用 `PUBLIC_HOST`、`ADMIN_HOST` 与可配置证书挂载路径，不硬编码假域名、不生成自签证书、不声称完成 TLS 验收。
 
 ## 10. T34-F7：CI
 
@@ -393,14 +401,24 @@ restore verify
 
 ### `container-smoke.yml`
 
-- Docker build；
+- Docker build（镜像构建验证在 CI 执行，不在本地）；
 - secret/content scan；
-- 空数据卷 migrate；
-- init 临时管理员；
-- Compose app + Nginx；
-- live/ready；
-- 公开首页、作品页、管理登录 smoke；
-- 容器重启后再次 ready。
+- `docker compose config` 静态展开检查（占位环境值，不启动服务）。
+
+本轮不要求在 CI 启动完整 Compose、真实 TLS、真实域名或远程服务器。
+
+### `release-image.yml`
+
+参考 `arktouros` 的 tag 发布模式：
+
+- 触发：`push tags: v*` 与 `workflow_dispatch`（可指定 image tag）；
+- `docker/login-action`、`docker/setup-buildx-action`、`docker/build-push-action`；
+- Secrets：`DOCKERHUB_USERNAME`、`DOCKERHUB_TOKEN`（仅 tag/手动流程读取，PR 不读）；
+- 默认镜像 `${DOCKERHUB_USERNAME}/project-fur-forge`，标签含 Git tag、`latest`、可选短 SHA；
+- 默认平台仅 `linux/amd64`：`better-sqlite3`、`ffmpeg-static` 为平台相关依赖，无经过验证的 arm64 依据前不加多架构；
+- 不加远程部署 job，不写 SSH/服务器地址，不创建 GitHub Release。
+
+本轮完成 workflow 文件后不创建 `v*` tag、不手动触发发布、不声称镜像已推送。
 
 ### `e2e.yml`
 
@@ -412,20 +430,26 @@ restore verify
 
 ## 11. T34-F8：总门禁
 
-按以下顺序收口：
+**T34-F8 由用户执行，实施者不得代签，也不得用自测代替独立 Review。**
+
+实施者需要交付的可 Review 状态：
 
 1. 文档一致性；
-2. lint/typecheck/unit/integration/build；
-3. 核心与全量 E2E；
-4. 真实双 Bucket；
+2. lint/typecheck/unit/integration/build/verify:production；
+3. 核心与全量 E2E（不可用部分必须明确记录，不伪造通过）；
+4. 真实双 Bucket（若现有 `.env` 具备凭据）；
 5. profile 切换与站点无水印不变性；
-6. 长任务进程中断与恢复；
+6. 长任务进程中断与恢复（本地 Node 进程，不属于 Docker 验收）；
 7. 上传过期清扫；
-8. 空环境 Compose；
-9. 升级、备份、回滚和恢复；
-10. 三视口真 Chrome；
-11. 新上下文独立 Review；
-12. 用户验收。
+8. 三视口真 Chrome。
+
+用户执行：
+
+9. 公开端与管理端视觉验收；
+10. 新上下文独立 Review；
+11. 明确确认后勾选 T34-F8 与 GATE-C1。
+
+延期到用户后续部署阶段：空环境 Compose、升级/回滚/恢复演练、正式域名与 TLS、Docker Hub 发布。
 
 任何阶段发现 MUST-FIX，先冻结 finding，再在根因处修复并重放相关链路。测试通过数量不能替代图片和真实操作观察。
 
