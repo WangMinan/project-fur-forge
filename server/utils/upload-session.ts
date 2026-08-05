@@ -148,7 +148,7 @@ export function requireUploadSession(sqlite: Database.Database, id: string) {
 
 export function assertUploadSessionVersion(row: UploadSessionRow, expectedVersion: number) {
   if (row.version !== expectedVersion) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
 }
 

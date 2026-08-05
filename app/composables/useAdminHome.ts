@@ -1,10 +1,6 @@
-import {
-  adminHeroPreviewResponseSchema,
-  adminHomeResponseSchema,
-} from '~~/shared/schemas/home'
+import { adminHomeResponseSchema } from '~~/shared/schemas/home'
 import { publicationOperationResponseSchema } from '~~/shared/schemas/publication'
 import type {
-  AdminHeroPreviewDto,
   AdminHomeDto,
   HeroPlacement,
   PublicationOperationDto,
@@ -50,7 +46,6 @@ const IN_PROGRESS_STATUSES = new Set([
   'CLEANING_PUBLIC',
 ])
 
-const POLL_INTERVAL_MS = 1_000
 
 export function useAdminHome(
   placement: MaybeRefOrGetter<HeroPlacement> = 'home',
@@ -75,23 +70,10 @@ export function useAdminHome(
   // 每个轮播项的最近一次启用操作与反馈，按 slideId 归档。
   const operations = ref<Record<string, PublicationOperationDto>>({})
   const feedback = ref<Record<string, SlideFeedback>>({})
-  const previews = ref<Record<string, AdminHeroPreviewDto>>({})
-  const previewPending = ref<Record<string, boolean>>({})
 
-  const pollTimers = new Map<string, ReturnType<typeof setTimeout>>()
-
-  function stopPolling(slideId?: string) {
-    if (slideId) {
-      const timer = pollTimers.get(slideId)
-      if (timer) {
-        clearTimeout(timer)
-        pollTimers.delete(slideId)
-      }
-      return
-    }
-    pollTimers.forEach(clearTimeout)
-    pollTimers.clear()
-  }
+  // T34-F4：定时器生命周期与操作状态拉取交给 usePublicationPolling。
+  const polling = usePublicationPolling()
+  const stopPolling = polling.stop
 
   function setFeedback(slideId: string, value: SlideFeedback | null) {
     feedback.value = value
@@ -112,7 +94,7 @@ export function useAdminHome(
       }
       operations.value = { ...operations.value, [slide.id]: operation }
       if (IN_PROGRESS_STATUSES.has(operation.status)) {
-        if (!pollTimers.has(slide.id)) {
+        if (!polling.isPolling(slide.id)) {
           void pollOperation(slide.id, operation.operationId)
         }
       }
@@ -165,6 +147,18 @@ export function useAdminHome(
     await refreshHome()
   }
 
+  // T34-F4：预览状态与请求交给 useHeroPreview。
+  const preview = useHeroPreview({
+    conflictSubject,
+    heroUrl,
+    onConflict,
+    resetConflictNotice: () => {
+      conflictNotice.value = null
+    },
+    versionedBody: payload => versionedBody(payload),
+  })
+  const { loadPreview, previewPending, previews } = preview
+
   function operationFeedback(operation: PublicationOperationDto): SlideFeedback {
     if (operation.status === 'DONE') {
       if (operation.operationType === 'UPSCALE') {
@@ -191,25 +185,13 @@ export function useAdminHome(
   }
 
   async function pollOperation(slideId: string, operationId: string) {
-    stopPolling(slideId)
-    const tick = async () => {
-      let current: PublicationOperationDto | null = null
-      try {
-        const result = await adminApi(
-          `/api/admin/v1/publication-operations/${operationId}`,
-          { schema: publicationOperationResponseSchema },
-        )
-        current = result.data
+    await polling.poll(slideId, operationId, {
+      onTick: async (current) => {
         operations.value = { ...operations.value, [slideId]: current }
         await refreshHome(false)
-      }
-      catch (error) {
-        if (error instanceof AdminApiError && error.status === 401) {
-          return
-        }
-        // 轮询失败不阻塞：保留已有状态，下一轮继续。
-      }
-      if (current && !IN_PROGRESS_STATUSES.has(current.status)) {
+      },
+      onSettled: async (current) => {
+        // 放大完成后自动接续启用发布，保持原有交接语义。
         if (current.operationType === 'UPSCALE' && current.status === 'DONE') {
           await refreshHome()
           const error = await startPublication(slideId)
@@ -225,14 +207,8 @@ export function useAdminHome(
         setFeedback(slideId, operationFeedback(current))
         // 提交会递增 home 版本：无论成败都重新加载，保证版本基线新鲜。
         await refreshHome()
-        return
-      }
-      pollTimers.set(slideId, setTimeout(() => {
-        pollTimers.delete(slideId)
-        void tick()
-      }, POLL_INTERVAL_MS))
-    }
-    await tick()
+      },
+    })
   }
 
   // 除启用外的写操作共用通道：成功则替换 home 快照，409 走冲突重载。
@@ -255,7 +231,8 @@ export function useAdminHome(
         return null
       }
       if (error instanceof AdminApiError && error.status === 409) {
-        if (error.serverMessage === 'At least one hero slide must remain enabled.') {
+        // T34-F4：只匹配稳定业务 reason，不再匹配服务端英文 message。
+        if (error.reason === 'HERO_LAST_ENABLED_SLIDE') {
           conflictNotice.value = null
           await refreshHome()
           return '停用未提交：首页至少需要保留一个启用的轮播项。请先启用另一个轮播项，再停用当前项。'
@@ -371,7 +348,7 @@ export function useAdminHome(
         return null
       }
       if (error instanceof AdminApiError && error.status === 409) {
-        if (error.serverMessage === 'Enabled hero slides must have 1 to 5 unique positions.') {
+        if (error.reason === 'HERO_SLOT_LIMIT') {
           const slide = home.value.slides.find(item => item.id === id)
           const orderOccupied = slide && home.value.slides.some(item =>
             item.enabled && item.sortOrder === slide.sortOrder,
@@ -382,7 +359,7 @@ export function useAdminHome(
             ? `启用未提交：顺位 ${slide.sortOrder} 已被其他启用项占用，请改为未使用的顺位并保存后重试。`
             : `启用未提交：${placementLabel()}最多启用 5 个大图项。`
         }
-        if (error.serverMessage === 'Enabled hero slide order must be between 0 and 4.') {
+        if (error.reason === 'HERO_ORDER_STALE') {
           conflictNotice.value = null
           await refreshHome()
           return '启用未提交：顺位必须是 0–4，请修改并保存后重试。'
@@ -482,40 +459,6 @@ export function useAdminHome(
     }
   }
 
-  // 活动居中水印真实私有预览：横版 768×432、竖版 480×853，同源地址 5 分钟。
-  async function loadPreview(id: string): Promise<string | null> {
-    if (!home.value || previewPending.value[id]) {
-      return null
-    }
-    previewPending.value = { ...previewPending.value, [id]: true }
-    try {
-      const result = await adminApi(
-        heroUrl(`/slides/${id}/preview`),
-        {
-          method: 'POST',
-          body: versionedBody({}),
-          schema: adminHeroPreviewResponseSchema,
-        },
-      )
-      previews.value = { ...previews.value, [id]: result.data }
-      conflictNotice.value = null
-      return null
-    }
-    catch (error) {
-      if (error instanceof AdminApiError && error.status === 401) {
-        return null
-      }
-      if (error instanceof AdminApiError && error.status === 409) {
-        await onConflict(`${conflictSubject()}或活动水印已变化，已重新加载，请确认后重试。`)
-        return '预览未生成：版本或活动水印已变化，请确认后重试。'
-      }
-      return '预览生成失败，请稍后重试。'
-    }
-    finally {
-      previewPending.value = { ...previewPending.value, [id]: false }
-    }
-  }
-
   watch(
     () => toValue(placement),
     () => {
@@ -523,8 +466,7 @@ export function useAdminHome(
       home.value = null
       operations.value = {}
       feedback.value = {}
-      previews.value = {}
-      previewPending.value = {}
+      preview.reset()
       void load()
     },
   )

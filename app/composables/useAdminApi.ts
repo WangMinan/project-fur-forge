@@ -1,9 +1,13 @@
 import type { z } from 'zod'
-import type { ErrorCode } from '~~/shared/types/contracts'
+import type { ErrorCode, ErrorReason } from '~~/shared/types/contracts'
 
 export class AdminApiError extends Error {
   readonly code: ErrorCode | null
-  /** 服务端 `error.message` 原文；同一状态码下用于区分冲突原因。 */
+  /**
+   * T34-F4 稳定业务原因：前端业务分支只允许匹配这个值。
+   */
+  readonly reason: ErrorReason | null
+  /** 仅用于诊断日志，禁止用于业务分支判断。 */
   readonly serverMessage: string | null
   readonly status: number | null
 
@@ -11,10 +15,12 @@ export class AdminApiError extends Error {
     status: number | null,
     code: ErrorCode | null,
     serverMessage: string | null = null,
+    reason: ErrorReason | null = null,
   ) {
     super(`Admin API request failed (${status ?? 'network'}).`)
     this.name = 'AdminApiError'
     this.code = code
+    this.reason = reason
     this.serverMessage = serverMessage
     this.status = status
   }
@@ -41,6 +47,12 @@ function errorMessageOf(error: unknown): string | null {
   const data = (error as { data?: { error?: { message?: unknown } } })?.data
   const message = data?.error?.message
   return typeof message === 'string' ? message : null
+}
+
+function errorReasonOf(error: unknown): ErrorReason | null {
+  const data = (error as { data?: { error?: { reason?: unknown } } })?.data
+  const reason = data?.error?.reason
+  return typeof reason === 'string' ? reason as ErrorReason : null
 }
 
 // 管理端 v1 接口统一入口：同源凭据、内存 CSRF、Zod 响应校验与错误规整。
@@ -82,6 +94,7 @@ export function useAdminApi() {
         status,
         errorCodeOf(error),
         errorMessageOf(error),
+        errorReasonOf(error),
       )
     }
 

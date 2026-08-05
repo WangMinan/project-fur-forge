@@ -601,7 +601,7 @@ export async function retryAssetProcessing(
 ) {
   let asset = requireAsset(sqlite, assetId)
   if (asset.version !== expectedVersion) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
   if (
     asset.status !== 'FAILED'

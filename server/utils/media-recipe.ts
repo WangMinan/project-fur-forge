@@ -692,7 +692,7 @@ export async function generatePublicVariantsForProfile(
     height: source.height,
     width: source.width,
   }, selectedUsages)) {
-    throw new ServiceError(409, 'CONFLICT', 'Media source does not meet public recipe dimensions.')
+    throw new ServiceError(409, 'CONFLICT', 'Media source does not meet public recipe dimensions.', 'MEDIA_SOURCE_TOO_SMALL')
   }
   const profile = requireWatermarkProfile(sqlite, profileId)
   if (!['APPLYING', 'ACTIVE'].includes(profile.status)) {

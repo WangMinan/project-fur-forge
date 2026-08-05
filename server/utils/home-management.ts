@@ -172,7 +172,7 @@ function requireHome(sqlite: Database.Database) {
 function requireHomeVersion(sqlite: Database.Database, expectedVersion: number) {
   const home = requireHome(sqlite)
   if (home.version !== expectedVersion) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
   return home
 }
@@ -410,7 +410,7 @@ export async function createHeroSlidePreview(
   requireHomeVersion(sqlite, expectedVersion)
   const slide = requireSlide(sqlite, slideId, placement)
   if (slide.enabled === 1) {
-    throw new ServiceError(409, 'CONFLICT', 'Disable the hero slide before previewing it.')
+    throw new ServiceError(409, 'CONFLICT', 'Disable the hero slide before previewing it.', 'HERO_SLIDE_ENABLED')
   }
   assertAssetPair(sqlite, {
     landscapeAssetId: slide.landscapeAssetId,
@@ -418,7 +418,7 @@ export async function createHeroSlidePreview(
   }, slide.id)
   const profileId = activeWatermarkProfileId(sqlite)
   if (!profileId) {
-    throw new ServiceError(409, 'CONFLICT', 'Active watermark profile is unavailable.')
+    throw new ServiceError(409, 'CONFLICT', 'Active watermark profile is unavailable.', 'WATERMARK_PROFILE_UNAVAILABLE')
   }
   const expiresAt = now + HERO_PREVIEW_TTL_MS
   const landscapeObjectKey = heroPreviewKey(
@@ -497,7 +497,7 @@ export function startHeroSlideUpscale(
   requireHomeVersion(sqlite, expectedVersion)
   const slide = requireSlide(sqlite, slideId, placement)
   if (slide.enabled === 1) {
-    throw new ServiceError(409, 'CONFLICT', 'Enabled hero slides cannot be upscaled.')
+    throw new ServiceError(409, 'CONFLICT', 'Enabled hero slides cannot be upscaled.', 'HERO_SLIDE_ENABLED')
   }
   assertAssetPair(sqlite, {
     landscapeAssetId: slide.landscapeAssetId,
@@ -513,7 +513,7 @@ export function startHeroSlideUpscale(
     LIMIT 1
   `).pluck().get(slideId)
   if (active) {
-    throw new ServiceError(409, 'CONFLICT', 'A home operation is already active.')
+    throw new ServiceError(409, 'CONFLICT', 'A home operation is already active.', 'ACTIVE_OPERATION_EXISTS')
   }
   const id = randomUUID()
   sqlite.prepare(`
@@ -567,7 +567,7 @@ export async function runHeroSlideUpscale(
   try {
     requireHomeVersion(sqlite, operation.requestedVersion)
     if (slide.enabled === 1) {
-      throw new ServiceError(409, 'CONFLICT', 'Enabled hero slides cannot be upscaled.')
+      throw new ServiceError(409, 'CONFLICT', 'Enabled hero slides cannot be upscaled.', 'HERO_SLIDE_ENABLED')
     }
     assertAssetPair(sqlite, {
       landscapeAssetId: slide.landscapeAssetId,
@@ -627,10 +627,10 @@ export function retryHeroSlideUpscale(
 ) {
   const operation = upscaleOperation(sqlite, operationId)
   if (operation.version !== expectedVersion) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
   if (operation.status !== 'FAILED') {
-    throw new ServiceError(409, 'CONFLICT', 'Hero upscale is not retryable.')
+    throw new ServiceError(409, 'CONFLICT', 'Hero upscale is not retryable.', 'OPERATION_NOT_RETRYABLE')
   }
   requireHomeVersion(sqlite, operation.requestedVersion)
   sqlite.prepare(`
@@ -781,7 +781,7 @@ function claimHomeVersion(
     WHERE id = 'site' AND version = ?
   `).run(now, expectedVersion)
   if (result.changes !== 1) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
 }
 
@@ -827,7 +827,7 @@ function assertAssetPair(
     || portrait.height <= portrait.width
     || portrait.uploadedForHome !== 1
   ) {
-    throw new ServiceError(409, 'CONFLICT', 'Hero assets are not publication-ready.')
+    throw new ServiceError(409, 'CONFLICT', 'Hero assets are not publication-ready.', 'HERO_ASSETS_NOT_READY')
   }
   const used = sqlite.prepare(`
     SELECT 1 FROM site_hero_slides
@@ -845,7 +845,7 @@ function assertAssetPair(
     input.portraitAssetId,
   )
   if (used) {
-    throw new ServiceError(409, 'CONFLICT', 'Hero asset is already assigned.')
+    throw new ServiceError(409, 'CONFLICT', 'Hero asset is already assigned.', 'HERO_ASSET_ALREADY_ASSIGNED')
   }
 }
 
@@ -858,7 +858,7 @@ function assertLinkedWork(sqlite: Database.Database, linkedWorkId: string | null
     WHERE id = ? AND publication_status = 'published'
   `).pluck().get(linkedWorkId)
   if (!published) {
-    throw new ServiceError(409, 'CONFLICT', 'Linked work must be published.')
+    throw new ServiceError(409, 'CONFLICT', 'Linked work must be published.', 'LINKED_WORK_NOT_PUBLISHED')
   }
 }
 
@@ -923,7 +923,7 @@ export async function updateHeroSlide(
   requireHomeVersion(sqlite, expectedVersion)
   const current = requireSlide(sqlite, id, placement)
   if (current.enabled === 1) {
-    throw new ServiceError(409, 'CONFLICT', 'Disable the hero slide before editing it.')
+    throw new ServiceError(409, 'CONFLICT', 'Disable the hero slide before editing it.', 'HERO_SLIDE_ENABLED')
   }
   assertAssetPair(sqlite, input, id)
   assertLinkedWork(sqlite, input.linkedWorkId)
@@ -966,7 +966,7 @@ export async function deleteHeroSlide(
   requireHomeVersion(sqlite, expectedVersion)
   const slide = requireSlide(sqlite, id, placement)
   if (slide.enabled === 1) {
-    throw new ServiceError(409, 'CONFLICT', 'Disable the hero slide before deleting it.')
+    throw new ServiceError(409, 'CONFLICT', 'Disable the hero slide before deleting it.', 'HERO_SLIDE_ENABLED')
   }
   await clearHeroSlidePreviews(sqlite, storage, slide)
   sqlite.transaction(() => {
@@ -1002,7 +1002,7 @@ export function updateHomeSettings(
     expectedVersion,
   )
   if (result.changes !== 1) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
   return getAdminHome(sqlite)
 }
@@ -1025,7 +1025,7 @@ export function reorderEnabledHeroSlides(
     || slideIds.length !== enabledIds.length
     || slideIds.some(id => !enabledIds.includes(id))
   ) {
-    throw new ServiceError(409, 'CONFLICT', 'Enabled hero slide order is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Enabled hero slide order is stale.', 'HERO_ORDER_STALE')
   }
   sqlite.transaction(() => {
     claimHomeVersion(sqlite, expectedVersion, now)
@@ -1068,7 +1068,7 @@ export async function disableHeroSlide(
     WHERE enabled = 1 AND placement = ?
   `).pluck().get(placement))
   if (placement === 'home' && enabledCount <= 1) {
-    throw new ServiceError(409, 'CONFLICT', 'At least one hero slide must remain enabled.')
+    throw new ServiceError(409, 'CONFLICT', 'At least one hero slide must remain enabled.', 'HERO_LAST_ENABLED_SLIDE')
   }
   await clearHeroSlidePreviews(sqlite, storage, slide)
   sqlite.transaction(() => {
@@ -1102,7 +1102,7 @@ function assertSlideCanEnable(
     throw new ServiceError(409, 'CONFLICT', 'Hero slide is already enabled.')
   }
   if (slide.sortOrder < 0 || slide.sortOrder > 4) {
-    throw new ServiceError(409, 'CONFLICT', 'Enabled hero slide order must be between 0 and 4.')
+    throw new ServiceError(409, 'CONFLICT', 'Enabled hero slide order must be between 0 and 4.', 'HERO_ORDER_STALE')
   }
   const enabledCount = Number(sqlite.prepare(`
     SELECT count(*) FROM site_hero_slides
@@ -1113,7 +1113,7 @@ function assertSlideCanEnable(
     WHERE enabled = 1 AND placement = ? AND sort_order = ? LIMIT 1
   `).pluck().get(placement, slide.sortOrder)
   if (enabledCount >= 5 || orderConflict) {
-    throw new ServiceError(409, 'CONFLICT', 'Enabled hero slides must have 1 to 5 unique positions.')
+    throw new ServiceError(409, 'CONFLICT', 'Enabled hero slides must have 1 to 5 unique positions.', 'HERO_SLOT_LIMIT')
   }
   assertAssetPair(sqlite, {
     landscapeAssetId: slide.landscapeAssetId,
@@ -1124,7 +1124,7 @@ function assertSlideCanEnable(
     !assetSupportsSiteDisplay(sqlite, slide.landscapeAssetId, [usages.landscape])
     || !assetSupportsSiteDisplay(sqlite, slide.portraitAssetId, [usages.portrait])
   ) {
-    throw new ServiceError(409, 'CONFLICT', 'Hero assets require confirmed upscale.')
+    throw new ServiceError(409, 'CONFLICT', 'Hero assets require confirmed upscale.', 'HERO_ASSETS_REQUIRE_UPSCALE')
   }
   assertLinkedWork(sqlite, slide.linkedWorkId)
 }
@@ -1159,7 +1159,7 @@ export function startHeroSlidePublication(
       AND status NOT IN ('FAILED', 'DONE')
   `).pluck().get(slideId)
   if (active) {
-    throw new ServiceError(409, 'CONFLICT', 'A home publication operation is already active.')
+    throw new ServiceError(409, 'CONFLICT', 'A home publication operation is already active.', 'ACTIVE_OPERATION_EXISTS')
   }
   const id = randomUUID()
   sqlite.prepare(`
@@ -1365,10 +1365,10 @@ export async function retryHeroSlidePublication(
 ) {
   const operation = homeOperation(sqlite, operationId)
   if (operation.version !== expectedVersion) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
   if (operation.status !== 'FAILED') {
-    throw new ServiceError(409, 'CONFLICT', 'Home publication is not retryable.')
+    throw new ServiceError(409, 'CONFLICT', 'Home publication is not retryable.', 'OPERATION_NOT_RETRYABLE')
   }
   requireHomeVersion(sqlite, operation.requestedVersion)
   const cleanup = JSON.parse(operation.cleanupObjectKeysJson) as unknown

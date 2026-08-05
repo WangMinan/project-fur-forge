@@ -147,9 +147,14 @@ export default defineNitroErrorHandler(async (
   )
     ? data.publicMessage
     : defaultErrorMessage(fallback.status)
+  // 稳定业务 reason 只在 4xx 透出；5xx 不泄漏内部分支。
+  const parsedReason = fallback.status < 500 && typeof data.reason === 'string'
+    ? apiErrorSchema.shape.error.shape.reason.safeParse(data.reason)
+    : undefined
   const body = apiErrorSchema.parse({
     error: {
       code,
+      ...(parsedReason?.success ? { reason: parsedReason.data } : {}),
       message,
     },
   })

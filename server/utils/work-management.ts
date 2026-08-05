@@ -80,7 +80,7 @@ function findWork(sqlite: Database.Database, id: string) {
 function requireWork(sqlite: Database.Database, id: string) {
   const work = findWork(sqlite, id)
   if (!work) {
-    throw new ServiceError(404, 'NOT_FOUND', 'Work was not found.')
+    throw new ServiceError(404, 'NOT_FOUND', 'Work was not found.', 'RESOURCE_NOT_FOUND')
   }
   return work
 }
@@ -212,13 +212,13 @@ function managedWork(
 function translateConstraint(error: unknown): never {
   const message = String(error)
   if (message.includes('works.slug') || message.includes('works_slug_unique')) {
-    throw new ServiceError(409, 'CONFLICT', 'Work slug is already in use.')
+    throw new ServiceError(409, 'CONFLICT', 'Work slug is already in use.', 'WORK_SLUG_TAKEN')
   }
   if (
     message.includes('work_assets_asset_unique')
     || message.includes('UNIQUE constraint failed: work_assets.asset_id')
   ) {
-    throw new ServiceError(409, 'CONFLICT', 'Asset is already linked to a work.')
+    throw new ServiceError(409, 'CONFLICT', 'Asset is already linked to a work.', 'ASSET_ALREADY_LINKED')
   }
   throw error
 }
@@ -360,10 +360,10 @@ export function updateManagedWork(
 ) {
   const current = requireWork(sqlite, id)
   if (current.version !== expectedVersion) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
   if (current.publicationStatus === 'published') {
-    throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before editing it.')
+    throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before editing it.', 'WORK_PUBLISHED_READONLY')
   }
   if (current.purpose === 'adoption' && input.purpose !== 'adoption') {
     const designSheetCount = sqlite.prepare(`
@@ -411,7 +411,7 @@ export function updateManagedWork(
         expectedVersion,
       )
       if (result.changes !== 1) {
-        throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+        throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
       }
       replaceTags(sqlite, id, input.featureTags)
     })()
@@ -435,7 +435,7 @@ export function updateManagedWorkPresentation(
 ) {
   const current = requireWork(sqlite, id)
   if (current.version !== expectedVersion) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
   const usedFeaturedOrders = new Set(input.featured
     ? sqlite.prepare(`
@@ -462,7 +462,7 @@ export function updateManagedWorkPresentation(
     expectedVersion,
   )
   if (result.changes !== 1) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
   return getManagedWork(sqlite, id)
 }
@@ -477,10 +477,10 @@ export async function deleteManagedWork(
 ) {
   const current = requireWork(sqlite, id)
   if (current.version !== expectedVersion) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
   if (current.publicationStatus === 'published') {
-    throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before deleting it.')
+    throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before deleting it.', 'WORK_PUBLISHED_READONLY')
   }
 
   const claimed = sqlite.prepare(`
@@ -488,7 +488,7 @@ export async function deleteManagedWork(
     WHERE id = ? AND version = ? AND publication_status != 'published'
   `).run(now, id, expectedVersion)
   if (claimed.changes !== 1) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
 
   const publicKeys = sqlite.prepare(`
@@ -513,7 +513,7 @@ export async function deleteManagedWork(
         WHERE id = ? AND version = ? AND publication_status != 'published'
       `).run(id, expectedVersion + 1)
       if (deleted.changes !== 1) {
-        throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+        throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
       }
       sqlite.prepare(`
         INSERT INTO audit_logs (
@@ -566,7 +566,7 @@ function assertReadyWorkAsset(
     throw new ServiceError(409, 'CONFLICT', 'Asset role, status or work ownership is invalid.')
   }
   if (row.linkedWorkId !== null && row.linkedWorkId !== workId) {
-    throw new ServiceError(409, 'CONFLICT', 'Asset is already linked to a work.')
+    throw new ServiceError(409, 'CONFLICT', 'Asset is already linked to a work.', 'ASSET_ALREADY_LINKED')
   }
 }
 
@@ -592,13 +592,13 @@ export function replaceManagedDesignSheet(
 ) {
   const current = requireWork(sqlite, workId)
   if (current.version !== expectedVersion) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
   if (current.purpose !== 'adoption') {
     throw new ServiceError(409, 'CONFLICT', 'Design sheets require an adoption work.')
   }
   if (current.publicationStatus === 'published') {
-    throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before editing media.')
+    throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before editing media.', 'WORK_PUBLISHED_READONLY')
   }
   if (input) {
     assertReadyWorkAsset(sqlite, workId, input.assetId, 'design_sheet')
@@ -621,7 +621,7 @@ export function replaceManagedDesignSheet(
         WHERE id = ? AND version = ? AND publication_status != 'published'
       `).run(now, workId, expectedVersion)
       if (result.changes !== 1) {
-        throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+        throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
       }
     })()
   }
@@ -643,10 +643,10 @@ export function replaceManagedStudioPhotos(
 ) {
   const current = requireWork(sqlite, workId)
   if (current.version !== expectedVersion) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
   if (current.publicationStatus === 'published') {
-    throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before editing media.')
+    throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before editing media.', 'WORK_PUBLISHED_READONLY')
   }
   assertStudioPhotoAssets(sqlite, workId, photos)
   try {
@@ -696,7 +696,7 @@ export function replaceManagedStudioPhotos(
         WHERE id = ? AND version = ? AND publication_status != 'published'
       `).run(now, workId, expectedVersion)
       if (result.changes !== 1) {
-        throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+        throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
       }
     })()
   }

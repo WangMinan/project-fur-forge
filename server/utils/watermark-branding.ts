@@ -282,7 +282,7 @@ function assertNoActiveOperation(sqlite: Database.Database) {
     WHERE status NOT IN ('FAILED', 'DONE') LIMIT 1
   `).pluck().get()
   if (active) {
-    throw new ServiceError(409, 'CONFLICT', 'A watermark operation is already active.')
+    throw new ServiceError(409, 'CONFLICT', 'A watermark operation is already active.', 'ACTIVE_OPERATION_EXISTS')
   }
 }
 
@@ -318,7 +318,7 @@ function createOperation(
       WHERE id = 'site' AND version = ?
     `).run(id, now, input.brandingVersion)
     if (changed.changes !== 1) {
-      throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+      throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
     }
   })()
   return requireOperation(sqlite, id)
@@ -542,7 +542,7 @@ export async function createWatermarkPreview(
     || profile.version !== expectedProfileVersion
     || !['DRAFT', 'FAILED'].includes(profile.status)
   ) {
-    throw new ServiceError(409, 'CONFLICT', 'Watermark draft is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Watermark draft is stale.', 'WATERMARK_DRAFT_STALE')
   }
   watermarkSource(sqlite, profile)
   const operation = createOperation(sqlite, {
@@ -771,7 +771,7 @@ export function startWatermarkProfileApplication(
     || profile.version !== expectedProfileVersion
     || !['DRAFT', 'FAILED'].includes(profile.status)
   ) {
-    throw new ServiceError(409, 'CONFLICT', 'Watermark draft is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Watermark draft is stale.', 'WATERMARK_DRAFT_STALE')
   }
   const previewed = sqlite.prepare(`
     SELECT 1 FROM watermark_operations
@@ -779,7 +779,7 @@ export function startWatermarkProfileApplication(
       AND status = 'DONE' AND verified_variant_count = 3 LIMIT 1
   `).pluck().get(profileId)
   if (!previewed) {
-    throw new ServiceError(409, 'CONFLICT', 'A verified watermark preview is required.')
+    throw new ServiceError(409, 'CONFLICT', 'A verified watermark preview is required.', 'WATERMARK_PREVIEW_REQUIRED')
   }
   watermarkSource(sqlite, profile)
   const operation = createOperation(sqlite, {
@@ -845,10 +845,10 @@ export async function retryWatermarkOperation(
 ) {
   let operation = requireOperation(sqlite, operationId)
   if (operation.version !== expectedVersion) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
   if (operation.status !== 'FAILED') {
-    throw new ServiceError(409, 'CONFLICT', 'Watermark operation is not retryable.')
+    throw new ServiceError(409, 'CONFLICT', 'Watermark operation is not retryable.', 'OPERATION_NOT_RETRYABLE')
   }
   const remaining = await cleanupManifest(
     sqlite,

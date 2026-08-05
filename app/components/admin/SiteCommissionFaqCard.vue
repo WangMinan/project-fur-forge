@@ -182,7 +182,7 @@ function save() {
       data-testid="site-faq-add"
       @click="addRow"
     >
-      新增一项
+      新增问题
     </button>
 
     <template #latest>
@@ -257,6 +257,8 @@ function save() {
 
 .faq-add {
   justify-self: start;
+  /* T26–T27 视觉：新增按钮与上方列表保持可见间距。 */
+  margin-top: var(--admin-space-2);
   padding: 0 var(--admin-space-3);
 }
 
