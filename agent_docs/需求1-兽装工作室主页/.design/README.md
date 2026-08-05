@@ -1,41 +1,83 @@
-# 设计工作区
+# 设计文档入口
 
-> **角色**：把公开站与管理端的体验、信息架构和视觉契约纳入 spec-driven 流程。
+> **角色**：记录公开站和管理端当前有效的信息架构、视觉原则和验收方式。
+> **边界**：颜色、字号和间距 Token 仍由各自 `DESIGN_TOKENS.md` 管理；媒体保护规则只引用 [`../requirements/MEDIA-PUBLICATION-POLICY.md`](../requirements/MEDIA-PUBLICATION-POLICY.md)。
 
-## 权威边界
+## 当前设计目标
 
-业务范围以 `../requirements/SPEC.md` 及其当前增量为准，技术路线以 `../planning/PLAN.md` 及其当前增量为准，执行状态以 `../implementation/TASKS.md` 为准。本目录不维护第二套任务清单。
+阶段 C.1 不重新设计品牌，而是修复后续功能接入造成的视觉断裂：
 
-水印相关设计以 [`WATERMARK-CENTERED-V2.md`](./WATERMARK-CENTERED-V2.md) 为当前局部增量；它覆盖公开站/管理端旧文件中的“小型四角角标、单图安全角、参数留待 T51 决定”等冲突条款。其他设计原则继续由现有 public/admin 文档约束。
+- 首页业务入口和状态合并；
+- 站点展示图片取消水印；
+- 作品详情竖图使用独立布局；
+- 管理端文案拆为多个可理解、可独立保存的 Card；
+- 保持摄影优先、白底、低装饰和清晰操作层级。
 
-历史 v5 原型只保留页面职责、内容顺序和关键交互参考；其名称、价格、单 Bucket、旧字段、配色、字体和组件造型不得覆盖当前契约。
+## 权威设计文件
 
-## 设计轨
+### 公开站
 
-| 设计轨 | 目标 | 产物 |
-| --- | --- | --- |
-| 公开站 | 图片大底/白底、可索引、连续浏览的编辑型摄影作品集；首页横竖双源轮播；角色化图片；大尺寸居中品牌水印 | `public-site/DESIGN_BRIEF.md`、`public-site/INFORMATION_ARCHITECTURE.md`、`WATERMARK-CENTERED-V2.md` |
-| 管理端 | 安静可靠的内容工具；首页轮播、站点品牌和媒体角色有独立对象；只显示已实现能力 | `admin-console/DESIGN_BRIEF.md`、`admin-console/INFORMATION_ARCHITECTURE.md`、`WATERMARK-CENTERED-V2.md` |
+- [`public-site/DESIGN_BRIEF.md`](./public-site/DESIGN_BRIEF.md)：长期视觉方向；
+- [`public-site/DESIGN_TOKENS.md`](./public-site/DESIGN_TOKENS.md)：公开站 Token；
+- [`public-site/INFORMATION_ARCHITECTURE.md`](./public-site/INFORMATION_ARCHITECTURE.md)：当前页面顺序、业务入口和作品详情规则。
 
-## 当前设计门禁
+### 管理端
 
-1. T04–T08 的生产视觉基线已由用户确认；
-2. T14–T18 的角色化上传、作品编辑和发布管理已通过联合验收；
-3. GATE-07 已完成 `/admin/site/branding`、真实 OSS 多比例预览、大型居中 50%/60% 默认水印、候选 Logo 切换、原子再生成和三视口证据，并于 2026-08-02 通过用户验收；
-4. T19–T22 已完成真实公开 SSR、首页轮播、完整作品字段、独立 Review 与用户验收；
-5. T23–T25 已完成设定图/出厂照分区、常规领养、独立 Agent Review 与用户验收；
-6. T26–T27 固定内容和营业状态迁入独立“文案配置”入口，继续使用受限字段而不建设万能 CMS；`/commission` 使用单张双源背景引导，不复制首页轮播；T36 验证返图轻量水印；
-7. T30 接入 favicon/触控图标；T51 使用正式素材复核当前可配置 profile 的跨素材结果。
+- [`admin-console/DESIGN_BRIEF.md`](./admin-console/DESIGN_BRIEF.md)：Quiet Editorial Tool 方向；
+- [`admin-console/DESIGN_TOKENS.md`](./admin-console/DESIGN_TOKENS.md)：管理端 Token；
+- [`admin-console/INFORMATION_ARCHITECTURE.md`](./admin-console/INFORMATION_ARCHITECTURE.md)：当前导航、文案 Card 和长任务状态。
 
-## 共通原则
+## 通用原则
 
-- 图片是公开站第一视觉层级；品牌水印用于归属识别，不替代作品主体和页面行动。
-- 白色与摄影承担主要面积，明显蓝色常态 5%–10%，硬上限 15%。
-- 首页横屏与竖屏使用独立图片，不以同一 `src` 的焦点变化冒充双源。
-- 设定图、出厂照和返图按角色表达，不共用模糊“主图”语义。
-- 私有原图无水印；公开衍生图使用 OSS 烘焙水印。
-- P0 标准水印为大尺寸居中 profile；现有四角角标仅作为 v1 历史证据。
-- 真实截图和真实 OSS 预览优先于 CSS 模拟、原型和组件预设。
-- 长耗时操作必须在原操作区域持续显示阶段和真实进度；未知总量使用不定进度，已知总量显示完成量/总量，失败与刷新恢复均可见。
-- E2E 以真实用户路径和页面结果为准，不以用例数量自证质量；图片解码、布局、溢出、焦点、关键请求和中间/失败状态必须按功能风险写入断言并结合截图或 trace 复核。
-- 未实现的 P1/P2 能力不出现在可点击导航或假成功状态中。
+### 图片优先
+
+- 公开页面首先展示兽装图片；
+- Logo、标题、状态和行动文案均为辅助；
+- 不以大面积色块、卡片边框和工具型状态区打断图片浏览；
+- 站点 Hero 和业务入口使用无水印图片；作品档案和领养图片继续水印。
+
+### 一致性
+
+- 相同语义使用相同组件和视觉语言；
+- 委托与领养两个业务入口必须对称；
+- 状态作为入口内容的一部分，不单独复制一遍；
+- 公开站不混入管理端式的灰底工具 Card；
+- 管理端不复制公开站的摄影叠字布局。
+
+### 横竖图片
+
+- 横图和竖图都保持完整、清晰、无异常裁剪；
+- 作品详情竖图不放在满宽灰色舞台中；
+- 卡片类图片可以按固定比例裁剪，但必须使用已保存焦点；
+- 详情与设定图使用 contain 时，占位背景只覆盖实际图片矩形。
+
+### 可访问性
+
+- 交互目标在触控设备上至少接近 44 px；
+- 焦点可见；
+- 轮播支持键盘、按钮、触控、暂停和减少动效；
+- 状态不能只用颜色表达；
+- 一张业务卡只提供一个主链接，避免嵌套链接；
+- 图片 alt 表达内容，不重复周围完整文字。
+
+## 固定验收视口
+
+- `390×844`；
+- `768×1024`；
+- `1440×900`。
+
+每次修改公开页面或管理页面，至少检查：
+
+- 横向溢出；
+- 图片自然尺寸和解码；
+- 图片方向与请求资源；
+- 文字重叠、截断和过密；
+- 键盘和焦点；
+- 减少动效；
+- loading、empty、error、conflict 和 recovery 状态。
+
+## 原型与历史文件
+
+`planning/prototype-v1/` 和 dated screenshots 只说明早期选择过程，不是当前生产页面的复制模板。
+
+`.design/WATERMARK-CENTERED-V2.md` 已改为归档指针。GATE-07 的历史视觉和实现证据保留在 `../implementation/notes/gate07-watermark/`，当前展示位置矩阵以媒体策略为准。

@@ -1,163 +1,133 @@
 # 状态
 
-> **角色**：当前需求的状态机与收敛中枢。每轮开始先读本文件，结束后回写。
+> **角色**：当前需求的状态机与执行入口。只记录现在有效的阶段、已确认决策、阻断项和下一步；历史过程见 `implementation/notes/`。
+> **最后更新**：2026-08-05。
 
 ## 当前阶段
 
-阶段 4 · IMPLEMENTATION 进行中。T01–T29、T31–T33、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T26-F1/T27-F1、T30、T34 的工程与新上下文独立 Review 均已完成，四项保持未勾选并等待用户统一验收。T34 初始 Docker、全量 E2E 与 `ali-oss` runtime findings 均已关闭，独立 Review 最终 `PASS`。**OQ-120 已由用户整批确认，0014/0015 已登记正式默认值。**
+项目进入 **阶段 C.1 · P0 收口修复**。
 
-T21 首次独立审查的 3 个 must-fix 与 1 个 should-fix、用户人工验收发现的管理入口命名、Hero 安全边距、作品筛选视觉、页脚联系方式配置、已保存首页轮播原图预览及启用态预览按钮错配均已修复并验证。用户于 2026-08-02 明确确认 T21 收口；首次 NOT PASS 报告继续保留为历史事实，不虚构第二份独立复审报告。
+阶段 C 的作品、领养、首页、委托、管理、OSS、发布、备份和安全主链已经完成工程实现；T34 的历史独立 Review 结论仍保留为 `PASS`。本轮完整审查确认，当前版本在视觉一致性、媒体保护契约、代码边界、长任务恢复和可重复部署方面仍有必须关闭的问题，因此不再把现有镜像和页面视为正式上线候选，也不提前进入 T35 之后的 P1 功能。
 
-阶段 C 启动说明见 [`implementation/notes/P0-C-STAGE-READINESS-2026-08-02.md`](./implementation/notes/P0-C-STAGE-READINESS-2026-08-02.md)。
-T22 后端、前端与独立 Review 证据分别见 [`implementation/notes/t19-t22/T22-BACKEND-2026-08-03.md`](./implementation/notes/t19-t22/T22-BACKEND-2026-08-03.md)、[`implementation/notes/t19-t22/T22-FRONTEND-2026-08-03.md`](./implementation/notes/t19-t22/T22-FRONTEND-2026-08-03.md) 和 [`implementation/notes/t19-t22/T22-INDEPENDENT-REVIEW-2026-08-03.md`](./implementation/notes/t19-t22/T22-INDEPENDENT-REVIEW-2026-08-03.md)。
-T23 工程、T25 服务端交接和本轮前端检查点分别见 [`implementation/notes/t23-t25/T23-ENGINEERING-2026-08-03.md`](./implementation/notes/t23-t25/T23-ENGINEERING-2026-08-03.md)、[`implementation/notes/t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md`](./implementation/notes/t23-t25/T25-BACKEND-HANDOFF-2026-08-03.md) 与 [`implementation/notes/t23-t25/T24-T25-FRONTEND-CHECKPOINT-2026-08-03.md`](./implementation/notes/t23-t25/T24-T25-FRONTEND-CHECKPOINT-2026-08-03.md)。
-T23–T25 最终收口见 [`implementation/notes/t23-t25/T23-T25-CLOSURE-2026-08-04.md`](./implementation/notes/t23-t25/T23-T25-CLOSURE-2026-08-04.md)。
-T26–T27 服务端契约见 [`implementation/notes/t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md)；前端交接见 [`implementation/notes/t26-t27/T26-T27-FRONTEND-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-FRONTEND-2026-08-04.md)；独立 findings、修复、浏览器与安全证据见 [`implementation/notes/t26-t27/T26-T27-INDEPENDENT-REVIEW-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-INDEPENDENT-REVIEW-2026-08-04.md)。
-T26-F1 工程交接与低分辨率追加设计见 [`implementation/notes/t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`](./implementation/notes/t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md)；用户下班后补验步骤见 [`implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md)。
-T27-F1 实现、迁移、自动化、浏览器与截图证据见 [`implementation/notes/t26-t27/T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md`](./implementation/notes/t26-t27/T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md)。
-T28–T30 实现、初始 findings、修复和独立 Chrome Review 见 [`implementation/notes/t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md`](./implementation/notes/t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md)。
-T31 验证恢复命令、初始 findings、迁移 hash 修复、数据一致性和恢复库 Chrome 证据见 [`implementation/notes/t28-t34/T31-BACKUP-RESTORE-2026-08-05.md`](./implementation/notes/t28-t34/T31-BACKUP-RESTORE-2026-08-05.md)。
-T32 初始 findings、统一请求边界、限流、脱敏、真实 OSS/secret scan 与新上下文复验见 [`implementation/notes/t28-t34/T32-SECURITY-GATE-2026-08-05.md`](./implementation/notes/t28-t34/T32-SECURITY-GATE-2026-08-05.md)。
-T33 性能、三视口媒体回归、初始 findings 与独立复验见 [`implementation/notes/t28-t34/T33-PERFORMANCE-VISUAL-2026-08-05.md`](./implementation/notes/t28-t34/T33-PERFORMANCE-VISUAL-2026-08-05.md)；T34 完整自动化、双 Bucket、恢复、部署镜像、初始 findings 与独立真 Chrome 复核见 [`implementation/notes/t28-t34/T34-P0-DEPLOYABLE-GATE-2026-08-05.md`](./implementation/notes/t28-t34/T34-P0-DEPLOYABLE-GATE-2026-08-05.md)。
+本轮结论：
 
-## 当前执行分工
+> **PASS WITH REQUIRED CLOSURE**：阶段 C 功能主链成立；完成 T34-F1 至 T34-F8 后再进行 P0 用户验收。
 
-- `BACKEND_PRIMARY`：固定由 GPT-5.6 Sol 负责数据库、迁移、共享 Schema、API、安全、OSS、公开投影和运维验证。
-- `FRONTEND_PRIMARY`：每个任务开始前由用户按额度在 Kimi K3、Claude Opus 5、GPT-5.6 Sol 中选择，不预先锁死整个阶段。
-- `REVIEW`：固定由 GPT-5.6 Sol 在新的审查上下文中执行，必须结合浏览器、视觉、真实点击、console/network、截图或 trace；不能只看 pnpm 测试或 E2E 通过数量。
-- `ACCEPTANCE`：用户保留最终业务和视觉确认权。
-- 完整路由见 [`implementation/EXECUTION_ROUTING.md`](./implementation/EXECUTION_ROUTING.md)。
+本次文档收敛只修改 `agent_docs/需求1-兽装工作室主页/`，不改产品代码。现有代码仍包含站点大图带水印、文案整包保存和最小 Docker 镜像等旧行为。
 
-## main 直推策略
+## 已确认产品决策
 
-后续所有代码、文档、Review 和修复直接在 `main` 串行完成：
+### 媒体保护
 
-1. 不创建功能分支，不发起 PR；
-2. 每次开始前读取远端最新 `main`，确认没有另一个写入 Agent 正在修改同一批文件；
-3. 后端 → 前端 → Review 依次提交，一个任务收口后再进入下一任务；
-4. 不 force push、不重写已验收历史、不硬 reset 他人提交、不删除或清空 `.env`；
-5. 只读分析可以并行，任何写入必须串行。
+水印由公开展示位置决定，不由图片方向决定。当前唯一事实源为 [`requirements/MEDIA-PUBLICATION-POLICY.md`](./requirements/MEDIA-PUBLICATION-POLICY.md)。
 
-## 阶段 C 进入状态
+- 首页 Hero 横图、竖图：无水印；
+- 委托页 Hero 横图、竖图：无水印；
+- 首页委托与领养入口大图：生成独立无水印站点展示衍生图；
+- 作品列表、作品详情、领养列表、领养设定图：继续使用活动水印；
+- 永久原图、预处理源和 Logo 候选：始终私有。
 
-- [x] T21 用户验收完成；
-- [x] OQ-119、OQ-120 均已答；OQ-120 正式默认值由 0014 迁移只补空字段或缺失状态，不覆盖管理员已有内容；
-- [x] 双 Bucket、30 MB 原图、FFmpeg 私有处理源和真实 OSS 水印链已通过；
-- [x] 包括 Logo 在内的素材已登记到 [`materials/MATERIAL-MANIFEST.md`](./materials/MATERIAL-MANIFEST.md)，EXT-01 不再等待外部文件；
-- [x] 模型分工、main 直推和浏览器/视觉 Review 方法已锁定；
-- [x] T22 范围已明确，不提前实现多图或展会完整矩阵。
-- [x] T22 后端、前端、独立 Review 和用户人工验收已收口。
-- [x] T23–T25 实现、自动化、独立 Agent Review 与用户人工核验全部收口，三项任务已勾选。
-- [x] T26–T27 实现、独立 Review 与 findings 修复已收口；本轮 USER_GATE 为否，两项任务已勾选。
-- [ ] T26-F1 委托页独立大图及持久低分辨率适配已通过新上下文独立 Review；等待用户验收。
-- [ ] T27-F1 公开信息架构与政策页增量已通过新上下文独立 Review；等待用户验收。
-- [x] T28 首页完整顺序与 T29 筛选/导航/301 已通过独立 Review并收口。
-- [ ] T30 SEO/品牌衍生物技术 Review 已通过；等待用户视觉验收。
-- [x] T31 备份、恢复、迁移精确匹配、失败清理与恢复库 production Chrome 已通过独立 Review。
-- [x] T32 Session/CSRF/Host/DTO、64 KiB JSON、分层限流、双 Bucket、日志脱敏与 secret scan 已通过独立 Review。
-- [x] T33 性能基线、Hero 批量查询、按需加载、横竖请求、三视口解码/CLS/溢出、键盘与减少动效已通过独立 Review。
-- [ ] T34 完整自动化、真实双 Bucket、备份恢复、Docker 部署镜像与独立真 Chrome 已通过；等待用户最终验收。
+### 首页信息架构
 
-当前无阻断 OQ。T30 小图标视觉和 T34 P0 结果等待用户验收；目标环境参数仍由 T52 负责。
+不继续保留独立的“委托/领养入口区”和“当前状态区”。两个业务入口合并为统一入口卡，每张卡在图片上或相邻信息区表达业务名称、当前状态、短说明和行动入口。
 
-## 已完成基础
+### 作品详情竖图
 
-- 双访问面、公开设计系统和管理视觉基线；
-- 双 Bucket、30 MB 永久原图、内嵌 FFmpeg 私有处理源和 OSS 跨桶水印能力；站点大图低分辨率适配已完成实现方自测；
-- SQLite/Drizzle、P0 Schema、唯一管理员认证和真实浏览器认证接线；
-- 角色化上传、服务端媒体核验、`recipe-v2`（兼容读取完整 v1 集合）、非领养作品 CRUD、发布/下架和管理端媒体工作流；
-- 真实作品详情、作品列表、首页双源轮播、大图管理和站点联系方式投影；
-- T22 三用途写入联合类型、完整管理读写、人工排序/精选、历史展会只读兼容、公开精选 6 项上限和用户人工验收；
-- T23 服务端设定图/出厂照关系、数量/主图/顺序、按需 recipe、活动 profile 原子切换和 T21 迁移兼容；
-- T25 regular adoption 发布检查、公开 adoption 列表和统一详情媒体分区服务端契约；
-- T24 管理端设定图/出厂照分区、同源原图与活动水印预览、上传恢复、媒体摘要和分区直达；
-- T25 `/adoptions` 横版设定图列表、真实空状态和统一详情两类媒体分区；
-- T26–T27 受限固定字段、委托/领养独立营业状态、版本化管理 API、即时公开投影和 ownerContact 泄漏守卫服务端能力；
-- T26–T27 前端历史基线：独立“文案配置”、公开 `/commission` `/about` `/contact`、邮件行动、空值隐藏、委托背景引导区，以及作品查找/筛选/分页和内页标题统一；T27-F1 已在不抹除历史的前提下把联系合并进 `/about`，新增 `/service` `/privacy`，并把 `/contact`、`/terms` 改为兼容重定向；
-- T27-F1 页头关于圆角二级导航、紧凑页脚右下法律/署名区、52rem 关于/政策正文、后台 FAQ 按钮间距、隐私政策受限字段、领养状态公开呈现与委托状态圆角矩形已完成实现方自测；
-- 当前活动目标 `brand-centered-v2`：可配置 Logo、默认 50% 不透明度；`recipe-v2` 使用 1.6 倍图形，出厂照及首页/委托页竖版大图使用单个居中水印，横版设定图及首页/委托页横版大图使用左右双水印；设定图全部响应式宽度按 960 px 基准同比缩放，并保留原子全站切换和失败恢复。
+详情图集按当前图片方向渲染。竖图不再放入横向满宽灰色舞台；保持完整显示、合理限宽和白色页面背景。切换作品时必须重置图集选中状态。
 
-T14–T22 的完成状态保持有效。后续扩展不能把既有验收改写为失败，也不能用旧 `brand-standard-v1` 或四角锚点回退当前发布要求。
+### 管理端文案
 
-## 素材与品牌状态
+现有 `SiteContentCard.vue` 拆为多个业务 Card，至少覆盖：
 
-用户已确认当前项目素材均位于 `materials/picture-examples/`。正式清单已经区分：
+- 委托基础文案；
+- 委托 FAQ；
+- 关于工作室与制作范围；
+- 服务条款；
+- 隐私政策；
+- 官方渠道与防诈骗提示。
 
-- 三份 Logo 源与当前浅色/深色组合标衍生物；
-- 出厂照、横版领养设定图、返图和首页宽图候选；
-- 宣传海报/二维码的使用边界；
-- T30 favicon/Touch Icon 与 T51 二次视觉校准职责。
+每个分区独立保存和版本控制，不再通过完整旧草稿覆盖其他管理员已经更新的分区。
 
-EXT-01 现在只表示“正式素材输入已经到位并完成角色映射”。最终衍生物仍按 T30/T51 生成和验收，但不再阻塞 T22–T29。
+## 必须关闭的问题
 
-## 仍然有效的产品与技术边界
+### 1. 媒体契约
 
-- `works` 是统一聚合，公开详情 canonical 为 `/works/{slug}`；
-- 私有原图、私有预处理源和水印 Logo 候选不可公开、不可覆盖；
-- 水印不替代访问控制；OSS 是公开 variant、最终格式和水印的唯一像素权威；
-- 首页横版/竖版、设定图、出厂照、返图和 Logo 是独立资产角色；
-- 公开 DTO、HTML、日志和错误不含作品私有联系人、私有 Key、签名 URL、Session 或水印源；
-- 不引入消息队列、媒体 worker、多实例、万能 CMS、访客账号、订单、支付或站内估价；
-- 所有非测试配置值由 `.env`、环境变量或不入库配置文件注入；
-- 用户触发的长耗时操作必须显示真实、可恢复的服务端进度；
-- E2E 是回归手段，不是页面质量的替代品。
+- 增加无水印站点展示配方和数据库表达；
+- 首页两个业务入口使用独立派生用途；
+- 水印 profile 切换只影响作品保护图片；
+- 迁移期间保持旧公开页面可用，完成后再清理旧 Hero 水印对象。
 
-## 阶段 C 执行波次
+### 2. 视觉与前端状态
 
-1. **C1 / T22（已完成）**：完整作品字段与约束；
-2. **C2 / T23–T25（已完成）**：多图角色、管理快速编辑、常规领养；
-3. **C3 / T26–T30（工程完成，用户门禁待统一验收）**：委托、关于/联系、首页完整内容、筛选/重定向、SEO 与品牌图标；
-4. **C4 / T31–T34（工程与独立 Review 完成，等待用户验收）**：备份恢复、安全、性能三视口和 P0 可部署总门禁。
+- 合并首页入口和状态；
+- 修复详情竖图舞台；
+- 拆分后台文案 Card；
+- 补充横竖图、路由复用、图集重置和三视口视觉回归。
 
-依赖、完成定义和具体边界只以 [`implementation/TASKS.md`](./implementation/TASKS.md) 为准。
+### 3. 代码边界
 
-## 自动化与 Review 状态
+- 拆分 `home-management.ts`、`media-recipe.ts`、`watermark-branding.ts`、`work-publication.ts` 等巨型服务；
+- 拆分 `useAdminHome.ts` 和大型管理组件；
+- API 增加稳定业务 `reason`，前端不再匹配英文错误文案；
+- 删除经本地引用检查确认的重复或失效图片原语。
 
-每个任务使用最小充分测试集合：常规执行 lint/typecheck，按改动执行 build 和定向 unit/integration/E2E；完整测试与 `verify:production` 主要放在 T31–T34、跨层高风险修复和明确总门禁。
+### 4. 可靠性
 
-含 UI、公开投影、媒体或用户操作的任务，GPT-5.6 Sol Review 必须实际启动应用，使用管理 Host 和公开 Host模拟管理员/新访客，检查成功、冲突、失败、恢复、重载、图片解码、横竖请求、三视口、焦点/键盘、溢出和浏览器日志。Review 结论记录为 `PASS / PASS WITH FOLLOW-UP / NOT PASS`。
+- 为 Hero 发布、Hero 放大和水印应用增加 lease、心跳、超时和启动恢复；
+- 进程重启后运行中任务不得永久卡死，也不得永久阻塞新操作；
+- 增加过期上传会话主动清扫，并用 OSS 生命周期规则只兜底临时前缀；
+- 限流按可信主体分桶，避免匿名流量耗尽唯一管理员的全局窗口。
 
-## 最近决策
+### 5. 部署
 
-- 2026-08-01：T14–T18 用户联合验收完成；随后新增大型居中、可配置 Logo 水印要求。
-- 2026-08-02：GATE-07 完成真实 OSS、全站进度、失败恢复、三视口和用户验收。
-- 2026-08-02：T19/T20 完成真实公开投影、首页双源轮播、管理端首页和完整工程收口。
-- 2026-08-02：T21 首次独立审查 NOT PASS，findings 修复后完成用户人工回归；用户明确确认 T21 收口。
-- 2026-08-02：用户确认后续前端模型按额度选择，后端和 Review 使用 GPT-5.6 Sol；Review 必须结合浏览器与视觉真实操作。
-- 2026-08-02：用户要求所有开发直接在 `main` 完成，不再切分支。
-- 2026-08-02：用户确认包括 Logo 在内的素材已经提供；建立正式素材清单并完成 EXT-01。
-- 2026-08-02：阶段 C 准备文档、执行路由和任务边界同步完成，T22 可启动。
-- 2026-08-03：T22 后端完成；现有 11 项迁移已满足列与约束，未制造新迁移。
-- 2026-08-03：T22 前端接线、独立浏览器 Review 和用户人工确认全部完成；T22 收口，下一任务切换为 T23。
-- 2026-08-03：用户调整 C2 后端顺序为 T23 → T25、明确跳过 T24 Vue 管理界面；T23 工程和 T25 服务端交接完成，任务勾选状态保持不变。
-- 2026-08-03：用户启动 T24/T25 前端与真实素材全链；实现和自动化自检完成，真实浏览器已创建常规领养并验证缺设定图阻断，但本地素材选择仍等待浏览器扩展文件权限。T23–T25 均未勾选。
-- 2026-08-04：根据用户界面反馈，作品发布改为先保存基础信息、设定图与出厂照的当前修改；管理媒体区删除内部配方/存储说明并统一中文用语。自动化与真实管理页回归通过，T23–T25 勾选状态不变。
-- 2026-08-04：用户确认 T23–T25 其他功能没有问题；完成“只有设定图不进入 `/works`”和 `recipe-v2` 左右双水印后，按用户反馈把水印从 2.0 倍回调为不重叠的 1.6 倍。正式素材真实 OSS、公开 E2E 与全套自动化通过，用户人工核验记为通过；独立 Review 尚未执行，任务框保持未勾选。
-- 2026-08-04：用户确认独立 Agent Review 已完成且 T23–T25 已完成并收口；三项任务勾选，阶段状态、执行路由、评审与产物索引同步切换到 T26–T27 服务端批次。
-- 2026-08-04：T26–T27 服务端完成 0012 迁移、严格站点内容/营业状态 Schema、现有首页管理聚合 API、公开 `no-store` 投影和定向/全量验证；未确认文案未写 seed，T26/T27 未勾选。
-- 2026-08-04：登记 **OQ-120**（10 项未确认文案）；前端完成首页管理固定区块与三公开页接线、自动化与实现方浏览器自测；公开页对空值整区隐藏，不编造文案；T26/T27 仍未勾选。
-- 2026-08-04：用户追加视觉跟进：`/works` 标题与 `/commission` 同尺度；作品管理移除可见 caption/表格外框并增加查找、筛选、分页；委托页改为单张双源背景引导；后台新增独立“文案配置”入口。参考渔屋只提炼布局和信息组织，OQ-120 候选稿不自动入库。
-- 2026-08-04：上述跟进已完成实现方自测；`pnpm typecheck` / `pnpm lint` / `pnpm build` 、列表单测与定向 Playwright 通过，新增五张视觉证据。该结论不代替新上下文独立 Review。
-- 2026-08-04：用户要求删除关于页的防御性隐私说明，并确认基本约定中的逐单报价、邮件协商周期与付款比例、工作室著作权和签收后一年非人为损坏保修原则；OQ-120 候选稿据此修订为 v2，未写入数据库，T26/T27 状态不变。
-- 2026-08-04：T26–T27 新上下文独立 Review 初始登记 2 个 must-fix，修复后键盘复测补充 1 个 should-fix；共享异步数据键、未经确认的公开事实和跳转焦点均完成最小修复。自动化、SSR/Host/DTO/私有 Bucket、真实图片、三视口和公开端键盘复测通过，结论 `PASS WITH FOLLOW-UP`；按本轮 USER_GATE 否的授权勾选 T26/T27。
-- 2026-08-04：用户启动 T26-F1：委托页大图不再复用首页第一项；“首页管理”增加首页/委托页大图 Tab，复用既有双源上传、排序与水印发布。公开委托页保持单张背景，只取独立集合排序第一项；无图隐藏且不回退首页。
-- 2026-08-04：T26-F1 文档、迁移、管理/公开契约、复用式 Tab、实现方自动化和浏览器自测完成；任务保持未勾选，等待新上下文独立 Review 与用户验收。
-- 2026-08-04：用户追加 T26-F1 大图尺寸策略：低于横版 `1920×1080` / 竖版 `1080×1920` 不再直接阻断保存；页面提示清晰度风险，启用前确认后由内嵌 FFmpeg Lanczos 生成私有适配源。该处理不宣称 AI 恢复细节，原图保留，作品媒体不扩展。
-- 2026-08-04：T26-F1 低分辨率追加实现与实现方验证完成：尺寸不足可保存、取消无副作用、确认后生成可追溯私有适配源并继续既有 OSS 发布；unit 102、integration 95、定向真实 Chromium 1 项及 lint/typecheck/build 通过。任务仍待统一的独立 Review/用户验收。
-- 2026-08-04：用户确认 OQ-120 全部正式文字；新增 0014 初始化迁移，只补空内容和缺失营业状态，并应用到当前开发数据库。管理入口统一改名为“大图管理”，`#commission-details` 增加固定页头滚动偏移；返图墙仍按 T35–T36 在 P1 建设。
-- 2026-08-05：用户启动 T27-F1：页脚删除重复联系方式，版权/服务条款/隐私政策/ICP备案入口合并到右下信息区；关于与联系合并，服务条款和隐私政策单独成页，“关于我们”增加桌面 Hover/键盘与移动展开二级导航；委托状态框改圆角矩形，领养页直接显示领养营业状态。隐私政策允许参考渔屋的信息组织，但默认文案必须按本站真实功能重新起草并进入受限 `site_content` 字段。
-- 2026-08-05：T27-F1 契约、0015、管理/公开 UI 和实现方验证完成；首次 E2E 暴露 768px 隐藏二级菜单造成 20px 横向溢出，改为贴右对齐后回归通过。当前开发库已应用 0015 且创建迁移备份；任务不勾选，等待独立 Review/用户验收。
-- 2026-08-05：用户反馈 `/adoptions` 在浏览器选中 1600/2400 px 设定图时水印仍偏小。根因是 `design-sheet` 响应式输出复用固定像素水印；修复按既有 960 px 设定图基准等比缩放，并通过新配置摘要沿现有原子切换链重建公开图，不改写 T25 历史收口结论。
-- 2026-08-05：用户追加 T27-F1 视觉收口：关于二级导航改为完整圆角矩形；文案配置 FAQ 新增按钮与最后一项增加间距；页脚压缩高度，并追加链接至 `https://github.com/wangminan` 的 `Design by Arktouros` 彩蛋署名。
-- 2026-08-05：T25 水印比例缺陷与 T27-F1 视觉追加完成实现方验证：当前开发库新活动 profile 真实 OSS 生成/核验 60/60，公开领养三视口通过；页头/页脚真实浏览器通过，定向生产 Playwright 4/4 PASS。T27-F1 仍等待独立 Review/用户验收。
-- 2026-08-05：T26-F1/T27-F1 新上下文独立 Review 在基线先冻结 3 个 must-fix、3 个 should-fix，修复复核又发现 1 个陈旧 E2E 契约；持久 UPSCALE 操作、文档冲突、0015 版本、持续风险、移动菜单焦点/inert、重复链接和页脚断言均已关闭，最终 `PASS WITH FOLLOW-UP`。用户验收与真实 OSS 安全前缀新写入仍保留为独立边界。
-- 2026-08-05：T33 新上下文独立 Review 初审冻结 Hero 投影 N+1、后续项 eager、方向固有尺寸和 10 px 命中区 4 个 findings；修复后 2–5 项 public/admin 查询恒定为 5/6，独立集成 6/6、Chrome 18/18 与 production 三视口通过，最终 `PASS WITH FOLLOW-UP`。Follow-up 仅是当前真实库单项和无管理凭据的证据边界。
-- 2026-08-05：T34 完整静态、104 unit、102 integration、206 E2E、build/verify、真实双 Bucket、备份恢复、发布/下架和 Docker 门禁完成。独立初审发现镜像漏带 Nitro 动态 `ali-oss` 依赖；修复只复制 frozen pnpm 树的 89 包运行闭包，真 Chrome 私有图在重启前后均 200 并解码，最终独立 Review `PASS`。T34 等待用户验收。
+- 使用标准 Node 24 镜像完成完整 frozen 构建；
+- 不再手工复制 `ali-oss` 依赖闭包；
+- 运行镜像包含迁移、管理员初始化、备份和恢复所需脚本及迁移文件；
+- 新增版本控制内的 Compose 和 Nginx 双 Host 配置；
+- 提供 `live` 与 `ready` 健康检查；
+- 验证空数据卷迁移、初始化、启动、重启、升级和回滚。
 
-## 下一步
+### 6. CI
 
-当前交接：
+新增 GitHub Actions 门禁，至少执行 frozen install、lint、typecheck、unit、integration、production build、Docker build，以及空数据卷迁移与 readiness smoke。完整 E2E 可以分为必跑核心集和手动/定时全量集。
 
-1. 用户统一验收 T26-F1、T27-F1、T30 与 T34；验收前四项保持未勾选，Review 初始 findings 保持可追溯。
-2. 用户可按 [`T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md`](./implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md) 补验 T26-F1/T27-F1，并核对 T30 图标与 T34 P0 核心路径。
-3. 用户验收前不提前进入 T35/T37 等 P1 能力。
+## 当前任务状态
+
+- T01–T29、T31–T33、GATE-06、GATE-07、EXT-01、EXT-02：历史完成状态保持有效；
+- T26-F1、T27-F1、T30、T34：工程与独立 Review 事实保留，但不再单独等待验收，统一纳入 C.1 总门禁；
+- T34-F0：本轮 Review 结论和文档去重，已授权执行；
+- T34-F1–T34-F8：待按 [`implementation/TASKS.md`](./implementation/TASKS.md) 串行完成；
+- T35 以后：暂不启动。
+
+当前无开放 OQ。实现过程中若出现会改变业务事实、公开内容或正式部署域名的新问题，再登记 OQ；纯工程选择由实现者按 SPEC 与 PLAN 收敛。
+
+## 执行顺序
+
+1. T34-F1：站点无水印媒体契约与迁移；
+2. T34-F2：首页和详情视觉修复；
+3. T34-F3：文案 Card 与分区并发；
+4. T34-F4：服务、组件和错误契约减债；
+5. T34-F5：长任务恢复、上传清扫和限流；
+6. T34-F6：完整镜像、Compose、Nginx、迁移与健康检查；
+7. T34-F7：CI 门禁；
+8. T34-F8：完整自动化、真实浏览器、重启恢复、部署演练和用户验收。
+
+写入继续直接在最新 `main` 串行完成；后端、前端、Review 的责任和交接要求见 [`implementation/EXECUTION_ROUTING.md`](./implementation/EXECUTION_ROUTING.md)。
+
+## 当前权威文档
+
+| 主题 | 权威文件 |
+| --- | --- |
+| 产品边界 | [`foundation/README.md`](./foundation/README.md) |
+| 功能与验收 | [`requirements/SPEC.md`](./requirements/SPEC.md) |
+| 媒体公开与保护 | [`requirements/MEDIA-PUBLICATION-POLICY.md`](./requirements/MEDIA-PUBLICATION-POLICY.md) |
+| 技术方案 | [`planning/PLAN.md`](./planning/PLAN.md) |
+| 数据模型 | [`models/README.md`](./models/README.md) |
+| 公开站与管理端信息架构 | [`.design/README.md`](./.design/README.md) |
+| 任务状态 | [`implementation/TASKS.md`](./implementation/TASKS.md) |
+| 执行分工 | [`implementation/EXECUTION_ROUTING.md`](./implementation/EXECUTION_ROUTING.md) |
+| 当前评审 | [`review/REVIEW.md`](./review/REVIEW.md) |
+| 产物索引 | [`artifacts/ARTIFACTS.md`](./artifacts/ARTIFACTS.md) |
+| 历史证据 | [`implementation/notes/README.md`](./implementation/notes/README.md) |
+
+dated notes、旧原型和归档指针只说明当时事实，不得覆盖以上当前权威文件。

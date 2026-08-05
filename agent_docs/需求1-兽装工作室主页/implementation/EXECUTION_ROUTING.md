@@ -1,140 +1,174 @@
 # 执行责任路由
 
-> **角色**：记录模型、人员与工作轨道的可变执行安排。
-> **效力**：本文件不改变 foundation、SPEC/增量、PLAN/增量、`.design` 或 `TASKS.md` 的产品范围和完成定义。
-> **生效日期**：2026-08-05（T28/T29/T31–T33 已收口；T34 工程与独立 Review 完成；T26-F1、T27-F1、T30、T34 等待用户统一验收）。
+> **角色**：记录当前执行角色、main 写入纪律和交接要求。
+> **效力**：不改变 foundation、SPEC、媒体策略、PLAN、设计 IA 或 TASKS 的产品范围。
+> **当前阶段**：C.1，按 T34-F1–T34-F8 串行收口。
 
-## 1. 当前角色
+## 1. 角色
 
-| 角色 | 当前责任 | 当前安排 |
+| 角色 | 责任 | 当前安排 |
 | --- | --- | --- |
-| `FRONTEND_PRIMARY` | Vue 页面/组件、响应式、浏览器状态、交互、无障碍与视觉证据 | 每个前端任务开始前，由用户按额度在 Kimi K3、Claude Opus 5、GPT-5.6 Sol 中选择，不预先锁死整阶段模型 |
-| `BACKEND_PRIMARY` | 数据库、迁移、Schema、API、认证、安全、OSS、事务、公开投影与运维验证 | 固定由 GPT-5.6 Sol 负责 |
-| `REVIEW` | 代码、契约、真实浏览器、视觉、性能、安全、媒体和任务证据复核 | 固定由 GPT-5.6 Sol 在新的审查上下文中执行；必须实际点击和查看页面，不以测试数量代签 |
-| `ACCEPTANCE` | 业务和视觉结果最终确认 | 用户；T21、T22、T23–T25 已确认；T26–T27 本轮明确 `USER_GATE：否`，后续按任务或门禁验收 |
+| `BACKEND_PRIMARY` | 数据库、迁移、Schema、API、安全、OSS、事务、长任务、部署和运维命令 | GPT-5.6 Sol |
+| `FRONTEND_PRIMARY` | Vue 页面/组件、状态、响应式、无障碍、视觉和浏览器接线 | 用户按任务在 Kimi K3、Claude Opus 5、GPT-5.6 Sol 中选择 |
+| `REVIEW` | 契约、代码、浏览器、媒体、安全、性能、部署和证据复核 | GPT-5.6 Sol，必须使用新的审查上下文 |
+| `ACCEPTANCE` | 最终业务和视觉确认 | 用户；T34-F8 统一验收 C.1 |
 
-`FRONTEND_PRIMARY` 无权自行修改数据库、API 权限、发布事务、媒体角色约束、profile identity 或产品事实。发现接口缺口时停止相关接线，形成明确清单交回 `BACKEND_PRIMARY`。
+`FRONTEND_PRIMARY` 不自行修改数据库、API 权限、媒体身份、发布事务或部署安全边界。发现接口缺口时形成明确清单交回 `BACKEND_PRIMARY`。
 
-GPT-5.6 Sol 可以同时承担后端实现与后续 Review，但 Review 必须使用新的上下文，从最新 `main` 重新读取和操作，不能引用实现阶段的自测作为独立体验结论。
+实现者不能为自己的自测代签独立 Review。Reviewer 必须从最新 `main` 重新读取文档、启动应用并重放路径。
 
-## 2. 当前状态
+## 2. 当前任务顺序
 
-- T01–T27、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成；T26–T27 新上下文独立 Review 的 3 个 findings 已修复，结论 `PASS WITH FOLLOW-UP`，两项任务已勾选。
-- T26-F1/T27-F1 新上下文独立 Review 已完成，结论 `PASS WITH FOLLOW-UP`；两项等待用户验收。
-- T28/T29 独立 Chrome Review 为 `PASS` 并已收口；T30 为 `PASS WITH FOLLOW-UP`，仅保留品牌图标用户视觉门禁。
-- T31 独立 Review 初审的 migration hash MUST-FIX 已关闭；验证恢复、失败清理、恢复库 production Chrome 与媒体 Host 健康最终 `PASS`。
-- T32 独立 Review 初审的请求中断与日志用户名 MUST-FIX 已在共享边界关闭；安全负路径、真实 OSS、secret scan、production build/verify 与 Chrome 最终 `PASS`。
-- T33 独立 Review 初审 4 个 findings 已关闭，最终 `PASS WITH FOLLOW-UP`；T34 初始 Docker、全量 E2E 与 runtime findings 已关闭，独立 Review 最终 `PASS`，等待用户验收。
-- **OQ-120** 已由用户整批确认，0014 迁移只补空字段或缺失状态；后台双上下文 409 与完整文案投影可由用户下班后补验。
-- T37 展会矩阵未提前进入。
-- T22 最终 Review 与用户验收追加见 [`notes/t19-t22/T22-INDEPENDENT-REVIEW-2026-08-03.md`](./notes/t19-t22/T22-INDEPENDENT-REVIEW-2026-08-03.md)。
-- T21 首次 NOT PASS、findings 修复、人工验收回归和用户最终确认均保留为分层历史事实。
-- 正式素材输入与角色映射见 [`../materials/MATERIAL-MANIFEST.md`](../materials/MATERIAL-MANIFEST.md)。T30/T51 负责生成与校准衍生物，不再等待外部素材交付。
-- 阶段 C 启动基线、执行波次与验收方法见 [`notes/P0-C-STAGE-READINESS-2026-08-02.md`](./notes/P0-C-STAGE-READINESS-2026-08-02.md)。
+严格按以下顺序：
 
-## 3. 阶段 C 执行顺序
+1. T34-F1：站点无水印媒体契约；
+2. T34-F2：首页与详情视觉；
+3. T34-F3：文案 Card 与分区并发；
+4. T34-F4：架构与错误契约减债；
+5. T34-F5：长任务恢复、上传清扫、限流；
+6. T34-F6：完整镜像、Compose、Nginx、健康检查；
+7. T34-F7：CI；
+8. T34-F8：总门禁与用户验收。
 
-### C1 · T22 完整作品字段与约束
+每项允许先做只读分析，但写入必须串行。不得为了并行让多个 Agent 同时改动 `media-recipe`、Hero 服务、共享 Schema、内容 API 或部署文件。
 
-1. [已完成] `BACKEND_PRIMARY` 核对现有 Drizzle 列、共享 Schema、管理 API、公开投影和迁移差异；
-2. [已完成] 用途、装型、基础领养、排序、精选、CNY 和短属性的服务端契约及定向测试；
-3. [已完成] 用户选择本任务的 `FRONTEND_PRIMARY`，接入创建、编辑、列表与状态；
-4. [已完成] `REVIEW` 使用管理 Host 和公开 Host 实际创建、编辑、冲突、筛选、精选和浏览；
-5. [已完成] 用户人工确认并勾选 T22，进入 T23。
+## 3. main 直推纪律
 
-T22 不提前实现 T23 多图关系，也不提前实现 T37 的展会实体和完整展会掉落矩阵。
+- 不创建功能分支或 PR；
+- 写入前读取远端最新 `main`；
+- 确认没有另一个写入 Agent 正在修改同一批文件；
+- 一个任务按后端 → 前端 → Review 顺序交接；
+- 提交小而可回滚，提交信息带任务号和意图；
+- 不 force push、不硬 reset、不重写已验收历史；
+- 不删除或清空 `.env`；
+- 冲突时停止写入并重新读取当前契约，不以整文件覆盖抢分支；
+- dated notes 保留首次失败和后续修复。
 
-### C2 · T23–T25 角色化媒体与常规领养（已完成）
+## 4. 文档读取顺序
 
-- T23–T25 的工程、自动化、正式素材、独立 Agent Review 与用户人工核验均已完成，三项任务已勾选；收口后继续直接在 `main` 串行。
+编码前至少读取：
 
-### C3 · T26–T30 完整公开站
+1. [`../STATE.md`](../STATE.md)；
+2. [`../foundation/README.md`](../foundation/README.md)；
+3. [`../requirements/SPEC.md`](../requirements/SPEC.md)；
+4. [`../requirements/MEDIA-PUBLICATION-POLICY.md`](../requirements/MEDIA-PUBLICATION-POLICY.md)；
+5. [`../planning/PLAN.md`](../planning/PLAN.md)；
+6. [`../models/README.md`](../models/README.md)；
+7. [`TASKS.md`](./TASKS.md)；
+8. 与本任务对应的 `.design` IA；
+9. [`notes/README.md`](./notes/README.md) 和相关历史 notes。
 
-- T26/T27：[已完成] 服务端、前端、独立 Review 与 findings 修复收口；OQ-120 正式默认值已登记；
-- T26-F1：[工程与独立 Review 完成] 委托页独立大图管理、公开投影和站点大图低分辨率适配；等待用户验收；
-- T27-F1：[工程与独立 Review 完成] 关于/联系合并、服务条款/隐私政策独立页、页头二级导航、页脚法律区、委托状态形状和领养状态呈现；等待用户验收；
-- T28/T29：[已完成] 首页内容顺序、作品筛选、详情导航、公开投影与 301；独立 Review 均为 `PASS`；
-- T30：[工程与独立 Review 完成] SEO、Sitemap、favicon/Touch Icon 均通过，等待用户视觉验收。
+五份 `WATERMARK-CENTERED-V2.md` 是归档指针，不是独立规格。
 
-### C4 · T31–T34 可部署收口
+## 5. 后端交接
 
-- 用户授权 T28–T34 作为单一长程批次连续实施；中间用户门禁统一延后至本批次末尾人工验收。批量继续执行不等于相应用户验收已经发生。
-- T31：[已完成] 新路径验证恢复、迁移 hash、非空短属性/媒体/大图/profile 一致性、失败清理与恢复库 Chrome；
-- T32：[已完成] GPT-5.6 Sol 完整 P0 安全门禁与新上下文独立复验；
-- T33：[已完成] 初始 1 个 MUST-FIX 与 3 个 SHOULD-FIX 已关闭；Hero 批量投影、三视口、媒体请求、性能、交互和视觉独立复验最终 `PASS WITH FOLLOW-UP`；
-- T34：[工程与独立 Review 完成] 完整自动化、真实双 Bucket、恢复、Docker 非 root/持久卷、Host/secret 边界和真 Chrome 重启复测均通过；等待用户最终 P0 验收。
+`BACKEND_PRIMARY` 在前端开始前提供：
 
-## 4. 直接在 main 上的策略
+- Zod 请求/响应 Schema；
+- 路由、方法、权限、Host、Origin、CSRF、版本和 no-store；
+- 稳定错误 `code` 与业务 `reason`；
+- 数据库迁移、约束、backfill 和回滚边界；
+- 媒体用途、保护模式、配方身份和公开投影；
+- 长任务状态、失败、lease 和恢复行为；
+- fake adapter、fixture 与相关测试；
+- 明确非目标。
 
-所有后续开发、修复、Review 记录和文档同步都直接提交到 `main`：
+接口发生变化时先更新共享 Schema，不让前端复制本地临时类型。
 
-1. 不创建功能分支，不发起 PR，不保留长期 Agent 分支；
-2. 每次写入前读取远端最新 `main`，确认没有另一个执行者正在修改同一批文件；
-3. 后端 → 前端 → Review 串行交接，一个执行者提交后下一个执行者再开始；
-4. 每个提交只表达一个可回滚意图，提交信息写明任务号和范围；
-5. 禁止 force push、重写已验收历史、硬 reset 他人提交、删除或清空 `.env`；
-6. 出现冲突时停止写入并重新读取最新契约，不用覆盖文件的方式“抢”主分支；
-7. 只读分析可以并行，任何代码或文档写入必须串行。
+## 6. 前端交接
 
-历史 `feature/gate07-*`、`feature/t19-t20-kimi` 等分支不再作为执行入口；当前唯一发布基线为 `main`。
+`FRONTEND_PRIMARY` 提供：
 
-## 5. 后端到前端的交接内容
+- 页面、组件、composable 和样式；
+- loading、empty、dirty、saving、saved、validation、conflict、operation、failure、recovery；
+- 三固定视口；
+- 横竖图片请求和自然尺寸；
+- 键盘、焦点、触控和减少动效；
+- console/network 检查；
+- 定向 E2E 和截图/trace；
+- 未解决接口清单。
 
-`BACKEND_PRIMARY` 在前端开始前至少提供：
+视觉修改不得通过泄漏原图、关闭水印保护或放宽服务端约束完成。
 
-1. Zod 请求/响应 Schema 与枚举语义；
-2. API 路由、方法、权限、资源版本、CSRF/Host 和 `no-store`；
-3. 成功、校验、冲突、业务阻断和服务失败响应；
-4. 数据库约束、迁移/backfill、fixture/fake adapter；
-5. 媒体角色、profile identity、OSS 参数和发布/切换原子性；
-6. 与本任务直接相关的单元、集成和真实 OSS 结果；
-7. 明确列出本任务不实现的下一任务边界。
+## 7. Review 要求
 
-`FRONTEND_PRIMARY` 至少提供：
+Reviewer 必须：
 
-1. Vue 页面、组件和 composable；
-2. loading、empty、validation、conflict、operation、failure/recovery 状态；
-3. 桌面、平板、手机布局；
-4. 真实图片解码、同源预览和公开请求证据；
-5. 键盘、焦点、减少动效和无溢出；
-6. 截图、实施记录和未解决接口清单。
+- 对照当前文档和任务完成定义；
+- 审查迁移、数据兼容和失败恢复；
+- 运行与改动相关的 lint/typecheck/build/unit/integration/E2E；
+- 实际启动公开和管理 Host；
+- 模拟管理员和新访客点击；
+- 检查 400、401、403、404、409、429、500；
+- 检查容器中断、任务恢复、清理和重载；
+- 检查真实图片解码、URL、横竖资源和水印矩阵；
+- 在 `390×844`、`768×1024`、`1440×900` 检查布局；
+- 记录首次 findings、修复和最终结论。
 
-## 6. 自动化测试策略
+只看 HTTP 200、元素数量、测试通过数或实现者截图不能判定完成。
 
-不再把每个小任务都机械执行一次完整五分钟级 E2E。测试集合按改动风险选择：
+## 8. C.1 特定责任
 
-- 常规基础：`pnpm lint`、`pnpm typecheck`；
-- Nuxt 路由、运行时、迁移或生产输出变化时：`pnpm build`；
-- 运行与本次 Schema、API、迁移和页面路径直接相关的 unit/integration/E2E；
-- 认证、媒体、发布、公开投影或全局契约变化时扩大回归；
-- 全量 `pnpm test`、`pnpm test:integration`、`pnpm test:e2e`、`pnpm verify:production` 主要用于 T31–T34、跨层高风险修复和明确总门禁。
+### T34-F1
 
-测试结果必须说明覆盖了什么风险。只登记“若干条通过”、HTTP 200、元素数量或选择器存在，不构成完成证据。
+- 后端先完成 schema、配方、生成器、公开投影和真实 OSS；
+- 前端再更新 Hero、业务入口和管理预览文案；
+- Reviewer 验证 profile 切换只改变作品图片。
 
-## 7. GPT-5.6 Sol 浏览器与视觉 Review
+### T34-F2
 
-含 UI、公开投影、媒体或用户操作的任务，`REVIEW` 必须：
+- 后端优先提供首页聚合 DTO；
+- 前端完成业务入口和方向感知图集；
+- Reviewer 使用真实横竖图和路由复用路径。
 
-1. 启动真实应用，区分管理 Host 与公开 Host；
-2. 模拟管理员和新访客完整点击路径，而不是只调用 API；
-3. 检查创建/编辑/保存、版本冲突、非法输入、失败、恢复、重载和最终页面结果；
-4. 在与改动相关的 390×844、768×1024、1440×900 视口检查图片、布局和交互；
-5. 查看 console、network、实际图片解码、横竖资源、焦点、键盘、溢出、截图或 trace；
-6. 对私有匿名读取、公开 DTO 泄漏、缺图、发布/下架阻断等负路径做真实操作；
-7. 在 `implementation/notes/` 留下 `PASS / PASS WITH FOLLOW-UP / NOT PASS`、操作步骤、观察结果和风险。
+### T34-F3
 
-浏览器与视觉 Review 是自动化测试之外的独立门禁，不能由 Playwright 通过数替代。
+- 后端先做分区版本和局部 API；
+- 前端拆 Card 和冲突体验；
+- Reviewer 使用两个管理上下文验证不同分区和同分区并发。
 
-## 8. 用户验收门禁
+### T34-F4
 
-实现者准备证据，GPT-5.6 Sol 做 Review，用户批准明确要求用户验收的结论：
+- 先冻结行为测试，再拆服务和 composable；
+- 不在同一提交混入新功能和大范围命名整理；
+- Reviewer 比较重构前后 API、SQL、公开 DTO 和页面行为。
 
-- T22：完整作品字段首次真实管理体验；
-- T25：常规领养与横版设定图；
-- T30：品牌小图标与 SEO 页面结果；
-- T34：P0 可部署版本；
-- T42：P1 一期闭环；
-- T49/T50：上线前综合审查和最终 E2E；
-- T53：景宸真实使用验收。
+### T34-F5
 
-用户可以在其他任务追加人工验收；自动化和模型 Review 不能取消用户的最终决定权。
+- 后端主导；
+- 必须真实杀进程、重启和恢复；
+- 前端只接服务端持久状态，不模拟完成。
+
+### T34-F6/F7
+
+- 部署和 CI 由后端主导；
+- Nginx、Compose、镜像和工作流必须进入版本控制；
+- Reviewer 从空目录和空卷执行，不复用开发库或根 `node_modules`。
+
+### T34-F8
+
+- Reviewer 新上下文执行总门禁；
+- 用户查看公开端、管理端和部署结果后明确确认；
+- 未得到用户确认前不勾选 GATE-C1。
+
+## 9. 测试策略
+
+常规任务：
+
+- `pnpm lint`；
+- `pnpm typecheck`；
+- 改 Nuxt、迁移、运行时或生产输出时 `pnpm build`；
+- 运行直接相关 unit/integration/E2E。
+
+T34-F8：
+
+- 完整 unit、integration、E2E、build、production verify；
+- 真实双 Bucket；
+- Docker/Compose/Nginx；
+- 空卷 migrate/init/ready；
+- 进程中断恢复；
+- 升级和回滚；
+- CI 结果；
+- 三视口真 Chrome。
+
+测试截图默认进入 `test-results` 或 CI artifact，只有明确批准的最终验收截图进入 notes。

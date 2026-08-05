@@ -1,82 +1,110 @@
 # 产物索引
 
-> **角色**：登记当前契约、状态路由、正式素材、历史证据和实施产物。
+> **角色**：列出当前可用产物和历史证据入口，不复制需求、技术方案或任务状态。
+> **当前阶段**：C.1 P0 收口。当前状态见 [`../STATE.md`](../STATE.md)。
 
-## 当前契约
+## 1. 当前权威文档
 
-水印相关条款按以下局部增量读取；冲突时增量优先，其他内容继续由原主文件约束：
+| 主题 | 文件 |
+| --- | --- |
+| 产品边界 | [`../foundation/README.md`](../foundation/README.md) |
+| 功能规格 | [`../requirements/SPEC.md`](../requirements/SPEC.md) |
+| 媒体公开与保护 | [`../requirements/MEDIA-PUBLICATION-POLICY.md`](../requirements/MEDIA-PUBLICATION-POLICY.md) |
+| 技术计划 | [`../planning/PLAN.md`](../planning/PLAN.md) |
+| 数据模型 | [`../models/README.md`](../models/README.md) |
+| 设计入口 | [`../.design/README.md`](../.design/README.md) |
+| 任务清单 | [`../implementation/TASKS.md`](../implementation/TASKS.md) |
+| 执行路由 | [`../implementation/EXECUTION_ROUTING.md`](../implementation/EXECUTION_ROUTING.md) |
+| 当前评审 | [`../review/REVIEW.md`](../review/REVIEW.md) |
+| 历史证据索引 | [`../implementation/notes/README.md`](../implementation/notes/README.md) |
 
-| 层级 | 主文件 | 当前水印增量 |
-| --- | --- | --- |
-| 地基 | `foundation/README.md` | `foundation/WATERMARK-CENTERED-V2.md` |
-| 规格 | `requirements/SPEC.md` | `requirements/WATERMARK-CENTERED-V2.md` |
-| 计划 | `planning/PLAN.md` | `planning/WATERMARK-CENTERED-V2.md` |
-| 模型投影 | `models/README.md` | `models/WATERMARK-CENTERED-V2.md` |
-| 设计 | `.design/` | `.design/WATERMARK-CENTERED-V2.md` |
-| 任务 | `implementation/TASKS.md` | T01–T29、T31–T33、EXT-01/02 与 GATE-06/07 已完成；T26-F1、T27-F1、T30、T34 用户验收待执行 |
-| 状态 | `STATE.md` | 阶段 C：T34 工程与独立 Review 已通过；四项用户门禁保持独立，main 直推继续生效 |
+## 2. 当前代码产物
 
-## 当前执行入口
+主分支当前包含：
 
-| 产物 | 状态 | 说明 |
-| --- | --- | --- |
-| `implementation/notes/P0-C-STAGE-READINESS-2026-08-02.md` | 当前 | 阶段 C 启动条件、T22 边界、执行波次、main 纪律和验收方法 |
-| `implementation/EXECUTION_ROUTING.md` | 当前 | 前端模型池、GPT-5.6 Sol 后端/Review、串行交接、定向自动化与真实浏览器 Review |
-| `implementation/TASKS.md` | 当前 | 唯一可勾选清单；T34 工程与独立 Review 已通过；T26-F1、T27-F1、T30、T34 保持未勾选并等待用户验收 |
-| `materials/MATERIAL-MANIFEST.md` | 已确认 | Logo、作品、横版设定图、返图与页面候选的正式输入和衍生职责；EXT-01 完成 |
-| `implementation/notes/README.md` | 当前 | 按当前/收口/历史/截图整理全部实施记录，不移动已被引用的旧路径 |
+- Nuxt 4 公开站与管理端；
+- SQLite/Drizzle schema 与迁移；
+- 唯一管理员认证；
+- 双 OSS Bucket 媒体存储；
+- 条件直传和媒体校验；
+- 作品、领养、首页、委托和站点内容管理；
+- 作品发布/下架；
+- Hero 发布和低分辨率适配；
+- 水印候选和 profile 应用；
+- 备份、恢复和生产验证脚本；
+- unit、integration 和 Playwright 测试；
+- 历史最小 Dockerfile。
 
-## 已完成实施与证据
+这些代码是 C.1 修改基线，不代表新规格已经实现。特别是：
 
-| 产物 | 状态 | 说明 |
-| --- | --- | --- |
-| T01–T13 | 已完成 | 应用底座、配置/Host/日志、共享契约、视觉基线、SQLite/P0 Schema、唯一管理员认证 |
-| GATE-06 | 已完成 | 登录/Session/退出/改密和浏览器安全证据 |
-| T10/EXT-02 | 已完成 | 双 Bucket、30 MB 原图、FFmpeg 私有处理源、OSS 水印和跨桶保存实测 |
-| T14–T18 后端记录 | 已完成 | `implementation/notes/t14-t18/T14-UPLOAD-ENGINEERING-2026-07-31.md` 至 `T18-PUBLICATION-ENGINEERING-2026-07-31.md` |
-| T14–T18 UI/修复记录 | 已完成 | `implementation/notes/t14-t18/t14-t18-ui/T14-T18-UI-REPAIR-2026-08-01.md` |
-| 水印 v2 文档校准 | 已完成 | `implementation/notes/gate07-watermark/DOCS-WATERMARK-CENTERED-V2-2026-08-01.md` |
-| GATE-07 工程/UI/收口 | 已完成 | 迁移、管理 API/UI、真实 OSS、原子切换、持续进度、三视口和用户验收 |
-| T19/T20 工程/UI/收口 | 已完成 | 真实作品详情/列表/首页 SSR、双源轮播、大图管理、真实浏览器和泄漏/清理证据 |
-| T21 首次独立审查 | NOT PASS（历史） | `implementation/notes/t19-t22/T21-REVIEW-2026-08-01.md`；findings 已完成修复 |
-| T21 人工验收与收口 | 已完成 | `implementation/notes/t19-t22/T21-MANUAL-UI-FIX-2026-08-02.md`；用户明确确认 |
-| T22 后端/前端/独立 Review/用户验收 | 已完成 | `implementation/notes/t19-t22/T22-BACKEND-2026-08-03.md`、`T22-FRONTEND-2026-08-03.md`、`T22-INDEPENDENT-REVIEW-2026-08-03.md` |
-| T23–T25 角色化媒体与常规领养 | 已完成 | `implementation/notes/t23-t25/T23-T25-CLOSURE-2026-08-04.md` 及同目录工程、前端、人工验收证据 |
-| T25 高分辨率设定图水印跟进 | 已完成实现方验证 | `implementation/notes/t23-t25/T25-DESIGN-SHEET-WATERMARK-FOLLOW-UP-2026-08-05.md`；960 px 基准同比缩放、活动 profile 原子重建、真实 OSS 与三视口证据 |
-| T26–T27 服务端 | 已完成 | `implementation/notes/t26-t27/T26-T27-BACKEND-HANDOFF-2026-08-04.md` |
-| T26–T27 前端与追加跟进 | 已完成 | `implementation/notes/t26-t27/T26-T27-FRONTEND-2026-08-04.md` 与 `T26-T27-VISUAL-FOLLOW-UP-2026-08-04.md` |
-| T26–T27 独立 Review | PASS WITH FOLLOW-UP | `implementation/notes/t26-t27/T26-T27-INDEPENDENT-REVIEW-2026-08-04.md`；初始 findings、最小修复、44 项定向测试、SSR/Host/DTO/私有 Bucket、真实图片、三视口、键盘和截图证据 |
-| T26–T27 OQ-120 与界面跟进 | 已完成 | `implementation/notes/t26-t27/T26-T27-OQ120-SEED-UX-FOLLOW-UP-2026-08-04.md`；0014 默认值、当前库注入、“大图管理”与锚点修复 |
-| T26-F1/T27-F1 独立 Review | PASS WITH FOLLOW-UP | `implementation/notes/t26-t27/T26-F1-T27-F1-INDEPENDENT-REVIEW-2026-08-05.md`；保留初始 FAIL，7 个 findings 修复与独立复测通过，用户验收待执行 |
-| T26-F1 委托页独立大图 | Review 通过，待用户验收 | `implementation/notes/t26-t27/T26-F1-COMMISSION-HERO-CHANGE-2026-08-04.md`；复用首页上传/排序/发布链，独立公开投影，并完成可刷新恢复的低分辨率 FFmpeg 私有适配 |
-| T27-F1 公开信息架构与政策页 | Review 通过，待用户验收 | `implementation/notes/t26-t27/T27-F1-PUBLIC-INFORMATION-ARCHITECTURE-2026-08-05.md`；0015、管理/公开投影、政策页、二级导航、紧凑页脚和营业状态 |
-| T28–T30 公开核心 Review | PASS / PASS WITH FOLLOW-UP | `implementation/notes/t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md`；首页顺序、详情导航/301、SEO、品牌衍生物、初始 findings 与 Chrome 复验；T30 待用户验收 |
-| T31 备份恢复与迁移冒烟 | PASS | `implementation/notes/t28-t34/T31-BACKUP-RESTORE-2026-08-05.md`；验证恢复命令、迁移 hash、非空短属性/媒体/大图/profile 一致性、失败清理和恢复库 Chrome |
-| T32 P0 安全门禁 | PASS | `implementation/notes/t28-t34/T32-SECURITY-GATE-2026-08-05.md`；初始 findings、64 KiB JSON、分层限流、请求中断收口、用户名脱敏、真实 OSS/secret scan 与独立复验 |
-| T33 性能与三视口媒体回归 | PASS WITH FOLLOW-UP | `implementation/notes/t28-t34/T33-PERFORMANCE-VISUAL-2026-08-05.md`；SSR 基线、初始 4 个 findings、Hero 批量查询、按需加载、方向尺寸、24 px 命中区、production 三视口与独立复验 |
-| T34 P0 全链与可部署门禁 | PASS，待用户验收 | `implementation/notes/t28-t34/T34-P0-DEPLOYABLE-GATE-2026-08-05.md`；完整自动化、双 Bucket、恢复/发布链、Docker 非 root/持久卷、初始 findings、89 包 runtime 闭包与独立真 Chrome 重启复核 |
-| 首页/委托页大图水印跟进 | 已完成 | `implementation/notes/t26-t27/T26-F1-HERO-WATERMARK-FOLLOW-UP-2026-08-04.md`；共享配方按作品媒体规则生成横版左右双水印、竖版单个居中水印，并完成现有公开对象原子重建与浏览器复核 |
-| T26/T27 回家人工核对 | 当前 | `implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md`；双 Host、文案/状态、委托独立大图、三公开页和可选 409 复核 |
-| EXT-01 正式素材 | 已完成 | `materials/MATERIAL-MANIFEST.md`；文件交付和角色映射完成，T30/T51 继续生成/校准衍生物 |
+- 站点 Hero 当前仍使用旧水印公开变体；
+- 首页入口仍复用委托 Hero 和领养设定图；
+- 文案仍使用集中 Card 和整包保存；
+- 长任务仍缺少重启 lease；
+- 当前镜像仍是最小运行镜像，没有 Compose/Nginx/完整运维命令；
+- 还没有 GitHub Actions 门禁。
 
-## 历史证据边界
+## 3. 品牌与素材
 
-- `materials/`：用户/景宸提供的项目素材与竞品参考并存；只有 `MATERIAL-MANIFEST.md` 登记的项目输入可进入公开内容，竞品截图只读参考；
-- `planning/prototype-v1/`：只保留页面职责和交互参考；
-- `implementation/notes/`：记录当时事实，既有路径不批量迁移；
-- `brand-standard-v1`：18% 宽度、70% 不透明度、四角水印的历史实现；
-- `brand-centered-v2`：当前目标，默认 50% 不透明度、60% 缩放、可选私有 Logo 候选；出厂照/站点竖图单个居中，设定图/站点横图左右双水印。
+正式素材来源和角色映射见：
 
-## 当前质量口径
+- [`../materials/MATERIAL-MANIFEST.md`](../materials/MATERIAL-MANIFEST.md)；
+- `../materials/picture-examples/`；
+- `public/brand/` 中的已生成站点图标。
 
-- 每个任务运行与改动风险直接相关的 lint/typecheck、build、unit/integration/E2E；
-- 完整自动化和 `verify:production` 主要放在 T31–T34、跨层高风险修复和明确总门禁；
-- 含 UI、公开投影、媒体或用户操作的任务，GPT-5.6 Sol 必须实际使用浏览器和视觉模拟点击，检查成功、失败、恢复、重载、图片解码、三视口、console/network、截图或 trace；
-- 测试总数、HTTP 200、元素数量和选择器存在不能单独证明任务完成。
+素材文件说明来源和授权边界，不定义媒体是否打水印。当前保护规则只看媒体策略。
 
-## 下一批预期产物
+## 4. 设计产物
 
-- T26-F1、T27-F1、T30、T34 用户验收记录；
-- 用户如愿意补充的后台双上下文 409 与完整文案投影人工证据。
+设计 Token 和信息架构：
 
-用户验收前不提前进入 T37。
+- `../.design/public-site/`；
+- `../.design/admin-console/`。
+
+`planning/prototype-v1/` 是早期原型验证，不是生产源码模板。dated screenshots 是当时验收证据，不是自动更新的视觉基线。
+
+## 5. 历史实施证据
+
+历史记录集中在 `../implementation/notes/`，包括：
+
+- T01–T09 视觉与基础工程；
+- T10/EXT-02 OSS 预检；
+- T11–T13 数据库与认证；
+- T14–T18 上传、媒体和发布；
+- GATE-07 水印 profile；
+- T19–T25 作品、首页和领养；
+- T26–T30 委托、信息页、筛选和 SEO；
+- T31–T34 备份、安全、性能、Docker 与全链 Review。
+
+这些记录保留当时命令、截图、finding 和结论。当前规则变化不修改其历史内容。
+
+## 6. 归档指针
+
+以下旧文件不再维护独立规则，只指向唯一媒体策略：
+
+- `../.design/WATERMARK-CENTERED-V2.md`；
+- `../foundation/WATERMARK-CENTERED-V2.md`；
+- `../requirements/WATERMARK-CENTERED-V2.md`；
+- `../planning/WATERMARK-CENTERED-V2.md`；
+- `../models/WATERMARK-CENTERED-V2.md`。
+
+需要查看 GATE-07 当时实现时，使用 `../implementation/notes/gate07-watermark/`。
+
+## 7. C.1 预期新增产物
+
+T34-F1–T34-F8 将新增或更新：
+
+- 站点无水印媒体迁移与配方；
+- 首页聚合投影和业务入口组件；
+- 方向感知详情图集；
+- 分区文案 API、版本和 Card；
+- 持久操作 runner 与上传清扫命令；
+- 稳定业务错误 reason；
+- 标准完整 Node 24 镜像；
+- `compose.yaml`；
+- Nginx 双 Host 配置；
+- live/ready；
+- GitHub Actions；
+- C.1 实施和独立 Review notes。
+
+只有 T34-F8 通过后，以上产物才构成 P0 正式候选。

@@ -1,69 +1,203 @@
-# 评审记录
+# 当前评审记录
 
-> **角色**：跨文档一致性、覆盖度与风险评审（对应 spec-kit `/analyze`）；可由只读子代理产出。
-> **写入时机**：阶段 5 形成正式总评审；阶段 4 的独立任务 Review 记录在 `implementation/notes/`。
-> **评审对象**：SPEC ↔ PLAN ↔ TASKS ↔ 代码 ↔ 真实浏览器结果是否一致、是否覆盖验收标准。
+> **角色**：记录当前 SPEC、PLAN、TASKS、代码和真实运行结果之间的差异。dated implementation notes 保留各阶段历史评审，本文件只表达现在有效的总判断。
+> **评审日期**：2026-08-05。
 
-## 评审对象
+## 1. 总结论
 
-尚未进入正式阶段 5；阶段 4 进行中。T01–T29、T31–T33、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T26-F1/T27-F1、T30、T34 的工程与独立 Review 均已通过，等待用户统一验收。**OQ-120 已关闭。**
+当前主分支的阶段 C 功能主链成立：作品、常规领养、首页、委托、管理、OSS、发布、备份和安全能力已经形成。上传核验、双 Bucket、版本冲突、公开 DTO 隔离和发布失败清理具有较完整的工程基础。
 
-T21 首次独立审查、findings 修复、人工验收回归和用户最终确认已收口；首次 NOT PASS 报告继续作为历史事实保留。阶段 C 启动和 Review 方法见 `implementation/notes/P0-C-STAGE-READINESS-2026-08-02.md`。
+本轮 Review 同时确认，当前版本不能直接宣布 P0 正式上线就绪。结论为：
 
-## 已确认结论
+> **PASS WITH REQUIRED CLOSURE**
 
-- T08 生产视觉方向已由用户通过，精选横向轨道和摄影优先基线保持有效。
-- T09 已完成契约债务、管理/公开 UI、响应式与完整 Logo 页头修正。
-- GATE-06 已完成登录、Session、退出、改密与真实浏览器安全边界。
-- T10/EXT-02 已证明双 Bucket、30 MB 原图、内嵌 FFmpeg 私有处理源、OSS 水印与跨桶保存能力。
-- T11–T13 已完成 SQLite/Drizzle、P0 Schema/投影与唯一管理员认证。
-- T14–T18 已完成角色化上传、媒体核验/预处理、配方与历史水印、非领养作品 CRUD、发布/下架和管理端接线。
-- GATE-07 已完成可配置 `brand-centered-v2`、四比例真实预览、全站原子应用、持续进度、失败恢复、三视口和泄漏检查。
-- T19/T20 已完成真实作品详情/列表/首页 SSR、首页双源轮播、首页管理和活动 profile 约束。
-- T21 findings、修复和用户人工回归均已完成，当前视觉基线以用户 2026-08-02 截图和点击结果为准。
-- T22 已完成三用途字段与约束、管理 UI、公开投影、独立浏览器 Review；`PASS WITH FOLLOW-UP` 的 T25/T26–T29 边界保留，用户于 2026-08-03 完成人工确认。
-- T23–T25 已完成角色化媒体、常规领养、正式素材验证、独立 Agent Review 与用户人工确认，并于 2026-08-04 勾选收口。
-- T26–T27 新上下文独立 Review 初始登记 2 个 must-fix，修复后补充 1 个 should-fix；共享异步数据键、未经确认的公开事实和跳转焦点均完成最小修复。自动化、SSR/Host/DTO/私有 Bucket、真实图片、三视口和公开端键盘复测通过，结论 `PASS WITH FOLLOW-UP`；本轮 USER_GATE 为否，任务已勾选。完整证据见 `implementation/notes/t26-t27/T26-T27-INDEPENDENT-REVIEW-2026-08-04.md`。
-- T26-F1/T27-F1 新上下文独立 Review 初始 7 个 findings 已关闭，最终 `PASS WITH FOLLOW-UP`；两项保持未勾选并等待用户验收。
-- T28 首页完整顺序与 T29 筛选/详情导航/301 的独立 Review 为 `PASS`；T30 SEO/品牌衍生物为 `PASS WITH FOLLOW-UP`，只保留用户视觉门禁。证据见 `implementation/notes/t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md`。
-- T31 独立 Review 初审为 `NOT PASS`；迁移 hash MUST-FIX 修复后，验证恢复、非空短属性/媒体/大图/profile 一致性、失败清理与恢复库 Chrome 最终 `PASS`。证据见 `implementation/notes/t28-t34/T31-BACKUP-RESTORE-2026-08-05.md`。
-- T32 独立 Review 初审为 `NOT PASS`；请求中断与日志明文用户名 2 个 MUST-FIX 在共享边界修复后，安全负路径、真实 OSS、secret scan、production build/verify 与 Chrome 最终 `PASS`。证据见 `implementation/notes/t28-t34/T32-SECURITY-GATE-2026-08-05.md`。
-- T33 独立 Review 初审为 `NOT PASS`；Hero 投影 N+1、后续项 eager、方向固有尺寸与轮播命中区 4 个 findings 在共享投影和原生 HTML/CSS 边界关闭。2–5 项查询恒定，独立集成、Chrome E2E 与 production 三视口通过，最终 `PASS WITH FOLLOW-UP`。证据见 `implementation/notes/t28-t34/T33-PERFORMANCE-VISUAL-2026-08-05.md`。
-- T34 初始缺少 Docker 定义、全量 E2E 18 项失败与最终镜像漏带 `ali-oss` runtime 的 findings 均在既有测试边界和部署镜像根因处关闭。完整自动化、真实双 Bucket、恢复/发布链、非 root 持久卷、Host/secret、真 Chrome 私有图解码与重启复测通过，最终独立 Review `PASS`；任务等待用户验收。证据见 `implementation/notes/t28-t34/T34-P0-DEPLOYABLE-GATE-2026-08-05.md`。
-- EXT-01 已根据用户确认收口：Logo、作品、领养设定图和返图来源登记在 `materials/MATERIAL-MANIFEST.md`；T30/T51 负责衍生与校准，不再等待外部文件。
-- 后续写入全部直接在 `main` 串行完成；前端按任务选择 Kimi K3、Claude Opus 5 或 GPT-5.6 Sol，后端和 Review 使用 GPT-5.6 Sol。
+T34 历史独立 Review 的 `PASS` 继续保留，表示当时约定的最小镜像和全链验证已经通过；本轮新增产品决策和更完整部署定义由 T34-F1–T34-F8 收口，不改写历史记录。
 
-## 当前 Review 方法
+## 2. 已确认有效的基础
 
-自动化测试与浏览器验收分层：
+- 公开 Host、管理 Host 和错误 Host 边界已经存在；
+- 唯一管理员 Session、Origin、CSRF、改密和失效机制已经存在；
+- 私有原图与公开衍生图使用双 Bucket；
+- 条件直传、摘要、MIME、尺寸、EXIF 和角色校验已经存在；
+- 作品、设定图、出厂照、发布、下架和公开投影已经存在；
+- 活动水印候选、不可变 profile、预览、应用和失败恢复已经存在；
+- 备份、验证恢复、迁移 hash、完整性和外键检查已经存在；
+- unit、integration、Playwright、production build 和最小 Docker 验证已有历史证据。
 
-1. 每个任务运行与改动直接相关的 lint/typecheck、build、unit/integration/E2E；
-2. 完整 `pnpm test`、`pnpm test:integration`、`pnpm test:e2e`、`pnpm verify:production` 主要用于 T31–T34、跨层高风险修复和明确总门禁；
-3. 含 UI、公开投影、媒体或用户操作的任务，GPT-5.6 Sol 必须实际启动应用、区分管理/公开 Host、模拟点击、检查成功/冲突/失败/恢复/重载；
-4. 必须查看实际图片解码、横竖请求、三视口布局、焦点/键盘、console、network、截图或 trace；
-5. 只看 HTTP 200、元素数量、选择器存在、测试总数或绿色报告不得判定完成；
-6. Review 结论写成 `PASS / PASS WITH FOLLOW-UP / NOT PASS`，并记录操作步骤与观察结果。
+这些能力在后续任务中应复用和加固，不应推倒重写。
 
-GPT-5.6 Sol 即使参与后端实现，也要使用新的审查上下文从最新 `main` 重放用户路径，不能以实现阶段自测代签。
+## 3. 必须修复的产品与视觉问题
 
-## 阶段 C 主要风险
+### R-01 · 站点大图保护规则错误
 
-- T23–T25 必须保持 `design_sheet`、`studio_photo` 与首页资产角色分离，并继续使用活动居中水印；T23 不提前实现 T24 管理快速编辑或 T25 常规领养发布。
-- T22 只完成常规领养基础字段；展会实体、当前展会和完整掉落状态仍留到 T37，不能因 T22 收口而提前扩张。
-- T26/T27 的正式事实与约定仍需用户确认；工程收口不授权 Agent 把 OQ-120 候选稿写入数据库或宣布为正式内容。
-- T26-F1 必须确认委托集合排序、全部停用、无首页回退、横竖图片请求和首页集合隔离；不得因复用同一管理服务而把两个位置的数据混在一起。
-- T30 的 favicon/Touch Icon 需要从同一品牌源生成并做小尺寸视觉检查，不能把完整纵向组合标直接压缩。
-- T32–T34 需要真实安全负路径、媒体性能和浏览器全链；不能只靠已有 E2E 的历史数字。
+当前首页 Hero、委托 Hero 与活动水印 profile 耦合。用户已确认：站点展示位无水印，作品展示位继续使用活动水印。
 
-## 后续评审点
+必须：
 
-- T26–T27 follow-up：用户如愿意可按 `implementation/notes/t26-t27/T26-T27-HOME-MANUAL-ACCEPTANCE-2026-08-04.md` 补验后台双上下文 409；不回退已完成任务；
-- T26-F1/T27-F1：用户核对独立大图、低分辨率确认/恢复、公开信息架构与政策页后决定是否勾选；
-- T30 follow-up：用户确认 favicon 16/32、Apple Touch Icon、浏览器标签与分享图；
-- T34：用户确认 P0 公开/管理核心和可部署结果后决定是否勾选；
-- 阶段 5：再执行完整 SPEC ↔ PLAN ↔ TASKS ↔ 代码 ↔ 浏览器结果总评审。
+- 新增无水印站点展示配方；
+- 首页和委托横竖 Hero 切换到无水印；
+- 首页委托和领养入口生成独立无水印变体；
+- profile 切换不再影响站点展示变体；
+- 永久原图继续私有。
 
-## 子代理评审记录
+权威规则见 [`../requirements/MEDIA-PUBLICATION-POLICY.md`](../requirements/MEDIA-PUBLICATION-POLICY.md)。
 
-- 尚未执行阶段 5 子代理总评审。
-- 历史 Reader Test、T21 与 T22 独立审查结果保留在 `implementation/notes/`；后续任务不得改写其当时结论。
+### R-02 · 首页入口与状态重复
+
+当前首页先显示委托/领养大图入口，再显示独立营业状态 Card，信息语义重复且视觉体系不一致。
+
+必须合并为统一业务入口卡，状态作为入口的辅助信息，不保留独立状态区。
+
+### R-03 · 详情竖图舞台错误
+
+当前竖图在满宽灰色舞台中 contain，形成两侧大面积灰色区域。必须按图片方向限制竖图容器宽度，保持完整显示并使用白色页面背景。
+
+图集还必须在作品或 gallery 变化时重置有效索引，避免主图与缩略图 `aria-pressed` 不一致。
+
+### R-04 · 文案管理过度集中
+
+`SiteContentCard.vue` 同时管理委托、FAQ、关于、条款、隐私和联系内容，并使用完整 payload 与全局版本。
+
+必须拆分 Card 和分区版本。一个 Card 的保存不能覆盖其他 Card 在新版本中的更新。
+
+## 4. 必须修复的架构问题
+
+### R-05 · 巨型服务和 composable
+
+以下边界已经过度集中：
+
+- Hero 管理、发布和恢复；
+- 媒体配方、源选择、生成和数据库写入；
+- 水印 profile 管理和全站应用；
+- 作品发布；
+- `useAdminHome` 的 CRUD、预览、轮询、错误和恢复；
+- 大型管理表单组件。
+
+必须围绕 repository、service、runner、pure recipe 和 UI state 拆分，但只处理 C.1 相关路径，不进行无目标全仓重构。
+
+### R-06 · 前端匹配英文错误消息
+
+前端通过英文 `serverMessage` 判断“最后一个 Hero”“顺位冲突”等业务分支。文案变化会破坏行为。
+
+API 必须提供稳定业务 `reason`，前端只匹配 reason 并集中映射中文提示。
+
+### R-07 · 公开首页重复查询和故障放大
+
+首页分别请求 Hero、委托 Hero、站点内容、领养和精选，多个路径重复构建公开作品快照。精选等次要区块失败还能导致整页 500。
+
+目标是首页聚合投影和区块故障隔离。
+
+## 5. 必须修复的可靠性问题
+
+### R-08 · 长任务进程重启后可能永久卡死
+
+Hero 发布、Hero 放大和水印应用依赖当前 Node 进程执行。操作表没有 lease、heartbeat 和启动接管；重试只接受 FAILED。容器在运行态中断后，任务可能永久停留并阻塞新操作。
+
+必须增加持久 lease、超时、幂等核对、启动恢复和进程中断测试。
+
+### R-09 · 上传过期清理为惰性
+
+上传会话只在再次查询或操作时发现过期。关闭页面后可能长期残留对象和记录。
+
+必须增加主动清扫命令和仅针对临时对象的 OSS 生命周期兜底。
+
+### R-10 · 全局限流可能阻断唯一管理员
+
+当前登录和管理写使用进程全局窗口。匿名流量或测试序列可以耗尽所有人的额度；账号 5 次失败锁定又放大了唯一管理员拒绝服务风险。
+
+必须按可信主体分桶，并与 Nginx 可信代理配置共同验证。
+
+## 6. 必须修复的部署问题
+
+### R-11 · 当前镜像不是完整运维镜像
+
+现有 Dockerfile 手工收集 `ali-oss` 依赖闭包，只复制 `.output` 和依赖，不包含迁移、管理员初始化、备份和恢复所需的完整脚本与迁移文件。
+
+必须使用标准 Node 24 frozen 构建和正式运行依赖部署方式，不再手工复制单个依赖树。
+
+### R-12 · 空数据卷不能证明可部署
+
+当前健康接口只返回进程存活，启动插件不验证迁移完整性。已有 T34 证据使用准备好的数据库，不等价于空环境部署。
+
+必须提供 migrate、init-admin、ready，并从空卷演练。
+
+### R-13 · 缺少 Compose 与 Nginx 契约
+
+项目依赖公开域名和管理域名隔离，但仓库没有版本化 Compose、Nginx 双 Host、TLS、安全头和可信代理配置。
+
+必须新增通用 P0 部署栈；正式域名和证书接入留到 T52。
+
+### R-14 · 缺少远端 CI
+
+当前质量结论依赖本地 Agent 执行。必须新增 GitHub Actions 核心门禁、容器 smoke 和 E2E artifact。
+
+## 7. 文档问题与本轮处理
+
+### R-15 · 水印事实源重复
+
+旧规则分散在 `.design`、foundation、requirements、planning、models、STATE、TASKS 和 AGENTS 摘要中。站点大图无水印的新决策会与旧文件冲突。
+
+本轮处理：
+
+- 新增唯一媒体策略；
+- 重写当前活文档，只引用媒体策略；
+- 五份 `WATERMARK-CENTERED-V2.md` 改为归档指针；
+- dated notes 保留历史事实，不删除、不改写。
+
+### R-16 · T34 与 T52 完成定义混淆
+
+旧 T34 被称为可部署版本，但真正的目标环境部署又在 T52。当前拆分调整为：
+
+- T34-F6：完成通用、可重复的 P0 Node/Compose/Nginx/迁移部署；
+- T52：在全部选定功能完成后接入正式域名、证书、正式 Bucket、备份计划和最终发布流程。
+
+## 8. C.1 Review 方法
+
+每个任务的 Reviewer 必须使用最新 `main` 和新上下文：
+
+1. 对照 SPEC、媒体策略、PLAN 和 TASKS；
+2. 查看代码差异和迁移；
+3. 运行相关 lint/typecheck/build/unit/integration/E2E；
+4. 实际启动应用；
+5. 区分公开、管理、媒体和错误 Host；
+6. 模拟管理员和新访客完整点击；
+7. 检查失败、冲突、重载、容器重启和恢复；
+8. 查看 console、network、图片自然尺寸和请求 URL；
+9. 在 `390×844`、`768×1024`、`1440×900` 检查布局；
+10. 留下 `PASS / PASS WITH FOLLOW-UP / NOT PASS` 和具体证据。
+
+不能以 HTTP 200、元素数量、选择器存在或测试总数代替页面观察。
+
+## 9. 当前门禁
+
+当前允许：
+
+- 执行 T34-F1–T34-F8；
+- 在 C.1 范围内修改数据库、媒体、公开 UI、管理 UI、可靠性、Docker、Compose、Nginx 和 CI；
+- 保留并复用历史测试和 notes。
+
+当前不允许：
+
+- 宣布现有版本 P0 正式上线就绪；
+- 进入 T35–T53；
+- 把站点大图重新纳入大型水印；
+- 删除永久原图或历史 Review；
+- 为解决部署问题复制完整本地工作区、`.env` 或开发数据库进镜像；
+- 通过放宽安全约束让测试通过。
+
+## 10. 通过条件
+
+只有 T34-F8 满足以下条件，本轮 Review 才能更新为 `PASS`：
+
+- 站点展示无水印、作品展示有水印；
+- 首页入口与状态合并；
+- 竖图详情正确；
+- 文案 Card 独立并发正确；
+- 长任务重启恢复；
+- 过期上传主动清扫；
+- 限流和代理边界通过；
+- 标准完整镜像、Compose、Nginx、live/ready；
+- 空环境部署、升级和回滚；
+- CI、完整自动化和真实双 Bucket；
+- 新上下文独立 Review；
+- 用户最终验收。
