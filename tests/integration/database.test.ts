@@ -99,7 +99,7 @@ describe('SQLite foundation', () => {
     expect(() => assertDatabaseMigrated(databaseFile))
       .toThrow(/run pnpm db:migrate first/)
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 17,
+      applied: 18,
       backupFile: undefined,
     })
     expect(() => assertDatabaseMigrated(databaseFile)).not.toThrow()
@@ -118,7 +118,7 @@ describe('SQLite foundation', () => {
       `).pluck().get()).toBe(1)
       expect(database.sqlite.prepare(`
         SELECT COUNT(*) FROM __drizzle_migrations
-      `).pluck().get()).toBe(17)
+      `).pluck().get()).toBe(18)
       const siteContent = database.sqlite.prepare(`
         SELECT commission_intro AS commissionIntro,
                commission_faq_json AS commissionFaqJson,
@@ -218,7 +218,7 @@ describe('SQLite foundation', () => {
     }
 
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 10,
+      applied: 11,
     })
     const upgraded = openDatabase(databaseFile)
     try {
@@ -272,7 +272,7 @@ describe('SQLite foundation', () => {
     }
 
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 6,
+      applied: 7,
     })
     const upgraded = openDatabase(databaseFile)
     try {

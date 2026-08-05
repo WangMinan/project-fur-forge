@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import type {
   PublicAdoptionListItemDto,
-  PublicHeroSlideDto,
+  PublicHomeEntriesDto,
   PublicSiteContentDto,
 } from '~~/shared/types/contracts'
 
 const props = defineProps<{
   adoptions: PublicAdoptionListItemDto[]
-  commissionSlide: PublicHeroSlideDto | null
+  entries: PublicHomeEntriesDto
   statuses: PublicSiteContentDto['statuses']
 }>()
 
-const firstAdoption = computed(() => props.adoptions[0] ?? null)
 const currentAdoptions = computed(() => props.adoptions.slice(0, 2))
 const visibleStatuses = computed(() => [
   props.statuses.commission,
@@ -22,28 +21,35 @@ const visibleStatuses = computed(() => [
 <template>
   <div class="home-continuation">
     <section
-      v-if="commissionSlide || firstAdoption"
+      v-if="entries.commission || entries.adoption"
       class="home-entry-grid"
       aria-label="委托与领养"
       data-testid="home-image-entries"
     >
-      <NuxtLink v-if="commissionSlide" to="/commission" class="home-entry">
+      <NuxtLink
+        v-if="entries.commission"
+        :to="entries.commission.href"
+        class="home-entry"
+      >
         <ResponsivePicture
           class="home-entry__media"
-          :sources="commissionSlide.landscape"
-          :portrait-sources="commissionSlide.portrait"
-          :alt="commissionSlide.alt"
+          :sources="entries.commission.sources"
+          :alt="entries.commission.alt"
           sizes="(min-width: 768px) 50vw, 100vw"
         />
         <span class="home-entry__shade" aria-hidden="true" />
         <span class="home-entry__label">自设委托 <span aria-hidden="true">→</span></span>
       </NuxtLink>
 
-      <NuxtLink v-if="firstAdoption" to="/adoptions" class="home-entry">
+      <NuxtLink
+        v-if="entries.adoption"
+        :to="entries.adoption.href"
+        class="home-entry"
+      >
         <ResponsivePicture
           class="home-entry__media"
-          :sources="firstAdoption.designSheet.sources"
-          :alt="firstAdoption.designSheet.alt"
+          :sources="entries.adoption.sources"
+          :alt="entries.adoption.alt"
           sizes="(min-width: 768px) 50vw, 100vw"
         />
         <span class="home-entry__shade" aria-hidden="true" />

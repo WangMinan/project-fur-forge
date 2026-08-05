@@ -58,8 +58,10 @@ export const watermarkCandidateDtoSchema = z.object({
 
 export const watermarkImpactDtoSchema = z.object({
   publishedWorkCount: z.number().int().nonnegative(),
-  enabledHeroSlideCount: z.number().int().nonnegative(),
+  /** 作品保护图片：本次切换会重新生成。 */
   targetVariantCount: z.number().int().nonnegative(),
+  /** 站点无水印图片：首页与委托页大图，本次切换不受影响。 */
+  siteDisplayVariantCount: z.number().int().nonnegative(),
 }).strict()
 
 export const watermarkBrandingDtoSchema = z.object({
@@ -109,11 +111,11 @@ export const watermarkOperationRetryRequestSchema = versionedRequestSchema(
   z.object({}).strict(),
 )
 
+/** T34-F1：预览只覆盖作品保护展示位；站点大图不打水印，无需预览。 */
 export const watermarkPreviewKindSchema = z.enum([
   'work-card',
   'detail',
-  'home-hero-landscape',
-  'home-hero-portrait',
+  'design-sheet',
 ])
 
 export const watermarkOperationDtoSchema = z.object({

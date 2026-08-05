@@ -552,10 +552,10 @@ export async function completeUploadSession(
           INSERT INTO asset_variants (
             id, asset_id, storage_scope, status, object_key, input_sha256,
             media_role, usage, width, height, format, quality, crop_identity,
-            recipe_version, watermark_profile, logo_digest, watermark_anchor,
-            sha256, byte_size, created_at, updated_at
+            recipe_version, protection_mode, watermark_profile, logo_digest,
+            watermark_anchor, sha256, byte_size, created_at, updated_at
           ) VALUES (?, ?, 'PRIVATE', 'READY', ?, ?, ?, 'preprocess', ?, ?,
-                    'png', 100, ?, ?, 'none', 'none', 'none', ?, ?, ?, ?)
+                    'png', 100, ?, ?, 'none', 'none', 'none', 'none', ?, ?, ?, ?)
         `).run(
           `${row.id}:preprocess-v1`,
           row.id,
@@ -636,10 +636,10 @@ export async function retryAssetProcessing(
         INSERT OR IGNORE INTO asset_variants (
           id, asset_id, storage_scope, status, object_key, input_sha256,
           media_role, usage, width, height, format, quality, crop_identity,
-          recipe_version, watermark_profile, logo_digest, watermark_anchor,
-          sha256, byte_size, created_at, updated_at
+          recipe_version, protection_mode, watermark_profile, logo_digest,
+          watermark_anchor, sha256, byte_size, created_at, updated_at
         ) VALUES (?, ?, 'PRIVATE', 'READY', ?, ?, ?, 'preprocess', ?, ?,
-                  'png', 100, ?, ?, 'none', 'none', 'none', ?, ?, ?, ?)
+                  'png', 100, ?, ?, 'none', 'none', 'none', 'none', ?, ?, ?, ?)
       `).run(
         `${asset.id}:preprocess-v1`,
         asset.id,

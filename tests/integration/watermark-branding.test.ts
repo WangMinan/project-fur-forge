@@ -206,21 +206,21 @@ describe('GATE-07 watermark branding lifecycle', () => {
     expect(requireSiteBranding(sqlite)).toEqual(before)
   })
 
-  it('previews four targets, atomically switches every public variant, and cleans old objects', async () => {
+  it('previews artwork targets, atomically switches every protected variant, and cleans old objects', async () => {
     const oldKeys = await generateActiveVariants()
     const { draft, preview } = await createPreviewedDraft()
 
     expect(preview).toMatchObject({
       status: 'DONE',
-      targetVariantCount: 4,
-      generatedVariantCount: 4,
-      verifiedVariantCount: 4,
+      targetVariantCount: 3,
+      generatedVariantCount: 3,
+      verifiedVariantCount: 3,
     })
+    // T34-F1：站点大图不打水印，预览只覆盖作品保护展示位。
     expect(preview.previews.map(item => item.kind)).toEqual([
       'work-card',
       'detail',
-      'home-hero-landscape',
-      'home-hero-portrait',
+      'design-sheet',
     ])
     expect(JSON.stringify(preview)).not.toContain('/preview/branding/')
 
@@ -228,10 +228,10 @@ describe('GATE-07 watermark branding lifecycle', () => {
     expect(applied).toMatchObject({
       status: 'DONE',
       affectedWorkCount: 1,
-      affectedHeroSlideCount: 1,
-      targetVariantCount: 24,
-      generatedVariantCount: 24,
-      verifiedVariantCount: 24,
+      affectedHeroSlideCount: 0,
+      targetVariantCount: 12,
+      generatedVariantCount: 12,
+      verifiedVariantCount: 12,
       cleanupPendingCount: 0,
     })
     expect(requireSiteBranding(sqlite)).toMatchObject({
@@ -242,13 +242,13 @@ describe('GATE-07 watermark branding lifecycle', () => {
     expect(sqlite.prepare(`
       SELECT count(*) FROM asset_variants
       WHERE storage_scope = 'PUBLIC' AND watermark_profile_id = ?
-    `).pluck().get(draft.id)).toBe(24)
+    `).pluck().get(draft.id)).toBe(12)
     expect(sqlite.prepare(`
       SELECT count(*) FROM asset_variants
       WHERE storage_scope = 'PUBLIC' AND watermark_profile_id = ?
     `).pluck().get(seededProfileId)).toBe(0)
     expect(storage.deletedPublicKeys).toEqual(expect.arrayContaining(oldKeys))
-    expect(storage.deletedPrivateKeys).toHaveLength(4)
+    expect(storage.deletedPrivateKeys).toHaveLength(3)
 
     await expect(applyWatermarkProfile(
       sqlite,
@@ -294,10 +294,10 @@ describe('GATE-07 watermark branding lifecycle', () => {
     expect(applied).toMatchObject({
       status: 'DONE',
       affectedWorkCount: 2,
-      affectedHeroSlideCount: 1,
-      targetVariantCount: 36,
-      generatedVariantCount: 36,
-      verifiedVariantCount: 36,
+      affectedHeroSlideCount: 0,
+      targetVariantCount: 24,
+      generatedVariantCount: 24,
+      verifiedVariantCount: 24,
     })
     expect(sqlite.prepare(`
       SELECT count(*) FROM asset_variants
@@ -335,12 +335,12 @@ describe('GATE-07 watermark branding lifecycle', () => {
     )
     expect(completed).toMatchObject({
       status: 'DONE',
-      generatedVariantCount: 24,
-      verifiedVariantCount: 24,
+      generatedVariantCount: 12,
+      verifiedVariantCount: 12,
     })
   })
 
-  it('previews all four ratios before homepage hero assets exist', async () => {
+  it('previews artwork ratios before homepage hero assets exist', async () => {
     sqlite.prepare('DELETE FROM site_hero_slides').run()
     sqlite.prepare(`
       DELETE FROM assets
@@ -351,15 +351,14 @@ describe('GATE-07 watermark branding lifecycle', () => {
 
     expect(preview).toMatchObject({
       status: 'DONE',
-      targetVariantCount: 4,
-      generatedVariantCount: 4,
-      verifiedVariantCount: 4,
+      targetVariantCount: 3,
+      generatedVariantCount: 3,
+      verifiedVariantCount: 3,
     })
     expect(preview.previews.map(item => item.kind)).toEqual([
       'work-card',
       'detail',
-      'home-hero-landscape',
-      'home-hero-portrait',
+      'design-sheet',
     ])
   })
 

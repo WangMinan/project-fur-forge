@@ -287,11 +287,11 @@ describe('brand-centered-v2 public media generation', () => {
       INSERT INTO asset_variants (
         id, asset_id, storage_scope, status, object_key, input_sha256,
         media_role, usage, width, height, format, quality, crop_identity,
-        recipe_version, watermark_profile, logo_digest, watermark_anchor,
-        sha256, byte_size, created_at, updated_at
+        recipe_version, protection_mode, watermark_profile, logo_digest,
+        watermark_anchor, sha256, byte_size, created_at, updated_at
       ) VALUES (?, ?, 'PRIVATE', 'READY', ?, ?, 'studio_photo',
                 'preprocess', 3200, 2400, 'png', 100, 'preprocess-v1',
-                'preprocess-v1', 'none', 'none', 'none', ?, ?, ?, ?)
+                'preprocess-v1', 'none', 'none', 'none', 'none', ?, ?, ?, ?)
     `).run(
       preprocessId,
       ASSET_ID,

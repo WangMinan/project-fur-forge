@@ -368,6 +368,7 @@ export const assetVariants = sqliteTable('asset_variants', {
   quality: integer('quality').notNull(),
   cropIdentity: text('crop_identity').notNull(),
   recipeVersion: text('recipe_version').notNull(),
+  protectionMode: text('protection_mode').notNull().default('watermark'),
   watermarkProfile: text('watermark_profile').notNull(),
   watermarkProfileId: text('watermark_profile_id')
     .references(() => watermarkProfiles.id, { onDelete: 'restrict' }),
@@ -418,6 +419,8 @@ export const assetVariants = sqliteTable('asset_variants', {
   ).where(sql`${table.watermarkProfileId} IS NOT NULL`),
   index('asset_variants_public_lookup_idx')
     .on(table.assetId, table.storageScope, table.status, table.usage),
+  index('asset_variants_protection_idx')
+    .on(table.storageScope, table.protectionMode, table.usage, table.status),
   check(
     'asset_variants_storage_scope',
     sql`${table.storageScope} IN ('PRIVATE', 'PUBLIC')`,
@@ -440,7 +443,7 @@ export const assetVariants = sqliteTable('asset_variants', {
   ),
   check(
     'asset_variants_usage',
-    sql`${table.usage} IN ('preprocess', 'work-card', 'detail', 'design-sheet', 'home-hero-landscape', 'home-hero-portrait')`,
+    sql`${table.usage} IN ('preprocess', 'work-card', 'detail', 'design-sheet', 'home-hero-landscape', 'home-hero-portrait', 'commission-hero-landscape', 'commission-hero-portrait', 'home-entry-commission', 'home-entry-adoption')`,
   ),
   check(
     'asset_variants_dimensions',
@@ -471,12 +474,36 @@ export const assetVariants = sqliteTable('asset_variants', {
     sql`${table.watermarkConfigDigest} = 'none' OR (length(${table.watermarkConfigDigest}) = 64 AND ${table.watermarkConfigDigest} = lower(${table.watermarkConfigDigest}) AND ${table.watermarkConfigDigest} NOT GLOB '*[^0-9a-f]*')`,
   ),
   check(
+    'asset_variants_protection_mode',
+    sql`${table.protectionMode} IN ('none', 'watermark')`,
+  ),
+  check(
+    'asset_variants_unprotected_identity',
+    sql`${table.protectionMode} != 'none' OR (${table.watermarkProfile} = 'none' AND ${table.watermarkProfileId} IS NULL AND ${table.watermarkConfigDigest} = 'none' AND ${table.logoDigest} = 'none' AND ${table.watermarkAnchor} = 'none' AND ${table.watermarkOpacityPercent} IS NULL AND ${table.watermarkScalePercent} IS NULL)`,
+  ),
+  check(
+    'asset_variants_site_display_recipe',
+    sql`${table.recipeVersion} != 'site-display-v1' OR (${table.storageScope} = 'PUBLIC' AND ${table.protectionMode} = 'none' AND ${table.usage} IN ('home-hero-landscape', 'home-hero-portrait', 'commission-hero-landscape', 'commission-hero-portrait', 'home-entry-commission', 'home-entry-adoption'))`,
+  ),
+  check(
+    'asset_variants_site_display_usage',
+    sql`${table.usage} NOT IN ('commission-hero-landscape', 'commission-hero-portrait', 'home-entry-commission', 'home-entry-adoption') OR (${table.storageScope} = 'PUBLIC' AND ${table.protectionMode} = 'none' AND ${table.recipeVersion} = 'site-display-v1')`,
+  ),
+  check(
+    'asset_variants_public_protection',
+    sql`${table.storageScope} != 'PUBLIC' OR ${table.protectionMode} = 'watermark' OR ${table.recipeVersion} = 'site-display-v1'`,
+  ),
+  check(
     'asset_variants_public_watermark',
-    sql`${table.storageScope} != 'PUBLIC' OR ((${table.watermarkProfile} = 'brand-standard-v1' AND ${table.watermarkProfileId} IS NULL AND ${table.watermarkConfigDigest} = 'none' AND ${table.logoDigest} != 'none' AND ${table.watermarkAnchor} IN ('top-left', 'top-right', 'bottom-left', 'bottom-right') AND ${table.watermarkOpacityPercent} IS NULL AND ${table.watermarkScalePercent} IS NULL) OR (${table.watermarkProfile} = 'brand-centered-v2' AND ${table.watermarkProfileId} IS NOT NULL AND ${table.watermarkConfigDigest} != 'none' AND ${table.logoDigest} != 'none' AND ${table.watermarkAnchor} = 'center' AND ${table.watermarkOpacityPercent} BETWEEN 10 AND 90 AND ${table.watermarkScalePercent} BETWEEN 20 AND 90))`,
+    sql`${table.storageScope} != 'PUBLIC' OR ${table.protectionMode} != 'watermark' OR ((${table.watermarkProfile} = 'brand-standard-v1' AND ${table.watermarkProfileId} IS NULL AND ${table.watermarkConfigDigest} = 'none' AND ${table.logoDigest} != 'none' AND ${table.watermarkAnchor} IN ('top-left', 'top-right', 'bottom-left', 'bottom-right') AND ${table.watermarkOpacityPercent} IS NULL AND ${table.watermarkScalePercent} IS NULL) OR (${table.watermarkProfile} = 'brand-centered-v2' AND ${table.watermarkProfileId} IS NOT NULL AND ${table.watermarkConfigDigest} != 'none' AND ${table.logoDigest} != 'none' AND ${table.watermarkAnchor} = 'center' AND ${table.watermarkOpacityPercent} BETWEEN 10 AND 90 AND ${table.watermarkScalePercent} BETWEEN 20 AND 90))`,
   ),
   check(
     'asset_variants_preprocess_private',
-    sql`${table.usage} != 'preprocess' OR (${table.storageScope} = 'PRIVATE' AND ${table.watermarkProfile} = 'none' AND ${table.watermarkProfileId} IS NULL AND ${table.watermarkConfigDigest} = 'none' AND ${table.logoDigest} = 'none' AND ${table.watermarkAnchor} = 'none' AND ${table.watermarkOpacityPercent} IS NULL AND ${table.watermarkScalePercent} IS NULL)`,
+    sql`${table.usage} != 'preprocess' OR (${table.storageScope} = 'PRIVATE' AND ${table.protectionMode} = 'none' AND ${table.watermarkProfile} = 'none' AND ${table.watermarkProfileId} IS NULL AND ${table.watermarkConfigDigest} = 'none' AND ${table.logoDigest} = 'none' AND ${table.watermarkAnchor} = 'none' AND ${table.watermarkOpacityPercent} IS NULL AND ${table.watermarkScalePercent} IS NULL)`,
+  ),
+  check(
+    'asset_variants_private_unprotected',
+    sql`${table.storageScope} != 'PRIVATE' OR ${table.protectionMode} = 'none'`,
   ),
   check(
     'asset_variants_ready_output',

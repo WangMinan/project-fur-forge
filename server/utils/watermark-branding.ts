@@ -19,6 +19,7 @@ import {
 } from './media-recipe'
 import type { PublicMediaUsage } from './media-recipe'
 import { ServiceError } from './service-error'
+import { SITE_DISPLAY_RECIPE_VERSION } from './site-display-recipe'
 import {
   findWatermarkProfile,
   requireSiteBranding,
@@ -166,12 +167,6 @@ function targetUsages(
   if (role === 'studio_photo' || role === 'design_sheet') {
     return workAssetPublicUsages(role, primary, hasPrimaryStudioPhoto)
   }
-  if (role === 'home_hero_landscape') {
-    return ['home-hero-landscape']
-  }
-  if (role === 'home_hero_portrait') {
-    return ['home-hero-portrait']
-  }
   throw new Error('Unsupported public watermark target role.')
 }
 
@@ -197,16 +192,9 @@ function watermarkTargets(sqlite: Database.Database) {
     primary: number
     role: string
   }>
-  const heroRows = sqlite.prepare(`
-    SELECT DISTINCT asset.id AS assetId, asset.role
-    FROM site_hero_slides AS slide
-    JOIN assets AS asset
-      ON asset.id IN (slide.landscape_asset_id, slide.portrait_asset_id)
-    WHERE slide.enabled = 1 AND asset.status = 'READY'
-      AND asset.role IN ('home_hero_landscape', 'home_hero_portrait')
-  `).all() as Array<{ assetId: string, role: string }>
+  // T34-F1：站点展示位使用无水印 site-display-v1，不参与 profile 重建。
   const targets = new Map<string, Set<PublicMediaUsage>>()
-  for (const row of [...workRows, ...heroRows]) {
+  for (const row of workRows) {
     const usages = targets.get(row.assetId) ?? new Set<PublicMediaUsage>()
     targetUsages(
       row.role,
@@ -226,13 +214,16 @@ function impact(sqlite: Database.Database, targets = watermarkTargets(sqlite)) {
     publishedWorkCount: Number(sqlite.prepare(`
       SELECT count(*) FROM works WHERE publication_status = 'published'
     `).pluck().get()),
-    enabledHeroSlideCount: Number(sqlite.prepare(`
-      SELECT count(*) FROM site_hero_slides WHERE enabled = 1
-    `).pluck().get()),
     targetVariantCount: targets.reduce(
       (count, target) => count + publicVariantCountForUsages(target.usages),
       0,
     ),
+    siteDisplayVariantCount: Number(sqlite.prepare(`
+      SELECT count(*) FROM asset_variants
+      WHERE storage_scope = 'PUBLIC' AND status = 'READY'
+        AND protection_mode = 'none'
+        AND recipe_version = '${SITE_DISPLAY_RECIPE_VERSION}'
+    `).pluck().get()),
   }
 }
 
@@ -429,32 +420,22 @@ async function cleanupManifest(
 }
 
 function previewSamples(sqlite: Database.Database) {
-  const work = sqlite.prepare(`
+  const sampleFor = (role: 'design_sheet' | 'studio_photo') => sqlite.prepare(`
     SELECT asset.id AS assetId, asset.private_object_key AS privateObjectKey
     FROM assets AS asset
     LEFT JOIN work_assets AS relation ON relation.asset_id = asset.id
     LEFT JOIN works AS work ON work.id = relation.work_id
-    WHERE asset.role = 'studio_photo' AND asset.status = 'READY'
+    WHERE asset.role = ? AND asset.status = 'READY'
     ORDER BY (work.publication_status = 'published') DESC,
              asset.created_at DESC LIMIT 1
-  `).get() as { assetId: string, privateObjectKey: string } | undefined
-  const sampleFor = (role: string) => sqlite.prepare(`
-    SELECT asset.id AS assetId, asset.private_object_key AS privateObjectKey
-    FROM assets AS asset
-    LEFT JOIN site_hero_slides AS slide
-      ON asset.id IN (slide.landscape_asset_id, slide.portrait_asset_id)
-    WHERE asset.role = ? AND asset.status = 'READY'
-    ORDER BY (slide.enabled = 1) DESC, asset.created_at DESC LIMIT 1
   `).get(role) as { assetId: string, privateObjectKey: string } | undefined
-  const landscape = sampleFor('home_hero_landscape')
-  const portrait = sampleFor('home_hero_portrait')
+  const work = sampleFor('studio_photo')
   if (!work) {
     throw new ServiceError(409, 'CONFLICT', 'Representative preview assets are unavailable.')
   }
   return {
     work,
-    landscape: landscape ?? work,
-    portrait: portrait ?? work,
+    designSheet: sampleFor('design_sheet') ?? work,
   }
 }
 
@@ -480,8 +461,7 @@ async function runPreview(
     const specifications = [
       { kind: 'work-card', assetId: samples.work.assetId, usage: 'work-card', width: 480 },
       { kind: 'detail', assetId: samples.work.assetId, usage: 'detail', width: 960 },
-      { kind: 'home-hero-landscape', assetId: samples.landscape.assetId, usage: 'home-hero-landscape', width: 768 },
-      { kind: 'home-hero-portrait', assetId: samples.portrait.assetId, usage: 'home-hero-portrait', width: 480 },
+      { kind: 'design-sheet', assetId: samples.designSheet.assetId, usage: 'design-sheet', width: 960 },
     ] as const
     updateOperation(sqlite, operationId, 'GENERATING_PUBLIC', now, {
       target: specifications.length,
@@ -597,7 +577,8 @@ async function runRebuild(
       WHERE id = ?
     `).run(
       counts.publishedWorkCount,
-      counts.enabledHeroSlideCount,
+      // 站点 Hero 不再随 profile 重建，受影响轮播项恒为 0。
+      0,
       counts.targetVariantCount,
       now,
       operationId,
@@ -623,6 +604,7 @@ async function runRebuild(
     const oldEntries = (sqlite.prepare(`
       SELECT object_key FROM asset_variants
       WHERE storage_scope = 'PUBLIC'
+        AND protection_mode = 'watermark'
         AND watermark_profile_id IS NOT ?
     `).pluck().all(operation.profileId) as string[]).map(objectKey => ({
       scope: 'PUBLIC' as const,
@@ -734,7 +716,8 @@ async function runRebuild(
     }
     const generatedEntries = (sqlite.prepare(`
       SELECT object_key FROM asset_variants
-      WHERE storage_scope = 'PUBLIC' AND watermark_profile_id = ?
+      WHERE storage_scope = 'PUBLIC' AND protection_mode = 'watermark'
+        AND watermark_profile_id = ?
     `).pluck().all(operation.profileId) as string[]).map(objectKey => ({
       scope: 'PUBLIC' as const,
       objectKey,
@@ -793,7 +776,7 @@ export function startWatermarkProfileApplication(
   const previewed = sqlite.prepare(`
     SELECT 1 FROM watermark_operations
     WHERE operation_type = 'WATERMARK_PREVIEW' AND profile_id = ?
-      AND status = 'DONE' AND verified_variant_count = 4 LIMIT 1
+      AND status = 'DONE' AND verified_variant_count = 3 LIMIT 1
   `).pluck().get(profileId)
   if (!previewed) {
     throw new ServiceError(409, 'CONFLICT', 'A verified watermark preview is required.')

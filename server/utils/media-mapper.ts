@@ -8,6 +8,7 @@ import {
 import type {
   AdminAssetDto,
   AssetStatus,
+  HeroPlacement,
   MediaRole,
   PublicHeroSlideDto,
   PublicSourceSetDto,
@@ -17,6 +18,11 @@ import {
   completePublicHeroVariants,
   HERO_RECIPE,
 } from './hero-publication'
+import {
+  completeSiteDisplayVariants,
+  siteDisplayWidths,
+  SITE_HERO_USAGES,
+} from './site-display-recipe'
 
 export interface AssetRecord {
   id: string
@@ -46,6 +52,7 @@ export interface VariantRecord {
   internalErrorCode: string | null
   logoDigest: string
   mediaRole: MediaRole
+  protectionMode: string
   recipeVersion: string
   sha256: string | null
   usage: string
@@ -58,11 +65,13 @@ export interface VariantRecord {
 }
 
 export interface HeroSlideRecord {
-  activeWatermarkProfileId: string
+  /** 迁移期兼容读取旧水印 Hero 变体时使用；新变体不需要 profile 身份。 */
+  activeWatermarkProfileId: string | null
   id: string
   version: number
   enabled: boolean
   altText: string
+  placement: HeroPlacement
   sortOrder: number
   landscapeVariants: VariantRecord[]
   portraitVariants: VariantRecord[]
@@ -165,32 +174,63 @@ export function toPublicHeroSlideDto(
     throw new Error('Enabled hero slide links to an unpublished work.')
   }
 
-  const landscape = completePublicHeroVariants(
-    'home_hero_landscape',
-    record.landscapeVariants,
-    record.activeWatermarkProfileId,
-  )
-  const portrait = completePublicHeroVariants(
-    'home_hero_portrait',
-    record.portraitVariants,
-    record.activeWatermarkProfileId,
-  )
+  const usages = SITE_HERO_USAGES[record.placement]
+  const unwatermarked = {
+    landscape: completeSiteDisplayVariants(usages.landscape, record.landscapeVariants),
+    portrait: completeSiteDisplayVariants(usages.portrait, record.portraitVariants),
+  }
+  // T34-F1：站点展示位优先命中无水印变体；仅在迁移完成前回退旧水印 Hero。
+  const sources = unwatermarked.landscape && unwatermarked.portrait
+    ? {
+        landscape: toPublicSourceSetDto(
+          unwatermarked.landscape,
+          mediaBaseUrl,
+          siteDisplayWidths(usages.landscape),
+        ),
+        portrait: toPublicSourceSetDto(
+          unwatermarked.portrait,
+          mediaBaseUrl,
+          siteDisplayWidths(usages.portrait),
+        ),
+      }
+    : legacyWatermarkedHeroSources(record, mediaBaseUrl)
 
   return publicHeroSlideDtoSchema.parse({
     alt: toSafePublicAlt(record.altText, '首页代表作品'),
     sortOrder: record.sortOrder,
-    landscape: toPublicSourceSetDto(
-      landscape,
-      mediaBaseUrl,
-      HERO_RECIPE.home_hero_landscape.widths,
-    ),
-    portrait: toPublicSourceSetDto(
-      portrait,
-      mediaBaseUrl,
-      HERO_RECIPE.home_hero_portrait.widths,
-    ),
+    landscape: sources.landscape,
+    portrait: sources.portrait,
     linkedWorkHref: record.linkedWork
       ? `/works/${record.linkedWork.slug}`
       : null,
   })
+}
+
+function legacyWatermarkedHeroSources(
+  record: HeroSlideRecord,
+  mediaBaseUrl: string,
+) {
+  if (!record.activeWatermarkProfileId) {
+    throw new Error('Enabled hero slide has no complete site display variants.')
+  }
+  return {
+    landscape: toPublicSourceSetDto(
+      completePublicHeroVariants(
+        'home_hero_landscape',
+        record.landscapeVariants,
+        record.activeWatermarkProfileId,
+      ),
+      mediaBaseUrl,
+      HERO_RECIPE.home_hero_landscape.widths,
+    ),
+    portrait: toPublicSourceSetDto(
+      completePublicHeroVariants(
+        'home_hero_portrait',
+        record.portraitVariants,
+        record.activeWatermarkProfileId,
+      ),
+      mediaBaseUrl,
+      HERO_RECIPE.home_hero_portrait.widths,
+    ),
+  }
 }

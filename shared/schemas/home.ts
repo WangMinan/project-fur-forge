@@ -8,6 +8,7 @@ import {
 import {
   publicAltSchema,
   publicHeroSlideDtoSchema,
+  publicSourceSetDtoSchema,
 } from './media'
 import { publicationOperationDtoSchema } from './publication'
 import { publicationStatusSchema, slugSchema } from './work'
@@ -66,6 +67,21 @@ export const adminHeroPreviewDtoSchema = z.object({
   portrait: adminHeroPreviewImageDtoSchema,
 }).strict()
 
+export const homeEntryKindSchema = z.enum(['commission', 'adoption'])
+
+/** 首页业务入口大图：独立无水印站点展示派生图，不复用其他页面公开 URL。 */
+export const publicHomeEntryDtoSchema = z.object({
+  kind: homeEntryKindSchema,
+  href: z.enum(['/commission', '/adoptions']),
+  alt: publicAltSchema,
+  sources: publicSourceSetDtoSchema,
+}).strict()
+
+export const publicHomeEntriesDtoSchema = z.object({
+  commission: publicHomeEntryDtoSchema.nullable(),
+  adoption: publicHomeEntryDtoSchema.nullable(),
+}).strict()
+
 export const publicHomeDtoSchema = z.object({
   tagline: homeTaglineSchema,
   contactEmail: contactEmailSchema,
@@ -73,6 +89,10 @@ export const publicHomeDtoSchema = z.object({
   autoRotate: z.boolean(),
   autoRotateIntervalMs: z.number().int().min(6_000).max(300_000),
   slides: z.array(publicHeroSlideDtoSchema).max(5),
+  entries: publicHomeEntriesDtoSchema.default({
+    commission: null,
+    adoption: null,
+  }),
 }).strict()
 
 export const publicCommissionHeroDtoSchema = z.object({

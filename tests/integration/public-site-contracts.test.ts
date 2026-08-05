@@ -435,11 +435,11 @@ describe('T19/T20 public repository contracts', () => {
       INSERT INTO asset_variants (
         id, asset_id, storage_scope, status, object_key, input_sha256,
         media_role, usage, width, height, format, quality, crop_identity,
-        recipe_version, watermark_profile, watermark_config_digest,
-        logo_digest, watermark_anchor, sha256, byte_size,
-        created_at, updated_at
+        recipe_version, protection_mode, watermark_profile,
+        watermark_config_digest, logo_digest, watermark_anchor,
+        sha256, byte_size, created_at, updated_at
       ) VALUES (?, ?, 'PUBLIC', 'READY', ?, ?, 'studio_photo', 'work-card',
-                480, 640, 'jpeg', 86, 'legacy', 'recipe-v1',
+                480, 640, 'jpeg', 86, 'legacy', 'recipe-v1', 'watermark',
                 'brand-standard-v1', 'none', ?, 'top-left', ?, 10, ?, ?)
     `).run(
       randomUUID(),
@@ -771,7 +771,8 @@ describe('T19/T20 public repository contracts', () => {
     )
     expect(failed).toMatchObject({
       status: 'FAILED',
-      failureStage: 'APPLYING_WATERMARK',
+      // T34-F1：Hero 生成无水印站点展示变体，失败阶段不再是水印应用。
+      failureStage: 'GENERATING_PUBLIC',
       failureCode: 'PUBLIC_MEDIA_GENERATION_FAILED',
     })
     expect(getAdminHome(sqlite).slides[0]?.publicationOperation).toMatchObject({
@@ -875,9 +876,11 @@ describe('T19/T20 public repository contracts', () => {
     const publicRead = capturePreparedQueries(() =>
       getPublicHome(sqlite, MEDIA_BASE_URL))
     const projection = publicRead.result
-    expect(publicRead.queries).toHaveLength(5)
+    // T34-F1 增加两个首页业务入口来源查询；T34-F2 的聚合投影会再收敛。
+    expect(publicRead.queries).toHaveLength(7)
+    // 管理端不再查活动水印 profile：站点大图与水印无关。
     const adminRead = capturePreparedQueries(() => getAdminHome(sqlite))
-    expect(adminRead.queries).toHaveLength(6)
+    expect(adminRead.queries).toHaveLength(4)
     expect(projection).toMatchObject({
       tagline: '只让作品说话',
       contactEmail: 'hello@example.test',

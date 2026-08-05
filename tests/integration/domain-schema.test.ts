@@ -117,6 +117,7 @@ function insertVariant(
     inputSha256: string
     logoDigest: string
     outputSha256: string | null
+    protectionMode: string
     recipeVersion: string
     sourceVariantId: string | null
     status: string
@@ -138,7 +139,7 @@ function insertVariant(
     INSERT INTO asset_variants (
       id, asset_id, source_variant_id, storage_scope, status, object_key,
       input_sha256, media_role, usage, width, height, format, quality,
-      crop_identity, recipe_version, watermark_profile,
+      crop_identity, recipe_version, protection_mode, watermark_profile,
       watermark_profile_id, watermark_config_digest,
       watermark_opacity_percent, watermark_scale_percent,
       logo_digest, watermark_anchor, sha256, byte_size,
@@ -146,7 +147,7 @@ function insertVariant(
     ) VALUES (
       @id, @assetId, @sourceVariantId, @storageScope, @status, @key,
       @inputSha256, @role, @usage, @width, @height, @format, 82,
-      @cropIdentity, @recipeVersion, @watermarkProfile,
+      @cropIdentity, @recipeVersion, @protectionMode, @watermarkProfile,
       @watermarkProfileId, @watermarkConfigDigest,
       @watermarkOpacityPercent, @watermarkScalePercent,
       @logoDigest, @watermarkAnchor, @outputSha256, @byteSize,
@@ -166,6 +167,8 @@ function insertVariant(
     height: fields.height ?? 1024,
     format: fields.format ?? 'webp',
     cropIdentity: `crop:${id}`,
+    protectionMode: fields.protectionMode
+      ?? (isPublic ? 'watermark' : 'none'),
     watermarkProfile,
     watermarkProfileId: managedProfile ? TEST_WATERMARK_PROFILE_ID : null,
     watermarkConfigDigest: managedProfile ? activeWatermarkConfigDigest : 'none',
@@ -635,13 +638,13 @@ describe('P0 schema boundary', () => {
       INSERT INTO asset_variants (
         id, asset_id, storage_scope, status, object_key,
         input_sha256, media_role, usage, width, height, format, quality,
-        crop_identity, recipe_version, watermark_profile,
+        crop_identity, recipe_version, protection_mode, watermark_profile,
         logo_digest, watermark_anchor, sha256, byte_size,
         created_at, updated_at
       ) VALUES (
         @id, 'variant-source', @scope, 'READY', @key,
         @input, 'studio_photo', 'work-card', 768, 1024, 'webp', 82,
-        'crop:full', 'recipe-v1', @profile,
+        'crop:full', 'recipe-v1', @protectionMode, @profile,
         @logo, @anchor, @output, 2048, @now, @now
       )
     `)
@@ -650,6 +653,7 @@ describe('P0 schema boundary', () => {
       scope: 'PUBLIC',
       key: 'prod/web/variant-source/recipe-v1/work-card/output.webp',
       input: SHA_A,
+      protectionMode: 'watermark',
       profile: 'brand-standard-v1',
       logo: SHA_B,
       anchor: 'top-left',
@@ -671,6 +675,23 @@ describe('P0 schema boundary', () => {
       logo: 'none',
       anchor: 'none',
     })).toThrow(/asset_variants_public_watermark/)
+    // T34-F1：作品保护展示位不得声明 protection_mode=none。
+    expect(() => insert.run({
+      ...publicIdentity,
+      id: 'variant-work-card-none',
+      key: 'prod/web/variant-source/work-card-none.webp',
+      protectionMode: 'none',
+      profile: 'none',
+      logo: 'none',
+      anchor: 'none',
+    })).toThrow(/asset_variants_public_protection/)
+    // 无水印身份不得携带水印 profile、Logo 或位置。
+    expect(() => insert.run({
+      ...publicIdentity,
+      id: 'variant-none-with-logo',
+      key: 'prod/web/variant-source/none-with-logo.webp',
+      protectionMode: 'none',
+    })).toThrow(/asset_variants_unprotected_identity/)
     expect(() => sqlite.prepare(`
       UPDATE asset_variants SET object_key = 'prod/web/replaced.webp'
       WHERE id = 'variant-public'

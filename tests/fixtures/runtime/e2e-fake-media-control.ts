@@ -12,6 +12,12 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { getDatabase } from '../../../server/utils/database'
 import { generatePublicVariants } from '../../../server/utils/media-recipe'
+import {
+  assetSupportsSiteDisplay,
+  generateSiteDisplayVariants,
+  HOME_ENTRY_USAGES,
+  SITE_HERO_USAGES,
+} from '../../../server/utils/site-display-recipe'
 import { resetRequestRateLimits } from '../../../server/utils/request-rate-limit'
 import { createSyntheticWatermarkPng } from '../../../scripts/oss-preflight-core.mjs'
 import { getE2eFakeMediaStorage } from './e2e-fake-media'
@@ -374,6 +380,25 @@ export default defineEventHandler(async (event) => {
             : undefined,
           now,
         )
+        // T34-F1：常规领养设定图同时预生成首页领养入口无水印变体。
+        if (
+          role === 'design_sheet'
+          && work.purpose === 'adoption'
+          && (work.adoptionMethod ?? 'regular') === 'regular'
+          && assetSupportsSiteDisplay(
+            sqlite,
+            assetId,
+            [HOME_ENTRY_USAGES.adoption],
+          )
+        ) {
+          await generateSiteDisplayVariants(
+            sqlite,
+            fake,
+            assetId,
+            [HOME_ENTRY_USAGES.adoption],
+            now,
+          )
+        }
       }
 
       if (work.designSheet) {
@@ -475,20 +500,31 @@ export default defineEventHandler(async (event) => {
         now,
       )
       if (slide.enabled) {
-        await generatePublicVariants(
+        // T34-F1：站点展示位使用无水印 site-display-v1 变体。
+        const usages = SITE_HERO_USAGES[placement]
+        await generateSiteDisplayVariants(
           sqlite,
           fake,
           landscapeAssetId,
-          ['home-hero-landscape'],
+          [usages.landscape],
           now,
         )
-        await generatePublicVariants(
+        await generateSiteDisplayVariants(
           sqlite,
           fake,
           portraitAssetId,
-          ['home-hero-portrait'],
+          [usages.portrait],
           now,
         )
+        if (placement === 'commission') {
+          await generateSiteDisplayVariants(
+            sqlite,
+            fake,
+            landscapeAssetId,
+            [HOME_ENTRY_USAGES.commission],
+            now,
+          )
+        }
       }
     }
 
