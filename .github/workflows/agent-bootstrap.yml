@@ -25,8 +25,8 @@ jobs:
             --exclude=.output \
             --exclude=test-results \
             --exclude=playwright-report \
-            --exclude=project-fur-forge-source.tgz \
-            -czf project-fur-forge-source.tgz .
+            -czf "$RUNNER_TEMP/project-fur-forge-source.tgz" .
+          cp "$RUNNER_TEMP/project-fur-forge-source.tgz" project-fur-forge-source.tgz
       - uses: actions/upload-artifact@v4
         with:
           name: project-fur-forge-source
