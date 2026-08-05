@@ -40,6 +40,7 @@ const publicVariant: VariantRecord = {
   internalErrorCode: null,
   logoDigest: 'b'.repeat(64),
   mediaRole: 'studio_photo',
+  protectionMode: 'watermark',
   recipeVersion: 'recipe-v1',
   sha256: 'c'.repeat(64),
   usage: 'work-card',
@@ -55,22 +56,36 @@ let variantSequence = 10
 
 function heroVariants(
   role: 'home_hero_landscape' | 'home_hero_portrait',
+  options: { placement?: 'commission' | 'home', siteDisplay?: boolean } = {},
 ) {
   const widths = role === 'home_hero_landscape'
     ? [768, 1280, 1920]
     : [480, 768, 1080]
-  const usage = role === 'home_hero_landscape'
-    ? 'home-hero-landscape'
-    : 'home-hero-portrait'
+  const orientation = role === 'home_hero_landscape' ? 'landscape' : 'portrait'
+  const usage = options.siteDisplay && options.placement === 'commission'
+    ? `commission-hero-${orientation}`
+    : `home-hero-${orientation}`
+  const unwatermarked = {
+    logoDigest: 'none',
+    protectionMode: 'none',
+    recipeVersion: 'site-display-v1',
+    watermarkAnchor: 'none',
+    watermarkConfigDigest: 'none',
+    watermarkOpacityPercent: null,
+    watermarkProfile: 'none',
+    watermarkProfileId: null,
+    watermarkScalePercent: null,
+  } as const
 
   return widths.flatMap(width => (['webp', 'jpeg'] as const).map(format => ({
     ...publicVariant,
+    ...(options.siteDisplay ? unwatermarked : {}),
     format,
     id: `550e8400-e29b-41d4-a716-${String(
       variantSequence++,
     ).padStart(12, '0')}`,
     mediaRole: role,
-    objectKey: `prod/web/asset/${role}/${width}.${format}`,
+    objectKey: `prod/web/asset/${usage}/${width}.${format}`,
     usage,
     width,
     height: role === 'home_hero_landscape'
@@ -127,6 +142,7 @@ describe('media DTO mapping', () => {
       version: 1,
       enabled: true,
       altText: '蓝白犬兽装站在浅色背景前',
+      placement: 'home',
       sortOrder: 0,
       landscapeVariants: heroVariants('home_hero_landscape'),
       portraitVariants: heroVariants('home_hero_portrait'),
@@ -190,5 +206,67 @@ describe('media DTO mapping', () => {
         height: 1,
       })),
     }, 'https://media.example.com')).toThrow(/requires complete WebP/)
+  })
+
+  it('prefers unwatermarked site display variants for home and commission heroes', () => {
+    const base = {
+      activeWatermarkProfileId: publicVariant.watermarkProfileId!,
+      id: '550e8400-e29b-41d4-a716-446655440003',
+      version: 1,
+      enabled: true as const,
+      altText: '蓝白犬兽装站在浅色背景前',
+      sortOrder: 0,
+      linkedWork: null,
+    }
+    const home: HeroSlideRecord = {
+      ...base,
+      placement: 'home',
+      landscapeVariants: [
+        ...heroVariants('home_hero_landscape'),
+        ...heroVariants('home_hero_landscape', { siteDisplay: true }),
+      ],
+      portraitVariants: [
+        ...heroVariants('home_hero_portrait'),
+        ...heroVariants('home_hero_portrait', { siteDisplay: true }),
+      ],
+    }
+    const homeDto = toPublicHeroSlideDto(home, 'https://media.example.com')
+    const homeSources = [
+      ...homeDto!.landscape.webp,
+      ...homeDto!.landscape.fallback,
+      ...homeDto!.portrait.webp,
+      ...homeDto!.portrait.fallback,
+    ]
+    expect(homeSources).toHaveLength(12)
+    expect(homeSources.every(source => source.src.includes('/home-hero-'))).toBe(true)
+
+    const commission: HeroSlideRecord = {
+      ...base,
+      // 委托 Hero 只有独立 commission-hero usage 的无水印变体。
+      activeWatermarkProfileId: null,
+      placement: 'commission',
+      landscapeVariants: heroVariants('home_hero_landscape', {
+        placement: 'commission',
+        siteDisplay: true,
+      }),
+      portraitVariants: heroVariants('home_hero_portrait', {
+        placement: 'commission',
+        siteDisplay: true,
+      }),
+    }
+    const commissionDto = toPublicHeroSlideDto(
+      commission,
+      'https://media.example.com',
+    )
+    expect(commissionDto!.landscape.webp.every(
+      source => source.src.includes('/commission-hero-landscape/'),
+    )).toBe(true)
+    expect(commissionDto!.portrait.webp.every(
+      source => source.src.includes('/commission-hero-portrait/'),
+    )).toBe(true)
+    expect(() => toPublicHeroSlideDto({
+      ...commission,
+      portraitVariants: [],
+    }, 'https://media.example.com')).toThrow(/no complete site display variants/)
   })
 })

@@ -12,19 +12,29 @@ import type {
   AdminHeroSlideDto,
   AdminHomeDto,
   HeroPlacement,
+  HomeEntryKind,
   PublicationFailureStage,
   PublicationOperationDto,
   PublicCommissionHeroDto,
   PublicHomeDto,
 } from '../../shared/types/contracts'
 import {
-  completeHeroVariants,
-  missingHeroVariantCount,
   validateHeroSlidesForPublication,
 } from './hero-publication'
 import type {
   HeroMediaRole,
 } from './hero-publication'
+import {
+  assetSupportsSiteDisplay,
+  generateSiteDisplayVariants,
+  HOME_ENTRY_USAGES,
+  missingSiteDisplayVariantCount,
+  SITE_HERO_USAGES,
+} from './site-display-recipe'
+import {
+  homeEntrySource,
+  projectHomeEntry,
+} from './site-entry'
 import { toPublicHeroSlideDto } from './media-mapper'
 import type {
   HeroSlideRecord,
@@ -32,12 +42,10 @@ import type {
 } from './media-mapper'
 import type { MediaStorage } from './media-storage'
 import {
-  assetSupportsPublicUsages,
   ensureHeroUpscaleSource,
   generatePrivateWatermarkPreview,
-  generatePublicVariants,
-  HERO_UPSCALE_RECIPE_VERSION,
 } from './media-recipe'
+import { HERO_UPSCALE_RECIPE_VERSION } from './media-source'
 import { ServiceError } from './service-error'
 import { activeWatermarkProfileId } from './watermark-branding'
 import {
@@ -197,6 +205,7 @@ const selectHeroVariants = `
       width, height, format, input_sha256 AS inputSha256,
       internal_error_code AS internalErrorCode,
       logo_digest AS logoDigest, media_role AS mediaRole,
+      protection_mode AS protectionMode,
       recipe_version AS recipeVersion, sha256, usage,
       watermark_anchor AS watermarkAnchor,
       watermark_config_digest AS watermarkConfigDigest,
@@ -286,25 +295,26 @@ function assetUpscaleReady(
   ]))
 }
 
+function missingSiteHeroVariants(
+  row: SlideRow,
+  variants: ReadonlyMap<string, readonly HeroVariantRow[]>,
+) {
+  const usages = SITE_HERO_USAGES[row.placement]
+  return missingSiteDisplayVariantCount(
+    usages.landscape,
+    variants.get(row.landscapeAssetId) ?? [],
+  ) + missingSiteDisplayVariantCount(
+    usages.portrait,
+    variants.get(row.portraitAssetId) ?? [],
+  )
+}
+
 function adminSlide(
   row: SlideRow,
-  profileId: string | null,
   variants: ReadonlyMap<string, readonly HeroVariantRow[]>,
   operations: ReadonlyMap<string, PublicationOperationDto>,
 ): AdminHeroSlideDto {
-  const landscapeVariants = variants.get(row.landscapeAssetId) ?? []
-  const portraitVariants = variants.get(row.portraitAssetId) ?? []
-  const missingVariantCount = profileId
-    ? missingHeroVariantCount(
-        'home_hero_landscape',
-        landscapeVariants,
-        profileId,
-      ) + missingHeroVariantCount(
-        'home_hero_portrait',
-        portraitVariants,
-        profileId,
-      )
-    : 12
+  const missingVariantCount = missingSiteHeroVariants(row, variants)
   const publicationOperation = operations.get(`${row.id}:PUBLISH`) ?? null
   return adminHeroSlideDtoSchema.parse({
     id: row.id,
@@ -343,7 +353,6 @@ export function getAdminHome(
   placement: HeroPlacement = 'home',
 ): AdminHomeDto {
   const home = requireHome(sqlite)
-  const profileId = activeWatermarkProfileId(sqlite)
   const currentSlides = slides(sqlite, placement)
   const variants = variantsForAssets(
     sqlite,
@@ -369,7 +378,6 @@ export function getAdminHome(
     autoRotateIntervalMs: home.autoRotateIntervalMs,
     slides: currentSlides.map(slide => adminSlide(
       slide,
-      profileId,
       variants,
       operations,
     )),
@@ -676,6 +684,25 @@ async function clearHeroSlidePreviews(
   }
 }
 
+export function getPublicHomeEntries(
+  sqlite: Database.Database,
+  mediaBaseUrl: string,
+) {
+  const entry = (kind: HomeEntryKind) => {
+    const source = homeEntrySource(sqlite, kind)
+    return projectHomeEntry(
+      kind,
+      source,
+      source ? variantsForAsset(sqlite, source.assetId) : [],
+      mediaBaseUrl,
+    )
+  }
+  return {
+    commission: entry('commission'),
+    adoption: entry('adoption'),
+  }
+}
+
 export function getPublicHome(
   sqlite: Database.Database,
   mediaBaseUrl: string,
@@ -689,6 +716,7 @@ export function getPublicHome(
     autoRotate: home.autoRotate === 1,
     autoRotateIntervalMs: home.autoRotateIntervalMs,
     slides: projected,
+    entries: getPublicHomeEntries(sqlite, mediaBaseUrl),
   })
 }
 
@@ -698,10 +726,8 @@ function publicHeroSlides(
   placement: HeroPlacement,
 ) {
   const enabled = slides(sqlite, placement).filter(slide => slide.enabled === 1)
+  // 迁移期仍可能只有旧水印 Hero 变体，此时 mapper 回退需要 profile 身份。
   const profileId = activeWatermarkProfileId(sqlite)
-  if (enabled.length > 0 && !profileId) {
-    throw new Error('Active watermark profile is unavailable.')
-  }
   const variants = variantsForAssets(
     sqlite,
     enabled.flatMap(slide => [
@@ -711,11 +737,12 @@ function publicHeroSlides(
   )
   const projected = enabled.map((slide) => {
     const record: HeroSlideRecord = {
-      activeWatermarkProfileId: profileId!,
+      activeWatermarkProfileId: profileId,
       id: slide.id,
       version: slide.version,
       enabled: true,
       altText: slide.alt,
+      placement,
       sortOrder: slide.sortOrder,
       landscapeVariants: variants.get(slide.landscapeAssetId) ?? [],
       portraitVariants: variants.get(slide.portraitAssetId) ?? [],
@@ -1092,24 +1119,14 @@ function assertSlideCanEnable(
     landscapeAssetId: slide.landscapeAssetId,
     portraitAssetId: slide.portraitAssetId,
   }, slide.id)
+  const usages = SITE_HERO_USAGES[placement]
   if (
-    !assetSupportsPublicUsages(
-      sqlite,
-      slide.landscapeAssetId,
-      ['home-hero-landscape'],
-    )
-    || !assetSupportsPublicUsages(
-      sqlite,
-      slide.portraitAssetId,
-      ['home-hero-portrait'],
-    )
+    !assetSupportsSiteDisplay(sqlite, slide.landscapeAssetId, [usages.landscape])
+    || !assetSupportsSiteDisplay(sqlite, slide.portraitAssetId, [usages.portrait])
   ) {
     throw new ServiceError(409, 'CONFLICT', 'Hero assets require confirmed upscale.')
   }
   assertLinkedWork(sqlite, slide.linkedWorkId)
-  if (!activeWatermarkProfileId(sqlite)) {
-    throw new ServiceError(409, 'CONFLICT', 'Active watermark profile is unavailable.')
-  }
 }
 
 function homeOperation(sqlite: Database.Database, id: string) {
@@ -1223,20 +1240,13 @@ function assertCompleteHeroPair(
   sqlite: Database.Database,
   slide: SlideRow,
 ) {
-  const profileId = activeWatermarkProfileId(sqlite)
-  if (!profileId) {
-    throw new Error('Active watermark profile is unavailable.')
+  const missing = missingSiteHeroVariants(slide, variantsForAssets(sqlite, [
+    slide.landscapeAssetId,
+    slide.portraitAssetId,
+  ]))
+  if (missing !== 0) {
+    throw new Error('Hero slide requires complete site display variants.')
   }
-  completeHeroVariants(
-    'home_hero_landscape',
-    variantsForAsset(sqlite, slide.landscapeAssetId),
-    profileId,
-  )
-  completeHeroVariants(
-    'home_hero_portrait',
-    variantsForAsset(sqlite, slide.portraitAssetId),
-    profileId,
-  )
 }
 
 export async function runHeroSlidePublication(
@@ -1257,23 +1267,34 @@ export async function runHeroSlidePublication(
   try {
     requireHomeVersion(sqlite, operation.requestedVersion)
     assertSlideCanEnable(sqlite, slide, slide.placement)
-    stage = 'APPLYING_WATERMARK'
+    // T34-F1：站点展示位生成无水印变体，不再套用活动水印 profile。
+    stage = 'GENERATING_PUBLIC'
     code = 'PUBLIC_MEDIA_GENERATION_FAILED'
-    setOperationStatus(sqlite, operationId, 'APPLYING_WATERMARK', now)
-    await generatePublicVariants(
+    setOperationStatus(sqlite, operationId, 'GENERATING_PUBLIC', now)
+    const usages = SITE_HERO_USAGES[slide.placement]
+    await generateSiteDisplayVariants(
       sqlite,
       storage,
       slide.landscapeAssetId,
-      ['home-hero-landscape'],
+      [usages.landscape],
       now,
     )
-    await generatePublicVariants(
+    await generateSiteDisplayVariants(
       sqlite,
       storage,
       slide.portraitAssetId,
-      ['home-hero-portrait'],
+      [usages.portrait],
       now,
     )
+    if (slide.placement === 'commission') {
+      await generateSiteDisplayVariants(
+        sqlite,
+        storage,
+        slide.landscapeAssetId,
+        [HOME_ENTRY_USAGES.commission],
+        now,
+      )
+    }
     stage = 'VERIFYING_PUBLIC'
     code = 'PUBLIC_MEDIA_VERIFICATION_FAILED'
     setOperationStatus(sqlite, operationId, 'VERIFYING_PUBLIC', now)

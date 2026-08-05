@@ -27,8 +27,7 @@ const emit = defineEmits<{
 const PREVIEW_ORDER: WatermarkPreviewKind[] = [
   'work-card',
   'detail',
-  'home-hero-landscape',
-  'home-hero-portrait',
+  'design-sheet',
 ]
 
 const previewOperation = computed(() => {

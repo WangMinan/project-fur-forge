@@ -4,6 +4,10 @@ import {
   LEGACY_PUBLIC_RECIPE_VERSION,
   PUBLIC_RECIPE_VERSION,
 } from './media-recipe'
+import {
+  missingSiteDisplayVariantCount,
+  SITE_HERO_USAGES,
+} from './site-display-recipe'
 
 export type HeroMediaRole =
   | 'home_hero_landscape'
@@ -14,6 +18,7 @@ export interface HeroVariantCandidate {
   format: 'webp' | 'jpeg' | 'png'
   logoDigest: string
   mediaRole: string
+  protectionMode: string
   recipeVersion: string
   sha256: string | null
   status: string
@@ -152,12 +157,10 @@ export function validateHeroSlidesForPublication(
   sqlite: Database.Database,
   placement: HeroPlacement = 'home',
 ) {
+  // T34-F1：站点展示位不再依赖活动水印 profile；旧水印 Hero 仅作迁移期兼容。
   const activeProfileId = sqlite.prepare(`
     SELECT active_watermark_profile_id FROM site_branding WHERE id = 'site'
   `).pluck().get() as string | null | undefined
-  if (!activeProfileId) {
-    throw new Error('An active watermark profile is required.')
-  }
   const rows = sqlite.prepare(`
     SELECT
       slide.id,
@@ -205,6 +208,7 @@ export function validateHeroSlidesForPublication(
       height,
       format,
       recipe_version AS recipeVersion,
+      protection_mode AS protectionMode,
       watermark_profile AS watermarkProfile,
       watermark_profile_id AS watermarkProfileId,
       watermark_config_digest AS watermarkConfigDigest,
@@ -235,22 +239,38 @@ export function validateHeroSlidesForPublication(
       )
     }
 
-    try {
-      completeHeroVariants(
-        'home_hero_landscape',
-        selectVariants.all(row.landscapeAssetId) as HeroVariantCandidate[],
-        activeProfileId,
-      )
-      completeHeroVariants(
-        'home_hero_portrait',
-        selectVariants.all(row.portraitAssetId) as HeroVariantCandidate[],
-        activeProfileId,
-      )
-    }
-    catch {
-      throw new Error(
-        `Hero slide ${row.id} does not have a complete public recipe.`,
-      )
+    const usages = SITE_HERO_USAGES[placement]
+    const landscapeVariants = selectVariants.all(
+      row.landscapeAssetId,
+    ) as HeroVariantCandidate[]
+    const portraitVariants = selectVariants.all(
+      row.portraitAssetId,
+    ) as HeroVariantCandidate[]
+    const siteDisplayComplete = (
+      missingSiteDisplayVariantCount(usages.landscape, landscapeVariants) === 0
+      && missingSiteDisplayVariantCount(usages.portrait, portraitVariants) === 0
+    )
+    if (!siteDisplayComplete) {
+      try {
+        if (!activeProfileId) {
+          throw new Error('An active watermark profile is required.')
+        }
+        completeHeroVariants(
+          'home_hero_landscape',
+          landscapeVariants,
+          activeProfileId,
+        )
+        completeHeroVariants(
+          'home_hero_portrait',
+          portraitVariants,
+          activeProfileId,
+        )
+      }
+      catch {
+        throw new Error(
+          `Hero slide ${row.id} does not have a complete public recipe.`,
+        )
+      }
     }
   }
 

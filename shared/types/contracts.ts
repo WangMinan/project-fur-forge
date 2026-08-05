@@ -13,8 +13,11 @@ import type {
   adminHeroSlideDtoSchema,
   adminHomeDtoSchema,
   heroPlacementSchema,
+  homeEntryKindSchema,
   publicCommissionHeroDtoSchema,
   publicHomeDtoSchema,
+  publicHomeEntriesDtoSchema,
+  publicHomeEntryDtoSchema,
 } from '../schemas/home'
 import type {
   publicAdoptionListDtoSchema,
@@ -112,6 +115,9 @@ export type PublicCommissionHeroDto = z.infer<
   typeof publicCommissionHeroDtoSchema
 >
 export type PublicHomeDto = z.infer<typeof publicHomeDtoSchema>
+export type HomeEntryKind = z.infer<typeof homeEntryKindSchema>
+export type PublicHomeEntryDto = z.infer<typeof publicHomeEntryDtoSchema>
+export type PublicHomeEntriesDto = z.infer<typeof publicHomeEntriesDtoSchema>
 export type SiteBusinessStatusKind = z.infer<
   typeof siteBusinessStatusKindSchema
 >

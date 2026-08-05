@@ -523,19 +523,40 @@ describe('dual-bucket work publication operations', () => {
       NOW + 3_000,
     )
     expect(published.work.publicationStatus).toBe('published')
-    expect(storage.processCalls).toHaveLength(12)
+    // 12 张作品水印图 + 6 张首页领养入口无水印图。
+    expect(storage.processCalls).toHaveLength(18)
     const variants = sqlite.prepare(`
-      SELECT usage, watermark_profile AS watermarkProfile
+      SELECT usage, protection_mode AS protectionMode,
+             recipe_version AS recipeVersion,
+             watermark_profile AS watermarkProfile
       FROM asset_variants
       WHERE asset_id = ? AND storage_scope = 'PUBLIC'
     `).all(DESIGN_ASSET_ID) as Array<{
+      protectionMode: string
+      recipeVersion: string
       usage: string
       watermarkProfile: string
     }>
     expect(new Set(variants.map(variant => variant.usage)))
-      .toEqual(new Set(['design-sheet', 'work-card']))
-    expect(variants.every(variant => (
+      .toEqual(new Set(['design-sheet', 'work-card', 'home-entry-adoption']))
+    const protected_ = variants.filter(
+      variant => variant.usage !== 'home-entry-adoption',
+    )
+    expect(protected_).toHaveLength(12)
+    expect(protected_.every(variant => (
       variant.watermarkProfile === 'brand-centered-v2'
+      && variant.protectionMode === 'watermark'
+      && variant.recipeVersion === 'recipe-v2'
+    ))).toBe(true)
+    // T34-F1：首页领养入口是独立无水印用途，不复用领养设定图公开 URL。
+    const entries = variants.filter(
+      variant => variant.usage === 'home-entry-adoption',
+    )
+    expect(entries).toHaveLength(6)
+    expect(entries.every(variant => (
+      variant.protectionMode === 'none'
+      && variant.watermarkProfile === 'none'
+      && variant.recipeVersion === 'site-display-v1'
     ))).toBe(true)
   })
 

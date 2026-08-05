@@ -64,13 +64,11 @@ export function formatWatermarkDateTime(iso: string) {
 export const WATERMARK_PREVIEW_KIND_LABELS: Record<WatermarkPreviewKind, string> = {
   'work-card': '作品卡片',
   'detail': '作品详情',
-  'home-hero-landscape': '首页横屏',
-  'home-hero-portrait': '首页竖屏',
+  'design-sheet': '领养设定图',
 }
 
 export const WATERMARK_PREVIEW_ASPECT_LABELS: Record<WatermarkPreviewKind, string> = {
   'work-card': '3:4',
   'detail': '原比例',
-  'home-hero-landscape': '16:9',
-  'home-hero-portrait': '9:16',
+  'design-sheet': '原比例',
 }

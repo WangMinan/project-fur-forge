@@ -8,6 +8,25 @@ import { WATERMARK_PROFILE_NAME } from '../../shared/schemas/watermark'
 import type {
   MediaRole,
 } from '../../shared/types/contracts'
+import {
+  contentTypeForFormat,
+  deterministicUuid,
+  digest,
+  environmentPrefix,
+  gravity,
+  HERO_UPSCALE_RECIPE_VERSION,
+  heroUpscaleTarget,
+  normalizedFormat,
+  OSS_PROCESS_INPUT_BYTE_LIMIT,
+  processingSource,
+  readyAssetSource,
+  urlSafeBase64,
+} from './media-source'
+import type {
+  AssetSource,
+  ProcessingSource,
+  PublicFormat,
+} from './media-source'
 import type { MediaStorage } from './media-storage'
 import { safeLog } from './safe-log'
 import { ServiceError } from './service-error'
@@ -23,7 +42,6 @@ import type {
 
 export const PUBLIC_RECIPE_VERSION = 'recipe-v2'
 export const LEGACY_PUBLIC_RECIPE_VERSION = 'recipe-v1'
-export const HERO_UPSCALE_RECIPE_VERSION = 'hero-upscale-lanczos-v1'
 const WATERMARK_SIZE_MULTIPLIER = 1.6
 const HERO_LANDSCAPE_WATERMARK_REFERENCE_WIDTH = 960
 const HERO_PORTRAIT_WATERMARK_REFERENCE_WIDTH = 480
@@ -38,39 +56,11 @@ export type PublicMediaUsage =
   | 'design-sheet'
   | 'detail'
 
-type PublicFormat = 'webp' | 'jpeg' | 'png'
-
 export interface PublicRecipeSourceGeometry {
   cropHeight?: number
   cropWidth?: number
   height: number
   role?: MediaRole
-  width: number
-}
-
-interface AssetSource {
-  byteSize: number
-  cropHeight: number
-  cropWidth: number
-  cropX: number
-  cropY: number
-  focalX: number
-  focalY: number
-  id: string
-  mimeType: 'image/jpeg' | 'image/png' | 'image/webp'
-  privateObjectKey: string
-  role: MediaRole
-  sha256: string
-  status: string
-  width: number
-  height: number
-}
-
-interface ProcessingSource {
-  height: number
-  inputSha256: string
-  objectKey: string
-  sourceVariantId: string | null
   width: number
 }
 
@@ -84,6 +74,7 @@ export interface ReadyPublicVariant {
   logoDigest: string
   mediaRole: MediaRole
   objectKey: string
+  protectionMode: 'watermark'
   recipeVersion: typeof PUBLIC_RECIPE_VERSION
   sha256: string
   sourceVariantId: string | null
@@ -138,7 +129,8 @@ const selectReadyVariant = `
     id, asset_id AS assetId, source_variant_id AS sourceVariantId,
     object_key AS objectKey, input_sha256 AS inputSha256,
     media_role AS mediaRole, usage, width, height, format,
-    recipe_version AS recipeVersion, watermark_profile AS watermarkProfile,
+    recipe_version AS recipeVersion, protection_mode AS protectionMode,
+    watermark_profile AS watermarkProfile,
     watermark_profile_id AS watermarkProfileId,
     watermark_config_digest AS watermarkConfigDigest,
     logo_digest AS logoDigest, watermark_anchor AS watermarkAnchor,
@@ -147,128 +139,10 @@ const selectReadyVariant = `
     sha256, byte_size AS byteSize
   FROM asset_variants
   WHERE storage_scope = 'PUBLIC' AND status = 'READY'
+    AND protection_mode = 'watermark'
 `
 
-function digest(algorithm: 'md5' | 'sha256', content: Buffer) {
-  return createHash(algorithm).update(content).digest('hex')
-}
-
-function asset(sqlite: Database.Database, assetId: string) {
-  const row = sqlite.prepare(`
-    SELECT
-      asset.id, asset.role, asset.status,
-      asset.private_object_key AS privateObjectKey,
-      asset.sha256, asset.byte_size AS byteSize, asset.mime_type AS mimeType,
-      asset.width, asset.height,
-      COALESCE(relation.focal_x, asset.focal_x) AS focalX,
-      COALESCE(relation.focal_y, asset.focal_y) AS focalY,
-      COALESCE(relation.crop_x, 0) AS cropX,
-      COALESCE(relation.crop_y, 0) AS cropY,
-      COALESCE(relation.crop_width, 1) AS cropWidth,
-      COALESCE(relation.crop_height, 1) AS cropHeight
-    FROM assets AS asset
-    LEFT JOIN work_assets AS relation ON relation.asset_id = asset.id
-    WHERE asset.id = ?
-  `).get(assetId) as AssetSource | undefined
-  if (!row) {
-    throw new ServiceError(404, 'NOT_FOUND', 'Asset was not found.')
-  }
-  if (row.status !== 'READY') {
-    throw new ServiceError(409, 'CONFLICT', 'Asset is not ready for public media.')
-  }
-  return row
-}
-
-function processingSource(
-  sqlite: Database.Database,
-  sourceAsset: AssetSource,
-): ProcessingSource {
-  const target = heroUpscaleTarget(sourceAsset.role)
-  if (target) {
-    const upscaled = sqlite.prepare(`
-      SELECT id, object_key AS objectKey, sha256, width, height
-      FROM asset_variants
-      WHERE asset_id = ? AND storage_scope = 'PRIVATE'
-        AND status = 'READY' AND usage = 'preprocess'
-        AND recipe_version = ? AND input_sha256 = ?
-        AND byte_size <= 20000000 AND width = ? AND height = ?
-      ORDER BY created_at DESC LIMIT 1
-    `).get(
-      sourceAsset.id,
-      HERO_UPSCALE_RECIPE_VERSION,
-      sourceAsset.sha256,
-      target.width,
-      target.height,
-    ) as {
-      height: number
-      id: string
-      objectKey: string
-      sha256: string
-      width: number
-    } | undefined
-    if (upscaled) {
-      return {
-        height: upscaled.height,
-        inputSha256: upscaled.sha256,
-        objectKey: upscaled.objectKey,
-        sourceVariantId: upscaled.id,
-        width: upscaled.width,
-      }
-    }
-  }
-  if (sourceAsset.byteSize <= 20_000_000) {
-    return {
-      height: sourceAsset.height,
-      inputSha256: sourceAsset.sha256,
-      objectKey: sourceAsset.privateObjectKey,
-      sourceVariantId: null,
-      width: sourceAsset.width,
-    }
-  }
-  const row = sqlite.prepare(`
-    SELECT id, object_key AS objectKey, sha256, width, height
-    FROM asset_variants
-    WHERE asset_id = ? AND storage_scope = 'PRIVATE'
-      AND status = 'READY' AND usage = 'preprocess'
-      AND input_sha256 = ? AND byte_size <= 20000000
-      AND width <= 4096 AND height <= 4096
-    ORDER BY created_at DESC LIMIT 1
-  `).get(sourceAsset.id, sourceAsset.sha256) as {
-    height: number
-    id: string
-    objectKey: string
-    sha256: string
-    width: number
-  } | undefined
-  if (!row) {
-    throw new ServiceError(409, 'CONFLICT', 'Asset has no ready private processing source.')
-  }
-  return {
-    height: row.height,
-    inputSha256: row.sha256,
-    objectKey: row.objectKey,
-    sourceVariantId: row.id,
-    width: row.width,
-  }
-}
-
-function environmentPrefix(privateObjectKey: string) {
-  const marker = privateObjectKey.indexOf('/original/')
-  if (marker < 1) {
-    throw new Error('Original object key has no environment prefix.')
-  }
-  return privateObjectKey.slice(0, marker)
-}
-
-function heroUpscaleTarget(role: MediaRole) {
-  if (role === 'home_hero_landscape') {
-    return { height: 1080, orientation: 'landscape' as const, width: 1920 }
-  }
-  if (role === 'home_hero_portrait') {
-    return { height: 1920, orientation: 'portrait' as const, width: 1080 }
-  }
-  return null
-}
+const asset = readyAssetSource
 
 export async function ensureHeroUpscaleSource(
   sqlite: Database.Database,
@@ -323,7 +197,7 @@ export async function ensureHeroUpscaleSource(
     if (
       head.byteSize !== output.content.length
       || head.byteSize !== saved.length
-      || head.byteSize > 20_000_000
+      || head.byteSize > OSS_PROCESS_INPUT_BYTE_LIMIT
       || head.contentType !== 'image/png'
       || head.etagMd5Hex !== digest('md5', saved)
       || head.sha256Metadata !== outputSha256
@@ -339,10 +213,10 @@ export async function ensureHeroUpscaleSource(
       INSERT OR IGNORE INTO asset_variants (
         id, asset_id, storage_scope, status, object_key, input_sha256,
         media_role, usage, width, height, format, quality, crop_identity,
-        recipe_version, watermark_profile, logo_digest, watermark_anchor,
-        sha256, byte_size, created_at, updated_at
+        recipe_version, protection_mode, watermark_profile, logo_digest,
+        watermark_anchor, sha256, byte_size, created_at, updated_at
       ) VALUES (?, ?, 'PRIVATE', 'READY', ?, ?, ?, 'preprocess', ?, ?,
-                'png', 100, ?, ?, 'none', 'none', 'none', ?, ?, ?, ?)
+                'png', 100, ?, ?, 'none', 'none', 'none', 'none', ?, ?, ?, ?)
     `).run(
       randomUUID(),
       sourceAsset.id,
@@ -412,16 +286,6 @@ export function workAssetPublicUsages(
   return hasPrimaryStudioPhoto
     ? ['design-sheet']
     : ['design-sheet', 'work-card']
-}
-
-function gravity(focalX: number, focalY: number) {
-  const horizontal = focalX < 1 / 3 ? 'w' : focalX > 2 / 3 ? 'e' : ''
-  const vertical = focalY < 1 / 3 ? 'n' : focalY > 2 / 3 ? 's' : ''
-  return `${vertical}${horizontal}` || 'center'
-}
-
-export function urlSafeBase64(value: string) {
-  return Buffer.from(value, 'utf8').toString('base64url')
 }
 
 function outputHeight(usage: PublicMediaUsage, width: number) {
@@ -558,20 +422,6 @@ function watermarkSizingReferenceWidth(usage: PublicMediaUsage) {
   return null
 }
 
-function deterministicUuid(hash: string) {
-  const bytes = Buffer.from(hash.slice(0, 32), 'hex')
-  bytes[6] = (bytes[6]! & 0x0f) | 0x50
-  bytes[8] = (bytes[8]! & 0x3f) | 0x80
-  const value = bytes.toString('hex')
-  return [
-    value.slice(0, 8),
-    value.slice(8, 12),
-    value.slice(12, 16),
-    value.slice(16, 20),
-    value.slice(20),
-  ].join('-')
-}
-
 function publicObjectKey(
   sourceAsset: AssetSource,
   usage: PublicMediaUsage,
@@ -614,17 +464,7 @@ export function buildWatermarkProcess(
   ].join('/')
 }
 
-function normalizedFormat(format: string): PublicFormat | null {
-  const value = format.toLowerCase()
-  if (value === 'jpg' || value === 'jpeg') {
-    return 'jpeg'
-  }
-  return value === 'webp' || value === 'png' ? value : null
-}
-
-function contentType(format: PublicFormat) {
-  return format === 'jpeg' ? 'image/jpeg' : `image/${format}`
-}
+const contentType = contentTypeForFormat
 
 function existingVariant(
   sqlite: Database.Database,
@@ -743,12 +583,12 @@ async function generateOne(
           INSERT INTO asset_variants (
           id, asset_id, source_variant_id, storage_scope, status,
           object_key, input_sha256, media_role, usage, width, height,
-          format, quality, crop_identity, recipe_version,
+          format, quality, crop_identity, recipe_version, protection_mode,
           watermark_profile, watermark_profile_id,
           watermark_config_digest, logo_digest, watermark_anchor,
           watermark_opacity_percent, watermark_scale_percent,
           sha256, byte_size, created_at, updated_at
-          ) VALUES (?, ?, ?, 'PUBLIC', 'READY', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, 'PUBLIC', 'READY', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'watermark', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).run(
           id,
           sourceAsset.id,

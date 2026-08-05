@@ -103,12 +103,12 @@ function onConfirmApply() {
         <dd>{{ branding.impact.publishedWorkCount }} 件</dd>
       </div>
       <div class="branding-apply__fact">
-        <dt>受影响首页轮播项</dt>
-        <dd>{{ branding.impact.enabledHeroSlideCount }} 项</dd>
+        <dt>需要重做的作品保护图</dt>
+        <dd>{{ branding.impact.targetVariantCount }} 张</dd>
       </div>
       <div class="branding-apply__fact">
-        <dt>目标公开图总数</dt>
-        <dd>{{ branding.impact.targetVariantCount }} 张</dd>
+        <dt>不受影响的站点无水印图</dt>
+        <dd>{{ branding.impact.siteDisplayVariantCount }} 张</dd>
       </div>
       <div class="branding-apply__fact">
         <dt>当前公开配置</dt>
@@ -121,8 +121,9 @@ function onConfirmApply() {
     </dl>
 
     <p class="branding-apply__note">
-      切换完成前，旧公开图保持可用；切换完成后，旧公开图进入清理。
-      生成或核验失败时，当前公开站仍使用原配置。
+      水印只用在作品图片上：作品列表、作品详情、领养列表和设定图。
+      首页和委托页的大图始终不打水印，换水印不会改变它们。
+      切换完成前旧作品图保持可用；生成或核验失败时，公开站仍使用原配置。
     </p>
 
     <div class="branding-apply__actions">
@@ -206,12 +207,14 @@ function onConfirmApply() {
       @cancel="confirmOpen = false"
     >
       <p>
-        将为 {{ branding.impact.publishedWorkCount }} 件已发布作品、
-        {{ branding.impact.enabledHeroSlideCount }} 项首页轮播重新生成
-        {{ branding.impact.targetVariantCount }} 张公开图，核验通过后原子切换为：
+        将为 {{ branding.impact.publishedWorkCount }} 件已发布作品重新生成
+        {{ branding.impact.targetVariantCount }} 张作品保护图，核验通过后原子切换为：
       </p>
       <p><strong>{{ profileSummary(branding.draftProfile) }}</strong></p>
-      <p>切换前旧公开图保持可用；切换完成后旧公开图进入清理。</p>
+      <p>
+        首页与委托页大图不打水印，这次切换不会改动它们；
+        切换前旧作品图保持可用，切换完成后旧作品图进入清理。
+      </p>
     </AdminConfirmDialog>
   </section>
 </template>

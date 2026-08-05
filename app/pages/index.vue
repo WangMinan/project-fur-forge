@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { PROJECT_NAME } from '~~/shared/constants/project'
-import {
-  publicCommissionHeroResponseSchema,
-  publicHomeResponseSchema,
-} from '~~/shared/schemas/home'
+import { publicHomeResponseSchema } from '~~/shared/schemas/home'
 import { publicAdoptionListResponseSchema } from '~~/shared/schemas/public-content'
 import { publicSiteContentResponseSchema } from '~~/shared/schemas/site-content'
 
@@ -24,15 +21,6 @@ if (homeError.value) {
   throw createError({ statusCode: 500, statusMessage: '首页暂时无法显示' })
 }
 
-const { data: commissionHero, error: commissionHeroError } = await useFetch(
-  '/api/public/v1/commission-hero',
-  {
-    key: 'public-home-commission-hero',
-    headers: useRequestHeaders(['host']),
-    transform: raw => publicCommissionHeroResponseSchema.parse(raw).data,
-  },
-)
-
 const { data: site, error: siteError } = await useFetch('/api/public/v1/site-content', {
   key: 'public-home-site-content',
   headers: useRequestHeaders(['host']),
@@ -45,7 +33,7 @@ const { data: adoptions, error: adoptionsError } = await useFetch('/api/public/v
   transform: raw => publicAdoptionListResponseSchema.parse(raw).data,
 })
 
-if (commissionHeroError.value || siteError.value || adoptionsError.value) {
+if (siteError.value || adoptionsError.value) {
   throw createError({ statusCode: 500, statusMessage: '首页暂时无法显示' })
 }
 
@@ -58,9 +46,9 @@ if (commissionHeroError.value || siteError.value || adoptionsError.value) {
     <FeaturedWorks />
 
     <HomeContinuation
-      v-if="site"
+      v-if="site && home"
       :adoptions="adoptions?.items ?? []"
-      :commission-slide="commissionHero?.slide ?? null"
+      :entries="home.entries"
       :statuses="site.statuses"
     />
   </div>

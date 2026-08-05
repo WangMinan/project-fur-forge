@@ -19,7 +19,13 @@ import {
   workAssetPublicUsages,
 } from './media-recipe'
 import type { PublicMediaUsage } from './media-recipe'
+import { safeLog } from './safe-log'
 import { ServiceError } from './service-error'
+import {
+  assetSupportsSiteDisplay,
+  generateSiteDisplayVariants,
+  HOME_ENTRY_USAGES,
+} from './site-display-recipe'
 import { activeWatermarkProfileId } from './watermark-branding'
 import { requireWatermarkProfile } from './watermark-profile'
 
@@ -549,6 +555,52 @@ async function cleanOperationKeys(
   return requireOperation(sqlite, operationId)
 }
 
+/**
+ * 常规领养设定图同时预生成首页领养入口的无水印变体。
+ * 入口是站点展示位，缺失时首页受控隐藏，因此不阻塞作品发布。
+ */
+async function generateAdoptionEntryVariants(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  work: WorkState,
+  targets: readonly PublicationTarget[],
+  now: number,
+) {
+  if (work.purpose !== 'adoption' || work.adoptionMethod !== 'regular') {
+    return
+  }
+  for (const target of targets) {
+    if (target.asset.role !== 'design_sheet') {
+      continue
+    }
+    if (!assetSupportsSiteDisplay(
+      sqlite,
+      target.asset.assetId,
+      [HOME_ENTRY_USAGES.adoption],
+    )) {
+      safeLog('warn', 'Adoption entry source is too small for site display.', {
+        assetId: target.asset.assetId,
+      })
+      continue
+    }
+    try {
+      await generateSiteDisplayVariants(
+        sqlite,
+        storage,
+        target.asset.assetId,
+        [HOME_ENTRY_USAGES.adoption],
+        now,
+      )
+    }
+    catch (error) {
+      safeLog('error', 'Adoption entry variant generation failed.', {
+        assetId: target.asset.assetId,
+        errorCode: (error as { code?: unknown }).code,
+      })
+    }
+  }
+}
+
 function repeatedOperation(
   sqlite: Database.Database,
   workId: string,
@@ -609,7 +661,8 @@ export async function publishWork(
     stage = 'APPLYING_WATERMARK'
     failureCode = 'PUBLIC_MEDIA_GENERATION_FAILED'
     updateOperation(sqlite, operation.id, 'APPLYING_WATERMARK', [], now)
-    for (const target of publicationTargets(sqlite, workId)) {
+    const targets = publicationTargets(sqlite, workId)
+    for (const target of targets) {
       try {
         await generatePublicVariants(
           sqlite,
@@ -632,6 +685,7 @@ export async function publishWork(
         )
       }
     }
+    await generateAdoptionEntryVariants(sqlite, storage, work, targets, now)
     const generatedKeys = newlyCreatedKeys(sqlite, workId, before)
     stage = 'VERIFYING_PUBLIC'
     failureCode = 'PUBLIC_MEDIA_VERIFICATION_FAILED'
