@@ -1,0 +1,123 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'fix/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: corepack enable && corepack prepare pnpm@11.18.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm test:integration
+      - run: pnpm build
+      - run: pnpm verify:production
+
+  core-browser:
+    runs-on: ubuntu-24.04
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: corepack enable && corepack prepare pnpm@11.18.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Run P0 browser paths
+        run: pnpm test:e2e -- tests/e2e/public-home.spec.ts tests/e2e/public-works.spec.ts tests/e2e/admin-home.spec.ts tests/e2e/t26-t27-visual-follow-up.spec.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: core-browser-results
+          path: |
+            test-results
+            playwright-report
+          if-no-files-found: ignore
+          retention-days: 7
+
+  container-smoke:
+    runs-on: ubuntu-24.04
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build complete Node 24 image
+        run: docker build -t project-fur-forge:ci .
+      - name: Prepare isolated production configuration
+        run: |
+          cat > .env.ci <<'ENV'
+          APP_ENV=production
+          PUBLIC_HOST=public.example.test
+          ADMIN_HOST=admin.example.test
+          PUBLIC_BASE_URL=https://public.example.test
+          ADMIN_BASE_URL=https://admin.example.test
+          MEDIA_BASE_URL=https://media.example.test
+          OSS_UPLOAD_BASE_URL=https://upload.example.test
+          DATABASE_FILE=/app/data/studio.db
+          TRUST_PROXY=true
+          SESSION_SECRET=ci-only-random-session-secret-0123456789abcdef
+          OSS_REGION=oss-cn-hangzhou
+          OSS_PRIVATE_BUCKET=ci-private-bucket
+          OSS_PUBLIC_BUCKET=ci-public-bucket
+          OSS_ENDPOINT=https://oss-cn-hangzhou.aliyuncs.com
+          OSS_ACCESS_KEY_ID=ci-access-key
+          OSS_ACCESS_KEY_SECRET=ci-access-secret
+          SMTP_HOST=
+          SMTP_PORT=
+          SMTP_SECURE=
+          SMTP_USER=
+          SMTP_PASSWORD=
+          ENV
+      - name: Empty-volume migrate and readiness smoke
+        env:
+          FUR_FORGE_ENV_FILE: .env.ci
+          FUR_FORGE_IMAGE: project-fur-forge:ci
+        run: |
+          docker compose up -d --wait
+          curl -fsS -H 'Host: public.example.test' http://127.0.0.1:8080/api/health/ready
+          curl -fsS -H 'Host: public.example.test' http://127.0.0.1:8080/ >/dev/null
+          curl -fsS -H 'Host: admin.example.test' http://127.0.0.1:8080/admin/login >/dev/null
+          test "$(curl -sS -o /dev/null -w '%{http_code}' -H 'Host: unknown.example.test' http://127.0.0.1:8080/)" = 421
+          docker compose run --rm -e ADMIN_USERNAME=ci-admin -e ADMIN_PASSWORD='CI-Admin-Password-2026!' app init-admin
+          docker compose restart app
+          for attempt in $(seq 1 30); do
+            if curl -fsS -H 'Host: public.example.test' http://127.0.0.1:8080/api/health/ready; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              exit 1
+            fi
+            sleep 2
+          done
+      - name: Inspect image for forbidden project files
+        run: |
+          test -z "$(docker run --rm --entrypoint sh project-fur-forge:ci -c 'find /app -maxdepth 3 \( -name .env -o -name agent_docs -o -name tests \) -print')"
+      - name: Compose diagnostics
+        if: failure()
+        env:
+          FUR_FORGE_ENV_FILE: .env.ci
+          FUR_FORGE_IMAGE: project-fur-forge:ci
+        run: docker compose ps && docker compose logs --no-color
+      - name: Cleanup
+        if: always()
+        env:
+          FUR_FORGE_ENV_FILE: .env.ci
+          FUR_FORGE_IMAGE: project-fur-forge:ci
+        run: docker compose down -v --remove-orphans || true
