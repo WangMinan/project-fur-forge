@@ -97,3 +97,15 @@
 - 容器精确重启后再次登录 200、同一私有预览 200 且字节数一致。宿主门禁 `lint`、`typecheck`、`build`、`verify:production` 全部 PASS；一次并行 pnpm 门禁触发本地依赖 hoist 竞态，仅删除可再生的 `node_modules` 并按 frozen lock 重建后恢复，源码、锁文件、`.env` 与数据均未改写。
 
 实现方已关闭该 MUST-FIX，等待原独立 Reviewer 对同一 finding 复核。T34 继续保持未勾选。
+
+### 独立 Review 最终复核
+
+原独立 Reviewer 对 `3db6bb7` 的最终结论为 `PASS`；`8215c58` 的历史 `NOT PASS` 保留，不覆盖。
+
+- `docker build --no-cache` 88 秒通过；frozen install、Nuxt build、89 包运行闭包与最终 `import('ali-oss')` 自检均通过。镜像 123,558,208 bytes，运行用户为 `node`。
+- 真 Chrome 150 经 HTTPS 登录后，私有预览返回 200、`image/png`、23,088,256 bytes，并解码为 `4173×5902`；精确 `docker restart` 后，既有会话和全新登录均再次得到相同字节与尺寸。
+- Host 边界为正确 Host 200、跨 Host 404、错误 Host 421；production 测试控制路由重启前后均为 404。日志 0 个模块缺失、未处理异常或 `Server request failed`。
+- `/app/node_modules` 只有 89 包、11,286,212-byte OSS 运行闭包；rootfs 不含 `.env`、测试、`agent_docs`、本地运行配置、数据库、`.pnpm`、根 manifest 或锁文件，三个当前本地敏感值在 rootfs/history/metadata 均为 0 命中。
+- 重启后数据库 `integrity_check=ok`、外键违规 0、三件作品保留。Reviewer 创建的容器、卷、镜像 tag、HTTPS 代理、临时目录、端口和浏览器进程均已清理；仓库保持 `main=origin/main=3db6bb7` 且干净。
+
+独立 Review 无未关闭 finding。工程门禁已通过；T34 仍等待用户最终验收，因此保持未勾选。

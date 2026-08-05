@@ -1,11 +1,11 @@
 # 任务清单：兽装工作室主页
 
 > **角色**：PLAN 的唯一可勾选实施分解。
-> **状态**：T01–T29、T31–T33、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T26-F1、T27-F1、T30 的独立 Review 已通过并等待用户验收；当前按授权进入 T34。**OQ-120 已整批确认并登记为数据库初始化默认值。**任务编号保留 T01–T53，任务后缀用于用户确认后的同主题增量。
+> **状态**：T01–T29、T31–T33、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。T26-F1、T27-F1、T30、T34 的工程与独立 Review 已通过并等待用户统一验收。**OQ-120 已整批确认并登记为数据库初始化默认值。**任务编号保留 T01–T53，任务后缀用于用户确认后的同主题增量。
 
 ## 当前目标
 
-从已经收口的作品、角色化媒体与常规领养链扩展到 P0 可部署核心。T26-F1/T27-F1 与 T28–T30 Review 分别见 [`notes/t26-t27/T26-F1-T27-F1-INDEPENDENT-REVIEW-2026-08-05.md`](./notes/t26-t27/T26-F1-T27-F1-INDEPENDENT-REVIEW-2026-08-05.md)、[`notes/t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md`](./notes/t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md)。T31–T33 证据见同目录备份恢复、安全与性能记录。当前执行 T34；T26-F1、T27-F1、T30 和 T34 的最终勾选仍以用户验收为准。T37 展会矩阵不提前实现。
+从已经收口的作品、角色化媒体与常规领养链扩展到 P0 可部署核心。T26-F1/T27-F1 与 T28–T30 Review 分别见 [`notes/t26-t27/T26-F1-T27-F1-INDEPENDENT-REVIEW-2026-08-05.md`](./notes/t26-t27/T26-F1-T27-F1-INDEPENDENT-REVIEW-2026-08-05.md)、[`notes/t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md`](./notes/t28-t34/T28-T30-PUBLIC-CORE-INDEPENDENT-REVIEW-2026-08-05.md)。T31–T34 证据见同目录备份恢复、安全、性能与总门禁记录。当前只等待 T26-F1、T27-F1、T30、T34 用户统一验收；最终勾选仍以用户确认为准。T37 展会矩阵不提前实现。
 
 ## 门禁
 
@@ -153,7 +153,7 @@ T43–T48 在 T34 后可按价值串行选择，不阻塞 T42。main 直推阶�
 - [x] **T31 · 备份、恢复与迁移冒烟**：新增只写新路径的验证恢复命令，覆盖作品、非空短属性、多图关系、首页/委托大图、站点内容、品牌 profile 和活动引用；验证空库/当前迁移、真实数据在线备份、新路径恢复、完整性/FK、迁移 hash、失败清理与恢复库 production Chrome。独立 Review 初审 1 个 migration hash MUST-FIX 已关闭，最终 `PASS`。_依赖：T30。_
 - [x] **T32 · P0 安全门禁**：覆盖 Session、CSRF、Host、DTO、限流/体积边界、双 Bucket、私有水印源、profile API、日志脱敏和 secret scan；实际验证公开 Host 无后台、匿名私有读取失败、公开 Bucket 无原图。独立 Review 初审 2 个 MUST-FIX 已在共享正文读取器和统一日志脱敏边界关闭，最终 `PASS`。_依赖：T31。_
 - [x] **T33 · P0 性能与三视口媒体回归**：轮播按需加载、横竖请求、首屏尺寸/CLS、SSR P95、图片真实解码、无溢出、焦点/键盘/减少动效；大型居中水印可辨识且不破坏关键内容。独立初审 1 个 MUST-FIX 与 3 个 SHOULD-FIX 已关闭，2–5 项查询恒定、三视口 production 与独立 Chrome 复验通过，最终 `PASS WITH FOLLOW-UP`。_依赖：T32。_
-- [ ] **T34 · P0 全链、完整自动化与可部署版本**：公开 P0、后台核心、品牌 profile、首页轮播、角色化媒体、常规领养、发布/下架、错误/恢复、备份恢复、生产 build/verify 和真实浏览器全链全部通过；形成首个可部署镜像与用户验收记录。_依赖：T33。_
+- [ ] **T34 · P0 全链、完整自动化与可部署版本**：公开 P0、后台核心、品牌 profile、首页轮播、角色化媒体、常规领养、发布/下架、错误/恢复、备份恢复、生产 build/verify 和真实浏览器全链全部通过；形成首个可部署镜像与用户验收记录。**完整自动化、真实双 Bucket、备份恢复、Docker 非 root/持久卷、Host/secret 边界和独立真 Chrome 已通过；初始 Docker、全量 E2E 与 `ali-oss` runtime findings 均保留并关闭，独立 Review 最终 `PASS`。任务保持未勾选，等待用户最终验收。** _依赖：T33。_
 
 ## D. P1 一期完整增强
 

@@ -6,7 +6,7 @@ This file provides guidance to coding agents working with code in this repositor
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 4 IMPLEMENTATION，T01–T29、T31–T33、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。** T26-F1/T27-F1 等待用户验收；T30 工程与独立 Review 为 `PASS WITH FOLLOW-UP`，等待品牌图标用户验收。T33 初始 1 个 MUST-FIX 与 3 个 SHOULD-FIX 已关闭，最终 `PASS WITH FOLLOW-UP`；当前进入 T34 P0 总门禁。**OQ-120 已由用户整批确认，并由 0014/0015 登记默认值。**
+> **当前阶段：阶段 4 IMPLEMENTATION，T01–T29、T31–T33、GATE-06、GATE-07、EXT-01 与 EXT-02 已完成。** T26-F1/T27-F1、T30、T34 的工程与新上下文独立 Review 均已通过，四项保持未勾选并等待用户统一验收。T34 初始 Docker、全量 E2E 与 `ali-oss` runtime findings 已关闭，最终 `PASS`。**OQ-120 已由用户整批确认，并由 0014/0015 登记默认值。**
 
 ## 网站核心原则（景宸确认）
 
@@ -127,5 +127,6 @@ pnpm auth:reset-password --confirm RESET_SINGLE_ADMIN_PASSWORD
 - T26-F1 已完成委托页独立大图和可刷新恢复的低分辨率 FFmpeg 私有适配；T27-F1 已完成关于/联系合并、政策页、二级导航、页脚法律区与营业状态呈现；两项独立 Review 为 `PASS WITH FOLLOW-UP`，等待用户验收。
 - T28 首页完整内容顺序与 T29 筛选/详情导航/301 已通过独立 Chrome Review；T30 canonical、结构化数据、Sitemap/robots 和品牌图标技术 Review 已通过，等待用户视觉验收。
 - T31 备份恢复、T32 安全门禁与 T33 性能/三视口媒体回归均已通过新上下文独立 Review；T33 的 Hero 查询已批量化，横竖固有尺寸、按需加载和触控命中区已复核。
+- T34 完整自动化、真实双 Bucket、恢复/发布链、Docker 非 root/持久卷、Host/secret 边界和真 Chrome 重启复测已通过；镜像只带 `ali-oss` 的 frozen 89 包运行闭包。
 
-`brand-standard-v1` 只保留为历史身份，当前发布必须匹配活动 `brand-centered-v2` 和 `recipe-v2`。当前下一交接为 T34 P0 全链、完整自动化与可部署版本；OQ-120 已关闭，后续文案修改继续通过“文案配置”完成。不建设万能 CMS，也不提前进入 T37 展会完整矩阵。
+`brand-standard-v1` 只保留为历史身份，当前发布必须匹配活动 `brand-centered-v2` 和 `recipe-v2`。当前下一交接为 T26-F1、T27-F1、T30、T34 用户统一验收；OQ-120 已关闭，后续文案修改继续通过“文案配置”完成。用户验收前不建设万能 CMS，也不提前进入 T37 展会完整矩阵。
