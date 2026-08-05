@@ -433,11 +433,11 @@ test.describe('T28 首页完整内容顺序', () => {
     ], undefined, 'commission')
     await page.goto('/')
 
+    // T34-F2：入口与状态合并为统一业务入口卡，不再有独立状态区。
     const order = await page.locator([
       '[data-testid="public-hero"]',
+      '[data-testid="home-business-entries"]',
       '[data-testid="featured-works"]',
-      '[data-testid="home-image-entries"]',
-      '[data-testid="home-business-statuses"]',
       '[data-testid="home-current-adoptions"]',
       '[data-testid="public-footer"]',
     ].join(',')).evaluateAll(elements => elements.map(element =>
@@ -445,34 +445,54 @@ test.describe('T28 首页完整内容顺序', () => {
     ))
     expect(order).toEqual([
       'public-hero',
+      'home-business-entries',
       'featured-works',
-      'home-image-entries',
-      'home-business-statuses',
       'home-current-adoptions',
       'public-footer',
     ])
 
-    const entries = page.getByTestId('home-image-entries')
-    await expect(entries.getByRole('link', { name: /自设委托/u })).toHaveAttribute(
-      'href',
-      '/commission',
-    )
-    await expect(entries.getByRole('link', { name: /角色领养/u })).toHaveAttribute(
-      'href',
-      '/adoptions',
-    )
+    await expect(page.getByTestId('home-business-statuses')).toHaveCount(0)
+
+    const entries = page.getByTestId('home-business-entries')
+    const commission = entries.getByTestId('home-business-entry')
+      .filter({ has: page.locator('[data-entry-kind="commission"]') })
+      .or(entries.locator('[data-entry-kind="commission"]'))
+    const adoption = entries.locator('[data-entry-kind="adoption"]')
+    await expect(commission).toHaveAttribute('href', '/commission')
+    await expect(adoption).toHaveAttribute('href', '/adoptions')
+
+    // 每张卡内部同时包含标题、状态和单一行动入口，且整卡是唯一链接。
+    for (const card of [commission, adoption]) {
+      await expect(card.locator('.home-entry__name')).toBeVisible()
+      await expect(card.locator('.home-entry__status')).toBeVisible()
+      await expect(card.locator('.home-entry__action')).toBeVisible()
+      expect(await card.locator('a').count()).toBe(0)
+    }
     await expect(page.getByTestId('home-current-adoptions')).toContainText('云朵')
 
     for (const [width, height] of [[390, 844], [768, 1024], [1440, 900]]) {
       await page.setViewportSize({ width, height })
       await page.goto('/')
-      const imageEntries = page.getByTestId('home-image-entries')
+      const imageEntries = page.getByTestId('home-business-entries')
       await imageEntries.scrollIntoViewIfNeeded()
       await expect(imageEntries.getByRole('img')).toHaveCount(2)
+      // 两卡视觉对称：同一断点下宽高一致。
+      const boxes = await imageEntries.locator('[data-testid="home-business-entry"]')
+        .evaluateAll(cards => cards.map((card) => {
+          const rect = card.getBoundingClientRect()
+          return [Math.round(rect.width), Math.round(rect.height)]
+        }))
+      expect(boxes).toHaveLength(2)
+      expect(boxes[0]![0]).toEqual(boxes[1]![0])
+      // 两卡同宽同比例；≥768px 为两列布局，网格默认拉伸使高度一致。
+      // <768px 单列堆叠时，两张卡各自按真实文案长度自适应高度，不强制相等。
+      if (width >= 768) {
+        expect(boxes[0]).toEqual(boxes[1])
+      }
       expect(await page.evaluate(() =>
         document.documentElement.scrollWidth - document.documentElement.clientWidth,
       )).toBeLessThanOrEqual(1)
-      await capture(page, `t28-home-continuation-${width}x${height}`, T28_SCREENSHOT_DIR)
+      await capture(page, `t34-f2-home-entries-${width}x${height}`, T28_SCREENSHOT_DIR)
     }
   })
 
@@ -481,9 +501,10 @@ test.describe('T28 首页完整内容顺序', () => {
     await seedHomeSlides(page, [], undefined, 'commission')
     await page.goto('/')
 
-    await expect(page.getByTestId('home-image-entries')).toHaveCount(0)
+    // 无可用入口图时整个业务入口区受控隐藏，不回退到作品水印图。
+    await expect(page.getByTestId('home-business-entries')).toHaveCount(0)
     await expect(page.getByTestId('home-current-adoptions')).toHaveCount(0)
-    await expect(page.getByTestId('home-business-statuses')).toBeVisible()
+    await expect(page.getByTestId('public-hero')).toBeVisible()
   })
 
   test('只有一个真实图片入口时在桌面占满整行', async ({ page }) => {
@@ -494,12 +515,15 @@ test.describe('T28 首页完整内容顺序', () => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
 
-    const widths = await page.getByTestId('home-image-entries').evaluate((section) => {
+    const widths = await page.getByTestId('home-business-entries').evaluate((section) => {
+      const list = section.querySelector('ul')!
       const entry = section.querySelector('a')!
-      return [section.getBoundingClientRect().width, entry.getBoundingClientRect().width]
+      return [list.getBoundingClientRect().width, entry.getBoundingClientRect().width]
     })
     expect(Math.abs(widths[0]! - widths[1]!)).toBeLessThanOrEqual(1)
-    await expect(page.getByTestId('home-image-entries').getByRole('link')).toHaveCount(1)
+    await expect(
+      page.getByTestId('home-business-entries').getByRole('link'),
+    ).toHaveCount(1)
   })
 })
 

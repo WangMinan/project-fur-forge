@@ -1,9 +1,14 @@
 import { z } from 'zod'
 import { apiSuccessSchema, resourceIdSchema } from './api'
 import {
+  publicHomeDtoSchema,
+  publicHomeEntryDtoSchema,
+} from './home'
+import {
   publicAltSchema,
   publicSourceSetDtoSchema,
 } from './media'
+import { publicSiteBusinessStatusDtoSchema } from './site-content'
 import {
   publicAdoptionWorkDtoSchema,
   publicWorkDtoSchema,
@@ -94,6 +99,39 @@ export const publicWorkListQuerySchema = z.object({
   purpose: workPurposeSchema.optional(),
   suitType: suitTypeSchema.optional(),
 }).strict()
+
+/**
+ * T34-F2 首页聚合投影。
+ * 非关键区块用 `available` 表达受控降级：Hero、导航和页面骨架不因精选作品或
+ * 当前领养异常而整体 500，也不把服务端错误详情暴露给匿名访客。
+ */
+function homeSectionSchema<T extends z.ZodType>(item: T) {
+  return z.object({
+    available: z.boolean(),
+    items: z.array(item),
+  }).strict()
+}
+
+/** 统一业务入口卡：图片、标题、状态、短说明和单一行动入口。 */
+export const publicHomeEntryCardDtoSchema = publicHomeEntryDtoSchema.extend({
+  title: z.string().trim().min(1).max(40),
+  status: publicSiteBusinessStatusDtoSchema.nullable(),
+  summary: z.string().trim().min(1).max(240).nullable(),
+}).strict()
+
+export const publicHomeAggregateDtoSchema = z.object({
+  hero: publicHomeDtoSchema,
+  entries: z.object({
+    commission: publicHomeEntryCardDtoSchema.nullable(),
+    adoption: publicHomeEntryCardDtoSchema.nullable(),
+  }).strict(),
+  featured: homeSectionSchema(publicWorkSummaryDtoSchema),
+  currentAdoptions: homeSectionSchema(publicAdoptionListItemDtoSchema),
+}).strict()
+
+export const publicHomeAggregateResponseSchema = apiSuccessSchema(
+  publicHomeAggregateDtoSchema,
+)
 
 export const publicWorkDetailResponseSchema = apiSuccessSchema(
   publicWorkDetailDtoSchema,

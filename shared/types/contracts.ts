@@ -24,6 +24,8 @@ import type {
   publicAdoptionListItemDtoSchema,
   publicDesignSheetDtoSchema,
   publicFeaturedWorksDtoSchema,
+  publicHomeAggregateDtoSchema,
+  publicHomeEntryCardDtoSchema,
   publicWorkCardDtoSchema,
   publicWorkDetailDtoSchema,
   publicWorkFilterStateSchema,
@@ -118,6 +120,12 @@ export type PublicHomeDto = z.infer<typeof publicHomeDtoSchema>
 export type HomeEntryKind = z.infer<typeof homeEntryKindSchema>
 export type PublicHomeEntryDto = z.infer<typeof publicHomeEntryDtoSchema>
 export type PublicHomeEntriesDto = z.infer<typeof publicHomeEntriesDtoSchema>
+export type PublicHomeEntryCardDto = z.infer<
+  typeof publicHomeEntryCardDtoSchema
+>
+export type PublicHomeAggregateDto = z.infer<
+  typeof publicHomeAggregateDtoSchema
+>
 export type SiteBusinessStatusKind = z.infer<
   typeof siteBusinessStatusKindSchema
 >

@@ -307,6 +307,32 @@ test.describe('T19 作品详情页', () => {
     await expect(page.getByRole('link', { name: '返回作品展示' })).toHaveAttribute('href', '/works')
   })
 
+  test('T34-F2：竖图按方向限宽居中，路由复用切换作品后选中索引复位', async ({ page }) => {
+    await seedCatalog(page)
+    await page.goto('/works/e2e-public-lanmei')
+
+    const stage = page.locator('[data-testid="work-gallery"] .work-gallery__stage')
+    await expect(stage).toHaveAttribute('data-orientation', 'landscape')
+
+    const thumbs = page.getByRole('button', { name: /查看第 \d 张，共 2 张/ })
+    await thumbs.nth(1).click()
+    await expect(stage).toHaveAttribute('data-orientation', 'portrait')
+
+    // 竖图舞台不出现两侧灰色留白：图片实际渲染宽度明显小于舞台宽度。
+    const stageBox = await stage.boundingBox()
+    const imageBox = await stage.locator('img').boundingBox()
+    expect(imageBox!.width).toBeLessThan(stageBox!.width * 0.9)
+    expect(imageBox!.height).toBeGreaterThan(0)
+
+    // 同组件实例内跳到下一件只有 1 张图的作品：选中索引必须复位，不带着索引 1 越界。
+    await page.getByTestId('work-detail-navigation')
+      .getByRole('link', { name: /下一件/u }).click()
+    await expect(page).toHaveURL(/\/works\/e2e-public-zhima$/u)
+    await expect(page.getByRole('button', { name: /查看第/u })).toHaveCount(0)
+    const nextStage = page.locator('[data-testid="work-gallery"] .work-gallery__stage img')
+    await expect(nextStage).toHaveJSProperty('complete', true)
+  })
+
   test('委托作品展示主人公开值，无价格区', async ({ page }) => {
     await seedCatalog(page)
     await page.goto('/works/e2e-public-zhima')
