@@ -5,7 +5,7 @@
 
 ## 当前阶段
 
-项目进入 **阶段 C.1 · P0 收口修复**。
+项目进入 **阶段 C.1 · P0 收口修复**。当前进度：**T34-F1 已实现并推送 `main`；T34-F2 进行中。T34-F8 与 GATE-C1 保持未勾选，等待用户最终 Review。**
 
 阶段 C 的作品、领养、首页、委托、管理、OSS、发布、备份和安全主链已经完成工程实现；T34 的历史独立 Review 结论仍保留为 `PASS`。本轮完整审查确认，当前版本在视觉一致性、媒体保护契约、代码边界、长任务恢复和可重复部署方面仍有必须关闭的问题，因此不再把现有镜像和页面视为正式上线候选，也不提前进入 T35 之后的 P1 功能。
 
@@ -84,19 +84,24 @@
 - 不再手工复制 `ali-oss` 依赖闭包；
 - 运行镜像包含迁移、管理员初始化、备份和恢复所需脚本及迁移文件；
 - 新增版本控制内的 Compose 和 Nginx 双 Host 配置；
-- 提供 `live` 与 `ready` 健康检查；
-- 验证空数据卷迁移、初始化、启动、重启、升级和回滚。
+- 提供 `live` 与 `ready` 健康检查。
+
+**本轮范围限制（用户明确要求）**：T34-F6 只准备 Dockerfile、Compose、Nginx 与运维文件，并做不依赖 Docker daemon 的静态检查；**不在本地执行任何 Docker 构建或容器验收**。镜像构建验证由 T34-F7 的 GitHub Actions 执行。空数据卷演练、升级、回滚、恢复、正式域名与 TLS 延期到用户后续部署阶段，不计入 GATE-C1。
 
 ### 6. CI
 
-新增 GitHub Actions 门禁，至少执行 frozen install、lint、typecheck、unit、integration、production build、Docker build，以及空数据卷迁移与 readiness smoke。完整 E2E 可以分为必跑核心集和手动/定时全量集。
+新增 GitHub Actions：质量门禁（frozen install、lint、typecheck、unit、integration、production build、verify:production、secret/content scan、`docker compose config`、Dockerfile 构建验证）与镜像发布（tag `v*` 或手动触发，推送 Docker Hub）。完整 E2E 可以分为必跑核心集和手动/定时全量集。
+
+镜像发布只使用 `DOCKERHUB_USERNAME` 与 `DOCKERHUB_TOKEN` 两个 Repository Secret；本轮完成 workflow 文件后不创建 tag、不触发发布、不添加远程部署。
 
 ## 当前任务状态
 
 - T01–T29、T31–T33、GATE-06、GATE-07、EXT-01、EXT-02：历史完成状态保持有效；
 - T26-F1、T27-F1、T30、T34：工程与独立 Review 事实保留，但不再单独等待验收，统一纳入 C.1 总门禁；
 - T34-F0：本轮 Review 结论和文档去重，已授权执行；
-- T34-F1–T34-F8：待按 [`implementation/TASKS.md`](./implementation/TASKS.md) 串行完成；
+- T34-F1：已实现并推送（迁移 0017、`site-display-v1`、首页业务入口独立派生、profile 切换边界），等待 T34-F8 用户验收；
+- T34-F2–T34-F7：待按 [`implementation/TASKS.md`](./implementation/TASKS.md) 串行完成；
+- T34-F8：由用户执行，实施者只交付可 Review 状态；
 - T35 以后：暂不启动。
 
 当前无开放 OQ。实现过程中若出现会改变业务事实、公开内容或正式部署域名的新问题，再登记 OQ；纯工程选择由实现者按 SPEC 与 PLAN 收敛。

@@ -132,38 +132,34 @@
   - 安全日志和审计保持脱敏。
   _依赖：T34-F4。_
 
-- [ ] **T34-F6 · 完整 Node 24 镜像、Compose、Nginx 与运维命令**：
+- [ ] **T34-F6 · Node 24 镜像、Compose、Nginx 与运维文件准备**：
   - 标准 frozen 多阶段构建；
   - 不手工复制 `ali-oss` 或其他单个依赖闭包；
-  - 同一镜像提供 serve、migrate、init-admin、backup、restore-verify、preflight；
+  - 同一镜像提供 serve、migrate、init-admin、backup、restore-verify、preflight、cleanup-expired-uploads；
   - 运行镜像包含迁移和必要脚本；
-  - `compose.yaml` 包含 migrate、app、nginx、数据卷、备份卷和健康检查；
-  - Nginx 双 Host、TLS、安全头、可信代理和未知 Host 拒绝；
+  - `compose.yaml` 只引用镜像，包含 migrate、app、nginx、数据卷、备份卷和健康检查；
+  - Nginx 双 Host、安全头、可信代理和未知 Host 拒绝，证书路径可配置；
   - live/ready；
-  - 空数据卷、重启、升级、回滚和恢复演练。
+  - **本轮只准备文件并做不依赖 Docker daemon 的静态检查；禁止本地 `docker build` / `compose up` / 空卷演练**；
+  - 镜像构建验证由 T34-F7 在 GitHub Actions 执行；正式域名、TLS 与线上演练延期。
   _依赖：T34-F5。_
 
-- [ ] **T34-F7 · GitHub Actions CI 门禁**：
-  - frozen install、lint、typecheck、unit、integration、build；
-  - Docker build 与 secret/content scan；
-  - 空数据卷 migrate/init/readiness；
-  - 公开首页、作品、管理登录 smoke；
-  - P0 核心 E2E；
-  - 全量 E2E 作为手动或定时工作流；
-  - 截图写 artifact，不修改历史 notes。
+- [ ] **T34-F7 · GitHub Actions CI 与镜像发布流水线**：
+  - 质量门禁：frozen install、lint、typecheck、unit、integration、build、verify:production、secret/content scan、`docker compose config`、Dockerfile 构建验证；
+  - 镜像发布：tag `v*` 与 `workflow_dispatch` 触发，登录 Docker Hub 并推送版本标签与 latest；
+  - Secrets 仅 `DOCKERHUB_USERNAME` 与 `DOCKERHUB_TOKEN`，PR 不读取、不 echo PAT；
+  - 默认平台仅 `linux/amd64`；
+  - concurrency 与最小 permissions；
+  - 截图写 artifact，不修改历史 notes；
+  - **本轮不创建 `v*` tag、不触发发布、不添加远程部署 job**。
   _依赖：T34-F6。_
 
-- [ ] **T34-F8 · C.1 总门禁与用户验收**：
-  - SPEC/PLAN/TASKS/模型/代码一致性；
-  - 完整自动化与 CI；
-  - 真实双 Bucket；
-  - 站点无水印、作品水印矩阵；
-  - profile 切换不改变站点展示；
-  - 长任务重启恢复和过期上传清扫；
-  - 空环境 Compose、Nginx、升级和回滚；
-  - 三视口真 Chrome、console/network、焦点/键盘、图片解码；
-  - 新上下文独立 Review；
-  - 用户最终确认后勾选 GATE-C1，并允许进入 T35。
+- [ ] **T34-F8 · C.1 总门禁与用户验收（由用户执行）**：
+  - 实施者交付：文档一致性、完整本地非 Docker 门禁、真实双 Bucket（若凭据可用）、站点无水印与作品水印矩阵、profile 切换不改变站点展示、长任务重启恢复、过期上传清扫、三视口真 Chrome 证据；
+  - 用户执行：公开端与管理端视觉验收、新上下文独立 Review；
+  - 实施者不得代签本项，也不得把自测写成独立 Review；
+  - 用户最终确认后勾选本项与 GATE-C1，并允许进入 T35；
+  - 空环境 Compose、升级/回滚/恢复、正式域名、TLS 与 Docker Hub 发布延期到用户部署阶段。
   _依赖：T34-F7。_
 
 ## D. P1 一期增强

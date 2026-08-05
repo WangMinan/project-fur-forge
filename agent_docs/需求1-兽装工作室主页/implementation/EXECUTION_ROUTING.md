@@ -143,13 +143,15 @@ Reviewer 必须：
 
 - 部署和 CI 由后端主导；
 - Nginx、Compose、镜像和工作流必须进入版本控制；
-- Reviewer 从空目录和空卷执行，不复用开发库或根 `node_modules`。
+- **本轮禁止本地 Docker 构建与容器验收**：F6 只准备文件并做静态检查，镜像构建验证在 F7 的 GitHub Actions 中执行；
+- Docker Hub 发布只读 `DOCKERHUB_USERNAME` 与 `DOCKERHUB_TOKEN`，本轮不创建 tag、不触发发布；
+- 空目录、空卷、正式域名与 TLS 演练延期到用户部署阶段。
 
 ### T34-F8
 
-- Reviewer 新上下文执行总门禁；
-- 用户查看公开端、管理端和部署结果后明确确认；
-- 未得到用户确认前不勾选 GATE-C1。
+- **本项由用户执行**，实施者只负责交付可 Review 状态与证据；
+- 实施者不得代签 T34-F8 或 GATE-C1，也不得把自测记为独立 Review；
+- 用户查看公开端、管理端后明确确认，再勾选本项与 GATE-C1。
 
 ## 9. 测试策略
 
