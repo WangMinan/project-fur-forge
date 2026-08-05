@@ -5,7 +5,7 @@ on:
     branches:
       - fix/phase-c1-t34-f
     paths:
-      - .agent/changes.patch
+      - .agent/changes.patch.gz.b64
       - .agent/commit-message.txt
       - .github/workflows/agent-apply-patch.yml
 
@@ -28,10 +28,11 @@ jobs:
       - name: Apply patch
         shell: bash
         run: |
-          test -f .agent/changes.patch
+          test -f .agent/changes.patch.gz.b64
           message="$(cat .agent/commit-message.txt 2>/dev/null || printf '%s' 'feat: implement phase C.1 closure')"
-          git apply --whitespace=fix .agent/changes.patch
-          rm -f .agent/changes.patch .agent/commit-message.txt
+          base64 --decode .agent/changes.patch.gz.b64 | gzip --decompress > "$RUNNER_TEMP/changes.patch"
+          git apply --whitespace=fix "$RUNNER_TEMP/changes.patch"
+          rm -f .agent/changes.patch.gz.b64 .agent/commit-message.txt
           rmdir .agent 2>/dev/null || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
