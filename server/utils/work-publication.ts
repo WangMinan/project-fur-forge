@@ -158,7 +158,7 @@ function findWork(sqlite: Database.Database, id: string) {
 function requireWork(sqlite: Database.Database, id: string) {
   const row = findWork(sqlite, id)
   if (!row) {
-    throw new ServiceError(404, 'NOT_FOUND', 'Work was not found.')
+    throw new ServiceError(404, 'NOT_FOUND', 'Work was not found.', 'RESOURCE_NOT_FOUND')
   }
   return row
 }
@@ -374,7 +374,7 @@ function createOperation(
     LIMIT 1
   `).pluck().get(workId)
   if (active) {
-    throw new ServiceError(409, 'CONFLICT', 'A publication operation is already active.')
+    throw new ServiceError(409, 'CONFLICT', 'A publication operation is already active.', 'ACTIVE_OPERATION_EXISTS')
   }
   const id = randomUUID()
   sqlite.prepare(`
@@ -494,7 +494,7 @@ async function cleanOperationKeys(
 ) {
   const operation = requireOperation(sqlite, operationId)
   if (operation.version !== expectedVersion) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
   let remaining = parseCleanupKeys(operation.cleanupObjectKeysJson)
   if (remaining.length === 0) {
@@ -638,7 +638,7 @@ export async function publishWork(
     && work.publicationStatus !== 'published'
     && !checkWorkPublication(sqlite, workId).canPublish
   ) {
-    throw new ServiceError(409, 'CONFLICT', 'Resolve publication blockers before publishing.')
+    throw new ServiceError(409, 'CONFLICT', 'Resolve publication blockers before publishing.', 'WORK_PUBLICATION_BLOCKED')
   }
   const operation = createOperation(
     sqlite,
@@ -911,7 +911,7 @@ export async function retryPublicationCleanup(
     operation.status !== 'FAILED'
     || operation.failureStage !== 'CLEANING_PUBLIC'
   ) {
-    throw new ServiceError(409, 'CONFLICT', 'Publication cleanup is not retryable.')
+    throw new ServiceError(409, 'CONFLICT', 'Publication cleanup is not retryable.', 'OPERATION_NOT_RETRYABLE')
   }
   return operationDto(await cleanOperationKeys(
     sqlite,

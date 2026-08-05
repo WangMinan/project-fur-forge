@@ -62,7 +62,7 @@ async function saveDraftWithOpacity(
 
 async function generatePreview(page: import('@playwright/test').Page) {
   await page.getByRole('button', { name: /生成真实预览|重新生成预览/ }).click()
-  await expect(previewFigures(page)).toHaveCount(4)
+  await expect(previewFigures(page)).toHaveCount(3)
 }
 
 test.beforeEach(async ({ page }) => {
@@ -172,13 +172,14 @@ test('非法参数本地拦截，数字输入与滑块同步', async ({ page }) 
   await expect(scaleNumber(page)).toHaveValue('45')
 })
 
-test('四比例真实 OSS 预览、同源 URL 与放大查看', async ({ page }) => {
+test('三比例真实 OSS 预览、同源 URL 与放大查看', async ({ page }) => {
   await seedBrandingStage(page)
   await gotoBranding(page)
   await saveDraftWithOpacity(page, 56)
   await generatePreview(page)
 
-  const captions = ['作品卡片 · 3:4', '作品详情 · 原比例', '首页横屏 · 16:9', '首页竖屏 · 9:16']
+  // T34-F1：站点大图不打水印，预览只覆盖作品保护展示位。
+  const captions = ['作品卡片 · 3:4', '作品详情 · 原比例', '领养设定图 · 原比例']
   for (const [index, caption] of captions.entries()) {
     const figure = previewFigures(page).nth(index)
     await expect(figure).toContainText(caption)
@@ -221,8 +222,9 @@ test('应用确认、影响摘要、原子切换与防重复', async ({ page }) 
   // 应用前的影响摘要（数量不写死，来自服务端 impact）。
   const applyCard = page.locator('.branding-apply')
   await expect(applyCard).toContainText('受影响已发布作品')
-  await expect(applyCard).toContainText('受影响首页轮播项')
-  await expect(applyCard).toContainText('目标公开图总数')
+  // T34-F1：影响摘要区分作品保护图与站点无水印图。
+  await expect(applyCard).toContainText('需要重做的作品保护图')
+  await expect(applyCard).toContainText('不受影响的站点无水印图')
   await expect(applyCard).toContainText('当前公开配置')
   await expect(applyCard).toContainText('新草稿配置')
 
@@ -230,10 +232,11 @@ test('应用确认、影响摘要、原子切换与防重复', async ({ page }) 
   const dialog = page.getByRole('dialog', { name: '应用草稿水印到全站？' })
   await expect(dialog).toBeVisible()
   await expect(dialog).toContainText('件已发布作品')
-  await expect(dialog).toContainText('项首页轮播')
-  await expect(dialog).toContainText('张公开图')
+  // T34-F1：确认文案只计作品保护图，并声明站点大图不受影响。
+  await expect(dialog).toContainText('张作品保护图')
+  await expect(dialog).toContainText('首页与委托页大图不打水印')
   await expect(dialog).toContainText('不透明度 57%')
-  await expect(dialog).toContainText('切换前旧公开图保持可用')
+  await expect(dialog).toContainText('切换前旧作品图保持可用')
   // 对话框打开时焦点在确认按钮上（键盘可直接确认）。
   await expect(dialog.getByRole('button', { name: '确认应用' })).toBeFocused()
   await page.keyboard.press('Enter')
@@ -369,7 +372,7 @@ test('三视口：无横向溢出，390 提示使用桌面端完成应用', asyn
     await page.setViewportSize({ width, height })
     await page.goto(`${adminBaseURL}/admin/site/branding`)
     await page.waitForSelector('.branding')
-    await expect(previewFigures(page)).toHaveCount(4)
+    await expect(previewFigures(page)).toHaveCount(3)
     await snap(page, `branding-${label}`)
     const overflow = await page.evaluate(() =>
       document.scrollingElement!.scrollWidth - document.documentElement.clientWidth,
@@ -440,10 +443,10 @@ test('reduced-motion 下预览不自动切换，界面完整可用', async ({ br
   await saveDraftWithOpacity(page, 63)
   await generatePreview(page)
 
-  await expect(previewFigures(page)).toHaveCount(4)
+  await expect(previewFigures(page)).toHaveCount(3)
   const firstSrc = await previewFigures(page).nth(0).locator('img').getAttribute('src')
   await page.waitForTimeout(1_000)
-  await expect(previewFigures(page)).toHaveCount(4)
+  await expect(previewFigures(page)).toHaveCount(3)
   await expect(previewFigures(page).nth(0).locator('img')).toHaveAttribute('src', firstSrc!)
   await snap(page, 'branding-reduced-motion-1440x900')
   await resetFakeMedia(page)

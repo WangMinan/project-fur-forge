@@ -51,6 +51,7 @@ import type {
 import type {
   apiErrorSchema,
   errorCodeSchema,
+  errorReasonSchema,
 } from '../schemas/api'
 import type {
   adminWorkDtoSchema,
@@ -94,6 +95,7 @@ import type {
 
 export type ApiError = z.infer<typeof apiErrorSchema>
 export type ErrorCode = z.infer<typeof errorCodeSchema>
+export type ErrorReason = z.infer<typeof errorReasonSchema>
 export type WorkPurpose = z.infer<typeof workPurposeSchema>
 export type SuitType = z.infer<typeof suitTypeSchema>
 export type PublicationStatus = z.infer<typeof publicationStatusSchema>

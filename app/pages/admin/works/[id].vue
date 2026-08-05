@@ -207,7 +207,7 @@ async function saveWork(): Promise<boolean> {
     if (
       error instanceof AdminApiError
       && error.status === 409
-      && error.serverMessage === 'Resource version is stale.'
+      && error.reason === 'VERSION_CONFLICT'
     ) {
       saveError.value = null
       conflictOpen.value = true

@@ -162,7 +162,7 @@ export function processingSource(
     OSS_PROCESS_INPUT_BYTE_LIMIT,
   ) as ProcessingSourceRow | undefined
   if (!row) {
-    throw new ServiceError(409, 'CONFLICT', 'Asset has no ready private processing source.')
+    throw new ServiceError(409, 'CONFLICT', 'Asset has no ready private processing source.', 'MEDIA_SOURCE_UNAVAILABLE')
   }
   return {
     height: row.height,

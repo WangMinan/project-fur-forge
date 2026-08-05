@@ -174,7 +174,7 @@ export function createWatermarkProfile(
 ) {
   const branding = requireSiteBranding(sqlite)
   if (branding.version !== expectedBrandingVersion) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
   const source = sqlite.prepare(`
     SELECT sha256 AS logoDigest
@@ -234,7 +234,7 @@ export function createWatermarkProfile(
       WHERE id = 'site' AND version = ?
     `).run(profile!.id, now, expectedBrandingVersion)
     if (updated.changes !== 1) {
-      throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+      throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
     }
   })()
   return requireWatermarkProfile(sqlite, profile!.id)

@@ -529,23 +529,26 @@ test('活动水印预览：横竖真实私有预览图可加载，DOM 不泄漏�
   expect(dom).not.toContain('Signature=')
 })
 
-test('水印 profile 阻断：无活动水印时预览与启用都被拒绝', async ({ page }) => {
+test('水印 profile 边界：无活动水印时预览被拒绝，但站点大图启用不再依赖水印', async ({ page }) => {
   await gotoHomeAdmin(page)
   const card = await createSlideViaUi(page, { alt: '阻断验证首页图', sortOrder: 0 })
 
   await setWatermarkProfileActive(page, false)
   try {
+    // 水印预览渲染的是带水印的图，仍然需要活动 profile。
     await card.getByRole('button', { name: '活动水印预览' }).click()
     await expect(page.getByRole('alert').filter({
       hasText: '首页数据或活动水印已变化',
     })).toBeVisible()
     await page.getByRole('alertdialog').getByRole('button', { name: '知道了' }).click()
 
+    // T34-F1 起首页/委托页大图使用无水印 site-display-v1：
+    // 没有活动水印 profile 也可以启用，不再报冲突。
     await card.getByRole('button', { name: '启用' }).click()
+    await expect(card.getByText('已启用', { exact: true })).toBeVisible({ timeout: 20_000 })
     await expect(page.getByRole('alert').filter({
       hasText: '首页数据已在其他地方变化',
-    }).first()).toBeVisible()
-    await expect(card.getByText('未启用')).toBeVisible()
+    })).toHaveCount(0)
   }
   finally {
     await setWatermarkProfileActive(page, true)

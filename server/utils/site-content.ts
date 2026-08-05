@@ -233,7 +233,7 @@ export function updateSiteContentSection(
       WHERE id = 'site' AND ${definition.versionColumn} = @expectedVersion
     `).run({ ...values, now, expectedVersion })
     if (result.changes !== 1) {
-      throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+      throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
     }
     sqlite.prepare(`
       INSERT INTO audit_logs (
@@ -262,7 +262,7 @@ export function updateSiteBusinessStatus(
     `).pluck().get(kind) as number | undefined
     if (currentVersion === undefined) {
       if (expectedVersion !== 0) {
-        throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+        throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
       }
       sqlite.prepare(`
         INSERT INTO business_statuses (
@@ -285,7 +285,7 @@ export function updateSiteBusinessStatus(
         expectedVersion,
       )
       if (result.changes !== 1) {
-        throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.')
+        throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
       }
     }
     sqlite.prepare(`

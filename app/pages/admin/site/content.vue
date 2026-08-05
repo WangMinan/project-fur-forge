@@ -93,7 +93,7 @@ onMounted(() => void load())
         </section>
 
         <section class="content-admin__group" aria-labelledby="content-sections-title">
-          <h2 id="content-sections-title" class="content-admin__group-title">页面文案</h2>
+          <h2 id="content-sections-title" class="content-admin__group-title">页面内容</h2>
           <div class="content-admin__sections">
             <AdminSiteCommissionContentCard
               :content="content"

@@ -407,7 +407,7 @@ export async function generateSiteDisplayVariants(
   }
   const source = processingSource(sqlite, sourceAsset)
   if (!sourceSupportsSiteDisplay(source, usages)) {
-    throw new ServiceError(409, 'CONFLICT', 'Media source does not meet site display dimensions.')
+    throw new ServiceError(409, 'CONFLICT', 'Media source does not meet site display dimensions.', 'MEDIA_SOURCE_TOO_SMALL')
   }
   const fallback: PublicFormat = sourceAsset.mimeType === 'image/png'
     ? 'png'
