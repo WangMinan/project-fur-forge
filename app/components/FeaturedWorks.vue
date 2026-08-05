@@ -1,21 +1,16 @@
 <script setup lang="ts">
-import { publicFeaturedWorksResponseSchema } from '~~/shared/schemas/public-content'
+import type { PublicWorkSummaryDto } from '~~/shared/types/contracts'
 
 /**
- * 首页精选轨道：SSR 消费 /api/public/v1/works/featured 的真实精选投影。
- * 人工顺序由服务端投影保证；无精选作品时整区隐藏（首屏不出现空轨道）。
+ * 首页精选轨道：人工顺序由服务端聚合投影保证。
+ * T34-F2 起由首页聚合传入，不再自行请求，精选异常不再放大为整页 500。
  */
-const { data: featured, error: featuredError } = await useFetch('/api/public/v1/works/featured', {
-  key: 'public-featured-works',
-  headers: useRequestHeaders(['host']),
-  transform: raw => publicFeaturedWorksResponseSchema.parse(raw).data,
-})
+const props = defineProps<{
+  available: boolean
+  works: PublicWorkSummaryDto[]
+}>()
 
-if (featuredError.value) {
-  throw createError({ statusCode: 500, statusMessage: '精选作品暂时无法显示' })
-}
-
-const works = computed(() => featured.value?.items ?? [])
+const works = computed(() => (props.available ? props.works : []))
 </script>
 
 <template>

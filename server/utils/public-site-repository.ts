@@ -5,7 +5,9 @@ import {
 } from '../../shared/schemas/home'
 import {
   publicAdoptionListDtoSchema,
+  publicAdoptionListItemDtoSchema,
   publicFeaturedWorksDtoSchema,
+  publicHomeAggregateDtoSchema,
   publicWorkDetailDtoSchema,
   publicWorkListDtoSchema,
   publicWorkListQuerySchema,
@@ -13,9 +15,12 @@ import {
 } from '../../shared/schemas/public-content'
 import type {
   PublicAdoptionListDto,
+  PublicAdoptionListItemDto,
   PublicCommissionHeroDto,
   PublicFeaturedWorksDto,
+  PublicHomeAggregateDto,
   PublicHomeDto,
+  PublicSiteBusinessStatusDto,
   PublicSourceSetDto,
   PublicWorkDetailDto,
   PublicWorkListDto,
@@ -37,6 +42,8 @@ import {
   publicRecipeWidths,
 } from './media-recipe'
 import { getRuntimeConfig } from './runtime-config'
+import { safeLog } from './safe-log'
+import { getPublicSiteContent } from './site-content'
 import { toPublicWorkDto } from './work-mapper'
 
 export interface PublicWorksQuery {
@@ -51,6 +58,7 @@ export interface PublicSiteRepository {
   listFeaturedWorks(): PublicFeaturedWorksDto
   getCommissionHero(): PublicCommissionHeroDto
   getHome(): PublicHomeDto
+  getHomeAggregate(): PublicHomeAggregateDto
 }
 
 interface PublishedWorkRow {
@@ -347,6 +355,97 @@ function snapshot(
   return entries
 }
 
+const ENTRY_TITLES = {
+  commission: '自设委托',
+  adoption: '角色领养',
+} as const
+
+function publicBusinessStatuses(sqlite: Database.Database) {
+  return getPublicSiteContent(sqlite).statuses
+}
+
+/**
+ * 首页聚合投影：Hero 与业务入口为关键区块，精选作品和当前领养失败时受控降级。
+ * 单次 SSR 只构建一份作品快照，避免精选与领养各自重复扫描。
+ */
+function homeAggregate(
+  sqlite: Database.Database,
+  mediaBaseUrl: string,
+): PublicHomeAggregateDto {
+  const hero = getPublicHome(sqlite, mediaBaseUrl)
+  const statuses = publicBusinessStatuses(sqlite)
+  const entryCard = (kind: 'adoption' | 'commission') => {
+    const entry = hero.entries[kind]
+    if (!entry) {
+      return null
+    }
+    const status = statuses[kind]
+    return {
+      ...entry,
+      title: ENTRY_TITLES[kind],
+      status,
+      summary: status?.detail ?? null,
+    }
+  }
+
+  let entries: PublicHomeAggregateDto['entries'] = {
+    commission: null,
+    adoption: null,
+  }
+  try {
+    entries = {
+      commission: entryCard('commission'),
+      adoption: entryCard('adoption'),
+    }
+  }
+  catch (error) {
+    safeLog('error', 'Home business entries projection failed.', {
+      errorName: (error as { name?: unknown }).name,
+    })
+  }
+
+  let featured: PublicWorkSummaryDto[] = []
+  let featuredAvailable = true
+  let currentAdoptions: PublicAdoptionListItemDto[] = []
+  let adoptionsAvailable = true
+  try {
+    const entriesSnapshot = snapshot(sqlite, mediaBaseUrl)
+    featured = entriesSnapshot
+      .filter(entry => entry.featured)
+      .slice(0, 6)
+      .map(entry => entry.summary)
+    currentAdoptions = adoptionItems(entriesSnapshot).slice(0, 2)
+  }
+  catch (error) {
+    featuredAvailable = false
+    adoptionsAvailable = false
+    safeLog('error', 'Home work snapshot projection failed.', {
+      errorName: (error as { name?: unknown }).name,
+    })
+  }
+
+  return publicHomeAggregateDtoSchema.parse({
+    hero,
+    entries,
+    featured: { available: featuredAvailable, items: featured },
+    currentAdoptions: { available: adoptionsAvailable, items: currentAdoptions },
+  })
+}
+
+function adoptionItems(entries: readonly SnapshotEntry[]) {
+  return entries.flatMap((entry): PublicAdoptionListItemDto[] => (
+    entry.summary.work.purpose === 'adoption'
+    && entry.summary.work.adoptionMethod === 'regular'
+    && entry.designSheet
+      ? [publicAdoptionListItemDtoSchema.parse({
+          work: entry.summary.work,
+          href: entry.summary.href,
+          designSheet: entry.designSheet,
+        })]
+      : []
+  ))
+}
+
 function detailFor(entries: readonly SnapshotEntry[], slug: string) {
   const currentIndex = entries.findIndex(entry => entry.summary.work.slug === slug)
   const current = entries[currentIndex]
@@ -419,17 +518,7 @@ export function createSqlitePublicSiteRepository(
     },
 
     listAdoptions() {
-      const items = snapshot(sqlite, mediaBaseUrl).flatMap(entry => (
-        entry.summary.work.purpose === 'adoption'
-        && entry.summary.work.adoptionMethod === 'regular'
-        && entry.designSheet
-          ? [{
-              work: entry.summary.work,
-              href: entry.summary.href,
-              designSheet: entry.designSheet,
-            }]
-          : []
-      ))
+      const items = adoptionItems(snapshot(sqlite, mediaBaseUrl))
       return publicAdoptionListDtoSchema.parse({
         items,
         resultCount: items.length,
@@ -480,6 +569,9 @@ export function createSqlitePublicSiteRepository(
     getCommissionHero() {
       return getPublicCommissionHero(sqlite, mediaBaseUrl)
     },
+    getHomeAggregate() {
+      return homeAggregate(sqlite, mediaBaseUrl)
+    },
   }
 }
 
@@ -488,6 +580,10 @@ export interface FakePublicSiteSeed {
   featuredSlugs: string[]
   home: PublicHomeDto
   commissionHero?: PublicCommissionHeroDto
+  statuses?: {
+    adoption: PublicSiteBusinessStatusDto | null
+    commission: PublicSiteBusinessStatusDto | null
+  }
 }
 
 export function createFakePublicSiteRepository(
@@ -564,6 +660,36 @@ export function createFakePublicSiteRepository(
     },
     getCommissionHero() {
       return publicCommissionHeroDtoSchema.parse(commissionHero)
+    },
+    getHomeAggregate() {
+      const entryCard = (kind: 'adoption' | 'commission') => {
+        const entry = home.entries[kind]
+        const status = seed.statuses?.[kind] ?? null
+        return entry
+          ? {
+              ...entry,
+              title: ENTRY_TITLES[kind],
+              status,
+              summary: status?.detail ?? null,
+            }
+          : null
+      }
+      const featured = seed.featuredSlugs.flatMap((slug) => {
+        const detail = bySlug.get(slug)
+        return detail ? [summaryFor(detail)] : []
+      }).slice(0, 6)
+      return publicHomeAggregateDtoSchema.parse({
+        hero: home,
+        entries: {
+          commission: entryCard('commission'),
+          adoption: entryCard('adoption'),
+        },
+        featured: { available: true, items: featured },
+        currentAdoptions: {
+          available: true,
+          items: this.listAdoptions().items.slice(0, 2),
+        },
+      })
     },
   }
 }

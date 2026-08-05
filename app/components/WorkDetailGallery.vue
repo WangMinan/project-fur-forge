@@ -11,12 +11,46 @@ const props = defineProps<{
 }>()
 
 const activeIndex = ref(0)
+
+/**
+ * T34-F2：同一组件复用到上一件/下一件作品时，必须把选中项校正回有效范围，
+ * 否则第二张缩略图的索引会带到只有一张图的下一件作品上。
+ */
+const galleryIdentity = computed(() =>
+  props.gallery.map(item => item.assetId).join('|'))
+
+watch(galleryIdentity, () => {
+  activeIndex.value = 0
+})
+
+watch(() => props.gallery.length, (length) => {
+  if (activeIndex.value > length - 1) {
+    activeIndex.value = length > 0 ? length - 1 : 0
+  }
+})
+
 const activeItem = computed(() => props.gallery[activeIndex.value] ?? props.gallery[0])
+
+/**
+ * 方向由公开衍生图的固有 width/height 决定：
+ * 横图使用宽舞台，竖图限宽并居中，占位背景只覆盖图片矩形附近。
+ */
+const activeOrientation = computed(() => {
+  const image = activeItem.value?.sources.fallback.at(-1)
+  if (!image) {
+    return 'landscape'
+  }
+  return image.height > image.width ? 'portrait' : 'landscape'
+})
 </script>
 
 <template>
   <div class="work-gallery" data-testid="work-gallery">
-    <div class="work-gallery__stage">
+    <div
+      class="work-gallery__stage"
+      :class="`work-gallery__stage--${activeOrientation}`"
+      :data-orientation="activeOrientation"
+    >
       <ResponsivePicture
         v-if="activeItem"
         :key="activeItem.assetId"
@@ -55,32 +89,48 @@ const activeItem = computed(() => props.gallery[activeIndex.value] ?? props.gall
 </template>
 
 <style scoped>
+/*
+ * 横图使用宽媒体舞台；竖图的实际舞台限宽并居中，避免形成横跨整栏的灰色区域。
+ * 两种方向都不使用 cover，不为了填满空间裁掉作品。
+ */
 .work-gallery__stage {
-  background: var(--image-placeholder);
+  display: flex;
+  justify-content: center;
   overflow: hidden;
 }
 
-/*
- * PC 端限制主图高度：纵向作品图应在一屏内完整可见，
- * 宽度随原始纵横比自适应、水平居中，不做裁切。
- */
-@media (min-width: 1024px) {
-  .work-gallery__stage {
-    display: flex;
-    justify-content: center;
-  }
+.work-gallery__stage--landscape {
+  background: var(--image-placeholder);
+}
 
-  .work-gallery__stage :deep(.work-gallery__image) {
+/* 竖图：占位背景只包裹图片本身，不铺满整栏。 */
+.work-gallery__stage--portrait :deep(.work-gallery__image) {
+  width: auto;
+  max-width: min(100%, 30rem);
+  background: var(--image-placeholder);
+}
+
+.work-gallery__stage--portrait :deep(.responsive-picture__image) {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: clamp(24rem, calc(100vh - 12rem), 46rem);
+  object-fit: contain;
+}
+
+@media (min-width: 1024px) {
+  .work-gallery__stage--landscape :deep(.work-gallery__image) {
     width: auto;
     max-width: 100%;
   }
 
-  .work-gallery__stage :deep(.responsive-picture__image) {
+  .work-gallery__stage--landscape :deep(.responsive-picture__image) {
     width: auto;
     height: auto;
     max-width: 100%;
     max-height: clamp(20rem, calc(100vh - 15rem), 46rem);
     margin: 0 auto;
+    object-fit: contain;
   }
 }
 
