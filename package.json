@@ -28,7 +28,8 @@
     "test:e2e": "playwright test",
     "preflight:oss": "node scripts/oss-preflight.mjs",
     "preflight:watermark": "node scripts/oss-watermark-centered-v2.mjs",
-    "verify:production": "node scripts/verify-production.mjs"
+    "verify:production": "node scripts/verify-production.mjs",
+    "upload:cleanup": "tsx scripts/upload-cleanup.ts"
   },
   "dependencies": {
     "ali-oss": "6.23.0",

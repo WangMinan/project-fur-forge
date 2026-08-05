@@ -1,26 +1,35 @@
-FROM node:24-bookworm-slim AS build
-
+FROM node:24-bookworm-slim AS dependencies
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@11.18.0 --activate
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+FROM dependencies AS build
 COPY . .
-RUN pnpm install --frozen-lockfile \
-    && pnpm build \
-    && node -e "const { execFileSync } = require('node:child_process'); const { cpSync, mkdirSync } = require('node:fs'); const { dirname, join } = require('node:path'); const tree = JSON.parse(execFileSync('pnpm', ['list', '--prod', '--depth', 'Infinity', '--json'], { encoding: 'utf8' }))[0].dependencies['ali-oss']; const packages = new Map(); const collect = (entry) => { const current = packages.get(entry.from); if (current && current.version !== entry.version) throw new Error('Conflicting runtime dependency: ' + entry.from); if (!current) packages.set(entry.from, entry); Object.values(entry.dependencies || {}).forEach(collect); }; collect(tree); for (const entry of packages.values()) { const target = join('/runtime-node-modules', entry.from); mkdirSync(dirname(target), { recursive: true }); cpSync(entry.path, target, { recursive: true, dereference: true }); }"
+RUN pnpm build
 
-FROM node:24-bookworm-slim
-
+FROM node:24-bookworm-slim AS runtime
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     PORT=3000 \
     DATABASE_FILE=/app/data/studio.db
-
 WORKDIR /app
-RUN mkdir -p /app/data && chown node:node /app/data
+RUN corepack enable && corepack prepare pnpm@11.18.0 --activate \
+    && mkdir -p /app/data /app/backups \
+    && chown -R node:node /app/data /app/backups
+COPY --from=build --chown=node:node /app/package.json /app/pnpm-lock.yaml ./
+COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/.output ./.output
-COPY --from=build --chown=node:node /runtime-node-modules ./node_modules
-RUN node -e "import('ali-oss')"
-
+COPY --from=build --chown=node:node /app/scripts ./scripts
+COPY --from=build --chown=node:node /app/server ./server
+COPY --from=build --chown=node:node /app/shared ./shared
+COPY --from=build --chown=node:node /app/config ./config
+COPY --from=build --chown=node:node /app/drizzle.config.ts /app/tsconfig.json ./
+RUN chmod +x /app/scripts/container-entrypoint.sh \
+    && node -e "import('ali-oss')" \
+    && node -e "import('better-sqlite3')"
 USER node
-VOLUME ["/app/data"]
+VOLUME ["/app/data", "/app/backups"]
 EXPOSE 3000
-CMD ["node", ".output/server/index.mjs"]
+ENTRYPOINT ["/app/scripts/container-entrypoint.sh"]
+CMD ["serve"]

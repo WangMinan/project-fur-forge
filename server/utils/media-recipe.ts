@@ -22,6 +22,7 @@ import type {
 } from './watermark-profile'
 
 export const PUBLIC_RECIPE_VERSION = 'recipe-v2'
+export const SITE_DISPLAY_RECIPE_VERSION = 'site-display-v1'
 export const LEGACY_PUBLIC_RECIPE_VERSION = 'recipe-v1'
 export const HERO_UPSCALE_RECIPE_VERSION = 'hero-upscale-lanczos-v1'
 const WATERMARK_SIZE_MULTIPLIER = 1.6
@@ -31,12 +32,31 @@ const HERO_PORTRAIT_WATERMARK_REFERENCE_WIDTH = 480
 export const STANDARD_WATERMARK_PROFILE = 'brand-standard-v1'
 export const CENTERED_WATERMARK_PROFILE = WATERMARK_PROFILE_NAME
 
-export type PublicMediaUsage =
+export type ProtectedMediaUsage =
   | 'work-card'
-  | 'home-hero-landscape'
-  | 'home-hero-portrait'
   | 'design-sheet'
   | 'detail'
+
+export type SiteDisplayMediaUsage =
+  | 'home-hero-landscape'
+  | 'home-hero-portrait'
+  | 'home-entry-commission'
+  | 'home-entry-adoption'
+
+export type PublicMediaUsage = ProtectedMediaUsage | SiteDisplayMediaUsage
+
+const SITE_DISPLAY_USAGE_VALUES = new Set<PublicMediaUsage>([
+  'home-hero-landscape',
+  'home-hero-portrait',
+  'home-entry-commission',
+  'home-entry-adoption',
+])
+
+export function isSiteDisplayUsage(
+  usage: PublicMediaUsage,
+): usage is SiteDisplayMediaUsage {
+  return SITE_DISPLAY_USAGE_VALUES.has(usage)
+}
 
 type PublicFormat = 'webp' | 'jpeg' | 'png'
 
@@ -84,16 +104,16 @@ export interface ReadyPublicVariant {
   logoDigest: string
   mediaRole: MediaRole
   objectKey: string
-  recipeVersion: typeof PUBLIC_RECIPE_VERSION
+  recipeVersion: string
   sha256: string
   sourceVariantId: string | null
   usage: PublicMediaUsage
-  watermarkAnchor: 'center'
+  watermarkAnchor: string
   watermarkConfigDigest: string
-  watermarkOpacityPercent: number
-  watermarkProfile: typeof CENTERED_WATERMARK_PROFILE
-  watermarkProfileId: string
-  watermarkScalePercent: number
+  watermarkOpacityPercent: number | null
+  watermarkProfile: string
+  watermarkProfileId: string | null
+  watermarkScalePercent: number | null
   width: number
 }
 
@@ -112,6 +132,16 @@ const recipes = {
     roles: ['home_hero_portrait'],
     widths: [480, 768, 1080],
     aspect: [9, 16],
+  },
+  'home-entry-commission': {
+    roles: ['home_hero_landscape'],
+    widths: [480, 768, 1200],
+    aspect: [4, 3],
+  },
+  'home-entry-adoption': {
+    roles: ['design_sheet'],
+    widths: [480, 768, 1200],
+    aspect: [4, 3],
   },
   'design-sheet': {
     roles: ['design_sheet'],
@@ -386,19 +416,24 @@ export function assetSupportsPublicUsages(
   }, usages)
 }
 
-function defaultUsages(role: MediaRole): PublicMediaUsage[] {
+function defaultProtectedUsages(role: MediaRole): ProtectedMediaUsage[] {
   if (role === 'studio_photo') {
     return ['work-card', 'detail']
   }
   if (role === 'design_sheet') {
     return ['design-sheet']
   }
-  if (role === 'watermark_logo') {
-    return []
+  return []
+}
+
+function defaultSiteDisplayUsages(role: MediaRole): SiteDisplayMediaUsage[] {
+  if (role === 'home_hero_landscape') {
+    return ['home-hero-landscape']
   }
-  return role === 'home_hero_landscape'
-    ? ['home-hero-landscape']
-    : ['home-hero-portrait']
+  if (role === 'home_hero_portrait') {
+    return ['home-hero-portrait']
+  }
+  return []
 }
 
 export function workAssetPublicUsages(
@@ -480,7 +515,10 @@ function resizeOperation(
   const crop = cropped
     ? `crop,w_${Math.round(sourceAsset.width * sourceAsset.cropWidth)},h_${Math.round(sourceAsset.height * sourceAsset.cropHeight)},x_${Math.round(sourceAsset.width * sourceAsset.cropX)},y_${Math.round(sourceAsset.height * sourceAsset.cropY)}/`
     : ''
-  if (sourceAsset.role === 'design_sheet') {
+  if (
+    sourceAsset.role === 'design_sheet'
+    && usage !== 'home-entry-adoption'
+  ) {
     return `${crop}resize,m_pad,w_${width},h_${height},color_F7F7F7`
   }
   return `${crop}resize,m_fill,w_${width},h_${height},g_${gravity(
@@ -489,7 +527,7 @@ function resizeOperation(
   )}`
 }
 
-function recipeIdentity(
+function protectedRecipeIdentity(
   sourceAsset: AssetSource,
   source: ProcessingSource,
   profile: WatermarkProfileRow,
@@ -541,6 +579,35 @@ function recipeIdentity(
   }
 }
 
+function siteDisplayRecipeIdentity(
+  sourceAsset: AssetSource,
+  source: ProcessingSource,
+  usage: SiteDisplayMediaUsage,
+  width: number,
+  format: PublicFormat,
+) {
+  const height = outputHeight(usage, width)
+  const identity = JSON.stringify({
+    recipeVersion: SITE_DISPLAY_RECIPE_VERSION,
+    protectionMode: 'none',
+    sourceSha256: source.inputSha256,
+    sourceVariantId: source.sourceVariantId,
+    mediaRole: sourceAsset.role,
+    usage,
+    width,
+    height,
+    fit: 'cover',
+    focalX: sourceAsset.focalX,
+    focalY: sourceAsset.focalY,
+    format,
+    quality: format === 'webp' ? 82 : format === 'jpeg' ? 86 : 100,
+  })
+  return {
+    hash: digest('sha256', Buffer.from(identity)),
+    identity,
+  }
+}
+
 function watermarkLayout(usage: PublicMediaUsage) {
   return usage === 'design-sheet'
     || usage === 'home-hero-landscape'
@@ -574,20 +641,21 @@ function deterministicUuid(hash: string) {
 
 function publicObjectKey(
   sourceAsset: AssetSource,
+  recipeVersion: string,
   usage: PublicMediaUsage,
   width: number,
   identityHash: string,
   format: PublicFormat,
 ) {
   const extension = format === 'jpeg' ? 'jpg' : format
-  return `${environmentPrefix(sourceAsset.privateObjectKey)}/web/${sourceAsset.id}/${PUBLIC_RECIPE_VERSION}/${usage}/${width}/${identityHash}.${extension}`
+  return `${environmentPrefix(sourceAsset.privateObjectKey)}/web/${sourceAsset.id}/${recipeVersion}/${usage}/${width}/${identityHash}.${extension}`
 }
 
 export function buildWatermarkProcess(
   sourceAsset: AssetSource,
   logo: WatermarkSource,
   profile: WatermarkProfileRow,
-  usage: PublicMediaUsage,
+  usage: ProtectedMediaUsage,
   width: number,
   format: PublicFormat,
 ) {
@@ -610,6 +678,18 @@ export function buildWatermarkProcess(
     ...(layout === 'west-east'
       ? [watermark('west'), watermark('east')]
       : [watermark('center')]),
+    formatOperation(format),
+  ].join('/')
+}
+
+export function buildSiteDisplayProcess(
+  sourceAsset: AssetSource,
+  usage: SiteDisplayMediaUsage,
+  width: number,
+  format: PublicFormat,
+) {
+  return [
+    `image/${resizeOperation(sourceAsset, usage, width)}`,
     formatOperation(format),
   ].join('/')
 }
@@ -655,28 +735,51 @@ async function verifyPublicVariant(
     && digest('sha256', anonymous.content) === variant.sha256
 }
 
+type PublicProtection =
+  | {
+      logo: WatermarkSource
+      mode: 'watermark'
+      profile: WatermarkProfileRow
+    }
+  | { mode: 'none' }
+
 async function generateOne(
   sqlite: Database.Database,
   storage: MediaStorage,
   sourceAsset: AssetSource,
   source: ProcessingSource,
-  profile: WatermarkProfileRow,
-  logo: WatermarkSource,
+  protection: PublicProtection,
   usage: PublicMediaUsage,
   width: number,
   format: PublicFormat,
   now: number,
 ) {
-  const identity = recipeIdentity(
-    sourceAsset,
-    source,
-    profile,
-    usage,
-    width,
-    format,
-  )
+  const siteDisplay = protection.mode === 'none'
+  if (siteDisplay !== isSiteDisplayUsage(usage)) {
+    throw new Error('Media protection mode does not match public usage.')
+  }
+  const identity = siteDisplay
+    ? siteDisplayRecipeIdentity(
+        sourceAsset,
+        source,
+        usage as SiteDisplayMediaUsage,
+        width,
+        format,
+      )
+    : protectedRecipeIdentity(
+        sourceAsset,
+        source,
+        protection.profile,
+        usage as ProtectedMediaUsage,
+        width,
+        format,
+      )
+  const recipeVersion = siteDisplay
+    ? SITE_DISPLAY_RECIPE_VERSION
+    : PUBLIC_RECIPE_VERSION
   const objectKey = publicObjectKey(
     sourceAsset,
+    recipeVersion,
     usage,
     width,
     identity.hash,
@@ -691,14 +794,21 @@ async function generateOne(
     await storage.processPrivateToPublic({
       sourceObjectKey: source.objectKey,
       objectKey,
-      process: buildWatermarkProcess(
-        sourceAsset,
-        logo,
-        profile,
-        usage,
-        width,
-        format,
-      ),
+      process: siteDisplay
+        ? buildSiteDisplayProcess(
+            sourceAsset,
+            usage as SiteDisplayMediaUsage,
+            width,
+            format,
+          )
+        : buildWatermarkProcess(
+            sourceAsset,
+            protection.logo,
+            protection.profile,
+            usage as ProtectedMediaUsage,
+            width,
+            format,
+          ),
     })
     const [head, info, anonymous] = await Promise.all([
       storage.headPublic(objectKey),
@@ -725,6 +835,25 @@ async function generateOne(
       'sha256',
       Buffer.from(`${sourceAsset.id}:${identity.hash}`),
     ))
+    const watermark = siteDisplay
+      ? {
+          profile: 'none',
+          profileId: null,
+          configDigest: 'none',
+          logoDigest: 'none',
+          anchor: 'none',
+          opacity: null,
+          scale: null,
+        }
+      : {
+          profile: protection.profile.profileName,
+          profileId: protection.profile.id,
+          configDigest: protection.profile.configDigest,
+          logoDigest: protection.profile.logoDigest,
+          anchor: protection.profile.position,
+          opacity: protection.profile.opacityPercent,
+          scale: protection.profile.scalePercent,
+        }
     try {
       const stale = sqlite.prepare(`
         SELECT id FROM asset_variants WHERE object_key = ?
@@ -741,13 +870,13 @@ async function generateOne(
       else {
         sqlite.prepare(`
           INSERT INTO asset_variants (
-          id, asset_id, source_variant_id, storage_scope, status,
-          object_key, input_sha256, media_role, usage, width, height,
-          format, quality, crop_identity, recipe_version,
-          watermark_profile, watermark_profile_id,
-          watermark_config_digest, logo_digest, watermark_anchor,
-          watermark_opacity_percent, watermark_scale_percent,
-          sha256, byte_size, created_at, updated_at
+            id, asset_id, source_variant_id, storage_scope, status,
+            object_key, input_sha256, media_role, usage, width, height,
+            format, quality, crop_identity, recipe_version,
+            watermark_profile, watermark_profile_id,
+            watermark_config_digest, logo_digest, watermark_anchor,
+            watermark_opacity_percent, watermark_scale_percent,
+            sha256, byte_size, created_at, updated_at
           ) VALUES (?, ?, ?, 'PUBLIC', 'READY', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).run(
           id,
@@ -762,14 +891,14 @@ async function generateOne(
           format,
           format === 'webp' ? 82 : format === 'jpeg' ? 86 : 100,
           identity.hash,
-          PUBLIC_RECIPE_VERSION,
-          profile.profileName,
-          profile.id,
-          profile.configDigest,
-          profile.logoDigest,
-          profile.position,
-          profile.opacityPercent,
-          profile.scalePercent,
+          recipeVersion,
+          watermark.profile,
+          watermark.profileId,
+          watermark.configDigest,
+          watermark.logoDigest,
+          watermark.anchor,
+          watermark.opacity,
+          watermark.scale,
           sha256,
           head.byteSize,
           now,
@@ -799,6 +928,7 @@ async function generateOne(
       errorCode: candidate.code,
       errorName: candidate.name,
       format,
+      protectionMode: protection.mode,
       requestId: candidate.requestId,
       serviceCode: candidate.data?.Code,
       status: candidate.status,
@@ -836,12 +966,13 @@ export async function generatePublicVariantsForProfile(
   now = Date.now(),
 ) {
   const sourceAsset = asset(sqlite, assetId)
-  const selectedUsages = usages ?? defaultUsages(sourceAsset.role)
+  const selectedUsages = usages ?? defaultProtectedUsages(sourceAsset.role)
   if (
     selectedUsages.length === 0
     || new Set(selectedUsages).size !== selectedUsages.length
     || selectedUsages.some(
-      usage => !recipes[usage].roles.includes(sourceAsset.role as never),
+      usage => isSiteDisplayUsage(usage)
+        || !recipes[usage].roles.includes(sourceAsset.role as never),
     )
   ) {
     throw new ServiceError(400, 'VALIDATION_ERROR', 'Media usage does not match asset role.')
@@ -871,8 +1002,57 @@ export async function generatePublicVariantsForProfile(
           storage,
           sourceAsset,
           source,
-          profile,
-          logo,
+          { mode: 'watermark', profile, logo },
+          usage,
+          width,
+          format,
+          now,
+        ))
+      }
+    }
+  }
+  return variants
+}
+
+export async function generateSiteDisplayVariants(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  assetId: string,
+  usages?: readonly SiteDisplayMediaUsage[],
+  now = Date.now(),
+) {
+  const sourceAsset = asset(sqlite, assetId)
+  const selectedUsages = usages ?? defaultSiteDisplayUsages(sourceAsset.role)
+  if (
+    selectedUsages.length === 0
+    || new Set(selectedUsages).size !== selectedUsages.length
+    || selectedUsages.some(
+      usage => !recipes[usage].roles.includes(sourceAsset.role as never),
+    )
+  ) {
+    throw new ServiceError(400, 'VALIDATION_ERROR', 'Site display usage does not match asset role.')
+  }
+  const source = processingSource(sqlite, sourceAsset)
+  if (!sourceSupportsPublicUsages({
+    ...sourceAsset,
+    height: source.height,
+    width: source.width,
+  }, selectedUsages)) {
+    throw new ServiceError(409, 'CONFLICT', 'Media source does not meet site display dimensions.')
+  }
+  const fallback: PublicFormat = sourceAsset.mimeType === 'image/png'
+    ? 'png'
+    : 'jpeg'
+  const variants: ReadyPublicVariant[] = []
+  for (const usage of selectedUsages) {
+    for (const width of recipes[usage].widths) {
+      for (const format of ['webp', fallback] as const) {
+        variants.push(await generateOne(
+          sqlite,
+          storage,
+          sourceAsset,
+          source,
+          { mode: 'none' },
           usage,
           width,
           format,
@@ -899,6 +1079,56 @@ export async function generatePublicVariants(
     usages,
     now,
   )
+}
+
+export async function generatePrivateSiteDisplayPreview(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  input: {
+    assetId: string
+    objectKey: string
+    usage: SiteDisplayMediaUsage
+    width: number
+  },
+) {
+  const sourceAsset = asset(sqlite, input.assetId)
+  if (!recipes[input.usage].widths.includes(input.width as never)) {
+    throw new ServiceError(400, 'VALIDATION_ERROR', 'Preview width is invalid.')
+  }
+  const source = processingSource(sqlite, sourceAsset)
+  await storage.processPrivateToPrivate({
+    sourceObjectKey: source.objectKey,
+    objectKey: input.objectKey,
+    process: buildSiteDisplayProcess(
+      sourceAsset,
+      input.usage,
+      input.width,
+      'webp',
+    ),
+  })
+  const [head, info, signed] = await Promise.all([
+    storage.headPrivate(input.objectKey),
+    storage.imageInfoPrivate(input.objectKey),
+    storage.getPrivateSigned(input.objectKey, Date.now() + 60_000),
+  ])
+  const height = outputHeight(input.usage, input.width)
+  if (
+    head.byteSize < 1
+    || head.byteSize !== signed.content.length
+    || head.contentType !== 'image/webp'
+    || signed.contentType !== 'image/webp'
+    || info.fileSize !== head.byteSize
+    || normalizedFormat(info.format) !== 'webp'
+    || info.width !== input.width
+    || (height !== null && info.height !== height)
+  ) {
+    throw new ServiceError(500, 'INTERNAL_ERROR', 'Site display preview verification failed.')
+  }
+  return {
+    format: 'webp' as const,
+    height: info.height,
+    width: info.width,
+  }
 }
 
 export async function generatePrivateWatermarkPreview(

@@ -3,19 +3,22 @@ import type { ErrorCode } from '~~/shared/types/contracts'
 
 export class AdminApiError extends Error {
   readonly code: ErrorCode | null
-  /** 服务端 `error.message` 原文；同一状态码下用于区分冲突原因。 */
+  /** 仅用于展示；业务分支必须使用稳定 reason。 */
   readonly serverMessage: string | null
+  readonly reason: string | null
   readonly status: number | null
 
   constructor(
     status: number | null,
     code: ErrorCode | null,
     serverMessage: string | null = null,
+    reason: string | null = null,
   ) {
     super(`Admin API request failed (${status ?? 'network'}).`)
     this.name = 'AdminApiError'
     this.code = code
     this.serverMessage = serverMessage
+    this.reason = reason
     this.status = status
   }
 }
@@ -35,6 +38,13 @@ function errorCodeOf(error: unknown): ErrorCode | null {
   const data = (error as { data?: { error?: { code?: unknown } } })?.data
   const code = data?.error?.code
   return typeof code === 'string' ? code as ErrorCode : null
+}
+
+
+function errorReasonOf(error: unknown): string | null {
+  const data = (error as { data?: { error?: { reason?: unknown } } })?.data
+  const reason = data?.error?.reason
+  return typeof reason === 'string' ? reason : null
 }
 
 function errorMessageOf(error: unknown): string | null {
@@ -82,6 +92,7 @@ export function useAdminApi() {
         status,
         errorCodeOf(error),
         errorMessageOf(error),
+        errorReasonOf(error),
       )
     }
 

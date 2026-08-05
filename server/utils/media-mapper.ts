@@ -58,7 +58,7 @@ export interface VariantRecord {
 }
 
 export interface HeroSlideRecord {
-  activeWatermarkProfileId: string
+  activeWatermarkProfileId: string | null
   id: string
   version: number
   enabled: boolean

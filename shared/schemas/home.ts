@@ -8,13 +8,18 @@ import {
 import {
   publicAltSchema,
   publicHeroSlideDtoSchema,
+  publicSourceSetDtoSchema,
 } from './media'
 import { publicationOperationDtoSchema } from './publication'
+import { contactEmailSchema, contactQqSchema } from './contact'
+import {
+  publicAdoptionListItemDtoSchema,
+  publicFeaturedWorksDtoSchema,
+} from './public-content'
+import { publicSiteBusinessStatusDtoSchema } from './site-content'
 import { publicationStatusSchema, slugSchema } from './work'
 
 export const homeTaglineSchema = z.string().trim().min(1).max(120)
-export const contactEmailSchema = z.string().trim().email().max(254)
-export const contactQqSchema = z.string().trim().regex(/^[1-9]\d{4,11}$/u)
 export const heroPlacementSchema = z.enum(['home', 'commission'])
 
 export const adminHeroAssetDtoSchema = z.object({
@@ -79,6 +84,25 @@ export const publicCommissionHeroDtoSchema = z.object({
   slide: publicHeroSlideDtoSchema.nullable(),
 }).strict()
 
+export const publicHomeBusinessEntryDtoSchema = z.object({
+  kind: z.enum(['commission', 'adoption']),
+  href: z.enum(['/commission', '/adoptions']),
+  title: z.string().trim().min(1).max(40),
+  alt: publicAltSchema,
+  sources: publicSourceSetDtoSchema,
+  status: publicSiteBusinessStatusDtoSchema.nullable(),
+}).strict()
+
+export const publicHomepageDtoSchema = z.object({
+  hero: publicHomeDtoSchema,
+  featured: publicFeaturedWorksDtoSchema,
+  entries: z.object({
+    commission: publicHomeBusinessEntryDtoSchema.nullable(),
+    adoption: publicHomeBusinessEntryDtoSchema.nullable(),
+  }).strict(),
+  currentAdoptions: z.array(publicAdoptionListItemDtoSchema).max(2),
+}).strict()
+
 const heroSlideInputSchema = z.object({
   alt: publicAltSchema,
   sortOrder: z.number().int().min(0).max(9_999),
@@ -99,8 +123,6 @@ export const mutateHomeRequestSchema = versionedRequestSchema(
 export const updateHomeSettingsRequestSchema = versionedRequestSchema(
   z.object({
     tagline: homeTaglineSchema,
-    contactEmail: contactEmailSchema,
-    contactQq: contactQqSchema,
     autoRotate: z.boolean(),
     autoRotateIntervalMs: z.number().int().min(6_000).max(300_000),
   }).strict(),
@@ -126,4 +148,7 @@ export const adminHeroPreviewResponseSchema = apiSuccessSchema(
 export const publicHomeResponseSchema = apiSuccessSchema(publicHomeDtoSchema)
 export const publicCommissionHeroResponseSchema = apiSuccessSchema(
   publicCommissionHeroDtoSchema,
+)
+export const publicHomepageResponseSchema = apiSuccessSchema(
+  publicHomepageDtoSchema,
 )

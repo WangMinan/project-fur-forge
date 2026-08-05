@@ -440,7 +440,7 @@ export const assetVariants = sqliteTable('asset_variants', {
   ),
   check(
     'asset_variants_usage',
-    sql`${table.usage} IN ('preprocess', 'work-card', 'detail', 'design-sheet', 'home-hero-landscape', 'home-hero-portrait')`,
+    sql`${table.usage} IN ('preprocess', 'work-card', 'detail', 'design-sheet', 'home-hero-landscape', 'home-hero-portrait', 'home-entry-commission', 'home-entry-adoption')`,
   ),
   check(
     'asset_variants_dimensions',
@@ -472,7 +472,7 @@ export const assetVariants = sqliteTable('asset_variants', {
   ),
   check(
     'asset_variants_public_watermark',
-    sql`${table.storageScope} != 'PUBLIC' OR ((${table.watermarkProfile} = 'brand-standard-v1' AND ${table.watermarkProfileId} IS NULL AND ${table.watermarkConfigDigest} = 'none' AND ${table.logoDigest} != 'none' AND ${table.watermarkAnchor} IN ('top-left', 'top-right', 'bottom-left', 'bottom-right') AND ${table.watermarkOpacityPercent} IS NULL AND ${table.watermarkScalePercent} IS NULL) OR (${table.watermarkProfile} = 'brand-centered-v2' AND ${table.watermarkProfileId} IS NOT NULL AND ${table.watermarkConfigDigest} != 'none' AND ${table.logoDigest} != 'none' AND ${table.watermarkAnchor} = 'center' AND ${table.watermarkOpacityPercent} BETWEEN 10 AND 90 AND ${table.watermarkScalePercent} BETWEEN 20 AND 90))`,
+    sql`${table.storageScope} != 'PUBLIC' OR ((${table.recipeVersion} = 'site-display-v1' AND ${table.usage} IN ('home-hero-landscape', 'home-hero-portrait', 'home-entry-commission', 'home-entry-adoption') AND ${table.watermarkProfile} = 'none' AND ${table.watermarkProfileId} IS NULL AND ${table.watermarkConfigDigest} = 'none' AND ${table.logoDigest} = 'none' AND ${table.watermarkAnchor} = 'none' AND ${table.watermarkOpacityPercent} IS NULL AND ${table.watermarkScalePercent} IS NULL) OR (${table.watermarkProfile} = 'brand-standard-v1' AND ${table.watermarkProfileId} IS NULL AND ${table.watermarkConfigDigest} = 'none' AND ${table.logoDigest} != 'none' AND ${table.watermarkAnchor} IN ('top-left', 'top-right', 'bottom-left', 'bottom-right') AND ${table.watermarkOpacityPercent} IS NULL AND ${table.watermarkScalePercent} IS NULL) OR (${table.watermarkProfile} = 'brand-centered-v2' AND ${table.watermarkProfileId} IS NOT NULL AND ${table.watermarkConfigDigest} != 'none' AND ${table.logoDigest} != 'none' AND ${table.watermarkAnchor} = 'center' AND ${table.watermarkOpacityPercent} BETWEEN 10 AND 90 AND ${table.watermarkScalePercent} BETWEEN 20 AND 90))`,
   ),
   check(
     'asset_variants_preprocess_private',
@@ -591,6 +591,9 @@ export const watermarkOperations = sqliteTable('watermark_operations', {
   cleanupObjectKeysJson: text('cleanup_object_keys_json').notNull().default('[]'),
   internalErrorCode: text('internal_error_code'),
   failureStage: text('failure_stage'),
+  attempt: integer('attempt').notNull().default(1),
+  heartbeatAt: integer('heartbeat_at').notNull().default(0),
+  leaseExpiresAt: integer('lease_expires_at').notNull().default(0),
   version: integer('version').notNull().default(1),
   startedAt: integer('started_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
@@ -614,6 +617,8 @@ export const watermarkOperations = sqliteTable('watermark_operations', {
     'watermark_operations_failure_state',
     sql`(${table.status} = 'FAILED' AND ${table.internalErrorCode} IS NOT NULL AND ${table.failureStage} IS NOT NULL) OR (${table.status} != 'FAILED' AND ${table.internalErrorCode} IS NULL AND ${table.failureStage} IS NULL)`,
   ),
+  check('watermark_operations_attempt_positive', sql`${table.attempt} > 0`),
+  check('watermark_operations_lease', sql`${table.heartbeatAt} >= 0 AND ${table.leaseExpiresAt} >= ${table.heartbeatAt}`),
   check('watermark_operations_version_positive', sql`${table.version} > 0`),
 ])
 
@@ -647,6 +652,9 @@ export const publicationOperations = sqliteTable('publication_operations', {
   internalErrorCode: text('internal_error_code'),
   internalErrorMessage: text('internal_error_message'),
   failureStage: text('failure_stage'),
+  attempt: integer('attempt').notNull().default(1),
+  heartbeatAt: integer('heartbeat_at').notNull().default(0),
+  leaseExpiresAt: integer('lease_expires_at').notNull().default(0),
   version: integer('version').notNull().default(1),
   startedAt: integer('started_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
@@ -678,6 +686,8 @@ export const publicationOperations = sqliteTable('publication_operations', {
     'publication_operations_failure_state',
     sql`(${table.status} = 'FAILED' AND ${table.internalErrorCode} IS NOT NULL AND ${table.failureStage} IS NOT NULL) OR (${table.status} != 'FAILED' AND ${table.internalErrorCode} IS NULL AND ${table.failureStage} IS NULL)`,
   ),
+  check('publication_operations_attempt_positive', sql`${table.attempt} > 0`),
+  check('publication_operations_lease', sql`${table.heartbeatAt} >= 0 AND ${table.leaseExpiresAt} >= ${table.heartbeatAt}`),
   check('publication_operations_version_positive', sql`${table.version} > 0`),
 ])
 
@@ -724,6 +734,12 @@ export const siteContent = sqliteTable('site_content', {
   basicTerms: text('basic_terms'),
   privacyPolicy: text('privacy_policy'),
   contactAntiScam: text('contact_anti_scam'),
+  commissionVersion: integer('commission_version').notNull().default(1),
+  faqVersion: integer('faq_version').notNull().default(1),
+  aboutVersion: integer('about_version').notNull().default(1),
+  termsVersion: integer('terms_version').notNull().default(1),
+  privacyVersion: integer('privacy_version').notNull().default(1),
+  contactVersion: integer('contact_version').notNull().default(1),
   heroAutoRotate: integer('hero_auto_rotate', { mode: 'boolean' })
     .notNull().default(false),
   heroAutoRotateIntervalMs: integer('hero_auto_rotate_interval_ms')
@@ -779,6 +795,10 @@ export const siteContent = sqliteTable('site_content', {
   check(
     'site_content_contact_anti_scam',
     sql`${table.contactAntiScam} IS NULL OR (length(trim(${table.contactAntiScam})) BETWEEN 1 AND 600 AND ${table.contactAntiScam} NOT GLOB '*[<>]*')`,
+  ),
+  check(
+    'site_content_section_versions_positive',
+    sql`${table.commissionVersion} > 0 AND ${table.faqVersion} > 0 AND ${table.aboutVersion} > 0 AND ${table.termsVersion} > 0 AND ${table.privacyVersion} > 0 AND ${table.contactVersion} > 0`,
   ),
   check('site_content_version_positive', sql`${table.version} > 0`),
 ])

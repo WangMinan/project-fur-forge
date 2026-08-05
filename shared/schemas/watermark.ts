@@ -112,8 +112,7 @@ export const watermarkOperationRetryRequestSchema = versionedRequestSchema(
 export const watermarkPreviewKindSchema = z.enum([
   'work-card',
   'detail',
-  'home-hero-landscape',
-  'home-hero-portrait',
+  'design-sheet',
 ])
 
 export const watermarkOperationDtoSchema = z.object({
@@ -135,6 +134,9 @@ export const watermarkOperationDtoSchema = z.object({
     url: z.string().startsWith('/api/admin/'),
   }).strict()),
   failureCode: z.string().min(1).max(100).nullable(),
+  attempt: z.number().int().positive(),
+  heartbeatAt: z.string().datetime({ offset: true }),
+  leaseExpiresAt: z.string().datetime({ offset: true }),
   version: resourceVersionSchema,
   startedAt: z.string().datetime({ offset: true }),
   updatedAt: z.string().datetime({ offset: true }),

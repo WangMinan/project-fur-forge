@@ -12,6 +12,7 @@ export const ERROR_CODE_VALUES = [
 ] as const
 
 export const errorCodeSchema = z.enum(ERROR_CODE_VALUES)
+export const errorReasonSchema = z.string().regex(/^[A-Z][A-Z0-9_]{1,99}$/u)
 
 export const resourceIdSchema = z.string().uuid()
 
@@ -29,6 +30,7 @@ export const apiErrorSchema = z.object({
   error: z.object({
     code: errorCodeSchema,
     message: z.string().min(1).max(200),
+    reason: errorReasonSchema.nullable(),
   }).strict(),
 }).strict()
 

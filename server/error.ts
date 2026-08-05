@@ -147,10 +147,14 @@ export default defineNitroErrorHandler(async (
   )
     ? data.publicMessage
     : defaultErrorMessage(fallback.status)
+  const parsedReason = typeof data.reason === 'string'
+    ? apiErrorSchema.shape.error.shape.reason.safeParse(data.reason)
+    : undefined
   const body = apiErrorSchema.parse({
     error: {
       code,
       message,
+      reason: parsedReason?.success ? parsedReason.data : null,
     },
   })
 

@@ -1,47 +1,42 @@
 <script setup lang="ts">
-import type { SiteBusinessStatusKind } from '~~/shared/types/contracts'
 import type {
-  SiteContentPayload,
+  SiteBusinessStatusKind,
+  SiteContentSection,
+} from '~~/shared/types/contracts'
+import type {
+  SiteContentSectionPayloads,
   SiteStatusPayload,
 } from '~/composables/useAdminSiteContent'
 
-definePageMeta({
-  layout: 'admin',
-  ssr: false,
-})
-
-useSeoMeta({
-  title: '文案配置',
-  robots: 'noindex, nofollow',
-})
+definePageMeta({ layout: 'admin', ssr: false })
+useSeoMeta({ title: '文案配置', robots: 'noindex, nofollow' })
 
 const {
   conflictNotice,
   content,
+  isMutating,
   load,
-  mutating,
   pageStatus,
   savedSection,
-  saveContent,
+  saveSection,
   saveStatus,
 } = useAdminSiteContent()
 
 const actionError = ref<string | null>(null)
 const errorDialogOpen = computed(() => Boolean(actionError.value || conflictNotice.value))
-
 function closeErrorDialog() {
   actionError.value = null
   conflictNotice.value = null
 }
-
 async function onSaveStatus(kind: SiteBusinessStatusKind, payload: SiteStatusPayload) {
   actionError.value = await saveStatus(kind, payload)
 }
-
-async function onSaveContent(payload: SiteContentPayload) {
-  actionError.value = await saveContent(payload)
+async function onSaveSection<S extends SiteContentSection>(
+  section: S,
+  payload: SiteContentSectionPayloads[S],
+) {
+  actionError.value = await saveSection(section, payload)
 }
-
 onMounted(() => void load())
 </script>
 
@@ -51,7 +46,7 @@ onMounted(() => void load())
       <header class="content-admin__header">
         <h1 class="content-admin__title">文案配置</h1>
         <p class="content-admin__meta">
-          维护委托与领养状态，以及自设委托、关于我们、服务条款、隐私政策的固定文案。
+          按业务分区独立维护和保存。一个 Card 的草稿、冲突或保存不会覆盖其他分区。
         </p>
       </header>
 
@@ -67,34 +62,32 @@ onMounted(() => void load())
         <section class="content-admin__card" aria-labelledby="business-statuses-title">
           <h2 id="business-statuses-title" class="content-admin__card-title">营业状态</h2>
           <p class="content-admin__meta">
-            委托与领养各自独立保存；状态链接由系统固定指向对应公开页。
+            委托与领养各自独立保存，并直接显示在首页统一业务入口卡中。
           </p>
           <div class="content-admin__statuses">
             <AdminSiteBusinessStatusCard
               kind="commission"
               :status="content.statuses.commission"
-              :mutating="mutating"
-              :saved="savedSection === 'commission'"
+              :mutating="isMutating('status-commission')"
+              :saved="savedSection === 'status-commission'"
               @save="payload => onSaveStatus('commission', payload)"
             />
             <AdminSiteBusinessStatusCard
               kind="adoption"
               :status="content.statuses.adoption"
-              :mutating="mutating"
-              :saved="savedSection === 'adoption'"
+              :mutating="isMutating('status-adoption')"
+              :saved="savedSection === 'status-adoption'"
               @save="payload => onSaveStatus('adoption', payload)"
             />
           </div>
         </section>
 
-        <div class="content-admin__card">
-          <AdminSiteContentCard
-            :content="content"
-            :mutating="mutating"
-            :saved="savedSection === 'content'"
-            @save="onSaveContent"
-          />
-        </div>
+        <AdminSiteContentCard
+          :content="content"
+          :is-mutating="isMutating"
+          :saved-section="savedSection"
+          @save="onSaveSection"
+        />
       </template>
 
       <AdminConfirmDialog
@@ -116,32 +109,19 @@ onMounted(() => void load())
 .content-admin {
   display: grid;
   gap: var(--admin-space-4);
-  max-width: 72rem;
+  max-width: 88rem;
 }
-
-.content-admin__header {
-  display: grid;
-  gap: var(--admin-space-1);
-}
-
+.content-admin__header { display: grid; gap: var(--admin-space-1); }
 .content-admin__title,
 .content-admin__card-title,
 .content-admin__meta,
-.content-admin__state p {
-  margin: 0;
-}
-
-.content-admin__title {
-  font-size: var(--admin-font-lg);
-  font-weight: 700;
-}
-
+.content-admin__state p { margin: 0; }
+.content-admin__title { font-size: var(--admin-font-lg); font-weight: 700; }
 .content-admin__meta {
   color: var(--admin-text-secondary);
   font-size: var(--admin-font-sm);
   line-height: var(--admin-line-normal);
 }
-
 .content-admin__state,
 .content-admin__card {
   padding: var(--admin-space-4);
@@ -149,7 +129,6 @@ onMounted(() => void load())
   border: 1px solid var(--admin-border-secondary);
   border-radius: var(--admin-radius-md);
 }
-
 .content-admin__state {
   display: grid;
   justify-items: start;
@@ -157,22 +136,9 @@ onMounted(() => void load())
   color: var(--admin-text-secondary);
   font-size: var(--admin-font-sm);
 }
-
-.content-admin__card {
-  display: grid;
-  gap: var(--admin-space-3);
-}
-
-.content-admin__card-title {
-  font-size: var(--admin-font-md);
-  font-weight: 600;
-}
-
-.content-admin__statuses {
-  display: grid;
-  gap: var(--admin-space-3);
-}
-
+.content-admin__card { display: grid; gap: var(--admin-space-3); }
+.content-admin__card-title { font-size: var(--admin-font-md); font-weight: 600; }
+.content-admin__statuses { display: grid; gap: var(--admin-space-3); }
 .content-admin__button {
   min-height: var(--admin-control-height-sm);
   padding: 0 var(--admin-space-3);
@@ -184,11 +150,7 @@ onMounted(() => void load())
   font-size: var(--admin-font-xs);
   cursor: pointer;
 }
-
 @media (min-width: 1024px) {
-  .content-admin__statuses {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
-  }
+  .content-admin__statuses { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
 }
 </style>

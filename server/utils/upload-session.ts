@@ -387,3 +387,65 @@ export async function retryUploadSession(
     { now },
   )
 }
+
+export interface ExpiredUploadCleanupResult {
+  candidateCount: number
+  expiredCount: number
+  cleanedCount: number
+  failedCount: number
+  sessionIds: string[]
+}
+
+/**
+ * Proactively expires abandoned upload sessions and deletes only their exact
+ * private object. Permanent assets and completed sessions are never selected.
+ */
+export async function cleanupExpiredUploadSessions(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  options: {
+    dryRun?: boolean
+    limit?: number
+    now?: number
+  } = {},
+): Promise<ExpiredUploadCleanupResult> {
+  const now = options.now ?? Date.now()
+  const limit = Math.max(1, Math.min(options.limit ?? 100, 1_000))
+  const candidates = sqlite.prepare(`
+    ${selectUploadSession}
+    WHERE status = 'AWAITING_UPLOAD' AND expires_at <= ?
+    ORDER BY expires_at, id
+    LIMIT ?
+  `).all(now, limit) as UploadSessionRow[]
+  const result: ExpiredUploadCleanupResult = {
+    candidateCount: candidates.length,
+    expiredCount: 0,
+    cleanedCount: 0,
+    failedCount: 0,
+    sessionIds: candidates.map(row => row.id),
+  }
+  if (options.dryRun) {
+    return result
+  }
+
+  for (const candidate of candidates) {
+    const changed = sqlite.prepare(`
+      UPDATE upload_sessions
+      SET status = 'EXPIRED', version = version + 1, updated_at = ?
+      WHERE id = ? AND version = ? AND status = 'AWAITING_UPLOAD'
+        AND expires_at <= ? AND asset_id IS NULL
+    `).run(now, candidate.id, candidate.version, now)
+    if (changed.changes !== 1) {
+      continue
+    }
+    result.expiredCount += 1
+    const updated = requireUploadSession(sqlite, candidate.id)
+    if (await cleanupExactObject(sqlite, storage, updated, now)) {
+      result.cleanedCount += 1
+    }
+    else {
+      result.failedCount += 1
+    }
+  }
+  return result
+}

@@ -1,77 +1,65 @@
 <script setup lang="ts">
 import type {
   PublicAdoptionListItemDto,
-  PublicHeroSlideDto,
-  PublicSiteContentDto,
+  PublicHomepageDto,
 } from '~~/shared/types/contracts'
 
 const props = defineProps<{
   adoptions: PublicAdoptionListItemDto[]
-  commissionSlide: PublicHeroSlideDto | null
-  statuses: PublicSiteContentDto['statuses']
+  entries: PublicHomepageDto['entries']
 }>()
 
-const firstAdoption = computed(() => props.adoptions[0] ?? null)
-const currentAdoptions = computed(() => props.adoptions.slice(0, 2))
-const visibleStatuses = computed(() => [
-  props.statuses.commission,
-  props.statuses.adoption,
-].filter(status => status !== null))
+const visibleEntries = computed(() => [
+  props.entries.commission,
+  props.entries.adoption,
+].filter(entry => entry !== null))
 </script>
 
 <template>
   <div class="home-continuation">
     <section
-      v-if="commissionSlide || firstAdoption"
-      class="home-entry-grid"
-      aria-label="委托与领养"
-      data-testid="home-image-entries"
+      v-if="visibleEntries.length > 0"
+      class="home-business"
+      aria-labelledby="home-business-title"
+      data-testid="home-business-entries"
     >
-      <NuxtLink v-if="commissionSlide" to="/commission" class="home-entry">
-        <ResponsivePicture
-          class="home-entry__media"
-          :sources="commissionSlide.landscape"
-          :portrait-sources="commissionSlide.portrait"
-          :alt="commissionSlide.alt"
-          sizes="(min-width: 768px) 50vw, 100vw"
-        />
-        <span class="home-entry__shade" aria-hidden="true" />
-        <span class="home-entry__label">自设委托 <span aria-hidden="true">→</span></span>
-      </NuxtLink>
+      <header class="home-business__header">
+        <p class="home-business__eyebrow">制作与领养</p>
+        <h2 id="home-business-title" class="home-section-title">找到适合你的入口</h2>
+      </header>
 
-      <NuxtLink v-if="firstAdoption" to="/adoptions" class="home-entry">
-        <ResponsivePicture
-          class="home-entry__media"
-          :sources="firstAdoption.designSheet.sources"
-          :alt="firstAdoption.designSheet.alt"
-          sizes="(min-width: 768px) 50vw, 100vw"
-        />
-        <span class="home-entry__shade" aria-hidden="true" />
-        <span class="home-entry__label">角色领养 <span aria-hidden="true">→</span></span>
-      </NuxtLink>
-    </section>
-
-    <section
-      v-if="visibleStatuses.length > 0"
-      class="home-statuses"
-      aria-labelledby="home-statuses-title"
-      data-testid="home-business-statuses"
-    >
-      <h2 id="home-statuses-title" class="home-section-title">当前状态</h2>
-      <div class="home-statuses__grid">
+      <div class="home-business__grid">
         <NuxtLink
-          v-for="status in visibleStatuses"
-          :key="status.kind"
-          :to="status.href"
-          class="home-statuses__item"
+          v-for="entry in visibleEntries"
+          :key="entry.kind"
+          :to="entry.href"
+          class="home-business-card"
+          :data-entry-kind="entry.kind"
         >
-          <PublicBusinessStatus :status="status" />
+          <ResponsivePicture
+            class="home-business-card__media"
+            :sources="entry.sources"
+            :alt="entry.alt"
+            sizes="(min-width: 768px) 50vw, 100vw"
+          />
+          <span class="home-business-card__shade" aria-hidden="true" />
+          <span class="home-business-card__content">
+            <span class="home-business-card__title-row">
+              <span class="home-business-card__title">{{ entry.title }}</span>
+              <span aria-hidden="true">→</span>
+            </span>
+            <PublicBusinessStatus
+              v-if="entry.status"
+              class="home-business-card__status"
+              :status="entry.status"
+            />
+          </span>
         </NuxtLink>
       </div>
     </section>
 
     <section
-      v-if="currentAdoptions.length > 0"
+      v-if="adoptions.length > 0"
       class="home-adoptions"
       aria-labelledby="home-adoptions-title"
       data-testid="home-current-adoptions"
@@ -83,7 +71,7 @@ const visibleStatuses = computed(() => [
         </NuxtLink>
       </header>
       <ul class="home-adoptions__grid" role="list">
-        <li v-for="adoption in currentAdoptions" :key="adoption.work.id">
+        <li v-for="adoption in adoptions" :key="adoption.work.id">
           <AdoptionCard :adoption="adoption" />
         </li>
       </ul>
@@ -100,60 +88,21 @@ const visibleStatuses = computed(() => [
   padding: var(--space-9) var(--public-page-padding) 0;
 }
 
-.home-entry-grid,
-.home-statuses__grid,
-.home-adoptions__grid {
+.home-business,
+.home-adoptions {
   display: grid;
-  gap: var(--space-6);
+  gap: var(--space-5);
 }
 
-.home-entry {
-  position: relative;
+.home-business__header {
   display: grid;
-  min-height: 16rem;
-  overflow: hidden;
-  color: var(--public-text-inverse);
-  background: var(--image-placeholder);
-  border-radius: var(--radius-md);
+  gap: var(--space-2);
 }
 
-.home-entry__media,
-.home-entry__shade,
-.home-entry__label {
-  grid-area: 1 / 1;
-}
-
-.home-entry__media,
-.home-entry__media :deep(.responsive-picture),
-.home-entry__media :deep(.responsive-picture__image) {
-  width: 100%;
-  height: 100%;
-}
-
-.home-entry__media :deep(.responsive-picture__image) {
-  object-fit: cover;
-  transition: transform var(--duration-section) var(--easing-standard);
-}
-
-.home-entry__shade {
-  background: linear-gradient(to top, rgb(17 20 25 / 0.62), transparent 60%);
-}
-
-.home-entry__label {
-  z-index: 1;
-  align-self: end;
-  padding: var(--space-6);
-  font-family: var(--font-public-display);
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-}
-
-.home-entry:hover {
-  color: var(--public-text-inverse);
-}
-
-.home-entry:hover .home-entry__media :deep(.responsive-picture__image) {
-  transform: scale(var(--image-hover-scale));
+.home-business__eyebrow {
+  color: var(--public-text-tertiary);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-label);
 }
 
 .home-section-title {
@@ -164,21 +113,84 @@ const visibleStatuses = computed(() => [
   letter-spacing: var(--letter-spacing-tight);
 }
 
-.home-statuses,
-.home-adoptions {
+.home-business__grid,
+.home-adoptions__grid {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-6);
 }
 
-.home-statuses__item {
-  padding: var(--space-5);
-  color: var(--public-text-primary);
-  background: var(--public-bg-secondary);
+.home-business-card {
+  position: relative;
+  display: grid;
+  min-height: clamp(18rem, 38vw, 30rem);
+  overflow: hidden;
+  color: var(--public-text-inverse);
+  background: var(--image-placeholder);
   border-radius: var(--radius-md);
 }
 
-.home-statuses__item:hover {
-  color: var(--public-text-primary);
+.home-business-card__media,
+.home-business-card__shade,
+.home-business-card__content {
+  grid-area: 1 / 1;
+}
+
+.home-business-card__media,
+.home-business-card__media :deep(.responsive-picture),
+.home-business-card__media :deep(.responsive-picture__image) {
+  width: 100%;
+  height: 100%;
+}
+
+.home-business-card__media :deep(.responsive-picture__image) {
+  object-fit: cover;
+  transition: transform var(--duration-section) var(--easing-standard);
+}
+
+.home-business-card__shade {
+  background: linear-gradient(
+    to top,
+    rgb(17 20 25 / 0.76),
+    rgb(17 20 25 / 0.16) 62%,
+    transparent
+  );
+}
+
+.home-business-card__content {
+  z-index: 1;
+  align-self: end;
+  display: grid;
+  gap: var(--space-3);
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.home-business-card__title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.home-business-card__title {
+  font-family: var(--font-public-display);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.home-business-card__status {
+  color: rgb(255 255 255 / 0.92);
+}
+
+.home-business-card__status :deep(.business-status__detail) {
+  color: rgb(255 255 255 / 0.78);
+}
+
+.home-business-card:hover {
+  color: var(--public-text-inverse);
+}
+
+.home-business-card:hover .home-business-card__media :deep(.responsive-picture__image) {
+  transform: scale(var(--image-hover-scale));
 }
 
 .home-adoptions__header {
@@ -205,24 +217,22 @@ const visibleStatuses = computed(() => [
 }
 
 @media (min-width: 768px) {
-  .home-entry-grid,
-  .home-statuses__grid,
+  .home-business__grid,
   .home-adoptions__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .home-entry-grid > :only-child,
-  .home-statuses__grid > :only-child {
+  .home-business__grid > :only-child {
     grid-column: 1 / -1;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .home-entry__media :deep(.responsive-picture__image) {
+  .home-business-card__media :deep(.responsive-picture__image) {
     transition: none;
   }
 
-  .home-entry:hover .home-entry__media :deep(.responsive-picture__image) {
+  .home-business-card:hover .home-business-card__media :deep(.responsive-picture__image) {
     transform: none;
   }
 }

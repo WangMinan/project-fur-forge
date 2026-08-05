@@ -17,7 +17,8 @@ import {
   publicVariantCountForUsages,
   workAssetPublicUsages,
 } from './media-recipe'
-import type { PublicMediaUsage } from './media-recipe'
+import type { ProtectedMediaUsage } from './media-recipe'
+import { leaseExpiresAt } from './operation-lease'
 import { ServiceError } from './service-error'
 import {
   findWatermarkProfile,
@@ -41,15 +42,18 @@ interface CleanupManifestEntry {
 }
 
 interface WatermarkOperationRow {
+  attempt: number
   affectedHeroSlideCount: number
   affectedWorkCount: number
   brandingVersion: number
   cleanupObjectKeysJson: string
   completedAt: number | null
   failureStage: string | null
+  heartbeatAt: number
   generatedVariantCount: number
   id: string
   internalErrorCode: string | null
+  leaseExpiresAt: number
   operationType: 'WATERMARK_PREVIEW' | 'WATERMARK_REBUILD'
   previewManifestJson: string
   profileId: string
@@ -63,7 +67,7 @@ interface WatermarkOperationRow {
 
 interface WatermarkTarget {
   assetId: string
-  usages: PublicMediaUsage[]
+  usages: ProtectedMediaUsage[]
 }
 
 const selectOperation = `
@@ -78,7 +82,8 @@ const selectOperation = `
     preview_manifest_json AS previewManifestJson,
     cleanup_object_keys_json AS cleanupObjectKeysJson,
     internal_error_code AS internalErrorCode,
-    failure_stage AS failureStage, version,
+    failure_stage AS failureStage, attempt,
+    heartbeat_at AS heartbeatAt, lease_expires_at AS leaseExpiresAt, version,
     started_at AS startedAt, updated_at AS updatedAt,
     completed_at AS completedAt
   FROM watermark_operations
@@ -149,6 +154,9 @@ function operationDto(row: WatermarkOperationRow): WatermarkOperationDto {
       url: `/api/admin/v1/site/branding/watermark-operations/${row.id}/previews/${preview.kind}`,
     })),
     failureCode: row.internalErrorCode,
+    attempt: row.attempt,
+    heartbeatAt: new Date(row.heartbeatAt).toISOString(),
+    leaseExpiresAt: new Date(row.leaseExpiresAt).toISOString(),
     version: row.version,
     startedAt: new Date(row.startedAt).toISOString(),
     updatedAt: new Date(row.updatedAt).toISOString(),
@@ -159,20 +167,11 @@ function operationDto(row: WatermarkOperationRow): WatermarkOperationDto {
 }
 
 function targetUsages(
-  role: string,
+  role: 'design_sheet' | 'studio_photo',
   primary = false,
   hasPrimaryStudioPhoto = false,
-): PublicMediaUsage[] {
-  if (role === 'studio_photo' || role === 'design_sheet') {
-    return workAssetPublicUsages(role, primary, hasPrimaryStudioPhoto)
-  }
-  if (role === 'home_hero_landscape') {
-    return ['home-hero-landscape']
-  }
-  if (role === 'home_hero_portrait') {
-    return ['home-hero-portrait']
-  }
-  throw new Error('Unsupported public watermark target role.')
+): ProtectedMediaUsage[] {
+  return workAssetPublicUsages(role, primary, hasPrimaryStudioPhoto)
 }
 
 function watermarkTargets(sqlite: Database.Database) {
@@ -195,23 +194,15 @@ function watermarkTargets(sqlite: Database.Database) {
     assetId: string
     hasPrimaryStudioPhoto: number
     primary: number
-    role: string
+    role: 'design_sheet' | 'studio_photo'
   }>
-  const heroRows = sqlite.prepare(`
-    SELECT DISTINCT asset.id AS assetId, asset.role
-    FROM site_hero_slides AS slide
-    JOIN assets AS asset
-      ON asset.id IN (slide.landscape_asset_id, slide.portrait_asset_id)
-    WHERE slide.enabled = 1 AND asset.status = 'READY'
-      AND asset.role IN ('home_hero_landscape', 'home_hero_portrait')
-  `).all() as Array<{ assetId: string, role: string }>
-  const targets = new Map<string, Set<PublicMediaUsage>>()
-  for (const row of [...workRows, ...heroRows]) {
-    const usages = targets.get(row.assetId) ?? new Set<PublicMediaUsage>()
+  const targets = new Map<string, Set<ProtectedMediaUsage>>()
+  for (const row of workRows) {
+    const usages = targets.get(row.assetId) ?? new Set<ProtectedMediaUsage>()
     targetUsages(
       row.role,
-      'primary' in row && row.primary === 1,
-      'hasPrimaryStudioPhoto' in row && row.hasPrimaryStudioPhoto === 1,
+      row.primary === 1,
+      row.hasPrimaryStudioPhoto === 1,
     ).forEach(usage => usages.add(usage))
     targets.set(row.assetId, usages)
   }
@@ -226,9 +217,9 @@ function impact(sqlite: Database.Database, targets = watermarkTargets(sqlite)) {
     publishedWorkCount: Number(sqlite.prepare(`
       SELECT count(*) FROM works WHERE publication_status = 'published'
     `).pluck().get()),
-    enabledHeroSlideCount: Number(sqlite.prepare(`
-      SELECT count(*) FROM site_hero_slides WHERE enabled = 1
-    `).pluck().get()),
+    // Site Hero and homepage business-entry derivatives are unwatermarked
+    // site-display media and are intentionally excluded from profile rebuilds.
+    enabledHeroSlideCount: 0,
     targetVariantCount: targets.reduce(
       (count, target) => count + publicVariantCountForUsages(target.usages),
       0,
@@ -310,13 +301,15 @@ function createOperation(
     sqlite.prepare(`
       INSERT INTO watermark_operations (
         id, operation_type, profile_id, branding_version,
-        status, started_at, updated_at
-      ) VALUES (?, ?, ?, ?, 'GENERATING_PUBLIC', ?, ?)
+        status, attempt, heartbeat_at, lease_expires_at, started_at, updated_at
+      ) VALUES (?, ?, ?, ?, 'GENERATING_PUBLIC', 1, ?, ?, ?, ?)
     `).run(
       id,
       input.operationType,
       input.profileId,
       input.brandingVersion + 1,
+      now,
+      leaseExpiresAt(now),
       now,
       now,
     )
@@ -355,6 +348,7 @@ function updateOperation(
         preview_manifest_json = COALESCE(?, preview_manifest_json),
         cleanup_object_keys_json = COALESCE(?, cleanup_object_keys_json),
         internal_error_code = NULL, failure_stage = NULL,
+        heartbeat_at = ?, lease_expires_at = ?,
         version = version + 1, updated_at = ?
     WHERE id = ?
   `).run(
@@ -364,6 +358,8 @@ function updateOperation(
     fields.verified ?? null,
     fields.preview ? JSON.stringify(fields.preview) : null,
     fields.cleanup ? JSON.stringify(fields.cleanup) : null,
+    now,
+    leaseExpiresAt(now),
     now,
     id,
   )
@@ -429,7 +425,7 @@ async function cleanupManifest(
 }
 
 function previewSamples(sqlite: Database.Database) {
-  const work = sqlite.prepare(`
+  const photo = sqlite.prepare(`
     SELECT asset.id AS assetId, asset.private_object_key AS privateObjectKey
     FROM assets AS asset
     LEFT JOIN work_assets AS relation ON relation.asset_id = asset.id
@@ -438,23 +434,21 @@ function previewSamples(sqlite: Database.Database) {
     ORDER BY (work.publication_status = 'published') DESC,
              asset.created_at DESC LIMIT 1
   `).get() as { assetId: string, privateObjectKey: string } | undefined
-  const sampleFor = (role: string) => sqlite.prepare(`
+  const designSheet = sqlite.prepare(`
     SELECT asset.id AS assetId, asset.private_object_key AS privateObjectKey
     FROM assets AS asset
-    LEFT JOIN site_hero_slides AS slide
-      ON asset.id IN (slide.landscape_asset_id, slide.portrait_asset_id)
-    WHERE asset.role = ? AND asset.status = 'READY'
-    ORDER BY (slide.enabled = 1) DESC, asset.created_at DESC LIMIT 1
-  `).get(role) as { assetId: string, privateObjectKey: string } | undefined
-  const landscape = sampleFor('home_hero_landscape')
-  const portrait = sampleFor('home_hero_portrait')
-  if (!work) {
-    throw new ServiceError(409, 'CONFLICT', 'Representative preview assets are unavailable.')
+    LEFT JOIN work_assets AS relation ON relation.asset_id = asset.id
+    LEFT JOIN works AS work ON work.id = relation.work_id
+    WHERE asset.role = 'design_sheet' AND asset.status = 'READY'
+    ORDER BY (work.publication_status = 'published') DESC,
+             asset.created_at DESC LIMIT 1
+  `).get() as { assetId: string, privateObjectKey: string } | undefined
+  if (!photo) {
+    throw new ServiceError(409, 'CONFLICT', 'Representative work photo is unavailable.')
   }
   return {
-    work,
-    landscape: landscape ?? work,
-    portrait: portrait ?? work,
+    photo,
+    designSheet: designSheet ?? photo,
   }
 }
 
@@ -476,12 +470,11 @@ async function runPreview(
   const manifest: PreviewManifestEntry[] = []
   try {
     const samples = previewSamples(sqlite)
-    const prefix = previewPrefix(samples.work.privateObjectKey, operation.id)
+    const prefix = previewPrefix(samples.photo.privateObjectKey, operation.id)
     const specifications = [
-      { kind: 'work-card', assetId: samples.work.assetId, usage: 'work-card', width: 480 },
-      { kind: 'detail', assetId: samples.work.assetId, usage: 'detail', width: 960 },
-      { kind: 'home-hero-landscape', assetId: samples.landscape.assetId, usage: 'home-hero-landscape', width: 768 },
-      { kind: 'home-hero-portrait', assetId: samples.portrait.assetId, usage: 'home-hero-portrait', width: 480 },
+      { kind: 'work-card', assetId: samples.photo.assetId, usage: 'work-card', width: 480 },
+      { kind: 'detail', assetId: samples.photo.assetId, usage: 'detail', width: 960 },
+      { kind: 'design-sheet', assetId: samples.designSheet.assetId, usage: 'design-sheet', width: 960 },
     ] as const
     updateOperation(sqlite, operationId, 'GENERATING_PUBLIC', now, {
       target: specifications.length,
@@ -623,6 +616,7 @@ async function runRebuild(
     const oldEntries = (sqlite.prepare(`
       SELECT object_key FROM asset_variants
       WHERE storage_scope = 'PUBLIC'
+        AND watermark_profile_id IS NOT NULL
         AND watermark_profile_id IS NOT ?
     `).pluck().all(operation.profileId) as string[]).map(objectKey => ({
       scope: 'PUBLIC' as const,
@@ -793,7 +787,7 @@ export function startWatermarkProfileApplication(
   const previewed = sqlite.prepare(`
     SELECT 1 FROM watermark_operations
     WHERE operation_type = 'WATERMARK_PREVIEW' AND profile_id = ?
-      AND status = 'DONE' AND verified_variant_count = 4 LIMIT 1
+      AND status = 'DONE' AND verified_variant_count = 3 LIMIT 1
   `).pluck().get(profileId)
   if (!previewed) {
     throw new ServiceError(409, 'CONFLICT', 'A verified watermark preview is required.')
@@ -885,6 +879,13 @@ export async function retryWatermarkOperation(
     )
     return operationDto(requireOperation(sqlite, operationId))
   }
+  operation = requireOperation(sqlite, operationId)
+  sqlite.prepare(`
+    UPDATE watermark_operations
+    SET attempt = attempt + 1, heartbeat_at = ?, lease_expires_at = ?,
+        completed_at = NULL, updated_at = ?
+    WHERE id = ? AND status = 'FAILED'
+  `).run(now, leaseExpiresAt(now), now, operationId)
   operation = requireOperation(sqlite, operationId)
   if (operation.operationType === 'WATERMARK_PREVIEW') {
     return operationDto(await runPreview(sqlite, storage, operationId, now))

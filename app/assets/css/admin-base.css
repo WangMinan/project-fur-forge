@@ -175,3 +175,38 @@
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Shared fields for sectioned site-content cards. */
+.admin-content-field { display: grid; gap: var(--admin-space-1); }
+.admin-content-label { font-size: var(--admin-font-xs); font-weight: 600; }
+.admin-content-input,
+.admin-content-textarea {
+  width: 100%;
+  padding: 0 var(--admin-space-2);
+  color: var(--admin-text-primary);
+  background: var(--admin-bg-primary);
+  border: 1px solid var(--admin-border-primary);
+  border-radius: var(--admin-radius-sm);
+  font: inherit;
+  font-size: var(--admin-font-sm);
+}
+.admin-content-input { min-height: var(--admin-control-height); }
+.admin-content-input--narrow { max-width: 20rem; }
+.admin-content-textarea { padding: var(--admin-space-2); line-height: var(--admin-line-normal); resize: vertical; }
+.admin-content-textarea--long { min-height: 16rem; }
+.admin-content-hint,
+.admin-content-issue { margin: 0; font-size: var(--admin-font-xs); }
+.admin-content-hint { color: var(--admin-text-tertiary); }
+.admin-content-issue { color: var(--admin-status-error); }
+.admin-content-secondary-button {
+  min-height: var(--admin-control-height-sm);
+  padding: 0 var(--admin-space-3);
+  color: var(--admin-text-primary);
+  background: var(--admin-bg-primary);
+  border: 1px solid var(--admin-border-primary);
+  border-radius: var(--admin-radius-sm);
+  font: inherit;
+  font-size: var(--admin-font-xs);
+  cursor: pointer;
+}
+.admin-content-secondary-button:disabled { opacity: 0.55; cursor: default; }

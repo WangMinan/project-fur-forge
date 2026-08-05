@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3'
 import {
   publicCommissionHeroDtoSchema,
+  publicHomepageDtoSchema,
   publicHomeDtoSchema,
 } from '../../shared/schemas/home'
 import {
@@ -15,6 +16,7 @@ import type {
   PublicAdoptionListDto,
   PublicCommissionHeroDto,
   PublicFeaturedWorksDto,
+  PublicHomepageDto,
   PublicHomeDto,
   PublicSourceSetDto,
   PublicWorkDetailDto,
@@ -35,8 +37,10 @@ import {
   LEGACY_PUBLIC_RECIPE_VERSION,
   PUBLIC_RECIPE_VERSION,
   publicRecipeWidths,
+  SITE_DISPLAY_RECIPE_VERSION,
 } from './media-recipe'
 import { getRuntimeConfig } from './runtime-config'
+import { getPublicSiteContent } from './site-content'
 import { toPublicWorkDto } from './work-mapper'
 
 export interface PublicWorksQuery {
@@ -51,6 +55,7 @@ export interface PublicSiteRepository {
   listFeaturedWorks(): PublicFeaturedWorksDto
   getCommissionHero(): PublicCommissionHeroDto
   getHome(): PublicHomeDto
+  getHomepage(): PublicHomepageDto
 }
 
 interface PublishedWorkRow {
@@ -91,6 +96,7 @@ interface SnapshotEntry {
     assetId: string
     sources: PublicSourceSetDto
   } | null
+  adoptionEntrySources: PublicSourceSetDto | null
   featured: boolean
   purpose: PublishedWorkRow['purpose']
   studioPhotos: Array<{
@@ -147,6 +153,33 @@ function sourceSet(
     }
   }
   return null
+}
+
+function siteDisplaySourceSet(
+  variants: readonly PublicVariantRow[],
+  mediaBaseUrl: string,
+  usage: 'home-entry-adoption' | 'home-entry-commission',
+) {
+  try {
+    return toPublicSourceSetDto(
+      variants.filter(variant => (
+        variant.usage === usage
+        && variant.recipeVersion === SITE_DISPLAY_RECIPE_VERSION
+        && variant.watermarkProfile === 'none'
+        && variant.watermarkProfileId === null
+        && variant.watermarkConfigDigest === 'none'
+        && variant.logoDigest === 'none'
+        && variant.watermarkAnchor === 'none'
+        && variant.watermarkOpacityPercent === null
+        && variant.watermarkScalePercent === null
+      )),
+      mediaBaseUrl,
+      publicRecipeWidths(usage),
+    )
+  }
+  catch {
+    return null
+  }
 }
 
 function loadPublishedWorks(sqlite: Database.Database) {
@@ -242,6 +275,43 @@ function loadCurrentPublicVariants(sqlite: Database.Database) {
   `).all() as PublicVariantRow[]
 }
 
+function loadSiteDisplayVariants(sqlite: Database.Database) {
+  return sqlite.prepare(`
+    SELECT
+      variant.id, variant.asset_id AS assetId,
+      variant.byte_size AS byteSize,
+      variant.storage_scope AS storageScope,
+      variant.status, variant.object_key AS objectKey,
+      variant.width, variant.height, variant.format,
+      variant.input_sha256 AS inputSha256,
+      variant.internal_error_code AS internalErrorCode,
+      variant.logo_digest AS logoDigest, variant.media_role AS mediaRole,
+      variant.recipe_version AS recipeVersion, variant.sha256, variant.usage,
+      variant.watermark_anchor AS watermarkAnchor,
+      variant.watermark_config_digest AS watermarkConfigDigest,
+      variant.watermark_opacity_percent AS watermarkOpacityPercent,
+      variant.watermark_profile AS watermarkProfile,
+      variant.watermark_profile_id AS watermarkProfileId,
+      variant.watermark_scale_percent AS watermarkScalePercent
+    FROM asset_variants AS variant
+    WHERE variant.storage_scope = 'PUBLIC'
+      AND variant.status = 'READY'
+      AND variant.recipe_version = 'site-display-v1'
+      AND variant.usage IN ('home-entry-commission', 'home-entry-adoption')
+      AND variant.watermark_profile = 'none'
+      AND variant.watermark_profile_id IS NULL
+      AND variant.watermark_config_digest = 'none'
+      AND variant.logo_digest = 'none'
+      AND variant.watermark_anchor = 'none'
+      AND variant.watermark_opacity_percent IS NULL
+      AND variant.watermark_scale_percent IS NULL
+      AND length(variant.sha256) = 64
+      AND variant.sha256 NOT GLOB '*[^0-9a-f]*'
+      AND variant.byte_size > 0
+    ORDER BY variant.asset_id, variant.usage, variant.width, variant.format
+  `).all() as PublicVariantRow[]
+}
+
 function snapshot(
   sqlite: Database.Database,
   mediaBaseUrl: string,
@@ -250,6 +320,10 @@ function snapshot(
   const mediaByWork = groupBy(loadWorkMedia(sqlite), media => media.workId)
   const variantsByAsset = groupBy(
     loadCurrentPublicVariants(sqlite),
+    variant => variant.assetId,
+  )
+  const siteVariantsByAsset = groupBy(
+    loadSiteDisplayVariants(sqlite),
     variant => variant.assetId,
   )
   const entries: SnapshotEntry[] = []
@@ -333,6 +407,13 @@ function snapshot(
     entries.push({
       featured: row.featured === 1,
       designSheet,
+      adoptionEntrySources: designSheet
+        ? siteDisplaySourceSet(
+            siteVariantsByAsset.get(designSheet.assetId) ?? [],
+            mediaBaseUrl,
+            'home-entry-adoption',
+          )
+        : null,
       purpose: row.purpose,
       suitType: row.suitType,
       summary: publicWorkSummaryDtoSchema.parse({
@@ -364,6 +445,55 @@ function detailFor(entries: readonly SnapshotEntry[], slug: string) {
     next: entries[currentIndex + 1]?.summary ?? null,
     previous: entries[currentIndex - 1]?.summary ?? null,
     related: [...samePurpose, ...others].slice(0, 3),
+  }
+}
+
+function publicAdoptionsFromSnapshot(entries: readonly SnapshotEntry[]) {
+  return entries.flatMap(entry => (
+    entry.summary.work.purpose === 'adoption'
+    && entry.summary.work.adoptionMethod === 'regular'
+    && entry.designSheet
+      ? [{
+          work: entry.summary.work,
+          href: entry.summary.href,
+          designSheet: entry.designSheet,
+        }]
+      : []
+  ))
+}
+
+function commissionEntry(
+  sqlite: Database.Database,
+  mediaBaseUrl: string,
+) {
+  const row = sqlite.prepare(`
+    SELECT
+      slide.alt_text AS alt,
+      slide.landscape_asset_id AS assetId
+    FROM site_hero_slides AS slide
+    WHERE slide.placement = 'commission' AND slide.enabled = 1
+    ORDER BY slide.sort_order, slide.id
+    LIMIT 1
+  `).get() as { alt: string, assetId: string } | undefined
+  if (!row) {
+    return null
+  }
+  const variants = loadSiteDisplayVariants(sqlite)
+    .filter(variant => variant.assetId === row.assetId)
+  const sources = siteDisplaySourceSet(
+    variants,
+    mediaBaseUrl,
+    'home-entry-commission',
+  )
+  if (!sources) {
+    return null
+  }
+  return {
+    kind: 'commission' as const,
+    href: '/commission' as const,
+    title: '自设委托',
+    alt: toSafePublicAlt(row.alt, '自设委托代表作品'),
+    sources,
   }
 }
 
@@ -419,17 +549,7 @@ export function createSqlitePublicSiteRepository(
     },
 
     listAdoptions() {
-      const items = snapshot(sqlite, mediaBaseUrl).flatMap(entry => (
-        entry.summary.work.purpose === 'adoption'
-        && entry.summary.work.adoptionMethod === 'regular'
-        && entry.designSheet
-          ? [{
-              work: entry.summary.work,
-              href: entry.summary.href,
-              designSheet: entry.designSheet,
-            }]
-          : []
-      ))
+      const items = publicAdoptionsFromSnapshot(snapshot(sqlite, mediaBaseUrl))
       return publicAdoptionListDtoSchema.parse({
         items,
         resultCount: items.length,
@@ -474,6 +594,45 @@ export function createSqlitePublicSiteRepository(
       })
     },
 
+    getHomepage() {
+      const entries = snapshot(sqlite, mediaBaseUrl)
+      const statuses = getPublicSiteContent(sqlite).statuses
+      const adoptions = publicAdoptionsFromSnapshot(entries)
+      const commission = commissionEntry(sqlite, mediaBaseUrl)
+      const adoption = entries.find(entry => (
+        entry.summary.work.purpose === 'adoption'
+        && entry.summary.work.adoptionMethod === 'regular'
+        && entry.designSheet
+        && entry.adoptionEntrySources
+      ))
+      const featuredItems = entries
+        .filter(entry => entry.featured)
+        .slice(0, 6)
+        .map(entry => entry.summary)
+      return publicHomepageDtoSchema.parse({
+        hero: getPublicHome(sqlite, mediaBaseUrl),
+        featured: {
+          items: featuredItems,
+          resultCount: featuredItems.length,
+        },
+        entries: {
+          commission: commission
+            ? { ...commission, status: statuses.commission }
+            : null,
+          adoption: adoption && adoption.designSheet && adoption.adoptionEntrySources
+            ? {
+                kind: 'adoption',
+                href: '/adoptions',
+                title: '角色领养',
+                alt: adoption.designSheet.alt,
+                sources: adoption.adoptionEntrySources,
+                status: statuses.adoption,
+              }
+            : null,
+        },
+        currentAdoptions: adoptions.slice(0, 2),
+      })
+    },
     getHome() {
       return getPublicHome(sqlite, mediaBaseUrl)
     },
@@ -557,6 +716,32 @@ export function createFakePublicSiteRepository(
       return publicFeaturedWorksDtoSchema.parse({
         items,
         resultCount: items.length,
+      })
+    },
+    getHomepage() {
+      const featuredItems = seed.featuredSlugs.flatMap((slug) => {
+        const detail = bySlug.get(slug)
+        return detail ? [summaryFor(detail)] : []
+      }).slice(0, 6)
+      const adoptions = details.flatMap(detail => (
+        detail.work.purpose === 'adoption'
+        && detail.work.adoptionMethod === 'regular'
+        && detail.media.designSheet
+          ? [{
+              work: detail.work,
+              href: detail.href,
+              designSheet: detail.media.designSheet,
+            }]
+          : []
+      )).slice(0, 2)
+      return publicHomepageDtoSchema.parse({
+        hero: home,
+        featured: {
+          items: featuredItems,
+          resultCount: featuredItems.length,
+        },
+        entries: { commission: null, adoption: null },
+        currentAdoptions: adoptions,
       })
     },
     getHome() {

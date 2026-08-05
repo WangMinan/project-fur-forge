@@ -2,26 +2,28 @@ import { adminSiteContentResponseSchema } from '~~/shared/schemas/site-content'
 import type {
   AdminSiteContentDto,
   SiteBusinessStatusKind,
+  SiteContentSection,
 } from '~~/shared/types/contracts'
 import { AdminApiError } from './useAdminApi'
 
-// T26–T27 站点内容与营业状态管理：content 快照为唯一状态基线，所有写操作带
-// expectedVersion；409 一律重新 GET，不自行递增或猜测版本。表单本地状态在卡片内，
-// 冲突重载后由卡片按 dirty 规则保留输入、仅推进基线。
-export interface SiteContentPayload {
+export interface SiteContentSectionPayloads {
   commission: {
     intro: string | null
     estimateNote: string | null
     emailAction: string | null
-    faqs: Array<{ question: string, answer: string }>
+  }
+  faq: {
+    faqs: Array<{ id: string, question: string, answer: string }>
   }
   about: {
     studioFacts: string | null
     makingScope: string | null
-    basicTerms: string | null
-    privacyPolicy: string | null
   }
+  terms: { basicTerms: string | null }
+  privacy: { privacyPolicy: string | null }
   contact: {
+    email: string
+    qq: string
     douyin: string | null
     antiScam: string | null
   }
@@ -33,15 +35,25 @@ export interface SiteStatusPayload {
   detail: string
 }
 
+type MutationSection = SiteContentSection | `status-${SiteBusinessStatusKind}`
+
 export function useAdminSiteContent() {
   const adminApi = useAdminApi()
-
   const content = ref<AdminSiteContentDto | null>(null)
   const pageStatus = ref<'error' | 'loading' | 'ready'>('loading')
-  const mutating = ref(false)
+  const mutatingSections = ref<Partial<Record<MutationSection, boolean>>>({})
   const conflictNotice = ref<string | null>(null)
-  /** 最近一次成功保存的区块；卡片内表单再次变脏后由卡片自行隐藏提示。 */
-  const savedSection = ref<'adoption' | 'commission' | 'content' | null>(null)
+  const savedSection = ref<MutationSection | null>(null)
+
+  const isMutating = (section: MutationSection) => Boolean(mutatingSections.value[section])
+
+  function setMutating(section: MutationSection, value: boolean) {
+    mutatingSections.value = value
+      ? { ...mutatingSections.value, [section]: true }
+      : Object.fromEntries(
+          Object.entries(mutatingSections.value).filter(([key]) => key !== section),
+        )
+  }
 
   async function refresh(): Promise<AdminSiteContentDto | null> {
     try {
@@ -72,14 +84,14 @@ export function useAdminSiteContent() {
   }
 
   async function runMutation(
+    section: MutationSection,
     request: () => Promise<AdminSiteContentDto>,
-    section: 'adoption' | 'commission' | 'content',
     errorText: string,
   ): Promise<string | null> {
-    if (!content.value || mutating.value) {
+    if (!content.value || isMutating(section)) {
       return null
     }
-    mutating.value = true
+    setMutating(section, true)
     try {
       content.value = await request()
       conflictNotice.value = null
@@ -91,55 +103,59 @@ export function useAdminSiteContent() {
         return null
       }
       if (error instanceof AdminApiError && error.status === 409) {
-        conflictNotice.value = '站点内容已在其他地方变化，已重新加载最新值；请确认当前内容后重试。'
+        conflictNotice.value = '该分区已在其他位置更新。已读取最新服务端值，并保留当前 Card 草稿；请核对后重试。'
         await refresh()
-        return '未提交：版本已变化，请确认当前内容后重试。'
+        return '未提交：该分区版本已变化，请核对当前草稿与最新内容。'
       }
       if (error instanceof AdminApiError && error.status === 400) {
-        return '内容未通过服务端校验，请检查各字段后重试。'
+        return '内容未通过服务端校验，请检查当前 Card 的字段。'
       }
       return errorText
     }
     finally {
-      mutating.value = false
+      setMutating(section, false)
     }
   }
 
-  async function saveContent(payload: SiteContentPayload): Promise<string | null> {
-    const expectedVersion = content.value?.version ?? 0
-    return await runMutation(async () => {
-      const result = await adminApi('/api/admin/v1/site/home/content', {
+  async function saveSection<S extends SiteContentSection>(
+    section: S,
+    payload: SiteContentSectionPayloads[S],
+  ): Promise<string | null> {
+    const expectedVersion = content.value?.versions[section] ?? 0
+    return await runMutation(section, async () => {
+      const result = await adminApi(`/api/admin/v1/site/home/content/${section}`, {
         method: 'PUT',
         body: { expectedVersion, payload },
         schema: adminSiteContentResponseSchema,
       })
       return result.data
-    }, 'content', '保存站点内容失败，请稍后重试。')
+    }, '保存当前分区失败，请稍后重试。')
   }
 
   async function saveStatus(
     kind: SiteBusinessStatusKind,
     payload: SiteStatusPayload,
   ): Promise<string | null> {
+    const section = `status-${kind}` as const
     const expectedVersion = content.value?.statuses[kind]?.version ?? 0
-    return await runMutation(async () => {
+    return await runMutation(section, async () => {
       const result = await adminApi(`/api/admin/v1/site/home/business-statuses/${kind}`, {
         method: 'PUT',
         body: { expectedVersion, payload },
         schema: adminSiteContentResponseSchema,
       })
       return result.data
-    }, kind, '保存营业状态失败，请稍后重试。')
+    }, '保存营业状态失败，请稍后重试。')
   }
 
   return {
     conflictNotice,
     content,
+    isMutating,
     load,
-    mutating,
     pageStatus,
     savedSection,
-    saveContent,
+    saveSection,
     saveStatus,
   }
 }

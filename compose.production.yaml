@@ -1,0 +1,8 @@
+services:
+  nginx:
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/templates/tls.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ${FUR_FORGE_CERT_DIR:-./deploy/certs}:/etc/nginx/certs:ro

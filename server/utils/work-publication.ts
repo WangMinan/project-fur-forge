@@ -12,24 +12,33 @@ import type {
 import type { MediaStorage } from './media-storage'
 import {
   generatePublicVariants,
+  generateSiteDisplayVariants,
   PUBLIC_RECIPE_VERSION,
   publicRecipeWidths,
   publicVariantCountForUsages,
+  SITE_DISPLAY_RECIPE_VERSION,
   sourceSupportsPublicUsages,
   workAssetPublicUsages,
 } from './media-recipe'
-import type { PublicMediaUsage } from './media-recipe'
+import type {
+  ProtectedMediaUsage,
+  SiteDisplayMediaUsage,
+} from './media-recipe'
+import { leaseExpiresAt } from './operation-lease'
 import { ServiceError } from './service-error'
 import { activeWatermarkProfileId } from './watermark-branding'
 import { requireWatermarkProfile } from './watermark-profile'
 
 interface OperationRow {
+  attempt: number
   cleanupObjectKeysJson: string
   completedAt: number | null
   entityId: string
   failureStage: PublicationFailureStage | null
+  heartbeatAt: number
   id: string
   internalErrorCode: string | null
+  leaseExpiresAt: number
   operationType: 'PUBLISH' | 'UNPUBLISH' | 'UPSCALE'
   requestedVersion: number
   startedAt: number
@@ -70,7 +79,8 @@ interface PublicationAsset {
 
 interface PublicationTarget {
   asset: PublicationAsset
-  usages: PublicMediaUsage[]
+  protectedUsages: ProtectedMediaUsage[]
+  siteDisplayUsages: SiteDisplayMediaUsage[]
 }
 
 const operationColumns = `
@@ -78,7 +88,8 @@ const operationColumns = `
     requested_version AS requestedVersion, status,
     cleanup_object_keys_json AS cleanupObjectKeysJson,
     internal_error_code AS internalErrorCode,
-    failure_stage AS failureStage, version,
+    failure_stage AS failureStage, attempt,
+    heartbeat_at AS heartbeatAt, lease_expires_at AS leaseExpiresAt, version,
     started_at AS startedAt, updated_at AS updatedAt,
     completed_at AS completedAt
 `
@@ -122,6 +133,9 @@ function operationDto(row: OperationRow): PublicationOperationDto {
     failureStage: row.failureStage,
     failureCode: row.internalErrorCode,
     cleanupPendingCount: parseCleanupKeys(row.cleanupObjectKeysJson).length,
+    attempt: row.attempt,
+    heartbeatAt: new Date(row.heartbeatAt).toISOString(),
+    leaseExpiresAt: new Date(row.leaseExpiresAt).toISOString(),
     version: row.version,
     startedAt: new Date(row.startedAt).toISOString(),
     updatedAt: new Date(row.updatedAt).toISOString(),
@@ -188,23 +202,35 @@ function publicationTargets(
   sqlite: Database.Database,
   workId: string,
 ) {
+  const work = requireWork(sqlite, workId)
   const assets = mediaAssets(sqlite, workId)
   const hasPrimaryStudioPhoto = assets.some(asset => (
     asset.role === 'studio_photo' && asset.primary === 1
   ))
   return assets.map((asset): PublicationTarget => ({
     asset,
-    usages: workAssetPublicUsages(
+    protectedUsages: workAssetPublicUsages(
       asset.role,
       asset.primary === 1,
       hasPrimaryStudioPhoto,
     ),
+    siteDisplayUsages: (
+      asset.role === 'design_sheet'
+      && work.purpose === 'adoption'
+      && work.adoptionMethod === 'regular'
+    )
+      ? ['home-entry-adoption']
+      : [],
   }))
+}
+
+function allTargetUsages(target: PublicationTarget) {
+  return [...target.protectedUsages, ...target.siteDisplayUsages]
 }
 
 function requiredVariantCount(targets: readonly PublicationTarget[]) {
   return targets.reduce(
-    (count, target) => count + publicVariantCountForUsages(target.usages),
+    (count, target) => count + publicVariantCountForUsages(allTargetUsages(target)),
     0,
   )
 }
@@ -214,11 +240,8 @@ function missingVariantCount(
   targets: readonly PublicationTarget[],
 ) {
   const profileId = activeWatermarkProfileId(sqlite)
-  if (!profileId) {
-    return requiredVariantCount(targets)
-  }
-  const profile = requireWatermarkProfile(sqlite, profileId)
-  const formats = sqlite.prepare(`
+  const profile = profileId ? requireWatermarkProfile(sqlite, profileId) : null
+  const protectedFormats = sqlite.prepare(`
     SELECT format FROM asset_variants
     WHERE asset_id = ? AND storage_scope = 'PUBLIC' AND status = 'READY'
       AND media_role = ? AND usage = ? AND width = ?
@@ -230,11 +253,36 @@ function missingVariantCount(
       AND sha256 NOT GLOB '*[^0-9a-f]*' AND length(sha256) = 64
       AND byte_size > 0
   `)
+  const siteFormats = sqlite.prepare(`
+    SELECT format FROM asset_variants
+    WHERE asset_id = ? AND storage_scope = 'PUBLIC' AND status = 'READY'
+      AND media_role = ? AND usage = ? AND width = ?
+      AND recipe_version = ?
+      AND watermark_profile = 'none' AND watermark_profile_id IS NULL
+      AND watermark_config_digest = 'none' AND logo_digest = 'none'
+      AND watermark_anchor = 'none'
+      AND watermark_opacity_percent IS NULL
+      AND watermark_scale_percent IS NULL
+      AND sha256 NOT GLOB '*[^0-9a-f]*' AND length(sha256) = 64
+      AND byte_size > 0
+  `)
   let missing = 0
+  const countFormats = (values: Set<string>) => {
+    if (!values.has('webp')) {
+      missing += 1
+    }
+    if (!values.has('jpeg') && !values.has('png')) {
+      missing += 1
+    }
+  }
   for (const target of targets) {
-    for (const usage of target.usages) {
+    for (const usage of target.protectedUsages) {
       for (const width of publicRecipeWidths(usage)) {
-        const values = new Set(formats.pluck().all(
+        if (!profile) {
+          missing += 2
+          continue
+        }
+        countFormats(new Set(protectedFormats.pluck().all(
           target.asset.assetId,
           target.asset.role,
           usage,
@@ -245,13 +293,18 @@ function missingVariantCount(
           profile.logoDigest,
           profile.opacityPercent,
           profile.scalePercent,
-        ) as string[])
-        if (!values.has('webp')) {
-          missing += 1
-        }
-        if (!values.has('jpeg') && !values.has('png')) {
-          missing += 1
-        }
+        ) as string[]))
+      }
+    }
+    for (const usage of target.siteDisplayUsages) {
+      for (const width of publicRecipeWidths(usage)) {
+        countFormats(new Set(siteFormats.pluck().all(
+          target.asset.assetId,
+          target.asset.role,
+          usage,
+          width,
+          SITE_DISPLAY_RECIPE_VERSION,
+        ) as string[]))
       }
     }
   }
@@ -310,7 +363,7 @@ export function checkWorkPublication(
     }
     if (targets.some(target => (
       target.asset.role === 'design_sheet'
-      && !sourceSupportsPublicUsages(target.asset, target.usages)
+      && !sourceSupportsPublicUsages(target.asset, allTargetUsages(target))
     ))) {
       blockers.push('DESIGN_SHEET_SOURCE_TOO_SMALL')
     }
@@ -332,7 +385,7 @@ export function checkWorkPublication(
   }
   if (targets.some(target => (
     target.asset.role === 'studio_photo'
-    && !sourceSupportsPublicUsages(target.asset, target.usages)
+    && !sourceSupportsPublicUsages(target.asset, allTargetUsages(target))
   ))) {
     blockers.push('STUDIO_PHOTO_SOURCE_TOO_SMALL')
   }
@@ -374,14 +427,16 @@ function createOperation(
   sqlite.prepare(`
     INSERT INTO publication_operations (
       id, operation_type, entity_type, entity_id, requested_version,
-      status, started_at, updated_at
-    ) VALUES (?, ?, 'WORK', ?, ?, ?, ?, ?)
+      status, attempt, heartbeat_at, lease_expires_at, started_at, updated_at
+    ) VALUES (?, ?, 'WORK', ?, ?, ?, 1, ?, ?, ?, ?)
   `).run(
     id,
     type,
     workId,
     requestedVersion,
     type === 'PUBLISH' ? 'GENERATING_PUBLIC' : 'COMMITTING',
+    now,
+    leaseExpiresAt(now),
     now,
     now,
   )
@@ -399,9 +454,10 @@ function updateOperation(
     UPDATE publication_operations
     SET status = ?, cleanup_object_keys_json = ?,
         internal_error_code = NULL, internal_error_message = NULL,
-        failure_stage = NULL, version = version + 1, updated_at = ?
+        failure_stage = NULL, heartbeat_at = ?, lease_expires_at = ?,
+        version = version + 1, updated_at = ?
     WHERE id = ?
-  `).run(status, JSON.stringify(cleanupKeys), now, id)
+  `).run(status, JSON.stringify(cleanupKeys), now, leaseExpiresAt(now), now, id)
 }
 
 function failOperation(
@@ -610,26 +666,34 @@ export async function publishWork(
     failureCode = 'PUBLIC_MEDIA_GENERATION_FAILED'
     updateOperation(sqlite, operation.id, 'APPLYING_WATERMARK', [], now)
     for (const target of publicationTargets(sqlite, workId)) {
+      const generate = async () => {
+        if (target.protectedUsages.length > 0) {
+          await generatePublicVariants(
+            sqlite,
+            storage,
+            target.asset.assetId,
+            target.protectedUsages,
+            now,
+          )
+        }
+        if (target.siteDisplayUsages.length > 0) {
+          await generateSiteDisplayVariants(
+            sqlite,
+            storage,
+            target.asset.assetId,
+            target.siteDisplayUsages,
+            now,
+          )
+        }
+      }
       try {
-        await generatePublicVariants(
-          sqlite,
-          storage,
-          target.asset.assetId,
-          target.usages,
-          now,
-        )
+        await generate()
       }
       catch {
-        // ponytail: one bounded retry absorbs OSS cold-read/transient failures;
-        // add a worker only if publication volume requires asynchronous jobs.
+        // One bounded retry absorbs OSS cold-read/transient failures. Durable
+        // recovery for interrupted operations is provided by T34-F5.
         await delay(1_000)
-        await generatePublicVariants(
-          sqlite,
-          storage,
-          target.asset.assetId,
-          target.usages,
-          now,
-        )
+        await generate()
       }
     }
     const generatedKeys = newlyCreatedKeys(sqlite, workId, before)

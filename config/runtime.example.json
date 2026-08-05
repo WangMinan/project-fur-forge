@@ -19,7 +19,8 @@
     "smtpPort": "integer",
     "smtpSecure": "boolean",
     "smtpUser": "string",
-    "smtpPassword": "string"
+    "smtpPassword": "string",
+    "trustedProxy": "boolean"
   },
   "env": {
     "appEnv": "APP_ENV",
@@ -39,7 +40,8 @@
     "smtpPort": "SMTP_PORT",
     "smtpSecure": "SMTP_SECURE",
     "smtpUser": "SMTP_USER",
-    "smtpPassword": "SMTP_PASSWORD"
+    "smtpPassword": "SMTP_PASSWORD",
+    "trustedProxy": "TRUST_PROXY"
   },
   "values": {
     "appEnv": "development",
@@ -59,6 +61,7 @@
     "smtpPort": "",
     "smtpSecure": "",
     "smtpUser": "",
-    "smtpPassword": ""
+    "smtpPassword": "",
+    "trustedProxy": false
   }
 }

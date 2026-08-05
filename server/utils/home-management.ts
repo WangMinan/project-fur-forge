@@ -34,10 +34,11 @@ import type { MediaStorage } from './media-storage'
 import {
   assetSupportsPublicUsages,
   ensureHeroUpscaleSource,
-  generatePrivateWatermarkPreview,
-  generatePublicVariants,
+  generatePrivateSiteDisplayPreview,
+  generateSiteDisplayVariants,
   HERO_UPSCALE_RECIPE_VERSION,
 } from './media-recipe'
+import { leaseExpiresAt } from './operation-lease'
 import { ServiceError } from './service-error'
 import { activeWatermarkProfileId } from './watermark-branding'
 import {
@@ -56,8 +57,6 @@ export interface HeroSlideInput {
 export interface HomeSettingsInput {
   autoRotate: boolean
   autoRotateIntervalMs: number
-  contactEmail: string
-  contactQq: string
   tagline: string
 }
 
@@ -288,23 +287,18 @@ function assetUpscaleReady(
 
 function adminSlide(
   row: SlideRow,
-  profileId: string | null,
   variants: ReadonlyMap<string, readonly HeroVariantRow[]>,
   operations: ReadonlyMap<string, PublicationOperationDto>,
 ): AdminHeroSlideDto {
   const landscapeVariants = variants.get(row.landscapeAssetId) ?? []
   const portraitVariants = variants.get(row.portraitAssetId) ?? []
-  const missingVariantCount = profileId
-    ? missingHeroVariantCount(
-        'home_hero_landscape',
-        landscapeVariants,
-        profileId,
-      ) + missingHeroVariantCount(
-        'home_hero_portrait',
-        portraitVariants,
-        profileId,
-      )
-    : 12
+  const missingVariantCount = missingHeroVariantCount(
+    'home_hero_landscape',
+    landscapeVariants,
+  ) + missingHeroVariantCount(
+    'home_hero_portrait',
+    portraitVariants,
+  )
   const publicationOperation = operations.get(`${row.id}:PUBLISH`) ?? null
   return adminHeroSlideDtoSchema.parse({
     id: row.id,
@@ -343,7 +337,6 @@ export function getAdminHome(
   placement: HeroPlacement = 'home',
 ): AdminHomeDto {
   const home = requireHome(sqlite)
-  const profileId = activeWatermarkProfileId(sqlite)
   const currentSlides = slides(sqlite, placement)
   const variants = variantsForAssets(
     sqlite,
@@ -369,7 +362,6 @@ export function getAdminHome(
     autoRotateIntervalMs: home.autoRotateIntervalMs,
     slides: currentSlides.map(slide => adminSlide(
       slide,
-      profileId,
       variants,
       operations,
     )),
@@ -408,10 +400,6 @@ export async function createHeroSlidePreview(
     landscapeAssetId: slide.landscapeAssetId,
     portraitAssetId: slide.portraitAssetId,
   }, slide.id)
-  const profileId = activeWatermarkProfileId(sqlite)
-  if (!profileId) {
-    throw new ServiceError(409, 'CONFLICT', 'Active watermark profile is unavailable.')
-  }
   const expiresAt = now + HERO_PREVIEW_TTL_MS
   const landscapeObjectKey = heroPreviewKey(
     slide.landscapePrivateObjectKey,
@@ -440,13 +428,12 @@ export async function createHeroSlidePreview(
     const objectKey = input.orientation === 'landscape'
       ? landscapeObjectKey
       : portraitObjectKey
-    const dimensions = await generatePrivateWatermarkPreview(
+    const dimensions = await generatePrivateSiteDisplayPreview(
       sqlite,
       storage,
       {
         assetId: input.assetId,
         objectKey,
-        profileId,
         usage: input.usage,
         width: input.width,
       },
@@ -473,9 +460,6 @@ export async function createHeroSlidePreview(
     }),
   ])
   requireHomeVersion(sqlite, expectedVersion)
-  if (activeWatermarkProfileId(sqlite) !== profileId) {
-    throw new ServiceError(409, 'CONFLICT', 'Active watermark profile changed.')
-  }
   return adminHeroPreviewDtoSchema.parse({ landscape, portrait })
 }
 
@@ -505,15 +489,15 @@ export function startHeroSlideUpscale(
     LIMIT 1
   `).pluck().get(slideId)
   if (active) {
-    throw new ServiceError(409, 'CONFLICT', 'A home operation is already active.')
+    throw new ServiceError(409, 'CONFLICT', 'A home operation is already active.', 'HERO_OPERATION_ACTIVE')
   }
   const id = randomUUID()
   sqlite.prepare(`
     INSERT INTO publication_operations (
       id, operation_type, entity_type, entity_id, requested_version,
-      status, started_at, updated_at
-    ) VALUES (?, 'UPSCALE', 'HOME', ?, ?, 'PREPARING_SOURCE', ?, ?)
-  `).run(id, slideId, expectedVersion, now, now)
+      status, attempt, heartbeat_at, lease_expires_at, started_at, updated_at
+    ) VALUES (?, 'UPSCALE', 'HOME', ?, ?, 'PREPARING_SOURCE', 1, ?, ?, ?, ?)
+  `).run(id, slideId, expectedVersion, now, leaseExpiresAt(now), now, now)
   return getPublicationOperation(sqlite, id)
 }
 
@@ -629,9 +613,10 @@ export function retryHeroSlideUpscale(
     UPDATE publication_operations
     SET status = 'PREPARING_SOURCE', failure_stage = NULL,
         internal_error_code = NULL, internal_error_message = NULL,
-        completed_at = NULL, version = version + 1, updated_at = ?
+        completed_at = NULL, attempt = attempt + 1, heartbeat_at = ?,
+        lease_expires_at = ?, version = version + 1, updated_at = ?
     WHERE id = ? AND version = ? AND status = 'FAILED'
-  `).run(now, operationId, expectedVersion)
+  `).run(now, leaseExpiresAt(now), now, operationId, expectedVersion)
   return getPublicationOperation(sqlite, operationId)
 }
 
@@ -699,9 +684,6 @@ function publicHeroSlides(
 ) {
   const enabled = slides(sqlite, placement).filter(slide => slide.enabled === 1)
   const profileId = activeWatermarkProfileId(sqlite)
-  if (enabled.length > 0 && !profileId) {
-    throw new Error('Active watermark profile is unavailable.')
-  }
   const variants = variantsForAssets(
     sqlite,
     enabled.flatMap(slide => [
@@ -711,7 +693,7 @@ function publicHeroSlides(
   )
   const projected = enabled.map((slide) => {
     const record: HeroSlideRecord = {
-      activeWatermarkProfileId: profileId!,
+      activeWatermarkProfileId: profileId,
       id: slide.id,
       version: slide.version,
       enabled: true,
@@ -960,15 +942,12 @@ export function updateHomeSettings(
 ) {
   const result = sqlite.prepare(`
     UPDATE site_content
-    SET hero_tagline = ?, contact_email = ?, contact_qq = ?,
-        hero_auto_rotate = ?,
+    SET hero_tagline = ?, hero_auto_rotate = ?,
         hero_auto_rotate_interval_ms = ?, version = version + 1,
         updated_at = ?
     WHERE id = 'site' AND version = ?
   `).run(
     input.tagline,
-    input.contactEmail,
-    input.contactQq,
     input.autoRotate ? 1 : 0,
     input.autoRotateIntervalMs,
     now,
@@ -1041,7 +1020,7 @@ export async function disableHeroSlide(
     WHERE enabled = 1 AND placement = ?
   `).pluck().get(placement))
   if (placement === 'home' && enabledCount <= 1) {
-    throw new ServiceError(409, 'CONFLICT', 'At least one hero slide must remain enabled.')
+    throw new ServiceError(409, 'CONFLICT', 'At least one hero slide must remain enabled.', 'HERO_LAST_ENABLED_SLIDE')
   }
   await clearHeroSlidePreviews(sqlite, storage, slide)
   sqlite.transaction(() => {
@@ -1075,7 +1054,7 @@ function assertSlideCanEnable(
     throw new ServiceError(409, 'CONFLICT', 'Hero slide is already enabled.')
   }
   if (slide.sortOrder < 0 || slide.sortOrder > 4) {
-    throw new ServiceError(409, 'CONFLICT', 'Enabled hero slide order must be between 0 and 4.')
+    throw new ServiceError(409, 'CONFLICT', 'Enabled hero slide order must be between 0 and 4.', 'HERO_SORT_ORDER_INVALID')
   }
   const enabledCount = Number(sqlite.prepare(`
     SELECT count(*) FROM site_hero_slides
@@ -1086,7 +1065,7 @@ function assertSlideCanEnable(
     WHERE enabled = 1 AND placement = ? AND sort_order = ? LIMIT 1
   `).pluck().get(placement, slide.sortOrder)
   if (enabledCount >= 5 || orderConflict) {
-    throw new ServiceError(409, 'CONFLICT', 'Enabled hero slides must have 1 to 5 unique positions.')
+    throw new ServiceError(409, 'CONFLICT', 'Enabled hero slides must have 1 to 5 unique positions.', 'HERO_ENABLED_POSITIONS_CONFLICT')
   }
   assertAssetPair(sqlite, {
     landscapeAssetId: slide.landscapeAssetId,
@@ -1107,9 +1086,6 @@ function assertSlideCanEnable(
     throw new ServiceError(409, 'CONFLICT', 'Hero assets require confirmed upscale.')
   }
   assertLinkedWork(sqlite, slide.linkedWorkId)
-  if (!activeWatermarkProfileId(sqlite)) {
-    throw new ServiceError(409, 'CONFLICT', 'Active watermark profile is unavailable.')
-  }
 }
 
 function homeOperation(sqlite: Database.Database, id: string) {
@@ -1142,15 +1118,15 @@ export function startHeroSlidePublication(
       AND status NOT IN ('FAILED', 'DONE')
   `).pluck().get(slideId)
   if (active) {
-    throw new ServiceError(409, 'CONFLICT', 'A home publication operation is already active.')
+    throw new ServiceError(409, 'CONFLICT', 'A home publication operation is already active.', 'HERO_OPERATION_ACTIVE')
   }
   const id = randomUUID()
   sqlite.prepare(`
     INSERT INTO publication_operations (
       id, operation_type, entity_type, entity_id, requested_version,
-      status, started_at, updated_at
-    ) VALUES (?, 'PUBLISH', 'HOME', ?, ?, 'GENERATING_PUBLIC', ?, ?)
-  `).run(id, slideId, expectedVersion, now, now)
+      status, attempt, heartbeat_at, lease_expires_at, started_at, updated_at
+    ) VALUES (?, 'PUBLISH', 'HOME', ?, ?, 'GENERATING_PUBLIC', 1, ?, ?, ?, ?)
+  `).run(id, slideId, expectedVersion, now, leaseExpiresAt(now), now, now)
   return getPublicationOperation(sqlite, id)
 }
 
@@ -1164,15 +1140,17 @@ function setOperationStatus(
     UPDATE publication_operations
     SET status = ?, failure_stage = NULL, internal_error_code = NULL,
         internal_error_message = NULL, cleanup_object_keys_json = '[]',
+        heartbeat_at = ?, lease_expires_at = ?,
         version = version + 1, updated_at = ?
     WHERE id = ?
-  `).run(status, now, id)
+  `).run(status, now, leaseExpiresAt(now), now, id)
 }
 
 function publicKeysForSlide(sqlite: Database.Database, slide: SlideRow) {
   return sqlite.prepare(`
     SELECT object_key FROM asset_variants
     WHERE storage_scope = 'PUBLIC'
+      AND recipe_version = 'site-display-v1'
       AND asset_id IN (?, ?)
   `).pluck().all(
     slide.landscapeAssetId,
@@ -1223,19 +1201,13 @@ function assertCompleteHeroPair(
   sqlite: Database.Database,
   slide: SlideRow,
 ) {
-  const profileId = activeWatermarkProfileId(sqlite)
-  if (!profileId) {
-    throw new Error('Active watermark profile is unavailable.')
-  }
   completeHeroVariants(
     'home_hero_landscape',
     variantsForAsset(sqlite, slide.landscapeAssetId),
-    profileId,
   )
   completeHeroVariants(
     'home_hero_portrait',
     variantsForAsset(sqlite, slide.portraitAssetId),
-    profileId,
   )
 }
 
@@ -1257,17 +1229,19 @@ export async function runHeroSlidePublication(
   try {
     requireHomeVersion(sqlite, operation.requestedVersion)
     assertSlideCanEnable(sqlite, slide, slide.placement)
-    stage = 'APPLYING_WATERMARK'
+    stage = 'GENERATING_PUBLIC'
     code = 'PUBLIC_MEDIA_GENERATION_FAILED'
-    setOperationStatus(sqlite, operationId, 'APPLYING_WATERMARK', now)
-    await generatePublicVariants(
+    setOperationStatus(sqlite, operationId, 'GENERATING_PUBLIC', now)
+    await generateSiteDisplayVariants(
       sqlite,
       storage,
       slide.landscapeAssetId,
-      ['home-hero-landscape'],
+      slide.placement === 'commission'
+        ? ['home-hero-landscape', 'home-entry-commission']
+        : ['home-hero-landscape'],
       now,
     )
-    await generatePublicVariants(
+    await generateSiteDisplayVariants(
       sqlite,
       storage,
       slide.portraitAssetId,
@@ -1371,8 +1345,9 @@ export async function retryHeroSlidePublication(
     SET status = 'GENERATING_PUBLIC', failure_stage = NULL,
         internal_error_code = NULL, internal_error_message = NULL,
         cleanup_object_keys_json = '[]', completed_at = NULL,
+        attempt = attempt + 1, heartbeat_at = ?, lease_expires_at = ?,
         version = version + 1, updated_at = ?
     WHERE id = ? AND version = ? AND status = 'FAILED'
-  `).run(now, operationId, expectedVersion)
+  `).run(now, leaseExpiresAt(now), now, operationId, expectedVersion)
   return getPublicationOperation(sqlite, operationId)
 }

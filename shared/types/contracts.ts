@@ -14,6 +14,8 @@ import type {
   adminHomeDtoSchema,
   heroPlacementSchema,
   publicCommissionHeroDtoSchema,
+  publicHomeBusinessEntryDtoSchema,
+  publicHomepageDtoSchema,
   publicHomeDtoSchema,
 } from '../schemas/home'
 import type {
@@ -35,6 +37,7 @@ import type {
   publicSiteContentDtoSchema,
   siteBusinessStatusKindSchema,
   siteBusinessStatusToneSchema,
+  siteContentSectionSchema,
 } from '../schemas/site-content'
 import type {
   publicationBlockerSchema,
@@ -112,12 +115,17 @@ export type PublicCommissionHeroDto = z.infer<
   typeof publicCommissionHeroDtoSchema
 >
 export type PublicHomeDto = z.infer<typeof publicHomeDtoSchema>
+export type PublicHomeBusinessEntryDto = z.infer<
+  typeof publicHomeBusinessEntryDtoSchema
+>
+export type PublicHomepageDto = z.infer<typeof publicHomepageDtoSchema>
 export type SiteBusinessStatusKind = z.infer<
   typeof siteBusinessStatusKindSchema
 >
 export type SiteBusinessStatusTone = z.infer<
   typeof siteBusinessStatusToneSchema
 >
+export type SiteContentSection = z.infer<typeof siteContentSectionSchema>
 export type AdminSiteBusinessStatusDto = z.infer<
   typeof adminSiteBusinessStatusDtoSchema
 >

@@ -1,26 +1,15 @@
 <script setup lang="ts">
-import { publicFeaturedWorksResponseSchema } from '~~/shared/schemas/public-content'
+import type { PublicWorkSummaryDto } from '~~/shared/types/contracts'
 
-/**
- * 首页精选轨道：SSR 消费 /api/public/v1/works/featured 的真实精选投影。
- * 人工顺序由服务端投影保证；无精选作品时整区隐藏（首屏不出现空轨道）。
- */
-const { data: featured, error: featuredError } = await useFetch('/api/public/v1/works/featured', {
-  key: 'public-featured-works',
-  headers: useRequestHeaders(['host']),
-  transform: raw => publicFeaturedWorksResponseSchema.parse(raw).data,
-})
-
-if (featuredError.value) {
-  throw createError({ statusCode: 500, statusMessage: '精选作品暂时无法显示' })
-}
-
-const works = computed(() => featured.value?.items ?? [])
+/** 首页精选轨道由聚合首页投影提供，避免子组件再次读取数据库。 */
+const props = defineProps<{
+  works: PublicWorkSummaryDto[]
+}>()
 </script>
 
 <template>
   <section
-    v-if="works.length > 0"
+    v-if="props.works.length > 0"
     class="featured-works"
     aria-labelledby="featured-works-title"
     data-testid="featured-works"
@@ -35,7 +24,7 @@ const works = computed(() => featured.value?.items ?? [])
       </NuxtLink>
     </header>
 
-    <FeaturedTrack :works="works" />
+    <FeaturedTrack :works="props.works" />
   </section>
 </template>
 

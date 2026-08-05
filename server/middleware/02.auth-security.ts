@@ -3,7 +3,10 @@ import {
   assertCsrfToken,
   requireAdminSession,
 } from '../utils/auth-session'
-import { assertRequestRateLimit } from '../utils/request-rate-limit'
+import {
+  assertRequestRateLimit,
+  requestClientSubject,
+} from '../utils/request-rate-limit'
 
 function isAtOrBelow(pathname: string, prefix: string) {
   return pathname === prefix || pathname.startsWith(`${prefix}/`)
@@ -17,7 +20,7 @@ export default defineEventHandler(async (event) => {
     && pathname === '/api/auth/login'
   ) {
     assertAdminOrigin(event)
-    assertRequestRateLimit(event, 'login')
+    assertRequestRateLimit(event, 'login', requestClientSubject(event))
     return
   }
 
@@ -32,7 +35,7 @@ export default defineEventHandler(async (event) => {
       assertAdminOrigin(event)
       assertCsrfToken(event, session.csrfToken)
       if (isAtOrBelow(pathname, '/api/admin')) {
-        assertRequestRateLimit(event, 'adminWrite')
+        assertRequestRateLimit(event, 'adminWrite', session.user.id)
       }
     }
   }

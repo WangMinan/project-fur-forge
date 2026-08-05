@@ -11,7 +11,7 @@ import {
   watermarkFailureHint,
 } from '~/utils/watermark-labels'
 
-// 真实 OSS 预览：四比例结果只来自预览操作返回的同源 URL，
+// 真实 OSS 预览：三类作品保护结果只来自预览操作返回的同源 URL，
 // 不使用 CSS 叠层冒充；短时 URL 只存内存，不写入持久存储。
 const props = defineProps<{
   draft: WatermarkProfileDto | null
@@ -27,8 +27,7 @@ const emit = defineEmits<{
 const PREVIEW_ORDER: WatermarkPreviewKind[] = [
   'work-card',
   'detail',
-  'home-hero-landscape',
-  'home-hero-portrait',
+  'design-sheet',
 ]
 
 const previewOperation = computed(() => {

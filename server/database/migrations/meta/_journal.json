@@ -120,6 +120,13 @@
       "when": 1785891600000,
       "tag": "0016_t26_f1_upscale_operation",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1785908424657,
+      "tag": "0017_phase_c1_contracts",
+      "breakpoints": true
     }
   ]
 }

@@ -2,8 +2,8 @@
 import type { PublicWorkGalleryItemDto } from '~~/shared/types/contracts'
 
 /**
- * 作品详情图集：主图 + 有序缩略图，只消费公开 detail 衍生图。
- * SSR 直接渲染第一张；切换仅替换主图，不自动播放、不引入覆盖层。
+ * 作品详情图集：主图 + 有序缩略图。横图使用宽舞台；竖图收窄到图片
+ * 自身的视觉宽度，不用满栏灰色背景填充两侧。
  */
 const props = defineProps<{
   gallery: PublicWorkGalleryItemDto[]
@@ -12,11 +12,30 @@ const props = defineProps<{
 
 const activeIndex = ref(0)
 const activeItem = computed(() => props.gallery[activeIndex.value] ?? props.gallery[0])
+const activeFallback = computed(() => activeItem.value?.sources.fallback.at(-1))
+const activeOrientation = computed(() => {
+  const image = activeFallback.value
+  if (!image) {
+    return 'landscape'
+  }
+  return image.height > image.width ? 'portrait' : 'landscape'
+})
+
+watch(
+  () => props.gallery.map(item => item.assetId).join(':'),
+  () => {
+    activeIndex.value = 0
+  },
+)
 </script>
 
 <template>
   <div class="work-gallery" data-testid="work-gallery">
-    <div class="work-gallery__stage">
+    <div
+      class="work-gallery__stage"
+      :class="`work-gallery__stage--${activeOrientation}`"
+      :data-orientation="activeOrientation"
+    >
       <ResponsivePicture
         v-if="activeItem"
         :key="activeItem.assetId"
@@ -56,31 +75,46 @@ const activeItem = computed(() => props.gallery[activeIndex.value] ?? props.gall
 
 <style scoped>
 .work-gallery__stage {
-  background: var(--image-placeholder);
+  display: flex;
+  justify-content: center;
   overflow: hidden;
 }
 
-/*
- * PC 端限制主图高度：纵向作品图应在一屏内完整可见，
- * 宽度随原始纵横比自适应、水平居中，不做裁切。
- */
+.work-gallery__stage--landscape {
+  background: var(--image-placeholder);
+}
+
+.work-gallery__stage--portrait {
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  background: transparent;
+}
+
+.work-gallery__stage :deep(.work-gallery__image) {
+  width: auto;
+  max-width: 100%;
+}
+
+.work-gallery__stage :deep(.responsive-picture__image) {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  margin: 0 auto;
+  background: var(--image-placeholder);
+}
+
+.work-gallery__stage--portrait :deep(.responsive-picture__image) {
+  max-height: min(78svh, 52rem);
+}
+
 @media (min-width: 1024px) {
-  .work-gallery__stage {
-    display: flex;
-    justify-content: center;
-  }
-
-  .work-gallery__stage :deep(.work-gallery__image) {
-    width: auto;
-    max-width: 100%;
-  }
-
   .work-gallery__stage :deep(.responsive-picture__image) {
-    width: auto;
-    height: auto;
-    max-width: 100%;
     max-height: clamp(20rem, calc(100vh - 15rem), 46rem);
-    margin: 0 auto;
+  }
+
+  .work-gallery__stage--portrait {
+    max-width: min(100%, 40rem);
   }
 }
 
