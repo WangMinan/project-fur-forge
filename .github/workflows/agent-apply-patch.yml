@@ -1,0 +1,41 @@
+name: Agent apply reviewed patch
+
+on:
+  push:
+    branches:
+      - fix/phase-c1-t34-f
+    paths:
+      - .agent/changes.patch
+      - .agent/commit-message.txt
+      - .github/workflows/agent-apply-patch.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: agent-apply-phase-c1-t34-f
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: fix/phase-c1-t34-f
+      - name: Apply patch
+        shell: bash
+        run: |
+          test -f .agent/changes.patch
+          message="$(cat .agent/commit-message.txt 2>/dev/null || printf '%s' 'feat: implement phase C.1 closure')"
+          git apply --whitespace=fix .agent/changes.patch
+          rm -f .agent/changes.patch .agent/commit-message.txt
+          rmdir .agent 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "$message"
+          git push origin HEAD:fix/phase-c1-t34-f
