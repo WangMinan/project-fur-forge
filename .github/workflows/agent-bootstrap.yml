@@ -25,10 +25,11 @@ jobs:
             --exclude=.output \
             --exclude=test-results \
             --exclude=playwright-report \
-            -czf ../project-fur-forge-source.tgz .
+            --exclude=project-fur-forge-source.tgz \
+            -czf project-fur-forge-source.tgz .
       - uses: actions/upload-artifact@v4
         with:
           name: project-fur-forge-source
-          path: ../project-fur-forge-source.tgz
+          path: project-fur-forge-source.tgz
           if-no-files-found: error
           retention-days: 1
