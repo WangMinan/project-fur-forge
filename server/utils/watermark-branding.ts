@@ -879,7 +879,6 @@ export async function retryWatermarkOperation(
     )
     return operationDto(requireOperation(sqlite, operationId))
   }
-  operation = requireOperation(sqlite, operationId)
   sqlite.prepare(`
     UPDATE watermark_operations
     SET attempt = attempt + 1, heartbeat_at = ?, lease_expires_at = ?,

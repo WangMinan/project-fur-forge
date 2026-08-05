@@ -22,7 +22,7 @@ watch(() => props.faqs, (value) => {
 const issues = computed(() => {
   const result: Record<string, string> = {}
   const seen = new Set<string>()
-  rows.value.forEach((row, index) => {
+  rows.value.forEach((row) => {
     const question = row.question.trim()
     const answer = row.answer.trim()
     if (!question || !answer) result[row.id] = '问题与回答必须同时填写。'

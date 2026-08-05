@@ -2,7 +2,7 @@
 import type { AdminSiteContentDto, SiteContentSection } from '~~/shared/types/contracts'
 import type { SiteContentSectionPayloads } from '~/composables/useAdminSiteContent'
 
-const props = defineProps<{
+defineProps<{
   content: AdminSiteContentDto
   isMutating: (section: SiteContentSection) => boolean
   savedSection: string | null
