@@ -1,0 +1,79 @@
+name: Agent quality report
+
+on:
+  push:
+    branches:
+      - fix/phase-c1-t34-f
+    paths-ignore:
+      - '.agent/**'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: agent-quality-report-phase-c1
+  cancel-in-progress: true
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.18.0
+          run_install: false
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Run quality commands and write report
+        shell: bash
+        run: |
+          set -u
+          mkdir -p "$RUNNER_TEMP/phase-c1-logs"
+          report="$RUNNER_TEMP/phase-c1-report.md"
+          printf '# Phase C.1 CI report\n\nCommit: `%s`\n\n' "$GITHUB_SHA" > "$report"
+
+          run_check() {
+            name="$1"
+            shift
+            log="$RUNNER_TEMP/phase-c1-logs/$name.log"
+            set +e
+            "$@" >"$log" 2>&1
+            code=$?
+            set -e
+            printf '## %s\n\nExit code: `%s`\n\n```text\n' "$name" "$code" >> "$report"
+            tail -n 240 "$log" >> "$report" || true
+            printf '\n```\n\n' >> "$report"
+          }
+
+          set -e
+          run_check lint pnpm lint
+          run_check typecheck pnpm typecheck
+          run_check unit pnpm test
+          run_check integration pnpm test:integration
+          run_check build pnpm build
+          cp "$report" phase-c1-ci-report.md
+      - name: Publish report branch
+        shell: bash
+        run: |
+          cp phase-c1-ci-report.md "$RUNNER_TEMP/phase-c1-ci-report.md"
+          rm -rf "$RUNNER_TEMP/report-repo"
+          mkdir -p "$RUNNER_TEMP/report-repo"
+          cd "$RUNNER_TEMP/report-repo"
+          git init
+          git checkout -b agent/phase-c1-ci-report
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          cp "$RUNNER_TEMP/phase-c1-ci-report.md" README.md
+          git add README.md
+          git commit -m 'ci: publish phase C.1 quality report'
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin HEAD:refs/heads/agent/phase-c1-ci-report
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
