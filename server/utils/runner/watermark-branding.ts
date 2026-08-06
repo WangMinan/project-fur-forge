@@ -51,6 +51,7 @@ import {
   hasVerifiedPreview,
   insertWatermarkOperation,
   markWatermarkOperationFailed,
+  reopenFailedWatermarkOperation,
   resolveFailedWatermarkOperation,
   retireActiveProfile,
   setRebuildCounts,
@@ -820,12 +821,16 @@ export async function retryWatermarkOperation(
     return operationDto(requireOperation(sqlite, operationId))
   }
   operation = requireOperation(sqlite, operationId)
-  if (operation.operationType === 'WATERMARK_PREVIEW') {
-    return operationDto(await runPreview(sqlite, storage, operationId, now))
-  }
   if (requireSiteBranding(sqlite).activeWatermarkProfileId === operation.profileId) {
+    // profile 已经切换成功，只剩清理；清理已在上面完成，直接收尾。
     resolveFailedWatermarkOperation(sqlite, operationId, now)
     return operationDto(requireOperation(sqlite, operationId))
+  }
+  // T34-F5：runner 只推进非终态记录（lease 不授予终态），因此重试必须先把
+  // FAILED 重新打开，否则 runPreview/runRebuild 会静默什么都不做。
+  reopenFailedWatermarkOperation(sqlite, operationId, now)
+  if (operation.operationType === 'WATERMARK_PREVIEW') {
+    return operationDto(await runPreview(sqlite, storage, operationId, now))
   }
   startApplyingProfile(sqlite, operation.profileId, now, true)
   return operationDto(await runRebuild(sqlite, storage, operationId, now))

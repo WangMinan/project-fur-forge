@@ -176,11 +176,13 @@ test('官方渠道分区并发：同分区第二个上下文冲突，不同分�
     await expect(conflictB.getByTestId('site-section-conflict'))
       .toContainText('a.official')
 
-    // 不同分区同时保存都成功：B 的 privacy 分区不受 contact 冲突影响。
-    await card(pageB, 'privacy').locator('#site-field-privacyPolicy')
-      .fill('本站不使用营销分析 Cookie。')
-    await card(pageB, 'privacy').getByTestId('site-section-save').click()
-    await expect(card(pageB, 'privacy').getByTestId('site-section-saved'))
+    // 不同分区同时保存都成功：B 的 about 分区不受 contact 冲突影响。
+    // 刻意不用 privacy：public-information.spec.ts 断言迁移 0015 种入的隐私
+    // 政策正文，而 E2E 套件串行共用同一个库，改写它会让那条用例失败。
+    await card(pageB, 'about').locator('#site-field-makingScope')
+      .fill('制作范围：全装与半装。')
+    await card(pageB, 'about').getByTestId('site-section-save').click()
+    await expect(card(pageB, 'about').getByTestId('site-section-saved'))
       .toBeVisible()
   }
   finally {
