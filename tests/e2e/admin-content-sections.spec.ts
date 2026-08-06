@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { adminBaseURL, loginAsAdmin } from './helpers/auth'
+import { adminBaseURL, loginAsAdmin, publicBaseURL } from './helpers/auth'
 import { capture } from './helpers/screenshots'
 
 const SCREENSHOT_DIR
@@ -103,6 +103,85 @@ test('同一分区并发保存：第二个上下文得到分区级冲突且保�
     await expect(conflictB.locator('#site-field-intro')).toHaveValue('A 的委托简介')
 
     await capture(pageB, 't34-f3-section-conflict', SCREENSHOT_DIR)
+  }
+  finally {
+    await first.close()
+    await second.close()
+  }
+})
+
+test('官方渠道 Card：邮箱、QQ、抖音号和防诈骗提醒一次保存并投影到公开页', async ({ page }) => {
+  await openContentAdmin(page)
+  const channels = card(page, 'contact')
+
+  // 四个字段都在同一张 Card 里可编辑，共用一次局部保存。
+  await expect(channels.locator('#site-field-email')).toBeEditable()
+  await expect(channels.locator('#site-field-qq')).toBeEditable()
+  await expect(channels.locator('#site-field-douyin')).toBeEditable()
+  await expect(channels.locator('#site-field-antiScam')).toBeEditable()
+
+  await channels.locator('#site-field-email').fill('channels@example.test')
+  await channels.locator('#site-field-qq').fill('123456789')
+  await channels.locator('#site-field-douyin').fill('studio.official')
+  await channels.locator('#site-field-antiScam')
+    .fill('只认这些官方渠道，其他都是冒充。')
+  await channels.getByTestId('site-section-save').click()
+  await expect(channels.getByTestId('site-section-saved')).toBeVisible()
+
+  // 无效邮箱与 QQ 在保存前就被拦下，不会发出请求。
+  await channels.locator('#site-field-email').fill('invalid')
+  await expect(channels.getByTestId('site-section-save')).toBeDisabled()
+  await channels.locator('#site-field-email').fill('channels@example.test')
+  await channels.locator('#site-field-qq').fill('0123')
+  await expect(channels.getByTestId('site-section-save')).toBeDisabled()
+  await channels.getByRole('button', { name: '放弃修改' }).click()
+
+  await page.reload()
+  const reloaded = card(page, 'contact')
+  await expect(reloaded.locator('#site-field-email'))
+    .toHaveValue('channels@example.test')
+  await expect(reloaded.locator('#site-field-qq')).toHaveValue('123456789')
+
+  // 公开页联系人跟随官方渠道 Card。
+  await page.goto(`${publicBaseURL}/about#contact`)
+  const contact = page.getByTestId('about-contact')
+  await expect(
+    contact.getByRole('link', { name: 'channels@example.test' }),
+  ).toHaveAttribute('href', 'mailto:channels@example.test')
+  await expect(contact.getByText('123456789', { exact: true })).toBeVisible()
+})
+
+test('官方渠道分区并发：同分区第二个上下文冲突，不同分区都成功', async ({ browser }) => {
+  const first = await browser.newContext()
+  const second = await browser.newContext()
+  const pageA = await first.newPage()
+  const pageB = await second.newPage()
+
+  try {
+    await openContentAdmin(pageA)
+    await openContentAdmin(pageB)
+
+    await card(pageA, 'contact').locator('#site-field-douyin').fill('a.official')
+    await card(pageB, 'contact').locator('#site-field-douyin').fill('b.official')
+
+    await card(pageA, 'contact').getByTestId('site-section-save').click()
+    await expect(card(pageA, 'contact').getByTestId('site-section-saved'))
+      .toBeVisible()
+
+    // 同一 contact 分区用陈旧版本保存：分区级 409，草稿保留。
+    await card(pageB, 'contact').getByTestId('site-section-save').click()
+    const conflictB = card(pageB, 'contact')
+    await expect(conflictB.getByTestId('site-section-conflict')).toBeVisible()
+    await expect(conflictB.locator('#site-field-douyin')).toHaveValue('b.official')
+    await expect(conflictB.getByTestId('site-section-conflict'))
+      .toContainText('a.official')
+
+    // 不同分区同时保存都成功：B 的 privacy 分区不受 contact 冲突影响。
+    await card(pageB, 'privacy').locator('#site-field-privacyPolicy')
+      .fill('本站不使用营销分析 Cookie。')
+    await card(pageB, 'privacy').getByTestId('site-section-save').click()
+    await expect(card(pageB, 'privacy').getByTestId('site-section-saved'))
+      .toBeVisible()
   }
   finally {
     await first.close()

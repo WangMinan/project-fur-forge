@@ -23,10 +23,12 @@ export interface HeroSlideInput {
   linkedWorkId: string | null
 }
 
+/**
+ * T34-F3：首屏设置只管首页口号与轮播行为。
+ * 官方邮箱、QQ、抖音号和防诈骗提醒统一由“文案配置”的官方渠道分区编辑。
+ */
 export interface HomeSettingsInput {
   tagline: string
-  contactEmail: string
-  contactQq: string
   autoRotate: boolean
   autoRotateIntervalMs: number
 }

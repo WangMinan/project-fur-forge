@@ -70,11 +70,10 @@ export interface HeroSlideInput {
   sortOrder: number
 }
 
+/** T34-F3：首屏设置不再包含官方邮箱与 QQ，它们属于 contact 分区。 */
 export interface HomeSettingsInput {
   autoRotate: boolean
   autoRotateIntervalMs: number
-  contactEmail: string
-  contactQq: string
   tagline: string
 }
 
@@ -1082,15 +1081,12 @@ export function updateHomeSettings(
 ) {
   const result = sqlite.prepare(`
     UPDATE site_content
-    SET hero_tagline = ?, contact_email = ?, contact_qq = ?,
-        hero_auto_rotate = ?,
+    SET hero_tagline = ?, hero_auto_rotate = ?,
         hero_auto_rotate_interval_ms = ?, version = version + 1,
         updated_at = ?
     WHERE id = 'site' AND version = ?
   `).run(
     input.tagline,
-    input.contactEmail,
-    input.contactQq,
     input.autoRotate ? 1 : 0,
     input.autoRotateIntervalMs,
     now,

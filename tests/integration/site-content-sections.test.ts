@@ -163,6 +163,8 @@ describe('T34-F3 site content section concurrency', () => {
 
   it('never leaks section versions or private contact fields to the public DTO', () => {
     updateSiteContentSection(sqlite, 'contact', versions().contact, {
+      email: 'studio@example.test',
+      qq: '3114559925',
       douyin: 'studio.official',
       antiScam: '只认这些官方渠道。',
     }, USER_ID, NOW)

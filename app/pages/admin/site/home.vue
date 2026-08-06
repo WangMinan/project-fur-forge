@@ -62,8 +62,6 @@ const errorDialogOpen = computed(() =>
 )
 
 const tagline = ref('')
-const contactEmail = ref('')
-const contactQq = ref('')
 const autoRotate = ref(false)
 const intervalSeconds = ref(6)
 
@@ -75,8 +73,6 @@ function closeErrorDialog() {
 function settingsSnapshot() {
   return JSON.stringify({
     tagline: tagline.value,
-    contactEmail: contactEmail.value,
-    contactQq: contactQq.value,
     autoRotate: autoRotate.value,
     intervalSeconds: intervalSeconds.value,
   })
@@ -90,8 +86,6 @@ function syncSettings() {
     return
   }
   tagline.value = current.tagline
-  contactEmail.value = current.contactEmail
-  contactQq.value = current.contactQq
   autoRotate.value = current.autoRotate
   intervalSeconds.value = Math.round(current.autoRotateIntervalMs / 1_000)
   settingsBaseline.value = settingsSnapshot()
@@ -104,9 +98,6 @@ const settingsDirty = computed(() =>
 const settingsValid = computed(() => {
   const text = tagline.value.trim()
   return text.length >= 1 && text.length <= 120
-    && /^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(contactEmail.value.trim())
-    && contactEmail.value.trim().length <= 254
-    && /^[1-9]\d{4,11}$/u.test(contactQq.value.trim())
     && Number.isInteger(intervalSeconds.value)
     && intervalSeconds.value >= 6 && intervalSeconds.value <= 300
 })
@@ -123,8 +114,6 @@ watch(home, (value) => {
     // 自己保存成功时服务端值与表单一致，基线推进后自然回到非 dirty。
     settingsBaseline.value = JSON.stringify({
       tagline: value.tagline,
-      contactEmail: value.contactEmail,
-      contactQq: value.contactQq,
       autoRotate: value.autoRotate,
       intervalSeconds: Math.round(value.autoRotateIntervalMs / 1_000),
     })
@@ -155,8 +144,6 @@ async function onSaveSettings() {
   }
   actionError.value = await saveSettings({
     tagline: tagline.value.trim(),
-    contactEmail: contactEmail.value.trim(),
-    contactQq: contactQq.value.trim(),
     autoRotate: autoRotate.value,
     autoRotateIntervalMs: intervalSeconds.value * 1_000,
   })
@@ -276,31 +263,9 @@ onMounted(() => {
                 :disabled="mutating"
               >
             </div>
-            <div class="home-admin__field">
-              <label class="home-admin__label" for="home-contact-email">业务邮箱</label>
-              <input
-                id="home-contact-email"
-                v-model="contactEmail"
-                class="home-admin__input"
-                type="email"
-                maxlength="254"
-                autocomplete="email"
-                :disabled="mutating"
-              >
-            </div>
-            <div class="home-admin__field">
-              <label class="home-admin__label" for="home-contact-qq">QQ</label>
-              <input
-                id="home-contact-qq"
-                v-model="contactQq"
-                class="home-admin__input"
-                type="text"
-                inputmode="numeric"
-                pattern="[1-9][0-9]{4,11}"
-                maxlength="12"
-                :disabled="mutating"
-              >
-            </div>
+            <p class="home-admin__hint">
+              官方邮箱、QQ、抖音号和防诈骗提醒统一在“文案配置”的官方渠道里修改。
+            </p>
             <div class="home-admin__field home-admin__field--inline">
               <label class="home-admin__label" for="home-auto-rotate">自动轮播</label>
               <input

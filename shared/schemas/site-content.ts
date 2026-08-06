@@ -107,15 +107,18 @@ const aboutContentSchema = aboutBasicContentSchema
   .extend(privacyContentSchema.shape)
   .strict()
 
+/**
+ * T34-F3：官方渠道是一个整体。邮箱、QQ、抖音号和防诈骗提醒都在
+ * contact 分区里编辑，使用 contact 分区版本；首屏设置不再重复提供入口。
+ */
 const mutableContactContentSchema = z.object({
+  email: contactEmailSchema,
+  qq: contactQqSchema,
   douyin: contactDouyinSchema.nullable(),
   antiScam: plainTextSchema(600).nullable(),
 }).strict()
 
-const publicContactContentSchema = mutableContactContentSchema.extend({
-  email: contactEmailSchema,
-  qq: contactQqSchema,
-}).strict()
+const publicContactContentSchema = mutableContactContentSchema
 
 const statusPairSchema = <T extends z.ZodType>(status: T) => z.object({
   commission: status.nullable(),

@@ -434,10 +434,11 @@ test.describe('T28 首页完整内容顺序', () => {
     await page.goto('/')
 
     // T34-F2：入口与状态合并为统一业务入口卡，不再有独立状态区。
+    // 顺序与公开站 IA 一致：Hero → 精选作品 → 统一业务入口 → 当前领养 → 页脚。
     const order = await page.locator([
       '[data-testid="public-hero"]',
-      '[data-testid="home-business-entries"]',
       '[data-testid="featured-works"]',
+      '[data-testid="home-business-entries"]',
       '[data-testid="home-current-adoptions"]',
       '[data-testid="public-footer"]',
     ].join(',')).evaluateAll(elements => elements.map(element =>
@@ -445,8 +446,8 @@ test.describe('T28 首页完整内容顺序', () => {
     ))
     expect(order).toEqual([
       'public-hero',
-      'home-business-entries',
       'featured-works',
+      'home-business-entries',
       'home-current-adoptions',
       'public-footer',
     ])

@@ -854,10 +854,10 @@ describe('T19/T20 public repository contracts', () => {
       NOW + sequence++,
     )
     home = getAdminHome(sqlite)
+    // T34-F3：首屏设置只写口号与轮播；官方邮箱与 QQ 由 contact 分区维护，
+    // 因此保存首屏设置不会改变公开投影里的联系人。
     home = updateHomeSettings(sqlite, home.version, {
       tagline: '只让作品说话',
-      contactEmail: 'hello@example.test',
-      contactQq: '123456789',
       autoRotate: true,
       autoRotateIntervalMs: 6000,
     }, NOW + sequence++)
@@ -883,8 +883,8 @@ describe('T19/T20 public repository contracts', () => {
     expect(adminRead.queries).toHaveLength(4)
     expect(projection).toMatchObject({
       tagline: '只让作品说话',
-      contactEmail: 'hello@example.test',
-      contactQq: '123456789',
+      contactEmail: '3114559925@qq.com',
+      contactQq: '3114559925',
       autoRotate: true,
       autoRotateIntervalMs: 6000,
     })
@@ -950,8 +950,6 @@ describe('T19/T20 public repository contracts', () => {
     expect(home.slides).toHaveLength(1)
     expect(() => updateHomeSettings(sqlite, 1, {
       tagline: 'stale',
-      contactEmail: 'stale@example.test',
-      contactQq: '123456789',
       autoRotate: false,
       autoRotateIntervalMs: 6000,
     })).toThrow(/stale/)

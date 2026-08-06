@@ -207,7 +207,7 @@ const SECTION_UPDATES = {
   'contact': {
     versionColumn: 'contact_content_version',
     action: 'SITE_CONTACT_CONTENT_UPDATE',
-    assignments: 'contact_douyin = @douyin, contact_anti_scam = @antiScam',
+    assignments: 'contact_email = @email, contact_qq = @qq, contact_douyin = @douyin, contact_anti_scam = @antiScam',
   },
 } as const satisfies Record<SiteContentSection, {
   action: string

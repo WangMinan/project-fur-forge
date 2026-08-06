@@ -47,10 +47,29 @@ describe('restricted site content contracts', () => {
       expectedVersion: 1,
       payload: { studioFacts: null, makingScope: null },
     }).success).toBe(true)
+    // T34-F3：邮箱与 QQ 现在也属于 contact 分区，且是公开投影必需字段。
+    expect(updateContactContentRequestSchema.safeParse({
+      expectedVersion: 1,
+      payload: {
+        email: 'studio@example.test',
+        qq: '3114559925',
+        douyin: null,
+        antiScam: null,
+      },
+    }).success).toBe(true)
     expect(updateContactContentRequestSchema.safeParse({
       expectedVersion: 1,
       payload: { douyin: null, antiScam: null },
-    }).success).toBe(true)
+    }).success).toBe(false)
+    for (const invalid of [
+      { email: 'invalid', qq: '3114559925' },
+      { email: 'studio@example.test', qq: '0123' },
+    ]) {
+      expect(updateContactContentRequestSchema.safeParse({
+        expectedVersion: 1,
+        payload: { ...invalid, douyin: null, antiScam: null },
+      }).success).toBe(false)
+    }
     // 分区请求不接受其它分区字段，避免整包覆盖复活。
     expect(updateCommissionContentRequestSchema.safeParse({
       expectedVersion: 1,
@@ -58,12 +77,22 @@ describe('restricted site content contracts', () => {
     }).success).toBe(false)
     expect(contactDouyinSchema.safeParse('to3114559925').success).toBe(true)
     expect(contactDouyinSchema.safeParse('@invalid handle').success).toBe(false)
+    // 首屏设置只写口号与轮播行为。
     expect(updateHomeSettingsRequestSchema.safeParse({
       expectedVersion: 1,
       payload: {
         tagline: '短口号',
-        contactEmail: 'invalid',
-        contactQq: '0123',
+        autoRotate: false,
+        autoRotateIntervalMs: 6000,
+      },
+    }).success).toBe(true)
+    // 旧版前端继续提交邮箱/QQ 会被拒绝，因此不会出现两个可编辑入口。
+    expect(updateHomeSettingsRequestSchema.safeParse({
+      expectedVersion: 1,
+      payload: {
+        tagline: '短口号',
+        contactEmail: 'studio@example.test',
+        contactQq: '3114559925',
         autoRotate: false,
         autoRotateIntervalMs: 6000,
       },
