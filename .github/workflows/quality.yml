@@ -1,18 +1,15 @@
-# T34-F7 质量门禁。
-# 不登录 Docker Hub、不推送镜像；镜像发布见 release-image.yml。
 name: quality
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
   workflow_dispatch:
-  # 供 release-image.yml 复用，发布前必须先过质量门禁。
   workflow_call:
 
-# 同一分支的新运行取消旧运行。
 concurrency:
-  group: quality-${{ github.ref }}
+  group: quality-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -20,24 +17,35 @@ permissions:
 
 env:
   APP_ENV: test
+  NODE_VERSION: 24.18.0
+  PNPM_VERSION: 11.18.0
 
 jobs:
   checks:
-    runs-on: ubuntu-latest
-    timeout-minutes: 40
+    name: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
         with:
-          version: 11.18.0
+          persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - name: Set up pnpm
+        uses: pnpm/setup@v2.0.0
         with:
-          node-version: 24
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
-      - run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Lint
         run: pnpm lint
@@ -61,64 +69,103 @@ jobs:
         run: node scripts/ci-secret-scan.mjs
 
       - name: Compose static config check
-        # 只展开配置，不启动任何服务。
-        run: |
-          set -a
-          . ./.env.compose.example
-          set +a
-          docker compose config --quiet
-          echo "compose config expanded OK"
+        env:
+          APP_IMAGE: example/project-fur-forge
+          APP_IMAGE_TAG: ci
+          PUBLIC_HOST: public.example.test
+          ADMIN_HOST: admin.example.test
+          TLS_CERT_DIR: ./deploy/nginx/tls
+          TLS_CERT_FILE: /etc/nginx/tls/fullchain.pem
+          TLS_KEY_FILE: /etc/nginx/tls/privkey.pem
+          PUBLIC_BASE_URL: https://public.example.test
+          ADMIN_BASE_URL: https://admin.example.test
+          MEDIA_BASE_URL: https://media.example.test
+          OSS_UPLOAD_BASE_URL: https://private.example.test
+          OSS_REGION: oss-cn-hangzhou
+          OSS_ENDPOINT: https://oss-cn-hangzhou.aliyuncs.com
+          OSS_PRIVATE_BUCKET: ci-private
+          OSS_PUBLIC_BUCKET: ci-public
+          OSS_ACCESS_KEY_ID: ci-placeholder
+          OSS_ACCESS_KEY_SECRET: ci-placeholder
+          SESSION_SECRET: ci-placeholder-session-secret-at-least-32-chars
+          BACKEND_SUBNET: 172.30.250.0/24
+          TRUSTED_PROXY_CIDRS: 172.30.250.0/24
+        run: docker compose -f docker-compose.yaml config --quiet
 
-      - name: Upload test artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Upload check artifacts
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@v7.0.1
         with:
-          name: test-results
+          name: check-artifacts
           path: |
             test-results/
             playwright-report/
           if-no-files-found: ignore
           retention-days: 7
 
-  # Dockerfile 构建验证在 CI 完成，不在本地执行。
   image-build:
-    runs-on: ubuntu-latest
-    timeout-minutes: 40
+    name: image-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - name: Build image (no push)
-        uses: docker/build-push-action@v6
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4.2.0
+
+      - name: Build application image
+        uses: docker/build-push-action@v7.3.0
         with:
           context: .
           platforms: linux/amd64
+          pull: true
           push: false
           load: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=quality-image
+          cache-to: type=gha,mode=max,scope=quality-image
 
   e2e:
-    runs-on: ubuntu-latest
-    timeout-minutes: 40
+    name: e2e
+    needs:
+      - checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
         with:
-          version: 11.18.0
-      - uses: actions/setup-node@v4
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/setup@v2.0.0
         with:
-          node-version: 24
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Install Playwright browsers
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
-      - name: E2E
+
+      - name: Run E2E
         run: pnpm test:e2e
+
       - name: Upload E2E artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@v7.0.1
         with:
-          # 截图与 trace 只进 artifact，不写回 agent_docs。
           name: e2e-artifacts
           path: |
             test-results/

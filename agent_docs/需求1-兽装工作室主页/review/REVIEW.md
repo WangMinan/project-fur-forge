@@ -1,203 +1,161 @@
 # 当前评审记录
 
-> **角色**：记录当前 SPEC、PLAN、TASKS、代码和真实运行结果之间的差异。dated implementation notes 保留各阶段历史评审，本文件只表达现在有效的总判断。
-> **评审日期**：2026-08-05。
+> **角色**：记录当前 SPEC、代码、部署文件、GitHub Actions 与任务状态之间的差异。
+> **评审日期**：2026-08-06。
+> **代码基线**：`aac745167e640e5ef20b4d054539a9a245ca109e`。
+> **结论**：`PASS WITH REQUIRED CLOSURE`。
 
 ## 1. 总结论
 
-当前主分支的阶段 C 功能主链成立：作品、常规领养、首页、委托、管理、OSS、发布、备份和安全能力已经形成。上传核验、双 Bucket、版本冲突、公开 DTO 隔离和发布失败清理具有较完整的工程基础。
-
-本轮 Review 同时确认，当前版本不能直接宣布 P0 正式上线就绪。结论为：
-
-> **PASS WITH REQUIRED CLOSURE**
-
-T34 历史独立 Review 的 `PASS` 继续保留，表示当时约定的最小镜像和全链验证已经通过；本轮新增产品决策和更完整部署定义由 T34-F1–T34-F8 收口，不改写历史记录。
-
-## 2. 已确认有效的基础
-
-- 公开 Host、管理 Host 和错误 Host 边界已经存在；
-- 唯一管理员 Session、Origin、CSRF、改密和失效机制已经存在；
-- 私有原图与公开衍生图使用双 Bucket；
-- 条件直传、摘要、MIME、尺寸、EXIF 和角色校验已经存在；
-- 作品、设定图、出厂照、发布、下架和公开投影已经存在；
-- 活动水印候选、不可变 profile、预览、应用和失败恢复已经存在；
-- 备份、验证恢复、迁移 hash、完整性和外键检查已经存在；
-- unit、integration、Playwright、production build 和最小 Docker 验证已有历史证据。
-
-这些能力在后续任务中应复用和加固，不应推倒重写。
-
-## 3. 必须修复的产品与视觉问题
-
-### R-01 · 站点大图保护规则错误
-
-当前首页 Hero、委托 Hero 与活动水印 profile 耦合。用户已确认：站点展示位无水印，作品展示位继续使用活动水印。
-
-必须：
-
-- 新增无水印站点展示配方；
-- 首页和委托横竖 Hero 切换到无水印；
-- 首页委托和领养入口生成独立无水印变体；
-- profile 切换不再影响站点展示变体；
-- 永久原图继续私有。
-
-权威规则见 [`../requirements/MEDIA-PUBLICATION-POLICY.md`](../requirements/MEDIA-PUBLICATION-POLICY.md)。
-
-### R-02 · 首页入口与状态重复
-
-当前首页先显示委托/领养大图入口，再显示独立营业状态 Card，信息语义重复且视觉体系不一致。
-
-必须合并为统一业务入口卡，状态作为入口的辅助信息，不保留独立状态区。
-
-### R-03 · 详情竖图舞台错误
-
-当前竖图在满宽灰色舞台中 contain，形成两侧大面积灰色区域。必须按图片方向限制竖图容器宽度，保持完整显示并使用白色页面背景。
-
-图集还必须在作品或 gallery 变化时重置有效索引，避免主图与缩略图 `aria-pressed` 不一致。
-
-### R-04 · 文案管理过度集中
-
-`SiteContentCard.vue` 同时管理委托、FAQ、关于、条款、隐私和联系内容，并使用完整 payload 与全局版本。
-
-必须拆分 Card 和分区版本。一个 Card 的保存不能覆盖其他 Card 在新版本中的更新。
-
-## 4. 必须修复的架构问题
-
-### R-05 · 巨型服务和 composable
-
-以下边界已经过度集中：
-
-- Hero 管理、发布和恢复；
-- 媒体配方、源选择、生成和数据库写入；
-- 水印 profile 管理和全站应用；
-- 作品发布；
-- `useAdminHome` 的 CRUD、预览、轮询、错误和恢复；
-- 大型管理表单组件。
-
-必须围绕 repository、service、runner、pure recipe 和 UI state 拆分，但只处理 C.1 相关路径，不进行无目标全仓重构。
-
-### R-06 · 前端匹配英文错误消息
-
-前端通过英文 `serverMessage` 判断“最后一个 Hero”“顺位冲突”等业务分支。文案变化会破坏行为。
-
-API 必须提供稳定业务 `reason`，前端只匹配 reason 并集中映射中文提示。
-
-### R-07 · 公开首页重复查询和故障放大
-
-首页分别请求 Hero、委托 Hero、站点内容、领养和精选，多个路径重复构建公开作品快照。精选等次要区块失败还能导致整页 500。
-
-目标是首页聚合投影和区块故障隔离。
-
-## 5. 必须修复的可靠性问题
-
-### R-08 · 长任务进程重启后可能永久卡死
-
-Hero 发布、Hero 放大和水印应用依赖当前 Node 进程执行。操作表没有 lease、heartbeat 和启动接管；重试只接受 FAILED。容器在运行态中断后，任务可能永久停留并阻塞新操作。
-
-必须增加持久 lease、超时、幂等核对、启动恢复和进程中断测试。
-
-### R-09 · 上传过期清理为惰性
-
-上传会话只在再次查询或操作时发现过期。关闭页面后可能长期残留对象和记录。
-
-必须增加主动清扫命令和仅针对临时对象的 OSS 生命周期兜底。
-
-### R-10 · 全局限流可能阻断唯一管理员
-
-当前登录和管理写使用进程全局窗口。匿名流量或测试序列可以耗尽所有人的额度；账号 5 次失败锁定又放大了唯一管理员拒绝服务风险。
-
-必须按可信主体分桶，并与 Nginx 可信代理配置共同验证。
-
-## 6. 必须修复的部署问题
-
-### R-11 · 当前镜像不是完整运维镜像
-
-现有 Dockerfile 手工收集 `ali-oss` 依赖闭包，只复制 `.output` 和依赖，不包含迁移、管理员初始化、备份和恢复所需的完整脚本与迁移文件。
-
-必须使用标准 Node 24 frozen 构建和正式运行依赖部署方式，不再手工复制单个依赖树。
-
-### R-12 · 空数据卷不能证明可部署
-
-当前健康接口只返回进程存活，启动插件不验证迁移完整性。已有 T34 证据使用准备好的数据库，不等价于空环境部署。
-
-必须提供 migrate、init-admin、ready，并从空卷演练。
-
-### R-13 · 缺少 Compose 与 Nginx 契约
-
-项目依赖公开域名和管理域名隔离，但仓库没有版本化 Compose、Nginx 双 Host、TLS、安全头和可信代理配置。
-
-必须新增通用 P0 部署栈；正式域名和证书接入留到 T52。
-
-### R-14 · 缺少远端 CI
-
-当前质量结论依赖本地 Agent 执行。必须新增 GitHub Actions 核心门禁、容器 smoke 和 E2E artifact。
-
-## 7. 文档问题与本轮处理
-
-### R-15 · 水印事实源重复
-
-旧规则分散在 `.design`、foundation、requirements、planning、models、STATE、TASKS 和 AGENTS 摘要中。站点大图无水印的新决策会与旧文件冲突。
-
-本轮处理：
-
-- 新增唯一媒体策略；
-- 重写当前活文档，只引用媒体策略；
-- 五份 `WATERMARK-CENTERED-V2.md` 改为归档指针；
-- dated notes 保留历史事实，不删除、不改写。
-
-### R-16 · T34 与 T52 完成定义混淆
-
-旧 T34 被称为可部署版本，但真正的目标环境部署又在 T52。当前拆分调整为：
-
-- T34-F6：完成通用、可重复的 P0 Node/Compose/Nginx/迁移部署；
-- T52：在全部选定功能完成后接入正式域名、证书、正式 Bucket、备份计划和最终发布流程。
-
-## 8. C.1 Review 方法
-
-每个任务的 Reviewer 必须使用最新 `main` 和新上下文：
-
-1. 对照 SPEC、媒体策略、PLAN 和 TASKS；
-2. 查看代码差异和迁移；
-3. 运行相关 lint/typecheck/build/unit/integration/E2E；
-4. 实际启动应用；
-5. 区分公开、管理、媒体和错误 Host；
-6. 模拟管理员和新访客完整点击；
-7. 检查失败、冲突、重载、容器重启和恢复；
-8. 查看 console、network、图片自然尺寸和请求 URL；
-9. 在 `390×844`、`768×1024`、`1440×900` 检查布局；
-10. 留下 `PASS / PASS WITH FOLLOW-UP / NOT PASS` 和具体证据。
-
-不能以 HTTP 200、元素数量、选择器存在或测试总数代替页面观察。
-
-## 9. 当前门禁
-
-当前允许：
-
-- 执行 T34-F1–T34-F8；
-- 在 C.1 范围内修改数据库、媒体、公开 UI、管理 UI、可靠性、Docker、Compose、Nginx 和 CI；
-- 保留并复用历史测试和 notes。
-
-当前不允许：
-
-- 宣布现有版本 P0 正式上线就绪；
-- 进入 T35–T53；
-- 把站点大图重新纳入大型水印；
-- 删除永久原图或历史 Review；
-- 为解决部署问题复制完整本地工作区、`.env` 或开发数据库进镜像；
-- 通过放宽安全约束让测试通过。
-
-## 10. 通过条件
-
-只有 T34-F8 满足以下条件，本轮 Review 才能更新为 `PASS`：
-
-- 站点展示无水印、作品展示有水印；
-- 首页入口与状态合并；
-- 竖图详情正确；
-- 文案 Card 独立并发正确；
-- 长任务重启恢复；
+阶段 C 的主业务链已经建立，T34-F1–F3 也完成了大部分产品改造；但是当前不能结束阶段 C，原因包括：
+
+1. 最新 `quality` 工作流的 `checks`、`image-build`、`e2e` 全部失败；
+2. 既有已启用 Hero 和既有已发布领养没有统一 reconcile 到无水印站点变体；
+3. 长任务没有 lease、heartbeat 和启动恢复；
+4. 后端 repository/service/runner 边界未完成；
+5. 首页顺序、官方渠道入口和 readiness 严格迁移校验仍有小型契约缺口；
+6. T34-F8 尚未由用户执行。
+
+因此 T34-F1、F2、F3、F6、F7 需要按“部分完成/待验证”重新打开，F4、F5继续保持未完成。
+
+## 2. 已确认有效的实现
+
+以下能力应保留，不推倒重写：
+
+- `protection_mode` 与 `site-display-v1`；
+- 首页/委托 Hero 及两个业务入口的无水印 usage；
+- 作品和领养展示位的活动水印；
+- 首页聚合 DTO、统一业务入口和竖图详情布局；
+- 文案分区 Card、分区版本、FAQ 稳定 ID 与 409 草稿保留；
+- 稳定 API `reason` 和前端英文消息匹配清理；
 - 过期上传主动清扫；
-- 限流和代理边界通过；
-- 标准完整镜像、Compose、Nginx、live/ready；
-- 空环境部署、升级和回滚；
-- CI、完整自动化和真实双 Bucket；
-- 新上下文独立 Review；
-- 用户最终验收。
+- 可信代理解析与按主体限流；
+- 容器运维命令、live/ready、Nginx 双 Host 和镜像发布流程骨架。
+
+## 3. 必须关闭的 finding
+
+### R-17 · 当前 GitHub Actions 失败
+
+复核时最新运行：
+
+- `checks` 在 TypeScript typecheck 失败：`ControlBody` 没有 `placement`；
+- `image-build` 因 pnpm 11 `ERR_PNPM_IGNORED_BUILDS` 失败，未批准 `better-sqlite3`、`esbuild`、`ffmpeg-static`、`unrs-resolver`；
+- `e2e` 因测试服务未成功启动而失败；
+- 原 Compose 检查通过 source `.env.compose.example` 注入环境，示例中的 `<...>` 与空必填值不适合作为 CI 环境；
+- 旧 Action 版本触发 Node.js 20 弃用警告。
+
+本次配置提交已：
+
+- Dockerfile 依赖阶段复制版本控制内的 `pnpm-workspace.yaml`，执行既有 `allowBuilds` / `strictDepBuilds`；
+- 将 Action 更新到 2026-08-06 核验的稳定版本；
+- 使用 `pnpm/setup@v2.0.0`；
+- 让 Compose 检查使用显式 dummy 环境；
+- 将 E2E 设为依赖 checks，避免基础门禁失败后继续浪费运行资源。
+
+`ControlBody.placement` 属于业务测试 fixture，本次按用户要求不修改，留给下一轮 Codex。
+
+### R-18 · 既有站点素材没有迁移闭环
+
+新发布路径能够生成 `site-display-v1`，但迁移 0017 主要改变数据库身份，不会主动为所有既有对象生成新文件。公开 Hero 仍存在旧水印回退，已发布领养入口也可能没有独立变体。
+
+必须增加幂等 reconcile：
+
+- 扫描当前启用首页 Hero；
+- 扫描当前委托 Hero；
+- 扫描首页委托入口源；
+- 扫描当前及必要的已发布常规领养入口源；
+- 生成/验证缺失变体；
+- 记录失败并可重试；
+- 只清理当前 attempt 新对象；
+- 旧投影持续可用；
+- 真实双 Bucket 验证。
+
+### R-19 · 长任务重启恢复尚未实现
+
+当前 publication/watermark operation 缺少：
+
+- attempt；
+- lease owner；
+- lease expiry；
+- heartbeat；
+- recovery reason；
+- 启动扫描与接管。
+
+必须覆盖 Hero 发布、Hero 放大、作品发布/下架、水印预览/应用和 reconcile。需要真实杀死 Node 进程并在生成、验证、提交边界重启，确认不会永久卡住或产生半套公开对象。
+
+### R-20 · 后端职责仍过度集中
+
+`home-management.ts`、`work-publication.ts` 和水印逻辑仍混合 SQL、规则、OSS、operation 和清理。F4 应与 F5 一起完成：
+
+- repository：SQL 和映射；
+- service：业务规则与事务入口；
+- runner：operation、lease、OSS 副作用、恢复与清理；
+- recipe/identity：纯函数；
+- route：权限、Schema 和安全响应。
+
+重构前先补 characterization tests，重构后比较 API、SQL、公开 DTO、状态机与浏览器行为。
+
+### R-21 · F2/F3 尚有两个产品边界
+
+- 当前 `index.vue` 的业务入口与精选作品顺序和公开站 IA 不一致；必须统一代码或 IA；
+- 官方渠道 Card 中邮箱和 QQ 仍为只读，管理员需要回“首屏设置”修改；必须把邮箱、QQ、抖音和防诈骗说明放入同一个可编辑并发分区。
+
+### R-22 · readiness 校验不足
+
+现有 readiness 主要比较已应用迁移数量与文件数量。项目已有迁移 hash/顺序验证能力，应复用严格检查，防止数量相同但历史不同的数据库错误返回 ready。
+
+### R-23 · Compose 网络和健康路由
+
+旧 Compose 只把 app 接入 `internal:true` 网络，会阻断应用主动访问阿里云 OSS。旧 Nginx 只屏蔽 `/api/health/`，没有屏蔽固定返回 ok 的 `/api/health`。
+
+本次配置提交已：
+
+- 将文件命名统一为 `docker-compose.yaml`；
+- 增加 app 专用 egress 网络；
+- backend 使用小型可配置子网，并与可信代理 CIDR 对齐；
+- 精确屏蔽 `/api/health` 与 `/api/health/`；
+- app/migrate 使用只读根文件系统、`no-new-privileges` 与 capabilities 收缩。
+
+## 4. 本次配置提交的允许范围
+
+允许修改：
+
+- `agent_docs/`；
+- `Dockerfile`；
+- `compose.yaml` → `docker-compose.yaml`；
+- `.env.compose.example`；
+- `deploy/nginx/`；
+- `docs/DEPLOYMENT.md`；
+- `.github/workflows/`；
+- `.github/dependabot.yml`。
+
+明确不修改：
+
+- `app/`；
+- `server/`；
+- `shared/`；
+- `tests/`；
+- `scripts/` 中的业务与运维实现；
+- 数据库迁移；
+- `package.json` 与 lockfile。
+
+因此，本次提交后 `quality` 仍可能因已知 TypeScript 业务错误失败；这不是通过放宽门禁解决，而是下一轮业务修复入口。
+
+## 5. C.1 通过条件
+
+只有以下条件全部满足，才允许把本文件结论改为 `PASS`：
+
+- 既有站点素材 reconcile 完成；
+- 站点展示无水印、作品/领养展示继续有水印；
+- profile 切换不改变站点展示 URL 与摘要；
+- 首页顺序和官方渠道入口收口；
+- 后端边界完成且行为不回归；
+- 长任务 lease、heartbeat、启动恢复与进程中断测试通过；
+- 过期上传清扫与限流保持通过；
+- readiness 使用严格迁移校验；
+- GitHub Actions `checks`、`image-build`、`e2e` 在最新 main 全绿；
+- 完整非 Docker 本地门禁通过；
+- 用户完成 T34-F8 视觉验收；
+- 新上下文独立 Review 为 `PASS`。
+
+正式域名、TLS、线上 Compose、空卷部署、升级、回滚、恢复和 Docker Hub 正式发布仍延期到部署阶段，不属于本轮 GATE-C1。

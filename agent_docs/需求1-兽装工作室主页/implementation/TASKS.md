@@ -1,24 +1,25 @@
 # 任务清单：兽装工作室主页
 
 > **角色**：当前唯一可勾选实施分解。
-> **规则**：历史完成状态不因后续增量回退；新发现的问题使用任务后缀收口。实现、Review 和用户验收按任务说明分别记录。
+> **最后校准**：2026-08-06。
+> **规则**：历史工程事实保留；任务只有在当前完成定义全部满足后才能勾选。实现者不能代签用户验收。
 
 ## 当前目标
 
-阶段 C 功能主链已建立，当前只执行 **阶段 C.1 · P0 收口修复**。T34 的历史工程与独立 Review 结果保留，但现有版本不再视为正式上线候选。完成 T34-F1–T34-F8 后再进入 T35。
+阶段 C 功能主链已经建立，当前只执行 **阶段 C.1 · P0 收口修复**。完成 T34-F1–T34-F8 并通过 `GATE-C1` 后，才能进入 T35。
 
-当前无开放 OQ。媒体规则以 [`../requirements/MEDIA-PUBLICATION-POLICY.md`](../requirements/MEDIA-PUBLICATION-POLICY.md) 为唯一事实源。
+媒体规则以 [`../requirements/MEDIA-PUBLICATION-POLICY.md`](../requirements/MEDIA-PUBLICATION-POLICY.md) 为唯一事实源。当前 finding 见 [`../review/REVIEW.md`](../review/REVIEW.md)。
 
 ## 执行规则
 
-- 写入前读取最新 `main`；后端 → 前端 → Review 串行执行；
-- 不 force push、不重写历史、不删除或清空 `.env`；
-- 业务冲突先改 SPEC/PLAN/TASKS，再改代码；
-- 所有写操作使用资源版本；
-- 所有长任务提供服务端持久进度、失败和恢复；
-- 自动化按风险选择，C.1 总门禁执行完整集合；
-- UI、媒体和公开投影任务必须做真实浏览器、三视口、console/network 和图片解码检查；
-- dated notes 只记录实施证据，不承担当前规则。
+- 写入前读取远端最新 `main`；
+- 不 force push、不硬 reset、不删除或清空 `.env`；
+- 数据库、Schema、API、媒体、可靠性和 UI 按依赖串行修改；
+- 所有长任务必须有服务端持久状态、失败和恢复；
+- UI、媒体和公开投影必须做真实浏览器、三视口、console/network 与图片解码检查；
+- 本轮不在本地构建或运行 Docker；镜像只由 GitHub Actions 验证；
+- 正式域名、TLS、线上 Compose、升级、回滚和恢复演练延期到部署阶段；
+- dated notes 只记录证据，不覆盖当前 SPEC、STATE、PLAN 或 TASKS。
 
 ## 门禁状态
 
@@ -30,7 +31,7 @@
 - [x] **EXT-01 · 正式素材登记**。
 - [x] **EXT-02 · 双 Bucket 与 30 MB 媒体预检**。
 - [x] **GATE-06 · 唯一管理员认证接线**。
-- [x] **GATE-07 · 可配置活动水印 profile**：作为作品保护能力保持有效；站点展示位在 T34-F1 改为无水印。
+- [x] **GATE-07 · 可配置活动水印 profile**：作为作品保护能力保持有效。
 - [ ] **GATE-C1 · P0 收口总门禁**：依赖 T34-F1–T34-F8。
 
 ## A. 设计与工程底座
@@ -67,107 +68,116 @@
 - [x] **T24 · 管理端媒体分区、预览、上传恢复和媒体摘要**。
 - [x] **T25 · 常规领养列表与统一详情媒体分区**。
 - [x] **T26 · 委托固定文案、人工估价和邮件行动**。
-- [ ] **T26-F1 · 委托页独立 Hero 与低分辨率适配**：历史工程与独立 Review 已完成；最终验收并入 T34-F8，Hero 保护方式由 T34-F1 改为无水印。
+- [ ] **T26-F1 · 委托页独立 Hero 与低分辨率适配**：历史工程与独立 Review 已完成，最终业务验收并入 T34-F8。
 - [x] **T27 · 关于、官方渠道和独立营业状态**。
-- [ ] **T27-F1 · 公开信息架构、政策页和导航增量**：历史工程与独立 Review 已完成；最终验收并入 T34-F8。
+- [ ] **T27-F1 · 公开信息架构、政策页和导航增量**：历史工程与独立 Review 已完成，最终业务验收并入 T34-F8。
 - [x] **T28 · 首页完整内容顺序**。
 - [x] **T29 · 作品筛选、详情导航与兼容重定向**。
-- [ ] **T30 · SEO、Sitemap 与品牌图标**：历史工程 Review 已完成；图标与页面视觉验收并入 T34-F8。
+- [ ] **T30 · SEO、Sitemap 与品牌图标**：工程 Review 已完成，图标与页面视觉验收并入 T34-F8。
 - [x] **T31 · 备份、验证恢复与迁移冒烟**。
-- [x] **T32 · P0 安全门禁**：历史门禁保持有效；限流与代理边界在 T34-F5/F6 加固。
-- [x] **T33 · 性能与三视口媒体回归**：历史结果保持有效；新媒体和视觉契约需重新回归。
-- [ ] **T34 · 原 P0 全链与最小可部署镜像**：历史工程与独立 Review 为 `PASS`，但上线就绪结论由 C.1 新门禁取代，不单独勾选。
+- [x] **T32 · P0 安全门禁**：历史门禁保持有效，限流与代理边界由 T34-F5/F6 加固。
+- [x] **T33 · 性能与三视口媒体回归**：历史结果保持有效，新媒体与视觉契约需在 T34-F8 重放。
+- [ ] **T34 · 原 P0 全链与最小镜像**：历史工程与独立 Review 为 `PASS`，当前上线结论由 C.1 门禁取代。
 
 ## C.1 P0 收口修复
 
 - [x] **T34-F0 · Review 结论与文档收敛**：
   - 确认站点展示位无水印、作品展示位保留水印；
-  - 确认首页入口与状态合并、详情竖图修复、文案 Card 拆分；
-  - 登记架构、可靠性、部署和 CI 必须项；
-  - 重写当前权威文档，重复水印文档改为归档指针；
-  - 不修改产品代码。
+  - 登记视觉、架构、可靠性、部署和 CI 必须项；
+  - 建立唯一媒体事实源；
+  - dated notes 保留历史事实。
 
-- [x] **T34-F1 · 站点无水印媒体契约、迁移与公开投影**：
-  - 增加明确 `none | watermark` 保护模式或等价严格模型；
-  - 首页 Hero、委托 Hero 使用 `site-display-v1` 无水印变体；
-  - 首页委托和领养入口增加独立无水印 usage；
-  - 作品列表、详情和领养媒体继续活动水印；
-  - profile 应用排除无水印变体；
-  - 兼容生成、原子切换、失败恢复与旧对象清理；
-  - unit、integration、真实双 Bucket 与公开请求验证。
+- [ ] **T34-F1 · 站点无水印媒体契约、既有数据迁移与真实验证**（**部分完成**）：
+  - [x] `none | watermark` 保护模式和迁移 0017；
+  - [x] 首页 Hero、委托 Hero 与首页两个入口的 `site-display-v1` usage；
+  - [x] profile 应用排除无水印变体；
+  - [ ] 增加持久、幂等的 `media:reconcile-site-display` 或等价 operation；
+  - [ ] 为当前已启用 Hero、委托 Hero 和既有已发布常规领养补齐变体；
+  - [ ] 验证失败重试、精确清理和旧投影持续可用；
+  - [ ] 使用真实双 Bucket 验证匿名公开读取、私有原图拒绝和 profile 切换不改变站点 URL/摘要。
   _依赖：T34-F0。_
 
-- [x] **T34-F2 · 首页业务入口合并与详情竖图修复**：
-  - 用统一业务入口卡替换“入口区 + 状态区”；
-  - 两卡统一图片、状态、短说明和行动层级；
-  - 首页使用聚合投影并隔离非关键区块故障；
-  - 详情图集按方向布局，竖图无两侧灰色舞台；
-  - 路由复用时重置有效 active index；
-  - 三视口、横竖图片、键盘、焦点、解码和截图 Review。
-  _依赖：T34-F1。_
+- [ ] **T34-F2 · 首页业务入口与详情竖图收口**（**主体完成**）：
+  - [x] 统一业务入口卡替换“入口区 + 独立状态区”；
+  - [x] 首页聚合投影和非关键区块故障隔离；
+  - [x] 详情图集按方向布局，竖图限宽且索引复位；
+  - [ ] 代码顺序与公开站 IA 统一；
+  - [ ] 在 390×844、768×1024、1440×900 重放视觉、键盘、焦点、解码和无横向溢出。
+  _依赖：T34-F1 的契约。_
 
-- [x] **T34-F3 · 文案 Card 拆分与分区并发**：
-  - 拆分委托、FAQ、关于、服务条款、隐私政策、官方渠道 Card；
-  - 官方联系方式管理入口统一；
-  - 分区版本和局部 API；
-  - FAQ 稳定 ID；
-  - 409 保留草稿并展示最新服务端分区，不整包覆盖；
-  - 浏览器验证独立保存、并发、重载和错误状态。
+- [ ] **T34-F3 · 文案 Card 与分区并发收口**（**主体完成**）：
+  - [x] 六个文案 Card、六个分区版本、局部 API；
+  - [x] FAQ 稳定 ID；
+  - [x] 同分区 409 保留草稿，不整包覆盖；
+  - [ ] 邮箱、QQ、抖音和防诈骗说明统一在同一个可编辑官方渠道 Card；
+  - [ ] 两个管理上下文重放同分区/不同分区并发与重载。
   _依赖：T34-F2。_
 
-- [ ] **T34-F4 · 服务、组件和错误契约减债**（**部分完成**：错误 `reason` 契约与前端英文消息匹配清零已完成；**后端服务拆分尚未完成**）：
-  - 拆分 Hero repository/service/runner、媒体配方/生成器、水印 apply runner；
-  - 拆分 `useAdminHome` 的集合、发布、预览和轮询；
-  - API 增加稳定业务 `reason`，前端禁止匹配英文消息；
-  - 本地引用检查后删除确认失效的重复组件；
-  - 不进行与 C.1 无关的全仓重构。
+- [ ] **T34-F4 · 服务、组件和错误契约减债**（**部分完成**）：
+  - [x] API 稳定业务 `reason`；
+  - [x] 前端英文错误 message 匹配清零；
+  - [x] `useHeroPreview` 与 `usePublicationPolling` 初步拆分；
+  - [ ] 拆分 Hero repository/service/publication runner；
+  - [ ] 拆分作品 publication runner；
+  - [ ] 拆分水印 profile service/apply runner；
+  - [ ] 拆分媒体配方、生成器与公开投影 repository；
+  - [ ] 经引用、typecheck、build 和测试确认后删除失效组件；
+  - [ ] 重构前后 API、SQL、公开 DTO、状态机和浏览器行为一致。
   _依赖：T34-F3。_
 
-- [ ] **T34-F5 · 长任务恢复、上传清扫与限流加固**（**部分完成**：过期上传清扫已落地；**operation lease/心跳/启动恢复与限流分桶尚未完成**）：
-  - operation attempt、lease、heartbeat、超时和启动恢复；
-  - 在生成/验证/提交阶段中断进程并重启验证；
-  - 过期上传会话主动清扫、dry-run 和精确前缀；
-  - 登录按可信 IP 摘要 + 用户名摘要，管理写按管理员分桶；
-  - 明确可信代理，防止伪造转发头；
-  - 安全日志和审计保持脱敏。
+- [ ] **T34-F5 · 长任务恢复、上传清扫与限流加固**（**部分完成**）：
+  - [x] 过期上传清扫、默认 dry-run、精确 Object Key 和幂等；
+  - [x] 登录/管理写/匿名探测按主体分桶；
+  - [x] 默认不信任转发头，只有可信代理网段可解析；
+  - [ ] publication/watermark operation 增加 attempt、lease、heartbeat、超时和 recovery reason；
+  - [ ] 事务内抢占 lease，OSS 副作用前后更新心跳；
+  - [ ] 应用启动扫描非终止任务并安全续做或转为可恢复失败；
+  - [ ] 生成、验证、提交边界真实杀 Node 进程并重启；
+  - [ ] 重复重启幂等，运行态任务不再永久阻塞新操作。
   _依赖：T34-F4。_
 
-- [x] **T34-F6 · Node 24 镜像、Compose、Nginx 与运维文件准备**：
-  - 标准 frozen 多阶段构建；
-  - 不手工复制 `ali-oss` 或其他单个依赖闭包；
-  - 同一镜像提供 serve、migrate、init-admin、backup、restore-verify、preflight、cleanup-expired-uploads；
-  - 运行镜像包含迁移和必要脚本；
-  - `compose.yaml` 只引用镜像，包含 migrate、app、nginx、数据卷、备份卷和健康检查；
-  - Nginx 双 Host、安全头、可信代理和未知 Host 拒绝，证书路径可配置；
-  - live/ready；
-  - **本轮只准备文件并做不依赖 Docker daemon 的静态检查；禁止本地 `docker build` / `compose up` / 空卷演练**；
-  - 镜像构建验证由 T34-F7 在 GitHub Actions 执行；正式域名、TLS 与线上演练延期。
-  _依赖：T34-F5。_
+- [ ] **T34-F6 · Node 24 镜像、Docker Compose、Nginx 与健康检查**（**配置已修订，等待 CI**）：
+  - [x] 标准 Node 24 多阶段 Dockerfile；
+  - [x] pnpm 官方 production deploy，不手工复制单包依赖树；
+  - [x] Docker 依赖阶段复制并执行版本控制内的 `allowBuilds` / `strictDepBuilds`；
+  - [x] 同一镜像提供 migrate、init-admin、backup、restore、preflight、cleanup；
+  - [x] Compose 文件统一为 `docker-compose.yaml`；
+  - [x] app 使用独立 egress 网络访问 OSS，仍不发布宿主机端口；
+  - [x] Nginx 双 Host、未知 Host 拒绝、健康端点不对公网暴露；
+  - [x] live/ready 接口已经存在；
+  - [ ] readiness 复用严格迁移历史/hash 校验；
+  - [ ] GitHub Actions `image-build` 成功；
+  - [ ] GitHub Actions `docker compose -f docker-compose.yaml config --quiet` 成功；
+  - [ ] 本轮不做本地 Docker/Compose、正式域名或 TLS 验收。
+  _依赖：T34-F5；配置文件可先准备，任务完成仍依赖 CI。_
 
-- [x] **T34-F7 · GitHub Actions CI 与镜像发布流水线**：
-  - 质量门禁：frozen install、lint、typecheck、unit、integration、build、verify:production、secret/content scan、`docker compose config`、Dockerfile 构建验证；
-  - 镜像发布：tag `v*` 与 `workflow_dispatch` 触发，登录 Docker Hub 并推送版本标签与 latest；
-  - Secrets 仅 `DOCKERHUB_USERNAME` 与 `DOCKERHUB_TOKEN`，PR 不读取、不 echo PAT；
-  - 默认平台仅 `linux/amd64`；
-  - concurrency 与最小 permissions；
-  - 截图写 artifact，不修改历史 notes；
-  - **本轮不创建 `v*` tag、不触发发布、不添加远程部署 job**。
+- [ ] **T34-F7 · GitHub Actions 与镜像发布流水线**（**工作流已修订，等待全绿**）：
+  - [x] Action 升级到 2026-08-06 已核验的稳定版本；
+  - [x] 使用 `pnpm/setup` 后继 Action；
+  - [x] Compose 静态检查使用安全 dummy 环境，不 source 人类示例文件；
+  - [x] `docker-compose.yaml` 路径统一；
+  - [x] Dependabot 覆盖 GitHub Actions、npm/pnpm 和 Docker；
+  - [x] tag/手动镜像发布只使用 `DOCKERHUB_USERNAME` 与 `DOCKERHUB_TOKEN`；
+  - [x] 不 SSH、不远程部署、不自动创建 Release；
+  - [ ] 修复当前 TypeScript/E2E 业务代码门禁；
+  - [ ] `checks`、`image-build`、`e2e` 在最新 main 全部成功；
+  - [ ] 本轮不创建 `v*` tag、不触发 Docker Hub 发布。
   _依赖：T34-F6。_
 
 - [ ] **T34-F8 · C.1 总门禁与用户验收（由用户执行）**：
-  - 实施者交付：文档一致性、完整本地非 Docker 门禁、真实双 Bucket（若凭据可用）、站点无水印与作品水印矩阵、profile 切换不改变站点展示、长任务重启恢复、过期上传清扫、三视口真 Chrome 证据；
-  - 用户执行：公开端与管理端视觉验收、新上下文独立 Review；
-  - 实施者不得代签本项，也不得把自测写成独立 Review；
-  - 用户最终确认后勾选本项与 GATE-C1，并允许进入 T35；
-  - 空环境 Compose、升级/回滚/恢复、正式域名、TLS 与 Docker Hub 发布延期到用户部署阶段。
-  _依赖：T34-F7。_
+  - 实施者交付文档一致性、完整非 Docker 门禁、真实双 Bucket、长任务重启恢复和三视口证据；
+  - 用户执行公开端、管理端视觉验收和新上下文独立 Review；
+  - 实施者不得代签本项；
+  - 用户确认后才勾选 T34-F8 与 GATE-C1；
+  - 空环境 Compose、正式域名、TLS、升级/回滚/恢复和 Docker Hub 正式发布延期到部署阶段。
+  _依赖：T34-F1–T34-F7。_
 
 ## D. P1 一期增强
 
 - [ ] **T35 · 返图模型与可选授权记录**。_依赖：GATE-C1。_
 - [ ] **T36 · 返图上传、轻量水印、管理与公开墙**。_依赖：T35。_
 - [ ] **T37 · 展会掉落、当前展会与完整状态矩阵**。_依赖：GATE-C1。_
-- [ ] **T38 · 受限站点文字内容扩展**：在现有分区 Card 基础上增加确认过的字段，不建设万能 CMS。_依赖：GATE-C1。_
+- [ ] **T38 · 受限站点文字内容扩展**：不建设万能 CMS。_依赖：GATE-C1。_
 - [ ] **T39 · Slug 显式改址历史**。_依赖：GATE-C1。_
 - [ ] **T40 · 30 天回收站**。_依赖：T36、T38。_
 - [ ] **T41 · 手机轻量维护闭环**。_依赖：T36–T40。_
@@ -186,8 +196,8 @@
 
 ## F. 正式素材、正式环境与闭环
 
-- [ ] **T51 · 正式素材衍生与二次视觉校准**：校准作品水印和 P1 轻量 profile；站点展示位继续无水印。_依赖：T42、EXT-01。_
-- [ ] **T52 · 正式目标环境发布演练**：在 T34-F6 的通用 Compose/Nginx 基础上接入正式域名、证书、两个 Bucket、备份计划、监控和发布回滚。_依赖：T50–T51。_
+- [ ] **T51 · 正式素材衍生与二次视觉校准**：站点展示位继续无水印。_依赖：T42、EXT-01。_
+- [ ] **T52 · 正式目标环境发布演练**：接入正式域名、证书、Bucket、备份、监控和发布回滚。_依赖：T50–T51。_
 - [ ] **T53 · 景宸真实使用验收与文档闭环**。_依赖：T52。_
 
 ## 每项完成定义
@@ -195,10 +205,10 @@
 每个任务至少留下：
 
 - 变更范围与明确非目标；
-- 迁移和回滚边界；
-- 相关 lint/typecheck/build/test；
-- UI/媒体任务的真实浏览器和三视口证据；
-- 失败、冲突、恢复和隐私负路径；
+- 迁移、兼容和回滚边界；
+- 相关 lint/typecheck/build/unit/integration/E2E；
+- UI/媒体任务的真实浏览器与三视口证据；
+- 失败、冲突、重启恢复和隐私负路径；
 - `implementation/notes/` 中的实施与 Review 记录；
-- 当前活文档的必要同步；
+- 当前活文档同步；
 - 用户门禁任务的明确确认。

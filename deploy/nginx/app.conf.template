@@ -1,15 +1,20 @@
-# T34-F6 Nginx 双 Host 模板。
+# T34-F6 · Nginx 双 Host 模板。
 #
-# 不硬编码任何域名：PUBLIC_HOST / ADMIN_HOST 由 compose 环境变量注入，
-# 官方 nginx 镜像启动时对本文件执行 envsubst。
-# 正式证书路径同样可配置；本仓库不生成、不提交证书，也不做 ACME 自动化。
+# PUBLIC_HOST / ADMIN_HOST 与证书路径由 docker-compose.yaml 注入。
+# 未知 Host 返回 421；应用只接受保留下来的原始 Host。
+# 正式域名、证书和 HSTS 在部署阶段启用。
 
 upstream app_upstream {
     server app:3000;
     keepalive 32;
 }
 
-# 未知 Host 明确拒绝，不回落到公开站。
+map $host $fur_forge_is_admin {
+    default       0;
+    ${ADMIN_HOST} 1;
+}
+
+# 未知 Host 不回落到公开站。
 server {
     listen 80 default_server;
     listen 443 ssl default_server;
@@ -22,22 +27,19 @@ server {
     return 421;
 }
 
-# HTTP 一律跳转 HTTPS（只对已知 Host）。
+# 已知 Host 的 HTTP 请求统一跳转 HTTPS。
 server {
     listen 80;
     server_name ${PUBLIC_HOST} ${ADMIN_HOST};
     return 308 https://$host$request_uri;
 }
 
-map $host $fur_forge_is_admin {
-    default            0;
-    ${ADMIN_HOST}      1;
-}
-
 server {
     listen 443 ssl;
     http2 on;
     server_name ${PUBLIC_HOST} ${ADMIN_HOST};
+
+    server_tokens off;
 
     ssl_certificate     ${TLS_CERT_FILE};
     ssl_certificate_key ${TLS_KEY_FILE};
@@ -47,43 +49,43 @@ server {
     ssl_session_timeout 1d;
     ssl_session_tickets off;
 
-    # 与 30 MB 原图上传策略一致（留出分片与头部余量）。
+    # 与 30 MB 原图直传策略保持余量。
     client_max_body_size 32m;
-    client_body_timeout  120s;
+    client_body_timeout 120s;
 
     proxy_http_version 1.1;
-    proxy_read_timeout    180s;
-    proxy_send_timeout    180s;
+    proxy_read_timeout 180s;
+    proxy_send_timeout 180s;
     proxy_connect_timeout 15s;
 
-    # 安全头。HSTS 只在正式域名与证书就位后启用。
     add_header X-Content-Type-Options nosniff always;
     add_header X-Frame-Options DENY always;
     add_header Referrer-Policy strict-origin-when-cross-origin always;
     add_header Cross-Origin-Opener-Policy same-origin always;
+    # HSTS 只在正式域名与可信证书稳定后启用。
+
+    # 旧 /api/health 固定 ok 端点和新探活端点都不对公网暴露。
+    location = /api/health {
+        return 404;
+    }
+
+    location ^~ /api/health/ {
+        return 404;
+    }
 
     location / {
         proxy_pass http://app_upstream;
 
-        # 保留原始 Host：应用按 Host 区分公开面与管理面。
         proxy_set_header Host              $host;
         proxy_set_header X-Real-IP         $remote_addr;
         proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Host  $host;
 
-        # WebSocket / 流式连接正确转发。
         proxy_set_header Upgrade    $http_upgrade;
         proxy_set_header Connection $connection_upgrade;
 
-        # 管理端响应绝不进入任何共享缓存，避免被当作公开内容复用。
         proxy_no_cache     $fur_forge_is_admin;
         proxy_cache_bypass $fur_forge_is_admin;
-    }
-
-    # 健康检查不对外公开。
-    location /api/health/ {
-        deny all;
-        return 404;
     }
 }

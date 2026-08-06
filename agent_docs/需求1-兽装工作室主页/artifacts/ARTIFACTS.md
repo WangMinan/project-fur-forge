@@ -1,9 +1,10 @@
 # 产物索引
 
-> **角色**：列出当前可用产物和历史证据入口，不复制需求、技术方案或任务状态。
-> **当前阶段**：C.1 P0 收口。当前状态见 [`../STATE.md`](../STATE.md)。
+> **角色**：列出当前可用产物、交付配置和历史证据入口，不复制需求或任务状态。
+> **当前阶段**：C.1 P0 收口；状态见 [`../STATE.md`](../STATE.md)。
+> **最后校准**：2026-08-06。
 
-## 1. 当前权威文档
+## 1. 当前权威入口
 
 | 主题 | 文件 |
 | --- | --- |
@@ -18,69 +19,70 @@
 | 当前评审 | [`../review/REVIEW.md`](../review/REVIEW.md) |
 | 历史证据索引 | [`../implementation/notes/README.md`](../implementation/notes/README.md) |
 
-## 2. 当前代码产物
+## 2. 当前业务代码产物
 
-主分支当前包含：
+主分支已经包含：
 
 - Nuxt 4 公开站与管理端；
-- SQLite/Drizzle schema 与迁移；
-- 唯一管理员认证；
-- 双 OSS Bucket 媒体存储；
-- 条件直传和媒体校验；
-- 作品、领养、首页、委托和站点内容管理；
-- 作品发布/下架；
-- Hero 发布和低分辨率适配；
-- 水印候选和 profile 应用；
-- 备份、恢复和生产验证脚本；
-- unit、integration 和 Playwright 测试；
-- 历史最小 Dockerfile。
+- SQLite/Drizzle schema、迁移、备份与验证恢复；
+- 唯一管理员认证、Host/Origin/CSRF 与安全日志；
+- 私有原图/公开衍生图双 OSS Bucket；
+- 作品、常规领养、首页、委托和站点内容管理；
+- 作品发布/下架、Hero 发布/放大与水印 profile；
+- `site-display-v1` 无水印站点展示配方；
+- 首页聚合投影、统一业务入口与方向感知详情图集；
+- 六个文案 Card、分区版本和 FAQ 稳定 ID；
+- 上传过期清扫、可信代理和按主体限流；
+- unit、integration 与 Playwright 测试。
 
-这些代码是 C.1 修改基线，不代表新规格已经实现。特别是：
+这些能力是 C.1 的实现基础，但当前仍缺少既有媒体 reconcile、operation 重启恢复、完整后端分层、少量产品契约和全绿 CI。不能据此宣布 P0 正式候选。
 
-- 站点 Hero 当前仍使用旧水印公开变体；
-- 首页入口仍复用委托 Hero 和领养设定图；
-- 文案仍使用集中 Card 和整包保存；
-- 长任务仍缺少重启 lease；
-- 当前镜像仍是最小运行镜像，没有 Compose/Nginx/完整运维命令；
-- 还没有 GitHub Actions 门禁。
+## 3. 当前部署与 CI 产物
 
-## 3. 品牌与素材
+根目录和 `.github/` 当前提供：
+
+- `Dockerfile`：Node 24.18.0 多阶段构建；
+- `docker-compose.yaml`：migrate、app、nginx、数据卷、backend/egress/edge 网络；
+- `.env.compose.example`：不含真实 Secret 的环境模板；
+- `deploy/nginx/app.conf.template`：公开/管理双 Host 与未知 Host 拒绝；
+- `deploy/nginx/upgrade-map.conf`：WebSocket upgrade map；
+- `docs/DEPLOYMENT.md`：当前部署契约；
+- `.github/workflows/quality.yml`：代码、Compose、镜像和 E2E 门禁；
+- `.github/workflows/release-image.yml`：Docker Hub 镜像发布；
+- `.github/dependabot.yml`：Actions、npm/pnpm 与 Docker 更新。
+
+当前只准备和远端验证这些文件。本地 Docker/Compose、正式域名、TLS、线上升级与回滚仍延期。
+
+## 4. 品牌、素材与设计
 
 正式素材来源和角色映射见：
 
 - [`../materials/MATERIAL-MANIFEST.md`](../materials/MATERIAL-MANIFEST.md)；
 - `../materials/picture-examples/`；
-- `public/brand/` 中的已生成站点图标。
+- `public/brand/` 中的站点图标。
 
-素材文件说明来源和授权边界，不定义媒体是否打水印。当前保护规则只看媒体策略。
-
-## 4. 设计产物
-
-设计 Token 和信息架构：
+设计 Token 和信息架构见：
 
 - `../.design/public-site/`；
 - `../.design/admin-console/`。
 
-`planning/prototype-v1/` 是早期原型验证，不是生产源码模板。dated screenshots 是当时验收证据，不是自动更新的视觉基线。
+素材文档不决定是否打水印；媒体保护只以当前媒体策略为准。`planning/prototype-v1/` 和 dated screenshots 只属于历史验证，不是生产源码模板或自动视觉基线。
 
-## 5. 历史实施证据
+## 5. C.1 当前证据
 
-历史记录集中在 `../implementation/notes/`，包括：
+目录：`../implementation/notes/t34-c1/`
 
-- T01–T09 视觉与基础工程；
-- T10/EXT-02 OSS 预检；
-- T11–T13 数据库与认证；
-- T14–T18 上传、媒体和发布；
-- GATE-07 水印 profile；
-- T19–T25 作品、首页和领养；
-- T26–T30 委托、信息页、筛选和 SEO；
-- T31–T34 备份、安全、性能、Docker 与全链 Review。
+当前包含 F1–F5 的实施记录，以及：
 
-这些记录保留当时命令、截图、finding 和结论。当前规则变化不修改其历史内容。
+- [`../implementation/notes/t34-c1/T34-C1-RECHECK-2026-08-06.md`](../implementation/notes/t34-c1/T34-C1-RECHECK-2026-08-06.md)：最新代码、Actions、部署与任务边界复核。
 
-## 6. 归档指针
+普通 Playwright screenshot、trace 和 CI 产物进入 `test-results/`、`playwright-report/` 或 GitHub Actions artifact，不写回历史目录。
 
-以下旧文件不再维护独立规则，只指向唯一媒体策略：
+## 6. 历史证据与归档
+
+历史记录集中在 `../implementation/notes/`，保留各阶段首次失败、修复、截图与结论。历史 T34 `PASS` 只代表当时约定的最小镜像和门禁，不覆盖 C.1 的新增要求。
+
+以下旧水印文件只作为归档指针：
 
 - `../.design/WATERMARK-CENTERED-V2.md`；
 - `../foundation/WATERMARK-CENTERED-V2.md`；
@@ -88,23 +90,4 @@
 - `../planning/WATERMARK-CENTERED-V2.md`；
 - `../models/WATERMARK-CENTERED-V2.md`。
 
-需要查看 GATE-07 当时实现时，使用 `../implementation/notes/gate07-watermark/`。
-
-## 7. C.1 预期新增产物
-
-T34-F1–T34-F8 将新增或更新：
-
-- 站点无水印媒体迁移与配方；
-- 首页聚合投影和业务入口组件；
-- 方向感知详情图集；
-- 分区文案 API、版本和 Card；
-- 持久操作 runner 与上传清扫命令；
-- 稳定业务错误 reason；
-- 标准完整 Node 24 镜像；
-- `compose.yaml`；
-- Nginx 双 Host 配置；
-- live/ready；
-- GitHub Actions；
-- C.1 实施和独立 Review notes。
-
-只有 T34-F8 通过后，以上产物才构成 P0 正式候选。
+只有 T34-F8 和 GATE-C1 通过后，当前业务代码、部署配置、CI 与 C.1 证据才共同构成 P0 候选。

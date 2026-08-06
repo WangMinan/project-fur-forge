@@ -1,32 +1,50 @@
-# T34-F6 标准 Node 24 多阶段构建。
-#
-# 与旧实现的关键差异：不再手工遍历 `pnpm list` 复制 ali-oss 依赖闭包。
-# 生产依赖使用 pnpm 官方的 `pnpm deploy --prod`，由包管理器保证闭包完整、
-# 版本一致、native 依赖正确落地。
-#
-# 本轮（用户明确要求）不在本地构建或运行此镜像；构建验证由 GitHub Actions 承担。
+# syntax=docker/dockerfile:1.7
 
-# ---------- deps：只解析依赖，最大化层缓存 ----------
-FROM node:24-bookworm-slim AS deps
-WORKDIR /app
-RUN corepack enable && corepack prepare pnpm@11.18.0 --activate
-# 先只复制清单，源码变动不会让依赖层失效。
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --ignore-scripts=false
+# T34-F6 · 标准 Node 24 多阶段构建。
+#
+# 约束：
+# - 使用完整 Node 24 Debian/glibc 运行环境，兼容 better-sqlite3 与 ffmpeg-static；
+# - 依赖闭包由 pnpm 管理，不手工复制 ali-oss 或任何单包依赖树；
+# - pnpm 11 默认阻止未批准的依赖构建脚本，因此依赖阶段必须复制版本控制内的
+#   pnpm-workspace.yaml，严格执行仓库已审查的 allowBuilds/strictDepBuilds 策略；
+# - 本地不构建镜像；由 GitHub Actions 的 image-build job 验证。
 
-# ---------- build：构建 Nuxt/Nitro 产物并导出生产依赖 ----------
-FROM node:24-bookworm-slim AS build
+FROM node:24.18.0-bookworm-slim AS base
+
+ENV PNPM_HOME=/pnpm \
+    PATH=/pnpm:${PATH}
+
 WORKDIR /app
-RUN corepack enable && corepack prepare pnpm@11.18.0 --activate
-COPY package.json pnpm-lock.yaml ./
-COPY --from=deps /app/node_modules ./node_modules
+
+RUN corepack enable \
+    && corepack prepare pnpm@11.18.0 --activate
+
+# ---------- deps：只根据 lockfile 拉取依赖，最大化缓存复用 ----------
+FROM base AS deps
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# fetch 不执行项目或依赖脚本；源码尚未复制也不会触发 nuxt prepare。
+# 复制 pnpm-workspace.yaml 是必要条件：其中的 allowBuilds/strictDepBuilds
+# 决定哪些依赖安装脚本可执行；遗漏它会在 CI 中触发 ERR_PNPM_IGNORED_BUILDS。
+RUN pnpm fetch --frozen-lockfile --store-dir=/pnpm/store
+
+# ---------- build：离线安装、执行允许的构建脚本并生成生产产物 ----------
+FROM base AS build
+
+COPY --from=deps /pnpm/store /pnpm/store
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY . .
+
+RUN pnpm install \
+      --offline \
+      --frozen-lockfile \
+      --store-dir=/pnpm/store
 
 RUN pnpm build
 
-# 把运维脚本 bundle 成单个 JS：运行镜像因此不需要 tsx 或任何开发工具链，
-# 也不会出现“复制了 TypeScript 源码却缺少执行器”的情况。
-# native / 平台相关依赖保持 external，由生产 node_modules 提供。
+# 运维脚本 bundle 成单个 ESM 文件；native/runtime 依赖保持 external，
+# 由生产 node_modules 提供。运行镜像不需要 tsx、Playwright 或测试依赖。
 RUN pnpm exec esbuild scripts/container-ops.ts \
       --bundle \
       --platform=node \
@@ -38,14 +56,16 @@ RUN pnpm exec esbuild scripts/container-ops.ts \
       --external:ali-oss \
       --external:drizzle-orm \
       --banner:js="import{createRequire as __nodeRequire}from'node:module';const require=__nodeRequire(import.meta.url);" \
-    && cp scripts/oss-preflight.mjs scripts/oss-preflight-core.mjs \
-          scripts/embedded-ffmpeg.mjs /app/ops-dist/
+    && cp scripts/oss-preflight.mjs \
+          scripts/oss-preflight-core.mjs \
+          scripts/embedded-ffmpeg.mjs \
+          /app/ops-dist/
 
-# 生产依赖闭包：pnpm 官方机制，不手工复制任何单个包。
+# pnpm 官方部署机制生成 production-only 依赖闭包。
 RUN pnpm deploy --prod --legacy /app/deploy
 
-# ---------- runtime：非 root、只带运行所需内容 ----------
-FROM node:24-bookworm-slim AS runtime
+# ---------- runtime：非 root，只包含运行和运维所需内容 ----------
+FROM node:24.18.0-bookworm-slim AS runtime
 
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
@@ -54,7 +74,6 @@ ENV NODE_ENV=production \
 
 WORKDIR /app
 
-# tini 作为 PID 1 正确转发 SIGTERM，保证优雅停机。
 RUN apt-get update \
     && apt-get install --no-install-recommends -y tini \
     && rm -rf /var/lib/apt/lists/* \
@@ -64,18 +83,26 @@ RUN apt-get update \
 COPY --from=build --chown=node:node /app/.output ./.output
 COPY --from=build --chown=node:node /app/deploy/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/ops-dist ./ops
-# 迁移文件与 drizzle 元数据必须进镜像：migrate 与 readiness 都依赖它们。
 COPY --from=build --chown=node:node /app/server/database/migrations ./server/database/migrations
 COPY --from=build --chown=node:node /app/package.json ./package.json
 
-# 构建期自检：native binding 与 OSS SDK 必须真正可加载。
-RUN node -e "import('better-sqlite3').then(()=>import('ali-oss')).then(()=>console.log('runtime deps ok'))"
+# 构建期验证：实际创建 SQLite 内存库、加载 OSS SDK，并确认 FFmpeg 可执行。
+RUN node --input-type=module -e "\
+  import { accessSync, constants } from 'node:fs'; \
+  import Database from 'better-sqlite3'; \
+  import ffmpegPath from 'ffmpeg-static'; \
+  await import('ali-oss'); \
+  const db = new Database(':memory:'); \
+  db.prepare('select 1').get(); \
+  db.close(); \
+  if (!ffmpegPath) throw new Error('ffmpeg-static path is unavailable'); \
+  accessSync(ffmpegPath, constants.X_OK); \
+  console.log('runtime dependencies verified');"
 
 USER node
+
 VOLUME ["/app/data", "/app/backups"]
 EXPOSE 3000
 
-# tini 转发信号；默认命令为 serve。运维子命令见 docs/DEPLOYMENT.md：
-#   docker compose run --rm app node ops/ops.mjs migrate
 ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["node", ".output/server/index.mjs"]
