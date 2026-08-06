@@ -61,9 +61,9 @@ RUN pnpm exec esbuild scripts/container-ops.ts \
           scripts/embedded-ffmpeg.mjs \
           /app/ops-dist/
 
-# pnpm deploy 面向 workspace package，必须显式选择根项目；否则 pnpm 11
-# 会返回 ERR_PNPM_NOTHING_TO_DEPLOY。项目名以 package.json 的 name 为准。
-RUN pnpm --filter=project-fur-paws --prod deploy --legacy /app/deploy
+# pnpm deploy 面向 workspace package，必须显式选择根项目。输出目录不能与仓库
+# 自身的 deploy/nginx 配置目录重叠，因此使用独立的 runtime-deploy。
+RUN pnpm --filter=project-fur-paws --prod deploy --legacy /app/runtime-deploy
 
 # ---------- runtime：非 root，只包含运行和运维所需内容 ----------
 FROM node:24.18.0-bookworm-slim AS runtime
@@ -82,7 +82,7 @@ RUN apt-get update \
     && chown -R node:node /app
 
 COPY --from=build --chown=node:node /app/.output ./.output
-COPY --from=build --chown=node:node /app/deploy/node_modules ./node_modules
+COPY --from=build --chown=node:node /app/runtime-deploy/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/ops-dist ./ops
 COPY --from=build --chown=node:node /app/server/database/migrations ./server/database/migrations
 COPY --from=build --chown=node:node /app/package.json ./package.json
