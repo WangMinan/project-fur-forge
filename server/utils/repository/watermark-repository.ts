@@ -254,6 +254,28 @@ export function finishWatermarkRebuild(
 }
 
 /**
+ * 重试前把 FAILED 重新打开为运行态。
+ *
+ * T34-F5 之后 runner 必须先抢到 lease 才推进，而 lease 不会授予终态记录；
+ * 因此重试必须先离开 FAILED，否则 runRebuild 会静默什么都不做。
+ * 与 retryHeroSlidePublication 的处理方式一致。
+ */
+export function reopenFailedWatermarkOperation(
+  sqlite: Database.Database,
+  id: string,
+  now: number,
+) {
+  return sqlite.prepare(`
+    UPDATE watermark_operations
+    SET status = 'GENERATING_PUBLIC', internal_error_code = NULL,
+        failure_stage = NULL, completed_at = NULL,
+        lease_owner = NULL, lease_expires_at = NULL,
+        version = version + 1, updated_at = ?
+    WHERE id = ? AND status = 'FAILED'
+  `).run(now, id).changes
+}
+
+/**
  * 从 FAILED 重试成功后收尾：必须同时清掉 internal_error_code 与 failure_stage，
  * 否则 watermark_operations_failure_state 约束会拒绝 status='DONE' 的行。
  */
