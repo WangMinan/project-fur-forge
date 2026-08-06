@@ -429,16 +429,6 @@ export function findPublicKeysForSlide(
   ) as string[]
 }
 
-export function deletePublicVariantRow(
-  sqlite: Database.Database,
-  objectKey: string,
-) {
-  sqlite.prepare(`
-    DELETE FROM asset_variants
-    WHERE storage_scope = 'PUBLIC' AND object_key = ?
-  `).run(objectKey)
-}
-
 export function insertHomeAuditLog(
   sqlite: Database.Database,
   input: {
