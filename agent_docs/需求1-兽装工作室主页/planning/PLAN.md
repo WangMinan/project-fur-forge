@@ -53,6 +53,12 @@
 
 ### 3.3 F4/F5 · 服务边界与长任务恢复
 
+> **2026-08-07 状态：已实现。** 五个层次落为 `server/utils/` 下的五个目录
+> （`repository/`、`service/`、`runner/`、`recipe/`、`route/`），根目录只留跨层
+> 基础设施。operation 模型的 attempt/lease/heartbeat/recovery_reason 由迁移
+> 0020 落地，恢复流程见 `runner/operation-recovery.ts` 与插件 02。
+> 本节保留为层次定义，新增后端代码继续按此归类。
+
 不要继续向 `home-management.ts`、`work-publication.ts` 和 `watermark-branding.ts` 堆叠职责。围绕以下层次拆分：
 
 - repository：SQL、行映射和条件更新；
