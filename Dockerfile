@@ -61,8 +61,9 @@ RUN pnpm exec esbuild scripts/container-ops.ts \
           scripts/embedded-ffmpeg.mjs \
           /app/ops-dist/
 
-# pnpm 官方部署机制生成 production-only 依赖闭包。
-RUN pnpm deploy --prod --legacy /app/deploy
+# pnpm deploy 面向 workspace package，必须显式选择根项目；否则 pnpm 11
+# 会返回 ERR_PNPM_NOTHING_TO_DEPLOY。项目名以 package.json 的 name 为准。
+RUN pnpm --filter=project-fur-paws --prod deploy --legacy /app/deploy
 
 # ---------- runtime：非 root，只包含运行和运维所需内容 ----------
 FROM node:24.18.0-bookworm-slim AS runtime
