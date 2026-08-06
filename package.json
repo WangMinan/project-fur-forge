@@ -28,7 +28,9 @@
     "test:e2e": "playwright test",
     "preflight:oss": "node scripts/oss-preflight.mjs",
     "preflight:watermark": "node scripts/oss-watermark-centered-v2.mjs",
-    "verify:production": "node scripts/verify-production.mjs"
+    "verify:production": "node scripts/verify-production.mjs",
+    "media:cleanup-expired-uploads": "tsx scripts/cleanup-expired-uploads.ts",
+    "ops:build": "esbuild scripts/container-ops.ts --bundle --platform=node --target=node24 --format=esm --outfile=.output/ops/ops.mjs --external:better-sqlite3 --external:ffmpeg-static --external:ali-oss --external:drizzle-orm"
   },
   "dependencies": {
     "ali-oss": "6.23.0",
@@ -48,6 +50,7 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "24.13.3",
     "drizzle-kit": "^0.31.10",
+    "esbuild": "0.25.12",
     "eslint": "10.8.0",
     "tsx": "^4.23.1",
     "typescript": "6.0.3",
