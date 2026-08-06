@@ -276,6 +276,8 @@ export const uploadSessions = sqliteTable('upload_sessions', {
   createdAt: integer('created_at').notNull(),
   expiresAt: integer('expires_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
+  /** T34-F5：过期上传会话清扫完成时间；已清扫的会话不再重复扫描。 */
+  cleanedAt: integer('cleaned_at'),
 }, table => [
   uniqueIndex('upload_sessions_private_object_key_unique')
     .on(table.privateObjectKey),

@@ -1,0 +1,73 @@
+# T34-F7 镜像发布。参考 arktouros 的 tag 发布模式。
+#
+# 只在 tag 或手动触发时读取 Docker Hub Secret；PR 永远不会尝试发布。
+# 不 SSH、不远程部署、不创建 GitHub Release。
+name: release-image
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Explicit image tag to publish (e.g. v1.0.0)'
+        required: true
+        type: string
+
+concurrency:
+  group: release-image-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  # 发布前先过质量门禁，避免推出未验证镜像。
+  quality:
+    uses: ./.github/workflows/quality.yml
+
+  publish:
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Derive image tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/project-fur-forge
+          tags: |
+            type=ref,event=tag
+            type=raw,value=${{ inputs.image_tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
+            type=sha,prefix=sha-,format=short
+            # latest 只跟随正式版本 tag，不跟随预发布。
+            type=raw,value=latest,enable=${{ github.event_name == 'push' && !contains(github.ref_name, '-') }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          # 平台相关依赖（better-sqlite3 / ffmpeg-static）尚无经过验证的
+          # arm64 部署依据，因此只构建 amd64。
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Report published tags
+        # 只输出 tag 名称，绝不回显用户名之外的凭据内容。
+        run: |
+          echo "Published tags:"
+          echo "${{ steps.meta.outputs.tags }}"

@@ -278,7 +278,7 @@ describe('single administrator commands and lockout', () => {
     expect(existsSync(resolve(directory, 'backups'))).toBe(false)
 
     await expect(migrateDatabase(pendingDatabaseFile)).resolves.toMatchObject({
-      applied: 17,
+      applied: 18,
     })
     const backupEntries = readdirSync(resolve(directory, 'backups'))
     expect(backupEntries.length).toBeGreaterThan(0)
