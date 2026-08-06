@@ -67,6 +67,11 @@ docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs backup --out
 docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs restore-verify --backup /app/backups/manual.db --output /tmp/verify.db
 docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs preflight
 docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs cleanup-expired-uploads --dry-run
+# T34-F1：为既有启用 Hero、委托 Hero 与已发布常规领养补齐无水印站点展示变体。
+# 默认 dry-run 只输出数量摘要；加 --no-dry-run 才真正生成。
+docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs reconcile-site-display --dry-run
+# T34-F5：手动触发一次长任务恢复扫描，用于确认卡住的 operation。
+docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs recover-operations
 ```
 
 管理员初始化不会在每次启动时重置密码。危险操作继续要求显式确认。

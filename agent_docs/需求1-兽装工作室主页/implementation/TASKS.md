@@ -87,53 +87,54 @@
   - 建立唯一媒体事实源；
   - dated notes 保留历史事实。
 
-- [ ] **T34-F1 · 站点无水印媒体契约、既有数据迁移与真实验证**（**部分完成**）：
+- [x] **T34-F1 · 站点无水印媒体契约、既有数据迁移与真实验证**：
   - [x] `none | watermark` 保护模式和迁移 0017；
   - [x] 首页 Hero、委托 Hero 与首页两个入口的 `site-display-v1` usage；
   - [x] profile 应用排除无水印变体；
-  - [ ] 增加持久、幂等的 `media:reconcile-site-display` 或等价 operation；
-  - [ ] 为当前已启用 Hero、委托 Hero 和既有已发布常规领养补齐变体；
-  - [ ] 验证失败重试、精确清理和旧投影持续可用；
-  - [ ] 使用真实双 Bucket 验证匿名公开读取、私有原图拒绝和 profile 切换不改变站点 URL/摘要。
+  - [x] 持久、幂等的 `media:reconcile-site-display`（迁移 0021 + 容器子命令）；
+  - [x] 为当前已启用 Hero、委托 Hero 和既有已发布常规领养补齐变体；
+  - [x] 验证失败重试、精确清理和旧投影持续可用；
+  - [x] 真实双 Bucket 验证匿名公开读取、私有原图拒绝和 profile 切换不改变站点 URL/摘要（9/9 通过）。
   _依赖：T34-F0。_
 
-- [ ] **T34-F2 · 首页业务入口与详情竖图收口**（**主体完成**）：
+- [x] **T34-F2 · 首页业务入口与详情竖图收口**：
   - [x] 统一业务入口卡替换“入口区 + 独立状态区”；
   - [x] 首页聚合投影和非关键区块故障隔离；
   - [x] 详情图集按方向布局，竖图限宽且索引复位；
-  - [ ] 代码顺序与公开站 IA 统一；
-  - [ ] 在 390×844、768×1024、1440×900 重放视觉、键盘、焦点、解码和无横向溢出。
+  - [x] 代码顺序与公开站 IA 统一（Hero → 精选作品 → 统一业务入口 → 当前领养）；
+  - [x] 在 390×844、768×1024、1440×900 重放视觉、键盘、焦点、解码和无横向溢出。
   _依赖：T34-F1 的契约。_
 
-- [ ] **T34-F3 · 文案 Card 与分区并发收口**（**主体完成**）：
+- [x] **T34-F3 · 文案 Card 与分区并发收口**：
   - [x] 六个文案 Card、六个分区版本、局部 API；
   - [x] FAQ 稳定 ID；
   - [x] 同分区 409 保留草稿，不整包覆盖；
-  - [ ] 邮箱、QQ、抖音和防诈骗说明统一在同一个可编辑官方渠道 Card；
-  - [ ] 两个管理上下文重放同分区/不同分区并发与重载。
+  - [x] 邮箱、QQ、抖音和防诈骗说明统一在同一个可编辑官方渠道 Card；
+  - [x] 两个管理上下文重放同分区/不同分区并发与重载。
   _依赖：T34-F2。_
 
-- [ ] **T34-F4 · 服务、组件和错误契约减债**（**部分完成**）：
+- [x] **T34-F4 · 服务、组件和错误契约减债**：
   - [x] API 稳定业务 `reason`；
   - [x] 前端英文错误 message 匹配清零；
   - [x] `useHeroPreview` 与 `usePublicationPolling` 初步拆分；
-  - [ ] 拆分 Hero repository/service/publication runner；
-  - [ ] 拆分作品 publication runner；
-  - [ ] 拆分水印 profile service/apply runner；
-  - [ ] 拆分媒体配方、生成器与公开投影 repository；
-  - [ ] 经引用、typecheck、build 和测试确认后删除失效组件；
-  - [ ] 重构前后 API、SQL、公开 DTO、状态机和浏览器行为一致。
+  - [x] 拆分 Hero repository/service/publication runner；
+  - [x] 拆分作品 publication runner；
+  - [x] 拆分水印 profile service/apply runner；
+  - [x] 拆分媒体配方、生成器与公开投影 repository（配方层 SQL 归零）；
+  - [x] `server/utils` 按 repository/service/runner/recipe/route 分目录；
+  - [x] 经引用、typecheck、build 和测试确认后删除重复定义；
+  - [x] 重构前后 API、SQL、公开 DTO、状态机和浏览器行为一致。
   _依赖：T34-F3。_
 
-- [ ] **T34-F5 · 长任务恢复、上传清扫与限流加固**（**部分完成**）：
+- [x] **T34-F5 · 长任务恢复、上传清扫与限流加固**：
   - [x] 过期上传清扫、默认 dry-run、精确 Object Key 和幂等；
   - [x] 登录/管理写/匿名探测按主体分桶；
   - [x] 默认不信任转发头，只有可信代理网段可解析；
-  - [ ] publication/watermark operation 增加 attempt、lease、heartbeat、超时和 recovery reason；
-  - [ ] 事务内抢占 lease，OSS 副作用前后更新心跳；
-  - [ ] 应用启动扫描非终止任务并安全续做或转为可恢复失败；
-  - [ ] 生成、验证、提交边界真实杀 Node 进程并重启；
-  - [ ] 重复重启幂等，运行态任务不再永久阻塞新操作。
+  - [x] publication/watermark operation 增加 attempt、lease、heartbeat、超时和 recovery reason（迁移 0020）；
+  - [x] 事务内抢占 lease，OSS 副作用前后更新心跳；
+  - [x] 应用启动扫描非终止任务并安全续做或转为可恢复失败（插件 02）；
+  - [x] 生成、验证、提交边界真实杀 Node 进程并重启（子进程 SIGKILL）；
+  - [x] 重复重启幂等，运行态任务不再永久阻塞新操作。
   _依赖：T34-F4。_
 
 - [ ] **T34-F6 · Node 24 镜像、Docker Compose、Nginx 与健康检查**（**配置已修订，镜像构建通过**）：
@@ -147,9 +148,10 @@
   - [x] Nginx 双 Host、未知 Host 拒绝、健康端点不对公网暴露；
   - [x] live/ready 接口已经存在；
   - [x] GitHub Actions `image-build` 在 `3b384c5` 成功；
-  - [ ] readiness 复用严格迁移历史/hash 校验；
+  - [x] readiness 复用严格迁移历史/hash 校验（数量、顺序、folderMillis、hash）；
+  - [x] 旧 `/api/health` 不再固定返回 ok，未就绪返回 503；
   - [ ] `checks` 修复后，GitHub Actions `docker compose -f docker-compose.yaml config --quiet` 成功；
-  - [ ] 本轮不做本地 Docker/Compose、正式域名或 TLS 验收。
+  - [x] 本轮不做本地 Docker/Compose、正式域名或 TLS 验收。
   _依赖：T34-F5；配置文件可先准备，任务完成仍依赖业务与完整 CI。_
 
 - [ ] **T34-F7 · GitHub Actions 与镜像发布流水线**（**工作流已修订，等待全绿**）：

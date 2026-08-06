@@ -1,7 +1,7 @@
 # 实施记录索引
 
 > **角色**：为 dated implementation notes 提供导航。历史记录描述当时事实；当前规则以 `../../STATE.md`、SPEC、PLAN、TASKS 和 REVIEW 为准。
-> **最后校准**：2026-08-06。
+> **最后校准**：2026-08-07。
 
 ## 当前入口
 
@@ -23,11 +23,13 @@
 - `T34-F3-CONTENT-CARDS-2026-08-06.md`：文案 Card 与分区并发；
 - `T34-F4-ARCHITECTURE-DEBT-2026-08-06.md`：错误 reason 和部分前端拆分，后端拆分未完；
 - `T34-F5-OPERATION-RECOVERY-2026-08-06.md`：上传清扫与限流，operation 恢复未完；
-- [`T34-C1-RECHECK-2026-08-06.md`](./t34-c1/T34-C1-RECHECK-2026-08-06.md)：最新 Actions、部署配置和剩余任务复核。
+- [`T34-C1-RECHECK-2026-08-06.md`](./t34-c1/T34-C1-RECHECK-2026-08-06.md)：Actions、部署配置和剩余任务复核；
+- [`T34-C1-CLOSURE-2026-08-07.md`](./t34-c1/T34-C1-CLOSURE-2026-08-07.md)：**当前**。F1–F6 实施收口：
+  迁移 0020/0021、五层目录边界、lease/heartbeat/启动恢复与真实 SIGKILL 中断证据、
+  reconcile 扫描范围与幂等性、真实双 Bucket 9/9、首页顺序与官方渠道 Card、
+  readiness 严格迁移校验。
 
 后续新增：
-
-- F4/F5 完整服务边界与恢复记录；
 - F1 reconcile 与真实双 Bucket 记录；
 - F2/F3 最终产品收口记录；
 - F6/F7 最新全绿 Actions 记录；

@@ -6,7 +6,7 @@ This file provides guidance to coding agents working with code in this repositor
 
 project-fur-paws —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装（fursuit）主页网站。
 
-> **当前阶段：阶段 C.1 · P0 收口修复。** T01–T29、T31–T33、GATE-06、GATE-07、EXT-01 与 EXT-02 保持历史完成状态；T26-F1、T27-F1、T30、T34 的工程事实保留，但上线就绪结论由 C.1 新门禁取代，统一并入 T34-F8 验收。当前按 T34-F1 → T34-F7 串行收口，**T34-F8 由用户执行，GATE-C1 未通过**。阶段和任务权威始终以 `agent_docs/需求1-兽装工作室主页/STATE.md` 与 `implementation/TASKS.md` 为准。
+> **当前阶段：阶段 C.1 · P0 收口修复。** T01–T29、T31–T33、GATE-06、GATE-07、EXT-01 与 EXT-02 保持历史完成状态；T26-F1、T27-F1、T30、T34 的工程事实保留，但上线就绪结论由 C.1 新门禁取代，统一并入 T34-F8 验收。T34-F1–F6 实施已完成，T34-F7 等待远端 runner 恢复后取得同一 SHA 三 job 全绿，**T34-F8 由用户执行，GATE-C1 未通过**。阶段和任务权威始终以 `agent_docs/需求1-兽装工作室主页/STATE.md` 与 `implementation/TASKS.md` 为准。
 
 ## 网站核心原则（景宸确认）
 
@@ -75,6 +75,16 @@ pnpm build
 pnpm verify:production
 ```
 
+门禁命令请统一加 `APP_ENV=test`：`nuxt.config.ts` 只在该环境下把 E2E fixture
+纳入编译，否则本地 typecheck 会漏掉 CI 能看到的错误。
+
+运维命令（默认 dry-run，需显式 `--no-dry-run` 才真正执行）：
+
+```bash
+pnpm media:cleanup-expired-uploads
+pnpm media:reconcile-site-display
+```
+
 这些命令不是每个小任务必须机械全跑的固定套餐：
 
 - 常规执行 lint/typecheck；
@@ -131,6 +141,31 @@ pnpm auth:reset-password --confirm RESET_SINGLE_ADMIN_PASSWORD
 - T34 历史工程与独立 Review 事实保留，但现有镜像与页面不再视为正式上线候选，上线就绪由 GATE-C1 重新判定。
 
 `brand-standard-v1` 只保留为历史身份，作品发布必须匹配活动 `brand-centered-v2` 与 `recipe-v2`；站点展示位匹配无水印 `site-display-v1`。
+
+## 后端分层（T34-F4）
+
+`server/utils/` 按职责分目录，层次体现在路径上：
+
+| 目录 | 只放什么 |
+| --- | --- |
+| `repository/` | SQL、行映射、条件更新、版本与 lease CAS |
+| `service/` | 同步业务规则、参数与状态校验、DTO 组合、事务入口 |
+| `runner/` | 持久 operation、OSS 副作用、阶段推进、心跳、失败、清理、启动恢复 |
+| `recipe/` | 纯函数：处理串、不可变媒体身份、Object Key、尺寸推导 |
+| `route/` | Host、Session、Origin、CSRF、Schema、安全错误转换 |
+
+根目录只留各层共用的基础设施：`database`、`media-storage`、`runtime-config`、
+`safe-log`、`service-error`、`api-error`、`password`、`private-response`。
+
+新增后端代码前先判断它属于哪一层，不要往 runner 里继续堆 SQL。
+
+`server/routes/` 是 Nitro 文件路由（每个文件对应一个公开 URL，如
+`robots.txt.get.ts` → `GET /robots.txt`），与 `server/utils/route/` 不是同一件
+事，**不要合并**。
+
+长任务（发布、下架、水印应用、站点展示 reconcile）一律通过
+`repository/operation-lease.ts` 抢占 lease、更新心跳，并在
+`runner/operation-recovery.ts` 注册 resumer，否则进程重启后任务会卡在运行态。
 
 阶段 C.1 的部署纪律：**T34-F6 只准备 Dockerfile、Compose、Nginx 与运维文件，不在本地执行 Docker 构建或容器验收**；镜像构建验证与发布由 T34-F7 的 GitHub Actions 承担（Secrets 仅 `DOCKERHUB_USERNAME`、`DOCKERHUB_TOKEN`，本轮不创建 tag、不触发发布）。正式域名、TLS 与线上 Compose 验收延期到用户部署阶段。运行镜像不得手工复制 `ali-oss` 或任何单个依赖闭包，必须使用 pnpm 正式的 production deploy/install 机制。
 

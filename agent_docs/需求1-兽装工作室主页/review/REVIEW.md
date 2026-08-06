@@ -1,23 +1,24 @@
 # 当前评审记录
 
 > **角色**：记录当前 SPEC、代码、部署文件、GitHub Actions 与任务状态之间的差异。
-> **评审日期**：2026-08-06。
+> **评审日期**：2026-08-06，2026-08-07 更新 finding 关闭状态。
 > **初始代码基线**：`aac745167e640e5ef20b4d054539a9a245ca109e`。
-> **配置收口验证 HEAD**：`3b384c5f54610c92e22e3f2e069cb5365e27bcc6`。
-> **结论**：`PASS WITH REQUIRED CLOSURE`。
+> **本轮业务收口起点**：`10a18291edc62a13296859ac7a2102c744086907`。
+> **结论**：`PASS WITH REQUIRED CLOSURE`（实施项已关闭，等待远端全绿与用户验收）。
 
 ## 1. 总结论
 
-阶段 C 的主业务链已经建立，T34-F1–F3 也完成了大部分产品改造；但是当前不能结束阶段 C，原因包括：
+阶段 C 主业务链成立，T34-F1–F6 的实施项已在 2026-08-07 全部关闭：R-18 至 R-22
+逐项完成，R-17 的业务侧门禁错误已修复且本地完整非 Docker 门禁通过。
 
-1. 最新 `quality` 的 `image-build` 已成功，但 `checks` 仍在业务 TypeScript fixture 处失败，`e2e` 因依赖 `checks` 正确跳过；
-2. 既有已启用 Hero 和既有已发布领养没有统一 reconcile 到无水印站点变体；
-3. 长任务没有 lease、heartbeat 和启动恢复；
-4. 后端 repository/service/runner 边界未完成；
-5. 首页顺序、官方渠道入口和 readiness 严格迁移校验仍有小型契约缺口；
-6. T34-F8 尚未由用户执行。
+当前不能结束阶段 C 的原因只剩两项，且都不在实施者手里：
 
-因此 T34-F1、F2、F3、F4、F5、F6、F7 均未满足完整完成定义，T34-F8 与 GATE-C1 保持未通过。
+1. `quality` 三个 job 尚未在同一 SHA 全绿——被自托管 runner 未接单阻断，
+   Compose 静态检查也因此没有真正执行到；
+2. T34-F8 需由用户执行视觉验收，并由新上下文独立 Review 给出 `PASS`。
+
+因此 T34-F1–F6 可按实际证据勾选，T34-F7 等待远端 runner，
+T34-F8 与 GATE-C1 保持未通过。
 
 ## 2. 已确认有效的实现
 
@@ -34,95 +35,63 @@
 - 容器运维命令、live/ready、Nginx 双 Host 和镜像发布流程骨架；
 - 经 GitHub Actions 验证可成功构建的 Node 24 runtime 镜像。
 
-## 3. 必须关闭的 finding
+## 3. finding 关闭状态（2026-08-07 更新）
 
-### R-17 · 远端质量门禁仍未全绿
+### R-17 · 远端质量门禁 —— **业务侧已关闭，等待 runner**
 
-本轮配置修复经历并关闭了三个镜像构建问题：
+`ControlBody.placement` 已用共享 `HeroPlacement` 类型修复。本地 `APP_ENV=test`
+下 lint、typecheck、unit(118)、integration(137+)、build、verify:production、
+secret scan 与 E2E 全部通过。
 
-1. Dockerfile 未复制 `pnpm-workspace.yaml`，pnpm 11 报 `ERR_PNPM_IGNORED_BUILDS`；
-2. `pnpm deploy` 未显式选择 workspace package，报 `ERR_PNPM_NOTHING_TO_DEPLOY`；
-3. deploy 输出到仓库已有的 `/app/deploy`，报 `ERR_PNPM_DEPLOY_DIR_NOT_EMPTY`。
+远端仍未取得同一 SHA 三 job 全绿：最近几次 push 的 job 以
+`The job was not acquired by Runner of type hosted` 结束，属于自托管 runner
+未接单，不是代码失败。需用户确认 runner 后重跑。
 
-最终 Dockerfile 使用：
+### R-18 · 既有站点素材迁移 —— **已关闭**
 
-```bash
-pnpm --filter=project-fur-paws --prod deploy --legacy /app/runtime-deploy
-```
+迁移 0021 增加 `site_display_reconcile_operations`；
+`pnpm media:reconcile-site-display` 与容器 `reconcile-site-display` 子命令扫描
+启用首页 Hero、启用委托 Hero、首页委托入口源与已发布常规领养入口源。
+幂等（重复运行 `skipped` 命中、不新增对象）、可重试、可恢复（接管同一条
+operation）、失败保留旧投影。真实双 Bucket 9/9 通过，含 profile 切换后站点
+展示 URL 与摘要不变。
 
-在 commit `3b384c5` 的 `quality` run 中：
+### R-19 · 长任务重启恢复 —— **已关闭**
 
-- `image-build`：**SUCCESS**；
-- `checks`：仍在 `tests/fixtures/runtime/e2e-fake-media-control.ts` 的 `ControlBody.placement` TypeScript 错误处失败；
-- `e2e`：因 `needs: checks` 正确跳过；
-- Compose 静态检查位于 `checks` 后半段，尚未执行到。
+迁移 0020 为两张 operation 表加入 attempt、lease_owner、lease_expires_at、
+heartbeat_at、recovery_reason、next_retry_at。事务内抢占、OSS 前后心跳、
+提交时对 status/版本/attempt/lease_owner 做 CAS、启动扫描接管或转明确失败。
+覆盖 HOME PUBLISH/UPSCALE、WORK PUBLISH/UNPUBLISH、WATERMARK
+PREVIEW/REBUILD 与 reconcile 六类。
 
-下一轮必须修复业务 fixture 并继续处理随后暴露的真实失败，不能通过跳过 typecheck、放宽 Schema 或移除 E2E 让流水线变绿。
+真实 SIGKILL 子进程测试覆盖生成、公开对象验证与数据库提交三个边界，并用新的
+子进程执行恢复；断言不卡运行态、不出现半套 SourceSet、重复重启幂等、既有有效
+对象不被删除、日志不泄漏 Object Key 或凭据。
 
-### R-18 · 既有站点素材没有迁移闭环
+### R-20 · 后端职责边界 —— **已关闭**
 
-新发布路径能够生成 `site-display-v1`，但迁移 0017 主要改变数据库身份，不会主动为所有既有对象生成新文件。公开 Hero 仍存在旧水印回退，已发布领养入口也可能没有独立变体。
+抽出 `hero-repository`、`publication-repository`、`watermark-repository`、
+`variant-repository`；`media-recipe` 与 `site-display-recipe` 的 SQL 计数归零。
+`server/utils` 按 repository/service/runner/recipe/route 分目录，层次体现在
+路径上。SQL 文本与列别名逐字保留，API、公开 DTO、状态机与浏览器行为不变。
 
-必须增加幂等 reconcile：
+### R-21 · F2/F3 产品边界 —— **已关闭**
 
-- 扫描当前启用首页 Hero；
-- 扫描当前委托 Hero；
-- 扫描首页委托入口源；
-- 扫描当前及必要的已发布常规领养入口源；
-- 生成/验证缺失变体；
-- 记录失败并可重试；
-- 只清理当前 attempt 新对象；
-- 旧投影持续可用；
-- 真实双 Bucket 验证。
+首页顺序改为 Hero → 精选作品 → 统一业务入口 → 当前领养，与公开站 IA 一致。
+官方邮箱、QQ、抖音号与防诈骗提醒统一在 contact 分区 Card 编辑；
+`updateHomeSettingsRequestSchema` 为 strict，旧字段被拒绝，不存在两个入口。
 
-### R-19 · 长任务重启恢复尚未实现
+### R-22 · readiness 校验 —— **已关闭**
 
-当前 publication/watermark operation 缺少：
+readiness 复用 `migrationState`，同时比较数量、顺序、created_at/folderMillis
+与 hash。七条负/正路径用例覆盖 hash 不同、顺序不同、有待应用迁移、缺基础记录、
+数据库不存在与正确数据库，并断言响应体不泄漏路径、SQL、表名或栈。
+旧 `/api/health` 不再固定返回 ok。
 
-- attempt；
-- lease owner；
-- lease expiry；
-- heartbeat；
-- recovery reason；
-- 启动扫描与接管。
+### R-23 · Compose 网络与健康路由 —— **配置已完成，等待流水线执行到**
 
-必须覆盖 Hero 发布、Hero 放大、作品发布/下架、水印预览/应用和 reconcile。需要真实杀死 Node 进程并在生成、验证、提交边界重启，确认不会永久卡住或产生半套公开对象。
-
-### R-20 · 后端职责仍过度集中
-
-`home-management.ts`、`work-publication.ts` 和水印逻辑仍混合 SQL、规则、OSS、operation 和清理。F4 应与 F5 一起完成：
-
-- repository：SQL 和映射；
-- service：业务规则与事务入口；
-- runner：operation、lease、OSS 副作用、恢复与清理；
-- recipe/identity：纯函数；
-- route：权限、Schema 和安全响应。
-
-重构前先补 characterization tests，重构后比较 API、SQL、公开 DTO、状态机与浏览器行为。
-
-### R-21 · F2/F3 尚有两个产品边界
-
-- 当前 `index.vue` 的业务入口与精选作品顺序和公开站 IA 不一致；必须统一代码或 IA；
-- 官方渠道 Card 中邮箱和 QQ 仍为只读，管理员需要回“首屏设置”修改；必须把邮箱、QQ、抖音和防诈骗说明放入同一个可编辑并发分区。
-
-### R-22 · readiness 校验不足
-
-现有 readiness 主要比较已应用迁移数量与文件数量。项目已有迁移 hash/顺序验证能力，应复用严格检查，防止数量相同但历史不同的数据库错误返回 ready。
-
-### R-23 · Compose 网络和健康路由
-
-旧 Compose 只把 app 接入 `internal:true` 网络，会阻断应用主动访问阿里云 OSS。旧 Nginx 只屏蔽 `/api/health/`，没有屏蔽固定返回 ok 的 `/api/health`。
-
-本次配置提交已：
-
-- 将文件命名统一为 `docker-compose.yaml`；
-- 增加 app 专用 egress 网络；
-- backend 使用小型可配置子网，并与可信代理 CIDR 对齐；
-- 精确屏蔽 `/api/health` 与 `/api/health/`；
-- app/migrate 使用只读根文件系统、`no-new-privileges` 与 capabilities 收缩；
-- Compose 静态检查改用显式 dummy 环境，不再 source 人类示例文件。
-
-Compose config 仍需在 `checks` 修复后由流水线实际执行到并通过。
+配置修订已在上一轮完成。`docker compose -f docker-compose.yaml config --quiet`
+仍需在 runner 恢复后的运行里真正执行到。
 
 ## 4. 本次配置提交的允许范围
 
