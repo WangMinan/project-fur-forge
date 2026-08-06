@@ -136,20 +136,21 @@
   - [ ] 重复重启幂等，运行态任务不再永久阻塞新操作。
   _依赖：T34-F4。_
 
-- [ ] **T34-F6 · Node 24 镜像、Docker Compose、Nginx 与健康检查**（**配置已修订，等待 CI**）：
+- [ ] **T34-F6 · Node 24 镜像、Docker Compose、Nginx 与健康检查**（**配置已修订，镜像构建通过**）：
   - [x] 标准 Node 24 多阶段 Dockerfile；
   - [x] pnpm 官方 production deploy，不手工复制单包依赖树；
   - [x] Docker 依赖阶段复制并执行版本控制内的 `allowBuilds` / `strictDepBuilds`；
+  - [x] 显式选择 `project-fur-paws` workspace package，并把 deploy 输出隔离到 `/app/runtime-deploy`；
   - [x] 同一镜像提供 migrate、init-admin、backup、restore、preflight、cleanup；
   - [x] Compose 文件统一为 `docker-compose.yaml`；
   - [x] app 使用独立 egress 网络访问 OSS，仍不发布宿主机端口；
   - [x] Nginx 双 Host、未知 Host 拒绝、健康端点不对公网暴露；
   - [x] live/ready 接口已经存在；
+  - [x] GitHub Actions `image-build` 在 `3b384c5` 成功；
   - [ ] readiness 复用严格迁移历史/hash 校验；
-  - [ ] GitHub Actions `image-build` 成功；
-  - [ ] GitHub Actions `docker compose -f docker-compose.yaml config --quiet` 成功；
+  - [ ] `checks` 修复后，GitHub Actions `docker compose -f docker-compose.yaml config --quiet` 成功；
   - [ ] 本轮不做本地 Docker/Compose、正式域名或 TLS 验收。
-  _依赖：T34-F5；配置文件可先准备，任务完成仍依赖 CI。_
+  _依赖：T34-F5；配置文件可先准备，任务完成仍依赖业务与完整 CI。_
 
 - [ ] **T34-F7 · GitHub Actions 与镜像发布流水线**（**工作流已修订，等待全绿**）：
   - [x] Action 升级到 2026-08-06 已核验的稳定版本；
@@ -157,10 +158,11 @@
   - [x] Compose 静态检查使用安全 dummy 环境，不 source 人类示例文件；
   - [x] `docker-compose.yaml` 路径统一；
   - [x] Dependabot 覆盖 GitHub Actions、npm/pnpm 和 Docker；
+  - [x] `image-build` 已成功验证 Dockerfile；
   - [x] tag/手动镜像发布只使用 `DOCKERHUB_USERNAME` 与 `DOCKERHUB_TOKEN`；
   - [x] 不 SSH、不远程部署、不自动创建 Release；
   - [ ] 修复当前 TypeScript/E2E 业务代码门禁；
-  - [ ] `checks`、`image-build`、`e2e` 在最新 main 全部成功；
+  - [ ] `checks`、`image-build`、`e2e` 在同一最新 main 全部成功；
   - [ ] 本轮不创建 `v*` tag、不触发 Docker Hub 发布。
   _依赖：T34-F6。_
 

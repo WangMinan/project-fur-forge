@@ -2,7 +2,7 @@
 
 > **角色**：当前需求的状态机与执行入口。只记录现在有效的阶段、阻断项和下一步；历史过程见 `implementation/notes/`。
 > **最后更新**：2026-08-06。
-> **复核基线**：`aac745167e640e5ef20b4d054539a9a245ca109e`。
+> **复核基线**：`aac745167e640e5ef20b4d054539a9a245ca109e`；当前配置收口 HEAD 为 `3b384c5f54610c92e22e3f2e069cb5365e27bcc6`。
 
 ## 当前阶段
 
@@ -12,9 +12,9 @@
 
 > **PASS WITH REQUIRED CLOSURE**
 
-当前不能勾选 `T34-F8` 或 `GATE-C1`，也不能进入 T35。主要原因不是页面主功能缺失，而是既有素材迁移、长任务重启恢复、后端边界和远端门禁尚未闭环。
+当前不能勾选 `T34-F8` 或 `GATE-C1`，也不能进入 T35。主要原因不是页面主功能缺失，而是既有素材迁移、长任务重启恢复、后端边界和完整远端门禁尚未闭环。
 
-本次配置收口提交只修改：
+本次配置收口只修改：
 
 - `agent_docs/` 当前状态和下一步；
 - `Dockerfile`、`docker-compose.yaml`、Nginx 与部署说明；
@@ -43,8 +43,8 @@
 | T34-F3 | **主体完成，待收口** | 六个 Card、分区版本和 FAQ 稳定 ID 已落地；邮箱、QQ、抖音和防诈骗说明仍需统一为一个可编辑官方渠道入口 |
 | T34-F4 | **部分完成** | 稳定错误 `reason` 与部分 composable 拆分完成；Hero、作品发布、水印应用和公开投影的 repository/service/runner 边界未完成 |
 | T34-F5 | **部分完成** | 上传清扫、可信代理和按主体限流完成；operation lease、heartbeat、启动恢复和真实进程中断测试未完成 |
-| T34-F6 | **重新打开** | 本次修正 Dockerfile、Compose 网络与 Nginx 健康端点；必须以 GitHub Actions `image-build` 成功作为完成证据 |
-| T34-F7 | **重新打开** | 工作流与 Action 版本已更新；必须修复业务代码门禁并取得 `checks`、`image-build`、`e2e` 全绿 |
+| T34-F6 | **配置修订完成，镜像构建通过，任务仍未关闭** | GitHub Actions `image-build` 已在 `3b384c5` 成功；仍需 readiness 严格迁移校验，并在 `checks` 修复后执行 Compose 静态检查 |
+| T34-F7 | **重新打开** | 工作流与 Action 版本已更新；`checks` 仍被业务测试 fixture 的 TypeScript 错误阻断，`e2e` 因依赖 `checks` 正确跳过 |
 | T34-F8 | **未开始** | 由用户执行最终视觉验收和新上下文独立 Review |
 | GATE-C1 | **未通过** | 依赖以上全部关闭 |
 
@@ -52,13 +52,13 @@
 
 ### 1. 远端 CI
 
-复核时最新 `quality` 运行的三个 job 均失败：
+配置收口后，最新可核验的 `quality` 结果为：
 
-- `checks`：`tests/fixtures/runtime/e2e-fake-media-control.ts` 的 `ControlBody` 缺少 `placement` 类型；
-- `image-build`：pnpm 11 拒绝未批准的 native/runtime 依赖构建脚本；
-- `e2e`：测试服务未成功进入可运行状态。
+- `image-build`：**成功**。pnpm 依赖脚本批准、Nuxt production build、显式 workspace deploy、独立输出目录、runtime SQLite/OSS/FFmpeg 自检和 Buildx 全部通过；
+- `checks`：在 `tests/fixtures/runtime/e2e-fake-media-control.ts` 的 `ControlBody` 缺少 `placement` 类型处失败；
+- `e2e`：因为声明 `needs: checks`，在基础门禁失败时正确跳过。
 
-本次配置提交处理 Dockerfile、Action 版本和 Compose 静态检查问题，但**不修改上述 TypeScript 业务测试 fixture**。下一轮 Codex 必须先从新的 Actions 结果继续修复。
+本次按用户要求没有修改上述 TypeScript 业务测试 fixture。下一轮 Codex 必须先修复该错误，再让 unit、integration、build、verify、Compose config 和 E2E 真正执行。
 
 ### 2. 既有站点素材迁移
 
@@ -82,7 +82,7 @@
 
 - Compose 文件统一命名为根目录 `docker-compose.yaml`；
 - 本地仍禁止执行 `docker build`、`docker compose up`、空卷演练或本地 Nginx 验收；
-- Dockerfile 由 GitHub Actions 构建验证；
+- Dockerfile 已由 GitHub Actions 成功构建验证；
 - 当前没有正式域名，不生成证书、不启用 HSTS、不声称完成 TLS；
 - 不创建 `v*` tag，不触发 Docker Hub 发布，不远程部署；
 - 镜像发布只读取 `DOCKERHUB_USERNAME` 与 `DOCKERHUB_TOKEN`；
@@ -90,13 +90,13 @@
 
 ## 下一步执行顺序
 
-1. 用户在 GitHub 仓库配置 Docker Hub Secrets，并查看本次提交触发的 `quality` 结果；
-2. Codex 先修复仍存在的 CI 业务代码错误；
+1. 用户在 GitHub 仓库配置 Docker Hub Secrets；
+2. Codex 先修复 `ControlBody.placement` 及随之暴露的 CI 业务代码错误；
 3. 合并完成 T34-F4 与 T34-F5：服务边界、operation lease/heartbeat/启动恢复和进程中断测试；
 4. 完成 T34-F1 既有素材 reconcile 与真实双 Bucket 验证；
 5. 收口 T34-F2/F3 的首页顺序和官方渠道入口；
 6. 修正 readiness 严格迁移验证；
-7. 重跑完整非 Docker 门禁与 GitHub Actions，要求三个 job 全绿；
+7. 重跑完整非 Docker 门禁与 GitHub Actions，要求 `checks`、`image-build`、`e2e` 全绿；
 8. 用户执行 T34-F8，确认后再勾选 `GATE-C1` 并进入 T35。
 
 具体 finding 和实施边界见：

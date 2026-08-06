@@ -2,21 +2,22 @@
 
 > **角色**：记录当前 SPEC、代码、部署文件、GitHub Actions 与任务状态之间的差异。
 > **评审日期**：2026-08-06。
-> **代码基线**：`aac745167e640e5ef20b4d054539a9a245ca109e`。
+> **初始代码基线**：`aac745167e640e5ef20b4d054539a9a245ca109e`。
+> **配置收口验证 HEAD**：`3b384c5f54610c92e22e3f2e069cb5365e27bcc6`。
 > **结论**：`PASS WITH REQUIRED CLOSURE`。
 
 ## 1. 总结论
 
 阶段 C 的主业务链已经建立，T34-F1–F3 也完成了大部分产品改造；但是当前不能结束阶段 C，原因包括：
 
-1. 最新 `quality` 工作流的 `checks`、`image-build`、`e2e` 全部失败；
+1. 最新 `quality` 的 `image-build` 已成功，但 `checks` 仍在业务 TypeScript fixture 处失败，`e2e` 因依赖 `checks` 正确跳过；
 2. 既有已启用 Hero 和既有已发布领养没有统一 reconcile 到无水印站点变体；
 3. 长任务没有 lease、heartbeat 和启动恢复；
 4. 后端 repository/service/runner 边界未完成；
 5. 首页顺序、官方渠道入口和 readiness 严格迁移校验仍有小型契约缺口；
 6. T34-F8 尚未由用户执行。
 
-因此 T34-F1、F2、F3、F6、F7 需要按“部分完成/待验证”重新打开，F4、F5继续保持未完成。
+因此 T34-F1、F2、F3、F4、F5、F6、F7 均未满足完整完成定义，T34-F8 与 GATE-C1 保持未通过。
 
 ## 2. 已确认有效的实现
 
@@ -30,29 +31,33 @@
 - 稳定 API `reason` 和前端英文消息匹配清理；
 - 过期上传主动清扫；
 - 可信代理解析与按主体限流；
-- 容器运维命令、live/ready、Nginx 双 Host 和镜像发布流程骨架。
+- 容器运维命令、live/ready、Nginx 双 Host 和镜像发布流程骨架；
+- 经 GitHub Actions 验证可成功构建的 Node 24 runtime 镜像。
 
 ## 3. 必须关闭的 finding
 
-### R-17 · 当前 GitHub Actions 失败
+### R-17 · 远端质量门禁仍未全绿
 
-复核时最新运行：
+本轮配置修复经历并关闭了三个镜像构建问题：
 
-- `checks` 在 TypeScript typecheck 失败：`ControlBody` 没有 `placement`；
-- `image-build` 因 pnpm 11 `ERR_PNPM_IGNORED_BUILDS` 失败，未批准 `better-sqlite3`、`esbuild`、`ffmpeg-static`、`unrs-resolver`；
-- `e2e` 因测试服务未成功启动而失败；
-- 原 Compose 检查通过 source `.env.compose.example` 注入环境，示例中的 `<...>` 与空必填值不适合作为 CI 环境；
-- 旧 Action 版本触发 Node.js 20 弃用警告。
+1. Dockerfile 未复制 `pnpm-workspace.yaml`，pnpm 11 报 `ERR_PNPM_IGNORED_BUILDS`；
+2. `pnpm deploy` 未显式选择 workspace package，报 `ERR_PNPM_NOTHING_TO_DEPLOY`；
+3. deploy 输出到仓库已有的 `/app/deploy`，报 `ERR_PNPM_DEPLOY_DIR_NOT_EMPTY`。
 
-本次配置提交已：
+最终 Dockerfile 使用：
 
-- Dockerfile 依赖阶段复制版本控制内的 `pnpm-workspace.yaml`，执行既有 `allowBuilds` / `strictDepBuilds`；
-- 将 Action 更新到 2026-08-06 核验的稳定版本；
-- 使用 `pnpm/setup@v2.0.0`；
-- 让 Compose 检查使用显式 dummy 环境；
-- 将 E2E 设为依赖 checks，避免基础门禁失败后继续浪费运行资源。
+```bash
+pnpm --filter=project-fur-paws --prod deploy --legacy /app/runtime-deploy
+```
 
-`ControlBody.placement` 属于业务测试 fixture，本次按用户要求不修改，留给下一轮 Codex。
+在 commit `3b384c5` 的 `quality` run 中：
+
+- `image-build`：**SUCCESS**；
+- `checks`：仍在 `tests/fixtures/runtime/e2e-fake-media-control.ts` 的 `ControlBody.placement` TypeScript 错误处失败；
+- `e2e`：因 `needs: checks` 正确跳过；
+- Compose 静态检查位于 `checks` 后半段，尚未执行到。
+
+下一轮必须修复业务 fixture 并继续处理随后暴露的真实失败，不能通过跳过 typecheck、放宽 Schema 或移除 E2E 让流水线变绿。
 
 ### R-18 · 既有站点素材没有迁移闭环
 
@@ -114,11 +119,14 @@
 - 增加 app 专用 egress 网络；
 - backend 使用小型可配置子网，并与可信代理 CIDR 对齐；
 - 精确屏蔽 `/api/health` 与 `/api/health/`；
-- app/migrate 使用只读根文件系统、`no-new-privileges` 与 capabilities 收缩。
+- app/migrate 使用只读根文件系统、`no-new-privileges` 与 capabilities 收缩；
+- Compose 静态检查改用显式 dummy 环境，不再 source 人类示例文件。
+
+Compose config 仍需在 `checks` 修复后由流水线实际执行到并通过。
 
 ## 4. 本次配置提交的允许范围
 
-允许修改：
+本轮仅修改：
 
 - `agent_docs/`；
 - `Dockerfile`；
@@ -129,7 +137,7 @@
 - `.github/workflows/`；
 - `.github/dependabot.yml`。
 
-明确不修改：
+明确未修改：
 
 - `app/`；
 - `server/`；
@@ -139,7 +147,7 @@
 - 数据库迁移；
 - `package.json` 与 lockfile。
 
-因此，本次提交后 `quality` 仍可能因已知 TypeScript 业务错误失败；这不是通过放宽门禁解决，而是下一轮业务修复入口。
+因此，当前 `checks` 的 TypeScript 失败是刻意留给下一轮业务修复的边界，不是通过放宽门禁解决。
 
 ## 5. C.1 通过条件
 
@@ -153,7 +161,7 @@
 - 长任务 lease、heartbeat、启动恢复与进程中断测试通过；
 - 过期上传清扫与限流保持通过；
 - readiness 使用严格迁移校验；
-- GitHub Actions `checks`、`image-build`、`e2e` 在最新 main 全绿；
+- GitHub Actions `checks`、`image-build`、`e2e` 在同一最新 main 全绿；
 - 完整非 Docker 本地门禁通过；
 - 用户完成 T34-F8 视觉验收；
 - 新上下文独立 Review 为 `PASS`。
