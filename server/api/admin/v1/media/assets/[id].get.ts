@@ -2,7 +2,7 @@ import { resourceIdSchema } from '../../../../../../shared/schemas/api'
 import { verifiedAssetResponseSchema } from '../../../../../../shared/schemas/upload'
 import { createApiError } from '../../../../../utils/api-error'
 import { getDatabase } from '../../../../../utils/database'
-import { getVerifiedAsset } from '../../../../../utils/media-completion'
+import { getVerifiedAsset } from '../../../../../utils/service/media-completion'
 import { asSafeApiError } from '../../../../../utils/service-error'
 
 export default defineEventHandler((event) => {

@@ -23,7 +23,7 @@ import {
   generatePublicVariants,
   PUBLIC_RECIPE_VERSION,
   workAssetPublicUsages,
-} from '../../server/utils/media-recipe'
+} from '../../server/utils/recipe/media-recipe'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 import {
   insertActiveWatermarkProfile,

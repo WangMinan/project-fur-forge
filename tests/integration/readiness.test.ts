@@ -21,7 +21,7 @@ import {
   migrateDatabase,
   openDatabase,
 } from '../../server/utils/database'
-import { evaluateReadiness } from '../../server/utils/readiness'
+import { evaluateReadiness } from '../../server/utils/service/readiness'
 
 /**
  * T34-F6 readiness 严格迁移校验。

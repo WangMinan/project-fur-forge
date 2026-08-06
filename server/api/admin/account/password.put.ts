@@ -3,13 +3,13 @@ import {
   changePasswordResponseSchema,
 } from '../../../../shared/schemas/auth'
 import { createApiError } from '../../../utils/api-error'
-import { changeAdminPassword } from '../../../utils/auth'
+import { changeAdminPassword } from '../../../utils/service/auth'
 import {
   adminSessionFor,
   endAdminSession,
-} from '../../../utils/auth-session'
+} from '../../../utils/route/auth-session'
 import { getDatabase } from '../../../utils/database'
-import { readAdminJsonBody } from '../../../utils/request-body'
+import { readAdminJsonBody } from '../../../utils/route/request-body'
 
 export default defineEventHandler(async (event) => {
   const parsed = changePasswordRequestSchema.safeParse(

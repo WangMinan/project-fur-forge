@@ -18,15 +18,15 @@ import {
   migrateDatabase,
   openDatabase,
 } from '../../server/utils/database'
-import { generatePublicVariants } from '../../server/utils/media-recipe'
-import { resetOperationLeaseOwner } from '../../server/utils/operation-lease'
+import { generatePublicVariants } from '../../server/utils/recipe/media-recipe'
+import { resetOperationLeaseOwner } from '../../server/utils/repository/operation-lease'
 import {
   findReconcileTargets,
   reconcileSiteDisplay,
   reconcileTargetComplete,
-} from '../../server/utils/site-display-reconcile'
-import { SITE_DISPLAY_RECIPE_VERSION } from '../../server/utils/site-display-recipe'
-import { getPublicHome } from '../../server/utils/home-management'
+} from '../../server/utils/runner/site-display-reconcile'
+import { SITE_DISPLAY_RECIPE_VERSION } from '../../server/utils/recipe/site-display-recipe'
+import { getPublicHome } from '../../server/utils/runner/home-management'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
 

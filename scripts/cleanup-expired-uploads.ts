@@ -1,5 +1,5 @@
 import { parseArgs } from 'node:util'
-import { cleanupExpiredUploads } from '../server/utils/upload-cleanup'
+import { cleanupExpiredUploads } from '../server/utils/runner/upload-cleanup'
 
 /**
  * T34-F5 本地入口：pnpm media:cleanup-expired-uploads

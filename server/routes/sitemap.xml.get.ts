@@ -1,4 +1,4 @@
-import { getPublicSiteRepository } from '../utils/public-site-repository'
+import { getPublicSiteRepository } from '../utils/repository/public-site-repository'
 import { getRuntimeConfig } from '../utils/runtime-config'
 
 const STATIC_PATHS = [

@@ -18,7 +18,7 @@ import {
   migrateDatabase,
   openDatabase,
 } from '../../server/utils/database'
-import { generatePublicVariants } from '../../server/utils/media-recipe'
+import { generatePublicVariants } from '../../server/utils/recipe/media-recipe'
 import {
   applyWatermarkProfile,
   createWatermarkPreview,
@@ -27,13 +27,13 @@ import {
   runWatermarkProfileApplication,
   retryWatermarkOperation,
   startWatermarkProfileApplication,
-} from '../../server/utils/watermark-branding'
+} from '../../server/utils/runner/watermark-branding'
 import {
   createWatermarkProfile,
   requireSiteBranding,
   requireWatermarkProfile,
-} from '../../server/utils/watermark-profile'
-import { seedBundledWatermark } from '../../server/utils/watermark-seed'
+} from '../../server/utils/service/watermark-profile'
+import { seedBundledWatermark } from '../../server/utils/runner/watermark-seed'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 
 const NOW = Date.UTC(2026, 7, 1)

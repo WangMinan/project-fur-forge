@@ -1,7 +1,7 @@
 import { watermarkBrandingResponseSchema } from '../../../../../../shared/schemas/watermark'
 import { getDatabase } from '../../../../../utils/database'
 import { asSafeApiError } from '../../../../../utils/service-error'
-import { getWatermarkBranding } from '../../../../../utils/watermark-branding'
+import { getWatermarkBranding } from '../../../../../utils/runner/watermark-branding'
 
 export default defineEventHandler(() => {
   try {

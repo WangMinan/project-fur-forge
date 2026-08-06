@@ -1,9 +1,9 @@
 import { appendFileSync } from 'node:fs'
 import type Database from 'better-sqlite3'
 import { openDatabase } from '../../server/utils/database'
-import { resetOperationLeaseOwner } from '../../server/utils/operation-lease'
-import { recoverPendingOperations } from '../../server/utils/operation-recovery'
-import { reconcileSiteDisplay } from '../../server/utils/site-display-reconcile'
+import { resetOperationLeaseOwner } from '../../server/utils/repository/operation-lease'
+import { recoverPendingOperations } from '../../server/utils/runner/operation-recovery'
+import { reconcileSiteDisplay } from '../../server/utils/runner/site-display-reconcile'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 import type {
   PublicProcessInput,

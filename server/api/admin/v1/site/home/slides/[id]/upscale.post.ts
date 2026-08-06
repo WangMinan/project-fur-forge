@@ -4,15 +4,15 @@ import {
 } from '../../../../../../../../shared/schemas/home'
 import { publicationOperationResponseSchema } from '../../../../../../../../shared/schemas/publication'
 import { createApiError } from '../../../../../../../utils/api-error'
-import { adminSessionFor } from '../../../../../../../utils/auth-session'
+import { adminSessionFor } from '../../../../../../../utils/route/auth-session'
 import { getDatabase } from '../../../../../../../utils/database'
 import {
   runHeroSlideUpscale,
   startHeroSlideUpscale,
-} from '../../../../../../../utils/home-management'
-import { readHeroPlacement } from '../../../../../../../utils/hero-placement'
+} from '../../../../../../../utils/runner/home-management'
+import { readHeroPlacement } from '../../../../../../../utils/route/hero-placement'
 import { getMediaStorage } from '../../../../../../../utils/media-storage'
-import { readAdminJsonBody } from '../../../../../../../utils/request-body'
+import { readAdminJsonBody } from '../../../../../../../utils/route/request-body'
 import { asSafeApiError } from '../../../../../../../utils/service-error'
 
 export default defineEventHandler(async (event) => {

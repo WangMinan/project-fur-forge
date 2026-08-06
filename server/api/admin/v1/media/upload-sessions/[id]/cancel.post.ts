@@ -6,9 +6,9 @@ import {
 import { createApiError } from '../../../../../../utils/api-error'
 import { getDatabase } from '../../../../../../utils/database'
 import { getMediaStorage } from '../../../../../../utils/media-storage'
-import { readAdminJsonBody } from '../../../../../../utils/request-body'
+import { readAdminJsonBody } from '../../../../../../utils/route/request-body'
 import { asApiError } from '../../../../../../utils/service-error'
-import { cancelUploadSession } from '../../../../../../utils/upload-session'
+import { cancelUploadSession } from '../../../../../../utils/service/upload-session'
 
 export default defineEventHandler(async (event) => {
   const id = resourceIdSchema.safeParse(getRouterParam(event, 'id'))

@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { resetAdminPassword } from '../../../server/utils/auth'
+import { resetAdminPassword } from '../../../server/utils/service/auth'
 import { openFixtureDatabase } from './fixture-db'
 
 function requiredEnvironment(name: string) {

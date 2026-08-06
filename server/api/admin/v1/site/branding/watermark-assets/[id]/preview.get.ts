@@ -3,7 +3,7 @@ import { createApiError } from '../../../../../../../utils/api-error'
 import { getDatabase } from '../../../../../../../utils/database'
 import { getMediaStorage } from '../../../../../../../utils/media-storage'
 import { asSafeApiError } from '../../../../../../../utils/service-error'
-import { getWatermarkCandidateContent } from '../../../../../../../utils/watermark-branding'
+import { getWatermarkCandidateContent } from '../../../../../../../utils/runner/watermark-branding'
 
 export default defineEventHandler(async (event) => {
   const id = resourceIdSchema.safeParse(getRouterParam(event, 'id'))

@@ -16,7 +16,7 @@ import {
   migrateDatabase,
   openDatabase,
 } from '../../server/utils/database'
-import { validateHeroSlidesForPublication } from '../../server/utils/hero-publication'
+import { validateHeroSlidesForPublication } from '../../server/utils/recipe/hero-publication'
 import {
   insertActiveWatermarkProfile,
   TEST_WATERMARK_PROFILE_ID,

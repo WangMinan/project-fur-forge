@@ -6,12 +6,12 @@ import {
 import { createApiError } from '../../../../../../../utils/api-error'
 import { getDatabase } from '../../../../../../../utils/database'
 import { getMediaStorage } from '../../../../../../../utils/media-storage'
-import { readAdminJsonBody } from '../../../../../../../utils/request-body'
+import { readAdminJsonBody } from '../../../../../../../utils/route/request-body'
 import { asSafeApiError } from '../../../../../../../utils/service-error'
 import {
   runWatermarkProfileApplication,
   startWatermarkProfileApplication,
-} from '../../../../../../../utils/watermark-branding'
+} from '../../../../../../../utils/runner/watermark-branding'
 
 export default defineEventHandler(async (event) => {
   const id = resourceIdSchema.safeParse(getRouterParam(event, 'id'))

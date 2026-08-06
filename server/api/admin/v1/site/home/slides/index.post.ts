@@ -4,9 +4,9 @@ import {
 } from '../../../../../../../shared/schemas/home'
 import { createApiError } from '../../../../../../utils/api-error'
 import { getDatabase } from '../../../../../../utils/database'
-import { createHeroSlide } from '../../../../../../utils/home-management'
-import { readHeroPlacement } from '../../../../../../utils/hero-placement'
-import { readAdminJsonBody } from '../../../../../../utils/request-body'
+import { createHeroSlide } from '../../../../../../utils/runner/home-management'
+import { readHeroPlacement } from '../../../../../../utils/route/hero-placement'
+import { readAdminJsonBody } from '../../../../../../utils/route/request-body'
 import { asSafeApiError } from '../../../../../../utils/service-error'
 
 export default defineEventHandler(async (event) => {

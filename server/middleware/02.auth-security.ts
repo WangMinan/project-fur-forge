@@ -2,8 +2,8 @@ import {
   assertAdminOrigin,
   assertCsrfToken,
   requireAdminSession,
-} from '../utils/auth-session'
-import { assertRequestRateLimit } from '../utils/request-rate-limit'
+} from '../utils/route/auth-session'
+import { assertRequestRateLimit } from '../utils/route/request-rate-limit'
 
 function isAtOrBelow(pathname: string, prefix: string) {
   return pathname === prefix || pathname.startsWith(`${prefix}/`)

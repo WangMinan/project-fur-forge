@@ -1,0 +1,736 @@
+import { randomUUID } from 'node:crypto'
+import type Database from 'better-sqlite3'
+import {
+  managedDesignSheetDtoSchema,
+  managedWorkDtoSchema,
+  publicSafeWorkPreviewDtoSchema,
+  workListItemDtoSchema,
+} from '../../../shared/schemas/work'
+import type {
+  ManagedDesignSheetDto,
+  ManagedWorkDto,
+  PublicSafeWorkPreviewDto,
+  WatermarkAnchor,
+  WorkFields,
+  WorkListItemDto,
+} from '../../../shared/types/contracts'
+import type { MediaStorage } from '../media-storage'
+import { ServiceError } from '../service-error'
+
+interface StudioPhotoInput {
+  alt: string
+  assetId: string
+  crop: {
+    height: number
+    width: number
+    x: number
+    y: number
+  }
+  focalX: number
+  focalY: number
+  primary: boolean
+  watermarkAnchor?: WatermarkAnchor | undefined
+}
+
+interface DesignSheetInput {
+  alt: string
+  assetId: string
+}
+
+interface WorkRow {
+  adoptionMethod: 'regular' | 'event_drop' | null
+  businessStatus: 'preparing' | 'available' | 'event_sale' | 'scheduled' | 'in_production' | 'delivered' | null
+  characterName: string
+  currentEventName: string | null
+  featured: number
+  id: string
+  ownerContact: string | null
+  ownerDisplay: string
+  priceAmountMinor: number | null
+  priceCurrency: 'CNY' | null
+  publicationStatus: 'draft' | 'published' | 'unpublished'
+  purpose: 'commission' | 'adoption' | 'showcase'
+  slug: string
+  sortOrder: number
+  species: string
+  suitType: 'full' | 'partial'
+  version: number
+}
+
+const selectWork = `
+  SELECT
+    id, version, slug, character_name AS characterName,
+    species, suit_type AS suitType, purpose,
+    adoption_method AS adoptionMethod,
+    business_status AS businessStatus,
+    current_event_name AS currentEventName,
+    owner_display AS ownerDisplay, owner_contact AS ownerContact,
+    price_amount_minor AS priceAmountMinor,
+    price_currency AS priceCurrency,
+    publication_status AS publicationStatus,
+    sort_order AS sortOrder, featured
+  FROM works
+`
+
+function findWork(sqlite: Database.Database, id: string) {
+  return sqlite.prepare(`${selectWork} WHERE id = ?`)
+    .get(id) as WorkRow | undefined
+}
+
+function requireWork(sqlite: Database.Database, id: string) {
+  const work = findWork(sqlite, id)
+  if (!work) {
+    throw new ServiceError(404, 'NOT_FOUND', 'Work was not found.', 'RESOURCE_NOT_FOUND')
+  }
+  return work
+}
+
+function featureTags(sqlite: Database.Database, workId: string) {
+  return sqlite.prepare(`
+    SELECT value FROM work_feature_tags
+    WHERE work_id = ? ORDER BY position
+  `).pluck().all(workId) as string[]
+}
+
+function studioPhotos(sqlite: Database.Database, workId: string) {
+  return sqlite.prepare(`
+    SELECT
+      relation.asset_id AS assetId,
+      relation.alt_text AS alt,
+      relation.position,
+      relation.is_primary AS "primary",
+      relation.focal_x AS focalX,
+      relation.focal_y AS focalY,
+      relation.crop_x AS cropX,
+      relation.crop_y AS cropY,
+      relation.crop_width AS cropWidth,
+      relation.crop_height AS cropHeight,
+      relation.watermark_anchor AS watermarkAnchor,
+      asset.version, asset.status, asset.width, asset.height,
+      (
+        SELECT count(*) FROM asset_variants AS variant
+        WHERE variant.asset_id = asset.id
+          AND variant.storage_scope = 'PUBLIC'
+          AND variant.status = 'READY'
+          AND variant.watermark_profile_id = (
+            SELECT active_watermark_profile_id
+            FROM site_branding WHERE id = 'site'
+          )
+      ) AS publicVariantCount
+    FROM work_assets AS relation
+    JOIN assets AS asset ON asset.id = relation.asset_id
+    WHERE relation.work_id = ? AND relation.role = 'studio_photo'
+    ORDER BY relation.position
+  `).all(workId).map((row) => {
+    const photo = row as Record<string, unknown>
+    return {
+      assetId: photo.assetId,
+      alt: photo.alt,
+      primary: Boolean(photo.primary),
+      focalX: photo.focalX,
+      focalY: photo.focalY,
+      crop: {
+        x: photo.cropX,
+        y: photo.cropY,
+        width: photo.cropWidth,
+        height: photo.cropHeight,
+      },
+      watermarkAnchor: photo.watermarkAnchor,
+      version: photo.version,
+      status: photo.status,
+      width: photo.width,
+      height: photo.height,
+      position: photo.position,
+      publicVariantCount: photo.publicVariantCount,
+    }
+  })
+}
+
+function designSheet(
+  sqlite: Database.Database,
+  workId: string,
+): ManagedDesignSheetDto | null {
+  const row = sqlite.prepare(`
+    SELECT
+      relation.asset_id AS assetId,
+      relation.alt_text AS alt,
+      relation.position,
+      asset.version, asset.status, asset.width, asset.height,
+      (
+        SELECT count(*) FROM asset_variants AS variant
+        WHERE variant.asset_id = asset.id
+          AND variant.storage_scope = 'PUBLIC'
+          AND variant.status = 'READY'
+          AND variant.watermark_profile_id = (
+            SELECT active_watermark_profile_id
+            FROM site_branding WHERE id = 'site'
+          )
+      ) AS publicVariantCount
+    FROM work_assets AS relation
+    JOIN assets AS asset ON asset.id = relation.asset_id
+    WHERE relation.work_id = ? AND relation.role = 'design_sheet'
+  `).get(workId)
+  return row ? managedDesignSheetDtoSchema.parse(row) : null
+}
+
+function managedWork(
+  sqlite: Database.Database,
+  row: WorkRow,
+): ManagedWorkDto {
+  const base = {
+    id: row.id,
+    version: row.version,
+    slug: row.slug,
+    characterName: row.characterName,
+    species: row.species,
+    suitType: row.suitType,
+    purpose: row.purpose,
+    ownerDisplay: row.ownerDisplay,
+    featureTags: featureTags(sqlite, row.id),
+    sortOrder: row.sortOrder,
+    featured: Boolean(row.featured),
+    publicationStatus: row.publicationStatus,
+    studioPhotos: studioPhotos(sqlite, row.id),
+    private: {
+      ownerContact: row.ownerContact,
+    },
+  }
+  return managedWorkDtoSchema.parse(row.purpose === 'adoption'
+    ? {
+        ...base,
+        designSheet: designSheet(sqlite, row.id),
+        adoptionMethod: row.adoptionMethod,
+        businessStatus: row.businessStatus,
+        currentEventName: row.currentEventName,
+        priceCnyMinor: row.priceCurrency === 'CNY'
+          ? row.priceAmountMinor
+          : null,
+      }
+    : base)
+}
+
+function translateConstraint(error: unknown): never {
+  const message = String(error)
+  if (message.includes('works.slug') || message.includes('works_slug_unique')) {
+    throw new ServiceError(409, 'CONFLICT', 'Work slug is already in use.', 'WORK_SLUG_TAKEN')
+  }
+  if (
+    message.includes('work_assets_asset_unique')
+    || message.includes('UNIQUE constraint failed: work_assets.asset_id')
+  ) {
+    throw new ServiceError(409, 'CONFLICT', 'Asset is already linked to a work.', 'ASSET_ALREADY_LINKED')
+  }
+  throw error
+}
+
+function replaceTags(
+  sqlite: Database.Database,
+  workId: string,
+  values: readonly string[],
+) {
+  sqlite.prepare('DELETE FROM work_feature_tags WHERE work_id = ?').run(workId)
+  const insert = sqlite.prepare(`
+    INSERT INTO work_feature_tags (work_id, position, value)
+    VALUES (?, ?, ?)
+  `)
+  values.forEach((value, position) => insert.run(workId, position, value))
+}
+
+export function listManagedWorks(
+  sqlite: Database.Database,
+): WorkListItemDto[] {
+  const rows = sqlite.prepare(`
+    SELECT
+      work.id, work.version, work.slug,
+      work.character_name AS characterName,
+      work.species, work.suit_type AS suitType, work.purpose,
+      work.adoption_method AS adoptionMethod,
+      work.business_status AS businessStatus,
+      work.current_event_name AS currentEventName,
+      work.owner_display AS ownerDisplay,
+      work.price_amount_minor AS priceAmountMinor,
+      work.price_currency AS priceCurrency,
+      work.publication_status AS publicationStatus,
+      work.sort_order AS sortOrder, work.featured,
+      count(photo.asset_id) AS studioPhotoCount,
+      max(CASE WHEN photo.is_primary = 1 THEN photo.asset_id END) AS primaryAssetId,
+      (
+        SELECT asset_id FROM work_assets
+        WHERE work_id = work.id AND role = 'design_sheet'
+      ) AS designSheetAssetId
+    FROM works AS work
+    LEFT JOIN work_assets AS photo
+      ON photo.work_id = work.id AND photo.role = 'studio_photo'
+    GROUP BY work.id
+    ORDER BY work.sort_order, work.id
+  `).all()
+  return rows.map((value) => {
+    const row = value as WorkRow & {
+      primaryAssetId: string | null
+      designSheetAssetId: string | null
+      studioPhotoCount: number
+    }
+    const base = {
+      id: row.id,
+      version: row.version,
+      slug: row.slug,
+      characterName: row.characterName,
+      species: row.species,
+      suitType: row.suitType,
+      purpose: row.purpose,
+      ownerDisplay: row.ownerDisplay,
+      publicationStatus: row.publicationStatus,
+      sortOrder: row.sortOrder,
+      featured: Boolean(row.featured),
+      studioPhotoCount: row.studioPhotoCount,
+      primaryAssetId: row.primaryAssetId,
+    }
+    return workListItemDtoSchema.parse(row.purpose === 'adoption'
+      ? {
+          ...base,
+          designSheetAssetId: row.designSheetAssetId,
+          adoptionMethod: row.adoptionMethod,
+          businessStatus: row.businessStatus,
+          currentEventName: row.currentEventName,
+          priceCnyMinor: row.priceCurrency === 'CNY'
+            ? row.priceAmountMinor
+            : null,
+        }
+      : base)
+  })
+}
+
+export function getManagedWork(
+  sqlite: Database.Database,
+  id: string,
+) {
+  return managedWork(sqlite, requireWork(sqlite, id))
+}
+
+export function createManagedWork(
+  sqlite: Database.Database,
+  input: WorkFields,
+  now = Date.now(),
+) {
+  const id = randomUUID()
+  try {
+    sqlite.transaction(() => {
+      sqlite.prepare(`
+        INSERT INTO works (
+          id, slug, character_name, species, suit_type, purpose,
+          adoption_method, business_status, current_event_name,
+          owner_display, owner_contact, price_amount_minor, price_currency,
+          publication_status, sort_order, featured, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, 'draft', ?, ?, ?, ?)
+      `).run(
+        id,
+        input.slug,
+        input.characterName,
+        input.species,
+        input.suitType,
+        input.purpose,
+        input.purpose === 'adoption' ? input.adoptionMethod : null,
+        input.purpose === 'adoption' ? input.businessStatus : null,
+        input.ownerDisplay,
+        input.ownerContact,
+        input.purpose === 'adoption' ? input.priceCnyMinor : null,
+        input.purpose === 'adoption' && input.priceCnyMinor !== null
+          ? 'CNY'
+          : null,
+        input.sortOrder,
+        input.featured ? 1 : 0,
+        now,
+        now,
+      )
+      replaceTags(sqlite, id, input.featureTags)
+    })()
+  }
+  catch (error) {
+    translateConstraint(error)
+  }
+  return getManagedWork(sqlite, id)
+}
+
+export function updateManagedWork(
+  sqlite: Database.Database,
+  id: string,
+  expectedVersion: number,
+  input: WorkFields,
+  now = Date.now(),
+) {
+  const current = requireWork(sqlite, id)
+  if (current.version !== expectedVersion) {
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+  }
+  if (current.publicationStatus === 'published') {
+    throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before editing it.', 'WORK_PUBLISHED_READONLY')
+  }
+  if (current.purpose === 'adoption' && input.purpose !== 'adoption') {
+    const designSheetCount = sqlite.prepare(`
+      SELECT count(*) FROM work_assets
+      WHERE work_id = ? AND role = 'design_sheet'
+    `).pluck().get(id) as number
+    if (designSheetCount > 0) {
+      throw new ServiceError(
+        409,
+        'CONFLICT',
+        'Remove the design sheet before changing the work purpose.',
+      )
+    }
+  }
+  try {
+    sqlite.transaction(() => {
+      const result = sqlite.prepare(`
+        UPDATE works
+        SET slug = ?, character_name = ?, species = ?, suit_type = ?,
+            purpose = ?, adoption_method = ?, business_status = ?,
+            current_event_name = NULL,
+            owner_display = ?, owner_contact = ?,
+            price_amount_minor = ?, price_currency = ?,
+            sort_order = ?, featured = ?,
+            version = version + 1, updated_at = ?
+        WHERE id = ? AND version = ? AND publication_status != 'published'
+      `).run(
+        input.slug,
+        input.characterName,
+        input.species,
+        input.suitType,
+        input.purpose,
+        input.purpose === 'adoption' ? input.adoptionMethod : null,
+        input.purpose === 'adoption' ? input.businessStatus : null,
+        input.ownerDisplay,
+        input.ownerContact,
+        input.purpose === 'adoption' ? input.priceCnyMinor : null,
+        input.purpose === 'adoption' && input.priceCnyMinor !== null
+          ? 'CNY'
+          : null,
+        input.sortOrder,
+        input.featured ? 1 : 0,
+        now,
+        id,
+        expectedVersion,
+      )
+      if (result.changes !== 1) {
+        throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+      }
+      replaceTags(sqlite, id, input.featureTags)
+    })()
+  }
+  catch (error) {
+    if (error instanceof ServiceError) {
+      throw error
+    }
+    translateConstraint(error)
+  }
+  return getManagedWork(sqlite, id)
+}
+
+/** 展示设置不改作品事实或媒体，因此已发布作品也可安全调整。 */
+export function updateManagedWorkPresentation(
+  sqlite: Database.Database,
+  id: string,
+  expectedVersion: number,
+  input: { featured: boolean, sortOrder: number },
+  now = Date.now(),
+) {
+  const current = requireWork(sqlite, id)
+  if (current.version !== expectedVersion) {
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+  }
+  const usedFeaturedOrders = new Set(input.featured
+    ? sqlite.prepare(`
+        SELECT sort_order FROM works
+        WHERE id != ? AND featured = 1
+      `).pluck().all(id) as number[]
+    : [])
+  let sortOrder = input.sortOrder
+  if (usedFeaturedOrders.has(sortOrder)) {
+    sortOrder = 0
+    while (usedFeaturedOrders.has(sortOrder)) {
+      sortOrder += 1
+    }
+  }
+  const result = sqlite.prepare(`
+    UPDATE works
+    SET sort_order = ?, featured = ?, version = version + 1, updated_at = ?
+    WHERE id = ? AND version = ?
+  `).run(
+    sortOrder,
+    input.featured ? 1 : 0,
+    now,
+    id,
+    expectedVersion,
+  )
+  if (result.changes !== 1) {
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+  }
+  return getManagedWork(sqlite, id)
+}
+
+export async function deleteManagedWork(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  id: string,
+  expectedVersion: number,
+  actorUserId: string,
+  now = Date.now(),
+) {
+  const current = requireWork(sqlite, id)
+  if (current.version !== expectedVersion) {
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+  }
+  if (current.publicationStatus === 'published') {
+    throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before deleting it.', 'WORK_PUBLISHED_READONLY')
+  }
+
+  const claimed = sqlite.prepare(`
+    UPDATE works SET version = version + 1, updated_at = ?
+    WHERE id = ? AND version = ? AND publication_status != 'published'
+  `).run(now, id, expectedVersion)
+  if (claimed.changes !== 1) {
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+  }
+
+  const publicKeys = sqlite.prepare(`
+    SELECT variant.object_key
+    FROM asset_variants AS variant
+    JOIN work_assets AS relation ON relation.asset_id = variant.asset_id
+    WHERE relation.work_id = ? AND variant.storage_scope = 'PUBLIC'
+  `).pluck().all(id) as string[]
+
+  try {
+    for (const key of publicKeys) {
+      await storage.deletePublic(key)
+      sqlite.prepare(`
+        DELETE FROM asset_variants
+        WHERE storage_scope = 'PUBLIC' AND object_key = ?
+      `).run(key)
+    }
+
+    sqlite.transaction(() => {
+      const deleted = sqlite.prepare(`
+        DELETE FROM works
+        WHERE id = ? AND version = ? AND publication_status != 'published'
+      `).run(id, expectedVersion + 1)
+      if (deleted.changes !== 1) {
+        throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+      }
+      sqlite.prepare(`
+        INSERT INTO audit_logs (
+          id, actor_user_id, action, entity_type, entity_id, result, created_at
+        ) VALUES (?, ?, 'WORK_DELETE', 'WORK', ?, 'SUCCESS', ?)
+      `).run(randomUUID(), actorUserId, id, now)
+    })()
+  }
+  catch (error) {
+    if (error instanceof ServiceError) {
+      throw error
+    }
+    throw new ServiceError(500, 'INTERNAL_ERROR', 'Work deletion failed.')
+  }
+
+  return { id }
+}
+
+function assertReadyWorkAsset(
+  sqlite: Database.Database,
+  workId: string,
+  assetId: string,
+  role: 'design_sheet' | 'studio_photo',
+) {
+  const select = sqlite.prepare(`
+    SELECT
+      asset.role, asset.status,
+      relation.work_id AS linkedWorkId,
+      EXISTS (
+        SELECT 1 FROM upload_sessions AS upload
+        WHERE upload.asset_id = asset.id
+          AND upload.owner_type = 'work'
+          AND upload.owner_id = ?
+          AND upload.status = 'COMPLETED'
+      ) AS ownedByWork
+    FROM assets AS asset
+    LEFT JOIN work_assets AS relation ON relation.asset_id = asset.id
+    WHERE asset.id = ?
+  `)
+  const row = select.get(workId, assetId) as {
+    linkedWorkId: string | null
+    ownedByWork: number
+    role: string
+    status: string
+  } | undefined
+  if (!row) {
+    throw new ServiceError(404, 'NOT_FOUND', 'Work media asset was not found.')
+  }
+  if (row.role !== role || row.status !== 'READY' || row.ownedByWork !== 1) {
+    throw new ServiceError(409, 'CONFLICT', 'Asset role, status or work ownership is invalid.')
+  }
+  if (row.linkedWorkId !== null && row.linkedWorkId !== workId) {
+    throw new ServiceError(409, 'CONFLICT', 'Asset is already linked to a work.', 'ASSET_ALREADY_LINKED')
+  }
+}
+
+function assertStudioPhotoAssets(
+  sqlite: Database.Database,
+  workId: string,
+  photos: readonly StudioPhotoInput[],
+) {
+  photos.forEach(photo => assertReadyWorkAsset(
+    sqlite,
+    workId,
+    photo.assetId,
+    'studio_photo',
+  ))
+}
+
+export function replaceManagedDesignSheet(
+  sqlite: Database.Database,
+  workId: string,
+  expectedVersion: number,
+  input: DesignSheetInput | null,
+  now = Date.now(),
+) {
+  const current = requireWork(sqlite, workId)
+  if (current.version !== expectedVersion) {
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+  }
+  if (current.purpose !== 'adoption') {
+    throw new ServiceError(409, 'CONFLICT', 'Design sheets require an adoption work.')
+  }
+  if (current.publicationStatus === 'published') {
+    throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before editing media.', 'WORK_PUBLISHED_READONLY')
+  }
+  if (input) {
+    assertReadyWorkAsset(sqlite, workId, input.assetId, 'design_sheet')
+  }
+  try {
+    sqlite.transaction(() => {
+      sqlite.prepare(`
+        DELETE FROM work_assets
+        WHERE work_id = ? AND role = 'design_sheet'
+      `).run(workId)
+      if (input) {
+        sqlite.prepare(`
+          INSERT INTO work_assets (
+            work_id, asset_id, role, alt_text, position, is_primary
+          ) VALUES (?, ?, 'design_sheet', ?, 0, 0)
+        `).run(workId, input.assetId, input.alt)
+      }
+      const result = sqlite.prepare(`
+        UPDATE works SET version = version + 1, updated_at = ?
+        WHERE id = ? AND version = ? AND publication_status != 'published'
+      `).run(now, workId, expectedVersion)
+      if (result.changes !== 1) {
+        throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+      }
+    })()
+  }
+  catch (error) {
+    if (error instanceof ServiceError) {
+      throw error
+    }
+    translateConstraint(error)
+  }
+  return getManagedWork(sqlite, workId)
+}
+
+export function replaceManagedStudioPhotos(
+  sqlite: Database.Database,
+  workId: string,
+  expectedVersion: number,
+  photos: readonly StudioPhotoInput[],
+  now = Date.now(),
+) {
+  const current = requireWork(sqlite, workId)
+  if (current.version !== expectedVersion) {
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+  }
+  if (current.publicationStatus === 'published') {
+    throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before editing media.', 'WORK_PUBLISHED_READONLY')
+  }
+  assertStudioPhotoAssets(sqlite, workId, photos)
+  try {
+    sqlite.transaction(() => {
+      sqlite.prepare(`
+        DELETE FROM work_assets
+        WHERE work_id = ? AND role = 'studio_photo'
+      `).run(workId)
+      const insert = sqlite.prepare(`
+        INSERT INTO work_assets (
+          work_id, asset_id, role, alt_text, position, is_primary,
+          focal_x, focal_y, crop_x, crop_y, crop_width, crop_height,
+          watermark_anchor
+        ) VALUES (?, ?, 'studio_photo', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `)
+      const updateAssetPresentation = sqlite.prepare(`
+        UPDATE assets
+        SET focal_x = ?, focal_y = ?, watermark_anchor = ?,
+            version = version + 1, updated_at = ?
+        WHERE id = ? AND status = 'READY' AND role = 'studio_photo'
+      `)
+      photos.forEach((photo, position) => {
+        insert.run(
+          workId,
+          photo.assetId,
+          photo.alt,
+          position,
+          photo.primary ? 1 : 0,
+          photo.focalX,
+          photo.focalY,
+          photo.crop.x,
+          photo.crop.y,
+          photo.crop.width,
+          photo.crop.height,
+          'top-left',
+        )
+        updateAssetPresentation.run(
+          photo.focalX,
+          photo.focalY,
+          'top-left',
+          now,
+          photo.assetId,
+        )
+      })
+      const result = sqlite.prepare(`
+        UPDATE works SET version = version + 1, updated_at = ?
+        WHERE id = ? AND version = ? AND publication_status != 'published'
+      `).run(now, workId, expectedVersion)
+      if (result.changes !== 1) {
+        throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+      }
+    })()
+  }
+  catch (error) {
+    if (error instanceof ServiceError) {
+      throw error
+    }
+    translateConstraint(error)
+  }
+  return getManagedWork(sqlite, workId)
+}
+
+export function getPublicSafeWorkPreview(
+  sqlite: Database.Database,
+  id: string,
+): PublicSafeWorkPreviewDto {
+  const work = getManagedWork(sqlite, id)
+  const safeWork = Object.fromEntries(
+    Object.entries(work).filter(([key]) => key !== 'private'),
+  )
+  return publicSafeWorkPreviewDtoSchema.parse({
+    ...safeWork,
+    mediaReady: (work.purpose === 'adoption'
+      ? work.designSheet !== null
+        && work.designSheet.status === 'READY'
+        && Boolean(work.designSheet.alt?.trim())
+        && (
+          work.studioPhotos.length === 0
+          || work.studioPhotos.filter(photo => photo.primary).length === 1
+        )
+      : work.studioPhotos.length > 0
+        && work.studioPhotos.filter(photo => photo.primary).length === 1)
+      && work.studioPhotos.every(photo =>
+        photo.status === 'READY' && photo.alt.trim() !== '',
+      ),
+  })
+}

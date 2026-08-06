@@ -1,6 +1,6 @@
 import { parseArgs } from 'node:util'
-import { reconcileSiteDisplay } from '../server/utils/site-display-reconcile'
-import type { ReconcileScope } from '../server/utils/site-display-reconcile'
+import { reconcileSiteDisplay } from '../server/utils/runner/site-display-reconcile'
+import type { ReconcileScope } from '../server/utils/runner/site-display-reconcile'
 
 /**
  * T34-F1 本地入口：pnpm media:reconcile-site-display

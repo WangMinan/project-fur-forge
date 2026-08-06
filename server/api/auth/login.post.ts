@@ -3,11 +3,11 @@ import {
   loginResponseSchema,
 } from '../../../shared/schemas/auth'
 import { createApiError } from '../../utils/api-error'
-import { authenticateAdmin } from '../../utils/auth'
-import { startAdminSession } from '../../utils/auth-session'
+import { authenticateAdmin } from '../../utils/service/auth'
+import { startAdminSession } from '../../utils/route/auth-session'
 import { getDatabase } from '../../utils/database'
-import { readAdminJsonBody } from '../../utils/request-body'
-import { assertRequestRateLimit } from '../../utils/request-rate-limit'
+import { readAdminJsonBody } from '../../utils/route/request-body'
+import { assertRequestRateLimit } from '../../utils/route/request-rate-limit'
 
 export default defineEventHandler(async (event) => {
   const parsed = loginRequestSchema.safeParse(await readAdminJsonBody(event))

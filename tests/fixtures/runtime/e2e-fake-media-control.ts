@@ -11,14 +11,14 @@ import {
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { getDatabase } from '../../../server/utils/database'
-import { generatePublicVariants } from '../../../server/utils/media-recipe'
+import { generatePublicVariants } from '../../../server/utils/recipe/media-recipe'
 import {
   assetSupportsSiteDisplay,
   generateSiteDisplayVariants,
   HOME_ENTRY_USAGES,
   SITE_HERO_USAGES,
-} from '../../../server/utils/site-display-recipe'
-import { resetRequestRateLimits } from '../../../server/utils/request-rate-limit'
+} from '../../../server/utils/recipe/site-display-recipe'
+import { resetRequestRateLimits } from '../../../server/utils/route/request-rate-limit'
 import { createSyntheticWatermarkPng } from '../../../scripts/oss-preflight-core.mjs'
 import type { HeroPlacement } from '../../../shared/types/contracts'
 import { getE2eFakeMediaStorage } from './e2e-fake-media'

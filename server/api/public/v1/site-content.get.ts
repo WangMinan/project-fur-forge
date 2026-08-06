@@ -1,6 +1,6 @@
 import { publicSiteContentResponseSchema } from '../../../../shared/schemas/site-content'
 import { getDatabase } from '../../../utils/database'
-import { getPublicSiteContent } from '../../../utils/site-content'
+import { getPublicSiteContent } from '../../../utils/service/site-content'
 import { asSafeApiError } from '../../../utils/service-error'
 
 export default defineEventHandler((event) => {

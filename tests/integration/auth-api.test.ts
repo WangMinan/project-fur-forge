@@ -8,12 +8,12 @@ import {
   expect,
   it,
 } from 'vitest'
-import { initializeAdmin } from '../../server/utils/auth'
+import { initializeAdmin } from '../../server/utils/service/auth'
 import {
   migrateDatabase,
   openDatabase,
 } from '../../server/utils/database'
-import { ADMIN_WRITE_RATE_LIMIT } from '../../server/utils/request-rate-limit'
+import { ADMIN_WRITE_RATE_LIMIT } from '../../server/utils/route/request-rate-limit'
 
 const port = 3103
 const publicBaseUrl = `http://127.0.0.1:${port}`

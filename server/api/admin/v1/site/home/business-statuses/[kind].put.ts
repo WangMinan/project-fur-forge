@@ -4,10 +4,10 @@ import {
   updateSiteBusinessStatusRequestSchema,
 } from '../../../../../../../shared/schemas/site-content'
 import { createApiError } from '../../../../../../utils/api-error'
-import { adminSessionFor } from '../../../../../../utils/auth-session'
+import { adminSessionFor } from '../../../../../../utils/route/auth-session'
 import { getDatabase } from '../../../../../../utils/database'
-import { readAdminJsonBody } from '../../../../../../utils/request-body'
-import { updateSiteBusinessStatus } from '../../../../../../utils/site-content'
+import { readAdminJsonBody } from '../../../../../../utils/route/request-body'
+import { updateSiteBusinessStatus } from '../../../../../../utils/service/site-content'
 import { asSafeApiError } from '../../../../../../utils/service-error'
 
 export default defineEventHandler(async (event) => {

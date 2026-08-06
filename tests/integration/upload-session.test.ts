@@ -22,7 +22,7 @@ import {
   getUploadSession,
   retryUploadSession,
   UPLOAD_SESSION_TTL_MS,
-} from '../../server/utils/upload-session'
+} from '../../server/utils/service/upload-session'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 
 const USER_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'

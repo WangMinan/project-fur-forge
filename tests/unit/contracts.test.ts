@@ -22,12 +22,12 @@ import {
 import {
   toAdminWorkDto,
   toPublicWorkDto,
-} from '../../server/utils/work-mapper'
+} from '../../server/utils/recipe/work-mapper'
 import {
   createWatermarkProfileRequestSchema,
   createWatermarkUploadSessionRequestSchema,
 } from '../../shared/schemas/watermark'
-import type { WorkRecord } from '../../server/utils/work-mapper'
+import type { WorkRecord } from '../../server/utils/recipe/work-mapper'
 
 const baseRecord: WorkRecord = {
   id: '018f47a0-5a8d-7c3c-84c2-75ecf3f7ca3b',

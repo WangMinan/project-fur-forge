@@ -40,17 +40,17 @@ import {
   startHeroSlidePublication,
   updateHeroSlide,
   updateHomeSettings,
-} from '../../server/utils/home-management'
+} from '../../server/utils/runner/home-management'
 import {
   createFakePublicSiteRepository,
   createSqlitePublicSiteRepository,
-} from '../../server/utils/public-site-repository'
+} from '../../server/utils/repository/public-site-repository'
 import {
   createManagedWork,
   replaceManagedDesignSheet,
   replaceManagedStudioPhotos,
-} from '../../server/utils/work-management'
-import { publishWork, unpublishWork } from '../../server/utils/work-publication'
+} from '../../server/utils/service/work-management'
+import { publishWork, unpublishWork } from '../../server/utils/runner/work-publication'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
 

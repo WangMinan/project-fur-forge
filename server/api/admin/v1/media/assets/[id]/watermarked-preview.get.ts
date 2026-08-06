@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { resourceIdSchema } from '../../../../../../../shared/schemas/api'
 import { createApiError } from '../../../../../../utils/api-error'
 import { getDatabase } from '../../../../../../utils/database'
-import { renderActiveWatermarkPreview } from '../../../../../../utils/media-recipe'
+import { renderActiveWatermarkPreview } from '../../../../../../utils/recipe/media-recipe'
 import { getMediaStorage } from '../../../../../../utils/media-storage'
 import { asSafeApiError } from '../../../../../../utils/service-error'
 

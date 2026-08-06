@@ -4,12 +4,12 @@ import {
 } from '../../../../../../shared/schemas/watermark'
 import { createApiError } from '../../../../../utils/api-error'
 import { getDatabase } from '../../../../../utils/database'
-import { readAdminJsonBody } from '../../../../../utils/request-body'
+import { readAdminJsonBody } from '../../../../../utils/route/request-body'
 import { asSafeApiError } from '../../../../../utils/service-error'
 import {
   createWatermarkProfile,
   watermarkProfileDto,
-} from '../../../../../utils/watermark-profile'
+} from '../../../../../utils/service/watermark-profile'
 
 export default defineEventHandler(async (event) => {
   const body = createWatermarkProfileRequestSchema.safeParse(

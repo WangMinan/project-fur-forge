@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import { WATERMARK_PROFILE_NAME } from '../../shared/schemas/watermark'
-import { watermarkConfigDigest } from '../../server/utils/watermark-profile'
+import { watermarkConfigDigest } from '../../server/utils/service/watermark-profile'
 
 export const TEST_WATERMARK_ASSET_ID = '99999999-9999-4999-8999-999999999999'
 export const TEST_WATERMARK_PROFILE_ID = '88888888-8888-4888-8888-888888888888'

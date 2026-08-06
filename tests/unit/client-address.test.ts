@@ -5,10 +5,10 @@ import {
   parseTrustedProxyCidrs,
   resolveTrustedClientAddress,
   subjectDigest,
-} from '../../server/utils/client-address'
+} from '../../server/utils/route/client-address'
 import {
   createSubjectLimiter,
-} from '../../server/utils/request-rate-limit'
+} from '../../server/utils/route/request-rate-limit'
 
 /**
  * T34-F5 可信代理与限流分桶。
