@@ -18,6 +18,10 @@ import type {
 import type { MediaStorage } from './media-storage'
 import { safeLog } from './safe-log'
 import { ServiceError } from './service-error'
+import {
+  findReadySiteDisplayVariant,
+  insertSiteDisplayVariant,
+} from './variant-repository'
 
 /** 站点展示配方：首页与委托页大图、首页业务入口，全部不打水印。 */
 export const SITE_DISPLAY_RECIPE_VERSION = 'site-display-v1'
@@ -151,22 +155,12 @@ export interface ReadySiteDisplayVariant {
   width: number
 }
 
-const selectReadySiteDisplayVariant = `
-  SELECT
-    id, asset_id AS assetId, source_variant_id AS sourceVariantId,
-    object_key AS objectKey, input_sha256 AS inputSha256,
-    media_role AS mediaRole, usage, width, height, format,
-    recipe_version AS recipeVersion, protection_mode AS protectionMode,
-    sha256, byte_size AS byteSize
-  FROM asset_variants
-  WHERE storage_scope = 'PUBLIC' AND status = 'READY'
-    AND protection_mode = 'none'
-    AND recipe_version = '${SITE_DISPLAY_RECIPE_VERSION}'
-`
-
 function existingVariant(sqlite: Database.Database, objectKey: string) {
-  return sqlite.prepare(`${selectReadySiteDisplayVariant} AND object_key = ?`)
-    .get(objectKey) as ReadySiteDisplayVariant | undefined
+  return findReadySiteDisplayVariant<ReadySiteDisplayVariant>(
+    sqlite,
+    objectKey,
+    SITE_DISPLAY_RECIPE_VERSION,
+  )
 }
 
 function resizeOperation(usage: SiteDisplayUsage, source: AssetSource, width: number) {
@@ -331,36 +325,23 @@ async function generateOne(
       Buffer.from(`${sourceAsset.id}:${identityHash}`),
     ))
     try {
-      sqlite.prepare(`
-        INSERT INTO asset_variants (
-          id, asset_id, source_variant_id, storage_scope, status,
-          object_key, input_sha256, media_role, usage, width, height,
-          format, quality, crop_identity, recipe_version, protection_mode,
-          watermark_profile, watermark_profile_id, watermark_config_digest,
-          logo_digest, watermark_anchor, watermark_opacity_percent,
-          watermark_scale_percent, sha256, byte_size, created_at, updated_at
-        ) VALUES (?, ?, ?, 'PUBLIC', 'READY', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                  'none', 'none', NULL, 'none', 'none', 'none', NULL, NULL,
-                  ?, ?, ?, ?)
-      `).run(
-        id,
-        sourceAsset.id,
-        source.sourceVariantId,
-        objectKey,
-        source.inputSha256,
-        sourceAsset.role,
-        usage,
-        info.width,
-        info.height,
+      insertSiteDisplayVariant(sqlite, {
+        byteSize: head.byteSize,
+        cropIdentity: identityHash,
         format,
-        qualityFor(format),
-        identityHash,
-        SITE_DISPLAY_RECIPE_VERSION,
+        height: info.height,
+        id,
+        inputSha256: source.inputSha256,
+        mediaRole: sourceAsset.role,
+        objectKey,
+        quality: qualityFor(format),
+        recipeVersion: SITE_DISPLAY_RECIPE_VERSION,
         sha256,
-        head.byteSize,
-        now,
-        now,
-      )
+        sourceAssetId: sourceAsset.id,
+        sourceVariantId: source.sourceVariantId,
+        usage,
+        width: info.width,
+      }, now)
     }
     catch (error) {
       const raced = existingVariant(sqlite, objectKey)

@@ -29,6 +29,13 @@ import type {
 } from './media-source'
 import type { MediaStorage } from './media-storage'
 import { safeLog } from './safe-log'
+import {
+  findReadyWatermarkVariant,
+  findVariantIdByObjectKey,
+  insertPublicVariant,
+  insertUpscaleVariant,
+  refreshVariantContent,
+} from './variant-repository'
 import { ServiceError } from './service-error'
 import {
   requireActiveWatermarkProfile,
@@ -124,24 +131,6 @@ export function publicRecipeWidths(usage: PublicMediaUsage) {
   return recipes[usage].widths
 }
 
-const selectReadyVariant = `
-  SELECT
-    id, asset_id AS assetId, source_variant_id AS sourceVariantId,
-    object_key AS objectKey, input_sha256 AS inputSha256,
-    media_role AS mediaRole, usage, width, height, format,
-    recipe_version AS recipeVersion, protection_mode AS protectionMode,
-    watermark_profile AS watermarkProfile,
-    watermark_profile_id AS watermarkProfileId,
-    watermark_config_digest AS watermarkConfigDigest,
-    logo_digest AS logoDigest, watermark_anchor AS watermarkAnchor,
-    watermark_opacity_percent AS watermarkOpacityPercent,
-    watermark_scale_percent AS watermarkScalePercent,
-    sha256, byte_size AS byteSize
-  FROM asset_variants
-  WHERE storage_scope = 'PUBLIC' AND status = 'READY'
-    AND protection_mode = 'watermark'
-`
-
 const asset = readyAssetSource
 
 export async function ensureHeroUpscaleSource(
@@ -209,29 +198,19 @@ export async function ensureHeroUpscaleSource(
     ) {
       throw new Error('Hero upscale verification failed.')
     }
-    sqlite.prepare(`
-      INSERT OR IGNORE INTO asset_variants (
-        id, asset_id, storage_scope, status, object_key, input_sha256,
-        media_role, usage, width, height, format, quality, crop_identity,
-        recipe_version, protection_mode, watermark_profile, logo_digest,
-        watermark_anchor, sha256, byte_size, created_at, updated_at
-      ) VALUES (?, ?, 'PRIVATE', 'READY', ?, ?, ?, 'preprocess', ?, ?,
-                'png', 100, ?, ?, 'none', 'none', 'none', 'none', ?, ?, ?, ?)
-    `).run(
-      randomUUID(),
-      sourceAsset.id,
+    insertUpscaleVariant(sqlite, {
+      byteSize: output.content.length,
+      cropIdentity: identityHash,
+      height: target.height,
+      id: randomUUID(),
+      inputSha256: sourceAsset.sha256,
+      mediaRole: sourceAsset.role,
       objectKey,
-      sourceAsset.sha256,
-      sourceAsset.role,
-      target.width,
-      target.height,
-      identityHash,
-      HERO_UPSCALE_RECIPE_VERSION,
-      outputSha256,
-      output.content.length,
-      now,
-      now,
-    )
+      recipeVersion: HERO_UPSCALE_RECIPE_VERSION,
+      sha256: outputSha256,
+      sourceAssetId: sourceAsset.id,
+      width: target.width,
+    }, now)
     return processingSource(sqlite, sourceAsset)
   }
   catch (error) {
@@ -470,8 +449,7 @@ function existingVariant(
   sqlite: Database.Database,
   objectKey: string,
 ) {
-  return sqlite.prepare(`${selectReadyVariant} AND object_key = ?`)
-    .get(objectKey) as ReadyPublicVariant | undefined
+  return findReadyWatermarkVariant<ReadyPublicVariant>(sqlite, objectKey)
 }
 
 async function verifyPublicVariant(
@@ -566,55 +544,35 @@ async function generateOne(
       Buffer.from(`${sourceAsset.id}:${identity.hash}`),
     ))
     try {
-      const stale = sqlite.prepare(`
-        SELECT id FROM asset_variants WHERE object_key = ?
-      `).get(objectKey) as { id: string } | undefined
+      const stale = findVariantIdByObjectKey(sqlite, objectKey)
       if (stale) {
-        sqlite.prepare(`
-          UPDATE asset_variants
-          SET status = 'READY', sha256 = ?, byte_size = ?,
-              internal_error_code = NULL, version = version + 1,
-              updated_at = ?
-          WHERE id = ?
-        `).run(sha256, head.byteSize, now, stale.id)
+        refreshVariantContent(sqlite, stale.id, sha256, head.byteSize, now)
       }
       else {
-        sqlite.prepare(`
-          INSERT INTO asset_variants (
-          id, asset_id, source_variant_id, storage_scope, status,
-          object_key, input_sha256, media_role, usage, width, height,
-          format, quality, crop_identity, recipe_version, protection_mode,
-          watermark_profile, watermark_profile_id,
-          watermark_config_digest, logo_digest, watermark_anchor,
-          watermark_opacity_percent, watermark_scale_percent,
-          sha256, byte_size, created_at, updated_at
-          ) VALUES (?, ?, ?, 'PUBLIC', 'READY', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'watermark', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(
-          id,
-          sourceAsset.id,
-          source.sourceVariantId,
-          objectKey,
-          source.inputSha256,
-          sourceAsset.role,
-          usage,
-          info.width,
-          info.height,
+        insertPublicVariant(sqlite, {
+          byteSize: head.byteSize,
+          configDigest: profile.configDigest,
+          cropIdentity: identity.hash,
           format,
-          format === 'webp' ? 82 : format === 'jpeg' ? 86 : 100,
-          identity.hash,
-          PUBLIC_RECIPE_VERSION,
-          profile.profileName,
-          profile.id,
-          profile.configDigest,
-          profile.logoDigest,
-          profile.position,
-          profile.opacityPercent,
-          profile.scalePercent,
+          height: info.height,
+          id,
+          inputSha256: source.inputSha256,
+          logoDigest: profile.logoDigest,
+          mediaRole: sourceAsset.role,
+          objectKey,
+          opacityPercent: profile.opacityPercent,
+          profileId: profile.id,
+          quality: format === 'webp' ? 82 : format === 'jpeg' ? 86 : 100,
+          recipeVersion: PUBLIC_RECIPE_VERSION,
+          scalePercent: profile.scalePercent,
           sha256,
-          head.byteSize,
-          now,
-          now,
-        )
+          sourceAssetId: sourceAsset.id,
+          sourceVariantId: source.sourceVariantId,
+          usage,
+          watermarkAnchor: profile.position,
+          watermarkProfile: profile.profileName,
+          width: info.width,
+        }, now)
       }
     }
     catch (error) {
