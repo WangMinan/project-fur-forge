@@ -408,6 +408,39 @@ describe('GATE-07 watermark branding lifecycle', () => {
     expect(oldKeys.every(key => storage.publicObjects.has(key))).toBe(true)
   })
 
+  /**
+   * T34-F5：lease 不授予终态记录，因此重试必须先把 FAILED 重新打开。
+   * 少了这一步，runner 会静默什么都不做，操作永远停在失败态。
+   */
+  it('retries a generation failure and activates the new profile', async () => {
+    await generateActiveVariants()
+    const { draft } = await createPreviewedDraft(61)
+    storage.failProcess = true
+
+    const failed = await applyDraft(draft.id, draft.version)
+    expect(failed).toMatchObject({
+      status: 'FAILED',
+      failureCode: 'WATERMARK_REBUILD_FAILED',
+    })
+    expect(requireSiteBranding(sqlite).activeWatermarkProfileId)
+      .toBe(seededProfileId)
+
+    storage.failProcess = false
+    const retried = await retryWatermarkOperation(
+      sqlite,
+      storage,
+      failed.operationId,
+      failed.version,
+      NOW + 5_000,
+    )
+
+    // 重试真的推进了 runner，而不是静默返回原失败态。
+    expect(retried).toMatchObject({ status: 'DONE', cleanupPendingCount: 0 })
+    expect(retried.generatedVariantCount).toBeGreaterThan(0)
+    expect(requireSiteBranding(sqlite).activeWatermarkProfileId).toBe(draft.id)
+    expect(requireWatermarkProfile(sqlite, draft.id).status).toBe('ACTIVE')
+  })
+
   it('keeps the new profile active and retries an exact cleanup failure', async () => {
     const oldKeys = await generateActiveVariants()
     const { draft } = await createPreviewedDraft(56)
