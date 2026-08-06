@@ -278,7 +278,11 @@ describe('single administrator commands and lockout', () => {
     expect(existsSync(resolve(directory, 'backups'))).toBe(false)
 
     await expect(migrateDatabase(pendingDatabaseFile)).resolves.toMatchObject({
-      applied: 18,
+      // 历史库只应用了前两个迁移，剩余数量从 journal 推导。
+      applied: JSON.parse(readFileSync(
+        resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+        'utf8',
+      ) as string).entries.length - 2,
     })
     const backupEntries = readdirSync(resolve(directory, 'backups'))
     expect(backupEntries.length).toBeGreaterThan(0)

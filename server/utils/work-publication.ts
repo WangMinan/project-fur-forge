@@ -19,6 +19,15 @@ import {
   workAssetPublicUsages,
 } from './media-recipe'
 import type { PublicMediaUsage } from './media-recipe'
+import {
+  assertOperationLease,
+  claimOperationLease,
+  heartbeatOperationLease,
+  holdsOperationLease,
+  releaseOperationLease,
+} from './operation-lease'
+import type { OperationLease } from './operation-lease'
+import { registerOperationResumer } from './operation-recovery'
 import { safeLog } from './safe-log'
 import { ServiceError } from './service-error'
 import {
@@ -623,7 +632,7 @@ export async function publishWork(
   actorUserId: string,
   now = Date.now(),
 ) {
-  let work = requireWork(sqlite, workId)
+  const work = requireWork(sqlite, workId)
   const repeated = repeatedOperation(
     sqlite,
     workId,
@@ -647,10 +656,44 @@ export async function publishWork(
     'PUBLISH',
     now,
   )
+  return runWorkPublication(
+    sqlite,
+    storage,
+    operation.id,
+    actorUserId,
+    now,
+  )
+}
+
+/**
+ * T34-F5：作品发布 runner。与 start 分离后，启动恢复可以在新 attempt 下
+ * 重跑同一序列。公开变体按对象 Key 幂等，因此重复生成不会产生半套 SourceSet。
+ */
+async function runWorkPublication(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  operationId: string,
+  actorUserId: string,
+  now: number,
+) {
+  const operation = requireOperation(sqlite, operationId)
+  const workId = operation.entityId
+  const expectedVersion = operation.requestedVersion
+  let work = requireWork(sqlite, workId)
+  const lease = claimOperationLease(sqlite, 'publication_operations', operationId, now)
+  if (!lease) {
+    return {
+      operation: operationDto(requireOperation(sqlite, operationId)),
+      work: workState(work),
+    }
+  }
   const before = new Set(readyPublicKeys(sqlite, workId))
   let stage: PublicationFailureStage = 'VALIDATING'
   let failureCode = 'PUBLICATION_VALIDATION_FAILED'
   try {
+    // 发布提交与 operation 置 DONE 在同一事务内，因此不存在
+    // "业务已提交但 operation 仍非终态" 的窗口：进程被杀只会回滚到
+    // 提交前，恢复路径就是在新 attempt 下重跑同一序列。
     if (work.version !== expectedVersion || work.publicationStatus === 'published') {
       throw new Error('Publication version conflict.')
     }
@@ -660,9 +703,10 @@ export async function publishWork(
     }
     stage = 'APPLYING_WATERMARK'
     failureCode = 'PUBLIC_MEDIA_GENERATION_FAILED'
-    updateOperation(sqlite, operation.id, 'APPLYING_WATERMARK', [], now)
+    updateOperation(sqlite, operationId, 'APPLYING_WATERMARK', [], now)
     const targets = publicationTargets(sqlite, workId)
     for (const target of targets) {
+      requireWorkLease(sqlite, lease)
       try {
         await generatePublicVariants(
           sqlite,
@@ -684,19 +728,23 @@ export async function publishWork(
           now,
         )
       }
+      requireWorkLease(sqlite, lease)
     }
     await generateAdoptionEntryVariants(sqlite, storage, work, targets, now)
     const generatedKeys = newlyCreatedKeys(sqlite, workId, before)
     stage = 'VERIFYING_PUBLIC'
     failureCode = 'PUBLIC_MEDIA_VERIFICATION_FAILED'
-    updateOperation(sqlite, operation.id, 'VERIFYING_PUBLIC', generatedKeys, now)
+    updateOperation(sqlite, operationId, 'VERIFYING_PUBLIC', generatedKeys, now)
+    requireWorkLease(sqlite, lease)
     if (checkWorkPublication(sqlite, workId).missingVariantCount !== 0) {
       throw new Error('Public recipe is incomplete.')
     }
     stage = 'COMMITTING'
     failureCode = 'PUBLICATION_COMMIT_FAILED'
-    updateOperation(sqlite, operation.id, 'COMMITTING', generatedKeys, now)
+    updateOperation(sqlite, operationId, 'COMMITTING', generatedKeys, now)
     sqlite.transaction(() => {
+      // lease CAS 与作品版本 CAS 同事务。
+      assertOperationLease(sqlite, lease)
       const updated = sqlite.prepare(`
         UPDATE works
         SET publication_status = 'published', published_at = ?,
@@ -706,12 +754,17 @@ export async function publishWork(
       if (updated.changes !== 1) {
         throw new Error('Publication version changed during generation.')
       }
-      sqlite.prepare(`
+      const committed = sqlite.prepare(`
         UPDATE publication_operations
         SET status = 'DONE', cleanup_object_keys_json = '[]',
+            lease_owner = NULL, lease_expires_at = NULL,
             version = version + 1, updated_at = ?, completed_at = ?
         WHERE id = ? AND status = 'COMMITTING'
-      `).run(now, now, operation.id)
+          AND lease_owner = ? AND attempt = ?
+      `).run(now, now, operationId, lease.owner, lease.attempt)
+      if (committed.changes !== 1) {
+        throw new Error('Publication commit lost its lease.')
+      }
       sqlite.prepare(`
         INSERT INTO audit_logs (
           id, actor_user_id, action, entity_type, entity_id, result, created_at
@@ -720,10 +773,17 @@ export async function publishWork(
     })()
   }
   catch {
+    if (!holdsOperationLease(sqlite, lease)) {
+      // lease 已被接管：不清理对象、不改状态，避免删掉接管者的新对象。
+      return {
+        operation: operationDto(requireOperation(sqlite, operationId)),
+        work: workState(requireWork(sqlite, workId)),
+      }
+    }
     const cleanupKeys = newlyCreatedKeys(sqlite, workId, before)
     failOperation(
       sqlite,
-      operation.id,
+      operationId,
       stage,
       failureCode,
       cleanupKeys,
@@ -731,22 +791,33 @@ export async function publishWork(
       now,
     )
     if (cleanupKeys.length > 0) {
-      const failed = requireOperation(sqlite, operation.id)
+      const failed = requireOperation(sqlite, operationId)
       await cleanOperationKeys(
         sqlite,
         storage,
-        operation.id,
+        operationId,
         failed.version,
         actorUserId,
         now,
         { stage, code: failureCode },
       )
     }
+    releaseOperationLease(sqlite, lease, now)
   }
   work = requireWork(sqlite, workId)
   return {
-    operation: operationDto(requireOperation(sqlite, operation.id)),
+    operation: operationDto(requireOperation(sqlite, operationId)),
     work: workState(work),
+  }
+}
+
+/** 长 OSS 操作前后更新心跳；失去 lease 立即停止。 */
+function requireWorkLease(
+  sqlite: Database.Database,
+  lease: OperationLease,
+) {
+  if (!heartbeatOperationLease(sqlite, lease)) {
+    throw new Error('Work publication lease was lost.')
   }
 }
 
@@ -758,7 +829,7 @@ export async function unpublishWork(
   actorUserId: string,
   now = Date.now(),
 ) {
-  let work = requireWork(sqlite, workId)
+  const work = requireWork(sqlite, workId)
   const repeated = repeatedOperation(
     sqlite,
     workId,
@@ -789,6 +860,57 @@ export async function unpublishWork(
     'UNPUBLISH',
     now,
   )
+  return runWorkUnpublication(
+    sqlite,
+    storage,
+    operation.id,
+    actorUserId,
+    now,
+  )
+}
+
+/**
+ * T34-F5：下架 runner。下架先在事务内提交状态并登记 cleanup 清单，
+ * 再逐个删除公开对象，因此重启后从 cleanup 清单继续即可，不会重复删除。
+ */
+async function runWorkUnpublication(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  operationId: string,
+  actorUserId: string,
+  now: number,
+) {
+  const started = requireOperation(sqlite, operationId)
+  const workId = started.entityId
+  const expectedVersion = started.requestedVersion
+  let work = requireWork(sqlite, workId)
+  const lease = claimOperationLease(sqlite, 'publication_operations', operationId, now)
+  if (!lease) {
+    return {
+      operation: operationDto(requireOperation(sqlite, operationId)),
+      work: workState(work),
+    }
+  }
+  const operation = { id: operationId }
+  if (
+    work.publicationStatus === 'unpublished'
+    && started.status === 'CLEANING_PUBLIC'
+  ) {
+    // 提交后重启：状态已切换，从残余 cleanup 清单继续删除。
+    const cleaning = requireOperation(sqlite, operationId)
+    await cleanOperationKeys(
+      sqlite,
+      storage,
+      operationId,
+      cleaning.version,
+      actorUserId,
+      now,
+    )
+    return {
+      operation: operationDto(requireOperation(sqlite, operationId)),
+      work: workState(requireWork(sqlite, workId)),
+    }
+  }
   if (work.version !== expectedVersion || work.publicationStatus !== 'published') {
     failOperation(
       sqlite,
@@ -799,11 +921,13 @@ export async function unpublishWork(
       actorUserId,
       now,
     )
+    releaseOperationLease(sqlite, lease, now)
   }
   else {
     const keys = publicKeys(sqlite, workId)
     try {
       sqlite.transaction(() => {
+        assertOperationLease(sqlite, lease)
         const updated = sqlite.prepare(`
           UPDATE works
           SET publication_status = 'unpublished', published_at = NULL,
@@ -829,6 +953,12 @@ export async function unpublishWork(
       })()
     }
     catch {
+      if (!holdsOperationLease(sqlite, lease)) {
+        return {
+          operation: operationDto(requireOperation(sqlite, operationId)),
+          work: workState(requireWork(sqlite, workId)),
+        }
+      }
       failOperation(
         sqlite,
         operation.id,
@@ -838,12 +968,15 @@ export async function unpublishWork(
         actorUserId,
         now,
       )
+      releaseOperationLease(sqlite, lease, now)
     }
     if (requireOperation(sqlite, operation.id).status !== 'FAILED') {
       if (keys.length === 0) {
         updateOperation(sqlite, operation.id, 'DONE', [], now)
         sqlite.prepare(`
-          UPDATE publication_operations SET completed_at = ? WHERE id = ?
+          UPDATE publication_operations
+          SET completed_at = ?, lease_owner = NULL, lease_expires_at = NULL
+          WHERE id = ?
         `).run(now, operation.id)
       }
       else {
@@ -856,6 +989,7 @@ export async function unpublishWork(
           actorUserId,
           now,
         )
+        releaseOperationLease(sqlite, lease, now)
       }
     }
   }
@@ -865,6 +999,81 @@ export async function unpublishWork(
     work: workState(work),
   }
 }
+
+function workOperationTypeOf(
+  sqlite: Database.Database,
+  operationId: string,
+) {
+  return sqlite.prepare(`
+    SELECT operation_type FROM publication_operations
+    WHERE id = ? AND entity_type = 'WORK'
+  `).pluck().get(operationId) as string | undefined
+}
+
+/** 恢复身份：没有交互式管理员时使用数据库中的唯一管理员作为可审计身份。 */
+function recoveryActorId(sqlite: Database.Database) {
+  return sqlite.prepare(`
+    SELECT id FROM users ORDER BY created_at LIMIT 1
+  `).pluck().get() as string | undefined ?? null
+}
+
+registerOperationResumer({
+  table: 'publication_operations',
+  matches: (sqlite, operationId) =>
+    workOperationTypeOf(sqlite, operationId) === 'PUBLISH',
+  failure: () => ({
+    stage: 'GENERATING_PUBLIC',
+    code: 'PUBLICATION_INTERRUPTED',
+  }),
+  resume: async (sqlite, storage, operationId, now) => {
+    const actorUserId = recoveryActorId(sqlite)
+    if (!actorUserId) {
+      throw new Error('No auditable recovery identity is available.')
+    }
+    const result = await runWorkPublication(
+      sqlite,
+      storage,
+      operationId,
+      actorUserId,
+      now,
+    )
+    if (
+      result.operation.status !== 'DONE'
+      && result.operation.status !== 'FAILED'
+    ) {
+      throw new Error('Work publication did not reach a terminal state.')
+    }
+  },
+})
+
+registerOperationResumer({
+  table: 'publication_operations',
+  matches: (sqlite, operationId) =>
+    workOperationTypeOf(sqlite, operationId) === 'UNPUBLISH',
+  failure: () => ({
+    stage: 'CLEANING_PUBLIC',
+    code: 'UNPUBLICATION_INTERRUPTED',
+  }),
+  resume: async (sqlite, storage, operationId, now) => {
+    const actorUserId = recoveryActorId(sqlite)
+    if (!actorUserId) {
+      throw new Error('No auditable recovery identity is available.')
+    }
+    const result = await runWorkUnpublication(
+      sqlite,
+      storage,
+      operationId,
+      actorUserId,
+      now,
+    )
+    if (
+      result.operation.status !== 'DONE'
+      && result.operation.status !== 'FAILED'
+    ) {
+      throw new Error('Work unpublication did not reach a terminal state.')
+    }
+  },
+})
 
 export function getPublicationOperation(
   sqlite: Database.Database,

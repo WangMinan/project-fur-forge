@@ -18,6 +18,8 @@ const COMMANDS = [
   'restore-verify',
   'preflight',
   'cleanup-expired-uploads',
+  'reconcile-site-display',
+  'recover-operations',
 ] as const
 
 type Command = typeof COMMANDS[number]
@@ -157,6 +159,41 @@ async function run() {
       return await cleanupExpiredUploads({
         dryRun: values['dry-run'] !== false,
         limit: values.limit ? Number(values.limit) : undefined,
+      })
+    }
+
+    case 'reconcile-site-display': {
+      // T34-F1：为既有启用 Hero、委托 Hero 与已发布常规领养补齐无水印站点变体。
+      const { values } = parseArgs({
+        args: argv(),
+        options: {
+          'dry-run': { type: 'boolean' },
+          scope: { type: 'string' },
+        },
+      })
+      const { reconcileSiteDisplay } = await import('../server/utils/site-display-reconcile')
+      const scopes = ['all', 'home-hero', 'commission-hero', 'home-entry']
+      if (values.scope && !scopes.includes(values.scope)) {
+        throw new Error(`--scope must be one of ${scopes.join(', ')}`)
+      }
+      return await reconcileSiteDisplay({
+        dryRun: values['dry-run'] !== false,
+        scope: (values.scope as 'all' | undefined) ?? 'all',
+      })
+    }
+
+    case 'recover-operations': {
+      // T34-F5：手动触发一次启动恢复扫描，用于运维确认卡住的长任务。
+      const { getDatabase } = await import('../server/utils/database')
+      const { getMediaStorage } = await import('../server/utils/media-storage')
+      await import('../server/utils/home-management')
+      await import('../server/utils/site-display-reconcile')
+      await import('../server/utils/watermark-branding')
+      await import('../server/utils/work-publication')
+      const { recoverPendingOperations } = await import('../server/utils/operation-recovery')
+      return await recoverPendingOperations({
+        sqlite: getDatabase().sqlite,
+        storage: getMediaStorage(),
       })
     }
   }

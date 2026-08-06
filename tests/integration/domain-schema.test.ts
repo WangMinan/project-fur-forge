@@ -306,6 +306,7 @@ describe('P0 schema boundary', () => {
       'publication_operations',
       'site_branding',
       'site_content',
+      'site_display_reconcile_operations',
       'site_hero_slides',
       'upload_sessions',
       'users',
