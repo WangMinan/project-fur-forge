@@ -20,10 +20,12 @@ import {
 } from '../../../server/utils/site-display-recipe'
 import { resetRequestRateLimits } from '../../../server/utils/request-rate-limit'
 import { createSyntheticWatermarkPng } from '../../../scripts/oss-preflight-core.mjs'
+import type { HeroPlacement } from '../../../shared/types/contracts'
 import { getE2eFakeMediaStorage } from './e2e-fake-media'
 
 interface ControlBody {
   action?: string
+  placement?: HeroPlacement
   flags?: Record<string, boolean>
   imageInfoOverride?: {
     key: string
