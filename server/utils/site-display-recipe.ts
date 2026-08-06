@@ -239,6 +239,23 @@ function publicObjectKey(
   return `${environmentPrefix(sourceAsset.privateObjectKey)}/web/${sourceAsset.id}/${SITE_DISPLAY_RECIPE_VERSION}/${usage}/${width}/${identityHash}.${extension}`
 }
 
+/**
+ * 复用判定：数据库行说 READY 不代表公开对象还在。进程在生成与提交之间被杀、
+ * 或对象被外部删除时，探测本身会抛错；那种情况必须当作"不可复用"重新生成，
+ * 而不是让整条 operation 失败。
+ */
+async function variantStillUsable(
+  storage: MediaStorage,
+  variant: ReadySiteDisplayVariant,
+) {
+  try {
+    return await verifyVariant(storage, variant)
+  }
+  catch {
+    return false
+  }
+}
+
 async function verifyVariant(
   storage: MediaStorage,
   variant: ReadySiteDisplayVariant,
@@ -279,7 +296,7 @@ async function generateOne(
     format,
   )
   const existing = existingVariant(sqlite, objectKey)
-  if (existing && await verifyVariant(storage, existing)) {
+  if (existing && await variantStillUsable(storage, existing)) {
     return existing
   }
 
