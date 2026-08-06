@@ -86,7 +86,11 @@ describe('T10 synthetic media', () => {
       provider: 'ffmpeg-static',
       usedPathLookup: false,
     })
-    expect(compressed.binary.version).toContain('ffmpeg version 6.1.1')
+    // 同一个 ffmpeg-static 版本在不同平台打包不同的 ffmpeg 构建
+    // （Windows 是 6.1.1-essentials，Linux 是 7.0.2-static），因此不能钉死
+    // 具体版本号——本地绿而 CI 必红。真正要守的是：用的是内置二进制、
+    // 没有回退到 PATH、且版本号可解析。
+    expect(compressed.binary.version).toMatch(/^ffmpeg version \d+\.\d+/u)
     expect(compressed.binary.sha256).toMatch(/^[a-f0-9]{64}$/u)
   }, 30_000)
 
