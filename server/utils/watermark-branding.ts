@@ -18,6 +18,15 @@ import {
   workAssetPublicUsages,
 } from './media-recipe'
 import type { PublicMediaUsage } from './media-recipe'
+import {
+  assertOperationLease,
+  claimOperationLease,
+  heartbeatOperationLease,
+  holdsOperationLease,
+  releaseOperationLease,
+} from './operation-lease'
+import type { OperationLease } from './operation-lease'
+import { registerOperationResumer } from './operation-recovery'
 import { ServiceError } from './service-error'
 import { SITE_DISPLAY_RECIPE_VERSION } from './site-display-recipe'
 import {
@@ -447,6 +456,16 @@ function previewPrefix(privateObjectKey: string, operationId: string) {
   return `${privateObjectKey.slice(0, marker)}/preview/branding/${operationId}`
 }
 
+/** 长 OSS 操作前后更新心跳；失去 lease 立即停止后续提交。 */
+function requireWatermarkLease(
+  sqlite: Database.Database,
+  lease: OperationLease,
+) {
+  if (!heartbeatOperationLease(sqlite, lease)) {
+    throw new Error('Watermark operation lease was lost.')
+  }
+}
+
 async function runPreview(
   sqlite: Database.Database,
   storage: MediaStorage,
@@ -454,6 +473,10 @@ async function runPreview(
   now: number,
 ) {
   const operation = requireOperation(sqlite, operationId)
+  const lease = claimOperationLease(sqlite, 'watermark_operations', operationId, now)
+  if (!lease) {
+    return requireOperation(sqlite, operationId)
+  }
   const manifest: PreviewManifestEntry[] = []
   try {
     const samples = previewSamples(sqlite)
@@ -471,6 +494,7 @@ async function runPreview(
       cleanup: [],
     })
     for (const specification of specifications) {
+      requireWatermarkLease(sqlite, lease)
       const objectKey = `${prefix}/${specification.kind}.webp`
       const result = await generatePrivateWatermarkPreview(
         sqlite,
@@ -488,19 +512,27 @@ async function runPreview(
         objectKey,
         ...result,
       })
+      requireWatermarkLease(sqlite, lease)
       updateOperation(sqlite, operationId, 'VERIFYING_PUBLIC', now, {
         generated: manifest.length,
         verified: manifest.length,
         preview: manifest,
       })
     }
-    sqlite.prepare(`
+    const finished = sqlite.prepare(`
       UPDATE watermark_operations
-      SET status = 'DONE', version = version + 1,
-          updated_at = ?, completed_at = ? WHERE id = ?
-    `).run(now, now, operationId)
+      SET status = 'DONE', lease_owner = NULL, lease_expires_at = NULL,
+          version = version + 1, updated_at = ?, completed_at = ?
+      WHERE id = ? AND lease_owner = ? AND attempt = ?
+    `).run(now, now, operationId, lease.owner, lease.attempt)
+    if (finished.changes !== 1) {
+      throw new Error('Watermark preview commit lost its lease.')
+    }
   }
   catch {
+    if (!holdsOperationLease(sqlite, lease)) {
+      return requireOperation(sqlite, operationId)
+    }
     const cleanup = manifest.map(entry => ({
       scope: 'PRIVATE' as const,
       objectKey: entry.objectKey,
@@ -522,6 +554,7 @@ async function runPreview(
       remaining,
       now,
     )
+    releaseOperationLease(sqlite, lease, now)
   }
   return requireOperation(sqlite, operationId)
 }
@@ -565,6 +598,10 @@ async function runRebuild(
   now: number,
 ) {
   const operation = requireOperation(sqlite, operationId)
+  const lease = claimOperationLease(sqlite, 'watermark_operations', operationId, now)
+  if (!lease) {
+    return requireOperation(sqlite, operationId)
+  }
   let generated = 0
   try {
     const targets = watermarkTargets(sqlite)
@@ -584,6 +621,7 @@ async function runRebuild(
       operationId,
     )
     for (const target of targets) {
+      requireWatermarkLease(sqlite, lease)
       const variants = await generatePublicVariantsForProfile(
         sqlite,
         storage,
@@ -593,6 +631,7 @@ async function runRebuild(
         now,
       )
       generated += variants.length
+      requireWatermarkLease(sqlite, lease)
       updateOperation(sqlite, operationId, 'VERIFYING_PUBLIC', now, {
         generated,
         verified: generated,
@@ -610,8 +649,11 @@ async function runRebuild(
       scope: 'PUBLIC' as const,
       objectKey,
     }))
+    requireWatermarkLease(sqlite, lease)
     updateOperation(sqlite, operationId, 'SWITCHING_PROFILE', now)
     sqlite.transaction(() => {
+      // profile 切换是本操作的原子提交点：lease CAS 与 branding 版本 CAS 同事务。
+      assertOperationLease(sqlite, lease)
       const branding = requireSiteBranding(sqlite)
       if (
         branding.version !== operation.brandingVersion
@@ -695,12 +737,16 @@ async function runRebuild(
       sqlite.prepare(`
         UPDATE watermark_operations
         SET status = 'DONE', cleanup_object_keys_json = '[]',
+            lease_owner = NULL, lease_expires_at = NULL,
             version = version + 1, updated_at = ?, completed_at = ?
         WHERE id = ?
       `).run(now, now, operationId)
     })()
   }
   catch {
+    if (!holdsOperationLease(sqlite, lease)) {
+      return requireOperation(sqlite, operationId)
+    }
     const active = requireSiteBranding(sqlite).activeWatermarkProfileId
     if (active === operation.profileId) {
       const remaining = cleanupEntries(requireOperation(sqlite, operationId))
@@ -712,6 +758,7 @@ async function runRebuild(
         remaining,
         now,
       )
+      releaseOperationLease(sqlite, lease, now)
       return requireOperation(sqlite, operationId)
     }
     const generatedEntries = (sqlite.prepare(`
@@ -739,9 +786,60 @@ async function runRebuild(
       remaining,
       now,
     )
+    releaseOperationLease(sqlite, lease, now)
   }
   return requireOperation(sqlite, operationId)
 }
+
+function watermarkOperationTypeOf(
+  sqlite: Database.Database,
+  operationId: string,
+) {
+  return sqlite.prepare(`
+    SELECT operation_type FROM watermark_operations WHERE id = ?
+  `).pluck().get(operationId) as string | undefined
+}
+
+/**
+ * T34-F5：水印预览重启后重跑同一序列；预览对象按 operation id 前缀命名，
+ * 因此重跑覆盖自己的对象，不会污染其他 attempt。
+ */
+registerOperationResumer({
+  table: 'watermark_operations',
+  matches: (sqlite, operationId) =>
+    watermarkOperationTypeOf(sqlite, operationId) === 'WATERMARK_PREVIEW',
+  failure: () => ({
+    stage: 'VERIFYING_PUBLIC',
+    code: 'WATERMARK_PREVIEW_INTERRUPTED',
+  }),
+  resume: async (sqlite, storage, operationId, now) => {
+    const result = await runPreview(sqlite, storage, operationId, now)
+    if (result.status !== 'DONE' && result.status !== 'FAILED') {
+      throw new Error('Watermark preview did not reach a terminal state.')
+    }
+  },
+})
+
+/**
+ * 水印应用重启：若 profile 已经切换为 ACTIVE，runRebuild 的 catch 分支会
+ * 从残余 cleanup 清单继续；否则重新生成本 profile 的公开变体。
+ * 两种路径都不会删除其他 profile 正在使用的有效对象。
+ */
+registerOperationResumer({
+  table: 'watermark_operations',
+  matches: (sqlite, operationId) =>
+    watermarkOperationTypeOf(sqlite, operationId) === 'WATERMARK_REBUILD',
+  failure: () => ({
+    stage: 'GENERATING_PUBLIC',
+    code: 'WATERMARK_REBUILD_INTERRUPTED',
+  }),
+  resume: async (sqlite, storage, operationId, now) => {
+    const result = await runRebuild(sqlite, storage, operationId, now)
+    if (result.status !== 'DONE' && result.status !== 'FAILED') {
+      throw new Error('Watermark rebuild did not reach a terminal state.')
+    }
+  },
+})
 
 export function startWatermarkProfileApplication(
   sqlite: Database.Database,

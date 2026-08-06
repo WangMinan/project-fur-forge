@@ -34,6 +34,18 @@ import {
 
 const temporaryDirectories: string[] = []
 
+/**
+ * 迁移总数由 journal 推导，而不是硬编码。
+ * 每加一个前向迁移就要改四处数字，本身没有验证价值，还会掩盖真正的回归。
+ */
+function currentMigrationCount() {
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: unknown[] }
+  return journal.entries.length
+}
+
 function temporaryDatabase(name = 'studio.db') {
   const directory = mkdtempSync(resolve(tmpdir(), 'fur-forge-db-'))
   temporaryDirectories.push(directory)
@@ -99,7 +111,7 @@ describe('SQLite foundation', () => {
     expect(() => assertDatabaseMigrated(databaseFile))
       .toThrow(/run pnpm db:migrate first/)
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 20,
+      applied: currentMigrationCount(),
       backupFile: undefined,
     })
     expect(() => assertDatabaseMigrated(databaseFile)).not.toThrow()
@@ -118,7 +130,7 @@ describe('SQLite foundation', () => {
       `).pluck().get()).toBe(1)
       expect(database.sqlite.prepare(`
         SELECT COUNT(*) FROM __drizzle_migrations
-      `).pluck().get()).toBe(20)
+      `).pluck().get()).toBe(currentMigrationCount())
       const siteContent = database.sqlite.prepare(`
         SELECT commission_intro AS commissionIntro,
                commission_faq_json AS commissionFaqJson,
@@ -218,7 +230,8 @@ describe('SQLite foundation', () => {
     }
 
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 13,
+      // 从 GATE-07 前的历史库继续升级：剩余迁移数随新增迁移增长。
+      applied: currentMigrationCount() - 7,
     })
     const upgraded = openDatabase(databaseFile)
     try {
@@ -272,7 +285,8 @@ describe('SQLite foundation', () => {
     }
 
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 9,
+      // 从 T23 前的历史库继续升级。
+      applied: currentMigrationCount() - 11,
     })
     const upgraded = openDatabase(databaseFile)
     try {

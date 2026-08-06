@@ -46,6 +46,15 @@ import {
   generatePrivateWatermarkPreview,
 } from './media-recipe'
 import { HERO_UPSCALE_RECIPE_VERSION } from './media-source'
+import {
+  assertOperationLease,
+  claimOperationLease,
+  heartbeatOperationLease,
+  holdsOperationLease,
+  releaseOperationLease,
+} from './operation-lease'
+import type { OperationLease } from './operation-lease'
+import { registerOperationResumer } from './operation-recovery'
 import { ServiceError } from './service-error'
 import { activeWatermarkProfileId } from './watermark-branding'
 import {
@@ -563,6 +572,10 @@ export async function runHeroSlideUpscale(
   if (operation.status === 'DONE' || operation.status === 'FAILED') {
     return operation
   }
+  const lease = claimOperationLease(sqlite, 'publication_operations', operationId, now)
+  if (!lease) {
+    return getPublicationOperation(sqlite, operationId)
+  }
   const slide = requireSlide(sqlite, operation.entityId)
   try {
     requireHomeVersion(sqlite, operation.requestedVersion)
@@ -573,18 +586,27 @@ export async function runHeroSlideUpscale(
       landscapeAssetId: slide.landscapeAssetId,
       portraitAssetId: slide.portraitAssetId,
     }, slide.id)
+    requireHeroLease(sqlite, lease)
     await ensureHeroUpscaleSource(sqlite, storage, slide.landscapeAssetId, now)
     setOperationStatus(sqlite, operationId, 'PREPARING_SOURCE', Date.now())
+    requireHeroLease(sqlite, lease)
     await ensureHeroUpscaleSource(sqlite, storage, slide.portraitAssetId, now)
+    requireHeroLease(sqlite, lease)
     requireHomeVersion(sqlite, operation.requestedVersion)
     sqlite.transaction(() => {
-      sqlite.prepare(`
+      assertOperationLease(sqlite, lease)
+      const committed = sqlite.prepare(`
         UPDATE publication_operations
         SET status = 'DONE', failure_stage = NULL,
             internal_error_code = NULL, internal_error_message = NULL,
+            lease_owner = NULL, lease_expires_at = NULL,
             version = version + 1, updated_at = ?, completed_at = ?
         WHERE id = ? AND status = 'PREPARING_SOURCE'
-      `).run(Date.now(), Date.now(), operationId)
+          AND lease_owner = ? AND attempt = ?
+      `).run(Date.now(), Date.now(), operationId, lease.owner, lease.attempt)
+      if (committed.changes !== 1) {
+        throw new Error('Hero upscale commit lost its lease.')
+      }
       sqlite.prepare(`
         INSERT INTO audit_logs (
           id, actor_user_id, action, entity_type, entity_id, result, created_at
@@ -601,7 +623,11 @@ export async function runHeroSlideUpscale(
     })()
   }
   catch {
+    if (!holdsOperationLease(sqlite, lease)) {
+      return getPublicationOperation(sqlite, operationId)
+    }
     failUpscaleOperation(sqlite, operationId, 'HERO_UPSCALE_FAILED', Date.now())
+    releaseOperationLease(sqlite, lease, Date.now())
     sqlite.prepare(`
       INSERT INTO audit_logs (
         id, actor_user_id, action, entity_type, entity_id, result, created_at
@@ -618,6 +644,75 @@ export async function runHeroSlideUpscale(
   }
   return getPublicationOperation(sqlite, operationId)
 }
+
+/**
+ * 启动恢复身份：Hero 发布与放大操作在系统恢复时没有交互式管理员，
+ * 因此审计使用数据库里的唯一管理员作为可审计身份；没有管理员时留空。
+ */
+export function systemRecoveryActorId(sqlite: Database.Database) {
+  return sqlite.prepare(`
+    SELECT id FROM users ORDER BY created_at LIMIT 1
+  `).pluck().get() as string | undefined ?? null
+}
+
+function homeOperationTypeOf(sqlite: Database.Database, operationId: string) {
+  return sqlite.prepare(`
+    SELECT operation_type FROM publication_operations
+    WHERE id = ? AND entity_type = 'HOME'
+  `).pluck().get(operationId) as string | undefined
+}
+
+registerOperationResumer({
+  table: 'publication_operations',
+  matches: (sqlite, operationId) =>
+    homeOperationTypeOf(sqlite, operationId) === 'PUBLISH',
+  failure: () => ({
+    stage: 'GENERATING_PUBLIC',
+    code: 'HOME_PUBLICATION_INTERRUPTED',
+  }),
+  resume: async (sqlite, storage, operationId, now) => {
+    const actorUserId = systemRecoveryActorId(sqlite)
+    if (!actorUserId) {
+      throw new Error('No auditable recovery identity is available.')
+    }
+    const result = await runHeroSlidePublication(
+      sqlite,
+      storage,
+      operationId,
+      actorUserId,
+      now,
+    )
+    if (result.status !== 'DONE' && result.status !== 'FAILED') {
+      throw new Error('Home publication did not reach a terminal state.')
+    }
+  },
+})
+
+registerOperationResumer({
+  table: 'publication_operations',
+  matches: (sqlite, operationId) =>
+    homeOperationTypeOf(sqlite, operationId) === 'UPSCALE',
+  failure: () => ({
+    stage: 'PREPARING_SOURCE',
+    code: 'HERO_UPSCALE_INTERRUPTED',
+  }),
+  resume: async (sqlite, storage, operationId, now) => {
+    const actorUserId = systemRecoveryActorId(sqlite)
+    if (!actorUserId) {
+      throw new Error('No auditable recovery identity is available.')
+    }
+    const result = await runHeroSlideUpscale(
+      sqlite,
+      storage,
+      operationId,
+      actorUserId,
+      now,
+    )
+    if (result.status !== 'DONE' && result.status !== 'FAILED') {
+      throw new Error('Hero upscale did not reach a terminal state.')
+    }
+  },
+})
 
 export function retryHeroSlideUpscale(
   sqlite: Database.Database,
@@ -1249,6 +1344,13 @@ function assertCompleteHeroPair(
   }
 }
 
+/**
+ * T34-F5：Hero 发布已经是“完整生成后再原子切换”的形状，因此重启后的安全续做
+ * 就是在新 attempt 下重跑同一序列。site-display 生成按对象 Key 幂等，
+ * 已存在且校验通过的变体会被复用，不会重复产生半套 SourceSet。
+ *
+ * 已提交（slide 已 enabled 且变体完整）的情况直接收尾为 DONE，不重复审计。
+ */
 export async function runHeroSlidePublication(
   sqlite: Database.Database,
   storage: MediaStorage,
@@ -1260,11 +1362,19 @@ export async function runHeroSlidePublication(
   if (operation.status === 'DONE' || operation.status === 'FAILED') {
     return getPublicationOperation(sqlite, operationId)
   }
+  const lease = claimOperationLease(sqlite, 'publication_operations', operationId, now)
+  if (!lease) {
+    // 另一个 runner 正持有 lease，或任务已终结：不并行推进同一 operation。
+    return getPublicationOperation(sqlite, operationId)
+  }
   const slide = requireSlide(sqlite, operation.entityId)
   const before = new Set(publicKeysForSlide(sqlite, slide))
   let stage: PublicationFailureStage = 'VALIDATING'
   let code = 'HOME_PUBLICATION_VALIDATION_FAILED'
   try {
+    // 启用与 operation 置 DONE 在同一事务内提交，因此不存在
+    // "已启用但 operation 仍非终态" 的窗口：进程被杀只会回滚到提交前，
+    // 恢复路径是在新 attempt 下重跑同一序列（变体生成按 Key 幂等）。
     requireHomeVersion(sqlite, operation.requestedVersion)
     assertSlideCanEnable(sqlite, slide, slide.placement)
     // T34-F1：站点展示位生成无水印变体，不再套用活动水印 profile。
@@ -1272,6 +1382,7 @@ export async function runHeroSlidePublication(
     code = 'PUBLIC_MEDIA_GENERATION_FAILED'
     setOperationStatus(sqlite, operationId, 'GENERATING_PUBLIC', now)
     const usages = SITE_HERO_USAGES[slide.placement]
+    requireHeroLease(sqlite, lease)
     await generateSiteDisplayVariants(
       sqlite,
       storage,
@@ -1279,6 +1390,7 @@ export async function runHeroSlidePublication(
       [usages.landscape],
       now,
     )
+    requireHeroLease(sqlite, lease)
     await generateSiteDisplayVariants(
       sqlite,
       storage,
@@ -1287,6 +1399,7 @@ export async function runHeroSlidePublication(
       now,
     )
     if (slide.placement === 'commission') {
+      requireHeroLease(sqlite, lease)
       await generateSiteDisplayVariants(
         sqlite,
         storage,
@@ -1295,15 +1408,19 @@ export async function runHeroSlidePublication(
         now,
       )
     }
+    requireHeroLease(sqlite, lease)
     stage = 'VERIFYING_PUBLIC'
     code = 'PUBLIC_MEDIA_VERIFICATION_FAILED'
     setOperationStatus(sqlite, operationId, 'VERIFYING_PUBLIC', now)
     assertCompleteHeroPair(sqlite, slide)
     await clearHeroSlidePreviews(sqlite, storage, slide)
+    requireHeroLease(sqlite, lease)
     stage = 'COMMITTING'
     code = 'HOME_PUBLICATION_COMMIT_FAILED'
     setOperationStatus(sqlite, operationId, 'COMMITTING', now)
     sqlite.transaction(() => {
+      // lease CAS 与业务版本 CAS 同事务：失去 lease 的 runner 无法覆盖接管者。
+      assertOperationLease(sqlite, lease)
       requireHomeVersion(sqlite, operation.requestedVersion)
       assertSlideCanEnable(
         sqlite,
@@ -1317,14 +1434,19 @@ export async function runHeroSlidePublication(
         WHERE id = ? AND enabled = 0 AND placement = ?
       `).run(now, slide.id, slide.placement)
       validateHeroSlidesForPublication(sqlite, slide.placement)
-      sqlite.prepare(`
+      const committed = sqlite.prepare(`
         UPDATE publication_operations
         SET status = 'DONE', failure_stage = NULL,
             internal_error_code = NULL, internal_error_message = NULL,
-            cleanup_object_keys_json = '[]', version = version + 1,
+            cleanup_object_keys_json = '[]', lease_owner = NULL,
+            lease_expires_at = NULL, version = version + 1,
             updated_at = ?, completed_at = ?
         WHERE id = ? AND status = 'COMMITTING'
-      `).run(now, now, operationId)
+          AND lease_owner = ? AND attempt = ?
+      `).run(now, now, operationId, lease.owner, lease.attempt)
+      if (committed.changes !== 1) {
+        throw new Error('Home publication commit lost its lease.')
+      }
       sqlite.prepare(`
         INSERT INTO audit_logs (
           id, actor_user_id, action, entity_type, entity_id, result, created_at
@@ -1341,6 +1463,10 @@ export async function runHeroSlidePublication(
     })()
   }
   catch {
+    if (!holdsOperationLease(sqlite, lease)) {
+      // lease 已被接管：不清理对象，也不改状态，交给接管者。
+      return getPublicationOperation(sqlite, operationId)
+    }
     const generated = publicKeysForSlide(sqlite, slide)
       .filter(key => !before.has(key))
     const remaining = await cleanPublicKeys(sqlite, storage, generated)
@@ -1352,9 +1478,21 @@ export async function runHeroSlidePublication(
       remaining,
       now,
     )
+    releaseOperationLease(sqlite, lease, now)
   }
   return getPublicationOperation(sqlite, operationId)
 }
+
+/** 长 OSS 操作前后更新心跳；失去 lease 立即停止，避免双写公开对象。 */
+function requireHeroLease(
+  sqlite: Database.Database,
+  lease: OperationLease,
+) {
+  if (!heartbeatOperationLease(sqlite, lease)) {
+    throw new Error('Home publication lease was lost.')
+  }
+}
+
 
 export async function retryHeroSlidePublication(
   sqlite: Database.Database,

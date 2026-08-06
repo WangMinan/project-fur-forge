@@ -621,12 +621,30 @@ export const watermarkOperations = sqliteTable('watermark_operations', {
   internalErrorCode: text('internal_error_code'),
   failureStage: text('failure_stage'),
   version: integer('version').notNull().default(1),
+  // T34-F5 恢复基础设施：attempt/lease/heartbeat 由迁移 0020 增加。
+  attempt: integer('attempt').notNull().default(0),
+  leaseOwner: text('lease_owner'),
+  leaseExpiresAt: integer('lease_expires_at'),
+  heartbeatAt: integer('heartbeat_at'),
+  recoveryReason: text('recovery_reason'),
+  nextRetryAt: integer('next_retry_at'),
   startedAt: integer('started_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
   completedAt: integer('completed_at'),
 }, table => [
   index('watermark_operations_profile_idx')
     .on(table.profileId, table.startedAt),
+  index('watermark_operations_lease_idx')
+    .on(table.status, table.leaseExpiresAt),
+  check('watermark_operations_attempt', sql`${table.attempt} >= 0`),
+  check(
+    'watermark_operations_lease_owner',
+    sql`${table.leaseOwner} IS NULL OR length(trim(${table.leaseOwner})) BETWEEN 1 AND 200`,
+  ),
+  check(
+    'watermark_operations_recovery_reason',
+    sql`${table.recoveryReason} IS NULL OR ${table.recoveryReason} IN ('LEASE_EXPIRED', 'STARTUP_SCAN', 'ALREADY_COMMITTED', 'NOT_RESUMABLE')`,
+  ),
   check(
     'watermark_operations_type',
     sql`${table.operationType} IN ('WATERMARK_PREVIEW', 'WATERMARK_REBUILD')`,
@@ -677,12 +695,30 @@ export const publicationOperations = sqliteTable('publication_operations', {
   internalErrorMessage: text('internal_error_message'),
   failureStage: text('failure_stage'),
   version: integer('version').notNull().default(1),
+  // T34-F5 恢复基础设施：attempt/lease/heartbeat 由迁移 0020 增加。
+  attempt: integer('attempt').notNull().default(0),
+  leaseOwner: text('lease_owner'),
+  leaseExpiresAt: integer('lease_expires_at'),
+  heartbeatAt: integer('heartbeat_at'),
+  recoveryReason: text('recovery_reason'),
+  nextRetryAt: integer('next_retry_at'),
   startedAt: integer('started_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
   completedAt: integer('completed_at'),
 }, table => [
   index('publication_operations_entity_idx')
     .on(table.entityType, table.entityId, table.startedAt),
+  index('publication_operations_lease_idx')
+    .on(table.status, table.leaseExpiresAt),
+  check('publication_operations_attempt', sql`${table.attempt} >= 0`),
+  check(
+    'publication_operations_lease_owner',
+    sql`${table.leaseOwner} IS NULL OR length(trim(${table.leaseOwner})) BETWEEN 1 AND 200`,
+  ),
+  check(
+    'publication_operations_recovery_reason',
+    sql`${table.recoveryReason} IS NULL OR ${table.recoveryReason} IN ('LEASE_EXPIRED', 'STARTUP_SCAN', 'ALREADY_COMMITTED', 'NOT_RESUMABLE')`,
+  ),
   check(
     'publication_operations_operation_type',
     sql`${table.operationType} IN ('PUBLISH', 'UNPUBLISH', 'UPSCALE')`,
@@ -828,6 +864,71 @@ export const siteContent = sqliteTable('site_content', {
   ),
   check('site_content_version_positive', sql`${table.version} > 0`),
 ])
+
+/**
+ * T34-F1 既有站点展示素材 reconcile 的持久 operation（迁移 0021）。
+ * 与 publication_operations 分表，但共用同一组 lease/heartbeat 列，
+ * 因此复用 operation-lease 的抢占、心跳和恢复语句。
+ */
+export const siteDisplayReconcileOperations = sqliteTable(
+  'site_display_reconcile_operations',
+  {
+    id: text('id').primaryKey(),
+    scope: text('scope').notNull().default('all'),
+    status: text('status').notNull(),
+    scannedCount: integer('scanned_count').notNull().default(0),
+    generatedCount: integer('generated_count').notNull().default(0),
+    skippedCount: integer('skipped_count').notNull().default(0),
+    failedCount: integer('failed_count').notNull().default(0),
+    cleanupObjectKeysJson: text('cleanup_object_keys_json').notNull().default('[]'),
+    internalErrorCode: text('internal_error_code'),
+    failureStage: text('failure_stage'),
+    version: integer('version').notNull().default(1),
+    attempt: integer('attempt').notNull().default(0),
+    leaseOwner: text('lease_owner'),
+    leaseExpiresAt: integer('lease_expires_at'),
+    heartbeatAt: integer('heartbeat_at'),
+    recoveryReason: text('recovery_reason'),
+    nextRetryAt: integer('next_retry_at'),
+    startedAt: integer('started_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+    completedAt: integer('completed_at'),
+  },
+  table => [
+    index('site_display_reconcile_started_idx').on(table.startedAt),
+    index('site_display_reconcile_lease_idx')
+      .on(table.status, table.leaseExpiresAt),
+    uniqueIndex('site_display_reconcile_single_active')
+      .on(table.scope)
+      .where(sql`${table.status} NOT IN ('FAILED', 'DONE')`),
+    check(
+      'site_display_reconcile_scope',
+      sql`${table.scope} IN ('all', 'home-hero', 'commission-hero', 'home-entry')`,
+    ),
+    check(
+      'site_display_reconcile_status',
+      sql`${table.status} IN ('SCANNING', 'GENERATING_PUBLIC', 'VERIFYING_PUBLIC', 'CLEANING_PUBLIC', 'FAILED', 'DONE')`,
+    ),
+    check(
+      'site_display_reconcile_counts',
+      sql`${table.scannedCount} >= 0 AND ${table.generatedCount} >= 0 AND ${table.skippedCount} >= 0 AND ${table.failedCount} >= 0`,
+    ),
+    check(
+      'site_display_reconcile_failure_state',
+      sql`(${table.status} = 'FAILED' AND ${table.internalErrorCode} IS NOT NULL AND ${table.failureStage} IS NOT NULL) OR (${table.status} != 'FAILED' AND ${table.internalErrorCode} IS NULL AND ${table.failureStage} IS NULL)`,
+    ),
+    check('site_display_reconcile_version_positive', sql`${table.version} > 0`),
+    check('site_display_reconcile_attempt', sql`${table.attempt} >= 0`),
+    check(
+      'site_display_reconcile_lease_owner',
+      sql`${table.leaseOwner} IS NULL OR length(trim(${table.leaseOwner})) BETWEEN 1 AND 200`,
+    ),
+    check(
+      'site_display_reconcile_recovery_reason',
+      sql`${table.recoveryReason} IS NULL OR ${table.recoveryReason} IN ('LEASE_EXPIRED', 'STARTUP_SCAN', 'ALREADY_COMMITTED', 'NOT_RESUMABLE')`,
+    ),
+  ],
+)
 
 export const auditLogs = sqliteTable('audit_logs', {
   id: text('id').primaryKey(),
