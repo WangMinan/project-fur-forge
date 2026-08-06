@@ -73,7 +73,10 @@ export default defineConfig({
       PORT: String(port),
       HOST: '0.0.0.0',
     },
-    url: `${baseURL}/api/health`,
+    // 等的是"进程能响应"，不是"数据库就绪"：夹具库由 globalSetup 迁移，
+    // 而 webServer 先于 globalSetup 启动。T34-F6 之后 /api/health 会诚实地在
+    // 未就绪时返回 503，因此这里必须用 liveness 端点。
+    url: `${baseURL}/api/health/live`,
     reuseExistingServer: false,
     // 含一次冷构建（约 80s）的启动预算。
     timeout: 300_000,
