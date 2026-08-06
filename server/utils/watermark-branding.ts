@@ -27,6 +27,39 @@ import {
 } from './operation-lease'
 import type { OperationLease } from './operation-lease'
 import { registerOperationResumer } from './operation-recovery'
+import { deletePublicVariant } from './publication-repository'
+import {
+  activateApplyingProfile,
+  claimBrandingOperation,
+  clearPreviewManifests,
+  completeWatermarkOperation,
+  countPublishedWorks,
+  countSiteDisplayVariants,
+  failApplyingProfile,
+  findDoneRebuildForProfile,
+  findPreviewManifestJson,
+  findPreviewSample,
+  findPublicKeysForOtherProfiles,
+  findPublicKeysForProfile,
+  findWatermarkCandidates,
+  findWatermarkCandidateSource,
+  findWatermarkOperation,
+  findWatermarkOperationType,
+  findWatermarkTargets,
+  finishWatermarkRebuild,
+  hasActiveWatermarkOperation,
+  hasVerifiedPreview,
+  insertWatermarkOperation,
+  markWatermarkOperationFailed,
+  resolveFailedWatermarkOperation,
+  retireActiveProfile,
+  setRebuildCounts,
+  setWatermarkCleanupJson,
+  startApplyingProfile,
+  switchActiveProfile,
+  updateWatermarkOperationRow,
+} from './watermark-repository'
+import type { WatermarkOperationRow } from './watermark-repository'
 import { ServiceError } from './service-error'
 import { SITE_DISPLAY_RECIPE_VERSION } from './site-display-recipe'
 import {
@@ -50,49 +83,16 @@ interface CleanupManifestEntry {
   scope: 'PRIVATE' | 'PUBLIC'
 }
 
-interface WatermarkOperationRow {
-  affectedHeroSlideCount: number
-  affectedWorkCount: number
-  brandingVersion: number
-  cleanupObjectKeysJson: string
-  completedAt: number | null
-  failureStage: string | null
-  generatedVariantCount: number
-  id: string
-  internalErrorCode: string | null
-  operationType: 'WATERMARK_PREVIEW' | 'WATERMARK_REBUILD'
-  previewManifestJson: string
-  profileId: string
-  startedAt: number
-  status: WatermarkOperationStatus
-  targetVariantCount: number
-  updatedAt: number
-  verifiedVariantCount: number
-  version: number
-}
-
 interface WatermarkTarget {
   assetId: string
   usages: PublicMediaUsage[]
 }
 
-const selectOperation = `
-  SELECT
-    id, operation_type AS operationType, profile_id AS profileId,
-    branding_version AS brandingVersion, status,
-    affected_work_count AS affectedWorkCount,
-    affected_hero_slide_count AS affectedHeroSlideCount,
-    target_variant_count AS targetVariantCount,
-    generated_variant_count AS generatedVariantCount,
-    verified_variant_count AS verifiedVariantCount,
-    preview_manifest_json AS previewManifestJson,
-    cleanup_object_keys_json AS cleanupObjectKeysJson,
-    internal_error_code AS internalErrorCode,
-    failure_stage AS failureStage, version,
-    started_at AS startedAt, updated_at AS updatedAt,
-    completed_at AS completedAt
-  FROM watermark_operations
-`
+/**
+ * T34-F4：SQL、行映射与条件更新已移入 watermark-repository。
+ * 本文件保留 service（profile 校验与 DTO 组合）与 apply runner（operation、
+ * OSS 副作用、profile 原子切换、心跳、失败与清理）。
+ */
 
 function parseJsonArray<T>(value: string, validate: (item: unknown) => boolean) {
   const parsed = JSON.parse(value) as unknown
@@ -126,13 +126,8 @@ function cleanupEntries(row: WatermarkOperationRow) {
   )
 }
 
-function findOperation(sqlite: Database.Database, id: string) {
-  return sqlite.prepare(`${selectOperation} WHERE id = ?`)
-    .get(id) as WatermarkOperationRow | undefined
-}
-
 function requireOperation(sqlite: Database.Database, id: string) {
-  const operation = findOperation(sqlite, id)
+  const operation = findWatermarkOperation(sqlite, id)
   if (!operation) {
     throw new ServiceError(404, 'NOT_FOUND', 'Watermark operation was not found.')
   }
@@ -180,27 +175,7 @@ function targetUsages(
 }
 
 function watermarkTargets(sqlite: Database.Database) {
-  const workRows = sqlite.prepare(`
-    SELECT DISTINCT
-      asset.id AS assetId, asset.role,
-      relation.is_primary AS "primary",
-      EXISTS (
-        SELECT 1 FROM work_assets AS primary_photo
-        WHERE primary_photo.work_id = work.id
-          AND primary_photo.role = 'studio_photo'
-          AND primary_photo.is_primary = 1
-      ) AS hasPrimaryStudioPhoto
-    FROM works AS work
-    JOIN work_assets AS relation ON relation.work_id = work.id
-    JOIN assets AS asset ON asset.id = relation.asset_id
-    WHERE work.publication_status = 'published' AND asset.status = 'READY'
-      AND relation.role IN ('studio_photo', 'design_sheet')
-  `).all() as Array<{
-    assetId: string
-    hasPrimaryStudioPhoto: number
-    primary: number
-    role: string
-  }>
+  const workRows = findWatermarkTargets(sqlite)
   // T34-F1：站点展示位使用无水印 site-display-v1，不参与 profile 重建。
   const targets = new Map<string, Set<PublicMediaUsage>>()
   for (const row of workRows) {
@@ -220,19 +195,15 @@ function watermarkTargets(sqlite: Database.Database) {
 
 function impact(sqlite: Database.Database, targets = watermarkTargets(sqlite)) {
   return {
-    publishedWorkCount: Number(sqlite.prepare(`
-      SELECT count(*) FROM works WHERE publication_status = 'published'
-    `).pluck().get()),
+    publishedWorkCount: countPublishedWorks(sqlite),
     targetVariantCount: targets.reduce(
       (count, target) => count + publicVariantCountForUsages(target.usages),
       0,
     ),
-    siteDisplayVariantCount: Number(sqlite.prepare(`
-      SELECT count(*) FROM asset_variants
-      WHERE storage_scope = 'PUBLIC' AND status = 'READY'
-        AND protection_mode = 'none'
-        AND recipe_version = '${SITE_DISPLAY_RECIPE_VERSION}'
-    `).pluck().get()),
+    siteDisplayVariantCount: countSiteDisplayVariants(
+      sqlite,
+      SITE_DISPLAY_RECIPE_VERSION,
+    ),
   }
 }
 
@@ -246,23 +217,7 @@ export function getWatermarkBranding(
   const draft = branding.draftWatermarkProfileId
     ? requireWatermarkProfile(sqlite, branding.draftWatermarkProfileId)
     : null
-  const candidates = sqlite.prepare(`
-    SELECT
-      id AS assetId, version, status, mime_type AS mimeType,
-      width, height, sha256, created_at AS createdAt
-    FROM assets
-    WHERE role = 'watermark_logo' AND status = 'READY'
-    ORDER BY created_at DESC, id
-  `).all() as Array<{
-    assetId: string
-    createdAt: number
-    height: number
-    mimeType: string
-    sha256: string
-    status: string
-    version: number
-    width: number
-  }>
+  const candidates = findWatermarkCandidates(sqlite)
   return watermarkBrandingDtoSchema.parse({
     version: branding.version,
     activeProfile: active ? watermarkProfileDto(active) : null,
@@ -286,11 +241,7 @@ export function getWatermarkBranding(
 }
 
 function assertNoActiveOperation(sqlite: Database.Database) {
-  const active = sqlite.prepare(`
-    SELECT 1 FROM watermark_operations
-    WHERE status NOT IN ('FAILED', 'DONE') LIMIT 1
-  `).pluck().get()
-  if (active) {
+  if (hasActiveWatermarkOperation(sqlite)) {
     throw new ServiceError(409, 'CONFLICT', 'A watermark operation is already active.', 'ACTIVE_OPERATION_EXISTS')
   }
 }
@@ -307,26 +258,19 @@ function createOperation(
   assertNoActiveOperation(sqlite)
   const id = randomUUID()
   sqlite.transaction(() => {
-    sqlite.prepare(`
-      INSERT INTO watermark_operations (
-        id, operation_type, profile_id, branding_version,
-        status, started_at, updated_at
-      ) VALUES (?, ?, ?, ?, 'GENERATING_PUBLIC', ?, ?)
-    `).run(
+    insertWatermarkOperation(sqlite, {
+      brandingVersion: input.brandingVersion + 1,
       id,
-      input.operationType,
-      input.profileId,
-      input.brandingVersion + 1,
-      now,
+      operationType: input.operationType,
+      profileId: input.profileId,
+    }, now)
+    const changed = claimBrandingOperation(
+      sqlite,
+      id,
+      input.brandingVersion,
       now,
     )
-    const changed = sqlite.prepare(`
-      UPDATE site_branding
-      SET last_watermark_operation_id = ?, version = version + 1,
-          updated_at = ?
-      WHERE id = 'site' AND version = ?
-    `).run(id, now, input.brandingVersion)
-    if (changed.changes !== 1) {
+    if (changed !== 1) {
       throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
     }
   })()
@@ -346,27 +290,13 @@ function updateOperation(
     verified?: number
   } = {},
 ) {
-  sqlite.prepare(`
-    UPDATE watermark_operations
-    SET status = ?,
-        target_variant_count = COALESCE(?, target_variant_count),
-        generated_variant_count = COALESCE(?, generated_variant_count),
-        verified_variant_count = COALESCE(?, verified_variant_count),
-        preview_manifest_json = COALESCE(?, preview_manifest_json),
-        cleanup_object_keys_json = COALESCE(?, cleanup_object_keys_json),
-        internal_error_code = NULL, failure_stage = NULL,
-        version = version + 1, updated_at = ?
-    WHERE id = ?
-  `).run(
-    status,
-    fields.target ?? null,
-    fields.generated ?? null,
-    fields.verified ?? null,
-    fields.preview ? JSON.stringify(fields.preview) : null,
-    fields.cleanup ? JSON.stringify(fields.cleanup) : null,
-    now,
-    id,
-  )
+  updateWatermarkOperationRow(sqlite, id, status, {
+    cleanupJson: fields.cleanup ? JSON.stringify(fields.cleanup) : null,
+    generated: fields.generated ?? null,
+    previewJson: fields.preview ? JSON.stringify(fields.preview) : null,
+    target: fields.target ?? null,
+    verified: fields.verified ?? null,
+  }, now)
 }
 
 function failOperation(
@@ -378,19 +308,12 @@ function failOperation(
   now: number,
 ) {
   sqlite.transaction(() => {
-    sqlite.prepare(`
-      UPDATE watermark_operations
-      SET status = 'FAILED', cleanup_object_keys_json = ?,
-          internal_error_code = ?, failure_stage = ?,
-          version = version + 1, updated_at = ?, completed_at = ?
-      WHERE id = ?
-    `).run(JSON.stringify(cleanup), code, stage, now, now, id)
-    const profileId = requireOperation(sqlite, id).profileId
-    sqlite.prepare(`
-      UPDATE watermark_profiles
-      SET status = 'FAILED', version = version + 1, updated_at = ?
-      WHERE id = ? AND status = 'APPLYING'
-    `).run(now, profileId)
+    markWatermarkOperationFailed(sqlite, id, {
+      cleanupJson: JSON.stringify(cleanup),
+      code,
+      stage,
+    }, now)
+    failApplyingProfile(sqlite, requireOperation(sqlite, id).profileId, now)
   })()
 }
 
@@ -406,20 +329,18 @@ async function cleanupManifest(
     try {
       if (entry.scope === 'PUBLIC') {
         await storage.deletePublic(entry.objectKey)
-        sqlite.prepare(`
-          DELETE FROM asset_variants
-          WHERE storage_scope = 'PUBLIC' AND object_key = ?
-        `).run(entry.objectKey)
+        deletePublicVariant(sqlite, entry.objectKey)
       }
       else {
         await storage.deletePrivate(entry.objectKey)
       }
       remaining = remaining.filter(candidate => candidate !== entry)
-      sqlite.prepare(`
-        UPDATE watermark_operations
-        SET cleanup_object_keys_json = ?, version = version + 1,
-            updated_at = ? WHERE id = ?
-      `).run(JSON.stringify(remaining), now, operationId)
+      setWatermarkCleanupJson(
+        sqlite,
+        operationId,
+        JSON.stringify(remaining),
+        now,
+      )
     }
     catch {
       return remaining
@@ -429,15 +350,8 @@ async function cleanupManifest(
 }
 
 function previewSamples(sqlite: Database.Database) {
-  const sampleFor = (role: 'design_sheet' | 'studio_photo') => sqlite.prepare(`
-    SELECT asset.id AS assetId, asset.private_object_key AS privateObjectKey
-    FROM assets AS asset
-    LEFT JOIN work_assets AS relation ON relation.asset_id = asset.id
-    LEFT JOIN works AS work ON work.id = relation.work_id
-    WHERE asset.role = ? AND asset.status = 'READY'
-    ORDER BY (work.publication_status = 'published') DESC,
-             asset.created_at DESC LIMIT 1
-  `).get(role) as { assetId: string, privateObjectKey: string } | undefined
+  const sampleFor = (role: 'design_sheet' | 'studio_photo') =>
+    findPreviewSample(sqlite, role)
   const work = sampleFor('studio_photo')
   if (!work) {
     throw new ServiceError(409, 'CONFLICT', 'Representative preview assets are unavailable.')
@@ -519,13 +433,11 @@ async function runPreview(
         preview: manifest,
       })
     }
-    const finished = sqlite.prepare(`
-      UPDATE watermark_operations
-      SET status = 'DONE', lease_owner = NULL, lease_expires_at = NULL,
-          version = version + 1, updated_at = ?, completed_at = ?
-      WHERE id = ? AND lease_owner = ? AND attempt = ?
-    `).run(now, now, operationId, lease.owner, lease.attempt)
-    if (finished.changes !== 1) {
+    const finished = completeWatermarkOperation(sqlite, operationId, now, {
+      attempt: lease.attempt,
+      owner: lease.owner,
+    })
+    if (finished !== 1) {
       throw new Error('Watermark preview commit lost its lease.')
     }
   }
@@ -606,20 +518,12 @@ async function runRebuild(
   try {
     const targets = watermarkTargets(sqlite)
     const counts = impact(sqlite, targets)
-    sqlite.prepare(`
-      UPDATE watermark_operations
-      SET affected_work_count = ?, affected_hero_slide_count = ?,
-          target_variant_count = ?, generated_variant_count = 0,
-          verified_variant_count = 0, version = version + 1, updated_at = ?
-      WHERE id = ?
-    `).run(
-      counts.publishedWorkCount,
+    setRebuildCounts(sqlite, operationId, {
       // 站点 Hero 不再随 profile 重建，受影响轮播项恒为 0。
-      0,
-      counts.targetVariantCount,
-      now,
-      operationId,
-    )
+      affectedHeroSlideCount: 0,
+      affectedWorkCount: counts.publishedWorkCount,
+      targetVariantCount: counts.targetVariantCount,
+    }, now)
     for (const target of targets) {
       requireWatermarkLease(sqlite, lease)
       const variants = await generatePublicVariantsForProfile(
@@ -640,15 +544,10 @@ async function runRebuild(
     if (generated !== counts.targetVariantCount) {
       throw new Error('Watermark rebuild target set is incomplete.')
     }
-    const oldEntries = (sqlite.prepare(`
-      SELECT object_key FROM asset_variants
-      WHERE storage_scope = 'PUBLIC'
-        AND protection_mode = 'watermark'
-        AND watermark_profile_id IS NOT ?
-    `).pluck().all(operation.profileId) as string[]).map(objectKey => ({
-      scope: 'PUBLIC' as const,
-      objectKey,
-    }))
+    const oldEntries = findPublicKeysForOtherProfiles(
+      sqlite,
+      operation.profileId,
+    ).map(objectKey => ({ scope: 'PUBLIC' as const, objectKey }))
     requireWatermarkLease(sqlite, lease)
     updateOperation(sqlite, operationId, 'SWITCHING_PROFILE', now)
     sqlite.transaction(() => {
@@ -662,27 +561,18 @@ async function runRebuild(
         throw new ServiceError(409, 'CONFLICT', 'Site branding changed during rebuild.')
       }
       if (branding.activeWatermarkProfileId) {
-        sqlite.prepare(`
-          UPDATE watermark_profiles
-          SET status = 'RETIRED', version = version + 1, updated_at = ?
-          WHERE id = ? AND status = 'ACTIVE'
-        `).run(now, branding.activeWatermarkProfileId)
+        retireActiveProfile(sqlite, branding.activeWatermarkProfileId, now)
       }
-      const activated = sqlite.prepare(`
-        UPDATE watermark_profiles
-        SET status = 'ACTIVE', version = version + 1, updated_at = ?
-        WHERE id = ? AND status = 'APPLYING'
-      `).run(now, operation.profileId)
-      if (activated.changes !== 1) {
+      if (activateApplyingProfile(sqlite, operation.profileId, now) !== 1) {
         throw new Error('Watermark profile activation failed.')
       }
-      const switched = sqlite.prepare(`
-        UPDATE site_branding
-        SET active_watermark_profile_id = ?, draft_watermark_profile_id = NULL,
-            version = version + 1, updated_at = ?
-        WHERE id = 'site' AND version = ?
-      `).run(operation.profileId, now, operation.brandingVersion)
-      if (switched.changes !== 1) {
+      const switched = switchActiveProfile(
+        sqlite,
+        operation.profileId,
+        operation.brandingVersion,
+        now,
+      )
+      if (switched !== 1) {
         throw new Error('Watermark profile switch failed.')
       }
       updateOperation(sqlite, operationId, 'CLEANING_PUBLIC', now, {
@@ -690,11 +580,7 @@ async function runRebuild(
       })
     })()
 
-    const previewEntries = (sqlite.prepare(`
-      SELECT preview_manifest_json FROM watermark_operations
-      WHERE profile_id = ? AND operation_type = 'WATERMARK_PREVIEW'
-        AND preview_manifest_json != '[]'
-    `).pluck().all(operation.profileId) as string[])
+    const previewEntries = findPreviewManifestJson(sqlite, operation.profileId)
       .flatMap(value => parseJsonArray<PreviewManifestEntry>(
         value,
         item => typeof item === 'object' && item !== null
@@ -705,10 +591,7 @@ async function runRebuild(
         objectKey: entry.objectKey,
       }))
     const cleanup = [...oldEntries, ...previewEntries]
-    sqlite.prepare(`
-      UPDATE watermark_operations SET cleanup_object_keys_json = ?,
-          version = version + 1, updated_at = ? WHERE id = ?
-    `).run(JSON.stringify(cleanup), now, operationId)
+    setWatermarkCleanupJson(sqlite, operationId, JSON.stringify(cleanup), now)
     const remaining = await cleanupManifest(
       sqlite,
       storage,
@@ -728,19 +611,8 @@ async function runRebuild(
       return requireOperation(sqlite, operationId)
     }
     sqlite.transaction(() => {
-      sqlite.prepare(`
-        UPDATE watermark_operations
-        SET preview_manifest_json = '[]', version = version + 1,
-            updated_at = ?
-        WHERE profile_id = ? AND operation_type = 'WATERMARK_PREVIEW'
-      `).run(now, operation.profileId)
-      sqlite.prepare(`
-        UPDATE watermark_operations
-        SET status = 'DONE', cleanup_object_keys_json = '[]',
-            lease_owner = NULL, lease_expires_at = NULL,
-            version = version + 1, updated_at = ?, completed_at = ?
-        WHERE id = ?
-      `).run(now, now, operationId)
+      clearPreviewManifests(sqlite, operation.profileId, now)
+      finishWatermarkRebuild(sqlite, operationId, now)
     })()
   }
   catch {
@@ -761,14 +633,10 @@ async function runRebuild(
       releaseOperationLease(sqlite, lease, now)
       return requireOperation(sqlite, operationId)
     }
-    const generatedEntries = (sqlite.prepare(`
-      SELECT object_key FROM asset_variants
-      WHERE storage_scope = 'PUBLIC' AND protection_mode = 'watermark'
-        AND watermark_profile_id = ?
-    `).pluck().all(operation.profileId) as string[]).map(objectKey => ({
-      scope: 'PUBLIC' as const,
-      objectKey,
-    }))
+    const generatedEntries = findPublicKeysForProfile(
+      sqlite,
+      operation.profileId,
+    ).map(objectKey => ({ scope: 'PUBLIC' as const, objectKey }))
     const remaining = await cleanupManifest(
       sqlite,
       storage,
@@ -795,9 +663,7 @@ function watermarkOperationTypeOf(
   sqlite: Database.Database,
   operationId: string,
 ) {
-  return sqlite.prepare(`
-    SELECT operation_type FROM watermark_operations WHERE id = ?
-  `).pluck().get(operationId) as string | undefined
+  return findWatermarkOperationType(sqlite, operationId)
 }
 
 /**
@@ -854,11 +720,7 @@ export function startWatermarkProfileApplication(
     branding.activeWatermarkProfileId === profileId
     && profile.status === 'ACTIVE'
   ) {
-    const repeated = sqlite.prepare(`
-      ${selectOperation}
-      WHERE operation_type = 'WATERMARK_REBUILD' AND profile_id = ?
-        AND status = 'DONE' ORDER BY started_at DESC LIMIT 1
-    `).get(profileId) as WatermarkOperationRow | undefined
+    const repeated = findDoneRebuildForProfile(sqlite, profileId)
     if (repeated) {
       return operationDto(repeated)
     }
@@ -871,12 +733,7 @@ export function startWatermarkProfileApplication(
   ) {
     throw new ServiceError(409, 'CONFLICT', 'Watermark draft is stale.', 'WATERMARK_DRAFT_STALE')
   }
-  const previewed = sqlite.prepare(`
-    SELECT 1 FROM watermark_operations
-    WHERE operation_type = 'WATERMARK_PREVIEW' AND profile_id = ?
-      AND status = 'DONE' AND verified_variant_count = 3 LIMIT 1
-  `).pluck().get(profileId)
-  if (!previewed) {
+  if (!hasVerifiedPreview(sqlite, profileId)) {
     throw new ServiceError(409, 'CONFLICT', 'A verified watermark preview is required.', 'WATERMARK_PREVIEW_REQUIRED')
   }
   watermarkSource(sqlite, profile)
@@ -885,11 +742,7 @@ export function startWatermarkProfileApplication(
     operationType: 'WATERMARK_REBUILD',
     profileId,
   }, now)
-  sqlite.prepare(`
-    UPDATE watermark_profiles
-    SET status = 'APPLYING', version = version + 1, updated_at = ?
-    WHERE id = ? AND status IN ('DRAFT', 'FAILED')
-  `).run(now, profileId)
+  startApplyingProfile(sqlite, profileId, now)
   return operationDto(operation)
 }
 
@@ -971,20 +824,10 @@ export async function retryWatermarkOperation(
     return operationDto(await runPreview(sqlite, storage, operationId, now))
   }
   if (requireSiteBranding(sqlite).activeWatermarkProfileId === operation.profileId) {
-    sqlite.prepare(`
-      UPDATE watermark_operations
-      SET status = 'DONE', cleanup_object_keys_json = '[]',
-          internal_error_code = NULL, failure_stage = NULL,
-          version = version + 1, updated_at = ?, completed_at = ?
-      WHERE id = ?
-    `).run(now, now, operationId)
+    resolveFailedWatermarkOperation(sqlite, operationId, now)
     return operationDto(requireOperation(sqlite, operationId))
   }
-  sqlite.prepare(`
-    UPDATE watermark_profiles
-    SET status = 'APPLYING', version = version + 1, updated_at = ?
-    WHERE id = ? AND status = 'FAILED'
-  `).run(now, operation.profileId)
+  startApplyingProfile(sqlite, operation.profileId, now, true)
   return operationDto(await runRebuild(sqlite, storage, operationId, now))
 }
 
@@ -1007,20 +850,7 @@ export async function getWatermarkCandidateContent(
   storage: MediaStorage,
   assetId: string,
 ) {
-  const profile = sqlite.prepare(`
-    SELECT
-      id AS assetId, private_object_key AS objectKey,
-      sha256 AS logoDigest, width, height
-    FROM assets
-    WHERE id = ? AND role = 'watermark_logo'
-      AND status = 'READY' AND mime_type = 'image/png'
-  `).get(assetId) as {
-    assetId: string
-    height: number
-    logoDigest: string
-    objectKey: string
-    width: number
-  } | undefined
+  const profile = findWatermarkCandidateSource(sqlite, assetId)
   if (!profile) {
     throw new ServiceError(404, 'NOT_FOUND', 'Watermark candidate was not found.')
   }

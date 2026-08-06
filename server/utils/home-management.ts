@@ -26,7 +26,6 @@ import {
   clearSlidePreviewKeys,
   countEnabledSlides,
   deleteDisabledSlide,
-  deletePublicVariantRow,
   findHeroAsset,
   findHome,
   findPublicKeysForSlide,
@@ -49,6 +48,8 @@ import type {
   HeroVariantRow,
   SlideRow,
 } from './hero-repository'
+// T34-F4：公开变体行删除只有一处定义，在 publication-repository。
+import { deletePublicVariant } from './publication-repository'
 import {
   assetSupportsSiteDisplay,
   generateSiteDisplayVariants,
@@ -1072,7 +1073,7 @@ async function cleanPublicKeys(
   for (const key of keys) {
     try {
       await storage.deletePublic(key)
-      deletePublicVariantRow(sqlite, key)
+      deletePublicVariant(sqlite, key)
     }
     catch {
       remaining.push(key)
