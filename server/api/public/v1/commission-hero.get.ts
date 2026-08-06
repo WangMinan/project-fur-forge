@@ -1,5 +1,5 @@
 import { publicCommissionHeroResponseSchema } from '../../../../shared/schemas/home'
-import { getPublicSiteRepository } from '../../../utils/public-site-repository'
+import { getPublicSiteRepository } from '../../../utils/repository/public-site-repository'
 import { asSafeApiError } from '../../../utils/service-error'
 
 export default defineEventHandler((event) => {

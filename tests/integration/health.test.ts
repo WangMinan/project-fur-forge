@@ -11,8 +11,8 @@ import {
   it,
 } from 'vitest'
 import { migrateDatabase } from '../../server/utils/database'
-import { ADMIN_JSON_BODY_MAX_BYTES } from '../../server/utils/request-body'
-import { LOGIN_RATE_LIMIT } from '../../server/utils/request-rate-limit'
+import { ADMIN_JSON_BODY_MAX_BYTES } from '../../server/utils/route/request-body'
+import { LOGIN_RATE_LIMIT } from '../../server/utils/route/request-rate-limit'
 
 const port = 3102
 const publicBaseUrl = `http://127.0.0.1:${port}`

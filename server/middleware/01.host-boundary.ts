@@ -1,4 +1,4 @@
-import { decideHostAccess } from '../utils/host-policy'
+import { decideHostAccess } from '../utils/route/host-policy'
 import { createApiError } from '../utils/api-error'
 import {
   isPrivateResponsePath,

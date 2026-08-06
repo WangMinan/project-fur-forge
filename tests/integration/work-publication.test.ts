@@ -25,13 +25,13 @@ import {
   createManagedWork,
   replaceManagedDesignSheet,
   replaceManagedStudioPhotos,
-} from '../../server/utils/work-management'
+} from '../../server/utils/service/work-management'
 import {
   checkWorkPublication,
   publishWork,
   retryPublicationCleanup,
   unpublishWork,
-} from '../../server/utils/work-publication'
+} from '../../server/utils/runner/work-publication'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
 

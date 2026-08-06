@@ -22,12 +22,12 @@ import {
   initializeAdmin,
   LOGIN_FAILURE_LIMIT,
   LOGIN_LOCK_MS,
-} from '../../server/utils/auth'
+} from '../../server/utils/service/auth'
 import {
   initializeAdminCommand,
   RESET_CONFIRMATION,
   resetAdminPasswordCommand,
-} from '../../server/utils/auth-commands'
+} from '../../server/utils/service/auth-commands'
 import {
   assertDatabaseMigrated,
   DATABASE_MIGRATIONS_FOLDER,

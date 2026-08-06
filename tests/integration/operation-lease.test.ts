@@ -27,11 +27,11 @@ import {
   operationLeaseOwner,
   releaseOperationLease,
   resetOperationLeaseOwner,
-} from '../../server/utils/operation-lease'
+} from '../../server/utils/repository/operation-lease'
 import {
   recoverPendingOperations,
   registerOperationResumer,
-} from '../../server/utils/operation-recovery'
+} from '../../server/utils/runner/operation-recovery'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 
 const NOW = Date.UTC(2026, 7, 6)

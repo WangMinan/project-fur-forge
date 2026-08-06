@@ -3,7 +3,7 @@ import { watermarkOperationResponseSchema } from '../../../../../../../shared/sc
 import { createApiError } from '../../../../../../utils/api-error'
 import { getDatabase } from '../../../../../../utils/database'
 import { asSafeApiError } from '../../../../../../utils/service-error'
-import { getWatermarkOperation } from '../../../../../../utils/watermark-branding'
+import { getWatermarkOperation } from '../../../../../../utils/runner/watermark-branding'
 
 export default defineEventHandler((event) => {
   const id = resourceIdSchema.safeParse(getRouterParam(event, 'id'))

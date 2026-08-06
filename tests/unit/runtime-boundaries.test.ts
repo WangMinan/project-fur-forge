@@ -18,7 +18,7 @@ import {
   vi,
 } from 'vitest'
 import { ORIGINAL_IMAGE_MAX_BYTES } from '../../shared/constants/project'
-import { decideHostAccess } from '../../server/utils/host-policy'
+import { decideHostAccess } from '../../server/utils/route/host-policy'
 import {
   loadRuntimeConfig,
   RUNTIME_CONFIG_ENV,

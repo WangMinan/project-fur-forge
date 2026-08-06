@@ -12,7 +12,7 @@ import {
   isSessionIdleExpired,
   logAuthEvent,
   SESSION_IDLE_MS,
-} from '../../server/utils/auth'
+} from '../../server/utils/service/auth'
 import {
   hashAdminPassword,
   verifyAdminPassword,

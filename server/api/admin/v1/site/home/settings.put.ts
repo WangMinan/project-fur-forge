@@ -4,8 +4,8 @@ import {
 } from '../../../../../../shared/schemas/home'
 import { createApiError } from '../../../../../utils/api-error'
 import { getDatabase } from '../../../../../utils/database'
-import { updateHomeSettings } from '../../../../../utils/home-management'
-import { readAdminJsonBody } from '../../../../../utils/request-body'
+import { updateHomeSettings } from '../../../../../utils/runner/home-management'
+import { readAdminJsonBody } from '../../../../../utils/route/request-body'
 import { asSafeApiError } from '../../../../../utils/service-error'
 
 export default defineEventHandler(async (event) => {

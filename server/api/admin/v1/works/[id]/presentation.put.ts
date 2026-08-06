@@ -5,9 +5,9 @@ import {
 } from '../../../../../../shared/schemas/work'
 import { createApiError } from '../../../../../utils/api-error'
 import { getDatabase } from '../../../../../utils/database'
-import { readAdminJsonBody } from '../../../../../utils/request-body'
+import { readAdminJsonBody } from '../../../../../utils/route/request-body'
 import { asApiError } from '../../../../../utils/service-error'
-import { updateManagedWorkPresentation } from '../../../../../utils/work-management'
+import { updateManagedWorkPresentation } from '../../../../../utils/service/work-management'
 
 export default defineEventHandler(async (event) => {
   const id = resourceIdSchema.safeParse(getRouterParam(event, 'id'))

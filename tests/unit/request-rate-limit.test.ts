@@ -3,7 +3,7 @@ import {
   expect,
   it,
 } from 'vitest'
-import { createFixedWindowLimiter } from '../../server/utils/request-rate-limit'
+import { createFixedWindowLimiter } from '../../server/utils/route/request-rate-limit'
 
 describe('request rate limits', () => {
   it('allows a fixed quota, reports retry time, then resets', () => {

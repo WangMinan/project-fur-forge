@@ -2,7 +2,7 @@ import type { PublicWorkDetailDto } from '../../../../../shared/types/contracts'
 import { slugSchema } from '../../../../../shared/schemas/work'
 import { publicWorkDetailResponseSchema } from '../../../../../shared/schemas/public-content'
 import { createApiError } from '../../../../utils/api-error'
-import { getPublicSiteRepository } from '../../../../utils/public-site-repository'
+import { getPublicSiteRepository } from '../../../../utils/repository/public-site-repository'
 import { asSafeApiError } from '../../../../utils/service-error'
 
 export default defineEventHandler((event) => {

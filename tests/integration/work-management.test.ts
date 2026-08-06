@@ -31,8 +31,8 @@ import {
   replaceManagedStudioPhotos,
   updateManagedWork,
   updateManagedWorkPresentation,
-} from '../../server/utils/work-management'
-import { generatePublicVariants } from '../../server/utils/media-recipe'
+} from '../../server/utils/service/work-management'
+import { generatePublicVariants } from '../../server/utils/recipe/media-recipe'
 import { createSyntheticWatermarkPng } from '../../scripts/oss-preflight-core.mjs'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'

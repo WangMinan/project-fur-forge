@@ -20,12 +20,12 @@ import {
 import {
   completeUploadSession,
   retryAssetProcessing,
-} from '../../server/utils/media-completion'
+} from '../../server/utils/service/media-completion'
 import {
   migrateDatabase,
   openDatabase,
 } from '../../server/utils/database'
-import { createUploadSession } from '../../server/utils/upload-session'
+import { createUploadSession } from '../../server/utils/service/upload-session'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 
 const USER_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'

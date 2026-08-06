@@ -4,13 +4,13 @@ import {
   uploadSessionMutationRequestSchema,
 } from '../../../../../../../shared/schemas/upload'
 import { createApiError } from '../../../../../../utils/api-error'
-import { adminSessionFor } from '../../../../../../utils/auth-session'
+import { adminSessionFor } from '../../../../../../utils/route/auth-session'
 import { getDatabase } from '../../../../../../utils/database'
 import { getMediaStorage } from '../../../../../../utils/media-storage'
-import { readAdminJsonBody } from '../../../../../../utils/request-body'
+import { readAdminJsonBody } from '../../../../../../utils/route/request-body'
 import { getRuntimeConfig } from '../../../../../../utils/runtime-config'
 import { asApiError } from '../../../../../../utils/service-error'
-import { retryUploadSession } from '../../../../../../utils/upload-session'
+import { retryUploadSession } from '../../../../../../utils/service/upload-session'
 
 export default defineEventHandler(async (event) => {
   const id = resourceIdSchema.safeParse(getRouterParam(event, 'id'))

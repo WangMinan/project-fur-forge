@@ -4,7 +4,7 @@ import { createApiError } from '../../../../../utils/api-error'
 import { getDatabase } from '../../../../../utils/database'
 import { getMediaStorage } from '../../../../../utils/media-storage'
 import { asApiError } from '../../../../../utils/service-error'
-import { getUploadSession } from '../../../../../utils/upload-session'
+import { getUploadSession } from '../../../../../utils/service/upload-session'
 
 export default defineEventHandler(async (event) => {
   const parsed = resourceIdSchema.safeParse(getRouterParam(event, 'id'))

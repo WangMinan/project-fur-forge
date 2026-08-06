@@ -2,11 +2,11 @@ import { logoutResponseSchema } from '../../../shared/schemas/auth'
 import {
   adminSessionFor,
   endAdminSession,
-} from '../../utils/auth-session'
+} from '../../utils/route/auth-session'
 import {
   invalidateAdminSessions,
   logAuthEvent,
-} from '../../utils/auth'
+} from '../../utils/service/auth'
 import { getDatabase } from '../../utils/database'
 
 export default defineEventHandler(async (event) => {

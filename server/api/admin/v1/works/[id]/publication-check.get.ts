@@ -3,7 +3,7 @@ import { workPublicationCheckResponseSchema } from '../../../../../../shared/sch
 import { createApiError } from '../../../../../utils/api-error'
 import { getDatabase } from '../../../../../utils/database'
 import { asApiError } from '../../../../../utils/service-error'
-import { checkWorkPublication } from '../../../../../utils/work-publication'
+import { checkWorkPublication } from '../../../../../utils/runner/work-publication'
 
 export default defineEventHandler((event) => {
   const id = resourceIdSchema.safeParse(getRouterParam(event, 'id'))

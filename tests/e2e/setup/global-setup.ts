@@ -4,7 +4,7 @@ import { basename, dirname, resolve } from 'node:path'
 import {
   initializeAdmin,
   resetAdminPassword,
-} from '../../../server/utils/auth'
+} from '../../../server/utils/service/auth'
 import {
   E2E_ADMIN,
   E2E_DATABASE_FILE,
@@ -14,7 +14,7 @@ import {
   migrateFixtureDatabase,
   openFixtureDatabase,
 } from '../helpers/fixture-db'
-import { seedBundledWatermark } from '../../../server/utils/watermark-seed'
+import { seedBundledWatermark } from '../../../server/utils/runner/watermark-seed'
 import { FakeMediaStorage } from '../../helpers/fake-media-storage'
 
 function resetE2EDatabase() {

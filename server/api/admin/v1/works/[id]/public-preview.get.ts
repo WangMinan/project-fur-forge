@@ -3,7 +3,7 @@ import { publicSafeWorkPreviewResponseSchema } from '../../../../../../shared/sc
 import { createApiError } from '../../../../../utils/api-error'
 import { getDatabase } from '../../../../../utils/database'
 import { asApiError } from '../../../../../utils/service-error'
-import { getPublicSafeWorkPreview } from '../../../../../utils/work-management'
+import { getPublicSafeWorkPreview } from '../../../../../utils/service/work-management'
 
 export default defineEventHandler((event) => {
   const id = resourceIdSchema.safeParse(getRouterParam(event, 'id'))

@@ -1,4 +1,4 @@
-import { evaluateReadiness } from '../../utils/readiness'
+import { evaluateReadiness } from '../../utils/service/readiness'
 
 /**
  * T34-F6 readiness：数据库可打开、迁移版本匹配、基础记录存在。

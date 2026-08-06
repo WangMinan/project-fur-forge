@@ -46,3 +46,6 @@ data/
 # Python
 __pycache__/
 *.py[cod]
+
+# Session goal file (local working notes)
+GOAL.md

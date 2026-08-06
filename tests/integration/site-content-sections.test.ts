@@ -20,7 +20,7 @@ import {
   getAdminSiteContent,
   getPublicSiteContent,
   updateSiteContentSection,
-} from '../../server/utils/site-content'
+} from '../../server/utils/service/site-content'
 
 /**
  * T34-F3 分区并发：不同分区同时保存都成功；同一分区第二次保存拿到 409。

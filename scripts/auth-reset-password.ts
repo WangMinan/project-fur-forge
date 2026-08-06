@@ -1,7 +1,7 @@
 import { parseArgs } from 'node:util'
 import {
   resetAdminPasswordCommand,
-} from '../server/utils/auth-commands'
+} from '../server/utils/service/auth-commands'
 import { loadRuntimeConfig } from '../server/utils/runtime-config'
 import { readAdminCredentials } from './auth-input'
 

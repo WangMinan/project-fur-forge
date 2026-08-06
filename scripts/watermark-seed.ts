@@ -7,7 +7,7 @@ import { AliOssMediaStorage } from '../server/utils/media-storage'
 import {
   loadRuntimeConfig,
 } from '../server/utils/runtime-config'
-import { seedBundledWatermark } from '../server/utils/watermark-seed'
+import { seedBundledWatermark } from '../server/utils/runner/watermark-seed'
 
 const config = loadRuntimeConfig()
 const databaseFile = resolveDatabaseFile(config)

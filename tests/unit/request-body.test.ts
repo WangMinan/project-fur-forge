@@ -7,7 +7,7 @@ import {
   it,
   vi,
 } from 'vitest'
-import { readAdminJsonBody } from '../../server/utils/request-body'
+import { readAdminJsonBody } from '../../server/utils/route/request-body'
 
 describe('admin JSON request body', () => {
   it('rejects interrupted requests and removes every listener', async () => {

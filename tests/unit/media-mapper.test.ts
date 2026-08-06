@@ -7,12 +7,12 @@ import {
   toAdminAssetDto,
   toPublicHeroSlideDto,
   toPublicVariantDto,
-} from '../../server/utils/media-mapper'
+} from '../../server/utils/recipe/media-mapper'
 import type {
   AssetRecord,
   HeroSlideRecord,
   VariantRecord,
-} from '../../server/utils/media-mapper'
+} from '../../server/utils/recipe/media-mapper'
 
 const asset: AssetRecord = {
   id: '550e8400-e29b-41d4-a716-446655440000',

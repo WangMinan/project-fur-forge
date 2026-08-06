@@ -3,7 +3,7 @@ import { managedWorkResponseSchema } from '../../../../../shared/schemas/work'
 import { createApiError } from '../../../../utils/api-error'
 import { getDatabase } from '../../../../utils/database'
 import { asApiError } from '../../../../utils/service-error'
-import { getManagedWork } from '../../../../utils/work-management'
+import { getManagedWork } from '../../../../utils/service/work-management'
 
 export default defineEventHandler((event) => {
   const id = resourceIdSchema.safeParse(getRouterParam(event, 'id'))

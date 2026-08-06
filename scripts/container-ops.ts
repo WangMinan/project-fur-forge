@@ -59,7 +59,7 @@ async function run() {
     }
 
     case 'init-admin': {
-      const { initializeAdminCommand } = await import('../server/utils/auth-commands')
+      const { initializeAdminCommand } = await import('../server/utils/service/auth-commands')
       const { readAdminCredentials } = await import('./auth-input')
       const { password, username } = await readAdminCredentials('Admin password: ')
       const result = await initializeAdminCommand(config, { username, password })
@@ -81,7 +81,7 @@ async function run() {
           'Refusing to reset: pass --confirm RESET_SINGLE_ADMIN_PASSWORD',
         )
       }
-      const { resetAdminPasswordCommand } = await import('../server/utils/auth-commands')
+      const { resetAdminPasswordCommand } = await import('../server/utils/service/auth-commands')
       const { readAdminCredentials } = await import('./auth-input')
       const { password, username } = await readAdminCredentials('New admin password: ')
       const result = await resetAdminPasswordCommand(config, {
@@ -155,7 +155,7 @@ async function run() {
           limit: { type: 'string' },
         },
       })
-      const { cleanupExpiredUploads } = await import('../server/utils/upload-cleanup')
+      const { cleanupExpiredUploads } = await import('../server/utils/runner/upload-cleanup')
       return await cleanupExpiredUploads({
         dryRun: values['dry-run'] !== false,
         limit: values.limit ? Number(values.limit) : undefined,
@@ -171,7 +171,7 @@ async function run() {
           scope: { type: 'string' },
         },
       })
-      const { reconcileSiteDisplay } = await import('../server/utils/site-display-reconcile')
+      const { reconcileSiteDisplay } = await import('../server/utils/runner/site-display-reconcile')
       const scopes = ['all', 'home-hero', 'commission-hero', 'home-entry']
       if (values.scope && !scopes.includes(values.scope)) {
         throw new Error(`--scope must be one of ${scopes.join(', ')}`)
@@ -186,11 +186,11 @@ async function run() {
       // T34-F5：手动触发一次启动恢复扫描，用于运维确认卡住的长任务。
       const { getDatabase } = await import('../server/utils/database')
       const { getMediaStorage } = await import('../server/utils/media-storage')
-      await import('../server/utils/home-management')
-      await import('../server/utils/site-display-reconcile')
-      await import('../server/utils/watermark-branding')
-      await import('../server/utils/work-publication')
-      const { recoverPendingOperations } = await import('../server/utils/operation-recovery')
+      await import('../server/utils/runner/home-management')
+      await import('../server/utils/runner/site-display-reconcile')
+      await import('../server/utils/runner/watermark-branding')
+      await import('../server/utils/runner/work-publication')
+      const { recoverPendingOperations } = await import('../server/utils/runner/operation-recovery')
       return await recoverPendingOperations({
         sqlite: getDatabase().sqlite,
         storage: getMediaStorage(),

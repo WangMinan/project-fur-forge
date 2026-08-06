@@ -1,4 +1,4 @@
-import { evaluateReadiness } from '../utils/readiness'
+import { evaluateReadiness } from '../utils/service/readiness'
 
 /**
  * T34-F6：旧兼容端点。此前它固定返回 ok，无论数据库是否可用，因此可能被

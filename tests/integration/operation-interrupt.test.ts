@@ -24,7 +24,7 @@ import {
   migrateDatabase,
   openDatabase,
 } from '../../server/utils/database'
-import { SITE_DISPLAY_RECIPE_VERSION } from '../../server/utils/site-display-recipe'
+import { SITE_DISPLAY_RECIPE_VERSION } from '../../server/utils/recipe/site-display-recipe'
 import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
 
 /**
