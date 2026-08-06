@@ -123,7 +123,7 @@
   - 不进行与 C.1 无关的全仓重构。
   _依赖：T34-F3。_
 
-- [ ] **T34-F5 · 长任务恢复、上传清扫与限流加固**：
+- [ ] **T34-F5 · 长任务恢复、上传清扫与限流加固**（**部分完成**：过期上传清扫已落地；**operation lease/心跳/启动恢复与限流分桶尚未完成**）：
   - operation attempt、lease、heartbeat、超时和启动恢复；
   - 在生成/验证/提交阶段中断进程并重启验证；
   - 过期上传会话主动清扫、dry-run 和精确前缀；
@@ -132,7 +132,7 @@
   - 安全日志和审计保持脱敏。
   _依赖：T34-F4。_
 
-- [ ] **T34-F6 · Node 24 镜像、Compose、Nginx 与运维文件准备**：
+- [x] **T34-F6 · Node 24 镜像、Compose、Nginx 与运维文件准备**：
   - 标准 frozen 多阶段构建；
   - 不手工复制 `ali-oss` 或其他单个依赖闭包；
   - 同一镜像提供 serve、migrate、init-admin、backup、restore-verify、preflight、cleanup-expired-uploads；
@@ -144,7 +144,7 @@
   - 镜像构建验证由 T34-F7 在 GitHub Actions 执行；正式域名、TLS 与线上演练延期。
   _依赖：T34-F5。_
 
-- [ ] **T34-F7 · GitHub Actions CI 与镜像发布流水线**：
+- [x] **T34-F7 · GitHub Actions CI 与镜像发布流水线**：
   - 质量门禁：frozen install、lint、typecheck、unit、integration、build、verify:production、secret/content scan、`docker compose config`、Dockerfile 构建验证；
   - 镜像发布：tag `v*` 与 `workflow_dispatch` 触发，登录 Docker Hub 并推送版本标签与 latest；
   - Secrets 仅 `DOCKERHUB_USERNAME` 与 `DOCKERHUB_TOKEN`，PR 不读取、不 echo PAT；
