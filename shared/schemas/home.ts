@@ -116,11 +116,14 @@ export const updateHeroSlideRequestSchema = versionedRequestSchema(
 export const mutateHomeRequestSchema = versionedRequestSchema(
   z.object({}).strict(),
 )
+/**
+ * T34-F3：首屏设置只写首页口号与轮播行为。
+ * 官方邮箱与 QQ 改由 contact 分区编辑，因此这里不再接受这两个字段；
+ * strict() 会拒绝旧版前端继续提交它们，避免出现两个可编辑入口。
+ */
 export const updateHomeSettingsRequestSchema = versionedRequestSchema(
   z.object({
     tagline: homeTaglineSchema,
-    contactEmail: contactEmailSchema,
-    contactQq: contactQqSchema,
     autoRotate: z.boolean(),
     autoRotateIntervalMs: z.number().int().min(6_000).max(300_000),
   }).strict(),

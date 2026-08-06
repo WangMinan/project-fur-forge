@@ -38,6 +38,8 @@ export const SITE_CONTENT_LIMITS = {
   statusDetail: 240,
   douyinMin: 2,
   douyinMax: 30,
+  emailMax: 254,
+  qqMax: 12,
 } as const
 
 const unsafePlainTextPattern = /[<>]|\b(?:javascript|vbscript)\s*:|data\s*:\s*text\/html/iu
@@ -52,6 +54,18 @@ export function hasUnsafePlainText(value: string): boolean {
 export function normalizeNullableText(value: string): string | null {
   const trimmed = value.trim()
   return trimmed.length > 0 ? trimmed : null
+}
+
+/** 与 shared contactEmailSchema 同边界的保存前提示。 */
+export function isValidContactEmail(value: string): boolean {
+  return value.length > 0
+    && value.length <= SITE_CONTENT_LIMITS.emailMax
+    && /^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(value)
+}
+
+/** 与 shared contactQqSchema 同边界的保存前提示。 */
+export function isValidContactQq(value: string): boolean {
+  return /^[1-9]\d{4,11}$/u.test(value)
 }
 
 export function isValidDouyin(value: string): boolean {

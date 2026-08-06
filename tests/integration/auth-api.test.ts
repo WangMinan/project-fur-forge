@@ -605,7 +605,13 @@ describe('authentication API', () => {
     const privacyPayload = {
       privacyPolicy: '本站不提供访客账号，不使用营销分析 Cookie。',
     }
-    const contactPayload = { douyin: 'to3114559925', antiScam: null }
+    // T34-F3：邮箱与 QQ 也在 contact 分区里编辑。
+    const contactPayload = {
+      email: 'studio@example.test',
+      qq: '3114559925',
+      douyin: 'to3114559925',
+      antiScam: null,
+    }
     const missingCsrf = await fetch(sectionUrl('commission'), {
       method: 'PUT',
       headers: {
@@ -644,8 +650,9 @@ describe('authentication API', () => {
           expectedVersion: 1,
           payload: {
             tagline: '不只做小狗毛',
-            contactEmail: 'invalid',
-            contactQq: '0123',
+            // 首屏设置不再接受官方邮箱与 QQ：strict 拒绝旧字段。
+            contactEmail: 'studio@example.test',
+            contactQq: '3114559925',
             autoRotate: false,
             autoRotateIntervalMs: 6000,
           },
@@ -755,7 +762,8 @@ describe('authentication API', () => {
         },
         commission: {
           ...payload.commission,
-          email: '3114559925@qq.com',
+          // contact 分区保存后，公开投影里的邮箱随之更新。
+          email: contactPayload.email,
           termsHref: '/service',
         },
         about: {
@@ -764,9 +772,9 @@ describe('authentication API', () => {
           basicTerms: null,
           privacyPolicy: payload.about.privacyPolicy,
           officialChannels: {
-            email: '3114559925@qq.com',
-            qq: '3114559925',
-            douyin: 'to3114559925',
+            email: contactPayload.email,
+            qq: contactPayload.qq,
+            douyin: contactPayload.douyin,
           },
         },
       },

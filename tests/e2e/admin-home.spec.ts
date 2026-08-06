@@ -115,17 +115,19 @@ test.afterEach(async ({ page }) => {
   await resetFakeMedia(page)
 })
 
+// T34-F3：首屏设置只剩口号与轮播行为；官方邮箱与 QQ 移到“文案配置”的
+// 官方渠道 Card，由 admin-content-sections.spec.ts 覆盖编辑与公开投影。
 test('首屏设置：加载、修改保存、刷新后保持', async ({ page }) => {
   await gotoHomeAdmin(page)
   await expect(page.locator('#home-tagline')).toHaveValue('不只做小狗毛')
-  await expect(page.locator('#home-contact-email')).toHaveValue('3114559925@qq.com')
-  await expect(page.locator('#home-contact-qq')).toHaveValue('3114559925')
+  // 首屏设置不再提供第二个官方渠道编辑入口。
+  await expect(page.locator('#home-contact-email')).toHaveCount(0)
+  await expect(page.locator('#home-contact-qq')).toHaveCount(0)
+  await expect(page.getByText(/官方邮箱、QQ、抖音号和防诈骗提醒统一在/u)).toBeVisible()
   await expect(page.locator('#home-auto-rotate')).not.toBeChecked()
   await expect(page.locator('#home-interval')).toBeDisabled()
 
   await page.locator('#home-tagline').fill('只做小狗毛（测试）')
-  await page.locator('#home-contact-email').fill('hello@example.test')
-  await page.locator('#home-contact-qq').fill('123456789')
   await page.locator('#home-auto-rotate').check()
   await page.locator('#home-interval').fill('8')
   await page.getByRole('button', { name: '保存设置' }).click()
@@ -134,22 +136,22 @@ test('首屏设置：加载、修改保存、刷新后保持', async ({ page }) 
   await page.reload()
   await page.waitForSelector('[data-testid="home-admin"]')
   await expect(page.locator('#home-tagline')).toHaveValue('只做小狗毛（测试）')
-  await expect(page.locator('#home-contact-email')).toHaveValue('hello@example.test')
-  await expect(page.locator('#home-contact-qq')).toHaveValue('123456789')
   await expect(page.locator('#home-auto-rotate')).toBeChecked()
   await expect(page.locator('#home-interval')).toHaveValue('8')
 
+  // 保存首屏设置不会改动官方渠道：公开页联系人保持既有值。
   await page.goto(`${publicBaseURL}/about#contact`)
   const contact = page.getByTestId('about-contact')
-  await expect(contact.getByRole('link', { name: 'hello@example.test' })).toHaveAttribute(
-    'href',
-    'mailto:hello@example.test',
-  )
-  await expect(contact.getByText('123456789', { exact: true })).toBeVisible()
+  await expect(
+    contact.getByRole('link', { name: DEFAULT_SETTINGS.contactEmail }),
+  ).toHaveAttribute('href', `mailto:${DEFAULT_SETTINGS.contactEmail}`)
+  await expect(
+    contact.getByText(DEFAULT_SETTINGS.contactQq, { exact: true }),
+  ).toBeVisible()
 
   const footer = page.getByTestId('public-footer')
-  await expect(footer).not.toContainText('hello@example.test')
-  await expect(footer).not.toContainText('QQ 123456789')
+  await expect(footer).not.toContainText(DEFAULT_SETTINGS.contactEmail)
+  await expect(footer).not.toContainText(`QQ ${DEFAULT_SETTINGS.contactQq}`)
 })
 
 test('轮播项 CRUD：横竖上传创建、编辑保存、删除确认', async ({ page }) => {
@@ -474,8 +476,6 @@ test('保存冲突：其他地方修改后提交，提示冲突并重新加载',
         expectedVersion: version,
         payload: {
           tagline: '别处修改的口号',
-          contactEmail: DEFAULT_SETTINGS.contactEmail,
-          contactQq: DEFAULT_SETTINGS.contactQq,
           autoRotate: false,
           autoRotateIntervalMs: 6_000,
         },

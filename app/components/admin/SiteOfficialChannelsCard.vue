@@ -2,14 +2,16 @@
 import type { AdminSiteContentDto } from '~~/shared/types/contracts'
 import {
   hasUnsafePlainText,
+  isValidContactEmail,
+  isValidContactQq,
   isValidDouyin,
   normalizeNullableText,
   SITE_CONTENT_LIMITS,
 } from '~/utils/site-content'
 
 /**
- * T34-F3 官方渠道与防诈骗提醒：抖音号与提醒文案在此保存。
- * 邮箱与 QQ 是同一官方渠道概念，此处只读展示并指向首屏设置，避免两个入口分散维护。
+ * T34-F3 官方渠道：官方邮箱、QQ、抖音号和防诈骗提醒都在这一张 Card 里编辑，
+ * 共用 contact 分区版本与一次局部保存。首屏设置不再提供第二个编辑入口。
  */
 const props = defineProps<{
   content: AdminSiteContentDto
@@ -29,6 +31,8 @@ const card = useSiteContentSectionCard({
   savedSection: () => props.savedSection,
   savingSection: () => props.savingSection,
   extract: dto => ({
+    email: dto.contact.email,
+    qq: dto.contact.qq,
     douyin: dto.contact.douyin ?? '',
     antiScam: dto.contact.antiScam ?? '',
   }),
@@ -36,6 +40,15 @@ const card = useSiteContentSectionCard({
 
 const issues = computed(() => {
   const found: Record<string, string> = {}
+  // 邮箱与 QQ 是公开投影必需字段，不能留空。
+  const email = card.draft.value.email.trim()
+  if (!isValidContactEmail(email)) {
+    found.email = '请填写有效的官方邮箱（最多 254 字符）'
+  }
+  const qq = card.draft.value.qq.trim()
+  if (!isValidContactQq(qq)) {
+    found.qq = 'QQ 号为 5–12 位数字，且不以 0 开头'
+  }
   const douyin = card.draft.value.douyin.trim()
   if (douyin && !isValidDouyin(douyin)) {
     found.douyin = '抖音号为 2–30 位字母、数字、点、下划线或连字符'
@@ -52,6 +65,8 @@ const issues = computed(() => {
 
 function save() {
   emit('save', {
+    email: card.draft.value.email.trim(),
+    qq: card.draft.value.qq.trim(),
     douyin: normalizeNullableText(card.draft.value.douyin),
     antiScam: normalizeNullableText(card.draft.value.antiScam),
   })
@@ -72,15 +87,44 @@ function save() {
     @reset="card.reset"
     @save="save"
   >
-    <dl class="channels-fixed">
-      <dt>官方邮箱</dt>
-      <dd>{{ content.contact.email }}</dd>
-      <dt>官方 QQ</dt>
-      <dd>{{ content.contact.qq }}</dd>
-    </dl>
-    <p class="channels-note">
-      邮箱与 QQ 在“首屏设置”里修改，这里显示当前生效的值，方便一起核对。
-    </p>
+    <div class="channels-field">
+      <label class="channels-label" for="site-field-email">官方邮箱</label>
+      <input
+        id="site-field-email"
+        v-model="card.draft.value.email"
+        class="channels-input"
+        :class="{ 'channels-input--invalid': Boolean(issues.email) }"
+        type="email"
+        :maxlength="SITE_CONTENT_LIMITS.emailMax"
+        autocomplete="email"
+        :aria-invalid="Boolean(issues.email)"
+        :aria-describedby="issues.email ? 'site-field-email-issue' : undefined"
+      >
+      <p v-if="issues.email" id="site-field-email-issue" class="channels-issue" role="alert">
+        {{ issues.email }}
+      </p>
+      <p v-else class="channels-hint">访客用它联系你，也是委托估价的收件地址。</p>
+    </div>
+
+    <div class="channels-field">
+      <label class="channels-label" for="site-field-qq">官方 QQ</label>
+      <input
+        id="site-field-qq"
+        v-model="card.draft.value.qq"
+        class="channels-input"
+        :class="{ 'channels-input--invalid': Boolean(issues.qq) }"
+        type="text"
+        inputmode="numeric"
+        pattern="[1-9][0-9]{4,11}"
+        :maxlength="SITE_CONTENT_LIMITS.qqMax"
+        autocomplete="off"
+        :aria-invalid="Boolean(issues.qq)"
+        :aria-describedby="issues.qq ? 'site-field-qq-issue' : undefined"
+      >
+      <p v-if="issues.qq" id="site-field-qq-issue" class="channels-issue" role="alert">
+        {{ issues.qq }}
+      </p>
+    </div>
 
     <div class="channels-field">
       <label class="channels-label" for="site-field-douyin">抖音号</label>
@@ -113,6 +157,10 @@ function save() {
 
     <template #latest>
       <dl class="channels-fixed">
+        <dt>官方邮箱</dt>
+        <dd>{{ card.latest.value.email }}</dd>
+        <dt>官方 QQ</dt>
+        <dd>{{ card.latest.value.qq }}</dd>
         <dt>抖音号</dt>
         <dd>{{ card.latest.value.douyin || '（未填写）' }}</dd>
         <dt>防诈骗提醒</dt>
