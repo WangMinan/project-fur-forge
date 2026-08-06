@@ -20,6 +20,34 @@ import {
 } from './media-recipe'
 import type { PublicMediaUsage } from './media-recipe'
 import {
+  completeOperation,
+  deletePublicVariant,
+  findDoneOperation,
+  findLatestOperations,
+  findPublicationOperation,
+  findReadyVariantFormats,
+  findRecoveryActorId,
+  findWorkMediaAssets,
+  findWorkOperationType,
+  findWorkPublicKeys,
+  findWorkState,
+  hasActiveWorkOperation,
+  hasEnabledHeroSlideForWork,
+  insertWorkAuditLog,
+  insertWorkOperation,
+  markOperationFailed,
+  markVariantsCleanupPending,
+  publishWorkRow,
+  setOperationCleanupKeys,
+  unpublishWorkRow,
+  updateOperationStatus,
+} from './publication-repository'
+import type {
+  OperationRow,
+  PublicationAsset,
+  WorkState,
+} from './publication-repository'
+import {
   assertOperationLease,
   claimOperationLease,
   heartbeatOperationLease,
@@ -38,83 +66,16 @@ import {
 import { activeWatermarkProfileId } from './watermark-branding'
 import { requireWatermarkProfile } from './watermark-profile'
 
-interface OperationRow {
-  cleanupObjectKeysJson: string
-  completedAt: number | null
-  entityId: string
-  failureStage: PublicationFailureStage | null
-  id: string
-  internalErrorCode: string | null
-  operationType: 'PUBLISH' | 'UNPUBLISH' | 'UPSCALE'
-  requestedVersion: number
-  startedAt: number
-  status: PublicationOperationStatus
-  updatedAt: number
-  version: number
-}
-
-interface WorkState {
-  adoptionMethod: string | null
-  businessStatus: string | null
-  characterName: string
-  id: string
-  ownerDisplay: string
-  currentEventName: string | null
-  priceAmountMinor: number | null
-  priceCurrency: string | null
-  publicationStatus: 'draft' | 'published' | 'unpublished'
-  purpose: 'commission' | 'adoption' | 'showcase'
-  slug: string
-  species: string
-  suitType: string
-  version: number
-}
-
-interface PublicationAsset {
-  alt: string | null
-  assetId: string
-  cropHeight: number
-  cropWidth: number
-  height: number
-  primary: number
-  role: 'design_sheet' | 'studio_photo'
-  status: string
-  watermarkAnchor: string
-  width: number
-}
-
 interface PublicationTarget {
   asset: PublicationAsset
   usages: PublicMediaUsage[]
 }
 
-const operationColumns = `
-    id, operation_type AS operationType, entity_id AS entityId,
-    requested_version AS requestedVersion, status,
-    cleanup_object_keys_json AS cleanupObjectKeysJson,
-    internal_error_code AS internalErrorCode,
-    failure_stage AS failureStage, version,
-    started_at AS startedAt, updated_at AS updatedAt,
-    completed_at AS completedAt
-`
-
-const selectOperation = `
-  SELECT ${operationColumns}
-  FROM publication_operations
-`
-
-const selectWork = `
-  SELECT
-    id, version, slug, character_name AS characterName, species,
-    suit_type AS suitType, purpose, adoption_method AS adoptionMethod,
-    business_status AS businessStatus,
-    current_event_name AS currentEventName,
-    price_amount_minor AS priceAmountMinor,
-    price_currency AS priceCurrency,
-    owner_display AS ownerDisplay,
-    publication_status AS publicationStatus
-  FROM works
-`
+/**
+ * T34-F4：SQL、行映射与条件更新已移入 publication-repository。
+ * 本文件保留 service（校验、DTO 组合、事务入口）与 runner（operation、
+ * OSS 副作用、阶段推进、心跳、失败与精确清理）。
+ */
 
 function parseCleanupKeys(value: string) {
   const parsed = JSON.parse(value) as unknown
@@ -146,26 +107,16 @@ function operationDto(row: OperationRow): PublicationOperationDto {
   })
 }
 
-function findOperation(sqlite: Database.Database, id: string) {
-  return sqlite.prepare(`${selectOperation} WHERE id = ?`)
-    .get(id) as OperationRow | undefined
-}
-
 function requireOperation(sqlite: Database.Database, id: string) {
-  const row = findOperation(sqlite, id)
+  const row = findPublicationOperation(sqlite, id)
   if (!row) {
     throw new ServiceError(404, 'NOT_FOUND', 'Publication operation was not found.')
   }
   return row
 }
 
-function findWork(sqlite: Database.Database, id: string) {
-  return sqlite.prepare(`${selectWork} WHERE id = ?`)
-    .get(id) as WorkState | undefined
-}
-
 function requireWork(sqlite: Database.Database, id: string) {
-  const row = findWork(sqlite, id)
+  const row = findWorkState(sqlite, id)
   if (!row) {
     throw new ServiceError(404, 'NOT_FOUND', 'Work was not found.', 'RESOURCE_NOT_FOUND')
   }
@@ -181,22 +132,7 @@ function workState(row: WorkState) {
 }
 
 function mediaAssets(sqlite: Database.Database, workId: string) {
-  return sqlite.prepare(`
-    SELECT
-      relation.asset_id AS assetId,
-      relation.alt_text AS alt,
-      relation.is_primary AS "primary",
-      relation.role,
-      relation.watermark_anchor AS watermarkAnchor,
-      relation.crop_width AS cropWidth,
-      relation.crop_height AS cropHeight,
-      asset.status, asset.width, asset.height
-    FROM work_assets AS relation
-    JOIN assets AS asset ON asset.id = relation.asset_id
-    WHERE relation.work_id = ?
-      AND relation.role IN ('design_sheet', 'studio_photo')
-    ORDER BY relation.role, relation.position
-  `).all(workId) as PublicationAsset[]
+  return findWorkMediaAssets(sqlite, workId)
 }
 
 function publicationTargets(
@@ -233,34 +169,22 @@ function missingVariantCount(
     return requiredVariantCount(targets)
   }
   const profile = requireWatermarkProfile(sqlite, profileId)
-  const formats = sqlite.prepare(`
-    SELECT format FROM asset_variants
-    WHERE asset_id = ? AND storage_scope = 'PUBLIC' AND status = 'READY'
-      AND media_role = ? AND usage = ? AND width = ?
-      AND recipe_version = ?
-      AND watermark_profile = 'brand-centered-v2'
-      AND watermark_profile_id = ? AND watermark_config_digest = ?
-      AND logo_digest = ? AND watermark_anchor = 'center'
-      AND watermark_opacity_percent = ? AND watermark_scale_percent = ?
-      AND sha256 NOT GLOB '*[^0-9a-f]*' AND length(sha256) = 64
-      AND byte_size > 0
-  `)
   let missing = 0
   for (const target of targets) {
     for (const usage of target.usages) {
       for (const width of publicRecipeWidths(usage)) {
-        const values = new Set(formats.pluck().all(
-          target.asset.assetId,
-          target.asset.role,
+        const values = new Set(findReadyVariantFormats(sqlite, {
+          assetId: target.asset.assetId,
+          configDigest: profile.configDigest,
+          logoDigest: profile.logoDigest,
+          opacityPercent: profile.opacityPercent,
+          profileId: profile.id,
+          recipeVersion: PUBLIC_RECIPE_VERSION,
+          role: target.asset.role,
+          scalePercent: profile.scalePercent,
           usage,
           width,
-          PUBLIC_RECIPE_VERSION,
-          profile.id,
-          profile.configDigest,
-          profile.logoDigest,
-          profile.opacityPercent,
-          profile.scalePercent,
-        ) as string[])
+        }))
         if (!values.has('webp')) {
           missing += 1
         }
@@ -376,30 +300,17 @@ function createOperation(
   type: 'PUBLISH' | 'UNPUBLISH',
   now: number,
 ) {
-  const active = sqlite.prepare(`
-    SELECT 1 FROM publication_operations
-    WHERE entity_type = 'WORK' AND entity_id = ?
-      AND status NOT IN ('FAILED', 'DONE')
-    LIMIT 1
-  `).pluck().get(workId)
-  if (active) {
+  if (hasActiveWorkOperation(sqlite, workId)) {
     throw new ServiceError(409, 'CONFLICT', 'A publication operation is already active.', 'ACTIVE_OPERATION_EXISTS')
   }
   const id = randomUUID()
-  sqlite.prepare(`
-    INSERT INTO publication_operations (
-      id, operation_type, entity_type, entity_id, requested_version,
-      status, started_at, updated_at
-    ) VALUES (?, ?, 'WORK', ?, ?, ?, ?, ?)
-  `).run(
+  insertWorkOperation(sqlite, {
     id,
+    requestedVersion,
+    status: type === 'PUBLISH' ? 'GENERATING_PUBLIC' : 'COMMITTING',
     type,
     workId,
-    requestedVersion,
-    type === 'PUBLISH' ? 'GENERATING_PUBLIC' : 'COMMITTING',
-    now,
-    now,
-  )
+  }, now)
   return requireOperation(sqlite, id)
 }
 
@@ -410,13 +321,7 @@ function updateOperation(
   cleanupKeys: readonly string[],
   now: number,
 ) {
-  sqlite.prepare(`
-    UPDATE publication_operations
-    SET status = ?, cleanup_object_keys_json = ?,
-        internal_error_code = NULL, internal_error_message = NULL,
-        failure_stage = NULL, version = version + 1, updated_at = ?
-    WHERE id = ?
-  `).run(status, JSON.stringify(cleanupKeys), now, id)
+  updateOperationStatus(sqlite, id, status, cleanupKeys, now)
 }
 
 function failOperation(
@@ -430,55 +335,25 @@ function failOperation(
 ) {
   sqlite.transaction(() => {
     if (cleanupKeys.length > 0) {
-      const markVariant = sqlite.prepare(`
-        UPDATE asset_variants
-        SET status = 'FAILED', internal_error_code = 'PUBLIC_CLEANUP_PENDING',
-            version = version + 1, updated_at = ?
-        WHERE storage_scope = 'PUBLIC' AND object_key = ?
-      `)
-      cleanupKeys.forEach(key => markVariant.run(now, key))
+      markVariantsCleanupPending(sqlite, cleanupKeys, now)
     }
-    sqlite.prepare(`
-      UPDATE publication_operations
-      SET status = 'FAILED', cleanup_object_keys_json = ?,
-          internal_error_code = ?, internal_error_message = ?,
-          failure_stage = ?, version = version + 1,
-          updated_at = ?, completed_at = ?
-      WHERE id = ?
-    `).run(
-      JSON.stringify(cleanupKeys),
-      code,
-      'Publication operation failed.',
-      stage,
-      now,
-      now,
-      id,
-    )
-    sqlite.prepare(`
-      INSERT INTO audit_logs (
-        id, actor_user_id, action, entity_type, entity_id, result, created_at
-      ) VALUES (?, ?, 'WORK_PUBLICATION', 'WORK', ?, 'FAILURE', ?)
-    `).run(randomUUID(), actorUserId, requireOperation(sqlite, id).entityId, now)
+    markOperationFailed(sqlite, id, { cleanupKeys, code, stage }, now)
+    insertWorkAuditLog(sqlite, {
+      action: 'WORK_PUBLICATION',
+      actorUserId,
+      id: randomUUID(),
+      result: 'FAILURE',
+      workId: requireOperation(sqlite, id).entityId,
+    }, now)
   })()
 }
 
 function publicKeys(sqlite: Database.Database, workId: string) {
-  return sqlite.prepare(`
-    SELECT variant.object_key
-    FROM asset_variants AS variant
-    JOIN work_assets AS relation ON relation.asset_id = variant.asset_id
-    WHERE relation.work_id = ? AND variant.storage_scope = 'PUBLIC'
-  `).pluck().all(workId) as string[]
+  return findWorkPublicKeys(sqlite, workId)
 }
 
 function readyPublicKeys(sqlite: Database.Database, workId: string) {
-  return sqlite.prepare(`
-    SELECT variant.object_key
-    FROM asset_variants AS variant
-    JOIN work_assets AS relation ON relation.asset_id = variant.asset_id
-    WHERE relation.work_id = ? AND variant.storage_scope = 'PUBLIC'
-      AND variant.status = 'READY'
-  `).pluck().all(workId) as string[]
+  return findWorkPublicKeys(sqlite, workId, true)
 }
 
 function newlyCreatedKeys(
@@ -514,16 +389,9 @@ async function cleanOperationKeys(
     try {
       await storage.deletePublic(key)
       sqlite.transaction(() => {
-        sqlite.prepare(`
-          DELETE FROM asset_variants
-          WHERE storage_scope = 'PUBLIC' AND object_key = ?
-        `).run(key)
+        deletePublicVariant(sqlite, key)
         remaining = remaining.filter(candidate => candidate !== key)
-        sqlite.prepare(`
-          UPDATE publication_operations
-          SET cleanup_object_keys_json = ?, version = version + 1,
-              updated_at = ? WHERE id = ?
-        `).run(JSON.stringify(remaining), now, operationId)
+        setOperationCleanupKeys(sqlite, operationId, remaining, now)
       })()
     }
     catch {
@@ -552,14 +420,7 @@ async function cleanOperationKeys(
     )
   }
   else {
-    sqlite.prepare(`
-      UPDATE publication_operations
-      SET status = 'DONE', cleanup_object_keys_json = '[]',
-          internal_error_code = NULL, internal_error_message = NULL,
-          failure_stage = NULL, version = version + 1,
-          updated_at = ?, completed_at = ?
-      WHERE id = ?
-    `).run(now, now, operationId)
+    completeOperation(sqlite, operationId, now)
   }
   return requireOperation(sqlite, operationId)
 }
@@ -616,12 +477,7 @@ function repeatedOperation(
   expectedVersion: number,
   type: 'PUBLISH' | 'UNPUBLISH',
 ) {
-  return sqlite.prepare(`
-    ${selectOperation}
-    WHERE entity_type = 'WORK' AND entity_id = ?
-      AND requested_version = ? AND operation_type = ? AND status = 'DONE'
-    ORDER BY started_at DESC LIMIT 1
-  `).get(workId, expectedVersion, type) as OperationRow | undefined
+  return findDoneOperation(sqlite, workId, expectedVersion, type)
 }
 
 export async function publishWork(
@@ -745,13 +601,8 @@ async function runWorkPublication(
     sqlite.transaction(() => {
       // lease CAS 与作品版本 CAS 同事务。
       assertOperationLease(sqlite, lease)
-      const updated = sqlite.prepare(`
-        UPDATE works
-        SET publication_status = 'published', published_at = ?,
-            version = version + 1, updated_at = ?
-        WHERE id = ? AND version = ? AND publication_status != 'published'
-      `).run(now, now, workId, expectedVersion)
-      if (updated.changes !== 1) {
+      const updated = publishWorkRow(sqlite, workId, expectedVersion, now)
+      if (updated !== 1) {
         throw new Error('Publication version changed during generation.')
       }
       const committed = sqlite.prepare(`
@@ -765,11 +616,13 @@ async function runWorkPublication(
       if (committed.changes !== 1) {
         throw new Error('Publication commit lost its lease.')
       }
-      sqlite.prepare(`
-        INSERT INTO audit_logs (
-          id, actor_user_id, action, entity_type, entity_id, result, created_at
-        ) VALUES (?, ?, 'WORK_PUBLISH', 'WORK', ?, 'SUCCESS', ?)
-      `).run(randomUUID(), actorUserId, workId, now)
+      insertWorkAuditLog(sqlite, {
+        action: 'WORK_PUBLISH',
+        actorUserId,
+        id: randomUUID(),
+        result: 'SUCCESS',
+        workId,
+      }, now)
     })()
   }
   catch {
@@ -842,10 +695,7 @@ export async function unpublishWork(
   if (
     work.version === expectedVersion
     && work.publicationStatus === 'published'
-    && sqlite.prepare(`
-      SELECT 1 FROM site_hero_slides
-      WHERE linked_work_id = ? AND enabled = 1 LIMIT 1
-    `).pluck().get(workId)
+    && hasEnabledHeroSlideForWork(sqlite, workId)
   ) {
     throw new ServiceError(
       409,
@@ -928,28 +778,19 @@ async function runWorkUnpublication(
     try {
       sqlite.transaction(() => {
         assertOperationLease(sqlite, lease)
-        const updated = sqlite.prepare(`
-          UPDATE works
-          SET publication_status = 'unpublished', published_at = NULL,
-              version = version + 1, updated_at = ?
-          WHERE id = ? AND version = ? AND publication_status = 'published'
-        `).run(now, workId, expectedVersion)
-        if (updated.changes !== 1) {
+        const updated = unpublishWorkRow(sqlite, workId, expectedVersion, now)
+        if (updated !== 1) {
           throw new Error('Unpublication version changed.')
         }
-        const markVariant = sqlite.prepare(`
-          UPDATE asset_variants
-          SET status = 'FAILED', internal_error_code = 'PUBLIC_CLEANUP_PENDING',
-              version = version + 1, updated_at = ?
-          WHERE storage_scope = 'PUBLIC' AND object_key = ?
-        `)
-        keys.forEach(key => markVariant.run(now, key))
+        markVariantsCleanupPending(sqlite, keys, now)
         updateOperation(sqlite, operation.id, 'CLEANING_PUBLIC', keys, now)
-        sqlite.prepare(`
-          INSERT INTO audit_logs (
-            id, actor_user_id, action, entity_type, entity_id, result, created_at
-          ) VALUES (?, ?, 'WORK_UNPUBLISH', 'WORK', ?, 'SUCCESS', ?)
-        `).run(randomUUID(), actorUserId, workId, now)
+        insertWorkAuditLog(sqlite, {
+          action: 'WORK_UNPUBLISH',
+          actorUserId,
+          id: randomUUID(),
+          result: 'SUCCESS',
+          workId,
+        }, now)
       })()
     }
     catch {
@@ -1004,17 +845,11 @@ function workOperationTypeOf(
   sqlite: Database.Database,
   operationId: string,
 ) {
-  return sqlite.prepare(`
-    SELECT operation_type FROM publication_operations
-    WHERE id = ? AND entity_type = 'WORK'
-  `).pluck().get(operationId) as string | undefined
+  return findWorkOperationType(sqlite, operationId)
 }
 
-/** 恢复身份：没有交互式管理员时使用数据库中的唯一管理员作为可审计身份。 */
 function recoveryActorId(sqlite: Database.Database) {
-  return sqlite.prepare(`
-    SELECT id FROM users ORDER BY created_at LIMIT 1
-  `).pluck().get() as string | undefined ?? null
+  return findRecoveryActorId(sqlite)
 }
 
 registerOperationResumer({
@@ -1087,24 +922,7 @@ export function getLatestPublicationOperations(
   entityType: 'HOME' | 'WORK',
   entityIds: readonly string[],
 ) {
-  const ids = [...new Set(entityIds)]
-  if (ids.length === 0) {
-    return []
-  }
-  const placeholders = ids.map(() => '?').join(', ')
-  const rows = sqlite.prepare(`
-    SELECT * FROM (
-      SELECT ${operationColumns},
-        row_number() OVER (
-          PARTITION BY entity_id, operation_type
-          ORDER BY started_at DESC, id DESC
-        ) AS operationRank
-      FROM publication_operations
-      WHERE entity_type = ? AND entity_id IN (${placeholders})
-    )
-    WHERE operationRank = 1
-  `).all(entityType, ...ids) as OperationRow[]
-  return rows.map(operationDto)
+  return findLatestOperations(sqlite, entityType, entityIds).map(operationDto)
 }
 
 export async function retryPublicationCleanup(
