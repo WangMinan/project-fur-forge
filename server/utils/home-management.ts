@@ -21,9 +21,34 @@ import type {
 import {
   validateHeroSlidesForPublication,
 } from './hero-publication'
+import {
+  claimHomeVersion,
+  clearSlidePreviewKeys,
+  countEnabledSlides,
+  deleteDisabledSlide,
+  deletePublicVariantRow,
+  findHeroAsset,
+  findHome,
+  findPublicKeysForSlide,
+  findSlide,
+  findSlides,
+  findSystemRecoveryActorId,
+  findVariantsForAssets,
+  hasEnabledSlideAtOrder,
+  insertHomeAuditLog,
+  insertSlide,
+  isHeroAssetAssigned,
+  isWorkPublished,
+  replaceEnabledOrder,
+  setSlideEnabled,
+  setSlidePreviewKeys,
+  updateDisabledSlide,
+  updateHomeSettingsRow,
+} from './hero-repository'
 import type {
-  HeroMediaRole,
-} from './hero-publication'
+  HeroVariantRow,
+  SlideRow,
+} from './hero-repository'
 import {
   assetSupportsSiteDisplay,
   generateSiteDisplayVariants,
@@ -36,10 +61,7 @@ import {
   projectHomeEntry,
 } from './site-entry'
 import { toPublicHeroSlideDto } from './media-mapper'
-import type {
-  HeroSlideRecord,
-  VariantRecord,
-} from './media-mapper'
+import type { HeroSlideRecord } from './media-mapper'
 import type { MediaStorage } from './media-storage'
 import {
   ensureHeroUpscaleSource,
@@ -77,49 +99,6 @@ export interface HomeSettingsInput {
   tagline: string
 }
 
-interface HomeRow {
-  autoRotate: number
-  autoRotateIntervalMs: number
-  contactEmail: string
-  contactQq: string
-  tagline: string
-  version: number
-}
-
-interface HeroAssetRow {
-  assetId: string
-  height: number
-  role: HeroMediaRole
-  status: string
-  uploadedForHome: number
-  width: number
-}
-
-interface SlideRow {
-  alt: string
-  enabled: number
-  id: string
-  landscapeAssetId: string
-  landscapeHeight: number
-  landscapePrivateObjectKey: string
-  landscapePreviewObjectKey: string | null
-  landscapeSha256: string
-  landscapeWidth: number
-  linkedWorkId: string | null
-  linkedWorkSlug: string | null
-  linkedWorkStatus: 'draft' | 'published' | 'unpublished' | null
-  portraitAssetId: string
-  portraitHeight: number
-  portraitPrivateObjectKey: string
-  portraitPreviewObjectKey: string | null
-  portraitSha256: string
-  portraitWidth: number
-  placement: HeroPlacement
-  sortOrder: number
-  previewExpiresAt: number | null
-  version: number
-}
-
 interface HomeOperationRow {
   cleanupObjectKeysJson: string
   entityId: string
@@ -131,46 +110,14 @@ interface HomeOperationRow {
   version: number
 }
 
-interface HeroVariantRow extends VariantRecord {
-  assetId: string
-}
-
-const selectSlides = `
-  SELECT
-    slide.id, slide.version, slide.alt_text AS alt,
-    slide.placement,
-    slide.sort_order AS sortOrder, slide.enabled,
-    slide.landscape_asset_id AS landscapeAssetId,
-    landscape.width AS landscapeWidth,
-    landscape.height AS landscapeHeight,
-    landscape.sha256 AS landscapeSha256,
-    landscape.private_object_key AS landscapePrivateObjectKey,
-    slide.landscape_preview_object_key AS landscapePreviewObjectKey,
-    slide.portrait_asset_id AS portraitAssetId,
-    portrait.width AS portraitWidth,
-    portrait.height AS portraitHeight,
-    portrait.sha256 AS portraitSha256,
-    portrait.private_object_key AS portraitPrivateObjectKey,
-    slide.portrait_preview_object_key AS portraitPreviewObjectKey,
-    slide.preview_expires_at AS previewExpiresAt,
-    slide.linked_work_id AS linkedWorkId,
-    linked.slug AS linkedWorkSlug,
-    linked.publication_status AS linkedWorkStatus
-  FROM site_hero_slides AS slide
-  JOIN assets AS landscape ON landscape.id = slide.landscape_asset_id
-  JOIN assets AS portrait ON portrait.id = slide.portrait_asset_id
-  LEFT JOIN works AS linked ON linked.id = slide.linked_work_id
-`
+/**
+ * T34-F4：SQL、行映射与条件更新已移入 hero-repository。
+ * 本文件保留 service（业务规则、DTO 组合、事务入口）与 runner（operation、
+ * OSS 副作用、阶段推进、心跳、失败与清理）。
+ */
 
 function requireHome(sqlite: Database.Database) {
-  const row = sqlite.prepare(`
-    SELECT
-      version, hero_tagline AS tagline,
-      contact_email AS contactEmail, contact_qq AS contactQq,
-      hero_auto_rotate AS autoRotate,
-      hero_auto_rotate_interval_ms AS autoRotateIntervalMs
-    FROM site_content WHERE id = 'site'
-  `).get() as HomeRow | undefined
+  const row = findHome(sqlite)
   if (!row || !row.tagline || !row.contactEmail || !row.contactQq) {
     throw new ServiceError(500, 'INTERNAL_ERROR', 'Home settings are unavailable.')
   }
@@ -189,8 +136,7 @@ function slides(
   sqlite: Database.Database,
   placement: HeroPlacement = 'home',
 ) {
-  return sqlite.prepare(`${selectSlides} WHERE slide.placement = ? ORDER BY slide.enabled DESC, slide.sort_order, slide.id`)
-    .all(placement) as SlideRow[]
+  return findSlides(sqlite, placement)
 }
 
 function requireSlide(
@@ -198,51 +144,18 @@ function requireSlide(
   id: string,
   placement?: HeroPlacement,
 ) {
-  const slide = sqlite.prepare(`${selectSlides} WHERE slide.id = ?${placement ? ' AND slide.placement = ?' : ''}`)
-    .get(...(placement ? [id, placement] : [id])) as SlideRow | undefined
+  const slide = findSlide(sqlite, id, placement)
   if (!slide) {
     throw new ServiceError(404, 'NOT_FOUND', 'Hero slide was not found.')
   }
   return slide
 }
 
-const selectHeroVariants = `
-  SELECT
-      id, asset_id AS assetId, byte_size AS byteSize,
-      storage_scope AS storageScope, status, object_key AS objectKey,
-      width, height, format, input_sha256 AS inputSha256,
-      internal_error_code AS internalErrorCode,
-      logo_digest AS logoDigest, media_role AS mediaRole,
-      protection_mode AS protectionMode,
-      recipe_version AS recipeVersion, sha256, usage,
-      watermark_anchor AS watermarkAnchor,
-      watermark_config_digest AS watermarkConfigDigest,
-      watermark_opacity_percent AS watermarkOpacityPercent,
-      watermark_profile AS watermarkProfile,
-      watermark_profile_id AS watermarkProfileId,
-      watermark_scale_percent AS watermarkScalePercent
-    FROM asset_variants
-`
-
 function variantsForAssets(
   sqlite: Database.Database,
   assetIds: readonly string[],
 ) {
-  const ids = [...new Set(assetIds)]
-  const grouped = new Map(ids.map(id => [id, [] as HeroVariantRow[]]))
-  if (ids.length === 0) {
-    return grouped
-  }
-  const placeholders = ids.map(() => '?').join(', ')
-  const rows = sqlite.prepare(`
-    ${selectHeroVariants}
-    WHERE asset_id IN (${placeholders})
-    ORDER BY asset_id, usage, width, format
-  `).all(...ids) as HeroVariantRow[]
-  for (const row of rows) {
-    grouped.get(row.assetId)!.push(row)
-  }
-  return grouped
+  return findVariantsForAssets(sqlite, assetIds)
 }
 
 function variantsForAsset(sqlite: Database.Database, assetId: string) {
@@ -441,12 +354,11 @@ export async function createHeroSlidePreview(
     placement,
     'portrait',
   )
-  sqlite.prepare(`
-    UPDATE site_hero_slides
-    SET landscape_preview_object_key = ?, portrait_preview_object_key = ?,
-        preview_expires_at = ?
-    WHERE id = ? AND enabled = 0
-  `).run(landscapeObjectKey, portraitObjectKey, expiresAt, slide.id)
+  setSlidePreviewKeys(sqlite, slide.id, {
+    expiresAt,
+    landscapeObjectKey,
+    portraitObjectKey,
+  })
   const preview = async (input: {
     assetId: string
     orientation: 'landscape' | 'portrait'
@@ -606,19 +518,15 @@ export async function runHeroSlideUpscale(
       if (committed.changes !== 1) {
         throw new Error('Hero upscale commit lost its lease.')
       }
-      sqlite.prepare(`
-        INSERT INTO audit_logs (
-          id, actor_user_id, action, entity_type, entity_id, result, created_at
-        ) VALUES (?, ?, ?, 'HOME', ?, 'SUCCESS', ?)
-      `).run(
-        randomUUID(),
-        actorUserId,
-        slide.placement === 'home'
+      insertHomeAuditLog(sqlite, {
+        action: slide.placement === 'home'
           ? 'HOME_HERO_UPSCALE'
           : 'COMMISSION_HERO_UPSCALE',
-        slide.id,
-        Date.now(),
-      )
+        actorUserId,
+        entityId: slide.id,
+        id: randomUUID(),
+        result: 'SUCCESS',
+      }, Date.now())
     })()
   }
   catch {
@@ -627,19 +535,15 @@ export async function runHeroSlideUpscale(
     }
     failUpscaleOperation(sqlite, operationId, 'HERO_UPSCALE_FAILED', Date.now())
     releaseOperationLease(sqlite, lease, Date.now())
-    sqlite.prepare(`
-      INSERT INTO audit_logs (
-        id, actor_user_id, action, entity_type, entity_id, result, created_at
-      ) VALUES (?, ?, ?, 'HOME', ?, 'FAILURE', ?)
-    `).run(
-      randomUUID(),
-      actorUserId,
-      slide.placement === 'home'
+    insertHomeAuditLog(sqlite, {
+      action: slide.placement === 'home'
         ? 'HOME_HERO_UPSCALE'
         : 'COMMISSION_HERO_UPSCALE',
-      slide.id,
-      Date.now(),
-    )
+      actorUserId,
+      entityId: slide.id,
+      id: randomUUID(),
+      result: 'FAILURE',
+    }, Date.now())
   }
   return getPublicationOperation(sqlite, operationId)
 }
@@ -649,9 +553,7 @@ export async function runHeroSlideUpscale(
  * 因此审计使用数据库里的唯一管理员作为可审计身份；没有管理员时留空。
  */
 export function systemRecoveryActorId(sqlite: Database.Database) {
-  return sqlite.prepare(`
-    SELECT id FROM users ORDER BY created_at LIMIT 1
-  `).pluck().get() as string | undefined ?? null
+  return findSystemRecoveryActorId(sqlite)
 }
 
 function homeOperationTypeOf(sqlite: Database.Database, operationId: string) {
@@ -768,13 +670,7 @@ async function clearHeroSlidePreviews(
     await storage.deletePrivate(key)
   }
   if (keys.length > 0 || slide.previewExpiresAt !== null) {
-    sqlite.prepare(`
-      UPDATE site_hero_slides
-      SET landscape_preview_object_key = NULL,
-          portrait_preview_object_key = NULL,
-          preview_expires_at = NULL
-      WHERE id = ?
-    `).run(slide.id)
+    clearSlidePreviewKeys(sqlite, slide.id)
   }
 }
 
@@ -864,40 +760,6 @@ export function getPublicCommissionHero(
   return publicCommissionHeroDtoSchema.parse({ slide: slides[0] ?? null })
 }
 
-function claimHomeVersion(
-  sqlite: Database.Database,
-  expectedVersion: number,
-  now: number,
-) {
-  const result = sqlite.prepare(`
-    UPDATE site_content
-    SET version = version + 1, updated_at = ?
-    WHERE id = 'site' AND version = ?
-  `).run(now, expectedVersion)
-  if (result.changes !== 1) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
-  }
-}
-
-function heroAsset(
-  sqlite: Database.Database,
-  assetId: string,
-): HeroAssetRow | undefined {
-  return sqlite.prepare(`
-    SELECT
-      asset.id AS assetId, asset.role, asset.status,
-      asset.width, asset.height,
-      EXISTS (
-        SELECT 1 FROM upload_sessions AS upload
-        WHERE upload.asset_id = asset.id
-          AND upload.owner_type = 'site'
-          AND upload.owner_id = 'home'
-          AND upload.status = 'COMPLETED'
-      ) AS uploadedForHome
-    FROM assets AS asset WHERE asset.id = ?
-  `).get(assetId) as HeroAssetRow | undefined
-}
-
 function assertAssetPair(
   sqlite: Database.Database,
   input: Pick<HeroSlideInput, 'landscapeAssetId' | 'portraitAssetId'>,
@@ -906,8 +768,8 @@ function assertAssetPair(
   if (input.landscapeAssetId === input.portraitAssetId) {
     throw new ServiceError(409, 'CONFLICT', 'Hero assets must be distinct.')
   }
-  const landscape = heroAsset(sqlite, input.landscapeAssetId)
-  const portrait = heroAsset(sqlite, input.portraitAssetId)
+  const landscape = findHeroAsset(sqlite, input.landscapeAssetId)
+  const portrait = findHeroAsset(sqlite, input.portraitAssetId)
   if (!landscape || !portrait) {
     throw new ServiceError(404, 'NOT_FOUND', 'Hero asset was not found.')
   }
@@ -923,20 +785,11 @@ function assertAssetPair(
   ) {
     throw new ServiceError(409, 'CONFLICT', 'Hero assets are not publication-ready.', 'HERO_ASSETS_NOT_READY')
   }
-  const used = sqlite.prepare(`
-    SELECT 1 FROM site_hero_slides
-    WHERE id != COALESCE(?, '')
-      AND (
-        landscape_asset_id IN (?, ?)
-        OR portrait_asset_id IN (?, ?)
-      )
-    LIMIT 1
-  `).pluck().get(
-    exceptSlideId ?? null,
+  const used = isHeroAssetAssigned(
+    sqlite,
     input.landscapeAssetId,
     input.portraitAssetId,
-    input.landscapeAssetId,
-    input.portraitAssetId,
+    exceptSlideId,
   )
   if (used) {
     throw new ServiceError(409, 'CONFLICT', 'Hero asset is already assigned.', 'HERO_ASSET_ALREADY_ASSIGNED')
@@ -947,11 +800,7 @@ function assertLinkedWork(sqlite: Database.Database, linkedWorkId: string | null
   if (!linkedWorkId) {
     return
   }
-  const published = sqlite.prepare(`
-    SELECT 1 FROM works
-    WHERE id = ? AND publication_status = 'published'
-  `).pluck().get(linkedWorkId)
-  if (!published) {
+  if (!isWorkPublished(sqlite, linkedWorkId)) {
     throw new ServiceError(409, 'CONFLICT', 'Linked work must be published.', 'LINKED_WORK_NOT_PUBLISHED')
   }
 }
@@ -980,23 +829,11 @@ export function createHeroSlide(
   try {
     sqlite.transaction(() => {
       claimHomeVersion(sqlite, expectedVersion, now)
-      sqlite.prepare(`
-        INSERT INTO site_hero_slides (
-          id, placement, landscape_asset_id, portrait_asset_id, alt_text,
-          sort_order, enabled, linked_work_id, version,
-          created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, 0, ?, 1, ?, ?)
-      `).run(
-        randomUUID(),
+      insertSlide(sqlite, {
+        ...input,
+        id: randomUUID(),
         placement,
-        input.landscapeAssetId,
-        input.portraitAssetId,
-        input.alt,
-        input.sortOrder,
-        input.linkedWorkId,
-        now,
-        now,
-      )
+      }, now)
     })()
   }
   catch (error) {
@@ -1025,22 +862,7 @@ export async function updateHeroSlide(
   try {
     sqlite.transaction(() => {
       claimHomeVersion(sqlite, expectedVersion, now)
-      sqlite.prepare(`
-        UPDATE site_hero_slides
-        SET landscape_asset_id = ?, portrait_asset_id = ?, alt_text = ?,
-            sort_order = ?, linked_work_id = ?, version = version + 1,
-            updated_at = ?
-        WHERE id = ? AND enabled = 0 AND placement = ?
-      `).run(
-        input.landscapeAssetId,
-        input.portraitAssetId,
-        input.alt,
-        input.sortOrder,
-        input.linkedWorkId,
-        now,
-        id,
-        placement,
-      )
+      updateDisabledSlide(sqlite, id, placement, input, now)
     })()
   }
   catch (error) {
@@ -1065,10 +887,7 @@ export async function deleteHeroSlide(
   await clearHeroSlidePreviews(sqlite, storage, slide)
   sqlite.transaction(() => {
     claimHomeVersion(sqlite, expectedVersion, now)
-    sqlite.prepare(`
-      DELETE FROM site_hero_slides
-      WHERE id = ? AND enabled = 0 AND placement = ?
-    `).run(id, placement)
+    deleteDisabledSlide(sqlite, id, placement)
   })()
   return getAdminHome(sqlite, placement)
 }
@@ -1079,20 +898,8 @@ export function updateHomeSettings(
   input: HomeSettingsInput,
   now = Date.now(),
 ) {
-  const result = sqlite.prepare(`
-    UPDATE site_content
-    SET hero_tagline = ?, hero_auto_rotate = ?,
-        hero_auto_rotate_interval_ms = ?, version = version + 1,
-        updated_at = ?
-    WHERE id = 'site' AND version = ?
-  `).run(
-    input.tagline,
-    input.autoRotate ? 1 : 0,
-    input.autoRotateIntervalMs,
-    now,
-    expectedVersion,
-  )
-  if (result.changes !== 1) {
+  const changes = updateHomeSettingsRow(sqlite, input, expectedVersion, now)
+  if (changes !== 1) {
     throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
   return getAdminHome(sqlite)
@@ -1120,21 +927,7 @@ export function reorderEnabledHeroSlides(
   }
   sqlite.transaction(() => {
     claimHomeVersion(sqlite, expectedVersion, now)
-    sqlite.prepare(`
-      UPDATE site_hero_slides SET enabled = 0
-      WHERE enabled = 1 AND placement = ?
-    `).run(placement)
-    const update = sqlite.prepare(`
-      UPDATE site_hero_slides
-      SET sort_order = ?, version = version + 1, updated_at = ?
-      WHERE id = ? AND enabled = 0 AND placement = ?
-    `)
-    slideIds.forEach((id, index) => update.run(index, now, id, placement))
-    const enable = sqlite.prepare(`
-      UPDATE site_hero_slides SET enabled = 1
-      WHERE id = ? AND placement = ?
-    `)
-    slideIds.forEach(id => enable.run(id, placement))
+    replaceEnabledOrder(sqlite, placement, slideIds, now)
     validateHeroSlidesForPublication(sqlite, placement)
   })()
   return getAdminHome(sqlite, placement)
@@ -1154,32 +947,23 @@ export async function disableHeroSlide(
   if (slide.enabled !== 1) {
     throw new ServiceError(409, 'CONFLICT', 'Hero slide is already disabled.')
   }
-  const enabledCount = Number(sqlite.prepare(`
-    SELECT count(*) FROM site_hero_slides
-    WHERE enabled = 1 AND placement = ?
-  `).pluck().get(placement))
+  const enabledCount = countEnabledSlides(sqlite, placement)
   if (placement === 'home' && enabledCount <= 1) {
     throw new ServiceError(409, 'CONFLICT', 'At least one hero slide must remain enabled.', 'HERO_LAST_ENABLED_SLIDE')
   }
   await clearHeroSlidePreviews(sqlite, storage, slide)
   sqlite.transaction(() => {
     claimHomeVersion(sqlite, expectedVersion, now)
-    sqlite.prepare(`
-      UPDATE site_hero_slides
-      SET enabled = 0, version = version + 1, updated_at = ?
-      WHERE id = ? AND enabled = 1 AND placement = ?
-    `).run(now, id, placement)
-    sqlite.prepare(`
-      INSERT INTO audit_logs (
-        id, actor_user_id, action, entity_type, entity_id, result, created_at
-      ) VALUES (?, ?, ?, 'HOME', ?, 'SUCCESS', ?)
-    `).run(
-      randomUUID(),
+    setSlideEnabled(sqlite, id, placement, false, now)
+    insertHomeAuditLog(sqlite, {
+      action: placement === 'home'
+        ? 'HOME_HERO_DISABLE'
+        : 'COMMISSION_HERO_DISABLE',
       actorUserId,
-      placement === 'home' ? 'HOME_HERO_DISABLE' : 'COMMISSION_HERO_DISABLE',
-      id,
-      now,
-    )
+      entityId: id,
+      id: randomUUID(),
+      result: 'SUCCESS',
+    }, now)
   })()
   return getAdminHome(sqlite, placement)
 }
@@ -1195,14 +979,12 @@ function assertSlideCanEnable(
   if (slide.sortOrder < 0 || slide.sortOrder > 4) {
     throw new ServiceError(409, 'CONFLICT', 'Enabled hero slide order must be between 0 and 4.', 'HERO_ORDER_STALE')
   }
-  const enabledCount = Number(sqlite.prepare(`
-    SELECT count(*) FROM site_hero_slides
-    WHERE enabled = 1 AND placement = ?
-  `).pluck().get(placement))
-  const orderConflict = sqlite.prepare(`
-    SELECT 1 FROM site_hero_slides
-    WHERE enabled = 1 AND placement = ? AND sort_order = ? LIMIT 1
-  `).pluck().get(placement, slide.sortOrder)
+  const enabledCount = countEnabledSlides(sqlite, placement)
+  const orderConflict = hasEnabledSlideAtOrder(
+    sqlite,
+    placement,
+    slide.sortOrder,
+  )
   if (enabledCount >= 5 || orderConflict) {
     throw new ServiceError(409, 'CONFLICT', 'Enabled hero slides must have 1 to 5 unique positions.', 'HERO_SLOT_LIMIT')
   }
@@ -1278,14 +1060,7 @@ function setOperationStatus(
 }
 
 function publicKeysForSlide(sqlite: Database.Database, slide: SlideRow) {
-  return sqlite.prepare(`
-    SELECT object_key FROM asset_variants
-    WHERE storage_scope = 'PUBLIC'
-      AND asset_id IN (?, ?)
-  `).pluck().all(
-    slide.landscapeAssetId,
-    slide.portraitAssetId,
-  ) as string[]
+  return findPublicKeysForSlide(sqlite, slide)
 }
 
 async function cleanPublicKeys(
@@ -1297,10 +1072,7 @@ async function cleanPublicKeys(
   for (const key of keys) {
     try {
       await storage.deletePublic(key)
-      sqlite.prepare(`
-        DELETE FROM asset_variants
-        WHERE storage_scope = 'PUBLIC' AND object_key = ?
-      `).run(key)
+      deletePublicVariantRow(sqlite, key)
     }
     catch {
       remaining.push(key)
@@ -1424,11 +1196,7 @@ export async function runHeroSlidePublication(
         slide.placement,
       )
       claimHomeVersion(sqlite, operation.requestedVersion, now)
-      sqlite.prepare(`
-        UPDATE site_hero_slides
-        SET enabled = 1, version = version + 1, updated_at = ?
-        WHERE id = ? AND enabled = 0 AND placement = ?
-      `).run(now, slide.id, slide.placement)
+      setSlideEnabled(sqlite, slide.id, slide.placement, true, now)
       validateHeroSlidesForPublication(sqlite, slide.placement)
       const committed = sqlite.prepare(`
         UPDATE publication_operations
@@ -1443,19 +1211,15 @@ export async function runHeroSlidePublication(
       if (committed.changes !== 1) {
         throw new Error('Home publication commit lost its lease.')
       }
-      sqlite.prepare(`
-        INSERT INTO audit_logs (
-          id, actor_user_id, action, entity_type, entity_id, result, created_at
-        ) VALUES (?, ?, ?, 'HOME', ?, 'SUCCESS', ?)
-      `).run(
-        randomUUID(),
-        actorUserId,
-        slide.placement === 'home'
+      insertHomeAuditLog(sqlite, {
+        action: slide.placement === 'home'
           ? 'HOME_HERO_ENABLE'
           : 'COMMISSION_HERO_ENABLE',
-        slide.id,
-        now,
-      )
+        actorUserId,
+        entityId: slide.id,
+        id: randomUUID(),
+        result: 'SUCCESS',
+      }, now)
     })()
   }
   catch {

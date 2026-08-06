@@ -1,5 +1,7 @@
 import type Database from 'better-sqlite3'
 import type { HeroPlacement } from '../../shared/types/contracts'
+// T34-F4：媒体角色类型的唯一定义在 hero-repository。
+import type { HeroMediaRole } from './hero-repository'
 import {
   LEGACY_PUBLIC_RECIPE_VERSION,
   PUBLIC_RECIPE_VERSION,
@@ -9,9 +11,6 @@ import {
   SITE_HERO_USAGES,
 } from './site-display-recipe'
 
-export type HeroMediaRole =
-  | 'home_hero_landscape'
-  | 'home_hero_portrait'
 
 export interface HeroVariantCandidate {
   byteSize: number | null
