@@ -8,7 +8,9 @@
 
 项目仍处于 **阶段 C.1 · P0 收口修复**。
 
-T34-F1 至 T34-F6 的实施工作已完成，本地完整非 Docker 门禁通过。当前结论：
+T34-F1 至 T34-F6 的实施工作已完成，本地完整非 Docker 门禁通过
+（lint、typecheck、unit 118、integration 139、build、verify:production、
+secret scan、E2E **212 通过 0 失败**，真实双 Bucket 9/9）。当前结论：
 
 > **PASS WITH REQUIRED CLOSURE（等待用户验收与远端全绿）**
 
