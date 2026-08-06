@@ -74,8 +74,8 @@ docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs cleanup-expi
 ## 健康检查
 
 - `/api/health/live`：Node 进程存活；
-- `/api/health/ready`：数据库、迁移和基础记录就绪；
-- `/api/health`：旧兼容端点，Nginx 明确对公网返回 404。
+- `/api/health/ready`：数据库可打开、迁移历史（数量、顺序、时间戳与 hash）严格匹配、基础记录就绪；
+- `/api/health`：旧兼容端点，已改为与 ready 相同的诚实判定（未就绪返回 503），Nginx 仍明确对公网返回 404。
 
 Compose 直接在 app 容器内访问 `/api/health/ready`。Nginx 不向公网暴露任何健康端点。
 

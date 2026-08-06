@@ -132,7 +132,7 @@ export function openDatabase(databaseFile: string) {
 
 export type DatabaseHandle = ReturnType<typeof openDatabase>
 
-function migrationState(
+export function migrationState(
   sqlite: Database.Database,
   migrationsFolder: string,
 ) {
