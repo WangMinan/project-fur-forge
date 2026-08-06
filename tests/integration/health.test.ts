@@ -103,6 +103,41 @@ describe('runtime request boundaries', () => {
     expect(adminResponse.ok).toBe(true)
   })
 
+  /**
+   * T34-F6：liveness 只证明进程能响应，readiness 才检查数据库与迁移。
+   * 两者必须区分：等待服务启动的探针（Playwright webServer、容器编排）用
+   * liveness，否则数据库尚未迁移时会把"未就绪"误判为"启动失败"。
+   */
+  it('separates liveness from readiness and never leaks internals', async () => {
+    const [live, ready, legacy] = await Promise.all([
+      fetch(`${publicBaseUrl}/api/health/live`),
+      fetch(`${publicBaseUrl}/api/health/ready`),
+      fetch(`${publicBaseUrl}/api/health`),
+    ])
+
+    // liveness 不触碰数据库，因此永远 200。
+    expect(live.status).toBe(200)
+    await expect(live.json()).resolves.toEqual({ status: 'live' })
+    expect(live.headers.get('cache-control')).toBe('no-store')
+
+    // 本套件的库已迁移，因此 readiness 与旧兼容端点都应为就绪。
+    expect(ready.status).toBe(200)
+    expect(legacy.status).toBe(200)
+    const readyBody = await ready.json() as {
+      checks: Record<string, unknown>
+      status: string
+    }
+    expect(readyBody.status).toBe('ready')
+    // checks 只有布尔项，不含路径、SQL、表名或栈。
+    expect(Object.values(readyBody.checks)
+      .every(value => typeof value === 'boolean')).toBe(true)
+    const serialized = JSON.stringify(readyBody)
+    expect(serialized).not.toContain('studio.db')
+    expect(serialized).not.toContain('SELECT')
+    expect(serialized).not.toContain('__drizzle_migrations')
+    expect(serialized).not.toMatch(/Error|at \w+ \(/u)
+  })
+
   it('keeps page failures as HTML and API failures as JSON', async () => {
     const publicAdminResponse = await fetch(
       `${publicBaseUrl}/admin/login`,
