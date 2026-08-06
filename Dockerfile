@@ -9,7 +9,7 @@
 #   pnpm-workspace.yaml，严格执行仓库已审查的 allowBuilds/strictDepBuilds 策略；
 # - 本地不构建镜像；由 GitHub Actions 的 image-build job 验证。
 
-FROM node:24.18.0-bookworm-slim AS base
+FROM node:26.5.1-bookworm-slim AS base
 
 ENV PNPM_HOME=/pnpm \
     PATH=/pnpm:${PATH}
@@ -66,7 +66,7 @@ RUN pnpm exec esbuild scripts/container-ops.ts \
 RUN pnpm --filter=project-fur-paws --prod deploy --legacy /app/runtime-deploy
 
 # ---------- runtime：非 root，只包含运行和运维所需内容 ----------
-FROM node:24.18.0-bookworm-slim AS runtime
+FROM node:26.5.1-bookworm-slim AS runtime
 
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
