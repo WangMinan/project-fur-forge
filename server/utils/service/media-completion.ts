@@ -17,6 +17,7 @@ import {
   requireUploadSession,
   uploadSessionDto,
 } from './upload-session'
+import { attachReturnPhotoAsset } from './return-photo'
 
 const PREPROCESS_THRESHOLD_BYTES = 20_000_000
 const PREPROCESS_RECIPE = 'preprocess-v1'
@@ -90,6 +91,10 @@ function previewsFor(role: AssetRow['role']): VerifiedAssetDto['previews'] {
       { usage: 'work-card', aspect: '3:4', fitMode: 'cover' },
       { usage: 'detail', aspect: 'original', fitMode: 'contain' },
     ]
+  }
+  // 返图只有一个公开用途，并且保持原始比例：不出现 3:4 强裁预览。
+  if (role === 'return_photo') {
+    return [{ usage: 'return-wall', aspect: 'original', fitMode: 'contain' }]
   }
   return role === 'home_hero_landscape'
     ? [{ usage: 'home-hero-landscape', aspect: '16:9', fitMode: 'cover' }]
@@ -586,9 +591,22 @@ export async function completeUploadSession(
   }
 
   const completed = requireUploadSession(sqlite, sessionId)
+  const asset = requireAsset(sqlite, row.id)
+  // T36：返图归属的会话在核验通过后立即把资产绑定到返图记录。
+  // 只有 READY 资产才绑定；预处理失败的资产留在 FAILED，
+  // 返图仍是无图草稿，发布检查会明确说明。
+  if (completed.ownerType === 'return' && asset.status === 'READY') {
+    attachReturnPhotoAsset(
+      sqlite,
+      completed.ownerId,
+      completed.ownerVersion,
+      asset.id,
+      now,
+    )
+  }
   return {
     session: uploadSessionDto(completed),
-    asset: assetDto(requireAsset(sqlite, row.id)),
+    asset: assetDto(asset),
   }
 }
 

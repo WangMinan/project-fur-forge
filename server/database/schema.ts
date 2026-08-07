@@ -154,7 +154,7 @@ export const assets = sqliteTable('assets', {
     .on(table.privateObjectKey),
   check(
     'assets_role',
-    sql`${table.role} IN ('design_sheet', 'studio_photo', 'home_hero_landscape', 'home_hero_portrait', 'watermark_logo')`,
+    sql`${table.role} IN ('design_sheet', 'studio_photo', 'home_hero_landscape', 'home_hero_portrait', 'watermark_logo', 'return_photo')`,
   ),
   check(
     'assets_status',
@@ -287,7 +287,7 @@ export const uploadSessions = sqliteTable('upload_sessions', {
     .on(table.status, table.expiresAt),
   check(
     'upload_sessions_owner_type',
-    sql`${table.ownerType} IN ('work', 'site')`,
+    sql`${table.ownerType} IN ('work', 'site', 'return')`,
   ),
   check(
     'upload_sessions_owner_id',
@@ -299,7 +299,7 @@ export const uploadSessions = sqliteTable('upload_sessions', {
   ),
   check(
     'upload_sessions_media_role',
-    sql`(${table.ownerType} = 'work' AND ${table.mediaRole} IN ('design_sheet', 'studio_photo')) OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'home' AND ${table.mediaRole} IN ('home_hero_landscape', 'home_hero_portrait')) OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'branding' AND ${table.mediaRole} = 'watermark_logo')`,
+    sql`(${table.ownerType} = 'work' AND ${table.mediaRole} IN ('design_sheet', 'studio_photo')) OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'home' AND ${table.mediaRole} IN ('home_hero_landscape', 'home_hero_portrait')) OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'branding' AND ${table.mediaRole} = 'watermark_logo') OR (${table.ownerType} = 'return' AND ${table.mediaRole} = 'return_photo')`,
   ),
   check(
     'upload_sessions_private_key_relative',
@@ -441,11 +441,11 @@ export const assetVariants = sqliteTable('asset_variants', {
   ),
   check(
     'asset_variants_media_role',
-    sql`${table.mediaRole} IN ('design_sheet', 'studio_photo', 'home_hero_landscape', 'home_hero_portrait')`,
+    sql`${table.mediaRole} IN ('design_sheet', 'studio_photo', 'home_hero_landscape', 'home_hero_portrait', 'return_photo')`,
   ),
   check(
     'asset_variants_usage',
-    sql`${table.usage} IN ('preprocess', 'work-card', 'detail', 'design-sheet', 'home-hero-landscape', 'home-hero-portrait', 'commission-hero-landscape', 'commission-hero-portrait', 'home-entry-commission', 'home-entry-adoption')`,
+    sql`${table.usage} IN ('preprocess', 'work-card', 'detail', 'design-sheet', 'home-hero-landscape', 'home-hero-portrait', 'commission-hero-landscape', 'commission-hero-portrait', 'home-entry-commission', 'home-entry-adoption', 'return-wall')`,
   ),
   check(
     'asset_variants_dimensions',
@@ -493,7 +493,25 @@ export const assetVariants = sqliteTable('asset_variants', {
   ),
   check(
     'asset_variants_public_protection',
-    sql`${table.storageScope} != 'PUBLIC' OR ${table.protectionMode} = 'watermark' OR ${table.recipeVersion} = 'site-display-v1'`,
+    sql`${table.storageScope} != 'PUBLIC' OR ${table.protectionMode} = 'watermark' OR ${table.recipeVersion} IN ('site-display-v1', 'return-display-v1')`,
+  ),
+  /**
+   * T36 返图公开变体：只允许 return-wall 用途、公开范围、无保护模式。
+   * 与 site-display 分开写，保证返图不会借用站点展示用途，
+   * 也保证水印身份列全部为 none/NULL（由 unprotected_identity 兜底）。
+   */
+  check(
+    'asset_variants_return_display_recipe',
+    sql`${table.recipeVersion} != 'return-display-v1' OR (${table.storageScope} = 'PUBLIC' AND ${table.protectionMode} = 'none' AND ${table.usage} = 'return-wall' AND ${table.mediaRole} = 'return_photo')`,
+  ),
+  check(
+    'asset_variants_return_wall_usage',
+    sql`${table.usage} != 'return-wall' OR (${table.storageScope} = 'PUBLIC' AND ${table.protectionMode} = 'none' AND ${table.recipeVersion} = 'return-display-v1' AND ${table.mediaRole} = 'return_photo')`,
+  ),
+  /** 返图原图只允许 preprocess 与 return-wall，不得冒充作品或站点展示位。 */
+  check(
+    'asset_variants_return_photo_role',
+    sql`${table.mediaRole} != 'return_photo' OR ${table.usage} IN ('preprocess', 'return-wall')`,
   ),
   check(
     'asset_variants_public_watermark',
@@ -561,6 +579,79 @@ export const workAssets = sqliteTable('work_assets', {
   check(
     'work_assets_watermark_anchor',
     sql`${table.watermarkAnchor} IN ('top-left', 'top-right', 'bottom-left', 'bottom-right')`,
+  ),
+])
+
+/**
+ * T35 返图：一张返图对应一行，恰好关联一件作品和一张 `return_photo` 私有原图。
+ *
+ * 不是相册：`asset_id` 唯一约束保证同一资产不被两条返图占用，
+ * 也保证一条返图不会累积多张图片。不引入 return_albums、批次、
+ * 返图 slug、返图详情或返图者账户。
+ *
+ * `work_id` 使用 ON DELETE restrict：存在返图关联时数据库直接阻止作品永久删除。
+ * `asset_id` 同样 restrict，永久原图不会因删除返图记录被级联清空。
+ *
+ * 授权三列（来源 / 确认时间 / 内部备注）全部可空，缺失不阻止保存和发布，
+ * 且只进入受认证管理 DTO；公开投影永不读取这三列。
+ */
+export const returnPhotos = sqliteTable('return_photos', {
+  id: text('id').primaryKey(),
+  workId: text('work_id').notNull()
+    .references(() => works.id, { onDelete: 'restrict' }),
+  /**
+   * 草稿可以先没有图片：返图上传会话的归属是返图记录本身及其版本，
+   * 因此记录必须先存在。发布前检查要求恰好一张 READY `return_photo` 资产，
+   * 并由 `return_photos_published_asset` CHECK 在数据库层兜住。
+   * 单列 + 唯一索引保证“一条返图最多一张资产”，永远不会长成相册。
+   */
+  assetId: text('asset_id')
+    .references(() => assets.id, { onDelete: 'restrict' }),
+  alt: text('alt').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+  publicationStatus: text('publication_status').notNull().default('draft'),
+  authorizationSource: text('authorization_source'),
+  authorizationConfirmedAt: integer('authorization_confirmed_at'),
+  authorizationNote: text('authorization_note'),
+  version: integer('version').notNull().default(1),
+  publishedAt: integer('published_at'),
+  ...timestampColumns(),
+}, table => [
+  uniqueIndex('return_photos_asset_unique').on(table.assetId),
+  index('return_photos_public_order_idx')
+    .on(table.publicationStatus, table.sortOrder, table.id),
+  index('return_photos_work_idx')
+    .on(table.workId, table.publicationStatus),
+  check(
+    'return_photos_alt_nonempty',
+    sql`${table.alt} = trim(${table.alt}) AND length(${table.alt}) BETWEEN 1 AND 500`,
+  ),
+  check(
+    'return_photos_publication_status',
+    sql`${table.publicationStatus} IN ('draft', 'published', 'unpublished')`,
+  ),
+  check('return_photos_sort_order_nonnegative', sql`${table.sortOrder} >= 0`),
+  check('return_photos_version_positive', sql`${table.version} > 0`),
+  check(
+    'return_photos_published_at',
+    sql`${table.publicationStatus} != 'published' OR ${table.publishedAt} IS NOT NULL`,
+  ),
+  /** 已发布返图必须有图片；草稿允许暂时为空。 */
+  check(
+    'return_photos_published_asset',
+    sql`${table.publicationStatus} != 'published' OR ${table.assetId} IS NOT NULL`,
+  ),
+  check(
+    'return_photos_authorization_source',
+    sql`${table.authorizationSource} IS NULL OR ${table.authorizationSource} IN ('qq', 'email', 'other')`,
+  ),
+  check(
+    'return_photos_authorization_confirmed_at',
+    sql`${table.authorizationConfirmedAt} IS NULL OR ${table.authorizationConfirmedAt} > 0`,
+  ),
+  check(
+    'return_photos_authorization_note',
+    sql`${table.authorizationNote} IS NULL OR (${table.authorizationNote} = trim(${table.authorizationNote}) AND length(${table.authorizationNote}) BETWEEN 1 AND 500)`,
   ),
 ])
 
@@ -725,7 +816,7 @@ export const publicationOperations = sqliteTable('publication_operations', {
   ),
   check(
     'publication_operations_entity_type',
-    sql`${table.entityType} IN ('WORK', 'HOME')`,
+    sql`${table.entityType} IN ('WORK', 'HOME', 'RETURN_PHOTO')`,
   ),
   check(
     'publication_operations_status',
