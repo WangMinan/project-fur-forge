@@ -97,8 +97,13 @@ function hrefFor(target: number) {
 </template>
 
 <style scoped>
+/* 与 /works 一致的内容宽度与页边距；`.public-container` 只是语义标记。 */
 .returns-page {
-  padding-bottom: var(--space-9);
+  max-width: var(--public-content-wide);
+  margin: 0 auto;
+  padding-right: var(--public-page-padding);
+  padding-bottom: var(--space-10);
+  padding-left: var(--public-page-padding);
 }
 
 .returns-page__retry {
