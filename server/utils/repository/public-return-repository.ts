@@ -104,6 +104,7 @@ function loadReturnVariants(
       variant.logo_digest AS logoDigest,
       variant.media_role AS mediaRole,
       variant.recipe_version AS recipeVersion,
+      variant.protection_mode AS protectionMode,
       variant.sha256, variant.usage,
       variant.watermark_anchor AS watermarkAnchor,
       variant.watermark_config_digest AS watermarkConfigDigest,

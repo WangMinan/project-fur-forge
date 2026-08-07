@@ -21,10 +21,19 @@ defineProps<{
 /** 首屏若干张用 eager，其余懒加载。 */
 const EAGER_COUNT = 4
 
+/**
+ * `sizes` 只能写合法的媒体条件 + 长度：HTML 的 sizes 属性不解析 `var()`，
+ * 写了 CSS 变量会让浏览器整条失效并退回 100vw，
+ * 结果给 300px 左右的格子下载最大变体，白白浪费流量。
+ *
+ * 这里的数值对应各断点下的实际列宽：
+ * 桌面内容宽上限 90rem、4 列、gap 20px → 约 316px；
+ * 平板 3 列、gap 16px → 约 33vw；手机 2 列、gap 12px → 约 50vw。
+ */
 const SIZES = [
-  '(min-width: 1280px) calc((min(90rem, 100vw) - 2 * var(--public-page-padding) - 60px) / 4)',
-  '(min-width: 768px) calc((100vw - 2 * var(--public-page-padding) - 32px) / 3)',
-  '(min-width: 340px) calc((100vw - 2 * var(--public-page-padding) - 12px) / 2)',
+  '(min-width: 1280px) 320px',
+  '(min-width: 768px) 33vw',
+  '(min-width: 340px) 50vw',
   '100vw',
 ].join(', ')
 </script>
