@@ -275,9 +275,10 @@ onMounted(() => {
               <td>
                 <div class="works-table__work">
                   <span class="works-table__thumb">
+                    <!-- 低分辨率缩略图：表格格子只有 3rem，不需要原图。 -->
                     <img
                       v-if="work.primaryAssetId"
-                      :src="`/api/admin/v1/media/assets/${work.primaryAssetId}/preview`"
+                      :src="`/api/admin/v1/media/assets/${work.primaryAssetId}/preview?w=96`"
                       alt=""
                       loading="lazy"
                       referrerpolicy="same-origin"
@@ -350,7 +351,7 @@ onMounted(() => {
             <span class="works-card__thumb">
               <img
                 v-if="work.primaryAssetId"
-                :src="`/api/admin/v1/media/assets/${work.primaryAssetId}/preview`"
+                :src="`/api/admin/v1/media/assets/${work.primaryAssetId}/preview?w=160`"
                 alt=""
                 loading="lazy"
                 referrerpolicy="same-origin"

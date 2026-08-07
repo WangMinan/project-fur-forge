@@ -104,6 +104,30 @@ export function countReadyReturnWallVariants(
   ) as { total: number }).total
 }
 
+/**
+ * 管理端无水印公开预览：取最小宽度的 READY 变体。
+ * 返回的是真实公开对象 Key，由调用方拼成公开媒体 URL；
+ * 公开对象本来就匿名可读，因此这不构成私有信息泄漏。
+ */
+export function findSmallestReturnWallVariant(
+  sqlite: Database.Database,
+  assetId: string,
+) {
+  return sqlite.prepare(`
+    SELECT object_key AS objectKey, width, height
+    FROM asset_variants
+    WHERE asset_id = ? AND storage_scope = 'PUBLIC' AND status = 'READY'
+      AND usage = ? AND recipe_version = ? AND protection_mode = 'none'
+      AND sha256 IS NOT NULL AND byte_size > 0
+    ORDER BY width
+    LIMIT 1
+  `).get(
+    assetId,
+    RETURN_WALL_USAGE,
+    RETURN_DISPLAY_RECIPE_VERSION,
+  ) as { height: number, objectKey: string, width: number } | undefined
+}
+
 function qualityFor(format: PublicFormat) {
   return format === 'webp' ? 82 : format === 'jpeg' ? 86 : 100
 }

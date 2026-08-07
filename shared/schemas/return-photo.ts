@@ -91,6 +91,16 @@ export const adminReturnPhotoDtoSchema = z.object({
   authorization: returnPhotoAuthorizationSchema,
   /** 无水印公开变体数量；完整时才允许发布。 */
   publicVariantCount: z.number().int().nonnegative(),
+  /**
+   * 无水印公开预览：直接给出访客会看到的真实衍生图地址。
+   * 由服务端计算，管理端因此不需要跨 Host 调用公开接口
+   * （管理 Host 会拒绝 `/api/public/**`）。未生成时为 null。
+   */
+  publicPreview: z.object({
+    src: z.string().url(),
+    width: z.number().int().positive().max(12_000),
+    height: z.number().int().positive().max(12_000),
+  }).strict().nullable(),
   publishedAt: z.string().datetime({ offset: true }).nullable(),
   createdAt: z.string().datetime({ offset: true }),
   updatedAt: z.string().datetime({ offset: true }),
