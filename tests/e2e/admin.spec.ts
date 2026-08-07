@@ -52,9 +52,10 @@ test.describe('后台作品列表页', () => {
     await loginAsAdmin(page)
   })
 
-  test('五个管理入口的导航、一级标题和标签页标题一致', async ({ page }) => {
+  test('六个管理入口的导航、一级标题和标签页标题一致', async ({ page }) => {
     for (const entry of [
       { label: '作品管理', path: '/admin/works' },
+      { label: '返图管理', path: '/admin/returns' },
       { label: '大图管理', path: '/admin/site/home' },
       { label: '文案配置', path: '/admin/site/content' },
       { label: '全局水印', path: '/admin/site/branding' },
@@ -79,10 +80,12 @@ test.describe('后台作品列表页', () => {
     await expect(page.locator('.works-page__meta')).toHaveText(/共 \d+ 件/u)
 
     const nav = page.getByRole('navigation', { name: '管理导航' })
-    // T21 人工验收确认管理导航顺序与完整页名。
-    await expect(nav.getByRole('link')).toHaveCount(5)
+    // T21 人工验收确认管理导航顺序与完整页名；
+    // T36 在作品管理之后插入“返图”，其余顺序不变。
+    await expect(nav.getByRole('link')).toHaveCount(6)
     expect(await nav.getByRole('link').allTextContents()).toEqual([
       '作品管理',
+      '返图管理',
       '大图管理',
       '文案配置',
       '全局水印',

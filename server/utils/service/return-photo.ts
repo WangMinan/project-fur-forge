@@ -27,9 +27,11 @@ import {
 import type { ReturnPhotoRow } from '../repository/return-photo-repository'
 import {
   countReadyReturnWallVariants,
+  findSmallestReturnWallVariant,
   returnWallRequiredVariantCount,
   returnWallSourceTooSmall,
 } from '../recipe/return-display-recipe'
+import { getRuntimeConfig } from '../runtime-config'
 
 /** 管理列表每页条数：与公开墙一致，景宸不需要记两套分页规则。 */
 export const ADMIN_RETURN_PAGE_SIZE = RETURN_WALL_PAGE_SIZE
@@ -83,6 +85,24 @@ function requireWork(sqlite: Database.Database, workId: string) {
   return row
 }
 
+/** 无水印公开预览地址：真实公开衍生图，未生成时为 null。 */
+function publicPreviewFor(sqlite: Database.Database, assetId: string | null) {
+  if (assetId === null) {
+    return null
+  }
+  const variant = findSmallestReturnWallVariant(sqlite, assetId)
+  if (!variant) {
+    return null
+  }
+  const base = getRuntimeConfig().mediaBaseUrl.replace(/\/$/u, '')
+  const path = variant.objectKey.split('/').map(encodeURIComponent).join('/')
+  return {
+    height: variant.height,
+    src: `${base}/${path}`,
+    width: variant.width,
+  }
+}
+
 /**
  * 管理 DTO。授权三列在这里出现，是唯一允许它们离开数据库的出口；
  * 公开投影走 public-return-repository，结构上不包含这些字段。
@@ -122,6 +142,7 @@ export function toAdminReturnPhotoDto(
     publicVariantCount: row.assetId === null
       ? 0
       : countReadyReturnWallVariants(sqlite, row.assetId),
+    publicPreview: publicPreviewFor(sqlite, row.assetId),
     publishedAt: row.publishedAt === null
       ? null
       : new Date(row.publishedAt).toISOString(),

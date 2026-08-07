@@ -263,9 +263,6 @@ onMounted(() => {
                 :disabled="mutating"
               >
             </div>
-            <p class="home-admin__hint">
-              官方邮箱、QQ、抖音号和防诈骗提醒统一在“文案配置”的官方渠道里修改。
-            </p>
             <div class="home-admin__field home-admin__field--inline">
               <label class="home-admin__label" for="home-auto-rotate">自动轮播</label>
               <input

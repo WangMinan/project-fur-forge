@@ -12,9 +12,9 @@ import { PROJECT_NAME } from '~~/shared/constants/project'
 const DESCRIPTION = '收到的真实穿着返图，来自作品交付之后的日常和展会现场。'
 
 useSeoMeta({
-  title: `返图 · ${PROJECT_NAME}`,
+  title: `返图墙 · ${PROJECT_NAME}`,
   description: DESCRIPTION,
-  ogTitle: `返图 · ${PROJECT_NAME}`,
+  ogTitle: `返图墙 · ${PROJECT_NAME}`,
   ogDescription: DESCRIPTION,
 })
 
@@ -53,7 +53,7 @@ function hrefFor(target: number) {
 
 <template>
   <div class="public-page">
-    <PublicPageIntro title="返图" :description="DESCRIPTION" />
+    <PublicPageIntro title="返图墙" :description="DESCRIPTION" />
 
     <div class="public-container returns-page">
       <!-- 分页请求失败：保留页面骨架与导航，提供普通链接重试。 -->
@@ -89,7 +89,7 @@ function hrefFor(target: number) {
           :page="page"
           :page-count="pageCount"
           :href-for="hrefFor"
-          label="返图分页"
+          label="返图墙分页"
         />
       </template>
     </div>

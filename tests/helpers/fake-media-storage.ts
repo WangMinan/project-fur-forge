@@ -153,6 +153,15 @@ export class FakeMediaStorage implements MediaStorage {
     }
   }
 
+  /** 假实现不做真实缩放：只回传原字节，调用方只关心内容与 MIME。 */
+  async getPrivateProcessed(objectKey: string, _process: string) {
+    const content = await this.getPrivate(objectKey)
+    return {
+      content,
+      contentType: this.objects.get(objectKey)?.contentType ?? '',
+    }
+  }
+
   async imageInfoPrivate(objectKey: string) {
     if (this.failImageInfo) {
       throw new Error('fake image info failure')

@@ -60,6 +60,16 @@ export interface MediaStorage {
   deletePrivate(objectKey: string): Promise<void>
   deletePublic(objectKey: string): Promise<void>
   getPrivate(objectKey: string): Promise<Buffer>
+  /**
+   * 读取私有对象的**服务端缩放结果**，用于管理端缩略图。
+   *
+   * 管理列表只需要几十像素宽的图，直接下载多 MB 原图既慢又浪费 OSS 流量。
+   * 处理在 OSS 侧完成，回传的只有缩略字节。
+   */
+  getPrivateProcessed(
+    objectKey: string,
+    process: string,
+  ): Promise<PrivateSignedObject>
   getPrivateSigned(objectKey: string, expiresAt: number): Promise<PrivateSignedObject>
   getPublicAnonymous(objectKey: string): Promise<AnonymousPublicObject>
   headPrivate(objectKey: string): Promise<PrivateObjectHead>
@@ -256,6 +266,19 @@ export class AliOssMediaStorage implements MediaStorage {
     return Buffer.isBuffer(result.content)
       ? result.content
       : Buffer.from(result.content)
+  }
+
+  async getPrivateProcessed(objectKey: string, process: string) {
+    const result = await (await this.privateClient).get(objectKey, { process })
+    if (result.content === undefined) {
+      throw new Error('OSS object body is unavailable.')
+    }
+    return {
+      content: Buffer.isBuffer(result.content)
+        ? result.content
+        : Buffer.from(result.content),
+      contentType: responseHeader(result, 'content-type') ?? '',
+    }
   }
 
   async getPrivateSigned(objectKey: string, expiresAt: number) {
