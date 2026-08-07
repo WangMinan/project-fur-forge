@@ -204,7 +204,7 @@ function moveTag(index: number, offset: number) {
           切换离开领养后，领养状态、价格与展会字段会在保存时被清空；若该作品已有领养设定图，服务端会拒绝本次切换。
         </p>
         <p v-else-if="leavingEventDrop" class="field__warning" role="status">
-          切换离开展会掉落后，展会名称与展会时间会在保存时被清空，不会留下残留值。
+          切换离开展会掉落后，展会名称与展会时间会在保存时被清空。
         </p>
         <p v-if="legacyEventSale" class="field__warning" role="status">
           该作品仍是旧的“展会出售中”状态，保存前请在下方选择一个正式的领养状态。
