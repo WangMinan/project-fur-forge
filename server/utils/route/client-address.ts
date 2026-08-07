@@ -10,18 +10,32 @@ import { createHash } from 'node:crypto'
  * 日志与限流只使用摘要，绝不记录完整地址。
  */
 
+/**
+ * 地址规范化为定长小写十六进制串（IPv4 8 位，IPv6 32 位）。
+ *
+ * 刻意不用 BigInt：Nitro 的 esbuild 目标是 es2019，BigInt 字面量属于 es2020，
+ * 会在每次构建时告警「may crash at run-time」。前缀匹配本来就只需要按位掩码后
+ * 比较，定长十六进制串的字符串前缀比较等价且无需大整数。
+ */
 interface Cidr {
+  /** 掩码后的定长十六进制前缀，与 maskedHex 的输出同格式。 */
   bits: number
-  prefix: bigint
+  prefix: string
   version: 4 | 6
 }
 
-function ipv4ToBigInt(value: string) {
+const IPV6_HEX_LENGTH = 32
+
+function hexGroup(value: number, width: number) {
+  return value.toString(16).padStart(width, '0')
+}
+
+function ipv4ToHex(value: string) {
   const parts = value.split('.')
   if (parts.length !== 4) {
     return null
   }
-  let result = 0n
+  let result = ''
   for (const part of parts) {
     if (!/^\d{1,3}$/u.test(part)) {
       return null
@@ -30,12 +44,12 @@ function ipv4ToBigInt(value: string) {
     if (octet > 255) {
       return null
     }
-    result = (result << 8n) | BigInt(octet)
+    result += hexGroup(octet, 2)
   }
   return result
 }
 
-function ipv6ToBigInt(value: string) {
+function ipv6ToHex(value: string) {
   const zoneless = value.split('%')[0]!
   if (!/^[0-9a-f:.]+$/iu.test(zoneless) || !zoneless.includes(':')) {
     return null
@@ -52,14 +66,12 @@ function ipv6ToBigInt(value: string) {
     const output: string[] = []
     for (const part of parts) {
       if (part.includes('.')) {
-        const mapped = ipv4ToBigInt(part)
+        const mapped = ipv4ToHex(part)
         if (mapped === null) {
           return null
         }
-        output.push(
-          ((mapped >> 16n) & 0xffffn).toString(16),
-          (mapped & 0xffffn).toString(16),
-        )
+        // 4 字节 IPv4 恰好占两个 16 位组。
+        output.push(mapped.slice(0, 4), mapped.slice(4))
         continue
       }
       if (!/^[0-9a-f]{1,4}$/iu.test(part)) {
@@ -91,11 +103,9 @@ function ipv6ToBigInt(value: string) {
         ...Array.from({ length: missing }, () => '0'),
         ...normalizedTail,
       ]
-  let result = 0n
-  for (const group of groups) {
-    result = (result << 16n) | BigInt(Number.parseInt(group, 16))
-  }
-  return result
+  return groups
+    .map(group => hexGroup(Number.parseInt(group, 16), 4))
+    .join('')
 }
 
 export function parseIpAddress(value: string) {
@@ -106,15 +116,35 @@ export function parseIpAddress(value: string) {
   // IPv4-mapped IPv6（::ffff:1.2.3.4）按 IPv4 比较。
   const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/iu.exec(trimmed)
   if (mapped) {
-    const value4 = ipv4ToBigInt(mapped[1]!)
+    const value4 = ipv4ToHex(mapped[1]!)
     return value4 === null ? null : { value: value4, version: 4 as const }
   }
   if (trimmed.includes(':')) {
-    const value6 = ipv6ToBigInt(trimmed)
-    return value6 === null ? null : { value: value6, version: 6 as const }
+    const value6 = ipv6ToHex(trimmed)
+    return value6 === null || value6.length !== IPV6_HEX_LENGTH
+      ? null
+      : { value: value6, version: 6 as const }
   }
-  const value4 = ipv4ToBigInt(trimmed)
+  const value4 = ipv4ToHex(trimmed)
   return value4 === null ? null : { value: value4, version: 4 as const }
+}
+
+/**
+ * 按位掩码后返回定长十六进制串。
+ * 逐 4 位（一个十六进制字符）处理：整字符保留，跨字符的余数按半字节掩码，
+ * 其余补 0，因此结果仍是定长串，可直接做相等比较。
+ */
+function maskedHex(hex: string, bits: number) {
+  const fullChars = Math.floor(bits / 4)
+  const remainder = bits % 4
+  let result = hex.slice(0, fullChars)
+  if (remainder !== 0) {
+    const nibble = Number.parseInt(hex[fullChars] ?? '0', 16)
+    // remainder 位保留，低位清零。
+    const mask = (0xf << (4 - remainder)) & 0xf
+    result += (nibble & mask).toString(16)
+  }
+  return result.padEnd(hex.length, '0')
 }
 
 export function parseTrustedProxyCidrs(raw: string | undefined): Cidr[] {
@@ -137,10 +167,9 @@ export function parseTrustedProxyCidrs(raw: string | undefined): Cidr[] {
     if (!Number.isInteger(bits) || bits < 0 || bits > width) {
       continue
     }
-    const shift = BigInt(width - bits)
     cidrs.push({
       bits,
-      prefix: (parsed.value >> shift) << shift,
+      prefix: maskedHex(parsed.value, bits),
       version: parsed.version,
     })
   }
@@ -156,9 +185,7 @@ export function isTrustedProxy(address: string, cidrs: readonly Cidr[]) {
     if (cidr.version !== parsed.version) {
       return false
     }
-    const width = cidr.version === 4 ? 32 : 128
-    const shift = BigInt(width - cidr.bits)
-    return (parsed.value >> shift) << shift === cidr.prefix
+    return maskedHex(parsed.value, cidr.bits) === cidr.prefix
   })
 }
 
