@@ -319,11 +319,13 @@ function moveTag(index: number, offset: number) {
           id="f-adoption-method"
           class="field__input"
           type="text"
-          value="常规领养"
+          :value="isEventDrop ? '展会掉落' : '常规领养'"
           readonly
           aria-describedby="f-adoption-method-hint"
         >
-        <p id="f-adoption-method-hint" class="field__hint">当前仅支持常规领养；展会掉落将在后续提供专门管理。</p>
+        <p id="f-adoption-method-hint" class="field__hint">
+          由上方“业务类型”决定；两种领养方式共用状态、价格、设定图与作品水印。
+        </p>
       </div>
       <div class="field">
         <label class="field__label" for="f-business-status">业务状态</label>
