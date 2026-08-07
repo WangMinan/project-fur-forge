@@ -1,28 +1,25 @@
 # 当前评审记录
 
 > **角色**：记录当前 SPEC、代码、部署文件、GitHub Actions 与任务状态之间的差异。
-> **评审日期**：2026-08-06，2026-08-07 更新 finding 关闭状态。
-> **初始代码基线**：`aac745167e640e5ef20b4d054539a9a245ca109e`。
-> **本轮业务收口起点**：`10a18291edc62a13296859ac7a2102c744086907`。
-> **结论**：`PASS WITH REQUIRED CLOSURE`（实施项已关闭，等待远端全绿与用户验收）。
+> **评审日期**：2026-08-07。
+> **代码基线**：`3984b4f181d5a3071a119affae34c1088a53b6f9`；其后的提交为阶段迁移文档更新。
+> **结论**：阶段 C 为 `PASS`；存在已明确后置的发布级 CI 技术债，不阻断阶段 D。
 
 ## 1. 总结论
 
-阶段 C 主业务链成立，T34-F1–F6 的实施项已在 2026-08-07 全部关闭：R-18 至 R-22
-逐项完成，R-17 的业务侧门禁错误已修复且本地完整非 Docker 门禁通过。
+阶段 C 主业务链、C.1 收口能力和用户浏览器人工验收已经完成，`GATE-C1` 通过。以下结论同时成立：
 
-当前不能结束阶段 C 的原因只剩两项，且都不在实施者手里：
+1. **阶段 C 产品与工程范围通过**：公开端、管理端、媒体保护、长任务恢复、三视口与用户人工核对均已形成证据；
+2. **GitHub Actions 尚未全绿**：最新已核对运行中，`image-build` 成功，`checks` 在 Production build 失败，`e2e` 跳过；
+3. **正式发布尚未就绪**：CI 全绿、正式域名、TLS、线上 Compose、升级、回滚与恢复演练仍待后续任务；
+4. **阶段 D 可以开始**：上述发布级遗留统一移到 T49、T52，不再阻断返图墙 T35–T36。
 
-1. `quality` 三个 job 尚未在同一 SHA 全绿——被自托管 runner 未接单阻断，
-   Compose 静态检查也因此没有真正执行到；
-2. T34-F8 需由用户执行视觉验收，并由新上下文独立 Review 给出 `PASS`。
+用户验收与迁移决策见
+[`../implementation/notes/t34-c1/T34-C1-USER-ACCEPTANCE-2026-08-07.md`](../implementation/notes/t34-c1/T34-C1-USER-ACCEPTANCE-2026-08-07.md)。
 
-因此 T34-F1–F6 可按实际证据勾选，T34-F7 等待远端 runner，
-T34-F8 与 GATE-C1 保持未通过。
+## 2. 阶段 C 已确认有效的实现
 
-## 2. 已确认有效的实现
-
-以下能力应保留，不推倒重写：
+以下能力应作为阶段 D 的稳定基线，不推倒重写：
 
 - `protection_mode` 与 `site-display-v1`；
 - 首页/委托 Hero 及两个业务入口的无水印 usage；
@@ -32,107 +29,112 @@ T34-F8 与 GATE-C1 保持未通过。
 - 稳定 API `reason` 和前端英文消息匹配清理；
 - 过期上传主动清扫；
 - 可信代理解析与按主体限流；
+- publication/watermark/reconcile operation 的 attempt、lease、heartbeat、恢复和精确清理；
+- `server/utils/{repository,service,runner,recipe,route}` 五层边界；
+- readiness 的严格迁移数量、顺序、folderMillis 与 hash 校验；
 - 容器运维命令、live/ready、Nginx 双 Host 和镜像发布流程骨架；
-- 经 GitHub Actions 验证可成功构建的 Node 24 runtime 镜像。
+- 经 GitHub Actions 成功验证的 Node 24 runtime 镜像构建；
+- 本地完整非 Docker 门禁、真实双 Bucket 9/9 和三视口浏览器证据；
+- 用户对阶段 C 公开端与管理端的人工浏览器核对。
 
-## 3. finding 关闭状态（2026-08-07 更新）
+## 3. Finding 关闭与移交状态
 
-### R-17 · 远端质量门禁 —— **业务侧已关闭，等待 runner**
+### R-17 · 远端质量门禁 —— **移交 T49，不再阻断阶段 C**
 
-`ControlBody.placement` 已用共享 `HeroPlacement` 类型修复。本地 `APP_ENV=test`
-下 lint、typecheck、unit(118)、integration(137+)、build、verify:production、
-secret scan 与 E2E 全部通过。
+阶段迁移时核对的 `quality` workflow run `31139795670` 基线为
+`3984b4f181d5a3071a119affae34c1088a53b6f9`：
 
-远端仍未取得同一 SHA 三 job 全绿：最近几次 push 的 job 以
-`The job was not acquired by Runner of type hosted` 结束，属于自托管 runner
-未接单，不是代码失败。需用户确认 runner 后重跑。
+- `image-build` 成功；
+- `checks` 的 lint、typecheck、unit、integration 成功；
+- `checks` 在 Production build 失败；
+- verify、secret scan、Compose 静态检查因此未执行；
+- `e2e` 因 `needs: checks` 跳过。
+
+现有 annotation 只有进程退出码，不能据此推断具体根因。旧文档中的“runner 未接单”不代表这次最新运行。
+
+用户决定把该问题移到 T49。T49 必须以届时最新 `main` 重新复现并修复，不能把本次失败解释为通过，也不能把不同 SHA 的结果拼接为全绿。
 
 ### R-18 · 既有站点素材迁移 —— **已关闭**
 
-迁移 0021 增加 `site_display_reconcile_operations`；
-`pnpm media:reconcile-site-display` 与容器 `reconcile-site-display` 子命令扫描
-启用首页 Hero、启用委托 Hero、首页委托入口源与已发布常规领养入口源。
-幂等（重复运行 `skipped` 命中、不新增对象）、可重试、可恢复（接管同一条
-operation）、失败保留旧投影。真实双 Bucket 9/9 通过，含 profile 切换后站点
-展示 URL 与摘要不变。
+迁移 0021、`media:reconcile-site-display` 和容器子命令覆盖启用首页 Hero、委托 Hero、首页委托入口和已发布常规领养入口。重复运行幂等、失败可重试、旧投影保留。真实双 Bucket 9/9 通过，profile 切换不改变站点展示 URL 与摘要。
 
 ### R-19 · 长任务重启恢复 —— **已关闭**
 
-迁移 0020 为两张 operation 表加入 attempt、lease_owner、lease_expires_at、
-heartbeat_at、recovery_reason、next_retry_at。事务内抢占、OSS 前后心跳、
-提交时对 status/版本/attempt/lease_owner 做 CAS、启动扫描接管或转明确失败。
-覆盖 HOME PUBLISH/UPSCALE、WORK PUBLISH/UNPUBLISH、WATERMARK
-PREVIEW/REBUILD 与 reconcile 六类。
+迁移 0020 为 operation 增加 attempt、lease、heartbeat、recovery reason 和必要重试时间。事务内抢占、OSS 前后心跳、提交 CAS、启动扫描接管或转可恢复失败已经覆盖作品、Hero、水印与 reconcile。
 
-真实 SIGKILL 子进程测试覆盖生成、公开对象验证与数据库提交三个边界，并用新的
-子进程执行恢复；断言不卡运行态、不出现半套 SourceSet、重复重启幂等、既有有效
-对象不被删除、日志不泄漏 Object Key 或凭据。
+真实 SIGKILL 子进程测试覆盖生成、公开对象验证和数据库提交边界；重复重启幂等，旧有效公开版本持续可见。
 
 ### R-20 · 后端职责边界 —— **已关闭**
 
-抽出 `hero-repository`、`publication-repository`、`watermark-repository`、
-`variant-repository`；`media-recipe` 与 `site-display-recipe` 的 SQL 计数归零。
-`server/utils` 按 repository/service/runner/recipe/route 分目录，层次体现在
-路径上。SQL 文本与列别名逐字保留，API、公开 DTO、状态机与浏览器行为不变。
+Hero、publication、watermark、variant repository 已抽出；recipe 层 SQL 归零；`server/utils` 以路径表达 repository、service、runner、recipe、route 五层。Nitro `server/routes` 与辅助 `server/utils/route` 保持分离。
 
-### R-21 · F2/F3 产品边界 —— **已关闭**
+### R-21 · 首页与文案产品边界 —— **已关闭**
 
-首页顺序改为 Hero → 精选作品 → 统一业务入口 → 当前领养，与公开站 IA 一致。
-官方邮箱、QQ、抖音号与防诈骗提醒统一在 contact 分区 Card 编辑；
-`updateHomeSettingsRequestSchema` 为 strict，旧字段被拒绝，不存在两个入口。
+首页顺序为 Hero → 精选作品 → 统一业务入口 → 当前领养。官方邮箱、QQ、抖音号与防诈骗提醒统一在 contact 分区 Card；首页设置不再提供第二套联系方式入口。
 
-### R-22 · readiness 校验 —— **已关闭**
+### R-22 · Readiness 迁移校验 —— **已关闭**
 
-readiness 复用 `migrationState`，同时比较数量、顺序、created_at/folderMillis
-与 hash。七条负/正路径用例覆盖 hash 不同、顺序不同、有待应用迁移、缺基础记录、
-数据库不存在与正确数据库，并断言响应体不泄漏路径、SQL、表名或栈。
-旧 `/api/health` 不再固定返回 ok。
+readiness 复用严格 migration state，同时比较数量、顺序、folderMillis 与 hash；旧 `/api/health` 不再无条件返回 ok，未就绪返回 503，且错误体不泄漏数据库路径、SQL 或栈。
 
-### R-23 · Compose 网络与健康路由 —— **配置已完成，等待流水线执行到**
+### R-23 · Compose 网络与健康路由 —— **阶段 C 配置完成，正式验证移交 T49/T52**
 
-配置修订已在上一轮完成。`docker compose -f docker-compose.yaml config --quiet`
-仍需在 runner 恢复后的运行里真正执行到。
+Dockerfile、`docker-compose.yaml`、Nginx 双 Host、未知 Host 拒绝、app egress、live/ready 和运维子命令均已形成。镜像构建成功。
 
-## 4. 本次配置提交的允许范围
+Compose 静态检查在最新失败运行中未执行到；正式域名、TLS、空数据卷、升级、回滚与恢复演练尚未完成。前者由 T49 关闭，后者由 T52 关闭。
 
-本轮仅修改：
+### R-24 · 用户视觉与业务验收 —— **已关闭**
 
-- `agent_docs/`；
-- `Dockerfile`；
-- `compose.yaml` → `docker-compose.yaml`；
-- `.env.compose.example`；
-- `deploy/nginx/`；
-- `docs/DEPLOYMENT.md`；
-- `.github/workflows/`；
-- `.github/dependabot.yml`。
+用户于 2026-08-07 明确确认已在浏览器中完成人工核对，并宣布阶段 C 开发任务人工 Review 完成。T26-F1、T27-F1、T30、T34、T34-F8 和 `GATE-C1` 据此完成。
 
-明确未修改：
+该结论不等同于正式目标环境验收；正式环境仍由 T52、T53 收口。
 
-- `app/`；
-- `server/`；
-- `shared/`；
-- `tests/`；
-- `scripts/` 中的业务与运维实现；
-- 数据库迁移；
-- `package.json` 与 lockfile。
+## 4. 阶段 C 结论边界
 
-因此，当前 `checks` 的 TypeScript 失败是刻意留给下一轮业务修复的边界，不是通过放宽门禁解决。
+阶段 C 的 `PASS` 表示：
 
-## 5. C.1 通过条件
+- 当前需求范围内的产品能力已经实现；
+- 关键媒体、安全、恢复与浏览器行为具备证据；
+- 用户完成公开端和管理端人工核对；
+- 项目可以进入下一阶段产品增强。
 
-只有以下条件全部满足，才允许把本文件结论改为 `PASS`：
+它不表示：
 
-- 既有站点素材 reconcile 完成；
-- 站点展示无水印、作品/领养展示继续有水印；
-- profile 切换不改变站点展示 URL 与摘要；
-- 首页顺序和官方渠道入口收口；
-- 后端边界完成且行为不回归；
-- 长任务 lease、heartbeat、启动恢复与进程中断测试通过；
-- 过期上传清扫与限流保持通过；
-- readiness 使用严格迁移校验；
-- GitHub Actions `checks`、`image-build`、`e2e` 在同一最新 main 全绿；
-- 完整非 Docker 本地门禁通过；
-- 用户完成 T34-F8 视觉验收；
-- 新上下文独立 Review 为 `PASS`。
+- GitHub Actions 已全绿；
+- Production build 失败已经修复；
+- E2E 已在最新远端运行成功；
+- 正式域名、证书、HSTS 或 CDN 已配置；
+- 线上 Compose、空卷初始化、升级、回滚和灾难恢复已经演练；
+- Docker Hub 正式镜像已经发布；
+- 站点已经可以直接对外宣布上线。
 
-正式域名、TLS、线上 Compose、空卷部署、升级、回滚、恢复和 Docker Hub 正式发布仍延期到部署阶段，不属于本轮 GATE-C1。
+## 5. 阶段 D Review 重点
+
+当前建议只授权返图墙 T35–T36。Review 必须重点检查：
+
+- 返图与作品出厂照是不同媒体角色和公开用途；
+- 返图永久原图和可选授权记录保持私有；
+- 轻量水印有不可变身份，不使用客户端临时参数加工；
+- 返图发布、下架、失败、重试与重启恢复沿用现有 operation 模型；
+- 返图不改变作品自身发布状态；
+- 管理端使用独立返图入口，公开端保持图片优先；
+- 三视口、键盘、焦点、图片解码、减少动效和横向溢出；
+- T38–T40 未经用户确认不得借返图墙之名提前实现。
+
+## 6. 后续通过条件
+
+### 阶段 D
+
+T42 只验证用户最终保留的 D 范围。取消的任务必须从验收矩阵中明确移除。
+
+### 阶段 E / T49
+
+必须满足：
+
+- 最新 `main` 的 Production build 失败被复现并修复；
+- checks 后续 verify、secret scan 与 Compose 静态检查实际执行；
+- `checks`、`image-build`、`e2e` 在同一个最新 SHA 成功；
+- 没有通过删除测试或放宽类型、安全、媒体和 E2E 断言取得绿色状态。
+
+### 正式发布 / T52–T53
+
+必须完成正式域名、TLS、线上 Compose、备份、监控、升级、回滚、恢复演练，以及景宸真实使用验收和文档闭环。
