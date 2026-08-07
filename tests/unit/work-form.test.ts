@@ -3,10 +3,12 @@ import type { ManagedWorkDto } from '../../shared/types/contracts'
 import { managedWorkDtoSchema } from '../../shared/schemas/work'
 import { parseCnyYuanInput, toCnyYuanInput } from '../../app/utils/price'
 import {
+  businessTypeOf,
   emptyWorkForm,
+  hasLegacyEventSaleStatus,
   hasWorkFormError,
-  historicalEventAdoption,
   parseSortOrderInput,
+  purposeOfBusinessType,
   toWorkFieldsPayload,
   validateWorkForm,
   workFormFromDto,
@@ -42,12 +44,18 @@ describe('toWorkFieldsPayload', () => {
     form.priceYuan = '15600'
     form.regularBusinessStatus = 'available'
 
-    for (const purpose of ['commission', 'showcase'] as const) {
-      const payload = toWorkFieldsPayload({ ...form, purpose })
-      expect(payload.purpose).toBe(purpose)
+    form.eventName = '幻夏祭 2026'
+    form.eventTime = '8 月 15 日'
+
+    for (const businessType of ['commission', 'showcase'] as const) {
+      const payload = toWorkFieldsPayload({ ...form, businessType })
+      expect(payload.purpose).toBe(businessType)
       expect(payload).not.toHaveProperty('adoptionMethod')
       expect(payload).not.toHaveProperty('businessStatus')
       expect(payload).not.toHaveProperty('priceCnyMinor')
+      // 展会字段同样不会随非领养类型提交。
+      expect(payload).not.toHaveProperty('eventName')
+      expect(payload).not.toHaveProperty('eventTime')
     }
   })
 
@@ -55,8 +63,8 @@ describe('toWorkFieldsPayload', () => {
     const payload = toWorkFieldsPayload({
       ...emptyWorkForm(),
       characterName: '小鲤',
+      businessType: 'regular_adoption',
       priceYuan: '8800.50',
-      purpose: 'adoption',
       regularBusinessStatus: 'available',
       slug: 'kori',
       sortOrder: '4',
@@ -75,8 +83,8 @@ describe('toWorkFieldsPayload', () => {
   it('treats an empty price as no public price', () => {
     const payload = toWorkFieldsPayload({
       ...emptyWorkForm(),
+      businessType: 'regular_adoption',
       characterName: '小鲤',
-      purpose: 'adoption',
       slug: 'kori',
       species: '犬',
     })
@@ -155,9 +163,9 @@ describe('validateWorkForm', () => {
     }
 
     for (const priceYuan of ['0', '-1', '12.345', '1e3']) {
-      expect(validateWorkForm({ ...base, purpose: 'adoption', priceYuan }).price)
+      expect(validateWorkForm({ ...base, businessType: 'regular_adoption', priceYuan }).price)
         .toBeTruthy()
-      expect(validateWorkForm({ ...base, purpose: 'commission', priceYuan }).price)
+      expect(validateWorkForm({ ...base, businessType: 'commission', priceYuan }).price)
         .toBeUndefined()
     }
   })
@@ -169,7 +177,8 @@ describe('workFormFromDto and workFormSnapshot', () => {
       purpose: 'adoption',
       adoptionMethod: 'regular',
       businessStatus: 'available',
-      currentEventName: null,
+      eventName: null,
+      eventTime: null,
       priceCnyMinor: 880_050,
     })
     const form = workFormFromDto(dto)
@@ -195,7 +204,8 @@ describe('workFormFromDto and workFormSnapshot', () => {
       purpose: 'adoption',
       adoptionMethod: 'regular',
       businessStatus: 'available',
-      currentEventName: null,
+      eventName: null,
+      eventTime: null,
       priceCnyMinor: null,
     }))
 
@@ -204,23 +214,86 @@ describe('workFormFromDto and workFormSnapshot', () => {
   })
 })
 
-describe('historicalEventAdoption', () => {
-  it('flags saved event facts and ignores plain adoption records', () => {
-    expect(historicalEventAdoption(managedWork())).toBeNull()
-    expect(historicalEventAdoption(managedWork({
+describe('T37 business type mapping', () => {
+  it('maps the four admin options to purpose and adoption method', () => {
+    expect(businessTypeOf('commission', null)).toBe('commission')
+    expect(businessTypeOf('showcase', null)).toBe('showcase')
+    expect(businessTypeOf('adoption', 'regular')).toBe('regular_adoption')
+    expect(businessTypeOf('adoption', 'event_drop')).toBe('event_drop')
+    expect(businessTypeOf('adoption', null)).toBe('regular_adoption')
+
+    expect(purposeOfBusinessType('commission')).toBe('commission')
+    expect(purposeOfBusinessType('showcase')).toBe('showcase')
+    expect(purposeOfBusinessType('regular_adoption')).toBe('adoption')
+    expect(purposeOfBusinessType('event_drop')).toBe('adoption')
+  })
+
+  it('submits event fields only for event drops', () => {
+    const base = {
+      ...emptyWorkForm(),
+      characterName: '掉落角色',
+      eventName: ' 幻夏祭 2026 ',
+      eventTime: ' 8 月 15 日 至 16 日 ',
+      ownerDisplay: '不公开',
+      slug: 'drop-role',
+      species: '犬科',
+    }
+
+    expect(toWorkFieldsPayload({ ...base, businessType: 'event_drop' }))
+      .toMatchObject({
+        purpose: 'adoption',
+        adoptionMethod: 'event_drop',
+        eventName: '幻夏祭 2026',
+        eventTime: '8 月 15 日 至 16 日',
+      })
+
+    // 切换到常规领养：展会字段提交 null，不留僵尸值。
+    expect(toWorkFieldsPayload({ ...base, businessType: 'regular_adoption' }))
+      .toMatchObject({
+        purpose: 'adoption',
+        adoptionMethod: 'regular',
+        eventName: null,
+        eventTime: null,
+      })
+
+    // 委托/纯展示完全不携带领养与展会字段。
+    expect(toWorkFieldsPayload({ ...base, businessType: 'commission' }))
+      .not.toHaveProperty('eventName')
+    expect(toWorkFieldsPayload({ ...base, businessType: 'showcase' }))
+      .not.toHaveProperty('adoptionMethod')
+  })
+
+  it('reads event drop fields back into the form', () => {
+    const form = workFormFromDto(managedWork({
+      purpose: 'adoption',
+      adoptionMethod: 'event_drop',
+      businessStatus: 'available',
+      eventName: 'CFF 2025',
+      eventTime: '2025 年 8 月 1 日',
+      priceCnyMinor: null,
+    }))
+    expect(form.businessType).toBe('event_drop')
+    expect(form.eventName).toBe('CFF 2025')
+    expect(form.eventTime).toBe('2025 年 8 月 1 日')
+  })
+
+  it('flags only the legacy event_sale status', () => {
+    expect(hasLegacyEventSaleStatus(managedWork({
       purpose: 'adoption',
       adoptionMethod: 'regular',
-      businessStatus: 'preparing',
-      currentEventName: null,
+      businessStatus: 'available',
+      eventName: null,
+      eventTime: null,
       priceCnyMinor: null,
-    }))).toBeNull()
-    expect(historicalEventAdoption(managedWork({
+    }))).toBe(false)
+    expect(hasLegacyEventSaleStatus(managedWork({
       purpose: 'adoption',
       adoptionMethod: 'event_drop',
       businessStatus: 'event_sale',
-      currentEventName: 'CFF 2025',
+      eventName: 'CFF 2025',
+      eventTime: '2025 年 8 月 1 日',
       priceCnyMinor: null,
-    }))).toMatchObject({ currentEventName: 'CFF 2025' })
+    }))).toBe(true)
   })
 })
 

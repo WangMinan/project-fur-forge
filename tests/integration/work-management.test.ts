@@ -281,13 +281,14 @@ describe('T22 work management', () => {
     })
     expect(showcased).not.toHaveProperty('adoptionMethod')
     expect(sqlite.prepare(`
-      SELECT adoption_method, business_status, current_event_name,
+      SELECT adoption_method, business_status, event_name, event_time,
              price_amount_minor, price_currency
       FROM works WHERE id = ?
     `).get(adoption.id)).toEqual({
       adoption_method: null,
       business_status: null,
-      current_event_name: null,
+      event_name: null,
+      event_time: null,
       price_amount_minor: null,
       price_currency: null,
     })
@@ -310,29 +311,50 @@ describe('T22 work management', () => {
     })
   })
 
-  it('keeps historical event values admin-readable and migrates them explicitly', () => {
+  it('T37: edits event drop fields and clears them when switching away', () => {
     const id = crypto.randomUUID()
     sqlite.prepare(`
       INSERT INTO works (
         id, slug, character_name, species, suit_type, purpose,
-        adoption_method, business_status, current_event_name,
+        adoption_method, business_status, event_name, event_time,
         owner_display, owner_contact, price_amount_minor, price_currency,
         publication_status, sort_order, featured, created_at, updated_at
       ) VALUES (?, 'legacy-event-drop', '旧展会角色', '犬科', 'partial',
-                'adoption', 'event_drop', 'event_sale', '旧展会文本',
+                'adoption', 'event_drop', 'available', '旧展会文本', NULL,
                 '不公开', '旧联系人', 100, 'CNY', 'draft', 8, 0, ?, ?)
     `).run(id, NOW, NOW)
 
+    // 历史掉落记录的展会名称原样可读；时间尚未补齐时为 null。
     expect(getManagedWork(sqlite, id)).toMatchObject({
       purpose: 'adoption',
       adoptionMethod: 'event_drop',
-      businessStatus: 'event_sale',
-      currentEventName: '旧展会文本',
+      eventName: '旧展会文本',
+      eventTime: null,
       priceCnyMinor: 100,
       private: { ownerContact: '旧联系人' },
     })
 
-    const migrated = updateManagedWork(sqlite, id, 1, {
+    // 补齐两项展会字段。
+    const filled = updateManagedWork(sqlite, id, 1, {
+      ...workInput,
+      slug: 'legacy-event-drop',
+      purpose: 'adoption',
+      adoptionMethod: 'event_drop',
+      businessStatus: 'available',
+      priceCnyMinor: 100,
+      sortOrder: 8,
+      eventName: '幻夏祭 2026',
+      eventTime: '8 月 15 日 至 16 日',
+    }, NOW + 1)
+    expect(filled).toMatchObject({
+      version: 2,
+      adoptionMethod: 'event_drop',
+      eventName: '幻夏祭 2026',
+      eventTime: '8 月 15 日 至 16 日',
+    })
+
+    // 切换到常规领养时展会字段被清空，不留僵尸值。
+    const migrated = updateManagedWork(sqlite, id, 2, {
       ...workInput,
       slug: 'legacy-event-drop',
       purpose: 'adoption',
@@ -340,13 +362,17 @@ describe('T22 work management', () => {
       businessStatus: 'available',
       priceCnyMinor: 100,
       sortOrder: 8,
-    }, NOW + 1)
+    }, NOW + 2)
     expect(migrated).toMatchObject({
-      version: 2,
+      version: 3,
       adoptionMethod: 'regular',
       businessStatus: 'available',
-      currentEventName: null,
+      eventName: null,
+      eventTime: null,
     })
+    expect(sqlite.prepare(
+      'SELECT event_name, event_time FROM works WHERE id = ?',
+    ).get(id)).toEqual({ event_name: null, event_time: null })
   })
 
   it('returns a readable conflict before leaving an adoption design sheet behind', () => {

@@ -581,20 +581,22 @@ describe('dual-bucket work publication operations', () => {
     `).pluck().get(work.id)).toBe(0)
   })
 
-  it('keeps event-drop adoption publication behind the T37 boundary', async () => {
+  it('T37: blocks event drop publication until both event fields exist', async () => {
     const id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
     sqlite.prepare(`
       INSERT INTO works (
         id, slug, character_name, species, suit_type, purpose,
-        adoption_method, business_status, current_event_name,
+        adoption_method, business_status, event_name, event_time,
         owner_display, publication_status, created_at, updated_at
       ) VALUES (?, 'event-adoption-draft', '展会待领养', '犬科', 'partial',
-                'adoption', 'event_drop', 'event_sale', '未来展会',
+                'adoption', 'event_drop', 'available', '未来展会', NULL,
                 '不公开', 'draft', ?, ?)
     `).run(id, NOW, NOW)
-    expect(checkWorkPublication(sqlite, id).blockers).toContain(
-      'EVENT_DROP_NOT_READY',
-    )
+
+    // 只有名称、缺时间：明确列出展会字段阻断，而不是整体禁止掉落发布。
+    const missingTime = checkWorkPublication(sqlite, id)
+    expect(missingTime.blockers).toContain('EVENT_DROP_FIELDS_REQUIRED')
+    expect(missingTime.canPublish).toBe(false)
 
     await expect(publishWork(
       sqlite,
@@ -607,6 +609,13 @@ describe('dual-bucket work publication operations', () => {
     expect(sqlite.prepare(`
       SELECT count(*) FROM publication_operations WHERE entity_id = ?
     `).pluck().get(id)).toBe(0)
+
+    // 补齐展会时间后，展会字段不再是阻断项（仍需设定图等常规条件）。
+    sqlite.prepare(
+      'UPDATE works SET event_time = ? WHERE id = ?',
+    ).run('8 月 15 日 至 16 日', id)
+    expect(checkWorkPublication(sqlite, id).blockers)
+      .not.toContain('EVENT_DROP_FIELDS_REQUIRED')
   })
 
   it('keeps audit and browser-visible operation data free of private values', async () => {

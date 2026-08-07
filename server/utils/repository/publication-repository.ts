@@ -33,7 +33,8 @@ export interface WorkState {
   adoptionMethod: string | null
   businessStatus: string | null
   characterName: string
-  currentEventName: string | null
+  eventName: string | null
+  eventTime: string | null
   id: string
   ownerDisplay: string
   priceAmountMinor: number | null
@@ -79,7 +80,8 @@ const selectWork = `
     id, version, slug, character_name AS characterName, species,
     suit_type AS suitType, purpose, adoption_method AS adoptionMethod,
     business_status AS businessStatus,
-    current_event_name AS currentEventName,
+    event_name AS eventName,
+    event_time AS eventTime,
     price_amount_minor AS priceAmountMinor,
     price_currency AS priceCurrency,
     owner_display AS ownerDisplay,

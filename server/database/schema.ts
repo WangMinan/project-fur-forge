@@ -48,7 +48,15 @@ export const works = sqliteTable('works', {
   purpose: text('purpose').notNull(),
   adoptionMethod: text('adoption_method'),
   businessStatus: text('business_status'),
-  currentEventName: text('current_event_name'),
+  /**
+   * T37 轻量展会掉落：只保存展会名称与展会时间展示文本。
+   *
+   * `event_time` 是给访客看的文本（可表达单日、日期范围或已确认时段），
+   * 不解析为调度时间，不驱动定时任务，也不自动改变领养状态。
+   * 不新增 events 表、展会 slug、地点、摊位、主办方或历史归档。
+   */
+  eventName: text('event_name'),
+  eventTime: text('event_time'),
   ownerDisplay: text('owner_display').notNull(),
   ownerContact: text('owner_contact'),
   priceAmountMinor: integer('price_amount_minor'),
@@ -86,7 +94,19 @@ export const works = sqliteTable('works', {
   ),
   check(
     'works_adoption_fields',
-    sql`(${table.purpose} = 'adoption') OR (${table.adoptionMethod} IS NULL AND ${table.businessStatus} IS NULL AND ${table.currentEventName} IS NULL AND ${table.priceAmountMinor} IS NULL AND ${table.priceCurrency} IS NULL)`,
+    sql`(${table.purpose} = 'adoption') OR (${table.adoptionMethod} IS NULL AND ${table.businessStatus} IS NULL AND ${table.eventName} IS NULL AND ${table.eventTime} IS NULL AND ${table.priceAmountMinor} IS NULL AND ${table.priceCurrency} IS NULL)`,
+  ),
+  /**
+   * 展会字段成组约束。
+   *
+   * - 非 event_drop 作品两项必须为空：切换离开掉落后不会留下僵尸值；
+   * - event_drop 草稿允许只填一项或都不填（编辑过程中的正常中间状态），
+   *   但**已发布**的掉落两项必须去空白后非空；
+   * - 与 alt、设定图同一套心智：草稿可以不完整，发布检查负责拦截。
+   */
+  check(
+    'works_event_drop_fields',
+    sql`CASE WHEN ${table.purpose} = 'adoption' AND ${table.adoptionMethod} = 'event_drop' THEN (${table.eventName} IS NULL OR length(trim(${table.eventName})) BETWEEN 1 AND 80) AND (${table.eventTime} IS NULL OR length(trim(${table.eventTime})) BETWEEN 1 AND 80) AND (${table.publicationStatus} != 'published' OR (${table.eventName} IS NOT NULL AND ${table.eventTime} IS NOT NULL)) ELSE ${table.eventName} IS NULL AND ${table.eventTime} IS NULL END`,
   ),
   check(
     'works_business_status',
@@ -94,7 +114,7 @@ export const works = sqliteTable('works', {
   ),
   check(
     'works_event_sale',
-    sql`${table.businessStatus} != 'event_sale' OR (${table.adoptionMethod} = 'event_drop' AND length(trim(${table.currentEventName})) > 0)`,
+    sql`${table.businessStatus} != 'event_sale' OR (${table.adoptionMethod} = 'event_drop' AND length(trim(${table.eventName})) > 0)`,
   ),
   check(
     'works_owner_display_nonempty',

@@ -82,17 +82,42 @@ export const publicFeaturedWorksDtoSchema = z.object({
   resultCount: z.number().int().min(0).max(6),
 }).strict()
 
+/** T37：领养列表同时容纳常规领养与展会掉落。 */
 export const publicAdoptionListItemDtoSchema = z.object({
-  work: publicAdoptionWorkDtoSchema.extend({
-    adoptionMethod: z.literal('regular'),
-  }),
+  work: publicAdoptionWorkDtoSchema,
   href: z.string().regex(/^\/works\/[a-z0-9]+(?:-[a-z0-9]+)*$/),
   designSheet: publicDesignSheetDtoSchema,
+}).strict()
+
+/** `/adoptions` 的轻量筛选：全部 / 常规领养 / 展会掉落。 */
+export const PUBLIC_ADOPTION_FILTER_VALUES = [
+  'all',
+  'regular',
+  'event_drop',
+] as const
+
+export const publicAdoptionFilterSchema = z.enum(
+  PUBLIC_ADOPTION_FILTER_VALUES,
+)
+
+export const publicAdoptionListQuerySchema = z.object({
+  method: publicAdoptionFilterSchema.optional(),
 }).strict()
 
 export const publicAdoptionListDtoSchema = z.object({
   items: z.array(publicAdoptionListItemDtoSchema),
   resultCount: z.number().int().nonnegative(),
+  /** 当前筛选状态；非法值收敛为 all 并标记 valid=false。 */
+  filter: z.object({
+    valid: z.boolean(),
+    method: publicAdoptionFilterSchema,
+  }).strict(),
+  /** 各筛选下的真实数量，用于区分“没有领养”与“没有掉落”。 */
+  counts: z.object({
+    all: z.number().int().nonnegative(),
+    regular: z.number().int().nonnegative(),
+    event_drop: z.number().int().nonnegative(),
+  }).strict(),
 }).strict()
 
 export const publicWorkListQuerySchema = z.object({

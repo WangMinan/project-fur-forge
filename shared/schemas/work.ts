@@ -114,11 +114,21 @@ const publicWorkBaseSchema = z.object({
   featureTags: workFeatureTagsSchema,
 }).strict()
 
+/** 展会名称与展会时间：短展示文本，时间不解析为可调度日期。 */
+export const eventNameSchema = z.string().trim().min(1).max(80)
+export const eventTimeSchema = z.string().trim().min(1).max(80)
+
 export const publicAdoptionWorkDtoSchema = publicWorkBaseSchema.extend({
   purpose: z.literal('adoption'),
   adoptionMethod: adoptionMethodSchema,
   businessStatus: businessStatusSchema,
   price: cnyPriceSchema.optional(),
+  /**
+   * T37 展会掉落：只有 event_drop 才有值，其他领养固定为 null。
+   * 时间是展示文本，不参与结构化数据或倒计时。
+   */
+  eventName: eventNameSchema.nullable(),
+  eventTime: eventTimeSchema.nullable(),
 })
 
 export const publicWorkDtoSchema = z.discriminatedUnion('purpose', [
@@ -152,7 +162,8 @@ export const adminWorkDtoSchema = z.discriminatedUnion('purpose', [
     purpose: z.literal('adoption'),
     adoptionMethod: adoptionMethodSchema.nullable(),
     businessStatus: businessStatusSchema.nullable(),
-    currentEventName: z.string().nullable(),
+    eventName: eventNameSchema.nullable(),
+    eventTime: eventTimeSchema.nullable(),
     priceCnyMinor: z.number().int().positive().nullable(),
     sortOrder: z.number().int().nonnegative(),
     featured: z.boolean(),
@@ -161,7 +172,8 @@ export const adminWorkDtoSchema = z.discriminatedUnion('purpose', [
     purpose: z.literal('commission'),
     adoptionMethod: z.never().optional(),
     businessStatus: z.never().optional(),
-    currentEventName: z.never().optional(),
+    eventName: z.never().optional(),
+    eventTime: z.never().optional(),
     priceCnyMinor: z.never().optional(),
     sortOrder: z.number().int().nonnegative(),
     featured: z.boolean(),
@@ -170,7 +182,8 @@ export const adminWorkDtoSchema = z.discriminatedUnion('purpose', [
     purpose: z.literal('showcase'),
     adoptionMethod: z.never().optional(),
     businessStatus: z.never().optional(),
-    currentEventName: z.never().optional(),
+    eventName: z.never().optional(),
+    eventTime: z.never().optional(),
     priceCnyMinor: z.never().optional(),
     sortOrder: z.number().int().nonnegative(),
     featured: z.boolean(),
@@ -189,24 +202,60 @@ const mutableWorkBaseSchema = z.object({
   featured: z.boolean(),
 }).strict()
 
-export const workFieldsSchema = z.discriminatedUnion('purpose', [
-  mutableWorkBaseSchema.extend({
-    purpose: z.literal('adoption'),
-    adoptionMethod: z.literal('regular'),
-    businessStatus: regularAdoptionBusinessStatusSchema,
-    priceCnyMinor: z.number().int().positive().nullable(),
-  }),
+/**
+ * 可编辑作品字段。
+ *
+ * 管理端展示四个业务选项，但底层仍只有三种 purpose：
+ * 委托作品 → commission；常规领养 → adoption + regular；
+ * 展会掉落 → adoption + event_drop；纯展示 → showcase。
+ *
+ * 展会名称/时间只属于 event_drop 分支，因此其他分支在类型层面
+ * 就无法携带这两个字段，切换业务类型不可能留下僵尸值。
+ */
+const mutableAdoptionSchema = mutableWorkBaseSchema.extend({
+  purpose: z.literal('adoption'),
+  adoptionMethod: adoptionMethodSchema,
+  businessStatus: regularAdoptionBusinessStatusSchema,
+  priceCnyMinor: z.number().int().positive().nullable(),
+  /**
+   * 展会名称与时间只属于 event_drop。
+   * 草稿允许留空（发布检查负责拦截），但非掉落必须为空，
+   * 因此切换业务类型不会留下僵尸值。
+   */
+  eventName: eventNameSchema.nullable().default(null),
+  eventTime: eventTimeSchema.nullable().default(null),
+}).superRefine((input, context) => {
+  if (input.adoptionMethod === 'event_drop') {
+    return
+  }
+  for (const field of ['eventName', 'eventTime'] as const) {
+    if (input[field] !== null) {
+      context.addIssue({
+        code: 'custom',
+        message: '只有展会掉落才能填写展会名称与展会时间',
+        path: [field],
+      })
+    }
+  }
+})
+
+export const workFieldsSchema = z.union([
+  mutableAdoptionSchema,
   mutableWorkBaseSchema.extend({
     purpose: z.literal('commission'),
     adoptionMethod: z.never().optional(),
     businessStatus: z.never().optional(),
     priceCnyMinor: z.never().optional(),
+    eventName: z.never().optional(),
+    eventTime: z.never().optional(),
   }),
   mutableWorkBaseSchema.extend({
     purpose: z.literal('showcase'),
     adoptionMethod: z.never().optional(),
     businessStatus: z.never().optional(),
     priceCnyMinor: z.never().optional(),
+    eventName: z.never().optional(),
+    eventTime: z.never().optional(),
   }),
 ])
 
@@ -322,21 +371,24 @@ export const managedWorkDtoSchema = z.discriminatedUnion('purpose', [
     designSheet: managedDesignSheetDtoSchema.nullable(),
     adoptionMethod: adoptionMethodSchema.nullable(),
     businessStatus: businessStatusSchema.nullable(),
-    currentEventName: z.string().nullable(),
+    eventName: eventNameSchema.nullable(),
+    eventTime: eventTimeSchema.nullable(),
     priceCnyMinor: z.number().int().positive().nullable(),
   }),
   managedWorkBaseSchema.extend({
     purpose: z.literal('commission'),
     adoptionMethod: z.never().optional(),
     businessStatus: z.never().optional(),
-    currentEventName: z.never().optional(),
+    eventName: z.never().optional(),
+    eventTime: z.never().optional(),
     priceCnyMinor: z.never().optional(),
   }),
   managedWorkBaseSchema.extend({
     purpose: z.literal('showcase'),
     adoptionMethod: z.never().optional(),
     businessStatus: z.never().optional(),
-    currentEventName: z.never().optional(),
+    eventName: z.never().optional(),
+    eventTime: z.never().optional(),
     priceCnyMinor: z.never().optional(),
   }),
 ])
@@ -356,21 +408,24 @@ export const workListItemDtoSchema = z.discriminatedUnion('purpose', [
     designSheetAssetId: resourceIdSchema.nullable(),
     adoptionMethod: adoptionMethodSchema.nullable(),
     businessStatus: businessStatusSchema.nullable(),
-    currentEventName: z.string().nullable(),
+    eventName: eventNameSchema.nullable(),
+    eventTime: eventTimeSchema.nullable(),
     priceCnyMinor: z.number().int().positive().nullable(),
   }),
   workListItemBaseSchema.extend({
     purpose: z.literal('commission'),
     adoptionMethod: z.never().optional(),
     businessStatus: z.never().optional(),
-    currentEventName: z.never().optional(),
+    eventName: z.never().optional(),
+    eventTime: z.never().optional(),
     priceCnyMinor: z.never().optional(),
   }),
   workListItemBaseSchema.extend({
     purpose: z.literal('showcase'),
     adoptionMethod: z.never().optional(),
     businessStatus: z.never().optional(),
-    currentEventName: z.never().optional(),
+    eventName: z.never().optional(),
+    eventTime: z.never().optional(),
     priceCnyMinor: z.never().optional(),
   }),
 ])
@@ -385,21 +440,24 @@ export const publicSafeWorkPreviewDtoSchema = z.discriminatedUnion('purpose', [
     designSheet: managedDesignSheetDtoSchema.nullable(),
     adoptionMethod: adoptionMethodSchema.nullable(),
     businessStatus: businessStatusSchema.nullable(),
-    currentEventName: z.string().nullable(),
+    eventName: eventNameSchema.nullable(),
+    eventTime: eventTimeSchema.nullable(),
     priceCnyMinor: z.number().int().positive().nullable(),
   }),
   publicSafeWorkPreviewBaseSchema.extend({
     purpose: z.literal('commission'),
     adoptionMethod: z.never().optional(),
     businessStatus: z.never().optional(),
-    currentEventName: z.never().optional(),
+    eventName: z.never().optional(),
+    eventTime: z.never().optional(),
     priceCnyMinor: z.never().optional(),
   }),
   publicSafeWorkPreviewBaseSchema.extend({
     purpose: z.literal('showcase'),
     adoptionMethod: z.never().optional(),
     businessStatus: z.never().optional(),
-    currentEventName: z.never().optional(),
+    eventName: z.never().optional(),
+    eventTime: z.never().optional(),
     priceCnyMinor: z.never().optional(),
   }),
 ])
