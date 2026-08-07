@@ -2,125 +2,97 @@
 
 > **角色**：当前需求的状态机与执行入口。只记录现在有效的阶段、阻断项和下一步；历史过程见 `implementation/notes/`。
 > **最后更新**：2026-08-07。
-> **复核基线**：`aac745167e640e5ef20b4d054539a9a245ca109e`；本轮业务收口起点为 `10a18291edc62a13296859ac7a2102c744086907`。
+> **代码基线**：`3984b4f181d5a3071a119affae34c1088a53b6f9`；其后的提交为本次阶段迁移文档更新。
 
 ## 当前阶段
 
-项目仍处于 **阶段 C.1 · P0 收口修复**。
+阶段 C 与阶段 C.1 已完成，`GATE-C1` 已通过。
 
-T34-F1 至 T34-F6 的实施工作已完成，本地完整非 Docker 门禁通过
-（lint、typecheck、unit 118、integration 139、build、verify:production、
-secret scan、E2E **212 通过 0 失败**，真实双 Bucket 9/9）。当前结论：
+用户已在浏览器中完成人工核对，确认公开端、管理端和阶段 C 主业务行为符合当前验收预期。项目现进入 **阶段 D · P1 一期增强的范围确认**，尚未开始阶段 D 编码。
 
-> **PASS WITH REQUIRED CLOSURE（等待用户验收与远端全绿）**
+当前结论为：
 
-`T34-F8` 与 `GATE-C1` **仍未通过**，也不进入 T35。剩余阻断只有两项：
+> **阶段 C：PASS；阶段 D：待确认范围；正式发布：尚未就绪。**
 
-1. GitHub Actions 三个 job 尚未在同一 SHA 全绿——最近几次 push 被
-   `The job was not acquired by Runner of type hosted` 阻断，是自托管 runner 的
-   基础设施问题，不是代码失败；
-2. T34-F8 由用户执行公开端/管理端视觉验收与新上下文独立 Review。
+阶段 C 的完成与正式发布就绪是两个不同结论。GitHub Actions 当前失败、正式域名、TLS、线上 Compose、升级、回滚与恢复演练仍需后续关闭，但不再阻断阶段 D。
 
-本轮修改范围（业务代码）：
+用户验收与阶段迁移记录见
+[`implementation/notes/t34-c1/T34-C1-USER-ACCEPTANCE-2026-08-07.md`](./implementation/notes/t34-c1/T34-C1-USER-ACCEPTANCE-2026-08-07.md)。
 
-- 两个前向迁移 0020、0021（未改 0000–0019）；
-- `server/utils` 按 repository/service/runner/recipe/route 分目录；
-- `app/pages/index.vue` 首页顺序、官方渠道 Card 与首屏设置边界；
-- readiness 严格迁移校验与诚实的 `/api/health`；
-- 新增 reconcile 与双 Bucket 验证脚本；
-- 对应单元、集成与 E2E 用例。
+## 阶段 C 已交付能力
 
-实施细节见
-[`implementation/notes/t34-c1/T34-C1-CLOSURE-2026-08-07.md`](./implementation/notes/t34-c1/T34-C1-CLOSURE-2026-08-07.md)。
+以下能力已经形成并经用户浏览器人工核对：
+
+- 完整作品字段、设定图、出厂照、作品发布与下架；
+- 常规领养列表与统一作品详情；
+- 首页 Hero、精选作品、统一业务入口和当前领养；
+- 委托页、关于、官方渠道、服务条款、隐私政策与营业状态；
+- 首页和委托站点展示位无水印，作品与领养展示位保留活动水印；
+- 可配置居中水印 profile 与真实双 Bucket 验证；
+- 分区文案 Card、稳定 FAQ ID 和分区级并发冲突处理；
+- 过期上传清扫、可信代理、按主体限流和稳定业务错误；
+- publication/watermark/reconcile 长任务的 lease、heartbeat、恢复与幂等；
+- Node 24 镜像结构、Compose/Nginx 配置、live/ready 与运维子命令；
+- 本地非 Docker 门禁、三视口浏览器检查和用户人工验收。
+
+媒体公开规则继续以
+[`requirements/MEDIA-PUBLICATION-POLICY.md`](./requirements/MEDIA-PUBLICATION-POLICY.md)
+为唯一事实源。
+
+## GitHub Actions 非阻断遗留
+
+记录阶段迁移时，代码基线 `3984b4f181d5a3071a119affae34c1088a53b6f9` 的
+`quality` workflow run `31139795670` 结果为：
+
+- `image-build`：成功；
+- `checks`：lint、typecheck、unit、integration 成功后，在 `Production build` 失败；
+- `e2e`：因依赖 `checks` 而跳过。
+
+当前证据只足以确认失败步骤，不能在文档中臆测具体根因。此前“runner 未接单”的判断不再代表最新运行结果。
+
+该问题已登记到 **阶段 E · T49**，由上线前综合审查统一完成：复现 Production build 失败、恢复完整 checks 与 E2E，并取得 `checks`、`image-build`、`e2e` 在同一最新 `main` SHA 全绿。
+
+在 T49 完成前不得声称 GitHub Actions 已全绿；但它不阻断 T35、T36 的返图墙开发。
+
+## 阶段 D 当前范围
+
+| 任务 | 当前判断 | 说明 |
+| --- | --- | --- |
+| T35 | **优先实施** | 建立返图实体、作品关联、排序、发布状态、版本与可选授权记录 |
+| T36 | **阶段核心** | 完成返图上传、轻量水印、后台管理和公开返图墙 |
+| T37 | **待确认** | 展会掉落与完整展会状态矩阵；与返图墙没有硬依赖 |
+| T38 | **待确认，建议不进入首轮** | 增加预定义文字字段或内容分区，不建设万能 CMS |
+| T39 | **待确认，建议后置** | 作品改 slug 后保存旧地址并永久重定向到新地址 |
+| T40 | **待确认，建议裁剪或取消** | 对选定对象提供 30 天软删除、恢复和到期永久清理 |
+| T41 | **待最终范围** | 手机端完成查看、文字、状态、单图和发布等轻量维护闭环 |
+| T42 | **待最终范围** | 只验收用户最终保留的阶段 D 功能，不强制实现被取消项 |
+
+当前唯一明确的阶段 D 产品优先级是 **返图墙垂直切片 T35–T36**。T38–T40 在用户完成范围讨论前不得自动实施。
 
 ## 已确认且继续有效的产品决策
 
-媒体公开规则仍以 [`requirements/MEDIA-PUBLICATION-POLICY.md`](./requirements/MEDIA-PUBLICATION-POLICY.md) 为唯一事实源：
-
-- 首页与委托页横竖 Hero 使用无水印站点展示变体；
-- 首页委托和领养入口使用各自独立的无水印变体；
+- 网站以图片为主，不建设万能 CMS、交易、订单或多管理员系统；
+- 首页与委托页横竖 Hero、首页两个业务入口继续使用无水印站点展示变体；
 - 作品列表、作品详情、领养列表和领养设定图继续使用活动水印；
-- 永久原图、处理源和 Logo 候选始终私有。
-
-首页入口与营业状态合并为统一业务入口卡；作品详情竖图使用限宽舞台；管理端文案使用分区 Card 和分区版本。
-
-## 当前任务状态
-
-| 任务 | 当前状态 | 剩余工作 |
-| --- | --- | --- |
-| T34-F1 | **完成** | reconcile 命令与容器子命令、既有 Hero/领养补齐、失败重试与旧投影保留、真实双 Bucket 9/9 通过 |
-| T34-F2 | **完成** | 首页顺序与公开站 IA 统一，三视口视觉回归通过 |
-| T34-F3 | **完成** | 邮箱、QQ、抖音与防诈骗提醒统一在 contact 分区 Card；首屏设置不再提供第二入口 |
-| T34-F4 | **完成** | 四个仓储抽出，配方层 SQL 归零，`server/utils` 按五层分目录 |
-| T34-F5 | **完成** | 迁移 0020 lease/heartbeat/attempt、启动恢复插件、真实子进程 SIGKILL 中断测试 |
-| T34-F6 | **完成（业务侧）** | readiness 严格迁移校验完成；Compose 静态检查仍需远端流水线实际执行到 |
-| T34-F7 | **等待远端 runner** | 业务门禁错误已修复，本地全绿；`quality` 三个 job 需在同一 SHA 成功，当前被自托管 runner 未接单阻断 |
-| T34-F8 | **未开始** | 由用户执行最终视觉验收和新上下文独立 Review |
-| GATE-C1 | **未通过** | 依赖 T34-F7 远端全绿与 T34-F8 用户确认 |
-
-## 已确认的当前阻断项
-
-### 1. 远端 CI runner
-
-业务侧门禁错误已修复，本地 `APP_ENV=test` 下 lint、typecheck、unit、integration、
-build、verify:production、secret scan 与 E2E 全部通过。
-
-但 `quality` 仍未取得同一 SHA 的三 job 全绿：最近几次 push 的 `checks` 与
-`image-build` 都以
-
-```text
-The job was not acquired by Runner of type hosted even after multiple attempts
-```
-
-结束，`e2e` 因 `needs: checks` 跳过。这是自托管 runner 未接单，**不是**代码
-失败。需要用户确认 runner 可用后重跑，`docker compose config --quiet` 也要在
-那次运行里真正执行到。
-
-### 2. T34-F8 用户验收
-
-公开端与管理端视觉验收、以及新上下文独立 Review 仍待用户执行。实施者不代签。
-
-## 部署与 CI 当前约束
-
-- Compose 文件统一命名为根目录 `docker-compose.yaml`；
-- 本地仍禁止执行 `docker build`、`docker compose up`、空卷演练或本地 Nginx 验收；
-- Dockerfile 已由 GitHub Actions 成功构建验证；
-- 当前没有正式域名，不生成证书、不启用 HSTS、不声称完成 TLS；
-- 不创建 `v*` tag，不触发 Docker Hub 发布，不远程部署；
-- 镜像发布只读取 `DOCKERHUB_USERNAME` 与 `DOCKERHUB_TOKEN`；
-- 正式域名、TLS、线上 Compose、升级、回滚和恢复演练延期到部署阶段。
+- 永久原图、处理源、Logo 候选和返图授权记录始终私有；
+- 首页入口与营业状态使用统一业务入口卡；
+- 作品详情竖图使用限宽舞台；
+- 管理端文案使用分区 Card 和分区版本；
+- GitHub Actions 故障不得通过放宽类型、安全、媒体或 E2E 断言来绕过。
 
 ## 下一步执行顺序
 
-1. 用户确认 GitHub 自托管 runner 可用（必要时配置 Docker Hub Secrets），重跑
-   `quality`，要求 `checks`、`image-build`、`e2e` 在**同一个 main SHA** 全绿，
-   且 Compose 静态检查实际执行到；
-2. 用户执行 T34-F8：公开端与管理端视觉验收，三个固定视口重放；
-3. 新上下文独立 Review 给出 `PASS`；
-4. 用户确认后再勾选 `T34-F8` 与 `GATE-C1`，然后才进入 T35。
+1. 完成阶段 D 范围决策，至少确认 T35–T36，明确 T37–T41 的保留、裁剪或取消；
+2. 先实施 T35：返图领域模型、迁移、共享契约、管理 API 与公开投影边界；
+3. 再实施 T36：私有上传、轻量水印、发布/撤下、管理端和公开返图墙；
+4. 对 T35–T36 执行单元、集成、真实媒体、三视口浏览器和独立 Review；
+5. 只对用户明确保留的 T37–T41 继续排期，并据此执行 T42；
+6. 阶段 E 的 T49 再集中修复 GitHub Actions，并在正式发布前取得同一 SHA 全绿；
+7. T52 完成正式域名、TLS、线上 Compose、备份、升级、回滚和恢复演练。
 
-## 用户验收清单（T34-F8）
+## 当前发布边界
 
-启动方式见 `CLAUDE.md`「本地查看前端与人工验收」。
-
-公开端（`http://127.0.0.1:3000`）：
-
-- 首页区块顺序为 Hero → 精选作品 → 统一业务入口 → 当前领养 → 页脚；
-- 首页与委托页大图、首页两个业务入口**无水印**；
-- 作品列表、作品详情、领养列表与设定图**仍有水印**；
-- 作品详情竖图限宽显示，切换作品后图集回到第一张；
-- `/about#contact` 的邮箱与 QQ 与管理端官方渠道一致；
-- 三个视口 390×844、768×1024、1440×900 无横向滚动、图片正常解码。
-
-管理端（`http://localhost:3000`）：
-
-- 「文案配置」官方渠道 Card 可同时编辑官方邮箱、QQ、抖音号与防诈骗提醒，
-  一次保存生效；
-- 「大图管理」首屏设置只有首页口号与轮播设置，并提示官方渠道去文案配置修改；
-- 两个浏览器窗口同时编辑同一分区：第二个得到分区级冲突且保留草稿；
-  编辑不同分区：都能保存成功。
-
-运维（可选）：
-
-- `pnpm media:reconcile-site-display` 默认输出 dry-run 数量摘要；
-  加 `--no-dry-run` 才真正补齐既有素材变体。
+- 当前没有正式域名，不生成证书、不启用 HSTS、不声称完成 TLS；
+- 不创建 `v*` tag，不触发 Docker Hub 正式发布，不远程部署；
+- 本地仍不以临时 Docker 运行结果替代后续正式环境演练；
+- 阶段 D 可以继续开发，但 T49、T50、T52 未完成前不得宣布正式上线就绪。
