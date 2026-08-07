@@ -53,9 +53,9 @@ export const WATERMARK_ANCHOR_LABELS: Record<WatermarkAnchor, string> = {
 }
 
 export const PUBLICATION_BLOCKER_LABELS: Record<PublicationBlocker, string> = {
-  EVENT_DROP_NOT_READY: '暂不支持发布展会掉落作品',
+  EVENT_DROP_FIELDS_REQUIRED: '展会掉落需要填写展会名称与展会时间',
   WORK_FIELDS_INVALID: '基础信息不完整，请检查必填字段',
-  DESIGN_SHEET_REQUIRED: '常规领养必须保存一张设定图',
+  DESIGN_SHEET_REQUIRED: '领养作品必须保存一张设定图',
   DESIGN_SHEET_NOT_READY: '设定图尚未完成服务端校验',
   DESIGN_SHEET_SOURCE_TOO_SMALL: '设定图尺寸不足，无法生成公开图片',
   DESIGN_SHEET_ALT_REQUIRED: '设定图缺少图片说明',

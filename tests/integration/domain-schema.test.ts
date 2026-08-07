@@ -40,7 +40,8 @@ function insertWork(
     publicationStatus: string
     adoptionMethod: string | null
     businessStatus: string | null
-    currentEventName: string | null
+    eventName: string | null
+    eventTime: string | null
     priceAmountMinor: number | null
     priceCurrency: string | null
   }> = {},
@@ -48,12 +49,12 @@ function insertWork(
   sqlite.prepare(`
     INSERT INTO works (
       id, slug, character_name, species, suit_type, purpose,
-      adoption_method, business_status, current_event_name,
+      adoption_method, business_status, event_name, event_time,
       owner_display, owner_contact, price_amount_minor, price_currency,
       publication_status, created_at, updated_at
     ) VALUES (
       @id, @slug, '团子', '犬科', 'full', @purpose,
-      @adoptionMethod, @businessStatus, @currentEventName,
+      @adoptionMethod, @businessStatus, @eventName, @eventTime,
       @ownerDisplay, 'private-contact', @priceAmountMinor, @priceCurrency,
       @publicationStatus, @now, @now
     )
@@ -63,7 +64,8 @@ function insertWork(
     purpose: fields.purpose ?? 'showcase',
     adoptionMethod: fields.adoptionMethod ?? null,
     businessStatus: fields.businessStatus ?? null,
-    currentEventName: fields.currentEventName ?? null,
+    eventName: fields.eventName ?? null,
+    eventTime: fields.eventTime ?? null,
     ownerDisplay: fields.ownerDisplay ?? '有点小狗工作室',
     priceAmountMinor: fields.priceAmountMinor ?? null,
     priceCurrency: fields.priceCurrency ?? null,

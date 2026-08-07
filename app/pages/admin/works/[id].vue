@@ -10,9 +10,10 @@ import type {
 import { AdminApiError } from '~/composables/useAdminApi'
 import type { WorkBasicsForm } from '~/utils/work-form'
 import {
+  businessTypeOf,
   emptyWorkForm,
+  hasLegacyEventSaleStatus,
   hasWorkFormError,
-  historicalEventAdoption,
   toWorkFieldsPayload,
   validateWorkForm,
   workFormFromDto,
@@ -54,9 +55,6 @@ const saving = ref(false)
 const saveError = ref<string | null>(null)
 const savedNotice = ref<string | null>(null)
 const conflictOpen = ref(false)
-const convertOpen = ref(false)
-/** 历史展会记录已在本次会话中转换：转换只有随保存成功才真正落库。 */
-const convertedFromEvent = ref(false)
 
 const preview = ref<PublicSafeWorkPreviewDto | null>(null)
 const previewError = ref<string | null>(null)
@@ -71,7 +69,6 @@ function applyWork(next: ManagedWorkDto) {
   form.value = workFormFromDto(next)
   baseline.value = workFormSnapshot(form.value)
   submitted.value = false
-  convertedFromEvent.value = false
 }
 
 function applyMediaWork(next: ManagedWorkDto) {
@@ -81,8 +78,7 @@ function applyMediaWork(next: ManagedWorkDto) {
     form.value = workFormFromDto(next)
     baseline.value = workFormSnapshot(form.value)
     submitted.value = false
-    convertedFromEvent.value = false
-  }
+    }
 }
 
 const locked = computed(() => work.value?.publicationStatus === 'published')
@@ -90,16 +86,27 @@ const locked = computed(() => work.value?.publicationStatus === 'published')
 const errors = computed(() => validateWorkForm(form.value))
 const invalid = computed(() => hasWorkFormError(errors.value))
 
-/** 已保存的展会记录；本次会话确认转换后不再阻断编辑与保存。 */
-const historical = computed(() => (
-  convertedFromEvent.value || work.value === null
+/**
+ * T37：展会掉落已是正式可编辑类型，不再需要“先转为常规领养”的阻断流程。
+ * 只有旧的 `event_sale` 状态仍需提示改成正式领养状态。
+ */
+const legacyEventSale = computed(
+  () => work.value !== null && hasLegacyEventSaleStatus(work.value),
+)
+
+/** 已保存的业务类型：用于提示切换类型会清空哪些字段。 */
+const savedBusinessType = computed(() => (
+  work.value === null
     ? null
-    : historicalEventAdoption(work.value)
+    : businessTypeOf(
+        work.value.purpose,
+        work.value.purpose === 'adoption' ? work.value.adoptionMethod : null,
+      )
 ))
 
 const isDirty = computed(() =>
   work.value !== null
-  && (convertedFromEvent.value || workFormSnapshot(form.value) !== baseline.value),
+  && workFormSnapshot(form.value) !== baseline.value,
 )
 
 const leaveGuardActive = computed(() =>
@@ -160,7 +167,7 @@ async function loadPreview() {
 }
 
 async function saveWork(): Promise<boolean> {
-  if (saving.value || !work.value || (!locked.value && historical.value)) {
+  if (saving.value || !work.value) {
     return false
   }
   submitted.value = true
@@ -232,15 +239,6 @@ async function saveBeforePublish(): Promise<boolean> {
     return false
   }
   return true
-}
-
-function onConvertConfirmed() {
-  convertOpen.value = false
-  convertedFromEvent.value = true
-  form.value.purpose = 'adoption'
-  form.value.regularBusinessStatus = 'preparing'
-  saveError.value = null
-  savedNotice.value = '已切换为常规领养编辑：请选择业务状态，保存后才会写入服务端并清空展会名称。'
 }
 
 function onPhotosSaved(next: ManagedWorkDto) {
@@ -327,7 +325,7 @@ useSeoMeta({
           <button
             type="button"
             class="editor__button editor__button--secondary"
-            :disabled="!isDirty || saving || (!locked && historical !== null)"
+            :disabled="!isDirty || saving"
             @click="saveWork"
           >{{ saving ? '保存中…' : locked ? '保存排序 / 精选' : '保存' }}</button>
         </div>
@@ -336,8 +334,8 @@ useSeoMeta({
       <p v-if="locked" class="editor__locked" role="status">
         作品已发布：基础信息、领养设定图与出厂照为只读；排序和精选仍可编辑，保存后会立即更新公开列表与首页精选。
       </p>
-      <p v-else-if="historical" class="editor__locked" role="status">
-        该作品保留着历史展会领养记录：为避免静默丢弃展会事实，保存前需要先在下方明确转为常规领养。
+      <p v-else-if="legacyEventSale" class="editor__locked" role="status">
+        该作品仍是旧的“展会出售中”状态：保存前请在领养信息里选择一个正式的领养状态。
       </p>
 
       <p v-if="savedNotice" class="editor__notice" role="status">{{ savedNotice }}</p>
@@ -349,10 +347,9 @@ useSeoMeta({
             :disabled="locked || saving"
             :ordering-disabled="saving"
             :errors="errors"
-            :historical="historical"
-            :saved-purpose="work.purpose"
+            :legacy-event-sale="legacyEventSale"
+            :saved-business-type="savedBusinessType"
             :show-errors="submitted"
-            @convert-to-regular="convertOpen = true"
           />
           <AdminDesignSheetSection
             v-if="work.purpose === 'adoption'"
@@ -471,19 +468,6 @@ useSeoMeta({
           </section>
         </aside>
       </div>
-
-      <AdminConfirmDialog
-        :open="convertOpen"
-        title="转为常规领养？"
-        confirm-label="转为常规领养"
-        @confirm="onConvertConfirmed"
-        @cancel="convertOpen = false"
-      >
-        <p>
-          保存后领养方式改为「常规领养」，展会名称会被清空，业务状态需要重新选择。
-          当前页面暂不支持展会掉落；转为常规领养后不会保留原展会名称。
-        </p>
-      </AdminConfirmDialog>
 
       <AdminConfirmDialog
         :open="conflictOpen"

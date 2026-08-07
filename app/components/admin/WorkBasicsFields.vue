@@ -1,18 +1,15 @@
 <script setup lang="ts">
-import type { BusinessStatus, WorkPurpose } from '~~/shared/types/contracts'
 import {
   REGULAR_ADOPTION_BUSINESS_STATUS_VALUES,
   SUIT_TYPE_VALUES,
-  WORK_PURPOSE_VALUES,
 } from '~~/shared/schemas/work'
 import {
   BUSINESS_STATUS_LABELS,
   SUIT_TYPE_LABELS,
-  WORK_PURPOSE_LABELS,
 } from '~/utils/work-labels'
 import type {
-  HistoricalEventAdoption,
   WorkBasicsForm,
+  WorkBusinessType,
   WorkFormErrors,
 } from '~/utils/work-form'
 import {
@@ -20,56 +17,60 @@ import {
   MAX_FEATURE_TAGS,
   OWNER_DISPLAY_PRESETS,
   PUBLIC_FEATURED_LIMIT,
+  purposeOfBusinessType,
+  WORK_BUSINESS_TYPE_LABELS,
+  WORK_BUSINESS_TYPE_VALUES,
 } from '~/utils/work-form'
 
 const props = withDefaults(defineProps<{
   disabled?: boolean
   errors: WorkFormErrors
   orderingDisabled?: boolean
-  /** 服务端已保存的历史展会领养事实；存在时领养字段只读。 */
-  historical?: HistoricalEventAdoption | null
-  /** 已保存的用途，用于说明切换用途会清空哪些字段。 */
-  savedPurpose?: WorkPurpose | null
+  /** 旧 `event_sale` 业务状态：只提示改成正式领养状态，不再锁死字段。 */
+  legacyEventSale?: boolean
+  /** 已保存的业务类型，用于说明切换类型会清空哪些字段。 */
+  savedBusinessType?: WorkBusinessType | null
   showErrors?: boolean
 }>(), {
   disabled: false,
-  historical: null,
+  legacyEventSale: false,
   orderingDisabled: false,
-  savedPurpose: null,
+  savedBusinessType: null,
   showErrors: false,
 })
-
-const emit = defineEmits<{
-  convertToRegular: []
-}>()
 
 // 与父页共享 reactive 表单对象：双向绑定直接落在父级状态上，
 // dirty 基线比较在父级完成。
 const form = defineModel<WorkBasicsForm>({ required: true })
 
-const PURPOSE_FIELD_NOTES: Record<WorkPurpose, string> = {
-  adoption: '领养作品：显示领养方式、业务状态与人民币价格；保存时一并提交。',
-  commission: '委托作品：不使用领养方式、业务状态与价格，这些字段不会出现，也不会提交。',
-  showcase: '展示作品：不使用领养方式、业务状态与价格，这些字段不会出现，也不会提交。',
+/**
+ * T37：四个易懂业务选项，只做映射，不新增底层 purpose。
+ * 说明文字直接告诉景宸「会显示什么、会提交什么」。
+ */
+const BUSINESS_TYPE_NOTES: Record<WorkBusinessType, string> = {
+  commission: '委托作品：不使用领养方式、状态、价格与展会字段，这些字段不会出现，也不会提交。',
+  regular_adoption: '常规领养：显示领养状态、人民币价格与设定图；不使用展会字段。',
+  event_drop: '展会掉落：在常规领养的基础上，额外填写展会名称与展会时间；发布前两项必填。',
+  showcase: '纯展示：不使用领养方式、状态、价格与展会字段，这些字段不会出现，也不会提交。',
 }
 
-const isAdoption = computed(() => form.value.purpose === 'adoption')
-const adoptionLocked = computed(() => props.historical !== null)
+const isAdoption = computed(
+  () => purposeOfBusinessType(form.value.businessType) === 'adoption',
+)
+const isEventDrop = computed(() => form.value.businessType === 'event_drop')
 
-const leavingAdoption = computed(() =>
-  props.savedPurpose === 'adoption' && form.value.purpose !== 'adoption',
+const leavingAdoption = computed(() => (
+  props.savedBusinessType !== null
+  && purposeOfBusinessType(props.savedBusinessType) === 'adoption'
+  && !isAdoption.value
+))
+
+/** 从展会掉落切换到其他类型时，明确提示展会字段会被清理。 */
+const leavingEventDrop = computed(
+  () => props.savedBusinessType === 'event_drop' && !isEventDrop.value,
 )
 
 const tagCount = computed(() => form.value.featureTags.length)
-
-function businessStatusText(value: string | null) {
-  if (value === null) {
-    return '未记录'
-  }
-  return value in BUSINESS_STATUS_LABELS
-    ? BUSINESS_STATUS_LABELS[value as BusinessStatus]
-    : value
-}
 
 function errorFor(key: keyof Omit<WorkFormErrors, 'featureTags'>) {
   return props.showErrors ? props.errors[key] : undefined
@@ -177,28 +178,81 @@ function moveTag(index: number, offset: number) {
         </select>
       </div>
       <div class="field field--wide">
-        <label class="field__label" for="f-purpose">用途</label>
+        <label class="field__label" for="f-business-type">业务类型</label>
         <select
-          id="f-purpose"
-          v-model="form.purpose"
+          id="f-business-type"
+          v-model="form.businessType"
           class="field__input field__input--compact"
-          :disabled="disabled || adoptionLocked"
-          aria-describedby="f-purpose-note"
+          :disabled="disabled"
+          aria-describedby="f-business-type-note"
         >
-          <option v-for="value in WORK_PURPOSE_VALUES" :key="value" :value="value">
-            {{ WORK_PURPOSE_LABELS[value] }}
-          </option>
+          <option
+            v-for="value in WORK_BUSINESS_TYPE_VALUES"
+            :key="value"
+            :value="value"
+          >{{ WORK_BUSINESS_TYPE_LABELS[value] }}</option>
         </select>
-        <p id="f-purpose-note" class="field__hint" role="status" data-testid="purpose-note">
-          {{ PURPOSE_FIELD_NOTES[form.purpose] }}
+        <p
+          id="f-business-type-note"
+          class="field__hint"
+          role="status"
+          data-testid="purpose-note"
+        >
+          {{ BUSINESS_TYPE_NOTES[form.businessType] }}
         </p>
         <p v-if="leavingAdoption" class="field__warning" role="status">
-          切换离开领养用途后，领养方式、业务状态与价格会在保存时被清空；若该作品已有领养设定图，服务端会拒绝本次切换。
+          切换离开领养后，领养状态、价格与展会字段会在保存时被清空；若该作品已有领养设定图，服务端会拒绝本次切换。
         </p>
-        <p v-if="adoptionLocked" class="field__warning" role="status">
-          该作品保留着历史展会领养记录，用途暂不可切换；请先在下方转为常规领养。
+        <p v-else-if="leavingEventDrop" class="field__warning" role="status">
+          切换离开展会掉落后，展会名称与展会时间会在保存时被清空，不会留下残留值。
+        </p>
+        <p v-if="legacyEventSale" class="field__warning" role="status">
+          该作品仍是旧的“展会出售中”状态，保存前请在下方选择一个正式的领养状态。
         </p>
       </div>
+
+      <!-- T37 展会掉落：只有展会名称与展会时间两项，不建设展会选择器。 -->
+      <template v-if="isEventDrop">
+        <div class="field field--wide">
+          <label class="field__label" for="f-event-name">展会名称</label>
+          <input
+            id="f-event-name"
+            v-model="form.eventName"
+            class="field__input field__input--compact"
+            type="text"
+            maxlength="80"
+            :disabled="disabled"
+            :aria-invalid="errorFor('eventName') ? 'true' : undefined"
+            :aria-describedby="describedBy('f-event-name-hint', 'f-event-name-error', Boolean(errorFor('eventName')))"
+          >
+          <p id="f-event-name-hint" class="field__hint">
+            公开端展示 · 例如“幻夏祭 2026”。发布前必填。
+          </p>
+          <p v-if="errorFor('eventName')" id="f-event-name-error" class="field__error">
+            {{ errorFor('eventName') }}
+          </p>
+        </div>
+        <div class="field field--wide">
+          <label class="field__label" for="f-event-time">展会时间</label>
+          <input
+            id="f-event-time"
+            v-model="form.eventTime"
+            class="field__input field__input--compact"
+            type="text"
+            maxlength="80"
+            :disabled="disabled"
+            :aria-invalid="errorFor('eventTime') ? 'true' : undefined"
+            :aria-describedby="describedBy('f-event-time-hint', 'f-event-time-error', Boolean(errorFor('eventTime')))"
+          >
+          <p id="f-event-time-hint" class="field__hint">
+            公开端展示 · 可写单日、日期范围或已确认时段，例如“8 月 15 日 至 16 日”。
+            这是给访客看的文字，<strong>不会自动改变领养状态</strong>，也不会触发定时上架。发布前必填。
+          </p>
+          <p v-if="errorFor('eventTime')" id="f-event-time-error" class="field__error">
+            {{ errorFor('eventTime') }}
+          </p>
+        </div>
+      </template>
       <div class="field field--wide">
         <label class="field__label" for="f-owner">角色主人公开值 <span aria-hidden="true">*</span></label>
         <input
@@ -246,41 +300,13 @@ function moveTag(index: number, offset: number) {
     </div>
   </section>
 
+  <!--
+    T37：展会掉落已经是可编辑、可发布的正式业务类型，
+    因此不再需要“历史展会记录（只读）”与“转为常规领养”的转换入口。
+    展会名称/时间直接在上方业务类型区编辑。
+  -->
   <section
-    v-if="historical"
-    class="editor-card"
-    aria-labelledby="historical-title"
-    data-testid="historical-adoption"
-  >
-    <h2 id="historical-title" class="editor-card__title">历史展会记录（只读）</h2>
-    <dl class="historical">
-      <div class="historical__row">
-        <dt>领养方式</dt>
-        <dd>{{ historical.adoptionMethod === 'event_drop' ? '展会掉落' : '未记录' }}</dd>
-      </div>
-      <div class="historical__row">
-        <dt>业务状态</dt>
-        <dd>{{ businessStatusText(historical.businessStatus) }}</dd>
-      </div>
-      <div class="historical__row">
-        <dt>展会名称</dt>
-        <dd>{{ historical.currentEventName ?? '未记录' }}</dd>
-      </div>
-    </dl>
-    <p class="historical__note">
-      当前页面暂不支持修改展会信息。
-      转为常规领养后，展会名称会被清空、方式改为常规领养，并需要重新选择业务状态。
-    </p>
-    <button
-      type="button"
-      class="editor__button editor__button--secondary"
-      :disabled="disabled"
-      @click="emit('convertToRegular')"
-    >转为常规领养…</button>
-  </section>
-
-  <section
-    v-if="isAdoption && !adoptionLocked"
+    v-if="isAdoption"
     class="editor-card"
     aria-labelledby="adoption-title"
     data-testid="adoption-fields"
@@ -588,35 +614,10 @@ function moveTag(index: number, offset: number) {
   gap: var(--admin-space-4);
 }
 
-.historical {
-  margin: 0 0 var(--admin-space-3);
-  display: grid;
-  gap: var(--admin-space-2);
-}
 
-.historical__row {
-  display: grid;
-  grid-template-columns: 6rem 1fr;
-  gap: var(--admin-space-2);
-  font-size: var(--admin-font-sm);
-}
 
-.historical__row dt {
-  color: var(--admin-text-tertiary);
-}
 
-.historical__row dd {
-  margin: 0;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
 
-.historical__note {
-  margin: 0 0 var(--admin-space-4);
-  font-size: var(--admin-font-xs);
-  color: var(--admin-text-tertiary);
-  line-height: var(--admin-line-normal);
-}
 
 .tags {
   list-style: none;

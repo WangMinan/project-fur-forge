@@ -624,7 +624,7 @@ describe('T19/T20 public repository contracts', () => {
     })
     expect(serialized).not.toContain('private-adoption@example.test')
     expect(serialized).not.toContain('/original/')
-    expect(serialized).not.toContain('currentEventName')
+    expect(serialized).not.toContain('ownerContact')
     expect(serialized).not.toContain('privateObjectKey')
   })
 

@@ -45,7 +45,8 @@ const baseRecord: WorkRecord = {
   ],
   adoptionMethod: 'event_drop',
   businessStatus: 'event_sale',
-  currentEventName: '测试展会',
+  eventName: '测试展会',
+  eventTime: '2026 年 8 月 15 日',
   featured: true,
   priceCnyMinor: 1_560_000,
   sortOrder: 4,
@@ -203,7 +204,8 @@ describe('T22 work mutation contracts', () => {
       purpose: 'adoption',
       adoptionMethod: 'event_drop',
       businessStatus: 'event_sale',
-      currentEventName: '未建模展会',
+      eventName: '未建模展会',
+      eventTime: '未建模时间',
       priceCnyMinor: 100,
     }).success).toBe(false)
     for (const priceCnyMinor of [0, -1, 1.5]) {

@@ -25,7 +25,8 @@ export interface WorkRecord {
   featureTags: string[]
   adoptionMethod: AdoptionMethod | null
   businessStatus: BusinessStatus | null
-  currentEventName: string | null
+  eventName: string | null
+  eventTime: string | null
   featured: boolean
   priceCnyMinor: number | null
   sortOrder: number
@@ -59,6 +60,9 @@ export function toPublicWorkDto(
         purpose: 'adoption',
         adoptionMethod: record.adoptionMethod,
         businessStatus: record.businessStatus,
+        // T37：展会字段只对 event_drop 有值，其他领养固定为 null。
+        eventName: record.eventName,
+        eventTime: record.eventTime,
       })
     }
 
@@ -74,6 +78,8 @@ export function toPublicWorkDto(
       purpose: 'adoption',
       adoptionMethod: record.adoptionMethod,
       businessStatus: record.businessStatus,
+      eventName: record.eventName,
+      eventTime: record.eventTime,
       price: {
         currency: 'CNY',
         minorUnits: record.priceCnyMinor,
@@ -113,7 +119,8 @@ export function toAdminWorkDto(record: WorkRecord): AdminWorkDto {
       },
       adoptionMethod: record.adoptionMethod,
       businessStatus: record.businessStatus,
-      currentEventName: record.currentEventName,
+      eventName: record.eventName,
+      eventTime: record.eventTime,
       priceCnyMinor: record.priceCnyMinor,
       sortOrder: record.sortOrder,
       featured: record.featured,

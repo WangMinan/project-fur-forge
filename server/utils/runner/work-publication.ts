@@ -220,11 +220,9 @@ export function checkWorkPublication(
     blockers.push('WORK_FIELDS_INVALID')
   }
   if (work.purpose === 'adoption') {
-    if (work.adoptionMethod === 'event_drop') {
-      blockers.push('EVENT_DROP_NOT_READY')
-    }
-    else if (
-      work.adoptionMethod !== 'regular'
+    const isEventDrop = work.adoptionMethod === 'event_drop'
+    if (
+      !['regular', 'event_drop'].includes(work.adoptionMethod ?? '')
       || ![
         'preparing',
         'available',
@@ -232,7 +230,8 @@ export function checkWorkPublication(
         'in_production',
         'delivered',
       ].includes(work.businessStatus ?? '')
-      || work.currentEventName !== null
+      // 非掉落作品不得残留展会字段。
+      || (!isEventDrop && (work.eventName !== null || work.eventTime !== null))
       || (
         work.priceAmountMinor === null
           ? work.priceCurrency !== null
@@ -241,7 +240,19 @@ export function checkWorkPublication(
     ) {
       blockers.push('WORK_FIELDS_INVALID')
     }
-    if (work.adoptionMethod === 'regular' && designSheets.length === 0) {
+    // T37：展会掉落额外要求展会名称与展会时间；
+    // 不再以“缺少独立展会表”为由整体阻断掉落发布。
+    if (
+      isEventDrop
+      && (
+        (work.eventName ?? '').trim() === ''
+        || (work.eventTime ?? '').trim() === ''
+      )
+    ) {
+      blockers.push('EVENT_DROP_FIELDS_REQUIRED')
+    }
+    // 掉落与常规领养共用设定图要求。
+    if (designSheets.length === 0) {
       blockers.push('DESIGN_SHEET_REQUIRED')
     }
     if (designSheets.some(sheet => sheet.status !== 'READY')) {

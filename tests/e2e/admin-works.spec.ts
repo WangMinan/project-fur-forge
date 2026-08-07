@@ -453,7 +453,8 @@ test.describe('编辑与保存', () => {
       purpose: 'adoption',
       adoptionMethod: 'event_drop',
       businessStatus: 'event_sale',
-      currentEventName: '历史展会',
+      eventName: '历史展会',
+      eventTime: '历史展会时间',
       publicationStatus: 'draft',
       photos: [{ alt: '历史展会作品照' }],
     }])

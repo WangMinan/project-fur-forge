@@ -17,10 +17,13 @@ export interface WorkBasicsForm {
   characterName: string
   featureTags: string[]
   featured: boolean
+  /** T37：管理端四选项业务类型，只做映射，不新增底层 purpose。 */
+  businessType: WorkBusinessType
+  eventName: string
+  eventTime: string
   ownerContact: string
   ownerDisplay: string
   priceYuan: string
-  purpose: WorkPurpose
   regularBusinessStatus: RegularAdoptionBusinessStatus
   slug: string
   sortOrder: string | number
@@ -28,21 +31,64 @@ export interface WorkBasicsForm {
   suitType: SuitType
 }
 
+/**
+ * 管理端业务类型：给景宸看的四个易懂选项。
+ *
+ * ```text
+ * commission      -> purpose=commission
+ * regular_adoption-> purpose=adoption, adoption_method=regular
+ * event_drop      -> purpose=adoption, adoption_method=event_drop
+ * showcase        -> purpose=showcase
+ * ```
+ */
+export const WORK_BUSINESS_TYPE_VALUES = [
+  'commission',
+  'regular_adoption',
+  'event_drop',
+  'showcase',
+] as const
+
+export type WorkBusinessType = typeof WORK_BUSINESS_TYPE_VALUES[number]
+
+export const WORK_BUSINESS_TYPE_LABELS: Record<WorkBusinessType, string> = {
+  commission: '委托作品',
+  regular_adoption: '常规领养',
+  event_drop: '展会掉落',
+  showcase: '纯展示',
+}
+
+/** 四选项 → 底层 purpose。 */
+export function purposeOfBusinessType(value: WorkBusinessType): WorkPurpose {
+  if (value === 'commission') {
+    return 'commission'
+  }
+  return value === 'showcase' ? 'showcase' : 'adoption'
+}
+
+/** 底层字段 → 四选项。 */
+export function businessTypeOf(
+  purpose: WorkPurpose,
+  adoptionMethod: 'event_drop' | 'regular' | null | undefined,
+): WorkBusinessType {
+  if (purpose === 'commission') {
+    return 'commission'
+  }
+  if (purpose === 'showcase') {
+    return 'showcase'
+  }
+  return adoptionMethod === 'event_drop' ? 'event_drop' : 'regular_adoption'
+}
+
 export interface WorkFormErrors {
   characterName?: string
+  eventName?: string
+  eventTime?: string
   featureTags: Record<number, string>
   ownerDisplay?: string
   price?: string
   slug?: string
   sortOrder?: string
   species?: string
-}
-
-/** 历史展会领养事实：只读展示，T22 不提供展会编辑器。 */
-export interface HistoricalEventAdoption {
-  adoptionMethod: 'event_drop' | 'regular' | null
-  businessStatus: string | null
-  currentEventName: string | null
 }
 
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
@@ -63,13 +109,15 @@ function isRegularBusinessStatus(
 
 export function emptyWorkForm(): WorkBasicsForm {
   return {
+    businessType: 'commission',
     characterName: '',
+    eventName: '',
+    eventTime: '',
     featureTags: [],
     featured: false,
     ownerContact: '',
     ownerDisplay: OWNER_DISPLAY_PRESETS[0],
     priceYuan: '',
-    purpose: 'commission',
     regularBusinessStatus: 'preparing',
     slug: '',
     sortOrder: '0',
@@ -81,7 +129,10 @@ export function emptyWorkForm(): WorkBasicsForm {
 export function workFormFromDto(dto: ManagedWorkDto): WorkBasicsForm {
   const adoption = dto.purpose === 'adoption' ? dto : null
   return {
+    businessType: businessTypeOf(dto.purpose, adoption?.adoptionMethod),
     characterName: dto.characterName,
+    eventName: adoption?.eventName ?? '',
+    eventTime: adoption?.eventTime ?? '',
     featureTags: [...dto.featureTags],
     featured: dto.featured,
     ownerContact: dto.private.ownerContact ?? '',
@@ -89,7 +140,6 @@ export function workFormFromDto(dto: ManagedWorkDto): WorkBasicsForm {
     priceYuan: adoption?.priceCnyMinor != null
       ? toCnyYuanInput(adoption.priceCnyMinor)
       : '',
-    purpose: dto.purpose,
     regularBusinessStatus: isRegularBusinessStatus(adoption?.businessStatus)
       ? adoption.businessStatus
       : 'preparing',
@@ -101,25 +151,14 @@ export function workFormFromDto(dto: ManagedWorkDto): WorkBasicsForm {
 }
 
 /**
- * 只有服务端已经写入的展会事实才算历史记录：
- * 方式或状态为空的旧领养作品可以直接按常规领养补齐，不需要转换确认。
+ * 历史 `event_sale` 业务状态。
+ *
+ * T37 起展会掉落已经是可编辑、可发布的正式业务类型，因此不再需要
+ * “历史展会事实只读展示”。只有旧的 `event_sale` 状态仍不可写，
+ * 需要在编辑时提示改成正式的领养状态。
  */
-export function historicalEventAdoption(
-  dto: ManagedWorkDto,
-): HistoricalEventAdoption | null {
-  if (dto.purpose !== 'adoption') {
-    return null
-  }
-  const hasEventFact = dto.adoptionMethod === 'event_drop'
-    || dto.businessStatus === 'event_sale'
-    || (dto.currentEventName ?? '').trim() !== ''
-  return hasEventFact
-    ? {
-        adoptionMethod: dto.adoptionMethod,
-        businessStatus: dto.businessStatus,
-        currentEventName: dto.currentEventName,
-      }
-    : null
+export function hasLegacyEventSaleStatus(dto: ManagedWorkDto) {
+  return dto.purpose === 'adoption' && dto.businessStatus === 'event_sale'
 }
 
 export function parseSortOrderInput(raw: string | number) {
@@ -158,10 +197,20 @@ export function validateWorkForm(form: WorkBasicsForm): WorkFormErrors {
     errors.sortOrder = sortOrder.error
   }
 
-  if (form.purpose === 'adoption') {
+  if (purposeOfBusinessType(form.businessType) === 'adoption') {
     const price = parseCnyYuanInput(form.priceYuan)
     if (price.error) {
       errors.price = price.error
+    }
+  }
+
+  // 展会字段允许在草稿阶段留空（发布检查会拦），但填了就必须合法。
+  if (form.businessType === 'event_drop') {
+    if (Array.from(form.eventName.trim()).length > 80) {
+      errors.eventName = '展会名称最多 80 个字符'
+    }
+    if (Array.from(form.eventTime.trim()).length > 80) {
+      errors.eventTime = '展会时间最多 80 个字符'
     }
   }
 
@@ -191,6 +240,8 @@ export function hasWorkFormError(errors: WorkFormErrors) {
   return Object.keys(errors.featureTags).length > 0
     || Boolean(
       errors.characterName
+      || errors.eventName
+      || errors.eventTime
       || errors.ownerDisplay
       || errors.price
       || errors.slug
@@ -217,17 +268,25 @@ export function toWorkFieldsPayload(form: WorkBasicsForm): WorkFields {
     featured: form.featured,
   }
 
-  if (form.purpose === 'adoption') {
+  const purpose = purposeOfBusinessType(form.businessType)
+  if (purpose === 'adoption') {
+    const isEventDrop = form.businessType === 'event_drop'
+    const eventName = form.eventName.trim()
+    const eventTime = form.eventTime.trim()
     return {
       ...base,
       purpose: 'adoption',
-      adoptionMethod: 'regular',
+      adoptionMethod: isEventDrop ? 'event_drop' : 'regular',
       businessStatus: form.regularBusinessStatus,
       priceCnyMinor: parseCnyYuanInput(form.priceYuan).minorUnits ?? null,
+      // 只有展会掉落才提交展会字段：切换到常规领养时提交 null，
+      // 因此服务端和数据库都不会留下僵尸值。
+      eventName: isEventDrop && eventName !== '' ? eventName : null,
+      eventTime: isEventDrop && eventTime !== '' ? eventTime : null,
     }
   }
 
-  return { ...base, purpose: form.purpose }
+  return { ...base, purpose }
 }
 
 /**
@@ -243,14 +302,14 @@ export function workFormSnapshot(form: WorkBasicsForm) {
     featured: form.featured,
     ownerContact: form.ownerContact.trim(),
     ownerDisplay: form.ownerDisplay.trim(),
-    purpose: form.purpose,
+    businessType: form.businessType,
     slug: form.slug.trim(),
     sortOrder: sortOrder.value ?? String(form.sortOrder).trim(),
     species: form.species.trim(),
     suitType: form.suitType,
   }
 
-  if (form.purpose !== 'adoption') {
+  if (purposeOfBusinessType(form.businessType) !== 'adoption') {
     return JSON.stringify(base)
   }
 
@@ -259,5 +318,12 @@ export function workFormSnapshot(form: WorkBasicsForm) {
     ...base,
     businessStatus: form.regularBusinessStatus,
     priceCnyMinor: price.minorUnits ?? form.priceYuan.trim(),
+    // 只有展会掉落才把展会字段计入基线，避免切换类型后误判未保存更改。
+    ...(form.businessType === 'event_drop'
+      ? {
+          eventName: form.eventName.trim(),
+          eventTime: form.eventTime.trim(),
+        }
+      : {}),
   })
 }

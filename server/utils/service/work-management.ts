@@ -42,7 +42,8 @@ interface WorkRow {
   adoptionMethod: 'regular' | 'event_drop' | null
   businessStatus: 'preparing' | 'available' | 'event_sale' | 'scheduled' | 'in_production' | 'delivered' | null
   characterName: string
-  currentEventName: string | null
+  eventName: string | null
+  eventTime: string | null
   featured: number
   id: string
   ownerContact: string | null
@@ -64,7 +65,8 @@ const selectWork = `
     species, suit_type AS suitType, purpose,
     adoption_method AS adoptionMethod,
     business_status AS businessStatus,
-    current_event_name AS currentEventName,
+    event_name AS eventName,
+    event_time AS eventTime,
     owner_display AS ownerDisplay, owner_contact AS ownerContact,
     price_amount_minor AS priceAmountMinor,
     price_currency AS priceCurrency,
@@ -202,12 +204,28 @@ function managedWork(
         designSheet: designSheet(sqlite, row.id),
         adoptionMethod: row.adoptionMethod,
         businessStatus: row.businessStatus,
-        currentEventName: row.currentEventName,
+        eventName: row.eventName,
+        eventTime: row.eventTime,
         priceCnyMinor: row.priceCurrency === 'CNY'
           ? row.priceAmountMinor
           : null,
       }
     : base)
+}
+
+/**
+ * 展会字段只在“领养 + 展会掉落”下有值。
+ * 其他业务类型统一返回 null，保证切换类型后不留僵尸值。
+ */
+function eventFieldFor(
+  input: WorkFields,
+  field: 'eventName' | 'eventTime',
+) {
+  if (input.purpose !== 'adoption' || input.adoptionMethod !== 'event_drop') {
+    return null
+  }
+  const value = input[field]
+  return value === undefined ? null : value
 }
 
 function translateConstraint(error: unknown): never {
@@ -247,7 +265,8 @@ export function listManagedWorks(
       work.species, work.suit_type AS suitType, work.purpose,
       work.adoption_method AS adoptionMethod,
       work.business_status AS businessStatus,
-      work.current_event_name AS currentEventName,
+      work.event_name AS eventName,
+      work.event_time AS eventTime,
       work.owner_display AS ownerDisplay,
       work.price_amount_minor AS priceAmountMinor,
       work.price_currency AS priceCurrency,
@@ -292,7 +311,8 @@ export function listManagedWorks(
           designSheetAssetId: row.designSheetAssetId,
           adoptionMethod: row.adoptionMethod,
           businessStatus: row.businessStatus,
-          currentEventName: row.currentEventName,
+          eventName: row.eventName,
+        eventTime: row.eventTime,
           priceCnyMinor: row.priceCurrency === 'CNY'
             ? row.priceAmountMinor
             : null,
@@ -319,10 +339,10 @@ export function createManagedWork(
       sqlite.prepare(`
         INSERT INTO works (
           id, slug, character_name, species, suit_type, purpose,
-          adoption_method, business_status, current_event_name,
+          adoption_method, business_status, event_name, event_time,
           owner_display, owner_contact, price_amount_minor, price_currency,
           publication_status, sort_order, featured, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, 'draft', ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?, ?, ?, 'draft', ?, ?, ?, ?)
       `).run(
         id,
         input.slug,
@@ -385,7 +405,7 @@ export function updateManagedWork(
         UPDATE works
         SET slug = ?, character_name = ?, species = ?, suit_type = ?,
             purpose = ?, adoption_method = ?, business_status = ?,
-            current_event_name = NULL,
+            event_name = ?, event_time = ?,
             owner_display = ?, owner_contact = ?,
             price_amount_minor = ?, price_currency = ?,
             sort_order = ?, featured = ?,
@@ -399,6 +419,10 @@ export function updateManagedWork(
         input.purpose,
         input.purpose === 'adoption' ? input.adoptionMethod : null,
         input.purpose === 'adoption' ? input.businessStatus : null,
+        // 只有展会掉落才写展会字段：切换到其他业务类型时这里一律写 NULL，
+        // 因此不会留下僵尸值（数据库 CHECK 同样会拒绝残留）。
+        eventFieldFor(input, 'eventName'),
+        eventFieldFor(input, 'eventTime'),
         input.ownerDisplay,
         input.ownerContact,
         input.purpose === 'adoption' ? input.priceCnyMinor : null,

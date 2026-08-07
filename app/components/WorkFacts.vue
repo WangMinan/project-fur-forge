@@ -28,6 +28,16 @@ const rows = computed<FactRow[]>(() => {
       term: '业务状态',
       value: BUSINESS_STATUS_LABELS[props.dto.businessStatus],
     })
+    // T37：只有展会掉落显示展会名称与时间；常规领养不出现空行。
+    // 展会时间只是展示文本，不是可解析的日程。
+    if (props.dto.adoptionMethod === 'event_drop') {
+      if (props.dto.eventName) {
+        base.push({ term: '展会名称', value: props.dto.eventName })
+      }
+      if (props.dto.eventTime) {
+        base.push({ term: '展会时间', value: props.dto.eventTime })
+      }
+    }
   }
 
   return base

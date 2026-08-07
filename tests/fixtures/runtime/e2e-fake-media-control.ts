@@ -50,7 +50,8 @@ interface ControlBody {
     publicationStatus?: 'draft' | 'published'
     adoptionMethod?: 'regular' | 'event_drop'
     businessStatus?: 'preparing' | 'available' | 'event_sale' | 'scheduled' | 'in_production' | 'delivered'
-    currentEventName?: string
+    eventName?: string
+    eventTime?: string
     priceMinorUnits?: number
     designSheet?: {
       alt: string
@@ -306,7 +307,7 @@ export default defineEventHandler(async (event) => {
       sqlite.prepare(`
         INSERT INTO works (
           id, slug, character_name, species, suit_type, purpose,
-          adoption_method, business_status, current_event_name,
+          adoption_method, business_status, event_name, event_time,
           owner_display, price_amount_minor, price_currency,
           publication_status, sort_order, featured,
           published_at, created_at, updated_at
@@ -320,7 +321,8 @@ export default defineEventHandler(async (event) => {
         purpose,
         adoption ? (work.adoptionMethod ?? 'regular') : null,
         adoption ? (work.businessStatus ?? 'available') : null,
-        adoption ? (work.currentEventName ?? null) : null,
+        adoption ? (work.eventName ?? null) : null,
+        adoption ? (work.eventTime ?? null) : null,
         work.ownerDisplay ?? '不公开',
         adoption && work.priceMinorUnits ? work.priceMinorUnits : null,
         adoption && work.priceMinorUnits ? 'CNY' : null,

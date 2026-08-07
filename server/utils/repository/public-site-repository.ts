@@ -6,6 +6,7 @@ import {
 import {
   publicAdoptionListDtoSchema,
   publicAdoptionListItemDtoSchema,
+  publicAdoptionListQuerySchema,
   publicFeaturedWorksDtoSchema,
   publicHomeAggregateDtoSchema,
   publicWorkDetailDtoSchema,
@@ -51,9 +52,13 @@ export interface PublicWorksQuery {
   suitType?: unknown
 }
 
+export interface PublicAdoptionsQuery {
+  method?: unknown
+}
+
 export interface PublicSiteRepository {
   getWorkBySlug(slug: string): PublicWorkDetailDto | null
-  listAdoptions(): PublicAdoptionListDto
+  listAdoptions(query?: PublicAdoptionsQuery): PublicAdoptionListDto
   listWorks(query?: PublicWorksQuery): PublicWorkListDto
   listFeaturedWorks(): PublicFeaturedWorksDto
   getCommissionHero(): PublicCommissionHeroDto
@@ -65,7 +70,8 @@ interface PublishedWorkRow {
   adoptionMethod: 'regular' | 'event_drop' | null
   businessStatus: 'preparing' | 'available' | 'event_sale' | 'scheduled' | 'in_production' | 'delivered' | null
   characterName: string
-  currentEventName: string | null
+  eventName: string | null
+  eventTime: string | null
   featured: number
   id: string
   ownerDisplay: string
@@ -164,7 +170,8 @@ function loadPublishedWorks(sqlite: Database.Database) {
       species, suit_type AS suitType, purpose,
       adoption_method AS adoptionMethod,
       business_status AS businessStatus,
-      current_event_name AS currentEventName,
+      event_name AS eventName,
+      event_time AS eventTime,
       owner_display AS ownerDisplay,
       price_amount_minor AS priceAmountMinor,
       price_currency AS priceCurrency,
@@ -432,11 +439,10 @@ function homeAggregate(
   })
 }
 
+/** T37：常规领养与展会掉落共用同一份领养投影和设定图水印变体。 */
 function adoptionItems(entries: readonly SnapshotEntry[]) {
   return entries.flatMap((entry): PublicAdoptionListItemDto[] => (
-    entry.summary.work.purpose === 'adoption'
-    && entry.summary.work.adoptionMethod === 'regular'
-    && entry.designSheet
+    entry.summary.work.purpose === 'adoption' && entry.designSheet
       ? [publicAdoptionListItemDtoSchema.parse({
           work: entry.summary.work,
           href: entry.summary.href,
@@ -444,6 +450,36 @@ function adoptionItems(entries: readonly SnapshotEntry[]) {
         })]
       : []
   ))
+}
+
+/**
+ * 领养列表 DTO：应用筛选并给出各筛选下的真实数量。
+ * 非法筛选参数不抛 500，收敛为“全部”并标记 valid=false。
+ */
+function adoptionListDto(
+  items: readonly PublicAdoptionListItemDto[],
+  query: PublicAdoptionsQuery,
+) {
+  const parsed = publicAdoptionListQuerySchema.safeParse(query)
+  const method = parsed.success ? parsed.data.method ?? 'all' : 'all'
+  const matches = (item: PublicAdoptionListItemDto) => (
+    method === 'all' || item.work.adoptionMethod === method
+  )
+  const filtered = items.filter(matches)
+  return publicAdoptionListDtoSchema.parse({
+    items: filtered,
+    resultCount: filtered.length,
+    filter: { valid: parsed.success, method },
+    counts: {
+      all: items.length,
+      regular: items.filter(
+        item => item.work.adoptionMethod === 'regular',
+      ).length,
+      event_drop: items.filter(
+        item => item.work.adoptionMethod === 'event_drop',
+      ).length,
+    },
+  })
 }
 
 function detailFor(entries: readonly SnapshotEntry[], slug: string) {
@@ -517,12 +553,8 @@ export function createSqlitePublicSiteRepository(
       })
     },
 
-    listAdoptions() {
-      const items = adoptionItems(snapshot(sqlite, mediaBaseUrl))
-      return publicAdoptionListDtoSchema.parse({
-        items,
-        resultCount: items.length,
-      })
+    listAdoptions(query = {}) {
+      return adoptionListDto(adoptionItems(snapshot(sqlite, mediaBaseUrl)), query)
     },
 
     listWorks(query = {}) {
@@ -607,22 +639,17 @@ export function createFakePublicSiteRepository(
       const detail = bySlug.get(slug)
       return detail ? publicWorkDetailDtoSchema.parse(detail) : null
     },
-    listAdoptions() {
+    listAdoptions(query = {}) {
       const items = details.flatMap(detail => (
-        detail.work.purpose === 'adoption'
-        && detail.work.adoptionMethod === 'regular'
-        && detail.media.designSheet
-          ? [{
+        detail.work.purpose === 'adoption' && detail.media.designSheet
+          ? [publicAdoptionListItemDtoSchema.parse({
               work: detail.work,
               href: detail.href,
               designSheet: detail.media.designSheet,
-            }]
+            })]
           : []
       ))
-      return publicAdoptionListDtoSchema.parse({
-        items,
-        resultCount: items.length,
-      })
+      return adoptionListDto(items, query)
     },
     listWorks(query = {}) {
       const parsed = publicWorkListQuerySchema.safeParse(query)
