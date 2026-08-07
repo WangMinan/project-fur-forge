@@ -42,7 +42,12 @@ function reachedBarrier(stage: string) {
 
 /** 永不 resolve：让父进程的 SIGKILL 精确落在当前阶段。 */
 function hangForever(): Promise<never> {
-  return new Promise(() => {})
+  return new Promise(() => {
+    // 必须留一个活跃 handle。否则事件循环在 fake storage 的微任务耗尽后就空了，
+    // Node 检测到悬挂的 top-level await，自己打印 "unsettled top-level await"
+    // 并以退出码 13 结束，父进程来不及 SIGKILL。
+    setInterval(() => {}, 1_000)
+  })
 }
 
 const sqlite: Database.Database = openDatabase(databaseFile).sqlite
