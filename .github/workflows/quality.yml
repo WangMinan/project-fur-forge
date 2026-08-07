@@ -59,9 +59,17 @@ jobs:
       - name: Integration tests
         run: pnpm test:integration
 
+      # 生产产物必须在 APP_ENV=production 下构建：workflow 级的 APP_ENV=test 会让
+      # nuxt.config.ts 把 tests/fixtures/runtime/* 编进 .output，随后 pnpm build
+      # 内置的 guard-production-content 必然拒收夹具产物。lint/typecheck/test 仍
+      # 需要 test 才能覆盖夹具，因此只在这一步覆盖。
       - name: Production build
+        env:
+          APP_ENV: production
         run: pnpm build
 
+      # verify:production 自己会用 APP_ENV=test 起服务（scripts/verify-production.mjs），
+      # 校验的是上一步已经构建好的 .output，不重新构建。
       - name: Verify production output
         run: pnpm verify:production
 
