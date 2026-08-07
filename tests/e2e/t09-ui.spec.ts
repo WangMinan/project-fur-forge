@@ -119,10 +119,11 @@ test.describe('UI-01 管理端布局边界', () => {
     await expect(skip).toHaveAttribute('href', '#admin-main')
     await expect(page.locator('main#admin-main')).toHaveCount(1)
 
-    // 随后进入管理导航，再进入主内容之前的动作区
+    // 随后进入管理导航，再进入主内容之前的动作区。
+    // 导航按“业务对象优先”排序，第一项是作品管理。
     await page.keyboard.press('Tab')
     await expect(
-      page.getByRole('navigation', { name: '管理导航' }).getByRole('link', { name: '大图管理' }),
+      page.getByRole('navigation', { name: '管理导航' }).getByRole('link', { name: '作品管理' }),
     ).toBeFocused()
 
     // 激活 skip link 后焦点落入主内容

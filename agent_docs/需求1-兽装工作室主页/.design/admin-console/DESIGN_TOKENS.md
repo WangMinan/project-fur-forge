@@ -1,6 +1,8 @@
 # Design Tokens：管理端
 
 > **设计哲学**：Quiet Editorial Tool。白色/浅灰工作区，品牌蓝作为操作色而非大面积背景。
+> **状态**：阶段 D 当前 Token，含返图私有/公开预览、授权 Card 与 event_drop 字段密度规则。
+> **最后校准**：2026-08-07。
 
 ## Color
 
@@ -128,6 +130,33 @@
 - 长任务状态保留在页面内；Toast 只作补充。
 - “授权记录（可选）”不得使用必填星号或阻断色。
 - 媒体状态使用“私有上传 / 校验 / 私有 READY / 生成公开图 / 已发布 / 清理失败”等真实语义，不显示 ACL 切换。
+
+## 阶段 D 返图与展会掉落密度
+
+```text
+--admin-return-thumb-size:      4.5rem   /* 列表缩略图边长，保持原比例 contain */
+--admin-return-preview-max:     22rem    /* 私有原图 / 无水印公开预览最大宽度 */
+--admin-return-preview-bg:      var(--admin-bg-subtle)
+--admin-return-preview-gap:     var(--admin-space-4)
+
+--admin-consent-card-bg:        var(--admin-bg-primary)
+--admin-consent-card-border:    var(--admin-border-secondary)
+--admin-consent-hint-color:     var(--admin-text-secondary)
+
+--admin-event-field-max:        24rem    /* 展会名称 / 展会时间单行输入 */
+--admin-event-help-size:        var(--admin-font-xs)
+```
+
+规则：
+
+- 返图列表缩略图使用 `contain`，不把竖图裁成方块；
+- 私有原图预览与无水印公开预览使用同一中性底色并各自带文字标签，
+  不允许只靠位置区分；
+- 授权记录 Card 使用普通边框和中性底色，不使用错误色、警告色或必填星号；
+  “仅后台可见”是文字说明，不只用颜色表达；
+- 展会名称与展会时间是单行短文本输入，宽度受 `--admin-event-field-max` 约束，
+  帮助文本说明“展会时间只用于公开展示，不会自动改变领养状态”；
+- 返图与展会区域都不出现水印参数控件。
 
 ## Motion
 
