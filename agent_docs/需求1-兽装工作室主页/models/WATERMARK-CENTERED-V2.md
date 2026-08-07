@@ -6,4 +6,4 @@
 - 当前媒体公开与保护规则：[`../requirements/MEDIA-PUBLICATION-POLICY.md`](../requirements/MEDIA-PUBLICATION-POLICY.md)
 - GATE-07 历史证据：[`../implementation/notes/gate07-watermark/`](../implementation/notes/gate07-watermark/)
 
-阶段 C.1 将在现有 `asset_variants` 和 `watermark_profiles` 基础上增加明确的无水印站点展示表达，具体以当前模型和迁移任务为准。
+阶段 C.1 已在 `asset_variants` 和 `watermark_profiles` 基础上落地明确的无水印站点展示表达，并完成既有站点素材 reconcile。当前模型和后续返图边界只以 `README.md`、SPEC 与媒体策略为准。
