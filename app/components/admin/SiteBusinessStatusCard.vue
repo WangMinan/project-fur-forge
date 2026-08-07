@@ -159,6 +159,8 @@ function onSave() {
   display: grid;
   gap: var(--admin-space-3);
   padding: var(--admin-space-3);
+  /* 与下方文案分区 Card 一致：卡片是白底，工作区底色不透过来。 */
+  background: var(--admin-bg-primary);
   border: 1px solid var(--admin-border-secondary);
   border-radius: var(--admin-radius-sm);
 }

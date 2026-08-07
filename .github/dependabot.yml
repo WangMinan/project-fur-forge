@@ -12,6 +12,11 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: "chore(actions)"
+    # 主版本升级一律手工评估，不让 Dependabot 自动开 PR。
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
     groups:
       actions-minor-and-patch:
         patterns:
@@ -32,6 +37,12 @@ updates:
     versioning-strategy: increase-if-necessary
     commit-message:
       prefix: "chore(deps)"
+    # Node 大版本锁在 24（package.json engines: >=24 <25），@types/node 等跟随
+    # 运行时的包不能跨大版本；其余依赖的主版本也统一手工评估。
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
     groups:
       npm-minor-and-patch:
         patterns:
@@ -52,6 +63,11 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: "chore(container)"
+    # 基础镜像必须停在 node:24（与 quality.yml 的 NODE_VERSION 一致）。
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
     groups:
       container-minor-and-patch:
         patterns:
