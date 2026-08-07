@@ -1,6 +1,9 @@
 # Design Tokens：公开站
 
 > **设计哲学**：白底、摄影优先、品牌蓝克制使用。OSS 预生成图片是唯一媒体来源。
+> **状态**：阶段 D 当前 Token。媒体身份为 `recipe-v2`（作品保护）、`site-display-v1`
+> （站点展示无水印）与 `return-display-v1`（返图无水印）。
+> **最后校准**：2026-08-07。
 
 ## Color
 
@@ -73,7 +76,8 @@
 --letter-spacing-label:  0.08em
 ```
 
-展示衬线只用于少数标题；T05 必须与一套亲近的无衬线展示方案比较。正式字体不得仅凭空白原型锁定。
+展示衬线只用于少数标题。当前字体方案已在阶段 C 的真实素材与三视口人工验收中确认，
+阶段 D 不重开字体体系讨论。
 
 ## Spacing
 
@@ -123,17 +127,55 @@
 --ratio-work-card: 3 / 4
 --ratio-work-hero: 16 / 9
 --ratio-design-sheet: auto
+--ratio-return-item: auto
 --hero-min-height: 100svh
 --image-placeholder: #F1F3F6
 --image-hover-scale: 1.02
 ```
 
-对应 OSS `recipe-v1`：
+### 返图墙（`return-display-v1`，无水印）
 
 ```text
-card:   3:4, 480 / 768 / 1200
-hero:   16:9, 768 / 1280 / 1920
-detail: original ratio, 960 / 1600 / 2400
+--return-columns-desktop: 4      /* >=1280px */
+--return-columns-tablet:  3      /* 768-1279px */
+--return-columns-mobile:  2      /* 340-767px */
+--return-columns-narrow:  1      /* <340px */
+
+--return-gap-mobile:  12px
+--return-gap-tablet:  16px
+--return-gap-desktop: 20px
+
+--return-radius:          12px   /* 允许区间 10-14px */
+--return-caption-gap:     8px
+--return-caption-size:    var(--font-size-sm)
+--return-caption-color:   var(--public-text-secondary)
+--return-page-size:       24
+```
+
+- 返图保持原始宽高比，不使用 `--ratio-work-card` 强裁；
+- 返图项默认无边框、无阴影、无彩色外壳、无渐变叠字；
+- caption 只显示关联作品名称/链接，位于图片下方 `--return-caption-gap`；
+- 每项只有一个主链接指向 `/works/{slug}`，避免嵌套链接。
+
+当前公开媒体身份分三族，互不混用（唯一事实源见
+[`../../requirements/MEDIA-PUBLICATION-POLICY.md`](../../requirements/MEDIA-PUBLICATION-POLICY.md)）：
+
+```text
+作品保护  recipe-v2         protection_mode=watermark  活动 brand-centered-v2
+  card:   3:4,            480 / 768 / 1200
+  detail: original ratio, 960 / 1600 / 2400
+  design-sheet: original ratio, 960 / 1600 / 2400
+
+站点展示  site-display-v1   protection_mode=none       无水印
+  home-hero-landscape / commission-hero-landscape: 16:9, 768 / 1280 / 1920
+  home-hero-portrait  / commission-hero-portrait:  9:16, 480 / 768 / 1080
+  home-entry-commission / home-entry-adoption:     3:2,  480 / 768 / 1080
+
+返图展示  return-display-v1 protection_mode=none       无水印
+  return-wall: original ratio（不强裁），480 / 768 / 1080
+```
+
+```text
 format: WebP + one source-compatible fallback
 ```
 
