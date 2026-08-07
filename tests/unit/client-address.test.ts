@@ -37,6 +37,39 @@ describe('trusted proxy resolution', () => {
     expect(parseTrustedProxyCidrs('garbage, 10.0.0.0/99')).toHaveLength(0)
   })
 
+  /**
+   * 前缀匹配按十六进制串掩码实现，因此要覆盖"位数不是 4 的整数倍"的边界：
+   * /12 与 /28 都落在半字节中间，掩码算错会让信任范围偏移。
+   */
+  it('masks prefixes that do not land on a hex character boundary', () => {
+    // /12：172.16.0.0–172.31.255.255。
+    const twelve = parseTrustedProxyCidrs('172.16.0.0/12')
+    expect(isTrustedProxy('172.16.0.0', twelve)).toBe(true)
+    expect(isTrustedProxy('172.31.255.255', twelve)).toBe(true)
+    expect(isTrustedProxy('172.15.255.255', twelve)).toBe(false)
+    expect(isTrustedProxy('172.32.0.0', twelve)).toBe(false)
+
+    // /28：最后一个八位组的高 4 位参与匹配。
+    const twentyEight = parseTrustedProxyCidrs('10.0.0.16/28')
+    expect(isTrustedProxy('10.0.0.16', twentyEight)).toBe(true)
+    expect(isTrustedProxy('10.0.0.31', twentyEight)).toBe(true)
+    expect(isTrustedProxy('10.0.0.15', twentyEight)).toBe(false)
+    expect(isTrustedProxy('10.0.0.32', twentyEight)).toBe(false)
+
+    // /0 匹配全部同版本地址；/32 只匹配自身。
+    expect(isTrustedProxy('203.0.113.1', parseTrustedProxyCidrs('0.0.0.0/0')))
+      .toBe(true)
+    const exact = parseTrustedProxyCidrs('10.1.2.3/32')
+    expect(isTrustedProxy('10.1.2.3', exact)).toBe(true)
+    expect(isTrustedProxy('10.1.2.2', exact)).toBe(false)
+
+    // IPv6 同样按位掩码，且不与 IPv4 跨版本误判。
+    const v6 = parseTrustedProxyCidrs('2001:db8::/33')
+    expect(isTrustedProxy('2001:db8:7fff::1', v6)).toBe(true)
+    expect(isTrustedProxy('2001:db8:8000::1', v6)).toBe(false)
+    expect(isTrustedProxy('10.0.0.1', v6)).toBe(false)
+  })
+
   it('ignores forwarded headers entirely when no proxy is trusted', () => {
     // 红线：未配置可信代理时，伪造的 X-Forwarded-For 必须完全无效。
     expect(resolveTrustedClientAddress('203.0.113.9', '1.2.3.4, 5.6.7.8', undefined))
