@@ -6,7 +6,12 @@
 
 ## 当前目标
 
-阶段 C 与阶段 C.1 已完成人工验收，`GATE-C1` 已通过。阶段 D 范围已经锁定，当前按 **T35 → T36 → T37 → T42** 串行推进：
+阶段 C 与阶段 C.1 已完成人工验收，`GATE-C1` 已通过。阶段 D 范围已经锁定，当前按 **T35 → T36 → T37 → T42** 串行推进。
+
+> **2026-08-08 进度**：T35 工程项全部完成；T36、T37 工程主体完成并已在
+> 1440×900 真实 OSS 双 Bucket 下核对。三项都还缺**新上下文独立 Review**；
+> T36、T37 另缺 390×844 真机手机闭环，T36 另缺针对返图的 SIGKILL /
+> 重复重启重放。这些未完成项不得当作已通过，T42 也不得由实施者代勾。
 
 - T35：返图模型、作品关联、版本、状态和可选私有授权记录；
 - T36：返图上传、无水印公开衍生、后台管理和一级导航 `/returns` 原比例瀑布流；
@@ -189,45 +194,63 @@ T38、T40 已取消；T39 当前版本取消并转入未来迭代备忘录；T41
 ### T35–T37 实施任务
 
 - [ ] **T35 · 返图模型、作品关联与可选私有授权记录**：
-  - [ ] 新前向迁移与 Drizzle schema；
-  - [ ] 一张返图对应一条记录，恰好关联一件作品和一张 `return_photo` 私有资产；
-  - [ ] alt、人工排序、`draft | published | unpublished`、版本和时间字段；
-  - [ ] 可选授权来源、确认时间和内部备注，只进入受认证管理 DTO；
-  - [ ] 只有关联作品已发布时返图才能发布；作品下架时公开查询隐藏关联返图；
-  - [ ] 存在返图关联时阻止作品永久删除；
-  - [ ] 管理/公开契约、稳定 `reason`、repository/service/route；
-  - [ ] 版本冲突、非法关联、隐私和迁移测试；
+  - [x] 新前向迁移（0022）与 Drizzle schema；
+  - [x] 一张返图对应一条记录，恰好关联一件作品和一张 `return_photo` 私有资产
+        （`asset_id` 单列 + 唯一索引；草稿允许暂时无图，
+        `return_photos_published_asset` CHECK 保证已发布返图必有图片）；
+  - [x] alt、人工排序、`draft | published | unpublished`、版本和时间字段；
+  - [x] 可选授权来源、确认时间和内部备注，只进入受认证管理 DTO；
+  - [x] 只有关联作品已发布时返图才能发布；作品下架时公开查询隐藏关联返图；
+  - [x] 存在返图关联时阻止作品永久删除（FK restrict + `WORK_HAS_RETURN_PHOTOS`）；
+  - [x] 管理/公开契约、稳定 `reason`、repository/service/route；
+  - [x] 版本冲突、非法关联、隐私和迁移测试（return-photo-management 10 项）；
   - [ ] 独立后端 Review 通过。
   _依赖：GATE-C1。_
+  _实施记录：[`notes/stage-d/T35-ENGINEERING-2026-08-08.md`](./notes/stage-d/T35-ENGINEERING-2026-08-08.md)。_
 
 - [ ] **T36 · 返图上传、无水印公开衍生、管理与 `/returns` 瀑布流**：
-  - [ ] `return_photo` 条件 PUT 私有直传、完成核验和过期清扫；
-  - [ ] `return-wall` / `return-display-v1` / `protection_mode=none`；
-  - [ ] 去除不需要的 EXIF，保持原始宽高比，生成 WebP 与 fallback SourceSet；
-  - [ ] 返图不关联活动水印 profile，profile 切换不改变返图 URL、摘要或内容；
-  - [ ] publication operation、attempt、lease、heartbeat、失败清理、重试和启动恢复；
-  - [ ] 管理端返图列表与一图一记录编辑页；
-  - [ ] 关联作品、单图上传、alt、排序、可选授权记录、无水印公开预览、发布与下架；
-  - [ ] 一级导航独立 `/returns`，采用原比例 masonry/瀑布流；
-  - [ ] 不建设作品详情返图 Tab、返图详情页、返图者主页、点赞、评论或公开投稿；
-  - [ ] 底部编号分页（每页 24 条、普通链接、SSR 与无 JS 可用），稳定 DOM/键盘顺序、固有尺寸和真实空态；
-  - [ ] 手机支持查看、关联作品、单图上传、alt、授权文本、发布和下架；
-  - [ ] 双 Bucket、隐私、失败、SIGKILL、重复重启和旧公开版本证据；
-  - [ ] 三视口浏览器、独立 Review 与用户验收。
+  - [x] `return_photo` 条件 PUT 私有直传、完成核验和过期清扫
+        （复用现有上传链路与 `return` 归属，未新建第二套协议）；
+  - [x] `return-wall` / `return-display-v1` / `protection_mode=none`；
+  - [x] 去除不需要的 EXIF（`auto-orient,1` 后重编码），保持原始宽高比
+        （`resize,m_lfit`），生成 WebP 与 fallback SourceSet；
+  - [x] 返图不关联活动水印 profile：runner 与投影都不 import watermark 模块，
+        profile 切换不改变返图 URL、摘要或内容；
+  - [x] publication operation、attempt、lease、heartbeat、失败清理、重试和启动恢复；
+  - [x] 管理端返图列表与一图一记录编辑页；
+  - [x] 关联作品、单图上传、alt、排序、可选授权记录、无水印公开预览、发布与下架；
+  - [x] 一级导航独立 `/returns`，采用原比例 masonry/瀑布流
+        （确定性 CSS Grid row-span，行主序，DOM/Tab/屏幕阅读顺序一致）；
+  - [x] 不建设作品详情返图 Tab、返图详情页、返图者主页、点赞、评论或公开投稿；
+  - [x] 底部编号分页（每页 24 条、普通链接、SSR 与无 JS 可用），稳定 DOM/键盘顺序、固有尺寸和真实空态；
+  - [ ] 手机支持查看、关联作品、单图上传、alt、授权文本、发布和下架
+        （代码已按单列/44px 触控实现，尚未在 390×844 真机点击验收）；
+  - [ ] 双 Bucket、隐私、失败、SIGKILL、重复重启和旧公开版本证据
+        （真实双 Bucket 上传/发布/无水印已验证；SIGKILL 与重复重启尚未针对返图重放）；
+  - [ ] 三视口浏览器、独立 Review 与用户验收
+        （1440×900 已核对；768/390 已核对列数与无溢出，其余交互待验收）。
   _依赖：T35。_
+  _实施记录：[`notes/stage-d/T36-ENGINEERING-2026-08-08.md`](./notes/stage-d/T36-ENGINEERING-2026-08-08.md)。_
 
 - [ ] **T37 · 复用作品管理的轻量展会掉落**：
-  - [ ] 底层保持 `purpose=adoption`、`adoption_method=event_drop`；
-  - [ ] 管理端显示“委托作品 / 常规领养 / 展会掉落 / 纯展示”四个易理解选项并正确映射；
-  - [ ] 新增或启用 `event_name` 与 `event_time`，event_drop 必填，其他作品必须为空；
-  - [ ] `event_time` 只作展示文本，不参与调度或自动状态切换；
-  - [ ] 复用领养状态、价格、设定图、出厂照、活动水印、发布与下架；
-  - [ ] `/adoptions` 提供全部/常规领养/展会掉落筛选；
-  - [ ] 首页当前领养、领养卡片和统一详情显示展会掉落标签、展会名称和时间；
-  - [ ] 手机支持两项展会字段、发布与下架；
-  - [ ] 不创建 events 表、展会管理页、展会详情、地点、摊位、封面或历史归档；
-  - [ ] 迁移、Schema、公开 DTO、SEO、测试、独立 Review 与用户验收。
+  - [x] 底层保持 `purpose=adoption`、`adoption_method=event_drop`；
+  - [x] 管理端显示“委托作品 / 常规领养 / 展会掉落 / 纯展示”四个易理解选项并正确映射；
+  - [x] 启用 `event_name`（由历史 `current_event_name` 规范而来）与新增 `event_time`；
+        非掉落作品两项必须为空，已发布掉落两项必填，草稿容忍缺项由发布检查拦截；
+  - [x] `event_time` 只作展示文本，不参与调度或自动状态切换
+        （字段帮助文本明确说明，SEO 不把它当可解析日期）；
+  - [x] 复用领养状态、价格、设定图、出厂照、活动水印、发布与下架
+        （掉落媒体仍为 `recipe-v2` 水印，未新增 event 专用角色或配方）；
+  - [x] `/adoptions` 提供全部/常规领养/展会掉落筛选（普通链接、SSR 与无 JS 可用，
+        非法参数收敛为全部并标记 `valid=false`）；
+  - [x] 首页当前领养、领养卡片和统一详情显示展会掉落标签、展会名称和时间；
+  - [ ] 手机支持两项展会字段、发布与下架（尚未在 390×844 真机点击验收）；
+  - [x] 不创建 events 表、展会管理页、展会详情、地点、摊位、封面或历史归档；
+  - [x] 迁移（0023）、Schema、公开 DTO、SEO、测试（event-drop-projection 3 项
+        与 work-form 四选项映射）已完成；
+  - [ ] 独立 Review 与用户验收。
   _依赖：GATE-C1；建议在 T36 稳定后实施。_
+  _实施记录：[`notes/stage-d/T37-ENGINEERING-2026-08-08.md`](./notes/stage-d/T37-ENGINEERING-2026-08-08.md)。_
 
 ### 已关闭的范围决策
 

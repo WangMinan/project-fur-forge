@@ -1,8 +1,9 @@
 # 产物索引
 
 > **角色**：列出当前可用产物、交付配置和历史证据入口，不复制需求或任务状态。
-> **当前阶段**：阶段 D，下一项 T35；状态见 [`../STATE.md`](../STATE.md)。
-> **最后校准**：2026-08-07。
+> **当前阶段**：阶段 D；T35–T37 工程主体已落地，待独立 Review 与用户验收。
+> 状态见 [`../STATE.md`](../STATE.md)。
+> **最后校准**：2026-08-08。
 
 ## 1. 当前权威入口
 
@@ -42,33 +43,48 @@
 
 阶段 C 已完成并通过用户浏览器人工验收。历史“仍缺 reconcile、operation 恢复或后端分层”的描述已经失效。
 
-## 3. 阶段 D 目标产物
+## 3. 阶段 D 产物（2026-08-08 已落地）
 
-T35–T37 完成后应新增：
+### T35（工程完成，待独立 Review）
 
-### T35
+- 前向迁移 `0022_t35_return_photos.sql` 与 `return_photos`；
+- 一图一记录（`asset_id` 单列 + 唯一索引）、作品/资产关联触发器、
+  状态、版本与可选私有授权字段；
+- `shared/schemas/return-photo.ts`、`repository/return-photo-repository.ts`、
+  `service/return-photo.ts`、`api/admin/v1/returns/*`；
+- `tests/integration/return-photo-management.test.ts`（10 项）；
+- 记录：[`../implementation/notes/stage-d/T35-ENGINEERING-2026-08-08.md`](../implementation/notes/stage-d/T35-ENGINEERING-2026-08-08.md)。
 
-- 返图前向迁移和 `return_photos`；
-- 一图一记录、作品/资产关联、状态、版本和可选私有授权字段；
-- 管理/公开 DTO、repository/service/route；
-- 迁移、版本、隐私和关联测试。
+### T36（工程主体完成，待补验证与 Review）
 
-### T36
+- `return_photo` 上传（`return` 归属）与完成核验；
+- `recipe/return-display-recipe.ts`：`return-wall` / `return-display-v1`
+  无水印变体，原比例、EXIF 收敛、480/768/1080 按源宽收敛；
+- `runner/return-photo-publication.ts`：发布/下架/精确清理 + 启动恢复 resumer；
+- `repository/public-return-repository.ts` 公开投影；
+- `/admin/returns`（列表 + 新建 + 一图一记录编辑七分区）；
+- 一级导航返图墙 `/returns`（CSS Grid row-span 原比例瀑布流 + 编号分页）；
+- 管理预览服务端缩放 `?w=`（返图缩略图 711 KB → 11 KB）；
+- 记录：[`../implementation/notes/stage-d/T36-ENGINEERING-2026-08-08.md`](../implementation/notes/stage-d/T36-ENGINEERING-2026-08-08.md)。
 
-- `return_photo` 上传与核验；
-- `return-wall` / `return-display-v1` 无水印变体；
-- 返图 publication runner 和恢复证据；
-- `/admin/returns` 列表与编辑；
-- 一级 `/returns` 原比例瀑布流；
-- 双 Bucket、EXIF、失败、重启和三视口证据。
+### T37（工程主体完成，待补验证与 Review）
 
-### T37
+- 前向迁移 `0023_t37_event_drop_fields.sql`：`event_name`（由
+  `current_event_name` 规范）与 `event_time`，草稿容忍/发布强制的 CHECK；
+- 作品编辑器四业务选项映射与展会两项字段；
+- 发布检查 `EVENT_DROP_FIELDS_REQUIRED`；
+- `/adoptions` 全部/常规领养/展会掉落筛选（普通链接、SSR 可用）；
+- 首页当前领养、领养卡片与统一详情的展会信息；
+- `tests/integration/event-drop-projection.test.ts`（3 项）；
+- 未产生独立 event 模型、页面或媒体配方；
+- 记录：[`../implementation/notes/stage-d/T37-ENGINEERING-2026-08-08.md`](../implementation/notes/stage-d/T37-ENGINEERING-2026-08-08.md)。
 
-- `works` 的 `event_name`、`event_time`；
-- 作品编辑器四业务选项映射；
-- `/adoptions` 全部/常规领养/展会掉落筛选；
-- 首页、领养卡片和详情的展会信息；
-- 不产生独立 event 模型或页面。
+### 尚未产出的产物
+
+- T35/T36/T37 的新上下文独立 Review 记录；
+- T36/T37 的 390×844 手机闭环证据；
+- 针对返图 operation 的 SIGKILL / 重复重启证据；
+- 用户人工验收记录与 T42 门禁记录。
 
 T38–T41 不产生代码产物。
 
