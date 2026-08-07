@@ -1,140 +1,190 @@
 # 当前评审记录
 
-> **角色**：记录当前 SPEC、代码、部署文件、GitHub Actions 与任务状态之间的差异。
+> **角色**：记录当前 SPEC、计划、代码、部署文件、GitHub Actions 与任务状态之间的差异。
 > **评审日期**：2026-08-07。
-> **代码基线**：`3984b4f181d5a3071a119affae34c1088a53b6f9`；其后的提交为阶段迁移文档更新。
-> **结论**：阶段 C 为 `PASS`；存在已明确后置的发布级 CI 技术债，不阻断阶段 D。
+> **代码基线**：`93557c38c9d3d4b0586c96bef5c05d8d369fb424`；其后的提交为阶段 D 范围收敛与文档改写。
+> **结论**：阶段 C 为 `PASS`；阶段 D 规格已收敛、可进入 T35；发布级 CI 技术债仍后置到 T49。
 
 ## 1. 总结论
 
-阶段 C 主业务链、C.1 收口能力和用户浏览器人工验收已经完成，`GATE-C1` 通过。以下结论同时成立：
+阶段 C 主业务链、C.1 收口能力和用户浏览器人工验收已经完成，`GATE-C1` 通过。
 
-1. **阶段 C 产品与工程范围通过**：公开端、管理端、媒体保护、长任务恢复、三视口与用户人工核对均已形成证据；
-2. **GitHub Actions 尚未全绿**：最新已核对运行中，`image-build` 成功，`checks` 在 Production build 失败，`e2e` 跳过；
-3. **正式发布尚未就绪**：CI 全绿、正式域名、TLS、线上 Compose、升级、回滚与恢复演练仍待后续任务；
-4. **阶段 D 可以开始**：上述发布级遗留统一移到 T49、T52，不再阻断返图墙 T35–T36。
+本轮对阶段 D 的产品范围、材料、SPEC、PLAN、TASKS、模型、媒体策略和设计入口进行了交叉复核。当前结论：
 
-用户验收与迁移决策见
-[`../implementation/notes/t34-c1/T34-C1-USER-ACCEPTANCE-2026-08-07.md`](../implementation/notes/t34-c1/T34-C1-USER-ACCEPTANCE-2026-08-07.md)。
+1. **返图墙范围明确**：独立一级 `/returns`、一图一记录、必须关联作品、原比例瀑布流、无水印公开衍生、可选私有授权记录；
+2. **展会掉落范围明确**：作为 adoption 的一种方式，复用作品管理，只增加展会名称和展会时间，不建设独立展会模型；
+3. **范围裁剪明确**：T38、T40 取消，T39 当前版本取消并转未来备忘录，T41 并入 T36/T37；
+4. **实施顺序明确**：T35 → T36 → T37 → T42；
+5. **发布遗留不变**：GitHub Actions 全绿由 T49、正式环境由 T52 收口，不阻断阶段 D。
 
-## 2. 阶段 C 已确认有效的实现
+阶段 D 当前没有需要用户继续回答的业务开放问题，可以进入 T35 后端实施。
 
-以下能力应作为阶段 D 的稳定基线，不推倒重写：
+决策证据见
+[`../implementation/notes/stage-d/STAGE-D-SCOPE-2026-08-07.md`](../implementation/notes/stage-d/STAGE-D-SCOPE-2026-08-07.md)。
 
-- `protection_mode` 与 `site-display-v1`；
-- 首页/委托 Hero 及两个业务入口的无水印 usage；
-- 作品和领养展示位的活动水印；
-- 首页聚合 DTO、统一业务入口和竖图详情布局；
+## 2. 阶段 C 稳定基线
+
+以下能力应保留，不推倒重写：
+
+- `protection_mode`、`site-display-v1` 与作品 `recipe-v2`；
+- 首页/委托 Hero 和两个业务入口的无水印 usage；
+- 标准作品和领养展示位的活动水印；
+- 首页聚合 DTO、统一业务入口和方向感知详情布局；
 - 文案分区 Card、分区版本、FAQ 稳定 ID 与 409 草稿保留；
-- 稳定 API `reason` 和前端英文消息匹配清理；
-- 过期上传主动清扫；
-- 可信代理解析与按主体限流；
+- 稳定 API `reason`、过期上传清扫、可信代理和按主体限流；
 - publication/watermark/reconcile operation 的 attempt、lease、heartbeat、恢复和精确清理；
 - `server/utils/{repository,service,runner,recipe,route}` 五层边界；
 - readiness 的严格迁移数量、顺序、folderMillis 与 hash 校验；
-- 容器运维命令、live/ready、Nginx 双 Host 和镜像发布流程骨架；
-- 经 GitHub Actions 成功验证的 Node 24 runtime 镜像构建；
-- 本地完整非 Docker 门禁、真实双 Bucket 9/9 和三视口浏览器证据；
-- 用户对阶段 C 公开端与管理端的人工浏览器核对。
+- Node 24 镜像、Compose/Nginx、live/ready 和运维入口；
+- 本地非 Docker 门禁、真实双 Bucket 9/9、三视口和用户人工验收。
 
-## 3. Finding 关闭与移交状态
+## 3. 阶段 C finding 状态
 
-### R-17 · 远端质量门禁 —— **移交 T49，不再阻断阶段 C**
+### R-17 · 远端质量门禁 —— **移交 T49**
 
-阶段迁移时核对的 `quality` workflow run `31139795670` 基线为
-`3984b4f181d5a3071a119affae34c1088a53b6f9`：
+阶段迁移时核对的 `quality` 基线结果：
 
 - `image-build` 成功；
 - `checks` 的 lint、typecheck、unit、integration 成功；
-- `checks` 在 Production build 失败；
-- verify、secret scan、Compose 静态检查因此未执行；
-- `e2e` 因 `needs: checks` 跳过。
+- Production build 失败，后续 verify、secret scan 和 Compose 检查未执行；
+- `e2e` 因依赖失败跳过。
 
-现有 annotation 只有进程退出码，不能据此推断具体根因。旧文档中的“runner 未接单”不代表这次最新运行。
+现有证据不能推断具体根因。T49 必须以届时最新 `main` 复现、修复并取得同一 SHA 全绿。
 
-用户决定把该问题移到 T49。T49 必须以届时最新 `main` 重新复现并修复，不能把本次失败解释为通过，也不能把不同 SHA 的结果拼接为全绿。
+### R-18 至 R-24 —— **已关闭或按发布阶段移交**
 
-### R-18 · 既有站点素材迁移 —— **已关闭**
+既有媒体 reconcile、长任务恢复、后端分层、首页/文案边界、readiness 和用户视觉验收已经关闭。Compose 正式验证和目标环境演练分别由 T49、T52 收口。
 
-迁移 0021、`media:reconcile-site-display` 和容器子命令覆盖启用首页 Hero、委托 Hero、首页委托入口和已发布常规领养入口。重复运行幂等、失败可重试、旧投影保留。真实双 Bucket 9/9 通过，profile 切换不改变站点展示 URL 与摘要。
+## 4. 阶段 D 规格 Review
 
-### R-19 · 长任务重启恢复 —— **已关闭**
+### D-R01 · 返图页面职责 —— **PASS**
 
-迁移 0020 为 operation 增加 attempt、lease、heartbeat、recovery reason 和必要重试时间。事务内抢占、OSS 前后心跳、提交 CAS、启动扫描接管或转可恢复失败已经覆盖作品、Hero、水印与 reconcile。
+当前规格明确：
 
-真实 SIGKILL 子进程测试覆盖生成、公开对象验证和数据库提交边界；重复重启幂等，旧有效公开版本持续可见。
+- `/returns` 是一级导航独立页面；
+- 不在作品详情增加返图 Tab；
+- 不建设返图详情页；
+- 返图项只提供必要关联作品入口；
+- 页面是作品交付后的真实使用照片墙，不是社交动态流。
 
-### R-20 · 后端职责边界 —— **已关闭**
+这与材料中“标准作品集和买家返图墙分开”的展示目标一致，同时覆盖用户本轮明确决策。
 
-Hero、publication、watermark、variant repository 已抽出；recipe 层 SQL 归零；`server/utils` 以路径表达 repository、service、runner、recipe、route 五层。Nitro `server/routes` 与辅助 `server/utils/route` 保持分离。
+### D-R02 · 返图模型 —— **PASS**
 
-### R-21 · 首页与文案产品边界 —— **已关闭**
+采用一图一记录：返图恰好关联一件作品和一张 `return_photo` 私有资产。没有相册、批次、返图 slug 或返图者账户。
 
-首页顺序为 Hero → 精选作品 → 统一业务入口 → 当前领养。官方邮箱、QQ、抖音号与防诈骗提醒统一在 contact 分区 Card；首页设置不再提供第二套联系方式入口。
+可选授权来源、确认时间和备注保持私有，不进入公开 DTO、HTML、图片元数据或日志。缺失不自动阻断发布。
 
-### R-22 · Readiness 迁移校验 —— **已关闭**
+关联生命周期清楚：作品必须已发布才能发布返图；作品下架后公开查询隐藏返图；存在返图时阻止作品永久删除。
 
-readiness 复用严格 migration state，同时比较数量、顺序、folderMillis 与 hash；旧 `/api/health` 不再无条件返回 ok，未就绪返回 503，且错误体不泄漏数据库路径、SQL 或栈。
+### D-R03 · 返图媒体 —— **PASS**
 
-### R-23 · Compose 网络与健康路由 —— **阶段 C 配置完成，正式验证移交 T49/T52**
+返图使用：
 
-Dockerfile、`docker-compose.yaml`、Nginx 双 Host、未知 Host 拒绝、app egress、live/ready 和运维子命令均已形成。镜像构建成功。
+```text
+return-wall
+return-display-v1
+protection_mode=none
+```
 
-Compose 静态检查在最新失败运行中未执行到；正式域名、TLS、空数据卷、升级、回滚与恢复演练尚未完成。前者由 T49 关闭，后者由 T52 关闭。
+公开变体保持原比例、去除不需要的 EXIF、生成 WebP/fallback、使用不可变 Key并写后验证。返图不关联活动 profile，profile 切换不改变返图。
 
-### R-24 · 用户视觉与业务验收 —— **已关闭**
+旧文档中的“返图轻量水印”已经被用户明确否定，不得恢复。
 
-用户于 2026-08-07 明确确认已在浏览器中完成人工核对，并宣布阶段 C 开发任务人工 Review 完成。T26-F1、T27-F1、T30、T34、T34-F8 和 `GATE-C1` 据此完成。
+### D-R04 · 返图 UI —— **PASS**
 
-该结论不等同于正式目标环境验收；正式环境仍由 T52、T53 收口。
+公开端固定使用原比例 masonry/瀑布流，稳定 DOM 与键盘顺序，分页或受控加载更多，不建设算法无限滚动。
 
-## 4. 阶段 C 结论边界
+管理端使用独立返图入口、一图一记录编辑、私有原图/无水印公开预览、持续 operation 状态。作品页只显示关联摘要，不嵌入编辑器。
 
-阶段 C 的 `PASS` 表示：
+### D-R05 · 轻量展会掉落 —— **PASS**
 
-- 当前需求范围内的产品能力已经实现；
-- 关键媒体、安全、恢复与浏览器行为具备证据；
-- 用户完成公开端和管理端人工核对；
-- 项目可以进入下一阶段产品增强。
+底层继续使用：
 
-它不表示：
+```text
+purpose=adoption
+adoption_method=event_drop
+```
 
-- GitHub Actions 已全绿；
-- Production build 失败已经修复；
-- E2E 已在最新远端运行成功；
-- 正式域名、证书、HSTS 或 CDN 已配置；
-- 线上 Compose、空卷初始化、升级、回滚和灾难恢复已经演练；
-- Docker Hub 正式镜像已经发布；
-- 站点已经可以直接对外宣布上线。
+只增加 `event_name`、`event_time`。复用领养状态、价格、设定图、出厂照、水印和 publication operation。展会时间只作展示，不自动驱动状态。
 
-## 5. 阶段 D Review 重点
+没有 `events` 表、展会管理页、展会详情、地点、摊位、封面或归档。
 
-当前建议只授权返图墙 T35–T36。Review 必须重点检查：
+### D-R06 · 公开展会呈现 —— **PASS**
 
-- 返图与作品出厂照是不同媒体角色和公开用途；
-- 返图永久原图和可选授权记录保持私有；
-- 轻量水印有不可变身份，不使用客户端临时参数加工；
-- 返图发布、下架、失败、重试与重启恢复沿用现有 operation 模型；
-- 返图不改变作品自身发布状态；
-- 管理端使用独立返图入口，公开端保持图片优先；
-- 三视口、键盘、焦点、图片解码、减少动效和横向溢出；
-- T38–T40 未经用户确认不得借返图墙之名提前实现。
+`/adoptions` 提供全部/常规领养/展会掉落筛选；首页当前领养和作品详情显示展会名称与时间；不增加独立“当前展会”区块或一级导航。
 
-## 6. 后续通过条件
+### D-R07 · 范围裁剪 —— **PASS**
 
-### 阶段 D
+- T38 取消，不扩张内容 Card 或通用 CMS；
+- T39 当前取消，未来与分享、OG、海报、二维码和 canonical 统一决策；
+- T40 取消，不建立数据库/OSS 联动回收站；
+- T41 并入 T36/T37，不建设通用手机后台。
 
-T42 只验证用户最终保留的 D 范围。取消的任务必须从验收矩阵中明确移除。
+任务清单保留编号并明确“未实施”，取消项不进入 T42。
 
-### 阶段 E / T49
+## 5. T35 Review 检查项
 
-必须满足：
+T35 独立 Review 必须检查：
 
-- 最新 `main` 的 Production build 失败被复现并修复；
-- checks 后续 verify、secret scan 与 Compose 静态检查实际执行；
-- `checks`、`image-build`、`e2e` 在同一个最新 SHA 成功；
-- 没有通过删除测试或放宽类型、安全、媒体和 E2E 断言取得绿色状态。
+- 新迁移不重写历史 migration；
+- 一条返图恰好一张 `return_photo`；
+- 资产唯一关联和非法角色被拒绝；
+- 返图必须关联现有作品；
+- 授权字段不进入公开 DTO、日志、异常和测试 artifact；
+- 作品发布约束、下架后公开隐藏和删除阻断；
+- 版本冲突不静默覆盖；
+- 迁移、备份副本、integrity、foreign key 和 readiness；
+- 代码仍遵守 repository/service/runner/recipe/route 边界。
 
-### 正式发布 / T52–T53
+T35 不应提前完成或假装完成 `/returns` UI 和媒体 publication；这些属于 T36。
 
-必须完成正式域名、TLS、线上 Compose、备份、监控、升级、回滚、恢复演练，以及景宸真实使用验收和文档闭环。
+## 6. T36 Review 检查项
+
+- 私有返图原图匿名不可读；
+- 公开返图变体匿名可读且无水印；
+- 敏感 EXIF、私有 Key和授权记录不泄漏；
+- profile 切换不影响返图；
+- 生成/验证/提交中断、失败清理、重复重启和旧公开版本保留；
+- `/returns` 一级导航、瀑布流、分页、真实空态和关联作品入口；
+- 作品详情没有返图 Tab；
+- 管理端上传、alt、授权提示、发布、下架、409 和恢复；
+- 三视口、键盘、焦点、图片解码、CLS、console/network；
+- 手机约定轻操作真实可用。
+
+## 7. T37 Review 检查项
+
+- 管理四选项正确映射三种 purpose 与 adoption_method；
+- event_drop 两项展会字段必填，其他作品字段为空；
+- 时间不触发定时任务或自动状态；
+- 领养状态、价格、设定图、出厂照和水印复用；
+- `/adoptions` 筛选、首页、卡片和详情一致；
+- 没有 event 实体、路由、媒体、导航或空页面；
+- 手机字段维护和发布可用；
+- Schema、数据库 CHECK、service 与前端校验一致。
+
+## 8. 阶段 D 通过条件
+
+T42 只验证 T35–T37：
+
+- 当前活文档和代码一致；
+- 迁移、数据、媒体、隐私、发布、失败和恢复有证据；
+- 真实双 Bucket 与相关自动化通过；
+- 三固定视口真实浏览器通过；
+- 新上下文独立 Review PASS；
+- 用户完成业务与视觉验收。
+
+T38–T41 不构成缺口。
+
+## 9. 后续发布条件
+
+### T49
+
+- 最新 `main` Production build 失败被复现和修复；
+- verify、secret scan 与 Compose 检查真实执行；
+- `checks`、`image-build`、`e2e` 同一 SHA 成功；
+- 不通过删除测试或放宽类型、安全、媒体和 E2E 断言取得绿色状态。
+
+### T52–T53
+
+完成正式域名、TLS、线上 Compose、空卷初始化、备份、监控、升级、回滚、恢复演练，以及景宸真实使用验收和文档闭环。
