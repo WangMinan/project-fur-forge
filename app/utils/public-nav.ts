@@ -10,7 +10,7 @@ export interface PublicNavItem {
 export const PUBLIC_NAV_ITEMS: PublicNavItem[] = [
   { href: '/', label: '首页' },
   { href: '/works', label: '作品展示' },
-  // 返图（/returns）在此处插入，随 T36 前端一起接入；实现前不显示空入口。
+  { href: '/returns', label: '返图' },
   { href: '/commission', label: '自设委托' },
   { href: '/adoptions', label: '角色领养' },
   {

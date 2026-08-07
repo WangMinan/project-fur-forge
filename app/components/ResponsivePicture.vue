@@ -21,6 +21,13 @@ const props = withDefaults(defineProps<{
   fetchpriority: 'auto',
 })
 
+/**
+ * 单图解码/网络失败向上通知。
+ * `<img>` 的 error 事件不冒泡，因此必须在 img 上显式绑定再转发，
+ * 调用方才能做局部降级而不影响整页。
+ */
+const emit = defineEmits<{ error: [] }>()
+
 const fallbackImg = computed(() => pickFallbackImg(props.sources))
 const portraitFallbackImg = computed(() =>
   props.portraitSources ? pickFallbackImg(props.portraitSources) : undefined,
@@ -72,6 +79,7 @@ const portraitFallbackSrcset = computed(() =>
       :loading="loading"
       :fetchpriority="fetchpriority"
       decoding="async"
+      @error="emit('error')"
     >
   </picture>
 </template>
