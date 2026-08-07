@@ -6,7 +6,9 @@ This file provides guidance to coding agents working with code in this repositor
 
 `project-fur-paws` —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装主页和轻量管理后台。
 
-> **当前阶段：阶段 D · P1 一期增强。** 阶段 C 与 C.1 已于 2026-08-07 经用户浏览器人工验收，`GATE-C1` 已通过。阶段 D 范围已锁定为 **T35 返图模型 → T36 无水印 `/returns` 返图墙 → T37 轻量展会掉落 → T42 总门禁**。T38、T40 已取消；T39 当前版本取消并转未来迭代备忘录；T41 不再单列。当前阶段和任务权威始终以 `agent_docs/需求1-兽装工作室主页/STATE.md` 与 `implementation/TASKS.md` 为准。
+> **当前阶段：阶段 D · P1 一期增强。** 阶段 C 与 C.1 已于 2026-08-07 经用户浏览器人工验收，`GATE-C1` 已通过。阶段 D 范围已锁定为 **T35 返图模型 → T36 无水印 `/returns` 返图墙 → T37 轻量展会掉落 → T42 总门禁**。T38、T40 已取消；T39 当前版本取消并转未来迭代备忘录；T41 不再单列。
+>
+> **2026-08-08 进度**：T35–T37 的工程主体已落地（前向迁移 0022/0023、返图一图一记录模型、`return-display-v1` 无水印返图墙、返图管理、轻量展会掉落与 `/adoptions` 三筛选），本地 lint/typecheck/unit 122/unit+integration 152 通过，并在 1440×900 真实双 Bucket 下核对。**尚未完成**：三项的新上下文独立 Review、T36/T37 的 390×844 手机闭环、针对返图 operation 的 SIGKILL 与重复重启重放、用户人工验收与 T42。不得把这些描述为已通过。当前阶段和任务权威始终以 `agent_docs/需求1-兽装工作室主页/STATE.md` 与 `implementation/TASKS.md` 为准。
 
 GitHub Actions 当前已知仍未全绿：`image-build` 成功，`checks` 在 Production build 失败，`e2e` 跳过。该遗留由 T49 统一关闭，不阻断阶段 D；不得把当前状态描述为远端全绿或正式发布就绪。
 
@@ -174,7 +176,17 @@ pnpm auth:reset-password --confirm RESET_SINGLE_ADMIN_PASSWORD
 - Node 24 镜像、`docker-compose.yaml`、Nginx 双 Host、live/ready 和运维子命令；
 - 阶段 C 本地非 Docker 门禁、真实双 Bucket 9/9、三视口和用户人工验收。
 
-返图模型、`/returns` 和新的 event_drop 编辑/展示尚未实施；不要把文档目标写成已有代码事实。
+阶段 D 已追加（2026-08-08）：
+
+- `return_photos` 一图一记录模型、`return_photo` 私有上传与 `return` 上传归属；
+- `return-wall` / `return-display-v1` / `protection_mode=none` 无水印公开衍生，
+  复用 operation lease/heartbeat/恢复，profile 切换不影响返图；
+- 管理端返图管理（列表 + 一图一记录编辑）与公开一级导航返图墙 `/returns`；
+- 轻量展会掉落：四选项业务类型映射、`event_name` / `event_time`、
+  `/adoptions` 全部/常规领养/展会掉落筛选、卡片与详情展示；
+- 管理端预览支持服务端缩放（`?w=`）以节省 OSS 流量。
+
+不要把仍待完成的独立 Review、手机闭环、返图 SIGKILL 重放和用户验收写成已完成。
 
 ## 后端分层
 

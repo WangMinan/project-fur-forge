@@ -1,7 +1,8 @@
 # 数据模型与投影
 
-> **角色**：描述当前已落地领域模型、跨层不变量和阶段 D 的目标模型。
-> **最后校准**：2026-08-07。
+> **角色**：描述当前已落地领域模型与跨层不变量。
+> **最后校准**：2026-08-08。第 3 节的阶段 D 模型已由迁移 0022（返图）
+> 与 0023（展会字段）落地，不再是目标状态。
 > **边界**：功能规则见 [`../requirements/SPEC.md`](../requirements/SPEC.md)，媒体规则见 [`../requirements/MEDIA-PUBLICATION-POLICY.md`](../requirements/MEDIA-PUBLICATION-POLICY.md)。
 
 ## 1. 模型原则
@@ -128,16 +129,16 @@ publication、watermark 和 reconcile operation 已具备请求版本、状态�
 
 `audit_logs` 只记录必要安全动作和结果，不保存敏感正文、凭据、私有 Key、联系人或返图授权记录正文。
 
-## 3. 阶段 D 目标模型
+## 3. 阶段 D 模型（已落地）
 
 ### 3.1 `return_photos`
 
-一张返图对应一行：
+一张返图对应一行（迁移 0022）：
 
 ```text
 id
 work_id
-asset_id
+asset_id                    nullable（草稿可暂时无图；已发布必有图）
 alt
 sort_order
 publication_status
@@ -150,12 +151,14 @@ updated_at
 published_at                nullable
 ```
 
-目标约束：
+已落地约束：
 
-- `work_id` 外键引用 `works`；
-- `asset_id` 外键引用 `assets`，媒体角色必须为 `return_photo`；
-- 一张资产最多属于一条返图；
-- 每条返图恰好一张资产，不引入相册；
+- `work_id` 外键引用 `works`，`ON DELETE restrict`；
+- `asset_id` 外键引用 `assets`（`restrict`），媒体角色必须为 `return_photo`
+  且状态为 READY（触发器保证）；
+- 一张资产最多属于一条返图（`asset_id` 唯一索引）；
+- 每条返图最多一张资产（单列，不可能长成相册）；
+  已发布返图必有资产（`return_photos_published_asset` CHECK）；
 - alt 非空；
 - `publication_status IN ('draft','published','unpublished')`；
 - `sort_order` 有稳定默认值和索引；
@@ -169,21 +172,25 @@ published_at                nullable
 
 ### 3.2 `works` 的轻量展会字段
 
-阶段 D 增加或启用：
+迁移 0023 把历史 `current_event_name` 规范为 `event_name`，并新增 `event_time`：
 
 ```text
 event_name TEXT NULL
 event_time TEXT NULL
 ```
 
-目标 CHECK：
+已落地 CHECK（`works_event_drop_fields`）：
 
 ```text
-adoption_method = 'event_drop'
-  -> event_name 非空 AND event_time 非空
-adoption_method != 'event_drop' 或 purpose != 'adoption'
+purpose = 'adoption' AND adoption_method = 'event_drop'
+  -> 两项各自长度 1..80（可为 NULL）
+  -> 且 publication_status = 'published' 时两项必须非空
+否则
   -> event_name IS NULL AND event_time IS NULL
 ```
+
+草稿容忍缺项、发布强制齐全，与 alt、设定图同一套心智：
+草稿可以不完整，发布检查（`EVENT_DROP_FIELDS_REQUIRED`）负责拦截。
 
 `event_time` 是展示文本，不是调度时间；不用于自动状态变化、定时任务或排序。切换离开展会掉落时必须清理两项字段，不能保留僵尸值。
 
@@ -196,7 +203,7 @@ adoption_method != 'event_drop' 或 purpose != 'adoption'
 
 未来只有出现多作品统一编辑、独立展会页或跨届历史需求时，才从轻量字段迁移到独立模型。
 
-## 4. 阶段 D 媒体用途
+## 4. 媒体用途（已落地）
 
 当前 usage 基线：
 
@@ -213,13 +220,13 @@ home-entry-adoption
 preprocess
 ```
 
-阶段 D 增加：
+阶段 D 已增加：
 
 ```text
 return-wall
 ```
 
-返图目标身份：
+返图身份：
 
 ```text
 media_role = return_photo

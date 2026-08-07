@@ -1,7 +1,10 @@
 # 需求规格：兽装工作室主页
 
 > **角色**：当前功能、业务规则、安全边界和验收标准的权威规格。
-> **状态**：阶段 C 已于 2026-08-07 经用户浏览器人工验收；阶段 D 范围已确认，等待实施 T35–T37。
+> **状态**：阶段 C 已于 2026-08-07 经用户浏览器人工验收。
+> 阶段 D 的 T35–T37 工程主体已于 2026-08-08 落地（返图模型、返图墙、
+> 轻量展会掉落），仍待新上下文独立 Review 与用户人工验收；
+> 本文描述的行为已经是代码事实，不再是待实施目标。
 > **关联**：产品边界见 [`../foundation/README.md`](../foundation/README.md)；媒体规则见 [`MEDIA-PUBLICATION-POLICY.md`](./MEDIA-PUBLICATION-POLICY.md)；实施方案见 [`../planning/PLAN.md`](../planning/PLAN.md)；未来候选见 [`../planning/FUTURE-ITERATIONS.md`](../planning/FUTURE-ITERATIONS.md)。
 
 ## 1. 产品目标
@@ -130,12 +133,14 @@
 
 展会掉落额外需要：
 
-- `event_name`：展会名称，必填短文本；
-- `event_time`：展会时间，必填展示文本，可以表达单日、日期范围或已确认时段。
+- `event_name`：展会名称，短文本；
+- `event_time`：展会时间展示文本，可以表达单日、日期范围或已确认时段。
 
 约束：
 
-- `purpose=adoption` 且 `adoption_method=event_drop` 时，两项均必须为非空；
+- `purpose=adoption` 且 `adoption_method=event_drop` 的**已发布**作品，
+  两项均必须为非空；草稿允许暂时缺项，由发布检查
+  （`EVENT_DROP_FIELDS_REQUIRED`）拦截，与 alt、设定图同一套心智；
 - 其他作品的两项必须为空；
 - 展会时间只用于公开展示，不触发定时任务，也不自动改变领养状态；
 - 当前版本一件掉落作品只保存一组展会名称和时间；

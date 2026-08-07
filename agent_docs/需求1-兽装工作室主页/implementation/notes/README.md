@@ -1,7 +1,7 @@
 # 实施记录索引
 
 > **角色**：为 dated implementation notes 提供导航。历史记录描述当时事实；当前规则以 `../../STATE.md`、SPEC、PLAN、TASKS 和 REVIEW 为准。
-> **最后校准**：2026-08-07。
+> **最后校准**：2026-08-08。
 
 ## 当前入口
 
@@ -36,13 +36,16 @@
 
 目录：`stage-d/`
 
-- [`STAGE-D-SCOPE-2026-08-07.md`](./stage-d/STAGE-D-SCOPE-2026-08-07.md)：用户确认独立 `/returns`、无水印返图、一图一记录、轻量展会掉落、T38/T40 取消、T39 当前取消和 T41 合并。
+- [`STAGE-D-SCOPE-2026-08-07.md`](./stage-d/STAGE-D-SCOPE-2026-08-07.md)：用户确认独立 `/returns`、无水印返图、一图一记录、轻量展会掉落、T38/T40 取消、T39 当前取消和 T41 合并；
+- [`STAGE-D-DESIGN-REVIEW-2026-08-07.md`](./stage-d/STAGE-D-DESIGN-REVIEW-2026-08-07.md)：调研截图 60–64 观察、返图墙唯一形式确认、无系统性视觉偏离结论与局部 IA/文档债处理；
+- [`T35-ENGINEERING-2026-08-08.md`](./stage-d/T35-ENGINEERING-2026-08-08.md)：返图模型与契约、迁移 0022、两次真实迁移失败与修复、迁移验证与测试；
+- [`T36-ENGINEERING-2026-08-08.md`](./stage-d/T36-ENGINEERING-2026-08-08.md)：无水印配方、发布 operation、返图墙布局为何保持可访问顺序、三次真实缺陷、OSS 流量优化、真实双 Bucket 证据与未验证边界；
+- [`T37-ENGINEERING-2026-08-08.md`](./stage-d/T37-ENGINEERING-2026-08-08.md)：展会掉落如何复用现有模型、迁移 0023、草稿容忍/发布强制的 CHECK、公开筛选与浏览器证据。
 
 后续按任务新增：
 
-- T35 实施记录、独立模型/隐私 Review；
-- T36 媒体与发布记录、公开/管理 UI 记录、独立浏览器 Review 和用户验收；
-- T37 轻量展会掉落后端/前端记录、独立 Review 和用户验收；
+- T35、T36、T37 的新上下文独立 Review 记录；
+- T36、T37 的用户浏览器人工验收记录；
 - T42 阶段 D 总门禁记录。
 
 ## 记录要求
