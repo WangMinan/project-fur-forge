@@ -5,14 +5,13 @@
 ## 权威顺序
 
 1. `foundation/README.md`：产品边界与不可违背的原则；
-2. `foundation/WATERMARK-CENTERED-V2.md`：2026-08-01 居中可配置水印地基增量；仅在水印条款冲突时覆盖上一文件；
-3. `requirements/SPEC.md` 与 `requirements/MEDIA-PUBLICATION-POLICY.md`：业务需求、数据边界与媒体公开规则；
-4. `planning/PLAN.md`：当前技术路线、阶段范围和实施顺序；
-5. `.design/`：公开站、管理端及水印体验与视觉契约；
-6. `implementation/TASKS.md`：唯一可勾选任务清单；
-7. `STATE.md`：当前状态、阻断项和下一步入口。
+2. `requirements/SPEC.md` 与 `requirements/MEDIA-PUBLICATION-POLICY.md`：业务需求、数据边界与媒体公开规则；
+3. `planning/PLAN.md`：当前技术路线、阶段范围和实施顺序；
+4. `.design/`：公开站和管理端当前有效的体验与视觉契约；
+5. `implementation/TASKS.md`：唯一可勾选任务清单；
+6. `STATE.md`：当前状态、阻断项和下一步入口。
 
-`models/README.md` 与水印增量文档是上游规格/计划的实施投影，不构成额外权威层级。`materials/`、`planning/prototype-v1/` 与 `implementation/notes/` 是素材、证据或历史记录，不得覆盖当前契约。
+`models/README.md` 是上游规格/计划的实施投影，不构成额外权威层级。各目录中的 `WATERMARK-CENTERED-V2.md` 已经是 GATE-07 归档指针，不再覆盖当前 README、SPEC、媒体策略或 PLAN。`materials/`、`planning/prototype-v1/` 与 `implementation/notes/` 是素材、证据或历史记录，不得覆盖当前契约。
 
 ## 执行责任路由
 
