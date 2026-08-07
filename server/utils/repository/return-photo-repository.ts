@@ -256,6 +256,92 @@ export function deleteReturnPhotoRow(
 }
 
 /**
+ * 返图 operation 复用 publication_operations 表与其 lease/heartbeat 列，
+ * 只用 entity_type='RETURN_PHOTO' 区分，不新建第二套任务状态机。
+ */
+export function hasActiveReturnPhotoOperation(
+  sqlite: Database.Database,
+  returnPhotoId: string,
+) {
+  return Boolean(sqlite.prepare(`
+    SELECT 1 FROM publication_operations
+    WHERE entity_type = 'RETURN_PHOTO' AND entity_id = ?
+      AND status NOT IN ('FAILED', 'DONE')
+    LIMIT 1
+  `).pluck().get(returnPhotoId))
+}
+
+export function insertReturnPhotoOperation(
+  sqlite: Database.Database,
+  input: {
+    id: string
+    requestedVersion: number
+    returnPhotoId: string
+    status: string
+    type: 'PUBLISH' | 'UNPUBLISH'
+  },
+  now: number,
+) {
+  sqlite.prepare(`
+    INSERT INTO publication_operations (
+      id, operation_type, entity_type, entity_id, requested_version,
+      status, started_at, updated_at
+    ) VALUES (?, ?, 'RETURN_PHOTO', ?, ?, ?, ?, ?)
+  `).run(
+    input.id,
+    input.type,
+    input.returnPhotoId,
+    input.requestedVersion,
+    input.status,
+    now,
+    now,
+  )
+}
+
+export function findDoneReturnPhotoOperation(
+  sqlite: Database.Database,
+  returnPhotoId: string,
+  requestedVersion: number,
+  operationType: 'PUBLISH' | 'UNPUBLISH',
+) {
+  return sqlite.prepare(`
+    SELECT id FROM publication_operations
+    WHERE entity_type = 'RETURN_PHOTO' AND entity_id = ?
+      AND requested_version = ? AND operation_type = ? AND status = 'DONE'
+    ORDER BY started_at DESC LIMIT 1
+  `).get(returnPhotoId, requestedVersion, operationType) as
+    { id: string } | undefined
+}
+
+export function findReturnPhotoOperationType(
+  sqlite: Database.Database,
+  operationId: string,
+) {
+  return sqlite.prepare(`
+    SELECT operation_type FROM publication_operations
+    WHERE id = ? AND entity_type = 'RETURN_PHOTO'
+  `).pluck().get(operationId) as string | undefined
+}
+
+/** 该返图当前引用的公开对象 Key；下架与失败清理都按精确清单执行。 */
+export function findReturnPhotoPublicKeys(
+  sqlite: Database.Database,
+  returnPhotoId: string,
+  readyOnly = false,
+) {
+  return sqlite.prepare(`
+    SELECT variant.object_key
+    FROM asset_variants AS variant
+    JOIN return_photos AS photo ON photo.asset_id = variant.asset_id
+    WHERE photo.id = ? AND variant.storage_scope = 'PUBLIC'
+      AND variant.usage = 'return-wall'
+      AND variant.recipe_version = 'return-display-v1'
+      ${readyOnly ? "AND variant.status = 'READY'" : ''}
+    ORDER BY variant.object_key
+  `).pluck().all(returnPhotoId) as string[]
+}
+
+/**
  * 返图审计记录。只记录动作与结果，不写 alt、授权正文、私有 Key 或联系人。
  */
 export function insertReturnPhotoAuditLog(
