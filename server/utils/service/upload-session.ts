@@ -21,7 +21,7 @@ export const UPLOAD_SESSION_TTL_MS = 5 * 60 * 1_000
 
 export interface UploadSessionRow {
   id: string
-  ownerType: 'work' | 'site'
+  ownerType: 'work' | 'site' | 'return'
   ownerId: string
   ownerVersion: number
   mediaRole: MediaRole
@@ -157,6 +157,39 @@ export function assertUploadOwner(
   owner: UploadOwner,
   mediaRole: MediaRole,
 ) {
+  // T36 返图：归属是返图记录本身及其版本，媒体角色固定 return_photo。
+  if (owner.type === 'return') {
+    if (mediaRole !== 'return_photo') {
+      throw new ServiceError(400, 'VALIDATION_ERROR', 'Media role does not match owner.')
+    }
+    const photo = sqlite.prepare(`
+      SELECT version, publication_status AS publicationStatus
+      FROM return_photos WHERE id = ?
+    `).get(owner.id) as {
+      publicationStatus: string
+      version: number
+    } | undefined
+    if (!photo) {
+      throw new ServiceError(404, 'NOT_FOUND', 'Owner was not found.')
+    }
+    if (photo.version !== owner.expectedVersion) {
+      throw new ServiceError(409, 'CONFLICT', 'Owner version is stale.')
+    }
+    if (photo.publicationStatus === 'published') {
+      throw new ServiceError(
+        409,
+        'CONFLICT',
+        'Unpublish the return photo before replacing its image.',
+        'RETURN_PHOTO_PUBLISHED_READONLY',
+      )
+    }
+    return
+  }
+
+  if (mediaRole === 'return_photo') {
+    throw new ServiceError(400, 'VALIDATION_ERROR', 'Media role does not match owner.')
+  }
+
   if (owner.type === 'site') {
     const validRole = owner.id === 'home'
       ? mediaRole.startsWith('home_hero_')

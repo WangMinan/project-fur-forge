@@ -304,6 +304,8 @@ describe('P0 schema boundary', () => {
       'audit_logs',
       'business_statuses',
       'publication_operations',
+      // T35 一图一记录返图；不引入 return_albums / return_assets 相册层级。
+      'return_photos',
       'site_branding',
       'site_content',
       'site_display_reconcile_operations',
@@ -426,8 +428,17 @@ describe('P0 schema boundary', () => {
         'adoption-work', 'studio-primary-second', 'studio_photo', 1, 1
       )
     `).run()).toThrow(/UNIQUE constraint failed/)
-    expect(() => insertAsset('return', 'return_photo'))
-      .toThrow(/assets_role/)
+    // T35：return_photo 是合法媒体角色，但它属于返图关系，
+    // 不得进入 work_assets 冒充设定图或出厂照。
+    insertAsset('return', 'return_photo')
+    expect(() => sqlite.prepare(`
+      INSERT INTO work_assets (work_id, asset_id, role, position)
+      VALUES ('adoption-work', 'return', 'studio_photo', 2)
+    `).run()).toThrow(/work asset role is invalid/)
+    expect(() => sqlite.prepare(`
+      INSERT INTO work_assets (work_id, asset_id, role, position)
+      VALUES ('adoption-work', 'return', 'return_photo', 2)
+    `).run()).toThrow(/work_assets_role/)
     expect(() => insertAsset('wrong-landscape', 'home_hero_landscape', {
       width: 900,
       height: 1600,

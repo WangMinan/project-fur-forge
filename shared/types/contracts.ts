@@ -83,6 +83,19 @@ import type {
   watermarkAnchorSchema,
 } from '../schemas/upload'
 import type {
+  adminReturnPhotoDtoSchema,
+  adminReturnPhotoListDtoSchema,
+  publicReturnPhotoDtoSchema,
+  publicReturnWallDtoSchema,
+  returnPhotoAssetSummarySchema,
+  returnPhotoAuthorizationSchema,
+  returnPhotoBlockerSchema,
+  returnPhotoFieldsSchema,
+  returnPhotoPublicationCheckDtoSchema,
+  returnPhotoStateDtoSchema,
+  returnPhotoWorkSummarySchema,
+} from '../schemas/return-photo'
+import type {
   watermarkBrandingDtoSchema,
   watermarkCandidateDtoSchema,
   watermarkImpactDtoSchema,
@@ -202,3 +215,24 @@ export type WatermarkImpactDto = z.infer<typeof watermarkImpactDtoSchema>
 export type WatermarkBrandingDto = z.infer<typeof watermarkBrandingDtoSchema>
 export type WatermarkOperationDto = z.infer<typeof watermarkOperationDtoSchema>
 export type WatermarkPreviewKind = z.infer<typeof watermarkPreviewKindSchema>
+export type ReturnPhotoBlocker = z.infer<typeof returnPhotoBlockerSchema>
+export type ReturnPhotoAuthorization = z.infer<
+  typeof returnPhotoAuthorizationSchema
+>
+export type ReturnPhotoFields = z.infer<typeof returnPhotoFieldsSchema>
+export type ReturnPhotoWorkSummary = z.infer<
+  typeof returnPhotoWorkSummarySchema
+>
+export type ReturnPhotoAssetSummary = z.infer<
+  typeof returnPhotoAssetSummarySchema
+>
+export type AdminReturnPhotoDto = z.infer<typeof adminReturnPhotoDtoSchema>
+export type AdminReturnPhotoListDto = z.infer<
+  typeof adminReturnPhotoListDtoSchema
+>
+export type ReturnPhotoPublicationCheckDto = z.infer<
+  typeof returnPhotoPublicationCheckDtoSchema
+>
+export type ReturnPhotoStateDto = z.infer<typeof returnPhotoStateDtoSchema>
+export type PublicReturnPhotoDto = z.infer<typeof publicReturnPhotoDtoSchema>
+export type PublicReturnWallDto = z.infer<typeof publicReturnWallDtoSchema>
