@@ -4,7 +4,7 @@ This file provides guidance to coding agents working with code in this repositor
 
 ## 项目简介
 
-`project-fur-paws` —— 为“有点小狗工作室”（英文暂用 `dite dog`）制作的兽装主页和轻量管理后台。
+`project-fur-paws` —— 为”有点小狗工作室”（英文 `DITE DOG`）制作的兽装主页和轻量管理后台。
 
 > **当前阶段：阶段 D · P1 一期增强。** 阶段 C 与 C.1 已于 2026-08-07 经用户浏览器人工验收，`GATE-C1` 已通过。阶段 D 范围已锁定为 **T35 返图模型 → T36 无水印 `/returns` 返图墙 → T37 轻量展会掉落 → T42 总门禁**。T38、T40 已取消；T39 当前版本取消并转未来迭代备忘录；T41 不再单列。
 >

@@ -1,18 +1,23 @@
 import { resourceIdSchema } from '../../../../../shared/schemas/api'
-import { adminReturnPhotoResponseSchema } from '../../../../../shared/schemas/return-photo'
+import { adminReturnCharacterResponseSchema } from '../../../../../shared/schemas/return-photo'
 import { createApiError } from '../../../../utils/api-error'
 import { getDatabase } from '../../../../utils/database'
 import { asApiError } from '../../../../utils/service-error'
-import { getReturnPhoto } from '../../../../utils/service/return-photo'
+import { getReturnCharacter } from '../../../../utils/service/return-photo'
 
+/** 设定详情，含它的全部返图照片。 */
 export default defineEventHandler((event) => {
   const id = resourceIdSchema.safeParse(getRouterParam(event, 'id'))
   if (!id.success) {
-    throw createApiError(400, 'VALIDATION_ERROR', 'Return photo id is invalid.')
+    throw createApiError(
+      400,
+      'VALIDATION_ERROR',
+      'Return character id is invalid.',
+    )
   }
   try {
-    return adminReturnPhotoResponseSchema.parse({
-      data: getReturnPhoto(getDatabase().sqlite, id.data),
+    return adminReturnCharacterResponseSchema.parse({
+      data: getReturnCharacter(getDatabase().sqlite, id.data),
     })
   }
   catch (error) {

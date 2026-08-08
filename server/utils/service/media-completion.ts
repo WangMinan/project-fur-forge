@@ -17,7 +17,7 @@ import {
   requireUploadSession,
   uploadSessionDto,
 } from './upload-session'
-import { attachReturnPhotoAsset } from './return-photo'
+import { addReturnPhotoFromUpload } from './return-photo'
 
 const PREPROCESS_THRESHOLD_BYTES = 20_000_000
 const PREPROCESS_RECIPE = 'preprocess-v1'
@@ -592,14 +592,14 @@ export async function completeUploadSession(
 
   const completed = requireUploadSession(sqlite, sessionId)
   const asset = requireAsset(sqlite, row.id)
-  // T36：返图归属的会话在核验通过后立即把资产绑定到返图记录。
-  // 只有 READY 资产才绑定；预处理失败的资产留在 FAILED，
-  // 返图仍是无图草稿，发布检查会明确说明。
+  // T35-F1：返图归属的会话在核验通过后直接为该设定新增一条返图记录。
+  // 一个设定可以有多张返图，所以上传本身就是“加一张”，
+  // 不需要先建空记录再补图。只有 READY 资产才建记录；
+  // 预处理失败的资产留在 FAILED，不会产生无图的僵尸返图。
   if (completed.ownerType === 'return' && asset.status === 'READY') {
-    attachReturnPhotoAsset(
+    addReturnPhotoFromUpload(
       sqlite,
       completed.ownerId,
-      completed.ownerVersion,
       asset.id,
       now,
     )

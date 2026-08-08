@@ -55,6 +55,7 @@ const meta = computed(() => {
   display: block;
   aspect-ratio: var(--ratio-work-card);
   background: var(--image-placeholder);
+  border-radius: var(--radius-image);
   overflow: hidden;
 }
 

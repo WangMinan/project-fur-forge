@@ -83,17 +83,23 @@ import type {
   watermarkAnchorSchema,
 } from '../schemas/upload'
 import type {
+  adminReturnCharacterDtoSchema,
+  adminReturnCharacterListDtoSchema,
+  adminReturnCharacterListItemDtoSchema,
   adminReturnPhotoDtoSchema,
-  adminReturnPhotoListDtoSchema,
+  publicReturnCharacterDtoSchema,
+  publicReturnCharacterRefSchema,
+  publicReturnImageSchema,
   publicReturnPhotoDtoSchema,
   publicReturnWallDtoSchema,
+  returnCharacterFieldsSchema,
+  returnCharacterWorkSummarySchema,
   returnPhotoAssetSummarySchema,
   returnPhotoAuthorizationSchema,
   returnPhotoBlockerSchema,
   returnPhotoFieldsSchema,
   returnPhotoPublicationCheckDtoSchema,
   returnPhotoStateDtoSchema,
-  returnPhotoWorkSummarySchema,
 } from '../schemas/return-photo'
 import type {
   watermarkBrandingDtoSchema,
@@ -220,15 +226,22 @@ export type ReturnPhotoAuthorization = z.infer<
   typeof returnPhotoAuthorizationSchema
 >
 export type ReturnPhotoFields = z.infer<typeof returnPhotoFieldsSchema>
-export type ReturnPhotoWorkSummary = z.infer<
-  typeof returnPhotoWorkSummarySchema
+export type ReturnCharacterFields = z.infer<typeof returnCharacterFieldsSchema>
+export type ReturnCharacterWorkSummary = z.infer<
+  typeof returnCharacterWorkSummarySchema
 >
 export type ReturnPhotoAssetSummary = z.infer<
   typeof returnPhotoAssetSummarySchema
 >
 export type AdminReturnPhotoDto = z.infer<typeof adminReturnPhotoDtoSchema>
-export type AdminReturnPhotoListDto = z.infer<
-  typeof adminReturnPhotoListDtoSchema
+export type AdminReturnCharacterDto = z.infer<
+  typeof adminReturnCharacterDtoSchema
+>
+export type AdminReturnCharacterListItemDto = z.infer<
+  typeof adminReturnCharacterListItemDtoSchema
+>
+export type AdminReturnCharacterListDto = z.infer<
+  typeof adminReturnCharacterListDtoSchema
 >
 export type ReturnPhotoPublicationCheckDto = z.infer<
   typeof returnPhotoPublicationCheckDtoSchema
@@ -236,3 +249,10 @@ export type ReturnPhotoPublicationCheckDto = z.infer<
 export type ReturnPhotoStateDto = z.infer<typeof returnPhotoStateDtoSchema>
 export type PublicReturnPhotoDto = z.infer<typeof publicReturnPhotoDtoSchema>
 export type PublicReturnWallDto = z.infer<typeof publicReturnWallDtoSchema>
+export type PublicReturnCharacterRef = z.infer<
+  typeof publicReturnCharacterRefSchema
+>
+export type PublicReturnImage = z.infer<typeof publicReturnImageSchema>
+export type PublicReturnCharacterDto = z.infer<
+  typeof publicReturnCharacterDtoSchema
+>

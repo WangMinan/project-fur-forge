@@ -61,9 +61,8 @@ const errorDialogOpen = computed(() =>
   Boolean(actionError.value || conflictNotice.value),
 )
 
+// 自动轮播固定开启、10 秒一张，因此这里只剩首页口号一个设置。
 const tagline = ref('')
-const autoRotate = ref(false)
-const intervalSeconds = ref(6)
 
 function closeErrorDialog() {
   actionError.value = null
@@ -71,11 +70,7 @@ function closeErrorDialog() {
 }
 
 function settingsSnapshot() {
-  return JSON.stringify({
-    tagline: tagline.value,
-    autoRotate: autoRotate.value,
-    intervalSeconds: intervalSeconds.value,
-  })
+  return JSON.stringify({ tagline: tagline.value })
 }
 
 const settingsBaseline = ref(settingsSnapshot())
@@ -86,8 +81,6 @@ function syncSettings() {
     return
   }
   tagline.value = current.tagline
-  autoRotate.value = current.autoRotate
-  intervalSeconds.value = Math.round(current.autoRotateIntervalMs / 1_000)
   settingsBaseline.value = settingsSnapshot()
 }
 
@@ -98,8 +91,6 @@ const settingsDirty = computed(() =>
 const settingsValid = computed(() => {
   const text = tagline.value.trim()
   return text.length >= 1 && text.length <= 120
-    && Number.isInteger(intervalSeconds.value)
-    && intervalSeconds.value >= 6 && intervalSeconds.value <= 300
 })
 
 watch(home, (value) => {
@@ -112,11 +103,7 @@ watch(home, (value) => {
   else {
     // 表单有未保存修改时只推进基线（版本随快照更新），保留用户输入；
     // 自己保存成功时服务端值与表单一致，基线推进后自然回到非 dirty。
-    settingsBaseline.value = JSON.stringify({
-      tagline: value.tagline,
-      autoRotate: value.autoRotate,
-      intervalSeconds: Math.round(value.autoRotateIntervalMs / 1_000),
-    })
+    settingsBaseline.value = JSON.stringify({ tagline: value.tagline })
   }
 })
 
@@ -142,10 +129,11 @@ async function onSaveSettings() {
   if (!settingsDirty.value || !settingsValid.value) {
     return
   }
+  // 自动轮播写死：始终开启、固定 10 秒，不再由界面决定。
   actionError.value = await saveSettings({
     tagline: tagline.value.trim(),
-    autoRotate: autoRotate.value,
-    autoRotateIntervalMs: intervalSeconds.value * 1_000,
+    autoRotate: true,
+    autoRotateIntervalMs: HERO_AUTOPLAY_INTERVAL_MS,
   })
 }
 
@@ -184,6 +172,27 @@ async function onMove(id: string, direction: -1 | 1) {
     return
   }
   ;[ids[index], ids[target]] = [ids[target]!, ids[index]!]
+  actionError.value = await reorderEnabled(ids)
+}
+
+/**
+ * 已启用项直接保存顺位：把该项插入到目标位置，其余顺序不变。
+ *
+ * 服务端按数组下标重排已启用序列（0,1,2…），所以这里只需要给出
+ * 期望的完整顺序；目标顺位超出范围时收敛到两端。
+ */
+async function onReorderTo(id: string, sortOrder: number) {
+  const ids = enabledSlides.value.map(slide => slide.id)
+  const index = ids.indexOf(id)
+  if (index === -1) {
+    return
+  }
+  const target = Math.min(Math.max(sortOrder, 0), ids.length - 1)
+  if (target === index) {
+    return
+  }
+  ids.splice(index, 1)
+  ids.splice(target, 0, id)
   actionError.value = await reorderEnabled(ids)
 }
 
@@ -263,28 +272,7 @@ onMounted(() => {
                 :disabled="mutating"
               >
             </div>
-            <div class="home-admin__field home-admin__field--inline">
-              <label class="home-admin__label" for="home-auto-rotate">自动轮播</label>
-              <input
-                id="home-auto-rotate"
-                v-model="autoRotate"
-                type="checkbox"
-                :disabled="mutating"
-              >
-            </div>
-            <div class="home-admin__field">
-              <label class="home-admin__label" for="home-interval">自动轮播间隔（秒，6–300）</label>
-              <input
-                id="home-interval"
-                v-model.number="intervalSeconds"
-                class="home-admin__input home-admin__input--narrow"
-                type="number"
-                min="6"
-                max="300"
-                step="1"
-                :disabled="mutating || !autoRotate"
-              >
-            </div>
+            <!-- 自动轮播不再是配置项：固定开启、10 秒一张。 -->
             <div class="home-admin__settings-actions">
               <button
                 type="button"
@@ -335,6 +323,7 @@ onMounted(() => {
               :can-move-up="moveStateFor(slide.id).canMoveUp"
               :can-move-down="moveStateFor(slide.id).canMoveDown"
               @save="payload => onSave(slide.id, payload)"
+              @reorder-to="order => onReorderTo(slide.id, order)"
               @delete="onDelete(slide.id)"
               @enable="allowUpscale => onEnable(slide.id, allowUpscale)"
               @disable="onDisable(slide.id)"

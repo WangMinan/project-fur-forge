@@ -255,6 +255,11 @@ const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
 </template>
 
 <style scoped>
+/* 详情页自己提供收尾留白；页脚只留一段小间距。 */
+.work-detail {
+  padding-bottom: var(--space-7);
+}
+
 .work-detail__back {
   max-width: var(--public-content-wide);
   margin: 0 auto;

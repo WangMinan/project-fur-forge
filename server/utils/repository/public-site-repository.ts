@@ -106,7 +106,10 @@ interface SnapshotEntry {
     sources: PublicSourceSetDto
   } | null
   featured: boolean
+  /** 只用于首页精选排序；公开列表按发布时间倒序，不看这个值。 */
+  id: string
   purpose: PublishedWorkRow['purpose']
+  sortOrder: number
   studioPhotos: Array<{
     alt: string
     assetId: string
@@ -163,6 +166,13 @@ function sourceSet(
   return null
 }
 
+/**
+ * T35-F5：公开列表排序为「越新的越靠前」。
+ *
+ * 人工 `sort_order` 只服务首页精选（见 `listFeaturedWorks`），
+ * 因此发布新作品不需要重排整站顺序。
+ * `published_at` 理论上可能缺失，回落到 `created_at` 保证顺序稳定。
+ */
 function loadPublishedWorks(sqlite: Database.Database) {
   return sqlite.prepare(`
     SELECT
@@ -179,7 +189,7 @@ function loadPublishedWorks(sqlite: Database.Database) {
       sort_order AS sortOrder, featured
     FROM works
     WHERE publication_status = 'published'
-    ORDER BY sort_order, id
+    ORDER BY COALESCE(published_at, created_at) DESC, id
   `).all() as PublishedWorkRow[]
 }
 
@@ -348,7 +358,9 @@ function snapshot(
     entries.push({
       featured: row.featured === 1,
       designSheet,
+      id: row.id,
       purpose: row.purpose,
+      sortOrder: row.sortOrder,
       suitType: row.suitType,
       summary: publicWorkSummaryDtoSchema.parse({
         work: facts,
@@ -417,10 +429,8 @@ function homeAggregate(
   let adoptionsAvailable = true
   try {
     const entriesSnapshot = snapshot(sqlite, mediaBaseUrl)
-    featured = entriesSnapshot
-      .filter(entry => entry.featured)
-      .slice(0, 6)
-      .map(entry => entry.summary)
+    featured = featuredEntries(entriesSnapshot).map(entry => entry.summary)
+    // 当前领养取最新两件：快照已按发布时间倒序。
     currentAdoptions = adoptionItems(entriesSnapshot).slice(0, 2)
   }
   catch (error) {
@@ -437,6 +447,19 @@ function homeAggregate(
     featured: { available: featuredAvailable, items: featured },
     currentAdoptions: { available: adoptionsAvailable, items: currentAdoptions },
   })
+}
+
+/**
+ * 首页精选：全站唯一使用人工 `sort_order` 的位置。
+ * 快照本身按发布时间倒序，因此这里显式重排。
+ */
+function featuredEntries(entries: readonly SnapshotEntry[]) {
+  return entries
+    .filter(entry => entry.featured)
+    .toSorted((left, right) => (
+      left.sortOrder - right.sortOrder || (left.id < right.id ? -1 : 1)
+    ))
+    .slice(0, 6)
 }
 
 /** T37：常规领养与展会掉落共用同一份领养投影和设定图水印变体。 */
@@ -585,9 +608,7 @@ export function createSqlitePublicSiteRepository(
     },
 
     listFeaturedWorks() {
-      const items = snapshot(sqlite, mediaBaseUrl)
-        .filter(entry => entry.featured)
-        .slice(0, 6)
+      const items = featuredEntries(snapshot(sqlite, mediaBaseUrl))
         .map(entry => entry.summary)
       return publicFeaturedWorksDtoSchema.parse({
         items,

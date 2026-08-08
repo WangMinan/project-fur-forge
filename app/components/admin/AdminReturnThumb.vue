@@ -1,28 +1,31 @@
 <script setup lang="ts">
-import type { AdminReturnPhotoDto } from '~~/shared/types/contracts'
-
 /**
- * 返图列表缩略图。
+ * 返图缩略图。
  *
  * 来源是受控管理预览（认证管理 Host + no-store），不是公开 URL，
  * 也不暴露私有 Object Key：浏览器只拿到 assetId。
  * 使用 contain，不把竖图裁成方块。
  */
-const props = defineProps<{
-  item: AdminReturnPhotoDto
-}>()
+const props = withDefaults(defineProps<{
+  assetId: string | null
+  name: string
+  /** 服务端缩放宽度：列表格子只有几十像素，不需要原图。 */
+  width?: number
+}>(), {
+  width: 96,
+})
 
 const failed = ref(false)
 
-/**
- * 请求服务端缩放后的低分辨率缩略图（96px 宽）。
- * 列表里几十像素的格子不需要多 MB 原图，这样能明显省下 OSS 流量。
- */
 const previewSrc = computed(() => (
-  props.item.asset
-    ? `/api/admin/v1/media/assets/${props.item.asset.assetId}/preview?w=96`
+  props.assetId
+    ? `/api/admin/v1/media/assets/${props.assetId}/preview?w=${props.width}`
     : null
 ))
+
+watch(previewSrc, () => {
+  failed.value = false
+})
 </script>
 
 <template>
@@ -31,13 +34,13 @@ const previewSrc = computed(() => (
       v-if="previewSrc && !failed"
       class="return-thumb__image"
       :src="previewSrc"
-      :alt="`${item.work.characterName}的返图缩略图`"
+      :alt="`${name}的返图缩略图`"
       loading="lazy"
       decoding="async"
       @error="failed = true"
     >
     <span v-else class="return-thumb__empty">
-      {{ previewSrc ? '预览失败' : '未上传' }}
+      {{ previewSrc ? '预览失败' : '无图' }}
     </span>
   </span>
 </template>

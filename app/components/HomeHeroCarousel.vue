@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import type { PublicHomeDto } from '~~/shared/types/contracts'
-import { PROJECT_NAME } from '~~/shared/constants/project'
+import {
+  PROJECT_ENGLISH_NAME,
+  PROJECT_NAME,
+} from '~~/shared/constants/project'
 
 /**
  * 首页双源轮播（T20）：
  * - 仅渲染当前项 <picture>：SSR 直出第一项，隐藏项不下载图片；无 JS 时第一项完整可用。
  * - 横屏 16:9 / 竖屏 9:16 独立 asset，由 ResponsivePicture 按 orientation 切换。
- * - 自动轮播默认关闭；开启时遵守 ≥6s、悬停/聚焦/页面隐藏暂停、reduced-motion 停止。
+ * - 自动轮播固定开启、10 秒一张；悬停/聚焦/页面隐藏暂停，reduced-motion 停止。
  */
 const props = defineProps<{
   home: PublicHomeDto
@@ -26,12 +29,9 @@ const focusWithin = ref(false)
 const userPaused = ref(false)
 const pageHidden = ref(false)
 
-const autoplayInterval = computed(() =>
-  resolveAutoplayIntervalMs(
-    props.home.autoRotate,
-    props.home.autoRotateIntervalMs,
-    reduceMotion.value,
-  ))
+const autoplayInterval = computed(
+  () => resolveAutoplayIntervalMs(reduceMotion.value),
+)
 
 const autoplayRunning = computed(() =>
   autoplayInterval.value !== null
@@ -183,7 +183,7 @@ onBeforeUnmount(() => {
 
     <div class="home-hero__content">
       <p class="home-hero__eyebrow">
-        dite dog
+        {{ PROJECT_ENGLISH_NAME }}
       </p>
       <h1 class="home-hero__title">
         {{ PROJECT_NAME }}
@@ -240,8 +240,9 @@ onBeforeUnmount(() => {
           <path d="M6.5 3.5L12 9l-5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
       </button>
+      <!-- 自动轮播固定开启，因此暂停按钮常在（无障碍要求可暂停动效）。 -->
       <button
-        v-if="home.autoRotate"
+        v-if="slides.length > 1"
         type="button"
         class="home-hero__pause"
         :aria-pressed="userPaused"

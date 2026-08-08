@@ -67,6 +67,17 @@ const publishedFeaturedCount = computed(() => works.value.filter(
   work => work.featured && work.publicationStatus === 'published',
 ).length)
 
+/**
+ * 列表缩略图用哪张资产。
+ *
+ * 领养作品可以只有设定图、没有出厂照（这是允许的发布形态），
+ * 这时用设定图当缩略图，不留空。
+ */
+function thumbAssetId(work: WorkListItemDto) {
+  return work.primaryAssetId
+    ?? (work.purpose === 'adoption' ? work.designSheetAssetId : null)
+}
+
 function adoptionSummary(work: WorkListItemDto) {
   if (work.purpose !== 'adoption') {
     return null
@@ -218,7 +229,7 @@ onMounted(() => {
       </div>
 
       <p v-if="status === 'ready'" class="works-page__ordering-hint">
-        数字越小越靠前；相同数字允许并保持稳定顺序。勾选精选时若顺位重复，会自动使用下一个空闲顺位。
+        排序只影响首页精选，数字越小越靠前。公开列表按发布时间从新到旧排列。
       </p>
 
       <p
@@ -226,8 +237,8 @@ onMounted(() => {
         class="works-page__featured-warning"
         role="status"
       >
-        已发布精选 {{ publishedFeaturedCount }} 件，首页精选轨道只显示排序最前的
-        {{ PUBLIC_FEATURED_LIMIT }} 件；正式内容建议保持 3–{{ PUBLIC_FEATURED_LIMIT }} 件。
+        已发布精选 {{ publishedFeaturedCount }} 件，首页只显示排序最前的
+        {{ PUBLIC_FEATURED_LIMIT }} 件。
       </p>
 
       <AdminWorkListToolbar
@@ -277,13 +288,13 @@ onMounted(() => {
                   <span class="works-table__thumb">
                     <!-- 低分辨率缩略图：表格格子只有 3rem，不需要原图。 -->
                     <img
-                      v-if="work.primaryAssetId"
-                      :src="`/api/admin/v1/media/assets/${work.primaryAssetId}/preview?w=96`"
+                      v-if="thumbAssetId(work)"
+                      :src="`/api/admin/v1/media/assets/${thumbAssetId(work)}/preview?w=96`"
                       alt=""
                       loading="lazy"
                       referrerpolicy="same-origin"
                     >
-                    <span v-else aria-hidden="true">无主图</span>
+                    <span v-else aria-hidden="true">无图</span>
                   </span>
                   <span class="works-table__name">
                     <NuxtLink :to="`/admin/works/${work.id}`" class="works-table__link">
@@ -350,13 +361,13 @@ onMounted(() => {
           <li v-for="work in visibleWorks" :key="work.id" class="works-card">
             <span class="works-card__thumb">
               <img
-                v-if="work.primaryAssetId"
-                :src="`/api/admin/v1/media/assets/${work.primaryAssetId}/preview?w=160`"
+                v-if="thumbAssetId(work)"
+                :src="`/api/admin/v1/media/assets/${thumbAssetId(work)}/preview?w=160`"
                 alt=""
                 loading="lazy"
                 referrerpolicy="same-origin"
               >
-              <span v-else aria-hidden="true">无主图</span>
+              <span v-else aria-hidden="true">无图</span>
             </span>
             <div class="works-card__body">
               <p class="works-card__name">
@@ -422,7 +433,7 @@ onMounted(() => {
         @confirm="deleteWork"
         @cancel="deleteTarget = null"
       >
-        <p>作品资料与媒体关联将删除，公开衍生图会先清理；私有原图保留。已发布作品必须先下架。此操作无法撤销。</p>
+        <p>作品资料与公开图片会被删除，私有原图保留。此操作无法撤销。</p>
       </AdminConfirmDialog>
 
       <AdminConfirmDialog

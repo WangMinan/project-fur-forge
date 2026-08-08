@@ -104,15 +104,29 @@ const eventDrop = computed(() => (
   color: var(--public-text-secondary);
 }
 
+/**
+ * 设定图外框：圆角矩形 + 固定比例。
+ *
+ * 固定比例是为了让并排的两张卡对齐——设定图各自比例不同，
+ * 高度自适应时右边卡的文字会比左边高出一截。`contain` 保证
+ * 设定图完整可见、不裁切，多余空间由留白承担。
+ */
 .adoption-card__canvas {
   display: block;
+  aspect-ratio: var(--ratio-design-sheet);
   overflow: hidden;
+  border: 1px solid var(--public-border-primary);
+  border-radius: var(--radius-image);
   background: var(--image-placeholder);
 }
 
+.adoption-card__canvas :deep(.responsive-picture),
 .adoption-card__canvas :deep(.responsive-picture__image) {
   width: 100%;
-  height: auto;
+  height: 100%;
+}
+
+.adoption-card__canvas :deep(.responsive-picture__image) {
   object-fit: contain;
   transition: transform var(--duration-section) var(--easing-standard);
 }

@@ -1,34 +1,17 @@
 <script setup lang="ts">
-import {
-  adminReturnPhotoResponseSchema,
-  deleteReturnPhotoResponseSchema,
-  returnPhotoPublicationActionResponseSchema,
-  returnPhotoPublicationCheckResponseSchema,
-} from '~~/shared/schemas/return-photo'
+import { adminReturnCharacterResponseSchema } from '~~/shared/schemas/return-photo'
 import { workListResponseSchema } from '~~/shared/schemas/work'
 import type {
-  AdminReturnPhotoDto,
-  ReturnPhotoPublicationCheckDto,
-  PublicationOperationDto,
+  AdminReturnCharacterDto,
   WorkListItemDto,
 } from '~~/shared/types/contracts'
 import { AdminApiError } from '~/composables/useAdminApi'
-import { PUBLICATION_STATUS_LABELS } from '~/utils/work-labels'
-import {
-  RETURN_BLOCKER_LABELS,
-  RETURN_CONSENT_SOURCE_LABELS,
-  RETURN_OPERATION_STAGE_LABELS,
-} from '~/utils/return-labels'
 
 /**
- * T36 返图编辑：一条记录只编辑一张图。
+ * T35-F1 设定编辑：名称 / 昵称 / 可选关联作品 + 这个设定的多张返图。
  *
- * 分区顺序按 .design/admin-console IA 锁定：
- * 1 关联作品 → 2 返图图片 → 3 alt 与排序 → 4 授权记录（仅后台可见）
- * → 5 私有原图与无水印公开预览 → 6 发布检查/发布/下架/失败恢复
- * → 7 危险操作边界。
- *
- * 页面不出现“出厂照”文案、相册控件、水印参数或回收站入口。
+ * 页面不出现公开衍生预览：返图公开图无水印、内容与私有原图一致，
+ * 再放一份预览没有信息量。也不出现作品水印参数或返图排序。
  */
 definePageMeta({
   layout: 'admin',
@@ -37,43 +20,60 @@ definePageMeta({
 
 const route = useRoute()
 const adminApi = useAdminApi()
-const returnPhotoId = computed(() => String(route.params.id))
+const characterId = computed(() => String(route.params.id))
 
 const status = ref<'error' | 'loading' | 'ready'>('loading')
-const record = ref<AdminReturnPhotoDto | null>(null)
+const record = ref<AdminReturnCharacterDto | null>(null)
 const works = ref<WorkListItemDto[]>([])
-const check = ref<ReturnPhotoPublicationCheckDto | null>(null)
-const operation = ref<PublicationOperationDto | null>(null)
 
 /** 表单草稿：409 冲突时保留，不被服务端值静默覆盖。 */
 const form = reactive({
-  alt: '',
   consentNote: '',
   consentSource: '' as '' | 'qq' | 'email' | 'other',
   consentConfirmedAt: '',
-  sortOrder: 0,
+  name: '',
+  nickname: '',
+  slug: '',
   workId: '',
 })
 
 const saving = ref(false)
-const publishing = ref(false)
-const deleting = ref(false)
 const actionError = ref<string | null>(null)
 const savedAt = ref<number | null>(null)
-const conflict = ref<AdminReturnPhotoDto | null>(null)
-const confirmDelete = ref(false)
+const conflict = ref<AdminReturnCharacterDto | null>(null)
+
+/**
+ * 有未保存更改：与作品编辑页一致，页头据此显示状态标记并启用保存按钮。
+ * 比较表单与服务端值本身，不额外维护一份基线快照。
+ */
+const dirty = computed(() => {
+  const current = record.value
+  if (!current) {
+    return false
+  }
+  return form.name !== current.name
+    || form.nickname !== (current.nickname ?? '')
+    || form.slug !== current.slug
+    || form.workId !== (current.work?.workId ?? '')
+    || form.consentSource !== (current.authorization.source ?? '')
+    || form.consentNote !== (current.authorization.note ?? '')
+    || form.consentConfirmedAt !== (
+      current.authorization.confirmedAt?.slice(0, 10) ?? ''
+    )
+})
 
 useSeoMeta({
   title: computed(() => (
-    record.value ? `返图管理 · ${record.value.work.characterName}` : '返图管理'
+    record.value ? `返图管理 · ${record.value.name}` : '返图管理'
   )),
   robots: 'noindex, nofollow',
 })
 
-function applyToForm(value: AdminReturnPhotoDto) {
-  form.alt = value.alt
-  form.sortOrder = value.sortOrder
-  form.workId = value.work.workId
+function applyToForm(value: AdminReturnCharacterDto) {
+  form.name = value.name
+  form.nickname = value.nickname ?? ''
+  form.slug = value.slug
+  form.workId = value.work?.workId ?? ''
   form.consentSource = value.authorization.source ?? ''
   form.consentNote = value.authorization.note ?? ''
   form.consentConfirmedAt = value.authorization.confirmedAt
@@ -81,31 +81,17 @@ function applyToForm(value: AdminReturnPhotoDto) {
     : ''
 }
 
-async function loadCheck() {
-  try {
-    const response = await adminApi(
-      `/api/admin/v1/returns/${returnPhotoId.value}/publication-check`,
-      { schema: returnPhotoPublicationCheckResponseSchema },
-    )
-    check.value = response.data
-  }
-  catch {
-    check.value = null
-  }
-}
-
 async function load(options: { keepDraft?: boolean } = {}) {
   try {
     const response = await adminApi(
-      `/api/admin/v1/returns/${returnPhotoId.value}`,
-      { schema: adminReturnPhotoResponseSchema },
+      `/api/admin/v1/returns/${characterId.value}`,
+      { schema: adminReturnCharacterResponseSchema },
     )
     record.value = response.data
     if (!options.keepDraft) {
       applyToForm(response.data)
     }
     status.value = 'ready'
-    await loadCheck()
   }
   catch (error) {
     if (error instanceof AdminApiError && error.status === 401) {
@@ -115,30 +101,29 @@ async function load(options: { keepDraft?: boolean } = {}) {
   }
 }
 
-const upload = useReturnPhotoUpload({
-  onConflict: () => {
-    void reloadForConflict()
-  },
-  onUploaded: async () => {
-    // 绑定成功后返图版本已经 +1，必须重新读取服务端状态。
-    await load({ keepDraft: true })
-  },
-})
-
 async function reloadForConflict() {
   try {
     const response = await adminApi(
-      `/api/admin/v1/returns/${returnPhotoId.value}`,
-      { schema: adminReturnPhotoResponseSchema },
+      `/api/admin/v1/returns/${characterId.value}`,
+      { schema: adminReturnCharacterResponseSchema },
     )
     conflict.value = response.data
     record.value = response.data
-    await loadCheck()
   }
   catch {
     conflict.value = null
   }
 }
+
+const upload = useReturnPhotoUpload({
+  onConflict: () => {
+    void reloadForConflict()
+  },
+  onUploaded: async () => {
+    // 上传完成后服务端已经新增了一张返图，重新读取设定。
+    await load({ keepDraft: true })
+  },
+})
 
 onMounted(async () => {
   await load()
@@ -152,18 +137,6 @@ onMounted(async () => {
     works.value = []
   }
 })
-
-const isPublished = computed(
-  () => record.value?.publicationStatus === 'published',
-)
-
-const authorizationPayload = computed(() => ({
-  source: form.consentSource === '' ? null : form.consentSource,
-  confirmedAt: form.consentConfirmedAt === ''
-    ? null
-    : new Date(`${form.consentConfirmedAt}T00:00:00Z`).toISOString(),
-  note: form.consentNote.trim() === '' ? null : form.consentNote.trim(),
-}))
 
 async function save() {
   const current = record.value
@@ -181,30 +154,38 @@ async function save() {
         body: {
           expectedVersion: current.version,
           payload: {
-            workId: form.workId,
-            alt: form.alt.trim(),
-            sortOrder: form.sortOrder,
-            authorization: authorizationPayload.value,
+            slug: form.slug.trim(),
+            name: form.name.trim(),
+            nickname: form.nickname.trim() === '' ? null : form.nickname.trim(),
+            workId: form.workId === '' ? null : form.workId,
+            authorization: {
+              source: form.consentSource === '' ? null : form.consentSource,
+              confirmedAt: form.consentConfirmedAt === ''
+                ? null
+                : new Date(`${form.consentConfirmedAt}T00:00:00Z`).toISOString(),
+              note: form.consentNote.trim() === ''
+                ? null
+                : form.consentNote.trim(),
+            },
           },
         },
-        schema: adminReturnPhotoResponseSchema,
+        schema: adminReturnCharacterResponseSchema,
       },
     )
     record.value = response.data
     applyToForm(response.data)
     savedAt.value = Date.now()
-    await loadCheck()
   }
   catch (error) {
     if (error instanceof AdminApiError && error.status === 401) {
       return
     }
     if (error instanceof AdminApiError && error.status === 409) {
-      if (error.reason === 'RETURN_PHOTO_PUBLISHED_READONLY') {
-        actionError.value = '这条返图已发布，更换关联作品前请先下架。'
+      if (error.reason === 'RETURN_CHARACTER_SLUG_TAKEN') {
+        actionError.value = '这个网址名称已经被其他设定使用，请换一个。'
       }
       else {
-        actionError.value = '这条返图已在别处修改。下面显示的是最新服务端内容，你当前填写的内容仍然保留。'
+        actionError.value = '这个设定已在别处修改。下面显示的是最新内容，你填写的内容仍然保留。'
         await reloadForConflict()
       }
       return
@@ -219,82 +200,6 @@ async function save() {
   }
 }
 
-async function runPublication(action: 'publish' | 'unpublish') {
-  const current = record.value
-  if (!current || publishing.value) {
-    return
-  }
-  publishing.value = true
-  actionError.value = null
-  try {
-    const response = await adminApi(
-      `/api/admin/v1/returns/${current.id}/${action}`,
-      {
-        method: 'POST',
-        body: { expectedVersion: current.version, payload: {} },
-        schema: returnPhotoPublicationActionResponseSchema,
-      },
-    )
-    operation.value = response.data.operation
-    await load({ keepDraft: true })
-  }
-  catch (error) {
-    if (error instanceof AdminApiError && error.status === 401) {
-      return
-    }
-    if (error instanceof AdminApiError && error.status === 409) {
-      if (error.reason === 'RETURN_PHOTO_PUBLICATION_BLOCKED') {
-        actionError.value = '还有未满足的发布条件，请先处理下面列出的项目。'
-      }
-      else if (error.reason === 'ACTIVE_OPERATION_EXISTS') {
-        actionError.value = '上一个发布任务还在进行中，请稍后刷新查看结果。'
-      }
-      else {
-        actionError.value = '返图已在别处修改，请刷新后重试。'
-        await reloadForConflict()
-      }
-      await loadCheck()
-      return
-    }
-    actionError.value = action === 'publish'
-      ? '发布失败，请查看下面的任务状态后重试。'
-      : '下架失败，请稍后重试。'
-    await load({ keepDraft: true })
-  }
-  finally {
-    publishing.value = false
-  }
-}
-
-async function removeDraft() {
-  const current = record.value
-  if (!current || deleting.value) {
-    return
-  }
-  deleting.value = true
-  actionError.value = null
-  try {
-    await adminApi(`/api/admin/v1/returns/${current.id}`, {
-      method: 'DELETE',
-      body: { expectedVersion: current.version, payload: {} },
-      schema: deleteReturnPhotoResponseSchema,
-    })
-    await navigateTo('/admin/returns')
-  }
-  catch (error) {
-    if (error instanceof AdminApiError && error.status === 401) {
-      return
-    }
-    actionError.value = error instanceof AdminApiError && error.status === 409
-      ? '返图状态已变化，请刷新后重试。'
-      : '删除失败，请稍后重试。'
-  }
-  finally {
-    deleting.value = false
-    confirmDelete.value = false
-  }
-}
-
 function onPickFile(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
@@ -303,49 +208,51 @@ function onPickFile(event: Event) {
     return
   }
   void upload.start(file, {
-    returnPhotoId: current.id,
+    characterId: current.id,
     version: current.version,
   })
   input.value = ''
 }
-
-/**
- * 私有原图预览也用服务端缩放版本（640px 宽）：
- * 预览框最大约 22rem，原图往往是几 MB 的手机照片，不必整张回传。
- */
-const privatePreviewSrc = computed(() => (
-  record.value?.asset
-    ? `/api/admin/v1/media/assets/${record.value.asset.assetId}/preview?w=640`
-    : null
-))
 </script>
 
 <template>
   <AdminShell current="returns">
     <section class="return-editor">
+      <!-- 页头结构与 /admin/works/[id] 一致：返回链接、标题、状态同一行，
+           右上角放主操作。 -->
       <header class="return-editor__header">
-        <div>
-          <p class="return-editor__breadcrumb">
-            <NuxtLink to="/admin/returns">返图管理</NuxtLink>
-          </p>
+        <div class="return-editor__heading">
+          <NuxtLink to="/admin/returns" class="return-editor__back">
+            ← 返图管理
+          </NuxtLink>
           <h1 class="return-editor__title">
-            {{ record ? `${record.work.characterName}的返图` : '返图' }}
+            {{ record ? record.name : '设定' }}
           </h1>
-          <p v-if="record" class="return-editor__status">
-            <AdminStatusBadge
-              :label="PUBLICATION_STATUS_LABELS[record.publicationStatus]"
-              :tone="isPublished ? 'success' : record.publicationStatus === 'unpublished' ? 'warning' : 'neutral'"
-            />
-            <span v-if="savedAt" class="return-editor__saved" role="status">已保存</span>
-          </p>
+          <AdminStatusBadge
+            v-if="record"
+            :tone="dirty ? 'warning' : 'neutral'"
+            :label="dirty ? '有未保存更改' : '未更改'"
+          />
+        </div>
+        <div v-if="record" class="return-editor__actions">
+          <button
+            type="button"
+            class="return-editor__save"
+            :disabled="!dirty || saving"
+            @click="save"
+          >{{ saving ? '保存中…' : '保存修改' }}</button>
         </div>
       </header>
 
+      <p v-if="savedAt && !dirty" class="return-editor__saved" role="status">
+        已保存
+      </p>
+
       <p v-if="status === 'loading'" class="return-editor__state" role="status">
-        正在加载返图…
+        正在加载…
       </p>
       <p v-else-if="status === 'error'" class="return-editor__state" role="alert">
-        返图加载失败，请刷新页面后重试。
+        加载失败，请刷新页面后重试。
       </p>
 
       <template v-else-if="record">
@@ -353,30 +260,20 @@ const privatePreviewSrc = computed(() => (
           {{ actionError }}
         </p>
 
-        <AdminReturnEditorCards
+        <AdminReturnCharacterCard
           v-model:form="form"
-          :record="record"
-          :works="works"
-          :check="check"
-          :operation="operation"
           :conflict="conflict"
-          :upload="upload"
-          :saving="saving"
-          :publishing="publishing"
-          :deleting="deleting"
-          :confirm-delete="confirmDelete"
-          :private-preview-src="privatePreviewSrc"
-          :blocker-labels="RETURN_BLOCKER_LABELS"
-          :consent-source-labels="RETURN_CONSENT_SOURCE_LABELS"
-          :operation-stage-labels="RETURN_OPERATION_STAGE_LABELS"
-          @save="save"
-          @publish="runPublication('publish')"
-          @unpublish="runPublication('unpublish')"
-          @pick-file="onPickFile"
-          @request-delete="confirmDelete = true"
-          @cancel-delete="confirmDelete = false"
-          @confirm-delete="removeDraft"
+          :works="works"
         />
+
+        <AdminReturnPhotoList
+          :record="record"
+          :upload="upload"
+          @pick-file="onPickFile"
+          @changed="load({ keepDraft: true })"
+        />
+
+        <!-- 删除入口只在设定列表里：与作品管理一致，详情页不放危险操作。 -->
       </template>
     </section>
   </AdminShell>
@@ -387,28 +284,66 @@ const privatePreviewSrc = computed(() => (
   max-width: var(--admin-content-max);
 }
 
-.return-editor__breadcrumb {
-  font-size: var(--admin-font-sm);
+/* 与 /admin/works/[id] 同一套页头排布。 */
+.return-editor__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--admin-space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--admin-space-5);
 }
 
-.return-editor__breadcrumb a {
-  color: var(--admin-accent-primary);
-}
-
-.return-editor__title {
-  margin-top: var(--admin-space-2);
-  font-size: var(--admin-font-xl);
-  font-weight: 600;
-}
-
-.return-editor__status {
+.return-editor__heading {
   display: flex;
   align-items: center;
   gap: var(--admin-space-3);
-  margin-top: var(--admin-space-2);
+  flex-wrap: wrap;
+}
+
+.return-editor__back {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--admin-touch-target);
+  color: var(--admin-text-secondary);
+  font-size: var(--admin-font-base);
+}
+
+.return-editor__back:hover {
+  color: var(--admin-text-primary);
+}
+
+.return-editor__title {
+  margin: 0;
+  font-size: var(--admin-font-base);
+  font-weight: 600;
+  line-height: var(--admin-line-tight);
+}
+
+.return-editor__actions {
+  display: flex;
+  gap: var(--admin-space-2);
+}
+
+.return-editor__save {
+  min-height: var(--admin-control-height);
+  padding: 0 var(--admin-space-5);
+  border: none;
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-accent-primary);
+  color: var(--admin-text-inverse);
+  font: inherit;
+  font-size: var(--admin-font-sm);
+  cursor: pointer;
+}
+
+.return-editor__save:disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 
 .return-editor__saved {
+  margin-bottom: var(--admin-space-4);
   color: var(--admin-status-success);
   font-size: var(--admin-font-xs);
 }
@@ -431,5 +366,75 @@ const privatePreviewSrc = computed(() => (
   color: var(--admin-status-error);
   font-size: var(--admin-font-sm);
   line-height: var(--admin-line-normal);
+}
+
+.admin-card {
+  margin-top: var(--admin-space-5);
+  padding: var(--admin-space-5);
+  border: 1px solid var(--admin-border-secondary);
+  border-radius: var(--admin-radius-lg);
+  background: var(--admin-bg-primary);
+}
+
+.admin-card--danger {
+  border-color: var(--admin-status-error-soft);
+}
+
+.admin-card__title {
+  font-size: var(--admin-font-md);
+  font-weight: 600;
+}
+
+.admin-card__hint {
+  margin-top: var(--admin-space-2);
+  color: var(--admin-text-secondary);
+  font-size: var(--admin-font-sm);
+  line-height: var(--admin-line-normal);
+}
+
+.return-danger__button {
+  min-height: var(--admin-control-height);
+  margin-top: var(--admin-space-4);
+  padding: 0 var(--admin-space-5);
+  border: 1px solid var(--admin-danger);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-bg-primary);
+  color: var(--admin-danger);
+  font: inherit;
+  font-size: var(--admin-font-sm);
+  cursor: pointer;
+}
+
+.return-danger__button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.return-danger__confirm {
+  margin-top: var(--admin-space-4);
+  padding: var(--admin-space-4);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-status-error-soft);
+  color: var(--admin-status-error);
+  font-size: var(--admin-font-sm);
+  line-height: var(--admin-line-normal);
+}
+
+.return-danger__confirm-actions {
+  display: flex;
+  gap: var(--admin-space-3);
+  margin-top: var(--admin-space-3);
+}
+
+.return-danger__confirm-actions button:last-child {
+  min-height: var(--admin-control-height);
+  padding: 0 var(--admin-space-4);
+  border: 1px solid var(--admin-border-primary);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-bg-primary);
+  color: var(--admin-text-primary);
+  font: inherit;
+  font-size: var(--admin-font-sm);
+  cursor: pointer;
 }
 </style>

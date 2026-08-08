@@ -3,8 +3,12 @@
  * 与 DOM/定时器解耦，供 HomeHeroCarousel 与单元测试共用。
  */
 
-/** 交接契约：自动轮播间隔不得低于 6 秒（服务端 Schema 已保证，UI 再兜底）。 */
-export const HERO_MIN_AUTOPLAY_INTERVAL_MS = 6_000
+/**
+ * 自动轮播固定 10 秒一张，且始终开启（不再是可配置项）。
+ *
+ * 唯一例外是 `prefers-reduced-motion`：那是无障碍要求，不是偏好设置。
+ */
+export const HERO_AUTOPLAY_INTERVAL_MS = 10_000
 
 export function nextSlideIndex(current: number, count: number): number {
   if (count <= 0) {
@@ -29,18 +33,13 @@ export function clampSlideIndex(index: number, count: number): number {
 }
 
 /**
- * 自动轮播仅在设置开启且用户未要求减少动态时运行；
+ * 自动轮播始终开启，只有用户要求减少动态时停止。
  * 返回 null 表示不得启动定时器。
  */
 export function resolveAutoplayIntervalMs(
-  autoRotate: boolean,
-  intervalMs: number,
   reduceMotion: boolean,
 ): number | null {
-  if (!autoRotate || reduceMotion) {
-    return null
-  }
-  return Math.max(intervalMs, HERO_MIN_AUTOPLAY_INTERVAL_MS)
+  return reduceMotion ? null : HERO_AUTOPLAY_INTERVAL_MS
 }
 
 /** 触控/指针滑动超过阈值才翻页；向右滑（正位移）回上一张。 */

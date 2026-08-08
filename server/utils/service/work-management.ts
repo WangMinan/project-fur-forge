@@ -16,7 +16,6 @@ import type {
 } from '../../../shared/types/contracts'
 import type { MediaStorage } from '../media-storage'
 import { ServiceError } from '../service-error'
-import { assertWorkHasNoReturnPhotos } from './return-photo'
 
 interface StudioPhotoInput {
   alt: string
@@ -282,7 +281,7 @@ export function listManagedWorks(
     LEFT JOIN work_assets AS photo
       ON photo.work_id = work.id AND photo.role = 'studio_photo'
     GROUP BY work.id
-    ORDER BY work.sort_order, work.id
+    ORDER BY work.updated_at DESC, work.id
   `).all()
   return rows.map((value) => {
     const row = value as WorkRow & {
@@ -507,10 +506,9 @@ export async function deleteManagedWork(
   if (current.publicationStatus === 'published') {
     throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before deleting it.', 'WORK_PUBLISHED_READONLY')
   }
-  // T35：存在返图关联时阻止作品永久删除，并给出可执行的业务原因。
-  // return_photos.work_id 的 FK 是 restrict，这里只是让错误可读，
-  // 不替代数据库这道最后防线。
-  assertWorkHasNoReturnPhotos(sqlite, id)
+  // T35-F1：返图与作品解耦后，返图不再阻止作品删除。
+  // return_characters.work_id 的 FK 是 set null：设定只是失去作品入口，
+  // 返图记录与私有原图都保留。
 
   const claimed = sqlite.prepare(`
     UPDATE works SET version = version + 1, updated_at = ?

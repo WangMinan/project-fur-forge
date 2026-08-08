@@ -1,9 +1,15 @@
+import { createHash } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import {
+  publicReturnCharacterDtoSchema,
   publicReturnWallDtoSchema,
   RETURN_WALL_PAGE_SIZE,
 } from '../../../shared/schemas/return-photo'
-import type { PublicReturnWallDto } from '../../../shared/types/contracts'
+import type {
+  PublicReturnCharacterDto,
+  PublicReturnPhotoDto,
+  PublicReturnWallDto,
+} from '../../../shared/types/contracts'
 import { toPublicSourceSetDto, toSafePublicAlt } from '../recipe/media-mapper'
 import type { VariantRecord } from '../recipe/media-mapper'
 import {
@@ -14,15 +20,14 @@ import { getDatabase } from '../database'
 import { getRuntimeConfig } from '../runtime-config'
 
 /**
- * T36 公开返图墙投影。
+ * T35-F1 公开返图投影。
  *
- * 这一层刻意只 SELECT 公开需要的列：返图 id、alt、关联作品的
- * 角色名与 slug、以及公开变体。授权来源 / 确认时间 / 内部备注、
- * 私有 Object Key、原文件名和 EXIF 根本不在查询里，
- * 因此不可能因为某个映射疏漏而进入公开响应。
+ * 这一层刻意只 SELECT 公开需要的列：返图 id、alt、所属设定的名称/昵称/slug
+ * 和公开变体。授权来源 / 确认时间 / 内部备注、私有 Object Key、原文件名
+ * 和 EXIF 根本不在查询里，因此不可能因为某个映射疏漏而进入公开响应。
  *
- * 可见性同时要求返图与关联作品都是 published：
- * 作品下架后关联返图立即从这里消失，但返图记录与私有原图保留。
+ * 可见性只要求返图自己是 published：设定的关联作品是否存在、是否已发布
+ * 都不影响返图公开可见（T35-F1 解耦结论）。
  */
 
 interface PublicReturnRow {
@@ -30,53 +35,122 @@ interface PublicReturnRow {
   assetHeight: number
   assetId: string
   assetWidth: number
+  characterName: string
+  characterNickname: string | null
+  characterSlug: string
   id: string
-  workCharacterName: string
-  workSlug: string
 }
 
 interface PublicReturnVariantRow extends VariantRecord {
   assetId: string
 }
 
+const publishedPhotoJoin = `
+  FROM return_photos AS photo
+  JOIN return_characters AS character ON character.id = photo.character_id
+  JOIN assets AS asset ON asset.id = photo.asset_id
+  WHERE photo.publication_status = 'published'
+    AND asset.role = 'return_photo'
+    AND asset.status = 'READY'
+`
+
+const publicPhotoColumns = `
+  photo.id,
+  photo.alt,
+  photo.asset_id AS assetId,
+  asset.width AS assetWidth,
+  asset.height AS assetHeight,
+  character.name AS characterName,
+  character.nickname AS characterNickname,
+  character.slug AS characterSlug
+`
+
 function countPublishedReturns(sqlite: Database.Database) {
   return (sqlite.prepare(`
-    SELECT COUNT(*) AS total
-    FROM return_photos AS photo
-    JOIN works AS work ON work.id = photo.work_id
-    JOIN assets AS asset ON asset.id = photo.asset_id
-    WHERE photo.publication_status = 'published'
-      AND work.publication_status = 'published'
-      AND asset.role = 'return_photo'
-      AND asset.status = 'READY'
+    SELECT COUNT(*) AS total ${publishedPhotoJoin}
   `).get() as { total: number }).total
 }
 
-/** 公开排序：人工 sort_order 后接稳定 ID，保证分页无重复无遗漏。 */
-function loadPublishedReturns(
+/**
+ * 公开返图墙排序：按 `seed` 确定性地打乱。
+ *
+ * 返图之间没有优劣顺序，因此墙上不用人工排序。打乱必须对同一个 seed
+ * 保持确定：否则第 2 页会重复或漏掉第 1 页已经出现过的照片。
+ *
+ * 实现是「取全部已发布返图的 id → 按 sha256(id + seed) 排序 → 切出当页 →
+ * 只取这一页的完整行」。id 列很窄，SQLite 也没有可用的哈希函数，
+ * 因此排序放在应用层最省事。
+ *
+ * ponytail: 每次请求排一遍全部 id，返图量到十万级再考虑物化随机列。
+ */
+function shuffledPhotoIds(
   sqlite: Database.Database,
+  seed: string,
   limit: number,
   offset: number,
 ) {
+  const ids = sqlite.prepare(`
+    SELECT photo.id ${publishedPhotoJoin} ORDER BY photo.id
+  `).pluck().all() as string[]
+  return ids
+    .map(id => ({
+      id,
+      key: createHash('sha256').update(`${seed}:${id}`).digest('hex'),
+    }))
+    .sort((left, right) => (left.key < right.key ? -1 : 1))
+    .slice(offset, offset + limit)
+    .map(entry => entry.id)
+}
+
+function loadReturnsByIds(
+  sqlite: Database.Database,
+  ids: readonly string[],
+) {
+  if (ids.length === 0) {
+    return []
+  }
+  const placeholders = ids.map(() => '?').join(', ')
+  const rows = sqlite.prepare(`
+    SELECT ${publicPhotoColumns}
+    ${publishedPhotoJoin}
+      AND photo.id IN (${placeholders})
+  `).all(...ids) as PublicReturnRow[]
+  // SQL 的 IN 不保证顺序，按打乱后的 id 顺序重排。
+  const byId = new Map(rows.map(row => [row.id, row]))
+  return ids.flatMap(id => (byId.has(id) ? [byId.get(id)!] : []))
+}
+
+/** 一个设定的全部已发布返图；主图优先，其余按创建顺序稳定排列。 */
+function loadCharacterReturns(sqlite: Database.Database, slug: string) {
+  return sqlite.prepare(`
+    SELECT ${publicPhotoColumns}, photo.is_primary AS isPrimary
+    ${publishedPhotoJoin}
+      AND character.slug = ?
+    ORDER BY photo.is_primary DESC, photo.created_at, photo.id
+  `).all(slug) as Array<PublicReturnRow & { isPrimary: number }>
+}
+
+/** 设定的公开身份与可选作品入口。作品未发布时不给公开入口。 */
+function loadCharacter(sqlite: Database.Database, slug: string) {
   return sqlite.prepare(`
     SELECT
-      photo.id,
-      photo.alt,
-      photo.asset_id AS assetId,
-      asset.width AS assetWidth,
-      asset.height AS assetHeight,
+      character.name,
+      character.nickname,
+      character.slug,
       work.character_name AS workCharacterName,
-      work.slug AS workSlug
-    FROM return_photos AS photo
-    JOIN works AS work ON work.id = photo.work_id
-    JOIN assets AS asset ON asset.id = photo.asset_id
-    WHERE photo.publication_status = 'published'
-      AND work.publication_status = 'published'
-      AND asset.role = 'return_photo'
-      AND asset.status = 'READY'
-    ORDER BY photo.sort_order, photo.id
-    LIMIT ? OFFSET ?
-  `).all(limit, offset) as PublicReturnRow[]
+      work.slug AS workSlug,
+      work.publication_status AS workPublicationStatus
+    FROM return_characters AS character
+    LEFT JOIN works AS work ON work.id = character.work_id
+    WHERE character.slug = ?
+  `).get(slug) as {
+    name: string
+    nickname: string | null
+    slug: string
+    workCharacterName: string | null
+    workPublicationStatus: string | null
+    workSlug: string | null
+  } | undefined
 }
 
 /**
@@ -126,26 +200,22 @@ function loadReturnVariants(
   `).all(...assetIds) as PublicReturnVariantRow[]
 }
 
-export function getPublicReturnWall(
-  sqlite: Database.Database,
+/**
+ * 把返图行映射为公开 DTO。
+ * 变体不完整或 URL 组装失败的单条返图受控跳过：
+ * 不回退私有原图，也不让整页 500。
+ */
+function toPublicItems(
+  rows: readonly PublicReturnRow[],
+  variants: readonly PublicReturnVariantRow[],
   mediaBaseUrl: string,
-  page = 1,
-): PublicReturnWallDto {
-  const total = countPublishedReturns(sqlite)
-  const pageCount = Math.ceil(total / RETURN_WALL_PAGE_SIZE)
-  const rows = loadPublishedReturns(
-    sqlite,
-    RETURN_WALL_PAGE_SIZE,
-    (page - 1) * RETURN_WALL_PAGE_SIZE,
-  )
-  const variants = loadReturnVariants(sqlite, rows.map(row => row.assetId))
-  const items = rows.flatMap((row) => {
+): PublicReturnPhotoDto[] {
+  return rows.flatMap((row) => {
     const complete = completeReturnWallVariants(
       row.assetWidth,
       variants.filter(variant => variant.assetId === row.assetId),
     )
     if (!complete) {
-      // 变体不完整的单条返图受控跳过：不回退私有原图，也不让整页 500。
       return []
     }
     let sources
@@ -167,21 +237,39 @@ export function getPublicReturnWall(
     return [{
       id: row.id,
       image: {
-        alt: toSafePublicAlt(row.alt, `${row.workCharacterName}的返图`),
+        alt: toSafePublicAlt(row.alt, `${row.characterName}的返图`),
         height: largest.height,
         sources,
         width: largest.width,
       },
-      work: {
-        characterName: row.workCharacterName,
-        href: `/works/${row.workSlug}`,
-        slug: row.workSlug,
+      character: {
+        href: `/returns/${row.characterSlug}`,
+        name: row.characterName,
+        nickname: row.characterNickname,
+        slug: row.characterSlug,
       },
     }]
   })
+}
+
+export function getPublicReturnWall(
+  sqlite: Database.Database,
+  mediaBaseUrl: string,
+  page = 1,
+  seed = '',
+): PublicReturnWallDto {
+  const total = countPublishedReturns(sqlite)
+  const pageCount = Math.ceil(total / RETURN_WALL_PAGE_SIZE)
+  const rows = loadReturnsByIds(sqlite, shuffledPhotoIds(
+    sqlite,
+    seed,
+    RETURN_WALL_PAGE_SIZE,
+    (page - 1) * RETURN_WALL_PAGE_SIZE,
+  ))
+  const variants = loadReturnVariants(sqlite, rows.map(row => row.assetId))
 
   return publicReturnWallDtoSchema.parse({
-    items,
+    items: toPublicItems(rows, variants, mediaBaseUrl),
     page,
     pageCount,
     pageSize: RETURN_WALL_PAGE_SIZE,
@@ -189,10 +277,73 @@ export function getPublicReturnWall(
   })
 }
 
-export function getPublicReturnWallForRequest(page = 1) {
+/** 设定页：找不到设定或它没有任何已发布返图时返回 null（由路由转 404）。 */
+export function getPublicReturnCharacter(
+  sqlite: Database.Database,
+  mediaBaseUrl: string,
+  slug: string,
+): PublicReturnCharacterDto | null {
+  const character = loadCharacter(sqlite, slug)
+  if (!character) {
+    return null
+  }
+  const rows = loadCharacterReturns(sqlite, slug)
+  const variants = loadReturnVariants(sqlite, rows.map(row => row.assetId))
+  const photos = toPublicItems(rows, variants, mediaBaseUrl)
+  if (photos.length === 0) {
+    return null
+  }
+  // 主图排在最前（SQL 已按 is_primary DESC 排序），因此取第一张。
+  const primary = photos[0]!
+
+  return publicReturnCharacterDtoSchema.parse({
+    character: {
+      href: `/returns/${character.slug}`,
+      name: character.name,
+      nickname: character.nickname,
+      slug: character.slug,
+    },
+    primaryImage: primary.image,
+    photos,
+    // 只有已发布的关联作品才给公开入口。
+    work: character.workSlug !== null
+      && character.workCharacterName !== null
+      && character.workPublicationStatus === 'published'
+      ? {
+          characterName: character.workCharacterName,
+          href: `/works/${character.workSlug}`,
+          slug: character.workSlug,
+        }
+      : null,
+  })
+}
+
+/**
+ * 返图墙随机种子：每 10 分钟换一次。
+ *
+ * 用时间窗而不是每请求一个随机数，是因为分页是普通链接：
+ * 种子必须在访客翻页期间保持稳定，否则第 2 页会重复第 1 页的照片。
+ * 时间窗同时保证下次再来时排列不同，无需 URL 上带种子参数。
+ */
+const WALL_SEED_WINDOW_MS = 600_000
+
+export function returnWallSeed(now = Date.now()) {
+  return String(Math.floor(now / WALL_SEED_WINDOW_MS))
+}
+
+export function getPublicReturnWallForRequest(page = 1, seed = '') {
   return getPublicReturnWall(
     getDatabase().sqlite,
     getRuntimeConfig().mediaBaseUrl,
     page,
+    seed,
+  )
+}
+
+export function getPublicReturnCharacterForRequest(slug: string) {
+  return getPublicReturnCharacter(
+    getDatabase().sqlite,
+    getRuntimeConfig().mediaBaseUrl,
+    slug,
   )
 }

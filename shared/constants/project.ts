@@ -1,5 +1,6 @@
 export const PROJECT_NAME = '有点小狗工作室'
-export const PROJECT_ENGLISH_NAME = 'dite dog'
+/** 英文名统一全大写，页头、页脚与登录页都直接用这个常量。 */
+export const PROJECT_ENGLISH_NAME = 'DITE DOG'
 
 export const ACCESS_SURFACES = [
   'public',

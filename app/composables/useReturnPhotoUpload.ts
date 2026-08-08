@@ -1,7 +1,6 @@
 import {
   createUploadSessionResponseSchema,
   completeUploadSessionResponseSchema,
-  uploadSessionResponseSchema,
 } from '~~/shared/schemas/upload'
 import type {
   ConditionalPutDto,
@@ -16,13 +15,11 @@ import {
 } from '~/utils/upload-declaration'
 
 /**
- * T36 返图单图上传。
+ * T35-F1 返图上传。
  *
- * 一条返图只有一张图片，因此这里是单一状态机，不做批量上传、
- * 批量排序或多图焦点编辑（那些不属于阶段 D）。
- *
- * 归属固定为 `{ type: 'return', id, expectedVersion }`，媒体角色固定
+ * 归属固定为 `{ type: 'return', id: 设定 id, expectedVersion }`，媒体角色固定
  * `return_photo`：复用现有条件 PUT 直传链路，不新建第二套上传协议。
+ * 上传完成即为该设定新增一张返图，因此这里不需要先建空记录。
  * 私有 Object Key 与签名 URL 只在本次动作的内存里短暂存在。
  */
 
@@ -36,16 +33,16 @@ export type ReturnUploadState =
 
 /** 面向景宸的中文阶段说明，不出现内部错误码或 Object Key。 */
 export const RETURN_UPLOAD_STATE_LABELS: Record<ReturnUploadState, string> = {
-  idle: '尚未选择图片',
+  idle: '未选择图片',
   digesting: '正在计算图片摘要',
-  uploading: '正在上传到私有存储',
+  uploading: '正在上传',
   validating: '正在核验图片',
-  ready: '私有原图已就绪',
+  ready: '上传完成',
   failed: '上传失败',
 }
 
 export interface ReturnUploadContext {
-  returnPhotoId: string
+  characterId: string
   version: number
 }
 
@@ -60,18 +57,13 @@ export function useReturnPhotoUpload(options: {
   const failureText = ref<string | null>(null)
   const session = ref<UploadSessionDto | null>(null)
   const fileName = ref<string | null>(null)
-  const previewUrl = ref<string | null>(null)
 
   function reset() {
-    if (previewUrl.value) {
-      URL.revokeObjectURL(previewUrl.value)
-    }
     state.value = 'idle'
     progress.value = null
     failureText.value = null
     session.value = null
     fileName.value = null
-    previewUrl.value = null
   }
 
   function fail(message: string) {
@@ -101,7 +93,7 @@ export function useReturnPhotoUpload(options: {
       )
       session.value = completed.data.session
       if (completed.data.asset.status !== 'READY') {
-        fail('图片已上传，但服务端处理未完成，请重试上传')
+        fail('图片已上传，但服务端处理未完成，请重试')
         return
       }
       state.value = 'ready'
@@ -116,11 +108,7 @@ export function useReturnPhotoUpload(options: {
         return
       }
       if (error instanceof AdminApiError && error.status === 409) {
-        if (error.reason === 'RETURN_PHOTO_PUBLISHED_READONLY') {
-          fail('这条返图已发布，替换图片前请先下架')
-          return
-        }
-        fail('返图数据已在其他地方变化，请刷新后重试')
+        fail('设定已在别处修改，请刷新后重试')
         options.onConflict()
         return
       }
@@ -159,7 +147,6 @@ export function useReturnPhotoUpload(options: {
   async function start(file: File, context: ReturnUploadContext) {
     reset()
     fileName.value = file.name
-    previewUrl.value = URL.createObjectURL(file)
     state.value = 'digesting'
 
     const declaration = await buildUploadDeclaration(file)
@@ -175,7 +162,7 @@ export function useReturnPhotoUpload(options: {
         body: {
           owner: {
             type: 'return',
-            id: context.returnPhotoId,
+            id: context.characterId,
             expectedVersion: context.version,
           },
           mediaRole: 'return_photo',
@@ -189,11 +176,7 @@ export function useReturnPhotoUpload(options: {
         return
       }
       if (error instanceof AdminApiError && error.status === 409) {
-        if (error.reason === 'RETURN_PHOTO_PUBLISHED_READONLY') {
-          fail('这条返图已发布，替换图片前请先下架')
-          return
-        }
-        fail('返图数据已在其他地方变化，请刷新后重试')
+        fail('设定已在别处修改，请刷新后重试')
         options.onConflict()
         return
       }
@@ -205,30 +188,10 @@ export function useReturnPhotoUpload(options: {
     await putThenComplete(created.data.upload, file)
   }
 
-  /** 刷新后恢复：按会话 ID 读回服务端真实状态。 */
-  async function refresh() {
-    const current = session.value
-    if (!current) {
-      return
-    }
-    try {
-      const latest = await adminApi(
-        `/api/admin/v1/media/upload-sessions/${current.uploadSessionId}`,
-        { schema: uploadSessionResponseSchema },
-      )
-      session.value = latest.data
-    }
-    catch {
-      // 恢复失败不改变当前显示状态，避免把网络抖动写成上传失败。
-    }
-  }
-
   return {
     failureText,
     fileName,
-    previewUrl,
     progress,
-    refresh,
     reset,
     session,
     start,

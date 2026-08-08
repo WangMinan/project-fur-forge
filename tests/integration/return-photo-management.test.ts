@@ -17,15 +17,20 @@ import {
   openDatabase,
 } from '../../server/utils/database'
 import {
-  attachReturnPhotoAsset,
+  addReturnPhotoFromUpload,
   checkReturnPhotoPublication,
-  createReturnPhoto,
+  createReturnCharacter,
+  deleteEmptyReturnCharacter,
   deleteReturnPhotoDraft,
-  getReturnPhoto,
-  listAdminReturnPhotos,
-  returnPhotoSummaryForWork,
+  getReturnCharacter,
+  listAdminReturnCharacters,
+  returnPhotoSummaryForCharacter,
+  setReturnCharacterPrimaryPhoto,
+  updateReturnCharacter,
   updateReturnPhoto,
 } from '../../server/utils/service/return-photo'
+import { findReturnCharacter } from '../../server/utils/repository/return-photo-repository'
+import { deleteReturnCharacterCascade } from '../../server/utils/runner/return-photo-publication'
 import { deleteManagedWork } from '../../server/utils/service/work-management'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 
@@ -91,11 +96,16 @@ const emptyAuthorization = {
   source: null,
 }
 
-function draftFor(workId: string, alt = '虾片在展会现场的返图') {
-  return createReturnPhoto(sqlite, {
-    alt,
+function characterFor(
+  name = '天暮',
+  slug = 'tianmu',
+  workId: string | null = null,
+) {
+  return createReturnCharacter(sqlite, {
     authorization: emptyAuthorization,
-    sortOrder: 0,
+    name,
+    nickname: null,
+    slug,
     workId,
   }, NOW)
 }
@@ -113,124 +123,151 @@ afterEach(() => {
   rmSync(directory, { force: true, recursive: true })
 })
 
-describe('T35 return photo domain model', () => {
-  it('creates a draft without an image and keeps one record per photo', () => {
-    const workId = insertWork('11111111-1111-4111-8111-111111111111', 'tuan-zi', 'published')
-    const draft = draftFor(workId)
+describe('T35-F1 return character domain model', () => {
+  it('holds many photos per character and auto-picks the first as cover', () => {
+    const character = characterFor()
+    expect(character.photos).toEqual([])
+    expect(character.work).toBeNull()
 
-    expect(draft.publicationStatus).toBe('draft')
-    expect(draft.asset).toBeNull()
-    expect(draft.work.characterName).toBe('角色-tuan-zi')
-    expect(draft.publicVariantCount).toBe(0)
-
-    const assetId = insertReturnAsset('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb')
-    const attached = attachReturnPhotoAsset(
+    const first = addReturnPhotoFromUpload(
       sqlite,
-      draft.id,
-      draft.version,
-      assetId,
+      character.id,
+      insertReturnAsset('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),
       NOW,
     )
-    expect(attached.asset).toEqual({
-      assetId,
+    expect(first.primary).toBe(true)
+    expect(first.asset).toEqual({
+      assetId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
       height: 2083,
       mimeType: 'image/jpeg',
       status: 'READY',
       width: 1139,
     })
 
-    // 同一张资产不能被第二条返图占用：一图一记录，不会长成相册。
-    const second = draftFor(workId, '另一张返图')
-    expect(() => attachReturnPhotoAsset(
+    // 第二张横版返图与第一张竖版共存：一个设定可以有多张，横竖混放。
+    const second = addReturnPhotoFromUpload(
       sqlite,
-      second.id,
-      second.version,
-      assetId,
+      character.id,
+      insertReturnAsset('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', {
+        height: 900,
+        width: 1600,
+      }),
       NOW,
-    )).toThrow(/already used by another return photo/)
+    )
+    expect(second.primary).toBe(false)
+
+    const loaded = getReturnCharacter(sqlite, character.id)
+    expect(loaded.photos).toHaveLength(2)
+    // 主图排在最前，公开设定页据此取圆形头像。
+    expect(loaded.photos[0]!.id).toBe(first.id)
   })
 
-  it('rejects illegal work and asset relations', () => {
-    const workId = insertWork('11111111-1111-4111-8111-111111111111', 'tuan-zi', 'published')
+  it('publishes return photos without requiring any work', () => {
+    // 完全不关联作品：老作品没上过架、甚至没建作品记录，也可以有返图。
+    const character = characterFor()
+    const photo = addReturnPhotoFromUpload(
+      sqlite,
+      character.id,
+      insertReturnAsset('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),
+      NOW,
+    )
 
-    expect(() => createReturnPhoto(sqlite, {
-      alt: '关联不存在的作品',
-      authorization: emptyAuthorization,
-      sortOrder: 0,
-      workId: '99999999-9999-4999-8999-999999999999',
-    }, NOW)).toThrow(/Linked work was not found/)
+    const check = checkReturnPhotoPublication(sqlite, photo.id)
+    expect(check.canPublish).toBe(true)
+    expect(check.blockers).toEqual([])
+  })
 
-    const draft = draftFor(workId)
+  it('publishes return photos linked to an unpublished work', () => {
+    const workId = insertWork(
+      '11111111-1111-4111-8111-111111111111',
+      'draft-work',
+      'draft',
+    )
+    const character = characterFor('牛肉包子', 'niurou', workId)
+    const photo = addReturnPhotoFromUpload(
+      sqlite,
+      character.id,
+      insertReturnAsset('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),
+      NOW,
+    )
 
-    // 非 return_photo 角色不能当返图图片。
+    // 关联作品未发布不再阻断返图发布。
+    expect(checkReturnPhotoPublication(sqlite, photo.id).canPublish).toBe(true)
+
+    // 数据库层也不再阻止：published 返图不要求 published 作品。
+    expect(() => sqlite.prepare(`
+      UPDATE return_photos SET publication_status = 'published', published_at = ?
+      WHERE id = ?
+    `).run(NOW, photo.id)).not.toThrow()
+  })
+
+  it('blocks publication until an image and alt exist', () => {
+    const character = characterFor()
+    const photo = addReturnPhotoFromUpload(
+      sqlite,
+      character.id,
+      insertReturnAsset('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),
+      NOW,
+    )
+    // 缺失公开变体不是阻断项：变体正是发布 operation 生成的。
+    const ready = checkReturnPhotoPublication(sqlite, photo.id)
+    expect(ready.missingVariantCount).toBe(6)
+    expect(ready.requiredVariantCount).toBe(6)
+    expect(ready.canPublish).toBe(true)
+
+    // 无图草稿（直接写库模拟上传未完成）必须被阻断。
     sqlite.prepare(`
-      INSERT INTO assets (
-        id, role, status, private_object_key, sha256, byte_size,
-        mime_type, width, height, created_at, updated_at
+      INSERT INTO return_photos (
+        id, character_id, asset_id, alt, is_primary, publication_status,
+        version, created_at, updated_at
       ) VALUES (
-        'cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'studio_photo', 'READY',
-        'test/return-fixture/original/studio/source.jpg',
-        'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
-        2048, 'image/jpeg', 1600, 900, ?, ?
+        '33333333-3333-4333-8333-333333333333', ?, NULL, '还没有图', 0,
+        'draft', 1, ?, ?
       )
-    `).run(NOW, NOW)
-    expect(() => attachReturnPhotoAsset(
+    `).run(character.id, NOW, NOW)
+    const noImage = checkReturnPhotoPublication(
       sqlite,
-      draft.id,
-      draft.version,
-      'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
-      NOW,
-    )).toThrow(/media role does not match/i)
-
-    // PENDING 资产不能绑定。
-    const pending = insertReturnAsset('dddddddd-dddd-4ddd-8ddd-dddddddddddd', {
-      status: 'PENDING',
-    })
-    expect(() => attachReturnPhotoAsset(
-      sqlite,
-      draft.id,
-      draft.version,
-      pending,
-      NOW,
-    )).toThrow(/not ready/i)
+      '33333333-3333-4333-8333-333333333333',
+    )
+    expect(noImage.canPublish).toBe(false)
+    expect(noImage.blockers).toEqual(['RETURN_PHOTO_ASSET_REQUIRED'])
   })
 
   it('rejects stale versions instead of silently overwriting', () => {
-    const workId = insertWork('11111111-1111-4111-8111-111111111111', 'tuan-zi', 'published')
-    const draft = draftFor(workId)
-
-    const updated = updateReturnPhoto(sqlite, draft.id, draft.version, {
-      alt: '更新后的说明',
+    const character = characterFor()
+    const updated = updateReturnCharacter(sqlite, character.id, character.version, {
       authorization: emptyAuthorization,
-      sortOrder: 3,
-      workId,
+      name: '天暮改名',
+      nickname: '暮暮',
+      slug: 'tianmu',
+      workId: null,
     }, NOW)
-    expect(updated.version).toBe(draft.version + 1)
-    expect(updated.sortOrder).toBe(3)
+    expect(updated.version).toBe(character.version + 1)
+    expect(updated.nickname).toBe('暮暮')
 
-    expect(() => updateReturnPhoto(sqlite, draft.id, draft.version, {
-      alt: '用旧版本覆盖',
+    expect(() => updateReturnCharacter(sqlite, character.id, character.version, {
       authorization: emptyAuthorization,
-      sortOrder: 9,
-      workId,
+      name: '用旧版本覆盖',
+      nickname: null,
+      slug: 'tianmu',
+      workId: null,
     }, NOW)).toThrow(/version is stale/i)
-    expect(getReturnPhoto(sqlite, draft.id).alt).toBe('更新后的说明')
+    expect(getReturnCharacter(sqlite, character.id).name).toBe('天暮改名')
   })
 
   it('keeps optional authorization records private to the admin DTO', () => {
-    const workId = insertWork('11111111-1111-4111-8111-111111111111', 'tuan-zi', 'published')
-    const draft = draftFor(workId)
-    const saved = updateReturnPhoto(sqlite, draft.id, draft.version, {
-      alt: '带授权记录的返图',
+    const character = characterFor()
+    const saved = updateReturnCharacter(sqlite, character.id, character.version, {
       authorization: {
         confirmedAt: new Date(NOW).toISOString(),
         note: '在 QQ 群里确认可以公开',
         source: 'qq',
       },
-      sortOrder: 0,
-      workId,
+      name: character.name,
+      nickname: null,
+      slug: character.slug,
+      workId: null,
     }, NOW)
-
     expect(saved.authorization).toEqual({
       confirmedAt: new Date(NOW).toISOString(),
       note: '在 QQ 群里确认可以公开',
@@ -238,75 +275,82 @@ describe('T35 return photo domain model', () => {
     })
 
     // 授权记录缺失不阻止发布：它不出现在阻断项里。
-    const assetId = insertReturnAsset('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb')
-    attachReturnPhotoAsset(sqlite, saved.id, saved.version, assetId, NOW)
-    const cleared = getReturnPhoto(sqlite, saved.id)
-    const withoutAuthorization = updateReturnPhoto(
+    const photo = addReturnPhotoFromUpload(
       sqlite,
-      cleared.id,
-      cleared.version,
-      {
-        alt: cleared.alt,
-        authorization: emptyAuthorization,
-        sortOrder: cleared.sortOrder,
-        workId,
-      },
+      character.id,
+      insertReturnAsset('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),
       NOW,
     )
-    expect(withoutAuthorization.authorization).toEqual(emptyAuthorization)
-    expect(checkReturnPhotoPublication(sqlite, cleared.id).blockers)
-      .not.toContain('RETURN_PHOTO_ALT_REQUIRED')
+    const cleared = updateReturnCharacter(sqlite, saved.id, saved.version, {
+      authorization: emptyAuthorization,
+      name: saved.name,
+      nickname: null,
+      slug: saved.slug,
+      workId: null,
+    }, NOW)
+    expect(cleared.authorization).toEqual(emptyAuthorization)
+    expect(checkReturnPhotoPublication(sqlite, photo.id).canPublish).toBe(true)
   })
 
-  it('blocks publication until the work is published and an image exists', () => {
-    const draftWorkId = insertWork('11111111-1111-4111-8111-111111111111', 'draft-work', 'draft')
-    const draft = draftFor(draftWorkId)
-
-    const noImage = checkReturnPhotoPublication(sqlite, draft.id)
-    expect(noImage.canPublish).toBe(false)
-    expect(noImage.blockers).toContain('RETURN_PHOTO_WORK_NOT_PUBLISHED')
-    expect(noImage.blockers).toContain('RETURN_PHOTO_ASSET_REQUIRED')
-
-    const assetId = insertReturnAsset('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb')
-    attachReturnPhotoAsset(sqlite, draft.id, draft.version, assetId, NOW)
-    const stillBlocked = checkReturnPhotoPublication(sqlite, draft.id)
-    expect(stillBlocked.canPublish).toBe(false)
-    expect(stillBlocked.blockers).toEqual(['RETURN_PHOTO_WORK_NOT_PUBLISHED'])
-    // 缺失公开变体不是阻断项：变体正是发布 operation 生成的。
-    expect(stillBlocked.missingVariantCount).toBe(6)
-    expect(stillBlocked.requiredVariantCount).toBe(6)
-
-    sqlite.prepare(`
-      UPDATE works SET publication_status = 'published', published_at = ?
-      WHERE id = ?
-    `).run(NOW, draftWorkId)
-    const ready = checkReturnPhotoPublication(sqlite, draft.id)
-    expect(ready.canPublish).toBe(true)
-    expect(ready.blockers).toEqual([])
+  it('rejects duplicate slugs and unknown linked works', () => {
+    characterFor()
+    expect(() => characterFor('另一个设定', 'tianmu')).toThrow(/slug is already/i)
+    expect(() => characterFor(
+      '关联不存在的作品',
+      'unknown-work',
+      '99999999-9999-4999-8999-999999999999',
+    )).toThrow(/Linked work was not found/)
   })
 
-  it('blocks sources narrower than the smallest public width', () => {
-    const workId = insertWork('11111111-1111-4111-8111-111111111111', 'tuan-zi', 'published')
-    const draft = draftFor(workId)
-    const narrow = insertReturnAsset('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', {
-      height: 600,
-      width: 320,
-    })
-    attachReturnPhotoAsset(sqlite, draft.id, draft.version, narrow, NOW)
+  it('moves the cover between photos and backfills it on delete', () => {
+    const character = characterFor()
+    const first = addReturnPhotoFromUpload(
+      sqlite,
+      character.id,
+      insertReturnAsset('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),
+      NOW,
+    )
+    const second = addReturnPhotoFromUpload(
+      sqlite,
+      character.id,
+      insertReturnAsset('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'),
+      NOW,
+    )
 
-    const check = checkReturnPhotoPublication(sqlite, draft.id)
+    const moved = setReturnCharacterPrimaryPhoto(sqlite, second.id, second.version, NOW)
+    expect(moved.photos.find(photo => photo.id === second.id)!.primary).toBe(true)
+    expect(moved.photos.find(photo => photo.id === first.id)!.primary).toBe(false)
+
+    // 删掉主图后，剩下那张自动补位，设定页不会失去圆形头像。
+    const current = moved.photos.find(photo => photo.id === second.id)!
+    deleteReturnPhotoDraft(sqlite, current.id, current.version, NOW)
+    const after = getReturnCharacter(sqlite, character.id)
+    expect(after.photos).toHaveLength(1)
+    expect(after.photos[0]!.primary).toBe(true)
+  })
+
+  it('rejects sources narrower than the smallest public width', () => {
+    const character = characterFor()
+    const photo = addReturnPhotoFromUpload(
+      sqlite,
+      character.id,
+      insertReturnAsset('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', {
+        height: 600,
+        width: 320,
+      }),
+      NOW,
+    )
+    const check = checkReturnPhotoPublication(sqlite, photo.id)
     expect(check.canPublish).toBe(false)
     expect(check.blockers).toContain('RETURN_PHOTO_SOURCE_TOO_SMALL')
     expect(check.requiredVariantCount).toBe(0)
   })
 
   it('derives the public width ladder from the source width', () => {
-    const workId = insertWork('11111111-1111-4111-8111-111111111111', 'tuan-zi', 'published')
-    const narrow = draftFor(workId, '只够 480 宽的返图')
-    attachReturnPhotoAsset(
+    const character = characterFor()
+    const narrow = addReturnPhotoFromUpload(
       sqlite,
-      narrow.id,
-      narrow.version,
+      character.id,
       insertReturnAsset('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', {
         height: 900,
         width: 600,
@@ -316,11 +360,9 @@ describe('T35 return photo domain model', () => {
     expect(checkReturnPhotoPublication(sqlite, narrow.id).requiredVariantCount)
       .toBe(2)
 
-    const wide = draftFor(workId, '足够宽的返图')
-    attachReturnPhotoAsset(
+    const wide = addReturnPhotoFromUpload(
       sqlite,
-      wide.id,
-      wide.version,
+      character.id,
       insertReturnAsset('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', {
         height: 2400,
         width: 1600,
@@ -331,109 +373,184 @@ describe('T35 return photo domain model', () => {
       .toBe(6)
   })
 
-  it('paginates the admin list and filters by work and status', () => {
-    const first = insertWork('11111111-1111-4111-8111-111111111111', 'work-one', 'published')
-    const second = insertWork('22222222-2222-4222-8222-222222222222', 'work-two', 'published')
+  it('paginates the admin character list and finds by name', () => {
     for (let index = 0; index < 3; index += 1) {
-      createReturnPhoto(sqlite, {
-        alt: `第一件作品的返图 ${index}`,
-        authorization: emptyAuthorization,
-        sortOrder: index,
-        workId: first,
-      }, NOW)
+      characterFor(`设定 ${index}`, `character-${index}`)
     }
-    createReturnPhoto(sqlite, {
-      alt: '第二件作品的返图',
-      authorization: emptyAuthorization,
-      sortOrder: 0,
-      workId: second,
-    }, NOW)
+    characterFor('牛肉包子', 'niurou')
 
-    const all = listAdminReturnPhotos(sqlite)
+    const all = listAdminReturnCharacters(sqlite)
     expect(all.resultCount).toBe(4)
     expect(all.page).toBe(1)
     expect(all.pageCount).toBe(1)
 
-    const byWork = listAdminReturnPhotos(sqlite, { workId: second })
-    expect(byWork.resultCount).toBe(1)
-    expect(byWork.items[0]!.work.slug).toBe('work-two')
+    const paged = listAdminReturnCharacters(sqlite, { page: 2, pageSize: 3 })
+    expect(paged.items).toHaveLength(1)
+    expect(paged.pageCount).toBe(2)
 
-    const drafts = listAdminReturnPhotos(sqlite, {
-      publicationStatus: 'draft',
-    })
-    expect(drafts.resultCount).toBe(4)
-    expect(listAdminReturnPhotos(sqlite, {
-      publicationStatus: 'published',
-    }).resultCount).toBe(0)
+    const found = listAdminReturnCharacters(sqlite, { query: '牛肉' })
+    expect(found.resultCount).toBe(1)
+    expect(found.items[0]!.slug).toBe('niurou')
   })
 
-  it('blocks permanent work deletion while return photos are linked', async () => {
-    const workId = insertWork('11111111-1111-4111-8111-111111111111', 'tuan-zi', 'draft')
-    const draft = draftFor(workId)
-    const storage = new FakeMediaStorage()
-
-    await expect(deleteManagedWork(
+  it('reports photo counts and refuses to delete a non-empty character', () => {
+    const character = characterFor()
+    const photo = addReturnPhotoFromUpload(
       sqlite,
-      storage,
-      workId,
-      1,
-      USER_ID,
+      character.id,
+      insertReturnAsset('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),
       NOW,
-    )).rejects.toThrow(/linked return photos/i)
-
-    expect(returnPhotoSummaryForWork(sqlite, workId))
+    )
+    expect(returnPhotoSummaryForCharacter(sqlite, character.id))
       .toEqual({ publishedCount: 0, totalCount: 1 })
 
-    deleteReturnPhotoDraft(sqlite, draft.id, draft.version)
-    expect(returnPhotoSummaryForWork(sqlite, workId))
+    // 底层的「只删空设定」入口仍然保护数据：连图删除由 runner 负责，
+    // 它会先删返图再调用这里。
+    const current = getReturnCharacter(sqlite, character.id)
+    expect(() => deleteEmptyReturnCharacter(
+      sqlite,
+      character.id,
+      current.version,
+    )).toThrow(/Remove the return photos/i)
+
+    deleteReturnPhotoDraft(sqlite, photo.id, photo.version, NOW)
+    expect(returnPhotoSummaryForCharacter(sqlite, character.id))
       .toEqual({ publishedCount: 0, totalCount: 0 })
+    expect(deleteEmptyReturnCharacter(
+      sqlite,
+      character.id,
+      getReturnCharacter(sqlite, character.id).version,
+    )).toEqual({ id: character.id })
+  })
+
+  it('deletes a character together with all of its photos', async () => {
+    const character = characterFor()
+    addReturnPhotoFromUpload(
+      sqlite,
+      character.id,
+      insertReturnAsset('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),
+      NOW,
+    )
+    const second = addReturnPhotoFromUpload(
+      sqlite,
+      character.id,
+      insertReturnAsset('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'),
+      NOW,
+    )
+    // 一张已发布：级联删除必须先把它下架，不能留下公开可读的图片。
+    sqlite.prepare(`
+      UPDATE return_photos SET publication_status = 'published', published_at = ?
+      WHERE id = ?
+    `).run(NOW, second.id)
+
+    const latest = getReturnCharacter(sqlite, character.id)
+    await expect(deleteReturnCharacterCascade(
+      sqlite,
+      new FakeMediaStorage(),
+      character.id,
+      latest.version,
+      USER_ID,
+      NOW,
+    )).resolves.toEqual({ id: character.id })
+
+    expect(findReturnCharacter(sqlite, character.id)).toBeUndefined()
+    expect(sqlite.prepare('SELECT COUNT(*) AS total FROM return_photos')
+      .get()).toEqual({ total: 0 })
+    // 私有永久原图保留：删除设定不碰 assets。
+    expect(sqlite.prepare('SELECT COUNT(*) AS total FROM assets')
+      .get()).toEqual({ total: 2 })
+  })
+
+  it('keeps return photos when the linked work is deleted', async () => {
+    const workId = insertWork(
+      '11111111-1111-4111-8111-111111111111',
+      'tuan-zi',
+      'draft',
+    )
+    const character = characterFor('天暮', 'tianmu', workId)
+    const photo = addReturnPhotoFromUpload(
+      sqlite,
+      character.id,
+      insertReturnAsset('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),
+      NOW,
+    )
+
+    // 返图不再阻止作品永久删除：work_id 是 set null。
     await expect(deleteManagedWork(
       sqlite,
-      storage,
+      new FakeMediaStorage(),
       workId,
       1,
       USER_ID,
       NOW,
     )).resolves.toMatchObject({ id: workId })
+
+    const after = getReturnCharacter(sqlite, character.id)
+    expect(after.work).toBeNull()
+    expect(after.photos.map(item => item.id)).toEqual([photo.id])
   })
 
-  it('enforces the one-asset-per-return database constraints', () => {
-    const workId = insertWork('11111111-1111-4111-8111-111111111111', 'tuan-zi', 'published')
-    const draft = draftFor(workId)
+  it('enforces the database constraints for photos and covers', () => {
+    const character = characterFor()
     const assetId = insertReturnAsset('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb')
-    attachReturnPhotoAsset(sqlite, draft.id, draft.version, assetId, NOW)
+    const photo = addReturnPhotoFromUpload(sqlite, character.id, assetId, NOW)
 
-    // 直接写库也不能把同一资产分给两条返图。
+    // 同一张私有原图不能被两条返图占用。
     expect(() => sqlite.prepare(`
       INSERT INTO return_photos (
-        id, work_id, asset_id, alt, sort_order, publication_status,
+        id, character_id, asset_id, alt, is_primary, publication_status,
         version, created_at, updated_at
       ) VALUES (
         '33333333-3333-4333-8333-333333333333', ?, ?, '重复占用', 0,
         'draft', 1, ?, ?
       )
-    `).run(workId, assetId, NOW, NOW)).toThrow(/UNIQUE constraint failed/)
+    `).run(character.id, assetId, NOW, NOW)).toThrow(/UNIQUE constraint failed/)
 
-    // 已发布返图不能直接改关联作品或图片。
+    // 一个设定最多一张主图。
+    const other = insertReturnAsset('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee')
+    expect(() => sqlite.prepare(`
+      INSERT INTO return_photos (
+        id, character_id, asset_id, alt, is_primary, publication_status,
+        version, created_at, updated_at
+      ) VALUES (
+        '44444444-4444-4444-8444-444444444444', ?, ?, '第二张主图', 1,
+        'draft', 1, ?, ?
+      )
+    `).run(character.id, other, NOW, NOW)).toThrow(/UNIQUE constraint failed/)
+
+    // 没有图片的记录不能当主图。
+    expect(() => sqlite.prepare(`
+      INSERT INTO return_photos (
+        id, character_id, asset_id, alt, is_primary, publication_status,
+        version, created_at, updated_at
+      ) VALUES (
+        '55555555-5555-4555-8555-555555555555', ?, NULL, '无图主图', 1,
+        'draft', 1, ?, ?
+      )
+    `).run(character.id, NOW, NOW)).toThrow(/primary_asset/)
+
+    // 已发布返图不能直接改归属设定或图片。
     sqlite.prepare(`
       UPDATE return_photos SET publication_status = 'published', published_at = ?
       WHERE id = ?
-    `).run(NOW, draft.id)
-    const other = insertWork('22222222-2222-4222-8222-222222222222', 'work-two', 'published')
+    `).run(NOW, photo.id)
+    const second = characterFor('牛肉包子', 'niurou')
     expect(() => sqlite.prepare(`
-      UPDATE return_photos SET work_id = ? WHERE id = ?
-    `).run(other, draft.id)).toThrow(/require unpublishing first/)
+      UPDATE return_photos SET character_id = ? WHERE id = ?
+    `).run(second.id, photo.id)).toThrow(/require unpublishing first/)
+  })
 
-    // 发布状态的返图不能落在未发布作品上。
-    const unpublished = insertWork('44444444-4444-4444-8444-444444444444', 'work-three', 'draft')
-    expect(() => sqlite.prepare(`
-      INSERT INTO return_photos (
-        id, work_id, asset_id, alt, sort_order, publication_status,
-        version, published_at, created_at, updated_at
-      ) VALUES (
-        '55555555-5555-4555-8555-555555555555', ?, NULL, '未发布作品', 0,
-        'published', 1, ?, ?, ?
-      )
-    `).run(unpublished, NOW, NOW, NOW)).toThrow(/published_asset|published work/)
+  it('updates a single photo alt with version checks', () => {
+    const character = characterFor()
+    const photo = addReturnPhotoFromUpload(
+      sqlite,
+      character.id,
+      insertReturnAsset('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),
+      NOW,
+    )
+    const updated = updateReturnPhoto(sqlite, photo.id, photo.version, '展会现场的返图', NOW)
+    expect(updated.alt).toBe('展会现场的返图')
+    expect(() => updateReturnPhoto(sqlite, photo.id, photo.version, '旧版本', NOW))
+      .toThrow(/version is stale/i)
   })
 })

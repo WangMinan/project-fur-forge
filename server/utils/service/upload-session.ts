@@ -157,31 +157,21 @@ export function assertUploadOwner(
   owner: UploadOwner,
   mediaRole: MediaRole,
 ) {
-  // T36 返图：归属是返图记录本身及其版本，媒体角色固定 return_photo。
+  // T35-F1 返图：归属是设定及其版本，媒体角色固定 return_photo。
+  // 一个设定可以有多张返图，因此上传会话不再绑定单张照片记录；
+  // 上传完成后由调用方把资产绑定到具体的返图照片。
   if (owner.type === 'return') {
     if (mediaRole !== 'return_photo') {
       throw new ServiceError(400, 'VALIDATION_ERROR', 'Media role does not match owner.')
     }
-    const photo = sqlite.prepare(`
-      SELECT version, publication_status AS publicationStatus
-      FROM return_photos WHERE id = ?
-    `).get(owner.id) as {
-      publicationStatus: string
-      version: number
-    } | undefined
-    if (!photo) {
+    const character = sqlite.prepare(`
+      SELECT version FROM return_characters WHERE id = ?
+    `).pluck().get(owner.id) as number | undefined
+    if (character === undefined) {
       throw new ServiceError(404, 'NOT_FOUND', 'Owner was not found.')
     }
-    if (photo.version !== owner.expectedVersion) {
+    if (character !== owner.expectedVersion) {
       throw new ServiceError(409, 'CONFLICT', 'Owner version is stale.')
-    }
-    if (photo.publicationStatus === 'published') {
-      throw new ServiceError(
-        409,
-        'CONFLICT',
-        'Unpublish the return photo before replacing its image.',
-        'RETURN_PHOTO_PUBLISHED_READONLY',
-      )
     }
     return
   }

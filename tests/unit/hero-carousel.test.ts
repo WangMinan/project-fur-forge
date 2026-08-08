@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   clampSlideIndex,
-  HERO_MIN_AUTOPLAY_INTERVAL_MS,
+  HERO_AUTOPLAY_INTERVAL_MS,
   nextSlideIndex,
   prevSlideIndex,
   resolveAutoplayIntervalMs,
@@ -30,16 +30,14 @@ describe('hero carousel pure logic', () => {
     expect(clampSlideIndex(1, 3)).toBe(1)
   })
 
-  it('disables autoplay when autoRotate is off or reduced-motion is requested', () => {
-    expect(resolveAutoplayIntervalMs(false, 8_000, false)).toBeNull()
-    expect(resolveAutoplayIntervalMs(true, 8_000, true)).toBeNull()
-    expect(resolveAutoplayIntervalMs(true, 8_000, false)).toBe(8_000)
+  // 自动轮播不再可配置：固定 10 秒一张，只有 reduced-motion 能停掉它。
+  it('always autoplays at the fixed interval', () => {
+    expect(resolveAutoplayIntervalMs(false)).toBe(HERO_AUTOPLAY_INTERVAL_MS)
+    expect(HERO_AUTOPLAY_INTERVAL_MS).toBe(10_000)
   })
 
-  it('never returns an interval below the 6s floor', () => {
-    expect(resolveAutoplayIntervalMs(true, 3_000, false)).toBe(
-      HERO_MIN_AUTOPLAY_INTERVAL_MS,
-    )
+  it('stops autoplay when reduced motion is requested', () => {
+    expect(resolveAutoplayIntervalMs(true)).toBeNull()
   })
 
   it('requires a clear swipe before changing slides', () => {

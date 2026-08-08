@@ -3,19 +3,19 @@ import { publicReturnWallResponseSchema } from '~~/shared/schemas/return-photo'
 import { PROJECT_NAME } from '~~/shared/constants/project'
 
 /**
- * T36 返图墙：一级导航独立页面，不是作品详情内的 Tab。
+ * T36/T35-F1 返图墙：一级导航独立页面。
  *
- * 页面结构固定为紧凑页头 → 原比例无水印瀑布流 → 底部编号分页。
- * 不设置大 Hero、搜索、筛选、统计、热门区或业务状态面板；
- * 不建设返图详情页、返图者主页、点赞、评论或公开投稿。
+ * 每一项是一张返图照片，同一个设定的多张都会出现；顺序每次随机打乱。
+ * 点击进入该设定的返图页，不跳作品详情。
  */
-const DESCRIPTION = '收到的真实穿着返图，来自作品交付之后的日常和展会现场。'
+// 只给搜索引擎用：页面上不再重复一句自我介绍。
+const SEO_DESCRIPTION = '收到的真实穿着返图。'
 
 useSeoMeta({
   title: `返图墙 · ${PROJECT_NAME}`,
-  description: DESCRIPTION,
+  description: SEO_DESCRIPTION,
   ogTitle: `返图墙 · ${PROJECT_NAME}`,
-  ogDescription: DESCRIPTION,
+  ogDescription: SEO_DESCRIPTION,
 })
 
 const route = useRoute()
@@ -53,7 +53,7 @@ function hrefFor(target: number) {
 
 <template>
   <div class="public-page">
-    <PublicPageIntro title="返图墙" :description="DESCRIPTION" />
+    <PublicPageIntro title="返图墙" />
 
     <div class="public-container returns-page">
       <!-- 分页请求失败：保留页面骨架与导航，提供普通链接重试。 -->
@@ -70,7 +70,7 @@ function hrefFor(target: number) {
       <PublicEmptyState
         v-else-if="items.length === 0 && page > 1"
         title="这一页没有返图"
-        description="返图数量可能刚刚变化，可以回到第一页继续浏览。"
+        description="可以回到第一页继续浏览。"
       >
         <NuxtLink class="returns-page__retry" to="/returns">
           回到第一页
@@ -80,7 +80,6 @@ function hrefFor(target: number) {
       <PublicEmptyState
         v-else-if="items.length === 0"
         title="还没有公开的返图"
-        description="返图会在收到并确认之后陆续展示。"
       />
 
       <template v-else>
@@ -102,7 +101,7 @@ function hrefFor(target: number) {
   max-width: var(--public-content-wide);
   margin: 0 auto;
   padding-right: var(--public-page-padding);
-  padding-bottom: var(--space-10);
+  padding-bottom: var(--space-7);
   padding-left: var(--public-page-padding);
 }
 

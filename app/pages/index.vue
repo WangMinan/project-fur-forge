@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { PROJECT_NAME } from '~~/shared/constants/project'
+import {
+  PROJECT_ENGLISH_NAME,
+  PROJECT_NAME,
+} from '~~/shared/constants/project'
 import { publicHomeAggregateResponseSchema } from '~~/shared/schemas/public-content'
 
 useSeoMeta({
   title: `${PROJECT_NAME} · 兽装作品主页`,
   description:
-    '有点小狗工作室（dite dog）的兽装作品主页：浏览全装与半装作品，了解自设委托人工估价与角色领养的真实营业状态。',
+    `${PROJECT_NAME}（${PROJECT_ENGLISH_NAME}）的兽装作品主页：浏览全装与半装作品，了解自设委托人工估价与角色领养的真实营业状态。`,
 })
 
 /**
@@ -30,7 +33,7 @@ if (homeError.value) {
 </script>
 
 <template>
-  <div v-if="home" class="public-home" data-testid="public-home">
+  <div v-if="home" class="public-home home-page" data-testid="public-home">
     <HomeHeroCarousel :home="home.hero" />
 
     <FeaturedWorks
@@ -46,3 +49,10 @@ if (homeError.value) {
     />
   </div>
 </template>
+
+<style scoped>
+/* 首页收尾留白由自己提供；内页页脚间距更紧凑。 */
+.home-page {
+  padding-bottom: var(--space-9);
+}
+</style>

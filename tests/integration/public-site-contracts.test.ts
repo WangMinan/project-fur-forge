@@ -577,10 +577,12 @@ describe('T19/T20 public repository contracts', () => {
     })
 
     const repository = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
+    // T35-F5：公开列表按发布时间倒序，越新的越靠前。
+    // 三件作品按 commission → adoption → showcase 顺序发布，因此这里反序。
     expect(repository.listWorks().items.map(item => item.work.purpose)).toEqual([
-      'commission',
-      'adoption',
       'showcase',
+      'adoption',
+      'commission',
     ])
     expect(repository.getWorkBySlug('adoption-purpose')?.work).toMatchObject({
       purpose: 'adoption',

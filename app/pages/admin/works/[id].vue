@@ -332,7 +332,7 @@ useSeoMeta({
       </header>
 
       <p v-if="locked" class="editor__locked" role="status">
-        作品已发布：基础信息、领养设定图与出厂照为只读；排序和精选仍可编辑，保存后会立即更新公开列表与首页精选。
+        作品已发布：基础信息与图片为只读，需要先下架。排序和精选仍可直接修改。
       </p>
       <p v-else-if="legacyEventSale" class="editor__locked" role="status">
         该作品仍是旧的“展会出售中”状态：保存前请在领养信息里选择一个正式的领养状态。

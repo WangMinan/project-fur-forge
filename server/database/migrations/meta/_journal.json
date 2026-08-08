@@ -169,6 +169,13 @@
       "when": 1786005000000,
       "tag": "0023_t37_event_drop_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1786010000000,
+      "tag": "0024_t35_f1_return_characters",
+      "breakpoints": true
     }
   ]
 }

@@ -108,7 +108,7 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
   gap: var(--space-8);
   max-width: var(--public-content-article);
   margin: 0 auto;
-  padding: 0 var(--public-page-padding) var(--space-9);
+  padding: 0 var(--public-page-padding) var(--space-7);
 }
 
 .about-page__section {

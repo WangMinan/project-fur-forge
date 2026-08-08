@@ -34,6 +34,8 @@ const emit = defineEmits<{
   enable: [allowUpscale: boolean]
   loadPreview: []
   move: [direction: -1 | 1]
+  /** 已启用项直接保存顺位：把这一项移到目标顺位。 */
+  reorderTo: [sortOrder: number]
   retryOperation: []
   save: [payload: HeroSlideInput]
 }>()
@@ -70,7 +72,13 @@ function syncFromSlide(slide: AdminHeroSlideDto | null) {
 }
 
 const isDirty = computed(() => snapshotOf() !== baseline.value)
+/** 已启用：内容（alt / 图片 / 关联作品）只读，顺位仍可直接改。 */
 const locked = computed(() => props.slide?.enabled === true)
+
+/** 已启用时只有顺位可改，因此单独判断“只改了顺位”。 */
+const orderOnlyDirty = computed(() => (
+  locked.value && sortOrder.value !== props.slide?.sortOrder
+))
 
 watch(() => props.slide, (slide) => {
   if (!isDirty.value) {
@@ -116,7 +124,14 @@ const lowResolutionSources = computed(() => {
 const requiresUpscale = computed(() => lowResolutionSources.value.length > 0)
 
 const canSubmit = computed(() => {
-  if (props.mutating || locked.value || !altValid.value || !sortOrderValid.value || !pairReady.value) {
+  if (props.mutating || !sortOrderValid.value) {
+    return false
+  }
+  // 已启用项只允许保存顺位：调整首页顺序不该要求先下架。
+  if (locked.value) {
+    return orderOnlyDirty.value
+  }
+  if (!altValid.value || !pairReady.value) {
     return false
   }
   return props.slide === null ? true : isDirty.value
@@ -158,6 +173,10 @@ function submit() {
   }
   if (props.slide === null) {
     emit('create', payload())
+  }
+  else if (locked.value) {
+    // 已启用项走顺位专用通道：整体重排已启用序列，不改内容。
+    emit('reorderTo', sortOrder.value)
   }
   else {
     emit('save', payload())
@@ -204,7 +223,7 @@ function requestEnable() {
     </header>
 
     <p v-if="locked" class="slide-card__locked-hint">
-      已启用的{{ itemLabel }}需先停用才能编辑内容或删除。
+      已启用：顺位可以直接改，图片与文字需先停用。
     </p>
 
     <p v-if="requiresUpscale" class="slide-card__upscale-warning" role="status">
@@ -263,7 +282,7 @@ function requestEnable() {
             max="9999"
             step="1"
             :value="sortOrder"
-            :disabled="locked || mutating"
+            :disabled="mutating"
             @input="onSortOrderInput"
           >
         </div>
@@ -302,7 +321,11 @@ function requestEnable() {
         class="slide-card__action slide-card__action--primary"
         :disabled="!canSubmit"
         @click="submit"
-      >{{ slide ? (mutating ? '保存中…' : '保存修改') : (mutating ? '创建中…' : `创建${itemLabel}`) }}</button>
+      >{{ !slide
+        ? (mutating ? '创建中…' : `创建${itemLabel}`)
+        : locked
+          ? (mutating ? '保存中…' : '保存顺位')
+          : (mutating ? '保存中…' : '保存修改') }}</button>
 
       <template v-if="slide">
         <button
