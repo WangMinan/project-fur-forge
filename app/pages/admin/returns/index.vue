@@ -1,17 +1,15 @@
 <script setup lang="ts">
 import {
-  adminReturnPhotoListResponseSchema,
+  adminReturnCharacterListResponseSchema,
+  deleteReturnCharacterResponseSchema,
 } from '~~/shared/schemas/return-photo'
-import { workListResponseSchema } from '~~/shared/schemas/work'
-import type {
-  AdminReturnPhotoDto,
-  WorkListItemDto,
-} from '~~/shared/types/contracts'
-import { PUBLICATION_STATUS_LABELS } from '~/utils/work-labels'
+import type { AdminReturnCharacterListItemDto } from '~~/shared/types/contracts'
+import { AdminApiError } from '~/composables/useAdminApi'
+import { ADMIN_WORK_PAGE_SIZES } from '~/utils/admin-work-list'
 
 /**
- * T36 返图列表：一行一张返图，不显示“图片数”或相册概念。
- * 按关联作品与发布状态筛选，底部编号分页。
+ * T35-F1 返图管理：列出设定，不是单张照片。
+ * 一个设定可以有多张返图，张数摘要显示在行内；分页与作品管理一致。
  */
 definePageMeta({
   layout: 'admin',
@@ -25,29 +23,29 @@ useSeoMeta({
 
 const adminApi = useAdminApi()
 const status = ref<'error' | 'loading' | 'ready'>('loading')
-const items = ref<AdminReturnPhotoDto[]>([])
-const works = ref<WorkListItemDto[]>([])
+const items = ref<AdminReturnCharacterListItemDto[]>([])
 const page = ref(1)
+const pageSize = ref(ADMIN_WORK_PAGE_SIZES[0]!)
 const pageCount = ref(0)
 const resultCount = ref(0)
-const workFilter = ref('')
-const statusFilter = ref('')
-/** 文本搜索在已取回的当页结果上做，匹配作品名与图片说明。 */
 const query = ref('')
+const deleteTarget = ref<AdminReturnCharacterListItemDto | null>(null)
+const deleting = ref(false)
+const actionError = ref<string | null>(null)
 
 async function load() {
   status.value = 'loading'
   try {
-    const query = new URLSearchParams({ page: String(page.value) })
-    if (workFilter.value) {
-      query.set('workId', workFilter.value)
-    }
-    if (statusFilter.value) {
-      query.set('publicationStatus', statusFilter.value)
+    const search = new URLSearchParams({
+      page: String(page.value),
+      pageSize: String(pageSize.value),
+    })
+    if (query.value.trim() !== '') {
+      search.set('query', query.value.trim())
     }
     const response = await adminApi(
-      `/api/admin/v1/returns?${query.toString()}`,
-      { schema: adminReturnPhotoListResponseSchema },
+      `/api/admin/v1/returns?${search.toString()}`,
+      { schema: adminReturnCharacterListResponseSchema },
     )
     items.value = response.data.items
     pageCount.value = response.data.pageCount
@@ -59,23 +57,12 @@ async function load() {
   }
 }
 
-async function loadWorks() {
-  try {
-    const response = await adminApi('/api/admin/v1/works', {
-      schema: workListResponseSchema,
-    })
-    works.value = response.data
-  }
-  catch {
-    works.value = []
-  }
-}
-
-onMounted(async () => {
-  await Promise.all([load(), loadWorks()])
+onMounted(() => {
+  void load()
 })
 
-watch([workFilter, statusFilter], () => {
+// 查找与每页条数变化都回到第一页，避免停在不存在的页码上。
+watch([query, pageSize], () => {
   page.value = 1
   void load()
 })
@@ -84,33 +71,43 @@ watch(page, () => {
   void load()
 })
 
-const filtersActive = computed(() => (
-  workFilter.value !== '' || statusFilter.value !== '' || query.value.trim() !== ''
+const visibleFrom = computed(() => (
+  resultCount.value === 0 ? 0 : (page.value - 1) * pageSize.value + 1
 ))
+const visibleTo = computed(
+  () => Math.min(page.value * pageSize.value, resultCount.value),
+)
 
-const visibleItems = computed(() => {
-  const keyword = query.value.trim().toLowerCase()
-  if (keyword === '') {
-    return items.value
+/** 删除设定会连带删除它的返图；已发布的返图先自动下架。 */
+async function deleteCharacter() {
+  const target = deleteTarget.value
+  if (!target || deleting.value) {
+    return
   }
-  return items.value.filter(item => (
-    item.work.characterName.toLowerCase().includes(keyword)
-    || item.alt.toLowerCase().includes(keyword)
-  ))
-})
-
-/** 状态既有文字也有语义色，不只靠颜色表达。 */
-function statusTone(value: 'draft' | 'published' | 'unpublished') {
-  if (value === 'published') {
-    return 'success' as const
+  deleting.value = true
+  try {
+    await adminApi(`/api/admin/v1/returns/${target.id}`, {
+      method: 'DELETE',
+      body: { expectedVersion: target.version, payload: {} },
+      schema: deleteReturnCharacterResponseSchema,
+    })
+    deleteTarget.value = null
+    await load()
   }
-  return value === 'unpublished' ? 'warning' as const : 'neutral' as const
-}
-
-function resetFilters() {
-  workFilter.value = ''
-  statusFilter.value = ''
-  query.value = ''
+  catch (error) {
+    if (error instanceof AdminApiError && error.status === 401) {
+      return
+    }
+    deleteTarget.value = null
+    actionError.value = error instanceof AdminApiError && error.status === 409
+      ? '设定已在别处修改，未删除。请刷新后重试。'
+      : '删除失败，请稍后重试。'
+    // 删除可能已部分完成，重新读取真实状态。
+    await load()
+  }
+  finally {
+    deleting.value = false
+  }
 }
 </script>
 
@@ -120,115 +117,133 @@ function resetFilters() {
       <header class="returns-admin__header">
         <div>
           <h1 class="returns-admin__title">返图管理</h1>
-          <p class="returns-admin__meta">
-            共 {{ resultCount }} 张。一条记录就是一张返图，公开展示在返图墙。
-          </p>
+          <p class="returns-admin__meta">共 {{ resultCount }} 个设定</p>
         </div>
         <NuxtLink class="returns-admin__new" to="/admin/returns/new">
-          新增返图
+          新增设定
         </NuxtLink>
       </header>
 
       <div class="returns-admin__filters">
         <label class="returns-admin__field">
-          <span>搜索</span>
-          <input
-            v-model="query"
-            type="search"
-            placeholder="作品名或图片说明"
-          >
+          <span>查找</span>
+          <input v-model="query" type="search" placeholder="名称或昵称">
         </label>
-        <label class="returns-admin__field">
-          <span>关联作品</span>
-          <select v-model="workFilter">
-            <option value="">全部作品</option>
-            <option v-for="work in works" :key="work.id" :value="work.id">
-              {{ work.characterName }}
-            </option>
-          </select>
-        </label>
-        <label class="returns-admin__field">
-          <span>发布状态</span>
-          <select v-model="statusFilter">
-            <option value="">全部状态</option>
-            <option value="draft">草稿</option>
-            <option value="published">已发布</option>
-            <option value="unpublished">已下架</option>
-          </select>
-        </label>
-        <button
-          v-if="filtersActive"
-          type="button"
-          class="returns-admin__reset"
-          @click="resetFilters"
-        >清除筛选</button>
       </div>
 
       <p v-if="status === 'loading'" class="returns-admin__state" role="status">
-        正在加载返图…
+        正在加载…
       </p>
       <p v-else-if="status === 'error'" class="returns-admin__state" role="alert">
-        返图列表加载失败，请稍后重试。
+        加载失败，请稍后重试。
       </p>
       <p
-        v-else-if="visibleItems.length === 0"
+        v-else-if="items.length === 0"
         class="returns-admin__state"
         data-testid="returns-empty"
       >
-        {{ filtersActive ? '没有符合筛选条件的返图。' : '还没有返图。点击“新增返图”开始。' }}
+        {{ query.trim() === '' ? '还没有设定。点击“新增设定”开始。' : '没有匹配的设定。' }}
       </p>
 
-      <table v-else class="returns-table" aria-label="返图列表">
-        <thead>
-          <tr>
-            <th scope="col">返图</th>
-            <th scope="col">关联作品</th>
-            <th scope="col">发布状态</th>
-            <th scope="col">顺序</th>
-            <th scope="col"><span class="visually-hidden">操作</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in visibleItems" :key="item.id">
-            <td>
-              <AdminReturnThumb :item="item" />
-            </td>
-            <td>
-              <span class="returns-table__work">{{ item.work.characterName }}</span>
-              <span class="returns-table__work-status">
-                作品{{ PUBLICATION_STATUS_LABELS[item.work.publicationStatus] }}
-              </span>
-            </td>
-            <td>
-              <AdminStatusBadge
-                :label="PUBLICATION_STATUS_LABELS[item.publicationStatus]"
-                :tone="statusTone(item.publicationStatus)"
-              />
-            </td>
-            <td>{{ item.sortOrder }}</td>
-            <td>
-              <NuxtLink
-                class="returns-table__edit"
-                :to="`/admin/returns/${item.id}`"
-              >编辑</NuxtLink>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <template v-else>
+        <table class="returns-table" aria-label="返图设定列表">
+          <thead>
+            <tr>
+              <th scope="col">主图</th>
+              <th scope="col">设定</th>
+              <th scope="col">返图</th>
+              <th scope="col">关联作品</th>
+              <th scope="col"><span class="visually-hidden">操作</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in items" :key="item.id">
+              <td>
+                <AdminReturnThumb
+                  :asset-id="item.primaryAssetId"
+                  :name="item.name"
+                />
+              </td>
+              <td>
+                <NuxtLink
+                  class="returns-table__name"
+                  :to="`/admin/returns/${item.id}`"
+                >{{ item.name }}</NuxtLink>
+                <span v-if="item.nickname" class="returns-table__nickname">
+                  @{{ item.nickname }}
+                </span>
+              </td>
+              <td>
+                <span class="returns-table__counts">
+                  {{ item.photoCount }} 张
+                </span>
+                <span class="returns-table__published">
+                  已发布 {{ item.publishedPhotoCount }} 张
+                </span>
+              </td>
+              <td>
+                <span v-if="item.work" class="returns-table__work">
+                  {{ item.work.characterName }}
+                </span>
+                <span v-else class="returns-table__work-none">未关联</span>
+              </td>
+              <td>
+                <div class="returns-table__actions">
+                  <NuxtLink
+                    class="returns-table__edit"
+                    :to="`/admin/returns/${item.id}`"
+                  >编辑</NuxtLink>
+                  <button
+                    type="button"
+                    class="returns-table__delete"
+                    :aria-label="`删除 ${item.name}`"
+                    @click="deleteTarget = item"
+                  >删除</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-      <nav
-        v-if="pageCount > 1"
-        class="returns-admin__pagination"
-        aria-label="返图管理分页"
+        <AdminPagination
+          v-model:page="page"
+          v-model:page-size="pageSize"
+          label="返图设定分页"
+          unit="个"
+          :page-count="pageCount"
+          :result-count="resultCount"
+          :visible-from="visibleFrom"
+          :visible-to="visibleTo"
+        />
+      </template>
+
+      <AdminConfirmDialog
+        :open="deleteTarget !== null"
+        :title="deleteTarget ? `删除「${deleteTarget.name}」？` : '删除设定？'"
+        :confirm-label="deleting ? '删除中…' : '确认删除'"
+        tone="danger"
+        @confirm="deleteCharacter"
+        @cancel="deleteTarget = null"
       >
-        <button type="button" :disabled="page <= 1" @click="page -= 1">
-          上一页
-        </button>
-        <span>第 {{ page }} / {{ pageCount }} 页</span>
-        <button type="button" :disabled="page >= pageCount" @click="page += 1">
-          下一页
-        </button>
-      </nav>
+        <p>
+          这个设定
+          <template v-if="deleteTarget && deleteTarget.photoCount > 0">
+            及它的 {{ deleteTarget.photoCount }} 张返图
+          </template>
+          会被删除，已发布的返图会先下架。私有原图保留。此操作无法撤销。
+        </p>
+      </AdminConfirmDialog>
+
+      <AdminConfirmDialog
+        :open="actionError !== null"
+        title="设定未删除"
+        confirm-label="知道了"
+        :show-cancel="false"
+        @confirm="actionError = null"
+        @cancel="actionError = null"
+      >
+        <p role="alert">{{ actionError }}</p>
+      </AdminConfirmDialog>
     </section>
   </AdminShell>
 </template>
@@ -285,7 +300,6 @@ function resetFilters() {
   color: var(--admin-text-secondary);
 }
 
-.returns-admin__field select,
 .returns-admin__field input {
   min-height: var(--admin-control-height);
   min-width: 12rem;
@@ -298,18 +312,6 @@ function resetFilters() {
   font-size: var(--admin-font-sm);
 }
 
-.returns-admin__reset {
-  min-height: var(--admin-control-height);
-  padding: 0 var(--admin-space-4);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-md);
-  background: var(--admin-bg-primary);
-  color: var(--admin-text-primary);
-  font: inherit;
-  font-size: var(--admin-font-sm);
-  cursor: pointer;
-}
-
 .returns-admin__state {
   margin-top: var(--admin-space-6);
   padding: var(--admin-space-7);
@@ -320,11 +322,17 @@ function resetFilters() {
   text-align: center;
 }
 
+/* 白底表格，与 /admin/works 一致。 */
 .returns-table {
   width: 100%;
   margin-top: var(--admin-space-6);
   border-collapse: collapse;
+  background: var(--admin-bg-primary);
   font-size: var(--admin-font-sm);
+}
+
+.returns-table tbody tr:hover {
+  background: var(--admin-bg-workspace);
 }
 
 .returns-table th,
@@ -344,16 +352,34 @@ function resetFilters() {
   min-height: var(--admin-table-row-min);
 }
 
-.returns-table__work {
+.returns-table__name {
   display: block;
   color: var(--admin-text-primary);
+  font-weight: 600;
 }
 
-.returns-table__work-status {
+.returns-table__name:hover {
+  color: var(--admin-accent-primary);
+}
+
+.returns-table__nickname,
+.returns-table__published,
+.returns-table__work-none {
   display: block;
   margin-top: var(--admin-space-1);
   color: var(--admin-text-tertiary);
   font-size: var(--admin-font-xs);
+}
+
+.returns-table__counts,
+.returns-table__work {
+  display: block;
+}
+
+.returns-table__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--admin-space-3);
 }
 
 .returns-table__edit {
@@ -363,33 +389,14 @@ function resetFilters() {
   color: var(--admin-accent-primary);
 }
 
-.returns-admin__pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--admin-space-3);
-  margin-top: var(--admin-space-5);
-  padding-top: var(--admin-space-4);
-  border-top: 1px solid var(--admin-border-secondary);
-  color: var(--admin-text-secondary);
-  font-size: var(--admin-font-sm);
-}
-
-.returns-admin__pagination button {
-  min-height: var(--admin-control-height);
-  padding: 0 var(--admin-space-4);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-md);
-  background: var(--admin-bg-primary);
-  color: var(--admin-text-primary);
+.returns-table__delete {
+  min-height: var(--admin-touch-target);
+  padding: 0;
+  color: var(--admin-danger);
+  background: none;
+  border: none;
   font: inherit;
-  font-size: var(--admin-font-sm);
   cursor: pointer;
-}
-
-.returns-admin__pagination button:disabled {
-  opacity: 0.45;
-  cursor: default;
 }
 
 @media (max-width: 767px) {

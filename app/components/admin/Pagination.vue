@@ -1,29 +1,35 @@
 <script setup lang="ts">
 import { ADMIN_WORK_PAGE_SIZES } from '~/utils/admin-work-list'
 
-defineProps<{
+withDefaults(defineProps<{
+  /** 无障碍名称与计数单位随列表类型变化，默认沿用作品列表。 */
+  label?: string
   pageCount: number
   resultCount: number
+  unit?: string
   visibleFrom: number
   visibleTo: number
-}>()
+}>(), {
+  label: '作品列表分页',
+  unit: '件',
+})
 
 const page = defineModel<number>('page', { required: true })
 const pageSize = defineModel<number>('pageSize', { required: true })
 </script>
 
 <template>
-  <nav class="admin-pagination" aria-label="作品列表分页">
+  <nav class="admin-pagination" :aria-label="label">
     <p class="admin-pagination__summary" role="status">
-      <template v-if="resultCount > 0">显示 {{ visibleFrom }}–{{ visibleTo }}，共 {{ resultCount }} 件</template>
-      <template v-else>共 0 件</template>
+      <template v-if="resultCount > 0">显示 {{ visibleFrom }}–{{ visibleTo }}，共 {{ resultCount }} {{ unit }}</template>
+      <template v-else>共 0 {{ unit }}</template>
     </p>
 
     <label class="admin-pagination__size">
       <span>每页</span>
       <select v-model.number="pageSize" class="admin-pagination__select">
         <option v-for="size in ADMIN_WORK_PAGE_SIZES" :key="size" :value="size">
-          {{ size }} 件
+          {{ size }} {{ unit }}
         </option>
       </select>
     </label>

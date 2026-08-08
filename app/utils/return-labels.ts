@@ -12,7 +12,6 @@ import type {
  */
 
 export const RETURN_BLOCKER_LABELS: Record<ReturnPhotoBlocker, string> = {
-  RETURN_PHOTO_WORK_NOT_PUBLISHED: '关联作品还没有发布，先发布作品才能发布返图',
   RETURN_PHOTO_ALT_REQUIRED: '需要填写图片说明',
   RETURN_PHOTO_ASSET_REQUIRED: '还没有上传返图图片',
   RETURN_PHOTO_ASSET_NOT_READY: '返图图片还在处理中或处理失败',

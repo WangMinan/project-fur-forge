@@ -27,7 +27,7 @@ const paragraphs = computed(() => props.content
   gap: var(--space-5);
   max-width: var(--public-content-article);
   margin: 0 auto;
-  padding: 0 var(--public-page-padding) var(--space-10);
+  padding: 0 var(--public-page-padding) var(--space-7);
 }
 
 .legal-document__text {

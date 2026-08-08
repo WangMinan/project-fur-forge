@@ -81,16 +81,20 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
         aria-labelledby="commission-scope-title"
       >
         <h2 id="commission-scope-title" class="commission-page__section-title">制作范围</h2>
-        <ul class="commission-page__scope" role="list">
-          <li class="commission-page__scope-item">
-            <h3 class="commission-page__scope-name">全装</h3>
-            <p class="commission-page__scope-detail">完整兽装制作。</p>
-          </li>
-          <li class="commission-page__scope-item">
-            <h3 class="commission-page__scope-name">半装</h3>
-            <p class="commission-page__scope-detail">由头、爪、尾巴组成。</p>
-          </li>
-        </ul>
+        <!--
+          两个并列选项，各只有一句说明。用术语表而不是卡片：
+          一句话撑不起一个灰底方块，反而显得空。
+        -->
+        <dl class="commission-page__scope">
+          <div class="commission-page__scope-row">
+            <dt class="commission-page__scope-name">全装</dt>
+            <dd class="commission-page__scope-detail">完整兽装制作</dd>
+          </div>
+          <div class="commission-page__scope-row">
+            <dt class="commission-page__scope-name">半装</dt>
+            <dd class="commission-page__scope-detail">头、爪、尾巴</dd>
+          </div>
+        </dl>
       </section>
 
       <section class="commission-page__section" aria-labelledby="commission-estimate-title">
@@ -128,7 +132,7 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
 
       <section
         v-if="faqs.length > 0"
-        class="commission-page__section"
+        class="commission-page__section commission-page__faq-section"
         aria-labelledby="commission-faq-title"
         data-testid="commission-faq"
       >
@@ -156,7 +160,7 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
   gap: var(--space-8);
   max-width: var(--public-content-wide);
   margin: 0 auto;
-  padding: 0 var(--public-page-padding) var(--space-9);
+  padding: 0 var(--public-page-padding) var(--space-7);
 }
 
 .commission-page__status {
@@ -165,10 +169,18 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
   border-radius: var(--radius-md);
 }
 
+/**
+ * 文字区块限制在易读宽度，但在 90rem 的页宽里**居中**。
+ *
+ * 之前是靠左：44rem 的正文贴在 90rem 容器左侧，右边空掉一大片。
+ * 居中后与 /service 的阅读版式一致；大图 Hero 仍占满页宽。
+ */
 .commission-page__section {
   display: grid;
   gap: var(--space-4);
+  width: 100%;
   max-width: var(--public-content-reading);
+  margin-inline: auto;
 }
 
 #commission-details {
@@ -182,35 +194,34 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
   line-height: var(--line-height-heading);
 }
 
+/**
+ * 制作范围：术语表式的两行，靠细分隔线区分，不用灰底卡片。
+ * 名称与说明同一行基线对齐，因此一句话的内容看起来是「一条事实」，
+ * 而不是一个填不满的方块。
+ */
 .commission-page__scope {
-  display: grid;
-  gap: var(--space-4);
   margin: 0;
-  padding: 0;
-  list-style: none;
+  border-top: 1px solid var(--public-border-secondary);
 }
 
-@media (min-width: 768px) {
-  .commission-page__scope {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-.commission-page__scope-item {
-  padding: var(--space-4) var(--space-5);
-  background: var(--public-bg-secondary);
-  border-radius: var(--radius-md);
+.commission-page__scope-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--public-border-secondary);
 }
 
 .commission-page__scope-name {
-  margin: 0;
+  flex: none;
+  min-width: 4rem;
+  font-family: var(--font-public-display);
   font-size: var(--font-size-md);
 }
 
 .commission-page__scope-detail {
-  margin-top: var(--space-2);
+  margin: 0;
   color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
   line-height: var(--line-height-relaxed);
 }
 
@@ -250,6 +261,18 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* 常见问题在宽屏分两列：每条问答都短，单列会拉出很长的滚动。 */
+@media (min-width: 1024px) {
+  .commission-page__faq-section {
+    max-width: var(--public-content-article);
+  }
+
+  .commission-page__faq {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-6);
+  }
 }
 
 .commission-page__faq-question {

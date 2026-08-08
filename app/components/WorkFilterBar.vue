@@ -3,29 +3,14 @@ import type { SuitType, WorkPurpose } from '~~/shared/types/contracts'
 import { SUIT_TYPE_VALUES, WORK_PURPOSE_VALUES } from '~~/shared/schemas/work'
 
 /**
- * 作品列表筛选条：普通链接（NuxtLink）切换 query，无 JS 也可用。
+ * 作品列表筛选条：普通链接切换 query，无 JS 也可用。
  * 选中态来自服务端回显的 filter（非法参数已被服务端复位为 null）。
+ * 胶囊样式由 PublicFilterChips 与 /adoptions 共用。
  */
 const props = defineProps<{
   filter: { purpose: WorkPurpose | null, suitType: SuitType | null }
   resultCount: number
 }>()
-
-const purposeOptions = computed(() => [
-  { value: null, label: '全部用途' },
-  ...WORK_PURPOSE_VALUES.map(value => ({
-    value,
-    label: WORK_PURPOSE_FILTER_LABELS[value],
-  })),
-])
-
-const suitOptions = computed(() => [
-  { value: null, label: '全部装型' },
-  ...SUIT_TYPE_VALUES.map(value => ({
-    value,
-    label: SUIT_TYPE_LABELS[value],
-  })),
-])
 
 function buildQuery(purpose: WorkPurpose | null, suitType: SuitType | null) {
   const query: Record<string, string> = {}
@@ -42,45 +27,38 @@ function optionLink(purpose: WorkPurpose | null, suitType: SuitType | null) {
   return { path: '/works', query: buildQuery(purpose, suitType) }
 }
 
-const purposeLink = (purpose: WorkPurpose | null) => optionLink(purpose, props.filter.suitType)
-const suitLink = (suitType: SuitType | null) => optionLink(props.filter.purpose, suitType)
+const purposeOptions = computed(() => [
+  { key: 'all', label: '全部用途', to: optionLink(null, props.filter.suitType) },
+  ...WORK_PURPOSE_VALUES.map(value => ({
+    key: value,
+    label: WORK_PURPOSE_FILTER_LABELS[value],
+    to: optionLink(value, props.filter.suitType),
+  })),
+])
+
+const suitOptions = computed(() => [
+  { key: 'all', label: '全部装型', to: optionLink(props.filter.purpose, null) },
+  ...SUIT_TYPE_VALUES.map(value => ({
+    key: value,
+    label: SUIT_TYPE_LABELS[value],
+    to: optionLink(props.filter.purpose, value),
+  })),
+])
 </script>
 
 <template>
   <div class="work-filter">
     <div class="work-filter__row">
-      <div
-        class="work-filter__group"
-        role="group"
-        aria-label="按用途筛选"
-      >
-        <NuxtLink
-          v-for="option in purposeOptions"
-          :key="option.value ?? 'all'"
-          :to="purposeLink(option.value)"
-          class="work-filter__chip"
-          :class="{ 'work-filter__chip--active': filter.purpose === option.value }"
-          :aria-current="filter.purpose === option.value ? 'true' : undefined"
-        >
-          {{ option.label }}
-        </NuxtLink>
-      </div>
-      <div
-        class="work-filter__group"
-        role="group"
-        aria-label="按装型筛选"
-      >
-        <NuxtLink
-          v-for="option in suitOptions"
-          :key="option.value ?? 'all'"
-          :to="suitLink(option.value)"
-          class="work-filter__chip"
-          :class="{ 'work-filter__chip--active': filter.suitType === option.value }"
-          :aria-current="filter.suitType === option.value ? 'true' : undefined"
-        >
-          {{ option.label }}
-        </NuxtLink>
-      </div>
+      <PublicFilterChips
+        label="按用途筛选"
+        :options="purposeOptions"
+        :selected="filter.purpose ?? 'all'"
+      />
+      <PublicFilterChips
+        label="按装型筛选"
+        :options="suitOptions"
+        :selected="filter.suitType ?? 'all'"
+      />
     </div>
     <p class="work-filter__count" role="status">
       共 {{ resultCount }} 件作品
@@ -97,41 +75,6 @@ const suitLink = (suitType: SuitType | null) => optionLink(props.filter.purpose,
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3) var(--space-6);
-}
-
-.work-filter__group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0;
-  padding: var(--space-1);
-  background: var(--public-bg-secondary);
-  border: 1px solid var(--public-border-primary);
-  border-radius: var(--radius-full);
-  box-shadow: 0 0.25rem 0.75rem rgb(25 31 42 / 0.08);
-}
-
-.work-filter__chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.5rem;
-  padding: var(--space-2) var(--space-4);
-  border: 1px solid transparent;
-  border-radius: var(--radius-full);
-  color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
-  line-height: 1.4;
-}
-
-.work-filter__chip:hover {
-  color: var(--public-text-primary);
-}
-
-.work-filter__chip--active,
-.work-filter__chip--active:hover {
-  background: var(--public-bg-primary);
-  border-color: var(--public-border-primary);
-  color: var(--public-text-primary);
-  box-shadow: 0 0.125rem 0.5rem rgb(25 31 42 / 0.12);
 }
 
 .work-filter__count {

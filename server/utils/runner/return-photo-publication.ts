@@ -26,6 +26,7 @@ import {
   hasActiveReturnPhotoOperation,
   insertReturnPhotoAuditLog,
   insertReturnPhotoOperation,
+  listReturnPhotosForCharacter,
   publishReturnPhotoRow,
   unpublishReturnPhotoRow,
 } from '../repository/return-photo-repository'
@@ -42,6 +43,9 @@ import { ServiceError } from '../service-error'
 import { generateReturnWallVariants } from '../recipe/return-display-recipe'
 import {
   checkReturnPhotoPublication,
+  deleteEmptyReturnCharacter,
+  deleteReturnPhotoDraft,
+  requireReturnCharacter,
   requireReturnPhoto,
 } from '../service/return-photo'
 
@@ -612,6 +616,63 @@ async function runReturnPhotoUnpublication(
     operation: operationDto(requireOperation(sqlite, operationId)),
     returnPhoto: returnPhotoState(requireReturnPhoto(sqlite, returnPhotoId)),
   }
+}
+
+/**
+ * 删除设定：连带删除它的全部返图。
+ *
+ * 已发布的返图先走正常下架流程（撤销公开状态 → 按精确清单删除公开对象），
+ * 因此不会留下孤立的公开图片；随后删除返图记录，最后删除设定本身。
+ * 私有永久原图保留，`assets` 不参与本次删除。
+ *
+ * 任何一张返图下架失败就整体停下并抛错：宁可留下一个还能重试的设定，
+ * 也不要删掉记录却留着公开可读的图片。
+ */
+export async function deleteReturnCharacterCascade(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  characterId: string,
+  expectedVersion: number,
+  actorUserId: string,
+  now = Date.now(),
+) {
+  const character = requireReturnCharacter(sqlite, characterId)
+  if (character.version !== expectedVersion) {
+    throw new ServiceError(
+      409,
+      'CONFLICT',
+      'Resource version is stale.',
+      'VERSION_CONFLICT',
+    )
+  }
+
+  for (const photo of listReturnPhotosForCharacter(sqlite, characterId)) {
+    let current = requireReturnPhoto(sqlite, photo.id)
+    if (current.publicationStatus === 'published') {
+      const result = await unpublishReturnPhoto(
+        sqlite,
+        storage,
+        current.id,
+        current.version,
+        actorUserId,
+        now,
+      )
+      if (result.operation.status !== 'DONE') {
+        throw new ServiceError(
+          409,
+          'CONFLICT',
+          'Return photo could not be unpublished before deletion.',
+          'RETURN_PHOTO_PUBLICATION_BLOCKED',
+        )
+      }
+      current = requireReturnPhoto(sqlite, current.id)
+    }
+    deleteReturnPhotoDraft(sqlite, current.id, current.version, now)
+  }
+
+  // 返图删除会 bump 设定的 updated_at，因此重新读取版本再删。
+  const latest = requireReturnCharacter(sqlite, characterId)
+  return deleteEmptyReturnCharacter(sqlite, characterId, latest.version)
 }
 
 /** 清理失败后的重试入口：只重放精确 Object Key 清单。 */

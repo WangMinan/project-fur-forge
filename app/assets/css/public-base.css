@@ -88,16 +88,23 @@
   --shadow-overlay: 0 1.5rem 4rem rgb(25 31 42 / 0.18);
 
   --ratio-work-card: 3 / 4;
+  /** 领养卡设定图框：横版设定图的常见比例，用于让并排卡片对齐。 */
+  --ratio-design-sheet: 16 / 9;
   --ratio-work-hero: 16 / 9;
   --hero-min-height: 100svh;
   --image-placeholder: #f1f3f6;
   --image-hover-scale: 1.02;
 
+  /**
+   * 公开端图片统一圆角。/works、/returns 与 /adoptions 共用同一个值，
+   * 三个页面的图片处理才不会各自漂移。
+   */
+  --radius-image: 12px;
+
   /* T36 返图墙（return-display-v1，无水印，保持原比例）。 */
   --return-gap-mobile: 12px;
   --return-gap-tablet: 16px;
   --return-gap-desktop: 20px;
-  --return-radius: 12px;
   --return-caption-gap: 8px;
   --return-caption-size: var(--font-size-sm);
   --return-caption-color: var(--public-text-secondary);

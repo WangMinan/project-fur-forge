@@ -384,7 +384,7 @@ function moveTag(index: number, offset: number) {
           :aria-describedby="describedBy('f-sort-order-hint', 'f-sort-order-error', Boolean(errorFor('sortOrder')))"
         >
         <p id="f-sort-order-hint" class="field__hint">
-          数值越小越靠前；精选顺位重复时，保存后自动使用下一个空闲顺位
+          只影响首页精选，数值越小越靠前
         </p>
         <p v-if="errorFor('sortOrder')" id="f-sort-order-error" class="field__error">
           {{ errorFor('sortOrder') }}
@@ -403,7 +403,7 @@ function moveTag(index: number, offset: number) {
           <span>加入首页精选作品</span>
         </label>
         <p id="f-featured-hint" class="field__hint">
-          首页精选最多展示前 {{ PUBLIC_FEATURED_LIMIT }} 件已发布作品；与首页轮播是两套内容
+          最多展示 {{ PUBLIC_FEATURED_LIMIT }} 件；与首页轮播是两套内容
         </p>
       </div>
     </div>

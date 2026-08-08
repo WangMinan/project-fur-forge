@@ -603,45 +603,93 @@ export const workAssets = sqliteTable('work_assets', {
 ])
 
 /**
- * T35 返图：一张返图对应一行，恰好关联一件作品和一张 `return_photo` 私有原图。
+ * T35-F1 返图设定：返图的归属主体，与作品彻底解耦。
  *
- * 不是相册：`asset_id` 唯一约束保证同一资产不被两条返图占用，
- * 也保证一条返图不会累积多张图片。不引入 return_albums、批次、
- * 返图 slug、返图详情或返图者账户。
+ * 设定有自己的名称、公开 slug 和可选 `@昵称`，因此老作品没上过架、
+ * 甚至根本没有作品记录时也可以有返图。`work_id` 是可选便利入口，
+ * ON DELETE set null：作品被永久删除只是失去入口，返图与私有原图保留。
  *
- * `work_id` 使用 ON DELETE restrict：存在返图关联时数据库直接阻止作品永久删除。
+ * 授权三列（来源 / 确认时间 / 内部备注）按设定保存——授权是“这个人同意
+ * 公开自己设定的返图”，与单张照片无关。三列全部可空，缺失不阻止发布，
+ * 且只进入受认证管理 DTO；公开投影永不读取。
+ */
+export const returnCharacters = sqliteTable('return_characters', {
+  id: text('id').primaryKey(),
+  slug: text('slug').notNull(),
+  name: text('name').notNull(),
+  nickname: text('nickname'),
+  workId: text('work_id')
+    .references(() => works.id, { onDelete: 'set null' }),
+  authorizationSource: text('authorization_source'),
+  authorizationConfirmedAt: integer('authorization_confirmed_at'),
+  authorizationNote: text('authorization_note'),
+  version: integer('version').notNull().default(1),
+  ...timestampColumns(),
+}, table => [
+  uniqueIndex('return_characters_slug_unique').on(table.slug),
+  index('return_characters_work_idx').on(table.workId),
+  check(
+    'return_characters_slug_nonempty',
+    sql`${table.slug} = trim(${table.slug}) AND length(${table.slug}) BETWEEN 1 AND 120`,
+  ),
+  check(
+    'return_characters_name_nonempty',
+    sql`${table.name} = trim(${table.name}) AND length(${table.name}) BETWEEN 1 AND 100`,
+  ),
+  check(
+    'return_characters_nickname',
+    sql`${table.nickname} IS NULL OR (${table.nickname} = trim(${table.nickname}) AND length(${table.nickname}) BETWEEN 1 AND 50)`,
+  ),
+  check('return_characters_version_positive', sql`${table.version} > 0`),
+  check(
+    'return_characters_authorization_source',
+    sql`${table.authorizationSource} IS NULL OR ${table.authorizationSource} IN ('qq', 'email', 'other')`,
+  ),
+  check(
+    'return_characters_authorization_confirmed_at',
+    sql`${table.authorizationConfirmedAt} IS NULL OR ${table.authorizationConfirmedAt} > 0`,
+  ),
+  check(
+    'return_characters_authorization_note',
+    sql`${table.authorizationNote} IS NULL OR (${table.authorizationNote} = trim(${table.authorizationNote}) AND length(${table.authorizationNote}) BETWEEN 1 AND 500)`,
+  ),
+])
+
+/**
+ * T35-F1 返图照片：一张返图一行，归属一个设定。
+ *
+ * 一个设定可以有多张返图，横竖混放。`asset_id` 唯一约束保证同一张
+ * 私有原图不被两条返图占用；`is_primary` 部分唯一索引保证一个设定
+ * 最多一张主图（设定页的圆形头像）。
+ *
+ * 不设 `sort_order`：返图墙每次请求随机打乱，人工排序没有意义。
+ * `character_id` 使用 ON DELETE restrict：删除设定前必须先处理它的返图。
  * `asset_id` 同样 restrict，永久原图不会因删除返图记录被级联清空。
- *
- * 授权三列（来源 / 确认时间 / 内部备注）全部可空，缺失不阻止保存和发布，
- * 且只进入受认证管理 DTO；公开投影永不读取这三列。
  */
 export const returnPhotos = sqliteTable('return_photos', {
   id: text('id').primaryKey(),
-  workId: text('work_id').notNull()
-    .references(() => works.id, { onDelete: 'restrict' }),
+  characterId: text('character_id').notNull()
+    .references(() => returnCharacters.id, { onDelete: 'restrict' }),
   /**
-   * 草稿可以先没有图片：返图上传会话的归属是返图记录本身及其版本，
-   * 因此记录必须先存在。发布前检查要求恰好一张 READY `return_photo` 资产，
+   * 草稿可以先没有图片：返图上传会话的归属是设定及其版本，
+   * 照片记录先建后补图。发布前检查要求一张 READY `return_photo` 资产，
    * 并由 `return_photos_published_asset` CHECK 在数据库层兜住。
-   * 单列 + 唯一索引保证“一条返图最多一张资产”，永远不会长成相册。
    */
   assetId: text('asset_id')
     .references(() => assets.id, { onDelete: 'restrict' }),
   alt: text('alt').notNull(),
-  sortOrder: integer('sort_order').notNull().default(0),
+  primary: integer('is_primary', { mode: 'boolean' }).notNull().default(false),
   publicationStatus: text('publication_status').notNull().default('draft'),
-  authorizationSource: text('authorization_source'),
-  authorizationConfirmedAt: integer('authorization_confirmed_at'),
-  authorizationNote: text('authorization_note'),
   version: integer('version').notNull().default(1),
   publishedAt: integer('published_at'),
   ...timestampColumns(),
 }, table => [
   uniqueIndex('return_photos_asset_unique').on(table.assetId),
-  index('return_photos_public_order_idx')
-    .on(table.publicationStatus, table.sortOrder, table.id),
-  index('return_photos_work_idx')
-    .on(table.workId, table.publicationStatus),
+  uniqueIndex('return_photos_primary_unique').on(table.characterId)
+    .where(sql`${table.primary} = 1`),
+  index('return_photos_character_idx')
+    .on(table.characterId, table.publicationStatus),
+  index('return_photos_public_idx').on(table.publicationStatus, table.id),
   check(
     'return_photos_alt_nonempty',
     sql`${table.alt} = trim(${table.alt}) AND length(${table.alt}) BETWEEN 1 AND 500`,
@@ -650,7 +698,6 @@ export const returnPhotos = sqliteTable('return_photos', {
     'return_photos_publication_status',
     sql`${table.publicationStatus} IN ('draft', 'published', 'unpublished')`,
   ),
-  check('return_photos_sort_order_nonnegative', sql`${table.sortOrder} >= 0`),
   check('return_photos_version_positive', sql`${table.version} > 0`),
   check(
     'return_photos_published_at',
@@ -661,17 +708,10 @@ export const returnPhotos = sqliteTable('return_photos', {
     'return_photos_published_asset',
     sql`${table.publicationStatus} != 'published' OR ${table.assetId} IS NOT NULL`,
   ),
+  /** 主图必须真的有图片：没有图片的草稿不能当设定封面。 */
   check(
-    'return_photos_authorization_source',
-    sql`${table.authorizationSource} IS NULL OR ${table.authorizationSource} IN ('qq', 'email', 'other')`,
-  ),
-  check(
-    'return_photos_authorization_confirmed_at',
-    sql`${table.authorizationConfirmedAt} IS NULL OR ${table.authorizationConfirmedAt} > 0`,
-  ),
-  check(
-    'return_photos_authorization_note',
-    sql`${table.authorizationNote} IS NULL OR (${table.authorizationNote} = trim(${table.authorizationNote}) AND length(${table.authorizationNote}) BETWEEN 1 AND 500)`,
+    'return_photos_primary_asset',
+    sql`${table.primary} = 0 OR ${table.assetId} IS NOT NULL`,
   ),
 ])
 

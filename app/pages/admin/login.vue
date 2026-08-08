@@ -62,12 +62,16 @@ async function onSubmit() {
 </script>
 
 <template>
+  <!--
+    登录页保留公开站页头与页脚：这个页面可能被 ICP 备案审核抓到，
+    备案信息统一放在公开页脚里。其他管理端页面仍用 admin 布局。
+  -->
   <div class="admin-surface login" data-testid="admin-login">
+    <PublicHeader brand-only />
     <main class="login__main">
       <div class="login__card">
         <header class="login__header">
-          <p class="login__brand">有点小狗工作室</p>
-          <p class="login__brand-sub">dite dog · 管理端</p>
+          <!-- 品牌已由页头给出，卡片里不再重复一遍。 -->
           <h1 class="login__title">管理端登录</h1>
         </header>
 
@@ -118,14 +122,17 @@ async function onSubmit() {
         </form>
       </div>
     </main>
+    <PublicFooter brand-only />
   </div>
 </template>
 
 <style scoped>
 .login {
+  /* 页头 → 登录卡 → 页脚纵向排列，登录卡吃掉剩余高度并居中。 */
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
   background: var(--admin-bg-workspace);
-  display: flex;
 }
 
 .login__main {
@@ -133,7 +140,7 @@ async function onSubmit() {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--admin-space-5);
+  padding: var(--admin-space-7) var(--admin-space-5);
 }
 
 .login__card {
@@ -150,21 +157,8 @@ async function onSubmit() {
   margin-bottom: var(--admin-space-6);
 }
 
-.login__brand {
-  margin: 0;
-  font-size: var(--admin-font-md);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.login__brand-sub {
-  margin: var(--admin-space-1) 0 0;
-  font-size: var(--admin-font-xs);
-  color: var(--admin-text-tertiary);
-}
-
 .login__title {
-  margin: var(--admin-space-5) 0 0;
+  margin: 0;
   font-size: var(--admin-font-xl);
   font-weight: 600;
   line-height: var(--admin-line-tight);

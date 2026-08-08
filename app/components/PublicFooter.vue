@@ -1,20 +1,38 @@
 <script setup lang="ts">
+import {
+  PROJECT_ENGLISH_NAME,
+  PROJECT_NAME,
+} from '~~/shared/constants/project'
+
+/**
+ * `brandOnly` 隐藏页脚导航，只留品牌与法务/备案信息。
+ * 管理端登录页用它：备案信息要保留，访客导航不进登录流程。
+ */
+withDefaults(defineProps<{
+  brandOnly?: boolean
+}>(), {
+  brandOnly: false,
+})
+
 const year = new Date().getFullYear()
 </script>
 
 <template>
   <footer class="public-footer" data-testid="public-footer">
-    <div class="public-footer__inner">
+    <div
+      class="public-footer__inner"
+      :class="{ 'public-footer__inner--brand-only': brandOnly }"
+    >
       <div class="public-footer__brand">
         <p class="public-footer__name">
-          有点小狗工作室
+          {{ PROJECT_NAME }}
         </p>
         <p class="public-footer__sub">
-          dite dog · 兽装制作工作室
+          {{ PROJECT_ENGLISH_NAME }} · 兽装制作工作室
         </p>
       </div>
 
-      <nav class="public-footer__nav" aria-label="页脚导航">
+      <nav v-if="!brandOnly" class="public-footer__nav" aria-label="页脚导航">
         <NuxtLink
           v-for="item in PUBLIC_NAV_ITEMS"
           :key="item.href"
@@ -37,8 +55,10 @@ const year = new Date().getFullYear()
             <a href="https://github.com/wangminan" target="_blank" rel="noopener noreferrer">Arktouros</a>
           </span>
         </p>
-        <p>
+        <p class="public-footer__legal-links">
           <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">ICP备案</a>
+          <span aria-hidden="true">|</span>
+          <NuxtLink to="/licenses">开源软件声明</NuxtLink>
         </p>
       </div>
     </div>
@@ -47,7 +67,11 @@ const year = new Date().getFullYear()
 
 <style scoped>
 .public-footer {
-  margin-top: var(--space-9);
+  /**
+   * 只留一段小的呼吸间距。首页需要更空的收尾，那份留白由首页自己的
+   * padding-bottom 提供，内页因此不会继承一段过大的空白。
+   */
+  margin-top: var(--space-6);
   padding: var(--space-4) var(--public-page-padding);
   background: var(--public-bg-secondary);
   border-top: 1px solid var(--public-border-secondary);
@@ -112,6 +136,11 @@ const year = new Date().getFullYear()
   .public-footer__inner {
     grid-template-columns: 1.2fr 1fr 1fr;
     align-items: stretch;
+  }
+
+  /* 没有导航列时收成两列，法务信息仍靠右对齐。 */
+  .public-footer__inner--brand-only {
+    grid-template-columns: 1fr auto;
   }
 
   .public-footer__legal {

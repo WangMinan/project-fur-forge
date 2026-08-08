@@ -1,11 +1,26 @@
 <script setup lang="ts">
 import type { PublicNavItem } from '~/utils/public-nav'
+import {
+  PROJECT_ENGLISH_NAME,
+  PROJECT_NAME,
+} from '~~/shared/constants/project'
+
+/**
+ * `brandOnly` 只保留 Logo 与工作室名称，隐藏主导航与移动端菜单。
+ * 管理端登录页用它：那个页面可能被 ICP 备案审核抓到，需要品牌与备案信息，
+ * 但不应该把访客导航混进登录流程。
+ */
+const props = withDefaults(defineProps<{
+  brandOnly?: boolean
+}>(), {
+  brandOnly: false,
+})
 
 const route = useRoute()
 const navOpen = ref(false)
 
 /** 首页图片覆盖态；内页白底态。 */
-const overlay = computed(() => route.path === '/')
+const overlay = computed(() => route.path === '/' && !props.brandOnly)
 const triggerId = 'public-nav-trigger'
 
 function isActive(item: PublicNavItem) {
@@ -35,11 +50,11 @@ watch(() => route.fullPath, () => {
         width="473"
         height="512"
       >
-      <span class="public-header__brand-name">有点小狗工作室</span>
-      <span class="public-header__brand-sub">dite dog</span>
+      <span class="public-header__brand-name">{{ PROJECT_NAME }}</span>
+      <span class="public-header__brand-sub">{{ PROJECT_ENGLISH_NAME }}</span>
     </NuxtLink>
 
-    <nav class="public-header__nav" aria-label="主导航">
+    <nav v-if="!brandOnly" class="public-header__nav" aria-label="主导航">
       <div
         v-for="item in PUBLIC_NAV_ITEMS"
         :key="item.href"
@@ -83,6 +98,7 @@ watch(() => route.fullPath, () => {
     </nav>
 
     <button
+      v-if="!brandOnly"
       :id="triggerId"
       type="button"
       class="public-header__menu"
@@ -108,6 +124,7 @@ watch(() => route.fullPath, () => {
     </button>
 
     <PublicMobileNav
+      v-if="!brandOnly"
       :open="navOpen"
       :trigger-id="triggerId"
       @close="navOpen = false"

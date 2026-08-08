@@ -50,24 +50,22 @@ const hasActiveFilter = computed(
   () => filter.value.purpose !== null || filter.value.suitType !== null,
 )
 
-type EmptyKind = 'no-works' | 'no-match' | 'invalid'
+/**
+ * 空态只分两种：一件作品都还没有，或这套筛选下没有作品。
+ * 非法参数对访客与「无匹配」是同一件事，不单独措辞。
+ */
+type EmptyKind = 'no-works' | 'no-match'
 const emptyKind = computed<EmptyKind | null>(() => {
   if (items.value.length > 0) {
     return null
   }
-  if (!filter.value.valid) {
-    return 'invalid'
-  }
-  return hasActiveFilter.value ? 'no-match' : 'no-works'
+  return hasActiveFilter.value || !filter.value.valid ? 'no-match' : 'no-works'
 })
 </script>
 
 <template>
   <div class="public-page">
-    <PublicPageIntro
-      title="作品展示"
-      description="每一套兽装都是独一无二的作品。"
-    />
+    <PublicPageIntro title="作品展示" />
 
     <div class="public-container works-page">
       <WorkFilterBar
@@ -85,30 +83,12 @@ const emptyKind = computed<EmptyKind | null>(() => {
       </ul>
 
       <div v-else-if="emptyKind === 'no-works'" class="works-empty">
-        <p class="works-empty__title">
-          作品正在整理中，请稍后再来。
-        </p>
+        <p class="works-empty__title">作品正在整理中。</p>
       </div>
 
-      <div v-else-if="emptyKind === 'no-match'" class="works-empty">
-        <p class="works-empty__title">
-          没有符合条件的作品
-        </p>
-        <p class="works-empty__description">
-          试试调整筛选条件，或浏览全部作品。
-        </p>
-        <NuxtLink to="/works" class="works-empty__reset">
-          清除筛选
-        </NuxtLink>
-      </div>
-
+      <!-- 无匹配与参数非法对访客是同一件事：这套条件下没有作品。 -->
       <div v-else class="works-empty">
-        <p class="works-empty__title">
-          没有符合条件的作品
-        </p>
-        <p class="works-empty__description">
-          当前筛选条件无效，清除筛选后浏览全部作品。
-        </p>
+        <p class="works-empty__title">没有符合条件的作品</p>
         <NuxtLink to="/works" class="works-empty__reset">
           清除筛选
         </NuxtLink>
@@ -123,7 +103,7 @@ const emptyKind = computed<EmptyKind | null>(() => {
   margin: 0 auto;
   padding-top: 0;
   padding-right: var(--public-page-padding);
-  padding-bottom: var(--space-10);
+  padding-bottom: var(--space-7);
   padding-left: var(--public-page-padding);
 }
 

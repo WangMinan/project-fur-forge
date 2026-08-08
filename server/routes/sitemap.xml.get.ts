@@ -2,8 +2,8 @@ import { getPublicSiteRepository } from '../utils/repository/public-site-reposit
 import { getRuntimeConfig } from '../utils/runtime-config'
 
 /**
- * `/returns` 作为一级页面进入 Sitemap，但不为单张返图生成 URL：
- * 返图没有详情路由，公开身份只是作品详情的入口。
+ * `/returns` 作为一级页面进入 Sitemap。单张返图没有自己的 URL；
+ * 设定返图页 `/returns/{slug}` 也不逐条枚举，返图墙已是它们的入口。
  */
 const STATIC_PATHS = [
   '/',
@@ -14,6 +14,7 @@ const STATIC_PATHS = [
   '/about',
   '/service',
   '/privacy',
+  '/licenses',
 ] as const
 
 export default defineEventHandler((event) => {

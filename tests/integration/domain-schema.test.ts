@@ -306,7 +306,8 @@ describe('P0 schema boundary', () => {
       'audit_logs',
       'business_statuses',
       'publication_operations',
-      // T35 一图一记录返图；不引入 return_albums / return_assets 相册层级。
+      // T35-F1 返图：设定 + 它的多张返图两级，不引入第三级相册层。
+      'return_characters',
       'return_photos',
       'site_branding',
       'site_content',
@@ -326,13 +327,16 @@ describe('P0 schema boundary', () => {
       'payment_note',
       'price_usd',
     ]))
-    expect(tables).not.toEqual(expect.arrayContaining([
+    // 已取消范围不得预建表：T37 不建 events，T39 不建 slug_redirects，
+    // T40 不建 trash_entries，T43 不建 password_reset_tokens。
+    for (const banned of [
       'events',
       'password_reset_tokens',
-      'return_photos',
       'slug_redirects',
       'trash_entries',
-    ]))
+    ]) {
+      expect(tables).not.toContain(banned)
+    }
   })
 
   it('enforces ownerDisplay, CNY and foreign keys', () => {

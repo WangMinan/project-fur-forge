@@ -128,10 +128,15 @@ const TONE_LABELS = {
   outline-offset: 2px;
 }
 
-/* 两卡共用 3:2 比例，图片按站点展示派生图的固有比例呈现。 */
+/**
+ * 两卡共用同一比例。
+ *
+ * 这是业务入口而不是作品展示位，图片只需要点到为止：用较扁的 21:9，
+ * 让入口卡不至于在首页抢过上方精选作品的视觉分量。
+ */
 .home-entry__media {
   display: block;
-  aspect-ratio: 3 / 2;
+  aspect-ratio: 21 / 9;
   overflow: hidden;
   background: var(--image-placeholder);
 }
