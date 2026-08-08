@@ -113,22 +113,31 @@ async function deleteCharacter() {
 
 <template>
   <AdminShell current="returns">
-    <section class="returns-admin">
-      <header class="returns-admin__header">
-        <div>
-          <h1 class="returns-admin__title">返图管理</h1>
-          <p class="returns-admin__meta">共 {{ resultCount }} 个设定</p>
-        </div>
-        <NuxtLink class="returns-admin__new" to="/admin/returns/new">
+    <section class="admin-list-page returns-admin">
+      <header class="admin-list-page__header">
+        <h1 class="admin-list-page__title">返图管理</h1>
+        <p v-if="status === 'ready'" class="admin-list-page__meta">
+          共 {{ resultCount }} 个
+        </p>
+        <NuxtLink class="admin-list-page__create" to="/admin/returns/new">
           新增设定
         </NuxtLink>
       </header>
 
-      <div class="returns-admin__filters">
-        <label class="returns-admin__field">
-          <span>查找</span>
-          <input v-model="query" type="search" placeholder="名称或昵称">
-        </label>
+      <div class="admin-list-toolbar returns-admin__filters">
+        <div class="admin-list-toolbar__field">
+          <label class="admin-list-toolbar__label" for="admin-return-search">
+            查找设定
+          </label>
+          <input
+            id="admin-return-search"
+            v-model="query"
+            class="admin-list-toolbar__control"
+            type="search"
+            placeholder="名称或昵称"
+            autocomplete="off"
+          >
+        </div>
       </div>
 
       <p v-if="status === 'loading'" class="returns-admin__state" role="status">
@@ -146,7 +155,7 @@ async function deleteCharacter() {
       </p>
 
       <template v-else>
-        <table class="returns-table" aria-label="返图设定列表">
+        <table class="admin-list-table returns-table" aria-label="返图设定列表">
           <thead>
             <tr>
               <th scope="col">主图</th>
@@ -249,67 +258,18 @@ async function deleteCharacter() {
 </template>
 
 <style scoped>
-.returns-admin__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--admin-space-4);
-}
+/* 页头、查找条与表格样式来自 admin-base.css 的 .admin-list-* 共用类。 */
 
-.returns-admin__title {
-  font-size: var(--admin-font-xl);
-  font-weight: 600;
-}
-
-.returns-admin__meta {
-  margin-top: var(--admin-space-2);
-  color: var(--admin-text-secondary);
-  font-size: var(--admin-font-sm);
-}
-
-.returns-admin__new {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--admin-touch-target);
-  padding: 0 var(--admin-space-5);
-  border-radius: var(--admin-radius-md);
-  background: var(--admin-accent-primary);
-  color: var(--admin-text-inverse);
-  font-size: var(--admin-font-sm);
-}
-
-.returns-admin__new:hover {
-  background: var(--admin-accent-hover);
-  color: var(--admin-text-inverse);
-}
-
-.returns-admin__filters {
-  display: flex;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  gap: var(--admin-space-4);
-  margin-top: var(--admin-space-6);
-}
-
-.returns-admin__field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--admin-space-2);
-  font-size: var(--admin-font-sm);
-  color: var(--admin-text-secondary);
-}
-
-.returns-admin__field input {
-  min-height: var(--admin-control-height);
-  min-width: 12rem;
-  padding: 0 var(--admin-space-3);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-md);
-  background: var(--admin-bg-primary);
-  color: var(--admin-text-primary);
-  font: inherit;
-  font-size: var(--admin-font-sm);
+/**
+ * 只有一个查找框：桌面端占约三分之一，不铺满整行。
+ *
+ * 选择器同时带上共用类，specificity 高于 admin-base.css 里的
+ * `.admin-surface .admin-list-toolbar`，因此不依赖样式表加载顺序。
+ */
+@media (min-width: 768px) {
+  .admin-list-toolbar.returns-admin__filters {
+    grid-template-columns: minmax(14rem, 1fr) 2fr;
+  }
 }
 
 .returns-admin__state {
@@ -320,36 +280,6 @@ async function deleteCharacter() {
   color: var(--admin-text-secondary);
   font-size: var(--admin-font-sm);
   text-align: center;
-}
-
-/* 白底表格，与 /admin/works 一致。 */
-.returns-table {
-  width: 100%;
-  margin-top: var(--admin-space-6);
-  border-collapse: collapse;
-  background: var(--admin-bg-primary);
-  font-size: var(--admin-font-sm);
-}
-
-.returns-table tbody tr:hover {
-  background: var(--admin-bg-workspace);
-}
-
-.returns-table th,
-.returns-table td {
-  padding: var(--admin-space-3);
-  border-bottom: 1px solid var(--admin-border-secondary);
-  text-align: left;
-  vertical-align: middle;
-}
-
-.returns-table th {
-  color: var(--admin-text-secondary);
-  font-weight: 600;
-}
-
-.returns-table tbody tr {
-  min-height: var(--admin-table-row-min);
 }
 
 .returns-table__name {

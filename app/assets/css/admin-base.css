@@ -166,6 +166,129 @@
   opacity: 0.55;
 }
 
+/**
+ * 管理端列表页的共用外壳：页头、主操作按钮、查找条与表格。
+ *
+ * 作品管理与返图管理原先各自维护一份同样的样式，结果每加一次需求就
+ * 漂移一次（表头字号、按钮大小、标题是否换行都对不上）。这里定义一次，
+ * 两个页面都用同一组类，视觉一致性就不再依赖人工比对。
+ */
+.admin-surface .admin-list-page {
+  max-width: var(--admin-content-max);
+}
+
+/* 标题与计数同一行：计数是标题的附注，不该被挤到下一行。 */
+.admin-surface .admin-list-page__header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--admin-space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--admin-space-5);
+}
+
+.admin-surface .admin-list-page__title {
+  margin: 0;
+  font-size: var(--admin-font-xl);
+  font-weight: 600;
+  line-height: var(--admin-line-tight);
+}
+
+.admin-surface .admin-list-page__meta {
+  margin: 0;
+  color: var(--admin-text-secondary);
+  font-size: var(--admin-font-sm);
+}
+
+/* 主操作固定在页头右端。 */
+.admin-surface .admin-list-page__create {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--admin-control-height);
+  margin-left: auto;
+  padding: 0 var(--admin-space-5);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-accent-primary);
+  color: var(--admin-text-inverse);
+  font-size: var(--admin-font-base);
+  font-weight: 600;
+}
+
+.admin-surface .admin-list-page__create:hover {
+  background: var(--admin-accent-hover);
+  color: var(--admin-text-inverse);
+}
+
+.admin-surface .admin-list-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--admin-space-3);
+  margin-bottom: var(--admin-space-4);
+  padding: var(--admin-space-4) 0;
+  border-top: 1px solid var(--admin-border-secondary);
+  border-bottom: 1px solid var(--admin-border-secondary);
+}
+
+.admin-surface .admin-list-toolbar__field {
+  min-width: 0;
+}
+
+.admin-surface .admin-list-toolbar__label {
+  display: block;
+  margin-bottom: var(--admin-space-1);
+  color: var(--admin-text-secondary);
+  font-size: var(--admin-font-xs);
+  font-weight: 600;
+}
+
+.admin-surface .admin-list-toolbar__control {
+  width: 100%;
+  min-height: var(--admin-control-height);
+  padding: 0 var(--admin-space-3);
+  border: 1px solid var(--admin-border-primary);
+  border-radius: var(--admin-radius-md);
+  color: var(--admin-text-primary);
+  background: var(--admin-bg-primary);
+  font: inherit;
+  font-size: var(--admin-font-base);
+}
+
+.admin-surface .admin-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--admin-bg-primary);
+}
+
+.admin-surface .admin-list-table th {
+  padding: var(--admin-space-3) var(--admin-space-4);
+  border-bottom: 1px solid var(--admin-border-secondary);
+  color: var(--admin-text-secondary);
+  font-size: var(--admin-font-xs);
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.admin-surface .admin-list-table td {
+  padding: var(--admin-space-3) var(--admin-space-4);
+  border-bottom: 1px solid var(--admin-border-secondary);
+  font-size: var(--admin-font-sm);
+  vertical-align: middle;
+}
+
+.admin-surface .admin-list-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-surface .admin-list-table tbody tr:hover {
+  background: var(--admin-bg-workspace);
+}
+
+@media (min-width: 768px) {
+  .admin-surface .admin-list-toolbar__control {
+    font-size: var(--admin-font-sm);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .admin-surface *,
   .admin-surface *::before,

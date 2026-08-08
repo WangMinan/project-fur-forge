@@ -34,22 +34,24 @@ const publicationStatus = defineModel<PublicationStatus | 'all'>('publicationSta
 </script>
 
 <template>
-  <section class="work-list-toolbar" aria-label="查找和筛选作品">
-    <div class="work-list-toolbar__search">
-      <label class="work-list-toolbar__label" for="admin-work-search">查找作品</label>
+  <!-- 标签与控件样式来自 admin-base.css 的 .admin-list-toolbar-*：
+       与返图管理的查找条共用一套，字号不会各自漂移。 -->
+  <section class="admin-list-toolbar work-list-toolbar" aria-label="查找和筛选作品">
+    <div class="admin-list-toolbar__field">
+      <label class="admin-list-toolbar__label" for="admin-work-search">查找作品</label>
       <input
         id="admin-work-search"
         v-model="query"
-        class="work-list-toolbar__control"
+        class="admin-list-toolbar__control"
         type="search"
         placeholder="角色名或物种"
         autocomplete="off"
       >
     </div>
 
-    <div class="work-list-toolbar__field">
-      <label class="work-list-toolbar__label" for="admin-work-purpose">用途</label>
-      <select id="admin-work-purpose" v-model="purpose" class="work-list-toolbar__control">
+    <div class="admin-list-toolbar__field">
+      <label class="admin-list-toolbar__label" for="admin-work-purpose">用途</label>
+      <select id="admin-work-purpose" v-model="purpose" class="admin-list-toolbar__control">
         <option value="all">全部用途</option>
         <option v-for="value in WORK_PURPOSE_VALUES" :key="value" :value="value">
           {{ WORK_PURPOSE_LABELS[value] }}
@@ -57,9 +59,9 @@ const publicationStatus = defineModel<PublicationStatus | 'all'>('publicationSta
       </select>
     </div>
 
-    <div class="work-list-toolbar__field">
-      <label class="work-list-toolbar__label" for="admin-work-suit-type">装型</label>
-      <select id="admin-work-suit-type" v-model="suitType" class="work-list-toolbar__control">
+    <div class="admin-list-toolbar__field">
+      <label class="admin-list-toolbar__label" for="admin-work-suit-type">装型</label>
+      <select id="admin-work-suit-type" v-model="suitType" class="admin-list-toolbar__control">
         <option value="all">全部装型</option>
         <option v-for="value in SUIT_TYPE_VALUES" :key="value" :value="value">
           {{ SUIT_TYPE_LABELS[value] }}
@@ -67,12 +69,12 @@ const publicationStatus = defineModel<PublicationStatus | 'all'>('publicationSta
       </select>
     </div>
 
-    <div class="work-list-toolbar__field">
-      <label class="work-list-toolbar__label" for="admin-work-publication">发布状态</label>
+    <div class="admin-list-toolbar__field">
+      <label class="admin-list-toolbar__label" for="admin-work-publication">发布状态</label>
       <select
         id="admin-work-publication"
         v-model="publicationStatus"
-        class="work-list-toolbar__control"
+        class="admin-list-toolbar__control"
       >
         <option value="all">全部状态</option>
         <option v-for="value in PUBLICATION_STATUS_VALUES" :key="value" :value="value">
@@ -96,40 +98,7 @@ const publicationStatus = defineModel<PublicationStatus | 'all'>('publicationSta
 </template>
 
 <style scoped>
-.work-list-toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--admin-space-3);
-  margin-bottom: var(--admin-space-4);
-  padding: var(--admin-space-4) 0;
-  border-top: 1px solid var(--admin-border-secondary);
-  border-bottom: 1px solid var(--admin-border-secondary);
-}
-
-.work-list-toolbar__search,
-.work-list-toolbar__field {
-  min-width: 0;
-}
-
-.work-list-toolbar__label {
-  display: block;
-  margin-bottom: var(--admin-space-1);
-  color: var(--admin-text-secondary);
-  font-size: var(--admin-font-xs);
-  font-weight: 600;
-}
-
-.work-list-toolbar__control {
-  width: 100%;
-  min-height: var(--admin-control-height);
-  padding: 0 var(--admin-space-3);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-md);
-  color: var(--admin-text-primary);
-  background: var(--admin-bg-primary);
-  font: inherit;
-  font-size: var(--admin-font-base);
-}
+/* 容器、标签与控件来自 .admin-list-toolbar*；这里只加四列布局与统计行。 */
 
 .work-list-toolbar__summary {
   display: flex;
@@ -166,13 +135,11 @@ const publicationStatus = defineModel<PublicationStatus | 'all'>('publicationSta
 }
 
 @media (min-width: 768px) {
-  .work-list-toolbar {
+  /* 同时带上共用类，specificity 高于 admin-base.css 的容器规则，
+     因此不依赖样式表加载顺序。 */
+  .admin-list-toolbar.work-list-toolbar {
     grid-template-columns: minmax(14rem, 2fr) repeat(3, minmax(8rem, 1fr));
     align-items: end;
-  }
-
-  .work-list-toolbar__control {
-    font-size: var(--admin-font-sm);
   }
 
   .work-list-toolbar__summary {
