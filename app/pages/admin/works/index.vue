@@ -210,13 +210,15 @@ onMounted(() => {
 
 <template>
   <AdminShell current="works">
-    <div class="works-page">
-      <header class="works-page__header">
-        <h1 class="works-page__title">作品管理</h1>
-        <p v-if="status === 'ready'" class="works-page__meta">
+    <div class="admin-list-page works-page">
+      <header class="admin-list-page__header">
+        <h1 class="admin-list-page__title">作品管理</h1>
+        <p v-if="status === 'ready'" class="admin-list-page__meta">
           共 {{ works.length }} 件
         </p>
-        <NuxtLink to="/admin/works/new" class="works-page__create">创建作品</NuxtLink>
+        <NuxtLink to="/admin/works/new" class="admin-list-page__create">
+          创建作品
+        </NuxtLink>
       </header>
 
       <div v-if="status === 'loading'" class="works-page__notice" role="status">
@@ -227,10 +229,6 @@ onMounted(() => {
         <p role="alert">作品列表加载失败，请检查网络连接后重试。</p>
         <button type="button" class="works-page__retry" @click="loadWorks">重试</button>
       </div>
-
-      <p v-if="status === 'ready'" class="works-page__ordering-hint">
-        排序只影响首页精选，数字越小越靠前。公开列表按发布时间从新到旧排列。
-      </p>
 
       <p
         v-if="status === 'ready' && publishedFeaturedCount > PUBLIC_FEATURED_LIMIT"
@@ -256,7 +254,9 @@ onMounted(() => {
       <div v-if="status === 'ready' && works.length === 0" class="works-page__empty">
         <p class="works-page__empty-title">暂无作品</p>
         <p class="works-page__empty-text">创建第一件作品，上传出厂照后即可发布。</p>
-        <NuxtLink to="/admin/works/new" class="works-page__create">创建第一件作品</NuxtLink>
+        <NuxtLink to="/admin/works/new" class="admin-list-page__create">
+          创建第一件作品
+        </NuxtLink>
       </div>
 
       <div
@@ -269,7 +269,7 @@ onMounted(() => {
       </div>
 
       <template v-else-if="status === 'ready'">
-        <table class="works-table" aria-label="作品管理表格">
+        <table class="admin-list-table works-table" aria-label="作品管理表格">
           <thead>
             <tr>
               <th scope="col">作品</th>
@@ -451,46 +451,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.works-page {
-  max-width: var(--admin-content-max);
-}
-
-.works-page__header {
-  display: flex;
-  align-items: baseline;
-  gap: var(--admin-space-4);
-  flex-wrap: wrap;
-  margin-bottom: var(--admin-space-5);
-}
-
-.works-page__title {
-  margin: 0;
-  font-size: var(--admin-font-xl);
-  font-weight: 600;
-  line-height: var(--admin-line-tight);
-}
-
-.works-page__meta {
-  margin: 0;
-  font-size: var(--admin-font-sm);
-  color: var(--admin-text-secondary);
-}
-
-.works-page__create {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--admin-control-height);
-  padding: 0 var(--admin-space-5);
-  border-radius: var(--admin-radius-md);
-  background: var(--admin-accent-primary);
-  color: var(--admin-text-inverse);
-  font-weight: 600;
-}
-
-.works-page__create:hover {
-  background: var(--admin-accent-hover);
-}
+/* 页头、主操作与表格样式来自 admin-base.css 的 .admin-list-* 共用类。 */
 
 .works-page__notice {
   background: var(--admin-bg-primary);
@@ -534,11 +495,6 @@ onMounted(() => {
   color: var(--admin-text-tertiary);
 }
 
-.works-page__ordering-hint {
-  margin: 0 0 var(--admin-space-4);
-  color: var(--admin-text-tertiary);
-  font-size: var(--admin-font-xs);
-}
 
 .works-page__retry {
   min-height: var(--admin-control-height);
@@ -591,42 +547,14 @@ onMounted(() => {
   color: var(--admin-text-secondary);
 }
 
-.works-page__empty .works-page__create {
+/* 空态里的按钮居中，不沿用页头那条靠右的 margin-left: auto。 */
+.works-page__empty .admin-list-page__create {
   margin-left: 0;
 }
 
+/* 表格本体样式来自 .admin-list-table；这里只控制窄屏改用卡片列表。 */
 .works-table {
   display: none;
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--admin-bg-primary);
-  border: 0;
-  border-radius: 0;
-}
-
-.works-table th {
-  text-align: left;
-  font-size: var(--admin-font-xs);
-  font-weight: 600;
-  color: var(--admin-text-secondary);
-  padding: var(--admin-space-3) var(--admin-space-4);
-  border-bottom: 1px solid var(--admin-border-secondary);
-  white-space: nowrap;
-}
-
-.works-table td {
-  padding: var(--admin-space-3) var(--admin-space-4);
-  border-bottom: 1px solid var(--admin-border-secondary);
-  font-size: var(--admin-font-sm);
-  vertical-align: middle;
-}
-
-.works-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.works-table tbody tr:hover {
-  background: var(--admin-bg-workspace);
 }
 
 .works-table__work {
