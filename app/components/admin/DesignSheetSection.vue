@@ -253,7 +253,7 @@ defineExpose({ save: saveDesignSheet })
           class="design-sheet__resolution-warning"
           role="status"
         >
-          这张原图分辨率较低，仍可保存和发布。发布时会用 FFmpeg Lanczos 生成私有适配源；放大不会恢复原图没有的细节，完整原图会保留不变。
+          这张原图分辨率较低，仍可保存和发布。发布时会用 FFmpeg Lanczos 生成私有适配源，然后才会执行上传。
         </p>
         <AdminWatermarkedMediaPreview
           :asset-id="entry.assetId"

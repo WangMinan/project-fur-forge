@@ -371,7 +371,7 @@ onUnmounted(() => {
         class="publication__preprocess"
         role="status"
       >
-        设定图原图分辨率较低，但可以发布。系统会先用 FFmpeg Lanczos 生成私有适配源；这不会恢复原图没有的细节，完整原图会保留不变。
+        设定图原图分辨率较低，但可以发布。系统会先用 FFmpeg Lanczos 生成私有适配源，然后才会执行上传。
       </p>
       <p v-if="check.missingVariantCount > 0" class="publication__variants">
         发布时将生成 {{ check.missingVariantCount }} 张带水印公开图片，可能需要较长时间。

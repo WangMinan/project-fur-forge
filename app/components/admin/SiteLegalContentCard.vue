@@ -27,14 +27,14 @@ const CONFIG = {
     field: 'basicTerms',
     title: '服务条款',
     label: '服务条款正文',
-    hint: '显示在 /service 页面，空行分段。',
+    hint: '空行分段。',
     max: SITE_CONTENT_LIMITS.basicTerms,
   },
   privacy: {
     field: 'privacyPolicy',
     title: '隐私政策',
     label: '隐私政策正文',
-    hint: '显示在 /privacy 页面，空行分段。',
+    hint: '空行分段。',
     max: SITE_CONTENT_LIMITS.privacyPolicy,
   },
 } as const

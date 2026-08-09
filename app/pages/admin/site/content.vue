@@ -55,9 +55,6 @@ onMounted(() => void load())
     <div class="content-admin" data-testid="content-admin">
       <header class="content-admin__header">
         <h1 class="content-admin__title">文案配置</h1>
-        <p class="content-admin__meta">
-          每一部分单独保存，互不影响。改完一部分点它自己的保存按钮就行。
-        </p>
       </header>
 
       <div v-if="pageStatus === 'loading'" class="content-admin__state" role="status">
@@ -71,9 +68,6 @@ onMounted(() => void load())
       <template v-else-if="content">
         <section class="content-admin__group" aria-labelledby="business-statuses-title">
           <h2 id="business-statuses-title" class="content-admin__group-title">营业状态</h2>
-          <p class="content-admin__meta">
-            委托与领养各自独立保存；状态链接由系统固定指向对应公开页。
-          </p>
           <div class="content-admin__statuses">
             <AdminSiteBusinessStatusCard
               kind="commission"

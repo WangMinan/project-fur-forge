@@ -18,7 +18,7 @@
 
 系统不建设交易、订单、排期、多管理员、万能 CMS、访客投稿或社交互动。
 
-阶段 E 完成最小化第一方访问统计、备案/品牌展示能力、生产媒体/CDN、app-only Compose + 宿主机 Nginx/acme.sh 部署/恢复基线、发布级 CI、独立 Review 和最终回归，并冻结唯一上线 SHA。阶段 F 主要由用户和远程开发机填写真实参数、操作阿里云控制台、部署冻结镜像、完成正式环境演练和验收；允许按实际运维需要补充不改变冻结应用契约的小型运维脚本。
+阶段 E 完成最小化第一方访问统计、备案/品牌展示能力、生产媒体/ESA、app-only Compose + 宿主机 HTTP-only Nginx 部署/恢复基线、发布级 CI、独立 Review 和最终回归，并冻结唯一上线 SHA。阶段 F 主要由用户和远程开发机填写真实参数、操作阿里云控制台、部署冻结镜像、完成正式环境演练和验收；允许按实际运维需要补充不改变冻结应用契约的小型运维脚本。
 
 产品开发完成与正式发布就绪是不同结论：只有 GATE-E 与 T53-F1～F5 全部关闭后才可声明正式上线就绪。
 
@@ -79,7 +79,7 @@
 - 杭州生产 ECS 的服务端 OSS SDK 使用 `https://oss-cn-hangzhou-internal.aliyuncs.com`；
 - 本地开发服务端使用杭州公网 Endpoint；
 - 管理浏览器条件 PUT 使用私有 Bucket 杭州公网域名，不能出现 `-internal`；
-- 公开图片只使用 CDN 媒体 origin，不能出现 OSS Bucket 域名。
+- 公开图片只使用 ESA 媒体 origin `public-media.ditedog.com`，不能出现原始 OSS Bucket 域名。
 
 应用只在测试环境暴露假媒体端点；生产环境不得注册测试控制路由。当前代码尚需在 T52-E1 将 `OSS_UPLOAD_BASE_URL` 真正接入签名链。
 
@@ -302,11 +302,11 @@
 
 - 继续复用当前两只杭州 Bucket，但两只 ACL 都改为 private，并开启 Bucket 级 Block Public Access；
 - 原图 Bucket 保存永久源、处理源和管理预览；网页衍生 Bucket 只保存 READY 网页衍生物；
-- CDN 只对网页衍生 Bucket 使用同账号私有回源；其全 Bucket 读取能力由严格内容隔离约束；
-- 原始 OSS Bucket 域名匿名 GET 均应 403；公开响应按鉴权方式 A 生成约 `86400` 秒有效的 CDN URL；
-- 数据库不持久化完整 CDN 签名 URL，日志/错误/审计不记录完整签名 URL 或鉴权 Key；
-- CDN 鉴权后忽略全部查询参数且不保留回源参数，公开页不能使用 `x-oss-process`；
-- 浏览器缓存最长 86400 秒，CDN 节点可按不可变 Key 长缓存；媒体域名不开启响应过期缓存。
+- `public-media.ditedog.com` 对网页衍生 Bucket 使用同账号私有回源；阿里云自动使用 STS 临时令牌和回源 `Authorization`，业务应用不实现或保存 STS；
+- 原始 OSS Bucket 域名匿名 GET 均应 403；公开响应使用稳定的 ESA HTTPS 媒体 URL；
+- 首版不做自定义边缘 URL 鉴权；管理端原有登录、Session、Host/Origin/CSRF 认证边界保持不变；
+- 数据库不持久化原始 OSS 签名 URL，日志/错误/审计不记录 Secret 或私有 Object Key；
+- ESA 缓存键忽略无业务意义的查询参数，公开页不能使用 `x-oss-process`；ESA 节点可按不可变 Key 长缓存，媒体域名不得在源站 404/故障时继续提供已下架旧图片。
 
 返图公开变体使用独立用途和配方，例如：
 
@@ -365,14 +365,14 @@ protection_mode = none
 5. 写入审计记录；
 6. 失败时只清理当前 attempt 新建对象，保留旧公开状态。
 
-下架先撤销公开状态，再精确清理不再引用的公开对象。阶段 E 接入 CDN 后还必须：
+下架先撤销公开状态，再精确清理不再引用的公开对象。阶段 E 接入 ESA 后还必须：
 
-1. 固化不含鉴权参数的精确 CDN File URL manifest；
-2. 调用 `RefreshObjectCaches`，`Force=true`；
-3. 保存任务 ID并用 `DescribeRefreshTasks` 查询；
-4. 刷新失败保留可恢复状态和 manifest，重启后继续收敛。
+1. 固化精确 ESA File URL manifest；
+2. 调用 `PurgeCaches(Type=file)`；
+3. 保存 ESA `TaskId` 并用 `DescribePurgeTasks` 查询；
+4. purge 失败保留可恢复状态和 manifest，重启后继续收敛。
 
-页面在数据库投影撤销后立即下架；用户已接受 CDN 服务器侧通常约 5～6 分钟完成撤销。不得把“页面已下架”冒充“CDN 已全网撤销”。运行中的发布/撤销不得被普通删除操作破坏。
+页面在数据库投影撤销后立即下架；ESA 服务器侧撤销以 purge task 完成为准，目标完成时间由 T53 warm-cache 实测后记录。不得把“页面已下架”冒充“ESA 已全网撤销”。运行中的发布/撤销不得被普通删除操作破坏。
 
 ## 8. 公开首页
 
@@ -531,7 +531,7 @@ protection_mode = none
 
 设定页额外包含可选关联作品的公开名称、slug 和 href。
 
-不得包含授权来源、授权时间、内部备注、私有联系人、私有 Object Key、私有 OSS 签名 URL、原文件名或 EXIF。T52-E3 完成后允许包含为当前页面动态生成的约 24 小时 CDN 鉴权 URL。
+不得包含授权来源、授权时间、内部备注、私有联系人、私有 Object Key、私有 OSS 签名 URL、原文件名或 EXIF。T52-E3 完成后只允许包含稳定的 ESA HTTPS 媒体 URL。
 
 首版不提供返图者主页、搜索、点赞、评论、公开投稿或访客账户。
 
@@ -677,13 +677,13 @@ protection_mode = none
 - 可信客户端 IP 只从明确配置的反向代理链取得；
 - 错误响应使用稳定 `code` 和业务 `reason`；
 - 管理响应使用 `no-store`、`noindex`；
-- 日志不得记录密码、用户名明文、邮箱、联系人、返图授权记录、Session、Cookie、签名 URL、应用 AK/SK、ACME `Ali_Key` / `Ali_Secret` 或私有 Object Key。
+- 日志不得记录密码、用户名明文、邮箱、联系人、返图授权记录、Session、Cookie、签名 URL、OSS/ESA AK/SK、媒体鉴权 Key 或私有 Object Key。
 
 返图公开衍生生成必须移除不需要的 EXIF，尤其不能公开拍摄位置和设备隐私信息。
 
 ## 18. 长任务与恢复
 
-适用于作品、Hero、品牌 profile、站点展示 reconcile、返图公开生成/发布，以及阶段 E 开发的 CDN 强制刷新。
+适用于作品、Hero、品牌 profile、站点展示 reconcile、返图公开生成/发布，以及阶段 E 开发的 ESA 强制 purge。
 
 每个 operation 至少包含：状态、请求版本、进度、失败阶段、稳定失败码、已创建对象清单、attempt、lease owner、lease 到期时间、heartbeat、recovery reason、必要的下一次重试时间和完成时间。
 
@@ -710,11 +710,11 @@ protection_mode = none
 - `docker-compose.yaml` 的唯一常驻服务是非 root Nuxt/Nitro `app`；migrate、preflight、backup、restore 和 recover 只以同一冻结镜像的一次性容器运行；
 - 不运行 Nginx 容器；记录并复用 ECS 宿主机现有 Nginx 版本、配置目录和 systemd 服务，GATE-E 冻结与其兼容的仓库模板与回滚入口；
 - app 端口固定只绑定 `127.0.0.1:3000`，安全组不得开放 3000；宿主机 Nginx upstream 固定代理该地址；
-- 公开与管理域名复用现有 `ditedog.com` / `*.ditedog.com` ECDSA 证书，由 acme.sh 显式使用 Let's Encrypt，并通过 `dns_ali` 执行 DNS-01；不改用 Certbot 或 `nginx-module-acme`；
-- 通配符只用于证书覆盖；Nginx 正式 `server_name` 必须只列公开/管理精确域名，其他 Host/SNI 由默认 server 拒绝；
-- 复用现有每 6 小时执行 `acme.sh --cron` 的 root cron；`--install-cert --ecc` 把 key/fullchain 复制到 `/etc/nginx/ssl/ditedog.com/`，reload command 唯一语义为 `/usr/sbin/nginx -t && /usr/bin/systemctl reload nginx`，Nginx 不读取 acme.sh 内部证书目录；
-- ACME 使用独立 DNS-only RAM API Key，只允许对承载公开/管理域名的 DNS zone（跨 zone 时逐个列出）执行 `DescribeDomainRecords`、`AddDomainRecord`、`DeleteDomainRecord`；它不进入应用 `.env`、Compose 或容器；
-- 媒体域名在阿里云 CDN 终止 TLS，不进入宿主机 Nginx 证书；DNS-01 不依赖 80 端口或正式 A 记录已切换。
+- 客户端 TLS 由 ESA 托管边缘证书终止；ESA 到 ECS 固定使用 HTTP/80，宿主机 Nginx 不监听 443、不保存证书或运行 ACME/续期调度；
+- Nginx 正式 `server_name` 必须只列公开/管理精确域名，两个媒体 Host 和其他未知 Host 由专用/默认 server 返回 `421`；ESA DNS 不保留 wildcard 正式路由；
+- ESA 边缘强制 HTTPS；`/_nuxt/**` 等不可变静态资源可长缓存，管理 Host、`/api/**`、登录/会话和写操作绕过共享缓存，公开 SSR HTML 在目标环境实测前默认绕过缓存；
+- 生产套餐启用源站保护后，ECS 80 只允许 ESA 回源 IP；app 3000 仍只绑定 `127.0.0.1`；
+- 部署产物不得包含 acme.sh、Certbot、DNS API Secret、证书目录、续期 cron/timer 或证书 reload 逻辑。
 
 GitHub Actions 目标至少执行 frozen install、lint、typecheck、unit、integration、production build、production output verify、secret/content scan、Compose 静态检查、Docker build 和核心 E2E。
 
@@ -744,10 +744,10 @@ GitHub Actions 目标至少执行 frozen install、lint、typecheck、unit、int
 - 手机端可以完成约定的返图和掉落轻量维护；
 - `/works` 页名与筛选条保持紧凑，不出现明显空档；
 - 低分辨率领养设定图可以上传、保存并发布：发布前有清晰度提示，发布中先生成私有 FFmpeg 适配源，原图不变，失败时给出可重试的明确反馈；
-- `/admin/analytics` 不泄漏 IP、UA、Referer、查询串、原始会话 ID或联系方式，采集失败不影响公开页面；
+- `/admin/analytics` 不泄漏 IP、UA、Referer、查询串、原始会话 ID 或联系方式，采集失败不影响公开页面；
 - console、network、图片解码、焦点、键盘、减少动效和 CLS。
 
-阶段 E 在受控环境完成相同能力的自动/浏览器/恢复验证；阶段 F 再按 Handbook 在目标环境检查：两只原始 OSS 域名匿名 403、CDN 有效/过期/篡改 URL、浏览器公网上传/远程机内网 Endpoint、查询参数收敛、下架强制刷新、备案品牌“有点小狗”、宿主机 Nginx、`127.0.0.1:3000` 隔离、现有证书/root cron/最近续期结果与安全 reload、用量封顶、告警、备份恢复和回滚。
+阶段 E 在受控环境完成相同能力的自动/浏览器/恢复验证；阶段 F 再按 Handbook 在目标环境检查：两只原始 OSS 域名匿名 403、ESA 已发布媒体可读、浏览器公网上传/远程机内网 Endpoint、查询参数收敛、下架 purge、备案品牌“有点小狗”、ESA 边缘 TLS/源站保护、宿主机 HTTP-only Nginx、`127.0.0.1:3000` 隔离、安全 reload、用量封顶、告警、备份恢复和回滚。
 
 ## 22. 阶段 D 完成与阶段 E 取消项
 
@@ -773,7 +773,7 @@ GitHub Actions 目标至少执行 frozen install、lint、typecheck、unit、int
 
 - T41：手机轻量维护闭环；必要能力并入 T36、T37。
 
-阶段 E 已取消 T43 邮件找回、T44 CSV、T45 原图档案 UI 和 T47 高级运维 UI；T48 已完成调研/契约，生产 CDN 开发全部纳入 T52-E1～E6。
+阶段 E 已取消 T43 邮件找回、T44 CSV、T45 原图档案 UI 和 T47 高级运维 UI；生产 ESA 开发全部纳入 T52-E1～E6。
 
 ## 23. 门禁分层
 
@@ -787,7 +787,7 @@ T42 已由用户验收关闭。该结论不等于独立 Review；T49 必须在�
 
 进入阶段 F 前必须满足：
 
-- T46、T51 和 T52-E1～E6 的全部应用代码、Schema、app-only Compose、宿主机 Nginx/ACME 部署基线、核心运维入口、模板、自动测试与受控演练完成；
+- T46、T51 和 T52-E1～E6 的全部应用代码、Schema、app-only Compose、宿主机 HTTP-only Nginx/ESA 部署基线、核心运维入口、模板、自动测试与受控演练完成；
 - T49 修复 GitHub Actions，并在同一最新 SHA 完成独立综合 Review；
 - T50 完成最终 E2E、浏览器、媒体、进程、部署和恢复复核；
 - 生产变量契约、镜像摘要、preflight、Handbook 和回滚入口基线冻结；
@@ -807,6 +807,6 @@ F 中若发现需要修改开发产物，GATE-E 失效，必须返回 E 修复�
 
 ## 24. 当前开放问题
 
-当前没有阻断阶段 E 开发的业务开放问题。阶段 E 先实现严格配置槽、校验、空值隐藏、测量和远程命令；T53-F1 时用户再提供正式公开/管理/媒体域名、真实 ICP 备案号、URL 鉴权主/备 Key、月度预算、目标环境实测后的 CDN 封顶数值和正式素材确认，并核对现有 ACME 邮箱/Key 的保存位置与轮换责任。占位值或预先存在的远程配置不能被视为阶段 F 完成。
+当前没有阻断阶段 E 开发的业务开放问题。阶段 E 先实现严格配置槽、校验、空值隐藏、测量和远程命令；T53-F1 时用户再提供正式公开/管理域名、真实 ICP 备案号、ESA Site 与 purge API 最小权限配置、正式套餐、月度预算、目标环境实测阈值和正式素材确认。`public-media.ditedog.com` 已确定。占位值或预先存在的远程配置不能被视为阶段 F 完成。
 
 实现者可以在不改变公开行为、数据事实和管理心智模型的前提下完成局部技术取舍；若新问题会改变本契约，必须先更新规格并取得用户确认。

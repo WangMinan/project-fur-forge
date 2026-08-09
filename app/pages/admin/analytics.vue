@@ -98,16 +98,6 @@ onMounted(() => void load())
             :items="contactRankingItems(analytics)"
           />
         </section>
-
-        <aside class="analytics-page__privacy" aria-labelledby="analytics-privacy-title">
-          <h2 id="analytics-privacy-title">口径与隐私边界</h2>
-          <p>
-            “页面浏览”是白名单页面打开次数；“大约会话”是同一标识在时间段内的去重数，不等于真实人数。
-          </p>
-          <p>
-            系统不保存 IP、浏览器信息、来源页、完整 URL、查询参数、Cookie、联系内容或设备指纹。
-          </p>
-        </aside>
       </template>
     </div>
   </AdminShell>
