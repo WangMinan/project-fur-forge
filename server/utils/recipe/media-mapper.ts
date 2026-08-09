@@ -81,7 +81,7 @@ export interface HeroSlideRecord {
   } | null
 }
 
-const PRODUCTION_MEDIA_ORIGIN = 'https://public-media.ditedog.com'
+export const PRODUCTION_MEDIA_ORIGIN = 'https://public-media.ditedog.com'
 
 function assertPublicDerivativeObjectKey(
   mediaOrigin: string,
@@ -109,7 +109,10 @@ function assertPublicDerivativeObjectKey(
   }
 }
 
-function publicMediaUrl(mediaBaseUrl: string, objectKey: string) {
+export function publicMediaUrlForObjectKey(
+  mediaBaseUrl: string,
+  objectKey: string,
+) {
   const base = new URL(mediaBaseUrl)
   assertPublicDerivativeObjectKey(base.origin, objectKey)
   base.pathname = `${base.pathname.replace(/\/$/, '')}/${objectKey
@@ -140,7 +143,7 @@ export function toPublicVariantDto(
   }
 
   return publicVariantDtoSchema.parse({
-    src: publicMediaUrl(mediaBaseUrl, record.objectKey),
+    src: publicMediaUrlForObjectKey(mediaBaseUrl, record.objectKey),
     width: record.width,
     height: record.height,
     format: record.format,

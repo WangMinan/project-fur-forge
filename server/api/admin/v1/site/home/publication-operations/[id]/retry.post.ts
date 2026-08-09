@@ -7,6 +7,7 @@ import { getDatabase } from '../../../../../../../utils/database'
 import {
   retryHeroSlidePublication,
   runHeroSlidePublication,
+  runHeroSlideUnpublication,
 } from '../../../../../../../utils/runner/home-management'
 import { getMediaStorage } from '../../../../../../../utils/media-storage'
 import { readAdminJsonBody } from '../../../../../../../utils/route/request-body'
@@ -27,8 +28,11 @@ export default defineEventHandler(async (event) => {
       id.data,
       body.data.expectedVersion,
     )
-    if (operation.status !== 'FAILED') {
-      event.waitUntil(runHeroSlidePublication(
+    if (operation.status !== 'FAILED' && operation.status !== 'DONE') {
+      const runner = operation.operationType === 'UNPUBLISH'
+        ? runHeroSlideUnpublication
+        : runHeroSlidePublication
+      event.waitUntil(runner(
         sqlite,
         storage,
         operation.operationId,

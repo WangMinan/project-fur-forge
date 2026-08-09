@@ -28,6 +28,14 @@ export const PUBLICATION_FAILURE_STAGE_VALUES = [
   'CLEANING_PUBLIC',
 ] as const
 
+export const EDGE_PURGE_STATUS_VALUES = [
+  'NOT_REQUIRED',
+  'PENDING',
+  'PURGING',
+  'COMPLETE',
+  'FAILED',
+] as const
+
 export const PUBLICATION_BLOCKER_VALUES = [
   /** T37：展会掉落缺少展会名称或展会时间。 */
   'EVENT_DROP_FIELDS_REQUIRED',
@@ -51,6 +59,7 @@ export const publicationFailureStageSchema = z.enum(
   PUBLICATION_FAILURE_STAGE_VALUES,
 )
 export const publicationBlockerSchema = z.enum(PUBLICATION_BLOCKER_VALUES)
+export const edgePurgeStatusSchema = z.enum(EDGE_PURGE_STATUS_VALUES)
 
 export const publicationOperationDtoSchema = z.object({
   operationId: resourceIdSchema,
@@ -61,6 +70,9 @@ export const publicationOperationDtoSchema = z.object({
   failureStage: publicationFailureStageSchema.nullable(),
   failureCode: z.string().min(1).max(100).nullable(),
   cleanupPendingCount: z.number().int().nonnegative(),
+  edgePurgeStatus: edgePurgeStatusSchema,
+  edgePurgeFailureReason: z.string().min(1).max(100).nullable(),
+  edgePurgeFileCount: z.number().int().min(0).max(1_000),
   version: resourceVersionSchema,
   startedAt: z.string().datetime({ offset: true }),
   updatedAt: z.string().datetime({ offset: true }),

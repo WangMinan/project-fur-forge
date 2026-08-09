@@ -133,6 +133,8 @@ T52-E3 已按该边界落地：公开 DTO 的唯一 URL 组装入口现在拒绝
 
 UI 区分“页面已下架”“ESA 缓存清除中”“已撤销”“撤销失败”。T53 记录目标环境 warm cache 的实际完成时间。
 
+T52-E4 已按该设计落地：作品、返图和首页/委托 Hero 共用 `publication_operations` 保存精确 URL manifest、TaskId、边缘状态和稳定失败 reason；页面投影先提交，随后删除精确 OSS 对象并使用官方 SDK 提交/查询 ESA file purge。失败重试和启动恢复只续做清理/查询，不重复改变业务版本。缓存策略基线冻结在 `deploy/esa/cache-policy.json`，由 `pnpm run verify:esa-cache` 校验；真实控制台配置和 warm-cache 完成时间仍由 T53 记录。
+
 ### 3.7 T52-E5 成本与可观测性准备
 
 E 提供测量与验证能力，不虚构生产阈值：

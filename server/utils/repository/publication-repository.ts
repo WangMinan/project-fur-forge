@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3'
 import type {
+  EdgePurgeStatus,
   PublicationFailureStage,
   PublicationOperationStatus,
 } from '../../../shared/types/contracts'
@@ -17,7 +18,13 @@ import type {
 export interface OperationRow {
   cleanupObjectKeysJson: string
   completedAt: number | null
+  edgePurgeCheckedAt: number | null
+  edgePurgeReason: string | null
+  edgePurgeStatus: EdgePurgeStatus
+  edgePurgeTaskId: string | null
+  edgePurgeUrlsJson: string
   entityId: string
+  entityType: 'HOME' | 'RETURN_PHOTO' | 'WORK'
   failureStage: PublicationFailureStage | null
   id: string
   internalErrorCode: string | null
@@ -61,9 +68,15 @@ export interface PublicationAsset {
 }
 
 export const operationColumns = `
-    id, operation_type AS operationType, entity_id AS entityId,
+    id, operation_type AS operationType, entity_type AS entityType,
+    entity_id AS entityId,
     requested_version AS requestedVersion, status,
     cleanup_object_keys_json AS cleanupObjectKeysJson,
+    edge_purge_urls_json AS edgePurgeUrlsJson,
+    edge_purge_task_id AS edgePurgeTaskId,
+    edge_purge_status AS edgePurgeStatus,
+    edge_purge_reason AS edgePurgeReason,
+    edge_purge_checked_at AS edgePurgeCheckedAt,
     internal_error_code AS internalErrorCode,
     failure_stage AS failureStage, version,
     started_at AS startedAt, updated_at AS updatedAt,
@@ -95,6 +108,48 @@ export function findPublicationOperation(
 ) {
   return sqlite.prepare(`${selectOperation} WHERE id = ?`)
     .get(id) as OperationRow | undefined
+}
+
+export function hasActivePublicationOperation(
+  sqlite: Database.Database,
+  entityType: OperationRow['entityType'],
+  entityId: string,
+) {
+  return Boolean(sqlite.prepare(`
+    SELECT 1 FROM publication_operations
+    WHERE entity_type = ? AND entity_id = ?
+      AND status NOT IN ('FAILED', 'DONE')
+    LIMIT 1
+  `).pluck().get(entityType, entityId))
+}
+
+export function insertPublicationOperation(
+  sqlite: Database.Database,
+  input: {
+    entityId: string
+    entityType: OperationRow['entityType']
+    id: string
+    operationType: OperationRow['operationType']
+    requestedVersion: number
+    status: PublicationOperationStatus
+  },
+  now: number,
+) {
+  sqlite.prepare(`
+    INSERT INTO publication_operations (
+      id, operation_type, entity_type, entity_id, requested_version,
+      status, started_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    input.id,
+    input.operationType,
+    input.entityType,
+    input.entityId,
+    input.requestedVersion,
+    input.status,
+    now,
+    now,
+  )
 }
 
 export function findWorkState(sqlite: Database.Database, id: string) {
@@ -195,6 +250,23 @@ export function updateOperationStatus(
   `).run(status, JSON.stringify(cleanupKeys), now, id)
 }
 
+export function resetFailedPublicationOperation(
+  sqlite: Database.Database,
+  id: string,
+  expectedVersion: number,
+  status: PublicationOperationStatus,
+  now: number,
+) {
+  return sqlite.prepare(`
+    UPDATE publication_operations
+    SET status = ?, failure_stage = NULL,
+        internal_error_code = NULL, internal_error_message = NULL,
+        cleanup_object_keys_json = '[]', completed_at = NULL,
+        version = version + 1, updated_at = ?
+    WHERE id = ? AND version = ? AND status = 'FAILED'
+  `).run(status, now, id, expectedVersion).changes
+}
+
 export function markOperationFailed(
   sqlite: Database.Database,
   id: string,
@@ -248,6 +320,78 @@ export function setOperationCleanupKeys(
     SET cleanup_object_keys_json = ?, version = version + 1,
         updated_at = ? WHERE id = ?
   `).run(JSON.stringify(cleanupKeys), now, id)
+}
+
+export function setOperationEdgePurgeManifest(
+  sqlite: Database.Database,
+  id: string,
+  urls: readonly string[],
+  now: number,
+) {
+  sqlite.prepare(`
+    UPDATE publication_operations
+    SET edge_purge_urls_json = ?, edge_purge_task_id = NULL,
+        edge_purge_status = ?, edge_purge_reason = NULL,
+        edge_purge_checked_at = NULL, version = version + 1,
+        updated_at = ?
+    WHERE id = ?
+  `).run(
+    JSON.stringify(urls),
+    urls.length > 0 ? 'PENDING' : 'NOT_REQUIRED',
+    now,
+    id,
+  )
+}
+
+export function markOperationEdgePurgeSubmitted(
+  sqlite: Database.Database,
+  id: string,
+  taskId: string,
+  now: number,
+) {
+  sqlite.prepare(`
+    UPDATE publication_operations
+    SET status = 'CLEANING_PUBLIC', edge_purge_task_id = ?,
+        edge_purge_status = 'PURGING', edge_purge_reason = NULL,
+        edge_purge_checked_at = ?, internal_error_code = NULL,
+        internal_error_message = NULL, failure_stage = NULL,
+        completed_at = NULL, version = version + 1, updated_at = ?
+    WHERE id = ?
+  `).run(taskId, now, now, id)
+}
+
+export function markOperationEdgePurgeChecked(
+  sqlite: Database.Database,
+  id: string,
+  input: {
+    reason?: string
+    status: 'COMPLETE' | 'FAILED' | 'PURGING'
+  },
+  now: number,
+) {
+  sqlite.prepare(`
+    UPDATE publication_operations
+    SET edge_purge_status = ?, edge_purge_reason = ?,
+        edge_purge_checked_at = ?, version = version + 1,
+        updated_at = ?
+    WHERE id = ?
+  `).run(input.status, input.reason ?? null, now, now, id)
+}
+
+export function resetOperationEdgePurge(
+  sqlite: Database.Database,
+  id: string,
+  now: number,
+) {
+  sqlite.prepare(`
+    UPDATE publication_operations
+    SET status = 'CLEANING_PUBLIC', edge_purge_task_id = NULL,
+        edge_purge_status = 'PENDING', edge_purge_reason = NULL,
+        edge_purge_checked_at = NULL, internal_error_code = NULL,
+        internal_error_message = NULL, failure_stage = NULL,
+        completed_at = NULL, version = version + 1, updated_at = ?
+    WHERE id = ? AND edge_purge_urls_json != '[]'
+  `).run(now, id)
 }
 
 export function deletePublicVariant(

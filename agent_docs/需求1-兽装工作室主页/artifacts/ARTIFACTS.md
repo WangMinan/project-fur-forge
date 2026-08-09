@@ -54,14 +54,15 @@ T35–T37 尚无独立 Review 签署；该门禁并入 T49，不能用用户验�
 - T52-E1 Endpoint/配置：服务端 OSS、浏览器条件 PUT 与 ESA 公开媒体三类地址分离，独立 ESA Site/API 配置，生产 Schema、环境/runtime 模板和 production verify 同步；证据见 [`../implementation/notes/stage-e/T52-E1-ENGINEERING-2026-08-09.md`](../implementation/notes/stage-e/T52-E1-ENGINEERING-2026-08-09.md)。
 - T52-E2 OSS/ESA preflight：默认无网络 dry-run、显式 live 探测、Bucket/对象/衍生物数据库边界、上传失败面、原站/ESA 读取、官方 SDK purge 最小权限与脱敏证据；证据见 [`../implementation/notes/stage-e/T52-E2-ENGINEERING-2026-08-09.md`](../implementation/notes/stage-e/T52-E2-ENGINEERING-2026-08-09.md)。
 - T52-E3 ESA 公开投影：生产公开媒体只接受 `public-media` 的 `prod/web/**`，公开 SSR/API 泄漏扫描、网页衍生物 fail-closed 门禁、H3 直接依赖闭包和生产产物验证同步；证据见 [`../implementation/notes/stage-e/T52-E3-ENGINEERING-2026-08-09.md`](../implementation/notes/stage-e/T52-E3-ENGINEERING-2026-08-09.md)。
+- T52-E4 ESA 缓存与撤销：机器可校验缓存基线、精确 file purge、URL/TaskId/边缘状态持久化、失败重试/启动恢复、作品/返图/Hero 管理反馈和正式输出依赖闭包；证据见 [`../implementation/notes/stage-e/T52-E4-ENGINEERING-2026-08-10.md`](../implementation/notes/stage-e/T52-E4-ENGINEERING-2026-08-10.md)。
 
-七项工程自测均不代签 T49 独立 Review；T52-E2/E3 尚未在生产凭据/Bucket 上执行 live 模式，T46 最终隐私文案与 T51 正式素材选择仍由用户确认。
+八项工程自测均不代签 T49 独立 Review；T52-E2/E3 尚未在生产凭据/Bucket 上执行 live 模式，T52-E4 尚未在目标环境实测控制台缓存与 warm-cache 撤销时间；T46 最终隐私文案与 T51 正式素材选择仍由用户确认。
 
 ## 后续待产物
 
 | 任务 | 产物 |
 | --- | --- |
-| T52-E4～E6 | 持久 purge、监控准备、app-only Compose 和宿主机 HTTP-only Nginx 完整远程部署包 |
+| T52-E5～E6 | 监控准备、app-only Compose 和宿主机 HTTP-only Nginx 完整远程部署包 |
 | T49/T50/GATE-E | 同一 SHA CI、独立 Review、最终回归与上线产物冻结 |
 | T53-F1～F5 | 用户参数、阿里云控制台、远程机部署、正式验证和最终验收 |
 

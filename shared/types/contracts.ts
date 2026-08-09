@@ -59,6 +59,7 @@ import type {
   siteBusinessStatusToneSchema,
 } from '../schemas/site-content'
 import type {
+  edgePurgeStatusSchema,
   publicationBlockerSchema,
   publicationFailureStageSchema,
   publicationOperationDtoSchema,
@@ -216,6 +217,7 @@ export type PublicFeaturedWorksDto = z.infer<
 export type PublicationOperationStatus = z.infer<
   typeof publicationOperationStatusSchema
 >
+export type EdgePurgeStatus = z.infer<typeof edgePurgeStatusSchema>
 export type PublicationFailureStage = z.infer<
   typeof publicationFailureStageSchema
 >

@@ -892,6 +892,11 @@ export const publicationOperations = sqliteTable('publication_operations', {
   requestedVersion: integer('requested_version').notNull(),
   status: text('status').notNull(),
   cleanupObjectKeysJson: text('cleanup_object_keys_json').notNull().default('[]'),
+  edgePurgeUrlsJson: text('edge_purge_urls_json').notNull().default('[]'),
+  edgePurgeTaskId: text('edge_purge_task_id'),
+  edgePurgeStatus: text('edge_purge_status').notNull().default('NOT_REQUIRED'),
+  edgePurgeReason: text('edge_purge_reason'),
+  edgePurgeCheckedAt: integer('edge_purge_checked_at'),
   internalErrorCode: text('internal_error_code'),
   internalErrorMessage: text('internal_error_message'),
   failureStage: text('failure_stage'),
@@ -911,6 +916,8 @@ export const publicationOperations = sqliteTable('publication_operations', {
     .on(table.entityType, table.entityId, table.startedAt),
   index('publication_operations_lease_idx')
     .on(table.status, table.leaseExpiresAt),
+  index('publication_operations_edge_purge_idx')
+    .on(table.edgePurgeStatus, table.updatedAt),
   check('publication_operations_attempt', sql`${table.attempt} >= 0`),
   check(
     'publication_operations_lease_owner',
@@ -943,6 +950,10 @@ export const publicationOperations = sqliteTable('publication_operations', {
   check(
     'publication_operations_failure_state',
     sql`(${table.status} = 'FAILED' AND ${table.internalErrorCode} IS NOT NULL AND ${table.failureStage} IS NOT NULL) OR (${table.status} != 'FAILED' AND ${table.internalErrorCode} IS NULL AND ${table.failureStage} IS NULL)`,
+  ),
+  check(
+    'publication_operations_edge_purge_status',
+    sql`${table.edgePurgeStatus} IN ('NOT_REQUIRED', 'PENDING', 'PURGING', 'COMPLETE', 'FAILED')`,
   ),
   check('publication_operations_version_positive', sql`${table.version} > 0`),
 ])

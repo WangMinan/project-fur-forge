@@ -91,6 +91,12 @@ const RUNTIME: Dependency[] = [
     url: 'https://github.com/aliyun/alibabacloud-typescript-sdk',
   },
   {
+    license: 'ISC',
+    name: 'Alibaba Cloud OpenAPI Core',
+    purpose: '阿里云 SDK 运行配置',
+    url: 'https://github.com/aliyun/darabonba-openapi',
+  },
+  {
     license: 'MIT',
     name: 'nuxt-auth-utils',
     purpose: '管理端登录会话',

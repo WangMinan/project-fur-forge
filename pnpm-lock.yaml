@@ -14,6 +14,9 @@ importers:
       '@alicloud/esa20240910':
         specifier: 3.13.0
         version: 3.13.0(supports-color@10.2.2)
+      '@alicloud/openapi-core':
+        specifier: 1.0.8
+        version: 1.0.8(supports-color@10.2.2)
       ali-oss:
         specifier: 6.23.0
         version: 6.23.0(supports-color@10.2.2)

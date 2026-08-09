@@ -147,6 +147,16 @@ const OPERATION_PROGRESS_LABELS: Record<string, string> = {
 }
 
 const operationProgress = computed(() => {
+  if (props.operation?.operationType === 'UNPUBLISH') {
+    if (props.operation.status === 'COMMITTING') {
+      return '正在从页面隐藏该大图…'
+    }
+    if (props.operation.status === 'CLEANING_PUBLIC') {
+      return props.operation.edgePurgeStatus === 'PURGING'
+        ? '页面已隐藏，正在撤销 ESA 缓存…'
+        : '页面已隐藏，正在删除公开文件…'
+    }
+  }
   const status = props.operation?.status
   return status ? OPERATION_PROGRESS_LABELS[status] ?? null : null
 })
@@ -339,9 +349,9 @@ function requestEnable() {
           v-else
           type="button"
           class="slide-card__action"
-          :disabled="mutating"
+          :disabled="mutating || operationProgress !== null"
           @click="emit('disable')"
-        >停用</button>
+        >{{ operation?.operationType === 'UNPUBLISH' && operationProgress ? '停用中…' : '停用' }}</button>
 
         <button
           v-if="slide.enabled"
@@ -382,16 +392,20 @@ function requestEnable() {
     </div>
 
     <div v-if="operationProgress" class="slide-card__progress" role="status">
-      <p>{{ operationProgress }}<template v-if="operation?.operationType !== 'UPSCALE'"> 当前活动 profile 已就绪 {{ readyVariantCount }} / 12</template></p>
+      <p>{{ operationProgress }}<template v-if="operation?.operationType === 'PUBLISH'"> 当前活动 profile 已就绪 {{ readyVariantCount }} / 12</template></p>
       <progress
         v-if="operation?.operationType === 'UPSCALE'"
         :aria-label="`${pageLabel}大图正在用 FFmpeg 放大适配`"
       />
       <progress
-        v-else
+        v-else-if="operation?.operationType === 'PUBLISH'"
         :value="readyVariantCount"
         max="12"
         :aria-label="`${pageLabel}公开衍生图已就绪 ${readyVariantCount} / 12`"
+      />
+      <progress
+        v-else
+        :aria-label="`${pageLabel}大图正在停用并撤销 ESA 缓存`"
       />
     </div>
 
@@ -410,7 +424,11 @@ function requestEnable() {
         class="slide-card__action"
         :disabled="mutating"
         @click="emit('retryOperation')"
-      >{{ operation?.operationType === 'UPSCALE' ? '重试适配' : '重试启用' }}</button>
+      >{{ operation?.operationType === 'UPSCALE'
+        ? '重试适配'
+        : operation?.operationType === 'UNPUBLISH'
+          ? '重试撤销'
+          : '重试启用' }}</button>
     </div>
 
     <div v-if="preview" class="slide-card__preview" data-testid="hero-watermark-preview">

@@ -100,6 +100,13 @@ const PUBLICATION_FAILURE_CODE_LABELS: Record<string, string> = {
   UNPUBLICATION_VALIDATION_FAILED: '下架校验未通过，请刷新状态后重试',
   UNPUBLICATION_COMMIT_FAILED: '下架提交失败，请刷新状态后重试',
   PUBLIC_CLEANUP_FAILED: '公开文件清理失败',
+  EDGE_PURGE_SUBMIT_FAILED: 'ESA 缓存撤销请求提交失败，请稍后重试',
+  EDGE_PURGE_QUERY_FAILED: 'ESA 缓存撤销状态查询失败，请稍后重试',
+  EDGE_PURGE_FAILED: 'ESA 缓存撤销失败，请稍后重试',
+  EDGE_PURGE_TASK_NOT_FOUND: '未找到 ESA 缓存撤销任务，请重新提交',
+  EDGE_PURGE_TIMEOUT: 'ESA 缓存撤销仍未完成，请稍后重试',
+  HOME_UNPUBLICATION_COMMIT_FAILED: '大图停用提交失败，请刷新状态后重试',
+  HOME_UNPUBLICATION_INTERRUPTED: '大图停用被中断，请重试撤销',
 }
 
 export function publicationFailureLabel(code: string | null) {

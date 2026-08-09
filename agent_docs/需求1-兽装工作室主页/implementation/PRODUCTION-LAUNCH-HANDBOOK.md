@@ -52,10 +52,12 @@ SDK 初始化、请求和异常处理参考[阿里云 TypeScript SDK samples 的
 2. 保持客户端 HTTPS 强制、ECS 回源 HTTP/80；生产启用源站保护后，ECS 80 只允许 ESA 回源地址。
 3. `public-media` 保持同账号私有 OSS 回源，origin 精确指向网页衍生 Bucket。该授权由 ESA 使用 STS 完成，业务应用不参与；不要配置自定义边缘鉴权、签名查询参数、媒体鉴权 Key/TTL 或业务侧 STS。
 4. 两只 Bucket 切为 private + BPA；核对历史 Object ACL、Bucket Policy、CORS 和生命周期规则。
-5. 缓存策略：`/_nuxt/**` 和不可变媒体长缓存；管理 Host、`/api/**`、登录、会话和写操作绕过共享缓存；公开 SSR HTML 首版绕过共享缓存；404 短缓存。
+5. 按 `deploy/esa/cache-policy.json` 的优先级配置缓存：管理 Host 与 `/api/**`/会话/写操作绕过，公开 SSR HTML 初始绕过，`/_nuxt/**` 缓存 365 天，`public-media` 的 `prod/web/**` 节点缓存 30 天、浏览器缓存 7 天并忽略全部无业务意义 query；404 缓存 60 秒，禁止源站错误或 404 时提供 stale。其他媒体路径拒绝。
 6. 配置独立的 ESA API 凭据，按控制台实际支持的粒度只授予缓存刷新与任务查询所需权限；若暂不支持按 Site 收敛，记录实际权限边界。OSS 与 ESA 凭据不复用。
 
 控制台保存后先停止写入并核对：两只 OSS 原站匿名 GET/HEAD 为 403；数据库中已发布的 `prod/web/**` 通过 `public-media` 返回 200；响应最终地址和响应头不暴露 OSS 原站；网页衍生 Bucket 全量对象与数据库 `READY + PUBLIC` 清单双向一致。任一项失败都不得靠放开 Bucket ACL、添加自定义签名或把私有对象移入网页衍生 Bucket 规避。
+
+配置前后都运行 `pnpm run verify:esa-cache` 校验仓库基线。阶段 F 将控制台实际规则逐项抄入脱敏证据并与同一 JSON 比对；不得只凭浏览器 `Cache-Control` 判断 ESA 节点缓存，query 合并、404 TTL 和 stale 禁用还要用目标域名的冷/热请求实测。
 
 官方依据：[ESA 私有 OSS 回源](https://help.aliyun.com/zh/edge-security-acceleration/esa/user-guide/use-esa-to-accelerate-oss-resource-access)、[ESA 源站保护](https://help.aliyun.com/zh/edge-security-acceleration/esa/user-guide/origin-protection)、[ESA 边缘证书](https://help.aliyun.com/en/edge-security-acceleration/esa/user-guide/configure-edge-certificates/)。
 

@@ -298,6 +298,9 @@ describe('P0 schema boundary', () => {
     const workColumns = sqlite.prepare('PRAGMA table_info(works)')
       .all()
       .map(column => (column as { name: string }).name)
+    const publicationColumns = sqlite.prepare('PRAGMA table_info(publication_operations)')
+      .all()
+      .map(column => (column as { name: string }).name)
 
     expect(tables).toEqual([
       '__drizzle_migrations',
@@ -328,6 +331,17 @@ describe('P0 schema boundary', () => {
       'payment_note',
       'price_usd',
     ]))
+    expect(publicationColumns).toEqual(expect.arrayContaining([
+      'edge_purge_urls_json',
+      'edge_purge_task_id',
+      'edge_purge_status',
+      'edge_purge_reason',
+      'edge_purge_checked_at',
+    ]))
+    expect(sqlite.prepare(`
+      SELECT name FROM sqlite_master
+      WHERE type = 'index' AND name = 'publication_operations_edge_purge_idx'
+    `).pluck().get()).toBe('publication_operations_edge_purge_idx')
     // 已取消范围不得预建表：T37 不建 events，T39 不建 slug_redirects，
     // T40 不建 trash_entries，T43 不建 password_reset_tokens。
     for (const banned of [
@@ -873,6 +887,10 @@ describe('P0 schema boundary', () => {
       now,
       now,
     )).toThrow(/publication_operations_status/)
+    expect(() => sqlite.prepare(`
+      UPDATE publication_operations SET edge_purge_status = 'SITE_WIDE'
+      WHERE id = 'operation-DONE'
+    `).run()).toThrow(/publication_operations_edge_purge_status/)
   })
 
   it('constrains independent site statuses and restricted content columns', () => {
