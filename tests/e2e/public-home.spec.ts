@@ -29,6 +29,8 @@ const WORKS: SeedWork[] = [
     purpose: 'adoption',
     adoptionMethod: 'event_drop',
     businessStatus: 'available',
+    eventName: '有点小狗夏日展',
+    eventTime: '2026 年 8 月 15 日',
     priceMinorUnits: 1_560_000,
     featured: true,
     sortOrder: 1,
@@ -142,21 +144,21 @@ test.describe('T20 首页双源轮播', () => {
     const requested = observeMediaRequests(page)
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+
+    const image = hero(page).getByRole('img', { name: '奶盖的首页展示照' })
+    await expect(image).toHaveJSProperty('complete', true)
+    expect(await image.evaluate((node: HTMLImageElement) => node.naturalWidth))
+      .toBeGreaterThan(0)
 
     const heroRequests = requested.filter(url => url.includes('home-hero'))
     expect(heroRequests.length).toBeGreaterThan(0)
     expect(heroRequests.every(url => url.includes('home-hero-landscape'))).toBe(true)
     expect(heroRequests.some(url => url.includes('home-hero-portrait'))).toBe(false)
-    const image = hero(page).getByRole('img', { name: '奶盖的首页展示照' })
     const portraitSource = hero(page)
       .locator('source[media="(orientation: portrait)"]')
       .first()
     await expect(portraitSource).toHaveAttribute('width', '1080')
     await expect(portraitSource).toHaveAttribute('height', '1920')
-    await expect(image).toHaveJSProperty('complete', true)
-    expect(await image.evaluate((node: HTMLImageElement) => node.naturalWidth))
-      .toBeGreaterThan(0)
   })
 
   test('竖屏视口只请求竖版图片', async ({ page }) => {
@@ -164,16 +166,16 @@ test.describe('T20 首页双源轮播', () => {
     const requested = observeMediaRequests(page)
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+
+    const image = hero(page).getByRole('img', { name: '奶盖的首页展示照' })
+    await expect(image).toHaveJSProperty('complete', true)
+    expect(await image.evaluate((node: HTMLImageElement) => node.naturalWidth))
+      .toBeGreaterThan(0)
 
     const heroRequests = requested.filter(url => url.includes('home-hero'))
     expect(heroRequests.length).toBeGreaterThan(0)
     expect(heroRequests.every(url => url.includes('home-hero-portrait'))).toBe(true)
     expect(heroRequests.some(url => url.includes('home-hero-landscape'))).toBe(false)
-    const image = hero(page).getByRole('img', { name: '奶盖的首页展示照' })
-    await expect(image).toHaveJSProperty('complete', true)
-    expect(await image.evaluate((node: HTMLImageElement) => node.naturalWidth))
-      .toBeGreaterThan(0)
   })
 
   test('隐藏轮播项不下载，切换到第二张后按需加载', async ({ page }) => {
@@ -181,7 +183,8 @@ test.describe('T20 首页双源轮播', () => {
     const requested = observeMediaRequests(page)
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await expect(hero(page).getByRole('img', { name: '奶盖的首页展示照' }))
+      .toHaveJSProperty('complete', true)
 
     const firstSlideUrls = requested.filter(url => url.includes('home-hero'))
     const firstAssetIds = new Set(
@@ -191,9 +194,12 @@ test.describe('T20 首页双源轮播', () => {
 
     await hero(page).getByRole('button', { name: '下一张' }).click()
     await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张')
-    await expect(hero(page).getByRole('img', { name: '蓝湄的首页展示照' }))
+    const secondImage = hero(page).getByRole('img', { name: '蓝湄的首页展示照' })
+    await expect(secondImage)
       .toHaveAttribute('loading', 'lazy')
-    await page.waitForLoadState('networkidle')
+    await expect(secondImage).toHaveJSProperty('complete', true)
+    expect(await secondImage.evaluate((node: HTMLImageElement) => node.naturalWidth))
+      .toBeGreaterThan(0)
 
     const secondSlideUrls = requested
       .filter(url => url.includes('home-hero'))
@@ -248,7 +254,8 @@ test.describe('T20 首页双源轮播', () => {
     await seedHome(page)
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await expect(hero(page).getByRole('img', { name: '奶盖的首页展示照' }))
+      .toHaveJSProperty('complete', true)
 
     const viewport = hero(page).locator('.home-hero__viewport')
     const box = await viewport.boundingBox()
@@ -272,18 +279,19 @@ test.describe('T20 首页双源轮播', () => {
     await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
   })
 
-  test('自动轮播默认关闭：无暂停按钮且停留首项', async ({ page }) => {
+  test('旧设置关闭时仍按固定规则开启自动轮播', async ({ page }) => {
     await seedHome(page, { autoRotate: false, autoRotateIntervalMs: 6_000 })
+    await page.clock.install()
     await page.goto('/')
 
-    await expect(hero(page).getByRole('button', { name: /自动轮播/ })).toHaveCount(0)
-    await page.waitForTimeout(2_000)
-    await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
+    await expect(hero(page).getByRole('button', { name: '暂停自动轮播' })).toBeVisible()
+    await page.clock.fastForward(10_100)
+    await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张')
   })
 
-  test('自动轮播开启：按间隔切换、可见暂停、悬停与焦点暂停', async ({ page }) => {
-    test.setTimeout(60_000)
+  test('固定十秒自动轮播：可见暂停、悬停与焦点暂停', async ({ page }) => {
     await seedHome(page, { autoRotate: true, autoRotateIntervalMs: 6_000 })
+    await page.clock.install()
     await page.goto('/')
 
     const pause = hero(page).getByRole('button', { name: '暂停自动轮播' })
@@ -291,26 +299,25 @@ test.describe('T20 首页双源轮播', () => {
 
     // 悬停暂停：停留在第一张
     await hero(page).hover()
-    await page.waitForTimeout(7_000)
+    await page.clock.fastForward(10_100)
     await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
 
     // 移开但焦点仍在轮播内：继续暂停
     await page.mouse.move(10, 10)
     await hero(page).getByRole('button', { name: '下一张' }).focus()
-    await page.waitForTimeout(7_000)
+    await page.clock.fastForward(10_100)
     await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
 
     // 焦点离开后按间隔自动切换
     await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
-    await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张', {
-      timeout: 8_000,
-    })
+    await page.clock.fastForward(10_100)
+    await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张')
 
     // 可见暂停：点击后不再自动切换
     await pause.click()
     await expect(hero(page).getByRole('button', { name: '继续自动轮播' }))
       .toHaveAttribute('aria-pressed', 'true')
-    await page.waitForTimeout(7_000)
+    await page.clock.fastForward(10_100)
     await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张')
   })
 
@@ -320,9 +327,10 @@ test.describe('T20 首页双源轮播', () => {
     await session.send('Emulation.setEmulatedMedia', {
       features: [{ name: 'prefers-reduced-motion', value: 'reduce' }],
     })
+    await page.clock.install()
 
     await page.goto('/')
-    await page.waitForTimeout(7_000)
+    await page.clock.fastForward(10_100)
     await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
   })
 
@@ -385,8 +393,8 @@ test.describe('T20 首页双源轮播', () => {
     for (const [width, height] of [[390, 844], [768, 1024], [1440, 900]]) {
       await page.setViewportSize({ width, height })
       await page.goto('/')
-      await page.waitForLoadState('networkidle')
       const image = hero(page).getByRole('img', { name: '奶盖的首页展示照' })
+      await expect(image).toHaveJSProperty('complete', true)
       expect(await image.evaluate((node: HTMLImageElement) => node.naturalWidth))
         .toBeGreaterThan(0)
       const overflow = await page.evaluate(() =>
@@ -532,7 +540,6 @@ test.describe('T20 首页精选轨道', () => {
   test('真实精选按人工顺序展示，非精选不出现，不自动播放', async ({ page }) => {
     await seedHome(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
 
     const track = page.getByTestId('featured-track')
     await expect(track).toBeVisible()

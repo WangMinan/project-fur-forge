@@ -29,6 +29,8 @@ const T09_WORKS: SeedWork[] = [
     purpose: 'adoption',
     adoptionMethod: 'event_drop',
     businessStatus: 'available',
+    eventName: '有点小狗夏日展',
+    eventTime: '2026 年 8 月 15 日',
     priceMinorUnits: 1_560_000,
     featured: true,
     sortOrder: 1,
@@ -143,13 +145,14 @@ test.describe('UI-01 管理端布局边界', () => {
     await expect(page.getByTestId('public-footer')).toHaveCount(0)
   })
 
-  test('登录页保持独立呈现：单一 main、无公开 Header/Footer', async ({ page }) => {
+  test('登录页使用品牌壳：单一 main、无访客导航', async ({ page }) => {
     await page.goto(`${adminBaseURL}/admin/login`)
     await page.waitForSelector('[data-testid="admin-login"]')
 
     await expect(page.locator('main')).toHaveCount(1)
-    await expect(page.getByTestId('public-header')).toHaveCount(0)
-    await expect(page.getByTestId('public-footer')).toHaveCount(0)
+    await expect(page.getByTestId('public-header')).toHaveCount(1)
+    await expect(page.getByTestId('public-footer')).toHaveCount(1)
+    await expect(page.getByRole('navigation', { name: '主导航' })).toHaveCount(0)
   })
 })
 
@@ -239,12 +242,12 @@ test.describe('UI-02 首页 Hero 确定性对比度', () => {
     await seedT09Home(page)
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await expect(page.locator('.home-hero__slide img')).toHaveJSProperty('complete', true)
     await expectHeroContrast(page, '1440×900 真实轮播', DESKTOP_ONLY_TARGETS)
 
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await expect(page.locator('.home-hero__slide img')).toHaveJSProperty('complete', true)
     await expectHeroContrast(page, '390×844 真实轮播')
     // 手机菜单按钮为图形控件，按非文本 3:1 验收
     const menuRatio = await measureContrast(page, '.public-header__menu')
@@ -256,7 +259,7 @@ test.describe('UI-02 首页 Hero 确定性对比度', () => {
     await seedT09Home(page)
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await expect(page.locator('.home-hero__slide img')).toHaveJSProperty('complete', true)
 
     // <picture> 的 <source> srcset 优先于 img.src，必须先移除 source 再替换。
     await page.locator('.home-hero__slide picture').evaluate((picture: HTMLPictureElement) => {
@@ -281,7 +284,6 @@ test.describe('UI-03 动态参数响应', () => {
   test('详情→详情：内容、图集、价格、SEO 与 related works 全部更新', async ({ page }) => {
     await seedT09Catalog(page)
     await page.goto('/works/e2e-public-t09-naigai')
-    await page.waitForLoadState('networkidle')
     await expect(page.getByTestId('work-detail')).toHaveAttribute('data-work-slug', 'e2e-public-t09-naigai')
     await expect(page.getByRole('button', { name: /查看第 \d 张，共 4 张/ })).toHaveCount(4)
     await expect(page.getByTestId('work-price')).toHaveCount(0)
@@ -317,7 +319,7 @@ test.describe('UI-03 动态参数响应', () => {
   test('详情→不存在 slug 进入 404 错误页，再进有效 slug 完整恢复', async ({ page }) => {
     await seedT09Catalog(page)
     await page.goto('/works/e2e-public-t09-lanmei')
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByTestId('work-detail')).toHaveAttribute('data-work-slug', 'e2e-public-t09-lanmei')
 
     // 通过应用内 router 制造同组件实例参数切换（不经整页刷新）
     const push = (to: string) => page.evaluate((path) => {
@@ -402,9 +404,9 @@ test.describe('UI-04 dirty 覆盖全部可编辑字段', () => {
     await page.getByLabel('装型').selectOption('full')
     await expect(dirtyBadge(page)).toHaveCount(0)
 
-    await page.getByLabel('用途').selectOption('showcase')
+    await page.getByLabel('业务类型').selectOption('showcase')
     await expect(dirtyBadge(page)).toBeVisible()
-    await page.getByLabel('用途').selectOption('commission')
+    await page.getByLabel('业务类型').selectOption('commission')
     await expect(dirtyBadge(page)).toHaveCount(0)
 
     await page.getByLabel('角色主人公开值').fill('有点小狗工作室')

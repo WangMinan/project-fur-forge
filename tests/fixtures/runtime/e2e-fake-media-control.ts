@@ -304,6 +304,18 @@ export default defineEventHandler(async (event) => {
 
       const workId = randomUUID()
       const publicationStatus = work.publicationStatus ?? 'published'
+      // 公开列表按发布时间倒序。为同一批种子分配不同毫秒，既保持输入顺序，
+      // 也避免 SQLite 在 published_at 完全相同时退化为不确定顺序。
+      const publishedAt = now - index
+      if (
+        adoption
+        && work.adoptionMethod === 'event_drop'
+        && publicationStatus === 'published'
+        && (!work.eventName?.trim() || !work.eventTime?.trim())
+      ) {
+        setResponseStatus(event, 400)
+        return { error: 'published event-drop seeds need eventName and eventTime' }
+      }
       sqlite.prepare(`
         INSERT INTO works (
           id, slug, character_name, species, suit_type, purpose,
@@ -329,7 +341,7 @@ export default defineEventHandler(async (event) => {
         publicationStatus,
         work.sortOrder ?? index,
         work.featured ? 1 : 0,
-        publicationStatus === 'published' ? now : null,
+        publicationStatus === 'published' ? publishedAt : null,
         now,
         now,
       )

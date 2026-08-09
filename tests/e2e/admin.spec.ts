@@ -78,7 +78,7 @@ test.describe('后台作品列表页', () => {
 
     await expect(page.getByRole('heading', { level: 1, name: '作品管理' })).toBeVisible()
     await expect(page).toHaveTitle(/作品管理/u)
-    await expect(page.locator('.works-page__meta')).toHaveText(/共 \d+ 件/u)
+    await expect(page.locator('.admin-list-page__meta')).toHaveText(/共 \d+ 件/u)
 
     const nav = page.getByRole('navigation', { name: '管理导航' })
     // T21 人工验收确认管理导航顺序与完整页名；

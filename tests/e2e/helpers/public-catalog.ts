@@ -13,25 +13,48 @@ export interface SeedWorkPhoto {
   height?: number
 }
 
-export interface SeedWork {
+interface SeedWorkCommon {
   slug: `e2e-public-${string}`
   characterName: string
   species?: string
   suitType?: 'full' | 'partial'
-  purpose?: 'commission' | 'showcase' | 'adoption'
   ownerDisplay?: string
   featureTags?: string[]
   featured?: boolean
   sortOrder?: number
-  publicationStatus?: 'draft' | 'published'
-  adoptionMethod?: 'regular' | 'event_drop'
   businessStatus?: 'preparing' | 'available' | 'event_sale' | 'scheduled' | 'in_production' | 'delivered'
-  eventName?: string
-  eventTime?: string
   priceMinorUnits?: number
   designSheet?: SeedWorkPhoto
   photos: SeedWorkPhoto[]
 }
+
+/**
+ * 已发布的展会掉落必须同时提供展会名称与时间。把数据库约束映射到种子类型，
+ * 避免夹具缺字段时等到 SQLite INSERT 才以不透明的 500 失败。
+ */
+export type SeedWork = SeedWorkCommon & (
+  | {
+    purpose: 'adoption'
+    adoptionMethod: 'event_drop'
+    publicationStatus?: 'published'
+    eventName: string
+    eventTime: string
+  }
+  | {
+    purpose: 'adoption'
+    adoptionMethod: 'event_drop'
+    publicationStatus: 'draft'
+    eventName?: string
+    eventTime?: string
+  }
+  | {
+    purpose?: 'commission' | 'showcase' | 'adoption'
+    adoptionMethod?: 'regular'
+    publicationStatus?: 'draft' | 'published'
+    eventName?: never
+    eventTime?: never
+  }
+)
 
 export interface SeedHomeSlide {
   alt: string
