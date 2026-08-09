@@ -142,7 +142,7 @@ else
   fail "host-certificate-files-forbidden"
 fi
 
-ready_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 10 http://127.0.0.1:3000/api/health/ready || true)"
+ready_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 10 --header "Host: $public_host" http://127.0.0.1:3000/api/health/ready || true)"
 if [[ "$ready_status" == "200" ]]; then
   pass "app-ready"
 else
