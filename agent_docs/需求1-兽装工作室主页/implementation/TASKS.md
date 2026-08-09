@@ -182,18 +182,18 @@ _依赖：T51-F1；完成后继续 T52-E1。_
 
 #### T52-E6 · app-only Compose、宿主机 HTTP-only Nginx 与运维命令
 
-- [ ] 把正式 Compose 收敛为唯一常驻 Nuxt/Nitro `app`；migrate、preflight、init、backup、restore 和 recover 使用同一冻结镜像的一次性容器，不运行 Nginx 容器或常驻 migrate 服务；
-- [ ] app 端口固定只绑定 `127.0.0.1:3000`，宿主机 Nginx upstream 固定代理该地址，安全组不开放 3000；保留单实例、非 root、持久卷和健康检查；
-- [ ] 固化宿主机 Nginx `1.30.4`、systemd 服务、配置目录和安装/升级/回滚入口；不依赖第三方动态模块；
-- [ ] Nginx 只监听 HTTP/80，不配置 443、证书或 HTTP→HTTPS 跳转；ESA 到 ECS 固定 HTTP/80，客户端 HTTPS 强制和证书由 ESA 边缘承担；
-- [ ] 正式 `server_name` 只列公开/管理精确域名，媒体 Host 和未知 Host 返回 `421`；移除 wildcard 路由；
-- [ ] 代理头冻结为客户端 scheme `https`，只信任受控 Nginx/ESA 代理链；验证 Host/Origin/CSRF/Session 在 ESA 后不被错误改写；
-- [ ] 部署产物不包含 acme.sh、Certbot、DNS API Secret、证书目录、续期 cron/timer 或证书 reload 逻辑；
-- [ ] 完成 migrate、init-admin、preflight、backup、restore-verify、recover、升级和回滚命令；
-- [ ] 准备用户授权后发布/传送冻结镜像的唯一入口，能够在远程拉取/载入前核对镜像摘要且不远程重建；
-- [ ] 在本地/受控环境完成空卷、迁移、重启、备份到新路径、恢复验证、旧镜像回滚、Host/proxy header、loopback 隔离、Nginx config test/reload 和 443 关闭验证；
-- [ ] Handbook 中每个核心远程步骤都有基线命令、预期结果、停止条件和回滚入口；便利性或目标环境诊断脚本可在阶段 F 补充；
-- [ ] 不创建 `v*` tag，不在阶段 E 未授权发布正式镜像。
+- [x] 把正式 Compose 收敛为唯一常驻 Nuxt/Nitro `app`；migrate、preflight、init、backup、restore 和 recover 使用同一冻结镜像的一次性容器，不运行 Nginx 容器或常驻 migrate 服务；
+- [x] app 端口固定只绑定 `127.0.0.1:3000`，宿主机 Nginx upstream 固定代理该地址，安全组不开放 3000；保留单实例、非 root、持久卷和健康检查；
+- [x] 固化宿主机 Nginx `1.30.4`、systemd 服务、配置目录和安装/升级/回滚入口；不依赖第三方动态模块；
+- [x] Nginx 只监听 HTTP/80，不配置 443、证书或 HTTP→HTTPS 跳转；ESA 到 ECS 固定 HTTP/80，客户端 HTTPS 强制和证书由 ESA 边缘承担；
+- [x] 正式 `server_name` 只列公开/管理精确域名，媒体 Host 和未知 Host 返回 `421`；移除 wildcard 路由；
+- [x] 代理头冻结为客户端 scheme `https`，只信任受控 Nginx/ESA 代理链；验证 Host/Origin/CSRF/Session 在 ESA 后不被错误改写；
+- [x] 部署产物不包含 acme.sh、Certbot、DNS API Secret、证书目录、续期 cron/timer 或证书 reload 逻辑；
+- [x] 完成 migrate、init-admin、preflight、backup、restore-verify、recover、升级和回滚命令；
+- [x] 准备用户授权后发布/传送冻结镜像的唯一入口，能够在远程拉取/载入前核对镜像摘要且不远程重建；
+- [x] 在本地/受控环境完成空卷、迁移、重启、备份到新路径、恢复验证、旧镜像回滚、Host/proxy header、loopback 隔离、Nginx config test/reload 和 443 关闭验证；
+- [x] Handbook 中每个核心远程步骤都有基线命令、预期结果、停止条件和回滚入口；便利性或目标环境诊断脚本可在阶段 F 补充；
+- [x] 不创建 `v*` tag，不在阶段 E 未授权发布正式镜像。
 
 ### T49 · 同一 SHA CI 与独立综合 Review
 
