@@ -71,20 +71,24 @@
 
 ## 6. 当前阶段 E
 
-只实施：
+阶段 E 完成所有剩余产品与上线基线开发：
 
 - 最小化第一方访问统计；
-- GitHub Actions 同一 SHA 全绿；
-- 新上下文综合 Review 阶段 D/E；
-- 全站最终 E2E、三视口、媒体和恢复回归。
+- 导航品牌“有点小狗”、备案/页脚配置和正式素材校准；
+- Endpoint 拆分、OSS/CDN preflight、短期 URL signer、下架强制刷新和恢复；
+- 成本/监控测量入口、app-only Compose、宿主机 Nginx、acme.sh/dns_ali、运维命令和回滚包；
+- GitHub Actions 同一 SHA 全绿、新上下文综合 Review 和最终 E2E；
+- GATE-E 冻结唯一上线 SHA、镜像、环境契约、Handbook 与回滚入口。
 
 不实施邮件找回、CSV 导出、原图档案 UI 或高级批量运维 UI。
 
 访问统计只回答聚合使用情况，不做画像/广告归因：不保存 IP、UA、Referer、查询串、联系方式或指纹；会话 ID 仅 sessionStorage，服务端存 HMAC；原始事件滚动保留 90 天。
 
-## 7. 阶段 F 正式生产
+## 7. 阶段 F 用户与远程开发机执行
 
-### 7.1 媒体与存储
+阶段 F 不再开发应用源码、迁移、运行时 Schema、产品模板或发布镜像。用户填写真实值并操作阿里云控制台；远程开发机拉取 GATE-E 冻结镜像、填写生产 `.env`、运行命令和收集证据。实际运维需要时可新增或调整独立小型脚本及其最小测试/文档；若问题必须改变应用或冻结契约，则退回 E 并重跑 T49/T50/GATE-E。
+
+### 7.1 人工媒体与存储切换
 
 - 复用现有两只杭州 OSS Bucket；
 - 两只均 private + Bucket Block Public Access；
@@ -95,28 +99,30 @@
 - 不保留旧匿名 URL 兼容，开发站暂时失效可接受；
 - 分享与长期 URL 后置。
 
-### 7.2 网络与凭据
+### 7.2 人工网络与凭据配置
 
 - 杭州 ECS 服务端使用 OSS 内网 Endpoint；
 - 本地开发和管理浏览器上传使用公网 Endpoint/Bucket 域名；
 - 公开媒体使用 CDN 域名；
-- 保持当前应用 AK/SK，不引入新的凭据体系；
+- 保持当前应用 OSS/CDN AK/SK；为宿主机 ACME 单独使用 DNS-only RAM API Key，不复用应用凭据，也不把它放进应用 `.env` 或容器；
 - 不做异地灾备，不默认购买高防或引入 ESA。
 
-### 7.3 发布与运维
+### 7.3 远程部署与验收
 
-- 备案、三个正式域名、TLS 与 CNAME；
+- 写入备案和三个正式域名；公开/管理域名复用宿主机现有 `acme.sh + dns_ali`、DNS-01 证书与续期 cron，媒体域名 TLS 在 CDN 侧单独终止；
+- 只运行一个常驻 Nuxt/Nitro 容器，app 端口仅绑定宿主机 loopback，由宿主机 systemd Nginx 代理；
 - 空卷 migrate/init/ready；
 - 备份、恢复、升级、旧镜像回滚；
 - CDN URL 鉴权、查询参数收敛、用量封顶、预算和监控；
 - 按 [`../implementation/PRODUCTION-LAUNCH-HANDBOOK.md`](../implementation/PRODUCTION-LAUNCH-HANDBOOK.md) 逐项演练；
-- 用户在目标环境真实使用验收。
+- 用户在目标环境真实使用验收；
+- 只追加脱敏证据、checkbox 和状态记录，不在 F 中修代码。
 
 ## 8. 数据与隐私边界
 
 - 公开 DTO 只包含公开展示所需字段；
 - 私有联系人、返图授权、私有 Object Key、私有 OSS 签名 URL、原文件名、敏感 EXIF、AK/SK、Session 与内部错误不公开；
-- 阶段 F 可在公开响应中包含当前页面使用的短期 CDN 鉴权 URL，但完整 URL 不记录到日志/审计/artifact；
+- T52-E3 完成后公开响应可包含当前页面使用的短期 CDN 鉴权 URL，但完整 URL 不记录到日志/审计/artifact；
 - 公开价格只展示人民币最小单位，不执行交易；
 - 管理响应/预览/错误 `no-store`；
 - 统计严格数据最小化与 90 天滚动保留。
@@ -139,7 +145,7 @@
 - SQLite、Drizzle、单实例；
 - 阿里云 OSS 双职责 Bucket + CDN；
 - FFmpeg 仅用于必要私有预处理/确认后的大图适配；
-- Docker Compose、Nginx、Playwright、Vitest、GitHub Actions。
+- app-only Docker Compose、宿主机 Nginx/systemd、`acme.sh + dns_ali`、Playwright、Vitest、GitHub Actions。
 
 ## 11. 完成定义分层
 
@@ -147,4 +153,4 @@
 
 正式上线还必须满足：同一最新 SHA CI 全绿、目标空卷和 Compose 可运行、两只 Bucket/CDN 权限真实验证、域名/TLS/监控/预算/回滚完成、正式素材三视口通过、用户真实使用验收。
 
-阶段 D 已完成；T49、T50、T51、T52、T53 关闭前不得宣布正式上线就绪。
+阶段 D 已完成；GATE-E 与 T53-F1～F5 关闭前不得宣布正式上线就绪。

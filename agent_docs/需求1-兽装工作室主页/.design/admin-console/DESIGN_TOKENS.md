@@ -1,7 +1,7 @@
 # Design Tokens：管理端
 
 > **设计哲学**：Quiet Editorial Tool。白色/浅灰工作区，品牌蓝作为操作色而非大面积背景。
-> **状态**：阶段 E/F 延续的管理端 Token，含返图私有/公开预览、授权 Card、event_drop 与生产状态密度规则。
+> **状态**：阶段 E 开发并冻结、阶段 F 仅复验的管理端 Token，含返图私有/公开预览、授权 Card、event_drop 与生产状态密度规则。
 > **最后校准**：2026-08-07。
 
 ## Color

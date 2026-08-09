@@ -1,90 +1,128 @@
 # 部署说明
 
-> **状态**：部署骨架已经存在，生产切换尚未执行。正式操作以 [`../agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md`](../agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md) 为逐项权威；先完成 T49/T50/T51、T52-F1、F2a preflight 重写和 F3/F4 应用能力，再由 Handbook 第 5～6 节执行 CDN 先行配置与 Bucket ACL/BPA 切换。F2 只有云上验证通过后才算完成。
+> **状态**：部署骨架已存在，剩余产品与上线基线开发全部归阶段 E。本文必须在 T52-E6 完成、并由 GATE-E 冻结后，才能由阶段 F 的用户/远程开发机执行。阶段 F 可受控补充不进入发布镜像的独立运维脚本，但不得热改应用或冻结部署契约。
 
-## 组成
+正式操作以 [`../agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md`](../agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md) 为逐项权威。
+
+## 阶段边界
+
+### 阶段 E 负责开发
+
+- Endpoint 与运行时 Schema；
+- CDN URL signer、刷新 operation 和恢复；
+- OSS/CDN preflight；
+- Dockerfile、app-only Compose、与现有宿主机 Nginx/acme.sh 兼容的配置模板；
+- migrate、init、backup、restore、recover、升级和回滚命令；
+- 空卷/持久卷/镜像/健康检查的受控演练；
+- CI、独立 Review、最终回归和 GATE-E。
+
+### 阶段 F 负责执行
+
+- 用户填写真实备案、域名、Secret、预算和阈值；
+- 用户操作阿里云控制台；
+- 用户授权发布/传送 GATE-E 冻结镜像；
+- 远程执行者先填写并校验生产 `.env`，再按冻结交付路径发布/传送、拉取/载入并核对镜像摘要，随后运行本文命令；
+- 正式域名验证、恢复/回滚演练和用户验收。
+
+阶段 F 可提交受控运维脚本、最小脚本测试、Runbook 和证据/状态同步；这些提交不替换冻结应用 SHA/镜像。只有超出该范围、需要改变应用或冻结部署契约时，才停止执行并返回阶段 E，新发布提交必须重跑 T49/T50/GATE-E。
+
+## 文件组成
 
 | 文件 | 作用 |
 | --- | --- |
 | `Dockerfile` | Node 24 多阶段构建、非 root runtime、生产依赖自检 |
-| `docker-compose.yaml` | migrate + app + nginx、数据/备份卷和隔离网络 |
+| `docker-compose.yaml` | T52-E6 收敛为唯一常驻 app；migrate/ops 以同一镜像的一次性容器运行 |
 | `.env.compose.example` | 生产 Compose 配置语义，不含真实 Secret |
 | `.env.example` | 本地/非 Compose 配置语义，不含真实 Secret |
-| `deploy/nginx/app.conf.template` | 双 Host、未知 Host 拒绝、安全头和 TLS 入口 |
+| `deploy/nginx/app.conf.template` | T52-E6 改为宿主机 Nginx：双 Host、loopback upstream、未知 Host 拒绝、安全头和 TLS 入口 |
 | `.github/workflows/quality.yml` | 代码、镜像与 E2E 门禁 |
 | `.github/workflows/release-image.yml` | 授权后的镜像发布 |
 
-镜像使用 pnpm 正式 production deploy/install 机制，不手工复制单个依赖。runtime 构建期应自检 SQLite、`ali-oss` 与内嵌 FFmpeg。
+镜像使用 pnpm 正式 production deploy/install 机制，不手工复制单个依赖。runtime 构建期自检 SQLite、`ali-oss` 与内嵌 FFmpeg。
 
 ## 生产媒体拓扑
 
-复用现有两个 Bucket：
-
 - 私有源图 Bucket：原图、处理源、品牌候选和草稿；
-- 公开衍生图 Bucket：只保存已发布并验证的网页衍生图。
+- 网页衍生 Bucket：只保存已发布并验证的网页衍生图；
+- 两只 Bucket 均 private + BPA；
+- CDN 只私有回源衍生 Bucket；
+- 浏览器只使用约 24 小时 CDN 鉴权 URL；
+- 下架先移除业务投影，再对精确 URL 强制刷新，服务器侧目标约 5～6 分钟。
 
-正式目标是两个 Bucket 都设为 `private` 并开启 Block Public Access。公开衍生图 Bucket 只授权 CDN 私有 OSS 回源；浏览器只使用 CDN 自定义域名下约 24 小时有效的鉴权 URL，不再直连 OSS。
-
-下架分两段：业务查询立即移除；服务端随后对精确 CDN URL 发起 `Force=true` 刷新并追踪任务，目标约 5～6 分钟完成 CDN 服务器侧撤销。客户端已经下载、截图或第三方转存的副本不在承诺内。
+这些行为在阶段 E 实现；ACL/CDN 的真实切换与验证在阶段 F 执行。
 
 ## Endpoint 场景
 
-| 场景 | `OSS_ENDPOINT` | 说明 |
+| 场景 | 地址 | 阶段 |
 | --- | --- | --- |
-| 本机开发/本机运维 | `https://oss-cn-hangzhou.aliyuncs.com` | 本机不能访问阿里云内网 Endpoint |
-| 杭州同地域 ECS 内的 app/migrate/ops | `https://oss-cn-hangzhou-internal.aliyuncs.com` | 服务端 SDK 读写，走内网 |
-| 浏览器条件上传 | 私有 Bucket 公网 Bucket 域名 | 浏览器在公网，不得签内网地址 |
-| CDN 回源 | 阿里云 CDN 配置的私有 OSS 源站 | 不读取应用的 `OSS_ENDPOINT` |
-| 公开页面图片 | CDN 自定义域名 | 不出现 OSS 域名 |
+| 本机开发/运维 | 杭州公网 OSS Endpoint | E 开发/测试 |
+| 杭州远程机 app/migrate/ops | 杭州内网 OSS Endpoint | F 生产 `.env` |
+| 浏览器条件上传 | 私有 Bucket 公网域名 | E 实现，F 验证 |
+| CDN 回源 | CDN 控制台私有 OSS 源站 | F 配置 |
+| 公开页面图片 | CDN 自定义域名 | E 实现，F 验证 |
 
-当前代码仍需由 T52-F1 完成真正的场景拆分：服务端签发浏览器条件上传时不能因为 `OSS_ENDPOINT` 使用内网地址；`OSS_UPLOAD_BASE_URL` 必须成为实际签名边界，而不只是已校验配置。`.env.example`、`.env.compose.example` 和生产 `.env` 必须同任务同步。
+T52-E1 必须让 `OSS_UPLOAD_BASE_URL` 真正控制浏览器签名 Host。`.env.example`、`.env.compose.example`、生产变量 Schema、`config/runtime.example.json`、测试和 production verify 同步。
 
-T52-F3 的固定配置名为 `CDN_URL_AUTH_ACTIVE_KEY`（`primary|secondary`）、`CDN_URL_AUTH_PRIMARY_KEY`、`CDN_URL_AUTH_SECONDARY_KEY` 和 `CDN_URL_AUTH_TTL_SECONDS`（生产固定 `86400`）。当前 runtime 尚不支持，因此示例文件只保留目标注释而不伪装成可用配置；T52-F3 必须一次性同步 `.env` 模板、`config/runtime.example.json`、Schema、测试与 production verify 后才可使用。
+T52-E3 的固定配置名为 `CDN_URL_AUTH_ACTIVE_KEY`（`primary|secondary`）、`CDN_URL_AUTH_PRIMARY_KEY`、`CDN_URL_AUTH_SECONDARY_KEY` 和 `CDN_URL_AUTH_TTL_SECONDS=86400`。GATE-E 前必须完成 runtime 支持，阶段 F 只填真实 Secret。
 
-继续使用当前静态 AK/SK 方案；本阶段不引入 ECS 实例 RAM 角色。凭据只能进入 Secret/生产 `.env`，不得提交、回显或写入截图。
+继续使用当前静态 AK/SK。凭据只进入远程 Secret/生产 `.env`，不得提交、回显或写入截图。
 
-## Compose 网络
+## 宿主机、Compose 与端口边界
 
-- `backend`：`internal:true`，Nginx、app、migrate 内部通信；
-- `egress`：app 主动访问 OSS/CDN API；
-- `edge`：Nginx 发布 80/443；
-- app 不直接发布宿主机端口；
-- `BACKEND_SUBNET` 与 `TRUSTED_PROXY_CIDRS` 必须同步，不能只改其一。
+- ECS 宿主机现有 Nginx 是唯一公网入口；记录当前版本/配置目录，继续由 systemd 管理并监听 80/443；
+- Compose 唯一常驻服务是非 root Nuxt/Nitro `app`；不包含 Nginx 容器或常驻 migrate 服务；
+- app 把容器 3000 端口固定只发布到 `127.0.0.1:3000`；安全组不开放 3000；
+- Nginx upstream 固定指向 `127.0.0.1:3000`；真实 Host、scheme 与客户端地址按冻结 proxy header/trusted proxy 契约传递；
+- migrate、preflight、init、backup、restore、recover 都以同一冻结 app 镜像的一次性容器运行；
+- app 仍需要受控 egress 访问 OSS/CDN API；T52-E6 必须验证 Nginx 可达 loopback、外网不可达 app 端口。
 
-## 首次部署命令骨架
+## 宿主机 TLS 与 ACME
 
-以下命令只能在 Handbook 前置门禁和配置复核通过后执行：
+- 复用宿主机现有 acme.sh `3.1.5`、`dns_ali`、Let's Encrypt DNS-01 和 `ditedog.com` / `*.ditedog.com` ECDSA 证书；不改用 Certbot 或 `nginx-module-acme`；
+- 复用现有每 6 小时执行 `acme.sh --cron` 的 root cron；不增加 systemd timer 或第二份 cron，不因文档整理重装客户端或重签有效证书；
+- 使用 `--install-cert --ecc` 维护 `/etc/nginx/ssl/ditedog.com/fullchain.pem` 与 `privkey.pem` 稳定路径；Nginx 不直接读取 acme.sh 内部目录；续期 reload 唯一语义为 `/usr/sbin/nginx -t && /usr/bin/systemctl reload nginx`；
+- wildcard 只用于证书覆盖；正式 Nginx `server_name` 只列公开/管理精确域名，其他 Host/SNI 由默认 server 拒绝；
+- DNS-01 不要求 80 端口；80 如开放只负责 HTTP→HTTPS 跳转；
+- ACME 使用独立 DNS-only RAM API Key，只允许承载公开/管理域名的 DNS zone（跨 zone 时逐个列出）的 `alidns:DescribeDomainRecords`、`alidns:AddDomainRecord`、`alidns:DeleteDomainRecord`；不复用应用 AK/SK；
+- `Ali_Key` / `Ali_Secret` 由 acme.sh 保存到 root 限权 config-home，因此不写入应用 `.env`、Compose、镜像、仓库或普通备份；
+- 媒体域名在阿里云 CDN 终止 TLS，不使用宿主机证书；80 如开放只负责 HTTP→HTTPS 跳转。
+
+## 阶段 F 远程命令骨架
+
+以下命令只有在 GATE-E 后执行；T52-E6 必须在冻结前核对命令与实际 ops 入口一致。
 
 ```bash
 cp .env.compose.example .env
-# 填入真实镜像、域名、Bucket、CDN、凭据、Session Secret 与监控阈值
+# 只在远程机填写真实镜像、域名、Bucket、CDN、凭据、Session Secret 与阈值
 
 docker compose -f docker-compose.yaml pull
-docker compose -f docker-compose.yaml run --rm migrate
-docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs preflight
-docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs init-admin
-docker compose -f docker-compose.yaml up -d
+# T52-E6 将以下一次性操作全部固定为同一 app 镜像的命令覆盖；不再有 migrate/nginx 常驻服务
+docker compose -f docker-compose.yaml run --rm --no-deps app node ops/ops.mjs migrate
+docker compose -f docker-compose.yaml run --rm --no-deps app node ops/ops.mjs preflight
+docker compose -f docker-compose.yaml run --rm --no-deps app node ops/ops.mjs init-admin
+docker compose -f docker-compose.yaml up -d app
 ```
 
-备份与恢复检查：
+备份与恢复：
 
 ```bash
-docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs backup --output /app/backups/manual.db
-docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs restore-verify --backup /app/backups/manual.db --output /tmp/verify.db
-docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs recover-operations
+docker compose -f docker-compose.yaml run --rm --no-deps app node ops/ops.mjs backup --output /app/backups/manual.db
+docker compose -f docker-compose.yaml run --rm --no-deps app node ops/ops.mjs restore-verify --backup /app/backups/manual.db --output /tmp/verify.db
+docker compose -f docker-compose.yaml run --rm --no-deps app node ops/ops.mjs recover-operations
 ```
 
-所有可写运维任务继续默认 dry-run，必须显式 `--no-dry-run` 才能产生副作用。
+若 GATE-E 记录的实际命令不同，以冻结 artifact 为准。目标环境需要诊断、检查、备份/恢复包装或证据采集时，可在仓库中补充独立运维脚本：单独提交，不进入或重建发布镜像，默认 dry-run、输出脱敏、目标明确并有回滚/针对性验证。不得在服务器或容器内编写未提交替代脚本来掩盖核心命令缺失；可写任务必须显式 `--no-dry-run` 才产生副作用。
 
 ## 健康与门禁
 
 - `/api/health/live`：进程存活；
 - `/api/health/ready`：数据库、严格迁移历史、基础记录和生产依赖就绪；
-- Nginx 不向公网暴露健康端点；
-- T49 必须让 `checks`、`image-build`、`e2e` 在同一 `main` SHA 全绿；
-- T52 必须完成空卷、迁移、管理员初始化、真实私有 Bucket/CDN、升级、回滚和恢复演练；
-- 不创建 `v*` tag、不推正式镜像、不切 DNS，除非对应任务和用户门禁已通过。
+- 宿主机 Nginx 不向公网暴露健康端点；app 端口固定只在 `127.0.0.1:3000`；
+- 证书门禁包含链/SAN/有效期、acme.sh cron、最近续期结果、TXT 清理、稳定证书路径、`nginx -t` 和 reload；
+- GATE-E：同一 SHA CI/Review/E2E、部署包、环境契约和回滚入口冻结；
+- T53-F3：远程空卷、迁移、初始化、私有 Bucket/CDN、升级、恢复和回滚；
+- T53-F4/F5：正式全链验证与用户验收。
 
 ## 品牌与备案
 
-备案网站名称为“有点小狗”。公开桌面/移动导航必须显示“有点小狗”，不带“工作室”；管理端内部名称不做机械全局替换。备案号、正式域名、证书与页脚链接在 T51 按实际审批结果填写，不能预填猜测值。
+阶段 E 完成公开导航“有点小狗”、备案空值/有值配置和测试；阶段 F 写入真实审批值并验证正式页。管理端内部名称不做机械全局替换，备案号不得预填猜测值。

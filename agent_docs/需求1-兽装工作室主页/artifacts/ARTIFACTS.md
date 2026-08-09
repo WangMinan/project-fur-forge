@@ -1,6 +1,6 @@
 # 产物索引
 
-> **当前阶段**：阶段 D 已由用户验收；阶段 E/F 的计划与上线资料已建立，工程尚按 TASKS 推进。
+> **当前阶段**：阶段 D 已由用户验收；阶段 E 将完成全部剩余产品/上线基线开发并冻结上线产物，阶段 F 主要由用户和远程开发机执行，并可受控补充独立运维小脚本。
 
 ## 活文档
 
@@ -35,6 +35,8 @@ T35–T37 尚无独立 Review 签署；该门禁并入 T49，不能用用户验�
 ## 阶段 E/F 已完成的文档产物
 
 - 用户生产决策：[`../implementation/notes/stage-e/STAGE-E-PRODUCTION-DECISIONS-2026-08-09.md`](../implementation/notes/stage-e/STAGE-E-PRODUCTION-DECISIONS-2026-08-09.md)；
+- 阶段边界调整：[`../implementation/notes/stage-e/STAGE-E-F-BOUNDARY-2026-08-09.md`](../implementation/notes/stage-e/STAGE-E-F-BOUNDARY-2026-08-09.md)；
+- 宿主机 Nginx/ACME 决策：[`../implementation/notes/stage-e/STAGE-E-TLS-DECISION-2026-08-09.md`](../implementation/notes/stage-e/STAGE-E-TLS-DECISION-2026-08-09.md)；
 - 阿里云官方调研：[`../planning/ALIYUN-PRODUCTION-RESEARCH-2026-08-09.md`](../planning/ALIYUN-PRODUCTION-RESEARCH-2026-08-09.md)；
 - 上线前 Handbook：[`../implementation/PRODUCTION-LAUNCH-HANDBOOK.md`](../implementation/PRODUCTION-LAUNCH-HANDBOOK.md)；
 - 重写后的生产 OSS 预检契约：[`../implementation/OSS-PREFLIGHT.md`](../implementation/OSS-PREFLIGHT.md)；
@@ -47,11 +49,10 @@ T35–T37 尚无独立 Review 签署；该门禁并入 T49，不能用用户验�
 | 任务 | 产物 |
 | --- | --- |
 | T46 | 第一方事件模型、采集/聚合 API、后台统计页、隐私说明和门禁 |
-| T49 | 同一 SHA 全绿的 CI 证据与新的综合独立 Review |
-| T50 | 管理/公开 Host、三视口、媒体与失败恢复的最终 E2E 证据 |
-| T51 | 公开导航“有点小狗”、备案/页脚/SEO 字段和证书前置 |
-| T52-F1–F7 | 配置拆分、Bucket 私有化、CDN 鉴权/缓存/撤销、监控、部署/回滚/恢复演练 |
-| T53 | 用户最终上线验收；实际上线后才可关闭发布门禁 |
+| T51 | 公开导航“有点小狗”、备案/页脚配置、正式素材和自动测试 |
+| T52-E1～E6 | 配置、preflight、CDN 鉴权/撤销、监控准备、app-only Compose 和宿主机 Nginx/acme.sh 完整远程部署包 |
+| T49/T50/GATE-E | 同一 SHA CI、独立 Review、最终回归与上线产物冻结 |
+| T53-F1～F5 | 用户参数、阿里云控制台、远程机部署、正式验证和最终验收 |
 
 ## 证据边界
 

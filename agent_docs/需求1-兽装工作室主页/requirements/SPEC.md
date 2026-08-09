@@ -3,8 +3,8 @@
 > **角色**：当前功能、业务规则、安全边界和验收标准的权威规格。
 > **状态**：阶段 C 已于 2026-08-07 经用户验收；阶段 D 最终工程和两轮
 > 修复已经合入，用户于 2026-08-09 以人工 Review 关闭 T42，独立综合
-> Review 移交 T49。本文同时定义阶段 E 的 T46 目标和阶段 F 的生产媒体
-> 目标；尚未落地的目标均显式标注，不能描述为当前代码事实。
+> Review 移交 T49。本文定义阶段 E 的全部剩余开发目标，以及阶段 F 的
+> 用户/远程开发机执行目标；尚未落地的目标均显式标注，不能描述为当前代码事实。
 > **关联**：产品边界见 [`../foundation/README.md`](../foundation/README.md)；媒体规则见 [`MEDIA-PUBLICATION-POLICY.md`](./MEDIA-PUBLICATION-POLICY.md)；实施方案见 [`../planning/PLAN.md`](../planning/PLAN.md)；未来候选见 [`../planning/FUTURE-ITERATIONS.md`](../planning/FUTURE-ITERATIONS.md)。
 
 ## 1. 产品目标
@@ -18,9 +18,9 @@
 
 系统不建设交易、订单、排期、多管理员、万能 CMS、访客投稿或社交互动。
 
-阶段 E 只增加最小化第一方访问统计并完成发布级 CI/独立 Review；阶段 F 完成备案品牌、两只现有 Bucket 私有化、CDN URL 鉴权、正式域名/TLS、升级、回滚和恢复演练。
+阶段 E 完成最小化第一方访问统计、备案/品牌展示能力、生产媒体/CDN、app-only Compose + 宿主机 Nginx/acme.sh 部署/恢复基线、发布级 CI、独立 Review 和最终回归，并冻结唯一上线 SHA。阶段 F 主要由用户和远程开发机填写真实参数、操作阿里云控制台、部署冻结镜像、完成正式环境演练和验收；允许按实际运维需要补充不改变冻结应用契约的小型运维脚本。
 
-产品阶段完成与正式发布就绪是不同结论：只有 T49–T53 全部关闭后才可声明正式上线就绪。
+产品开发完成与正式发布就绪是不同结论：只有 GATE-E 与 T53-F1～F5 全部关闭后才可声明正式上线就绪。
 
 ## 2. 访问面与路由
 
@@ -81,7 +81,7 @@
 - 管理浏览器条件 PUT 使用私有 Bucket 杭州公网域名，不能出现 `-internal`；
 - 公开图片只使用 CDN 媒体 origin，不能出现 OSS Bucket 域名。
 
-应用只在测试环境暴露假媒体端点；生产环境不得注册测试控制路由。当前代码尚需在 T52-F1 将 `OSS_UPLOAD_BASE_URL` 真正接入签名链。
+应用只在测试环境暴露假媒体端点；生产环境不得注册测试控制路由。当前代码尚需在 T52-E1 将 `OSS_UPLOAD_BASE_URL` 真正接入签名链。
 
 ## 3. 作品领域
 
@@ -290,7 +290,7 @@
 - 所有公开图片预生成、验证完成、去除不需要的 EXIF，并使用不可变 Key；
 - 生成、验证和切换失败时保持当前公开版本。
 
-阶段 F 的正式访问边界：
+阶段 E 必须实现并自动验证、阶段 F 必须在目标环境执行的正式访问边界：
 
 - 继续复用当前两只杭州 Bucket，但两只 ACL 都改为 private，并开启 Bucket 级 Block Public Access；
 - 原图 Bucket 保存永久源、处理源和管理预览；网页衍生 Bucket 只保存 READY 网页衍生物；
@@ -355,7 +355,7 @@ protection_mode = none
 5. 写入审计记录；
 6. 失败时只清理当前 attempt 新建对象，保留旧公开状态。
 
-下架先撤销公开状态，再精确清理不再引用的公开对象。阶段 F 接入 CDN 后还必须：
+下架先撤销公开状态，再精确清理不再引用的公开对象。阶段 E 接入 CDN 后还必须：
 
 1. 固化不含鉴权参数的精确 CDN File URL manifest；
 2. 调用 `RefreshObjectCaches`，`Force=true`；
@@ -517,7 +517,7 @@ protection_mode = none
 
 设定页额外包含可选关联作品的公开名称、slug 和 href。
 
-不得包含授权来源、授权时间、内部备注、私有联系人、私有 Object Key、私有 OSS 签名 URL、原文件名或 EXIF。阶段 F 允许包含为当前页面生成的约 24 小时 CDN 鉴权 URL。
+不得包含授权来源、授权时间、内部备注、私有联系人、私有 Object Key、私有 OSS 签名 URL、原文件名或 EXIF。T52-E3 完成后允许包含为当前页面动态生成的约 24 小时 CDN 鉴权 URL。
 
 首版不提供返图者主页、搜索、点赞、评论、公开投稿或访客账户。
 
@@ -659,13 +659,13 @@ protection_mode = none
 - 可信客户端 IP 只从明确配置的反向代理链取得；
 - 错误响应使用稳定 `code` 和业务 `reason`；
 - 管理响应使用 `no-store`、`noindex`；
-- 日志不得记录密码、用户名明文、邮箱、联系人、返图授权记录、Session、Cookie、签名 URL、AK/SK 或私有 Object Key。
+- 日志不得记录密码、用户名明文、邮箱、联系人、返图授权记录、Session、Cookie、签名 URL、应用 AK/SK、ACME `Ali_Key` / `Ali_Secret` 或私有 Object Key。
 
 返图公开衍生生成必须移除不需要的 EXIF，尤其不能公开拍摄位置和设备隐私信息。
 
 ## 18. 长任务与恢复
 
-适用于作品、Hero、品牌 profile、站点展示 reconcile、返图公开生成/发布，以及阶段 F 的 CDN 强制刷新。
+适用于作品、Hero、品牌 profile、站点展示 reconcile、返图公开生成/发布，以及阶段 E 开发的 CDN 强制刷新。
 
 每个 operation 至少包含：状态、请求版本、进度、失败阶段、稳定失败码、已创建对象清单、attempt、lease owner、lease 到期时间、heartbeat、recovery reason、必要的下一次重试时间和完成时间。
 
@@ -687,7 +687,16 @@ protection_mode = none
 
 ## 20. 容器、CI 与发布边界
 
-当前 Node 24 runtime 镜像已经由 GitHub Actions `image-build` 成功验证。版本控制内的 `docker-compose.yaml` 继续包含 app、migrate、nginx、持久卷、健康检查、受控网络、环境变量和单副本约束。
+当前 Node 24 runtime 镜像已经由 GitHub Actions `image-build` 成功验证。T52-E6 必须把现有部署骨架改成以下正式拓扑：
+
+- `docker-compose.yaml` 的唯一常驻服务是非 root Nuxt/Nitro `app`；migrate、preflight、backup、restore 和 recover 只以同一冻结镜像的一次性容器运行；
+- 不运行 Nginx 容器；记录并复用 ECS 宿主机现有 Nginx 版本、配置目录和 systemd 服务，GATE-E 冻结与其兼容的仓库模板与回滚入口；
+- app 端口固定只绑定 `127.0.0.1:3000`，安全组不得开放 3000；宿主机 Nginx upstream 固定代理该地址；
+- 公开与管理域名复用现有 `ditedog.com` / `*.ditedog.com` ECDSA 证书，由 acme.sh 显式使用 Let's Encrypt，并通过 `dns_ali` 执行 DNS-01；不改用 Certbot 或 `nginx-module-acme`；
+- 通配符只用于证书覆盖；Nginx 正式 `server_name` 必须只列公开/管理精确域名，其他 Host/SNI 由默认 server 拒绝；
+- 复用现有每 6 小时执行 `acme.sh --cron` 的 root cron；`--install-cert --ecc` 把 key/fullchain 复制到 `/etc/nginx/ssl/ditedog.com/`，reload command 唯一语义为 `/usr/sbin/nginx -t && /usr/bin/systemctl reload nginx`，Nginx 不读取 acme.sh 内部证书目录；
+- ACME 使用独立 DNS-only RAM API Key，只允许对承载公开/管理域名的 DNS zone（跨 zone 时逐个列出）执行 `DescribeDomainRecords`、`AddDomainRecord`、`DeleteDomainRecord`；它不进入应用 `.env`、Compose 或容器；
+- 媒体域名在阿里云 CDN 终止 TLS，不进入宿主机 Nginx 证书；DNS-01 不依赖 80 端口或正式 A 记录已切换。
 
 GitHub Actions 目标至少执行 frozen install、lint、typecheck、unit、integration、production build、production output verify、secret/content scan、Compose 静态检查、Docker build 和核心 E2E。
 
@@ -717,7 +726,7 @@ GitHub Actions 目标至少执行 frozen install、lint、typecheck、unit、int
 - `/admin/analytics` 不泄漏 IP、UA、Referer、查询串、原始会话 ID或联系方式，采集失败不影响公开页面；
 - console、network、图片解码、焦点、键盘、减少动效和 CLS。
 
-阶段 F 目标环境另需按 Handbook 检查：两只原始 OSS 域名匿名 403、CDN 有效/过期/篡改 URL、浏览器公网上传/ECS 内网 Endpoint、查询参数收敛、下架强制刷新、备案品牌“有点小狗”、用量封顶、告警、备份恢复和回滚。
+阶段 E 在受控环境完成相同能力的自动/浏览器/恢复验证；阶段 F 再按 Handbook 在目标环境检查：两只原始 OSS 域名匿名 403、CDN 有效/过期/篡改 URL、浏览器公网上传/远程机内网 Endpoint、查询参数收敛、下架强制刷新、备案品牌“有点小狗”、宿主机 Nginx、`127.0.0.1:3000` 隔离、现有证书/root cron/最近续期结果与安全 reload、用量封顶、告警、备份恢复和回滚。
 
 ## 22. 阶段 D 完成与阶段 E 取消项
 
@@ -743,7 +752,7 @@ GitHub Actions 目标至少执行 frozen install、lint、typecheck、unit、int
 
 - T41：手机轻量维护闭环；必要能力并入 T36、T37。
 
-阶段 E 已取消 T43 邮件找回、T44 CSV、T45 原图档案 UI 和 T47 高级运维 UI；T48 已完成调研/契约，生产 CDN 实现转入 T52。
+阶段 E 已取消 T43 邮件找回、T44 CSV、T45 原图档案 UI 和 T47 高级运维 UI；T48 已完成调研/契约，生产 CDN 开发全部纳入 T52-E1～E6。
 
 ## 23. 门禁分层
 
@@ -753,20 +762,30 @@ T42 已由用户验收关闭。该结论不等于独立 Review；T49 必须在�
 
 取消项不构成隐式阻断。
 
-### 23.2 正式发布门禁
+### 23.2 GATE-E 开发冻结门禁
 
-正式发布仍必须满足：
+进入阶段 F 前必须满足：
 
-- T49 修复 GitHub Actions并取得同一最新 SHA 全绿；
-- T50 完成最终 E2E 和浏览器视觉复核；
-- T51 完成备案、导航品牌“有点小狗”、正式素材和二次视觉校准；
-- T52 完成 Endpoint 拆分、两只 Bucket 私有化、CDN 一日 URL 鉴权/强制撤销、正式域名、TLS、线上 Compose、空卷、备份、监控、升级、回滚和恢复演练；
-- T53 完成景宸真实使用验收和文档闭环。
+- T46、T51 和 T52-E1～E6 的全部应用代码、Schema、app-only Compose、宿主机 Nginx/ACME 部署基线、核心运维入口、模板、自动测试与受控演练完成；
+- T49 修复 GitHub Actions，并在同一最新 SHA 完成独立综合 Review；
+- T50 完成最终 E2E、浏览器、媒体、进程、部署和恢复复核；
+- 生产变量契约、镜像摘要、preflight、Handbook 和回滚入口基线冻结；
+- 阶段 F 不需要修改应用源码、迁移、运行时 Schema、产品模板或发布镜像；允许补充独立运维脚本、最小脚本测试和对应 Runbook。
 
-在这些任务关闭前不得声称站点正式上线就绪。
+### 23.3 阶段 F 正式执行门禁
+
+- T53-F1 完成真实参数和用户确认；
+- T53-F2 完成阿里云控制台配置；
+- T53-F3 完成远程开发机部署、备份/恢复和回滚；
+- T53-F4 完成正式域名全链验证；
+- T53-F5 完成景宸真实使用验收和证据闭环。
+
+F 中若发现需要修改开发产物，GATE-E 失效，必须返回 E 修复并重新执行 T49/T50/GATE-E。
+
+在 GATE-E 和 T53-F1～F5 关闭前不得声称站点正式上线就绪。
 
 ## 24. 当前开放问题
 
-当前没有阻断 T46/T49/T50 的业务开放问题。T51/T52 上线时仍需用户提供：正式公开/管理/媒体域名、真实 ICP 备案号、URL 鉴权主/备 Key 已设置状态、月度预算、基于目标环境实测确定的 CDN 用量封顶数值，以及 EXT-01 已登记素材是否就是正式上线素材的确认（不是则只提供替换项）。占位值不能被视为完成。
+当前没有阻断阶段 E 开发的业务开放问题。阶段 E 先实现严格配置槽、校验、空值隐藏、测量和远程命令；T53-F1 时用户再提供正式公开/管理/媒体域名、真实 ICP 备案号、URL 鉴权主/备 Key、月度预算、目标环境实测后的 CDN 封顶数值和正式素材确认，并核对现有 ACME 邮箱/Key 的保存位置与轮换责任。占位值或预先存在的远程配置不能被视为阶段 F 完成。
 
 实现者可以在不改变公开行为、数据事实和管理心智模型的前提下完成局部技术取舍；若新问题会改变本契约，必须先更新规格并取得用户确认。

@@ -2,7 +2,7 @@
 
 > **角色**：描述当前已落地模型和已批准的下一步目标模型。
 > **最后校准**：2026-08-09。
-> **边界**：业务规则见 [`../requirements/SPEC.md`](../requirements/SPEC.md)，媒体规则见 [`../requirements/MEDIA-PUBLICATION-POLICY.md`](../requirements/MEDIA-PUBLICATION-POLICY.md)。
+> **边界**：业务规则见 [`../requirements/SPEC.md`](../requirements/SPEC.md)，媒体规则见 [`../requirements/MEDIA-PUBLICATION-POLICY.md`](../requirements/MEDIA-PUBLICATION-POLICY.md)。所有目标模型在阶段 E 开发并迁移；阶段 F 不新增或修改数据模型。
 
 ## 1. 模型原则
 
@@ -42,7 +42,7 @@
 - `protection_mode=watermark`：作品/领养/展会 `recipe-v2` + 活动 `brand-centered-v2`；
 - 私有 preprocess 不能被公开投影选中。
 
-数据库保存不可变对象身份，不保存阶段 F 的短期 CDN 签名 URL。
+数据库保存不可变对象身份，不保存 T52-E3 动态生成的短期 CDN 签名 URL。
 
 ### `watermark_profiles`、`site_branding`、`site_hero_slides`
 
@@ -54,7 +54,7 @@ profile 不可变，`site_branding` 指向活动 profile；Hero 保存 placement
 
 ### operation 与审计
 
-publication、watermark、reconcile、return operation 保存请求版本、状态/进度、失败、精确清理对象、attempt、lease、heartbeat、recovery reason、重试和时间。T52 在现有模型上扩展 CDN refresh manifest/task ID/status，不新建第二套状态机。
+publication、watermark、reconcile、return operation 保存请求版本、状态/进度、失败、精确清理对象、attempt、lease、heartbeat、recovery reason、重试和时间。T52-E4 在现有模型上扩展 CDN refresh manifest/task ID/status，不新建第二套状态机。
 
 `audit_logs` 不保存敏感正文、凭据、私有 Key、联系人、授权备注或完整签名 URL。
 
@@ -125,7 +125,7 @@ optional work { name, slug, href }
 
 公开条件只依赖返图自身 published、完整 `return-display-v1`、`protection_mode=none`。不依赖关联作品状态。
 
-不得包含授权记录、联系人、私有 Key、私有 OSS 签名 URL、原文件名或 EXIF。T52 完成后 SourceSet URL 是动态生成的约 24 小时 CDN 鉴权 URL。
+不得包含授权记录、联系人、私有 Key、私有 OSS 签名 URL、原文件名或 EXIF。T52-E3 完成后 SourceSet URL 是动态生成的约 24 小时 CDN 鉴权 URL。
 
 ### 管理 DTO
 
@@ -159,7 +159,7 @@ session_hmac    fixed-length digest
 - 原始行 90 天滚动保留，不建立通用 scheduler；
 - 后台只做 1/7/30 天聚合，不提供任意 SQL/导出。
 
-## 6. T52 生产媒体投影（未落地）
+## 6. T52-E3/E4 生产媒体投影（阶段 E 待落地）
 
 ### URL 组装
 
@@ -212,7 +212,7 @@ cdn_refresh_checked_at nullable
 
 每次迁移：校验历史 hash、验证备份、在副本迁移、`integrity_check=ok`、`foreign_key_check=0`、既有数量合理、旧投影可读、恢复库 production ready。
 
-索引必须通过实际查询计划验证，不机械覆盖字段。T46 特别检查 30 天聚合不会无界扫描；T52 媒体撤销复用 operation 状态/lease 索引。
+索引必须通过实际查询计划验证，不机械覆盖字段。T46 特别检查 30 天聚合不会无界扫描；T52-E4 媒体撤销复用 operation 状态/lease 索引。
 
 ## 9. 明确不建
 
