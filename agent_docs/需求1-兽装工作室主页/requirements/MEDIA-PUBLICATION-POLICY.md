@@ -49,6 +49,8 @@ watermark_profile = active brand-centered-v2
 
 profile 改变生成新 Key，在完整校验后原子切换。仍被引用的旧版本不能删除。
 
+低分辨率 `design_sheet` 不直接成为公开配方输入。作品发布时先按实际用途计算所需最小几何尺寸，使用内嵌 FFmpeg Lanczos 保持原比例放大并生成 `design-sheet-upscale-lanczos-v1` 私有 `preprocess` 变体；不裁掉主体、不覆盖永久原图，也不宣称恢复细节。后续 `recipe-v2` 只从验证为 READY 且不超过 OSS 处理输入上限的该处理源生成公开图。
+
 ### 3.3 返图
 
 ```text
@@ -90,7 +92,7 @@ watermark_profile_id = NULL
 保存：
 
 - 永久作品/返图原图；
-- FFmpeg 预处理或低分辨率适配源；
+- FFmpeg 预处理、低分辨率 Hero 适配源和低分辨率设定图适配源；
 - 水印 Logo 候选；
 - 管理预览和临时处理对象。
 

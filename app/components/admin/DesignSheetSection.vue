@@ -97,6 +97,13 @@ const busyUploads = computed(() => uploads.items.value.filter(item =>
   ['digesting', 'uploading', 'validating'].includes(item.state),
 ).length)
 
+const needsResolutionAdaptation = computed(() => {
+  if (!entry.value) {
+    return false
+  }
+  return entry.value.width < 2_400
+})
+
 watch(() => props.work, (work) => {
   if (!isDirty.value) {
     resetFromWork(work)
@@ -241,6 +248,13 @@ defineExpose({ save: saveDesignSheet })
         <p class="design-sheet__note">
           {{ entry.width }}×{{ entry.height }} · 完整原图 · 无水印 · 仅管理员可查看
         </p>
+        <p
+          v-if="needsResolutionAdaptation"
+          class="design-sheet__resolution-warning"
+          role="status"
+        >
+          这张原图分辨率较低，仍可保存和发布。发布时会用 FFmpeg Lanczos 生成私有适配源；放大不会恢复原图没有的细节，完整原图会保留不变。
+        </p>
         <AdminWatermarkedMediaPreview
           :asset-id="entry.assetId"
           usage="design-sheet"
@@ -370,6 +384,16 @@ defineExpose({ save: saveDesignSheet })
   background: var(--admin-status-info-soft);
   color: var(--admin-status-info);
   font-size: var(--admin-font-sm);
+}
+
+.design-sheet__resolution-warning {
+  margin: 0 0 var(--admin-space-3);
+  padding: var(--admin-space-3) var(--admin-space-4);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-status-warning-soft);
+  color: var(--admin-status-warning);
+  font-size: var(--admin-font-xs);
+  line-height: var(--admin-line-normal);
 }
 
 .design-sheet__entry {

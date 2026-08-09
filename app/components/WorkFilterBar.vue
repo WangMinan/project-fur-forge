@@ -68,7 +68,7 @@ const suitOptions = computed(() => [
 
 <style scoped>
 .work-filter {
-  margin-top: var(--space-6);
+  margin-top: 0;
 }
 
 .work-filter__row {

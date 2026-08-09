@@ -3,13 +3,17 @@ import {
   randomUUID,
 } from 'node:crypto'
 import type Database from 'better-sqlite3'
-import { upscaleHeroImage } from '../../../scripts/embedded-ffmpeg.mjs'
+import {
+  upscaleDesignSheetImage,
+  upscaleHeroImage,
+} from '../../../scripts/embedded-ffmpeg.mjs'
 import { WATERMARK_PROFILE_NAME } from '../../../shared/schemas/watermark'
 import type {
   MediaRole,
 } from '../../../shared/types/contracts'
 import {
   contentTypeForFormat,
+  DESIGN_SHEET_UPSCALE_RECIPE_VERSION,
   deterministicUuid,
   digest,
   environmentPrefix,
@@ -222,6 +226,113 @@ export async function ensureHeroUpscaleSource(
       errorCode: (error as { code?: unknown }).code,
     })
     throw new ServiceError(500, 'INTERNAL_ERROR', 'Hero image upscale failed.')
+  }
+}
+
+function minimumDimensionsForUsages(usages: readonly PublicMediaUsage[]) {
+  return {
+    height: 0,
+    width: Math.max(...usages.map(usage => recipes[usage].widths.at(-1)!)),
+  }
+}
+
+export async function ensureDesignSheetUpscaleSource(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  assetId: string,
+  usages: readonly PublicMediaUsage[],
+  now = Date.now(),
+) {
+  const sourceAsset = asset(sqlite, assetId)
+  if (
+    sourceAsset.role !== 'design_sheet'
+    || usages.length === 0
+    || new Set(usages).size !== usages.length
+    || usages.some(usage => !recipes[usage].roles.includes(sourceAsset.role as never))
+  ) {
+    throw new ServiceError(400, 'VALIDATION_ERROR', 'Design sheet usages are invalid.')
+  }
+  const current = processingSource(sqlite, sourceAsset)
+  if (sourceSupportsPublicUsages({
+    ...sourceAsset,
+    height: current.height,
+    width: current.width,
+  }, usages)) {
+    return current
+  }
+
+  const minimum = minimumDimensionsForUsages(usages)
+  let objectKey: string | null = null
+  try {
+    const output = upscaleDesignSheetImage(
+      await storage.getPrivate(sourceAsset.privateObjectKey),
+      minimum,
+    )
+    const identity = JSON.stringify({
+      recipeVersion: DESIGN_SHEET_UPSCALE_RECIPE_VERSION,
+      sourceSha256: sourceAsset.sha256,
+      minimum,
+      target: output.dimensions,
+      filter: output.filter,
+      binary: output.binary,
+      format: 'png',
+    })
+    const identityHash = digest('sha256', Buffer.from(identity))
+    const outputSha256 = digest('sha256', output.content)
+    objectKey = `${environmentPrefix(sourceAsset.privateObjectKey)}/processing/${sourceAsset.id}/${DESIGN_SHEET_UPSCALE_RECIPE_VERSION}/${identityHash}.png`
+    await storage.putPrivateConditional({
+      content: output.content,
+      contentMd5: createHash('md5').update(output.content).digest('base64'),
+      contentType: 'image/png',
+      objectKey,
+      sha256: outputSha256,
+    })
+    const [head, info, saved] = await Promise.all([
+      storage.headPrivate(objectKey),
+      storage.imageInfoPrivate(objectKey),
+      storage.getPrivate(objectKey),
+    ])
+    if (
+      head.byteSize !== output.content.length
+      || head.byteSize !== saved.length
+      || head.byteSize > OSS_PROCESS_INPUT_BYTE_LIMIT
+      || head.contentType !== 'image/png'
+      || head.etagMd5Hex !== digest('md5', saved)
+      || head.sha256Metadata !== outputSha256
+      || info.fileSize !== head.byteSize
+      || normalizedFormat(info.format) !== 'png'
+      || info.width !== output.dimensions.width
+      || info.height !== output.dimensions.height
+      || info.width < minimum.width
+      || info.height < minimum.height
+      || digest('sha256', saved) !== outputSha256
+    ) {
+      throw new Error('Design sheet upscale verification failed.')
+    }
+    insertUpscaleVariant(sqlite, {
+      byteSize: output.content.length,
+      cropIdentity: identityHash,
+      height: output.dimensions.height,
+      id: randomUUID(),
+      inputSha256: sourceAsset.sha256,
+      mediaRole: sourceAsset.role,
+      objectKey,
+      recipeVersion: DESIGN_SHEET_UPSCALE_RECIPE_VERSION,
+      sha256: outputSha256,
+      sourceAssetId: sourceAsset.id,
+      width: output.dimensions.width,
+    }, now)
+    return processingSource(sqlite, sourceAsset)
+  }
+  catch (error) {
+    if (objectKey) {
+      await storage.deletePrivate(objectKey).catch(() => {})
+    }
+    safeLog('error', 'Design sheet upscale failed.', {
+      assetId: sourceAsset.id,
+      errorCode: (error as { code?: unknown }).code,
+    })
+    throw new ServiceError(500, 'INTERNAL_ERROR', 'Design sheet upscale failed.')
   }
 }
 

@@ -196,6 +196,78 @@ export function upscaleHeroImage(content, orientation) {
   }
 }
 
+export function upscaleDesignSheetImage(content, minimumDimensions) {
+  if (!Buffer.isBuffer(content)) {
+    throw new Error('Embedded FFmpeg input must be an image Buffer.')
+  }
+  const minimumWidth = minimumDimensions?.width
+  const minimumHeight = minimumDimensions?.height
+  if (
+    !Number.isInteger(minimumWidth)
+    || minimumWidth < 1
+    || minimumWidth > 12_000
+    || !Number.isInteger(minimumHeight)
+    || minimumHeight < 0
+    || minimumHeight > 12_000
+  ) {
+    throw new Error('Design sheet upscale dimensions are invalid.')
+  }
+
+  const filter = minimumHeight > 0
+    ? `scale=w=${minimumWidth}:h=${minimumHeight}:force_original_aspect_ratio=increase:force_divisible_by=2:flags=lanczos`
+    : `scale=w=${minimumWidth}:h=-2:flags=lanczos`
+  const result = runEmbeddedFfmpeg([
+    '-hide_banner',
+    '-loglevel',
+    'error',
+    '-f',
+    'image2pipe',
+    '-c:v',
+    inputCodec(content),
+    '-i',
+    'pipe:0',
+    '-frames:v',
+    '1',
+    '-map_metadata',
+    '-1',
+    '-vf',
+    filter,
+    '-threads',
+    '1',
+    '-c:v',
+    'png',
+    '-compression_level',
+    '9',
+    '-pred',
+    'mixed',
+    '-f',
+    'image2pipe',
+    'pipe:1',
+  ], { input: content })
+  const output = result.stdout
+  const width = output.length >= 24 ? output.readUInt32BE(16) : 0
+  const height = output.length >= 24 ? output.readUInt32BE(20) : 0
+  if (
+    output.length === 0
+    || output.length < 24
+    || output.length > OSS_IMAGE_PROCESSING_MAX_BYTES
+    || !output.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)
+    || width < minimumWidth
+    || height < minimumHeight
+    || width > 12_000
+    || height > 12_000
+  ) {
+    throw new Error('Embedded FFmpeg design sheet upscale output is invalid.')
+  }
+  return {
+    content: output,
+    contentType: 'image/png',
+    dimensions: { width, height },
+    filter,
+    binary: embeddedBinaryIdentity(),
+  }
+}
+
 export function compressPngForOss(content) {
   if (!Buffer.isBuffer(content) || inputCodec(content) !== 'png') {
     throw new Error('Embedded FFmpeg preflight input must be a PNG Buffer.')

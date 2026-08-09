@@ -16,7 +16,10 @@ import {
   expect,
   it,
 } from 'vitest'
-import { createSyntheticWatermarkPng } from '../../scripts/oss-preflight-core.mjs'
+import {
+  createSyntheticSourcePng,
+  createSyntheticWatermarkPng,
+} from '../../scripts/oss-preflight-core.mjs'
 import {
   migrateDatabase,
   openDatabase,
@@ -149,7 +152,7 @@ function attachDesignSheet(
   width = 3200,
   height = 1800,
 ) {
-  const content = createSyntheticWatermarkPng()
+  const content = createSyntheticSourcePng(width, height)
   const key = `test/t18-fixture/original/${DESIGN_ASSET_ID}/source.png`
   sqlite.prepare(`
     INSERT INTO assets (
@@ -560,25 +563,87 @@ describe('dual-bucket work publication operations', () => {
     ))).toBe(true)
   })
 
-  it('returns a stable blocker before writing an operation for a small design sheet', async () => {
+  it('prepares a private Lanczos source and publishes a low-resolution design sheet', async () => {
     const work = createRegularAdoption()
-    const ready = attachDesignSheet(work, 959, 600)
+    const ready = attachDesignSheet(work, 1560, 1080)
     expect(checkWorkPublication(sqlite, work.id)).toMatchObject({
-      canPublish: false,
-      blockers: ['DESIGN_SHEET_SOURCE_TOO_SMALL'],
+      canPublish: true,
+      blockers: [],
+      designSheetNeedsPreprocess: true,
     })
-    await expect(publishWork(
+    const published = await publishWork(
       sqlite,
       storage,
       work.id,
       ready.version,
       USER_ID,
       NOW + 3_000,
-    )).rejects.toThrow(/Resolve publication blockers/u)
+    )
+
+    expect(published).toMatchObject({
+      operation: { status: 'DONE' },
+      work: { publicationStatus: 'published' },
+    })
+    expect(checkWorkPublication(sqlite, work.id).designSheetNeedsPreprocess)
+      .toBe(false)
+    const preprocess = sqlite.prepare(`
+      SELECT storage_scope AS storageScope, status, recipe_version AS recipeVersion,
+             width, height, input_sha256 AS inputSha256
+      FROM asset_variants
+      WHERE asset_id = ? AND recipe_version = 'design-sheet-upscale-lanczos-v1'
+    `).get(DESIGN_ASSET_ID) as {
+      height: number
+      inputSha256: string
+      recipeVersion: string
+      status: string
+      storageScope: string
+      width: number
+    }
+    expect(preprocess).toMatchObject({
+      inputSha256: sha256(storage.objects.get(
+        `test/t18-fixture/original/${DESIGN_ASSET_ID}/source.png`,
+      )!.content),
+      recipeVersion: 'design-sheet-upscale-lanczos-v1',
+      status: 'READY',
+      storageScope: 'PRIVATE',
+    })
+    expect(preprocess.width).toBeGreaterThanOrEqual(2400)
+    expect(preprocess.width / preprocess.height).toBeCloseTo(1560 / 1080, 2)
+    expect(storage.privatePuts).toHaveLength(1)
+    expect(storage.privatePuts[0]?.contentMd5).toMatch(/^[A-Za-z0-9+/]{22}==$/u)
+    expect(storage.objects.has(
+      `test/t18-fixture/original/${DESIGN_ASSET_ID}/source.png`,
+    )).toBe(true)
+    // 12 张作品水印图 + 6 张首页领养入口无水印图。
+    expect(storage.processCalls).toHaveLength(18)
+  }, 30_000)
+
+  it('keeps the original and reports a stable preparation failure when adaptation fails', async () => {
+    const work = createRegularAdoption()
+    const ready = attachDesignSheet(work, 1560, 1080)
+    storage.failPut = true
+
+    const failed = await publishWork(
+      sqlite,
+      storage,
+      work.id,
+      ready.version,
+      USER_ID,
+      NOW + 3_000,
+    )
+
+    expect(failed).toMatchObject({
+      operation: {
+        failureCode: 'DESIGN_SHEET_UPSCALE_FAILED',
+        failureStage: 'PREPARING_SOURCE',
+        status: 'FAILED',
+      },
+      work: { publicationStatus: 'draft' },
+    })
+    expect(storage.objects.has(
+      `test/t18-fixture/original/${DESIGN_ASSET_ID}/source.png`,
+    )).toBe(true)
     expect(storage.processCalls).toHaveLength(0)
-    expect(sqlite.prepare(`
-      SELECT count(*) FROM publication_operations WHERE entity_id = ?
-    `).pluck().get(work.id)).toBe(0)
   })
 
   it('T37: blocks event drop publication until both event fields exist', async () => {
