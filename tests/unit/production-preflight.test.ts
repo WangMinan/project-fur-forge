@@ -197,7 +197,7 @@ describe('T52-E2 production preflight contract', () => {
 describe('T52-E2 dry-run CLI', () => {
   it('performs no network or cloud writes and records only redacted evidence', () => {
     const directory = temporaryDirectory()
-    const evidencePath = resolve(directory, 'evidence.json')
+    const evidencePath = resolve(directory, 't52e2-20260809T123456Z-01020304.json')
     const configuration = validConfig(resolve(directory, 'production.db'))
     const result = spawnSync(
       process.execPath,
@@ -205,8 +205,6 @@ describe('T52-E2 dry-run CLI', () => {
         resolve(process.cwd(), 'scripts/oss-preflight.mjs'),
         '--run-id',
         't52e2-20260809T123456Z-01020304',
-        '--evidence',
-        evidencePath,
       ],
       {
         cwd: process.cwd(),
@@ -228,6 +226,7 @@ describe('T52-E2 dry-run CLI', () => {
           ESA_SITE_ID: configuration.esaSiteId,
           ESA_ACCESS_KEY_ID: configuration.esaAccessKeyId,
           ESA_ACCESS_KEY_SECRET: configuration.esaAccessKeySecret,
+          PREFLIGHT_EVIDENCE_DIR: directory,
         },
       },
     )

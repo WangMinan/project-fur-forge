@@ -1,6 +1,6 @@
 # 部署说明
 
-> Endpoint/运行时配置和 OSS/ESA 生产预检已由 T52-E1/E2 收敛；部署骨架仍需由 T52-E3～E6 完成。真实部署只在 GATE-E 冻结后执行。逐步命令以 [`PRODUCTION-LAUNCH-HANDBOOK.md`](../agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md) 为准。
+> T52-E1～E5 已完成，T52-E6 的目标机部署基线已实现并等待受控 Docker/Actions 结果。真实部署只在 T49/T50/GATE-E 冻结后执行。逐步命令以 [`PRODUCTION-LAUNCH-HANDBOOK.md`](../agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md) 为准。
 
 ## 生产结构
 
@@ -10,6 +10,8 @@
 - 两只 OSS Bucket 上线时均为 private + BPA；私有原图与网页衍生物严格分桶；
 - 首版不做自定义边缘 URL 鉴权；管理端登录、Session、Host/Origin/CSRF 等应用认证边界保持不变；
 - Compose 唯一常驻服务是 app；Nginx 由宿主机 systemd 管理，只监听 80；宿主机没有证书、ACME 或 443。
+
+目标机固定为 `root@120.26.51.205:/root/project-fur-forge`。2026-08-10 只读核对为 Ubuntu 24.04.4、官方 Nginx `1.30.4-1~noble`、Docker 29.6.2、Compose v5.3.1；Nginx 当前文件是 `/etc/nginx/conf.d/ditedog.conf` 与 `00-connection-map.conf`。当时没有 `.env`、业务容器/卷/自定义网络，因此首次部署必须从空卷 migrate，不运行通用安装脚本覆盖现有宿主机。
 
 ## Endpoint
 
@@ -31,7 +33,10 @@
 | `docker-compose.yaml` | 唯一常驻 app；`127.0.0.1:3000:3000`；migrate/ops 一次性运行 |
 | `.env.compose.example` / `.env.example` | OSS 内外网、上传基址、ESA Site/API 配置，不含真实 Secret |
 | `deploy/nginx/app.conf.template` | 宿主机 HTTP/80、精确 Host、loopback upstream、未知 Host 421 |
+| `deploy/nginx/00-connection-map.conf` | 对应目标机 `/etc/nginx/conf.d/00-connection-map.conf` |
 | `scripts/container-ops.ts` | migrate、preflight、init、backup、restore、recover |
+
+镜像发布只使用手动 `release-image` workflow：必须选择 `main` 的 GATE-E SHA、再次填写同一 40 位 SHA，并输入 `PUBLISH_GATE_E_IMAGE`。目标机只拉取工作流证据中的 `repository@sha256:digest`，不使用 tag/`latest`，不远程 build。
 
 ## OSS/ESA 生产预检
 

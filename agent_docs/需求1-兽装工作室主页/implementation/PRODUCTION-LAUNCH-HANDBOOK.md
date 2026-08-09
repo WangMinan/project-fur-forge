@@ -19,6 +19,22 @@
 | 正式管理 Host | T53-F1 确认 |
 | 冻结 commit/镜像 | GATE-E 填写 |
 
+### 目标机实测基线（2026-08-10，只读）
+
+| 项目 | `root@120.26.51.205` 实际状态 |
+| --- | --- |
+| 系统 | Ubuntu 24.04.4 LTS（Noble），Linux 6.8.0-124-generic，amd64 |
+| Nginx | 官方 `nginx.org` Noble 包 `1.30.4-1~noble`；systemd enabled + active |
+| Nginx 文件 | `/etc/nginx/nginx.conf` 包含 `/etc/nginx/conf.d/*.conf`；站点为 `ditedog.conf`，连接 map 为 `00-connection-map.conf` |
+| 监听 | Nginx 监听 IPv4/IPv6 80；没有 443 和 3000 |
+| Docker | Engine 29.6.2；Compose v5.3.1；systemd enabled + active |
+| 仓库 | `/root/project-fur-forge`；当时为干净 `main@19d0b3c8`，部署时必须前向更新到 GATE-E SHA |
+| 当前业务容器/卷 | 没有容器、业务 volume 或自定义 network；没有 `.env` |
+| 磁盘 | 根盘 40 GiB，已用约 8.8 GiB，可用约 29 GiB |
+| 主机防火墙 | UFW inactive；ESA 源站保护依赖阿里云安全组当前规则，不能把 UFW 状态当作源站保护证据 |
+
+该表只用于让部署基线符合现有机器，不表示 T53 已完成。部署期间若系统、包、端口、目录或 Docker 版本漂移，先停止并重新评估，不运行通用安装器覆盖现状。
+
 已完成：ESA NS 接入、边缘证书、ECS HTTP/80 回源限制、`public-media` 同账号私有 OSS 回源；宿主机 acme.sh、续期 cron、本地证书和 443 已卸载，Nginx 仅监听 80。
 
 首版不做自定义边缘 URL 鉴权。ESA 到私有 OSS 的 STS 回源签名由阿里云自动完成，应用不创建、保存或刷新 STS。管理员条件上传仍直连私有 Bucket 的公网 OSS 域名。
@@ -124,21 +140,121 @@ sudo bash deploy/host/verify-http-origin.sh \
 
 ## 6. 部署命令
 
-以下命令以 GATE-E 冻结产物为准；若实际 ops 入口不一致，必须回到阶段 E 修正文档和实现，不能在服务器现场改代码。
+以下命令只针对上表实测的 `root@120.26.51.205:/root/project-fur-forge`。不安装第二套 Nginx、不运行 Nginx 容器、不创建 TLS/ACME 文件，也不在远程 build 应用镜像。
+
+### 6.1 用户授权后的唯一镜像发布入口
+
+只有 GATE-E 写入冻结 SHA 且用户在 T53-F1 明确授权后，才从 GitHub Actions 手动运行 `release-image`。必须在 ref 选择器选 `main`，并填写：
+
+- `frozen_sha`：与该次 workflow `GITHUB_SHA` 相同的 40 位 GATE-E SHA；
+- `image_tag`：非 `latest` 的发布标签；
+- `confirmation`：精确 `PUBLISH_GATE_E_IMAGE`。
+
+工作流先复用同一 SHA 的完整 quality，再发布 Docker Hub 镜像并输出 `image-release-evidence.json`。远程只使用证据里的 `repository@sha256:digest`；不得使用 tag、短 SHA、`latest` 或服务器现场 build。阶段 E 不执行该工作流、不创建 `v*` tag。
+
+### 6.2 目标机取冻结代码与配置
 
 ```bash
-cp .env.compose.example .env
-docker compose pull
-docker compose run --rm --no-deps app node ops/ops.mjs migrate
-# 先验证冻结变量契约；该步不访问云侧
-docker compose run --rm --no-deps app node ops/ops.mjs preflight
-# 只有显式 live 模式才验证并写入精确、可清理的 OSS/ESA 测试对象
-docker compose run --rm --no-deps app node ops/ops.mjs preflight --no-dry-run
-docker compose run --rm --no-deps app node ops/ops.mjs init-admin
-docker compose up -d app
+ssh root@120.26.51.205
+cd /root/project-fur-forge
+git fetch origin main
+git merge --ff-only origin/main
+test "$(git rev-parse HEAD)" = "$FROZEN_SHA"
+test -z "$(git status --porcelain)"
+
+test ! -e .env
+install -m 600 .env.compose.example .env
+# 使用编辑器填写真实值；不要 source、cat、截图或提交该文件。
+
+docker compose config --quiet
+test "$(docker compose config --services)" = "app"
+IMAGE_REF="$(docker compose config --images)"
+test "$(printf '%s\n' "$IMAGE_REF" | wc -l)" = "1"
+printf '%s\n' "$IMAGE_REF" | grep -Eq '@sha256:[0-9a-f]{64}$'
+docker pull "$IMAGE_REF"
+docker image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$IMAGE_REF" \
+  | grep -Fx "$IMAGE_REF"
 ```
 
-两次 preflight 都会创建不可覆盖的脱敏 JSON 证据。默认模式出现变量错误，或 live 模式出现 FAIL/blocked、非零退出、`exact-test-object-cleanup` 失败时，立即停止；按证据中的 run ID 只核对该次测试前缀，不执行 Bucket 清空或递归模糊删除。live 预检会调用一次精确 `PurgeCaches(Type=file)` 并轮询任务终态，因此必须在 F2 完成 Bucket/ESA/RAM 收敛后执行。
+`.env` 中 `TRUSTED_PROXY_CIDRS` 必须包含固定 Compose gateway `172.30.250.1/32` 和 T53-F2 当日控制台/安全组证据里的全部 ESA 代理 CIDR。模板里的 `replace-me` 故意不合法；未替换时生产 runtime 必须拒绝启动。阿里云安全组负责公网 80 只允许 ESA 回源，UFW inactive 不改变该责任。
+
+### 6.3 空卷初始化与唯一常驻 app
+
+```bash
+docker compose run --rm --no-deps app node ops/ops.mjs migrate
+# 默认 dry-run：不访问或写云侧；证据写入 app-backups volume。
+docker compose run --rm --no-deps app node ops/ops.mjs preflight
+# F2 完成后才允许 live；会创建并清理本次 run 的精确测试对象和 file purge。
+docker compose run --rm --no-deps app node ops/ops.mjs preflight --no-dry-run
+docker compose run --rm --no-deps app node ops/ops.mjs init-admin
+docker compose up --detach --no-build --no-deps app
+
+test "$(docker compose config --services)" = "app"
+docker compose ps
+curl --fail --silent --show-error http://127.0.0.1:3000/api/health/ready
+ss -lntp | grep '127.0.0.1:3000'
+! ss -lntp | grep -E '(0.0.0.0|\[::\]):3000'
+```
+
+两次 preflight 都创建不可覆盖的脱敏 JSON 证据。默认模式变量错误，或 live 模式出现 FAIL/blocked、非零退出、`exact-test-object-cleanup` 失败时立即停止；只按证据 run ID 核对精确前缀，不做 Bucket 清空或模糊递归删除。`docker compose ps` 只能出现常驻 `app`；migrate/init/preflight/backup/restore/recover 都必须是 `run --rm` 一次性容器。
+
+### 6.4 按目标机现有路径收敛 Nginx
+
+目标机已经安装正确包，不重复安装。先核对：
+
+```bash
+nginx -v 2>&1 | grep -Fx 'nginx version: nginx/1.30.4'
+apt-cache policy nginx | sed -n '1,20p'
+systemctl is-enabled nginx
+systemctl is-active nginx
+```
+
+T53-F1 确认精确 Host 后，使用仓库模板替换当前临时 wildcard 配置。下面只备份/写入目标机实际存在的两个文件；不触碰 `/etc/nginx/nginx.conf`、包仓库、证书或其他服务：
+
+```bash
+PUBLIC_HOST='T53-F1-CONFIRMED-PUBLIC-HOST'
+ADMIN_HOST='T53-F1-CONFIRMED-ADMIN-HOST'
+for EXACT_HOST in "$PUBLIC_HOST" "$ADMIN_HOST"; do
+  printf '%s\n' "$EXACT_HOST" | grep -Eq '^[a-z0-9][a-z0-9.-]*[a-z0-9]$'
+  [[ "$EXACT_HOST" != *..* ]]
+done
+test "$PUBLIC_HOST" != "$ADMIN_HOST"
+
+NGINX_BACKUP="/var/backups/project-fur-forge/nginx-$(date -u +%Y%m%dT%H%M%SZ)"
+test ! -e "$NGINX_BACKUP"
+install -d -m 700 "$NGINX_BACKUP"
+cp -a /etc/nginx/conf.d/ditedog.conf "$NGINX_BACKUP/"
+cp -a /etc/nginx/conf.d/00-connection-map.conf "$NGINX_BACKUP/"
+
+sed \
+  -e "s/@@PUBLIC_HOST@@/$PUBLIC_HOST/g" \
+  -e "s/@@ADMIN_HOST@@/$ADMIN_HOST/g" \
+  deploy/nginx/app.conf.template >/tmp/ditedog.conf.candidate
+grep -q '@@' /tmp/ditedog.conf.candidate && exit 1
+install -m 0644 /tmp/ditedog.conf.candidate /etc/nginx/conf.d/ditedog.conf
+install -m 0644 deploy/nginx/00-connection-map.conf \
+  /etc/nginx/conf.d/00-connection-map.conf
+
+if ! nginx -t; then
+  cp -a "$NGINX_BACKUP/ditedog.conf" /etc/nginx/conf.d/ditedog.conf
+  cp -a "$NGINX_BACKUP/00-connection-map.conf" \
+    /etc/nginx/conf.d/00-connection-map.conf
+  nginx -t
+  exit 1
+fi
+systemctl reload nginx
+
+bash deploy/host/verify-http-origin.sh \
+  --public-host "$PUBLIC_HOST" --admin-host "$ADMIN_HOST" --reload
+test "$(curl -sS -o /dev/null -w '%{http_code}' \
+  -H 'Host: public-media.ditedog.com' http://127.0.0.1/)" = "421"
+test "$(curl -sS -o /dev/null -w '%{http_code}' \
+  -H 'Host: unknown.ditedog.invalid' http://127.0.0.1/)" = "421"
+```
+
+包版本本次不需要升级。如果未来检查发现漂移，先记录 `dpkg-query -W nginx` 和 `apt-cache policy nginx`，取得用户授权后才用当前已配置的官方 Noble 源执行精确版本安装；失败时用同一源的已记录旧版本 `apt-get install --allow-downgrades nginx=OLD_VERSION` 回退。配置回退使用上面 `NGINX_BACKUP` 两个精确文件，`nginx -t` 通过后 reload；不下载通用安装脚本。
+
+### 6.5 备份、恢复、升级与回滚
 
 ```bash
 docker compose run --rm --no-deps app node ops/ops.mjs backup --output /app/backups/manual.db
@@ -146,7 +262,28 @@ docker compose run --rm --no-deps app node ops/ops.mjs restore-verify --backup /
 docker compose run --rm --no-deps app node ops/ops.mjs recover-operations
 ```
 
-部署后确认：Nginx `nginx -t` 通过；80 正常、443 和公网 3000 关闭；app ready；公开/管理 Host 隔离；图片可解码；浏览器上传走公网 OSS，服务端走杭州内网 OSS。
+恢复永远写新路径，不覆盖活动数据库：
+
+```bash
+docker compose stop app
+docker compose run --rm --no-deps app node ops/ops.mjs restore \
+  --backup /app/backups/manual.db --output /app/data/restored-UTC.db
+# 验证后把 .env 的 DATABASE_FILE 改为 /app/data/restored-UTC.db，再启动。
+docker compose config --quiet
+docker compose up --detach --no-build --no-deps app
+```
+
+升级前记录当前 `IMAGE_REF`、数据库路径并创建新备份；新镜像仍按 6.2 校验摘要，再执行 migrate/up/ready。回滚镜像必须是 GATE-E 记录的旧 `repository@sha256:digest`，先确认本地存在，再临时覆盖而不远程重建：
+
+```bash
+APP_IMAGE_REF="$ROLLBACK_IMAGE_REF" docker compose up \
+  --detach --no-build --no-deps --force-recreate app
+curl --fail --silent --show-error http://127.0.0.1:3000/api/health/ready
+```
+
+通过后才把 `.env` 的 `APP_IMAGE_REF` 持久改为回滚摘要。若旧镜像不能读取前向迁移后的数据库，停止 app，按上面的新路径恢复对应备份，并同时切换 `DATABASE_FILE`；不得在线覆盖 `studio.db`。首次正式部署前目标机没有旧业务镜像，失败回退是停止 app、保留卷/证据并恢复 Nginx 备份，不能虚构“旧生产镜像已回滚”。
+
+部署后确认：Nginx `nginx -t`、systemd active、80 正常、443 和公网 3000 关闭；app ready；公开/管理 Host 隔离；媒体/未知 Host 421；图片可解码；浏览器上传走公网 OSS，服务端走杭州内网 OSS。宿主机 `mihomo` 的既有 1053/7890/7891/9090 等监听不属于本应用，本任务不修改；安全组仍必须只把应用源站 80 暴露给 ESA。
 
 ## 7. 下架、验证与回滚
 

@@ -7,6 +7,7 @@ import {
   isAbsolute,
   resolve,
 } from 'node:path'
+import { isIP } from 'node:net'
 import { z } from 'zod'
 import runtimeExample from '../../config/runtime.example.json'
 
@@ -121,6 +122,33 @@ const optionalEsaSiteId = z.preprocess(
   z.string().trim().regex(/^[1-9]\d{0,31}$/u).optional(),
 )
 
+function parseCidrList(value: string | undefined) {
+  if (!value) {
+    return []
+  }
+  const entries = value.split(',').map(entry => entry.trim())
+  if (entries.some(entry => entry === '') || new Set(entries).size !== entries.length) {
+    return null
+  }
+  for (const entry of entries) {
+    const match = /^([^/]+)\/(\d{1,3})$/u.exec(entry)
+    if (!match) {
+      return null
+    }
+    const version = isIP(match[1]!)
+    const bits = Number(match[2])
+    if ((version !== 4 && version !== 6) || bits > (version === 4 ? 32 : 128)) {
+      return null
+    }
+  }
+  return entries
+}
+
+const optionalCidrList = optionalText(16_384).refine(
+  value => value === undefined || parseCidrList(value) !== null,
+  '必须是无重复、逗号分隔的有效 IPv4/IPv6 CIDR',
+)
+
 function isOfficialFilingUrl(
   value: string | undefined,
   officialHosts: readonly string[],
@@ -192,7 +220,7 @@ export const runtimeConfigSchema = z.object({
   policeFilingNumber: optionalText(120),
   policeFilingUrl: optionalFilingUrl,
   // T34-F5：可信代理网段列表（逗号分隔 CIDR）。留空表示不解析任何转发链。
-  trustedProxyCidrs: optionalText(512),
+  trustedProxyCidrs: optionalCidrList,
   smtpHost: optionalText(255),
   smtpPort: optionalPort,
   smtpSecure: optionalBoolean,
@@ -417,6 +445,19 @@ export const runtimeConfigSchema = z.object({
         code: 'custom',
         message: '生产数据库文件必须使用绝对路径',
         path: ['databaseFile'],
+      })
+    }
+
+    const trustedProxyCidrs = parseCidrList(config.trustedProxyCidrs)
+    if (
+      !trustedProxyCidrs
+      || trustedProxyCidrs.length < 2
+      || !trustedProxyCidrs.includes('172.30.250.1/32')
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: '生产可信代理必须包含固定 Docker gateway 和当前 ESA 代理 CIDR',
+        path: ['trustedProxyCidrs'],
       })
     }
 
