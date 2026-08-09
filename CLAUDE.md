@@ -135,7 +135,7 @@ pnpm test
 pnpm test:integration
 pnpm test:e2e
 pnpm build
-pnpm verify:production
+pnpm run verify:production
 ```
 
 门禁命令统一使用 `APP_ENV=test`。`nuxt.config.ts` 只在该环境下把 E2E fixture 纳入编译，否则本地 typecheck 可能漏掉 CI 可见错误。**但 `pnpm build` 要用 `APP_ENV=production`**：内容守卫会拦下 test 环境故意编入的 fixture。

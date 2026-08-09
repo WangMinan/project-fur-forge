@@ -58,6 +58,7 @@ RUN pnpm exec esbuild scripts/container-ops.ts \
       --banner:js="import{createRequire as __nodeRequire}from'node:module';const require=__nodeRequire(import.meta.url);" \
     && cp scripts/oss-preflight.mjs \
           scripts/oss-preflight-core.mjs \
+          scripts/production-preflight-core.mjs \
           scripts/embedded-ffmpeg.mjs \
           /app/ops-dist/
 
@@ -87,12 +88,13 @@ COPY --from=build --chown=node:node /app/ops-dist ./ops
 COPY --from=build --chown=node:node /app/server/database/migrations ./server/database/migrations
 COPY --from=build --chown=node:node /app/package.json ./package.json
 
-# 构建期验证：实际创建 SQLite 内存库、加载 OSS SDK，并确认 FFmpeg 可执行。
+# 构建期验证：实际创建 SQLite 内存库、加载 OSS/ESA SDK，并确认 FFmpeg 可执行。
 RUN node --input-type=module -e "\
   import { accessSync, constants } from 'node:fs'; \
   import Database from 'better-sqlite3'; \
   import ffmpegPath from 'ffmpeg-static'; \
   await import('ali-oss'); \
+  await import('@alicloud/esa20240910'); \
   const db = new Database(':memory:'); \
   db.prepare('select 1').get(); \
   db.close(); \

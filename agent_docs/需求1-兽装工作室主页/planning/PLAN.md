@@ -107,6 +107,8 @@ T52-E1 已按该设计落地：服务端 OSS client、浏览器上传签名 clie
 
 阶段 F 原则上运行该冻结入口；若目标环境需要补充诊断或证据采集包装器，可在不改变 preflight 判定契约的前提下追加运维脚本并做最小验证。
 
+T52-E2 已按该设计落地：`pnpm run preflight:oss` 默认只做本地 production 契约校验，显式 `--no-dry-run` 才执行受控 live 探测；Bucket/对象/数据库衍生物、CORS/签名失败、OSS 原站/ESA 读取与官方 SDK purge/最小权限均有稳定检查项、非零退出和脱敏证据。live 模式只创建本次 run 的精确对象并在 `finally` 清理；阶段 E 未使用真实生产凭据执行，不代签 T53 的云侧结果。
+
 ### 3.5 T52-E3 ESA 同账号私有 OSS 回源
 
 - 阿里云自动使用 STS 临时令牌和回源 `Authorization`；业务应用不实现、保存或轮换 STS；

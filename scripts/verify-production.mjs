@@ -139,7 +139,7 @@ try {
     'Public navigation brand was not rendered into the server HTML.',
   )
   assert(
-    publicHtml.includes('DITE DOG'),
+    publicHtml.includes('DITE DOG FURSUIT'),
     'Public English brand was not rendered into the server HTML.',
   )
   assert(adminResponse.ok, 'Admin login did not return 2xx.')
