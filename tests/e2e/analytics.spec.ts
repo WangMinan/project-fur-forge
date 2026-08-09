@@ -175,7 +175,7 @@ test('authenticated overview is responsive and explains the approximate count', 
       .toBeVisible()
     await expect(page.getByText('次页面浏览').first()).toBeVisible()
     await expect(page.getByText('大约会话', { exact: true }).first()).toBeVisible()
-    await expect(page.getByText('不等于真实人数')).toBeVisible()
+    await expect(page.getByText('联系行动', { exact: true }).first()).toBeVisible()
     expect(await page.evaluate(() =>
       document.documentElement.scrollWidth - document.documentElement.clientWidth,
     )).toBeLessThanOrEqual(1)

@@ -126,7 +126,7 @@ test('低分辨率设定图保留原图、明确提示并经 FFmpeg 适配后发
   await designSheet.getByLabel(/图片说明/).fill('低分辨率完整设定图')
   await page.getByRole('button', { name: '保存设定图' }).click()
   await expect(designSheet).toContainText('仍可保存和发布')
-  await expect(designSheet).toContainText('放大不会恢复原图没有的细节')
+  await expect(designSheet).toContainText('发布时会用 FFmpeg Lanczos 生成私有适配源，然后才会执行上传')
 
   const panel = page.getByTestId('publication-panel')
   await expect(panel).toContainText('设定图原图分辨率较低，但可以发布')
@@ -245,7 +245,7 @@ test('下架清理失败：持久“待清理”反馈与重试清理成功', as
 
   const panel = page.getByTestId('publication-panel')
   await expect(panel.getByRole('alert')).toContainText(
-    '作品已下架，但公开文件清理未完成',
+    '作品已下架，但公开文件或 ESA 缓存撤销未完成',
     { timeout: 60_000 },
   )
   await expect(panel.getByRole('alert')).toContainText('作品不会重新公开')
@@ -256,7 +256,7 @@ test('下架清理失败：持久“待清理”反馈与重试清理成功', as
   expect(before.publicObjects.length).toBeGreaterThan(0)
   await setFakeMediaFlags(page, { failDelete: false })
   await panel.getByRole('button', { name: '重试清理公开文件' }).click()
-  await expect(panel).toContainText('公开文件清理完成', { timeout: 60_000 })
+  await expect(panel).toContainText('公开文件与 ESA 缓存撤销完成', { timeout: 60_000 })
   const after = await fakeMediaState(page)
   expect(after.publicObjects).toHaveLength(0)
 })
