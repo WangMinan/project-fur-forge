@@ -5,9 +5,7 @@ import { loadEnvFile } from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 import EsaClient, {
-  DeleteSiteRequest,
   DescribePurgeTasksRequest,
-  ListSitesRequest,
   PurgeCachesRequest,
   PurgeCachesRequestContent,
 } from '@alicloud/esa20240910'
@@ -27,10 +25,8 @@ import {
   evaluateLifecycleRules,
   evaluateStrictCorsRules,
   exactEsaMediaUrl,
-  EXPECTED_MEDIA_ORIGIN,
   EXPECTED_PRIVATE_BUCKET,
   fingerprint,
-  isAccessDenied,
   maskIdentifier,
   productionPreflightError,
   productionPreflightPrefix,
@@ -114,8 +110,7 @@ function loadPreflightConfig() {
     accessKeyId: value('OSS_ACCESS_KEY_ID', 'ossAccessKeyId'),
     accessKeySecret: value('OSS_ACCESS_KEY_SECRET', 'ossAccessKeySecret'),
     esaSiteId: value('ESA_SITE_ID', 'esaSiteId'),
-    esaAccessKeyId: value('ESA_ACCESS_KEY_ID', 'esaAccessKeyId'),
-    esaAccessKeySecret: value('ESA_ACCESS_KEY_SECRET', 'esaAccessKeySecret'),
+    esaApiEndpoint: value('ESA_API_ENDPOINT', 'esaApiEndpoint'),
   })
 }
 
@@ -135,9 +130,9 @@ function createOssClient(config, bucket, upload = false) {
 
 function createEsaClient(config) {
   return new EsaClient({
-    accessKeyId: config.esaAccessKeyId,
-    accessKeySecret: config.esaAccessKeySecret,
-    endpoint: 'esa.cn-hangzhou.aliyuncs.com',
+    accessKeyId: config.accessKeyId,
+    accessKeySecret: config.accessKeySecret,
+    endpoint: new URL(config.esaApiEndpoint).hostname,
     protocol: 'HTTPS',
     regionId: 'cn-hangzhou',
     connectTimeout: 10_000,
@@ -334,21 +329,7 @@ async function bucketReadGate({
   }
 }
 
-async function expectOssAccountEnumerationDenied(client, evidence) {
-  try {
-    await client.listBuckets({ 'max-keys': 1 })
-    addCheck(evidence, 'oss-account-enumeration-denied', 'fail', {
-      reason: 'list-buckets-unexpectedly-allowed',
-    })
-  }
-  catch (error) {
-    addCheck(evidence, 'oss-account-enumeration-denied', (
-      isAccessDenied(error)
-    ) ? 'pass' : 'fail', safeErrorSummary(error))
-  }
-}
-
-async function verifyEsaCredentialBoundary(esaClient, siteId, evidence) {
+async function verifyEsaAccess(esaClient, siteId, evidence) {
   const response = await esaClient.describePurgeTasks(
     new DescribePurgeTasksRequest({
       pageNumber: 1,
@@ -364,34 +345,6 @@ async function verifyEsaCredentialBoundary(esaClient, siteId, evidence) {
     requestId: maskIdentifier(response.body?.requestId ?? ''),
   })
 
-  try {
-    await esaClient.listSites(new ListSitesRequest({
-      pageNumber: 1,
-      pageSize: 1,
-    }))
-    addCheck(evidence, 'esa-site-enumeration-denied', 'fail', {
-      reason: 'list-sites-unexpectedly-allowed',
-    })
-  }
-  catch (error) {
-    addCheck(evidence, 'esa-site-enumeration-denied', (
-      isAccessDenied(error)
-    ) ? 'pass' : 'fail', safeErrorSummary(error))
-  }
-
-  try {
-    // SiteId=0 is outside ESA's positive identifier space, so even an
-    // accidentally over-privileged credential cannot delete the real Site.
-    await esaClient.deleteSite(new DeleteSiteRequest({ siteId: 0 }))
-    addCheck(evidence, 'esa-site-control-plane-write-denied', 'fail', {
-      reason: 'delete-site-unexpectedly-allowed',
-    })
-  }
-  catch (error) {
-    addCheck(evidence, 'esa-site-control-plane-write-denied', (
-      isAccessDenied(error)
-    ) ? 'pass' : 'fail', safeErrorSummary(error))
-  }
 }
 
 function signedPut(client, key, content, expiresSeconds = 300) {
@@ -461,8 +414,8 @@ async function fetchWithRetry(url, expectedStatus, attempts = 10) {
   return response
 }
 
-async function purgeExactTestFile({ esaClient, siteId, url, evidence }) {
-  const input = buildExactPurgeInput(siteId, url)
+async function purgeExactTestFile({ esaClient, siteId, url, mediaOrigin, evidence }) {
+  const input = buildExactPurgeInput(siteId, url, mediaOrigin)
   const response = await esaClient.purgeCaches(new PurgeCachesRequest({
     siteId: input.siteId,
     type: input.type,
@@ -717,7 +670,7 @@ async function liveObjectGate({
       && esaResponseSafe
     ) ? 'pass' : 'fail', {
       responseStatus: esaOutput.status,
-      mediaOrigin: EXPECTED_MEDIA_ORIGIN,
+      mediaOrigin: config.mediaBaseUrl,
       originAndPrivateKeyHidden: esaResponseSafe,
     })
     if (esaOutput.status !== 200) {
@@ -739,6 +692,7 @@ async function liveObjectGate({
       esaClient,
       siteId: config.esaSiteId,
       url: esaOutputUrl,
+      mediaOrigin: config.mediaBaseUrl,
       evidence,
     })
   }
@@ -776,7 +730,7 @@ function redactedConfig(config) {
     privateBucket: maskIdentifier(config.privateBucket),
     derivativeBucket: maskIdentifier(config.publicBucket),
     ossCredentialFingerprint: fingerprint(config.accessKeyId),
-    esaCredentialFingerprint: fingerprint(config.esaAccessKeyId),
+    aliyunCredentialFingerprint: fingerprint(config.accessKeyId),
     esaSite: maskIdentifier(config.esaSiteId),
     credentialsRecorded: false,
   }
@@ -789,7 +743,7 @@ function plannedChecks(evidence) {
     'application-read-write-process-delete-and-overreach',
     'raw-oss-anonymous-403-and-esa-derivative-200',
     'derivative-inventory-database-boundary',
-    'esa-purge-permission-and-control-plane-denial',
+    'esa-purge-access',
   ]) {
     addCheck(evidence, name, 'skip', { reason: 'dry-run-no-network-or-cloud-writes' })
   }
@@ -876,8 +830,7 @@ async function main() {
       evidence,
       readyDerivativeKeys,
     })
-    await expectOssAccountEnumerationDenied(privateClient, evidence)
-    await verifyEsaCredentialBoundary(esaClient, config.esaSiteId, evidence)
+    await verifyEsaAccess(esaClient, config.esaSiteId, evidence)
 
     if (evidence.checks.some(check => check.status === 'fail')) {
       addCheck(evidence, 'live-object-gate', 'skip', {

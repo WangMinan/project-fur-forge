@@ -144,14 +144,14 @@ _依赖：T51-F1；完成后继续 T52-E1。_
 - [x] `OSS_UPLOAD_BASE_URL` 真正控制浏览器条件 PUT Host，不能含 `-internal`；
 - [x] `MEDIA_BASE_URL` 在 production 固定为/只接受 `https://public-media.ditedog.com`，拒绝原始 OSS Bucket 域名；
 - [x] 同步 `.env.example`、`.env.compose.example`、`config/runtime.example.json`、Schema、测试、production verify 和部署文档；
-- [x] 增加 ESA Site/API 最小权限配置；OSS 与 ESA API 使用独立静态服务端 RAM 凭据，不增加 ECS RAM Role，也不在业务侧实现 ESA 回源 STS。
+- [x] 增加 ESA Site/API Endpoint 配置；OSS 与 ESA API 按用户真实部署共用 `.env` 中现有一套静态阿里云 AK/SK，不增加 ECS RAM Role，也不在业务侧实现 ESA 回源 STS。
 
 #### T52-E2 · OSS/ESA preflight 与权限验证程序
 
 - [x] 重写受控 preflight，不再要求 public-read 或原站匿名 200；
-- [x] 自动检查两只原始 OSS 域名匿名 403、应用权限通过、越权拒绝、已发布 ESA 媒体 URL 200；
+- [x] 自动检查两只原始 OSS 域名匿名 403、共享阿里云凭据业务能力、条件上传失败面、已发布 ESA 媒体 URL 200；
 - [x] 检查 Bucket ACL/BPA、Object ACL/Policy、CORS、生命周期和 ESA 只回源衍生 Bucket；
-- [x] 检查网页衍生 Bucket 只含允许公开展示的对象；检查 purge API 最小权限并拒绝域名/套餐等控制面越权；
+- [x] 检查网页衍生 Bucket 只含允许公开展示的对象；检查现有阿里云 AK/SK 具备 purge/查询和 OSS 所需能力，不再把控制面越权拒绝作为门禁；
 - [x] 提供 dry-run、脱敏输出和非零退出码；阶段 F 可补诊断/证据采集包装器，但不得改变该入口的判定契约。
 
 #### T52-E3 · ESA 同账号私有 OSS 回源
@@ -232,7 +232,7 @@ _依赖：T49。_
 
 - [ ] 用户填写真实公开/管理域名、ICP备案号/链接和公安备案状态；公开媒体域名固定为 `public-media.ditedog.com`；
 - [ ] 用户确认正式 Logo、Hero、作品、返图和备案显示；
-- [ ] 用户在远程 Secret 中保存 ESA Site/purge 最小权限 AK/SK、OSS AK/SK 和 Session Secret；
+- [ ] 用户在远程 `.env` 中保存 ESA Site/API Endpoint、现有一套阿里云 AK/SK 和 Session Secret；OSS 与 ESA API 共用该 AK/SK；
 - [ ] 用户确认月度预算、异常费用容忍和待实测的封顶原则；
 - [ ] 用户选择并明确授权 GATE-E 冻结镜像的发布/传送方式；未授权时不得进入 F3；
 - [ ] 核对发布 SHA/镜像摘要，阶段 F 不切换到未通过 GATE-E 的构建。
@@ -243,7 +243,7 @@ _依赖：GATE-E、备案审批/同步。_
 - [ ] 用户把 wildcard DNS 收敛为公开/管理精确记录，复核已经生效的 ECS HTTP/80 回源和 ESA 边缘 HTTPS；
 - [ ] 用户按 Handbook 复核 `public-media` 同账号私有 OSS 回源，并配置缓存、源站保护/WAF、正式套餐、保守初始用量封顶和告警；F3 目标环境实测后再校准阈值；
 - [ ] 用户把两只现有 Bucket 改为 private + BPA，核对 Object ACL/Policy、CORS、生命周期和 RAM；
-- [ ] 用户为应用建立独立的 ESA purge RAM 凭据，按阿里云实际支持的 action/resource 粒度收敛到 `PurgeCaches`/`DescribePurgeTasks`；若控制台暂不支持按 Site 收敛，记录实际权限边界，且不授予 DNS、证书、套餐等无关写权限；
+- [ ] 用户确认现有全权限阿里云 AK/SK 可用于 OSS 与 ESA purge/查询，并记录该权限边界与 Secret 保管方式；本版本不再建立第二套 ESA 凭据；
 - [ ] 用户核对/完成公开与管理 DNS、`public-media` CNAME、ESA 边缘证书和基础防护；已提前存在的 NS/CNAME/A 只作为现状复核，不提前关闭本任务；
 - [ ] 每步保留脱敏截图/任务 ID，不把“已提交”写成“已完成”。
 _依赖：T53-F1。_

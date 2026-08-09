@@ -101,8 +101,7 @@ jobs:
           OSS_ACCESS_KEY_ID: ci-oss-access-key-id
           OSS_ACCESS_KEY_SECRET: ci-oss-access-key-secret
           ESA_SITE_ID: "1234567890"
-          ESA_ACCESS_KEY_ID: ci-esa-access-key-id
-          ESA_ACCESS_KEY_SECRET: ci-esa-access-key-secret
+          ESA_API_ENDPOINT: https://esa.cn-hangzhou.aliyuncs.com
           SESSION_SECRET: ci-placeholder-session-secret-at-least-32-chars
           POLICE_FILING_STATUS: unconfigured
           TRUSTED_PROXY_CIDRS: 172.30.250.1/32,192.0.2.0/24
@@ -162,8 +161,7 @@ jobs:
           OSS_ACCESS_KEY_ID: ci-oss-access-key-id
           OSS_ACCESS_KEY_SECRET: ci-oss-access-key-secret
           ESA_SITE_ID: "1234567890"
-          ESA_ACCESS_KEY_ID: ci-esa-access-key-id
-          ESA_ACCESS_KEY_SECRET: ci-esa-access-key-secret
+          ESA_API_ENDPOINT: https://esa.cn-hangzhou.aliyuncs.com
           SESSION_SECRET: ci-placeholder-session-secret-at-least-32-chars
           POLICE_FILING_STATUS: unconfigured
           TRUSTED_PROXY_CIDRS: 172.30.250.1/32,192.0.2.0/24
@@ -270,6 +268,7 @@ jobs:
           sed \
             -e 's/@@PUBLIC_HOST@@/public.test.invalid/g' \
             -e 's/@@ADMIN_HOST@@/admin.test.invalid/g' \
+            -e 's/@@MEDIA_HOST@@/media.test.invalid/g' \
             deploy/nginx/app.conf.template >"${nginx_test}/conf.d/ditedog.conf"
           cp deploy/nginx/00-connection-map.conf \
             "${nginx_test}/conf.d/00-connection-map.conf"
@@ -290,7 +289,7 @@ jobs:
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
             --header 'Host: unknown.test.invalid' http://127.0.0.1/)" = "421"
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
-            --header 'Host: public-media.ditedog.com' http://127.0.0.1/)" = "421"
+            --header 'Host: media.test.invalid' http://127.0.0.1/)" = "421"
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
             --header 'Host: public.test.invalid' http://127.0.0.1/)" = "200"
 
@@ -339,8 +338,7 @@ jobs:
           OSS_ACCESS_KEY_ID: ci-oss-access-key-id
           OSS_ACCESS_KEY_SECRET: ci-oss-access-key-secret
           ESA_SITE_ID: "1234567890"
-          ESA_ACCESS_KEY_ID: ci-esa-access-key-id
-          ESA_ACCESS_KEY_SECRET: ci-esa-access-key-secret
+          ESA_API_ENDPOINT: https://esa.cn-hangzhou.aliyuncs.com
           SESSION_SECRET: ci-placeholder-session-secret-at-least-32-chars
           POLICE_FILING_STATUS: unconfigured
           TRUSTED_PROXY_CIDRS: 172.30.250.1/32,192.0.2.0/24

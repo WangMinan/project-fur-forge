@@ -64,3 +64,17 @@ T52-E6 的应用、Compose、宿主机 Nginx 模板、运维入口、Handbook �
 修复后用迁移完成的临时数据库启动现有 production output：携带 `Host: public.test.invalid` 的 loopback ready 返回 200，同一路径使用 `Host: 127.0.0.1:3000` 返回 421，证明 health 修复保留了 Host 隔离。
 
 第三次提交 `9353864a` 的 Actions run `31326725491` 中 `checks` 成功，image-build 也越过初始 health、备份、restore-verify、recover 和重启，但恢复到 `/app/data/ci-restored.db` 后应用退出。冻结代码仍把 production 数据库硬编码为 `/app/data/studio.db`，与 SPEC/TASKS/PLAN 已锁定的“恢复到新路径再切换”冲突。修复为只允许 `/app/data` 直属、规范化后的 `.db` 文件：保留 volume/path traversal 边界，同时允许经过 restore 校验的新数据库文件启动。
+
+第四次提交 `4582c859` 的 Actions run `31327226267` 仍为 failure；随后提交 `3e99f746` 的 run `31328323057` 首次取得 `quality` success。该成功只证明当时 SHA 的远端自动化，不覆盖之后的配置和部署手册调整。
+
+## 用户配置与本地首页 follow-up
+
+本节所在提交按用户 2026-08-10 再次确认的真实部署原则完成以下收敛：
+
+- 修复本地 `127.0.0.1:3000` 的 `/api/public/v1/home-aggregate` 500：公开路径使用 `APP_ENV` 判断是否必须是 `prod/web/**`，不再因本地 `.env` 使用正式 `MEDIA_BASE_URL` 就把 `dev/web/**` 误判为生产泄漏；修复后 API 与首页均返回 200。
+- `PUBLIC_BASE_URL`、`ADMIN_BASE_URL`、`MEDIA_BASE_URL`、`OSS_UPLOAD_BASE_URL`、`OSS_ENDPOINT`、`ESA_API_ENDPOINT` 均由环境配置提供；Nginx 媒体 Host 也从 `.env` 的 `MEDIA_BASE_URL` 派生，不保留应用内 `PRODUCTION_MEDIA_ORIGIN` 常量。
+- OSS 与 ESA API 共用现有 `OSS_ACCESS_KEY_ID` / `OSS_ACCESS_KEY_SECRET`；删除第二套 `ESA_ACCESS_KEY_*`，preflight 不再运行 `ListSites`/`DeleteSite` 控制面拒绝探针。浏览器条件上传的 Key/CORS/MD5/过期失败面和 live run 精确对象清理仍保留。
+- 当前产品没有邮件发送或邮件找回密码，因此从 `.env.example`、`.env.compose.example`、runtime example、Schema 与测试中删除未消费的 SMTP 配置；本地忽略的 `.env` 同步移除 SMTP 并补齐 ESA Site/API Endpoint，过程没有输出或提交 Secret。
+- `docs/DEPLOYMENT.md` 改为目标机操作者可逐段执行的控制台确认、首次部署、Nginx 安装、备份、后续镜像更新、单独 migrate 和回滚清单；没有对目标机执行写操作。
+
+本轮本地证据：lint、typecheck、unit 29 files / 161 tests、integration 20 files / 168 tests、production build、production verify、ESA cache/observability verify、secret scan 均 PASS；公开首页定向 E2E 23 tests PASS。目标机再次只读确认 Nginx active、Docker/Compose 可用、仅 80 监听、仓库干净且仍无 `.env`/业务容器。本节提交后的 Actions 尚待执行，因此此处仍不代签 T49 或正式上线结论。

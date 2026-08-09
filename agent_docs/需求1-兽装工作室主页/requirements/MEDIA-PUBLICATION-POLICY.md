@@ -132,7 +132,7 @@ ESA 同账号私有 OSS 回源可读取该 Bucket 全部对象，ESA 侧不能�
 - `.env` 生产实例、两个示例、runtime 示例/校验、部署说明和 preflight 同步；
 - 当前应用 AK/SK 保持，仍只进入服务端 Secret。
 
-当前实现使用两个彼此独立的 OSS SDK client：服务端读写使用 `OSS_ENDPOINT`，条件 PUT 签名使用 `OSS_UPLOAD_BASE_URL`。生产 Schema 同时要求独立、完整的 ESA Site/API 凭据组，并拒绝与 OSS AccessKey ID 复用。
+当前实现使用两个彼此独立的 OSS SDK client：服务端读写使用 `OSS_ENDPOINT`，条件 PUT 签名使用 `OSS_UPLOAD_BASE_URL`。ESA purge 使用 `ESA_SITE_ID`、`ESA_API_ENDPOINT`，并与 OSS SDK 共用 `.env` 中现有的 `OSS_ACCESS_KEY_ID` / `OSS_ACCESS_KEY_SECRET`；不再维护重复的 ESA AccessKey 变量。公开路径是否必须是 `prod/web/**` 由 `APP_ENV=production` 判定，不再通过媒体域名猜测运行环境。
 
 ## 8. ESA 访问与缓存（T52-E3/E4）
 

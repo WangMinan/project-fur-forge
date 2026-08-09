@@ -105,7 +105,7 @@
 - 杭州 ECS 服务端使用 OSS 内网 Endpoint；
 - 本地开发和管理浏览器上传使用公网 Endpoint/Bucket 域名；
 - 公开媒体使用 `public-media.ditedog.com` ESA 域名；
-- 保持静态服务端凭据：OSS 与 ESA purge 分别使用最小权限 RAM，媒体鉴权 Key 独立；不引入 ECS RAM Role；
+- 保持静态服务端凭据：OSS 与 ESA purge 共用 `.env` 中现有一套阿里云 AK/SK，不再配置第二套 ESA 凭据；不引入 ECS RAM Role；
 - 不做异地灾备或跨云多边缘；Free 仅用于开发/验证，正式套餐在 T53 确认。
 
 ### 7.3 远程部署与验收

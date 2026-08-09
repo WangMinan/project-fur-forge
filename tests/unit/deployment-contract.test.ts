@@ -43,7 +43,7 @@ describe('T52-E6 production deployment contract', () => {
     expect(template).toContain('/etc/nginx/conf.d/ditedog.conf')
     expect(connectionMap).toContain('/etc/nginx/conf.d/00-connection-map.conf')
     expect(template).toContain('server 127.0.0.1:3000;')
-    expect(template).toContain('server_name public-media.ditedog.com;')
+    expect(template).toContain('server_name @@MEDIA_HOST@@;')
     expect(template).toContain('server_name @@PUBLIC_HOST@@ @@ADMIN_HOST@@;')
     expect(template).toContain('proxy_set_header X-Forwarded-Proto https;')
     expect(template).toContain('proxy_set_header X-Forwarded-Port  443;')

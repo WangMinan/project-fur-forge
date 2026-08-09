@@ -114,7 +114,7 @@ GitHub Actions 已知未全绿（`checks` 在 Production build 失败，`e2e` �
 - `public-media.ditedog.com` 同账号私有回源公开衍生图 Bucket；阿里云自动使用 STS 完成 ESA 到 OSS 的回源鉴权，业务应用不实现或保存 STS。首版不做自定义边缘 URL 鉴权，浏览器只使用稳定的 ESA HTTPS 媒体 URL；
 - 下架后公开查询立即移除，服务端通过阿里云官方 SDK 对精确 ESA File URL 调用 `PurgeCaches(Type=file)`，保存 `TaskId` 并以 `DescribePurgeTasks` 追踪；撤销时限由 T53 目标环境实测，也不得声称能删除客户端已保存副本；
 - 杭州同地域 ECS 内的 Nitro、migrate 和 ops 使用 `oss-cn-hangzhou-internal.aliyuncs.com`；本机、浏览器条件上传、ESA 回源和公开图片 URL 必须使用各自公网/ESA 场景，不能混用内网 Endpoint；
-- 继续使用当前静态 AK/SK 方案，本阶段不引入实例 RAM 角色；Secret 不得进入仓库、日志、截图或客户端；
+- 继续使用 `.env` 中现有一套静态阿里云 AK/SK，OSS 与 ESA API 共用，不再维护重复凭据变量；本阶段不引入实例 RAM 角色。该凭据权限较大，因此 Secret 绝不能进入仓库、日志、截图或客户端；
 - 正式部署使用 app-only Compose：唯一常驻容器是 Nuxt/Nitro app，端口固定只绑定 `127.0.0.1:3000`；Nginx 独立安装在 ECS 宿主机并由 systemd 管理，migrate/ops 使用同一冻结镜像的一次性容器；
 - `ditedog.com` 使用 ESA NS 接入；客户端 TLS 由 ESA 托管边缘证书终止，ECS 回源协议固定为 HTTP/80。宿主机不监听 443，不保存证书/ACME DNS Secret，不运行 acme.sh、Certbot、续期 cron 或 timer；
 - ESA 边缘强制 HTTPS；正式 DNS 与 Nginx `server_name` 只列公开/管理精确域名，临时 wildcard 记录/Host 必须在 T53 收敛，其他 Host 由 ESA/Nginx 拒绝；

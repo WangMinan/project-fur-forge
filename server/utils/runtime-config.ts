@@ -25,8 +25,7 @@ export const RUNTIME_CONFIG_ENV = {
   ossAccessKeyId: 'OSS_ACCESS_KEY_ID',
   ossAccessKeySecret: 'OSS_ACCESS_KEY_SECRET',
   esaSiteId: 'ESA_SITE_ID',
-  esaAccessKeyId: 'ESA_ACCESS_KEY_ID',
-  esaAccessKeySecret: 'ESA_ACCESS_KEY_SECRET',
+  esaApiEndpoint: 'ESA_API_ENDPOINT',
   sessionSecret: 'SESSION_SECRET',
   icpFilingNumber: 'ICP_FILING_NUMBER',
   icpFilingUrl: 'ICP_FILING_URL',
@@ -34,11 +33,6 @@ export const RUNTIME_CONFIG_ENV = {
   policeFilingNumber: 'POLICE_FILING_NUMBER',
   policeFilingUrl: 'POLICE_FILING_URL',
   trustedProxyCidrs: 'TRUSTED_PROXY_CIDRS',
-  smtpHost: 'SMTP_HOST',
-  smtpPort: 'SMTP_PORT',
-  smtpSecure: 'SMTP_SECURE',
-  smtpUser: 'SMTP_USER',
-  smtpPassword: 'SMTP_PASSWORD',
 } as const
 
 export const RUNTIME_CONFIG_TYPES = {
@@ -55,8 +49,7 @@ export const RUNTIME_CONFIG_TYPES = {
   ossAccessKeyId: 'string',
   ossAccessKeySecret: 'string',
   esaSiteId: 'string',
-  esaAccessKeyId: 'string',
-  esaAccessKeySecret: 'string',
+  esaApiEndpoint: 'origin',
   sessionSecret: 'string',
   icpFilingNumber: 'string',
   icpFilingUrl: 'url',
@@ -64,11 +57,6 @@ export const RUNTIME_CONFIG_TYPES = {
   policeFilingNumber: 'string',
   policeFilingUrl: 'url',
   trustedProxyCidrs: 'string',
-  smtpHost: 'string',
-  smtpPort: 'integer',
-  smtpSecure: 'boolean',
-  smtpUser: 'string',
-  smtpPassword: 'string',
 } as const
 
 type RuntimeConfigKey = keyof typeof RUNTIME_CONFIG_ENV
@@ -92,25 +80,6 @@ const optionalText = (maximum: number) => z.preprocess(
   emptyToUndefined,
   z.string().trim().min(1).max(maximum).optional(),
 )
-
-const optionalPort = z.preprocess(
-  emptyToUndefined,
-  z.coerce.number().int().min(1).max(65_535).optional(),
-)
-
-const optionalBoolean = z.preprocess((value) => {
-  const normalized = emptyToUndefined(value)
-
-  if (normalized === 'true') {
-    return true
-  }
-
-  if (normalized === 'false') {
-    return false
-  }
-
-  return normalized
-}, z.boolean().optional())
 
 const optionalFilingUrl = z.preprocess(
   emptyToUndefined,
@@ -205,8 +174,10 @@ export const runtimeConfigSchema = z.object({
   ossAccessKeyId: optionalText(256),
   ossAccessKeySecret: optionalText(256),
   esaSiteId: optionalEsaSiteId,
-  esaAccessKeyId: optionalText(256),
-  esaAccessKeySecret: optionalText(256),
+  esaApiEndpoint: z.preprocess(
+    emptyToUndefined,
+    originSchema.optional(),
+  ),
   sessionSecret: z.preprocess(
     emptyToUndefined,
     z.string().min(32).max(1_024).optional(),
@@ -221,11 +192,6 @@ export const runtimeConfigSchema = z.object({
   policeFilingUrl: optionalFilingUrl,
   // T34-F5：可信代理网段列表（逗号分隔 CIDR）。留空表示不解析任何转发链。
   trustedProxyCidrs: optionalCidrList,
-  smtpHost: optionalText(255),
-  smtpPort: optionalPort,
-  smtpSecure: optionalBoolean,
-  smtpUser: optionalText(320),
-  smtpPassword: optionalText(1_024),
 }).strict().superRefine((config, context) => {
   const origins = [
     config.publicBaseUrl,
@@ -283,49 +249,27 @@ export const runtimeConfigSchema = z.object({
 
   const esaConfig = [
     config.esaSiteId,
-    config.esaAccessKeyId,
-    config.esaAccessKeySecret,
+    config.esaApiEndpoint,
   ]
   const hasAnyEsaConfig = esaConfig.some(Boolean)
   if (hasAnyEsaConfig && esaConfig.some(value => !value)) {
     context.addIssue({
       code: 'custom',
-      message: 'ESA Site 与 API 凭据必须成组提供',
+      message: 'ESA Site 与 API Endpoint 必须成组提供',
       path: ['esaSiteId'],
     })
   }
 
   if (
-    config.ossAccessKeyId
-    && config.esaAccessKeyId
-    && config.ossAccessKeyId === config.esaAccessKeyId
+    config.esaApiEndpoint
+    && !/^esa(?:\.[a-z0-9-]+)?\.aliyuncs\.com$/u.test(
+      new URL(config.esaApiEndpoint).hostname,
+    )
   ) {
     context.addIssue({
       code: 'custom',
-      message: 'OSS 与 ESA API 必须使用不同的 RAM 凭据',
-      path: ['esaAccessKeyId'],
-    })
-  }
-
-  const smtpConfig = [
-    config.smtpHost,
-    config.smtpPort,
-    config.smtpSecure,
-    config.smtpUser,
-    config.smtpPassword,
-  ]
-  const hasAnySmtpConfig = smtpConfig.some(
-    value => value !== undefined,
-  )
-
-  if (
-    hasAnySmtpConfig
-    && smtpConfig.some(value => value === undefined)
-  ) {
-    context.addIssue({
-      code: 'custom',
-      message: 'SMTP 配置必须成组提供',
-      path: ['smtpHost'],
+      message: 'ESA API Endpoint 必须使用阿里云官方 HTTPS 域名',
+      path: ['esaApiEndpoint'],
     })
   }
 
@@ -401,10 +345,10 @@ export const runtimeConfigSchema = z.object({
       }
     }
 
-    if (config.mediaBaseUrl !== 'https://public-media.ditedog.com') {
+    if (new URL(config.mediaBaseUrl).hostname.endsWith('.aliyuncs.com')) {
       context.addIssue({
         code: 'custom',
-        message: '生产媒体 origin 必须使用 public-media.ditedog.com',
+        message: '生产媒体 origin 必须使用 ESA 自定义域名，不能使用 OSS 原站',
         path: ['mediaBaseUrl'],
       })
     }
@@ -419,7 +363,7 @@ export const runtimeConfigSchema = z.object({
 
     if (
       config.ossEndpoint
-      !== 'https://oss-cn-hangzhou-internal.aliyuncs.com'
+      !== `https://${config.ossRegion}-internal.aliyuncs.com`
     ) {
       context.addIssue({
         code: 'custom',
@@ -430,7 +374,7 @@ export const runtimeConfigSchema = z.object({
 
     if (config.ossPrivateBucket) {
       const expectedUploadOrigin
-        = `https://${config.ossPrivateBucket}.oss-cn-hangzhou.aliyuncs.com`
+        = `https://${config.ossPrivateBucket}.${config.ossRegion}.aliyuncs.com`
       if (config.ossUploadBaseUrl !== expectedUploadOrigin) {
         context.addIssue({
           code: 'custom',
@@ -469,8 +413,7 @@ export const runtimeConfigSchema = z.object({
       'ossAccessKeyId',
       'ossAccessKeySecret',
       'esaSiteId',
-      'esaAccessKeyId',
-      'esaAccessKeySecret',
+      'esaApiEndpoint',
       'sessionSecret',
     ] as const) {
       if (config[key] === undefined) {

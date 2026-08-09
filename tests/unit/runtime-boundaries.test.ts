@@ -244,49 +244,24 @@ describe('runtime configuration', () => {
       OSS_ACCESS_KEY_ID: 'test-access-key-id',
       OSS_ACCESS_KEY_SECRET: 'test-access-key-secret',
       ESA_SITE_ID: '1234567890',
-      ESA_ACCESS_KEY_ID: 'test-esa-access-key-id',
-      ESA_ACCESS_KEY_SECRET: 'test-esa-access-key-secret',
+      ESA_API_ENDPOINT: 'https://esa.cn-hangzhou.aliyuncs.com',
       SESSION_SECRET: 'production-session-secret-at-least-32-characters',
       POLICE_FILING_STATUS: 'unconfigured',
       TRUSTED_PROXY_CIDRS: '172.30.250.1/32,192.0.2.0/24',
     }
 
-    const productionWithoutSmtp = loadRuntimeConfig({
+    const productionConfig = loadRuntimeConfig({
       cwd: productionCwd,
       env: productionRequired,
     })
-    expect(productionWithoutSmtp).toMatchObject({
+    expect(productionConfig).toMatchObject({
       appEnv: 'production',
+      esaApiEndpoint: 'https://esa.cn-hangzhou.aliyuncs.com',
       esaSiteId: '1234567890',
       mediaBaseUrl: 'https://public-media.ditedog.com',
       ossEndpoint: 'https://oss-cn-hangzhou-internal.aliyuncs.com',
       ossUploadBaseUrl:
         'https://test-private-bucket.oss-cn-hangzhou.aliyuncs.com',
-    })
-    expect(productionWithoutSmtp.smtpHost).toBeUndefined()
-    expect(productionWithoutSmtp.smtpPassword).toBeUndefined()
-    expect(() => loadRuntimeConfig({
-      cwd: productionCwd,
-      env: {
-        ...productionRequired,
-        SMTP_HOST: 'smtp.example.test',
-      },
-    })).toThrowError(/smtpHost/)
-    expect(loadRuntimeConfig({
-      cwd: productionCwd,
-      env: {
-        ...productionRequired,
-        SMTP_HOST: 'smtp.example.test',
-        SMTP_PORT: '465',
-        SMTP_SECURE: 'true',
-        SMTP_USER: 'mailer@example.test',
-        SMTP_PASSWORD: 'test-smtp-password',
-      },
-    })).toMatchObject({
-      smtpHost: 'smtp.example.test',
-      smtpPort: 465,
-      smtpSecure: true,
-      smtpUser: 'mailer@example.test',
     })
   })
 
@@ -307,8 +282,7 @@ describe('runtime configuration', () => {
       OSS_ACCESS_KEY_ID: 'oss-access-key-id',
       OSS_ACCESS_KEY_SECRET: 'oss-access-key-secret',
       ESA_SITE_ID: '171890925863148',
-      ESA_ACCESS_KEY_ID: 'esa-access-key-id',
-      ESA_ACCESS_KEY_SECRET: 'esa-access-key-secret',
+      ESA_API_ENDPOINT: 'https://esa.cn-hangzhou.aliyuncs.com',
       SESSION_SECRET: 'production-session-secret-at-least-32-characters',
       POLICE_FILING_STATUS: 'unconfigured',
       TRUSTED_PROXY_CIDRS: '172.30.250.1/32,192.0.2.0/24',
@@ -354,9 +328,9 @@ describe('runtime configuration', () => {
       cwd,
       env: {
         ...valid,
-        ESA_ACCESS_KEY_ID: valid.OSS_ACCESS_KEY_ID,
+        ESA_API_ENDPOINT: 'https://example.com',
       },
-    })).toThrowError(/esaAccessKeyId/)
+    })).toThrowError(/esaApiEndpoint/)
     expect(() => loadRuntimeConfig({
       cwd,
       env: {
@@ -478,8 +452,7 @@ describe('runtime configuration', () => {
       mediaBaseUrl: '',
       ossUploadBaseUrl: '',
       esaSiteId: '',
-      esaAccessKeyId: '',
-      esaAccessKeySecret: '',
+      esaApiEndpoint: '',
     })
     expect(template.values).not.toHaveProperty('ossBucket')
     expect(template.values).not.toHaveProperty('originalImageMaxBytes')
@@ -692,8 +665,7 @@ describe('host boundary', () => {
         OSS_ACCESS_KEY_ID: 'test-access-key-id',
         OSS_ACCESS_KEY_SECRET: 'test-access-key-secret',
         ESA_SITE_ID: '1234567890',
-        ESA_ACCESS_KEY_ID: 'test-esa-access-key-id',
-        ESA_ACCESS_KEY_SECRET: 'test-esa-access-key-secret',
+        ESA_API_ENDPOINT: 'https://esa.cn-hangzhou.aliyuncs.com',
         SESSION_SECRET: 'test-only-session-secret-with-32-chars',
         POLICE_FILING_STATUS: 'not_applicable',
         TRUSTED_PROXY_CIDRS: '172.30.250.1/32,192.0.2.0/24',

@@ -56,7 +56,7 @@ app/migrate/ops --杭州内网 Endpoint--> 两只 OSS Bucket
 
 - app-only Compose：唯一常驻服务是 app，端口只映射 `127.0.0.1:3000`；migrate、preflight、init、backup、restore、recover 使用同一镜像的一次性容器。
 - 宿主机 Nginx 模板：只监听 80，只接受正式公开/管理精确 Host，未知 Host 返回 `421`，向应用传递受控 `X-Forwarded-Proto=https`。
-- 生产配置：浏览器上传基址、OSS 内外网 Endpoint、ESA Site/API 凭据互相分离；Secret 不进仓库、镜像、日志或截图。
+- 生产配置：浏览器上传基址、OSS 内外网 Endpoint、ESA Site/API Endpoint 显式分离；OSS 与 ESA API 共用 `.env` 中现有一套阿里云 AK/SK，Secret 不进仓库、镜像、日志或截图。
 - ESA 精确刷新：应用使用阿里云官方 SDK 调用 `PurgeCaches(Type=file)`，保存 `TaskId`，再用 `DescribePurgeTasks` 收敛；不做全站刷新。
 - 同一 SHA 通过 T49、T50，并由 GATE-E 写入唯一镜像摘要和回滚摘要。
 
@@ -69,7 +69,7 @@ SDK 初始化、请求和异常处理参考[阿里云 TypeScript SDK samples 的
 3. `public-media` 保持同账号私有 OSS 回源，origin 精确指向网页衍生 Bucket。该授权由 ESA 使用 STS 完成，业务应用不参与；不要配置自定义边缘鉴权、签名查询参数、媒体鉴权 Key/TTL 或业务侧 STS。
 4. 两只 Bucket 切为 private + BPA；核对历史 Object ACL、Bucket Policy、CORS 和生命周期规则。
 5. 按 `deploy/esa/cache-policy.json` 的优先级配置缓存：管理 Host 与 `/api/**`/会话/写操作绕过，公开 SSR HTML 初始绕过，`/_nuxt/**` 缓存 365 天，`public-media` 的 `prod/web/**` 节点缓存 30 天、浏览器缓存 7 天并忽略全部无业务意义 query；404 缓存 60 秒，禁止源站错误或 404 时提供 stale。其他媒体路径拒绝。
-6. 配置独立的 ESA API 凭据，按控制台实际支持的粒度只授予缓存刷新与任务查询所需权限；若暂不支持按 Site 收敛，记录实际权限边界。OSS 与 ESA 凭据不复用。
+6. 记录现有全权限阿里云 AK/SK 的权限边界和保管位置；OSS 与 ESA API 共用该凭据，不创建第二套 ESA AccessKey。preflight 只验证本任务实际所需的 OSS/ESA 能力，不以控制面拒绝作为通过条件。
 
 控制台保存后先停止写入并核对：两只 OSS 原站匿名 GET/HEAD 为 403；数据库中已发布的 `prod/web/**` 通过 `public-media` 返回 200；响应最终地址和响应头不暴露 OSS 原站；网页衍生 Bucket 全量对象与数据库 `READY + PUBLIC` 清单双向一致。任一项失败都不得靠放开 Bucket ACL、添加自定义签名或把私有对象移入网页衍生 Bucket 规避。
 
@@ -176,7 +176,7 @@ docker image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$IMA
   | grep -Fx "$IMAGE_REF"
 ```
 
-`.env` 中 `TRUSTED_PROXY_CIDRS` 必须包含固定 Compose gateway `172.30.250.1/32` 和 T53-F2 当日控制台/安全组证据里的全部 ESA 代理 CIDR。模板里的 `replace-me` 故意不合法；未替换时生产 runtime 必须拒绝启动。阿里云安全组负责公网 80 只允许 ESA 回源，UFW inactive 不改变该责任。
+`.env` 中 `ESA_API_ENDPOINT` 使用阿里云 ESA API HTTPS origin；`OSS_ACCESS_KEY_ID` / `OSS_ACCESS_KEY_SECRET` 同时供 OSS 与 ESA API 使用，不配置 `ESA_ACCESS_KEY_*`。`TRUSTED_PROXY_CIDRS` 必须包含固定 Compose gateway `172.30.250.1/32` 和 T53-F2 当日控制台/安全组证据里的全部 ESA 代理 CIDR。模板里的 `replace-me` 故意不合法；未替换时生产 runtime 必须拒绝启动。阿里云安全组负责公网 80 只允许 ESA 回源，UFW inactive 不改变该责任。
 
 ### 6.3 空卷初始化与唯一常驻 app
 

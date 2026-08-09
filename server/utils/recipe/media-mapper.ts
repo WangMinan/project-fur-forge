@@ -14,6 +14,7 @@ import type {
   PublicSourceSetDto,
   PublicVariantDto,
 } from '../../../shared/types/contracts'
+import type { RuntimeConfig } from '../runtime-config'
 import {
   completePublicHeroVariants,
   HERO_RECIPE,
@@ -81,11 +82,9 @@ export interface HeroSlideRecord {
   } | null
 }
 
-export const PRODUCTION_MEDIA_ORIGIN = 'https://public-media.ditedog.com'
-
 function assertPublicDerivativeObjectKey(
-  mediaOrigin: string,
   objectKey: string,
+  appEnv: RuntimeConfig['appEnv'],
 ) {
   const segments = objectKey.split('/')
   const webIndex = segments.indexOf('web')
@@ -101,7 +100,7 @@ function assertPublicDerivativeObjectKey(
     && !segments.some(segment => (
       ['original', 'preview', 'processing'].includes(segment)
     ))
-  const productionSafe = mediaOrigin !== PRODUCTION_MEDIA_ORIGIN
+  const productionSafe = appEnv !== 'production'
     || (webIndex === 1 && segments[0] === 'prod')
 
   if (!structurallySafe || !productionSafe) {
@@ -112,9 +111,10 @@ function assertPublicDerivativeObjectKey(
 export function publicMediaUrlForObjectKey(
   mediaBaseUrl: string,
   objectKey: string,
+  appEnv: RuntimeConfig['appEnv'] = 'development',
 ) {
   const base = new URL(mediaBaseUrl)
-  assertPublicDerivativeObjectKey(base.origin, objectKey)
+  assertPublicDerivativeObjectKey(objectKey, appEnv)
   base.pathname = `${base.pathname.replace(/\/$/, '')}/${objectKey
     .split('/')
     .map(encodeURIComponent)
@@ -137,13 +137,14 @@ export function toAdminAssetDto(record: AssetRecord): AdminAssetDto {
 export function toPublicVariantDto(
   record: VariantRecord,
   mediaBaseUrl: string,
+  appEnv: RuntimeConfig['appEnv'] = 'development',
 ): PublicVariantDto | null {
   if (record.storageScope !== 'PUBLIC' || record.status !== 'READY') {
     return null
   }
 
   return publicVariantDtoSchema.parse({
-    src: publicMediaUrlForObjectKey(mediaBaseUrl, record.objectKey),
+    src: publicMediaUrlForObjectKey(mediaBaseUrl, record.objectKey, appEnv),
     width: record.width,
     height: record.height,
     format: record.format,
@@ -164,9 +165,10 @@ export function toPublicSourceSetDto(
   records: readonly VariantRecord[],
   mediaBaseUrl: string,
   expectedWidths: readonly number[],
+  appEnv: RuntimeConfig['appEnv'] = 'development',
 ): PublicSourceSetDto {
   const variants = records
-    .map(record => toPublicVariantDto(record, mediaBaseUrl))
+    .map(record => toPublicVariantDto(record, mediaBaseUrl, appEnv))
     .filter(variant => variant !== null)
   const webp = variants
     .filter(variant => variant.format === 'webp')
@@ -191,6 +193,7 @@ export function toPublicSourceSetDto(
 export function toPublicHeroSlideDto(
   record: HeroSlideRecord,
   mediaBaseUrl: string,
+  appEnv: RuntimeConfig['appEnv'] = 'development',
 ): PublicHeroSlideDto | null {
   if (!record.enabled) {
     return null
@@ -215,14 +218,16 @@ export function toPublicHeroSlideDto(
           unwatermarked.landscape,
           mediaBaseUrl,
           siteDisplayWidths(usages.landscape),
+          appEnv,
         ),
         portrait: toPublicSourceSetDto(
           unwatermarked.portrait,
           mediaBaseUrl,
           siteDisplayWidths(usages.portrait),
+          appEnv,
         ),
       }
-    : legacyWatermarkedHeroSources(record, mediaBaseUrl)
+    : legacyWatermarkedHeroSources(record, mediaBaseUrl, appEnv)
 
   return publicHeroSlideDtoSchema.parse({
     alt: toSafePublicAlt(record.altText, '首页代表作品'),
@@ -238,6 +243,7 @@ export function toPublicHeroSlideDto(
 function legacyWatermarkedHeroSources(
   record: HeroSlideRecord,
   mediaBaseUrl: string,
+  appEnv: RuntimeConfig['appEnv'],
 ) {
   if (!record.activeWatermarkProfileId) {
     throw new Error('Enabled hero slide has no complete site display variants.')
@@ -251,6 +257,7 @@ function legacyWatermarkedHeroSources(
       ),
       mediaBaseUrl,
       HERO_RECIPE.home_hero_landscape.widths,
+      appEnv,
     ),
     portrait: toPublicSourceSetDto(
       completePublicHeroVariants(
@@ -260,6 +267,7 @@ function legacyWatermarkedHeroSources(
       ),
       mediaBaseUrl,
       HERO_RECIPE.home_hero_portrait.widths,
+      appEnv,
     ),
   }
 }

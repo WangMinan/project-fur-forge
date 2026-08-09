@@ -15,20 +15,14 @@
     "ossAccessKeyId": "string",
     "ossAccessKeySecret": "string",
     "esaSiteId": "string",
-    "esaAccessKeyId": "string",
-    "esaAccessKeySecret": "string",
+    "esaApiEndpoint": "origin",
     "sessionSecret": "string",
     "icpFilingNumber": "string",
     "icpFilingUrl": "url",
     "policeFilingStatus": "filing-status",
     "policeFilingNumber": "string",
     "policeFilingUrl": "url",
-    "trustedProxyCidrs": "string",
-    "smtpHost": "string",
-    "smtpPort": "integer",
-    "smtpSecure": "boolean",
-    "smtpUser": "string",
-    "smtpPassword": "string"
+    "trustedProxyCidrs": "string"
   },
   "env": {
     "appEnv": "APP_ENV",
@@ -44,20 +38,14 @@
     "ossAccessKeyId": "OSS_ACCESS_KEY_ID",
     "ossAccessKeySecret": "OSS_ACCESS_KEY_SECRET",
     "esaSiteId": "ESA_SITE_ID",
-    "esaAccessKeyId": "ESA_ACCESS_KEY_ID",
-    "esaAccessKeySecret": "ESA_ACCESS_KEY_SECRET",
+    "esaApiEndpoint": "ESA_API_ENDPOINT",
     "sessionSecret": "SESSION_SECRET",
     "icpFilingNumber": "ICP_FILING_NUMBER",
     "icpFilingUrl": "ICP_FILING_URL",
     "policeFilingStatus": "POLICE_FILING_STATUS",
     "policeFilingNumber": "POLICE_FILING_NUMBER",
     "policeFilingUrl": "POLICE_FILING_URL",
-    "trustedProxyCidrs": "TRUSTED_PROXY_CIDRS",
-    "smtpHost": "SMTP_HOST",
-    "smtpPort": "SMTP_PORT",
-    "smtpSecure": "SMTP_SECURE",
-    "smtpUser": "SMTP_USER",
-    "smtpPassword": "SMTP_PASSWORD"
+    "trustedProxyCidrs": "TRUSTED_PROXY_CIDRS"
   },
   "values": {
     "appEnv": "development",
@@ -73,19 +61,13 @@
     "ossAccessKeyId": "",
     "ossAccessKeySecret": "",
     "esaSiteId": "",
-    "esaAccessKeyId": "",
-    "esaAccessKeySecret": "",
+    "esaApiEndpoint": "",
     "sessionSecret": "",
     "icpFilingNumber": "",
     "icpFilingUrl": "",
     "policeFilingStatus": "unconfigured",
     "policeFilingNumber": "",
     "policeFilingUrl": "",
-    "trustedProxyCidrs": "",
-    "smtpHost": "",
-    "smtpPort": "",
-    "smtpSecure": "",
-    "smtpUser": "",
-    "smtpPassword": ""
+    "trustedProxyCidrs": ""
   }
 }
