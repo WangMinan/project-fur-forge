@@ -1,6 +1,7 @@
 import {
   mkdtempSync,
   readFileSync,
+  readdirSync,
   rmSync,
   writeFileSync,
 } from 'node:fs'
@@ -532,6 +533,31 @@ describe('runtime configuration', () => {
         url: 'https://beian.mps.gov.cn/#/query/webSearch?code=33010000000000',
       },
     })
+  })
+})
+
+describe('public media projection boundary', () => {
+  it('keeps storage internals out of public route handlers', () => {
+    const publicApiRoot = resolve(projectRoot, 'server/api/public')
+    const source = readdirSync(publicApiRoot, {
+      encoding: 'utf8',
+      recursive: true,
+    })
+      .filter(path => path.endsWith('.ts'))
+      .map(path => readFileSync(resolve(publicApiRoot, path), 'utf8'))
+      .join('\n')
+
+    expect(source).not.toMatch(
+      /privateObjectKey|signedUrl|signatureUrl|getPrivate|signPrivate|\.aliyuncs\.com|x-oss/iu,
+    )
+  })
+
+  it('does not add browser media signing keys or TTL configuration', () => {
+    const environmentNames = Object.values(RUNTIME_CONFIG_ENV).join('\n')
+
+    expect(environmentNames).not.toMatch(
+      /(?:MEDIA|EDGE|CDN).*(?:AUTH|KEY|SIGN|TTL)/iu,
+    )
   })
 })
 

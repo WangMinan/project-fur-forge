@@ -112,16 +112,29 @@ function assert(condition, message) {
 try {
   await waitUntilReady()
 
-  const [healthResponse, publicResponse, adminResponse] = await Promise.all([
+  const publicApiPaths = [
+    '/api/public/v1/home-aggregate',
+    '/api/public/v1/works',
+    '/api/public/v1/adoptions',
+    '/api/public/v1/returns',
+  ]
+  const [
+    healthResponse,
+    publicResponse,
+    adminResponse,
+    ...publicApiResponses
+  ] = await Promise.all([
     fetch(`${baseURL}/api/health`),
     fetch(`${baseURL}/`),
     fetch(`${adminBaseURL}/admin/login`),
+    ...publicApiPaths.map(path => fetch(`${baseURL}${path}`)),
   ])
 
-  const [health, publicHtml, adminHtml] = await Promise.all([
+  const [health, publicHtml, adminHtml, ...publicApiBodies] = await Promise.all([
     healthResponse.json(),
     publicResponse.text(),
     adminResponse.text(),
+    ...publicApiResponses.map(response => response.text()),
   ])
 
   assert(healthResponse.ok, 'Health endpoint did not return 2xx.')
@@ -141,6 +154,33 @@ try {
   assert(
     publicHtml.includes('DITE DOG FURSUIT'),
     'Public English brand was not rendered into the server HTML.',
+  )
+  publicApiResponses.forEach((response, index) => assert(
+    response.ok,
+    `Public API ${publicApiPaths[index]} returned ${response.status}.`,
+  ))
+  const publicProjection = [publicHtml, ...publicApiBodies].join('\n')
+  for (const forbidden of [
+    '.oss-cn-hangzhou.aliyuncs.com',
+    '/prod/original/',
+    '/prod/processing/',
+    '/prod/preview/',
+    'privateObjectKey',
+    'signedUrl',
+  ]) {
+    assert(
+      !publicProjection.includes(forbidden),
+      `Public SSR/API projection exposed forbidden media data: ${forbidden}`,
+    )
+  }
+  const projectedProductionMediaUrls = publicProjection.match(
+    /https?:\/\/[^"\\\s]+\/prod\/web\/[^"\\\s]+/gu,
+  ) ?? []
+  assert(
+    projectedProductionMediaUrls.every(url => (
+      url.startsWith('https://public-media.ditedog.com/prod/web/')
+    )),
+    'Public SSR/API projection used a non-ESA production media URL.',
   )
   assert(adminResponse.ok, 'Admin login did not return 2xx.')
   assert(

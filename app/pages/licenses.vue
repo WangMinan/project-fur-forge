@@ -50,6 +50,12 @@ const RUNTIME: Dependency[] = [
   },
   {
     license: 'MIT',
+    name: 'H3',
+    purpose: '服务端请求处理',
+    url: 'https://github.com/h3js/h3',
+  },
+  {
+    license: 'MIT',
     name: 'Vue',
     purpose: '界面渲染',
     url: 'https://github.com/vuejs/core',
