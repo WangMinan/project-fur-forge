@@ -3,6 +3,7 @@ import {
   PROJECT_ENGLISH_NAME,
   PROJECT_NAME,
 } from '~~/shared/constants/project'
+import { publicSiteMetaResponseSchema } from '~~/shared/schemas/site-meta'
 
 /**
  * `brandOnly` 隐藏页脚导航，只留品牌与法务/备案信息。
@@ -15,6 +16,11 @@ withDefaults(defineProps<{
 })
 
 const year = new Date().getFullYear()
+const { data: filings } = await useFetch('/api/site-meta', {
+  key: 'public-site-meta',
+  default: () => ({ icp: null, police: null }),
+  transform: raw => publicSiteMetaResponseSchema.parse(raw).data.filings,
+})
 </script>
 
 <template>
@@ -56,8 +62,14 @@ const year = new Date().getFullYear()
           </span>
         </p>
         <p class="public-footer__legal-links">
-          <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">ICP备案</a>
-          <span aria-hidden="true">|</span>
+          <template v-if="filings.icp">
+            <a :href="filings.icp.url" target="_blank" rel="noopener noreferrer">{{ filings.icp.number }}</a>
+            <span aria-hidden="true">|</span>
+          </template>
+          <template v-if="filings.police">
+            <a :href="filings.police.url" target="_blank" rel="noopener noreferrer">{{ filings.police.number }}</a>
+            <span aria-hidden="true">|</span>
+          </template>
           <NuxtLink to="/licenses">开源软件声明</NuxtLink>
         </p>
       </div>
@@ -122,6 +134,7 @@ const year = new Date().getFullYear()
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-1) var(--space-2);
+  overflow-wrap: anywhere;
 }
 
 .public-footer__legal a {

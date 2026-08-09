@@ -50,7 +50,11 @@ const avatarSrc = computed(() => (
 </script>
 
 <template>
-  <div class="public-page">
+  <div
+    class="public-page"
+    data-analytics-entity-type="return_character"
+    :data-analytics-entity-id="character.id"
+  >
     <div class="public-container character-page">
       <p class="character-page__back">
         <NuxtLink to="/returns">← 返图墙</NuxtLink>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { PUBLIC_NAV_BRAND } from '~~/shared/constants/project'
+
 const props = defineProps<{
   open: boolean
   triggerId: string
@@ -119,7 +121,7 @@ onBeforeUnmount(() => {
       data-testid="public-mobile-nav"
     >
       <div class="mobile-nav__bar">
-        <span class="mobile-nav__brand">有点小狗工作室</span>
+        <span class="mobile-nav__brand">{{ PUBLIC_NAV_BRAND }}</span>
         <button
           type="button"
           class="mobile-nav__close"

@@ -121,7 +121,14 @@ const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
 </script>
 
 <template>
-  <article v-if="dto" class="work-detail" data-testid="work-detail" :data-work-slug="dto.slug">
+  <article
+    v-if="dto"
+    class="work-detail"
+    data-testid="work-detail"
+    data-analytics-entity-type="work"
+    :data-analytics-entity-id="dto.id"
+    :data-work-slug="dto.slug"
+  >
     <nav class="work-detail__back" aria-label="返回">
       <NuxtLink to="/works" class="work-detail__back-link">
         <span aria-hidden="true">←</span> 返回作品展示

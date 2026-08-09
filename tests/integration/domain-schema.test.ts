@@ -301,6 +301,7 @@ describe('P0 schema boundary', () => {
 
     expect(tables).toEqual([
       '__drizzle_migrations',
+      'analytics_events',
       'asset_variants',
       'assets',
       'audit_logs',

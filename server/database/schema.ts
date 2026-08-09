@@ -715,6 +715,56 @@ export const returnPhotos = sqliteTable('return_photos', {
   ),
 ])
 
+/**
+ * T46 最小第一方统计。
+ *
+ * 表只保存服务端时间、规范枚举、可选公开实体 ID、白名单联系行动与域分离
+ * HMAC。IP、UA、Referer、原始 URL/query、Cookie、联系方式和原始会话 ID
+ * 没有列，也不能借通用 JSON 扩展进入数据库。
+ */
+export const analyticsEvents = sqliteTable('analytics_events', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  occurredAt: integer('occurred_at').notNull(),
+  eventType: text('event_type').notNull(),
+  routeKey: text('route_key').notNull(),
+  entityType: text('entity_type'),
+  entityId: text('entity_id'),
+  actionKey: text('action_key'),
+  sessionHmac: text('session_hmac').notNull(),
+}, table => [
+  index('analytics_events_occurred_idx').on(table.occurredAt),
+  index('analytics_events_type_occurred_idx')
+    .on(table.eventType, table.occurredAt),
+  index('analytics_events_route_occurred_idx')
+    .on(table.routeKey, table.occurredAt),
+  index('analytics_events_entity_occurred_idx')
+    .on(table.entityType, table.entityId, table.occurredAt),
+  check(
+    'analytics_events_event_type',
+    sql`${table.eventType} IN ('page_view', 'contact_action')`,
+  ),
+  check(
+    'analytics_events_route_key',
+    sql`${table.routeKey} IN ('home', 'works', 'work_detail', 'returns', 'return_character', 'commission', 'adoptions', 'about', 'service', 'privacy', 'licenses')`,
+  ),
+  check(
+    'analytics_events_entity_type',
+    sql`${table.entityType} IS NULL OR ${table.entityType} IN ('work', 'return_character')`,
+  ),
+  check(
+    'analytics_events_action_key',
+    sql`${table.actionKey} IS NULL OR ${table.actionKey} IN ('email_open', 'email_copy')`,
+  ),
+  check(
+    'analytics_events_session_hmac',
+    sql`length(${table.sessionHmac}) = 64 AND ${table.sessionHmac} NOT GLOB '*[^0-9a-f]*'`,
+  ),
+  check(
+    'analytics_events_shape',
+    sql`CASE WHEN ${table.eventType} = 'contact_action' THEN ${table.routeKey} IN ('about', 'commission') AND ${table.actionKey} IS NOT NULL AND ${table.entityType} IS NULL AND ${table.entityId} IS NULL WHEN ${table.routeKey} = 'work_detail' THEN ${table.entityType} = 'work' AND ${table.entityId} IS NOT NULL AND ${table.actionKey} IS NULL WHEN ${table.routeKey} = 'return_character' THEN ${table.entityType} = 'return_character' AND ${table.entityId} IS NOT NULL AND ${table.actionKey} IS NULL ELSE ${table.entityType} IS NULL AND ${table.entityId} IS NULL AND ${table.actionKey} IS NULL END`,
+  ),
+])
+
 export const siteHeroSlides = sqliteTable('site_hero_slides', {
   id: text('id').primaryKey(),
   placement: text('placement').notNull().default('home'),

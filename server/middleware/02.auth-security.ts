@@ -23,6 +23,16 @@ export default defineEventHandler(async (event) => {
   }
 
   if (
+    event.method === 'POST'
+    && pathname === '/api/public/v1/analytics/events'
+  ) {
+    // 先按可信客户端地址摘要限制请求量，阻止通过轮换会话 ID 绕过。
+    // 摘要只存在于单进程 60 秒内存桶，不写数据库或日志。
+    assertRequestRateLimit(event, 'analytics')
+    return
+  }
+
+  if (
     pathname === '/api/auth/logout'
     || isAtOrBelow(pathname, '/api/admin')
   ) {

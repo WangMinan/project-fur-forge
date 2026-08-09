@@ -205,6 +205,7 @@ export const returnPhotoPublicationActionResponseSchema = apiSuccessSchema(
 
 /** 设定公开身份：名称、可选 `@昵称` 与设定页地址。 */
 export const publicReturnCharacterRefSchema = z.object({
+  id: resourceIdSchema,
   name: returnCharacterNameSchema,
   nickname: returnCharacterNicknameSchema.nullable(),
   slug: slugSchema,
