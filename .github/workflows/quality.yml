@@ -96,6 +96,7 @@ jobs:
           OSS_ACCESS_KEY_ID: ci-placeholder
           OSS_ACCESS_KEY_SECRET: ci-placeholder
           SESSION_SECRET: ci-placeholder-session-secret-at-least-32-chars
+          POLICE_FILING_STATUS: unconfigured
           BACKEND_SUBNET: 172.30.250.0/24
           TRUSTED_PROXY_CIDRS: 172.30.250.0/24
         run: docker compose -f docker-compose.yaml config --quiet
