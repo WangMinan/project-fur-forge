@@ -2,7 +2,7 @@
 
 > **角色**：当前媒体公开行为的唯一事实源。
 > **最后校准**：2026-08-09。
-> **状态分层**：媒体配方与阶段 D 页面已经落地；第 6～9 节的 Bucket 私有化、CDN URL 鉴权和强制撤销是 T52 目标契约，尚未实现前不得描述为当前代码事实。
+> **状态分层**：媒体配方与阶段 D 页面已经落地；第 6～9 节的 Endpoint、CDN URL 鉴权和强制撤销必须在阶段 E 的 T52-E1～E4 开发完成。阶段 F 不再改变媒体产品契约，主要执行真实云配置与远程验证；所需独立运维辅助脚本按 TASKS 的 F 边界处理。尚未落地前不得描述为当前代码事实。
 
 ## 1. 核心原则
 
@@ -83,7 +83,7 @@ watermark_profile_id = NULL
 
 展会掉落可作为当前领养数据来源，但自身卡片/详情仍使用作品水印；入口媒体仍是独立无水印用途。
 
-## 6. 两只 Bucket 的生产职责（T52 目标）
+## 6. 两只 Bucket 的生产职责（阶段 E 实现，阶段 F 执行）
 
 ### 6.1 私有原图 Bucket
 
@@ -114,7 +114,7 @@ CDN 同账号私有 OSS 回源可读取该 Bucket 全部对象，CDN 侧不能�
 - ACL 切换导致旧开发站直接 OSS 图片失效是已接受结果；
 - 回滚不得恢复 public-read。
 
-## 7. Endpoint 与上传边界（T52 目标）
+## 7. Endpoint 与上传边界（T52-E1）
 
 | 场景 | 地址 |
 | --- | --- |
@@ -130,13 +130,13 @@ CDN 同账号私有 OSS 回源可读取该 Bucket 全部对象，CDN 侧不能�
 - `.env` 生产实例、两个示例、runtime 示例/校验、部署说明和 preflight 同步；
 - 当前应用 AK/SK 保持，仍只进入服务端 Secret。
 
-## 8. CDN 访问与缓存（T52 目标）
+## 8. CDN 访问与缓存（T52-E3/E4）
 
 ### 8.1 私有回源与 URL 鉴权
 
 - CDN 只回源网页衍生 Bucket；
 - 同账号私有回源使用阿里云推荐的 STS 方式；该 STS 只存在于 CDN→OSS 链，不改变应用 AK/SK；
-- URL 鉴权方式 A，主/备 Key，有效期 `86400` 秒；T52-F3 固定使用 `CDN_URL_AUTH_ACTIVE_KEY`、`CDN_URL_AUTH_PRIMARY_KEY`、`CDN_URL_AUTH_SECONDARY_KEY`、`CDN_URL_AUTH_TTL_SECONDS`，并与 runtime Schema/示例同步落地；
+- URL 鉴权方式 A，主/备 Key，有效期 `86400` 秒；T52-E3 固定使用 `CDN_URL_AUTH_ACTIVE_KEY`、`CDN_URL_AUTH_PRIMARY_KEY`、`CDN_URL_AUTH_SECONDARY_KEY`、`CDN_URL_AUTH_TTL_SECONDS`，并与 runtime Schema/示例同步落地；
 - 有效 URL 访问 CDN，过期/篡改/缺签名返回 403；
 - URL 鉴权只限制服务器侧访问，不承诺清除终端已经下载或截图的副本。
 
@@ -206,7 +206,14 @@ CDN 同账号私有 OSS 回源可读取该 Bucket 全部对象，CDN 侧不能�
 - profile 切换不改变站点与返图身份；
 - 横/竖/方图三视口无坏图、异常裁切或溢出。
 
-### T52 生产门禁
+### 阶段 E 媒体开发门禁
+
+- signer、公开 DTO/SSR、下架 refresh、恢复和日志脱敏全部实现；
+- preflight、环境 Schema、production verify、Compose/ops 与 Handbook 命令完整；
+- 有效/无效鉴权、原站拒绝、Endpoint、缓存参数、失败/重启在受控环境通过；
+- T49/T50 在同一 SHA 复核后才能签署 GATE-E。
+
+### 阶段 F 目标环境门禁
 
 - 两只原始 OSS Bucket 域名匿名 GET 均为 403；
 - 有效 CDN URL 200，过期/篡改/缺签名 403；
@@ -221,4 +228,4 @@ CDN 同账号私有 OSS 回源可读取该 Bucket 全部对象，CDN 侧不能�
 
 ## 11. 文档去重
 
-本文是媒体公开与保护唯一事实源。阿里云依据见 [`../planning/ALIYUN-PRODUCTION-RESEARCH-2026-08-09.md`](../planning/ALIYUN-PRODUCTION-RESEARCH-2026-08-09.md)，人工步骤见 [`../implementation/PRODUCTION-LAUNCH-HANDBOOK.md`](../implementation/PRODUCTION-LAUNCH-HANDBOOK.md)。历史 T10/T14–T36 notes 对当时 public-read 行为有效，但不能覆盖本策略的 T52 目标契约。
+本文是媒体公开与保护唯一事实源。阿里云依据见 [`../planning/ALIYUN-PRODUCTION-RESEARCH-2026-08-09.md`](../planning/ALIYUN-PRODUCTION-RESEARCH-2026-08-09.md)，阶段 F 人工步骤见 [`../implementation/PRODUCTION-LAUNCH-HANDBOOK.md`](../implementation/PRODUCTION-LAUNCH-HANDBOOK.md)。历史 T10/T14–T36 notes 对当时 public-read 行为有效，但不能覆盖本策略的阶段 E 实现/阶段 F 执行契约。

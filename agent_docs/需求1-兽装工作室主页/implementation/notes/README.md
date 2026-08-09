@@ -42,8 +42,10 @@ T35–T37 的工程记录不是独立 Review。用户同意将一次新的综合
 目录：`stage-e/`。
 
 - [`STAGE-E-PRODUCTION-DECISIONS-2026-08-09.md`](./stage-e/STAGE-E-PRODUCTION-DECISIONS-2026-08-09.md)：两个既有 Bucket、CDN 鉴权、Endpoint、AK/SK、备案品牌和撤销时限的用户决策。
+- [`STAGE-E-F-BOUNDARY-2026-08-09.md`](./stage-e/STAGE-E-F-BOUNDARY-2026-08-09.md)：后续用户决策，产品与上线基线开发合并进阶段 E；阶段 F 主要由用户/远程开发机执行，并允许补充独立运维小脚本。该记录覆盖旧文档中的阶段归属，不改变生产技术事实。
+- [`STAGE-E-TLS-DECISION-2026-08-09.md`](./stage-e/STAGE-E-TLS-DECISION-2026-08-09.md)：最终宿主机部署与 TLS 决策：app-only Compose，并复用现有宿主机 Nginx、`acme.sh + dns_ali`、证书与 root cron；覆盖聊天中曾考虑的原生 `nginx-module-acme` 和后续过度改造方案。
 
-后续按任务新增 T46、T49、T50、T51、T52、T53 的工程、Review、演练与验收证据。
+后续按任务新增 T46/T51/T52-E1～E6/T49/T50/GATE-E 的工程与 Review 证据，以及 T53-F1～F5 的远程执行/验收证据。
 
 ## 新记录最低要求
 
@@ -66,4 +68,4 @@ T35–T37 的工程记录不是独立 Review。用户同意将一次新的综合
 - `t19-t34/`：作品、首页、内容、安全、性能与镜像；
 - `t34-c1/`：阶段 C.1；
 - `stage-d/`：阶段 D；
-- `stage-e/`：阶段 E/F 决策与后续证据。
+- `stage-e/`：阶段 E/F 决策、工程和远程执行证据。

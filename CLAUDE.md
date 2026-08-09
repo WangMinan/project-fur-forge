@@ -106,14 +106,22 @@ GitHub Actions 已知未全绿（`checks` 在 Production build 失败，`e2e` �
 
 ## 阶段 E/F 已锁定生产事实
 
+- 所有应用源码、迁移、运行时 Schema、环境模板、OSS/CDN 核心实现、正式部署基线、自动测试、CI 和独立 Review 必须在阶段 E 完成，并由 GATE-E 冻结唯一上线 SHA/镜像；
+- 阶段 F 主要由用户和远程开发机填写真实值、操作阿里云控制台、部署冻结镜像、运行命令、演练和验收；允许为实际运维新增或调整独立小脚本及其最小测试/文档，但不得改变应用、数据模型、公开行为、运行时契约或发布镜像。超出该边界才返回 E 并重跑 T49/T50/GATE-E；
+
 - 公开桌面与移动导航条品牌固定为“有点小狗”，不带“工作室”；这是公开导航显示规则，不做全仓机械替换；
 - 复用现有私有源图 Bucket 与公开衍生图 Bucket，不保留旧的直连公开 OSS 兼容路径；正式切换时两个 Bucket 都设为 private 并开启 Block Public Access；
 - CDN 只私有回源公开衍生图 Bucket，不能读取私有源图 Bucket；浏览器只消费约 24 小时有效的 CDN 鉴权 URL；
 - 下架后公开查询立即移除，服务端对精确 CDN URL 发起强制刷新并追踪，CDN 服务器侧撤销目标约 5～6 分钟；不得声称能删除客户端已保存副本；
 - 杭州同地域 ECS 内的 Nitro、migrate 和 ops 使用 `oss-cn-hangzhou-internal.aliyuncs.com`；本机、浏览器条件上传、CDN 回源和公开图片 URL 必须使用各自公网/CDN 场景，不能混用内网 Endpoint；
 - 继续使用当前静态 AK/SK 方案，本阶段不引入实例 RAM 角色；Secret 不得进入仓库、日志、截图或客户端；
-- `.env`、`.env.example`、`.env.compose.example` 与运行时校验必须同步。当前条件上传签名器必须在 T52-F1 真正使用独立公网上传基址，不能只校验 `OSS_UPLOAD_BASE_URL`；
-- 生产 Bucket、CDN、域名、TLS、监控、部署、回滚和恢复按 `implementation/PRODUCTION-LAUNCH-HANDBOOK.md` 逐项执行；T49–T52 前不得提前切 ACL。
+- 正式部署使用 app-only Compose：唯一常驻容器是 Nuxt/Nitro app，端口固定只绑定 `127.0.0.1:3000`；Nginx 独立安装在 ECS 宿主机并由 systemd 管理，migrate/ops 使用同一冻结镜像的一次性容器；
+- 公开/管理域名 TLS 复用宿主机现有 `acme.sh + dns_ali`、Let's Encrypt DNS-01 和 `ditedog.com` / `*.ditedog.com` ECDSA 证书；不改用 Certbot 或 `nginx-module-acme`。媒体域名仍在阿里云 CDN 终止 TLS；
+- ACME 单独使用只含 `DescribeDomainRecords`、`AddDomainRecord`、`DeleteDomainRecord` 的 DNS-only RAM API Key，不复用应用 AK/SK；`Ali_Key`/`Ali_Secret` 只保存在宿主机 root 限权的 acme.sh config-home，不进入应用 `.env`、Compose 或容器；
+- 复用宿主机现有每 6 小时运行 `acme.sh --cron` 的 root cron，不为形式统一改造为 systemd timer；证书继续通过 `--install-cert --ecc` 写入 `/etc/nginx/ssl/ditedog.com/`，续期 reload 唯一语义为 `/usr/sbin/nginx -t && /usr/bin/systemctl reload nginx`；
+- 通配符只用于证书覆盖；正式 Nginx `server_name` 仍只列公开/管理精确域名，其他 Host/SNI 由默认 server 拒绝；
+- `.env`、`.env.example`、`.env.compose.example` 与运行时校验必须同步。当前条件上传签名器必须在 T52-E1 真正使用独立公网上传基址，不能只校验 `OSS_UPLOAD_BASE_URL`；
+- 生产 Bucket、CDN、域名、TLS、监控、部署、回滚和恢复按 `implementation/PRODUCTION-LAUNCH-HANDBOOK.md` 逐项执行；GATE-E 前不得进入阶段 F 或提前切 ACL。
 
 ## 常用命令
 
@@ -207,4 +215,4 @@ pnpm auth:reset-password --confirm RESET_SINGLE_ADMIN_PASSWORD
 - 不得删除测试、放宽类型、安全、媒体或 E2E 断言；
 - 不创建 `v*` tag，不触发 Docker Hub 正式发布；
 - 运行镜像使用 pnpm 正式 production deploy/install 机制，不手工复制单个依赖闭包；
-- 正式域名、TLS、线上 Compose、空卷、升级、回滚和恢复演练由 T52 处理。
+- 正式域名、宿主机 Nginx/acme.sh TLS、app-only Compose、空卷、升级、回滚和恢复所需代码/模板/命令由 T52-E1～E6 开发；真实远程执行由 T53-F1～F5 完成。

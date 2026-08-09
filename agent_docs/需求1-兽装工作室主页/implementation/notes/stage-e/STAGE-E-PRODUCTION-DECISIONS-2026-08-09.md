@@ -1,6 +1,8 @@
 # 阶段 E/F 范围与生产决策（2026-08-09）
 
 > **性质**：用户确认的范围决策记录。活契约仍以 SPEC、媒体策略、PLAN、TASKS 和 STATE 为准。
+> **后续覆盖**：本文的生产技术事实继续有效；阶段归属已由 [`STAGE-E-F-BOUNDARY-2026-08-09.md`](./STAGE-E-F-BOUNDARY-2026-08-09.md) 调整为“产品与上线基线开发在 E，F 主要人工/远程执行并可补独立运维小脚本”。
+> **TLS 后续决策**：宿主机 Nginx、app-only Compose 与 `acme.sh + dns_ali` 方案见 [`STAGE-E-TLS-DECISION-2026-08-09.md`](./STAGE-E-TLS-DECISION-2026-08-09.md)。
 
 ## 1. 阶段 E 取舍
 
@@ -31,7 +33,7 @@
 - 本地开发机和浏览器不能使用内网 Endpoint：本地服务端继续用杭州公网 Endpoint，浏览器条件 PUT 使用私有 Bucket 的杭州公网域名；
 - 访客媒体只使用 CDN 域名；
 - `.env`、`.env.example`、`.env.compose.example`、`config/runtime.example.json`、部署文档、生产校验和 OSS preflight 必须保持同一语义；
-- 当前 AK/SK 方案保持不变，不在本阶段引入 ECS RAM Role、STS 客户端上传或新的密钥托管依赖；
+- 当前**应用** OSS/CDN AK/SK 方案保持不变，不在本阶段引入 ECS RAM Role、STS 客户端上传或新的应用密钥托管依赖；宿主机 ACME 的 DNS-only RAM Key 按后续 TLS 决策独立处理；
 - AK/SK 仍只进入服务端运行环境，不进入仓库、镜像、前端、日志或证据。
 
 ## 4. 备案与品牌
