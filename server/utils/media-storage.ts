@@ -168,6 +168,7 @@ export class AliOssMediaStorage implements MediaStorage {
   private readonly publicBucket: string
   private readonly publicClient: Promise<OssClient>
   private readonly publicMediaBaseUrl: string
+  private readonly uploadClient: Promise<OssClient>
 
   constructor(config: RuntimeConfig) {
     const oss = requiredOssConfig(config)
@@ -194,6 +195,20 @@ export class AliOssMediaStorage implements MediaStorage {
       secure: true,
       timeout: 120_000,
     })
+    // Browser PUT signatures must use the private Bucket's public origin even
+    // when the server itself talks to OSS through the Hangzhou internal
+    // endpoint. `cname` prevents ali-oss from prefixing the Bucket twice.
+    this.uploadClient = createOssClient({
+      region: oss.region,
+      endpoint: config.ossUploadBaseUrl,
+      bucket: oss.bucket,
+      cname: true,
+      accessKeyId: oss.accessKeyId,
+      accessKeySecret: oss.accessKeySecret,
+      authorizationV4: true,
+      secure: true,
+      timeout: 120_000,
+    })
   }
 
   async signConditionalPut(input: ConditionalPutInput) {
@@ -207,7 +222,7 @@ export class AliOssMediaStorage implements MediaStorage {
       1,
       Math.ceil((input.expiresAt - Date.now()) / 1_000),
     )
-    const url = await (await this.privateClient).signatureUrlV4(
+    const url = await (await this.uploadClient).signatureUrlV4(
       'PUT',
       expiresSeconds,
       { headers },
