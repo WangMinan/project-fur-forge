@@ -1,124 +1,48 @@
-# 设计文档入口
+# 设计入口
 
-> **角色**：记录公开站和管理端当前有效的信息架构、视觉原则和验收方式。
-> **最后校准**：2026-08-07。
-> **边界**：颜色、字号和间距 Token 由各自 `DESIGN_TOKENS.md` 管理；媒体保护只以 [`../requirements/MEDIA-PUBLICATION-POLICY.md`](../requirements/MEDIA-PUBLICATION-POLICY.md) 为准。
+> **状态**：阶段 D 已由用户完成浏览器验收；当前进入阶段 E，随后按阶段 F 上线手册完成生产化。当前事实以 `STATE.md`、`SPEC.md` 和 `TASKS.md` 为准。
 
-## 当前设计状态
+设计只服务一个核心原则：**兽装图片是主体，品牌、文字、符号和管理能力都只做辅助。**
 
-阶段 C 的视觉与交互收口已经完成，并经用户浏览器人工核对。
+## 当前文档
 
-**2026-08-07 阶段 D 设计复核结论：当前代码没有系统性视觉偏离，只存在局部信息架构和文档债。**
-公开站仍是白底、摄影优先、克制品牌蓝；管理端仍是浅色低装饰的 Quiet Editorial Tool；
-两端没有互相复制视觉语言。需要在 T35 编码前收口的是管理端导航顺序、过时媒体 Token
-表述与“分页或加载更多”二选一，不是重做全站。复核记录见
-[`../implementation/notes/stage-d/STAGE-D-DESIGN-REVIEW-2026-08-07.md`](../implementation/notes/stage-d/STAGE-D-DESIGN-REVIEW-2026-08-07.md)。
+- [`public-site/DESIGN_BRIEF.md`](./public-site/DESIGN_BRIEF.md)：公开端视觉和交互边界；
+- [`public-site/INFORMATION_ARCHITECTURE.md`](./public-site/INFORMATION_ARCHITECTURE.md)：公开端导航、页面和内容层级；
+- [`public-site/DESIGN_TOKENS.md`](./public-site/DESIGN_TOKENS.md)：公开端设计 Token；
+- [`admin-console/DESIGN_BRIEF.md`](./admin-console/DESIGN_BRIEF.md)：管理端心智模型和交互边界；
+- [`admin-console/INFORMATION_ARCHITECTURE.md`](./admin-console/INFORMATION_ARCHITECTURE.md)：管理端导航、页面和状态层级；
+- [`admin-console/DESIGN_TOKENS.md`](./admin-console/DESIGN_TOKENS.md)：管理端设计 Token。
 
-阶段 D 设计范围已经锁定：
+历史原型位于 `planning/prototype-v1/`，仅作阶段 A 记录，不得复制为生产 UI。
 
-- 独立一级导航 `/returns`；
-- 原比例、无水印的返图 masonry/瀑布流；
-- 独立返图管理入口和一图一记录编辑；
-- 现有作品管理中增加轻量展会掉落；
-- `/adoptions`、首页当前领养和统一详情显示展会名称与时间；
-- 不建设更多文字维护、slug 历史、回收站或独立手机后台。
+## 已锁定的公开端结构
 
-## 阶段 D 设计目标
+- 一级导航：`首页 → 作品展示 → 返图墙 → 自设委托 → 角色领养 → 关于我们`；
+- 公开导航条品牌文字固定为 **“有点小狗”**，不带“工作室”；管理端名称和正式主体名称不因此全局替换；
+- 首页轮播固定开启、10 秒一张，并尊重 `prefers-reduced-motion`；
+- `/returns` 每张返图独立平铺、每次请求随机、无名称和说明文字；点击进入 `/returns/{slug}`；
+- 返图以“设定 + 多张照片”为心智模型，关联作品可选，公开资格不依赖作品；
+- `/works` 与 `/adoptions` 按发布时间倒序；人工 `sort_order` 只影响首页精选；
+- 阶段 F 后公开页面只消费 CDN 鉴权 URL，不暴露 OSS 原站地址。
 
-### 返图墙
+## 已锁定的管理端结构
 
-返图墙延续图片优先语言，但与标准作品明确分开：
+- 作品、返图设定、首页与委托大图、文案、品牌水印是主要对象；
+- 阶段 E 增加只读“访问统计”，位置靠后，不能变成首页仪表盘或抢占内容管理；
+- 返图列表一行一个设定，编辑页管理多张照片、圆形主图、可选作品关联和设定级私有授权记录；
+- 公私预览、发布、下架、失败恢复和删除影响必须用清楚中文说明；
+- 不向管理员显示 Object Key、内部任务号、数据库术语或原始中英混杂错误。
 
-- `/returns` 是公开站一级导航，不是作品详情 Tab；
-- 页面形式固定为**紧凑页头 → 原比例无水印瀑布流 → 底部编号分页 → 页脚**；
-- 不设置大 Hero、搜索、筛选、统计或热门区；
-- 真实返图图片是页面最高层级；
-- 使用原比例瀑布流，不统一强裁为 3:4；
-- 返图公开图不加水印（`return-display-v1` / `protection_mode=none`）；
-- 每页默认 24 条，排序为人工 `sort_order` 后接稳定 ID；
-- 每项只显示关联作品名称或入口等必要信息；
-- 不增加点赞、评论、用户头像、返图者主页、时间线算法或公开投稿；
-- DOM、键盘和屏幕阅读顺序稳定；
-- 管理端授权记录明确标注“仅后台可见”。
+## 阶段 E/F 的设计约束
 
-### 轻量展会掉落
+1. 访问统计只回答访问量、热门页面、来源概况等必要问题，不收集指纹或长期唯一访客标识。
+2. CDN URL 的签名和变化不应出现在用户界面；浏览器只看到可解码图片。
+3. 下架后页面立即移除，管理端应将 CDN 撤销表现为短暂处理中；服务端目标约 5～6 分钟，不承诺客户端已经保存的副本消失。
+4. 正式上线前按 [`../implementation/PRODUCTION-LAUNCH-HANDBOOK.md`](../implementation/PRODUCTION-LAUNCH-HANDBOOK.md) 逐项人工核对三视口、键盘、图片、Host 隔离和生产媒体边界。
 
-- 不设计独立“当前展会”导航或后台；
-- 在作品编辑器的业务类型中直接显示“展会掉落”；
-- 选择后显示展会名称、展会时间，以及已有领养状态、价格和媒体；
-- 公开端复用领养卡和详情视觉，只增加清楚的类型、名称和时间；
-- 不制作展会封面、专题页、地点地图、摊位或历史归档。
+## 设计变更纪律
 
-## 权威设计文件
-
-### 公开站
-
-- [`public-site/DESIGN_BRIEF.md`](./public-site/DESIGN_BRIEF.md)：长期视觉方向；
-- [`public-site/DESIGN_TOKENS.md`](./public-site/DESIGN_TOKENS.md)：公开站 Token；
-- [`public-site/INFORMATION_ARCHITECTURE.md`](./public-site/INFORMATION_ARCHITECTURE.md)：页面、导航、返图墙和掉落呈现。
-
-### 管理端
-
-- [`admin-console/DESIGN_BRIEF.md`](./admin-console/DESIGN_BRIEF.md)：Quiet Editorial Tool 方向；
-- [`admin-console/DESIGN_TOKENS.md`](./admin-console/DESIGN_TOKENS.md)：管理端 Token；
-- [`admin-console/INFORMATION_ARCHITECTURE.md`](./admin-console/INFORMATION_ARCHITECTURE.md)：当前导航、返图管理、作品掉落字段和长任务状态。
-
-返图入口只在 T35–T36 实现后进入导航；任何已取消或未实现功能不得显示空页面或假控件。
-
-## 通用原则
-
-### 图片优先
-
-- 公开页面首先展示兽装图片；
-- Logo、标题、状态和行动文案均为辅助；
-- 不以大面积色块、卡片边框或工具型状态区打断图片浏览；
-- 首页/委托 Hero、首页入口和返图无水印；
-- 标准作品、常规领养和展会掉落使用活动作品水印。
-
-### 语义一致
-
-- 标准作品、出厂照、设定图和返图使用清楚不同名称；
-- 展会掉落是领养的一种呈现，不复制一套展会视觉系统；
-- 返图关联作品时复用作品名称和跳转语言，不复制完整作品卡；
-- 公开站不混入管理端工具 Card；
-- 管理端不复制公开站的摄影叠字布局。
-
-### 横竖图片与瀑布流
-
-- 横图和竖图保持完整、清晰、无异常裁切；
-- 作品详情竖图不放在满宽灰色舞台中；
-- 返图墙按真实固有尺寸排列，加载前保留空间；
-- masonry 视觉重排不能破坏 DOM、键盘或屏幕阅读顺序；
-- 不能用纯色 fixture 代替真实混合方向图片完成最终评审。
-
-### 可访问性
-
-- 触控目标至少接近 44 px；
-- 焦点可见；
-- 状态不能只用颜色表达；
-- 一张卡只提供一个主链接，避免嵌套链接；
-- 图片 alt 表达内容，不重复周围完整文字；
-- 返图墙使用底部编号分页：普通链接、键盘可达、SSR 与无 JS 可用；
-  不使用自动无限滚动，也不以“加载更多”为默认方案。
-
-## 固定验收视口
-
-- `390×844`；
-- `768×1024`；
-- `1440×900`。
-
-每次相关修改至少检查：
-
-- 横向溢出；
-- 图片固有尺寸、方向和解码；
-- 返图是否误加水印或泄漏 EXIF；
-- 展会名称/时间在卡片、首页和详情中的折行；
-- loading、empty、error、conflict 和 recovery；
-- 键盘、焦点、减少动效；
-- 私有原图、授权记录和管理预览未进入公开 DOM、网络响应或缓存。
-
-## 原型与历史文件
-
-`planning/prototype-v1/`、调研截图和 dated notes 只说明早期选择过程，不是生产页面复制模板。调研中关于返图水印或独立展会实体的建议已经被当前用户决策覆盖。
-
-`.design/WATERMARK-CENTERED-V2.md` 是归档指针。当前展示位置矩阵只以媒体策略为准。
+- 新需求先进入 `SPEC.md`、`PLAN.md`、`TASKS.md`，再调整此目录；
+- 不因分析能力增加公开端密度；
+- 不预建已取消任务的导航、空页面或通用 CMS；
+- 日期记录和历史截图只能说明当时事实，不能覆盖活文档。
