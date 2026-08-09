@@ -78,3 +78,13 @@ T52-E6 的应用、Compose、宿主机 Nginx 模板、运维入口、Handbook �
 - `docs/DEPLOYMENT.md` 改为目标机操作者可逐段执行的控制台确认、首次部署、Nginx 安装、备份、后续镜像更新、单独 migrate 和回滚清单；没有对目标机执行写操作。
 
 本轮本地证据：lint、typecheck、unit 29 files / 161 tests、integration 20 files / 168 tests、production build、production verify、ESA cache/observability verify、secret scan 均 PASS；公开首页定向 E2E 23 tests PASS。目标机再次只读确认 Nginx active、Docker/Compose 可用、仅 80 监听、仓库干净且仍无 `.env`/业务容器。本节提交后的 Actions 尚待执行，因此此处仍不代签 T49 或正式上线结论。
+
+## 最终 Actions 结果与 E6 关闭
+
+follow-up 实现提交 `fcb99f409a1381821debc7aa3b37b82283d79653` 已推送到 `origin/main`。GitHub Actions quality run `31329958587` 最终为 success：
+
+- `checks` success（5m06s）；
+- `image-build` success（5m31s），包含真实生产镜像构建、app-only Compose/一次性运维、Nginx 1.30.4 config test/reload 与回滚演练；
+- `e2e` success（9m25s），实际执行且不是 skipped。
+
+因此 T52-E6 的工程 checkbox 可以关闭，STATE 下一步进入 T49。这里仍不代签 T49 新上下文独立综合 Review、不代替用户正式环境 T53 验收，也不声明已发布或正式上线就绪。

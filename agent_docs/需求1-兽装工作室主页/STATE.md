@@ -9,7 +9,7 @@
 
 当前为：
 
-> **阶段 E · 全部产品/上线基线开发、自动化门禁与可上线代码冻结。T52-E1～E5 工程完成；下一步继续 T52-E6。**
+> **阶段 E · 全部产品/上线基线开发、自动化门禁与可上线代码冻结。T52-E1～E6 工程完成；下一步进入 T49 新上下文独立综合 Review。**
 
 阶段 E 包含所有剩余应用代码、数据库迁移、运行时配置 Schema、媒体/ESA 核心实现、部署/恢复基线、app-only Compose 与宿主机 HTTP-only Nginx 模板、自动化测试、浏览器回归和独立 Review。阶段 E 结束时必须形成唯一、不在阶段 F 改写的上线 SHA/镜像。
 
@@ -28,7 +28,7 @@
 
 阶段 D 用户门禁见 [`implementation/notes/stage-d/T42-USER-ACCEPTANCE-2026-08-09.md`](./implementation/notes/stage-d/T42-USER-ACCEPTANCE-2026-08-09.md)。
 
-T46/T51/T51-F1/T51-F2 与 T52-E1～E5 已完成各自工程实现和相关本地自动验证；工程证据见 `implementation/notes/stage-e/` 对应记录。T52-E2 只冻结 preflight 实现和判定契约，尚未使用真实生产凭据运行 live 模式；T52-E3 已把公开 SourceSet/SSR/API 收敛到稳定 ESA URL；T52-E4 已实现精确 file purge、持久状态/重试/恢复和缓存策略校验入口；T52-E5 已冻结防盗刷/告警基线、实测入口、主机验证和脱敏证据模板，所有生产套餐、预算和阈值保持待 T53 实测。真实控制台缓存与 warm-cache 撤销时限仍由 T53 实测。这些结果不是 T49 独立 Review，也不关闭 T46 隐私文案或 T51 正式素材的用户确认项。
+T46/T51/T51-F1/T51-F2 与 T52-E1～E6 已完成各自工程实现和相关本地自动验证；工程证据见 `implementation/notes/stage-e/` 对应记录。T52-E2 只冻结 preflight 实现和判定契约，尚未使用真实生产凭据运行 live 模式；T52-E3 已把公开 SourceSet/SSR/API 收敛到稳定 ESA URL；T52-E4 已实现精确 file purge、持久状态/重试/恢复和缓存策略校验入口；T52-E5 已冻结防盗刷/告警基线、实测入口、主机验证和脱敏证据模板；T52-E6 已交付 app-only Compose、目标机匹配的 HTTP-only Nginx/运维基线与直接面向部署人的顺序清单。实现 SHA `fcb99f4` 的 Actions run `31329958587` 中 `checks`、`image-build`、`e2e` 均成功。真实控制台缓存、warm-cache 撤销时限、生产套餐、预算和阈值仍由 T53 实测。这些结果不是 T49 独立 Review，也不关闭 T46 隐私文案或 T51 正式素材的用户确认项。
 
 ## 阶段 E 已锁定范围
 
@@ -110,8 +110,8 @@ F 允许的仓库写入包括验收 note、证据索引、checkbox、STATE 状�
 | T52-E3 | 工程完成；目标环境 ESA/OSS live 待 T53 | T49 新上下文独立 Review |
 | T52-E4 | 工程完成；目标环境缓存/purge 实测待 T53 | T49 新上下文独立 Review |
 | T52-E5 | 工程完成；目标环境套餐/预算/阈值/告警待 T53 | T49 新上下文独立 Review |
-| T52-E6 | 待实施 | 继续生产能力开发 |
-| T49 | 等待 E 开发完成 | 同一 SHA CI + 独立综合 Review |
+| T52-E6 | 工程完成 | T49 新上下文独立 Review |
+| T49 | 待独立 Review | 保留历史 NOT PASS，在新上下文重放同一 SHA 自动化与综合 Review |
 | T50 | 等待 T49 | 最终回归与冻结证据 |
 | GATE-E | 等待 T50 | 允许进入阶段 F |
 | T53-F1～F5 | 等待 GATE-E | 用户与远程机执行 |
@@ -128,15 +128,14 @@ F 允许的仓库写入包括验收 note、证据索引、checkbox、STATE 状�
 
 ## GitHub Actions 已知边界
 
-历史 Actions 证据仍是：`image-build` 成功、`checks` 在 Production build 失败、`e2e` 跳过。E3 开发期已补齐源码直接使用的 H3 1.15.11 依赖并在本地恢复 production build，但这不等于远端同一 SHA 已全绿；T49 必须基于届时完成全部 E 开发的最新 `main` 重新取得完整结果。
+历史 Actions 的多次 failure/cancelled/skipped 已原样保留在 T52-E6 工程记录。实现 SHA `fcb99f4` 的最新完整证据是 quality run `31329958587` success：`checks`、`image-build`、`e2e` 三项均实际执行并成功。该结果关闭 T52-E6 工程，不代签 T49 新上下文独立 Review；T49 仍须基于其实际审阅的最新 `main` 核对同一 SHA Actions。
 
 ## 下一步顺序
 
-1. T52-E6；
-2. T49；
-3. T50；
-4. GATE-E；
-5. T53-F1～F5。
+1. T49；
+2. T50；
+3. GATE-E；
+4. T53-F1～F5。
 
 ## 当前发布边界
 

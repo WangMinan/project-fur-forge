@@ -8,7 +8,7 @@ This file provides guidance to coding agents working with code in this repositor
 
 **当前阶段与任务状态一律以 `agent_docs/需求1-兽装工作室主页/STATE.md` 与 `implementation/TASKS.md` 为准。**本文只提供入口与稳定纪律，不记录进度：进度写在这里会过期，然后误导下一个 Agent。
 
-GitHub Actions 已知未全绿（`checks` 在 Production build 失败，`e2e` 跳过），由 T49 统一关闭。不得把本地门禁通过描述为远端全绿或正式发布就绪。
+T52-E6 实现 SHA `fcb99f4` 的 GitHub Actions run `31329958587` 已取得 `checks`、`image-build`、`e2e` 全部成功；历史 NOT PASS 仍保留在工程记录中。该结果只关闭 E6 工程与该 SHA 的自动化，不代签 T49 新上下文独立 Review，也不等于正式发布就绪；后续 SHA 仍须重新查询实际 Actions 结果。
 
 ## 网站核心原则（景宸确认）
 
