@@ -9,6 +9,7 @@ import {
   dirname,
   extname,
   isAbsolute,
+  posix,
   relative,
   resolve,
 } from 'node:path'
@@ -21,6 +22,7 @@ import { getRuntimeConfig } from './runtime-config'
 
 export const DATABASE_BUSY_TIMEOUT_MS = 5_000
 export const DEVELOPMENT_DATABASE_FILE = '.data/dev.db'
+export const PRODUCTION_DATABASE_DIRECTORY = '/app/data'
 export const PRODUCTION_DATABASE_FILE = '/app/data/studio.db'
 export const DATABASE_MIGRATIONS_FOLDER = resolve(
   process.cwd(),
@@ -46,13 +48,20 @@ export function resolveDatabaseFile(
   }
 
   if (config.appEnv === 'production') {
-    if (config.databaseFile.replaceAll('\\', '/') !== PRODUCTION_DATABASE_FILE) {
+    const configuredFile = config.databaseFile.replaceAll('\\', '/')
+    const databaseFile = posix.normalize(configuredFile)
+    if (
+      configuredFile !== databaseFile
+      || !posix.isAbsolute(databaseFile)
+      || posix.dirname(databaseFile) !== PRODUCTION_DATABASE_DIRECTORY
+      || posix.extname(databaseFile).toLowerCase() !== '.db'
+    ) {
       throw new Error(
-        `Production DATABASE_FILE must be ${PRODUCTION_DATABASE_FILE}.`,
+        `Production DATABASE_FILE must be a direct .db file inside ${PRODUCTION_DATABASE_DIRECTORY}.`,
       )
     }
 
-    return PRODUCTION_DATABASE_FILE
+    return databaseFile
   }
 
   const databaseFile = resolve(cwd, config.databaseFile)

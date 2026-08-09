@@ -67,9 +67,12 @@ describe('T52-E6 production deployment contract', () => {
   it('runs the published image as the non-root Node user', () => {
     const dockerfile = source('Dockerfile')
     const containerOps = source('scripts/container-ops.ts')
+    const database = source('server/utils/database.ts')
     expect(dockerfile).toMatch(/^USER node$/mu)
     expect(dockerfile).not.toMatch(/apt-get install[^\n]*(?:nginx|certbot|cron)/iu)
     expect(containerOps).toContain("import('../server/utils/runner/return-photo-publication')")
+    expect(database).toContain("PRODUCTION_DATABASE_DIRECTORY = '/app/data'")
+    expect(database).toContain('posix.dirname(databaseFile) !== PRODUCTION_DATABASE_DIRECTORY')
   })
 
   it('keeps publication manual and exercises the target deployment shape in CI', () => {
