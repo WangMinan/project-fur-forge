@@ -1,223 +1,141 @@
 # 执行责任路由
 
-> **角色**：记录阶段 D 的执行顺序、写入边界和交接要求。
-> **最后校准**：2026-08-08。
-> **当前门禁**：阶段 C 与 `GATE-C1` 已通过。T35–T37 的工程主体已由
-> Claude Opus 5 在 `main` 上串行落地（第 4–6 节的执行顺序已完成），
-> 下一步是 `REVIEW` 角色在**新的独立上下文**中复核三项，以及用户人工验收。
-> 同一实现者不得为自己的实现代签 Review。
+> **角色**：记录阶段 E/F 的执行顺序、写入边界和交接要求。
+> **最后校准**：2026-08-09。
+> **当前门禁**：阶段 D 已经用户验收；独立综合 Review 保留到 T49。
 
-## 1. 当前角色
+## 1. 角色
 
 | 角色 | 责任 |
 | --- | --- |
-| `BACKEND_PRIMARY` | 数据库、Schema、API、媒体、operation、恢复和公开投影 |
-| `FRONTEND_PRIMARY` | Vue 页面、组件、状态、响应式、无障碍和视觉接线 |
-| `REVIEW` | 契约、代码、浏览器、媒体、安全、性能和证据复核 |
-| `ACCEPTANCE` | 用户最终业务与视觉确认，负责阶段门禁签署 |
+| `BACKEND_PRIMARY` | 迁移、Schema、API、统计、媒体签名、OSS/CDN operation、恢复和投影 |
+| `FRONTEND_PRIMARY` | Vue 页面、公开采集、管理统计、品牌、响应式与无障碍 |
+| `REVIEW` | 新上下文独立审查契约、代码、浏览器、媒体、安全、隐私、成本和证据 |
+| `ACCEPTANCE` | 用户业务/视觉/生产操作确认与门禁签署 |
 
-默认分工：
+默认分工：GPT-5.6 Sol 为后端；前端由用户逐任务指定；GPT-5.6 Sol 可在新的独立上下文 Review。联合任务按后端 → 前端 → Review → 用户验收串行，实施者不能代签 Review。
 
-- GPT-5.6 Sol：`BACKEND_PRIMARY`，并可在新的独立上下文承担 `REVIEW`；
-- 前端由用户在 Kimi K3、Claude Opus 5、GPT-5.6 Sol 中指定；
-- 同一实现者不能为自己的工作代签 Review；
-- 联合任务按后端 → 前端 → Review → 用户验收串行推进。
+## 2. 当前写入范围
 
-## 2. 当前起点
+允许：
 
-阶段 C 已形成稳定基线：完整作品/领养/首页/委托/信息页、双 Bucket、站点无水印与作品水印、角色化上传、发布与下架、分区文案、operation 恢复、五层后端边界、Node 24 镜像和部署配置。
+1. T46 第一方访问统计；
+2. T49 发布级 CI 与阶段 D/E 综合 Review；
+3. T50 全站回归；
+4. T51 备案/导航品牌/正式素材；
+5. T52-F1～F7 生产媒体、CDN、正式环境与 Handbook；
+6. T53 用户验收与文档闭环。
 
-后端层次保持：
+禁止恢复邮件找回、CSV、原图档案 UI、高级批量运维 UI，也不新增 Bucket、异地灾备、公开读兼容、分享 URL、DDoS 高防或 ESA。
 
-```text
-server/utils/{repository,service,runner,recipe,route}/
-```
+## 3. T46 路由
 
-`server/routes/` 是 Nitro 文件路由；`server/utils/route/` 是 handler 辅助层，不得合并。
+### BACKEND_PRIMARY
 
-## 3. 当前授权范围
+1. 新前向迁移 `analytics_events` 与索引；
+2. 共享白名单事件/route/action Schema；
+3. sessionStorage 随机值的域分离 HMAC；
+4. 同源公开写接口、body limit、限流与稳定错误；
+5. 90 天幂等清理；
+6. 今日/7/30 天管理聚合；
+7. 确认不保存 IP、UA、Referer、query、联系方式、Cookie/指纹；
+8. 迁移、并发、重复、清理、隐私和查询计划测试；
+9. 实施 note 与后端交接。
 
-允许实施：
+### FRONTEND_PRIMARY
 
-1. T35：返图模型、作品关联、版本、状态和可选私有授权记录；
-2. T36：返图上传、无水印公开衍生、后台和独立 `/returns` 瀑布流；
-3. T37：复用作品与领养管理的轻量展会掉落；
-4. T42：只验收 T35–T37。
+1. 公开端 sessionStorage 会话与 `sendBeacon`/keepalive；
+2. 只上报白名单 route/entity/action；
+3. 失败不影响页面或导航；
+4. `/admin/analytics` 今日/7/30 天最小视图；
+5. 统计措辞使用“近似会话”，不称精确独立访客/转化；
+6. 三视口、空态、错误和加载；
+7. 与用户确认隐私政策最终公开文字，未确认不持久化。
 
-禁止恢复：
+### REVIEW / ACCEPTANCE
 
-- T38 更多站点文字内容；
-- T39 当前版本 slug 改址历史；
-- T40 30 天回收站；
-- T41 独立通用手机后台。
+Review 复核数据最小化、HMAC、90 天清理、限流、日志/DTO/HTML 泄漏、统计定义和采集失败降级。PASS 后用户确认统计含义及隐私公开文案。
 
-不得为取消项预建表、JSON 字段、路由、页面、导航、通用重定向、统一 `deleted_at` 或到期清理任务。
+## 4. T49/T50 路由
 
-## 4. T35 执行顺序
+T49 必须由新上下文：
 
-### 4.1 BACKEND_PRIMARY
+- 复现/修复历史 CI；
+- 同一最新 SHA 取得 `checks`、`image-build`、`e2e` 全绿；
+- 独立 Review 阶段 D 最终代码和 T46；
+- 冻结初始 finding，不删除 NOT PASS 历史；
+- 禁止删除测试、放宽类型/安全/媒体/隐私断言。
 
-1. 读取当前 SPEC、PLAN、TASKS、模型和媒体策略；
-2. 新增前向迁移，不修改历史迁移；
-3. 实现一图一记录 `return_photos` 与唯一资产关联；
-4. 增加 `return_photo` 角色所需共享枚举和上传归属准备，但 T35 不提前完成 T36 媒体发布；
-5. 实现管理/公开 Schema、稳定 `reason`、repository/service/route；
-6. 保证授权记录仅管理可见；
-7. 保证关联作品发布约束、作品下架后的公开隐藏和作品删除阻断；
-8. 完成迁移、版本、非法关联、隐私和状态测试；
-9. 写 T35 实施 note 并同步活文档中的已落地事实。
+T50 基于同一 SHA 在管理/公开 Host 和三视口重放全站、409/失败/恢复、媒体、console/network、键盘/焦点与进程中断。T50 不替代目标云环境验证。
 
-### 4.2 REVIEW
+## 5. T51 路由
 
-独立 Review 至少检查：
+FRONTEND_PRIMARY 新增独立 `PROJECT_NAV_NAME='有点小狗'`，只接入公开桌面导航、移动导航和登录页公开壳。不得用全局替换误改 `ownerDisplay`、条款、版权、关于或 SEO 组织名。
 
-- 一条返图恰好一张资产，没有相册层级；
-- `return_photo` 不能冒充 `studio_photo`；
-- 授权字段不进入公开 DTO、日志、异常和测试 artifact；
-- 作品未发布时返图不能发布；
-- 作品下架时公开查询隐藏返图；
-- 存在返图时作品永久删除被阻止；
-- 版本冲突不会静默覆盖；
-- 迁移与 readiness 边界正确。
+用户提供/确认备案号、正式域名和素材，完成三视口品牌/备案验收。
 
-Review 为 PASS 后才能进入 T36。
+## 6. T52 后端/配置路由
 
-## 5. T36 执行顺序
+### T52-F1 · Endpoint
 
-### 5.1 媒体与发布后端
+- 将服务端 OSS 客户端与浏览器上传签名客户端/URL 分离；
+- 生产 `OSS_ENDPOINT` 是杭州内网，`OSS_UPLOAD_BASE_URL` 是私有 Bucket 公网域名，`MEDIA_BASE_URL` 是 CDN；
+- 当前 `OSS_UPLOAD_BASE_URL` 未被签名链使用，必须用返回 URL Host 测试证明已接线；
+- 同步 `.env` 生产实例、示例、runtime、verify、preflight、部署文档；
+- 不增加新 AK/SK。
 
-`BACKEND_PRIMARY` 完成：
+### T52-F2 · OSS preflight
 
-1. `return_photo` 条件 PUT 私有直传和完成核验；
-2. `return-wall` / `return-display-v1` / `protection_mode=none`；
-3. 原比例 WebP/fallback SourceSet 和 EXIF 收敛；
-4. 不关联活动水印 profile，不复用作品 `recipe-v2`；
-5. publication operation、attempt、lease、heartbeat、失败清理和启动恢复；
-6. 公开分页查询，只返回返图与作品均 published 的记录；
-7. 双 Bucket、匿名访问、敏感 EXIF、SIGKILL、重复重启和幂等测试；
-8. 写后端实施 note 和契约交接。
+- 现有两只 Bucket 直接 private + BPA；
+- 审计 Object ACL/Policy/CORS；
+- 原始 OSS 匿名 403；
+- 应用精确权限通过、越权拒绝；
+- CDN 只回源衍生 Bucket；
+- 旧 preflight 的 public-read/匿名 200 断言必须被重写，不能兼容保留。
 
-不得新建第二套上传器、第二套公开 URL 生成规则或第二套 operation 状态机。
+### T52-F3/F4 · CDN
 
-### 5.2 FRONTEND_PRIMARY
+- 单一 CDN URL signer，方式 A、86400 秒、主备 Key；
+- 所有公开 SourceSet 动态签名，数据库不存完整 URL；
+- 查询参数收敛和缓存策略；
+- 下架 operation 先撤销投影，再精确 OSS 删除 + `Force=true` File refresh；
+- 保存任务 ID/状态并查询，进程重启可恢复；
+- 完整签名 URL/Key 不进日志。
 
-在后端契约稳定后完成：
+### T52-F5 · 成本
 
-1. `/admin/returns` 列表；
-2. 新建和编辑一图一记录返图；
-3. 关联作品、单图上传、alt、排序和可选授权记录；
-4. 私有原图预览与无水印公开预览；
-5. 发布、下架、持续进度、失败、刷新恢复和 409 草稿保留；
-6. 公开一级导航 `/returns`；
-7. 原比例 masonry/瀑布流、底部编号分页、真实空态和关联作品入口；
-8. 手机查看、选择作品、单图上传、alt、授权文字、发布和下架；
-9. 三视口、键盘、焦点、图片解码、减少动效、CLS 和无横向溢出。
+- 先测页面字节、命中、并发/峰值，再由用户定预算/封顶；
+- 用量封顶、预算、CDN/ECS/证书/DDoS 基础防护监控；
+- 不把预算写成硬限制，不隐瞒 CDN 约 10 分钟延迟。
 
-明确禁止：
+## 7. T52 前端/浏览器路由
 
-- 作品详情返图 Tab；
-- 返图详情页；
-- 返图水印或水印开关；
-- 返图者昵称/主页；
-- 点赞、评论、搜索、公开投稿或访客账户；
-- 回收站入口。
+- 确认所有公开图片为 CDN Host，src/srcset 不含 OSS；
+- URL 过期后重载页面获得新 URL；
+- 公开页面在 Referer 白名单下真实浏览器可用；
+- 管理上传 URL 公网可达且无 internal；
+- 下架 UI 分别表达页面已下架、CDN 刷新中/完成/失败；
+- 三视口、私密模式、console/network、图片解码、错误与恢复。
 
-### 5.3 REVIEW 与 ACCEPTANCE
+## 8. T52 云上操作与用户交接
 
-Review 至少检查：
+实施者完成代码/自动门禁后，用户按 [`PRODUCTION-LAUNCH-HANDBOOK.md`](./PRODUCTION-LAUNCH-HANDBOOK.md) 执行：备案/域名、CDN、ACL/BPA、CORS、RAM、生产 env、封顶预算、空卷部署、备份恢复、切换与验收。
 
-- 返图公开对象无水印且不含敏感 EXIF；
-- 私有原图和授权记录不进入公开 DTO、DOM、日志或缓存；
-- profile 切换不影响返图；
-- 关联作品下架后的公开隐藏；
-- 发布失败和重启不破坏旧公开版本；
-- masonry 的 DOM/焦点顺序、分页和三视口；
-- 管理与公开 Host 隔离；
-- 页面真实点击与图片内容，不只看用例数量。
-
-Review PASS 后由用户执行 T36 人工验收。
-
-## 6. T37 执行顺序
-
-### 6.1 BACKEND_PRIMARY
-
-1. 新前向迁移或启用现有 event_drop 兼容字段；
-2. `works` 增加/规范 `event_name`、`event_time`；
-3. 数据库 CHECK、共享 Schema 和 service 校验保持一致；
-4. event_drop 使用 `purpose=adoption`、`adoption_method=event_drop`；
-5. 发布检查增加展会字段，不增加 event operation；
-6. 公开作品/领养 DTO 增加展会名称和时间；
-7. 首页当前领养和 `/adoptions` 查询包含 regular 与 event_drop；
-8. 非 event_drop 清理/拒绝残留展会字段；
-9. 迁移、状态、发布、隐私和查询测试。
-
-不得创建 `events`、`event_works`、展会 slug、展会媒体或“当前展会”全局表。
-
-### 6.2 FRONTEND_PRIMARY
-
-1. 作品业务类型显示委托/常规领养/展会掉落/纯展示；
-2. 正确映射到三种 purpose 与 adoption_method；
-3. event_drop 显示展会名称、展会时间、状态、价格和现有媒体；
-4. 类型切换清理展会字段并明确提示；
-5. `/adoptions` 增加全部/常规领养/展会掉落筛选；
-6. 领养卡、首页当前领养和详情显示一致展会信息；
-7. 手机支持展会字段、发布和下架；
-8. 不增加独立展会导航、页面、封面、地点或时间线。
-
-### 6.3 REVIEW 与 ACCEPTANCE
-
-Review 检查四选项映射、字段 CHECK、媒体复用、水印、首页/列表/详情、时间不自动驱动状态、SEO 与三视口。PASS 后由用户验收。
-
-## 7. T42 阶段 D 收口
-
-T42 只依赖 T35–T37：
-
-- 文档、模型、媒体策略和代码一致；
-- 迁移与恢复正确；
-- 返图隐私、无水印媒体和 operation 通过；
-- 展会掉落复用领养且没有独立展会系统；
-- 三视口、自动化、双 Bucket、失败和重启证据完整；
-- 独立 Review PASS；
-- 用户完成业务与视觉验收。
-
-T38–T41 不构成隐式阻断。
-
-## 8. GitHub Actions 处理边界
-
-已知 `quality` 状态：`image-build` 成功，`checks` 在 Production build 失败，`e2e` 跳过。该故障属于 T49，不阻断 T35–T37。
-
-阶段 D 实现者必须运行相关本地门禁并如实记录，但：
-
-- 不得把本地通过写成远端全绿；
-- 不得顺手扩大范围修复整个流水线，除非用户授权；
-- 不得删除测试、放宽类型、安全、媒体或 E2E 断言；
-- 不得拼接不同 SHA 的成功结果；
-- 不得把 `e2e skipped` 记为成功。
+需要用户真实控制台操作的项不能由 Agent 预先勾选；用户提供脱敏证据后，REVIEW 在新上下文复核，最后由用户完成 T53。
 
 ## 9. 写入纪律
 
-- 基于最新 `main` 串行推进；
-- 小提交、可回滚，提交信息带 T35/T36/T37；
-- 不 force push、不硬 reset；
-- 不删除或清空 `.env`；
+- 最新 `main` 直接串行，不建分支/PR；
+- 小提交、可回滚，不 force push/硬 reset；
+- 不删除/清空 `.env`，不回显 Secret；
 - 不重写历史迁移；
-- 不公开原图、授权记录或敏感 EXIF；
-- 不通过错误水印/无水印行为让测试通过；
-- 不创建 `v*` tag，不触发正式镜像发布；
-- T35 Review 前不并行写 T36；T36 稳定前不建议推进 T37 UI。
+- 不把 Bucket 改回 public-read 作为回滚；
+- 不创建 `v*` tag、不触发正式镜像发布，除非用户明确授权；
+- OSS/CDN 集成有费用，只跑当前任务必要的真实测试；
+- 独立 Review 与用户验收分别记录。
 
 ## 10. 文档交接
 
-每项至少更新：
+每项至少更新 STATE、TASKS、PLAN、SPEC，涉及媒体再更新媒体策略/OSS preflight/Handbook，涉及模型再更新 models，涉及 UI 再更新 design，最后更新 artifacts/notes 索引与 `CLAUDE.md` 稳定纪律。
 
-- `../STATE.md`；
-- `TASKS.md`；
-- `../planning/PLAN.md`；
-- `../requirements/SPEC.md` 中实际变化的业务事实；
-- `../requirements/MEDIA-PUBLICATION-POLICY.md` 中实际媒体行为；
-- `../models/README.md` 中实际落地模型；
-- 对应 `implementation/notes/` 实施与 Review 记录。
-
-实施记录包含范围、非目标、迁移、首次失败、findings、修复、命令、浏览器证据和未验证边界。测试数量不能替代真实页面、媒体和重启恢复观察。
-
-阶段 D 完成后仍不能自动宣布正式上线。GitHub Actions 全绿由 T49 负责，正式域名、TLS、线上 Compose、升级、回滚和恢复演练由 T52 负责。
+实施 note 保留范围、非目标、迁移、首次失败、finding、修复、命令、浏览器/云证据和未验证边界。测试数量不能替代真实页面、媒体、刷新和恢复观察。

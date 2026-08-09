@@ -1,161 +1,150 @@
-# T10 OSS 预检与最小权限
+# OSS/CDN 生产预检契约
 
-> **范围**：只说明 T10/EXT-02 的可重复验证、运行身份最小权限和秘密放置方式；不实现上传页面、认证、数据库、作品 CRUD 或正式媒体参数。
+> **角色**：定义 T52-F2 完成后的可重复自动预检。
+> **最后校准**：2026-08-09。
+> **重要**：当前 `scripts/oss-preflight.mjs` 仍按历史 public-read 衍生 Bucket 设计，必须在 T52-F2 重写后才能作为生产门禁。本文不声称现有脚本已经满足。
 
-## 1. 固定边界
+## 1. 固定拓扑
 
-| 项目 | 固定值或约束 |
+| 项目 | 目标 |
 | --- | --- |
 | Region | `oss-cn-hangzhou` |
-| Endpoint | `https://oss-cn-hangzhou.aliyuncs.com` |
-| 私有 Bucket | `project-furry-forge-private`，ACL `private`，Bucket 级 Block Public Access 开启 |
-| 公开 Bucket | `project-furry-forge-public`，只保存网页衍生图；当前 ACL `public-read` |
-| 正式私有前缀 | 每个部署身份只授权自身的 `<env>/original/` 与 `<env>/processing/` |
-| 正式公开前缀 | 每个部署身份只授权自身的 `<env>/web/` |
-| T10 前缀 | 每次只使用独立的 `test/<run-id>/` |
+| 生产服务端 Endpoint | `https://oss-cn-hangzhou-internal.aliyuncs.com` |
+| 本地服务端 Endpoint | `https://oss-cn-hangzhou.aliyuncs.com` |
+| 浏览器上传 | 私有 Bucket 杭州公网域名 |
+| 私有原图 Bucket | 现有 Bucket，ACL private，Bucket BPA 开启 |
+| 网页衍生 Bucket | 现有 Bucket，ACL private，Bucket BPA 开启 |
+| 公开媒体 | CDN 媒体域名 + URL 鉴权方式 A |
+| CDN 回源 | 只回源衍生 Bucket，同账号私有回源 |
 
-公开 Bucket 的 `public-read` 表示其中每个对象都可能被匿名读取，不能靠对象命名隐藏内容。因此原图、联系人、返图授权记录、原文件名和其他私有数据不得写入该 Bucket。
+不创建新 Bucket，不兼容旧 public-read URL。两只原始 OSS 域名匿名访问都必须失败。
 
-## 2. 最小权限
+## 2. 应用最小权限
 
-条件 PUT 的完整约束由两层共同完成：
+现有应用 RAM 身份继续使用当前 AK/SK，只允许：
 
-1. RAM 只允许向精确 Bucket/前缀执行 `PutObject`；
-2. 服务端生成的 V4 URL 同时签入 `Content-Type`、`Content-MD5`、`x-oss-meta-sha256` 和 `x-oss-forbid-overwrite: true`。浏览器请求必须逐项匹配，重复 Key 返回 `FileAlreadyExists`。
+- 读取必要 Bucket 信息/CORS/BPA 状态；
+- 对私有 Bucket 的单一生产原图/处理前缀执行需要的 Put/Get/Delete/Process；
+- 对衍生 Bucket 的单一生产网页前缀执行需要的 Put/Get/Delete；
+- CDN 对正式媒体域名执行 `RefreshObjectCaches`、`DescribeRefreshTasks`、`DescribeRefreshQuota`。
 
-生产、开发和预检身份应分开。下面的 `<env>` 只能替换为单一环境（如 `dev` 或 `prod`），不得改成 `*`；`<run-id>` 只能替换为本次预检 ID，并在验证后撤销临时语句。
+不授予 `oss:*`、`AliyunOSSFullAccess`、`AliyunCDNFullAccess`、无界 List 后批量删除或 CDN 域名/计费修改权限。
 
-### 2.1 应用身份
+具体 RAM JSON 在实现时根据阿里云资源级授权能力生成并用越权负测试验证；示例不能替代控制台实际授权结果。
 
-```json
-{
-  "Version": "1",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": ["oss:GetBucketInfo"],
-      "Resource": [
-        "acs:oss:*:*:project-furry-forge-private",
-        "acs:oss:*:*:project-furry-forge-public"
-      ]
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["oss:GetBucketCors"],
-      "Resource": ["acs:oss:*:*:project-furry-forge-private"]
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["oss:PostProcessTask"],
-      "Resource": ["acs:oss:*:*:project-furry-forge-private"]
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["oss:PutObject", "oss:GetObject"],
-      "Resource": ["acs:oss:*:*:project-furry-forge-private/<env>/original/*"]
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["oss:PutObject", "oss:GetObject", "oss:DeleteObject"],
-      "Resource": ["acs:oss:*:*:project-furry-forge-private/<env>/processing/*"]
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["oss:PutObject", "oss:GetObject", "oss:DeleteObject"],
-      "Resource": ["acs:oss:*:*:project-furry-forge-public/<env>/web/*"]
-    }
-  ]
-}
-```
+官方参考：
 
-`GetBucketInfo` 同时返回 Bucket 身份、地域、Endpoint、ACL 和 BPA，因此不再重复授予单独 ACL/BPA 读取动作；浏览器条件 PUT 只涉及私有 Bucket，所以 `GetBucketCors` 也只授予私有 Bucket。`GetObject` 覆盖对象 HEAD、`image/info`、服务端读取大原图和必要的签名 GET。阿里云将 `PostProcessTask` 定义为源 Bucket 级权限，不能缩到对象前缀；这里保留这一项必要的 Bucket 级动作，其他对象动作仍限制在单一环境前缀。若未来需要在同一 Bucket 内隔离互不信任的处理身份，应拆分 Bucket，而不是扩大对象通配权限。内嵌 FFmpeg 的结果只能 `PutObject` 到私有 `<env>/processing/*`，且只按已知 Key 删除；OSS `sys/saveas` 只能写公开 `<env>/web/*`。公开对象 HEAD/验证使用 `GetObject`，下架清理使用精确 Key 的 `DeleteObject`。
-
-### 2.2 单次 T10 临时增量
-
-```json
-{
-  "Version": "1",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": ["oss:PostProcessTask"],
-      "Resource": ["acs:oss:*:*:project-furry-forge-private"]
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["oss:PutObject", "oss:GetObject", "oss:DeleteObject"],
-      "Resource": ["acs:oss:*:*:project-furry-forge-private/test/<run-id>/*"]
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["oss:PutObject", "oss:GetObject", "oss:DeleteObject"],
-      "Resource": ["acs:oss:*:*:project-furry-forge-public/test/<run-id>/web/*"]
-    }
-  ]
-}
-```
-
-预检不需要 `oss:ListObjects`、Bucket/ACL/BPA/CORS 写权限、账号级安全写权限或其他云服务权限。正式方案不得绑定 `AdministratorAccess`、`AliyunOSSFullAccess`、`oss:*` 或长期全桶对象通配权限。
+- [CDN 自定义权限策略](https://help.aliyun.com/zh/cdn/user-guide/authorize-a-ram-user-to-prefetch-and-refresh-resources/)
+- [CDN 私有 OSS 回源](https://help.aliyun.com/zh/cdn/user-guide/grant-alibaba-cloud-cdn-access-permissions-on-private-oss-buckets)
 
 ## 3. 秘密放置
 
-- AK/SK 只写入仓库已忽略的本机 `.env`，或 `config/runtime.local.json` 等受控本机安全配置；模板只保留变量名。
-- AK/SK 只能进入服务端进程，不得放入仓库、提交、镜像、`runtimeConfig.public`、前端构建产物、测试快照、预检证据或日志。
-- 不在命令中打印变量值，不输出完整异常请求、签名 URL 或 Authorization Header。
-- 不把 AK/SK 粘贴到聊天、Markdown、issue 或截图。需要轮换时只在阿里云控制台和本机秘密文件中完成。
-- `test-results/oss-preflight/` 已被 Git 忽略；证据只记录“凭据存在”布尔值、脱敏状态码、对象摘要和请求 ID。
+- AK/SK、Session Secret、CDN URL 鉴权主/备 Key只进入本机/生产受控 Secret；
+- 不进入仓库、镜像、`runtimeConfig.public`、前端构建、日志、证据、测试快照或聊天；
+- 预检只记录“已设置”布尔值、脱敏状态码/Request ID、摘要和任务状态；
+- 完整 OSS/CDN 签名 URL 不落盘到证据；
+- `.env` 不删除/清空；生产 `.env` 与本地 `.env` 分场景维护。
 
-## 4. 执行
+## 4. 配置门禁
 
-```powershell
-pnpm preflight:oss
-```
+预检先验证：
 
-可选参数：
+- `OSS_REGION=oss-cn-hangzhou`；
+- 生产 `OSS_ENDPOINT` 精确为杭州 internal；本地模式精确为杭州 public；
+- `OSS_UPLOAD_BASE_URL` 是私有 Bucket 公网 HTTPS origin 且不含 `-internal`；
+- `MEDIA_BASE_URL` 是 CDN HTTPS origin，不是 `.aliyuncs.com` OSS Bucket 域名；
+- 私有/衍生 Bucket 名不同；
+- 公开、管理、媒体、上传 origin 互不相同；
+- OSS 与 Session/CDN 鉴权配置完整成组；
+- 浏览器条件 PUT 实际返回 URL Host 与 `OSS_UPLOAD_BASE_URL` 语义一致，不能只检查变量存在。
 
-```powershell
-pnpm preflight:oss --origin https://admin.example.com
-node --env-file=.env.preflight scripts/oss-preflight.mjs
-```
+同步入口：生产 `.env`、`.env.example`、`.env.compose.example`、`config/runtime.example.json`、runtime Schema/测试、production verify 与 `docs/DEPLOYMENT.md`。
 
-未传 `--origin` 时必须由 `.env`、进程环境变量或活动配置文件提供 `ADMIN_BASE_URL`；脚本不回退到硬编码本机 origin。
+## 5. Bucket 与对象权限门禁
 
-自定义 `--env-file` 必须放在脚本路径之前，由项目基线 Node.js 24 原生读取；脚本只解析自身的 `--origin`、`--evidence` 和 `--run-id`，不读取或回显秘密参数。
+对两只 Bucket：
 
-执行顺序：
+1. Region/Endpoint/账号匹配；
+2. Bucket ACL 为 private；
+3. Bucket 级 Block Public Access 开启；
+4. 无公共 Bucket Policy；
+5. 抽样对象不存在 public-read/public-read-write ACL；
+6. 原始 Bucket 域名匿名 GET 403；
+7. 应用身份精确前缀读写成功；越过前缀/角色/环境失败。
 
-1. 只读核对 Region、Endpoint、Bucket 名、同账号同地域、ACL、BPA 和私有 Bucket CORS；
-2. 真实发送浏览器 OPTIONS；
-3. 生成无个人信息的 29,360,568 字节 PNG，执行 V4 条件 PUT、重复覆盖拒绝、HEAD、摘要和 `image/info` 校验；
-4. 通过 `ffmpeg-static@5.3.0` 暴露的绝对路径启动随应用安装的 FFmpeg，并从子进程环境移除 `PATH`/`Path`；把大原图生成最长边不超过 4,096 px、大小不超过 20,000,000 字节的私有 PNG 处理源，同时记录二进制版本和 SHA-256；
-5. 使用处理源和 160×64 合成 Logo 验证 `image/info`、缩放、水印、WebP 与跨 Bucket `sys/saveas`；
-6. 验证私有匿名 GET 为 403、公开衍生对象匿名 GET 为 200、永久原图和私有处理源摘要不变；
-7. 再次核对两个 Bucket、环境和完整 `test/<run-id>/` 前缀，只按内存中的四个精确 Key 反序删除并逐个 HEAD 确认 404。
+对衍生 Bucket 额外检查：
 
-脚本不会列举 Bucket，也不会自动修改 ACL、Bucket Policy、BPA 或 CORS。只读门禁不满足时，写入阶段停止并输出最小、可回滚的控制台操作。
+- 对象都可从数据库追溯到 `asset_variants` 的网页用途；
+- 不包含原图、processing、Logo、预览或授权附件；
+- CDN 只回源该 Bucket。
 
-阿里云图片处理原图不能超过 20 MB，而普通 PutObject 上限更高。项目仍接受不超过 30,000,000 字节的永久私有原图；超过图片处理上限时，必须先生成上述私有处理源，不能把大对象 PUT 或 `image/info` 成功冒充为可直接处理。
+官方参考：[Block Public Access](https://help.aliyun.com/zh/oss/user-guide/block-public-access/)、[Object ACL](https://help.aliyun.com/zh/oss/user-guide/object-acl)。
 
-`ffmpeg-static` 与所带 FFmpeg 二进制采用 GPL 许可。T52 打包部署前必须保留适用许可证与来源说明，并确认最终分发方式满足许可义务；T10 不把 Windows 开发机二进制提交进仓库，也不依赖系统安装的 FFmpeg。
+## 6. CORS 与条件 PUT
 
-## 5. CORS 收敛
+私有 Bucket 最小 CORS：
 
-T10 只要求私有 Bucket 支持后台来源的条件 PUT。最小规则：
-
-- Allowed Origin：实际后台 Origin；
+- Allowed Origin：正式管理 HTTPS origin；
 - Allowed Method：`PUT`；
 - Allowed Headers：`content-type`、`content-md5`、`x-oss-meta-sha256`、`x-oss-forbid-overwrite`；
 - Expose Headers：`ETag`、`x-oss-request-id`。
 
-当前 `Origin: *`、`Headers: *` 和 GET/POST/PUT/DELETE/HEAD 规则足以通过能力预检，但范围大于正式最小值。公开图片由普通 `<img>` 匿名读取时不需要 CORS；只有未来确需跨源 JavaScript 读取像素时，才为公开 Bucket 增加对应 GET 规则。
+衍生 Bucket 不配置浏览器上传 CORS。
 
-## 6. 媒体参数边界
+预检从真实管理 origin：OPTIONS 通过；V4 条件 PUT 成功；Content-Type/MD5/SHA/forbid-overwrite 任一篡改失败；重复 Key拒绝；完成后服务端 HEAD/摘要/MIME/尺寸/EXIF/角色重验通过。
 
-预检中的缩放宽度、透明度、边距和右下角锚点只用于证明 OSS 能组合执行 Logo 水印、缩放、WebP 和跨 Bucket `sys/saveas`。这些值不是任何正式品牌配方参数。
+## 7. 媒体处理与存储职责
 
-正式媒体行为只以当前媒体策略为准：
+- 永久原图不超过 30,000,000 字节、最大边 12,000 px；
+- 超过 OSS 图片处理输入限制时生成私有 FFmpeg 处理源；
+- 公开衍生写入衍生 Bucket，使用完整不可变身份与 Cache-Control；
+- 作品/领养/掉落水印，站点/返图无水印；
+- 公开文件 EXIF 收敛；
+- 私有源摘要前后不变；
+- 清理只按本次内存/数据库精确 Key 反序执行，不 List 前缀后删除。
 
-- 标准作品和领养使用活动 `brand-centered-v2`；
-- 首页/委托 Hero 和首页入口使用无水印 `site-display-v1`；
-- 阶段 D 返图使用无水印 `return-display-v1`，不从本预检的 Logo 水印样例推导参数；
-- T51 只校准仍需要品牌水印的正式作品媒体和站点品牌衍生物。
+## 8. CDN 门禁
+
+### 私有回源
+
+- 有效 CDN URL 访问 READY 衍生对象返回 200；
+- 同一路径原始 OSS URL 匿名返回 403；
+- CDN 无法读取私有原图 Bucket；
+- 缺少/过期/篡改 URL 鉴权返回 403。
+
+### 查询与缓存
+
+- URL 鉴权先执行；
+- 随机 query 命中同一缓存身份；
+- `x-oss-process` 不传源站、不产生新像素；
+- 浏览器缓存不超过 86400 秒；
+- 媒体响应过期缓存关闭；
+- 404 短缓存生效。
+
+### 下架刷新
+
+1. 预热专用测试对象；
+2. 撤销页面投影；
+3. 删除精确衍生对象；
+4. `RefreshObjectCaches`：`Force=true`、`ObjectType=File`；
+5. 保存任务 ID并查询到 Complete；
+6. 通常 5～6 分钟目标窗口后旧 URL 不能继续返回图片；
+7. 模拟 API 失败与进程中断，operation 保留 manifest并可恢复。
+
+官方参考：[URL 鉴权](https://help.aliyun.com/zh/cdn/user-guide/configure-url-signing/)、[忽略参数](https://help.aliyun.com/zh/cdn/user-guide/ignore-parameters/)、[刷新缓存](https://help.aliyun.com/zh/cdn/user-guide/refresh-and-prefetch-resources)。
+
+## 9. 执行与证据
+
+T52-F2 必须更新现有 `pnpm preflight:oss` 或提供同一受控入口；具体命令以实现 note 为准。在此之前不要运行旧脚本并把 public-read 结果记为新门禁通过。
+
+证据只保存：
+
+- 配置场景/Host 分类；
+- Bucket ACL/BPA/CORS 的脱敏结论；
+- 匿名/授权/越权状态码；
+- 输入/输出摘要和尺寸；
+- CDN 有效/无效鉴权结果；
+- refresh 任务 ID 的脱敏值/状态/耗时；
+- 清理完成数量与 404 结果。
+
+完整人工顺序见 [`PRODUCTION-LAUNCH-HANDBOOK.md`](./PRODUCTION-LAUNCH-HANDBOOK.md)。

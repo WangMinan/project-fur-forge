@@ -1,141 +1,90 @@
-# 部署说明（T34-F6 / T34-F7）
+# 部署说明
 
-> 当前只准备交付文件和 GitHub Actions。根据用户要求，本地不执行 Docker build、Docker Compose、Nginx 或空卷验收。
-> 正式域名、TLS、线上部署、升级和回滚延期到部署阶段。
+> **状态**：部署骨架已经存在，生产切换尚未执行。正式操作以 [`../agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md`](../agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md) 为逐项权威；先完成 T49/T50/T51、T52-F1、F2a preflight 重写和 F3/F4 应用能力，再由 Handbook 第 5～6 节执行 CDN 先行配置与 Bucket ACL/BPA 切换。F2 只有云上验证通过后才算完成。
 
-## 文件组成
+## 组成
 
 | 文件 | 作用 |
 | --- | --- |
-| `Dockerfile` | Node 24.18.0 多阶段构建、受控依赖脚本策略、非 root runtime |
-| `docker-compose.yaml` | migrate + app + nginx、数据卷、备份卷、内部网络与 OSS egress |
-| `.env.compose.example` | Shell 安全的环境示例，不含真实 Secret |
-| `deploy/nginx/app.conf.template` | 双 Host、未知 Host 拒绝、安全头和健康端点屏蔽 |
-| `deploy/nginx/upgrade-map.conf` | WebSocket upgrade map |
-| `.github/workflows/quality.yml` | 代码门禁、Compose 静态检查、镜像构建和 E2E |
-| `.github/workflows/release-image.yml` | tag/手动触发的 Docker Hub 发布 |
-| `.github/dependabot.yml` | GitHub Actions、npm/pnpm 和 Docker 更新 |
+| `Dockerfile` | Node 24 多阶段构建、非 root runtime、生产依赖自检 |
+| `docker-compose.yaml` | migrate + app + nginx、数据/备份卷和隔离网络 |
+| `.env.compose.example` | 生产 Compose 配置语义，不含真实 Secret |
+| `.env.example` | 本地/非 Compose 配置语义，不含真实 Secret |
+| `deploy/nginx/app.conf.template` | 双 Host、未知 Host 拒绝、安全头和 TLS 入口 |
+| `.github/workflows/quality.yml` | 代码、镜像与 E2E 门禁 |
+| `.github/workflows/release-image.yml` | 授权后的镜像发布 |
 
-## Dockerfile
+镜像使用 pnpm 正式 production deploy/install 机制，不手工复制单个依赖。runtime 构建期应自检 SQLite、`ali-oss` 与内嵌 FFmpeg。
 
-镜像使用：
+## 生产媒体拓扑
 
-```text
-node:24.18.0-bookworm-slim
-pnpm 11.18.0
-linux/amd64
-```
+复用现有两个 Bucket：
 
-pnpm 11 默认拒绝未批准的依赖构建脚本。Dockerfile 会在依赖阶段同时复制版本控制内的 `pnpm-workspace.yaml`，严格执行其中的 `allowBuilds` 与 `strictDepBuilds`；此前 Docker 构建遗漏该文件，才导致 `ERR_PNPM_IGNORED_BUILDS`。
+- 私有源图 Bucket：原图、处理源、品牌候选和草稿；
+- 公开衍生图 Bucket：只保存已发布并验证的网页衍生图。
 
-仓库 package、lockfile 与依赖构建策略不会在镜像内被临时改写。生产依赖由 `pnpm deploy --prod --legacy` 生成，不手工复制 `ali-oss` 或其他单包依赖树。
+正式目标是两个 Bucket 都设为 `private` 并开启 Block Public Access。公开衍生图 Bucket 只授权 CDN 私有 OSS 回源；浏览器只使用 CDN 自定义域名下约 24 小时有效的鉴权 URL，不再直连 OSS。
 
-runtime 构建期自检会：
+下架分两段：业务查询立即移除；服务端随后对精确 CDN URL 发起 `Force=true` 刷新并追踪任务，目标约 5～6 分钟完成 CDN 服务器侧撤销。客户端已经下载、截图或第三方转存的副本不在承诺内。
 
-- 创建 SQLite 内存数据库并执行查询；
-- 加载 `ali-oss`；
-- 确认 `ffmpeg-static` 路径存在且可执行。
+## Endpoint 场景
+
+| 场景 | `OSS_ENDPOINT` | 说明 |
+| --- | --- | --- |
+| 本机开发/本机运维 | `https://oss-cn-hangzhou.aliyuncs.com` | 本机不能访问阿里云内网 Endpoint |
+| 杭州同地域 ECS 内的 app/migrate/ops | `https://oss-cn-hangzhou-internal.aliyuncs.com` | 服务端 SDK 读写，走内网 |
+| 浏览器条件上传 | 私有 Bucket 公网 Bucket 域名 | 浏览器在公网，不得签内网地址 |
+| CDN 回源 | 阿里云 CDN 配置的私有 OSS 源站 | 不读取应用的 `OSS_ENDPOINT` |
+| 公开页面图片 | CDN 自定义域名 | 不出现 OSS 域名 |
+
+当前代码仍需由 T52-F1 完成真正的场景拆分：服务端签发浏览器条件上传时不能因为 `OSS_ENDPOINT` 使用内网地址；`OSS_UPLOAD_BASE_URL` 必须成为实际签名边界，而不只是已校验配置。`.env.example`、`.env.compose.example` 和生产 `.env` 必须同任务同步。
+
+T52-F3 的固定配置名为 `CDN_URL_AUTH_ACTIVE_KEY`（`primary|secondary`）、`CDN_URL_AUTH_PRIMARY_KEY`、`CDN_URL_AUTH_SECONDARY_KEY` 和 `CDN_URL_AUTH_TTL_SECONDS`（生产固定 `86400`）。当前 runtime 尚不支持，因此示例文件只保留目标注释而不伪装成可用配置；T52-F3 必须一次性同步 `.env` 模板、`config/runtime.example.json`、Schema、测试与 production verify 后才可使用。
+
+继续使用当前静态 AK/SK 方案；本阶段不引入 ECS 实例 RAM 角色。凭据只能进入 Secret/生产 `.env`，不得提交、回显或写入截图。
 
 ## Compose 网络
 
-`docker-compose.yaml` 使用三个网络：
+- `backend`：`internal:true`，Nginx、app、migrate 内部通信；
+- `egress`：app 主动访问 OSS/CDN API；
+- `edge`：Nginx 发布 80/443；
+- app 不直接发布宿主机端口；
+- `BACKEND_SUBNET` 与 `TRUSTED_PROXY_CIDRS` 必须同步，不能只改其一。
 
-- `backend`：`internal:true`，仅用于 Nginx、app 和 migrate 之间通信；
-- `egress`：app 主动访问阿里云 OSS；
-- `edge`：Nginx 发布 80/443。
+## 首次部署命令骨架
 
-app 不发布宿主机端口。`BACKEND_SUBNET` 与 `TRUSTED_PROXY_CIDRS` 默认都为 `172.30.250.0/24`；如与宿主机网络冲突，必须同时修改。
-
-## 运维命令
-
-首次部署前：
+以下命令只能在 Handbook 前置门禁和配置复核通过后执行：
 
 ```bash
 cp .env.compose.example .env
-# 填入真实镜像、域名、Bucket、凭据和 Session Secret
-```
+# 填入真实镜像、域名、Bucket、CDN、凭据、Session Secret 与监控阈值
 
-常用命令：
-
-```bash
 docker compose -f docker-compose.yaml pull
 docker compose -f docker-compose.yaml run --rm migrate
+docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs preflight
 docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs init-admin
 docker compose -f docker-compose.yaml up -d
+```
 
+备份与恢复检查：
+
+```bash
 docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs backup --output /app/backups/manual.db
 docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs restore-verify --backup /app/backups/manual.db --output /tmp/verify.db
-docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs preflight
-docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs cleanup-expired-uploads --dry-run
-# T34-F1：为既有启用 Hero、委托 Hero 与已发布常规领养补齐无水印站点展示变体。
-# 默认 dry-run 只输出数量摘要；加 --no-dry-run 才真正生成。
-docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs reconcile-site-display --dry-run
-# T34-F5：手动触发一次长任务恢复扫描，用于确认卡住的 operation。
 docker compose -f docker-compose.yaml run --rm app node ops/ops.mjs recover-operations
 ```
 
-管理员初始化不会在每次启动时重置密码。危险操作继续要求显式确认。
+所有可写运维任务继续默认 dry-run，必须显式 `--no-dry-run` 才能产生副作用。
 
-## 健康检查
+## 健康与门禁
 
-- `/api/health/live`：Node 进程存活；
-- `/api/health/ready`：数据库可打开、迁移历史（数量、顺序、时间戳与 hash）严格匹配、基础记录就绪；
-- `/api/health`：旧兼容端点，已改为与 ready 相同的诚实判定（未就绪返回 503），Nginx 仍明确对公网返回 404。
+- `/api/health/live`：进程存活；
+- `/api/health/ready`：数据库、严格迁移历史、基础记录和生产依赖就绪；
+- Nginx 不向公网暴露健康端点；
+- T49 必须让 `checks`、`image-build`、`e2e` 在同一 `main` SHA 全绿；
+- T52 必须完成空卷、迁移、管理员初始化、真实私有 Bucket/CDN、升级、回滚和恢复演练；
+- 不创建 `v*` tag、不推正式镜像、不切 DNS，除非对应任务和用户门禁已通过。
 
-Compose 直接在 app 容器内访问 `/api/health/ready`。Nginx 不向公网暴露任何健康端点。
+## 品牌与备案
 
-readiness 后续仍需由业务代码复用严格迁移 history/hash 校验；当前不应仅凭迁移数量作为最终上线证据。
-
-## GitHub Actions
-
-### `quality.yml`
-
-在 main push、PR、手动触发和 reusable workflow 中运行：
-
-- frozen install；
-- lint；
-- typecheck；
-- unit；
-- integration；
-- production build；
-- production verify；
-- secret/content scan；
-- `docker compose -f docker-compose.yaml config --quiet`；
-- Dockerfile `linux/amd64` build；
-- 完整 Chromium E2E；
-- artifact 上传。
-
-Compose 静态检查使用 workflow 内显式 dummy 环境，不读取真实 Secret，也不 source 人类示例文件。
-
-### `release-image.yml`
-
-触发方式：
-
-- `push tags: v*`；
-- `workflow_dispatch` 并提供 `image_tag`。
-
-发布前复用完整 quality workflow。镜像名：
-
-```text
-${DOCKERHUB_USERNAME}/project-fur-forge
-```
-
-需要 Repository Secrets：
-
-- `DOCKERHUB_USERNAME`
-- `DOCKERHUB_TOKEN`
-
-工作流不 SSH、不远程部署、不创建 GitHub Release、不回显 PAT。
-
-## 当前不执行
-
-- 本地 `docker build`；
-- 本地 `docker compose up`；
-- 本地 Nginx/TLS；
-- 空卷 migrate/init/ready；
-- 正式域名和证书；
-- 创建 `v*` tag；
-- Docker Hub 正式发布；
-- 线上升级、回滚和恢复。
-
-这些不是遗漏，而是已经明确延期的部署阶段工作。
+备案网站名称为“有点小狗”。公开桌面/移动导航必须显示“有点小狗”，不带“工作室”；管理端内部名称不做机械全局替换。备案号、正式域名、证书与页脚链接在 T51 按实际审批结果填写，不能预填猜测值。

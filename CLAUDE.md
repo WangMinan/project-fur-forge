@@ -104,6 +104,17 @@ GitHub Actions 已知未全绿（`checks` 在 Production build 失败，`e2e` �
 - T41 不作为独立任务，手机轻量能力分别并入 T36、T37；
 - Agent 不得为这些任务预建通用表、空路由、空页面或空导航。
 
+## 阶段 E/F 已锁定生产事实
+
+- 公开桌面与移动导航条品牌固定为“有点小狗”，不带“工作室”；这是公开导航显示规则，不做全仓机械替换；
+- 复用现有私有源图 Bucket 与公开衍生图 Bucket，不保留旧的直连公开 OSS 兼容路径；正式切换时两个 Bucket 都设为 private 并开启 Block Public Access；
+- CDN 只私有回源公开衍生图 Bucket，不能读取私有源图 Bucket；浏览器只消费约 24 小时有效的 CDN 鉴权 URL；
+- 下架后公开查询立即移除，服务端对精确 CDN URL 发起强制刷新并追踪，CDN 服务器侧撤销目标约 5～6 分钟；不得声称能删除客户端已保存副本；
+- 杭州同地域 ECS 内的 Nitro、migrate 和 ops 使用 `oss-cn-hangzhou-internal.aliyuncs.com`；本机、浏览器条件上传、CDN 回源和公开图片 URL 必须使用各自公网/CDN 场景，不能混用内网 Endpoint；
+- 继续使用当前静态 AK/SK 方案，本阶段不引入实例 RAM 角色；Secret 不得进入仓库、日志、截图或客户端；
+- `.env`、`.env.example`、`.env.compose.example` 与运行时校验必须同步。当前条件上传签名器必须在 T52-F1 真正使用独立公网上传基址，不能只校验 `OSS_UPLOAD_BASE_URL`；
+- 生产 Bucket、CDN、域名、TLS、监控、部署、回滚和恢复按 `implementation/PRODUCTION-LAUNCH-HANDBOOK.md` 逐项执行；T49–T52 前不得提前切 ACL。
+
 ## 常用命令
 
 Node.js 24 LTS 与 pnpm 11.18 为当前基线：
