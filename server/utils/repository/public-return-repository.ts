@@ -18,6 +18,7 @@ import {
 } from '../recipe/return-display-recipe'
 import { getDatabase } from '../database'
 import { getRuntimeConfig } from '../runtime-config'
+import type { RuntimeConfig } from '../runtime-config'
 
 /**
  * T35-F1 公开返图投影。
@@ -213,6 +214,7 @@ function toPublicItems(
   rows: readonly PublicReturnRow[],
   variants: readonly PublicReturnVariantRow[],
   mediaBaseUrl: string,
+  appEnv: RuntimeConfig['appEnv'],
 ): PublicReturnPhotoDto[] {
   return rows.flatMap((row) => {
     const complete = completeReturnWallVariants(
@@ -228,6 +230,7 @@ function toPublicItems(
         complete,
         mediaBaseUrl,
         returnWallWidths(row.assetWidth),
+        appEnv,
       )
     }
     catch {
@@ -262,6 +265,7 @@ export function getPublicReturnWall(
   mediaBaseUrl: string,
   page = 1,
   seed = '',
+  appEnv: RuntimeConfig['appEnv'] = 'development',
 ): PublicReturnWallDto {
   const total = countPublishedReturns(sqlite)
   const pageCount = Math.ceil(total / RETURN_WALL_PAGE_SIZE)
@@ -274,7 +278,7 @@ export function getPublicReturnWall(
   const variants = loadReturnVariants(sqlite, rows.map(row => row.assetId))
 
   return publicReturnWallDtoSchema.parse({
-    items: toPublicItems(rows, variants, mediaBaseUrl),
+    items: toPublicItems(rows, variants, mediaBaseUrl, appEnv),
     page,
     pageCount,
     pageSize: RETURN_WALL_PAGE_SIZE,
@@ -287,6 +291,7 @@ export function getPublicReturnCharacter(
   sqlite: Database.Database,
   mediaBaseUrl: string,
   slug: string,
+  appEnv: RuntimeConfig['appEnv'] = 'development',
 ): PublicReturnCharacterDto | null {
   const character = loadCharacter(sqlite, slug)
   if (!character) {
@@ -294,7 +299,7 @@ export function getPublicReturnCharacter(
   }
   const rows = loadCharacterReturns(sqlite, slug)
   const variants = loadReturnVariants(sqlite, rows.map(row => row.assetId))
-  const photos = toPublicItems(rows, variants, mediaBaseUrl)
+  const photos = toPublicItems(rows, variants, mediaBaseUrl, appEnv)
   if (photos.length === 0) {
     return null
   }
@@ -338,18 +343,22 @@ export function returnWallSeed(now = Date.now()) {
 }
 
 export function getPublicReturnWallForRequest(page = 1, seed = '') {
+  const config = getRuntimeConfig()
   return getPublicReturnWall(
     getDatabase().sqlite,
-    getRuntimeConfig().mediaBaseUrl,
+    config.mediaBaseUrl,
     page,
     seed,
+    config.appEnv,
   )
 }
 
 export function getPublicReturnCharacterForRequest(slug: string) {
+  const config = getRuntimeConfig()
   return getPublicReturnCharacter(
     getDatabase().sqlite,
-    getRuntimeConfig().mediaBaseUrl,
+    config.mediaBaseUrl,
     slug,
+    config.appEnv,
   )
 }

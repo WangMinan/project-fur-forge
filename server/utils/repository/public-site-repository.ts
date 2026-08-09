@@ -46,6 +46,7 @@ import {
   publicRecipeWidths,
 } from '../recipe/media-recipe'
 import { getRuntimeConfig } from '../runtime-config'
+import type { RuntimeConfig } from '../runtime-config'
 import { safeLog } from '../safe-log'
 import { getPublicSiteContent } from '../service/site-content'
 import { toPublicWorkDto } from '../recipe/work-mapper'
@@ -140,6 +141,7 @@ function sourceSet(
   variants: readonly PublicVariantRow[],
   mediaBaseUrl: string,
   usage: 'design-sheet' | 'detail' | 'work-card',
+  appEnv: RuntimeConfig['appEnv'],
 ) {
   for (const recipeVersion of [
     PUBLIC_RECIPE_VERSION,
@@ -153,6 +155,7 @@ function sourceSet(
         )),
         mediaBaseUrl,
         publicRecipeWidths(usage),
+        appEnv,
       )
       if (
         usage === 'work-card'
@@ -275,6 +278,7 @@ function loadCurrentPublicVariants(sqlite: Database.Database) {
 function snapshot(
   sqlite: Database.Database,
   mediaBaseUrl: string,
+  appEnv: RuntimeConfig['appEnv'],
 ): SnapshotEntry[] {
   const tagsByWork = groupBy(loadTags(sqlite), tag => tag.workId)
   const mediaByWork = groupBy(loadWorkMedia(sqlite), media => media.workId)
@@ -308,6 +312,7 @@ function snapshot(
           variantsByAsset.get(item.assetId) ?? [],
           mediaBaseUrl,
           'design-sheet',
+          appEnv,
         )
         return sources ? [{
           assetId: item.assetId,
@@ -322,7 +327,7 @@ function snapshot(
       .filter(item => item.role === 'studio_photo')
       .flatMap((photo) => {
         const variants = variantsByAsset.get(photo.assetId) ?? []
-        const detail = sourceSet(variants, mediaBaseUrl, 'detail')
+        const detail = sourceSet(variants, mediaBaseUrl, 'detail', appEnv)
         if (!detail) {
           return []
         }
@@ -333,7 +338,7 @@ function snapshot(
             `${row.characterName}的出厂照`,
           ),
           sources: detail,
-          card: sourceSet(variants, mediaBaseUrl, 'work-card'),
+          card: sourceSet(variants, mediaBaseUrl, 'work-card', appEnv),
         }]
       })
     const primary = photos.find(photo => photo.primary === 1 && photo.card)
@@ -342,6 +347,7 @@ function snapshot(
           variantsByAsset.get(designSheet.assetId) ?? [],
           mediaBaseUrl,
           'work-card',
+          appEnv,
         )
       : null
     const card = primary?.card
@@ -395,8 +401,9 @@ function publicBusinessStatuses(sqlite: Database.Database) {
 function homeAggregate(
   sqlite: Database.Database,
   mediaBaseUrl: string,
+  appEnv: RuntimeConfig['appEnv'],
 ): PublicHomeAggregateDto {
-  const hero = getPublicHome(sqlite, mediaBaseUrl)
+  const hero = getPublicHome(sqlite, mediaBaseUrl, appEnv)
   const statuses = publicBusinessStatuses(sqlite)
   const entryCard = (kind: 'adoption' | 'commission') => {
     const entry = hero.entries[kind]
@@ -433,7 +440,7 @@ function homeAggregate(
   let currentAdoptions: PublicAdoptionListItemDto[] = []
   let adoptionsAvailable = true
   try {
-    const entriesSnapshot = snapshot(sqlite, mediaBaseUrl)
+    const entriesSnapshot = snapshot(sqlite, mediaBaseUrl, appEnv)
     featured = featuredEntries(entriesSnapshot).map(entry => entry.summary)
     // 当前领养取最新两件：快照已按发布时间倒序。
     currentAdoptions = adoptionItems(entriesSnapshot).slice(0, 2)
@@ -552,10 +559,11 @@ function detailFor(entries: readonly SnapshotEntry[], slug: string) {
 export function createSqlitePublicSiteRepository(
   sqlite: Database.Database,
   mediaBaseUrl: string,
+  appEnv: RuntimeConfig['appEnv'] = 'development',
 ): PublicSiteRepository {
   return {
     getWorkBySlug(slug) {
-      const entries = snapshot(sqlite, mediaBaseUrl)
+      const entries = snapshot(sqlite, mediaBaseUrl, appEnv)
       const match = detailFor(entries, slug)
       if (!match) {
         return null
@@ -601,7 +609,7 @@ export function createSqlitePublicSiteRepository(
     },
 
     listAdoptions(query = {}) {
-      return adoptionListDto(adoptionItems(snapshot(sqlite, mediaBaseUrl)), query)
+      return adoptionListDto(adoptionItems(snapshot(sqlite, mediaBaseUrl, appEnv)), query)
     },
 
     listWorks(query = {}) {
@@ -620,7 +628,7 @@ export function createSqlitePublicSiteRepository(
           filter: { valid: false, purpose: null, suitType: null },
         })
       }
-      const items = snapshot(sqlite, mediaBaseUrl)
+      const items = snapshot(sqlite, mediaBaseUrl, appEnv)
         .filter(entry => entry.studioPhotos.length > 0)
         .filter(entry => (
           (!parsed.data.purpose || entry.purpose === parsed.data.purpose)
@@ -638,7 +646,7 @@ export function createSqlitePublicSiteRepository(
     },
 
     listFeaturedWorks() {
-      const items = featuredEntries(snapshot(sqlite, mediaBaseUrl))
+      const items = featuredEntries(snapshot(sqlite, mediaBaseUrl, appEnv))
         .map(entry => entry.summary)
       return publicFeaturedWorksDtoSchema.parse({
         items,
@@ -647,13 +655,13 @@ export function createSqlitePublicSiteRepository(
     },
 
     getHome() {
-      return getPublicHome(sqlite, mediaBaseUrl)
+      return getPublicHome(sqlite, mediaBaseUrl, appEnv)
     },
     getCommissionHero() {
-      return getPublicCommissionHero(sqlite, mediaBaseUrl)
+      return getPublicCommissionHero(sqlite, mediaBaseUrl, appEnv)
     },
     getHomeAggregate() {
-      return homeAggregate(sqlite, mediaBaseUrl)
+      return homeAggregate(sqlite, mediaBaseUrl, appEnv)
     },
   }
 }
@@ -780,8 +788,10 @@ export function createFakePublicSiteRepository(
 }
 
 export function getPublicSiteRepository() {
+  const config = getRuntimeConfig()
   return createSqlitePublicSiteRepository(
     getDatabase().sqlite,
-    getRuntimeConfig().mediaBaseUrl,
+    config.mediaBaseUrl,
+    config.appEnv,
   )
 }

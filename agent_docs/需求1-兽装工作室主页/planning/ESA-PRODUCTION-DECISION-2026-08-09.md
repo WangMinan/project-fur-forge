@@ -36,7 +36,7 @@
 
 应用通过阿里云官方 TypeScript/Node.js SDK 调用 ESA 2024-09-10 API。SDK 初始化、请求和异常处理参考[阿里云 TypeScript SDK samples 的 ESA20240910 目录](https://github.com/aliyun/alibabacloud-typescript-sdk-samples/tree/main/ESA20240910)，刷新参数、返回值和任务状态以 [PurgeCaches](https://help.aliyun.com/zh/edge-security-acceleration/esa/api-esa-2024-09-10-purgecaches) 与 [DescribePurgeTasks](https://help.aliyun.com/zh/edge-security-acceleration/esa/api-esa-2024-09-10-describepurgetasks) 为准。
 
-ESA API 凭据与 OSS 应用凭据分离，并按阿里云实际支持的 action/resource 粒度授予刷新和任务查询所需最小权限；若暂不支持按 Site 收敛，必须记录实际权限边界。不得授予 DNS、证书、套餐等无关控制面写权限。
+2026-08-10 用户确认当前只有 `.env` 中现有一套全权限阿里云 AK/SK，OSS 与 ESA API 共用；本版本不再建立或校验第二套 ESA 凭据。必须记录该高权限边界并严格限制 Secret 只存在于本地/远程 `.env`，不得进入仓库、镜像、日志、截图或客户端。ESA 到私有 OSS 的托管 STS 仍与该应用 AK/SK 无关。
 
 ## 阶段分工
 

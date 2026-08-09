@@ -85,8 +85,8 @@ GATE-E 前必须交付：
 
 负责提供/确认：
 
-- 域名、备案、正式素材、OSS/ESA/媒体鉴权 Secret、正式套餐、预算和阈值；
-- 阿里云控制台中的 OSS/ESA/应用 RAM、DNS/ESA 边缘 TLS/源站保护/告警配置，以及 wildcard DNS 收敛；
+- 域名、备案、正式素材、现有一套阿里云 AK/SK、ESA Site/API Endpoint、正式套餐、预算和阈值；
+- 阿里云控制台中的 OSS/ESA、DNS/ESA 边缘 TLS/源站保护/告警配置、现有 AK/SK 权限边界，以及 wildcard DNS 收敛；
 - GATE-E 冻结镜像发布/传送方式的明确授权；
 - 危险动作的最终确认；
 - 正式业务操作与最终验收。

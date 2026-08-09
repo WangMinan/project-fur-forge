@@ -6,7 +6,6 @@ import EsaClient, {
 import { $OpenApiUtil } from '@alicloud/openapi-core'
 import type { RuntimeConfig } from './runtime-config'
 import { getRuntimeConfig } from './runtime-config'
-import { PRODUCTION_MEDIA_ORIGIN } from './recipe/media-mapper'
 
 export const MAX_EDGE_PURGE_FILES = 1_000
 
@@ -18,6 +17,7 @@ export type PublicMediaPurgeTaskStatus =
 
 export interface PublicMediaCache {
   readonly enabled: boolean
+  readonly mediaOrigin: string | null
   describeExactFilePurge(
     taskId: string,
     urls: readonly string[],
@@ -25,7 +25,10 @@ export interface PublicMediaCache {
   purgeExactFiles(urls: readonly string[]): Promise<string>
 }
 
-export function assertExactPublicMediaUrls(urls: readonly string[]) {
+export function assertExactPublicMediaUrls(
+  urls: readonly string[],
+  mediaOrigin: string,
+) {
   if (
     urls.length < 1
     || urls.length > MAX_EDGE_PURGE_FILES
@@ -37,7 +40,7 @@ export function assertExactPublicMediaUrls(urls: readonly string[]) {
   for (const value of urls) {
     const url = new URL(value)
     if (
-      url.origin !== PRODUCTION_MEDIA_ORIGIN
+      url.origin !== new URL(mediaOrigin).origin
       || !url.pathname.startsWith('/prod/web/')
       || url.pathname.endsWith('/')
       || url.search !== ''
@@ -52,24 +55,26 @@ export function assertExactPublicMediaUrls(urls: readonly string[]) {
 
 export class AliEsaPublicMediaCache implements PublicMediaCache {
   readonly enabled = true
+  readonly mediaOrigin: string
   readonly #client: EsaClient
   readonly #siteId: number
 
   constructor(config: RuntimeConfig) {
     if (
       config.appEnv !== 'production'
-      || config.mediaBaseUrl !== PRODUCTION_MEDIA_ORIGIN
       || !config.esaSiteId
-      || !config.esaAccessKeyId
-      || !config.esaAccessKeySecret
+      || !config.esaApiEndpoint
+      || !config.ossAccessKeyId
+      || !config.ossAccessKeySecret
     ) {
       throw new Error('Production ESA cache configuration is incomplete.')
     }
+    this.mediaOrigin = config.mediaBaseUrl
     this.#siteId = Number(config.esaSiteId)
     this.#client = new EsaClient(new $OpenApiUtil.Config({
-      accessKeyId: config.esaAccessKeyId,
-      accessKeySecret: config.esaAccessKeySecret,
-      endpoint: 'esa.cn-hangzhou.aliyuncs.com',
+      accessKeyId: config.ossAccessKeyId,
+      accessKeySecret: config.ossAccessKeySecret,
+      endpoint: new URL(config.esaApiEndpoint).hostname,
       protocol: 'HTTPS',
       regionId: 'cn-hangzhou',
       connectTimeout: 10_000,
@@ -78,7 +83,7 @@ export class AliEsaPublicMediaCache implements PublicMediaCache {
   }
 
   async purgeExactFiles(urls: readonly string[]) {
-    assertExactPublicMediaUrls(urls)
+    assertExactPublicMediaUrls(urls, this.mediaOrigin)
     const response = await this.#client.purgeCaches(new PurgeCachesRequest({
       siteId: this.#siteId,
       type: 'file',
@@ -96,7 +101,7 @@ export class AliEsaPublicMediaCache implements PublicMediaCache {
     if (normalizedTaskId === '' || normalizedTaskId.length > 200) {
       throw new Error('ESA purge task ID is invalid.')
     }
-    assertExactPublicMediaUrls(urls)
+    assertExactPublicMediaUrls(urls, this.mediaOrigin)
     const response = await this.#client.describePurgeTasks(
       new DescribePurgeTasksRequest({
         content: urls[0],
@@ -126,6 +131,7 @@ export class AliEsaPublicMediaCache implements PublicMediaCache {
 
 const disabledPublicMediaCache: PublicMediaCache = {
   enabled: false,
+  mediaOrigin: null,
   async describeExactFilePurge() {
     throw new Error('ESA cache purge is disabled outside production.')
   },

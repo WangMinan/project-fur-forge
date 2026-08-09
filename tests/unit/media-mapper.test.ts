@@ -140,7 +140,13 @@ describe('media DTO mapping', () => {
     expect(() => toPublicVariantDto({
       ...publicVariant,
       objectKey: 'test/run/web/asset/work-card.webp',
-    }, 'https://public-media.ditedog.com')).toThrow(/web derivative/)
+    }, 'https://public-media.ditedog.com', 'production')).toThrow(/web derivative/)
+    expect(toPublicVariantDto({
+      ...publicVariant,
+      objectKey: 'dev/web/asset/work-card.webp',
+    }, 'https://public-media.ditedog.com', 'development')).toMatchObject({
+      src: 'https://public-media.ditedog.com/dev/web/asset/work-card.webp',
+    })
   })
 
   it('maps complete hero recipes and rejects incomplete publication data', () => {

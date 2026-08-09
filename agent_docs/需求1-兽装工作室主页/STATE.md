@@ -46,7 +46,7 @@ T43、T44、T45、T47 已取消；T48 调研完成。所有生产能力的开发
 
 阶段 F 只有 T53-F1～F5：
 
-- **F1**：用户填写域名、备案、素材、应用/OSS/ESA API Secret、正式套餐与预算等真实参数，并授权冻结镜像的发布/传送方式；
+- **F1**：用户填写域名、备案、素材、现有阿里云 AK/SK、Session Secret、正式套餐与预算等真实参数，并授权冻结镜像的发布/传送方式；
 - **F2**：用户在 ESA/OSS 控制台收敛 wildcard DNS、复核 ECS `HTTP/80` 回源与边缘 HTTPS、配置缓存、源站保护/WAF、初始用量封顶和告警，并把两只 Bucket 切为 private + BPA；
 - **F3**：远程执行者先填写并校验生产 `.env`，再发布/传送、拉取/载入并核对冻结镜像摘要，随后部署唯一常驻 Nuxt 容器，把宿主机 Nginx 收敛为公开/管理精确 Host 的 HTTP-only origin，执行迁移、preflight、测量校准、备份/恢复和回滚；
 - **F4**：正式域名做媒体安全、ESA 边缘 TLS/源站保护/purge、HTTP-only Nginx、loopback 隔离、三视口、业务操作、监控和恢复全链验证；
@@ -79,7 +79,7 @@ F 允许的仓库写入包括验收 note、证据索引、checkbox、STATE 状�
 - 浏览器条件 PUT：私有 Bucket 公网域名；
 - ESA 回源：`public-media.ditedog.com` 对网页衍生 Bucket 的同账号私有 OSS 源站；
 - 公开图片：ESA 公开媒体域名；
-- 应用继续使用现有静态 OSS/ESA API AK/SK；按最小权限拆分运行时用途，Secret 不进入客户端、仓库、日志或截图；
+- 应用继续使用 `.env` 中现有一套静态阿里云 AK/SK，OSS 与 ESA API 共用；不再要求或保存第二套 ESA 凭据。该凭据权限较大，Secret 不进入客户端、仓库、日志或截图；
 - 浏览器条件 PUT 仍使用私有 Bucket 原始公网域名，不经过 ESA。
 
 ### ESA、宿主机 Nginx 与 TLS
@@ -120,7 +120,7 @@ F 允许的仓库写入包括验收 note、证据索引、checkbox、STATE 状�
 
 - ICP 审批结果、备案号与平台同步时间；
 - 正式公开、管理域名；公开媒体域名已确定为 `public-media.ditedog.com`；
-- ESA Site 与 API 最小权限凭据的实际值；
+- ESA Site/API Endpoint 与现有阿里云 AK/SK 的实际值；
 - ESA 正式套餐、源站保护/WAF策略、月度预算和目标环境实测后的用量封顶数值；
 - EXT-01 素材是否直接作为正式素材，以及替换项。
 

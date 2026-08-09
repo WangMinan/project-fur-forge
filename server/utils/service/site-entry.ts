@@ -10,6 +10,7 @@ import {
 } from '../recipe/media-mapper'
 import type { VariantRecord } from '../recipe/media-mapper'
 import type { MediaStorage } from '../media-storage'
+import type { RuntimeConfig } from '../runtime-config'
 import {
   assetSupportsSiteDisplay,
   completeSiteDisplayVariants,
@@ -92,6 +93,7 @@ export function projectHomeEntry(
   source: HomeEntrySourceRow | null,
   variants: readonly VariantRecord[],
   mediaBaseUrl: string,
+  appEnv: RuntimeConfig['appEnv'] = 'development',
 ): PublicHomeEntryDto | null {
   if (!source) {
     return null
@@ -109,6 +111,7 @@ export function projectHomeEntry(
       complete,
       mediaBaseUrl,
       siteDisplayWidths(usage),
+      appEnv,
     ),
   })
 }

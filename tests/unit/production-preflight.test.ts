@@ -42,8 +42,7 @@ function validConfig(databaseFile = resolve(temporaryDirectory(), 'production.db
     accessKeyId: 'unit-oss-access-key',
     accessKeySecret: 'unit-oss-secret-value',
     esaSiteId: '171890925863148',
-    esaAccessKeyId: 'unit-esa-access-key',
-    esaAccessKeySecret: 'unit-esa-secret-value',
+    esaApiEndpoint: 'https://esa.cn-hangzhou.aliyuncs.com',
   }
 }
 
@@ -77,8 +76,8 @@ describe('T52-E2 production preflight contract', () => {
     })).toThrow(/public origin/u)
     expect(() => validateProductionPreflightConfig({
       ...validConfig(),
-      esaAccessKeyId: 'unit-oss-access-key',
-    })).toThrow(/distinct RAM/u)
+      esaApiEndpoint: 'https://esa.invalid-provider.cn',
+    })).toThrow(/official Aliyun/u)
     expect(() => validateProductionPreflightConfig({
       ...validConfig(),
       adminBaseUrl: 'https://admin.example.test',
@@ -178,7 +177,11 @@ describe('T52-E2 production preflight contract', () => {
       'https://public-media.ditedog.com',
       objectKey,
     )
-    expect(buildExactPurgeInput('171890925863148', mediaUrl)).toEqual({
+    expect(buildExactPurgeInput(
+      '171890925863148',
+      mediaUrl,
+      'https://public-media.ditedog.com',
+    )).toEqual({
       siteId: 171890925863148,
       type: 'file',
       content: { files: [mediaUrl] },
@@ -186,10 +189,12 @@ describe('T52-E2 production preflight contract', () => {
     expect(() => buildExactPurgeInput(
       '171890925863148',
       'https://public-media.ditedog.com/prod/web/?prefix=true',
+      'https://public-media.ditedog.com',
     )).toThrow(/exact/u)
     expect(() => buildExactPurgeInput(
       '171890925863148',
       'https://project-furry-forge-public.oss-cn-hangzhou.aliyuncs.com/a.webp',
+      'https://public-media.ditedog.com',
     )).toThrow(/public-media/u)
   })
 })
@@ -224,8 +229,7 @@ describe('T52-E2 dry-run CLI', () => {
           OSS_ACCESS_KEY_ID: configuration.accessKeyId,
           OSS_ACCESS_KEY_SECRET: configuration.accessKeySecret,
           ESA_SITE_ID: configuration.esaSiteId,
-          ESA_ACCESS_KEY_ID: configuration.esaAccessKeyId,
-          ESA_ACCESS_KEY_SECRET: configuration.esaAccessKeySecret,
+          ESA_API_ENDPOINT: configuration.esaApiEndpoint,
           PREFLIGHT_EVIDENCE_DIR: directory,
         },
       },
@@ -247,8 +251,6 @@ describe('T52-E2 dry-run CLI', () => {
     ))).toBe(true)
     expect(evidenceText).not.toContain(configuration.accessKeyId)
     expect(evidenceText).not.toContain(configuration.accessKeySecret)
-    expect(evidenceText).not.toContain(configuration.esaAccessKeyId)
-    expect(evidenceText).not.toContain(configuration.esaAccessKeySecret)
     expect(evidenceText).not.toContain('/original/')
     expect(evidenceText).not.toContain('x-oss-signature')
   })

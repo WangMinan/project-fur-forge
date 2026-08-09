@@ -91,9 +91,9 @@ F 中发现问题时先判断边界：可由独立运维脚本在冻结接口内
 | 浏览器条件 PUT | 私有 Bucket 公网域名 |
 | 公开网页媒体 | `https://public-media.ditedog.com`（ESA） |
 
-`OSS_UPLOAD_BASE_URL` 必须真实控制上传签名 Host，且只能是私有 Bucket 原始公网 OSS 域名。`MEDIA_BASE_URL` 生产固定为 `https://public-media.ditedog.com` 并拒绝原始 OSS 域名。Schema、模板、runtime example、测试、verify 和文档同一提交完成。应用继续使用静态服务端 RAM 凭据：OSS 凭据维持现状，ESA purge 使用独立最小权限凭据，不引入 ECS RAM Role。
+`OSS_UPLOAD_BASE_URL` 必须真实控制上传签名 Host，且只能是私有 Bucket 原始公网 OSS 域名。`MEDIA_BASE_URL` 生产使用 `https://public-media.ditedog.com` 并拒绝原始 OSS 域名。`ESA_API_ENDPOINT` 显式配置，Schema、模板、runtime example、测试、verify 和文档同一提交完成。应用继续使用 `.env` 中现有一套静态阿里云 AK/SK，OSS 与 ESA purge 共用，不再维护重复凭据变量，也不引入 ECS RAM Role。
 
-T52-E1 已按该设计落地：服务端 OSS client、浏览器上传签名 client 与公开媒体 origin 已分离，生产 Schema 固定杭州内网/公网/ESA 三类地址，并要求 OSS 与 ESA 凭据分组完整且 AccessKey ID 不复用。后续 E2～E4 直接消费此配置，不再增加平行的 Endpoint 规则。
+T52-E1 已按该设计落地：服务端 OSS client、浏览器上传签名 client 与公开媒体 origin 已分离，生产 Schema 固定杭州内网/公网/ESA 三类地址。2026-08-10 按用户真实凭据方案收敛为 OSS 与 ESA API 共用现有 AK/SK，并增加显式 `ESA_API_ENDPOINT`；后续 E2～E4 直接消费此配置，不再增加平行的 Endpoint 或凭据规则。
 
 ### 3.4 T52-E2 preflight
 
@@ -101,13 +101,13 @@ T52-E1 已按该设计落地：服务端 OSS client、浏览器上传签名 clie
 
 - dry-run 与真实验证模式；
 - Bucket ACL/BPA、Object ACL/Policy、CORS、生命周期、RAM；
-- 原站匿名 403、应用权限、越权拒绝；
+- 原站匿名 403、共享阿里云凭据的业务能力、条件上传策略失败面；
 - ESA 已发布媒体 URL、purge API 与衍生 Bucket 内容边界；
 - 脱敏输出、稳定退出码和明确修复指向。
 
 阶段 F 原则上运行该冻结入口；若目标环境需要补充诊断或证据采集包装器，可在不改变 preflight 判定契约的前提下追加运维脚本并做最小验证。
 
-T52-E2 已按该设计落地：`pnpm run preflight:oss` 默认只做本地 production 契约校验，显式 `--no-dry-run` 才执行受控 live 探测；Bucket/对象/数据库衍生物、CORS/签名失败、OSS 原站/ESA 读取与官方 SDK purge/最小权限均有稳定检查项、非零退出和脱敏证据。live 模式只创建本次 run 的精确对象并在 `finally` 清理；阶段 E 未使用真实生产凭据执行，不代签 T53 的云侧结果。
+T52-E2 已按该设计落地：`pnpm run preflight:oss` 默认只做本地 production 契约校验，显式 `--no-dry-run` 才执行受控 live 探测；Bucket/对象/数据库衍生物、CORS/签名失败、OSS 原站/ESA 读取与官方 SDK purge 业务能力均有稳定检查项、非零退出和脱敏证据。OSS 与 ESA API 共用 `.env` 中现有一套完整权限 AK/SK，预检不再要求控制面越权拒绝。live 模式只创建本次 run 的精确对象并在 `finally` 清理；阶段 E 未使用真实生产凭据执行，不代签 T53 的云侧结果。
 
 ### 3.5 T52-E3 ESA 同账号私有 OSS 回源
 
@@ -188,11 +188,11 @@ GATE-E 只在以下条件签署：
 
 ### 4.1 T53-F1 参数冻结
 
-用户填写真实公开/管理域名、ICP备案、公安备案状态、正式素材、ESA Site 与 purge API 最小权限凭据、OSS AK/SK、Session Secret、正式套餐、预算和封顶原则，并选择、明确授权 GATE-E 冻结镜像的发布/传送方式。仓库不保存任何 Secret。
+用户填写真实公开/管理域名、ICP备案、公安备案状态、正式素材、ESA Site/API Endpoint、现有一套阿里云 AK/SK、Session Secret、正式套餐、预算和封顶原则，并选择、明确授权 GATE-E 冻结镜像的发布/传送方式。仓库不保存任何 Secret。
 
 ### 4.2 T53-F2 阿里云控制台
 
-按 Handbook 把 wildcard DNS 收敛为公开/管理精确记录，复核已经生效的 ECS HTTP/80 回源与边缘 HTTPS；复核 `public-media` 同账号私有 OSS 回源，并配置缓存、源站保护/WAF、保守初始用量封顶、告警、两只 Bucket private+BPA、ACL/Policy/CORS 和最小权限 RAM。已经提前存在的 NS/CNAME/A 记录只作为现状复核，不提前关闭 F2。目标环境实测后的阈值校准在 F3 完成。
+按 Handbook 把 wildcard DNS 收敛为公开/管理精确记录，复核已经生效的 ECS HTTP/80 回源与边缘 HTTPS；复核 `public-media` 同账号私有 OSS 回源，并配置缓存、源站保护/WAF、保守初始用量封顶、告警、两只 Bucket private+BPA、ACL/Policy/CORS。现有全权限阿里云 AK/SK 是用户确认的部署事实，preflight 只验证本任务实际所需 OSS/ESA 能力，不再以“控制面必须拒绝”作为通过条件。已经提前存在的 NS/CNAME/A 记录只作为现状复核，不提前关闭 F2。目标环境实测后的阈值校准在 F3 完成。
 
 ### 4.3 T53-F3 远程开发机
 

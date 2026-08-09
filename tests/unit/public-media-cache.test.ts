@@ -7,10 +7,12 @@ import { edgePurgeUrlsForObjectKeys } from '../../server/utils/runner/public-med
 import { FakePublicMediaCache } from '../helpers/fake-public-media-cache'
 
 describe('public media edge purge contract', () => {
+  const mediaOrigin = 'https://public-media.ditedog.com'
+
   it('accepts only exact production media files', () => {
     expect(() => assertExactPublicMediaUrls([
       'https://public-media.ditedog.com/prod/web/asset/work-card.webp',
-    ])).not.toThrow()
+    ], mediaOrigin)).not.toThrow()
 
     for (const value of [
       'https://project-furry-forge-public.oss-cn-hangzhou.aliyuncs.com/prod/web/asset/work-card.webp',
@@ -18,17 +20,17 @@ describe('public media edge purge contract', () => {
       'https://public-media.ditedog.com/prod/web/asset/work-card.webp?cache=1',
       'https://public-media.ditedog.com/prod/web/',
     ]) {
-      expect(() => assertExactPublicMediaUrls([value])).toThrow(/exact production media file/)
+      expect(() => assertExactPublicMediaUrls([value], mediaOrigin)).toThrow(/exact production media file/)
     }
   })
 
   it('rejects duplicate and over-limit batches', () => {
     const url = 'https://public-media.ditedog.com/prod/web/asset/work-card.webp'
-    expect(() => assertExactPublicMediaUrls([url, url])).toThrow(/unique/)
+    expect(() => assertExactPublicMediaUrls([url, url], mediaOrigin)).toThrow(/unique/)
     expect(() => assertExactPublicMediaUrls(Array.from(
       { length: MAX_EDGE_PURGE_FILES + 1 },
       (_, index) => `https://public-media.ditedog.com/prod/web/asset/${index}.webp`,
-    ))).toThrow(/1000/)
+    ), mediaOrigin)).toThrow(/1000/)
   })
 
   it('builds encoded exact URLs from immutable public object keys', () => {

@@ -5,6 +5,7 @@ import type {
 
 export class FakePublicMediaCache implements PublicMediaCache {
   readonly enabled = true
+  readonly mediaOrigin = 'https://public-media.ditedog.com'
   readonly submittedUrls: string[][] = []
   describeError = false
   submitError = false

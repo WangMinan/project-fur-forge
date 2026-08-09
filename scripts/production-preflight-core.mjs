@@ -2,9 +2,6 @@ import { createHash, randomBytes } from 'node:crypto'
 import { isAbsolute } from 'node:path'
 
 export const EXPECTED_REGION = 'oss-cn-hangzhou'
-export const EXPECTED_SERVER_ENDPOINT
-  = 'https://oss-cn-hangzhou-internal.aliyuncs.com'
-export const EXPECTED_MEDIA_ORIGIN = 'https://public-media.ditedog.com'
 export const EXPECTED_PRIVATE_BUCKET = 'project-furry-forge-private'
 export const EXPECTED_PUBLIC_BUCKET = 'project-furry-forge-public'
 export const REQUIRED_PUT_HEADERS = [
@@ -106,8 +103,10 @@ export function validateProductionPreflightConfig(config) {
     accessKeyId: required(config, 'accessKeyId'),
     accessKeySecret: required(config, 'accessKeySecret'),
     esaSiteId: required(config, 'esaSiteId'),
-    esaAccessKeyId: required(config, 'esaAccessKeyId'),
-    esaAccessKeySecret: required(config, 'esaAccessKeySecret'),
+    esaApiEndpoint: credentialFreeHttpsOrigin(
+      required(config, 'esaApiEndpoint'),
+      'ESA_API_ENDPOINT',
+    ),
   }
 
   if (normalized.appEnv !== 'production') {
@@ -128,10 +127,10 @@ export function validateProductionPreflightConfig(config) {
       'PUBLIC_BASE_URL and ADMIN_BASE_URL must be distinct.',
     )
   }
-  if (normalized.mediaBaseUrl !== EXPECTED_MEDIA_ORIGIN) {
+  if (new URL(normalized.mediaBaseUrl).hostname.endsWith('.aliyuncs.com')) {
     throw productionPreflightError(
       'wrong-media-origin',
-      'MEDIA_BASE_URL must use the approved ESA media origin.',
+      'MEDIA_BASE_URL must use an ESA custom domain instead of an OSS origin.',
     )
   }
   if (normalized.region !== EXPECTED_REGION) {
@@ -140,7 +139,10 @@ export function validateProductionPreflightConfig(config) {
       'OSS_REGION must be the approved Hangzhou region.',
     )
   }
-  if (normalized.endpoint !== EXPECTED_SERVER_ENDPOINT) {
+  if (
+    normalized.endpoint
+    !== `https://${normalized.region}-internal.aliyuncs.com`
+  ) {
     throw productionPreflightError(
       'wrong-oss-service-endpoint',
       'OSS_ENDPOINT must use the Hangzhou internal service endpoint.',
@@ -179,10 +181,12 @@ export function validateProductionPreflightConfig(config) {
       'OSS_UPLOAD_BASE_URL cannot use an internal endpoint.',
     )
   }
-  if (normalized.accessKeyId === normalized.esaAccessKeyId) {
+  if (!/^esa(?:\.[a-z0-9-]+)?\.aliyuncs\.com$/u.test(
+    new URL(normalized.esaApiEndpoint).hostname,
+  )) {
     throw productionPreflightError(
-      'credential-purpose-collision',
-      'OSS and ESA must use distinct RAM access keys.',
+      'wrong-esa-api-endpoint',
+      'ESA_API_ENDPOINT must use an official Aliyun ESA API host.',
     )
   }
   if (!/^[1-9]\d{0,31}$/u.test(normalized.esaSiteId)) {
@@ -358,7 +362,11 @@ export function exactEsaMediaUrl(mediaOrigin, objectKey) {
   }
   const url = new URL(objectKey, `${mediaOrigin}/`)
 
-  if (url.origin !== EXPECTED_MEDIA_ORIGIN || url.search || url.hash) {
+  if (
+    url.origin !== new URL(mediaOrigin).origin
+    || url.search
+    || url.hash
+  ) {
     throw productionPreflightError(
       'invalid-esa-media-url',
       'ESA media URL must be an exact public-media file URL.',
@@ -368,11 +376,11 @@ export function exactEsaMediaUrl(mediaOrigin, objectKey) {
   return url.toString()
 }
 
-export function buildExactPurgeInput(siteId, mediaUrl) {
+export function buildExactPurgeInput(siteId, mediaUrl, mediaOrigin) {
   const url = new URL(mediaUrl)
 
   if (
-    url.origin !== EXPECTED_MEDIA_ORIGIN
+    url.origin !== new URL(mediaOrigin).origin
     || url.search
     || url.hash
     || url.pathname === '/'

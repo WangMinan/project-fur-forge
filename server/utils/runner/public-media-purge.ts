@@ -6,7 +6,6 @@ import {
   MAX_EDGE_PURGE_FILES,
 } from '../public-media-cache'
 import {
-  PRODUCTION_MEDIA_ORIGIN,
   publicMediaUrlForObjectKey,
 } from '../recipe/media-mapper'
 import {
@@ -53,10 +52,14 @@ export function edgePurgeUrlsForObjectKeys(
   if (!cache.enabled || objectKeys.length === 0) {
     return []
   }
+  const mediaOrigin = cache.mediaOrigin
+  if (!mediaOrigin) {
+    throw new Error('ESA cache media origin is missing.')
+  }
   const urls = [...new Set(objectKeys)].map(key => (
-    publicMediaUrlForObjectKey(PRODUCTION_MEDIA_ORIGIN, key)
+    publicMediaUrlForObjectKey(mediaOrigin, key, 'production')
   ))
-  assertExactPublicMediaUrls(urls)
+  assertExactPublicMediaUrls(urls, mediaOrigin)
   return urls
 }
 

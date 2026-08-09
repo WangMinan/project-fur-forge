@@ -77,6 +77,7 @@ import {
 import { toPublicHeroSlideDto } from '../recipe/media-mapper'
 import type { HeroSlideRecord } from '../recipe/media-mapper'
 import type { MediaStorage } from '../media-storage'
+import type { RuntimeConfig } from '../runtime-config'
 import { getPublicMediaCache } from '../public-media-cache'
 import {
   ensureHeroUpscaleSource,
@@ -717,6 +718,7 @@ async function clearHeroSlidePreviews(
 export function getPublicHomeEntries(
   sqlite: Database.Database,
   mediaBaseUrl: string,
+  appEnv: RuntimeConfig['appEnv'] = 'development',
 ) {
   const entry = (kind: HomeEntryKind) => {
     const source = homeEntrySource(sqlite, kind)
@@ -725,6 +727,7 @@ export function getPublicHomeEntries(
       source,
       source ? variantsForAsset(sqlite, source.assetId) : [],
       mediaBaseUrl,
+      appEnv,
     )
   }
   return {
@@ -736,9 +739,10 @@ export function getPublicHomeEntries(
 export function getPublicHome(
   sqlite: Database.Database,
   mediaBaseUrl: string,
+  appEnv: RuntimeConfig['appEnv'] = 'development',
 ): PublicHomeDto {
   const home = requireHome(sqlite)
-  const projected = publicHeroSlides(sqlite, mediaBaseUrl, 'home')
+  const projected = publicHeroSlides(sqlite, mediaBaseUrl, 'home', appEnv)
   return publicHomeDtoSchema.parse({
     tagline: home.tagline,
     contactEmail: home.contactEmail,
@@ -746,7 +750,7 @@ export function getPublicHome(
     autoRotate: home.autoRotate === 1,
     autoRotateIntervalMs: home.autoRotateIntervalMs,
     slides: projected,
-    entries: getPublicHomeEntries(sqlite, mediaBaseUrl),
+    entries: getPublicHomeEntries(sqlite, mediaBaseUrl, appEnv),
   })
 }
 
@@ -754,6 +758,7 @@ function publicHeroSlides(
   sqlite: Database.Database,
   mediaBaseUrl: string,
   placement: HeroPlacement,
+  appEnv: RuntimeConfig['appEnv'],
 ) {
   const enabled = slides(sqlite, placement).filter(slide => slide.enabled === 1)
   // 迁移期仍可能只有旧水印 Hero 变体，此时 mapper 回退需要 profile 身份。
@@ -783,7 +788,7 @@ function publicHeroSlides(
           }
         : null,
     }
-    const dto = toPublicHeroSlideDto(record, mediaBaseUrl)
+    const dto = toPublicHeroSlideDto(record, mediaBaseUrl, appEnv)
     if (!dto) {
       throw new Error('Enabled hero slide could not be projected.')
     }
@@ -795,8 +800,9 @@ function publicHeroSlides(
 export function getPublicCommissionHero(
   sqlite: Database.Database,
   mediaBaseUrl: string,
+  appEnv: RuntimeConfig['appEnv'] = 'development',
 ): PublicCommissionHeroDto {
-  const slides = publicHeroSlides(sqlite, mediaBaseUrl, 'commission')
+  const slides = publicHeroSlides(sqlite, mediaBaseUrl, 'commission', appEnv)
   return publicCommissionHeroDtoSchema.parse({ slide: slides[0] ?? null })
 }
 

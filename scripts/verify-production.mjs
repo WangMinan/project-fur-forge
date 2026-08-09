@@ -27,8 +27,7 @@ const verificationEnv = {
   OSS_ACCESS_KEY_ID: 'production-verify-oss-access-key-id',
   OSS_ACCESS_KEY_SECRET: 'production-verify-oss-access-key-secret',
   ESA_SITE_ID: '1234567890',
-  ESA_ACCESS_KEY_ID: 'production-verify-esa-access-key-id',
-  ESA_ACCESS_KEY_SECRET: 'production-verify-esa-access-key-secret',
+  ESA_API_ENDPOINT: 'https://esa.cn-hangzhou.aliyuncs.com',
   PUBLIC_BASE_URL: baseURL,
   TRUSTED_PROXY_CIDRS: '172.30.250.1/32,192.0.2.0/24',
 }
