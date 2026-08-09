@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "environmentPolicy": {
+    "freePlanPurpose": "development-and-validation-only",
+    "productionPlanRequired": true,
+    "productionPlan": null,
+    "productionPlanSource": "T53-F1/F2-live-confirmation"
+  },
+  "edgeHttps": {
+    "forceHttps": true,
+    "certificateManagement": "esa-managed",
+    "certificateHostsSource": "T53-F1-exact-public-hosts",
+    "originProtocol": "http",
+    "originPort": 80,
+    "originTlsEnabled": false
+  },
+  "originProtection": {
+    "requiredForProduction": true,
+    "allowEsaConvergedNodeIpsOnly": true,
+    "ecsPublicPorts": [80],
+    "appListen": "127.0.0.1:3000",
+    "esaIpListSource": "T53-F2-console-current-list",
+    "ipListChangeRequiresReview": true
+  },
+  "waf": {
+    "managedProtectionEnabled": true,
+    "initialMode": "observe-first",
+    "targetModeSource": "T53-live-evidence",
+    "rules": [
+      {
+        "id": "admin-auth-abuse",
+        "hostScope": "admin-host",
+        "pathScope": "/api/auth/**",
+        "metric": "client-ip",
+        "threshold": null,
+        "thresholdSource": "T53-live-measurement",
+        "action": "observe-then-block"
+      },
+      {
+        "id": "public-analytics-abuse",
+        "hostScope": "public-host",
+        "pathScope": "/api/analytics/events",
+        "metric": "client-ip",
+        "threshold": null,
+        "thresholdSource": "T53-live-measurement",
+        "action": "observe-then-block"
+      },
+      {
+        "id": "public-read-abuse",
+        "hostScope": "public-host",
+        "pathScope": "/**",
+        "metric": "client-ip",
+        "threshold": null,
+        "thresholdSource": "T53-live-measurement",
+        "action": "observe-then-challenge"
+      }
+    ]
+  },
+  "budget": {
+    "monthlyBudgetCny": null,
+    "budgetSource": "T53-F1-user-confirmation",
+    "notificationOnly": true,
+    "automaticSpendStopClaimed": false,
+    "usageCapValue": null,
+    "usageCapSource": "T53-F1/F2-plan-confirmation",
+    "meteringDelayAcknowledged": true
+  },
+  "measurements": {
+    "thresholdsSource": "T53-target-environment",
+    "pageResponseBytes": null,
+    "firstObservedLatencyMs": null,
+    "repeatObservedLatencyMs": null,
+    "requestCount": null,
+    "peakObservedRequestsPerSecond": null,
+    "cacheHitRatioPercent": null
+  },
+  "alerts": [
+    {
+      "id": "esa-plan-quota",
+      "source": "esa",
+      "metric": "plan-and-quota",
+      "threshold": null,
+      "thresholdSource": "T53-plan-confirmation"
+    },
+    {
+      "id": "esa-traffic",
+      "source": "esa",
+      "metric": "traffic",
+      "threshold": null,
+      "thresholdSource": "T53-live-measurement"
+    },
+    {
+      "id": "esa-origin-5xx",
+      "source": "esa",
+      "metric": "origin-5xx-rate",
+      "threshold": null,
+      "thresholdSource": "T53-live-measurement"
+    },
+    {
+      "id": "esa-edge-4xx-5xx",
+      "source": "esa",
+      "metric": "edge-4xx-5xx-rate",
+      "threshold": null,
+      "thresholdSource": "T53-live-measurement"
+    },
+    {
+      "id": "esa-cache-hit",
+      "source": "esa",
+      "metric": "cache-hit-ratio",
+      "threshold": null,
+      "thresholdSource": "T53-live-measurement"
+    },
+    {
+      "id": "esa-purge",
+      "source": "esa",
+      "metric": "purge-failure-and-duration",
+      "threshold": null,
+      "thresholdSource": "T53-live-measurement"
+    },
+    {
+      "id": "esa-edge-certificate",
+      "source": "esa",
+      "metric": "managed-certificate-expiry",
+      "threshold": null,
+      "thresholdSource": "T53-certificate-policy"
+    },
+    {
+      "id": "ecs-disk",
+      "source": "ecs",
+      "metric": "disk-usage",
+      "threshold": null,
+      "thresholdSource": "T53-live-measurement"
+    },
+    {
+      "id": "nginx-origin",
+      "source": "ecs",
+      "metric": "nginx-active-config-reload-http80",
+      "threshold": null,
+      "thresholdSource": "T53-live-verification"
+    },
+    {
+      "id": "app-container",
+      "source": "ecs",
+      "metric": "container-running-and-ready",
+      "threshold": null,
+      "thresholdSource": "T53-live-verification"
+    }
+  ],
+  "hostInvariants": {
+    "nginxConfigTestRequired": true,
+    "reloadRequiresSuccessfulConfigTest": true,
+    "listen80Required": true,
+    "listen443Forbidden": true,
+    "acmeSchedulerForbidden": true,
+    "certificateFilesForbidden": true,
+    "httpOriginReadyRequired": true
+  }
+}

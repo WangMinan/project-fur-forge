@@ -30,6 +30,8 @@
     "preflight:watermark": "node scripts/oss-watermark-centered-v2.mjs",
     "verify:production": "node scripts/verify-production.mjs",
     "verify:esa-cache": "node scripts/verify-esa-cache-policy.mjs",
+    "verify:observability": "node scripts/verify-security-observability-policy.mjs",
+    "measure:production": "node scripts/measure-production-baseline.mjs",
     "media:cleanup-expired-uploads": "tsx scripts/cleanup-expired-uploads.ts",
     "media:reconcile-site-display": "tsx scripts/reconcile-site-display.ts",
     "ops:build": "esbuild scripts/container-ops.ts --bundle --platform=node --target=node24 --format=esm --outfile=.output/ops/ops.mjs --external:better-sqlite3 --external:ffmpeg-static --external:ali-oss --external:drizzle-orm"
