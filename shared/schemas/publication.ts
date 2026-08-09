@@ -73,6 +73,7 @@ export const workPublicationCheckDtoSchema = z.object({
   canPublish: z.boolean(),
   blockers: z.array(publicationBlockerSchema),
   designSheetCount: z.number().int().min(0).max(1),
+  designSheetNeedsPreprocess: z.boolean(),
   studioPhotoCount: z.number().int().min(0).max(5),
   requiredVariantCount: z.number().int().nonnegative(),
   missingVariantCount: z.number().int().nonnegative(),

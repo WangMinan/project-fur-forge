@@ -3,6 +3,7 @@ import { adminBaseURL, loginAsAdmin } from './helpers/auth'
 import { bumpWorkViaApi, createWorkViaApi } from './helpers/admin-work'
 import {
   fakeMediaState,
+  lowResolutionDesignSheetPng,
   publishableStudioPng,
   resetFakeMedia,
   setFakeMediaFlags,
@@ -105,6 +106,51 @@ test('READY 小图在发布前给出尺寸阻断', async ({ page }) => {
   const panel = page.getByTestId('publication-panel')
   await expect(panel).toContainText('有出厂照尺寸不足')
   await expect(panel.getByRole('button', { name: '发布', exact: true })).toBeDisabled()
+})
+
+test('低分辨率设定图保留原图、明确提示并经 FFmpeg 适配后发布', async ({ page }) => {
+  test.setTimeout(120_000)
+  const work = await createWorkViaApi(page, {
+    characterName: '低分辨率设定图验证',
+    purpose: 'adoption',
+    businessStatus: 'available',
+  })
+  await gotoEditor(page, work.id)
+  await uploadDesignSheetToEditor(
+    page,
+    lowResolutionDesignSheetPng(),
+    'low-resolution-design.png',
+  )
+  const designSheet = page.locator('.design-sheet__entry')
+  await expect(designSheet).toHaveCount(1)
+  await designSheet.getByLabel(/图片说明/).fill('低分辨率完整设定图')
+  await page.getByRole('button', { name: '保存设定图' }).click()
+  await expect(designSheet).toContainText('仍可保存和发布')
+  await expect(designSheet).toContainText('放大不会恢复原图没有的细节')
+
+  const panel = page.getByTestId('publication-panel')
+  await expect(panel).toContainText('设定图原图分辨率较低，但可以发布')
+  await expect(panel).not.toContainText('设定图尺寸不足，无法生成公开图片')
+  await expect(panel.getByRole('button', { name: '发布', exact: true })).toBeEnabled()
+
+  await setFakeMediaFlags(page, { failPut: true })
+  await panel.getByRole('button', { name: '发布', exact: true }).click()
+  await expect(panel.getByRole('alert')).toContainText(
+    '设定图尺寸适配失败，完整原图已保留',
+    { timeout: 60_000 },
+  )
+  await expect(panel).toContainText('草稿')
+
+  await setFakeMediaFlags(page, { failPut: false })
+  await panel.getByRole('button', { name: '发布', exact: true }).click()
+  await expect(panel).toContainText('发布成功', { timeout: 60_000 })
+
+  const state = await fakeMediaState(page)
+  expect(state.objects.some(key =>
+    key.includes('/design-sheet-upscale-lanczos-v1/'),
+  )).toBe(true)
+  expect(state.objects.some(key => key.includes('/original/'))).toBe(true)
+  expect(state.publicObjects.filter(key => key.includes('/web/'))).toHaveLength(18)
 })
 
 test('发布成功：状态翻转、编辑锁定、公开预览媒体就绪', async ({ page }) => {

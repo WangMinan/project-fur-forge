@@ -85,6 +85,25 @@ test.describe('T20 作品列表页', () => {
     await expect(page.getByRole('link', { name: '全部用途' })).toHaveAttribute('aria-current', 'true')
     await expect(page.getByRole('link', { name: '全部装型' })).toHaveAttribute('aria-current', 'true')
 
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 768, height: 1024 },
+      { width: 1440, height: 900 },
+    ]) {
+      await page.setViewportSize(viewport)
+      const titleBox = await page.getByRole('heading', {
+        level: 1,
+        name: '作品展示',
+      }).boundingBox()
+      const filterBox = await page.getByRole('group', {
+        name: '按用途筛选',
+      }).boundingBox()
+      expect(titleBox).not.toBeNull()
+      expect(filterBox).not.toBeNull()
+      expect(filterBox!.y - (titleBox!.y + titleBox!.height))
+        .toBeLessThanOrEqual(32)
+    }
+
     const filterAppearance = await page.getByRole('group', { name: '按用途筛选' }).evaluate((group) => {
       const active = group.querySelector<HTMLElement>('[aria-current="true"]')!
       const groupStyle = getComputedStyle(group)

@@ -57,7 +57,7 @@ export const PUBLICATION_BLOCKER_LABELS: Record<PublicationBlocker, string> = {
   WORK_FIELDS_INVALID: '基础信息不完整，请检查必填字段',
   DESIGN_SHEET_REQUIRED: '领养作品必须保存一张设定图',
   DESIGN_SHEET_NOT_READY: '设定图尚未完成服务端校验',
-  DESIGN_SHEET_SOURCE_TOO_SMALL: '设定图尺寸不足，无法生成公开图片',
+  DESIGN_SHEET_SOURCE_TOO_SMALL: '设定图需要尺寸适配，请重新发布重试；完整原图会保留',
   DESIGN_SHEET_ALT_REQUIRED: '设定图缺少图片说明',
   STUDIO_PHOTO_REQUIRED: '至少需要一张出厂照',
   PRIMARY_STUDIO_PHOTO_REQUIRED: '需要设置唯一一张主图',
@@ -92,6 +92,7 @@ export const PUBLICATION_FAILURE_STAGE_LABELS
 
 const PUBLICATION_FAILURE_CODE_LABELS: Record<string, string> = {
   HERO_UPSCALE_FAILED: '大图适配失败，私有原图已保留，请重试',
+  DESIGN_SHEET_UPSCALE_FAILED: '设定图尺寸适配失败，完整原图已保留；可以重新发布重试，或换一张更清晰的图片',
   PUBLICATION_VALIDATION_FAILED: '发布检查未通过，请根据待办项修正后重试',
   PUBLIC_MEDIA_GENERATION_FAILED: '公开图片生成失败，请稍后重试',
   PUBLIC_MEDIA_VERIFICATION_FAILED: '公开图片校验失败，请稍后重试',

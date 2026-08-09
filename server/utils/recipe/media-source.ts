@@ -6,6 +6,9 @@ import { ServiceError } from '../service-error'
 /** Lanczos 私有适配源身份，横竖 Hero 低分辨率原图共用。 */
 export const HERO_UPSCALE_RECIPE_VERSION = 'hero-upscale-lanczos-v1'
 
+/** 领养设定图保持比例的 Lanczos 私有适配源身份。 */
+export const DESIGN_SHEET_UPSCALE_RECIPE_VERSION = 'design-sheet-upscale-lanczos-v1'
+
 /** OSS 图片处理的单次输入上限。 */
 export const OSS_PROCESS_INPUT_BYTE_LIMIT = 20_000_000
 
@@ -128,6 +131,31 @@ export function processingSource(
       OSS_PROCESS_INPUT_BYTE_LIMIT,
       target.width,
       target.height,
+    ) as ProcessingSourceRow | undefined
+    if (upscaled) {
+      return {
+        height: upscaled.height,
+        inputSha256: upscaled.sha256,
+        objectKey: upscaled.objectKey,
+        sourceVariantId: upscaled.id,
+        width: upscaled.width,
+      }
+    }
+  }
+  if (sourceAsset.role === 'design_sheet') {
+    const upscaled = sqlite.prepare(`
+      SELECT id, object_key AS objectKey, sha256, width, height
+      FROM asset_variants
+      WHERE asset_id = ? AND storage_scope = 'PRIVATE'
+        AND status = 'READY' AND usage = 'preprocess'
+        AND recipe_version = ? AND input_sha256 = ?
+        AND byte_size <= ?
+      ORDER BY width DESC, height DESC, created_at DESC LIMIT 1
+    `).get(
+      sourceAsset.id,
+      DESIGN_SHEET_UPSCALE_RECIPE_VERSION,
+      sourceAsset.sha256,
+      OSS_PROCESS_INPUT_BYTE_LIMIT,
     ) as ProcessingSourceRow | undefined
     if (upscaled) {
       return {

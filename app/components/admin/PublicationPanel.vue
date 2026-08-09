@@ -366,6 +366,13 @@ onUnmounted(() => {
           </li>
         </ul>
       </div>
+      <p
+        v-if="check.designSheetNeedsPreprocess"
+        class="publication__preprocess"
+        role="status"
+      >
+        设定图原图分辨率较低，但可以发布。系统会先用 FFmpeg Lanczos 生成私有适配源；这不会恢复原图没有的细节，完整原图会保留不变。
+      </p>
       <p v-if="check.missingVariantCount > 0" class="publication__variants">
         发布时将生成 {{ check.missingVariantCount }} 张带水印公开图片，可能需要较长时间。
       </p>
@@ -402,7 +409,9 @@ onUnmounted(() => {
 
     <div v-if="pending === 'publish'" class="publication__progress" role="status">
       <p class="publication__state">
-        正在生成带水印的公开图片并检查图片是否可用，请勿关闭页面…
+        {{ check?.designSheetNeedsPreprocess
+          ? '正在用 FFmpeg 准备设定图，再生成带水印的公开图片，请勿关闭页面…'
+          : '正在生成带水印的公开图片并检查图片是否可用，请勿关闭页面…' }}
       </p>
       <template v-if="publishProgress && publishProgress.total > 0">
         <p class="publication__progress-label">已生成 {{ publishCompleted }} / {{ publishProgress.total }}，剩余 {{ publishProgress.remaining }} 张</p>
@@ -506,6 +515,16 @@ onUnmounted(() => {
   gap: var(--admin-space-1);
   font-size: var(--admin-font-sm);
   color: var(--admin-text-secondary);
+}
+
+.publication__preprocess {
+  margin: var(--admin-space-3) 0;
+  padding: var(--admin-space-3) var(--admin-space-4);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-status-warning-soft);
+  color: var(--admin-status-warning);
+  font-size: var(--admin-font-sm);
+  line-height: var(--admin-line-normal);
 }
 
 .publication__variants {

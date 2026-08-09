@@ -11,6 +11,8 @@ import type {
 } from '../../../shared/types/contracts'
 import type { MediaStorage } from '../media-storage'
 import {
+  assetSupportsPublicUsages,
+  ensureDesignSheetUpscaleSource,
   generatePublicVariants,
   PUBLIC_RECIPE_VERSION,
   publicRecipeWidths,
@@ -209,6 +211,15 @@ export function checkWorkPublication(
   const designSheets = targets
     .map(target => target.asset)
     .filter(asset => asset.role === 'design_sheet')
+  const designSheetNeedsPreprocess = targets.some(target => (
+    target.asset.role === 'design_sheet'
+    && target.asset.status === 'READY'
+    && !assetSupportsPublicUsages(
+      sqlite,
+      target.asset.assetId,
+      target.usages,
+    )
+  ))
   const blockers: PublicationBlocker[] = []
   if (
     work.slug.trim() === ''
@@ -258,12 +269,6 @@ export function checkWorkPublication(
     if (designSheets.some(sheet => sheet.status !== 'READY')) {
       blockers.push('DESIGN_SHEET_NOT_READY')
     }
-    if (targets.some(target => (
-      target.asset.role === 'design_sheet'
-      && !sourceSupportsPublicUsages(target.asset, target.usages)
-    ))) {
-      blockers.push('DESIGN_SHEET_SOURCE_TOO_SMALL')
-    }
     if (designSheets.some(sheet => !sheet.alt?.trim())) {
       blockers.push('DESIGN_SHEET_ALT_REQUIRED')
     }
@@ -298,6 +303,7 @@ export function checkWorkPublication(
     canPublish: blockers.length === 0,
     blockers,
     designSheetCount: designSheets.length,
+    designSheetNeedsPreprocess,
     studioPhotoCount: publicationPhotos.length,
     requiredVariantCount: requiredVariantCount(targets),
     missingVariantCount: missingVariantCount(sqlite, targets),
@@ -568,10 +574,34 @@ async function runWorkPublication(
     if (!check.canPublish) {
       throw new Error('Publication validation failed.')
     }
+    const targets = publicationTargets(sqlite, workId)
+    const designSheetTargets = targets.filter(target => (
+      target.asset.role === 'design_sheet'
+      && !assetSupportsPublicUsages(
+        sqlite,
+        target.asset.assetId,
+        target.usages,
+      )
+    ))
+    if (designSheetTargets.length > 0) {
+      stage = 'PREPARING_SOURCE'
+      failureCode = 'DESIGN_SHEET_UPSCALE_FAILED'
+      updateOperation(sqlite, operationId, 'PREPARING_SOURCE', [], now)
+      for (const target of designSheetTargets) {
+        requireWorkLease(sqlite, lease)
+        await ensureDesignSheetUpscaleSource(
+          sqlite,
+          storage,
+          target.asset.assetId,
+          target.usages,
+          now,
+        )
+        requireWorkLease(sqlite, lease)
+      }
+    }
     stage = 'APPLYING_WATERMARK'
     failureCode = 'PUBLIC_MEDIA_GENERATION_FAILED'
     updateOperation(sqlite, operationId, 'APPLYING_WATERMARK', [], now)
-    const targets = publicationTargets(sqlite, workId)
     for (const target of targets) {
       requireWorkLease(sqlite, lease)
       try {

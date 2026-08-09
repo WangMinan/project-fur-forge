@@ -75,6 +75,7 @@
 
 - 最小化第一方访问统计；
 - 导航品牌“有点小狗”、备案/页脚配置和正式素材校准；
+- 作品页保持紧凑的图片优先节奏；低分辨率设定图保留完整原图并在发布时生成私有 FFmpeg Lanczos 适配源，不以尺寸笼统阻断上传或发布；
 - Endpoint 拆分、OSS/CDN preflight、短期 URL signer、下架强制刷新和恢复；
 - 成本/监控测量入口、app-only Compose、宿主机 Nginx、acme.sh/dns_ali、运维命令和回滚包；
 - GitHub Actions 同一 SHA 全绿、新上下文综合 Review 和最终 E2E；

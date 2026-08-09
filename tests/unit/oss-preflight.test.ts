@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   compressPngForOss,
   OSS_IMAGE_PROCESSING_MAX_BYTES,
+  upscaleDesignSheetImage,
   upscaleHeroImage,
 } from '../../scripts/embedded-ffmpeg.mjs'
 import {
@@ -123,6 +124,24 @@ describe('T10 synthetic media', () => {
     )
     expect(source.readUInt32BE(16)).toBe(320)
     expect(source.readUInt32BE(20)).toBe(180)
+  }, 30_000)
+
+  it('keeps a low-resolution design sheet proportional while meeting publication minimums', () => {
+    const source = createSyntheticSourcePng(1560, 1080)
+    const adapted = upscaleDesignSheetImage(source, {
+      width: 2400,
+      height: 0,
+    })
+
+    expect(adapted.dimensions.width).toBe(2400)
+    expect(adapted.dimensions.width / adapted.dimensions.height)
+      .toBeCloseTo(1560 / 1080, 2)
+    expect(adapted.filter).toContain('flags=lanczos')
+    expect(adapted.content.length).toBeLessThanOrEqual(
+      OSS_IMAGE_PROCESSING_MAX_BYTES,
+    )
+    expect(source.readUInt32BE(16)).toBe(1560)
+    expect(source.readUInt32BE(20)).toBe(1080)
   }, 30_000)
 
   it('uses URL-safe unpadded Base64 for OSS processing parameters', () => {

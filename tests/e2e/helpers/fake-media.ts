@@ -91,6 +91,13 @@ export function publishableStudioPng(): Buffer {
   return uniquePng(publishableStudioSource)
 }
 
+let lowResolutionDesignSheetSource: Buffer | null = null
+
+export function lowResolutionDesignSheetPng(): Buffer {
+  lowResolutionDesignSheetSource ??= createSyntheticSourcePng(1560, 1080) as Buffer
+  return uniquePng(lowResolutionDesignSheetSource)
+}
+
 // 9500×1030、约 29 MB 噪点 PNG：触发内嵌 FFmpeg 私有处理源。
 export function largeStudioPng(): Buffer {
   return uniquePng(createLargeSyntheticPng() as Buffer)

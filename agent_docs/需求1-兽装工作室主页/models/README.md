@@ -40,7 +40,7 @@
 
 - `protection_mode=none`：站点 `site-display-v1` 与返图 `return-display-v1`；
 - `protection_mode=watermark`：作品/领养/展会 `recipe-v2` + 活动 `brand-centered-v2`；
-- 私有 preprocess 不能被公开投影选中。
+- 私有 preprocess 不能被公开投影选中；`design-sheet-upscale-lanczos-v1` 按原始资产摘要与目标几何保存不可变低分辨率设定图适配源，后续公开变体只记录该 READY 处理源的 `source_variant_id`。
 
 数据库保存不可变对象身份，不保存 T52-E3 动态生成的短期 CDN 签名 URL。
 
