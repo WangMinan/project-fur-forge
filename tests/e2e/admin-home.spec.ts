@@ -49,6 +49,19 @@ async function adminHomeVersion(page: Page) {
   return body.data.version
 }
 
+async function adminHomeSettings(page: Page) {
+  const response = await page.request.get(`${adminBaseURL}/api/admin/v1/site/home`)
+  expect(response.status(), '读取首页配置应成功').toBe(200)
+  const body = await response.json() as {
+    data: {
+      autoRotate: boolean
+      autoRotateIntervalMs: number
+      tagline: string
+    }
+  }
+  return body.data
+}
+
 async function publicHomeAlts(page: Page) {
   const response = await page.request.get(`${publicBaseURL}/api/public/v1/home`)
   expect(response.status(), '公开首页投影应可用').toBe(200)
@@ -115,29 +128,30 @@ test.afterEach(async ({ page }) => {
   await resetFakeMedia(page)
 })
 
-// T34-F3：首屏设置只剩口号与轮播行为；官方邮箱与 QQ 移到“文案配置”的
-// 官方渠道 Card，由 admin-content-sections.spec.ts 覆盖编辑与公开投影。
+// T34-F3/T37：首页设置只剩口号；官方渠道移到“文案配置”，自动轮播固定开启、
+// 十秒一张，不再提供第二套可配置入口。
 test('首屏设置：加载、修改保存、刷新后保持', async ({ page }) => {
   await gotoHomeAdmin(page)
   await expect(page.locator('#home-tagline')).toHaveValue('不只做小狗毛')
-  // 首屏设置不再提供第二个官方渠道编辑入口。
   await expect(page.locator('#home-contact-email')).toHaveCount(0)
   await expect(page.locator('#home-contact-qq')).toHaveCount(0)
-  await expect(page.getByText(/官方邮箱、QQ、抖音号和防诈骗提醒统一在/u)).toBeVisible()
-  await expect(page.locator('#home-auto-rotate')).not.toBeChecked()
-  await expect(page.locator('#home-interval')).toBeDisabled()
+  await expect(page.locator('#home-auto-rotate')).toHaveCount(0)
+  await expect(page.locator('#home-interval')).toHaveCount(0)
 
   await page.locator('#home-tagline').fill('只做小狗毛（测试）')
-  await page.locator('#home-auto-rotate').check()
-  await page.locator('#home-interval').fill('8')
   await page.getByRole('button', { name: '保存设置' }).click()
   await expect(page.getByRole('button', { name: '保存设置' })).toBeDisabled()
+
+  const saved = await adminHomeSettings(page)
+  expect(saved).toMatchObject({
+    tagline: '只做小狗毛（测试）',
+    autoRotate: true,
+    autoRotateIntervalMs: 10_000,
+  })
 
   await page.reload()
   await page.waitForSelector('[data-testid="home-admin"]')
   await expect(page.locator('#home-tagline')).toHaveValue('只做小狗毛（测试）')
-  await expect(page.locator('#home-auto-rotate')).toBeChecked()
-  await expect(page.locator('#home-interval')).toHaveValue('8')
 
   // 保存首屏设置不会改动官方渠道：公开页联系人保持既有值。
   await page.goto(`${publicBaseURL}/about#contact`)
@@ -371,7 +385,8 @@ test('启用后公开首页可见，停用后移除；启用过程有进度与�
 
   // 启用后字段锁定，只能停用/排序；公开结果本身就是当前水印结果。
   await expect(card.getByLabel(/图片说明/)).toBeDisabled()
-  await expect(card.getByRole('button', { name: '保存修改' })).toBeDisabled()
+  await expect(card.getByRole('spinbutton', { name: /顺位/ })).toBeEnabled()
+  await expect(card.getByRole('button', { name: '保存顺位' })).toBeDisabled()
 
   await card.getByRole('button', { name: '停用' }).click()
   await expect(card.getByText('未启用')).toBeVisible()

@@ -27,7 +27,7 @@ async function seedAdoptions(page: import('@playwright/test').Page) {
       characterName: '展会角色',
       purpose: 'adoption',
       adoptionMethod: 'event_drop',
-      businessStatus: 'event_sale',
+      businessStatus: 'available',
       eventName: '历史展会',
       eventTime: '历史展会时间',
       designSheet: { alt: '展会角色设定图' },
@@ -46,18 +46,21 @@ test.beforeEach(async ({ page }) => {
   await seedAdoptions(page)
 })
 
-test('只展示 regular adoption 的完整横版设定图、状态、属性和人民币价格', async ({ page }) => {
+test('默认展示全部领养，并保留常规与展会掉落各自事实', async ({ page }) => {
   await page.goto('/adoptions')
 
   await expect(page.getByRole('heading', { level: 1, name: '角色领养' })).toBeVisible()
   await expect(page.getByTestId('adoption-status')).toContainText('领养')
-  await expect(page.getByRole('status')).toContainText('共 1 个可浏览角色')
+  await expect(page.getByRole('status')).toContainText('共 2 个可浏览角色')
   const card = page.locator(`[data-work-slug="${regularSlug}"]`)
   await expect(card).toContainText('星糖')
   await expect(card).toContainText('可领养')
   await expect(card).toContainText('正侧背三视图')
   await expect(card).toContainText('¥12,800')
-  await expect(page.locator('[data-work-slug="e2e-public-event-adoption"]')).toHaveCount(0)
+  const eventCard = page.locator('[data-work-slug="e2e-public-event-adoption"]')
+  await expect(eventCard).toContainText('展会掉落')
+  await expect(eventCard).toContainText('历史展会')
+  await expect(eventCard).toContainText('历史展会时间')
   await expect(page.locator('[data-work-slug="e2e-public-commission-no-design"]')).toHaveCount(0)
 
   const image = card.locator('img')
@@ -111,12 +114,12 @@ test('只有设定图的领养保留在领养页与统一详情，但不进入�
   await expect(page.getByTestId('work-gallery')).toHaveCount(0)
 })
 
-test('没有已发布 regular adoption 时展示真实空状态', async ({ page }) => {
+test('没有已发布领养时展示真实空状态', async ({ page }) => {
   await seedPublicCatalog(page, [])
   await page.goto('/adoptions')
   await expect(page.getByTestId('adoption-status')).toContainText('领养')
   const empty = page.getByTestId('public-empty-state')
-  await expect(empty).toContainText('当前没有已发布的常规领养')
+  await expect(empty).toContainText('当前没有可领养的角色')
   await expect(empty).toContainText('浏览作品展示')
   await expect(empty).not.toContainText('功能开发中')
 })
@@ -147,8 +150,7 @@ test('三视口图片解码、contain、无横向溢出且 DOM 无私有 Key', a
   ]) {
     await page.setViewportSize({ width, height })
     for (const path of ['/adoptions', `/works/${regularSlug}`]) {
-      await page.goto(path)
-      await page.waitForLoadState('networkidle')
+      await page.goto(path, { waitUntil: 'domcontentloaded' })
       const image = path === '/adoptions'
         ? page.locator(`[data-work-slug="${regularSlug}"] img`)
         : page.getByTestId('public-design-sheet').locator('img')

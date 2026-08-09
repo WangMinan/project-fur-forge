@@ -25,6 +25,8 @@ const CATALOG: SeedWork[] = [
     purpose: 'adoption',
     adoptionMethod: 'event_drop',
     businessStatus: 'available',
+    eventName: '有点小狗夏日展',
+    eventTime: '2026 年 8 月 15 日',
     priceMinorUnits: 1_560_000,
     featureTags: ['纯海绵头', '内置风扇'],
     featured: true,
@@ -72,7 +74,7 @@ async function seedCatalog(page: import('@playwright/test').Page) {
 }
 
 test.describe('T20 作品列表页', () => {
-  test('默认按人工顺序展示已发布作品、结果数与筛选入口', async ({ page }) => {
+  test('默认按发布时间倒序展示已发布作品、结果数与筛选入口', async ({ page }) => {
     await seedCatalog(page)
     await page.goto('/works')
 
@@ -163,7 +165,6 @@ test.describe('T20 作品列表页', () => {
     await page.goto('/works?purpose=bogus&suitType=nope')
     await expect(page.getByRole('status')).toContainText('共 0 件作品')
     await expect(page.getByText('没有符合条件的作品')).toBeVisible()
-    await expect(page.getByText(/当前筛选条件无效/)).toBeVisible()
     await expect(page.getByRole('link', { name: '全部用途' })).toHaveAttribute('aria-current', 'true')
     await expect(page.getByRole('link', { name: '全部装型' })).toHaveAttribute('aria-current', 'true')
   })
@@ -171,14 +172,14 @@ test.describe('T20 作品列表页', () => {
   test('没有任何已发布作品时展示整理中空态', async ({ page }) => {
     await seedPublicCatalog(page, [])
     await page.goto('/works')
-    await expect(page.getByText('作品正在整理中，请稍后再来。')).toBeVisible()
+    await expect(page.getByText('作品正在整理中。')).toBeVisible()
     await expect(page.getByRole('status')).toContainText('共 0 件作品')
   })
 
   test('页面无横向溢出', async ({ page }) => {
     await seedCatalog(page)
     await page.goto('/works')
-    await page.waitForLoadState('networkidle')
+    await expect(card(page, 'e2e-public-lanmei')).toBeVisible()
     const overflow = await page.evaluate(() =>
       document.scrollingElement!.scrollWidth - document.documentElement.clientWidth,
     )
@@ -195,7 +196,6 @@ test.describe('T20 作品列表页', () => {
         ['/works/e2e-public-lanmei', `work-detail-${width}x${height}`],
       ] as const) {
         await page.goto(path)
-        await page.waitForLoadState('networkidle')
         const coreImage = path === '/works'
           ? page.locator('[data-work-slug="e2e-public-lanmei"] img')
           : page.locator('.work-gallery__stage img')
@@ -234,7 +234,7 @@ test.describe('T20 作品列表页', () => {
 })
 
 test.describe('T19 作品详情页', () => {
-  test('按人工顺序前后浏览，领养旧路径永久跳到统一详情', async ({ page, request }) => {
+  test('按发布时间顺序前后浏览，领养旧路径永久跳到统一详情', async ({ page, request }) => {
     await seedCatalog(page)
     await page.goto('/works/e2e-public-zhima')
 
@@ -426,9 +426,10 @@ test.describe('T19 作品详情页', () => {
     }])
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/works/e2e-public-tall')
-    await page.waitForLoadState('networkidle')
 
-    const box = await page.locator('.work-gallery__image').boundingBox()
+    const image = page.locator('.work-gallery__image img')
+    await expect(image).toHaveJSProperty('complete', true)
+    const box = await image.boundingBox()
     expect(box).not.toBeNull()
     // clamp(20rem, 100vh - 15rem, 46rem)：1440×900 下为 900 - 240 = 660px
     expect(box!.height).toBeLessThanOrEqual(661)

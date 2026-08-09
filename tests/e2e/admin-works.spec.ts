@@ -123,7 +123,7 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
   test('创建展示作品并保留排序与精选', async ({ page }) => {
     const slug = `t22-showcase-${Date.now().toString(36)}`
     await fillBasics(page, 'T22 展示', slug)
-    await page.getByLabel('用途').selectOption('showcase')
+    await page.getByLabel('业务类型').selectOption('showcase')
     await page.getByLabel('人工排序').fill('4')
     await page.getByLabel('加入首页精选作品').check()
     await page.getByRole('button', { name: '创建草稿' }).click()
@@ -139,7 +139,7 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
   test('创建常规领养：价格按元输入、按分提交，刷新后往返一致', async ({ page }) => {
     const slug = `t22-adoption-${Date.now().toString(36)}`
     await fillBasics(page, 'T22 领养', slug)
-    await page.getByLabel('用途').selectOption('adoption')
+    await page.getByLabel('业务类型').selectOption('regular_adoption')
     await expect(page.getByTestId('adoption-fields')).toBeVisible()
     await expect(page.getByLabel('领养方式')).toHaveValue('常规领养')
     await page.getByLabel('业务状态').selectOption('available')
@@ -161,7 +161,7 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
     await expect(page.getByLabel(/领养价格/)).toHaveValue('8800.50')
     await expect(page.getByLabel('业务状态')).toHaveValue('available')
     // T25 后端已开放 regular adoption；缺少 T23 设定图时必须明确阻断。
-    await expect(page.getByTestId('publication-panel')).toContainText('常规领养必须保存一张设定图')
+    await expect(page.getByTestId('publication-panel')).toContainText('领养作品必须保存一张设定图')
   })
 
   test('非法价格在客户端阻断并给出关联错误', async ({ page }) => {
@@ -234,10 +234,10 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
     await page.waitForSelector('.editor-card')
     await expect(page.getByLabel(/领养价格/)).toHaveValue('15600')
 
-    await page.getByLabel('用途').selectOption('showcase')
+    await page.getByLabel('业务类型').selectOption('showcase')
     await expect(page.getByTestId('adoption-fields')).toHaveCount(0)
     await expect(page.getByTestId('purpose-note')).toContainText('不会提交')
-    await expect(page.getByText('切换离开领养用途后')).toBeVisible()
+    await expect(page.getByText('切换离开领养后')).toBeVisible()
 
     const request = page.waitForRequest(req =>
       req.url().includes(`/api/admin/v1/works/${work.id}`) && req.method() === 'PUT',
@@ -445,14 +445,14 @@ test.describe('编辑与保存', () => {
     await expect(page.getByText('未更改')).toBeVisible()
   })
 
-  test('历史展会作品确认转换后可保存为常规领养', async ({ page }) => {
-    const characterName = `历史展会转换-${Date.now().toString(36)}`
+  test('展会掉落可直接编辑展会名称和时间并保存', async ({ page }) => {
+    const characterName = `展会掉落编辑-${Date.now().toString(36)}`
     await seedPublicCatalog(page, [{
       slug: `e2e-public-event-${Date.now().toString(36)}`,
       characterName,
       purpose: 'adoption',
       adoptionMethod: 'event_drop',
-      businessStatus: 'event_sale',
+      businessStatus: 'available',
       eventName: '历史展会',
       eventTime: '历史展会时间',
       publicationStatus: 'draft',
@@ -461,10 +461,12 @@ test.describe('编辑与保存', () => {
     await page.goto(`${adminBaseURL}/admin/works`)
     await page.getByRole('link', { name: characterName, exact: true }).click()
 
-    await page.getByRole('button', { name: '转为常规领养…' }).click()
-    await page.getByRole('dialog', { name: '转为常规领养？' })
-      .getByRole('button', { name: '转为常规领养' })
-      .click()
+    await expect(page.getByLabel('业务类型')).toHaveValue('event_drop')
+    await expect(page.getByLabel('领养方式')).toHaveValue('展会掉落')
+    await expect(page.getByLabel('展会名称')).toHaveValue('历史展会')
+    await expect(page.getByLabel('展会时间')).toHaveValue('历史展会时间')
+    await page.getByLabel('展会名称').fill('幻夏祭 2026')
+    await page.getByLabel('展会时间').fill('8 月 15 日至 16 日')
 
     await expect(page.getByText('有未保存更改')).toBeVisible()
     await expect(page.getByRole('button', { name: '保存', exact: true })).toBeEnabled()
@@ -472,9 +474,11 @@ test.describe('编辑与保存', () => {
     await expect(page.getByText('已保存。')).toBeVisible()
 
     await page.reload()
-    await expect(page.getByTestId('historical-adoption')).toHaveCount(0)
-    await expect(page.getByLabel('领养方式')).toHaveValue('常规领养')
-    await expect(page.getByLabel('业务状态')).toHaveValue('preparing')
+    await expect(page.getByLabel('业务类型')).toHaveValue('event_drop')
+    await expect(page.getByLabel('领养方式')).toHaveValue('展会掉落')
+    await expect(page.getByLabel('业务状态')).toHaveValue('available')
+    await expect(page.getByLabel('展会名称')).toHaveValue('幻夏祭 2026')
+    await expect(page.getByLabel('展会时间')).toHaveValue('8 月 15 日至 16 日')
     await expect(page.getByText('未更改')).toBeVisible()
   })
 

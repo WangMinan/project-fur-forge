@@ -65,7 +65,7 @@ test('发布会先自动保存基础信息、设定图和出厂照，再完成�
   await gotoEditor(page, work.id)
 
   const panel = page.getByTestId('publication-panel')
-  await expect(panel).toContainText('常规领养必须保存一张设定图')
+  await expect(panel).toContainText('领养作品必须保存一张设定图')
   await expect(panel.getByRole('button', { name: '发布', exact: true })).toBeDisabled()
 
   await uploadDesignSheetToEditor(page, publishableStudioPng(), 'adoption-design.png')
@@ -128,7 +128,7 @@ test('发布成功：状态翻转、编辑锁定、公开预览媒体就绪', as
   await expect(panel).toContainText('发布成功', { timeout: 60_000 })
   await expect(panel.getByRole('progressbar')).toHaveCount(0)
   await expect(panel).toContainText('已发布')
-  await expect(page.getByText(/作品已发布：基础信息、领养设定图与出厂照为只读/)).toBeVisible()
+  await expect(page.getByText(/作品已发布：基础信息与图片为只读/)).toBeVisible()
   await expect(page.getByLabel(/角色名/)).toBeDisabled()
   await expect(page.getByTestId('public-preview')).toContainText('媒体就绪')
 

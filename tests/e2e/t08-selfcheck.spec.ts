@@ -26,6 +26,8 @@ async function seedPublicPages(page: import('@playwright/test').Page) {
       purpose: 'adoption',
       adoptionMethod: 'event_drop',
       businessStatus: 'available',
+      eventName: '有点小狗夏日展',
+      eventTime: '2026 年 8 月 15 日',
       priceMinorUnits: 1_560_000,
       featured: true,
       sortOrder: 0,
@@ -80,7 +82,9 @@ for (const viewport of VIEWPORTS) {
       if (target.host === 'admin') {
         await page.waitForSelector('.admin-shell, [data-testid="admin-login"]')
       }
-      await page.waitForLoadState('networkidle')
+      else {
+        await expect(page.locator('main#main-content')).toBeVisible()
+      }
 
       const overflow = await page.evaluate(() =>
         document.scrollingElement!.scrollWidth - document.documentElement.clientWidth,
@@ -95,7 +99,6 @@ for (const viewport of VIEWPORTS) {
     const work = await createWorkViaApi(page, { characterName: '溢出验证' })
     await page.goto(`${adminBaseURL}/admin/works/${work.id}`)
     await page.waitForSelector('.editor-card')
-    await page.waitForLoadState('networkidle')
 
     const overflow = await page.evaluate(() =>
       document.scrollingElement!.scrollWidth - document.documentElement.clientWidth,
@@ -129,8 +132,8 @@ function parseRgb(value: string): [number, number, number] {
 test.describe('对比度抽查（AA 4.5:1）', () => {
   test('公开站：正文/次要文字/页脚/筛选文字', async ({ page }) => {
     await seedPublicPages(page)
-    await page.goto('/works')
-    await page.waitForLoadState('networkidle')
+    await page.goto('/works', { waitUntil: 'domcontentloaded' })
+    await expect(page.locator('.work-card').first()).toBeVisible()
 
     const samples = await page.evaluate(() => {
       const pick = (selector: string) => {
@@ -171,7 +174,7 @@ test.describe('对比度抽查（AA 4.5:1）', () => {
   test('管理端：正文/次要文字/徽章文字', async ({ page }) => {
     await loginAsAdmin(page)
     await page.goto(`${adminBaseURL}/admin/works`)
-    await page.waitForSelector('.works-page__header')
+    await page.waitForSelector('.admin-list-page__header')
 
     const samples = await page.evaluate(() => {
       const effectiveBackground = (element: Element) => {
@@ -194,8 +197,8 @@ test.describe('对比度抽查（AA 4.5:1）', () => {
         return { color: styles.color, background: effectiveBackground(element) }
       }
       return {
-        title: pick('.works-page__title'),
-        meta: pick('.works-page__meta'),
+        title: pick('.admin-list-page__title'),
+        meta: pick('.admin-list-page__meta'),
         badgeSuccess: pick('.admin-badge[data-tone=\'success\']'),
         badgeWarning: pick('.admin-badge[data-tone=\'warning\']'),
         badgeInfo: pick('.admin-badge[data-tone=\'info\']'),
@@ -281,12 +284,12 @@ test.describe('减少动态效果', () => {
     await emulateReducedMotion(page)
     await seedPublicPages(page)
     await page.goto('/works')
-    await page.waitForLoadState('networkidle')
 
     const matches = await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)
     expect(matches).toBe(true)
 
-    const image = page.locator('.work-card__image').first()
+    const image = page.locator('.work-card__image img').first()
+    await expect(image).toHaveJSProperty('complete', true)
     await image.hover()
     const transform = await image.evaluate(element => getComputedStyle(element).transform)
     expect(transform === 'none' || transform === 'matrix(1, 0, 0, 1, 0, 0)').toBe(true)
@@ -336,9 +339,9 @@ test.describe('键盘可达性', () => {
   test('详情页图集缩略图可 Tab 到达并响应 Enter', async ({ page }) => {
     await seedPublicPages(page)
     await page.goto(`/works/${DETAIL_SLUG}`)
-    await page.waitForLoadState('networkidle')
 
     const secondThumb = page.getByRole('button', { name: '查看第 2 张，共 2 张' })
+    await expect(secondThumb).toBeVisible()
     await secondThumb.focus()
     await expect(secondThumb).toBeFocused()
     await page.keyboard.press('Enter')
