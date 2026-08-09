@@ -1,55 +1,34 @@
-# T34-F6 · Nginx 双 Host 模板。
-#
-# PUBLIC_HOST / ADMIN_HOST 与证书路径由 docker-compose.yaml 注入。
-# 未知 Host 返回 421；应用只接受保留下来的原始 Host。
-# 正式域名、证书和 HSTS 在部署阶段启用。
+# T52-E6 · /etc/nginx/conf.d/ditedog.conf on root@120.26.51.205.
+# Replace @@PUBLIC_HOST@@ and @@ADMIN_HOST@@ only after T53-F1 confirms both hosts.
 
-upstream app_upstream {
-    server app:3000;
+upstream ditedog_app {
+    server 127.0.0.1:3000;
     keepalive 32;
 }
 
-map $host $fur_forge_is_admin {
-    default       0;
-    ${ADMIN_HOST} 1;
-}
-
-# 未知 Host 不回落到公开站。
+# Unknown/wildcard hosts never fall through to Nitro.
 server {
     listen 80 default_server;
-    listen 443 ssl default_server;
-    http2 on;
+    listen [::]:80 default_server;
     server_name _;
+    return 421;
+}
 
-    ssl_certificate     ${TLS_CERT_FILE};
-    ssl_certificate_key ${TLS_KEY_FILE};
+# The ESA media Host belongs to ESA -> OSS and never reaches Nitro.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name public-media.ditedog.com;
 
     return 421;
 }
 
-# 已知 Host 的 HTTP 请求统一跳转 HTTPS。
 server {
     listen 80;
-    server_name ${PUBLIC_HOST} ${ADMIN_HOST};
-    return 308 https://$host$request_uri;
-}
-
-server {
-    listen 443 ssl;
-    http2 on;
-    server_name ${PUBLIC_HOST} ${ADMIN_HOST};
+    listen [::]:80;
+    server_name @@PUBLIC_HOST@@ @@ADMIN_HOST@@;
 
     server_tokens off;
-
-    ssl_certificate     ${TLS_CERT_FILE};
-    ssl_certificate_key ${TLS_KEY_FILE};
-    ssl_protocols       TLSv1.2 TLSv1.3;
-    ssl_prefer_server_ciphers off;
-    ssl_session_cache   shared:SSL:10m;
-    ssl_session_timeout 1d;
-    ssl_session_tickets off;
-
-    # 与 30 MB 原图直传策略保持余量。
     client_max_body_size 32m;
     client_body_timeout 120s;
 
@@ -62,9 +41,8 @@ server {
     add_header X-Frame-Options DENY always;
     add_header Referrer-Policy strict-origin-when-cross-origin always;
     add_header Cross-Origin-Opener-Policy same-origin always;
-    # HSTS 只在正式域名与可信证书稳定后启用。
 
-    # 旧 /api/health 固定 ok 端点和新探活端点都不对公网暴露。
+    # Health is checked locally; ESA/public clients do not receive it.
     location = /api/health {
         return 404;
     }
@@ -74,18 +52,24 @@ server {
     }
 
     location / {
-        proxy_pass http://app_upstream;
+        proxy_pass http://ditedog_app;
 
         proxy_set_header Host              $host;
         proxy_set_header X-Real-IP         $remote_addr;
         proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-Port  443;
         proxy_set_header X-Forwarded-Host  $host;
 
         proxy_set_header Upgrade    $http_upgrade;
         proxy_set_header Connection $connection_upgrade;
 
-        proxy_no_cache     $fur_forge_is_admin;
-        proxy_cache_bypass $fur_forge_is_admin;
+        proxy_intercept_errors on;
+        error_page 502 503 504 = @backend_unavailable;
+    }
+
+    location @backend_unavailable {
+        default_type text/plain;
+        return 503 "ditedog backend is not running on 127.0.0.1:3000\n";
     }
 }

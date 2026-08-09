@@ -30,6 +30,7 @@ const verificationEnv = {
   ESA_ACCESS_KEY_ID: 'production-verify-esa-access-key-id',
   ESA_ACCESS_KEY_SECRET: 'production-verify-esa-access-key-secret',
   PUBLIC_BASE_URL: baseURL,
+  TRUSTED_PROXY_CIDRS: '172.30.250.1/32,192.0.2.0/24',
 }
 
 function cleanupDatabase() {

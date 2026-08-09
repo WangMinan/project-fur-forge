@@ -1,18 +1,19 @@
 name: project-fur-forge
 
-# T34-F6 · 生产编排模板。
+# T52-E6 · app-only 生产编排。
 #
-# - 只引用 GitHub Actions 已发布的应用镜像，不在服务器端 build；
-# - app 不发布宿主机端口，只由 nginx 通过 backend 网络访问；
-# - backend 为内部网络；egress 单独用于 app 访问阿里云 OSS；
-# - 正式域名、证书和线上演练在部署阶段补齐。
+# - 唯一常驻服务是 Nuxt/Nitro app；
+# - 只使用 GATE-E 冻结的不可变镜像摘要，不在服务器 build；
+# - migrate/preflight/init/backup/restore/recover 通过 `docker compose run`
+#   复用 app 镜像，一次性执行；
+# - 宿主机 systemd Nginx 代理 127.0.0.1:3000，Compose 不运行 Nginx/TLS。
 
 x-app-env: &app-env
   NODE_ENV: production
   APP_ENV: production
   HOST: 0.0.0.0
   PORT: "3000"
-  DATABASE_FILE: /app/data/studio.db
+  DATABASE_FILE: ${DATABASE_FILE:?set absolute DATABASE_FILE in .env}
   PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:?set PUBLIC_BASE_URL in .env}
   ADMIN_BASE_URL: ${ADMIN_BASE_URL:?set ADMIN_BASE_URL in .env}
   MEDIA_BASE_URL: ${MEDIA_BASE_URL:?set MEDIA_BASE_URL in .env}
@@ -32,41 +33,20 @@ x-app-env: &app-env
   POLICE_FILING_STATUS: ${POLICE_FILING_STATUS:?set POLICE_FILING_STATUS in .env}
   POLICE_FILING_NUMBER: ${POLICE_FILING_NUMBER:-}
   POLICE_FILING_URL: ${POLICE_FILING_URL:-}
-  TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-172.30.250.0/24}
-
-x-app-security: &app-security
-  read_only: true
-  tmpfs:
-    - /tmp:size=64m,mode=1777
-  security_opt:
-    - no-new-privileges:true
-  cap_drop:
-    - ALL
+  TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:?set Docker gateway and current ESA proxy CIDRs in .env}
+  PREFLIGHT_EVIDENCE_DIR: /app/backups/production-preflight
 
 services:
-  migrate:
-    image: ${APP_IMAGE:?set APP_IMAGE in .env}:${APP_IMAGE_TAG:-latest}
-    command: ["node", "ops/ops.mjs", "migrate"]
-    environment: *app-env
-    volumes:
-      - app-data:/app/data
-    networks:
-      - backend
-    restart: "no"
-    <<: *app-security
-
   app:
-    image: ${APP_IMAGE:?set APP_IMAGE in .env}:${APP_IMAGE_TAG:-latest}
+    image: ${APP_IMAGE_REF:?set immutable APP_IMAGE_REF in .env}
     environment: *app-env
     volumes:
       - app-data:/app/data
       - app-backups:/app/backups
-    expose:
-      - "3000"
+    ports:
+      - "127.0.0.1:3000:3000"
     networks:
-      - backend
-      # backend 使用 internal:true，不能访问外部网络；单独加入 egress 才能访问 OSS。
-      - egress
+      - app-egress
     healthcheck:
       test:
         [
@@ -79,50 +59,23 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
     restart: unless-stopped
     stop_grace_period: 30s
-    <<: *app-security
-
-  nginx:
-    image: nginx:1.27-alpine
-    depends_on:
-      app:
-        condition: service_healthy
-    environment:
-      PUBLIC_HOST: ${PUBLIC_HOST:?set PUBLIC_HOST in .env}
-      ADMIN_HOST: ${ADMIN_HOST:?set ADMIN_HOST in .env}
-      TLS_CERT_FILE: ${TLS_CERT_FILE:-/etc/nginx/tls/fullchain.pem}
-      TLS_KEY_FILE: ${TLS_KEY_FILE:-/etc/nginx/tls/privkey.pem}
-    volumes:
-      - ./deploy/nginx/app.conf.template:/etc/nginx/templates/app.conf.template:ro
-      - ./deploy/nginx/upgrade-map.conf:/etc/nginx/conf.d/00-upgrade-map.conf:ro
-      - ${TLS_CERT_DIR:-./deploy/nginx/tls}:/etc/nginx/tls:ro
-    ports:
-      - "80:80"
-      - "443:443"
-    networks:
-      - backend
-      - edge
-    restart: unless-stopped
-    stop_grace_period: 15s
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
 
 volumes:
   app-data:
   app-backups:
 
 networks:
-  backend:
+  app-egress:
     driver: bridge
-    internal: true
     ipam:
       config:
-        - subnet: ${BACKEND_SUBNET:-172.30.250.0/24}
-  egress:
-    driver: bridge
-  edge:
-    driver: bridge
+        - subnet: 172.30.250.0/24

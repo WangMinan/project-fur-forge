@@ -826,10 +826,12 @@ async function main() {
     const arguments_ = parseArguments(process.argv.slice(2))
     const runId = arguments_['run-id'] ?? createProductionPreflightRunId(startedAt)
     const prefix = productionPreflightPrefix(runId)
-    evidencePath = resolve(
-      projectRoot,
-      arguments_.evidence ?? `test-results/production-preflight/${runId}.json`,
-    )
+    const evidenceDirectory = nonEmpty(process.env.PREFLIGHT_EVIDENCE_DIR)
+    evidencePath = arguments_.evidence
+      ? resolve(projectRoot, arguments_.evidence)
+      : evidenceDirectory
+        ? resolve(evidenceDirectory, `${runId}.json`)
+        : resolve(projectRoot, `test-results/production-preflight/${runId}.json`)
     evidence.runId = runId
     evidence.mode = arguments_['no-dry-run'] ? 'live' : 'dry-run'
 

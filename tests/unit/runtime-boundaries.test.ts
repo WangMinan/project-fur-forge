@@ -214,6 +214,7 @@ describe('runtime configuration', () => {
       OSS_UPLOAD_BASE_URL:
         'https://test-private-bucket.oss-cn-hangzhou.aliyuncs.com',
       DATABASE_FILE: resolve(productionCwd, 'studio.db'),
+      TRUSTED_PROXY_CIDRS: '172.30.250.1/32,192.0.2.0/24',
     }
 
     expect(() => loadRuntimeConfig({
@@ -247,6 +248,7 @@ describe('runtime configuration', () => {
       ESA_ACCESS_KEY_SECRET: 'test-esa-access-key-secret',
       SESSION_SECRET: 'production-session-secret-at-least-32-characters',
       POLICE_FILING_STATUS: 'unconfigured',
+      TRUSTED_PROXY_CIDRS: '172.30.250.1/32,192.0.2.0/24',
     }
 
     const productionWithoutSmtp = loadRuntimeConfig({
@@ -309,6 +311,7 @@ describe('runtime configuration', () => {
       ESA_ACCESS_KEY_SECRET: 'esa-access-key-secret',
       SESSION_SECRET: 'production-session-secret-at-least-32-characters',
       POLICE_FILING_STATUS: 'unconfigured',
+      TRUSTED_PROXY_CIDRS: '172.30.250.1/32,192.0.2.0/24',
     }
 
     expect(loadRuntimeConfig({ cwd, env: valid })).toMatchObject({
@@ -354,6 +357,20 @@ describe('runtime configuration', () => {
         ESA_ACCESS_KEY_ID: valid.OSS_ACCESS_KEY_ID,
       },
     })).toThrowError(/esaAccessKeyId/)
+    expect(() => loadRuntimeConfig({
+      cwd,
+      env: {
+        ...valid,
+        TRUSTED_PROXY_CIDRS: '172.30.250.1/32,replace-me',
+      },
+    })).toThrowError(/trustedProxyCidrs/)
+    expect(() => loadRuntimeConfig({
+      cwd,
+      env: {
+        ...valid,
+        TRUSTED_PROXY_CIDRS: '192.0.2.0/24,198.51.100.0/24',
+      },
+    })).toThrowError(/trustedProxyCidrs/)
   })
 
   it('requires distinct private and public buckets and rejects OSS_BUCKET', () => {
@@ -679,6 +696,7 @@ describe('host boundary', () => {
         ESA_ACCESS_KEY_SECRET: 'test-esa-access-key-secret',
         SESSION_SECRET: 'test-only-session-secret-with-32-chars',
         POLICE_FILING_STATUS: 'not_applicable',
+        TRUSTED_PROXY_CIDRS: '172.30.250.1/32,192.0.2.0/24',
       },
     })
     expect(decideHostAccess(

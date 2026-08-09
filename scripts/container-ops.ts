@@ -187,6 +187,7 @@ async function run() {
       const { getDatabase } = await import('../server/utils/database')
       const { getMediaStorage } = await import('../server/utils/media-storage')
       await import('../server/utils/runner/home-management')
+      await import('../server/utils/runner/return-photo-publication')
       await import('../server/utils/runner/site-display-reconcile')
       await import('../server/utils/runner/watermark-branding')
       await import('../server/utils/runner/work-publication')

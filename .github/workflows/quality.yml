@@ -76,30 +76,34 @@ jobs:
       - name: Secret and content scan
         run: node scripts/ci-secret-scan.mjs
 
+      - name: Verify ESA and observability baselines
+        run: |
+          pnpm verify:esa-cache
+          pnpm verify:observability
+
       - name: Compose static config check
         env:
-          APP_IMAGE: example/project-fur-forge
-          APP_IMAGE_TAG: ci
-          PUBLIC_HOST: public.example.test
-          ADMIN_HOST: admin.example.test
-          TLS_CERT_DIR: ./deploy/nginx/tls
-          TLS_CERT_FILE: /etc/nginx/tls/fullchain.pem
-          TLS_KEY_FILE: /etc/nginx/tls/privkey.pem
+          APP_IMAGE_REF: example/project-fur-forge@sha256:1111111111111111111111111111111111111111111111111111111111111111
+          DATABASE_FILE: /app/data/studio.db
           PUBLIC_BASE_URL: https://public.example.test
           ADMIN_BASE_URL: https://admin.example.test
-          MEDIA_BASE_URL: https://media.example.test
-          OSS_UPLOAD_BASE_URL: https://private.example.test
+          MEDIA_BASE_URL: https://public-media.ditedog.com
+          OSS_UPLOAD_BASE_URL: https://ci-private.oss-cn-hangzhou.aliyuncs.com
           OSS_REGION: oss-cn-hangzhou
-          OSS_ENDPOINT: https://oss-cn-hangzhou.aliyuncs.com
+          OSS_ENDPOINT: https://oss-cn-hangzhou-internal.aliyuncs.com
           OSS_PRIVATE_BUCKET: ci-private
           OSS_PUBLIC_BUCKET: ci-public
-          OSS_ACCESS_KEY_ID: ci-placeholder
-          OSS_ACCESS_KEY_SECRET: ci-placeholder
+          OSS_ACCESS_KEY_ID: ci-oss-placeholder
+          OSS_ACCESS_KEY_SECRET: ci-oss-secret-placeholder
+          ESA_SITE_ID: "1234567890"
+          ESA_ACCESS_KEY_ID: ci-esa-placeholder
+          ESA_ACCESS_KEY_SECRET: ci-esa-secret-placeholder
           SESSION_SECRET: ci-placeholder-session-secret-at-least-32-chars
           POLICE_FILING_STATUS: unconfigured
-          BACKEND_SUBNET: 172.30.250.0/24
-          TRUSTED_PROXY_CIDRS: 172.30.250.0/24
-        run: docker compose -f docker-compose.yaml config --quiet
+          TRUSTED_PROXY_CIDRS: 172.30.250.1/32,192.0.2.0/24
+        run: |
+          docker compose -f docker-compose.yaml config --quiet
+          test "$(docker compose -f docker-compose.yaml config --services)" = "app"
 
       - name: Upload check artifacts
         if: always() && !cancelled()
@@ -133,9 +137,210 @@ jobs:
           platforms: linux/amd64
           pull: true
           push: false
-          load: false
+          load: true
+          tags: project-fur-forge:quality
           cache-from: type=gha,scope=quality-image
           cache-to: type=gha,mode=max,scope=quality-image
+
+      - name: Exercise app-only Compose and one-shot operations
+        env:
+          APP_IMAGE_REF: project-fur-forge:quality
+          DATABASE_FILE: /app/data/studio.db
+          PUBLIC_BASE_URL: https://public.example.test
+          ADMIN_BASE_URL: https://admin.example.test
+          MEDIA_BASE_URL: https://public-media.ditedog.com
+          OSS_UPLOAD_BASE_URL: https://ci-private.oss-cn-hangzhou.aliyuncs.com
+          OSS_REGION: oss-cn-hangzhou
+          OSS_ENDPOINT: https://oss-cn-hangzhou-internal.aliyuncs.com
+          OSS_PRIVATE_BUCKET: ci-private
+          OSS_PUBLIC_BUCKET: ci-public
+          OSS_ACCESS_KEY_ID: ci-oss-placeholder
+          OSS_ACCESS_KEY_SECRET: ci-oss-secret-placeholder
+          ESA_SITE_ID: "1234567890"
+          ESA_ACCESS_KEY_ID: ci-esa-placeholder
+          ESA_ACCESS_KEY_SECRET: ci-esa-secret-placeholder
+          SESSION_SECRET: ci-placeholder-session-secret-at-least-32-chars
+          POLICE_FILING_STATUS: unconfigured
+          TRUSTED_PROXY_CIDRS: 172.30.250.1/32,192.0.2.0/24
+        run: |
+          set -euo pipefail
+          docker compose run --rm --no-deps app node ops/ops.mjs migrate
+          docker compose run --rm --no-deps \
+            -e ADMIN_USERNAME=ci-admin \
+            -e ADMIN_PASSWORD=ci-only-password-at-least-12 \
+            app node ops/ops.mjs init-admin
+          docker compose run --rm --no-deps app node ops/ops.mjs preflight
+          docker compose up --detach --no-build --no-deps app
+
+          app_id="$(docker compose ps -q app)"
+          for _ in $(seq 1 60); do
+            status="$(docker inspect --format '{{.State.Health.Status}}' "${app_id}")"
+            [[ "${status}" == "healthy" ]] && break
+            [[ "${status}" == "unhealthy" ]] && exit 1
+            sleep 2
+          done
+          test "$(docker inspect --format '{{.State.Health.Status}}' "${app_id}")" = "healthy"
+          curl --fail --silent --show-error http://127.0.0.1:3000/api/health/ready >/dev/null
+          ss -lnt | grep -Eq '127\.0\.0\.1:3000[[:space:]]'
+          ! ss -lnt | grep -Eq '(0\.0\.0\.0|\[::\]):3000[[:space:]]'
+
+          docker compose run --rm --no-deps app node ops/ops.mjs backup \
+            --output /app/backups/ci-before-restore.db
+          docker compose run --rm --no-deps app node ops/ops.mjs restore-verify \
+            --backup /app/backups/ci-before-restore.db --output /tmp/verify.db
+          docker compose run --rm --no-deps app node ops/ops.mjs recover-operations
+          docker compose restart app
+          restarted_id="$(docker compose ps -q app)"
+          for _ in $(seq 1 60); do
+            status="$(docker inspect --format '{{.State.Health.Status}}' "${restarted_id}")"
+            [[ "${status}" == "healthy" ]] && break
+            [[ "${status}" == "unhealthy" ]] && exit 1
+            sleep 2
+          done
+          test "$(docker inspect --format '{{.State.Health.Status}}' "${restarted_id}")" = "healthy"
+
+          docker compose stop app
+          docker compose run --rm --no-deps app node ops/ops.mjs restore \
+            --backup /app/backups/ci-before-restore.db --output /app/data/ci-restored.db
+          DATABASE_FILE=/app/data/ci-restored.db docker compose up \
+            --detach --no-build --no-deps --force-recreate app
+          restored_id="$(DATABASE_FILE=/app/data/ci-restored.db docker compose ps -q app)"
+          for _ in $(seq 1 60); do
+            status="$(docker inspect --format '{{.State.Health.Status}}' "${restored_id}")"
+            [[ "${status}" == "healthy" ]] && break
+            [[ "${status}" == "unhealthy" ]] && exit 1
+            sleep 2
+          done
+          test "$(docker inspect --format '{{.State.Health.Status}}' "${restored_id}")" = "healthy"
+
+          DATABASE_FILE=/app/data/studio.db docker compose up \
+            --detach --no-build --no-deps --force-recreate app
+          rollback_id="$(DATABASE_FILE=/app/data/studio.db docker compose ps -q app)"
+          for _ in $(seq 1 60); do
+            status="$(docker inspect --format '{{.State.Health.Status}}' "${rollback_id}")"
+            [[ "${status}" == "healthy" ]] && break
+            [[ "${status}" == "unhealthy" ]] && exit 1
+            sleep 2
+          done
+          test "$(docker inspect --format '{{.State.Health.Status}}' "${rollback_id}")" = "healthy"
+
+          docker tag project-fur-forge:quality project-fur-forge:rollback-baseline
+          rollback_fixture="${RUNNER_TEMP}/fur-forge-image-rollback"
+          mkdir -p "${rollback_fixture}"
+          cat >"${rollback_fixture}/Dockerfile" <<'EOF'
+          FROM project-fur-forge:rollback-baseline
+          LABEL org.opencontainers.image.description="controlled rollback candidate"
+          EOF
+          docker build --tag project-fur-forge:rollback-candidate "${rollback_fixture}"
+
+          APP_IMAGE_REF=project-fur-forge:rollback-candidate docker compose up \
+            --detach --no-build --no-deps --force-recreate app
+          candidate_id="$(APP_IMAGE_REF=project-fur-forge:rollback-candidate \
+            docker compose ps -q app)"
+          candidate_image="$(docker inspect --format '{{.Image}}' "${candidate_id}")"
+          test "${candidate_image}" = \
+            "$(docker image inspect --format '{{.Id}}' project-fur-forge:rollback-candidate)"
+
+          APP_IMAGE_REF=project-fur-forge:rollback-baseline docker compose up \
+            --detach --no-build --no-deps --force-recreate app
+          old_image_id="$(APP_IMAGE_REF=project-fur-forge:rollback-baseline \
+            docker compose ps -q app)"
+          for _ in $(seq 1 60); do
+            status="$(docker inspect --format '{{.State.Health.Status}}' "${old_image_id}")"
+            [[ "${status}" == "healthy" ]] && break
+            [[ "${status}" == "unhealthy" ]] && exit 1
+            sleep 2
+          done
+          old_image="$(docker inspect --format '{{.Image}}' "${old_image_id}")"
+          test "${old_image}" = \
+            "$(docker image inspect --format '{{.Id}}' project-fur-forge:rollback-baseline)"
+          test "${old_image}" != "${candidate_image}"
+
+      - name: Validate Nginx 1.30.4 HTTP-only config and reload
+        run: |
+          set -euo pipefail
+          nginx_test="${RUNNER_TEMP}/fur-forge-nginx"
+          mkdir -p "${nginx_test}/conf.d"
+          sed \
+            -e 's/@@PUBLIC_HOST@@/public.example.test/g' \
+            -e 's/@@ADMIN_HOST@@/admin.example.test/g' \
+            deploy/nginx/app.conf.template >"${nginx_test}/conf.d/ditedog.conf"
+          cp deploy/nginx/00-connection-map.conf \
+            "${nginx_test}/conf.d/00-connection-map.conf"
+          cat >"${nginx_test}/nginx.conf" <<'EOF'
+          events {}
+          http {
+              include /etc/nginx/mime.types;
+              include /etc/nginx/conf.d/*.conf;
+          }
+          EOF
+          docker run --detach --rm --name fur-forge-nginx-test \
+            --network host \
+            --volume "${nginx_test}/nginx.conf:/etc/nginx/nginx.conf:ro" \
+            --volume "${nginx_test}/conf.d:/etc/nginx/conf.d:ro" \
+            nginx:1.30.4
+          docker exec fur-forge-nginx-test nginx -t
+          docker exec fur-forge-nginx-test nginx -s reload
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            --header 'Host: unknown.example.test' http://127.0.0.1/)" = "421"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            --header 'Host: public-media.ditedog.com' http://127.0.0.1/)" = "421"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            --header 'Host: public.example.test' http://127.0.0.1/)" = "200"
+
+          auth_headers="${nginx_test}/auth-headers.txt"
+          auth_body="${nginx_test}/auth-body.json"
+          test "$(curl --silent --show-error --output "${auth_body}" \
+            --dump-header "${auth_headers}" --write-out '%{http_code}' \
+            --header 'Host: admin.example.test' \
+            --header 'Origin: https://admin.example.test' \
+            --header 'Content-Type: application/json' \
+            --data '{"username":"ci-admin","password":"ci-only-password-at-least-12"}' \
+            http://127.0.0.1/api/auth/login)" = "200"
+          grep -Eiq '^set-cookie: __Host-fur-forge-session=.*;.*Secure' "${auth_headers}"
+          session_cookie="$(sed -nE \
+            's/^set-cookie: ([^;]+).*/\1/ip' "${auth_headers}" | tr -d '\r')"
+          csrf_token="$(jq -er '.data.csrfToken' "${auth_body}")"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            --header 'Host: admin.example.test' \
+            --header "Cookie: ${session_cookie}" \
+            http://127.0.0.1/api/auth/session)" = "200"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            --request POST --header 'Host: admin.example.test' \
+            --header 'Origin: https://admin.example.test' \
+            --header "Cookie: ${session_cookie}" \
+            http://127.0.0.1/api/auth/logout)" = "403"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            --request POST --header 'Host: admin.example.test' \
+            --header 'Origin: https://admin.example.test' \
+            --header "Cookie: ${session_cookie}" \
+            --header "x-csrf-token: ${csrf_token}" \
+            http://127.0.0.1/api/auth/logout)" = "200"
+
+      - name: Clean deployment smoke resources
+        if: always()
+        env:
+          APP_IMAGE_REF: project-fur-forge:quality
+          DATABASE_FILE: /app/data/studio.db
+          PUBLIC_BASE_URL: https://public.example.test
+          ADMIN_BASE_URL: https://admin.example.test
+          MEDIA_BASE_URL: https://public-media.ditedog.com
+          OSS_UPLOAD_BASE_URL: https://ci-private.oss-cn-hangzhou.aliyuncs.com
+          OSS_REGION: oss-cn-hangzhou
+          OSS_ENDPOINT: https://oss-cn-hangzhou-internal.aliyuncs.com
+          OSS_PRIVATE_BUCKET: ci-private
+          OSS_PUBLIC_BUCKET: ci-public
+          OSS_ACCESS_KEY_ID: ci-oss-placeholder
+          OSS_ACCESS_KEY_SECRET: ci-oss-secret-placeholder
+          ESA_SITE_ID: "1234567890"
+          ESA_ACCESS_KEY_ID: ci-esa-placeholder
+          ESA_ACCESS_KEY_SECRET: ci-esa-secret-placeholder
+          SESSION_SECRET: ci-placeholder-session-secret-at-least-32-chars
+          POLICE_FILING_STATUS: unconfigured
+          TRUSTED_PROXY_CIDRS: 172.30.250.1/32,192.0.2.0/24
+        run: |
+          docker rm --force fur-forge-nginx-test 2>/dev/null || true
+          docker compose down --volumes --remove-orphans
 
   e2e:
     name: e2e
