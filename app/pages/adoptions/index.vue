@@ -11,13 +11,17 @@ useSeoMeta({
 })
 
 const route = useRoute()
+const requestedPage = computed(() => publicPageFromQuery(route.query.page))
 
 /** 筛选参数原样透传（含非法值），由服务端判定 filter.valid。 */
 const filterQuery = computed(() => {
   const raw = Array.isArray(route.query.method)
     ? route.query.method[0]
     : route.query.method
-  return typeof raw === 'string' && raw !== '' ? { method: raw } : {}
+  return {
+    ...(typeof raw === 'string' && raw !== '' ? { method: raw } : {}),
+    page: requestedPage.value,
+  }
 })
 
 const { data: list, error: listError } = await useFetch('/api/public/v1/adoptions', {
@@ -38,6 +42,9 @@ if (listError.value || siteError.value) {
 }
 
 const items = computed(() => list.value?.items ?? [])
+const resultCount = computed(() => list.value?.resultCount ?? 0)
+const page = computed(() => list.value?.page ?? requestedPage.value)
+const pageCount = computed(() => list.value?.pageCount ?? 0)
 const status = computed(() => site.value?.statuses.adoption ?? null)
 const filter = computed(
   () => list.value?.filter ?? { method: 'all' as const, valid: true },
@@ -66,6 +73,18 @@ const emptyText = computed(() => {
   }
   return { description: '', title: '当前没有可领养的角色' }
 })
+
+const isOutOfRange = computed(() => (
+  items.value.length === 0
+  && resultCount.value > 0
+  && page.value > pageCount.value
+))
+
+function hrefFor(target: number) {
+  return publicPageHref('/adoptions', {
+    method: filter.value.method === 'all' ? null : filter.value.method,
+  }, target)
+}
 </script>
 
 <template>
@@ -94,13 +113,26 @@ const emptyText = computed(() => {
     </div>
 
     <div v-if="items.length > 0" class="adoptions-page__content">
-      <p class="adoptions-page__count" role="status">共 {{ items.length }} 个可浏览角色</p>
       <ul class="adoptions-page__grid" role="list">
         <li v-for="adoption in items" :key="adoption.work.id">
           <AdoptionCard :adoption="adoption" />
         </li>
       </ul>
+      <PublicPagination
+        :page="page"
+        :page-count="pageCount"
+        :href-for="hrefFor"
+        label="角色领养分页"
+      />
     </div>
+
+    <PublicEmptyState
+      v-else-if="isOutOfRange"
+      title="这一页没有可领养角色"
+      description="可以回到当前筛选的第一页继续浏览。"
+    >
+      <NuxtLink :to="hrefFor(1)">回到第一页</NuxtLink>
+    </PublicEmptyState>
 
     <PublicEmptyState
       v-else
@@ -133,12 +165,6 @@ const emptyText = computed(() => {
   padding: var(--space-4) var(--space-5);
   background: var(--public-bg-secondary);
   border-radius: var(--radius-md);
-}
-
-.adoptions-page__count {
-  margin-bottom: var(--space-5);
-  color: var(--public-text-tertiary);
-  font-size: var(--font-size-sm);
 }
 
 .adoptions-page__filters-wrap {

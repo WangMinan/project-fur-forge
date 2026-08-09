@@ -24,13 +24,7 @@ const route = useRoute()
 // 因此 /returns 的 canonical 不带 page 查询参数。
 
 /** 非法页码收敛为第 1 页，不抛 500，也不显示内部信息。 */
-const requestedPage = computed(() => {
-  const raw = Array.isArray(route.query.page)
-    ? route.query.page[0]
-    : route.query.page
-  const parsed = Number(raw)
-  return Number.isInteger(parsed) && parsed >= 1 ? parsed : 1
-})
+const requestedPage = computed(() => publicPageFromQuery(route.query.page))
 
 const { data: wall, error: wallError } = await useFetch(
   '/api/public/v1/returns',
@@ -47,7 +41,7 @@ const page = computed(() => wall.value?.page ?? requestedPage.value)
 const pageCount = computed(() => wall.value?.pageCount ?? 0)
 
 function hrefFor(target: number) {
-  return target <= 1 ? '/returns' : `/returns?page=${target}`
+  return publicPageHref('/returns', {}, target)
 }
 </script>
 

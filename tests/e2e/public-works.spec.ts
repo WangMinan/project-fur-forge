@@ -81,6 +81,10 @@ test.describe('T20 作品列表页', () => {
     await expect(page).toHaveTitle(/作品展示 · 有点小狗工作室/)
     await expect(page.getByRole('heading', { level: 1, name: '作品展示' })).toBeVisible()
     await expect(page.getByRole('status')).toContainText('共 4 件作品')
+    const pagination = page.getByRole('navigation', { name: '作品展示分页' })
+    await expect(pagination).toBeVisible()
+    await expect(pagination.getByLabel('第 1 页，当前页')).toBeVisible()
+    await expect(pagination.locator('[aria-disabled="true"]')).toHaveCount(2)
 
     await expect(page.getByRole('link', { name: '全部用途' })).toHaveAttribute('aria-current', 'true')
     await expect(page.getByRole('link', { name: '全部装型' })).toHaveAttribute('aria-current', 'true')
@@ -203,6 +207,66 @@ test.describe('T20 作品列表页', () => {
       document.scrollingElement!.scrollWidth - document.documentElement.clientWidth,
     )
     expect(overflow).toBeLessThanOrEqual(1)
+  })
+
+  test('固定 12 件分页保留筛选，支持键盘、三视口、非法与越界页码', async ({ page, request }) => {
+    test.setTimeout(120_000)
+    const pagedWorks: SeedWork[] = Array.from({ length: 13 }, (_, index) => ({
+      slug: `e2e-public-pagination-${index + 1}`,
+      characterName: `分页作品 ${index + 1}`,
+      purpose: 'commission',
+      suitType: index % 2 === 0 ? 'full' : 'partial',
+      photos: [{ alt: `分页作品 ${index + 1} 出厂照` }],
+    }))
+    await seedPublicCatalog(page, pagedWorks)
+
+    const api = await request.get('/api/public/v1/works?purpose=commission&page=2')
+    expect(api.status()).toBe(200)
+    expect((await api.json()).data).toMatchObject({
+      page: 2,
+      pageCount: 2,
+      pageSize: 12,
+      resultCount: 13,
+    })
+
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 768, height: 1024 },
+      { width: 1440, height: 900 },
+    ]) {
+      await page.setViewportSize(viewport)
+      await page.goto('/works?purpose=commission')
+      const pagination = page.getByRole('navigation', { name: '作品展示分页' })
+      await expect(pagination).toBeVisible()
+      await expect(page.locator('[data-work-slug]')).toHaveCount(12)
+      await expect(pagination.getByRole('link', { name: '下一页' }))
+        .toHaveAttribute('href', '/works?purpose=commission&page=2')
+      await pagination.getByRole('link', { name: '下一页' }).focus()
+      await expect(pagination.getByRole('link', { name: '下一页' })).toBeFocused()
+      expect(await page.evaluate(() => (
+        document.documentElement.scrollWidth - document.documentElement.clientWidth
+      ))).toBeLessThanOrEqual(1)
+    }
+
+    await page.getByRole('navigation', { name: '作品展示分页' })
+      .getByRole('link', { name: '下一页' }).click()
+    await expect(page).toHaveURL(/purpose=commission&page=2$/u)
+    await expect(page.locator('[data-work-slug]')).toHaveCount(1)
+    await expect(page.getByRole('navigation', { name: '作品展示分页' })
+      .getByRole('link', { name: '上一页' }))
+      .toHaveAttribute('href', '/works?purpose=commission')
+
+    await page.goto('/works?purpose=commission&page=bad')
+    await expect(page.locator('[data-work-slug]')).toHaveCount(12)
+    const currentPage = page.getByRole('navigation', { name: '作品展示分页' })
+      .locator('[aria-current="page"]')
+    await expect(currentPage).toHaveCount(1)
+    await expect(currentPage).toContainText('1')
+
+    await page.goto('/works?purpose=commission&page=99')
+    await expect(page.getByText('这一页没有作品')).toBeVisible()
+    await expect(page.getByRole('link', { name: '回到第一页' }))
+      .toHaveAttribute('href', '/works?purpose=commission')
   })
 
   test('三视口图片真实解码、无横向溢出并留存列表与详情证据', async ({ page }) => {

@@ -26,7 +26,10 @@ function firstQueryValue(value: unknown): string | undefined {
   return undefined
 }
 
+const requestedPage = computed(() => publicPageFromQuery(route.query.page))
+
 const filterQuery = computed(() => ({
+  page: requestedPage.value,
   purpose: firstQueryValue(route.query.purpose),
   suitType: firstQueryValue(route.query.suitType),
 }))
@@ -45,22 +48,34 @@ if (listError.value) {
 const items = computed(() => list.value?.items ?? [])
 const filter = computed(() => list.value?.filter ?? { purpose: null, suitType: null, valid: true as const })
 const resultCount = computed(() => list.value?.resultCount ?? 0)
+const page = computed(() => list.value?.page ?? requestedPage.value)
+const pageCount = computed(() => list.value?.pageCount ?? 0)
 
 const hasActiveFilter = computed(
   () => filter.value.purpose !== null || filter.value.suitType !== null,
 )
 
 /**
- * 空态只分两种：一件作品都还没有，或这套筛选下没有作品。
- * 非法参数对访客与「无匹配」是同一件事，不单独措辞。
+ * 空态区分尚无作品、筛选无匹配与越界页码。
+ * 非法筛选对访客与「无匹配」是同一件事，不单独措辞。
  */
-type EmptyKind = 'no-works' | 'no-match'
+type EmptyKind = 'no-works' | 'no-match' | 'out-of-range'
 const emptyKind = computed<EmptyKind | null>(() => {
   if (items.value.length > 0) {
     return null
   }
+  if (filter.value.valid && resultCount.value > 0 && page.value > pageCount.value) {
+    return 'out-of-range'
+  }
   return hasActiveFilter.value || !filter.value.valid ? 'no-match' : 'no-works'
 })
+
+function hrefFor(target: number) {
+  return publicPageHref('/works', {
+    purpose: filter.value.purpose,
+    suitType: filter.value.suitType,
+  }, target)
+}
 </script>
 
 <template>
@@ -73,14 +88,29 @@ const emptyKind = computed<EmptyKind | null>(() => {
         :result-count="resultCount"
       />
 
-      <ul v-if="items.length > 0" class="works-grid">
-        <li v-for="work in items" :key="work.work.id">
-          <WorkCard
-            :work="work"
-            sizes="(min-width: 1024px) 30vw, (min-width: 768px) 45vw, 100vw"
-          />
-        </li>
-      </ul>
+      <template v-if="items.length > 0">
+        <ul class="works-grid">
+          <li v-for="work in items" :key="work.work.id">
+            <WorkCard
+              :work="work"
+              sizes="(min-width: 1024px) 30vw, (min-width: 768px) 45vw, 100vw"
+            />
+          </li>
+        </ul>
+        <PublicPagination
+          :page="page"
+          :page-count="pageCount"
+          :href-for="hrefFor"
+          label="作品展示分页"
+        />
+      </template>
+
+      <div v-else-if="emptyKind === 'out-of-range'" class="works-empty">
+        <p class="works-empty__title">这一页没有作品</p>
+        <NuxtLink :to="hrefFor(1)" class="works-empty__reset">
+          回到第一页
+        </NuxtLink>
+      </div>
 
       <div v-else-if="emptyKind === 'no-works'" class="works-empty">
         <p class="works-empty__title">作品正在整理中。</p>

@@ -10,6 +10,7 @@ export default defineEventHandler((event) => {
     return publicAdoptionListResponseSchema.parse({
       data: getPublicSiteRepository().listAdoptions({
         method: getQuery(event).method,
+        page: getQuery(event).page,
       }),
     })
   }

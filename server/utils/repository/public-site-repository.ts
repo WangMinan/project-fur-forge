@@ -4,6 +4,9 @@ import {
   publicHomeDtoSchema,
 } from '../../../shared/schemas/home'
 import {
+  PUBLIC_ADOPTIONS_PAGE_SIZE,
+  PUBLIC_WORKS_PAGE_SIZE,
+  publicCatalogPageQuerySchema,
   publicAdoptionListDtoSchema,
   publicAdoptionListItemDtoSchema,
   publicAdoptionListQuerySchema,
@@ -48,12 +51,14 @@ import { getPublicSiteContent } from '../service/site-content'
 import { toPublicWorkDto } from '../recipe/work-mapper'
 
 export interface PublicWorksQuery {
+  page?: unknown
   purpose?: unknown
   suitType?: unknown
 }
 
 export interface PublicAdoptionsQuery {
   method?: unknown
+  page?: unknown
 }
 
 export interface PublicSiteRepository {
@@ -475,6 +480,25 @@ function adoptionItems(entries: readonly SnapshotEntry[]) {
   ))
 }
 
+function catalogPage(value: unknown) {
+  const raw = Array.isArray(value) ? value[0] : value
+  const parsed = publicCatalogPageQuerySchema.safeParse(
+    raw === undefined || raw === '' ? {} : { page: Number(raw) },
+  )
+  return parsed.success ? parsed.data.page ?? 1 : 1
+}
+
+function paginateCatalog<T>(items: readonly T[], page: number, pageSize: number) {
+  const resultCount = items.length
+  return {
+    items: items.slice((page - 1) * pageSize, page * pageSize),
+    page,
+    pageCount: Math.ceil(resultCount / pageSize),
+    pageSize,
+    resultCount,
+  }
+}
+
 /**
  * 领养列表 DTO：应用筛选并给出各筛选下的真实数量。
  * 非法筛选参数不抛 500，收敛为“全部”并标记 valid=false。
@@ -483,15 +507,15 @@ function adoptionListDto(
   items: readonly PublicAdoptionListItemDto[],
   query: PublicAdoptionsQuery,
 ) {
-  const parsed = publicAdoptionListQuerySchema.safeParse(query)
+  const parsed = publicAdoptionListQuerySchema.safeParse({ method: query.method })
   const method = parsed.success ? parsed.data.method ?? 'all' : 'all'
+  const page = catalogPage(query.page)
   const matches = (item: PublicAdoptionListItemDto) => (
     method === 'all' || item.work.adoptionMethod === method
   )
   const filtered = items.filter(matches)
   return publicAdoptionListDtoSchema.parse({
-    items: filtered,
-    resultCount: filtered.length,
+    ...paginateCatalog(filtered, page, PUBLIC_ADOPTIONS_PAGE_SIZE),
     filter: { valid: parsed.success, method },
     counts: {
       all: items.length,
@@ -581,11 +605,18 @@ export function createSqlitePublicSiteRepository(
     },
 
     listWorks(query = {}) {
-      const parsed = publicWorkListQuerySchema.safeParse(query)
+      const page = catalogPage(query.page)
+      const parsed = publicWorkListQuerySchema.safeParse({
+        purpose: query.purpose,
+        suitType: query.suitType,
+      })
       if (!parsed.success) {
         return publicWorkListDtoSchema.parse({
           items: [],
           resultCount: 0,
+          page,
+          pageCount: 0,
+          pageSize: PUBLIC_WORKS_PAGE_SIZE,
           filter: { valid: false, purpose: null, suitType: null },
         })
       }
@@ -597,8 +628,7 @@ export function createSqlitePublicSiteRepository(
         ))
         .map(entry => entry.summary)
       return publicWorkListDtoSchema.parse({
-        items,
-        resultCount: items.length,
+        ...paginateCatalog(items, page, PUBLIC_WORKS_PAGE_SIZE),
         filter: {
           valid: true,
           purpose: parsed.data.purpose ?? null,
@@ -673,7 +703,11 @@ export function createFakePublicSiteRepository(
       return adoptionListDto(items, query)
     },
     listWorks(query = {}) {
-      const parsed = publicWorkListQuerySchema.safeParse(query)
+      const page = catalogPage(query.page)
+      const parsed = publicWorkListQuerySchema.safeParse({
+        purpose: query.purpose,
+        suitType: query.suitType,
+      })
       const filtered = parsed.success
         ? details.filter(detail => (
             detail.media.studioPhotos.length > 0
@@ -682,8 +716,11 @@ export function createFakePublicSiteRepository(
           ))
         : []
       return publicWorkListDtoSchema.parse({
-        items: filtered.map(summaryFor),
-        resultCount: filtered.length,
+        ...paginateCatalog(
+          filtered.map(summaryFor),
+          page,
+          PUBLIC_WORKS_PAGE_SIZE,
+        ),
         filter: parsed.success
           ? {
               valid: true,

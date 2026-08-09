@@ -71,9 +71,20 @@ export const publicWorkFilterStateSchema = z.object({
   suitType: suitTypeSchema.nullable(),
 }).strict()
 
+/** 公开图片列表固定页长；访客端不提供每页数量选择。 */
+export const PUBLIC_WORKS_PAGE_SIZE = 12
+export const PUBLIC_ADOPTIONS_PAGE_SIZE = 8
+
+export const publicCatalogPageQuerySchema = z.object({
+  page: z.number().int().min(1).max(10_000).optional(),
+}).strict()
+
 export const publicWorkListDtoSchema = z.object({
   items: z.array(publicWorkSummaryDtoSchema),
   resultCount: z.number().int().nonnegative(),
+  page: z.number().int().min(1),
+  pageSize: z.literal(PUBLIC_WORKS_PAGE_SIZE),
+  pageCount: z.number().int().nonnegative(),
   filter: publicWorkFilterStateSchema,
 }).strict()
 
@@ -107,6 +118,9 @@ export const publicAdoptionListQuerySchema = z.object({
 export const publicAdoptionListDtoSchema = z.object({
   items: z.array(publicAdoptionListItemDtoSchema),
   resultCount: z.number().int().nonnegative(),
+  page: z.number().int().min(1),
+  pageSize: z.literal(PUBLIC_ADOPTIONS_PAGE_SIZE),
+  pageCount: z.number().int().nonnegative(),
   /** 当前筛选状态；非法值收敛为 all 并标记 valid=false。 */
   filter: z.object({
     valid: z.boolean(),
