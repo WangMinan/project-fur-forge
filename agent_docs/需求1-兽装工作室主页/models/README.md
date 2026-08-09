@@ -161,7 +161,7 @@ session_hmac    fixed-length digest
 
 前向迁移为 `0025_t46_analytics.sql`。集成测试核对列与索引，并用实际查询计划确认 30 天窗口和排行查询使用时间/组合索引；该模型不改变现有业务表或媒体状态机。
 
-## 6. T52-E3/E4 生产媒体投影（E3 已落地，E4 待落地）
+## 6. T52-E3/E4 生产媒体投影与撤销（已落地）
 
 ### URL 组装
 
@@ -174,14 +174,14 @@ session_hmac    fixed-length digest
 在现有 publication/cleanup operation 中增加或明确保存：
 
 ```text
-edge_purge_urls       exact ESA file URLs / manifest
+edge_purge_urls_json  exact ESA file URL manifest
 edge_purge_task_id    nullable
-edge_purge_status     pending | purging | complete | failed
+edge_purge_status     NOT_REQUIRED | PENDING | PURGING | COMPLETE | FAILED
 edge_purge_reason     nullable stable code
 edge_purge_checked_at nullable
 ```
 
-具体字段可按现有 operation 表分布实现，但必须保证：事务提交后不丢 manifest、任务可重试/重启恢复、刷新完成与业务下架分别表达。
+前向迁移为 `0026_t52_e4_edge_purge.sql`，并建立 `(edge_purge_status, updated_at)` 恢复扫描索引。事务提交后不丢 manifest；任务可重试/重启恢复；刷新完成与业务下架分别表达。
 
 ## 7. 核心不变量
 

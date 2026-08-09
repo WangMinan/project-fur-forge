@@ -8,6 +8,7 @@ import type {
   PublicationOperationStatus,
 } from '../../../shared/types/contracts'
 import type { MediaStorage } from '../media-storage'
+import { getPublicMediaCache } from '../public-media-cache'
 import {
   completeOperation,
   deletePublicVariant,
@@ -16,6 +17,7 @@ import {
   markOperationFailed,
   markVariantsCleanupPending,
   setOperationCleanupKeys,
+  setOperationEdgePurgeManifest,
   updateOperationStatus,
 } from '../repository/publication-repository'
 import type { OperationRow } from '../repository/publication-repository'
@@ -41,6 +43,11 @@ import type { OperationLease } from '../repository/operation-lease'
 import { registerOperationResumer } from './operation-recovery'
 import { ServiceError } from '../service-error'
 import { generateReturnWallVariants } from '../recipe/return-display-recipe'
+import {
+  edgePurgeUrlsForObjectKeys,
+  parseEdgePurgeUrls,
+  runOperationEdgePurge,
+} from './public-media-purge'
 import {
   checkReturnPhotoPublication,
   deleteEmptyReturnCharacter,
@@ -83,6 +90,9 @@ function operationDto(row: OperationRow): PublicationOperationDto {
     failureStage: row.failureStage,
     failureCode: row.internalErrorCode,
     cleanupPendingCount: parseCleanupKeys(row.cleanupObjectKeysJson).length,
+    edgePurgeStatus: row.edgePurgeStatus,
+    edgePurgeFailureReason: row.edgePurgeReason,
+    edgePurgeFileCount: parseEdgePurgeUrls(row.edgePurgeUrlsJson).length,
     version: row.version,
     startedAt: new Date(row.startedAt).toISOString(),
     updatedAt: new Date(row.updatedAt).toISOString(),
@@ -202,13 +212,22 @@ async function cleanOperationKeys(
     code: string
     stage: PublicationFailureStage
   },
+  heartbeat?: () => void,
 ) {
   const operation = requireOperation(sqlite, operationId)
   if (operation.version !== expectedVersion) {
     throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
   let remaining = parseCleanupKeys(operation.cleanupObjectKeysJson)
-  if (remaining.length === 0) {
+  if (
+    remaining.length === 0
+    && (
+      restorePublishFailure
+      || operation.operationType !== 'UNPUBLISH'
+      || operation.edgePurgeStatus === 'NOT_REQUIRED'
+      || operation.edgePurgeStatus === 'COMPLETE'
+    )
+  ) {
     throw new ServiceError(409, 'CONFLICT', 'Publication cleanup is not pending.')
   }
   updateOperation(sqlite, operationId, 'CLEANING_PUBLIC', remaining, now)
@@ -247,6 +266,28 @@ async function cleanOperationKeys(
     )
   }
   else {
+    const current = requireOperation(sqlite, operationId)
+    if (current.operationType === 'UNPUBLISH') {
+      const edgeFailure = await runOperationEdgePurge(
+        sqlite,
+        getPublicMediaCache(),
+        operationId,
+        now,
+        heartbeat ? { heartbeat } : {},
+      )
+      if (edgeFailure) {
+        failOperation(
+          sqlite,
+          operationId,
+          'CLEANING_PUBLIC',
+          edgeFailure,
+          [],
+          actorUserId,
+          now,
+        )
+        return requireOperation(sqlite, operationId)
+      }
+    }
     completeOperation(sqlite, operationId, now)
   }
   return requireOperation(sqlite, operationId)
@@ -527,6 +568,8 @@ async function runReturnPhotoUnpublication(
       cleaning.version,
       actorUserId,
       now,
+      undefined,
+      () => requireReturnLease(sqlite, lease),
     )
     return {
       operation: operationDto(requireOperation(sqlite, operationId)),
@@ -551,6 +594,7 @@ async function runReturnPhotoUnpublication(
   }
   else {
     const keys = findReturnPhotoPublicKeys(sqlite, returnPhotoId)
+    const edgeUrls = edgePurgeUrlsForObjectKeys(getPublicMediaCache(), keys)
     try {
       sqlite.transaction(() => {
         assertOperationLease(sqlite, lease)
@@ -565,6 +609,12 @@ async function runReturnPhotoUnpublication(
         }
         markVariantsCleanupPending(sqlite, keys, now)
         updateOperation(sqlite, operationId, 'CLEANING_PUBLIC', keys, now)
+        setOperationEdgePurgeManifest(
+          sqlite,
+          operationId,
+          edgeUrls,
+          now,
+        )
         insertReturnPhotoAuditLog(sqlite, {
           action: 'RETURN_PHOTO_UNPUBLISH',
           actorUserId,
@@ -607,6 +657,8 @@ async function runReturnPhotoUnpublication(
           cleaning.version,
           actorUserId,
           now,
+          undefined,
+          () => requireReturnLease(sqlite, lease),
         )
       }
     }

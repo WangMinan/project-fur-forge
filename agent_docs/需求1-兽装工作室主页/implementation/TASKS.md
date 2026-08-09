@@ -165,11 +165,11 @@ _依赖：T51-F1；完成后继续 T52-E1。_
 
 #### T52-E4 · 缓存、下架与 ESA 强制撤销
 
-- [ ] 固化 `/_nuxt/**` 长缓存、管理/API/会话绕过、SSR HTML 初始绕过、媒体查询参数/长缓存、404 短缓存和禁用 stale 的 ESA 配置及验证入口；
-- [ ] 下架先立即撤销页面投影，再精确删除 OSS 对象并提交 `PurgeCaches(Type=file)`；
-- [ ] 持久保存精确 `public-media` URL、ESA `TaskId`、状态和稳定失败 reason；
-- [ ] 使用 `DescribePurgeTasks` 收敛，失败可重试，重启不丢 manifest；不做全站 purge 或前缀列举删除；
-- [ ] 自动/集成测试区分页面立即下架、purge 中、已撤销和撤销失败；撤销完成时间留给 T53 目标环境实测，不承诺 5～6 分钟。
+- [x] 固化 `/_nuxt/**` 长缓存、管理/API/会话绕过、SSR HTML 初始绕过、媒体查询参数/长缓存、404 短缓存和禁用 stale 的 ESA 配置及验证入口；
+- [x] 下架先立即撤销页面投影，再精确删除 OSS 对象并提交 `PurgeCaches(Type=file)`；
+- [x] 持久保存精确 `public-media` URL、ESA `TaskId`、状态和稳定失败 reason；
+- [x] 使用 `DescribePurgeTasks` 收敛，失败可重试，重启不丢 manifest；不做全站 purge 或前缀列举删除；
+- [x] 自动/集成测试区分页面立即下架、purge 中、已撤销和撤销失败；撤销完成时间留给 T53 目标环境实测，不承诺 5～6 分钟。
 
 #### T52-E5 · 防盗刷、预算与可观测性准备
 

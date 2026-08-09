@@ -49,7 +49,20 @@ import type {
   SlideRow,
 } from '../repository/hero-repository'
 // T34-F4：公开变体行删除只有一处定义，在 publication-repository。
-import { deletePublicVariant } from '../repository/publication-repository'
+import {
+  completeOperation,
+  deletePublicVariant,
+  findPublicationOperation,
+  hasActivePublicationOperation,
+  insertPublicationOperation,
+  markOperationFailed,
+  markVariantsCleanupPending,
+  resetFailedPublicationOperation,
+  setOperationCleanupKeys,
+  setOperationEdgePurgeManifest,
+  updateOperationStatus,
+} from '../repository/publication-repository'
+import type { OperationRow } from '../repository/publication-repository'
 import {
   assetSupportsSiteDisplay,
   generateSiteDisplayVariants,
@@ -64,6 +77,7 @@ import {
 import { toPublicHeroSlideDto } from '../recipe/media-mapper'
 import type { HeroSlideRecord } from '../recipe/media-mapper'
 import type { MediaStorage } from '../media-storage'
+import { getPublicMediaCache } from '../public-media-cache'
 import {
   ensureHeroUpscaleSource,
   generatePrivateWatermarkPreview,
@@ -78,6 +92,10 @@ import {
 } from '../repository/operation-lease'
 import type { OperationLease } from '../repository/operation-lease'
 import { registerOperationResumer } from './operation-recovery'
+import {
+  edgePurgeUrlsForObjectKeys,
+  runOperationEdgePurge,
+} from './public-media-purge'
 import { ServiceError } from '../service-error'
 import { activeWatermarkProfileId } from './watermark-branding'
 import {
@@ -98,17 +116,6 @@ export interface HomeSettingsInput {
   autoRotate: boolean
   autoRotateIntervalMs: number
   tagline: string
-}
-
-interface HomeOperationRow {
-  cleanupObjectKeysJson: string
-  entityId: string
-  entityType: 'HOME'
-  id: string
-  operationType: 'PUBLISH'
-  requestedVersion: number
-  status: string
-  version: number
 }
 
 /**
@@ -237,7 +244,15 @@ function adminSlide(
   operations: ReadonlyMap<string, PublicationOperationDto>,
 ): AdminHeroSlideDto {
   const missingVariantCount = missingSiteHeroVariants(row, variants)
-  const publicationOperation = operations.get(`${row.id}:PUBLISH`) ?? null
+  const publicationOperation = [
+    operations.get(`${row.id}:PUBLISH`),
+    operations.get(`${row.id}:UNPUBLISH`),
+  ]
+    .filter((operation): operation is PublicationOperationDto => (
+      operation !== undefined && operation.status !== 'DONE'
+    ))
+    .sort((left, right) => right.startedAt.localeCompare(left.startedAt))[0]
+    ?? null
   return adminHeroSlideDtoSchema.parse({
     id: row.id,
     version: row.version,
@@ -264,9 +279,7 @@ function adminSlide(
     upscaleReady: assetUpscaleReadyFromVariants(row, variants),
     upscaleOperation: operations.get(`${row.id}:UPSCALE`) ?? null,
     missingVariantCount,
-    publicationOperation: publicationOperation?.status === 'DONE'
-      ? null
-      : publicationOperation,
+    publicationOperation,
   })
 }
 
@@ -558,10 +571,10 @@ export function systemRecoveryActorId(sqlite: Database.Database) {
 }
 
 function homeOperationTypeOf(sqlite: Database.Database, operationId: string) {
-  return sqlite.prepare(`
-    SELECT operation_type FROM publication_operations
-    WHERE id = ? AND entity_type = 'HOME'
-  `).pluck().get(operationId) as string | undefined
+  const operation = findPublicationOperation(sqlite, operationId)
+  return operation?.entityType === 'HOME'
+    ? operation.operationType
+    : undefined
 }
 
 registerOperationResumer({
@@ -586,6 +599,32 @@ registerOperationResumer({
     )
     if (result.status !== 'DONE' && result.status !== 'FAILED') {
       throw new Error('Home publication did not reach a terminal state.')
+    }
+  },
+})
+
+registerOperationResumer({
+  table: 'publication_operations',
+  matches: (sqlite, operationId) =>
+    homeOperationTypeOf(sqlite, operationId) === 'UNPUBLISH',
+  failure: () => ({
+    stage: 'CLEANING_PUBLIC',
+    code: 'HOME_UNPUBLICATION_INTERRUPTED',
+  }),
+  resume: async (sqlite, storage, operationId, now) => {
+    const actorUserId = systemRecoveryActorId(sqlite)
+    if (!actorUserId) {
+      throw new Error('No auditable recovery identity is available.')
+    }
+    const result = await runHeroSlideUnpublication(
+      sqlite,
+      storage,
+      operationId,
+      actorUserId,
+      now,
+    )
+    if (result.status !== 'DONE' && result.status !== 'FAILED') {
+      throw new Error('Home unpublication did not reach a terminal state.')
     }
   },
 })
@@ -934,17 +973,11 @@ export function reorderEnabledHeroSlides(
   return getAdminHome(sqlite, placement)
 }
 
-export async function disableHeroSlide(
+function assertSlideCanDisable(
   sqlite: Database.Database,
-  storage: MediaStorage,
-  id: string,
-  expectedVersion: number,
-  actorUserId: string,
-  now = Date.now(),
+  slide: SlideRow,
   placement: HeroPlacement = 'home',
 ) {
-  requireHomeVersion(sqlite, expectedVersion)
-  const slide = requireSlide(sqlite, id, placement)
   if (slide.enabled !== 1) {
     throw new ServiceError(409, 'CONFLICT', 'Hero slide is already disabled.')
   }
@@ -952,21 +985,34 @@ export async function disableHeroSlide(
   if (placement === 'home' && enabledCount <= 1) {
     throw new ServiceError(409, 'CONFLICT', 'At least one hero slide must remain enabled.', 'HERO_LAST_ENABLED_SLIDE')
   }
-  await clearHeroSlidePreviews(sqlite, storage, slide)
-  sqlite.transaction(() => {
-    claimHomeVersion(sqlite, expectedVersion, now)
-    setSlideEnabled(sqlite, id, placement, false, now)
-    insertHomeAuditLog(sqlite, {
-      action: placement === 'home'
-        ? 'HOME_HERO_DISABLE'
-        : 'COMMISSION_HERO_DISABLE',
-      actorUserId,
-      entityId: id,
-      id: randomUUID(),
-      result: 'SUCCESS',
-    }, now)
-  })()
-  return getAdminHome(sqlite, placement)
+}
+
+export function startHeroSlideUnpublication(
+  sqlite: Database.Database,
+  slideId: string,
+  expectedVersion: number,
+  now = Date.now(),
+  placement: HeroPlacement = 'home',
+): PublicationOperationDto {
+  requireHomeVersion(sqlite, expectedVersion)
+  assertSlideCanDisable(
+    sqlite,
+    requireSlide(sqlite, slideId, placement),
+    placement,
+  )
+  if (hasActivePublicationOperation(sqlite, 'HOME', slideId)) {
+    throw new ServiceError(409, 'CONFLICT', 'A home publication operation is already active.', 'ACTIVE_OPERATION_EXISTS')
+  }
+  const id = randomUUID()
+  insertPublicationOperation(sqlite, {
+    entityId: slideId,
+    entityType: 'HOME',
+    id,
+    operationType: 'UNPUBLISH',
+    requestedVersion: expectedVersion,
+    status: 'COMMITTING',
+  }, now)
+  return getPublicationOperation(sqlite, id)
 }
 
 function assertSlideCanEnable(
@@ -1004,18 +1050,15 @@ function assertSlideCanEnable(
 }
 
 function homeOperation(sqlite: Database.Database, id: string) {
-  const row = sqlite.prepare(`
-    SELECT
-      id, operation_type AS operationType, entity_type AS entityType,
-      entity_id AS entityId, requested_version AS requestedVersion,
-      status, cleanup_object_keys_json AS cleanupObjectKeysJson, version
-    FROM publication_operations
-    WHERE id = ? AND entity_type = 'HOME' AND operation_type = 'PUBLISH'
-  `).get(id) as HomeOperationRow | undefined
-  if (!row) {
+  const row = findPublicationOperation(sqlite, id)
+  if (
+    !row
+    || row.entityType !== 'HOME'
+    || (row.operationType !== 'PUBLISH' && row.operationType !== 'UNPUBLISH')
+  ) {
     throw new ServiceError(404, 'NOT_FOUND', 'Home publication operation was not found.')
   }
-  return row
+  return row as OperationRow & { operationType: 'PUBLISH' | 'UNPUBLISH' }
 }
 
 export function startHeroSlidePublication(
@@ -1027,37 +1070,34 @@ export function startHeroSlidePublication(
 ): PublicationOperationDto {
   requireHomeVersion(sqlite, expectedVersion)
   assertSlideCanEnable(sqlite, requireSlide(sqlite, slideId, placement), placement)
-  const active = sqlite.prepare(`
-    SELECT 1 FROM publication_operations
-    WHERE entity_type = 'HOME' AND entity_id = ?
-      AND status NOT IN ('FAILED', 'DONE')
-  `).pluck().get(slideId)
-  if (active) {
+  if (hasActivePublicationOperation(sqlite, 'HOME', slideId)) {
     throw new ServiceError(409, 'CONFLICT', 'A home publication operation is already active.', 'ACTIVE_OPERATION_EXISTS')
   }
   const id = randomUUID()
-  sqlite.prepare(`
-    INSERT INTO publication_operations (
-      id, operation_type, entity_type, entity_id, requested_version,
-      status, started_at, updated_at
-    ) VALUES (?, 'PUBLISH', 'HOME', ?, ?, 'GENERATING_PUBLIC', ?, ?)
-  `).run(id, slideId, expectedVersion, now, now)
+  insertPublicationOperation(sqlite, {
+    entityId: slideId,
+    entityType: 'HOME',
+    id,
+    operationType: 'PUBLISH',
+    requestedVersion: expectedVersion,
+    status: 'GENERATING_PUBLIC',
+  }, now)
   return getPublicationOperation(sqlite, id)
 }
 
 function setOperationStatus(
   sqlite: Database.Database,
   id: string,
-  status: string,
+  status: PublicationOperationDto['status'],
   now: number,
 ) {
-  sqlite.prepare(`
-    UPDATE publication_operations
-    SET status = ?, failure_stage = NULL, internal_error_code = NULL,
-        internal_error_message = NULL, cleanup_object_keys_json = '[]',
-        version = version + 1, updated_at = ?
-    WHERE id = ?
-  `).run(status, now, id)
+  updateOperationStatus(
+    sqlite,
+    id,
+    status,
+    [],
+    now,
+  )
 }
 
 function publicKeysForSlide(sqlite: Database.Database, slide: SlideRow) {
@@ -1090,14 +1130,11 @@ function failHomeOperation(
   cleanupKeys: readonly string[],
   now: number,
 ) {
-  sqlite.prepare(`
-    UPDATE publication_operations
-    SET status = 'FAILED', failure_stage = ?, internal_error_code = ?,
-        internal_error_message = 'Home publication failed.',
-        cleanup_object_keys_json = ?, version = version + 1,
-        updated_at = ?, completed_at = ?
-    WHERE id = ?
-  `).run(stage, code, JSON.stringify(cleanupKeys), now, now, id)
+  markOperationFailed(sqlite, id, {
+    cleanupKeys,
+    code,
+    stage,
+  }, now)
 }
 
 function assertCompleteHeroPair(
@@ -1128,6 +1165,9 @@ export async function runHeroSlidePublication(
   now = Date.now(),
 ) {
   const operation = homeOperation(sqlite, operationId)
+  if (operation.operationType !== 'PUBLISH') {
+    throw new ServiceError(404, 'NOT_FOUND', 'Home publication operation was not found.')
+  }
   if (operation.status === 'DONE' || operation.status === 'FAILED') {
     return getPublicationOperation(sqlite, operationId)
   }
@@ -1244,6 +1284,219 @@ export async function runHeroSlidePublication(
   return getPublicationOperation(sqlite, operationId)
 }
 
+function parseHomeCleanupKeys(value: string) {
+  const parsed = JSON.parse(value) as unknown
+  if (
+    !Array.isArray(parsed)
+    || parsed.some(key => typeof key !== 'string' || key.length === 0)
+  ) {
+    throw new Error('Home cleanup manifest is invalid.')
+  }
+  return parsed as string[]
+}
+
+async function cleanHeroSlideUnpublication(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  operationId: string,
+  expectedVersion: number,
+  now: number,
+  heartbeat?: () => void,
+) {
+  const operation = homeOperation(sqlite, operationId)
+  if (operation.version !== expectedVersion) {
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+  }
+  let remaining = parseHomeCleanupKeys(operation.cleanupObjectKeysJson)
+  if (
+    remaining.length === 0
+    && (
+      operation.operationType !== 'UNPUBLISH'
+      || operation.edgePurgeStatus === 'NOT_REQUIRED'
+      || operation.edgePurgeStatus === 'COMPLETE'
+    )
+  ) {
+    throw new ServiceError(409, 'CONFLICT', 'Publication cleanup is not pending.', 'OPERATION_NOT_RETRYABLE')
+  }
+  setOperationStatus(sqlite, operationId, 'CLEANING_PUBLIC', now)
+  setOperationCleanupKeys(sqlite, operationId, remaining, now)
+  for (const key of [...remaining]) {
+    try {
+      heartbeat?.()
+      await storage.deletePublic(key)
+      heartbeat?.()
+      sqlite.transaction(() => {
+        deletePublicVariant(sqlite, key)
+        remaining = remaining.filter(candidate => candidate !== key)
+        setOperationCleanupKeys(sqlite, operationId, remaining, now)
+      })()
+    }
+    catch {
+      failHomeOperation(
+        sqlite,
+        operationId,
+        'CLEANING_PUBLIC',
+        'PUBLIC_CLEANUP_FAILED',
+        remaining,
+        now,
+      )
+      return
+    }
+  }
+
+  const edgeFailure = await runOperationEdgePurge(
+    sqlite,
+    getPublicMediaCache(),
+    operationId,
+    now,
+    heartbeat ? { heartbeat } : {},
+  )
+  if (edgeFailure) {
+    failHomeOperation(
+      sqlite,
+      operationId,
+      'CLEANING_PUBLIC',
+      edgeFailure,
+      [],
+      now,
+    )
+    return
+  }
+  completeOperation(sqlite, operationId, now)
+}
+
+export async function runHeroSlideUnpublication(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  operationId: string,
+  actorUserId: string,
+  now = Date.now(),
+) {
+  const operation = homeOperation(sqlite, operationId)
+  if (operation.operationType !== 'UNPUBLISH') {
+    throw new ServiceError(404, 'NOT_FOUND', 'Home unpublication operation was not found.')
+  }
+  if (operation.status === 'DONE' || operation.status === 'FAILED') {
+    return getPublicationOperation(sqlite, operationId)
+  }
+  const lease = claimOperationLease(sqlite, 'publication_operations', operationId, now)
+  if (!lease) {
+    return getPublicationOperation(sqlite, operationId)
+  }
+  let slide = requireSlide(sqlite, operation.entityId)
+
+  if (slide.enabled !== 1 && operation.status === 'CLEANING_PUBLIC') {
+    const cleaning = homeOperation(sqlite, operationId)
+    await cleanHeroSlideUnpublication(
+      sqlite,
+      storage,
+      operationId,
+      cleaning.version,
+      now,
+      () => requireHeroLease(sqlite, lease),
+    )
+    releaseOperationLease(sqlite, lease, now)
+    return getPublicationOperation(sqlite, operationId)
+  }
+
+  try {
+    requireHomeVersion(sqlite, operation.requestedVersion)
+    assertSlideCanDisable(sqlite, slide, slide.placement)
+    await clearHeroSlidePreviews(sqlite, storage, slide)
+    requireHeroLease(sqlite, lease)
+    const keys = publicKeysForSlide(sqlite, slide)
+    const edgeUrls = edgePurgeUrlsForObjectKeys(getPublicMediaCache(), keys)
+    sqlite.transaction(() => {
+      assertOperationLease(sqlite, lease)
+      requireHomeVersion(sqlite, operation.requestedVersion)
+      slide = requireSlide(sqlite, slide.id, slide.placement)
+      assertSlideCanDisable(sqlite, slide, slide.placement)
+      claimHomeVersion(sqlite, operation.requestedVersion, now)
+      setSlideEnabled(sqlite, slide.id, slide.placement, false, now)
+      markVariantsCleanupPending(sqlite, keys, now)
+      updateOperationStatus(
+        sqlite,
+        operationId,
+        'CLEANING_PUBLIC',
+        keys,
+        now,
+      )
+      setOperationEdgePurgeManifest(sqlite, operationId, edgeUrls, now)
+      insertHomeAuditLog(sqlite, {
+        action: slide.placement === 'home'
+          ? 'HOME_HERO_DISABLE'
+          : 'COMMISSION_HERO_DISABLE',
+        actorUserId,
+        entityId: slide.id,
+        id: randomUUID(),
+        result: 'SUCCESS',
+      }, now)
+    })()
+
+    const cleaning = homeOperation(sqlite, operationId)
+    if (
+      parseHomeCleanupKeys(cleaning.cleanupObjectKeysJson).length === 0
+      && cleaning.edgePurgeStatus === 'NOT_REQUIRED'
+    ) {
+      completeOperation(sqlite, operationId, now)
+    }
+    else {
+      await cleanHeroSlideUnpublication(
+        sqlite,
+        storage,
+        operationId,
+        cleaning.version,
+        now,
+        () => requireHeroLease(sqlite, lease),
+      )
+    }
+  }
+  catch {
+    if (holdsOperationLease(sqlite, lease)) {
+      failHomeOperation(
+        sqlite,
+        operationId,
+        'COMMITTING',
+        'HOME_UNPUBLICATION_COMMIT_FAILED',
+        [],
+        now,
+      )
+    }
+  }
+  releaseOperationLease(sqlite, lease, now)
+  return getPublicationOperation(sqlite, operationId)
+}
+
+/**
+ * 兼容 service/集成调用：HTTP 入口使用 start + runner，避免请求等待 ESA；
+ * 直接调用仍可等待持久 operation 到达当前终态并取得最新首页快照。
+ */
+export async function disableHeroSlide(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  id: string,
+  expectedVersion: number,
+  actorUserId: string,
+  now = Date.now(),
+  placement: HeroPlacement = 'home',
+) {
+  const operation = startHeroSlideUnpublication(
+    sqlite,
+    id,
+    expectedVersion,
+    now,
+    placement,
+  )
+  await runHeroSlideUnpublication(
+    sqlite,
+    storage,
+    operation.operationId,
+    actorUserId,
+    now,
+  )
+  return getAdminHome(sqlite, placement)
+}
+
 /** 长 OSS 操作前后更新心跳；失去 lease 立即停止，避免双写公开对象。 */
 function requireHeroLease(
   sqlite: Database.Database,
@@ -1269,6 +1522,16 @@ export async function retryHeroSlidePublication(
   if (operation.status !== 'FAILED') {
     throw new ServiceError(409, 'CONFLICT', 'Home publication is not retryable.', 'OPERATION_NOT_RETRYABLE')
   }
+  if (operation.operationType === 'UNPUBLISH') {
+    await cleanHeroSlideUnpublication(
+      sqlite,
+      storage,
+      operationId,
+      expectedVersion,
+      now,
+    )
+    return getPublicationOperation(sqlite, operationId)
+  }
   requireHomeVersion(sqlite, operation.requestedVersion)
   const cleanup = JSON.parse(operation.cleanupObjectKeysJson) as unknown
   if (!Array.isArray(cleanup) || cleanup.some(key => typeof key !== 'string')) {
@@ -1286,13 +1549,12 @@ export async function retryHeroSlidePublication(
     )
     return getPublicationOperation(sqlite, operationId)
   }
-  sqlite.prepare(`
-    UPDATE publication_operations
-    SET status = 'GENERATING_PUBLIC', failure_stage = NULL,
-        internal_error_code = NULL, internal_error_message = NULL,
-        cleanup_object_keys_json = '[]', completed_at = NULL,
-        version = version + 1, updated_at = ?
-    WHERE id = ? AND version = ? AND status = 'FAILED'
-  `).run(now, operationId, expectedVersion)
+  resetFailedPublicationOperation(
+    sqlite,
+    operationId,
+    expectedVersion,
+    'GENERATING_PUBLIC',
+    now,
+  )
   return getPublicationOperation(sqlite, operationId)
 }

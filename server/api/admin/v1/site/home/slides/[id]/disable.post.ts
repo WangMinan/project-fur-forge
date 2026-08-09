@@ -1,9 +1,13 @@
 import { resourceIdSchema } from '../../../../../../../../shared/schemas/api'
-import { mutateHomeRequestSchema, adminHomeResponseSchema } from '../../../../../../../../shared/schemas/home'
+import { mutateHomeRequestSchema } from '../../../../../../../../shared/schemas/home'
+import { publicationOperationResponseSchema } from '../../../../../../../../shared/schemas/publication'
 import { adminSessionFor } from '../../../../../../../utils/route/auth-session'
 import { createApiError } from '../../../../../../../utils/api-error'
 import { getDatabase } from '../../../../../../../utils/database'
-import { disableHeroSlide } from '../../../../../../../utils/runner/home-management'
+import {
+  runHeroSlideUnpublication,
+  startHeroSlideUnpublication,
+} from '../../../../../../../utils/runner/home-management'
 import { readHeroPlacement } from '../../../../../../../utils/route/hero-placement'
 import { getMediaStorage } from '../../../../../../../utils/media-storage'
 import { readAdminJsonBody } from '../../../../../../../utils/route/request-body'
@@ -16,17 +20,24 @@ export default defineEventHandler(async (event) => {
     throw createApiError(400, 'VALIDATION_ERROR', 'Request is invalid.')
   }
   try {
-    return adminHomeResponseSchema.parse({
-      data: await disableHeroSlide(
-        getDatabase().sqlite,
-        getMediaStorage(),
-        id.data,
-        body.data.expectedVersion,
-        adminSessionFor(event).user.id,
-        Date.now(),
-        readHeroPlacement(event),
-      ),
-    })
+    const sqlite = getDatabase().sqlite
+    const actorUserId = adminSessionFor(event).user.id
+    const operation = startHeroSlideUnpublication(
+      sqlite,
+      id.data,
+      body.data.expectedVersion,
+      Date.now(),
+      readHeroPlacement(event),
+    )
+    event.waitUntil(runHeroSlideUnpublication(
+      sqlite,
+      getMediaStorage(),
+      operation.operationId,
+      actorUserId,
+    ).catch(error => event.captureError(error, {
+      tags: ['home-hero-unpublication'],
+    })))
+    return publicationOperationResponseSchema.parse({ data: operation })
   }
   catch (error) {
     asSafeApiError(error)

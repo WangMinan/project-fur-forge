@@ -6,15 +6,18 @@ import {
   returnPhotoPublicationActionResponseSchema,
   returnPhotoPublicationCheckResponseSchema,
 } from '~~/shared/schemas/return-photo'
+import { publicationOperationResponseSchema } from '~~/shared/schemas/publication'
 import type {
   AdminReturnCharacterDto,
   AdminReturnPhotoDto,
+  PublicationOperationDto,
   ReturnPhotoPublicationCheckDto,
 } from '~~/shared/types/contracts'
 import type { useReturnPhotoUpload } from '~/composables/useReturnPhotoUpload'
 import { RETURN_UPLOAD_STATE_LABELS } from '~/composables/useReturnPhotoUpload'
 import { AdminApiError } from '~/composables/useAdminApi'
 import { RETURN_BLOCKER_LABELS } from '~/utils/return-labels'
+import { publicationFailureLabel } from '~/utils/media-labels'
 import { PUBLICATION_STATUS_LABELS } from '~/utils/work-labels'
 
 /**
@@ -39,6 +42,8 @@ const errorText = ref<string | null>(null)
 /** alt 草稿：按返图 id 保存，保存成功后置 undefined 交回服务端值。 */
 const altDrafts = reactive<Record<string, string | undefined>>({})
 const checks = ref<Record<string, ReturnPhotoPublicationCheckDto | null>>({})
+const operations = ref<Record<string, PublicationOperationDto | undefined>>({})
+const operationFeedback = ref<Record<string, string | undefined>>({})
 
 function altOf(photo: AdminReturnPhotoDto) {
   return altDrafts[photo.id] ?? photo.alt
@@ -131,12 +136,48 @@ function makePrimary(photo: AdminReturnPhotoDto) {
 
 function publish(photo: AdminReturnPhotoDto, action: 'publish' | 'unpublish') {
   void run(photo, async () => {
-    await adminApi(photoUrl(photo, `/${action}`), {
+    const result = await adminApi(photoUrl(photo, `/${action}`), {
       method: 'POST',
       body: { expectedVersion: photo.version, payload: {} },
       schema: returnPhotoPublicationActionResponseSchema,
     })
+    const operation = result.data.operation
+    operations.value = { ...operations.value, [photo.id]: operation }
+    operationFeedback.value = {
+      ...operationFeedback.value,
+      [photo.id]: operation.status === 'DONE'
+        ? action === 'unpublish'
+          ? '已下架：页面已隐藏，公开文件与 ESA 缓存已撤销。'
+          : '发布完成。'
+        : action === 'unpublish' && operation.edgePurgeStatus === 'FAILED'
+          ? `页面已隐藏，但 ESA 缓存撤销未完成：${publicationFailureLabel(operation.failureCode)}`
+          : publicationFailureLabel(operation.failureCode),
+    }
   }, action === 'publish' ? '发布失败，请稍后重试。' : '下架失败，请稍后重试。')
+}
+
+function retryCleanup(photo: AdminReturnPhotoDto) {
+  const operation = operations.value[photo.id]
+  if (!operation || operation.status !== 'FAILED') {
+    return
+  }
+  void run(photo, async () => {
+    const result = await adminApi(
+      `/api/admin/v1/publication-operations/${operation.operationId}/retry-cleanup`,
+      {
+        method: 'POST',
+        body: { expectedVersion: operation.version, payload: {} },
+        schema: publicationOperationResponseSchema,
+      },
+    )
+    operations.value = { ...operations.value, [photo.id]: result.data }
+    operationFeedback.value = {
+      ...operationFeedback.value,
+      [photo.id]: result.data.status === 'DONE'
+        ? '公开文件与 ESA 缓存撤销完成。'
+        : `撤销仍未完成：${publicationFailureLabel(result.data.failureCode)}`,
+    }
+  }, '重试撤销失败，请稍后再试。')
 }
 
 function remove(photo: AdminReturnPhotoDto) {
@@ -263,6 +304,19 @@ function canPublish(photo: AdminReturnPhotoDto) {
               @click="remove(photo)"
             >删除</button>
           </div>
+          <p
+            v-if="operationFeedback[photo.id]"
+            class="photos__operation-feedback"
+            :data-tone="operations[photo.id]?.status === 'FAILED' ? 'error' : 'success'"
+            :role="operations[photo.id]?.status === 'FAILED' ? 'alert' : 'status'"
+          >{{ operationFeedback[photo.id] }}</p>
+          <button
+            v-if="operations[photo.id]?.status === 'FAILED'
+              && operations[photo.id]?.operationType === 'UNPUBLISH'"
+            type="button"
+            :disabled="pendingId === photo.id"
+            @click="retryCleanup(photo)"
+          >重试撤销</button>
         </div>
       </li>
     </ul>
@@ -288,6 +342,16 @@ function canPublish(photo: AdminReturnPhotoDto) {
   color: var(--admin-text-secondary);
   font-size: var(--admin-font-sm);
   line-height: var(--admin-line-normal);
+}
+
+.photos__operation-feedback {
+  margin-top: var(--admin-space-2);
+  color: var(--admin-text-secondary);
+  font-size: var(--admin-font-sm);
+}
+
+.photos__operation-feedback[data-tone='error'] {
+  color: var(--admin-danger);
 }
 
 .photos__picker {

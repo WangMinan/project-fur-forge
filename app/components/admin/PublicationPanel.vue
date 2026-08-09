@@ -134,7 +134,7 @@ function handleOperationOutcome(
       cleanupRetry: false,
       text: publicationStatus === 'published'
         ? '发布成功：公开图片已生成并通过校验。'
-        : '已下架：公开页面不再可访问，公开文件已清理。',
+        : '已下架：公开页面不再可访问，公开文件与 ESA 缓存已撤销。',
       tone: 'success',
     }
     return
@@ -143,12 +143,15 @@ function handleOperationOutcome(
     ? PUBLICATION_FAILURE_STAGE_LABELS[operation.failureStage]
     : null
   const cleanupPending = operation.failureStage === 'CLEANING_PUBLIC'
-    && operation.cleanupPendingCount > 0
+    && (
+      operation.cleanupPendingCount > 0
+      || operation.edgePurgeStatus === 'FAILED'
+    )
   const base = publicationFailureLabel(operation.failureCode)
   feedback.value = {
     cleanupRetry: cleanupPending,
     text: cleanupPending && operation.operationType === 'UNPUBLISH'
-      ? `作品已下架，但公开文件清理未完成（${base}）。作品不会重新公开，可重试清理。`
+      ? `作品已下架，但公开文件或 ESA 缓存撤销未完成（${base}）。作品不会重新公开，可重试撤销。`
       : `${base}${stage ? `（失败于${stage}环节）` : ''}`,
     tone: 'error',
   }
@@ -285,14 +288,15 @@ async function retryCleanup() {
     if (result.data.status === 'DONE') {
       feedback.value = {
         cleanupRetry: false,
-        text: '公开文件清理完成。',
+        text: '公开文件与 ESA 缓存撤销完成。',
         tone: 'success',
       }
     }
     else {
       feedback.value = {
-        cleanupRetry: result.data.cleanupPendingCount > 0,
-        text: '公开文件清理仍未完成，可再次重试。',
+        cleanupRetry: result.data.cleanupPendingCount > 0
+          || result.data.edgePurgeStatus === 'FAILED',
+        text: '公开文件或 ESA 缓存撤销仍未完成，可再次重试。',
         tone: 'error',
       }
     }

@@ -36,8 +36,10 @@ import {
   retryHeroSlidePublication,
   runHeroSlideUpscale,
   runHeroSlidePublication,
+  runHeroSlideUnpublication,
   startHeroSlideUpscale,
   startHeroSlidePublication,
+  startHeroSlideUnpublication,
   updateHeroSlide,
   updateHomeSettings,
 } from '../../server/utils/runner/home-management'
@@ -52,7 +54,9 @@ import {
 } from '../../server/utils/service/work-management'
 import { publishWork, unpublishWork } from '../../server/utils/runner/work-publication'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
+import { FakePublicMediaCache } from '../helpers/fake-public-media-cache'
 import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
+import { setPublicMediaCacheForTests } from '../../server/utils/public-media-cache'
 
 const USER_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const NOW = Date.UTC(2026, 7, 2)
@@ -240,13 +244,14 @@ function createHeroAsset(
   role: 'home_hero_landscape' | 'home_hero_portrait',
   ownerVersion: number,
   dimensions?: { height: number, width: number },
+  environmentPrefix = 'test/t20',
 ) {
   const assetId = randomUUID()
   const content = createSyntheticWatermarkPng()
   const landscape = role === 'home_hero_landscape'
   const width = dimensions?.width ?? (landscape ? 3200 : 1800)
   const height = dimensions?.height ?? (landscape ? 1800 : 3200)
-  const key = `test/t20/original/${assetId}/source.png`
+  const key = `${environmentPrefix}/original/${assetId}/source.png`
   sqlite.prepare(`
     INSERT INTO assets (
       id, role, status, private_object_key, sha256, byte_size,
@@ -278,11 +283,109 @@ beforeEach(async () => {
 })
 
 afterEach(() => {
+  setPublicMediaCacheForTests()
   sqlite.close()
   rmSync(directory, { force: true, recursive: true })
 })
 
 describe('T19/T20 public repository contracts', () => {
+  it('hides a hero slide before its exact ESA files finish revoking', async () => {
+    let home = getAdminHome(sqlite)
+    const createEnabledSlide = async (alt: string, sortOrder: number) => {
+      const landscapeAssetId = createHeroAsset(
+        'home_hero_landscape',
+        home.version,
+        undefined,
+        'prod',
+      )
+      const portraitAssetId = createHeroAsset(
+        'home_hero_portrait',
+        home.version,
+        undefined,
+        'prod',
+      )
+      home = createHeroSlide(sqlite, home.version, {
+        alt,
+        landscapeAssetId,
+        linkedWorkId: null,
+        portraitAssetId,
+        sortOrder,
+      }, NOW + sequence++)
+      const slide = home.slides.find(item => item.alt === alt)!
+      const operation = startHeroSlidePublication(
+        sqlite,
+        slide.id,
+        home.version,
+        NOW + sequence++,
+      )
+      await runHeroSlidePublication(
+        sqlite,
+        storage,
+        operation.operationId,
+        USER_ID,
+        NOW + sequence++,
+      )
+      home = getAdminHome(sqlite)
+      return slide
+    }
+
+    const removable = await createEnabledSlide('待撤销首页图', 0)
+    await createEnabledSlide('保留首页图', 1)
+    const variantRows = sqlite.prepare(`
+      SELECT id, object_key AS objectKey FROM asset_variants
+      WHERE asset_id IN (?, ?) AND storage_scope = 'PUBLIC'
+      ORDER BY id
+    `).all(
+      removable.landscape.assetId,
+      removable.portrait.assetId,
+    ) as { id: string, objectKey: string }[]
+    expect(variantRows.every(row => row.objectKey.startsWith('prod/web/')))
+      .toBe(true)
+
+    const cache = new FakePublicMediaCache()
+    let finishDescribe: ((status: 'Complete') => void) | undefined
+    cache.describeExactFilePurge = vi.fn(async () => await new Promise<'Complete'>((resolve) => {
+      finishDescribe = resolve
+    }))
+    setPublicMediaCacheForTests(cache)
+    const unpublication = startHeroSlideUnpublication(
+      sqlite,
+      removable.id,
+      home.version,
+      NOW + sequence++,
+    )
+    const running = runHeroSlideUnpublication(
+      sqlite,
+      storage,
+      unpublication.operationId,
+      USER_ID,
+      NOW + sequence++,
+    )
+    await vi.waitFor(() => {
+      expect(cache.submittedUrls).toHaveLength(1)
+    })
+
+    expect(getPublicHome(sqlite, MEDIA_BASE_URL).slides.map(item => item.alt))
+      .toEqual(['保留首页图'])
+    expect(sqlite.prepare(`
+      SELECT status, edge_purge_status AS edgePurgeStatus
+      FROM publication_operations WHERE id = ?
+    `).get(unpublication.operationId)).toEqual({
+      edgePurgeStatus: 'PURGING',
+      status: 'CLEANING_PUBLIC',
+    })
+    expect(cache.submittedUrls[0]).toHaveLength(variantRows.length)
+    expect([...cache.submittedUrls[0]!].sort()).toEqual(variantRows.map(row => (
+      `https://public-media.ditedog.com/${row.objectKey}`
+    )).sort())
+
+    finishDescribe?.('Complete')
+    await expect(running).resolves.toMatchObject({
+      edgePurgeStatus: 'COMPLETE',
+      status: 'DONE',
+    })
+  })
+
   it('saves low-resolution hero sources but requires confirmed private upscale before enabling', async () => {
     const initial = getAdminHome(sqlite)
     const landscape = createHeroAsset(

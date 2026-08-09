@@ -10,6 +10,7 @@ import type {
   WorkPublicationCheckDto,
 } from '../../../shared/types/contracts'
 import type { MediaStorage } from '../media-storage'
+import { getPublicMediaCache } from '../public-media-cache'
 import {
   assetSupportsPublicUsages,
   ensureDesignSheetUpscaleSource,
@@ -41,6 +42,7 @@ import {
   markVariantsCleanupPending,
   publishWorkRow,
   setOperationCleanupKeys,
+  setOperationEdgePurgeManifest,
   unpublishWorkRow,
   updateOperationStatus,
 } from '../repository/publication-repository'
@@ -67,6 +69,11 @@ import {
 } from '../recipe/site-display-recipe'
 import { activeWatermarkProfileId } from './watermark-branding'
 import { requireWatermarkProfile } from '../service/watermark-profile'
+import {
+  edgePurgeUrlsForObjectKeys,
+  parseEdgePurgeUrls,
+  runOperationEdgePurge,
+} from './public-media-purge'
 
 interface PublicationTarget {
   asset: PublicationAsset
@@ -100,6 +107,9 @@ function operationDto(row: OperationRow): PublicationOperationDto {
     failureStage: row.failureStage,
     failureCode: row.internalErrorCode,
     cleanupPendingCount: parseCleanupKeys(row.cleanupObjectKeysJson).length,
+    edgePurgeStatus: row.edgePurgeStatus,
+    edgePurgeFailureReason: row.edgePurgeReason,
+    edgePurgeFileCount: parseEdgePurgeUrls(row.edgePurgeUrlsJson).length,
     version: row.version,
     startedAt: new Date(row.startedAt).toISOString(),
     updatedAt: new Date(row.updatedAt).toISOString(),
@@ -392,13 +402,22 @@ async function cleanOperationKeys(
     code: string
     stage: PublicationFailureStage
   },
+  heartbeat?: () => void,
 ) {
   const operation = requireOperation(sqlite, operationId)
   if (operation.version !== expectedVersion) {
     throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
   let remaining = parseCleanupKeys(operation.cleanupObjectKeysJson)
-  if (remaining.length === 0) {
+  if (
+    remaining.length === 0
+    && (
+      restorePublishFailure
+      || operation.operationType !== 'UNPUBLISH'
+      || operation.edgePurgeStatus === 'NOT_REQUIRED'
+      || operation.edgePurgeStatus === 'COMPLETE'
+    )
+  ) {
     throw new ServiceError(409, 'CONFLICT', 'Publication cleanup is not pending.')
   }
   updateOperation(sqlite, operationId, 'CLEANING_PUBLIC', remaining, now)
@@ -437,6 +456,28 @@ async function cleanOperationKeys(
     )
   }
   else {
+    const current = requireOperation(sqlite, operationId)
+    if (current.operationType === 'UNPUBLISH') {
+      const edgeFailure = await runOperationEdgePurge(
+        sqlite,
+        getPublicMediaCache(),
+        operationId,
+        now,
+        heartbeat ? { heartbeat } : {},
+      )
+      if (edgeFailure) {
+        failOperation(
+          sqlite,
+          operationId,
+          'CLEANING_PUBLIC',
+          edgeFailure,
+          [],
+          actorUserId,
+          now,
+        )
+        return requireOperation(sqlite, operationId)
+      }
+    }
     completeOperation(sqlite, operationId, now)
   }
   return requireOperation(sqlite, operationId)
@@ -796,6 +837,8 @@ async function runWorkUnpublication(
       cleaning.version,
       actorUserId,
       now,
+      undefined,
+      () => requireWorkLease(sqlite, lease),
     )
     return {
       operation: operationDto(requireOperation(sqlite, operationId)),
@@ -816,6 +859,7 @@ async function runWorkUnpublication(
   }
   else {
     const keys = publicKeys(sqlite, workId)
+    const edgeUrls = edgePurgeUrlsForObjectKeys(getPublicMediaCache(), keys)
     try {
       sqlite.transaction(() => {
         assertOperationLease(sqlite, lease)
@@ -825,6 +869,12 @@ async function runWorkUnpublication(
         }
         markVariantsCleanupPending(sqlite, keys, now)
         updateOperation(sqlite, operation.id, 'CLEANING_PUBLIC', keys, now)
+        setOperationEdgePurgeManifest(
+          sqlite,
+          operation.id,
+          edgeUrls,
+          now,
+        )
         insertWorkAuditLog(sqlite, {
           action: 'WORK_UNPUBLISH',
           actorUserId,
@@ -854,12 +904,7 @@ async function runWorkUnpublication(
     }
     if (requireOperation(sqlite, operation.id).status !== 'FAILED') {
       if (keys.length === 0) {
-        updateOperation(sqlite, operation.id, 'DONE', [], now)
-        sqlite.prepare(`
-          UPDATE publication_operations
-          SET completed_at = ?, lease_owner = NULL, lease_expires_at = NULL
-          WHERE id = ?
-        `).run(now, operation.id)
+        completeOperation(sqlite, operation.id, now)
       }
       else {
         const cleaning = requireOperation(sqlite, operation.id)
@@ -870,6 +915,8 @@ async function runWorkUnpublication(
           cleaning.version,
           actorUserId,
           now,
+          undefined,
+          () => requireWorkLease(sqlite, lease),
         )
         releaseOperationLease(sqlite, lease, now)
       }

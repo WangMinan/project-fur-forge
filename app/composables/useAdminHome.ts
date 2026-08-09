@@ -170,6 +170,13 @@ export function useAdminHome(
           tone: 'success',
         }
       }
+      if (operation.operationType === 'UNPUBLISH') {
+        return {
+          retryOperationId: null,
+          text: '停用完成：页面已隐藏，公开文件与 ESA 缓存已撤销。',
+          tone: 'success',
+        }
+      }
       return {
         retryOperationId: null,
         text: `启用成功：公开图片已生成并通过校验，${placementLabel()}大图已更新。`,
@@ -179,6 +186,13 @@ export function useAdminHome(
     const stage = operation.failureStage
       ? PUBLICATION_FAILURE_STAGE_LABELS[operation.failureStage]
       : null
+    if (operation.operationType === 'UNPUBLISH' && operation.edgePurgeStatus === 'FAILED') {
+      return {
+        retryOperationId: operation.operationId,
+        text: `页面已隐藏，但 ESA 缓存撤销未完成：${publicationFailureLabel(operation.failureCode)}${stage ? `（失败于${stage}环节）` : ''}`,
+        tone: 'error',
+      }
+    }
     return {
       retryOperationId: operation.status === 'FAILED' ? operation.operationId : null,
       text: `${publicationFailureLabel(operation.failureCode)}${stage ? `（失败于${stage}环节）` : ''}`,
@@ -312,17 +326,43 @@ export function useAdminHome(
   }
 
   async function disableSlide(id: string) {
-    return await runHomeMutation(async () => {
+    if (!home.value || mutating.value) {
+      return null
+    }
+    mutating.value = true
+    setFeedback(id, null)
+    try {
       const result = await adminApi(
         heroUrl(`/slides/${id}/disable`),
         {
           method: 'POST',
           body: versionedBody({}),
-          schema: adminHomeResponseSchema,
+          schema: publicationOperationResponseSchema,
         },
       )
-      return result.data
-    }, '停用失败，请稍后重试。')
+      operations.value = { ...operations.value, [id]: result.data }
+      conflictNotice.value = null
+      void pollOperation(id, result.data.operationId)
+      return null
+    }
+    catch (error) {
+      if (error instanceof AdminApiError && error.status === 401) {
+        return null
+      }
+      if (error instanceof AdminApiError && error.status === 409) {
+        if (error.reason === 'HERO_LAST_ENABLED_SLIDE') {
+          conflictNotice.value = null
+          await refreshHome()
+          return '停用未提交：首页至少需要保留一个启用的轮播项。请先启用另一个轮播项，再停用当前项。'
+        }
+        await onConflict(`${conflictSubject()}已在其他地方变化，已重新加载，请确认后重试。`)
+        return '停用未提交：版本或大图状态已变化，请确认后重试。'
+      }
+      return '停用失败，请稍后重试。'
+    }
+    finally {
+      mutating.value = false
+    }
   }
 
   async function startPublication(id: string): Promise<string | null> {

@@ -30,9 +30,14 @@ import {
   updateReturnPhoto,
 } from '../../server/utils/service/return-photo'
 import { findReturnCharacter } from '../../server/utils/repository/return-photo-repository'
-import { deleteReturnCharacterCascade } from '../../server/utils/runner/return-photo-publication'
+import {
+  deleteReturnCharacterCascade,
+  unpublishReturnPhoto,
+} from '../../server/utils/runner/return-photo-publication'
+import { setPublicMediaCacheForTests } from '../../server/utils/public-media-cache'
 import { deleteManagedWork } from '../../server/utils/service/work-management'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
+import { FakePublicMediaCache } from '../helpers/fake-public-media-cache'
 
 const NOW = Date.UTC(2026, 7, 7)
 const USER_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
@@ -69,7 +74,12 @@ function insertWork(id: string, slug: string, status: string) {
 
 function insertReturnAsset(
   assetId: string,
-  overrides: Partial<{ status: string, width: number, height: number }> = {},
+  overrides: Partial<{
+    environmentPrefix: string
+    height: number
+    status: string
+    width: number
+  }> = {},
 ) {
   const sha = assetId.replaceAll(/[^0-9a-f]/gu, 'a').padEnd(64, 'b').slice(0, 64)
   sqlite.prepare(`
@@ -80,7 +90,7 @@ function insertReturnAsset(
   `).run(
     assetId,
     overrides.status ?? 'READY',
-    `test/return-fixture/original/${assetId}/source.jpg`,
+    `${overrides.environmentPrefix ?? 'test/return-fixture'}/original/${assetId}/source.jpg`,
     sha,
     overrides.width ?? 1139,
     overrides.height ?? 2083,
@@ -119,6 +129,7 @@ beforeEach(async () => {
 })
 
 afterEach(() => {
+  setPublicMediaCacheForTests()
   sqlite.close()
   rmSync(directory, { force: true, recursive: true })
 })
@@ -459,6 +470,69 @@ describe('T35-F1 return character domain model', () => {
     // 私有永久原图保留：删除设定不碰 assets。
     expect(sqlite.prepare('SELECT COUNT(*) AS total FROM assets')
       .get()).toEqual({ total: 2 })
+  })
+
+  it('hides a return photo before revoking its exact ESA file URL', async () => {
+    const character = characterFor()
+    const assetId = insertReturnAsset(
+      'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+      { environmentPrefix: 'prod' },
+    )
+    const photo = addReturnPhotoFromUpload(sqlite, character.id, assetId, NOW)
+    sqlite.prepare(`
+      UPDATE return_photos
+      SET publication_status = 'published', published_at = ?
+      WHERE id = ?
+    `).run(NOW, photo.id)
+    const objectKey = `prod/web/returns/${photo.id}/return-wall-480.webp`
+    const inputSha = sqlite.prepare(`
+      SELECT sha256 FROM assets WHERE id = ?
+    `).pluck().get(assetId) as string
+    sqlite.prepare(`
+      INSERT INTO asset_variants (
+        id, asset_id, storage_scope, status, object_key, input_sha256,
+        media_role, usage, width, height, format, quality, crop_identity,
+        recipe_version, protection_mode, watermark_profile,
+        watermark_config_digest, logo_digest, watermark_anchor,
+        sha256, byte_size, created_at, updated_at
+      ) VALUES (?, ?, 'PUBLIC', 'READY', ?, ?, 'return_photo', 'return-wall',
+                480, 877, 'webp', 82, 'return-wall', 'return-display-v1',
+                'none', 'none', 'none', 'none', 'none', ?, 10, ?, ?)
+    `).run(
+      'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+      assetId,
+      objectKey,
+      inputSha,
+      'd'.repeat(64),
+      NOW,
+      NOW,
+    )
+    const cache = new FakePublicMediaCache()
+    setPublicMediaCacheForTests(cache)
+
+    const result = await unpublishReturnPhoto(
+      sqlite,
+      new FakeMediaStorage(),
+      photo.id,
+      photo.version,
+      USER_ID,
+      NOW + 1,
+    )
+
+    expect(result.returnPhoto.publicationStatus).toBe('unpublished')
+    expect(result.operation).toMatchObject({
+      edgePurgeFileCount: 1,
+      edgePurgeStatus: 'COMPLETE',
+      operationType: 'UNPUBLISH',
+      status: 'DONE',
+    })
+    expect(cache.submittedUrls).toEqual([[
+      `https://public-media.ditedog.com/${objectKey}`,
+    ]])
+    expect(sqlite.prepare(`
+      SELECT edge_purge_task_id FROM publication_operations
+      WHERE id = ?
+    `).pluck().get(result.operation.operationId)).toBe('purge-task-1')
   })
 
   it('keeps return photos when the linked work is deleted', async () => {

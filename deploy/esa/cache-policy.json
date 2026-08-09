@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "rules": [
+    {
+      "id": "admin-host-bypass",
+      "priority": 10,
+      "hostScope": "admin-host",
+      "path": "/**",
+      "methods": ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"],
+      "edgeCache": "bypass",
+      "browserCacheSeconds": 0
+    },
+    {
+      "id": "app-api-session-bypass",
+      "priority": 20,
+      "hostScope": "public-and-admin-hosts",
+      "path": "/api/**",
+      "methods": ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"],
+      "edgeCache": "bypass",
+      "browserCacheSeconds": 0
+    },
+    {
+      "id": "nuxt-immutable-assets",
+      "priority": 30,
+      "hostScope": "public-host",
+      "path": "/_nuxt/**",
+      "methods": ["GET", "HEAD"],
+      "edgeCache": "cache",
+      "edgeCacheSeconds": 31536000,
+      "browserCacheSeconds": 31536000,
+      "queryString": "ignore-all",
+      "cache404Seconds": 60,
+      "serveStaleOnOriginError": false
+    },
+    {
+      "id": "public-ssr-html-bypass",
+      "priority": 40,
+      "hostScope": "public-host",
+      "path": "/**",
+      "methods": ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"],
+      "edgeCache": "bypass",
+      "browserCacheSeconds": 0
+    },
+    {
+      "id": "public-media-immutable",
+      "priority": 50,
+      "hostScope": "public-media.ditedog.com",
+      "path": "/prod/web/**",
+      "methods": ["GET", "HEAD"],
+      "edgeCache": "cache",
+      "edgeCacheSeconds": 2592000,
+      "browserCacheSeconds": 604800,
+      "queryString": "ignore-all",
+      "cache404Seconds": 60,
+      "serveStaleOnOriginError": false
+    },
+    {
+      "id": "public-media-deny-other-paths",
+      "priority": 60,
+      "hostScope": "public-media.ditedog.com",
+      "path": "/**",
+      "methods": ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"],
+      "edgeCache": "bypass",
+      "browserCacheSeconds": 0,
+      "deny": true
+    }
+  ]
+}

@@ -25,6 +25,9 @@ import {
   openDatabase,
 } from '../../server/utils/database'
 import {
+  setPublicMediaCacheForTests,
+} from '../../server/utils/public-media-cache'
+import {
   createManagedWork,
   replaceManagedDesignSheet,
   replaceManagedStudioPhotos,
@@ -35,7 +38,9 @@ import {
   retryPublicationCleanup,
   unpublishWork,
 } from '../../server/utils/runner/work-publication'
+import { recoverPendingOperations } from '../../server/utils/runner/operation-recovery'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
+import { FakePublicMediaCache } from '../helpers/fake-public-media-cache'
 import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
 
 const USER_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
@@ -59,7 +64,11 @@ function insertUser() {
   `).run(USER_ID, NOW, NOW, NOW)
 }
 
-function createWorkWithPhoto(width = 3200, height = 2400) {
+function createWorkWithPhoto(
+  width = 3200,
+  height = 2400,
+  environmentPrefix = 'test/t18-fixture',
+) {
   const work = createManagedWork(sqlite, {
     slug: 'publication-work',
     characterName: '团子',
@@ -73,7 +82,7 @@ function createWorkWithPhoto(width = 3200, height = 2400) {
     featured: false,
   }, NOW)
   const content = createSyntheticWatermarkPng()
-  const key = `test/t18-fixture/original/${ASSET_ID}/source.png`
+  const key = `${environmentPrefix}/original/${ASSET_ID}/source.png`
   sqlite.prepare(`
     INSERT INTO assets (
       id, role, status, private_object_key, sha256, byte_size,
@@ -221,6 +230,7 @@ beforeEach(async () => {
 })
 
 afterEach(() => {
+  setPublicMediaCacheForTests()
   sqlite.close()
   rmSync(directory, { force: true, recursive: true })
 })
@@ -407,6 +417,169 @@ describe('dual-bucket work publication operations', () => {
     expect(sqlite.prepare(`
       SELECT count(*) FROM asset_variants WHERE storage_scope = 'PUBLIC'
     `).pluck().get()).toBe(0)
+  })
+
+  it('persists exact ESA URLs before deletion and exposes purge progress separately', async () => {
+    const work = createWorkWithPhoto(3200, 2400, 'prod')
+    const published = await publishWork(
+      sqlite,
+      storage,
+      work.id,
+      work.version,
+      USER_ID,
+      NOW + 3_000,
+    )
+    let finishDescribe!: (status: 'Complete') => void
+    const cache = new FakePublicMediaCache()
+    cache.describeExactFilePurge = async () => await new Promise((resolve) => {
+      finishDescribe = resolve
+    })
+    setPublicMediaCacheForTests(cache)
+
+    const unpublishing = unpublishWork(
+      sqlite,
+      storage,
+      work.id,
+      published.work.version,
+      USER_ID,
+      NOW + 4_000,
+    )
+    await expect.poll(() => sqlite.prepare(`
+      SELECT edge_purge_status FROM publication_operations
+      WHERE operation_type = 'UNPUBLISH'
+      ORDER BY started_at DESC LIMIT 1
+    `).pluck().get()).toBe('PURGING')
+    expect(sqlite.prepare(`
+      SELECT publication_status FROM works WHERE id = ?
+    `).pluck().get(work.id)).toBe('unpublished')
+
+    finishDescribe('Complete')
+    const unpublished = await unpublishing
+    expect(unpublished.operation).toMatchObject({
+      status: 'DONE',
+      edgePurgeStatus: 'COMPLETE',
+      edgePurgeFailureReason: null,
+      edgePurgeFileCount: 12,
+    })
+    expect(cache.submittedUrls).toHaveLength(1)
+    expect(cache.submittedUrls[0]).toHaveLength(12)
+    expect(cache.submittedUrls[0]?.every(url => (
+      url.startsWith('https://public-media.ditedog.com/prod/web/')
+      && !url.includes('?')
+    ))).toBe(true)
+    expect(sqlite.prepare(`
+      SELECT edge_purge_task_id FROM publication_operations
+      WHERE id = ?
+    `).pluck().get(unpublished.operation.operationId)).toBe('purge-task-1')
+  })
+
+  it('keeps the page hidden when ESA purge fails and retries without another business write', async () => {
+    const work = createWorkWithPhoto(3200, 2400, 'prod')
+    const published = await publishWork(
+      sqlite,
+      storage,
+      work.id,
+      work.version,
+      USER_ID,
+      NOW + 3_000,
+    )
+    const cache = new FakePublicMediaCache()
+    cache.statuses = ['Failed']
+    setPublicMediaCacheForTests(cache)
+
+    const unpublished = await unpublishWork(
+      sqlite,
+      storage,
+      work.id,
+      published.work.version,
+      USER_ID,
+      NOW + 4_000,
+    )
+    expect(unpublished.work.publicationStatus).toBe('unpublished')
+    expect(unpublished.operation).toMatchObject({
+      status: 'FAILED',
+      failureCode: 'EDGE_PURGE_FAILED',
+      cleanupPendingCount: 0,
+      edgePurgeStatus: 'FAILED',
+      edgePurgeFailureReason: 'EDGE_PURGE_FAILED',
+      edgePurgeFileCount: 12,
+    })
+    const hiddenVersion = unpublished.work.version
+
+    cache.statuses = ['Complete']
+    const retried = await retryPublicationCleanup(
+      sqlite,
+      storage,
+      unpublished.operation.operationId,
+      unpublished.operation.version,
+      USER_ID,
+      NOW + 5_000,
+    )
+    expect(retried).toMatchObject({
+      status: 'DONE',
+      edgePurgeStatus: 'COMPLETE',
+      edgePurgeFailureReason: null,
+    })
+    expect(cache.submittedUrls).toHaveLength(2)
+    expect(sqlite.prepare(`
+      SELECT version FROM works WHERE id = ?
+    `).pluck().get(work.id)).toBe(hiddenVersion)
+  })
+
+  it('resumes an in-flight ESA purge after restart without resubmitting or republishing', async () => {
+    const work = createWorkWithPhoto(3200, 2400, 'prod')
+    const published = await publishWork(
+      sqlite,
+      storage,
+      work.id,
+      work.version,
+      USER_ID,
+      NOW + 3_000,
+    )
+    const cache = new FakePublicMediaCache()
+    cache.statuses = ['Failed']
+    setPublicMediaCacheForTests(cache)
+    const unpublished = await unpublishWork(
+      sqlite,
+      storage,
+      work.id,
+      published.work.version,
+      USER_ID,
+      NOW + 4_000,
+    )
+    const hiddenVersion = unpublished.work.version
+
+    sqlite.prepare(`
+      UPDATE publication_operations
+      SET status = 'CLEANING_PUBLIC', edge_purge_status = 'PURGING',
+          edge_purge_reason = NULL, failure_stage = NULL,
+          internal_error_code = NULL, internal_error_message = NULL,
+          completed_at = NULL, lease_owner = NULL, lease_expires_at = NULL
+      WHERE id = ?
+    `).run(unpublished.operation.operationId)
+    cache.statuses = ['Complete']
+
+    const summary = await recoverPendingOperations({
+      now: NOW + 5_000,
+      sqlite,
+      storage,
+    })
+    expect(summary.resumed).toBeGreaterThanOrEqual(1)
+    expect(sqlite.prepare(`
+      SELECT status, edge_purge_status AS edgePurgeStatus
+      FROM publication_operations WHERE id = ?
+    `).get(unpublished.operation.operationId)).toEqual({
+      edgePurgeStatus: 'COMPLETE',
+      status: 'DONE',
+    })
+    expect(cache.submittedUrls).toHaveLength(1)
+    expect(sqlite.prepare(`
+      SELECT publication_status AS publicationStatus, version
+      FROM works WHERE id = ?
+    `).get(work.id)).toEqual({
+      publicationStatus: 'unpublished',
+      version: hiddenVersion,
+    })
   })
 
   it('records an unexpected unpublish commit error as FAILED', async () => {
