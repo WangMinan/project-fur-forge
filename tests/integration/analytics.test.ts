@@ -26,7 +26,7 @@ import { insertAnalyticsEvent } from '../../server/utils/repository/analytics-re
 
 const NOW = Date.UTC(2026, 7, 9, 4, 0, 0)
 const DAY_MS = 24 * 60 * 60 * 1_000
-const SECRET = 't46-test-session-secret-is-long-enough'
+const SECRET = 'test-session-secret-for-t46-is-long-enough'
 const WORK_ID = '11111111-1111-4111-8111-111111111111'
 const CHARACTER_ID = '22222222-2222-4222-8222-222222222222'
 const PHOTO_ID = '33333333-3333-4333-8333-333333333333'
