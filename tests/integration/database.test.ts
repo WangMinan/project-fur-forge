@@ -473,7 +473,7 @@ describe('SQLite foundation', () => {
 })
 
 describe('database path boundaries', () => {
-  it('locks development and production to their documented files', () => {
+  it('locks development to its file and production to the persistent volume', () => {
     const cwd = resolve(tmpdir(), 'fur-forge-project')
 
     expect(resolveDatabaseFile({
@@ -484,6 +484,10 @@ describe('database path boundaries', () => {
       appEnv: 'production',
       databaseFile: PRODUCTION_DATABASE_FILE,
     }, cwd)).toBe(PRODUCTION_DATABASE_FILE)
+    expect(resolveDatabaseFile({
+      appEnv: 'production',
+      databaseFile: '/app/data/restored-20260810T010203Z.db',
+    }, cwd)).toBe('/app/data/restored-20260810T010203Z.db')
 
     expect(() => resolveDatabaseFile({
       appEnv: 'development',
@@ -493,6 +497,17 @@ describe('database path boundaries', () => {
       appEnv: 'production',
       databaseFile: resolve(cwd, 'studio.db'),
     }, cwd)).toThrow(/Production DATABASE_FILE/)
+    for (const databaseFile of [
+      '/app/data/nested/restored.db',
+      '/app/data/../restored.db',
+      '/app/backups/restored.db',
+      '/app/data/restored.sqlite',
+    ]) {
+      expect(() => resolveDatabaseFile({
+        appEnv: 'production',
+        databaseFile,
+      }, cwd)).toThrow(/Production DATABASE_FILE/)
+    }
   })
 
   it('requires tests to use an absolute temporary database', () => {

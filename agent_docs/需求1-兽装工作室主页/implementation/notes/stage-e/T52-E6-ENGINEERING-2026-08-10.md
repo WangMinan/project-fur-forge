@@ -62,3 +62,5 @@ T52-E6 的应用、Compose、宿主机 Nginx 模板、运维入口、Handbook �
 第二次提交 `47211e95` 的 Actions run `31326347449` 越过 image build、空卷 migrate、init-admin 和 dry preflight，但 app health 失败。原因是应用严格 Host 隔离，而容器 healthcheck 和宿主机 ready 命令直接请求 `127.0.0.1`，没有携带公开 Host；这在本地 production verify 中被与 base URL 相同的 loopback Host 遮住。修复为 healthcheck 使用 Node `http.get` 显式发送 `PUBLIC_BASE_URL` 的 Host，CI、目标机检查器和 Handbook 的 loopback ready 请求也显式携带公开 Host；没有放宽应用 Host 白名单。
 
 修复后用迁移完成的临时数据库启动现有 production output：携带 `Host: public.test.invalid` 的 loopback ready 返回 200，同一路径使用 `Host: 127.0.0.1:3000` 返回 421，证明 health 修复保留了 Host 隔离。
+
+第三次提交 `9353864a` 的 Actions run `31326725491` 中 `checks` 成功，image-build 也越过初始 health、备份、restore-verify、recover 和重启，但恢复到 `/app/data/ci-restored.db` 后应用退出。冻结代码仍把 production 数据库硬编码为 `/app/data/studio.db`，与 SPEC/TASKS/PLAN 已锁定的“恢复到新路径再切换”冲突。修复为只允许 `/app/data` 直属、规范化后的 `.db` 文件：保留 volume/path traversal 边界，同时允许经过 restore 校验的新数据库文件启动。
