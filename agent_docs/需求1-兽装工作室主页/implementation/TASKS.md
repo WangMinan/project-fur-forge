@@ -20,7 +20,7 @@ GATE-E 通过后才进入：
 >
 > T53-F1 参数确认 → F2 阿里云控制台 → F3 远程机部署/恢复演练 → F4 正式域名验收 → F5 用户签署与证据闭环。
 
-阶段 F 不再开发应用源码、迁移、Dockerfile、Compose、Nginx/ACME 冻结模板、运行时 Schema 或发布镜像。实际运维需要时，允许新增或调整独立小型运维脚本及其最小测试/文档；若必须改变应用、数据模型、公开行为或冻结契约，则停止 F、重新打开对应阶段 E 任务，修复后重跑 T49、T50 和 GATE-E。
+阶段 F 不再开发应用源码、迁移、Dockerfile、Compose、Nginx/ESA 冻结模板、运行时 Schema 或发布镜像。实际运维需要时，允许新增或调整独立小型运维脚本及其最小测试/文档；若必须改变应用、数据模型、公开行为或冻结契约，则停止 F、重新打开对应阶段 E 任务，修复后重跑 T49、T50 和 GATE-E。
 
 生产媒体规则以 [`../requirements/MEDIA-PUBLICATION-POLICY.md`](../requirements/MEDIA-PUBLICATION-POLICY.md) 为唯一事实源。阶段 F 人工步骤以 [`PRODUCTION-LAUNCH-HANDBOOK.md`](./PRODUCTION-LAUNCH-HANDBOOK.md) 为执行清单。
 
@@ -30,8 +30,8 @@ GATE-E 通过后才进入：
 - 不 force push、不硬 reset、不删除或清空 `.env`；
 - 不重写已经执行的迁移，只新增前向迁移；
 - 当前两只 OSS Bucket 可以直接切换权限，不保留旧匿名 URL 或开发站前向兼容；
-- 生产 Endpoint、浏览器上传 Endpoint 与 CDN 媒体 origin 分场景；
-- 下架、发布、CDN 刷新和清理使用持久状态与精确 manifest；
+- 生产 Endpoint、浏览器上传 Endpoint 与 ESA 媒体 origin 分场景；
+- 下架、发布、ESA purge 和清理使用持久状态与精确 manifest；
 - 阶段 E 负责所有产品代码、发布模板、核心命令、产品测试和 Review；阶段 F 主要填写目标环境值、运行入口、操作控制台和记录证据，可按前述边界补充独立运维脚本；
 - UI、媒体和公开投影必须做真实浏览器、三视口、console/network 与图片解码检查；
 - dated notes 记录事实与首次失败，不覆盖当前 SPEC、PLAN、TASKS 或 STATE；
@@ -76,7 +76,7 @@ GATE-E 通过后才进入：
 - [x] **T44**：取消 CSV 导出中心。
 - [x] **T45**：取消永久原图档案 UI。
 - [x] **T47**：取消高级媒体恢复/批量运维 UI，保留受控 CLI。
-- [x] **T48**：完成阿里云 CDN 与生产隔离调研；实现全部纳入阶段 E 的 T52-E1～E6。
+- [x] **T48**：完成阿里云生产边缘与隔离调研；当前 ESA 实现全部纳入 T52-E1～E6。
 
 ### T46 · 最小化第一方访问统计
 
@@ -131,69 +131,75 @@ _依赖：T51-F1；完成后继续 T52-E1。_
 
 ### T52 · 生产媒体与远程部署能力开发
 
+#### T52-E0 · ESA 方案重定向与服务器基础设施基线
+
+- [x] 根据用户选择把正式边缘方案收敛为 ESA NS、ESA 边缘 TLS、ESA 私有 OSS 回源和 ECS HTTP/80 origin；
+- [x] 完成官方文档核对并同步活文档、历史覆盖关系和 T52/T53 任务边界；
+- [x] 按用户明确授权卸载 `120.26.51.205` 的 acme.sh/续期 cron/本地证书目录，关闭 Nginx 443，把宿主机收敛为 HTTP/80 origin，并完成 `nginx -t`、service、端口与 Host 拒绝验证；
+- [x] 用户已配置 `public-media.ditedog.com` 同账号私有 OSS 回源，并已把 ECS origin 限制为 HTTP/80；业务侧不实现阿里云托管的回源 STS。
+
 #### T52-E1 · Endpoint 与运行时配置
 
 - [ ] `OSS_ENDPOINT` 只供服务端 SDK：杭州远程机为内网 Endpoint，本地为公网 Endpoint；
 - [ ] `OSS_UPLOAD_BASE_URL` 真正控制浏览器条件 PUT Host，不能含 `-internal`；
-- [ ] `MEDIA_BASE_URL` 在 production 只接受 CDN origin，拒绝原始 OSS Bucket 域名；
+- [ ] `MEDIA_BASE_URL` 在 production 固定为/只接受 `https://public-media.ditedog.com`，拒绝原始 OSS Bucket 域名；
 - [ ] 同步 `.env.example`、`.env.compose.example`、`config/runtime.example.json`、Schema、测试、production verify 和部署文档；
-- [ ] 保持应用静态 OSS/CDN AK/SK，不增加 ECS RAM Role 或客户端 STS；T52-E6 的 ACME DNS-only RAM Key 是宿主机独立 Secret，不属于应用 runtime。
+- [ ] 增加 ESA Site/API 最小权限配置；OSS 与 ESA API 使用独立静态服务端 RAM 凭据，不增加 ECS RAM Role，也不在业务侧实现 ESA 回源 STS。
 
-#### T52-E2 · OSS/CDN preflight 与权限验证程序
+#### T52-E2 · OSS/ESA preflight 与权限验证程序
 
 - [ ] 重写受控 preflight，不再要求 public-read 或原站匿名 200；
-- [ ] 自动检查两只原始 OSS 域名匿名 403、应用权限通过、越权拒绝、CDN 有效 URL 200；
-- [ ] 检查 Bucket ACL/BPA、Object ACL/Policy、CORS、生命周期和 CDN 只回源衍生 Bucket；
+- [ ] 自动检查两只原始 OSS 域名匿名 403、应用权限通过、越权拒绝、已发布 ESA 媒体 URL 200；
+- [ ] 检查 Bucket ACL/BPA、Object ACL/Policy、CORS、生命周期和 ESA 只回源衍生 Bucket；
+- [ ] 检查网页衍生 Bucket 只含允许公开展示的对象；检查 purge API 最小权限并拒绝域名/套餐等控制面越权；
 - [ ] 提供 dry-run、脱敏输出和非零退出码；阶段 F 可补诊断/证据采集包装器，但不得改变该入口的判定契约。
 
-#### T52-E3 · CDN 私有回源与约 24 小时 URL 鉴权
+#### T52-E3 · ESA 同账号私有 OSS 回源
 
-- [ ] 实现鉴权方式 A 的单一服务端 signer；
-- [ ] 实现 `CDN_URL_AUTH_ACTIVE_KEY`、`PRIMARY_KEY`、`SECONDARY_KEY`、`TTL_SECONDS=86400` 及轮换校验；
-- [ ] 所有公开 SourceSet/SSR/API 动态生成 CDN URL，不返回永久 OSS URL；
-- [ ] 有效、过期、篡改、缺签名和日志脱敏测试齐全；
-- [ ] 分享和永久 URL 明确后置。
+- [x] 范围确认：阿里云自动使用 STS 临时令牌和回源 `Authorization`，业务应用不申请、不保存、不轮换 STS；
+- [x] 范围确认：首版不做自定义边缘 URL 鉴权，后续需要时作为独立迭代；
+- [ ] 所有公开 SourceSet/SSR/API 使用稳定的 `public-media` ESA HTTPS URL，不返回原始 OSS URL 或私有 Object Key；
+- [ ] 固化网页衍生 Bucket 只保存已验证公开派生物的门禁，并验证原始 OSS 匿名拒绝、ESA 已发布媒体可读；
+- [ ] 同步 runtime、preflight、production verify、测试与控制台说明，不增加媒体鉴权 Key/TTL 配置；
+- [ ] 管理端登录、Session、Host/Origin/CSRF 等应用认证保持现有契约。
 
-#### T52-E4 · 缓存、下架与 CDN 强制撤销
+#### T52-E4 · 缓存、下架与 ESA 强制撤销
 
-- [ ] 固化查询参数、缓存、404 短缓存和禁用 stale 的目标配置及验证入口；
-- [ ] 下架先立即撤销页面投影，再精确删除 OSS 对象并提交 `RefreshObjectCaches`；
-- [ ] `Force=true`、`ObjectType=File`，持久保存无鉴权参数的精确 URL、任务 ID、状态和失败；
-- [ ] 使用 `DescribeRefreshTasks` 收敛，失败可重试，重启不丢 manifest；
-- [ ] 自动/集成测试区分页面立即下架、刷新中、已撤销和撤销失败。
+- [ ] 固化 `/_nuxt/**` 长缓存、管理/API/会话绕过、SSR HTML 初始绕过、媒体查询参数/长缓存、404 短缓存和禁用 stale 的 ESA 配置及验证入口；
+- [ ] 下架先立即撤销页面投影，再精确删除 OSS 对象并提交 `PurgeCaches(Type=file)`；
+- [ ] 持久保存精确 `public-media` URL、ESA `TaskId`、状态和稳定失败 reason；
+- [ ] 使用 `DescribePurgeTasks` 收敛，失败可重试，重启不丢 manifest；不做全站 purge 或前缀列举删除；
+- [ ] 自动/集成测试区分页面立即下架、purge 中、已撤销和撤销失败；撤销完成时间留给 T53 目标环境实测，不承诺 5～6 分钟。
 
 #### T52-E5 · 防盗刷、预算与可观测性准备
 
-- [ ] 固化 URL 鉴权为主、Referer 为辅的配置清单和验证脚本；
+- [ ] 固化 WAF/速率限制、源站保护和 HTTPS 强制的配置清单与验证脚本；
 - [ ] 提供页面字节数、冷/热缓存、请求量和峰值的测量入口，阶段 F 只填写实测阈值；
-- [ ] 准备 CDN/ECS/磁盘/证书/容器/ready 告警检查表与脱敏证据模板；
-- [ ] 证书监控必须覆盖到期时间、acme.sh root cron 存在性与最近续期结果、DNS 清理、Nginx config test 与 reload 失败；不得只监控证书文件存在；
-- [ ] 明确预算只通知、用量封顶有延迟、当前不购买高防或 ESA；
+- [ ] 准备 ESA 套餐/流量/源站 5xx/边缘 4xx/5xx/缓存命中/purge/边缘证书、ECS/磁盘/Nginx/容器/ready 告警检查表与脱敏证据模板；
+- [ ] 证书监控只针对 ESA 托管边缘证书与实际公开 Host；宿主机必须验证无 443、无 ACME 调度、Nginx config test/reload 和 HTTP origin 可用；
+- [ ] 明确 Free 只用于开发/验证，正式套餐与配额在 T53-F1/F2 当日确认；预算只通知、任何用量封顶/套餐配额都可能有统计延迟；
 - [ ] 不在代码中硬编码未经目标环境测量的费用阈值。
 
-#### T52-E6 · app-only Compose、宿主机 Nginx/ACME 与运维命令
+#### T52-E6 · app-only Compose、宿主机 HTTP-only Nginx 与运维命令
 
 - [ ] 把正式 Compose 收敛为唯一常驻 Nuxt/Nitro `app`；migrate、preflight、init、backup、restore 和 recover 使用同一冻结镜像的一次性容器，不运行 Nginx 容器或常驻 migrate 服务；
 - [ ] app 端口固定只绑定 `127.0.0.1:3000`，宿主机 Nginx upstream 固定代理该地址，安全组不开放 3000；保留单实例、非 root、持久卷和健康检查；
-- [ ] 记录并兼容宿主机现有 Nginx `1.30.4`、systemd 服务、配置目录和安装/升级/回滚入口；不依赖第三方动态模块，也不要求重装；
-- [ ] 记录并复用 acme.sh `3.1.5`、Let's Encrypt、`dns_ali` 和现有 `ditedog.com` / `*.ditedog.com` ECDSA 证书；不改用 Certbot 或 `nginx-module-acme`，不要求重新签发当前有效证书；
-- [ ] 复用现有每 6 小时执行 `acme.sh --cron` 的 root cron；确认只有一份调度，不新增 systemd timer；
-- [ ] 继续通过 `--install-cert --ecc` 使用 `/etc/nginx/ssl/ditedog.com/` 稳定 key/fullchain 路径；reload command 唯一语义为 `/usr/sbin/nginx -t && /usr/bin/systemctl reload nginx`，Nginx 不读取 acme.sh 内部证书目录；
-- [ ] 通配符只用于证书覆盖；正式 Nginx `server_name` 只列公开/管理精确域名，其他 Host/SNI 由默认 server 拒绝；
-- [ ] 为 ACME 定义独立 DNS-only RAM 权限模板：只在承载公开/管理域名的 DNS zone（跨 zone 时逐个列出）允许 `alidns:DescribeDomainRecords`、`alidns:AddDomainRecord`、`alidns:DeleteDomainRecord`；`Ali_Key`/`Ali_Secret` 只进入 root 限权 config-home，不进入应用 `.env`、Compose、容器或证据；
-- [ ] 记录 AliDNS 不能把新增/删除进一步限制为 TXT 的剩余风险，并用专用 Key、最小 zone、DNS 审计和异常监控收敛；不得为省事扩大到 AliDNS FullAccess；
-- [ ] 媒体域名 TLS 明确由阿里云 CDN 单独终止；DNS-01 不要求开放 80 或提前切公开/管理 A 记录，80 仅作正常 HTTP→HTTPS 跳转；
+- [ ] 固化宿主机 Nginx `1.30.4`、systemd 服务、配置目录和安装/升级/回滚入口；不依赖第三方动态模块；
+- [ ] Nginx 只监听 HTTP/80，不配置 443、证书或 HTTP→HTTPS 跳转；ESA 到 ECS 固定 HTTP/80，客户端 HTTPS 强制和证书由 ESA 边缘承担；
+- [ ] 正式 `server_name` 只列公开/管理精确域名，媒体 Host 和未知 Host 返回 `421`；移除 wildcard 路由；
+- [ ] 代理头冻结为客户端 scheme `https`，只信任受控 Nginx/ESA 代理链；验证 Host/Origin/CSRF/Session 在 ESA 后不被错误改写；
+- [ ] 部署产物不包含 acme.sh、Certbot、DNS API Secret、证书目录、续期 cron/timer 或证书 reload 逻辑；
 - [ ] 完成 migrate、init-admin、preflight、backup、restore-verify、recover、升级和回滚命令；
 - [ ] 准备用户授权后发布/传送冻结镜像的唯一入口，能够在远程拉取/载入前核对镜像摘要且不远程重建；
-- [ ] 在本地/受控环境完成空卷、迁移、重启、备份到新路径、恢复验证、旧镜像回滚、Host/proxy header、loopback 隔离、Nginx config test 和证书 reload 失败演练；
+- [ ] 在本地/受控环境完成空卷、迁移、重启、备份到新路径、恢复验证、旧镜像回滚、Host/proxy header、loopback 隔离、Nginx config test/reload 和 443 关闭验证；
 - [ ] Handbook 中每个核心远程步骤都有基线命令、预期结果、停止条件和回滚入口；便利性或目标环境诊断脚本可在阶段 F 补充；
 - [ ] 不创建 `v*` tag，不在阶段 E 未授权发布正式镜像。
 
 ### T49 · 同一 SHA CI 与独立综合 Review
 
 - [ ] 基于届时最新 `main` 复现历史 Actions 失败并修复；
-- [ ] frozen install、lint、typecheck、unit、integration、production build、production verify、secret scan、app-only Compose、宿主机 Nginx/ACME 部署契约静态检查全部通过；
-- [ ] 检查部署产物不含 Nginx 容器、Certbot/`nginx-module-acme` 集成、ACME Secret、第二份续期调度或直接读取 acme.sh 内部证书目录；
+- [ ] frozen install、lint、typecheck、unit、integration、production build、production verify、secret scan、app-only Compose、宿主机 HTTP-only Nginx/ESA 部署契约静态检查全部通过；
+- [ ] 检查部署产物不含 Nginx 容器、acme.sh、Certbot、证书/ACME Secret 或续期调度；
 - [ ] `checks`、`image-build`、`e2e` 在同一个最新 SHA 成功，`skipped` 不算成功；
 - [ ] 新上下文独立 Review 阶段 D 最终代码以及 T46、T51、T52-E1～E6；
 - [ ] 保留首次 finding/NOT PASS，修复后逐项重测，不由实现者代签；
@@ -205,8 +211,8 @@ _依赖：T46、T51、T52-E1～E6。_
 - [ ] 管理 `localhost` / 公开 `127.0.0.1` 与等价预览 Host 分开验证；
 - [ ] 三固定视口覆盖全部公开页和主要管理流程；
 - [ ] 覆盖成功、409、失败、恢复、重载、图片解码、横竖图、键盘/焦点、减少动效、console/network；
-- [ ] 重放作品、返图、Hero、profile、reconcile 和 CDN refresh 的中断/重复重启；
-- [ ] 验证 Endpoint 拆分、CDN 签名、下架状态、app loopback、宿主机 Nginx 代理、acme.sh cron/稳定证书路径/安全 reload、部署命令、备份/恢复和无敏感泄漏；
+- [ ] 重放作品、返图、Hero、profile、reconcile 和 ESA purge 的中断/重复重启；
+- [ ] 验证 Endpoint 拆分、ESA 媒体访问、下架状态、app loopback、宿主机 HTTP-only Nginx 代理、边缘 TLS/源站保护契约、安全 reload、部署命令、备份/恢复和无敏感泄漏；
 - [ ] 形成同一 SHA 的 Review 记录和 artifact 清单。
 _依赖：T49。_
 
@@ -214,7 +220,7 @@ _依赖：T49。_
 
 - [ ] T46、T51、T52-E1～E6、T49、T50 全部关闭；
 - [ ] 远程 `.env` 所需变量名、类型、必填条件和 Secret 边界均已冻结；
-- [ ] 现有 Nginx/acme.sh 兼容基线、Let's Encrypt server、DNS-only RAM 权限、config-home/稳定证书路径、root cron 和安全 reload 均已记录，真实 ACME Secret 不进入 artifact；
+- [ ] ESA NS/边缘 TLS/HTTP origin、精确 Host、源站保护、宿主机无 ACME/443 和安全 reload 基线均已记录；
 - [ ] Handbook 不再包含“待开发”“以后补命令”或要求用户现场写代码的步骤；
 - [ ] 目标发布 SHA、镜像摘要、回滚镜像和 artifact 清单唯一；
 - [ ] 工作区、跟踪分支和远端 SHA 一致，发布产物守卫干净；
@@ -224,9 +230,9 @@ _依赖：T49。_
 
 ### T53-F1 · 上线参数与人工确认
 
-- [ ] 用户填写真实公开/管理/媒体域名、ICP备案号/链接和公安备案状态；
+- [ ] 用户填写真实公开/管理域名、ICP备案号/链接和公安备案状态；公开媒体域名固定为 `public-media.ditedog.com`；
 - [ ] 用户确认正式 Logo、Hero、作品、返图和备案显示；
-- [ ] 用户在阿里云/远程 Secret 中创建并保存 CDN 主/备 Key、应用 AK/SK、Session Secret；另核对现有 ACME 联系邮箱、DNS-only RAM Secret 的宿主机保存位置与轮换责任；
+- [ ] 用户在远程 Secret 中保存 ESA Site/purge 最小权限 AK/SK、OSS AK/SK 和 Session Secret；
 - [ ] 用户确认月度预算、异常费用容忍和待实测的封顶原则；
 - [ ] 用户选择并明确授权 GATE-E 冻结镜像的发布/传送方式；未授权时不得进入 F3；
 - [ ] 核对发布 SHA/镜像摘要，阶段 F 不切换到未通过 GATE-E 的构建。
@@ -234,10 +240,11 @@ _依赖：GATE-E、备案审批/同步。_
 
 ### T53-F2 · 阿里云控制台人工配置
 
-- [ ] 用户按 Handbook 配置 CDN 私有 OSS 回源、URL 鉴权、查询参数、缓存、Referer、保守初始用量封顶和告警；F3 目标环境实测后再校准阈值；
+- [ ] 用户把 wildcard DNS 收敛为公开/管理精确记录，复核已经生效的 ECS HTTP/80 回源和 ESA 边缘 HTTPS；
+- [ ] 用户按 Handbook 复核 `public-media` 同账号私有 OSS 回源，并配置缓存、源站保护/WAF、正式套餐、保守初始用量封顶和告警；F3 目标环境实测后再校准阈值；
 - [ ] 用户把两只现有 Bucket 改为 private + BPA，核对 Object ACL/Policy、CORS、生命周期和 RAM；
-- [ ] 用户核对现有 ACME RAM 身份；只给承载公开/管理域名的 DNS zone（跨 zone 时逐个列出）的 `DescribeDomainRecords`、`AddDomainRecord`、`DeleteDomainRecord`，若不满足再收紧或新建，不得复用应用 AK/SK 或授予 AliDNS FullAccess；
-- [ ] 用户核对/完成公开与管理 DNS、媒体 CNAME/CDN 侧证书和 DDoS 基础防护观察项；已提前存在的 `ditedog.com A` 只作为现状复核，不提前关闭本任务；DNS-01 挑战记录由 acme.sh 自动创建/删除，不手工长期保留；
+- [ ] 用户为应用建立独立的 ESA purge RAM 凭据，按阿里云实际支持的 action/resource 粒度收敛到 `PurgeCaches`/`DescribePurgeTasks`；若控制台暂不支持按 Site 收敛，记录实际权限边界，且不授予 DNS、证书、套餐等无关写权限；
+- [ ] 用户核对/完成公开与管理 DNS、`public-media` CNAME、ESA 边缘证书和基础防护；已提前存在的 NS/CNAME/A 只作为现状复核，不提前关闭本任务；
 - [ ] 每步保留脱敏截图/任务 ID，不把“已提交”写成“已完成”。
 _依赖：T53-F1。_
 
@@ -246,23 +253,22 @@ _依赖：T53-F1。_
 - [ ] 在远程开发机填写生产 `.env`，只使用 GATE-E 冻结的变量；
 - [ ] 按 F1 授权和 T52-E6 冻结入口发布/传送镜像；远程拉取/载入后核对摘要，不重新构建；
 - [ ] 使用该固定镜像执行 migrate、preflight、init-admin、启动和 ready；
-- [ ] 复核现有 Nginx `1.30.4`、acme.sh `3.1.5`、Let's Encrypt wildcard 证书、`dns_ali` 和稳定证书路径；当前证书有效时不重装、不重签；
-- [ ] 验证现有每 6 小时 root cron 是唯一调度，config-home 为 root `0700`、Secret 文件 `0600`；把续期 reload command 收紧为先 `nginx -t` 再 reload，并增加证书到期/续期失败可见性；
-- [ ] 把正式 Nginx `server_name` 收敛到公开/管理精确域名；其他 Host/SNI 由默认 server 拒绝，证书可继续使用 wildcard；
-- [ ] Compose 只有一个常驻 app，`127.0.0.1:3000` 可被宿主机 Nginx 访问但不能从公网访问；80 只重定向 HTTPS，ACME 不依赖 80；
+- [ ] 复核 Nginx `1.30.4` 的 HTTP-only 配置、systemd 状态、无 acme.sh/证书/续期 cron、80 监听和 443 关闭；
+- [ ] 把正式 Nginx `server_name` 收敛到公开/管理精确域名；其他 Host 以及媒体 Host 由默认/专用 server 拒绝；
+- [ ] Compose 只有一个常驻 app，`127.0.0.1:3000` 可被宿主机 Nginx 访问但不能从公网访问；ESA 通过 80 回源，客户端 HTTPS 只在边缘终止；
 - [ ] 在不切正式 DNS 的目标环境测量冷/热缓存、页面字节数和峰值，据此校准 F2 初始用量封顶与告警；
 - [ ] 完成空卷、持久卷、备份、恢复到新路径、升级、旧镜像回滚和进程恢复演练；
 - [ ] 验证 ECS 服务端走杭州内网 Endpoint，浏览器 PUT 仍走公网 Bucket 域名；
 - [ ] 若实际运维需要，受控新增/调整独立小脚本及最小测试/文档：默认 dry-run、脱敏、目标明确、可回滚，单独提交并记录验证；
-- [ ] 不热改应用源码、容器内文件、迁移、运行时契约、Compose、Nginx/ACME 冻结模板或发布镜像。
+- [ ] 不热改应用源码、容器内文件、迁移、运行时契约、Compose、Nginx/ESA 冻结模板或发布镜像。
 _依赖：T53-F2。_
 
 ### T53-F4 · 正式域名全链验证
 
-- [ ] 原始 OSS 匿名 403、有效 CDN 200、过期/篡改/缺签名 403；
-- [ ] 查询参数收敛、Referer、CORS 条件 PUT、页面立即下架和约 5～6 分钟强制刷新通过；
+- [ ] 原始 OSS 匿名 403，已发布 ESA 媒体 200，未发布/已撤销媒体不可读；
+- [ ] 查询参数收敛、CORS 条件 PUT、页面立即下架和 ESA purge 目标环境实测通过并记录完成时长；
 - [ ] 三视口、双 Host、全部公开页、主要管理流程、统计隐私、console/network 通过；
-- [ ] 公开/管理 TLS 链、SAN、有效期与 SNI 正确；app 端口公网不可达，未知 Host/SNI 拒绝；acme.sh cron、最近续期结果、TXT 清理、稳定证书路径和 Nginx 安全 reload 监控通过；
+- [ ] ESA 公开/管理/媒体边缘 TLS 链、SAN 与有效期正确；ECS 443/app 端口公网不可达，未知 Host 拒绝，源站保护和 Nginx 安全 reload 监控通过；
 - [ ] 告警、预算通知、用量封顶、备份/恢复和回滚证据齐全；
 - [ ] 发现冻结应用/契约缺陷时停止 F，退回 E 修复并重跑 T49/T50/GATE-E；仅运维脚本缺口可留在 F 受控补充。
 _依赖：T53-F3。_
@@ -271,7 +277,7 @@ _依赖：T53-F3。_
 
 - [ ] 用户在正式域名完成浏览、上传、发布、下架、冲突、失败和恢复操作；
 - [ ] 用户确认“有点小狗”导航、正式素材、备案、统计含义和隐私文案；
-- [ ] 用户确认约 24 小时签名 URL 与约 5～6 分钟服务器侧撤销语义；
+- [ ] 用户确认稳定 ESA 媒体 URL、页面立即下架与 T53 实测的 ESA 服务器侧撤销语义；
 - [ ] 未关闭 P0/P1 finding 为 0，接受的 follow-up 明确登记；
 - [ ] 更新验收证据、checkbox、STATE 和历史 notes；允许单独记录运维脚本提交，若需产品/应用代码或冻结契约变更则返回 E；
 - [ ] 用户签署“正式上线就绪”。

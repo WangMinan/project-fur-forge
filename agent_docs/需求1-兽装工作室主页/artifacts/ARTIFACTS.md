@@ -34,10 +34,11 @@ T35–T37 尚无独立 Review 签署；该门禁并入 T49，不能用用户验�
 
 ## 阶段 E/F 已完成的文档产物
 
-- 用户生产决策：[`../implementation/notes/stage-e/STAGE-E-PRODUCTION-DECISIONS-2026-08-09.md`](../implementation/notes/stage-e/STAGE-E-PRODUCTION-DECISIONS-2026-08-09.md)；
+- 用户生产决策：[`../planning/ESA-PRODUCTION-DECISION-2026-08-09.md`](../planning/ESA-PRODUCTION-DECISION-2026-08-09.md)；
 - 阶段边界调整：[`../implementation/notes/stage-e/STAGE-E-F-BOUNDARY-2026-08-09.md`](../implementation/notes/stage-e/STAGE-E-F-BOUNDARY-2026-08-09.md)；
-- 宿主机 Nginx/ACME 决策：[`../implementation/notes/stage-e/STAGE-E-TLS-DECISION-2026-08-09.md`](../implementation/notes/stage-e/STAGE-E-TLS-DECISION-2026-08-09.md)；
-- 阿里云官方调研：[`../planning/ALIYUN-PRODUCTION-RESEARCH-2026-08-09.md`](../planning/ALIYUN-PRODUCTION-RESEARCH-2026-08-09.md)；
+- 当前 ESA 生产方案：[`../planning/ESA-PRODUCTION-DECISION-2026-08-09.md`](../planning/ESA-PRODUCTION-DECISION-2026-08-09.md)；
+- 服务器 ESA/HTTP-origin 切换记录：[`../implementation/notes/stage-e/T52-ESA-INFRASTRUCTURE-TRANSITION-2026-08-09.md`](../implementation/notes/stage-e/T52-ESA-INFRASTRUCTURE-TRANSITION-2026-08-09.md)；
+- ESA/宿主机切换证据：[`../implementation/notes/stage-e/T52-ESA-INFRASTRUCTURE-TRANSITION-2026-08-09.md`](../implementation/notes/stage-e/T52-ESA-INFRASTRUCTURE-TRANSITION-2026-08-09.md)；
 - 上线前 Handbook：[`../implementation/PRODUCTION-LAUNCH-HANDBOOK.md`](../implementation/PRODUCTION-LAUNCH-HANDBOOK.md)；
 - 重写后的生产 OSS 预检契约：[`../implementation/OSS-PREFLIGHT.md`](../implementation/OSS-PREFLIGHT.md)；
 - `.env.example` 与 `.env.compose.example` 的 Endpoint 场景说明。
@@ -57,7 +58,7 @@ T35–T37 尚无独立 Review 签署；该门禁并入 T49，不能用用户验�
 
 | 任务 | 产物 |
 | --- | --- |
-| T52-E1～E6 | 配置、preflight、CDN 鉴权/撤销、监控准备、app-only Compose 和宿主机 Nginx/acme.sh 完整远程部署包 |
+| T52-E1～E6 | 配置、preflight、ESA 鉴权/purge、监控准备、app-only Compose 和宿主机 HTTP-only Nginx 完整远程部署包 |
 | T49/T50/GATE-E | 同一 SHA CI、独立 Review、最终回归与上线产物冻结 |
 | T53-F1～F5 | 用户参数、阿里云控制台、远程机部署、正式验证和最终验收 |
 
@@ -66,5 +67,5 @@ T35–T37 尚无独立 Review 签署；该门禁并入 T49，不能用用户验�
 - 代码自测、独立 Review、用户验收和正式上线是四种不同证据；
 - dated note 不覆盖活文档；
 - 本地通过不等于远端 Actions 全绿；
-- 控制台截图不得包含 Secret、完整签名 URL、私有对象键或个人信息；
+- 控制台截图不得包含 Secret、原始 OSS 签名 URL、私有对象键或个人信息；
 - 发布前的逐条证据位置以 Handbook 为准。

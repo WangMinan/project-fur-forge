@@ -1,6 +1,6 @@
 # 兽装工作室官网与管理端技术方案
 
-> **资料边界**：这是 2026-07-28 外部讨论形成的技术方案输入，不是本仓库的实施契约。当前有效范围、页面、数据、OSS 安全边界、URL、媒体发布和运维策略一律以 [`requirements/SPEC.md`](../../requirements/SPEC.md)、[`planning/PLAN.md`](../../planning/PLAN.md)、[`implementation/TASKS.md`](../../implementation/TASKS.md) 与 [`STATE.md`](../../STATE.md) 为准；生产设计细化见 [`.design/README.md`](../../.design/README.md)。本文中的联系表单、公告、Nuxt UI、CDN 私有回源或其他未被正式文档接纳的建议不得直接进入 TASKS/实现。
+> **资料边界**：这是 2026-07-28 外部讨论形成的技术方案输入，不是本仓库的实施契约。当前有效范围、页面、数据、OSS 安全边界、URL、媒体发布和运维策略一律以 [`requirements/SPEC.md`](../../requirements/SPEC.md)、[`planning/PLAN.md`](../../planning/PLAN.md)、[`implementation/TASKS.md`](../../implementation/TASKS.md) 与 [`STATE.md`](../../STATE.md) 为准；生产设计细化见 [`.design/README.md`](../../.design/README.md)。本文中的联系表单、公告、Nuxt UI、旧边缘方案或其他未被正式文档接纳的建议不得直接进入 TASKS/实现。
 
 ## 1. 结论
 
@@ -10,7 +10,7 @@
 - 管理端：`/admin/**` 客户端渲染，使用独立布局和 Nuxt UI。
 - 服务端：Nuxt Nitro Server API，承担鉴权、CRUD、发布、OSS 签名和联系表单。
 - 数据库：SQLite + Drizzle ORM + `better-sqlite3`，数据库文件挂载到持久卷。
-- 媒体：阿里云 OSS，自第一天启用；浏览器通过短期预签名 URL 直传，公开访问通过 CDN 自定义域名。
+- 媒体：阿里云 OSS，自第一天启用；浏览器通过短期预签名 URL 直传，公开访问通过独立媒体域名。
 - 部署：开发机完成 Docker 多阶段构建，生产机只拉取/加载镜像并运行，不在生产机安装依赖或构建 Nuxt。
 
 当前阶段不引入 Spring Boot、Go 独立 API、PostgreSQL、Redis、消息队列或微服务。未来业务复杂度上升时，可在不重写 Nuxt 前端的前提下抽离 Nitro API。
@@ -23,7 +23,7 @@
 ├─ /admin 管理端 ──────────> Nitro API ──────> SQLite
 └─ 图片直传 ───────────────> OSS 上传域名
                                       │
-公开页面 <──── Nuxt Image / CDN <──── OSS 私有源站
+公开页面 <──── 边缘媒体域名 <──── OSS 私有源站
 
 反向代理（Nginx/Caddy）
 └─ HTTPS、Host、X-Forwarded-*、静态缓存头、请求限流
@@ -235,12 +235,12 @@ Docker
 
 ### 8.1 域名和权限
 
-- OSS Bucket 使用私有权限。
-- `upload.example.com`：CNAME 到 OSS，用于预签名 PUT/HEAD。
-- `media.example.com`：CDN 加速域名，回源私有 OSS。
-- 中国大陆 Bucket 的自定义域名需要完成 ICP 备案和 HTTPS 证书配置。
+- 私有原图与网页衍生 Bucket 上线时都使用 private + Block Public Access。
+- 管理员预签名 PUT/HEAD 直连私有原图 Bucket 的公网 OSS 域名，不增加上传专用 CNAME。
+- `public-media.ditedog.com` 由 ESA 同账号私有回源网页衍生 Bucket；阿里云自动完成回源 STS 鉴权，业务应用不处理 STS。
+- 客户端 HTTPS 由 ESA 边缘证书终止；首版公开媒体不做自定义边缘 URL 鉴权。
 - OSS CORS 只允许正式站点和必要的开发 Origin，开放 `PUT`、`GET`、`HEAD`，暴露 `ETag`。
-- OSS AccessKey 仅存在服务端运行环境；若部署在阿里云 ECS，优先使用 RAM 角色。
+- OSS AccessKey 仅存在服务端运行环境；首版沿用独立静态 AK/SK，不引入 ECS RAM 角色。
 
 ### 8.2 上传流程
 
@@ -280,7 +280,7 @@ Docker
 - 前端路由中间件只用于界面跳转，不能代替服务端授权。
 - 登录、联系表单和预签名接口分别限流。
 - 所有写请求校验 `Origin`/CSRF Token。
-- CSP 仅允许本站脚本、OSS/CDN 图片域名和上传连接域名。
+- CSP 仅允许本站脚本、公开媒体域名和上传连接域名。
 - Nitro API 请求体限制在较小范围，图片不经过 API。
 - 日志中不得打印密码、Session、AccessKey、预签名 URL 或完整联系信息。
 

@@ -76,8 +76,8 @@
 - 最小化第一方访问统计；
 - 导航品牌“有点小狗”、备案/页脚配置和正式素材校准；
 - 作品页保持紧凑的图片优先节奏；低分辨率设定图保留完整原图并在发布时生成私有 FFmpeg Lanczos 适配源，不以尺寸笼统阻断上传或发布；
-- Endpoint 拆分、OSS/CDN preflight、短期 URL signer、下架强制刷新和恢复；
-- 成本/监控测量入口、app-only Compose、宿主机 Nginx、acme.sh/dns_ali、运维命令和回滚包；
+- Endpoint 拆分、OSS/ESA preflight、短期 URL signer、下架精确 purge 和恢复；
+- 成本/监控测量入口、app-only Compose、宿主机 HTTP-only Nginx、ESA 边缘/源站配置、运维命令和回滚包；
 - GitHub Actions 同一 SHA 全绿、新上下文综合 Review 和最终 E2E；
 - GATE-E 冻结唯一上线 SHA、镜像、环境契约、Handbook 与回滚入口。
 
@@ -93,10 +93,10 @@
 
 - 复用现有两只杭州 OSS Bucket；
 - 两只均 private + Bucket Block Public Access；
-- 原图 Bucket 永不向 CDN 授权；
-- 衍生 Bucket 只保存 READY 网页媒体，由 CDN 同账号私有回源；
-- 正式网页只使用约 24 小时 CDN 鉴权 URL，不使用永久 OSS URL；
-- 下架页面立即撤销，CDN 服务器侧通常约 5～6 分钟强制刷新完成；
+- 原图 Bucket 永不作为公开媒体 origin；网页衍生 Bucket 只能保存允许公开展示的派生对象；
+- 衍生 Bucket 只保存 READY 网页媒体，由 ESA 同账号私有回源；
+- 正式网页只使用 ESA HTTPS 媒体 URL，不使用原始 OSS URL；首版不做自定义边缘 URL 鉴权；
+- 下架页面立即撤销，ESA 精确 purge 完成时间由正式环境实测；
 - 不保留旧匿名 URL 兼容，开发站暂时失效可接受；
 - 分享与长期 URL 后置。
 
@@ -104,17 +104,17 @@
 
 - 杭州 ECS 服务端使用 OSS 内网 Endpoint；
 - 本地开发和管理浏览器上传使用公网 Endpoint/Bucket 域名；
-- 公开媒体使用 CDN 域名；
-- 保持当前应用 OSS/CDN AK/SK；为宿主机 ACME 单独使用 DNS-only RAM API Key，不复用应用凭据，也不把它放进应用 `.env` 或容器；
-- 不做异地灾备，不默认购买高防或引入 ESA。
+- 公开媒体使用 `public-media.ditedog.com` ESA 域名；
+- 保持静态服务端凭据：OSS 与 ESA purge 分别使用最小权限 RAM，媒体鉴权 Key 独立；不引入 ECS RAM Role；
+- 不做异地灾备或跨云多边缘；Free 仅用于开发/验证，正式套餐在 T53 确认。
 
 ### 7.3 远程部署与验收
 
-- 写入备案和三个正式域名；公开/管理域名复用宿主机现有 `acme.sh + dns_ali`、DNS-01 证书与续期 cron，媒体域名 TLS 在 CDN 侧单独终止；
+- 写入备案和公开/管理精确域名；ESA 边缘托管 TLS，ECS 只提供 HTTP/80 origin；宿主机不保留 ACME/证书/443；
 - 只运行一个常驻 Nuxt/Nitro 容器，app 端口仅绑定宿主机 loopback，由宿主机 systemd Nginx 代理；
 - 空卷 migrate/init/ready；
 - 备份、恢复、升级、旧镜像回滚；
-- CDN URL 鉴权、查询参数收敛、用量封顶、预算和监控；
+- ESA 托管私有 OSS 回源、缓存规则、SDK 精确 purge、源站保护、套餐/预算和监控；
 - 按 [`../implementation/PRODUCTION-LAUNCH-HANDBOOK.md`](../implementation/PRODUCTION-LAUNCH-HANDBOOK.md) 逐项演练；
 - 用户在目标环境真实使用验收；
 - 只追加脱敏证据、checkbox 和状态记录，不在 F 中修代码。
@@ -123,7 +123,7 @@
 
 - 公开 DTO 只包含公开展示所需字段；
 - 私有联系人、返图授权、私有 Object Key、私有 OSS 签名 URL、原文件名、敏感 EXIF、AK/SK、Session 与内部错误不公开；
-- T52-E3 完成后公开响应可包含当前页面使用的短期 CDN 鉴权 URL，但完整 URL 不记录到日志/审计/artifact；
+- 公开响应可以包含稳定的 ESA 媒体 URL，但不记录原始 OSS 签名 URL、私有 Object Key 或任何 Secret；
 - 公开价格只展示人民币最小单位，不执行交易；
 - 管理响应/预览/错误 `no-store`；
 - 统计严格数据最小化与 90 天滚动保留。
@@ -137,21 +137,21 @@
 - 独立展会系统或通用回收站；
 - 公开原图下载或动态 `x-oss-process` 媒体；
 - 永久匿名媒体 URL；
-- 当前阶段的异地灾备、高防、ESA、消息队列或常驻 worker。
+- 当前阶段的异地灾备、高防、跨云多边缘、消息队列或常驻 worker。
 
 ## 10. 技术基线
 
 - Nuxt 4、Vue 3、Nitro Node Server；
 - Node.js 24、pnpm 11、TypeScript strict、Zod；
 - SQLite、Drizzle、单实例；
-- 阿里云 OSS 双职责 Bucket + CDN；
+- 阿里云 OSS 双职责 Bucket + ESA；
 - FFmpeg 仅用于必要私有预处理/确认后的大图适配；
-- app-only Docker Compose、宿主机 Nginx/systemd、`acme.sh + dns_ali`、Playwright、Vitest、GitHub Actions。
+- app-only Docker Compose、宿主机 HTTP-only Nginx/systemd、ESA 边缘 TLS、Playwright、Vitest、GitHub Actions。
 
 ## 11. 完成定义分层
 
 产品阶段完成要求范围已实现、关键失败/隐私/恢复有证据、用户完成对应验收、活文档一致。独立 Review 与用户验收必须分别记录。
 
-正式上线还必须满足：同一最新 SHA CI 全绿、目标空卷和 Compose 可运行、两只 Bucket/CDN 权限真实验证、域名/TLS/监控/预算/回滚完成、正式素材三视口通过、用户真实使用验收。
+正式上线还必须满足：同一最新 SHA CI 全绿、目标空卷和 Compose 可运行、两只 Bucket/ESA 权限真实验证、域名/边缘 TLS/源站保护/监控/预算/回滚完成、正式素材三视口通过、用户真实使用验收。
 
 阶段 D 已完成；GATE-E 与 T53-F1～F5 关闭前不得宣布正式上线就绪。

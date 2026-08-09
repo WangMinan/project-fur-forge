@@ -10,7 +10,7 @@
 - 私有/衍生对象都有数据库身份，不能只靠 Object Key；
 - 公开 DTO 使用字段白名单；
 - 可并发修改资源使用显式版本；
-- OSS/CDN 副作用通过持久 operation 收敛；
+- OSS/ESA 副作用通过持久 operation 收敛；
 - 迁移只向前，不修改已执行历史；
 - 不预埋万能 JSON、CMS、重定向、回收站、统计维度或通用批任务。
 
@@ -42,7 +42,7 @@
 - `protection_mode=watermark`：作品/领养/展会 `recipe-v2` + 活动 `brand-centered-v2`；
 - 私有 preprocess 不能被公开投影选中；`design-sheet-upscale-lanczos-v1` 按原始资产摘要与目标几何保存不可变低分辨率设定图适配源，后续公开变体只记录该 READY 处理源的 `source_variant_id`。
 
-数据库保存不可变对象身份，不保存 T52-E3 动态生成的短期 CDN 签名 URL。
+数据库保存不可变对象身份；公开响应用 `MEDIA_BASE_URL` 和相对 Object Key 组装稳定的 ESA HTTPS URL。
 
 ### `watermark_profiles`、`site_branding`、`site_hero_slides`
 
@@ -54,9 +54,9 @@ profile 不可变，`site_branding` 指向活动 profile；Hero 保存 placement
 
 ### operation 与审计
 
-publication、watermark、reconcile、return operation 保存请求版本、状态/进度、失败、精确清理对象、attempt、lease、heartbeat、recovery reason、重试和时间。T52-E4 在现有模型上扩展 CDN refresh manifest/task ID/status，不新建第二套状态机。
+publication、watermark、reconcile、return operation 保存请求版本、状态/进度、失败、精确清理对象、attempt、lease、heartbeat、recovery reason、重试和时间。T52-E4 在现有模型上扩展 ESA purge manifest/task ID/status，不新建第二套状态机。
 
-`audit_logs` 不保存敏感正文、凭据、私有 Key、联系人、授权备注或完整签名 URL。
+`audit_logs` 不保存敏感正文、凭据、私有 Key、联系人、授权备注或原始 OSS 签名 URL。
 
 ## 3. 阶段 D 最终模型（已落地）
 
@@ -125,11 +125,11 @@ optional work { name, slug, href }
 
 公开条件只依赖返图自身 published、完整 `return-display-v1`、`protection_mode=none`。不依赖关联作品状态。
 
-不得包含授权记录、联系人、私有 Key、私有 OSS 签名 URL、原文件名或 EXIF。T52-E3 完成后 SourceSet URL 是动态生成的约 24 小时 CDN 鉴权 URL。
+不得包含授权记录、联系人、私有 Key、私有 OSS 签名 URL、原文件名或 EXIF。T52-E3 完成后 SourceSet URL 使用稳定的 `public-media` ESA HTTPS URL。
 
 ### 管理 DTO
 
-管理 DTO 可以包含受控私有事实、资产 ID/尺寸/状态、短期私有预览、发布检查和 operation；不返回私有 Object Key、AK/SK、鉴权 Key或长期可复用签名 URL。
+管理 DTO 可以包含受控私有事实、资产 ID/尺寸/状态、短期私有预览、发布检查和 operation；不返回私有 Object Key、AK/SK 或原始 OSS 签名 URL。
 
 ## 5. T46 已落地模型
 
@@ -165,23 +165,23 @@ session_hmac    fixed-length digest
 
 ### URL 组装
 
-数据库继续存相对衍生 Object Key。单一 CDN URL signer 接收 Key 和签发时间，按鉴权方式 A、`86400` 秒生成当前响应 URL。签名不改变 `asset_variants` 媒体身份。
+数据库继续存相对衍生 Object Key。公开投影统一用 `MEDIA_BASE_URL` 组装稳定的 ESA HTTPS URL，不增加 signer、鉴权 Key、TTL 或边缘函数。该 URL 组装不改变 `asset_variants` 媒体身份。
 
-`MEDIA_BASE_URL` 是 CDN origin；`OSS_ENDPOINT` 是服务端 SDK origin；`OSS_UPLOAD_BASE_URL` 是浏览器条件 PUT公网 origin。三者不能互换。
+`MEDIA_BASE_URL` 是 `public-media` ESA origin；`OSS_ENDPOINT` 是服务端 SDK origin；`OSS_UPLOAD_BASE_URL` 是私有 Bucket 原始公网 origin。三者不能互换。
 
-### CDN 撤销状态
+### ESA 撤销状态
 
 在现有 publication/cleanup operation 中增加或明确保存：
 
 ```text
-cdn_refresh_urls       exact unsigned CDN file URLs / manifest
-cdn_refresh_task_id    nullable
-cdn_refresh_status     pending | refreshing | complete | failed
-cdn_refresh_reason     nullable stable code
-cdn_refresh_checked_at nullable
+edge_purge_urls       exact ESA file URLs / manifest
+edge_purge_task_id    nullable
+edge_purge_status     pending | purging | complete | failed
+edge_purge_reason     nullable stable code
+edge_purge_checked_at nullable
 ```
 
-具体字段可按现有 operation 表分布实现，但必须保证：事务提交后不丢 manifest、完整签名 URL 不持久化、任务可重试/重启恢复、刷新完成与业务下架分别表达。
+具体字段可按现有 operation 表分布实现，但必须保证：事务提交后不丢 manifest、任务可重试/重启恢复、刷新完成与业务下架分别表达。
 
 ## 7. 核心不变量
 
@@ -189,8 +189,8 @@ cdn_refresh_checked_at nullable
 
 - `assets.private_object_key` 永不公开；
 - 两只生产 Bucket 原始域名匿名 GET 都失败；
-- CDN 只回源衍生 Bucket，衍生 Bucket 不含私有源；
-- 公开响应只包含 READY 衍生物的短期 CDN URL；
+- ESA 公开媒体 origin 只指向衍生 Bucket，衍生 Bucket 不含私有源；
+- 公开响应只包含 READY 衍生物的稳定 ESA URL；
 - 授权记录与统计禁采字段不进入公开/日志/artifact。
 
 ### 媒体
@@ -206,7 +206,7 @@ cdn_refresh_checked_at nullable
 - 资源更新使用条件版本；
 - 一个 operation 只有一个有效 lease owner；
 - 公开对象完整验证后才提交业务状态；
-- 下架业务投影与 CDN refresh 状态分开；
+- 下架业务投影与 ESA purge 状态分开；
 - 清理/刷新失败保留精确 manifest；
 - 重启幂等，旧有效版本在新版本 READY 前可用。
 
@@ -222,5 +222,5 @@ cdn_refresh_checked_at nullable
 - 页面树、通用内容 JSON、通用 slug 重定向、通用回收站；
 - event 实体、返图相册/用户/社交表；
 - analytics visitor/profile/fingerprint/campaign/referrer 表；
-- CDN URL 持久缓存表或第二套媒体状态机；
+- 第二套媒体状态机；
 - 多区域 Bucket/复制/灾备模型。

@@ -36,10 +36,10 @@
 - T51-F1 设定图私有 FFmpeg 适配源和 publication operation 恢复；
 - T52-E1 运行时配置与 Endpoint 拆分；
 - T52-E2 preflight；
-- T52-E3 CDN signer；
-- T52-E4 下架刷新 operation/recovery；
-- T52-E5 测量/诊断入口，以及证书、acme.sh cron、Nginx reload 监控基线；
-- T52-E6 ops、app-only Compose、宿主机 Nginx systemd 服务、现有 acme.sh/dns_ali/root cron 兼容、备份/恢复/回滚；
+- T52-E3 ESA 托管 STS 私有 OSS 回源边界与稳定媒体 URL；
+- T52-E4 ESA purge operation/recovery；
+- T52-E5 测量/诊断入口，以及 ESA 边缘证书、源站保护、流量/purge、Nginx reload 监控基线；
+- T52-E6 ops、app-only Compose、宿主机 HTTP-only Nginx systemd 服务、ESA HTTP origin、备份/恢复/回滚；
 - unit/integration/build/production verify。
 
 默认 `BACKEND_PRIMARY`：GPT-5.6 Sol。
@@ -52,7 +52,7 @@
 - T51 导航“有点小狗”、备案/页脚、正式素材和三视口；
 - T51-F1 `/works` 紧凑间距、低分辨率设定图提示与真实发布流程；
 - T52-E4 下架/刷新状态；
-- T52 的公开 CDN SourceSet 与错误恢复体验；
+- T52 的公开 ESA SourceSet 与错误恢复体验；
 - 浏览器、键盘、焦点、console/network 和 DTO 泄漏检查。
 
 由用户在 Kimi K3、Claude Opus 5、GPT-5.6 Sol 中逐任务指定。
@@ -75,7 +75,7 @@ GATE-E 前必须交付：
 - 唯一 commit SHA 与镜像摘要；
 - 完整且经过校验的生产环境变量清单；
 - 可直接运行的 migrate/preflight/init/backup/restore/recover/rollback；
-- 不需现场修改的 app-only Compose、宿主机 Nginx/ACME 兼容模板与 Handbook；
+- 不需现场修改的 app-only Compose、宿主机 HTTP-only Nginx/ESA 模板与 Handbook；
 - 同一 SHA CI、独立 Review、三视口、媒体和恢复证据；
 - 已知 follow-up 与明确回滚边界。
 
@@ -85,8 +85,8 @@ GATE-E 前必须交付：
 
 负责提供/确认：
 
-- 域名、备案、正式素材、应用 Secret、预算和阈值；核对现有 ACME 联系邮箱、DNS-only RAM Secret 保存位置与轮换责任；
-- 阿里云控制台中的 OSS/CDN/应用 RAM、DNS/CDN TLS/告警配置；核对现有 ACME RAM 权限，仅不满足时调整；
+- 域名、备案、正式素材、OSS/ESA/媒体鉴权 Secret、正式套餐、预算和阈值；
+- 阿里云控制台中的 OSS/ESA/应用 RAM、DNS/ESA 边缘 TLS/源站保护/告警配置，以及 wildcard DNS 收敛；
 - GATE-E 冻结镜像发布/传送方式的明确授权；
 - 危险动作的最终确认；
 - 正式业务操作与最终验收。
@@ -97,7 +97,7 @@ GATE-E 前必须交付：
 
 - 写远程生产 `.env`；
 - 按用户授权和冻结入口发布/传送 GATE-E 镜像，远程拉取/载入后核对摘要；
-- 复核并复用宿主机现有 Nginx、acme.sh、`dns_ali`、Let's Encrypt 证书、root cron 和稳定证书路径；只按冻结模板收紧精确 Host、安全 reload 与监控，不做无必要的重装、重签或调度器迁移；
+- 复核宿主机 HTTP-only Nginx、关闭的 443 与已移除的 ACME/证书/续期调度；按冻结模板收紧精确 Host、安全 reload 与监控；
 - 运行 Handbook 已列命令；
 - 按实际需要在仓库中补充独立运维脚本及其最小测试/文档；
 - 读取日志/健康/监控并保存脱敏证据；
@@ -105,7 +105,7 @@ GATE-E 前必须交付：
 
 不能：
 
-- 在远程机热改应用源码、迁移、运行时契约、Dockerfile、Compose、Nginx/ACME 冻结模板或容器内文件；
+- 在远程机热改应用源码、迁移、运行时契约、Dockerfile、Compose、Nginx/ESA 冻结模板或容器内文件；
 - 创建仓库外临时修复后继续验收；运维补充脚本必须回到仓库、单独提交并做针对性验证；
 - 把控制台“已提交”当作“已生效”；
 - 把 Bucket 改回 public-read。
@@ -121,7 +121,7 @@ Agent 可以指导用户、解释输出、执行已授权的远程命令、整�
 | 问题 | 处理 |
 | --- | --- |
 | Secret/域名/ACL/缓存等环境配置错误 | 留在 F，按 Handbook 修正并重验 |
-| DNS-only RAM 授权、acme.sh config-home 权限或真实证书签发配置错误 | 留在 F，按冻结模板修正并重验，不扩大 RAM 权限 |
+| ESA DNS/origin/边缘证书、源站保护或 purge RAM 配置错误 | 留在 F，按冻结模板修正并重验，不扩大 RAM 权限 |
 | 远程机缺少已约定目录/权限 | 按冻结部署前置修正环境，不改仓库 |
 | 缺诊断、检查、备份/恢复包装或证据采集脚本 | 留在 F，受控补充并记录独立 commit/验证 |
 | 应用源码、Schema、迁移、发布模板、产品测试或冻结契约缺陷 | 停止 F，回到 E 修复 |

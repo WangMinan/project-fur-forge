@@ -15,7 +15,10 @@ withDefaults(defineProps<{
   brandOnly: false,
 })
 
-const year = new Date().getFullYear()
+const shanghaiYear = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  timeZone: 'Asia/Shanghai',
+}).format(new Date())
 const { data: filings } = await useFetch('/api/site-meta', {
   key: 'public-site-meta',
   default: () => ({ icp: null, police: null }),
@@ -34,7 +37,7 @@ const { data: filings } = await useFetch('/api/site-meta', {
           {{ PROJECT_NAME }}
         </p>
         <p class="public-footer__sub">
-          {{ PROJECT_ENGLISH_NAME }} · 兽装制作工作室
+          {{ PROJECT_ENGLISH_NAME }}
         </p>
       </div>
 
@@ -50,7 +53,7 @@ const { data: filings } = await useFetch('/api/site-meta', {
       </nav>
 
       <div class="public-footer__legal">
-        <p>© {{ year }} 有点小狗工作室</p>
+        <p class="public-footer__copyright">© 2026-{{ shanghaiYear }} {{ PROJECT_NAME }}. {{ PROJECT_ENGLISH_NAME }}. All Rights Reserved.</p>
         <p class="public-footer__legal-links">
           <NuxtLink to="/service">服务条款</NuxtLink>
           <span aria-hidden="true">|</span>
@@ -79,12 +82,7 @@ const { data: filings } = await useFetch('/api/site-meta', {
 
 <style scoped>
 .public-footer {
-  /**
-   * 只留一段小的呼吸间距。首页需要更空的收尾，那份留白由首页自己的
-   * padding-bottom 提供，内页因此不会继承一段过大的空白。
-   */
-  margin-top: var(--space-6);
-  padding: var(--space-4) var(--public-page-padding);
+  padding: calc(var(--space-4) + var(--space-1)) var(--public-page-padding) var(--space-4);
   background: var(--public-bg-secondary);
   border-top: 1px solid var(--public-border-secondary);
 }
@@ -147,8 +145,12 @@ const { data: filings } = await useFetch('/api/site-meta', {
 
 @media (min-width: 768px) {
   .public-footer__inner {
-    grid-template-columns: 1.2fr 1fr 1fr;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) max-content;
     align-items: stretch;
+  }
+
+  .public-footer__copyright {
+    white-space: nowrap;
   }
 
   /* 没有导航列时收成两列，法务信息仍靠右对齐。 */

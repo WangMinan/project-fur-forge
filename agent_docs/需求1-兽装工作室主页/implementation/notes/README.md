@@ -11,7 +11,8 @@
 - [`../../planning/PLAN.md`](../../planning/PLAN.md)：技术计划；
 - [`../TASKS.md`](../TASKS.md)：唯一任务清单；
 - [`../PRODUCTION-LAUNCH-HANDBOOK.md`](../PRODUCTION-LAUNCH-HANDBOOK.md)：上线前人工 Handbook；
-- [`../../planning/ALIYUN-PRODUCTION-RESEARCH-2026-08-09.md`](../../planning/ALIYUN-PRODUCTION-RESEARCH-2026-08-09.md)：阿里云调研；
+- [`../../planning/ESA-PRODUCTION-DECISION-2026-08-09.md`](../../planning/ESA-PRODUCTION-DECISION-2026-08-09.md)：当前 ESA/DNS/TLS/媒体方案；
+- [`../../planning/ESA-PRODUCTION-DECISION-2026-08-09.md`](../../planning/ESA-PRODUCTION-DECISION-2026-08-09.md)：当前 ESA 生产决策；
 - [`../../review/REVIEW.md`](../../review/REVIEW.md)：冻结的既有 Review 记录。
 
 ## 阶段 C.1
@@ -41,9 +42,8 @@ T35–T37 的工程记录不是独立 Review。用户同意将一次新的综合
 
 目录：`stage-e/`。
 
-- [`STAGE-E-PRODUCTION-DECISIONS-2026-08-09.md`](./stage-e/STAGE-E-PRODUCTION-DECISIONS-2026-08-09.md)：两个既有 Bucket、CDN 鉴权、Endpoint、AK/SK、备案品牌和撤销时限的用户决策。
 - [`STAGE-E-F-BOUNDARY-2026-08-09.md`](./stage-e/STAGE-E-F-BOUNDARY-2026-08-09.md)：后续用户决策，产品与上线基线开发合并进阶段 E；阶段 F 主要由用户/远程开发机执行，并允许补充独立运维小脚本。该记录覆盖旧文档中的阶段归属，不改变生产技术事实。
-- [`STAGE-E-TLS-DECISION-2026-08-09.md`](./stage-e/STAGE-E-TLS-DECISION-2026-08-09.md)：最终宿主机部署与 TLS 决策：app-only Compose，并复用现有宿主机 Nginx、`acme.sh + dns_ali`、证书与 root cron；覆盖聊天中曾考虑的原生 `nginx-module-acme` 和后续过度改造方案。
+- [`T52-ESA-INFRASTRUCTURE-TRANSITION-2026-08-09.md`](./stage-e/T52-ESA-INFRASTRUCTURE-TRANSITION-2026-08-09.md)：用户授权卸载服务器 ACME/证书、改为 HTTP/80 回源，以及 ESA 私有 OSS 回源当前状态的执行与验证记录。
 - [`T46-ENGINEERING-2026-08-09.md`](./stage-e/T46-ENGINEERING-2026-08-09.md)：最小化第一方统计的迁移、HMAC/90 天清理、公开采集、管理概览及自动/浏览器门禁；用户隐私文案与 T49 Review 保持开放。
 - [`T51-ENGINEERING-2026-08-09.md`](./stage-e/T51-ENGINEERING-2026-08-09.md)：公开导航短品牌、备案配置/空值隐藏、页脚与 tracked 素材审计；正式素材选择与 T49 Review 保持开放。
 - [`T51-F1-ENGINEERING-2026-08-09.md`](./stage-e/T51-F1-ENGINEERING-2026-08-09.md)：作品页间距、低分辨率设定图私有 FFmpeg 适配、原图保留、失败恢复与门禁结果；T49 Review 保持开放。
