@@ -209,8 +209,9 @@ describe('runtime configuration', () => {
       APP_ENV: 'production',
       PUBLIC_BASE_URL: 'https://public.test',
       ADMIN_BASE_URL: 'https://admin.test',
-      MEDIA_BASE_URL: 'https://media.test',
-      OSS_UPLOAD_BASE_URL: 'https://upload.test',
+      MEDIA_BASE_URL: 'https://public-media.ditedog.com',
+      OSS_UPLOAD_BASE_URL:
+        'https://test-private-bucket.oss-cn-hangzhou.aliyuncs.com',
       DATABASE_FILE: resolve(productionCwd, 'studio.db'),
     }
 
@@ -226,7 +227,7 @@ describe('runtime configuration', () => {
         OSS_REGION: 'oss-cn-hangzhou',
         OSS_PRIVATE_BUCKET: 'test-private-bucket',
         OSS_PUBLIC_BUCKET: 'test-public-bucket',
-        OSS_ENDPOINT: 'https://oss-cn-hangzhou.aliyuncs.com',
+        OSS_ENDPOINT: 'https://oss-cn-hangzhou-internal.aliyuncs.com',
         OSS_ACCESS_KEY_ID: 'test-access-key-id',
         OSS_ACCESS_KEY_SECRET: 'test-access-key-secret',
       },
@@ -237,9 +238,12 @@ describe('runtime configuration', () => {
       OSS_REGION: 'oss-cn-hangzhou',
       OSS_PRIVATE_BUCKET: 'test-private-bucket',
       OSS_PUBLIC_BUCKET: 'test-public-bucket',
-      OSS_ENDPOINT: 'https://oss-cn-hangzhou.aliyuncs.com',
+      OSS_ENDPOINT: 'https://oss-cn-hangzhou-internal.aliyuncs.com',
       OSS_ACCESS_KEY_ID: 'test-access-key-id',
       OSS_ACCESS_KEY_SECRET: 'test-access-key-secret',
+      ESA_SITE_ID: '1234567890',
+      ESA_ACCESS_KEY_ID: 'test-esa-access-key-id',
+      ESA_ACCESS_KEY_SECRET: 'test-esa-access-key-secret',
       SESSION_SECRET: 'production-session-secret-at-least-32-characters',
       POLICE_FILING_STATUS: 'unconfigured',
     }
@@ -250,6 +254,11 @@ describe('runtime configuration', () => {
     })
     expect(productionWithoutSmtp).toMatchObject({
       appEnv: 'production',
+      esaSiteId: '1234567890',
+      mediaBaseUrl: 'https://public-media.ditedog.com',
+      ossEndpoint: 'https://oss-cn-hangzhou-internal.aliyuncs.com',
+      ossUploadBaseUrl:
+        'https://test-private-bucket.oss-cn-hangzhou.aliyuncs.com',
     })
     expect(productionWithoutSmtp.smtpHost).toBeUndefined()
     expect(productionWithoutSmtp.smtpPassword).toBeUndefined()
@@ -276,6 +285,74 @@ describe('runtime configuration', () => {
       smtpSecure: true,
       smtpUser: 'mailer@example.test',
     })
+  })
+
+  it('locks production OSS, upload, media, and ESA boundaries', () => {
+    const cwd = temporaryDirectory()
+    const valid = {
+      APP_ENV: 'production',
+      PUBLIC_BASE_URL: 'https://ditedog.com',
+      ADMIN_BASE_URL: 'https://admin.ditedog.com',
+      MEDIA_BASE_URL: 'https://public-media.ditedog.com',
+      OSS_UPLOAD_BASE_URL:
+        'https://private-bucket.oss-cn-hangzhou.aliyuncs.com',
+      DATABASE_FILE: resolve(cwd, 'studio.db'),
+      OSS_REGION: 'oss-cn-hangzhou',
+      OSS_PRIVATE_BUCKET: 'private-bucket',
+      OSS_PUBLIC_BUCKET: 'public-bucket',
+      OSS_ENDPOINT: 'https://oss-cn-hangzhou-internal.aliyuncs.com',
+      OSS_ACCESS_KEY_ID: 'oss-access-key-id',
+      OSS_ACCESS_KEY_SECRET: 'oss-access-key-secret',
+      ESA_SITE_ID: '171890925863148',
+      ESA_ACCESS_KEY_ID: 'esa-access-key-id',
+      ESA_ACCESS_KEY_SECRET: 'esa-access-key-secret',
+      SESSION_SECRET: 'production-session-secret-at-least-32-characters',
+      POLICE_FILING_STATUS: 'unconfigured',
+    }
+
+    expect(loadRuntimeConfig({ cwd, env: valid })).toMatchObject({
+      esaSiteId: '171890925863148',
+      mediaBaseUrl: 'https://public-media.ditedog.com',
+      ossEndpoint: 'https://oss-cn-hangzhou-internal.aliyuncs.com',
+    })
+    expect(() => loadRuntimeConfig({
+      cwd,
+      env: {
+        ...valid,
+        MEDIA_BASE_URL:
+          'https://public-bucket.oss-cn-hangzhou.aliyuncs.com',
+      },
+    })).toThrowError(/mediaBaseUrl/)
+    expect(() => loadRuntimeConfig({
+      cwd,
+      env: {
+        ...valid,
+        OSS_ENDPOINT: 'https://oss-cn-hangzhou.aliyuncs.com',
+      },
+    })).toThrowError(/ossEndpoint/)
+    expect(() => loadRuntimeConfig({
+      cwd,
+      env: {
+        ...valid,
+        OSS_UPLOAD_BASE_URL:
+          'https://private-bucket.oss-cn-hangzhou-internal.aliyuncs.com',
+      },
+    })).toThrowError(/ossUploadBaseUrl/)
+    expect(() => loadRuntimeConfig({
+      cwd,
+      env: {
+        ...valid,
+        OSS_UPLOAD_BASE_URL:
+          'https://other-bucket.oss-cn-hangzhou.aliyuncs.com',
+      },
+    })).toThrowError(/ossUploadBaseUrl/)
+    expect(() => loadRuntimeConfig({
+      cwd,
+      env: {
+        ...valid,
+        ESA_ACCESS_KEY_ID: valid.OSS_ACCESS_KEY_ID,
+      },
+    })).toThrowError(/esaAccessKeyId/)
   })
 
   it('requires distinct private and public buckets and rejects OSS_BUCKET', () => {
@@ -382,6 +459,9 @@ describe('runtime configuration', () => {
       adminBaseUrl: '',
       mediaBaseUrl: '',
       ossUploadBaseUrl: '',
+      esaSiteId: '',
+      esaAccessKeyId: '',
+      esaAccessKeySecret: '',
     })
     expect(template.values).not.toHaveProperty('ossBucket')
     expect(template.values).not.toHaveProperty('originalImageMaxBytes')
@@ -438,7 +518,8 @@ describe('runtime configuration', () => {
         ICP_FILING_URL: 'https://beian.miit.gov.cn/',
         POLICE_FILING_STATUS: 'filed',
         POLICE_FILING_NUMBER: '浙公网安备 33010000000000 号',
-        POLICE_FILING_URL: 'https://www.beian.gov.cn/portal/registerSystemInfo',
+        POLICE_FILING_URL:
+          'https://beian.mps.gov.cn/#/query/webSearch?code=33010000000000',
       },
     })
     expect(getPublicSiteMeta(configured).filings).toEqual({
@@ -448,7 +529,7 @@ describe('runtime configuration', () => {
       },
       police: {
         number: '浙公网安备 33010000000000 号',
-        url: 'https://www.beian.gov.cn/portal/registerSystemInfo',
+        url: 'https://beian.mps.gov.cn/#/query/webSearch?code=33010000000000',
       },
     })
   })
@@ -557,15 +638,19 @@ describe('host boundary', () => {
         APP_ENV: 'production',
         PUBLIC_BASE_URL: 'https://public.example',
         ADMIN_BASE_URL: 'https://admin.example',
-        MEDIA_BASE_URL: 'https://media.example',
-        OSS_UPLOAD_BASE_URL: 'https://upload.example',
+        MEDIA_BASE_URL: 'https://public-media.ditedog.com',
+        OSS_UPLOAD_BASE_URL:
+          'https://private-bucket.oss-cn-hangzhou.aliyuncs.com',
         DATABASE_FILE: '/srv/app/data.db',
         OSS_REGION: 'oss-cn-hangzhou',
         OSS_PRIVATE_BUCKET: 'private-bucket',
         OSS_PUBLIC_BUCKET: 'public-bucket',
-        OSS_ENDPOINT: 'https://oss-cn-hangzhou.aliyuncs.com',
+        OSS_ENDPOINT: 'https://oss-cn-hangzhou-internal.aliyuncs.com',
         OSS_ACCESS_KEY_ID: 'test-access-key-id',
         OSS_ACCESS_KEY_SECRET: 'test-access-key-secret',
+        ESA_SITE_ID: '1234567890',
+        ESA_ACCESS_KEY_ID: 'test-esa-access-key-id',
+        ESA_ACCESS_KEY_SECRET: 'test-esa-access-key-secret',
         SESSION_SECRET: 'test-only-session-secret-with-32-chars',
         POLICE_FILING_STATUS: 'not_applicable',
       },
@@ -579,7 +664,7 @@ describe('host boundary', () => {
       statusCode: 404,
     })
     expect(decideHostAccess(
-      'media.example',
+      'public-media.ditedog.com',
       '/api/e2e-fake-oss/test/run/web/id/image.webp',
       productionConfig,
     )).toMatchObject({ action: 'reject', statusCode: 404 })

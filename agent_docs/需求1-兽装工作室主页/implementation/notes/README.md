@@ -48,8 +48,9 @@ T35–T37 的工程记录不是独立 Review。用户同意将一次新的综合
 - [`T51-ENGINEERING-2026-08-09.md`](./stage-e/T51-ENGINEERING-2026-08-09.md)：公开导航短品牌、备案配置/空值隐藏、页脚与 tracked 素材审计；正式素材选择与 T49 Review 保持开放。
 - [`T51-F1-ENGINEERING-2026-08-09.md`](./stage-e/T51-F1-ENGINEERING-2026-08-09.md)：作品页间距、低分辨率设定图私有 FFmpeg 适配、原图保留、失败恢复与门禁结果；T49 Review 保持开放。
 - [`T51-F2-ENGINEERING-2026-08-09.md`](./stage-e/T51-F2-ENGINEERING-2026-08-09.md)：公开作品/领养固定数量编号分页、单页分页栏、筛选/非法页码契约与三视口真实浏览器证据；T49 Review 保持开放。
+- [`T52-E1-ENGINEERING-2026-08-09.md`](./stage-e/T52-E1-ENGINEERING-2026-08-09.md)：服务端 OSS、浏览器上传与 ESA 公开媒体 Endpoint 分离，独立 ESA 配置、生产 Schema/模板/verify 与测试证据；T49 Review 保持开放。
 
-后续按任务新增 T52-E1～E6/T49/T50/GATE-E 的工程与 Review 证据，以及 T53-F1～F5 的远程执行/验收证据。
+后续按任务新增 T52-E2～E6/T49/T50/GATE-E 的工程与 Review 证据，以及 T53-F1～F5 的远程执行/验收证据。
 
 ## 新记录最低要求
 

@@ -81,7 +81,7 @@
 - 管理浏览器条件 PUT 使用私有 Bucket 杭州公网域名，不能出现 `-internal`；
 - 公开图片只使用 ESA 媒体 origin `public-media.ditedog.com`，不能出现原始 OSS Bucket 域名。
 
-应用只在测试环境暴露假媒体端点；生产环境不得注册测试控制路由。当前代码尚需在 T52-E1 将 `OSS_UPLOAD_BASE_URL` 真正接入签名链。
+应用只在测试环境暴露假媒体端点；生产环境不得注册测试控制路由。T52-E1 已将 `OSS_UPLOAD_BASE_URL` 接入独立浏览器上传签名客户端，服务端 OSS SDK 仍只使用 `OSS_ENDPOINT`。
 
 ## 3. 作品领域
 

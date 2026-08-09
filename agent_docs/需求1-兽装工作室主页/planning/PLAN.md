@@ -93,6 +93,8 @@ F 中发现问题时先判断边界：可由独立运维脚本在冻结接口内
 
 `OSS_UPLOAD_BASE_URL` 必须真实控制上传签名 Host，且只能是私有 Bucket 原始公网 OSS 域名。`MEDIA_BASE_URL` 生产固定为 `https://public-media.ditedog.com` 并拒绝原始 OSS 域名。Schema、模板、runtime example、测试、verify 和文档同一提交完成。应用继续使用静态服务端 RAM 凭据：OSS 凭据维持现状，ESA purge 使用独立最小权限凭据，不引入 ECS RAM Role。
 
+T52-E1 已按该设计落地：服务端 OSS client、浏览器上传签名 client 与公开媒体 origin 已分离，生产 Schema 固定杭州内网/公网/ESA 三类地址，并要求 OSS 与 ESA 凭据分组完整且 AccessKey ID 不复用。后续 E2～E4 直接消费此配置，不再增加平行的 Endpoint 规则。
+
 ### 3.4 T52-E2 preflight
 
 现有 public-read 预检要在 E 重写为可直接供 F 运行的命令：

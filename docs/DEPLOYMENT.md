@@ -1,6 +1,6 @@
 # 部署说明
 
-> 当前部署骨架仍需由 T52-E1～E6 收敛；真实部署只在 GATE-E 冻结后执行。逐步命令以 [`PRODUCTION-LAUNCH-HANDBOOK.md`](../agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md) 为准。
+> Endpoint 与运行时配置已由 T52-E1 收敛；部署骨架仍需由 T52-E2～E6 完成。真实部署只在 GATE-E 冻结后执行。逐步命令以 [`PRODUCTION-LAUNCH-HANDBOOK.md`](../agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md) 为准。
 
 ## 生产结构
 
@@ -21,7 +21,7 @@
 | 公开媒体 | `https://public-media.ditedog.com` |
 | ESA 媒体 origin | 网页衍生 Bucket 公网 OSS 域名 |
 
-`OSS_UPLOAD_BASE_URL` 必须真实控制浏览器签名 PUT Host；`MEDIA_BASE_URL` 生产固定为 ESA HTTPS 媒体 origin。ESA Site/API 凭据与 OSS 凭据分离。
+`OSS_UPLOAD_BASE_URL` 已真实控制浏览器签名 PUT Host；`MEDIA_BASE_URL` 生产固定为 ESA HTTPS 媒体 origin。`ESA_SITE_ID`、`ESA_ACCESS_KEY_ID`、`ESA_ACCESS_KEY_SECRET` 与 OSS 凭据分组配置，且生产 Schema 拒绝复用同一个 AccessKey ID。
 
 ## 部署产物目标
 

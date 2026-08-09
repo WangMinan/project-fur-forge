@@ -4,7 +4,7 @@ This file provides guidance to coding agents working with code in this repositor
 
 ## 项目简介
 
-`project-fur-paws` —— 为“有点小狗工作室”（英文 `DITE DOG`）制作的兽装主页和轻量管理后台。
+`project-fur-paws` —— 为“有点小狗工作室”（英文 `DITE DOG FURSUIT`）制作的兽装主页和轻量管理后台。
 
 **当前阶段与任务状态一律以 `agent_docs/需求1-兽装工作室主页/STATE.md` 与 `implementation/TASKS.md` 为准。**本文只提供入口与稳定纪律，不记录进度：进度写在这里会过期，然后误导下一个 Agent。
 
@@ -120,7 +120,7 @@ GitHub Actions 已知未全绿（`checks` 在 Production build 失败，`e2e` �
 - ESA 边缘强制 HTTPS；正式 DNS 与 Nginx `server_name` 只列公开/管理精确域名，临时 wildcard 记录/Host 必须在 T53 收敛，其他 Host 由 ESA/Nginx 拒绝；
 - `/_nuxt/**` 等不可变静态资源可长缓存；`/api/**`、登录/会话、管理 Host 与写操作绕过共享缓存，公开 SSR HTML 在正式实测前默认绕过缓存；
 - 生产套餐应支持源站保护，并把 ECS 80 收敛为仅允许 ESA 回源 IP；Free 套餐只用于开发/验证，不作为正式生产 SLA；
-- `.env`、`.env.example`、`.env.compose.example` 与运行时校验必须同步。当前条件上传签名器必须在 T52-E1 真正使用独立公网上传基址，不能只校验 `OSS_UPLOAD_BASE_URL`；
+- `.env`、`.env.example`、`.env.compose.example` 与运行时校验必须同步。条件上传签名器已使用独立的公网 `OSS_UPLOAD_BASE_URL`，服务端 SDK 仍只使用 `OSS_ENDPOINT`；
 - 生产 Bucket、ESA、域名、TLS、监控、部署、回滚和恢复按 `implementation/PRODUCTION-LAUNCH-HANDBOOK.md` 逐项执行；当前决策见 `planning/ESA-PRODUCTION-DECISION-2026-08-09.md`；GATE-E 前不得进入阶段 F 或提前切 ACL。
 
 ## 常用命令

@@ -23,6 +23,9 @@ export const RUNTIME_CONFIG_ENV = {
   ossEndpoint: 'OSS_ENDPOINT',
   ossAccessKeyId: 'OSS_ACCESS_KEY_ID',
   ossAccessKeySecret: 'OSS_ACCESS_KEY_SECRET',
+  esaSiteId: 'ESA_SITE_ID',
+  esaAccessKeyId: 'ESA_ACCESS_KEY_ID',
+  esaAccessKeySecret: 'ESA_ACCESS_KEY_SECRET',
   sessionSecret: 'SESSION_SECRET',
   icpFilingNumber: 'ICP_FILING_NUMBER',
   icpFilingUrl: 'ICP_FILING_URL',
@@ -50,6 +53,9 @@ export const RUNTIME_CONFIG_TYPES = {
   ossEndpoint: 'origin',
   ossAccessKeyId: 'string',
   ossAccessKeySecret: 'string',
+  esaSiteId: 'string',
+  esaAccessKeyId: 'string',
+  esaAccessKeySecret: 'string',
   sessionSecret: 'string',
   icpFilingNumber: 'string',
   icpFilingUrl: 'url',
@@ -110,9 +116,15 @@ const optionalFilingUrl = z.preprocess(
   z.string().url().max(2_048).optional(),
 )
 
+const optionalEsaSiteId = z.preprocess(
+  emptyToUndefined,
+  z.string().trim().regex(/^[1-9]\d{0,31}$/u).optional(),
+)
+
 function isOfficialFilingUrl(
   value: string | undefined,
   officialHosts: readonly string[],
+  allowHash = false,
 ) {
   if (!value) {
     return true
@@ -122,7 +134,7 @@ function isOfficialFilingUrl(
     && officialHosts.includes(url.hostname.toLowerCase())
     && url.username === ''
     && url.password === ''
-    && url.hash === ''
+    && (allowHash || url.hash === '')
 }
 
 const embeddedContract = configFileSchema.parse(runtimeExample)
@@ -164,6 +176,9 @@ export const runtimeConfigSchema = z.object({
   ),
   ossAccessKeyId: optionalText(256),
   ossAccessKeySecret: optionalText(256),
+  esaSiteId: optionalEsaSiteId,
+  esaAccessKeyId: optionalText(256),
+  esaAccessKeySecret: optionalText(256),
   sessionSecret: z.preprocess(
     emptyToUndefined,
     z.string().min(32).max(1_024).optional(),
@@ -230,6 +245,40 @@ export const runtimeConfigSchema = z.object({
     })
   }
 
+  if (new URL(config.ossUploadBaseUrl).hostname.endsWith('-internal.aliyuncs.com')) {
+    context.addIssue({
+      code: 'custom',
+      message: '浏览器上传 origin 不能使用 OSS 内网地址',
+      path: ['ossUploadBaseUrl'],
+    })
+  }
+
+  const esaConfig = [
+    config.esaSiteId,
+    config.esaAccessKeyId,
+    config.esaAccessKeySecret,
+  ]
+  const hasAnyEsaConfig = esaConfig.some(Boolean)
+  if (hasAnyEsaConfig && esaConfig.some(value => !value)) {
+    context.addIssue({
+      code: 'custom',
+      message: 'ESA Site 与 API 凭据必须成组提供',
+      path: ['esaSiteId'],
+    })
+  }
+
+  if (
+    config.ossAccessKeyId
+    && config.esaAccessKeyId
+    && config.ossAccessKeyId === config.esaAccessKeyId
+  ) {
+    context.addIssue({
+      code: 'custom',
+      message: 'OSS 与 ESA API 必须使用不同的 RAM 凭据',
+      path: ['esaAccessKeyId'],
+    })
+  }
+
   const smtpConfig = [
     config.smtpHost,
     config.smtpPort,
@@ -291,7 +340,8 @@ export const runtimeConfigSchema = z.object({
   }
   if (!isOfficialFilingUrl(
     config.policeFilingUrl,
-    ['beian.gov.cn', 'www.beian.gov.cn'],
+    ['beian.gov.cn', 'www.beian.gov.cn', 'beian.mps.gov.cn'],
+    true,
   )) {
     context.addIssue({
       code: 'custom',
@@ -323,6 +373,45 @@ export const runtimeConfigSchema = z.object({
       }
     }
 
+    if (config.mediaBaseUrl !== 'https://public-media.ditedog.com') {
+      context.addIssue({
+        code: 'custom',
+        message: '生产媒体 origin 必须使用 public-media.ditedog.com',
+        path: ['mediaBaseUrl'],
+      })
+    }
+
+    if (config.ossRegion !== 'oss-cn-hangzhou') {
+      context.addIssue({
+        code: 'custom',
+        message: '生产 OSS Region 必须使用杭州区域',
+        path: ['ossRegion'],
+      })
+    }
+
+    if (
+      config.ossEndpoint
+      !== 'https://oss-cn-hangzhou-internal.aliyuncs.com'
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: '生产服务端 OSS Endpoint 必须使用杭州内网地址',
+        path: ['ossEndpoint'],
+      })
+    }
+
+    if (config.ossPrivateBucket) {
+      const expectedUploadOrigin
+        = `https://${config.ossPrivateBucket}.oss-cn-hangzhou.aliyuncs.com`
+      if (config.ossUploadBaseUrl !== expectedUploadOrigin) {
+        context.addIssue({
+          code: 'custom',
+          message: '生产浏览器上传 origin 必须是私有 Bucket 的杭州公网域名',
+          path: ['ossUploadBaseUrl'],
+        })
+      }
+    }
+
     if (!isAbsolute(config.databaseFile)) {
       context.addIssue({
         code: 'custom',
@@ -338,6 +427,9 @@ export const runtimeConfigSchema = z.object({
       'ossEndpoint',
       'ossAccessKeyId',
       'ossAccessKeySecret',
+      'esaSiteId',
+      'esaAccessKeyId',
+      'esaAccessKeySecret',
       'sessionSecret',
     ] as const) {
       if (config[key] === undefined) {

@@ -140,11 +140,11 @@ _依赖：T51-F1；完成后继续 T52-E1。_
 
 #### T52-E1 · Endpoint 与运行时配置
 
-- [ ] `OSS_ENDPOINT` 只供服务端 SDK：杭州远程机为内网 Endpoint，本地为公网 Endpoint；
-- [ ] `OSS_UPLOAD_BASE_URL` 真正控制浏览器条件 PUT Host，不能含 `-internal`；
-- [ ] `MEDIA_BASE_URL` 在 production 固定为/只接受 `https://public-media.ditedog.com`，拒绝原始 OSS Bucket 域名；
-- [ ] 同步 `.env.example`、`.env.compose.example`、`config/runtime.example.json`、Schema、测试、production verify 和部署文档；
-- [ ] 增加 ESA Site/API 最小权限配置；OSS 与 ESA API 使用独立静态服务端 RAM 凭据，不增加 ECS RAM Role，也不在业务侧实现 ESA 回源 STS。
+- [x] `OSS_ENDPOINT` 只供服务端 SDK：杭州远程机为内网 Endpoint，本地为公网 Endpoint；
+- [x] `OSS_UPLOAD_BASE_URL` 真正控制浏览器条件 PUT Host，不能含 `-internal`；
+- [x] `MEDIA_BASE_URL` 在 production 固定为/只接受 `https://public-media.ditedog.com`，拒绝原始 OSS Bucket 域名；
+- [x] 同步 `.env.example`、`.env.compose.example`、`config/runtime.example.json`、Schema、测试、production verify 和部署文档；
+- [x] 增加 ESA Site/API 最小权限配置；OSS 与 ESA API 使用独立静态服务端 RAM 凭据，不增加 ECS RAM Role，也不在业务侧实现 ESA 回源 STS。
 
 #### T52-E2 · OSS/ESA preflight 与权限验证程序
 

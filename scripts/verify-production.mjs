@@ -17,8 +17,18 @@ const verificationEnv = {
   ADMIN_BASE_URL: adminBaseURL,
   APP_ENV: 'test',
   DATABASE_FILE: databaseFile,
-  MEDIA_BASE_URL: 'https://media.test.invalid',
-  OSS_UPLOAD_BASE_URL: 'https://upload.test.invalid',
+  MEDIA_BASE_URL: 'https://public-media.ditedog.com',
+  OSS_UPLOAD_BASE_URL:
+    'https://verify-private.oss-cn-hangzhou.aliyuncs.com',
+  OSS_REGION: 'oss-cn-hangzhou',
+  OSS_PRIVATE_BUCKET: 'verify-private',
+  OSS_PUBLIC_BUCKET: 'verify-public',
+  OSS_ENDPOINT: 'https://oss-cn-hangzhou-internal.aliyuncs.com',
+  OSS_ACCESS_KEY_ID: 'production-verify-oss-access-key-id',
+  OSS_ACCESS_KEY_SECRET: 'production-verify-oss-access-key-secret',
+  ESA_SITE_ID: '1234567890',
+  ESA_ACCESS_KEY_ID: 'production-verify-esa-access-key-id',
+  ESA_ACCESS_KEY_SECRET: 'production-verify-esa-access-key-secret',
   PUBLIC_BASE_URL: baseURL,
 }
 
