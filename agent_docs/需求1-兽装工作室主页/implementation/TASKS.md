@@ -158,10 +158,10 @@ _依赖：T51-F1；完成后继续 T52-E1。_
 
 - [x] 范围确认：阿里云自动使用 STS 临时令牌和回源 `Authorization`，业务应用不申请、不保存、不轮换 STS；
 - [x] 范围确认：首版不做自定义边缘 URL 鉴权，后续需要时作为独立迭代；
-- [ ] 所有公开 SourceSet/SSR/API 使用稳定的 `public-media` ESA HTTPS URL，不返回原始 OSS URL 或私有 Object Key；
-- [ ] 固化网页衍生 Bucket 只保存已验证公开派生物的门禁，并验证原始 OSS 匿名拒绝、ESA 已发布媒体可读；
-- [ ] 同步 runtime、preflight、production verify、测试与控制台说明，不增加媒体鉴权 Key/TTL 配置；
-- [ ] 管理端登录、Session、Host/Origin/CSRF 等应用认证保持现有契约。
+- [x] 所有公开 SourceSet/SSR/API 使用稳定的 `public-media` ESA HTTPS URL，不返回原始 OSS URL 或私有 Object Key；
+- [x] 固化网页衍生 Bucket 只保存已验证公开派生物的门禁，并验证原始 OSS 匿名拒绝、ESA 已发布媒体可读；
+- [x] 同步 runtime、preflight、production verify、测试与控制台说明，不增加媒体鉴权 Key/TTL 配置；
+- [x] 管理端登录、Session、Host/Origin/CSRF 等应用认证保持现有契约。
 
 #### T52-E4 · 缓存、下架与 ESA 强制撤销
 

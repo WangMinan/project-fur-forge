@@ -116,9 +116,9 @@ describe('media DTO mapping', () => {
   it('only projects READY public variants and derives URL outside SQLite', () => {
     expect(toPublicVariantDto(
       publicVariant,
-      'https://media.example.com',
+      'https://public-media.ditedog.com',
     )).toMatchObject({
-      src: 'https://media.example.com/prod/web/asset/work-card.webp',
+      src: 'https://public-media.ditedog.com/prod/web/asset/work-card.webp',
     })
     expect(toPublicVariantDto({
       ...publicVariant,
@@ -132,7 +132,15 @@ describe('media DTO mapping', () => {
     expect(() => toPublicVariantDto({
       ...publicVariant,
       objectKey: 'prod/web/../private.webp',
-    }, 'https://media.example.com')).toThrow(/dot segments/)
+    }, 'https://public-media.ditedog.com')).toThrow(/web derivative/)
+    expect(() => toPublicVariantDto({
+      ...publicVariant,
+      objectKey: 'prod/original/private.webp',
+    }, 'https://public-media.ditedog.com')).toThrow(/web derivative/)
+    expect(() => toPublicVariantDto({
+      ...publicVariant,
+      objectKey: 'test/run/web/asset/work-card.webp',
+    }, 'https://public-media.ditedog.com')).toThrow(/web derivative/)
   })
 
   it('maps complete hero recipes and rejects incomplete publication data', () => {

@@ -81,11 +81,37 @@ export interface HeroSlideRecord {
   } | null
 }
 
+const PRODUCTION_MEDIA_ORIGIN = 'https://public-media.ditedog.com'
+
+function assertPublicDerivativeObjectKey(
+  mediaOrigin: string,
+  objectKey: string,
+) {
+  const segments = objectKey.split('/')
+  const webIndex = segments.indexOf('web')
+  const structurallySafe = segments.length >= 3
+    && segments.every(segment => segment.length > 0)
+    && !objectKey.includes('\\')
+    && !objectKey.includes('://')
+    && !segments.includes('.')
+    && !segments.includes('..')
+    && webIndex >= 1
+    && webIndex < segments.length - 1
+    && segments.lastIndexOf('web') === webIndex
+    && !segments.some(segment => (
+      ['original', 'preview', 'processing'].includes(segment)
+    ))
+  const productionSafe = mediaOrigin !== PRODUCTION_MEDIA_ORIGIN
+    || (webIndex === 1 && segments[0] === 'prod')
+
+  if (!structurallySafe || !productionSafe) {
+    throw new Error('Public variant must use a generated web derivative object key.')
+  }
+}
+
 function publicMediaUrl(mediaBaseUrl: string, objectKey: string) {
   const base = new URL(mediaBaseUrl)
-  if (objectKey.split('/').some(part => part === '.' || part === '..')) {
-    throw new Error('Public object key must not contain dot segments.')
-  }
+  assertPublicDerivativeObjectKey(base.origin, objectKey)
   base.pathname = `${base.pathname.replace(/\/$/, '')}/${objectKey
     .split('/')
     .map(encodeURIComponent)

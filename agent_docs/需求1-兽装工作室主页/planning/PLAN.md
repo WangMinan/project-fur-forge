@@ -118,6 +118,8 @@ T52-E2 已按该设计落地：`pnpm run preflight:oss` 默认只做本地 produ
 - 网页衍生 Bucket 只保存验证完成、允许公开的派生物；
 - 管理端现有登录、Session、Host/Origin/CSRF 认证契约保持不变。
 
+T52-E3 已按该边界落地：公开 DTO 的唯一 URL 组装入口现在拒绝原图/预览/处理路径，并在生产 ESA origin 下只接受 `prod/web/**`；production verify 同时检查公开 SSR 与首页聚合、作品、领养、返图 API，不允许 OSS 原站、私有路径或签名字段。T52-E2 preflight 继续负责真实 Bucket 内容双向清单、原站匿名 403 与 ESA 已发布媒体 200；阶段 E 未执行真实云侧 live，不代签 T53。
+
 ### 3.6 T52-E4 下架与强制刷新
 
 下架 operation 在 E 完整实现：

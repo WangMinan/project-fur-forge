@@ -161,11 +161,11 @@ session_hmac    fixed-length digest
 
 前向迁移为 `0025_t46_analytics.sql`。集成测试核对列与索引，并用实际查询计划确认 30 天窗口和排行查询使用时间/组合索引；该模型不改变现有业务表或媒体状态机。
 
-## 6. T52-E3/E4 生产媒体投影（阶段 E 待落地）
+## 6. T52-E3/E4 生产媒体投影（E3 已落地，E4 待落地）
 
 ### URL 组装
 
-数据库继续存相对衍生 Object Key。公开投影统一用 `MEDIA_BASE_URL` 组装稳定的 ESA HTTPS URL，不增加 signer、鉴权 Key、TTL 或边缘函数。该 URL 组装不改变 `asset_variants` 媒体身份。
+数据库继续存相对衍生 Object Key。公开投影统一用 `MEDIA_BASE_URL` 组装稳定的 ESA HTTPS URL，不增加 signer、鉴权 Key、TTL 或边缘函数。生产 origin 下只接受 `prod/web/**`，原图、处理源、管理预览和其他环境前缀 fail closed。该 URL 组装不改变 `asset_variants` 媒体身份。
 
 `MEDIA_BASE_URL` 是 `public-media` ESA origin；`OSS_ENDPOINT` 是服务端 SDK origin；`OSS_UPLOAD_BASE_URL` 是私有 Bucket 原始公网 origin。三者不能互换。
 
