@@ -51,7 +51,10 @@ test('默认展示全部领养，并保留常规与展会掉落各自事实', as
 
   await expect(page.getByRole('heading', { level: 1, name: '角色领养' })).toBeVisible()
   await expect(page.getByTestId('adoption-status')).toContainText('领养')
-  await expect(page.getByRole('status')).toContainText('共 2 个可浏览角色')
+  const pagination = page.getByRole('navigation', { name: '角色领养分页' })
+  await expect(pagination).toBeVisible()
+  await expect(pagination.getByLabel('第 1 页，当前页')).toBeVisible()
+  await expect(pagination.locator('[aria-disabled="true"]')).toHaveCount(2)
   const card = page.locator(`[data-work-slug="${regularSlug}"]`)
   await expect(card).toContainText('星糖')
   await expect(card).toContainText('可领养')
@@ -140,6 +143,57 @@ test('未公开价格时不渲染价格占位区', async ({ page }) => {
   await expect(card).toBeVisible()
   await expect(card.locator('.adoption-card__price')).toHaveCount(0)
   await expect(card).not.toContainText('价格未公开')
+})
+
+test('固定 8 个分页保留领养筛选并在三视口无溢出', async ({ page, request }) => {
+  test.setTimeout(120_000)
+  await seedPublicCatalog(page, Array.from({ length: 9 }, (_, index) => ({
+    slug: `e2e-public-adoption-page-${index + 1}`,
+    characterName: `分页领养 ${index + 1}`,
+    purpose: 'adoption' as const,
+    adoptionMethod: 'regular' as const,
+    businessStatus: 'available' as const,
+    designSheet: { alt: `分页领养 ${index + 1} 设定图` },
+    photos: [{ alt: `分页领养 ${index + 1} 出厂照` }],
+  })))
+
+  const api = await request.get('/api/public/v1/adoptions?method=regular&page=2')
+  expect(api.status()).toBe(200)
+  expect((await api.json()).data).toMatchObject({
+    page: 2,
+    pageCount: 2,
+    pageSize: 8,
+    resultCount: 9,
+  })
+
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 768, height: 1024 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport)
+    await page.goto('/adoptions?method=regular')
+    const pagination = page.getByRole('navigation', { name: '角色领养分页' })
+    await expect(pagination).toBeVisible()
+    await expect(page.locator('[data-work-slug]')).toHaveCount(8)
+    await expect(pagination.getByRole('link', { name: '下一页' }))
+      .toHaveAttribute('href', '/adoptions?method=regular&page=2')
+    expect(await page.evaluate(() => (
+      document.documentElement.scrollWidth - document.documentElement.clientWidth
+    ))).toBeLessThanOrEqual(1)
+  }
+
+  await page.getByRole('navigation', { name: '角色领养分页' })
+    .getByRole('link', { name: '下一页' }).click()
+  await expect(page).toHaveURL(/method=regular&page=2$/u)
+  await expect(page.locator('[data-work-slug]')).toHaveCount(1)
+  await expect(page.getByRole('link', { name: '常规领养' }))
+    .toHaveAttribute('href', '/adoptions?method=regular')
+
+  await page.goto('/adoptions?method=regular&page=99')
+  await expect(page.getByText('这一页没有可领养角色')).toBeVisible()
+  await expect(page.getByRole('link', { name: '回到第一页' }))
+    .toHaveAttribute('href', '/adoptions?method=regular')
 })
 
 test('三视口图片解码、contain、无横向溢出且 DOM 无私有 Key', async ({ page }) => {

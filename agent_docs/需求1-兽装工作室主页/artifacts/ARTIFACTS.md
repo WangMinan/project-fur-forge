@@ -49,8 +49,9 @@ T35–T37 尚无独立 Review 签署；该门禁并入 T49，不能用用户验�
 - T46 第一方统计：迁移、最小事件仓储/服务/路由、公开最佳努力采集、管理端只读概览和隐私/失败路径门禁；证据见 [`../implementation/notes/stage-e/T46-ENGINEERING-2026-08-09.md`](../implementation/notes/stage-e/T46-ENGINEERING-2026-08-09.md)；
 - T51 品牌/备案能力：公开导航短品牌、严格备案配置与空值隐藏、页脚投影、确定性品牌衍生复核和 tracked 素材审计；证据见 [`../implementation/notes/stage-e/T51-ENGINEERING-2026-08-09.md`](../implementation/notes/stage-e/T51-ENGINEERING-2026-08-09.md)。
 - T51-F1 用户反馈修复：`/works` 紧凑间距、低分辨率设定图非阻断上传/发布、私有 FFmpeg Lanczos 适配源、明确中文失败恢复和自动/真实浏览器证据；证据见 [`../implementation/notes/stage-e/T51-F1-ENGINEERING-2026-08-09.md`](../implementation/notes/stage-e/T51-F1-ENGINEERING-2026-08-09.md)。
+- T51-F2 公开列表分页：`/works` 固定 12 件、`/adoptions` 固定 8 个，筛选后服务端分页、单页仍显示编号栏、非法/越界页码受控，以及三视口真实浏览器证据；证据见 [`../implementation/notes/stage-e/T51-F2-ENGINEERING-2026-08-09.md`](../implementation/notes/stage-e/T51-F2-ENGINEERING-2026-08-09.md)。
 
-三项工程自测均不代签 T49 独立 Review；T46 最终隐私文案与 T51 正式素材选择仍由用户确认。
+四项工程自测均不代签 T49 独立 Review；T46 最终隐私文案与 T51 正式素材选择仍由用户确认。
 
 ## 后续待产物
 

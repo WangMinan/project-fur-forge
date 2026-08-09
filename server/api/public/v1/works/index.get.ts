@@ -8,6 +8,7 @@ export default defineEventHandler((event) => {
     const query = getQuery(event)
     return publicWorkListResponseSchema.parse({
       data: getPublicSiteRepository().listWorks({
+        page: query.page,
         purpose: query.purpose,
         suitType: query.suitType,
       }),

@@ -28,13 +28,24 @@ const pages = computed(() => {
     }
   }
   const sorted = [...numbers].sort((left, right) => left - right)
-  const entries: Array<{ key: string, page: number | null }> = []
+  const entries: Array<{
+    compactHidden: boolean
+    key: string
+    page: number | null
+  }> = []
   sorted.forEach((page, index) => {
     const previous = sorted[index - 1]
     if (previous !== undefined && page - previous > 1) {
-      entries.push({ key: `gap-${page}`, page: null })
+      entries.push({ compactHidden: true, key: `gap-${page}`, page: null })
     }
-    entries.push({ key: `page-${page}`, page })
+    entries.push({
+      compactHidden: (
+        (page === 1 || page === props.pageCount)
+        && Math.abs(page - props.page) > WINDOW
+      ),
+      key: `page-${page}`,
+      page,
+    })
   })
   return entries
 })
@@ -42,27 +53,42 @@ const pages = computed(() => {
 
 <template>
   <nav
-    v-if="pageCount > 1"
+    v-if="pageCount > 0"
     class="pagination"
     :aria-label="label ?? '分页'"
   >
-    <NuxtLink
+    <a
       v-if="page > 1"
       class="pagination__step"
-      :to="hrefFor(page - 1)"
+      :href="hrefFor(page - 1)"
       rel="prev"
-    >上一页</NuxtLink>
-    <span v-else class="pagination__step pagination__step--disabled" aria-hidden="true">上一页</span>
+    >
+      <span class="pagination__arrow" aria-hidden="true">‹</span>
+      <span class="pagination__step-label">上一页</span>
+    </a>
+    <span
+      v-else
+      class="pagination__step pagination__step--disabled"
+      aria-disabled="true"
+    >
+      <span class="pagination__arrow" aria-hidden="true">‹</span>
+      <span class="pagination__step-label">上一页</span>
+    </span>
 
     <ol class="pagination__list">
-      <li v-for="entry in pages" :key="entry.key">
+      <li
+        v-for="entry in pages"
+        :key="entry.key"
+        class="pagination__entry"
+        :class="{ 'pagination__entry--compact-hidden': entry.compactHidden }"
+      >
         <span v-if="entry.page === null" class="pagination__gap">…</span>
-        <NuxtLink
+        <a
           v-else-if="entry.page !== page"
           class="pagination__page"
-          :to="hrefFor(entry.page)"
+          :href="hrefFor(entry.page)"
           :aria-label="`第 ${entry.page} 页`"
-        >{{ entry.page }}</NuxtLink>
+        >{{ entry.page }}</a>
         <span
           v-else
           class="pagination__page pagination__page--current"
@@ -72,13 +98,23 @@ const pages = computed(() => {
       </li>
     </ol>
 
-    <NuxtLink
+    <a
       v-if="page < pageCount"
       class="pagination__step"
-      :to="hrefFor(page + 1)"
+      :href="hrefFor(page + 1)"
       rel="next"
-    >下一页</NuxtLink>
-    <span v-else class="pagination__step pagination__step--disabled" aria-hidden="true">下一页</span>
+    >
+      <span class="pagination__step-label">下一页</span>
+      <span class="pagination__arrow" aria-hidden="true">›</span>
+    </a>
+    <span
+      v-else
+      class="pagination__step pagination__step--disabled"
+      aria-disabled="true"
+    >
+      <span class="pagination__step-label">下一页</span>
+      <span class="pagination__arrow" aria-hidden="true">›</span>
+    </span>
   </nav>
 </template>
 
@@ -87,15 +123,14 @@ const pages = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-3);
+  gap: var(--space-3);
   margin-top: var(--space-8);
 }
 
 .pagination__list {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -106,36 +141,64 @@ const pages = computed(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 2.75rem;
-  min-height: 2.75rem;
-  padding: 0 var(--space-3);
-  border-radius: var(--radius-sm);
+  min-height: 3rem;
+  border: 1px solid var(--public-border-primary);
+  background: var(--public-bg-primary);
   color: var(--public-text-secondary);
   font-size: var(--font-size-sm);
+  transition:
+    color var(--duration-fast) var(--easing-standard),
+    background-color var(--duration-fast) var(--easing-standard),
+    border-color var(--duration-fast) var(--easing-standard);
+}
+
+.pagination__page {
+  width: 3rem;
+  padding: 0;
+  border-radius: var(--radius-full);
+}
+
+.pagination__step {
+  gap: var(--space-2);
+  min-width: 6.75rem;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
 }
 
 .pagination__page:hover,
 .pagination__step:hover {
+  border-color: var(--public-accent-tint);
   background: var(--public-bg-secondary);
   color: var(--public-text-primary);
 }
 
+.pagination__page:focus-visible,
+.pagination__step:focus-visible {
+  outline: 3px solid var(--public-focus-ring);
+  outline-offset: 2px;
+}
+
 .pagination__page--current {
-  background: var(--public-bg-secondary);
-  color: var(--public-text-primary);
+  border-color: var(--public-accent-primary);
+  background: var(--public-accent-primary);
+  color: var(--public-text-inverse);
   font-weight: 600;
 }
 
 .pagination__page--current:hover {
-  background: var(--public-bg-secondary);
+  background: var(--public-accent-primary);
+  color: var(--public-text-inverse);
 }
 
 .pagination__step--disabled {
+  border-color: var(--public-border-secondary);
+  background: var(--public-bg-secondary);
   color: var(--public-text-tertiary);
+  opacity: 0.58;
 }
 
 .pagination__step--disabled:hover {
-  background: none;
+  background: var(--public-bg-secondary);
   color: var(--public-text-tertiary);
 }
 
@@ -145,5 +208,44 @@ const pages = computed(() => {
   justify-content: center;
   min-width: 1.5rem;
   color: var(--public-text-tertiary);
+}
+
+.pagination__arrow {
+  font-size: var(--font-size-lg);
+  line-height: 1;
+}
+
+@media (max-width: 479px) {
+  .pagination {
+    gap: var(--space-2);
+  }
+
+  .pagination__list {
+    gap: var(--space-1);
+  }
+
+  .pagination__entry--compact-hidden {
+    display: none;
+  }
+
+  .pagination__page,
+  .pagination__step {
+    width: 2.75rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0;
+  }
+
+  .pagination__step-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
 }
 </style>

@@ -513,6 +513,48 @@ describe('T19/T20 public repository contracts', () => {
     expect(fake.listFeaturedWorks().items[0]?.work.slug).toBe('second-work')
     expect(fake.listWorks({ suitType: 'full' }).resultCount).toBe(1)
 
+    const pagedDetails = Array.from({ length: 13 }, (_, index) => {
+      const slug = `paged-work-${index + 1}`
+      return {
+        ...detail,
+        work: {
+          ...detail.work,
+          id: randomUUID(),
+          slug,
+          characterName: `分页作品 ${index + 1}`,
+        },
+        href: `/works/${slug}`,
+        navigation: { previous: null, next: null },
+        related: [],
+      }
+    })
+    const pagedFake = createFakePublicSiteRepository({
+      details: pagedDetails,
+      featuredSlugs: [],
+      home: {
+        tagline: '不只做小狗毛',
+        contactEmail: 'studio@example.test',
+        contactQq: '123456789',
+        autoRotate: false,
+        autoRotateIntervalMs: 6000,
+        slides: [],
+      },
+    })
+    expect(pagedFake.listWorks({ page: 2 })).toMatchObject({
+      page: 2,
+      pageCount: 2,
+      pageSize: 12,
+      resultCount: 13,
+      items: [{ work: { slug: 'paged-work-13' } }],
+    })
+    expect(pagedFake.listWorks({ page: 'bad' }).page).toBe(1)
+    expect(pagedFake.listWorks({ page: 3 })).toMatchObject({
+      items: [],
+      page: 3,
+      pageCount: 2,
+      resultCount: 13,
+    })
+
     for (let index = 0; index < 6; index += 1) {
       await createPublishedWork({
         slug: `featured-extra-${index}`,
@@ -615,6 +657,42 @@ describe('T19/T20 public repository contracts', () => {
     expect(adoptionDetail?.media.primaryStudioPhotoAssetId)
       .not.toBe(adoptionDetail?.media.designSheet?.assetId)
     expect(adoptionDetail?.media.studioPhotos).toHaveLength(1)
+
+    const pagedAdoptionDetails = Array.from({ length: 9 }, (_, index) => {
+      const slug = `paged-adoption-${index + 1}`
+      return {
+        ...adoptionDetail!,
+        work: {
+          ...adoptionDetail!.work,
+          id: randomUUID(),
+          slug,
+          characterName: `分页领养 ${index + 1}`,
+        },
+        href: `/works/${slug}`,
+        navigation: { previous: null, next: null },
+        related: [],
+      }
+    })
+    const pagedAdoptions = createFakePublicSiteRepository({
+      details: pagedAdoptionDetails,
+      featuredSlugs: [],
+      home: {
+        tagline: '不只做小狗毛',
+        contactEmail: 'studio@example.test',
+        contactQq: '123456789',
+        autoRotate: false,
+        autoRotateIntervalMs: 6000,
+        slides: [],
+      },
+    }).listAdoptions({ method: 'regular', page: 2 })
+    expect(pagedAdoptions).toMatchObject({
+      page: 2,
+      pageCount: 2,
+      pageSize: 8,
+      resultCount: 9,
+      items: [{ work: { slug: 'paged-adoption-9' } }],
+      counts: { all: 9, regular: 9, event_drop: 0 },
+    })
     expect(repository.getWorkBySlug('commission-purpose')?.media)
       .not.toHaveProperty('designSheet')
     expect(repository.getWorkBySlug('showcase-purpose')?.media)
