@@ -617,7 +617,7 @@ protection_mode = none
 
 品牌页继续管理活动作品水印 profile。影响摘要必须明确：站点展示和返图均为无水印位置，不受 profile 变化影响。
 
-## 16. 阶段 E 最小访问统计（T46 目标）
+## 16. 阶段 E 最小访问统计（T46 已实现契约）
 
 ### 16.1 收集范围
 
@@ -630,6 +630,8 @@ protection_mode = none
 
 服务端只保存：事件时间、规范 `route_key`、可选公开实体 ID、可选 `action_key`、HMAC 后的会话标识。
 
+当前公开写入口为 `POST /api/public/v1/analytics/events`，管理聚合入口为 `GET /api/admin/v1/analytics`。公开请求体只接受上述枚举字段与浏览器会话 UUID，响应只确认是否接受；服务端不会把原始会话 UUID 持久化。
+
 明确不保存：IP、User-Agent、Referer、原始 URL、查询串、Cookie、localStorage、联系方式、表单正文或浏览器/设备指纹。不接入第三方统计平台。
 
 ### 16.2 会话、保留与写入
@@ -637,7 +639,7 @@ protection_mode = none
 - 客户端随机会话 ID 只放 `sessionStorage`；
 - 服务端使用现有 Session Secret 和固定域分离前缀做 HMAC，只保存摘要，不保存原值；
 - “会话”只表示浏览器会话级近似，不宣称精确独立访客；
-- 原始事件滚动保留 90 天，清理幂等，不增加常驻 worker；
+- 原始事件滚动保留 90 天；每次接受写入时在同一事务内先执行幂等清理，不增加常驻 worker 或独立调度器；
 - 公开写接口使用严格 Schema、小 body、专用限流和稳定安全错误；
 - 客户端使用 `sendBeacon` 或 keepalive fetch；失败不得阻断页面、导航或媒体；
 - 健康检查、媒体请求、管理页面和仅 SSR 未运行客户端脚本的机器人不计入。

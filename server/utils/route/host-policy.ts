@@ -81,6 +81,7 @@ export function decideHostAccess(
 
     return (
       pathname === '/favicon.ico'
+      || pathname === '/api/site-meta'
       || e2eFakeAllowed
       || adminAllowedPrefixes.some(prefix => isAtOrBelow(pathname, prefix))
     )

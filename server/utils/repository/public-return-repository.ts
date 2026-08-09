@@ -38,6 +38,7 @@ interface PublicReturnRow {
   characterName: string
   characterNickname: string | null
   characterSlug: string
+  characterId: string
   id: string
 }
 
@@ -60,6 +61,7 @@ const publicPhotoColumns = `
   photo.asset_id AS assetId,
   asset.width AS assetWidth,
   asset.height AS assetHeight,
+  character.id AS characterId,
   character.name AS characterName,
   character.nickname AS characterNickname,
   character.slug AS characterSlug
@@ -134,6 +136,7 @@ function loadCharacterReturns(sqlite: Database.Database, slug: string) {
 function loadCharacter(sqlite: Database.Database, slug: string) {
   return sqlite.prepare(`
     SELECT
+      character.id,
       character.name,
       character.nickname,
       character.slug,
@@ -144,6 +147,7 @@ function loadCharacter(sqlite: Database.Database, slug: string) {
     LEFT JOIN works AS work ON work.id = character.work_id
     WHERE character.slug = ?
   `).get(slug) as {
+    id: string
     name: string
     nickname: string | null
     slug: string
@@ -243,6 +247,7 @@ function toPublicItems(
         width: largest.width,
       },
       character: {
+        id: row.characterId,
         href: `/returns/${row.characterSlug}`,
         name: row.characterName,
         nickname: row.characterNickname,
@@ -298,6 +303,7 @@ export function getPublicReturnCharacter(
 
   return publicReturnCharacterDtoSchema.parse({
     character: {
+      id: character.id,
       href: `/returns/${character.slug}`,
       name: character.name,
       nickname: character.nickname,

@@ -8,6 +8,8 @@ const props = withDefaults(defineProps<{
   subject: undefined,
 })
 
+const route = useRoute()
+
 const mailtoHref = computed(() => {
   const base = `mailto:${props.email}`
   return props.subject ? `${base}?subject=${encodeURIComponent(props.subject)}` : base
@@ -39,6 +41,7 @@ function copyWithExecCommand(text: string): boolean {
 }
 
 async function onCopy() {
+  trackPublicContactAction(route.path, 'email_copy')
   if (copyTimer) {
     clearTimeout(copyTimer)
     copyTimer = null
@@ -58,6 +61,10 @@ async function onCopy() {
   }, 3_000)
 }
 
+function onEmailOpen() {
+  trackPublicContactAction(route.path, 'email_open')
+}
+
 onScopeDispose(() => {
   if (copyTimer) {
     clearTimeout(copyTimer)
@@ -68,7 +75,7 @@ onScopeDispose(() => {
 <template>
   <div class="email-actions">
     <div class="email-actions__buttons">
-      <a class="email-actions__primary" :href="mailtoHref">
+      <a class="email-actions__primary" :href="mailtoHref" @click="onEmailOpen">
         打开邮件客户端
         <span aria-hidden="true">↗</span>
       </a>
@@ -81,7 +88,7 @@ onScopeDispose(() => {
       </button>
     </div>
     <p class="email-actions__address">
-      <a :href="mailtoHref" class="email-actions__address-link">{{ email }}</a>
+      <a :href="mailtoHref" class="email-actions__address-link" @click="onEmailOpen">{{ email }}</a>
     </p>
     <p v-if="copyState === 'failed'" class="email-actions__feedback" role="alert">
       复制失败，请手动选择邮箱地址复制。

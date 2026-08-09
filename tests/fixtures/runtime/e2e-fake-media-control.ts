@@ -311,7 +311,7 @@ export default defineEventHandler(async (event) => {
           owner_display, price_amount_minor, price_currency,
           publication_status, sort_order, featured,
           published_at, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         workId,
         work.slug,

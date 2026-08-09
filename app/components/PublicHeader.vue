@@ -2,7 +2,7 @@
 import type { PublicNavItem } from '~/utils/public-nav'
 import {
   PROJECT_ENGLISH_NAME,
-  PROJECT_NAME,
+  PUBLIC_NAV_BRAND,
 } from '~~/shared/constants/project'
 
 /**
@@ -41,7 +41,7 @@ watch(() => route.fullPath, () => {
     <NuxtLink
       to="/"
       class="public-header__brand"
-      aria-label="有点小狗工作室 · 回首页"
+      :aria-label="`${PUBLIC_NAV_BRAND} · 回首页`"
     >
       <img
         class="public-header__logo"
@@ -50,7 +50,7 @@ watch(() => route.fullPath, () => {
         width="473"
         height="512"
       >
-      <span class="public-header__brand-name">{{ PROJECT_NAME }}</span>
+      <span class="public-header__brand-name">{{ PUBLIC_NAV_BRAND }}</span>
       <span class="public-header__brand-sub">{{ PROJECT_ENGLISH_NAME }}</span>
     </NuxtLink>
 

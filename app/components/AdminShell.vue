@@ -1,12 +1,13 @@
 <script setup lang="ts">
 // 管理端壳：窄屏为顶栏 + 横向导航，≥1280px 为固定侧栏。
 // 导航顺序按 .design/admin-console/INFORMATION_ARCHITECTURE.md 的“业务对象优先”：
-// 作品管理 → 返图管理 → 大图管理 → 文案配置 → 全局水印 → 修改密码。
+// 作品管理 → 返图管理 → 大图管理 → 文案配置 → 全局水印 → 访问概览 → 修改密码。
 // 公开端称“返图墙”，管理端称“返图管理”，两端不混用同一个短词。
 // 仅包含已实现入口；未实现的项目不提前出现（返图入口随 T36 前端接入）。
 withDefaults(defineProps<{
   current?:
     | 'account'
+    | 'analytics'
     | 'branding'
     | 'content'
     | 'home'
@@ -79,6 +80,11 @@ async function onLogout() {
           class="admin-shell__nav-link"
           :aria-current="current === 'branding' ? 'page' : undefined"
         >全局水印</NuxtLink>
+        <NuxtLink
+          to="/admin/analytics"
+          class="admin-shell__nav-link"
+          :aria-current="current === 'analytics' ? 'page' : undefined"
+        >访问概览</NuxtLink>
         <NuxtLink
           to="/admin/account"
           class="admin-shell__nav-link"

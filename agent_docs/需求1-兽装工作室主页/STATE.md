@@ -9,7 +9,7 @@
 
 当前为：
 
-> **阶段 E · 全部产品/上线基线开发、自动化门禁与可上线代码冻结。下一项：T46。**
+> **阶段 E · 全部产品/上线基线开发、自动化门禁与可上线代码冻结。T46/T51 工程已完成；下一项：T52-E1。**
 
 阶段 E 包含所有剩余应用代码、数据库迁移、运行时配置 Schema、媒体/CDN 核心实现、部署/恢复基线、app-only Compose 与宿主机 Nginx/ACME 兼容模板、自动化测试、浏览器回归和独立 Review。阶段 E 结束时必须形成唯一、不在阶段 F 改写的上线 SHA/镜像。
 
@@ -27,6 +27,8 @@
 - 阶段 D 用户浏览器验收。
 
 阶段 D 用户门禁见 [`implementation/notes/stage-d/T42-USER-ACCEPTANCE-2026-08-09.md`](./implementation/notes/stage-d/T42-USER-ACCEPTANCE-2026-08-09.md)。
+
+T46/T51 已完成迁移、应用实现、自动测试和本地真实浏览器回归；工程证据见 [`implementation/notes/stage-e/T46-ENGINEERING-2026-08-09.md`](./implementation/notes/stage-e/T46-ENGINEERING-2026-08-09.md) 与 [`implementation/notes/stage-e/T51-ENGINEERING-2026-08-09.md`](./implementation/notes/stage-e/T51-ENGINEERING-2026-08-09.md)。这不是 T49 独立 Review，也不关闭 T46 隐私文案或 T51 正式素材的用户确认项。
 
 ## 阶段 E 已锁定范围
 
@@ -97,8 +99,8 @@ F 允许的仓库写入包括验收 note、证据索引、checkbox、STATE 状�
 | T42 | 用户门禁已关闭 | 独立 Review 移交 T49 |
 | T43/T44/T45/T47 | 已取消 | 不建设 |
 | T48 | 调研/契约完成 | 实现已纳入 T52-E1～E6 |
-| T46 | 待实施 | 后端统计契约与迁移 |
-| T51 | 待实施 | 品牌/备案展示能力和正式素材 |
+| T46 | 工程完成，用户文案确认待关闭 | T49 独立 Review；用户确认统计含义与最终隐私文案 |
+| T51 | 工程完成，正式素材确认待关闭 | 用户选择正式素材/独立竖版 Hero，并决定是否替换低分辨率设定图 |
 | T52-E1～E6 | 待实施 | 全部生产能力开发 |
 | T49 | 等待 E 开发完成 | 同一 SHA CI + 独立综合 Review |
 | T50 | 等待 T49 | 最终回归与冻结证据 |
@@ -122,13 +124,11 @@ F 允许的仓库写入包括验收 note、证据索引、checkbox、STATE 状�
 
 ## 下一步顺序
 
-1. T46；
-2. T51；
-3. T52-E1～E6；
-4. T49；
-5. T50；
-6. GATE-E；
-7. T53-F1～F5。
+1. T52-E1～E6；
+2. T49；
+3. T50；
+4. GATE-E；
+5. T53-F1～F5。
 
 ## 当前发布边界
 

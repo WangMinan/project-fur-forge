@@ -44,12 +44,17 @@ T35–T37 尚无独立 Review 签署；该门禁并入 T49，不能用用户验�
 
 这些是实施契约，不代表阿里云控制台、代码、Bucket ACL 或生产环境已经切换。
 
+## 阶段 E 已交付工程产物
+
+- T46 第一方统计：迁移、最小事件仓储/服务/路由、公开最佳努力采集、管理端只读概览和隐私/失败路径门禁；证据见 [`../implementation/notes/stage-e/T46-ENGINEERING-2026-08-09.md`](../implementation/notes/stage-e/T46-ENGINEERING-2026-08-09.md)；
+- T51 品牌/备案能力：公开导航短品牌、严格备案配置与空值隐藏、页脚投影、确定性品牌衍生复核和 tracked 素材审计；证据见 [`../implementation/notes/stage-e/T51-ENGINEERING-2026-08-09.md`](../implementation/notes/stage-e/T51-ENGINEERING-2026-08-09.md)。
+
+两项工程自测均不代签 T49 独立 Review；T46 最终隐私文案与 T51 正式素材选择仍由用户确认。
+
 ## 后续待产物
 
 | 任务 | 产物 |
 | --- | --- |
-| T46 | 第一方事件模型、采集/聚合 API、后台统计页、隐私说明和门禁 |
-| T51 | 公开导航“有点小狗”、备案/页脚配置、正式素材和自动测试 |
 | T52-E1～E6 | 配置、preflight、CDN 鉴权/撤销、监控准备、app-only Compose 和宿主机 Nginx/acme.sh 完整远程部署包 |
 | T49/T50/GATE-E | 同一 SHA CI、独立 Review、最终回归与上线产物冻结 |
 | T53-F1～F5 | 用户参数、阿里云控制台、远程机部署、正式验证和最终验收 |

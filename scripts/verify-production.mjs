@@ -121,10 +121,16 @@ try {
     `Public homepage returned ${publicResponse.status}.\n${serverOutput}`,
   )
   assert(
-    publicHtml.includes('data-testid="public-home"')
-    && publicHtml.includes('有点小狗工作室')
-    && publicHtml.includes('dite dog'),
-    'Public homepage was not rendered into the server HTML.',
+    publicHtml.includes('data-testid="public-home"'),
+    'Public homepage marker was not rendered into the server HTML.',
+  )
+  assert(
+    publicHtml.includes('有点小狗'),
+    'Public navigation brand was not rendered into the server HTML.',
+  )
+  assert(
+    publicHtml.includes('DITE DOG'),
+    'Public English brand was not rendered into the server HTML.',
   )
   assert(adminResponse.ok, 'Admin login did not return 2xx.')
   assert(

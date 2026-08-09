@@ -19,6 +19,7 @@ import {
 } from 'vitest'
 import { ORIGINAL_IMAGE_MAX_BYTES } from '../../shared/constants/project'
 import { decideHostAccess } from '../../server/utils/route/host-policy'
+import { getPublicSiteMeta } from '../../server/utils/service/site-meta'
 import {
   loadRuntimeConfig,
   RUNTIME_CONFIG_ENV,
@@ -240,6 +241,7 @@ describe('runtime configuration', () => {
       OSS_ACCESS_KEY_ID: 'test-access-key-id',
       OSS_ACCESS_KEY_SECRET: 'test-access-key-secret',
       SESSION_SECRET: 'production-session-secret-at-least-32-characters',
+      POLICE_FILING_STATUS: 'unconfigured',
     }
 
     const productionWithoutSmtp = loadRuntimeConfig({
@@ -369,6 +371,13 @@ describe('runtime configuration', () => {
     expect(template.values).toHaveProperty('ossPrivateBucket', '')
     expect(template.values).toHaveProperty('ossPublicBucket', '')
     expect(template.values).toMatchObject({
+      icpFilingNumber: '',
+      icpFilingUrl: '',
+      policeFilingStatus: 'unconfigured',
+      policeFilingNumber: '',
+      policeFilingUrl: '',
+    })
+    expect(template.values).toMatchObject({
       publicBaseUrl: '',
       adminBaseUrl: '',
       mediaBaseUrl: '',
@@ -378,6 +387,70 @@ describe('runtime configuration', () => {
     expect(template.values).not.toHaveProperty('originalImageMaxBytes')
     expect(nuxtConfig).not.toContain('process.env.SESSION_SECRET')
     expect(ORIGINAL_IMAGE_MAX_BYTES).toBe(30_000_000)
+  })
+
+  it('validates official filing pairs and hides unconfigured values truthfully', () => {
+    const base = {
+      APP_ENV: 'test',
+      PUBLIC_BASE_URL: 'http://public.test',
+      ADMIN_BASE_URL: 'http://admin.test',
+      MEDIA_BASE_URL: 'https://media.test',
+      OSS_UPLOAD_BASE_URL: 'https://upload.test',
+    }
+
+    expect(() => loadRuntimeConfig({
+      cwd: temporaryDirectory(),
+      env: {
+        ...base,
+        ICP_FILING_NUMBER: '浙 ICP 备 12345678 号',
+      },
+    })).toThrowError(/icpFilingNumber/)
+    expect(() => loadRuntimeConfig({
+      cwd: temporaryDirectory(),
+      env: {
+        ...base,
+        ICP_FILING_NUMBER: '浙 ICP 备 12345678 号',
+        ICP_FILING_URL: 'https://example.test/fake',
+      },
+    })).toThrowError(/icpFilingUrl/)
+    expect(() => loadRuntimeConfig({
+      cwd: temporaryDirectory(),
+      env: {
+        ...base,
+        POLICE_FILING_STATUS: 'filed',
+      },
+    })).toThrowError(/policeFilingNumber/)
+
+    const empty = loadRuntimeConfig({
+      cwd: temporaryDirectory(),
+      env: base,
+    })
+    expect(getPublicSiteMeta(empty).filings).toEqual({
+      icp: null,
+      police: null,
+    })
+
+    const configured = loadRuntimeConfig({
+      cwd: temporaryDirectory(),
+      env: {
+        ...base,
+        ICP_FILING_NUMBER: '浙 ICP 备 12345678 号',
+        ICP_FILING_URL: 'https://beian.miit.gov.cn/',
+        POLICE_FILING_STATUS: 'filed',
+        POLICE_FILING_NUMBER: '浙公网安备 33010000000000 号',
+        POLICE_FILING_URL: 'https://www.beian.gov.cn/portal/registerSystemInfo',
+      },
+    })
+    expect(getPublicSiteMeta(configured).filings).toEqual({
+      icp: {
+        number: '浙 ICP 备 12345678 号',
+        url: 'https://beian.miit.gov.cn/',
+      },
+      police: {
+        number: '浙公网安备 33010000000000 号',
+        url: 'https://www.beian.gov.cn/portal/registerSystemInfo',
+      },
+    })
   })
 })
 
@@ -418,6 +491,11 @@ describe('host boundary', () => {
     expect(decideHostAccess(
       'admin.test',
       '/admin/login',
+      config,
+    )).toEqual({ action: 'allow' })
+    expect(decideHostAccess(
+      'admin.test',
+      '/api/site-meta',
       config,
     )).toEqual({ action: 'allow' })
     expect(decideHostAccess(
@@ -489,6 +567,7 @@ describe('host boundary', () => {
         OSS_ACCESS_KEY_ID: 'test-access-key-id',
         OSS_ACCESS_KEY_SECRET: 'test-access-key-secret',
         SESSION_SECRET: 'test-only-session-secret-with-32-chars',
+        POLICE_FILING_STATUS: 'not_applicable',
       },
     })
     expect(decideHostAccess(

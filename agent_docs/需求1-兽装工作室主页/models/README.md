@@ -131,12 +131,12 @@ optional work { name, slug, href }
 
 管理 DTO 可以包含受控私有事实、资产 ID/尺寸/状态、短期私有预览、发布检查和 operation；不返回私有 Object Key、AK/SK、鉴权 Key或长期可复用签名 URL。
 
-## 5. T46 目标模型（未落地）
+## 5. T46 已落地模型
 
 ### `analytics_events`
 
 ```text
-id              integer/uuid stable
+id              integer stable
 occurred_at     timestamp
 event_type      page_view | contact_action
 route_key       whitelist enum
@@ -156,8 +156,10 @@ session_hmac    fixed-length digest
 - `session_hmac` 是客户端 sessionStorage 随机 ID 经服务端域分离 HMAC 的结果；
 - 不保存原始会话 ID、IP、UA、Referer、Cookie、localStorage、联系方式或指纹；
 - `(occurred_at)`、`(event_type, occurred_at)`、`(route_key, occurred_at)` 与必要实体窗口索引；
-- 原始行 90 天滚动保留，不建立通用 scheduler；
+- 原始行 90 天滚动保留，每次接受写入时同事务幂等清理，不建立通用 scheduler；
 - 后台只做 1/7/30 天聚合，不提供任意 SQL/导出。
+
+前向迁移为 `0025_t46_analytics.sql`。集成测试核对列与索引，并用实际查询计划确认 30 天窗口和排行查询使用时间/组合索引；该模型不改变现有业务表或媒体状态机。
 
 ## 6. T52-E3/E4 生产媒体投影（阶段 E 待落地）
 

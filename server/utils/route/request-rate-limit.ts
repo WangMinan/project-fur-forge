@@ -9,6 +9,7 @@ import { getRuntimeConfig } from '../runtime-config'
 export const LOGIN_RATE_LIMIT = 30
 export const ADMIN_WRITE_RATE_LIMIT = 60
 export const ADMIN_PROBE_RATE_LIMIT = 60
+export const PUBLIC_ANALYTICS_RATE_LIMIT = 120
 const RATE_LIMIT_WINDOW_MS = 60_000
 /** 桶数量上限，防止伪造大量 subject 撑爆内存。 */
 const MAX_BUCKETS_PER_TIER = 4_096
@@ -81,6 +82,11 @@ function createRequestLimiters() {
       ADMIN_PROBE_RATE_LIMIT,
       RATE_LIMIT_WINDOW_MS,
     ),
+    // 第一方统计：中间件按可信客户端 IP 摘要，处理器再按 IP + 会话 HMAC。
+    analytics: createSubjectLimiter(
+      PUBLIC_ANALYTICS_RATE_LIMIT,
+      RATE_LIMIT_WINDOW_MS,
+    ),
   }
 }
 
@@ -104,11 +110,13 @@ export interface RateLimitSubject {
   adminId?: string
   /** 登录用户名，与 IP 摘要共同分桶。 */
   username?: string
+  /** 已域分离 HMAC 的浏览器会话，仅在内存限流桶中使用。 */
+  analyticsSession?: string
 }
 
 export function rateLimitSubjectKey(
   event: H3Event,
-  tier: 'adminProbe' | 'adminWrite' | 'login',
+  tier: 'adminProbe' | 'adminWrite' | 'analytics' | 'login',
   subject: RateLimitSubject = {},
 ) {
   if (tier === 'adminWrite' && subject.adminId) {
@@ -117,6 +125,9 @@ export function rateLimitSubjectKey(
   const parts = [`ip:${trustedClientDigest(event)}`]
   if (tier === 'login' && subject.username) {
     parts.push(`user:${subjectDigest(subject.username.toLowerCase())}`)
+  }
+  if (tier === 'analytics' && subject.analyticsSession) {
+    parts.push(`session:${subject.analyticsSession}`)
   }
   return parts.join('|')
 }

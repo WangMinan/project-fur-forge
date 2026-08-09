@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import { createApiError } from '../api-error'
 
 export const ADMIN_JSON_BODY_MAX_BYTES = 64 * 1_024
+export const PUBLIC_ANALYTICS_JSON_BODY_MAX_BYTES = 1_024
 
 function bodyError(statusCode: 400 | 413) {
   return createApiError(
@@ -13,7 +14,7 @@ function bodyError(statusCode: 400 | 413) {
   )
 }
 
-function readLimitedRawBody(event: H3Event) {
+function readLimitedRawBody(event: H3Event, maximumBytes: number) {
   return new Promise<string>((resolve, reject) => {
     const request = event.node.req
     const chunks: Buffer[] = []
@@ -29,7 +30,7 @@ function readLimitedRawBody(event: H3Event) {
     const onData = (chunk: Buffer | string) => {
       const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
       byteLength += buffer.byteLength
-      if (byteLength > ADMIN_JSON_BODY_MAX_BYTES) {
+      if (byteLength > maximumBytes) {
         cleanup()
         request.resume()
         reject(bodyError(413))
@@ -63,13 +64,16 @@ function readLimitedRawBody(event: H3Event) {
   })
 }
 
-export async function readAdminJsonBody(event: H3Event): Promise<unknown> {
+async function readJsonBody(
+  event: H3Event,
+  maximumBytes: number,
+): Promise<unknown> {
   const contentLength = Number(event.node.req.headers['content-length'])
-  if (Number.isFinite(contentLength) && contentLength > ADMIN_JSON_BODY_MAX_BYTES) {
+  if (Number.isFinite(contentLength) && contentLength > maximumBytes) {
     throw bodyError(413)
   }
 
-  const raw = await readLimitedRawBody(event)
+  const raw = await readLimitedRawBody(event, maximumBytes)
   if (!raw) {
     throw createApiError(
       400,
@@ -88,4 +92,12 @@ export async function readAdminJsonBody(event: H3Event): Promise<unknown> {
       'Request body is invalid.',
     )
   }
+}
+
+export function readAdminJsonBody(event: H3Event): Promise<unknown> {
+  return readJsonBody(event, ADMIN_JSON_BODY_MAX_BYTES)
+}
+
+export function readPublicAnalyticsJsonBody(event: H3Event): Promise<unknown> {
+  return readJsonBody(event, PUBLIC_ANALYTICS_JSON_BODY_MAX_BYTES)
 }

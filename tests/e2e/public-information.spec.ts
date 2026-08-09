@@ -24,10 +24,8 @@ test('关于二级导航、独立条款页、页脚与兼容跳转连通', async
   const footer = page.locator('.public-footer')
   await expect(footer.getByRole('link', { name: '服务条款' })).toBeVisible()
   await expect(footer.getByRole('link', { name: '隐私政策' })).toBeVisible()
-  await expect(footer.getByRole('link', { name: 'ICP备案' })).toHaveAttribute(
-    'href',
-    'https://beian.miit.gov.cn/',
-  )
+  await expect(footer.getByRole('link', { name: 'ICP备案' })).toHaveCount(0)
+  await expect(footer).not.toContainText('待备案')
   await expect(footer.getByRole('link', { name: 'Arktouros' })).toHaveAttribute(
     'href',
     'https://github.com/wangminan',

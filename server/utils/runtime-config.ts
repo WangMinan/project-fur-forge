@@ -24,6 +24,11 @@ export const RUNTIME_CONFIG_ENV = {
   ossAccessKeyId: 'OSS_ACCESS_KEY_ID',
   ossAccessKeySecret: 'OSS_ACCESS_KEY_SECRET',
   sessionSecret: 'SESSION_SECRET',
+  icpFilingNumber: 'ICP_FILING_NUMBER',
+  icpFilingUrl: 'ICP_FILING_URL',
+  policeFilingStatus: 'POLICE_FILING_STATUS',
+  policeFilingNumber: 'POLICE_FILING_NUMBER',
+  policeFilingUrl: 'POLICE_FILING_URL',
   trustedProxyCidrs: 'TRUSTED_PROXY_CIDRS',
   smtpHost: 'SMTP_HOST',
   smtpPort: 'SMTP_PORT',
@@ -46,6 +51,11 @@ export const RUNTIME_CONFIG_TYPES = {
   ossAccessKeyId: 'string',
   ossAccessKeySecret: 'string',
   sessionSecret: 'string',
+  icpFilingNumber: 'string',
+  icpFilingUrl: 'url',
+  policeFilingStatus: 'filing-status',
+  policeFilingNumber: 'string',
+  policeFilingUrl: 'url',
   trustedProxyCidrs: 'string',
   smtpHost: 'string',
   smtpPort: 'integer',
@@ -95,6 +105,26 @@ const optionalBoolean = z.preprocess((value) => {
   return normalized
 }, z.boolean().optional())
 
+const optionalFilingUrl = z.preprocess(
+  emptyToUndefined,
+  z.string().url().max(2_048).optional(),
+)
+
+function isOfficialFilingUrl(
+  value: string | undefined,
+  officialHosts: readonly string[],
+) {
+  if (!value) {
+    return true
+  }
+  const url = new URL(value)
+  return url.protocol === 'https:'
+    && officialHosts.includes(url.hostname.toLowerCase())
+    && url.username === ''
+    && url.password === ''
+    && url.hash === ''
+}
+
 const embeddedContract = configFileSchema.parse(runtimeExample)
 const localFallback = Object.fromEntries(
   Object.entries(embeddedContract.values)
@@ -138,6 +168,14 @@ export const runtimeConfigSchema = z.object({
     emptyToUndefined,
     z.string().min(32).max(1_024).optional(),
   ),
+  icpFilingNumber: optionalText(120),
+  icpFilingUrl: optionalFilingUrl,
+  policeFilingStatus: z.preprocess(
+    emptyToUndefined,
+    z.enum(['unconfigured', 'not_applicable', 'filed']).optional(),
+  ),
+  policeFilingNumber: optionalText(120),
+  policeFilingUrl: optionalFilingUrl,
   // T34-F5：可信代理网段列表（逗号分隔 CIDR）。留空表示不解析任何转发链。
   trustedProxyCidrs: optionalText(512),
   smtpHost: optionalText(255),
@@ -214,7 +252,62 @@ export const runtimeConfigSchema = z.object({
     })
   }
 
+  if (Boolean(config.icpFilingNumber) !== Boolean(config.icpFilingUrl)) {
+    context.addIssue({
+      code: 'custom',
+      message: 'ICP 备案号与官方链接必须成对提供',
+      path: ['icpFilingNumber'],
+    })
+  }
+  if (!isOfficialFilingUrl(
+    config.icpFilingUrl,
+    ['beian.miit.gov.cn'],
+  )) {
+    context.addIssue({
+      code: 'custom',
+      message: 'ICP 备案链接必须使用工信部 HTTPS 官方域名',
+      path: ['icpFilingUrl'],
+    })
+  }
+
+  const policeHasDisplay = Boolean(
+    config.policeFilingNumber || config.policeFilingUrl,
+  )
+  if (config.policeFilingStatus === 'filed') {
+    if (!config.policeFilingNumber || !config.policeFilingUrl) {
+      context.addIssue({
+        code: 'custom',
+        message: '公安备案标记为 filed 时必须提供备案号与链接',
+        path: ['policeFilingNumber'],
+      })
+    }
+  }
+  else if (policeHasDisplay) {
+    context.addIssue({
+      code: 'custom',
+      message: '只有已完成公安备案时才能配置展示信息',
+      path: ['policeFilingStatus'],
+    })
+  }
+  if (!isOfficialFilingUrl(
+    config.policeFilingUrl,
+    ['beian.gov.cn', 'www.beian.gov.cn'],
+  )) {
+    context.addIssue({
+      code: 'custom',
+      message: '公安备案链接必须使用全国互联网安全管理平台 HTTPS 官方域名',
+      path: ['policeFilingUrl'],
+    })
+  }
+
   if (config.appEnv === 'production') {
+    if (config.policeFilingStatus === undefined) {
+      context.addIssue({
+        code: 'custom',
+        message: '生产环境必须显式声明公安备案状态',
+        path: ['policeFilingStatus'],
+      })
+    }
     for (const key of [
       'publicBaseUrl',
       'adminBaseUrl',

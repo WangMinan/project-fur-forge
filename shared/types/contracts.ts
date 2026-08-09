@@ -1,5 +1,22 @@
 import type { z } from 'zod'
 import type {
+  policeFilingStatusSchema,
+  publicFilingItemSchema,
+  publicSiteMetaSchema,
+} from '../schemas/site-meta'
+import type {
+  analyticsActionKeySchema,
+  analyticsContentRankingItemSchema,
+  analyticsContactActionItemSchema,
+  analyticsEntityTypeSchema,
+  analyticsEventRequestSchema,
+  analyticsEventTypeSchema,
+  analyticsOverviewDtoSchema,
+  analyticsPageRankingItemSchema,
+  analyticsRangeSummarySchema,
+  analyticsRouteKeySchema,
+} from '../schemas/analytics'
+import type {
   adminAssetDtoSchema,
   assetStatusSchema,
   mediaRoleSchema,
@@ -113,6 +130,25 @@ import type {
 } from '../schemas/watermark'
 
 export type ApiError = z.infer<typeof apiErrorSchema>
+export type AnalyticsEventType = z.infer<typeof analyticsEventTypeSchema>
+export type AnalyticsRouteKey = z.infer<typeof analyticsRouteKeySchema>
+export type AnalyticsEntityType = z.infer<typeof analyticsEntityTypeSchema>
+export type AnalyticsActionKey = z.infer<typeof analyticsActionKeySchema>
+export type AnalyticsEventRequest = z.infer<typeof analyticsEventRequestSchema>
+export type AnalyticsRangeSummary = z.infer<typeof analyticsRangeSummarySchema>
+export type AnalyticsPageRankingItem = z.infer<
+  typeof analyticsPageRankingItemSchema
+>
+export type AnalyticsContentRankingItem = z.infer<
+  typeof analyticsContentRankingItemSchema
+>
+export type AnalyticsContactActionItem = z.infer<
+  typeof analyticsContactActionItemSchema
+>
+export type AnalyticsOverviewDto = z.infer<typeof analyticsOverviewDtoSchema>
+export type PoliceFilingStatus = z.infer<typeof policeFilingStatusSchema>
+export type PublicFilingItem = z.infer<typeof publicFilingItemSchema>
+export type PublicSiteMeta = z.infer<typeof publicSiteMetaSchema>
 export type ErrorCode = z.infer<typeof errorCodeSchema>
 export type ErrorReason = z.infer<typeof errorReasonSchema>
 export type WorkPurpose = z.infer<typeof workPurposeSchema>
