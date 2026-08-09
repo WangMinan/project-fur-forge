@@ -57,6 +57,11 @@ jobs:
         run: pnpm test
 
       - name: Integration tests
+        env:
+          PUBLIC_BASE_URL: https://public.test.invalid
+          ADMIN_BASE_URL: https://admin.test.invalid
+          MEDIA_BASE_URL: https://media.test.invalid
+          OSS_UPLOAD_BASE_URL: https://upload.test.invalid
         run: pnpm test:integration
 
       # 生产产物必须在 APP_ENV=production 下构建：workflow 级的 APP_ENV=test 会让
@@ -85,19 +90,19 @@ jobs:
         env:
           APP_IMAGE_REF: example/project-fur-forge@sha256:1111111111111111111111111111111111111111111111111111111111111111
           DATABASE_FILE: /app/data/studio.db
-          PUBLIC_BASE_URL: https://public.example.test
-          ADMIN_BASE_URL: https://admin.example.test
+          PUBLIC_BASE_URL: https://public.test.invalid
+          ADMIN_BASE_URL: https://admin.test.invalid
           MEDIA_BASE_URL: https://public-media.ditedog.com
-          OSS_UPLOAD_BASE_URL: https://ci-private.oss-cn-hangzhou.aliyuncs.com
+          OSS_UPLOAD_BASE_URL: https://project-furry-forge-private.oss-cn-hangzhou.aliyuncs.com
           OSS_REGION: oss-cn-hangzhou
           OSS_ENDPOINT: https://oss-cn-hangzhou-internal.aliyuncs.com
-          OSS_PRIVATE_BUCKET: ci-private
-          OSS_PUBLIC_BUCKET: ci-public
-          OSS_ACCESS_KEY_ID: ci-oss-placeholder
-          OSS_ACCESS_KEY_SECRET: ci-oss-secret-placeholder
+          OSS_PRIVATE_BUCKET: project-furry-forge-private
+          OSS_PUBLIC_BUCKET: project-furry-forge-public
+          OSS_ACCESS_KEY_ID: ci-oss-access-key-id
+          OSS_ACCESS_KEY_SECRET: ci-oss-access-key-secret
           ESA_SITE_ID: "1234567890"
-          ESA_ACCESS_KEY_ID: ci-esa-placeholder
-          ESA_ACCESS_KEY_SECRET: ci-esa-secret-placeholder
+          ESA_ACCESS_KEY_ID: ci-esa-access-key-id
+          ESA_ACCESS_KEY_SECRET: ci-esa-access-key-secret
           SESSION_SECRET: ci-placeholder-session-secret-at-least-32-chars
           POLICE_FILING_STATUS: unconfigured
           TRUSTED_PROXY_CIDRS: 172.30.250.1/32,192.0.2.0/24
@@ -146,19 +151,19 @@ jobs:
         env:
           APP_IMAGE_REF: project-fur-forge:quality
           DATABASE_FILE: /app/data/studio.db
-          PUBLIC_BASE_URL: https://public.example.test
-          ADMIN_BASE_URL: https://admin.example.test
+          PUBLIC_BASE_URL: https://public.test.invalid
+          ADMIN_BASE_URL: https://admin.test.invalid
           MEDIA_BASE_URL: https://public-media.ditedog.com
-          OSS_UPLOAD_BASE_URL: https://ci-private.oss-cn-hangzhou.aliyuncs.com
+          OSS_UPLOAD_BASE_URL: https://project-furry-forge-private.oss-cn-hangzhou.aliyuncs.com
           OSS_REGION: oss-cn-hangzhou
           OSS_ENDPOINT: https://oss-cn-hangzhou-internal.aliyuncs.com
-          OSS_PRIVATE_BUCKET: ci-private
-          OSS_PUBLIC_BUCKET: ci-public
-          OSS_ACCESS_KEY_ID: ci-oss-placeholder
-          OSS_ACCESS_KEY_SECRET: ci-oss-secret-placeholder
+          OSS_PRIVATE_BUCKET: project-furry-forge-private
+          OSS_PUBLIC_BUCKET: project-furry-forge-public
+          OSS_ACCESS_KEY_ID: ci-oss-access-key-id
+          OSS_ACCESS_KEY_SECRET: ci-oss-access-key-secret
           ESA_SITE_ID: "1234567890"
-          ESA_ACCESS_KEY_ID: ci-esa-placeholder
-          ESA_ACCESS_KEY_SECRET: ci-esa-secret-placeholder
+          ESA_ACCESS_KEY_ID: ci-esa-access-key-id
+          ESA_ACCESS_KEY_SECRET: ci-esa-access-key-secret
           SESSION_SECRET: ci-placeholder-session-secret-at-least-32-chars
           POLICE_FILING_STATUS: unconfigured
           TRUSTED_PROXY_CIDRS: 172.30.250.1/32,192.0.2.0/24
@@ -262,8 +267,8 @@ jobs:
           nginx_test="${RUNNER_TEMP}/fur-forge-nginx"
           mkdir -p "${nginx_test}/conf.d"
           sed \
-            -e 's/@@PUBLIC_HOST@@/public.example.test/g' \
-            -e 's/@@ADMIN_HOST@@/admin.example.test/g' \
+            -e 's/@@PUBLIC_HOST@@/public.test.invalid/g' \
+            -e 's/@@ADMIN_HOST@@/admin.test.invalid/g' \
             deploy/nginx/app.conf.template >"${nginx_test}/conf.d/ditedog.conf"
           cp deploy/nginx/00-connection-map.conf \
             "${nginx_test}/conf.d/00-connection-map.conf"
@@ -282,18 +287,18 @@ jobs:
           docker exec fur-forge-nginx-test nginx -t
           docker exec fur-forge-nginx-test nginx -s reload
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
-            --header 'Host: unknown.example.test' http://127.0.0.1/)" = "421"
+            --header 'Host: unknown.test.invalid' http://127.0.0.1/)" = "421"
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
             --header 'Host: public-media.ditedog.com' http://127.0.0.1/)" = "421"
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
-            --header 'Host: public.example.test' http://127.0.0.1/)" = "200"
+            --header 'Host: public.test.invalid' http://127.0.0.1/)" = "200"
 
           auth_headers="${nginx_test}/auth-headers.txt"
           auth_body="${nginx_test}/auth-body.json"
           test "$(curl --silent --show-error --output "${auth_body}" \
             --dump-header "${auth_headers}" --write-out '%{http_code}' \
-            --header 'Host: admin.example.test' \
-            --header 'Origin: https://admin.example.test' \
+            --header 'Host: admin.test.invalid' \
+            --header 'Origin: https://admin.test.invalid' \
             --header 'Content-Type: application/json' \
             --data '{"username":"ci-admin","password":"ci-only-password-at-least-12"}' \
             http://127.0.0.1/api/auth/login)" = "200"
@@ -302,17 +307,17 @@ jobs:
             's/^set-cookie: ([^;]+).*/\1/ip' "${auth_headers}" | tr -d '\r')"
           csrf_token="$(jq -er '.data.csrfToken' "${auth_body}")"
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
-            --header 'Host: admin.example.test' \
+            --header 'Host: admin.test.invalid' \
             --header "Cookie: ${session_cookie}" \
             http://127.0.0.1/api/auth/session)" = "200"
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
-            --request POST --header 'Host: admin.example.test' \
-            --header 'Origin: https://admin.example.test' \
+            --request POST --header 'Host: admin.test.invalid' \
+            --header 'Origin: https://admin.test.invalid' \
             --header "Cookie: ${session_cookie}" \
             http://127.0.0.1/api/auth/logout)" = "403"
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
-            --request POST --header 'Host: admin.example.test' \
-            --header 'Origin: https://admin.example.test' \
+            --request POST --header 'Host: admin.test.invalid' \
+            --header 'Origin: https://admin.test.invalid' \
             --header "Cookie: ${session_cookie}" \
             --header "x-csrf-token: ${csrf_token}" \
             http://127.0.0.1/api/auth/logout)" = "200"
@@ -322,19 +327,19 @@ jobs:
         env:
           APP_IMAGE_REF: project-fur-forge:quality
           DATABASE_FILE: /app/data/studio.db
-          PUBLIC_BASE_URL: https://public.example.test
-          ADMIN_BASE_URL: https://admin.example.test
+          PUBLIC_BASE_URL: https://public.test.invalid
+          ADMIN_BASE_URL: https://admin.test.invalid
           MEDIA_BASE_URL: https://public-media.ditedog.com
-          OSS_UPLOAD_BASE_URL: https://ci-private.oss-cn-hangzhou.aliyuncs.com
+          OSS_UPLOAD_BASE_URL: https://project-furry-forge-private.oss-cn-hangzhou.aliyuncs.com
           OSS_REGION: oss-cn-hangzhou
           OSS_ENDPOINT: https://oss-cn-hangzhou-internal.aliyuncs.com
-          OSS_PRIVATE_BUCKET: ci-private
-          OSS_PUBLIC_BUCKET: ci-public
-          OSS_ACCESS_KEY_ID: ci-oss-placeholder
-          OSS_ACCESS_KEY_SECRET: ci-oss-secret-placeholder
+          OSS_PRIVATE_BUCKET: project-furry-forge-private
+          OSS_PUBLIC_BUCKET: project-furry-forge-public
+          OSS_ACCESS_KEY_ID: ci-oss-access-key-id
+          OSS_ACCESS_KEY_SECRET: ci-oss-access-key-secret
           ESA_SITE_ID: "1234567890"
-          ESA_ACCESS_KEY_ID: ci-esa-placeholder
-          ESA_ACCESS_KEY_SECRET: ci-esa-secret-placeholder
+          ESA_ACCESS_KEY_ID: ci-esa-access-key-id
+          ESA_ACCESS_KEY_SECRET: ci-esa-access-key-secret
           SESSION_SECRET: ci-placeholder-session-secret-at-least-32-chars
           POLICE_FILING_STATUS: unconfigured
           TRUSTED_PROXY_CIDRS: 172.30.250.1/32,192.0.2.0/24

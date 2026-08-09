@@ -50,3 +50,11 @@ T52-E6 的应用、Compose、宿主机 Nginx 模板、运维入口、Handbook �
 | `pnpm verify:observability` | PASS |
 
 本机没有 Docker CLI，因此不能把 quality 中的容器演练冒充本地执行。提交后必须等待 Actions 的 `image-build` 实际结果，再决定 E6 是否可勾选。
+
+## 首次 Actions 结果与修复
+
+首次实现提交 `332744ab` 的 Actions run `31325728593` 为 `failure`，保留该 NOT PASS：
+
+- `checks` 在 integration 失败，39/168 失败；CI 没有本地 `.env`，四个测试 origin 为空，严格 runtime Schema 正确拒绝。修复为只在 integration step 显式注入四个互异的 `.invalid` 测试 origin；同组环境本地完整重放为 20 files / 168 tests PASS。
+- `image-build` 已成功构建生产镜像、空卷 migrate 和 init-admin，随后 dry preflight 正确拒绝 `example.test` 占位 origin。修复为在受控 Compose/Nginx 演练中使用明确非生产的 `.invalid` Host 和不含 placeholder 标记的合成凭据；没有放宽 preflight 的生产占位拒绝规则。
+- 因 `checks` 失败，首次 `e2e` 被跳过；不能计为通过。修复提交后必须重新取得 `checks`、`image-build`、`e2e` 同一 SHA 结果。

@@ -87,7 +87,7 @@ describe('T52-E6 production deployment contract', () => {
     expect(quality).toContain('test "${old_image}" != "${candidate_image}"')
     expect(quality).toContain('nginx:1.30.4')
     expect(quality).toContain('docker exec fur-forge-nginx-test nginx -s reload')
-    expect(quality).toContain("'Origin: https://admin.example.test'")
+    expect(quality).toContain("'Origin: https://admin.test.invalid'")
     expect(quality).toContain('http://127.0.0.1/api/auth/logout')
   })
 })
