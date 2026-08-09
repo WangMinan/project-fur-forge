@@ -1,6 +1,6 @@
 # 部署说明
 
-> Endpoint 与运行时配置已由 T52-E1 收敛；部署骨架仍需由 T52-E2～E6 完成。真实部署只在 GATE-E 冻结后执行。逐步命令以 [`PRODUCTION-LAUNCH-HANDBOOK.md`](../agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md) 为准。
+> Endpoint/运行时配置和 OSS/ESA 生产预检已由 T52-E1/E2 收敛；部署骨架仍需由 T52-E3～E6 完成。真实部署只在 GATE-E 冻结后执行。逐步命令以 [`PRODUCTION-LAUNCH-HANDBOOK.md`](../agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md) 为准。
 
 ## 生产结构
 
@@ -32,6 +32,12 @@
 | `.env.compose.example` / `.env.example` | OSS 内外网、上传基址、ESA Site/API 配置，不含真实 Secret |
 | `deploy/nginx/app.conf.template` | 宿主机 HTTP/80、精确 Host、loopback upstream、未知 Host 421 |
 | `scripts/container-ops.ts` | migrate、preflight、init、backup、restore、recover |
+
+## OSS/ESA 生产预检
+
+`pnpm run preflight:oss` 默认只校验 production 变量和输出脱敏计划，不访问网络或写云资源；只有显式添加 `--no-dry-run` 才执行 OSS/ESA live 验证。live 模式检查 private+BPA、Policy/Object ACL、CORS、生命周期、衍生物数据库边界、应用读写/处理/精确清理、原站匿名 403、ESA 媒体 200，以及 purge/控制面最小权限。
+
+目标环境必须先运行默认模式，再运行 live 模式，并分别保留新建的 JSON 证据；任何 FAIL、blocked、非零退出或精确清理失败都停止部署。阶段 E 不使用真实生产凭据运行 live 模式。
 
 ## 缓存与下架
 

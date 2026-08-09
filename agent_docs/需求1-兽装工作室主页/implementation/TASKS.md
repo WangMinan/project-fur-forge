@@ -148,11 +148,11 @@ _依赖：T51-F1；完成后继续 T52-E1。_
 
 #### T52-E2 · OSS/ESA preflight 与权限验证程序
 
-- [ ] 重写受控 preflight，不再要求 public-read 或原站匿名 200；
-- [ ] 自动检查两只原始 OSS 域名匿名 403、应用权限通过、越权拒绝、已发布 ESA 媒体 URL 200；
-- [ ] 检查 Bucket ACL/BPA、Object ACL/Policy、CORS、生命周期和 ESA 只回源衍生 Bucket；
-- [ ] 检查网页衍生 Bucket 只含允许公开展示的对象；检查 purge API 最小权限并拒绝域名/套餐等控制面越权；
-- [ ] 提供 dry-run、脱敏输出和非零退出码；阶段 F 可补诊断/证据采集包装器，但不得改变该入口的判定契约。
+- [x] 重写受控 preflight，不再要求 public-read 或原站匿名 200；
+- [x] 自动检查两只原始 OSS 域名匿名 403、应用权限通过、越权拒绝、已发布 ESA 媒体 URL 200；
+- [x] 检查 Bucket ACL/BPA、Object ACL/Policy、CORS、生命周期和 ESA 只回源衍生 Bucket；
+- [x] 检查网页衍生 Bucket 只含允许公开展示的对象；检查 purge API 最小权限并拒绝域名/套餐等控制面越权；
+- [x] 提供 dry-run、脱敏输出和非零退出码；阶段 F 可补诊断/证据采集包装器，但不得改变该入口的判定契约。
 
 #### T52-E3 · ESA 同账号私有 OSS 回源
 

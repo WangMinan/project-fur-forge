@@ -52,14 +52,15 @@ T35–T37 尚无独立 Review 签署；该门禁并入 T49，不能用用户验�
 - T51-F1 用户反馈修复：`/works` 紧凑间距、低分辨率设定图非阻断上传/发布、私有 FFmpeg Lanczos 适配源、明确中文失败恢复和自动/真实浏览器证据；证据见 [`../implementation/notes/stage-e/T51-F1-ENGINEERING-2026-08-09.md`](../implementation/notes/stage-e/T51-F1-ENGINEERING-2026-08-09.md)。
 - T51-F2 公开列表分页：`/works` 固定 12 件、`/adoptions` 固定 8 个，筛选后服务端分页、单页仍显示编号栏、非法/越界页码受控，以及三视口真实浏览器证据；证据见 [`../implementation/notes/stage-e/T51-F2-ENGINEERING-2026-08-09.md`](../implementation/notes/stage-e/T51-F2-ENGINEERING-2026-08-09.md)。
 - T52-E1 Endpoint/配置：服务端 OSS、浏览器条件 PUT 与 ESA 公开媒体三类地址分离，独立 ESA Site/API 配置，生产 Schema、环境/runtime 模板和 production verify 同步；证据见 [`../implementation/notes/stage-e/T52-E1-ENGINEERING-2026-08-09.md`](../implementation/notes/stage-e/T52-E1-ENGINEERING-2026-08-09.md)。
+- T52-E2 OSS/ESA preflight：默认无网络 dry-run、显式 live 探测、Bucket/对象/衍生物数据库边界、上传失败面、原站/ESA 读取、官方 SDK purge 最小权限与脱敏证据；证据见 [`../implementation/notes/stage-e/T52-E2-ENGINEERING-2026-08-09.md`](../implementation/notes/stage-e/T52-E2-ENGINEERING-2026-08-09.md)。
 
-五项工程自测均不代签 T49 独立 Review；T46 最终隐私文案与 T51 正式素材选择仍由用户确认。
+六项工程自测均不代签 T49 独立 Review；T52-E2 尚未在生产凭据/Bucket 上执行 live 模式，T46 最终隐私文案与 T51 正式素材选择仍由用户确认。
 
 ## 后续待产物
 
 | 任务 | 产物 |
 | --- | --- |
-| T52-E2～E6 | preflight、ESA 鉴权/purge、监控准备、app-only Compose 和宿主机 HTTP-only Nginx 完整远程部署包 |
+| T52-E3～E6 | ESA 公开投影/鉴权、持久 purge、监控准备、app-only Compose 和宿主机 HTTP-only Nginx 完整远程部署包 |
 | T49/T50/GATE-E | 同一 SHA CI、独立 Review、最终回归与上线产物冻结 |
 | T53-F1～F5 | 用户参数、阿里云控制台、远程机部署、正式验证和最终验收 |
 

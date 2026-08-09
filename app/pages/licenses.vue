@@ -79,6 +79,12 @@ const RUNTIME: Dependency[] = [
     url: 'https://github.com/ali-sdk/ali-oss',
   },
   {
+    license: 'Apache-2.0',
+    name: 'Alibaba Cloud ESA SDK for TypeScript',
+    purpose: 'ESA 精确缓存刷新与任务查询',
+    url: 'https://github.com/aliyun/alibabacloud-typescript-sdk',
+  },
+  {
     license: 'MIT',
     name: 'nuxt-auth-utils',
     purpose: '管理端登录会话',

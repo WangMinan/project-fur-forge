@@ -1,55 +1,54 @@
-import {
-  existsSync,
-  readFileSync,
-} from 'node:fs'
-import {
-  mkdir,
-  writeFile,
-} from 'node:fs/promises'
+import { existsSync, readFileSync } from 'node:fs'
+import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { loadEnvFile } from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
+import EsaClient, {
+  DeleteSiteRequest,
+  DescribePurgeTasksRequest,
+  ListSitesRequest,
+  PurgeCachesRequest,
+  PurgeCachesRequestContent,
+} from '@alicloud/esa20240910'
 import OSS from 'ali-oss'
+import Database from 'better-sqlite3'
 import {
-  compressPngForOss,
-  OSS_IMAGE_PROCESSING_MAX_BYTES,
-} from './embedded-ffmpeg.mjs'
-import {
-  assertExactObjectScope,
   contentDigests,
-  createLargeSyntheticPng,
-  createRunId,
-  createSyntheticWatermarkPng,
-  evaluateCorsRules,
-  EXPECTED_PRIVATE_BUCKET,
-  EXPECTED_PUBLIC_BUCKET,
-  ORIGINAL_IMAGE_MAX_BYTES,
-  ossErrorSummary,
-  parseImageInfo,
+  createSyntheticSourcePng,
   requestIdOf,
-  REQUIRED_PUT_HEADERS,
   responseHeader,
-  sha256,
-  testPrefixFor,
-  urlSafeBase64,
 } from './oss-preflight-core.mjs'
+import {
+  assertProductionTestObject,
+  buildExactPurgeInput,
+  createProductionPreflightRunId,
+  evaluateDerivativeInventory,
+  evaluateLifecycleRules,
+  evaluateStrictCorsRules,
+  exactEsaMediaUrl,
+  EXPECTED_MEDIA_ORIGIN,
+  EXPECTED_PRIVATE_BUCKET,
+  fingerprint,
+  isAccessDenied,
+  maskIdentifier,
+  productionPreflightError,
+  productionPreflightPrefix,
+  REQUIRED_PUT_HEADERS,
+  safeErrorSummary,
+  validateProductionPreflightConfig,
+} from './production-preflight-core.mjs'
 
-const projectRoot = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  '..',
-)
-const EXPECTED_ENDPOINT = 'https://oss-cn-hangzhou.aliyuncs.com'
-const EXPECTED_REGION = 'oss-cn-hangzhou'
+const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const PNG_CONTENT_TYPE = 'image/png'
-const PROCESS_OUTPUT_TYPE = 'image/webp'
+const WEBP_CONTENT_TYPE = 'image/webp'
 
 function parseArguments(argv) {
   return parseArgs({
     args: argv,
     options: {
       evidence: { type: 'string' },
-      origin: { type: 'string' },
+      'no-dry-run': { type: 'boolean', default: false },
       'run-id': { type: 'string' },
     },
     strict: true,
@@ -57,10 +56,7 @@ function parseArguments(argv) {
 }
 
 function nonEmpty(value) {
-  const normalized = typeof value === 'string'
-    ? value.trim()
-    : ''
-
+  const normalized = typeof value === 'string' ? value.trim() : ''
   return normalized || undefined
 }
 
@@ -78,102 +74,57 @@ function loadLocalValues() {
   }
 
   const parsed = JSON.parse(readFileSync(path, 'utf8'))
-
   if (
     parsed?.schemaVersion !== 1
     || typeof parsed.values !== 'object'
     || parsed.values === null
   ) {
-    throw new Error('Local runtime configuration does not match schema version 1.')
+    throw productionPreflightError(
+      'invalid-local-runtime-config',
+      'Local runtime configuration does not match schema version 1.',
+    )
   }
 
   return parsed.values
 }
 
-function loadPreflightConfig(arguments_) {
+function loadPreflightConfig() {
   const envFile = resolve(projectRoot, '.env')
-
   if (existsSync(envFile)) {
     loadEnvFile(envFile)
   }
 
   const localValues = loadLocalValues()
-  const value = (environmentName, fileKey, fallback) => (
+  const value = (environmentName, fileKey) => (
     nonEmpty(process.env[environmentName])
     ?? nonEmpty(localValues[fileKey])
-    ?? fallback
   )
-  const config = {
+
+  return validateProductionPreflightConfig({
+    appEnv: value('APP_ENV', 'appEnv'),
+    databaseFile: value('DATABASE_FILE', 'databaseFile'),
+    publicBaseUrl: value('PUBLIC_BASE_URL', 'publicBaseUrl'),
+    adminBaseUrl: value('ADMIN_BASE_URL', 'adminBaseUrl'),
+    mediaBaseUrl: value('MEDIA_BASE_URL', 'mediaBaseUrl'),
+    uploadBaseUrl: value('OSS_UPLOAD_BASE_URL', 'ossUploadBaseUrl'),
     region: value('OSS_REGION', 'ossRegion'),
     endpoint: value('OSS_ENDPOINT', 'ossEndpoint'),
     privateBucket: value('OSS_PRIVATE_BUCKET', 'ossPrivateBucket'),
     publicBucket: value('OSS_PUBLIC_BUCKET', 'ossPublicBucket'),
     accessKeyId: value('OSS_ACCESS_KEY_ID', 'ossAccessKeyId'),
-    accessKeySecret: value(
-      'OSS_ACCESS_KEY_SECRET',
-      'ossAccessKeySecret',
-    ),
-    browserOrigin: arguments_.origin
-      ?? value('ADMIN_BASE_URL', 'adminBaseUrl'),
-  }
-  const missing = Object.entries(config)
-    .filter(([, configured]) => !configured)
-    .map(([name]) => name)
-
-  if (missing.length > 0) {
-    throw new Error(`Missing T10 preflight configuration: ${missing.join(', ')}`)
-  }
-
-  if (config.privateBucket !== EXPECTED_PRIVATE_BUCKET) {
-    throw new Error('OSS_PRIVATE_BUCKET does not match the T10 private Bucket.')
-  }
-
-  if (config.publicBucket !== EXPECTED_PUBLIC_BUCKET) {
-    throw new Error('OSS_PUBLIC_BUCKET does not match the T10 public Bucket.')
-  }
-
-  if (config.region !== EXPECTED_REGION) {
-    throw new Error('OSS_REGION does not match the T10 Hangzhou Region.')
-  }
-
-  if (config.privateBucket === config.publicBucket) {
-    throw new Error('T10 requires two distinct OSS Buckets.')
-  }
-
-  const endpoint = new URL(config.endpoint)
-  const origin = new URL(config.browserOrigin)
-
-  if (
-    endpoint.protocol !== 'https:'
-    || endpoint.pathname !== '/'
-    || endpoint.search
-    || endpoint.hash
-    || endpoint.username
-    || endpoint.password
-  ) {
-    throw new Error('OSS_ENDPOINT must be a credential-free HTTPS origin.')
-  }
-
-  if (endpoint.origin !== EXPECTED_ENDPOINT) {
-    throw new Error('OSS_ENDPOINT does not match the T10 Hangzhou endpoint.')
-  }
-
-  if (origin.username || origin.password || origin.pathname !== '/') {
-    throw new Error('The browser origin must be a credential-free origin.')
-  }
-
-  return {
-    ...config,
-    endpoint: endpoint.origin,
-    browserOrigin: origin.origin,
-  }
+    accessKeySecret: value('OSS_ACCESS_KEY_SECRET', 'ossAccessKeySecret'),
+    esaSiteId: value('ESA_SITE_ID', 'esaSiteId'),
+    esaAccessKeyId: value('ESA_ACCESS_KEY_ID', 'esaAccessKeyId'),
+    esaAccessKeySecret: value('ESA_ACCESS_KEY_SECRET', 'esaAccessKeySecret'),
+  })
 }
 
-function createClient(config, bucket) {
+function createOssClient(config, bucket, upload = false) {
   return new OSS({
     region: config.region,
-    endpoint: config.endpoint,
+    endpoint: upload ? config.uploadBaseUrl : config.endpoint,
     bucket,
+    cname: upload,
     accessKeyId: config.accessKeyId,
     accessKeySecret: config.accessKeySecret,
     authorizationV4: true,
@@ -182,202 +133,286 @@ function createClient(config, bucket) {
   })
 }
 
-function addCheck(evidence, name, status, summary = {}) {
-  evidence.checks.push({
-    ...summary,
-    name,
-    status,
+function createEsaClient(config) {
+  return new EsaClient({
+    accessKeyId: config.esaAccessKeyId,
+    accessKeySecret: config.esaAccessKeySecret,
+    endpoint: 'esa.cn-hangzhou.aliyuncs.com',
+    protocol: 'HTTPS',
+    regionId: 'cn-hangzhou',
+    connectTimeout: 10_000,
+    readTimeout: 60_000,
   })
 }
 
-async function getCors(client, bucket) {
-  try {
-    const result = await client.getBucketCORS(bucket)
+function addCheck(evidence, name, status, details = {}) {
+  evidence.checks.push({
+    name,
+    status,
+    ...(status === 'fail' && !details.reason
+      ? { reason: `${name}-failed` }
+      : {}),
+    ...details,
+  })
+}
 
-    return {
-      rules: result.rules,
-      requestId: requestIdOf(result),
-      status: result.res?.status ?? 200,
-    }
+function rawObjectUrl(bucket, key) {
+  const encoded = key.split('/').map(encodeURIComponent).join('/')
+  return `https://${bucket}.oss-cn-hangzhou.aliyuncs.com/${encoded}`
+}
+
+async function optionalBucketCall(call, notConfiguredCodes) {
+  try {
+    return await call()
   }
   catch (error) {
-    const summary = ossErrorSummary(error)
-
-    if (summary.status === 404 && summary.code === 'NoSuchCORSConfiguration') {
-      return {
-        rules: [],
-        requestId: summary.requestId,
-        status: 404,
-      }
+    const summary = safeErrorSummary(error)
+    if (summary.status === 404 || notConfiguredCodes.includes(summary.code)) {
+      return null
     }
-
     throw error
   }
 }
 
-function objectUrl(client, key) {
-  return new URL(client._objectUrl(key))
-}
-
-async function readOnlyGate({
-  config,
-  evidence,
-  privateClient,
-  publicClient,
-}) {
-  const [privateInfo, publicInfo] = await Promise.all([
-    privateClient.getBucketInfo(config.privateBucket),
-    publicClient.getBucketInfo(config.publicBucket),
-  ])
-  const privateBucket = privateInfo.bucket
-  const publicBucket = publicInfo.bucket
-  const sameOwner = nonEmpty(privateBucket.Owner?.ID)
-    && privateBucket.Owner?.ID === publicBucket.Owner?.ID
-  const sameRegion = privateBucket.Location === publicBucket.Location
-    && privateBucket.Location === config.region
-  const endpointHost = new URL(config.endpoint).host
-  const endpointMatches = [
-    privateBucket.ExtranetEndpoint,
-    publicBucket.ExtranetEndpoint,
-  ].every(endpoint => endpoint === endpointHost)
-  const privateBlockEnabled = String(
-    privateBucket.BlockPublicAccess,
-  ) === 'true'
-  const publicBlockEnabled = String(
-    publicBucket.BlockPublicAccess,
-  ) === 'true'
-
-  addCheck(evidence, 'bucket-identities', (
-    privateBucket.Name === config.privateBucket
-    && publicBucket.Name === config.publicBucket
-  ) ? 'pass' : 'fail', {
-    privateStatus: privateInfo.res?.status,
-    publicStatus: publicInfo.res?.status,
-    requestIds: [
-      requestIdOf(privateInfo),
-      requestIdOf(publicInfo),
-    ],
-  })
-  addCheck(evidence, 'same-account', sameOwner ? 'pass' : 'fail')
-  addCheck(evidence, 'same-region', sameRegion ? 'pass' : 'fail', {
-    configuredRegion: config.region,
-    observedPrivateRegion: privateBucket.Location,
-    observedPublicRegion: publicBucket.Location,
-  })
-  addCheck(evidence, 'endpoint', endpointMatches ? 'pass' : 'fail', {
-    configuredEndpointOrigin: config.endpoint,
-    endpointMatchesBucketInfo: endpointMatches,
-  })
-  addCheck(
-    evidence,
-    'private-bucket-acl',
-    privateBucket.AccessControlList?.Grant === 'private' ? 'pass' : 'fail',
-    { observedAcl: privateBucket.AccessControlList?.Grant },
+async function getPolicyStatus(client, bucket) {
+  const parameters = client._bucketRequestParams(
+    'GET',
+    bucket,
+    'policyStatus',
+    {},
   )
-  addCheck(
-    evidence,
-    'public-bucket-acl',
-    publicBucket.AccessControlList?.Grant === 'public-read'
-      ? 'pass'
-      : 'warn',
-    {
-      observedAcl: publicBucket.AccessControlList?.Grant,
-      note: 'A private ACL requires an equally precise anonymous GetObject Bucket policy for the generated test/web object.',
-    },
-  )
+  parameters.successStatuses = [200]
+  parameters.xmlResponse = true
+  const result = await client.request(parameters)
+  const value = result.data?.PolicyStatus?.IsPublic
+    ?? result.data?.IsPublic
 
-  const privateCors = await getCors(privateClient, config.privateBucket)
-
-  addCheck(
-    evidence,
-    'private-block-public-access',
-    privateBlockEnabled ? 'pass' : 'fail',
-    {
-      enabled: privateBlockEnabled,
-      responseStatus: privateInfo.res?.status,
-      requestId: requestIdOf(privateInfo),
-    },
-  )
-  addCheck(
-    evidence,
-    'public-anonymous-read-prerequisite',
-    publicBlockEnabled ? 'fail' : 'pass',
-    {
-      enabled: publicBlockEnabled,
-      responseStatus: publicInfo.res?.status,
-      requestId: requestIdOf(publicInfo),
-      note: publicBlockEnabled
-        ? 'Bucket-level Block Public Access prevents the required anonymous derivative GET.'
-        : 'The generated object still must pass an anonymous GET after sys/saveas.',
-    },
-  )
-
-  const cors = evaluateCorsRules(privateCors.rules, {
-    origin: config.browserOrigin,
-  })
-  addCheck(
-    evidence,
-    'private-bucket-cors',
-    cors.sufficient ? 'pass' : 'fail',
-    {
-      ...cors,
-      browserOrigin: config.browserOrigin,
-      requiredMethod: 'PUT',
-      requiredHeaders: REQUIRED_PUT_HEADERS,
-      requestId: privateCors.requestId,
-      responseStatus: privateCors.status,
-    },
-  )
-
-  return !evidence.checks.some(check => check.status === 'fail')
-}
-
-function consoleActionsFor(evidence) {
-  const failed = new Set(
-    evidence.checks
-      .filter(check => check.status === 'fail')
-      .map(check => check.name),
-  )
-  const actions = []
-
-  if (failed.has('private-bucket-cors')) {
-    actions.push({
-      target: EXPECTED_PRIVATE_BUCKET,
-      location: 'OSS 控制台 > 权限控制 > 跨域设置',
-      change: '新增一条精确 CORS 规则',
-      values: {
-        allowedOrigin: evidence.config.browserOrigin,
-        allowedMethods: ['PUT'],
-        allowedHeaders: REQUIRED_PUT_HEADERS,
-        exposeHeaders: [
-          'ETag',
-          'x-oss-request-id',
-        ],
-      },
-      rollback: '删除本次新增的这条 CORS 规则',
-    })
+  return {
+    isPublic: String(value).toLowerCase() === 'true',
+    requestId: requestIdOf(result),
   }
-
-  if (failed.has('public-anonymous-read-prerequisite')) {
-    actions.push({
-      target: EXPECTED_PUBLIC_BUCKET,
-      location: 'OSS 控制台 > 权限控制',
-      change: '仅关闭公开 Bucket 的 Bucket 级 Block Public Access，并将匿名 GetObject 限定到网页衍生对象；不得改动私有 Bucket',
-      preferredBoundary: '公开 Bucket ACL 设为 public-read，且继续只允许应用写入 web/ 与 test/<run-id>/web/ 衍生对象；或使用等价的精确匿名 GetObject Bucket Policy',
-      rollback: '恢复公开 Bucket 原 ACL/Policy，并重新开启其 Bucket 级 Block Public Access',
-    })
-  }
-
-  return actions
 }
 
-async function browserOptionsCheck({
+async function listAllObjects(client) {
+  const objects = []
+  let continuationToken
+
+  do {
+    const result = await client.listV2({
+      'max-keys': 1000,
+      ...(continuationToken ? { 'continuation-token': continuationToken } : {}),
+    })
+    objects.push(...(result.objects ?? []))
+    continuationToken = result.isTruncated
+      ? result.nextContinuationToken
+      : undefined
+    if (result.isTruncated && !continuationToken) {
+      throw productionPreflightError(
+        'missing-object-continuation-token',
+        'OSS returned a truncated object list without a continuation token.',
+      )
+    }
+  } while (continuationToken)
+
+  return objects
+}
+
+async function scanObjectAcls(client, objects) {
+  let unsafeCount = 0
+  let checkedCount = 0
+  const queue = [...objects]
+  const workers = Array.from({ length: Math.min(6, queue.length || 1) }, async () => {
+    while (queue.length > 0) {
+      const object = queue.shift()
+      const result = await client.getACL(object.name)
+      checkedCount += 1
+      if (!['default', 'private'].includes(String(result.acl))) {
+        unsafeCount += 1
+      }
+    }
+  })
+  await Promise.all(workers)
+
+  return { checkedCount, unsafeCount }
+}
+
+function readReadyDerivativeKeys(databaseFile) {
+  const database = new Database(databaseFile, {
+    fileMustExist: true,
+    readonly: true,
+  })
+  try {
+    return database.prepare(`
+      SELECT object_key AS objectKey
+      FROM asset_variants
+      WHERE storage_scope = 'PUBLIC' AND status = 'READY'
+      ORDER BY object_key
+    `).all().map(row => row.objectKey)
+  }
+  finally {
+    database.close()
+  }
+}
+
+async function bucketReadGate({
   client,
+  bucket,
+  adminOrigin,
   evidence,
-  key,
-  origin,
+  readyDerivativeKeys,
 }) {
-  const response = await fetch(objectUrl(client, key), {
+  const [info, acl, policyStatus, policy, cors, lifecycle, objects] = await Promise.all([
+    client.getBucketInfo(bucket),
+    client.getBucketACL(bucket),
+    getPolicyStatus(client, bucket),
+    optionalBucketCall(
+      () => client.getBucketPolicy(bucket),
+      ['NoSuchBucketPolicy'],
+    ),
+    optionalBucketCall(
+      () => client.getBucketCORS(bucket),
+      ['NoSuchCORSConfiguration'],
+    ),
+    optionalBucketCall(
+      () => client.getBucketLifecycle(bucket),
+      ['NoSuchLifecycle'],
+    ),
+    listAllObjects(client),
+  ])
+  const bucketInfo = info.bucket
+  const blockPublicAccess = String(bucketInfo.BlockPublicAccess).toLowerCase() === 'true'
+  const lifecycleResult = evaluateLifecycleRules(lifecycle?.rules ?? [], bucket)
+  const objectAclResult = await scanObjectAcls(client, objects)
+  const bucketLabel = bucket === EXPECTED_PRIVATE_BUCKET ? 'private' : 'derivative'
+
+  addCheck(evidence, `${bucketLabel}-bucket-identity`, (
+    bucketInfo.Name === bucket
+    && bucketInfo.Location === 'oss-cn-hangzhou'
+  ) ? 'pass' : 'fail', {
+    responseStatus: info.res?.status ?? 200,
+    requestId: maskIdentifier(requestIdOf(info) ?? ''),
+  })
+  addCheck(evidence, `${bucketLabel}-bucket-private-bpa`, (
+    acl.acl === 'private' && blockPublicAccess
+  ) ? 'pass' : 'fail', {
+    acl: acl.acl,
+    blockPublicAccess,
+  })
+  addCheck(evidence, `${bucketLabel}-bucket-policy-private`, (
+    policyStatus.isPublic === false
+  ) ? 'pass' : 'fail', {
+    policyConfigured: Boolean(policy?.policy),
+    policyReportsPublic: policyStatus.isPublic,
+    requestId: maskIdentifier(policyStatus.requestId ?? ''),
+  })
+  addCheck(evidence, `${bucketLabel}-object-acls-private`, (
+    objectAclResult.unsafeCount === 0
+  ) ? 'pass' : 'fail', objectAclResult)
+  addCheck(evidence, `${bucketLabel}-lifecycle-safe`, (
+    lifecycleResult.safe
+  ) ? 'pass' : 'fail', lifecycleResult)
+
+  if (bucket === EXPECTED_PRIVATE_BUCKET) {
+    const corsResult = evaluateStrictCorsRules(cors?.rules ?? [], adminOrigin)
+    addCheck(evidence, 'private-bucket-cors-exact', (
+      corsResult.safe
+    ) ? 'pass' : 'fail', corsResult)
+  }
+  else {
+    const inventory = evaluateDerivativeInventory(
+      objects.map(object => object.name),
+      readyDerivativeKeys,
+    )
+    addCheck(evidence, 'derivative-inventory-database-boundary', (
+      inventory.safe
+    ) ? 'pass' : 'fail', inventory)
+    addCheck(evidence, 'derivative-bucket-no-cors', (
+      (cors?.rules ?? []).length === 0
+    ) ? 'pass' : 'fail', {
+      ruleCount: (cors?.rules ?? []).length,
+    })
+  }
+}
+
+async function expectOssAccountEnumerationDenied(client, evidence) {
+  try {
+    await client.listBuckets({ 'max-keys': 1 })
+    addCheck(evidence, 'oss-account-enumeration-denied', 'fail', {
+      reason: 'list-buckets-unexpectedly-allowed',
+    })
+  }
+  catch (error) {
+    addCheck(evidence, 'oss-account-enumeration-denied', (
+      isAccessDenied(error)
+    ) ? 'pass' : 'fail', safeErrorSummary(error))
+  }
+}
+
+async function verifyEsaCredentialBoundary(esaClient, siteId, evidence) {
+  const response = await esaClient.describePurgeTasks(
+    new DescribePurgeTasksRequest({
+      pageNumber: 1,
+      pageSize: 1,
+      siteId: Number(siteId),
+      type: 'file',
+    }),
+  )
+  addCheck(evidence, 'esa-describe-purge-tasks-allowed', (
+    response.statusCode === 200
+  ) ? 'pass' : 'fail', {
+    responseStatus: response.statusCode,
+    requestId: maskIdentifier(response.body?.requestId ?? ''),
+  })
+
+  try {
+    await esaClient.listSites(new ListSitesRequest({
+      pageNumber: 1,
+      pageSize: 1,
+    }))
+    addCheck(evidence, 'esa-site-enumeration-denied', 'fail', {
+      reason: 'list-sites-unexpectedly-allowed',
+    })
+  }
+  catch (error) {
+    addCheck(evidence, 'esa-site-enumeration-denied', (
+      isAccessDenied(error)
+    ) ? 'pass' : 'fail', safeErrorSummary(error))
+  }
+
+  try {
+    // SiteId=0 is outside ESA's positive identifier space, so even an
+    // accidentally over-privileged credential cannot delete the real Site.
+    await esaClient.deleteSite(new DeleteSiteRequest({ siteId: 0 }))
+    addCheck(evidence, 'esa-site-control-plane-write-denied', 'fail', {
+      reason: 'delete-site-unexpectedly-allowed',
+    })
+  }
+  catch (error) {
+    addCheck(evidence, 'esa-site-control-plane-write-denied', (
+      isAccessDenied(error)
+    ) ? 'pass' : 'fail', safeErrorSummary(error))
+  }
+}
+
+function signedPut(client, key, content, expiresSeconds = 300) {
+  const digests = contentDigests(content)
+  const headers = {
+    'Content-MD5': digests.md5Base64,
+    'Content-Type': PNG_CONTENT_TYPE,
+    'x-oss-forbid-overwrite': 'true',
+    'x-oss-meta-sha256': digests.sha256,
+  }
+
+  return client.signatureUrlV4(
+    'PUT',
+    expiresSeconds,
+    { headers },
+    key,
+  ).then(url => ({ digests, headers, url }))
+}
+
+async function checkCorsOptions(url, origin) {
+  const response = await fetch(url, {
     method: 'OPTIONS',
     headers: {
       Origin: origin,
@@ -386,234 +421,11 @@ async function browserOptionsCheck({
     },
     redirect: 'manual',
   })
-  const allowedOrigin = response.headers.get('access-control-allow-origin')
-  const allowedMethods = response.headers
-    .get('access-control-allow-methods')
-    ?.split(',')
-    .map(method => method.trim().toUpperCase()) ?? []
-  const passed = response.status >= 200
-    && response.status < 300
-    && (allowedOrigin === origin || allowedOrigin === '*')
-    && allowedMethods.includes('PUT')
-
-  addCheck(
-    evidence,
-    'browser-options-conditional-put',
-    passed ? 'pass' : 'fail',
-    {
-      status: response.status,
-      allowedOriginMatches: allowedOrigin === origin,
-      wildcardOrigin: allowedOrigin === '*',
-      putAllowed: allowedMethods.includes('PUT'),
-      requestId: response.headers.get('x-oss-request-id'),
-    },
-  )
-
-  if (!passed) {
-    throw new Error('Browser OPTIONS preflight did not allow the conditional PUT.')
-  }
-}
-
-async function v4Put({
-  client,
-  content,
-  contentType,
-  digests,
-  key,
-}) {
-  const headers = {
-    'Content-MD5': digests.md5Base64,
-    'Content-Type': contentType,
-    'x-oss-forbid-overwrite': 'true',
-    'x-oss-meta-sha256': digests.sha256,
-  }
-  const signedUrl = await client.signatureUrlV4(
-    'PUT',
-    300,
-    { headers },
-    key,
-  )
-  const response = await fetch(signedUrl, {
-    method: 'PUT',
-    headers,
-    body: content,
-    redirect: 'manual',
-  })
 
   return {
-    response,
-    signedUrl,
-  }
-}
-
-function responseCode(content) {
-  return content.match(/<Code>([^<]+)<\/Code>/u)?.[1] ?? null
-}
-
-async function verifyV4Put({
-  client,
-  content,
-  contentType,
-  digests,
-  evidence,
-  key,
-  label,
-}) {
-  const first = await v4Put({
-    client,
-    content,
-    contentType,
-    digests,
-    key,
-  })
-
-  if (!first.response.ok) {
-    const code = responseCode(await first.response.text())
-    const error = new Error('V4 conditional PUT failed.')
-    error.code = code ?? 'V4PutFailed'
-    error.status = first.response.status
-    error.requestId = first.response.headers.get('x-oss-request-id')
-    throw error
-  }
-
-  addCheck(evidence, `${label}-v4-put`, 'pass', {
-    status: first.response.status,
-    bytes: content.length,
-    contentType,
-    contentMd5Pinned: true,
-    sha256MetadataPinned: true,
-    forbidOverwritePinned: true,
-    signatureVersion: new URL(first.signedUrl)
-      .searchParams.get('x-oss-signature-version'),
-    requestId: first.response.headers.get('x-oss-request-id'),
-  })
-
-  return first
-}
-
-async function verifyOverwriteRejected({
-  client,
-  content,
-  contentType,
-  digests,
-  evidence,
-  key,
-}) {
-  const repeated = await v4Put({
-    client,
-    content,
-    contentType,
-    digests,
-    key,
-  })
-  const code = responseCode(await repeated.response.text())
-  const passed = repeated.response.status === 409
-    && code === 'FileAlreadyExists'
-
-  addCheck(
-    evidence,
-    'source-overwrite-rejected',
-    passed ? 'pass' : 'fail',
-    {
-      status: repeated.response.status,
-      code,
-      requestId: repeated.response.headers.get('x-oss-request-id'),
-    },
-  )
-
-  if (!passed) {
-    throw new Error('x-oss-forbid-overwrite did not reject the repeated PUT.')
-  }
-}
-
-async function verifyHead({
-  client,
-  digests,
-  evidence,
-  expectedBytes,
-  expectedContentType,
-  key,
-  label,
-}) {
-  const result = await client.head(key)
-  const observedBytes = Number(responseHeader(result, 'content-length'))
-  const observedContentType = responseHeader(result, 'content-type')
-  const observedEtag = responseHeader(result, 'etag')
-    ?.replaceAll('"', '')
-    .toLowerCase()
-  const metadataMatches = digests
-    ? result.meta?.sha256 === digests.sha256
-    : true
-  const passed = result.status === 200
-    && observedBytes === expectedBytes
-    && observedContentType === expectedContentType
-    && metadataMatches
-    && (!digests || observedEtag === digests.md5Hex)
-
-  addCheck(evidence, `${label}-head`, passed ? 'pass' : 'fail', {
-    status: result.status,
-    bytes: observedBytes,
-    contentType: observedContentType,
-    etagMatchesMd5: digests ? observedEtag === digests.md5Hex : null,
-    sha256MetadataMatches: digests ? metadataMatches : null,
-    requestId: requestIdOf(result),
-  })
-
-  if (!passed) {
-    throw new Error(`${label} HEAD validation failed.`)
-  }
-
-  return result
-}
-
-async function imageInfo(client, key) {
-  const result = await client.get(key, {
-    process: 'image/info',
-  })
-
-  return {
-    info: parseImageInfo(result.content),
-    requestId: requestIdOf(result),
-    status: result.res?.status,
-  }
-}
-
-async function signedGet(client, key) {
-  const signedUrl = await client.signatureUrlV4(
-    'GET',
-    60,
-    undefined,
-    key,
-  )
-  const response = await fetch(signedUrl, {
-    redirect: 'manual',
-  })
-
-  if (!response.ok) {
-    const error = new Error('Signed GET failed.')
-    error.code = 'SignedGetFailed'
-    error.status = response.status
-    error.requestId = response.headers.get('x-oss-request-id')
-    throw error
-  }
-
-  return {
-    content: Buffer.from(await response.arrayBuffer()),
-    requestId: response.headers.get('x-oss-request-id'),
-    status: response.status,
-  }
-}
-
-async function anonymousGet(client, key) {
-  const response = await fetch(objectUrl(client, key), {
-    redirect: 'manual',
-  })
-
-  return {
-    content: response.ok
-      ? Buffer.from(await response.arrayBuffer())
-      : Buffer.alloc(0),
-    contentType: response.headers.get('content-type'),
+    allowedHeaders: response.headers.get('access-control-allow-headers') ?? '',
+    allowedOrigin: response.headers.get('access-control-allow-origin'),
+    allowedMethods: response.headers.get('access-control-allow-methods') ?? '',
     requestId: response.headers.get('x-oss-request-id'),
     status: response.status,
   }
@@ -621,626 +433,507 @@ async function anonymousGet(client, key) {
 
 async function waitForHead(client, key) {
   let lastError
-
   for (let attempt = 0; attempt < 8; attempt += 1) {
     try {
       return await client.head(key)
     }
     catch (error) {
       lastError = error
-      const summary = ossErrorSummary(error)
-
-      if (summary.status !== 404) {
+      if (Number(error?.status) !== 404) {
         throw error
       }
-
-      await new Promise(resolveTimeout => setTimeout(
-        resolveTimeout,
-        250 * (attempt + 1),
-      ))
+      await new Promise(resolveTimeout => setTimeout(resolveTimeout, 250 * (attempt + 1)))
     }
   }
-
   throw lastError
 }
 
-async function exactCleanup({
+async function fetchWithRetry(url, expectedStatus, attempts = 10) {
+  let response
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    response = await fetch(url, { redirect: 'manual' })
+    if (response.status === expectedStatus) {
+      return response
+    }
+    await response.arrayBuffer()
+    await new Promise(resolveTimeout => setTimeout(resolveTimeout, 1000 * (attempt + 1)))
+  }
+  return response
+}
+
+async function purgeExactTestFile({ esaClient, siteId, url, evidence }) {
+  const input = buildExactPurgeInput(siteId, url)
+  const response = await esaClient.purgeCaches(new PurgeCachesRequest({
+    siteId: input.siteId,
+    type: input.type,
+    content: new PurgeCachesRequestContent(input.content),
+  }))
+  const taskId = response.body?.taskId
+  if (response.statusCode !== 200 || !taskId) {
+    throw productionPreflightError(
+      'esa-purge-missing-task-id',
+      'ESA exact file purge did not return a TaskId.',
+    )
+  }
+  addCheck(evidence, 'esa-exact-file-purge-submitted', 'pass', {
+    responseStatus: response.statusCode,
+    taskId: maskIdentifier(taskId),
+    type: 'file',
+    fileCount: 1,
+  })
+
+  let terminalStatus
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const described = await esaClient.describePurgeTasks(
+      new DescribePurgeTasksRequest({
+        content: url,
+        pageNumber: 1,
+        pageSize: 20,
+        siteId: Number(siteId),
+        type: 'file',
+      }),
+    )
+    const task = described.body?.tasks?.find(item => item.taskId === taskId)
+    terminalStatus = task?.status
+    if (terminalStatus === 'Complete' || terminalStatus === 'Failed') {
+      break
+    }
+    await new Promise(resolveTimeout => setTimeout(resolveTimeout, 2000))
+  }
+  addCheck(evidence, 'esa-exact-file-purge-completed', (
+    terminalStatus === 'Complete'
+  ) ? 'pass' : 'fail', {
+    taskId: maskIdentifier(taskId),
+    terminalStatus: terminalStatus ?? 'timeout',
+  })
+}
+
+async function liveObjectGate({
+  config,
   evidence,
-  objects,
-  prefix,
+  esaClient,
   privateClient,
   publicClient,
+  uploadClient,
+  prefix,
+  runId,
 }) {
-  const clients = {
-    [EXPECTED_PRIVATE_BUCKET]: privateClient,
-    [EXPECTED_PUBLIC_BUCKET]: publicClient,
+  const sourceKey = `${prefix}private/source.png`
+  const forbiddenKey = `${prefix}outside-allowed-prefix.png`
+  const outputKey = `prod/web/preflight/${runId}/output.webp`
+  const created = []
+  for (const [bucket, key] of [
+    [config.privateBucket, sourceKey],
+    [config.publicBucket, outputKey],
+  ]) {
+    assertProductionTestObject({ bucket, key, prefix })
   }
-  let passed = true
 
-  for (const object of [...objects].reverse()) {
-    try {
-      assertExactObjectScope({
-        bucket: object.bucket,
-        expectedBucket: object.bucket,
-        key: object.key,
-        prefix,
-      })
-      const result = await clients[object.bucket].delete(object.key)
-      const entry = evidence.objects.find(candidate => (
-        candidate.bucket === object.bucket
-        && candidate.key === object.key
+  try {
+    const optionsUrl = rawObjectUrl(config.privateBucket, sourceKey)
+    const [allowedOptions, deniedOptions] = await Promise.all([
+      checkCorsOptions(optionsUrl, config.adminBaseUrl),
+      checkCorsOptions(optionsUrl, 'https://wrong-origin.invalid'),
+    ])
+    const optionsPassed = allowedOptions.status >= 200
+      && allowedOptions.status < 300
+      && allowedOptions.allowedOrigin === config.adminBaseUrl
+      && allowedOptions.allowedMethods.toUpperCase().includes('PUT')
+      && REQUIRED_PUT_HEADERS.every(header => (
+        allowedOptions.allowedHeaders.toLowerCase().split(/\s*,\s*/u).includes(header)
       ))
-
-      if (entry) {
-        entry.cleanup = {
-          status: 'deleted',
-          requestId: requestIdOf(result),
-        }
-      }
+      && deniedOptions.allowedOrigin !== 'https://wrong-origin.invalid'
+    addCheck(evidence, 'browser-cors-origin-boundary', optionsPassed ? 'pass' : 'fail', {
+      allowedStatus: allowedOptions.status,
+      exactOriginAllowed: allowedOptions.allowedOrigin === config.adminBaseUrl,
+      wrongOriginDenied: deniedOptions.allowedOrigin !== 'https://wrong-origin.invalid',
+    })
+    if (!optionsPassed) {
+      throw productionPreflightError(
+        'browser-cors-boundary-failed',
+        'Browser CORS origin boundary failed.',
+      )
     }
-    catch (error) {
-      passed = false
-      const entry = evidence.objects.find(candidate => (
-        candidate.bucket === object.bucket
-        && candidate.key === object.key
-      ))
 
-      if (entry) {
-        entry.cleanup = {
-          status: 'failed',
-          error: ossErrorSummary(error),
-        }
-      }
+    const source = createSyntheticSourcePng(320, 240)
+    const signed = await signedPut(uploadClient, sourceKey, source)
+    const uploadUrl = new URL(signed.url)
+    if (uploadUrl.origin !== config.uploadBaseUrl || uploadUrl.hostname.includes('-internal')) {
+      throw productionPreflightError(
+        'browser-upload-origin-mismatch',
+        'Browser PUT signature used the wrong upload origin.',
+      )
     }
+    const upload = await fetch(signed.url, {
+      method: 'PUT',
+      body: source,
+      headers: signed.headers,
+      redirect: 'manual',
+    })
+    if (!upload.ok) {
+      throw productionPreflightError(
+        'browser-conditional-put-failed',
+        `Browser conditional PUT failed with HTTP ${upload.status}.`,
+      )
+    }
+    created.push({ bucket: config.privateBucket, key: sourceKey })
+    addCheck(evidence, 'browser-conditional-put', 'pass', {
+      responseStatus: upload.status,
+      uploadOriginMatches: true,
+      forbidOverwritePinned: true,
+      contentMd5Pinned: true,
+    })
+
+    const repeated = await fetch(signed.url, {
+      method: 'PUT',
+      body: source,
+      headers: signed.headers,
+      redirect: 'manual',
+    })
+    addCheck(evidence, 'browser-overwrite-rejected', (
+      repeated.status === 409
+    ) ? 'pass' : 'fail', { responseStatus: repeated.status })
+
+    const tampered = await signedPut(uploadClient, `${prefix}private/tampered.png`, source)
+    const tamperedHeaders = {
+      ...tampered.headers,
+      'Content-MD5': Buffer.alloc(16, 1).toString('base64'),
+    }
+    const tamperedResponse = await fetch(tampered.url, {
+      method: 'PUT',
+      body: source,
+      headers: tamperedHeaders,
+      redirect: 'manual',
+    })
+    addCheck(evidence, 'browser-tampered-md5-rejected', (
+      tamperedResponse.status === 403
+    ) ? 'pass' : 'fail', { responseStatus: tamperedResponse.status })
+
+    const expired = await signedPut(
+      uploadClient,
+      `${prefix}private/expired.png`,
+      source,
+      1,
+    )
+    await new Promise(resolveTimeout => setTimeout(resolveTimeout, 2100))
+    const expiredResponse = await fetch(expired.url, {
+      method: 'PUT',
+      body: source,
+      headers: expired.headers,
+      redirect: 'manual',
+    })
+    addCheck(evidence, 'browser-expired-signature-rejected', (
+      expiredResponse.status === 403
+    ) ? 'pass' : 'fail', { responseStatus: expiredResponse.status })
+
+    const overreach = await signedPut(uploadClient, forbiddenKey, source)
+    const overreachResponse = await fetch(overreach.url, {
+      method: 'PUT',
+      body: source,
+      headers: overreach.headers,
+      redirect: 'manual',
+    })
+    if (overreachResponse.ok) {
+      created.push({ bucket: config.privateBucket, key: forbiddenKey })
+    }
+    addCheck(evidence, 'oss-write-prefix-overreach-denied', (
+      overreachResponse.status === 403
+    ) ? 'pass' : 'fail', { responseStatus: overreachResponse.status })
+
+    const [sourceHead, sourceGet] = await Promise.all([
+      privateClient.head(sourceKey),
+      privateClient.get(sourceKey),
+    ])
+    const sourceReadable = sourceHead.status === 200
+      && Number(responseHeader(sourceHead, 'content-length')) === source.length
+      && sourceGet.res?.status === 200
+      && sourceGet.content?.length === source.length
+    addCheck(evidence, 'oss-application-head-get-allowed', (
+      sourceReadable
+    ) ? 'pass' : 'fail', {
+      getStatus: sourceGet.res?.status,
+      headStatus: sourceHead.status,
+    })
+
+    const processResult = await privateClient.processObjectSave(
+      sourceKey,
+      outputKey,
+      'image/resize,w_160/format,webp',
+      config.publicBucket,
+    )
+    await waitForHead(publicClient, outputKey)
+    created.push({ bucket: config.publicBucket, key: outputKey })
+    addCheck(evidence, 'oss-process-and-cross-bucket-save-allowed', (
+      processResult.status === 200
+    ) ? 'pass' : 'fail', { responseStatus: processResult.status })
+
+    const [
+      privateAnonymousGet,
+      privateAnonymousHead,
+      publicAnonymousGet,
+      publicAnonymousHead,
+    ] = await Promise.all([
+      fetch(rawObjectUrl(config.privateBucket, sourceKey), { redirect: 'manual' }),
+      fetch(rawObjectUrl(config.privateBucket, sourceKey), {
+        method: 'HEAD',
+        redirect: 'manual',
+      }),
+      fetch(rawObjectUrl(config.publicBucket, outputKey), { redirect: 'manual' }),
+      fetch(rawObjectUrl(config.publicBucket, outputKey), {
+        method: 'HEAD',
+        redirect: 'manual',
+      }),
+    ])
+    addCheck(evidence, 'raw-oss-anonymous-reads-denied', (
+      privateAnonymousGet.status === 403
+      && privateAnonymousHead.status === 403
+      && publicAnonymousGet.status === 403
+      && publicAnonymousHead.status === 403
+    ) ? 'pass' : 'fail', {
+      privateGetStatus: privateAnonymousGet.status,
+      privateHeadStatus: privateAnonymousHead.status,
+      derivativeGetStatus: publicAnonymousGet.status,
+      derivativeHeadStatus: publicAnonymousHead.status,
+    })
+
+    const publicHead = await publicClient.head(outputKey)
+    addCheck(evidence, 'oss-application-derivative-read-allowed', (
+      publicHead.status === 200
+      && responseHeader(publicHead, 'content-type') === WEBP_CONTENT_TYPE
+    ) ? 'pass' : 'fail', { responseStatus: publicHead.status })
+
+    const esaOutputUrl = exactEsaMediaUrl(config.mediaBaseUrl, outputKey)
+    const esaOutput = await fetchWithRetry(esaOutputUrl, 200)
+    const esaResponseMetadata = JSON.stringify([
+      esaOutput.url,
+      ...esaOutput.headers.entries(),
+    ])
+    const esaResponseSafe = !esaResponseMetadata.includes('.aliyuncs.com')
+      && !esaResponseMetadata.includes(config.privateBucket)
+      && !esaResponseMetadata.includes('/prod/original/')
+    addCheck(evidence, 'esa-derivative-read-allowed', (
+      esaOutput.status === 200
+      && esaOutput.headers.get('content-type') === WEBP_CONTENT_TYPE
+      && esaResponseSafe
+    ) ? 'pass' : 'fail', {
+      responseStatus: esaOutput.status,
+      mediaOrigin: EXPECTED_MEDIA_ORIGIN,
+      originAndPrivateKeyHidden: esaResponseSafe,
+    })
+    if (esaOutput.status !== 200) {
+      throw productionPreflightError(
+        'esa-derivative-read-failed',
+        'ESA could not read the generated derivative object.',
+      )
+    }
+
+    const esaPrivateProbe = await fetch(
+      new URL(sourceKey, `${config.mediaBaseUrl}/`),
+      { redirect: 'manual' },
+    )
+    addCheck(evidence, 'esa-does-not-expose-private-bucket', (
+      esaPrivateProbe.status !== 200
+    ) ? 'pass' : 'fail', { responseStatus: esaPrivateProbe.status })
+
+    await purgeExactTestFile({
+      esaClient,
+      siteId: config.esaSiteId,
+      url: esaOutputUrl,
+      evidence,
+    })
   }
-
-  for (const object of objects) {
-    try {
-      await clients[object.bucket].head(object.key)
-      passed = false
-    }
-    catch (error) {
-      const summary = ossErrorSummary(error)
-
-      if (summary.status !== 404) {
-        passed = false
+  finally {
+    let cleanupFailed = 0
+    for (const object of [...created].reverse()) {
+      try {
+        const client = object.bucket === config.privateBucket
+          ? privateClient
+          : publicClient
+        await client.delete(object.key)
+      }
+      catch {
+        cleanupFailed += 1
       }
     }
+    addCheck(evidence, 'exact-test-object-cleanup', (
+      cleanupFailed === 0
+    ) ? 'pass' : 'fail', {
+      attemptedCount: created.length,
+      failedCount: cleanupFailed,
+    })
   }
+}
 
-  addCheck(
-    evidence,
-    'exact-object-cleanup',
-    passed ? 'pass' : 'fail',
-    {
-      objectCount: objects.length,
-      fullPrefixRechecked: prefix,
-      bucketNamesRechecked: [
-        EXPECTED_PRIVATE_BUCKET,
-        EXPECTED_PUBLIC_BUCKET,
-      ],
-      usedObjectListing: false,
-    },
-  )
+function redactedConfig(config) {
+  return {
+    environment: config.appEnv,
+    region: config.region,
+    serverEndpoint: config.endpoint,
+    uploadOrigin: config.uploadBaseUrl,
+    mediaOrigin: config.mediaBaseUrl,
+    publicOrigin: config.publicBaseUrl,
+    adminOrigin: config.adminBaseUrl,
+    privateBucket: maskIdentifier(config.privateBucket),
+    derivativeBucket: maskIdentifier(config.publicBucket),
+    ossCredentialFingerprint: fingerprint(config.accessKeyId),
+    esaCredentialFingerprint: fingerprint(config.esaAccessKeyId),
+    esaSite: maskIdentifier(config.esaSiteId),
+    credentialsRecorded: false,
+  }
+}
 
-  return passed
+function plannedChecks(evidence) {
+  for (const name of [
+    'bucket-acl-bpa-policy-object-acl-lifecycle',
+    'cors-and-browser-conditional-put-failures',
+    'application-read-write-process-delete-and-overreach',
+    'raw-oss-anonymous-403-and-esa-derivative-200',
+    'derivative-inventory-database-boundary',
+    'esa-purge-permission-and-control-plane-denial',
+  ]) {
+    addCheck(evidence, name, 'skip', { reason: 'dry-run-no-network-or-cloud-writes' })
+  }
 }
 
 async function writeEvidence(path, evidence) {
   await mkdir(dirname(path), { recursive: true })
-  await writeFile(
-    path,
-    `${JSON.stringify(evidence, null, 2)}\n`,
-    {
-      encoding: 'utf8',
-      flag: 'wx',
-    },
-  )
+  await writeFile(path, `${JSON.stringify(evidence, null, 2)}\n`, {
+    encoding: 'utf8',
+    flag: 'wx',
+  })
 }
 
 async function main() {
   const startedAt = new Date()
-  let arguments_
-
-  try {
-    arguments_ = parseArguments(process.argv.slice(2))
-  }
-  catch (error) {
-    process.stderr.write(`${error.message}\n`)
-    process.exitCode = 1
-    return
-  }
-
-  const runId = arguments_['run-id'] ?? createRunId(startedAt)
-  const prefix = testPrefixFor(runId)
-  const evidencePath = resolve(
-    projectRoot,
-    arguments_.evidence
-      ?? `test-results/oss-preflight/${runId}.json`,
-  )
-  let config
-
-  try {
-    config = loadPreflightConfig(arguments_)
-  }
-  catch (error) {
-    process.stderr.write(`${error.message}\n`)
-    process.exitCode = 1
-    return
-  }
-
   const evidence = {
-    schemaVersion: 1,
-    task: 'T10',
-    extGate: 'EXT-02',
-    runId,
+    schemaVersion: 2,
+    task: 'T52-E2',
+    mode: 'dry-run',
+    runId: null,
     startedAt: startedAt.toISOString(),
     finishedAt: null,
     status: 'running',
-    testPrefix: prefix,
-    config: {
-      environment: 'test',
-      region: config.region,
-      endpointOrigin: config.endpoint,
-      privateBucket: config.privateBucket,
-      publicBucket: config.publicBucket,
-      browserOrigin: config.browserOrigin,
-      credentialsPresent: true,
-      credentialsRecorded: false,
-    },
+    config: null,
     checks: [],
-    objects: [],
-    consoleActions: [],
     failure: null,
+    secretsRecorded: false,
+    objectKeysRecorded: false,
+    signedUrlsRecorded: false,
   }
-  const privateClient = createClient(config, config.privateBucket)
-  const publicClient = createClient(config, config.publicBucket)
-  const objectManifest = [
-    {
-      bucket: config.privateBucket,
-      key: `${prefix}private/limit-29360568.png`,
-      role: 'synthetic-large-upload-boundary',
-    },
-    {
-      bucket: config.privateBucket,
-      key: `${prefix}private/processing-source.png`,
-      role: 'embedded-ffmpeg-processing-source',
-    },
-    {
-      bucket: config.privateBucket,
-      key: `${prefix}private/watermark-logo.png`,
-      role: 'synthetic-watermark-source',
-    },
-    {
-      bucket: config.publicBucket,
-      key: `${prefix}web/processed-watermarked.webp`,
-      role: 'public-watermarked-derivative',
-    },
-  ]
-
-  evidence.objects = objectManifest.map(object => ({
-    ...object,
-    generated: false,
-    verified: false,
-    cleanup: {
-      status: 'not-created',
-    },
-  }))
+  let evidencePath
 
   try {
-    const gatePassed = await readOnlyGate({
-      config,
-      evidence,
-      privateClient,
-      publicClient,
+    const arguments_ = parseArguments(process.argv.slice(2))
+    const runId = arguments_['run-id'] ?? createProductionPreflightRunId(startedAt)
+    const prefix = productionPreflightPrefix(runId)
+    evidencePath = resolve(
+      projectRoot,
+      arguments_.evidence ?? `test-results/production-preflight/${runId}.json`,
+    )
+    evidence.runId = runId
+    evidence.mode = arguments_['no-dry-run'] ? 'live' : 'dry-run'
+
+    const config = loadPreflightConfig()
+    evidence.config = redactedConfig(config)
+    addCheck(evidence, 'production-runtime-contract', 'pass', {
+      databasePathAbsolute: true,
+      endpointSeparation: true,
+      credentialsSeparated: true,
+      placeholderFree: true,
     })
 
-    if (!gatePassed) {
-      evidence.status = 'blocked'
-      evidence.consoleActions = consoleActionsFor(evidence)
-      addCheck(evidence, 'write-phase', 'skip', {
-        reason: 'Read-only configuration gate failed; no OSS objects were written.',
+    if (!arguments_['no-dry-run']) {
+      plannedChecks(evidence)
+      evidence.status = 'passed'
+      return
+    }
+    if (!existsSync(config.databaseFile)) {
+      throw productionPreflightError(
+        'production-database-missing',
+        'Production DATABASE_FILE does not exist.',
+      )
+    }
+
+    const privateClient = createOssClient(config, config.privateBucket)
+    const publicClient = createOssClient(config, config.publicBucket)
+    const uploadClient = createOssClient(config, config.privateBucket, true)
+    const esaClient = createEsaClient(config)
+    const readyDerivativeKeys = readReadyDerivativeKeys(config.databaseFile)
+
+    await bucketReadGate({
+      client: privateClient,
+      bucket: config.privateBucket,
+      adminOrigin: config.adminBaseUrl,
+      evidence,
+      readyDerivativeKeys,
+    })
+    await bucketReadGate({
+      client: publicClient,
+      bucket: config.publicBucket,
+      adminOrigin: config.adminBaseUrl,
+      evidence,
+      readyDerivativeKeys,
+    })
+    await expectOssAccountEnumerationDenied(privateClient, evidence)
+    await verifyEsaCredentialBoundary(esaClient, config.esaSiteId, evidence)
+
+    if (evidence.checks.some(check => check.status === 'fail')) {
+      addCheck(evidence, 'live-object-gate', 'skip', {
+        reason: 'read-only-production-boundary-failed',
       })
+      evidence.status = 'blocked'
       process.exitCode = 2
       return
     }
 
-    for (const object of objectManifest) {
-      assertExactObjectScope({
-        bucket: object.bucket,
-        expectedBucket: object.bucket,
-        key: object.key,
-        prefix,
-      })
-    }
-
-    const largeObject = objectManifest[0]
-    const sourceObject = objectManifest[1]
-    const watermarkObject = objectManifest[2]
-    const outputObject = objectManifest[3]
-
-    await browserOptionsCheck({
-      client: privateClient,
+    await liveObjectGate({
+      config,
       evidence,
-      key: largeObject.key,
-      origin: config.browserOrigin,
-    })
-
-    const largeSource = createLargeSyntheticPng()
-    const localCompression = compressPngForOss(largeSource)
-    const source = localCompression.content
-    const watermark = createSyntheticWatermarkPng()
-    const largeSourceDigests = contentDigests(largeSource)
-    const sourceDigests = contentDigests(source)
-    const watermarkDigests = contentDigests(watermark)
-
-    if (largeSource.length > ORIGINAL_IMAGE_MAX_BYTES) {
-      throw new Error('Synthetic source exceeds 30,000,000 bytes.')
-    }
-
-    if (source.length > OSS_IMAGE_PROCESSING_MAX_BYTES) {
-      throw new Error('Embedded FFmpeg output exceeds the OSS 20 MB image-processing limit.')
-    }
-
-    addCheck(evidence, 'embedded-ffmpeg-local-compression', 'pass', {
-      inputBytes: largeSource.length,
-      outputBytes: source.length,
-      outputContentType: localCompression.contentType,
-      outputDimensions: localCompression.dimensions,
-      ossImageProcessingLimitBytes: OSS_IMAGE_PROCESSING_MAX_BYTES,
-      binary: localCompression.binary,
-      developmentCompressionParametersAreFinal: false,
-    })
-
-    evidence.objects[0].cleanup.status = 'pending'
-    await verifyV4Put({
-      client: privateClient,
-      content: largeSource,
-      contentType: PNG_CONTENT_TYPE,
-      digests: largeSourceDigests,
-      evidence,
-      key: largeObject.key,
-      label: 'large-source',
-    })
-    evidence.objects[0].generated = true
-    evidence.objects[0].bytes = largeSource.length
-    evidence.objects[0].sha256 = largeSourceDigests.sha256
-
-    await verifyOverwriteRejected({
-      client: privateClient,
-      content: largeSource,
-      contentType: PNG_CONTENT_TYPE,
-      digests: largeSourceDigests,
-      evidence,
-      key: largeObject.key,
-    })
-
-    evidence.objects[1].cleanup.status = 'pending'
-    await verifyV4Put({
-      client: privateClient,
-      content: source,
-      contentType: localCompression.contentType,
-      digests: sourceDigests,
-      evidence,
-      key: sourceObject.key,
-      label: 'processing-source',
-    })
-    evidence.objects[1].generated = true
-    evidence.objects[1].bytes = source.length
-    evidence.objects[1].sha256 = sourceDigests.sha256
-
-    evidence.objects[2].cleanup.status = 'pending'
-    await verifyV4Put({
-      client: privateClient,
-      content: watermark,
-      contentType: PNG_CONTENT_TYPE,
-      digests: watermarkDigests,
-      evidence,
-      key: watermarkObject.key,
-      label: 'watermark-source',
-    })
-    evidence.objects[2].generated = true
-    evidence.objects[2].bytes = watermark.length
-    evidence.objects[2].sha256 = watermarkDigests.sha256
-
-    await verifyHead({
-      client: privateClient,
-      digests: largeSourceDigests,
-      evidence,
-      expectedBytes: largeSource.length,
-      expectedContentType: PNG_CONTENT_TYPE,
-      key: largeObject.key,
-      label: 'private-large-source',
-    })
-
-    const largeInfo = await imageInfo(privateClient, largeObject.key)
-    const largeInfoPassed = largeInfo.status === 200
-      && largeInfo.info.width === 9_500
-      && largeInfo.info.height === 1_030
-      && largeInfo.info.fileSize === largeSource.length
-      && largeInfo.info.format?.toLowerCase() === 'png'
-
-    addCheck(
-      evidence,
-      'private-large-source-image-info',
-      largeInfoPassed ? 'pass' : 'fail',
-      {
-        ...largeInfo.info,
-        status: largeInfo.status,
-        requestId: largeInfo.requestId,
-      },
-    )
-
-    if (!largeInfoPassed) {
-      throw new Error('OSS image/info did not match the large synthetic source.')
-    }
-
-    await verifyHead({
-      client: privateClient,
-      digests: sourceDigests,
-      evidence,
-      expectedBytes: source.length,
-      expectedContentType: localCompression.contentType,
-      key: sourceObject.key,
-      label: 'private-processing-source',
-    })
-
-    const sourceInfo = await imageInfo(privateClient, sourceObject.key)
-    const sourceInfoPassed = sourceInfo.status === 200
-      && sourceInfo.info.width === localCompression.dimensions.width
-      && sourceInfo.info.height === localCompression.dimensions.height
-      && sourceInfo.info.fileSize === source.length
-      && sourceInfo.info.format?.toLowerCase() === 'png'
-
-    addCheck(
-      evidence,
-      'private-processing-source-image-info',
-      sourceInfoPassed ? 'pass' : 'fail',
-      {
-        ...sourceInfo.info,
-        status: sourceInfo.status,
-        requestId: sourceInfo.requestId,
-      },
-    )
-
-    if (!sourceInfoPassed) {
-      throw new Error('OSS image/info did not match the synthetic source.')
-    }
-
-    const anonymousPrivate = await anonymousGet(
-      privateClient,
-      sourceObject.key,
-    )
-    const anonymousPrivatePassed = anonymousPrivate.status === 403
-
-    addCheck(
-      evidence,
-      'private-anonymous-get',
-      anonymousPrivatePassed ? 'pass' : 'fail',
-      {
-        status: anonymousPrivate.status,
-        requestId: anonymousPrivate.requestId,
-      },
-    )
-
-    if (!anonymousPrivatePassed) {
-      throw new Error('Private source was not rejected for anonymous GET.')
-    }
-
-    const unwatermarkedProcess = 'image/resize,w_1600/format,webp'
-    const unwatermarked = await privateClient.get(sourceObject.key, {
-      process: unwatermarkedProcess,
-    })
-    const unwatermarkedHash = sha256(unwatermarked.content)
-    const watermarkReference = urlSafeBase64(watermarkObject.key)
-    const watermarkedProcess = [
-      'image/resize,w_1600',
-      `watermark,image_${watermarkReference},t_70,g_se,x_24,y_24`,
-      'format,webp',
-    ].join('/')
-
-    evidence.objects[3].cleanup.status = 'pending'
-    const processResult = await privateClient.processObjectSave(
-      sourceObject.key,
-      outputObject.key,
-      watermarkedProcess,
-      config.publicBucket,
-    )
-    await waitForHead(publicClient, outputObject.key)
-    evidence.objects[3].generated = true
-
-    addCheck(
-      evidence,
-      'watermark-resize-format-sys-saveas',
-      processResult.status === 200 ? 'pass' : 'fail',
-      {
-        status: processResult.status,
-        processOperations: [
-          'resize',
-          'image-watermark',
-          'format-webp',
-          'cross-bucket-sys-saveas',
-        ],
-        developmentWatermarkParametersAreFinal: false,
-        requestId: requestIdOf(processResult),
-      },
-    )
-
-    if (processResult.status !== 200) {
-      throw new Error('OSS sys/saveas processing failed.')
-    }
-
-    const outputHead = await publicClient.head(outputObject.key)
-    const outputBytes = Number(responseHeader(outputHead, 'content-length'))
-
-    await verifyHead({
-      client: publicClient,
-      evidence,
-      expectedBytes: outputBytes,
-      expectedContentType: PROCESS_OUTPUT_TYPE,
-      key: outputObject.key,
-      label: 'public-output',
-    })
-
-    const outputInfo = await imageInfo(publicClient, outputObject.key)
-    const outputInfoPassed = outputInfo.status === 200
-      && outputInfo.info.width === 1_600
-      && outputInfo.info.format?.toLowerCase() === 'webp'
-
-    addCheck(
-      evidence,
-      'public-output-image-info',
-      outputInfoPassed ? 'pass' : 'fail',
-      {
-        ...outputInfo.info,
-        status: outputInfo.status,
-        requestId: outputInfo.requestId,
-      },
-    )
-
-    if (!outputInfoPassed) {
-      throw new Error('Public output image/info validation failed.')
-    }
-
-    const anonymousPublic = await anonymousGet(publicClient, outputObject.key)
-    const outputHash = sha256(anonymousPublic.content)
-    const anonymousPublicPassed = anonymousPublic.status === 200
-      && anonymousPublic.contentType === PROCESS_OUTPUT_TYPE
-      && anonymousPublic.content.length === outputBytes
-      && outputHash !== unwatermarkedHash
-
-    addCheck(
-      evidence,
-      'public-anonymous-get-and-watermark-effect',
-      anonymousPublicPassed ? 'pass' : 'fail',
-      {
-        status: anonymousPublic.status,
-        contentType: anonymousPublic.contentType,
-        bytes: anonymousPublic.content.length,
-        differsFromUnwatermarkedTransform: outputHash !== unwatermarkedHash,
-        requestId: anonymousPublic.requestId,
-      },
-    )
-
-    if (!anonymousPublicPassed) {
-      throw new Error('Public anonymous GET or watermark effect validation failed.')
-    }
-
-    const [largeOriginalAfterProcessing, processingSourceAfterProcessing]
-      = await Promise.all([
-        signedGet(privateClient, largeObject.key),
-        signedGet(privateClient, sourceObject.key),
-      ])
-    const largeOriginalUnchanged
-      = largeOriginalAfterProcessing.content.length === largeSource.length
-        && sha256(largeOriginalAfterProcessing.content)
-        === largeSourceDigests.sha256
-    const processingSourceUnchanged
-      = processingSourceAfterProcessing.content.length === source.length
-        && sha256(processingSourceAfterProcessing.content)
-        === sourceDigests.sha256
-
-    addCheck(
-      evidence,
-      'private-large-original-unchanged-after-processing',
-      largeOriginalUnchanged ? 'pass' : 'fail',
-      {
-        status: largeOriginalAfterProcessing.status,
-        bytes: largeOriginalAfterProcessing.content.length,
-        sha256MatchesOriginal: largeOriginalUnchanged,
-        requestId: largeOriginalAfterProcessing.requestId,
-      },
-    )
-
-    addCheck(
-      evidence,
-      'private-processing-source-unchanged-after-processing',
-      processingSourceUnchanged ? 'pass' : 'fail',
-      {
-        status: processingSourceAfterProcessing.status,
-        bytes: processingSourceAfterProcessing.content.length,
-        sha256MatchesOriginal: processingSourceUnchanged,
-        requestId: processingSourceAfterProcessing.requestId,
-      },
-    )
-
-    if (!largeOriginalUnchanged || !processingSourceUnchanged) {
-      throw new Error('A private source changed during image processing.')
-    }
-
-    evidence.objects[0].verified = true
-    evidence.objects[1].verified = true
-    evidence.objects[2].verified = true
-    evidence.objects[3].verified = true
-    evidence.objects[3].bytes = outputBytes
-    evidence.objects[3].sha256 = outputHash
-
-    const cleanupPassed = await exactCleanup({
-      evidence,
-      objects: objectManifest,
-      prefix,
+      esaClient,
       privateClient,
       publicClient,
+      uploadClient,
+      prefix,
+      runId,
     })
-
-    if (!cleanupPassed) {
-      throw new Error('Exact cleanup verification failed.')
-    }
-
-    evidence.status = evidence.checks.every(
-      check => ['pass', 'warn'].includes(check.status),
-    ) ? 'passed' : 'failed'
+    evidence.status = evidence.checks.every(check => (
+      ['pass', 'skip'].includes(check.status)
+    )) ? 'passed' : 'failed'
     process.exitCode = evidence.status === 'passed' ? 0 : 1
   }
   catch (error) {
     evidence.status = 'failed'
-    evidence.failure = ossErrorSummary(error)
-    evidence.consoleActions = consoleActionsFor(evidence)
-
-    const cleanupPassed = await exactCleanup({
-      evidence,
-      objects: objectManifest.filter((object) => {
-        const entry = evidence.objects.find(candidate => (
-          candidate.bucket === object.bucket
-          && candidate.key === object.key
-        ))
-
-        return entry?.cleanup.status === 'pending'
-      }),
-      prefix,
-      privateClient,
-      publicClient,
-    })
-
-    if (!cleanupPassed) {
-      evidence.failure.cleanupIncomplete = true
-    }
-
+    evidence.failure = safeErrorSummary(error)
     process.exitCode = 1
   }
   finally {
     evidence.finishedAt = new Date().toISOString()
-
-    try {
-      await writeEvidence(evidencePath, evidence)
-      const summary = {
-        status: evidence.status,
-        runId: evidence.runId,
-        testPrefix: evidence.testPrefix,
-        evidencePath,
-        checks: evidence.checks.map(check => ({
-          name: check.name,
-          status: check.status,
-        })),
-        consoleActions: evidence.consoleActions,
-        secretsRecorded: false,
-      }
-
-      process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`)
+    if (!evidencePath) {
+      process.stderr.write(`${evidence.failure?.code ?? 'PreflightArgumentError'}\n`)
     }
-    catch (error) {
-      process.stderr.write(`Failed to write redacted evidence: ${error.message}\n`)
-      process.exitCode = 1
+    else {
+      try {
+        await writeEvidence(evidencePath, evidence)
+        const summary = {
+          status: evidence.status,
+          mode: evidence.mode,
+          runId: evidence.runId,
+          evidencePath,
+          checks: evidence.checks.map(check => ({
+            name: check.name,
+            status: check.status,
+          })),
+          failure: evidence.failure,
+          secretsRecorded: false,
+          objectKeysRecorded: false,
+          signedUrlsRecorded: false,
+        }
+        process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`)
+      }
+      catch (error) {
+        process.stderr.write(`Failed to write redacted evidence: ${safeErrorSummary(error).code}\n`)
+        process.exitCode = 1
+      }
     }
   }
 }

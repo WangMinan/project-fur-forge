@@ -65,10 +65,15 @@ SDK 初始化、请求和异常处理参考[阿里云 TypeScript SDK samples 的
 cp .env.compose.example .env
 docker compose pull
 docker compose run --rm --no-deps app node ops/ops.mjs migrate
+# 先验证冻结变量契约；该步不访问云侧
 docker compose run --rm --no-deps app node ops/ops.mjs preflight
+# 只有显式 live 模式才验证并写入精确、可清理的 OSS/ESA 测试对象
+docker compose run --rm --no-deps app node ops/ops.mjs preflight --no-dry-run
 docker compose run --rm --no-deps app node ops/ops.mjs init-admin
 docker compose up -d app
 ```
+
+两次 preflight 都会创建不可覆盖的脱敏 JSON 证据。默认模式出现变量错误，或 live 模式出现 FAIL/blocked、非零退出、`exact-test-object-cleanup` 失败时，立即停止；按证据中的 run ID 只核对该次测试前缀，不执行 Bucket 清空或递归模糊删除。live 预检会调用一次精确 `PurgeCaches(Type=file)` 并轮询任务终态，因此必须在 F2 完成 Bucket/ESA/RAM 收敛后执行。
 
 ```bash
 docker compose run --rm --no-deps app node ops/ops.mjs backup --output /app/backups/manual.db

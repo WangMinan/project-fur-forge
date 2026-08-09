@@ -9,7 +9,7 @@
 
 当前为：
 
-> **阶段 E · 全部产品/上线基线开发、自动化门禁与可上线代码冻结。T52-E1 工程完成；下一步继续 T52-E2。**
+> **阶段 E · 全部产品/上线基线开发、自动化门禁与可上线代码冻结。T52-E1/E2 工程完成；下一步继续 T52-E3。**
 
 阶段 E 包含所有剩余应用代码、数据库迁移、运行时配置 Schema、媒体/ESA 核心实现、部署/恢复基线、app-only Compose 与宿主机 HTTP-only Nginx 模板、自动化测试、浏览器回归和独立 Review。阶段 E 结束时必须形成唯一、不在阶段 F 改写的上线 SHA/镜像。
 
@@ -28,7 +28,7 @@
 
 阶段 D 用户门禁见 [`implementation/notes/stage-d/T42-USER-ACCEPTANCE-2026-08-09.md`](./implementation/notes/stage-d/T42-USER-ACCEPTANCE-2026-08-09.md)。
 
-T46/T51/T51-F1/T51-F2 已完成迁移或无迁移应用实现、相关自动测试和本地真实浏览器回归；工程证据见 [`implementation/notes/stage-e/T46-ENGINEERING-2026-08-09.md`](./implementation/notes/stage-e/T46-ENGINEERING-2026-08-09.md)、[`implementation/notes/stage-e/T51-ENGINEERING-2026-08-09.md`](./implementation/notes/stage-e/T51-ENGINEERING-2026-08-09.md)、[`implementation/notes/stage-e/T51-F1-ENGINEERING-2026-08-09.md`](./implementation/notes/stage-e/T51-F1-ENGINEERING-2026-08-09.md) 与 [`implementation/notes/stage-e/T51-F2-ENGINEERING-2026-08-09.md`](./implementation/notes/stage-e/T51-F2-ENGINEERING-2026-08-09.md)。这不是 T49 独立 Review，也不关闭 T46 隐私文案或 T51 正式素材的用户确认项。
+T46/T51/T51-F1/T51-F2 与 T52-E1/E2 已完成各自工程实现和相关本地自动验证；工程证据见 `implementation/notes/stage-e/` 对应记录。T52-E2 只冻结 preflight 实现和判定契约，尚未使用真实生产凭据运行 live 模式；这些结果不是 T49 独立 Review，也不关闭 T46 隐私文案或 T51 正式素材的用户确认项。
 
 ## 阶段 E 已锁定范围
 
@@ -106,7 +106,8 @@ F 允许的仓库写入包括验收 note、证据索引、checkbox、STATE 状�
 | T51-F1 | 工程完成 | T49 新上下文独立 Review |
 | T51-F2 | 工程完成 | T49 新上下文独立 Review |
 | T52-E1 | 工程完成 | T49 新上下文独立 Review |
-| T52-E2～E6 | 待实施 | 继续生产能力开发 |
+| T52-E2 | 工程完成；目标环境 live 待 T53 | T49 新上下文独立 Review |
+| T52-E3～E6 | 待实施 | 继续生产能力开发 |
 | T49 | 等待 E 开发完成 | 同一 SHA CI + 独立综合 Review |
 | T50 | 等待 T49 | 最终回归与冻结证据 |
 | GATE-E | 等待 T50 | 允许进入阶段 F |
@@ -128,7 +129,7 @@ F 允许的仓库写入包括验收 note、证据索引、checkbox、STATE 状�
 
 ## 下一步顺序
 
-1. T52-E2～E6；
+1. T52-E3～E6；
 2. T49；
 3. T50；
 4. GATE-E；
