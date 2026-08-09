@@ -191,7 +191,8 @@ docker compose up --detach --no-build --no-deps app
 
 test "$(docker compose config --services)" = "app"
 docker compose ps
-curl --fail --silent --show-error http://127.0.0.1:3000/api/health/ready
+curl --fail --silent --show-error --header "Host: $PUBLIC_HOST" \
+  http://127.0.0.1:3000/api/health/ready
 ss -lntp | grep '127.0.0.1:3000'
 ! ss -lntp | grep -E '(0.0.0.0|\[::\]):3000'
 ```
@@ -278,7 +279,8 @@ docker compose up --detach --no-build --no-deps app
 ```bash
 APP_IMAGE_REF="$ROLLBACK_IMAGE_REF" docker compose up \
   --detach --no-build --no-deps --force-recreate app
-curl --fail --silent --show-error http://127.0.0.1:3000/api/health/ready
+curl --fail --silent --show-error --header "Host: $PUBLIC_HOST" \
+  http://127.0.0.1:3000/api/health/ready
 ```
 
 通过后才把 `.env` 的 `APP_IMAGE_REF` 持久改为回滚摘要。若旧镜像不能读取前向迁移后的数据库，停止 app，按上面的新路径恢复对应备份，并同时切换 `DATABASE_FILE`；不得在线覆盖 `studio.db`。首次正式部署前目标机没有旧业务镜像，失败回退是停止 app、保留卷/证据并恢复 Nginx 备份，不能虚构“旧生产镜像已回滚”。

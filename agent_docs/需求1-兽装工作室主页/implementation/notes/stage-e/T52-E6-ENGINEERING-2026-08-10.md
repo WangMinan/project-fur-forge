@@ -58,3 +58,7 @@ T52-E6 的应用、Compose、宿主机 Nginx 模板、运维入口、Handbook �
 - `checks` 在 integration 失败，39/168 失败；CI 没有本地 `.env`，四个测试 origin 为空，严格 runtime Schema 正确拒绝。修复为只在 integration step 显式注入四个互异的 `.invalid` 测试 origin；同组环境本地完整重放为 20 files / 168 tests PASS。
 - `image-build` 已成功构建生产镜像、空卷 migrate 和 init-admin，随后 dry preflight 正确拒绝 `example.test` 占位 origin。修复为在受控 Compose/Nginx 演练中使用明确非生产的 `.invalid` Host 和不含 placeholder 标记的合成凭据；没有放宽 preflight 的生产占位拒绝规则。
 - 因 `checks` 失败，首次 `e2e` 被跳过；不能计为通过。修复提交后必须重新取得 `checks`、`image-build`、`e2e` 同一 SHA 结果。
+
+第二次提交 `47211e95` 的 Actions run `31326347449` 越过 image build、空卷 migrate、init-admin 和 dry preflight，但 app health 失败。原因是应用严格 Host 隔离，而容器 healthcheck 和宿主机 ready 命令直接请求 `127.0.0.1`，没有携带公开 Host；这在本地 production verify 中被与 base URL 相同的 loopback Host 遮住。修复为 healthcheck 使用 Node `http.get` 显式发送 `PUBLIC_BASE_URL` 的 Host，CI、目标机检查器和 Handbook 的 loopback ready 请求也显式携带公开 Host；没有放宽应用 Host 白名单。
+
+修复后用迁移完成的临时数据库启动现有 production output：携带 `Host: public.test.invalid` 的 loopback ready 返回 200，同一路径使用 `Host: 127.0.0.1:3000` 返回 421，证明 health 修复保留了 Host 隔离。

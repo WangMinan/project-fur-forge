@@ -185,7 +185,8 @@ jobs:
             sleep 2
           done
           test "$(docker inspect --format '{{.State.Health.Status}}' "${app_id}")" = "healthy"
-          curl --fail --silent --show-error http://127.0.0.1:3000/api/health/ready >/dev/null
+          curl --fail --silent --show-error --header 'Host: public.test.invalid' \
+            http://127.0.0.1:3000/api/health/ready >/dev/null
           ss -lnt | grep -Eq '127\.0\.0\.1:3000[[:space:]]'
           ! ss -lnt | grep -Eq '(0\.0\.0\.0|\[::\]):3000[[:space:]]'
 
