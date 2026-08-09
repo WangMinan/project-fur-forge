@@ -146,6 +146,8 @@ E 提供测量与验证能力，不虚构生产阈值：
 
 用户在 F 根据远程实测填写预算与阈值。
 
+T52-E5 已按该边界落地：`deploy/esa/security-observability-policy.json` 冻结 Free/生产套餐边界、ESA 边缘 HTTPS/托管证书、HTTP/80 源站、源站保护、WAF/速率规则、预算通知和完整告警清单；校验器拒绝任何提前写入的生产套餐、费用、限流、用量封顶、告警或测量数字。`measure:production` 只接受无凭据、无 query/fragment 的精确 HTTPS URL，默认测量首次/重复响应且不冒充 cold，受控峰值探测必须显式授权并有请求/并发硬上限。宿主机检查器验证 80/443、loopback 3000、Nginx config/reload、HTTP origin、ready 与 ACME/证书残留；真实阈值、套餐/配额和控制台告警仍由 T53 留证。
+
 ### 3.8 T52-E6 远程部署包
 
 在 E 完成并验证：

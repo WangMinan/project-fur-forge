@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": null,
+  "operator": null,
+  "frozenCommit": null,
+  "environment": "production",
+  "redactionConfirmed": false,
+  "planAndBudget": {
+    "esaPlan": null,
+    "quotaEvidence": null,
+    "monthlyBudgetCny": null,
+    "budgetNotificationConfigured": false,
+    "usageCapValue": null,
+    "meteringDelayWarningRecorded": false
+  },
+  "edgeSecurity": {
+    "exactHosts": [],
+    "httpsForced": false,
+    "esaManagedCertificates": [],
+    "wafMode": null,
+    "rateLimitThresholds": [],
+    "originProtectionEnabled": false,
+    "esaOriginIpsEvidence": null
+  },
+  "measurements": {
+    "artifact": null,
+    "coldConditionProven": false,
+    "coldConditionEvidence": null,
+    "thresholdCalibration": []
+  },
+  "alerts": [
+    "esa-plan-quota",
+    "esa-traffic",
+    "esa-origin-5xx",
+    "esa-edge-4xx-5xx",
+    "esa-cache-hit",
+    "esa-purge",
+    "esa-edge-certificate",
+    "ecs-disk",
+    "nginx-origin",
+    "app-container"
+  ],
+  "hostVerification": {
+    "artifact": null,
+    "nginxConfigTest": false,
+    "safeReloadTest": false,
+    "listen80": false,
+    "listen443Absent": false,
+    "appLoopbackOnly": false,
+    "acmeSchedulerAbsent": false,
+    "certificateFilesAbsent": false,
+    "httpOriginReady": false
+  },
+  "notes": []
+}
