@@ -61,13 +61,13 @@ pnpm run verify:observability
 GATE-E 后，在 GitHub Actions 手动运行 `release-image`：
 
 1. ref 选择 `main`；
-2. `frozen_sha` 填 GATE-E 的 40 位 SHA；
-3. `image_tag` 填本次镜像标签，不用 `latest`；
-4. `confirmation` 精确填写 `PUBLISH_GATE_E_IMAGE`。
+2. `image_tag` 填本次镜像标签，不用 `latest`；
+3. `confirmation` 精确填写 `PUBLISH_GATE_E_IMAGE`。
 
-工作流完成后，只使用证据中的
-`repository@sha256:64位摘要`。标签只便于发布，服务器实际部署不信任标签。
-无需创建 `v*` Git tag。
+工作流直接发布 ref 选择器对应的 `GITHUB_SHA`，无需再手工输入 40 位 Git
+SHA。完成后，从 `image-release-evidence.json` 读取 `commit` 作为
+`FROZEN_SHA`，并只使用证据中的 `repository@sha256:64位摘要` 部署。
+标签只便于识别发布，服务器实际部署不信任标签。无需创建 `v*` Git tag。
 
 ## 3. 第一次服务器部署
 

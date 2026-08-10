@@ -146,11 +146,10 @@ sudo bash deploy/host/verify-http-origin.sh \
 
 只有 GATE-E 写入冻结 SHA 且用户在 T53-F1 明确授权后，才从 GitHub Actions 手动运行 `release-image`。必须在 ref 选择器选 `main`，并填写：
 
-- `frozen_sha`：与该次 workflow `GITHUB_SHA` 相同的 40 位 GATE-E SHA；
 - `image_tag`：非 `latest` 的发布标签；
 - `confirmation`：精确 `PUBLISH_GATE_E_IMAGE`。
 
-工作流先复用同一 SHA 的完整 quality，再发布 Docker Hub 镜像并输出 `image-release-evidence.json`。远程只使用证据里的 `repository@sha256:digest`；不得使用 tag、短 SHA、`latest` 或服务器现场 build。阶段 E 不执行该工作流、不创建 `v*` tag。
+工作流直接使用 ref 选择器对应的 `GITHUB_SHA`，不再要求手工重复输入 40 位 Git SHA；它先复用该 SHA 的完整 quality，再发布 Docker Hub 镜像并输出 `image-release-evidence.json`。将证据中的 `commit` 作为远程代码核对使用的冻结 SHA，远程镜像只使用证据里的 `repository@sha256:digest`；不得使用 tag、短 SHA、`latest` 或服务器现场 build。阶段 E 不执行该工作流、不创建 `v*` tag。
 
 ### 6.2 目标机取冻结代码与配置
 
