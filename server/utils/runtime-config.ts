@@ -11,6 +11,8 @@ import { isIP } from 'node:net'
 import { z } from 'zod'
 import runtimeExample from '../../config/runtime.example.json'
 
+export const PRODUCTION_MEDIA_BASE_URL = 'https://public-media.ditedog.com'
+
 export const RUNTIME_CONFIG_ENV = {
   appEnv: 'APP_ENV',
   publicBaseUrl: 'PUBLIC_BASE_URL',
@@ -345,10 +347,10 @@ export const runtimeConfigSchema = z.object({
       }
     }
 
-    if (new URL(config.mediaBaseUrl).hostname.endsWith('.aliyuncs.com')) {
+    if (config.mediaBaseUrl !== PRODUCTION_MEDIA_BASE_URL) {
       context.addIssue({
         code: 'custom',
-        message: '生产媒体 origin 必须使用 ESA 自定义域名，不能使用 OSS 原站',
+        message: `生产媒体 origin 必须精确使用 ${PRODUCTION_MEDIA_BASE_URL}`,
         path: ['mediaBaseUrl'],
       })
     }

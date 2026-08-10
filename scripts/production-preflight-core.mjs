@@ -4,6 +4,7 @@ import { isAbsolute } from 'node:path'
 export const EXPECTED_REGION = 'oss-cn-hangzhou'
 export const EXPECTED_PRIVATE_BUCKET = 'project-furry-forge-private'
 export const EXPECTED_PUBLIC_BUCKET = 'project-furry-forge-public'
+export const EXPECTED_MEDIA_ORIGIN = 'https://public-media.ditedog.com'
 export const REQUIRED_PUT_HEADERS = [
   'content-md5',
   'content-type',
@@ -127,10 +128,10 @@ export function validateProductionPreflightConfig(config) {
       'PUBLIC_BASE_URL and ADMIN_BASE_URL must be distinct.',
     )
   }
-  if (new URL(normalized.mediaBaseUrl).hostname.endsWith('.aliyuncs.com')) {
+  if (normalized.mediaBaseUrl !== EXPECTED_MEDIA_ORIGIN) {
     throw productionPreflightError(
       'wrong-media-origin',
-      'MEDIA_BASE_URL must use an ESA custom domain instead of an OSS origin.',
+      `MEDIA_BASE_URL must be exactly ${EXPECTED_MEDIA_ORIGIN}.`,
     )
   }
   if (normalized.region !== EXPECTED_REGION) {
