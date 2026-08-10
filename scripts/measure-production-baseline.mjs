@@ -3,6 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { performance } from 'node:perf_hooks'
 import {
+  measurementTargetFailures,
   parseMeasurementTarget,
   selectEvidenceHeaders,
   summarizeLoadProbe,
@@ -242,6 +243,12 @@ async function main() {
   const output = resolve(input.output ?? `.data/production-baseline-${safeTimestamp}.json`)
   await mkdir(dirname(output), { recursive: true })
   await writeFile(output, `${JSON.stringify(artifact, null, 2)}\n`, { flag: 'wx' })
+  const targetFailures = measurementTargetFailures(targets)
+  if (targetFailures.length > 0) {
+    throw new Error(
+      `Target verification failed: ${targetFailures.join('; ')}. Evidence saved to ${output}`,
+    )
+  }
   process.stdout.write(`Production baseline measurement PASS: ${output}\n`)
 }
 

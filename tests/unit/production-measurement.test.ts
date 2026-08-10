@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  measurementTargetFailures,
   parseMeasurementTarget,
   selectEvidenceHeaders,
   summarizeLoadProbe,
@@ -32,6 +33,29 @@ describe('T52-E5 production measurement', () => {
       'cache-control': 'public, max-age=60',
       'x-cache': 'HIT',
     })
+  })
+
+  it('fails a baseline for non-2xx targets or an inexact HTTPS redirect', () => {
+    expect(measurementTargetFailures([{
+      name: 'admin-login',
+      observations: [
+        { ok: false, round: 1, status: 404 },
+        { ok: true, round: 2, status: 200 },
+      ],
+      httpsRedirect: { exactHttpsRedirect: false },
+    }])).toEqual([
+      'admin-login round 1 returned HTTP 404',
+      'admin-login did not preserve an exact HTTP-to-HTTPS redirect',
+    ])
+
+    expect(measurementTargetFailures([{
+      name: 'admin-login',
+      observations: [
+        { ok: true, round: 1, status: 200 },
+        { ok: true, round: 2, status: 200 },
+      ],
+      httpsRedirect: { exactHttpsRedirect: true },
+    }])).toEqual([])
   })
 
   it('requires explicit authorization and caps a load probe', () => {
