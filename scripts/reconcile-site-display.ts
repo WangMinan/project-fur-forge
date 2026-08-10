@@ -10,6 +10,7 @@ const SCOPES: ReconcileScope[] = ['all', 'home-hero', 'commission-hero', 'home-e
 
 const { values } = parseArgs({
   args: process.argv.slice(2).filter(argument => argument !== '--'),
+  allowNegative: true,
   options: {
     'dry-run': { type: 'boolean' },
     scope: { type: 'string' },

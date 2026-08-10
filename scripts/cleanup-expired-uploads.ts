@@ -7,6 +7,7 @@ import { cleanupExpiredUploads } from '../server/utils/runner/upload-cleanup'
  */
 const { values } = parseArgs({
   args: process.argv.slice(2).filter(argument => argument !== '--'),
+  allowNegative: true,
   options: {
     'dry-run': { type: 'boolean' },
     limit: { type: 'string' },

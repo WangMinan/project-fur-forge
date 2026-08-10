@@ -62,6 +62,7 @@ T35–T37 尚无独立 Review 签署；该门禁并入 T49，不能用用户验�
 - T52-E5/E6 HTTP origin 与 dev follow-up：宿主机继续严格禁止 443、Nginx 证书配置和活动 ACME，但停用 unit/未引用历史文件不阻断、不删除；ESA SDK 纳入 Nitro 内联边界，真实本地 dev 健康请求通过且不再解析到 `D:\scripts\esa-sdk.mjs`；证据见 [`../implementation/notes/stage-e/T52-HTTP-ORIGIN-DEV-RUNTIME-FIX-2026-08-10.md`](../implementation/notes/stage-e/T52-HTTP-ORIGIN-DEV-RUNTIME-FIX-2026-08-10.md)。
 - T52-E6 部署基线：app-only Compose、目标机 Nginx 1.30.4 HTTP-only 配置、同镜像一次性运维命令、镜像摘要/备份/恢复/回滚与直接面向部署人的顺序清单；实现 SHA `fcb99f4` 的 Actions run `31329958587` 中 `checks`、`image-build`、`e2e` 全部成功；证据见 [`../implementation/notes/stage-e/T52-E6-ENGINEERING-2026-08-10.md`](../implementation/notes/stage-e/T52-E6-ENGINEERING-2026-08-10.md)。
 - T52 远端 Node ESM 修复：首次 live preflight 在云写入前暴露 ESA SDK CommonJS 默认导出互操作缺陷；实现提交 `70538e0` 已统一脚本/运行时入口、补原生 Node 24 与 Docker 实际构造守卫，本地门禁通过；SHA `4e24916` 的 Actions run `31392080770` 中 `checks`、`image-build`、`e2e` 全部成功，独立 Review 和新镜像仍待完成；证据见 [`../implementation/notes/stage-e/T52-ESA-NODE-ESM-FIX-2026-08-10.md`](../implementation/notes/stage-e/T52-ESA-NODE-ESM-FIX-2026-08-10.md)。
+- T52 容器运维认证与参数修复：确认 init 的 TTY/环境输入和哈希链支持 `@` 等特殊字符且不会覆盖既有管理员；修复发布镜像 reset 的确认值漏传，并同步修复 cleanup/reconcile 的 `--no-dry-run` Node 24 解析；真实 ops bundle、认证、完整本地门禁与发布授权见 [`../implementation/notes/stage-e/T52-CONTAINER-OPS-AUTH-FIX-2026-08-11.md`](../implementation/notes/stage-e/T52-CONTAINER-OPS-AUTH-FIX-2026-08-11.md)。
 
 以上工程自测均不代签 T49 独立 Review；T52-E2/E3 尚未在生产凭据/Bucket 上执行 live 模式，T52-E4 尚未在目标环境实测控制台缓存与 warm-cache 撤销时间；T46 最终隐私文案与 T51 正式素材选择仍由用户确认。
 

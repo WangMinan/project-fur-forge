@@ -159,7 +159,7 @@ docker compose run --rm --no-deps app node ops/ops.mjs preflight
 docker compose run --rm --no-deps app \
   node ops/ops.mjs preflight --no-dry-run
 
-# 交互输入管理员用户名和密码。
+# 交互输入管理员用户名和密码；密码可包含 @、!、$ 等特殊字符。
 docker compose run --rm --no-deps app node ops/ops.mjs init-admin
 
 docker compose up --detach --no-build --no-deps app
@@ -175,6 +175,7 @@ ss -lntp | grep '127.0.0.1:3000'
 
 `preflight` 任一 FAIL、blocked、非零退出或测试对象清理失败，都停止部署。
 `docker compose ps` 只能有一个常驻 `app`。
+`init-admin` 只在管理员不存在时创建账号；已有管理员时不会替换密码。
 
 ### 3.5 安装与目标机匹配的 Nginx 配置
 
@@ -344,6 +345,23 @@ docker compose run --rm --no-deps app node ops/ops.mjs migrate
 
 迁移命令会先校验历史迁移，并在需要时创建验证备份。不要进入容器手改 SQLite，
 不要在线覆盖当前数据库。
+
+## 5.1 离线重置唯一管理员密码
+
+停止 app 后，在仓库根目录执行下面的交互命令。新密码可包含 `@`、`!`、`$`
+等特殊字符，输入不会回显。重置会清除登录失败锁定并使既有 Session 失效：
+
+```bash
+cd /root/project-fur-forge
+
+docker compose stop app
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs reset-admin-password \
+  --confirm RESET_SINGLE_ADMIN_PASSWORD
+docker compose up --detach --no-build --no-deps app
+```
+
+不要用 `init-admin` 修改已有账号；它是幂等初始化命令，不会覆盖现有密码。
 
 ## 6. 回滚镜像与数据库
 

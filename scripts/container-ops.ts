@@ -75,16 +75,20 @@ async function run() {
         args: argv(),
         options: { confirm: { type: 'string' } },
       })
+      const {
+        RESET_CONFIRMATION,
+        resetAdminPasswordCommand,
+      } = await import('../server/utils/service/auth-commands')
       // 与本地 pnpm auth:reset-password 相同的显式确认。
-      if (values.confirm !== 'RESET_SINGLE_ADMIN_PASSWORD') {
+      if (values.confirm !== RESET_CONFIRMATION) {
         throw new Error(
-          'Refusing to reset: pass --confirm RESET_SINGLE_ADMIN_PASSWORD',
+          `Refusing to reset: pass --confirm ${RESET_CONFIRMATION}`,
         )
       }
-      const { resetAdminPasswordCommand } = await import('../server/utils/service/auth-commands')
       const { readAdminCredentials } = await import('./auth-input')
       const { password, username } = await readAdminCredentials('New admin password: ')
       const result = await resetAdminPasswordCommand(config, {
+        confirmation: values.confirm,
         username,
         password,
       })
@@ -150,6 +154,7 @@ async function run() {
     case 'cleanup-expired-uploads': {
       const { values } = parseArgs({
         args: argv(),
+        allowNegative: true,
         options: {
           'dry-run': { type: 'boolean' },
           limit: { type: 'string' },
@@ -166,6 +171,7 @@ async function run() {
       // T34-F1：为既有启用 Hero、委托 Hero 与已发布常规领养补齐无水印站点变体。
       const { values } = parseArgs({
         args: argv(),
+        allowNegative: true,
         options: {
           'dry-run': { type: 'boolean' },
           scope: { type: 'string' },

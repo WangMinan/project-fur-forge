@@ -185,6 +185,7 @@ docker compose run --rm --no-deps app node ops/ops.mjs migrate
 docker compose run --rm --no-deps app node ops/ops.mjs preflight
 # F2 完成后才允许 live；会创建并清理本次 run 的精确测试对象和 file purge。
 docker compose run --rm --no-deps app node ops/ops.mjs preflight --no-dry-run
+# 交互密码可包含 @、!、$ 等特殊字符；输入不会回显。
 docker compose run --rm --no-deps app node ops/ops.mjs init-admin
 docker compose up --detach --no-build --no-deps app
 
@@ -197,6 +198,18 @@ ss -lntp | grep '127.0.0.1:3000'
 ```
 
 两次 preflight 都创建不可覆盖的脱敏 JSON 证据。默认模式变量错误，或 live 模式出现 FAIL/blocked、非零退出、`exact-test-object-cleanup` 失败时立即停止；只按证据 run ID 核对精确前缀，不做 Bucket 清空或模糊递归删除。`docker compose ps` 只能出现常驻 `app`；migrate/init/preflight/backup/restore/recover 都必须是 `run --rm` 一次性容器。
+
+`init-admin` 只在唯一管理员不存在时创建账号，不会覆盖已有密码。需要离线重置时，先停止 app，再使用同一冻结镜像交互输入用户名和新密码；新密码同样可包含特殊字符：
+
+```bash
+docker compose stop app
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs reset-admin-password \
+  --confirm RESET_SINGLE_ADMIN_PASSWORD
+docker compose up --detach --no-build --no-deps app
+```
+
+成功重置会清除登录失败锁定并使既有 Session 失效；命令失败时不要继续尝试登录。
 
 ### 6.4 按目标机现有路径收敛 Nginx
 

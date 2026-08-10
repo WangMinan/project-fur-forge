@@ -46,16 +46,26 @@ describe('authentication primitives', () => {
     )
     input.write('admin\r')
     await new Promise<void>(resolve => setImmediate(resolve))
-    input.write('hidden admin password\r')
+    input.write('hidden@Admin!2026#$%\r')
 
     await expect(credentials).resolves.toEqual({
-      password: 'hidden admin password',
+      password: 'hidden@Admin!2026#$%',
       username: 'admin',
     })
     expect(stdout).toContain('admin')
-    expect(stdout).not.toContain('hidden admin password')
+    expect(stdout).not.toContain('hidden@Admin!2026#$%')
     expect(input.isRaw).toBe(false)
     expect(input.isPaused()).toBe(true)
+  })
+
+  it('preserves special characters from controlled environment input', async () => {
+    await expect(readAdminCredentials('Admin password: ', {
+      ADMIN_PASSWORD: 'literal@Admin!2026#$%&*',
+      ADMIN_USERNAME: 'admin',
+    })).resolves.toEqual({
+      password: 'literal@Admin!2026#$%&*',
+      username: 'admin',
+    })
   })
 
   it('hashes passwords with scrypt and verifies without plaintext storage', async () => {

@@ -1,7 +1,7 @@
 # 实施记录索引
 
 > **角色**：导航 dated notes。历史记录描述当时事实；当前规则以 `STATE.md`、SPEC、媒体策略、PLAN 和 TASKS 为准。
-> **最后校准**：2026-08-10。
+> **最后校准**：2026-08-11。
 
 ## 当前入口
 
@@ -58,6 +58,7 @@ T35–T37 的工程记录不是独立 Review。用户同意将一次新的综合
 - [`T52-E4-ENGINEERING-2026-08-10.md`](./stage-e/T52-E4-ENGINEERING-2026-08-10.md)：ESA 缓存策略基线、精确 file purge、持久状态/重试/启动恢复、作品/返图/Hero 管理反馈与本地门禁；真实云侧 warm-cache 实测和 T49 Review 保持开放。
 - [`T52-ESA-NODE-ESM-FIX-2026-08-10.md`](./stage-e/T52-ESA-NODE-ESM-FIX-2026-08-10.md)：远端 live preflight 在云写入前暴露 ESA SDK 原生 Node ESM 默认导出缺陷；实现提交 `70538e0` 统一 preflight/Nitro 互操作并补真实构造守卫，SHA `4e24916` Actions 全绿，等待独立 Review 与新镜像。
 - [`T52-HTTP-ORIGIN-DEV-RUNTIME-FIX-2026-08-10.md`](./stage-e/T52-HTTP-ORIGIN-DEV-RUNTIME-FIX-2026-08-10.md)：宿主机检查器继续阻断 443、Nginx 证书配置和活动 ACME，但不再因停用 unit/未引用历史文件 FAIL 或删除；同时将 ESA SDK 内联进 Nitro，修复本地 dev 错误解析到 `D:\scripts\esa-sdk.mjs`。
+- [`T52-CONTAINER-OPS-AUTH-FIX-2026-08-11.md`](./stage-e/T52-CONTAINER-OPS-AUTH-FIX-2026-08-11.md)：确认 init 支持特殊字符且不覆盖既有管理员，修复容器 reset 确认值漏传，并审计/修复 cleanup 与 reconcile 的 `--no-dry-run` 参数解析；记录真实 ops bundle、认证和完整本地门禁。
 
 后续按任务新增 T49/T50/GATE-E 的 Review 与冻结证据，以及 T53-F1～F5 的远程执行/验收证据。
 
