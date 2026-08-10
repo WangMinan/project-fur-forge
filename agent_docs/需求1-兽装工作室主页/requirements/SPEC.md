@@ -739,7 +739,7 @@ protection_mode = none
 - `docker-compose.yaml` 的唯一常驻服务是非 root Nuxt/Nitro `app`；migrate、preflight、backup、restore 和 recover 只以同一冻结镜像的一次性容器运行；
 - 不运行 Nginx 容器；记录并复用 ECS 宿主机现有 Nginx 版本、配置目录和 systemd 服务，GATE-E 冻结与其兼容的仓库模板与回滚入口；
 - app 端口固定只绑定 `127.0.0.1:3000`，安全组不得开放 3000；宿主机 Nginx upstream 固定代理该地址；
-- 客户端 TLS 由 ESA 托管边缘证书终止；ESA 到 ECS 固定使用 HTTP/80，宿主机 Nginx 不监听 443、不保存证书或运行 ACME/续期调度；
+- 客户端 TLS 由 ESA 托管边缘证书终止；ESA 到 ECS 固定使用 HTTP/80，宿主机 Nginx 不监听 443、不引用证书，也不得存在正在运行的 ACME/续期服务、定时器或进程；历史遗留但未启用、未被 Nginx 引用的 Certbot unit、Let’s Encrypt 账户或证书文件不参与运行时，不作为部署阻断项，预检不得因此删除文件；
 - Nginx 正式 `server_name` 必须只列公开/管理精确域名，两个媒体 Host 和其他未知 Host 由专用/默认 server 返回 `421`；ESA DNS 不保留 wildcard 正式路由；
 - ESA 边缘强制 HTTPS；`/_nuxt/**` 等不可变静态资源可长缓存，管理 Host、`/api/**`、登录/会话和写操作绕过共享缓存，公开 SSR HTML 在目标环境实测前默认绕过缓存；
 - 生产套餐启用源站保护后，ECS 80 只允许 ESA 回源 IP；app 3000 仍只绑定 `127.0.0.1`；

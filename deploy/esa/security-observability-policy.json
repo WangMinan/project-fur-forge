@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "environmentPolicy": {
     "freePlanPurpose": "development-and-validation-only",
     "productionPlanRequired": true,
@@ -151,8 +151,10 @@
     "reloadRequiresSuccessfulConfigTest": true,
     "listen80Required": true,
     "listen443Forbidden": true,
-    "acmeSchedulerForbidden": true,
-    "certificateFilesForbidden": true,
+    "nginxCertificateConfigForbidden": true,
+    "activeAcmeSchedulerForbidden": true,
+    "activeAcmeProcessForbidden": true,
+    "inactiveCertificateResidueAllowed": true,
     "httpOriginReadyRequired": true
   }
 }

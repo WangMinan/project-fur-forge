@@ -16,6 +16,9 @@ const runtimePageErrorFixture = fileURLToPath(
 const embeddedFfmpegRuntime = fileURLToPath(
   new URL('./scripts/embedded-ffmpeg.mjs', import.meta.url),
 ).replaceAll('\\', '/')
+const esaSdkRuntime = fileURLToPath(
+  new URL('./scripts/esa-sdk.mjs', import.meta.url),
+).replaceAll('\\', '/')
 const e2eFakeOssPutFixture = fileURLToPath(
   new URL('./tests/fixtures/runtime/e2e-fake-oss-put.ts', import.meta.url),
 ).replaceAll('\\', '/')
@@ -101,7 +104,7 @@ export default defineNuxtConfig({
     ...(e2eOutputDir ? { output: { dir: e2eOutputDir } } : {}),
     errorHandler: './server/error.ts',
     externals: {
-      inline: [embeddedFfmpegRuntime],
+      inline: [embeddedFfmpegRuntime, esaSdkRuntime],
     },
     handlers: includeRuntimeErrorFixtures
       ? [

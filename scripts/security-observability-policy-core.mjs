@@ -30,8 +30,8 @@ function assertExactIds(actual, expected, label) {
 }
 
 export function validateSecurityObservabilityPolicy(policy) {
-  if (!policy || typeof policy !== 'object' || policy.schemaVersion !== 1) {
-    throw new Error('Security observability policy schemaVersion must be 1.')
+  if (!policy || typeof policy !== 'object' || policy.schemaVersion !== 2) {
+    throw new Error('Security observability policy schemaVersion must be 2.')
   }
 
   const environment = policy.environmentPolicy
@@ -140,8 +140,10 @@ export function validateSecurityObservabilityPolicy(policy) {
     'reloadRequiresSuccessfulConfigTest',
     'listen80Required',
     'listen443Forbidden',
-    'acmeSchedulerForbidden',
-    'certificateFilesForbidden',
+    'nginxCertificateConfigForbidden',
+    'activeAcmeSchedulerForbidden',
+    'activeAcmeProcessForbidden',
+    'inactiveCertificateResidueAllowed',
     'httpOriginReadyRequired',
   ]) {
     if (host?.[key] !== true) {
@@ -153,8 +155,8 @@ export function validateSecurityObservabilityPolicy(policy) {
 }
 
 export function validateObservabilityEvidenceTemplate(template) {
-  if (!template || typeof template !== 'object' || template.schemaVersion !== 1) {
-    throw new Error('Observability evidence template schemaVersion must be 1.')
+  if (!template || typeof template !== 'object' || template.schemaVersion !== 2) {
+    throw new Error('Observability evidence template schemaVersion must be 2.')
   }
   if (
     template.capturedAt !== null
@@ -217,8 +219,9 @@ export function validateObservabilityEvidenceTemplate(template) {
     'listen80',
     'listen443Absent',
     'appLoopbackOnly',
-    'acmeSchedulerAbsent',
-    'certificateFilesAbsent',
+    'nginxCertificateConfigAbsent',
+    'activeAcmeSchedulerAbsent',
+    'activeAcmeProcessAbsent',
     'httpOriginReady',
   ]) {
     if (host?.[key] !== false) {

@@ -167,7 +167,7 @@ E 提供测量与验证能力，不虚构生产阈值：
 
 用户在 F 根据远程实测填写预算与阈值。
 
-T52-E5 已按该边界落地：`deploy/esa/security-observability-policy.json` 冻结 Free/生产套餐边界、ESA 边缘 HTTPS/托管证书、HTTP/80 源站、源站保护、WAF/速率规则、预算通知和完整告警清单；校验器拒绝任何提前写入的生产套餐、费用、限流、用量封顶、告警或测量数字。`measure:production` 只接受无凭据、无 query/fragment 的精确 HTTPS URL，默认测量首次/重复响应且不冒充 cold，受控峰值探测必须显式授权并有请求/并发硬上限。宿主机检查器验证 80/443、loopback 3000、Nginx config/reload、HTTP origin、ready 与 ACME/证书残留；真实阈值、套餐/配额和控制台告警仍由 T53 留证。
+T52-E5 已按该边界落地：`deploy/esa/security-observability-policy.json` 冻结 Free/生产套餐边界、ESA 边缘 HTTPS/托管证书、HTTP/80 源站、源站保护、WAF/速率规则、预算通知和完整告警清单；校验器拒绝任何提前写入的生产套餐、费用、限流、用量封顶、告警或测量数字。`measure:production` 只接受无凭据、无 query/fragment 的精确 HTTPS URL，默认测量首次/重复响应且不冒充 cold，受控峰值探测必须显式授权并有请求/并发硬上限。宿主机检查器验证 80/443、loopback 3000、Nginx config/reload、HTTP origin、ready，以及是否存在正在运行的 ACME 服务、定时器或进程；停用 unit 和未被 Nginx 引用的历史账户/证书文件不阻断也不删除。真实阈值、套餐/配额和控制台告警仍由 T53 留证。
 
 ### 3.8 T52-E6 远程部署包
 
@@ -217,7 +217,7 @@ GATE-E 只在以下条件签署：
 
 ### 4.3 T53-F3 远程开发机
 
-远程执行者先写生产 `.env` 并通过冻结配置校验，再按 F1 授权和 T52-E6 冻结入口发布/传送镜像；远程拉取/载入后核对摘要且不重建。复核 Nginx HTTP-only 配置、公网 80、关闭的 443、app loopback 端口和精确 Host；确认服务器没有 ACME/证书/续期残留。部署唯一常驻 app 容器后运行 migrate、preflight、init、ready、目标环境测量/阈值校准、备份、恢复、升级、回滚和 operation recovery。可在仓库中受控新增或调整不进入镜像的运维脚本，要求默认 dry-run、脱敏、目标明确、可回滚，提交后做针对性验证；禁止直接热改应用源码、冻结模板或容器内文件。
+远程执行者先写生产 `.env` 并通过冻结配置校验，再按 F1 授权和 T52-E6 冻结入口发布/传送镜像；远程拉取/载入后核对摘要且不重建。复核 Nginx HTTP-only 配置、公网 80、关闭的 443、app loopback 端口和精确 Host；确认 Nginx 不引用证书，且没有正在运行的 ACME/续期服务、定时器或进程。停用 unit 和未被引用的历史账户/证书文件可以保留。部署唯一常驻 app 容器后运行 migrate、preflight、init、ready、目标环境测量/阈值校准、备份、恢复、升级、回滚和 operation recovery。可在仓库中受控新增或调整不进入镜像的运维脚本，要求默认 dry-run、脱敏、目标明确、可回滚，提交后做针对性验证；禁止直接热改应用源码、冻结模板或容器内文件。
 
 ### 4.4 T53-F4 正式验证
 
