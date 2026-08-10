@@ -36,7 +36,7 @@ import {
 } from '../../server/utils/database'
 import { loadRuntimeConfig } from '../../server/utils/runtime-config'
 
-const originalPassword = 'initial admin password'
+const originalPassword = 'initial@Admin!2026'
 let directory: string
 let databaseFile: string
 
@@ -113,7 +113,7 @@ describe('single administrator commands and lockout', () => {
     })
     const repeated = await initializeAdminCommand(config(), {
       username: 'admin',
-      password: 'different admin password',
+      password: 'different@Admin!2026',
     })
     const database = openDatabase(databaseFile)
 
@@ -132,7 +132,7 @@ describe('single administrator commands and lockout', () => {
       })
       await expect(authenticateAdmin(database.sqlite, {
         username: 'admin',
-        password: 'different admin password',
+        password: 'different@Admin!2026',
       })).resolves.toBeNull()
     }
     finally {
@@ -193,13 +193,13 @@ describe('single administrator commands and lockout', () => {
     })
     expect(() => resetAdminPasswordCommand(config(), {
       username: 'admin',
-      password: 'replacement admin password',
+      password: 'replacement@Admin!2026',
       confirmation: 'wrong',
     })).toThrow(/Reset requires/)
 
     const result = await resetAdminPasswordCommand(config(), {
       username: 'admin',
-      password: 'replacement admin password',
+      password: 'replacement@Admin!2026',
       confirmation: RESET_CONFIRMATION,
     })
     const database = openDatabase(databaseFile)
@@ -220,7 +220,7 @@ describe('single administrator commands and lockout', () => {
       })).resolves.toBeNull()
       await expect(authenticateAdmin(database.sqlite, {
         username: 'admin',
-        password: 'replacement admin password',
+        password: 'replacement@Admin!2026',
       })).resolves.toMatchObject({
         sessionVersion: 2,
       })
@@ -259,7 +259,7 @@ describe('single administrator commands and lockout', () => {
       .toThrow(/pending migration/)
     await expect(resetAdminPasswordCommand(config(pendingDatabaseFile), {
       username: 'admin',
-      password: 'replacement admin password',
+      password: 'replacement@Admin!2026',
       confirmation: RESET_CONFIRMATION,
     })).rejects.toThrow(/run pnpm db:migrate first/)
 
@@ -288,7 +288,7 @@ describe('single administrator commands and lockout', () => {
     expect(backupEntries.length).toBeGreaterThan(0)
     await expect(resetAdminPasswordCommand(config(pendingDatabaseFile), {
       username: 'admin',
-      password: 'replacement admin password',
+      password: 'replacement@Admin!2026',
       confirmation: RESET_CONFIRMATION,
     })).resolves.toMatchObject({
       version: userVersion + 1,

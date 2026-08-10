@@ -170,8 +170,13 @@ jobs:
           docker compose run --rm --no-deps app node ops/ops.mjs migrate
           docker compose run --rm --no-deps \
             -e ADMIN_USERNAME=ci-admin \
-            -e ADMIN_PASSWORD=ci-only-password-at-least-12 \
+            -e ADMIN_PASSWORD=ci-init@password-2026 \
             app node ops/ops.mjs init-admin
+          docker compose run --rm --no-deps \
+            -e ADMIN_USERNAME=ci-admin \
+            -e ADMIN_PASSWORD=ci-reset@password-2026 \
+            app node ops/ops.mjs reset-admin-password \
+            --confirm RESET_SINGLE_ADMIN_PASSWORD
           docker compose run --rm --no-deps app node ops/ops.mjs preflight
           docker compose up --detach --no-build --no-deps app
 
@@ -300,7 +305,7 @@ jobs:
             --header 'Host: admin.test.invalid' \
             --header 'Origin: https://admin.test.invalid' \
             --header 'Content-Type: application/json' \
-            --data '{"username":"ci-admin","password":"ci-only-password-at-least-12"}' \
+            --data '{"username":"ci-admin","password":"ci-reset@password-2026"}' \
             http://127.0.0.1/api/auth/login)" = "200"
           grep -Eiq '^set-cookie: __Host-fur-forge-session=.*;.*Secure' "${auth_headers}"
           session_cookie="$(sed -nE \
