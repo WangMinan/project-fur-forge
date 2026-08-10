@@ -52,6 +52,7 @@ T35–T37 的工程记录不是独立 Review。用户同意将一次新的综合
 - [`T51-F4-ENGINEERING-2026-08-10.md`](./stage-e/T51-F4-ENGINEERING-2026-08-10.md)：全管理端 FFmpeg 动态等待反馈、异步子进程、`recipe-v3` 作品竖图单居中水印缩放、旧配方整体回退及本地门禁；T49 Review 保持开放。
 - [`T52-E1-ENGINEERING-2026-08-09.md`](./stage-e/T52-E1-ENGINEERING-2026-08-09.md)：服务端 OSS、浏览器上传与 ESA 公开媒体 Endpoint 分离，独立 ESA 配置、生产 Schema/模板/verify 与测试证据；T49 Review 保持开放。
 - [`T52-E2-ENGINEERING-2026-08-09.md`](./stage-e/T52-E2-ENGINEERING-2026-08-09.md)：OSS/ESA preflight 的 dry-run/live 边界、Bucket/对象/衍生物/权限验证、官方 SDK、脱敏证据与本地门禁；真实云侧 live 与 T49 Review 保持开放。
+- [`T52-E2-PREFLIGHT-RELAXATION-2026-08-10.md`](./stage-e/T52-E2-PREFLIGHT-RELAXATION-2026-08-10.md)：用户明确允许排障期通配 CORS 并保留既有本地测试衍生对象；预检只验证上传能力，不再检查衍生 Bucket CORS 或全桶数据库一致性，也不清理旧对象。
 - [`T52-E3-ENGINEERING-2026-08-09.md`](./stage-e/T52-E3-ENGINEERING-2026-08-09.md)：ESA `prod/web/**` 公开投影、SSR/API 泄漏门禁、H3 直接依赖与生产产物验证；真实云侧 live 与 T49 Review 保持开放。
 - [`T52-E4-ENGINEERING-2026-08-10.md`](./stage-e/T52-E4-ENGINEERING-2026-08-10.md)：ESA 缓存策略基线、精确 file purge、持久状态/重试/启动恢复、作品/返图/Hero 管理反馈与本地门禁；真实云侧 warm-cache 实测和 T49 Review 保持开放。
 - [`T52-ESA-NODE-ESM-FIX-2026-08-10.md`](./stage-e/T52-ESA-NODE-ESM-FIX-2026-08-10.md)：远端 live preflight 在云写入前暴露 ESA SDK 原生 Node ESM 默认导出缺陷；实现提交 `70538e0` 统一 preflight/Nitro 互操作并补真实构造守卫，SHA `4e24916` Actions 全绿，等待独立 Review 与新镜像。

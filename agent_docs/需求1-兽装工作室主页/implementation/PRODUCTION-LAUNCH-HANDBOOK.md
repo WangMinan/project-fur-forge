@@ -50,7 +50,7 @@
 app/migrate/ops --杭州内网 Endpoint--> 两只 OSS Bucket
 ```
 
-两只 Bucket 上线时都设为 private 并开启 Bucket 级 Block Public Access。网页衍生 Bucket 只能放已验证、允许公开展示的派生图片；永久原图、处理源和管理预览只能在私有原图 Bucket。
+两只 Bucket 上线时都设为 private 并开启 Bucket 级 Block Public Access。应用新写入网页衍生 Bucket 的生产对象只能是已验证、允许公开展示的派生图片；永久原图、处理源和管理预览只能在私有原图 Bucket。既有 `dev/web/**` 等本地测试衍生对象可以暂时保留，预检不要求它们与当前生产数据库一致，也不会清理它们。
 
 ## 3. GATE-E 前必须交付
 
@@ -67,11 +67,11 @@ SDK 初始化、请求和异常处理参考[阿里云 TypeScript SDK samples 的
 1. 把临时 wildcard 路由收敛为正式公开/管理精确 Host；ESA 与 Nginx 都拒绝未知 Host。
 2. 保持客户端 HTTPS 强制、ECS 回源 HTTP/80；生产启用源站保护后，ECS 80 只允许 ESA 回源地址。
 3. `public-media` 保持同账号私有 OSS 回源，origin 精确指向网页衍生 Bucket。该授权由 ESA 使用 STS 完成，业务应用不参与；不要配置自定义边缘鉴权、签名查询参数、媒体鉴权 Key/TTL 或业务侧 STS。
-4. 两只 Bucket 切为 private + BPA；核对历史 Object ACL、Bucket Policy、CORS 和生命周期规则。
+4. 两只 Bucket 切为 private + BPA；核对历史 Object ACL、Bucket Policy、CORS 和生命周期规则。CORS 在排障期可以保持通配 Origin/Header，只需确保正式管理 Origin 的条件 PUT 可用；衍生 Bucket 是否存在 CORS 不作为预检阻断。
 5. 按 `deploy/esa/cache-policy.json` 的优先级配置缓存：管理 Host 与 `/api/**`/会话/写操作绕过，公开 SSR HTML 初始绕过，`/_nuxt/**` 缓存 365 天，`public-media` 的 `prod/web/**` 节点缓存 30 天、浏览器缓存 7 天并忽略全部无业务意义 query；404 缓存 60 秒，禁止源站错误或 404 时提供 stale。其他媒体路径拒绝。
 6. 记录现有全权限阿里云 AK/SK 的权限边界和保管位置；OSS 与 ESA API 共用该凭据，不创建第二套 ESA AccessKey。preflight 只验证本任务实际所需的 OSS/ESA 能力，不以控制面拒绝作为通过条件。
 
-控制台保存后先停止写入并核对：两只 OSS 原站匿名 GET/HEAD 为 403；数据库中已发布的 `prod/web/**` 通过 `public-media` 返回 200；响应最终地址和响应头不暴露 OSS 原站；网页衍生 Bucket 全量对象与数据库 `READY + PUBLIC` 清单双向一致。任一项失败都不得靠放开 Bucket ACL、添加自定义签名或把私有对象移入网页衍生 Bucket 规避。
+控制台保存后先停止写入并核对：两只 OSS 原站匿名 GET/HEAD 为 403；数据库中已发布的 `prod/web/**` 通过 `public-media` 返回 200；响应最终地址和响应头不暴露 OSS 原站。既有本地测试衍生对象或未登记旧对象不参与生产数据库双向一致性门禁，也不要求清理。其余失败不得靠放开 Bucket ACL、添加自定义签名或把私有对象移入网页衍生 Bucket 规避。
 
 配置前后都运行 `pnpm run verify:esa-cache` 校验仓库基线。阶段 F 将控制台实际规则逐项抄入脱敏证据并与同一 JSON 比对；不得只凭浏览器 `Cache-Control` 判断 ESA 节点缓存，query 合并、404 TTL 和 stale 禁用还要用目标域名的冷/热请求实测。
 

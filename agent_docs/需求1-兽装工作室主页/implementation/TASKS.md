@@ -169,8 +169,8 @@ _依赖：T51-F3；完成后进入 T49。_
 
 - [x] 重写受控 preflight，不再要求 public-read 或原站匿名 200；
 - [x] 自动检查两只原始 OSS 域名匿名 403、共享阿里云凭据业务能力、条件上传失败面、已发布 ESA 媒体 URL 200；
-- [x] 检查 Bucket ACL/BPA、Object ACL/Policy、CORS、生命周期和 ESA 只回源衍生 Bucket；
-- [x] 检查网页衍生 Bucket 只含允许公开展示的对象；检查现有阿里云 AK/SK 具备 purge/查询和 OSS 所需能力，不再把控制面越权拒绝作为门禁；
+- [x] 检查 Bucket ACL/BPA、Object ACL/Policy、生命周期和 ESA 只回源衍生 Bucket；CORS 只验证管理 Origin 的条件 PUT 能力，允许通配 Origin/Header，不要求衍生 Bucket 无 CORS；
+- [x] 应用新写入的生产衍生对象仍须是 READY 公开派生物；预检不以既有 `dev/web/**` 或未登记在当前生产数据库的旧衍生对象阻断部署，也不清理它们；检查现有阿里云 AK/SK 具备 purge/查询和 OSS 所需能力，不再把控制面越权拒绝作为门禁；
 - [x] 提供 dry-run、脱敏输出和非零退出码；阶段 F 可补诊断/证据采集包装器，但不得改变该入口的判定契约。
 
 #### T52-E3 · ESA 同账号私有 OSS 回源
@@ -238,8 +238,10 @@ _依赖：T46、T51、T51-F1～F4、T52-E1～E6。_
   policy 与 Secret scan；
 - [x] 包含实现与修复记录的 SHA `4e24916` 已在 Actions run
   `31392080770` 取得 `checks`、`image-build`、`e2e` 全部成功；
+- [ ] 用户明确放宽 CORS/既有测试对象预检门禁后的新 SHA 重新取得
+  `checks`、`image-build`、`e2e` 全部成功；旧 `4e24916` 结果不能代签；
 - [ ] 新上下文独立 Review preflight、Nitro 产物、Docker 守卫及停止/恢复
-  边界；实现者不得代签。
+  边界，并覆盖本次 CORS/旧对象判定调整；实现者不得代签。
 - [ ] Review 通过后重新发布不可变镜像，保存新的
   `repository@sha256:digest`，远端不得继续使用旧镜像。
 _依赖：实现提交 `70538e0`；完成后才可继续 T50/GATE-E 或远端 live preflight。_
@@ -280,7 +282,7 @@ _依赖：GATE-E、备案审批/同步。_
 
 - [ ] 用户把 wildcard DNS 收敛为公开/管理精确记录，复核已经生效的 ECS HTTP/80 回源和 ESA 边缘 HTTPS；
 - [ ] 用户按 Handbook 复核 `public-media` 同账号私有 OSS 回源，并配置缓存、源站保护/WAF、正式套餐、保守初始用量封顶和告警；F3 目标环境实测后再校准阈值；
-- [ ] 用户把两只现有 Bucket 改为 private + BPA，核对 Object ACL/Policy、CORS、生命周期和 RAM；
+- [ ] 用户把两只现有 Bucket 改为 private + BPA，核对 Object ACL/Policy、CORS、生命周期和 RAM；CORS 可在排障期保持通配，后续收紧不作为本次部署前置；
 - [ ] 用户确认现有全权限阿里云 AK/SK 可用于 OSS 与 ESA purge/查询，并记录该权限边界与 Secret 保管方式；本版本不再建立第二套 ESA 凭据；
 - [ ] 用户核对/完成公开与管理 DNS、`public-media` CNAME、ESA 边缘证书和基础防护；已提前存在的 NS/CNAME/A 只作为现状复核，不提前关闭本任务；
 - [ ] 每步保留脱敏截图/任务 ID，不把“已提交”写成“已完成”。

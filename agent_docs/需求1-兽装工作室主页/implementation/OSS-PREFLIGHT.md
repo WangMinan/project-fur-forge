@@ -41,17 +41,17 @@ ESA 首次开启同账号私有 OSS 回源后，由阿里云使用 STS 临时令
 - 两只 Bucket 均为 private + Bucket 级 BPA，原始 OSS 域名匿名 GET/HEAD 为 403，历史 Object ACL/Policy 不允许匿名读；
 - `.env` 中现有一套阿里云 AK/SK 同时完成 OSS 与 ESA 业务所需操作；预检只验证业务能力，不把控制面权限拒绝当作凭据门禁；
 - `public-media` 通过 ESA 可读取已知 READY 衍生对象，公开响应不出现原始 OSS 域名或私有 Object Key；
-- 私有原图、处理源和管理预览不进入网页衍生 Bucket；
-- CORS 只允许实际管理 origin 和条件 PUT 所需方法/头，过期、篡改、错误 MD5、错误来源和越权 Key 前缀有明确失败；
+- 应用新写入网页衍生 Bucket 的生产对象不包含私有原图、处理源或管理预览；既有 `dev/web/**` 等本地测试衍生对象可以保留，预检不要求它们登记在当前生产数据库中，也不删除它们；
+- CORS 只验证实际管理 origin 的条件 PUT 所需方法/头可用；允许暂时使用通配 Origin/Header，不要求衍生 Bucket 无 CORS；过期、篡改、错误 MD5 和越权 Key 前缀仍有明确失败；
 - ESA 客户端 HTTPS 正常，ECS origin 为 HTTP/80，宿主机只监听 80，公网 3000/443 不可达；
 - 管理 Host、`/api/**`、登录、会话、写操作和健康检查绕过共享缓存；公开 SSR HTML 首版绕过共享缓存；静态资源与不可变媒体按规则缓存。
 
 T52-E2 的 live 入口已经实现前六项 OSS/ESA 媒体与凭据检查：
 
-- 读取两只 Bucket 的 identity、region、ACL、BPA、Policy Status、Object ACL、CORS、生命周期和完整对象清单；
-- 把网页衍生 Bucket 的每个对象与生产数据库中 `READY + PUBLIC` 的变体身份双向核对，拒绝未跟踪对象、缺失对象和任何非 `prod/web/` 对象；
+- 读取两只 Bucket 的 identity、region、ACL、BPA、Policy Status、Object ACL 和生命周期；仅为私有 Bucket 读取 CORS 并验证管理端上传能力；
+- 不再把网页衍生 Bucket 全量对象与当前生产数据库做双向一致性门禁；既有测试对象和未登记旧对象不阻断，也不会被预检删除；
 - 用现有共享凭据执行私有对象条件 PUT、HEAD/GET、跨 Bucket 图片处理与精确删除；浏览器签名仍由应用策略限制到本次 run 的精确 Key 前缀；
-- 验证正确/错误 CORS Origin、禁止覆盖、篡改 MD5、过期签名，以及两只原始 OSS 域名的匿名 GET/HEAD 均为 403；
+- 验证管理 Origin 在精确或通配 CORS 下可执行条件 PUT、禁止覆盖、篡改 MD5、过期签名，以及两只原始 OSS 域名的匿名 GET/HEAD 均为 403；
 - 验证 ESA 对本次衍生物返回 200，响应地址/头不暴露 OSS 原站或私有 Key，并确认同路径不能暴露私有 Bucket 对象；
 - 使用官方 `@alicloud/esa20240910` SDK 验证 `DescribePurgeTasks` 与精确 file purge 可用；不再执行 `ListSites`、`DeleteSite` 等控制面权限负向探针。
 

@@ -109,9 +109,13 @@ watermark_profile_id = NULL
 
 ### 6.2 网页衍生 Bucket
 
-只保存经过完整身份生成和验证的网页衍生物。正式要求同样是 private + Bucket 级 Block Public Access，原始 OSS 域名匿名 GET 403。
+应用新写入的生产对象只允许是经过完整身份生成和验证的网页衍生物。正式要求同样是 private + Bucket 级 Block Public Access，原始 OSS 域名匿名 GET 403。
+
+既有 `dev/web/**` 等本地测试衍生对象可以暂时保留。生产预检不把“对象未登记在当前生产数据库”作为失败，也不清理这些旧对象；它们不能进入生产公开 DTO，不能借此把永久原图、处理源或管理预览写入衍生 Bucket。
 
 禁止保存永久原图、处理源、Logo 源、管理预览、授权附件或其他私有数据。
+
+CORS 在当前排障期可以使用通配 Origin/Header。生产预检只验证管理 Origin 的条件 PUT 能力，不要求精确 Origin/Header，不要求衍生 Bucket 删除 CORS；该放宽不改变条件签名、禁止覆盖、Key 前缀或对象公开权限。
 
 ESA 同账号私有 OSS 回源可读取该 Bucket 全部对象，ESA 侧不能把“错误混入同一 Bucket 的私有对象”自动变安全。因此“这里只能放可作为网页媒体发布的衍生物”是生产安全门禁，而非命名建议。
 

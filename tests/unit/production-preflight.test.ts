@@ -4,17 +4,18 @@ import { resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
+  evaluateCorsRules,
+  REQUIRED_PUT_HEADERS,
+} from '../../scripts/oss-preflight-core.mjs'
+import {
   assertProductionTestObject,
   buildExactPurgeInput,
   createProductionPreflightRunId,
-  evaluateDerivativeInventory,
   evaluateLifecycleRules,
-  evaluateStrictCorsRules,
   exactEsaMediaUrl,
   EXPECTED_PRIVATE_BUCKET,
   EXPECTED_PUBLIC_BUCKET,
   productionPreflightPrefix,
-  REQUIRED_PUT_HEADERS,
   validateProductionPreflightConfig,
 } from '../../scripts/production-preflight-core.mjs'
 
@@ -117,23 +118,26 @@ describe('T52-E2 production preflight contract', () => {
     })).toThrow(/exact/u)
   })
 
-  it('requires one exact CORS rule for the administrator PUT surface', () => {
+  it('accepts exact or wildcard CORS when the administrator PUT surface works', () => {
     const origin = 'https://admin.ditedog.com'
-    expect(evaluateStrictCorsRules([{
+    expect(evaluateCorsRules([{
       allowedOrigin: origin,
       allowedMethod: ['PUT'],
       allowedHeader: REQUIRED_PUT_HEADERS,
-    }], origin)).toMatchObject({ safe: true, ruleCount: 1 })
-    expect(evaluateStrictCorsRules([{
+    }], { origin })).toMatchObject({
+      sufficient: true,
+      broadOrigin: false,
+      broadHeaders: false,
+    })
+    expect(evaluateCorsRules([{
       allowedOrigin: '*',
       allowedMethod: ['PUT'],
       allowedHeader: ['*'],
-    }], origin).safe).toBe(false)
-    expect(evaluateStrictCorsRules([{
-      allowedOrigin: origin,
-      allowedMethod: ['GET', 'PUT'],
-      allowedHeader: REQUIRED_PUT_HEADERS,
-    }], origin).safe).toBe(false)
+    }], { origin })).toMatchObject({
+      sufficient: true,
+      broadOrigin: true,
+      broadHeaders: true,
+    })
   })
 
   it('rejects destructive lifecycle rules over durable production objects', () => {
@@ -155,27 +159,6 @@ describe('T52-E2 production preflight contract', () => {
       expiration: { days: 30 },
       status: 'Enabled',
     }], EXPECTED_PUBLIC_BUCKET).safe).toBe(false)
-  })
-
-  it('binds every derivative object to a READY public database identity', () => {
-    const ready = [
-      'prod/web/asset/recipe-v2/detail/1280/a.webp',
-      'prod/web/asset/site-display-v1/home-entry-commission/960/b.webp',
-    ]
-    expect(evaluateDerivativeInventory(ready, ready)).toMatchObject({
-      safe: true,
-      missingCount: 0,
-      untrackedCount: 0,
-    })
-    expect(evaluateDerivativeInventory([
-      ready[0]!,
-      'prod/original/private.png',
-    ], ready)).toMatchObject({
-      safe: false,
-      unsafeCount: 1,
-      untrackedCount: 1,
-      missingCount: 1,
-    })
   })
 
   it('constructs only exact public-media file purge inputs', () => {
@@ -246,6 +229,7 @@ describe('T52-E2 dry-run CLI', () => {
     const evidenceText = readFileSync(evidencePath, 'utf8')
     const evidence = JSON.parse(evidenceText)
     expect(evidence).toMatchObject({
+      schemaVersion: 3,
       task: 'T52-E2',
       mode: 'dry-run',
       status: 'passed',
@@ -256,6 +240,12 @@ describe('T52-E2 dry-run CLI', () => {
     expect(evidence.checks.some((check: { status: string }) => (
       check.status === 'skip'
     ))).toBe(true)
+    const checkNames = evidence.checks.map((check: { name: string }) => check.name)
+    expect(checkNames).toContain(
+      'cors-upload-capability-and-browser-conditional-put-failures',
+    )
+    expect(checkNames).not.toContain('derivative-inventory-database-boundary')
+    expect(checkNames).not.toContain('derivative-bucket-no-cors')
     expect(evidenceText).not.toContain(configuration.accessKeyId)
     expect(evidenceText).not.toContain(configuration.accessKeySecret)
     expect(evidenceText).not.toContain('/original/')

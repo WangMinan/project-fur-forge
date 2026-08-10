@@ -32,7 +32,8 @@
      `project-furry-forge-public` 都是 private；
    - 两只都开启 Bucket Block Public Access；
    - 历史 Object ACL、Bucket Policy 没有遗留公开权限；
-   - 私有 Bucket 的 CORS 只允许正式管理 Origin 条件 PUT；
+   - 私有 Bucket 的 CORS 能让正式管理 Origin 完成条件 PUT；排障期允许通配 Origin/Header，预检不要求衍生 Bucket 删除 CORS；
+   - 既有 `dev/web/**` 等本地测试衍生对象可以保留，预检不会因它们未登记在生产数据库而停止，也不会清理它们；
    - 私有永久原图没有会误删它的生命周期规则。
 5. **ESA 缓存与防护**
    - 按 `deploy/esa/cache-policy.json` 配置；

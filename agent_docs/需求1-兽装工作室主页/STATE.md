@@ -37,6 +37,23 @@ OSS/ESA 写入之前，没有创建测试对象；app、管理员和 Nginx 切�
 当前必须等待 T49-R1 新上下文独立 Review 和新镜像发布后，才能从 live
 preflight 重新开始；不得热改旧容器或绕过 preflight。
 
+## 2026-08-10 live preflight 判定契约调整
+
+后续 live preflight 证明代码已运行到 Bucket 只读边界，但因三项既有严格
+规则停止：私有 Bucket CORS 不是精确单一规则、衍生 Bucket 存在 CORS、
+衍生 Bucket 中本地测试旧对象未登记在当前生产数据库。用户明确决定排障期
+保持通配 CORS，并保留这些本地测试对象、不执行清理。
+
+本次提交因此把 CORS 门禁收敛为“管理 Origin 的条件 PUT 能力可用”，不再
+检查衍生 Bucket CORS；同时删除衍生 Bucket 全量对象与当前生产数据库的双向
+一致性阻断。两只 Bucket 的 private+BPA、Policy/逐对象 ACL、生命周期、原站
+匿名 403、条件签名失败面、本次 run 精确清理、ESA 读取和精确 purge 仍保留。
+
+该调整会进入发布镜像中的预检脚本，所以 `4e24916` 的既有 Actions 与镜像仍
+不能代签本次新 SHA；提交后必须重新取得 CI、独立 Review 和不可变镜像，远端
+才可重新运行 live preflight。决策与验证见
+`implementation/notes/stage-e/T52-E2-PREFLIGHT-RELAXATION-2026-08-10.md`。
+
 ## 代码与 CI 基线
 
 - 当前生产实现基于 Nuxt/Nitro 单 app、SQLite/Drizzle、双私有 OSS Bucket、ESA 媒体回源、宿主机 systemd Nginx HTTP/80 origin。
