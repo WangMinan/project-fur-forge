@@ -16,6 +16,7 @@ import {
   migrateDatabase,
   openDatabase,
 } from '../../server/utils/database'
+import { createSyntheticSourcePng } from '../../scripts/oss-preflight-core.mjs'
 import {
   addReturnPhotoFromUpload,
   checkReturnPhotoPublication,
@@ -32,6 +33,7 @@ import {
 import { findReturnCharacter } from '../../server/utils/repository/return-photo-repository'
 import {
   deleteReturnCharacterCascade,
+  publishReturnPhoto,
   retryReturnPhotoCleanup,
   unpublishReturnPhoto,
 } from '../../server/utils/runner/return-photo-publication'
@@ -572,6 +574,72 @@ describe('T35-F1 return character domain model', () => {
       USER_ID,
       NOW + 4,
     )).resolves.toEqual({ id: character.id })
+  })
+
+  it('keeps a failed return-photo publish failed after cleanup retry succeeds', async () => {
+    const character = characterFor()
+    const assetId = insertReturnAsset('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb')
+    const photo = addReturnPhotoFromUpload(sqlite, character.id, assetId, NOW)
+    const privateObjectKey = sqlite.prepare(`
+      SELECT private_object_key FROM assets WHERE id = ?
+    `).pluck().get(assetId) as string
+    const storage = new FakeMediaStorage()
+    storage.seedPrivate(
+      privateObjectKey,
+      createSyntheticSourcePng(1139, 2083),
+      'image/png',
+    )
+    sqlite.exec(`
+      CREATE TRIGGER test_abort_return_photo_publish
+      BEFORE UPDATE OF publication_status ON return_photos
+      WHEN NEW.publication_status = 'published'
+      BEGIN
+        SELECT RAISE(ABORT, 'test return-photo publish failure');
+      END;
+    `)
+    storage.failDelete = true
+
+    const failed = await publishReturnPhoto(
+      sqlite,
+      storage,
+      photo.id,
+      photo.version,
+      USER_ID,
+      NOW + 1,
+    )
+    expect(failed.returnPhoto.publicationStatus).toBe('draft')
+    expect(failed.operation).toMatchObject({
+      cleanupPendingCount: 6,
+      failureCode: 'PUBLIC_CLEANUP_FAILED',
+      failureStage: 'CLEANING_PUBLIC',
+      operationType: 'PUBLISH',
+      status: 'FAILED',
+    })
+
+    storage.failDelete = false
+    const retried = await retryReturnPhotoCleanup(
+      sqlite,
+      storage,
+      failed.operation.operationId,
+      failed.operation.version,
+      USER_ID,
+      NOW + 2,
+    )
+    expect(retried).toMatchObject({
+      cleanupPendingCount: 0,
+      failureCode: 'PUBLIC_CLEANUP_FAILED',
+      failureStage: 'CLEANING_PUBLIC',
+      operationType: 'PUBLISH',
+      status: 'FAILED',
+    })
+    expect(getReturnCharacter(sqlite, character.id).photos[0]).toMatchObject({
+      id: photo.id,
+      publicationStatus: 'draft',
+    })
+    expect(sqlite.prepare(`
+      SELECT count(*) FROM asset_variants
+      WHERE asset_id = ? AND storage_scope = 'PUBLIC'
+    `).pluck().get(assetId)).toBe(0)
   })
 
   it('keeps return photos when the linked work is deleted', async () => {

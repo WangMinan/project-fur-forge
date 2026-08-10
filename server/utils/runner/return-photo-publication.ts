@@ -741,7 +741,10 @@ export async function retryReturnPhotoCleanup(
   if (!findReturnPhotoOperationType(sqlite, operationId)) {
     throw new ServiceError(404, 'NOT_FOUND', 'Publication operation was not found.')
   }
-  if (operation.status !== 'FAILED') {
+  if (
+    operation.status !== 'FAILED'
+    || operation.failureStage !== 'CLEANING_PUBLIC'
+  ) {
     throw new ServiceError(
       409,
       'CONFLICT',
@@ -756,6 +759,12 @@ export async function retryReturnPhotoCleanup(
     expectedVersion,
     actorUserId,
     now,
+    operation.operationType === 'PUBLISH'
+      ? {
+          stage: 'CLEANING_PUBLIC',
+          code: operation.internalErrorCode ?? 'RETURN_PUBLICATION_FAILED',
+        }
+      : undefined,
   ))
 }
 
