@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto'
+import { createHash, randomBytes } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import {
   publicReturnCharacterDtoSchema,
@@ -86,6 +86,19 @@ function countPublishedReturns(sqlite: Database.Database) {
  *
  * ponytail: 每次请求排一遍全部 id，返图量到十万级再考虑物化随机列。
  */
+export function shuffledReturnPhotoIds(
+  ids: readonly string[],
+  seed: string,
+) {
+  return ids
+    .map(id => ({
+      id,
+      key: createHash('sha256').update(`${seed}:${id}`).digest('hex'),
+    }))
+    .sort((left, right) => (left.key < right.key ? -1 : 1))
+    .map(entry => entry.id)
+}
+
 function shuffledPhotoIds(
   sqlite: Database.Database,
   seed: string,
@@ -95,14 +108,8 @@ function shuffledPhotoIds(
   const ids = sqlite.prepare(`
     SELECT photo.id ${publishedPhotoJoin} ORDER BY photo.id
   `).pluck().all() as string[]
-  return ids
-    .map(id => ({
-      id,
-      key: createHash('sha256').update(`${seed}:${id}`).digest('hex'),
-    }))
-    .sort((left, right) => (left.key < right.key ? -1 : 1))
+  return shuffledReturnPhotoIds(ids, seed)
     .slice(offset, offset + limit)
-    .map(entry => entry.id)
 }
 
 function loadReturnsByIds(
@@ -264,7 +271,7 @@ export function getPublicReturnWall(
   sqlite: Database.Database,
   mediaBaseUrl: string,
   page = 1,
-  seed = '',
+  seed = returnWallSeed(),
   appEnv: RuntimeConfig['appEnv'] = 'development',
 ): PublicReturnWallDto {
   const total = countPublishedReturns(sqlite)
@@ -283,6 +290,7 @@ export function getPublicReturnWall(
     pageCount,
     pageSize: RETURN_WALL_PAGE_SIZE,
     resultCount: total,
+    seed,
   })
 }
 
@@ -330,19 +338,22 @@ export function getPublicReturnCharacter(
 }
 
 /**
- * 返图墙随机种子：每 10 分钟换一次。
+ * 为一次返图墙浏览创建随机种子。
  *
- * 用时间窗而不是每请求一个随机数，是因为分页是普通链接：
- * 种子必须在访客翻页期间保持稳定，否则第 2 页会重复第 1 页的照片。
- * 时间窗同时保证下次再来时排列不同，无需 URL 上带种子参数。
+ * 无 seed 的页面/API 请求每次生成新值；响应把 seed 返回给页面，分页普通链接
+ * 再显式传递同一值，因此新请求会重新打乱，同一次浏览跨页仍不会重复或遗漏。
  */
-const WALL_SEED_WINDOW_MS = 600_000
-
-export function returnWallSeed(now = Date.now()) {
-  return String(Math.floor(now / WALL_SEED_WINDOW_MS))
+export function returnWallSeed(bytes = randomBytes(16)) {
+  if (bytes.length !== 16) {
+    throw new Error('Return wall seed entropy must be exactly 16 bytes.')
+  }
+  return bytes.toString('hex')
 }
 
-export function getPublicReturnWallForRequest(page = 1, seed = '') {
+export function getPublicReturnWallForRequest(
+  page = 1,
+  seed = returnWallSeed(),
+) {
   const config = getRuntimeConfig()
   return getPublicReturnWall(
     getDatabase().sqlite,

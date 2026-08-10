@@ -26,6 +26,7 @@ import { publicationOperationDtoSchema } from './publication'
 
 /** 公开返图墙每页条数；由 `.design` 与 SPEC 锁定为 24。 */
 export const RETURN_WALL_PAGE_SIZE = 24
+export const returnWallSeedSchema = z.string().regex(/^[0-9a-f]{32}$/u)
 
 export const RETURN_PHOTO_BLOCKER_VALUES = [
   'RETURN_PHOTO_ALT_REQUIRED',
@@ -236,10 +237,13 @@ export const publicReturnWallDtoSchema = z.object({
   pageSize: z.number().int().min(1),
   pageCount: z.number().int().nonnegative(),
   resultCount: z.number().int().nonnegative(),
+  /** 一次浏览的随机顺序身份；分页链接显式传递，避免跨页重复或遗漏。 */
+  seed: returnWallSeedSchema,
 }).strict()
 
 export const publicReturnWallQuerySchema = z.object({
   page: z.number().int().min(1).max(10_000).optional(),
+  seed: returnWallSeedSchema.optional(),
 }).strict()
 
 export const publicReturnWallResponseSchema = apiSuccessSchema(

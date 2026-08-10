@@ -16,13 +16,16 @@ import {
  * 因此再来看时排列不同，但同一次浏览里翻页不会重复或漏图。
  */
 export default defineEventHandler((event) => {
-  const parsed = publicReturnWallQuerySchema.safeParse(
-    getQuery(event).page === undefined
-      ? {}
-      : { page: Number(getQuery(event).page) },
-  )
+  const query = getQuery(event)
+  const parsed = publicReturnWallQuerySchema.safeParse({
+    ...(query.page === undefined ? {} : { page: Number(query.page) }),
+    ...(query.seed === undefined ? {} : { seed: query.seed }),
+  })
   const page = parsed.success ? parsed.data.page ?? 1 : 1
+  const seed = parsed.success
+    ? parsed.data.seed ?? returnWallSeed()
+    : returnWallSeed()
   return publicReturnWallResponseSchema.parse({
-    data: getPublicReturnWallForRequest(page, returnWallSeed()),
+    data: getPublicReturnWallForRequest(page, seed),
   })
 })
