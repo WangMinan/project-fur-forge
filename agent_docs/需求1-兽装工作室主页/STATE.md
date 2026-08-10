@@ -19,7 +19,7 @@
 - 当前生产实现基于 Nuxt/Nitro 单 app、SQLite/Drizzle、双私有 OSS Bucket、ESA 媒体回源、宿主机 systemd Nginx HTTP/80 origin。
 - T49 最终独立 Review 记录在 `implementation/notes/stage-e/T49-INDEPENDENT-REVIEW-2026-08-10.md`。
 - 2026-08-10 最新实现又加入真实 ICP 配置：`浙ICP备2026062899号`，公安备案状态保持 `unconfigured`；对应最新 `quality` 的 `checks`、`image-build`、`e2e` 均成功。
-- `release-image` 为手动工作流；它直接使用 ref 选择器对应的 `GITHUB_SHA`，无需重复输入 40 位 Git SHA；构建并推送后仍输出包含 commit 与 `repository@sha256:digest` 的发布证据。
+- `release-image` 为手动工作流；它直接使用 ref 选择器对应的 `GITHUB_SHA`，无需重复输入 40 位 Git SHA；每次发布可识别标签、短 SHA 标签和便捷 `latest`，并在 Summary/证据中直接输出可复制的冻结 SHA 与 `APP_IMAGE_REF=repository@sha256:digest`。
 
 ## 当前已确认生产参数
 
@@ -87,7 +87,7 @@
 - `WangMinan/flink-docker`：push `master` 后直接覆盖固定语义 tag；
 - `project-fur-forge`：手动发布、重跑 quality、直接使用所选 ref 的精确 Git SHA、生成不可变 registry digest，服务器按 digest 部署。
 
-后续提交已按本轮建议简化 workflow：直接使用 `${GITHUB_SHA}`，只保留人类可读 `image_tag` 和发布授权。**服务器按 `repository@sha256:digest` 部署这一层继续保留**，因为它能避免 tag 被覆盖后无法确认实际运行镜像，并为单实例 SQLite 站点提供清晰回滚点。
+后续提交已按本轮建议简化 workflow：直接使用 `${GITHUB_SHA}`，只保留人类可读 `image_tag` 和发布授权；每次发布同时更新 `latest`，但它只用于便捷查看/拉取。**服务器按 `repository@sha256:digest` 部署这一层继续保留**，Actions Summary 和证据会直接提供完整 `APP_IMAGE_REF`，避免人工拼接，同时保留明确回滚点。
 
 完整比较与建议见本轮决策 note。
 

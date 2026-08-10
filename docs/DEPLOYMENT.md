@@ -61,13 +61,15 @@ pnpm run verify:observability
 GATE-E 后，在 GitHub Actions 手动运行 `release-image`：
 
 1. ref 选择 `main`；
-2. `image_tag` 填本次镜像标签，不用 `latest`；
+2. `image_tag` 填本次可识别的镜像标签，不用 `latest`；工作流会额外自动更新
+   `latest` 便于人工查看和临时拉取；
 3. `confirmation` 精确填写 `PUBLISH_GATE_E_IMAGE`。
 
 工作流直接发布 ref 选择器对应的 `GITHUB_SHA`，无需再手工输入 40 位 Git
-SHA。完成后，从 `image-release-evidence.json` 读取 `commit` 作为
-`FROZEN_SHA`，并只使用证据中的 `repository@sha256:64位摘要` 部署。
-标签只便于识别发布，服务器实际部署不信任标签。无需创建 `v*` Git tag。
+SHA。完成后，Actions Summary 会直接显示可复制的 `FROZEN_SHA=...` 与
+`APP_IMAGE_REF=repository@sha256:...`；`image-release-evidence.json` 也保存
+完整 `imageRef`。服务器仍使用该 digest 部署，不使用会随下次发布变化的
+`latest`。无需创建 `v*` Git tag。
 
 ## 3. 第一次服务器部署
 
