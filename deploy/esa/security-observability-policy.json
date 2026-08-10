@@ -39,7 +39,7 @@
       {
         "id": "public-analytics-abuse",
         "hostScope": "public-host",
-        "pathScope": "/api/analytics/events",
+        "pathScope": "/api/public/v1/analytics/events",
         "metric": "client-ip",
         "threshold": null,
         "thresholdSource": "T53-live-measurement",

@@ -13,6 +13,7 @@ import type {
   ReturnPhotoBlocker,
 } from '../../../shared/types/contracts'
 import { ServiceError } from '../service-error'
+import { hasBlockingPublicationCleanup } from '../repository/publication-repository'
 import {
   clearCharacterPrimary,
   countReturnCharacters,
@@ -502,6 +503,14 @@ export function deleteReturnPhotoDraft(
       'CONFLICT',
       'Unpublish the return photo before deleting it.',
       'RETURN_PHOTO_PUBLISHED_READONLY',
+    )
+  }
+  if (hasBlockingPublicationCleanup(sqlite, 'RETURN_PHOTO', id)) {
+    throw new ServiceError(
+      409,
+      'CONFLICT',
+      'Finish public media cleanup before deleting the return photo.',
+      'PUBLICATION_CLEANUP_PENDING',
     )
   }
   sqlite.transaction(() => {

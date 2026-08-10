@@ -29,6 +29,7 @@ import {
 } from '../../server/utils/public-media-cache'
 import {
   createManagedWork,
+  deleteManagedWork,
   replaceManagedDesignSheet,
   replaceManagedStudioPhotos,
 } from '../../server/utils/service/work-management'
@@ -576,6 +577,18 @@ describe('dual-bucket work publication operations', () => {
     })
     const hiddenVersion = unpublished.work.version
 
+    await expect(deleteManagedWork(
+      sqlite,
+      storage,
+      work.id,
+      hiddenVersion,
+      USER_ID,
+      NOW + 4_500,
+    )).rejects.toMatchObject({
+      reason: 'PUBLICATION_CLEANUP_PENDING',
+      statusCode: 409,
+    })
+
     cache.statuses = ['Complete']
     const retried = await retryPublicationCleanup(
       sqlite,
@@ -594,6 +607,15 @@ describe('dual-bucket work publication operations', () => {
     expect(sqlite.prepare(`
       SELECT version FROM works WHERE id = ?
     `).pluck().get(work.id)).toBe(hiddenVersion)
+
+    await expect(deleteManagedWork(
+      sqlite,
+      storage,
+      work.id,
+      hiddenVersion,
+      USER_ID,
+      NOW + 6_000,
+    )).resolves.toEqual({ id: work.id })
   })
 
   it('resumes an in-flight ESA purge after restart without resubmitting or republishing', async () => {

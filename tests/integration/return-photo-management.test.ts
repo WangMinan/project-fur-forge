@@ -32,6 +32,7 @@ import {
 import { findReturnCharacter } from '../../server/utils/repository/return-photo-repository'
 import {
   deleteReturnCharacterCascade,
+  retryReturnPhotoCleanup,
   unpublishReturnPhoto,
 } from '../../server/utils/runner/return-photo-publication'
 import { setPublicMediaCacheForTests } from '../../server/utils/public-media-cache'
@@ -472,7 +473,7 @@ describe('T35-F1 return character domain model', () => {
       .get()).toEqual({ total: 2 })
   })
 
-  it('hides a return photo before revoking its exact ESA file URL', async () => {
+  it('keeps a failed return-photo purge retryable before cascade deletion', async () => {
     const character = characterFor()
     const assetId = insertReturnAsset(
       'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
@@ -508,11 +509,13 @@ describe('T35-F1 return character domain model', () => {
       NOW,
     )
     const cache = new FakePublicMediaCache()
+    cache.submitError = true
     setPublicMediaCacheForTests(cache)
+    const storage = new FakeMediaStorage()
 
     const result = await unpublishReturnPhoto(
       sqlite,
-      new FakeMediaStorage(),
+      storage,
       photo.id,
       photo.version,
       USER_ID,
@@ -522,8 +525,35 @@ describe('T35-F1 return character domain model', () => {
     expect(result.returnPhoto.publicationStatus).toBe('unpublished')
     expect(result.operation).toMatchObject({
       edgePurgeFileCount: 1,
-      edgePurgeStatus: 'COMPLETE',
+      edgePurgeStatus: 'FAILED',
       operationType: 'UNPUBLISH',
+      status: 'FAILED',
+    })
+
+    const latest = getReturnCharacter(sqlite, character.id)
+    await expect(deleteReturnCharacterCascade(
+      sqlite,
+      storage,
+      character.id,
+      latest.version,
+      USER_ID,
+      NOW + 2,
+    )).rejects.toMatchObject({
+      reason: 'PUBLICATION_CLEANUP_PENDING',
+      statusCode: 409,
+    })
+
+    cache.submitError = false
+    const retried = await retryReturnPhotoCleanup(
+      sqlite,
+      storage,
+      result.operation.operationId,
+      result.operation.version,
+      USER_ID,
+      NOW + 3,
+    )
+    expect(retried).toMatchObject({
+      edgePurgeStatus: 'COMPLETE',
       status: 'DONE',
     })
     expect(cache.submittedUrls).toEqual([[
@@ -533,6 +563,15 @@ describe('T35-F1 return character domain model', () => {
       SELECT edge_purge_task_id FROM publication_operations
       WHERE id = ?
     `).pluck().get(result.operation.operationId)).toBe('purge-task-1')
+
+    await expect(deleteReturnCharacterCascade(
+      sqlite,
+      storage,
+      character.id,
+      latest.version,
+      USER_ID,
+      NOW + 4,
+    )).resolves.toEqual({ id: character.id })
   })
 
   it('keeps return photos when the linked work is deleted', async () => {

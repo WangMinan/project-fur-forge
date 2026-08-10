@@ -54,6 +54,7 @@ import {
   deletePublicVariant,
   findPublicationOperation,
   hasActivePublicationOperation,
+  hasBlockingPublicationCleanup,
   insertPublicationOperation,
   markOperationFailed,
   markVariantsCleanupPending,
@@ -929,6 +930,14 @@ export async function deleteHeroSlide(
   const slide = requireSlide(sqlite, id, placement)
   if (slide.enabled === 1) {
     throw new ServiceError(409, 'CONFLICT', 'Disable the hero slide before deleting it.', 'HERO_SLIDE_ENABLED')
+  }
+  if (hasBlockingPublicationCleanup(sqlite, 'HOME', id)) {
+    throw new ServiceError(
+      409,
+      'CONFLICT',
+      'Finish public media cleanup before deleting the hero slide.',
+      'PUBLICATION_CLEANUP_PENDING',
+    )
   }
   await clearHeroSlidePreviews(sqlite, storage, slide)
   sqlite.transaction(() => {
