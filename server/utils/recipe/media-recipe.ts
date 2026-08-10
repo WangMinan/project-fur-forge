@@ -62,8 +62,7 @@ export const PUBLIC_RECIPE_VERSIONS = [
 const WATERMARK_SIZE_MULTIPLIER = 1.6
 const HERO_LANDSCAPE_WATERMARK_REFERENCE_WIDTH = 960
 const HERO_PORTRAIT_WATERMARK_REFERENCE_WIDTH = 480
-const WORK_CARD_WATERMARK_REFERENCE_WIDTH = 480
-const PORTRAIT_DETAIL_WATERMARK_REFERENCE_WIDTH = 960
+const PORTRAIT_WORK_WATERMARK_REFERENCE_WIDTH = 480
 /** Historical identity only. */
 export const STANDARD_WATERMARK_PROFILE = 'brand-standard-v1'
 export const CENTERED_WATERMARK_PROFILE = WATERMARK_PROFILE_NAME
@@ -544,13 +543,13 @@ function watermarkSizingReferenceWidth(
     return HERO_PORTRAIT_WATERMARK_REFERENCE_WIDTH
   }
   if (usage === 'work-card') {
-    return WORK_CARD_WATERMARK_REFERENCE_WIDTH
+    return PORTRAIT_WORK_WATERMARK_REFERENCE_WIDTH
   }
   if (
     usage === 'detail'
     && processingGeometry.height > processingGeometry.width
   ) {
-    return PORTRAIT_DETAIL_WATERMARK_REFERENCE_WIDTH
+    return PORTRAIT_WORK_WATERMARK_REFERENCE_WIDTH
   }
   return null
 }

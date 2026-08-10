@@ -44,7 +44,7 @@
 
 数据库保存不可变对象身份；公开响应用 `MEDIA_BASE_URL` 和相对 Object Key 组装稳定的 ESA HTTPS URL。
 
-`recipe-v3` 不增加列：配方身份哈希和新 Object Key 记录竖图水印缩放语义。3:4 `work-card` 与竖版 `studio_photo` `detail` 仍是单个 `center` 水印，但按用途最小宽度随输出档位等比放大；横版 `detail` 和设定图左右双水印保持原规则。新旧配方行可以并存，公开投影不能跨版本拼 SourceSet。
+`recipe-v3` 不增加列：配方身份哈希和新 Object Key 记录竖图水印缩放语义。3:4 `work-card` 与竖版 `studio_photo` `detail` 仍是单个 `center` 水印，并统一按 480 px 参考宽度随输出档位等比放大，使卡片、详情和后台公开水印预览保持相同相对尺寸；横版 `detail` 和设定图左右双水印保持原规则。新旧配方行可以并存，公开投影不能跨版本拼 SourceSet。
 
 ### `watermark_profiles`、`site_branding`、`site_hero_slides`
 
