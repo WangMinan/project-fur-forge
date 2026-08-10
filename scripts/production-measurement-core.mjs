@@ -38,6 +38,28 @@ export function selectEvidenceHeaders(headers) {
   }))
 }
 
+/**
+ * 基线命令可以保留失败响应的脱敏证据，但不能把错误路由或错误边缘跳转
+ * 宣称为 PASS。返回稳定、无响应正文的失败摘要供 CLI 在写完 artifact 后
+ * 以非零状态退出。
+ */
+export function measurementTargetFailures(targets) {
+  const failures = []
+  for (const target of targets) {
+    for (const observation of target.observations) {
+      if (observation.ok !== true) {
+        failures.push(
+          `${target.name} round ${observation.round} returned HTTP ${observation.status}`,
+        )
+      }
+    }
+    if (target.httpsRedirect?.exactHttpsRedirect !== true) {
+      failures.push(`${target.name} did not preserve an exact HTTP-to-HTTPS redirect`)
+    }
+  }
+  return failures
+}
+
 export function percentile(values, quantile) {
   if (!values.length) {
     return null

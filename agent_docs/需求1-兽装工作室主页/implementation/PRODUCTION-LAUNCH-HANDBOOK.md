@@ -95,7 +95,7 @@ WAF 开启托管防护并从 observe-first 开始；管理员认证、公开统�
 pnpm run measure:production -- \
   --target "public-home=https://${PUBLIC_HOST}/" \
   --target "public-works=https://${PUBLIC_HOST}/works" \
-  --target "admin-login=https://${ADMIN_HOST}/login" \
+  --target "admin-login=https://${ADMIN_HOST}/admin/login" \
   --target "public-media=https://public-media.ditedog.com/prod/web/EXACT-PUBLISHED-OBJECT" \
   --output .data/evidence/production-baseline.json
 ```
