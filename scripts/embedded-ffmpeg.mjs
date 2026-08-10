@@ -196,7 +196,7 @@ export function upscaleHeroImage(content, orientation) {
   }
 }
 
-export function upscaleDesignSheetImage(content, minimumDimensions) {
+export function upscaleImageToMinimum(content, minimumDimensions) {
   if (!Buffer.isBuffer(content)) {
     throw new Error('Embedded FFmpeg input must be an image Buffer.')
   }
@@ -210,7 +210,7 @@ export function upscaleDesignSheetImage(content, minimumDimensions) {
     || minimumHeight < 0
     || minimumHeight > 12_000
   ) {
-    throw new Error('Design sheet upscale dimensions are invalid.')
+    throw new Error('Image upscale dimensions are invalid.')
   }
 
   const filter = minimumHeight > 0
@@ -257,7 +257,7 @@ export function upscaleDesignSheetImage(content, minimumDimensions) {
     || width > 12_000
     || height > 12_000
   ) {
-    throw new Error('Embedded FFmpeg design sheet upscale output is invalid.')
+    throw new Error('Embedded FFmpeg image upscale output is invalid.')
   }
   return {
     content: output,
@@ -267,6 +267,9 @@ export function upscaleDesignSheetImage(content, minimumDimensions) {
     binary: embeddedBinaryIdentity(),
   }
 }
+
+/** Backward-compatible name retained for the existing design-sheet call sites. */
+export const upscaleDesignSheetImage = upscaleImageToMinimum
 
 export function compressPngForOss(content) {
   if (!Buffer.isBuffer(content) || inputCodec(content) !== 'png') {

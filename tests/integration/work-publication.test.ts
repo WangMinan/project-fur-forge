@@ -81,7 +81,9 @@ function createWorkWithPhoto(
     sortOrder: 0,
     featured: false,
   }, NOW)
-  const content = createSyntheticWatermarkPng()
+  const content = width < 2400 || height < 1600
+    ? createSyntheticSourcePng(width, height)
+    : createSyntheticWatermarkPng()
   const key = `${environmentPrefix}/original/${ASSET_ID}/source.png`
   sqlite.prepare(`
     INSERT INTO assets (
@@ -236,26 +238,93 @@ afterEach(() => {
 })
 
 describe('dual-bucket work publication operations', () => {
-  it('blocks READY source images that cannot satisfy the fixed public recipe', async () => {
+  it('prepares a private Lanczos source and publishes a low-resolution studio photo', async () => {
     const work = createWorkWithPhoto(480, 640)
 
     expect(checkWorkPublication(sqlite, work.id)).toMatchObject({
-      canPublish: false,
-      blockers: ['STUDIO_PHOTO_SOURCE_TOO_SMALL'],
+      canPublish: true,
+      blockers: [],
+      studioPhotoNeedsPreprocess: true,
     })
-    await expect(publishWork(
+    const published = await publishWork(
       sqlite,
       storage,
       work.id,
       work.version,
       USER_ID,
       NOW + 3_000,
-    )).rejects.toThrow(/Resolve publication blockers/u)
-    expect(storage.processCalls).toHaveLength(0)
+    )
+
+    expect(published).toMatchObject({
+      operation: { status: 'DONE' },
+      work: { publicationStatus: 'published' },
+    })
+    expect(checkWorkPublication(sqlite, work.id).studioPhotoNeedsPreprocess)
+      .toBe(false)
+    const preprocess = sqlite.prepare(`
+      SELECT storage_scope AS storageScope, status, recipe_version AS recipeVersion,
+             width, height, input_sha256 AS inputSha256
+      FROM asset_variants
+      WHERE asset_id = ? AND recipe_version = 'studio-photo-upscale-lanczos-v1'
+    `).get(ASSET_ID) as {
+      height: number
+      inputSha256: string
+      recipeVersion: string
+      status: string
+      storageScope: string
+      width: number
+    }
+    expect(preprocess).toMatchObject({
+      recipeVersion: 'studio-photo-upscale-lanczos-v1',
+      status: 'READY',
+      storageScope: 'PRIVATE',
+      width: 2400,
+      height: 3200,
+    })
+    expect(preprocess.inputSha256).toBe(sha256(storage.objects.get(
+      `test/t18-fixture/original/${ASSET_ID}/source.png`,
+    )!.content))
+    expect(storage.privatePuts).toHaveLength(1)
+    expect(storage.objects.has(
+      `test/t18-fixture/original/${ASSET_ID}/source.png`,
+    )).toBe(true)
+    expect(storage.processCalls).toHaveLength(12)
     expect(sqlite.prepare(`
-      SELECT count(*) FROM publication_operations WHERE entity_id = ?
-    `).pluck().get(work.id)).toBe(0)
-  })
+      SELECT count(*) FROM asset_variants
+      WHERE asset_id = ? AND storage_scope = 'PUBLIC'
+        AND source_variant_id = (
+          SELECT id FROM asset_variants
+          WHERE asset_id = ? AND recipe_version = 'studio-photo-upscale-lanczos-v1'
+        )
+    `).pluck().get(ASSET_ID, ASSET_ID)).toBe(12)
+  }, 30_000)
+
+  it('keeps the studio original and reports a stable preparation failure', async () => {
+    const work = createWorkWithPhoto(480, 640)
+    storage.failPut = true
+
+    const failed = await publishWork(
+      sqlite,
+      storage,
+      work.id,
+      work.version,
+      USER_ID,
+      NOW + 3_000,
+    )
+
+    expect(failed).toMatchObject({
+      operation: {
+        failureCode: 'STUDIO_PHOTO_UPSCALE_FAILED',
+        failureStage: 'PREPARING_SOURCE',
+        status: 'FAILED',
+      },
+      work: { publicationStatus: 'draft' },
+    })
+    expect(storage.objects.has(
+      `test/t18-fixture/original/${ASSET_ID}/source.png`,
+    )).toBe(true)
+    expect(storage.processCalls).toHaveLength(0)
+  }, 30_000)
 
   it('checks, generates, commits and reuses one idempotent publication', async () => {
     const work = createWorkWithPhoto()
@@ -264,6 +333,7 @@ describe('dual-bucket work publication operations', () => {
       blockers: [],
       missingVariantCount: 12,
       studioPhotoCount: 1,
+      studioPhotoNeedsPreprocess: false,
     })
 
     const published = await publishWork(

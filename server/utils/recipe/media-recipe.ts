@@ -4,8 +4,8 @@ import {
 } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import {
-  upscaleDesignSheetImage,
   upscaleHeroImage,
+  upscaleImageToMinimum,
 } from '../../../scripts/embedded-ffmpeg.mjs'
 import { WATERMARK_PROFILE_NAME } from '../../../shared/schemas/watermark'
 import type {
@@ -13,7 +13,6 @@ import type {
 } from '../../../shared/types/contracts'
 import {
   contentTypeForFormat,
-  DESIGN_SHEET_UPSCALE_RECIPE_VERSION,
   deterministicUuid,
   digest,
   environmentPrefix,
@@ -24,6 +23,7 @@ import {
   OSS_PROCESS_INPUT_BYTE_LIMIT,
   processingSource,
   readyAssetSource,
+  workMediaUpscaleRecipeVersion,
   urlSafeBase64,
 } from './media-source'
 import type {
@@ -229,14 +229,29 @@ export async function ensureHeroUpscaleSource(
   }
 }
 
-function minimumDimensionsForUsages(usages: readonly PublicMediaUsage[]) {
+function minimumDimensionsForUsages(
+  sourceAsset: AssetSource,
+  usages: readonly PublicMediaUsage[],
+) {
+  const width = Math.max(...usages.map(usage => recipes[usage].widths.at(-1)!))
+  if (sourceAsset.role === 'design_sheet') {
+    return { height: 0, width }
+  }
+  const workCardHeight = usages.includes('work-card')
+    ? outputHeight('work-card', recipes['work-card'].widths.at(-1)!)!
+    : 0
   return {
-    height: 0,
-    width: Math.max(...usages.map(usage => recipes[usage].widths.at(-1)!)),
+    height: Math.ceil(workCardHeight / sourceAsset.cropHeight),
+    width: Math.max(
+      width,
+      usages.includes('work-card')
+        ? Math.ceil(recipes['work-card'].widths.at(-1)! / sourceAsset.cropWidth)
+        : 0,
+    ),
   }
 }
 
-export async function ensureDesignSheetUpscaleSource(
+export async function ensureWorkMediaUpscaleSource(
   sqlite: Database.Database,
   storage: MediaStorage,
   assetId: string,
@@ -244,13 +259,14 @@ export async function ensureDesignSheetUpscaleSource(
   now = Date.now(),
 ) {
   const sourceAsset = asset(sqlite, assetId)
+  const recipeVersion = workMediaUpscaleRecipeVersion(sourceAsset.role)
   if (
-    sourceAsset.role !== 'design_sheet'
+    !recipeVersion
     || usages.length === 0
     || new Set(usages).size !== usages.length
     || usages.some(usage => !recipes[usage].roles.includes(sourceAsset.role as never))
   ) {
-    throw new ServiceError(400, 'VALIDATION_ERROR', 'Design sheet usages are invalid.')
+    throw new ServiceError(400, 'VALIDATION_ERROR', 'Work media usages are invalid.')
   }
   const current = processingSource(sqlite, sourceAsset)
   if (sourceSupportsPublicUsages({
@@ -261,15 +277,15 @@ export async function ensureDesignSheetUpscaleSource(
     return current
   }
 
-  const minimum = minimumDimensionsForUsages(usages)
+  const minimum = minimumDimensionsForUsages(sourceAsset, usages)
   let objectKey: string | null = null
   try {
-    const output = upscaleDesignSheetImage(
+    const output = upscaleImageToMinimum(
       await storage.getPrivate(sourceAsset.privateObjectKey),
       minimum,
     )
     const identity = JSON.stringify({
-      recipeVersion: DESIGN_SHEET_UPSCALE_RECIPE_VERSION,
+      recipeVersion,
       sourceSha256: sourceAsset.sha256,
       minimum,
       target: output.dimensions,
@@ -279,7 +295,7 @@ export async function ensureDesignSheetUpscaleSource(
     })
     const identityHash = digest('sha256', Buffer.from(identity))
     const outputSha256 = digest('sha256', output.content)
-    objectKey = `${environmentPrefix(sourceAsset.privateObjectKey)}/processing/${sourceAsset.id}/${DESIGN_SHEET_UPSCALE_RECIPE_VERSION}/${identityHash}.png`
+    objectKey = `${environmentPrefix(sourceAsset.privateObjectKey)}/processing/${sourceAsset.id}/${recipeVersion}/${identityHash}.png`
     await storage.putPrivateConditional({
       content: output.content,
       contentMd5: createHash('md5').update(output.content).digest('base64'),
@@ -305,9 +321,14 @@ export async function ensureDesignSheetUpscaleSource(
       || info.height !== output.dimensions.height
       || info.width < minimum.width
       || info.height < minimum.height
+      || !sourceSupportsPublicUsages({
+        ...sourceAsset,
+        height: info.height,
+        width: info.width,
+      }, usages)
       || digest('sha256', saved) !== outputSha256
     ) {
-      throw new Error('Design sheet upscale verification failed.')
+      throw new Error('Work media upscale verification failed.')
     }
     insertUpscaleVariant(sqlite, {
       byteSize: output.content.length,
@@ -317,7 +338,7 @@ export async function ensureDesignSheetUpscaleSource(
       inputSha256: sourceAsset.sha256,
       mediaRole: sourceAsset.role,
       objectKey,
-      recipeVersion: DESIGN_SHEET_UPSCALE_RECIPE_VERSION,
+      recipeVersion,
       sha256: outputSha256,
       sourceAssetId: sourceAsset.id,
       width: output.dimensions.width,
@@ -328,11 +349,12 @@ export async function ensureDesignSheetUpscaleSource(
     if (objectKey) {
       await storage.deletePrivate(objectKey).catch(() => {})
     }
-    safeLog('error', 'Design sheet upscale failed.', {
+    safeLog('error', 'Work media upscale failed.', {
       assetId: sourceAsset.id,
       errorCode: (error as { code?: unknown }).code,
+      mediaRole: sourceAsset.role,
     })
-    throw new ServiceError(500, 'INTERNAL_ERROR', 'Design sheet upscale failed.')
+    throw new ServiceError(500, 'INTERNAL_ERROR', 'Work media upscale failed.')
   }
 }
 
@@ -419,6 +441,7 @@ function resizeOperation(
   sourceAsset: AssetSource,
   usage: PublicMediaUsage,
   width: number,
+  processingGeometry: Pick<ProcessingSource, 'height' | 'width'> = sourceAsset,
 ) {
   const height = outputHeight(usage, width)
   if (height === null) {
@@ -432,7 +455,7 @@ function resizeOperation(
       || sourceAsset.cropHeight !== 1
     )
   const crop = cropped
-    ? `crop,w_${Math.round(sourceAsset.width * sourceAsset.cropWidth)},h_${Math.round(sourceAsset.height * sourceAsset.cropHeight)},x_${Math.round(sourceAsset.width * sourceAsset.cropX)},y_${Math.round(sourceAsset.height * sourceAsset.cropY)}/`
+    ? `crop,w_${Math.round(processingGeometry.width * sourceAsset.cropWidth)},h_${Math.round(processingGeometry.height * sourceAsset.cropHeight)},x_${Math.round(processingGeometry.width * sourceAsset.cropX)},y_${Math.round(processingGeometry.height * sourceAsset.cropY)}/`
     : ''
   if (sourceAsset.role === 'design_sheet') {
     return `${crop}resize,m_pad,w_${width},h_${height},color_F7F7F7`
@@ -530,6 +553,7 @@ export function buildWatermarkProcess(
   usage: PublicMediaUsage,
   width: number,
   format: PublicFormat,
+  processingGeometry: Pick<ProcessingSource, 'height' | 'width'> = sourceAsset,
 ) {
   const layout = watermarkLayout(usage)
   const configuredWatermarkWidth = Math.round(
@@ -546,7 +570,7 @@ export function buildWatermarkProcess(
     `g_${position}`,
   ].join(',')
   return [
-    `image/${resizeOperation(sourceAsset, usage, width)}`,
+    `image/${resizeOperation(sourceAsset, usage, width, processingGeometry)}`,
     ...(layout === 'west-east'
       ? [watermark('west'), watermark('east')]
       : [watermark('center')]),
@@ -627,6 +651,7 @@ async function generateOne(
         usage,
         width,
         format,
+        source,
       ),
     })
     const [head, info, anonymous] = await Promise.all([
@@ -838,6 +863,7 @@ export async function generatePrivateWatermarkPreview(
     input.usage,
     input.width,
     'webp',
+    source,
   )
   await storage.processPrivateToPrivate({
     sourceObjectKey: source.objectKey,

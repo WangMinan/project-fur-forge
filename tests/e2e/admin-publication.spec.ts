@@ -94,18 +94,41 @@ test('发布会先自动保存基础信息、设定图和出厂照，再完成�
   await expect(photoCards(page).getByLabel(/图片说明/)).toHaveValue('常规领养出厂照')
 })
 
-test('READY 小图在发布前给出尺寸阻断', async ({ page }) => {
-  const work = await createWorkViaApi(page, { characterName: '小图阻断' })
+test('低分辨率出厂照保留原图、明确提示并经 FFmpeg 适配后发布', async ({ page }) => {
+  test.setTimeout(120_000)
+  const work = await createWorkViaApi(page, { characterName: '低分辨率出厂照验证' })
   await gotoEditor(page, work.id)
   await uploadFileToEditor(page, smallStudioPng(), 'small.png')
   await expect(photoCards(page)).toHaveCount(1)
-  await photoCards(page).first().getByLabel(/图片说明/).fill('尺寸不足的出厂照')
+  await photoCards(page).first().getByLabel(/图片说明/).fill('低分辨率出厂照')
   await page.getByRole('button', { name: '保存出厂照' }).click()
   await expect(page.getByText('出厂照已保存。')).toBeVisible()
+  await expect(page.locator('#studio-photos')).toContainText('低分辨率照片也可以上传和保存')
+  await expect(page.locator('#studio-photos')).toContainText('完整原图会保留')
 
   const panel = page.getByTestId('publication-panel')
-  await expect(panel).toContainText('有出厂照尺寸不足')
-  await expect(panel.getByRole('button', { name: '发布', exact: true })).toBeDisabled()
+  await expect(panel).toContainText('有出厂照原图分辨率较低，但可以发布')
+  await expect(panel).not.toContainText('有出厂照尺寸不足')
+  await expect(panel.getByRole('button', { name: '发布', exact: true })).toBeEnabled()
+
+  await setFakeMediaFlags(page, { failPut: true })
+  await panel.getByRole('button', { name: '发布', exact: true }).click()
+  await expect(panel.getByRole('alert')).toContainText(
+    '出厂照尺寸适配失败，完整原图已保留',
+    { timeout: 60_000 },
+  )
+  await expect(panel).toContainText('草稿')
+
+  await setFakeMediaFlags(page, { failPut: false })
+  await panel.getByRole('button', { name: '发布', exact: true }).click()
+  await expect(panel).toContainText('发布成功', { timeout: 60_000 })
+
+  const state = await fakeMediaState(page)
+  expect(state.objects.some(key =>
+    key.includes('/studio-photo-upscale-lanczos-v1/'),
+  )).toBe(true)
+  expect(state.objects.some(key => key.includes('/original/'))).toBe(true)
+  expect(state.publicObjects.filter(key => key.includes('/web/'))).toHaveLength(12)
 })
 
 test('低分辨率设定图保留原图、明确提示并经 FFmpeg 适配后发布', async ({ page }) => {

@@ -51,6 +51,8 @@ profile 改变生成新 Key，在完整校验后原子切换。仍被引用的�
 
 低分辨率 `design_sheet` 不直接成为公开配方输入。作品发布时先按实际用途计算所需最小几何尺寸，使用内嵌 FFmpeg Lanczos 保持原比例放大并生成 `design-sheet-upscale-lanczos-v1` 私有 `preprocess` 变体；不裁掉主体、不覆盖永久原图，也不宣称恢复细节。后续 `recipe-v2` 只从验证为 READY 且不超过 OSS 处理输入上限的该处理源生成公开图。
 
+低分辨率 `studio_photo` 采用同一发布链，但使用独立 `studio-photo-upscale-lanczos-v1` 身份。发布检查不以像素不足阻断；同一 publication operation 在 `PREPARING_SOURCE` 阶段按当前用途计算最小几何尺寸，主图同时覆盖 2400 px `detail` 与 1200 × 1600 `work-card`，非主图覆盖 `detail`。FFmpeg Lanczos 保持原比例生成 READY 私有 `preprocess` 变体，永久原图不覆盖；卡片焦点/裁切按处理源实际尺寸执行，后续 `recipe-v2` 只消费验证完成的处理源。适配失败保持作品未发布并保留原图，可重新发布重试。
+
 ### 3.3 返图
 
 ```text
@@ -92,7 +94,7 @@ watermark_profile_id = NULL
 保存：
 
 - 永久作品/返图原图；
-- FFmpeg 预处理、低分辨率 Hero 适配源和低分辨率设定图适配源；
+- FFmpeg 预处理、低分辨率 Hero、设定图和出厂照适配源；
 - 水印 Logo 候选；
 - 管理预览和临时处理对象。
 

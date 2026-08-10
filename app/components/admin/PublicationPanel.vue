@@ -377,6 +377,13 @@ onUnmounted(() => {
       >
         设定图原图分辨率较低，但可以发布。系统会先用 FFmpeg Lanczos 生成私有适配源，然后才会执行上传。
       </p>
+      <p
+        v-if="check.studioPhotoNeedsPreprocess"
+        class="publication__preprocess"
+        role="status"
+      >
+        有出厂照原图分辨率较低，但可以发布。系统会先用 FFmpeg Lanczos 生成私有适配源；放大不会恢复细节，完整原图会保留。
+      </p>
       <p v-if="check.missingVariantCount > 0" class="publication__variants">
         发布时将生成 {{ check.missingVariantCount }} 张带水印公开图片，可能需要较长时间。
       </p>
@@ -413,8 +420,8 @@ onUnmounted(() => {
 
     <div v-if="pending === 'publish'" class="publication__progress" role="status">
       <p class="publication__state">
-        {{ check?.designSheetNeedsPreprocess
-          ? '正在用 FFmpeg 准备设定图，再生成带水印的公开图片，请勿关闭页面…'
+        {{ check?.designSheetNeedsPreprocess || check?.studioPhotoNeedsPreprocess
+          ? '正在用 FFmpeg 准备低分辨率图片，再生成带水印的公开图片，请勿关闭页面…'
           : '正在生成带水印的公开图片并检查图片是否可用，请勿关闭页面…' }}
       </p>
       <template v-if="publishProgress && publishProgress.total > 0">

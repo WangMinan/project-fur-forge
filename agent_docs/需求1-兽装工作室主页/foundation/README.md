@@ -75,7 +75,7 @@
 
 - 最小化第一方访问统计；
 - 导航品牌“有点小狗”、备案/页脚配置和正式素材校准；
-- 作品页保持紧凑的图片优先节奏；低分辨率设定图保留完整原图并在发布时生成私有 FFmpeg Lanczos 适配源，不以尺寸笼统阻断上传或发布；
+- 作品页保持紧凑的图片优先节奏；低分辨率设定图与出厂照保留完整原图并在发布时生成各自不可变的私有 FFmpeg Lanczos 适配源，不以尺寸笼统阻断上传、保存或发布；
 - Endpoint 拆分、OSS/ESA preflight、短期 URL signer、下架精确 purge 和恢复；
 - 成本/监控测量入口、app-only Compose、宿主机 HTTP-only Nginx、ESA 边缘/源站配置、运维命令和回滚包；
 - GitHub Actions 同一 SHA 全绿、新上下文综合 Review 和最终 E2E；
@@ -145,7 +145,7 @@
 - Node.js 24、pnpm 11、TypeScript strict、Zod；
 - SQLite、Drizzle、单实例；
 - 阿里云 OSS 双职责 Bucket + ESA；
-- FFmpeg 仅用于必要私有预处理/确认后的大图适配；
+- FFmpeg 仅用于必要私有预处理，以及低分辨率 Hero、设定图和出厂照的诚实尺寸适配；
 - app-only Docker Compose、宿主机 HTTP-only Nginx/systemd、ESA 边缘 TLS、Playwright、Vitest、GitHub Actions。
 
 ## 11. 完成定义分层

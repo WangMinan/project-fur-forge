@@ -13,12 +13,11 @@ import type { MediaStorage } from '../media-storage'
 import { getPublicMediaCache } from '../public-media-cache'
 import {
   assetSupportsPublicUsages,
-  ensureDesignSheetUpscaleSource,
+  ensureWorkMediaUpscaleSource,
   generatePublicVariants,
   PUBLIC_RECIPE_VERSION,
   publicRecipeWidths,
   publicVariantCountForUsages,
-  sourceSupportsPublicUsages,
   workAssetPublicUsages,
 } from '../recipe/media-recipe'
 import type { PublicMediaUsage } from '../recipe/media-recipe'
@@ -230,6 +229,15 @@ export function checkWorkPublication(
       target.usages,
     )
   ))
+  const studioPhotoNeedsPreprocess = targets.some(target => (
+    target.asset.role === 'studio_photo'
+    && target.asset.status === 'READY'
+    && !assetSupportsPublicUsages(
+      sqlite,
+      target.asset.assetId,
+      target.usages,
+    )
+  ))
   const blockers: PublicationBlocker[] = []
   if (
     work.slug.trim() === ''
@@ -295,12 +303,6 @@ export function checkWorkPublication(
   if (publicationPhotos.some(photo => photo.status !== 'READY')) {
     blockers.push('STUDIO_PHOTO_NOT_READY')
   }
-  if (targets.some(target => (
-    target.asset.role === 'studio_photo'
-    && !sourceSupportsPublicUsages(target.asset, target.usages)
-  ))) {
-    blockers.push('STUDIO_PHOTO_SOURCE_TOO_SMALL')
-  }
   if (publicationPhotos.some(photo => !photo.alt || photo.alt.trim() === '')) {
     blockers.push('STUDIO_PHOTO_ALT_REQUIRED')
   }
@@ -315,6 +317,7 @@ export function checkWorkPublication(
     designSheetCount: designSheets.length,
     designSheetNeedsPreprocess,
     studioPhotoCount: publicationPhotos.length,
+    studioPhotoNeedsPreprocess,
     requiredVariantCount: requiredVariantCount(targets),
     missingVariantCount: missingVariantCount(sqlite, targets),
   }
@@ -616,21 +619,23 @@ async function runWorkPublication(
       throw new Error('Publication validation failed.')
     }
     const targets = publicationTargets(sqlite, workId)
-    const designSheetTargets = targets.filter(target => (
-      target.asset.role === 'design_sheet'
+    const preprocessTargets = targets.filter(target => (
+      ['design_sheet', 'studio_photo'].includes(target.asset.role)
       && !assetSupportsPublicUsages(
         sqlite,
         target.asset.assetId,
         target.usages,
       )
     ))
-    if (designSheetTargets.length > 0) {
+    if (preprocessTargets.length > 0) {
       stage = 'PREPARING_SOURCE'
-      failureCode = 'DESIGN_SHEET_UPSCALE_FAILED'
       updateOperation(sqlite, operationId, 'PREPARING_SOURCE', [], now)
-      for (const target of designSheetTargets) {
+      for (const target of preprocessTargets) {
+        failureCode = target.asset.role === 'design_sheet'
+          ? 'DESIGN_SHEET_UPSCALE_FAILED'
+          : 'STUDIO_PHOTO_UPSCALE_FAILED'
         requireWorkLease(sqlite, lease)
-        await ensureDesignSheetUpscaleSource(
+        await ensureWorkMediaUpscaleSource(
           sqlite,
           storage,
           target.asset.assetId,
