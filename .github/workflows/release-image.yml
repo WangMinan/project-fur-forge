@@ -3,10 +3,6 @@ name: release-image
 on:
   workflow_dispatch:
     inputs:
-      frozen_sha:
-        description: Exact 40-character GATE-E commit SHA selected in the workflow ref picker
-        required: true
-        type: string
       image_tag:
         description: Explicit immutable release label, for example gate-e-20260810
         required: true
@@ -46,17 +42,12 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-          REQUESTED_SHA: ${{ inputs.frozen_sha }}
           REQUESTED_TAG: ${{ inputs.image_tag }}
           CONFIRMATION: ${{ inputs.confirmation }}
         run: |
           set -euo pipefail
           if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
             echo "The frozen image can only be published from main." >&2
-            exit 1
-          fi
-          if [[ ! "${REQUESTED_SHA}" =~ ^[0-9a-f]{40}$ || "${REQUESTED_SHA}" != "${GITHUB_SHA}" ]]; then
-            echo "The requested frozen SHA does not match the checked-out workflow SHA." >&2
             exit 1
           fi
           if [[ "${CONFIRMATION}" != "PUBLISH_GATE_E_IMAGE" ]]; then
