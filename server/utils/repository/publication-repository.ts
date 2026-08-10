@@ -123,6 +123,35 @@ export function hasActivePublicationOperation(
   `).pluck().get(entityType, entityId))
 }
 
+/**
+ * 永久删除不能孤立仍需续做的 publication operation。
+ *
+ * 普通进行中任务始终阻止删除；FAILED 任务只有在仍持有公开对象清理清单，
+ * 或 ESA 精确 purge 尚未收敛时才阻止。这样既保留失败清理/撤回的重试入口，
+ * 又不会让一个没有任何副作用的历史校验失败永久锁死实体。
+ */
+export function hasBlockingPublicationCleanup(
+  sqlite: Database.Database,
+  entityType: OperationRow['entityType'],
+  entityId: string,
+) {
+  return Boolean(sqlite.prepare(`
+    SELECT 1 FROM publication_operations
+    WHERE entity_type = ? AND entity_id = ?
+      AND (
+        status NOT IN ('FAILED', 'DONE')
+        OR (
+          status = 'FAILED'
+          AND (
+            cleanup_object_keys_json != '[]'
+            OR edge_purge_status IN ('PENDING', 'PURGING', 'FAILED')
+          )
+        )
+      )
+    LIMIT 1
+  `).pluck().get(entityType, entityId))
+}
+
 export function insertPublicationOperation(
   sqlite: Database.Database,
   input: {

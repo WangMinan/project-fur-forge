@@ -1169,6 +1169,42 @@ describe('T19/T20 public repository contracts', () => {
       USER_ID,
       NOW + sequence++,
     )
+    const failedPurgeOperationId = randomUUID()
+    sqlite.prepare(`
+      INSERT INTO publication_operations (
+        id, operation_type, entity_type, entity_id, requested_version,
+        status, failure_stage, internal_error_code,
+        edge_purge_urls_json, edge_purge_status, edge_purge_reason,
+        started_at, updated_at, completed_at
+      ) VALUES (?, 'UNPUBLISH', 'HOME', ?, ?, 'FAILED',
+                'CLEANING_PUBLIC', 'EDGE_PURGE_SUBMIT_FAILED',
+                ?, 'FAILED', 'EDGE_PURGE_SUBMIT_FAILED', ?, ?, ?)
+    `).run(
+      failedPurgeOperationId,
+      secondSlide.id,
+      home.version,
+      JSON.stringify(['https://public-media.ditedog.com/prod/web/hero/stale.webp']),
+      NOW + sequence,
+      NOW + sequence,
+      NOW + sequence++,
+    )
+    await expect(deleteHeroSlide(
+      sqlite,
+      storage,
+      secondSlide.id,
+      home.version,
+      NOW + sequence++,
+    )).rejects.toMatchObject({
+      reason: 'PUBLICATION_CLEANUP_PENDING',
+      statusCode: 409,
+    })
+    sqlite.prepare(`
+      UPDATE publication_operations
+      SET status = 'DONE', failure_stage = NULL, internal_error_code = NULL,
+          edge_purge_status = 'COMPLETE', edge_purge_reason = NULL,
+          version = version + 1, updated_at = ?
+      WHERE id = ?
+    `).run(NOW + sequence++, failedPurgeOperationId)
     await expect(disableHeroSlide(
       sqlite,
       storage,

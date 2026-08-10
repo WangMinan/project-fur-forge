@@ -13,7 +13,7 @@ const ALERT_IDS = [
 
 const WAF_RULES = {
   'admin-auth-abuse': ['admin-host', '/api/auth/**', 'observe-then-block'],
-  'public-analytics-abuse': ['public-host', '/api/analytics/events', 'observe-then-block'],
+  'public-analytics-abuse': ['public-host', '/api/public/v1/analytics/events', 'observe-then-block'],
   'public-read-abuse': ['public-host', '/**', 'observe-then-challenge'],
 }
 

@@ -16,7 +16,7 @@ interface PolicyShape {
   environmentPolicy: { productionPlanRequired: boolean }
   hostInvariants: { certificateFilesForbidden: boolean }
   originProtection: { appListen: string }
-  waf: { rules: Array<{ threshold: unknown }> }
+  waf: { rules: Array<{ id: string, pathScope: string, threshold: unknown }> }
 }
 
 function baseline(): PolicyShape {
@@ -35,8 +35,19 @@ function evidenceTemplate(): Record<string, unknown> {
 
 describe('T52-E5 security and observability policy', () => {
   it('freezes HTTPS, origin protection, WAF, monitoring, and host invariants', () => {
-    expect(() => validateSecurityObservabilityPolicy(baseline())).not.toThrow()
+    const policy = baseline()
+    expect(() => validateSecurityObservabilityPolicy(policy)).not.toThrow()
     expect(() => validateObservabilityEvidenceTemplate(evidenceTemplate())).not.toThrow()
+
+    const analyticsRule = policy.waf.rules.find(rule => rule.id === 'public-analytics-abuse')
+    expect(analyticsRule?.pathScope).toBe('/api/public/v1/analytics/events')
+    expect(readFileSync(
+      resolve('server/api/public/v1/analytics/events.post.ts'),
+      'utf8',
+    )).toContain('defineEventHandler')
+
+    analyticsRule!.pathScope = '/api/analytics/events'
+    expect(() => validateSecurityObservabilityPolicy(policy)).toThrow(/public-analytics-abuse drifted/u)
   })
 
   it('rejects an invented rate, alert, budget, or usage-cap threshold', () => {

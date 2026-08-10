@@ -16,6 +16,7 @@ import type {
 } from '../../../shared/types/contracts'
 import type { MediaStorage } from '../media-storage'
 import { ServiceError } from '../service-error'
+import { hasBlockingPublicationCleanup } from '../repository/publication-repository'
 
 interface StudioPhotoInput {
   alt: string
@@ -505,6 +506,14 @@ export async function deleteManagedWork(
   }
   if (current.publicationStatus === 'published') {
     throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before deleting it.', 'WORK_PUBLISHED_READONLY')
+  }
+  if (hasBlockingPublicationCleanup(sqlite, 'WORK', id)) {
+    throw new ServiceError(
+      409,
+      'CONFLICT',
+      'Finish public media cleanup before deleting the work.',
+      'PUBLICATION_CLEANUP_PENDING',
+    )
   }
   // T35-F1：返图与作品解耦后，返图不再阻止作品删除。
   // return_characters.work_id 的 FK 是 set null：设定只是失去作品入口，
