@@ -59,6 +59,7 @@ RUN pnpm exec esbuild scripts/container-ops.ts \
     && cp scripts/oss-preflight.mjs \
           scripts/oss-preflight-core.mjs \
           scripts/production-preflight-core.mjs \
+          scripts/esa-sdk.mjs \
           scripts/embedded-ffmpeg.mjs \
           /app/ops-dist/
 
@@ -94,7 +95,13 @@ RUN node --input-type=module -e "\
   import Database from 'better-sqlite3'; \
   import ffmpegPath from 'ffmpeg-static'; \
   await import('ali-oss'); \
-  await import('@alicloud/esa20240910'); \
+  import { \$OpenApiUtil } from '@alicloud/openapi-core'; \
+  import { EsaClient, DescribePurgeTasksRequest, PurgeCachesRequest, PurgeCachesRequestContent } from './ops/esa-sdk.mjs'; \
+  const esaClient = new EsaClient(new \$OpenApiUtil.Config({ accessKeyId: 'runtime-verify-id', accessKeySecret: 'runtime-verify-secret', endpoint: 'esa.cn-hangzhou.aliyuncs.com', protocol: 'HTTPS', regionId: 'cn-hangzhou' })); \
+  const purgeContent = new PurgeCachesRequestContent({ files: ['https://public-media.ditedog.com/prod/web/runtime-verify.webp'] }); \
+  const purgeRequest = new PurgeCachesRequest({ siteId: 1234567890, type: 'file', content: purgeContent }); \
+  const describeRequest = new DescribePurgeTasksRequest({ siteId: 1234567890, type: 'file' }); \
+  if (typeof esaClient.purgeCaches !== 'function' || purgeRequest.type !== 'file' || describeRequest.type !== 'file') throw new Error('ESA SDK runtime constructors are unavailable'); \
   const db = new Database(':memory:'); \
   db.prepare('select 1').get(); \
   db.close(); \
