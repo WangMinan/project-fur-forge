@@ -20,6 +20,7 @@ import {
 } from '../../server/utils/database'
 import {
   CENTERED_WATERMARK_PROFILE,
+  generatePrivateWatermarkPreview,
   generatePublicVariants,
   PUBLIC_RECIPE_VERSION,
   workAssetPublicUsages,
@@ -276,7 +277,7 @@ describe('current public media generation', () => {
     ))).toBe(true)
   })
 
-  it('keeps one centered watermark but scales it up across portrait work outputs', async () => {
+  it('keeps the same relative centered watermark across portrait cards, details, and previews', async () => {
     insertReadyAsset({ height: 3_200, width: 2_400 })
 
     await generatePublicVariants(sqlite, storage, ASSET_ID, undefined, NOW)
@@ -287,14 +288,27 @@ describe('current public media generation', () => {
     ))
     expect(calls).toHaveLength(12)
     expect(calls.every((call) => {
-      const referenceWidth = call.objectKey.includes('/work-card/') ? 480 : 960
       return watermarkWidths(call.process).length === 1
         && watermarkWidths(call.process)[0]
-        === Math.round(492 * publicVariantWidth(call.objectKey) / referenceWidth)
+        === Math.round(492 * publicVariantWidth(call.objectKey) / 480)
         && call.process.includes(',t_50,g_center/')
         && !call.process.includes(',t_50,g_west')
         && !call.process.includes(',t_50,g_east')
     })).toBe(true)
+
+    const publicDetailPreviewSize = watermarkWidths(
+      calls.find(call => call.objectKey.includes('/detail/960/'))!.process,
+    )
+    await generatePrivateWatermarkPreview(sqlite, storage, {
+      assetId: ASSET_ID,
+      objectKey: `test/t16-fixture/preview/work/${ASSET_ID}/detail.webp`,
+      profileId: TEST_WATERMARK_PROFILE_ID,
+      usage: 'detail',
+      width: 960,
+    })
+    expect(watermarkWidths(storage.processCalls.at(-1)!.process))
+      .toEqual(publicDetailPreviewSize)
+    expect(publicDetailPreviewSize).toEqual([984])
   })
 
   it('uses the READY private preprocess as the only source above 20 MB', async () => {
