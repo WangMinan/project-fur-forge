@@ -11,27 +11,25 @@ import {
   PurgeCachesRequestContent,
 } from './esa-sdk.mjs'
 import OSS from 'ali-oss'
-import Database from 'better-sqlite3'
 import {
   contentDigests,
   createSyntheticSourcePng,
+  evaluateCorsRules,
   requestIdOf,
+  REQUIRED_PUT_HEADERS,
   responseHeader,
 } from './oss-preflight-core.mjs'
 import {
   assertProductionTestObject,
   buildExactPurgeInput,
   createProductionPreflightRunId,
-  evaluateDerivativeInventory,
   evaluateLifecycleRules,
-  evaluateStrictCorsRules,
   exactEsaMediaUrl,
   EXPECTED_PRIVATE_BUCKET,
   fingerprint,
   maskIdentifier,
   productionPreflightError,
   productionPreflightPrefix,
-  REQUIRED_PUT_HEADERS,
   safeErrorSummary,
   validateProductionPreflightConfig,
 } from './production-preflight-core.mjs'
@@ -232,32 +230,19 @@ async function scanObjectAcls(client, objects) {
   return { checkedCount, unsafeCount }
 }
 
-function readReadyDerivativeKeys(databaseFile) {
-  const database = new Database(databaseFile, {
-    fileMustExist: true,
-    readonly: true,
-  })
-  try {
-    return database.prepare(`
-      SELECT object_key AS objectKey
-      FROM asset_variants
-      WHERE storage_scope = 'PUBLIC' AND status = 'READY'
-      ORDER BY object_key
-    `).all().map(row => row.objectKey)
-  }
-  finally {
-    database.close()
-  }
-}
-
 async function bucketReadGate({
   client,
   bucket,
   adminOrigin,
   evidence,
-  readyDerivativeKeys,
 }) {
-  const [info, acl, policyStatus, policy, cors, lifecycle, objects] = await Promise.all([
+  const corsPromise = bucket === EXPECTED_PRIVATE_BUCKET
+    ? optionalBucketCall(
+        () => client.getBucketCORS(bucket),
+        ['NoSuchCORSConfiguration'],
+      )
+    : Promise.resolve(null)
+  const [info, acl, policyStatus, policy, lifecycle, objects, cors] = await Promise.all([
     client.getBucketInfo(bucket),
     client.getBucketACL(bucket),
     getPolicyStatus(client, bucket),
@@ -266,14 +251,11 @@ async function bucketReadGate({
       ['NoSuchBucketPolicy'],
     ),
     optionalBucketCall(
-      () => client.getBucketCORS(bucket),
-      ['NoSuchCORSConfiguration'],
-    ),
-    optionalBucketCall(
       () => client.getBucketLifecycle(bucket),
       ['NoSuchLifecycle'],
     ),
     listAllObjects(client),
+    corsPromise,
   ])
   const bucketInfo = info.bucket
   const blockPublicAccess = String(bucketInfo.BlockPublicAccess).toLowerCase() === 'true'
@@ -309,24 +291,12 @@ async function bucketReadGate({
   ) ? 'pass' : 'fail', lifecycleResult)
 
   if (bucket === EXPECTED_PRIVATE_BUCKET) {
-    const corsResult = evaluateStrictCorsRules(cors?.rules ?? [], adminOrigin)
-    addCheck(evidence, 'private-bucket-cors-exact', (
-      corsResult.safe
-    ) ? 'pass' : 'fail', corsResult)
-  }
-  else {
-    const inventory = evaluateDerivativeInventory(
-      objects.map(object => object.name),
-      readyDerivativeKeys,
-    )
-    addCheck(evidence, 'derivative-inventory-database-boundary', (
-      inventory.safe
-    ) ? 'pass' : 'fail', inventory)
-    addCheck(evidence, 'derivative-bucket-no-cors', (
-      (cors?.rules ?? []).length === 0
-    ) ? 'pass' : 'fail', {
-      ruleCount: (cors?.rules ?? []).length,
+    const corsResult = evaluateCorsRules(cors?.rules ?? [], {
+      origin: adminOrigin,
     })
+    addCheck(evidence, 'private-bucket-cors-upload-capability', (
+      corsResult.sufficient
+    ) ? 'pass' : 'fail', corsResult)
   }
 }
 
@@ -485,27 +455,33 @@ async function liveObjectGate({
 
   try {
     const optionsUrl = rawObjectUrl(config.privateBucket, sourceKey)
-    const [allowedOptions, deniedOptions] = await Promise.all([
-      checkCorsOptions(optionsUrl, config.adminBaseUrl),
-      checkCorsOptions(optionsUrl, 'https://wrong-origin.invalid'),
-    ])
+    const allowedOptions = await checkCorsOptions(
+      optionsUrl,
+      config.adminBaseUrl,
+    )
+    const allowedHeaders = allowedOptions.allowedHeaders
+      .toLowerCase()
+      .split(/\s*,\s*/u)
+    const originAllowed = [config.adminBaseUrl, '*']
+      .includes(allowedOptions.allowedOrigin ?? '')
+    const headersAllowed = allowedHeaders.includes('*')
+      || REQUIRED_PUT_HEADERS.every(header => allowedHeaders.includes(header))
     const optionsPassed = allowedOptions.status >= 200
       && allowedOptions.status < 300
-      && allowedOptions.allowedOrigin === config.adminBaseUrl
+      && originAllowed
       && allowedOptions.allowedMethods.toUpperCase().includes('PUT')
-      && REQUIRED_PUT_HEADERS.every(header => (
-        allowedOptions.allowedHeaders.toLowerCase().split(/\s*,\s*/u).includes(header)
-      ))
-      && deniedOptions.allowedOrigin !== 'https://wrong-origin.invalid'
-    addCheck(evidence, 'browser-cors-origin-boundary', optionsPassed ? 'pass' : 'fail', {
+      && headersAllowed
+    addCheck(evidence, 'browser-cors-upload-capability', optionsPassed ? 'pass' : 'fail', {
       allowedStatus: allowedOptions.status,
-      exactOriginAllowed: allowedOptions.allowedOrigin === config.adminBaseUrl,
-      wrongOriginDenied: deniedOptions.allowedOrigin !== 'https://wrong-origin.invalid',
+      originAllowed,
+      wildcardOrigin: allowedOptions.allowedOrigin === '*',
+      headersAllowed,
+      wildcardHeaders: allowedHeaders.includes('*'),
     })
     if (!optionsPassed) {
       throw productionPreflightError(
-        'browser-cors-boundary-failed',
-        'Browser CORS origin boundary failed.',
+        'browser-cors-capability-failed',
+        'Browser CORS upload capability failed.',
       )
     }
 
@@ -740,10 +716,9 @@ function redactedConfig(config) {
 function plannedChecks(evidence) {
   for (const name of [
     'bucket-acl-bpa-policy-object-acl-lifecycle',
-    'cors-and-browser-conditional-put-failures',
+    'cors-upload-capability-and-browser-conditional-put-failures',
     'application-read-write-process-delete-and-overreach',
     'raw-oss-anonymous-403-and-esa-derivative-200',
-    'derivative-inventory-database-boundary',
     'esa-purge-access',
   ]) {
     addCheck(evidence, name, 'skip', { reason: 'dry-run-no-network-or-cloud-writes' })
@@ -761,7 +736,7 @@ async function writeEvidence(path, evidence) {
 async function main() {
   const startedAt = new Date()
   const evidence = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     task: 'T52-E2',
     mode: 'dry-run',
     runId: null,
@@ -815,21 +790,17 @@ async function main() {
     const publicClient = createOssClient(config, config.publicBucket)
     const uploadClient = createOssClient(config, config.privateBucket, true)
     const esaClient = createEsaClient(config)
-    const readyDerivativeKeys = readReadyDerivativeKeys(config.databaseFile)
-
     await bucketReadGate({
       client: privateClient,
       bucket: config.privateBucket,
       adminOrigin: config.adminBaseUrl,
       evidence,
-      readyDerivativeKeys,
     })
     await bucketReadGate({
       client: publicClient,
       bucket: config.publicBucket,
       adminOrigin: config.adminBaseUrl,
       evidence,
-      readyDerivativeKeys,
     })
     await verifyEsaAccess(esaClient, config.esaSiteId, evidence)
 

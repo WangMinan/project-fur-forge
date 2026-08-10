@@ -324,12 +324,14 @@
 阶段 E 必须实现并自动验证、阶段 F 必须在目标环境执行的正式访问边界：
 
 - 继续复用当前两只杭州 Bucket，但两只 ACL 都改为 private，并开启 Bucket 级 Block Public Access；
-- 原图 Bucket 保存永久源、处理源和管理预览；网页衍生 Bucket 只保存 READY 网页衍生物；
+- 原图 Bucket 保存永久源、处理源和管理预览；应用新写入网页衍生 Bucket 的生产对象只允许是 READY 网页衍生物；既有 `dev/web/**` 等本地测试衍生对象可保留，生产预检不要求它们与当前生产数据库双向一致，也不删除它们；
 - `public-media.ditedog.com` 对网页衍生 Bucket 使用同账号私有回源；阿里云自动使用 STS 临时令牌和回源 `Authorization`，业务应用不实现或保存 STS；
 - 原始 OSS Bucket 域名匿名 GET 均应 403；公开响应使用稳定的 ESA HTTPS 媒体 URL；
 - 首版不做自定义边缘 URL 鉴权；管理端原有登录、Session、Host/Origin/CSRF 认证边界保持不变；
 - 数据库不持久化原始 OSS 签名 URL，日志/错误/审计不记录 Secret 或私有 Object Key；
 - ESA 缓存键忽略无业务意义的查询参数，公开页不能使用 `x-oss-process`；ESA 节点可按不可变 Key 长缓存，媒体域名不得在源站 404/故障时继续提供已下架旧图片。
+
+生产预检对 CORS 只验证实际管理 Origin 的条件 PUT 能力，允许阶段 F 暂时使用通配 Origin/Header；通配本身不作为部署阻断，衍生 Bucket 是否配置 CORS 也不作为门禁。该放宽不改变条件签名、MD5、禁止覆盖、Key 前缀、private+BPA 或原站匿名 403 等边界。
 
 返图公开变体使用独立用途和配方，例如：
 

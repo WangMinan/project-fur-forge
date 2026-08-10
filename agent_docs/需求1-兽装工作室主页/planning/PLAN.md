@@ -121,14 +121,14 @@ T52-E1 已按该设计落地：服务端 OSS client、浏览器上传签名 clie
 现有 public-read 预检要在 E 重写为可直接供 F 运行的命令：
 
 - dry-run 与真实验证模式；
-- Bucket ACL/BPA、Object ACL/Policy、CORS、生命周期、RAM；
+- Bucket ACL/BPA、Object ACL/Policy、生命周期、RAM，以及允许通配规则的管理端条件 PUT CORS 能力；
 - 原站匿名 403、共享阿里云凭据的业务能力、条件上传策略失败面；
-- ESA 已发布媒体 URL、purge API 与衍生 Bucket 内容边界；
+- ESA 已发布媒体 URL、purge API 与衍生 Bucket 私有数据隔离边界；既有本地测试衍生对象不与当前生产数据库做全桶双向一致性门禁；
 - 脱敏输出、稳定退出码和明确修复指向。
 
 阶段 F 原则上运行该冻结入口；若目标环境需要补充诊断或证据采集包装器，可在不改变 preflight 判定契约的前提下追加运维脚本并做最小验证。
 
-T52-E2 已按该设计落地：`pnpm run preflight:oss` 默认只做本地 production 契约校验，显式 `--no-dry-run` 才执行受控 live 探测；Bucket/对象/数据库衍生物、CORS/签名失败、OSS 原站/ESA 读取与官方 SDK purge 业务能力均有稳定检查项、非零退出和脱敏证据。OSS 与 ESA API 共用 `.env` 中现有一套完整权限 AK/SK，预检不再要求控制面越权拒绝。live 模式只创建本次 run 的精确对象并在 `finally` 清理；阶段 E 未使用真实生产凭据执行，不代签 T53 的云侧结果。
+T52-E2 已按该设计落地：`pnpm run preflight:oss` 默认只做本地 production 契约校验，显式 `--no-dry-run` 才执行受控 live 探测；Bucket/对象权限、允许通配的 CORS 上传能力、签名失败面、OSS 原站/ESA 读取与官方 SDK purge 业务能力均有稳定检查项、非零退出和脱敏证据。预检不再用 CORS 是否收紧、衍生 Bucket 是否配置 CORS，或既有对象是否登记在当前生产数据库作为部署阻断，也不清理这些旧对象。OSS 与 ESA API 共用 `.env` 中现有一套完整权限 AK/SK，预检不要求控制面越权拒绝。live 模式只创建本次 run 的精确对象并在 `finally` 清理；阶段 E 未使用真实生产凭据执行，不代签 T53 的云侧结果。
 
 ### 3.5 T52-E3 ESA 同账号私有 OSS 回源
 
@@ -213,7 +213,7 @@ GATE-E 只在以下条件签署：
 
 ### 4.2 T53-F2 阿里云控制台
 
-按 Handbook 把 wildcard DNS 收敛为公开/管理精确记录，复核已经生效的 ECS HTTP/80 回源与边缘 HTTPS；复核 `public-media` 同账号私有 OSS 回源，并配置缓存、源站保护/WAF、保守初始用量封顶、告警、两只 Bucket private+BPA、ACL/Policy/CORS。现有全权限阿里云 AK/SK 是用户确认的部署事实，preflight 只验证本任务实际所需 OSS/ESA 能力，不再以“控制面必须拒绝”作为通过条件。已经提前存在的 NS/CNAME/A 记录只作为现状复核，不提前关闭 F2。目标环境实测后的阈值校准在 F3 完成。
+按 Handbook 把 wildcard DNS 收敛为公开/管理精确记录，复核已经生效的 ECS HTTP/80 回源与边缘 HTTPS；复核 `public-media` 同账号私有 OSS 回源，并配置缓存、源站保护/WAF、保守初始用量封顶、告警、两只 Bucket private+BPA、ACL/Policy/CORS。CORS 可在排障期保持通配，只要管理 Origin 的条件 PUT 可用；现有全权限阿里云 AK/SK 是用户确认的部署事实，preflight 只验证本任务实际所需 OSS/ESA 能力，不再以“控制面必须拒绝”作为通过条件。已经提前存在的 NS/CNAME/A 记录只作为现状复核，不提前关闭 F2。目标环境实测后的阈值校准在 F3 完成。
 
 ### 4.3 T53-F3 远程开发机
 

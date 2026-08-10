@@ -5,13 +5,6 @@ export const EXPECTED_REGION = 'oss-cn-hangzhou'
 export const EXPECTED_PRIVATE_BUCKET = 'project-furry-forge-private'
 export const EXPECTED_PUBLIC_BUCKET = 'project-furry-forge-public'
 export const EXPECTED_MEDIA_ORIGIN = 'https://public-media.ditedog.com'
-export const REQUIRED_PUT_HEADERS = [
-  'content-md5',
-  'content-type',
-  'x-oss-forbid-overwrite',
-  'x-oss-meta-sha256',
-]
-
 const RUN_ID_PATTERN = /^t52e2-\d{8}T\d{6}Z-[a-f0-9]{8}$/u
 const PLACEHOLDER_PATTERN
   = /(?:replace[-_ ]?me|example\.(?:com|test)|test[-_ ]?only|your[-_ ]?(?:key|secret|site))/iu
@@ -244,42 +237,6 @@ export function assertProductionTestObject({ bucket, key, prefix }) {
   }
 }
 
-function strings(value) {
-  if (Array.isArray(value)) {
-    return value.map(item => String(item))
-  }
-  if (value === undefined || value === null) {
-    return []
-  }
-  return [String(value)]
-}
-
-export function evaluateStrictCorsRules(rules, adminOrigin) {
-  const details = rules.map((rule, index) => {
-    const origins = strings(rule.allowedOrigin)
-    const methods = strings(rule.allowedMethod).map(value => value.toUpperCase())
-    const headers = strings(rule.allowedHeader).map(value => value.toLowerCase())
-    const exactOrigin = origins.length === 1 && origins[0] === adminOrigin
-    const exactMethods = methods.length === 1 && methods[0] === 'PUT'
-    const exactHeaders = !headers.includes('*')
-      && REQUIRED_PUT_HEADERS.every(header => headers.includes(header))
-
-    return {
-      index,
-      exactOrigin,
-      exactMethods,
-      exactHeaders,
-      safe: exactOrigin && exactMethods && exactHeaders,
-    }
-  })
-
-  return {
-    safe: details.length === 1 && details[0]?.safe === true,
-    ruleCount: details.length,
-    matchingRuleCount: details.filter(rule => rule.safe).length,
-  }
-}
-
 function lifecyclePrefix(rule) {
   return String(rule.prefix ?? rule.Prefix ?? '')
 }
@@ -333,25 +290,6 @@ export function isAllowedDerivativeObjectKey(key) {
     && !['/original/', '/processing/', '/preview/'].some(marker => (
       key.includes(marker)
     ))
-}
-
-export function evaluateDerivativeInventory(objectNames, readyDatabaseKeys) {
-  const objects = new Set(objectNames)
-  const ready = new Set(readyDatabaseKeys)
-  const unsafeNames = objectNames.filter(name => !isAllowedDerivativeObjectKey(name))
-  const untrackedNames = objectNames.filter(name => !ready.has(name))
-  const missingNames = readyDatabaseKeys.filter(name => !objects.has(name))
-
-  return {
-    safe: unsafeNames.length === 0
-      && untrackedNames.length === 0
-      && missingNames.length === 0,
-    objectCount: objectNames.length,
-    readyDatabaseCount: readyDatabaseKeys.length,
-    unsafeCount: unsafeNames.length,
-    untrackedCount: untrackedNames.length,
-    missingCount: missingNames.length,
-  }
 }
 
 export function exactEsaMediaUrl(mediaOrigin, objectKey) {

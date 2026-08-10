@@ -95,7 +95,7 @@
 - 复用现有两只杭州 OSS Bucket；
 - 两只均 private + Bucket Block Public Access；
 - 原图 Bucket 永不作为公开媒体 origin；网页衍生 Bucket 只能保存允许公开展示的派生对象；
-- 衍生 Bucket 只保存 READY 网页媒体，由 ESA 同账号私有回源；
+- 应用新写入衍生 Bucket 的生产对象仍只允许是 READY 网页媒体，由 ESA 同账号私有回源；既有 `dev/web/**` 等本地测试衍生对象可以暂时保留，生产预检不要求它们出现在当前生产数据库中，也不负责清理；
 - 正式网页只使用 ESA HTTPS 媒体 URL，不使用原始 OSS URL；首版不做自定义边缘 URL 鉴权；
 - 下架页面立即撤销，ESA 精确 purge 完成时间由正式环境实测；
 - 不保留旧匿名 URL 兼容，开发站暂时失效可接受；
