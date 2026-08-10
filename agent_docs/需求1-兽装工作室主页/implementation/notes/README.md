@@ -54,6 +54,7 @@ T35–T37 的工程记录不是独立 Review。用户同意将一次新的综合
 - [`T52-E2-ENGINEERING-2026-08-09.md`](./stage-e/T52-E2-ENGINEERING-2026-08-09.md)：OSS/ESA preflight 的 dry-run/live 边界、Bucket/对象/衍生物/权限验证、官方 SDK、脱敏证据与本地门禁；真实云侧 live 与 T49 Review 保持开放。
 - [`T52-E3-ENGINEERING-2026-08-09.md`](./stage-e/T52-E3-ENGINEERING-2026-08-09.md)：ESA `prod/web/**` 公开投影、SSR/API 泄漏门禁、H3 直接依赖与生产产物验证；真实云侧 live 与 T49 Review 保持开放。
 - [`T52-E4-ENGINEERING-2026-08-10.md`](./stage-e/T52-E4-ENGINEERING-2026-08-10.md)：ESA 缓存策略基线、精确 file purge、持久状态/重试/启动恢复、作品/返图/Hero 管理反馈与本地门禁；真实云侧 warm-cache 实测和 T49 Review 保持开放。
+- [`T52-ESA-NODE-ESM-FIX-2026-08-10.md`](./stage-e/T52-ESA-NODE-ESM-FIX-2026-08-10.md)：远端 live preflight 在云写入前暴露 ESA SDK 原生 Node ESM 默认导出缺陷；实现提交 `70538e0` 统一 preflight/Nitro 互操作并补真实构造守卫，等待新 SHA CI、独立 Review 与镜像。
 
 后续按任务新增 T49/T50/GATE-E 的 Review 与冻结证据，以及 T53-F1～F5 的远程执行/验收证据。
 

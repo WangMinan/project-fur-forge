@@ -8,11 +8,33 @@
 
 阶段 A～D 已完成，T49 独立综合 Review 已通过。当前主流程仍处于：
 
-> **阶段 E 收口：T50 最终回归 → GATE-E → T53-F1～F5。**
+> **阶段 E 收口：T49-R1 新 SHA CI/独立 Review → T50 最终回归 → GATE-E → T53-F1～F5。**
 
 2026-08-10 用户新增一个现实部署目标：工信部 ICP 已通过，而公安联网备案需要网站先实际提供服务，因此允许在不冒充“正式上线就绪”的前提下先做一次**公安备案前临时上线**。该例外只调整运维时序，不修改应用代码、运行时 Schema、Compose、Nginx/ESA 模板或安全基线。
 
 正式状态仍遵守：只有 TASKS 中 GATE-E 与 T53-F1～F5 全部关闭后，才能签署“正式上线就绪”。
+
+## 2026-08-10 远端部署停止与 E 级修复
+
+备案前临时上线首次执行在 live preflight 前安全停止：27 个迁移和 dry-run
+preflight 已通过，但 `@alicloud/esa20240910` 在 Node 24 原生 ESM 下的默认
+导出是 CommonJS 模块对象，冻结代码却把它直接当构造器使用。失败发生在任何
+OSS/ESA 写入之前，没有创建测试对象；app、管理员和 Nginx 切换均未开始。
+
+实现提交 `70538e0` 已完成以下修复：
+
+- `scripts/oss-preflight.mjs` 与 Nitro 的 `public-media-cache` 共用同一 SDK
+  namespace 归一化入口，兼容默认导出为类或 CommonJS 模块对象；
+- Node 24 原生 ESM 子进程真实构造 ESA client、purge request 和 describe
+  request；Docker 构建守卫也从“只 import 包”加强为实际构造；
+- 本地 lint、typecheck、167 项 unit、172 项串行 integration、production
+  build/guard、Nitro 产物导入检查、production verify、ESA/observability
+  policy 和 Secret scan 均通过。
+
+该提交改变应用与发布镜像，因此旧 T49/Actions/镜像证据不能代签新 SHA。
+当前必须等待 `main` 推送后的同 SHA Actions 全绿、T49-R1 新上下文独立
+Review 和新镜像发布后，才能从 live preflight 重新开始；不得热改旧容器或
+绕过 preflight。
 
 ## 代码与 CI 基线
 
@@ -96,7 +118,7 @@
 | 任务 | 状态 | 下一步 |
 | --- | --- | --- |
 | T46/T51/T52-E1～E6 | 工程完成 | 用户输入与目标环境证据继续在 T53 收口 |
-| T49 | 已通过 | 保留既有独立 Review 证据 |
+| T49 | 既有 SHA 已通过；T49-R1 待执行 | 新修复 SHA 需重新取得 CI 与独立 Review |
 | T50 | 未关闭 | 最终回归与冻结证据 |
 | GATE-E | 未关闭 | 正式流程的唯一 SHA/镜像冻结 |
 | T53-F1 | 部分真实参数已明确 | 远程 `.env`、素材/隐私/预算等仍按 TASKS 收口 |

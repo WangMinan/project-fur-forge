@@ -225,6 +225,23 @@ _依赖：T51-F3；完成后进入 T49。_
 - [x] 不删除测试或放宽类型、安全、媒体、隐私、部署断言。
 _依赖：T46、T51、T51-F1～F4、T52-E1～E6。_
 
+#### T49-R1 · 远端 Node ESM 缺陷修复后的重新门禁
+
+- [x] 在 Node 24 原生 ESM 下复现 `@alicloud/esa20240910` 默认导出为
+  CommonJS 模块对象，确认 live preflight 在任何云写入前停止；
+- [x] 用同一 namespace 归一化入口修复 preflight 和 Nitro ESA purge，
+  不热改旧容器、不放宽 preflight；
+- [x] 增加原生 Node ESM client/request 构造回归，并把 Docker 依赖守卫从
+  “只 import”提升为实际构造；
+- [x] 本地完成 lint、typecheck、unit、串行 integration、production
+  build/guard、Nitro 产物导入检查、production verify、ESA/observability
+  policy 与 Secret scan；
+- [ ] 修复后的同一最新 `main` SHA 取得 `checks`、`image-build`、`e2e`
+  全部成功，并重新发布不可变镜像；
+- [ ] 新上下文独立 Review preflight、Nitro 产物、Docker 守卫及停止/恢复
+  边界；实现者不得代签。
+_依赖：实现提交 `70538e0`；完成后才可继续 T50/GATE-E 或远端 live preflight。_
+
 ### T50 · 代码冻结前最终回归
 
 - [ ] 管理 `localhost` / 公开 `127.0.0.1` 与等价预览 Host 分开验证；
