@@ -84,6 +84,7 @@ jobs:
           tags: |
             type=raw,value=${{ inputs.image_tag }}
             type=sha,prefix=sha-,format=short
+            type=raw,value=latest
 
       - name: Build and push
         id: build
@@ -101,16 +102,29 @@ jobs:
           sbom: true
 
       - name: Report image digest
+        env:
+          IMAGE_REPOSITORY: ${{ secrets.DOCKERHUB_USERNAME }}/project-fur-forge
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
           set -euo pipefail
+          image_ref="${IMAGE_REPOSITORY}@${IMAGE_DIGEST}"
           jq -n \
             --arg commit "${GITHUB_SHA}" \
-            --arg digest "${{ steps.build.outputs.digest }}" \
-            --arg repository "${{ secrets.DOCKERHUB_USERNAME }}/project-fur-forge" \
-            --arg tag "${{ inputs.image_tag }}" \
-            '{schemaVersion: 1, commit: $commit, repository: $repository, tag: $tag, digest: $digest}' \
+            --arg digest "${IMAGE_DIGEST}" \
+            --arg repository "${IMAGE_REPOSITORY}" \
+            --arg tag "${IMAGE_TAG}" \
+            --arg image_ref "${image_ref}" \
+            '{schemaVersion: 2, commit: $commit, repository: $repository, tag: $tag, digest: $digest, imageRef: $image_ref}' \
             > image-release-evidence.json
-          cat image-release-evidence.json >> "${GITHUB_STEP_SUMMARY}"
+          {
+            echo '### Frozen image'
+            echo
+            echo '```env'
+            echo "FROZEN_SHA=${GITHUB_SHA}"
+            echo "APP_IMAGE_REF=${image_ref}"
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload release evidence
         uses: actions/upload-artifact@v7.0.1
