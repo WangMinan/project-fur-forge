@@ -76,6 +76,13 @@ describe('T52-E2 production preflight contract', () => {
     })).toThrow(/public origin/u)
     expect(() => validateProductionPreflightConfig({
       ...validConfig(),
+      mediaBaseUrl: 'https://media.attacker.invalid',
+    })).toThrow(expect.objectContaining({
+      code: 'wrong-media-origin',
+      message: expect.stringMatching(/exactly/u),
+    }))
+    expect(() => validateProductionPreflightConfig({
+      ...validConfig(),
       esaApiEndpoint: 'https://esa.invalid-provider.cn',
     })).toThrow(/official Aliyun/u)
     expect(() => validateProductionPreflightConfig({

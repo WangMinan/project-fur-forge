@@ -305,6 +305,13 @@ describe('runtime configuration', () => {
       cwd,
       env: {
         ...valid,
+        MEDIA_BASE_URL: 'https://media.attacker.invalid',
+      },
+    })).toThrowError(/mediaBaseUrl/)
+    expect(() => loadRuntimeConfig({
+      cwd,
+      env: {
+        ...valid,
         OSS_ENDPOINT: 'https://oss-cn-hangzhou.aliyuncs.com',
       },
     })).toThrowError(/ossEndpoint/)
