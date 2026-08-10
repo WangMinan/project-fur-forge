@@ -34,6 +34,7 @@ const adminApi = useAdminApi()
 const entry = ref<DesignSheetEntry | null>(null)
 const baseline = shallowRef('null')
 const saving = shallowRef(false)
+const processing = shallowRef(false)
 const saveError = shallowRef<string | null>(null)
 const selectedFile = shallowRef<File | null>(null)
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
@@ -112,7 +113,7 @@ watch(() => props.work, (work) => {
 
 watchEffect(() => {
   emit('stateChange', {
-    busy: saving.value || busyUploads.value > 0,
+    busy: saving.value || processing.value || busyUploads.value > 0,
     dirty: isDirty.value,
   })
 })
@@ -149,9 +150,11 @@ async function uploadSelectedFile() {
 }
 
 async function retryEntryProcessing() {
-  if (!entry.value) {
+  if (!entry.value || processing.value) {
     return
   }
+  processing.value = true
+  saveError.value = null
   try {
     const result = await adminApi(
       `/api/admin/v1/media/assets/${entry.value.assetId}/retry-processing`,
@@ -169,6 +172,9 @@ async function retryEntryProcessing() {
       return
     }
     saveError.value = '重试处理失败，请稍后重试。'
+  }
+  finally {
+    processing.value = false
   }
 }
 
@@ -281,25 +287,29 @@ defineExpose({ save: saveDesignSheet })
           type="text"
           maxlength="500"
           :value="entry.alt"
-          :disabled="locked"
+          :disabled="locked || processing"
           placeholder="例如：角色正侧背三视图与色板"
           @input="entry.alt = ($event.target as HTMLInputElement).value"
         >
         <p v-if="entry.status === 'FAILED'" class="design-sheet__error" role="alert">
           私有处理源生成失败；原图仍保留，可重试处理。
         </p>
+        <AdminFfmpegProgress
+          v-if="processing"
+          label="设定图：FFmpeg 私有预处理中"
+        />
         <div class="design-sheet__entry-actions">
           <button
             v-if="entry.status === 'FAILED'"
             type="button"
             class="editor__button editor__button--secondary"
-            :disabled="locked"
+            :disabled="locked || processing"
             @click="retryEntryProcessing"
-          >重试处理</button>
+          >{{ processing ? '处理中…' : '重试处理' }}</button>
           <button
             type="button"
             class="editor__button editor__button--secondary"
-            :disabled="locked"
+            :disabled="locked || processing"
             @click="entry = null"
           >移除设定图</button>
         </div>

@@ -33,6 +33,7 @@ const {
   deleteSlide,
   disableSlide,
   enableSlide,
+  ffmpegPending,
   feedback,
   home,
   load,
@@ -316,6 +317,7 @@ onMounted(() => {
               :works="works"
               :home-version="home.version"
               :mutating="mutating"
+              :ffmpeg-pending="ffmpegPending[slide.id] ?? false"
               :operation="operations[slide.id] ?? null"
               :feedback="feedback[slide.id] ?? null"
               :preview="previews[slide.id] ?? null"

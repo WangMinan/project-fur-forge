@@ -9,7 +9,7 @@
 
 当前为：
 
-> **阶段 E · 全部产品/上线基线开发、自动化门禁与可上线代码冻结。T52-E1～E6 与 T51-F3 工程完成；下一步进入 T49 新上下文独立综合 Review。**
+> **阶段 E · 全部产品/上线基线开发、自动化门禁与可上线代码冻结。T52-E1～E6 与 T51-F1～F4 工程完成；下一步进入 T49 新上下文独立综合 Review。**
 
 阶段 E 包含所有剩余应用代码、数据库迁移、运行时配置 Schema、媒体/ESA 核心实现、部署/恢复基线、app-only Compose 与宿主机 HTTP-only Nginx 模板、自动化测试、浏览器回归和独立 Review。阶段 E 结束时必须形成唯一、不在阶段 F 改写的上线 SHA/镜像。
 
@@ -28,12 +28,12 @@
 
 阶段 D 用户门禁见 [`implementation/notes/stage-d/T42-USER-ACCEPTANCE-2026-08-09.md`](./implementation/notes/stage-d/T42-USER-ACCEPTANCE-2026-08-09.md)。
 
-T46/T51/T51-F1～F3 与 T52-E1～E6 已完成各自工程实现和相关本地自动验证；工程证据见 `implementation/notes/stage-e/` 对应记录。T51-F3 已取消出厂照像素硬阻断，并复用作品 publication operation 生成私有 FFmpeg Lanczos 适配源；用户在 2026-08-10 当前交互中确认浏览器行为可用。T52-E2 只冻结 preflight 实现和判定契约，尚未使用真实生产凭据运行 live 模式；T52-E3 已把公开 SourceSet/SSR/API 收敛到稳定 ESA URL；T52-E4 已实现精确 file purge、持久状态/重试/恢复和缓存策略校验入口；T52-E5 已冻结防盗刷/告警基线、实测入口、主机验证和脱敏证据模板；T52-E6 已交付 app-only Compose、目标机匹配的 HTTP-only Nginx/运维基线与直接面向部署人的顺序清单。实现 SHA `fcb99f4` 的 Actions run `31329958587` 中 `checks`、`image-build`、`e2e` 均成功。真实控制台缓存、warm-cache 撤销时限、生产套餐、预算和阈值仍由 T53 实测。这些结果不是 T49 独立 Review，也不关闭 T46 隐私文案或 T51 正式素材的用户确认项。
+T46/T51/T51-F1～F4 与 T52-E1～E6 已完成各自工程实现和相关本地自动验证；工程证据见 `implementation/notes/stage-e/` 对应记录。T51-F3 已取消出厂照像素硬阻断，并复用作品 publication operation 生成私有 FFmpeg Lanczos 适配源；用户在 2026-08-10 当前交互中确认浏览器行为可用。T51-F4 已把管理端 FFmpeg 改为可轮询的异步执行并覆盖可见等待进度，作品竖图使用 `recipe-v3` 放大单个居中水印；完整 v2/v1 仅整体回退，现存 v2 对象不原地改写。T52-E2 只冻结 preflight 实现和判定契约，尚未使用真实生产凭据运行 live 模式；T52-E3 已把公开 SourceSet/SSR/API 收敛到稳定 ESA URL；T52-E4 已实现精确 file purge、持久状态/重试/恢复和缓存策略校验入口；T52-E5 已冻结防盗刷/告警基线、实测入口、主机验证和脱敏证据模板；T52-E6 已交付 app-only Compose、目标机匹配的 HTTP-only Nginx/运维基线与直接面向部署人的顺序清单。实现 SHA `fcb99f4` 的 Actions run `31329958587` 中 `checks`、`image-build`、`e2e` 均成功。真实控制台缓存、warm-cache 撤销时限、生产套餐、预算和阈值仍由 T53 实测。这些结果不是 T49 独立 Review，也不关闭 T46 隐私文案或 T51 正式素材的用户确认项。
 
 ## 阶段 E 已锁定范围
 
 1. **T46**：最小化第一方访问统计；
-2. **T51/T51-F1～F3**：公开导航“有点小狗”、备案展示配置、正式素材、浏览器校准，以及低分辨率设定图/出厂照的非阻断 FFmpeg 适配；
+2. **T51/T51-F1～F4**：公开导航“有点小狗”、备案展示配置、正式素材、浏览器校准、低分辨率设定图/出厂照的非阻断 FFmpeg 适配、全部管理端 FFmpeg 可见进度，以及作品竖图单居中水印尺寸修正；
 3. **T51-F2**：公开作品与领养列表固定数量编号分页；
 4. **T52-E1～E6**：Endpoint/配置、preflight、ESA 托管私有 OSS 回源、SDK 精确 purge、成本/监控准备，以及 app-only Compose + 宿主机 HTTP-only Nginx 远程部署包；
 5. **T49**：同一 SHA CI 全绿与阶段 D/E 新上下文独立综合 Review；
@@ -106,6 +106,7 @@ F 允许的仓库写入包括验收 note、证据索引、checkbox、STATE 状�
 | T51-F1 | 工程完成 | T49 新上下文独立 Review |
 | T51-F2 | 工程完成 | T49 新上下文独立 Review |
 | T51-F3 | 工程完成；用户已确认当前浏览器行为 | T49 新上下文独立 Review |
+| T51-F4 | 工程完成 | T49 新上下文独立 Review；现存 v2 在重新发布/水印重建前整体回退 |
 | T52-E1 | 工程完成 | T49 新上下文独立 Review |
 | T52-E2 | 工程完成；目标环境 live 待 T53 | T49 新上下文独立 Review |
 | T52-E3 | 工程完成；目标环境 ESA/OSS live 待 T53 | T49 新上下文独立 Review |

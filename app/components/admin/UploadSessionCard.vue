@@ -16,6 +16,11 @@ const progressPercent = computed(() =>
   props.item.progress === null ? null : Math.round(props.item.progress * 100),
 )
 
+const ffmpegActive = computed(() => props.item.state === 'validating' && (
+  (props.item.session?.expected.byteSize ?? 0) > 20_000_000
+  || props.item.asset?.processingFailureStage === 'PREPROCESS'
+))
+
 const stateLabel = computed(() => {
   switch (props.item.state) {
     case 'digesting':
@@ -23,7 +28,9 @@ const stateLabel = computed(() => {
     case 'uploading':
       return `私有上传中 ${progressPercent.value ?? 0}%`
     case 'validating':
-      return '服务端校验中（大原图可能正在生成私有处理源）'
+      return ffmpegActive.value
+        ? '正在用 FFmpeg 生成私有处理源'
+        : '服务端校验中'
     case 'completed':
       return props.item.asset?.status === 'FAILED' ? '处理失败' : '已完成'
     case 'cancelled':
@@ -89,6 +96,10 @@ const retryable = computed(() =>
           :style="{ width: `${progressPercent ?? 0}%` }"
         />
       </div>
+      <AdminFfmpegProgress
+        v-if="ffmpegActive"
+        :label="`${item.fileName}：FFmpeg 私有预处理中`"
+      />
       <p v-if="item.failureText" class="upload-card__failure" role="alert">
         {{ item.failureText }}
         <template v-if="item.failureStage">（失败于{{ item.failureStage }}环节）</template>

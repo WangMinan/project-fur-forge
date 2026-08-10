@@ -1,9 +1,9 @@
 # Design Tokens：公开站
 
 > **设计哲学**：白底、摄影优先、品牌蓝克制使用。OSS 预生成图片是唯一媒体来源。
-> **状态**：阶段 E 开发并冻结、阶段 F 仅复验的公开端 Token。媒体身份为 `recipe-v2`（作品保护）、`site-display-v1`
+> **状态**：阶段 E 开发并冻结、阶段 F 仅复验的公开端 Token。媒体身份为 `recipe-v3`（作品保护）、`site-display-v1`
 > （站点展示无水印）与 `return-display-v1`（返图无水印）。
-> **最后校准**：2026-08-07。
+> **最后校准**：2026-08-10。
 
 ## Color
 
@@ -161,7 +161,7 @@
 [`../../requirements/MEDIA-PUBLICATION-POLICY.md`](../../requirements/MEDIA-PUBLICATION-POLICY.md)）：
 
 ```text
-作品保护  recipe-v2         protection_mode=watermark  活动 brand-centered-v2
+作品保护  recipe-v3         protection_mode=watermark  活动 brand-centered-v2
   card:   3:4,            480 / 768 / 1200
   detail: original ratio, 960 / 1600 / 2400
   design-sheet: original ratio, 960 / 1600 / 2400

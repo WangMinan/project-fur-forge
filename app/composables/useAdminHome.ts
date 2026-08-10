@@ -71,6 +71,7 @@ export function useAdminHome(
   const conflictNotice = ref<string | null>(null)
   // 每个轮播项的最近一次启用操作与反馈，按 slideId 归档。
   const operations = ref<Record<string, PublicationOperationDto>>({})
+  const ffmpegPending = ref<Record<string, boolean>>({})
   const feedback = ref<Record<string, SlideFeedback>>({})
 
   // T34-F4：定时器生命周期与操作状态拉取交给 usePublicationPolling。
@@ -428,6 +429,7 @@ export function useAdminHome(
       return null
     }
     mutating.value = true
+    ffmpegPending.value = { ...ffmpegPending.value, [id]: true }
     setFeedback(id, null)
     try {
       const result = await adminApi(
@@ -453,6 +455,7 @@ export function useAdminHome(
       return 'FFmpeg 放大适配未开始，私有原图已保留，请稍后重试。'
     }
     finally {
+      ffmpegPending.value = { ...ffmpegPending.value, [id]: false }
       mutating.value = false
     }
   }
@@ -463,6 +466,10 @@ export function useAdminHome(
       return null
     }
     mutating.value = true
+    const retryingUpscale = operation.operationType === 'UPSCALE'
+    if (retryingUpscale) {
+      ffmpegPending.value = { ...ffmpegPending.value, [slideId]: true }
+    }
     try {
       const retryUrl = operation.operationType === 'UPSCALE'
         ? `/api/admin/v1/site/home/upscale-operations/${operation.operationId}/retry`
@@ -497,6 +504,9 @@ export function useAdminHome(
       return '重试失败，请稍后重试。'
     }
     finally {
+      if (retryingUpscale) {
+        ffmpegPending.value = { ...ffmpegPending.value, [slideId]: false }
+      }
       mutating.value = false
     }
   }
@@ -507,6 +517,7 @@ export function useAdminHome(
       stopPolling()
       home.value = null
       operations.value = {}
+      ffmpegPending.value = {}
       feedback.value = {}
       preview.reset()
       void load()
@@ -521,6 +532,7 @@ export function useAdminHome(
     deleteSlide,
     disableSlide,
     enableSlide,
+    ffmpegPending,
     feedback,
     home,
     load,

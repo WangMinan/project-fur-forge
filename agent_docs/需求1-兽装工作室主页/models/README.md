@@ -1,7 +1,7 @@
 # 数据模型与投影
 
 > **角色**：描述当前已落地模型和已批准的下一步目标模型。
-> **最后校准**：2026-08-09。
+> **最后校准**：2026-08-10。
 > **边界**：业务规则见 [`../requirements/SPEC.md`](../requirements/SPEC.md)，媒体规则见 [`../requirements/MEDIA-PUBLICATION-POLICY.md`](../requirements/MEDIA-PUBLICATION-POLICY.md)。所有目标模型在阶段 E 开发并迁移；阶段 F 不新增或修改数据模型。
 
 ## 1. 模型原则
@@ -39,10 +39,12 @@
 保存输入、存储范围、相对 Object Key、用途、尺寸/格式/质量/裁剪、配方、保护模式、可选水印 profile、输出摘要/字节和状态。
 
 - `protection_mode=none`：站点 `site-display-v1` 与返图 `return-display-v1`；
-- `protection_mode=watermark`：作品/领养/展会 `recipe-v2` + 活动 `brand-centered-v2`；
+- `protection_mode=watermark`：作品/领养/展会当前使用 `recipe-v3` + 活动 `brand-centered-v2`；完整 `recipe-v2` / `recipe-v1` 只作为新配方未齐时的整体回退；
 - 私有 preprocess 不能被公开投影选中；`design-sheet-upscale-lanczos-v1` 与 `studio-photo-upscale-lanczos-v1` 分别按原始资产摘要、媒体角色与目标几何保存不可变低分辨率适配源，后续公开变体只记录对应 READY 处理源的 `source_variant_id`。
 
 数据库保存不可变对象身份；公开响应用 `MEDIA_BASE_URL` 和相对 Object Key 组装稳定的 ESA HTTPS URL。
+
+`recipe-v3` 不增加列：配方身份哈希和新 Object Key 记录竖图水印缩放语义。3:4 `work-card` 与竖版 `studio_photo` `detail` 仍是单个 `center` 水印，但按用途最小宽度随输出档位等比放大；横版 `detail` 和设定图左右双水印保持原规则。新旧配方行可以并存，公开投影不能跨版本拼 SourceSet。
 
 ### `watermark_profiles`、`site_branding`、`site_hero_slides`
 

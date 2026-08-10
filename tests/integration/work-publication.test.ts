@@ -792,7 +792,7 @@ describe('dual-bucket work publication operations', () => {
     expect(protected_.every(variant => (
       variant.watermarkProfile === 'brand-centered-v2'
       && variant.protectionMode === 'watermark'
-      && variant.recipeVersion === 'recipe-v2'
+      && variant.recipeVersion === 'recipe-v3'
     ))).toBe(true)
     // T34-F1：首页领养入口是独立无水印用途，不复用领养设定图公开 URL。
     const entries = variants.filter(

@@ -183,10 +183,23 @@ test.describe('大原图私有处理源', () => {
 
     const content = largeStudioPng()
     expect(content.length).toBeGreaterThan(20_000_000)
+    let releaseComplete!: () => void
+    const completeGate = new Promise<void>((resolve) => {
+      releaseComplete = resolve
+    })
+    await page.route('**/api/admin/v1/media/upload-sessions/*/complete', async (route) => {
+      await completeGate
+      await route.continue()
+    }, { times: 1 })
     await uploadFileToEditor(page, content, 'large.png')
 
-    // 校验/预处理阶段文案（不把 100% PUT 当成 READY）。
-    await expect(page.getByText(/服务端校验中/)).toBeVisible()
+    // PUT 完成后明确进入 FFmpeg 阶段，不把 100% 上传误报为 READY。
+    const uploadCard = page.locator('article.upload-card').first()
+    const progress = uploadCard.getByTestId('ffmpeg-progress')
+    await expect(progress).toBeVisible()
+    await expect(progress).toContainText('FFmpeg 私有预处理中')
+    await expect(progress).toContainText('已等待')
+    releaseComplete()
     await expect(photoCards(page)).toHaveCount(1)
     const card = photoCards(page).first()
     await expect(card).toContainText('已就绪', { timeout: 90_000 })
@@ -208,7 +221,18 @@ test.describe('大原图私有处理源', () => {
     await expect(photoCards(page)).toHaveCount(0)
 
     await setFakeMediaFlags(page, { failPut: false })
+    let releaseRetry!: () => void
+    const retryGate = new Promise<void>((resolve) => {
+      releaseRetry = resolve
+    })
+    await page.route('**/api/admin/v1/media/assets/*/retry-processing', async (route) => {
+      await retryGate
+      await route.continue()
+    }, { times: 1 })
     await uploadCard.getByRole('button', { name: '重试处理' }).click()
+    await expect(uploadCard.getByTestId('ffmpeg-progress')).toBeVisible()
+    await expect(uploadCard.getByTestId('ffmpeg-progress')).toContainText('已等待')
+    releaseRetry()
     await expect(photoCards(page)).toHaveCount(1, { timeout: 90_000 })
     await expect(photoCards(page).first()).toContainText('已就绪')
   })

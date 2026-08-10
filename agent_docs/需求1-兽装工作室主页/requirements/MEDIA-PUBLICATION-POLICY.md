@@ -1,7 +1,7 @@
 # 媒体公开与保护策略
 
 > **角色**：当前媒体公开行为的唯一事实源。
-> **最后校准**：2026-08-09。
+> **最后校准**：2026-08-10。
 > **状态分层**：媒体配方、阶段 D 页面、第 7 节 Endpoint 分离、T52-E2 私有/BPA preflight、T52-E3 ESA 公开投影和 T52-E4 精确缓存撤销均已完成工程实现。阶段 F 不再改变媒体产品契约，主要填写真实值、执行云配置和运行冻结 preflight；所需独立运维辅助脚本按 TASKS 的 F 边界处理。未在目标环境执行的 live 检查不得描述为生产通过。
 
 ## 1. 核心原则
@@ -24,7 +24,7 @@
 | 首页 Hero 横/竖图 | 首页资产 | 无水印 | `site-display-v1` |
 | 委托 Hero 横/竖图 | 委托资产 | 无水印 | `site-display-v1` |
 | 首页委托/领养入口 | 独立入口源 | 无水印 | `home-entry-commission` / `home-entry-adoption` |
-| 首页精选、作品列表/详情 | 作品主图/出厂照 | 活动水印 | `recipe-v2` + 活动 profile |
+| 首页精选、作品列表/详情 | 作品主图/出厂照 | 活动水印 | `recipe-v3` + 活动 profile |
 | 常规领养与展会掉落 | 设定图/出厂照 | 活动水印 | 与作品相同 |
 | `/returns` 与 `/returns/{slug}` | `return_photo` | 无水印 | `return-wall` / `return-display-v1` |
 | 管理端原图/Logo/处理源 | 私有对象 | 不公开 | 认证 Host、短期私有预览、`no-store` |
@@ -42,16 +42,23 @@
 作品、常规领养和展会掉落使用：
 
 ```text
-recipe_version = recipe-v2
+recipe_version = recipe-v3
 protection_mode = watermark
 watermark_profile = active brand-centered-v2
 ```
 
-profile 改变生成新 Key，在完整校验后原子切换。仍被引用的旧版本不能删除。
+profile 或配方像素改变都生成新 Key，在完整校验后原子切换。仍被引用的旧版本不能删除；新配方未完整生成前只允许整体回退完整 `recipe-v2` / `recipe-v1` SourceSet，不能跨配方拼接。
 
-低分辨率 `design_sheet` 不直接成为公开配方输入。作品发布时先按实际用途计算所需最小几何尺寸，使用内嵌 FFmpeg Lanczos 保持原比例放大并生成 `design-sheet-upscale-lanczos-v1` 私有 `preprocess` 变体；不裁掉主体、不覆盖永久原图，也不宣称恢复细节。后续 `recipe-v2` 只从验证为 READY 且不超过 OSS 处理输入上限的该处理源生成公开图。
+`recipe-v3` 保持版式语义，只修正作品竖图在高分辨率档位中水印显得过小的问题：
 
-低分辨率 `studio_photo` 采用同一发布链，但使用独立 `studio-photo-upscale-lanczos-v1` 身份。发布检查不以像素不足阻断；同一 publication operation 在 `PREPARING_SOURCE` 阶段按当前用途计算最小几何尺寸，主图同时覆盖 2400 px `detail` 与 1200 × 1600 `work-card`，非主图覆盖 `detail`。FFmpeg Lanczos 保持原比例生成 READY 私有 `preprocess` 变体，永久原图不覆盖；卡片焦点/裁切按处理源实际尺寸执行，后续 `recipe-v2` 只消费验证完成的处理源。适配失败保持作品未发布并保留原图，可重新发布重试。
+- 竖版 `studio_photo` 的 `detail` 与所有 3:4 `work-card` 仍为单个 `center` 水印；
+- 水印以该用途最小输出宽度为参考，随 480/768/1200 或 960/1600/2400 档位等比放大；最小档位保持活动 profile 当前视觉基线；
+- 横版原比例 `detail` 保持原有单居中尺寸；
+- `design-sheet` 继续为左右两个不重叠水印，并按现有 960 px 参考宽度缩放；不得把双水印套到竖图。
+
+低分辨率 `design_sheet` 不直接成为公开配方输入。作品发布时先按实际用途计算所需最小几何尺寸，使用内嵌 FFmpeg Lanczos 保持原比例放大并生成 `design-sheet-upscale-lanczos-v1` 私有 `preprocess` 变体；不裁掉主体、不覆盖永久原图，也不宣称恢复细节。后续 `recipe-v3` 只从验证为 READY 且不超过 OSS 处理输入上限的该处理源生成公开图。
+
+低分辨率 `studio_photo` 采用同一发布链，但使用独立 `studio-photo-upscale-lanczos-v1` 身份。发布检查不以像素不足阻断；同一 publication operation 在 `PREPARING_SOURCE` 阶段按当前用途计算最小几何尺寸，主图同时覆盖 2400 px `detail` 与 1200 × 1600 `work-card`，非主图覆盖 `detail`。FFmpeg Lanczos 保持原比例生成 READY 私有 `preprocess` 变体，永久原图不覆盖；卡片焦点/裁切按处理源实际尺寸执行，后续 `recipe-v3` 只消费验证完成的处理源。适配失败保持作品未发布并保留原图，可重新发布重试。
 
 ### 3.3 返图
 
@@ -209,6 +216,8 @@ ESA 同账号私有 OSS 回源可读取该 Bucket 全部对象，ESA 侧不能�
 - 返图 `return-display-v1` 无水印、原比例、EXIF 收敛；
 - profile 切换不改变站点与返图身份；
 - 横/竖/方图三视口无坏图、异常裁切或溢出。
+- 作品竖版 `detail` 与 3:4 `work-card` 在所有响应式宽度保持单个居中水印，水印相对尺寸不随高分辨率档位缩小；设定图仍为左右双水印。
+- 管理端触发的大文件预处理、Hero/设定图/出厂照适配和处理重试均显示 FFmpeg 动态等待进度、阶段与已等待时间；不伪造静态图连续百分比，也不阻塞状态轮询。
 
 ### 阶段 E 媒体开发门禁
 

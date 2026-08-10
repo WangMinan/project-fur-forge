@@ -19,7 +19,7 @@
 - 私有直传、媒体处理、发布/下架、operation lease/heartbeat/recovery；
 - 作品、领养、首页、委托、固定文案、品牌水印；
 - 双 Bucket、部署文件、备份/恢复入口、生产镜像依赖闭包；
-- 作品 `recipe-v2`，站点大图 `site-display-v1`。
+- 作品 `recipe-v3`（完整 `recipe-v2` / `recipe-v1` 整体回退），站点大图 `site-display-v1`。
 
 ### 阶段 D
 
@@ -52,6 +52,7 @@ T35–T37 尚无独立 Review 签署；该门禁并入 T49，不能用用户验�
 - T51-F1 用户反馈修复：`/works` 紧凑间距、低分辨率设定图非阻断上传/发布、私有 FFmpeg Lanczos 适配源、明确中文失败恢复和自动/真实浏览器证据；证据见 [`../implementation/notes/stage-e/T51-F1-ENGINEERING-2026-08-09.md`](../implementation/notes/stage-e/T51-F1-ENGINEERING-2026-08-09.md)。
 - T51-F2 公开列表分页：`/works` 固定 12 件、`/adoptions` 固定 8 个，筛选后服务端分页、单页仍显示编号栏、非法/越界页码受控，以及三视口真实浏览器证据；证据见 [`../implementation/notes/stage-e/T51-F2-ENGINEERING-2026-08-09.md`](../implementation/notes/stage-e/T51-F2-ENGINEERING-2026-08-09.md)。
 - T51-F3 低分辨率出厂照适配：取消像素硬阻断，复用作品发布 operation 生成不可变私有 FFmpeg Lanczos 处理源，保留原图并提供失败重试；证据见 [`../implementation/notes/stage-e/T51-F3-ENGINEERING-2026-08-10.md`](../implementation/notes/stage-e/T51-F3-ENGINEERING-2026-08-10.md)。
+- T51-F4 FFmpeg 反馈与竖图水印：全部管理端 FFmpeg 入口显示不伪造百分比的动态等待进度/经过时间，内嵌进程异步执行；作品 3:4 卡片与竖版详情以 `recipe-v3` 等比放大单个居中水印，横版详情和设定图版式不变；证据见 [`../implementation/notes/stage-e/T51-F4-ENGINEERING-2026-08-10.md`](../implementation/notes/stage-e/T51-F4-ENGINEERING-2026-08-10.md)。
 - T52-E1 Endpoint/配置：服务端 OSS、浏览器条件 PUT 与 ESA 公开媒体三类地址分离，ESA Site/API Endpoint 显式配置，生产 Schema、环境/runtime 模板和 production verify 同步；2026-08-10 又按用户真实部署收敛为 OSS/ESA API 共用现有 AK/SK；证据见 [`../implementation/notes/stage-e/T52-E1-ENGINEERING-2026-08-09.md`](../implementation/notes/stage-e/T52-E1-ENGINEERING-2026-08-09.md) 与 T52-E6 follow-up。
 - T52-E2 OSS/ESA preflight：默认无网络 dry-run、显式 live 探测、Bucket/对象/衍生物数据库边界、上传失败面、原站/ESA 读取、共享阿里云凭据的官方 SDK purge 业务能力与脱敏证据；证据见 [`../implementation/notes/stage-e/T52-E2-ENGINEERING-2026-08-09.md`](../implementation/notes/stage-e/T52-E2-ENGINEERING-2026-08-09.md)，2026-08-10 的凭据收敛见 T52-E6 follow-up。
 - T52-E3 ESA 公开投影：生产公开媒体只接受 `public-media` 的 `prod/web/**`，公开 SSR/API 泄漏扫描、网页衍生物 fail-closed 门禁、H3 直接依赖闭包和生产产物验证同步；证据见 [`../implementation/notes/stage-e/T52-E3-ENGINEERING-2026-08-09.md`](../implementation/notes/stage-e/T52-E3-ENGINEERING-2026-08-09.md)。

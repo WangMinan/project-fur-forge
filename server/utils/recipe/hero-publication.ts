@@ -4,6 +4,7 @@ import type { HeroPlacement } from '../../../shared/types/contracts'
 import type { HeroMediaRole } from '../repository/hero-repository'
 import {
   LEGACY_PUBLIC_RECIPE_VERSION,
+  OLDEST_PUBLIC_RECIPE_VERSION,
   PUBLIC_RECIPE_VERSION,
 } from './media-recipe'
 import {
@@ -131,24 +132,29 @@ export function completePublicHeroVariants<T extends HeroVariantCandidate>(
     return completeHeroVariants(role, variants, activeProfileId)
   }
   catch {
-    const eligible = eligibleHeroVariants(
-      role,
-      variants,
-      activeProfileId,
-      LEGACY_PUBLIC_RECIPE_VERSION,
-    )
     const recipe = HERO_RECIPE[role]
-    const complete = recipe.widths.every(width => (
-      eligible.some(variant => variant.width === width && variant.format === 'webp')
-      && eligible.some(variant => (
-        variant.width === width
-        && (variant.format === 'jpeg' || variant.format === 'png')
+    for (const recipeVersion of [
+      LEGACY_PUBLIC_RECIPE_VERSION,
+      OLDEST_PUBLIC_RECIPE_VERSION,
+    ]) {
+      const eligible = eligibleHeroVariants(
+        role,
+        variants,
+        activeProfileId,
+        recipeVersion,
+      )
+      const complete = recipe.widths.every(width => (
+        eligible.some(variant => variant.width === width && variant.format === 'webp')
+        && eligible.some(variant => (
+          variant.width === width
+          && (variant.format === 'jpeg' || variant.format === 'png')
+        ))
       ))
-    ))
-    if (!complete) {
-      throw new Error(`${role} requires complete WebP and fallback variants.`)
+      if (complete) {
+        return eligible
+      }
     }
-    return eligible
+    throw new Error(`${role} requires complete WebP and fallback variants.`)
   }
 }
 
@@ -254,12 +260,12 @@ export function validateHeroSlidesForPublication(
         if (!activeProfileId) {
           throw new Error('An active watermark profile is required.')
         }
-        completeHeroVariants(
+        completePublicHeroVariants(
           'home_hero_landscape',
           landscapeVariants,
           activeProfileId,
         )
-        completeHeroVariants(
+        completePublicHeroVariants(
           'home_hero_portrait',
           portraitVariants,
           activeProfileId,

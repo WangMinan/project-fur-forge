@@ -51,11 +51,19 @@ import type {
   WatermarkSource,
 } from '../service/watermark-profile'
 
-export const PUBLIC_RECIPE_VERSION = 'recipe-v2'
-export const LEGACY_PUBLIC_RECIPE_VERSION = 'recipe-v1'
+export const PUBLIC_RECIPE_VERSION = 'recipe-v3'
+export const LEGACY_PUBLIC_RECIPE_VERSION = 'recipe-v2'
+export const OLDEST_PUBLIC_RECIPE_VERSION = 'recipe-v1'
+export const PUBLIC_RECIPE_VERSIONS = [
+  PUBLIC_RECIPE_VERSION,
+  LEGACY_PUBLIC_RECIPE_VERSION,
+  OLDEST_PUBLIC_RECIPE_VERSION,
+] as const
 const WATERMARK_SIZE_MULTIPLIER = 1.6
 const HERO_LANDSCAPE_WATERMARK_REFERENCE_WIDTH = 960
 const HERO_PORTRAIT_WATERMARK_REFERENCE_WIDTH = 480
+const WORK_CARD_WATERMARK_REFERENCE_WIDTH = 480
+const PORTRAIT_DETAIL_WATERMARK_REFERENCE_WIDTH = 960
 /** Historical identity only. */
 export const STANDARD_WATERMARK_PROFILE = 'brand-standard-v1'
 export const CENTERED_WATERMARK_PROFILE = WATERMARK_PROFILE_NAME
@@ -160,7 +168,7 @@ export async function ensureHeroUpscaleSource(
 
   let objectKey: string | null = null
   try {
-    const output = upscaleHeroImage(
+    const output = await upscaleHeroImage(
       await storage.getPrivate(sourceAsset.privateObjectKey),
       target.orientation,
     )
@@ -280,7 +288,7 @@ export async function ensureWorkMediaUpscaleSource(
   const minimum = minimumDimensionsForUsages(sourceAsset, usages)
   let objectKey: string | null = null
   try {
-    const output = upscaleImageToMinimum(
+    const output = await upscaleImageToMinimum(
       await storage.getPrivate(sourceAsset.privateObjectKey),
       minimum,
     )
@@ -510,7 +518,7 @@ function recipeIdentity(
     watermarkScalePercent: profile.scalePercent,
     watermarkSizeMultiplier: WATERMARK_SIZE_MULTIPLIER,
     watermarkLayout: watermarkLayout(usage),
-    watermarkSizingReferenceWidth: watermarkSizingReferenceWidth(usage),
+    watermarkSizingReferenceWidth: watermarkSizingReferenceWidth(usage, source),
   })
   return {
     hash: digest('sha256', Buffer.from(identity)),
@@ -525,12 +533,24 @@ function watermarkLayout(usage: PublicMediaUsage) {
     : 'center' as const
 }
 
-function watermarkSizingReferenceWidth(usage: PublicMediaUsage) {
+function watermarkSizingReferenceWidth(
+  usage: PublicMediaUsage,
+  processingGeometry: Pick<ProcessingSource, 'height' | 'width'>,
+) {
   if (usage === 'design-sheet' || usage === 'home-hero-landscape') {
     return HERO_LANDSCAPE_WATERMARK_REFERENCE_WIDTH
   }
   if (usage === 'home-hero-portrait') {
     return HERO_PORTRAIT_WATERMARK_REFERENCE_WIDTH
+  }
+  if (usage === 'work-card') {
+    return WORK_CARD_WATERMARK_REFERENCE_WIDTH
+  }
+  if (
+    usage === 'detail'
+    && processingGeometry.height > processingGeometry.width
+  ) {
+    return PORTRAIT_DETAIL_WATERMARK_REFERENCE_WIDTH
   }
   return null
 }
@@ -559,7 +579,7 @@ export function buildWatermarkProcess(
   const configuredWatermarkWidth = Math.round(
     logo.width * profile.scalePercent * WATERMARK_SIZE_MULTIPLIER / 100,
   )
-  const referenceWidth = watermarkSizingReferenceWidth(usage)
+  const referenceWidth = watermarkSizingReferenceWidth(usage, processingGeometry)
   const watermarkWidth = referenceWidth === null
     ? configuredWatermarkWidth
     : Math.round(configuredWatermarkWidth * width / referenceWidth)

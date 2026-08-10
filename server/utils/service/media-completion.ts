@@ -381,7 +381,7 @@ async function createPreprocess(
   assetId: string,
   content: Buffer,
 ) {
-  const output = preprocessImageForOss(content)
+  const output = await preprocessImageForOss(content)
   const sha256 = digest('sha256', output.content)
   const contentMd5 = createHash('md5').update(output.content).digest('base64')
   const objectKey = preprocessKey(originalKey, assetId, sha256)

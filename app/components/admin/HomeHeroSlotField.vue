@@ -48,7 +48,9 @@ const stateText = computed(() => {
   switch (upload.item.state) {
     case 'digesting': return '正在预检查文件…'
     case 'uploading': return '正在上传…'
-    case 'validating': return '正在核验…'
+    case 'validating': return upload.item.ffmpegPreprocessExpected
+      ? '正在用 FFmpeg 预处理…'
+      : '正在核验…'
     default: return null
   }
 })
@@ -149,6 +151,11 @@ function onFileChange(event: Event) {
       :value="upload.item.progress"
       :max="1"
       :aria-label="`${SLOT_LABEL[orientation]}上传进度`"
+    />
+
+    <AdminFfmpegProgress
+      v-if="upload.item.state === 'validating' && upload.item.ffmpegPreprocessExpected"
+      :label="`${SLOT_LABEL[orientation]}${pageLabel}图：FFmpeg 私有预处理中`"
     />
 
     <p v-if="upload.item.failureText" class="hero-slot__failure" role="alert">

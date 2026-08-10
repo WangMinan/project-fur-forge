@@ -55,6 +55,7 @@ export function useReturnPhotoUpload(options: {
   const state = ref<ReturnUploadState>('idle')
   const progress = ref<number | null>(null)
   const failureText = ref<string | null>(null)
+  const ffmpegPreprocessExpected = shallowRef(false)
   const session = ref<UploadSessionDto | null>(null)
   const fileName = ref<string | null>(null)
 
@@ -62,6 +63,7 @@ export function useReturnPhotoUpload(options: {
     state.value = 'idle'
     progress.value = null
     failureText.value = null
+    ffmpegPreprocessExpected.value = false
     session.value = null
     fileName.value = null
   }
@@ -154,6 +156,7 @@ export function useReturnPhotoUpload(options: {
       fail(DECLARATION_FAILURE_LABELS[declaration.reason])
       return
     }
+    ffmpegPreprocessExpected.value = declaration.declaration.byteSize > 20_000_000
 
     let created
     try {
@@ -190,6 +193,7 @@ export function useReturnPhotoUpload(options: {
 
   return {
     failureText,
+    ffmpegPreprocessExpected,
     fileName,
     progress,
     reset,
