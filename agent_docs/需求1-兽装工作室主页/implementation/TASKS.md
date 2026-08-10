@@ -216,13 +216,13 @@ _依赖：T51-F3；完成后进入 T49。_
 
 ### T49 · 同一 SHA CI 与独立综合 Review
 
-- [ ] 基于届时最新 `main` 复现历史 Actions 失败并修复；
-- [ ] frozen install、lint、typecheck、unit、integration、production build、production verify、secret scan、app-only Compose、宿主机 HTTP-only Nginx/ESA 部署契约静态检查全部通过；
-- [ ] 检查部署产物不含 Nginx 容器、acme.sh、Certbot、证书/ACME Secret 或续期调度；
-- [ ] `checks`、`image-build`、`e2e` 在同一个最新 SHA 成功，`skipped` 不算成功；
-- [ ] 新上下文独立 Review 阶段 D 最终代码以及 T46、T51、T52-E1～E6；
-- [ ] 保留首次 finding/NOT PASS，修复后逐项重测，不由实现者代签；
-- [ ] 不删除测试或放宽类型、安全、媒体、隐私、部署断言。
+- [x] 基于届时最新 `main` 复现历史 Actions 失败并修复；
+- [x] frozen install、lint、typecheck、unit、integration、production build、production verify、secret scan、app-only Compose、宿主机 HTTP-only Nginx/ESA 部署契约静态检查全部通过；
+- [x] 检查部署产物不含 Nginx 容器、acme.sh、Certbot、证书/ACME Secret 或续期调度；
+- [x] `checks`、`image-build`、`e2e` 在同一个最新 SHA 成功，`skipped` 不算成功；
+- [x] 新上下文独立 Review 阶段 D 最终代码以及 T46、T51、T52-E1～E6；
+- [x] 保留首次 finding/NOT PASS 并逐项修复、重测；最后一项修复按用户 2026-08-10 明确授权不再追加 fresh reviewer，例外与证据见 T49 Review note；
+- [x] 不删除测试或放宽类型、安全、媒体、隐私、部署断言。
 _依赖：T46、T51、T51-F1～F4、T52-E1～E6。_
 
 ### T50 · 代码冻结前最终回归
