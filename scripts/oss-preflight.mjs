@@ -4,11 +4,12 @@ import { dirname, resolve } from 'node:path'
 import { loadEnvFile } from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
-import EsaClient, {
+import {
+  EsaClient,
   DescribePurgeTasksRequest,
   PurgeCachesRequest,
   PurgeCachesRequestContent,
-} from '@alicloud/esa20240910'
+} from './esa-sdk.mjs'
 import OSS from 'ali-oss'
 import Database from 'better-sqlite3'
 import {

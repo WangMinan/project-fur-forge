@@ -1,8 +1,9 @@
-import EsaClient, {
+import {
+  EsaClient,
   DescribePurgeTasksRequest,
   PurgeCachesRequest,
   PurgeCachesRequestContent,
-} from '@alicloud/esa20240910'
+} from '../../scripts/esa-sdk.mjs'
 import { $OpenApiUtil } from '@alicloud/openapi-core'
 import type { RuntimeConfig } from './runtime-config'
 import { getRuntimeConfig } from './runtime-config'
@@ -56,7 +57,7 @@ export function assertExactPublicMediaUrls(
 export class AliEsaPublicMediaCache implements PublicMediaCache {
   readonly enabled = true
   readonly mediaOrigin: string
-  readonly #client: EsaClient
+  readonly #client: InstanceType<typeof EsaClient>
   readonly #siteId: number
 
   constructor(config: RuntimeConfig) {
