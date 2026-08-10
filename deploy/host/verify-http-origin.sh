@@ -63,7 +63,7 @@ printf 'INFO\tcaptured-at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 printf 'INFO\tpublic-host=%s\n' "$public_host"
 printf 'INFO\tadmin-host=%s\n' "$admin_host"
 
-for required_command in nginx systemctl ss curl pgrep find; do
+for required_command in nginx systemctl ss curl pgrep; do
   check_command "$required_command"
 done
 if [[ $failures -gt 0 ]]; then
@@ -118,28 +118,17 @@ else
   fail "app-loopback-3000-only"
 fi
 
-timer_text="$(systemctl list-timers --all --no-legend 2>/dev/null || true)"
-service_text="$(systemctl list-units --all --no-legend --type=service 2>/dev/null || true)"
+timer_text="$(systemctl list-timers --no-legend 2>/dev/null || true)"
+service_text="$(systemctl list-units --no-legend --type=service --state=active 2>/dev/null || true)"
 if grep -Eiq 'acme|certbot|letsencrypt' <<<"${timer_text}${service_text}"; then
-  fail "acme-certificate-scheduler-forbidden"
+  fail "active-acme-certificate-scheduler-forbidden"
 else
-  pass "acme-certificate-scheduler-absent"
+  pass "active-acme-certificate-scheduler-absent"
 fi
 if pgrep -af 'acme\.sh|certbot|letsencrypt' >/dev/null 2>&1; then
-  fail "acme-certificate-process-forbidden"
+  fail "active-acme-certificate-process-forbidden"
 else
-  pass "acme-certificate-process-absent"
-fi
-certificate_file_count="$(
-  {
-    find /etc/letsencrypt /etc/nginx/certs /etc/nginx/ssl /root/.acme.sh -type f 2>/dev/null
-    find /home -path '*/.acme.sh/*' -type f 2>/dev/null
-  } | wc -l
-)"
-if [[ "$certificate_file_count" == "0" ]]; then
-  pass "host-certificate-files-absent"
-else
-  fail "host-certificate-files-forbidden"
+  pass "active-acme-certificate-process-absent"
 fi
 
 ready_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 10 --header "Host: $public_host" http://127.0.0.1:3000/api/health/ready || true)"

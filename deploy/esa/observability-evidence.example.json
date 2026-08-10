@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "capturedAt": null,
   "operator": null,
   "frozenCommit": null,
@@ -47,8 +47,9 @@
     "listen80": false,
     "listen443Absent": false,
     "appLoopbackOnly": false,
-    "acmeSchedulerAbsent": false,
-    "certificateFilesAbsent": false,
+    "nginxCertificateConfigAbsent": false,
+    "activeAcmeSchedulerAbsent": false,
+    "activeAcmeProcessAbsent": false,
     "httpOriginReady": false
   },
   "notes": []

@@ -14,7 +14,10 @@ interface PolicyShape {
   }
   edgeHttps: { originTlsEnabled: boolean }
   environmentPolicy: { productionPlanRequired: boolean }
-  hostInvariants: { certificateFilesForbidden: boolean }
+  hostInvariants: {
+    activeAcmeProcessForbidden: boolean
+    inactiveCertificateResidueAllowed: boolean
+  }
   originProtection: { appListen: string }
   waf: { rules: Array<{ id: string, pathScope: string, threshold: unknown }> }
 }
@@ -63,7 +66,7 @@ describe('T52-E5 security and observability policy', () => {
     }
   })
 
-  it('rejects Free production, origin TLS, public 3000, or host certificate drift', () => {
+  it('rejects Free production, origin TLS, public 3000, or active ACME drift', () => {
     const freeProduction = baseline()
     freeProduction.environmentPolicy.productionPlanRequired = false
     expect(() => validateSecurityObservabilityPolicy(freeProduction)).toThrow(/plan boundaries/u)
@@ -76,9 +79,13 @@ describe('T52-E5 security and observability policy', () => {
     publicApp.originProtection.appListen = '0.0.0.0:3000'
     expect(() => validateSecurityObservabilityPolicy(publicApp)).toThrow(/Origin protection/u)
 
-    const hostCertificate = baseline()
-    hostCertificate.hostInvariants.certificateFilesForbidden = false
-    expect(() => validateSecurityObservabilityPolicy(hostCertificate)).toThrow(/certificateFilesForbidden/u)
+    const activeAcme = baseline()
+    activeAcme.hostInvariants.activeAcmeProcessForbidden = false
+    expect(() => validateSecurityObservabilityPolicy(activeAcme)).toThrow(/activeAcmeProcessForbidden/u)
+
+    const inactiveResidue = baseline()
+    inactiveResidue.hostInvariants.inactiveCertificateResidueAllowed = false
+    expect(() => validateSecurityObservabilityPolicy(inactiveResidue)).toThrow(/inactiveCertificateResidueAllowed/u)
   })
 
   it('rejects a pre-filled or incomplete evidence template', () => {

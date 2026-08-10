@@ -66,6 +66,28 @@ describe('T52-E6 production deployment contract', () => {
     expect(handbookReplacements).toEqual(templatePlaceholders)
   })
 
+  it('checks active ACME runtime state without blocking on inert host residue', () => {
+    const verifier = source('deploy/host/verify-http-origin.sh')
+
+    expect(verifier).toContain('nginx-listen-443-forbidden')
+    expect(verifier).toContain('nginx-certificate-or-acme-config-forbidden')
+    expect(verifier).toContain('systemctl list-timers --no-legend')
+    expect(verifier).toContain('systemctl list-units --no-legend --type=service --state=active')
+    expect(verifier).toContain('active-acme-certificate-process-forbidden')
+    expect(verifier).not.toContain('list-timers --all')
+    expect(verifier).not.toContain('list-units --all')
+    expect(verifier).not.toContain('find /etc/letsencrypt')
+    expect(verifier).not.toContain('host-certificate-files-forbidden')
+  })
+
+  it('inlines repository-local runtime modules in Nitro dev output', () => {
+    const config = source('nuxt.config.ts')
+
+    expect(config).toContain("new URL('./scripts/embedded-ffmpeg.mjs', import.meta.url)")
+    expect(config).toContain("new URL('./scripts/esa-sdk.mjs', import.meta.url)")
+    expect(config).toContain('inline: [embeddedFfmpegRuntime, esaSdkRuntime]')
+  })
+
   it('keeps the production example intentionally blocked until real values exist', () => {
     const environment = source('.env.compose.example')
     expect(environment).toMatch(/^APP_IMAGE_REF=.*@sha256:0{64}$/mu)

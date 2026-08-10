@@ -54,6 +54,20 @@ preflight 重新开始；不得热改旧容器或绕过 preflight。
 才可重新运行 live preflight。决策与验证见
 `implementation/notes/stage-e/T52-E2-PREFLIGHT-RELAXATION-2026-08-10.md`。
 
+## 2026-08-10 HTTP origin 预检与本地 dev 修复
+
+目标宿主机继续严格保持 HTTP/80 origin：客户端 HTTPS 只在 ESA 边缘终止，
+ECS/Nginx 不得监听 443，Nginx 不得引用证书。宿主机检查器此前同时扫描
+`systemctl --all` 与证书目录，因而把停用的 Certbot unit 和未被引用的
+Let’s Encrypt 账户文件误判为运行时 FAIL。当前契约改为只阻断活动的 ACME
+timer/service/process；历史停用 unit 与未引用文件不参与运行时，不检查、
+不删除。
+
+本地 Nuxt dev 还会把未内联的 `scripts/esa-sdk.mjs` 生成成越过仓库根目录的
+相对导入，最终错误解析为 `D:\scripts\esa-sdk.mjs`。修复必须把该本地模块与
+既有 FFmpeg 运行时一样加入 Nitro `externals.inline`，并以真实 3000 启动和
+健康请求验证，而不是改成宿主机 443 或复制第二份 SDK 实现。
+
 ## 代码与 CI 基线
 
 - 当前生产实现基于 Nuxt/Nitro 单 app、SQLite/Drizzle、双私有 OSS Bucket、ESA 媒体回源、宿主机 systemd Nginx HTTP/80 origin。

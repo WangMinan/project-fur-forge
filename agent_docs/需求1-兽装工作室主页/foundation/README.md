@@ -111,7 +111,7 @@
 
 ### 7.3 远程部署与验收
 
-- 写入备案和公开/管理精确域名；ESA 边缘托管 TLS，ECS 只提供 HTTP/80 origin；宿主机不保留 ACME/证书/443；
+- 写入备案和公开/管理精确域名；ESA 边缘托管 TLS，ECS 只提供 HTTP/80 origin；宿主机不监听 443，Nginx 不引用证书，且不运行 ACME/续期服务、定时器或进程；历史遗留但未启用、未被 Nginx 引用的 unit/账户文件可以保留，不作为部署阻断项，也不由预检删除；
 - 只运行一个常驻 Nuxt/Nitro 容器，app 端口仅绑定宿主机 loopback，由宿主机 systemd Nginx 代理；
 - 空卷 migrate/init/ready；
 - 备份、恢复、升级、旧镜像回滚；

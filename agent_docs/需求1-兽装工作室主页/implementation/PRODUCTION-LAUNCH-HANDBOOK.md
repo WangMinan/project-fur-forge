@@ -35,7 +35,7 @@
 
 该表只用于让部署基线符合现有机器，不表示 T53 已完成。部署期间若系统、包、端口、目录或 Docker 版本漂移，先停止并重新评估，不运行通用安装器覆盖现状。
 
-已完成：ESA NS 接入、边缘证书、ECS HTTP/80 回源限制、`public-media` 同账号私有 OSS 回源；宿主机 acme.sh、续期 cron、本地证书和 443 已卸载，Nginx 仅监听 80。
+已完成：ESA NS 接入、边缘证书、ECS HTTP/80 回源限制、`public-media` 同账号私有 OSS 回源；宿主机不运行 ACME/续期任务且 443 已关闭，Nginx 仅监听 80。停用的 Certbot unit 或未被 Nginx 引用的 Let’s Encrypt 历史账户/证书文件可以留存，它们不参与当前运行时。
 
 首版不做自定义边缘 URL 鉴权。ESA 到私有 OSS 的 STS 回源签名由阿里云自动完成，应用不创建、保存或刷新 STS。管理员条件上传仍直连私有 Bucket 的公网 OSS 域名。
 
@@ -134,7 +134,7 @@ sudo bash deploy/host/verify-http-origin.sh \
   | tee .data/evidence/host-http-origin-after-reload.txt
 ```
 
-必须同时通过：`nginx -t`、监听 80、无监听 443、app 仅 loopback 3000、无 acme.sh/Certbot/Let’s Encrypt service/timer/process/文件、ready 200、公开/管理精确 Host 的 HTTP origin 可用。任一 FAIL 立即停止；reload 前已有 FAIL 时脚本不会 reload。管道执行时应在支持 `pipefail` 的 shell 中运行并保留脚本退出码。
+必须同时通过：`nginx -t`、监听 80、无监听 443、app 仅 loopback 3000、Nginx 不引用证书、无正在运行的 acme.sh/Certbot/Let’s Encrypt service/timer/process、ready 200、公开/管理精确 Host 的 HTTP origin 可用。停用 unit 和未被 Nginx 引用的历史账户/证书文件不检查、不阻断，也不会被脚本删除。任一 FAIL 立即停止；reload 前已有 FAIL 时脚本不会 reload。管道执行时应在支持 `pipefail` 的 shell 中运行并保留脚本退出码。
 
 官方依据：[ESA 源站保护](https://help.aliyun.com/zh/edge-security-acceleration/esa/user-guide/origin-protection)、[ESA 安全规则](https://help.aliyun.com/zh/edge-security-acceleration/esa/user-guide/security-rules)、[ESA 频率控制](https://help.aliyun.com/en/edge-security-acceleration/esa/user-guide/frequency-control-rules)、[ESA 缓存命中率优化](https://help.aliyun.com/zh/edge-security-acceleration/esa/user-guide/improve-cache-hit-ratio-on-esa)。
 
