@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { publicReturnWallResponseSchema } from '~~/shared/schemas/return-photo'
+import {
+  publicReturnWallResponseSchema,
+  returnWallSeedSchema,
+} from '~~/shared/schemas/return-photo'
 import { PROJECT_NAME } from '~~/shared/constants/project'
 
 /**
@@ -25,13 +28,23 @@ const route = useRoute()
 
 /** 非法页码收敛为第 1 页，不抛 500，也不显示内部信息。 */
 const requestedPage = computed(() => publicPageFromQuery(route.query.page))
+const requestedSeed = computed(() => {
+  const raw = Array.isArray(route.query.seed)
+    ? route.query.seed[0]
+    : route.query.seed
+  const parsed = returnWallSeedSchema.safeParse(raw)
+  return parsed.success ? parsed.data : undefined
+})
 
 const { data: wall, error: wallError } = await useFetch(
   '/api/public/v1/returns',
   {
     key: 'public-return-wall',
     headers: useRequestHeaders(['host']),
-    query: computed(() => ({ page: requestedPage.value })),
+    query: computed(() => ({
+      page: requestedPage.value,
+      seed: requestedSeed.value,
+    })),
     transform: raw => publicReturnWallResponseSchema.parse(raw).data,
   },
 )
@@ -39,9 +52,10 @@ const { data: wall, error: wallError } = await useFetch(
 const items = computed(() => wall.value?.items ?? [])
 const page = computed(() => wall.value?.page ?? requestedPage.value)
 const pageCount = computed(() => wall.value?.pageCount ?? 0)
+const activeSeed = computed(() => wall.value?.seed ?? requestedSeed.value)
 
 function hrefFor(target: number) {
-  return publicPageHref('/returns', {}, target)
+  return publicPageHref('/returns', { seed: activeSeed.value }, target)
 }
 </script>
 
