@@ -215,11 +215,14 @@ T53-F1 确认精确 Host 后，使用仓库模板替换当前临时 wildcard 配
 ```bash
 PUBLIC_HOST='T53-F1-CONFIRMED-PUBLIC-HOST'
 ADMIN_HOST='T53-F1-CONFIRMED-ADMIN-HOST'
-for EXACT_HOST in "$PUBLIC_HOST" "$ADMIN_HOST"; do
+MEDIA_HOST='public-media.ditedog.com'
+for EXACT_HOST in "$PUBLIC_HOST" "$ADMIN_HOST" "$MEDIA_HOST"; do
   printf '%s\n' "$EXACT_HOST" | grep -Eq '^[a-z0-9][a-z0-9.-]*[a-z0-9]$'
   [[ "$EXACT_HOST" != *..* ]]
 done
 test "$PUBLIC_HOST" != "$ADMIN_HOST"
+test "$PUBLIC_HOST" != "$MEDIA_HOST"
+test "$ADMIN_HOST" != "$MEDIA_HOST"
 
 NGINX_BACKUP="/var/backups/project-fur-forge/nginx-$(date -u +%Y%m%dT%H%M%SZ)"
 test ! -e "$NGINX_BACKUP"
@@ -230,6 +233,7 @@ cp -a /etc/nginx/conf.d/00-connection-map.conf "$NGINX_BACKUP/"
 sed \
   -e "s/@@PUBLIC_HOST@@/$PUBLIC_HOST/g" \
   -e "s/@@ADMIN_HOST@@/$ADMIN_HOST/g" \
+  -e "s/@@MEDIA_HOST@@/$MEDIA_HOST/g" \
   deploy/nginx/app.conf.template >/tmp/ditedog.conf.candidate
 grep -q '@@' /tmp/ditedog.conf.candidate && exit 1
 install -m 0644 /tmp/ditedog.conf.candidate /etc/nginx/conf.d/ditedog.conf
@@ -248,7 +252,7 @@ systemctl reload nginx
 bash deploy/host/verify-http-origin.sh \
   --public-host "$PUBLIC_HOST" --admin-host "$ADMIN_HOST" --reload
 test "$(curl -sS -o /dev/null -w '%{http_code}' \
-  -H 'Host: public-media.ditedog.com' http://127.0.0.1/)" = "421"
+  -H "Host: $MEDIA_HOST" http://127.0.0.1/)" = "421"
 test "$(curl -sS -o /dev/null -w '%{http_code}' \
   -H 'Host: unknown.ditedog.invalid' http://127.0.0.1/)" = "421"
 ```

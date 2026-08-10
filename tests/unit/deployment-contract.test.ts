@@ -35,10 +35,20 @@ describe('T52-E6 production deployment contract', () => {
   it('matches the real systemd Nginx HTTP-only file layout', () => {
     const template = source('deploy/nginx/app.conf.template')
     const connectionMap = source('deploy/nginx/00-connection-map.conf')
+    const handbook = source(
+      'agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md',
+    )
     const activeLines = template
       .split('\n')
       .filter(line => !line.trimStart().startsWith('#'))
       .join('\n')
+    const templatePlaceholders = [...new Set(
+      template.match(/@@[A-Z_]+@@/gu) ?? [],
+    )].sort()
+    const handbookReplacements = [...new Set(
+      [...handbook.matchAll(/s\/(@@[A-Z_]+@@)\//gu)]
+        .map(match => match[1]!),
+    )].sort()
 
     expect(template).toContain('/etc/nginx/conf.d/ditedog.conf')
     expect(connectionMap).toContain('/etc/nginx/conf.d/00-connection-map.conf')
@@ -53,6 +63,7 @@ describe('T52-E6 production deployment contract', () => {
     expect(activeLines).not.toMatch(/listen\s+(?:\[::\]:)?443/u)
     expect(activeLines).not.toMatch(/ssl_certificate|acme\.sh|certbot/iu)
     expect(connectionMap).not.toMatch(/listen|server_name|ssl/iu)
+    expect(handbookReplacements).toEqual(templatePlaceholders)
   })
 
   it('keeps the production example intentionally blocked until real values exist', () => {
