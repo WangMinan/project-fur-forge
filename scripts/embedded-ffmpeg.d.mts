@@ -31,7 +31,7 @@ export function upscaleHeroImage(
   }
 }
 
-export function upscaleDesignSheetImage(
+export function upscaleImageToMinimum(
   content: Buffer,
   minimumDimensions: { width: number, height: number },
 ): {
@@ -46,6 +46,8 @@ export function upscaleDesignSheetImage(
     usedPathLookup: false
   }
 }
+
+export const upscaleDesignSheetImage: typeof upscaleImageToMinimum
 
 export function compressPngForOss(content: Buffer): {
   content: Buffer

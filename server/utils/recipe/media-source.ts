@@ -9,6 +9,9 @@ export const HERO_UPSCALE_RECIPE_VERSION = 'hero-upscale-lanczos-v1'
 /** 领养设定图保持比例的 Lanczos 私有适配源身份。 */
 export const DESIGN_SHEET_UPSCALE_RECIPE_VERSION = 'design-sheet-upscale-lanczos-v1'
 
+/** 出厂照保持比例的 Lanczos 私有适配源身份。 */
+export const STUDIO_PHOTO_UPSCALE_RECIPE_VERSION = 'studio-photo-upscale-lanczos-v1'
+
 /** OSS 图片处理的单次输入上限。 */
 export const OSS_PROCESS_INPUT_BYTE_LIMIT = 20_000_000
 
@@ -98,6 +101,16 @@ export function heroUpscaleTarget(role: MediaRole) {
   return null
 }
 
+export function workMediaUpscaleRecipeVersion(role: MediaRole) {
+  if (role === 'design_sheet') {
+    return DESIGN_SHEET_UPSCALE_RECIPE_VERSION
+  }
+  if (role === 'studio_photo') {
+    return STUDIO_PHOTO_UPSCALE_RECIPE_VERSION
+  }
+  return null
+}
+
 interface ProcessingSourceRow {
   height: number
   id: string
@@ -142,7 +155,8 @@ export function processingSource(
       }
     }
   }
-  if (sourceAsset.role === 'design_sheet') {
+  const workMediaRecipe = workMediaUpscaleRecipeVersion(sourceAsset.role)
+  if (workMediaRecipe) {
     const upscaled = sqlite.prepare(`
       SELECT id, object_key AS objectKey, sha256, width, height
       FROM asset_variants
@@ -153,7 +167,7 @@ export function processingSource(
       ORDER BY width DESC, height DESC, created_at DESC LIMIT 1
     `).get(
       sourceAsset.id,
-      DESIGN_SHEET_UPSCALE_RECIPE_VERSION,
+      workMediaRecipe,
       sourceAsset.sha256,
       OSS_PROCESS_INPUT_BYTE_LIMIT,
     ) as ProcessingSourceRow | undefined

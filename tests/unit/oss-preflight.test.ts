@@ -4,6 +4,7 @@ import {
   OSS_IMAGE_PROCESSING_MAX_BYTES,
   upscaleDesignSheetImage,
   upscaleHeroImage,
+  upscaleImageToMinimum,
 } from '../../scripts/embedded-ffmpeg.mjs'
 import {
   assertExactObjectScope,
@@ -142,6 +143,23 @@ describe('T10 synthetic media', () => {
     )
     expect(source.readUInt32BE(16)).toBe(1560)
     expect(source.readUInt32BE(20)).toBe(1080)
+  }, 30_000)
+
+  it('keeps a low-resolution studio photo proportional while meeting detail and card minimums', () => {
+    const source = createSyntheticSourcePng(480, 640)
+    const adapted = upscaleImageToMinimum(source, {
+      width: 2400,
+      height: 1600,
+    })
+
+    expect(adapted.dimensions).toEqual({ width: 2400, height: 3200 })
+    expect(adapted.dimensions.width / adapted.dimensions.height)
+      .toBeCloseTo(480 / 640, 2)
+    expect(adapted.filter).toContain('force_original_aspect_ratio=increase')
+    expect(adapted.filter).toContain('flags=lanczos')
+    expect(adapted.content.length).toBeLessThanOrEqual(
+      OSS_IMAGE_PROCESSING_MAX_BYTES,
+    )
   }, 30_000)
 
   it('uses URL-safe unpadded Base64 for OSS processing parameters', () => {

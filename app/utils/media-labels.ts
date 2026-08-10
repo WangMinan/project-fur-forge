@@ -62,7 +62,6 @@ export const PUBLICATION_BLOCKER_LABELS: Record<PublicationBlocker, string> = {
   STUDIO_PHOTO_REQUIRED: '至少需要一张出厂照',
   PRIMARY_STUDIO_PHOTO_REQUIRED: '需要设置唯一一张主图',
   STUDIO_PHOTO_NOT_READY: '有出厂照尚未处理完成',
-  STUDIO_PHOTO_SOURCE_TOO_SMALL: '有出厂照尺寸不足，原图至少需支持 2400 像素详情图与 1200 × 1600 卡片图',
   STUDIO_PHOTO_ALT_REQUIRED: '有出厂照缺少图片说明',
   WATERMARK_PROFILE_REQUIRED: '需要先初始化并启用站点水印',
 }
@@ -93,6 +92,7 @@ export const PUBLICATION_FAILURE_STAGE_LABELS
 const PUBLICATION_FAILURE_CODE_LABELS: Record<string, string> = {
   HERO_UPSCALE_FAILED: '大图适配失败，私有原图已保留，请重试',
   DESIGN_SHEET_UPSCALE_FAILED: '设定图尺寸适配失败，完整原图已保留；可以重新发布重试，或换一张更清晰的图片',
+  STUDIO_PHOTO_UPSCALE_FAILED: '出厂照尺寸适配失败，完整原图已保留；可以重新发布重试，或换一张更清晰的图片',
   PUBLICATION_VALIDATION_FAILED: '发布检查未通过，请根据待办项修正后重试',
   PUBLIC_MEDIA_GENERATION_FAILED: '公开图片生成失败，请稍后重试',
   PUBLIC_MEDIA_VERIFICATION_FAILED: '公开图片校验失败，请稍后重试',

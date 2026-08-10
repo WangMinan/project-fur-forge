@@ -290,6 +290,9 @@ defineExpose({ save: savePhotos })
     <p v-if="locked" class="photo-section__locked" role="status">
       作品已发布，出厂照为只读；如需调整请先下架。
     </p>
+    <p class="photo-section__resolution-note">
+      低分辨率照片也可以上传和保存；发布时会用 FFmpeg Lanczos 生成私有适配源。放大不会恢复细节，完整原图会保留。
+    </p>
 
     <ul v-if="entries.length > 0" class="photo-section__list" role="list">
       <li v-for="(entry, index) in entries" :key="entry.assetId">
@@ -405,6 +408,16 @@ defineExpose({ save: savePhotos })
   background: var(--admin-status-info-soft);
   color: var(--admin-status-info);
   font-size: var(--admin-font-sm);
+}
+
+.photo-section__resolution-note {
+  margin: 0 0 var(--admin-space-4);
+  padding: var(--admin-space-3) var(--admin-space-4);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-status-warning-soft);
+  color: var(--admin-status-warning);
+  font-size: var(--admin-font-sm);
+  line-height: var(--admin-line-normal);
 }
 
 .photo-section__actions {

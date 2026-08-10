@@ -47,7 +47,6 @@ export const PUBLICATION_BLOCKER_VALUES = [
   'STUDIO_PHOTO_REQUIRED',
   'PRIMARY_STUDIO_PHOTO_REQUIRED',
   'STUDIO_PHOTO_NOT_READY',
-  'STUDIO_PHOTO_SOURCE_TOO_SMALL',
   'STUDIO_PHOTO_ALT_REQUIRED',
   'WATERMARK_PROFILE_REQUIRED',
 ] as const
@@ -87,6 +86,7 @@ export const workPublicationCheckDtoSchema = z.object({
   designSheetCount: z.number().int().min(0).max(1),
   designSheetNeedsPreprocess: z.boolean(),
   studioPhotoCount: z.number().int().min(0).max(5),
+  studioPhotoNeedsPreprocess: z.boolean(),
   requiredVariantCount: z.number().int().nonnegative(),
   missingVariantCount: z.number().int().nonnegative(),
 }).strict()

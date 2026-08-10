@@ -40,7 +40,7 @@
 
 - `protection_mode=none`：站点 `site-display-v1` 与返图 `return-display-v1`；
 - `protection_mode=watermark`：作品/领养/展会 `recipe-v2` + 活动 `brand-centered-v2`；
-- 私有 preprocess 不能被公开投影选中；`design-sheet-upscale-lanczos-v1` 按原始资产摘要与目标几何保存不可变低分辨率设定图适配源，后续公开变体只记录该 READY 处理源的 `source_variant_id`。
+- 私有 preprocess 不能被公开投影选中；`design-sheet-upscale-lanczos-v1` 与 `studio-photo-upscale-lanczos-v1` 分别按原始资产摘要、媒体角色与目标几何保存不可变低分辨率适配源，后续公开变体只记录对应 READY 处理源的 `source_variant_id`。
 
 数据库保存不可变对象身份；公开响应用 `MEDIA_BASE_URL` 和相对 Object Key 组装稳定的 ESA HTTPS URL。
 
