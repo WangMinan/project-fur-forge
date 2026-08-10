@@ -227,6 +227,10 @@ function canPublish(photo: AdminReturnPhotoDto) {
         （{{ Math.round(upload.progress.value * 100) }}%）
       </template>
     </p>
+    <AdminFfmpegProgress
+      v-if="upload.state.value === 'validating' && upload.ffmpegPreprocessExpected.value"
+      :label="`${upload.fileName.value ?? '返图'}：FFmpeg 私有预处理中`"
+    />
     <p v-if="upload.failureText.value" class="photos__error" role="alert">
       {{ upload.failureText.value }}
     </p>

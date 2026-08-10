@@ -41,6 +41,20 @@ function sha256(content: Buffer) {
   return createHash('sha256').update(content).digest('hex')
 }
 
+function publicVariantWidth(objectKey: string) {
+  const suffix = objectKey.split(`/${PUBLIC_RECIPE_VERSION}/`)[1]
+  const width = Number(suffix?.split('/')[1])
+  expect(width).toBeGreaterThan(0)
+  return width
+}
+
+function watermarkWidths(process: string) {
+  return [...process.matchAll(/\/watermark,image_([^,]+)/gu)].map((match) => {
+    const logoProcess = Buffer.from(match[1]!, 'base64url').toString('utf8')
+    return Number(/resize,w_(\d+),limit_0/u.exec(logoProcess)?.[1])
+  })
+}
+
 function insertReadyAsset(options: {
   byteSize?: number
   id?: string
@@ -97,7 +111,7 @@ afterEach(() => {
   rmSync(directory, { force: true, recursive: true })
 })
 
-describe('brand-centered-v2 public media generation', () => {
+describe('current public media generation', () => {
   it('generates only the role usages with OSS-baked watermark identity and is idempotent', async () => {
     insertReadyAsset()
 
@@ -129,13 +143,12 @@ describe('brand-centered-v2 public media generation', () => {
     )).toBe(true)
     expect(storage.processCalls).toHaveLength(12)
     expect(storage.processCalls.every((call) => {
-      const encodedLogo = /\/watermark,image_([^,]+)/u.exec(call.process)?.[1]
-      const width = Number(/\/recipe-v2\/[^/]+\/(\d+)\//u.exec(call.objectKey)?.[1])
-      return encodedLogo
-        && Buffer.from(encodedLogo, 'base64url').toString('utf8').endsWith(
-          '?x-oss-process=image/resize,w_492,limit_0',
-        )
-        && width > 0
+      const width = publicVariantWidth(call.objectKey)
+      const expectedWatermarkWidth = call.objectKey.includes('/work-card/')
+        ? Math.round(492 * width / 480)
+        : 492
+      return watermarkWidths(call.process).length === 1
+        && watermarkWidths(call.process)[0] === expectedWatermarkWidth
         && call.process.includes(',t_50,g_center/')
         && !call.process.includes(',x_')
         && !call.process.includes(',y_')
@@ -200,21 +213,20 @@ describe('brand-centered-v2 public media generation', () => {
       && call.process.includes(',t_50,g_west/')
       && call.process.includes(',t_50,g_east/')
       && !call.process.includes('g_center')
-      && Number(/resize,w_(\d+),limit_0/u.exec(
-        Buffer.from(
-          /\/watermark,image_([^,]+)/u.exec(call.process)![1]!,
-          'base64url',
-        ).toString('utf8'),
-      )![1])
-      === Math.round(492 * Number(
-        /\/recipe-v2\/[^/]+\/(\d+)\//u.exec(call.objectKey)![1],
-      ) / 960)
+      && watermarkWidths(call.process).every(
+        watermarkWidth => watermarkWidth
+          === Math.round(492 * publicVariantWidth(call.objectKey) / 960),
+      )
     ))).toBe(true)
     expect(fallbackProcesses).toHaveLength(6)
     expect(fallbackProcesses.every(call => (
       call.process.includes('resize,m_pad')
       && call.process.includes('color_F7F7F7')
       && !call.process.includes('resize,m_fill')
+      && watermarkWidths(call.process).length === 1
+      && watermarkWidths(call.process)[0]
+      === Math.round(492 * publicVariantWidth(call.objectKey) / 480)
+      && call.process.includes(',t_50,g_center/')
     ))).toBe(true)
   })
 
@@ -248,15 +260,10 @@ describe('brand-centered-v2 public media generation', () => {
       && call.process.includes(',t_50,g_west/')
       && call.process.includes(',t_50,g_east/')
       && !call.process.includes(',t_50,g_center')
-      && Number(/resize,w_(\d+),limit_0/u.exec(
-        Buffer.from(
-          /\/watermark,image_([^,]+)/u.exec(call.process)![1]!,
-          'base64url',
-        ).toString('utf8'),
-      )![1])
-      === Math.round(492 * Number(
-        /\/recipe-v2\/[^/]+\/(\d+)\//u.exec(call.objectKey)![1],
-      ) / 960)
+      && watermarkWidths(call.process).every(
+        watermarkWidth => watermarkWidth
+          === Math.round(492 * publicVariantWidth(call.objectKey) / 960),
+      )
     ))).toBe(true)
     expect(portrait).toHaveLength(6)
     expect(portrait.every(call => (
@@ -264,16 +271,30 @@ describe('brand-centered-v2 public media generation', () => {
       && call.process.includes(',t_50,g_center/')
       && !call.process.includes(',t_50,g_west')
       && !call.process.includes(',t_50,g_east')
-      && Number(/resize,w_(\d+),limit_0/u.exec(
-        Buffer.from(
-          /\/watermark,image_([^,]+)/u.exec(call.process)![1]!,
-          'base64url',
-        ).toString('utf8'),
-      )![1])
-      === Math.round(492 * Number(
-        /\/recipe-v2\/[^/]+\/(\d+)\//u.exec(call.objectKey)![1],
-      ) / 480)
+      && watermarkWidths(call.process)[0]
+      === Math.round(492 * publicVariantWidth(call.objectKey) / 480)
     ))).toBe(true)
+  })
+
+  it('keeps one centered watermark but scales it up across portrait work outputs', async () => {
+    insertReadyAsset({ height: 3_200, width: 2_400 })
+
+    await generatePublicVariants(sqlite, storage, ASSET_ID, undefined, NOW)
+
+    const calls = storage.processCalls.filter(call => (
+      call.objectKey.includes('/work-card/')
+      || call.objectKey.includes('/detail/')
+    ))
+    expect(calls).toHaveLength(12)
+    expect(calls.every((call) => {
+      const referenceWidth = call.objectKey.includes('/work-card/') ? 480 : 960
+      return watermarkWidths(call.process).length === 1
+        && watermarkWidths(call.process)[0]
+        === Math.round(492 * publicVariantWidth(call.objectKey) / referenceWidth)
+        && call.process.includes(',t_50,g_center/')
+        && !call.process.includes(',t_50,g_west')
+        && !call.process.includes(',t_50,g_east')
+    })).toBe(true)
   })
 
   it('uses the READY private preprocess as the only source above 20 MB', async () => {
@@ -364,7 +385,7 @@ describe('brand-centered-v2 public media generation', () => {
 
     expect(storage.deletedPublicKeys).toHaveLength(1)
     expect(storage.deletedPublicKeys[0]).toMatch(
-      /^test\/t16-fixture\/web\/[^/]+\/recipe-v2\/detail\/960\/[0-9a-f]{64}\.webp$/u,
+      /^test\/t16-fixture\/web\/[^/]+\/recipe-v3\/detail\/960\/[0-9a-f]{64}\.webp$/u,
     )
     expect(sqlite.prepare(`
       SELECT count(*) FROM asset_variants WHERE storage_scope = 'PUBLIC'

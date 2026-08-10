@@ -1,6 +1,6 @@
 export const OSS_IMAGE_PROCESSING_MAX_BYTES: 20_000_000
 
-export function preprocessImageForOss(content: Buffer): {
+export function preprocessImageForOss(content: Buffer): Promise<{
   content: Buffer
   contentType: 'image/png'
   dimensions: {
@@ -13,12 +13,12 @@ export function preprocessImageForOss(content: Buffer): {
     sha256: string
     usedPathLookup: false
   }
-}
+}>
 
 export function upscaleHeroImage(
   content: Buffer,
   orientation: 'landscape' | 'portrait',
-): {
+): Promise<{
   content: Buffer
   contentType: 'image/png'
   dimensions: { width: number, height: number }
@@ -29,12 +29,12 @@ export function upscaleHeroImage(
     sha256: string
     usedPathLookup: false
   }
-}
+}>
 
 export function upscaleImageToMinimum(
   content: Buffer,
   minimumDimensions: { width: number, height: number },
-): {
+): Promise<{
   content: Buffer
   contentType: 'image/png'
   dimensions: { width: number, height: number }
@@ -45,11 +45,11 @@ export function upscaleImageToMinimum(
     sha256: string
     usedPathLookup: false
   }
-}
+}>
 
 export const upscaleDesignSheetImage: typeof upscaleImageToMinimum
 
-export function compressPngForOss(content: Buffer): {
+export function compressPngForOss(content: Buffer): Promise<{
   content: Buffer
   contentType: 'image/png'
   dimensions: {
@@ -62,4 +62,4 @@ export function compressPngForOss(content: Buffer): {
     sha256: string
     usedPathLookup: false
   }
-}
+}>

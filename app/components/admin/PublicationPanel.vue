@@ -66,6 +66,13 @@ const publishCompleted = computed(() => publishProgress.value
   ? Math.max(0, publishProgress.value.total - publishProgress.value.remaining)
   : 0,
 )
+const ffmpegPublishActive = computed(() => pending.value === 'publish'
+  && publishProgress.value !== null
+  && (
+    check.value?.designSheetNeedsPreprocess === true
+    || check.value?.studioPhotoNeedsPreprocess === true
+  ),
+)
 
 async function refreshPublishProgress() {
   try {
@@ -418,11 +425,13 @@ onUnmounted(() => {
       >刷新检查</button>
     </div>
 
-    <div v-if="pending === 'publish'" class="publication__progress" role="status">
-      <p class="publication__state">
-        {{ check?.designSheetNeedsPreprocess || check?.studioPhotoNeedsPreprocess
-          ? '正在用 FFmpeg 准备低分辨率图片，再生成带水印的公开图片，请勿关闭页面…'
-          : '正在生成带水印的公开图片并检查图片是否可用，请勿关闭页面…' }}
+    <div v-if="pending === 'publish'" class="publication__progress">
+      <AdminFfmpegProgress
+        v-if="ffmpegPublishActive"
+        label="正在用 FFmpeg 准备低分辨率图片，再生成带水印的公开图片，请勿关闭页面…"
+      />
+      <p v-else class="publication__state" role="status">
+        正在生成带水印的公开图片并检查图片是否可用，请勿关闭页面…
       </p>
       <template v-if="publishProgress && publishProgress.total > 0">
         <p class="publication__progress-label">已生成 {{ publishCompleted }} / {{ publishProgress.total }}，剩余 {{ publishProgress.remaining }} 张</p>

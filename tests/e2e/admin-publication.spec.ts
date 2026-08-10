@@ -112,7 +112,18 @@ test('低分辨率出厂照保留原图、明确提示并经 FFmpeg 适配后发
   await expect(panel.getByRole('button', { name: '发布', exact: true })).toBeEnabled()
 
   await setFakeMediaFlags(page, { failPut: true })
+  let releaseStudioPublish!: () => void
+  const studioPublishGate = new Promise<void>((resolve) => {
+    releaseStudioPublish = resolve
+  })
+  await page.route(`**/api/admin/v1/works/${work.id}/publish`, async (route) => {
+    await studioPublishGate
+    await route.continue()
+  }, { times: 1 })
   await panel.getByRole('button', { name: '发布', exact: true }).click()
+  await expect(panel.getByTestId('ffmpeg-progress')).toBeVisible()
+  await expect(panel.getByTestId('ffmpeg-progress')).toContainText('已等待')
+  releaseStudioPublish()
   await expect(panel.getByRole('alert')).toContainText(
     '出厂照尺寸适配失败，完整原图已保留',
     { timeout: 60_000 },
@@ -157,7 +168,18 @@ test('低分辨率设定图保留原图、明确提示并经 FFmpeg 适配后发
   await expect(panel.getByRole('button', { name: '发布', exact: true })).toBeEnabled()
 
   await setFakeMediaFlags(page, { failPut: true })
+  let releaseDesignPublish!: () => void
+  const designPublishGate = new Promise<void>((resolve) => {
+    releaseDesignPublish = resolve
+  })
+  await page.route(`**/api/admin/v1/works/${work.id}/publish`, async (route) => {
+    await designPublishGate
+    await route.continue()
+  }, { times: 1 })
   await panel.getByRole('button', { name: '发布', exact: true }).click()
+  await expect(panel.getByTestId('ffmpeg-progress')).toBeVisible()
+  await expect(panel.getByTestId('ffmpeg-progress')).toContainText('已等待')
+  releaseDesignPublish()
   await expect(panel.getByRole('alert')).toContainText(
     '设定图尺寸适配失败，完整原图已保留',
     { timeout: 60_000 },

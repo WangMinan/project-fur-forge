@@ -41,8 +41,7 @@ import {
   getPublicHome,
 } from '../runner/home-management'
 import {
-  LEGACY_PUBLIC_RECIPE_VERSION,
-  PUBLIC_RECIPE_VERSION,
+  PUBLIC_RECIPE_VERSIONS,
   publicRecipeWidths,
 } from '../recipe/media-recipe'
 import { getRuntimeConfig } from '../runtime-config'
@@ -143,10 +142,7 @@ function sourceSet(
   usage: 'design-sheet' | 'detail' | 'work-card',
   appEnv: RuntimeConfig['appEnv'],
 ) {
-  for (const recipeVersion of [
-    PUBLIC_RECIPE_VERSION,
-    LEGACY_PUBLIC_RECIPE_VERSION,
-  ]) {
+  for (const recipeVersion of PUBLIC_RECIPE_VERSIONS) {
     try {
       const sources = toPublicSourceSetDto(
         variants.filter(variant => (
@@ -168,7 +164,7 @@ function sourceSet(
       return sources
     }
     catch {
-      // A complete previous recipe remains visible until v2 is complete.
+      // A complete previous recipe remains visible until the current recipe is complete.
     }
   }
   return null
@@ -259,7 +255,7 @@ function loadCurrentPublicVariants(sqlite: Database.Database) {
       AND variant.status = 'READY'
       AND variant.media_role IN ('design_sheet', 'studio_photo')
       AND variant.usage IN ('work-card', 'detail', 'design-sheet')
-      AND variant.recipe_version IN ('recipe-v2', 'recipe-v1')
+      AND variant.recipe_version IN ('recipe-v3', 'recipe-v2', 'recipe-v1')
       AND variant.watermark_profile = 'brand-centered-v2'
       AND variant.watermark_profile_id = profile.id
       AND variant.watermark_config_digest = profile.config_digest

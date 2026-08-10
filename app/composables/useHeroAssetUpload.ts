@@ -34,6 +34,7 @@ export type HeroUploadState
 export interface HeroUploadItem {
   asset: VerifiedAssetDto | null
   failureText: string | null
+  ffmpegPreprocessExpected: boolean
   fileName: string | null
   previewUrl: string | null
   progress: number | null
@@ -58,6 +59,7 @@ export function useHeroAssetUpload(options: HeroAssetUploadOptions) {
   const item = reactive<HeroUploadItem>({
     asset: null,
     failureText: null,
+    ffmpegPreprocessExpected: false,
     fileName: null,
     previewUrl: null,
     progress: null,
@@ -102,6 +104,7 @@ export function useHeroAssetUpload(options: HeroAssetUploadOptions) {
     clearLocalPreview()
     item.asset = null
     item.failureText = null
+    item.ffmpegPreprocessExpected = false
     item.fileName = file.name
     item.previewUrl = URL.createObjectURL(file)
     item.state = 'digesting'
@@ -111,6 +114,7 @@ export function useHeroAssetUpload(options: HeroAssetUploadOptions) {
       fail(DECLARATION_FAILURE_LABELS[declaration.reason])
       return
     }
+    item.ffmpegPreprocessExpected = declaration.declaration.byteSize > 20_000_000
 
     try {
       const created = await adminApi('/api/admin/v1/media/upload-sessions', {

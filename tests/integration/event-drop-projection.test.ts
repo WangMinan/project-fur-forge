@@ -179,8 +179,8 @@ describe('T37 event drop public projection', () => {
       ORDER BY usage
     `).all()
     expect(variants).toEqual([
-      { protection: 'watermark', recipe: 'recipe-v2', usage: 'design-sheet' },
-      { protection: 'watermark', recipe: 'recipe-v2', usage: 'work-card' },
+      { protection: 'watermark', recipe: 'recipe-v3', usage: 'design-sheet' },
+      { protection: 'watermark', recipe: 'recipe-v3', usage: 'work-card' },
     ])
     expect(sqlite.prepare(`
       SELECT count(*) FROM asset_variants WHERE usage LIKE '%event%'

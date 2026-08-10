@@ -22,6 +22,7 @@ const props = defineProps<{
   entry: StudioPhotoEntry
   index: number
   locked: boolean
+  processing: boolean
   total: number
 }>()
 
@@ -152,6 +153,10 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
       <p v-if="entry.status === 'FAILED'" class="photo-card__failure" role="alert">
         私有处理源生成失败，可重试处理；原图仍在私有库中。
       </p>
+      <AdminFfmpegProgress
+        v-if="processing"
+        :label="`第 ${index + 1} 张出厂照：FFmpeg 私有预处理中`"
+      />
 
       <div class="photo-card__field">
         <label class="photo-card__label" :for="`alt-${entry.assetId}`">
@@ -163,7 +168,7 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
           type="text"
           maxlength="500"
           :value="entry.alt"
-          :disabled="locked"
+          :disabled="locked || processing"
           placeholder="例如：正面全身，自然光"
           @input="emit('update', { alt: ($event.target as HTMLInputElement).value })"
         >
@@ -179,7 +184,7 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
           min="0"
           max="100"
           :value="focalPercent.x"
-          :disabled="locked"
+          :disabled="locked || processing"
           @input="onFocalInput('x', $event)"
         >
         <label class="photo-card__label" :for="`focal-y-${entry.assetId}`">
@@ -191,7 +196,7 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
           min="0"
           max="100"
           :value="focalPercent.y"
-          :disabled="locked"
+          :disabled="locked || processing"
           @input="onFocalInput('y', $event)"
         >
       </div>
@@ -202,20 +207,20 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
         v-if="!entry.primary && entry.status === 'READY'"
         type="button"
         class="photo-card__action"
-        :disabled="locked"
+        :disabled="locked || processing"
         @click="emit('setPrimary')"
       >设为主图</button>
       <button
         type="button"
         class="photo-card__action"
-        :disabled="locked || index === 0"
+        :disabled="locked || processing || index === 0"
         :aria-label="`上移第 ${index + 1} 张`"
         @click="emit('move', -1)"
       >上移</button>
       <button
         type="button"
         class="photo-card__action"
-        :disabled="locked || index === total - 1"
+        :disabled="locked || processing || index === total - 1"
         :aria-label="`下移第 ${index + 1} 张`"
         @click="emit('move', 1)"
       >下移</button>
@@ -223,13 +228,13 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
         v-if="entry.status === 'FAILED'"
         type="button"
         class="photo-card__action"
-        :disabled="locked"
+        :disabled="locked || processing"
         @click="emit('retryProcessing')"
-      >重试处理</button>
+      >{{ processing ? '处理中…' : '重试处理' }}</button>
       <button
         type="button"
         class="photo-card__action photo-card__action--danger"
-        :disabled="locked"
+        :disabled="locked || processing"
         @click="emit('remove')"
       >移除</button>
     </div>

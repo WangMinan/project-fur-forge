@@ -1,8 +1,8 @@
-import { spawnSync } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import {
+  createReadStream,
   existsSync,
-  readFileSync,
 } from 'node:fs'
 import { isAbsolute } from 'node:path'
 import ffmpegPath from 'ffmpeg-static'
@@ -41,7 +41,11 @@ function embeddedEnvironment() {
   return environment
 }
 
-function runEmbeddedFfmpeg(arguments_, options = {}) {
+const MAX_OUTPUT_BYTES = 30_000_000
+const MAX_ERROR_BYTES = 1_000_000
+const FFMPEG_TIMEOUT_MS = 120_000
+
+function requireEmbeddedFfmpeg() {
   if (
     !ffmpegPath
     || !isAbsolute(ffmpegPath)
@@ -49,44 +53,129 @@ function runEmbeddedFfmpeg(arguments_, options = {}) {
   ) {
     throw new Error('The ffmpeg-static binary is unavailable.')
   }
-
-  const result = spawnSync(ffmpegPath, arguments_, {
-    env: embeddedEnvironment(),
-    maxBuffer: 30_000_000,
-    timeout: 120_000,
-    windowsHide: true,
-    ...options,
-  })
-
-  if (result.error || result.status !== 0) {
-    const error = new Error('Embedded FFmpeg execution failed.')
-    error.code = result.error?.code ?? 'EmbeddedFfmpegFailed'
-    throw error
-  }
-
-  return result
+  return ffmpegPath
 }
+
+function embeddedFfmpegError(code) {
+  const error = new Error('Embedded FFmpeg execution failed.')
+  error.code = code
+  return error
+}
+
+function runEmbeddedFfmpeg(arguments_, options = {}) {
+  const binaryPath = requireEmbeddedFfmpeg()
+  return new Promise((resolve, reject) => {
+    const stdout = []
+    const stderr = []
+    let stdoutBytes = 0
+    let stderrBytes = 0
+    let outputOverflow = false
+    let timedOut = false
+    let settled = false
+
+    const child = spawn(binaryPath, arguments_, {
+      env: embeddedEnvironment(),
+      stdio: ['pipe', 'pipe', 'pipe'],
+      windowsHide: true,
+    })
+    const finish = (callback) => {
+      if (settled) {
+        return
+      }
+      settled = true
+      clearTimeout(timer)
+      callback()
+    }
+    const timer = setTimeout(() => {
+      timedOut = true
+      child.kill()
+    }, options.timeout ?? FFMPEG_TIMEOUT_MS)
+
+    child.stdout.on('data', (chunk) => {
+      if (outputOverflow) {
+        return
+      }
+      stdoutBytes += chunk.length
+      if (stdoutBytes > (options.maxBuffer ?? MAX_OUTPUT_BYTES)) {
+        outputOverflow = true
+        child.kill()
+        return
+      }
+      stdout.push(chunk)
+    })
+    child.stderr.on('data', (chunk) => {
+      if (stderrBytes >= MAX_ERROR_BYTES) {
+        return
+      }
+      const remaining = MAX_ERROR_BYTES - stderrBytes
+      const bounded = chunk.length > remaining ? chunk.subarray(0, remaining) : chunk
+      stderr.push(bounded)
+      stderrBytes += bounded.length
+    })
+    child.on('error', (cause) => {
+      finish(() => reject(embeddedFfmpegError(cause.code ?? 'EmbeddedFfmpegFailed')))
+    })
+    child.on('close', (status) => {
+      finish(() => {
+        if (timedOut) {
+          reject(embeddedFfmpegError('ETIMEDOUT'))
+          return
+        }
+        if (outputOverflow) {
+          reject(embeddedFfmpegError('EmbeddedFfmpegOutputTooLarge'))
+          return
+        }
+        if (status !== 0) {
+          reject(embeddedFfmpegError('EmbeddedFfmpegFailed'))
+          return
+        }
+        resolve({
+          stderr: Buffer.concat(stderr),
+          stdout: Buffer.concat(stdout),
+        })
+      })
+    })
+
+    child.stdin.on('error', () => {
+      // The close status remains authoritative (for example, an early FFmpeg
+      // validation failure can close stdin before the whole image is written).
+    })
+    child.stdin.end(options.input)
+  })
+}
+
+function hashEmbeddedBinary() {
+  const binaryPath = requireEmbeddedFfmpeg()
+  return new Promise((resolve, reject) => {
+    const hash = createHash('sha256')
+    const stream = createReadStream(binaryPath)
+    stream.on('data', chunk => hash.update(chunk))
+    stream.on('error', reject)
+    stream.on('end', () => resolve(hash.digest('hex')))
+  })
+}
+
+let binaryIdentityPromise
 
 function embeddedBinaryIdentity() {
-  const version = runEmbeddedFfmpeg(['-version'], {
-    encoding: 'utf8',
-  }).stdout.split(/\r?\n/u)[0]
-  return {
+  binaryIdentityPromise ??= Promise.all([
+    runEmbeddedFfmpeg(['-version']),
+    hashEmbeddedBinary(),
+  ]).then(([result, sha256]) => ({
     provider: 'ffmpeg-static',
-    version,
-    sha256: createHash('sha256')
-      .update(readFileSync(ffmpegPath))
-      .digest('hex'),
+    version: result.stdout.toString('utf8').split(/\r?\n/u)[0],
+    sha256,
     usedPathLookup: false,
-  }
+  }))
+  return binaryIdentityPromise
 }
 
-export function preprocessImageForOss(content) {
+export async function preprocessImageForOss(content) {
   if (!Buffer.isBuffer(content)) {
     throw new Error('Embedded FFmpeg input must be an image Buffer.')
   }
   const codec = inputCodec(content)
-  const result = runEmbeddedFfmpeg([
+  const result = await runEmbeddedFfmpeg([
     '-hide_banner',
     '-loglevel',
     'error',
@@ -134,11 +223,11 @@ export function preprocessImageForOss(content) {
       width: output.readUInt32BE(16),
       height: output.readUInt32BE(20),
     },
-    binary: embeddedBinaryIdentity(),
+    binary: await embeddedBinaryIdentity(),
   }
 }
 
-export function upscaleHeroImage(content, orientation) {
+export async function upscaleHeroImage(content, orientation) {
   if (!Buffer.isBuffer(content)) {
     throw new Error('Embedded FFmpeg input must be an image Buffer.')
   }
@@ -148,7 +237,7 @@ export function upscaleHeroImage(content, orientation) {
   const width = orientation === 'landscape' ? 1920 : 1080
   const height = orientation === 'landscape' ? 1080 : 1920
   const filter = `scale=w=${width}:h=${height}:force_original_aspect_ratio=increase:flags=lanczos,crop=${width}:${height}`
-  const result = runEmbeddedFfmpeg([
+  const result = await runEmbeddedFfmpeg([
     '-hide_banner',
     '-loglevel',
     'error',
@@ -192,11 +281,11 @@ export function upscaleHeroImage(content, orientation) {
     contentType: 'image/png',
     dimensions: { width, height },
     filter,
-    binary: embeddedBinaryIdentity(),
+    binary: await embeddedBinaryIdentity(),
   }
 }
 
-export function upscaleImageToMinimum(content, minimumDimensions) {
+export async function upscaleImageToMinimum(content, minimumDimensions) {
   if (!Buffer.isBuffer(content)) {
     throw new Error('Embedded FFmpeg input must be an image Buffer.')
   }
@@ -216,7 +305,7 @@ export function upscaleImageToMinimum(content, minimumDimensions) {
   const filter = minimumHeight > 0
     ? `scale=w=${minimumWidth}:h=${minimumHeight}:force_original_aspect_ratio=increase:force_divisible_by=2:flags=lanczos`
     : `scale=w=${minimumWidth}:h=-2:flags=lanczos`
-  const result = runEmbeddedFfmpeg([
+  const result = await runEmbeddedFfmpeg([
     '-hide_banner',
     '-loglevel',
     'error',
@@ -264,14 +353,14 @@ export function upscaleImageToMinimum(content, minimumDimensions) {
     contentType: 'image/png',
     dimensions: { width, height },
     filter,
-    binary: embeddedBinaryIdentity(),
+    binary: await embeddedBinaryIdentity(),
   }
 }
 
 /** Backward-compatible name retained for the existing design-sheet call sites. */
 export const upscaleDesignSheetImage = upscaleImageToMinimum
 
-export function compressPngForOss(content) {
+export async function compressPngForOss(content) {
   if (!Buffer.isBuffer(content) || inputCodec(content) !== 'png') {
     throw new Error('Embedded FFmpeg preflight input must be a PNG Buffer.')
   }

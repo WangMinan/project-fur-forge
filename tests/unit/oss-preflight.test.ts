@@ -61,7 +61,7 @@ describe('T10 OSS preflight scope', () => {
 })
 
 describe('T10 synthetic media', () => {
-  it('generates a deterministic 20–30 MB PNG within the product limit', () => {
+  it('generates a deterministic 20–30 MB PNG within the product limit', async () => {
     const first = createLargeSyntheticPng()
     const second = createLargeSyntheticPng()
 
@@ -73,7 +73,7 @@ describe('T10 synthetic media', () => {
     expect(contentDigests(first).sha256).toBe(
       contentDigests(second).sha256,
     )
-    const compressed = compressPngForOss(first)
+    const compressed = await compressPngForOss(first)
 
     expect(compressed.content.length).toBeLessThanOrEqual(
       OSS_IMAGE_PROCESSING_MAX_BYTES,
@@ -112,10 +112,10 @@ describe('T10 synthetic media', () => {
     expect(contentDigests(source).sha256).toMatch(/^[a-f0-9]{64}$/u)
   })
 
-  it('uses deterministic Lanczos sizing for confirmed low-resolution hero images', () => {
+  it('uses deterministic Lanczos sizing for confirmed low-resolution hero images', async () => {
     const source = createSyntheticSourcePng(320, 180)
-    const landscape = upscaleHeroImage(source, 'landscape')
-    const portrait = upscaleHeroImage(source, 'portrait')
+    const landscape = await upscaleHeroImage(source, 'landscape')
+    const portrait = await upscaleHeroImage(source, 'portrait')
 
     expect(landscape.dimensions).toEqual({ width: 1920, height: 1080 })
     expect(portrait.dimensions).toEqual({ width: 1080, height: 1920 })
@@ -127,9 +127,23 @@ describe('T10 synthetic media', () => {
     expect(source.readUInt32BE(20)).toBe(180)
   }, 30_000)
 
-  it('keeps a low-resolution design sheet proportional while meeting publication minimums', () => {
+  it('keeps the Node event loop responsive while embedded FFmpeg is running', async () => {
+    const source = createSyntheticSourcePng(320, 180)
+    const processing = upscaleHeroImage(source, 'landscape')
+    const firstResult = await Promise.race([
+      processing.then(() => 'ffmpeg' as const),
+      new Promise<'timer'>(resolve => setTimeout(() => resolve('timer'), 0)),
+    ])
+
+    expect(firstResult).toBe('timer')
+    await expect(processing).resolves.toMatchObject({
+      dimensions: { height: 1080, width: 1920 },
+    })
+  }, 30_000)
+
+  it('keeps a low-resolution design sheet proportional while meeting publication minimums', async () => {
     const source = createSyntheticSourcePng(1560, 1080)
-    const adapted = upscaleDesignSheetImage(source, {
+    const adapted = await upscaleDesignSheetImage(source, {
       width: 2400,
       height: 0,
     })
@@ -145,9 +159,9 @@ describe('T10 synthetic media', () => {
     expect(source.readUInt32BE(20)).toBe(1080)
   }, 30_000)
 
-  it('keeps a low-resolution studio photo proportional while meeting detail and card minimums', () => {
+  it('keeps a low-resolution studio photo proportional while meeting detail and card minimums', async () => {
     const source = createSyntheticSourcePng(480, 640)
-    const adapted = upscaleImageToMinimum(source, {
+    const adapted = await upscaleImageToMinimum(source, {
       width: 2400,
       height: 1600,
     })

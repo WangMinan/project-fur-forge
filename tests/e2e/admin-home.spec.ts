@@ -281,7 +281,18 @@ test('低分辨率大图：保存后提示，取消不处理，确认后 FFmpeg 
 
   await setFakeMediaFlags(page, { failGet: true })
   await card.getByRole('button', { name: '启用' }).click()
+  let releaseUpscale!: () => void
+  const upscaleGate = new Promise<void>((resolve) => {
+    releaseUpscale = resolve
+  })
+  await page.route('**/api/admin/v1/site/home/slides/*/upscale', async (route) => {
+    await upscaleGate
+    await route.continue()
+  }, { times: 1 })
   await dialog.getByRole('button', { name: '确认并继续启用' }).click()
+  await expect(card.getByTestId('ffmpeg-progress')).toBeVisible()
+  await expect(card.getByTestId('ffmpeg-progress')).toContainText('已等待')
+  releaseUpscale()
   await expect(card.getByRole('alert')).toContainText('大图适配失败', {
     timeout: 30_000,
   })
@@ -290,7 +301,17 @@ test('低分辨率大图：保存后提示，取消不处理，确认后 FFmpeg 
   await expect(card.getByRole('alert')).toContainText('大图适配失败')
   await expect(card.getByText(/插值只补足尺寸/)).toBeVisible()
   await setFakeMediaFlags(page, { failGet: false })
+  let releaseRetry!: () => void
+  const retryGate = new Promise<void>((resolve) => {
+    releaseRetry = resolve
+  })
+  await page.route('**/api/admin/v1/site/home/upscale-operations/*/retry', async (route) => {
+    await retryGate
+    await route.continue()
+  }, { times: 1 })
   await card.getByRole('button', { name: '重试适配' }).click()
+  await expect(card.getByTestId('ffmpeg-progress')).toBeVisible()
+  releaseRetry()
   await expect(card.getByText('已启用', { exact: true })).toBeVisible({
     timeout: 30_000,
   })

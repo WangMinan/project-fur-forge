@@ -121,6 +121,7 @@ const uploads = useStudioPhotoUpload({
 })
 
 const saving = ref(false)
+const processingAssetId = shallowRef<string | null>(null)
 const saveError = ref<string | null>(null)
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 const selectedFile = ref<File | null>(null)
@@ -150,7 +151,7 @@ const emptyText = computed(() => props.work.purpose === 'adoption'
 
 watchEffect(() => {
   emit('stateChange', {
-    busy: saving.value || busyUploads.value > 0,
+    busy: saving.value || processingAssetId.value !== null || busyUploads.value > 0,
     dirty: isDirty.value,
   })
 })
@@ -210,6 +211,11 @@ function setPrimary(index: number) {
 }
 
 async function retryEntryProcessing(entry: SectionEntry) {
+  if (processingAssetId.value !== null) {
+    return
+  }
+  processingAssetId.value = entry.assetId
+  saveError.value = null
   try {
     const result = await adminApi(
       `/api/admin/v1/media/assets/${entry.assetId}/retry-processing`,
@@ -227,6 +233,9 @@ async function retryEntryProcessing(entry: SectionEntry) {
       return
     }
     saveError.value = '重试处理失败，请稍后重试。'
+  }
+  finally {
+    processingAssetId.value = null
   }
 }
 
@@ -300,6 +309,7 @@ defineExpose({ save: savePhotos })
           :entry="entry"
           :index="index"
           :locked="locked"
+          :processing="processingAssetId === entry.assetId"
           :total="entries.length"
           @move="moveEntry(index, $event)"
           @remove="removeEntry(index)"

@@ -16,6 +16,7 @@ const props = defineProps<{
   canMoveUp?: boolean
   defaultSortOrder?: number
   feedback?: SlideFeedback | null
+  ffmpegPending?: boolean
   homeVersion: number | null
   mutating: boolean
   operation?: PublicationOperationDto | null
@@ -137,8 +138,9 @@ const canSubmit = computed(() => {
   return props.slide === null ? true : isDirty.value
 })
 
+const FFMPEG_UPSCALE_LABEL = '正在用 FFmpeg 放大适配（Lanczos 插值）…'
 const OPERATION_PROGRESS_LABELS: Record<string, string> = {
-  PREPARING_SOURCE: '正在用 FFmpeg 放大适配（Lanczos 插值）…',
+  PREPARING_SOURCE: FFMPEG_UPSCALE_LABEL,
   GENERATING_PUBLIC: '正在生成公开图片…',
   APPLYING_WATERMARK: '正在烘焙活动水印…',
   VERIFYING_PUBLIC: '正在校验公开图片…',
@@ -391,22 +393,24 @@ function requestEnable() {
       </template>
     </div>
 
-    <div v-if="operationProgress" class="slide-card__progress" role="status">
-      <p>{{ operationProgress }}<template v-if="operation?.operationType === 'PUBLISH'"> 当前活动 profile 已就绪 {{ readyVariantCount }} / 12</template></p>
-      <progress
-        v-if="operation?.operationType === 'UPSCALE'"
-        :aria-label="`${pageLabel}大图正在用 FFmpeg 放大适配`"
+    <div v-if="operationProgress || ffmpegPending" class="slide-card__progress">
+      <AdminFfmpegProgress
+        v-if="ffmpegPending || operation?.operationType === 'UPSCALE'"
+        :label="operationProgress ?? FFMPEG_UPSCALE_LABEL"
       />
-      <progress
-        v-else-if="operation?.operationType === 'PUBLISH'"
-        :value="readyVariantCount"
-        max="12"
-        :aria-label="`${pageLabel}公开衍生图已就绪 ${readyVariantCount} / 12`"
-      />
-      <progress
-        v-else
-        :aria-label="`${pageLabel}大图正在停用并撤销 ESA 缓存`"
-      />
+      <div v-else role="status">
+        <p>{{ operationProgress }}<template v-if="operation?.operationType === 'PUBLISH'"> 当前活动 profile 已就绪 {{ readyVariantCount }} / 12</template></p>
+        <progress
+          v-if="operation?.operationType === 'PUBLISH'"
+          :value="readyVariantCount"
+          max="12"
+          :aria-label="`${pageLabel}公开衍生图已就绪 ${readyVariantCount} / 12`"
+        />
+        <progress
+          v-else
+          :aria-label="`${pageLabel}大图正在停用并撤销 ESA 缓存`"
+        />
+      </div>
     </div>
 
     <div

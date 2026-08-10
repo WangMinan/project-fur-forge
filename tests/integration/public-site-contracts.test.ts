@@ -693,6 +693,60 @@ describe('T19/T20 public repository contracts', () => {
       .not.toContain('second-work')
   })
 
+  it('uses one complete recipe-v2 source set while recipe-v3 is incomplete', async () => {
+    const legacy = await createPublishedWork({
+      slug: 'legacy-recipe-work',
+      sortOrder: 0,
+      featured: false,
+      ownerContact: 'private-legacy@example.test',
+    })
+    sqlite.prepare(`
+      INSERT INTO asset_variants (
+        id, asset_id, source_variant_id, storage_scope, status, object_key,
+        input_sha256, media_role, usage, width, height, format, quality,
+        crop_identity, recipe_version, protection_mode, watermark_profile,
+        watermark_profile_id, watermark_config_digest, logo_digest,
+        watermark_anchor, watermark_opacity_percent, watermark_scale_percent,
+        sha256, byte_size, version, internal_error_code, created_at, updated_at
+      )
+      SELECT
+        lower(hex(randomblob(16))), asset_id, source_variant_id, storage_scope,
+        status, replace(object_key, '/recipe-v3/', '/recipe-v2/'), input_sha256,
+        media_role, usage, width, height, format, quality, crop_identity,
+        'recipe-v2', protection_mode, watermark_profile, watermark_profile_id,
+        watermark_config_digest, logo_digest, watermark_anchor,
+        watermark_opacity_percent, watermark_scale_percent, sha256, byte_size,
+        version, internal_error_code, created_at, updated_at
+      FROM asset_variants
+      WHERE asset_id = ? AND recipe_version = 'recipe-v3'
+    `).run(legacy.assetId)
+    sqlite.prepare(`
+      UPDATE asset_variants
+      SET status = 'FAILED'
+      WHERE asset_id = ? AND recipe_version = 'recipe-v3'
+        AND id != (
+          SELECT id FROM asset_variants
+          WHERE asset_id = ? AND recipe_version = 'recipe-v3'
+          ORDER BY usage, width, format
+          LIMIT 1
+        )
+    `).run(legacy.assetId, legacy.assetId)
+
+    const detail = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
+      .getWorkBySlug('legacy-recipe-work')!
+    const urls = [
+      ...detail.media.card.sources.webp,
+      ...detail.media.card.sources.fallback,
+      ...detail.media.gallery.flatMap(item => [
+        ...item.sources.webp,
+        ...item.sources.fallback,
+      ]),
+    ].map(item => item.src)
+    expect(urls.length).toBeGreaterThan(0)
+    expect(urls.every(url => url.includes('/recipe-v2/'))).toBe(true)
+    expect(urls.some(url => url.includes('/recipe-v3/'))).toBe(false)
+  })
+
   it('projects all three published purposes without private fields', async () => {
     const emptyRepository = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
     expect(emptyRepository.listFeaturedWorks()).toEqual({
