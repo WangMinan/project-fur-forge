@@ -1,7 +1,7 @@
 # T51-F3 工程记录 · 低分辨率出厂照非阻断适配
 
-> 日期：2026-08-10  
-> 基线：`d4deed4eaf139f07ecb7bbab202fdd11a39738c6`（写入前本地 `main` 与 `origin/main` 一致）  
+> 日期：2026-08-10
+> 基线：`d4deed4eaf139f07ecb7bbab202fdd11a39738c6`（写入前本地 `main` 与 `origin/main` 一致）
 > 角色：实现与工程自测；不代签 T49 新上下文独立 Review
 
 ## 范围与结论
