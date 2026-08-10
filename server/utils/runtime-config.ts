@@ -285,6 +285,7 @@ export const runtimeConfigSchema = z.object({
   if (!isOfficialFilingUrl(
     config.icpFilingUrl,
     ['beian.miit.gov.cn'],
+    true,
   )) {
     context.addIssue({
       code: 'custom',

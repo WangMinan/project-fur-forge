@@ -508,6 +508,23 @@ describe('runtime configuration', () => {
       police: null,
     })
 
+    const icpOnly = loadRuntimeConfig({
+      cwd: temporaryDirectory(),
+      env: {
+        ...base,
+        ICP_FILING_NUMBER: '浙ICP备2026062899号',
+        ICP_FILING_URL: 'https://beian.miit.gov.cn/#/Integrated/index',
+        POLICE_FILING_STATUS: 'unconfigured',
+      },
+    })
+    expect(getPublicSiteMeta(icpOnly).filings).toEqual({
+      icp: {
+        number: '浙ICP备2026062899号',
+        url: 'https://beian.miit.gov.cn/#/Integrated/index',
+      },
+      police: null,
+    })
+
     const configured = loadRuntimeConfig({
       cwd: temporaryDirectory(),
       env: {
