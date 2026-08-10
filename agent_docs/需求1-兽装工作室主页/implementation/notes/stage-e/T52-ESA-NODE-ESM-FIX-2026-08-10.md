@@ -3,8 +3,8 @@
 > 日期：2026-08-10
 > 失败基线：`7c24de91b27275ca9cad197bc297181445e552de`
 > 实现提交：`70538e0`
-> 结论：工程修复与本地门禁 PASS；新 SHA Actions、独立 Review、新镜像和
-> live preflight 尚未完成。
+> 结论：工程修复、本地门禁与 SHA `4e24916` Actions PASS；独立 Review、
+> 新镜像和 live preflight 尚未完成。
 
 ## 1. 范围与停止边界
 
@@ -81,14 +81,13 @@ cache override 守卫拒绝；正确环境下默认并行运行又因 FFmpeg/Nux
 
 ## 5. Review、发布与恢复
 
-本记录只签实现与本地验证，不代签独立 Review、远端 Actions、镜像发布或
-生产 live preflight。`70538e0` 改变应用与发布镜像，旧 SHA 的 T49/CI/镜像
-证据不能复用。
+本记录只签实现、本地验证和已查询的 Actions，不代签独立 Review、镜像发布
+或生产 live preflight。包含实现与本记录的 SHA `4e24916` 对应 Actions run
+`31392080770` 已取得 `checks`、`image-build`、`e2e` 全部成功；旧镜像和旧
+SHA 的 T49 Review 证据仍不能复用。
 
 继续远端部署前必须：
 
-1. 推送包含该实现和本记录的最新 `main`；
-2. 等待同一最新 SHA 的 `checks`、`image-build`、`e2e` 全部成功；
-3. 由新上下文完成 T49-R1 独立 Review；
-4. 重新发布并核对不可变 `repository@sha256:digest`；
-5. 从 live preflight 重新开始，失败则继续停止，不直接启动 app 或切 Nginx。
+1. 由新上下文完成 T49-R1 独立 Review；
+2. Review 通过后重新发布并核对不可变 `repository@sha256:digest`；
+3. 从 live preflight 重新开始，失败则继续停止，不直接启动 app 或切 Nginx。

@@ -30,11 +30,12 @@ OSS/ESA 写入之前，没有创建测试对象；app、管理员和 Nginx 切�
 - 本地 lint、typecheck、167 项 unit、172 项串行 integration、production
   build/guard、Nitro 产物导入检查、production verify、ESA/observability
   policy 和 Secret scan 均通过。
+- 包含实现与修复记录的 SHA `4e24916` 对应 Actions run `31392080770`
+  已取得 `checks`、`image-build`、`e2e` 全部成功。
 
 该提交改变应用与发布镜像，因此旧 T49/Actions/镜像证据不能代签新 SHA。
-当前必须等待 `main` 推送后的同 SHA Actions 全绿、T49-R1 新上下文独立
-Review 和新镜像发布后，才能从 live preflight 重新开始；不得热改旧容器或
-绕过 preflight。
+当前必须等待 T49-R1 新上下文独立 Review 和新镜像发布后，才能从 live
+preflight 重新开始；不得热改旧容器或绕过 preflight。
 
 ## 代码与 CI 基线
 
@@ -118,7 +119,7 @@ Review 和新镜像发布后，才能从 live preflight 重新开始；不得热
 | 任务 | 状态 | 下一步 |
 | --- | --- | --- |
 | T46/T51/T52-E1～E6 | 工程完成 | 用户输入与目标环境证据继续在 T53 收口 |
-| T49 | 既有 SHA 已通过；T49-R1 待执行 | 新修复 SHA 需重新取得 CI 与独立 Review |
+| T49 | 新修复 SHA CI 已通过；T49-R1 Review 待执行 | 新上下文独立 Review 后重新发布镜像 |
 | T50 | 未关闭 | 最终回归与冻结证据 |
 | GATE-E | 未关闭 | 正式流程的唯一 SHA/镜像冻结 |
 | T53-F1 | 部分真实参数已明确 | 远程 `.env`、素材/隐私/预算等仍按 TASKS 收口 |

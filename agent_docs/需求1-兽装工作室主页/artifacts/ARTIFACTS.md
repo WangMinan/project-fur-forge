@@ -59,7 +59,7 @@ T35–T37 尚无独立 Review 签署；该门禁并入 T49，不能用用户验�
 - T52-E4 ESA 缓存与撤销：机器可校验缓存基线、精确 file purge、URL/TaskId/边缘状态持久化、失败重试/启动恢复、作品/返图/Hero 管理反馈和正式输出依赖闭包；证据见 [`../implementation/notes/stage-e/T52-E4-ENGINEERING-2026-08-10.md`](../implementation/notes/stage-e/T52-E4-ENGINEERING-2026-08-10.md)。
 - T52-E5 ESA 安全/可观测性：源站保护/WAF、流量/费用/错误/purge/证书/源站/应用/SQLite 告警契约，生产测量入口、宿主机验证和脱敏证据模板；证据见 [`../implementation/notes/stage-e/T52-E5-ENGINEERING-2026-08-10.md`](../implementation/notes/stage-e/T52-E5-ENGINEERING-2026-08-10.md)。
 - T52-E6 部署基线：app-only Compose、目标机 Nginx 1.30.4 HTTP-only 配置、同镜像一次性运维命令、镜像摘要/备份/恢复/回滚与直接面向部署人的顺序清单；实现 SHA `fcb99f4` 的 Actions run `31329958587` 中 `checks`、`image-build`、`e2e` 全部成功；证据见 [`../implementation/notes/stage-e/T52-E6-ENGINEERING-2026-08-10.md`](../implementation/notes/stage-e/T52-E6-ENGINEERING-2026-08-10.md)。
-- T52 远端 Node ESM 修复：首次 live preflight 在云写入前暴露 ESA SDK CommonJS 默认导出互操作缺陷；实现提交 `70538e0` 已统一脚本/运行时入口、补原生 Node 24 与 Docker 实际构造守卫，本地门禁通过；新 SHA CI、独立 Review 和镜像仍待完成，证据见 [`../implementation/notes/stage-e/T52-ESA-NODE-ESM-FIX-2026-08-10.md`](../implementation/notes/stage-e/T52-ESA-NODE-ESM-FIX-2026-08-10.md)。
+- T52 远端 Node ESM 修复：首次 live preflight 在云写入前暴露 ESA SDK CommonJS 默认导出互操作缺陷；实现提交 `70538e0` 已统一脚本/运行时入口、补原生 Node 24 与 Docker 实际构造守卫，本地门禁通过；SHA `4e24916` 的 Actions run `31392080770` 中 `checks`、`image-build`、`e2e` 全部成功，独立 Review 和新镜像仍待完成；证据见 [`../implementation/notes/stage-e/T52-ESA-NODE-ESM-FIX-2026-08-10.md`](../implementation/notes/stage-e/T52-ESA-NODE-ESM-FIX-2026-08-10.md)。
 
 以上工程自测均不代签 T49 独立 Review；T52-E2/E3 尚未在生产凭据/Bucket 上执行 live 模式，T52-E4 尚未在目标环境实测控制台缓存与 warm-cache 撤销时间；T46 最终隐私文案与 T51 正式素材选择仍由用户确认。
 

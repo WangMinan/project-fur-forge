@@ -236,10 +236,12 @@ _依赖：T46、T51、T51-F1～F4、T52-E1～E6。_
 - [x] 本地完成 lint、typecheck、unit、串行 integration、production
   build/guard、Nitro 产物导入检查、production verify、ESA/observability
   policy 与 Secret scan；
-- [ ] 修复后的同一最新 `main` SHA 取得 `checks`、`image-build`、`e2e`
-  全部成功，并重新发布不可变镜像；
+- [x] 包含实现与修复记录的 SHA `4e24916` 已在 Actions run
+  `31392080770` 取得 `checks`、`image-build`、`e2e` 全部成功；
 - [ ] 新上下文独立 Review preflight、Nitro 产物、Docker 守卫及停止/恢复
   边界；实现者不得代签。
+- [ ] Review 通过后重新发布不可变镜像，保存新的
+  `repository@sha256:digest`，远端不得继续使用旧镜像。
 _依赖：实现提交 `70538e0`；完成后才可继续 T50/GATE-E 或远端 live preflight。_
 
 ### T50 · 代码冻结前最终回归
