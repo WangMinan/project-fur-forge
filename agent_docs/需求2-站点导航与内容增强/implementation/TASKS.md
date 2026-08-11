@@ -1,8 +1,8 @@
 # 任务清单：站点导航与内容增强
 
 > **角色**：PLAN 的可勾选垂直切片；每个任务应在一个实现会话内完成并留下可运行验证。
-> **状态**：规划稿，动态方案已锁定，尚未授权功能实现。
-> **规则**：方案 B 是唯一动态实现路径；其它任务需用户明确开始实现后才能勾选。
+> **状态**：实施中；动态方案已锁定，`GATE-01` 与 T01 已完成工程实现，下一项为 T02。
+> **规则**：方案 B 是唯一动态实现路径；任务勾选只代表其定义完成，不代签后续独立 Review、用户验收或 PR 合并。
 
 ## 当前目标
 
@@ -14,12 +14,12 @@
 
 ## 导航
 
-- [x] **T01 · 合并委托导航垂直切片**：修改 `PUBLIC_NAV_ITEMS`，让“委托”复用现有 children 下拉包含“自设委托”和“掉落领养”；验证父项激活、`var(--radius-lg)`、桌面 hover/focus 与移动菜单，路由保持不变。 _复用：`PublicHeader`、`PublicMobileNav`；修改：导航数据与定向测试；不新建组件。实现记录：[`notes/T01-NAVIGATION-2026-08-12.md`](./notes/T01-NAVIGATION-2026-08-12.md)。_
+- [x] **T01 · 合并委托导航垂直切片**：修改 `PUBLIC_NAV_ITEMS`，让“委托”复用现有 children 下拉包含“自设委托”和“掉落领养”；验证父项激活、`var(--radius-lg)`、桌面 hover/focus 与移动菜单，路由保持不变。 _复用：`PublicHeader`、`PublicMobileNav`；修改：导航数据与定向测试；不新建组件。实现 `e573760`，E2E 修复 `a38c295`；该 SHA 的 Actions run `31515689322` 已通过 checks/image-build/e2e。实现记录：[`notes/T01-NAVIGATION-2026-08-12.md`](./notes/T01-NAVIGATION-2026-08-12.md)。_
 
 ## 联系方式
 
-- [ ] **T02 · 五平台 contact 契约与前向迁移**：扩展 contact Schema、DTO、类型、service 和 `site_content` 持久结构为五个平台记录，保留邮箱并迁移已有 QQ/抖音；空的新平台不得导致公开页失败，分区版本与 409 行为保持。 _修改：现有 contact 分区；新建：一条前向迁移；依赖：无。_
-- [ ] **T03 · 二维码媒体垂直切片**：在现有上传/资产/派生链增加 `contact_qr` 与 `contact-qr`，限定 `site/contact`、方形 PNG、contain、无裁切、无水印和 READY 才公开；完成私有源图、不可变公开 Key、失败/重试和泄漏测试。 _复用：现有 upload/asset/variant 基础设施；修改：媒体 Schema/recipe/runner；不新建上传器。_
+- [ ] **T02 · 五平台 contact 契约与前向迁移**：扩展 contact Schema、管理 DTO、兼容公开 DTO、类型、service 和 `site_content` 持久结构为五个平台记录，保留邮箱并迁移已有 QQ/抖音；复用现有 contact 版本列与 409 行为，不新增第二个版本列。T03 前二维码 SourceSet 为空、不生成新平台卡，既有公开联系投影保持可用。 _修改：现有 contact 分区；新建：一条前向迁移；依赖：无。_
+- [ ] **T03 · 二维码媒体垂直切片**：在现有上传/资产/派生链增加 `contact_qr` 与 `contact-qr`，限定 `site/contact`、方形 PNG、contain、无裁切、无水印和 READY 才公开；完成私有源图、不可变公开 Key、失败/重试和泄漏测试，并从此阶段开始向公开 DTO 输出 READY 二维码 SourceSet。 _复用：现有 upload/asset/variant 基础设施；修改：媒体 Schema/recipe/runner；不新建上传器。_
 - [ ] **T04 · 后台五平台编辑体验**：扩展 `SiteOfficialChannelsCard`，以单一平台数组渲染五行账号与二维码上传/替换/预览，显示不完整原因并保留 contact 局部保存、草稿和 409 对比。 _修改：现有 Card/composable；复用：上传控件与分区 Card；依赖：T02、T03。_
 - [ ] **T05 · 公开渠道卡片**：新增 `ContactChannelGrid`，从公开 DTO 横向渲染 Logo/名称、二维码与账号；保留顶部邮箱操作，响应式换行且不出现嵌套卡片或溢出。登记五个平台官方 Logo 来源与商标说明。 _新组件；修改：`about.vue` 与静态平台资源；依赖：T02、T03。_
 
@@ -51,3 +51,4 @@
 ## 闭环结论
 
 - `GATE-01` 与 T01 已关闭；下一项为 T02。
+- PR #10 仍未合入 `main`；T16 独立 Review、T17 用户验收保持未勾选。

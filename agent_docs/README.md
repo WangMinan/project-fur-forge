@@ -1,53 +1,42 @@
 # agent_docs
 
-本目录是项目的 spec-driven 工作区：
+本目录是项目的 spec-driven 工作区。每个需求目录维护自己的产品边界、规格、计划、任务与状态；增量需求只覆盖其明确改变的行为，不复制或放宽既有安全、媒体、隐私和部署基线。
 
-- [`需求1-兽装工作室主页/`](./需求1-兽装工作室主页/) 是当前已落地产品、生产与部署基线；
-- [`需求2-站点导航与内容增强/`](./需求2-站点导航与内容增强/) 是 2026-08-11 新建的增量需求规划稿，尚未授权实施。
+## 当前需求
+
+- [`需求1-兽装工作室主页/`](./需求1-兽装工作室主页/)：当前已落地产品、生产与部署基线；阶段与上线门禁以其 [`STATE.md`](./需求1-兽装工作室主页/STATE.md) 和 [`implementation/TASKS.md`](./需求1-兽装工作室主页/implementation/TASKS.md) 为准。
+- [`需求2-站点导航与内容增强/`](./需求2-站点导航与内容增强/)：当前增量开发；`GATE-01` 决策门禁已关闭，T01 已完成分支工程实现与该 SHA 自动化；T02～T15 待实施（T10-A 已取消），T16/T17 为待执行的独立 Review 与用户验收，状态以其 [`STATE.md`](./需求2-站点导航与内容增强/STATE.md) 和 [`implementation/TASKS.md`](./需求2-站点导航与内容增强/implementation/TASKS.md) 为准。
+
+需求2继承需求1的图片优先、双 Host、私有媒体、隐私、部署和验收边界。发生冲突时，需求2只覆盖已写入其 SPEC/PLAN/TASKS 的新增产品行为；其余仍以需求1为准。
 
 ## 权威顺序
 
+每个需求目录内按以下顺序读取：
+
 1. `foundation/README.md`：产品边界；
-2. `requirements/SPEC.md` 与 `requirements/MEDIA-PUBLICATION-POLICY.md`：业务和媒体契约；
+2. `requirements/SPEC.md` 与适用的媒体政策：业务和媒体契约；
 3. `planning/PLAN.md`：技术路线与实施顺序；
-4. `.design/`：当前公开端与管理端体验；
-5. `implementation/TASKS.md`：唯一任务和勾选权威；
+4. `.design/`：公开端与管理端体验；
+5. `implementation/TASKS.md`：该需求唯一任务和勾选权威；
 6. `STATE.md`：当前阶段、阻断项和下一步。
 
-`models/README.md` 是实施投影；`materials/`、历史原型、dated notes、旧 Review 和截图只能说明当时事实。`planning/FUTURE-ITERATIONS.md` 不是实施授权。
+`models/README.md` 是实施投影；`materials/`、历史原型、dated notes、旧 Review 和截图只能说明当时事实。需求1的 `planning/FUTURE-ITERATIONS.md` 不是实施授权。
 
-## 当前状态
+## 当前分支事实（2026-08-12）
 
-截至 2026-08-09：
+- 分支：`feat/requirement-2`，相对 `origin/main` 实施需求2的 T01；
+- T01 代码提交：`e573760`；E2E 修复提交：`a38c295`；
+- T01 最新的实现代码 SHA 为 `a38c295`；其后的本轮提交只同步文档，不改变应用代码或测试；
+- PR：[#10](https://github.com/WangMinan/project-fur-forge/pull/10)，当前仍为 open，尚未合入 `main`；
+- `a38c295` 的 GitHub Actions run [`31515689322`](https://github.com/WangMinan/project-fur-forge/actions/runs/31515689322) 已取得 `checks`、`image-build`、`e2e` 全部成功；该结果只绑定该实现 SHA，当前 PR HEAD 及检查状态须从远端重新查询；
+- 上述自动化只证明该 SHA 的工程门禁，不代签需求2的 T16 独立 Review、T17 用户验收，也不改变需求1的 T50/GATE-E/T53 上线门禁。
 
-- 阶段 C/C.1 已完成；
-- 阶段 D 的返图与展会掉落已落地，并由用户完成浏览器人工验收；
-- 阶段 E 执行所有剩余产品与上线基线开发：统计、品牌/备案展示、生产 Bucket/CDN 能力、app-only Compose + 宿主机 Nginx/acme.sh 部署/恢复基线、CI、独立 Review 和最终回归；
-- 阶段 F 主要由用户和远程开发机填写真实参数、操作阿里云控制台、部署冻结镜像、演练和验收；允许按实际运维需要补充不进入发布镜像的小型运维脚本；
-- GitHub Actions 的既有失败由 T49 在同一 SHA 上关闭，当前不得描述为全绿。
-
-生产与部署下一步仍以 [`需求1-兽装工作室主页/implementation/TASKS.md`](./需求1-兽装工作室主页/implementation/TASKS.md) 为准；新增功能的范围、动态方案决策与任务以 [`需求2-站点导航与内容增强/STATE.md`](./需求2-站点导航与内容增强/STATE.md) 和 [`TASKS.md`](./需求2-站点导航与内容增强/implementation/TASKS.md) 为准。
-
-## 已锁定的生产媒体方向
-
-- 复用现有私有源图 Bucket 与公开衍生图 Bucket；正式切换时两者都设为 private，并开启 Block Public Access；
-- 公开衍生图由 CDN 私有 OSS 回源读取，浏览器只获得约 24 小时有效的 CDN 鉴权 URL；
-- 下架后页面立即移除，服务端对精确 CDN URL 发起强制刷新，目标约 5～6 分钟完成边缘撤销；
-- 同地域 ECS/Nitro 服务端访问 OSS 使用杭州内网 Endpoint；本机、浏览器、CDN 回源和外部运维不能误用内网 Endpoint；
-- 当前继续使用静态 AK/SK，不在本阶段引入实例 RAM 角色；
-- 应用 AK/SK 与宿主机 ACME 凭据分离：复用现有 `acme.sh + dns_ali`、Let's Encrypt DNS-01、root cron 和稳定证书路径；不改用 Certbot 或 `nginx-module-acme`；
-- Compose 唯一常驻服务是 Nuxt/Nitro app，端口固定只绑定 `127.0.0.1:3000`；Nginx 独立安装在宿主机，媒体域名 TLS 在阿里云 CDN 终止；
-- 公开导航品牌固定为“有点小狗”，不带“工作室”。
-
-阿里云依据与逐项操作入口：
-
-- [`需求1-兽装工作室主页/planning/ALIYUN-PRODUCTION-RESEARCH-2026-08-09.md`](./需求1-兽装工作室主页/planning/ALIYUN-PRODUCTION-RESEARCH-2026-08-09.md)；
-- [`需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md`](./需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md)。
+后续文档提交或代码提交形成新 SHA 后，必须重新查询该 SHA 的远端检查，不能沿用 `a38c295` 的结果。
 
 ## 执行纪律
 
-- 所有写入在最新 `main` 串行完成，不创建功能分支或 PR；
+- 所有代码、文档、Review 和修复通过独立分支与 PR 合入 `main`，禁止直接在 `main` 提交或推送；
 - 后端 → 前端 → 新上下文独立 Review → 用户验收；同一实现者不得为自己代签 Review；
-- 不删除或清空 `.env`，不重写已执行迁移；
-- 只运行与改动风险相称的测试，真实 OSS/E2E 会产生费用；
-- 在 GATE-E 与 T53-F1～F5 完成前，不得声称正式发布就绪；F 中若需要改应用代码或冻结契约，必须返回 E 并重跑冻结门禁。
+- 不删除或清空 `.env`，不重写已执行迁移，不把 Secret 写入仓库、日志或截图；
+- 只运行与改动风险相称的测试；自动化不能替代真实浏览器验收；
+- 不把功能工程完成、PR CI、独立 Review、用户验收、代码冻结或正式发布互相代签。
