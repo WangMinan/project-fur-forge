@@ -31,10 +31,7 @@ const { data: filings } = await useFetch("/api/site-meta", {
 
 <template>
   <footer class="public-footer" data-testid="public-footer">
-    <div
-      class="public-footer__inner"
-      :class="{ 'public-footer__inner--brand-only': brandOnly }"
-    >
+    <div class="public-footer__inner">
       <div class="public-footer__brand">
         <p class="public-footer__name">
           {{ PROJECT_NAME }}
@@ -44,16 +41,42 @@ const { data: filings } = await useFetch("/api/site-meta", {
         </p>
       </div>
 
-      <nav v-if="!brandOnly" class="public-footer__nav" aria-label="页脚导航">
-        <NuxtLink
-          v-for="item in PUBLIC_NAV_ITEMS"
-          :key="item.href"
-          :to="item.href"
-          class="public-footer__link"
+      <div class="public-footer__center">
+        <nav v-if="!brandOnly" class="public-footer__nav" aria-label="页脚导航">
+          <NuxtLink
+            v-for="item in PUBLIC_NAV_ITEMS"
+            :key="item.href"
+            :to="item.href"
+            class="public-footer__link"
+          >
+            {{ item.label }}
+          </NuxtLink>
+        </nav>
+
+        <p
+          v-if="filings.icp || filings.police"
+          class="public-footer__filings"
+          aria-label="网站备案信息"
         >
-          {{ item.label }}
-        </NuxtLink>
-      </nav>
+          <template v-if="filings.icp">
+            <a
+              :href="filings.icp.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              >{{ filings.icp.number }}</a
+            >
+          </template>
+          <template v-if="filings.police">
+            <span v-if="filings.icp" aria-hidden="true">|</span>
+            <a
+              :href="filings.police.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              >{{ filings.police.number }}</a
+            >
+          </template>
+        </p>
+      </div>
 
       <div class="public-footer__legal">
         <p class="public-footer__copyright">
@@ -64,6 +87,8 @@ const { data: filings } = await useFetch("/api/site-meta", {
           <NuxtLink to="/service">服务条款</NuxtLink>
           <span aria-hidden="true">|</span>
           <NuxtLink to="/privacy">隐私政策</NuxtLink>
+          <span aria-hidden="true">｜</span>
+          <NuxtLink to="/licenses">开源软件声明</NuxtLink>
           <span aria-hidden="true">|</span>
           <span>
             Design by
@@ -81,27 +106,6 @@ const { data: filings } = await useFetch("/api/site-meta", {
               >LingXun</a
             >
           </span>
-        </p>
-        <p class="public-footer__legal-links">
-          <template v-if="filings.icp">
-            <a
-              :href="filings.icp.url"
-              target="_blank"
-              rel="noopener noreferrer"
-              >{{ filings.icp.number }}</a
-            >
-            <span aria-hidden="true">|</span>
-          </template>
-          <template v-if="filings.police">
-            <a
-              :href="filings.police.url"
-              target="_blank"
-              rel="noopener noreferrer"
-              >{{ filings.police.number }}</a
-            >
-            <span aria-hidden="true">|</span>
-          </template>
-          <NuxtLink to="/licenses">开源软件声明</NuxtLink>
         </p>
       </div>
     </div>
@@ -123,6 +127,11 @@ const { data: filings } = await useFetch("/api/site-meta", {
   margin: 0 auto;
 }
 
+.public-footer__center {
+  display: grid;
+  gap: var(--space-2);
+}
+
 .public-footer__name {
   font-family: var(--font-public-display);
   font-size: var(--font-size-lg);
@@ -138,7 +147,7 @@ const { data: filings } = await useFetch("/api/site-meta", {
 .public-footer__nav {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3) var(--space-5);
+  gap: var(--space-3) var(--space-4);
 }
 
 .public-footer__link {
@@ -147,6 +156,23 @@ const { data: filings } = await useFetch("/api/site-meta", {
 }
 
 .public-footer__link:hover {
+  color: var(--public-accent-primary);
+}
+
+.public-footer__filings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  color: var(--public-text-secondary);
+  font-size: var(--font-size-xs);
+  overflow-wrap: anywhere;
+}
+
+.public-footer__filings a {
+  color: inherit;
+}
+
+.public-footer__filings a:hover {
   color: var(--public-accent-primary);
 }
 
@@ -172,25 +198,35 @@ const { data: filings } = await useFetch("/api/site-meta", {
   color: var(--public-accent-primary);
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1200px) {
   .public-footer__inner {
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) max-content;
-    align-items: stretch;
+    grid-template-columns: max-content minmax(0, 1fr) max-content;
+    align-items: end;
+    column-gap: clamp(var(--space-5), 3vw, var(--space-8));
   }
 
-  .public-footer__copyright {
-    white-space: nowrap;
+  .public-footer__center {
+    justify-items: center;
+    text-align: center;
   }
 
-  /* 没有导航列时收成两列，法务信息仍靠右对齐。 */
-  .public-footer__inner--brand-only {
-    grid-template-columns: 1fr auto;
+  .public-footer__nav,
+  .public-footer__filings {
+    justify-content: center;
   }
 
   .public-footer__legal {
-    align-self: end;
     justify-items: end;
     text-align: right;
+  }
+
+  .public-footer__copyright,
+  .public-footer__legal-links {
+    white-space: nowrap;
+  }
+
+  .public-footer__legal-links {
+    flex-wrap: nowrap;
   }
 }
 </style>
