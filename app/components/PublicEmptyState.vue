@@ -1,9 +1,9 @@
 <script setup lang="ts">
 /** 公开站真实空状态：说明原因并给出恢复行动，不用假图或“后续开放”。 */
 defineProps<{
-  title: string
-  description?: string
-}>()
+  title: string;
+  description?: string;
+}>();
 </script>
 
 <template>
