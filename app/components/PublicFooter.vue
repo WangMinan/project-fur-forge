@@ -2,28 +2,31 @@
 import {
   PROJECT_ENGLISH_NAME,
   PROJECT_NAME,
-} from '~~/shared/constants/project'
-import { publicSiteMetaResponseSchema } from '~~/shared/schemas/site-meta'
+} from "~~/shared/constants/project";
+import { publicSiteMetaResponseSchema } from "~~/shared/schemas/site-meta";
 
 /**
  * `brandOnly` 隐藏页脚导航，只留品牌与法务/备案信息。
  * 管理端登录页用它：备案信息要保留，访客导航不进登录流程。
  */
-withDefaults(defineProps<{
-  brandOnly?: boolean
-}>(), {
-  brandOnly: false,
-})
+withDefaults(
+  defineProps<{
+    brandOnly?: boolean;
+  }>(),
+  {
+    brandOnly: false,
+  },
+);
 
-const shanghaiYear = new Intl.DateTimeFormat('en-US', {
-  year: 'numeric',
-  timeZone: 'Asia/Shanghai',
-}).format(new Date())
-const { data: filings } = await useFetch('/api/site-meta', {
-  key: 'public-site-meta',
+const shanghaiYear = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  timeZone: "Asia/Shanghai",
+}).format(new Date());
+const { data: filings } = await useFetch("/api/site-meta", {
+  key: "public-site-meta",
   default: () => ({ icp: null, police: null }),
-  transform: raw => publicSiteMetaResponseSchema.parse(raw).data.filings,
-})
+  transform: (raw) => publicSiteMetaResponseSchema.parse(raw).data.filings,
+});
 </script>
 
 <template>
@@ -53,7 +56,10 @@ const { data: filings } = await useFetch('/api/site-meta', {
       </nav>
 
       <div class="public-footer__legal">
-        <p class="public-footer__copyright">© 2026-{{ shanghaiYear }} {{ PROJECT_NAME }}. {{ PROJECT_ENGLISH_NAME }}. All Rights Reserved.</p>
+        <p class="public-footer__copyright">
+          © 2026-{{ shanghaiYear }} {{ PROJECT_NAME }}.
+          {{ PROJECT_ENGLISH_NAME }}. All Rights Reserved.
+        </p>
         <p class="public-footer__legal-links">
           <NuxtLink to="/service">服务条款</NuxtLink>
           <span aria-hidden="true">|</span>
@@ -61,16 +67,38 @@ const { data: filings } = await useFetch('/api/site-meta', {
           <span aria-hidden="true">|</span>
           <span>
             Design by
-            <a href="https://github.com/wangminan" target="_blank" rel="noopener noreferrer">Arktouros</a>
+            <a
+              href="https://github.com/wangminan"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Arktouros</a
+            >
+            &amp;
+            <a
+              href="https://github.com/lingxunfurry"
+              target="_blank"
+              rel="noopener noreferrer"
+              >LingXun</a
+            >
           </span>
         </p>
         <p class="public-footer__legal-links">
           <template v-if="filings.icp">
-            <a :href="filings.icp.url" target="_blank" rel="noopener noreferrer">{{ filings.icp.number }}</a>
+            <a
+              :href="filings.icp.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              >{{ filings.icp.number }}</a
+            >
             <span aria-hidden="true">|</span>
           </template>
           <template v-if="filings.police">
-            <a :href="filings.police.url" target="_blank" rel="noopener noreferrer">{{ filings.police.number }}</a>
+            <a
+              :href="filings.police.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              >{{ filings.police.number }}</a
+            >
             <span aria-hidden="true">|</span>
           </template>
           <NuxtLink to="/licenses">开源软件声明</NuxtLink>
@@ -82,7 +110,8 @@ const { data: filings } = await useFetch('/api/site-meta', {
 
 <style scoped>
 .public-footer {
-  padding: calc(var(--space-4) + var(--space-1)) var(--public-page-padding) var(--space-4);
+  padding: calc(var(--space-4) + var(--space-1)) var(--public-page-padding)
+    var(--space-4);
   background: var(--public-bg-secondary);
   border-top: 1px solid var(--public-border-secondary);
 }

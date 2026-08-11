@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { RouteLocationRaw } from 'vue-router'
+import type { RouteLocationRaw } from "vue-router";
 
 /**
  * 公开端筛选条：一组胶囊链接。
@@ -9,15 +9,15 @@ import type { RouteLocationRaw } from 'vue-router'
  * 选中态同时用底色、边框与文字权重表达，不只依赖颜色。
  */
 defineProps<{
-  label: string
+  label: string;
   options: Array<{
-    key: string
-    label: string
-    to: RouteLocationRaw
-  }>
+    key: string;
+    label: string;
+    to: RouteLocationRaw;
+  }>;
   /** 当前选中项的 key。 */
-  selected: string
-}>()
+  selected: string;
+}>();
 </script>
 
 <template>
