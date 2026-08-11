@@ -14,7 +14,7 @@
 
 ## 导航
 
-- [ ] **T01 · 合并委托导航垂直切片**：修改 `PUBLIC_NAV_ITEMS`，让“委托”复用现有 children 下拉包含“自设委托”和“掉落领养”；验证父项激活、`var(--radius-lg)`、桌面 hover/focus 与移动菜单，路由保持不变。 _复用：`PublicHeader`、`PublicMobileNav`；修改：导航数据与定向测试；不新建组件。_
+- [x] **T01 · 合并委托导航垂直切片**：修改 `PUBLIC_NAV_ITEMS`，让“委托”复用现有 children 下拉包含“自设委托”和“掉落领养”；验证父项激活、`var(--radius-lg)`、桌面 hover/focus 与移动菜单，路由保持不变。 _复用：`PublicHeader`、`PublicMobileNav`；修改：导航数据与定向测试；不新建组件。实现记录：[`notes/T01-NAVIGATION-2026-08-12.md`](./notes/T01-NAVIGATION-2026-08-12.md)。_
 
 ## 联系方式
 
@@ -50,4 +50,4 @@
 
 ## 闭环结论
 
-- `GATE-01` 已关闭；功能尚未实施，下一项为 T01。
+- `GATE-01` 与 T01 已关闭；下一项为 T02。
