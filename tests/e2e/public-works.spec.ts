@@ -153,14 +153,16 @@ test.describe('T20 作品列表页', () => {
   test('用途筛选：commission 只剩两件，URL 与选中态同步', async ({ page }) => {
     await seedCatalog(page)
     await page.goto('/works')
-    await page.getByRole('link', { name: '委托', exact: true }).click()
+    const purposeFilter = page.getByRole('group', { name: '按用途筛选' })
+    await purposeFilter.getByRole('link', { name: '委托', exact: true }).click()
 
     await expect(page).toHaveURL(/purpose=commission/)
     await expect(page.getByRole('status')).toContainText('共 2 件作品')
     await expect(card(page, 'e2e-public-zhima')).toBeVisible()
     await expect(card(page, 'e2e-public-doudou')).toBeVisible()
     await expect(card(page, 'e2e-public-lanmei')).toHaveCount(0)
-    await expect(page.getByRole('link', { name: '委托', exact: true })).toHaveAttribute('aria-current', 'true')
+    await expect(purposeFilter.getByRole('link', { name: '委托', exact: true }))
+      .toHaveAttribute('aria-current', 'true')
   })
 
   test('装型筛选：suitType=partial 只剩豆豆与栗子', async ({ page }) => {
