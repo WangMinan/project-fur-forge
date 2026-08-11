@@ -13,7 +13,7 @@
 
 ## 当前记录
 
-- [`T01-NAVIGATION-2026-08-12.md`](./T01-NAVIGATION-2026-08-12.md)：合并委托导航、定向验证与 CI follow-up。
+- [`T01-NAVIGATION-2026-08-12.md`](./T01-NAVIGATION-2026-08-12.md)：合并委托导航、首次 E2E 失败、修复与同一 SHA 远端质量闭环。
 
 ## 新记录最低要求
 
