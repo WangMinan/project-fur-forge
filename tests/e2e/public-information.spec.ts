@@ -40,6 +40,56 @@ test('关于二级导航、独立条款页、页脚与兼容跳转连通', async
   await expect(page).toHaveURL(/\/service$/u)
 })
 
+test('委托合并导航复用下拉并保持两个业务路由可达', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/commission')
+
+  const header = page.getByTestId('public-header')
+  const commissionLink = header.getByRole('link', { name: '委托', exact: true })
+  const commissionSubnav = header.getByRole('navigation', { name: '委托二级导航' })
+  const commissionPanel = commissionSubnav
+  await expect(header.getByRole('link', { name: '角色领养', exact: true })).toHaveCount(0)
+  await expect(commissionLink).toHaveAttribute('href', '/commission')
+  await expect(commissionLink).toHaveAttribute('aria-current', 'page')
+  await expect(commissionSubnav).toBeHidden()
+
+  await commissionLink.hover()
+  await expect(commissionSubnav).toBeVisible()
+  await expect(commissionSubnav.getByRole('link', { name: '自设委托' }))
+    .toHaveAttribute('href', '/commission')
+  await expect(commissionSubnav.getByRole('link', { name: '掉落领养' }))
+    .toHaveAttribute('href', '/adoptions')
+  const expectedRadius = await page.evaluate(() => {
+    const probe = document.createElement('div')
+    probe.style.borderRadius = 'var(--radius-lg)'
+    document.body.append(probe)
+    const radius = getComputedStyle(probe).borderTopLeftRadius
+    probe.remove()
+    return radius
+  })
+  await expect(commissionPanel).toHaveCSS('border-top-left-radius', expectedRadius)
+
+  await page.getByRole('link', { name: '首页', exact: true }).first().focus()
+  await expect(commissionSubnav).toBeHidden()
+  await commissionLink.focus()
+  await expect(commissionSubnav).toBeVisible()
+  await commissionSubnav.getByRole('link', { name: '掉落领养' }).click()
+  await expect(page).toHaveURL(/\/adoptions$/u)
+  await expect(
+    page.getByTestId('public-header')
+      .locator('.public-header__nav-item--active')
+      .getByRole('link', { name: '委托', exact: true }),
+  ).toBeVisible()
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.getByRole('button', { name: '打开导航' }).click()
+  const mobileNav = page.getByTestId('public-mobile-nav')
+  await expect(mobileNav.getByRole('link', { name: '自设委托' }))
+    .toHaveAttribute('href', '/commission')
+  await expect(mobileNav.getByRole('link', { name: '掉落领养' }))
+    .toHaveAttribute('href', '/adoptions')
+})
+
 test('移动导航可达法律页，委托状态框为圆角矩形且三视口无溢出', async ({ page }) => {
   await seedHomeSlides(page, [
     { alt: '委托页圆角状态框测试图', sortOrder: 0, enabled: true },

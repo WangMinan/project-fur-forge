@@ -1,6 +1,6 @@
 # 实施记录索引
 
-> **状态**：尚未实施。后续 dated notes 只记录执行事实，不覆盖 STATE、SPEC、PLAN 或 TASKS。
+> **状态**：实施中。dated notes 只记录执行事实，不覆盖 STATE、SPEC、PLAN 或 TASKS。
 
 ## 当前入口
 
@@ -10,6 +10,10 @@
 - [`../TASKS.md`](../TASKS.md)：唯一任务清单；
 - [`../../models/README.md`](../../models/README.md)：目标模型；
 - [`../../review/REVIEW.md`](../../review/REVIEW.md)：后续独立 Review。
+
+## 当前记录
+
+- [`T01-NAVIGATION-2026-08-12.md`](./T01-NAVIGATION-2026-08-12.md)：合并委托导航、定向验证与 CI follow-up。
 
 ## 新记录最低要求
 
