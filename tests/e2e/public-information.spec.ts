@@ -69,6 +69,7 @@ test('委托合并导航复用下拉并保持两个业务路由可达', async ({
   })
   await expect(commissionPanel).toHaveCSS('border-top-left-radius', expectedRadius)
 
+  await page.mouse.move(0, 0)
   await page.getByRole('link', { name: '首页', exact: true }).first().focus()
   await expect(commissionSubnav).toBeHidden()
   await commissionLink.focus()
