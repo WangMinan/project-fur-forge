@@ -21,7 +21,9 @@ export function useSiteContentSectionCard<T extends Record<string, unknown>>(opt
    * 直接赋值会让两者共享同一引用：之后管理员的输入同时改到"服务端值"上，
    * dirty 判定永远为 false、保存按钮永远禁用。
    */
-  const cloneOf = (value: T): T => structuredClone(toRaw(value))
+  // 分区草稿均来自严格 Zod DTO，只含 JSON 值。JSON 往返会递归解开 Vue Proxy；
+  // structuredClone(toRaw(value)) 只解最外层，嵌套数组仍是 Proxy 时会抛 DataCloneError。
+  const cloneOf = (value: T): T => JSON.parse(JSON.stringify(value)) as T
 
   const draft = ref(cloneOf(options.extract(options.content()))) as Ref<T>
 

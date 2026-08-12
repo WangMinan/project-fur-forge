@@ -779,10 +779,8 @@ describe('authentication API', () => {
           makingScope: null,
           basicTerms: null,
           privacyPolicy: payload.about.privacyPolicy,
-          officialChannels: [
-            { platform: 'qq', account: '3114559925' },
-            { platform: 'douyin', account: 'to3114559925' },
-          ],
+          // T03：只有账号与 READY 二维码派生同时存在才进入公开投影。
+          officialChannels: [],
         },
       },
     })

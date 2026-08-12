@@ -24,6 +24,7 @@ const {
   content,
   load,
   pageStatus,
+  refreshConflict,
   savedSection,
   saveSection,
   saveStatus,
@@ -45,6 +46,10 @@ async function onSaveSection(
   payload: Record<string, unknown>,
 ) {
   actionError.value = await saveSection(section, payload)
+}
+
+async function onSectionConflict(section: SiteContentSection) {
+  actionError.value = await refreshConflict(section)
 }
 
 onMounted(() => void load())
@@ -131,6 +136,7 @@ onMounted(() => void load())
               :conflict-section="conflictSection"
               :saved-section="savedSection"
               :saving-section="savingSection"
+              @conflict="onSectionConflict('contact')"
               @save="payload => onSaveSection('contact', payload)"
             />
           </div>
