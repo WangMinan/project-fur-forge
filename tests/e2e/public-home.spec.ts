@@ -84,6 +84,8 @@ const SCREENSHOT_DIR =
   'agent_docs/需求1-兽装工作室主页/implementation/notes/t19-t22/t19-t20/screenshots'
 const T28_SCREENSHOT_DIR =
   'agent_docs/需求1-兽装工作室主页/implementation/notes/t28-t34/screenshots'
+const REQUIREMENT_2_SCREENSHOT_DIR =
+  'agent_docs/需求2-站点导航与内容增强/implementation/notes/t15/screenshots'
 
 async function seedHome(
   page: Page,
@@ -290,7 +292,7 @@ test.describe('T20 首页双源轮播', () => {
     await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张')
   })
 
-  test('固定十秒自动轮播：可见暂停、悬停与焦点暂停', async ({ page }) => {
+  test('固定十秒自动轮播：鼠标停留和控件聚焦不隐式暂停，可见按钮可暂停', async ({ page }) => {
     await seedHome(page, { autoRotate: true, autoRotateIntervalMs: 6_000 })
     await page.clock.install()
     await page.goto('/')
@@ -298,28 +300,22 @@ test.describe('T20 首页双源轮播', () => {
     const pause = hero(page).getByRole('button', { name: '暂停自动轮播' })
     await expect(pause).toBeVisible()
 
-    // 悬停暂停：停留在第一张
+    // 鼠标停留在大面积 Hero 上仍自动切换，避免桌面端看起来“卡住”。
     await hero(page).hover()
     await page.clock.fastForward(10_100)
-    await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
+    await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张')
 
-    // 移开但焦点仍在轮播内：继续暂停
-    await page.mouse.move(10, 10)
+    // 控件获得焦点也不成为隐式暂停；键盘用户用同一可见按钮显式暂停。
     await hero(page).getByRole('button', { name: '下一张' }).focus()
     await page.clock.fastForward(10_100)
-    await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
-
-    // 焦点离开后按间隔自动切换
-    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
-    await page.clock.fastForward(10_100)
-    await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张')
+    await expect(liveStatus(page)).toHaveText('第 3 张，共 3 张')
 
     // 可见暂停：点击后不再自动切换
     await pause.click()
     await expect(hero(page).getByRole('button', { name: '继续自动轮播' }))
       .toHaveAttribute('aria-pressed', 'true')
     await page.clock.fastForward(10_100)
-    await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张')
+    await expect(liveStatus(page)).toHaveText('第 3 张，共 3 张')
   })
 
   test('reduced-motion 下自动轮播不启动', async ({ page }) => {
@@ -586,6 +582,22 @@ test.describe('T12 首页最新动态摘要', () => {
       { type: 'other', title: 'E2E 公开动态 Home 4', content: 'Body 4', publishedAt: now + 4 },
       { type: 'other', title: 'E2E 公开动态 Home draft', content: 'Hidden', publicationStatus: 'draft' },
     ])
+    await seedPublicCatalog(page, [
+      ...WORKS,
+      {
+        slug: 'e2e-public-home-updates-adoption',
+        characterName: '动态区对照领养',
+        species: '犬',
+        suitType: 'partial',
+        purpose: 'adoption',
+        adoptionMethod: 'regular',
+        businessStatus: 'available',
+        sortOrder: 4,
+        designSheet: { alt: '动态区对照领养设定图' },
+        photos: [],
+      },
+    ])
+    await seedHomeSlides(page, SLIDES)
 
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
@@ -596,8 +608,29 @@ test.describe('T12 首页最新动态摘要', () => {
     await expect(section.locator('li').nth(2)).toContainText('Home 2')
     await expect(section).not.toContainText('Home 1')
     await expect(section).not.toContainText('Home draft')
+    await expect(section).not.toContainText('工作室通知')
+    const adoptionHeading = page.getByTestId('home-current-adoptions')
+      .getByRole('heading', { name: '当前领养' })
+    const expectedHeadingSize = await adoptionHeading.evaluate(
+      element => getComputedStyle(element).fontSize,
+    )
+    await expect(section.getByRole('heading', { name: '最新动态' }))
+      .toHaveCSS('font-size', expectedHeadingSize)
     await expect(section.getByRole('link', { name: '查看全部' }))
       .toHaveAttribute('href', '/updates')
+
+    const homeEndingOrder = await page.locator([
+      '[data-testid="home-current-adoptions"]',
+      '[data-testid="home-latest-updates"]',
+      '[data-testid="public-footer"]',
+    ].join(',')).evaluateAll(elements => elements.map(element => (
+      element.getAttribute('data-testid')
+    )))
+    expect(homeEndingOrder).toEqual([
+      'home-current-adoptions',
+      'home-latest-updates',
+      'public-footer',
+    ])
 
     const header = page.getByTestId('public-header')
     const topLinks = await header.locator('.public-header__nav-item > .public-header__link')
@@ -631,10 +664,17 @@ test.describe('T12 首页最新动态摘要', () => {
     ]) {
       await page.setViewportSize(viewport)
       await page.goto('/')
-      await expect(page.getByTestId('home-latest-updates')).toBeVisible()
+      const viewportSection = page.getByTestId('home-latest-updates')
+      await expect(viewportSection).toBeVisible()
+      await viewportSection.scrollIntoViewIfNeeded()
       expect(await page.evaluate(() => (
         document.documentElement.scrollWidth - document.documentElement.clientWidth
       ))).toBeLessThanOrEqual(1)
+      await capture(
+        page,
+        `home-latest-updates-${viewport.width}x${viewport.height}`,
+        REQUIREMENT_2_SCREENSHOT_DIR,
+      )
     }
   })
 

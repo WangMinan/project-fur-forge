@@ -1,7 +1,7 @@
 # 任务清单：站点导航与内容增强
 
 > **角色**：PLAN 的可勾选垂直切片；每个任务应在一个实现会话内完成并留下可运行验证。
-> **状态**：实施中；动态方案已锁定，`GATE-01` 与 T01～T15 已完成工程实现，下一项为 T16 独立 Review。
+> **状态**：实施中；动态方案已锁定，`GATE-01`、T01～T15 与预验收修正 T15-F1～T15-F4 已完成，下一项为 T16 独立 Review。
 > **规则**：方案 B 是唯一动态实现路径；任务勾选只代表其定义完成，不代签后续独立 Review、用户验收或 PR 合并。
 
 ## 当前目标
@@ -45,10 +45,14 @@
 - [x] **T13 · 数据与安全回归**：执行新迁移的空库/既有库验证、foreign key/integrity、Schema strict、私有二维码不可读、公开 DTO 无 Key/签名 URL、草稿/下架动态不可见和 Host/Origin/CSRF 回归。 _修改：定向 integration；依赖：T02～T12 中已选择并完成的任务。实现记录：[`notes/T13-DATA-SECURITY-REGRESSION-2026-08-12.md`](./notes/T13-DATA-SECURITY-REGRESSION-2026-08-12.md)。_
 - [x] **T14 · 质量门禁**：运行相关 unit/integration、`pnpm lint`、`pnpm typecheck`、`APP_ENV=production pnpm build`；不得删除或放宽既有断言。 _复用：现有质量脚本；依赖：T13。实现记录：[`notes/T14-QUALITY-GATES-2026-08-12.md`](./notes/T14-QUALITY-GATES-2026-08-12.md)。_
 - [x] **T15 · 三视口真实浏览器验收准备**：分别以公开 `127.0.0.1` 和管理 `localhost` 验证 390×844、768×1024、1440×900；检查 hover/focus、移动菜单、账号溢出、二维码解码/扫码、搜索组合、动态发布/下架、console/network。 _复用：Playwright 与现有 E2E helper；依赖：T14。真实 QR 媒体字节、公开显示和三视口证据已通过；物理手机扫码保留给 T17。实现记录：[`notes/T15-BROWSER-ACCEPTANCE-2026-08-12.md`](./notes/T15-BROWSER-ACCEPTANCE-2026-08-12.md)。_
+- [x] **T15-F1 · 首页轮播自动播放修正**：移除 Hero hover/focus 的隐式暂停门槛，保持固定 10 秒、显式暂停、页面隐藏和 reduced-motion；补鼠标停留、控件聚焦与真实时间/虚拟时钟 E2E，确认隐藏轮播项仍按需加载。 _Edge 合并回归与全量 E2E 通过；实现记录：[`notes/T15-F1-F4-PREACCEPTANCE-FIXES-2026-08-13.md`](./notes/T15-F1-F4-PREACCEPTANCE-FIXES-2026-08-13.md)。_
+- [x] **T15-F2 · 首页动态摘要视觉与顺序修正**：把最近三条动态移到当前领养之后、页脚之前；删除“工作室通知”，让“最新动态”字号、字重、标题基线、上下间距与其它首页模块一致，并覆盖三视口。 _三视口浏览器断言与截图通过；实现记录同 T15-F1。_
+- [x] **T15-F3 · 二维码 FFmpeg 适配与双渠道布局**：新增前向迁移，让原始二维码接受 PNG、JPG/JPEG、WebP、任意长宽比且任一边至少 64 px；复用内嵌 FFmpeg Lanczos 将完整原图 contain 到 640×640 白色画布，不裁切内容，保存私有 `preprocess` 变体并保留原图，再生成既有无水印公开 PNG；保留失败重试，后台显示处理状态，公开端重点验证只有两张渠道卡时不拉伸、不溢出。 _迁移 `0032`、定向 FFmpeg/unit/integration、三视口两卡 E2E 与全量门禁通过；实现记录同 T15-F1。_
+- [x] **T15-F4 · 两条 E2E 根因修复**：修复 `admin-home.spec.ts` 的“首屏设置”与 `requirement-2-acceptance.spec.ts` 的双 Host 三视口用例；保留原有 console/network 与持久化断言，补稳定隔离和确定性等待，并重跑相关 spec 与全量门禁。 _根因分别为过期公开契约断言和漏清委托页媒体引用；Edge 合并 47/47、全量 239/239 通过；实现记录同 T15-F1。_
 - [ ] **T16 · 新上下文独立 Review**：核对 SPEC → PLAN → TASKS → 代码、迁移、媒体和公开投影，记录首次 findings 与修复重测；实现者不得代签。 _新 review 记录；依赖：T15。_
 - [ ] **T17 · 用户验收与闭环**：用户确认导航、联系方式、模板、搜索和动态发布体验；更新 STATE、ARTIFACTS、models、REVIEW 与任务勾选。 _文档闭环；依赖：T16。_
 
 ## 闭环结论
 
-- `GATE-01`、T01～T15 已关闭；下一项为 T16。
+- `GATE-01`、T01～T15 与 T15-F1～T15-F4 已关闭；下一项为 T16。
 - PR #10 仍未合入 `main`；T16 独立 Review、T17 用户验收保持未勾选。

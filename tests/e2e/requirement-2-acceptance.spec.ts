@@ -6,6 +6,15 @@ import {
 } from './helpers/auth'
 import { seedPublicUpdates } from './helpers/public-updates'
 import { capture } from './helpers/screenshots'
+import {
+  resetFakeMedia,
+  resetOfficialChannels,
+} from './helpers/fake-media'
+import {
+  seedHomeSlides,
+  seedPublicCatalog,
+  seedPublicReturns,
+} from './helpers/public-catalog'
 
 const SCREENSHOT_DIR
   = 'agent_docs/需求2-站点导航与内容增强/implementation/notes/t15/screenshots'
@@ -47,6 +56,14 @@ async function expectNoOverflow(page: import('@playwright/test').Page) {
 test('需求2公开与管理关键页面在双 Host 三视口无 console/network 错误', async ({ page }) => {
   test.setTimeout(180_000)
   const runtime = observeRuntime(page)
+  // 全量套件共享夹具库；先移除前序媒体用例的数据库引用并清空内存对象，
+  // 避免把不存在的旧预览误判成当前需求2页面的网络错误。
+  await resetOfficialChannels(page)
+  await seedHomeSlides(page, [])
+  await seedHomeSlides(page, [], undefined, 'commission')
+  await seedPublicCatalog(page, [])
+  await seedPublicReturns(page, [])
+  await resetFakeMedia(page)
   await seedPublicUpdates(page, [{
     type: 'event',
     title: 'E2E 公开动态 T15 验收',

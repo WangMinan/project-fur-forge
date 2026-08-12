@@ -1,7 +1,7 @@
 # 数据模型规划
 
 > **角色**：记录本轮现状模型与目标变更；实现后回填实际迁移和字段。
-> **状态**：T01～T15 已落地；数据模型、媒体投影、质量门禁与三视口浏览器准备已验证，下一步为独立 Review。
+> **状态**：T01～T15 与 T15-F1～T15-F4 已落地；数据模型、媒体投影、质量门禁与三视口浏览器准备已验证，下一步为独立 Review。
 
 ## 0. 当前分支实际变更
 
@@ -49,6 +49,8 @@ format           png
 ```
 
 迁移 `0028_requirement_2_contact_qr.sql` 已扩展 `assets`、`upload_sessions` 与 `asset_variants` 的前向约束。源图限制为至少 320×320、方形、20 MB 内 PNG；公开派生按源宽生成 320/640 PNG 阶梯，不裁切、不加水印。资产仅在整套派生验证完成后进入 READY，失败使用现有资产处理重试 API。
+
+T15-F3 以新前向迁移 `0032_requirement_2_contact_qr_upscale.sql` 覆盖上述首版输入限制：contact QR 原图现接受 PNG、JPG/JPEG、WebP、任意长宽比、20 MB 内且任一边至少 64 px。原图继续私有且字节不变；内嵌 FFmpeg Lanczos 将完整内容等比 contain 到 640×640 白色画布，保存不可变私有 `preprocess` 变体，再由既有 `contact-qr-v1` 生成 320/640 无水印公开 PNG。公开 DTO 仍只投影 READY 的完整 PNG SourceSet，不公开原始格式、私有 Key 或预处理资源。
 
 T04 管理端始终按固定枚举显示五个平台槽位。二维码上传完成后只把 READY `assetId` 写入 contact 本地草稿；管理员执行 contact 局部保存后才更新 `official_channels_json`。上传会话使用 `contact_content_version` 检测并发，409 时刷新服务端最新值但保留当前账号草稿供对比。
 

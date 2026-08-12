@@ -1,7 +1,7 @@
 # 产物索引
 
-> **最后校准**：2026-08-12。
-> **状态**：阶段 0～3 文档已锁定；阶段 4 已完成 T01～T15，等待独立 Review 与用户验收。
+> **最后校准**：2026-08-13。
+> **状态**：阶段 0～3 文档已锁定；阶段 4 已完成 T01～T15 与 T15-F1～T15-F4，等待独立 Review 与用户验收。
 
 ## 文档产物
 
@@ -10,11 +10,11 @@
 | 0 地基 | 产品地基 | `foundation/README.md` | 已锁定 | 增量范围、安全与非目标 |
 | 1 规格 | 需求规格 | `requirements/SPEC.md` | 已锁定 | 五组功能与验收契约；T01～T15 已实现 |
 | 2 计划 | 实施计划 | `planning/PLAN.md` | 已决策 | OQ-001 已选择方案 B |
-| 3 任务 | 任务清单 | `implementation/TASKS.md` | 实施中 | GATE-01、T01～T15 已关闭，仅保留动态方案 B；T16/T17 开放 |
-| 4 实施 | 实施记录 | `implementation/notes/README.md` | 实施中 | T01～T15 已记录 |
+| 3 任务 | 任务清单 | `implementation/TASKS.md` | 实施中 | GATE-01、T01～T15、T15-F1～T15-F4 已关闭；T16/T17 开放 |
+| 4 实施 | 实施记录 | `implementation/notes/README.md` | 实施中 | T01～T15 与预验收修正已记录 |
 | 5 评审 | 评审记录 | `review/REVIEW.md` | 未开始 | 等实现后独立 Review |
 | 6 闭环 | 模型说明 | `models/README.md` | 已落地待评审 | contact、FAQ、搜索与方案 B 动态均已落地并验证 |
-| 6 闭环 | 当前状态 | `STATE.md` | 当前 | T15 已关闭，下一步为 T16 独立 Review |
+| 6 闭环 | 当前状态 | `STATE.md` | 当前 | 预验收修正已关闭，下一步为 T16 独立 Review |
 
 ## 外部与既有资料
 
@@ -48,6 +48,8 @@
 - T07～T14：搜索契约/UI、方案 B 动态后台/公开页/首页、数据安全回归与全量质量门禁，记录见 `implementation/notes/README.md`；
 - T15：真实 QR 测试素材和公开字节保留、双 Host 三视口总体验收、管理账号响应式以及六张证据截图；
 - T15 记录：[`../implementation/notes/T15-BROWSER-ACCEPTANCE-2026-08-12.md`](../implementation/notes/T15-BROWSER-ACCEPTANCE-2026-08-12.md)。
+- T15-F1～F4：`0032_requirement_2_contact_qr_upscale.sql`、二维码 FFmpeg 私有适配、首页轮播/动态修正、两渠道三视口截图及两条 E2E 根因修复；
+- T15-F1～F4 记录：[`../implementation/notes/T15-F1-F4-PREACCEPTANCE-FIXES-2026-08-13.md`](../implementation/notes/T15-F1-F4-PREACCEPTANCE-FIXES-2026-08-13.md)。
 
 ## 待实施产物
 

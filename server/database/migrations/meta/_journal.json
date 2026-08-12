@@ -225,6 +225,13 @@
       "when": 1786540000000,
       "tag": "0031_requirement_2_updates_analytics",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1786590000000,
+      "tag": "0032_requirement_2_contact_qr_upscale",
+      "breakpoints": true
     }
   ]
 }

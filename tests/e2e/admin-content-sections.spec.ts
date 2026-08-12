@@ -3,8 +3,10 @@ import { adminBaseURL, loginAsAdmin, publicBaseURL } from './helpers/auth'
 import {
   contactQrPng,
   fakeMediaState,
+  lowResolutionContactQrPng,
   nonSquareContactQrPng,
   resetFakeMedia,
+  resetOfficialChannels,
   setFakeMediaFlags,
 } from './helpers/fake-media'
 import { capture } from './helpers/screenshots'
@@ -196,14 +198,24 @@ test('官方渠道二维码：固定五行、前置校验、失败重试、保�
   const qq = channels.locator('[data-platform="qq"]')
   await expect(qq).toContainText('公开页暂不显示')
 
-  // 非方形 PNG 在浏览器端直接拒绝，不创建上传会话。
+  // 非方形 PNG 也由 FFmpeg 完整容纳到方形画布，不要求管理员预处理。
   await chooseQr(page, 'qq', 'not-square', nonSquareContactQrPng())
-  await expect(qq.getByRole('alert')).toContainText('至少 320×320 的方形 PNG')
-  expect((await fakeMediaState(page)).putRecords).toHaveLength(0)
+  await expect(qq.getByText('新二维码已上传，保存联系方式后生效。')).toBeVisible()
+  const nonSquareState = await fakeMediaState(page)
+  expect(nonSquareState.objects.some(key => (
+    key.includes('/contact-qr-upscale-lanczos-v1/')
+  ))).toBe(true)
+  expect(nonSquareState.putRecords).toHaveLength(1)
 
-  // 公开派生失败保留私有原图并提供现有 retry-processing 动作。
+  // 低分辨率二维码会显示 FFmpeg 适配进度；失败保留私有原图并提供重试。
   await setFakeMediaFlags(page, { failProcess: true })
-  await chooseQr(page, 'qq', 'qq', contactQrPng())
+  await chooseQr(page, 'qq', 'qq-low-resolution', lowResolutionContactQrPng())
+  await expect(qq.getByTestId('ffmpeg-progress')).toContainText('FFmpeg Lanczos')
+  await expect(qq.getByRole('alert')).toContainText('二维码网页图片生成失败')
+  const failedState = await fakeMediaState(page)
+  expect(failedState.objects.some(key => (
+    key.includes('/contact-qr-upscale-lanczos-v1/')
+  ))).toBe(true)
   await expect(qq.getByRole('alert')).toContainText('二维码网页图片生成失败')
   await expect(qq.getByRole('button', { name: '重试处理' })).toBeVisible()
 
@@ -299,6 +311,60 @@ test('公开官方渠道：五个平台按固定顺序显示 Logo、二维码和
     await capture(
       page,
       `public-five-channels-${viewport.width}x${viewport.height}`,
+      REQUIREMENT_2_SCREENSHOT_DIR,
+    )
+  }
+})
+
+test('公开官方渠道只有两个完整平台时保持卡片阅读宽度并左对齐', async ({ page }) => {
+  await resetOfficialChannels(page)
+  await resetFakeMedia(page)
+  await openContentAdmin(page)
+  const channels = card(page, 'contact')
+  for (const fixture of [
+    { platform: 'qq', account: '123456789' },
+    { platform: 'douyin', account: 'ditedog.studio' },
+  ] as const) {
+    const row = channels.locator(`[data-platform="${fixture.platform}"]`)
+    await row.locator(`#site-field-${fixture.platform}`).fill(fixture.account)
+    await chooseQr(page, fixture.platform, fixture.platform, contactQrPng())
+    await expect(row.getByText('新二维码已上传，保存联系方式后生效。')).toBeVisible()
+  }
+  for (const platform of ['qq_group', 'xiaohongshu', 'bilibili']) {
+    await channels.locator(`#site-field-${platform}`).fill('')
+  }
+  await channels.getByTestId('site-section-save').click()
+  await expect(channels.getByTestId('site-section-saved')).toBeVisible()
+
+  await page.goto(`${publicBaseURL}/about#contact`)
+  const grid = page.getByTestId('contact-channel-grid')
+  const cards = grid.getByTestId('contact-channel-card')
+  await expect(cards).toHaveCount(2)
+  for (const viewport of [
+    { width: 390, height: 844, columns: 2 },
+    { width: 768, height: 1024, columns: 3 },
+    { width: 1440, height: 900, columns: 5 },
+  ]) {
+    await page.setViewportSize(viewport)
+    const metrics = await grid.evaluate((element, columnCount) => {
+      const gridRect = element.getBoundingClientRect()
+      const cardRects = Array.from(element.children, child => child.getBoundingClientRect())
+      return {
+        gridLeft: Math.round(gridRect.left),
+        gridWidth: gridRect.width,
+        cardLefts: cardRects.map(rect => Math.round(rect.left)),
+        cardWidths: cardRects.map(rect => rect.width),
+        expectedMax: gridRect.width / Number(columnCount),
+      }
+    }, viewport.columns)
+    expect(metrics.cardLefts[0]).toBe(metrics.gridLeft)
+    expect(Math.max(...metrics.cardWidths)).toBeLessThanOrEqual(metrics.expectedMax + 4)
+    expect(await page.evaluate(() => (
+      document.documentElement.scrollWidth - document.documentElement.clientWidth
+    ))).toBeLessThanOrEqual(1)
+    await capture(
+      page,
+      `public-two-channels-${viewport.width}x${viewport.height}`,
       REQUIREMENT_2_SCREENSHOT_DIR,
     )
   }

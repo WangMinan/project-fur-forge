@@ -129,15 +129,14 @@ export const createUploadSessionRequestSchema = z.object({
   if (
     input.mediaRole === 'contact_qr'
     && (
-      input.expected.contentType !== 'image/png'
-      || input.expected.width !== input.expected.height
-      || input.expected.width < 320
+      input.expected.width < 64
+      || input.expected.height < 64
       || input.expected.byteSize > 20_000_000
     )
   ) {
     context.addIssue({
       code: 'custom',
-      message: '联系二维码只接受至少 320×320 且不超过 20 MB 的方形 PNG',
+      message: '联系二维码支持 PNG、JPEG、WebP，任一边至少 64 px 且不超过 20 MB',
       path: ['expected'],
     })
   }
