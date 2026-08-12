@@ -30,14 +30,15 @@ function card(page: import('@playwright/test').Page, section: string) {
 
 async function chooseQr(
   page: import('@playwright/test').Page,
-  platformLabel: string,
+  platform: string,
+  fileName: string,
   content: Buffer,
 ) {
   const chooser = page.waitForEvent('filechooser')
-  await card(page, 'contact').locator('[data-platform="qq"]')
+  await card(page, 'contact').locator(`[data-platform="${platform}"]`)
     .getByRole('button', { name: /二维码/u }).click()
   await (await chooser).setFiles({
-    name: `${platformLabel}.png`,
+    name: `${fileName}.png`,
     mimeType: 'image/png',
     buffer: content,
   })
@@ -194,13 +195,13 @@ test('官方渠道二维码：固定五行、前置校验、失败重试、保�
   await expect(qq).toContainText('公开页暂不显示')
 
   // 非方形 PNG 在浏览器端直接拒绝，不创建上传会话。
-  await chooseQr(page, 'not-square', nonSquareContactQrPng())
+  await chooseQr(page, 'qq', 'not-square', nonSquareContactQrPng())
   await expect(qq.getByRole('alert')).toContainText('至少 320×320 的方形 PNG')
   expect((await fakeMediaState(page)).putRecords).toHaveLength(0)
 
   // 公开派生失败保留私有原图并提供现有 retry-processing 动作。
   await setFakeMediaFlags(page, { failProcess: true })
-  await chooseQr(page, 'qq', contactQrPng())
+  await chooseQr(page, 'qq', 'qq', contactQrPng())
   await expect(qq.getByRole('alert')).toContainText('二维码网页图片生成失败')
   await expect(qq.getByRole('button', { name: '重试处理' })).toBeVisible()
 
@@ -221,6 +222,79 @@ test('官方渠道二维码：固定五行、前置校验、失败重试、保�
     /\/api\/admin\/v1\/media\/assets\/[0-9a-f-]+\/preview\?w=320$/u,
   )
   await expect(savedQq).toContainText('信息完整，保存后可在公开页显示。')
+
+  await page.goto(`${publicBaseURL}/about#contact`)
+  const publicGrid = page.getByTestId('contact-channel-grid')
+  const publicQq = publicGrid.locator('[data-platform="qq"]')
+  await expect(publicGrid.getByTestId('contact-channel-card')).toHaveCount(1)
+  await expect(publicQq.getByRole('heading', { name: 'QQ' })).toBeVisible()
+  await expect(publicQq.getByText('123456789', { exact: true })).toBeVisible()
+  await expect(publicQq.locator('.contact-channel-grid__logo'))
+    .toHaveAttribute('src', '/contact-platforms/qq.svg')
+  const publicQr = publicQq.getByRole('img', { name: '扫描QQ官方二维码' })
+  await expect(publicQr).toHaveAttribute('srcset', /contact-qr-v1/u)
+  await expect.poll(() => publicQr.evaluate(
+    element => (element as HTMLImageElement).naturalWidth,
+  )).toBeGreaterThan(0)
+})
+
+test('公开官方渠道：五个平台按固定顺序显示 Logo、二维码和账号，三视口不溢出', async ({ page }) => {
+  await resetFakeMedia(page)
+  await openContentAdmin(page)
+
+  const fixtures = [
+    { platform: 'qq', label: 'QQ', account: '345678901', logo: 'qq.svg' },
+    { platform: 'douyin', label: '抖音', account: 'ditedog.studio', logo: 'douyin.svg' },
+    { platform: 'qq_group', label: 'QQ群', account: '456789012', logo: 'qq.svg' },
+    { platform: 'xiaohongshu', label: '小红书', account: '有点小狗工作室', logo: 'xiaohongshu.svg' },
+    {
+      platform: 'bilibili',
+      label: 'Bilibili',
+      account: 'ditedog-bilibili-account-with-a-long-readable-name',
+      logo: 'bilibili.svg',
+    },
+  ] as const
+
+  const channels = card(page, 'contact')
+  for (const fixture of fixtures) {
+    const row = channels.locator(`[data-platform="${fixture.platform}"]`)
+    await row.locator(`#site-field-${fixture.platform}`).fill(fixture.account)
+    await chooseQr(page, fixture.platform, fixture.platform, contactQrPng())
+    await expect(row.getByText('新二维码已上传，保存联系方式后生效。')).toBeVisible()
+  }
+  await channels.getByTestId('site-section-save').click()
+  await expect(channels.getByTestId('site-section-saved')).toBeVisible()
+
+  await page.goto(`${publicBaseURL}/about#contact`)
+  const grid = page.getByTestId('contact-channel-grid')
+  const cards = grid.getByTestId('contact-channel-card')
+  await expect(cards).toHaveCount(fixtures.length)
+
+  for (const fixture of fixtures) {
+    const channel = grid.locator(`[data-platform="${fixture.platform}"]`)
+    await expect(channel.getByRole('heading', { name: fixture.label })).toBeVisible()
+    await expect(channel.getByText(fixture.account, { exact: true })).toBeVisible()
+    await expect(channel.locator('.contact-channel-grid__logo'))
+      .toHaveAttribute('src', `/contact-platforms/${fixture.logo}`)
+    await expect.poll(() => channel.getByRole('img', {
+      name: `扫描${fixture.label}官方二维码`,
+    }).evaluate(element => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
+  }
+
+  for (const viewport of [
+    { width: 390, height: 844, firstRowCount: 2 },
+    { width: 768, height: 1024, firstRowCount: 3 },
+    { width: 1440, height: 900, firstRowCount: 5 },
+  ]) {
+    await page.setViewportSize(viewport)
+    const cardTops = await cards.evaluateAll(elements => elements.map(
+      element => Math.round(element.getBoundingClientRect().top),
+    ))
+    expect(cardTops.filter(top => top === cardTops[0])).toHaveLength(viewport.firstRowCount)
+    expect(await page.evaluate(() => (
+      document.documentElement.scrollWidth - document.documentElement.clientWidth
+    ))).toBeLessThanOrEqual(1)
+  }
 })
 
 test('官方渠道二维码上传使用 contact 分区版本，冲突后保留草稿并显示最新值', async ({ browser }) => {
@@ -238,7 +312,7 @@ test('官方渠道二维码上传使用 contact 分区版本，冲突后保留�
     await card(pageA, 'contact').getByTestId('site-section-save').click()
     await expect(card(pageA, 'contact').getByTestId('site-section-saved')).toBeVisible()
 
-    await chooseQr(pageB, 'stale-contact', contactQrPng())
+    await chooseQr(pageB, 'qq', 'stale-contact', contactQrPng())
     const conflicted = card(pageB, 'contact')
     await expect(conflicted.getByTestId('site-section-conflict')).toBeVisible()
     await expect(conflicted.locator('#site-field-qq')).toHaveValue('987654321')
