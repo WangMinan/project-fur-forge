@@ -1,5 +1,12 @@
 import { expect, test } from '@playwright/test'
 import { adminBaseURL, loginAsAdmin, publicBaseURL } from './helpers/auth'
+import {
+  contactQrPng,
+  fakeMediaState,
+  nonSquareContactQrPng,
+  resetFakeMedia,
+  setFakeMediaFlags,
+} from './helpers/fake-media'
 import { capture } from './helpers/screenshots'
 
 const SCREENSHOT_DIR
@@ -19,6 +26,21 @@ async function openContentAdmin(page: import('@playwright/test').Page) {
 
 function card(page: import('@playwright/test').Page, section: string) {
   return page.locator(`[data-testid="site-section-card"][data-section="${section}"]`)
+}
+
+async function chooseQr(
+  page: import('@playwright/test').Page,
+  platformLabel: string,
+  content: Buffer,
+) {
+  const chooser = page.waitForEvent('filechooser')
+  await card(page, 'contact').locator('[data-platform="qq"]')
+    .getByRole('button', { name: /二维码/u }).click()
+  await (await chooser).setFiles({
+    name: `${platformLabel}.png`,
+    mimeType: 'image/png',
+    buffer: content,
+  })
 }
 
 test('六个文案分区各自独立保存，互不禁用', async ({ page }) => {
@@ -148,7 +170,86 @@ test('官方渠道 Card：邮箱、QQ、抖音号和防诈骗提醒一次保存�
   await expect(
     contact.getByRole('link', { name: 'channels@example.test' }),
   ).toHaveAttribute('href', 'mailto:channels@example.test')
-  await expect(contact.getByText('123456789', { exact: true })).toBeVisible()
+  // 账号没有 READY 二维码时不进入公开渠道列表。
+  await expect(contact.getByText('123456789', { exact: true })).toHaveCount(0)
+})
+
+test('官方渠道二维码：固定五行、前置校验、失败重试、保存和预览恢复', async ({ page }) => {
+  await resetFakeMedia(page)
+  await openContentAdmin(page)
+  const channels = card(page, 'contact')
+  const rows = channels.locator('[data-platform]')
+  await expect(rows).toHaveCount(5)
+  expect(await rows.evaluateAll(elements => elements.map(
+    element => element.getAttribute('data-platform'),
+  ))).toEqual([
+    'qq',
+    'douyin',
+    'qq_group',
+    'xiaohongshu',
+    'bilibili',
+  ])
+
+  const qq = channels.locator('[data-platform="qq"]')
+  await expect(qq).toContainText('公开页暂不显示')
+
+  // 非方形 PNG 在浏览器端直接拒绝，不创建上传会话。
+  await chooseQr(page, 'not-square', nonSquareContactQrPng())
+  await expect(qq.getByRole('alert')).toContainText('至少 320×320 的方形 PNG')
+  expect((await fakeMediaState(page)).putRecords).toHaveLength(0)
+
+  // 公开派生失败保留私有原图并提供现有 retry-processing 动作。
+  await setFakeMediaFlags(page, { failProcess: true })
+  await chooseQr(page, 'qq', contactQrPng())
+  await expect(qq.getByRole('alert')).toContainText('二维码网页图片生成失败')
+  await expect(qq.getByRole('button', { name: '重试处理' })).toBeVisible()
+
+  await setFakeMediaFlags(page, { failProcess: false })
+  await qq.getByRole('button', { name: '重试处理' }).click()
+  await expect(qq.getByText('新二维码已上传，保存联系方式后生效。')).toBeVisible()
+  await expect(qq.getByRole('img', { name: 'QQ二维码预览' })).toHaveAttribute('src', /^blob:/u)
+  await expect(channels.getByTestId('site-section-dirty')).toBeVisible()
+
+  await channels.locator('#site-field-qq').fill('123456789')
+  await channels.getByTestId('site-section-save').click()
+  await expect(channels.getByTestId('site-section-saved')).toBeVisible()
+
+  await page.reload()
+  const savedQq = card(page, 'contact').locator('[data-platform="qq"]')
+  await expect(savedQq.getByRole('img', { name: 'QQ二维码预览' })).toHaveAttribute(
+    'src',
+    /\/api\/admin\/v1\/media\/assets\/[0-9a-f-]+\/preview\?w=320$/u,
+  )
+  await expect(savedQq).toContainText('信息完整，保存后可在公开页显示。')
+})
+
+test('官方渠道二维码上传使用 contact 分区版本，冲突后保留草稿并显示最新值', async ({ browser }) => {
+  const first = await browser.newContext()
+  const second = await browser.newContext()
+  const pageA = await first.newPage()
+  const pageB = await second.newPage()
+
+  try {
+    await openContentAdmin(pageA)
+    await openContentAdmin(pageB)
+    await card(pageB, 'contact').locator('#site-field-qq').fill('987654321')
+
+    await card(pageA, 'contact').locator('#site-field-qq').fill('234567890')
+    await card(pageA, 'contact').getByTestId('site-section-save').click()
+    await expect(card(pageA, 'contact').getByTestId('site-section-saved')).toBeVisible()
+
+    await chooseQr(pageB, 'stale-contact', contactQrPng())
+    const conflicted = card(pageB, 'contact')
+    await expect(conflicted.getByTestId('site-section-conflict')).toBeVisible()
+    await expect(conflicted.locator('#site-field-qq')).toHaveValue('987654321')
+    await expect(conflicted.getByTestId('site-section-conflict')).toContainText('234567890')
+    await expect(conflicted.getByRole('alert').last())
+      .toContainText('联系方式已在其他地方变化')
+  }
+  finally {
+    await first.close()
+    await second.close()
+  }
 })
 
 test('官方渠道分区并发：同分区第二个上下文冲突，不同分区都成功', async ({ browser }) => {
