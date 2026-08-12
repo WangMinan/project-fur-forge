@@ -24,6 +24,8 @@
 - [`T10-B-UPDATES-ADMIN-2026-08-12.md`](./T10-B-UPDATES-ADMIN-2026-08-12.md)：独立动态表、严格契约、管理 API、后台 CRUD/发布状态与 CAS 冲突。
 - [`T11-PUBLIC-UPDATES-2026-08-12.md`](./T11-PUBLIC-UPDATES-2026-08-12.md)：published-only 公开投影、动态列表页、纯文本安全、SEO 与 sitemap。
 - [`T12-HOME-UPDATES-NAV-2026-08-12.md`](./T12-HOME-UPDATES-NAV-2026-08-12.md)：首页最近三条动态、独立降级、公开导航与 analytics route key。
+- [`T13-DATA-SECURITY-REGRESSION-2026-08-12.md`](./T13-DATA-SECURITY-REGRESSION-2026-08-12.md)：迁移完整性、严格 DTO、二维码私有边界、动态可见性与 Host/Origin/CSRF 回归。
+- [`T14-QUALITY-GATES-2026-08-12.md`](./T14-QUALITY-GATES-2026-08-12.md)：全量 unit/integration、lint、typecheck 与生产构建门禁。
 
 ## 新记录最低要求
 
