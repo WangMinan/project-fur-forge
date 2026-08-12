@@ -11,6 +11,7 @@ const STATIC_PATHS = [
   '/returns',
   '/commission',
   '/adoptions',
+  '/updates',
   '/about',
   '/service',
   '/privacy',

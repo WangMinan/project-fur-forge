@@ -72,6 +72,13 @@ interface ControlBody {
     slug: string
     photos: Array<{ alt: string }>
   }>
+  updates?: Array<{
+    content: string
+    publicationStatus?: 'draft' | 'published' | 'unpublished'
+    publishedAt?: number
+    title: string
+    type: 'event' | 'drop' | 'commission_open' | 'other'
+  }>
   slides?: Array<{
     alt: string
     sortOrder: number
@@ -169,6 +176,37 @@ export default defineEventHandler(async (event) => {
 
   if (body?.action === 'resetRateLimits') {
     resetRequestRateLimits()
+    return { data: { ok: true } }
+  }
+
+  if (body?.action === 'seedPublicUpdates') {
+    const sqlite = getDatabase().sqlite
+    const now = Date.now()
+    sqlite.prepare(`
+      DELETE FROM updates WHERE title LIKE 'E2E 公开动态%'
+    `).run()
+    const insert = sqlite.prepare(`
+      INSERT INTO updates (
+        id, type, title, content, publication_status, published_at,
+        version, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)
+    `)
+    body.updates?.forEach((update, index) => {
+      const status = update.publicationStatus ?? 'published'
+      const publishedAt = status === 'draft'
+        ? null
+        : update.publishedAt ?? now + index
+      insert.run(
+        randomUUID(),
+        update.type,
+        update.title,
+        update.content,
+        status,
+        publishedAt,
+        now + index,
+        now + index,
+      )
+    })
     return { data: { ok: true } }
   }
 

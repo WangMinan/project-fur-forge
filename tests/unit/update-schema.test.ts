@@ -43,6 +43,10 @@ describe('update schemas', () => {
       ...fields,
       title: 'x'.repeat(201),
     }).success).toBe(false)
+    expect(createUpdateRequestSchema.safeParse({
+      ...fields,
+      content: '<script>alert(1)</script>',
+    }).success).toBe(false)
     expect(mutateUpdateRequestSchema.safeParse({
       expectedVersion: 1,
       payload: { scheduledAt: null },

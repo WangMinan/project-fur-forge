@@ -6,7 +6,7 @@
 
 ## 当前阶段
 
-阶段 4 · 已进入串行实现，动态后台方案锁定为 B，T01～T10-B 已完成；PR 合并、独立 Review 和用户验收尚未完成。
+阶段 4 · 已进入串行实现，动态后台方案锁定为 B，T01～T11 已完成；PR 合并、独立 Review 和用户验收尚未完成。
 
 T03 已接入 `site/contact` 私有二维码上传、`contact-qr-v1` 无水印方形 PNG 公开派生、失败重试与 READY 公开投影。
 
@@ -22,6 +22,8 @@ T08/T09 已把共用原生 GET 搜索表单接入作品、领养和返图页；�
 
 T10-B 已新增 `updates` 独立表、严格契约、repository/service/管理 API 与 `/admin/updates`，支持逐条草稿、编辑、发布、下架、删除、审计及 409 本地草稿保留；公开页尚由 T11 接续。
 
+T11 已新增 published-only 公开 DTO/API、`/updates` 纯文本列表页、受控状态、SEO/canonical 与 sitemap；草稿和下架记录在 SQL 层排除。
+
 当前分支为 `feat/requirement-2`。T01 实现代码 SHA `a38c295` 的 GitHub Actions run [`31515689322`](https://github.com/WangMinan/project-fur-forge/actions/runs/31515689322) 已取得 `checks`、`image-build`、`e2e` 全部成功；该结果只绑定该 SHA，包含 T02 的后续 HEAD 须重新查询远端检查。PR [#10](https://github.com/WangMinan/project-fur-forge/pull/10) 仍为 open，尚未合入 `main`。工程证据不代签 T16 独立 Review 或 T17 用户验收。
 
 ## 已确认结论
@@ -31,13 +33,13 @@ T10-B 已新增 `updates` 独立表、严格契约、repository/service/管理 A
 - 后台作品列表已有名称/物种包含匹配；后台返图列表已有名称/昵称包含匹配。
 - 联系方式已由 `site_content.official_channels_json` 保存固定五平台数组；旧 QQ/抖音完成迁移，二维码媒体链、完整五行管理界面及公开 Logo/二维码卡片已实现，真实账号补齐与手机扫码验收尚未完成。
 - 委托 FAQ 已由 `/admin/site/content` 管理，并保存在 `commission_faq_json`；邮件估价标准模板已通过前向 SQLite 迁移追加，不包含 SMTP。
-- 项目已有“最新动态”独立数据模型与管理入口；公开页、首页区块和公开导航尚未接入。
+- 项目已有“最新动态”独立数据模型、管理入口与公开列表页；首页区块和公开导航由 T12 接入。
 - 公开导航已把“自设委托”和“角色领养”合并为“委托”，桌面下拉与移动菜单继续复用现有组件。
 - “掉落领养”只是 `/adoptions` 的新导航标签；页面仍同时展示常规领养与展会掉落，没有改变筛选、数据模型或发布语义。
 
 ## 当前约束
 
-- 只按 TASKS 串行实施；当前 `GATE-01`、T01～T10-B 已勾选。
+- 只按 TASKS 串行实施；当前 `GATE-01`、T01～T11 已勾选。
 - T01 后续文档或代码若产生新 SHA，必须重新查询该 SHA 的远端检查，不沿用 `a38c295` 的结果。
 - 不重写历史迁移，只能新增前向迁移。
 - 保留现有邮箱联系方式；五个平台卡片是新增，不是删除邮箱。
@@ -52,6 +54,6 @@ T10-B 已新增 `updates` 独立表、严格契约、repository/service/管理 A
 
 ## 下一步交接
 
-1. 按 T11 实现公开动态投影、API 与 `/updates`；
-2. 完成后进入 T12 首页摘要与导航/统计接入；
+1. 按 T12 接入首页最近三条动态、桌面/移动导航和统计 route key；
+2. 然后进入 T13 数据与安全回归、T14 全量质量门禁；
 3. 保持 T16 独立 Review、T17 用户验收开放，不能用早期 SHA 的 CI 结果提前关闭。
