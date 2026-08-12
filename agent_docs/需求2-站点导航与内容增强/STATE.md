@@ -6,7 +6,7 @@
 
 ## 当前阶段
 
-阶段 4 · 已进入串行实现，动态后台方案锁定为 B，T01～T12 已完成；PR 合并、独立 Review 和用户验收尚未完成。
+阶段 4 · 已进入串行实现，动态后台方案锁定为 B，T01～T14 已完成；PR 合并、独立 Review 和用户验收尚未完成。
 
 T03 已接入 `site/contact` 私有二维码上传、`contact-qr-v1` 无水印方形 PNG 公开派生、失败重试与 READY 公开投影。
 
@@ -26,6 +26,10 @@ T11 已新增 published-only 公开 DTO/API、`/updates` 纯文本列表页、�
 
 T12 已把最近 3 条 published 动态接入可单独降级的 home aggregate，在业务入口后展示首页摘要，并把“最新动态”加入桌面/移动共用导航、页脚及 analytics route key；SQLite 白名单由前向迁移扩展。
 
+T13 已完成空库/既有库迁移、foreign key/integrity、严格 Schema、二维码私有边界、动态公开投影和 Host/Origin/CSRF 定向回归；新增 `0031` 既有事件保留测试，并修正 T06 FAQ 迁移后过期的版本 fixture。
+
+T14 已通过全量 unit 177/177、integration 188/188、lint、typecheck、production build 与生产内容防泄漏守卫；没有删除或放宽既有断言。
+
 当前分支为 `feat/requirement-2`。T01 实现代码 SHA `a38c295` 的 GitHub Actions run [`31515689322`](https://github.com/WangMinan/project-fur-forge/actions/runs/31515689322) 已取得 `checks`、`image-build`、`e2e` 全部成功；该结果只绑定该 SHA，包含 T02 的后续 HEAD 须重新查询远端检查。PR [#10](https://github.com/WangMinan/project-fur-forge/pull/10) 仍为 open，尚未合入 `main`。工程证据不代签 T16 独立 Review 或 T17 用户验收。
 
 ## 已确认结论
@@ -41,7 +45,7 @@ T12 已把最近 3 条 published 动态接入可单独降级的 home aggregate�
 
 ## 当前约束
 
-- 只按 TASKS 串行实施；当前 `GATE-01`、T01～T12 已勾选。
+- 只按 TASKS 串行实施；当前 `GATE-01`、T01～T14 已勾选。
 - T01 后续文档或代码若产生新 SHA，必须重新查询该 SHA 的远端检查，不沿用 `a38c295` 的结果。
 - 不重写历史迁移，只能新增前向迁移。
 - 保留现有邮箱联系方式；五个平台卡片是新增，不是删除邮箱。
@@ -56,6 +60,6 @@ T12 已把最近 3 条 published 动态接入可单独降级的 home aggregate�
 
 ## 下一步交接
 
-1. 进入 T13 数据与安全回归、T14 全量质量门禁；
-2. 按 T15 完成公开/管理双 Host 与三视口真实浏览器验收准备；
-3. 保持 T16 独立 Review、T17 用户验收开放，不能用早期 SHA 的 CI 结果提前关闭。
+1. 按 T15 完成公开/管理双 Host 与三视口真实浏览器验收准备；
+2. 由新上下文执行 T16 独立 Review 并记录首次 findings、修复与重测；
+3. 保持 T17 用户验收开放，不能用工程或 CI 结果代签。

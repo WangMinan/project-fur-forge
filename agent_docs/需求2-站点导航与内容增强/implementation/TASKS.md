@@ -1,7 +1,7 @@
 # 任务清单：站点导航与内容增强
 
 > **角色**：PLAN 的可勾选垂直切片；每个任务应在一个实现会话内完成并留下可运行验证。
-> **状态**：实施中；动态方案已锁定，`GATE-01` 与 T01～T12 已完成工程实现，下一项为 T13。
+> **状态**：实施中；动态方案已锁定，`GATE-01` 与 T01～T13 已完成工程实现，下一项为 T14。
 > **规则**：方案 B 是唯一动态实现路径；任务勾选只代表其定义完成，不代签后续独立 Review、用户验收或 PR 合并。
 
 ## 当前目标
@@ -42,13 +42,13 @@
 
 ## 验证与评审
 
-- [ ] **T13 · 数据与安全回归**：执行新迁移的空库/既有库验证、foreign key/integrity、Schema strict、私有二维码不可读、公开 DTO 无 Key/签名 URL、草稿/下架动态不可见和 Host/Origin/CSRF 回归。 _修改：定向 integration；依赖：T02～T12 中已选择并完成的任务。_
-- [ ] **T14 · 质量门禁**：运行相关 unit/integration、`pnpm lint`、`pnpm typecheck`、`APP_ENV=production pnpm build`；不得删除或放宽既有断言。 _复用：现有质量脚本；依赖：T13。_
+- [x] **T13 · 数据与安全回归**：执行新迁移的空库/既有库验证、foreign key/integrity、Schema strict、私有二维码不可读、公开 DTO 无 Key/签名 URL、草稿/下架动态不可见和 Host/Origin/CSRF 回归。 _修改：定向 integration；依赖：T02～T12 中已选择并完成的任务。实现记录：[`notes/T13-DATA-SECURITY-REGRESSION-2026-08-12.md`](./notes/T13-DATA-SECURITY-REGRESSION-2026-08-12.md)。_
+- [x] **T14 · 质量门禁**：运行相关 unit/integration、`pnpm lint`、`pnpm typecheck`、`APP_ENV=production pnpm build`；不得删除或放宽既有断言。 _复用：现有质量脚本；依赖：T13。实现记录：[`notes/T14-QUALITY-GATES-2026-08-12.md`](./notes/T14-QUALITY-GATES-2026-08-12.md)。_
 - [ ] **T15 · 三视口真实浏览器验收准备**：分别以公开 `127.0.0.1` 和管理 `localhost` 验证 390×844、768×1024、1440×900；检查 hover/focus、移动菜单、账号溢出、二维码解码/扫码、搜索组合、动态发布/下架、console/network。 _复用：Playwright 与现有 E2E helper；依赖：T14。_
 - [ ] **T16 · 新上下文独立 Review**：核对 SPEC → PLAN → TASKS → 代码、迁移、媒体和公开投影，记录首次 findings 与修复重测；实现者不得代签。 _新 review 记录；依赖：T15。_
 - [ ] **T17 · 用户验收与闭环**：用户确认导航、联系方式、模板、搜索和动态发布体验；更新 STATE、ARTIFACTS、models、REVIEW 与任务勾选。 _文档闭环；依赖：T16。_
 
 ## 闭环结论
 
-- `GATE-01`、T01～T12 已关闭；下一项为 T13。
+- `GATE-01`、T01～T14 已关闭；下一项为 T15。
 - PR #10 仍未合入 `main`；T16 独立 Review、T17 用户验收保持未勾选。

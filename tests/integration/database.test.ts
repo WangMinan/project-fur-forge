@@ -178,6 +178,30 @@ function migrationsBeforeUpdates(databaseFile: string) {
   return folder
 }
 
+function migrationsBeforeUpdatesAnalytics(databaseFile: string) {
+  const folder = resolve(dirname(databaseFile), 'pre-updates-analytics-migrations')
+  const meta = resolve(folder, 'meta')
+  mkdirSync(meta, { recursive: true })
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  const entries = journal.entries.slice(0, journal.entries.findIndex(
+    entry => entry.tag === '0031_requirement_2_updates_analytics',
+  ))
+  for (const { tag } of entries) {
+    copyFileSync(
+      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
+      resolve(folder, `${tag}.sql`),
+    )
+  }
+  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
+    ...journal,
+    entries,
+  }))
+  return folder
+}
+
 afterEach(() => {
   temporaryDirectories.splice(0).forEach(directory => rmSync(
     directory,
@@ -414,6 +438,60 @@ describe('SQLite foundation', () => {
       `).pluck().get()).toBe('kept@example.test')
       expect(upgraded.sqlite.pragma('foreign_key_check')).toEqual([])
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
+    }
+    finally {
+      upgraded.sqlite.close()
+    }
+  })
+
+  it('extends the analytics route whitelist without losing existing events', async () => {
+    const databaseFile = temporaryDatabase()
+    await migrateDatabase(databaseFile, {
+      migrationsFolder: migrationsBeforeUpdatesAnalytics(databaseFile),
+    })
+    const legacy = openDatabase(databaseFile)
+    try {
+      legacy.sqlite.prepare(`
+        INSERT INTO analytics_events (
+          occurred_at, event_type, route_key,
+          entity_type, entity_id, action_key, session_hmac
+        ) VALUES (?, 'page_view', 'home', NULL, NULL, NULL, ?)
+      `).run(Date.UTC(2026, 7, 12), 'a'.repeat(64))
+      expect(() => legacy.sqlite.prepare(`
+        INSERT INTO analytics_events (
+          occurred_at, event_type, route_key,
+          entity_type, entity_id, action_key, session_hmac
+        ) VALUES (?, 'page_view', 'updates', NULL, NULL, NULL, ?)
+      `).run(Date.UTC(2026, 7, 12), 'b'.repeat(64)))
+        .toThrow(/analytics_events_route_key/u)
+    }
+    finally {
+      legacy.sqlite.close()
+    }
+
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
+      applied: migrationCountFrom('0031_requirement_2_updates_analytics'),
+    })
+    const upgraded = openDatabase(databaseFile)
+    try {
+      expect(upgraded.sqlite.prepare(`
+        SELECT route_key FROM analytics_events ORDER BY id
+      `).pluck().all()).toEqual(['home'])
+      upgraded.sqlite.prepare(`
+        INSERT INTO analytics_events (
+          occurred_at, event_type, route_key,
+          entity_type, entity_id, action_key, session_hmac
+        ) VALUES (?, 'page_view', 'updates', NULL, NULL, NULL, ?)
+      `).run(Date.UTC(2026, 7, 12) + 1, 'b'.repeat(64))
+      expect(upgraded.sqlite.prepare(`
+        SELECT route_key FROM analytics_events ORDER BY id
+      `).pluck().all()).toEqual(['home', 'updates'])
+      expect(upgraded.sqlite.pragma('foreign_key_check')).toEqual([])
+      expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
+      expect(upgraded.sqlite.prepare(`
+        SELECT name FROM sqlite_master
+        WHERE type = 'index' AND name = 'analytics_events_route_occurred_idx'
+      `).pluck().get()).toBe('analytics_events_route_occurred_idx')
     }
     finally {
       upgraded.sqlite.close()

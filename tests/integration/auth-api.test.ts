@@ -563,7 +563,7 @@ describe('authentication API', () => {
         version: 1,
         sectionVersions: {
           commission: 1,
-          commissionFaq: 1,
+          commissionFaq: 2,
           about: 1,
           terms: 1,
           privacy: 1,
@@ -702,13 +702,13 @@ describe('authentication API', () => {
     expectPrivateResponseHeaders(updatedContent)
     await expect(updatedContent.json()).resolves.toMatchObject({
       data: {
-        sectionVersions: { commission: 2, commissionFaq: 1, about: 1 },
+        sectionVersions: { commission: 2, commissionFaq: 2, about: 1 },
         commission: commissionPayload,
       },
     })
 
     // 不同分区各自保存都成功，且只推进自己的版本。
-    expect((await putSection('commission-faq', 1, faqPayload)).status).toBe(200)
+    expect((await putSection('commission-faq', 2, faqPayload)).status).toBe(200)
     expect((await putSection('privacy', 1, privacyPayload)).status).toBe(200)
     expect((await putSection('contact', 1, contactPayload)).status).toBe(200)
     // 同一分区用旧版本再保存拿到 409。
