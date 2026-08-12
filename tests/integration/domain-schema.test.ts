@@ -897,6 +897,10 @@ describe('P0 schema boundary', () => {
     expect(sqlite.prepare(`
       SELECT contact_douyin FROM site_content WHERE id = 'site'
     `).pluck().get()).toBe('to3114559925')
+    expect(() => sqlite.prepare(`
+      UPDATE site_content SET official_channels_json = '[]'
+      WHERE id = 'site'
+    `).run()).toThrow(/site_content_official_channels_json/)
     expect(sqlite.prepare('SELECT count(*) FROM business_statuses').pluck().get())
       .toBe(2)
     expect(() => sqlite.prepare(`

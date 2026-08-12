@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import {
   adminSiteContentDtoSchema,
+  adminOfficialChannelsSchema,
   commissionFaqListSchema,
   publicSiteContentDtoSchema,
 } from '../../../shared/schemas/site-content'
@@ -25,9 +26,8 @@ interface SiteContentRow {
   commissionIntro: string | null
   contactAntiScam: string | null
   contactContentVersion: number
-  contactDouyin: string | null
   contactEmail: string
-  contactQq: string
+  officialChannelsJson: string
   privacyContentVersion: number
   privacyPolicy: string | null
   termsContentVersion: number
@@ -51,8 +51,8 @@ const statusHref = {
 function siteContentRow(sqlite: Database.Database) {
   const row = sqlite.prepare(`
     SELECT
-      version, contact_email AS contactEmail, contact_qq AS contactQq,
-      contact_douyin AS contactDouyin,
+      version, contact_email AS contactEmail,
+      official_channels_json AS officialChannelsJson,
       commission_intro AS commissionIntro,
       commission_estimate_note AS commissionEstimateNote,
       commission_email_action AS commissionEmailAction,
@@ -70,7 +70,7 @@ function siteContentRow(sqlite: Database.Database) {
       contact_content_version AS contactContentVersion
     FROM site_content WHERE id = 'site'
   `).get() as SiteContentRow | undefined
-  if (!row || !row.contactEmail || !row.contactQq) {
+  if (!row || !row.contactEmail) {
     throw new ServiceError(500, 'INTERNAL_ERROR', 'Site content is unavailable.')
   }
   return row
@@ -94,6 +94,15 @@ function faqs(raw: string | null) {
   }
   catch {
     throw new ServiceError(500, 'INTERNAL_ERROR', 'Site FAQ data is invalid.')
+  }
+}
+
+function officialChannels(raw: string) {
+  try {
+    return adminOfficialChannelsSchema.parse(JSON.parse(raw))
+  }
+  catch {
+    throw new ServiceError(500, 'INTERNAL_ERROR', 'Official channel data is invalid.')
   }
 }
 
@@ -124,8 +133,7 @@ function content(sqlite: Database.Database): AdminSiteContentDto {
     },
     contact: {
       email: row.contactEmail,
-      qq: row.contactQq,
-      douyin: row.contactDouyin,
+      officialChannels: officialChannels(row.officialChannelsJson),
       antiScam: row.contactAntiScam,
     },
   })
@@ -144,6 +152,9 @@ export function getPublicSiteContent(sqlite: Database.Database) {
     detail: status.detail,
     href: status.href,
   })
+  const publicChannels = current.contact.officialChannels
+    .filter(channel => channel.account !== null)
+    .map(channel => ({ platform: channel.platform, account: channel.account! }))
   return publicSiteContentDtoSchema.parse({
     statuses: {
       commission: publicStatus(current.statuses.commission),
@@ -156,13 +167,13 @@ export function getPublicSiteContent(sqlite: Database.Database) {
     },
     about: {
       ...current.about,
-      officialChannels: {
-        email: current.contact.email,
-        qq: current.contact.qq,
-        douyin: current.contact.douyin,
-      },
+      officialChannels: publicChannels,
     },
-    contact: current.contact,
+    contact: {
+      email: current.contact.email,
+      officialChannels: publicChannels,
+      antiScam: current.contact.antiScam,
+    },
   })
 }
 
@@ -207,7 +218,7 @@ const SECTION_UPDATES = {
   'contact': {
     versionColumn: 'contact_content_version',
     action: 'SITE_CONTACT_CONTENT_UPDATE',
-    assignments: 'contact_email = @email, contact_qq = @qq, contact_douyin = @douyin, contact_anti_scam = @antiScam',
+    assignments: 'contact_email = @email, official_channels_json = @officialChannelsJson, contact_anti_scam = @antiScam',
   },
 } as const satisfies Record<SiteContentSection, {
   action: string

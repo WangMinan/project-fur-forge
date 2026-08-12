@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { updateHomeSettingsRequestSchema } from '../../shared/schemas/home'
 import {
+  adminOfficialChannelsSchema,
   contactDouyinSchema,
   publicSiteContentDtoSchema,
   updateAboutContentRequestSchema,
@@ -9,6 +10,14 @@ import {
   updateContactContentRequestSchema,
   updateSiteBusinessStatusRequestSchema,
 } from '../../shared/schemas/site-content'
+
+const officialChannels = (qq: string | null = '3114559925', douyin: string | null = null) => [
+  { platform: 'qq', account: qq, qrCodeAssetId: null },
+  { platform: 'douyin', account: douyin, qrCodeAssetId: null },
+  { platform: 'qq_group', account: null, qrCodeAssetId: null },
+  { platform: 'xiaohongshu', account: null, qrCodeAssetId: null },
+  { platform: 'bilibili', account: null, qrCodeAssetId: null },
+] as const
 
 const emptyContent = {
   commission: {
@@ -24,7 +33,7 @@ const emptyContent = {
     privacyPolicy: null,
   },
   contact: {
-    douyin: null,
+    officialChannels: [],
     antiScam: null,
   },
 }
@@ -47,27 +56,26 @@ describe('restricted site content contracts', () => {
       expectedVersion: 1,
       payload: { studioFacts: null, makingScope: null },
     }).success).toBe(true)
-    // T34-F3：邮箱与 QQ 现在也属于 contact 分区，且是公开投影必需字段。
+    // T02：邮箱与固定五平台数组属于同一个 contact 分区。
     expect(updateContactContentRequestSchema.safeParse({
       expectedVersion: 1,
       payload: {
         email: 'studio@example.test',
-        qq: '3114559925',
-        douyin: null,
+        officialChannels: officialChannels(),
         antiScam: null,
       },
     }).success).toBe(true)
     expect(updateContactContentRequestSchema.safeParse({
       expectedVersion: 1,
-      payload: { douyin: null, antiScam: null },
+      payload: { officialChannels: officialChannels(), antiScam: null },
     }).success).toBe(false)
     for (const invalid of [
-      { email: 'invalid', qq: '3114559925' },
-      { email: 'studio@example.test', qq: '0123' },
+      { email: 'invalid', officialChannels: officialChannels() },
+      { email: 'studio@example.test', officialChannels: officialChannels('0123') },
     ]) {
       expect(updateContactContentRequestSchema.safeParse({
         expectedVersion: 1,
-        payload: { ...invalid, douyin: null, antiScam: null },
+        payload: { ...invalid, antiScam: null },
       }).success).toBe(false)
     }
     // 分区请求不接受其它分区字段，避免整包覆盖复活。
@@ -77,6 +85,12 @@ describe('restricted site content contracts', () => {
     }).success).toBe(false)
     expect(contactDouyinSchema.safeParse('to3114559925').success).toBe(true)
     expect(contactDouyinSchema.safeParse('@invalid handle').success).toBe(false)
+    expect(adminOfficialChannelsSchema.safeParse(officialChannels()).success).toBe(true)
+    expect(adminOfficialChannelsSchema.safeParse([
+      officialChannels()[1],
+      officialChannels()[0],
+      ...officialChannels().slice(2),
+    ]).success).toBe(false)
     // 首屏设置只写口号与轮播行为。
     expect(updateHomeSettingsRequestSchema.safeParse({
       expectedVersion: 1,
@@ -172,16 +186,11 @@ describe('restricted site content contracts', () => {
       },
       about: {
         ...emptyContent.about,
-        officialChannels: {
-          email: 'studio@example.test',
-          qq: '123456789',
-          douyin: null,
-        },
+        officialChannels: [{ platform: 'qq', account: '123456789' }],
       },
       contact: {
         email: 'studio@example.test',
-        qq: '123456789',
-        douyin: null,
+        officialChannels: [{ platform: 'qq', account: '123456789' }],
         antiScam: null,
       },
     }

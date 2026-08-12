@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { PROJECT_NAME } from '~~/shared/constants/project'
+import { CONTACT_PLATFORM_LABELS } from '~~/shared/constants/contact'
 import { publicSiteContentResponseSchema } from '~~/shared/schemas/site-content'
 
 /**
@@ -78,13 +79,9 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
         </p>
         <ContactEmailActions :email="contact.email" />
         <ul class="about-page__channels" role="list">
-          <li>
-            <span class="about-page__channel-label">QQ</span>
-            <span class="about-page__channel-value">{{ contact.qq }}</span>
-          </li>
-          <li v-if="contact.douyin">
-            <span class="about-page__channel-label">抖音</span>
-            <span class="about-page__channel-value">{{ contact.douyin }}</span>
+          <li v-for="channel in contact.officialChannels" :key="channel.platform">
+            <span class="about-page__channel-label">{{ CONTACT_PLATFORM_LABELS[channel.platform] }}</span>
+            <span class="about-page__channel-value">{{ channel.account }}</span>
           </li>
         </ul>
         <div v-if="antiScamParagraphs.length > 0" class="about-page__antiscam">

@@ -1,11 +1,11 @@
 # 数据模型规划
 
 > **角色**：记录本轮现状模型与目标变更；实现后回填实际迁移和字段。
-> **状态**：T01 已落地且不涉及数据模型；T02 及后续模型仍为规划稿，动态方案 B 已锁定。
+> **状态**：T01～T02 已落地；二维码媒体、FAQ、搜索与动态方案 B 尚未落地。
 
 ## 0. 当前分支实际变更
 
-T01 只修改 `PUBLIC_NAV_ITEMS` 与 E2E，没有新增或修改表、列、迁移、DTO、媒体角色、运行时配置或云端对象。下文从“联系方式目标模型”起均是 T02 之后的目标设计，不能当作当前数据库事实。
+T01 只修改 `PUBLIC_NAV_ITEMS` 与 E2E。T02 新增 `official_channels_json`、管理/公开 DTO 和 contact 保存投影，但尚未增加媒体角色、运行时配置或云端对象。
 
 ## 1. 现状
 
@@ -29,11 +29,11 @@ officialChannels[5]
 antiScam
 ```
 
-建议持久化为 `site_content.official_channels_json`：
+已由迁移 `0027_requirement_2_contact_channels.sql` 持久化为 `site_content.official_channels_json`：
 
 - 数组必须恰好覆盖五个平台且 platform 不重复；
 - 账号与二维码引用迁移期可空；
-- 公开投影只输出完整、READY 项；
+- T02 公开投影只输出有账号的项；T03 接入二维码派生后收紧为完整、READY 项；
 - 邮箱继续独立保存，不混进平台数组；
 - 旧 `contact_qq`、`contact_douyin` 在本轮保留，供前向迁移与回滚读取；迁移完成后新写入口以 `official_channels_json` 为权威，不再双写旧列。旧列的物理删除不属于本需求，不能重写历史迁移。
 
