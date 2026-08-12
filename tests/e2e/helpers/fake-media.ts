@@ -123,6 +123,17 @@ export function lowResolutionHeroPng(
   ) as Buffer)
 }
 
+let contactQrSource: Buffer | null = null
+
+export function contactQrPng(): Buffer {
+  contactQrSource ??= createSyntheticSourcePng(640, 640) as Buffer
+  return uniquePng(contactQrSource)
+}
+
+export function nonSquareContactQrPng(): Buffer {
+  return uniquePng(createSyntheticSourcePng(640, 320) as Buffer)
+}
+
 // T20 大图管理 E2E：临时停用/恢复活动水印 profile（验证预览与启用阻断）。
 export async function setWatermarkProfileActive(page: Page, active: boolean) {
   await control(page, { action: 'setWatermarkProfileActive', active })

@@ -82,6 +82,17 @@ export function useAdminSiteContent() {
     }
   }
 
+  async function refreshConflict(section: SiteSaveSection): Promise<string | null> {
+    conflictSection.value = section
+    try {
+      await refresh()
+      return null
+    }
+    catch {
+      return '最新内容加载失败，请刷新页面后重试。'
+    }
+  }
+
   async function runMutation(
     request: () => Promise<AdminSiteContentDto>,
     section: SiteSaveSection,
@@ -158,6 +169,7 @@ export function useAdminSiteContent() {
     content,
     load,
     pageStatus,
+    refreshConflict,
     savedSection,
     saveSection,
     saveStatus,

@@ -1,11 +1,11 @@
 # 数据模型规划
 
 > **角色**：记录本轮现状模型与目标变更；实现后回填实际迁移和字段。
-> **状态**：T01～T03 已落地；FAQ、搜索与动态方案 B 尚未落地。
+> **状态**：T01～T04 已落地；公开渠道卡片、FAQ、搜索与动态方案 B 尚未落地。
 
 ## 0. 当前分支实际变更
 
-T01 只修改 `PUBLIC_NAV_ITEMS` 与 E2E。T02 新增 `official_channels_json`、管理/公开 DTO 和 contact 保存投影。T03 新增 `contact_qr`、`contact-qr-v1`、`site/contact` 上传归属及 READY SourceSet 投影。
+T01 只修改 `PUBLIC_NAV_ITEMS` 与 E2E。T02 新增 `official_channels_json`、管理/公开 DTO 和 contact 保存投影。T03 新增 `contact_qr`、`contact-qr-v1`、`site/contact` 上传归属及 READY SourceSet 投影。T04 复用这些契约完成固定五行管理编辑，不新增表、字段或第二个 contact 版本。
 
 ## 1. 现状
 
@@ -49,6 +49,8 @@ format           png
 ```
 
 迁移 `0028_requirement_2_contact_qr.sql` 已扩展 `assets`、`upload_sessions` 与 `asset_variants` 的前向约束。源图限制为至少 320×320、方形、20 MB 内 PNG；公开派生按源宽生成 320/640 PNG 阶梯，不裁切、不加水印。资产仅在整套派生验证完成后进入 READY，失败使用现有资产处理重试 API。
+
+T04 管理端始终按固定枚举显示五个平台槽位。二维码上传完成后只把 READY `assetId` 写入 contact 本地草稿；管理员执行 contact 局部保存后才更新 `official_channels_json`。上传会话使用 `contact_content_version` 检测并发，409 时刷新服务端最新值但保留当前账号草稿供对比。
 
 ## 3. FAQ 目标变更
 
