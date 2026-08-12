@@ -62,6 +62,21 @@ async function adminHomeSettings(page: Page) {
   return body.data
 }
 
+async function adminContactSnapshot(page: Page) {
+  const response = await page.request.get(`${adminBaseURL}/api/admin/v1/site/home/content`)
+  expect(response.status(), '读取文案配置应成功').toBe(200)
+  const body = await response.json() as {
+    data: {
+      contact: unknown
+      sectionVersions: { contact: number }
+    }
+  }
+  return {
+    contact: body.data.contact,
+    version: body.data.sectionVersions.contact,
+  }
+}
+
 async function publicHomeAlts(page: Page) {
   const response = await page.request.get(`${publicBaseURL}/api/public/v1/home`)
   expect(response.status(), '公开首页投影应可用').toBe(200)
@@ -131,6 +146,7 @@ test.afterEach(async ({ page }) => {
 // T34-F3/T37：首页设置只剩口号；官方渠道移到“文案配置”，自动轮播固定开启、
 // 十秒一张，不再提供第二套可配置入口。
 test('首屏设置：加载、修改保存、刷新后保持', async ({ page }) => {
+  const contactBefore = await adminContactSnapshot(page)
   await gotoHomeAdmin(page)
   await expect(page.locator('#home-tagline')).toHaveValue('不只做小狗毛')
   await expect(page.locator('#home-contact-email')).toHaveCount(0)
@@ -153,15 +169,17 @@ test('首屏设置：加载、修改保存、刷新后保持', async ({ page }) 
   await page.waitForSelector('[data-testid="home-admin"]')
   await expect(page.locator('#home-tagline')).toHaveValue('只做小狗毛（测试）')
 
-  // 保存首屏设置不会改动官方渠道：公开页联系人保持既有值。
+  // 保存首屏设置不会改动独立的官方联系方式分区。
+  expect(await adminContactSnapshot(page)).toEqual(contactBefore)
+
+  // 未配置 READY 二维码的旧 QQ 不再公开；邮箱仍保持既有值。
   await page.goto(`${publicBaseURL}/about#contact`)
   const contact = page.getByTestId('about-contact')
   await expect(
     contact.getByRole('link', { name: DEFAULT_SETTINGS.contactEmail }),
   ).toHaveAttribute('href', `mailto:${DEFAULT_SETTINGS.contactEmail}`)
-  await expect(
-    contact.getByText(DEFAULT_SETTINGS.contactQq, { exact: true }),
-  ).toBeVisible()
+  await expect(contact.getByText(DEFAULT_SETTINGS.contactQq, { exact: true }))
+    .toHaveCount(0)
 
   const footer = page.getByTestId('public-footer')
   await expect(footer).not.toContainText(DEFAULT_SETTINGS.contactEmail)

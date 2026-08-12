@@ -1,12 +1,12 @@
 # 当前状态
 
-> **最后校准**：2026-08-12。
+> **最后校准**：2026-08-13。
 > **任务权威**：[`implementation/TASKS.md`](./implementation/TASKS.md)。
 > **范围边界**：本目录是对“需求1-兽装工作室主页”的增量需求，不覆盖其生产、媒体与安全基线。
 
 ## 当前阶段
 
-阶段 4 · 已进入串行实现，动态后台方案锁定为 B，T01～T15 已完成；PR 合并、独立 Review 和用户验收尚未完成。
+阶段 4 · 动态后台方案锁定为 B，T01～T15 与用户预验收修正 T15-F1～T15-F4 已完成；PR 合并、独立 Review 和用户验收尚未完成。
 
 T03 已接入 `site/contact` 私有二维码上传、`contact-qr-v1` 无水印方形 PNG 公开派生、失败重试与 READY 公开投影。
 
@@ -32,6 +32,8 @@ T14 已通过全量 unit 177/177、integration 188/188、lint、typecheck、prod
 
 T15 已在 Edge 真实进程中完成公开 `127.0.0.1` / 管理 `localhost` 双 Host、390×844 / 768×1024 / 1440×900 三视口验收准备；相关导航、联系配置、动态管理和总体验收 24/24 通过。二维码测试已由普通方形图升级为固定真实 QR PNG，公开派生字节、五平台三视口显示和截图均保留 QR 模块；物理手机扫码仍由 T17 用户验收完成。
 
+2026-08-13 用户预验收四项修正已完成：Hero hover/focus 不再隐式暂停；最新动态移到当前领养后并统一标题层级；二维码接受 PNG/JPEG/WebP、任意比例和 64 px 最小边，使用 FFmpeg Lanczos 自动补白到 640×640 私有适配源；两条 E2E 根因已修复。Edge 相关 spec 47/47、全量 239/239，unit 179/179、integration 189/189、lint、typecheck、production build 均通过；下一步必须在新干净提交上执行 T16。
+
 当前分支为 `feat/requirement-2`。T01 实现代码 SHA `a38c295` 的 GitHub Actions run [`31515689322`](https://github.com/WangMinan/project-fur-forge/actions/runs/31515689322) 已取得 `checks`、`image-build`、`e2e` 全部成功；该结果只绑定该 SHA，包含 T02 的后续 HEAD 须重新查询远端检查。PR [#10](https://github.com/WangMinan/project-fur-forge/pull/10) 仍为 open，尚未合入 `main`。工程证据不代签 T16 独立 Review 或 T17 用户验收。
 
 ## 已确认结论
@@ -47,7 +49,7 @@ T15 已在 Edge 真实进程中完成公开 `127.0.0.1` / 管理 `localhost` 双
 
 ## 当前约束
 
-- 只按 TASKS 串行实施；当前 `GATE-01`、T01～T15 已勾选。
+- 只按 TASKS 串行实施；当前 `GATE-01`、T01～T15、T15-F1～T15-F4 已勾选，T16/T17 保持开放。
 - T01 后续文档或代码若产生新 SHA，必须重新查询该 SHA 的远端检查，不沿用 `a38c295` 的结果。
 - 不重写历史迁移，只能新增前向迁移。
 - 保留现有邮箱联系方式；五个平台卡片是新增，不是删除邮箱。
@@ -62,6 +64,6 @@ T15 已在 Edge 真实进程中完成公开 `127.0.0.1` / 管理 `localhost` 双
 
 ## 下一步交接
 
-1. 由新上下文执行 T16 独立 Review 并记录首次 findings、修复与重测；
+1. 在新的干净提交上由新上下文执行 T16 独立 Review，并记录首次 findings、修复与重测；
 2. 查询 T16 最终 SHA 的远端检查，不沿用旧 SHA 结果；
 3. 保持 T17 用户验收开放，不能用工程或 CI 结果代签。

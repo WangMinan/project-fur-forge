@@ -199,8 +199,9 @@ function contactQrSources(
     !asset
     || asset.role !== 'contact_qr'
     || asset.status !== 'READY'
-    || asset.mimeType !== 'image/png'
-    || asset.width !== asset.height
+    || !['image/jpeg', 'image/png', 'image/webp'].includes(asset.mimeType)
+    || asset.width < 64
+    || asset.height < 64
   ) {
     return null
   }

@@ -202,6 +202,30 @@ function migrationsBeforeUpdatesAnalytics(databaseFile: string) {
   return folder
 }
 
+function migrationsBeforeContactQrAdaptation(databaseFile: string) {
+  const folder = resolve(dirname(databaseFile), 'pre-contact-qr-adaptation-migrations')
+  const meta = resolve(folder, 'meta')
+  mkdirSync(meta, { recursive: true })
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  const entries = journal.entries.slice(0, journal.entries.findIndex(
+    entry => entry.tag === '0032_requirement_2_contact_qr_upscale',
+  ))
+  for (const { tag } of entries) {
+    copyFileSync(
+      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
+      resolve(folder, `${tag}.sql`),
+    )
+  }
+  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
+    ...journal,
+    entries,
+  }))
+  return folder
+}
+
 afterEach(() => {
   temporaryDirectories.splice(0).forEach(directory => rmSync(
     directory,
@@ -492,6 +516,76 @@ describe('SQLite foundation', () => {
         SELECT name FROM sqlite_master
         WHERE type = 'index' AND name = 'analytics_events_route_occurred_idx'
       `).pluck().get()).toBe('analytics_events_route_occurred_idx')
+    }
+    finally {
+      upgraded.sqlite.close()
+    }
+  })
+
+  it('widens contact QR inputs while preserving data and cross-table triggers', async () => {
+    const databaseFile = temporaryDatabase()
+    await migrateDatabase(databaseFile, {
+      migrationsFolder: migrationsBeforeContactQrAdaptation(databaseFile),
+    })
+    const legacy = openDatabase(databaseFile)
+    let triggerNames: string[]
+    try {
+      const now = Date.UTC(2026, 7, 13)
+      legacy.sqlite.prepare(`
+        INSERT INTO assets (
+          id, role, status, private_object_key, sha256, byte_size,
+          mime_type, width, height, fit_mode, created_at, updated_at
+        ) VALUES (?, 'contact_qr', 'READY', ?, ?, 1024,
+                  'image/png', 320, 320, 'contain', ?, ?)
+      `).run(
+        '93939393-9393-4939-8939-939393939393',
+        'test/contact-before-upgrade.png',
+        '9'.repeat(64),
+        now,
+        now,
+      )
+      triggerNames = legacy.sqlite.prepare(`
+        SELECT name FROM sqlite_master
+        WHERE type = 'trigger'
+          AND (sql LIKE '%assets%' OR sql LIKE '%upload_sessions%')
+        ORDER BY name
+      `).pluck().all() as string[]
+    }
+    finally {
+      legacy.sqlite.close()
+    }
+
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
+      applied: 1,
+    })
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({ applied: 0 })
+    const upgraded = openDatabase(databaseFile)
+    try {
+      expect(upgraded.sqlite.prepare(`
+        SELECT mime_type, width, height FROM assets
+        WHERE id = '93939393-9393-4939-8939-939393939393'
+      `).get()).toEqual({ mime_type: 'image/png', width: 320, height: 320 })
+      expect(upgraded.sqlite.prepare(`
+        SELECT name FROM sqlite_master
+        WHERE type = 'trigger'
+          AND (sql LIKE '%assets%' OR sql LIKE '%upload_sessions%')
+        ORDER BY name
+      `).pluck().all()).toEqual(triggerNames)
+      expect(() => upgraded.sqlite.prepare(`
+        INSERT INTO assets (
+          id, role, status, private_object_key, sha256, byte_size,
+          mime_type, width, height, fit_mode, created_at, updated_at
+        ) VALUES (?, 'contact_qr', 'PENDING', ?, ?, 1024,
+                  'image/jpeg', 640, 320, 'contain', ?, ?)
+      `).run(
+        '94949494-9494-4949-8949-949494949494',
+        'test/contact-after-upgrade.jpg',
+        '8'.repeat(64),
+        Date.UTC(2026, 7, 13),
+        Date.UTC(2026, 7, 13),
+      )).not.toThrow()
+      expect(upgraded.sqlite.pragma('foreign_key_check')).toEqual([])
+      expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
     }
     finally {
       upgraded.sqlite.close()

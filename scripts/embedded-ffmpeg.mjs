@@ -357,6 +357,67 @@ export async function upscaleImageToMinimum(content, minimumDimensions) {
   }
 }
 
+export async function fitImageToSquare(content, side) {
+  if (!Buffer.isBuffer(content)) {
+    throw new Error('Embedded FFmpeg input must be an image Buffer.')
+  }
+  if (!Number.isInteger(side) || side < 1 || side > 12_000) {
+    throw new Error('Image square dimensions are invalid.')
+  }
+
+  const filter = [
+    `scale=w=${side}:h=${side}:force_original_aspect_ratio=decrease:force_divisible_by=2:flags=lanczos`,
+    `pad=${side}:${side}:(ow-iw)/2:(oh-ih)/2:color=white`,
+    'setsar=1',
+  ].join(',')
+  const result = await runEmbeddedFfmpeg([
+    '-hide_banner',
+    '-loglevel',
+    'error',
+    '-f',
+    'image2pipe',
+    '-c:v',
+    inputCodec(content),
+    '-i',
+    'pipe:0',
+    '-frames:v',
+    '1',
+    '-map_metadata',
+    '-1',
+    '-vf',
+    filter,
+    '-threads',
+    '1',
+    '-c:v',
+    'png',
+    '-compression_level',
+    '9',
+    '-pred',
+    'mixed',
+    '-f',
+    'image2pipe',
+    'pipe:1',
+  ], { input: content })
+  const output = result.stdout
+  if (
+    output.length === 0
+    || output.length < 24
+    || output.length > OSS_IMAGE_PROCESSING_MAX_BYTES
+    || !output.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)
+    || output.readUInt32BE(16) !== side
+    || output.readUInt32BE(20) !== side
+  ) {
+    throw new Error('Embedded FFmpeg square-fit output is invalid.')
+  }
+  return {
+    content: output,
+    contentType: 'image/png',
+    dimensions: { width: side, height: side },
+    filter,
+    binary: await embeddedBinaryIdentity(),
+  }
+}
+
 /** Backward-compatible name retained for the existing design-sheet call sites. */
 export const upscaleDesignSheetImage = upscaleImageToMinimum
 

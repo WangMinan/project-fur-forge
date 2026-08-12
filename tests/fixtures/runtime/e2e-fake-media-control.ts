@@ -179,6 +179,27 @@ export default defineEventHandler(async (event) => {
     return { data: { ok: true } }
   }
 
+  if (body?.action === 'resetOfficialChannels') {
+    const sqlite = getDatabase().sqlite
+    const now = Date.now()
+    sqlite.prepare(`
+      UPDATE site_content
+      SET contact_email = '3114559925@qq.com',
+          contact_qq = '3114559925', contact_douyin = 'to3114559925',
+          official_channels_json = ?,
+          contact_content_version = contact_content_version + 1,
+          updated_at = ?
+      WHERE id = 'site'
+    `).run(JSON.stringify([
+      { platform: 'qq', account: '3114559925', qrCodeAssetId: null },
+      { platform: 'douyin', account: 'to3114559925', qrCodeAssetId: null },
+      { platform: 'qq_group', account: null, qrCodeAssetId: null },
+      { platform: 'xiaohongshu', account: null, qrCodeAssetId: null },
+      { platform: 'bilibili', account: null, qrCodeAssetId: null },
+    ]), now)
+    return { data: { ok: true } }
+  }
+
   if (body?.action === 'seedPublicUpdates') {
     const sqlite = getDatabase().sqlite
     const now = Date.now()

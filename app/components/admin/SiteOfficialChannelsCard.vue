@@ -149,14 +149,19 @@ function adoptLatest() {
 
 function save() {
   upload.reset()
-  emit('save', {
-    email: card.draft.value.email.trim(),
-    officialChannels: card.draft.value.officialChannels.map(channel => ({
-      ...channel,
-      account: normalizeNullableText(channel.account ?? ''),
-    })),
-    antiScam: normalizeNullableText(card.draft.value.antiScam),
-  })
+  const email = card.draft.value.email.trim()
+  const officialChannels = card.draft.value.officialChannels.map(channel => ({
+    ...channel,
+    account: normalizeNullableText(channel.account ?? ''),
+  }))
+  const antiScam = normalizeNullableText(card.draft.value.antiScam)
+
+  // 与服务端相同地归一化空字符串；否则保存成功后 draft 的 '' 与响应的 null
+  // 仍会被判为 dirty，成功提示消失、保存按钮也不会回到稳定状态。
+  card.draft.value.email = email
+  card.draft.value.officialChannels = officialChannels
+  card.draft.value.antiScam = antiScam ?? ''
+  emit('save', { email, officialChannels, antiScam })
 }
 </script>
 
@@ -277,8 +282,13 @@ function save() {
           max="1"
           :aria-label="`${CONTACT_PLATFORM_LABELS[channel.platform]}二维码上传进度`"
         />
+        <AdminFfmpegProgress
+          v-if="upload.items[channel.platform].state === 'validating'
+            && upload.items[channel.platform].ffmpegExpected"
+          :label="`${CONTACT_PLATFORM_LABELS[channel.platform]}二维码：正在用 FFmpeg Lanczos 生成私有适配源`"
+        />
         <p
-          v-if="upload.items[channel.platform].state === 'validating'"
+          v-else-if="upload.items[channel.platform].state === 'validating'"
           class="channels-hint"
           role="status"
         >
@@ -299,7 +309,8 @@ function save() {
           {{ upload.items[channel.platform].failureText }}
         </p>
         <button
-          v-if="upload.items[channel.platform].asset?.processingFailureCode === 'UPLOAD_DERIVATIVE_FAILURE'"
+          v-if="upload.items[channel.platform].asset?.processingFailureCode === 'UPLOAD_DERIVATIVE_FAILURE'
+            || upload.items[channel.platform].asset?.processingFailureCode === 'UPLOAD_PREPROCESS_FAILURE'"
           type="button"
           class="channel-row__retry"
           :disabled="upload.busy.value"
@@ -313,11 +324,11 @@ function save() {
     <input
       ref="fileInput"
       type="file"
-      accept="image/png"
+      accept="image/png,image/jpeg,image/webp"
       hidden
       :aria-label="pendingPlatform
-        ? `选择${CONTACT_PLATFORM_LABELS[pendingPlatform]}二维码 PNG`
-        : '选择平台二维码 PNG'"
+        ? `选择${CONTACT_PLATFORM_LABELS[pendingPlatform]}二维码图片`
+        : '选择平台二维码图片'"
       @change="onFileChange"
     >
 
