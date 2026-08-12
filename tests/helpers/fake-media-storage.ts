@@ -221,7 +221,12 @@ export class FakeMediaStorage implements MediaStorage {
       ?? Math.round(width * source.imageInfo.height / source.imageInfo.width))
     const format = /format,(webp|jpg|png)/u.exec(input.process)?.[1] ?? 'webp'
     const contentType = format === 'jpg' ? 'image/jpeg' : `image/${format}`
-    const content = Buffer.from(PROCESSED_CONTENT[format] ?? PROCESSED_CONTENT.webp!)
+    // Contact QR E2E uses a real code image. Preserve those source pixels in
+    // fake storage so browser acceptance can catch a broken/non-code public
+    // image; other media recipes retain the tiny deterministic fast fixture.
+    const content = format === 'png' && input.objectKey.includes('/contact-qr-v1/')
+      ? Buffer.from(source.content)
+      : Buffer.from(PROCESSED_CONTENT[format] ?? PROCESSED_CONTENT.webp!)
     output.set(input.objectKey, {
       content,
       contentType,
