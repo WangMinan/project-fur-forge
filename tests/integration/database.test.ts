@@ -94,6 +94,30 @@ function migrationsBeforeT23(databaseFile: string) {
   return folder
 }
 
+function migrationsBeforeContactChannels(databaseFile: string) {
+  const folder = resolve(dirname(databaseFile), 'pre-contact-channels-migrations')
+  const meta = resolve(folder, 'meta')
+  mkdirSync(meta, { recursive: true })
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  const entries = journal.entries.slice(0, journal.entries.findIndex(
+    entry => entry.tag === '0027_requirement_2_contact_channels',
+  ))
+  for (const { tag } of entries) {
+    copyFileSync(
+      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
+      resolve(folder, `${tag}.sql`),
+    )
+  }
+  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
+    ...journal,
+    entries,
+  }))
+  return folder
+}
+
 afterEach(() => {
   temporaryDirectories.splice(0).forEach(directory => rmSync(
     directory,
@@ -137,7 +161,8 @@ describe('SQLite foundation', () => {
                about_studio_facts AS aboutStudioFacts,
                basic_terms AS basicTerms,
                privacy_policy AS privacyPolicy,
-               contact_anti_scam AS contactAntiScam
+               contact_anti_scam AS contactAntiScam,
+               official_channels_json AS officialChannelsJson
         FROM site_content WHERE id = 'site'
       `).get() as {
         aboutStudioFacts: string
@@ -145,6 +170,7 @@ describe('SQLite foundation', () => {
         commissionFaqJson: string
         commissionIntro: string
         contactAntiScam: string
+        officialChannelsJson: string
         privacyPolicy: string
       }
       expect(siteContent.commissionIntro).toContain('逐单估价')
@@ -155,6 +181,13 @@ describe('SQLite foundation', () => {
       expect(siteContent.privacyPolicy).toContain('不提供访客账号')
       expect(siteContent.privacyPolicy).toContain('不使用营销或访问分析 Cookie')
       expect(siteContent.contactAntiScam).toContain('交叉核验')
+      expect(JSON.parse(siteContent.officialChannelsJson)).toEqual([
+        { platform: 'qq', account: '3114559925', qrCodeAssetId: null },
+        { platform: 'douyin', account: 'to3114559925', qrCodeAssetId: null },
+        { platform: 'qq_group', account: null, qrCodeAssetId: null },
+        { platform: 'xiaohongshu', account: null, qrCodeAssetId: null },
+        { platform: 'bilibili', account: null, qrCodeAssetId: null },
+      ])
       expect(database.sqlite.prepare(`
         SELECT kind, tone, label, href
         FROM business_statuses ORDER BY kind
@@ -175,6 +208,54 @@ describe('SQLite foundation', () => {
     }
     finally {
       database.sqlite.close()
+    }
+  })
+
+  it('migrates legacy QQ and Douyin into fixed official channels', async () => {
+    const databaseFile = temporaryDatabase()
+    await migrateDatabase(databaseFile, {
+      migrationsFolder: migrationsBeforeContactChannels(databaseFile),
+    })
+    const legacy = openDatabase(databaseFile)
+    try {
+      legacy.sqlite.prepare(`
+        UPDATE site_content
+        SET contact_qq = '123456789', contact_douyin = 'legacy.douyin'
+        WHERE id = 'site'
+      `).run()
+    }
+    finally {
+      legacy.sqlite.close()
+    }
+
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
+      applied: 1,
+    })
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
+      applied: 0,
+    })
+    const upgraded = openDatabase(databaseFile)
+    try {
+      const row = upgraded.sqlite.prepare(`
+        SELECT contact_qq AS qq, contact_douyin AS douyin,
+               official_channels_json AS channels
+        FROM site_content WHERE id = 'site'
+      `).get() as { channels: string, douyin: string, qq: string }
+      expect({ qq: row.qq, douyin: row.douyin }).toEqual({
+        qq: '123456789',
+        douyin: 'legacy.douyin',
+      })
+      expect(JSON.parse(row.channels)).toEqual([
+        { platform: 'qq', account: '123456789', qrCodeAssetId: null },
+        { platform: 'douyin', account: 'legacy.douyin', qrCodeAssetId: null },
+        { platform: 'qq_group', account: null, qrCodeAssetId: null },
+        { platform: 'xiaohongshu', account: null, qrCodeAssetId: null },
+        { platform: 'bilibili', account: null, qrCodeAssetId: null },
+      ])
+      expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
+    }
+    finally {
+      upgraded.sqlite.close()
     }
   })
 

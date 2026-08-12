@@ -1,7 +1,7 @@
 # 产物索引
 
 > **最后校准**：2026-08-12。
-> **状态**：阶段 0～3 文档已锁定；阶段 4 已完成 T01 工程实现，T02 待开始。
+> **状态**：阶段 0～3 文档已锁定；阶段 4 已完成 T01～T02。
 
 ## 文档产物
 
@@ -10,11 +10,11 @@
 | 0 地基 | 产品地基 | `foundation/README.md` | 已锁定 | 增量范围、安全与非目标 |
 | 1 规格 | 需求规格 | `requirements/SPEC.md` | 已锁定 | 五组功能与验收契约；T01 已实现 |
 | 2 计划 | 实施计划 | `planning/PLAN.md` | 已决策 | OQ-001 已选择方案 B |
-| 3 任务 | 任务清单 | `implementation/TASKS.md` | 实施中 | GATE-01、T01 已关闭，仅保留动态方案 B |
-| 4 实施 | 实施记录 | `implementation/notes/README.md` | 实施中 | T01 已记录 |
+| 3 任务 | 任务清单 | `implementation/TASKS.md` | 实施中 | GATE-01、T01～T02 已关闭，仅保留动态方案 B |
+| 4 实施 | 实施记录 | `implementation/notes/README.md` | 实施中 | T01～T02 已记录 |
 | 5 评审 | 评审记录 | `review/REVIEW.md` | 未开始 | 等实现后独立 Review |
-| 6 闭环 | 模型说明 | `models/README.md` | 部分落地 | T01 无模型变化；联系、FAQ、搜索与方案 B 动态仍为目标模型 |
-| 6 闭环 | 当前状态 | `STATE.md` | 当前 | T01 CI 已关闭，下一步为 T02 |
+| 6 闭环 | 模型说明 | `models/README.md` | 部分落地 | contact 持久结构已落地；FAQ、搜索与方案 B 动态仍为目标模型 |
+| 6 闭环 | 当前状态 | `STATE.md` | 当前 | T01 CI 已关闭，下一步为 T03 二维码媒体链 |
 
 ## 外部与既有资料
 
@@ -34,6 +34,9 @@
 - T01：`tests/e2e/public-information.spec.ts` 增加父项激活、hover/focus、圆角、路由和移动入口断言；
 - T01：`tests/e2e/public-works.spec.ts` 把作品用途筛选定位收窄到“按用途筛选”分组，避免与导航/页脚“委托”同名链接冲突；
 - T01 记录：[`../implementation/notes/T01-NAVIGATION-2026-08-12.md`](../implementation/notes/T01-NAVIGATION-2026-08-12.md)。
+- T02：`site_content.official_channels_json`、固定五平台 Schema/DTO、contact 局部保存与安全公开投影；
+- T02：迁移 `0027_requirement_2_contact_channels.sql` 保留邮箱并迁移旧 QQ/抖音；
+- T02 记录：[`../implementation/notes/T02-CONTACT-CONTRACT-2026-08-12.md`](../implementation/notes/T02-CONTACT-CONTRACT-2026-08-12.md)。
 
 ## 待实施产物
 

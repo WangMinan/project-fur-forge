@@ -32,8 +32,9 @@ const card = useSiteContentSectionCard({
   savingSection: () => props.savingSection,
   extract: dto => ({
     email: dto.contact.email,
-    qq: dto.contact.qq,
-    douyin: dto.contact.douyin ?? '',
+    officialChannels: dto.contact.officialChannels,
+    qq: dto.contact.officialChannels.find(channel => channel.platform === 'qq')?.account ?? '',
+    douyin: dto.contact.officialChannels.find(channel => channel.platform === 'douyin')?.account ?? '',
     antiScam: dto.contact.antiScam ?? '',
   }),
 })
@@ -64,10 +65,17 @@ const issues = computed(() => {
 })
 
 function save() {
+  const officialChannels = card.draft.value.officialChannels.map(channel => ({
+    ...channel,
+    account: channel.platform === 'qq'
+      ? card.draft.value.qq.trim()
+      : channel.platform === 'douyin'
+        ? normalizeNullableText(card.draft.value.douyin)
+        : channel.account,
+  }))
   emit('save', {
     email: card.draft.value.email.trim(),
-    qq: card.draft.value.qq.trim(),
-    douyin: normalizeNullableText(card.draft.value.douyin),
+    officialChannels,
     antiScam: normalizeNullableText(card.draft.value.antiScam),
   })
 }

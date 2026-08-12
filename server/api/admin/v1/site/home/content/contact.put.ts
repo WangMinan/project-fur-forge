@@ -6,8 +6,7 @@ export default defineEventHandler(defineSiteContentSectionHandler({
   section: 'contact',
   toValues: payload => ({
     email: payload.email,
-    qq: payload.qq,
-    douyin: payload.douyin,
+    officialChannelsJson: JSON.stringify(payload.officialChannels),
     antiScam: payload.antiScam,
   }),
 }))

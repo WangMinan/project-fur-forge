@@ -24,6 +24,13 @@ const databaseFile = resolve(
 )
 const originalPassword = 'initial admin password'
 const sessionSecret = 'test-session-secret-at-least-32-characters'
+const officialChannels = (qq: string | null, douyin: string | null) => [
+  { platform: 'qq', account: qq, qrCodeAssetId: null },
+  { platform: 'douyin', account: douyin, qrCodeAssetId: null },
+  { platform: 'qq_group', account: null, qrCodeAssetId: null },
+  { platform: 'xiaohongshu', account: null, qrCodeAssetId: null },
+  { platform: 'bilibili', account: null, qrCodeAssetId: null },
+]
 
 await migrateDatabase(databaseFile)
 const setupDatabase = openDatabase(databaseFile)
@@ -577,8 +584,7 @@ describe('authentication API', () => {
         },
         contact: {
           email: '3114559925@qq.com',
-          qq: '3114559925',
-          douyin: 'to3114559925',
+          officialChannels: officialChannels('3114559925', 'to3114559925'),
           antiScam: null,
         },
       },
@@ -605,11 +611,10 @@ describe('authentication API', () => {
     const privacyPayload = {
       privacyPolicy: '本站不提供访客账号，不使用营销分析 Cookie。',
     }
-    // T34-F3：邮箱与 QQ 也在 contact 分区里编辑。
+    // T02：邮箱与五个平台数组在同一个 contact 分区里编辑。
     const contactPayload = {
       email: 'studio@example.test',
-      qq: '3114559925',
-      douyin: 'to3114559925',
+      officialChannels: officialChannels('3114559925', 'to3114559925'),
       antiScam: null,
     }
     const missingCsrf = await fetch(sectionUrl('commission'), {
@@ -672,7 +677,10 @@ describe('authentication API', () => {
       headers,
       body: JSON.stringify({
         expectedVersion: 1,
-        payload: { ...contactPayload, douyin: '@bad handle' },
+        payload: {
+          ...contactPayload,
+          officialChannels: officialChannels('3114559925', '@bad handle'),
+        },
       }),
     })
     expect(invalidChannels.status).toBe(400)
@@ -771,11 +779,10 @@ describe('authentication API', () => {
           makingScope: null,
           basicTerms: null,
           privacyPolicy: payload.about.privacyPolicy,
-          officialChannels: {
-            email: contactPayload.email,
-            qq: contactPayload.qq,
-            douyin: contactPayload.douyin,
-          },
+          officialChannels: [
+            { platform: 'qq', account: '3114559925' },
+            { platform: 'douyin', account: 'to3114559925' },
+          ],
         },
       },
     })

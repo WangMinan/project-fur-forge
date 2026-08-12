@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { CONTACT_PLATFORMS } from '../constants/contact'
 import { apiSuccessSchema, resourceVersionSchema, versionedRequestSchema } from './api'
 import { contactEmailSchema, contactQqSchema } from './home'
 
@@ -107,18 +108,90 @@ const aboutContentSchema = aboutBasicContentSchema
   .extend(privacyContentSchema.shape)
   .strict()
 
-/**
- * T34-F3：官方渠道是一个整体。邮箱、QQ、抖音号和防诈骗提醒都在
- * contact 分区里编辑，使用 contact 分区版本；首屏设置不再重复提供入口。
- */
+export const contactPlatformSchema = z.enum(CONTACT_PLATFORMS)
+
+export const adminOfficialChannelSchema = z.object({
+  platform: contactPlatformSchema,
+  account: plainTextSchema(120).nullable(),
+  qrCodeAssetId: z.string().uuid().nullable(),
+}).strict()
+
+function isValidOfficialChannelAccount(
+  channel: z.infer<typeof adminOfficialChannelSchema>,
+) {
+  if (channel.account === null) {
+    return true
+  }
+  const schema = channel.platform === 'douyin'
+    ? contactDouyinSchema
+    : channel.platform === 'qq' || channel.platform === 'qq_group'
+      ? contactQqSchema
+      : null
+  return schema === null || schema.safeParse(channel.account).success
+}
+
+export const adminOfficialChannelsSchema = z.array(adminOfficialChannelSchema)
+  .length(CONTACT_PLATFORMS.length)
+  .superRefine((channels, context) => {
+    channels.forEach((channel, index) => {
+      if (channel.platform !== CONTACT_PLATFORMS[index]) {
+        context.addIssue({
+          code: 'custom',
+          message: '官方渠道必须按固定平台顺序提交',
+          path: [index, 'platform'],
+        })
+      }
+      if (!isValidOfficialChannelAccount(channel)) {
+        context.addIssue({
+          code: 'custom',
+          message: '平台账号格式不正确',
+          path: [index, 'account'],
+        })
+      }
+    })
+  })
+
+export const publicOfficialChannelSchema = adminOfficialChannelSchema
+  .omit({ qrCodeAssetId: true })
+  .extend({ account: plainTextSchema(120) })
+  .strict()
+
+export const publicOfficialChannelsSchema = z.array(publicOfficialChannelSchema)
+  .max(CONTACT_PLATFORMS.length)
+  .superRefine((channels, context) => {
+    let previous = -1
+    channels.forEach((channel, index) => {
+      const order = CONTACT_PLATFORMS.indexOf(channel.platform)
+      if (order <= previous) {
+        context.addIssue({
+          code: 'custom',
+          message: '公开渠道不得重复且必须保持固定顺序',
+          path: [index, 'platform'],
+        })
+      }
+      previous = order
+      if (!isValidOfficialChannelAccount({ ...channel, qrCodeAssetId: null })) {
+        context.addIssue({
+          code: 'custom',
+          message: '平台账号格式不正确',
+          path: [index, 'account'],
+        })
+      }
+    })
+  })
+
+/** T02：邮箱、五个平台和防诈骗提醒共用 contact 分区版本。 */
 const mutableContactContentSchema = z.object({
   email: contactEmailSchema,
-  qq: contactQqSchema,
-  douyin: contactDouyinSchema.nullable(),
+  officialChannels: adminOfficialChannelsSchema,
   antiScam: plainTextSchema(600).nullable(),
 }).strict()
 
-const publicContactContentSchema = mutableContactContentSchema
+const publicContactContentSchema = z.object({
+  email: contactEmailSchema,
+  officialChannels: publicOfficialChannelsSchema,
+  antiScam: plainTextSchema(600).nullable(),
+}).strict()
 
 const statusPairSchema = <T extends z.ZodType>(status: T) => z.object({
   commission: status.nullable(),
@@ -160,7 +233,7 @@ export const adminSiteContentDtoSchema = z.object({
   statuses: statusPairSchema(adminSiteBusinessStatusDtoSchema),
   commission: commissionContentSchema,
   about: aboutContentSchema,
-  contact: publicContactContentSchema,
+  contact: mutableContactContentSchema,
 }).strict()
 
 export const updateCommissionContentRequestSchema = versionedRequestSchema(
@@ -189,7 +262,7 @@ export const publicSiteContentDtoSchema = z.object({
     termsHref: z.literal('/service'),
   }).strict(),
   about: aboutContentSchema.extend({
-    officialChannels: publicContactContentSchema.omit({ antiScam: true }),
+    officialChannels: publicOfficialChannelsSchema,
   }).strict(),
   contact: publicContactContentSchema,
 }).strict()
