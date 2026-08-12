@@ -36,6 +36,7 @@ export const UPLOAD_FAILURE_CODE_LABELS: Record<UploadFailureCode, string> = {
   UPLOAD_DIMENSIONS_INVALID: '图片尺寸或格式不符合要求，请更换后重新上传',
   UPLOAD_STORAGE_FAILURE: '存储服务暂时不可用，请稍后重试',
   UPLOAD_PREPROCESS_FAILURE: '大原图私有处理源生成失败，可重试处理',
+  UPLOAD_DERIVATIVE_FAILURE: '二维码网页图片生成失败，可重试处理',
   UPLOAD_CLEANUP_FAILED: '临时文件清理失败，请联系维护人员',
 }
 

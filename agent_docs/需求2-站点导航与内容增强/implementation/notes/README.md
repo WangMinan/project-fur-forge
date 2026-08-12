@@ -14,6 +14,8 @@
 ## 当前记录
 
 - [`T01-NAVIGATION-2026-08-12.md`](./T01-NAVIGATION-2026-08-12.md)：合并委托导航、首次 E2E 失败、修复与同一 SHA 远端质量闭环。
+- [`T02-CONTACT-CONTRACT-2026-08-12.md`](./T02-CONTACT-CONTRACT-2026-08-12.md)：固定五平台 contact 契约、旧值迁移和分区并发。
+- [`T03-CONTACT-QR-MEDIA-2026-08-12.md`](./T03-CONTACT-QR-MEDIA-2026-08-12.md)：二维码私有上传、无水印公开派生、失败重试与安全投影。
 
 ## 新记录最低要求
 

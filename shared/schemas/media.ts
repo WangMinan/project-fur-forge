@@ -12,6 +12,7 @@ export const MEDIA_ROLE_VALUES = [
   'watermark_logo',
   /** T36 返图私有永久原图；不得与 studio_photo 互相冒充。 */
   'return_photo',
+  'contact_qr',
 ] as const
 
 export const ASSET_STATUS_VALUES = [
@@ -63,6 +64,14 @@ const publicFallbackVariantDtoSchema = publicVariantDtoSchema.extend({
 export const publicSourceSetDtoSchema = z.object({
   webp: z.array(publicWebpVariantDtoSchema).min(1),
   fallback: z.array(publicFallbackVariantDtoSchema).min(1),
+}).strict()
+
+/** 二维码保持 PNG，不生成会影响边缘清晰度的有损或 WebP 版本。 */
+export const publicPngSourceSetDtoSchema = z.object({
+  webp: z.array(publicWebpVariantDtoSchema).max(0),
+  fallback: z.array(publicVariantDtoSchema.extend({
+    format: z.literal('png'),
+  })).min(1),
 }).strict()
 
 export const publicHeroSlideDtoSchema = z.object({
