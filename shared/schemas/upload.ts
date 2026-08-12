@@ -23,6 +23,7 @@ export const UPLOAD_FAILURE_CODE_VALUES = [
   'UPLOAD_DIMENSIONS_INVALID',
   'UPLOAD_STORAGE_FAILURE',
   'UPLOAD_PREPROCESS_FAILURE',
+  'UPLOAD_DERIVATIVE_FAILURE',
   'UPLOAD_CLEANUP_FAILED',
 ] as const
 
@@ -55,7 +56,7 @@ const workUploadOwnerSchema = z.object({
 
 const siteUploadOwnerSchema = z.object({
   type: z.literal('site'),
-  id: z.enum(['home', 'branding']),
+  id: z.enum(['home', 'branding', 'contact']),
   expectedVersion: resourceVersionSchema,
 }).strict()
 
@@ -98,6 +99,7 @@ export const createUploadSessionRequestSchema = z.object({
     && (
       (input.owner.id === 'home' && input.mediaRole.startsWith('home_hero_'))
       || (input.owner.id === 'branding' && input.mediaRole === 'watermark_logo')
+      || (input.owner.id === 'contact' && input.mediaRole === 'contact_qr')
     )
   const returnRoleMatches = input.owner.type === 'return'
     && input.mediaRole === 'return_photo'
@@ -122,6 +124,21 @@ export const createUploadSessionRequestSchema = z.object({
       code: 'custom',
       message: '水印候选只接受透明 PNG',
       path: ['expected', 'contentType'],
+    })
+  }
+  if (
+    input.mediaRole === 'contact_qr'
+    && (
+      input.expected.contentType !== 'image/png'
+      || input.expected.width !== input.expected.height
+      || input.expected.width < 320
+      || input.expected.byteSize > 20_000_000
+    )
+  ) {
+    context.addIssue({
+      code: 'custom',
+      message: '联系二维码只接受至少 320×320 且不超过 20 MB 的方形 PNG',
+      path: ['expected'],
     })
   }
 })
@@ -181,7 +198,7 @@ export const verifiedAssetDtoSchema = z.object({
   fitMode: fitModeSchema,
   watermarkAnchor: watermarkAnchorSchema,
   processingFailureCode: uploadFailureCodeSchema.nullable(),
-  processingFailureStage: z.literal('PREPROCESS').nullable(),
+  processingFailureStage: z.enum(['PREPROCESS', 'DERIVATIVE']).nullable(),
   previews: z.array(z.object({
     usage: z.enum([
       'work-card',
@@ -190,6 +207,7 @@ export const verifiedAssetDtoSchema = z.object({
       'home-hero-landscape',
       'home-hero-portrait',
       'return-wall',
+      'contact-qr',
     ]),
     aspect: previewAspectSchema,
     fitMode: fitModeSchema,

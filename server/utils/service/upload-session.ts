@@ -183,14 +183,18 @@ export function assertUploadOwner(
   if (owner.type === 'site') {
     const validRole = owner.id === 'home'
       ? mediaRole.startsWith('home_hero_')
-      : owner.id === 'branding' && mediaRole === 'watermark_logo'
+      : owner.id === 'branding'
+        ? mediaRole === 'watermark_logo'
+        : owner.id === 'contact' && mediaRole === 'contact_qr'
     if (!validRole) {
       throw new ServiceError(400, 'VALIDATION_ERROR', 'Media role does not match owner.')
     }
-    const current = sqlite.prepare(owner.id === 'home' ? `
-      SELECT version FROM site_content WHERE id = 'site'
-    ` : `
+    const current = sqlite.prepare(owner.id === 'branding' ? `
       SELECT version FROM site_branding WHERE id = 'site'
+    ` : owner.id === 'contact' ? `
+      SELECT contact_content_version FROM site_content WHERE id = 'site'
+    ` : `
+      SELECT version FROM site_content WHERE id = 'site'
     `).pluck().get()
     const version = current === undefined ? 0 : Number(current)
     if (version !== owner.expectedVersion) {

@@ -229,7 +229,7 @@ describe('SQLite foundation', () => {
     }
 
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 1,
+      applied: 2,
     })
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
       applied: 0,

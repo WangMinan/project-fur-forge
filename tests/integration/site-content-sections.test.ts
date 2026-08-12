@@ -175,15 +175,12 @@ describe('T34-F3 site content section concurrency', () => {
       antiScam: '只认这些官方渠道。',
     }, USER_ID, NOW)
 
-    const publicDto = getPublicSiteContent(sqlite)
+    const publicDto = getPublicSiteContent(sqlite, 'https://media.example.test')
     const serialized = JSON.stringify(publicDto)
     expect(serialized).not.toContain('sectionVersions')
     expect(serialized).not.toContain('commissionFaqVersion')
     expect(publicDto).not.toHaveProperty('version')
-    expect(publicDto.contact.officialChannels).toEqual([
-      { platform: 'qq', account: '3114559925' },
-      { platform: 'douyin', account: 'studio.official' },
-    ])
+    expect(publicDto.contact.officialChannels).toEqual([])
     expect(serialized).not.toContain('qrCodeAssetId')
     // 公开 FAQ 仍带稳定 ID（供前端 key 使用），但不含任何版本字段。
     for (const faq of publicDto.commission.faqs) {
