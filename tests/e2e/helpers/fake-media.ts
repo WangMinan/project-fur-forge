@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto'
 import { expect } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { createLargeSyntheticPng, createSyntheticSourcePng, createSyntheticWatermarkPng } from '../../../scripts/oss-preflight-core.mjs'
+import { CONTACT_QR_PNG } from '../../helpers/contact-qr-fixture'
 import { adminBaseURL } from './auth'
 
 export interface FakeMediaState {
@@ -123,11 +124,8 @@ export function lowResolutionHeroPng(
   ) as Buffer)
 }
 
-let contactQrSource: Buffer | null = null
-
 export function contactQrPng(): Buffer {
-  contactQrSource ??= createSyntheticSourcePng(640, 640) as Buffer
-  return uniquePng(contactQrSource)
+  return uniquePng(CONTACT_QR_PNG)
 }
 
 export function nonSquareContactQrPng(): Buffer {

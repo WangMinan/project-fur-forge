@@ -89,6 +89,15 @@ test('动态后台三个固定视口无横向溢出且控件可达', async ({ pa
       'aria-current',
       'page',
     )
+    await expect(page.getByRole('button', { name: '退出登录' })).toBeVisible()
+    const username = page.locator('.admin-shell__user')
+    if (width >= 1280) {
+      await expect(username).toHaveText('e2e-admin')
+      await expect(username).toBeVisible()
+    }
+    else {
+      await expect(username).toBeHidden()
+    }
     expect(await page.evaluate(() => (
       document.documentElement.scrollWidth - document.documentElement.clientWidth
     ))).toBeLessThanOrEqual(1)

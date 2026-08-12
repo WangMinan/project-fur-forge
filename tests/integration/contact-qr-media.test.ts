@@ -4,7 +4,6 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import type Database from 'better-sqlite3'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { createSyntheticSourcePng } from '../../scripts/oss-preflight-core.mjs'
 import { migrateDatabase, openDatabase } from '../../server/utils/database'
 import {
   completeUploadSession,
@@ -13,6 +12,7 @@ import {
 import { getPublicSiteContent } from '../../server/utils/service/site-content'
 import { createUploadSession } from '../../server/utils/service/upload-session'
 import { createUploadSessionRequestSchema } from '../../shared/schemas/upload'
+import { CONTACT_QR_PNG } from '../helpers/contact-qr-fixture'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 
 const USER_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
@@ -64,7 +64,7 @@ afterEach(() => {
 
 describe('T03 contact QR media', () => {
   it('publishes only a complete READY PNG derivative and retries failures', async () => {
-    const content = createSyntheticSourcePng(640, 640)
+    const content = CONTACT_QR_PNG
     expect(createUploadSessionRequestSchema.safeParse(input(content, 640)).success)
       .toBe(true)
     expect(createUploadSessionRequestSchema.safeParse(input(content, 640, 320)).success)
@@ -134,6 +134,10 @@ describe('T03 contact QR media', () => {
     expect(storage.processCalls.every(
       call => !call.process.includes('watermark') && !call.process.includes('m_fill'),
     )).toBe(true)
+    for (const call of storage.processCalls) {
+      const publicImage = await storage.getPublicAnonymous(call.objectKey)
+      expect(publicImage.content).toEqual(content)
+    }
 
     sqlite.prepare(`
       UPDATE site_content SET official_channels_json = ? WHERE id = 'site'

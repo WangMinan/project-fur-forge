@@ -11,6 +11,8 @@ import { capture } from './helpers/screenshots'
 
 const SCREENSHOT_DIR
   = 'agent_docs/需求1-兽装工作室主页/implementation/notes/t34-c1/screenshots'
+const REQUIREMENT_2_SCREENSHOT_DIR
+  = 'agent_docs/需求2-站点导航与内容增强/implementation/notes/t15/screenshots'
 
 /**
  * T34-F3 文案分区 Card：独立保存、分区并发、分区级 409 与草稿保留。
@@ -294,6 +296,11 @@ test('公开官方渠道：五个平台按固定顺序显示 Logo、二维码和
     expect(await page.evaluate(() => (
       document.documentElement.scrollWidth - document.documentElement.clientWidth
     ))).toBeLessThanOrEqual(1)
+    await capture(
+      page,
+      `public-five-channels-${viewport.width}x${viewport.height}`,
+      REQUIREMENT_2_SCREENSHOT_DIR,
+    )
   }
 })
 
