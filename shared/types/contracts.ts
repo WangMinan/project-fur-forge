@@ -53,6 +53,9 @@ import type {
 import type {
   adminSiteBusinessStatusDtoSchema,
   adminSiteContentDtoSchema,
+  adminOfficialChannelSchema,
+  contactPlatformSchema,
+  publicOfficialChannelSchema,
   publicSiteBusinessStatusDtoSchema,
   publicSiteContentDtoSchema,
   siteBusinessStatusKindSchema,
@@ -198,6 +201,9 @@ export type PublicSiteBusinessStatusDto = z.infer<
 >
 export type AdminSiteContentDto = z.infer<typeof adminSiteContentDtoSchema>
 export type PublicSiteContentDto = z.infer<typeof publicSiteContentDtoSchema>
+export type ContactPlatform = z.infer<typeof contactPlatformSchema>
+export type AdminOfficialChannel = z.infer<typeof adminOfficialChannelSchema>
+export type PublicOfficialChannel = z.infer<typeof publicOfficialChannelSchema>
 export type PublicWorkCardDto = z.infer<typeof publicWorkCardDtoSchema>
 export type PublicDesignSheetDto = z.infer<typeof publicDesignSheetDtoSchema>
 export type PublicAdoptionListItemDto = z.infer<

@@ -992,6 +992,7 @@ export const siteContent = sqliteTable('site_content', {
   contactEmail: text('contact_email'),
   contactQq: text('contact_qq'),
   contactDouyin: text('contact_douyin'),
+  officialChannelsJson: text('official_channels_json').notNull().default('[{"platform":"qq","account":null,"qrCodeAssetId":null},{"platform":"douyin","account":null,"qrCodeAssetId":null},{"platform":"qq_group","account":null,"qrCodeAssetId":null},{"platform":"xiaohongshu","account":null,"qrCodeAssetId":null},{"platform":"bilibili","account":null,"qrCodeAssetId":null}]'),
   commissionIntro: text('commission_intro'),
   commissionEstimateNote: text('commission_estimate_note'),
   commissionEmailAction: text('commission_email_action'),
@@ -1041,6 +1042,10 @@ export const siteContent = sqliteTable('site_content', {
   check(
     'site_content_contact_douyin',
     sql`${table.contactDouyin} IS NULL OR (${table.contactDouyin} = trim(${table.contactDouyin}) AND length(${table.contactDouyin}) BETWEEN 2 AND 30 AND ${table.contactDouyin} NOT GLOB '*[ <>]*')`,
+  ),
+  check(
+    'site_content_official_channels_json',
+    sql`json_valid(${table.officialChannelsJson}) AND json_type(${table.officialChannelsJson}) = 'array' AND json_array_length(${table.officialChannelsJson}) = 5 AND json_extract(${table.officialChannelsJson}, '$[0].platform') = 'qq' AND json_extract(${table.officialChannelsJson}, '$[1].platform') = 'douyin' AND json_extract(${table.officialChannelsJson}, '$[2].platform') = 'qq_group' AND json_extract(${table.officialChannelsJson}, '$[3].platform') = 'xiaohongshu' AND json_extract(${table.officialChannelsJson}, '$[4].platform') = 'bilibili' AND length(${table.officialChannelsJson}) <= 5000`,
   ),
   check(
     'site_content_commission_estimate_note',

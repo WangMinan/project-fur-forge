@@ -30,6 +30,13 @@ const NOW = Date.UTC(2026, 7, 6)
 const USER_ID = '99999999-9999-4999-8999-999999999999'
 const FAQ_A = '11111111-1111-4111-8111-111111111111'
 const FAQ_B = '22222222-2222-4222-8222-222222222222'
+const officialChannels = (qq: string | null, douyin: string | null) => [
+  { platform: 'qq', account: qq, qrCodeAssetId: null },
+  { platform: 'douyin', account: douyin, qrCodeAssetId: null },
+  { platform: 'qq_group', account: null, qrCodeAssetId: null },
+  { platform: 'xiaohongshu', account: null, qrCodeAssetId: null },
+  { platform: 'bilibili', account: null, qrCodeAssetId: null },
+]
 
 let directory: string
 let sqlite: Database.Database
@@ -164,8 +171,7 @@ describe('T34-F3 site content section concurrency', () => {
   it('never leaks section versions or private contact fields to the public DTO', () => {
     updateSiteContentSection(sqlite, 'contact', versions().contact, {
       email: 'studio@example.test',
-      qq: '3114559925',
-      douyin: 'studio.official',
+      officialChannelsJson: JSON.stringify(officialChannels('3114559925', 'studio.official')),
       antiScam: '只认这些官方渠道。',
     }, USER_ID, NOW)
 
@@ -174,7 +180,11 @@ describe('T34-F3 site content section concurrency', () => {
     expect(serialized).not.toContain('sectionVersions')
     expect(serialized).not.toContain('commissionFaqVersion')
     expect(publicDto).not.toHaveProperty('version')
-    expect(publicDto.contact.douyin).toBe('studio.official')
+    expect(publicDto.contact.officialChannels).toEqual([
+      { platform: 'qq', account: '3114559925' },
+      { platform: 'douyin', account: 'studio.official' },
+    ])
+    expect(serialized).not.toContain('qrCodeAssetId')
     // 公开 FAQ 仍带稳定 ID（供前端 key 使用），但不含任何版本字段。
     for (const faq of publicDto.commission.faqs) {
       expect(faq).toHaveProperty('id')
