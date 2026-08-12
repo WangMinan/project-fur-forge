@@ -40,6 +40,11 @@ const emptyContent = {
 
 const FAQ_ID_A = '11111111-1111-4111-8111-111111111111'
 const FAQ_ID_B = '22222222-2222-4222-8222-222222222222'
+const faq = (index: number) => ({
+  id: `${String(index).padStart(8, '0')}-1111-4111-8111-111111111111`,
+  question: `问题 ${index}`,
+  answer: `回答 ${index}`,
+})
 const qrCodeSources = {
   webp: [],
   fallback: [{
@@ -166,6 +171,14 @@ describe('restricted site content contracts', () => {
         ],
       },
     }).success).toBe(true)
+    expect(updateCommissionFaqRequestSchema.safeParse({
+      expectedVersion: 1,
+      payload: { faqs: Array.from({ length: 9 }, (_, index) => faq(index + 1)) },
+    }).success).toBe(true)
+    expect(updateCommissionFaqRequestSchema.safeParse({
+      expectedVersion: 1,
+      payload: { faqs: Array.from({ length: 10 }, (_, index) => faq(index + 1)) },
+    }).success).toBe(false)
   })
 
   it('keeps business status values enumerated and public DTOs strict', () => {
