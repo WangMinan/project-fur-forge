@@ -1,11 +1,11 @@
 # 数据模型规划
 
 > **角色**：记录本轮现状模型与目标变更；实现后回填实际迁移和字段。
-> **状态**：T01～T04 已落地；公开渠道卡片、FAQ、搜索与动态方案 B 尚未落地。
+> **状态**：T01～T05 已落地；FAQ、搜索与动态方案 B 尚未落地。
 
 ## 0. 当前分支实际变更
 
-T01 只修改 `PUBLIC_NAV_ITEMS` 与 E2E。T02 新增 `official_channels_json`、管理/公开 DTO 和 contact 保存投影。T03 新增 `contact_qr`、`contact-qr-v1`、`site/contact` 上传归属及 READY SourceSet 投影。T04 复用这些契约完成固定五行管理编辑，不新增表、字段或第二个 contact 版本。
+T01 只修改 `PUBLIC_NAV_ITEMS` 与 E2E。T02 新增 `official_channels_json`、管理/公开 DTO 和 contact 保存投影。T03 新增 `contact_qr`、`contact-qr-v1`、`site/contact` 上传归属及 READY SourceSet 投影。T04 复用这些契约完成固定五行管理编辑，不新增表、字段或第二个 contact 版本。T05 只消费既有公开投影，不增加持久字段。
 
 ## 1. 现状
 
@@ -104,3 +104,5 @@ publishedAt
 ```
 
 不返回草稿、内部时间、管理员、版本、私有字段或任意 HTML。首页只取最近 3 条。
+
+contact 公开卡片只消费 `platform + account + qrCodeSources`。Logo 路径和平台显示名是固定枚举元数据，不进入数据库或公开 DTO；二维码 `<img>` 只使用已验证 PNG variant URL，不使用资产 ID、私有预览或签名 URL。

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { PROJECT_NAME } from '~~/shared/constants/project'
-import { CONTACT_PLATFORM_LABELS } from '~~/shared/constants/contact'
 import { publicSiteContentResponseSchema } from '~~/shared/schemas/site-content'
 
 /**
@@ -78,12 +77,7 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
           委托与领养通过以下官方渠道人工沟通；本站不提供站内留言或在线提交。
         </p>
         <ContactEmailActions :email="contact.email" />
-        <ul class="about-page__channels" role="list">
-          <li v-for="channel in contact.officialChannels" :key="channel.platform">
-            <span class="about-page__channel-label">{{ CONTACT_PLATFORM_LABELS[channel.platform] }}</span>
-            <span class="about-page__channel-value">{{ channel.account }}</span>
-          </li>
-        </ul>
+        <ContactChannelGrid :channels="contact.officialChannels" />
         <div v-if="antiScamParagraphs.length > 0" class="about-page__antiscam">
           <h3 class="about-page__subsection-title">防诈骗提示</h3>
           <p
@@ -134,14 +128,6 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
   font-size: var(--font-size-sm);
 }
 
-.about-page__channels {
-  display: grid;
-  gap: var(--space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
 .about-page__antiscam {
   display: grid;
   gap: var(--space-3);
@@ -153,23 +139,6 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
 .about-page__subsection-title {
   font-size: var(--font-size-base);
   font-weight: 600;
-}
-
-.about-page__channels li {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-3);
-}
-
-.about-page__channel-label {
-  flex: none;
-  min-width: 4.5em;
-  color: var(--public-text-tertiary);
-  font-size: var(--font-size-sm);
-}
-
-.about-page__channel-value {
-  overflow-wrap: anywhere;
 }
 
 </style>
