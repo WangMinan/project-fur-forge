@@ -805,7 +805,7 @@ export const analyticsEvents = sqliteTable('analytics_events', {
   ),
   check(
     'analytics_events_route_key',
-    sql`${table.routeKey} IN ('home', 'works', 'work_detail', 'returns', 'return_character', 'commission', 'adoptions', 'about', 'service', 'privacy', 'licenses')`,
+    sql`${table.routeKey} IN ('home', 'works', 'work_detail', 'returns', 'return_character', 'commission', 'adoptions', 'updates', 'about', 'service', 'privacy', 'licenses')`,
   ),
   check(
     'analytics_events_entity_type',
