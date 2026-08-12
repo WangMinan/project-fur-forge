@@ -204,6 +204,13 @@
       "when": 1786520000000,
       "tag": "0028_requirement_2_contact_qr",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "6",
+      "when": 1786530000000,
+      "tag": "0029_requirement_2_commission_email_faq",
+      "breakpoints": true
     }
   ]
 }

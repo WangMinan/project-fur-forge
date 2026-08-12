@@ -1,11 +1,11 @@
 # 数据模型规划
 
 > **角色**：记录本轮现状模型与目标变更；实现后回填实际迁移和字段。
-> **状态**：T01～T05 已落地；FAQ、搜索与动态方案 B 尚未落地。
+> **状态**：T01～T06 已落地；搜索与动态方案 B 尚未落地。
 
 ## 0. 当前分支实际变更
 
-T01 只修改 `PUBLIC_NAV_ITEMS` 与 E2E。T02 新增 `official_channels_json`、管理/公开 DTO 和 contact 保存投影。T03 新增 `contact_qr`、`contact-qr-v1`、`site/contact` 上传归属及 READY SourceSet 投影。T04 复用这些契约完成固定五行管理编辑，不新增表、字段或第二个 contact 版本。T05 只消费既有公开投影，不增加持久字段。
+T01 只修改 `PUBLIC_NAV_ITEMS` 与 E2E。T02 新增 `official_channels_json`、管理/公开 DTO 和 contact 保存投影。T03 新增 `contact_qr`、`contact-qr-v1`、`site/contact` 上传归属及 READY SourceSet 投影。T04 复用这些契约完成固定五行管理编辑，不新增表、字段或第二个 contact 版本。T05 只消费既有公开投影，不增加持久字段。T06 只迁移 `commission_faq_json` 内容和上限，不新增表或列。
 
 ## 1. 现状
 
@@ -54,9 +54,9 @@ T04 管理端始终按固定枚举显示五个平台槽位。二维码上传完�
 
 ## 3. FAQ 目标变更
 
-`commission_faq_json` 继续保存稳定 ID、问题、回答和顺序。新迁移追加一个固定 UUID 的标准模板项，不新增表。
+`commission_faq_json` 继续保存稳定 ID、问题、回答和顺序。迁移 `0029_requirement_2_commission_email_faq.sql` 追加固定 UUID `2f7c23c4-8e8a-4cc4-a8c5-3a8f3b8e9d61` 的标准模板项，不新增表。
 
-若迁移时当前数组已达到 8 项，优先提高 Schema 上限，不删除用户内容。
+FAQ Schema 与管理提示上限已从 8 提高到 9，因此迁移时已有 8 项会全部保留，模板追加为第 9 项。迁移只在 UUID 不存在且数组少于 9 项时写入，并递增 `commission_faq_version`。
 
 ## 4. 搜索
 
