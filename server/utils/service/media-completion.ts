@@ -18,6 +18,7 @@ import {
   uploadSessionDto,
 } from './upload-session'
 import { addReturnPhotoFromUpload } from './return-photo'
+import { generateContactQrVariants } from '../recipe/contact-qr-recipe'
 
 const PREPROCESS_THRESHOLD_BYTES = 20_000_000
 const PREPROCESS_RECIPE = 'preprocess-v1'
@@ -96,6 +97,9 @@ function previewsFor(role: AssetRow['role']): VerifiedAssetDto['previews'] {
   if (role === 'return_photo') {
     return [{ usage: 'return-wall', aspect: 'original', fitMode: 'contain' }]
   }
+  if (role === 'contact_qr') {
+    return [{ usage: 'contact-qr', aspect: 'original', fitMode: 'contain' }]
+  }
   return role === 'home_hero_landscape'
     ? [{ usage: 'home-hero-landscape', aspect: '16:9', fitMode: 'cover' }]
     : [{ usage: 'home-hero-portrait', aspect: '9:16', fitMode: 'cover' }]
@@ -119,7 +123,9 @@ function assetDto(row: AssetRow): VerifiedAssetDto {
     processingFailureCode: row.internalErrorCode,
     processingFailureStage: row.internalErrorCode === 'UPLOAD_PREPROCESS_FAILURE'
       ? 'PREPROCESS'
-      : null,
+      : row.internalErrorCode === 'UPLOAD_DERIVATIVE_FAILURE'
+        ? 'DERIVATIVE'
+        : null,
     previews: previewsFor(row.role),
   })
 }
@@ -416,7 +422,7 @@ function insertAsset(
   row: ReturnType<typeof requireUploadSession>,
   verified: VerifiedOriginal,
   input: CompleteUploadInput,
-  status: 'READY' | 'FAILED',
+  status: 'PENDING' | 'READY' | 'FAILED',
   now: number,
 ) {
   sqlite.prepare(`
@@ -438,7 +444,7 @@ function insertAsset(
     verified.orientation,
     input.focalX,
     input.focalY,
-    row.mediaRole === 'design_sheet' ? 'contain' : 'cover',
+    ['design_sheet', 'contact_qr'].includes(row.mediaRole) ? 'contain' : 'cover',
     input.watermarkAnchor ?? 'top-left',
     status === 'FAILED' ? 'UPLOAD_PREPROCESS_FAILURE' : null,
     now,
@@ -457,6 +463,31 @@ function completeSession(
         failure_stage = NULL, version = version + 1, updated_at = ?
     WHERE id = ? AND status = 'VALIDATING' AND asset_id IS NULL
   `).run(now, sessionId)
+}
+
+async function processContactQr(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  assetId: string,
+  now: number,
+) {
+  try {
+    await generateContactQrVariants(sqlite, storage, assetId, now)
+    sqlite.prepare(`
+      UPDATE assets
+      SET status = 'READY', internal_error_code = NULL,
+          version = version + 1, updated_at = ?
+      WHERE id = ? AND status = 'PENDING'
+    `).run(now, assetId)
+  }
+  catch {
+    sqlite.prepare(`
+      UPDATE assets
+      SET status = 'FAILED', internal_error_code = 'UPLOAD_DERIVATIVE_FAILURE',
+          version = version + 1, updated_at = ?
+      WHERE id = ? AND status = 'PENDING'
+    `).run(now, assetId)
+  }
 }
 
 export async function completeUploadSession(
@@ -513,7 +544,14 @@ export async function completeUploadSession(
   if (verified.content.length <= PREPROCESS_THRESHOLD_BYTES) {
     try {
       sqlite.transaction(() => {
-        insertAsset(sqlite, row, verified, input, 'READY', now)
+        insertAsset(
+          sqlite,
+          row,
+          verified,
+          input,
+          row.mediaRole === 'contact_qr' ? 'PENDING' : 'READY',
+          now,
+        )
         completeSession(sqlite, sessionId, now)
       })()
     }
@@ -526,6 +564,9 @@ export async function completeUploadSession(
         'DATABASE',
         now,
       )
+    }
+    if (row.mediaRole === 'contact_qr') {
+      await processContactQr(sqlite, storage, row.id, now)
     }
   }
   else {
@@ -621,21 +662,33 @@ export async function retryAssetProcessing(
   if (asset.version !== expectedVersion) {
     throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
-  if (
-    asset.status !== 'FAILED'
-    || asset.internalErrorCode !== 'UPLOAD_PREPROCESS_FAILURE'
-    || asset.byteSize <= PREPROCESS_THRESHOLD_BYTES
-  ) {
+  const contactQrRetry = asset.role === 'contact_qr'
+    && (
+      asset.status === 'PENDING'
+      || (
+        asset.status === 'FAILED'
+        && asset.internalErrorCode === 'UPLOAD_DERIVATIVE_FAILURE'
+      )
+    )
+  const preprocessRetry = asset.status === 'FAILED'
+    && asset.internalErrorCode === 'UPLOAD_PREPROCESS_FAILURE'
+    && asset.byteSize > PREPROCESS_THRESHOLD_BYTES
+  if (!contactQrRetry && !preprocessRetry) {
     throw new ServiceError(409, 'CONFLICT', 'Asset processing is not retryable.')
   }
   const acquired = sqlite.prepare(`
     UPDATE assets
     SET status = 'PENDING', internal_error_code = NULL,
         version = version + 1, updated_at = ?
-    WHERE id = ? AND status = 'FAILED' AND version = ?
+    WHERE id = ? AND status IN ('FAILED', 'PENDING') AND version = ?
   `).run(now, assetId, expectedVersion)
   if (acquired.changes !== 1) {
     throw new ServiceError(409, 'CONFLICT', 'Asset is already being processed.')
+  }
+
+  if (contactQrRetry) {
+    await processContactQr(sqlite, storage, assetId, now)
+    return assetDto(requireAsset(sqlite, assetId))
   }
 
   try {

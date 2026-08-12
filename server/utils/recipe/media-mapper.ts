@@ -2,6 +2,7 @@ import {
   adminAssetDtoSchema,
   publicAltSchema,
   publicHeroSlideDtoSchema,
+  publicPngSourceSetDtoSchema,
   publicSourceSetDtoSchema,
   publicVariantDtoSchema,
 } from '../../../shared/schemas/media'
@@ -11,6 +12,7 @@ import type {
   HeroPlacement,
   MediaRole,
   PublicHeroSlideDto,
+  PublicPngSourceSetDto,
   PublicSourceSetDto,
   PublicVariantDto,
 } from '../../../shared/types/contracts'
@@ -134,8 +136,13 @@ export function toAdminAssetDto(record: AssetRecord): AdminAssetDto {
   })
 }
 
+type PublicVariantRecord = Pick<
+  VariantRecord,
+  'format' | 'height' | 'objectKey' | 'status' | 'storageScope' | 'width'
+>
+
 export function toPublicVariantDto(
-  record: VariantRecord,
+  record: PublicVariantRecord,
   mediaBaseUrl: string,
   appEnv: RuntimeConfig['appEnv'] = 'development',
 ): PublicVariantDto | null {
@@ -149,6 +156,27 @@ export function toPublicVariantDto(
     height: record.height,
     format: record.format,
   })
+}
+
+export function toPublicPngSourceSetDto(
+  records: readonly PublicVariantRecord[],
+  mediaBaseUrl: string,
+  expectedWidths: readonly number[],
+  appEnv: RuntimeConfig['appEnv'] = 'development',
+): PublicPngSourceSetDto {
+  const fallback = records
+    .map(record => toPublicVariantDto(record, mediaBaseUrl, appEnv))
+    .filter((variant): variant is PublicVariantDto => (
+      variant !== null && variant.format === 'png'
+    ))
+    .sort((left, right) => left.width - right.width)
+  if (
+    fallback.length !== expectedWidths.length
+    || fallback.some((variant, index) => variant.width !== expectedWidths[index])
+  ) {
+    throw new Error('Public PNG srcset is incomplete.')
+  }
+  return publicPngSourceSetDtoSchema.parse({ webp: [], fallback })
 }
 
 export function toSafePublicAlt(value: string | null, fallback: string) {

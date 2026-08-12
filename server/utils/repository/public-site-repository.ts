@@ -47,7 +47,7 @@ import {
 import { getRuntimeConfig } from '../runtime-config'
 import type { RuntimeConfig } from '../runtime-config'
 import { safeLog } from '../safe-log'
-import { getPublicSiteContent } from '../service/site-content'
+import { getPublicBusinessStatuses } from '../service/site-content'
 import { toPublicWorkDto } from '../recipe/work-mapper'
 
 export interface PublicWorksQuery {
@@ -387,7 +387,7 @@ const ENTRY_TITLES = {
 } as const
 
 function publicBusinessStatuses(sqlite: Database.Database) {
-  return getPublicSiteContent(sqlite).statuses
+  return getPublicBusinessStatuses(sqlite)
 }
 
 /**

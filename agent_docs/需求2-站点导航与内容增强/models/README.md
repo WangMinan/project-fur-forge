@@ -1,11 +1,11 @@
 # 数据模型规划
 
 > **角色**：记录本轮现状模型与目标变更；实现后回填实际迁移和字段。
-> **状态**：T01～T02 已落地；二维码媒体、FAQ、搜索与动态方案 B 尚未落地。
+> **状态**：T01～T03 已落地；FAQ、搜索与动态方案 B 尚未落地。
 
 ## 0. 当前分支实际变更
 
-T01 只修改 `PUBLIC_NAV_ITEMS` 与 E2E。T02 新增 `official_channels_json`、管理/公开 DTO 和 contact 保存投影，但尚未增加媒体角色、运行时配置或云端对象。
+T01 只修改 `PUBLIC_NAV_ITEMS` 与 E2E。T02 新增 `official_channels_json`、管理/公开 DTO 和 contact 保存投影。T03 新增 `contact_qr`、`contact-qr-v1`、`site/contact` 上传归属及 READY SourceSet 投影。
 
 ## 1. 现状
 
@@ -47,6 +47,8 @@ protection       none
 fit              contain
 format           png
 ```
+
+迁移 `0028_requirement_2_contact_qr.sql` 已扩展 `assets`、`upload_sessions` 与 `asset_variants` 的前向约束。源图限制为至少 320×320、方形、20 MB 内 PNG；公开派生按源宽生成 320/640 PNG 阶梯，不裁切、不加水印。资产仅在整套派生验证完成后进入 READY，失败使用现有资产处理重试 API。
 
 ## 3. FAQ 目标变更
 

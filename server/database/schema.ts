@@ -174,7 +174,7 @@ export const assets = sqliteTable('assets', {
     .on(table.privateObjectKey),
   check(
     'assets_role',
-    sql`${table.role} IN ('design_sheet', 'studio_photo', 'home_hero_landscape', 'home_hero_portrait', 'watermark_logo', 'return_photo')`,
+    sql`${table.role} IN ('design_sheet', 'studio_photo', 'home_hero_landscape', 'home_hero_portrait', 'watermark_logo', 'return_photo', 'contact_qr')`,
   ),
   check(
     'assets_status',
@@ -223,6 +223,10 @@ export const assets = sqliteTable('assets', {
   check(
     'assets_watermark_logo_png',
     sql`${table.role} != 'watermark_logo' OR (${table.mimeType} = 'image/png' AND ${table.byteSize} <= 20000000)`,
+  ),
+  check(
+    'assets_contact_qr_png',
+    sql`${table.role} != 'contact_qr' OR (${table.mimeType} = 'image/png' AND ${table.byteSize} <= 20000000 AND ${table.width} = ${table.height} AND ${table.width} >= 320 AND ${table.fitMode} = 'contain')`,
   ),
   check('assets_version_positive', sql`${table.version} > 0`),
 ])
@@ -311,7 +315,7 @@ export const uploadSessions = sqliteTable('upload_sessions', {
   ),
   check(
     'upload_sessions_owner_id',
-    sql`length(trim(${table.ownerId})) > 0 AND (${table.ownerType} != 'site' OR ${table.ownerId} IN ('home', 'branding'))`,
+    sql`length(trim(${table.ownerId})) > 0 AND (${table.ownerType} != 'site' OR ${table.ownerId} IN ('home', 'branding', 'contact'))`,
   ),
   check(
     'upload_sessions_owner_version',
@@ -319,7 +323,7 @@ export const uploadSessions = sqliteTable('upload_sessions', {
   ),
   check(
     'upload_sessions_media_role',
-    sql`(${table.ownerType} = 'work' AND ${table.mediaRole} IN ('design_sheet', 'studio_photo')) OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'home' AND ${table.mediaRole} IN ('home_hero_landscape', 'home_hero_portrait')) OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'branding' AND ${table.mediaRole} = 'watermark_logo') OR (${table.ownerType} = 'return' AND ${table.mediaRole} = 'return_photo')`,
+    sql`(${table.ownerType} = 'work' AND ${table.mediaRole} IN ('design_sheet', 'studio_photo')) OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'home' AND ${table.mediaRole} IN ('home_hero_landscape', 'home_hero_portrait')) OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'branding' AND ${table.mediaRole} = 'watermark_logo') OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'contact' AND ${table.mediaRole} = 'contact_qr') OR (${table.ownerType} = 'return' AND ${table.mediaRole} = 'return_photo')`,
   ),
   check(
     'upload_sessions_private_key_relative',
@@ -332,6 +336,10 @@ export const uploadSessions = sqliteTable('upload_sessions', {
   check(
     'upload_sessions_watermark_logo_png',
     sql`${table.mediaRole} != 'watermark_logo' OR (${table.expectedContentType} = 'image/png' AND ${table.expectedBytes} <= 20000000)`,
+  ),
+  check(
+    'upload_sessions_contact_qr_png',
+    sql`${table.mediaRole} != 'contact_qr' OR (${table.expectedContentType} = 'image/png' AND ${table.expectedBytes} <= 20000000 AND ${table.expectedWidth} = ${table.expectedHeight} AND ${table.expectedWidth} >= 320)`,
   ),
   check(
     'upload_sessions_expected_bytes',
@@ -461,11 +469,11 @@ export const assetVariants = sqliteTable('asset_variants', {
   ),
   check(
     'asset_variants_media_role',
-    sql`${table.mediaRole} IN ('design_sheet', 'studio_photo', 'home_hero_landscape', 'home_hero_portrait', 'return_photo')`,
+    sql`${table.mediaRole} IN ('design_sheet', 'studio_photo', 'home_hero_landscape', 'home_hero_portrait', 'return_photo', 'contact_qr')`,
   ),
   check(
     'asset_variants_usage',
-    sql`${table.usage} IN ('preprocess', 'work-card', 'detail', 'design-sheet', 'home-hero-landscape', 'home-hero-portrait', 'commission-hero-landscape', 'commission-hero-portrait', 'home-entry-commission', 'home-entry-adoption', 'return-wall')`,
+    sql`${table.usage} IN ('preprocess', 'work-card', 'detail', 'design-sheet', 'home-hero-landscape', 'home-hero-portrait', 'commission-hero-landscape', 'commission-hero-portrait', 'home-entry-commission', 'home-entry-adoption', 'return-wall', 'contact-qr')`,
   ),
   check(
     'asset_variants_dimensions',
@@ -513,7 +521,7 @@ export const assetVariants = sqliteTable('asset_variants', {
   ),
   check(
     'asset_variants_public_protection',
-    sql`${table.storageScope} != 'PUBLIC' OR ${table.protectionMode} = 'watermark' OR ${table.recipeVersion} IN ('site-display-v1', 'return-display-v1')`,
+    sql`${table.storageScope} != 'PUBLIC' OR ${table.protectionMode} = 'watermark' OR ${table.recipeVersion} IN ('site-display-v1', 'return-display-v1', 'contact-qr-v1')`,
   ),
   /**
    * T36 返图公开变体：只允许 return-wall 用途、公开范围、无保护模式。
@@ -532,6 +540,18 @@ export const assetVariants = sqliteTable('asset_variants', {
   check(
     'asset_variants_return_photo_role',
     sql`${table.mediaRole} != 'return_photo' OR ${table.usage} IN ('preprocess', 'return-wall')`,
+  ),
+  check(
+    'asset_variants_contact_qr_recipe',
+    sql`${table.recipeVersion} != 'contact-qr-v1' OR (${table.storageScope} = 'PUBLIC' AND ${table.protectionMode} = 'none' AND ${table.usage} = 'contact-qr' AND ${table.mediaRole} = 'contact_qr' AND ${table.format} = 'png' AND ${table.width} = ${table.height})`,
+  ),
+  check(
+    'asset_variants_contact_qr_usage',
+    sql`${table.usage} != 'contact-qr' OR (${table.storageScope} = 'PUBLIC' AND ${table.protectionMode} = 'none' AND ${table.recipeVersion} = 'contact-qr-v1' AND ${table.mediaRole} = 'contact_qr' AND ${table.format} = 'png' AND ${table.width} = ${table.height})`,
+  ),
+  check(
+    'asset_variants_contact_qr_role',
+    sql`${table.mediaRole} != 'contact_qr' OR ${table.usage} IN ('preprocess', 'contact-qr')`,
   ),
   check(
     'asset_variants_public_watermark',

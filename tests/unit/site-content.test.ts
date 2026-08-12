@@ -40,6 +40,15 @@ const emptyContent = {
 
 const FAQ_ID_A = '11111111-1111-4111-8111-111111111111'
 const FAQ_ID_B = '22222222-2222-4222-8222-222222222222'
+const qrCodeSources = {
+  webp: [],
+  fallback: [{
+    src: 'https://media.example.test/test/web/qr/contact-qr-v1/contact-qr/320/qr.png',
+    width: 320,
+    height: 320,
+    format: 'png' as const,
+  }],
+}
 
 describe('restricted site content contracts', () => {
   it('accepts empty drafts per section and validates official channels', () => {
@@ -186,11 +195,19 @@ describe('restricted site content contracts', () => {
       },
       about: {
         ...emptyContent.about,
-        officialChannels: [{ platform: 'qq', account: '123456789' }],
+        officialChannels: [{
+          platform: 'qq',
+          account: '123456789',
+          qrCodeSources,
+        }],
       },
       contact: {
         email: 'studio@example.test',
-        officialChannels: [{ platform: 'qq', account: '123456789' }],
+        officialChannels: [{
+          platform: 'qq',
+          account: '123456789',
+          qrCodeSources,
+        }],
         antiScam: null,
       },
     }

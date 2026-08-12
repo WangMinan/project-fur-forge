@@ -1,7 +1,7 @@
 # 产物索引
 
 > **最后校准**：2026-08-12。
-> **状态**：阶段 0～3 文档已锁定；阶段 4 已完成 T01～T02。
+> **状态**：阶段 0～3 文档已锁定；阶段 4 已完成 T01～T03。
 
 ## 文档产物
 
@@ -11,10 +11,10 @@
 | 1 规格 | 需求规格 | `requirements/SPEC.md` | 已锁定 | 五组功能与验收契约；T01 已实现 |
 | 2 计划 | 实施计划 | `planning/PLAN.md` | 已决策 | OQ-001 已选择方案 B |
 | 3 任务 | 任务清单 | `implementation/TASKS.md` | 实施中 | GATE-01、T01～T02 已关闭，仅保留动态方案 B |
-| 4 实施 | 实施记录 | `implementation/notes/README.md` | 实施中 | T01～T02 已记录 |
+| 4 实施 | 实施记录 | `implementation/notes/README.md` | 实施中 | T01～T03 已记录 |
 | 5 评审 | 评审记录 | `review/REVIEW.md` | 未开始 | 等实现后独立 Review |
-| 6 闭环 | 模型说明 | `models/README.md` | 部分落地 | contact 持久结构已落地；FAQ、搜索与方案 B 动态仍为目标模型 |
-| 6 闭环 | 当前状态 | `STATE.md` | 当前 | T01 CI 已关闭，下一步为 T03 二维码媒体链 |
+| 6 闭环 | 模型说明 | `models/README.md` | 部分落地 | contact 持久结构与二维码媒体已落地；FAQ、搜索与方案 B 动态仍为目标模型 |
+| 6 闭环 | 当前状态 | `STATE.md` | 当前 | T03 已关闭，下一步为 T04 后台五平台编辑体验 |
 
 ## 外部与既有资料
 
@@ -37,6 +37,8 @@
 - T02：`site_content.official_channels_json`、固定五平台 Schema/DTO、contact 局部保存与安全公开投影；
 - T02：迁移 `0027_requirement_2_contact_channels.sql` 保留邮箱并迁移旧 QQ/抖音；
 - T02 记录：[`../implementation/notes/T02-CONTACT-CONTRACT-2026-08-12.md`](../implementation/notes/T02-CONTACT-CONTRACT-2026-08-12.md)。
+- T03：`contact_qr` 私有源图、`contact-qr-v1` 稳定公开 PNG 派生、失败重试和 READY SourceSet 投影；
+- T03 记录：[`../implementation/notes/T03-CONTACT-QR-MEDIA-2026-08-12.md`](../implementation/notes/T03-CONTACT-QR-MEDIA-2026-08-12.md)。
 
 ## 待实施产物
 

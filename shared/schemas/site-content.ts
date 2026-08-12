@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { CONTACT_PLATFORMS } from '../constants/contact'
 import { apiSuccessSchema, resourceVersionSchema, versionedRequestSchema } from './api'
 import { contactEmailSchema, contactQqSchema } from './home'
+import { publicPngSourceSetDtoSchema } from './media'
 
 const unsafePlainTextPattern = /[<>]|\b(?:javascript|vbscript)\s*:|data\s*:\s*text\/html/iu
 
@@ -153,7 +154,10 @@ export const adminOfficialChannelsSchema = z.array(adminOfficialChannelSchema)
 
 export const publicOfficialChannelSchema = adminOfficialChannelSchema
   .omit({ qrCodeAssetId: true })
-  .extend({ account: plainTextSchema(120) })
+  .extend({
+    account: plainTextSchema(120),
+    qrCodeSources: publicPngSourceSetDtoSchema,
+  })
   .strict()
 
 export const publicOfficialChannelsSchema = z.array(publicOfficialChannelSchema)
@@ -170,7 +174,11 @@ export const publicOfficialChannelsSchema = z.array(publicOfficialChannelSchema)
         })
       }
       previous = order
-      if (!isValidOfficialChannelAccount({ ...channel, qrCodeAssetId: null })) {
+      if (!isValidOfficialChannelAccount({
+        platform: channel.platform,
+        account: channel.account,
+        qrCodeAssetId: null,
+      })) {
         context.addIssue({
           code: 'custom',
           message: '平台账号格式不正确',

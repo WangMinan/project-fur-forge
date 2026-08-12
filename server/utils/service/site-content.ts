@@ -12,6 +12,13 @@ import type {
   SiteBusinessStatusTone,
 } from '../../../shared/types/contracts'
 import { ServiceError } from '../service-error'
+import type { RuntimeConfig } from '../runtime-config'
+import { safeLog } from '../safe-log'
+import {
+  completeContactQrVariants,
+  contactQrWidths,
+} from '../recipe/contact-qr-recipe'
+import { toPublicPngSourceSetDto } from '../recipe/media-mapper'
 
 interface SiteContentRow {
   aboutContentVersion: number
@@ -88,6 +95,21 @@ function businessStatuses(sqlite: Database.Database) {
   }
 }
 
+export function getPublicBusinessStatuses(sqlite: Database.Database) {
+  const current = businessStatuses(sqlite)
+  const project = (status: BusinessStatusRow | null) => status && ({
+    kind: status.kind,
+    tone: status.tone,
+    label: status.label,
+    detail: status.detail,
+    href: status.href,
+  })
+  return {
+    commission: project(current.commission),
+    adoption: project(current.adoption),
+  }
+}
+
 function faqs(raw: string | null) {
   try {
     return commissionFaqListSchema.parse(raw ? JSON.parse(raw) : [])
@@ -143,23 +165,101 @@ export function getAdminSiteContent(sqlite: Database.Database) {
   return content(sqlite)
 }
 
-export function getPublicSiteContent(sqlite: Database.Database) {
+interface ContactQrVariantRow {
+  byteSize: number
+  format: 'png'
+  height: number
+  objectKey: string
+  protectionMode: 'none'
+  recipeVersion: 'contact-qr-v1'
+  sha256: string
+  status: 'READY'
+  storageScope: 'PUBLIC'
+  usage: 'contact-qr'
+  width: number
+}
+
+function contactQrSources(
+  sqlite: Database.Database,
+  assetId: string,
+  mediaBaseUrl: string,
+  appEnv: RuntimeConfig['appEnv'],
+) {
+  const asset = sqlite.prepare(`
+    SELECT role, status, width, height, mime_type AS mimeType
+    FROM assets WHERE id = ?
+  `).get(assetId) as {
+    height: number
+    mimeType: string
+    role: string
+    status: string
+    width: number
+  } | undefined
+  if (
+    !asset
+    || asset.role !== 'contact_qr'
+    || asset.status !== 'READY'
+    || asset.mimeType !== 'image/png'
+    || asset.width !== asset.height
+  ) {
+    return null
+  }
+  const variants = sqlite.prepare(`
+    SELECT storage_scope AS storageScope, status, object_key AS objectKey,
+           width, height, format, recipe_version AS recipeVersion,
+           protection_mode AS protectionMode, usage, sha256,
+           byte_size AS byteSize
+    FROM asset_variants
+    WHERE asset_id = ? AND storage_scope = 'PUBLIC' AND status = 'READY'
+      AND usage = 'contact-qr' AND recipe_version = 'contact-qr-v1'
+      AND protection_mode = 'none' AND sha256 IS NOT NULL AND byte_size > 0
+  `).all(assetId) as ContactQrVariantRow[]
+  const complete = completeContactQrVariants(asset.width, variants)
+  if (!complete) {
+    return null
+  }
+  try {
+    return toPublicPngSourceSetDto(
+      complete,
+      mediaBaseUrl,
+      contactQrWidths(asset.width),
+      appEnv,
+    )
+  }
+  catch (error) {
+    safeLog('error', 'Contact QR public projection failed.', {
+      assetId,
+      errorName: (error as { name?: unknown }).name,
+    })
+    return null
+  }
+}
+
+export function getPublicSiteContent(
+  sqlite: Database.Database,
+  mediaBaseUrl: string,
+  appEnv: RuntimeConfig['appEnv'] = 'development',
+) {
   const current = content(sqlite)
-  const publicStatus = (status: BusinessStatusRow | null) => status && ({
-    kind: status.kind,
-    tone: status.tone,
-    label: status.label,
-    detail: status.detail,
-    href: status.href,
-  })
   const publicChannels = current.contact.officialChannels
-    .filter(channel => channel.account !== null)
-    .map(channel => ({ platform: channel.platform, account: channel.account! }))
+    .flatMap((channel) => {
+      if (channel.account === null || channel.qrCodeAssetId === null) {
+        return []
+      }
+      const qrCodeSources = contactQrSources(
+        sqlite,
+        channel.qrCodeAssetId,
+        mediaBaseUrl,
+        appEnv,
+      )
+      return qrCodeSources ? [{
+        platform: channel.platform,
+        account: channel.account,
+        qrCodeSources,
+      }] : []
+    })
   return publicSiteContentDtoSchema.parse({
-    statuses: {
-      commission: publicStatus(current.statuses.commission),
-      adoption: publicStatus(current.statuses.adoption),
-    },
+    statuses: getPublicBusinessStatuses(sqlite),
     commission: {
       ...current.commission,
       email: current.contact.email,

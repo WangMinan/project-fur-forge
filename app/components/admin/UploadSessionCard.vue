@@ -19,6 +19,7 @@ const progressPercent = computed(() =>
 const ffmpegActive = computed(() => props.item.state === 'validating' && (
   (props.item.session?.expected.byteSize ?? 0) > 20_000_000
   || props.item.asset?.processingFailureStage === 'PREPROCESS'
+  || props.item.asset?.processingFailureStage === 'DERIVATIVE'
 ))
 
 const stateLabel = computed(() => {

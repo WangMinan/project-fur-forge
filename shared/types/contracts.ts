@@ -21,6 +21,7 @@ import type {
   assetStatusSchema,
   mediaRoleSchema,
   publicHeroSlideDtoSchema,
+  publicPngSourceSetDtoSchema,
   publicSourceSetDtoSchema,
   publicVariantDtoSchema,
 } from '../schemas/media'
@@ -168,6 +169,7 @@ export type AssetStatus = z.infer<typeof assetStatusSchema>
 export type AdminAssetDto = z.infer<typeof adminAssetDtoSchema>
 export type PublicVariantDto = z.infer<typeof publicVariantDtoSchema>
 export type PublicSourceSetDto = z.infer<typeof publicSourceSetDtoSchema>
+export type PublicPngSourceSetDto = z.infer<typeof publicPngSourceSetDtoSchema>
 export type PublicHeroSlideDto = z.infer<typeof publicHeroSlideDtoSchema>
 export type AdminHeroAssetDto = z.infer<typeof adminHeroAssetDtoSchema>
 export type AdminHeroPreviewDto = z.infer<typeof adminHeroPreviewDtoSchema>
