@@ -23,6 +23,7 @@
 - [`T08-T09-PUBLIC-SEARCH-UI-2026-08-12.md`](./T08-T09-PUBLIC-SEARCH-UI-2026-08-12.md)：三页原生 GET 搜索、查询保留、空态与浏览器验证。
 - [`T10-B-UPDATES-ADMIN-2026-08-12.md`](./T10-B-UPDATES-ADMIN-2026-08-12.md)：独立动态表、严格契约、管理 API、后台 CRUD/发布状态与 CAS 冲突。
 - [`T11-PUBLIC-UPDATES-2026-08-12.md`](./T11-PUBLIC-UPDATES-2026-08-12.md)：published-only 公开投影、动态列表页、纯文本安全、SEO 与 sitemap。
+- [`T12-HOME-UPDATES-NAV-2026-08-12.md`](./T12-HOME-UPDATES-NAV-2026-08-12.md)：首页最近三条动态、独立降级、公开导航与 analytics route key。
 
 ## 新记录最低要求
 

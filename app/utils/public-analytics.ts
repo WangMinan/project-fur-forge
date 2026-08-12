@@ -15,6 +15,7 @@ const STATIC_ROUTE_KEYS: Readonly<Record<string, AnalyticsRouteKey>> = {
   '/returns': 'returns',
   '/commission': 'commission',
   '/adoptions': 'adoptions',
+  '/updates': 'updates',
   '/about': 'about',
   '/service': 'service',
   '/privacy': 'privacy',

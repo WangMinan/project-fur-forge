@@ -1,7 +1,7 @@
 # 任务清单：站点导航与内容增强
 
 > **角色**：PLAN 的可勾选垂直切片；每个任务应在一个实现会话内完成并留下可运行验证。
-> **状态**：实施中；动态方案已锁定，`GATE-01` 与 T01～T11 已完成工程实现，下一项为 T12。
+> **状态**：实施中；动态方案已锁定，`GATE-01` 与 T01～T12 已完成工程实现，下一项为 T13。
 > **规则**：方案 B 是唯一动态实现路径；任务勾选只代表其定义完成，不代签后续独立 Review、用户验收或 PR 合并。
 
 ## 当前目标
@@ -38,7 +38,7 @@
 - **T10-A · 已取消，不实施**：不增加 `site_content.updates_json`、动态文案 Card 或第二套写入口。
 - [x] **T10-B · 独立动态模型与后台**：新增最小 `updates` 表、repository/service/route 和 `/admin/updates` 管理入口，支持逐条新增、编辑、发布、下架、删除与版本冲突；首版无媒体、slug、详情页或定时发布。 _新模型与管理页面；复用：admin list/form/status patterns；依赖：已关闭的 GATE-01。实现记录：[`notes/T10-B-UPDATES-ADMIN-2026-08-12.md`](./notes/T10-B-UPDATES-ADMIN-2026-08-12.md)。_
 - [x] **T11 · 最新动态公开页**：建立统一公开 DTO/API 和 `/updates`，只显示 published 记录，按发布时间倒序呈现类型、标题、正文和时间；补 loading/error/empty、安全纯文本、SEO 与 sitemap。 _新页面/API/展示组件；复用：公开页壳和空态；依赖：T10-B。实现记录：[`notes/T11-PUBLIC-UPDATES-2026-08-12.md`](./notes/T11-PUBLIC-UPDATES-2026-08-12.md)。_
-- [ ] **T12 · 首页动态摘要与导航入口**：给 home aggregate 增加可降级 `latestUpdates`，首页显示最近 3 条；页面可用后再把“最新动态”加入桌面/移动导航和 analytics route key。 _修改：首页聚合/首页/导航/统计白名单；新建：`HomeLatestUpdates`；依赖：T11。_
+- [x] **T12 · 首页动态摘要与导航入口**：给 home aggregate 增加可降级 `latestUpdates`，首页显示最近 3 条；页面可用后再把“最新动态”加入桌面/移动导航和 analytics route key。 _修改：首页聚合/首页/导航/统计白名单；新建：`HomeLatestUpdates`；依赖：T11。实现记录：[`notes/T12-HOME-UPDATES-NAV-2026-08-12.md`](./notes/T12-HOME-UPDATES-NAV-2026-08-12.md)。_
 
 ## 验证与评审
 
@@ -50,5 +50,5 @@
 
 ## 闭环结论
 
-- `GATE-01`、T01～T11 已关闭；下一项为 T12。
+- `GATE-01`、T01～T12 已关闭；下一项为 T13。
 - PR #10 仍未合入 `main`；T16 独立 Review、T17 用户验收保持未勾选。

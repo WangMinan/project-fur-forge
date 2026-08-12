@@ -218,6 +218,13 @@
       "when": 1786533676377,
       "tag": "0030_requirement_2_updates",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "6",
+      "when": 1786540000000,
+      "tag": "0031_requirement_2_updates_analytics",
+      "breakpoints": true
     }
   ]
 }

@@ -40,7 +40,7 @@ let sqlite: Database.Database
 function pageView(input: {
   entityId?: string
   entityType?: 'return_character' | 'work'
-  routeKey: 'about' | 'home' | 'return_character' | 'work_detail' | 'works'
+  routeKey: 'about' | 'home' | 'return_character' | 'updates' | 'work_detail' | 'works'
   sessionId?: string
 }, occurredAt = NOW) {
   recordAnalyticsEvent(sqlite, {
@@ -210,6 +210,19 @@ describe('T46 analytics persistence and overview', () => {
       views: 1,
     })])
     expect(overview.contactActions).toHaveLength(2)
+  })
+
+  it('accepts and labels the latest-updates route after the forward migration', () => {
+    pageView({ routeKey: 'updates' })
+
+    expect(sqlite.prepare(`
+      SELECT route_key FROM analytics_events ORDER BY id DESC LIMIT 1
+    `).pluck().get()).toBe('updates')
+    expect(getAnalyticsOverview(sqlite, NOW).topPages[0]).toMatchObject({
+      routeKey: 'updates',
+      label: '最新动态',
+      views: 1,
+    })
   })
 
   it('deletes only events older than 90 days and remains idempotent', () => {

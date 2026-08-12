@@ -399,7 +399,9 @@ describe('SQLite foundation', () => {
       legacy.sqlite.close()
     }
 
-    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({ applied: 1 })
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
+      applied: migrationCountFrom('0030_requirement_2_updates'),
+    })
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({ applied: 0 })
     const upgraded = openDatabase(databaseFile)
     try {

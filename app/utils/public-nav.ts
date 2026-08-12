@@ -19,6 +19,7 @@ export const PUBLIC_NAV_ITEMS: PublicNavItem[] = [
       { href: '/adoptions', label: '掉落领养' },
     ],
   },
+  { href: '/updates', label: '最新动态' },
   {
     href: '/about',
     label: '关于我们',

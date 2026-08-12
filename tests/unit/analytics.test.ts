@@ -85,6 +85,13 @@ describe('T46 analytics contract', () => {
       routeKey: 'home',
       entityId: null,
     })
+    expect(analyticsPageEventForPath('/updates')).toEqual({
+      eventType: 'page_view',
+      routeKey: 'updates',
+      entityType: null,
+      entityId: null,
+      actionKey: null,
+    })
     expect(analyticsPageEventForPath('/works/sample', {
       id: WORK_ID,
       type: 'work',
