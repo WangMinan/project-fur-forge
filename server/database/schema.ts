@@ -132,6 +132,46 @@ export const works = sqliteTable('works', {
   check('works_version_positive', sql`${table.version} > 0`),
 ])
 
+/**
+ * 最新动态是独立内容资源，不与站点 singleton 文案混存。
+ *
+ * 首版只保存纯文本；不预留媒体、slug、定时发布或富文本字段。
+ */
+export const updates = sqliteTable('updates', {
+  id: text('id').primaryKey(),
+  type: text('type').notNull(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  publicationStatus: text('publication_status').notNull().default('draft'),
+  publishedAt: integer('published_at'),
+  version: integer('version').notNull().default(1),
+  ...timestampColumns(),
+}, table => [
+  index('updates_publication_published_idx')
+    .on(table.publicationStatus, table.publishedAt),
+  check(
+    'updates_type',
+    sql`${table.type} IN ('event', 'drop', 'commission_open', 'other')`,
+  ),
+  check(
+    'updates_title',
+    sql`${table.title} = trim(${table.title}) AND length(${table.title}) BETWEEN 1 AND 200`,
+  ),
+  check(
+    'updates_content',
+    sql`${table.content} = trim(${table.content}) AND length(${table.content}) BETWEEN 1 AND 20000`,
+  ),
+  check(
+    'updates_publication_status',
+    sql`${table.publicationStatus} IN ('draft', 'published', 'unpublished')`,
+  ),
+  check(
+    'updates_publication_time',
+    sql`(${table.publicationStatus} = 'draft' AND ${table.publishedAt} IS NULL) OR (${table.publicationStatus} != 'draft' AND ${table.publishedAt} IS NOT NULL)`,
+  ),
+  check('updates_version_positive', sql`${table.version} > 0`),
+])
+
 export const workFeatureTags = sqliteTable('work_feature_tags', {
   workId: text('work_id').notNull()
     .references(() => works.id, { onDelete: 'cascade' }),

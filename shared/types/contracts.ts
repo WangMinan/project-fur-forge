@@ -133,6 +133,12 @@ import type {
   watermarkProfileDtoSchema,
   watermarkProfileStatusSchema,
 } from '../schemas/watermark'
+import type {
+  adminUpdateDtoSchema,
+  publicUpdateDtoSchema,
+  updateFieldsSchema,
+  updateTypeSchema,
+} from '../schemas/update'
 
 export type ApiError = z.infer<typeof apiErrorSchema>
 export type AnalyticsEventType = z.infer<typeof analyticsEventTypeSchema>
@@ -302,3 +308,7 @@ export type PublicReturnImage = z.infer<typeof publicReturnImageSchema>
 export type PublicReturnCharacterDto = z.infer<
   typeof publicReturnCharacterDtoSchema
 >
+export type UpdateType = z.infer<typeof updateTypeSchema>
+export type UpdateFields = z.infer<typeof updateFieldsSchema>
+export type AdminUpdateDto = z.infer<typeof adminUpdateDtoSchema>
+export type PublicUpdateDto = z.infer<typeof publicUpdateDtoSchema>

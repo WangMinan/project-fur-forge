@@ -154,6 +154,30 @@ function migrationsBeforeCommissionEmailFaq(databaseFile: string) {
   return folder
 }
 
+function migrationsBeforeUpdates(databaseFile: string) {
+  const folder = resolve(dirname(databaseFile), 'pre-requirement-2-updates-migrations')
+  const meta = resolve(folder, 'meta')
+  mkdirSync(meta, { recursive: true })
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  const entries = journal.entries.slice(0, journal.entries.findIndex(
+    entry => entry.tag === '0030_requirement_2_updates',
+  ))
+  for (const { tag } of entries) {
+    copyFileSync(
+      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
+      resolve(folder, `${tag}.sql`),
+    )
+  }
+  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
+    ...journal,
+    entries,
+  }))
+  return folder
+}
+
 afterEach(() => {
   temporaryDirectories.splice(0).forEach(directory => rmSync(
     directory,
@@ -329,7 +353,9 @@ describe('SQLite foundation', () => {
       legacy.sqlite.close()
     }
 
-    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({ applied: 1 })
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
+      applied: migrationCountFrom('0029_requirement_2_commission_email_faq'),
+    })
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({ applied: 0 })
     const upgraded = openDatabase(databaseFile)
     try {
@@ -346,6 +372,45 @@ describe('SQLite foundation', () => {
         question: '邮件估价咨询可以按什么格式填写？',
       })
       expect(row.version).toBe(previousVersion + 1)
+      expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
+    }
+    finally {
+      upgraded.sqlite.close()
+    }
+  })
+
+  it('adds the independent updates table to an existing database', async () => {
+    const databaseFile = temporaryDatabase()
+    await migrateDatabase(databaseFile, {
+      migrationsFolder: migrationsBeforeUpdates(databaseFile),
+    })
+    const legacy = openDatabase(databaseFile)
+    try {
+      expect(legacy.sqlite.prepare(`
+        SELECT count(*) FROM sqlite_master
+        WHERE type = 'table' AND name = 'updates'
+      `).pluck().get()).toBe(0)
+      legacy.sqlite.prepare(`
+        UPDATE site_content SET contact_email = 'kept@example.test'
+        WHERE id = 'site'
+      `).run()
+    }
+    finally {
+      legacy.sqlite.close()
+    }
+
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({ applied: 1 })
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({ applied: 0 })
+    const upgraded = openDatabase(databaseFile)
+    try {
+      expect(upgraded.sqlite.prepare(`
+        SELECT count(*) FROM sqlite_master
+        WHERE type = 'table' AND name = 'updates'
+      `).pluck().get()).toBe(1)
+      expect(upgraded.sqlite.prepare(`
+        SELECT contact_email FROM site_content WHERE id = 'site'
+      `).pluck().get()).toBe('kept@example.test')
+      expect(upgraded.sqlite.pragma('foreign_key_check')).toEqual([])
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
     }
     finally {

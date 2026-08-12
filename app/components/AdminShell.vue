@@ -12,6 +12,7 @@ withDefaults(defineProps<{
     | 'content'
     | 'home'
     | 'returns'
+    | 'updates'
     | 'works'
     | 'none'
 }>(), {
@@ -65,6 +66,11 @@ async function onLogout() {
           class="admin-shell__nav-link"
           :aria-current="current === 'returns' ? 'page' : undefined"
         >返图管理</NuxtLink>
+        <NuxtLink
+          to="/admin/updates"
+          class="admin-shell__nav-link"
+          :aria-current="current === 'updates' ? 'page' : undefined"
+        >动态管理</NuxtLink>
         <NuxtLink
           to="/admin/site/home"
           class="admin-shell__nav-link"
@@ -129,6 +135,7 @@ async function onLogout() {
 }
 
 .admin-shell__brand {
+  order: 1;
   display: flex;
   align-items: baseline;
   gap: var(--admin-space-2);
@@ -151,8 +158,13 @@ async function onLogout() {
 }
 
 .admin-shell__nav {
+  order: 3;
   display: flex;
   gap: var(--admin-space-1);
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
 }
 
 .admin-shell__nav-link {
@@ -176,6 +188,7 @@ async function onLogout() {
 }
 
 .admin-shell__session {
+  order: 2;
   margin-left: auto;
   display: flex;
   align-items: center;
@@ -251,6 +264,7 @@ async function onLogout() {
   }
 
   .admin-shell__brand {
+    order: initial;
     flex-direction: column;
     align-items: flex-start;
     gap: var(--admin-space-2);
@@ -258,10 +272,14 @@ async function onLogout() {
   }
 
   .admin-shell__nav {
+    order: initial;
     flex-direction: column;
+    width: auto;
+    overflow: visible;
   }
 
   .admin-shell__session {
+    order: initial;
     margin: auto 0 0;
     flex-direction: column;
     align-items: stretch;
