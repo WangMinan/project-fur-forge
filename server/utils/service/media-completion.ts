@@ -480,13 +480,17 @@ async function processContactQr(
       WHERE id = ? AND status = 'PENDING'
     `).run(now, assetId)
   }
-  catch {
+  catch (error) {
+    const failureCode = error instanceof ServiceError
+      && error.reason === 'MEDIA_SOURCE_UNAVAILABLE'
+      ? 'UPLOAD_PREPROCESS_FAILURE'
+      : 'UPLOAD_DERIVATIVE_FAILURE'
     sqlite.prepare(`
       UPDATE assets
-      SET status = 'FAILED', internal_error_code = 'UPLOAD_DERIVATIVE_FAILURE',
+      SET status = 'FAILED', internal_error_code = ?,
           version = version + 1, updated_at = ?
       WHERE id = ? AND status = 'PENDING'
-    `).run(now, assetId)
+    `).run(failureCode, now, assetId)
   }
 }
 
@@ -667,7 +671,10 @@ export async function retryAssetProcessing(
       asset.status === 'PENDING'
       || (
         asset.status === 'FAILED'
-        && asset.internalErrorCode === 'UPLOAD_DERIVATIVE_FAILURE'
+        && (
+          asset.internalErrorCode === 'UPLOAD_DERIVATIVE_FAILURE'
+          || asset.internalErrorCode === 'UPLOAD_PREPROCESS_FAILURE'
+        )
       )
     )
   const preprocessRetry = asset.status === 'FAILED'

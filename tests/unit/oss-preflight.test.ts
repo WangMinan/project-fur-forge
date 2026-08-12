@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   compressPngForOss,
+  fitImageToSquare,
   OSS_IMAGE_PROCESSING_MAX_BYTES,
   upscaleDesignSheetImage,
   upscaleHeroImage,
@@ -174,6 +175,35 @@ describe('T10 synthetic media', () => {
     expect(adapted.content.length).toBeLessThanOrEqual(
       OSS_IMAGE_PROCESSING_MAX_BYTES,
     )
+  }, 30_000)
+
+  it('contains a non-square QR source on a white square canvas without cropping', async () => {
+    const source = createSyntheticSourcePng(640, 320)
+    const adapted = await fitImageToSquare(source, 640)
+
+    expect(adapted.dimensions).toEqual({ width: 640, height: 640 })
+    expect(adapted.filter).toContain('force_original_aspect_ratio=decrease')
+    expect(adapted.filter).toContain('pad=640:640')
+    expect(adapted.filter).toContain('color=white')
+    expect(source.readUInt32BE(16)).toBe(640)
+    expect(source.readUInt32BE(20)).toBe(320)
+  }, 30_000)
+
+  it('accepts JPEG and WebP input for the same square-fit recipe', async () => {
+    const jpeg = Buffer.from(
+      '/9j//gAQTGF2YzYwLjMxLjEwMgD/2wBDAAgEBAQEBAUFBQUFBQYGBgYGBgYGBgYGBgYHBwcICAgHBwcGBgcHCAgICAkJCQgICAgJCQoKCgwMCwsODg4RERT/xABaAAEBAAAAAAAAAAAAAAAAAAAFBwEBAQAAAAAAAAAAAAAAAAAAAwQQAAICAwEAAAAAAAAAAAAAAAAGIjJBUYFCEQACAgMBAAAAAAAAAAAAAAAABQQDIWFCMv/AABEIAAgACAMBEgACEgADEgD/2gAMAwEAAhEDEQA/AJ6rq9IawPq/jgtkXRRYMlZ+ckCXk//Z',
+      'base64',
+    )
+    const webp = Buffer.from(
+      'UklGRkIAAABXRUJQVlA4TDUAAAAvv8OzAAfQnJI0qf8BIUHi//cmIvqf8Z///Oc///nPf/7zn//85z//+c9//vOf//znP/+fAAA=',
+      'base64',
+    )
+
+    for (const source of [jpeg, webp]) {
+      const adapted = await fitImageToSquare(source, 640)
+      expect(adapted.contentType).toBe('image/png')
+      expect(adapted.dimensions).toEqual({ width: 640, height: 640 })
+    }
   }, 30_000)
 
   it('uses URL-safe unpadded Base64 for OSS processing parameters', () => {

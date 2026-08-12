@@ -9,7 +9,8 @@ import {
  * 首页双源轮播（T20）：
  * - 仅渲染当前项 <picture>：SSR 直出第一项，隐藏项不下载图片；无 JS 时第一项完整可用。
  * - 横屏 16:9 / 竖屏 9:16 独立 asset，由 ResponsivePicture 按 orientation 切换。
- * - 自动轮播固定开启、10 秒一张；悬停/聚焦/页面隐藏暂停，reduced-motion 停止。
+ * - 自动轮播固定开启、10 秒一张；显式暂停/页面隐藏暂停，reduced-motion 停止。
+ * - Hero 占据大面积首屏，鼠标停留或操作控件不能成为隐式永久暂停条件。
  */
 const props = defineProps<{
   home: PublicHomeDto
@@ -24,8 +25,6 @@ watch(() => slides.value.length, (count) => {
 })
 
 const reduceMotion = ref(false)
-const hovered = ref(false)
-const focusWithin = ref(false)
 const userPaused = ref(false)
 const pageHidden = ref(false)
 
@@ -37,8 +36,6 @@ const autoplayRunning = computed(() =>
   autoplayInterval.value !== null
   && slides.value.length > 1
   && !userPaused.value
-  && !hovered.value
-  && !focusWithin.value
   && !pageHidden.value)
 
 let timer: ReturnType<typeof setInterval> | null = null
@@ -149,10 +146,6 @@ onBeforeUnmount(() => {
     aria-roledescription="carousel"
     aria-label="代表作品轮播"
     data-testid="public-hero"
-    @mouseenter="hovered = true"
-    @mouseleave="hovered = false"
-    @focusin="focusWithin = true"
-    @focusout="focusWithin = false"
     @keydown="onKeydown"
     @pointerdown="onPointerDown"
     @pointerup="onPointerUp"

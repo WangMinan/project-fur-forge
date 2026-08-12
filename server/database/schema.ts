@@ -265,8 +265,8 @@ export const assets = sqliteTable('assets', {
     sql`${table.role} != 'watermark_logo' OR (${table.mimeType} = 'image/png' AND ${table.byteSize} <= 20000000)`,
   ),
   check(
-    'assets_contact_qr_png',
-    sql`${table.role} != 'contact_qr' OR (${table.mimeType} = 'image/png' AND ${table.byteSize} <= 20000000 AND ${table.width} = ${table.height} AND ${table.width} >= 320 AND ${table.fitMode} = 'contain')`,
+    'assets_contact_qr_source',
+    sql`${table.role} != 'contact_qr' OR (${table.mimeType} IN ('image/jpeg', 'image/png', 'image/webp') AND ${table.byteSize} <= 20000000 AND ${table.width} >= 64 AND ${table.height} >= 64 AND ${table.fitMode} = 'contain')`,
   ),
   check('assets_version_positive', sql`${table.version} > 0`),
 ])
@@ -378,8 +378,8 @@ export const uploadSessions = sqliteTable('upload_sessions', {
     sql`${table.mediaRole} != 'watermark_logo' OR (${table.expectedContentType} = 'image/png' AND ${table.expectedBytes} <= 20000000)`,
   ),
   check(
-    'upload_sessions_contact_qr_png',
-    sql`${table.mediaRole} != 'contact_qr' OR (${table.expectedContentType} = 'image/png' AND ${table.expectedBytes} <= 20000000 AND ${table.expectedWidth} = ${table.expectedHeight} AND ${table.expectedWidth} >= 320)`,
+    'upload_sessions_contact_qr_source',
+    sql`${table.mediaRole} != 'contact_qr' OR (${table.expectedContentType} IN ('image/jpeg', 'image/png', 'image/webp') AND ${table.expectedBytes} <= 20000000 AND ${table.expectedWidth} >= 64 AND ${table.expectedHeight} >= 64)`,
   ),
   check(
     'upload_sessions_expected_bytes',

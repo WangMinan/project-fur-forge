@@ -17,12 +17,9 @@ defineProps<{
     data-testid="home-latest-updates"
   >
     <header class="home-updates__heading">
-      <div>
-        <p class="home-updates__eyebrow">工作室通知</p>
-        <h2 id="home-updates-title" class="home-updates__title">最新动态</h2>
-      </div>
+      <h2 id="home-updates-title" class="home-updates__title">最新动态</h2>
       <NuxtLink class="home-updates__more" to="/updates">
-        查看全部
+        查看全部 <span aria-hidden="true">→</span>
       </NuxtLink>
     </header>
 
@@ -45,32 +42,26 @@ defineProps<{
 
 <style scoped>
 .home-updates {
-  width: min(100% - (var(--space-5) * 2), var(--public-content-wide));
-  margin-inline: auto;
-  padding-block: var(--space-9);
+  display: grid;
+  gap: var(--space-5);
+  max-width: var(--public-content-wide);
+  margin: 0 auto;
+  padding: var(--space-9) var(--public-page-padding) 0;
 }
 
 .home-updates__heading {
   display: flex;
-  align-items: end;
+  align-items: baseline;
   justify-content: space-between;
-  gap: var(--space-5);
-  margin-bottom: var(--space-6);
-}
-
-.home-updates__eyebrow {
-  color: var(--public-accent-primary);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  letter-spacing: var(--letter-spacing-label);
+  gap: var(--space-4);
 }
 
 .home-updates__title {
-  margin-top: var(--space-2);
   font-family: var(--font-public-display);
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-xl);
   font-weight: 600;
   line-height: var(--line-height-heading);
+  letter-spacing: var(--letter-spacing-tight);
 }
 
 .home-updates__more {
@@ -142,16 +133,6 @@ defineProps<{
 }
 
 @media (max-width: 479px) {
-  .home-updates {
-    width: min(100% - (var(--space-4) * 2), var(--public-content-wide));
-  }
-
-  .home-updates__heading {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: var(--space-3);
-  }
-
   .home-updates__meta {
     align-items: flex-start;
     flex-direction: column;

@@ -12,6 +12,9 @@ export const DESIGN_SHEET_UPSCALE_RECIPE_VERSION = 'design-sheet-upscale-lanczos
 /** 出厂照保持比例的 Lanczos 私有适配源身份。 */
 export const STUDIO_PHOTO_UPSCALE_RECIPE_VERSION = 'studio-photo-upscale-lanczos-v1'
 
+/** 联系二维码保持方形的 Lanczos 私有适配源身份。 */
+export const CONTACT_QR_UPSCALE_RECIPE_VERSION = 'contact-qr-upscale-lanczos-v1'
+
 /** OSS 图片处理的单次输入上限。 */
 export const OSS_PROCESS_INPUT_BYTE_LIMIT = 20_000_000
 
@@ -168,6 +171,31 @@ export function processingSource(
     `).get(
       sourceAsset.id,
       workMediaRecipe,
+      sourceAsset.sha256,
+      OSS_PROCESS_INPUT_BYTE_LIMIT,
+    ) as ProcessingSourceRow | undefined
+    if (upscaled) {
+      return {
+        height: upscaled.height,
+        inputSha256: upscaled.sha256,
+        objectKey: upscaled.objectKey,
+        sourceVariantId: upscaled.id,
+        width: upscaled.width,
+      }
+    }
+  }
+  if (sourceAsset.role === 'contact_qr') {
+    const upscaled = sqlite.prepare(`
+      SELECT id, object_key AS objectKey, sha256, width, height
+      FROM asset_variants
+      WHERE asset_id = ? AND storage_scope = 'PRIVATE'
+        AND status = 'READY' AND usage = 'preprocess'
+        AND recipe_version = ? AND input_sha256 = ?
+        AND byte_size <= ? AND width = 640 AND height = 640
+      ORDER BY created_at DESC LIMIT 1
+    `).get(
+      sourceAsset.id,
+      CONTACT_QR_UPSCALE_RECIPE_VERSION,
       sourceAsset.sha256,
       OSS_PROCESS_INPUT_BYTE_LIMIT,
     ) as ProcessingSourceRow | undefined

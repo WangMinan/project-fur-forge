@@ -64,6 +64,10 @@ export async function resetFakeMedia(page: Page) {
   await control(page, { action: 'reset' })
 }
 
+export async function resetOfficialChannels(page: Page) {
+  await control(page, { action: 'resetOfficialChannels' })
+}
+
 // GATE-07：种入已发布作品照 + 启用的横竖首页图，并预生成当前活动水印的公开 variant。
 export async function seedBrandingStage(page: Page) {
   await control(page, { action: 'seedBrandingStage' })
@@ -126,6 +130,10 @@ export function lowResolutionHeroPng(
 
 export function contactQrPng(): Buffer {
   return uniquePng(CONTACT_QR_PNG)
+}
+
+export function lowResolutionContactQrPng(): Buffer {
+  return uniquePng(createSyntheticSourcePng(256, 256) as Buffer)
 }
 
 export function nonSquareContactQrPng(): Buffer {

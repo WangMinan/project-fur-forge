@@ -29,6 +29,7 @@ export interface ContactQrUploadItem {
   asset: VerifiedAssetDto | null
   failureText: string | null
   fileName: string | null
+  ffmpegExpected: boolean
   previewUrl: string | null
   progress: number | null
   state: ContactQrUploadState
@@ -39,6 +40,7 @@ function emptyItem(): ContactQrUploadItem {
     asset: null,
     failureText: null,
     fileName: null,
+    ffmpegExpected: false,
     previewUrl: null,
     progress: null,
     state: 'idle',
@@ -83,9 +85,11 @@ export function useContactQrUpload(options: {
 
   function processingFailure(item: ContactQrUploadItem, asset: VerifiedAssetDto) {
     item.asset = asset
-    fail(item, asset.processingFailureCode === 'UPLOAD_DERIVATIVE_FAILURE'
-      ? '二维码网页图片生成失败，可重试处理'
-      : '二维码处理未完成，请重新上传')
+    fail(item, asset.processingFailureCode === 'UPLOAD_PREPROCESS_FAILURE'
+      ? '二维码分辨率适配失败，私有原图已保留，可重试处理'
+      : asset.processingFailureCode === 'UPLOAD_DERIVATIVE_FAILURE'
+        ? '二维码网页图片生成失败，可重试处理'
+        : '二维码处理未完成，请重新上传')
   }
 
   async function complete(
@@ -145,21 +149,18 @@ export function useContactQrUpload(options: {
       fail(item, DECLARATION_FAILURE_LABELS[declaration.reason])
       return
     }
-    if (declaration.declaration.contentType !== 'image/png') {
-      fail(item, '二维码只接受 PNG 图片')
-      return
-    }
     if (declaration.declaration.byteSize > 20_000_000) {
-      fail(item, '二维码 PNG 不能超过 20 MB')
+      fail(item, '二维码图片不能超过 20 MB')
       return
     }
     if (
-      declaration.declaration.width !== declaration.declaration.height
-      || declaration.declaration.width < 320
+      declaration.declaration.width < 64
+      || declaration.declaration.height < 64
     ) {
-      fail(item, '二维码需要至少 320×320 的方形 PNG')
+      fail(item, '二维码图片任一边至少需要 64 px；更小的图片无法保证可读性')
       return
     }
+    item.ffmpegExpected = true
 
     let created: {
       data: { session: UploadSessionDto, upload: ConditionalPutDto }

@@ -30,12 +30,17 @@ function digests(content: Buffer) {
   }
 }
 
-function input(content: Buffer, width: number, height = width) {
+function input(
+  content: Buffer,
+  width: number,
+  height = width,
+  contentType: 'image/jpeg' | 'image/png' | 'image/webp' = 'image/png',
+) {
   return {
     owner: { type: 'site' as const, id: 'contact' as const, expectedVersion: 1 },
     mediaRole: 'contact_qr' as const,
     expected: {
-      contentType: 'image/png' as const,
+      contentType,
       byteSize: content.length,
       ...digests(content),
       width,
@@ -68,13 +73,30 @@ describe('T03 contact QR media', () => {
     expect(createUploadSessionRequestSchema.safeParse(input(content, 640)).success)
       .toBe(true)
     expect(createUploadSessionRequestSchema.safeParse(input(content, 640, 320)).success)
-      .toBe(false)
+      .toBe(true)
     expect(createUploadSessionRequestSchema.safeParse(input(content, 200)).success)
+      .toBe(true)
+    expect(createUploadSessionRequestSchema.safeParse(input(content, 63)).success)
       .toBe(false)
     expect(createUploadSessionRequestSchema.safeParse({
       ...input(content, 640),
-      expected: { ...input(content, 640).expected, contentType: 'image/jpeg' },
+      expected: {
+        ...input(content, 640).expected,
+        byteSize: 20_000_001,
+      },
     }).success).toBe(false)
+    expect(createUploadSessionRequestSchema.safeParse(input(
+      content,
+      640,
+      320,
+      'image/jpeg',
+    )).success).toBe(true)
+    expect(createUploadSessionRequestSchema.safeParse(input(
+      content,
+      320,
+      640,
+      'image/webp',
+    )).success).toBe(true)
 
     const created = await createUploadSession(
       sqlite,
@@ -136,8 +158,12 @@ describe('T03 contact QR media', () => {
     )).toBe(true)
     for (const call of storage.processCalls) {
       const publicImage = await storage.getPublicAnonymous(call.objectKey)
-      expect(publicImage.content).toEqual(content)
+      expect(publicImage.content.subarray(1, 4).toString('ascii')).toBe('PNG')
     }
+    expect(storage.privatePuts).toHaveLength(1)
+    expect(storage.privatePuts[0]?.content).not.toEqual(content)
+    expect(storage.privatePuts[0]?.content.readUInt32BE(16)).toBe(640)
+    expect(storage.privatePuts[0]?.content.readUInt32BE(20)).toBe(640)
 
     sqlite.prepare(`
       UPDATE site_content SET official_channels_json = ? WHERE id = 'site'

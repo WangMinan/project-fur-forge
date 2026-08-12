@@ -1,13 +1,17 @@
+import { createHash, randomUUID } from 'node:crypto'
 import type Database from 'better-sqlite3'
+import { fitImageToSquare } from '../../../scripts/embedded-ffmpeg.mjs'
 import type { MediaStorage } from '../media-storage'
 import {
   findReadySiteDisplayVariant,
   insertSiteDisplayVariant,
+  insertUpscaleVariant,
 } from '../repository/variant-repository'
 import { safeLog } from '../safe-log'
 import { ServiceError } from '../service-error'
 import {
   contentTypeForFormat,
+  CONTACT_QR_UPSCALE_RECIPE_VERSION,
   deterministicUuid,
   digest,
   environmentPrefix,
@@ -20,10 +24,10 @@ export const CONTACT_QR_RECIPE_VERSION = 'contact-qr-v1'
 export const CONTACT_QR_USAGE = 'contact-qr'
 export const CONTACT_QR_MEDIA_ROLE = 'contact_qr'
 const WIDTH_LADDER = [320, 640] as const
+const CONTACT_QR_UPSCALE_SIZE = 640
 
-export function contactQrWidths(sourceWidth: number) {
-  const widths = WIDTH_LADDER.filter(width => width <= sourceWidth)
-  return widths.length > 0 ? widths : [sourceWidth]
+export function contactQrWidths(_sourceWidth?: number) {
+  return [...WIDTH_LADDER]
 }
 
 export function buildContactQrProcess(width: number) {
@@ -69,8 +73,9 @@ function contactQrAssetSource(
   }
   if (
     row.role !== CONTACT_QR_MEDIA_ROLE
-    || row.mimeType !== 'image/png'
-    || row.width !== row.height
+    || !['image/jpeg', 'image/png', 'image/webp'].includes(row.mimeType)
+    || row.width < 64
+    || row.height < 64
     || !['PENDING', 'READY', 'FAILED'].includes(row.status)
   ) {
     throw new ServiceError(400, 'VALIDATION_ERROR', 'Contact QR asset is invalid.')
@@ -116,6 +121,102 @@ function existingVariant(sqlite: Database.Database, key: string) {
     key,
     CONTACT_QR_RECIPE_VERSION,
   )
+}
+
+async function ensureContactQrProcessingSource(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  sourceAsset: AssetSource,
+  now: number,
+) {
+  const current = processingSource(sqlite, sourceAsset)
+  if (
+    current.sourceVariantId !== null
+    && current.width === CONTACT_QR_UPSCALE_SIZE
+    && current.height === CONTACT_QR_UPSCALE_SIZE
+  ) {
+    return current
+  }
+
+  let objectKey: string | null = null
+  try {
+    const output = await fitImageToSquare(
+      await storage.getPrivate(sourceAsset.privateObjectKey),
+      CONTACT_QR_UPSCALE_SIZE,
+    )
+    if (
+      output.dimensions.width !== CONTACT_QR_UPSCALE_SIZE
+      || output.dimensions.height !== CONTACT_QR_UPSCALE_SIZE
+    ) {
+      throw new Error('Contact QR adaptation must be a 640px square.')
+    }
+    const identity = JSON.stringify({
+      recipeVersion: CONTACT_QR_UPSCALE_RECIPE_VERSION,
+      sourceSha256: sourceAsset.sha256,
+      target: output.dimensions,
+      filter: output.filter,
+      binary: output.binary,
+      format: 'png',
+    })
+    const identityHash = digest('sha256', Buffer.from(identity))
+    const outputSha256 = digest('sha256', output.content)
+    objectKey = `${environmentPrefix(sourceAsset.privateObjectKey)}/processing/${sourceAsset.id}/${CONTACT_QR_UPSCALE_RECIPE_VERSION}/${identityHash}.png`
+    await storage.putPrivateConditional({
+      content: output.content,
+      contentMd5: createHash('md5').update(output.content).digest('base64'),
+      contentType: 'image/png',
+      objectKey,
+      sha256: outputSha256,
+    })
+    const [head, info, saved] = await Promise.all([
+      storage.headPrivate(objectKey),
+      storage.imageInfoPrivate(objectKey),
+      storage.getPrivate(objectKey),
+    ])
+    if (
+      head.byteSize !== output.content.length
+      || head.byteSize !== saved.length
+      || head.contentType !== 'image/png'
+      || head.etagMd5Hex !== digest('md5', saved)
+      || head.sha256Metadata !== outputSha256
+      || info.fileSize !== head.byteSize
+      || normalizedFormat(info.format) !== 'png'
+      || info.width !== CONTACT_QR_UPSCALE_SIZE
+      || info.height !== CONTACT_QR_UPSCALE_SIZE
+      || digest('sha256', saved) !== outputSha256
+    ) {
+      throw new Error('Contact QR adaptation verification failed.')
+    }
+    insertUpscaleVariant(sqlite, {
+      byteSize: output.content.length,
+      cropIdentity: identityHash,
+      height: CONTACT_QR_UPSCALE_SIZE,
+      id: randomUUID(),
+      inputSha256: sourceAsset.sha256,
+      mediaRole: CONTACT_QR_MEDIA_ROLE,
+      objectKey,
+      recipeVersion: CONTACT_QR_UPSCALE_RECIPE_VERSION,
+      sha256: outputSha256,
+      sourceAssetId: sourceAsset.id,
+      width: CONTACT_QR_UPSCALE_SIZE,
+    }, now)
+    return processingSource(sqlite, sourceAsset)
+  }
+  catch (error) {
+    if (objectKey) {
+      await storage.deletePrivate(objectKey).catch(() => {})
+    }
+    safeLog('error', 'Contact QR adaptation failed.', {
+      assetId: sourceAsset.id,
+      errorCode: (error as { code?: unknown }).code,
+    })
+    throw new ServiceError(
+      500,
+      'INTERNAL_ERROR',
+      'Contact QR adaptation failed.',
+      'MEDIA_SOURCE_UNAVAILABLE',
+    )
+  }
 }
 
 async function verifyVariant(
@@ -245,7 +346,12 @@ export async function generateContactQrVariants(
   now = Date.now(),
 ) {
   const sourceAsset = contactQrAssetSource(sqlite, assetId)
-  const source = processingSource(sqlite, sourceAsset)
+  const source = await ensureContactQrProcessingSource(
+    sqlite,
+    storage,
+    sourceAsset,
+    now,
+  )
   const variants: ReadyContactQrVariant[] = []
   for (const width of contactQrWidths(source.width)) {
     variants.push(await generateOne(
