@@ -155,11 +155,11 @@ export const updates = sqliteTable('updates', {
   ),
   check(
     'updates_title',
-    sql`${table.title} = trim(${table.title}) AND length(${table.title}) BETWEEN 1 AND 200`,
+    sql`${table.title} = trim(${table.title}) AND length(${table.title}) BETWEEN 1 AND 200 AND ${table.title} NOT GLOB '*[<>]*'`,
   ),
   check(
     'updates_content',
-    sql`${table.content} = trim(${table.content}) AND length(${table.content}) BETWEEN 1 AND 20000`,
+    sql`${table.content} = trim(${table.content}) AND length(${table.content}) BETWEEN 1 AND 20000 AND ${table.content} NOT GLOB '*[<>]*'`,
   ),
   check(
     'updates_publication_status',

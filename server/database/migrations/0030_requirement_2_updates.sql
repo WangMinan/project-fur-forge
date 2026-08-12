@@ -1,8 +1,8 @@
 CREATE TABLE `updates` (
 	`id` text PRIMARY KEY NOT NULL,
 	`type` text NOT NULL CONSTRAINT "updates_type" CHECK(`type` IN ('event', 'drop', 'commission_open', 'other')),
-	`title` text NOT NULL CONSTRAINT "updates_title" CHECK(`title` = trim(`title`) AND length(`title`) BETWEEN 1 AND 200),
-	`content` text NOT NULL CONSTRAINT "updates_content" CHECK(`content` = trim(`content`) AND length(`content`) BETWEEN 1 AND 20000),
+	`title` text NOT NULL CONSTRAINT "updates_title" CHECK(`title` = trim(`title`) AND length(`title`) BETWEEN 1 AND 200 AND `title` NOT GLOB '*[<>]*'),
+	`content` text NOT NULL CONSTRAINT "updates_content" CHECK(`content` = trim(`content`) AND length(`content`) BETWEEN 1 AND 20000 AND `content` NOT GLOB '*[<>]*'),
 	`publication_status` text DEFAULT 'draft' NOT NULL CONSTRAINT "updates_publication_status" CHECK(`publication_status` IN ('draft', 'published', 'unpublished')),
 	`published_at` integer,
 	`version` integer DEFAULT 1 NOT NULL CONSTRAINT "updates_version_positive" CHECK(`version` > 0),

@@ -19,6 +19,7 @@ export const UPDATE_PUBLICATION_LABELS: Record<PublicationStatus, string> = {
 const dateTimeFormatter = new Intl.DateTimeFormat('zh-CN', {
   dateStyle: 'medium',
   timeStyle: 'short',
+  timeZone: 'Asia/Shanghai',
 })
 
 export function formatUpdateDateTime(value: string) {
