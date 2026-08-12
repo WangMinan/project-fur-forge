@@ -16,10 +16,20 @@ export const UPDATE_TYPE_VALUES = [
 
 export const updateTypeSchema = z.enum(UPDATE_TYPE_VALUES)
 
+const unsafePlainTextPattern
+  = /[<>]|\b(?:javascript|vbscript)\s*:|data\s*:\s*text\/html/iu
+
+function safePlainText(max: number) {
+  return z.string().trim().min(1).max(max).refine(
+    value => !unsafePlainTextPattern.test(value),
+    'Only safe plain text is allowed.',
+  )
+}
+
 export const updateFieldsSchema = z.object({
   type: updateTypeSchema,
-  title: z.string().trim().min(1).max(200),
-  content: z.string().trim().min(1).max(20_000),
+  title: safePlainText(200),
+  content: safePlainText(20_000),
 }).strict()
 
 export const adminUpdateDtoSchema = updateFieldsSchema.extend({

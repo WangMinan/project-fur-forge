@@ -210,5 +210,16 @@ describe('update management', () => {
       NOW,
       NOW,
     )).toThrow(/updates_version_positive/u)
+    expect(() => insert.run(
+      'ffffffff-ffff-4fff-8fff-ffffffffffff',
+      'other',
+      '标题',
+      '<script>不安全正文</script>',
+      'draft',
+      null,
+      1,
+      NOW,
+      NOW,
+    )).toThrow(/updates_content/u)
   })
 })
