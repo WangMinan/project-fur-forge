@@ -3,7 +3,7 @@ import type {
   SuitType,
   WorkPurpose,
 } from '../../shared/types/contracts'
-import { includesSearchText } from '../../shared/utils/search'
+import { includesSearchText } from '~~/shared/utils/search'
 
 export const ADMIN_WORK_PAGE_SIZES = [10, 20, 50] as const
 

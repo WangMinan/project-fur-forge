@@ -28,6 +28,7 @@ const route = useRoute()
 
 /** 非法页码收敛为第 1 页，不抛 500，也不显示内部信息。 */
 const requestedPage = computed(() => publicPageFromQuery(route.query.page))
+const search = computed(() => publicSearchFromQuery(route.query.q))
 const requestedSeed = computed(() => {
   const raw = Array.isArray(route.query.seed)
     ? route.query.seed[0]
@@ -43,6 +44,7 @@ const { data: wall, error: wallError } = await useFetch(
     headers: useRequestHeaders(['host']),
     query: computed(() => ({
       page: requestedPage.value,
+      q: route.query.q,
       seed: requestedSeed.value,
     })),
     transform: raw => publicReturnWallResponseSchema.parse(raw).data,
@@ -52,10 +54,14 @@ const { data: wall, error: wallError } = await useFetch(
 const items = computed(() => wall.value?.items ?? [])
 const page = computed(() => wall.value?.page ?? requestedPage.value)
 const pageCount = computed(() => wall.value?.pageCount ?? 0)
+const resultCount = computed(() => wall.value?.resultCount ?? 0)
 const activeSeed = computed(() => wall.value?.seed ?? requestedSeed.value)
 
 function hrefFor(target: number) {
-  return publicPageHref('/returns', { seed: activeSeed.value }, target)
+  return publicPageHref('/returns', {
+    q: search.value.query || null,
+    seed: activeSeed.value,
+  }, target)
 }
 </script>
 
@@ -64,6 +70,13 @@ function hrefFor(target: number) {
     <PublicPageIntro title="返图墙" />
 
     <div class="public-container returns-page">
+      <PublicCatalogSearch
+        action="/returns"
+        clear-to="/returns"
+        :query="search.query"
+        :show-clear="search.active"
+      />
+
       <!-- 分页请求失败：保留页面骨架与导航，提供普通链接重试。 -->
       <PublicEmptyState
         v-if="wallError"
@@ -76,17 +89,35 @@ function hrefFor(target: number) {
       </PublicEmptyState>
 
       <PublicEmptyState
-        v-else-if="items.length === 0 && page > 1"
+        v-else-if="items.length === 0 && !search.valid"
+        title="搜索条件无效"
+      >
+        <NuxtLink class="returns-page__retry" to="/returns">
+          清除搜索
+        </NuxtLink>
+      </PublicEmptyState>
+
+      <PublicEmptyState
+        v-else-if="items.length === 0 && search.active"
+        title="没有找到这个设定"
+      >
+        <NuxtLink class="returns-page__retry" to="/returns">
+          清除搜索
+        </NuxtLink>
+      </PublicEmptyState>
+
+      <PublicEmptyState
+        v-else-if="items.length === 0 && resultCount > 0 && page > pageCount"
         title="这一页没有返图"
         description="可以回到第一页继续浏览。"
       >
-        <NuxtLink class="returns-page__retry" to="/returns">
+        <NuxtLink class="returns-page__retry" :to="hrefFor(1)">
           回到第一页
         </NuxtLink>
       </PublicEmptyState>
 
       <PublicEmptyState
-        v-else-if="items.length === 0"
+        v-else-if="items.length === 0 && resultCount === 0"
         title="还没有公开的返图"
       />
 
@@ -119,5 +150,9 @@ function hrefFor(target: number) {
   min-height: 2.75rem;
   color: var(--public-text-link);
   font-size: var(--font-size-sm);
+}
+
+.returns-page > :deep(.catalog-search) {
+  margin-bottom: var(--space-6);
 }
 </style>

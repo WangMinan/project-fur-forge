@@ -27,10 +27,12 @@ function firstQueryValue(value: unknown): string | undefined {
 }
 
 const requestedPage = computed(() => publicPageFromQuery(route.query.page))
+const search = computed(() => publicSearchFromQuery(route.query.q))
 
 const filterQuery = computed(() => ({
   page: requestedPage.value,
   purpose: firstQueryValue(route.query.purpose),
+  q: route.query.q,
   suitType: firstQueryValue(route.query.suitType),
 }))
 
@@ -54,12 +56,16 @@ const pageCount = computed(() => list.value?.pageCount ?? 0)
 const hasActiveFilter = computed(
   () => filter.value.purpose !== null || filter.value.suitType !== null,
 )
+const clearSearchHref = computed(() => publicPageHref('/works', {
+  purpose: filter.value.purpose,
+  suitType: filter.value.suitType,
+}, 1))
 
 /**
  * 空态区分尚无作品、筛选无匹配与越界页码。
  * 非法筛选对访客与「无匹配」是同一件事，不单独措辞。
  */
-type EmptyKind = 'no-works' | 'no-match' | 'out-of-range'
+type EmptyKind = 'invalid-search' | 'no-works' | 'no-match' | 'out-of-range' | 'search-no-match'
 const emptyKind = computed<EmptyKind | null>(() => {
   if (items.value.length > 0) {
     return null
@@ -67,12 +73,19 @@ const emptyKind = computed<EmptyKind | null>(() => {
   if (filter.value.valid && resultCount.value > 0 && page.value > pageCount.value) {
     return 'out-of-range'
   }
+  if (!search.value.valid) {
+    return 'invalid-search'
+  }
+  if (search.value.active) {
+    return 'search-no-match'
+  }
   return hasActiveFilter.value || !filter.value.valid ? 'no-match' : 'no-works'
 })
 
 function hrefFor(target: number) {
   return publicPageHref('/works', {
     purpose: filter.value.purpose,
+    q: search.value.query || null,
     suitType: filter.value.suitType,
   }, target)
 }
@@ -83,8 +96,20 @@ function hrefFor(target: number) {
     <PublicPageIntro title="作品展示" />
 
     <div class="public-container works-page">
+      <PublicCatalogSearch
+        action="/works"
+        :clear-to="clearSearchHref"
+        :hidden-fields="{
+          purpose: filter.purpose,
+          suitType: filter.suitType,
+        }"
+        :query="search.query"
+        :show-clear="search.active"
+      />
+
       <WorkFilterBar
         :filter="filter"
+        :query="search.query"
         :result-count="resultCount"
       />
 
@@ -116,6 +141,20 @@ function hrefFor(target: number) {
         <p class="works-empty__title">作品正在整理中。</p>
       </div>
 
+      <div v-else-if="emptyKind === 'invalid-search'" class="works-empty">
+        <p class="works-empty__title">搜索条件无效</p>
+        <NuxtLink :to="clearSearchHref" class="works-empty__reset">
+          清除搜索
+        </NuxtLink>
+      </div>
+
+      <div v-else-if="emptyKind === 'search-no-match'" class="works-empty">
+        <p class="works-empty__title">没有找到这个设定</p>
+        <NuxtLink :to="clearSearchHref" class="works-empty__reset">
+          清除搜索
+        </NuxtLink>
+      </div>
+
       <!-- 无匹配与参数非法对访客是同一件事：这套条件下没有作品。 -->
       <div v-else class="works-empty">
         <p class="works-empty__title">没有符合条件的作品</p>
@@ -145,6 +184,10 @@ function hrefFor(target: number) {
      缺少这条重置时浏览器默认 marker 会出现在角色名左侧。 */
   padding: 0;
   list-style: none;
+}
+
+.works-page > :deep(.catalog-search) {
+  margin-bottom: var(--space-6);
 }
 
 @media (min-width: 768px) {
