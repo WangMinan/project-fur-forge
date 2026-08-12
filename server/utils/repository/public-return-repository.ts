@@ -1,10 +1,14 @@
 import { createHash, randomBytes } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import {
+  publicCatalogSearchQuerySchema,
+} from '../../../shared/schemas/public-content'
+import {
   publicReturnCharacterDtoSchema,
   publicReturnWallDtoSchema,
   RETURN_WALL_PAGE_SIZE,
 } from '../../../shared/schemas/return-photo'
+import { includesSearchText } from '../../../shared/utils/search'
 import type {
   PublicReturnCharacterDto,
   PublicReturnPhotoDto,
@@ -68,12 +72,6 @@ const publicPhotoColumns = `
   character.slug AS characterSlug
 `
 
-function countPublishedReturns(sqlite: Database.Database) {
-  return (sqlite.prepare(`
-    SELECT COUNT(*) AS total ${publishedPhotoJoin}
-  `).get() as { total: number }).total
-}
-
 /**
  * 公开返图墙排序：按 `seed` 确定性地打乱。
  *
@@ -99,17 +97,18 @@ export function shuffledReturnPhotoIds(
     .map(entry => entry.id)
 }
 
-function shuffledPhotoIds(
+function matchingPhotoIds(
   sqlite: Database.Database,
-  seed: string,
-  limit: number,
-  offset: number,
+  query: string,
 ) {
-  const ids = sqlite.prepare(`
-    SELECT photo.id ${publishedPhotoJoin} ORDER BY photo.id
-  `).pluck().all() as string[]
-  return shuffledReturnPhotoIds(ids, seed)
-    .slice(offset, offset + limit)
+  const rows = sqlite.prepare(`
+    SELECT photo.id, character.name AS characterName
+    ${publishedPhotoJoin}
+    ORDER BY photo.id
+  `).all() as Array<{ characterName: string, id: string }>
+  return rows
+    .filter(row => includesSearchText(row.characterName, query))
+    .map(row => row.id)
 }
 
 function loadReturnsByIds(
@@ -273,15 +272,19 @@ export function getPublicReturnWall(
   page = 1,
   seed = returnWallSeed(),
   appEnv: RuntimeConfig['appEnv'] = 'development',
+  q: unknown = undefined,
 ): PublicReturnWallDto {
-  const total = countPublishedReturns(sqlite)
+  const search = publicCatalogSearchQuerySchema.safeParse(q)
+  const matchingIds = search.success
+    ? matchingPhotoIds(sqlite, search.data ?? '')
+    : []
+  const total = matchingIds.length
   const pageCount = Math.ceil(total / RETURN_WALL_PAGE_SIZE)
-  const rows = loadReturnsByIds(sqlite, shuffledPhotoIds(
-    sqlite,
-    seed,
-    RETURN_WALL_PAGE_SIZE,
+  const pageIds = shuffledReturnPhotoIds(matchingIds, seed).slice(
     (page - 1) * RETURN_WALL_PAGE_SIZE,
-  ))
+    page * RETURN_WALL_PAGE_SIZE,
+  )
+  const rows = loadReturnsByIds(sqlite, pageIds)
   const variants = loadReturnVariants(sqlite, rows.map(row => row.assetId))
 
   return publicReturnWallDtoSchema.parse({
@@ -353,6 +356,7 @@ export function returnWallSeed(bytes = randomBytes(16)) {
 export function getPublicReturnWallForRequest(
   page = 1,
   seed = returnWallSeed(),
+  q: unknown = undefined,
 ) {
   const config = getRuntimeConfig()
   return getPublicReturnWall(
@@ -361,6 +365,7 @@ export function getPublicReturnWallForRequest(
     page,
     seed,
     config.appEnv,
+    q,
   )
 }
 

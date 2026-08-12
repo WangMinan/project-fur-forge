@@ -3,6 +3,7 @@ import type {
   SuitType,
   WorkPurpose,
 } from '../../shared/types/contracts'
+import { includesSearchText } from '../../shared/utils/search'
 
 export const ADMIN_WORK_PAGE_SIZES = [10, 20, 50] as const
 
@@ -21,21 +22,16 @@ export interface AdminWorkListFilters {
   suitType: SuitType | 'all'
 }
 
-function normalized(value: string): string {
-  return value.trim().toLocaleLowerCase('zh-CN')
-}
-
 export function filterAdminWorks<T extends AdminWorkListEntry>(
   works: readonly T[],
   filters: AdminWorkListFilters,
 ): T[] {
-  const query = normalized(filters.query)
   return works.filter(work => (
     (filters.purpose === 'all' || work.purpose === filters.purpose)
     && (filters.suitType === 'all' || work.suitType === filters.suitType)
     && (filters.publicationStatus === 'all'
       || work.publicationStatus === filters.publicationStatus)
-    && (!query || normalized(`${work.characterName} ${work.species}`).includes(query))
+    && includesSearchText(`${work.characterName} ${work.species}`, filters.query)
   ))
 }
 

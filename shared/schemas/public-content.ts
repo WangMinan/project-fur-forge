@@ -75,6 +75,11 @@ export const publicWorkFilterStateSchema = z.object({
 export const PUBLIC_WORKS_PAGE_SIZE = 12
 export const PUBLIC_ADOPTIONS_PAGE_SIZE = 8
 
+export const publicCatalogSearchQuerySchema = z.preprocess(
+  value => typeof value === 'string' && value.trim() === '' ? undefined : value,
+  z.string().trim().min(1).max(100).optional(),
+)
+
 export const publicCatalogPageQuerySchema = z.object({
   page: z.number().int().min(1).max(10_000).optional(),
 }).strict()
@@ -113,6 +118,7 @@ export const publicAdoptionFilterSchema = z.enum(
 
 export const publicAdoptionListQuerySchema = z.object({
   method: publicAdoptionFilterSchema.optional(),
+  q: publicCatalogSearchQuerySchema,
 }).strict()
 
 export const publicAdoptionListDtoSchema = z.object({
@@ -136,6 +142,7 @@ export const publicAdoptionListDtoSchema = z.object({
 
 export const publicWorkListQuerySchema = z.object({
   purpose: workPurposeSchema.optional(),
+  q: publicCatalogSearchQuerySchema,
   suitType: suitTypeSchema.optional(),
 }).strict()
 

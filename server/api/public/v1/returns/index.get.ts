@@ -19,6 +19,7 @@ export default defineEventHandler((event) => {
   const query = getQuery(event)
   const parsed = publicReturnWallQuerySchema.safeParse({
     ...(query.page === undefined ? {} : { page: Number(query.page) }),
+    ...(query.q === undefined ? {} : { q: query.q }),
     ...(query.seed === undefined ? {} : { seed: query.seed }),
   })
   const page = parsed.success ? parsed.data.page ?? 1 : 1
@@ -26,6 +27,6 @@ export default defineEventHandler((event) => {
     ? parsed.data.seed ?? returnWallSeed()
     : returnWallSeed()
   return publicReturnWallResponseSchema.parse({
-    data: getPublicReturnWallForRequest(page, seed),
+    data: getPublicReturnWallForRequest(page, seed, query.q),
   })
 })
