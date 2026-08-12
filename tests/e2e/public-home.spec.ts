@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { seedPublicUpdates } from './helpers/public-updates'
 import type { Page } from '@playwright/test'
 import { capture } from './helpers/screenshots'
 import { seedHomeSlides, seedPublicCatalog } from './helpers/public-catalog'
@@ -572,5 +573,80 @@ test.describe('T20 首页精选轨道', () => {
 
     await expect(page.getByTestId('featured-works')).toHaveCount(0)
     await expect(page.getByTestId('featured-track')).toHaveCount(0)
+  })
+})
+
+test.describe('T12 首页最新动态摘要', () => {
+  test('只展示最新三条已发布动态并在桌面与移动导航可达', async ({ page }) => {
+    const now = Date.now()
+    await seedPublicUpdates(page, [
+      { type: 'other', title: 'E2E 公开动态 Home 1', content: 'Body 1', publishedAt: now + 1 },
+      { type: 'other', title: 'E2E 公开动态 Home 2', content: 'Body 2', publishedAt: now + 2 },
+      { type: 'other', title: 'E2E 公开动态 Home 3', content: 'Body 3', publishedAt: now + 3 },
+      { type: 'other', title: 'E2E 公开动态 Home 4', content: 'Body 4', publishedAt: now + 4 },
+      { type: 'other', title: 'E2E 公开动态 Home draft', content: 'Hidden', publicationStatus: 'draft' },
+    ])
+
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+    const section = page.getByTestId('home-latest-updates')
+    await expect(section).toBeVisible()
+    await expect(section.locator('li')).toHaveCount(3)
+    await expect(section.locator('li').nth(0)).toContainText('Home 4')
+    await expect(section.locator('li').nth(2)).toContainText('Home 2')
+    await expect(section).not.toContainText('Home 1')
+    await expect(section).not.toContainText('Home draft')
+    await expect(section.getByRole('link', { name: '查看全部' }))
+      .toHaveAttribute('href', '/updates')
+
+    const header = page.getByTestId('public-header')
+    const topLinks = await header.locator('.public-header__nav-item > .public-header__link')
+      .evaluateAll(links => links.map(link => link.textContent?.trim()))
+    expect(topLinks.slice(-2)).toEqual(['最新动态', '关于我们'])
+
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+    await page.getByRole('button', { name: '打开导航' }).click()
+    const mobileUpdatesLink = page.getByTestId('public-mobile-nav')
+      .getByRole('link', { name: '最新动态', exact: true })
+    await expect(mobileUpdatesLink).toHaveAttribute('href', '/updates')
+    const analyticsRequest = page.waitForRequest(request => (
+      request.url().endsWith('/api/public/v1/analytics/events')
+      && request.postDataJSON()?.routeKey === 'updates'
+    ))
+    await mobileUpdatesLink.click()
+    expect((await analyticsRequest).postDataJSON()).toMatchObject({
+      eventType: 'page_view',
+      routeKey: 'updates',
+      entityType: null,
+      entityId: null,
+      actionKey: null,
+    })
+    await expect(page).toHaveURL(/\/updates$/u)
+
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 768, height: 1024 },
+      { width: 1440, height: 900 },
+    ]) {
+      await page.setViewportSize(viewport)
+      await page.goto('/')
+      await expect(page.getByTestId('home-latest-updates')).toBeVisible()
+      expect(await page.evaluate(() => (
+        document.documentElement.scrollWidth - document.documentElement.clientWidth
+      ))).toBeLessThanOrEqual(1)
+    }
+  })
+
+  test('没有已发布动态时不渲染首页摘要', async ({ page }) => {
+    await seedPublicUpdates(page, [{
+      type: 'other',
+      title: 'E2E 公开动态 Draft only',
+      content: 'Hidden',
+      publicationStatus: 'draft',
+    }])
+    await page.goto('/')
+    await expect(page.getByTestId('home-latest-updates')).toHaveCount(0)
+    await expect(page.getByTestId('public-hero')).toBeVisible()
   })
 })

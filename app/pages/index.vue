@@ -43,6 +43,11 @@ if (homeError.value) {
 
     <HomeBusinessEntries :entries="home.entries" />
 
+    <HomeLatestUpdates
+      v-if="home.latestUpdates.available && home.latestUpdates.items.length > 0"
+      :items="home.latestUpdates.items"
+    />
+
     <HomeCurrentAdoptions
       :adoptions="home.currentAdoptions.items"
       :available="home.currentAdoptions.available"

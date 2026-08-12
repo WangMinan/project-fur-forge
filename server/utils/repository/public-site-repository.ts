@@ -28,6 +28,7 @@ import type {
   PublicHomeDto,
   PublicSiteBusinessStatusDto,
   PublicSourceSetDto,
+  PublicUpdateDto,
   PublicWorkDetailDto,
   PublicWorkListDto,
   PublicWorkSummaryDto,
@@ -51,6 +52,7 @@ import type { RuntimeConfig } from '../runtime-config'
 import { safeLog } from '../safe-log'
 import { getPublicBusinessStatuses } from '../service/site-content'
 import { toPublicWorkDto } from '../recipe/work-mapper'
+import { listPublishedUpdates } from './public-update-repository'
 
 export interface PublicWorksQuery {
   page?: unknown
@@ -453,10 +455,23 @@ function homeAggregate(
     })
   }
 
+  let latestUpdates: PublicUpdateDto[] = []
+  let updatesAvailable = true
+  try {
+    latestUpdates = listPublishedUpdates(sqlite, 3)
+  }
+  catch (error) {
+    updatesAvailable = false
+    safeLog('error', 'Home latest updates projection failed.', {
+      errorName: (error as { name?: unknown }).name,
+    })
+  }
+
   return publicHomeAggregateDtoSchema.parse({
     hero,
     entries,
     featured: { available: featuredAvailable, items: featured },
+    latestUpdates: { available: updatesAvailable, items: latestUpdates },
     currentAdoptions: { available: adoptionsAvailable, items: currentAdoptions },
   })
 }
@@ -683,6 +698,7 @@ export interface FakePublicSiteSeed {
   details: PublicWorkDetailDto[]
   featuredSlugs: string[]
   home: PublicHomeDto
+  updates?: PublicUpdateDto[]
   commissionHero?: PublicCommissionHeroDto
   statuses?: {
     adoption: PublicSiteBusinessStatusDto | null
@@ -793,6 +809,10 @@ export function createFakePublicSiteRepository(
           adoption: entryCard('adoption'),
         },
         featured: { available: true, items: featured },
+        latestUpdates: {
+          available: true,
+          items: (seed.updates ?? []).slice(0, 3),
+        },
         currentAdoptions: {
           available: true,
           items: this.listAdoptions().items.slice(0, 2),

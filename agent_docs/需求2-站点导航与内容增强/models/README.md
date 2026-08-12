@@ -1,7 +1,7 @@
 # 数据模型规划
 
 > **角色**：记录本轮现状模型与目标变更；实现后回填实际迁移和字段。
-> **状态**：T01～T11 已落地；动态首页摘要由 T12 接续。
+> **状态**：T01～T12 已落地；下一步为数据与安全回归。
 
 ## 0. 当前分支实际变更
 
@@ -107,6 +107,6 @@ publishedAt
 
 不返回草稿、内部时间、管理员、版本、私有字段或任意 HTML。首页只取最近 3 条。
 
-T11 已由 `public-update-repository` 落地完整列表投影：SQL 只读取 published 记录并按发布时间倒序，公开 API 以严格 DTO 返回；`/updates` 只做纯文本展示。首页限制三条的同一 repository 入口由 T12 消费。
+T11 已由 `public-update-repository` 落地完整列表投影：SQL 只读取 published 记录并按发布时间倒序，公开 API 以严格 DTO 返回；`/updates` 只做纯文本展示。T12 复用同一入口，以 `LIMIT 3` 写入 home aggregate 的可降级 `latestUpdates` 区块；查询失败时只关闭该区块。迁移 `0031_requirement_2_updates_analytics.sql` 仅扩展 analytics `route_key` CHECK 以接纳 `updates`，不改变动态表。
 
 contact 公开卡片只消费 `platform + account + qrCodeSources`。Logo 路径和平台显示名是固定枚举元数据，不进入数据库或公开 DTO；二维码 `<img>` 只使用已验证 PNG variant URL，不使用资产 ID、私有预览或签名 URL。
