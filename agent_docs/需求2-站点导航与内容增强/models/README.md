@@ -1,7 +1,7 @@
 # 数据模型规划
 
 > **角色**：记录本轮现状模型与目标变更；实现后回填实际迁移和字段。
-> **状态**：T01～T06 已落地；搜索与动态方案 B 尚未落地。
+> **状态**：T01～T10-B 已落地；动态公开投影与首页摘要由 T11/T12 接续。
 
 ## 0. 当前分支实际变更
 
@@ -13,7 +13,7 @@ T01 只修改 `PUBLIC_NAV_ITEMS` 与 E2E。T02 新增 `official_channels_json`�
 - `assets`、`upload_sessions`、`asset_variants` 已覆盖私有上传和公开派生，但没有 contact QR 角色。
 - `works.character_name` 是作品/领养的设定名称。
 - `return_characters.name` 是返图的设定名称；一项设定可以有多张 `return_photos`。
-- 当前没有动态数据模型。
+- T10-B 已由迁移 `0030_requirement_2_updates.sql` 建立独立动态数据模型。
 
 ## 2. 联系方式目标模型
 
@@ -90,6 +90,8 @@ updates
 索引仅需 `(publication_status, published_at)`。首版不建 tags、media、slug、schedule、author 或 revision 表。
 
 类型映射固定为 `event=参展资讯`、`drop=掉落预告`、`commission_open=开单通知`、`other=其它`。首次发布写当前 `published_at`；下架后重新发布时更新该值，仅编辑已发布正文不改变它。
+
+T10-B 实际实现与上述字段一致；标题上限 200 字、正文上限 20000 字，数据库 CHECK 保证 trim 后非空、枚举、正版本及 publication status/time 组合。所有管理修改以 `expectedVersion` CAS 写入，审计不保存标题或正文。
 
 ## 6. 公开投影
 
