@@ -99,12 +99,16 @@ test.describe('T20 作品列表页', () => {
         level: 1,
         name: '作品展示',
       }).boundingBox()
+      const searchBox = await page.getByRole('search').boundingBox()
       const filterBox = await page.getByRole('group', {
         name: '按用途筛选',
       }).boundingBox()
       expect(titleBox).not.toBeNull()
+      expect(searchBox).not.toBeNull()
       expect(filterBox).not.toBeNull()
-      expect(filterBox!.y - (titleBox!.y + titleBox!.height))
+      expect(searchBox!.y - (titleBox!.y + titleBox!.height))
+        .toBeLessThanOrEqual(32)
+      expect(filterBox!.y - (searchBox!.y + searchBox!.height))
         .toBeLessThanOrEqual(32)
     }
 

@@ -9,6 +9,7 @@ import { SUIT_TYPE_VALUES, WORK_PURPOSE_VALUES } from '~~/shared/schemas/work'
  */
 const props = defineProps<{
   filter: { purpose: WorkPurpose | null, suitType: SuitType | null }
+  query?: string
   resultCount: number
 }>()
 
@@ -19,6 +20,9 @@ function buildQuery(purpose: WorkPurpose | null, suitType: SuitType | null) {
   }
   if (suitType) {
     query.suitType = suitType
+  }
+  if (props.query) {
+    query.q = props.query
   }
   return query
 }

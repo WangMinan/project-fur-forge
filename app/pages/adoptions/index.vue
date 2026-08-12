@@ -12,6 +12,7 @@ useSeoMeta({
 
 const route = useRoute()
 const requestedPage = computed(() => publicPageFromQuery(route.query.page))
+const search = computed(() => publicSearchFromQuery(route.query.q))
 
 /** 筛选参数原样透传（含非法值），由服务端判定 filter.valid。 */
 const filterQuery = computed(() => {
@@ -21,6 +22,7 @@ const filterQuery = computed(() => {
   return {
     ...(typeof raw === 'string' && raw !== '' ? { method: raw } : {}),
     page: requestedPage.value,
+    q: route.query.q,
   }
 })
 
@@ -51,14 +53,24 @@ const filter = computed(
 )
 
 /** 三个筛选都是普通链接：SSR 直出、无 JavaScript 时可用。 */
-const FILTER_OPTIONS = [
-  { key: 'all', label: '全部', to: '/adoptions' },
-  { key: 'regular', label: '常规领养', to: '/adoptions?method=regular' },
-  { key: 'event_drop', label: '展会掉落', to: '/adoptions?method=event_drop' },
-]
+const FILTER_OPTIONS = computed(() => [
+  { key: 'all', label: '全部', to: publicPageHref('/adoptions', { q: search.value.query || null }, 1) },
+  { key: 'regular', label: '常规领养', to: publicPageHref('/adoptions', { method: 'regular', q: search.value.query || null }, 1) },
+  { key: 'event_drop', label: '展会掉落', to: publicPageHref('/adoptions', { method: 'event_drop', q: search.value.query || null }, 1) },
+])
+
+const clearSearchHref = computed(() => publicPageHref('/adoptions', {
+  method: filter.value.method === 'all' ? null : filter.value.method,
+}, 1))
 
 /** 空态只表达真实数据，不编造“即将更新”。 */
 const emptyText = computed(() => {
+  if (!search.value.valid) {
+    return { description: '', title: '搜索条件无效' }
+  }
+  if (search.value.active) {
+    return { description: '', title: '没有找到这个设定' }
+  }
   if (!filter.value.valid) {
     return {
       description: '筛选参数无法识别，已显示全部领养。',
@@ -83,6 +95,7 @@ const isOutOfRange = computed(() => (
 function hrefFor(target: number) {
   return publicPageHref('/adoptions', {
     method: filter.value.method === 'all' ? null : filter.value.method,
+    q: search.value.query || null,
   }, target)
 }
 </script>
@@ -105,6 +118,15 @@ function hrefFor(target: number) {
     </div>
 
     <div class="adoptions-page__filters-wrap">
+      <PublicCatalogSearch
+        action="/adoptions"
+        :clear-to="clearSearchHref"
+        :hidden-fields="{
+          method: filter.method === 'all' ? null : filter.method,
+        }"
+        :query="search.query"
+        :show-clear="search.active"
+      />
       <PublicFilterChips
         label="领养方式筛选"
         :options="FILTER_OPTIONS"
@@ -139,7 +161,8 @@ function hrefFor(target: number) {
       :title="emptyText.title"
       :description="emptyText.description"
     >
-      <NuxtLink to="/works">浏览作品展示</NuxtLink>
+      <NuxtLink v-if="search.active" :to="clearSearchHref">清除搜索</NuxtLink>
+      <NuxtLink v-else to="/works">浏览作品展示</NuxtLink>
     </PublicEmptyState>
   </div>
 </template>
@@ -171,6 +194,10 @@ function hrefFor(target: number) {
   max-width: var(--public-content-wide);
   margin: 0 auto var(--space-6);
   padding: 0 var(--public-page-padding);
+}
+
+.adoptions-page__filters-wrap > :deep(.catalog-search) {
+  margin-bottom: var(--space-5);
 }
 
 .adoptions-page__grid {
