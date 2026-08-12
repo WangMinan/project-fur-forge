@@ -17,6 +17,7 @@
 - [`T02-CONTACT-CONTRACT-2026-08-12.md`](./T02-CONTACT-CONTRACT-2026-08-12.md)：固定五平台 contact 契约、旧值迁移和分区并发。
 - [`T03-CONTACT-QR-MEDIA-2026-08-12.md`](./T03-CONTACT-QR-MEDIA-2026-08-12.md)：二维码私有上传、无水印公开派生、失败重试与安全投影。
 - [`T04-CONTACT-ADMIN-2026-08-12.md`](./T04-CONTACT-ADMIN-2026-08-12.md)：固定五平台账号和二维码编辑、局部保存、预览恢复与冲突草稿保留。
+- [`T05-CONTACT-PUBLIC-2026-08-12.md`](./T05-CONTACT-PUBLIC-2026-08-12.md)：公开平台 Logo、二维码、账号网格与三视口验证。
 
 ## 新记录最低要求
 

@@ -13,3 +13,11 @@ export const CONTACT_PLATFORM_LABELS = {
   xiaohongshu: '小红书',
   bilibili: 'Bilibili',
 } as const satisfies Record<typeof CONTACT_PLATFORMS[number], string>
+
+export const CONTACT_PLATFORM_LOGO_PATHS = {
+  qq: '/contact-platforms/qq.svg',
+  douyin: '/contact-platforms/douyin.svg',
+  qq_group: '/contact-platforms/qq.svg',
+  xiaohongshu: '/contact-platforms/xiaohongshu.svg',
+  bilibili: '/contact-platforms/bilibili.svg',
+} as const satisfies Record<typeof CONTACT_PLATFORMS[number], string>
