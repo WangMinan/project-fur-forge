@@ -28,7 +28,7 @@ export const SITE_CONTENT_LIMITS = {
   emailAction: 240,
   faqQuestion: 120,
   faqAnswer: 1_000,
-  faqMaxCount: 8,
+  faqMaxCount: 9,
   studioFacts: 1_200,
   makingScope: 1_200,
   basicTerms: 8_000,

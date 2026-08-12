@@ -46,6 +46,18 @@ function currentMigrationCount() {
   return journal.entries.length
 }
 
+function migrationCountFrom(tag: string) {
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  const index = journal.entries.findIndex(entry => entry.tag === tag)
+  if (index < 0) {
+    throw new Error(`Migration ${tag} is missing from the journal.`)
+  }
+  return journal.entries.length - index
+}
+
 function temporaryDatabase(name = 'studio.db') {
   const directory = mkdtempSync(resolve(tmpdir(), 'fur-forge-db-'))
   temporaryDirectories.push(directory)
@@ -118,6 +130,30 @@ function migrationsBeforeContactChannels(databaseFile: string) {
   return folder
 }
 
+function migrationsBeforeCommissionEmailFaq(databaseFile: string) {
+  const folder = resolve(dirname(databaseFile), 'pre-commission-email-faq-migrations')
+  const meta = resolve(folder, 'meta')
+  mkdirSync(meta, { recursive: true })
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  const entries = journal.entries.slice(0, journal.entries.findIndex(
+    entry => entry.tag === '0029_requirement_2_commission_email_faq',
+  ))
+  for (const { tag } of entries) {
+    copyFileSync(
+      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
+      resolve(folder, `${tag}.sql`),
+    )
+  }
+  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
+    ...journal,
+    entries,
+  }))
+  return folder
+}
+
 afterEach(() => {
   temporaryDirectories.splice(0).forEach(directory => rmSync(
     directory,
@@ -174,7 +210,17 @@ describe('SQLite foundation', () => {
         privacyPolicy: string
       }
       expect(siteContent.commissionIntro).toContain('逐单估价')
-      expect(JSON.parse(siteContent.commissionFaqJson)).toHaveLength(5)
+      const commissionFaqs = JSON.parse(siteContent.commissionFaqJson) as Array<{
+        answer: string
+        id: string
+        question: string
+      }>
+      expect(commissionFaqs).toHaveLength(6)
+      expect(commissionFaqs.at(-1)).toEqual({
+        id: '2f7c23c4-8e8a-4cc4-a8c5-3a8f3b8e9d61',
+        question: '邮件估价咨询可以按什么格式填写？',
+        answer: expect.stringContaining('角色名、委托装型、身高/体型、设定图、希望实现的细节、期望时间和其它说明'),
+      })
       expect(siteContent.aboutStudioFacts).not.toContain('私人联系方式')
       expect(siteContent.basicTerms).toContain('著作权均归有点小狗工作室所有')
       expect(siteContent.basicTerms).toContain('签收之日起一年')
@@ -229,7 +275,7 @@ describe('SQLite foundation', () => {
     }
 
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 2,
+      applied: migrationCountFrom('0027_requirement_2_contact_channels'),
     })
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
       applied: 0,
@@ -252,6 +298,54 @@ describe('SQLite foundation', () => {
         { platform: 'xiaohongshu', account: null, qrCodeAssetId: null },
         { platform: 'bilibili', account: null, qrCodeAssetId: null },
       ])
+      expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
+    }
+    finally {
+      upgraded.sqlite.close()
+    }
+  })
+
+  it('appends the commission email FAQ without replacing eight existing items', async () => {
+    const databaseFile = temporaryDatabase()
+    await migrateDatabase(databaseFile, {
+      migrationsFolder: migrationsBeforeCommissionEmailFaq(databaseFile),
+    })
+    const legacy = openDatabase(databaseFile)
+    const existingFaqs = Array.from({ length: 8 }, (_, index) => ({
+      id: `${String(index + 1).padStart(8, '0')}-1111-4111-8111-111111111111`,
+      question: `已有问题 ${index + 1}`,
+      answer: `已有回答 ${index + 1}`,
+    }))
+    let previousVersion: number
+    try {
+      previousVersion = legacy.sqlite.prepare(`
+        SELECT commission_faq_version FROM site_content WHERE id = 'site'
+      `).pluck().get() as number
+      legacy.sqlite.prepare(`
+        UPDATE site_content SET commission_faq_json = ? WHERE id = 'site'
+      `).run(JSON.stringify(existingFaqs))
+    }
+    finally {
+      legacy.sqlite.close()
+    }
+
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({ applied: 1 })
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({ applied: 0 })
+    const upgraded = openDatabase(databaseFile)
+    try {
+      const row = upgraded.sqlite.prepare(`
+        SELECT commission_faq_json AS faqs,
+               commission_faq_version AS version
+        FROM site_content WHERE id = 'site'
+      `).get() as { faqs: string, version: number }
+      const faqs = JSON.parse(row.faqs) as typeof existingFaqs
+      expect(faqs.slice(0, 8)).toEqual(existingFaqs)
+      expect(faqs).toHaveLength(9)
+      expect(faqs[8]).toMatchObject({
+        id: '2f7c23c4-8e8a-4cc4-a8c5-3a8f3b8e9d61',
+        question: '邮件估价咨询可以按什么格式填写？',
+      })
+      expect(row.version).toBe(previousVersion + 1)
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
     }
     finally {

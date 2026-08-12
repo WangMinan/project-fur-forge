@@ -38,7 +38,7 @@ export const commissionFaqSchema = z.object({
 }).strict()
 
 export const commissionFaqListSchema = z.array(commissionFaqSchema)
-  .max(8)
+  .max(9)
   .superRefine((items, context) => {
     const questions = new Set<string>()
     const ids = new Set<string>()

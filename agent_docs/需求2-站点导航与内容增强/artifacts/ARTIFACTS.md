@@ -1,20 +1,20 @@
 # 产物索引
 
 > **最后校准**：2026-08-12。
-> **状态**：阶段 0～3 文档已锁定；阶段 4 已完成 T01～T05。
+> **状态**：阶段 0～3 文档已锁定；阶段 4 已完成 T01～T06。
 
 ## 文档产物
 
 | 阶段 | 产物 | 路径 | 状态 | 说明 |
 | --- | --- | --- | --- | --- |
 | 0 地基 | 产品地基 | `foundation/README.md` | 已锁定 | 增量范围、安全与非目标 |
-| 1 规格 | 需求规格 | `requirements/SPEC.md` | 已锁定 | 五组功能与验收契约；T01～T05 已实现 |
+| 1 规格 | 需求规格 | `requirements/SPEC.md` | 已锁定 | 五组功能与验收契约；T01～T06 已实现 |
 | 2 计划 | 实施计划 | `planning/PLAN.md` | 已决策 | OQ-001 已选择方案 B |
-| 3 任务 | 任务清单 | `implementation/TASKS.md` | 实施中 | GATE-01、T01～T05 已关闭，仅保留动态方案 B |
-| 4 实施 | 实施记录 | `implementation/notes/README.md` | 实施中 | T01～T05 已记录 |
+| 3 任务 | 任务清单 | `implementation/TASKS.md` | 实施中 | GATE-01、T01～T06 已关闭，仅保留动态方案 B |
+| 4 实施 | 实施记录 | `implementation/notes/README.md` | 实施中 | T01～T06 已记录 |
 | 5 评审 | 评审记录 | `review/REVIEW.md` | 未开始 | 等实现后独立 Review |
 | 6 闭环 | 模型说明 | `models/README.md` | 部分落地 | contact 持久结构与二维码媒体已落地；FAQ、搜索与方案 B 动态仍为目标模型 |
-| 6 闭环 | 当前状态 | `STATE.md` | 当前 | T05 已关闭，下一步为 T06 委托邮件估价模板迁移 |
+| 6 闭环 | 当前状态 | `STATE.md` | 当前 | T06 已关闭，下一步为 T07 统一名称包含匹配 |
 
 ## 外部与既有资料
 
@@ -43,9 +43,11 @@
 - T04 记录：[`../implementation/notes/T04-CONTACT-ADMIN-2026-08-12.md`](../implementation/notes/T04-CONTACT-ADMIN-2026-08-12.md)。
 - T05：`ContactChannelGrid`、共享平台 Logo 路径、四份本地 SVG（QQ群复用 QQ）及五平台三视口公开 E2E；
 - T05 记录：[`../implementation/notes/T05-CONTACT-PUBLIC-2026-08-12.md`](../implementation/notes/T05-CONTACT-PUBLIC-2026-08-12.md)。
+- T06：迁移 `0029_requirement_2_commission_email_faq.sql`、FAQ 上限 9 及空库/既有 8 项/幂等迁移测试；
+- T06 记录：[`../implementation/notes/T06-COMMISSION-EMAIL-FAQ-2026-08-12.md`](../implementation/notes/T06-COMMISSION-EMAIL-FAQ-2026-08-12.md)。
 
 ## 待实施产物
 
-- FAQ、搜索、动态的迁移、Schema、API、页面与测试；
+- 搜索、动态的迁移、Schema、API、页面与测试；
 - 三视口截图、二维码解码与手机扫码证据；
 - 独立 Review 和用户验收记录。
