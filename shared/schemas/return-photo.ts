@@ -12,6 +12,7 @@ import {
   slugSchema,
 } from './work'
 import { publicationOperationDtoSchema } from './publication'
+import { publicCatalogSearchQuerySchema } from './public-content'
 
 /**
  * T35-F1 返图契约。
@@ -243,6 +244,7 @@ export const publicReturnWallDtoSchema = z.object({
 
 export const publicReturnWallQuerySchema = z.object({
   page: z.number().int().min(1).max(10_000).optional(),
+  q: publicCatalogSearchQuerySchema,
   seed: returnWallSeedSchema.optional(),
 }).strict()
 

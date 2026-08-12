@@ -11,6 +11,7 @@ export default defineEventHandler((event) => {
       data: getPublicSiteRepository().listAdoptions({
         method: getQuery(event).method,
         page: getQuery(event).page,
+        q: getQuery(event).q,
       }),
     })
   }

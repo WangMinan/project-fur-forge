@@ -31,6 +31,7 @@ import {
   updateReturnPhoto,
 } from '../../server/utils/service/return-photo'
 import { findReturnCharacter } from '../../server/utils/repository/return-photo-repository'
+import { getPublicReturnWall } from '../../server/utils/repository/public-return-repository'
 import {
   deleteReturnCharacterCascade,
   publishReturnPhoto,
@@ -213,6 +214,75 @@ describe('T35-F1 return character domain model', () => {
       UPDATE return_photos SET publication_status = 'published', published_at = ?
       WHERE id = ?
     `).run(NOW, photo.id)).not.toThrow()
+  })
+
+  it('filters all public photos by character name before seeded pagination', async () => {
+    const storage = new FakeMediaStorage()
+    const matchingCharacter = characterFor('Mochi 云朵', 'mochi')
+    const otherCharacter = characterFor('芝麻', 'sesame')
+    const photos = [
+      [matchingCharacter, 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'],
+      [matchingCharacter, 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'],
+      [otherCharacter, 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'],
+    ] as const
+
+    for (const [character, assetId] of photos) {
+      insertReturnAsset(assetId)
+      const privateObjectKey = sqlite.prepare(`
+        SELECT private_object_key FROM assets WHERE id = ?
+      `).pluck().get(assetId) as string
+      storage.seedPrivate(
+        privateObjectKey,
+        createSyntheticSourcePng(1139, 2083),
+        'image/png',
+      )
+      const photo = addReturnPhotoFromUpload(
+        sqlite,
+        character.id,
+        assetId,
+        NOW,
+      )
+      await publishReturnPhoto(
+        sqlite,
+        storage,
+        photo.id,
+        photo.version,
+        USER_ID,
+        NOW + 1,
+      )
+    }
+
+    const seed = '11'.repeat(16)
+    const first = getPublicReturnWall(
+      sqlite,
+      'https://media.example.test',
+      1,
+      seed,
+      'test',
+      '  mOCHI  ',
+    )
+    const repeated = getPublicReturnWall(
+      sqlite,
+      'https://media.example.test',
+      1,
+      seed,
+      'test',
+      '云朵',
+    )
+
+    expect(first).toMatchObject({ resultCount: 2, pageCount: 1, seed })
+    expect(first.items.map(item => item.character.name))
+      .toEqual(['Mochi 云朵', 'Mochi 云朵'])
+    expect(repeated.items.map(item => item.id))
+      .toEqual(first.items.map(item => item.id))
+    expect(getPublicReturnWall(
+      sqlite,
+      'https://media.example.test',
+      1,
+      seed,
+      'test',
+      ['Mochi'],
+    )).toMatchObject({ items: [], resultCount: 0, pageCount: 0 })
   })
 
   it('blocks publication until an image and alt exist', () => {

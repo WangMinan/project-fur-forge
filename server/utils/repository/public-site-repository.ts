@@ -6,6 +6,7 @@ import {
 import {
   PUBLIC_ADOPTIONS_PAGE_SIZE,
   PUBLIC_WORKS_PAGE_SIZE,
+  publicCatalogSearchQuerySchema,
   publicCatalogPageQuerySchema,
   publicAdoptionListDtoSchema,
   publicAdoptionListItemDtoSchema,
@@ -17,6 +18,7 @@ import {
   publicWorkListQuerySchema,
   publicWorkSummaryDtoSchema,
 } from '../../../shared/schemas/public-content'
+import { includesSearchText } from '../../../shared/utils/search'
 import type {
   PublicAdoptionListDto,
   PublicAdoptionListItemDto,
@@ -53,12 +55,14 @@ import { toPublicWorkDto } from '../recipe/work-mapper'
 export interface PublicWorksQuery {
   page?: unknown
   purpose?: unknown
+  q?: unknown
   suitType?: unknown
 }
 
 export interface PublicAdoptionsQuery {
   method?: unknown
   page?: unknown
+  q?: unknown
 }
 
 export interface PublicSiteRepository {
@@ -511,21 +515,28 @@ function adoptionListDto(
   query: PublicAdoptionsQuery,
 ) {
   const parsed = publicAdoptionListQuerySchema.safeParse({ method: query.method })
+  const search = publicCatalogSearchQuerySchema.safeParse(query.q)
   const method = parsed.success ? parsed.data.method ?? 'all' : 'all'
   const page = catalogPage(query.page)
   const matches = (item: PublicAdoptionListItemDto) => (
     method === 'all' || item.work.adoptionMethod === method
   )
-  const filtered = items.filter(matches)
+  const searched = search.success
+    ? items.filter(item => includesSearchText(
+        item.work.characterName,
+        search.data ?? '',
+      ))
+    : []
+  const filtered = searched.filter(matches)
   return publicAdoptionListDtoSchema.parse({
     ...paginateCatalog(filtered, page, PUBLIC_ADOPTIONS_PAGE_SIZE),
     filter: { valid: parsed.success, method },
     counts: {
-      all: items.length,
-      regular: items.filter(
+      all: searched.length,
+      regular: searched.filter(
         item => item.work.adoptionMethod === 'regular',
       ).length,
-      event_drop: items.filter(
+      event_drop: searched.filter(
         item => item.work.adoptionMethod === 'event_drop',
       ).length,
     },
@@ -614,6 +625,7 @@ export function createSqlitePublicSiteRepository(
         purpose: query.purpose,
         suitType: query.suitType,
       })
+      const search = publicCatalogSearchQuerySchema.safeParse(query.q)
       if (!parsed.success) {
         return publicWorkListDtoSchema.parse({
           items: [],
@@ -624,13 +636,18 @@ export function createSqlitePublicSiteRepository(
           filter: { valid: false, purpose: null, suitType: null },
         })
       }
-      const items = snapshot(sqlite, mediaBaseUrl, appEnv)
+      const items = search.success ? snapshot(sqlite, mediaBaseUrl, appEnv)
         .filter(entry => entry.studioPhotos.length > 0)
         .filter(entry => (
           (!parsed.data.purpose || entry.purpose === parsed.data.purpose)
           && (!parsed.data.suitType || entry.suitType === parsed.data.suitType)
+          && includesSearchText(
+            entry.summary.work.characterName,
+            search.data ?? '',
+          )
         ))
         .map(entry => entry.summary)
+        : []
       return publicWorkListDtoSchema.parse({
         ...paginateCatalog(items, page, PUBLIC_WORKS_PAGE_SIZE),
         filter: {
@@ -712,11 +729,13 @@ export function createFakePublicSiteRepository(
         purpose: query.purpose,
         suitType: query.suitType,
       })
-      const filtered = parsed.success
+      const search = publicCatalogSearchQuerySchema.safeParse(query.q)
+      const filtered = parsed.success && search.success
         ? details.filter(detail => (
             detail.media.studioPhotos.length > 0
             && (!parsed.data.purpose || detail.work.purpose === parsed.data.purpose)
             && (!parsed.data.suitType || detail.work.suitType === parsed.data.suitType)
+            && includesSearchText(detail.work.characterName, search.data ?? '')
           ))
         : []
       return publicWorkListDtoSchema.parse({

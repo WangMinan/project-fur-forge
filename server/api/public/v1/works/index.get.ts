@@ -10,6 +10,7 @@ export default defineEventHandler((event) => {
       data: getPublicSiteRepository().listWorks({
         page: query.page,
         purpose: query.purpose,
+        q: query.q,
         suitType: query.suitType,
       }),
     })

@@ -564,6 +564,12 @@ describe('T19/T20 public repository contracts', () => {
     expect(list.resultCount).toBe(2)
     expect(repository.listWorks({ suitType: 'full' }).items)
       .toHaveLength(1)
+    expect(repository.listWorks({ q: '  团子  ' }).items.map(item => item.work.slug))
+      .toEqual(['first-work'])
+    expect(repository.listWorks({ q: ['团子'] })).toMatchObject({
+      items: [],
+      resultCount: 0,
+    })
     expect(repository.listWorks({ purpose: 'bad-value' })).toMatchObject({
       items: [],
       resultCount: 0,
@@ -806,6 +812,15 @@ describe('T19/T20 public repository contracts', () => {
     })
     expect(adoptionList.items[0]?.designSheet.sources.webp.map(item => item.width))
       .toEqual([960, 1600, 2400])
+    expect(repository.listAdoptions({ q: '雪球' })).toMatchObject({
+      items: [{ work: { slug: 'adoption-purpose' } }],
+      resultCount: 1,
+    })
+    expect(repository.listAdoptions({ q: { invalid: true } })).toMatchObject({
+      items: [],
+      resultCount: 0,
+      counts: { all: 0, regular: 0, event_drop: 0 },
+    })
     const adoptionDetail = repository.getWorkBySlug('adoption-purpose')
     expect(adoptionDetail?.media.designSheet?.assetId)
       .toBe(adoptionList.items[0]?.designSheet.assetId)
