@@ -24,5 +24,9 @@ describe('公开列表分页 URL', () => {
     }, 2)).toBe('/works?purpose=commission&suitType=full&page=2')
     expect(publicPageHref('/adoptions', { method: 'event_drop' }, 3))
       .toBe('/adoptions?method=event_drop&page=3')
+    expect(publicPageHref('/returns', {
+      q: '蓝湄',
+      seed: '11'.repeat(16),
+    }, 2)).toBe(`/returns?q=${encodeURIComponent('蓝湄')}&seed=${'11'.repeat(16)}&page=2`)
   })
 })

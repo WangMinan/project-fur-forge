@@ -6,7 +6,7 @@
 
 ## 当前阶段
 
-阶段 4 · 已进入串行实现，动态后台方案锁定为 B，T01～T07 已完成；PR 合并、独立 Review 和用户验收尚未完成。
+阶段 4 · 已进入串行实现，动态后台方案锁定为 B，T01～T09 已完成；PR 合并、独立 Review 和用户验收尚未完成。
 
 T03 已接入 `site/contact` 私有二维码上传、`contact-qr-v1` 无水印方形 PNG 公开派生、失败重试与 READY 公开投影。
 
@@ -18,12 +18,14 @@ T06 已新增 `0029_requirement_2_commission_email_faq.sql`，以固定 UUID 向
 
 T07 已统一后台作品与三个公开 repository 的名称包含匹配；公开 `q` 契约统一为 trim 后 1～100 字，作品/领养在分页前按 `characterName` 过滤，返图按设定名称过滤后再按 seed 随机分页。
 
+T08/T09 已把共用原生 GET 搜索表单接入作品、领养和返图页；筛选与分页保留有效 `q`，新查询清除旧页码/返图 seed，并完成无匹配、非法查询、三视口键盘与浏览器回归。
+
 当前分支为 `feat/requirement-2`。T01 实现代码 SHA `a38c295` 的 GitHub Actions run [`31515689322`](https://github.com/WangMinan/project-fur-forge/actions/runs/31515689322) 已取得 `checks`、`image-build`、`e2e` 全部成功；该结果只绑定该 SHA，包含 T02 的后续 HEAD 须重新查询远端检查。PR [#10](https://github.com/WangMinan/project-fur-forge/pull/10) 仍为 open，尚未合入 `main`。工程证据不代签 T16 独立 Review 或 T17 用户验收。
 
 ## 已确认结论
 
 - 桌面导航已有通用 `children` 下拉结构；“关于我们”的圆角下拉可原样复用。
-- `/works`、`/adoptions`、`/returns` 公开 API 已支持按设定名称搜索；三个公开页面的搜索表单、查询保留和搜索空态仍待 T08 接入。
+- `/works`、`/adoptions`、`/returns` 已支持按设定名称搜索、原生 GET 表单、查询保留、搜索空态与清除入口。
 - 后台作品列表已有名称/物种包含匹配；后台返图列表已有名称/昵称包含匹配。
 - 联系方式已由 `site_content.official_channels_json` 保存固定五平台数组；旧 QQ/抖音完成迁移，二维码媒体链、完整五行管理界面及公开 Logo/二维码卡片已实现，真实账号补齐与手机扫码验收尚未完成。
 - 委托 FAQ 已由 `/admin/site/content` 管理，并保存在 `commission_faq_json`；邮件估价标准模板已通过前向 SQLite 迁移追加，不包含 SMTP。
@@ -33,7 +35,7 @@ T07 已统一后台作品与三个公开 repository 的名称包含匹配；公�
 
 ## 当前约束
 
-- 只按 TASKS 串行实施；当前 `GATE-01`、T01～T07 已勾选。
+- 只按 TASKS 串行实施；当前 `GATE-01`、T01～T09 已勾选。
 - T01 后续文档或代码若产生新 SHA，必须重新查询该 SHA 的远端检查，不沿用 `a38c295` 的结果。
 - 不重写历史迁移，只能新增前向迁移。
 - 保留现有邮箱联系方式；五个平台卡片是新增，不是删除邮箱。
@@ -48,6 +50,6 @@ T07 已统一后台作品与三个公开 repository 的名称包含匹配；公�
 
 ## 下一步交接
 
-1. 按 T08 接入三页共用 GET 搜索界面、查询保留和搜索空态；
-2. T08 完成后进入 T09 搜索契约与浏览器验证；
+1. 按 T10-B 实现独立动态模型与 `/admin/updates`；
+2. 完成后依次进入 T11 公开动态页与 T12 首页/导航聚合；
 3. 保持 T16 独立 Review、T17 用户验收开放，不能用早期 SHA 的 CI 结果提前关闭。
