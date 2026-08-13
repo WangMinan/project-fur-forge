@@ -78,16 +78,21 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
         </p>
         <ContactEmailActions :email="contact.email" />
         <ContactChannelGrid :channels="contact.officialChannels" />
-        <div v-if="antiScamParagraphs.length > 0" class="about-page__antiscam">
-          <h3 class="about-page__subsection-title">防诈骗提示</h3>
-          <p
-            v-for="(paragraph, index) in antiScamParagraphs"
-            :key="index"
-            class="about-page__text"
-          >
-            {{ paragraph }}
-          </p>
-        </div>
+      </section>
+
+      <section
+        v-if="antiScamParagraphs.length > 0"
+        class="about-page__section about-page__antiscam"
+        aria-labelledby="about-antiscam-title"
+      >
+        <h2 id="about-antiscam-title" class="about-page__section-title">防诈骗提示</h2>
+        <p
+          v-for="(paragraph, index) in antiScamParagraphs"
+          :key="index"
+          class="about-page__text"
+        >
+          {{ paragraph }}
+        </p>
       </section>
     </div>
   </div>
@@ -126,17 +131,6 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
 .about-page__text--muted {
   color: var(--public-text-secondary);
   font-size: var(--font-size-sm);
-}
-
-.about-page__antiscam {
-  display: grid;
-  gap: var(--space-3);
-  margin-top: var(--space-2);
-}
-
-.about-page__subsection-title {
-  font-size: var(--font-size-base);
-  font-weight: 600;
 }
 
 </style>

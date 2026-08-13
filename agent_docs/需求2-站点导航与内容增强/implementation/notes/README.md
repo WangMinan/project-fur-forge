@@ -29,6 +29,7 @@
 - [`T15-BROWSER-ACCEPTANCE-2026-08-12.md`](./T15-BROWSER-ACCEPTANCE-2026-08-12.md)：双 Host、三视口、真实 QR 像素、管理账号响应式与 console/network 浏览器证据。
 - [`T15-F1-F4-PREACCEPTANCE-FIXES-2026-08-13.md`](./T15-F1-F4-PREACCEPTANCE-FIXES-2026-08-13.md)：轮播、首页动态、二维码 FFmpeg 自动适配、双渠道布局和两条 E2E 根因修复。
 - [`T17-F1-USER-REVIEW-FIXES-2026-08-13.md`](./T17-F1-USER-REVIEW-FIXES-2026-08-13.md)：首轮用户验收六组视觉/交互 findings、最终自动化门禁与三视口 Edge 证据。
+- [`T17-F2-E2E-DOCS-ABOUT-2026-08-13.md`](./T17-F2-E2E-DOCS-ABOUT-2026-08-13.md)：动态后台陈旧版本竞态、根 Agent 指令重整、关于页防诈骗 section 一致性及全量回归。
 
 ## 新记录最低要求
 

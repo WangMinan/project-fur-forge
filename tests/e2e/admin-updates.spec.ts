@@ -67,6 +67,11 @@ test('动态编辑遇到陈旧版本时保留本地草稿并给出中文反馈',
 
     await pageA.getByLabel('正文').fill('A 已保存的内容')
     await pageA.getByRole('button', { name: '保存修改' }).click()
+    // `click()` 只等待点击派发，不等待 Vue 异步 submit 中的网络请求。
+    // 先观察 A 端保存完成，才能确定随后 B 端提交使用的是陈旧版本。
+    await expect(pageA.getByRole('heading', { name: '新增动态', level: 2 }))
+      .toBeVisible()
+    await expect(rowA).toContainText('A 已保存的内容')
     await pageB.getByLabel('正文').fill('B 需要保留的本地草稿')
     await pageB.getByRole('button', { name: '保存修改' }).click()
 
