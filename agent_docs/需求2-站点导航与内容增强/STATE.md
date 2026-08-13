@@ -38,7 +38,7 @@ T16 已在独立上下文对实现基线 `19af5878e4bc5c2b01316f9cb89082b90cce0e
 
 T17 首轮用户验收新增六组明确修复：Hero 自动与手动切换需要平滑过渡；首页入口标题改为“委托投递”；当前领养/最新动态的“查看全部”统一品牌蓝；关于页防诈骗提示回归正文排版；首页与动态页统一圆角动态卡片并增加类型筛选；作品/领养宽屏搜索与筛选同排且三个目录删除搜索框上方冗余可见标题。上述改变不修改媒体、动态数据模型、发布状态或公开 DTO。旧 T16 与 `19af587` Actions 不能代签修复后的新 SHA。
 
-T17-F1 已完成：Hero 过渡期间 DOM 数量由 1 到 2 再回到 1，计算时长 680 ms；首页/动态页复用白底圆角卡片并保留类型文字；动态页提供五项普通链接筛选；搜索重复标题节点已删除且 `aria-label` 保留；作品/领养桌面工具栏 y 偏差为 0；关于页防诈骗区回归透明正文。Edge 三视口无 console error 或失败请求，证据见 `implementation/notes/T17-F1-USER-REVIEW-FIXES-2026-08-13.md`。
+T17-F1 已完成并以应用实现 commit `f3df1be` 推送到 PR #10：Hero 过渡期间 DOM 数量由 1 到 2 再回到 1，计算时长 680 ms；首页/动态页复用白底圆角卡片并保留类型文字；动态页提供五项普通链接筛选；搜索重复标题节点已删除且 `aria-label` 保留；作品/领养桌面工具栏 y 偏差为 0；关于页防诈骗区回归透明正文。Edge 三视口无 console error 或失败请求，证据见 `implementation/notes/T17-F1-USER-REVIEW-FIXES-2026-08-13.md`。
 
 当前分支为 `feat/requirement-2`。应用实现基线 `19af5878e4bc5c2b01316f9cb89082b90cce0e46` 的 GitHub Actions run [`31628640863`](https://github.com/WangMinan/project-fur-forge/actions/runs/31628640863) 已取得 `checks`、`image-build`、`e2e` 全部成功；该结果只绑定该 SHA，T16 文档修复形成的新 PR HEAD 仍须在合并前重新查询实际检查。PR [#10](https://github.com/WangMinan/project-fur-forge/pull/10) 仍未合入 `main`。工程证据与独立 Review 均不代签 T17 用户验收。
 
@@ -70,7 +70,7 @@ T17-F1 已完成：Hero 过渡期间 DOM 数量由 1 到 2 再回到 1，计算�
 
 ## 下一步交接
 
-1. 提交并推送 T17-F1 到 PR #10，查询最终 SHA 的远端检查；
+1. 查询 PR #10 最终 HEAD 的远端检查；
 2. 由新上下文完成 T16-R1 独立复查；
 3. 由用户继续 T17 真实平台账号、实际二维码物理手机扫码和完整体验验收；
 4. 只有 T17 取得用户确认后，才能更新最终闭环状态并考虑合并 PR。

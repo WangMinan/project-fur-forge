@@ -51,7 +51,7 @@
 - T15-F1～F4：`0032_requirement_2_contact_qr_upscale.sql`、二维码 FFmpeg 私有适配、首页轮播/动态修正、两渠道三视口截图及两条 E2E 根因修复；
 - T15-F1～F4 记录：[`../implementation/notes/T15-F1-F4-PREACCEPTANCE-FIXES-2026-08-13.md`](../implementation/notes/T15-F1-F4-PREACCEPTANCE-FIXES-2026-08-13.md)。
 - T16：独立 Review 覆盖代码、功能、三视口视觉和文档一致性；三组文档 findings 已修复，记录见 [`../review/REVIEW.md`](../review/REVIEW.md)。
-- T17-F1：Hero 平滑过渡、首页文案/链接、防诈骗正文、共享动态卡片/类型筛选和公开目录工具栏；unit 179/179、最终合并 E2E 40/40、lint/typecheck/production build 与 Edge 三视口通过；
+- T17-F1：应用实现 commit `f3df1be`；Hero 平滑过渡、首页文案/链接、防诈骗正文、共享动态卡片/类型筛选和公开目录工具栏；unit 179/179、最终合并 E2E 40/40、lint/typecheck/production build 与 Edge 三视口通过；
 - T17-F1 记录：[`../implementation/notes/T17-F1-USER-REVIEW-FIXES-2026-08-13.md`](../implementation/notes/T17-F1-USER-REVIEW-FIXES-2026-08-13.md)。
 
 ## 待实施产物
