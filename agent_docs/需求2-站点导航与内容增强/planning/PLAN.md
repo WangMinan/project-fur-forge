@@ -2,7 +2,7 @@
 
 > **角色**：把 SPEC 翻译为按依赖排序的技术方案。
 > **日期**：2026-08-12。
-> **状态**：工程实施、T16 独立 Review、T15-F1～T15-F4 与 T17-F1 已完成；`OQ-001` 采用方案 B。下一步为 T16-R1 新 SHA 独立复查与 T17 最终用户验收。
+> **状态**：工程实施、T16 独立 Review、T15-F1～T15-F4、T17-F1 与 T17-F2 已完成；`OQ-001` 采用方案 B。下一步为 T16-R1 新 SHA 独立复查与 T17 最终用户验收。
 
 ## 1. 执行结论
 
@@ -124,6 +124,13 @@
 - T17-F1-D：`/updates` 增加 `type` 普通链接筛选；不修改动态数据模型、公开 DTO、发布时间或首页最近三条排序。
 - T17-F1-E：`PublicCatalogSearch` 删除重复标题节点，改由输入框 `aria-label` 提供可访问名称；`/works`、`/adoptions` 在宽屏将搜索与已有筛选同排，窄屏按组换行，`/returns` 保持紧凑单搜索行。
 - 先补组件/查询/几何 E2E，再串行运行定向 unit、相关 E2E、lint、typecheck 和 production build；三固定视口检查图片解码、键盘、focus、console/network 与横向溢出。
+
+### 12. T17 第二轮反馈修复（2026-08-13）
+
+- T17-F2-A：动态后台并发 E2E 在 A 端点击保存后等待表单复位和列表正文更新，再让 B 端提交陈旧版本；用可观察状态固定先后关系，不使用 sleep 或放宽 409/草稿断言。
+- T17-F2-B：把防诈骗提示提升为 `.about-page__body` 下的同级 `section`，标题直接复用 `.about-page__section-title`，模块间距直接复用 body grid gap。
+- T17-F2-C：重整根目录 `CLAUDE.md` 为稳定规则入口，删除旧项目名、旧 SHA/run 和阶段进度；增加 `git pull --rebase`、Playwright 精确 spec 命令、`--` 误跑全套陷阱和异步 E2E 完成条件。
+- 定向压力回归先证明并发用例稳定性；随后执行相关 E2E、lint、typecheck、unit、production build 与真实 Edge 三视口。
 
 ## 4. 技术决策
 

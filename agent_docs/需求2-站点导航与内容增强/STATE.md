@@ -6,7 +6,7 @@
 
 ## 当前阶段
 
-阶段 5 · 动态后台方案锁定为 B，T01～T16、用户预验收修正 T15-F1～T15-F4 与 T17-F1 已完成。T17 首轮用户验收的六组视觉/交互 findings 已通过 unit 179/179、最终合并 E2E 40/40、lint、typecheck、production build 和 Edge 三视口验证；PR 合并、T16-R1 新 SHA 独立复查和 T17 最终用户签署尚未完成。
+阶段 5 · 动态后台方案锁定为 B，T01～T16、用户预验收修正 T15-F1～T15-F4、T17-F1 与 T17-F2 已完成。PR 合并、T16-R1 新 SHA 独立复查和 T17 最终用户签署尚未完成。
 
 T03 已接入 `site/contact` 私有二维码上传、`contact-qr-v1` 无水印方形 PNG 公开派生、失败重试与 READY 公开投影。
 
@@ -40,6 +40,8 @@ T17 首轮用户验收新增六组明确修复：Hero 自动与手动切换需�
 
 T17-F1 已完成并以应用实现 commit `f3df1be` 推送到 PR #10：Hero 过渡期间 DOM 数量由 1 到 2 再回到 1，计算时长 680 ms；首页/动态页复用白底圆角卡片并保留类型文字；动态页提供五项普通链接筛选；搜索重复标题节点已删除且 `aria-label` 保留；作品/领养桌面工具栏 y 偏差为 0；关于页防诈骗区回归透明正文。Edge 三视口无 console error 或失败请求，证据见 `implementation/notes/T17-F1-USER-REVIEW-FIXES-2026-08-13.md`。
 
+T17-F2 已完成：动态后台并发用例在 A 端 `click()` 后等待表单复位与列表正文更新，再提交 B 端陈旧版本，修复后连续 25/25、相关 12/12 与全量 240/240 E2E 通过；防诈骗提示已提升为关于页同级 section，直接复用正文标题和 64 px 模块间距，390/768/1440 三视口计算样式一致且无 console error/失败请求。根目录 `CLAUDE.md` 已清理旧项目名、旧 SHA/run 和阶段进度，重组为稳定纪律入口，并写明 `git pull --rebase`、Playwright `--` 误跑全量陷阱与 Vue 异步保存的可观察等待规则。证据见 `implementation/notes/T17-F2-E2E-DOCS-ABOUT-2026-08-13.md`。
+
 当前分支为 `feat/requirement-2`。应用实现基线 `19af5878e4bc5c2b01316f9cb89082b90cce0e46` 的 GitHub Actions run [`31628640863`](https://github.com/WangMinan/project-fur-forge/actions/runs/31628640863) 已取得 `checks`、`image-build`、`e2e` 全部成功；该结果只绑定该 SHA，T16 文档修复形成的新 PR HEAD 仍须在合并前重新查询实际检查。PR [#10](https://github.com/WangMinan/project-fur-forge/pull/10) 仍未合入 `main`。工程证据与独立 Review 均不代签 T17 用户验收。
 
 ## 已确认结论
@@ -55,7 +57,7 @@ T17-F1 已完成并以应用实现 commit `f3df1be` 推送到 PR #10：Hero 过�
 
 ## 当前约束
 
-- 只按 TASKS 串行实施；当前 `GATE-01`、T01～T16、T15-F1～T15-F4 与 T17-F1 已勾选，T16-R1 与 T17 保持开放。
+- 只按 TASKS 串行实施；当前 `GATE-01`、T01～T16、T15-F1～T15-F4、T17-F1 与 T17-F2 已勾选，T16-R1 与 T17 保持开放。
 - 后续文档或代码若产生新 SHA，必须重新查询该 SHA 的远端检查，不沿用 `19af587` 的结果。
 - 不重写历史迁移，只能新增前向迁移。
 - 保留现有邮箱联系方式；五个平台卡片是新增，不是删除邮箱。
@@ -70,7 +72,6 @@ T17-F1 已完成并以应用实现 commit `f3df1be` 推送到 PR #10：Hero 过�
 
 ## 下一步交接
 
-1. 查询 PR #10 最终 HEAD 的远端检查；
+1. 提交并推送 T17-F2 到 PR #10，查询最终 PR HEAD 的远端检查；
 2. 由新上下文完成 T16-R1 独立复查；
-3. 由用户继续 T17 真实平台账号、实际二维码物理手机扫码和完整体验验收；
-4. 只有 T17 取得用户确认后，才能更新最终闭环状态并考虑合并 PR。
+3. 由用户继续 T17 真实平台账号、实际二维码物理手机扫码和完整体验验收；只有 T17 取得用户确认后才能考虑合并 PR。
