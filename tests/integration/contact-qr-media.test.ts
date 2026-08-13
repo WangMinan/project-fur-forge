@@ -23,6 +23,14 @@ let directory: string
 let sqlite: Database.Database
 let storage: FakeMediaStorage
 
+function contactContentVersion() {
+  return (sqlite.prepare(`
+    SELECT contact_content_version AS version
+    FROM site_content
+    WHERE id = 'site'
+  `).get() as { version: number }).version
+}
+
 function digests(content: Buffer) {
   return {
     contentMd5: createHash('md5').update(content).digest('base64'),
@@ -37,7 +45,11 @@ function input(
   contentType: 'image/jpeg' | 'image/png' | 'image/webp' = 'image/png',
 ) {
   return {
-    owner: { type: 'site' as const, id: 'contact' as const, expectedVersion: 1 },
+    owner: {
+      type: 'site' as const,
+      id: 'contact' as const,
+      expectedVersion: contactContentVersion(),
+    },
     mediaRole: 'contact_qr' as const,
     expected: {
       contentType,

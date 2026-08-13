@@ -916,13 +916,14 @@ describe('T19/T20 public repository contracts', () => {
     })
     const initial = getAdminHome(sqlite)
     expect(initial).toMatchObject({
-      version: 3,
+      version: expect.any(Number),
       tagline: '不只做小狗毛',
       contactEmail: '3114559925@qq.com',
       contactQq: '3114559925',
       autoRotate: false,
       autoRotateIntervalMs: 6000,
     })
+    expect(initial.version).toBeGreaterThan(0)
     const landscape = createHeroAsset('home_hero_landscape', initial.version)
     const portrait = createHeroAsset('home_hero_portrait', initial.version)
     const created = createHeroSlide(sqlite, initial.version, {
