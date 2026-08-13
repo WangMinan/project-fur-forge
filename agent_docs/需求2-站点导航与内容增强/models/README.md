@@ -1,13 +1,15 @@
 # 数据模型规划
 
 > **角色**：记录本轮现状模型与目标变更；实现后回填实际迁移和字段。
-> **状态**：T01～T15 与 T15-F1～T15-F4 已落地；数据模型、媒体投影、质量门禁与三视口浏览器准备已验证，下一步为独立 Review。
+> **状态**：T01～T16 与 T15-F1～T15-F4 已完成；数据模型、媒体投影、质量门禁、三视口浏览器与独立 Review 已验证，下一步为 T17 用户验收。
 
 ## 0. 当前分支实际变更
 
 T01 只修改 `PUBLIC_NAV_ITEMS` 与 E2E。T02 新增 `official_channels_json`、管理/公开 DTO 和 contact 保存投影。T03 新增 `contact_qr`、`contact-qr-v1`、`site/contact` 上传归属及 READY SourceSet 投影。T04 复用这些契约完成固定五行管理编辑，不新增表、字段或第二个 contact 版本。T05 只消费既有公开投影，不增加持久字段。T06 只迁移 `commission_faq_json` 内容和上限，不新增表或列。
 
-## 1. 现状
+## 1. 实施前模型基线（历史）
+
+以下条目记录需求建立时的模型起点，不表示当前分支仍缺少 contact QR 或动态模型；当前实际变更见上一节及后续目标模型的落地说明。
 
 - `site_content` 是 singleton，保存邮箱、QQ、抖音、FAQ JSON 与六个文案分区版本。
 - `assets`、`upload_sessions`、`asset_variants` 已覆盖私有上传和公开派生，但没有 contact QR 角色。
