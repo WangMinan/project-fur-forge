@@ -232,6 +232,13 @@
       "when": 1786590000000,
       "tag": "0032_requirement_2_contact_qr_upscale",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1786600000000,
+      "tag": "0033_requirement_2_visitor_copy",
+      "breakpoints": true
     }
   ]
 }

@@ -74,13 +74,13 @@ async function seedCatalog(page: import('@playwright/test').Page) {
 }
 
 test.describe('T20 作品列表页', () => {
-  test('默认按发布时间倒序展示已发布作品、结果数与筛选入口', async ({ page }) => {
+  test('默认按发布时间倒序展示已发布作品与筛选入口，不显示结果总数', async ({ page }) => {
     await seedCatalog(page)
     await page.goto('/works')
 
     await expect(page).toHaveTitle(/作品展示 · 有点小狗工作室/)
     await expect(page.getByRole('heading', { level: 1, name: '作品展示' })).toBeVisible()
-    await expect(page.getByRole('status')).toContainText('共 4 件作品')
+    await expect(page.getByText(/^共 \d+ 件作品$/u)).toHaveCount(0)
     const pagination = page.getByRole('navigation', { name: '作品展示分页' })
     await expect(pagination).toBeVisible()
     await expect(pagination.getByLabel('第 1 页，当前页')).toBeVisible()
@@ -161,7 +161,6 @@ test.describe('T20 作品列表页', () => {
     await purposeFilter.getByRole('link', { name: '委托', exact: true }).click()
 
     await expect(page).toHaveURL(/purpose=commission/)
-    await expect(page.getByRole('status')).toContainText('共 2 件作品')
     await expect(card(page, 'e2e-public-zhima')).toBeVisible()
     await expect(card(page, 'e2e-public-doudou')).toBeVisible()
     await expect(card(page, 'e2e-public-lanmei')).toHaveCount(0)
@@ -172,7 +171,6 @@ test.describe('T20 作品列表页', () => {
   test('装型筛选：suitType=partial 只剩豆豆与栗子', async ({ page }) => {
     await seedCatalog(page)
     await page.goto('/works?suitType=partial')
-    await expect(page.getByRole('status')).toContainText('共 2 件作品')
     await expect(card(page, 'e2e-public-doudou')).toBeVisible()
     await expect(card(page, 'e2e-public-lizi')).toBeVisible()
     await expect(page.getByRole('link', { name: '半装', exact: true })).toHaveAttribute('aria-current', 'true')
@@ -181,18 +179,16 @@ test.describe('T20 作品列表页', () => {
   test('交集为空时展示空状态与清除筛选链接', async ({ page }) => {
     await seedCatalog(page)
     await page.goto('/works?purpose=adoption&suitType=partial')
-    await expect(page.getByRole('status')).toContainText('共 0 件作品')
     await expect(page.getByText('没有符合条件的作品')).toBeVisible()
     const clear = page.getByRole('link', { name: '清除筛选' })
     await expect(clear).toBeVisible()
     await clear.click()
-    await expect(page.getByRole('status')).toContainText('共 4 件作品')
+    await expect(page.getByText(/^共 \d+ 件作品$/u)).toHaveCount(0)
   })
 
   test('非法筛选参数返回空结果并复位筛选选中态', async ({ page }) => {
     await seedCatalog(page)
     await page.goto('/works?purpose=bogus&suitType=nope')
-    await expect(page.getByRole('status')).toContainText('共 0 件作品')
     await expect(page.getByText('没有符合条件的作品')).toBeVisible()
     await expect(page.getByRole('link', { name: '全部用途' })).toHaveAttribute('aria-current', 'true')
     await expect(page.getByRole('link', { name: '全部装型' })).toHaveAttribute('aria-current', 'true')
@@ -202,7 +198,6 @@ test.describe('T20 作品列表页', () => {
     await seedPublicCatalog(page, [])
     await page.goto('/works')
     await expect(page.getByText('作品正在整理中。')).toBeVisible()
-    await expect(page.getByRole('status')).toContainText('共 0 件作品')
   })
 
   test('页面无横向溢出', async ({ page }) => {
@@ -308,7 +303,7 @@ test.describe('T20 作品列表页', () => {
     expect(response.status()).toBe(200)
     const html = await response.text()
     expect(html).toContain('作品展示')
-    expect(html).toContain('共 4 件作品')
+    expect(html).not.toContain('共 4 件作品')
     for (const work of CATALOG) {
       expect(html).toContain(`href="/works/${work.slug}"`)
     }

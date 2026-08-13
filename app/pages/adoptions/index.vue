@@ -207,7 +207,7 @@ function hrefFor(target: number) {
 
 .adoptions-page__grid {
   display: grid;
-  gap: var(--space-8) var(--space-6);
+  gap: var(--space-6);
   margin: 0;
   padding: 0;
   list-style: none;

@@ -27,14 +27,14 @@ const CONFIG = {
     field: 'basicTerms',
     title: '服务条款',
     label: '服务条款正文',
-    hint: '空行分段。',
+    hint: '直接面向访客；写清价格、权利、修改、保修和官方渠道，空行分段。',
     max: SITE_CONTENT_LIMITS.basicTerms,
   },
   privacy: {
     field: 'privacyPolicy',
     title: '隐私政策',
     label: '隐私政策正文',
-    hint: '空行分段。',
+    hint: '直接面向访客；只说明当前实际处理的信息、用途、保存期限和联系办法，空行分段。',
     max: SITE_CONTENT_LIMITS.privacyPolicy,
   },
 } as const

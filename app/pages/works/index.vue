@@ -111,7 +111,6 @@ function hrefFor(target: number) {
         <WorkFilterBar
           :filter="filter"
           :query="search.query"
-          :result-count="resultCount"
         />
       </div>
 

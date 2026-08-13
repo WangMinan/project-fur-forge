@@ -20,6 +20,9 @@ test('关于二级导航、独立条款页、页脚与兼容跳转连通', async
   await page.goto('/privacy')
   await expect(page.getByRole('heading', { level: 1, name: '隐私政策' })).toBeVisible()
   await expect(page.getByText('公开站不提供访客账号', { exact: false })).toBeVisible()
+  await expect(page.getByText('原始记录保留 90 天', { exact: false })).toBeVisible()
+  await expect(page.getByText('未来如新增会影响访客的信息处理功能', { exact: false }))
+    .toHaveCount(0)
 
   const footer = page.locator('.public-footer')
   await expect(footer.getByRole('link', { name: '服务条款' })).toBeVisible()
@@ -40,49 +43,29 @@ test('关于二级导航、独立条款页、页脚与兼容跳转连通', async
   await expect(page).toHaveURL(/\/service$/u)
 })
 
-test('委托合并导航复用下拉并保持两个业务路由可达', async ({ page }) => {
+test('自设委托与掉落领养作为一级导航直接可达', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/commission')
 
   const header = page.getByTestId('public-header')
-  const commissionLink = header.getByRole('link', { name: '委托', exact: true })
-  const commissionSubnav = header.getByRole('navigation', { name: '委托二级导航' })
-  const commissionPanel = commissionSubnav
+  const commissionLink = header.getByRole('link', { name: '自设委托', exact: true })
+  const adoptionLink = header.getByRole('link', { name: '掉落领养', exact: true })
+  await expect(header.getByRole('navigation', { name: '委托二级导航' })).toHaveCount(0)
+  await expect(header.getByRole('link', { name: '委托', exact: true })).toHaveCount(0)
   await expect(header.getByRole('link', { name: '角色领养', exact: true })).toHaveCount(0)
   await expect(commissionLink).toHaveAttribute('href', '/commission')
+  await expect(adoptionLink).toHaveAttribute('href', '/adoptions')
   await expect(commissionLink).toHaveAttribute('aria-current', 'page')
-  await expect(commissionSubnav).toBeHidden()
-
-  await commissionLink.hover()
-  await expect(commissionSubnav).toBeVisible()
-  await expect(commissionSubnav.getByRole('link', { name: '自设委托' }))
-    .toHaveAttribute('href', '/commission')
-  await expect(commissionSubnav.getByRole('link', { name: '掉落领养' }))
-    .toHaveAttribute('href', '/adoptions')
-  const expectedRadius = await page.evaluate(() => {
-    const probe = document.createElement('div')
-    probe.style.borderRadius = 'var(--radius-lg)'
-    document.body.append(probe)
-    const radius = getComputedStyle(probe).borderTopLeftRadius
-    probe.remove()
-    return radius
-  })
-  await expect(commissionPanel).toHaveCSS('border-top-left-radius', expectedRadius)
-
-  await page.mouse.move(0, 0)
-  await page.getByRole('link', { name: '首页', exact: true }).first().focus()
-  await expect(commissionSubnav).toBeHidden()
-  await commissionLink.focus()
-  await expect(commissionSubnav).toBeVisible()
-  await commissionSubnav.getByRole('link', { name: '掉落领养' }).click()
+  await adoptionLink.click()
   await expect(page).toHaveURL(/\/adoptions$/u)
   await expect(
     page.getByTestId('public-header')
-      .locator('.public-header__nav-item--active')
-      .getByRole('link', { name: '委托', exact: true }),
-  ).toBeVisible()
+      .getByRole('link', { name: '掉落领养', exact: true }),
+  ).toHaveAttribute('aria-current', 'page')
 
-  await page.setViewportSize({ width: 390, height: 844 })
+  await page.setViewportSize({ width: 768, height: 1024 })
+  await expect(page.getByTestId('public-header').getByRole('navigation', { name: '主导航' }))
+    .toBeHidden()
   await page.getByRole('button', { name: '打开导航' }).click()
   const mobileNav = page.getByTestId('public-mobile-nav')
   await expect(mobileNav.getByRole('link', { name: '自设委托' }))

@@ -226,6 +226,30 @@ function migrationsBeforeContactQrAdaptation(databaseFile: string) {
   return folder
 }
 
+function migrationsBeforeVisitorCopy(databaseFile: string) {
+  const folder = resolve(dirname(databaseFile), 'pre-visitor-copy-migrations')
+  const meta = resolve(folder, 'meta')
+  mkdirSync(meta, { recursive: true })
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  const entries = journal.entries.slice(0, journal.entries.findIndex(
+    entry => entry.tag === '0033_requirement_2_visitor_copy',
+  ))
+  for (const { tag } of entries) {
+    copyFileSync(
+      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
+      resolve(folder, `${tag}.sql`),
+    )
+  }
+  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
+    ...journal,
+    entries,
+  }))
+  return folder
+}
+
 afterEach(() => {
   temporaryDirectories.splice(0).forEach(directory => rmSync(
     directory,
@@ -293,12 +317,14 @@ describe('SQLite foundation', () => {
         question: '邮件估价咨询可以按什么格式填写？',
         answer: expect.stringContaining('角色名、委托装型、身高/体型、设定图、希望实现的细节、期望时间和其它说明'),
       })
-      expect(siteContent.aboutStudioFacts).not.toContain('私人联系方式')
-      expect(siteContent.basicTerms).toContain('著作权均归有点小狗工作室所有')
+      expect(siteContent.aboutStudioFacts).toBe('有点小狗工作室制作全装和半装兽装，并在本站展示已完成的作品与返图。')
+      expect(siteContent.basicTerms).toContain('著作权归有点小狗工作室')
       expect(siteContent.basicTerms).toContain('签收之日起一年')
       expect(siteContent.privacyPolicy).toContain('不提供访客账号')
-      expect(siteContent.privacyPolicy).toContain('不使用营销或访问分析 Cookie')
-      expect(siteContent.contactAntiScam).toContain('交叉核验')
+      expect(siteContent.privacyPolicy).toContain('不接入第三方统计平台')
+      expect(siteContent.privacyPolicy).toContain('原始记录保留 90 天')
+      expect(siteContent.privacyPolicy).not.toContain('未来如新增')
+      expect(siteContent.contactAntiScam).toContain('另一条已公布渠道核实')
       expect(JSON.parse(siteContent.officialChannelsJson)).toEqual([
         { platform: 'qq', account: '3114559925', qrCodeAssetId: null },
         { platform: 'douyin', account: 'to3114559925', qrCodeAssetId: null },
@@ -522,6 +548,80 @@ describe('SQLite foundation', () => {
     }
   })
 
+  it('updates only untouched visitor copy and advances affected section versions once', async () => {
+    const databaseFile = temporaryDatabase()
+    await migrateDatabase(databaseFile, {
+      migrationsFolder: migrationsBeforeVisitorCopy(databaseFile),
+    })
+    const legacy = openDatabase(databaseFile)
+    let before!: Record<string, number>
+    try {
+      before = legacy.sqlite.prepare(`
+        SELECT version,
+               commission_content_version AS commission,
+               about_content_version AS about,
+               terms_content_version AS terms,
+               privacy_content_version AS privacy,
+               contact_content_version AS contact
+        FROM site_content WHERE id = 'site'
+      `).get() as Record<string, number>
+      legacy.sqlite.prepare(`
+        UPDATE site_content
+        SET commission_estimate_note = '管理员自定义估价说明',
+            about_studio_facts = '管理员自定义工作室介绍',
+            basic_terms = '管理员自定义服务条款',
+            contact_anti_scam = '管理员自定义防诈骗提醒'
+        WHERE id = 'site'
+      `).run()
+    }
+    finally {
+      legacy.sqlite.close()
+    }
+
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({ applied: 1 })
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({ applied: 0 })
+    const upgraded = openDatabase(databaseFile)
+    try {
+      const row = upgraded.sqlite.prepare(`
+        SELECT version,
+               commission_intro AS commissionIntro,
+               commission_estimate_note AS commissionEstimateNote,
+               commission_email_action AS commissionEmailAction,
+               commission_content_version AS commissionVersion,
+               about_studio_facts AS aboutStudioFacts,
+               about_making_scope AS aboutMakingScope,
+               about_content_version AS aboutVersion,
+               basic_terms AS basicTerms,
+               terms_content_version AS termsVersion,
+               privacy_policy AS privacyPolicy,
+               privacy_content_version AS privacyVersion,
+               contact_anti_scam AS contactAntiScam,
+               contact_content_version AS contactVersion
+        FROM site_content WHERE id = 'site'
+      `).get() as Record<string, number | string>
+
+      expect(row.commissionIntro).toContain('确认可行性后逐单估价')
+      expect(row.commissionEstimateNote).toBe('管理员自定义估价说明')
+      expect(row.commissionEmailAction).toContain('复制邮箱地址发送')
+      expect(row.commissionVersion).toBe(before.commission + 1)
+      expect(row.aboutStudioFacts).toBe('管理员自定义工作室介绍')
+      expect(row.aboutMakingScope).toContain('确认委托前沟通')
+      expect(row.aboutVersion).toBe(before.about + 1)
+      expect(row.basicTerms).toBe('管理员自定义服务条款')
+      expect(row.termsVersion).toBe(before.terms)
+      expect(row.privacyPolicy).toContain('原始记录保留 90 天')
+      expect(row.privacyPolicy).not.toContain('未来如新增')
+      expect(row.privacyVersion).toBe(before.privacy + 1)
+      expect(row.contactAntiScam).toBe('管理员自定义防诈骗提醒')
+      expect(row.contactVersion).toBe(before.contact)
+      expect(row.version).toBe(before.version + 3)
+      expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
+    }
+    finally {
+      upgraded.sqlite.close()
+    }
+  })
+
   it('widens contact QR inputs while preserving data and cross-table triggers', async () => {
     const databaseFile = temporaryDatabase()
     await migrateDatabase(databaseFile, {
@@ -556,7 +656,7 @@ describe('SQLite foundation', () => {
     }
 
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 1,
+      applied: migrationCountFrom('0032_requirement_2_contact_qr_upscale'),
     })
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({ applied: 0 })
     const upgraded = openDatabase(databaseFile)

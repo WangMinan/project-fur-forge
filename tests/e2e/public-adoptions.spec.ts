@@ -25,13 +25,34 @@ async function seedAdoptions(page: import('@playwright/test').Page) {
     {
       slug: 'e2e-public-event-adoption',
       characterName: '展会角色',
+      species: '龙',
+      suitType: 'partial',
       purpose: 'adoption',
       adoptionMethod: 'event_drop',
       businessStatus: 'available',
-      eventName: '历史展会',
-      eventTime: '历史展会时间',
+      priceMinorUnits: 2_500_000,
+      eventName: '幻夏祭',
+      eventTime: '2026 年 8 月 15 日至 16 日',
       designSheet: { alt: '展会角色设定图' },
       photos: [{ alt: '展会角色出厂照' }],
+    },
+    {
+      slug: 'e2e-public-second-row-a',
+      characterName: '第二行角色甲',
+      purpose: 'adoption',
+      adoptionMethod: 'regular',
+      businessStatus: 'available',
+      designSheet: { alt: '第二行角色甲设定图' },
+      photos: [{ alt: '第二行角色甲出厂照' }],
+    },
+    {
+      slug: 'e2e-public-second-row-b',
+      characterName: '第二行角色乙',
+      purpose: 'adoption',
+      adoptionMethod: 'regular',
+      businessStatus: 'available',
+      designSheet: { alt: '第二行角色乙设定图' },
+      photos: [{ alt: '第二行角色乙出厂照' }],
     },
     {
       slug: 'e2e-public-commission-no-design',
@@ -62,8 +83,8 @@ test('默认展示全部领养，并保留常规与展会掉落各自事实', as
   await expect(card).toContainText('¥12,800')
   const eventCard = page.locator('[data-work-slug="e2e-public-event-adoption"]')
   await expect(eventCard).toContainText('展会掉落')
-  await expect(eventCard).toContainText('历史展会')
-  await expect(eventCard).toContainText('历史展会时间')
+  await expect(eventCard).toContainText('幻夏祭')
+  await expect(eventCard).toContainText('2026 年 8 月 15 日至 16 日')
   await expect(page.locator('[data-work-slug="e2e-public-commission-no-design"]')).toHaveCount(0)
 
   const image = card.locator('img')
@@ -73,6 +94,25 @@ test('默认展示全部领养，并保留常规与展会掉落各自事实', as
   const frame = await card.locator('.adoption-card__canvas').boundingBox()
   expect(frame).not.toBeNull()
   expect(frame!.width / frame!.height).toBeGreaterThan(1)
+})
+
+test('展会文案与价格收敛为紧凑信息带，不放大两行图片间距', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/adoptions')
+
+  const firstCard = page.locator(`[data-work-slug="${regularSlug}"]`)
+  const eventCard = page.locator('[data-work-slug="e2e-public-event-adoption"]')
+  const nextRowCard = page.locator('[data-work-slug="e2e-public-second-row-a"]')
+  const firstCanvas = await firstCard.locator('.adoption-card__canvas').boundingBox()
+  const nextCanvas = await nextRowCard.locator('.adoption-card__canvas').boundingBox()
+  const details = eventCard.locator('.adoption-card__details')
+
+  expect(firstCanvas).not.toBeNull()
+  expect(nextCanvas).not.toBeNull()
+  await expect(details).toContainText('龙 · 半装')
+  await expect(details).toContainText('展会掉落')
+  await expect(details).toContainText('¥25,000')
+  expect(nextCanvas!.y - (firstCanvas!.y + firstCanvas!.height)).toBeLessThanOrEqual(180)
 })
 
 test('卡片进入统一详情并明确分开设定图与出厂照', async ({ page }) => {

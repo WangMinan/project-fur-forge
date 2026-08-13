@@ -46,22 +46,24 @@ const eventDrop = computed(() => (
           {{ BUSINESS_STATUS_LABELS[adoption.work.businessStatus] }}
         </span>
       </span>
-      <span class="adoption-card__meta">
-        {{ adoption.work.species }} · {{ SUIT_TYPE_LABELS[adoption.work.suitType] }}
-      </span>
-      <span v-if="eventDrop" class="adoption-card__event">
-        <span class="adoption-card__event-tag">展会掉落</span>
-        <span v-if="eventDrop.name" class="adoption-card__event-name">
-          {{ eventDrop.name }}
+      <span class="adoption-card__details">
+        <span class="adoption-card__meta">
+          {{ adoption.work.species }} · {{ SUIT_TYPE_LABELS[adoption.work.suitType] }}
         </span>
-        <span v-if="eventDrop.time" class="adoption-card__event-time">
-          {{ eventDrop.time }}
+        <span v-if="eventDrop" class="adoption-card__event">
+          <span class="adoption-card__event-tag">展会掉落</span>
+          <span v-if="eventDrop.name" class="adoption-card__event-name">
+            {{ eventDrop.name }}
+          </span>
+          <span v-if="eventDrop.time" class="adoption-card__event-time">
+            {{ eventDrop.time }}
+          </span>
         </span>
+        <span v-if="price" class="adoption-card__price">{{ price }}</span>
       </span>
       <span v-if="adoption.work.featureTags.length > 0" class="adoption-card__tags">
         <span v-for="tag in adoption.work.featureTags" :key="tag">{{ tag }}</span>
       </span>
-      <span v-if="price" class="adoption-card__price">{{ price }}</span>
     </span>
   </NuxtLink>
 </template>
@@ -76,14 +78,12 @@ const eventDrop = computed(() => (
   color: var(--public-text-primary);
 }
 
-/* 展会信息：长名称/时间受控折行，不遮挡图片、状态或价格。 */
+/* 展会信息在元信息带内受控折行，不再独占多行并放大整行卡片高度。 */
 .adoption-card__event {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
   gap: var(--space-2);
-  margin-top: var(--space-2);
-  font-size: var(--font-size-sm);
   overflow-wrap: anywhere;
 }
 
@@ -137,6 +137,7 @@ const eventDrop = computed(() => (
 
 .adoption-card__body,
 .adoption-card__heading,
+.adoption-card__details,
 .adoption-card__tags {
   display: flex;
 }
@@ -165,9 +166,17 @@ const eventDrop = computed(() => (
   font-size: var(--font-size-sm);
 }
 
-.adoption-card__meta {
+.adoption-card__details {
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
   color: var(--public-text-secondary);
   font-size: var(--font-size-sm);
+}
+
+.adoption-card__meta {
+  flex: none;
+  color: var(--public-text-secondary);
 }
 
 .adoption-card__tags {
@@ -184,6 +193,8 @@ const eventDrop = computed(() => (
 }
 
 .adoption-card__price {
+  margin-inline-start: auto;
+  color: var(--public-text-primary);
   font-family: var(--font-public-display);
   font-size: var(--font-size-md);
 }

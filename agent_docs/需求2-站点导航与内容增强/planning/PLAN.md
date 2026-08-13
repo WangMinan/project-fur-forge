@@ -2,7 +2,7 @@
 
 > **角色**：把 SPEC 翻译为按依赖排序的技术方案。
 > **日期**：2026-08-12。
-> **状态**：工程实施、T16 独立 Review、T15-F1～T15-F4、T17-F1 与 T17-F2 已完成；`OQ-001` 采用方案 B。下一步为 T16-R1 新 SHA 独立复查与 T17 最终用户验收。
+> **状态**：工程实施、T16 独立 Review、T15-F1～T15-F4 与 T17-F1～T17-F3 已完成；`OQ-001` 采用方案 B。下一步为 T16-R1 新 SHA 独立复查与 T17 最终用户验收。
 
 ## 1. 执行结论
 
@@ -15,15 +15,18 @@
 
 | 模块 | 责任 | 处理方式 |
 | --- | --- | --- |
-| `PUBLIC_NAV_ITEMS` | 桌面/移动共用导航树 | T01 已合并委托；T12 在动态页可用后再增加“最新动态” |
-| `PublicHeader` / `PublicMobileNav` | 下拉与移动菜单 | 原样复用，必要时只补无障碍测试 |
+| `PUBLIC_NAV_ITEMS` | 桌面/移动/页脚共用导航树 | T17-F3 将自设委托、掉落领养恢复为两个一级入口，保留“关于我们”子菜单 |
+| `PublicHeader` / `PublicMobileNav` | 一级导航、关于下拉与移动菜单 | 复用现有组件；按新增一级项调整中等宽度断点并补无障碍测试 |
 | `PublicCatalogSearch` | 三个公开列表共用 GET 搜索框 | 新建小组件；只负责输入、提交与清除 |
 | 公开目录工具栏 | 搜索与已有筛选的紧凑编排 | 页面负责组合；宽屏同排、窄屏按控件组换行 |
 | 作品/领养/返图公开页 | 查询编排、空态、分页 | 修改；保留现有筛选和 SSR |
+| `WorkFilterBar` | 作品筛选控件组 | 删除访客可见总数，保留页面内部分页/空态总数 |
+| `AdoptionCard` | 领养图片与元信息 | 名称/状态单独一行，其余元信息收敛为可换行信息带，减少同一网格行的高度差 |
 | contact Schema/Service/Card | 五个平台账号与二维码管理 | 修改；继续使用 contact 分区版本与 409 流程 |
 | `ContactChannelGrid` | 五个平台卡片 | 新建展示组件；props 输入、无内部业务数据 |
 | 上传与媒体 recipe | 二维码源图与公开派生 | 修改；新增一个角色/用途，复用现有链路 |
 | commission FAQ | 标准模板 | 修改数据迁移；公开页组件原样复用 |
+| `SiteLegalContentCard` / `site_content` 默认文案 | 访客条款、隐私与后台编辑提示 | 后台提示明确对象；新增条件式前向迁移，只更新未修改的旧默认字段并递增分区版本 |
 | `updates` 管理 | 动态写入 | 新建独立 `/admin/updates` 与最小数据表 |
 | `PublicUpdateCard` / `PublicUpdateList` | 首页与动态页共用的类型圆点、元信息和圆角卡片 | 单卡 props 输入；列表只负责 full/summary 布局 |
 | `/updates`、`HomeLatestUpdates` | 动态类型筛选、公开列表与首页摘要 | 只消费公开 DTO；类型筛选为 SSR 普通链接 |
@@ -38,6 +41,8 @@
 - 方案 A 取消，不保留第二套管理入口。
 
 ### 2. 合并委托导航（已完成）
+
+> 历史切片：该形态已被 T17-F3 的用户反馈替代，当前契约见第 13 节。
 
 - 只改导航数据，把 `/commission` 与 `/adoptions` 变为“委托”的 children。
 - 复用现有 `PublicHeader` 下拉面板和圆角 token；补桌面、键盘和移动断言。
@@ -132,9 +137,18 @@
 - T17-F2-C：重整根目录 `CLAUDE.md` 为稳定规则入口，删除旧项目名、旧 SHA/run 和阶段进度；增加 `git pull --rebase`、Playwright 精确 spec 命令、`--` 误跑全套陷阱和异步 E2E 完成条件。
 - 定向压力回归先证明并发用例稳定性；随后执行相关 E2E、lint、typecheck、unit、production build 与真实 Edge 三视口。
 
+### 13. T17 第三轮反馈修复（2026-08-13）
+
+- T17-F3-A：从 `WorkFilterBar` 移除访客可见的结果总数及冗余 prop，但页面内部继续使用总数驱动分页和空态。
+- T17-F3-B：把 `/commission` 与 `/adoptions` 作为 `PUBLIC_NAV_ITEMS` 的独立一级项；保留“关于我们”下拉，并让 768 px 等中等宽度使用移动菜单避免溢出。
+- T17-F3-C：重排 `AdoptionCard`，将物种、展会、时间和价格放入同一可换行信息带，保留名称/状态和可选特征标签；用至少两行测试数据验证下一行图片间距。
+- T17-F3-D：审查默认委托、关于、服务条款、隐私与防诈骗文案；新迁移仅条件替换旧默认值，保留管理员编辑，后台隐私/条款提示强调“当前事实、访客对象”。
+- 先验证空库迁移、已有默认值升级和管理员自定义保留，再串行执行 unit、integration、相关 E2E、lint、typecheck、production build；最后使用公开 `127.0.0.1` 和管理 `localhost` 完成三视口与 console/network 验收。
+- 实施结果：`0033_requirement_2_visitor_copy.sql`、相关 integration 17/17、公开 E2E 32/32、后台定向 E2E 1/1、unit 179/179、lint、typecheck、production build/verify 与实际 Chrome 三视口均通过；实施记录见 `implementation/notes/T17-F3-NAV-ADOPTION-COPY-2026-08-14.md`。
+
 ## 4. 技术决策
 
-- **导航复用现有 children**：已有结构同时服务桌面与移动，没有理由新增 `CommissionDropdown`。
+- **导航继续复用单一事实源**：T17-F3 取消委托二级菜单，但不删除通用 children 能力；“关于我们”仍使用它，桌面、移动和页脚继续共用 `PUBLIC_NAV_ITEMS`。
 - **联系方式用固定平台枚举 + 数据数组**：业务值可配置，展示模板只循环一次；五个平台不需要关系表。
 - **二维码复用媒体链**：私有源图和公开派生边界是现有安全基线，不能把后台上传 URL直接放到公开页。
 - **二维码低分辨率适配复用 FFmpeg 私有源**：和作品管理一样，原图只保存一次，适配源以不可变身份写入私有 `preprocess` 变体；公开 `contact-qr-v1` 只消费适配后的 READY 来源。
