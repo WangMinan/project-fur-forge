@@ -2,7 +2,7 @@
 
 > **角色**：把 SPEC 翻译为按依赖排序的技术方案。
 > **日期**：2026-08-12。
-> **状态**：工程实施与 T16 独立 Review 已完成；`OQ-001` 采用方案 B，T15-F1～T15-F4 预验收修正及 Review 文档一致性 findings 均已闭环，下一步为 T17 用户验收。
+> **状态**：工程实施、T16 独立 Review、T15-F1～T15-F4 与 T17-F1 已完成；`OQ-001` 采用方案 B。下一步为 T16-R1 新 SHA 独立复查与 T17 最终用户验收。
 
 ## 1. 执行结论
 
@@ -18,14 +18,16 @@
 | `PUBLIC_NAV_ITEMS` | 桌面/移动共用导航树 | T01 已合并委托；T12 在动态页可用后再增加“最新动态” |
 | `PublicHeader` / `PublicMobileNav` | 下拉与移动菜单 | 原样复用，必要时只补无障碍测试 |
 | `PublicCatalogSearch` | 三个公开列表共用 GET 搜索框 | 新建小组件；只负责输入、提交与清除 |
+| 公开目录工具栏 | 搜索与已有筛选的紧凑编排 | 页面负责组合；宽屏同排、窄屏按控件组换行 |
 | 作品/领养/返图公开页 | 查询编排、空态、分页 | 修改；保留现有筛选和 SSR |
 | contact Schema/Service/Card | 五个平台账号与二维码管理 | 修改；继续使用 contact 分区版本与 409 流程 |
 | `ContactChannelGrid` | 五个平台卡片 | 新建展示组件；props 输入、无内部业务数据 |
 | 上传与媒体 recipe | 二维码源图与公开派生 | 修改；新增一个角色/用途，复用现有链路 |
 | commission FAQ | 标准模板 | 修改数据迁移；公开页组件原样复用 |
 | `updates` 管理 | 动态写入 | 新建独立 `/admin/updates` 与最小数据表 |
-| `/updates`、`HomeLatestUpdates` | 动态公开列表与首页摘要 | 新建；只消费公开 DTO |
-| `HomeHeroCarousel` | 当前轮播索引、显式暂停与页面可见性 | 修正；鼠标/焦点不再隐式永久暂停，保持固定 10 秒与 reduced-motion |
+| `PublicUpdateCard` / `PublicUpdateList` | 首页与动态页共用的类型圆点、元信息和圆角卡片 | 单卡 props 输入；列表只负责 full/summary 布局 |
+| `/updates`、`HomeLatestUpdates` | 动态类型筛选、公开列表与首页摘要 | 只消费公开 DTO；类型筛选为 SSR 普通链接 |
+| `HomeHeroCarousel` | 当前轮播索引、切换方向、显式暂停与页面可见性 | 使用 Vue Transition + transform/opacity；保持固定 10 秒与 reduced-motion |
 | contact QR 私有适配源 | 低分辨率二维码发布前处理 | 复用 `upscaleImageToMinimum`、私有 `preprocess` 变体和现有重试链，不改公开原图边界 |
 
 ## 3. 执行顺序
@@ -113,6 +115,15 @@
 - T15-F3 的公开布局同时增加 2 渠道三视口回归；桌面仍使用五列栅格，因此两张卡占前两列而不横向拉伸。
 - T15-F4：先用失败 trace/响应明细定位 `admin-home` 与 requirement-2 acceptance 两条死用例；只修测试隔离、等待条件或真实应用根因，不用忽略 console/network、放宽状态码或删除断言来“变绿”。
 - 四项修正已通过定向 unit/integration/E2E、lint、typecheck、production build 和三视口实机浏览器；T16 随后在新上下文完成代码、功能、视觉和文档一致性 Review，并修复其文档 findings。
+
+### 11. T17 首轮用户验收修复（2026-08-13）
+
+- T17-F1-A：Hero 以带方向的 Vue Transition 平滑切换，自动、箭头、圆点、键盘和触控共用同一入口；只在过渡期间同时保留离场/进场项，后续图片继续按需加载，reduced-motion 关闭动画。
+- T17-F1-B：首页入口标题改为“委托投递”；“当前领养”和“最新动态”的“查看全部”统一品牌蓝；关于页防诈骗提示移除卡片底色和内边距，回到正文排版。
+- T17-F1-C：抽出 `PublicUpdateCard`，首页与 `/updates` 共同使用白底圆角卡片、类型文字和类型圆点；四种类型使用固定语义色，但不移除文字标签。
+- T17-F1-D：`/updates` 增加 `type` 普通链接筛选；不修改动态数据模型、公开 DTO、发布时间或首页最近三条排序。
+- T17-F1-E：`PublicCatalogSearch` 删除重复标题节点，改由输入框 `aria-label` 提供可访问名称；`/works`、`/adoptions` 在宽屏将搜索与已有筛选同排，窄屏按组换行，`/returns` 保持紧凑单搜索行。
+- 先补组件/查询/几何 E2E，再串行运行定向 unit、相关 E2E、lint、typecheck 和 production build；三固定视口检查图片解码、键盘、focus、console/network 与横向溢出。
 
 ## 4. 技术决策
 

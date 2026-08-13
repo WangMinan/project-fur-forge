@@ -131,9 +131,7 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
 .about-page__antiscam {
   display: grid;
   gap: var(--space-3);
-  padding: var(--space-4) var(--space-5);
-  background: var(--public-bg-secondary);
-  border-radius: var(--radius-md);
+  margin-top: var(--space-2);
 }
 
 .about-page__subsection-title {

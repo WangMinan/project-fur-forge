@@ -10,15 +10,13 @@ defineProps<{
 
 <template>
   <form class="catalog-search" method="get" :action="action" role="search">
-    <label class="catalog-search__label" :for="`catalog-search-${action}`">
-      按设定名称搜索
-    </label>
     <div class="catalog-search__controls">
       <input
         :id="`catalog-search-${action}`"
         class="catalog-search__input"
         type="search"
         name="q"
+        aria-label="按设定名称搜索"
         :value="query"
         maxlength="100"
         autocomplete="off"
@@ -40,13 +38,6 @@ defineProps<{
 <style scoped>
 .catalog-search {
   width: min(100%, 34rem);
-}
-
-.catalog-search__label {
-  display: block;
-  margin-bottom: var(--space-2);
-  color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
 }
 
 .catalog-search__controls {
