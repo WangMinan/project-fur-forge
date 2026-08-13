@@ -10,7 +10,6 @@ import { SUIT_TYPE_VALUES, WORK_PURPOSE_VALUES } from '~~/shared/schemas/work'
 const props = defineProps<{
   filter: { purpose: WorkPurpose | null, suitType: SuitType | null }
   query?: string
-  resultCount: number
 }>()
 
 function buildQuery(purpose: WorkPurpose | null, suitType: SuitType | null) {
@@ -64,9 +63,6 @@ const suitOptions = computed(() => [
         :selected="filter.suitType ?? 'all'"
       />
     </div>
-    <p class="work-filter__count" role="status">
-      共 {{ resultCount }} 件作品
-    </p>
   </div>
 </template>
 
@@ -81,9 +77,4 @@ const suitOptions = computed(() => [
   gap: var(--space-3) var(--space-6);
 }
 
-.work-filter__count {
-  margin-top: var(--space-4);
-  color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
-}
 </style>

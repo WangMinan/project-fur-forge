@@ -308,7 +308,7 @@ watch(() => route.fullPath, () => {
   background: rgb(127 137 150 / 0.16);
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .public-header__nav {
     display: flex;
   }
