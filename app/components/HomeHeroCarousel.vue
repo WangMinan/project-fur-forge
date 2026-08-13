@@ -19,6 +19,8 @@ const props = defineProps<{
 const slides = computed(() => props.home.slides)
 const activeIndex = ref(0)
 const activeSlide = computed(() => slides.value[activeIndex.value])
+const transitionDirection = shallowRef<'next' | 'prev'>('next')
+const transitionName = computed(() => `home-hero-slide-${transitionDirection.value}`)
 
 watch(() => slides.value.length, (count) => {
   activeIndex.value = clampSlideIndex(activeIndex.value, count)
@@ -56,14 +58,21 @@ function restartTimer() {
 }
 
 function goTo(index: number) {
-  activeIndex.value = clampSlideIndex(index, slides.value.length)
+  const target = clampSlideIndex(index, slides.value.length)
+  if (target === activeIndex.value) {
+    return
+  }
+  transitionDirection.value = target > activeIndex.value ? 'next' : 'prev'
+  activeIndex.value = target
 }
 
 function goNext() {
+  transitionDirection.value = 'next'
   activeIndex.value = nextSlideIndex(activeIndex.value, slides.value.length)
 }
 
 function goPrev() {
+  transitionDirection.value = 'prev'
   activeIndex.value = prevSlideIndex(activeIndex.value, slides.value.length)
 }
 
@@ -153,23 +162,25 @@ onBeforeUnmount(() => {
   >
     <template v-if="activeSlide">
       <div class="home-hero__viewport">
-        <div
-          :key="activeIndex"
-          class="home-hero__slide"
-          role="group"
-          aria-roledescription="slide"
-          :aria-label="`第 ${activeIndex + 1} 张，共 ${slides.length} 张`"
-        >
-          <ResponsivePicture
-            class="home-hero__media"
-            :sources="activeSlide.landscape"
-            :portrait-sources="activeSlide.portrait"
-            :alt="activeSlide.alt"
-            sizes="100vw"
-            :loading="activeIndex === 0 ? 'eager' : 'lazy'"
-            :fetchpriority="activeIndex === 0 ? 'high' : 'auto'"
-          />
-        </div>
+        <Transition :name="transitionName">
+          <div
+            :key="activeIndex"
+            class="home-hero__slide"
+            role="group"
+            aria-roledescription="slide"
+            :aria-label="`第 ${activeIndex + 1} 张，共 ${slides.length} 张`"
+          >
+            <ResponsivePicture
+              class="home-hero__media"
+              :sources="activeSlide.landscape"
+              :portrait-sources="activeSlide.portrait"
+              :alt="activeSlide.alt"
+              sizes="100vw"
+              :loading="activeIndex === 0 ? 'eager' : 'lazy'"
+              :fetchpriority="activeIndex === 0 ? 'high' : 'auto'"
+            />
+          </div>
+        </Transition>
       </div>
       <div class="home-hero__scrim" aria-hidden="true" />
     </template>
@@ -293,6 +304,29 @@ onBeforeUnmount(() => {
 
 .home-hero__slide :deep(.responsive-picture__image) {
   object-fit: cover;
+}
+
+/* 离场项只在切换的 680ms 内保留；下一张仍在用户/计时器触发后才挂载和下载。 */
+.home-hero-slide-next-enter-active,
+.home-hero-slide-next-leave-active,
+.home-hero-slide-prev-enter-active,
+.home-hero-slide-prev-leave-active {
+  transition:
+    opacity 680ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 680ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+.home-hero-slide-next-enter-from,
+.home-hero-slide-prev-leave-to {
+  opacity: 0;
+  transform: translate3d(3%, 0, 0) scale(1.01);
+}
+
+.home-hero-slide-next-leave-to,
+.home-hero-slide-prev-enter-from {
+  opacity: 0;
+  transform: translate3d(-3%, 0, 0) scale(1.01);
 }
 
 .home-hero__scrim {
@@ -457,6 +491,10 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .home-hero-slide-next-enter-active,
+  .home-hero-slide-next-leave-active,
+  .home-hero-slide-prev-enter-active,
+  .home-hero-slide-prev-leave-active,
   .home-hero__action {
     transition: none;
   }

@@ -153,8 +153,26 @@ test('非法与超长 q 返回受控空态，三个视口键盘可用且无溢�
     const input = search(page).getByRole('searchbox', { name: '按设定名称搜索' })
     await input.focus()
     await expect(input).toBeFocused()
+    await expect(page.getByText('按设定名称搜索', { exact: true })).toHaveCount(0)
+    await expect(input).toHaveAttribute('aria-label', '按设定名称搜索')
     expect(await page.evaluate(() => (
       document.documentElement.scrollWidth - document.documentElement.clientWidth
     ))).toBeLessThanOrEqual(1)
+
+    if (viewport.width === 1440) {
+      const searchBox = await search(page).boundingBox()
+      const filterBox = await page.getByRole('group', { name: '按用途筛选' }).boundingBox()
+      expect(searchBox).not.toBeNull()
+      expect(filterBox).not.toBeNull()
+      expect(Math.abs(searchBox!.y - filterBox!.y)).toBeLessThanOrEqual(2)
+
+      await page.goto('/adoptions')
+      const adoptionSearchBox = await search(page).boundingBox()
+      const adoptionFilterBox = await page.getByRole('group', { name: '领养方式筛选' })
+        .boundingBox()
+      expect(adoptionSearchBox).not.toBeNull()
+      expect(adoptionFilterBox).not.toBeNull()
+      expect(Math.abs(adoptionSearchBox!.y - adoptionFilterBox!.y)).toBeLessThanOrEqual(2)
+    }
   }
 })

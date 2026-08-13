@@ -222,8 +222,15 @@ test.describe('T20 首页双源轮播', () => {
     expect(dotBox?.height).toBeGreaterThanOrEqual(24)
 
     await next.click()
+    // 切换期间同时保留离场/进场项，并以非零 transform/opacity 过渡；
+    // 结束后重新收敛为唯一当前项，不常驻下载隐藏图片。
+    await expect(hero(page).locator('.home-hero__slide')).toHaveCount(2)
+    expect(await hero(page).locator('.home-hero__slide').evaluateAll(slides => (
+      slides.every(slide => getComputedStyle(slide).transitionDuration.includes('0.68s'))
+    ))).toBe(true)
     await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张')
     await expect(hero(page).getByRole('img', { name: '蓝湄的首页展示照' })).toBeVisible()
+    await expect(hero(page).locator('.home-hero__slide')).toHaveCount(1)
     // 关联作品链接随当前项切换
     await expect(hero(page).getByRole('link', { name: '查看这套作品' }))
       .toHaveAttribute('href', '/works/e2e-public-home-lanmei')
@@ -618,6 +625,17 @@ test.describe('T12 首页最新动态摘要', () => {
       .toHaveCSS('font-size', expectedHeadingSize)
     await expect(section.getByRole('link', { name: '查看全部' }))
       .toHaveAttribute('href', '/updates')
+    await expect(section.locator('.public-update-card')).toHaveCount(3)
+    await expect(section.locator('.public-update-card').first())
+      .toHaveCSS('background-color', 'rgb(255, 255, 255)')
+
+    const adoptionMore = page.getByTestId('home-current-adoptions')
+      .getByRole('link', { name: '查看全部' })
+    const updatesMore = section.getByRole('link', { name: '查看全部' })
+    await expect(adoptionMore).toHaveCSS('color', 'rgb(50, 77, 175)')
+    await expect(updatesMore).toHaveCSS('color', 'rgb(50, 77, 175)')
+    await expect(page.getByTestId('home-business-entries')
+      .getByRole('heading', { name: '委托投递' })).toBeVisible()
 
     const homeEndingOrder = await page.locator([
       '[data-testid="home-current-adoptions"]',

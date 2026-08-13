@@ -28,6 +28,7 @@
 - [`T14-QUALITY-GATES-2026-08-12.md`](./T14-QUALITY-GATES-2026-08-12.md)：全量 unit/integration、lint、typecheck 与生产构建门禁。
 - [`T15-BROWSER-ACCEPTANCE-2026-08-12.md`](./T15-BROWSER-ACCEPTANCE-2026-08-12.md)：双 Host、三视口、真实 QR 像素、管理账号响应式与 console/network 浏览器证据。
 - [`T15-F1-F4-PREACCEPTANCE-FIXES-2026-08-13.md`](./T15-F1-F4-PREACCEPTANCE-FIXES-2026-08-13.md)：轮播、首页动态、二维码 FFmpeg 自动适配、双渠道布局和两条 E2E 根因修复。
+- [`T17-F1-USER-REVIEW-FIXES-2026-08-13.md`](./T17-F1-USER-REVIEW-FIXES-2026-08-13.md)：首轮用户验收六组视觉/交互 findings、最终自动化门禁与三视口 Edge 证据。
 
 ## 新记录最低要求
 

@@ -60,10 +60,13 @@ const currentAdoptions = computed(() => props.adoptions.slice(0, 2))
 
 .home-adoptions__more {
   flex: none;
+  color: var(--public-text-link);
   font-size: var(--font-size-sm);
 }
 
-.home-adoptions__more:hover {
+.home-adoptions__more:hover,
+.home-adoptions__more:focus-visible {
+  color: var(--public-accent-hover);
   text-decoration: underline;
   text-underline-offset: 0.3em;
 }

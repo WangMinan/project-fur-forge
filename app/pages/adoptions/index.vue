@@ -191,13 +191,18 @@ function hrefFor(target: number) {
 }
 
 .adoptions-page__filters-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4) var(--space-6);
   max-width: var(--public-content-wide);
   margin: 0 auto var(--space-6);
   padding: 0 var(--public-page-padding);
 }
 
 .adoptions-page__filters-wrap > :deep(.catalog-search) {
-  margin-bottom: var(--space-5);
+  flex: 1 1 22rem;
 }
 
 .adoptions-page__grid {
