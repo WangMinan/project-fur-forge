@@ -1,7 +1,7 @@
 # 任务清单：站点导航与内容增强
 
 > **角色**：PLAN 的可勾选垂直切片；每个任务应在一个实现会话内完成并留下可运行验证。
-> **状态**：`GATE-01`、T01～T16、预验收修正 T15-F1～T15-F4 与 T17-F1 已关闭。T16-R1 新 SHA 独立复查和 T17 最终用户签署保持开放。
+> **状态**：`GATE-01`、T01～T16、预验收修正 T15-F1～T15-F4、T17-F1 与 T17-F2 已关闭。T16-R1 新 SHA 独立复查和 T17 最终用户签署保持开放。
 > **规则**：方案 B 是唯一动态实现路径；任务勾选只代表其定义完成，不代签后续独立 Review、用户验收或 PR 合并。
 
 ## 当前目标
@@ -51,10 +51,11 @@
 - [x] **T15-F4 · 两条 E2E 根因修复**：修复 `admin-home.spec.ts` 的“首屏设置”与 `requirement-2-acceptance.spec.ts` 的双 Host 三视口用例；保留原有 console/network 与持久化断言，补稳定隔离和确定性等待，并重跑相关 spec 与全量门禁。 _根因分别为过期公开契约断言和漏清委托页媒体引用；Edge 合并 47/47、全量 239/239 通过；实现记录同 T15-F1。_
 - [x] **T16 · 新上下文独立 Review**：核对 SPEC → PLAN → TASKS → 代码、迁移、媒体和公开投影，记录首次 findings 与修复重测；实现者不得代签。 _独立 Review 初判 `NOT PASS`，发现 `.design`、SPEC 验收证据与进度文档三组不一致；用户授权后已修复并完成读者一致性复查，结论 `PASS WITH USER FOLLOW-UP`。记录：[`../review/REVIEW.md`](../review/REVIEW.md)。_
 - [x] **T17-F1 · 首轮用户验收 findings 修复**：完成 Hero 平滑过渡、首页标题/链接颜色、关于页防诈骗正文排版、首页与动态页共用圆角卡片及类型筛选、三个目录搜索的冗余标题删除和宽屏搜索/筛选同排；同步 SPEC/PLAN/TASKS/STATE、定向测试、三视口浏览器、lint/typecheck/build。 _应用实现 `f3df1be` 已推送；unit 179/179、最终合并 E2E 40/40、lint/typecheck/production build 与 Edge 三视口通过；记录：[`notes/T17-F1-USER-REVIEW-FIXES-2026-08-13.md`](./notes/T17-F1-USER-REVIEW-FIXES-2026-08-13.md)。不代签 T16-R1 或 T17。_
+- [x] **T17-F2 · 第二轮用户反馈修复**：稳定动态后台陈旧版本并发 E2E；重整 `CLAUDE.md` 并写入 `git pull --rebase`、Playwright `--` 陷阱与异步完成条件；让防诈骗标题和模块间距与其它关于页 section 完全一致。 _陈旧版本用例修复后连续 25/25，通过相关 12/12 与全量 240/240 E2E；unit 179/179、lint、typecheck、production build 和 Edge 三视口均通过。记录：[`notes/T17-F2-E2E-DOCS-ABOUT-2026-08-13.md`](./notes/T17-F2-E2E-DOCS-ABOUT-2026-08-13.md)。不得据此代签 T16-R1 或 T17。_
 - [ ] **T16-R1 · 新 SHA 独立复查**：由未参与 T17-F1 实现的新上下文核对动画按需加载/reduced-motion、动态筛选与卡片复用、搜索工具栏三视口和文档一致性；旧 T16 不代签新 SHA。
 - [ ] **T17 · 用户验收与闭环**：用户确认导航、联系方式、模板、搜索和动态发布体验；更新 STATE、ARTIFACTS、models、REVIEW 与任务勾选。 _文档闭环；依赖：T16。_
 
 ## 闭环结论
 
-- `GATE-01`、T01～T16、T15-F1～T15-F4 与 T17-F1 已关闭；T16-R1 与 T17 保持开放。
+- `GATE-01`、T01～T16、T15-F1～T15-F4、T17-F1 与 T17-F2 已关闭；T16-R1 与 T17 保持开放。
 - PR #10 仍未合入 `main`；T17 用户验收保持未勾选，不能由工程 Review 或 CI 代签，旧 T16 也不能代签 T17-F1 的新代码。

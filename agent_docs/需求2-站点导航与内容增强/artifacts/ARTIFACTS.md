@@ -1,20 +1,20 @@
 # 产物索引
 
 > **最后校准**：2026-08-13。
-> **状态**：阶段 0～3 文档已锁定；阶段 4/5 已完成 T01～T16、T15-F1～T15-F4 与 T17-F1，等待 T16-R1 和 T17 用户验收。
+> **状态**：阶段 0～3 文档已锁定；阶段 4/5 已完成 T01～T16、T15-F1～T15-F4、T17-F1 与 T17-F2，等待 T16-R1 和 T17 用户验收。
 
 ## 文档产物
 
 | 阶段 | 产物 | 路径 | 状态 | 说明 |
 | --- | --- | --- | --- | --- |
 | 0 地基 | 产品地基 | `foundation/README.md` | 已锁定 | 增量范围、安全与非目标 |
-| 1 规格 | 需求规格 | `requirements/SPEC.md` | 已锁定 | 五组功能与验收契约；T17-F1 已实现，等待新 SHA 独立复查 |
+| 1 规格 | 需求规格 | `requirements/SPEC.md` | 已锁定 | 五组功能与验收契约；T17-F1/F2 已实现，等待新 SHA 独立复查 |
 | 2 计划 | 实施计划 | `planning/PLAN.md` | 已决策 | OQ-001 已选择方案 B |
-| 3 任务 | 任务清单 | `implementation/TASKS.md` | 待验收 | GATE-01、T01～T16、T15-F1～T15-F4、T17-F1 已关闭；T16-R1/T17 开放 |
-| 4 实施 | 实施记录 | `implementation/notes/README.md` | 已完成 | T01～T15、预验收修正与 T17-F1 已记录 |
+| 3 任务 | 任务清单 | `implementation/TASKS.md` | 实施完成 | T17-F2 已关闭；T16-R1/T17 开放 |
+| 4 实施 | 实施记录 | `implementation/notes/README.md` | 已完成 | T01～T15、预验收修正与 T17-F1/F2 已记录 |
 | 5 评审 | 评审记录 | `review/REVIEW.md` | 已完成 | 初次 NOT PASS 的三组文档 findings 已修复；最终 PASS WITH USER FOLLOW-UP |
 | 6 闭环 | 模型说明 | `models/README.md` | 已落地 | contact、FAQ、搜索与方案 B 动态均已落地并通过独立 Review |
-| 6 闭环 | 当前状态 | `STATE.md` | 当前 | T17-F1 已关闭，下一步为 T16-R1 与 T17 用户验收 |
+| 6 闭环 | 当前状态 | `STATE.md` | 当前 | T17-F2 已完成，随后为 T16-R1 与 T17 用户验收 |
 
 ## 外部与既有资料
 
@@ -53,6 +53,8 @@
 - T16：独立 Review 覆盖代码、功能、三视口视觉和文档一致性；三组文档 findings 已修复，记录见 [`../review/REVIEW.md`](../review/REVIEW.md)。
 - T17-F1：应用实现 commit `f3df1be`；Hero 平滑过渡、首页文案/链接、防诈骗正文、共享动态卡片/类型筛选和公开目录工具栏；unit 179/179、最终合并 E2E 40/40、lint/typecheck/production build 与 Edge 三视口通过；
 - T17-F1 记录：[`../implementation/notes/T17-F1-USER-REVIEW-FIXES-2026-08-13.md`](../implementation/notes/T17-F1-USER-REVIEW-FIXES-2026-08-13.md)。
+- T17-F2：动态后台陈旧版本 E2E 增加首个保存的可观察完成条件；关于页防诈骗提示复用同级 section 标题与间距；根 `CLAUDE.md` 重组并增加 rebase/Playwright 陷阱；repeat 25/25、相关 12/12、全量 240/240 E2E、unit 179/179、lint/typecheck/build 与 Edge 三视口通过；
+- T17-F2 记录：[`../implementation/notes/T17-F2-E2E-DOCS-ABOUT-2026-08-13.md`](../implementation/notes/T17-F2-E2E-DOCS-ABOUT-2026-08-13.md)。
 
 ## 待实施产物
 

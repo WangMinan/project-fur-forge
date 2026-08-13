@@ -175,10 +175,33 @@ test('官方渠道 Card：邮箱、QQ、抖音号和防诈骗提醒一次保存�
   await expect(
     contact.getByRole('link', { name: 'channels@example.test' }),
   ).toHaveAttribute('href', 'mailto:channels@example.test')
-  const antiScam = contact.locator('.about-page__antiscam')
+  const about = page.getByTestId('about-page')
+  const antiScam = about.locator('.about-page__antiscam')
   await expect(antiScam).toContainText('只认这些官方渠道，其他都是冒充。')
   await expect(antiScam).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
   await expect(antiScam).toHaveCSS('padding-top', '0px')
+  const contactTitle = contact.getByRole('heading', { name: '联系', level: 2 })
+  const antiScamTitle = antiScam.getByRole('heading', { name: '防诈骗提示', level: 2 })
+  const titleStyles = await Promise.all([contactTitle, antiScamTitle].map(title => (
+    title.evaluate((element) => {
+      const style = getComputedStyle(element)
+      return [style.fontFamily, style.fontSize, style.fontWeight, style.lineHeight]
+    })
+  )))
+  expect(titleStyles[1]).toEqual(titleStyles[0])
+
+  const scope = page.getByTestId('about-scope')
+  const sectionGaps = await Promise.all([
+    [scope, contact],
+    [contact, antiScam],
+  ].map(async ([before, after]) => {
+    const beforeBox = await before!.boundingBox()
+    const afterBox = await after!.boundingBox()
+    expect(beforeBox).not.toBeNull()
+    expect(afterBox).not.toBeNull()
+    return afterBox!.y - (beforeBox!.y + beforeBox!.height)
+  }))
+  expect(Math.abs(sectionGaps[1]! - sectionGaps[0]!)).toBeLessThanOrEqual(1)
   // 账号没有 READY 二维码时不进入公开渠道列表。
   await expect(contact.getByText('123456789', { exact: true })).toHaveCount(0)
 })
