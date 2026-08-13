@@ -180,7 +180,7 @@ function hrefFor(target: number) {
 .works-grid {
   display: grid;
   gap: var(--space-8) var(--space-6);
-  margin-top: var(--space-8);
+  margin-top: var(--space-6);
   /* 作品网格是语义列表，但不显示项目符号与列表缩进：
      缺少这条重置时浏览器默认 marker 会出现在角色名左侧。 */
   padding: 0;

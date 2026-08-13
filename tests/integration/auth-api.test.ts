@@ -558,16 +558,24 @@ describe('authentication API', () => {
     expect(content.status).toBe(200)
     expectPrivateResponseHeaders(content)
     const initial = await content.json()
+    const initialSectionVersions = initial.data.sectionVersions as {
+      about: number
+      commission: number
+      commissionFaq: number
+      contact: number
+      privacy: number
+      terms: number
+    }
     expect(initial).toMatchObject({
       data: {
         version: 1,
         sectionVersions: {
-          commission: 1,
-          commissionFaq: 2,
-          about: 1,
-          terms: 1,
-          privacy: 1,
-          contact: 1,
+          commission: expect.any(Number),
+          commissionFaq: expect.any(Number),
+          about: expect.any(Number),
+          terms: expect.any(Number),
+          privacy: expect.any(Number),
+          contact: expect.any(Number),
         },
         statuses: { commission: null, adoption: null },
         commission: {
@@ -589,6 +597,8 @@ describe('authentication API', () => {
         },
       },
     })
+    expect(Object.values(initialSectionVersions).every(version => version > 0))
+      .toBe(true)
 
     const publicHostAdmin = await fetch(
       `${publicBaseUrl}/api/admin/v1/site/home/content`,
@@ -624,12 +634,18 @@ describe('authentication API', () => {
         cookie: authenticated.cookie,
         origin: adminBaseUrl,
       },
-      body: JSON.stringify({ expectedVersion: 1, payload: commissionPayload }),
+      body: JSON.stringify({
+        expectedVersion: initialSectionVersions.commission,
+        payload: commissionPayload,
+      }),
     })
     const wrongOrigin = await fetch(sectionUrl('commission'), {
       method: 'PUT',
       headers: { ...headers, origin: publicBaseUrl },
-      body: JSON.stringify({ expectedVersion: 1, payload: commissionPayload }),
+      body: JSON.stringify({
+        expectedVersion: initialSectionVersions.commission,
+        payload: commissionPayload,
+      }),
     })
     // 分区写入端点同样不接受公开 Host。
     const publicHostSection = await fetch(
@@ -637,7 +653,10 @@ describe('authentication API', () => {
       {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ expectedVersion: 1, payload: commissionPayload }),
+        body: JSON.stringify({
+          expectedVersion: initialSectionVersions.commission,
+          payload: commissionPayload,
+        }),
       },
     )
     expect(publicHostSection.status).toBe(404)
@@ -668,7 +687,7 @@ describe('authentication API', () => {
       method: 'PUT',
       headers,
       body: JSON.stringify({
-        expectedVersion: 1,
+        expectedVersion: initialSectionVersions.commission,
         payload: { ...commissionPayload, intro: '<script>x</script>' },
       }),
     })
@@ -676,7 +695,7 @@ describe('authentication API', () => {
       method: 'PUT',
       headers,
       body: JSON.stringify({
-        expectedVersion: 1,
+        expectedVersion: initialSectionVersions.contact,
         payload: {
           ...contactPayload,
           officialChannels: officialChannels('3114559925', '@bad handle'),
@@ -697,22 +716,46 @@ describe('authentication API', () => {
       body: JSON.stringify({ expectedVersion, payload }),
     })
 
-    const updatedContent = await putSection('commission', 1, commissionPayload)
+    const updatedContent = await putSection(
+      'commission',
+      initialSectionVersions.commission,
+      commissionPayload,
+    )
     expect(updatedContent.status).toBe(200)
     expectPrivateResponseHeaders(updatedContent)
     await expect(updatedContent.json()).resolves.toMatchObject({
       data: {
-        sectionVersions: { commission: 2, commissionFaq: 2, about: 1 },
+        sectionVersions: {
+          commission: initialSectionVersions.commission + 1,
+          commissionFaq: initialSectionVersions.commissionFaq,
+          about: initialSectionVersions.about,
+        },
         commission: commissionPayload,
       },
     })
 
     // 不同分区各自保存都成功，且只推进自己的版本。
-    expect((await putSection('commission-faq', 2, faqPayload)).status).toBe(200)
-    expect((await putSection('privacy', 1, privacyPayload)).status).toBe(200)
-    expect((await putSection('contact', 1, contactPayload)).status).toBe(200)
+    expect((await putSection(
+      'commission-faq',
+      initialSectionVersions.commissionFaq,
+      faqPayload,
+    )).status).toBe(200)
+    expect((await putSection(
+      'privacy',
+      initialSectionVersions.privacy,
+      privacyPayload,
+    )).status).toBe(200)
+    expect((await putSection(
+      'contact',
+      initialSectionVersions.contact,
+      contactPayload,
+    )).status).toBe(200)
     // 同一分区用旧版本再保存拿到 409。
-    expect((await putSection('commission', 1, commissionPayload)).status).toBe(409)
+    expect((await putSection(
+      'commission',
+      initialSectionVersions.commission,
+      commissionPayload,
+    )).status).toBe(409)
 
     const payload = {
       commission: { ...commissionPayload, faqs: faqPayload.faqs },

@@ -43,16 +43,17 @@ test('关于二级导航、独立条款页、页脚与兼容跳转连通', async
   await expect(page).toHaveURL(/\/service$/u)
 })
 
-test('自设委托与掉落领养作为一级导航直接可达', async ({ page }) => {
+test('自设委托与设定领养作为一级导航直接可达', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/commission')
 
   const header = page.getByTestId('public-header')
   const commissionLink = header.getByRole('link', { name: '自设委托', exact: true })
-  const adoptionLink = header.getByRole('link', { name: '掉落领养', exact: true })
+  const adoptionLink = header.getByRole('link', { name: '设定领养', exact: true })
   await expect(header.getByRole('navigation', { name: '委托二级导航' })).toHaveCount(0)
   await expect(header.getByRole('link', { name: '委托', exact: true })).toHaveCount(0)
   await expect(header.getByRole('link', { name: '角色领养', exact: true })).toHaveCount(0)
+  await expect(header.getByRole('link', { name: '掉落领养', exact: true })).toHaveCount(0)
   await expect(commissionLink).toHaveAttribute('href', '/commission')
   await expect(adoptionLink).toHaveAttribute('href', '/adoptions')
   await expect(commissionLink).toHaveAttribute('aria-current', 'page')
@@ -60,7 +61,7 @@ test('自设委托与掉落领养作为一级导航直接可达', async ({ page 
   await expect(page).toHaveURL(/\/adoptions$/u)
   await expect(
     page.getByTestId('public-header')
-      .getByRole('link', { name: '掉落领养', exact: true }),
+      .getByRole('link', { name: '设定领养', exact: true }),
   ).toHaveAttribute('aria-current', 'page')
 
   await page.setViewportSize({ width: 768, height: 1024 })
@@ -70,7 +71,7 @@ test('自设委托与掉落领养作为一级导航直接可达', async ({ page 
   const mobileNav = page.getByTestId('public-mobile-nav')
   await expect(mobileNav.getByRole('link', { name: '自设委托' }))
     .toHaveAttribute('href', '/commission')
-  await expect(mobileNav.getByRole('link', { name: '掉落领养' }))
+  await expect(mobileNav.getByRole('link', { name: '设定领养' }))
     .toHaveAttribute('href', '/adoptions')
 })
 

@@ -1,20 +1,20 @@
 # 产物索引
 
 > **最后校准**：2026-08-14。
-> **状态**：阶段 0～3 文档已锁定；阶段 4/5 已完成 T01～T16、T15-F1～T15-F4 与 T17-F1～T17-F3，等待 T16-R1 和 T17 用户验收。
+> **状态**：阶段 0～3 文档已锁定；阶段 4/5 已完成 T01～T16、T15-F1～T15-F4 与 T17-F1～T17-F4，等待 T16-R1 和 T17 用户验收。
 
 ## 文档产物
 
 | 阶段 | 产物 | 路径 | 状态 | 说明 |
 | --- | --- | --- | --- | --- |
 | 0 地基 | 产品地基 | `foundation/README.md` | 已锁定 | 增量范围、安全与非目标 |
-| 1 规格 | 需求规格 | `requirements/SPEC.md` | 已锁定 | 五组功能与验收契约；T17-F1～F3 已实现，等待新 SHA 独立复查 |
+| 1 规格 | 需求规格 | `requirements/SPEC.md` | 已锁定 | 五组功能与验收契约；T17-F1～F4 已实现 |
 | 2 计划 | 实施计划 | `planning/PLAN.md` | 已决策 | OQ-001 已选择方案 B |
-| 3 任务 | 任务清单 | `implementation/TASKS.md` | 实施完成 | T17-F3 已关闭；T16-R1/T17 开放 |
-| 4 实施 | 实施记录 | `implementation/notes/README.md` | 已完成 | T01～T15、预验收修正与 T17-F1～F3 已记录 |
+| 3 任务 | 任务清单 | `implementation/TASKS.md` | 实施完成 | T17-F4 已关闭；T16-R1/T17 开放 |
+| 4 实施 | 实施记录 | `implementation/notes/README.md` | 已完成 | T01～T15、预验收修正与 T17-F1～F4 已记录 |
 | 5 评审 | 评审记录 | `review/REVIEW.md` | 已完成 | 初次 NOT PASS 的三组文档 findings 已修复；最终 PASS WITH USER FOLLOW-UP |
 | 6 闭环 | 模型说明 | `models/README.md` | 已落地 | contact、FAQ、搜索与方案 B 动态均已落地并通过独立 Review |
-| 6 闭环 | 当前状态 | `STATE.md` | 当前 | T17-F3 已完成，随后为 T16-R1 与 T17 用户验收 |
+| 6 闭环 | 当前状态 | `STATE.md` | 当前 | T17-F4 已完成，随后为 T16-R1 与 T17 用户验收 |
 
 ## 外部与既有资料
 
@@ -57,6 +57,8 @@
 - T17-F2 记录：[`../implementation/notes/T17-F2-E2E-DOCS-ABOUT-2026-08-13.md`](../implementation/notes/T17-F2-E2E-DOCS-ABOUT-2026-08-13.md)。
 - T17-F3：一级委托/领养导航、作品总数移除、领养紧凑信息带与 32 px 行距、`0033` 条件式访客文案迁移、后台编辑提示和四张三视口/作品证据截图；
 - T17-F3 记录：[`../implementation/notes/T17-F3-NAV-ADOPTION-COPY-2026-08-14.md`](../implementation/notes/T17-F3-NAV-ADOPTION-COPY-2026-08-14.md)。
+- T17-F4：公开导航与 `/adoptions` 标题统一为“设定领养”；三个目录首图节奏统一使用 `var(--space-6)`，并增加跨页三视口几何断言；
+- T17-F4 记录：[`../implementation/notes/T17-F4-CATALOG-RHYTHM-NAMING-2026-08-14.md`](../implementation/notes/T17-F4-CATALOG-RHYTHM-NAMING-2026-08-14.md)。
 
 ## 待实施产物
 
