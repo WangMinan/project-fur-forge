@@ -2,7 +2,7 @@
 import type { PublicHomeEntryCardDto } from '~~/shared/types/contracts'
 
 /**
- * T34-F2 统一业务入口：委托与领养共用一张卡的比例、间距、文字层级和交互。
+ * T34-F2 统一业务入口：委托投递与领养共用一张卡的比例、间距、文字层级和交互。
  * 每张卡内部同时给出图片、标题、当前状态、一行短说明和单一行动入口；
  * 整张卡是唯一可访问链接，不出现嵌套链接。
  */
@@ -33,7 +33,7 @@ const TONE_LABELS = {
     data-testid="home-business-entries"
   >
     <h2 id="home-entries-title" class="home-entries__title">
-      委托与领养
+      委托投递
     </h2>
 
     <ul class="home-entries__grid" role="list">

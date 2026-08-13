@@ -96,22 +96,24 @@ function hrefFor(target: number) {
     <PublicPageIntro title="作品展示" />
 
     <div class="public-container works-page">
-      <PublicCatalogSearch
-        action="/works"
-        :clear-to="clearSearchHref"
-        :hidden-fields="{
-          purpose: filter.purpose,
-          suitType: filter.suitType,
-        }"
-        :query="search.query"
-        :show-clear="search.active"
-      />
+      <div class="works-page__toolbar">
+        <PublicCatalogSearch
+          action="/works"
+          :clear-to="clearSearchHref"
+          :hidden-fields="{
+            purpose: filter.purpose,
+            suitType: filter.suitType,
+          }"
+          :query="search.query"
+          :show-clear="search.active"
+        />
 
-      <WorkFilterBar
-        :filter="filter"
-        :query="search.query"
-        :result-count="resultCount"
-      />
+        <WorkFilterBar
+          :filter="filter"
+          :query="search.query"
+          :result-count="resultCount"
+        />
+      </div>
 
       <template v-if="items.length > 0">
         <ul class="works-grid">
@@ -186,8 +188,20 @@ function hrefFor(target: number) {
   list-style: none;
 }
 
-.works-page > :deep(.catalog-search) {
-  margin-bottom: var(--space-6);
+.works-page__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4) var(--space-6);
+}
+
+.works-page__toolbar > :deep(.catalog-search) {
+  flex: 1 1 22rem;
+}
+
+.works-page__toolbar > :deep(.work-filter) {
+  flex: 0 1 auto;
 }
 
 @media (min-width: 768px) {
