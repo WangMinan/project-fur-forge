@@ -6,7 +6,7 @@
 
 ## 当前阶段
 
-阶段 4 · 动态后台方案锁定为 B，T01～T15 与用户预验收修正 T15-F1～T15-F4 已完成；PR 合并、独立 Review 和用户验收尚未完成。
+阶段 5 · 动态后台方案锁定为 B，T01～T16 与用户预验收修正 T15-F1～T15-F4 已完成；PR 合并和 T17 用户验收尚未完成。
 
 T03 已接入 `site/contact` 私有二维码上传、`contact-qr-v1` 无水印方形 PNG 公开派生、失败重试与 READY 公开投影。
 
@@ -20,11 +20,11 @@ T07 已统一后台作品与三个公开 repository 的名称包含匹配；公�
 
 T08/T09 已把共用原生 GET 搜索表单接入作品、领养和返图页；筛选与分页保留有效 `q`，新查询清除旧页码/返图 seed，并完成无匹配、非法查询、三视口键盘与浏览器回归。
 
-T10-B 已新增 `updates` 独立表、严格契约、repository/service/管理 API 与 `/admin/updates`，支持逐条草稿、编辑、发布、下架、删除、审计及 409 本地草稿保留；公开页尚由 T11 接续。
+T10-B 已新增 `updates` 独立表、严格契约、repository/service/管理 API 与 `/admin/updates`，支持逐条草稿、编辑、发布、下架、删除、审计及 409 本地草稿保留；T11 已完成对应公开投影与页面。
 
 T11 已新增 published-only 公开 DTO/API、`/updates` 纯文本列表页、受控状态、SEO/canonical 与 sitemap；草稿和下架记录在 SQL 层排除。
 
-T12 已把最近 3 条 published 动态接入可单独降级的 home aggregate，在业务入口后展示首页摘要，并把“最新动态”加入桌面/移动共用导航、页脚及 analytics route key；SQLite 白名单由前向迁移扩展。
+T12 已把最近 3 条 published 动态接入可单独降级的 home aggregate；T15-F2 将首页摘要固定在“当前领养”之后、页脚之前，并统一首页模块标题层级；“最新动态”已加入桌面/移动共用导航、页脚及 analytics route key，SQLite 白名单由前向迁移扩展。
 
 T13 已完成空库/既有库迁移、foreign key/integrity、严格 Schema、二维码私有边界、动态公开投影和 Host/Origin/CSRF 定向回归；新增 `0031` 既有事件保留测试，并修正 T06 FAQ 迁移后过期的版本 fixture。
 
@@ -32,9 +32,11 @@ T14 已通过全量 unit 177/177、integration 188/188、lint、typecheck、prod
 
 T15 已在 Edge 真实进程中完成公开 `127.0.0.1` / 管理 `localhost` 双 Host、390×844 / 768×1024 / 1440×900 三视口验收准备；相关导航、联系配置、动态管理和总体验收 24/24 通过。二维码测试已由普通方形图升级为固定真实 QR PNG，公开派生字节、五平台三视口显示和截图均保留 QR 模块；物理手机扫码仍由 T17 用户验收完成。
 
-2026-08-13 用户预验收四项修正已完成：Hero hover/focus 不再隐式暂停；最新动态移到当前领养后并统一标题层级；二维码接受 PNG/JPEG/WebP、任意比例和 64 px 最小边，使用 FFmpeg Lanczos 自动补白到 640×640 私有适配源；两条 E2E 根因已修复。Edge 相关 spec 47/47、全量 239/239，unit 179/179、integration 189/189、lint、typecheck、production build 均通过；下一步必须在新干净提交上执行 T16。
+2026-08-13 用户预验收四项修正已完成：Hero hover/focus 不再隐式暂停；最新动态移到当前领养后并统一标题层级；二维码接受 PNG/JPEG/WebP、任意比例和 64 px 最小边，使用 FFmpeg Lanczos 自动补白到 640×640 私有适配源；两条 E2E 根因已修复。Edge 相关 spec 47/47、全量 239/239，unit 179/179、integration 189/189、lint、typecheck、production build 均通过。
 
-当前分支为 `feat/requirement-2`。T01 实现代码 SHA `a38c295` 的 GitHub Actions run [`31515689322`](https://github.com/WangMinan/project-fur-forge/actions/runs/31515689322) 已取得 `checks`、`image-build`、`e2e` 全部成功；该结果只绑定该 SHA，包含 T02 的后续 HEAD 须重新查询远端检查。PR [#10](https://github.com/WangMinan/project-fur-forge/pull/10) 仍为 open，尚未合入 `main`。工程证据不代签 T16 独立 Review 或 T17 用户验收。
+T16 已在独立上下文对实现基线 `19af5878e4bc5c2b01316f9cb89082b90cce0e46` 完成代码、功能、视觉与文档 Review：首次结论 `NOT PASS`，仅发现 `.design` 信息架构、SPEC 验收证据和进度/Review 文档三组不一致；用户授权后已修复并复查，最终结论为 `PASS WITH USER FOLLOW-UP`。功能与安全未发现新的阻断问题，T17 继续保留真实账号和物理手机扫码验收。
+
+当前分支为 `feat/requirement-2`。应用实现基线 `19af5878e4bc5c2b01316f9cb89082b90cce0e46` 的 GitHub Actions run [`31628640863`](https://github.com/WangMinan/project-fur-forge/actions/runs/31628640863) 已取得 `checks`、`image-build`、`e2e` 全部成功；该结果只绑定该 SHA，T16 文档修复形成的新 PR HEAD 仍须在合并前重新查询实际检查。PR [#10](https://github.com/WangMinan/project-fur-forge/pull/10) 仍未合入 `main`。工程证据与独立 Review 均不代签 T17 用户验收。
 
 ## 已确认结论
 
@@ -49,8 +51,8 @@ T15 已在 Edge 真实进程中完成公开 `127.0.0.1` / 管理 `localhost` 双
 
 ## 当前约束
 
-- 只按 TASKS 串行实施；当前 `GATE-01`、T01～T15、T15-F1～T15-F4 已勾选，T16/T17 保持开放。
-- T01 后续文档或代码若产生新 SHA，必须重新查询该 SHA 的远端检查，不沿用 `a38c295` 的结果。
+- 只按 TASKS 串行实施；当前 `GATE-01`、T01～T16、T15-F1～T15-F4 已勾选，T17 保持开放。
+- 后续文档或代码若产生新 SHA，必须重新查询该 SHA 的远端检查，不沿用 `19af587` 的结果。
 - 不重写历史迁移，只能新增前向迁移。
 - 保留现有邮箱联系方式；五个平台卡片是新增，不是删除邮箱。
 - 联系方式、二维码和动态正文必须来自后台数据，不在公开页面模板中写死业务值。
@@ -64,6 +66,6 @@ T15 已在 Edge 真实进程中完成公开 `127.0.0.1` / 管理 `localhost` 双
 
 ## 下一步交接
 
-1. 在新的干净提交上由新上下文执行 T16 独立 Review，并记录首次 findings、修复与重测；
-2. 查询 T16 最终 SHA 的远端检查，不沿用旧 SHA 结果；
-3. 保持 T17 用户验收开放，不能用工程或 CI 结果代签。
+1. 查询 T16 文档修复最终 SHA 的远端检查，不沿用 `19af587` 的结果；
+2. 由用户执行 T17 真实平台账号、实际二维码物理手机扫码和完整体验验收；
+3. 只有 T17 取得用户确认后，才能更新最终闭环状态并考虑合并 PR。
