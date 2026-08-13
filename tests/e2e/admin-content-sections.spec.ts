@@ -62,6 +62,8 @@ test('六个文案分区各自独立保存，互不禁用', async ({ page }) => 
   for (const section of sections) {
     await expect(card(page, section)).toBeVisible()
   }
+  await expect(card(page, 'terms')).toContainText('直接面向访客；写清价格、权利、修改、保修和官方渠道')
+  await expect(card(page, 'privacy')).toContainText('直接面向访客；只说明当前实际处理的信息、用途、保存期限和联系办法')
 
   const commission = card(page, 'commission')
   const about = card(page, 'about')
