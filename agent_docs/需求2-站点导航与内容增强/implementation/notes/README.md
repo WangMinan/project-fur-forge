@@ -31,6 +31,7 @@
 - [`T17-F1-USER-REVIEW-FIXES-2026-08-13.md`](./T17-F1-USER-REVIEW-FIXES-2026-08-13.md)：首轮用户验收六组视觉/交互 findings、最终自动化门禁与三视口 Edge 证据。
 - [`T17-F2-E2E-DOCS-ABOUT-2026-08-13.md`](./T17-F2-E2E-DOCS-ABOUT-2026-08-13.md)：动态后台陈旧版本竞态、根 Agent 指令重整、关于页防诈骗 section 一致性及全量回归。
 - [`T17-F3-NAV-ADOPTION-COPY-2026-08-14.md`](./T17-F3-NAV-ADOPTION-COPY-2026-08-14.md)：一级委托/领养导航、作品总数移除、领养卡片紧凑排版、条件式访客文案迁移与三视口 Chrome 证据。
+- [`T17-F4-CATALOG-RHYTHM-NAMING-2026-08-14.md`](./T17-F4-CATALOG-RHYTHM-NAMING-2026-08-14.md)：三个目录首图节奏统一、设定领养公开命名与跨页三视口几何证据。
 
 ## 新记录最低要求
 

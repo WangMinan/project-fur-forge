@@ -176,3 +176,50 @@ test('非法与超长 q 返回受控空态，三个视口键盘可用且无溢�
     }
   }
 })
+
+test('三个目录的搜索筛选区到首张图片保持同一间距', async ({ page }) => {
+  await seedPublicCatalog(page, [
+    {
+      slug: 'e2e-public-catalog-rhythm-work',
+      characterName: '目录节奏作品',
+      purpose: 'showcase',
+      photos: [{ alt: '目录节奏作品出厂照' }],
+    },
+    {
+      slug: 'e2e-public-catalog-rhythm-adoption',
+      characterName: '目录节奏领养',
+      purpose: 'adoption',
+      adoptionMethod: 'regular',
+      businessStatus: 'available',
+      designSheet: { alt: '目录节奏领养设定图' },
+      photos: [{ alt: '目录节奏领养出厂照' }],
+    },
+  ])
+  await seedPublicReturns(page, [{
+    name: '目录节奏返图',
+    slug: 'e2e-catalog-rhythm-return',
+    photos: [{ alt: '目录节奏返图照片' }],
+  }])
+
+  const pages = [
+    { path: '/works', controls: '.works-page__toolbar', content: '.works-grid' },
+    { path: '/adoptions', controls: '.adoptions-page__filters-wrap', content: '.adoptions-page__grid' },
+    { path: '/returns', controls: '[role="search"]', content: '.return-wall' },
+  ]
+
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 768, height: 1024 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport)
+    for (const catalog of pages) {
+      await page.goto(catalog.path)
+      const controls = await page.locator(catalog.controls).boundingBox()
+      const content = await page.locator(catalog.content).boundingBox()
+      expect(controls).not.toBeNull()
+      expect(content).not.toBeNull()
+      expect(Math.round(content!.y - controls!.y - controls!.height)).toBe(32)
+    }
+  }
+})

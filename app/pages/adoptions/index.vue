@@ -4,9 +4,9 @@ import { publicAdoptionListResponseSchema } from '~~/shared/schemas/public-conte
 import { publicSiteContentResponseSchema } from '~~/shared/schemas/site-content'
 
 useSeoMeta({
-  title: `角色领养 · ${PROJECT_NAME}`,
+  title: `设定领养 · ${PROJECT_NAME}`,
   description: `${PROJECT_NAME}当前公开的常规领养与展会掉落角色，查看完整横版设定图、状态、属性与人民币价格。`,
-  ogTitle: `角色领养 · ${PROJECT_NAME}`,
+  ogTitle: `设定领养 · ${PROJECT_NAME}`,
   ogDescription: `${PROJECT_NAME}当前公开的常规领养与展会掉落角色。`,
 })
 
@@ -40,7 +40,7 @@ const { data: site, error: siteError } = await useFetch('/api/public/v1/site-con
 })
 
 if (listError.value || siteError.value) {
-  throw createError({ statusCode: 500, statusMessage: '角色领养暂时无法显示' })
+  throw createError({ statusCode: 500, statusMessage: '设定领养暂时无法显示' })
 }
 
 const items = computed(() => list.value?.items ?? [])
@@ -102,7 +102,7 @@ function hrefFor(target: number) {
 
 <template>
   <div class="adoptions-page">
-    <PublicPageIntro title="角色领养" />
+    <PublicPageIntro title="设定领养" />
 
     <div
       v-if="status"
@@ -144,7 +144,7 @@ function hrefFor(target: number) {
         :page="page"
         :page-count="pageCount"
         :href-for="hrefFor"
-        label="角色领养分页"
+        label="设定领养分页"
       />
     </div>
 

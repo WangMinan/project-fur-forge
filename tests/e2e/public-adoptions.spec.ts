@@ -70,9 +70,10 @@ test.beforeEach(async ({ page }) => {
 test('默认展示全部领养，并保留常规与展会掉落各自事实', async ({ page }) => {
   await page.goto('/adoptions')
 
-  await expect(page.getByRole('heading', { level: 1, name: '角色领养' })).toBeVisible()
+  await expect(page).toHaveTitle(/设定领养 · 有点小狗工作室/)
+  await expect(page.getByRole('heading', { level: 1, name: '设定领养' })).toBeVisible()
   await expect(page.getByTestId('adoption-status')).toContainText('领养')
-  const pagination = page.getByRole('navigation', { name: '角色领养分页' })
+  const pagination = page.getByRole('navigation', { name: '设定领养分页' })
   await expect(pagination).toBeVisible()
   await expect(pagination.getByLabel('第 1 页，当前页')).toBeVisible()
   await expect(pagination.locator('[aria-disabled="true"]')).toHaveCount(2)
@@ -213,7 +214,7 @@ test('固定 8 个分页保留领养筛选并在三视口无溢出', async ({ pa
   ]) {
     await page.setViewportSize(viewport)
     await page.goto('/adoptions?method=regular')
-    const pagination = page.getByRole('navigation', { name: '角色领养分页' })
+    const pagination = page.getByRole('navigation', { name: '设定领养分页' })
     await expect(pagination).toBeVisible()
     await expect(page.locator('[data-work-slug]')).toHaveCount(8)
     await expect(pagination.getByRole('link', { name: '下一页' }))
@@ -223,7 +224,7 @@ test('固定 8 个分页保留领养筛选并在三视口无溢出', async ({ pa
     ))).toBeLessThanOrEqual(1)
   }
 
-  await page.getByRole('navigation', { name: '角色领养分页' })
+  await page.getByRole('navigation', { name: '设定领养分页' })
     .getByRole('link', { name: '下一页' }).click()
   await expect(page).toHaveURL(/method=regular&page=2$/u)
   await expect(page.locator('[data-work-slug]')).toHaveCount(1)
