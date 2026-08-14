@@ -26,6 +26,7 @@
 2. 真实 4K Lanczos unit 首次超过旧 30 秒上限；只把两个 4K FFmpeg 用例超时提高到 120 秒，尺寸、字节上限、滤镜和事件循环断言未放宽，精确重跑 40/40 通过。
 3. 集成首次暴露管理 Hero DTO `missingVariantCount` 仍上限 12；同步为 16，并把首页进度从硬编码 12 改为首页 16/委托 12，失败文件重跑通过。
 4. 浏览器首次 29/34 通过；5 个失败来自旧 E2E seed 默认 3200×1800 与 4K 合同冲突，以及新增分辨率状态造成 locator 二义。种子改为 4000×2250、定位器按状态文案收窄后，失败 5 项精确重跑 5/5 通过。
+5. PR #11 的 Copilot Review 指出旧图 reconcile 在单次 Hero 4K FFmpeg/公开变体生成期间只在目标开始前续租，处理超过 60 秒时启动恢复或另一个运维进程可能接管同一 operation；同时私有适配源使用 `Date.now()`，与 reconcile 已传入的确定性 `now` 不一致。该风险不依赖多个管理员同时操作。修复在 reconcile 的整个异步生成窗口每 20 秒续租，并在每个不可取消副作用完成后、进度写入前检查 lease；失去 lease 时旧 runner 不再继续提交，退出路径始终清理 timer。私有适配源改用 reconcile `now`，heartbeat 继续使用真实墙钟。
 
 ## 本地证据
 
@@ -38,6 +39,7 @@
 - `APP_ENV=production pnpm build`：通过，包含生产内容守卫。
 - `pnpm run verify:production`：通过（health、公开 SSR、管理 CSR）。
 - `git diff --check`：通过。
+- PR #11 Review follow-up：定向 integration 2 文件 21 项、完整 unit 38 文件 193 项、完整 integration 24 文件 195 项通过；新增覆盖异步工作超过 lease TTL 仍拒绝第二 owner、丢失 lease 阻止后续提交并清理 timer，以及私有 Hero 适配源透传固定 `now`。
 
 ## 未签署门禁
 
