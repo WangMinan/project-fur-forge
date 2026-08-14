@@ -79,7 +79,7 @@ test.describe('创建作品', () => {
   })
 })
 
-test.describe('T22 完整字段：三用途、领养、价格、排序与精选', () => {
+test.describe('T22 完整字段：三用途、领养、价格与首页精选', () => {
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page)
   })
@@ -120,20 +120,20 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
     await expect(preview).not.toContainText('价格')
   })
 
-  test('创建展示作品并保留排序与精选', async ({ page }) => {
+  test('创建展示作品并加入精选，顺序交给精选 Tab 维护', async ({ page }) => {
     const slug = `t22-showcase-${Date.now().toString(36)}`
     await fillBasics(page, 'T22 展示', slug)
     await page.getByLabel('业务类型').selectOption('showcase')
-    await page.getByLabel('人工排序').fill('4')
     await page.getByLabel('加入首页精选作品').check()
     await page.getByRole('button', { name: '创建草稿' }).click()
 
     await expect(page).toHaveURL(/\/admin\/works\/[0-9a-f-]{36}$/)
     await expect(page.getByTestId('public-preview')).toContainText('展示作品')
-    await expect(page.getByTestId('public-preview')).toContainText('4 · 首页精选')
+    await expect(page.getByTestId('public-preview')).toContainText('已加入（顺序在精选 Tab 调整）')
     await page.reload()
-    await expect(page.getByLabel('人工排序')).toHaveValue('4')
+    await expect(page.getByLabel('人工排序')).toHaveCount(0)
     await expect(page.getByLabel('加入首页精选作品')).toBeChecked()
+    await expect(page.getByRole('link', { name: '前往调整精选顺序' })).toBeVisible()
   })
 
   test('创建常规领养：价格按元输入、按分提交，刷新后往返一致', async ({ page }) => {
@@ -255,14 +255,13 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
     await expect(page.getByTestId('public-preview')).not.toContainText('¥15,600')
   })
 
-  test('列表显示排序、精选与领养状态，并可内联编辑', async ({ page }) => {
+  test('全部作品保留最近修改语义，可勾选精选并自动追加到末尾', async ({ page }) => {
     const suffix = Date.now().toString(36)
     const work = await createWorkViaApi(page, {
       characterName: `列表领养-${suffix}`,
       purpose: 'adoption',
       businessStatus: 'available',
       priceCnyMinor: 1_560_000,
-      sortOrder: 1,
     })
     await page.goto(`${adminBaseURL}/admin/works`)
     await page.getByRole('searchbox', { name: '查找作品' })
@@ -271,28 +270,24 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
     await expect(row).toContainText('可领养')
     await expect(row).toContainText('¥15,600')
 
-    const sortSaved = page.waitForResponse(response =>
+    await expect(row.getByLabel('排序')).toHaveCount(0)
+    const saved = page.waitForResponse(response =>
       response.url().endsWith(`/api/admin/v1/works/${work.id}/presentation`)
       && response.request().method() === 'PUT',
     )
-    await row.getByLabel('排序').fill('7')
-    await row.getByLabel('排序').press('Tab')
-    expect((await sortSaved).status()).toBe(200)
-    await expect(page.getByRole('row').filter({ hasText: `列表领养-${suffix}` })
-      .getByLabel('排序')).toHaveValue('7')
-
-    const featured = page.getByRole('row').filter({ hasText: `列表领养-${suffix}` })
-      .getByLabel('精选')
+    const featured = row.getByLabel('加入首页精选', { exact: true })
     await featured.check()
-    await expect(page.getByRole('row').filter({ hasText: `列表领养-${suffix}` })
-      .getByLabel('精选')).toBeChecked()
+    expect((await saved).status()).toBe(200)
+    await expect(row.getByLabel('加入首页精选', { exact: true })).toBeChecked()
+    await expect(row).toContainText(/当前第 \d+ 位/)
+    await expect(row.getByRole('link', { name: '前往调整顺序' })).toBeVisible()
 
     await page.reload()
     await page.getByRole('searchbox', { name: '查找作品' })
       .fill(`列表领养-${suffix}`)
     const reloaded = page.getByRole('row').filter({ hasText: `列表领养-${suffix}` })
-    await expect(reloaded.getByLabel('排序')).toHaveValue('7')
-    await expect(reloaded.getByLabel('精选')).toBeChecked()
+    await expect(reloaded.getByLabel('排序')).toHaveCount(0)
+    await expect(reloaded.getByLabel('加入首页精选', { exact: true })).toBeChecked()
   })
 
   test('已发布作品可直接精选，重复精选顺位自动避让并进入公开首页', async ({ page }) => {
@@ -322,17 +317,22 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
 
     await page.goto(`${adminBaseURL}/admin/works`)
     const row = page.getByRole('row').filter({ hasText: secondName })
-    await expect(row.getByLabel('排序')).toBeEnabled()
     const saved = page.waitForResponse(response =>
       response.url().endsWith('/presentation')
       && response.request().method() === 'PUT',
     )
-    await row.getByLabel('精选', { exact: true }).check()
+    await row.getByLabel('加入首页精选', { exact: true }).check()
     expect((await saved).status()).toBe(200)
 
     const updated = page.getByRole('row').filter({ hasText: secondName })
-    await expect(updated.getByLabel('精选', { exact: true })).toBeChecked()
-    await expect(updated.getByLabel('排序')).toHaveValue('1')
+    await expect(updated.getByLabel('加入首页精选', { exact: true })).toBeChecked()
+    await expect(updated).toContainText(/当前第 \d+ 位/)
+
+    await page.getByRole('link', { name: '首页精选', exact: true }).click()
+    await expect(page).toHaveURL(/\/admin\/works\?tab=featured$/)
+    await expect(page.getByRole('heading', { name: '首页精选顺序' })).toBeVisible()
+    await expect(page.getByRole('listitem').filter({ hasText: firstName })).toBeVisible()
+    await expect(page.getByRole('listitem').filter({ hasText: secondName })).toBeVisible()
 
     await page.goto(publicBaseURL)
     const featured = page.getByTestId('featured-works')
@@ -340,7 +340,7 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
     await expect(featured).toContainText(secondName)
   })
 
-  test('已发布作品在内层编辑页仍可保存排序与精选', async ({ page }) => {
+  test('已发布作品在内层编辑页仍可保存精选成员关系', async ({ page }) => {
     const suffix = Date.now().toString(36)
     const firstName = `详情优先-${suffix}`
     const secondName = `详情候选-${suffix}`
@@ -365,7 +365,7 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
 
     await page.goto(`${adminBaseURL}/admin/works`)
     await page.getByRole('link', { name: secondName, exact: true }).click()
-    await expect(page.getByLabel('人工排序')).toBeEnabled()
+    await expect(page.getByLabel('人工排序')).toHaveCount(0)
     await expect(page.getByLabel('加入首页精选作品')).toBeEnabled()
 
     const saved = page.waitForResponse(response =>
@@ -373,10 +373,9 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
       && response.request().method() === 'PUT',
     )
     await page.getByLabel('加入首页精选作品').check()
-    await page.getByRole('button', { name: '保存排序 / 精选' }).click()
+    await page.getByRole('button', { name: '保存首页精选' }).click()
     expect((await saved).status()).toBe(200)
-    await expect(page.getByText('排序与精选已保存，公开端已更新。')).toBeVisible()
-    await expect(page.getByLabel('人工排序')).toHaveValue('1')
+    await expect(page.getByText('首页精选设置已保存，公开端已更新。')).toBeVisible()
     await expect(page.getByLabel('加入首页精选作品')).toBeChecked()
 
     await page.goto(publicBaseURL)
@@ -385,16 +384,90 @@ test.describe('T22 完整字段：三用途、领养、价格、排序与精选'
     await expect(featured).toContainText(secondName)
   })
 
-  test('列表内联编辑遇到过期版本显示服务端冲突', async ({ page }) => {
+  test('精选 Tab 将第 4 件置顶时一次提交完整顺序，其余作品保持相对次序', async ({ page }) => {
+    const suffix = Date.now().toString(36)
+    const entries: Array<Awaited<ReturnType<typeof createWorkViaApi>>> = []
+    for (const index of [0, 1, 2, 3]) {
+      entries.push(await createWorkViaApi(page, {
+        characterName: `精选编排-${suffix}-${index}`,
+        featured: true,
+      }))
+    }
+
+    await page.goto(`${adminBaseURL}/admin/works?tab=featured`)
+    await expect(page.getByRole('heading', { name: '首页精选顺序' })).toBeVisible()
+    const targetName = `精选编排-${suffix}-3`
+    const requestPromise = page.waitForRequest(request =>
+      request.url().endsWith('/api/admin/v1/works/featured-order')
+      && request.method() === 'PUT',
+    )
+    await page.getByRole('button', { name: `将 ${targetName} 置顶` }).click()
+    const request = await requestPromise
+    const payload = JSON.parse(request.postData() ?? '{}') as {
+      payload: { items: Array<{ expectedVersion: number, id: string }> }
+    }
+    expect(payload.payload.items[0]?.id).toBe(entries[3]?.id)
+    expect(new Set(payload.payload.items.map(item => item.id)).size)
+      .toBe(payload.payload.items.length)
+    const positions = entries.slice(0, 3).map(entry =>
+      payload.payload.items.findIndex(item => item.id === entry.id),
+    )
+    expect(positions[0]).toBeLessThan(positions[1]!)
+    expect(positions[1]).toBeLessThan(positions[2]!)
+
+    const cards = page.locator('.featured-order__item')
+    await expect(cards.first()).toContainText(targetName)
+    await expect(cards.first().locator('.featured-order__position')).toHaveText('1')
+  })
+
+  test('精选完整排序遇到版本变化会整体冲突并自动重新加载', async ({ page }) => {
+    const suffix = Date.now().toString(36)
+    const firstName = `精选冲突-${suffix}-0`
+    const secondName = `精选冲突-${suffix}-1`
+    const first = await createWorkViaApi(page, {
+      characterName: firstName,
+      featured: true,
+    })
+    await createWorkViaApi(page, {
+      characterName: secondName,
+      featured: true,
+    })
+
+    await page.goto(`${adminBaseURL}/admin/works?tab=featured`)
+    await expect(page.getByRole('button', { name: `将 ${secondName} 置顶` })).toBeEnabled()
+    await bumpWorkViaApi(page, first, { characterName: `${firstName}-远端` })
+    await page.getByRole('button', { name: `将 ${secondName} 置顶` }).click()
+
+    await expect(page.getByRole('alert')).toContainText(
+      '精选作品或版本已在其他地方变化，已重新加载',
+    )
+    await expect(page.getByRole('listitem').filter({ hasText: `${firstName}-远端` }))
+      .toBeVisible()
+  })
+
+  test('列表内联编辑遇到服务端版本冲突时保留原状态并持续提示', async ({ page }) => {
     const work = await createWorkViaApi(page, { characterName: '列表冲突' })
     await page.goto(`${adminBaseURL}/admin/works`)
     const row = page.getByRole('row').filter({ hasText: '列表冲突' })
-    await expect(row.getByLabel('排序')).toHaveValue('0')
+    await expect(row.getByLabel('排序')).toHaveCount(0)
 
-    await bumpWorkViaApi(page, work, { characterName: '列表冲突' })
+    await page.route(`**/api/admin/v1/works/${work.id}/presentation`, async (route) => {
+      await route.fulfill({
+        status: 409,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          error: {
+            code: 'CONFLICT',
+            message: 'Resource version is stale.',
+            reason: 'VERSION_CONFLICT',
+          },
+        }),
+      })
+    })
 
-    await row.getByLabel('精选').check()
+    await row.getByLabel('加入首页精选', { exact: true }).check()
     await expect(page.getByRole('alert').filter({ hasText: '版本冲突' })).toBeVisible()
+    await expect(row.getByLabel('加入首页精选', { exact: true })).not.toBeChecked()
   })
 })
 
@@ -431,7 +504,6 @@ test.describe('编辑与保存', () => {
     await page.waitForSelector('.editor-card')
 
     await page.getByLabel(/角色名/).fill('保存验证改')
-    await page.getByLabel('人工排序').fill('5')
     await expect(page.getByText('有未保存更改')).toBeVisible()
     await page.getByRole('button', { name: '保存', exact: true }).click()
 
@@ -441,7 +513,7 @@ test.describe('编辑与保存', () => {
 
     await page.reload()
     await expect(page.getByLabel(/角色名/)).toHaveValue('保存验证改')
-    await expect(page.getByLabel('人工排序')).toHaveValue('5')
+    await expect(page.getByLabel('人工排序')).toHaveCount(0)
     await expect(page.getByText('未更改')).toBeVisible()
   })
 

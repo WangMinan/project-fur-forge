@@ -22,7 +22,7 @@
 
 ### `works` 与 `work_feature_tags`
 
-作品保存 slug、角色名、物种、装型、用途、公开主人显示/私有联系人、领养方式/状态/价格、展会名称/时间、发布状态、首页精选/排序和版本。
+作品保存 slug、角色名、物种、装型、用途、公开主人显示/私有联系人、领养方式/状态/价格、展会名称/时间、发布状态、首页精选/排序和版本。`sort_order` 只表示首页精选连续 `0..n-1` 顺序，由服务端在精选加入、移出和完整集合重排事务中维护；管理 UI 不暴露内部编号。历史重复或空洞值在下一次相关写入归一化，不增加唯一索引或迁移。
 
 底层 purpose：`commission | adoption | showcase`。展会掉落仍是 `purpose=adoption` + `adoption_method=event_drop`，不增加 event 实体。
 
@@ -50,7 +50,7 @@
 
 ### `watermark_profiles`、`site_branding`、`site_hero_slides`
 
-profile 不可变，`site_branding` 指向活动 profile；Hero 保存 placement、横竖资产、alt、排序、启用、关联作品和版本。无水印站点/返图不依赖活动 profile。
+profile 不可变，`site_branding` 指向活动 profile；品牌组合写入在同一事务入口创建/复用 profile 并启动持久重建，空目标可激活，已有公开作品在完整验证后原子切换。品牌页真实预览不再是模型门禁，历史 preview operation 只保留兼容。Hero 保存 placement、横竖资产、alt、排序、启用、关联作品和版本。无水印站点/返图不依赖活动 profile。
 
 ### `site_content`、FAQ、`business_statuses`
 

@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import type { WorkListItemDto } from '~~/shared/types/contracts'
-import { parseSortOrderInput } from '~/utils/work-form'
-
 /**
- * 列表内的人工排序与首页精选编辑。
- * 当前数据量下用数字输入 + 勾选即可可靠维护顺序，不引入拖拽库。
+ * 列表内只维护首页精选成员；具体顺序统一进入精选 Tab 编排。
  * 展示设置使用独立接口，已发布作品也可直接更新。
  */
 const props = defineProps<{
@@ -15,59 +12,17 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  update: [{ featured?: boolean, sortOrder?: number }]
+  update: [{ featured: boolean }]
 }>()
-
-const draft = ref(String(props.work.sortOrder))
-const localError = ref<string | null>(null)
-
-watch(() => props.work.sortOrder, (value) => {
-  draft.value = String(value)
-  localError.value = null
-})
-
-const sortInputId = computed(() => `${props.scope}-sort-${props.work.id}`)
 const featuredInputId = computed(() => `${props.scope}-featured-${props.work.id}`)
-const messageId = computed(() => `${props.scope}-ordering-message-${props.work.id}`)
-
-const message = computed(() => localError.value)
-
-function commitSortOrder() {
-  const parsed = parseSortOrderInput(draft.value)
-  if (parsed.value === undefined) {
-    localError.value = parsed.error
-    return
-  }
-  localError.value = null
-  if (parsed.value === props.work.sortOrder) {
-    return
-  }
-  emit('update', { sortOrder: parsed.value })
-}
 
 function commitFeatured(event: Event) {
-  localError.value = null
   emit('update', { featured: (event.target as HTMLInputElement).checked })
 }
 </script>
 
 <template>
   <div class="ordering">
-    <div class="ordering__row">
-      <label class="ordering__label" :for="sortInputId">排序</label>
-      <input
-        :id="sortInputId"
-        v-model="draft"
-        class="ordering__number"
-        type="number"
-        min="0"
-        step="1"
-        :disabled="pending"
-        :aria-invalid="message ? 'true' : undefined"
-        :aria-describedby="message ? messageId : undefined"
-        @change="commitSortOrder"
-      >
-    </div>
     <div class="ordering__row">
       <input
         :id="featuredInputId"
@@ -77,12 +32,13 @@ function commitFeatured(event: Event) {
         :disabled="pending"
         @change="commitFeatured"
       >
-      <label class="ordering__label" :for="featuredInputId">精选</label>
+      <label class="ordering__label" :for="featuredInputId">加入首页精选</label>
     </div>
+    <span v-if="work.featured" class="ordering__position">当前第 {{ work.sortOrder + 1 }} 位</span>
+    <NuxtLink v-if="work.featured" to="/admin/works?tab=featured" class="ordering__link">
+      前往调整顺序
+    </NuxtLink>
     <p v-if="pending" class="ordering__status" role="status">保存中…</p>
-    <p v-else-if="message" :id="messageId" class="ordering__error" role="alert">
-      {{ message }}
-    </p>
   </div>
 </template>
 
@@ -104,30 +60,12 @@ function commitFeatured(event: Event) {
   color: var(--admin-text-secondary);
 }
 
-.ordering__number {
-  width: 4.5rem;
-  min-height: var(--admin-control-height-sm);
-  padding: 0 var(--admin-space-2);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-sm);
-  font: inherit;
-  font-size: var(--admin-font-sm);
-  color: var(--admin-text-primary);
-  background: var(--admin-bg-primary);
-}
-
-.ordering__number:focus,
 .ordering__checkbox:focus-visible {
   border-color: var(--admin-border-focus);
   outline: none;
   box-shadow: 0 0 0 3px var(--admin-focus-ring);
 }
 
-.ordering__number[aria-invalid='true'] {
-  border-color: var(--admin-status-error);
-}
-
-.ordering__number:disabled,
 .ordering__checkbox:disabled {
   opacity: 0.55;
   cursor: default;
@@ -139,16 +77,16 @@ function commitFeatured(event: Event) {
   accent-color: var(--admin-accent-primary);
 }
 
-.ordering__status {
+.ordering__status,
+.ordering__position,
+.ordering__link {
   margin: 0;
   font-size: var(--admin-font-xs);
   color: var(--admin-text-tertiary);
 }
 
-.ordering__error {
-  margin: 0;
-  font-size: var(--admin-font-xs);
+.ordering__link {
+  color: var(--admin-accent-primary);
   font-weight: 600;
-  color: var(--admin-status-error);
 }
 </style>

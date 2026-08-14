@@ -34,8 +34,11 @@ useSeoMeta({
 })
 
 const adminApi = useAdminApi()
+const route = useRoute()
+const activeTab = computed(() => route.query.tab === 'featured' ? 'featured' : 'all')
 const status = ref<'error' | 'loading' | 'ready'>('loading')
 const works = ref<WorkListItemDto[]>([])
+const featuredOrder = useFeaturedWorkOrder()
 const {
   filteredWorks,
   filtersActive,
@@ -57,6 +60,7 @@ const deleting = ref(false)
 const actionError = ref<{ message: string, title: string } | null>(null)
 
 const orderingPendingId = ref<string | null>(null)
+const featuredRemovingId = ref<string | null>(null)
 
 const PUBLICATION_TONES = {
   draft: 'warning',
@@ -140,20 +144,18 @@ async function loadWorks() {
 /** 已发布作品也走展示设置接口；完整作品字段仍保留下架门禁。 */
 async function updateOrdering(
   work: WorkListItemDto,
-  patch: { featured?: boolean, sortOrder?: number },
+  patch: { featured: boolean },
 ) {
   if (orderingPendingId.value !== null) {
     return
   }
   orderingPendingId.value = work.id
   try {
-    const featured = patch.featured ?? work.featured
-    const sortOrder = patch.sortOrder ?? work.sortOrder
     await adminApi(`/api/admin/v1/works/${work.id}/presentation`, {
       method: 'PUT',
       body: {
         expectedVersion: work.version,
-        payload: { featured, sortOrder },
+        payload: { featured: patch.featured },
       },
       schema: managedWorkResponseSchema,
     })
@@ -164,12 +166,46 @@ async function updateOrdering(
       return
     }
     actionError.value = {
-      title: '排序或精选未保存',
+      title: '精选设置未保存',
       message: workApiErrorText(error, '保存失败，请刷新后重试。'),
     }
+    // 原生 checkbox 在 change 后会先改变 DOM 状态；失败时重新读取服务端真值，
+    // 避免“提示未保存但界面仍显示已勾选”的误导。
+    await loadWorks()
   }
   finally {
     orderingPendingId.value = null
+  }
+}
+
+async function removeFeatured(work: WorkListItemDto) {
+  if (featuredRemovingId.value !== null || featuredOrder.pendingId.value !== null) {
+    return
+  }
+  featuredRemovingId.value = work.id
+  try {
+    await adminApi(`/api/admin/v1/works/${work.id}/presentation`, {
+      method: 'PUT',
+      body: {
+        expectedVersion: work.version,
+        payload: { featured: false },
+      },
+      schema: managedWorkResponseSchema,
+    })
+    await featuredOrder.load()
+  }
+  catch (error) {
+    if (error instanceof AdminApiError && error.status === 401) {
+      return
+    }
+    actionError.value = {
+      title: '未移出首页精选',
+      message: workApiErrorText(error, '保存失败，已保留原顺序，请重新加载后重试。'),
+    }
+    await featuredOrder.load()
+  }
+  finally {
+    featuredRemovingId.value = null
   }
 }
 
@@ -205,9 +241,14 @@ async function deleteWork() {
   }
 }
 
-onMounted(() => {
-  void loadWorks()
-})
+watch(activeTab, (tab) => {
+  if (tab === 'featured') {
+    void featuredOrder.load()
+  }
+  else {
+    void loadWorks()
+  }
+}, { immediate: true })
 </script>
 
 <template>
@@ -215,25 +256,41 @@ onMounted(() => {
     <div class="admin-list-page works-page">
       <header class="admin-list-page__header">
         <h1 class="admin-list-page__title">作品管理</h1>
-        <p v-if="status === 'ready'" class="admin-list-page__meta">
-          共 {{ works.length }} 件
+        <p v-if="activeTab === 'all' && status === 'ready'" class="admin-list-page__meta">
+          共 {{ works.length }} 件作品
+        </p>
+        <p v-else-if="activeTab === 'featured' && featuredOrder.status.value === 'ready'" class="admin-list-page__meta">
+          共 {{ featuredOrder.items.value.length }} 件精选
         </p>
         <NuxtLink to="/admin/works/new" class="admin-list-page__create">
           创建作品
         </NuxtLink>
       </header>
 
-      <div v-if="status === 'loading'" class="works-page__notice" role="status">
+      <nav class="works-tabs" aria-label="作品管理视图">
+        <NuxtLink
+          to="/admin/works"
+          class="works-tabs__item"
+          :aria-current="activeTab === 'all' ? 'page' : undefined"
+        >全部作品</NuxtLink>
+        <NuxtLink
+          to="/admin/works?tab=featured"
+          class="works-tabs__item"
+          :aria-current="activeTab === 'featured' ? 'page' : undefined"
+        >首页精选</NuxtLink>
+      </nav>
+
+      <div v-if="activeTab === 'all' && status === 'loading'" class="works-page__notice" role="status">
         正在加载作品列表…
       </div>
 
-      <div v-else-if="status === 'error'" class="works-page__notice works-page__notice--error">
+      <div v-else-if="activeTab === 'all' && status === 'error'" class="works-page__notice works-page__notice--error">
         <p role="alert">作品列表加载失败，请检查网络连接后重试。</p>
         <button type="button" class="works-page__retry" @click="loadWorks">重试</button>
       </div>
 
       <p
-        v-if="status === 'ready' && publishedFeaturedCount > PUBLIC_FEATURED_LIMIT"
+        v-if="activeTab === 'all' && status === 'ready' && publishedFeaturedCount > PUBLIC_FEATURED_LIMIT"
         class="works-page__featured-warning"
         role="status"
       >
@@ -242,7 +299,7 @@ onMounted(() => {
       </p>
 
       <AdminWorkListToolbar
-        v-if="status === 'ready' && works.length > 0"
+        v-if="activeTab === 'all' && status === 'ready' && works.length > 0"
         v-model:query="query"
         v-model:purpose="purpose"
         v-model:suit-type="suitType"
@@ -253,7 +310,7 @@ onMounted(() => {
         @reset="resetFilters"
       />
 
-      <div v-if="status === 'ready' && works.length === 0" class="works-page__empty">
+      <div v-if="activeTab === 'all' && status === 'ready' && works.length === 0" class="works-page__empty">
         <p class="works-page__empty-title">暂无作品</p>
         <p class="works-page__empty-text">创建第一件作品，上传出厂照后即可发布。</p>
         <NuxtLink to="/admin/works/new" class="admin-list-page__create">
@@ -262,7 +319,7 @@ onMounted(() => {
       </div>
 
       <div
-        v-else-if="status === 'ready' && filteredWorks.length === 0"
+        v-else-if="activeTab === 'all' && status === 'ready' && filteredWorks.length === 0"
         class="works-page__empty"
       >
         <p class="works-page__empty-title">没有符合条件的作品</p>
@@ -270,13 +327,13 @@ onMounted(() => {
         <button type="button" class="works-page__reset" @click="resetFilters">清除查找与筛选</button>
       </div>
 
-      <template v-else-if="status === 'ready'">
+      <template v-else-if="activeTab === 'all' && status === 'ready'">
         <table class="admin-list-table works-table" aria-label="作品管理表格">
           <thead>
             <tr>
               <th scope="col">作品</th>
               <th scope="col">用途</th>
-              <th scope="col">排序 / 精选</th>
+              <th scope="col">首页精选</th>
               <th scope="col">发布状态</th>
               <th scope="col">媒体</th>
               <th scope="col">发布阻断</th>
@@ -427,6 +484,18 @@ onMounted(() => {
         />
       </template>
 
+      <AdminFeaturedWorkOrderPanel
+        v-if="activeTab === 'featured'"
+        :error="featuredOrder.error.value"
+        :items="featuredOrder.items.value"
+        :pending-id="featuredOrder.pendingId.value"
+        :removing-id="featuredRemovingId"
+        :status="featuredOrder.status.value"
+        @move="featuredOrder.move"
+        @reload="featuredOrder.load"
+        @remove="removeFeatured"
+      />
+
       <AdminConfirmDialog
         :open="deleteTarget !== null"
         :title="deleteTarget ? `删除「${deleteTarget.characterName}」？` : '删除作品？'"
@@ -454,6 +523,41 @@ onMounted(() => {
 
 <style scoped>
 /* 页头、主操作与表格样式来自 admin-base.css 的 .admin-list-* 共用类。 */
+
+.works-tabs {
+  display: flex;
+  gap: var(--admin-space-1);
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 var(--admin-space-4);
+  padding: var(--admin-space-1);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-bg-subtle);
+}
+
+.works-tabs__item {
+  min-height: var(--admin-control-height);
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--admin-space-4);
+  border: 1px solid transparent;
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-text-secondary);
+  font-size: var(--admin-font-sm);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.works-tabs__item[aria-current='page'] {
+  border-color: var(--admin-border-secondary);
+  background: var(--admin-bg-primary);
+  color: var(--admin-accent-primary);
+}
+
+.works-tabs__item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 var(--admin-focus-width) var(--admin-focus-ring);
+}
 
 .works-page__notice {
   background: var(--admin-bg-primary);

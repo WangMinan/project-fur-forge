@@ -368,44 +368,26 @@ function moveTag(index: number, offset: number) {
   </section>
 
   <section class="editor-card" aria-labelledby="ordering-title">
-    <h2 id="ordering-title" class="editor-card__title">排序与精选</h2>
-    <div class="editor-card__grid">
-      <div class="field">
-        <label class="field__label" for="f-sort-order">人工排序</label>
+    <div class="editor-card__head">
+      <h2 id="ordering-title" class="editor-card__title">首页精选</h2>
+      <NuxtLink to="/admin/works?tab=featured" class="editor-card__hint">
+        前往调整精选顺序
+      </NuxtLink>
+    </div>
+    <div class="field">
+      <label class="checkbox">
         <input
-          id="f-sort-order"
-          v-model="form.sortOrder"
-          class="field__input field__input--compact"
-          type="number"
-          min="0"
-          step="1"
+          v-model="form.featured"
+          type="checkbox"
+          class="checkbox__input"
           :disabled="orderingDisabled"
-          :aria-invalid="errorFor('sortOrder') ? 'true' : undefined"
-          :aria-describedby="describedBy('f-sort-order-hint', 'f-sort-order-error', Boolean(errorFor('sortOrder')))"
+          aria-describedby="f-featured-hint"
         >
-        <p id="f-sort-order-hint" class="field__hint">
-          只影响首页精选，数值越小越靠前
-        </p>
-        <p v-if="errorFor('sortOrder')" id="f-sort-order-error" class="field__error">
-          {{ errorFor('sortOrder') }}
-        </p>
-      </div>
-      <div class="field">
-        <span class="field__label">首页精选</span>
-        <label class="checkbox">
-          <input
-            v-model="form.featured"
-            type="checkbox"
-            class="checkbox__input"
-            :disabled="orderingDisabled"
-            aria-describedby="f-featured-hint"
-          >
-          <span>加入首页精选作品</span>
-        </label>
-        <p id="f-featured-hint" class="field__hint">
-          最多展示 {{ PUBLIC_FEATURED_LIMIT }} 件；与首页轮播是两套内容
-        </p>
-      </div>
+        <span>加入首页精选作品</span>
+      </label>
+      <p id="f-featured-hint" class="field__hint">
+        新加入的作品自动排在末尾；首页最多展示排序最前的 {{ PUBLIC_FEATURED_LIMIT }} 件已发布作品。
+      </p>
     </div>
   </section>
 

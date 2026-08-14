@@ -576,7 +576,7 @@ describe('T19/T20 public repository contracts', () => {
       filter: { valid: false },
     })
     expect(repository.listFeaturedWorks().items.map(item => item.work.slug))
-      .toEqual(['first-work', 'second-work'])
+      .toEqual(['second-work', 'first-work'])
     expect(repository.getWorkBySlug(draft.slug)).toBeNull()
 
     const detail = repository.getWorkBySlug('first-work')!
@@ -664,7 +664,7 @@ describe('T19/T20 public repository contracts', () => {
       resultCount: 13,
     })
 
-    for (let index = 0; index < 6; index += 1) {
+    for (let index = 0; index < 11; index += 1) {
       await createPublishedWork({
         slug: `featured-extra-${index}`,
         sortOrder: 30 + index,
@@ -674,14 +674,20 @@ describe('T19/T20 public repository contracts', () => {
     }
     expect(repository.listFeaturedWorks().items.map(item => item.work.slug))
       .toEqual([
-        'first-work',
         'second-work',
+        'first-work',
         'featured-extra-0',
         'featured-extra-1',
         'featured-extra-2',
         'featured-extra-3',
+        'featured-extra-4',
+        'featured-extra-5',
+        'featured-extra-6',
+        'featured-extra-7',
+        'featured-extra-8',
+        'featured-extra-9',
       ])
-    expect(repository.listFeaturedWorks().resultCount).toBe(6)
+    expect(repository.listFeaturedWorks().resultCount).toBe(12)
 
     await createPublishedWork({
       slug: 'published-after-first-read',

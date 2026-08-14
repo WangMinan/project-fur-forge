@@ -48,7 +48,6 @@ import {
   findWatermarkTargets,
   finishWatermarkRebuild,
   hasActiveWatermarkOperation,
-  hasVerifiedPreview,
   insertWatermarkOperation,
   markWatermarkOperationFailed,
   reopenFailedWatermarkOperation,
@@ -65,6 +64,7 @@ import { ServiceError } from '../service-error'
 import { SITE_DISPLAY_RECIPE_VERSION } from '../recipe/site-display-recipe'
 import {
   findWatermarkProfile,
+  createWatermarkProfile,
   requireSiteBranding,
   requireWatermarkProfile,
   watermarkProfileDto,
@@ -734,9 +734,6 @@ export function startWatermarkProfileApplication(
   ) {
     throw new ServiceError(409, 'CONFLICT', 'Watermark draft is stale.', 'WATERMARK_DRAFT_STALE')
   }
-  if (!hasVerifiedPreview(sqlite, profileId)) {
-    throw new ServiceError(409, 'CONFLICT', 'A verified watermark preview is required.', 'WATERMARK_PREVIEW_REQUIRED')
-  }
   watermarkSource(sqlite, profile)
   const operation = createOperation(sqlite, {
     brandingVersion: branding.version,
@@ -745,6 +742,39 @@ export function startWatermarkProfileApplication(
   }, now)
   startApplyingProfile(sqlite, profileId, now)
   return operationDto(operation)
+}
+
+/**
+ * T51-F8：品牌页的一次写入入口。外层事务把 profile 创建/复用、branding
+ * 草稿指针和 rebuild operation 启动绑定在一起，避免留下需要管理员继续处理的
+ * 半成品草稿。实际 OSS 生成仍由持久 operation 在事务提交后异步执行。
+ */
+export function startWatermarkRefresh(
+  sqlite: Database.Database,
+  expectedBrandingVersion: number,
+  input: {
+    opacityPercent: number
+    scalePercent: number
+    sourceAssetId: string
+  },
+  now = Date.now(),
+) {
+  return sqlite.transaction(() => {
+    const profile = createWatermarkProfile(
+      sqlite,
+      expectedBrandingVersion,
+      input,
+      now,
+    )
+    const branding = requireSiteBranding(sqlite)
+    return startWatermarkProfileApplication(
+      sqlite,
+      profile.id,
+      profile.version,
+      branding.version,
+      now,
+    )
+  })()
 }
 
 export async function runWatermarkProfileApplication(

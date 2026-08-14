@@ -6,7 +6,10 @@ import type {
   WorkPurpose,
 } from '../../shared/types/contracts'
 import { REGULAR_ADOPTION_BUSINESS_STATUS_VALUES } from '../../shared/schemas/work'
+import { PUBLIC_FEATURED_LIMIT } from '~~/shared/constants/featured'
 import { parseCnyYuanInput, toCnyYuanInput } from './price'
+
+export { PUBLIC_FEATURED_LIMIT }
 
 /**
  * 管理端作品表单的单一形状。价格与排序保留为输入文本，
@@ -94,9 +97,6 @@ export interface WorkFormErrors {
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 export const MAX_FEATURE_TAGS = 8
 export const MAX_FEATURE_TAG_LENGTH = 24
-/** 公开首页精选轨道的服务端上限；超出后管理端提示，但不阻止保存。 */
-export const PUBLIC_FEATURED_LIMIT = 6
-
 export const OWNER_DISPLAY_PRESETS = ['有点小狗工作室', '不公开'] as const
 
 function isRegularBusinessStatus(

@@ -62,6 +62,10 @@ profile 或配方像素改变都生成新 Key，在完整校验后原子切换�
 - 横版原比例 `detail` 保持原有单居中尺寸；
 - `design-sheet` 继续为左右两个不重叠水印，并按现有 960 px 参考宽度缩放；不得把双水印套到竖图。
 
+活动 profile 的管理流程不要求先生成品牌页真实预览。品牌页一次提交 Logo、参数和 branding 版本，服务端创建或复用不可变 profile 并启动同一个持久重建 operation：空库或无目标作品时可直接激活；已有公开作品时，先生成和校验完整新变体，再原子切换活动 profile。切换前失败继续使用旧 profile，首次失败保持无活动 profile；切换后的旧对象清理失败不回退新 profile，只重试清理。历史预览 API/operation 可以保留兼容，但新 UI 不调用。
+
+设定图和出厂照的后台公开水印预览仍复用活动 profile 与实际 `buildWatermarkProcess`，仅作为作品编辑器中的可选视觉检查，不是作品发布或 profile 切换门禁。profile 一旦启用，后续作品上传、预览和发布自动使用当前活动 profile。
+
 低分辨率 `design_sheet` 不直接成为公开配方输入。作品发布时先按实际用途计算所需最小几何尺寸，使用内嵌 FFmpeg Lanczos 保持原比例放大并生成 `design-sheet-upscale-lanczos-v1` 私有 `preprocess` 变体；不裁掉主体、不覆盖永久原图，也不宣称恢复细节。后续 `recipe-v3` 只从验证为 READY 且不超过 OSS 处理输入上限的该处理源生成公开图。
 
 低分辨率 `studio_photo` 采用同一发布链，但使用独立 `studio-photo-upscale-lanczos-v1` 身份。发布检查不以像素不足阻断；同一 publication operation 在 `PREPARING_SOURCE` 阶段按当前用途计算最小几何尺寸，主图同时覆盖 2400 px `detail` 与 1200 × 1600 `work-card`，非主图覆盖 `detail`。FFmpeg Lanczos 保持原比例生成 READY 私有 `preprocess` 变体，永久原图不覆盖；卡片焦点/裁切按处理源实际尺寸执行，后续 `recipe-v3` 只消费验证完成的处理源。适配失败保持作品未发布并保留原图，可重新发布重试。

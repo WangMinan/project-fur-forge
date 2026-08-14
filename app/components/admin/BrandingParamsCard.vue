@@ -2,17 +2,15 @@
 // 水印参数：不透明度 10–90（默认 50）、缩放 20–90（默认 60）、位置固定居中。
 // 不提供关闭开关与四角位置；数字输入与滑块双向同步；
 // 服务端/本地校验错误通过 aria-describedby 与控件程序化关联。
-const props = defineProps<{
+defineProps<{
   disabled: boolean
   dirty: boolean
   opacityPercent: number
-  saving: boolean
   scalePercent: number
-  serverError: string | null
 }>()
 
 const emit = defineEmits<{
-  save: []
+  validity: [value: boolean]
   'update:opacityPercent': [value: number]
   'update:scalePercent': [value: number]
 }>()
@@ -23,6 +21,8 @@ const SCALE_MIN = 20
 const SCALE_MAX = 90
 
 const localError = ref<string | null>(null)
+
+watch(localError, value => emit('validity', value === null), { immediate: true })
 
 function inRange(value: number, min: number, max: number) {
   return Number.isInteger(value) && value >= min && value <= max
@@ -57,14 +57,14 @@ function onRangeInput(kind: 'opacity' | 'scale', event: Event) {
   }
 }
 
-const visibleError = computed(() => localError.value ?? props.serverError)
+const visibleError = computed(() => localError.value)
 </script>
 
 <template>
   <section class="editor-card branding-params" aria-labelledby="branding-params-title">
     <div class="editor-card__head">
       <h2 id="branding-params-title" class="editor-card__title">水印参数</h2>
-      <p class="editor-card__hint">保存后生成新的草稿配置</p>
+      <p class="editor-card__hint">确认刷新时与 Logo 一起保存</p>
     </div>
 
     <div class="branding-params__field">
@@ -156,15 +156,9 @@ const visibleError = computed(() => localError.value ?? props.serverError)
       {{ visibleError }}
     </p>
 
-    <div class="branding-params__actions">
-      <button
-        type="button"
-        class="editor__button editor__button--primary"
-        :disabled="disabled || saving || !dirty || !!localError"
-        @click="emit('save')"
-      >{{ saving ? '保存中…' : '保存草稿配置' }}</button>
-      <span v-if="dirty" class="branding-params__dirty">有未保存的参数更改</span>
-    </div>
+    <p v-if="dirty" class="branding-params__dirty" role="status">
+      当前设置尚未保存并刷新
+    </p>
   </section>
 </template>
 
@@ -231,14 +225,8 @@ const visibleError = computed(() => localError.value ?? props.serverError)
   font-size: var(--admin-font-sm);
 }
 
-.branding-params__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--admin-space-3);
-  flex-wrap: wrap;
-}
-
 .branding-params__dirty {
+  margin: 0;
   font-size: var(--admin-font-xs);
   color: var(--admin-status-warning);
   font-weight: 600;

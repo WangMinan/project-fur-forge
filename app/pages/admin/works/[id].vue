@@ -190,7 +190,7 @@ async function saveWork(): Promise<boolean> {
         body: {
           expectedVersion: work.value.version,
           payload: presentationOnly
-            ? { featured: payload.featured, sortOrder: payload.sortOrder }
+            ? { featured: payload.featured }
             : payload,
         },
         schema: managedWorkResponseSchema,
@@ -198,7 +198,7 @@ async function saveWork(): Promise<boolean> {
     )
     applyWork(result.data)
     savedNotice.value = presentationOnly
-      ? '排序与精选已保存，公开端已更新。'
+      ? '首页精选设置已保存，公开端已更新。'
       : '已保存。'
     void loadPreview()
     return true
@@ -327,12 +327,12 @@ useSeoMeta({
             class="editor__button editor__button--secondary"
             :disabled="!isDirty || saving"
             @click="saveWork"
-          >{{ saving ? '保存中…' : locked ? '保存排序 / 精选' : '保存' }}</button>
+          >{{ saving ? '保存中…' : locked ? '保存首页精选' : '保存' }}</button>
         </div>
       </header>
 
       <p v-if="locked" class="editor__locked" role="status">
-        作品已发布：基础信息与图片为只读，需要先下架。排序和精选仍可直接修改。
+        作品已发布：基础信息与图片为只读，需要先下架。首页精选仍可直接修改，具体顺序在作品管理的“首页精选”Tab 调整。
       </p>
       <p v-else-if="legacyEventSale" class="editor__locked" role="status">
         该作品仍是旧的“展会出售中”状态：保存前请在领养信息里选择一个正式的领养状态。
@@ -431,8 +431,8 @@ useSeoMeta({
                   </div>
                 </template>
                 <div class="preview-card__fact">
-                  <dt>排序 / 精选</dt>
-                  <dd>{{ preview.sortOrder }} · {{ preview.featured ? '首页精选' : '不精选' }}</dd>
+                  <dt>首页精选</dt>
+                  <dd>{{ preview.featured ? '已加入（顺序在精选 Tab 调整）' : '未加入' }}</dd>
                 </div>
                 <div class="preview-card__fact">
                   <dt>公开地址</dt>

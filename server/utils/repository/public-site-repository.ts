@@ -33,6 +33,7 @@ import type {
   PublicWorkListDto,
   PublicWorkSummaryDto,
 } from '../../../shared/types/contracts'
+import { PUBLIC_FEATURED_LIMIT } from '../../../shared/constants/featured'
 import { getDatabase } from '../database'
 import {
   toPublicSourceSetDto,
@@ -477,7 +478,7 @@ function homeAggregate(
 }
 
 /**
- * 首页精选：全站唯一使用人工 `sort_order` 的位置。
+ * 首页精选：全站唯一使用服务端连续 `sort_order` 的位置。
  * 快照本身按发布时间倒序，因此这里显式重排。
  */
 function featuredEntries(entries: readonly SnapshotEntry[]) {
@@ -486,7 +487,7 @@ function featuredEntries(entries: readonly SnapshotEntry[]) {
     .toSorted((left, right) => (
       left.sortOrder - right.sortOrder || (left.id < right.id ? -1 : 1)
     ))
-    .slice(0, 6)
+    .slice(0, PUBLIC_FEATURED_LIMIT)
 }
 
 /** T37：常规领养与展会掉落共用同一份领养投影和设定图水印变体。 */
@@ -773,7 +774,7 @@ export function createFakePublicSiteRepository(
       const items = seed.featuredSlugs.flatMap((slug) => {
         const detail = bySlug.get(slug)
         return detail ? [summaryFor(detail)] : []
-      }).slice(0, 6)
+      }).slice(0, PUBLIC_FEATURED_LIMIT)
       return publicFeaturedWorksDtoSchema.parse({
         items,
         resultCount: items.length,
@@ -801,7 +802,7 @@ export function createFakePublicSiteRepository(
       const featured = seed.featuredSlugs.flatMap((slug) => {
         const detail = bySlug.get(slug)
         return detail ? [summaryFor(detail)] : []
-      }).slice(0, 6)
+      }).slice(0, PUBLIC_FEATURED_LIMIT)
       return publicHomeAggregateDtoSchema.parse({
         hero: home,
         entries: {
