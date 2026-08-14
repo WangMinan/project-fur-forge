@@ -90,11 +90,24 @@ test('动态后台三个固定视口无横向溢出且控件可达', async ({ pa
   for (const [width, height] of [[390, 844], [768, 1024], [1440, 900]]) {
     await page.setViewportSize({ width, height })
     await expect(page.locator('#update-form-title')).toBeVisible()
-    await expect(page.getByRole('link', { name: '动态管理' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    )
-    await expect(page.getByRole('button', { name: '退出登录' })).toBeVisible()
+    if (width < 1024) {
+      const trigger = page.getByRole('button', { name: '打开管理导航' })
+      await trigger.click()
+      const drawer = page.getByTestId('admin-mobile-nav')
+      await expect(drawer).toBeVisible()
+      await expect(drawer.getByRole('link', { name: '动态管理' }))
+        .toHaveAttribute('aria-current', 'page')
+      await expect(drawer.getByRole('button', { name: '退出登录' })).toBeVisible()
+      await page.keyboard.press('Escape')
+      await expect(drawer).toBeHidden()
+    }
+    else {
+      const navigation = page.locator('.admin-shell__nav')
+      await expect(navigation.getByRole('link', { name: '动态管理' }))
+        .toHaveAttribute('aria-current', 'page')
+      await expect(page.locator('.admin-shell__session')
+        .getByRole('button', { name: '退出登录' })).toBeVisible()
+    }
     const username = page.locator('.admin-shell__user')
     if (width >= 1280) {
       await expect(username).toHaveText('e2e-admin')

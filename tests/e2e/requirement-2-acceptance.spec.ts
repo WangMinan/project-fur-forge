@@ -53,6 +53,24 @@ async function expectNoOverflow(page: import('@playwright/test').Page) {
   ))).toBeLessThanOrEqual(1)
 }
 
+async function expectAdminLogoutReachable(
+  page: import('@playwright/test').Page,
+  width: number,
+) {
+  if (width < 1024) {
+    await page.getByRole('button', { name: '打开管理导航' }).click()
+    const drawer = page.getByTestId('admin-mobile-nav')
+    await expect(drawer).toBeVisible()
+    await expect(drawer.getByRole('button', { name: '退出登录' })).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(drawer).toBeHidden()
+    return
+  }
+
+  await expect(page.locator('.admin-shell__session')
+    .getByRole('button', { name: '退出登录' })).toBeVisible()
+}
+
 test('需求2公开与管理关键页面在双 Host 三视口无 console/network 错误', async ({ page }) => {
   test.setTimeout(180_000)
   const runtime = observeRuntime(page)
@@ -86,7 +104,7 @@ test('需求2公开与管理关键页面在双 Host 三视口无 console/network
       await page.goto(`${adminBaseURL}${path}`)
       expect(new URL(page.url()).hostname).toBe('localhost')
       await expect(page.getByTestId('admin-shell')).toBeVisible()
-      await expect(page.getByRole('button', { name: '退出登录' })).toBeVisible()
+      await expectAdminLogoutReachable(page, viewport.width)
       await page.waitForTimeout(100)
       await expectNoOverflow(page)
     }
