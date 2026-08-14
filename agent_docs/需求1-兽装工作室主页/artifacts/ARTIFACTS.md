@@ -34,6 +34,7 @@ T35–T37 尚无独立 Review 签署；该门禁并入 T49，不能用用户验�
 
 ## 阶段 E/F 已完成的文档产物
 
+- 公开端 Figma 协作契约：[`../.design/public-site/FIGMA-COLLABORATION.md`](../.design/public-site/FIGMA-COLLABORATION.md)，规定免费 Starter 三页结构、公开素材边界、设计候选与实施授权分离；外部工作区为 [`有点小狗 · 公开端 UI 优化`](https://www.figma.com/design/JnpFS63r3jRybqfeN7IIjl)；
 - 用户生产决策：[`../planning/ESA-PRODUCTION-DECISION-2026-08-09.md`](../planning/ESA-PRODUCTION-DECISION-2026-08-09.md)；
 - 阶段边界调整：[`../implementation/notes/stage-e/STAGE-E-F-BOUNDARY-2026-08-09.md`](../implementation/notes/stage-e/STAGE-E-F-BOUNDARY-2026-08-09.md)；
 - 当前 ESA 生产方案：[`../planning/ESA-PRODUCTION-DECISION-2026-08-09.md`](../planning/ESA-PRODUCTION-DECISION-2026-08-09.md)；

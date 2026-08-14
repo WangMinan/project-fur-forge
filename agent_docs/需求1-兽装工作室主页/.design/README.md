@@ -9,6 +9,7 @@
 - [`public-site/DESIGN_BRIEF.md`](./public-site/DESIGN_BRIEF.md)：公开端视觉和交互边界；
 - [`public-site/INFORMATION_ARCHITECTURE.md`](./public-site/INFORMATION_ARCHITECTURE.md)：公开端导航、页面和内容层级；
 - [`public-site/DESIGN_TOKENS.md`](./public-site/DESIGN_TOKENS.md)：公开端设计 Token；
+- [`public-site/FIGMA-COLLABORATION.md`](./public-site/FIGMA-COLLABORATION.md)：免费 Starter 单文件协作、公开素材边界、设计师交付与实施授权纪律；
 - [`admin-console/DESIGN_BRIEF.md`](./admin-console/DESIGN_BRIEF.md)：管理端心智模型和交互边界；
 - [`admin-console/INFORMATION_ARCHITECTURE.md`](./admin-console/INFORMATION_ARCHITECTURE.md)：管理端导航、页面和状态层级；
 - [`admin-console/DESIGN_TOKENS.md`](./admin-console/DESIGN_TOKENS.md)：管理端设计 Token。
@@ -53,6 +54,7 @@
 ## 设计变更纪律
 
 - 新需求先进入 `SPEC.md`、`PLAN.md`、`TASKS.md`，再调整此目录；
+- Figma 的 `Current UI` 只记录指定 SHA 的现状，`Proposed` 只作为候选；未经用户确认并同步活文档，不得据此修改实现；
 - 不因分析能力增加公开端密度；
 - 不预建已取消任务的导航、空页面或通用 CMS；
 - 日期记录和历史截图只能说明当时事实，不能覆盖活文档。
