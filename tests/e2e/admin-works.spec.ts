@@ -446,9 +446,10 @@ test.describe('T22 完整字段：三用途、领养、价格与首页精选', (
   })
 
   test('列表内联编辑遇到服务端版本冲突时保留原状态并持续提示', async ({ page }) => {
-    const work = await createWorkViaApi(page, { characterName: '列表冲突' })
+    const characterName = `列表冲突-${Date.now().toString(36)}`
+    const work = await createWorkViaApi(page, { characterName })
     await page.goto(`${adminBaseURL}/admin/works`)
-    const row = page.getByRole('row').filter({ hasText: '列表冲突' })
+    const row = page.getByRole('row').filter({ hasText: characterName })
     await expect(row.getByLabel('排序')).toHaveCount(0)
 
     await page.route(`**/api/admin/v1/works/${work.id}/presentation`, async (route) => {
@@ -465,9 +466,19 @@ test.describe('T22 完整字段：三用途、领养、价格与首页精选', (
       })
     })
 
-    await row.getByLabel('加入首页精选', { exact: true }).check()
-    await expect(page.getByRole('alert').filter({ hasText: '版本冲突' })).toBeVisible()
-    await expect(row.getByLabel('加入首页精选', { exact: true })).not.toBeChecked()
+    const featured = row.getByLabel('加入首页精选', { exact: true })
+    const rejected = page.waitForResponse(response =>
+      response.url().endsWith(`/api/admin/v1/works/${work.id}/presentation`)
+      && response.request().method() === 'PUT',
+    )
+    await featured.click()
+    expect((await rejected).status()).toBe(409)
+
+    const dialog = page.getByRole('alertdialog')
+    await expect(dialog.getByRole('alert')).toContainText('版本冲突')
+    await expect(featured).not.toBeChecked()
+    await dialog.getByRole('button', { name: '知道了' }).click()
+    await expect(dialog).toBeHidden()
   })
 })
 
