@@ -24,7 +24,12 @@ import {
 } from '../repository/variant-repository'
 
 /** 站点展示配方：首页与委托页大图、首页业务入口，全部不打水印。 */
-export const SITE_DISPLAY_RECIPE_VERSION = 'site-display-v1'
+export const SITE_DISPLAY_RECIPE_VERSION = 'site-display-v2'
+export const LEGACY_SITE_DISPLAY_RECIPE_VERSION = 'site-display-v1'
+
+export type SiteDisplayRecipeVersion =
+  | typeof SITE_DISPLAY_RECIPE_VERSION
+  | typeof LEGACY_SITE_DISPLAY_RECIPE_VERSION
 
 export type SiteDisplayUsage =
   | 'home-hero-landscape'
@@ -40,7 +45,7 @@ interface SiteDisplayRecipe {
   widths: readonly number[]
 }
 
-const recipes = {
+const legacyRecipes = {
   'home-hero-landscape': {
     roles: ['home_hero_landscape'],
     widths: [768, 1280, 1920],
@@ -73,6 +78,18 @@ const recipes = {
   },
 } as const satisfies Record<SiteDisplayUsage, SiteDisplayRecipe>
 
+const recipes = {
+  ...legacyRecipes,
+  'home-hero-landscape': {
+    ...legacyRecipes['home-hero-landscape'],
+    widths: [768, 1280, 1920, 2880, 3840],
+  },
+} as const satisfies Record<SiteDisplayUsage, SiteDisplayRecipe>
+
+function recipesForVersion(version: SiteDisplayRecipeVersion) {
+  return version === SITE_DISPLAY_RECIPE_VERSION ? recipes : legacyRecipes
+}
+
 export const SITE_DISPLAY_USAGES = Object.keys(recipes) as SiteDisplayUsage[]
 
 export const HOME_ENTRY_USAGES = {
@@ -96,6 +113,13 @@ export const SITE_HERO_USAGES = {
 
 export function siteDisplayWidths(usage: SiteDisplayUsage) {
   return recipes[usage].widths
+}
+
+export function siteDisplayWidthsForVersion(
+  usage: SiteDisplayUsage,
+  recipeVersion: SiteDisplayRecipeVersion,
+) {
+  return recipesForVersion(recipeVersion)[usage].widths
 }
 
 export function siteDisplayHeight(usage: SiteDisplayUsage, width: number) {
@@ -171,11 +195,11 @@ function resizeOperation(usage: SiteDisplayUsage, source: AssetSource, width: nu
   )}`
 }
 
-function formatOperation(format: PublicFormat) {
+function formatOperation(usage: SiteDisplayUsage, format: PublicFormat) {
   if (format === 'png') {
     return 'format,png'
   }
-  return `quality,q_${format === 'webp' ? 82 : 86}/format,${
+  return `quality,q_${qualityFor(usage, format)}/format,${
     format === 'jpeg' ? 'jpg' : 'webp'
   }`
 }
@@ -189,12 +213,22 @@ export function buildSiteDisplayProcess(
 ) {
   return [
     `image/${resizeOperation(usage, source, width)}`,
-    formatOperation(format),
+    formatOperation(usage, format),
   ].join('/')
 }
 
-function qualityFor(format: PublicFormat) {
-  return format === 'webp' ? 82 : format === 'jpeg' ? 86 : 100
+function qualityFor(
+  usage: SiteDisplayUsage,
+  format: PublicFormat,
+  recipeVersion: SiteDisplayRecipeVersion = SITE_DISPLAY_RECIPE_VERSION,
+) {
+  if (format === 'webp') {
+    return recipeVersion === SITE_DISPLAY_RECIPE_VERSION
+      && usage.includes('-hero-')
+      ? 90
+      : 82
+  }
+  return format === 'jpeg' ? 86 : 100
 }
 
 function recipeIdentity(
@@ -217,7 +251,7 @@ function recipeIdentity(
     focalX: sourceAsset.focalX,
     focalY: sourceAsset.focalY,
     format,
-    quality: qualityFor(format),
+    quality: qualityFor(usage, format),
   })
   return digest('sha256', Buffer.from(identity))
 }
@@ -334,7 +368,7 @@ async function generateOne(
         inputSha256: source.inputSha256,
         mediaRole: sourceAsset.role,
         objectKey,
-        quality: qualityFor(format),
+        quality: qualityFor(usage, format),
         recipeVersion: SITE_DISPLAY_RECIPE_VERSION,
         sha256,
         sourceAssetId: sourceAsset.id,
@@ -448,13 +482,15 @@ const digestPattern = /^[0-9a-f]{64}$/u
 function eligible<T extends SiteDisplayVariantCandidate>(
   usage: SiteDisplayUsage,
   variants: readonly T[],
+  recipeVersion: SiteDisplayRecipeVersion = SITE_DISPLAY_RECIPE_VERSION,
 ) {
-  const widths = recipes[usage].widths as readonly number[]
+  const selectedRecipes = recipesForVersion(recipeVersion)
+  const widths = selectedRecipes[usage].widths as readonly number[]
   return variants.filter(variant => (
     variant.storageScope === 'PUBLIC'
     && variant.status === 'READY'
     && variant.usage === usage
-    && variant.recipeVersion === SITE_DISPLAY_RECIPE_VERSION
+    && variant.recipeVersion === recipeVersion
     && variant.protectionMode === 'none'
     && variant.sha256 !== null
     && digestPattern.test(variant.sha256)
@@ -469,7 +505,7 @@ export function missingSiteDisplayVariantCount(
   usage: SiteDisplayUsage,
   variants: readonly SiteDisplayVariantCandidate[],
 ) {
-  const matched = eligible(usage, variants)
+  const matched = eligible(usage, variants, SITE_DISPLAY_RECIPE_VERSION)
   let missing = 0
   for (const width of recipes[usage].widths) {
     const formats = new Set(
@@ -492,6 +528,65 @@ export function completeSiteDisplayVariants<T extends SiteDisplayVariantCandidat
   variants: readonly T[],
 ) {
   return missingSiteDisplayVariantCount(usage, variants) === 0
-    ? eligible(usage, variants)
+    ? eligible(usage, variants, SITE_DISPLAY_RECIPE_VERSION)
+    : null
+}
+
+function completeLegacySiteDisplayVariants<T extends SiteDisplayVariantCandidate>(
+  usage: SiteDisplayUsage,
+  variants: readonly T[],
+) {
+  const matched = eligible(
+    usage,
+    variants,
+    LEGACY_SITE_DISPLAY_RECIPE_VERSION,
+  )
+  let missing = 0
+  for (const width of legacyRecipes[usage].widths) {
+    const formats = new Set(
+      matched.filter(variant => variant.width === width)
+        .map(variant => variant.format),
+    )
+    if (!formats.has('webp')) {
+      missing += 1
+    }
+    if (!formats.has('jpeg') && !formats.has('png')) {
+      missing += 1
+    }
+  }
+  return missing === 0 ? matched : null
+}
+
+export function completeSiteDisplayVariantsForVersion<
+  T extends SiteDisplayVariantCandidate,
+>(
+  usage: SiteDisplayUsage,
+  variants: readonly T[],
+  recipeVersion: SiteDisplayRecipeVersion,
+) {
+  return recipeVersion === SITE_DISPLAY_RECIPE_VERSION
+    ? completeSiteDisplayVariants(usage, variants)
+    : completeLegacySiteDisplayVariants(usage, variants)
+}
+
+/** v2 完整后原子优先；升级期间只整体回退完整 v1，不跨版本拼接。 */
+export function resolveCompleteSiteDisplayVariants<
+  T extends SiteDisplayVariantCandidate,
+>(usage: SiteDisplayUsage, variants: readonly T[]) {
+  const current = completeSiteDisplayVariants(usage, variants)
+  if (current) {
+    return {
+      recipeVersion: SITE_DISPLAY_RECIPE_VERSION,
+      variants: current,
+      widths: recipes[usage].widths,
+    } as const
+  }
+  const legacy = completeLegacySiteDisplayVariants(usage, variants)
+  return legacy
+    ? {
+        recipeVersion: LEGACY_SITE_DISPLAY_RECIPE_VERSION,
+        variants: legacy,
+        widths: legacyRecipes[usage].widths,
+      } as const
     : null
 }

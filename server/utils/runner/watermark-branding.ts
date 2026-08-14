@@ -177,7 +177,7 @@ function targetUsages(
 
 function watermarkTargets(sqlite: Database.Database) {
   const workRows = findWatermarkTargets(sqlite)
-  // T34-F1：站点展示位使用无水印 site-display-v1，不参与 profile 重建。
+  // T51-F7：站点展示位使用无水印 site-display-v2，不参与 profile 重建。
   const targets = new Map<string, Set<PublicMediaUsage>>()
   for (const row of workRows) {
     const usages = targets.get(row.assetId) ?? new Set<PublicMediaUsage>()

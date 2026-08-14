@@ -607,7 +607,7 @@ test.describe('公开预览与泄漏边界', () => {
     page.on('response', (response) => {
       if (
         response.url().includes('/api/admin/')
-        && !/\/api\/admin\/v1\/media\/assets\/[^/]+\/preview$/u.test(response.url())
+        && !/\/api\/admin\/v1\/media\/assets\/[^/]+\/preview(?:\?.*)?$/u.test(response.url())
       ) {
         void response.text().then(text => adminResponses.push(text)).catch(() => {})
       }

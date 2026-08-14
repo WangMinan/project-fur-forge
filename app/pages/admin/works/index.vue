@@ -20,6 +20,8 @@ import { formatCnyMinorUnits } from '~/utils/format'
 import { workApiErrorText } from '~/utils/work-errors'
 import { PUBLIC_FEATURED_LIMIT } from '~/utils/work-form'
 import { PUBLICATION_BLOCKER_LABELS } from '~/utils/media-labels'
+import { ADMIN_MEDIA_CARD_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
+import { adminMediaPreviewUrl } from '~/utils/admin-media-preview'
 
 definePageMeta({
   layout: 'admin',
@@ -289,7 +291,7 @@ onMounted(() => {
                     <!-- 低分辨率缩略图：表格格子只有 3rem，不需要原图。 -->
                     <img
                       v-if="thumbAssetId(work)"
-                      :src="`/api/admin/v1/media/assets/${thumbAssetId(work)}/preview?w=96`"
+                      :src="adminMediaPreviewUrl(thumbAssetId(work)!, ADMIN_MEDIA_CARD_PREVIEW_WIDTH)"
                       alt=""
                       loading="lazy"
                       referrerpolicy="same-origin"
@@ -362,7 +364,7 @@ onMounted(() => {
             <span class="works-card__thumb">
               <img
                 v-if="thumbAssetId(work)"
-                :src="`/api/admin/v1/media/assets/${thumbAssetId(work)}/preview?w=160`"
+                :src="adminMediaPreviewUrl(thumbAssetId(work)!, ADMIN_MEDIA_CARD_PREVIEW_WIDTH)"
                 alt=""
                 loading="lazy"
                 referrerpolicy="same-origin"

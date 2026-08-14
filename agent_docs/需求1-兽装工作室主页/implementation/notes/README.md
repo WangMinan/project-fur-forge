@@ -1,7 +1,7 @@
 # 实施记录索引
 
 > **角色**：导航 dated notes。历史记录描述当时事实；当前规则以 `STATE.md`、SPEC、媒体策略、PLAN 和 TASKS 为准。
-> **最后校准**：2026-08-11。
+> **最后校准**：2026-08-14。
 
 ## 当前入口
 
@@ -52,6 +52,7 @@ T35–T37 的工程记录不是独立 Review。用户同意将一次新的综合
 - [`T51-F4-ENGINEERING-2026-08-10.md`](./stage-e/T51-F4-ENGINEERING-2026-08-10.md)：全管理端 FFmpeg 动态等待反馈、异步子进程、`recipe-v3` 作品竖图单居中水印缩放、旧配方整体回退及本地门禁；T49 Review 保持开放。
 - [`T51-F5-ENGINEERING-2026-08-10.md`](./stage-e/T51-F5-ENGINEERING-2026-08-10.md)：竖版作品详情、3:4 卡片和后台公开水印预览统一相对水印尺寸，新不可变身份、完整本地门禁与用户视觉确认；T49-R1 独立 Review 保持开放。
 - [`T51-F6-FOOTER-LAYOUT-2026-08-11.md`](./stage-e/T51-F6-FOOTER-LAYOUT-2026-08-11.md)：公共页脚三块间距重排、备案居中和右侧两行法务文案；本机测试按用户要求跳过，等待远端流水线验证。
+- [`T51-F7-MEDIA-UPGRADE-2026-08-14.md`](./stage-e/T51-F7-MEDIA-UPGRADE-2026-08-14.md)：管理私有 320/640 预览与显式原图边界、Hero 4K `site-display-v2`、v1 整体回退、旧图升级命令及本地工程门禁；T49-R1/同 SHA CI/发布保持开放。
 - [`T52-E1-ENGINEERING-2026-08-09.md`](./stage-e/T52-E1-ENGINEERING-2026-08-09.md)：服务端 OSS、浏览器上传与 ESA 公开媒体 Endpoint 分离，独立 ESA 配置、生产 Schema/模板/verify 与测试证据；T49 Review 保持开放。
 - [`T52-E2-ENGINEERING-2026-08-09.md`](./stage-e/T52-E2-ENGINEERING-2026-08-09.md)：OSS/ESA preflight 的 dry-run/live 边界、Bucket/对象/衍生物/权限验证、官方 SDK、脱敏证据与本地门禁；真实云侧 live 与 T49 Review 保持开放。
 - [`T52-E2-PREFLIGHT-RELAXATION-2026-08-10.md`](./stage-e/T52-E2-PREFLIGHT-RELAXATION-2026-08-10.md)：用户明确允许排障期通配 CORS 并保留既有本地测试衍生对象；预检只验证上传能力，不再检查衍生 Bucket CORS 或全桶数据库一致性，也不清理旧对象。

@@ -279,6 +279,17 @@ docker compose run --rm --no-deps app node ops/ops.mjs restore-verify --backup /
 docker compose run --rm --no-deps app node ops/ops.mjs recover-operations
 ```
 
+站点图片配方升级先 dry-run，再显式生成；两步都必须使用当前 `.env` 解析出的同一冻结镜像：
+
+```bash
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs upgrade-site-display-v2 --scope all
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs upgrade-site-display-v2 --scope all --no-dry-run
+```
+
+命令可重入，支持 `home-hero`、`commission-hero`、`home-entry` 分批。某个资产的 v2 全套验证完成前，公开投影继续使用完整 v1；命令不覆盖或删除旧不可变对象。低分辨率旧 Hero 仅在第二条显式写入命令中生成新的 private Lanczos 适配源。
+
 恢复永远写新路径，不覆盖活动数据库：
 
 ```bash

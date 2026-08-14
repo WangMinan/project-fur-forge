@@ -17,9 +17,11 @@ import {
   generateSiteDisplayVariants,
   HOME_ENTRY_USAGES,
   missingSiteDisplayVariantCount,
+  SITE_DISPLAY_RECIPE_VERSION,
   SITE_HERO_USAGES,
 } from '../recipe/site-display-recipe'
 import type { SiteDisplayUsage } from '../recipe/site-display-recipe'
+import { ensureHeroUpscaleSource } from '../recipe/media-recipe'
 import { adoptionEntrySource } from '../service/site-entry'
 
 /**
@@ -27,7 +29,7 @@ import { adoptionEntrySource } from '../service/site-entry'
  *
  * 迁移 0017 只改变数据库身份，不会为既有对象生成文件；已启用 Hero 与既有
  * 已发布领养因此可能仍在依赖旧水印回退。本命令补齐缺失的无水印
- * `site-display-v1` 变体，**不要求管理员手动禁用再启用**。
+ * 当前 `site-display-v2` 变体，**不要求管理员手动禁用再启用**。
  *
  * 安全边界：
  * - 只生成站点展示位变体，不生成水印，不触碰作品/领养的水印变体；
@@ -55,6 +57,7 @@ export interface ReconcileResult {
   failed: number
   generated: number
   operationId: string | null
+  recipeVersion: string
   scanned: number
   skipped: number
   status: string
@@ -298,8 +301,28 @@ async function runReconcile(
         skipped += 1
         continue
       }
-      if (!assetSupportsSiteDisplay(sqlite, target.assetId, target.usages)) {
-        // 源太小：站点展示位受控隐藏，不放大也不改用水印图。
+      let supported = assetSupportsSiteDisplay(sqlite, target.assetId, target.usages)
+      if (!supported && (
+        target.kind === 'home-hero'
+        || target.kind === 'commission-hero'
+        || target.label === 'home-entry-commission'
+      )) {
+        // 显式执行升级命令即为这次旧 Hero 私有 Lanczos 适配的操作确认。
+        // 私有原图仍不公开，适配源继续留在 private Bucket。
+        try {
+          await ensureHeroUpscaleSource(sqlite, storage, target.assetId, Date.now())
+          supported = assetSupportsSiteDisplay(sqlite, target.assetId, target.usages)
+        }
+        catch (error) {
+          safeLog('warn', 'Reconcile target hero upscale failed.', {
+            assetId: target.assetId,
+            errorCode: (error as { code?: unknown }).code,
+            usage: target.label,
+          })
+        }
+      }
+      if (!supported) {
+        // 非 Hero 源太小：站点展示位受控隐藏，不改用水印图。
         failed += 1
         safeLog('warn', 'Reconcile target source is too small for site display.', {
           assetId: target.assetId,
@@ -416,6 +439,7 @@ function summarize(
     failed: row.failedCount,
     generated: row.generatedCount,
     operationId: row.id,
+    recipeVersion: SITE_DISPLAY_RECIPE_VERSION,
     scanned: row.scannedCount,
     skipped: row.skippedCount,
     status: row.status,
@@ -456,6 +480,7 @@ export async function reconcileSiteDisplay(options: {
       failed: 0,
       generated: 0,
       operationId: null,
+      recipeVersion: SITE_DISPLAY_RECIPE_VERSION,
       scanned: targets.length,
       skipped: complete,
       status: 'SCANNING',

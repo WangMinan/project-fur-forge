@@ -4,7 +4,12 @@ import type {
   HeroPlacement,
   VerifiedAssetDto,
 } from '~~/shared/types/contracts'
+import { ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
 import type { HeroSlot } from '~/composables/useHeroAssetUpload'
+import {
+  adminMediaOriginalUrl,
+  adminMediaPreviewUrl,
+} from '~/utils/admin-media-preview'
 
 // T20 首页横/竖槽位：固定比例预览框 + 文件选择上传（选中即传）。
 // 已保存资产通过同源鉴权接口预览；新上传用本地 objectURL 预览。
@@ -56,7 +61,7 @@ const stateText = computed(() => {
 })
 
 const recommendedSize = computed(() => props.orientation === 'landscape'
-  ? { width: 1920, height: 1080 }
+  ? { width: 3840, height: 2160 }
   : { width: 1080, height: 1920 },
 )
 const visibleAsset = computed(() => upload.item.asset ?? props.savedAsset)
@@ -102,8 +107,8 @@ function onFileChange(event: Event) {
       >
       <img
         v-else-if="savedAsset"
-        :src="`/api/admin/v1/media/assets/${savedAsset.assetId}/preview`"
-        :alt="`${SLOT_LABEL[orientation]}已上传原图预览`"
+        :src="adminMediaPreviewUrl(savedAsset.assetId, ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH)"
+        :alt="`${SLOT_LABEL[orientation]}已上传编辑预览`"
         class="hero-slot__image"
         :data-testid="`hero-slot-saved-image-${orientation}`"
         decoding="async"
@@ -115,7 +120,12 @@ function onFileChange(event: Event) {
     </div>
 
     <p v-if="savedAsset && !upload.item.previewUrl" class="hero-slot__saved">
-      已保存原图 {{ savedAsset.width }}×{{ savedAsset.height }}
+      已保存原图 {{ savedAsset.width }}×{{ savedAsset.height }} · 640 px 编辑预览 ·
+      <a
+        :href="adminMediaOriginalUrl(savedAsset.assetId)"
+        target="_blank"
+        rel="noopener"
+      >查看原图</a>
     </p>
 
     <p v-if="unsavedAssetId && upload.item.state === 'completed'" class="hero-slot__unsaved" role="status">

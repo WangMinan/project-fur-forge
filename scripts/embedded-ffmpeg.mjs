@@ -234,8 +234,8 @@ export async function upscaleHeroImage(content, orientation) {
   if (orientation !== 'landscape' && orientation !== 'portrait') {
     throw new Error('Hero upscale orientation is invalid.')
   }
-  const width = orientation === 'landscape' ? 1920 : 1080
-  const height = orientation === 'landscape' ? 1080 : 1920
+  const width = orientation === 'landscape' ? 3840 : 1080
+  const height = orientation === 'landscape' ? 2160 : 1920
   const filter = `scale=w=${width}:h=${height}:force_original_aspect_ratio=increase:flags=lanczos,crop=${width}:${height}`
   const result = await runEmbeddedFfmpeg([
     '-hide_banner',

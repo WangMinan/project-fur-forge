@@ -118,7 +118,7 @@ describe('T10 synthetic media', () => {
     const landscape = await upscaleHeroImage(source, 'landscape')
     const portrait = await upscaleHeroImage(source, 'portrait')
 
-    expect(landscape.dimensions).toEqual({ width: 1920, height: 1080 })
+    expect(landscape.dimensions).toEqual({ width: 3840, height: 2160 })
     expect(portrait.dimensions).toEqual({ width: 1080, height: 1920 })
     expect(landscape.filter).toContain('flags=lanczos')
     expect(landscape.content.length).toBeLessThanOrEqual(
@@ -126,7 +126,7 @@ describe('T10 synthetic media', () => {
     )
     expect(source.readUInt32BE(16)).toBe(320)
     expect(source.readUInt32BE(20)).toBe(180)
-  }, 30_000)
+  }, 120_000)
 
   it('keeps the Node event loop responsive while embedded FFmpeg is running', async () => {
     const source = createSyntheticSourcePng(320, 180)
@@ -138,9 +138,9 @@ describe('T10 synthetic media', () => {
 
     expect(firstResult).toBe('timer')
     await expect(processing).resolves.toMatchObject({
-      dimensions: { height: 1080, width: 1920 },
+      dimensions: { height: 2160, width: 3840 },
     })
-  }, 30_000)
+  }, 120_000)
 
   it('keeps a low-resolution design sheet proportional while meeting publication minimums', async () => {
     const source = createSyntheticSourcePng(1560, 1080)

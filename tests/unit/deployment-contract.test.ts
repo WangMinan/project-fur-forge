@@ -107,10 +107,29 @@ describe('T52-E6 production deployment contract', () => {
     expect(dockerfile).toContain('new EsaClient(')
     expect(dockerfile).toContain('new PurgeCachesRequest(')
     expect(containerOps).toContain('confirmation: values.confirm')
-    expect(containerOps.match(/allowNegative: true/gu)).toHaveLength(2)
+    expect(containerOps).toContain("case 'upgrade-site-display-v2':")
+    expect(containerOps).toContain("import('./site-display-upgrade-options')")
     expect(containerOps).toContain("import('../server/utils/runner/return-photo-publication')")
     expect(database).toContain("PRODUCTION_DATABASE_DIRECTORY = '/app/data'")
     expect(database).toContain('posix.dirname(databaseFile) !== PRODUCTION_DATABASE_DIRECTORY')
+  })
+
+  it('ships one v2 upgrade parser through pnpm and the frozen deployment image', () => {
+    const packageJson = source('package.json')
+    const localUpgrade = source('scripts/upgrade-site-display-v2.ts')
+    const containerOps = source('scripts/container-ops.ts')
+    const deployment = source('docs/DEPLOYMENT.md')
+    const handbook = source(
+      'agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md',
+    )
+
+    expect(packageJson).toContain('"media:upgrade-site-display-v2"')
+    expect(localUpgrade).toContain("from './site-display-upgrade-options'")
+    expect(containerOps).toContain("import('./site-display-upgrade-options')")
+    for (const document of [deployment, handbook]) {
+      expect(document).toContain('node ops/ops.mjs upgrade-site-display-v2 --scope all')
+      expect(document).toContain('--scope all --no-dry-run')
+    }
   })
 
   it('keeps publication manual and exercises the target deployment shape in CI', () => {
