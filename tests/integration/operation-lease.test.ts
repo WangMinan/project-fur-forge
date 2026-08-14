@@ -12,6 +12,7 @@ import {
   describe,
   expect,
   it,
+  vi,
 } from 'vitest'
 import {
   migrateDatabase,
@@ -23,6 +24,7 @@ import {
   failUnrecoverableOperation,
   heartbeatOperationLease,
   holdsOperationLease,
+  OPERATION_HEARTBEAT_INTERVAL_MS,
   OPERATION_LEASE_TTL_MS,
   operationLeaseOwner,
   releaseOperationLease,
@@ -32,6 +34,7 @@ import {
   recoverPendingOperations,
   registerOperationResumer,
 } from '../../server/utils/runner/operation-recovery'
+import { withOperationLeaseHeartbeat } from '../../server/utils/runner/operation-lease-heartbeat'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 
 const NOW = Date.UTC(2026, 7, 6)
@@ -77,6 +80,7 @@ beforeEach(async () => {
 })
 
 afterEach(() => {
+  vi.useRealTimers()
   sqlite.close()
   resetOperationLeaseOwner()
   rmSync(directory, { force: true, recursive: true })
@@ -160,6 +164,73 @@ describe('operation lease, heartbeat and recovery', () => {
     expect(beaten.leaseExpiresAt).toBe(NOW + 5_000 + OPERATION_LEASE_TTL_MS)
     expect(beaten.attempt).toBe(lease.attempt)
     expect(beaten.leaseOwner).toBe(lease.owner)
+  })
+
+  it('keeps a lease exclusive while asynchronous work exceeds the lease ttl', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(NOW)
+    const id = insertOperation()
+    const lease = claimOperationLease(sqlite, 'publication_operations', id, NOW)!
+    let finishWork!: () => void
+    const work = new Promise<void>((resolve) => {
+      finishWork = resolve
+    })
+
+    const running = withOperationLeaseHeartbeat(
+      sqlite,
+      lease,
+      async ({ assertActive }) => {
+        await work
+        assertActive()
+      },
+    )
+
+    await vi.advanceTimersByTimeAsync(OPERATION_LEASE_TTL_MS + 5_000)
+    expect(row(id).heartbeatAt).toBe(NOW + 60_000)
+    resetOperationLeaseOwner('other-host/999/deadbeef')
+    expect(claimOperationLease(
+      sqlite,
+      'publication_operations',
+      id,
+      Date.now(),
+    )).toBeNull()
+
+    finishWork()
+    await expect(running).resolves.toBeUndefined()
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('stops progress and clears its timer when a heartbeat loses the lease', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(NOW)
+    const id = insertOperation()
+    const lease = claimOperationLease(sqlite, 'publication_operations', id, NOW)!
+    let continueWork!: () => void
+    let committed = false
+    const work = new Promise<void>((resolve) => {
+      continueWork = resolve
+    })
+
+    const running = withOperationLeaseHeartbeat(
+      sqlite,
+      lease,
+      async ({ assertActive }) => {
+        await work
+        assertActive()
+        committed = true
+      },
+    )
+    sqlite.prepare(`
+      UPDATE publication_operations
+      SET lease_owner = 'takeover-host/7/cafebabe', attempt = attempt + 1
+      WHERE id = ?
+    `).run(id)
+
+    await vi.advanceTimersByTimeAsync(OPERATION_HEARTBEAT_INTERVAL_MS)
+    continueWork()
+    await expect(running).rejects.toThrow(/lease was lost/u)
+    expect(committed).toBe(false)
+    expect(vi.getTimerCount()).toBe(0)
   })
 
   it('releases the lease so the operation can be taken over again', () => {
