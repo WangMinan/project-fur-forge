@@ -104,3 +104,52 @@ test('移动导航可达法律页，委托状态框为圆角矩形且三视口�
   await expect(mobileNav.getByRole('link', { name: '服务条款' })).toBeVisible()
   await expect(mobileNav.getByRole('link', { name: '隐私政策' })).toBeVisible()
 })
+
+test('公开移动抽屉错峰进场，并共用焦点陷阱、Escape、滚动锁定与减弱动效', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/about')
+
+  const trigger = page.getByRole('button', { name: '打开导航' })
+  await trigger.click()
+  const drawer = page.getByTestId('public-mobile-nav')
+  await expect(drawer).toBeVisible()
+  expect(await page.locator('html').evaluate(element => element.style.overflow)).toBe('hidden')
+  expect(await page.locator('main').evaluate(element => element.inert)).toBe(true)
+
+  const close = drawer.getByRole('button', { name: '关闭导航' })
+  const lastLink = drawer.getByRole('link', { name: '隐私政策' })
+  await expect(close).toBeFocused()
+  await page.keyboard.press('Shift+Tab')
+  await expect(lastLink).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(close).toBeFocused()
+
+  const itemMotion = await drawer.locator('.mobile-nav__item').evaluateAll(items => items.map((item) => {
+    const style = getComputedStyle(item)
+    return {
+      animationName: style.animationName,
+      animationDelay: Number.parseFloat(style.animationDelay) * 1000,
+    }
+  }))
+  expect(itemMotion.every(item => /^mobile-nav-item-in-/u.test(item.animationName))).toBe(true)
+  expect(itemMotion.map(item => item.animationDelay)).toEqual(
+    [...itemMotion.map(item => item.animationDelay)].sort((left, right) => left - right),
+  )
+  expect(new Set(itemMotion.map(item => item.animationDelay)).size).toBe(itemMotion.length)
+
+  await page.keyboard.press('Escape')
+  await expect(drawer).toBeHidden()
+  await expect(trigger).toBeFocused()
+  expect(await page.locator('html').evaluate(element => element.style.overflow)).toBe('')
+  expect(await page.locator('main').evaluate(element => element.inert)).toBe(false)
+
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await trigger.click()
+  await expect(drawer).toBeVisible()
+  expect(await drawer.evaluate(element => (
+    Math.max(...getComputedStyle(element).transitionDuration.split(',').map(value => (
+      Number.parseFloat(value) * 1000
+    )))
+  ))).toBeLessThanOrEqual(0.02)
+  await expect(drawer.locator('.mobile-nav__item').first()).toHaveCSS('animation-name', 'none')
+})

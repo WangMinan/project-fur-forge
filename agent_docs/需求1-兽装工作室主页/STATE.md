@@ -1,6 +1,6 @@
 # 当前状态
 
-> **最后校准**：2026-08-14。
+> **最后校准**：2026-08-15。
 > **状态权威**：任务勾选仍以 [`implementation/TASKS.md`](./implementation/TASKS.md) 为准。  
 > **本轮决策记录**：[`implementation/notes/stage-f/PRE-POLICE-LAUNCH-DECISION-2026-08-10.md`](./implementation/notes/stage-f/PRE-POLICE-LAUNCH-DECISION-2026-08-10.md)。
 
@@ -13,6 +13,12 @@
 2026-08-10 用户新增一个现实部署目标：工信部 ICP 已通过，而公安联网备案需要网站先实际提供服务，因此允许在不冒充“正式上线就绪”的前提下先做一次**公安备案前临时上线**。该例外只调整运维时序，不修改应用代码、运行时 Schema、Compose、Nginx/ESA 模板或安全基线。
 
 正式状态仍遵守：只有 TASKS 中 GATE-E 与 T53-F1～F5 全部关闭后，才能签署“正式上线就绪”。
+
+## 2026-08-15 首页与管理端动效、移动导航
+
+T51-F9 工程实现和本地门禁已完成：`/admin/site/home` 的首页/委托大图使用稳定 ID 的 FLIP 重排；管理端 `<1024px` 使用八入口全屏抽屉，1024px 起恢复横向导航；公开首页增加渐进增强的 Hero 错峰、一次性入屏揭示和仅限可点击卡片的精细指针反馈。公开/管理抽屉共用焦点陷阱、Escape、滚动锁定、背景 `inert`、路由关闭和焦点归还，全部动效遵守 `prefers-reduced-motion`，SSR/无 JavaScript 内容默认可见。
+
+本轮未改变数据库、媒体链、HTTP API、排序协议或依赖。lint、typecheck、196 项 unit、62 项相关 E2E 和 production build 已通过；双 Host 的 390/768/1440 与管理 1023/1024 边界已用真实浏览器复验。该工程结论不代签最新 SHA 的远端 CI、T49-R1 独立 Review、用户验收或发布。
 
 ## 2026-08-14 全局水印流程与首页精选排序优化
 

@@ -1,6 +1,6 @@
 # 实施记录索引
 
-> **状态**：实施中。dated notes 只记录执行事实，不覆盖 STATE、SPEC、PLAN 或 TASKS。
+> **状态**：需求2等价实现补丁当前已包含在 `main`，T16-R1 与 T17 仍开放。dated notes 只记录当时执行事实，不覆盖 STATE、SPEC、PLAN 或 TASKS；历史分支、PR 与 SHA 叙述不重写。
 
 ## 当前入口
 

@@ -96,6 +96,34 @@ async function seedHome(
   await seedHomeSlides(page, slides, settings)
 }
 
+async function seedCompleteMotionHome(page: Page, settings?: SeedHomeSettings) {
+  await seedPublicCatalog(page, [
+    ...WORKS,
+    {
+      slug: 'e2e-public-home-motion-adoption',
+      characterName: '动效领养验证',
+      species: '犬',
+      suitType: 'partial',
+      purpose: 'adoption',
+      adoptionMethod: 'regular',
+      businessStatus: 'available',
+      sortOrder: 4,
+      designSheet: { alt: '动效领养验证设定图' },
+      photos: [],
+    },
+  ])
+  await seedHomeSlides(page, SLIDES, settings)
+  await seedHomeSlides(page, [
+    { alt: '动效验证委托页大图', sortOrder: 0, enabled: true },
+  ], undefined, 'commission')
+  await seedPublicUpdates(page, [{
+    type: 'other',
+    title: 'E2E 公开动态动效验证',
+    content: '这张静态卡片不应制造可点击的悬浮反馈。',
+    publishedAt: Date.now(),
+  }])
+}
+
 /** 记录公开媒体请求；test-only 同源 fake OSS 返回真实可解码图片。 */
 function observeMediaRequests(page: Page) {
   const requested: string[] = []
@@ -339,7 +367,7 @@ test.describe('T20 首页双源轮播', () => {
   })
 
   test('无 JS 时第一项完整可用', async ({ browser, page }) => {
-    await seedHome(page, { tagline: '不只做小狗毛（测试）' })
+    await seedCompleteMotionHome(page, { tagline: '不只做小狗毛（测试）' })
     const context = await browser.newContext({ javaScriptEnabled: false })
     const plainPage = await context.newPage()
     try {
@@ -351,6 +379,19 @@ test.describe('T20 首页双源轮播', () => {
       await expect(
         plainPage.getByRole('link', { name: '查看这套作品' }),
       ).toHaveAttribute('href', '/works/e2e-public-home-naigai')
+      await expect(plainPage.getByTestId('featured-works')).toBeVisible()
+      await expect(plainPage.getByTestId('home-business-entries')).toBeVisible()
+      await expect(plainPage.getByTestId('home-current-adoptions')).toBeVisible()
+      await expect(plainPage.getByTestId('home-latest-updates')).toBeVisible()
+      for (const reveal of [
+        'home-featured-reveal',
+        'home-entries-reveal',
+        'home-adoptions-reveal',
+        'home-updates-reveal',
+      ]) {
+        await expect(plainPage.getByTestId(reveal)).toHaveAttribute('data-reveal-state', 'static')
+        await expect(plainPage.getByTestId(reveal)).toHaveCSS('opacity', '1')
+      }
     }
     finally {
       await context.close()
@@ -755,5 +796,109 @@ test.describe('T12 首页最新动态摘要', () => {
     await page.goto('/')
     await expect(page.getByTestId('home-latest-updates')).toHaveCount(0)
     await expect(page.getByTestId('public-hero')).toBeVisible()
+  })
+})
+
+test.describe('T51-F9 首页明显式动效', () => {
+  test('Hero 内容按顺序首次进场，轮播切换不重建内容层', async ({ page }) => {
+    await seedCompleteMotionHome(page)
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+
+    const publicHero = hero(page)
+    await expect(publicHero).toHaveClass(/home-hero--motion-ready/u)
+    const animated = [
+      publicHero.locator('.home-hero__eyebrow'),
+      publicHero.locator('.home-hero__title'),
+      publicHero.locator('.home-hero__tagline'),
+      publicHero.locator('.home-hero__action'),
+      publicHero.locator('.home-hero__controls'),
+    ]
+    const delays: number[] = []
+    for (const locator of animated) {
+      await expect(locator).toHaveCSS('animation-name', /^home-hero-content-in-/u)
+      delays.push(await locator.evaluate(element => (
+        Number.parseFloat(getComputedStyle(element).animationDelay) * 1000
+      )))
+    }
+    expect(delays).toEqual([...delays].sort((left, right) => left - right))
+    expect(new Set(delays).size).toBe(delays.length)
+
+    const title = publicHero.locator('.home-hero__title')
+    await title.evaluate(element => element.setAttribute('data-motion-node', 'stable'))
+    await publicHero.getByRole('button', { name: '下一张' }).click()
+    await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张')
+    await expect(title).toHaveAttribute('data-motion-node', 'stable')
+  })
+
+  test('内容区只在首次入屏揭示，可点击卡片抬升而静态动态卡不抬升', async ({ page }) => {
+    await seedCompleteMotionHome(page)
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+
+    for (const testId of [
+      'home-featured-reveal',
+      'home-entries-reveal',
+      'home-adoptions-reveal',
+      'home-updates-reveal',
+    ]) {
+      const reveal = page.getByTestId(testId)
+      await reveal.scrollIntoViewIfNeeded()
+      await expect(reveal).toHaveAttribute('data-reveal-state', 'visible')
+    }
+
+    await page.evaluate(() => window.scrollTo(0, 0))
+    for (const testId of [
+      'home-featured-reveal',
+      'home-entries-reveal',
+      'home-adoptions-reveal',
+      'home-updates-reveal',
+    ]) {
+      await expect(page.getByTestId(testId)).toHaveAttribute('data-reveal-state', 'visible')
+    }
+
+    const workCard = page.locator('.work-card').first()
+    await workCard.hover()
+    await expect.poll(() => workCard.evaluate(element => getComputedStyle(element).transform))
+      .not.toBe('none')
+    await expect.poll(() => workCard.locator('.work-card__frame')
+      .evaluate(element => getComputedStyle(element).boxShadow))
+      .not.toBe('none')
+
+    const businessEntry = page.getByTestId('home-business-entry').first()
+    await businessEntry.hover()
+    await expect.poll(() => businessEntry.evaluate(element => getComputedStyle(element).transform))
+      .not.toBe('none')
+
+    const adoptionCard = page.locator('.adoption-card').first()
+    await adoptionCard.hover()
+    await expect.poll(() => adoptionCard.evaluate(element => getComputedStyle(element).transform))
+      .not.toBe('none')
+
+    const updateCard = page.locator('.public-update-card').first()
+    await updateCard.hover()
+    await expect(updateCard).toHaveCSS('transform', 'none')
+  })
+
+  test('reduced-motion 取消 Hero、入屏和悬浮位移', async ({ page }) => {
+    await seedCompleteMotionHome(page)
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+
+    await expect(hero(page).locator('.home-hero__title')).toHaveCSS('animation-name', 'none')
+    const reveal = page.getByTestId('home-featured-reveal')
+    await reveal.scrollIntoViewIfNeeded()
+    await expect(reveal).toHaveCSS('opacity', '1')
+    await expect(reveal).toHaveCSS('transform', 'none')
+    expect(await reveal.evaluate(element => (
+      Math.max(...getComputedStyle(element).transitionDuration.split(',').map(value => (
+        Number.parseFloat(value) * 1000
+      )))
+    ))).toBeLessThanOrEqual(0.02)
+
+    const workCard = page.locator('.work-card').first()
+    await workCard.hover()
+    await expect(workCard).toHaveCSS('transform', 'none')
   })
 })

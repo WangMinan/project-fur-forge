@@ -1,12 +1,12 @@
 # 当前状态
 
-> **最后校准**：2026-08-13。
+> **最后校准**：2026-08-15。
 > **任务权威**：[`implementation/TASKS.md`](./implementation/TASKS.md)。
 > **范围边界**：本目录是对“需求1-兽装工作室主页”的增量需求，不覆盖其生产、媒体与安全基线。
 
 ## 当前阶段
 
-阶段 5 · 动态后台方案锁定为 B，T01～T16、用户预验收修正 T15-F1～T15-F4 与 T17-F1～T17-F4 已完成。PR 合并、T16-R1 新 SHA 独立复查和 T17 最终用户签署尚未完成。
+阶段 5 · 动态后台方案锁定为 B，T01～T16、用户预验收修正 T15-F1～T15-F4 与 T17-F1～T17-F4 已完成。上述需求2实现的等价补丁当前已包含在 `main`；不再把功能分支或 PR 合入列为当前门禁。T16-R1 新 SHA 独立复查和 T17 最终用户签署尚未完成。
 
 T03 已接入 `site/contact` 私有二维码上传、`contact-qr-v1` 无水印方形 PNG 公开派生、失败重试与 READY 公开投影。
 
@@ -50,7 +50,7 @@ T17 第四轮用户反馈要求把公开导航和 `/adoptions` 页面标题统�
 
 T17-F4 已完成：公开导航、`/adoptions` H1/SEO/分页名称统一为“设定领养”；`.works-grid` 顶部改为 `var(--space-6)`。跨页三视口几何 E2E 九组组合均为 32 px，相关公开 E2E 37/37、unit 179/179、integration 190/190、lint/typecheck/build/verify 均通过。上一提交 `6b51627` 的 Actions run `31719392357` 暴露三处迁移后版本硬编码；修复后测试从迁移后的真实初始版本继续验证 CAS，不放宽冲突行为。
 
-当前分支为 `feat/requirement-2`。应用实现基线 `19af5878e4bc5c2b01316f9cb89082b90cce0e46` 的 GitHub Actions run [`31628640863`](https://github.com/WangMinan/project-fur-forge/actions/runs/31628640863) 已取得 `checks`、`image-build`、`e2e` 全部成功；该结果只绑定该 SHA，T16 文档修复形成的新 PR HEAD 仍须在合并前重新查询实际检查。PR [#10](https://github.com/WangMinan/project-fur-forge/pull/10) 仍未合入 `main`。工程证据与独立 Review 均不代签 T17 用户验收。
+历史实现曾位于 `feat/requirement-2` / PR [#10](https://github.com/WangMinan/project-fur-forge/pull/10)；截至 2026-08-15，Git 补丁等价检查确认这些实现已包含在当前 `main`，因此旧分支/PR 状态只作为历史上下文。应用实现基线 `19af5878e4bc5c2b01316f9cb89082b90cce0e46` 的 GitHub Actions run [`31628640863`](https://github.com/WangMinan/project-fur-forge/actions/runs/31628640863) 只绑定该历史 SHA，不能代签当前 `main` 的后续改动。工程证据与独立 Review 仍不代签 T17 用户验收。
 
 ## 已确认结论
 
@@ -81,6 +81,6 @@ T17-F4 已完成：公开导航、`/adoptions` H1/SEO/分页名称统一为“�
 
 ## 下一步交接
 
-1. 完成、提交并推送 T17-F4 到 PR #10，查询最终 PR HEAD 的远端检查；
-2. 由新上下文完成 T16-R1 独立复查；
-3. 由用户继续 T17 真实平台账号、实际二维码物理手机扫码和完整体验验收；只有 T17 取得用户确认后才能考虑合并 PR。
+1. 由新上下文基于届时最新 `main` 完成 T16-R1 独立复查，并单独核对该 SHA 的远端检查；
+2. 由用户继续 T17 真实平台账号、实际二维码物理手机扫码和完整体验验收；
+3. 只有 T16-R1 与 T17 分别取得独立复查和用户确认后，才更新最终闭环状态。

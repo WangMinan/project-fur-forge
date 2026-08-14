@@ -72,6 +72,7 @@ const eventDrop = computed(() => (
 .adoption-card {
   display: block;
   color: var(--public-text-primary);
+  transition: transform var(--duration-normal) var(--easing-standard);
 }
 
 .adoption-card:hover {
@@ -118,6 +119,7 @@ const eventDrop = computed(() => (
   border: 1px solid var(--public-border-primary);
   border-radius: var(--radius-image);
   background: var(--image-placeholder);
+  transition: box-shadow var(--duration-normal) var(--easing-standard);
 }
 
 .adoption-card__canvas :deep(.responsive-picture),
@@ -131,8 +133,18 @@ const eventDrop = computed(() => (
   transition: transform var(--duration-section) var(--easing-standard);
 }
 
-.adoption-card:hover .adoption-card__canvas :deep(.responsive-picture__image) {
-  transform: scale(var(--image-hover-scale));
+@media (hover: hover) and (pointer: fine) {
+  .adoption-card:hover {
+    transform: translateY(-0.25rem);
+  }
+
+  .adoption-card:hover .adoption-card__canvas {
+    box-shadow: 0 1rem 2.25rem rgb(17 20 25 / 0.12);
+  }
+
+  .adoption-card:hover .adoption-card__canvas :deep(.responsive-picture__image) {
+    transform: scale(var(--image-hover-scale));
+  }
 }
 
 .adoption-card__body,
@@ -200,6 +212,13 @@ const eventDrop = computed(() => (
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .adoption-card,
+  .adoption-card__canvas,
+  .adoption-card__canvas :deep(.responsive-picture__image) {
+    transition: none;
+  }
+
+  .adoption-card:hover,
   .adoption-card:hover .adoption-card__canvas :deep(.responsive-picture__image) {
     transform: none;
   }

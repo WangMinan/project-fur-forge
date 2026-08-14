@@ -93,6 +93,47 @@ async function publicCommissionHeroAlt(page: Page) {
   return body.data.slide?.alt ?? null
 }
 
+async function adminSlideAlts(page: Page, placement: 'home' | 'commission') {
+  const query = placement === 'commission' ? '?placement=commission' : ''
+  const response = await page.request.get(
+    `${adminBaseURL}/api/admin/v1/site/home${query}`,
+  )
+  expect(response.status(), `读取${placement}大图顺序应成功`).toBe(200)
+  const body = await response.json() as {
+    data: { slides: Array<{ alt: string, enabled: boolean, sortOrder: number }> }
+  }
+  return body.data.slides
+    .filter(slide => slide.enabled)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map(slide => slide.alt)
+}
+
+async function watchForHomeMoveClass(page: Page) {
+  await page.evaluate(() => {
+    const observedWindow = window as Window & { __homeMoveClassSeen?: boolean }
+    observedWindow.__homeMoveClassSeen = false
+    const list = document.querySelector('.home-admin__slides')
+    if (!list) {
+      return
+    }
+    const observer = new MutationObserver((mutations) => {
+      if (mutations.some(mutation => (
+        mutation.target instanceof HTMLElement
+        && mutation.target.classList.contains('home-slide-list-move')
+      ))) {
+        observedWindow.__homeMoveClassSeen = true
+        observer.disconnect()
+      }
+    })
+    observer.observe(list, {
+      attributes: true,
+      attributeFilter: ['class'],
+      subtree: true,
+    })
+    window.setTimeout(() => observer.disconnect(), 3_000)
+  })
+}
+
 async function uploadHeroPair(
   page: Page,
   card: ReturnType<Page['locator']>,
@@ -482,10 +523,65 @@ test('已启用轮播项可上移/下移，公开首页顺序同步', async ({ p
   await expect(second.getByText('已启用', { exact: true })).toBeVisible({ timeout: 15_000 })
   expect(await publicHomeAlts(page)).toEqual(['第一项首页图', '第二项首页图'])
 
+  await watchForHomeMoveClass(page)
   await second.getByRole('button', { name: /上移轮播项/ }).click()
+  await expect.poll(() => page.evaluate(() => (
+    (window as Window & { __homeMoveClassSeen?: boolean }).__homeMoveClassSeen
+  ))).toBe(true)
   await expect(async () => {
     expect(await publicHomeAlts(page)).toEqual(['第二项首页图', '第一项首页图'])
   }).toPass()
+})
+
+test('委托页大图使用同一真实重排与 FLIP move class', async ({ page }) => {
+  await seedHomeSlides(page, [
+    { alt: '第一项委托页图', sortOrder: 0, enabled: true },
+    { alt: '第二项委托页图', sortOrder: 1, enabled: true },
+  ], undefined, 'commission')
+  await page.goto(`${adminBaseURL}/admin/site/home?tab=commission`)
+  await page.waitForSelector('[data-testid="home-admin"]')
+  await expect(page.locator('article.slide-card')).toHaveCount(2)
+  expect(await adminSlideAlts(page, 'commission')).toEqual([
+    '第一项委托页图',
+    '第二项委托页图',
+  ])
+
+  await watchForHomeMoveClass(page)
+  const second = page.locator('article.slide-card').nth(1)
+  await expect(second.getByLabel(/图片说明/)).toHaveValue('第二项委托页图')
+  await second
+    .getByRole('button', { name: /上移大图项/ })
+    .click()
+
+  await expect.poll(() => page.evaluate(() => (
+    (window as Window & { __homeMoveClassSeen?: boolean }).__homeMoveClassSeen
+  ))).toBe(true)
+  await expect.poll(() => adminSlideAlts(page, 'commission')).toEqual([
+    '第二项委托页图',
+    '第一项委托页图',
+  ])
+})
+
+test('大图 Tab 与排序在 reduced-motion 下取消位移过渡', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await seedHomeSlides(page, [
+    { alt: '减少动效首页图一', sortOrder: 0, enabled: true },
+    { alt: '减少动效首页图二', sortOrder: 1, enabled: true },
+  ])
+  await gotoHomeAdmin(page)
+
+  expect(await page.getByRole('link', { name: '首页大图' }).evaluate(element => (
+    Math.max(...getComputedStyle(element).transitionDuration.split(',').map(value => (
+      Number.parseFloat(value) * 1000
+    )))
+  ))).toBeLessThanOrEqual(0.02)
+  const card = page.locator('article.slide-card').first()
+  await card.evaluate(element => element.classList.add('home-slide-list-move'))
+  expect(await card.evaluate(element => (
+    Math.max(...getComputedStyle(element).transitionDuration.split(',').map(value => (
+      Number.parseFloat(value) * 1000
+    )))
+  ))).toBeLessThanOrEqual(0.02)
 })
 
 test('关联作品：已发布作品可关联保存；未发布作品选项被禁用', async ({ page }) => {
