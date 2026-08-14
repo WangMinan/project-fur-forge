@@ -45,6 +45,7 @@ const meta = computed(() => {
 .work-card {
   display: block;
   color: var(--public-text-primary);
+  transition: transform var(--duration-normal) var(--easing-standard);
 }
 
 .work-card:hover {
@@ -57,6 +58,7 @@ const meta = computed(() => {
   background: var(--image-placeholder);
   border-radius: var(--radius-image);
   overflow: hidden;
+  transition: box-shadow var(--duration-normal) var(--easing-standard);
 }
 
 .work-card__frame :deep(.responsive-picture) {
@@ -72,11 +74,28 @@ const meta = computed(() => {
   transition: transform var(--duration-section) var(--easing-standard);
 }
 
-.work-card:hover .work-card__image {
-  transform: scale(var(--image-hover-scale));
+@media (hover: hover) and (pointer: fine) {
+  .work-card:hover {
+    transform: translateY(-0.25rem);
+  }
+
+  .work-card:hover .work-card__frame {
+    box-shadow: 0 1rem 2.25rem rgb(17 20 25 / 0.14);
+  }
+
+  .work-card:hover .work-card__image {
+    transform: scale(var(--image-hover-scale));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .work-card,
+  .work-card__frame,
+  .work-card__image {
+    transition: none;
+  }
+
+  .work-card:hover,
   .work-card:hover .work-card__image {
     transform: none;
   }

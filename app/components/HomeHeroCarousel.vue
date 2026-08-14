@@ -29,6 +29,7 @@ watch(() => slides.value.length, (count) => {
 const reduceMotion = ref(false)
 const userPaused = ref(false)
 const pageHidden = ref(false)
+const motionReady = shallowRef(false)
 
 const autoplayInterval = computed(
   () => resolveAutoplayIntervalMs(reduceMotion.value),
@@ -121,6 +122,7 @@ function onPointerCancel() {
 }
 
 let motionQuery: MediaQueryList | null = null
+let motionFrame: number | null = null
 
 function onMotionChange(event: MediaQueryListEvent) {
   reduceMotion.value = event.matches
@@ -137,11 +139,18 @@ onMounted(() => {
   reduceMotion.value = motionQuery.matches
   motionQuery.addEventListener('change', onMotionChange)
   document.addEventListener('visibilitychange', onVisibilityChange)
+  motionFrame = window.requestAnimationFrame(() => {
+    motionReady.value = true
+    motionFrame = null
+  })
   restartTimer()
 })
 
 onBeforeUnmount(() => {
   stopTimer()
+  if (motionFrame !== null) {
+    window.cancelAnimationFrame(motionFrame)
+  }
   motionQuery?.removeEventListener('change', onMotionChange)
   document.removeEventListener('visibilitychange', onVisibilityChange)
 })
@@ -150,7 +159,10 @@ onBeforeUnmount(() => {
 <template>
   <section
     class="home-hero"
-    :class="{ 'home-hero--empty': slides.length === 0 }"
+    :class="{
+      'home-hero--empty': slides.length === 0,
+      'home-hero--motion-ready': motionReady,
+    }"
     role="region"
     aria-roledescription="carousel"
     aria-label="代表作品轮播"
@@ -409,6 +421,46 @@ onBeforeUnmount(() => {
   gap: var(--space-3);
 }
 
+.home-hero--motion-ready .home-hero__eyebrow,
+.home-hero--motion-ready .home-hero__title,
+.home-hero--motion-ready .home-hero__tagline,
+.home-hero--motion-ready .home-hero__action,
+.home-hero--motion-ready .home-hero__controls {
+  animation: home-hero-content-in 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.home-hero--motion-ready .home-hero__eyebrow {
+  animation-delay: 100ms;
+}
+
+.home-hero--motion-ready .home-hero__title {
+  animation-delay: 180ms;
+}
+
+.home-hero--motion-ready .home-hero__tagline {
+  animation-delay: 270ms;
+}
+
+.home-hero--motion-ready .home-hero__action {
+  animation-delay: 360ms;
+}
+
+.home-hero--motion-ready .home-hero__controls {
+  animation-delay: 470ms;
+}
+
+@keyframes home-hero-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .home-hero__arrow,
 .home-hero__pause {
   display: grid;
@@ -497,6 +549,14 @@ onBeforeUnmount(() => {
   .home-hero-slide-prev-leave-active,
   .home-hero__action {
     transition: none;
+  }
+
+  .home-hero--motion-ready .home-hero__eyebrow,
+  .home-hero--motion-ready .home-hero__title,
+  .home-hero--motion-ready .home-hero__tagline,
+  .home-hero--motion-ready .home-hero__action,
+  .home-hero--motion-ready .home-hero__controls {
+    animation: none;
   }
 }
 </style>

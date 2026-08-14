@@ -246,19 +246,21 @@ onMounted(() => {
         >委托页大图</NuxtLink>
       </nav>
 
-      <div v-if="pageStatus === 'loading'" class="home-admin__state" role="status">
-        正在加载{{ placementLabel }}大图…
-      </div>
-      <div v-else-if="pageStatus === 'error'" class="home-admin__state" role="alert">
-        {{ placementLabel }}大图加载失败，请刷新重试。
-      </div>
+      <Transition name="home-placement" mode="out-in">
+        <div :key="placement" class="home-admin__placement">
+          <div v-if="pageStatus === 'loading'" class="home-admin__state" role="status">
+            正在加载{{ placementLabel }}大图…
+          </div>
+          <div v-else-if="pageStatus === 'error'" class="home-admin__state" role="alert">
+            {{ placementLabel }}大图加载失败，请刷新重试。
+          </div>
 
-      <div
-        v-else-if="home"
-        id="hero-settings-panel"
-        :aria-labelledby="isHomePlacement ? 'home-hero-tab' : 'commission-hero-tab'"
-        class="home-admin__panel"
-      >
+          <div
+            v-else-if="home"
+            id="hero-settings-panel"
+            :aria-labelledby="isHomePlacement ? 'home-hero-tab' : 'commission-hero-tab'"
+            class="home-admin__panel"
+          >
         <section v-if="isHomePlacement" class="home-admin__card" aria-labelledby="home-settings-title">
           <h2 id="home-settings-title" class="home-admin__card-title">首屏设置</h2>
           <div class="home-admin__settings">
@@ -308,7 +310,7 @@ onMounted(() => {
               : '还没有委托页大图。新增一项并上传横竖两版图片后，即可作为委托页背景。' }}
           </p>
 
-          <div class="home-admin__slides">
+          <TransitionGroup name="home-slide-list" tag="div" class="home-admin__slides">
             <AdminHomeSlideCard
               v-for="slide in slides"
               :key="slide.id"
@@ -336,6 +338,7 @@ onMounted(() => {
             />
             <AdminHomeSlideCard
               v-if="showDraft"
+              key="home-slide-draft"
               :slide="null"
               :placement="placement"
               :works="works"
@@ -345,10 +348,12 @@ onMounted(() => {
               @create="onCreate"
               @conflict="load()"
             />
-          </div>
+          </TransitionGroup>
         </section>
 
-      </div>
+          </div>
+        </div>
+      </Transition>
 
       <AdminConfirmDialog
         :open="errorDialogOpen"
@@ -410,6 +415,10 @@ onMounted(() => {
   font-size: var(--admin-font-sm);
   font-weight: 600;
   text-decoration: none;
+  transition:
+    color var(--admin-duration-fast) var(--admin-easing),
+    background-color var(--admin-duration-fast) var(--admin-easing),
+    box-shadow var(--admin-duration-fast) var(--admin-easing);
 }
 
 .home-admin__tab[aria-current='page'] {
@@ -426,6 +435,10 @@ onMounted(() => {
 .home-admin__panel {
   display: grid;
   gap: var(--admin-space-4);
+}
+
+.home-admin__placement {
+  min-width: 0;
 }
 
 .home-admin__state {
@@ -565,5 +578,31 @@ onMounted(() => {
 .home-admin__slides {
   display: grid;
   gap: var(--admin-space-3);
+}
+
+.home-slide-list-move {
+  transition: transform var(--admin-duration-normal) var(--admin-easing);
+}
+
+.home-placement-enter-active,
+.home-placement-leave-active {
+  transition:
+    opacity var(--admin-duration-normal) var(--admin-easing),
+    transform var(--admin-duration-normal) var(--admin-easing);
+}
+
+.home-placement-enter-from,
+.home-placement-leave-to {
+  opacity: 0;
+  transform: translateY(0.5rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-admin__tab,
+  .home-slide-list-move,
+  .home-placement-enter-active,
+  .home-placement-leave-active {
+    transition: none;
+  }
 }
 </style>

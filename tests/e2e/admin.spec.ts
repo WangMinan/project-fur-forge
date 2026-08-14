@@ -190,6 +190,87 @@ test.describe('后台作品列表页', () => {
   })
 })
 
+test.describe('管理端移动导航', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAsAdmin(page)
+  })
+
+  test('1023px 使用完整抽屉，并支持焦点陷阱、Escape、滚动锁定和路由后关闭', async ({ page }) => {
+    await page.setViewportSize({ width: 1023, height: 900 })
+    await page.goto(`${adminBaseURL}/admin/works`)
+
+    await expect(page.locator('.admin-shell__nav')).toBeHidden()
+    const trigger = page.getByRole('button', { name: '打开管理导航' })
+    await expect(trigger).toBeVisible()
+    await trigger.click()
+
+    const drawer = page.getByTestId('admin-mobile-nav')
+    await expect(drawer).toBeVisible()
+    const nav = drawer.getByRole('navigation', { name: '管理导航入口' })
+    await expect(nav.getByRole('link')).toHaveCount(8)
+    expect(await nav.getByRole('link').evaluateAll(links => links.map(link => (
+      link.firstElementChild?.textContent?.trim()
+    )))).toEqual([
+      '作品管理',
+      '返图管理',
+      '动态管理',
+      '大图管理',
+      '文案配置',
+      '全局水印',
+      '访问概览',
+      '修改密码',
+    ])
+    await expect(nav.getByRole('link', { name: '作品管理' }))
+      .toHaveAttribute('aria-current', 'page')
+    expect(await page.locator('html').evaluate(element => element.style.overflow)).toBe('hidden')
+    expect(await page.locator('#admin-main').evaluate(element => element.inert)).toBe(true)
+
+    const close = drawer.getByRole('button', { name: '关闭管理导航' })
+    const logout = drawer.getByRole('button', { name: '退出登录' })
+    await expect(close).toBeFocused()
+    await page.keyboard.press('Shift+Tab')
+    await expect(logout).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(close).toBeFocused()
+
+    await page.keyboard.press('Escape')
+    await expect(drawer).toBeHidden()
+    await expect(trigger).toBeFocused()
+    expect(await page.locator('html').evaluate(element => element.style.overflow)).toBe('')
+    expect(await page.locator('#admin-main').evaluate(element => element.inert)).toBe(false)
+
+    await trigger.click()
+    await drawer.getByRole('link', { name: '大图管理' }).click()
+    await expect(page).toHaveURL(/\/admin\/site\/home$/u)
+    await expect(drawer).toBeHidden()
+  })
+
+  test('1024px 保留横向导航，不显示三横线按钮', async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 900 })
+    await page.goto(`${adminBaseURL}/admin/works`)
+
+    await expect(page.locator('.admin-shell__nav')).toBeVisible()
+    await expect(page.getByRole('button', { name: '打开管理导航' })).toBeHidden()
+  })
+
+  test('移动抽屉内退出失败时保留菜单并显示明确错误', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.route('**/api/auth/logout', route => route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ message: '暂时无法退出' }),
+    }))
+    await page.goto(`${adminBaseURL}/admin/works`)
+    await page.getByRole('button', { name: '打开管理导航' }).click()
+
+    const drawer = page.getByTestId('admin-mobile-nav')
+    await drawer.getByRole('button', { name: '退出登录' }).click()
+    await expect(drawer).toBeVisible()
+    await expect(drawer.getByRole('alert'))
+      .toHaveText('退出失败，请稍后重试。若持续失败，可直接关闭页面。')
+  })
+})
+
 test.describe('后台作品编辑页', () => {
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page)

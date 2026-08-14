@@ -116,6 +116,10 @@ const TONE_LABELS = {
   background: var(--public-bg-primary);
   border: 1px solid var(--public-border-primary);
   border-radius: var(--radius-md);
+  transition:
+    transform var(--duration-normal) var(--easing-standard),
+    border-color var(--duration-fast) var(--easing-standard),
+    box-shadow var(--duration-normal) var(--easing-standard);
 }
 
 .home-entry:hover {
@@ -152,8 +156,15 @@ const TONE_LABELS = {
   transition: transform var(--duration-section) var(--easing-standard);
 }
 
-.home-entry:hover .home-entry__media :deep(.responsive-picture__image) {
-  transform: scale(var(--image-hover-scale));
+@media (hover: hover) and (pointer: fine) {
+  .home-entry:hover {
+    transform: translateY(-0.25rem);
+    box-shadow: 0 1rem 2.25rem rgb(17 20 25 / 0.12);
+  }
+
+  .home-entry:hover .home-entry__media :deep(.responsive-picture__image) {
+    transform: scale(var(--image-hover-scale));
+  }
 }
 
 .home-entry__body {
@@ -237,10 +248,12 @@ const TONE_LABELS = {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .home-entry,
   .home-entry__media :deep(.responsive-picture__image) {
     transition: none;
   }
 
+  .home-entry:hover,
   .home-entry:hover .home-entry__media :deep(.responsive-picture__image) {
     transform: none;
   }

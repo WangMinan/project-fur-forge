@@ -1,20 +1,15 @@
 <script setup lang="ts">
-// 管理端壳：窄屏为顶栏 + 横向导航，≥1280px 为固定侧栏。
+import type { AdminNavCurrent } from '~/utils/admin-nav'
+import AdminMobileNav from '~/components/AdminMobileNav.vue'
+import { ADMIN_NAV_ITEMS } from '~/utils/admin-nav'
+
+// 管理端壳：<1024px 为顶栏 + 全屏抽屉，1024–1279px 为顶栏 + 横向导航，
+// ≥1280px 为固定侧栏。
 // 导航顺序按 .design/admin-console/INFORMATION_ARCHITECTURE.md 的“业务对象优先”：
 // 作品管理 → 返图管理 → 动态管理 → 大图管理 → 文案配置 → 全局水印 → 访问概览 → 修改密码。
 // 公开端称“返图墙”，管理端称“返图管理”，两端不混用同一个短词。
-// 仅包含已实现入口；未实现的项目不提前出现（返图入口随 T36 前端接入）。
 withDefaults(defineProps<{
-  current?:
-    | 'account'
-    | 'analytics'
-    | 'branding'
-    | 'content'
-    | 'home'
-    | 'returns'
-    | 'updates'
-    | 'works'
-    | 'none'
+  current?: AdminNavCurrent
 }>(), {
   current: 'none',
 })
@@ -23,6 +18,8 @@ const { user, logout } = useAdminAuth()
 
 const logoutPending = ref(false)
 const logoutError = ref<string | null>(null)
+const navOpen = shallowRef(false)
+const triggerId = 'admin-nav-trigger'
 
 async function onLogout() {
   if (logoutPending.value) {
@@ -57,45 +54,12 @@ async function onLogout() {
       </p>
       <nav class="admin-shell__nav" aria-label="管理导航">
         <NuxtLink
-          to="/admin/works"
+          v-for="item in ADMIN_NAV_ITEMS"
+          :key="item.key"
+          :to="item.href"
           class="admin-shell__nav-link"
-          :aria-current="current === 'works' ? 'page' : undefined"
-        >作品管理</NuxtLink>
-        <NuxtLink
-          to="/admin/returns"
-          class="admin-shell__nav-link"
-          :aria-current="current === 'returns' ? 'page' : undefined"
-        >返图管理</NuxtLink>
-        <NuxtLink
-          to="/admin/updates"
-          class="admin-shell__nav-link"
-          :aria-current="current === 'updates' ? 'page' : undefined"
-        >动态管理</NuxtLink>
-        <NuxtLink
-          to="/admin/site/home"
-          class="admin-shell__nav-link"
-          :aria-current="current === 'home' ? 'page' : undefined"
-        >大图管理</NuxtLink>
-        <NuxtLink
-          to="/admin/site/content"
-          class="admin-shell__nav-link"
-          :aria-current="current === 'content' ? 'page' : undefined"
-        >文案配置</NuxtLink>
-        <NuxtLink
-          to="/admin/site/branding"
-          class="admin-shell__nav-link"
-          :aria-current="current === 'branding' ? 'page' : undefined"
-        >全局水印</NuxtLink>
-        <NuxtLink
-          to="/admin/analytics"
-          class="admin-shell__nav-link"
-          :aria-current="current === 'analytics' ? 'page' : undefined"
-        >访问概览</NuxtLink>
-        <NuxtLink
-          to="/admin/account"
-          class="admin-shell__nav-link"
-          :aria-current="current === 'account' ? 'page' : undefined"
-        >修改密码</NuxtLink>
+          :aria-current="current === item.key ? 'page' : undefined"
+        >{{ item.label }}</NuxtLink>
       </nav>
       <div class="admin-shell__session">
         <span v-if="user" class="admin-shell__user">{{ user.username }}</span>
@@ -108,6 +72,19 @@ async function onLogout() {
           {{ logoutPending ? '退出中…' : '退出登录' }}
         </button>
       </div>
+      <button
+        :id="triggerId"
+        type="button"
+        class="admin-shell__menu"
+        aria-label="打开管理导航"
+        :aria-expanded="navOpen"
+        aria-controls="admin-mobile-nav-panel"
+        @click="navOpen = true"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" />
+        </svg>
+      </button>
     </header>
     <main id="admin-main" class="admin-shell__main" tabindex="-1">
       <p v-if="logoutError" class="admin-shell__alert" role="alert">
@@ -115,6 +92,16 @@ async function onLogout() {
       </p>
       <slot />
     </main>
+    <AdminMobileNav
+      :open="navOpen"
+      :trigger-id="triggerId"
+      :current="current"
+      :username="user?.username"
+      :logout-pending="logoutPending"
+      :logout-error="logoutError"
+      @close="navOpen = false"
+      @logout="onLogout"
+    />
   </div>
 </template>
 
@@ -195,6 +182,29 @@ async function onLogout() {
   gap: var(--admin-space-3);
 }
 
+.admin-shell__menu {
+  display: none;
+  width: var(--admin-touch-target);
+  height: var(--admin-touch-target);
+  margin-left: auto;
+  padding: 0;
+  color: var(--admin-text-primary);
+  background: none;
+  border: none;
+  border-radius: var(--admin-radius-md);
+  cursor: pointer;
+  place-items: center;
+}
+
+.admin-shell__menu:hover {
+  background: var(--admin-bg-subtle);
+}
+
+.admin-shell__menu:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--admin-focus-ring);
+}
+
 .admin-shell__user {
   display: none;
   font-size: var(--admin-font-xs);
@@ -243,6 +253,32 @@ async function onLogout() {
 
 .admin-shell__main {
   padding: var(--admin-space-4);
+}
+
+@media (max-width: 1023px) {
+  .admin-shell__bar {
+    flex-wrap: nowrap;
+    gap: var(--admin-space-3);
+  }
+
+  .admin-shell__brand {
+    min-width: 0;
+  }
+
+  .admin-shell__brand-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .admin-shell__nav,
+  .admin-shell__session {
+    display: none;
+  }
+
+  .admin-shell__menu {
+    display: grid;
+    flex: none;
+  }
 }
 
 @media (min-width: 1280px) {

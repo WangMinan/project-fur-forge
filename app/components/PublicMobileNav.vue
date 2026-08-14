@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { PUBLIC_NAV_BRAND } from '~~/shared/constants/project'
+import { useFullscreenNavigation } from '~/composables/useFullscreenNavigation'
 
 const props = defineProps<{
   open: boolean
@@ -11,99 +12,22 @@ const emit = defineEmits<{
 }>()
 
 const route = useRoute()
-const panelRef = ref<HTMLElement | null>(null)
-const inertedElements: HTMLElement[] = []
-let previousOverflow = ''
+const panelRef = useTemplateRef<HTMLElement>('panelRef')
 
 function close() {
   emit('close')
 }
 
-function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape') {
-    event.preventDefault()
-    close()
-    return
-  }
-  if (event.key !== 'Tab') {
-    return
-  }
-  const focusable = Array.from(panelRef.value?.querySelectorAll<HTMLElement>(
-    'a[href], button:not(:disabled)',
-  ) ?? [])
-  const first = focusable[0]
-  const last = focusable.at(-1)
-  if (!first || !last) {
-    return
-  }
-  if (event.shiftKey && document.activeElement === first) {
-    event.preventDefault()
-    last.focus()
-  }
-  else if (!event.shiftKey && document.activeElement === last) {
-    event.preventDefault()
-    first.focus()
-  }
-}
-
-function setBackgroundInert(inert: boolean) {
-  if (!import.meta.client) {
-    return
-  }
-  if (!inert) {
-    inertedElements.splice(0).forEach(element => (element.inert = false))
-    return
-  }
-  const candidates = [
-    ...Array.from(panelRef.value?.parentElement?.children ?? []),
-    document.querySelector('main'),
-    document.querySelector('footer'),
-  ]
-  for (const candidate of candidates) {
-    if (
-      candidate instanceof HTMLElement
-      && candidate !== panelRef.value
-      && !candidate.inert
-    ) {
-      candidate.inert = true
-      inertedElements.push(candidate)
-    }
-  }
-}
-
-watch(() => props.open, async (isOpen) => {
-  if (!import.meta.client) {
-    return
-  }
-
-  if (isOpen) {
-    previousOverflow = document.documentElement.style.overflow
-    document.documentElement.style.overflow = 'hidden'
-    await nextTick()
-    setBackgroundInert(true)
-    const firstLink = panelRef.value?.querySelector<HTMLElement>('a, button')
-    firstLink?.focus()
-    document.addEventListener('keydown', onKeydown)
-  }
-  else {
-    document.documentElement.style.overflow = previousOverflow
-    setBackgroundInert(false)
-    document.removeEventListener('keydown', onKeydown)
-    document.getElementById(props.triggerId)?.focus()
-  }
+useFullscreenNavigation({
+  open: () => props.open,
+  panel: panelRef,
+  triggerId: props.triggerId,
+  close,
 })
 
 watch(() => route.fullPath, () => {
   if (props.open) {
     close()
-  }
-})
-
-onBeforeUnmount(() => {
-  if (import.meta.client) {
-    document.documentElement.style.overflow = previousOverflow
-    setBackgroundInert(false)
-    document.removeEventListener('keydown', onKeydown)
   }
 })
 </script>
@@ -147,9 +71,10 @@ onBeforeUnmount(() => {
 
       <nav class="mobile-nav__links" aria-label="主导航">
         <div
-          v-for="item in PUBLIC_NAV_ITEMS"
+          v-for="(item, index) in PUBLIC_NAV_ITEMS"
           :key="item.href"
           class="mobile-nav__item"
+          :style="{ animationDelay: `${70 + index * 38}ms` }"
         >
           <NuxtLink
             v-if="!item.children"
@@ -225,6 +150,7 @@ onBeforeUnmount(() => {
 
 .mobile-nav__item {
   display: grid;
+  animation: mobile-nav-item-in var(--duration-normal) var(--easing-standard) both;
 }
 
 .mobile-nav__link {
@@ -281,18 +207,37 @@ onBeforeUnmount(() => {
 
 .mobile-nav-enter-active,
 .mobile-nav-leave-active {
-  transition: opacity var(--duration-normal) var(--easing-standard);
+  transition:
+    opacity var(--duration-normal) var(--easing-standard),
+    transform var(--duration-normal) var(--easing-standard);
 }
 
 .mobile-nav-enter-from,
 .mobile-nav-leave-to {
   opacity: 0;
+  transform: translateY(-0.75rem);
+}
+
+@keyframes mobile-nav-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.65rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .mobile-nav-enter-active,
   .mobile-nav-leave-active {
     transition: none;
+  }
+
+  .mobile-nav__item {
+    animation: none;
   }
 }
 </style>
