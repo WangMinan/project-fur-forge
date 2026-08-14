@@ -4,7 +4,7 @@ import type { RouteLocationRaw } from "vue-router";
 /**
  * 公开端筛选条：一组胶囊链接。
  *
- * `/works` 与 `/adoptions` 共用这一个组件，两个页面的筛选条才不会各自漂移。
+ * `/works`、`/adoptions` 与 `/updates` 共用这一个组件，筛选条才不会各自漂移。
  * 全部是普通链接（NuxtLink），无 JavaScript 也可用；
  * 选中态同时用底色、边框与文字权重表达，不只依赖颜色。
  */
@@ -44,7 +44,9 @@ defineProps<{
   padding: var(--space-1);
   background: var(--public-bg-secondary);
   border: 1px solid var(--public-border-primary);
-  border-radius: var(--radius-full);
+  /* 单行仍是 25px 胶囊；换行时外框圆角不随总高度膨胀，
+     与 40px chip 的 20px 圆角保持 4px 内边距和 1px 边框间隔。 */
+  border-radius: calc(1.25rem + var(--space-1) + 1px);
   box-shadow: 0 0.25rem 0.75rem rgb(25 31 42 / 0.08);
 }
 

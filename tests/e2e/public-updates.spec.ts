@@ -85,6 +85,60 @@ test('公开动态按固定类型筛选，并以文字和不同颜色圆点共�
   await expect(page.locator('[data-update-id]')).toHaveCount(4)
 })
 
+test('动态筛选条窄屏换行后保持嵌套圆角，宽屏仍是单行胶囊', async ({ page }) => {
+  await seedPublicUpdates(page, [])
+
+  for (const viewport of [
+    { width: 390, height: 844, expectedRows: 2 },
+    { width: 1440, height: 900, expectedRows: 1 },
+  ]) {
+    await page.setViewportSize(viewport)
+    await page.goto('/updates')
+
+    const geometry = await page.getByRole('group', { name: '资讯类型筛选' })
+      .evaluate((group) => {
+        const active = group.querySelector<HTMLElement>('[aria-current="true"]')
+        if (!(group instanceof HTMLElement) || !active) {
+          throw new Error('筛选条或选中项不存在')
+        }
+
+        const groupRect = group.getBoundingClientRect()
+        const activeRect = active.getBoundingClientRect()
+        const declaredGroupRadius = Number.parseFloat(
+          getComputedStyle(group).borderTopLeftRadius,
+        )
+        const groupRadius = Math.min(
+          declaredGroupRadius,
+          groupRect.width / 2,
+          groupRect.height / 2,
+        )
+        const activeRadius = Math.min(activeRect.width, activeRect.height) / 2
+        const cornerCenterDistance = Math.hypot(
+          groupRect.x + groupRadius - (activeRect.x + activeRadius),
+          groupRect.y + groupRadius - (activeRect.y + activeRadius),
+        )
+
+        return {
+          activeRadius,
+          cornerCenterDistance,
+          groupHeight: groupRect.height,
+          groupRadius,
+          rows: new Set(
+            [...group.children].map(child => Math.round(child.getBoundingClientRect().y)),
+          ).size,
+        }
+      })
+
+    expect(geometry.rows).toBe(viewport.expectedRows)
+    expect(geometry.cornerCenterDistance + geometry.activeRadius)
+      .toBeLessThanOrEqual(geometry.groupRadius + 0.5)
+
+    if (viewport.expectedRows === 1) {
+      expect(geometry.groupRadius).toBeCloseTo(geometry.groupHeight / 2, 1)
+    }
+  }
+})
+
 test('公开动态空态和 API 失败态受控显示', async ({ page }) => {
   await seedPublicUpdates(page, [])
   await page.goto('/updates')
