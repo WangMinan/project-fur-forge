@@ -25,7 +25,10 @@ import {
   reconcileSiteDisplay,
   reconcileTargetComplete,
 } from '../../server/utils/runner/site-display-reconcile'
-import { SITE_DISPLAY_RECIPE_VERSION } from '../../server/utils/recipe/site-display-recipe'
+import {
+  LEGACY_SITE_DISPLAY_RECIPE_VERSION,
+  SITE_DISPLAY_RECIPE_VERSION,
+} from '../../server/utils/recipe/site-display-recipe'
 import { getPublicHome } from '../../server/utils/runner/home-management'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
@@ -61,7 +64,7 @@ function insertSource(id: string, role: string, width: number, height: number) {
 async function seedLegacyEnabledHero(placement: 'home' | 'commission') {
   const landscapeId = `${placement}-landscape`
   const portraitId = `${placement}-portrait`
-  insertSource(landscapeId, 'home_hero_landscape', 3200, 1800)
+  insertSource(landscapeId, 'home_hero_landscape', 4000, 2250)
   insertSource(portraitId, 'home_hero_portrait', 1800, 3200)
   sqlite.prepare(`
     INSERT INTO site_hero_slides (
@@ -129,6 +132,59 @@ function watermarkKeys() {
   `).pluck().all() as string[]
 }
 
+function seedLegacySiteDisplay(
+  assetId: string,
+  usage: 'home-hero-landscape' | 'home-hero-portrait',
+) {
+  const role = usage === 'home-hero-landscape'
+    ? 'home_hero_landscape'
+    : 'home_hero_portrait'
+  const widths = usage === 'home-hero-landscape'
+    ? [768, 1280, 1920]
+    : [480, 768, 1080]
+  const sourceSha256 = sqlite.prepare(
+    'SELECT sha256 FROM assets WHERE id = ?',
+  ).pluck().get(assetId) as string
+  for (const width of widths) {
+    for (const format of ['webp', 'png'] as const) {
+      const id = `${assetId}-${width}-${format}-legacy`
+      sqlite.prepare(`
+        INSERT INTO asset_variants (
+          id, asset_id, storage_scope, status, object_key,
+          input_sha256, media_role, usage, width, height, format, quality,
+          crop_identity, recipe_version, protection_mode, watermark_profile,
+          watermark_config_digest, logo_digest, watermark_anchor,
+          sha256, byte_size, created_at, updated_at
+        ) VALUES (
+          ?, ?, 'PUBLIC', 'READY', ?,
+          ?, ?, ?, ?, ?, ?, ?,
+          ?, ?, 'none', 'none',
+          'none', 'none', 'none',
+          ?, 100, ?, ?
+        )
+      `).run(
+        id,
+        assetId,
+        `${PREFIX}/web/${assetId}/${LEGACY_SITE_DISPLAY_RECIPE_VERSION}/${usage}/${width}/${id}.${format}`,
+        sourceSha256,
+        role,
+        usage,
+        width,
+        usage === 'home-hero-landscape'
+          ? Math.round(width * 9 / 16)
+          : Math.round(width * 16 / 9),
+        format,
+        format === 'webp' ? 82 : 100,
+        `legacy:${width}:${format}`,
+        LEGACY_SITE_DISPLAY_RECIPE_VERSION,
+        'd'.repeat(64),
+        NOW,
+        NOW,
+      )
+    }
+  }
+}
+
 function reconcileRows() {
   return sqlite.prepare(`
     SELECT id, scope, status, scanned_count AS scanned,
@@ -192,6 +248,7 @@ describe('T34-F1 existing site display reconcile', () => {
       failed: 0,
       generated: 0,
       operationId: null,
+      recipeVersion: SITE_DISPLAY_RECIPE_VERSION,
       scanned: 6,
       skipped: 0,
       status: 'SCANNING',
@@ -229,9 +286,9 @@ describe('T34-F1 existing site display reconcile', () => {
     `).pluck().get()).toBe(enabledBefore)
     // 作品与领养的水印变体一个都没动。
     expect(watermarkKeys()).toEqual(beforeWatermark)
-    // 站点展示变体全部为无水印 site-display-v1。
+    // 站点展示变体全部为无水印 site-display-v2。
     const created = siteDisplayKeys()
-    expect(created).toHaveLength(36)
+    expect(created).toHaveLength(40)
     expect(created.every(key => key.includes(SITE_DISPLAY_RECIPE_VERSION)))
       .toBe(true)
     expect(sqlite.prepare(`
@@ -240,6 +297,45 @@ describe('T34-F1 existing site display reconcile', () => {
     `).pluck().get(SITE_DISPLAY_RECIPE_VERSION)).toBe(0)
     expect(findReconcileTargets(sqlite)
       .every(target => reconcileTargetComplete(sqlite, target))).toBe(true)
+  })
+
+  it('serves a complete v1 hero until the v2 operation atomically replaces it', async () => {
+    seedLegacySiteDisplay('home-landscape', 'home-hero-landscape')
+    seedLegacySiteDisplay('home-portrait', 'home-hero-portrait')
+
+    const before = getPublicHome(sqlite, MEDIA_BASE_URL).slides[0]!
+    expect(before.landscape.webp).toHaveLength(3)
+    expect([
+      ...before.landscape.webp,
+      ...before.landscape.fallback,
+      ...before.portrait.webp,
+      ...before.portrait.fallback,
+    ].every(variant => variant.src.includes(LEGACY_SITE_DISPLAY_RECIPE_VERSION)))
+      .toBe(true)
+
+    const upgraded = await reconcileSiteDisplay({
+      sqlite,
+      storage,
+      dryRun: false,
+      now: NOW,
+      scope: 'home-hero',
+    })
+    expect(upgraded).toMatchObject({
+      failed: 0,
+      generated: 2,
+      recipeVersion: SITE_DISPLAY_RECIPE_VERSION,
+      status: 'DONE',
+    })
+
+    const after = getPublicHome(sqlite, MEDIA_BASE_URL).slides[0]!
+    expect(after.landscape.webp).toHaveLength(5)
+    expect([
+      ...after.landscape.webp,
+      ...after.landscape.fallback,
+      ...after.portrait.webp,
+      ...after.portrait.fallback,
+    ].every(variant => variant.src.includes(SITE_DISPLAY_RECIPE_VERSION)))
+      .toBe(true)
   })
 
   it('projects the homepage hero and both entries without watermarks after reconcile', async () => {
@@ -263,7 +359,7 @@ describe('T34-F1 existing site display reconcile', () => {
       ...sourceUrls(home.entries.adoption!.sources),
     ]
     expect(urls.length).toBeGreaterThan(0)
-    // 站点展示位一律 site-display-v1；作品保护配方不出现在这些 URL 上。
+    // 站点展示位一律 site-display-v2；作品保护配方不出现在这些 URL 上。
     expect(urls.every(url => url.includes(SITE_DISPLAY_RECIPE_VERSION))).toBe(true)
     expect(urls.some(url => url.includes('recipe-v2'))).toBe(false)
     // 首页入口 URL 与委托 Hero 的公开 URL 不同：入口使用独立变体。

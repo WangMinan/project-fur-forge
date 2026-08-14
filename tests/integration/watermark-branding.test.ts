@@ -65,7 +65,7 @@ function insertSource(id: string, role: string, width: number, height: number) {
 
 function insertPublishedTargets() {
   insertSource('work-photo', 'studio_photo', 3200, 2400)
-  insertSource('hero-landscape', 'home_hero_landscape', 3200, 1800)
+  insertSource('hero-landscape', 'home_hero_landscape', 4000, 2250)
   insertSource('hero-portrait', 'home_hero_portrait', 1800, 3200)
   sqlite.prepare(`
     INSERT INTO works (

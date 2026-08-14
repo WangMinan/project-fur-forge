@@ -249,8 +249,8 @@ function createHeroAsset(
   const assetId = randomUUID()
   const content = createSyntheticWatermarkPng()
   const landscape = role === 'home_hero_landscape'
-  const width = dimensions?.width ?? (landscape ? 3200 : 1800)
-  const height = dimensions?.height ?? (landscape ? 1800 : 3200)
+  const width = dimensions?.width ?? (landscape ? 4000 : 1800)
+  const height = dimensions?.height ?? (landscape ? 2250 : 3200)
   const key = `${environmentPrefix}/original/${assetId}/source.png`
   sqlite.prepare(`
     INSERT INTO assets (
@@ -479,12 +479,12 @@ describe('T19/T20 public repository contracts', () => {
       sourceVariantId: null,
       storageScope: 'PRIVATE',
       usage: 'preprocess',
-      width: 1920,
-      height: 1080,
-      recipeVersion: 'hero-upscale-lanczos-v1',
+      width: 3840,
+      height: 2160,
+      recipeVersion: 'hero-upscale-lanczos-v2',
     })
     expect(preprocess.inputSha256).not.toBe(preprocess.sha256)
-    expect(String(preprocess.objectKey)).toContain('/hero-upscale-lanczos-v1/')
+    expect(String(preprocess.objectKey)).toContain('/hero-upscale-lanczos-v2/')
 
     const operation = startHeroSlidePublication(
       sqlite,
@@ -934,7 +934,7 @@ describe('T19/T20 public repository contracts', () => {
       linkedWorkId: linked.workId,
     }, NOW + sequence++)
     const slide = created.slides[0]!
-    expect(slide).toMatchObject({ enabled: false, missingVariantCount: 12 })
+    expect(slide).toMatchObject({ enabled: false, missingVariantCount: 16 })
     const publicObjectCount = storage.publicObjects.size
     const processCallCount = storage.processCalls.length
     const preview = await createHeroSlidePreview(
@@ -987,7 +987,7 @@ describe('T19/T20 public repository contracts', () => {
     expect(storage.publicObjects.size).toBe(publicObjectCount)
     expect(getAdminHome(sqlite).slides[0]).toMatchObject({
       enabled: false,
-      missingVariantCount: 12,
+      missingVariantCount: 16,
     })
     sqlite.prepare(`
       UPDATE works SET publication_status = 'unpublished' WHERE id = ?
@@ -1147,6 +1147,8 @@ describe('T19/T20 public repository contracts', () => {
       768,
       1280,
       1920,
+      2880,
+      3840,
     ])
     expect(projection.slides[0]?.portrait.fallback.map(item => item.width)).toEqual([
       480,

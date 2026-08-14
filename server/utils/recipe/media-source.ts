@@ -4,7 +4,7 @@ import type { MediaRole } from '../../../shared/types/contracts'
 import { ServiceError } from '../service-error'
 
 /** Lanczos 私有适配源身份，横竖 Hero 低分辨率原图共用。 */
-export const HERO_UPSCALE_RECIPE_VERSION = 'hero-upscale-lanczos-v1'
+export const HERO_UPSCALE_RECIPE_VERSION = 'hero-upscale-lanczos-v2'
 
 /** 领养设定图保持比例的 Lanczos 私有适配源身份。 */
 export const DESIGN_SHEET_UPSCALE_RECIPE_VERSION = 'design-sheet-upscale-lanczos-v1'
@@ -96,7 +96,7 @@ export function environmentPrefix(privateObjectKey: string) {
 
 export function heroUpscaleTarget(role: MediaRole) {
   if (role === 'home_hero_landscape') {
-    return { height: 1080, orientation: 'landscape' as const, width: 1920 }
+    return { height: 2160, orientation: 'landscape' as const, width: 3840 }
   }
   if (role === 'home_hero_portrait') {
     return { height: 1920, orientation: 'portrait' as const, width: 1080 }

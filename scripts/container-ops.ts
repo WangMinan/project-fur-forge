@@ -19,6 +19,7 @@ const COMMANDS = [
   'preflight',
   'cleanup-expired-uploads',
   'reconcile-site-display',
+  'upgrade-site-display-v2',
   'recover-operations',
 ] as const
 
@@ -167,25 +168,12 @@ async function run() {
       })
     }
 
-    case 'reconcile-site-display': {
-      // T34-F1：为既有启用 Hero、委托 Hero 与已发布常规领养补齐无水印站点变体。
-      const { values } = parseArgs({
-        args: argv(),
-        allowNegative: true,
-        options: {
-          'dry-run': { type: 'boolean' },
-          scope: { type: 'string' },
-        },
-      })
+    case 'reconcile-site-display':
+    case 'upgrade-site-display-v2': {
+      // 旧命令保留兼容；新命令明确表达将既有站点媒体升级到当前 v2 配方。
+      const { parseSiteDisplayUpgradeArgs } = await import('./site-display-upgrade-options')
       const { reconcileSiteDisplay } = await import('../server/utils/runner/site-display-reconcile')
-      const scopes = ['all', 'home-hero', 'commission-hero', 'home-entry']
-      if (values.scope && !scopes.includes(values.scope)) {
-        throw new Error(`--scope must be one of ${scopes.join(', ')}`)
-      }
-      return await reconcileSiteDisplay({
-        dryRun: values['dry-run'] !== false,
-        scope: (values.scope as 'all' | undefined) ?? 'all',
-      })
+      return await reconcileSiteDisplay(parseSiteDisplayUpgradeArgs(argv()))
     }
 
     case 'recover-operations': {

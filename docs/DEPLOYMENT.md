@@ -329,6 +329,18 @@ bash deploy/host/verify-http-origin.sh \
   --admin-host "$ADMIN_HOST"
 ```
 
+如果本次镜像包含 `site-display-v2`，先用同一个冻结镜像查看待升级数量，再显式执行。命令可重入；每个资产完整生成并验证 v2 后才切换，旧 v1 不覆盖、不删除：
+
+```bash
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs upgrade-site-display-v2 --scope all
+
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs upgrade-site-display-v2 --scope all --no-dry-run
+```
+
+需要分批时，`--scope` 也接受 `home-hero`、`commission-hero`、`home-entry`。本地同一操作使用 `pnpm media:upgrade-site-display-v2 -- --scope all`，真正写入同样追加 `--no-dry-run`。
+
 验收完成前不要删除旧镜像和升级前备份。
 
 ## 5. 单独执行 db:migrate

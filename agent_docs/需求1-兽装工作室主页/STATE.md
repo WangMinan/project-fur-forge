@@ -1,6 +1,6 @@
 # 当前状态
 
-> **最后校准**：2026-08-11。
+> **最后校准**：2026-08-14。
 > **状态权威**：任务勾选仍以 [`implementation/TASKS.md`](./implementation/TASKS.md) 为准。  
 > **本轮决策记录**：[`implementation/notes/stage-f/PRE-POLICE-LAUNCH-DECISION-2026-08-10.md`](./implementation/notes/stage-f/PRE-POLICE-LAUNCH-DECISION-2026-08-10.md)。
 
@@ -13,6 +13,10 @@
 2026-08-10 用户新增一个现实部署目标：工信部 ICP 已通过，而公安联网备案需要网站先实际提供服务，因此允许在不冒充“正式上线就绪”的前提下先做一次**公安备案前临时上线**。该例外只调整运维时序，不修改应用代码、运行时 Schema、Compose、Nginx/ESA 模板或安全基线。
 
 正式状态仍遵守：只有 TASKS 中 GATE-E 与 T53-F1～F5 全部关闭后，才能签署“正式上线就绪”。
+
+## 2026-08-14 管理预览与首页 Hero 媒体修复
+
+用户确认 T51-F7：管理列表/卡片改用 320 px 私有预览，编辑器大预览改用 640 px，永久原图只允许显式点击读取且继续 `no-store`；首页横版 Hero 升级为 `site-display-v2`，增加 2880×1620、3840×2160 并提高 Hero WebP 质量。实现还必须提供默认 dry-run、可在发布镜像一次性容器中运行的旧图升级命令及参数透传测试。该变更产生新的应用/迁移/镜像 SHA，完成工程自测后仍须进入 T49-R1 独立 Review、同 SHA CI 和新镜像门禁。
 
 ## 2026-08-11 公共页脚备案布局修复
 

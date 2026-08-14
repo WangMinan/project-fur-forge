@@ -13,6 +13,10 @@ import type {
   HeroSlideRecord,
   VariantRecord,
 } from '../../server/utils/recipe/media-mapper'
+import {
+  LEGACY_SITE_DISPLAY_RECIPE_VERSION,
+  SITE_DISPLAY_RECIPE_VERSION,
+} from '../../server/utils/recipe/site-display-recipe'
 
 const asset: AssetRecord = {
   id: '550e8400-e29b-41d4-a716-446655440000',
@@ -56,10 +60,18 @@ let variantSequence = 10
 
 function heroVariants(
   role: 'home_hero_landscape' | 'home_hero_portrait',
-  options: { placement?: 'commission' | 'home', siteDisplay?: boolean } = {},
+  options: {
+    placement?: 'commission' | 'home'
+    recipeVersion?: typeof LEGACY_SITE_DISPLAY_RECIPE_VERSION | typeof SITE_DISPLAY_RECIPE_VERSION
+    siteDisplay?: boolean
+  } = {},
 ) {
   const widths = role === 'home_hero_landscape'
-    ? [768, 1280, 1920]
+    ? options.siteDisplay
+      && options.placement !== 'commission'
+      && options.recipeVersion !== LEGACY_SITE_DISPLAY_RECIPE_VERSION
+      ? [768, 1280, 1920, 2880, 3840]
+      : [768, 1280, 1920]
     : [480, 768, 1080]
   const orientation = role === 'home_hero_landscape' ? 'landscape' : 'portrait'
   const usage = options.siteDisplay && options.placement === 'commission'
@@ -68,7 +80,7 @@ function heroVariants(
   const unwatermarked = {
     logoDigest: 'none',
     protectionMode: 'none',
-    recipeVersion: 'site-display-v1',
+    recipeVersion: options.recipeVersion ?? SITE_DISPLAY_RECIPE_VERSION,
     watermarkAnchor: 'none',
     watermarkConfigDigest: 'none',
     watermarkOpacityPercent: null,
@@ -251,7 +263,7 @@ describe('media DTO mapping', () => {
       ...homeDto!.portrait.webp,
       ...homeDto!.portrait.fallback,
     ]
-    expect(homeSources).toHaveLength(12)
+    expect(homeSources).toHaveLength(16)
     expect(homeSources.every(source => source.src.includes('/home-hero-'))).toBe(true)
 
     const commission: HeroSlideRecord = {
@@ -282,5 +294,38 @@ describe('media DTO mapping', () => {
       ...commission,
       portraitVariants: [],
     }, 'https://media.example.com')).toThrow(/no complete site display variants/)
+  })
+
+  it('falls back to one complete v1 hero set and never mixes recipe generations', () => {
+    const legacy: HeroSlideRecord = {
+      activeWatermarkProfileId: null,
+      id: '550e8400-e29b-41d4-a716-446655440004',
+      version: 1,
+      enabled: true,
+      altText: '旧首页首图',
+      placement: 'home',
+      sortOrder: 0,
+      linkedWork: null,
+      landscapeVariants: heroVariants('home_hero_landscape', {
+        recipeVersion: LEGACY_SITE_DISPLAY_RECIPE_VERSION,
+        siteDisplay: true,
+      }),
+      portraitVariants: heroVariants('home_hero_portrait', {
+        recipeVersion: LEGACY_SITE_DISPLAY_RECIPE_VERSION,
+        siteDisplay: true,
+      }),
+    }
+
+    expect(toPublicHeroSlideDto(legacy, 'https://media.example.com')!
+      .landscape.webp.map(variant => variant.width)).toEqual([768, 1280, 1920])
+
+    const mixed = {
+      ...legacy,
+      landscapeVariants: heroVariants('home_hero_landscape', {
+        siteDisplay: true,
+      }),
+    }
+    expect(() => toPublicHeroSlideDto(mixed, 'https://media.example.com'))
+      .toThrow(/no complete site display variants/)
   })
 })

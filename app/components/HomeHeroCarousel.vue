@@ -333,7 +333,7 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   /* 确定性对比度保护：顶部导航区与左下文字安全区各自一条受控渐变。
-     首页 Hero 是站点展示位，使用无水印 site-display-v1 变体，不叠加 Logo。 */
+     首页 Hero 是站点展示位，优先使用无水印 site-display-v2 完整变体，不叠加 Logo。 */
   background:
     linear-gradient(
       to bottom,
