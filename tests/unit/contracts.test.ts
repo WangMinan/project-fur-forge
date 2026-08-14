@@ -14,6 +14,7 @@ import {
 import {
   adminWorkDtoSchema,
   createWorkRequestSchema,
+  featuredWorkOrderRequestSchema,
   publicWorkDtoSchema,
   returnPhotoConsentSchema,
   updateWorkRequestSchema,
@@ -125,6 +126,27 @@ describe('shared API contracts', () => {
           width: 512,
           height: 512,
         },
+      },
+    }).success).toBe(false)
+  })
+
+  it('accepts a complete versioned featured order and rejects duplicate IDs', () => {
+    const first = '11111111-1111-4111-8111-111111111111'
+    const second = '22222222-2222-4222-8222-222222222222'
+    expect(featuredWorkOrderRequestSchema.parse({
+      payload: {
+        items: [
+          { id: first, expectedVersion: 2 },
+          { id: second, expectedVersion: 4 },
+        ],
+      },
+    }).payload.items).toHaveLength(2)
+    expect(featuredWorkOrderRequestSchema.safeParse({
+      payload: {
+        items: [
+          { id: first, expectedVersion: 2 },
+          { id: first, expectedVersion: 2 },
+        ],
       },
     }).success).toBe(false)
   })

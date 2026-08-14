@@ -1,7 +1,6 @@
 import {
   watermarkBrandingResponseSchema,
   watermarkOperationResponseSchema,
-  watermarkProfileResponseSchema,
 } from '~~/shared/schemas/watermark'
 import type {
   WatermarkBrandingDto,
@@ -52,7 +51,9 @@ export function useWatermarkBranding() {
         `/api/admin/v1/site/branding/watermark-operations/${operationId}`,
         { schema: watermarkOperationResponseSchema },
       )
-      operation.value = result.data
+      if (result.data.operationType === 'WATERMARK_REBUILD') {
+        operation.value = result.data
+      }
     }
     catch (error) {
       if (error instanceof AdminApiError && error.status === 401) {
@@ -128,7 +129,7 @@ export function useWatermarkBranding() {
   }
 
   // 返回 null 表示成功；否则为可展示的中文错误。
-  async function createDraft(input: {
+  async function saveAndRefresh(input: {
     opacityPercent: number
     scalePercent: number
     sourceAssetId: string
@@ -139,16 +140,18 @@ export function useWatermarkBranding() {
     }
     mutating.value = true
     try {
-      await adminApi('/api/admin/v1/site/branding/watermark-profiles', {
-        method: 'POST',
+      const result = await adminApi('/api/admin/v1/site/branding/watermark', {
+        method: 'PUT',
         body: {
           expectedVersion: current.version,
           payload: input,
         },
-        schema: watermarkProfileResponseSchema,
+        schema: watermarkOperationResponseSchema,
       })
+      operation.value = result.data
       await refreshBranding()
       conflictNotice.value = null
+      ensurePolling()
       return null
     }
     catch (error) {
@@ -157,60 +160,12 @@ export function useWatermarkBranding() {
       }
       if (error instanceof AdminApiError && error.status === 409) {
         await onConflict('站点品牌数据已在其他地方变化，已重新加载，请确认后重试。')
-        return '草稿保存未提交：版本已变化，请确认当前内容后重试。'
+        return '水印配置未提交：版本已变化，请确认当前内容后重试。'
       }
       if (error instanceof AdminApiError && error.status === 400) {
         return '参数未通过服务端校验：不透明度需在 10–90，缩放需在 20–90。'
       }
-      return '保存草稿失败，请稍后重试。'
-    }
-    finally {
-      mutating.value = false
-    }
-  }
-
-  async function runProfileMutation(
-    kind: 'apply' | 'preview',
-  ): Promise<string | null> {
-    const current = branding.value
-    const draft = current?.draftProfile
-    if (!current || !draft || mutating.value) {
-      return null
-    }
-    mutating.value = true
-    try {
-      const result = await adminApi(
-        `/api/admin/v1/site/branding/watermark-profiles/${draft.id}/${kind}`,
-        {
-          method: 'POST',
-          body: {
-            expectedVersion: draft.version,
-            payload: { brandingVersion: current.version },
-          },
-          schema: watermarkOperationResponseSchema,
-        },
-      )
-      operation.value = result.data
-      conflictNotice.value = null
-      ensurePolling()
-      if (!isInProgress(result.data.status)) {
-        await refreshBranding()
-      }
-      return null
-    }
-    catch (error) {
-      if (error instanceof AdminApiError && error.status === 401) {
-        return null
-      }
-      if (error instanceof AdminApiError && error.status === 409) {
-        await onConflict('站点品牌数据已在其他地方变化，已重新加载，请确认后重试。')
-        return kind === 'preview'
-          ? '预览未启动：草稿或版本已变化，请确认后重试。'
-          : '应用未启动：草稿或版本已变化，请确认后重试。'
-      }
-      return kind === 'preview'
-        ? '预览启动失败，请稍后重试。'
-        : '应用启动失败，请稍后重试。'
+      return '保存并刷新全站失败，请稍后重试。'
     }
     finally {
       mutating.value = false
@@ -260,13 +215,12 @@ export function useWatermarkBranding() {
   return {
     branding,
     conflictNotice,
-    createDraft,
     load,
     mutating,
     operation,
     pageStatus,
     refreshBranding,
     retryOperation,
-    runProfileMutation,
+    saveAndRefresh,
   }
 }

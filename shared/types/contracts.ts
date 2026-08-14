@@ -90,6 +90,7 @@ import type {
   returnPhotoConsentSchema,
   returnPhotoConsentSourceSchema,
   suitTypeSchema,
+  featuredWorkOrderRequestSchema,
   workListItemDtoSchema,
   workFieldsSchema,
   workPurposeSchema,
@@ -254,6 +255,9 @@ export type ManagedDesignSheetDto = z.infer<typeof managedDesignSheetDtoSchema>
 export type ManagedStudioPhotoDto = z.infer<typeof managedStudioPhotoDtoSchema>
 export type ManagedWorkDto = z.infer<typeof managedWorkDtoSchema>
 export type WorkListItemDto = z.infer<typeof workListItemDtoSchema>
+export type FeaturedWorkOrderItem = z.infer<
+  typeof featuredWorkOrderRequestSchema
+>['payload']['items'][number]
 export type PublicSafeWorkPreviewDto = z.infer<
   typeof publicSafeWorkPreviewDtoSchema
 >

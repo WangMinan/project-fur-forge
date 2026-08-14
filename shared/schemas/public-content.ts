@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { PUBLIC_FEATURED_LIMIT } from '../constants/featured'
 import { apiSuccessSchema, resourceIdSchema } from './api'
 import {
   publicHomeDtoSchema,
@@ -95,8 +96,8 @@ export const publicWorkListDtoSchema = z.object({
 }).strict()
 
 export const publicFeaturedWorksDtoSchema = z.object({
-  items: z.array(publicWorkSummaryDtoSchema).max(6),
-  resultCount: z.number().int().min(0).max(6),
+  items: z.array(publicWorkSummaryDtoSchema).max(PUBLIC_FEATURED_LIMIT),
+  resultCount: z.number().int().min(0).max(PUBLIC_FEATURED_LIMIT),
 }).strict()
 
 /** T37：领养列表同时容纳常规领养与展会掉落。 */

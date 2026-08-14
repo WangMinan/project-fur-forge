@@ -577,6 +577,55 @@ test.describe('T20 首页精选轨道', () => {
     await expect(page.getByTestId('featured-works')).toHaveCount(0)
     await expect(page.getByTestId('featured-track')).toHaveCount(0)
   })
+
+  test('首页最多展示前 12 件，第 7–12 件可横向访问且图片保持懒加载', async ({ page }) => {
+    const works: SeedWork[] = Array.from({ length: 13 }, (_, index) => ({
+      slug: `e2e-public-featured-limit-${index}` as `e2e-public-${string}`,
+      characterName: `精选上限 ${index + 1}`,
+      species: '犬',
+      suitType: 'full',
+      purpose: 'showcase',
+      featured: true,
+      sortOrder: index,
+      photos: [{ alt: `精选上限 ${index + 1} 出厂照` }],
+    }))
+    await seedPublicCatalog(page, works)
+    await seedHomeSlides(page, [{
+      alt: '精选上限首页展示照',
+      sortOrder: 0,
+      enabled: true,
+      linkedWorkSlug: 'e2e-public-featured-limit-0',
+    }])
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+
+    const track = page.getByTestId('featured-track')
+    const cards = track.locator('[data-work-slug]')
+    await expect(cards).toHaveCount(12)
+    await expect(cards.nth(6)).toContainText('精选上限 7')
+    await expect(cards.nth(11)).toContainText('精选上限 12')
+    await expect(track.getByText('精选上限 13')).toHaveCount(0)
+    for (const image of await cards.locator('img').all()) {
+      await expect(image).toHaveAttribute('loading', 'lazy')
+    }
+
+    const rail = track.locator('.featured-track__rail')
+    const next = track.getByRole('button', { name: '下一批作品' })
+    const previous = track.getByRole('button', { name: '上一批作品' })
+    await expect(previous).toBeDisabled()
+    await expect(next).toBeEnabled()
+    await next.click()
+    await expect.poll(() => rail.evaluate(element => element.scrollLeft))
+      .toBeGreaterThan(0)
+
+    await rail.evaluate((element) => {
+      element.scrollLeft = element.scrollWidth
+      element.dispatchEvent(new Event('scroll'))
+    })
+    await expect(next).toBeDisabled()
+    await expect(previous).toBeEnabled()
+    await expect(cards.nth(11)).toBeInViewport()
+  })
 })
 
 test.describe('T12 首页最新动态摘要', () => {

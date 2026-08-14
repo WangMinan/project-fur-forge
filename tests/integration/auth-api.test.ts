@@ -416,7 +416,7 @@ describe('authentication API', () => {
       },
     )
 
-    for (const purpose of ['commission', 'showcase'] as const) {
+    for (const [index, purpose] of (['commission', 'showcase'] as const).entries()) {
       const response = await create({
         ...common,
         slug: `${purpose}-${suffix}`,
@@ -425,7 +425,7 @@ describe('authentication API', () => {
       expect(response.status).toBe(201)
       expectPrivateResponseHeaders(response)
       await expect(response.json()).resolves.toMatchObject({
-        data: { purpose, sortOrder: 2, featured: true, version: 1 },
+        data: { purpose, sortOrder: index, featured: true, version: 1 },
       })
     }
 
@@ -446,6 +446,7 @@ describe('authentication API', () => {
         adoptionMethod: 'regular',
         businessStatus: 'available',
         priceCnyMinor: 1,
+        sortOrder: 2,
         private: { ownerContact: 'private-contact' },
       },
     })

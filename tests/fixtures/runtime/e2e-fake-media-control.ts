@@ -300,9 +300,9 @@ export default defineEventHandler(async (event) => {
     return { data: { ok: true } }
   }
 
-  // GATE-07 品牌页 E2E：预览/应用需要已发布作品照与启用的横竖首页图作为代表资产，
-  // 并预生成当前活动 profile 的公开 variant（旧对象，供切换后清理）。
-  // 首页轮播管理 API 属于 T20，这里直接落库 + fake 存储，不走被测接口。
+  // GATE-07/T51-F8 品牌页 E2E：已发布作品照生成当前活动水印变体，
+  // 首页横竖图始终生成独立的无水印 site-display-v2 变体。水印切换清理旧
+  // profile 时不得破坏 Hero；首页轮播管理 API 不在此处被测，故直接落库。
   if (body?.action === 'seedBrandingStage') {
     const sqlite = getDatabase().sqlite
     const now = Date.now()
@@ -384,9 +384,21 @@ export default defineEventHandler(async (event) => {
       ) VALUES (?, ?, ?, '品牌舞台首页图', 0, 1, ?, ?)
     `).run(randomUUID(), landscapeId, portraitId, now, now)
 
-    for (const assetId of [photoId, landscapeId, portraitId]) {
-      await generatePublicVariants(sqlite, fake, assetId, undefined, now)
-    }
+    await generatePublicVariants(sqlite, fake, photoId, undefined, now)
+    await generateSiteDisplayVariants(
+      sqlite,
+      fake,
+      landscapeId,
+      [SITE_HERO_USAGES.home.landscape],
+      now,
+    )
+    await generateSiteDisplayVariants(
+      sqlite,
+      fake,
+      portraitId,
+      [SITE_HERO_USAGES.home.portrait],
+      now,
+    )
     return { data: { ok: true } }
   }
 

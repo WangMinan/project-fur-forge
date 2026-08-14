@@ -265,8 +265,9 @@ export const updateWorkRequestSchema = versionedRequestSchema(
 )
 export const updateWorkPresentationRequestSchema = versionedRequestSchema(
   z.object({
-    sortOrder: z.number().int().nonnegative(),
     featured: z.boolean(),
+    /** @deprecated T51-F8 起顺序只允许通过完整精选集合接口维护。 */
+    sortOrder: z.number().int().nonnegative().optional(),
   }).strict(),
 )
 export const deleteWorkRequestSchema = versionedRequestSchema(
@@ -464,6 +465,28 @@ export const publicSafeWorkPreviewDtoSchema = z.discriminatedUnion('purpose', [
 
 export const managedWorkResponseSchema = apiSuccessSchema(managedWorkDtoSchema)
 export const workListResponseSchema = apiSuccessSchema(
+  z.array(workListItemDtoSchema),
+)
+
+export const featuredWorkOrderRequestSchema = z.object({
+  payload: z.object({
+    items: z.array(z.object({
+      id: resourceIdSchema,
+      expectedVersion: resourceVersionSchema,
+    }).strict()),
+  }).strict(),
+}).strict().superRefine((input, context) => {
+  const ids = input.payload.items.map(item => item.id)
+  if (new Set(ids).size !== ids.length) {
+    context.addIssue({
+      code: 'custom',
+      message: '精选作品不能重复',
+      path: ['payload', 'items'],
+    })
+  }
+})
+
+export const featuredWorkOrderResponseSchema = apiSuccessSchema(
   z.array(workListItemDtoSchema),
 )
 export const publicSafeWorkPreviewResponseSchema = apiSuccessSchema(

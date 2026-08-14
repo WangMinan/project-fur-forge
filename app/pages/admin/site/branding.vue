@@ -23,14 +23,13 @@ useSeoMeta({
 const {
   branding,
   conflictNotice,
-  createDraft,
   load,
   mutating,
   operation,
   pageStatus,
   refreshBranding,
   retryOperation,
-  runProfileMutation,
+  saveAndRefresh,
 } = useWatermarkBranding()
 
 const selectedAssetId = ref<string | null>(null)
@@ -38,9 +37,8 @@ const opacityPercent = ref(WATERMARK_DEFAULT_OPACITY)
 const scalePercent = ref(WATERMARK_DEFAULT_SCALE)
 // 基线与初始表单一致：首次载入 branding 时不误判 dirty，确保从草稿/活动配置同步。
 const baseline = ref('')
-const draftError = ref<string | null>(null)
-const previewError = ref<string | null>(null)
 const applyError = ref<string | null>(null)
+const paramsValid = ref(true)
 
 function snapshotOf() {
   return JSON.stringify({
@@ -94,16 +92,15 @@ const activeCandidate = computed<WatermarkCandidateDto | null>(() => {
   ) ?? null
 })
 
-const previewReady = computed(() => {
-  const current = operation.value
-  const draft = branding.value?.draftProfile
-  return !!(
-    current
-    && draft
-    && current.operationType === 'WATERMARK_PREVIEW'
-    && current.status === 'DONE'
-    && current.profileId === draft.id
-  )
+const configurationChanged = computed(() => {
+  const active = branding.value?.activeProfile
+  if (!selectedAssetId.value) {
+    return false
+  }
+  return !active
+    || active.sourceAssetId !== selectedAssetId.value
+    || active.opacityPercent !== opacityPercent.value
+    || active.scalePercent !== scalePercent.value
 })
 
 const upload = useWatermarkLogoUpload({
@@ -121,40 +118,28 @@ function onSelectCandidate(assetId: string) {
   selectedAssetId.value = assetId
 }
 
-async function onSaveDraft() {
+async function onSaveAndRefresh() {
   if (!selectedAssetId.value) {
-    draftError.value = '请先选择一个 Logo 候选。'
+    applyError.value = '请先选择一个 Logo 候选。'
     return
   }
-  draftError.value = null
-  draftError.value = await createDraft({
+  applyError.value = null
+  const message = await saveAndRefresh({
     opacityPercent: opacityPercent.value,
     scalePercent: scalePercent.value,
     sourceAssetId: selectedAssetId.value,
   })
-}
-
-async function onGeneratePreview() {
-  previewError.value = null
-  previewError.value = await runProfileMutation('preview')
-}
-
-async function onApply() {
-  applyError.value = null
-  applyError.value = await runProfileMutation('apply')
+  applyError.value = message
+  if (!message) {
+    baseline.value = snapshotOf()
+  }
 }
 
 async function onRetry() {
   applyError.value = null
-  previewError.value = null
   const message = await retryOperation()
   if (message) {
-    if (operation.value?.operationType === 'WATERMARK_PREVIEW') {
-      previewError.value = message
-    }
-    else {
-      applyError.value = message
-    }
+    applyError.value = message
   }
 }
 
@@ -179,7 +164,7 @@ onMounted(() => {
       <header class="branding__header">
         <h1 class="branding__title">全局水印</h1>
         <p class="branding__subtitle">
-          全站公开图的居中水印配置；Logo 与参数变更会生成新的草稿，应用后原子切换。
+          选择 Logo 和参数后确认一次；系统会安全刷新已有作品，后续作品自动使用当前水印。
         </p>
       </header>
 
@@ -230,67 +215,47 @@ onMounted(() => {
           </dl>
         </div>
         <p v-else class="branding-active__empty" role="status">
-          当前没有活动水印配置；公开图发布检查要求先完成一次应用。
-        </p>
-        <p
-          v-if="branding.draftProfile"
-          class="branding-active__draft"
-          role="status"
-        >
-          草稿：{{ branding.draftProfile.profileName }} · 居中 ·
-          不透明度 {{ branding.draftProfile.opacityPercent }}% ·
-          缩放 {{ branding.draftProfile.scalePercent }}%
-          <AdminStatusBadge
-            :tone="WATERMARK_PROFILE_STATUS_TONES[branding.draftProfile.status]"
-            :label="WATERMARK_PROFILE_STATUS_LABELS[branding.draftProfile.status]"
-          />
+          当前没有活动水印配置。选择 Logo 和参数后可直接保存并启用。
         </p>
       </section>
 
-      <div class="branding__grid">
-        <AdminBrandingCandidatesCard
-          :branding-version="branding.version"
-          :candidates="branding.candidates"
-          :disabled="mutating"
-          :selected-asset-id="selectedAssetId"
-          :upload="upload"
-          @select="onSelectCandidate"
-        />
+      <div class="branding__workspace">
+        <div class="branding__configuration">
+          <AdminBrandingCandidatesCard
+            :branding-version="branding.version"
+            :candidates="branding.candidates"
+            :disabled="mutating"
+            :selected-asset-id="selectedAssetId"
+            :upload="upload"
+            @select="onSelectCandidate"
+          />
 
-        <AdminBrandingParamsCard
-          v-model:opacity-percent="opacityPercent"
-          v-model:scale-percent="scalePercent"
-          :disabled="mutating"
-          :dirty="isDirty"
-          :saving="mutating"
-          :server-error="draftError"
-          @save="onSaveDraft"
-        />
+          <AdminBrandingParamsCard
+            v-model:opacity-percent="opacityPercent"
+            v-model:scale-percent="scalePercent"
+            :disabled="mutating"
+            :dirty="isDirty"
+            @validity="paramsValid = $event"
+          />
+        </div>
 
-        <AdminBrandingPreviewCard
-          :draft="branding.draftProfile"
+        <AdminBrandingApplyCard
+          :branding="branding"
+          :changed="configurationChanged"
           :mutating="mutating"
+          :opacity-percent="opacityPercent"
           :operation="operation"
-          @generate="onGeneratePreview"
+          :scale-percent="scalePercent"
+          :settings-valid="paramsValid"
+          :source-ready="selectedAssetId !== null"
+          @apply="onSaveAndRefresh"
           @retry="onRetry"
         />
       </div>
 
-      <p v-if="previewError" class="branding__notice branding__notice--error" role="alert">
-        {{ previewError }}
-      </p>
       <p v-if="applyError" class="branding__notice branding__notice--error" role="alert">
         {{ applyError }}
       </p>
-
-      <AdminBrandingApplyCard
-        :branding="branding"
-        :mutating="mutating"
-        :operation="operation"
-        :preview-ready="previewReady"
-        @apply="onApply"
-        @retry="onRetry"
-      />
     </div>
   </AdminShell>
 </template>
@@ -432,25 +397,10 @@ onMounted(() => {
   color: var(--admin-status-warning);
 }
 
-.branding-active__draft {
-  margin: var(--admin-space-3) 0 0;
-  display: flex;
-  align-items: center;
-  gap: var(--admin-space-2);
-  flex-wrap: wrap;
-  font-size: var(--admin-font-sm);
-  color: var(--admin-text-secondary);
-}
-
-.branding__grid {
+.branding__workspace,
+.branding__configuration {
   display: grid;
   gap: var(--admin-space-5);
   align-items: start;
-}
-
-@media (min-width: 1280px) {
-  .branding__grid {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.2fr);
-  }
 }
 </style>

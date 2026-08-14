@@ -9,6 +9,7 @@ import {
 import type {
   ManagedDesignSheetDto,
   ManagedWorkDto,
+  FeaturedWorkOrderItem,
   PublicSafeWorkPreviewDto,
   WatermarkAnchor,
   WorkFields,
@@ -56,6 +57,12 @@ interface WorkRow {
   sortOrder: number
   species: string
   suitType: 'full' | 'partial'
+  version: number
+}
+
+interface FeaturedOrderRow {
+  id: string
+  sortOrder: number
   version: number
 }
 
@@ -255,6 +262,55 @@ function replaceTags(
   values.forEach((value, position) => insert.run(workId, position, value))
 }
 
+function featuredOrderRows(sqlite: Database.Database) {
+  return sqlite.prepare(`
+    SELECT id, version, sort_order AS sortOrder
+    FROM works
+    WHERE featured = 1
+    ORDER BY sort_order, id
+  `).all() as FeaturedOrderRow[]
+}
+
+function featuredIdsForMembership(
+  sqlite: Database.Database,
+  id: string,
+  featured: boolean,
+) {
+  const ids = featuredOrderRows(sqlite).map(row => row.id)
+  const existingIndex = ids.indexOf(id)
+  if (!featured) {
+    return ids.filter(value => value !== id)
+  }
+  if (existingIndex >= 0) {
+    return ids
+  }
+  return [...ids, id]
+}
+
+/**
+ * 把精选序号压成连续 0..n-1。只更新实际变化的其他作品，避免一次勾选
+ * 无意义地使全部资源版本失效；目标作品由调用方与其业务字段一起更新。
+ */
+function normalizeFeaturedRows(
+  sqlite: Database.Database,
+  orderedIds: readonly string[],
+  now: number,
+  skipId?: string,
+) {
+  const current = new Map(featuredOrderRows(sqlite).map(row => [row.id, row]))
+  const update = sqlite.prepare(`
+    UPDATE works
+    SET sort_order = ?, version = version + 1, updated_at = ?
+    WHERE id = ? AND featured = 1 AND sort_order != ?
+  `)
+  orderedIds.forEach((id, index) => {
+    if (id === skipId || current.get(id)?.sortOrder === index) {
+      return
+    }
+    update.run(index, now, id, index)
+  })
+}
+
 export function listManagedWorks(
   sqlite: Database.Database,
 ): WorkListItemDto[] {
@@ -321,6 +377,63 @@ export function listManagedWorks(
   })
 }
 
+export function listFeaturedManagedWorks(
+  sqlite: Database.Database,
+) {
+  return listManagedWorks(sqlite)
+    .filter(work => work.featured)
+    .toSorted((left, right) => (
+      left.sortOrder - right.sortOrder || (left.id < right.id ? -1 : 1)
+    ))
+}
+
+export function saveFeaturedManagedWorkOrder(
+  sqlite: Database.Database,
+  items: readonly FeaturedWorkOrderItem[],
+  now = Date.now(),
+) {
+  sqlite.transaction(() => {
+    const current = featuredOrderRows(sqlite)
+    const submittedIds = items.map(item => item.id)
+    const uniqueIds = new Set(submittedIds)
+    const currentIds = new Set(current.map(row => row.id))
+    const versions = new Map(current.map(row => [row.id, row.version]))
+    const sameSet = uniqueIds.size === submittedIds.length
+      && submittedIds.length === current.length
+      && submittedIds.every(id => currentIds.has(id))
+    const versionsMatch = sameSet && items.every(
+      item => versions.get(item.id) === item.expectedVersion,
+    )
+    if (!sameSet || !versionsMatch) {
+      throw new ServiceError(
+        409,
+        'CONFLICT',
+        'Featured work order changed.',
+        'FEATURED_ORDER_CONFLICT',
+      )
+    }
+
+    const update = sqlite.prepare(`
+      UPDATE works
+      SET sort_order = ?, version = version + 1, updated_at = ?
+      WHERE id = ? AND version = ? AND featured = 1
+    `)
+    items.forEach((item, index) => {
+      const result = update.run(index, now, item.id, item.expectedVersion)
+      if (result.changes !== 1) {
+        throw new ServiceError(
+          409,
+          'CONFLICT',
+          'Featured work order changed.',
+          'FEATURED_ORDER_CONFLICT',
+        )
+      }
+    })
+  })()
+
+  return listFeaturedManagedWorks(sqlite)
+}
+
 export function getManagedWork(
   sqlite: Database.Database,
   id: string,
@@ -336,6 +449,10 @@ export function createManagedWork(
   const id = randomUUID()
   try {
     sqlite.transaction(() => {
+      const featuredIds = input.featured
+        ? featuredOrderRows(sqlite).map(row => row.id)
+        : []
+      const sortOrder = input.featured ? featuredIds.length : 0
       sqlite.prepare(`
         INSERT INTO works (
           id, slug, character_name, species, suit_type, purpose,
@@ -358,12 +475,15 @@ export function createManagedWork(
         input.purpose === 'adoption' && input.priceCnyMinor !== null
           ? 'CNY'
           : null,
-        input.sortOrder,
+        sortOrder,
         input.featured ? 1 : 0,
         now,
         now,
       )
       replaceTags(sqlite, id, input.featureTags)
+      if (input.featured) {
+        normalizeFeaturedRows(sqlite, [...featuredIds, id], now, id)
+      }
     })()
   }
   catch (error) {
@@ -401,6 +521,8 @@ export function updateManagedWork(
   }
   try {
     sqlite.transaction(() => {
+      const featuredIds = featuredIdsForMembership(sqlite, id, input.featured)
+      const sortOrder = input.featured ? featuredIds.indexOf(id) : 0
       const result = sqlite.prepare(`
         UPDATE works
         SET slug = ?, character_name = ?, species = ?, suit_type = ?,
@@ -429,7 +551,7 @@ export function updateManagedWork(
         input.purpose === 'adoption' && input.priceCnyMinor !== null
           ? 'CNY'
           : null,
-        input.sortOrder,
+        sortOrder,
         input.featured ? 1 : 0,
         now,
         id,
@@ -439,6 +561,9 @@ export function updateManagedWork(
         throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
       }
       replaceTags(sqlite, id, input.featureTags)
+      if (current.featured || input.featured) {
+        normalizeFeaturedRows(sqlite, featuredIds, now, id)
+      }
     })()
   }
   catch (error) {
@@ -455,40 +580,34 @@ export function updateManagedWorkPresentation(
   sqlite: Database.Database,
   id: string,
   expectedVersion: number,
-  input: { featured: boolean, sortOrder: number },
+  input: { featured: boolean, sortOrder?: number | undefined },
   now = Date.now(),
 ) {
   const current = requireWork(sqlite, id)
   if (current.version !== expectedVersion) {
     throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
-  const usedFeaturedOrders = new Set(input.featured
-    ? sqlite.prepare(`
-        SELECT sort_order FROM works
-        WHERE id != ? AND featured = 1
-      `).pluck().all(id) as number[]
-    : [])
-  let sortOrder = input.sortOrder
-  if (usedFeaturedOrders.has(sortOrder)) {
-    sortOrder = 0
-    while (usedFeaturedOrders.has(sortOrder)) {
-      sortOrder += 1
+  sqlite.transaction(() => {
+    const featuredIds = featuredIdsForMembership(sqlite, id, input.featured)
+    const sortOrder = input.featured ? featuredIds.indexOf(id) : 0
+    const result = sqlite.prepare(`
+      UPDATE works
+      SET sort_order = ?, featured = ?, version = version + 1, updated_at = ?
+      WHERE id = ? AND version = ?
+    `).run(
+      sortOrder,
+      input.featured ? 1 : 0,
+      now,
+      id,
+      expectedVersion,
+    )
+    if (result.changes !== 1) {
+      throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
     }
-  }
-  const result = sqlite.prepare(`
-    UPDATE works
-    SET sort_order = ?, featured = ?, version = version + 1, updated_at = ?
-    WHERE id = ? AND version = ?
-  `).run(
-    sortOrder,
-    input.featured ? 1 : 0,
-    now,
-    id,
-    expectedVersion,
-  )
-  if (result.changes !== 1) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
-  }
+    if (current.featured || input.featured) {
+      normalizeFeaturedRows(sqlite, featuredIds, now, id)
+    }
+  })()
   return getManagedWork(sqlite, id)
 }
 
@@ -556,6 +675,13 @@ export async function deleteManagedWork(
           id, actor_user_id, action, entity_type, entity_id, result, created_at
         ) VALUES (?, ?, 'WORK_DELETE', 'WORK', ?, 'SUCCESS', ?)
       `).run(randomUUID(), actorUserId, id, now)
+      if (current.featured) {
+        normalizeFeaturedRows(
+          sqlite,
+          featuredOrderRows(sqlite).map(row => row.id),
+          now,
+        )
+      }
     })()
   }
   catch (error) {

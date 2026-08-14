@@ -13,9 +13,13 @@ import {
 // 失败持续展示并可重试；始终标明当前公开站使用的活动配置。
 const props = defineProps<{
   branding: WatermarkBrandingDto
+  changed: boolean
   mutating: boolean
   operation: WatermarkOperationDto | null
-  previewReady: boolean
+  opacityPercent: number
+  scalePercent: number
+  settingsValid: boolean
+  sourceReady: boolean
 }>()
 
 const emit = defineEmits<{
@@ -58,21 +62,25 @@ const progressPercent = computed(() => progressValue.value === undefined
 )
 
 const canApply = computed(() =>
-  props.previewReady
+  props.sourceReady
+  && props.settingsValid
+  && props.changed
   && !props.mutating
   && !operationBusy.value
-  && props.branding.draftProfile !== null,
 )
 
 const applyBlockReason = computed(() => {
-  if (props.branding.draftProfile === null) {
-    return null
+  if (!props.sourceReady) {
+    return '请先上传或选择一个 Logo。'
+  }
+  if (!props.settingsValid) {
+    return '请先修正水印参数。'
   }
   if (operationBusy.value) {
     return '有操作正在进行，请等待完成。'
   }
-  if (!props.previewReady) {
-    return '需要先在“真实预览”中为当前草稿生成并核验预览。'
+  if (!props.changed) {
+    return '当前选择和参数与活动水印一致。'
   }
   return null
 })
@@ -84,6 +92,16 @@ function profileSummary(profile: WatermarkBrandingDto['activeProfile']) {
   return `${profile.profileName} · 居中 · 不透明度 ${profile.opacityPercent}% · 缩放 ${profile.scalePercent}%`
 }
 
+const actionLabel = computed(() => props.branding.activeProfile
+  ? '保存并刷新全站'
+  : '保存并启用水印',
+)
+
+const pendingSummary = computed(() => props.sourceReady
+  ? `居中 · 不透明度 ${props.opacityPercent}% · 缩放 ${props.scalePercent}%`
+  : '尚未选择 Logo',
+)
+
 function onConfirmApply() {
   confirmOpen.value = false
   emit('apply')
@@ -93,8 +111,8 @@ function onConfirmApply() {
 <template>
   <section class="editor-card branding-apply" aria-labelledby="branding-apply-title">
     <div class="editor-card__head">
-      <h2 id="branding-apply-title" class="editor-card__title">应用到全站</h2>
-      <p class="editor-card__hint">先生成并核验全部公开图，再原子切换</p>
+      <h2 id="branding-apply-title" class="editor-card__title">保存与刷新</h2>
+      <p class="editor-card__hint">一次确认后自动生成、核验并切换</p>
     </div>
 
     <dl class="branding-apply__impact">
@@ -115,14 +133,14 @@ function onConfirmApply() {
         <dd>{{ profileSummary(branding.activeProfile) }}</dd>
       </div>
       <div class="branding-apply__fact">
-        <dt>新草稿配置</dt>
-        <dd>{{ profileSummary(branding.draftProfile) }}</dd>
+        <dt>准备保存</dt>
+        <dd>{{ pendingSummary }}</dd>
       </div>
     </dl>
 
     <p class="branding-apply__note">
       水印只用在作品图片上：作品列表、作品详情、领养列表和设定图。
-      首页和委托页的大图始终不打水印，换水印不会改变它们。
+      首页和委托页的大图、返图始终不打水印，换水印不会改变它们。
       切换完成前旧作品图保持可用；生成或核验失败时，公开站仍使用原配置。
     </p>
 
@@ -132,12 +150,9 @@ function onConfirmApply() {
         class="editor__button editor__button--primary"
         :disabled="!canApply"
         @click="confirmOpen = true"
-      >应用草稿到全站</button>
+      >{{ mutating ? '正在提交…' : actionLabel }}</button>
       <p v-if="applyBlockReason" class="branding-apply__block" role="status">
         {{ applyBlockReason }}
-      </p>
-      <p class="branding-apply__desktop-hint" role="note">
-        屏幕较窄：建议改用桌面端完成应用操作；当前可查看活动配置与操作进度。
       </p>
     </div>
 
@@ -194,23 +209,19 @@ function onConfirmApply() {
       </p>
     </div>
 
-    <p class="branding-apply__current">
-      当前公开站使用：{{ profileSummary(branding.activeProfile) }}
-    </p>
-
     <AdminConfirmDialog
       :open="confirmOpen"
-      title="应用草稿水印到全站？"
-      confirm-label="确认应用"
+      :title="`${actionLabel}？`"
+      :confirm-label="actionLabel"
       tone="primary"
       @confirm="onConfirmApply"
       @cancel="confirmOpen = false"
     >
       <p>
-        将为 {{ branding.impact.publishedWorkCount }} 件已发布作品重新生成
+        将保存当前 Logo 和参数，并为 {{ branding.impact.publishedWorkCount }} 件已发布作品重新生成
         {{ branding.impact.targetVariantCount }} 张作品保护图，核验通过后原子切换为：
       </p>
-      <p><strong>{{ profileSummary(branding.draftProfile) }}</strong></p>
+      <p><strong>{{ pendingSummary }}</strong></p>
       <p>
         首页与委托页大图不打水印，这次切换不会改动它们；
         切换前旧作品图保持可用，切换完成后旧作品图进入清理。
@@ -240,7 +251,7 @@ function onConfirmApply() {
 
 .branding-apply__fact {
   display: grid;
-  grid-template-columns: 8.5rem 1fr;
+  grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
   gap: var(--admin-space-2);
   font-size: var(--admin-font-sm);
 }
@@ -253,6 +264,13 @@ function onConfirmApply() {
   margin: 0;
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+@media (max-width: 520px) {
+  .branding-apply__fact {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
 }
 
 .branding-apply__note {
@@ -274,17 +292,6 @@ function onConfirmApply() {
   color: var(--admin-text-secondary);
 }
 
-.branding-apply__desktop-hint {
-  margin: 0;
-  font-size: var(--admin-font-xs);
-  color: var(--admin-status-info);
-}
-
-@media (min-width: 768px) {
-  .branding-apply__desktop-hint {
-    display: none;
-  }
-}
 
 .branding-apply__operation {
   display: grid;
@@ -343,9 +350,4 @@ function onConfirmApply() {
   color: var(--admin-status-success);
 }
 
-.branding-apply__current {
-  margin: 0;
-  font-size: var(--admin-font-sm);
-  color: var(--admin-text-secondary);
-}
 </style>

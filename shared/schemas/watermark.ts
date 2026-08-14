@@ -103,6 +103,9 @@ export const createWatermarkProfileRequestSchema = versionedRequestSchema(
   }).strict(),
 )
 
+/** T51-F8：Logo 与参数一次提交并直接启动持久全站刷新。 */
+export const saveWatermarkRequestSchema = createWatermarkProfileRequestSchema
+
 export const watermarkProfileMutationRequestSchema = versionedRequestSchema(
   z.object({ brandingVersion: resourceVersionSchema }).strict(),
 )

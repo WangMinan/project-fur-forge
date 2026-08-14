@@ -27,6 +27,7 @@ import {
   runWatermarkProfileApplication,
   retryWatermarkOperation,
   startWatermarkProfileApplication,
+  startWatermarkRefresh,
 } from '../../server/utils/runner/watermark-branding'
 import {
   createWatermarkProfile,
@@ -204,6 +205,79 @@ describe('GATE-07 watermark branding lifecycle', () => {
 
     expect(repeated.profileId).toBe(draft.id)
     expect(requireSiteBranding(sqlite)).toEqual(before)
+  })
+
+  it('activates an empty site in one save without a branding preview', async () => {
+    const active = requireWatermarkProfile(sqlite, seededProfileId)
+    sqlite.transaction(() => {
+      sqlite.prepare('DELETE FROM work_assets').run()
+      sqlite.prepare('DELETE FROM works').run()
+      sqlite.prepare(`
+        UPDATE watermark_profiles SET status = 'RETIRED' WHERE id = ?
+      `).run(active.id)
+      sqlite.prepare(`
+        UPDATE site_branding
+        SET active_watermark_profile_id = NULL,
+            draft_watermark_profile_id = NULL,
+            version = version + 1
+        WHERE id = 'site'
+      `).run()
+    })()
+
+    const started = startWatermarkRefresh(
+      sqlite,
+      requireSiteBranding(sqlite).version,
+      {
+        sourceAssetId: active.sourceAssetId,
+        opacityPercent: 58,
+        scalePercent: 60,
+      },
+      NOW + 1_000,
+    )
+    const completed = await runWatermarkProfileApplication(
+      sqlite,
+      storage,
+      started.operationId,
+      NOW + 2_000,
+    )
+    expect(completed).toMatchObject({
+      status: 'DONE',
+      affectedWorkCount: 0,
+      targetVariantCount: 0,
+      generatedVariantCount: 0,
+      verifiedVariantCount: 0,
+    })
+    expect(requireSiteBranding(sqlite)).toMatchObject({
+      activeWatermarkProfileId: completed.profileId,
+      draftWatermarkProfileId: null,
+    })
+    expect(sqlite.prepare(`
+      SELECT count(*) FROM watermark_operations
+      WHERE operation_type = 'WATERMARK_PREVIEW'
+    `).pluck().get()).toBe(0)
+  })
+
+  it('starts an existing-site refresh directly without a verified preview', () => {
+    const active = requireWatermarkProfile(sqlite, seededProfileId)
+    const started = startWatermarkRefresh(
+      sqlite,
+      requireSiteBranding(sqlite).version,
+      {
+        sourceAssetId: active.sourceAssetId,
+        opacityPercent: 59,
+        scalePercent: 60,
+      },
+      NOW + 1_000,
+    )
+    expect(started).toMatchObject({
+      operationType: 'WATERMARK_REBUILD',
+      status: 'GENERATING_PUBLIC',
+    })
+    expect(sqlite.prepare(`
+      SELECT count(*) FROM watermark_operations
+      WHERE operation_type = 'WATERMARK_PREVIEW'
+        AND profile_id = ?
+    `).pluck().get(started.profileId)).toBe(0)
   })
 
   it('previews artwork targets, atomically switches every protected variant, and cleans old objects', async () => {

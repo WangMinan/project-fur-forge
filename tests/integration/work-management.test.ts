@@ -26,9 +26,11 @@ import {
   deleteManagedWork,
   getManagedWork,
   getPublicSafeWorkPreview,
+  listFeaturedManagedWorks,
   listManagedWorks,
   replaceManagedDesignSheet,
   replaceManagedStudioPhotos,
+  saveFeaturedManagedWorkOrder,
   updateManagedWork,
   updateManagedWorkPresentation,
 } from '../../server/utils/service/work-management'
@@ -153,7 +155,7 @@ describe('T22 work management', () => {
       featureTags: ['软萌', '大尾巴'],
       private: { ownerContact: '仅后台联系人' },
       studioPhotos: [],
-      sortOrder: 10,
+      sortOrder: 0,
       featured: false,
     })
     expect(listManagedWorks(sqlite)).toEqual([
@@ -188,7 +190,7 @@ describe('T22 work management', () => {
       ownerDisplay: '有点小狗工作室',
       featureTags: ['大尾巴'],
       private: { ownerContact: null },
-      sortOrder: 2,
+      sortOrder: 0,
       featured: true,
     })
     expect(() => updateManagedWork(
@@ -233,6 +235,66 @@ describe('T22 work management', () => {
     )).toThrow(/Unpublish the work before editing/u)
   })
 
+  it('appends, compacts, normalizes and atomically reorders featured works', () => {
+    const created = Array.from({ length: 4 }, (_, index) => createManagedWork(
+      sqlite,
+      {
+        ...workInput,
+        slug: `featured-${index}`,
+        characterName: `精选 ${index}`,
+        featured: true,
+        sortOrder: 99 - index,
+      },
+      NOW + index,
+    ))
+    expect(created.map(work => work.sortOrder)).toEqual([0, 1, 2, 3])
+
+    const before = listFeaturedManagedWorks(sqlite)
+    const reordered = saveFeaturedManagedWorkOrder(sqlite, [
+      before[3]!,
+      before[0]!,
+      before[1]!,
+      before[2]!,
+    ].map(work => ({ id: work.id, expectedVersion: work.version })), NOW + 10)
+    expect(reordered.map(work => work.slug)).toEqual([
+      'featured-3',
+      'featured-0',
+      'featured-1',
+      'featured-2',
+    ])
+    expect(reordered.map(work => work.sortOrder)).toEqual([0, 1, 2, 3])
+
+    expect(() => saveFeaturedManagedWorkOrder(sqlite, before.map(work => ({
+      id: work.id,
+      expectedVersion: work.version,
+    })), NOW + 11)).toThrowError(expect.objectContaining({
+      reason: 'FEATURED_ORDER_CONFLICT',
+    }))
+
+    const removed = updateManagedWorkPresentation(
+      sqlite,
+      reordered[1]!.id,
+      reordered[1]!.version,
+      { featured: false },
+      NOW + 12,
+    )
+    expect(removed).toMatchObject({ featured: false, sortOrder: 0 })
+    expect(listFeaturedManagedWorks(sqlite).map(work => work.sortOrder))
+      .toEqual([0, 1, 2])
+
+    sqlite.prepare('UPDATE works SET sort_order = 8 WHERE featured = 1').run()
+    const sparse = listFeaturedManagedWorks(sqlite)
+    updateManagedWorkPresentation(
+      sqlite,
+      sparse[0]!.id,
+      sparse[0]!.version,
+      { featured: true },
+      NOW + 13,
+    )
+    expect(listFeaturedManagedWorks(sqlite).map(work => work.sortOrder))
+      .toEqual([0, 1, 2])
+  })
+
   it('creates and updates all purposes while preserving the adoption matrix', () => {
     const commission = createManagedWork(sqlite, {
       ...workInput,
@@ -247,7 +309,7 @@ describe('T22 work management', () => {
       adoptionMethod: 'regular',
       businessStatus: 'available',
       priceCnyMinor: 1,
-      sortOrder: 1,
+      sortOrder: 0,
       featured: true,
     }, NOW + 1)
 
@@ -260,7 +322,7 @@ describe('T22 work management', () => {
       adoptionMethod: 'regular',
       businessStatus: 'available',
       priceCnyMinor: 1,
-      sortOrder: 1,
+      sortOrder: 0,
       featured: true,
     })
     expect(listManagedWorks(sqlite).map(work => work.slug)).toEqual([
@@ -272,12 +334,12 @@ describe('T22 work management', () => {
       ...workInput,
       slug: 'adoption-became-showcase',
       purpose: 'showcase',
-      sortOrder: 3,
+      sortOrder: 0,
     }, NOW + 2)
     expect(showcased).toMatchObject({
       version: 2,
       purpose: 'showcase',
-      sortOrder: 3,
+      sortOrder: 0,
     })
     expect(showcased).not.toHaveProperty('adoptionMethod')
     expect(sqlite.prepare(`
