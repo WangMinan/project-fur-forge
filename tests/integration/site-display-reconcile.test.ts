@@ -338,6 +338,36 @@ describe('T34-F1 existing site display reconcile', () => {
       .toBe(true)
   })
 
+  it('uses the reconcile timestamp for a private hero upscale source', async () => {
+    insertSource(
+      'low-resolution-home-landscape',
+      'home_hero_landscape',
+      320,
+      180,
+    )
+    sqlite.prepare(`
+      UPDATE site_hero_slides
+      SET landscape_asset_id = 'low-resolution-home-landscape'
+      WHERE id = 'home-slide'
+    `).run()
+
+    const result = await reconcileSiteDisplay({
+      sqlite,
+      storage,
+      dryRun: false,
+      now: NOW,
+      scope: 'home-hero',
+    })
+
+    expect(result).toMatchObject({ failed: 0, generated: 2, status: 'DONE' })
+    expect(sqlite.prepare(`
+      SELECT created_at AS createdAt, updated_at AS updatedAt
+      FROM asset_variants
+      WHERE asset_id = 'low-resolution-home-landscape'
+        AND recipe_version = 'hero-upscale-lanczos-v2'
+    `).get()).toEqual({ createdAt: NOW, updatedAt: NOW })
+  })
+
   it('projects the homepage hero and both entries without watermarks after reconcile', async () => {
     await reconcileSiteDisplay({ sqlite, storage, dryRun: false, now: NOW })
 

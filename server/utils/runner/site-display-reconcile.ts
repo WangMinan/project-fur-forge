@@ -11,6 +11,7 @@ import {
   releaseOperationLease,
 } from '../repository/operation-lease'
 import { registerOperationResumer } from './operation-recovery'
+import { withOperationLeaseHeartbeat } from './operation-lease-heartbeat'
 import { safeLog } from '../safe-log'
 import {
   assetSupportsSiteDisplay,
@@ -258,7 +259,8 @@ function setReconcileStatus(
 
 /**
  * 执行 reconcile 的核心循环。既被 CLI 调用，也被启动恢复复用。
- * 每个目标之前更新心跳；失去 lease 立即停止，避免两个进程并行生成。
+ * 生成期间周期续租并在目标边界复核；失去 lease 立即停止后续提交，
+ * 避免两个进程并行推进同一 operation。
  */
 async function runReconcile(
   sqlite: Database.Database,
@@ -293,75 +295,80 @@ async function runReconcile(
       now,
     )
 
-    for (const target of targets) {
-      if (!heartbeatOperationLease(sqlite, lease)) {
-        throw new Error('Site display reconcile lease was lost.')
-      }
-      if (reconcileTargetComplete(sqlite, target)) {
-        skipped += 1
-        continue
-      }
-      let supported = assetSupportsSiteDisplay(sqlite, target.assetId, target.usages)
-      if (!supported && (
-        target.kind === 'home-hero'
-        || target.kind === 'commission-hero'
-        || target.label === 'home-entry-commission'
-      )) {
-        // 显式执行升级命令即为这次旧 Hero 私有 Lanczos 适配的操作确认。
-        // 私有原图仍不公开，适配源继续留在 private Bucket。
+    await withOperationLeaseHeartbeat(sqlite, lease, async (leaseHeartbeat) => {
+      for (const target of targets) {
+        leaseHeartbeat.heartbeat()
+        if (reconcileTargetComplete(sqlite, target)) {
+          skipped += 1
+          continue
+        }
+        let supported = assetSupportsSiteDisplay(sqlite, target.assetId, target.usages)
+        if (!supported && (
+          target.kind === 'home-hero'
+          || target.kind === 'commission-hero'
+          || target.label === 'home-entry-commission'
+        )) {
+          // 显式执行升级命令即为这次旧 Hero 私有 Lanczos 适配的操作确认。
+          // 私有原图仍不公开，适配源继续留在 private Bucket。
+          try {
+            await ensureHeroUpscaleSource(sqlite, storage, target.assetId, now)
+            leaseHeartbeat.assertActive()
+            supported = assetSupportsSiteDisplay(sqlite, target.assetId, target.usages)
+          }
+          catch (error) {
+            leaseHeartbeat.assertActive()
+            safeLog('warn', 'Reconcile target hero upscale failed.', {
+              assetId: target.assetId,
+              errorCode: (error as { code?: unknown }).code,
+              usage: target.label,
+            })
+          }
+        }
+        if (!supported) {
+          // 非 Hero 源太小：站点展示位受控隐藏，不改用水印图。
+          failed += 1
+          safeLog('warn', 'Reconcile target source is too small for site display.', {
+            assetId: target.assetId,
+            usage: target.label,
+          })
+          continue
+        }
         try {
-          await ensureHeroUpscaleSource(sqlite, storage, target.assetId, Date.now())
-          supported = assetSupportsSiteDisplay(sqlite, target.assetId, target.usages)
+          await generateSiteDisplayVariants(
+            sqlite,
+            storage,
+            target.assetId,
+            target.usages,
+            now,
+          )
+          leaseHeartbeat.assertActive()
+          // 只有完整生成并通过校验才计入成功；投影按完整性判定。
+          if (reconcileTargetComplete(sqlite, target)) {
+            generated += 1
+          }
+          else {
+            failed += 1
+          }
         }
         catch (error) {
-          safeLog('warn', 'Reconcile target hero upscale failed.', {
+          leaseHeartbeat.assertActive()
+          failed += 1
+          safeLog('error', 'Reconcile target generation failed.', {
             assetId: target.assetId,
             errorCode: (error as { code?: unknown }).code,
             usage: target.label,
           })
         }
-      }
-      if (!supported) {
-        // 非 Hero 源太小：站点展示位受控隐藏，不改用水印图。
-        failed += 1
-        safeLog('warn', 'Reconcile target source is too small for site display.', {
-          assetId: target.assetId,
-          usage: target.label,
-        })
-        continue
-      }
-      try {
-        await generateSiteDisplayVariants(
+        leaseHeartbeat.assertActive()
+        setReconcileStatus(
           sqlite,
-          storage,
-          target.assetId,
-          target.usages,
-          now,
+          operationId,
+          'GENERATING_PUBLIC',
+          { generated, skipped, failed },
+          Date.now(),
         )
-        // 只有完整生成并通过校验才计入成功；投影按完整性判定。
-        if (reconcileTargetComplete(sqlite, target)) {
-          generated += 1
-        }
-        else {
-          failed += 1
-        }
       }
-      catch (error) {
-        failed += 1
-        safeLog('error', 'Reconcile target generation failed.', {
-          assetId: target.assetId,
-          errorCode: (error as { code?: unknown }).code,
-          usage: target.label,
-        })
-      }
-      setReconcileStatus(
-        sqlite,
-        operationId,
-        'GENERATING_PUBLIC',
-        { generated, skipped, failed },
-        Date.now(),
-      )
-    }
+    })
 
     if (!heartbeatOperationLease(sqlite, lease)) {
       throw new Error('Site display reconcile lease was lost.')
