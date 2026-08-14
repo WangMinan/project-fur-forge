@@ -22,9 +22,11 @@ import {
   HERO_RECIPE,
 } from './hero-publication'
 import {
-  completeSiteDisplayVariants,
-  siteDisplayWidths,
+  completeSiteDisplayVariantsForVersion,
+  LEGACY_SITE_DISPLAY_RECIPE_VERSION,
+  SITE_DISPLAY_RECIPE_VERSION,
   SITE_HERO_USAGES,
+  siteDisplayWidthsForVersion,
 } from './site-display-recipe'
 
 export interface AssetRecord {
@@ -235,23 +237,45 @@ export function toPublicHeroSlideDto(
   }
 
   const usages = SITE_HERO_USAGES[record.placement]
-  const unwatermarked = {
-    landscape: completeSiteDisplayVariants(usages.landscape, record.landscapeVariants),
-    portrait: completeSiteDisplayVariants(usages.portrait, record.portraitVariants),
+  const completeHeroVersion = (recipeVersion: typeof SITE_DISPLAY_RECIPE_VERSION | typeof LEGACY_SITE_DISPLAY_RECIPE_VERSION) => {
+    const landscape = completeSiteDisplayVariantsForVersion(
+      usages.landscape,
+      record.landscapeVariants,
+      recipeVersion,
+    )
+    const portrait = completeSiteDisplayVariantsForVersion(
+      usages.portrait,
+      record.portraitVariants,
+      recipeVersion,
+    )
+    return landscape && portrait
+      ? {
+          landscape: {
+            variants: landscape,
+            widths: siteDisplayWidthsForVersion(usages.landscape, recipeVersion),
+          },
+          portrait: {
+            variants: portrait,
+            widths: siteDisplayWidthsForVersion(usages.portrait, recipeVersion),
+          },
+        }
+      : null
   }
-  // T34-F1：站点展示位优先命中无水印变体；仅在迁移完成前回退旧水印 Hero。
-  const sources = unwatermarked.landscape && unwatermarked.portrait
+  const unwatermarked = completeHeroVersion(SITE_DISPLAY_RECIPE_VERSION)
+    ?? completeHeroVersion(LEGACY_SITE_DISPLAY_RECIPE_VERSION)
+  // T51-F7：完整 v2 优先、完整 v1 次之；只在两者都缺失时回退历史水印 Hero。
+  const sources = unwatermarked
     ? {
         landscape: toPublicSourceSetDto(
-          unwatermarked.landscape,
+          unwatermarked.landscape.variants,
           mediaBaseUrl,
-          siteDisplayWidths(usages.landscape),
+          unwatermarked.landscape.widths,
           appEnv,
         ),
         portrait: toPublicSourceSetDto(
-          unwatermarked.portrait,
+          unwatermarked.portrait.variants,
           mediaBaseUrl,
-          siteDisplayWidths(usages.portrait),
+          unwatermarked.portrait.widths,
           appEnv,
         ),
       }

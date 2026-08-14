@@ -190,7 +190,7 @@ test('轮播项 CRUD：横竖上传创建、编辑保存、删除确认', async 
   await gotoHomeAdmin(page)
   const card = await createSlideViaUi(page, { alt: '蓝湄的首页展示照', sortOrder: 0 })
   await expect(card.getByText('未启用')).toBeVisible()
-  await expect(card.getByText(/启用时将生成 12 张/)).toBeVisible()
+  await expect(card.getByText(/启用时将生成 16 张/)).toBeVisible()
 
   await card.getByLabel(/图片说明/).fill('蓝湄的首页展示照（改）')
   await card.getByRole('button', { name: '保存修改' }).click()
@@ -206,7 +206,7 @@ test('轮播项 CRUD：横竖上传创建、编辑保存、删除确认', async 
     expect(await image.evaluate((img: HTMLImageElement) => img.naturalWidth))
       .toBeGreaterThan(0)
     expect(await image.getAttribute('src')).toMatch(
-      /^\/api\/admin\/v1\/media\/assets\/[0-9a-f-]+\/preview$/u,
+      /^\/api\/admin\/v1\/media\/assets\/[0-9a-f-]+\/preview\?w=640$/u,
     )
   }
 
@@ -294,7 +294,7 @@ test('低分辨率大图：保存后提示，取消不处理，确认后 FFmpeg 
   await dialog.getByRole('button', { name: '取消' }).click()
   await expect(card.getByText('未启用', { exact: true })).toBeVisible()
   expect((await fakeMediaState(page)).objects.some(key =>
-    key.includes('/hero-upscale-lanczos-v1/'),
+    key.includes('/hero-upscale-lanczos-v2/'),
   )).toBe(false)
 
   await setFakeMediaFlags(page, { failGet: true })
@@ -336,7 +336,7 @@ test('低分辨率大图：保存后提示，取消不处理，确认后 FFmpeg 
   await expect(card.getByText(/已生成私有适配源/)).toBeVisible()
   const state = await fakeMediaState(page)
   expect(state.objects.filter(key =>
-    key.includes('/hero-upscale-lanczos-v1/'),
+    key.includes('/hero-upscale-lanczos-v2/'),
   )).toHaveLength(2)
   expect(await publicHomeAlts(page)).toEqual(['低分辨率适配首页图'])
 })
@@ -459,14 +459,16 @@ test('启用任务刷新后恢复真实阶段与公开衍生图计数', async ({
   await gotoHomeAdmin(page)
   const card = page.locator('article.slide-card').first()
   await expect(card.getByLabel(/图片说明/)).toHaveValue('恢复中的首页图')
-  await expect(card.getByRole('status')).toContainText('正在生成公开图片')
+  await expect(card.getByRole('status').filter({ hasText: '正在生成公开图片' }))
+    .toBeVisible()
   await expect(card.getByRole('progressbar', {
-    name: '首页公开衍生图已就绪 0 / 12',
+    name: '首页公开衍生图已就绪 0 / 16',
   })).toHaveAttribute('value', '0')
 
   await page.reload()
   await page.waitForSelector('[data-testid="home-admin"]')
-  await expect(card.getByRole('status')).toContainText('当前活动 profile 已就绪 0 / 12')
+  await expect(card.getByRole('status').filter({ hasText: '当前配方已就绪' }))
+    .toContainText('当前配方已就绪 0 / 16')
 })
 
 test('已启用轮播项可上移/下移，公开首页顺序同步', async ({ page }) => {
@@ -596,7 +598,7 @@ test('水印 profile 边界：无活动水印时预览被拒绝，但站点大�
     })).toBeVisible()
     await page.getByRole('alertdialog').getByRole('button', { name: '知道了' }).click()
 
-    // T34-F1 起首页/委托页大图使用无水印 site-display-v1：
+    // T51-F7 起首页/委托页大图使用无水印 site-display-v2：
     // 没有活动水印 profile 也可以启用，不再报冲突。
     await card.getByRole('button', { name: '启用' }).click()
     await expect(card.getByText('已启用', { exact: true })).toBeVisible({ timeout: 20_000 })

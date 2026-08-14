@@ -249,7 +249,6 @@ function canPublish(photo: AdminReturnPhotoDto) {
         <AdminReturnThumb
           :asset-id="photo.asset?.assetId ?? null"
           :name="record.name"
-          :width="160"
         />
 
         <div class="photo__body">

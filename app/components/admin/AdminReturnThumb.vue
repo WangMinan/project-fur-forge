@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { ADMIN_MEDIA_CARD_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
+import { adminMediaPreviewUrl } from '~/utils/admin-media-preview'
+
 /**
  * 返图缩略图。
  *
@@ -6,20 +9,16 @@
  * 也不暴露私有 Object Key：浏览器只拿到 assetId。
  * 使用 contain，不把竖图裁成方块。
  */
-const props = withDefaults(defineProps<{
+const props = defineProps<{
   assetId: string | null
   name: string
-  /** 服务端缩放宽度：列表格子只有几十像素，不需要原图。 */
-  width?: number
-}>(), {
-  width: 96,
-})
+}>()
 
 const failed = ref(false)
 
 const previewSrc = computed(() => (
   props.assetId
-    ? `/api/admin/v1/media/assets/${props.assetId}/preview?w=${props.width}`
+    ? adminMediaPreviewUrl(props.assetId, ADMIN_MEDIA_CARD_PREVIEW_WIDTH)
     : null
 ))
 

@@ -76,11 +76,11 @@ function createClient(config, bucket) {
  * 与 server/utils/site-display-recipe.ts 一致的无水印处理串：
  * 只有缩放、质量与格式，不含任何 watermark 算子。
  */
-function siteDisplayProcess(width, height, format) {
+function siteDisplayProcess(width, height, format, usage) {
   const resize = `image/resize,m_fill,w_${width},h_${height},g_center`
   return format === 'png'
     ? `${resize}/format,png`
-    : `${resize}/quality,q_${format === 'webp' ? 82 : 86}/format,${format === 'jpeg' ? 'jpg' : 'webp'}`
+    : `${resize}/quality,q_${format === 'webp' && usage.includes('-hero-') ? 90 : format === 'webp' ? 82 : 86}/format,${format === 'jpeg' ? 'jpg' : 'webp'}`
 }
 
 /** 作品保护展示位的处理串：带居中水印，用于确认两类媒体确实不同。 */
@@ -142,7 +142,7 @@ async function main() {
 
   try {
     // 一份 Hero 横版源与一份领养设定图源，都是私有原图。
-    const heroSource = createSyntheticSourcePng(2400, 1350)
+    const heroSource = createSyntheticSourcePng(4000, 2250)
     const heroKey = `${prefix}/original/hero/source.png`
     await privateClient.put(heroKey, heroSource, {
       headers: { 'Content-Type': 'image/png' },
@@ -174,18 +174,19 @@ async function main() {
     const siteVariants = [
       { usage: 'home-hero-landscape', width: 1920, height: 1080, format: 'webp' },
       { usage: 'home-hero-landscape', width: 1920, height: 1080, format: 'png' },
+      { usage: 'home-hero-landscape', width: 3840, height: 2160, format: 'webp' },
       { usage: 'commission-hero-landscape', width: 1280, height: 720, format: 'webp' },
       { usage: 'home-entry-commission', width: 768, height: 512, format: 'webp' },
       { usage: 'home-entry-adoption', width: 768, height: 512, format: 'webp' },
     ]
     const siteResults = []
     for (const variant of siteVariants) {
-      const process_ = siteDisplayProcess(variant.width, variant.height, variant.format)
+      const process_ = siteDisplayProcess(variant.width, variant.height, variant.format, variant.usage)
       if (/watermark/u.test(process_)) {
         throw new Error('Site display process must not contain a watermark operator.')
       }
       const extension = variant.format === 'jpeg' ? 'jpg' : variant.format
-      const objectKey = `${prefix}/web/hero/site-display-v1/${variant.usage}/${variant.width}/object.${extension}`
+      const objectKey = `${prefix}/web/hero/site-display-v2/${variant.usage}/${variant.width}/object.${extension}`
       await privateClient.processObjectSave(
         heroKey,
         objectKey,

@@ -39,7 +39,7 @@ export const adminHeroSlideDtoSchema = z.object({
   }).strict().nullable(),
   upscaleReady: z.boolean(),
   upscaleOperation: publicationOperationDtoSchema.nullable(),
-  missingVariantCount: z.number().int().min(0).max(12),
+  missingVariantCount: z.number().int().min(0).max(16),
   publicationOperation: publicationOperationDtoSchema.nullable(),
 }).strict()
 

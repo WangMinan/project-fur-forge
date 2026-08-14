@@ -7,6 +7,11 @@ import type {
 } from '~~/shared/types/contracts'
 import { AdminApiError } from '~/composables/useAdminApi'
 import { ASSET_STATUS_LABELS } from '~/utils/media-labels'
+import { ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
+import {
+  adminMediaOriginalUrl,
+  adminMediaPreviewUrl,
+} from '~/utils/admin-media-preview'
 
 interface DesignSheetEntry {
   alt: string
@@ -44,7 +49,7 @@ function toEntry(sheet: ManagedDesignSheetDto): DesignSheetEntry {
     alt: sheet.alt ?? '',
     assetId: sheet.assetId,
     height: sheet.height,
-    previewUrl: `/api/admin/v1/media/assets/${sheet.assetId}/preview`,
+    previewUrl: adminMediaPreviewUrl(sheet.assetId, ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH),
     publicVariantCount: sheet.publicVariantCount,
     status: sheet.status,
     version: sheet.version,
@@ -81,7 +86,7 @@ const uploads = useStudioPhotoUpload({
       alt: '',
       assetId: asset.assetId,
       height: asset.height,
-      previewUrl: `/api/admin/v1/media/assets/${asset.assetId}/preview`,
+      previewUrl: adminMediaPreviewUrl(asset.assetId, ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH),
       publicVariantCount: 0,
       status: asset.status,
       version: asset.version,
@@ -239,7 +244,7 @@ defineExpose({ save: saveDesignSheet })
 
     <article v-if="entry" class="design-sheet__entry" :data-status="entry.status">
       <div class="design-sheet__preview">
-        <p class="design-sheet__preview-title">私有原图预览</p>
+        <p class="design-sheet__preview-title">私有编辑预览</p>
         <div
           class="design-sheet__canvas"
           :style="{ aspectRatio: `${entry.width} / ${entry.height}` }"
@@ -247,12 +252,17 @@ defineExpose({ save: saveDesignSheet })
         >
           <img
             :src="entry.previewUrl"
-            :alt="entry.alt || '领养设定图原图预览'"
+            :alt="entry.alt || '领养设定图编辑预览'"
             referrerpolicy="same-origin"
           >
         </div>
         <p class="design-sheet__note">
-          {{ entry.width }}×{{ entry.height }} · 完整原图 · 无水印 · 仅管理员可查看
+          {{ entry.width }}×{{ entry.height }} · 640 px 编辑预览 · 无水印 · 仅管理员可查看
+          · <a
+            :href="adminMediaOriginalUrl(entry.assetId)"
+            target="_blank"
+            rel="noopener"
+          >查看原图</a>
         </p>
         <p
           v-if="needsResolutionAdaptation"

@@ -8,26 +8,22 @@ import {
 } from '../../../../../../utils/recipe/media-source'
 import { safeLog } from '../../../../../../utils/safe-log'
 import { asSafeApiError, ServiceError } from '../../../../../../utils/service-error'
+import { parseAdminMediaPreviewQuery } from '../../../../../../utils/route/admin-media-preview'
 
 /**
  * 管理端私有原图预览。
  *
- * `?w=` 请求服务端缩放后的缩略图：管理列表只需要几十像素宽，
- * 直接回传多 MB 原图既慢又浪费 OSS 流量。宽度白名单固定，
- * 避免把任意处理参数透传给 OSS。
+ * `?w=320|640` 请求服务端缩放后的预览；`?original=1` 才读取永久原图。
+ * 两种模式显式互斥，避免宽度拼错或缩略失败时意外回传多 MB 原图。
  */
-const PREVIEW_WIDTHS = [64, 96, 160, 320, 640] as const
-
 export default defineEventHandler(async (event) => {
   const id = resourceIdSchema.safeParse(getRouterParam(event, 'id'))
   if (!id.success) {
     throw createApiError(400, 'VALIDATION_ERROR', 'Request is invalid.')
   }
 
-  const requestedWidth = Number(getQuery(event).w)
-  const width = PREVIEW_WIDTHS.find(value => value === requestedWidth) ?? null
-
   try {
+    const request = parseAdminMediaPreviewQuery(getQuery(event))
     const asset = getDatabase().sqlite.prepare(`
       SELECT private_object_key AS privateObjectKey, mime_type AS mimeType
       FROM assets
@@ -38,7 +34,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const storage = getMediaStorage()
-    if (width === null) {
+    if (request.mode === 'original') {
       setResponseHeader(event, 'content-type', asset.mimeType)
       return await storage.getPrivate(asset.privateObjectKey)
     }
@@ -51,7 +47,7 @@ export default defineEventHandler(async (event) => {
       // auto-orient 保证竖图不会横躺；m_lfit 保持原比例，不裁掉主体。
       const processed = await storage.getPrivateProcessed(
         source.objectKey,
-        `image/auto-orient,1/resize,m_lfit,w_${width}`,
+        `image/auto-orient,1/resize,m_lfit,w_${request.width}`,
       )
       setResponseHeader(
         event,
@@ -61,14 +57,16 @@ export default defineEventHandler(async (event) => {
       return processed.content
     }
     catch (error) {
-      // 缩略图失败不应让整行变成破图：退回原图，只记录脱敏日志。
-      safeLog('warn', 'Admin preview downscale failed; serving original.', {
+      safeLog('warn', 'Admin preview downscale failed.', {
         assetId: id.data,
         errorName: (error as { name?: unknown }).name,
-        width,
+        width: request.width,
       })
-      setResponseHeader(event, 'content-type', asset.mimeType)
-      return await storage.getPrivate(asset.privateObjectKey)
+      throw new ServiceError(
+        500,
+        'INTERNAL_ERROR',
+        'Private preview generation failed.',
+      )
     }
   }
   catch (error) {

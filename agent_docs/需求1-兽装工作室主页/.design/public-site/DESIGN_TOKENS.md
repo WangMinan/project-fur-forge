@@ -1,7 +1,7 @@
 # Design Tokens：公开站
 
 > **设计哲学**：白底、摄影优先、品牌蓝克制使用。OSS 预生成图片是唯一媒体来源。
-> **状态**：阶段 E 开发并冻结、阶段 F 仅复验的公开端 Token。媒体身份为 `recipe-v3`（作品保护）、`site-display-v1`
+> **状态**：阶段 E 开发并冻结、阶段 F 仅复验的公开端 Token。媒体身份为 `recipe-v3`（作品保护）、`site-display-v2`
 > （站点展示无水印）与 `return-display-v1`（返图无水印）。
 > **最后校准**：2026-08-10。
 
@@ -166,7 +166,7 @@
   detail: original ratio, 960 / 1600 / 2400
   design-sheet: original ratio, 960 / 1600 / 2400
 
-站点展示  site-display-v1   protection_mode=none       无水印
+站点展示  site-display-v2   protection_mode=none       无水印
   home-hero-landscape / commission-hero-landscape: 16:9, 768 / 1280 / 1920
   home-hero-portrait  / commission-hero-portrait:  9:16, 480 / 768 / 1080
   home-entry-commission / home-entry-adoption:     3:2,  480 / 768 / 1080

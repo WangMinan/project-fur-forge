@@ -76,7 +76,13 @@ test.describe('出厂照上传链路', () => {
     await expect(page.getByText('出厂照已保存。')).toBeVisible()
     await expect(page.getByText('出厂照有未保存更改')).toHaveCount(0)
 
-    // 刷新后通过 assetId 的同源认证路由继续显示私有原图预览。
+    // 刷新后通过 assetId 的同源认证路由继续显示 640 px 私有编辑预览。
+    const originalRequests: string[] = []
+    page.on('request', (request) => {
+      if (request.url().includes('/preview?original=1')) {
+        originalRequests.push(request.url())
+      }
+    })
     await page.reload()
     await page.waitForSelector('.editor-card')
     await expect(photoCards(page)).toHaveCount(1)
@@ -85,8 +91,11 @@ test.describe('出厂照上传链路', () => {
     await expect(photoCards(page).first().getByTestId('photo-preview')).toBeVisible()
     await expect(photoCards(page).first().locator('img')).toHaveAttribute(
       'src',
-      /\/api\/admin\/v1\/media\/assets\/[0-9a-f-]+\/preview$/u,
+      /\/api\/admin\/v1\/media\/assets\/[0-9a-f-]+\/preview\?w=640$/u,
     )
+    await expect(photoCards(page).first().getByRole('link', { name: '查看原图' }))
+      .toHaveAttribute('href', /\/preview\?original=1$/u)
+    expect(originalRequests).toEqual([])
     await expect(page.getByText('未更改')).toBeVisible()
   })
 
@@ -358,7 +367,7 @@ test.describe('出厂照区域：泄漏边界与三视口', () => {
     const persistedPreview = photoCards(page).first().locator('img')
     await expect(persistedPreview).toHaveAttribute(
       'src',
-      new RegExp(`/api/admin/v1/media/assets/[0-9a-f-]+/preview$`, 'u'),
+      new RegExp(`/api/admin/v1/media/assets/[0-9a-f-]+/preview\\?w=640$`, 'u'),
     )
     const domAfterSave = await page.content()
     expect(domAfterSave).not.toContain('/original/')
@@ -443,7 +452,7 @@ test.describe('T24 领养设定图与角色化列表', () => {
     const original = page.getByTestId('design-sheet-original-preview').locator('img')
     await expect(original).toHaveAttribute(
       'src',
-      /\/api\/admin\/v1\/media\/assets\/[0-9a-f-]+\/preview$/u,
+      /\/api\/admin\/v1\/media\/assets\/[0-9a-f-]+\/preview\?w=640$/u,
     )
     expect(await original.evaluate(node => getComputedStyle(node).objectFit)).toBe('contain')
 

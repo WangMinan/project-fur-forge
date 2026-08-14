@@ -38,11 +38,13 @@
 
 保存输入、存储范围、相对 Object Key、用途、尺寸/格式/质量/裁剪、配方、保护模式、可选水印 profile、输出摘要/字节和状态。
 
-- `protection_mode=none`：站点 `site-display-v1` 与返图 `return-display-v1`；
+- `protection_mode=none`：站点当前 `site-display-v2`（升级期间整体回退 `site-display-v1`）与返图 `return-display-v1`；
 - `protection_mode=watermark`：作品/领养/展会当前使用 `recipe-v3` + 活动 `brand-centered-v2`；完整 `recipe-v2` / `recipe-v1` 只作为新配方未齐时的整体回退；
 - 私有 preprocess 不能被公开投影选中；`design-sheet-upscale-lanczos-v1` 与 `studio-photo-upscale-lanczos-v1` 分别按原始资产摘要、媒体角色与目标几何保存不可变低分辨率适配源，后续公开变体只记录对应 READY 处理源的 `source_variant_id`。
 
 数据库保存不可变对象身份；公开响应用 `MEDIA_BASE_URL` 和相对 Object Key 组装稳定的 ESA HTTPS URL。
+
+`site-display-v2` 为首页横版 Hero 增加 2880×1620、3840×2160，并将 Hero WebP 质量固定为 90；v1/v2 行与对象可并存，公开投影只选择一个完整配方，不跨版本拼接。旧图通过幂等 reconcile 生成 v2，不覆盖 v1。
 
 `recipe-v3` 不增加列：配方身份哈希和新 Object Key 记录竖图水印缩放语义。3:4 `work-card` 与竖版 `studio_photo` `detail` 仍是单个 `center` 水印，并统一按 480 px 参考宽度随输出档位等比放大，使卡片、详情和后台公开水印预览保持相同相对尺寸；横版 `detail` 和设定图左右双水印保持原规则。新旧配方行可以并存，公开投影不能跨版本拼 SourceSet。
 

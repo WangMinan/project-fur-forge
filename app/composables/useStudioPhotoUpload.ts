@@ -20,6 +20,8 @@ import {
   buildUploadDeclaration,
   DECLARATION_FAILURE_LABELS,
 } from '~/utils/upload-declaration'
+import { ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
+import { adminMediaPreviewUrl } from '~/utils/admin-media-preview'
 import { AdminApiError } from './useAdminApi'
 
 export type StudioUploadState
@@ -489,7 +491,7 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
         schema: verifiedAssetResponseSchema,
       })
       item.asset = result.data
-      item.previewUrl = `/api/admin/v1/media/assets/${assetId}/preview`
+      item.previewUrl = adminMediaPreviewUrl(assetId, ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH)
       item.state = 'completed'
       if (result.data.status === 'READY') {
         options.onAssetReady(item, result.data)

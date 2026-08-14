@@ -115,7 +115,7 @@ const lowResolutionSources = computed(() => {
   }
   return [
     props.slide.landscape.width < 1920 || props.slide.landscape.height < 1080
-      ? `横版 ${props.slide.landscape.width}×${props.slide.landscape.height}（推荐 1920×1080）`
+      ? `横版 ${props.slide.landscape.width}×${props.slide.landscape.height}（推荐 3840×2160）`
       : null,
     props.slide.portrait.width < 1080 || props.slide.portrait.height < 1920
       ? `竖版 ${props.slide.portrait.width}×${props.slide.portrait.height}（推荐 1080×1920）`
@@ -163,8 +163,9 @@ const operationProgress = computed(() => {
   return status ? OPERATION_PROGRESS_LABELS[status] ?? null : null
 })
 
+const targetVariantCount = computed(() => props.placement === 'home' ? 16 : 12)
 const readyVariantCount = computed(() =>
-  props.slide ? 12 - props.slide.missingVariantCount : 0,
+  props.slide ? targetVariantCount.value - props.slide.missingVariantCount : 0,
 )
 
 const linkedWorkOptions = computed(() => props.works)
@@ -230,7 +231,7 @@ function requestEnable() {
         :label="slide.enabled ? '已启用' : '未启用'"
       />
       <span v-if="slide && slide.missingVariantCount > 0 && !slide.enabled" class="slide-card__variants">
-        启用时将生成 {{ slide.missingVariantCount }} 张带水印公开衍生图
+        启用时将生成 {{ slide.missingVariantCount }} 张无水印公开衍生图
       </span>
     </header>
 
@@ -399,12 +400,12 @@ function requestEnable() {
         :label="operationProgress ?? FFMPEG_UPSCALE_LABEL"
       />
       <div v-else role="status">
-        <p>{{ operationProgress }}<template v-if="operation?.operationType === 'PUBLISH'"> 当前活动 profile 已就绪 {{ readyVariantCount }} / 12</template></p>
+        <p>{{ operationProgress }}<template v-if="operation?.operationType === 'PUBLISH'"> 当前配方已就绪 {{ readyVariantCount }} / {{ targetVariantCount }}</template></p>
         <progress
           v-if="operation?.operationType === 'PUBLISH'"
           :value="readyVariantCount"
-          max="12"
-          :aria-label="`${pageLabel}公开衍生图已就绪 ${readyVariantCount} / 12`"
+          :max="targetVariantCount"
+          :aria-label="`${pageLabel}公开衍生图已就绪 ${readyVariantCount} / ${targetVariantCount}`"
         />
         <progress
           v-else

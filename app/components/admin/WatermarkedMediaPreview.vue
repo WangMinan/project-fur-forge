@@ -30,7 +30,7 @@ watch(() => [props.assetId, props.usage], () => {
       >{{ state === 'loading' ? '生成中…' : src ? '重新生成' : '生成预览' }}</button>
     </div>
     <p class="watermarked-preview__note">
-      使用当前站点水印，位置固定居中；与上方原图预览互不影响。
+      使用当前站点水印，位置固定居中；与上方编辑预览互不影响。
     </p>
     <p v-if="state === 'loading'" class="watermarked-preview__state" role="status">
       正在生成带水印的公开预览…

@@ -360,7 +360,7 @@ export default defineEventHandler(async (event) => {
     const landscapeId = randomUUID()
     const portraitId = randomUUID()
     insertSource(photoId, 'studio_photo', 3200, 2400)
-    insertSource(landscapeId, 'home_hero_landscape', 3200, 1800)
+    insertSource(landscapeId, 'home_hero_landscape', 4000, 2250)
     insertSource(portraitId, 'home_hero_portrait', 1800, 3200)
     const workId = randomUUID()
     sqlite.prepare(`
@@ -617,8 +617,8 @@ export default defineEventHandler(async (event) => {
     for (const slide of body.slides ?? []) {
       const landscapeAssetId = insertHeroSource(
         'home_hero_landscape',
-        slide.landscapeWidth ?? 3200,
-        slide.landscapeHeight ?? 1800,
+        slide.landscapeWidth ?? 4000,
+        slide.landscapeHeight ?? 2250,
       )
       const portraitAssetId = insertHeroSource(
         'home_hero_portrait',
@@ -652,7 +652,7 @@ export default defineEventHandler(async (event) => {
         now,
       )
       if (slide.enabled) {
-        // T34-F1：站点展示位使用无水印 site-display-v1 变体。
+        // T51-F7：站点展示位使用无水印 site-display-v2 变体。
         const usages = SITE_HERO_USAGES[placement]
         await generateSiteDisplayVariants(
           sqlite,

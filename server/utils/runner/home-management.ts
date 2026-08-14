@@ -84,7 +84,10 @@ import {
   ensureHeroUpscaleSource,
   generatePrivateWatermarkPreview,
 } from '../recipe/media-recipe'
-import { HERO_UPSCALE_RECIPE_VERSION } from '../recipe/media-source'
+import {
+  HERO_UPSCALE_RECIPE_VERSION,
+  heroUpscaleTarget,
+} from '../recipe/media-source'
 import {
   assertOperationLease,
   claimOperationLease,
@@ -197,21 +200,25 @@ function assetUpscaleReadyFromVariants(
     | 'portraitAssetId' | 'portraitHeight' | 'portraitSha256' | 'portraitWidth'>,
   variants: ReadonlyMap<string, readonly HeroVariantRow[]>,
 ) {
+  const landscapeTarget = heroUpscaleTarget('home_hero_landscape')!
+  const portraitTarget = heroUpscaleTarget('home_hero_portrait')!
   const landscapeReady = (
-    asset.landscapeWidth >= 1920 && asset.landscapeHeight >= 1080
+    asset.landscapeWidth >= landscapeTarget.width
+    && asset.landscapeHeight >= landscapeTarget.height
   ) || hasUpscaleVariant(
     variants.get(asset.landscapeAssetId) ?? [],
     asset.landscapeSha256,
-    1920,
-    1080,
+    landscapeTarget.width,
+    landscapeTarget.height,
   )
   const portraitReady = (
-    asset.portraitWidth >= 1080 && asset.portraitHeight >= 1920
+    asset.portraitWidth >= portraitTarget.width
+    && asset.portraitHeight >= portraitTarget.height
   ) || hasUpscaleVariant(
     variants.get(asset.portraitAssetId) ?? [],
     asset.portraitSha256,
-    1080,
-    1920,
+    portraitTarget.width,
+    portraitTarget.height,
   )
   return landscapeReady && portraitReady
 }

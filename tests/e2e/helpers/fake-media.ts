@@ -113,8 +113,8 @@ const heroSources: Partial<Record<'landscape' | 'portrait', Buffer>> = {}
 
 export function heroPng(orientation: 'landscape' | 'portrait'): Buffer {
   heroSources[orientation] ??= createSyntheticSourcePng(
-    orientation === 'landscape' ? 1920 : 1080,
-    orientation === 'landscape' ? 1080 : 1920,
+    orientation === 'landscape' ? 3840 : 1080,
+    orientation === 'landscape' ? 2160 : 1920,
   ) as Buffer
   return uniquePng(heroSources[orientation])
 }

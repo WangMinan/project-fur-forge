@@ -732,6 +732,50 @@ describe('P0 schema boundary', () => {
     `).run()).toThrow(/asset variant identity is immutable/)
   })
 
+  it('allows immutable site-display v1 and v2 rows under the same privacy boundary', () => {
+    insertAsset('site-display-source', 'home_hero_landscape', {
+      width: 4000,
+      height: 2250,
+    })
+    const siteDisplayFields = {
+      format: 'webp' as const,
+      height: 1080,
+      logoDigest: 'none',
+      protectionMode: 'none',
+      storageScope: 'PUBLIC',
+      usage: 'home-hero-landscape',
+      watermarkAnchor: 'none',
+      watermarkProfile: 'none',
+      width: 1920,
+    }
+
+    expect(() => insertVariant(
+      'site-display-v1-row',
+      'site-display-source',
+      'home_hero_landscape',
+      'home-hero-landscape',
+      { ...siteDisplayFields, recipeVersion: 'site-display-v1' },
+    )).not.toThrow()
+    expect(() => insertVariant(
+      'site-display-v2-row',
+      'site-display-source',
+      'home_hero_landscape',
+      'home-hero-landscape',
+      { ...siteDisplayFields, recipeVersion: 'site-display-v2' },
+    )).not.toThrow()
+    expect(() => insertVariant(
+      'site-display-v2-private',
+      'site-display-source',
+      'home_hero_landscape',
+      'home-hero-landscape',
+      {
+        ...siteDisplayFields,
+        recipeVersion: 'site-display-v2',
+        storageScope: 'PRIVATE',
+      },
+    )).toThrow(/asset_variants_site_display_recipe/)
+  })
+
   it('isolates enabled hero order by home and commission placement', () => {
     insertHeroPair(0)
     expect(() => sqlite.prepare(`

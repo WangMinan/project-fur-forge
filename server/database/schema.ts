@@ -553,15 +553,15 @@ export const assetVariants = sqliteTable('asset_variants', {
   ),
   check(
     'asset_variants_site_display_recipe',
-    sql`${table.recipeVersion} != 'site-display-v1' OR (${table.storageScope} = 'PUBLIC' AND ${table.protectionMode} = 'none' AND ${table.usage} IN ('home-hero-landscape', 'home-hero-portrait', 'commission-hero-landscape', 'commission-hero-portrait', 'home-entry-commission', 'home-entry-adoption'))`,
+    sql`${table.recipeVersion} NOT IN ('site-display-v1', 'site-display-v2') OR (${table.storageScope} = 'PUBLIC' AND ${table.protectionMode} = 'none' AND ${table.usage} IN ('home-hero-landscape', 'home-hero-portrait', 'commission-hero-landscape', 'commission-hero-portrait', 'home-entry-commission', 'home-entry-adoption'))`,
   ),
   check(
     'asset_variants_site_display_usage',
-    sql`${table.usage} NOT IN ('commission-hero-landscape', 'commission-hero-portrait', 'home-entry-commission', 'home-entry-adoption') OR (${table.storageScope} = 'PUBLIC' AND ${table.protectionMode} = 'none' AND ${table.recipeVersion} = 'site-display-v1')`,
+    sql`${table.usage} NOT IN ('commission-hero-landscape', 'commission-hero-portrait', 'home-entry-commission', 'home-entry-adoption') OR (${table.storageScope} = 'PUBLIC' AND ${table.protectionMode} = 'none' AND ${table.recipeVersion} IN ('site-display-v1', 'site-display-v2'))`,
   ),
   check(
     'asset_variants_public_protection',
-    sql`${table.storageScope} != 'PUBLIC' OR ${table.protectionMode} = 'watermark' OR ${table.recipeVersion} IN ('site-display-v1', 'return-display-v1', 'contact-qr-v1')`,
+    sql`${table.storageScope} != 'PUBLIC' OR ${table.protectionMode} = 'watermark' OR ${table.recipeVersion} IN ('site-display-v1', 'site-display-v2', 'return-display-v1', 'contact-qr-v1')`,
   ),
   /**
    * T36 返图公开变体：只允许 return-wall 用途、公开范围、无保护模式。

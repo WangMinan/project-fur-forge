@@ -19,7 +19,7 @@
 - 私有直传、媒体处理、发布/下架、operation lease/heartbeat/recovery；
 - 作品、领养、首页、委托、固定文案、品牌水印；
 - 双 Bucket、部署文件、备份/恢复入口、生产镜像依赖闭包；
-- 作品 `recipe-v3`（完整 `recipe-v2` / `recipe-v1` 整体回退），站点大图 `site-display-v1`。
+- 作品 `recipe-v3`（完整 `recipe-v2` / `recipe-v1` 整体回退），站点大图当前 `site-display-v2`（旧图升级期间整体回退 `site-display-v1`）。
 
 ### 阶段 D
 

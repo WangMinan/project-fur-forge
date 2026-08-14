@@ -824,7 +824,7 @@ describe('dual-bucket work publication operations', () => {
     expect(entries.every(variant => (
       variant.protectionMode === 'none'
       && variant.watermarkProfile === 'none'
-      && variant.recipeVersion === 'site-display-v1'
+      && variant.recipeVersion === 'site-display-v2'
     ))).toBe(true)
   })
 

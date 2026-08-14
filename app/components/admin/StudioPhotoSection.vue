@@ -6,6 +6,8 @@ import type {
 } from '~~/shared/types/contracts'
 import { retryAssetProcessingResponseSchema } from '~~/shared/schemas/upload'
 import { AdminApiError } from '~/composables/useAdminApi'
+import { ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
+import { adminMediaPreviewUrl } from '~/utils/admin-media-preview'
 import type { StudioPhotoEntry } from './StudioPhotoCard.vue'
 
 interface SectionEntry extends StudioPhotoEntry {
@@ -43,7 +45,7 @@ function toEntry(
     height: photo.height,
     position: photo.position,
     previewUrl: previous?.previewUrl
-      ?? `/api/admin/v1/media/assets/${photo.assetId}/preview`,
+      ?? adminMediaPreviewUrl(photo.assetId, ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH),
     primary: photo.primary,
     publicVariantCount: photo.publicVariantCount,
     status: photo.status,
@@ -106,7 +108,7 @@ const uploads = useStudioPhotoUpload({
       focalY: asset.focalY,
       height: asset.height,
       position: entries.value.length,
-      previewUrl: `/api/admin/v1/media/assets/${asset.assetId}/preview`,
+      previewUrl: adminMediaPreviewUrl(asset.assetId, ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH),
       primary: entries.value.length === 0,
       publicVariantCount: 0,
       status: asset.status,

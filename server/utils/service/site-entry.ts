@@ -13,10 +13,9 @@ import type { MediaStorage } from '../media-storage'
 import type { RuntimeConfig } from '../runtime-config'
 import {
   assetSupportsSiteDisplay,
-  completeSiteDisplayVariants,
   generateSiteDisplayVariants,
   HOME_ENTRY_USAGES,
-  siteDisplayWidths,
+  resolveCompleteSiteDisplayVariants,
 } from '../recipe/site-display-recipe'
 
 interface HomeEntrySourceRow {
@@ -99,7 +98,7 @@ export function projectHomeEntry(
     return null
   }
   const usage = HOME_ENTRY_USAGES[kind]
-  const complete = completeSiteDisplayVariants(usage, variants)
+  const complete = resolveCompleteSiteDisplayVariants(usage, variants)
   if (!complete) {
     return null
   }
@@ -108,9 +107,9 @@ export function projectHomeEntry(
     href: ENTRY_LABELS[kind].href,
     alt: toSafePublicAlt(source.altText, ENTRY_LABELS[kind].alt),
     sources: toPublicSourceSetDto(
-      complete,
+      complete.variants,
       mediaBaseUrl,
-      siteDisplayWidths(usage),
+      complete.widths,
       appEnv,
     ),
   })

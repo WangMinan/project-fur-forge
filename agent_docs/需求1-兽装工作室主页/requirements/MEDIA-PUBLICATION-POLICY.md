@@ -21,13 +21,13 @@
 
 | 展示位置 | 媒体来源 | 保护方式 | 用途/配方 |
 | --- | --- | --- | --- |
-| 首页 Hero 横/竖图 | 首页资产 | 无水印 | `site-display-v1` |
-| 委托 Hero 横/竖图 | 委托资产 | 无水印 | `site-display-v1` |
+| 首页 Hero 横/竖图 | 首页资产 | 无水印 | `site-display-v2`（升级期间整体回退 `site-display-v1`） |
+| 委托 Hero 横/竖图 | 委托资产 | 无水印 | `site-display-v2`（升级期间整体回退 `site-display-v1`） |
 | 首页委托/领养入口 | 独立入口源 | 无水印 | `home-entry-commission` / `home-entry-adoption` |
 | 首页精选、作品列表/详情 | 作品主图/出厂照 | 活动水印 | `recipe-v3` + 活动 profile |
 | 常规领养与展会掉落 | 设定图/出厂照 | 活动水印 | 与作品相同 |
 | `/returns` 与 `/returns/{slug}` | `return_photo` | 无水印 | `return-wall` / `return-display-v1` |
-| 管理端原图/Logo/处理源 | 私有对象 | 不公开 | 认证 Host、短期私有预览、`no-store` |
+| 管理端原图/Logo/处理源 | 私有对象 | 不公开 | 认证 Host、卡片 `w=320`、编辑预览 `w=640`、显式原图、`no-store` |
 
 返图不使用“轻量水印”，也不随活动作品 profile 切换。
 
@@ -35,7 +35,13 @@
 
 ### 3.1 站点展示
 
-`site-display-v1` 身份至少包含输入资产/摘要、公开用途、输出宽高/格式/质量、裁剪或焦点、配方版本和 `protection_mode=none`。不携带水印 Logo/profile/几何参数。
+`site-display-v2` 身份至少包含输入资产/摘要、公开用途、输出宽高/格式/质量、裁剪或焦点、配方版本和 `protection_mode=none`。不携带水印 Logo/profile/几何参数。
+
+- 首页横版 Hero 在 768/1280/1920 基础上增加 2880×1620 与 3840×2160；
+- Hero WebP 质量固定为 90，站点入口仍保持既有较轻质量；
+- `srcset` 继续按视口和 DPR 选择，普通屏幕不强制下载 2880/3840；
+- 公开投影优先完整 `site-display-v2`，升级未完成时只整体回退完整 `site-display-v1`，不能跨版本拼 SourceSet；
+- v2 使用新路径和新身份，不覆盖或改写既有 v1 对象。
 
 ### 3.2 作品保护
 
@@ -82,6 +88,8 @@ watermark_profile_id = NULL
 - 首页、作品、领养、返图和 Hero 复用同一 URL 组装规则，不各自复制逻辑；
 - 公开 DTO 可以包含 ESA 媒体 URL；禁止的是私有 OSS Key、私有 OSS 签名 URL、原始 OSS Bucket 地址和 Secret；
 - 首版不实现自定义边缘 URL 鉴权，后续若需要必须作为独立迭代重新设计和验收。
+
+管理端私有预览不属于公开投影：列表/卡片只请求 `w=320`，较大的编辑预览只请求 `w=640`；读取永久原图必须由管理员明确点击并发送 `original=1`。所有响应继续 `no-store`，缩略处理失败不得回退并传输完整原图。
 
 ## 5. 首页入口与配方隔离
 

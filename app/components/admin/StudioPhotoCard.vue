@@ -2,6 +2,7 @@
 import {
   ASSET_STATUS_LABELS,
 } from '~/utils/media-labels'
+import { adminMediaOriginalUrl } from '~/utils/admin-media-preview'
 
 export interface StudioPhotoEntry {
   alt: string
@@ -108,7 +109,7 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
         <span v-if="entry.primary" class="photo-card__primary-badge">主图</span>
         <p class="photo-card__empty-text">
           原图已保存在私有库（{{ entry.width }}×{{ entry.height }}）<br>
-          正在加载私有原图预览…
+          正在加载私有编辑预览…
         </p>
       </div>
       <div v-if="entry.previewUrl" class="photo-card__aspect" role="group" :aria-label="`第 ${index + 1} 张预览比例`">
@@ -126,7 +127,12 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
         >3:4 卡片</button>
       </div>
       <p class="photo-card__preview-note">
-        完整原图 · 无水印 · 仅管理员可查看。
+        640 px 编辑预览 · 无水印 · 仅管理员可查看 ·
+        <a
+          :href="adminMediaOriginalUrl(entry.assetId)"
+          target="_blank"
+          rel="noopener"
+        >查看原图</a>
       </p>
       <AdminWatermarkedMediaPreview
         :asset-id="entry.assetId"
