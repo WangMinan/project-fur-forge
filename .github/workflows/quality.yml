@@ -178,6 +178,24 @@ jobs:
             app node ops/ops.mjs reset-admin-password \
             --confirm RESET_SINGLE_ADMIN_PASSWORD
           docker compose run --rm --no-deps app node ops/ops.mjs preflight
+
+          if cleanup_usage="$(docker compose run --rm --no-deps app \
+            node ops/ops.mjs r3-stage-a-cleanup 2>&1)"; then
+            echo 'R3-A cleanup unexpectedly accepted a missing scope.' >&2
+            exit 1
+          fi
+          grep -Fq 'Pass --environment-prefix with the exact confirmed object scope.' \
+            <<<"${cleanup_usage}"
+          ! grep -Fq 'Unexpected argument' <<<"${cleanup_usage}"
+
+          if prune_usage="$(docker compose run --rm --no-deps app \
+            node ops/ops.mjs r3-stage-a-prune-backups 2>&1)"; then
+            echo 'R3-A backup pruning unexpectedly accepted missing paths.' >&2
+            exit 1
+          fi
+          grep -Fq 'Usage: r3-stage-a-prune-backups' <<<"${prune_usage}"
+          ! grep -Fq 'Unexpected argument' <<<"${prune_usage}"
+
           docker compose up --detach --no-build --no-deps app
 
           app_id="$(docker compose ps -q app)"

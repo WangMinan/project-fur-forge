@@ -95,13 +95,3 @@ export async function runR3StageACleanupCli(
     database.sqlite.close()
   }
 }
-
-if (import.meta.url === `file://${process.argv[1]?.replaceAll('\\', '/')}`) {
-  try {
-    process.stdout.write(`${JSON.stringify(await runR3StageACleanupCli())}\n`)
-  }
-  catch (error) {
-    process.stderr.write(`${(error as Error).message}\n`)
-    process.exitCode = 1
-  }
-}

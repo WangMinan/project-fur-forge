@@ -139,6 +139,26 @@ describe('T52-E6 production deployment contract', () => {
     expect(stageA.indexOf(cleanBackup)).toBeLessThan(stageA.indexOf(prune))
   })
 
+  it('keeps R3-A importable commands free of direct-execution side effects', () => {
+    const cleanup = source('scripts/r3-stage-a-cleanup.ts')
+    const cleanupCli = source('scripts/r3-stage-a-cleanup-cli.ts')
+    const prune = source('scripts/r3-stage-a-prune-backups.ts')
+    const pruneCli = source('scripts/r3-stage-a-prune-backups-cli.ts')
+    const packageJson = source('package.json')
+    const quality = source('.github/workflows/quality.yml')
+
+    for (const importableModule of [cleanup, prune]) {
+      expect(importableModule).not.toContain('import.meta.url')
+      expect(importableModule).not.toContain('process.stdout.write')
+      expect(importableModule).not.toContain('process.exitCode')
+    }
+    expect(cleanupCli).toContain('runR3StageACleanupCli()')
+    expect(pruneCli).toContain('runR3StageABackupPruneCli()')
+    expect(packageJson).toContain('tsx scripts/r3-stage-a-cleanup-cli.ts')
+    expect(packageJson).toContain('tsx scripts/r3-stage-a-prune-backups-cli.ts')
+    expect(quality).toContain("! grep -Fq 'Unexpected argument'")
+  })
+
   it('ships one v2 upgrade parser through pnpm and the frozen deployment image', () => {
     const packageJson = source('package.json')
     const localUpgrade = source('scripts/upgrade-site-display-v2.ts')
