@@ -1,113 +1,114 @@
 # 任务清单：站点业务简化与委托投递
 
-> **角色**：需求3唯一可勾选实施分解；任务勾选只证明该任务定义完成，不代签后续 CI、独立 Review、用户验收或生产破坏性执行。
-> **状态**：需求与计划已锁定，工程尚未开始。
-> **规则**：任何数据库写入、迁移、OSS 删除、发布 operation 和生产命令必须串行；返图/动态永久删除只能在对应门禁关闭后执行。
+> **角色**：需求3唯一任务与勾选权威。
+> **状态**：GATE-00/T00 已完成；工程尚未开始。
+> **规则**：任务完成不代签 CI、独立 Review、用户验收或生产执行。所有数据库写、媒体删除和 operation 串行。
 
-## 当前目标
+## 决策与文档
 
-完成品牌名回退、退役返图/动态、公开动效和 Hero 改造、作品/领养模型收缩、委托站内提交和后台队列，并在本地和生产永久删除退役数据与媒体。
+- [x] **GATE-00 · 产品决策冻结**：品牌、立即退役、动效、Hero、作品、领养和委托字段已确认。
+- [x] **T00 · 文档地基**：创建需求3活文档并于 2026-08-15 完成合入后复查；修正退役顺序、Hero 并发域、状态迁移、CORS 和 email action 边界。
 
-## 决策门禁
+## A. 立即永久退役返图与动态
 
-- [x] **GATE-00 · 需求冻结**：用户确认英文名为 `DITE DOG`；返图和动态永久删除；首页 slogan、桌面/移动排版、Hero 横竖独立、作品字段、领养状态、单张设定图、委托字段和后台状态均已锁定。 _完成于 2026-08-15。_
-- [x] **T00 · 文档地基**：创建需求3的 foundation、SPEC、models、design、PLAN、DATA-MIGRATION、TASKS、routing、STATE、review 和 artifacts 入口，并同步 `agent_docs/README.md` 与 `CLAUDE.md`。 _纯文档，不代表任何代码已实现。_
+- [ ] **T01 · 品牌与公开入口基线**：英文名改为 `DITE DOG`，slogan 更新；审计 SEO/JSON-LD/测试/带文字静态资产；移除返图/动态公开和管理导航；首页停止消费 latest updates。
+- [ ] **T02 · 退役代码垂直切片**：删除 returns/updates 页面、API、Schema、DTO、repository、service、runner、recipe、fixture 和测试；旧路由 404；更新 sitemap、analytics、build guard、verify。
+- [ ] **T03 · 退役 dry-run 与强确认工具**：精确盘点 return/update 行、asset/session/variant/operation/analytics、private/public objects、OSS versions、ESA URLs 和应用备份；只输出脱敏计数。
+- [ ] **T04 · 退役数据库 contract**：删除 updates/return 表及相关行，重建 assets/upload/variants/publication/analytics 约束，移除 `return_photo`、`return-wall`、`return-display-v1`、`RETURN_PHOTO` 和旧 route/entity enum。
+- [ ] **T05 · 本地不可恢复演练**：复杂副本完成 dry-run、对象/版本删除、ESA purge、contract、404、重复执行、integrity 和 clean backup restore；旧应用备份在 clean backup 验证后删除。
+- [ ] **T06 · 第一发布单元质量与独立复查**：相关 lint/typecheck/unit/integration/E2E/build/verify 全部通过；新上下文 focused review 检查对象枚举、停止点、404、约束和证据。
+- [ ] **T07 · 生产立即退役**：维护窗口停写，用户核对 dry-run并强确认；删除媒体/版本/cache，执行 contract，验证服务，创建并恢复 clean backup，再删除旧应用备份；操作员记录外部快照处理状态。
 
-## A. Expand：品牌、Schema 与新基础设施
+### GATE-A · 退役完成
 
-- [ ] **T01 · 品牌英文名与当前文案回退**：将项目英文名统一为 `DITE DOG`，迁移首页 slogan 为 `不只做小狗毛 | 只做海绵头`，更新 SEO、JSON-LD、静态内容守卫、测试和当前文档；全仓当前契约不得出现 `DITE DOG FURSUIT`。 _修改：共享常量、页面元数据、测试、默认内容迁移；不改历史 dated evidence。_
-- [ ] **T02 · Hero orientation 数据模型与后端**：新增 orientation 独立 Hero 表、Schema、repository、service、route 和 DTO；复用现有 Hero 资产、站点展示 recipe、适配、operation、lease、恢复和 ESA purge；删除新契约中的 linked work。 _依赖：T01；暂不删除旧 pair 表。_
-- [ ] **T03 · Hero pair 幂等迁移与兼容读取**：把每条旧 Hero pair 确定性拆成 landscape/portrait 两条记录，归一化顺序，完成空库/既有库/重复执行测试；提供切换前一致性报告。 _依赖：T02。_
-- [ ] **T04 · 作品与领养 expand Schema**：增加 `adoption_status`、`adoption_cover`、`adoption-card` 及目标 DTO；扩展上传、资产、关系、recipe、发布检查和媒体清理；旧字段暂时保留作迁移输入。 _依赖：无；不自动生成 cover。_
-- [ ] **T05 · 委托申请和匿名上传模型**：新增 `commission_upload_sessions`、`commission_submissions`、`commission_design_reference`，完成严格 Schema、repository、service、一次性消费、TTL、清理、审计和私有预览基础设施。 _依赖：无；不能放宽管理员 upload_sessions。_
-- [ ] **T06 · 匿名写安全边界**：新增公开 Origin、Content-Type、body limit、独立可信客户端限流、一次性 token、蜜罐、日志脱敏和私有字段负向测试；生产配置、环境模板和观测策略同步。 _依赖：T05。_
+- [ ] 本地和生产均无返图/动态表、行、私有原图、派生、版本和应用旧备份；
+- [ ] 退役路由 404，导航/首页/sitemap/管理端无入口；
+- [ ] return/update 枚举不可插入；
+- [ ] foreign key、integrity、readiness、production verify 通过；
+- [ ] 证据仅含脱敏计数；外部快照由操作员明确记录。
 
-### GATE-A · Expand 契约
+## B. Expand 新模型与安全
 
-- [ ] 新空库与既有库 expand migration、foreign key、integrity 全部通过；
-- [ ] Hero 拆分幂等、adoption cover identity、委托上传状态机和 PII 泄漏测试通过；
-- [ ] 新结构不改变旧公开页面的当前可用性；
-- [ ] 形成脱敏迁移盘点，不包含作品名、私有字段或完整 Object Key。
+- [ ] **T08 · Hero collection/item Schema**：新增四个 collection 并发域和 items；collection version 独立；管理 upload owner context 区分四集合；linked work 从新契约删除。
+- [ ] **T09 · Hero pair 幂等迁移**：旧 pair 确定性拆成两方向 item，保留 placement/alt/order/enabled，归一化顺序；空库/既有库/重复执行测试。
+- [ ] **T10 · Works/adoption Expand**：新增 nullable `adoption_status`、`adoption_cover`、`adoption-card`；复用上传、recipe、publication、lease、recovery、purge；旧字段暂留。
+- [ ] **T11 · 领养状态盘点**：只自动映射 available→available、delivered→adopted；其它状态保持 NULL，生成后台人工复核清单。
+- [ ] **T12 · Commission 持久模型**：新增 `commission_upload_sessions`、`commission_submissions`、private media role、repository/service/audit/no-store preview。
+- [ ] **T13 · Commission 匿名安全与 CORS**：Origin、body、Content-Type、独立限流、token、TTL、蜜罐、日志禁值；私有 Bucket CORS 精确加入 public Origin并保留 admin Origin；preflight/live probe。
+- [ ] **T14 · Expand 综合门禁**：空库/既有库 migration、foreign key/integrity、Hero collection 409、cover identity、upload state machine、CORS、PII leakage 通过。
 
-## B. 公开动效与首页
+### GATE-B · Expand 稳定
 
-- [ ] **T07 · 公开导航交互动效**：桌面主导航增加圆角底、阴影、轻微上移和等价 focus；下拉菜单保持自然过渡；移动抽屉不模拟 hover。 _依赖：GATE-A；修改：PublicHeader、设计 Token 和 E2E。_
-- [ ] **T08 · 公开页面路由切换**：在公共布局中只过渡主内容，Header/Footer 保持稳定；处理前进后退、错误页、锚点、焦点、旧内容 pointer-events 和 reduced-motion。 _依赖：T07。_
-- [ ] **T09 · 首页区块与卡片动效**：强化首页首次入屏揭示、作品/领养/业务入口 hover，SSR/无 JS 默认可见，静态内容不制造点击暗示。 _依赖：T08。_
-- [ ] **T10 · 首页 Hero 新排版与首屏覆盖**：移除 Hero 按钮；桌面实现中文居中、英文/slogan 同行左右分置；移动实现整体左对齐下移；修复 100svh/100dvh 白块和安全区。 _依赖：T01、T02。_
-- [ ] **T11 · 首页 Hero 独立序列公开轮播**：公开 DTO 返回两套 orientation 序列；SSR 第一项 `<picture>`、水合选择、方向变化、懒加载、10 秒轮播、暂停、页面隐藏和 reduced-motion 全覆盖。 _依赖：T03、T10。_
-- [ ] **T12 · Hero 管理端四集合体验**：`首页/委托页 × 横版/竖版` 分层，独立新增、上传、排序、启停、适配、预览和发布；复用稳定 ID、完整顺序、409 和 FLIP。 _依赖：T02、T03。_
-- [ ] **T13 · 首页业务标题与收尾**：将“委托投递”改为“委托与领养”，删除首页最新动态区块，调整当前领养至页脚的节奏和测试。 _依赖：T09；动态表此时仍可暂存，公开不再消费。_
+- [ ] 四个 Hero collection 各自 version/上传归属正确；
+- [ ] Hero 拆分幂等；
+- [ ] commission asset 无 PUBLIC variant；
+- [ ] public/admin CORS 只允许精确 Origin；
+- [ ] 旧公开页面仍可运行；
+- [ ] adoption 歧义状态清单可由景宸处理。
 
-### GATE-B · 首页与动效
+## C. 公开动效与 Hero
 
-- [ ] 390×844、768×1024、1023/1024、1440×900 浏览器验证通过；
-- [ ] 桌面/移动 Hero 对齐明确不同，移动首屏无白块；
-- [ ] 横竖数量和顺序可不同，SSR/hydration 无警告；
-- [ ] 导航 hover/focus、页面切换、卡片交互和 reduced-motion 通过；
-- [ ] 公开首页不再请求最新动态 API。
+- [ ] **T15 · 导航交互动效**：桌面胶囊底、阴影、轻微上移及等价 focus；移动抽屉沿用无障碍工具。
+- [ ] **T16 · 公开页面切换**：仅 main 过渡，Header/Footer 稳定；back/forward、锚点、错误页、焦点、pointer-events、reduced-motion。
+- [ ] **T17 · 首页区块与卡片动效**：首次入屏揭示、可点击卡 hover；SSR/无 JS 默认可见。
+- [ ] **T18 · 首页 Hero 排版与首屏**：删除 action；桌面中文居中+英文/slogan 左右；移动左对齐下移；100svh/100dvh。
+- [ ] **T19 · Hero 独立序列公开端**：landscape/portrait DTO、SSR first picture、水合、orientation change、懒加载、10 秒轮播、暂停、hidden、reduced-motion。
+- [ ] **T20 · Hero 四集合管理端**：首页/委托×横/竖独立 CRUD、排序、启停、适配、预览、发布；collection expectedVersion、完整顺序、409、FLIP。
+- [ ] **T21 · 首页业务收尾**：“委托投递”改“委托与领养”，确认首页无 latest updates 请求，当前领养到页脚节奏正确。
 
-## C. 作品与领养
+### GATE-C · 首页与动效
 
-- [ ] **T14 · 作品管理表单收缩**：移除装型、主人、联系人、属性、领养方式、展会和旧进度编辑；只维护名称、物种、内部用途、adoption 状态/价格、精选和图片。 _依赖：T04。_
-- [ ] **T15 · 作品公开 DTO 与列表收缩**：PublicWorkSummary 只含名称、物种、卡图；`/works` 删除用途/装型筛选，保留名称搜索、分页和发布时间排序；卡片只显示名称、物种。 _依赖：T04、T14。_
-- [ ] **T16 · 作品详情图片化**：`/works/{slug}` 只保留名称、物种、图集、前后浏览和相关作品；删除 facts、tags、price、status、purpose 及对应 SEO 文案。 _依赖：T15。_
-- [ ] **T17 · adoption cover 媒体垂直切片**：完成上传、私有验证、适配、公开水印派生、发布阻断、失败重试、清理和后台预览；每件 adoption 最多一张。 _依赖：T04。_
-- [ ] **T18 · 既有领养补图与状态复核工具**：列出缺 cover 的 published adoption 和旧状态映射计数；景宸逐件补横版单头图或下架，人工复核 adopted 映射。 _依赖：T17；报告不得进仓库。_
-- [ ] **T19 · 领养公开 API 与页面收缩**：删除 method 筛选、regular/event counts 和展会信息；`/adoptions` 与首页当前领养只使用横版 cover，显示名称、物种、available/adopted 和可选价格。 _依赖：T17、T18。_
-- [ ] **T20 · 可选设定图契约**：设定图仍最多一张，可在详情图集中展示；从领养列表和发布门禁移除，补负向测试。 _依赖：T16、T19。_
+- [ ] 390/768/1023/1024/1440 与真实手机通过；
+- [ ] 桌面/移动对齐明确不同，移动首屏无白块；
+- [ ] 横竖数量/顺序可不同且 hydration 无警告；
+- [ ] hover/focus/page transition/back-forward/reduced-motion 通过。
 
-### GATE-C · 作品与领养
+## D. 作品与领养
 
-- [ ] 公开 DTO 不可解析或输出已删除字段；
-- [ ] `/works`、详情和 `/adoptions` 三视口符合设计；
-- [ ] published adoption 缺 `adoption_cover` 数量为 0；
-- [ ] published work 缺主 studio photo 数量为 0；
-- [ ] 设定图不再充当领养卡或发布门禁；
-- [ ] 当前页面不再出现展会掉落、装型、主人或属性文案。
+- [ ] **T22 · 作品管理表单收缩**：删除 suit/owner/contact/tags/method/event/旧 progress UI；只维护目标字段和三类图片。
+- [ ] **T23 · PublicWork DTO 与 `/works`**：摘要只含名称、物种、卡图；删除用途/装型筛选，保留名称搜索、分页、发布时间排序。
+- [ ] **T24 · `/works/{slug}` 图片化**：只保留名称、物种、图集、前后和相关作品；SEO/JSON-LD 收缩。
+- [ ] **T25 · Adoption cover 媒体垂直切片**：上传、验证、适配、watermark variant、发布阻断、失败重试、清理和后台预览。
+- [ ] **T26 · 领养人工复核与补图**：所有 NULL 状态由景宸确认；published adoption 补 cover 或下架；缺主 studio photo 修复。
+- [ ] **T27 · `/adoptions` 收缩**：删除 method/count/event；cover only；名称、物种、状态、可选价格；首页当前领养复用。
+- [ ] **T28 · 可选设定图**：0..1，可在详情图集展示；不作列表卡或发布门禁。
+- [ ] **T29 · Works contract**：在 NULL/缺图均为 0 后重建 works/work_assets，删除旧列和 `work_feature_tags`；`commission_email_action`、contact 兼容列不删除。
 
-## D. 委托投递
+### GATE-D · 作品与领养
 
-- [ ] **T21 · 公开委托上传 API**：创建、条件 PUT、complete、过期、失败、重试和清理；只接受一张 20 MB 内 JPEG/PNG/WebP，校验摘要、MIME、尺寸和 token。 _依赖：T05、T06。_
-- [ ] **T22 · 委托申请提交 API**：校验称呼、+86 手机、QQ、身高、体重和 completed upload，在单事务中消费 asset、创建 pending submission 和随机 receipt；防重复和蜜罐路径完整。 _依赖：T21。_
-- [ ] **T23 · `/commission/apply` 表单**：实现单图预览/上传、五个字段、即时错误、失败保留、过期重选、提交中和成功回执；不使用 URL/localStorage/analytics 保存 PII。 _依赖：T22。_
-- [ ] **T24 · 委托后台列表与详情**：新增“委托申请”导航、三状态列表、私有详情、认证 no-store 图片预览、状态/备注保存、409 和审计。 _依赖：T05、T22。_
-- [ ] **T25 · 委托页主行动与二维码**：`/commission` 优先站内提交，展示 QQ/QQ群二维码和关于页入口；邮件只保留在 about 备用渠道；更新 CommissionLead 行动。 _依赖：T23；复用需求2渠道投影。_
-- [ ] **T26 · FAQ 和邮件行动完整退役**：删除 FAQ UI、Schema、版本、API、Card、测试及 `commission_email_action`；保留 intro/estimate；更新 about 和隐私政策。 _依赖：T25。_
+- [ ] PublicWork DTO 无旧字段；
+- [ ] adoption status NULL=0；
+- [ ] published adoption missing cover=0；
+- [ ] published work missing primary studio photo=0；
+- [ ] works/detail/adoptions 三视口通过；
+- [ ] contract migration、foreign key、integrity 通过。
 
-### GATE-D · 委托流程
+## E. 委托投递
 
-- [ ] 成功、字段错误、图片错误、过期、重复、限流、蜜罐、刷新和清理 integration/E2E 通过；
-- [ ] 管理列表、详情、状态、备注、冲突和审计通过；
-- [ ] 私有图片只在认证 no-store 预览中可见；
-- [ ] PII 不进入公开 DTO、HTML、URL、analytics、普通日志和错误；
-- [ ] 真实浏览器完成一张设定图端到端提交。
+- [ ] **T30 · 公开上传 API**：create、conditional PUT、complete、cancel/expire/retry/cleanup；一张 20MB 内图片；token/TTL/摘要/MIME/尺寸/CORS。
+- [ ] **T31 · Submission API**：校验五项字段与 COMPLETED upload，单事务消费 asset、创建 pending、重试 receipt collision；重复/蜜罐/限流完整。
+- [ ] **T32 · `/commission/apply`**：单图预览与上传、可见 label、邻近错误、失败保留内存草稿、过期重选、提交中、成功回执；不写 URL/localStorage/analytics/console。
+- [ ] **T33 · `/admin/commissions`**：三状态列表、私有详情、no-store 图片、状态/备注、version/409/audit。
+- [ ] **T34 · `/commission` 与联系入口**：站内提交主 CTA、QQ/QQ群二维码、about 入口；邮箱仅备用。
+- [ ] **T35 · FAQ 完整退役**：删除 FAQ JSON/version/UI/Schema/API/Card/test；保留 intro、estimate、`commission_email_action` 和官方渠道；about/privacy 同步。
+- [ ] **T36 · 委托综合门禁**：成功/错误/过期/重复/限流/蜜罐/cleanup/CORS/PII/admin 409；真实浏览器单图端到端。
 
-## E. 返图/动态永久退役与 Contract
+### GATE-E · 委托完成
 
-- [ ] **T27 · 退役清理工具与 dry-run**：实现默认只读的精确盘点，覆盖数据库行、返图私有原图、preprocess、preview、public variant、pending upload、publication operation、ESA URL、OSS versions 和项目备份；输出仅脱敏计数。 _依赖：GATE-B、GATE-C、GATE-D。_
-- [ ] **T28 · 强确认永久删除执行器**：显式确认后串行删除全部返图媒体、版本、delete marker、ESA 缓存和旧项目备份；失败时停在 DROP TABLE 前；重复执行安全。 _依赖：T27。_
-- [ ] **T29 · 本地永久删除演练**：在复杂本地副本完成 dry-run、永久删除、对象不可达验证、旧备份删除、重复执行和证据记录。 _依赖：T28。_
-- [ ] **T30 · Contract 前向迁移**：重建 works/assets/upload/variant/publication/site_content/analytics 等表，删除 updates、return 表、feature tag、旧 Hero pair、旧列和旧枚举；迁移事务和 integrity/foreign key 通过。 _依赖：T03、T18、T26、T29。_
-- [ ] **T31 · 退役代码和兼容链删除**：删除返图/动态页面、API、组件、repository、service、runner、recipe、fixture、测试、导航、sitemap、analytics 和旧 DTO；不得只隐藏或 skip。 _依赖：T30。_
-- [ ] **T32 · 生产内容与产物守卫**：更新 production build guard、verify、部署检查和 grep，阻止旧英文名、返图/动态入口、旧字段和 commission 私有数据进入产物。 _依赖：T31。_
+- [ ] private image 仅认证 no-store 可见；
+- [ ] PII 不进公开面、URL、analytics、普通日志、错误；
+- [ ] CORS live probe 通过；
+- [ ] FAQ 删除且 email action 未误删；
+- [ ] 管理与公开流程通过。
 
-### GATE-E · Contract 就绪
+## F. 最终评审与发布
 
-- [ ] 本地永久清理和最终 Schema 全量回归通过；
-- [ ] 退役路由 404，导航、sitemap、首页和管理端均无入口；
-- [ ] 表/列/枚举不存在断言通过；
-- [ ] 生产冻结镜像、清理命令、强确认短语、停止点和净化备份步骤已演练；
-- [ ] 最新 PR HEAD CI 全绿。
-
-## F. 评审、验收与生产
-
-- [ ] **T33 · 全量质量门禁**：串行运行 lint、typecheck、unit、integration、相关 E2E、production build、verify 和内容守卫；不得删除或放宽既有有效断言。 _依赖：GATE-E。_
-- [ ] **T34 · 新上下文独立 Review**：按 SPEC → PLAN → TASKS → 代码 → 迁移 → OSS 清理 → DTO/隐私 → 部署逐项复查，记录首次 findings、修复和重测；实现者不得代签。 _依赖：T33。_
-- [ ] **T35 · 用户公开端与后台验收**：用户验收 Hero、动效、作品、领养、委托表单、后台处理、二维码、真实手机和 reduced-motion；只由用户签署。 _依赖：T34。_
-- [ ] **T36 · 生产永久退役执行**：在维护窗口使用冻结镜像完成 dry-run、用户强确认、媒体/备份永久删除、contract migration、integrity/readiness/verify、净化备份和服务恢复。 _依赖：T35；步骤开始后无退役数据回滚。_
-- [ ] **T37 · 生产验收与文档收口**：确认公开/管理 Host、首页横竖、作品、领养、委托提交和后台处理；回填脱敏计数、迁移名、生产时间、净化备份结果与最终 STATE。 _依赖：T36。_
+- [ ] **T37 · 全量质量门禁**：lint、typecheck、unit、integration、E2E、production build、verify、content guard。
+- [ ] **T38 · 新上下文独立 Review**：SPEC→models→PLAN→TASKS→代码→迁移→媒体→PII→部署；记录首次 findings 和重测。
+- [ ] **T39 · 用户验收**：Hero、动效、works、adoption、commission、后台、二维码、真实手机、reduced-motion。
+- [ ] **T40 · 剩余功能生产发布**：部署 B–E 冻结镜像，迁移、readiness、verify、页面/提交验收。
+- [ ] **T41 · 文档收口**：回填迁移名、脱敏计数、生产时间、模型差异、Review、用户签署和最终 STATE。
 
 ## 最终门禁
 
-- [ ] **GATE-R3 · 需求3关闭**：T01–T37、GATE-A～E 全部完成；最新 SHA CI、独立 Review、用户验收、本地和生产不可恢复清理、净化备份与文档收口全部有证据。只有此时才能声明需求3完成。
+- [ ] **GATE-R3 · 需求3关闭**：T01–T41、GATE-A～E 完成；两个生产发布单元、最新 SHA CI、独立 Review、用户验收和证据齐全。

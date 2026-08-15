@@ -1,213 +1,156 @@
 # 需求规格：站点业务简化与委托投递
 
-> **角色**：定义本轮公开行为、管理心智模型、数据删除、媒体与隐私契约，是需求3实现和评审的唯一产品真理来源。
-> **状态**：需求已由用户于 2026-08-15 锁定；尚未开始代码实施。
-> **基线**：继承需求1的安全、媒体、双 Host、部署和质量门禁；继承需求2仍适用的官方渠道、二维码和名称搜索能力。本文件明确覆盖旧返图、旧动态、旧作品字段、旧掉落和旧 Hero 契约。
+> **角色**：需求3实现和评审的产品、数据、媒体、隐私与验收真理来源。
+> **状态**：用户决策已锁定；代码尚未开始。
+> **基线**：继承需求1安全/媒体/部署基线和需求2仍适用的官方渠道、二维码、名称搜索。
+> **复查修订**：2026-08-15，修正实施顺序、Hero 并发域、领养状态迁移、公开上传 CORS 和文案删除边界。
 
-## 1. 状态与资料来源
+## 1. 目标
 
-- 日期：2026-08-15
-- 阶段：规格锁定，待实施计划执行
-- 审查代码基线：`main@9a6add09db559ac134b58cd5b75af1c588c76306`
-- 本轮范围：品牌英文名回退、返图/动态永久退役、公开动效升级、Hero 横竖解耦、作品与领养模型收缩、委托在线提交和后台处理。
+1. 立即永久退役返图墙和最新动态，不让其数据继续存活到本轮末尾。
+2. 将英文品牌名纠正为 `DITE DOG`。
+3. 以图片为主重做首页 Hero、作品和领养展示。
+4. 增强公开导航、页面切换、区块和卡片动效。
+5. 横版/竖版 Hero 分别维护。
+6. 新增私有委托申请和后台处理流程。
+7. 删除不再维护的作品、领养和 FAQ 字段，同时保留未被明确授权删除的联系文案。
 
-| 来源 | 用途 |
-| --- | --- |
-| 用户 2026-08-15 的需求说明与确认 | 最终产品决策和破坏性删除授权 |
-| `agent_docs/需求1-兽装工作室主页/` | 既有媒体、安全、部署、作品与 Hero 基线 |
-| `agent_docs/需求2-站点导航与内容增强/` | 官方渠道、二维码、搜索和最新动态现状 |
-| `server/database/schema.ts`、`shared/schemas/*`、`app/`、`server/` | 当前实现差距与迁移输入 |
-| `https://www.ww-pass.com/wp-fursuit/` | 公开端动效与 Tab 交互参考，不作为内容或视觉复制授权 |
+## 2. 非目标
 
-## 2. 产品目标
+- 交易、支付、定金、退款、排期、合同、自动报价或自动接单；
+- SMTP、短信或第三方推送；
+- 访客账号、申请查询、撤回、编辑；
+- 多管理员、审批流、通用 CMS、富文本；
+- 第三方验证码；
+- 返图/动态只读归档或搜索引擎兼容跳转；
+- 自动从其它图片裁切领养横版头图。
 
-1. 让首页、作品与领养以成果图片为绝对主角，删去当前不再需要的内容模块和冗余事实字段。
-2. 通过更明显的桌面导航反馈、页面切换和区块入场动效，提升公开站的品牌表现。
-3. 让首页横版和竖版 Hero 能按实际构图分别维护，不再强迫一一配对。
-4. 让访客通过站内表单提交一条私有委托申请，景宸可以在后台查看并标记处理结果。
-5. 让领养页优先展示横版单头成果照，而作品页继续展示竖版全装成果照。
-6. 对返图墙和最新动态执行彻底、不可恢复的退役，消除无用页面、数据和媒体存量。
+## 3. 品牌与固定文案
 
-## 3. 非目标
+- 公开导航短品牌：`有点小狗`。
+- 首页完整标题：`有点小狗工作室`。
+- 英文品牌：`DITE DOG`。
+- 首页 slogan：`不只做小狗毛 | 只做海绵头`。
+- 首页业务区标题：`委托与领养`。
+- 代码常量、SEO、JSON-LD、可见文案、测试以及带文字的 SVG/PNG/OG 资产必须审计；当前产品不得显示 `DITE DOG FURSUIT`。历史 dated note 可以保留并注明当时错误。
 
-- 不建设交易、定金、支付、退款、排期、合同、自动报价或自动接单。
-- 不接入 SMTP、短信或第三方消息推送。
-- 不建设访客账号、申请状态查询、申请编辑、撤回或自动转作品。
-- 不建设多管理员、审批流、通用 CMS、富文本或页面搭建器。
-- 不建设第三方验证码；首版使用限流、Origin、一次性 token 和蜜罐防滥用。
-- 不恢复返图或动态的归档页、只读页、导出页或搜索引擎兼容跳转。
-- 不从竖版全装照或设定图自动裁切生成横版领养头图。
+## 4. 路由
 
-## 4. 权威覆盖关系
+### 4.1 保留/新增公开路由
 
-需求3对以下旧契约具有明确覆盖权：
+- `/`
+- `/works`
+- `/works/{slug}`
+- `/adoptions`
+- `/adoptions/{slug}`：继续兼容跳转到 `/works/{slug}`
+- `/commission`
+- `/commission/apply`
+- `/about`
+- `/service`
+- `/privacy`
+- `/licenses`
+- 既有 `/contact`、`/terms` 兼容跳转
 
-- `DITE DOG FURSUIT` → `DITE DOG`；
-- `/returns`、`/returns/{slug}`、`/updates` 及其管理端和 API → 永久移除；
-- `return_characters`、`return_photos`、`updates` → 永久删除；
-- 作品的装型、主人、联系人、属性、制作进度 → 不再维护；
-- `regular | event_drop` 领养方式和展会字段 → 删除；
-- Hero 横竖成对记录 → 横竖独立记录；
-- “邮件咨询优先、无在线提交” → “站内提交优先、邮件只在关于页作为备用联系方式”。
+`/commission/apply` 建议 `noindex, nofollow`，但必须可由 `/commission` 正常进入。
 
-其它未被本文件明确改变的需求1媒体、安全、部署、Host 隔离、审计和质量规则继续生效。
+### 4.2 保留/新增管理路由
 
-## 5. 品牌与固定文案
+- `/admin/login`
+- `/admin/works/**`
+- `/admin/commissions`
+- `/admin/commissions/{id}`
+- `/admin/site/home`
+- `/admin/site/content`
+- `/admin/site/branding`
+- `/admin/analytics`
+- `/admin/account`
 
-### 5.1 名称
+管理导航新增“委托申请”，放在作品管理之后。
 
-- 中文公开导航品牌继续为 `有点小狗`。
-- 完整中文主体在首页标题等既有位置使用 `有点小狗工作室`。
-- 英文品牌名固定为 `DITE DOG`。
-- 代码常量、SEO、结构化数据、图片 alt、测试、文档和管理提示中不得继续出现 `DITE DOG FURSUIT`，除非 dated history 明确说明当时错误。
+### 4.3 第一阶段永久移除
 
-### 5.2 首页 slogan
+- `/returns`
+- `/returns/{slug}`
+- `/updates`
+- `/admin/returns/**`
+- `/admin/updates`
 
-当前首页 slogan 必须更新为：
+不做任何重定向，移除后返回普通 404。
 
-```text
-不只做小狗毛 | 只做海绵头
-```
+## 5. 返图墙与最新动态立即永久退役
 
-该值继续作为首页可维护的单一 slogan 字段；迁移和真实内容验收时必须写入上述值。
+### 5.1 第一实施阶段完成定义
 
-### 5.3 首页业务标题
+必须在其它 Hero、作品和委托新功能之前完成：
 
-首页原“委托投递”区块标题改为：
+- 页面、导航、首页摘要、sitemap、analytics 新事件入口删除；
+- 公开和管理 API 删除；
+- Schema、DTO、类型、repository、service、runner、recipe、fixture、测试删除；
+- `updates`、`return_characters`、`return_photos` 表与数据删除；
+- `return_photo`、`return-wall`、`return-display-v1`、`RETURN_PHOTO` 从目标代码和数据库约束删除；
+- 相关 assets、upload sessions、variants、publication operations、analytics 行删除；
+- 私有原图、preprocess、preview、public variants、pending upload objects 删除；
+- OSS 历史版本/delete marker（若启用）删除；
+- ESA 精确 URL purge 并验证对象不可达。
 
-```text
-委托与领养
-```
+### 5.2 备份顺序
 
-顶部导航仍分别保留“自设委托”和“设定领养”，不合并为一个页面。
+- 不为退役内容创建新的长期导出或归档。
+- 现有应用管理备份只能在维护窗口内作为受限恢复材料暂存。
+- 退役数据库 contract 和服务验证成功后，先创建并恢复验证新的净化备份，再删除仍含退役数据的旧应用备份。
+- 外部 ECS 快照、云盘快照或第三方备份由操作员单独确认，不由应用脚本假设其位置或权限。
+- 最终证据只保留脱敏计数、总字节、状态和时间，不保留内容或完整 Object Key。
 
-## 6. 路由与信息架构
+用户已授权本地和生产执行不可恢复删除；完成后不提供退役数据恢复路径。
 
-### 6.1 公开端保留路由
+## 6. 公开动效
 
-- `/`：首页；
-- `/works`：作品列表；
-- `/works/{slug}`：作品图片详情；
-- `/adoptions`：设定领养；
-- `/adoptions/{slug}`：继续兼容跳转到对应 `/works/{slug}`；
-- `/commission`：自设委托介绍与主要入口；
-- `/commission/apply`：在线委托申请；
-- `/about`：工作室、制作范围和全部官方联系方式；
-- `/service`、`/privacy`、`/licenses`；
-- `/contact`、`/terms` 的既有兼容跳转可以保留。
+### 6.1 导航
 
-### 6.2 管理端保留与新增路由
+桌面精细指针环境：
 
-- `/admin/login`；
-- `/admin/works`、`/admin/works/new`、`/admin/works/{id}`；
-- `/admin/commissions`、`/admin/commissions/{id}`；
-- `/admin/site/home`、`/admin/site/content`、`/admin/site/branding`；
-- `/admin/analytics`、`/admin/account`。
+- 主导航 hover/focus 出现浅色或半透明圆角底；
+- 柔和阴影；
+- 最多 2px 上移；
+- 活跃项有稳定标识；
+- 下拉菜单淡入、位移复位和 chevron 旋转。
 
-管理导航新增“委托申请”，放在“作品管理”之后。
+移动端不模拟 hover，保留抽屉错峰、焦点陷阱、Escape、滚动锁定、inert 和焦点归还。
 
-### 6.3 永久移除路由
+### 6.2 页面切换
 
-- `/returns`、`/returns/{slug}`；
-- `/updates`；
-- `/admin/returns`、`/admin/returns/new`、`/admin/returns/{id}`；
-- `/admin/updates`。
+- 只过渡公开主内容，Header/Footer 保持稳定；
+- 离场 140–200ms，入场 240–360ms；
+- opacity + 8–16px 位移；
+- 旧内容离场后不得继续接收指针事件；
+- 前进、后退、锚点、错误页和焦点必须正确。
 
-这些路由不做 301、302、307、308 或内容替代，移除后走普通 404。sitemap、导航、页脚、首页聚合和 analytics 新事件白名单同步移除。
+### 6.3 区块与卡片
 
-## 7. 返图墙和最新动态永久退役
+- 首页主要区块首次入屏可以错峰揭示；
+- SSR/无 JavaScript 内容默认可见；
+- 可点击图片卡可上浮、加阴影和轻微放大；
+- 静态内容不制造点击暗示；
+- 管理端只做功能性动效。
 
-### 7.1 功能删除
+### 6.4 reduced-motion
 
-必须删除与返图和动态有关的：
+必须关闭自动轮播、页面位移、错峰、平滑滚动、卡片位移/缩放等非必要动效，内容和状态仍完整可用。
 
-- 公开和管理页面；
-- Header、MobileNav、Footer、首页摘要和后台导航入口；
-- 公开、管理 API；
-- Schema、DTO、类型、repository、service、runner、recipe；
-- 返图上传、发布、下架、预览和恢复流程；
-- 单元、集成、E2E、fixture、SEO、sitemap 和文档中的当前契约；
-- `return_photo` 媒体角色、`return-wall` usage、`return-display-v1` recipe 和 `RETURN_PHOTO` publication entity。
+## 7. 首页 Hero
 
-### 7.2 数据删除
+### 7.1 排版
 
-必须永久删除：
+删除“查看这套作品/浏览作品展示”按钮和 Hero linked work。
 
-- `updates` 全部行和数据表；
-- `return_characters`、`return_photos` 全部行和数据表；
-- 返图关联的 `assets`、`upload_sessions`、`asset_variants`、publication operation、清理 operation 和相关孤儿记录；
-- analytics 中 `returns`、`return_character`、`updates` 的历史事件；
-- 任何 site aggregate、缓存或测试 seed 中的返图和动态内容。
-
-### 7.3 媒体删除
-
-必须删除所有已知返图媒体：
-
-- 私有原图；
-- 私有预处理和失败残留；
-- 公开派生；
-- 私有预览；
-- 未完成上传对象；
-- ESA 精确文件缓存；
-- OSS 版本控制下的所有版本与 delete marker；
-- 项目管理的历史数据库备份和媒体备份中仍包含的返图或动态数据。
-
-清理完成后不得保留恢复包、CSV 导出、长期 Object Key manifest 或内容截图。允许保留不含内容、账号和完整 Key 的数量级验收记录。
-
-### 7.4 不可恢复授权
-
-用户已明确授权本地和生产环境执行不可恢复的破坏性清理。最终 contract migration 完成后不要求旧镜像或旧功能可以回滚；故障处理采用前向修复。
-
-## 8. 公开动效契约
-
-### 8.1 导航
-
-在 `hover: hover` 且 `pointer: fine` 的桌面环境中：
-
-- 主导航项悬停出现浅色或半透明圆角底；
-- 同时出现柔和阴影和最多 2px 的轻微上移；
-- 活跃项继续有明确当前页标识；
-- 下拉菜单保留淡入、位移和 chevron 旋转；
-- 键盘 `focus-visible` 与悬停获得等价可见反馈。
-
-移动端不模拟 hover，只保留抽屉进场、菜单项错峰和触控反馈。
-
-### 8.2 页面切换
-
-- 公开站在同一布局内切换页面时，只过渡主内容，Header 和 Footer 保持稳定；
-- 离场采用短时淡出，入场采用淡入和轻微纵向位移；
-- 动效不得阻塞导航、造成双击、让旧页面可交互或引起明显布局跳动；
-- 浏览器前进、后退和直接访问必须得到同一可用页面。
-
-### 8.3 区块与图片
-
-- 首页主要区块首次进入视口时可以错峰揭示；SSR 和无 JavaScript 时内容默认可见；
-- 可点击作品、领养和业务入口卡在桌面端可上浮、加阴影和轻微放大图片；
-- 静态内容不得制造错误的可点击暗示；
-- 管理端只增加列表重排、Tab、抽屉、对话框和保存反馈等功能性动效，不做全屏装饰动画。
-
-### 8.4 减少动效
-
-`prefers-reduced-motion: reduce` 必须关闭自动轮播、页面位移、错峰、平滑滚动、卡片上浮和非必要过渡，但不得隐藏内容或移除状态反馈。
-
-## 9. 首页 Hero 契约
-
-### 9.1 排版
-
-首页 Hero 不再显示“查看这套作品”或“浏览作品展示”按钮。
-
-桌面端采用两层底部排版：
+桌面：
 
 ```text
                  有点小狗工作室
 DITE DOG                     不只做小狗毛 | 只做海绵头
 ```
 
-- 中文主标题在 Hero 底部安全区居中；
-- 英文名与 slogan 位于同一辅助行，分别靠左和靠右；
-- 整体位于轮播控制上方，不能遮挡控制或角色主体的主要视觉区域。
-
-移动端采用与桌面不同的左对齐布局：
+移动：
 
 ```text
 DITE DOG
@@ -215,322 +158,229 @@ DITE DOG
 不只做小狗毛 | 只做海绵头
 ```
 
-- 全部文字左对齐并下移到画面底部安全区；
-- slogan 可以正常换行，但不得溢出或与轮播控制重叠；
-- 不能为了与桌面对齐而居中。
+桌面中文标题居中；英文/slogan 同行左右分置。移动整组左对齐并下移。两端对齐方式必须不同。
 
-### 9.2 首屏覆盖
+### 7.2 首屏
 
-- 手机竖屏 Hero 必须至少覆盖完整 `100svh`，并在动态地址栏环境使用 `100dvh` 兜底；
-- 图片使用竖版素材和 `object-fit: cover`；
-- 首屏底部不得出现页面白块；
-- 顶部 Header、底部安全区和轮播控制需要计入文字安全区。
+- 移动至少覆盖 `100svh`，使用 `100dvh` 处理动态地址栏；
+- 只使用竖版素材，`object-fit: cover`；
+- 不露底部白块；
+- 文字、Header、轮播控制和 safe area 不重叠。
 
-### 9.3 横竖独立维护
-
-首页和委托页分别维护两个独立集合：
+### 7.3 四个独立集合
 
 ```text
-placement = home | commission
-orientation = landscape | portrait
+home / landscape
+home / portrait
+commission / landscape
+commission / portrait
 ```
 
 每个集合：
 
-- 最多启用 5 张；
-- 独立创建、排序、启用、停用和发布；
-- 横版和竖版数量、顺序和图片可以完全不同；
-- 至少启用 1 张后该方向才具备公开就绪资格；
-- 不允许拿另一方向图片自动裁切或静默替代；
-- 不再维护 Hero 到作品的 `linkedWork` 关系。
+- 独立版本、排序、启停、上传和发布；
+- 1–5 张 enabled 才公开就绪；
+- 数量和顺序允许不同；
+- 不跨方向自动裁切或静默替代；
+- 管理写入使用集合级 `expectedVersion`，不能继续让四个集合共享一个全局 home version。
 
-公开 DTO 必须分别返回 landscape 和 portrait 序列。SSR/无 JavaScript 至少使用两个序列各自的第一张组成响应式 `<picture>`；水合后按当前方向使用对应序列轮播，方向变化时安全重置或夹紧索引。
+公开首页 DTO 分别返回 landscape/portrait 序列。SSR 第一帧可用两方向各自首项组成响应式 `<picture>`；水合后只轮播当前方向，方向变化时夹紧或重置索引。首页固定 10 秒自动轮播、显式暂停、页面隐藏暂停；reduced-motion 停止。委托页只取当前方向第一张，不自动轮播。
 
-### 9.4 轮播
+## 8. 作品
 
-- 首页继续固定 10 秒自动轮播；
-- 保留上一张、下一张、分页和显式暂停；
-- 页面隐藏时暂停；
-- reduced-motion 下停止自动轮播；
-- 委托页只展示当前方向排序最前的已启用图片，不需要自动轮播，除非后续另立需求。
+### 8.1 持久字段
 
-## 10. 作品契约
+保留：
 
-### 10.1 持久业务字段
-
-通用作品只维护：
-
-- 稳定 ID；
-- 唯一 slug；
-- 名称；
-- 物种；
-- 内部用途 `commission | adoption | showcase`；
-- adoption 专属状态与可选价格；
-- 发布状态；
-- 首页精选与精选顺序；
-- 资源版本、发布时间和时间戳；
+- ID、slug、名称、物种；
+- 内部 `purpose=commission|adoption|showcase`；
+- adoption 专属 `adoption_status` 与可选 CNY 价格；
+- `publication_status`；
+- 精选标记与顺序；
+- 版本、发布时间、时间戳；
 - 图片关系。
 
-必须删除：
+删除：
 
-- `suit_type`；
-- `owner_display`；
-- `owner_contact`；
-- `featureTags` 和 `work_feature_tags`；
-- 旧制作进度集合；
-- `adoption_method`；
-- `event_name`、`event_time`；
-- `event_sale`。
+- `suit_type`
+- `owner_display`
+- `owner_contact`
+- `featureTags` / `work_feature_tags`
+- `adoption_method`
+- `business_status`
+- `event_name`
+- `event_time`
+- `event_sale`
 
-`publication_status` 是技术发布状态，必须保留，不属于被删除的制作进度。
+### 8.2 `/works`
 
-### 10.2 `/works`
+- 卡片只显示名称、物种和 3:4 竖版成果图；
+- 删除用途/装型筛选；
+- 保留名称搜索、分页、发布时间倒序；
+- 首页精选复用同一简化摘要。
 
-- 作品卡只显示名称和物种；
-- 图片使用竖版全装主图，保持 3:4 成果展示；
-- 不显示装型、用途、主人、领养状态、价格、属性或制作进度；
-- 移除用途和装型筛选；
-- 可以保留按名称搜索、分页和首页精选顺序之外的发布时间倒序。
+### 8.3 `/works/{slug}`
 
-### 10.3 `/works/{slug}`
+- 只显示名称、物种、图集；
+- 可保留前后浏览和相关作品；
+- 不显示主人、装型、用途、状态、价格、属性或展会信息；
+- SEO/JSON-LD 只使用名称、物种、图片和工作室事实。
 
-- 只显示名称、物种和图片图集；
-- 不显示主人、装型、用途、状态、价格、属性标签或展会信息；
-- 保留前后浏览、继续浏览和结构化图片入口，但结构化描述也只能使用名称、物种和工作室事实；
-- adoption 的价格和可领养状态由 `/adoptions` 表达，不在普通作品详情中重复。
+## 9. 设定领养
 
-### 10.4 管理端
+### 9.1 状态迁移
 
-作品编辑器只维护目标字段和图片，不再出现被删除字段的输入、提示、兼容转换或历史只读区。已发布事实字段继续要求先下架再编辑；精选顺序仍使用完整集合和版本控制。
+目标状态：
 
-## 11. 设定领养契约
+- `available`
+- `adopted`
 
-### 11.1 统一领养
+Expand 阶段 `adoption_status` 允许暂时为空。自动迁移只处理语义明确的值：
 
-- 所有 `purpose=adoption` 都视为普通领养；
-- 不再维护常规领养与展会掉落的区别；
-- `/adoptions` 不再接受或生成 `method` 查询参数；
-- 移除“全部 / 常规领养 / 展会掉落”筛选和数量统计；
-- 旧 event drop 数据迁移为普通 adoption。
+- 旧 `available` → `available`
+- 旧 `delivered` → `adopted`
 
-### 11.2 状态与价格
+旧 `preparing`、`scheduled`、`in_production`、`event_sale` 和 NULL 均视为歧义，必须由景宸逐条确认，不能默认映射为 available。最终 contract 前所有 adoption 均必须有明确状态。
 
-领养状态固定为：
+### 9.2 媒体
 
-- `available`：可领养；
-- `adopted`：已领养。
+每件已发布 adoption 必须具备：
 
-价格可以为空；存在时必须为正数人民币最小单位。网站只展示，不接受付款或登记。
+- 恰好一张 READY `adoption_cover`：横版单头成果照，用于 `/adoptions` 和首页当前领养；
+- 至少一张 READY `studio_photo`，且恰好一张 primary：用于 `/works` 和详情；
+- 0..1 张 `design_sheet`：只作可选详情素材，不是列表图或发布门禁。
 
-### 11.3 媒体
+不得自动生成 cover。
 
-每件已发布领养作品必须具备：
+### 9.3 `/adoptions`
 
-- 一张 READY `adoption_cover`：横版单头成果照，用于 `/adoptions` 和首页当前领养；
-- 一张 READY 主 `studio_photo`：竖版全装成果照，用于 `/works` 和首页精选；
-- 可选一张 `design_sheet`：只在详情图集中按需展示，不作为列表封面或发布资格。
+- 不再接受 `method`；
+- 删除常规/展会筛选、counts、展会标签和字段；
+- 保留名称搜索、分页；
+- 卡片显示横版 cover、名称、物种、状态、可选价格。
 
-不得用设定图、竖版全装图或 CSS 裁切代替缺失的 `adoption_cover`。既有领养作品在切换新公开投影前必须人工补图；缺图作品不能保持 published。
+## 10. 自设委托
 
-### 11.4 `/adoptions`
+### 10.1 `/commission`
 
-卡片展示：
+保留营业状态、代表图、简短介绍、制作范围、人工估价、服务条款。首要行动进入 `/commission/apply`；直接展示 QQ 与 QQ群二维码，并提供 `/about#contact`。
 
-- 横版单头成果图；
-- 名称；
-- 物种；
-- 可领养状态；
-- 可选价格。
+邮箱不再是委托页主行动，但仍可在关于页作为备用官方渠道。
 
-保留名称搜索和分页；不显示装型、属性、主人、展会标签或制作进度。
+### 10.2 `/commission/apply`
 
-## 12. 自设委托公开流程
+字段：
 
-### 12.1 `/commission`
+- 一张 JPEG/PNG/WebP 设定图，最大 20MB，边长 64–12000px；
+- 称呼：1–50 字；
+- +86 大陆手机号：11 位；
+- QQ：5–12 位非零开头数字；
+- 身高：80–250cm 整数；
+- 体重：20–300kg，最多一位小数。
 
-页面继续展示：
+提交成功返回随机回执编号，只用于成功提示，不提供公开查询。工作室通过手机号或 QQ 人工联系。
 
-- 当前委托营业状态；
-- 委托代表图片；
-- 简短介绍；
-- 制作范围；
-- 人工逐单估价说明；
-- QQ 与 QQ 群账号及二维码；
-- 关于我们与全部联系方式入口；
-- 服务条款入口。
+### 10.3 匿名上传安全
 
-主要行动必须是进入 `/commission/apply` 提交站内申请。邮件不再是委托页的主行动；邮箱仍可在 `/about` 作为备用官方渠道。
+建议接口：
 
-### 12.2 `/commission/apply`
+- `POST /api/public/v1/commission-upload-sessions`
+- 条件 PUT 到私有 OSS
+- `POST /api/public/v1/commission-upload-sessions/{id}/complete`
+- `POST /api/public/v1/commission-submissions`
 
-表单字段固定为：
+要求：
 
-- 设定图：恰好一张；
-- 称呼：必填，去空白后 1–50 字；
-- 手机号：必填，首版固定 `+86`，11 位中国大陆手机号；
-- QQ：必填，5–12 位非零开头数字；
-- 身高：必填，整数厘米，80–250；
-- 体重：必填，公斤，20–300，最多一位小数。
+- 独立上传会话，TTL ≤ 10 分钟，一次消费；
+- 精确 Origin、Content-Type、body size、token、限流和蜜罐；
+- MD5、SHA-256、MIME、字节、尺寸和图片解码验证；
+- 生产 CORS 精确允许 public/admin Origin 和所需 PUT headers，不允许 `*`；
+- 私有设定图不生成 PUBLIC variant、不进 ESA；
+- 过期/失败/未消费对象可清理；
+- PII 不进 URL、localStorage、analytics、普通日志或错误响应。
 
-设定图接受 JPEG、PNG、WebP，最大 20 MB，边长 64–12000 px。只允许一个完成且未消费的上传资产绑定到一次申请。
+### 10.4 管理后台
 
-提交成功后：
+`/admin/commissions` 默认 pending，支持 pending/accepted/rejected 三视图。列表只显示称呼、时间、状态和回执；详情按需显示手机号、QQ、身高、体重、备注和认证 no-store 图片预览。
 
-- 显示不含个人信息的随机回执编号；
-- 明确说明工作室会通过提交的手机号或 QQ 人工联系；
-- 不发送邮件或短信；
-- 不提供查询链接或公开状态页；
-- 刷新或重复提交不能重复消费同一上传会话。
+状态/备注更新使用资源版本、409 冲突与审计。状态变化不发通知、不自动建作品。
 
-### 12.3 错误与防重复
+首版不提供申请永久删除按钮；如需保留周期或删除能力，另立隐私需求。
 
-- 客户端校验用于即时反馈，服务端必须独立校验所有字段；
-- 请求失败时保留未提交文本草稿，但不得在 URL 或本地长期存储中保存手机号和 QQ；
-- 上传会话过期后要求重新选择图片；
-- 同一个 completed upload 只能被一条 submission 消费；
-- 蜜罐命中时返回普通成功外观但不持久化，避免向自动化攻击暴露判定规则。
+## 11. 委托 FAQ 与联系文案
 
-## 13. 委托后台流程
+永久删除：
 
-### 13.1 列表
+- `commission_faq_json`
+- `commission_faq_version`
+- FAQ Schema、DTO、管理 Card、API、公开区块和测试
+- 需求2追加的邮件估价 FAQ
 
-`/admin/commissions` 提供三个状态视图：
+继续保留：
 
-- 待处理 `pending`；
-- 已接单 `accepted`；
-- 已拒绝 `rejected`。
+- `commission_intro`
+- `commission_estimate_note`
+- `commission_email_action`
+- about、service、privacy、contact、官方渠道和防诈骗内容
 
-默认打开待处理，按提交时间倒序。列表只显示称呼、提交时间、状态和必要摘要；手机号、QQ、身高、体重和设定图在详情中查看，避免列表大面积暴露隐私。
+`commission_email_action` 不在 `/commission` 作为主行动；实现可以仅在关于/联系语境保留备用邮件说明。本轮不得因清理 FAQ 顺带删除该字段或其真实内容。
 
-### 13.2 详情与处理
+## 12. 数据模型与接口
 
-管理员可以：
+目标模型见 `../models/README.md`。关键原则：
 
-- 查看全部提交字段；
-- 通过认证私有预览查看设定图；
-- 将状态改为 accepted 或 rejected；
-- 重新改回 pending；
-- 编辑一条仅后台可见的内部备注。
+- Hero 有四个 collection 并发域；
+- 普通作品公开 DTO 不返回内部 purpose、价格、adoption 状态或旧字段；
+- 领养 DTO 独立返回状态、价格和 cover；
+- 委托列表 DTO 不返回手机号、QQ、体型和图片；
+- 委托详情 DTO 仅管理 Host 认证可见；
+- 所有管理写继续执行 Host、Session、Origin、CSRF、限流和 expectedVersion。
 
-每次更新使用资源版本和 409 冲突处理。状态变化不触发邮件、短信、作品创建、文件公开或其它副作用。
+## 13. 迁移
 
-### 13.3 删除
+迁移发布单元：
 
-首版不提供永久删除按钮。后续如需数据保留策略或管理员删除，必须另立隐私需求，不能借本轮破坏性返图清理顺手扩展。
+1. **立即退役 release**：删除返图/动态代码、数据、媒体和备份残留；
+2. **Expand release**：Hero collections/items、adoption status/cover、commission tables/upload；
+3. **Migrate**：Hero 拆分、状态人工确认、领养补图、页面切换；
+4. **Works contract**：删除作品旧列和 tags；
+5. **最终 release**：委托、全量质量、独立 Review、用户验收和生产部署。
 
-## 14. 委托文案与 FAQ
+详细顺序见 `../planning/DATA-MIGRATION.md`。
 
-必须完整删除：
+## 14. 开放问题
 
-- `commission_faq_json`；
-- FAQ Schema、类型、版本、管理 Card、保存 API 和公开区块；
-- 需求2追加的邮件估价 FAQ；
-- `commission_email_action` 字段、管理入口和委托页邮件行动文案。
+用户已确认的产品问题全部关闭。技术实现只有在改变产品行为、删除范围、安全、隐私、Hero 对齐或新增第三方服务时才重新升级。
 
-继续保留并可维护：
+## 15. 验收
 
-- 委托介绍；
-- 人工估价说明；
-- 工作室介绍、制作范围；
-- 服务条款、隐私政策；
-- 邮箱、QQ、QQ群、其它官方渠道和防诈骗提醒。
+### 15.1 立即退役
 
-`/about` 原“本站不提供站内留言或在线提交”必须改为与新流程一致，优先指向 `/commission/apply`。
+- [ ] 返图/动态路由 404，导航、首页、sitemap、管理端无入口。
+- [ ] 表、行、私有原图、派生、OSS versions 和 ESA cache 已删除。
+- [ ] 净化备份完成恢复验证，旧应用管理备份随后删除。
+- [ ] 代码和最终数据库不能再创建 return/update 资源。
 
-## 15. 数据与接口契约
+### 15.2 公开体验
 
-### 15.1 公开委托写入
+- [ ] 390×844 Hero 完整首屏、移动左对齐、无白块。
+- [ ] 1440×900 中文居中，英文/slogan 同行左右分置。
+- [ ] 四个 Hero 集合独立管理，409 并发域互不干扰。
+- [ ] 导航 hover/focus、页面切换、区块和卡片动效符合设计。
+- [ ] reduced-motion 完整。
 
-新增公开写入能力必须使用独立命名空间，建议契约为：
+### 15.3 作品与领养
 
-- `POST /api/public/v1/commission-upload-sessions`：创建短时一次性私有上传会话；
-- 浏览器按条件 PUT 直传私有 OSS；
-- `POST /api/public/v1/commission-upload-sessions/{id}/complete`：服务端校验并生成 READY 私有资产；
-- `POST /api/public/v1/commission-submissions`：消费已完成上传并创建申请。
+- [ ] PublicWork DTO 不含已删除字段。
+- [ ] `/works`、详情只显示名称、物种和图片。
+- [ ] adoption 歧义状态均已人工确认。
+- [ ] published adoption 缺 cover 数量为 0。
+- [ ] `/adoptions` 不含 method/展会信息。
 
-公开响应不得返回私有 Object Key、永久签名 URL、管理员信息或其它申请数据。
+### 15.4 委托与隐私
 
-### 15.2 管理委托 API
-
-建议契约为：
-
-- `GET /api/admin/v1/commission-submissions?status=pending|accepted|rejected`；
-- `GET /api/admin/v1/commission-submissions/{id}`；
-- `PUT /api/admin/v1/commission-submissions/{id}`：更新状态与内部备注；
-- `GET /api/admin/v1/commission-submissions/{id}/design-reference`：短时认证私有预览。
-
-所有管理写操作继续执行 Session、Host、Origin、CSRF、管理员限流和 expectedVersion。
-
-## 16. 隐私与安全
-
-- 匿名提交和上传只能从公开正式 Origin 发起；管理 Origin 不作为匿名表单 Origin。
-- 上传会话 TTL 不超过 10 分钟，完成后只能消费一次；过期或未消费对象进入现有清理机制的匿名专用分支。
-- 首版按可信客户端地址设置独立上传和提交限流；提交限流不得与 analytics 或管理员写入共用桶。
-- JSON 请求体限制在字段所需的小尺寸；图片字节只走 OSS 条件 PUT，不通过 Nitro JSON/body 上传。
-- 普通日志、analytics、审计 diff 和错误响应不得保存手机号、QQ、身高、体重、称呼、设定图内容或完整 Object Key。
-- 允许审计记录申请 ID、管理员 ID、旧状态、新状态和时间，不记录私有字段值。
-- 委托设定图不生成公开派生、不通过 ESA、不写公开缓存；管理预览使用认证、短时、`no-store` 响应。
-- 隐私政策必须明确说明收集字段、用途、人工联系和后台保存事实。
-
-## 17. 数据迁移契约
-
-- 不重写历史迁移，只增加 expand、数据迁移和 contract 前向迁移。
-- 旧 Hero 一条横竖配对记录拆为两条 orientation 记录，保留 placement、顺序、启用状态和 alt；删除 linked work。
-- 旧 adoption 的 `event_drop` 统一迁移为 adoption；`delivered` 映射为 adopted，其余旧业务状态先映射为 available，并生成不含私有内容的人工复核计数。
-- 删除作品的 suit、owner、contact、feature tag、adoption method、event 和旧进度字段；保留 ID、slug、名称、物种、purpose、价格、发布与精选事实。
-- 新 `adoption_cover` 不从旧图片自动生成；所有已发布 adoption 在 contract 前必须完成横版头图补齐，否则先下架。
-- 返图和动态对象必须在删除数据库表前完成精确 OSS 删除和验证。
-- 迁移完成后删除仍含退役数据的项目管理备份，创建新的净化备份。
-- 最终 contract 完成后旧应用镜像不保证可运行。
-
-详细执行顺序见 [`../planning/DATA-MIGRATION.md`](../planning/DATA-MIGRATION.md)。
-
-## 18. 开放问题
-
-所有立项问题均已由用户确认，当前没有阻塞计划的开放问题。
-
-| 编号 | 状态 | 问题 | 解答 |
-| --- | --- | --- | --- |
-| OQ-001 | 已答 | 返图和动态只隐藏还是永久删除？ | 永久删除页面、接口、数据表、私有原图、派生和相关备份，允许不可恢复。 |
-| OQ-002 | 已答 | 是否删除主人公开值与私有联系人？ | 两者均删除。 |
-| OQ-003 | 已答 | 作品属性标签是否保留？ | 不保留。 |
-| OQ-004 | 已答 | 作品详情是否保留？ | 保留，只展示名称、物种和图集。 |
-| OQ-005 | 已答 | 领养状态如何收敛？ | `available | adopted`，价格保留。 |
-| OQ-006 | 已答 | 设定图如何处理？ | 最多一张，作为可选详情素材；委托申请也恰好一张设定图。 |
-| OQ-007 | 已答 | 委托联系方式和图片数量？ | 手机号与 QQ 都必填，设定图只允许一张。 |
-| OQ-008 | 已答 | Hero 横竖是否允许不同数量？ | 完全独立，各方向 1–5 张启用素材，不自动兜底。 |
-| OQ-009 | 已答 | 英文品牌名是什么？ | `DITE DOG`。 |
-| OQ-010 | 已答 | 桌面和移动 Hero 是否同一对齐？ | 不同；桌面主标题居中并左右分置英文/slogan，移动端整体左对齐。 |
-
-## 19. 验收标准
-
-### 19.1 静态与自动化
-
-- [ ] 全仓当前契约和可见内容中不再出现 `DITE DOG FURSUIT`。
-- [ ] 返图、动态路由、入口、API、Schema、数据表、媒体角色和测试从目标代码中移除。
-- [ ] 新空库和既有库迁移通过 `foreign_key_check`、`integrity_check` 和 Schema strict 测试。
-- [ ] `/works` 和详情公开 DTO 不包含 suit、owner、contact、tags、purpose、progress、adoption method 或 event 字段。
-- [ ] `/adoptions` 不接受 method 筛选，只使用 `adoption_cover`。
-- [ ] 委托提交的私有字段不会进入公开 DTO、analytics、日志和错误响应。
-- [ ] 匿名上传、提交、重复消费、过期、限流、Origin、MIME、摘要、尺寸和失败清理均有 integration 覆盖。
-- [ ] 管理委托列表、详情、状态更新、备注和 409 冲突有 E2E 覆盖。
-- [ ] production build 与内容守卫不会打包返图/动态入口或测试私有接口。
-
-### 19.2 真实浏览器
-
-- [ ] 390×844 首页 Hero 完整覆盖首屏，无底部白块，文字左对齐且不遮挡控制。
-- [ ] 1440×900 首页主标题底部居中，`DITE DOG` 和 slogan 同行左右分置。
-- [ ] 桌面导航悬停有圆角底、阴影和轻微位移；键盘焦点等价可见。
-- [ ] 页面切换、区块入场、卡片交互平滑，Header/Footer 不闪烁。
-- [ ] reduced-motion 下没有自动轮播和非必要位移动效，内容仍完整可用。
-- [ ] 首页和委托页横竖素材可以分别创建、排序、启停并按方向展示。
-- [ ] `/works`、详情和 `/adoptions` 的图片用途、比例和文字字段符合契约。
-- [ ] `/commission/apply` 完成一张图上传、字段校验、提交成功和失败恢复。
-- [ ] `/commission` 显示 QQ/QQ群二维码并优先引导站内提交；`/about` 文案不再否认在线提交。
-
-### 19.3 破坏性清理
-
-- [ ] 本地环境返图和动态表、行、私有原图、派生、缓存及旧备份已永久删除并验证。
-- [ ] 生产维护窗口使用同一冻结镜像完成精确清理、contract migration、净化备份和服务恢复。
-- [ ] 清理证据只保留计数、状态和脱敏错误，不保留内容、私有字段或完整 Object Key。
-- [ ] 用户签署不可恢复删除、公开体验和后台流程验收。
+- [ ] 一张图端到端上传、完成、消费、提交成功。
+- [ ] CORS、Origin、限流、蜜罐、过期、重复消费和清理有覆盖。
+- [ ] 管理列表、详情、状态、备注和 409 有覆盖。
+- [ ] PII 不进入公开面、URL、analytics、普通日志和错误。
+- [ ] FAQ 已删除，`commission_email_action` 未被误删。

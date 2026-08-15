@@ -1,24 +1,25 @@
-# 数据模型规划
+# 需求3 · 数据模型规划
 
-> **角色**：记录需求3的目标持久模型、公开/管理投影和退役对象；实现后回填实际迁移、表名和约束。
-> **状态**：目标模型已锁定，代码尚未实施。
-> **基线**：当前实现以 `server/database/schema.ts`、`shared/schemas/*` 和 `server/utils/repository/*` 为准；本文件描述 contract migration 完成后的目标状态。
+> **角色**：定义 contract 完成后的目标持久模型、DTO 和媒体身份。
+> **状态**：目标已锁定；实际迁移名、索引名和约束在实施后回填。
+> **复查修订**：增加 Hero collection 版本域、明确领养状态人工迁移、沿用既有 `detail` usage、保留 `commission_email_action`，并统一匿名上传状态命名。
 
-## 1. 模型总览
+## 1. 最终数据域
 
-需求3完成后，核心数据域只有：
+需求3完成后保留：
 
-- 唯一管理员与认证；
-- 简化作品及其图片；
-- 首页/委托页独立横竖 Hero；
-- 站点内容、官方渠道与水印；
-- 委托申请及其私有设定图；
-- 最小第一方访问统计；
-- 现有部署、备份和持久 operation 基础设施。
+- 用户/管理员认证；
+- 简化作品及图片；
+- 领养状态、价格和独立横版 cover；
+- 四个 Hero collection 及其 items；
+- 站点内容、官方渠道和水印；
+- 委托申请与私有设定图；
+- 最小第一方 analytics；
+- 现有 publication、lease、recovery、备份和部署基础设施。
 
-返图和最新动态不再是任何形式的活模型或归档模型。
+返图和最新动态不再有活表、归档表或媒体身份。
 
-## 2. `works` 目标模型
+## 2. `works`
 
 ```text
 works
@@ -41,13 +42,14 @@ works
 
 约束：
 
-- `purpose != adoption` 时 `adoption_status`、价格两列必须为空；
-- `purpose = adoption` 时 `adoption_status` 必填；
-- 价格为空时 amount/currency 必须同时为空；存在时必须为正数 CNY；
-- `sort_order` 只服务首页精选，不作为 `/works` 或 `/adoptions` 默认排序；
-- 已发布事实字段继续要求先下架再编辑。
+- 非 adoption 的 `adoption_status`、价格必须为空；
+- adoption 在 Expand 期允许 `adoption_status=NULL`，仅用于人工迁移；
+- 最终 contract 后 adoption 的 `adoption_status` 必填；
+- 价格为空时 amount/currency 同时为空，存在时为正数 CNY；
+- `sort_order` 只服务首页精选；
+- 已发布事实字段继续先下架再改。
 
-从目标模型物理删除：
+最终删除：
 
 ```text
 suit_type
@@ -59,13 +61,13 @@ event_name
 event_time
 ```
 
-`work_feature_tags` 整表删除，公开/管理 DTO 也不再出现 `featureTags`。
+`work_feature_tags` 整表删除。
 
 ## 3. 作品媒体
 
 ### 3.1 `assets.role`
 
-需求3完成后的相关角色：
+相关目标枚举：
 
 ```text
 design_sheet
@@ -78,48 +80,73 @@ watermark_logo
 contact_qr
 ```
 
-`return_photo` 永久删除。
+`return_photo` 在第一阶段永久删除。
 
 ### 3.2 `work_assets.role`
 
 ```text
 design_sheet    每件作品 0..1，position=0，contain
-studio_photo    每件作品 0..5，恰好一张 primary，作品主图与图集
-adoption_cover  adoption 作品 0..1，position=0，横版单头成果图
+studio_photo    每件作品 0..5，恰好一张 primary
+adoption_cover  adoption 作品 0..1，position=0
 ```
 
 发布资格：
 
-- commission/showcase：至少一张 READY 主 `studio_photo`；
-- adoption：至少一张 READY 主 `studio_photo`，同时恰好一张 READY `adoption_cover`；
-- `design_sheet` 永远可选，不参与发布门禁。
+- commission/showcase：至少一张 READY studio photo 且恰好一张 primary；
+- adoption：上述条件 + 恰好一张 READY adoption cover；
+- design sheet 永远可选。
 
 ### 3.3 公开 usage
 
+沿用既有命名，避免无意义重命名：
+
 ```text
-work-card          3:4，studio_photo primary，公开水印
-work-detail        原比例或既有详情规则，studio_photo，公开水印
-design-sheet       contain，design_sheet，公开水印
-adoption-card      横版，adoption_cover，公开水印
+work-card       3:4，primary studio_photo，公开水印
+detail          原比例详情图，studio_photo，公开水印
+design-sheet    contain，design_sheet，公开水印
+adoption-card   横版，adoption_cover，公开水印
 ```
 
-`return-wall` 和 `return-display-v1` 永久删除。
+不新增 `work-detail` usage。`return-wall` 与 `return-display-v1` 第一阶段删除。
 
-## 4. Hero 目标模型
+## 4. Hero collection 与 item
 
-旧 `site_hero_slides` 的“横竖一对”心智被替换为 orientation 独立记录：
+横竖解耦需要两个表，不能只给 item 加 version 后虚构集合级并发。
+
+### 4.1 `site_hero_collections`
+
+固定四行：
+
+```text
+site_hero_collections
+  placement      home | commission
+  orientation    landscape | portrait
+  version        integer > 0
+  created_at     integer
+  updated_at     integer
+  PK (placement, orientation)
+```
+
+用途：
+
+- 作为新增、排序、启停和上传归属的独立乐观并发域；
+- 四个集合互不制造无关 409；
+- 完整顺序更新先 claim collection version，再事务写 items；
+- 首页 slogan/自动轮播设置继续使用 site content 自己的版本，不与 collection 混用。
+
+### 4.2 `site_hero_items`
 
 ```text
 site_hero_items
-  id                 text PK
-  placement          home | commission
-  orientation        landscape | portrait
-  asset_id            text FK assets
-  alt_text            text
-  sort_order          integer >= 0
-  enabled             boolean
-  preview_object_key  text | null
-  preview_expires_at  integer | null
+  id                  text PK
+  placement           home | commission
+  orientation         landscape | portrait
+  asset_id             text FK assets
+  alt_text             text
+  sort_order           integer >= 0
+  enabled              boolean
+  preview_object_key   text | null
+  preview_expires_at   integer | null
   version              integer > 0
   created_at           integer
   updated_at           integer
@@ -127,16 +154,32 @@ site_hero_items
 
 约束：
 
-- `orientation=landscape` 只能引用 `home_hero_landscape`；
-- `orientation=portrait` 只能引用 `home_hero_portrait`；
-- 每个 `(placement, orientation)` 最多 5 条 enabled；
-- enabled 项的 `(placement, orientation, sort_order)` 唯一且连续为 `0..n-1`；
-- `home` 和 `commission` 分别维护；
-- 不再保存 `linked_work_id`；
-- 首页公开就绪要求 home/landscape 与 home/portrait 各至少一条 enabled；
-- 委托页公开 Hero 要求 commission/landscape 与 commission/portrait 各至少一条 enabled。
+- `(placement, orientation)` 必须存在 collection；
+- landscape 只能引用 `home_hero_landscape`；
+- portrait 只能引用 `home_hero_portrait`；
+- enabled 的 `(placement, orientation, sort_order)` 唯一；
+- 每个 collection 最多 5 个 enabled，完整保存后顺序连续为 `0..n-1`；
+- 不保存 linked work。
 
-### 4.1 管理 DTO
+### 4.3 Hero 上传归属
+
+现有管理员 `upload_sessions` 继续使用 owner 约束，但目标 owner context 必须能区分四个 collection，例如：
+
+```text
+site / hero-home-landscape
+site / hero-home-portrait
+site / hero-commission-landscape
+site / hero-commission-portrait
+```
+
+具体字符串可实现时校准，但必须：
+
+- 绑定 collection version；
+- 媒体角色与 orientation 一致；
+- 不继续使用一个共享 `site/home` expectedVersion 代表四个集合；
+- branding/contact owner 不受影响。
+
+### 4.4 DTO
 
 ```text
 AdminHeroCollection
@@ -144,33 +187,26 @@ AdminHeroCollection
   orientation
   version
   items[]
-    id
-    version
-    alt
-    sortOrder
-    enabled
-    asset { assetId, width, height }
-    upscaleReady
-    missingVariantCount
-    publicationOperation
-```
 
-### 4.2 公开 DTO
+AdminHeroItem
+  id
+  version
+  alt
+  sortOrder
+  enabled
+  asset { assetId, width, height }
+  upscaleReady
+  missingVariantCount
+  publicationOperation
 
-```text
 PublicHeroPlacement
   landscape[] PublicHeroItem
   portrait[]  PublicHeroItem
-
-PublicHeroItem
-  id
-  alt
-  sources
 ```
 
-首页 DTO 额外包含 slogan、固定自动轮播契约和业务入口；不再包含 linked work href 或 Hero action。
+公开 item 不包含 collection version、linked work 或私有 Key。
 
-## 5. 委托申请模型
+## 5. 委托申请
 
 ### 5.1 `commission_submissions`
 
@@ -196,20 +232,20 @@ commission_submissions
 
 约束：
 
-- nickname 去空白后 1–50 字；
-- phone 固定 `+86`，号码符合中国大陆 11 位手机号；
-- QQ 为 5–12 位非零开头数字；
-- `height_cm` 在 80–250；
-- `weight_kg_tenths` 在 200–3000，对外 DTO 转为一位小数公斤；
-- `design_asset_id` 必须引用 READY `commission_design_reference`；
-- 一个私有设定图只能绑定一条申请；
-- `pending` 时 handled 字段必须为空；accepted/rejected 时写处理时间和管理员；
-- 状态回到 pending 时清空 handled 字段；
-- `receipt_code` 只用于提交成功提示，不提供公开查询能力。
+- nickname 1–50 字；
+- phone 为 11 位大陆手机号；
+- QQ 5–12 位非零开头数字；
+- height 80–250；
+- weight tenths 200–3000；
+- design asset 必须 READY 且 role 为 `commission_design_reference`；
+- 一个资产只能绑定一条申请；
+- pending 时 handled 字段为空；
+- accepted/rejected 时写管理员和处理时间；
+- receipt collision 必须重试生成，不能返回数据库错误。
 
-### 5.2 管理列表 DTO
+### 5.2 管理 DTO
 
-列表只返回：
+列表：
 
 ```text
 id
@@ -220,9 +256,7 @@ createdAt
 version
 ```
 
-手机号、QQ、身高、体重、内部备注和图片只进入详情 DTO。
-
-### 5.3 管理详情 DTO
+详情：
 
 ```text
 id
@@ -241,11 +275,11 @@ version
 designReferencePreviewHref
 ```
 
-预览 href 是认证、短时、`no-store` 路由，不是 OSS 永久签名 URL。
+列表不返回手机号、QQ、体型、备注或图片。
 
 ## 6. 匿名上传会话
 
-现有 `upload_sessions` 继续只服务管理员归属，不能移除 `created_by` 或放宽 owner 类型。匿名委托使用独立表和路由，但复用已有摘要、MIME、尺寸、OSS 条件 PUT、图片校验和清理函数。
+不能放宽管理员 `upload_sessions`。使用：
 
 ```text
 commission_upload_sessions
@@ -258,9 +292,12 @@ commission_upload_sessions
   expected_sha256        text
   expected_width         integer
   expected_height        integer
-  status                 awaiting_upload | validating | completed | consumed | failed | expired
+  status                 AWAITING_UPLOAD | VALIDATING | COMPLETED |
+                         CONSUMED | FAILED | CANCELLED | EXPIRED
   asset_id               text | null FK assets
   failure_code           text | null
+  failure_stage          text | null
+  version                integer > 0
   created_at             integer
   expires_at             integer
   completed_at           integer | null
@@ -270,14 +307,15 @@ commission_upload_sessions
 
 约束：
 
-- TTL 不超过 10 分钟；
-- completed 时必须有 READY asset；
-- consumed 只能由一次事务性 submission 创建产生；
-- consumed 后不能重试或再次绑定；
-- 过期、失败和未消费对象进入匿名专用清理分支；
-- 表不保存 IP、UA、Referer、手机号、QQ 或表单草稿。
+- TTL ≤ 10 分钟；
+- COMPLETED 必须有 READY asset；
+- CONSUMED 只能由 submission 创建事务产生；
+- CONSUMED 不能重试或再次绑定；
+- 过期、失败、取消、未消费对象进入匿名专用清理；
+- 不保存 IP、UA、Referer 或表单字段；
+- failure code/stage 尽量复用现有上传错误集合。
 
-## 7. `site_content` 目标收缩
+## 7. `site_content`
 
 继续保留：
 
@@ -287,6 +325,7 @@ contact_email
 official_channels_json
 commission_intro
 commission_estimate_note
+commission_email_action
 about_studio_facts
 about_making_scope
 basic_terms
@@ -294,56 +333,50 @@ privacy_policy
 contact_anti_scam
 hero_auto_rotate
 hero_auto_rotate_interval_ms
-各保留分区的 version
+现有保留分区版本
 ```
 
-永久删除：
+第一阶段/委托阶段删除：
 
 ```text
-commission_email_action
 commission_faq_json
 commission_faq_version
-旧 contact_qq/contact_douyin 兼容列（若迁移确认已无读取者）
 ```
 
-contact 官方渠道继续使用需求2的五平台数组；`/commission` 只选取 QQ 和 QQ群公开卡，`/about` 显示全部完整渠道。
+旧 `contact_qq`、`contact_douyin` 兼容列不属于需求3删除范围，不在本轮顺手清理。
 
-## 8. 领养公开投影
+## 8. 领养状态迁移
+
+Expand migration 新增 nullable `adoption_status`。
+
+自动映射：
 
 ```text
-PublicAdoptionListItem
-  work
-    id
-    slug
-    characterName
-    species
-    adoptionStatus
-    price?
-  href
-  cover
-    assetId
-    alt
-    sources
+old available -> available
+old delivered -> adopted
 ```
 
-不再包含：
+下列值保持 NULL 并进入人工复核：
 
 ```text
-suitType
-ownerDisplay
-featureTags
-adoptionMethod
-businessStatus
-eventName
-eventTime
-designSheet as card
+preparing
+scheduled
+in_production
+event_sale
+NULL
+其它异常值
 ```
 
-列表响应不再包含 `method` filter 或 regular/event_drop counts，只保留名称搜索、分页和结果计数。
+最终 contract 条件：
 
-## 9. 作品公开投影
+- adoption_status NULL 数量为 0；
+- 每条由景宸明确确认；
+- 非 adoption 的 status 为 NULL；
+- 不把歧义行默认为 available。
 
-### 9.1 列表摘要
+## 9. 公开 DTO
+
+### 9.1 作品摘要
 
 ```text
 PublicWorkSummary
@@ -356,7 +389,7 @@ PublicWorkSummary
   card
 ```
 
-### 9.2 详情
+### 9.2 作品详情
 
 ```text
 PublicWorkDetail
@@ -372,48 +405,79 @@ PublicWorkDetail
     gallery[]
     designSheet?
   navigation
-  related[] PublicWorkSummary
+  related[]
 ```
 
-普通作品公开投影不返回内部 purpose、价格、adoption 状态或任何已删除字段。
+不返回内部 purpose、价格、adoption status 或旧字段。
 
-## 10. 永久退役模型
+### 9.3 领养
 
-以下表、字段、枚举和媒体身份必须从最终 Schema 中消失：
+```text
+PublicAdoptionListItem
+  work
+    id
+    slug
+    characterName
+    species
+    adoptionStatus
+    price?
+  href
+  cover
+```
+
+不包含 method、event、suit、owner、tags 或 design sheet as card。
+
+## 10. analytics
+
+第一阶段：
+
+- 删除历史 `returns`、`return_character`、`updates` 行；
+- 删除 route/entity 枚举；
+- 不再接收对应事件。
+
+委托：
+
+- 可以新增 `commission_apply` page view；
+- 不记录提交成功业务事件、receipt、submission ID 或任何字段值。
+
+## 11. 第一阶段永久退役模型
+
+第一阶段最终 Schema 中消失：
 
 ```text
 updates
 return_characters
 return_photos
-work_feature_tags
 assets.role = return_photo
 upload_sessions.owner_type = return
 asset_variants.usage = return-wall
 asset_variants.recipe_version = return-display-v1
 publication_operations.entity_type = RETURN_PHOTO
-analytics route keys returns | return_character | updates
-adoption_method
-business_status 旧集合
-event_name
-event_time
+analytics returns | return_character | updates
+```
+
+后续作品 contract 再删除：
+
+```text
+work_feature_tags
 suit_type
 owner_display
 owner_contact
-commission_faq_json
-commission_faq_version
-commission_email_action
+adoption_method
+business_status
+event_name
+event_time
 ```
 
-与它们有关的行必须先清理，再通过 SQLite 表重建收紧 CHECK 约束。
+这样满足立即退役，又避免把返图清理与全部作品重构强绑成一次停机。
 
-## 11. 迁移后回填要求
-
-实现完成后本文件必须补充：
+## 12. 实施后回填
 
 - 实际迁移文件名和顺序；
-- 实际新表名、索引名和 CHECK；
-- 旧数据映射数量；
-- 补齐 adoption cover 的作品数量；
-- 本地与生产永久删除的脱敏计数；
-- 最终 DTO 文件路径；
-- 任何与本规划不同但经用户批准的变更。
+- collection/owner context 实际字符串；
+- 实际索引和 CHECK；
+- 退役脱敏计数；
+- adoption 歧义状态人工确认数量；
+- 补齐 cover 数量；
+- DTO 与 route 文件路径；
+- 净化备份恢复结果。
