@@ -11,7 +11,8 @@ test('public homepage is server rendered', async ({ page, request }) => {
   expect(response.ok()).toBe(true)
   expect(html).toContain('data-testid="public-home"')
   expect(html).toContain('有点小狗工作室')
-  expect(html).toContain('DITE DOG FURSUIT')
+  expect(html).toContain('DITE DOG')
+  expect(html).not.toContain('DITE DOG FURSUIT')
 
   await page.goto('/')
   await expect(page.getByTestId('public-home')).toBeVisible()

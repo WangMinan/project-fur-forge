@@ -84,9 +84,6 @@ const SCREENSHOT_DIR =
   'agent_docs/需求1-兽装工作室主页/implementation/notes/t19-t22/t19-t20/screenshots'
 const T28_SCREENSHOT_DIR =
   'agent_docs/需求1-兽装工作室主页/implementation/notes/t28-t34/screenshots'
-const REQUIREMENT_2_SCREENSHOT_DIR =
-  'agent_docs/需求2-站点导航与内容增强/implementation/notes/t15/screenshots'
-
 async function seedHome(
   page: Page,
   settings?: SeedHomeSettings,
@@ -669,133 +666,25 @@ test.describe('T20 首页精选轨道', () => {
   })
 })
 
-test.describe('T12 首页最新动态摘要', () => {
-  test('只展示最新三条已发布动态并在桌面与移动导航可达', async ({ page }) => {
-    const now = Date.now()
-    await seedPublicUpdates(page, [
-      { type: 'other', title: 'E2E 公开动态 Home 1', content: 'Body 1', publishedAt: now + 1 },
-      { type: 'other', title: 'E2E 公开动态 Home 2', content: 'Body 2', publishedAt: now + 2 },
-      { type: 'other', title: 'E2E 公开动态 Home 3', content: 'Body 3', publishedAt: now + 3 },
-      { type: 'other', title: 'E2E 公开动态 Home 4', content: 'Body 4', publishedAt: now + 4 },
-      { type: 'other', title: 'E2E 公开动态 Home draft', content: 'Hidden', publicationStatus: 'draft' },
-    ])
-    await seedPublicCatalog(page, [
-      ...WORKS,
-      {
-        slug: 'e2e-public-home-updates-adoption',
-        characterName: '动态区对照领养',
-        species: '犬',
-        suitType: 'partial',
-        purpose: 'adoption',
-        adoptionMethod: 'regular',
-        businessStatus: 'available',
-        sortOrder: 4,
-        designSheet: { alt: '动态区对照领养设定图' },
-        photos: [],
-      },
-    ])
-    await seedHomeSlides(page, SLIDES)
-
-    await page.setViewportSize({ width: 1440, height: 900 })
-    await page.goto('/')
-    const section = page.getByTestId('home-latest-updates')
-    await expect(section).toBeVisible()
-    await expect(section.locator('li')).toHaveCount(3)
-    await expect(section.locator('li').nth(0)).toContainText('Home 4')
-    await expect(section.locator('li').nth(2)).toContainText('Home 2')
-    await expect(section).not.toContainText('Home 1')
-    await expect(section).not.toContainText('Home draft')
-    await expect(section).not.toContainText('工作室通知')
-    const adoptionHeading = page.getByTestId('home-current-adoptions')
-      .getByRole('heading', { name: '当前领养' })
-    const expectedHeadingSize = await adoptionHeading.evaluate(
-      element => getComputedStyle(element).fontSize,
-    )
-    await expect(section.getByRole('heading', { name: '最新动态' }))
-      .toHaveCSS('font-size', expectedHeadingSize)
-    await expect(section.getByRole('link', { name: '查看全部' }))
-      .toHaveAttribute('href', '/updates')
-    await expect(section.locator('.public-update-card')).toHaveCount(3)
-    await expect(section.locator('.public-update-card').first())
-      .toHaveCSS('background-color', 'rgb(255, 255, 255)')
-
-    const adoptionMore = page.getByTestId('home-current-adoptions')
-      .getByRole('link', { name: '查看全部' })
-    const updatesMore = section.getByRole('link', { name: '查看全部' })
-    await expect(adoptionMore).toHaveCSS('color', 'rgb(50, 77, 175)')
-    await expect(updatesMore).toHaveCSS('color', 'rgb(50, 77, 175)')
-    await expect(page.getByTestId('home-business-entries')
-      .getByRole('heading', { name: '委托投递' })).toBeVisible()
-
-    const homeEndingOrder = await page.locator([
-      '[data-testid="home-current-adoptions"]',
-      '[data-testid="home-latest-updates"]',
-      '[data-testid="public-footer"]',
-    ].join(',')).evaluateAll(elements => elements.map(element => (
-      element.getAttribute('data-testid')
-    )))
-    expect(homeEndingOrder).toEqual([
-      'home-current-adoptions',
-      'home-latest-updates',
-      'public-footer',
-    ])
-
-    const header = page.getByTestId('public-header')
-    const topLinks = await header.locator('.public-header__nav-item > .public-header__link')
-      .evaluateAll(links => links.map(link => link.textContent?.trim()))
-    expect(topLinks.slice(-2)).toEqual(['最新动态', '关于我们'])
-
-    await page.setViewportSize({ width: 390, height: 844 })
-    await page.goto('/')
-    await page.getByRole('button', { name: '打开导航' }).click()
-    const mobileUpdatesLink = page.getByTestId('public-mobile-nav')
-      .getByRole('link', { name: '最新动态', exact: true })
-    await expect(mobileUpdatesLink).toHaveAttribute('href', '/updates')
-    const analyticsRequest = page.waitForRequest(request => (
-      request.url().endsWith('/api/public/v1/analytics/events')
-      && request.postDataJSON()?.routeKey === 'updates'
-    ))
-    await mobileUpdatesLink.click()
-    expect((await analyticsRequest).postDataJSON()).toMatchObject({
-      eventType: 'page_view',
-      routeKey: 'updates',
-      entityType: null,
-      entityId: null,
-      actionKey: null,
-    })
-    await expect(page).toHaveURL(/\/updates$/u)
-
-    for (const viewport of [
-      { width: 390, height: 844 },
-      { width: 768, height: 1024 },
-      { width: 1440, height: 900 },
-    ]) {
-      await page.setViewportSize(viewport)
-      await page.goto('/')
-      const viewportSection = page.getByTestId('home-latest-updates')
-      await expect(viewportSection).toBeVisible()
-      await viewportSection.scrollIntoViewIfNeeded()
-      expect(await page.evaluate(() => (
-        document.documentElement.scrollWidth - document.documentElement.clientWidth
-      ))).toBeLessThanOrEqual(1)
-      await capture(
-        page,
-        `home-latest-updates-${viewport.width}x${viewport.height}`,
-        REQUIREMENT_2_SCREENSHOT_DIR,
-      )
-    }
-  })
-
-  test('没有已发布动态时不渲染首页摘要', async ({ page }) => {
+test.describe('R3-A 首页退役动态摘要', () => {
+  test('即使旧库仍有动态，首页和两端导航也不再提供入口', async ({ page }) => {
     await seedPublicUpdates(page, [{
       type: 'other',
-      title: 'E2E 公开动态 Draft only',
-      content: 'Hidden',
-      publicationStatus: 'draft',
+      title: 'E2E 已退役公开动态',
+      content: '不应显示',
+      publicationStatus: 'published',
     }])
     await page.goto('/')
     await expect(page.getByTestId('home-latest-updates')).toHaveCount(0)
-    await expect(page.getByTestId('public-hero')).toBeVisible()
+    const desktopNav = page.getByRole('navigation', { name: '主导航' })
+    await expect(desktopNav.getByRole('link', { name: '最新动态' })).toHaveCount(0)
+    await expect(desktopNav.getByRole('link', { name: '返图墙' })).toHaveCount(0)
+
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.getByRole('button', { name: '打开导航' }).click()
+    const mobileNav = page.getByTestId('public-mobile-nav')
+    await expect(mobileNav.getByRole('link', { name: '最新动态' })).toHaveCount(0)
+    await expect(mobileNav.getByRole('link', { name: '返图墙' })).toHaveCount(0)
   })
 })
 

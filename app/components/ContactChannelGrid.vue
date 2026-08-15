@@ -9,13 +9,15 @@ const props = defineProps<{
   channels: PublicOfficialChannel[]
 }>()
 
-const displayChannels = computed(() => props.channels.map(channel => ({
+const displayChannels = computed(() => props.channels
+  .filter(channel => channel.platform === 'qq' || channel.platform === 'qq_group')
+  .map(channel => ({
   ...channel,
   label: CONTACT_PLATFORM_LABELS[channel.platform],
   logoSrc: CONTACT_PLATFORM_LOGO_PATHS[channel.platform],
   qr: pickFallbackImg(channel.qrCodeSources),
   qrSrcset: buildSrcset(channel.qrCodeSources.fallback),
-})))
+  })))
 </script>
 
 <template>
@@ -129,7 +131,7 @@ const displayChannels = computed(() => props.channels.map(channel => ({
 
 @media (min-width: 768px) {
   .contact-channel-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-4);
   }
 
@@ -140,12 +142,12 @@ const displayChannels = computed(() => props.channels.map(channel => ({
 
 @media (min-width: 1024px) {
   .contact-channel-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: var(--space-2);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
   }
 
   .contact-channel-grid__item {
-    padding: var(--space-2);
+    padding: var(--space-4);
   }
 }
 </style>
