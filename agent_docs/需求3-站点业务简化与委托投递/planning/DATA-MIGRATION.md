@@ -151,6 +151,14 @@ contact_douyin legacy column
 - `contact_qq` 兼容列不在本阶段强制删除；
 - 本阶段不等待作品字段重构，也不删除 works 的 suit/owner/event 等列。
 
+### 2.6 T05 隔离本地演练结果
+
+- 隔离证明：`APP_ENV=test`，系统临时目录绝对 SQLite 路径，测试双 Bucket/loopback-or-test Endpoint adapter，唯一前缀 `test/r3-a-drill/integration-001/`；
+- dry-run：8 个当前对象、16 个历史 version、8 个 delete marker；private original=2、preprocess=2、private preview=0、public derived=3、pending reference=2；
+- 正式演练：仅使用完整强确认短语，删除后 current/version/delete-marker 均为 0，ESA exact purge adapter 完成后才签发 Contract-ready 标记；
+- Contract/备份：退役表、媒体和 QR 资产已删，渠道仅 QQ/QQ群，FK/integrity 通过；新净化备份恢复到新数据库后再删除旧演练备份；
+- 重入：Contract 后 dry-run 所有退役计数均为 0，再次执行安全。
+
 ## 3. R3-B：Hero Expand
 
 ### 3.1 创建 collection

@@ -59,7 +59,11 @@ export interface R3StageACleanupCounts {
   operationRows: number
   orphanQrAssets: number
   pendingObjects: number
+  privateOriginalKeys: number
+  privatePreprocessKeys: number
+  privatePreviewKeys: number
   privateObjectKeys: number
+  publicDerivedKeys: number
   publicObjectKeys: number
   retiredAccounts: number
   retiredChannelEntries: number
@@ -299,29 +303,40 @@ async function inventory(
   }
 
   const objects = new Map<string, ObjectReference>()
+  const privateOriginalKeys = new Set<string>()
+  const privatePreprocessKeys = new Set<string>()
+  const privatePreviewKeys = new Set<string>()
+  const publicDerivedKeys = new Set<string>()
   if (assetIds.size > 0) {
     const assetStatement = sqlite.prepare(`
       SELECT private_object_key AS objectKey FROM assets WHERE id = ?
     `)
     const variantStatement = tableExists(sqlite, 'asset_variants')
       ? sqlite.prepare(`
-          SELECT storage_scope AS scope, object_key AS objectKey
+          SELECT storage_scope AS scope, object_key AS objectKey, usage
           FROM asset_variants WHERE asset_id = ?
         `)
       : null
     for (const assetId of assetIds) {
       const asset = assetStatement.get(assetId) as { objectKey: string } | undefined
       addObject(objects, 'private', asset?.objectKey, environmentPrefix)
+      if (asset?.objectKey) privateOriginalKeys.add(asset.objectKey)
       for (const variant of (variantStatement?.all(assetId) ?? []) as {
         objectKey: string
         scope: string
+        usage: string
       }[]) {
-        addObject(
-          objects,
-          variant.scope === 'PUBLIC' ? 'public' : 'private',
-          variant.objectKey,
-          environmentPrefix,
-        )
+        const scope = variant.scope === 'PUBLIC' ? 'public' : 'private'
+        addObject(objects, scope, variant.objectKey, environmentPrefix)
+        if (scope === 'public') {
+          publicDerivedKeys.add(variant.objectKey)
+        }
+        else if (variant.usage === 'preprocess') {
+          privatePreprocessKeys.add(variant.objectKey)
+        }
+        else {
+          privatePreviewKeys.add(variant.objectKey)
+        }
       }
     }
   }
@@ -369,6 +384,7 @@ async function inventory(
       pendingObjects += cleanupKeys.length
       for (const key of cleanupKeys) {
         addObject(objects, 'public', key, environmentPrefix)
+        publicDerivedKeys.add(key)
       }
       for (const url of stringArray(row.edgeUrls)) {
         addExactCacheUrl(cacheUrls, url, mediaOrigin)
@@ -415,8 +431,12 @@ async function inventory(
       ),
       orphanQrAssets: existingOrphanQrIds.size,
       pendingObjects,
+      privateOriginalKeys: privateOriginalKeys.size,
+      privatePreprocessKeys: privatePreprocessKeys.size,
+      privatePreviewKeys: privatePreviewKeys.size,
       privateObjectKeys: [...objects.values()]
         .filter(object => object.scope === 'private').length,
+      publicDerivedKeys: publicDerivedKeys.size,
       publicObjectKeys: [...objects.values()]
         .filter(object => object.scope === 'public').length,
       retiredAccounts: retiredChannels.filter(channel => (

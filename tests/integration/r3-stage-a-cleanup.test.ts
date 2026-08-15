@@ -1,5 +1,6 @@
 import {
   copyFileSync,
+  existsSync,
   mkdtempSync,
   mkdirSync,
   readFileSync,
@@ -11,9 +12,11 @@ import { dirname, resolve } from 'node:path'
 import type Database from 'better-sqlite3'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
+  backupDatabase,
   DATABASE_MIGRATIONS_FOLDER,
   migrateDatabase,
   openDatabase,
+  restoreDatabase,
 } from '../../server/utils/database'
 import {
   R3_STAGE_A_AUDIT_ACTION,
@@ -314,6 +317,11 @@ describe('R3-A retirement cleanup', () => {
       objectVersions: 16,
       operationRows: 1,
       orphanQrAssets: 1,
+      pendingObjects: 2,
+      privateOriginalKeys: 2,
+      privatePreprocessKeys: 2,
+      privatePreviewKeys: 0,
+      publicDerivedKeys: 3,
       retiredAccounts: 3,
       retiredChannelEntries: 3,
       retiredQrReferences: 1,
@@ -405,6 +413,10 @@ describe('R3-A retirement cleanup', () => {
   })
 
   it('contracts a cleaned complex legacy database and enforces target constraints', async () => {
+    const oldBackup = resolve(directory, 'backups', 'pre-contract-old.db')
+    await backupDatabase(databaseFile, oldBackup)
+    expect(existsSync(oldBackup)).toBe(true)
+
     await runR3StageACleanup(options({
       dryRun: false,
       confirmation: R3_STAGE_A_CONFIRMATION,
@@ -472,6 +484,34 @@ describe('R3-A retirement cleanup', () => {
     expect(schemaSql).not.toContain('return_character')
     expect(schemaSql).not.toContain('contact_douyin')
 
+    sqlite.close()
+    const cleanBackup = resolve(directory, 'backups', 'post-contract-clean.db')
+    const restoredFile = resolve(directory, 'restored', 'post-contract.db')
+    await backupDatabase(databaseFile, cleanBackup)
+    await restoreDatabase(cleanBackup, restoredFile, {
+      activeDatabaseFile: databaseFile,
+    })
+    const restored = openDatabase(restoredFile).sqlite
+    try {
+      expect(restored.pragma('integrity_check', { simple: true })).toBe('ok')
+      expect(restored.pragma('foreign_key_check')).toEqual([])
+      expect(restored.prepare(`
+        SELECT name FROM sqlite_master
+        WHERE type = 'table' AND name IN ('updates', 'return_characters', 'return_photos')
+      `).all()).toEqual([])
+      expect(JSON.parse(restored.prepare(`
+        SELECT official_channels_json FROM site_content WHERE id = 'site'
+      `).pluck().get() as string).map((channel: { platform: string }) => channel.platform))
+        .toEqual(['qq', 'qq_group'])
+    }
+    finally {
+      restored.close()
+    }
+    rmSync(oldBackup)
+    expect(existsSync(oldBackup)).toBe(false)
+    expect(existsSync(cleanBackup)).toBe(true)
+    sqlite = openDatabase(databaseFile).sqlite
+
     const postContract = await runR3StageACleanup(options())
     expect(postContract.counts).toMatchObject({
       analyticsRows: 0,
@@ -483,6 +523,10 @@ describe('R3-A retirement cleanup', () => {
       operationRows: 0,
       orphanQrAssets: 0,
       pendingObjects: 0,
+      privateOriginalKeys: 0,
+      privatePreprocessKeys: 0,
+      privatePreviewKeys: 0,
+      publicDerivedKeys: 0,
       retiredAccounts: 0,
       retiredChannelEntries: 0,
       retiredQrReferences: 0,
