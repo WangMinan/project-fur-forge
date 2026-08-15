@@ -52,6 +52,23 @@ interface ExactVersionInventory {
   versions: OssVersionEntry[]
 }
 
+export type R3StageAEdgeProbe = (
+  url: string,
+  method: 'GET' | 'HEAD',
+) => Promise<number>
+
+async function probeEdge(url: string, method: 'GET' | 'HEAD') {
+  const response = await fetch(url, {
+    cache: 'no-store',
+    headers: method === 'GET'
+      ? { 'cache-control': 'no-cache', pragma: 'no-cache', range: 'bytes=0-0' }
+      : { 'cache-control': 'no-cache', pragma: 'no-cache' },
+    method,
+    redirect: 'manual',
+  })
+  return response.status
+}
+
 function isMissing(error: unknown) {
   const candidate = error as { code?: string, status?: number }
   return candidate.code === 'NoSuchKey'
@@ -188,9 +205,12 @@ export class AliOssR3StageAObjectStore implements R3StageAObjectStore {
 }
 
 export class R3StageAEsaCachePurger implements R3StageACachePurger {
-  constructor(private readonly cache: PublicMediaCache) {}
+  constructor(
+    private readonly cache: PublicMediaCache,
+    private readonly probe: R3StageAEdgeProbe = probeEdge,
+  ) {}
 
-  async purgeExactAndWait(urls: readonly string[]) {
+  async purgeExactWaitAndVerifyUnavailable(urls: readonly string[]) {
     if (!this.cache.enabled) {
       throw new Error('R3-A ESA cache purge is unavailable.')
     }
@@ -210,6 +230,15 @@ export class R3StageAEsaCachePurger implements R3StageACachePurger {
       }
       if (!complete) {
         throw new Error('ESA purge did not complete before the timeout.')
+      }
+      for (const url of batch) {
+        const headStatus = await this.probe(url, 'HEAD')
+        const status = headStatus === 405 || headStatus === 501
+          ? await this.probe(url, 'GET')
+          : headStatus
+        if (status !== 404 && status !== 410) {
+          throw new Error('A retired ESA URL is still reachable after purge.')
+        }
       }
     }
   }

@@ -100,6 +100,7 @@ describe('T52-E6 production deployment contract', () => {
   it('runs the published image as the non-root Node user', () => {
     const dockerfile = source('Dockerfile')
     const containerOps = source('scripts/container-ops.ts')
+    const backupRetirement = source('server/utils/runner/r3-stage-a-backup-retirement.ts')
     const database = source('server/utils/database.ts')
     expect(dockerfile).toMatch(/^USER node$/mu)
     expect(dockerfile).not.toMatch(/apt-get install[^\n]*(?:nginx|certbot|cron)/iu)
@@ -111,9 +112,31 @@ describe('T52-E6 production deployment contract', () => {
     expect(containerOps).toContain("import('./site-display-upgrade-options')")
     expect(containerOps).toContain("case 'r3-stage-a-cleanup':")
     expect(containerOps).toContain("import('./r3-stage-a-cleanup')")
+    expect(containerOps).toContain("case 'r3-stage-a-prune-backups':")
+    expect(containerOps).toContain("import('./r3-stage-a-prune-backups')")
+    expect(dockerfile).toContain('esbuild scripts/container-ops.ts')
+    expect(backupRetirement).toContain("resolve('/app/backups')")
+    expect(backupRetirement).toContain("resolve(dirname(databaseFile), 'backups')")
     expect(containerOps).not.toContain('return-photo-publication')
     expect(database).toContain("PRODUCTION_DATABASE_DIRECTORY = '/app/data'")
     expect(database).toContain('posix.dirname(databaseFile) !== PRODUCTION_DATABASE_DIRECTORY')
+  })
+
+  it('documents the one-time R3-A cleanup before Contract migration and backup retirement', () => {
+    const deployment = source('docs/DEPLOYMENT.md')
+    const stageA = deployment
+      .split('### 4.1 需求3 R3-A 一次性永久退役\n')[1]
+      ?.split('### 4.2 普通镜像更新\n')[0] ?? ''
+    const cleanup = 'node ops/ops.mjs r3-stage-a-cleanup --environment-prefix prod/'
+    const migrate = 'node ops/ops.mjs migrate'
+    const cleanBackup = 'node ops/ops.mjs backup --output "$CLEAN_BACKUP"'
+    const prune = 'node ops/ops.mjs r3-stage-a-prune-backups'
+
+    expect(deployment).toContain('--confirm "DELETE R3-A RETIRED MEDIA"')
+    expect(deployment).toContain('--confirm "DELETE R3-A OLD APP BACKUPS"')
+    expect(stageA.indexOf(cleanup)).toBeLessThan(stageA.indexOf(migrate))
+    expect(stageA.indexOf(migrate)).toBeLessThan(stageA.indexOf(cleanBackup))
+    expect(stageA.indexOf(cleanBackup)).toBeLessThan(stageA.indexOf(prune))
   })
 
   it('ships one v2 upgrade parser through pnpm and the frozen deployment image', () => {

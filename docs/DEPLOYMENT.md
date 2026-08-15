@@ -279,6 +279,63 @@ ss -lntp | grep -E '(:80|127.0.0.1:3000)'
 
 ## 4. 后续更新服务器镜像
 
+### 4.1 需求3 R3-A 一次性永久退役
+
+含 `0036_r3_a_contract.sql` 的首个镜像不得直接走下面的普通升级命令。必须先按需求3 T07 停写、清理对象/历史版本/ESA，只有清理输出 `contractReady=true` 才能 migrate。本段是交接步骤，不表示 T07 已执行。
+
+操作员先在云控制台记录 ECS/云盘等外部快照的实际处理状态，并逐项核对 `.env` 中 `APP_ENV=production`、绝对 `DATABASE_FILE`、两个 OSS Bucket、Endpoint 和对象前缀 `prod/`。不得把 Secret 打印到证据中；任一项无法证明就停止。
+
+```bash
+cd /root/project-fur-forge
+
+# 已在前文核对冻结 SHA/摘要、更新 APP_IMAGE_REF 并 pull 后，先停写。
+docker compose stop app
+docker compose config --quiet
+
+# 默认 dry-run；只输出环境布尔证明和脱敏计数。
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs r3-stage-a-cleanup --environment-prefix prod/
+
+# 用户核对 dry-run 计数并明确同意后才执行。
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs r3-stage-a-cleanup --environment-prefix prod/ \
+  --execute --confirm "DELETE R3-A RETIRED MEDIA"
+
+# 上一条任一对象/version/delete-marker/ESA purge/HEAD-GET 不可达验证失败，
+# 或输出 contractReady!=true，立即停止，不得执行此 migration。
+docker compose run --rm --no-deps app node ops/ops.mjs migrate
+docker compose up --detach --no-build --no-deps --force-recreate app
+```
+
+确认 readiness、退役路由 404、公开/管理联系只有邮箱、QQ、QQ群且 foreign-key/integrity/production verify 通过后，创建净化备份并真实恢复到新路径。只有恢复库再次通过 Contract/FK/integrity 校验，才能用第二个强确认命令删除 `/app/backups` 和数据卷自动 `backups/` 中的旧 `.db`/边车文件。净化备份和恢复库保留。
+
+```bash
+CLEAN_BACKUP="/app/backups/r3-a-clean-$(date -u +%Y%m%dT%H%M%SZ).db"
+RESTORED_DATABASE="/app/data/r3-a-restore-verify-$(date -u +%Y%m%dT%H%M%SZ).db"
+
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs backup --output "$CLEAN_BACKUP"
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs restore-verify \
+  --backup "$CLEAN_BACKUP" --output "$RESTORED_DATABASE"
+
+# 默认 dry-run；只报应用备份总数/旧备份数和验证布尔值。
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs r3-stage-a-prune-backups \
+  --clean-backup "$CLEAN_BACKUP" --restored-database "$RESTORED_DATABASE"
+
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs r3-stage-a-prune-backups \
+  --clean-backup "$CLEAN_BACKUP" --restored-database "$RESTORED_DATABASE" \
+  --execute --confirm "DELETE R3-A OLD APP BACKUPS"
+
+# Contract 后重入盘点必须为零或与明确保留项一致。
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs r3-stage-a-cleanup --environment-prefix prod/
+```
+
+### 4.2 普通镜像更新
+
 先通过 `release-image` 得到新冻结 SHA 和新镜像摘要。然后在服务器执行：
 
 ```bash
