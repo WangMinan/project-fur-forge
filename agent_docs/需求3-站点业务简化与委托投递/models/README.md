@@ -1,7 +1,7 @@
 # 需求3 · 数据模型规划
 
 > **角色**：定义 contract 完成后的目标持久模型、DTO 和媒体身份。
-> **状态**：目标已锁定；T01 品牌迁移和 T02 活动代码/DTO 契约已回填，T03～T06 实施中。
+> **状态**：目标已锁定；T01 品牌迁移、T02 活动代码/DTO 契约和 T03 清理工具已回填，T04～T06 实施中。
 > **修订**：增加 Hero collection 版本域、明确领养状态人工迁移、沿用既有 `detail` usage、保留 `commission_email_action`；官方渠道收缩为 `qq | qq_group`，OSS CORS 保持通配且不进入模型门禁。
 
 ## 1. 最终数据域
@@ -18,6 +18,8 @@
 - 现有 publication、lease、recovery、备份和部署基础设施。
 
 返图、最新动态、抖音、小红书和 Bilibili 联系渠道不再有活模型或隐藏兼容投影。
+
+R3-A 清理完成凭据复用既有 `audit_logs`：只写固定 action/entity/result 和时间，不保存账号、内容、对象 Key 或 manifest；T04 仅把它作为对象清理停止点凭据，不把它投影到产品 DTO。
 
 ## 2. `works`
 

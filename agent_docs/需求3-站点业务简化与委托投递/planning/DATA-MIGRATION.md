@@ -35,6 +35,24 @@ R3-A 完成后，返图、动态和三类取消平台联系方式不得继续存
 
 ### 2.2 dry-run
 
+实现命令：
+
+```powershell
+# 默认只读；不会删除对象、purge 或写数据库
+pnpm r3-a:cleanup -- --environment-prefix prod/
+
+# 容器镜像内等价入口
+node /app/ops/ops.mjs r3-stage-a-cleanup --environment-prefix prod/
+```
+
+正式对象删除必须显式执行：
+
+```powershell
+pnpm r3-a:cleanup -- --environment-prefix prod/ --execute --confirm "DELETE R3-A RETIRED MEDIA"
+```
+
+输出固定为 `environment` 布尔证明、`counts` 脱敏计数、`contractReady`、`dryRun` 和 `externalSnapshots=OPERATOR_CONFIRMATION_REQUIRED`；不输出账号、完整 Key、内容或可恢复 manifest。测试执行还要求唯一 `test/r3-a-drill/<run>/` 前缀、系统临时目录绝对数据库、名称含 test 的两个 Bucket 和 test/loopback Endpoint，否则在盘点前拒绝。
+
 停机前工具只读计算：
 
 - updates、return characters、return photos 行数；
@@ -89,6 +107,8 @@ R3-A 完成后，返图、动态和三类取消平台联系方式不得继续存
 18. 操作员确认外部主机/云盘快照策略。
 
 若步骤 4–12 任一对象删除失败，禁止进入步骤 13。若数据库 transaction 失败，数据库回滚，但已删除媒体不会恢复，只能修复新镜像后重试。
+
+T03 工具仅在对象 versions/delete markers 全部验证为零且 ESA purge 完成后，向 `audit_logs` 写入无内容、无 Key、无 PII 的 `R3_STAGE_A_OBJECT_CLEANUP/SUCCESS` 标记。T04 Contract 对复杂旧库必须先验证该标记；工具失败或仅 dry-run 不产生标记。
 
 ### 2.5 R3-A 数据库 contract
 
