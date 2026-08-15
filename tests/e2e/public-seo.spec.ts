@@ -66,7 +66,6 @@ test('sitemap 与 robots 只列公开路径，图标尺寸可核对', async ({ r
     '/works',
     '/commission',
     '/adoptions',
-    '/updates',
     '/about',
     '/service',
     '/privacy',
@@ -77,6 +76,8 @@ test('sitemap 与 robots 只列公开路径，图标尺寸可核对', async ({ r
   }
   expect(sitemap).not.toContain('/admin')
   expect(sitemap).not.toContain('/api/')
+  expect(sitemap).not.toContain('/returns')
+  expect(sitemap).not.toContain('/updates')
   expect(sitemap).not.toContain('/contact')
   expect(sitemap).not.toContain('/terms')
 

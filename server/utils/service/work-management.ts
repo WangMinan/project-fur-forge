@@ -634,10 +634,6 @@ export async function deleteManagedWork(
       'PUBLICATION_CLEANUP_PENDING',
     )
   }
-  // T35-F1：返图与作品解耦后，返图不再阻止作品删除。
-  // return_characters.work_id 的 FK 是 set null：设定只是失去作品入口，
-  // 返图记录与私有原图都保留。
-
   const claimed = sqlite.prepare(`
     UPDATE works SET version = version + 1, updated_at = ?
     WHERE id = ? AND version = ? AND publication_status != 'published'

@@ -30,12 +30,9 @@ const NOW = Date.UTC(2026, 7, 6)
 const USER_ID = '99999999-9999-4999-8999-999999999999'
 const FAQ_A = '11111111-1111-4111-8111-111111111111'
 const FAQ_B = '22222222-2222-4222-8222-222222222222'
-const officialChannels = (qq: string | null, douyin: string | null) => [
+const officialChannels = (qq: string | null, qqGroup: string | null) => [
   { platform: 'qq', account: qq, qrCodeAssetId: null },
-  { platform: 'douyin', account: douyin, qrCodeAssetId: null },
-  { platform: 'qq_group', account: null, qrCodeAssetId: null },
-  { platform: 'xiaohongshu', account: null, qrCodeAssetId: null },
-  { platform: 'bilibili', account: null, qrCodeAssetId: null },
+  { platform: 'qq_group', account: qqGroup, qrCodeAssetId: null },
 ]
 
 let directory: string
@@ -171,7 +168,7 @@ describe('T34-F3 site content section concurrency', () => {
   it('never leaks section versions or private contact fields to the public DTO', () => {
     updateSiteContentSection(sqlite, 'contact', versions().contact, {
       email: 'studio@example.test',
-      officialChannelsJson: JSON.stringify(officialChannels('3114559925', 'studio.official')),
+      officialChannelsJson: JSON.stringify(officialChannels('3114559925', '456789012')),
       antiScam: '只认这些官方渠道。',
     }, USER_ID, NOW)
 

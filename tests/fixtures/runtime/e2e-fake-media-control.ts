@@ -18,7 +18,6 @@ import {
   HOME_ENTRY_USAGES,
   SITE_HERO_USAGES,
 } from '../../../server/utils/recipe/site-display-recipe'
-import { generateReturnWallVariants } from '../../../server/utils/recipe/return-display-recipe'
 import { resetRequestRateLimits } from '../../../server/utils/route/request-rate-limit'
 import {
   createSyntheticWatermarkPng,
@@ -66,18 +65,6 @@ interface ControlBody {
       width?: number
       height?: number
     }>
-  }>
-  returns?: Array<{
-    name: string
-    slug: string
-    photos: Array<{ alt: string }>
-  }>
-  updates?: Array<{
-    content: string
-    publicationStatus?: 'draft' | 'published' | 'unpublished'
-    publishedAt?: number
-    title: string
-    type: 'event' | 'drop' | 'commission_open' | 'other'
   }>
   slides?: Array<{
     alt: string
@@ -185,118 +172,15 @@ export default defineEventHandler(async (event) => {
     sqlite.prepare(`
       UPDATE site_content
       SET contact_email = '3114559925@qq.com',
-          contact_qq = '3114559925', contact_douyin = 'to3114559925',
+          contact_qq = '3114559925',
           official_channels_json = ?,
           contact_content_version = contact_content_version + 1,
           updated_at = ?
       WHERE id = 'site'
     `).run(JSON.stringify([
       { platform: 'qq', account: '3114559925', qrCodeAssetId: null },
-      { platform: 'douyin', account: 'to3114559925', qrCodeAssetId: null },
       { platform: 'qq_group', account: null, qrCodeAssetId: null },
-      { platform: 'xiaohongshu', account: null, qrCodeAssetId: null },
-      { platform: 'bilibili', account: null, qrCodeAssetId: null },
     ]), now)
-    return { data: { ok: true } }
-  }
-
-  if (body?.action === 'seedPublicUpdates') {
-    const sqlite = getDatabase().sqlite
-    const now = Date.now()
-    sqlite.prepare(`
-      DELETE FROM updates WHERE title LIKE 'E2E 公开动态%'
-    `).run()
-    const insert = sqlite.prepare(`
-      INSERT INTO updates (
-        id, type, title, content, publication_status, published_at,
-        version, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)
-    `)
-    body.updates?.forEach((update, index) => {
-      const status = update.publicationStatus ?? 'published'
-      const publishedAt = status === 'draft'
-        ? null
-        : update.publishedAt ?? now + index
-      insert.run(
-        randomUUID(),
-        update.type,
-        update.title,
-        update.content,
-        status,
-        publishedAt,
-        now + index,
-        now + index,
-      )
-    })
-    return { data: { ok: true } }
-  }
-
-  if (body?.action === 'seedPublicReturns') {
-    const sqlite = getDatabase().sqlite
-    const now = Date.now()
-    const returnSource = readFileSync(resolve('public/brand/favicon-dark-16.png'))
-    const staleAssetIds = sqlite.prepare(`
-      SELECT id FROM assets WHERE private_object_key LIKE 'test/e2e-returns/%'
-    `).pluck().all() as string[]
-    if (staleAssetIds.length > 0) {
-      const placeholders = staleAssetIds.map(() => '?').join(', ')
-      sqlite.prepare(`DELETE FROM asset_variants WHERE asset_id IN (${placeholders})`)
-        .run(...staleAssetIds)
-      sqlite.prepare(`DELETE FROM return_photos WHERE asset_id IN (${placeholders})`)
-        .run(...staleAssetIds)
-      sqlite.prepare(`DELETE FROM assets WHERE id IN (${placeholders})`)
-        .run(...staleAssetIds)
-    }
-    sqlite.prepare(`DELETE FROM return_characters WHERE slug LIKE 'e2e-search-%'`).run()
-
-    for (const character of body.returns ?? []) {
-      const characterId = randomUUID()
-      sqlite.prepare(`
-        INSERT INTO return_characters (
-          id, slug, name, nickname, work_id,
-          authorization_source, authorization_confirmed_at,
-          authorization_note, version, created_at, updated_at
-        ) VALUES (?, ?, ?, NULL, NULL, NULL, NULL, NULL, 1, ?, ?)
-      `).run(characterId, character.slug, character.name, now, now)
-
-      for (const [index, photo] of character.photos.entries()) {
-        const assetId = randomUUID()
-        const photoId = randomUUID()
-        const content = returnSource
-        const sha256 = createHash('sha256').update(content).digest('hex')
-        const objectKey = `test/e2e-returns/original/${assetId}/source.png`
-        sqlite.prepare(`
-          INSERT INTO assets (
-            id, role, status, private_object_key, sha256, byte_size,
-            mime_type, width, height, created_at, updated_at
-          ) VALUES (?, 'return_photo', 'READY', ?, ?, ?,
-                    'image/png', 480, 877, ?, ?)
-        `).run(assetId, objectKey, sha256, content.length, now, now)
-        fake.seedPrivate(objectKey, content, 'image/png', sha256, {
-          fileSize: content.length,
-          format: 'png',
-          height: 877,
-          orientation: 1,
-          width: 480,
-        })
-        sqlite.prepare(`
-          INSERT INTO return_photos (
-            id, character_id, asset_id, alt, is_primary,
-            publication_status, version, published_at, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, 'published', 1, ?, ?, ?)
-        `).run(
-          photoId,
-          characterId,
-          assetId,
-          photo.alt,
-          index === 0 ? 1 : 0,
-          now,
-          now,
-          now,
-        )
-        await generateReturnWallVariants(sqlite, fake, assetId, now)
-      }
-    }
     return { data: { ok: true } }
   }
 

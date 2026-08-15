@@ -12,10 +12,8 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3
 const STATIC_ROUTE_KEYS: Readonly<Record<string, AnalyticsRouteKey>> = {
   '/': 'home',
   '/works': 'works',
-  '/returns': 'returns',
   '/commission': 'commission',
   '/adoptions': 'adoptions',
-  '/updates': 'updates',
   '/about': 'about',
   '/service': 'service',
   '/privacy': 'privacy',
@@ -46,16 +44,14 @@ export function analyticsPageEventForPath(
 
   const expectedType = /^\/works\/[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(pathname)
     ? 'work'
-    : /^\/returns\/[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(pathname)
-      ? 'return_character'
-      : null
+    : null
   if (!expectedType || entity?.type !== expectedType || !UUID_PATTERN.test(entity.id)) {
     return null
   }
 
   return {
     eventType: 'page_view',
-    routeKey: expectedType === 'work' ? 'work_detail' : 'return_character',
+    routeKey: 'work_detail',
     entityType: expectedType,
     entityId: entity.id,
     actionKey: null,

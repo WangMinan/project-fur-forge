@@ -1,8 +1,5 @@
 import { expect, test } from '@playwright/test'
-import {
-  seedPublicCatalog,
-  seedPublicReturns,
-} from './helpers/public-catalog'
+import { seedPublicCatalog } from './helpers/public-catalog'
 
 const search = (page: import('@playwright/test').Page) => page.getByRole('search')
 
@@ -79,53 +76,6 @@ test('领养搜索与方式筛选组合，并提供无匹配和清除入口', as
     .toHaveAttribute('href', '/adoptions?method=event_drop')
 })
 
-test('返图按设定名称命中全部照片，过滤后保留 seed 分页', async ({ page, request }) => {
-  test.setTimeout(120_000)
-  await seedPublicReturns(page, [
-    {
-      name: 'Mochi 云朵',
-      slug: 'e2e-search-mochi',
-      photos: Array.from({ length: 25 }, (_, index) => ({
-        alt: `Mochi 云朵返图 ${index + 1}`,
-      })),
-    },
-    {
-      name: '芝麻',
-      slug: 'e2e-search-sesame',
-      photos: [{ alt: '芝麻返图' }],
-    },
-  ])
-
-  const first = await request.get('/api/public/v1/returns?q=moCHI')
-  expect(first.status()).toBe(200)
-  const firstData = (await first.json()).data as {
-    items: Array<{ character: { name: string } }>
-    pageCount: number
-    resultCount: number
-    seed: string
-  }
-  expect(firstData).toMatchObject({ pageCount: 2, resultCount: 25 })
-  expect(firstData.items).toHaveLength(24)
-  expect(firstData.items.every(item => item.character.name === 'Mochi 云朵')).toBe(true)
-
-  await page.goto(`/returns?q=moCHI&seed=${firstData.seed}`)
-  const pagination = page.getByRole('navigation', { name: '返图墙分页' })
-  await expect(pagination.getByRole('link', { name: '下一页' })).toHaveAttribute(
-    'href',
-    `/returns?q=moCHI&seed=${firstData.seed}&page=2`,
-  )
-  await expect(search(page).getByRole('searchbox', { name: '按设定名称搜索' }))
-    .toHaveValue('moCHI')
-
-  await search(page).getByRole('searchbox', { name: '按设定名称搜索' }).fill('芝麻')
-  await search(page).getByRole('button', { name: '搜索' }).click()
-  await expect(page).toHaveURL(`/returns?q=${encodeURIComponent('芝麻')}`)
-  const next = await request.get(`/api/public/v1/returns?q=${encodeURIComponent('芝麻')}`)
-  expect(next.status()).toBe(200)
-  expect(((await next.json()).data as { seed: string }).seed).not.toBe(firstData.seed)
-  await expect(page.locator('[data-return-id]')).toHaveCount(1)
-})
-
 test('非法与超长 q 返回受控空态，三个视口键盘可用且无溢出', async ({ page }) => {
   await seedPublicCatalog(page, [{
     slug: 'e2e-public-search-viewport',
@@ -137,7 +87,6 @@ test('非法与超长 q 返回受控空态，三个视口键盘可用且无溢�
   for (const path of [
     '/works?q=视口搜索&q=重复',
     `/adoptions?q=${'犬'.repeat(101)}`,
-    '/returns?q=视口&q=重复',
   ]) {
     await page.goto(path)
     await expect(page.getByText('搜索条件无效')).toBeVisible()
@@ -177,7 +126,7 @@ test('非法与超长 q 返回受控空态，三个视口键盘可用且无溢�
   }
 })
 
-test('三个目录的搜索筛选区到首张图片保持同一间距', async ({ page }) => {
+test('两个目录的搜索筛选区到首张图片保持同一间距', async ({ page }) => {
   await seedPublicCatalog(page, [
     {
       slug: 'e2e-public-catalog-rhythm-work',
@@ -195,16 +144,9 @@ test('三个目录的搜索筛选区到首张图片保持同一间距', async ({
       photos: [{ alt: '目录节奏领养出厂照' }],
     },
   ])
-  await seedPublicReturns(page, [{
-    name: '目录节奏返图',
-    slug: 'e2e-catalog-rhythm-return',
-    photos: [{ alt: '目录节奏返图照片' }],
-  }])
-
   const pages = [
     { path: '/works', controls: '.works-page__toolbar', content: '.works-grid' },
     { path: '/adoptions', controls: '.adoptions-page__filters-wrap', content: '.adoptions-page__grid' },
-    { path: '/returns', controls: '[role="search"]', content: '.return-wall' },
   ]
 
   for (const viewport of [

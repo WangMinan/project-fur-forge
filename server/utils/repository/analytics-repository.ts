@@ -60,22 +60,9 @@ export function analyticsEntityIsPublic(
   entityType: AnalyticsEntityType,
   entityId: string,
 ) {
-  if (entityType === 'work') {
-    return sqlite.prepare(`
-      SELECT 1 FROM works
-      WHERE id = ? AND publication_status = 'published'
-    `).pluck().get(entityId) === 1
-  }
-
   return sqlite.prepare(`
-    SELECT 1
-    FROM return_characters AS character
-    WHERE character.id = ?
-      AND EXISTS (
-        SELECT 1 FROM return_photos AS photo
-        WHERE photo.character_id = character.id
-          AND photo.publication_status = 'published'
-      )
+    SELECT 1 FROM works
+    WHERE id = ? AND publication_status = 'published'
   `).pluck().get(entityId) === 1
 }
 
@@ -138,38 +125,6 @@ export function topAnalyticsWorks(
       AND event.route_key = 'work_detail'
     GROUP BY work.id, work.character_name, work.slug
     ORDER BY views DESC, work.id
-    LIMIT 10
-  `).all(since) as Array<{
-    id: string
-    label: string
-    slug: string
-    views: number
-  }>
-}
-
-export function topAnalyticsReturnCharacters(
-  sqlite: Database.Database,
-  since: number,
-) {
-  return sqlite.prepare(`
-    SELECT
-      character.id,
-      character.name AS label,
-      character.slug,
-      count(*) AS views
-    FROM analytics_events AS event
-    JOIN return_characters AS character ON character.id = event.entity_id
-    WHERE event.occurred_at >= ?
-      AND event.event_type = 'page_view'
-      AND event.entity_type = 'return_character'
-      AND event.route_key = 'return_character'
-      AND EXISTS (
-        SELECT 1 FROM return_photos AS photo
-        WHERE photo.character_id = character.id
-          AND photo.publication_status = 'published'
-      )
-    GROUP BY character.id, character.name, character.slug
-    ORDER BY views DESC, character.id
     LIMIT 10
   `).all(since) as Array<{
     id: string

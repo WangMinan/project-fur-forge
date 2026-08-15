@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type Database from 'better-sqlite3'
+import { CONTACT_PLATFORMS } from '../../../shared/constants/contact'
 import {
   adminSiteContentDtoSchema,
   adminOfficialChannelsSchema,
@@ -121,7 +122,18 @@ function faqs(raw: string | null) {
 
 function officialChannels(raw: string) {
   try {
-    return adminOfficialChannelsSchema.parse(JSON.parse(raw))
+    const value = JSON.parse(raw) as unknown
+    if (!Array.isArray(value)) {
+      throw new Error('Official channels must be an array.')
+    }
+    return adminOfficialChannelsSchema.parse(CONTACT_PLATFORMS.map(platform => (
+      value.find(channel => (
+        typeof channel === 'object'
+        && channel !== null
+        && 'platform' in channel
+        && channel.platform === platform
+      ))
+    )))
   }
   catch {
     throw new ServiceError(500, 'INTERNAL_ERROR', 'Official channel data is invalid.')

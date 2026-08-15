@@ -27,7 +27,7 @@ const previewMatchedSources = computed(() => ({
 .design-sheet {
   width: 100%;
   overflow: hidden;
-  /* 与 /works、/returns 与领养卡统一的圆角矩形。 */
+  /* 与 /works 和领养卡统一的圆角矩形。 */
   border: 1px solid var(--public-border-primary);
   border-radius: var(--radius-image);
   background: var(--image-placeholder);

@@ -96,18 +96,9 @@
   --image-hover-scale: 1.02;
 
   /**
-   * 公开端图片统一圆角。/works、/returns 与 /adoptions 共用同一个值，
-   * 三个页面的图片处理才不会各自漂移。
+   * 公开端图片统一圆角。/works 与 /adoptions 共用同一个值。
    */
   --radius-image: 12px;
-
-  /* T36 返图墙（return-display-v1，无水印，保持原比例）。 */
-  --return-gap-mobile: 12px;
-  --return-gap-tablet: 16px;
-  --return-gap-desktop: 20px;
-  --return-caption-gap: 8px;
-  --return-caption-size: var(--font-size-sm);
-  --return-caption-color: var(--public-text-secondary);
 
   --duration-instant: 50ms;
   --duration-fast: 150ms;

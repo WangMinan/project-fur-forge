@@ -10,7 +10,6 @@ import {
   hasUnsafePlainText,
   isValidContactEmail,
   isValidContactQq,
-  isValidDouyin,
   normalizeNullableText,
   SITE_CONTENT_LIMITS,
 } from '~/utils/site-content'
@@ -42,9 +41,6 @@ const card = useSiteContentSectionCard({
 
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 const pendingPlatform = shallowRef<ContactPlatform | null>(null)
-const displayedChannels = computed(() => card.draft.value.officialChannels.filter(
-  channel => channel.platform === 'qq' || channel.platform === 'qq_group',
-))
 
 const upload = useContactQrUpload({
   getContactVersion: () => props.content.sectionVersions.contact,
@@ -60,12 +56,8 @@ function channelAccountIssue(channel: AdminOfficialChannel) {
   if (account.length > 120 || hasUnsafePlainText(account)) {
     return '账号最多 120 字，且只能填写安全纯文本'
   }
-  if ((channel.platform === 'qq' || channel.platform === 'qq_group')
-    && !isValidContactQq(account)) {
+  if (!isValidContactQq(account)) {
     return `${CONTACT_PLATFORM_LABELS[channel.platform]}号为 5–12 位数字，且不以 0 开头`
-  }
-  if (channel.platform === 'douyin' && !isValidDouyin(account)) {
-    return '抖音号为 2–30 位字母、数字、点、下划线或连字符'
   }
   return null
 }
@@ -91,13 +83,6 @@ const issues = computed(() => {
   }
   return found
 })
-
-function accountMaxLength(platform: ContactPlatform) {
-  if (platform === 'qq' || platform === 'qq_group') {
-    return SITE_CONTENT_LIMITS.qqMax
-  }
-  return platform === 'douyin' ? SITE_CONTENT_LIMITS.douyinMax : 120
-}
 
 function completeness(channel: AdminOfficialChannel) {
   const account = channel.account?.trim()
@@ -203,7 +188,7 @@ function save() {
 
     <div class="channels-list" data-testid="official-channel-list">
       <section
-        v-for="channel in displayedChannels"
+        v-for="channel in card.draft.value.officialChannels"
         :key="channel.platform"
         class="channel-row"
         :data-platform="channel.platform"
@@ -231,8 +216,8 @@ function save() {
                 'channels-input--invalid': Boolean(issues[`account-${channel.platform}`]),
               }"
               type="text"
-              :inputmode="channel.platform === 'qq' || channel.platform === 'qq_group' ? 'numeric' : 'text'"
-              :maxlength="accountMaxLength(channel.platform)"
+              inputmode="numeric"
+              :maxlength="SITE_CONTENT_LIMITS.qqMax"
               autocomplete="off"
               :aria-invalid="Boolean(issues[`account-${channel.platform}`])"
               :aria-describedby="issues[`account-${channel.platform}`]

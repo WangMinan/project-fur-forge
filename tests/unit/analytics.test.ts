@@ -85,13 +85,7 @@ describe('T46 analytics contract', () => {
       routeKey: 'home',
       entityId: null,
     })
-    expect(analyticsPageEventForPath('/updates')).toEqual({
-      eventType: 'page_view',
-      routeKey: 'updates',
-      entityType: null,
-      entityId: null,
-      actionKey: null,
-    })
+    expect(analyticsPageEventForPath('/updates')).toBeNull()
     expect(analyticsPageEventForPath('/works/sample', {
       id: WORK_ID,
       type: 'work',
@@ -102,10 +96,6 @@ describe('T46 analytics contract', () => {
     expect(analyticsPageEventForPath('/works/sample?draft=true', {
       id: WORK_ID,
       type: 'work',
-    })).toBeNull()
-    expect(analyticsPageEventForPath('/works/sample', {
-      id: WORK_ID,
-      type: 'return_character',
     })).toBeNull()
     expect(analyticsContactEventForPath('/about', 'email_copy')).toMatchObject({
       routeKey: 'about',

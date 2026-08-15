@@ -36,14 +36,11 @@ export const SITE_CONTENT_LIMITS = {
   antiScam: 600,
   statusLabel: 40,
   statusDetail: 240,
-  douyinMin: 2,
-  douyinMax: 30,
   emailMax: 254,
   qqMax: 12,
 } as const
 
 const unsafePlainTextPattern = /[<>]|\b(?:javascript|vbscript)\s*:|data\s*:\s*text\/html/iu
-const douyinPattern = /^[\p{L}\p{N}._-]+$/u
 
 /** 与服务端 plainTextSchema 相同的不安全字符判断，用于保存前的字段级提示。 */
 export function hasUnsafePlainText(value: string): boolean {
@@ -68,13 +65,6 @@ export function isValidContactQq(value: string): boolean {
   return /^[1-9]\d{4,11}$/u.test(value)
 }
 
-export function isValidDouyin(value: string): boolean {
-  const length = value.length
-  return length >= SITE_CONTENT_LIMITS.douyinMin
-    && length <= SITE_CONTENT_LIMITS.douyinMax
-    && douyinPattern.test(value)
-}
-
 /** 服务条款等长纯文本按空行拆段渲染；输入已保证无 HTML，逐段 trim 后丢弃空段。 */
 export function splitPlainTextParagraphs(value: string): string[] {
   return value
@@ -92,7 +82,6 @@ export interface SiteContentFormFields {
   makingScope: string
   basicTerms: string
   privacyPolicy: string
-  douyin: string
   antiScam: string
 }
 
@@ -122,9 +111,6 @@ export function siteContentFieldIssues(form: SiteContentFormFields): Record<stri
     else if (hasUnsafePlainText(value)) {
       issues[field] = '只允许安全纯文本，不能包含 HTML 或脚本'
     }
-  }
-  if (form.douyin.trim() && !isValidDouyin(form.douyin.trim())) {
-    issues.douyin = '抖音号为 2–30 位字母、数字、点、下划线或连字符'
   }
   if (form.faqs.length > SITE_CONTENT_LIMITS.faqMaxCount) {
     issues.faqs = `常见问题最多 ${SITE_CONTENT_LIMITS.faqMaxCount} 项`

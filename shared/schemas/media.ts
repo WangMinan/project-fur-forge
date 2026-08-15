@@ -10,8 +10,6 @@ export const MEDIA_ROLE_VALUES = [
   'home_hero_landscape',
   'home_hero_portrait',
   'watermark_logo',
-  /** T36 返图私有永久原图；不得与 studio_photo 互相冒充。 */
-  'return_photo',
   'contact_qr',
 ] as const
 

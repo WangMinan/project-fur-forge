@@ -181,10 +181,7 @@ describe('T03 contact QR media', () => {
       UPDATE site_content SET official_channels_json = ? WHERE id = 'site'
     `).run(JSON.stringify([
       { platform: 'qq', account: '3114559925', qrCodeAssetId: ASSET_ID },
-      { platform: 'douyin', account: null, qrCodeAssetId: null },
       { platform: 'qq_group', account: null, qrCodeAssetId: null },
-      { platform: 'xiaohongshu', account: null, qrCodeAssetId: null },
-      { platform: 'bilibili', account: null, qrCodeAssetId: null },
     ]))
     const publicDto = getPublicSiteContent(
       sqlite,

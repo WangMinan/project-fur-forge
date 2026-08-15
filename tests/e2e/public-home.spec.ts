@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test'
-import { seedPublicUpdates } from './helpers/public-updates'
 import type { Page } from '@playwright/test'
 import { capture } from './helpers/screenshots'
 import { seedHomeSlides, seedPublicCatalog } from './helpers/public-catalog'
@@ -113,12 +112,6 @@ async function seedCompleteMotionHome(page: Page, settings?: SeedHomeSettings) {
   await seedHomeSlides(page, [
     { alt: '动效验证委托页大图', sortOrder: 0, enabled: true },
   ], undefined, 'commission')
-  await seedPublicUpdates(page, [{
-    type: 'other',
-    title: 'E2E 公开动态动效验证',
-    content: '这张静态卡片不应制造可点击的悬浮反馈。',
-    publishedAt: Date.now(),
-  }])
 }
 
 /** 记录公开媒体请求；test-only 同源 fake OSS 返回真实可解码图片。 */
@@ -379,12 +372,10 @@ test.describe('T20 首页双源轮播', () => {
       await expect(plainPage.getByTestId('featured-works')).toBeVisible()
       await expect(plainPage.getByTestId('home-business-entries')).toBeVisible()
       await expect(plainPage.getByTestId('home-current-adoptions')).toBeVisible()
-      await expect(plainPage.getByTestId('home-latest-updates')).toBeVisible()
       for (const reveal of [
         'home-featured-reveal',
         'home-entries-reveal',
         'home-adoptions-reveal',
-        'home-updates-reveal',
       ]) {
         await expect(plainPage.getByTestId(reveal)).toHaveAttribute('data-reveal-state', 'static')
         await expect(plainPage.getByTestId(reveal)).toHaveCSS('opacity', '1')
@@ -667,13 +658,7 @@ test.describe('T20 首页精选轨道', () => {
 })
 
 test.describe('R3-A 首页退役动态摘要', () => {
-  test('即使旧库仍有动态，首页和两端导航也不再提供入口', async ({ page }) => {
-    await seedPublicUpdates(page, [{
-      type: 'other',
-      title: 'E2E 已退役公开动态',
-      content: '不应显示',
-      publicationStatus: 'published',
-    }])
+  test('首页和两端导航不再提供返图/动态入口', async ({ page }) => {
     await page.goto('/')
     await expect(page.getByTestId('home-latest-updates')).toHaveCount(0)
     const desktopNav = page.getByRole('navigation', { name: '主导航' })
@@ -720,7 +705,7 @@ test.describe('T51-F9 首页明显式动效', () => {
     await expect(title).toHaveAttribute('data-motion-node', 'stable')
   })
 
-  test('内容区只在首次入屏揭示，可点击卡片抬升而静态动态卡不抬升', async ({ page }) => {
+  test('内容区只在首次入屏揭示，三个可点击卡片均抬升', async ({ page }) => {
     await seedCompleteMotionHome(page)
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
@@ -729,7 +714,6 @@ test.describe('T51-F9 首页明显式动效', () => {
       'home-featured-reveal',
       'home-entries-reveal',
       'home-adoptions-reveal',
-      'home-updates-reveal',
     ]) {
       const reveal = page.getByTestId(testId)
       await reveal.scrollIntoViewIfNeeded()
@@ -741,7 +725,6 @@ test.describe('T51-F9 首页明显式动效', () => {
       'home-featured-reveal',
       'home-entries-reveal',
       'home-adoptions-reveal',
-      'home-updates-reveal',
     ]) {
       await expect(page.getByTestId(testId)).toHaveAttribute('data-reveal-state', 'visible')
     }
@@ -764,9 +747,6 @@ test.describe('T51-F9 首页明显式动效', () => {
     await expect.poll(() => adoptionCard.evaluate(element => getComputedStyle(element).transform))
       .not.toBe('none')
 
-    const updateCard = page.locator('.public-update-card').first()
-    await updateCard.hover()
-    await expect(updateCard).toHaveCSS('transform', 'none')
   })
 
   test('reduced-motion 取消 Hero、入屏和悬浮位移', async ({ page }) => {

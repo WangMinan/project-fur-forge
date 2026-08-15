@@ -10,11 +10,8 @@ export const ANALYTICS_ROUTE_KEY_VALUES = [
   'home',
   'works',
   'work_detail',
-  'returns',
-  'return_character',
   'commission',
   'adoptions',
-  'updates',
   'about',
   'service',
   'privacy',
@@ -23,7 +20,6 @@ export const ANALYTICS_ROUTE_KEY_VALUES = [
 
 export const ANALYTICS_ENTITY_TYPE_VALUES = [
   'work',
-  'return_character',
 ] as const
 
 export const ANALYTICS_ACTION_KEY_VALUES = [
@@ -35,11 +31,8 @@ export const ANALYTICS_ROUTE_LABELS = {
   home: '首页',
   works: '作品展示',
   work_detail: '作品详情',
-  returns: '返图墙',
-  return_character: '返图设定页',
   commission: '自设委托',
   adoptions: '角色领养',
-  updates: '最新动态',
   about: '关于我们',
   service: '服务条款',
   privacy: '隐私政策',
@@ -103,11 +96,7 @@ export const analyticsEventRequestSchema = z.object({
     })
   }
 
-  const expectedEntity = event.routeKey === 'work_detail'
-    ? 'work'
-    : event.routeKey === 'return_character'
-      ? 'return_character'
-      : null
+  const expectedEntity = event.routeKey === 'work_detail' ? 'work' : null
 
   if (expectedEntity === null) {
     if (event.entityType !== null || event.entityId !== null) {
@@ -148,7 +137,7 @@ export const analyticsPageRankingItemSchema = z.object({
 export const analyticsContentRankingItemSchema = z.object({
   id: resourceIdSchema,
   label: z.string().trim().min(1).max(120),
-  href: z.string().regex(/^\/(?:works|returns)\/[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  href: z.string().regex(/^\/works\/[a-z0-9]+(?:-[a-z0-9]+)*$/),
   views: z.number().int().nonnegative(),
 }).strict()
 
@@ -169,7 +158,6 @@ export const analyticsOverviewDtoSchema = z.object({
   }).strict(),
   topPages: z.array(analyticsPageRankingItemSchema).max(10),
   topWorks: z.array(analyticsContentRankingItemSchema).max(10),
-  topReturnCharacters: z.array(analyticsContentRankingItemSchema).max(10),
   contactActions: z.array(analyticsContactActionItemSchema)
     .max(ANALYTICS_ACTION_KEY_VALUES.length),
 }).strict()

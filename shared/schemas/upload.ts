@@ -60,23 +60,14 @@ const siteUploadOwnerSchema = z.object({
   expectedVersion: resourceVersionSchema,
 }).strict()
 
-/** T36：返图上传归属到返图记录本身及其版本，不借用 work 归属。 */
-const returnUploadOwnerSchema = z.object({
-  type: z.literal('return'),
-  id: resourceIdSchema,
-  expectedVersion: resourceVersionSchema,
-}).strict()
-
 export const uploadOwnerSchema = z.discriminatedUnion('type', [
   workUploadOwnerSchema,
   siteUploadOwnerSchema,
-  returnUploadOwnerSchema,
 ])
 
 export const uploadOwnerDtoSchema = z.discriminatedUnion('type', [
   workUploadOwnerSchema.omit({ expectedVersion: true }),
   siteUploadOwnerSchema.omit({ expectedVersion: true }),
-  returnUploadOwnerSchema.omit({ expectedVersion: true }),
 ])
 
 export const expectedUploadSchema = z.object({
@@ -101,14 +92,8 @@ export const createUploadSessionRequestSchema = z.object({
       || (input.owner.id === 'branding' && input.mediaRole === 'watermark_logo')
       || (input.owner.id === 'contact' && input.mediaRole === 'contact_qr')
     )
-  const returnRoleMatches = input.owner.type === 'return'
-    && input.mediaRole === 'return_photo'
   if ((input.owner.type === 'work') !== workRole || (
     input.owner.type === 'site' && !siteRoleMatches
-  ) || (
-    input.owner.type === 'return' && !returnRoleMatches
-  ) || (
-    input.mediaRole === 'return_photo' && input.owner.type !== 'return'
   )) {
     context.addIssue({
       code: 'custom',
@@ -205,7 +190,6 @@ export const verifiedAssetDtoSchema = z.object({
       'design-sheet',
       'home-hero-landscape',
       'home-hero-portrait',
-      'return-wall',
       'contact-qr',
     ]),
     aspect: previewAspectSchema,

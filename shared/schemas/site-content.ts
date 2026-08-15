@@ -22,11 +22,6 @@ export const siteBusinessStatusToneSchema = z.enum([
   'limited',
   'closed',
 ])
-export const contactDouyinSchema = z.string().trim()
-  .min(2)
-  .max(30)
-  .regex(/^[\p{L}\p{N}._-]+$/u)
-
 /**
  * T34-F3：FAQ 项拥有稳定 ID，排序与身份分离。
  * 前端 key 用该 ID，不再用数组下标，新增/删除/重排不会复用错误组件状态。
@@ -123,12 +118,7 @@ function isValidOfficialChannelAccount(
   if (channel.account === null) {
     return true
   }
-  const schema = channel.platform === 'douyin'
-    ? contactDouyinSchema
-    : channel.platform === 'qq' || channel.platform === 'qq_group'
-      ? contactQqSchema
-      : null
-  return schema === null || schema.safeParse(channel.account).success
+  return contactQqSchema.safeParse(channel.account).success
 }
 
 export const adminOfficialChannelsSchema = z.array(adminOfficialChannelSchema)
@@ -188,7 +178,7 @@ export const publicOfficialChannelsSchema = z.array(publicOfficialChannelSchema)
     })
   })
 
-/** T02：邮箱、五个平台和防诈骗提醒共用 contact 分区版本。 */
+/** 需求3阶段 A：邮箱、QQ、QQ群和防诈骗提醒共用 contact 分区版本。 */
 const mutableContactContentSchema = z.object({
   email: contactEmailSchema,
   officialChannels: adminOfficialChannelsSchema,

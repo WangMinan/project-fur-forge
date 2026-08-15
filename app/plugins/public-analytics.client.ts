@@ -11,8 +11,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     )
     const markerType = marker?.dataset.analyticsEntityType
     const entity: PublicAnalyticsEntity | null = (
-      (markerType === 'work' || markerType === 'return_character')
-      && marker?.dataset.analyticsEntityId
+      markerType === 'work' && marker?.dataset.analyticsEntityId
     )
       ? {
           type: markerType,

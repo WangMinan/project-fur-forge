@@ -16,7 +16,6 @@ import {
   createWorkRequestSchema,
   featuredWorkOrderRequestSchema,
   publicWorkDtoSchema,
-  returnPhotoConsentSchema,
   updateWorkRequestSchema,
   workFeatureTagsSchema,
 } from '../../shared/schemas/work'
@@ -250,45 +249,17 @@ describe('T22 work mutation contracts', () => {
   })
 })
 
-describe('return photo consent records', () => {
-  it('keeps every consent field nullable and private from work DTOs', () => {
-    expect(returnPhotoConsentSchema.parse({
-      consentSource: null,
-      consentConfirmedAt: null,
-      consentNote: null,
-    })).toEqual({
-      consentSource: null,
-      consentConfirmedAt: null,
-      consentNote: null,
-    })
-    expect(returnPhotoConsentSchema.parse({
-      consentSource: 'qq',
-      consentConfirmedAt: '2026-07-30T12:00:00+08:00',
-      consentNote: '已在聊天中确认',
-    })).toMatchObject({
-      consentSource: 'qq',
-    })
-    expect(returnPhotoConsentSchema.safeParse({
-      consentSource: 'chat',
-      consentConfirmedAt: null,
-      consentNote: null,
-    }).success).toBe(false)
-  })
-})
-
 describe('work DTO mapping', () => {
   it('publishes adoption price and ordered tags without private fields', () => {
     const publicDto = toPublicWorkDto({
       ...baseRecord,
       signedUrl: 'https://oss.test/private.jpg?signature=test-signature',
-      consentNote: 'private-consent',
       passwordHash: 'private-password-hash',
       sessionToken: 'private-session-token',
       internalErrorMessage: 'private-error-detail',
       draftVariantUrl: 'https://oss.test/private-draft.jpg',
     } as WorkRecord & {
       signedUrl: string
-      consentNote: string
       passwordHash: string
       sessionToken: string
       internalErrorMessage: string
@@ -307,13 +278,11 @@ describe('work DTO mapping', () => {
       ],
     })
     expect(serialized).not.toContain('private-contact')
-    expect(serialized).not.toContain('private-consent')
     expect(serialized).not.toContain('test-signature')
     expect(serialized).not.toContain('secret.jpg')
     expect(serialized).not.toContain('ownerContact')
     expect(serialized).not.toContain('originalObjectKeys')
     expect(serialized).not.toContain('signedUrl')
-    expect(serialized).not.toContain('consentNote')
     expect(serialized).not.toContain('private-password-hash')
     expect(serialized).not.toContain('private-session-token')
     expect(serialized).not.toContain('private-error-detail')

@@ -9,15 +9,13 @@ const props = defineProps<{
   channels: PublicOfficialChannel[]
 }>()
 
-const displayChannels = computed(() => props.channels
-  .filter(channel => channel.platform === 'qq' || channel.platform === 'qq_group')
-  .map(channel => ({
+const displayChannels = computed(() => props.channels.map(channel => ({
   ...channel,
   label: CONTACT_PLATFORM_LABELS[channel.platform],
   logoSrc: CONTACT_PLATFORM_LOGO_PATHS[channel.platform],
   qr: pickFallbackImg(channel.qrCodeSources),
   qrSrcset: buildSrcset(channel.qrCodeSources.fallback),
-  })))
+})))
 </script>
 
 <template>
