@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { updateHomeSettingsRequestSchema } from '../../shared/schemas/home'
 import {
   adminOfficialChannelsSchema,
-  contactDouyinSchema,
   publicSiteContentDtoSchema,
   updateAboutContentRequestSchema,
   updateCommissionContentRequestSchema,
@@ -11,12 +10,9 @@ import {
   updateSiteBusinessStatusRequestSchema,
 } from '../../shared/schemas/site-content'
 
-const officialChannels = (qq: string | null = '3114559925', douyin: string | null = null) => [
+const officialChannels = (qq: string | null = '3114559925', qqGroup: string | null = null) => [
   { platform: 'qq', account: qq, qrCodeAssetId: null },
-  { platform: 'douyin', account: douyin, qrCodeAssetId: null },
-  { platform: 'qq_group', account: null, qrCodeAssetId: null },
-  { platform: 'xiaohongshu', account: null, qrCodeAssetId: null },
-  { platform: 'bilibili', account: null, qrCodeAssetId: null },
+  { platform: 'qq_group', account: qqGroup, qrCodeAssetId: null },
 ] as const
 
 const emptyContent = {
@@ -70,7 +66,7 @@ describe('restricted site content contracts', () => {
       expectedVersion: 1,
       payload: { studioFacts: null, makingScope: null },
     }).success).toBe(true)
-    // T02：邮箱与固定五平台数组属于同一个 contact 分区。
+    // 需求3阶段 A：邮箱与固定 QQ/QQ群数组属于同一个 contact 分区。
     expect(updateContactContentRequestSchema.safeParse({
       expectedVersion: 1,
       payload: {
@@ -97,13 +93,10 @@ describe('restricted site content contracts', () => {
       expectedVersion: 1,
       payload: { intro: null, estimateNote: null, emailAction: null, studioFacts: 'x' },
     }).success).toBe(false)
-    expect(contactDouyinSchema.safeParse('to3114559925').success).toBe(true)
-    expect(contactDouyinSchema.safeParse('@invalid handle').success).toBe(false)
     expect(adminOfficialChannelsSchema.safeParse(officialChannels()).success).toBe(true)
     expect(adminOfficialChannelsSchema.safeParse([
       officialChannels()[1],
       officialChannels()[0],
-      ...officialChannels().slice(2),
     ]).success).toBe(false)
     // 首屏设置只写口号与轮播行为。
     expect(updateHomeSettingsRequestSchema.safeParse({

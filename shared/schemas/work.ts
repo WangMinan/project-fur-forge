@@ -46,12 +46,6 @@ export const REGULAR_ADOPTION_BUSINESS_STATUS_VALUES = [
   'delivered',
 ] as const
 
-export const RETURN_PHOTO_CONSENT_SOURCE_VALUES = [
-  'qq',
-  'email',
-  'other',
-] as const
-
 export const workPurposeSchema = z.enum(WORK_PURPOSE_VALUES)
 export const suitTypeSchema = z.enum(SUIT_TYPE_VALUES)
 export const publicationStatusSchema = z.enum(PUBLICATION_STATUS_VALUES)
@@ -60,16 +54,6 @@ export const businessStatusSchema = z.enum(BUSINESS_STATUS_VALUES)
 export const regularAdoptionBusinessStatusSchema = z.enum(
   REGULAR_ADOPTION_BUSINESS_STATUS_VALUES,
 )
-export const returnPhotoConsentSourceSchema = z.enum(
-  RETURN_PHOTO_CONSENT_SOURCE_VALUES,
-)
-
-export const returnPhotoConsentSchema = z.object({
-  consentSource: returnPhotoConsentSourceSchema.nullable(),
-  consentConfirmedAt: z.string().datetime({ offset: true }).nullable(),
-  consentNote: z.string().trim().max(500).nullable(),
-}).strict()
-
 export const workFeatureTagSchema = z.string()
   .trim()
   .refine(value => Array.from(value).length >= 1, '属性不能为空')

@@ -684,7 +684,6 @@ export interface FakePublicSiteSeed {
   details: PublicWorkDetailDto[]
   featuredSlugs: string[]
   home: PublicHomeDto
-  updates?: PublicUpdateDto[]
   commissionHero?: PublicCommissionHeroDto
   statuses?: {
     adoption: PublicSiteBusinessStatusDto | null

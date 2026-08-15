@@ -24,7 +24,7 @@ export interface OperationRow {
   edgePurgeTaskId: string | null
   edgePurgeUrlsJson: string
   entityId: string
-  entityType: 'HOME' | 'RETURN_PHOTO' | 'WORK'
+  entityType: 'HOME' | 'WORK'
   failureStage: PublicationFailureStage | null
   id: string
   internalErrorCode: string | null

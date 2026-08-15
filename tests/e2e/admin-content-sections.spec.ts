@@ -139,19 +139,19 @@ test('同一分区并发保存：第二个上下文得到分区级冲突且保�
   }
 })
 
-test('官方渠道 Card：邮箱、QQ、抖音号和防诈骗提醒一次保存并投影到公开页', async ({ page }) => {
+test('官方渠道 Card：邮箱、QQ、QQ群和防诈骗提醒一次保存并投影到公开页', async ({ page }) => {
   await openContentAdmin(page)
   const channels = card(page, 'contact')
 
   // 四个字段都在同一张 Card 里可编辑，共用一次局部保存。
   await expect(channels.locator('#site-field-email')).toBeEditable()
   await expect(channels.locator('#site-field-qq')).toBeEditable()
-  await expect(channels.locator('#site-field-douyin')).toBeEditable()
+  await expect(channels.locator('#site-field-qq_group')).toBeEditable()
   await expect(channels.locator('#site-field-antiScam')).toBeEditable()
 
   await channels.locator('#site-field-email').fill('channels@example.test')
   await channels.locator('#site-field-qq').fill('123456789')
-  await channels.locator('#site-field-douyin').fill('studio.official')
+  await channels.locator('#site-field-qq_group').fill('456789012')
   await channels.locator('#site-field-antiScam')
     .fill('只认这些官方渠道，其他都是冒充。')
   await channels.getByTestId('site-section-save').click()
@@ -208,20 +208,17 @@ test('官方渠道 Card：邮箱、QQ、抖音号和防诈骗提醒一次保存�
   await expect(contact.getByText('123456789', { exact: true })).toHaveCount(0)
 })
 
-test('官方渠道二维码：固定五行、前置校验、失败重试、保存和预览恢复', async ({ page }) => {
+test('官方渠道二维码：固定两行、前置校验、失败重试、保存和预览恢复', async ({ page }) => {
   await resetFakeMedia(page)
   await openContentAdmin(page)
   const channels = card(page, 'contact')
   const rows = channels.locator('[data-platform]')
-  await expect(rows).toHaveCount(5)
+  await expect(rows).toHaveCount(2)
   expect(await rows.evaluateAll(elements => elements.map(
     element => element.getAttribute('data-platform'),
   ))).toEqual([
     'qq',
-    'douyin',
     'qq_group',
-    'xiaohongshu',
-    'bilibili',
   ])
 
   const qq = channels.locator('[data-platform="qq"]')
@@ -281,21 +278,13 @@ test('官方渠道二维码：固定五行、前置校验、失败重试、保�
   )).toBeGreaterThan(0)
 })
 
-test('公开官方渠道：五个平台按固定顺序显示 Logo、二维码和账号，三视口不溢出', async ({ page }) => {
+test('公开官方渠道：QQ 与QQ群按固定顺序显示 Logo、二维码和账号，三视口不溢出', async ({ page }) => {
   await resetFakeMedia(page)
   await openContentAdmin(page)
 
   const fixtures = [
     { platform: 'qq', label: 'QQ', account: '345678901', logo: 'qq.svg' },
-    { platform: 'douyin', label: '抖音', account: 'ditedog.studio', logo: 'douyin.svg' },
     { platform: 'qq_group', label: 'QQ群', account: '456789012', logo: 'qq.svg' },
-    { platform: 'xiaohongshu', label: '小红书', account: '有点小狗工作室', logo: 'xiaohongshu.svg' },
-    {
-      platform: 'bilibili',
-      label: 'Bilibili',
-      account: 'ditedog-bilibili-account-with-a-long-readable-name',
-      logo: 'bilibili.svg',
-    },
   ] as const
 
   const channels = card(page, 'contact')
@@ -326,8 +315,8 @@ test('公开官方渠道：五个平台按固定顺序显示 Logo、二维码和
 
   for (const viewport of [
     { width: 390, height: 844, firstRowCount: 2 },
-    { width: 768, height: 1024, firstRowCount: 3 },
-    { width: 1440, height: 900, firstRowCount: 5 },
+    { width: 768, height: 1024, firstRowCount: 2 },
+    { width: 1440, height: 900, firstRowCount: 2 },
   ]) {
     await page.setViewportSize(viewport)
     const cardTops = await cards.evaluateAll(elements => elements.map(
@@ -339,7 +328,7 @@ test('公开官方渠道：五个平台按固定顺序显示 Logo、二维码和
     ))).toBeLessThanOrEqual(1)
     await capture(
       page,
-      `public-five-channels-${viewport.width}x${viewport.height}`,
+      `public-two-channels-${viewport.width}x${viewport.height}`,
       REQUIREMENT_2_SCREENSHOT_DIR,
     )
   }
@@ -352,15 +341,12 @@ test('公开官方渠道只有两个完整平台时保持卡片阅读宽度并�
   const channels = card(page, 'contact')
   for (const fixture of [
     { platform: 'qq', account: '123456789' },
-    { platform: 'douyin', account: 'ditedog.studio' },
+    { platform: 'qq_group', account: '456789012' },
   ] as const) {
     const row = channels.locator(`[data-platform="${fixture.platform}"]`)
     await row.locator(`#site-field-${fixture.platform}`).fill(fixture.account)
     await chooseQr(page, fixture.platform, fixture.platform, contactQrPng())
     await expect(row.getByText('新二维码已上传，保存联系方式后生效。')).toBeVisible()
-  }
-  for (const platform of ['qq_group', 'xiaohongshu', 'bilibili']) {
-    await channels.locator(`#site-field-${platform}`).fill('')
   }
   await channels.getByTestId('site-section-save').click()
   await expect(channels.getByTestId('site-section-saved')).toBeVisible()
@@ -371,8 +357,8 @@ test('公开官方渠道只有两个完整平台时保持卡片阅读宽度并�
   await expect(cards).toHaveCount(2)
   for (const viewport of [
     { width: 390, height: 844, columns: 2 },
-    { width: 768, height: 1024, columns: 3 },
-    { width: 1440, height: 900, columns: 5 },
+    { width: 768, height: 1024, columns: 2 },
+    { width: 1440, height: 900, columns: 2 },
   ]) {
     await page.setViewportSize(viewport)
     const metrics = await grid.evaluate((element, columnCount) => {
@@ -438,8 +424,8 @@ test('官方渠道分区并发：同分区第二个上下文冲突，不同分�
     await openContentAdmin(pageA)
     await openContentAdmin(pageB)
 
-    await card(pageA, 'contact').locator('#site-field-douyin').fill('a.official')
-    await card(pageB, 'contact').locator('#site-field-douyin').fill('b.official')
+    await card(pageA, 'contact').locator('#site-field-qq_group').fill('234567890')
+    await card(pageB, 'contact').locator('#site-field-qq_group').fill('345678901')
 
     await card(pageA, 'contact').getByTestId('site-section-save').click()
     await expect(card(pageA, 'contact').getByTestId('site-section-saved'))
@@ -449,9 +435,9 @@ test('官方渠道分区并发：同分区第二个上下文冲突，不同分�
     await card(pageB, 'contact').getByTestId('site-section-save').click()
     const conflictB = card(pageB, 'contact')
     await expect(conflictB.getByTestId('site-section-conflict')).toBeVisible()
-    await expect(conflictB.locator('#site-field-douyin')).toHaveValue('b.official')
+    await expect(conflictB.locator('#site-field-qq_group')).toHaveValue('345678901')
     await expect(conflictB.getByTestId('site-section-conflict'))
-      .toContainText('a.official')
+      .toContainText('234567890')
 
     // 不同分区同时保存都成功：B 的 about 分区不受 contact 冲突影响。
     // 刻意不用 privacy：public-information.spec.ts 断言迁移 0015 种入的隐私

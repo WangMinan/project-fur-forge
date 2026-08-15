@@ -16,7 +16,6 @@ import {
   deleteAnalyticsEventsBefore,
   insertAnalyticsEvent,
   topAnalyticsPages,
-  topAnalyticsReturnCharacters,
   topAnalyticsWorks,
 } from '../repository/analytics-repository'
 import { ServiceError } from '../service-error'
@@ -122,15 +121,6 @@ export function getAnalyticsOverview(
       id: row.id,
       label: row.label,
       href: `/works/${row.slug}`,
-      views: Number(row.views),
-    })),
-    topReturnCharacters: topAnalyticsReturnCharacters(
-      sqlite,
-      thirtyDays,
-    ).map(row => ({
-      id: row.id,
-      label: row.label,
-      href: `/returns/${row.slug}`,
       views: Number(row.views),
     })),
     contactActions: analyticsContactActions(sqlite, thirtyDays).map(row => ({

@@ -28,9 +28,6 @@ const NOW = Date.UTC(2026, 7, 9, 4, 0, 0)
 const DAY_MS = 24 * 60 * 60 * 1_000
 const SECRET = 'test-session-secret-for-t46-is-long-enough'
 const WORK_ID = '11111111-1111-4111-8111-111111111111'
-const CHARACTER_ID = '22222222-2222-4222-8222-222222222222'
-const PHOTO_ID = '33333333-3333-4333-8333-333333333333'
-const ASSET_ID = '44444444-4444-4444-8444-444444444444'
 const SESSION_A = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const SESSION_B = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
 
@@ -39,8 +36,8 @@ let sqlite: Database.Database
 
 function pageView(input: {
   entityId?: string
-  entityType?: 'return_character' | 'work'
-  routeKey: 'about' | 'home' | 'return_character' | 'updates' | 'work_detail' | 'works'
+  entityType?: 'work'
+  routeKey: 'about' | 'home' | 'work_detail' | 'works'
   sessionId?: string
 }, occurredAt = NOW) {
   recordAnalyticsEvent(sqlite, {
@@ -75,24 +72,6 @@ function seedPublishedEntities() {
     ) VALUES (?, 'tuanzi', '团子', '犬科', 'full', 'showcase',
       '不公开', 'published', ?, ?, ?)
   `).run(WORK_ID, NOW, NOW, NOW)
-  sqlite.prepare(`
-    INSERT INTO return_characters (
-      id, slug, name, version, created_at, updated_at
-    ) VALUES (?, 'tianmu', '天暮', 1, ?, ?)
-  `).run(CHARACTER_ID, NOW, NOW)
-  sqlite.prepare(`
-    INSERT INTO assets (
-      id, role, status, private_object_key, sha256, byte_size,
-      mime_type, width, height, created_at, updated_at
-    ) VALUES (?, 'return_photo', 'READY', 'test/return/source.jpg', ?, 1024,
-      'image/jpeg', 1200, 1800, ?, ?)
-  `).run(ASSET_ID, 'a'.repeat(64), NOW, NOW)
-  sqlite.prepare(`
-    INSERT INTO return_photos (
-      id, character_id, asset_id, alt, is_primary, publication_status,
-      version, published_at, created_at, updated_at
-    ) VALUES (?, ?, ?, '天暮返图', 1, 'published', 1, ?, ?, ?)
-  `).run(PHOTO_ID, CHARACTER_ID, ASSET_ID, NOW, NOW, NOW)
 }
 
 beforeEach(async () => {
@@ -160,11 +139,6 @@ describe('T46 analytics persistence and overview', () => {
       entityType: 'work',
       routeKey: 'work_detail',
     })
-    pageView({
-      entityId: CHARACTER_ID,
-      entityType: 'return_character',
-      routeKey: 'return_character',
-    }, NOW - 5 * DAY_MS)
     pageView({ routeKey: 'works' }, NOW - 20 * DAY_MS)
     contactAction('email_copy')
     contactAction('email_open', NOW - 5 * DAY_MS)
@@ -183,12 +157,12 @@ describe('T46 analytics persistence and overview', () => {
         contactActions: 1,
       },
       sevenDays: {
-        pageViews: 4,
+        pageViews: 3,
         approximateSessions: 2,
         contactActions: 2,
       },
       thirtyDays: {
-        pageViews: 5,
+        pageViews: 4,
         approximateSessions: 2,
         contactActions: 2,
       },
@@ -203,26 +177,7 @@ describe('T46 analytics persistence and overview', () => {
       label: '团子',
       views: 1,
     })])
-    expect(overview.topReturnCharacters).toEqual([expect.objectContaining({
-      id: CHARACTER_ID,
-      href: '/returns/tianmu',
-      label: '天暮',
-      views: 1,
-    })])
     expect(overview.contactActions).toHaveLength(2)
-  })
-
-  it('accepts and labels the latest-updates route after the forward migration', () => {
-    pageView({ routeKey: 'updates' })
-
-    expect(sqlite.prepare(`
-      SELECT route_key FROM analytics_events ORDER BY id DESC LIMIT 1
-    `).pluck().get()).toBe('updates')
-    expect(getAnalyticsOverview(sqlite, NOW).topPages[0]).toMatchObject({
-      routeKey: 'updates',
-      label: '最新动态',
-      views: 1,
-    })
   })
 
   it('deletes only events older than 90 days and remains idempotent', () => {

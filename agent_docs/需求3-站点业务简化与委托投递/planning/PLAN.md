@@ -1,7 +1,7 @@
 # 需求3 · 实施计划
 
 > **角色**：将需求3拆成可串行实施、可审查、可上线的发布单元。
-> **状态**：计划锁定，应用代码尚未开始。
+> **状态**：阶段 A 本地实施中；A1、A2 已完成，A3 执行中。
 > **修订**：永久退役提前为第一发布单元；增加 Hero collection version、歧义状态人工复核；OSS CORS 保持通配且不作门禁；官方渠道收缩为邮箱、QQ、QQ群。
 
 ## 1. 总路线
@@ -29,7 +29,7 @@ A 立即退役返图/动态并收缩联系渠道
 
 ### A1. 品牌、入口和联系展示基线
 
-> 2026-08-15：T01 已在任务分支完成并通过 focused lint/typecheck/unit/E2E；slogan 使用前向 migration `0035_r3_a_brand.sql` 更新。A2 尚未执行。
+> 2026-08-15：T01 已在任务分支完成并通过 focused lint/typecheck/unit/E2E；slogan 使用前向 migration `0035_r3_a_brand.sql` 更新。A2 也已完成代码退役与两渠道活动契约；数据库持久 Contract 仍属于 A3/T04。
 
 - 将英文名改为 `DITE DOG`；
 - 更新 slogan；

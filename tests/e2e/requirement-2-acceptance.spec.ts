@@ -4,7 +4,6 @@ import {
   loginAsAdmin,
   publicBaseURL,
 } from './helpers/auth'
-import { seedPublicUpdates } from './helpers/public-updates'
 import { capture } from './helpers/screenshots'
 import {
   resetFakeMedia,
@@ -13,7 +12,6 @@ import {
 import {
   seedHomeSlides,
   seedPublicCatalog,
-  seedPublicReturns,
 } from './helpers/public-catalog'
 
 const SCREENSHOT_DIR
@@ -80,19 +78,13 @@ test('需求2公开与管理关键页面在双 Host 三视口无 console/network
   await seedHomeSlides(page, [])
   await seedHomeSlides(page, [], undefined, 'commission')
   await seedPublicCatalog(page, [])
-  await seedPublicReturns(page, [])
   await resetFakeMedia(page)
-  await seedPublicUpdates(page, [{
-    type: 'event',
-    title: 'E2E 公开动态 T15 验收',
-    content: '用于双 Host 与三视口验收。',
-  }])
   await loginAsAdmin(page)
 
   for (const viewport of viewports) {
     await page.setViewportSize(viewport)
 
-    for (const path of ['/', '/works', '/adoptions', '/returns', '/updates', '/about']) {
+    for (const path of ['/', '/works', '/adoptions', '/commission', '/about']) {
       await page.goto(`${publicBaseURL}${path}`)
       expect(new URL(page.url()).hostname).toBe('127.0.0.1')
       await expect(page.getByTestId('public-header')).toBeVisible()
@@ -100,7 +92,7 @@ test('需求2公开与管理关键页面在双 Host 三视口无 console/network
       await expectNoOverflow(page)
     }
 
-    for (const path of ['/admin/updates', '/admin/site/content', '/admin/account']) {
+    for (const path of ['/admin/works', '/admin/site/content', '/admin/account']) {
       await page.goto(`${adminBaseURL}${path}`)
       expect(new URL(page.url()).hostname).toBe('localhost')
       await expect(page.getByTestId('admin-shell')).toBeVisible()

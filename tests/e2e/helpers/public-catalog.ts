@@ -90,17 +90,6 @@ export async function seedPublicCatalog(page: Page, works: SeedWork[]) {
   await control(page, { action: 'seedPublicCatalog', works })
 }
 
-export async function seedPublicReturns(
-  page: Page,
-  returns: Array<{
-    name: string
-    slug: string
-    photos: Array<{ alt: string }>
-  }>,
-) {
-  await control(page, { action: 'seedPublicReturns', returns })
-}
-
 export async function seedHomeSlides(
   page: Page,
   slides: SeedHomeSlide[],

@@ -21,7 +21,7 @@ export const UPLOAD_SESSION_TTL_MS = 5 * 60 * 1_000
 
 export interface UploadSessionRow {
   id: string
-  ownerType: 'work' | 'site' | 'return'
+  ownerType: 'work' | 'site'
   ownerId: string
   ownerVersion: number
   mediaRole: MediaRole
@@ -157,29 +157,6 @@ export function assertUploadOwner(
   owner: UploadOwner,
   mediaRole: MediaRole,
 ) {
-  // T35-F1 返图：归属是设定及其版本，媒体角色固定 return_photo。
-  // 一个设定可以有多张返图，因此上传会话不再绑定单张照片记录；
-  // 上传完成后由调用方把资产绑定到具体的返图照片。
-  if (owner.type === 'return') {
-    if (mediaRole !== 'return_photo') {
-      throw new ServiceError(400, 'VALIDATION_ERROR', 'Media role does not match owner.')
-    }
-    const character = sqlite.prepare(`
-      SELECT version FROM return_characters WHERE id = ?
-    `).pluck().get(owner.id) as number | undefined
-    if (character === undefined) {
-      throw new ServiceError(404, 'NOT_FOUND', 'Owner was not found.')
-    }
-    if (character !== owner.expectedVersion) {
-      throw new ServiceError(409, 'CONFLICT', 'Owner version is stale.')
-    }
-    return
-  }
-
-  if (mediaRole === 'return_photo') {
-    throw new ServiceError(400, 'VALIDATION_ERROR', 'Media role does not match owner.')
-  }
-
   if (owner.type === 'site') {
     const validRole = owner.id === 'home'
       ? mediaRole.startsWith('home_hero_')

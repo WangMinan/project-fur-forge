@@ -1,17 +1,11 @@
 import { getPublicSiteRepository } from '../utils/repository/public-site-repository'
 import { getRuntimeConfig } from '../utils/runtime-config'
 
-/**
- * `/returns` 作为一级页面进入 Sitemap。单张返图没有自己的 URL；
- * 设定返图页 `/returns/{slug}` 也不逐条枚举，返图墙已是它们的入口。
- */
 const STATIC_PATHS = [
   '/',
   '/works',
-  '/returns',
   '/commission',
   '/adoptions',
-  '/updates',
   '/about',
   '/service',
   '/privacy',
