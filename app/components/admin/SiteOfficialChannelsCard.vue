@@ -42,6 +42,9 @@ const card = useSiteContentSectionCard({
 
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 const pendingPlatform = shallowRef<ContactPlatform | null>(null)
+const displayedChannels = computed(() => card.draft.value.officialChannels.filter(
+  channel => channel.platform === 'qq' || channel.platform === 'qq_group',
+))
 
 const upload = useContactQrUpload({
   getContactVersion: () => props.content.sectionVersions.contact,
@@ -200,7 +203,7 @@ function save() {
 
     <div class="channels-list" data-testid="official-channel-list">
       <section
-        v-for="channel in card.draft.value.officialChannels"
+        v-for="channel in displayedChannels"
         :key="channel.platform"
         class="channel-row"
         :data-platform="channel.platform"

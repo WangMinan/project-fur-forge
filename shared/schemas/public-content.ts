@@ -10,7 +10,6 @@ import {
   publicSourceSetDtoSchema,
 } from './media'
 import { publicSiteBusinessStatusDtoSchema } from './site-content'
-import { publicUpdateDtoSchema } from './update'
 import {
   publicAdoptionWorkDtoSchema,
   publicWorkDtoSchema,
@@ -174,9 +173,6 @@ export const publicHomeAggregateDtoSchema = z.object({
     adoption: publicHomeEntryCardDtoSchema.nullable(),
   }).strict(),
   featured: homeSectionSchema(publicWorkSummaryDtoSchema),
-  latestUpdates: homeSectionSchema(publicUpdateDtoSchema).extend({
-    items: z.array(publicUpdateDtoSchema).max(3),
-  }).strict(),
   currentAdoptions: homeSectionSchema(publicAdoptionListItemDtoSchema),
 }).strict()
 

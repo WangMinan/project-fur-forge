@@ -1,9 +1,9 @@
 # 当前状态：需求3 · 站点业务简化与委托投递
 
 > **最后校准**：2026-08-15。
-> **当前阶段**：文档复查与本轮口径修订完成，工程尚未开始。
+> **当前阶段**：阶段 A 本地实施中；T01 已完成，正在执行 T02。
 > **任务权威**：[`implementation/TASKS.md`](./implementation/TASKS.md)。
-> **当前 main 基线**：需求3文档已合入；本轮只同步 CORS 与联系方式决策，不改变应用代码、数据库、OSS 或生产数据。
+> **当前 main 基线**：`639d15b`；任务分支 `feat/r3-retire-returns-updates` 已完成 T01 品牌/入口/展示基线，未触碰生产数据。
 
 ## 1. 已锁定产品结论
 
@@ -85,8 +85,8 @@ OSS CORS 通配是用户确认的现状和目标，不是风险 finding，也不
 
 ## 5. 下一步
 
-1. 从最新 main 创建 `feat/r3-retire-returns-updates`；
-2. 按 T01–T06 完成本地实现、演练、CI 和 focused review；
+1. 在 `feat/r3-retire-returns-updates` 按 T02–T06 完成本地实现、演练、CI 和 focused review；
+2. 保持 T07/GATE-A 未完成，不进入阶段 B/C；
 3. 用户核对生产 dry-run 后执行 T07；
 4. GATE-A 关闭后再进入 Expand；
 5. 后续按 B→C→D→E→F 推进。

@@ -246,6 +246,13 @@
       "when": 1786665600000,
       "tag": "0034_t51_f7_site_display_v2",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "6",
+      "when": 1786723200000,
+      "tag": "0035_r3_a_brand",
+      "breakpoints": true
     }
   ]
 }
