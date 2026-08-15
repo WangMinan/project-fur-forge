@@ -22,6 +22,7 @@ const COMMANDS = [
   'upgrade-site-display-v2',
   'recover-operations',
   'r3-stage-a-cleanup',
+  'r3-stage-a-prune-backups',
 ] as const
 
 type Command = typeof COMMANDS[number]
@@ -195,6 +196,11 @@ async function run() {
     case 'r3-stage-a-cleanup': {
       const { runR3StageACleanupCli } = await import('./r3-stage-a-cleanup')
       return await runR3StageACleanupCli({ args: argv() })
+    }
+
+    case 'r3-stage-a-prune-backups': {
+      const { runR3StageABackupPruneCli } = await import('./r3-stage-a-prune-backups')
+      return runR3StageABackupPruneCli({ args: argv() })
     }
   }
 }

@@ -1,5 +1,4 @@
-import { existsSync, readdirSync } from 'node:fs'
-import { dirname, isAbsolute, join } from 'node:path'
+import { isAbsolute } from 'node:path'
 import { parseArgs } from 'node:util'
 import { openDatabase, resolveDatabaseFile } from '../server/utils/database'
 import { getPublicMediaCache } from '../server/utils/public-media-cache'
@@ -10,20 +9,11 @@ import {
 import {
   runR3StageACleanup,
 } from '../server/utils/runner/r3-stage-a-retirement'
+import { countR3StageAApplicationBackups } from '../server/utils/runner/r3-stage-a-backup-retirement'
 import { loadRuntimeConfig } from '../server/utils/runtime-config'
 
 export interface R3StageACleanupCliOptions {
   args?: string[]
-}
-
-function applicationBackupCount(databaseFile: string) {
-  const backupDirectory = join(dirname(databaseFile), 'backups')
-  if (!existsSync(backupDirectory)) {
-    return 0
-  }
-  return readdirSync(backupDirectory, { withFileTypes: true })
-    .filter(entry => entry.isFile() && entry.name.endsWith('.db'))
-    .length
 }
 
 function assertRemoteScope(
@@ -84,7 +74,10 @@ export async function runR3StageACleanupCli(
   try {
     return await runR3StageACleanup({
       appEnv: config.appEnv,
-      applicationBackups: applicationBackupCount(databaseFile),
+      applicationBackups: countR3StageAApplicationBackups(
+        config.appEnv,
+        databaseFile,
+      ),
       cache: new R3StageAEsaCachePurger(getPublicMediaCache()),
       confirmation: values.confirm,
       databaseAbsolute: isAbsolute(databaseFile),

@@ -19,6 +19,10 @@ import {
   restoreDatabase,
 } from '../../server/utils/database'
 import {
+  R3_STAGE_A_BACKUP_CONFIRMATION,
+  runR3StageABackupPrune,
+} from '../../server/utils/runner/r3-stage-a-backup-retirement'
+import {
   R3_STAGE_A_AUDIT_ACTION,
   R3_STAGE_A_CONFIRMATION,
   runR3StageACleanup,
@@ -41,6 +45,8 @@ class FakeRetirementStore implements R3StageAObjectStore {
   readonly deleted: string[] = []
   readonly entries = new Map<string, R3StageAObjectInspection>()
   failAfter = Number.POSITIVE_INFINITY
+  failInspectAfter = Number.POSITIVE_INFINITY
+  inspectCalls = 0
 
   seed(scope: R3StageAObjectScope, objectKey: string) {
     this.entries.set(`${scope}:${objectKey}`, {
@@ -52,6 +58,10 @@ class FakeRetirementStore implements R3StageAObjectStore {
   }
 
   async inspect(scope: R3StageAObjectScope, objectKey: string) {
+    this.inspectCalls += 1
+    if (this.inspectCalls > this.failInspectAfter) {
+      throw new Error('injected final inventory failure')
+    }
     return this.entries.get(`${scope}:${objectKey}`) ?? {
       current: false,
       deleteMarkers: 0,
@@ -73,7 +83,7 @@ class FakeCache implements R3StageACachePurger {
   readonly purges: string[][] = []
   fail = false
 
-  async purgeExactAndWait(urls: readonly string[]) {
+  async purgeExactWaitAndVerifyUnavailable(urls: readonly string[]) {
     if (this.fail) throw new Error('injected purge failure')
     this.purges.push([...urls])
   }
@@ -387,6 +397,28 @@ describe('R3-A retirement cleanup', () => {
     }))).rejects.toThrow(/unique test/)
   })
 
+  it('refuses an ESA URL outside the confirmed isolated-test prefix', async () => {
+    sqlite.prepare(`
+      UPDATE publication_operations SET edge_purge_urls_json = ?
+      WHERE entity_type = 'RETURN_PHOTO'
+    `).run(JSON.stringify([`${MEDIA_ORIGIN}/prod/web/retired.png`]))
+    await expect(runR3StageACleanup(options()))
+      .rejects.toThrow(/outside the confirmed environment prefix/)
+    expect(store.inspectCalls).toBe(0)
+    expect(cache.purges).toEqual([])
+  })
+
+  it('does not persist success when the final inventory fails', async () => {
+    store.failInspectAfter = 16
+    await expect(runR3StageACleanup(options({
+      dryRun: false,
+      confirmation: R3_STAGE_A_CONFIRMATION,
+    }))).rejects.toThrow(/final inventory failure/)
+    expect(sqlite.prepare(`
+      SELECT COUNT(*) FROM audit_logs WHERE action = ?
+    `).pluck().get(R3_STAGE_A_AUDIT_ACTION)).toBe(0)
+  })
+
   it('blocks the database Contract before successful object cleanup', async () => {
     sqlite.close()
     let migrationError: unknown
@@ -507,9 +539,44 @@ describe('R3-A retirement cleanup', () => {
     finally {
       restored.close()
     }
-    rmSync(oldBackup)
+    const backupOptions = {
+      activeDatabaseFile: databaseFile,
+      appEnv: 'test' as const,
+      backupDirectories: [resolve(directory, 'backups')],
+      cleanBackupFile: cleanBackup,
+      restoredDatabaseFile: restoredFile,
+    }
+    expect(runR3StageABackupPrune(backupOptions)).toMatchObject({
+      counts: {
+        applicationBackups: 3,
+        deletedBackups: 0,
+        oldBackups: 2,
+      },
+      dryRun: true,
+    })
+    expect(() => runR3StageABackupPrune({
+      ...backupOptions,
+      confirmation: 'wrong',
+      dryRun: false,
+    })).toThrow(R3_STAGE_A_BACKUP_CONFIRMATION)
+    expect(runR3StageABackupPrune({
+      ...backupOptions,
+      confirmation: R3_STAGE_A_BACKUP_CONFIRMATION,
+      dryRun: false,
+    })).toMatchObject({
+      counts: {
+        applicationBackups: 3,
+        deletedBackups: 2,
+        oldBackups: 2,
+      },
+      dryRun: false,
+    })
     expect(existsSync(oldBackup)).toBe(false)
     expect(existsSync(cleanBackup)).toBe(true)
+    expect(runR3StageABackupPrune(backupOptions)).toMatchObject({
+      counts: { applicationBackups: 1, oldBackups: 0 },
+      dryRun: true,
+    })
     sqlite = openDatabase(databaseFile).sqlite
 
     const postContract = await runR3StageACleanup(options())

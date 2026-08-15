@@ -26,7 +26,7 @@ export interface R3StageAObjectStore {
 }
 
 export interface R3StageACachePurger {
-  purgeExactAndWait(urls: readonly string[]): Promise<void>
+  purgeExactWaitAndVerifyUnavailable(urls: readonly string[]): Promise<void>
 }
 
 interface ContactChannelRecord {
@@ -205,10 +205,16 @@ function addExactCacheUrl(
   urls: Set<string>,
   candidate: string,
   mediaOrigin: string,
+  environmentPrefix: string,
 ) {
   const url = new URL(candidate)
+  const origin = new URL(mediaOrigin)
+  const prefixPath = `${origin.pathname.replace(/\/$/u, '')}/${environmentPrefix}`
+  if (!url.pathname.startsWith(prefixPath)) {
+    throw new Error('A retirement cache URL is outside the confirmed environment prefix.')
+  }
   if (
-    url.origin !== new URL(mediaOrigin).origin
+    url.origin !== origin.origin
     || url.pathname.endsWith('/')
     || url.search !== ''
     || url.hash !== ''
@@ -387,7 +393,7 @@ async function inventory(
         publicDerivedKeys.add(key)
       }
       for (const url of stringArray(row.edgeUrls)) {
-        addExactCacheUrl(cacheUrls, url, mediaOrigin)
+        addExactCacheUrl(cacheUrls, url, mediaOrigin, environmentPrefix)
       }
     }
   }
@@ -541,22 +547,13 @@ export async function runR3StageACleanup(
   }
   if (first.edgeUrls.length > 0) {
     try {
-      await options.cache.purgeExactAndWait(first.edgeUrls)
+      await options.cache.purgeExactWaitAndVerifyUnavailable(first.edgeUrls)
     }
     catch {
       throw new Error('R3-A ESA purge failed; database Contract is forbidden.')
     }
   }
 
-  options.sqlite.prepare(`
-    INSERT INTO audit_logs (
-      id, actor_user_id, action, entity_type, entity_id, result, created_at
-    ) VALUES (?, NULL, ?, 'stage_a_retirement', 'object_cleanup', 'SUCCESS', ?)
-  `).run(
-    randomUUID(),
-    R3_STAGE_A_AUDIT_ACTION,
-    options.now ?? Date.now(),
-  )
   const verified = await inventory(options)
   const contractReady = verified.counts.currentObjects === 0
     && verified.counts.objectVersions === 0
@@ -564,5 +561,19 @@ export async function runR3StageACleanup(
   if (!contractReady) {
     throw new Error('R3-A verification changed after cleanup; database Contract is forbidden.')
   }
+  options.sqlite.prepare(`
+    INSERT INTO audit_logs (
+      id, actor_user_id, action, entity_type, entity_id, result, created_at
+    )
+    SELECT ?, NULL, ?, 'stage_a_retirement', 'object_cleanup', 'SUCCESS', ?
+    WHERE NOT EXISTS (
+      SELECT 1 FROM audit_logs WHERE action = ? AND result = 'SUCCESS'
+    )
+  `).run(
+    randomUUID(),
+    R3_STAGE_A_AUDIT_ACTION,
+    options.now ?? Date.now(),
+    R3_STAGE_A_AUDIT_ACTION,
+  )
   return output(options, verified.counts, prefixKind, true)
 }
