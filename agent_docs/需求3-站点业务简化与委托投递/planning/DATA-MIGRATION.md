@@ -108,7 +108,7 @@ pnpm r3-a:cleanup -- --environment-prefix prod/ --execute --confirm "DELETE R3-A
 
 若步骤 4–12 任一对象删除失败，禁止进入步骤 13。若数据库 transaction 失败，数据库回滚，但已删除媒体不会恢复，只能修复新镜像后重试。
 
-T03 工具仅在对象 versions/delete markers 全部验证为零且 ESA purge 完成后，向 `audit_logs` 写入无内容、无 Key、无 PII 的 `R3_STAGE_A_OBJECT_CLEANUP/SUCCESS` 标记。T04 Contract 对复杂旧库必须先验证该标记；工具失败或仅 dry-run 不产生标记。
+T03 工具仅在对象 versions/delete markers 全部验证为零、ESA purge task 完成且精确 URL 经 HEAD（405/501 时受限 GET）确认为 404/410 后，向 `audit_logs` 幂等写入无内容、无 Key、无 PII 的 `R3_STAGE_A_OBJECT_CLEANUP/SUCCESS` 标记。T04 Contract 对复杂旧库必须先验证该标记；工具失败、最终盘点失败或仅 dry-run 不产生标记。
 
 ### 2.5 R3-A 数据库 contract
 
@@ -158,6 +158,7 @@ contact_douyin legacy column
 - 正式演练：仅使用完整强确认短语，删除后 current/version/delete-marker 均为 0，ESA exact purge adapter 完成后才签发 Contract-ready 标记；
 - Contract/备份：退役表、媒体和 QR 资产已删，渠道仅 QQ/QQ群，FK/integrity 通过；新净化备份恢复到新数据库后再删除旧演练备份；
 - 重入：Contract 后 dry-run 所有退役计数均为 0，再次执行安全。
+- 独立复查：首轮五项 P1 已修复；同一独立 Reviewer 对 `3e0efa7` 复审 PASS，T06 完成。生产 T07、GATE-A、远端 CI 和冻结镜像仍独立开放。
 
 ## 3. R3-B：Hero Expand
 
@@ -308,7 +309,7 @@ work_feature_tags
 ### 8.1 应用管理备份
 
 - R3-A 前不创建新的长期退役数据导出；
-- 现有备份暂存到净化备份验证完成；
+- 同时盘点生产 `/app/backups` 与数据库同目录自动 `backups/`；现有备份暂存到净化备份验证完成；
 - R3-A contract 成功后立即创建净化备份；
 - 使用 `db:restore` 或等价流程验证；
 - 之后删除旧应用管理备份；

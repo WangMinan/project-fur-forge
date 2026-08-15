@@ -1,7 +1,7 @@
 # 任务清单：站点业务简化与委托投递
 
 > **角色**：需求3唯一任务与勾选权威。
-> **状态**：T01～T05 已完成；T06～T07 待执行。
+> **状态**：T01～T06 已完成；本地阶段 A 就绪，生产 T07 待执行。
 > **规则**：任务完成不代签 CI、独立 Review、用户验收或生产执行。所有数据库写、媒体删除和 operation 串行。
 
 ## 决策与文档
@@ -16,7 +16,7 @@
 - [x] **T03 · 退役/渠道 dry-run 与强确认工具**：精确盘点 return/update 行、asset/session/variant/operation/analytics、private/public objects、OSS versions/delete markers、ESA URLs、应用备份，以及三类取消平台账号/二维码引用和无其它引用的 QR 资产；只输出脱敏计数。`pnpm r3-a:cleanup -- --environment-prefix prod/` 默认 dry-run；正式删除必须追加 `--execute --confirm "DELETE R3-A RETIRED MEDIA"`。对象/版本/marker/ESA 任一步失败都不写 `R3_STAGE_A_OBJECT_CLEANUP` 成功标记，T04 不得继续。
 - [x] **T04 · 第一发布单元数据库 contract**：前向迁移 `0036_r3_a_contract.sql` 在 DROP 前验证 T03 标记/净新库条件，删除 updates/return 表及相关行，重建 assets/upload/variants/publication/analytics 约束；`official_channels_json` 固定 QQ/QQ群，删除 `contact_douyin` 与无其它引用的退役平台 QR 资产，保留 `contact_qq`。focused integration 7 files / 57 tests、lint/typecheck 通过，fresh/re-entrant migration、FK/integrity 通过。
 - [x] **T05 · 本地不可恢复演练**：复杂副本和测试对象在唯一隔离前缀上完成 dry-run、强确认、8 current objects/16 versions/8 delete markers 删除、ESA purge、渠道收缩、孤立 QR 清理、Contract、404、六个联系渠道 E2E、FK/integrity、production build/verify、clean backup 真实恢复、恢复后旧备份删除和零结果重入；未访问任何生产资源。
-- [ ] **T06 · 第一发布单元质量与独立复查**：相关 lint/typecheck/unit/integration/E2E/build/verify 全部通过；新上下文 focused review 检查对象枚举、停止点、404、两平台约束、取消平台资产清理和证据。
+- [x] **T06 · 第一发布单元质量与独立复查**：lint/typecheck、unit 38 files / 192 tests、integration 21 files / 177 tests、退役路由 E2E 1/1、官方渠道 E2E 6/6、production build/content guard、verify 和 ops bundle 均通过。独立 Reviewer 对 `e3ed0c6` 首轮给出五项 P1；修复后对 `3e0efa7` 复审 PASS，未发现新的 Stage A blocker。证据见 `review/R3-A-FOCUSED-REVIEW-2026-08-16.md`。
 - [ ] **T07 · 生产立即退役与渠道收缩**：维护窗口停写，用户核对 dry-run 并强确认返图/动态删除；删除媒体/版本/cache，执行渠道/退役 contract，验证服务，创建并恢复 clean backup，再删除旧应用备份；操作员记录外部快照处理状态。
 
 ### GATE-A · 第一发布单元完成

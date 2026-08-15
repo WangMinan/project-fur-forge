@@ -1,7 +1,7 @@
 # 需求3 · 数据模型规划
 
 > **角色**：定义 contract 完成后的目标持久模型、DTO 和媒体身份。
-> **状态**：目标已锁定；T01～T05 的品牌、代码、清理工具、持久 Contract 和本地演练已回填，T06 实施中。
+> **状态**：目标已锁定；T01～T06 的品牌、代码、清理工具、持久 Contract、本地演练和独立 focused Review 已回填，生产 T07 待执行。
 > **修订**：增加 Hero collection 版本域、明确领养状态人工迁移、沿用既有 `detail` usage、保留 `commission_email_action`；官方渠道收缩为 `qq | qq_group`，OSS CORS 保持通配且不进入模型门禁。
 
 ## 1. 最终数据域
@@ -533,3 +533,5 @@ event_time
 - 净化备份恢复结果。
 
 2026-08-15 T05 回填：复杂旧库与测试对象演练目标计数为 private original 2、private preprocess 2、private preview 0、public derived 3、pending reference 2；历史返图模型没有独立持久 private-preview 类型，因此该项明确验证为零。Contract 后新净化备份已真实恢复到新路径，验证成功后才删除演练目录中的旧应用备份。
+
+2026-08-16 T06 回填：清理成功标记只在最终对象/version/delete-marker 零残留盘点及 ESA URL 404/410 验证后幂等写入；应用备份域同时覆盖生产 `/app/backups` 与数据库同目录 `backups/`。独立 Reviewer 对修复后 `3e0efa7` 结论为 PASS。
