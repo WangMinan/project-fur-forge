@@ -1,9 +1,20 @@
-import { mkdtempSync, rmSync } from 'node:fs'
+import {
+  copyFileSync,
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
-import { resolve } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import type Database from 'better-sqlite3'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { migrateDatabase, openDatabase } from '../../server/utils/database'
+import {
+  DATABASE_MIGRATIONS_FOLDER,
+  migrateDatabase,
+  openDatabase,
+} from '../../server/utils/database'
 import {
   R3_STAGE_A_AUDIT_ACTION,
   R3_STAGE_A_CONFIRMATION,
@@ -66,9 +77,34 @@ class FakeCache implements R3StageACachePurger {
 }
 
 let directory: string
+let databaseFile: string
 let sqlite: Database.Database
 let store: FakeRetirementStore
 let cache: FakeCache
+
+function migrationsBeforeContract() {
+  const folder = resolve(dirname(databaseFile), 'pre-r3-a-contract-migrations')
+  const meta = resolve(folder, 'meta')
+  mkdirSync(meta, { recursive: true })
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  const entries = journal.entries.filter(
+    entry => entry.tag !== '0036_r3_a_contract',
+  )
+  for (const { tag } of entries) {
+    copyFileSync(
+      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
+      resolve(folder, `${tag}.sql`),
+    )
+  }
+  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
+    ...journal,
+    entries,
+  }))
+  return folder
+}
 
 function insertAsset(id: string, role: 'return_photo' | 'contact_qr') {
   const suffix = role === 'return_photo' ? 'return' : 'qr'
@@ -248,8 +284,10 @@ function options(overrides: Partial<Parameters<typeof runR3StageACleanup>[0]> = 
 
 beforeEach(async () => {
   directory = mkdtempSync(resolve(tmpdir(), 'fur-forge-r3-a-cleanup-'))
-  const databaseFile = resolve(directory, 'legacy.db')
-  await migrateDatabase(databaseFile)
+  databaseFile = resolve(directory, 'legacy.db')
+  await migrateDatabase(databaseFile, {
+    migrationsFolder: migrationsBeforeContract(),
+  })
   sqlite = openDatabase(databaseFile).sqlite
   store = new FakeRetirementStore()
   cache = new FakeCache()
@@ -339,5 +377,120 @@ describe('R3-A retirement cleanup', () => {
     await expect(runR3StageACleanup(options({
       environmentPrefix: 'prod/',
     }))).rejects.toThrow(/unique test/)
+  })
+
+  it('blocks the database Contract before successful object cleanup', async () => {
+    sqlite.close()
+    let migrationError: unknown
+    try {
+      await migrateDatabase(databaseFile)
+    }
+    catch (error) {
+      migrationError = error
+    }
+    expect(migrationError).toMatchObject({
+      cause: {
+        code: 'SQLITE_CONSTRAINT_CHECK',
+        message: expect.stringContaining('r3_a_cleanup_required'),
+      },
+    })
+    sqlite = openDatabase(databaseFile).sqlite
+    expect(sqlite.prepare(`
+      SELECT COUNT(*) FROM return_photos
+    `).pluck().get()).toBe(1)
+    expect(sqlite.prepare(`
+      SELECT 1 FROM sqlite_master
+      WHERE type = 'table' AND name = 'updates'
+    `).pluck().get()).toBe(1)
+  })
+
+  it('contracts a cleaned complex legacy database and enforces target constraints', async () => {
+    await runR3StageACleanup(options({
+      dryRun: false,
+      confirmation: R3_STAGE_A_CONFIRMATION,
+    }))
+    sqlite.close()
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
+      applied: 1,
+    })
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
+      applied: 0,
+    })
+    sqlite = openDatabase(databaseFile).sqlite
+
+    expect(sqlite.prepare(`
+      SELECT name FROM sqlite_master
+      WHERE type = 'table' AND name IN ('updates', 'return_characters', 'return_photos')
+    `).all()).toEqual([])
+    expect(sqlite.prepare(`
+      SELECT COUNT(*) FROM assets WHERE id IN (?, ?)
+    `).pluck().get(RETURN_ASSET_ID, QR_ASSET_ID)).toBe(0)
+    expect(JSON.parse(sqlite.prepare(`
+      SELECT official_channels_json FROM site_content WHERE id = 'site'
+    `).pluck().get() as string)).toEqual([
+      { platform: 'qq', account: '10000', qrCodeAssetId: null },
+      { platform: 'qq_group', account: '20000', qrCodeAssetId: null },
+    ])
+    expect((sqlite.pragma('table_info(site_content)') as { name: string }[])
+      .some(column => column.name === 'contact_douyin')).toBe(false)
+    expect(sqlite.prepare(`
+      SELECT COUNT(*) FROM audit_logs WHERE action = ? AND result = 'SUCCESS'
+    `).pluck().get(R3_STAGE_A_AUDIT_ACTION)).toBe(1)
+    expect(sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
+    expect(sqlite.pragma('foreign_key_check')).toEqual([])
+
+    expect(() => sqlite.prepare(`
+      INSERT INTO assets (
+        id, role, status, private_object_key, sha256, byte_size,
+        mime_type, width, height, created_at, updated_at
+      ) VALUES (
+        'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', 'return_photo', 'READY',
+        'test/r3-a-drill/forbidden/original.png', ?, 100,
+        'image/png', 640, 640, ?, ?
+      )
+    `).run('e'.repeat(64), NOW, NOW)).toThrow(/assets_role/)
+    expect(() => sqlite.prepare(`
+      INSERT INTO analytics_events (
+        occurred_at, event_type, route_key, session_hmac
+      ) VALUES (?, 'page_view', 'updates', ?)
+    `).run(NOW, 'f'.repeat(64))).toThrow(/analytics_events_route_key/)
+    expect(() => sqlite.prepare(`
+      UPDATE site_content SET official_channels_json = ? WHERE id = 'site'
+    `).run(JSON.stringify([
+      { platform: 'qq', account: null, qrCodeAssetId: null },
+      { platform: 'douyin', account: null, qrCodeAssetId: null },
+      { platform: 'qq_group', account: null, qrCodeAssetId: null },
+      { platform: 'xiaohongshu', account: null, qrCodeAssetId: null },
+      { platform: 'bilibili', account: null, qrCodeAssetId: null },
+    ]))).toThrow(/site_content_official_channels_json/)
+    const schemaSql = (sqlite.prepare(`
+      SELECT group_concat(sql, ' ') FROM sqlite_master
+      WHERE type IN ('table', 'trigger')
+    `).pluck().get() as string).toLowerCase()
+    expect(schemaSql).not.toContain('return_photo')
+    expect(schemaSql).not.toContain('return-wall')
+    expect(schemaSql).not.toContain('return_character')
+    expect(schemaSql).not.toContain('contact_douyin')
+
+    const postContract = await runR3StageACleanup(options())
+    expect(postContract.counts).toMatchObject({
+      analyticsRows: 0,
+      assetRows: 0,
+      currentObjects: 0,
+      deleteMarkers: 0,
+      objectKeys: 0,
+      objectVersions: 0,
+      operationRows: 0,
+      orphanQrAssets: 0,
+      pendingObjects: 0,
+      retiredAccounts: 0,
+      retiredChannelEntries: 0,
+      retiredQrReferences: 0,
+      returnCharacters: 0,
+      returnPhotos: 0,
+      updates: 0,
+      uploadSessions: 0,
+      variantRows: 0,
+    })
   })
 })
