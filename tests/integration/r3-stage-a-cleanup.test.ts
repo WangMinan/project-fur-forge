@@ -258,6 +258,16 @@ function seedComplexLegacyState() {
   )
   store.seed('public', cleanupKey)
   sqlite.prepare(`
+    INSERT INTO publication_operations (
+      id, operation_type, entity_type, entity_id, requested_version, status,
+      cleanup_object_keys_json, edge_purge_urls_json, edge_purge_status,
+      version, attempt, started_at, updated_at, completed_at
+    ) VALUES (
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'PUBLISH', 'HOME',
+      'home', 1, 'DONE', '[]', '[]', 'NOT_REQUIRED', 1, 0, ?, ?, ?
+    )
+  `).run(NOW, NOW, NOW)
+  sqlite.prepare(`
     INSERT INTO analytics_events (
       occurred_at, event_type, route_key, entity_type, entity_id, session_hmac
     ) VALUES (?, 'page_view', 'return_character', 'return_character', ?, ?)
@@ -462,6 +472,19 @@ describe('R3-A retirement cleanup', () => {
     })
     sqlite = openDatabase(databaseFile).sqlite
 
+    expect(sqlite.prepare(`
+      SELECT operation_type, entity_type, status, edge_purge_status,
+        internal_error_code, failure_stage
+      FROM publication_operations
+      WHERE id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+    `).get()).toEqual({
+      operation_type: 'PUBLISH',
+      entity_type: 'HOME',
+      status: 'DONE',
+      edge_purge_status: 'NOT_REQUIRED',
+      internal_error_code: null,
+      failure_stage: null,
+    })
     expect(sqlite.prepare(`
       SELECT name FROM sqlite_master
       WHERE type = 'table' AND name IN ('updates', 'return_characters', 'return_photos')

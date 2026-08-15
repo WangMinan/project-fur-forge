@@ -4,7 +4,7 @@
 
 - 任务：T07 生产永久退役前的冻结镜像阻断修复。
 - 分支：用户明确授权本次直接在 `main` 修改、提交、推送和出包。
-- 生产边界：本提交只修复运维入口与 CI smoke，不执行数据库迁移、媒体删除或备份清理。
+- 生产边界：首次提交只修复运维入口与 CI smoke；后续生产执行与迁移阻断均在本文续记，外部快照仍不代签。
 
 ## 首次生产 dry-run finding
 
@@ -40,3 +40,14 @@
 - lint、提高 Node heap 后的 typecheck、`pnpm ops:build`：通过；
 - 首次并行完整 unit 因 1.6 GiB 主机资源争用出现两个 5 秒超时，相关 7 项随后以单 worker 重跑全部通过；
 - 用户要求停止继续运行本地完整 unit/本地 Docker build，直接推送后以 GitHub Actions 的完整 quality 和真实镜像 one-shot smoke 为发布门禁。
+
+## 新镜像生产执行与第二停止点
+
+- `main` 修复提交：`c3a50653ce0bb106d88e04ff9a411db151243548`；quality run `31899405868` 全部通过，release-image run `31900404443` 全部通过。
+- 首次修复镜像：`wangminan/project-fur-forge@sha256:98bec9bf2d8969fd6991319c5690aeb351ecd81355a5dcfcd6f627a88e475156`；release evidence、RepoDigest 与 OCI revision 均与冻结提交一致。
+- 新镜像 dry-run 退出码为 0，环境证明为 production/绝对数据库路径/完整 Endpoint 与双 Bucket/`prod/`，脱敏计数与首次盘点一致。
+- 用户已明确授权完成本次运维流程；正式清理使用冻结确认串成功，输出 `contractReady=true`。实际清理计数为 analytics 37、retired account 1、retired channel entries 3；退役媒体、对象、version、delete marker 与 ESA URL 均为 0。
+- 随后的 `migrate` 在 `0036_r3_a_contract.sql` 重建 `publication_operations` 时失败；应用保持停止，未启动不兼容 Schema。只读诊断证明生产仅有 1 条应保留的 `HOME/PUBLISH/DONE` 历史操作，所有目标约束均合法。
+- 失败根因是旧表的 5 个 edge-purge 列由历史 migration 追加在表尾，而新表将它们放在错误字段之前；`INSERT ... SELECT *` 按物理位置复制导致错列。修复改为 25 列显式同名映射，并在集成测试中加入应保留的 HOME 操作，验证字段值与目标约束。
+- 清理后、修复前已创建应急备份 `/app/backups/r3-a-post-cleanup-pre-repair-20260815T184147Z.db`；待净化备份真实恢复通过后，此中间备份随旧应用备份按文档定向清理。
+- 第二次本地门禁只运行 R3-A integration，8/8 通过；完整测试、镜像内 migration/one-shot smoke 与发布门禁继续交给 GitHub Actions，避免压垮生产主机。
