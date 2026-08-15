@@ -253,7 +253,24 @@ CREATE TABLE `__new_publication_operations` (
 	CONSTRAINT "publication_operations_edge_purge_status" CHECK(`edge_purge_status` IN ('NOT_REQUIRED', 'PENDING', 'PURGING', 'COMPLETE', 'FAILED')),
 	CONSTRAINT "publication_operations_version_positive" CHECK(`version` > 0)
 );--> statement-breakpoint
-INSERT INTO `__new_publication_operations` SELECT * FROM `publication_operations`;--> statement-breakpoint
+INSERT INTO `__new_publication_operations` (
+	`id`, `operation_type`, `entity_type`, `entity_id`, `requested_version`,
+	`status`, `cleanup_object_keys_json`, `edge_purge_urls_json`,
+	`edge_purge_task_id`, `edge_purge_status`, `edge_purge_reason`,
+	`edge_purge_checked_at`, `internal_error_code`, `internal_error_message`,
+	`failure_stage`, `version`, `attempt`, `lease_owner`, `lease_expires_at`,
+	`heartbeat_at`, `recovery_reason`, `next_retry_at`, `started_at`,
+	`updated_at`, `completed_at`
+)
+SELECT
+	`id`, `operation_type`, `entity_type`, `entity_id`, `requested_version`,
+	`status`, `cleanup_object_keys_json`, `edge_purge_urls_json`,
+	`edge_purge_task_id`, `edge_purge_status`, `edge_purge_reason`,
+	`edge_purge_checked_at`, `internal_error_code`, `internal_error_message`,
+	`failure_stage`, `version`, `attempt`, `lease_owner`, `lease_expires_at`,
+	`heartbeat_at`, `recovery_reason`, `next_retry_at`, `started_at`,
+	`updated_at`, `completed_at`
+FROM `publication_operations`;--> statement-breakpoint
 DROP TABLE `publication_operations`;--> statement-breakpoint
 ALTER TABLE `__new_publication_operations` RENAME TO `publication_operations`;--> statement-breakpoint
 CREATE INDEX `publication_operations_entity_idx` ON `publication_operations` (`entity_type`,`entity_id`,`started_at`);--> statement-breakpoint
