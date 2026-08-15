@@ -51,3 +51,28 @@ Reviewer 完整阅读需求1媒体/生产基线与需求3活文档，并执行�
 ## 复审
 
 待同一独立 Reviewer 基于修复后 SHA 复审。未获得其 PASS 前，T06 保持未完成。
+
+### 独立 Reviewer 复审结论：PASS
+
+- 复审 SHA：`3e0efa7f3bdf64fc950288e5cf9313956f46eff6`；比较范围：`e3ed0c6..3e0efa7`。
+- Reviewer：同一独立上下文 `Beauvoir`（`r3_a_focused_review`）；未参与修复实现。
+- 复审未访问生产数据库、OSS 或 ESA，未执行生产清理、备份删除、提交或历史改写。
+
+五项首轮 P1 均已关闭：
+
+1. `scripts/container-ops.ts` 已把 cleanup 和 backup prune 纳入同一生产 `ops.mjs` bundle；`docs/DEPLOYMENT.md` 的 R3-A 一次性路径固定为停写 → dry-run → 媒体强确认清理/不可达验证 → Contract → 服务验证 → clean backup/真实恢复 → 旧备份强确认删除，普通升级路径被明确排除。
+2. `server/utils/runner/r3-stage-a-backup-retirement.ts` 同时盘点生产 `/app/backups` 与数据库同目录 `backups/`，缺少生产备份卷即拒绝；旧备份删除默认 dry-run，要求精确短语 `DELETE R3-A OLD APP BACKUPS`，保留已验证 clean backup，并验证删除后只剩该备份。隔离 integration 也覆盖恢复验证、错误确认拒绝、删除和零结果重入。
+3. `server/utils/runner/r3-stage-a-retirement.ts` 要求 operation 中的 ESA URL 与媒体 origin 一致且 pathname 位于已确认的 `environmentPrefix`；测试前缀越界在任何 OSS inventory/purge 前失败。
+4. `server/utils/r3-stage-a-remote-cleanup.ts` 在 ESA task `Complete` 后逐 URL 执行 HEAD；仅在 405/501 时退化为带 Range 的 GET，且只接受 404/410，仍可达或 task 失败均阻断 Contract。
+5. `R3_STAGE_A_OBJECT_CLEANUP/SUCCESS` 已移到最终 OSS inventory 的 current/version/delete-marker 全零检查之后，并以幂等写入实现；失败注入证明最终 inventory 抛错时不会留下标记。
+
+Reviewer 独立执行结果：
+
+- `$env:APP_ENV='test'; pnpm lint`：PASS。
+- `$env:APP_ENV='test'; pnpm typecheck`：PASS。
+- `$env:APP_ENV='test'; pnpm exec vitest run --config vitest.config.ts tests/unit/r3-stage-a-remote-cleanup.test.ts tests/unit/deployment-contract.test.ts`：2 files / 12 tests，PASS。
+- `$env:APP_ENV='test'; pnpm exec vitest run --config vitest.integration.config.ts tests/integration/r3-stage-a-cleanup.test.ts`：1 file / 8 tests，PASS。
+- `pnpm ops:build` 及 bundle marker 检查：PASS；bundle 含两个 R3-A 命令、两条强确认短语、ESA 不可达错误和 `/app/backups` 路径。
+- `git diff --check e3ed0c6..3e0efa7`：PASS；复审写入前工作树无实现代码改动。
+
+结论：修复后 SHA 的 R3-A T01～T06 focused Review 为 **PASS**，首轮五项 P1 均已闭环，未发现新的 Stage A release blocker。该 PASS 只覆盖本地工程复审，不代表生产 T07 已执行，不代签 GATE-A、用户验收、发布镜像或该 SHA 的远端 CI；这些生产交接项继续保持开放。
