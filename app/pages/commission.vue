@@ -36,6 +36,7 @@ if (heroError.value) {
 }
 
 const commission = computed(() => site.value?.commission ?? null)
+const contact = computed(() => site.value?.contact ?? null)
 const status = computed(() => site.value?.statuses.commission ?? null)
 const heroSlide = computed(() => hero.value?.slide ?? null)
 const faqs = computed(() => commission.value?.faqs ?? [])
@@ -124,10 +125,10 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
           </p>
         </div>
 
-        <p class="commission-page__more-contact">
-          邮箱之外的联系方式见
-          <NuxtLink to="/about#contact" class="commission-page__inline-link">关于我们页</NuxtLink>。
-        </p>
+        <ContactChannelGrid
+          v-if="contact"
+          :channels="contact.officialChannels"
+        />
       </section>
 
       <section

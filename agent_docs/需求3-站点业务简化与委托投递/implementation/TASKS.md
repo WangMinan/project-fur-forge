@@ -1,7 +1,7 @@
 # 任务清单：站点业务简化与委托投递
 
 > **角色**：需求3唯一任务与勾选权威。
-> **状态**：GATE-00/T00 已完成；工程尚未开始。
+> **状态**：T01 已完成；T02～T07 待执行。
 > **规则**：任务完成不代签 CI、独立 Review、用户验收或生产执行。所有数据库写、媒体删除和 operation 串行。
 
 ## 决策与文档
@@ -11,7 +11,7 @@
 
 ## A. 立即永久退役返图/动态并收缩联系渠道
 
-- [ ] **T01 · 品牌、公开入口与联系展示基线**：英文名改为 `DITE DOG`，slogan 更新；审计 SEO/JSON-LD/测试/带文字静态资产；移除返图/动态公开和管理导航；首页停止消费 latest updates；`/about` 和后台联系配置只显示邮箱、QQ、QQ群。
+- [x] **T01 · 品牌、公开入口与联系展示基线**：英文名改为 `DITE DOG`，slogan 更新；审计 SEO/JSON-LD/测试/带文字静态资产；移除返图/动态公开和管理导航；首页停止消费 latest updates；`/about`、`/commission` 和后台联系配置只显示邮箱、QQ、QQ群。证据见 `implementation/notes/R3-A-T01-T06-EXECUTION-2026-08-15.md`。
 - [ ] **T02 · 退役代码与联系渠道契约**：删除 returns/updates 页面、API、Schema、DTO、repository、service、runner、recipe、fixture 和测试；旧路由 404；更新 sitemap、analytics、build guard、verify；把 `CONTACT_PLATFORMS`、Schema、DTO、管理 Card 和公开 Grid 收缩为 `qq | qq_group`，删除抖音/小红书/Bilibili 分支、Logo 和测试。
 - [ ] **T03 · 退役/渠道 dry-run 与强确认工具**：精确盘点 return/update 行、asset/session/variant/operation/analytics、private/public objects、OSS versions、ESA URLs、应用备份，以及三类取消平台账号/二维码引用和无其它引用的 QR 资产；只输出脱敏计数。
 - [ ] **T04 · 第一发布单元数据库 contract**：删除 updates/return 表及相关行，重建 assets/upload/variants/publication/analytics 约束；把 `official_channels_json` 迁移为固定 QQ/QQ群；删除 `contact_douyin`、三类取消平台枚举和无其它引用的 QR 资产；`contact_qq` 不强制删除。

@@ -152,7 +152,7 @@ try {
     'Public navigation brand was not rendered into the server HTML.',
   )
   assert(
-    publicHtml.includes('DITE DOG FURSUIT'),
+    publicHtml.includes('DITE DOG'),
     'Public English brand was not rendered into the server HTML.',
   )
   publicApiResponses.forEach((response, index) => assert(

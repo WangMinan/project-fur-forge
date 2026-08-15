@@ -29,6 +29,8 @@ A 立即退役返图/动态并收缩联系渠道
 
 ### A1. 品牌、入口和联系展示基线
 
+> 2026-08-15：T01 已在任务分支完成并通过 focused lint/typecheck/unit/E2E；slogan 使用前向 migration `0035_r3_a_brand.sql` 更新。A2 尚未执行。
+
 - 将英文名改为 `DITE DOG`；
 - 更新 slogan；
 - 审计 SEO、JSON-LD、测试和带文字的静态图片/SVG；
