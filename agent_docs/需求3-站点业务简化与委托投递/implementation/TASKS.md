@@ -1,7 +1,7 @@
 # 任务清单：站点业务简化与委托投递
 
 > **角色**：需求3唯一任务与勾选权威。
-> **状态**：T01～T04 已完成；T05～T07 待执行。
+> **状态**：T01～T05 已完成；T06～T07 待执行。
 > **规则**：任务完成不代签 CI、独立 Review、用户验收或生产执行。所有数据库写、媒体删除和 operation 串行。
 
 ## 决策与文档
@@ -15,7 +15,7 @@
 - [x] **T02 · 退役代码与联系渠道契约**：删除 returns/updates 页面、API、Schema、DTO、repository、service、runner、recipe、fixture 和测试；旧路由 404；更新 sitemap、analytics、build guard、verify；把 `CONTACT_PLATFORMS`、Schema、DTO、管理 Card 和公开 Grid 收缩为 `qq | qq_group`，删除抖音/小红书/Bilibili 分支、Logo 和测试。代码删除、全量 unit、lint/typecheck、production build 和退役路由 E2E 已通过；旧库五槽 CHECK 导致的 selected integration 失败已记录，固定由 T04 Contract 修复并原样重测。
 - [x] **T03 · 退役/渠道 dry-run 与强确认工具**：精确盘点 return/update 行、asset/session/variant/operation/analytics、private/public objects、OSS versions/delete markers、ESA URLs、应用备份，以及三类取消平台账号/二维码引用和无其它引用的 QR 资产；只输出脱敏计数。`pnpm r3-a:cleanup -- --environment-prefix prod/` 默认 dry-run；正式删除必须追加 `--execute --confirm "DELETE R3-A RETIRED MEDIA"`。对象/版本/marker/ESA 任一步失败都不写 `R3_STAGE_A_OBJECT_CLEANUP` 成功标记，T04 不得继续。
 - [x] **T04 · 第一发布单元数据库 contract**：前向迁移 `0036_r3_a_contract.sql` 在 DROP 前验证 T03 标记/净新库条件，删除 updates/return 表及相关行，重建 assets/upload/variants/publication/analytics 约束；`official_channels_json` 固定 QQ/QQ群，删除 `contact_douyin` 与无其它引用的退役平台 QR 资产，保留 `contact_qq`。focused integration 7 files / 57 tests、lint/typecheck 通过，fresh/re-entrant migration、FK/integrity 通过。
-- [ ] **T05 · 本地不可恢复演练**：复杂副本完成 dry-run、返图对象/版本删除、ESA purge、渠道 JSON 收缩、取消平台 QR 清理、contract、404、联系页面检查、重复执行、integrity 和 clean backup restore；旧应用备份在 clean backup 验证后删除。
+- [x] **T05 · 本地不可恢复演练**：复杂副本和测试对象在唯一隔离前缀上完成 dry-run、强确认、8 current objects/16 versions/8 delete markers 删除、ESA purge、渠道收缩、孤立 QR 清理、Contract、404、六个联系渠道 E2E、FK/integrity、production build/verify、clean backup 真实恢复、恢复后旧备份删除和零结果重入；未访问任何生产资源。
 - [ ] **T06 · 第一发布单元质量与独立复查**：相关 lint/typecheck/unit/integration/E2E/build/verify 全部通过；新上下文 focused review 检查对象枚举、停止点、404、两平台约束、取消平台资产清理和证据。
 - [ ] **T07 · 生产立即退役与渠道收缩**：维护窗口停写，用户核对 dry-run 并强确认返图/动态删除；删除媒体/版本/cache，执行渠道/退役 contract，验证服务，创建并恢复 clean backup，再删除旧应用备份；操作员记录外部快照处理状态。
 
