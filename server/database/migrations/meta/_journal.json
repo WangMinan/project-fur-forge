@@ -253,6 +253,13 @@
       "when": 1786723200000,
       "tag": "0035_r3_a_brand",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "6",
+      "when": 1786809600000,
+      "tag": "0036_r3_a_contract",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,7 @@
 # 需求3 · 数据模型规划
 
 > **角色**：定义 contract 完成后的目标持久模型、DTO 和媒体身份。
-> **状态**：目标已锁定；T01 品牌迁移、T02 活动代码/DTO 契约和 T03 清理工具已回填，T04～T06 实施中。
+> **状态**：目标已锁定；T01～T04 的品牌、代码、清理工具和持久 Contract 已回填，T05～T06 实施中。
 > **修订**：增加 Hero collection 版本域、明确领养状态人工迁移、沿用既有 `detail` usage、保留 `commission_email_action`；官方渠道收缩为 `qq | qq_group`，OSS CORS 保持通配且不进入模型门禁。
 
 ## 1. 最终数据域
@@ -522,7 +522,7 @@ event_time
 
 ## 12. 实施后回填
 
-- 实际迁移文件名和顺序：`0035_r3_a_brand.sql` 先更新旧默认 slogan；阶段 A Contract migration 待 T04 回填；
+- 实际迁移文件名和顺序：`0035_r3_a_brand.sql` 先更新旧默认 slogan；`0036_r3_a_contract.sql` 再在对象清理成功标记后删除退役关系并重建目标约束；
 - collection/owner context 实际字符串；
 - 实际索引和 CHECK；
 - 退役脱敏计数；
