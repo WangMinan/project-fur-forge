@@ -4,7 +4,6 @@ import {
   publicCatalogSearchQuerySchema,
   publicWorkListQuerySchema,
 } from '../../shared/schemas/public-content'
-import { publicReturnWallQuerySchema } from '../../shared/schemas/return-photo'
 import { includesSearchText, normalizeSearchText } from '../../shared/utils/search'
 
 describe('统一名称搜索', () => {
@@ -24,9 +23,8 @@ describe('统一名称搜索', () => {
     expect(publicCatalogSearchQuerySchema.safeParse('犬'.repeat(101)).success).toBe(false)
   })
 
-  it('uses the same q contract for works, adoptions and returns', () => {
+  it('uses the same q contract for works and adoptions', () => {
     expect(publicWorkListQuerySchema.parse({ q: '  蓝湄  ' }).q).toBe('蓝湄')
     expect(publicAdoptionListQuerySchema.parse({ q: '  蓝湄  ' }).q).toBe('蓝湄')
-    expect(publicReturnWallQuerySchema.parse({ q: '  蓝湄  ' }).q).toBe('蓝湄')
   })
 })

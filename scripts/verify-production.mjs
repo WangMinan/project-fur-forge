@@ -116,7 +116,6 @@ try {
     '/api/public/v1/home-aggregate',
     '/api/public/v1/works',
     '/api/public/v1/adoptions',
-    '/api/public/v1/returns',
   ]
   const [
     healthResponse,

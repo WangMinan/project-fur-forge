@@ -35,7 +35,7 @@ const publicationStatus = defineModel<PublicationStatus | 'all'>('publicationSta
 
 <template>
   <!-- 标签与控件样式来自 admin-base.css 的 .admin-list-toolbar-*：
-       与返图管理的查找条共用一套，字号不会各自漂移。 -->
+       列表页查找与筛选保持同一字号。 -->
   <section class="admin-list-toolbar work-list-toolbar" aria-label="查找和筛选作品">
     <div class="admin-list-toolbar__field">
       <label class="admin-list-toolbar__label" for="admin-work-search">查找作品</label>

@@ -88,11 +88,6 @@ onMounted(() => void load())
             :items="contentRankingItems(analytics.topWorks)"
           />
           <AdminAnalyticsRankingList
-            title="返图设定·近 30 日"
-            empty-text="近 30 日还没有返图设定访问。"
-            :items="contentRankingItems(analytics.topReturnCharacters)"
-          />
-          <AdminAnalyticsRankingList
             title="联系行动·近 30 日"
             empty-text="近 30 日还没有联系行动。"
             :items="contactRankingItems(analytics)"

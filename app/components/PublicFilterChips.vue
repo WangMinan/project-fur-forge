@@ -4,7 +4,7 @@ import type { RouteLocationRaw } from "vue-router";
 /**
  * 公开端筛选条：一组胶囊链接。
  *
- * `/works`、`/adoptions` 与 `/updates` 共用这一个组件，筛选条才不会各自漂移。
+ * `/works` 与 `/adoptions` 共用这一个组件，筛选条才不会各自漂移。
  * 全部是普通链接（NuxtLink），无 JavaScript 也可用；
  * 选中态同时用底色、边框与文字权重表达，不只依赖颜色。
  */

@@ -8,5 +8,4 @@ export const ADMIN_NAV_ITEMS = [
 ] as const
 
 export type AdminNavKey = typeof ADMIN_NAV_ITEMS[number]['key']
-/** T01 先移除入口；T02 删除旧页面后同步删掉两个过渡类型。 */
-export type AdminNavCurrent = AdminNavKey | 'returns' | 'updates' | 'none'
+export type AdminNavCurrent = AdminNavKey | 'none'

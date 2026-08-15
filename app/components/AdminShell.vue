@@ -6,8 +6,7 @@ import { ADMIN_NAV_ITEMS } from '~/utils/admin-nav'
 // 管理端壳：<1024px 为顶栏 + 全屏抽屉，1024–1279px 为顶栏 + 横向导航，
 // ≥1280px 为固定侧栏。
 // 导航顺序按 .design/admin-console/INFORMATION_ARCHITECTURE.md 的“业务对象优先”：
-// 作品管理 → 返图管理 → 动态管理 → 大图管理 → 文案配置 → 全局水印 → 访问概览 → 修改密码。
-// 公开端称“返图墙”，管理端称“返图管理”，两端不混用同一个短词。
+// 需求3阶段 A：作品管理 → 大图管理 → 文案配置 → 全局水印 → 访问概览 → 修改密码。
 withDefaults(defineProps<{
   current?: AdminNavCurrent
 }>(), {

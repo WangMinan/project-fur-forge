@@ -24,12 +24,9 @@ const databaseFile = resolve(
 )
 const originalPassword = 'initial admin password'
 const sessionSecret = 'test-session-secret-at-least-32-characters'
-const officialChannels = (qq: string | null, douyin: string | null) => [
+const officialChannels = (qq: string | null, qqGroup: string | null) => [
   { platform: 'qq', account: qq, qrCodeAssetId: null },
-  { platform: 'douyin', account: douyin, qrCodeAssetId: null },
-  { platform: 'qq_group', account: null, qrCodeAssetId: null },
-  { platform: 'xiaohongshu', account: null, qrCodeAssetId: null },
-  { platform: 'bilibili', account: null, qrCodeAssetId: null },
+  { platform: 'qq_group', account: qqGroup, qrCodeAssetId: null },
 ]
 
 await migrateDatabase(databaseFile)
@@ -514,7 +511,7 @@ describe('authentication API', () => {
         database.sqlite.prepare('DELETE FROM business_statuses').run()
         database.sqlite.prepare(`
           UPDATE site_content
-          SET contact_douyin = 'to3114559925', commission_intro = NULL,
+          SET commission_intro = NULL,
               commission_estimate_note = NULL, commission_email_action = NULL,
               commission_faq_json = NULL, about_studio_facts = NULL,
               about_making_scope = NULL, basic_terms = NULL,
@@ -593,7 +590,7 @@ describe('authentication API', () => {
         },
         contact: {
           email: '3114559925@qq.com',
-          officialChannels: officialChannels('3114559925', 'to3114559925'),
+          officialChannels: officialChannels('3114559925', null),
           antiScam: null,
         },
       },
@@ -622,10 +619,10 @@ describe('authentication API', () => {
     const privacyPayload = {
       privacyPolicy: '本站不提供访客账号，不使用营销分析 Cookie。',
     }
-    // T02：邮箱与五个平台数组在同一个 contact 分区里编辑。
+    // 需求3阶段 A：邮箱与 QQ/QQ群数组在同一个 contact 分区里编辑。
     const contactPayload = {
       email: 'studio@example.test',
-      officialChannels: officialChannels('3114559925', 'to3114559925'),
+      officialChannels: officialChannels('3114559925', '456789012'),
       antiScam: null,
     }
     const missingCsrf = await fetch(sectionUrl('commission'), {

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
   hasUnsafePlainText,
-  isValidDouyin,
   normalizeNullableText,
   SITE_CONTENT_LIMITS,
   SITE_STATUS_KIND_LABELS,
@@ -26,7 +25,6 @@ function cleanForm() {
     makingScope: '',
     basicTerms: '',
     privacyPolicy: '',
-    douyin: '',
     antiScam: '',
   }
 }
@@ -57,15 +55,6 @@ describe('hasUnsafePlainText', () => {
     expect(hasUnsafePlainText('javascript:alert(1)')).toBe(true)
     expect(hasUnsafePlainText('data:text/html;base64,x')).toBe(true)
     expect(hasUnsafePlainText('普通中文说明，不含标记。')).toBe(false)
-  })
-})
-
-describe('isValidDouyin', () => {
-  it('accepts registered douyin id and rejects invalid shapes', () => {
-    expect(isValidDouyin('to3114559925')).toBe(true)
-    expect(isValidDouyin('a')).toBe(false)
-    expect(isValidDouyin('含空格 id')).toBe(false)
-    expect(isValidDouyin('x'.repeat(31))).toBe(false)
   })
 })
 
@@ -121,12 +110,6 @@ describe('siteContentFieldIssues', () => {
     expect(issues['faq-0']).toBeUndefined()
   })
 
-  it('flags invalid douyin only when filled', () => {
-    const form = cleanForm()
-    expect(siteContentFieldIssues(form).douyin).toBeUndefined()
-    form.douyin = 'a'
-    expect(siteContentFieldIssues(form).douyin).toBeTruthy()
-  })
 })
 
 describe('siteStatusFieldIssues', () => {

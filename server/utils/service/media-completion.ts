@@ -17,7 +17,6 @@ import {
   requireUploadSession,
   uploadSessionDto,
 } from './upload-session'
-import { addReturnPhotoFromUpload } from './return-photo'
 import { generateContactQrVariants } from '../recipe/contact-qr-recipe'
 
 const PREPROCESS_THRESHOLD_BYTES = 20_000_000
@@ -92,10 +91,6 @@ function previewsFor(role: AssetRow['role']): VerifiedAssetDto['previews'] {
       { usage: 'work-card', aspect: '3:4', fitMode: 'cover' },
       { usage: 'detail', aspect: 'original', fitMode: 'contain' },
     ]
-  }
-  // 返图只有一个公开用途，并且保持原始比例：不出现 3:4 强裁预览。
-  if (role === 'return_photo') {
-    return [{ usage: 'return-wall', aspect: 'original', fitMode: 'contain' }]
   }
   if (role === 'contact_qr') {
     return [{ usage: 'contact-qr', aspect: 'original', fitMode: 'contain' }]
@@ -637,18 +632,6 @@ export async function completeUploadSession(
 
   const completed = requireUploadSession(sqlite, sessionId)
   const asset = requireAsset(sqlite, row.id)
-  // T35-F1：返图归属的会话在核验通过后直接为该设定新增一条返图记录。
-  // 一个设定可以有多张返图，所以上传本身就是“加一张”，
-  // 不需要先建空记录再补图。只有 READY 资产才建记录；
-  // 预处理失败的资产留在 FAILED，不会产生无图的僵尸返图。
-  if (completed.ownerType === 'return' && asset.status === 'READY') {
-    addReturnPhotoFromUpload(
-      sqlite,
-      completed.ownerId,
-      asset.id,
-      now,
-    )
-  }
   return {
     session: uploadSessionDto(completed),
     asset: assetDto(asset),

@@ -87,8 +87,6 @@ import type {
   publicAdoptionWorkDtoSchema,
   publicSafeWorkPreviewDtoSchema,
   regularAdoptionBusinessStatusSchema,
-  returnPhotoConsentSchema,
-  returnPhotoConsentSourceSchema,
   suitTypeSchema,
   featuredWorkOrderRequestSchema,
   workListItemDtoSchema,
@@ -106,25 +104,6 @@ import type {
   watermarkAnchorSchema,
 } from '../schemas/upload'
 import type {
-  adminReturnCharacterDtoSchema,
-  adminReturnCharacterListDtoSchema,
-  adminReturnCharacterListItemDtoSchema,
-  adminReturnPhotoDtoSchema,
-  publicReturnCharacterDtoSchema,
-  publicReturnCharacterRefSchema,
-  publicReturnImageSchema,
-  publicReturnPhotoDtoSchema,
-  publicReturnWallDtoSchema,
-  returnCharacterFieldsSchema,
-  returnCharacterWorkSummarySchema,
-  returnPhotoAssetSummarySchema,
-  returnPhotoAuthorizationSchema,
-  returnPhotoBlockerSchema,
-  returnPhotoFieldsSchema,
-  returnPhotoPublicationCheckDtoSchema,
-  returnPhotoStateDtoSchema,
-} from '../schemas/return-photo'
-import type {
   watermarkBrandingDtoSchema,
   watermarkCandidateDtoSchema,
   watermarkImpactDtoSchema,
@@ -134,12 +113,6 @@ import type {
   watermarkProfileDtoSchema,
   watermarkProfileStatusSchema,
 } from '../schemas/watermark'
-import type {
-  adminUpdateDtoSchema,
-  publicUpdateDtoSchema,
-  updateFieldsSchema,
-  updateTypeSchema,
-} from '../schemas/update'
 
 export type ApiError = z.infer<typeof apiErrorSchema>
 export type AnalyticsEventType = z.infer<typeof analyticsEventTypeSchema>
@@ -243,10 +216,6 @@ export type PublicationOperationDto = z.infer<
 export type WorkPublicationCheckDto = z.infer<
   typeof workPublicationCheckDtoSchema
 >
-export type ReturnPhotoConsentSource = z.infer<
-  typeof returnPhotoConsentSourceSchema
->
-export type ReturnPhotoConsent = z.infer<typeof returnPhotoConsentSchema>
 export type PublicWorkDto = z.infer<typeof publicWorkDtoSchema>
 export type PublicAdoptionWorkDto = z.infer<typeof publicAdoptionWorkDtoSchema>
 export type AdminWorkDto = z.infer<typeof adminWorkDtoSchema>
@@ -277,42 +246,3 @@ export type WatermarkImpactDto = z.infer<typeof watermarkImpactDtoSchema>
 export type WatermarkBrandingDto = z.infer<typeof watermarkBrandingDtoSchema>
 export type WatermarkOperationDto = z.infer<typeof watermarkOperationDtoSchema>
 export type WatermarkPreviewKind = z.infer<typeof watermarkPreviewKindSchema>
-export type ReturnPhotoBlocker = z.infer<typeof returnPhotoBlockerSchema>
-export type ReturnPhotoAuthorization = z.infer<
-  typeof returnPhotoAuthorizationSchema
->
-export type ReturnPhotoFields = z.infer<typeof returnPhotoFieldsSchema>
-export type ReturnCharacterFields = z.infer<typeof returnCharacterFieldsSchema>
-export type ReturnCharacterWorkSummary = z.infer<
-  typeof returnCharacterWorkSummarySchema
->
-export type ReturnPhotoAssetSummary = z.infer<
-  typeof returnPhotoAssetSummarySchema
->
-export type AdminReturnPhotoDto = z.infer<typeof adminReturnPhotoDtoSchema>
-export type AdminReturnCharacterDto = z.infer<
-  typeof adminReturnCharacterDtoSchema
->
-export type AdminReturnCharacterListItemDto = z.infer<
-  typeof adminReturnCharacterListItemDtoSchema
->
-export type AdminReturnCharacterListDto = z.infer<
-  typeof adminReturnCharacterListDtoSchema
->
-export type ReturnPhotoPublicationCheckDto = z.infer<
-  typeof returnPhotoPublicationCheckDtoSchema
->
-export type ReturnPhotoStateDto = z.infer<typeof returnPhotoStateDtoSchema>
-export type PublicReturnPhotoDto = z.infer<typeof publicReturnPhotoDtoSchema>
-export type PublicReturnWallDto = z.infer<typeof publicReturnWallDtoSchema>
-export type PublicReturnCharacterRef = z.infer<
-  typeof publicReturnCharacterRefSchema
->
-export type PublicReturnImage = z.infer<typeof publicReturnImageSchema>
-export type PublicReturnCharacterDto = z.infer<
-  typeof publicReturnCharacterDtoSchema
->
-export type UpdateType = z.infer<typeof updateTypeSchema>
-export type UpdateFields = z.infer<typeof updateFieldsSchema>
-export type AdminUpdateDto = z.infer<typeof adminUpdateDtoSchema>
-export type PublicUpdateDto = z.infer<typeof publicUpdateDtoSchema>
