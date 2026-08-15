@@ -1,9 +1,9 @@
 # 当前状态：需求3 · 站点业务简化与委托投递
 
 > **最后校准**：2026-08-15。
-> **当前阶段**：阶段 A 本地实施中；T01～T02 已完成，正在执行 T03。
+> **当前阶段**：阶段 A 本地实施中；T01～T03 已完成，正在执行 T04。
 > **任务权威**：[`implementation/TASKS.md`](./implementation/TASKS.md)。
-> **当前 main 基线**：`639d15b`；任务分支 `feat/r3-retire-returns-updates` 已删除返图/动态代码和三类退役渠道的活动契约，未触碰生产数据。
+> **当前 main 基线**：`639d15b`；任务分支 `feat/r3-retire-returns-updates` 已删除返图/动态代码和三类退役渠道活动契约，并新增默认 dry-run 的串行清理命令；未触碰生产数据。
 
 ## 1. 已锁定产品结论
 
@@ -46,7 +46,7 @@
 | 阶段 | 状态 | 门禁 |
 | --- | --- | --- |
 | GATE-00 文档与决策 | 已完成 | — |
-| A 立即退役返图/动态并收缩联系渠道 | 本地实施中（T01～T02 完成） | GATE-A |
+| A 立即退役返图/动态并收缩联系渠道 | 本地实施中（T01～T03 完成） | GATE-A |
 | B Expand 新模型与安全 | 未开始 | GATE-B |
 | C 动效与 Hero | 未开始 | GATE-C |
 | D 作品与领养 | 未开始 | GATE-D |
@@ -85,7 +85,7 @@ OSS CORS 通配是用户确认的现状和目标，不是风险 finding，也不
 
 ## 5. 下一步
 
-1. 在 `feat/r3-retire-returns-updates` 按 T03–T06 完成本地实现、演练、CI 和 focused review；
+1. 在 `feat/r3-retire-returns-updates` 按 T04–T06 完成本地 Contract、演练、CI 和 focused review；
 2. 保持 T07/GATE-A 未完成，不进入阶段 B/C；
 3. 用户核对生产 dry-run 后执行 T07；
 4. GATE-A 关闭后再进入 Expand；

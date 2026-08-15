@@ -35,6 +35,7 @@
     "media:cleanup-expired-uploads": "tsx scripts/cleanup-expired-uploads.ts",
     "media:reconcile-site-display": "tsx scripts/reconcile-site-display.ts",
     "media:upgrade-site-display-v2": "tsx scripts/upgrade-site-display-v2.ts",
+    "r3-a:cleanup": "tsx scripts/r3-stage-a-cleanup.ts",
     "ops:build": "esbuild scripts/container-ops.ts --bundle --platform=node --target=node24 --format=esm --outfile=.output/ops/ops.mjs --external:better-sqlite3 --external:ffmpeg-static --external:ali-oss --external:drizzle-orm"
   },
   "dependencies": {
