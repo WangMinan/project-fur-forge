@@ -21,6 +21,7 @@ const COMMANDS = [
   'reconcile-site-display',
   'upgrade-site-display-v2',
   'recover-operations',
+  'r3-stage-a-cleanup',
 ] as const
 
 type Command = typeof COMMANDS[number]
@@ -181,7 +182,6 @@ async function run() {
       const { getDatabase } = await import('../server/utils/database')
       const { getMediaStorage } = await import('../server/utils/media-storage')
       await import('../server/utils/runner/home-management')
-      await import('../server/utils/runner/return-photo-publication')
       await import('../server/utils/runner/site-display-reconcile')
       await import('../server/utils/runner/watermark-branding')
       await import('../server/utils/runner/work-publication')
@@ -190,6 +190,11 @@ async function run() {
         sqlite: getDatabase().sqlite,
         storage: getMediaStorage(),
       })
+    }
+
+    case 'r3-stage-a-cleanup': {
+      const { runR3StageACleanupCli } = await import('./r3-stage-a-cleanup')
+      return await runR3StageACleanupCli({ args: argv() })
     }
   }
 }
