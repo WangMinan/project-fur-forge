@@ -2,12 +2,12 @@
 
 > **角色**：将需求3拆成可串行实施、可审查、可上线的发布单元。
 > **状态**：计划锁定，应用代码尚未开始。
-> **复查修订**：永久退役提前为第一发布单元；增加 Hero collection version、匿名上传 CORS、歧义状态人工复核；FAQ 与 email action 边界分开。
+> **修订**：永久退役提前为第一发布单元；增加 Hero collection version、歧义状态人工复核；OSS CORS 保持通配且不作门禁；官方渠道收缩为邮箱、QQ、QQ群。
 
 ## 1. 总路线
 
 ```text
-A 立即退役返图/动态
+A 立即退役返图/动态并收缩联系渠道
   → B Expand 新模型与安全
   → C 公开动效与 Hero
   → D 作品与领养
@@ -21,23 +21,25 @@ A 立即退役返图/动态
 
 - 工程从最新 `origin/main` 建任务分支；
 - 推荐每个阶段独立 PR；
-- R3-A 清理代码、清理工具、退役迁移和生产手册必须属于同一可冻结发布；
+- R3-A 清理代码、清理工具、退役/渠道迁移和生产手册必须属于同一可冻结发布；
 - 本地结果、CI、独立 Review、用户验收和生产执行互不代签；
 - 生产永久删除不在普通 CI 自动执行。
 
-## 3. 阶段 A：立即永久退役
+## 3. 阶段 A：立即永久退役与联系渠道收缩
 
-### A1. 品牌与入口基线
+### A1. 品牌、入口和联系展示基线
 
 - 将英文名改为 `DITE DOG`；
 - 更新 slogan；
 - 审计 SEO、JSON-LD、测试和带文字的静态图片/SVG；
 - 从公开/管理导航移除返图和动态；
-- 首页停止查询/渲染 latest updates。
+- 首页停止查询/渲染 latest updates；
+- `/about`、`/commission` 和后台内容配置只保留邮箱、QQ、QQ群；
+- 抖音、小红书、Bilibili 不再显示或维护。
 
-### A2. 退役代码
+### A2. 退役代码与渠道契约
 
-删除：
+删除返图/动态：
 
 - public/admin pages；
 - public/admin APIs；
@@ -48,13 +50,24 @@ A 立即退役返图/动态
 - sitemap/analytics route registration；
 - production verify 中的旧入口。
 
+收缩联系方式：
+
+- `CONTACT_PLATFORMS`、标签和 Logo 路径改为 `qq | qq_group`；
+- contact Schema/DTO/service/admin Card/public grid 改为固定两项；
+- 移除 `douyin`、`xiaohongshu`、`bilibili` 分支、静态资源和测试；
+- 邮箱继续独立维护；
+- `commission_email_action` 继续保留为备用邮件说明。
+
 ### A3. 清理工具与数据库 contract
 
-- dry-run 精确盘点；
-- 强确认永久删除；
+- dry-run 精确盘点返图/动态及三类取消平台账号、二维码引用和失去引用的二维码资产；
+- 强确认永久删除返图/动态；
 - 删除 return media、OSS versions/delete markers、ESA cache；
 - drop updates/return tables；
 - 重建 assets/upload/variants/publication/analytics 约束；
+- 把 `official_channels_json` 重建为固定 `qq | qq_group`；
+- 删除 `contact_douyin` 兼容列及读写者；`contact_qq` 兼容列不强制删除；
+- 删除三类取消平台确认无其它引用的 `contact_qr` 源图、preprocess、公开派生和 ESA cache；
 - 旧路由 404；
 - 净化备份恢复验证后删除旧应用备份。
 
@@ -71,6 +84,8 @@ A 立即退役返图/动态
 
 - 返图/动态代码、表、媒体和应用管理旧备份最终清空；
 - 退役路由 404；
+- `official_channels_json` 仅有 QQ、QQ群，邮箱独立可用；
+- 抖音、小红书、Bilibili 无公开/管理入口、枚举、DTO、持久记录或孤立二维码资产；
 - clean backup restore pass；
 - foreign key/integrity/production verify 通过；
 - 外部快照状态由操作员明确记录。
@@ -98,8 +113,8 @@ A 立即退役返图/动态
 
 - 新增 commission upload sessions/submissions；
 - 新增 private media role；
-- 独立限流、token、TTL、蜜罐、body/Origin；
-- 私有 Bucket CORS 精确加入 public Origin；
+- 独立限流、token、TTL、蜜罐、body/API Origin；
+- OSS Bucket CORS 继续保持当前 `AllowedOrigin=*`，不新增精确 Origin 收紧任务；
 - 管理 private preview 和审计。
 
 ### GATE-B
@@ -108,9 +123,11 @@ A 立即退役返图/动态
 - Hero 拆分幂等和独立 409；
 - adoption cover identity；
 - commission upload state machine；
-- CORS/preflight；
-- PII leakage；
+- 签名 PUT 与 complete 端到端可用；
+- 应用 API Origin/token/TTL/限流和 PII leakage 通过；
 - 旧公开页面仍可用。
+
+OSS CORS `*` 不作为 GATE-B 的失败条件，不要求测试“只能允许精确 Origin”。
 
 ## 5. 阶段 C：公开动效与 Hero
 
@@ -183,7 +200,7 @@ A 立即退役返图/动态
 
 ### D4. Works contract
 
-在页面/API完全切换、NULL status=0、缺图=0 后，重建表并删除旧列/tags。`commission_email_action` 和 contact 兼容列不受影响。
+在页面/API完全切换、NULL status=0、缺图=0 后，重建表并删除旧列/tags。`commission_email_action` 和 `contact_qq` 兼容列不受影响；`contact_douyin` 已在 R3-A 删除。
 
 ### GATE-D
 
@@ -203,9 +220,11 @@ A 立即退役返图/动态
 - complete；
 - consume into submission；
 - token/TTL/摘要/MIME/尺寸；
-- CORS/Origin/限流/蜜罐；
+- API Origin/限流/蜜罐；
 - 失败、取消、过期和清理；
 - no PUBLIC variant。
+
+OSS CORS 继续保持通配，不在本阶段建立精确 Origin 配置或对应门禁。
 
 ### E2. `/commission/apply`
 
@@ -232,6 +251,7 @@ A 立即退役返图/动态
 - 站内提交为主 CTA；
 - QQ/QQ群二维码；
 - about 入口；
+- `/about` 只保留邮箱、QQ、QQ群；
 - 删除 FAQ UI/Schema/API/version/data；
 - 保留 intro/estimate/email action；
 - email action 不作为 commission 主 CTA；
@@ -241,10 +261,11 @@ A 立即退役返图/动态
 
 - 上传/提交/重复/过期/限流/蜜罐/清理；
 - 管理详情/状态/备注/409；
-- CORS live probe；
+- 签名 PUT 在现有通配 CORS 下端到端通过；
 - PII leakage；
 - 真实浏览器端到端提交；
-- FAQ 删除且 email action 未误删。
+- FAQ 删除且 email action 未误删；
+- 公开与管理联系面仍只出现邮箱、QQ、QQ群。
 
 ## 8. 阶段 F：最终门禁
 
@@ -262,8 +283,10 @@ A 立即退役返图/动态
 | 退役拖延 | R3-A 独立第一发布单元。 |
 | 媒体先删后失去 Key | 数据库仍在时枚举；失败停止在 contract 前。 |
 | 旧备份提前删除 | clean backup restore 成功后才删旧应用备份。 |
+| 三类取消平台留下僵尸数据 | 固定两平台 Schema、迁移计数、引用检查和孤立 QR 清理。 |
 | Hero 四集合互相冲突 | 独立 collection version 和 upload owner context。 |
 | 歧义状态误标可领养 | 只自动映射明确值，其余人工确认。 |
-| 公开上传浏览器失败 | 精确 CORS/preflight/live probe。 |
+| 匿名上传失去应用安全边界 | 保留 API Origin/token/TTL/限流/摘要校验；不依赖 CORS 收紧。 |
+| 文档误把 `*` 当 blocker | 明确 OSS CORS 通配是用户确认目标，不进入门禁。 |
 | PII 泄漏 | DTO 分层、日志禁值、no-store、负向测试。 |
 | 动效影响可用性 | SSR 默认可见、短时、键盘、back-forward、reduced-motion。 |

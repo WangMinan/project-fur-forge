@@ -2,7 +2,7 @@
 
 > **角色**：定义 contract 完成后的目标持久模型、DTO 和媒体身份。
 > **状态**：目标已锁定；实际迁移名、索引名和约束在实施后回填。
-> **复查修订**：增加 Hero collection 版本域、明确领养状态人工迁移、沿用既有 `detail` usage、保留 `commission_email_action`，并统一匿名上传状态命名。
+> **修订**：增加 Hero collection 版本域、明确领养状态人工迁移、沿用既有 `detail` usage、保留 `commission_email_action`；官方渠道收缩为 `qq | qq_group`，OSS CORS 保持通配且不进入模型门禁。
 
 ## 1. 最终数据域
 
@@ -12,12 +12,12 @@
 - 简化作品及图片；
 - 领养状态、价格和独立横版 cover；
 - 四个 Hero collection 及其 items；
-- 站点内容、官方渠道和水印；
+- 站点内容、邮箱、QQ、QQ群和水印；
 - 委托申请与私有设定图；
 - 最小第一方 analytics；
 - 现有 publication、lease、recovery、备份和部署基础设施。
 
-返图和最新动态不再有活表、归档表或媒体身份。
+返图、最新动态、抖音、小红书和 Bilibili 联系渠道不再有活模型或隐藏兼容投影。
 
 ## 2. `works`
 
@@ -315,9 +315,11 @@ commission_upload_sessions
 - 不保存 IP、UA、Referer 或表单字段；
 - failure code/stage 尽量复用现有上传错误集合。
 
-## 7. `site_content`
+OSS CORS 不进入持久模型或 Schema 门禁。当前运维目标继续为 `AllowedOrigin=*`；应用层 Origin 校验仍在公开 API 路由完成。
 
-继续保留：
+## 7. `site_content` 与官方渠道
+
+### 7.1 保留字段
 
 ```text
 hero_tagline
@@ -343,7 +345,39 @@ commission_faq_json
 commission_faq_version
 ```
 
-旧 `contact_qq`、`contact_douyin` 兼容列不属于需求3删除范围，不在本轮顺手清理。
+### 7.2 `official_channels_json` 目标结构
+
+目标数组恰好两项，固定顺序：
+
+```text
+[
+  { platform: 'qq',       account, qrCodeAssetId },
+  { platform: 'qq_group', account, qrCodeAssetId }
+]
+```
+
+约束：
+
+- platform 只允许 `qq | qq_group`；
+- 两项均必须存在且顺序固定；
+- account 与二维码完整性继续使用 contact 分区版本和 READY `contact_qr` 投影；
+- 邮箱不进入数组，继续使用 `contact_email`；
+- 公开 DTO 只返回两项完整渠道；
+- 管理端只显示两行；
+- `/about` 显示邮箱、QQ、QQ群；`/commission` 显示 QQ、QQ群。
+
+第一阶段删除/收缩：
+
+```text
+CONTACT_PLATFORMS: douyin
+CONTACT_PLATFORMS: xiaohongshu
+CONTACT_PLATFORMS: bilibili
+contact_douyin legacy column and readers
+三个平台的账号/二维码 JSON 项
+三个平台失去引用的 contact_qr 资产与派生
+```
+
+`contact_qq` 兼容列不在本轮强制删除；它可以作为迁移读取源，但新写入权威仍是两项 `official_channels_json`。
 
 ## 8. 领养状态迁移
 
@@ -427,6 +461,17 @@ PublicAdoptionListItem
 
 不包含 method、event、suit、owner、tags 或 design sheet as card。
 
+### 9.4 官方渠道
+
+```text
+PublicOfficialChannel
+  platform       qq | qq_group
+  account
+  qrCodeSources
+```
+
+不允许 `douyin | xiaohongshu | bilibili` 出现在公开或管理 DTO。
+
 ## 10. analytics
 
 第一阶段：
@@ -440,7 +485,7 @@ PublicAdoptionListItem
 - 可以新增 `commission_apply` page view；
 - 不记录提交成功业务事件、receipt、submission ID 或任何字段值。
 
-## 11. 第一阶段永久退役模型
+## 11. 第一阶段永久退役/收缩模型
 
 第一阶段最终 Schema 中消失：
 
@@ -454,6 +499,8 @@ asset_variants.usage = return-wall
 asset_variants.recipe_version = return-display-v1
 publication_operations.entity_type = RETURN_PHOTO
 analytics returns | return_character | updates
+contact platform = douyin | xiaohongshu | bilibili
+contact_douyin legacy column
 ```
 
 后续作品 contract 再删除：
@@ -469,7 +516,7 @@ event_name
 event_time
 ```
 
-这样满足立即退役，又避免把返图清理与全部作品重构强绑成一次停机。
+这样满足立即退役和联系渠道收缩，又避免把返图清理与全部作品重构强绑成一次停机。
 
 ## 12. 实施后回填
 
@@ -477,6 +524,7 @@ event_time
 - collection/owner context 实际字符串；
 - 实际索引和 CHECK；
 - 退役脱敏计数；
+- 三类取消平台账号/二维码引用和资产清理计数；
 - adoption 歧义状态人工确认数量；
 - 补齐 cover 数量；
 - DTO 与 route 文件路径；
