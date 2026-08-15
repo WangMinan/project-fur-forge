@@ -37,6 +37,7 @@ const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 
 const upload = useHeroAssetUpload({
   slot: props.orientation,
+  placement: props.placement,
   getHomeVersion: () => props.homeVersion,
   onAssetReady: (_slot, asset) => emit('uploaded', asset),
   onConflict: () => emit('conflict'),

@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm'
 import {
   check,
+  foreignKey,
   index,
   integer,
   primaryKey,
@@ -315,7 +316,7 @@ export const uploadSessions = sqliteTable('upload_sessions', {
   ),
   check(
     'upload_sessions_owner_id',
-    sql`length(trim(${table.ownerId})) > 0 AND (${table.ownerType} != 'site' OR ${table.ownerId} IN ('home', 'branding', 'contact'))`,
+    sql`length(trim(${table.ownerId})) > 0 AND (${table.ownerType} != 'site' OR ${table.ownerId} IN ('hero-home-landscape', 'hero-home-portrait', 'hero-commission-landscape', 'hero-commission-portrait', 'branding', 'contact'))`,
   ),
   check(
     'upload_sessions_owner_version',
@@ -323,7 +324,7 @@ export const uploadSessions = sqliteTable('upload_sessions', {
   ),
   check(
     'upload_sessions_media_role',
-    sql`(${table.ownerType} = 'work' AND ${table.mediaRole} IN ('design_sheet', 'studio_photo')) OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'home' AND ${table.mediaRole} IN ('home_hero_landscape', 'home_hero_portrait')) OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'branding' AND ${table.mediaRole} = 'watermark_logo') OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'contact' AND ${table.mediaRole} = 'contact_qr')`,
+    sql`(${table.ownerType} = 'work' AND ${table.mediaRole} IN ('design_sheet', 'studio_photo')) OR (${table.ownerType} = 'site' AND ${table.ownerId} IN ('hero-home-landscape', 'hero-commission-landscape') AND ${table.mediaRole} = 'home_hero_landscape') OR (${table.ownerType} = 'site' AND ${table.ownerId} IN ('hero-home-portrait', 'hero-commission-portrait') AND ${table.mediaRole} = 'home_hero_portrait') OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'branding' AND ${table.mediaRole} = 'watermark_logo') OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'contact' AND ${table.mediaRole} = 'contact_qr')`,
   ),
   check(
     'upload_sessions_private_key_relative',
@@ -692,6 +693,76 @@ export const siteHeroSlides = sqliteTable('site_hero_slides', {
     sql`${table.sortOrder} >= 0 AND (${table.enabled} = 0 OR ${table.sortOrder} <= 4)`,
   ),
   check('site_hero_slides_version_positive', sql`${table.version} > 0`),
+])
+
+/** R3-B expand: four collection rows are independent optimistic-lock domains. */
+export const siteHeroCollections = sqliteTable('site_hero_collections', {
+  placement: text('placement').notNull(),
+  orientation: text('orientation').notNull(),
+  version: integer('version').notNull().default(1),
+  ...timestampColumns(),
+}, table => [
+  primaryKey({ columns: [table.placement, table.orientation] }),
+  check(
+    'site_hero_collections_placement',
+    sql`${table.placement} IN ('home', 'commission')`,
+  ),
+  check(
+    'site_hero_collections_orientation',
+    sql`${table.orientation} IN ('landscape', 'portrait')`,
+  ),
+  check(
+    'site_hero_collections_version_positive',
+    sql`${table.version} > 0`,
+  ),
+])
+
+/** R3-B expand: one orientation-specific item, with no linked-work field. */
+export const siteHeroItems = sqliteTable('site_hero_items', {
+  id: text('id').primaryKey(),
+  placement: text('placement').notNull(),
+  orientation: text('orientation').notNull(),
+  assetId: text('asset_id').notNull()
+    .references(() => assets.id, { onDelete: 'restrict' }),
+  altText: text('alt_text').notNull(),
+  sortOrder: integer('sort_order').notNull(),
+  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
+  previewObjectKey: text('preview_object_key'),
+  previewExpiresAt: integer('preview_expires_at'),
+  version: integer('version').notNull().default(1),
+  ...timestampColumns(),
+}, table => [
+  foreignKey({
+    columns: [table.placement, table.orientation],
+    foreignColumns: [siteHeroCollections.placement, siteHeroCollections.orientation],
+  }).onDelete('restrict'),
+  uniqueIndex('site_hero_items_enabled_sort_unique')
+    .on(table.placement, table.orientation, table.sortOrder)
+    .where(sql`${table.enabled} = 1`),
+  index('site_hero_items_collection_idx')
+    .on(table.placement, table.orientation, table.enabled, table.sortOrder),
+  index('site_hero_items_asset_idx').on(table.assetId),
+  check(
+    'site_hero_items_placement',
+    sql`${table.placement} IN ('home', 'commission')`,
+  ),
+  check(
+    'site_hero_items_orientation',
+    sql`${table.orientation} IN ('landscape', 'portrait')`,
+  ),
+  check(
+    'site_hero_items_alt_nonempty',
+    sql`${table.altText} = trim(${table.altText}) AND length(${table.altText}) BETWEEN 1 AND 500`,
+  ),
+  check(
+    'site_hero_items_sort',
+    sql`${table.sortOrder} >= 0 AND (${table.enabled} = 0 OR ${table.sortOrder} <= 4)`,
+  ),
+  check(
+    'site_hero_items_preview_state',
+    sql`(${table.previewObjectKey} IS NULL AND ${table.previewExpiresAt} IS NULL) OR (${table.previewObjectKey} IS NOT NULL AND ${table.previewExpiresAt} IS NOT NULL)`,
+  ),
+  check('site_hero_items_version_positive', sql`${table.version} > 0`),
 ])
 
 export const watermarkOperations = sqliteTable('watermark_operations', {
