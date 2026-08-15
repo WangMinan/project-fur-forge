@@ -43,13 +43,3 @@ export function runR3StageABackupPruneCli(
     restoredDatabaseFile: values['restored-database'],
   })
 }
-
-if (import.meta.url === `file://${process.argv[1]?.replaceAll('\\', '/')}`) {
-  try {
-    process.stdout.write(`${JSON.stringify(runR3StageABackupPruneCli())}\n`)
-  }
-  catch (error) {
-    process.stderr.write(`${(error as Error).message}\n`)
-    process.exitCode = 1
-  }
-}
