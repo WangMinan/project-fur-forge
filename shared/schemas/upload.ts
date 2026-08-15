@@ -56,7 +56,14 @@ const workUploadOwnerSchema = z.object({
 
 const siteUploadOwnerSchema = z.object({
   type: z.literal('site'),
-  id: z.enum(['home', 'branding', 'contact']),
+  id: z.enum([
+    'hero-home-landscape',
+    'hero-home-portrait',
+    'hero-commission-landscape',
+    'hero-commission-portrait',
+    'branding',
+    'contact',
+  ]),
   expectedVersion: resourceVersionSchema,
 }).strict()
 
@@ -88,7 +95,8 @@ export const createUploadSessionRequestSchema = z.object({
     || input.mediaRole === 'studio_photo'
   const siteRoleMatches = input.owner.type === 'site'
     && (
-      (input.owner.id === 'home' && input.mediaRole.startsWith('home_hero_'))
+      (input.owner.id.endsWith('-landscape') && input.mediaRole === 'home_hero_landscape')
+      || (input.owner.id.endsWith('-portrait') && input.mediaRole === 'home_hero_portrait')
       || (input.owner.id === 'branding' && input.mediaRole === 'watermark_logo')
       || (input.owner.id === 'contact' && input.mediaRole === 'contact_qr')
     )

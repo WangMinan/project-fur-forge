@@ -46,6 +46,7 @@ interface HeroAssetUploadOptions {
   getHomeVersion: () => number | null
   onAssetReady: (slot: HeroSlot, asset: VerifiedAssetDto) => void
   onConflict: () => void
+  placement: 'home' | 'commission'
   slot: HeroSlot
 }
 
@@ -122,7 +123,7 @@ export function useHeroAssetUpload(options: HeroAssetUploadOptions) {
         body: {
           owner: {
             type: 'site',
-            id: 'home',
+            id: `hero-${options.placement}-${options.slot}`,
             expectedVersion: homeVersion,
           },
           mediaRole: SLOT_MEDIA_ROLE[options.slot],
