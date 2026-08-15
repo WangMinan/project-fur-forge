@@ -273,6 +273,8 @@ test "$(curl -sS -o /dev/null -w '%{http_code}' \
 
 ### 6.5 备份、恢复、升级与回滚
 
+需求3 R3-A 首发镜像是一次性例外：它含有会永久删除返图/动态表的 `0036_r3_a_contract.sql`，不得直接按本节普通升级流程备份后 migrate。生产 T07 必须改用 [`docs/DEPLOYMENT.md` 的 R3-A 一次性永久退役步骤](../../../../docs/DEPLOYMENT.md#41-需求3-r3-a-一次性永久退役)：停写、dry-run、用户强确认、对象/version/delete-marker/ESA 清理和不可达验证、Contract、服务验证、clean backup 真实恢复，最后才用受控 `r3-stage-a-prune-backups` 删除两个应用备份位置中的旧备份。外部 ECS/云盘快照仍由操作员在控制台确认。
+
 ```bash
 docker compose run --rm --no-deps app node ops/ops.mjs backup --output /app/backups/manual.db
 docker compose run --rm --no-deps app node ops/ops.mjs restore-verify --backup /app/backups/manual.db --output /tmp/verify.db
