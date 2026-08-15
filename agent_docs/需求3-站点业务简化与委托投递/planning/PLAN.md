@@ -1,7 +1,7 @@
 # 需求3 · 实施计划
 
 > **角色**：将需求3拆成可串行实施、可审查、可上线的发布单元。
-> **状态**：阶段 A 本地实施中；A1、A2 和 A3 清理工具已完成，A3 数据库 Contract 执行中。
+> **状态**：阶段 A 本地实施中；A1、A2 与 A3 代码/迁移已完成，A4 本地演练与独立复查执行中。
 > **修订**：永久退役提前为第一发布单元；增加 Hero collection version、歧义状态人工复核；OSS CORS 保持通配且不作门禁；官方渠道收缩为邮箱、QQ、QQ群。
 
 ## 1. 总路线
@@ -63,6 +63,8 @@ A 立即退役返图/动态并收缩联系渠道
 ### A3. 清理工具与数据库 contract
 
 > 2026-08-15：T03 已提供单一 `r3-a:cleanup` / 容器 `r3-stage-a-cleanup` 命令。默认 dry-run，只返回脱敏计数；正式执行要求 `--execute` 和强确认短语。成功后只在 `audit_logs` 写无 Key/PII 的 Contract-ready 标记，业务行仍保留给 T04 前向迁移处理。
+
+> 2026-08-15：T04 已新增前向迁移 `0036_r3_a_contract.sql`，在 DROP 前核验清理标记/净新库条件，删除三个退役表并重建 assets/upload/variants/publication/analytics/site-content 目标约束。
 
 - dry-run 精确盘点返图/动态及三类取消平台账号、二维码引用和失去引用的二维码资产；
 - 强确认永久删除返图/动态；

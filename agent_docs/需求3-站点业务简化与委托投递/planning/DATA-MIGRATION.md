@@ -20,7 +20,7 @@ R3-A 完成后，返图、动态和三类取消平台联系方式不得继续存
 
 ### 2.1 代码先行
 
-> 2026-08-15 T01～T02：已新增 `0035_r3_a_brand.sql`，只把空值或旧默认 slogan 更新为 `不只做小狗毛 | 只做海绵头`，不覆盖管理员已自定义值；返图/动态活动代码和三类退役渠道活动契约已删除。旧 SQLite 五槽 CHECK 会拒绝两槽写入，退役/渠道持久 Contract 仍属于 T04，清理前不得执行。
+> 2026-08-15 T01～T04：`0035_r3_a_brand.sql` 更新旧默认 slogan；`0036_r3_a_contract.sql` 在对象清理停止点之后删除退役表/行和五槽 CHECK，重建两渠道及媒体/发布/分析目标约束。两个文件均为前向迁移，没有改写历史迁移。
 
 在删除数据库前，新镜像必须已：
 
@@ -111,6 +111,8 @@ pnpm r3-a:cleanup -- --environment-prefix prod/ --execute --confirm "DELETE R3-A
 T03 工具仅在对象 versions/delete markers 全部验证为零且 ESA purge 完成后，向 `audit_logs` 写入无内容、无 Key、无 PII 的 `R3_STAGE_A_OBJECT_CLEANUP/SUCCESS` 标记。T04 Contract 对复杂旧库必须先验证该标记；工具失败或仅 dry-run 不产生标记。
 
 ### 2.5 R3-A 数据库 contract
+
+T04 实际文件为 `server/database/migrations/0036_r3_a_contract.sql`。复杂旧库必须有 `R3_STAGE_A_OBJECT_CLEANUP/SUCCESS` 标记；只含历史默认退役账号、不含退役二维码/媒体/业务行的新库可直接收缩。迁移重入时 `applied=0`。
 
 第一阶段重建受影响表并删除：
 

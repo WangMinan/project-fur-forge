@@ -317,7 +317,7 @@ describe('SQLite foundation', () => {
         question: '邮件估价咨询可以按什么格式填写？',
         answer: expect.stringContaining('角色名、委托装型、身高/体型、设定图、希望实现的细节、期望时间和其它说明'),
       })
-      expect(siteContent.aboutStudioFacts).toBe('有点小狗工作室制作全装和半装兽装，并在本站展示已完成的作品与返图。')
+      expect(siteContent.aboutStudioFacts).toBe('有点小狗工作室制作全装和半装兽装，并在本站展示已完成的作品。')
       expect(siteContent.basicTerms).toContain('著作权归有点小狗工作室')
       expect(siteContent.basicTerms).toContain('签收之日起一年')
       expect(siteContent.privacyPolicy).toContain('不提供访客账号')
@@ -327,10 +327,7 @@ describe('SQLite foundation', () => {
       expect(siteContent.contactAntiScam).toContain('另一条已公布渠道核实')
       expect(JSON.parse(siteContent.officialChannelsJson)).toEqual([
         { platform: 'qq', account: '3114559925', qrCodeAssetId: null },
-        { platform: 'douyin', account: 'to3114559925', qrCodeAssetId: null },
         { platform: 'qq_group', account: null, qrCodeAssetId: null },
-        { platform: 'xiaohongshu', account: null, qrCodeAssetId: null },
-        { platform: 'bilibili', account: null, qrCodeAssetId: null },
       ])
       expect(database.sqlite.prepare(`
         SELECT kind, tone, label, href
@@ -355,7 +352,7 @@ describe('SQLite foundation', () => {
     }
   })
 
-  it('migrates legacy QQ and Douyin into fixed official channels', async () => {
+  it('contracts legacy QQ and Douyin into the retained QQ channel', async () => {
     const databaseFile = temporaryDatabase()
     await migrateDatabase(databaseFile, {
       migrationsFolder: migrationsBeforeContactChannels(databaseFile),
@@ -381,21 +378,16 @@ describe('SQLite foundation', () => {
     const upgraded = openDatabase(databaseFile)
     try {
       const row = upgraded.sqlite.prepare(`
-        SELECT contact_qq AS qq, contact_douyin AS douyin,
-               official_channels_json AS channels
+        SELECT contact_qq AS qq, official_channels_json AS channels
         FROM site_content WHERE id = 'site'
-      `).get() as { channels: string, douyin: string, qq: string }
-      expect({ qq: row.qq, douyin: row.douyin }).toEqual({
-        qq: '123456789',
-        douyin: 'legacy.douyin',
-      })
+      `).get() as { channels: string, qq: string }
+      expect(row.qq).toBe('123456789')
       expect(JSON.parse(row.channels)).toEqual([
         { platform: 'qq', account: '123456789', qrCodeAssetId: null },
-        { platform: 'douyin', account: 'legacy.douyin', qrCodeAssetId: null },
         { platform: 'qq_group', account: null, qrCodeAssetId: null },
-        { platform: 'xiaohongshu', account: null, qrCodeAssetId: null },
-        { platform: 'bilibili', account: null, qrCodeAssetId: null },
       ])
+      expect((upgraded.sqlite.pragma('table_info(site_content)') as { name: string }[])
+        .some(column => column.name === 'contact_douyin')).toBe(false)
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
     }
     finally {
@@ -453,7 +445,7 @@ describe('SQLite foundation', () => {
     }
   })
 
-  it('adds the independent updates table to an existing database', async () => {
+  it('preserves unrelated content while historical updates is later contracted', async () => {
     const databaseFile = temporaryDatabase()
     await migrateDatabase(databaseFile, {
       migrationsFolder: migrationsBeforeUpdates(databaseFile),
@@ -482,7 +474,7 @@ describe('SQLite foundation', () => {
       expect(upgraded.sqlite.prepare(`
         SELECT count(*) FROM sqlite_master
         WHERE type = 'table' AND name = 'updates'
-      `).pluck().get()).toBe(1)
+      `).pluck().get()).toBe(0)
       expect(upgraded.sqlite.prepare(`
         SELECT contact_email FROM site_content WHERE id = 'site'
       `).pluck().get()).toBe('kept@example.test')
@@ -494,7 +486,7 @@ describe('SQLite foundation', () => {
     }
   })
 
-  it('extends the analytics route whitelist without losing existing events', async () => {
+  it('preserves existing analytics while the updates route is later contracted', async () => {
     const databaseFile = temporaryDatabase()
     await migrateDatabase(databaseFile, {
       migrationsFolder: migrationsBeforeUpdatesAnalytics(databaseFile),
@@ -527,15 +519,16 @@ describe('SQLite foundation', () => {
       expect(upgraded.sqlite.prepare(`
         SELECT route_key FROM analytics_events ORDER BY id
       `).pluck().all()).toEqual(['home'])
-      upgraded.sqlite.prepare(`
+      expect(() => upgraded.sqlite.prepare(`
         INSERT INTO analytics_events (
           occurred_at, event_type, route_key,
           entity_type, entity_id, action_key, session_hmac
         ) VALUES (?, 'page_view', 'updates', NULL, NULL, NULL, ?)
-      `).run(Date.UTC(2026, 7, 12) + 1, 'b'.repeat(64))
+      `).run(Date.UTC(2026, 7, 12) + 1, 'b'.repeat(64)))
+        .toThrow(/analytics_events_route_key/u)
       expect(upgraded.sqlite.prepare(`
         SELECT route_key FROM analytics_events ORDER BY id
-      `).pluck().all()).toEqual(['home', 'updates'])
+      `).pluck().all()).toEqual(['home'])
       expect(upgraded.sqlite.pragma('foreign_key_check')).toEqual([])
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
       expect(upgraded.sqlite.prepare(`
@@ -615,8 +608,8 @@ describe('SQLite foundation', () => {
       expect(row.privacyPolicy).not.toContain('未来如新增')
       expect(row.privacyVersion).toBe(before.privacy + 1)
       expect(row.contactAntiScam).toBe('管理员自定义防诈骗提醒')
-      expect(row.contactVersion).toBe(before.contact)
-      expect(row.version).toBe(before.version + 3)
+      expect(row.contactVersion).toBe(before.contact + 1)
+      expect(row.version).toBe(before.version + 5)
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
     }
     finally {
@@ -672,7 +665,7 @@ describe('SQLite foundation', () => {
         WHERE type = 'trigger'
           AND (sql LIKE '%assets%' OR sql LIKE '%upload_sessions%')
         ORDER BY name
-      `).pluck().all()).toEqual(triggerNames)
+      `).pluck().all()).toEqual(triggerNames.filter(name => !name.startsWith('return_photos_')))
       expect(() => upgraded.sqlite.prepare(`
         INSERT INTO assets (
           id, role, status, private_object_key, sha256, byte_size,

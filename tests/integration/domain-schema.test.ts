@@ -310,14 +310,10 @@ describe('P0 schema boundary', () => {
       'audit_logs',
       'business_statuses',
       'publication_operations',
-      // T35-F1 返图：设定 + 它的多张返图两级，不引入第三级相册层。
-      'return_characters',
-      'return_photos',
       'site_branding',
       'site_content',
       'site_display_reconcile_operations',
       'site_hero_slides',
-      'updates',
       'upload_sessions',
       'users',
       'watermark_operations',
@@ -450,17 +446,8 @@ describe('P0 schema boundary', () => {
         'adoption-work', 'studio-primary-second', 'studio_photo', 1, 1
       )
     `).run()).toThrow(/UNIQUE constraint failed/)
-    // T35：return_photo 是合法媒体角色，但它属于返图关系，
-    // 不得进入 work_assets 冒充设定图或出厂照。
-    insertAsset('return', 'return_photo')
-    expect(() => sqlite.prepare(`
-      INSERT INTO work_assets (work_id, asset_id, role, position)
-      VALUES ('adoption-work', 'return', 'studio_photo', 2)
-    `).run()).toThrow(/work asset role is invalid/)
-    expect(() => sqlite.prepare(`
-      INSERT INTO work_assets (work_id, asset_id, role, position)
-      VALUES ('adoption-work', 'return', 'return_photo', 2)
-    `).run()).toThrow(/work_assets_role/)
+    expect(() => insertAsset('return', 'return_photo'))
+      .toThrow(/assets_role/)
     expect(() => insertAsset('wrong-landscape', 'home_hero_landscape', {
       width: 900,
       height: 1600,
@@ -939,9 +926,12 @@ describe('P0 schema boundary', () => {
   })
 
   it('constrains independent site statuses and restricted content columns', () => {
-    expect(sqlite.prepare(`
-      SELECT contact_douyin FROM site_content WHERE id = 'site'
-    `).pluck().get()).toBe('to3114559925')
+    expect((sqlite.pragma('table_info(site_content)') as { name: string }[])
+      .some(column => column.name === 'contact_douyin')).toBe(false)
+    expect(JSON.parse(sqlite.prepare(`
+      SELECT official_channels_json FROM site_content WHERE id = 'site'
+    `).pluck().get() as string).map((channel: { platform: string }) => channel.platform))
+      .toEqual(['qq', 'qq_group'])
     expect(() => sqlite.prepare(`
       UPDATE site_content SET official_channels_json = '[]'
       WHERE id = 'site'
