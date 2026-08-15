@@ -2,18 +2,19 @@
 
 > **角色**：需求3实现和评审的产品、数据、媒体、隐私与验收真理来源。
 > **状态**：用户决策已锁定；代码尚未开始。
-> **基线**：继承需求1安全/媒体/部署基线和需求2仍适用的官方渠道、二维码、名称搜索。
-> **复查修订**：2026-08-15，修正实施顺序、Hero 并发域、领养状态迁移、公开上传 CORS 和文案删除边界。
+> **基线**：继承需求1安全/媒体/部署基线和需求2仍适用的二维码媒体链、名称搜索。
+> **修订**：2026-08-15，修正实施顺序、Hero 并发域、领养状态迁移、文案删除边界；按用户追加口径保留 OSS CORS 通配并将官方渠道收缩为邮箱、QQ、QQ群。
 
 ## 1. 目标
 
 1. 立即永久退役返图墙和最新动态，不让其数据继续存活到本轮末尾。
-2. 将英文品牌名纠正为 `DITE DOG`。
-3. 以图片为主重做首页 Hero、作品和领养展示。
-4. 增强公开导航、页面切换、区块和卡片动效。
-5. 横版/竖版 Hero 分别维护。
-6. 新增私有委托申请和后台处理流程。
-7. 删除不再维护的作品、领养和 FAQ 字段，同时保留未被明确授权删除的联系文案。
+2. 立即停止维护抖音、小红书和 Bilibili 联系方式，只保留邮箱、QQ、QQ群。
+3. 将英文品牌名纠正为 `DITE DOG`。
+4. 以图片为主重做首页 Hero、作品和领养展示。
+5. 增强公开导航、页面切换、区块和卡片动效。
+6. 横版/竖版 Hero 分别维护。
+7. 新增私有委托申请和后台处理流程。
+8. 删除不再维护的作品、领养和 FAQ 字段，同时保留未被明确授权删除的联系文案。
 
 ## 2. 非目标
 
@@ -23,9 +24,12 @@
 - 多管理员、审批流、通用 CMS、富文本；
 - 第三方验证码；
 - 返图/动态只读归档或搜索引擎兼容跳转；
-- 自动从其它图片裁切领养横版头图。
+- 自动从其它图片裁切领养横版头图；
+- 把 OSS CORS 收紧为精确 Origin 或以禁止 `*` 作为安全门禁。
 
-## 3. 品牌与固定文案
+## 3. 品牌、固定文案与官方联系方式
+
+### 3.1 品牌文案
 
 - 公开导航短品牌：`有点小狗`。
 - 首页完整标题：`有点小狗工作室`。
@@ -33,6 +37,35 @@
 - 首页 slogan：`不只做小狗毛 | 只做海绵头`。
 - 首页业务区标题：`委托与领养`。
 - 代码常量、SEO、JSON-LD、可见文案、测试以及带文字的 SVG/PNG/OG 资产必须审计；当前产品不得显示 `DITE DOG FURSUIT`。历史 dated note 可以保留并注明当时错误。
+
+### 3.2 官方联系方式
+
+当前正式维护范围固定为：
+
+```text
+contact_email
+qq
+qq_group
+```
+
+其中邮箱继续独立保存；`official_channels_json` 只保存 `qq` 与 `qq_group`，固定顺序为 QQ、QQ群。
+
+以下平台从当前产品中取消：
+
+```text
+douyin
+xiaohongshu
+bilibili
+```
+
+要求：
+
+- 管理端不再显示三个平台的账号或二维码槽位；
+- `/about`、`/commission` 和公开 DTO 不再返回或展示三个平台；
+- `CONTACT_PLATFORMS`、标签、Logo 路径、Schema、测试和 fixture 收缩为 `qq | qq_group`；
+- 三个平台的旧账号值不迁移到备注、隐藏字段或兼容公开投影；
+- 三个平台的二维码引用移除后，确认无其它引用的 `contact_qr` 私有源图、preprocess、公开派生和 ESA 缓存按既有媒体清理流程删除；
+- 邮箱、QQ、QQ群继续作为完整官方联系面。
 
 ## 4. 路由
 
@@ -77,9 +110,9 @@
 
 不做任何重定向，移除后返回普通 404。
 
-## 5. 返图墙与最新动态立即永久退役
+## 5. 第一发布单元：返图、动态与联系渠道收缩
 
-### 5.1 第一实施阶段完成定义
+### 5.1 返图与动态立即退役
 
 必须在其它 Hero、作品和委托新功能之前完成：
 
@@ -93,15 +126,27 @@
 - OSS 历史版本/delete marker（若启用）删除；
 - ESA 精确 URL purge 并验证对象不可达。
 
-### 5.2 备份顺序
+### 5.2 联系渠道收缩
 
-- 不为退役内容创建新的长期导出或归档。
+同一发布单元完成：
+
+- `official_channels_json` 从五平台迁移为固定两平台；
+- 只保留 `qq` 与 `qq_group` 的账号和二维码引用；
+- `douyin`、`xiaohongshu`、`bilibili` 数据不导出、不归档、不转入其它字段；
+- 删除旧 `contact_douyin` 兼容列及读写者；`contact_qq` 兼容列不在本轮强制删除；
+- 删除三平台专用枚举、Logo 资源、公开/管理组件分支和测试；
+- 对三平台失去引用的二维码资产执行安全孤儿清理；
+- `/about` 最终只显示邮箱、QQ、QQ群；`/commission` 直接显示 QQ、QQ群。
+
+### 5.3 备份顺序
+
+- 不为退役内容或取消平台创建新的长期导出或归档。
 - 现有应用管理备份只能在维护窗口内作为受限恢复材料暂存。
-- 退役数据库 contract 和服务验证成功后，先创建并恢复验证新的净化备份，再删除仍含退役数据的旧应用备份。
+- 数据库 contract 和服务验证成功后，先创建并恢复验证新的净化备份，再删除仍含退役数据的旧应用备份。
 - 外部 ECS 快照、云盘快照或第三方备份由操作员单独确认，不由应用脚本假设其位置或权限。
 - 最终证据只保留脱敏计数、总字节、状态和时间，不保留内容或完整 Object Key。
 
-用户已授权本地和生产执行不可恢复删除；完成后不提供退役数据恢复路径。
+用户已授权本地和生产执行返图/动态不可恢复删除；完成后不提供退役数据恢复路径。
 
 ## 6. 公开动效
 
@@ -265,7 +310,7 @@ Expand 阶段 `adoption_status` 允许暂时为空。自动迁移只处理语义
 
 保留营业状态、代表图、简短介绍、制作范围、人工估价、服务条款。首要行动进入 `/commission/apply`；直接展示 QQ 与 QQ群二维码，并提供 `/about#contact`。
 
-邮箱不再是委托页主行动，但仍可在关于页作为备用官方渠道。
+邮箱不再是委托页主行动，但仍可在关于页作为备用官方渠道。抖音、小红书和 Bilibili 不在委托页或关于页显示。
 
 ### 10.2 `/commission/apply`
 
@@ -292,9 +337,10 @@ Expand 阶段 `adoption_status` 允许暂时为空。自动迁移只处理语义
 要求：
 
 - 独立上传会话，TTL ≤ 10 分钟，一次消费；
-- 精确 Origin、Content-Type、body size、token、限流和蜜罐；
+- 应用 API 精确校验 Origin、Content-Type、body size、token、限流和蜜罐；
 - MD5、SHA-256、MIME、字节、尺寸和图片解码验证；
-- 生产 CORS 精确允许 public/admin Origin 和所需 PUT headers，不允许 `*`；
+- OSS Bucket CORS 继续保持现网 `AllowedOrigin=*`，不要求改成 public/admin 精确 Origin，不把 wildcard 作为验收失败；
+- 条件 PUT 不使用浏览器 Cookie 或 credentialed CORS；
 - 私有设定图不生成 PUBLIC variant、不进 ESA；
 - 过期/失败/未消费对象可清理；
 - PII 不进 URL、localStorage、analytics、普通日志或错误响应。
@@ -321,7 +367,9 @@ Expand 阶段 `adoption_status` 允许暂时为空。自动迁移只处理语义
 - `commission_intro`
 - `commission_estimate_note`
 - `commission_email_action`
-- about、service、privacy、contact、官方渠道和防诈骗内容
+- about、service、privacy、contact、防诈骗内容
+- `contact_email`
+- QQ 与 QQ群账号和二维码
 
 `commission_email_action` 不在 `/commission` 作为主行动；实现可以仅在关于/联系语境保留备用邮件说明。本轮不得因清理 FAQ 顺带删除该字段或其真实内容。
 
@@ -330,6 +378,7 @@ Expand 阶段 `adoption_status` 允许暂时为空。自动迁移只处理语义
 目标模型见 `../models/README.md`。关键原则：
 
 - Hero 有四个 collection 并发域；
+- `official_channels_json` 只允许固定两项 `qq | qq_group`；
 - 普通作品公开 DTO 不返回内部 purpose、价格、adoption 状态或旧字段；
 - 领养 DTO 独立返回状态、价格和 cover；
 - 委托列表 DTO 不返回手机号、QQ、体型和图片；
@@ -340,7 +389,7 @@ Expand 阶段 `adoption_status` 允许暂时为空。自动迁移只处理语义
 
 迁移发布单元：
 
-1. **立即退役 release**：删除返图/动态代码、数据、媒体和备份残留；
+1. **立即退役 release**：删除返图/动态代码、数据、媒体和备份残留，同时把官方渠道收缩为邮箱、QQ、QQ群；
 2. **Expand release**：Hero collections/items、adoption status/cover、commission tables/upload；
 3. **Migrate**：Hero 拆分、状态人工确认、领养补图、页面切换；
 4. **Works contract**：删除作品旧列和 tags；
@@ -352,14 +401,22 @@ Expand 阶段 `adoption_status` 允许暂时为空。自动迁移只处理语义
 
 用户已确认的产品问题全部关闭。技术实现只有在改变产品行为、删除范围、安全、隐私、Hero 对齐或新增第三方服务时才重新升级。
 
+已答补充：
+
+- OSS CORS：保持当前通配 `*`，不作为门禁；
+- 联系方式：只维护邮箱、QQ、QQ群，删除抖音、小红书、Bilibili 当前契约。
+
 ## 15. 验收
 
-### 15.1 立即退役
+### 15.1 第一发布单元
 
 - [ ] 返图/动态路由 404，导航、首页、sitemap、管理端无入口。
 - [ ] 表、行、私有原图、派生、OSS versions 和 ESA cache 已删除。
+- [ ] `CONTACT_PLATFORMS` 与 `official_channels_json` 只含 `qq | qq_group`。
+- [ ] `/about` 只显示邮箱、QQ、QQ群；三类取消平台无管理槽位、公开卡片、DTO 或测试入口。
+- [ ] 三类取消平台失去引用的二维码资产已安全清理。
 - [ ] 净化备份完成恢复验证，旧应用管理备份随后删除。
-- [ ] 代码和最终数据库不能再创建 return/update 资源。
+- [ ] 代码和最终数据库不能再创建 return/update 资源或三类取消平台记录。
 
 ### 15.2 公开体验
 
@@ -380,7 +437,8 @@ Expand 阶段 `adoption_status` 允许暂时为空。自动迁移只处理语义
 ### 15.4 委托与隐私
 
 - [ ] 一张图端到端上传、完成、消费、提交成功。
-- [ ] CORS、Origin、限流、蜜罐、过期、重复消费和清理有覆盖。
+- [ ] 应用层 Origin、限流、蜜罐、过期、重复消费和清理有覆盖。
+- [ ] OSS CORS 仍为 `AllowedOrigin=*`，且不设置精确 Origin/禁止 wildcard 门禁。
 - [ ] 管理列表、详情、状态、备注和 409 有覆盖。
 - [ ] PII 不进入公开面、URL、analytics、普通日志和错误。
 - [ ] FAQ 已删除，`commission_email_action` 未被误删。

@@ -1,15 +1,18 @@
 # 当前状态：需求3 · 站点业务简化与委托投递
 
 > **最后校准**：2026-08-15。
-> **当前阶段**：文档复查完成，工程尚未开始。
+> **当前阶段**：文档复查与本轮口径修订完成，工程尚未开始。
 > **任务权威**：[`implementation/TASKS.md`](./implementation/TASKS.md)。
-> **当前 main 基线**：文档 PR 已合入；本次复查已通过一个 main commit 修正文档，不改变应用代码、数据库、OSS 或生产数据。
+> **当前 main 基线**：需求3文档已合入；本轮只同步 CORS 与联系方式决策，不改变应用代码、数据库、OSS 或生产数据。
 
 ## 1. 已锁定产品结论
 
 - 英文品牌名：`DITE DOG`。
 - slogan：`不只做小狗毛 | 只做海绵头`。
 - 返图墙/最新动态永久删除，且必须作为第一实施发布单元立即推进。
+- 官方联系方式只维护邮箱、QQ、QQ群；抖音、小红书和 Bilibili 不再维护。
+- OSS Bucket CORS 继续保持当前通配 `*`；精确 Origin、禁止 wildcard 或 CORS 收紧不作为实现/验收/生产门禁。
+- 匿名委托 API 仍校验应用层 Origin、token、TTL、限流、蜜罐和一次性消费。
 - 公开端增加动效，保留 reduced-motion。
 - 桌面 Hero 中文居中、英文/slogan 同行左右；移动整体左对齐下移。
 - 首页/委托横竖 Hero 四集合独立。
@@ -21,23 +24,29 @@
 - FAQ 完整删除；`commission_email_action` 保留但不作委托页主行动。
 - 不接 SMTP、短信、用户账号、公开查询或自动建作品。
 
-## 2. 本次文档复查发现并修正
+## 2. 文档复查与后续修订
 
-1. **退役顺序错误**：原计划把返图/动态删除拖到本轮末尾，违背“立即永久删除”；现改为第一发布单元。
-2. **Hero 并发域缺失**：原模型有 collection DTO version，却没有持久 collection；现新增四个 collection version 和上传归属。
-3. **领养状态映射过于激进**：原计划把所有非 delivered 状态默认为 available；现仅自动映射 available/delivered，其余人工确认。
-4. **匿名上传部署缺口**：原计划未明确私有 Bucket 对公开 Origin 的 CORS；现纳入 Schema、任务、preflight 和生产门禁。
-5. **文案删除越界**：原计划把 `commission_email_action` 与 FAQ 一起物理删除；现只删除 FAQ，邮件说明保留为备用。
-6. **媒体 usage 漂移**：原文档使用不存在的 `work-detail`；现沿用当前 `detail`。
-7. **备份顺序风险**：原顺序可能在 clean backup 验证前删除旧备份；现改为净化备份恢复成功后再删旧应用备份。
-8. **无关清理越界**：旧 contact 兼容列不再纳入需求3删除。
+2026-08-15 首轮合入后复查修正：
+
+1. **退役顺序错误**：返图/动态删除提前为第一发布单元。
+2. **Hero 并发域缺失**：新增四个 collection version 和上传归属。
+3. **领养状态映射过于激进**：仅自动映射 available/delivered，其余人工确认。
+4. **文案删除越界**：只删除 FAQ，保留 `commission_email_action` 作为备用说明。
+5. **媒体 usage 漂移**：沿用当前 `detail`。
+6. **备份顺序风险**：净化备份恢复成功后再删旧应用备份。
+7. **无关清理越界**：不顺手删除未获授权的数据。
+
+用户本轮追加并覆盖首轮复查中的两项判断：
+
+8. **OSS CORS**：现网 OSS CORS 均为通配，继续保持 `AllowedOrigin=*`；不要求收紧为 public/admin 精确 Origin，也不把 CORS 配置作为门禁。
+9. **官方渠道收缩**：仅保留邮箱、QQ、QQ群；`douyin`、`xiaohongshu`、`bilibili` 从当前模型、管理端、公开端和数据迁移目标中移除。
 
 ## 3. 阶段状态
 
 | 阶段 | 状态 | 门禁 |
 | --- | --- | --- |
 | GATE-00 文档与决策 | 已完成 | — |
-| A 立即退役返图/动态 | 未开始 | GATE-A |
+| A 立即退役返图/动态并收缩联系渠道 | 未开始 | GATE-A |
 | B Expand 新模型与安全 | 未开始 | GATE-B |
 | C 动效与 Hero | 未开始 | GATE-C |
 | D 作品与领养 | 未开始 | GATE-D |
@@ -62,11 +71,15 @@
 
 `preparing/scheduled/in_production/event_sale/NULL` 不能自动变 available，必须景宸确认。
 
-### 4.5 公开直传 CORS
+### 4.5 OSS CORS 与应用 Origin
 
-私有 Bucket 当前主要服务管理端上传；新增 public Origin 前必须收紧 CORS、签名 headers 和 live probe，不能使用 wildcard 作为正式方案。
+OSS CORS 通配是用户确认的现状和目标，不是风险 finding，也不是门禁。实现风险在于匿名 API 自身的 Origin/token/TTL/限流与签名 PUT 校验，不能误把 CORS `*` 当成取消应用安全校验的理由。
 
-### 4.6 委托 PII
+### 4.6 联系渠道迁移
+
+当前 `official_channels_json`、平台常量和二维码管理仍按五平台实现。第一发布单元必须安全迁移为固定 `qq | qq_group`，保留邮箱，并清理三类退役平台失去引用的二维码资产，避免后台和公开 DTO继续携带僵尸槽位。
+
+### 4.7 委托 PII
 
 手机号、QQ、体型和图片只能进入认证管理详情；日志/URL/analytics/错误均禁止。
 

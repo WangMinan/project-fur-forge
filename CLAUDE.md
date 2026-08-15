@@ -28,7 +28,7 @@
 8. `implementation/TASKS.md`
 9. `implementation/EXECUTION_ROUTING.md`
 
-需求2仍是官方渠道、二维码和名称搜索的实现依据；其返图、FAQ、最新动态和旧产品行为已被需求3明确覆盖。
+需求2仍是二维码上传/公开派生和名称搜索的实现依据；其五平台列表、返图、FAQ、最新动态和其它旧产品行为已被需求3明确覆盖。当前官方联系方式只维护邮箱、QQ 和 QQ群。
 
 权威顺序：SPEC 定产品契约；models 定目标模型；PLAN/DATA-MIGRATION 定顺序和停止点；TASKS 定勾选；STATE 定当前事实。聊天摘要、dated notes、旧 Review 和历史 commit 不能覆盖活文档。
 
@@ -45,7 +45,7 @@
 - 首页/委托×横/竖四个集合独立，集合级 version、排序、启停和上传归属互不干扰。
 - 首页固定 10 秒轮播，保留暂停、hidden pause 和 reduced-motion。
 
-### 2.2 第一阶段立即退役
+### 2.2 第一阶段立即退役与联系渠道收缩
 
 需求3第一发布单元必须永久删除：
 
@@ -55,6 +55,13 @@
 - private originals/preprocess/preview、public variants、pending objects；
 - OSS versions/delete markers（若启用）和 ESA cache；
 - clean backup 验证后删除旧应用管理备份。
+
+同一发布单元把官方渠道收缩为：
+
+- 邮箱：独立保留；
+- `qq`：保留账号和二维码；
+- `qq_group`：保留账号和二维码；
+- `douyin`、`xiaohongshu`、`bilibili`：从枚举、Schema、管理端、公开端和持久数据中移除；其失去引用的二维码资产按现有媒体清理规则删除。
 
 不得把退役拖到 Hero、作品或委托完成后。外部 ECS/云盘快照必须由操作员确认，不能虚报。
 
@@ -75,9 +82,10 @@
 - 不接 SMTP、短信、公开查询、自动建作品。
 - FAQ JSON/version/UI/API/test 全部删除。
 - `commission_email_action` 保留为备用邮件说明，不作 `/commission` 主 CTA，不得顺手物理删除。
+- 公开联系只展示邮箱、QQ 和 QQ群；不再维护抖音、小红书和 Bilibili。
 - 匿名上传使用独立 `commission_upload_sessions`，状态沿用大写状态机惯例。
 - 私有设定图无 PUBLIC variant、无 ESA、无水印。
-- 私有 Bucket CORS 精确允许 public/admin Origin；production 不得 wildcard。
+- OSS Bucket CORS 继续保持当前 `AllowedOrigin=*`；不得把“收紧为精确 Origin”或“禁止 wildcard”作为实现、CI、验收或生产门禁。应用自己的匿名 API 仍必须校验请求 Origin、token、TTL、限流和蜜罐。
 - PII 不进入公开 DTO、HTML、URL、localStorage、analytics、普通日志、错误或真实 fixture。
 
 ## 3. Git 与写入
@@ -118,11 +126,13 @@ pnpm exec playwright test tests/e2e/admin-home.spec.ts tests/e2e/public-home.spe
 按风险执行：
 
 - 常规代码：lint/typecheck/相关 unit；
-- Schema/API/migration/CORS：相关 integration；
+- Schema/API/migration/匿名上传：相关 integration；
 - Nuxt route/runtime：production build；
 - 媒体/发布/恢复/永久删除：完整相关套件；
 - UI：E2E + 真实浏览器；
 - R3-A 和最终发布：verify、content guard、independent review。
+
+OSS CORS 的 `AllowedOrigin=*` 是已确认运维现状，不设置“必须改为精确 Origin”的测试。端到端上传仍需证明签名 PUT、对象校验和应用层 Origin 防护可用。
 
 ## 5. 浏览器与 Host
 
@@ -141,8 +151,9 @@ pnpm dev --host 0.0.0.0 --port 3000
 ## 6. 媒体、安全与生产
 
 - 私有源图与公开派生图分离；公开只消费 ESA HTTPS READY variants。
-- 服务端 OSS Endpoint、浏览器上传 Origin、ESA 回源各自配置，不能混用。
+- 服务端 OSS Endpoint、浏览器上传地址、ESA 回源各自配置，不能混用。
 - 条件 PUT 使用 `OSS_UPLOAD_BASE_URL`；服务端 SDK 使用 `OSS_ENDPOINT`。
+- OSS CORS 继续使用通配 `*`；安全边界依赖私有 Bucket、短时条件 PUT、不可预测对象 Key、摘要校验和应用 API Origin 校验，而不是把 CORS 收紧作为发布条件。
 - production 环境由 `APP_ENV` 判定。
 - 下架立即移除公开查询并对精确 URL purge。
 - `.env*`、runtime schema、tests、部署文档同步；不输出 Secret。

@@ -11,7 +11,8 @@
 - changed files、migrations、ops scripts；
 - unit/integration/E2E/build/verify；
 - R3-A 本地 destructive drill；
-- CORS/live probe；
+- 联系渠道迁移与取消平台 QR 清理证据；
+- 签名 PUT 与应用 API Origin/安全测试；
 - production runbook。
 
 ## 2. 结论
@@ -24,7 +25,7 @@
 - `PASS WITH USER FOLLOW-UP`
 - `NOT PASS`
 
-用户 follow-up 不能代替代码、迁移、安全、CORS、PII 或对象删除审查。
+用户 follow-up 不能代替代码、迁移、安全、PII 或对象删除审查。OSS CORS `AllowedOrigin=*` 是用户明确锁定的配置，不得因未收紧为精确 Origin而判定失败。
 
 ## 3. R3-A focused review
 
@@ -35,20 +36,28 @@
 - [ ] 对象删除失败会停止在 contract 前；
 - [ ] updates/return tables 与所有 return enum 最终消失；
 - [ ] 旧路由 404；
+- [ ] `CONTACT_PLATFORMS` 和 `official_channels_json` 只含 `qq | qq_group`；
+- [ ] 邮箱独立保留；
+- [ ] 抖音、小红书、Bilibili 的管理槽位、公开卡片、DTO、Schema、Logo 和测试已删除；
+- [ ] 三类取消平台无其它引用的 QR 私有/派生对象和 ESA cache 已清理；
+- [ ] `contact_douyin` 已删除，`contact_qq` 未被越界删除；
 - [ ] clean backup restore 成功后才删旧应用备份；
 - [ ] 外部快照只由操作员确认，不虚报；
-- [ ] evidence 不含内容或完整 Key；
+- [ ] evidence 不含内容、账号值或完整 Key；
 - [ ] 重复执行安全；
 - [ ] latest SHA CI 通过。
 
 ## 4. 最终 Review
 
-### 4.1 文档与品牌
+### 4.1 文档、品牌与联系面
 
 - [ ] foundation/SPEC/models/design/PLAN/DATA-MIGRATION/TASKS/STATE/CLAUDE 一致；
 - [ ] 当前产品只用 `DITE DOG`；
 - [ ] 带文字静态资产已审计；
-- [ ] slogan 与“委托与领养”准确。
+- [ ] slogan 与“委托与领养”准确；
+- [ ] `/about` 只显示邮箱、QQ、QQ群；
+- [ ] `/commission` 直接显示 QQ、QQ群，邮箱只作备用；
+- [ ] 抖音、小红书、Bilibili 不再可配置、投影或渲染。
 
 ### 4.2 Hero
 
@@ -72,12 +81,13 @@
 - [ ] design sheet 0..1、optional、不是列表图/门禁；
 - [ ] usage 沿用 `detail`，无平行 `work-detail`。
 
-### 4.4 Commission/CORS/PII
+### 4.4 Commission/API Origin/PII
 
 - [ ] 匿名上传未放宽 admin upload session；
-- [ ] Origin/body/Content-Type/token/TTL/MD5/SHA/MIME/尺寸/限流/蜜罐；
-- [ ] private Bucket CORS 精确允许 public/admin Origin，无 wildcard；
-- [ ] preflight/live probe；
+- [ ] API Origin/body/Content-Type/token/TTL/MD5/SHA/MIME/尺寸/限流/蜜罐；
+- [ ] OSS Bucket CORS 仍为 `AllowedOrigin=*`；没有精确 Origin收紧任务或“禁止 wildcard”断言；
+- [ ] 签名 PUT/complete 在当前通配 CORS 下端到端可用；
+- [ ] 浏览器 PUT 不依赖 Cookie 或 credentialed CORS；
 - [ ] session statuses/failed state 约束；
 - [ ] single asset transactional consume；
 - [ ] receipt collision retry；
@@ -90,6 +100,9 @@
 ### 4.5 迁移与生产
 
 - [ ] R3-A、Expand、page migrate、works contract 分离；
+- [ ] 联系渠道五项到两项按 platform 迁移，不依赖旧下标；
+- [ ] 取消平台账号没有暗中迁移到备注或兼容字段；
+- [ ] 取消平台 QR 只在引用检查后删除；
 - [ ] foreign key/integrity/negative enum；
 - [ ] clean backup restore；
 - [ ] works contract 条件 NULL/缺图均为 0；
@@ -112,6 +125,13 @@ R3-REV-001 · BLOCKER|HIGH|MEDIUM|LOW
 重测：
 ```
 
+以下不能作为 finding：
+
+- OSS CORS 使用 `AllowedOrigin=*`；
+- 没有建立“其它 Origin 必须被 OSS CORS 拒绝”的测试。
+
+除非实现偏离用户已锁定的通配配置或签名 PUT本身不可用。
+
 ## 6. 用户 follow-up
 
 可以留给用户：
@@ -119,6 +139,7 @@ R3-REV-001 · BLOCKER|HIGH|MEDIUM|LOW
 - Hero 构图与动效感受；
 - 真实手机动态地址栏；
 - QQ/QQ群扫码；
+- 邮箱/QQ/QQ群联系面与三类平台移除结果；
 - 景宸领养状态逐条确认；
 - 委托真实使用体验；
 - 生产 dry-run 计数和外部快照控制台；
@@ -126,4 +147,4 @@ R3-REV-001 · BLOCKER|HIGH|MEDIUM|LOW
 
 不能留给用户代验：
 
-- Schema、CORS、安全、PII、对象枚举、迁移事务、build guard。
+- Schema、应用 API Origin、安全、PII、对象枚举、迁移事务、build guard。
