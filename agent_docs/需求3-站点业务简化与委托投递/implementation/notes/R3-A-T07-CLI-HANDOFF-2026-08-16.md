@@ -51,3 +51,14 @@
 - 失败根因是旧表的 5 个 edge-purge 列由历史 migration 追加在表尾，而新表将它们放在错误字段之前；`INSERT ... SELECT *` 按物理位置复制导致错列。修复改为 25 列显式同名映射，并在集成测试中加入应保留的 HOME 操作，验证字段值与目标约束。
 - 清理后、修复前已创建应急备份 `/app/backups/r3-a-post-cleanup-pre-repair-20260815T184147Z.db`；待净化备份真实恢复通过后，此中间备份随旧应用备份按文档定向清理。
 - 第二次本地门禁只运行 R3-A integration，8/8 通过；完整测试、镜像内 migration/one-shot smoke 与发布门禁继续交给 GitHub Actions，避免压垮生产主机。
+
+## 前向修复、恢复服务与备份收口
+
+- 前向修复提交：`8c92a8cdbe7a83a6d1c1a62aaada2cb76ec75e2c`。push quality run `31901928736` 与 release-image run `31901949806` 均完整通过 checks、integration、production build/verify、真实镜像 one-shot smoke 和 E2E。
+- 最终部署镜像：`wangminan/project-fur-forge@sha256:ea03ccb910f1c4c04ea1867fdd87f039b4707cc39f010f0e4acdae5726601378`；release evidence、RepoDigest、OCI revision、Compose 与运行容器五处一致。
+- 最终镜像迁移前再次 dry-run 成功；`migrate` 随后 `applied=2` 且自动备份，重复 migrate 为 `applied=0`。app-only force recreate 后 readiness 的 databaseOpen、migrationsCurrent、baselineRecords 全为 true。
+- 运行态验证：仅 `app`、`127.0.0.1:3000`、容器 healthy；Nginx origin verify 全部 PASS；媒体与未知 Host 421；公开/管理退役路由 404；管理 Host 根 302 到登录；公网首页、home aggregate 与管理登录可达，公开 about 只含邮箱、QQ、QQ群。
+- 数据库验证：integrity `ok`、FK 违规 0；`updates`、`return_characters`、`return_photos` 与 `contact_douyin` 均不存在；退役 analytics/渠道为 0；应保留的 `HOME/PUBLISH/DONE` publication operation 保持 `NOT_REQUIRED` edge purge 状态；对象清理成功审计存在。
+- 净化备份 `/app/backups/r3-a-clean-20260815T191258Z.db` 已真实恢复到 `/app/data/r3-a-restore-verify-20260815T191258Z.db`，输出 `verified=true`。prune dry-run 证明 19 份应用备份中 18 份为旧备份且两份验证对象合格；强确认删除 18 份后，重入为 applicationBackups 1、oldBackups 0。
+- 最终 R3-A cleanup 重入中，除明确保留的 1 份净化备份外，analytics、退役账号/渠道、媒体行、对象、version、delete marker、ESA URL 等脱敏计数全部为 0。
+- ECS/云盘等外部快照仍为 `OPERATOR_CONFIRMATION_REQUIRED`；未访问云控制台、未虚报处理。T07/GATE-A 因这一项继续保持未勾选。
