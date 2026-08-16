@@ -33,7 +33,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up pnpm
-        uses: pnpm/setup@v2.0.0
+        uses: pnpm/setup@v2.0.2
         with:
           version: ${{ env.PNPM_VERSION }}
 
@@ -383,7 +383,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up pnpm
-        uses: pnpm/setup@v2.0.0
+        uses: pnpm/setup@v2.0.2
         with:
           version: ${{ env.PNPM_VERSION }}
 
