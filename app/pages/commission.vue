@@ -6,13 +6,13 @@ import { publicSiteContentResponseSchema } from '~~/shared/schemas/site-content'
 /**
  * T26 自设委托页：SSR 消费 /api/public/v1/site-content（固定内容 + 委托营业状态）
  * 与 /api/public/v1/commission-hero（委托页独立代表作品宽图）。自由文案为 null 时整区隐藏；
- * 制作范围、人工逐单估价机制与邮件行动为已确认结构性事实，不编造业务文案。
+ * 制作范围、人工逐单估价机制与站内提交为已确认结构性事实，不编造业务文案。
  */
 useSeoMeta({
   title: `自设委托 · ${PROJECT_NAME}`,
-  description: `${PROJECT_NAME}的自设委托：全装与半装制作范围、当前营业状态、邮件人工逐单估价与已确认常见问题。`,
+  description: `${PROJECT_NAME}的自设委托：全装与半装制作范围、当前营业状态与站内申请。`,
   ogTitle: `自设委托 · ${PROJECT_NAME}`,
-  ogDescription: `${PROJECT_NAME}的自设委托：制作范围、营业状态与邮件人工逐单估价。`,
+  ogDescription: `${PROJECT_NAME}的自设委托：制作范围、营业状态与站内申请。`,
 })
 
 const { data: site, error: siteError } = await useFetch('/api/public/v1/site-content', {
@@ -41,7 +41,6 @@ const status = computed(() => site.value?.statuses.commission ?? null)
 const heroReady = computed(() => Boolean(
   hero.value?.landscape[0] && hero.value?.portrait[0],
 ))
-const faqs = computed(() => commission.value?.faqs ?? [])
 
 function paragraphs(value: string | null | undefined) {
   return value ? splitPlainTextParagraphs(value) : []
@@ -73,7 +72,6 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
         v-if="heroReady && hero"
         :hero="hero"
         :status="status"
-        :email="commission?.email"
         :description="introText"
         data-testid="commission-hero"
       />
@@ -113,7 +111,14 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
           {{ paragraph }}
         </p>
 
+        <NuxtLink class="commission-page__apply" to="/commission/apply">
+          提交委托申请
+        </NuxtLink>
+
         <div v-if="commission" class="commission-page__actions">
+          <p class="commission-page__text commission-page__text--muted">
+            邮箱是备用联系渠道；申请请优先使用站内表单。
+          </p>
           <ContactEmailActions
             :email="commission.email"
             subject="自设委托估价咨询"
@@ -131,21 +136,9 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
           v-if="contact"
           :channels="contact.officialChannels"
         />
-      </section>
-
-      <section
-        v-if="faqs.length > 0"
-        class="commission-page__section commission-page__faq-section"
-        aria-labelledby="commission-faq-title"
-        data-testid="commission-faq"
-      >
-        <h2 id="commission-faq-title" class="commission-page__section-title">常见问题</h2>
-        <ul class="commission-page__faq" role="list">
-          <li v-for="faq in faqs" :key="faq.question" class="commission-page__faq-item">
-            <h3 class="commission-page__faq-question">{{ faq.question }}</h3>
-            <p class="commission-page__faq-answer">{{ faq.answer }}</p>
-          </li>
-        </ul>
+        <NuxtLink class="commission-page__more-contact" to="/about#contact">
+          查看关于页与完整联系说明 →
+        </NuxtLink>
       </section>
 
       <p v-if="commission" class="commission-page__terms">
@@ -248,6 +241,24 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
   margin-top: var(--space-2);
 }
 
+.commission-page__apply {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
+  min-height: 3rem;
+  padding: 0 var(--space-6);
+  border-radius: var(--radius-full);
+  color: var(--public-text-inverse);
+  background: var(--public-bg-inverse);
+  font-weight: 600;
+}
+
+.commission-page__apply:hover {
+  color: var(--public-text-inverse);
+  background: var(--public-accent-active);
+}
+
 .commission-page__more-contact {
   color: var(--public-text-secondary);
   font-size: var(--font-size-sm);
@@ -256,38 +267,6 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
 .commission-page__inline-link:hover {
   text-decoration: underline;
   text-underline-offset: 0.3em;
-}
-
-.commission-page__faq {
-  display: grid;
-  gap: var(--space-5);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* 常见问题在宽屏分两列：每条问答都短，单列会拉出很长的滚动。 */
-@media (min-width: 1024px) {
-  .commission-page__faq-section {
-    max-width: var(--public-content-article);
-  }
-
-  .commission-page__faq {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-6);
-  }
-}
-
-.commission-page__faq-question {
-  margin: 0;
-  font-size: var(--font-size-base);
-}
-
-.commission-page__faq-answer {
-  margin-top: var(--space-2);
-  color: var(--public-text-secondary);
-  line-height: var(--line-height-relaxed);
-  white-space: pre-line;
 }
 
 .commission-page__terms-link {

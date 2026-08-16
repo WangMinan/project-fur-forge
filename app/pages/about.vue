@@ -74,8 +74,9 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
       >
         <h2 id="about-contact-title" class="about-page__section-title">联系</h2>
         <p class="about-page__text about-page__text--muted">
-          委托与领养通过以下官方渠道人工沟通；本站不提供站内留言或在线提交。
+          委托申请可通过站内表单私密提交；邮箱、QQ 与 QQ群用于后续人工沟通和备用联系。
         </p>
+        <NuxtLink class="about-page__apply" to="/commission/apply">提交委托申请</NuxtLink>
         <ContactEmailActions :email="contact.email" />
         <ContactChannelGrid :channels="contact.officialChannels" />
       </section>
@@ -131,6 +132,18 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
 .about-page__text--muted {
   color: var(--public-text-secondary);
   font-size: var(--font-size-sm);
+}
+
+.about-page__apply {
+  justify-self: start;
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-full);
+  color: var(--public-text-inverse);
+  background: var(--public-bg-inverse);
+  font-weight: 600;
 }
 
 </style>

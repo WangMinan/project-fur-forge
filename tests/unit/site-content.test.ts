@@ -5,7 +5,6 @@ import {
   publicSiteContentDtoSchema,
   updateAboutContentRequestSchema,
   updateCommissionContentRequestSchema,
-  updateCommissionFaqRequestSchema,
   updateContactContentRequestSchema,
   updateSiteBusinessStatusRequestSchema,
 } from '../../shared/schemas/site-content'
@@ -20,7 +19,6 @@ const emptyContent = {
     intro: null,
     estimateNote: null,
     emailAction: null,
-    faqs: [],
   },
   about: {
     studioFacts: null,
@@ -34,13 +32,6 @@ const emptyContent = {
   },
 }
 
-const FAQ_ID_A = '11111111-1111-4111-8111-111111111111'
-const FAQ_ID_B = '22222222-2222-4222-8222-222222222222'
-const faq = (index: number) => ({
-  id: `${String(index).padStart(8, '0')}-1111-4111-8111-111111111111`,
-  question: `问题 ${index}`,
-  answer: `回答 ${index}`,
-})
 const qrCodeSources = {
   webp: [],
   fallback: [{
@@ -57,10 +48,6 @@ describe('restricted site content contracts', () => {
     expect(updateCommissionContentRequestSchema.safeParse({
       expectedVersion: 1,
       payload: { intro: null, estimateNote: null, emailAction: null },
-    }).success).toBe(true)
-    expect(updateCommissionFaqRequestSchema.safeParse({
-      expectedVersion: 1,
-      payload: { faqs: [] },
     }).success).toBe(true)
     expect(updateAboutContentRequestSchema.safeParse({
       expectedVersion: 1,
@@ -120,7 +107,7 @@ describe('restricted site content contracts', () => {
     }).success).toBe(false)
   })
 
-  it('rejects long text, HTML, script protocols and duplicate FAQ items', () => {
+  it('rejects long text, HTML, script protocols and retired FAQ fields', () => {
     for (const intro of [
       'x'.repeat(241),
       '<script>alert(1)</script>',
@@ -132,45 +119,14 @@ describe('restricted site content contracts', () => {
         payload: { intro, estimateNote: null, emailAction: null },
       }).success).toBe(false)
     }
-    expect(updateCommissionFaqRequestSchema.safeParse({
+    expect(updateCommissionContentRequestSchema.safeParse({
       expectedVersion: 1,
       payload: {
-        faqs: [
-          { id: FAQ_ID_A, question: '怎么联系？', answer: '通过邮件联系。' },
-          { id: FAQ_ID_B, question: '怎么联系？', answer: '通过公开渠道联系。' },
-        ],
+        intro: null,
+        estimateNote: null,
+        emailAction: '保留备用邮件说明',
+        faqs: [],
       },
-    }).success).toBe(false)
-    // 稳定 ID：缺失或重复都不接受。
-    expect(updateCommissionFaqRequestSchema.safeParse({
-      expectedVersion: 1,
-      payload: { faqs: [{ question: '问', answer: '答' }] },
-    }).success).toBe(false)
-    expect(updateCommissionFaqRequestSchema.safeParse({
-      expectedVersion: 1,
-      payload: {
-        faqs: [
-          { id: FAQ_ID_A, question: '问一', answer: '答一' },
-          { id: FAQ_ID_A, question: '问二', answer: '答二' },
-        ],
-      },
-    }).success).toBe(false)
-    expect(updateCommissionFaqRequestSchema.safeParse({
-      expectedVersion: 1,
-      payload: {
-        faqs: [
-          { id: FAQ_ID_A, question: '问一', answer: '答一' },
-          { id: FAQ_ID_B, question: '问二', answer: '答二' },
-        ],
-      },
-    }).success).toBe(true)
-    expect(updateCommissionFaqRequestSchema.safeParse({
-      expectedVersion: 1,
-      payload: { faqs: Array.from({ length: 9 }, (_, index) => faq(index + 1)) },
-    }).success).toBe(true)
-    expect(updateCommissionFaqRequestSchema.safeParse({
-      expectedVersion: 1,
-      payload: { faqs: Array.from({ length: 10 }, (_, index) => faq(index + 1)) },
     }).success).toBe(false)
   })
 
@@ -218,6 +174,10 @@ describe('restricted site content contracts', () => {
       },
     }
     expect(publicSiteContentDtoSchema.safeParse(publicDto).success).toBe(true)
+    expect(publicSiteContentDtoSchema.safeParse({
+      ...publicDto,
+      commission: { ...publicDto.commission, faqs: [] },
+    }).success).toBe(false)
     expect(publicSiteContentDtoSchema.safeParse({
       ...publicDto,
       version: 1,

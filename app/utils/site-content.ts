@@ -26,9 +26,6 @@ export const SITE_CONTENT_LIMITS = {
   intro: 240,
   estimateNote: 600,
   emailAction: 240,
-  faqQuestion: 120,
-  faqAnswer: 1_000,
-  faqMaxCount: 9,
   studioFacts: 1_200,
   makingScope: 1_200,
   basicTerms: 8_000,
@@ -77,7 +74,6 @@ export interface SiteContentFormFields {
   intro: string
   estimateNote: string
   emailAction: string
-  faqs: Array<{ question: string, answer: string }>
   studioFacts: string
   makingScope: string
   basicTerms: string
@@ -112,34 +108,6 @@ export function siteContentFieldIssues(form: SiteContentFormFields): Record<stri
       issues[field] = '只允许安全纯文本，不能包含 HTML 或脚本'
     }
   }
-  if (form.faqs.length > SITE_CONTENT_LIMITS.faqMaxCount) {
-    issues.faqs = `常见问题最多 ${SITE_CONTENT_LIMITS.faqMaxCount} 项`
-  }
-  const seen = new Set<string>()
-  form.faqs.forEach((faq, index) => {
-    const question = faq.question.trim()
-    const answer = faq.answer.trim()
-    if (!question && !answer) {
-      return
-    }
-    if (!question || !answer) {
-      issues[`faq-${index}`] = '请同时填写问题与回答，或删除该整行'
-      return
-    }
-    if (question.length > SITE_CONTENT_LIMITS.faqQuestion) {
-      issues[`faq-${index}`] = `问题最多 ${SITE_CONTENT_LIMITS.faqQuestion} 字`
-    }
-    else if (answer.length > SITE_CONTENT_LIMITS.faqAnswer) {
-      issues[`faq-${index}`] = `回答最多 ${SITE_CONTENT_LIMITS.faqAnswer} 字`
-    }
-    else if (seen.has(question)) {
-      issues[`faq-${index}`] = '问题不得重复'
-    }
-    else if (hasUnsafePlainText(question) || hasUnsafePlainText(answer)) {
-      issues[`faq-${index}`] = '只允许安全纯文本，不能包含 HTML 或脚本'
-    }
-    seen.add(question)
-  })
   return issues
 }
 

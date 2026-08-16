@@ -48,12 +48,11 @@ async function chooseQr(
   })
 }
 
-test('六个文案分区各自独立保存，互不禁用', async ({ page }) => {
+test('五个现存文案分区各自独立保存，互不禁用', async ({ page }) => {
   await openContentAdmin(page)
 
   const sections = [
     'commission',
-    'commission-faq',
     'about',
     'terms',
     'privacy',
@@ -452,61 +451,4 @@ test('官方渠道分区并发：同分区第二个上下文冲突，不同分�
     await first.close()
     await second.close()
   }
-})
-
-test('FAQ 稳定 ID：新增、删除、重排不串行为', async ({ page }) => {
-  await openContentAdmin(page)
-  const faq = card(page, 'commission-faq')
-
-  // 数据库自带种子 FAQ；先清空到 0 项，专注验证新增两项的行为，
-  // 不假设初始条数。
-  await expect(faq.getByTestId('site-section-save')).toBeVisible()
-  let remaining = await faq.locator('[data-faq-id]').count()
-  while (remaining > 0) {
-    await faq.getByLabel('删除第 1 项').click()
-    remaining -= 1
-  }
-  await faq.getByTestId('site-section-save').click()
-  await expect(faq.getByTestId('site-section-saved')).toBeVisible()
-  await expect(faq.locator('[data-faq-id]')).toHaveCount(0)
-
-  await faq.getByTestId('site-faq-add').click()
-  await faq.getByLabel('第 1 项问题').fill('交期多久')
-  await faq.getByLabel('第 1 项回答').fill('约三个月')
-  await faq.getByTestId('site-faq-add').click()
-  await faq.getByLabel('第 2 项问题').fill('可以改设定吗')
-  await faq.getByLabel('第 2 项回答').fill('定稿前可以')
-  await faq.getByTestId('site-section-save').click()
-  await expect(faq.getByTestId('site-section-saved')).toBeVisible()
-
-  const idsBefore = await faq.locator('[data-faq-id]').evaluateAll(
-    rows => rows.map(row => row.getAttribute('data-faq-id')),
-  )
-  expect(idsBefore).toHaveLength(2)
-  expect(new Set(idsBefore).size).toBe(2)
-
-  // 重排：顺序变化但 ID 与内容跟随各自的行，不发生错位。
-  await faq.getByLabel('下移第 1 项').click()
-  await expect(faq.getByLabel('第 1 项问题')).toHaveValue('可以改设定吗')
-  await expect(faq.getByLabel('第 2 项问题')).toHaveValue('交期多久')
-  const idsAfterMove = await faq.locator('[data-faq-id]').evaluateAll(
-    rows => rows.map(row => row.getAttribute('data-faq-id')),
-  )
-  expect(idsAfterMove).toEqual([idsBefore[1], idsBefore[0]])
-
-  await faq.getByTestId('site-section-save').click()
-  await expect(faq.getByTestId('site-section-saved')).toBeVisible()
-
-  // 删除第一项后，剩下那项仍是原来的 ID 和内容。
-  await faq.getByLabel('删除第 1 项').click()
-  await expect(faq.getByLabel('第 1 项问题')).toHaveValue('交期多久')
-  await faq.getByTestId('site-section-save').click()
-  await expect(faq.getByTestId('site-section-saved')).toBeVisible()
-
-  await page.reload()
-  const reloaded = card(page, 'commission-faq')
-  await expect(reloaded.locator('[data-faq-id]')).toHaveCount(1)
-  await expect(reloaded.getByLabel('第 1 项问题')).toHaveValue('交期多久')
-  expect(await reloaded.locator('[data-faq-id]').getAttribute('data-faq-id'))
-    .toBe(idsBefore[0])
 })
