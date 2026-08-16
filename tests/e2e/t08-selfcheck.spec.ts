@@ -22,13 +22,10 @@ async function seedPublicPages(page: import('@playwright/test').Page) {
       slug: 'e2e-public-t08-lanmei',
       characterName: '蓝湄',
       species: '北极狐',
-      suitType: 'full',
       purpose: 'adoption',
-      adoptionMethod: 'event_drop',
-      businessStatus: 'available',
-      eventName: '有点小狗夏日展',
-      eventTime: '2026 年 8 月 15 日',
-      priceMinorUnits: 1_560_000,
+      adoptionStatus: 'available',
+      priceCnyMinor: 1_560_000,
+      adoptionCover: { alt: '蓝湄的独立横版领养封面', width: 1920, height: 1080 },
       featured: true,
       sortOrder: 0,
       photos: [
@@ -40,7 +37,6 @@ async function seedPublicPages(page: import('@playwright/test').Page) {
       slug: 'e2e-public-t08-zhima',
       characterName: '芝麻',
       species: '哈士奇',
-      suitType: 'full',
       purpose: 'commission',
       featured: true,
       sortOrder: 1,
@@ -304,23 +300,37 @@ test.describe('CLS', () => {
     test(`${target.name} CLS < 0.1`, async ({ page }) => {
       await seedPublicPages(page)
       await page.goto(target.url)
-      const cls = await page.evaluate(() => new Promise<number>((resolve) => {
+      const cls = await page.evaluate(() => new Promise<{
+        entries: Array<{ sources: string[], value: number }>
+        value: number
+      }>((resolve) => {
         let value = 0
+        const entries: Array<{ sources: string[], value: number }> = []
         const observer = new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
-            const shift = entry as PerformanceEntry & { hadRecentInput?: boolean, value?: number }
+            const shift = entry as PerformanceEntry & {
+              hadRecentInput?: boolean
+              sources?: Array<{ node?: Node | null }>
+              value?: number
+            }
             if (!shift.hadRecentInput && typeof shift.value === 'number') {
               value += shift.value
+              entries.push({
+                sources: (shift.sources ?? []).map(source => source.node instanceof Element
+                  ? `${source.node.tagName.toLowerCase()}.${source.node.className}`
+                  : 'unknown'),
+                value: shift.value,
+              })
             }
           }
         })
         observer.observe({ type: 'layout-shift', buffered: true })
         window.setTimeout(() => {
           observer.disconnect()
-          resolve(value)
+          resolve({ entries, value })
         }, 2_500)
       }))
-      expect(cls).toBeLessThan(0.1)
+      expect(cls.value, JSON.stringify(cls.entries)).toBeLessThan(0.1)
     })
   }
 })
