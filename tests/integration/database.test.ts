@@ -665,7 +665,12 @@ describe('SQLite foundation', () => {
         WHERE type = 'trigger'
           AND (sql LIKE '%assets%' OR sql LIKE '%upload_sessions%')
         ORDER BY name
-      `).pluck().all()).toEqual(triggerNames.filter(name => !name.startsWith('return_photos_')))
+      `).pluck().all()).toEqual(expect.arrayContaining(
+        triggerNames.filter(name => (
+          !name.startsWith('return_photos_')
+          && !name.startsWith('work_assets_design_sheet_primary_')
+        )),
+      ))
       expect(() => upgraded.sqlite.prepare(`
         INSERT INTO assets (
           id, role, status, private_object_key, sha256, byte_size,

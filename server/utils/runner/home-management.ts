@@ -44,6 +44,10 @@ import {
   updateDisabledSlide,
   updateHomeSettingsRow,
 } from '../repository/hero-repository'
+import {
+  findHeroItems,
+  findHeroItemVariants,
+} from '../repository/hero-collection-repository'
 import type {
   HeroVariantRow,
   SlideRow,
@@ -75,8 +79,9 @@ import {
   homeEntrySource,
   projectHomeEntry,
 } from '../service/site-entry'
-import { toPublicHeroSlideDto } from '../recipe/media-mapper'
-import type { HeroSlideRecord } from '../recipe/media-mapper'
+import {
+  toPublicHeroItemDto,
+} from '../recipe/media-mapper'
 import type { MediaStorage } from '../media-storage'
 import type { RuntimeConfig } from '../runtime-config'
 import { getPublicMediaCache } from '../public-media-cache'
@@ -581,7 +586,7 @@ export function systemRecoveryActorId(sqlite: Database.Database) {
 
 function homeOperationTypeOf(sqlite: Database.Database, operationId: string) {
   const operation = findPublicationOperation(sqlite, operationId)
-  return operation?.entityType === 'HOME'
+  return operation?.entityType === 'HOME' && findSlide(sqlite, operation.entityId)
     ? operation.operationType
     : undefined
 }
@@ -750,59 +755,45 @@ export function getPublicHome(
   appEnv: RuntimeConfig['appEnv'] = 'development',
 ): PublicHomeDto {
   const home = requireHome(sqlite)
-  const projected = publicHeroSlides(sqlite, mediaBaseUrl, 'home', appEnv)
+  const projected = publicHeroPlacement(sqlite, mediaBaseUrl, 'home', appEnv)
   return publicHomeDtoSchema.parse({
     tagline: home.tagline,
     contactEmail: home.contactEmail,
     contactQq: home.contactQq,
     autoRotate: home.autoRotate === 1,
     autoRotateIntervalMs: home.autoRotateIntervalMs,
-    slides: projected,
+    ...projected,
     entries: getPublicHomeEntries(sqlite, mediaBaseUrl, appEnv),
   })
 }
 
-function publicHeroSlides(
+function publicHeroPlacement(
   sqlite: Database.Database,
   mediaBaseUrl: string,
   placement: HeroPlacement,
   appEnv: RuntimeConfig['appEnv'],
 ) {
-  const enabled = slides(sqlite, placement).filter(slide => slide.enabled === 1)
-  // 迁移期仍可能只有旧水印 Hero 变体，此时 mapper 回退需要 profile 身份。
   const profileId = activeWatermarkProfileId(sqlite)
-  const variants = variantsForAssets(
-    sqlite,
-    enabled.flatMap(slide => [
-      slide.landscapeAssetId,
-      slide.portraitAssetId,
-    ]),
-  )
-  const projected = enabled.map((slide) => {
-    const record: HeroSlideRecord = {
+  const orientationItems = (orientation: 'landscape' | 'portrait') => {
+    const items = findHeroItems(sqlite, placement, orientation)
+      .filter(item => item.enabled === 1)
+    const variants = findHeroItemVariants(
+      sqlite,
+      items.map(item => item.assetId),
+    )
+    return items.map(item => toPublicHeroItemDto({
       activeWatermarkProfileId: profileId,
-      id: slide.id,
-      version: slide.version,
-      enabled: true,
-      altText: slide.alt,
+      altText: item.alt,
+      orientation,
       placement,
-      sortOrder: slide.sortOrder,
-      landscapeVariants: variants.get(slide.landscapeAssetId) ?? [],
-      portraitVariants: variants.get(slide.portraitAssetId) ?? [],
-      linkedWork: slide.linkedWorkId
-        ? {
-            publicationStatus: slide.linkedWorkStatus!,
-            slug: slide.linkedWorkSlug!,
-          }
-        : null,
-    }
-    const dto = toPublicHeroSlideDto(record, mediaBaseUrl, appEnv)
-    if (!dto) {
-      throw new Error('Enabled hero slide could not be projected.')
-    }
-    return dto
-  })
-  return projected
+      sortOrder: item.sortOrder,
+      variants: [...(variants.get(item.assetId) ?? [])],
+    }, mediaBaseUrl, appEnv))
+  }
+  return {
+    landscape: orientationItems('landscape'),
+    portrait: orientationItems('portrait'),
+  }
 }
 
 export function getPublicCommissionHero(
@@ -810,8 +801,9 @@ export function getPublicCommissionHero(
   mediaBaseUrl: string,
   appEnv: RuntimeConfig['appEnv'] = 'development',
 ): PublicCommissionHeroDto {
-  const slides = publicHeroSlides(sqlite, mediaBaseUrl, 'commission', appEnv)
-  return publicCommissionHeroDtoSchema.parse({ slide: slides[0] ?? null })
+  return publicCommissionHeroDtoSchema.parse(
+    publicHeroPlacement(sqlite, mediaBaseUrl, 'commission', appEnv),
+  )
 }
 
 function assertAssetPair(

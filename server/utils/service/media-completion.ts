@@ -9,7 +9,7 @@ import type {
   VerifiedAssetDto,
   WatermarkAnchor,
 } from '../../../shared/types/contracts'
-import type { MediaStorage, PrivateImageInfo } from '../media-storage'
+import type { MediaStorage } from '../media-storage'
 import { ServiceError } from '../service-error'
 import {
   assertUploadOwner,
@@ -18,6 +18,10 @@ import {
   uploadSessionDto,
 } from './upload-session'
 import { generateContactQrVariants } from '../recipe/contact-qr-recipe'
+import {
+  PrivateImageValidationError,
+  verifyConditionalImageUpload,
+} from './private-image-validation'
 
 const PREPROCESS_THRESHOLD_BYTES = 20_000_000
 const PREPROCESS_RECIPE = 'preprocess-v1'
@@ -92,6 +96,12 @@ function previewsFor(role: AssetRow['role']): VerifiedAssetDto['previews'] {
       { usage: 'detail', aspect: 'original', fitMode: 'contain' },
     ]
   }
+  if (role === 'adoption_cover') {
+    return [{ usage: 'adoption-card', aspect: '16:9', fitMode: 'cover' }]
+  }
+  if (role === 'commission_design_reference') {
+    return []
+  }
   if (role === 'contact_qr') {
     return [{ usage: 'contact-qr', aspect: 'original', fitMode: 'contain' }]
   }
@@ -132,71 +142,8 @@ export function getVerifiedAsset(
   return assetDto(requireAsset(sqlite, assetId))
 }
 
-function md5HexFromBase64(value: string) {
-  return Buffer.from(value, 'base64').toString('hex')
-}
-
 function digest(algorithm: 'md5' | 'sha256', content: Buffer) {
   return createHash(algorithm).update(content).digest('hex')
-}
-
-function mimeFromBuffer(content: Buffer) {
-  if (content.subarray(0, 8).equals(Buffer.from('89504e470d0a1a0a', 'hex'))) {
-    return 'image/png'
-  }
-  if (content.subarray(0, 3).equals(Buffer.from('ffd8ff', 'hex'))) {
-    return 'image/jpeg'
-  }
-  if (
-    content.subarray(0, 4).toString('ascii') === 'RIFF'
-    && content.subarray(8, 12).toString('ascii') === 'WEBP'
-  ) {
-    return 'image/webp'
-  }
-  return null
-}
-
-function mimeFromImageInfo(format: string) {
-  const normalized = format.toLowerCase()
-  if (normalized === 'jpg' || normalized === 'jpeg') {
-    return 'image/jpeg'
-  }
-  if (normalized === 'png' || normalized === 'webp') {
-    return `image/${normalized}`
-  }
-  return null
-}
-
-export function pngHasTransparency(content: Buffer) {
-  if (
-    content.length < 33
-    || !content.subarray(0, 8).equals(Buffer.from('89504e470d0a1a0a', 'hex'))
-  ) {
-    return false
-  }
-  const colorType = content[25]
-  if (colorType === 4 || colorType === 6) {
-    return true
-  }
-  for (let offset = 8; offset + 12 <= content.length;) {
-    const length = content.readUInt32BE(offset)
-    const end = offset + 12 + length
-    if (end > content.length) {
-      return false
-    }
-    if (content.toString('ascii', offset + 4, offset + 8) === 'tRNS') {
-      return true
-    }
-    offset = end
-  }
-  return false
-}
-
-function correctedDimensions(info: PrivateImageInfo) {
-  const swapped = info.orientation >= 5 && info.orientation <= 8
-  return swapped
-    ? { width: info.height, height: info.width }
-    : { width: info.width, height: info.height }
 }
 
 function ownerOf(row: ReturnType<typeof requireUploadSession>): UploadOwner {
@@ -250,124 +197,31 @@ async function verifyOriginal(
   now: number,
 ): Promise<VerifiedOriginal> {
   const row = requireUploadSession(sqlite, sessionId)
-  let head
   try {
-    head = await storage.headPrivate(row.privateObjectKey)
+    return await verifyConditionalImageUpload(storage, {
+      byteSize: row.expectedBytes,
+      contentMd5: row.expectedContentMd5,
+      contentType: row.expectedContentType,
+      height: row.expectedHeight,
+      mediaRole: row.mediaRole,
+      objectKey: row.privateObjectKey,
+      sha256: row.expectedSha256,
+      width: row.expectedWidth,
+    })
   }
   catch (error) {
-    const candidate = error as { code?: string, status?: number }
     return failValidation(
       sqlite,
       storage,
       sessionId,
-      candidate.code === 'NoSuchKey' || candidate.status === 404
-        ? 'UPLOAD_OBJECT_MISSING'
+      error instanceof PrivateImageValidationError
+        ? error.failureCode
         : 'UPLOAD_STORAGE_FAILURE',
-      'HEAD',
+      error instanceof PrivateImageValidationError
+        ? error.failureStage
+        : 'HEAD',
       now,
     )
-  }
-
-  if (
-    head.byteSize !== row.expectedBytes
-    || head.contentType !== row.expectedContentType
-    || head.etagMd5Hex !== md5HexFromBase64(row.expectedContentMd5)
-    || head.sha256Metadata !== row.expectedSha256
-  ) {
-    return failValidation(
-      sqlite,
-      storage,
-      sessionId,
-      'UPLOAD_METADATA_MISMATCH',
-      'HEAD',
-      now,
-    )
-  }
-
-  let content: Buffer
-  try {
-    content = await storage.getPrivate(row.privateObjectKey)
-  }
-  catch {
-    return failValidation(
-      sqlite,
-      storage,
-      sessionId,
-      'UPLOAD_STORAGE_FAILURE',
-      'DIGEST',
-      now,
-    )
-  }
-  if (
-    content.length !== row.expectedBytes
-    || digest('md5', content) !== head.etagMd5Hex
-    || digest('sha256', content) !== row.expectedSha256
-    || mimeFromBuffer(content) !== row.expectedContentType
-  ) {
-    return failValidation(
-      sqlite,
-      storage,
-      sessionId,
-      'UPLOAD_METADATA_MISMATCH',
-      'DIGEST',
-      now,
-    )
-  }
-
-  let info: PrivateImageInfo
-  try {
-    info = await storage.imageInfoPrivate(row.privateObjectKey)
-  }
-  catch {
-    return failValidation(
-      sqlite,
-      storage,
-      sessionId,
-      'UPLOAD_IMAGE_INVALID',
-      'IMAGE_INFO',
-      now,
-    )
-  }
-  const dimensions = correctedDimensions(info)
-  const expectedDimensions = row.expectedWidth === dimensions.width
-    && row.expectedHeight === dimensions.height
-  const directionValid = row.mediaRole !== 'home_hero_landscape'
-    || dimensions.width > dimensions.height
-  const portraitValid = row.mediaRole !== 'home_hero_portrait'
-    || dimensions.height > dimensions.width
-  if (
-    info.fileSize !== row.expectedBytes
-    || mimeFromImageInfo(info.format) !== row.expectedContentType
-    || !Number.isInteger(info.orientation)
-    || info.orientation < 1
-    || info.orientation > 8
-    || !expectedDimensions
-    || Math.max(dimensions.width, dimensions.height) > 12_000
-    || !directionValid
-    || !portraitValid
-    || (
-      row.mediaRole === 'watermark_logo'
-      && (
-        row.expectedContentType !== 'image/png'
-        || row.expectedBytes > PREPROCESS_THRESHOLD_BYTES
-        || !pngHasTransparency(content)
-      )
-    )
-  ) {
-    return failValidation(
-      sqlite,
-      storage,
-      sessionId,
-      'UPLOAD_DIMENSIONS_INVALID',
-      'IMAGE_INFO',
-      now,
-    )
-  }
-  return {
-    content,
-    height: dimensions.height,
-    orientation: info.orientation,
-    width: dimensions.width,
   }
 }
 
@@ -439,7 +293,9 @@ function insertAsset(
     verified.orientation,
     input.focalX,
     input.focalY,
-    ['design_sheet', 'contact_qr'].includes(row.mediaRole) ? 'contain' : 'cover',
+    ['design_sheet', 'commission_design_reference', 'contact_qr'].includes(row.mediaRole)
+      ? 'contain'
+      : 'cover',
     input.watermarkAnchor ?? 'top-left',
     status === 'FAILED' ? 'UPLOAD_PREPROCESS_FAILURE' : null,
     now,

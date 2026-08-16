@@ -80,6 +80,27 @@ async function seedLegacyEnabledHero(placement: 'home' | 'commission') {
     NOW,
     NOW,
   )
+  const itemIds = placement === 'home'
+    ? [
+        '11111111-1111-4111-8111-111111111111',
+        '22222222-2222-4222-8222-222222222222',
+      ]
+    : [
+        '33333333-3333-4333-8333-333333333333',
+        '44444444-4444-4444-8444-444444444444',
+      ]
+  sqlite.prepare(`
+    INSERT INTO site_hero_items (
+      id, placement, orientation, asset_id, alt_text,
+      sort_order, enabled, created_at, updated_at
+    ) VALUES (?, ?, 'landscape', ?, ?, 0, 1, ?, ?)
+  `).run(itemIds[0], placement, landscapeId, `${placement} 旧首图`, NOW, NOW)
+  sqlite.prepare(`
+    INSERT INTO site_hero_items (
+      id, placement, orientation, asset_id, alt_text,
+      sort_order, enabled, created_at, updated_at
+    ) VALUES (?, ?, 'portrait', ?, ?, 0, 1, ?, ?)
+  `).run(itemIds[1], placement, portraitId, `${placement} 旧首图`, NOW, NOW)
   // 旧水印变体：迁移后仍存在，reconcile 不应删除它们。
   await generatePublicVariants(sqlite, storage, landscapeId, undefined, NOW)
   await generatePublicVariants(sqlite, storage, portraitId, undefined, NOW)
@@ -229,8 +250,8 @@ describe('T34-F1 existing site display reconcile', () => {
 
     expect(targets.map(target => target.label)).toEqual([
       'commission-hero-landscape',
-      'commission-hero-portrait',
       'home-entry-commission',
+      'commission-hero-portrait',
       'home-hero-landscape',
       'home-hero-portrait',
       'home-entry-adoption',
@@ -303,13 +324,13 @@ describe('T34-F1 existing site display reconcile', () => {
     seedLegacySiteDisplay('home-landscape', 'home-hero-landscape')
     seedLegacySiteDisplay('home-portrait', 'home-hero-portrait')
 
-    const before = getPublicHome(sqlite, MEDIA_BASE_URL).slides[0]!
-    expect(before.landscape.webp).toHaveLength(3)
+    const before = getPublicHome(sqlite, MEDIA_BASE_URL)
+    expect(before.landscape[0]?.sources.webp).toHaveLength(3)
     expect([
-      ...before.landscape.webp,
-      ...before.landscape.fallback,
-      ...before.portrait.webp,
-      ...before.portrait.fallback,
+      ...before.landscape[0]!.sources.webp,
+      ...before.landscape[0]!.sources.fallback,
+      ...before.portrait[0]!.sources.webp,
+      ...before.portrait[0]!.sources.fallback,
     ].every(variant => variant.src.includes(LEGACY_SITE_DISPLAY_RECIPE_VERSION)))
       .toBe(true)
 
@@ -327,13 +348,13 @@ describe('T34-F1 existing site display reconcile', () => {
       status: 'DONE',
     })
 
-    const after = getPublicHome(sqlite, MEDIA_BASE_URL).slides[0]!
-    expect(after.landscape.webp).toHaveLength(5)
+    const after = getPublicHome(sqlite, MEDIA_BASE_URL)
+    expect(after.landscape[0]?.sources.webp).toHaveLength(5)
     expect([
-      ...after.landscape.webp,
-      ...after.landscape.fallback,
-      ...after.portrait.webp,
-      ...after.portrait.fallback,
+      ...after.landscape[0]!.sources.webp,
+      ...after.landscape[0]!.sources.fallback,
+      ...after.portrait[0]!.sources.webp,
+      ...after.portrait[0]!.sources.fallback,
     ].every(variant => variant.src.includes(SITE_DISPLAY_RECIPE_VERSION)))
       .toBe(true)
   })
@@ -349,6 +370,11 @@ describe('T34-F1 existing site display reconcile', () => {
       UPDATE site_hero_slides
       SET landscape_asset_id = 'low-resolution-home-landscape'
       WHERE id = 'home-slide'
+    `).run()
+    sqlite.prepare(`
+      UPDATE site_hero_items
+      SET asset_id = 'low-resolution-home-landscape'
+      WHERE placement = 'home' AND orientation = 'landscape'
     `).run()
 
     const result = await reconcileSiteDisplay({
@@ -373,7 +399,8 @@ describe('T34-F1 existing site display reconcile', () => {
 
     const home = getPublicHome(sqlite, MEDIA_BASE_URL)
 
-    expect(home.slides).toHaveLength(1)
+    expect(home.landscape).toHaveLength(1)
+    expect(home.portrait).toHaveLength(1)
     expect(home.entries.commission).not.toBeNull()
     expect(home.entries.adoption).not.toBeNull()
     const sourceUrls = (set: {
@@ -381,10 +408,8 @@ describe('T34-F1 existing site display reconcile', () => {
       webp: Array<{ src: string }>
     }) => [...set.webp, ...set.fallback].map(source => source.src)
     const urls = [
-      ...home.slides.flatMap(slide => [
-        ...sourceUrls(slide.landscape),
-        ...sourceUrls(slide.portrait),
-      ]),
+      ...home.landscape.flatMap(item => sourceUrls(item.sources)),
+      ...home.portrait.flatMap(item => sourceUrls(item.sources)),
       ...sourceUrls(home.entries.commission!.sources),
       ...sourceUrls(home.entries.adoption!.sources),
     ]

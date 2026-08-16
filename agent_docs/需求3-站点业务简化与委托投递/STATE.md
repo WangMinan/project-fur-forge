@@ -1,9 +1,9 @@
 # 当前状态：需求3 · 站点业务简化与委托投递
 
 > **最后校准**：2026-08-16。
-> **当前阶段**：本地阶段 A 就绪，生产 T07 待执行；T01～T06 已完成，T07 与 GATE-A 保持未完成。
+> **当前阶段**：GATE-A 已由用户确认发布完成；阶段 B 已完成并通过 GATE-B；阶段 C 的 T15～T21 与本地浏览器门禁已完成，GATE-C 仅余真实手机人工验证。
 > **任务权威**：[`implementation/TASKS.md`](./implementation/TASKS.md)。
-> **当前 main 基线**：`639d15b`；任务分支 `feat/r3-retire-returns-updates` 已删除退役代码，新增默认 dry-run 的串行清理命令及前向 Contract migration `0036_r3_a_contract.sql`；未触碰生产数据。
+> **当前 main 基线**：`979b7db`；阶段 B/C 任务分支为 `codex/r3-phase-b-c-t08-t21`，未合并 main，未开展阶段 D/E/F。
 
 ## 1. 已锁定产品结论
 
@@ -46,9 +46,9 @@
 | 阶段 | 状态 | 门禁 |
 | --- | --- | --- |
 | GATE-00 文档与决策 | 已完成 | — |
-| A 立即退役返图/动态并收缩联系渠道 | 本地就绪（T01～T06 完成；生产 T07 待执行） | GATE-A |
-| B Expand 新模型与安全 | 未开始 | GATE-B |
-| C 动效与 Hero | 未开始 | GATE-C |
+| A 立即退役返图/动态并收缩联系渠道 | 已发布；用户已确认完成 | GATE-A 已完成 |
+| B Expand 新模型与安全 | T08～T14 已完成并完成全量回归 | GATE-B 已完成 |
+| C 动效与 Hero | T15～T21 已完成；五档本地浏览器通过，真实手机待用户验证 | GATE-C 部分完成 |
 | D 作品与领养 | 未开始 | GATE-D |
 | E 委托投递 | 未开始 | GATE-E |
 | F 最终评审与发布 | 未开始 | GATE-R3 |
@@ -65,11 +65,11 @@
 
 ### 4.3 Hero 集合版本
 
-没有 collection version 会导致四个方向互相 409 或无安全排序 CAS；实现必须按模型落地。
+四个 collection 已分别使用 version、上传归属和完整顺序 CAS；后续写入仍必须串行处理 409，不得退回共享首页 version 或局部顺序 patch。
 
 ### 4.4 领养误公开
 
-`preparing/scheduled/in_production/event_sale/NULL` 不能自动变 available，必须景宸确认。
+`preparing/scheduled/in_production/event_sale/NULL` 不会自动变 available；后台人工复核清单已提供，实际歧义项仍必须由景宸确认。
 
 ### 4.5 OSS CORS 与应用 Origin
 
@@ -81,15 +81,14 @@ OSS CORS 通配是用户确认的现状和目标，不是风险 finding，也不
 
 ### 4.7 委托 PII
 
-手机号、QQ、体型和图片只能进入认证管理详情；日志/URL/analytics/错误均禁止。
+手机号、QQ、体型和私有设定图已限制在委托持久模型及认证管理详情边界；日志/URL/analytics/错误仍禁止，阶段 E 接入表单时必须复用现有匿名安全服务。
 
 ## 5. 下一步
 
-1. 推送 `feat/r3-retire-returns-updates`、创建 PR 并查询最终 PR HEAD 的实际 CI；
-2. 保持 T07/GATE-A 未完成，不进入阶段 B/C；冻结镜像须待 PR 合入 main 后生成并记录 digest；
-3. 操作员确认外部快照、用户核对生产 dry-run 后，另行执行 T07；
-4. GATE-A 关闭后再进入 Expand；
-5. 后续按 B→C→D→E→F 推进。
+1. 推送 `codex/r3-phase-b-c-t08-t21`，以最终远端分支 SHA 运行 CI/Review；本地测试不代签远端 CI 或独立 Review；
+2. 用户使用真实手机验证首页动态地址栏、横竖方向切换、首屏无白块、轮播控件与 reduced-motion；完成前保持 GATE-C 第一项未勾选；
+3. 用户验收与独立 Review 仍分别记录，不由本次实现代签；
+4. 本分支不得自行合并 main；GATE-C 关闭前不进入阶段 D，阶段 E/F 同样保持未开始。
 
 ## 6. 文档入口
 

@@ -10,6 +10,7 @@ export const LOGIN_RATE_LIMIT = 30
 export const ADMIN_WRITE_RATE_LIMIT = 60
 export const ADMIN_PROBE_RATE_LIMIT = 60
 export const PUBLIC_ANALYTICS_RATE_LIMIT = 120
+export const PUBLIC_COMMISSION_UPLOAD_RATE_LIMIT = 20
 const RATE_LIMIT_WINDOW_MS = 60_000
 /** 桶数量上限，防止伪造大量 subject 撑爆内存。 */
 const MAX_BUCKETS_PER_TIER = 4_096
@@ -87,6 +88,10 @@ function createRequestLimiters() {
       PUBLIC_ANALYTICS_RATE_LIMIT,
       RATE_LIMIT_WINDOW_MS,
     ),
+    commissionUpload: createSubjectLimiter(
+      PUBLIC_COMMISSION_UPLOAD_RATE_LIMIT,
+      RATE_LIMIT_WINDOW_MS,
+    ),
   }
 }
 
@@ -116,7 +121,7 @@ export interface RateLimitSubject {
 
 export function rateLimitSubjectKey(
   event: H3Event,
-  tier: 'adminProbe' | 'adminWrite' | 'analytics' | 'login',
+  tier: 'adminProbe' | 'adminWrite' | 'analytics' | 'commissionUpload' | 'login',
   subject: RateLimitSubject = {},
 ) {
   if (tier === 'adminWrite' && subject.adminId) {

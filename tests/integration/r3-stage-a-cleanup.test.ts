@@ -103,9 +103,13 @@ function migrationsBeforeContract() {
     resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
     'utf8',
   )) as { entries: { tag: string }[] }
-  const entries = journal.entries.filter(
-    entry => entry.tag !== '0036_r3_a_contract',
+  const contractIndex = journal.entries.findIndex(
+    entry => entry.tag === '0036_r3_a_contract',
   )
+  if (contractIndex < 0) {
+    throw new Error('R3-A contract migration is missing from the journal.')
+  }
+  const entries = journal.entries.slice(0, contractIndex)
   for (const { tag } of entries) {
     copyFileSync(
       resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
@@ -117,6 +121,20 @@ function migrationsBeforeContract() {
     entries,
   }))
   return folder
+}
+
+function migrationsFromContractCount() {
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  const contractIndex = journal.entries.findIndex(
+    entry => entry.tag === '0036_r3_a_contract',
+  )
+  if (contractIndex < 0) {
+    throw new Error('R3-A contract migration is missing from the journal.')
+  }
+  return journal.entries.length - contractIndex
 }
 
 function insertAsset(id: string, role: 'return_photo' | 'contact_qr') {
@@ -465,7 +483,7 @@ describe('R3-A retirement cleanup', () => {
     }))
     sqlite.close()
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: 1,
+      applied: migrationsFromContractCount(),
     })
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
       applied: 0,

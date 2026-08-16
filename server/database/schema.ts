@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm'
 import {
   check,
+  foreignKey,
   index,
   integer,
   primaryKey,
@@ -48,6 +49,7 @@ export const works = sqliteTable('works', {
   purpose: text('purpose').notNull(),
   adoptionMethod: text('adoption_method'),
   businessStatus: text('business_status'),
+  adoptionStatus: text('adoption_status'),
   /**
    * T37 轻量展会掉落：只保存展会名称与展会时间展示文本。
    *
@@ -113,6 +115,10 @@ export const works = sqliteTable('works', {
     sql`${table.businessStatus} IS NULL OR ${table.businessStatus} IN ('preparing', 'available', 'event_sale', 'scheduled', 'in_production', 'delivered')`,
   ),
   check(
+    'works_adoption_status',
+    sql`(${table.purpose} = 'adoption' AND (${table.adoptionStatus} IS NULL OR ${table.adoptionStatus} IN ('available', 'adopted'))) OR (${table.purpose} != 'adoption' AND ${table.adoptionStatus} IS NULL)`,
+  ),
+  check(
     'works_event_sale',
     sql`${table.businessStatus} != 'event_sale' OR (${table.adoptionMethod} = 'event_drop' AND length(trim(${table.eventName})) > 0)`,
   ),
@@ -174,7 +180,7 @@ export const assets = sqliteTable('assets', {
     .on(table.privateObjectKey),
   check(
     'assets_role',
-    sql`${table.role} IN ('design_sheet', 'studio_photo', 'home_hero_landscape', 'home_hero_portrait', 'watermark_logo', 'contact_qr')`,
+    sql`${table.role} IN ('design_sheet', 'studio_photo', 'adoption_cover', 'commission_design_reference', 'home_hero_landscape', 'home_hero_portrait', 'watermark_logo', 'contact_qr')`,
   ),
   check(
     'assets_status',
@@ -215,6 +221,14 @@ export const assets = sqliteTable('assets', {
   check(
     'assets_hero_orientation',
     sql`(${table.role} != 'home_hero_landscape' OR ${table.width} > ${table.height}) AND (${table.role} != 'home_hero_portrait' OR ${table.height} > ${table.width})`,
+  ),
+  check(
+    'assets_adoption_cover_landscape',
+    sql`${table.role} != 'adoption_cover' OR ${table.width} > ${table.height}`,
+  ),
+  check(
+    'assets_commission_reference_private_source',
+    sql`${table.role} != 'commission_design_reference' OR ${table.byteSize} <= 20000000`,
   ),
   check(
     'assets_mime_type',
@@ -315,7 +329,7 @@ export const uploadSessions = sqliteTable('upload_sessions', {
   ),
   check(
     'upload_sessions_owner_id',
-    sql`length(trim(${table.ownerId})) > 0 AND (${table.ownerType} != 'site' OR ${table.ownerId} IN ('home', 'branding', 'contact'))`,
+    sql`length(trim(${table.ownerId})) > 0 AND (${table.ownerType} != 'site' OR ${table.ownerId} IN ('hero-home-landscape', 'hero-home-portrait', 'hero-commission-landscape', 'hero-commission-portrait', 'branding', 'contact'))`,
   ),
   check(
     'upload_sessions_owner_version',
@@ -323,7 +337,7 @@ export const uploadSessions = sqliteTable('upload_sessions', {
   ),
   check(
     'upload_sessions_media_role',
-    sql`(${table.ownerType} = 'work' AND ${table.mediaRole} IN ('design_sheet', 'studio_photo')) OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'home' AND ${table.mediaRole} IN ('home_hero_landscape', 'home_hero_portrait')) OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'branding' AND ${table.mediaRole} = 'watermark_logo') OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'contact' AND ${table.mediaRole} = 'contact_qr')`,
+    sql`(${table.ownerType} = 'work' AND ${table.mediaRole} IN ('design_sheet', 'studio_photo', 'adoption_cover')) OR (${table.ownerType} = 'site' AND ${table.ownerId} IN ('hero-home-landscape', 'hero-commission-landscape') AND ${table.mediaRole} = 'home_hero_landscape') OR (${table.ownerType} = 'site' AND ${table.ownerId} IN ('hero-home-portrait', 'hero-commission-portrait') AND ${table.mediaRole} = 'home_hero_portrait') OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'branding' AND ${table.mediaRole} = 'watermark_logo') OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'contact' AND ${table.mediaRole} = 'contact_qr')`,
   ),
   check(
     'upload_sessions_private_key_relative',
@@ -340,6 +354,10 @@ export const uploadSessions = sqliteTable('upload_sessions', {
   check(
     'upload_sessions_contact_qr_source',
     sql`${table.mediaRole} != 'contact_qr' OR (${table.expectedContentType} IN ('image/jpeg', 'image/png', 'image/webp') AND ${table.expectedBytes} <= 20000000 AND ${table.expectedWidth} >= 64 AND ${table.expectedHeight} >= 64)`,
+  ),
+  check(
+    'upload_sessions_adoption_cover_landscape',
+    sql`${table.mediaRole} != 'adoption_cover' OR ${table.expectedWidth} > ${table.expectedHeight}`,
   ),
   check(
     'upload_sessions_expected_bytes',
@@ -378,6 +396,140 @@ export const uploadSessions = sqliteTable('upload_sessions', {
     sql`${table.expiresAt} = ${table.createdAt} + 300000`,
   ),
   check('upload_sessions_version_positive', sql`${table.version} > 0`),
+])
+
+/** R3-B: anonymous commission uploads stay isolated from administrator sessions. */
+export const commissionUploadSessions = sqliteTable('commission_upload_sessions', {
+  id: text('id').primaryKey(),
+  tokenDigest: text('token_digest').notNull(),
+  privateObjectKey: text('private_object_key').notNull(),
+  expectedContentType: text('expected_content_type').notNull(),
+  expectedBytes: integer('expected_bytes').notNull(),
+  expectedContentMd5: text('expected_content_md5').notNull(),
+  expectedSha256: text('expected_sha256').notNull(),
+  expectedWidth: integer('expected_width').notNull(),
+  expectedHeight: integer('expected_height').notNull(),
+  status: text('status').notNull().default('AWAITING_UPLOAD'),
+  assetId: text('asset_id').references(() => assets.id, { onDelete: 'restrict' }),
+  failureCode: text('failure_code'),
+  failureStage: text('failure_stage'),
+  version: integer('version').notNull().default(1),
+  createdAt: integer('created_at').notNull(),
+  expiresAt: integer('expires_at').notNull(),
+  completedAt: integer('completed_at'),
+  consumedAt: integer('consumed_at'),
+  updatedAt: integer('updated_at').notNull(),
+}, table => [
+  uniqueIndex('commission_upload_sessions_token_unique').on(table.tokenDigest),
+  uniqueIndex('commission_upload_sessions_key_unique').on(table.privateObjectKey),
+  uniqueIndex('commission_upload_sessions_asset_unique')
+    .on(table.assetId).where(sql`${table.assetId} IS NOT NULL`),
+  index('commission_upload_sessions_expiry_idx').on(table.status, table.expiresAt),
+  check(
+    'commission_upload_sessions_token_digest',
+    sql`length(${table.tokenDigest}) = 64 AND ${table.tokenDigest} = lower(${table.tokenDigest}) AND ${table.tokenDigest} NOT GLOB '*[^0-9a-f]*'`,
+  ),
+  check(
+    'commission_upload_sessions_key_relative',
+    sql`length(trim(${table.privateObjectKey})) > 0 AND instr(${table.privateObjectKey}, '://') = 0 AND substr(${table.privateObjectKey}, 1, 1) != '/'`,
+  ),
+  check(
+    'commission_upload_sessions_content_type',
+    sql`${table.expectedContentType} IN ('image/jpeg', 'image/png', 'image/webp')`,
+  ),
+  check(
+    'commission_upload_sessions_expected_bytes',
+    sql`${table.expectedBytes} BETWEEN 1 AND 20000000`,
+  ),
+  check('commission_upload_sessions_expected_md5', sql`length(${table.expectedContentMd5}) = 24`),
+  check(
+    'commission_upload_sessions_expected_sha256',
+    sql`length(${table.expectedSha256}) = 64 AND ${table.expectedSha256} = lower(${table.expectedSha256}) AND ${table.expectedSha256} NOT GLOB '*[^0-9a-f]*'`,
+  ),
+  check(
+    'commission_upload_sessions_dimensions',
+    sql`${table.expectedWidth} BETWEEN 64 AND 12000 AND ${table.expectedHeight} BETWEEN 64 AND 12000`,
+  ),
+  check(
+    'commission_upload_sessions_status',
+    sql`${table.status} IN ('AWAITING_UPLOAD', 'VALIDATING', 'COMPLETED', 'CONSUMED', 'FAILED', 'CANCELLED', 'EXPIRED')`,
+  ),
+  check(
+    'commission_upload_sessions_asset_state',
+    sql`(${table.status} IN ('COMPLETED', 'CONSUMED') AND ${table.assetId} IS NOT NULL) OR (${table.status} NOT IN ('COMPLETED', 'CONSUMED') AND ${table.assetId} IS NULL)`,
+  ),
+  check(
+    'commission_upload_sessions_failure_state',
+    sql`(${table.status} = 'FAILED' AND ${table.failureCode} IS NOT NULL AND ${table.failureStage} IS NOT NULL) OR (${table.status} != 'FAILED' AND ${table.failureCode} IS NULL AND ${table.failureStage} IS NULL)`,
+  ),
+  check(
+    'commission_upload_sessions_failure_stage',
+    sql`${table.failureStage} IS NULL OR ${table.failureStage} IN ('HEAD', 'DIGEST', 'IMAGE_INFO', 'PREPROCESS', 'DATABASE', 'CLEANUP')`,
+  ),
+  check(
+    'commission_upload_sessions_ttl',
+    sql`${table.expiresAt} > ${table.createdAt} AND ${table.expiresAt} <= ${table.createdAt} + 600000`,
+  ),
+  check(
+    'commission_upload_sessions_times',
+    sql`(${table.status} IN ('COMPLETED', 'CONSUMED')) = (${table.completedAt} IS NOT NULL) AND (${table.status} = 'CONSUMED') = (${table.consumedAt} IS NOT NULL)`,
+  ),
+  check('commission_upload_sessions_version_positive', sql`${table.version} > 0`),
+])
+
+export const commissionSubmissions = sqliteTable('commission_submissions', {
+  id: text('id').primaryKey(),
+  receiptCode: text('receipt_code').notNull(),
+  nickname: text('nickname').notNull(),
+  phoneCountryCode: text('phone_country_code').notNull().default('+86'),
+  phoneNumber: text('phone_number').notNull(),
+  qq: text('qq').notNull(),
+  heightCm: integer('height_cm').notNull(),
+  weightKgTenths: integer('weight_kg_tenths').notNull(),
+  designAssetId: text('design_asset_id').notNull()
+    .references(() => assets.id, { onDelete: 'restrict' }),
+  status: text('status').notNull().default('pending'),
+  internalNote: text('internal_note'),
+  handledAt: integer('handled_at'),
+  handledBy: text('handled_by').references(() => users.id, { onDelete: 'restrict' }),
+  version: integer('version').notNull().default(1),
+  ...timestampColumns(),
+}, table => [
+  uniqueIndex('commission_submissions_receipt_unique').on(table.receiptCode),
+  uniqueIndex('commission_submissions_design_asset_unique').on(table.designAssetId),
+  index('commission_submissions_status_created_idx').on(table.status, table.createdAt),
+  check(
+    'commission_submissions_receipt',
+    sql`${table.receiptCode} = upper(${table.receiptCode}) AND length(${table.receiptCode}) BETWEEN 8 AND 24 AND ${table.receiptCode} NOT GLOB '*[^A-Z0-9-]*'`,
+  ),
+  check(
+    'commission_submissions_nickname',
+    sql`${table.nickname} = trim(${table.nickname}) AND length(${table.nickname}) BETWEEN 1 AND 50`,
+  ),
+  check('commission_submissions_country', sql`${table.phoneCountryCode} = '+86'`),
+  check(
+    'commission_submissions_phone',
+    sql`length(${table.phoneNumber}) = 11 AND ${table.phoneNumber} GLOB '1[3-9]*' AND ${table.phoneNumber} NOT GLOB '*[^0-9]*'`,
+  ),
+  check(
+    'commission_submissions_qq',
+    sql`substr(${table.qq}, 1, 1) BETWEEN '1' AND '9' AND length(${table.qq}) BETWEEN 5 AND 12 AND ${table.qq} NOT GLOB '*[^0-9]*'`,
+  ),
+  check('commission_submissions_height', sql`${table.heightCm} BETWEEN 80 AND 250`),
+  check('commission_submissions_weight', sql`${table.weightKgTenths} BETWEEN 200 AND 3000`),
+  check(
+    'commission_submissions_status',
+    sql`${table.status} IN ('pending', 'accepted', 'rejected')`,
+  ),
+  check(
+    'commission_submissions_note',
+    sql`${table.internalNote} IS NULL OR (${table.internalNote} = trim(${table.internalNote}) AND length(${table.internalNote}) BETWEEN 1 AND 2000)`,
+  ),
+  check(
+    'commission_submissions_handled',
+    sql`(${table.status} = 'pending' AND ${table.handledAt} IS NULL AND ${table.handledBy} IS NULL) OR (${table.status} IN ('accepted', 'rejected') AND ${table.handledAt} IS NOT NULL AND ${table.handledBy} IS NOT NULL)`,
+  ),
+  check('commission_submissions_version_positive', sql`${table.version} > 0`),
 ])
 
 export const assetVariants = sqliteTable('asset_variants', {
@@ -469,11 +621,11 @@ export const assetVariants = sqliteTable('asset_variants', {
   ),
   check(
     'asset_variants_media_role',
-    sql`${table.mediaRole} IN ('design_sheet', 'studio_photo', 'home_hero_landscape', 'home_hero_portrait', 'contact_qr')`,
+    sql`${table.mediaRole} IN ('design_sheet', 'studio_photo', 'adoption_cover', 'commission_design_reference', 'home_hero_landscape', 'home_hero_portrait', 'contact_qr')`,
   ),
   check(
     'asset_variants_usage',
-    sql`${table.usage} IN ('preprocess', 'work-card', 'detail', 'design-sheet', 'home-hero-landscape', 'home-hero-portrait', 'commission-hero-landscape', 'commission-hero-portrait', 'home-entry-commission', 'home-entry-adoption', 'contact-qr')`,
+    sql`${table.usage} IN ('preprocess', 'work-card', 'adoption-card', 'detail', 'design-sheet', 'home-hero-landscape', 'home-hero-portrait', 'commission-hero-landscape', 'commission-hero-portrait', 'home-entry-commission', 'home-entry-adoption', 'contact-qr')`,
   ),
   check(
     'asset_variants_dimensions',
@@ -522,6 +674,10 @@ export const assetVariants = sqliteTable('asset_variants', {
   check(
     'asset_variants_public_protection',
     sql`${table.storageScope} != 'PUBLIC' OR ${table.protectionMode} = 'watermark' OR ${table.recipeVersion} IN ('site-display-v1', 'site-display-v2', 'contact-qr-v1')`,
+  ),
+  check(
+    'asset_variants_commission_private',
+    sql`${table.mediaRole} != 'commission_design_reference' OR ${table.storageScope} = 'PRIVATE'`,
   ),
   check(
     'asset_variants_contact_qr_recipe',
@@ -580,7 +736,7 @@ export const workAssets = sqliteTable('work_assets', {
     .where(sql`${table.primary} = 1`),
   check(
     'work_assets_role',
-    sql`${table.role} IN ('design_sheet', 'studio_photo')`,
+    sql`${table.role} IN ('design_sheet', 'studio_photo', 'adoption_cover')`,
   ),
   check(
     'work_assets_alt_text',
@@ -588,7 +744,11 @@ export const workAssets = sqliteTable('work_assets', {
   ),
   check(
     'work_assets_position',
-    sql`(${table.role} = 'design_sheet' AND ${table.position} = 0) OR (${table.role} = 'studio_photo' AND ${table.position} BETWEEN 0 AND 4)`,
+    sql`(${table.role} IN ('design_sheet', 'adoption_cover') AND ${table.position} = 0) OR (${table.role} = 'studio_photo' AND ${table.position} BETWEEN 0 AND 4)`,
+  ),
+  check(
+    'work_assets_primary',
+    sql`${table.role} = 'studio_photo' OR ${table.primary} = 0`,
   ),
   check(
     'work_assets_focus',
@@ -692,6 +852,76 @@ export const siteHeroSlides = sqliteTable('site_hero_slides', {
     sql`${table.sortOrder} >= 0 AND (${table.enabled} = 0 OR ${table.sortOrder} <= 4)`,
   ),
   check('site_hero_slides_version_positive', sql`${table.version} > 0`),
+])
+
+/** R3-B expand: four collection rows are independent optimistic-lock domains. */
+export const siteHeroCollections = sqliteTable('site_hero_collections', {
+  placement: text('placement').notNull(),
+  orientation: text('orientation').notNull(),
+  version: integer('version').notNull().default(1),
+  ...timestampColumns(),
+}, table => [
+  primaryKey({ columns: [table.placement, table.orientation] }),
+  check(
+    'site_hero_collections_placement',
+    sql`${table.placement} IN ('home', 'commission')`,
+  ),
+  check(
+    'site_hero_collections_orientation',
+    sql`${table.orientation} IN ('landscape', 'portrait')`,
+  ),
+  check(
+    'site_hero_collections_version_positive',
+    sql`${table.version} > 0`,
+  ),
+])
+
+/** R3-B expand: one orientation-specific item, with no linked-work field. */
+export const siteHeroItems = sqliteTable('site_hero_items', {
+  id: text('id').primaryKey(),
+  placement: text('placement').notNull(),
+  orientation: text('orientation').notNull(),
+  assetId: text('asset_id').notNull()
+    .references(() => assets.id, { onDelete: 'restrict' }),
+  altText: text('alt_text').notNull(),
+  sortOrder: integer('sort_order').notNull(),
+  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
+  previewObjectKey: text('preview_object_key'),
+  previewExpiresAt: integer('preview_expires_at'),
+  version: integer('version').notNull().default(1),
+  ...timestampColumns(),
+}, table => [
+  foreignKey({
+    columns: [table.placement, table.orientation],
+    foreignColumns: [siteHeroCollections.placement, siteHeroCollections.orientation],
+  }).onDelete('restrict'),
+  uniqueIndex('site_hero_items_enabled_sort_unique')
+    .on(table.placement, table.orientation, table.sortOrder)
+    .where(sql`${table.enabled} = 1`),
+  index('site_hero_items_collection_idx')
+    .on(table.placement, table.orientation, table.enabled, table.sortOrder),
+  index('site_hero_items_asset_idx').on(table.assetId),
+  check(
+    'site_hero_items_placement',
+    sql`${table.placement} IN ('home', 'commission')`,
+  ),
+  check(
+    'site_hero_items_orientation',
+    sql`${table.orientation} IN ('landscape', 'portrait')`,
+  ),
+  check(
+    'site_hero_items_alt_nonempty',
+    sql`${table.altText} = trim(${table.altText}) AND length(${table.altText}) BETWEEN 1 AND 500`,
+  ),
+  check(
+    'site_hero_items_sort',
+    sql`${table.sortOrder} >= 0 AND (${table.enabled} = 0 OR ${table.sortOrder} <= 4)`,
+  ),
+  check(
+    'site_hero_items_preview_state',
+    sql`(${table.previewObjectKey} IS NULL AND ${table.previewExpiresAt} IS NULL) OR (${table.previewObjectKey} IS NOT NULL AND ${table.previewExpiresAt} IS NOT NULL)`,
+  ),
+  check('site_hero_items_version_positive', sql`${table.version} > 0`),
 ])
 
 export const watermarkOperations = sqliteTable('watermark_operations', {

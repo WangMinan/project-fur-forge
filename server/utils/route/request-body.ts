@@ -3,6 +3,7 @@ import { createApiError } from '../api-error'
 
 export const ADMIN_JSON_BODY_MAX_BYTES = 64 * 1_024
 export const PUBLIC_ANALYTICS_JSON_BODY_MAX_BYTES = 1_024
+export const PUBLIC_COMMISSION_JSON_BODY_MAX_BYTES = 4 * 1_024
 
 function bodyError(statusCode: 400 | 413) {
   return createApiError(
@@ -100,4 +101,8 @@ export function readAdminJsonBody(event: H3Event): Promise<unknown> {
 
 export function readPublicAnalyticsJsonBody(event: H3Event): Promise<unknown> {
   return readJsonBody(event, PUBLIC_ANALYTICS_JSON_BODY_MAX_BYTES)
+}
+
+export function readPublicCommissionJsonBody(event: H3Event): Promise<unknown> {
+  return readJsonBody(event, PUBLIC_COMMISSION_JSON_BODY_MAX_BYTES)
 }

@@ -27,15 +27,21 @@ import type {
 } from '../schemas/media'
 import type {
   adminHeroAssetDtoSchema,
+  adminHeroCollectionDtoSchema,
+  adminHeroItemDtoSchema,
+  adminHeroItemPreviewDtoSchema,
   adminHeroPreviewDtoSchema,
   adminHeroSlideDtoSchema,
   adminHomeDtoSchema,
   heroPlacementSchema,
+  heroOrientationSchema,
   homeEntryKindSchema,
   publicCommissionHeroDtoSchema,
   publicHomeDtoSchema,
   publicHomeEntriesDtoSchema,
   publicHomeEntryDtoSchema,
+  publicHeroItemDtoSchema,
+  publicHeroPlacementDtoSchema,
 } from '../schemas/home'
 import type {
   publicAdoptionListDtoSchema,
@@ -78,7 +84,9 @@ import type {
 import type {
   adminWorkDtoSchema,
   adoptionMethodSchema,
+  adoptionStatusSchema,
   businessStatusSchema,
+  managedAdoptionCoverDtoSchema,
   managedDesignSheetDtoSchema,
   managedStudioPhotoDtoSchema,
   managedWorkDtoSchema,
@@ -113,8 +121,30 @@ import type {
   watermarkProfileDtoSchema,
   watermarkProfileStatusSchema,
 } from '../schemas/watermark'
+import type {
+  commissionSubmissionDetailDtoSchema,
+  commissionSubmissionListItemDtoSchema,
+  commissionSubmissionStatusSchema,
+  commissionUploadSessionDtoSchema,
+  commissionUploadStatusSchema,
+} from '../schemas/commission'
 
 export type ApiError = z.infer<typeof apiErrorSchema>
+export type CommissionUploadStatus = z.infer<
+  typeof commissionUploadStatusSchema
+>
+export type CommissionUploadSessionDto = z.infer<
+  typeof commissionUploadSessionDtoSchema
+>
+export type CommissionSubmissionStatus = z.infer<
+  typeof commissionSubmissionStatusSchema
+>
+export type CommissionSubmissionListItemDto = z.infer<
+  typeof commissionSubmissionListItemDtoSchema
+>
+export type CommissionSubmissionDetailDto = z.infer<
+  typeof commissionSubmissionDetailDtoSchema
+>
 export type AnalyticsEventType = z.infer<typeof analyticsEventTypeSchema>
 export type AnalyticsRouteKey = z.infer<typeof analyticsRouteKeySchema>
 export type AnalyticsEntityType = z.infer<typeof analyticsEntityTypeSchema>
@@ -140,6 +170,7 @@ export type WorkPurpose = z.infer<typeof workPurposeSchema>
 export type SuitType = z.infer<typeof suitTypeSchema>
 export type PublicationStatus = z.infer<typeof publicationStatusSchema>
 export type AdoptionMethod = z.infer<typeof adoptionMethodSchema>
+export type AdoptionStatus = z.infer<typeof adoptionStatusSchema>
 export type BusinessStatus = z.infer<typeof businessStatusSchema>
 export type RegularAdoptionBusinessStatus = z.infer<
   typeof regularAdoptionBusinessStatusSchema
@@ -152,10 +183,22 @@ export type PublicSourceSetDto = z.infer<typeof publicSourceSetDtoSchema>
 export type PublicPngSourceSetDto = z.infer<typeof publicPngSourceSetDtoSchema>
 export type PublicHeroSlideDto = z.infer<typeof publicHeroSlideDtoSchema>
 export type AdminHeroAssetDto = z.infer<typeof adminHeroAssetDtoSchema>
+export type AdminHeroItemDto = z.infer<typeof adminHeroItemDtoSchema>
+export type AdminHeroCollectionDto = z.infer<
+  typeof adminHeroCollectionDtoSchema
+>
 export type AdminHeroPreviewDto = z.infer<typeof adminHeroPreviewDtoSchema>
+export type AdminHeroItemPreviewDto = z.infer<
+  typeof adminHeroItemPreviewDtoSchema
+>
 export type AdminHeroSlideDto = z.infer<typeof adminHeroSlideDtoSchema>
 export type AdminHomeDto = z.infer<typeof adminHomeDtoSchema>
 export type HeroPlacement = z.infer<typeof heroPlacementSchema>
+export type HeroOrientation = z.infer<typeof heroOrientationSchema>
+export type PublicHeroItemDto = z.infer<typeof publicHeroItemDtoSchema>
+export type PublicHeroPlacementDto = z.infer<
+  typeof publicHeroPlacementDtoSchema
+>
 export type PublicCommissionHeroDto = z.infer<
   typeof publicCommissionHeroDtoSchema
 >
@@ -221,6 +264,9 @@ export type PublicAdoptionWorkDto = z.infer<typeof publicAdoptionWorkDtoSchema>
 export type AdminWorkDto = z.infer<typeof adminWorkDtoSchema>
 export type WorkFields = z.infer<typeof workFieldsSchema>
 export type ManagedDesignSheetDto = z.infer<typeof managedDesignSheetDtoSchema>
+export type ManagedAdoptionCoverDto = z.infer<
+  typeof managedAdoptionCoverDtoSchema
+>
 export type ManagedStudioPhotoDto = z.infer<typeof managedStudioPhotoDtoSchema>
 export type ManagedWorkDto = z.infer<typeof managedWorkDtoSchema>
 export type WorkListItemDto = z.infer<typeof workListItemDtoSchema>

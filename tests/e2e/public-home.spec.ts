@@ -1,7 +1,11 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { capture } from './helpers/screenshots'
-import { seedHomeSlides, seedPublicCatalog } from './helpers/public-catalog'
+import {
+  seedHeroCollections,
+  seedHomeSlides,
+  seedPublicCatalog,
+} from './helpers/public-catalog'
 import type { SeedHomeSlide, SeedHomeSettings, SeedWork } from './helpers/public-catalog'
 
 /**
@@ -152,8 +156,9 @@ test.describe('T20 首页双源轮播', () => {
     // 后续项不渲染图片标记（隐藏项不下载由方向性请求用例覆盖）
     expect(markup).not.toContain('蓝湄的首页展示照')
     expect(markup).not.toContain('芝麻的首页展示照')
-    // 关联作品链接只信 linkedWorkHref
-    expect(markup).toContain('href="/works/e2e-public-home-naigai"')
+    // R3-C Hero 不再输出 action 或 linked work。
+    expect(markup).not.toContain('查看这套作品')
+    expect(markup).not.toContain('浏览作品展示')
     expect(markup).not.toContain('mailto:3114559925@qq.com')
     expect(markup).not.toContain('QQ 3114559925')
     expect(markup).not.toContain('e2e-private-contact')
@@ -249,20 +254,12 @@ test.describe('T20 首页双源轮播', () => {
     await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张')
     await expect(hero(page).getByRole('img', { name: '蓝湄的首页展示照' })).toBeVisible()
     await expect(hero(page).locator('.home-hero__slide')).toHaveCount(1)
-    // 关联作品链接随当前项切换
-    await expect(hero(page).getByRole('link', { name: '查看这套作品' }))
-      .toHaveAttribute('href', '/works/e2e-public-home-lanmei')
-
     await prev.click()
     await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
 
     // 回绕：第一张上一张 → 最后一张
     await prev.click()
     await expect(liveStatus(page)).toHaveText('第 3 张，共 3 张')
-    // 第三张无关联作品：行动回退到作品列表
-    await expect(hero(page).getByRole('link', { name: '浏览作品展示' }))
-      .toHaveAttribute('href', '/works')
-
     // 圆点直达
     await hero(page).getByRole('button', { name: '第 1 张，共 3 张' }).click()
     await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
@@ -356,6 +353,37 @@ test.describe('T20 首页双源轮播', () => {
     await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
   })
 
+  test('横竖序列数量与顺序可不同，方向变化后只切换当前集合', async ({ page }) => {
+    const hydrationErrors: string[] = []
+    page.on('console', (message) => {
+      if (message.type() === 'error' && /hydration/iu.test(message.text())) {
+        hydrationErrors.push(message.text())
+      }
+    })
+    await seedHeroCollections(page, {
+      landscape: [
+        { alt: '横版 A', sortOrder: 0, enabled: true },
+        { alt: '横版 B', sortOrder: 1, enabled: true },
+        { alt: '横版 C', sortOrder: 2, enabled: true },
+      ],
+      portrait: [
+        { alt: '竖版首页', sortOrder: 0, enabled: true },
+        { alt: '竖版次页', sortOrder: 1, enabled: true },
+      ],
+    })
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+    await expect(liveStatus(page)).toHaveText('第 1 张，共 3 张')
+    await expect(hero(page).getByRole('img', { name: '横版 A' })).toBeVisible()
+    await hero(page).getByRole('button', { name: '下一张' }).click()
+    await expect(liveStatus(page)).toHaveText('第 2 张，共 3 张')
+
+    await page.setViewportSize({ width: 390, height: 844 })
+    await expect(liveStatus(page)).toHaveText('第 1 张，共 2 张')
+    await expect(hero(page).getByRole('img', { name: '竖版首页' })).toBeVisible()
+    expect(hydrationErrors).toEqual([])
+  })
+
   test('无 JS 时第一项完整可用', async ({ browser, page }) => {
     await seedCompleteMotionHome(page, { tagline: '不只做小狗毛（测试）' })
     const context = await browser.newContext({ javaScriptEnabled: false })
@@ -366,9 +394,7 @@ test.describe('T20 首页双源轮播', () => {
       await expect(img).toBeVisible()
       await expect(plainPage.getByRole('heading', { level: 1 })).toBeVisible()
       await expect(plainPage.getByText('不只做小狗毛（测试）')).toBeVisible()
-      await expect(
-        plainPage.getByRole('link', { name: '查看这套作品' }),
-      ).toHaveAttribute('href', '/works/e2e-public-home-naigai')
+      await expect(plainPage.getByText('浏览作品展示')).toHaveCount(0)
       await expect(plainPage.getByTestId('featured-works')).toBeVisible()
       await expect(plainPage.getByTestId('home-business-entries')).toBeVisible()
       await expect(plainPage.getByTestId('home-current-adoptions')).toBeVisible()
@@ -384,6 +410,18 @@ test.describe('T20 首页双源轮播', () => {
     finally {
       await context.close()
     }
+  })
+
+  test('横版集合暂空时 SSR 仍直出竖版首项作为受控回退', async ({ page, request }) => {
+    await seedHeroCollections(page, {
+      landscape: [],
+      portrait: [{ alt: '仅有竖版的首项', sortOrder: 0, enabled: true }],
+    })
+    const response = await request.get('/')
+    expect(response.status()).toBe(200)
+    const markup = (await response.text()).split('<script type="application/json"')[0]!
+    expect(markup).toContain('仅有竖版的首项')
+    expect(markup).toContain('home-hero-portrait')
   })
 
   test('无启用轮播项时首屏退化为文字区，不出控件', async ({ page }) => {
@@ -420,32 +458,51 @@ test.describe('T20 首页双源轮播', () => {
     expect(cls).toBeLessThan(0.1)
   })
 
-  test('三视口图片真实解码、无横向溢出并留存首页证据', async ({ page }) => {
+  test('五视口图片真实解码、无横向溢出并留存首页证据', async ({ page }) => {
     test.setTimeout(90_000)
     await seedHome(page)
-    for (const [width, height] of [[390, 844], [768, 1024], [1440, 900]]) {
+    for (const [width, height] of [
+      [390, 844],
+      [768, 1024],
+      [1023, 900],
+      [1024, 900],
+      [1440, 900],
+    ]) {
       await page.setViewportSize({ width, height })
       await page.goto('/')
       const image = hero(page).getByRole('img', { name: '奶盖的首页展示照' })
       await expect(image).toHaveJSProperty('complete', true)
       expect(await image.evaluate((node: HTMLImageElement) => node.naturalWidth))
         .toBeGreaterThan(0)
+      await hero(page).locator('.home-hero__controls').evaluate(async (controls) => {
+        await Promise.all(controls.getAnimations().map(animation => animation.finished))
+      })
       const overflow = await page.evaluate(() =>
         document.documentElement.scrollWidth - document.documentElement.clientWidth,
       )
       expect(overflow).toBeLessThanOrEqual(1)
       const spacing = await hero(page).evaluate((node) => {
         const content = node.querySelector<HTMLElement>('.home-hero__content')!
-        const action = node.querySelector<HTMLElement>('.home-hero__action')!
+        const title = node.querySelector<HTMLElement>('.home-hero__title')!
+        const controls = node.querySelector<HTMLElement>('.home-hero__controls')!
         const heroRect = node.getBoundingClientRect()
-        const actionRect = action.getBoundingClientRect()
+        const titleRect = title.getBoundingClientRect()
+        const controlsRect = controls.getBoundingClientRect()
         return {
           contentPaddingLeft: Number.parseFloat(getComputedStyle(content).paddingLeft),
-          actionBottomGap: heroRect.bottom - actionRect.bottom,
+          controlsBottomGap: heroRect.bottom - controlsRect.bottom,
+          heroHeight: heroRect.height,
+          titleCenterDelta: Math.abs(
+            titleRect.left + titleRect.width / 2 - window.innerWidth / 2,
+          ),
         }
       })
       expect(spacing.contentPaddingLeft).toBeGreaterThanOrEqual(16)
-      expect(spacing.actionBottomGap).toBeGreaterThanOrEqual(64)
+      expect(spacing.controlsBottomGap).toBeGreaterThanOrEqual(12)
+      expect(spacing.heroHeight).toBeGreaterThanOrEqual(height - 1)
+      if (width >= 1024) {
+        expect(spacing.titleCenterDelta).toBeLessThanOrEqual(2)
+      }
       await capture(page, `home-${width}x${height}`, SCREENSHOT_DIR)
     }
   })
@@ -496,6 +553,8 @@ test.describe('T28 首页完整内容顺序', () => {
     await expect(page.getByTestId('home-business-statuses')).toHaveCount(0)
 
     const entries = page.getByTestId('home-business-entries')
+    await expect(entries.getByRole('heading', { level: 2 }))
+      .toHaveText('委托与领养')
     const commission = entries.getByTestId('home-business-entry')
       .filter({ has: page.locator('[data-entry-kind="commission"]') })
       .or(entries.locator('[data-entry-kind="commission"]'))
@@ -673,6 +732,100 @@ test.describe('R3-A 首页退役动态摘要', () => {
   })
 })
 
+test.describe('R3-C 导航与公开主内容切换', () => {
+  test('桌面导航 hover/focus 胶囊、阴影、轻移与下拉反馈等价', async ({ page }) => {
+    await seedCompleteMotionHome(page)
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+
+    const works = page.getByRole('navigation', { name: '主导航' })
+      .getByRole('link', { name: '作品展示' })
+    await works.hover()
+    await expect.poll(() => works.evaluate((element) => {
+      const style = getComputedStyle(element)
+      return {
+        background: style.backgroundColor,
+        shadow: style.boxShadow,
+        transform: style.transform,
+      }
+    })).toMatchObject({
+      background: expect.not.stringMatching(/^rgba\(0, 0, 0, 0\)$/u),
+      shadow: expect.not.stringMatching(/^none$/u),
+      transform: expect.not.stringMatching(/^none$/u),
+    })
+
+    await works.focus()
+    await expect(works).toBeFocused()
+    await expect.poll(() => works.evaluate(element => getComputedStyle(element).transform))
+      .not.toBe('none')
+
+    const about = page.getByRole('navigation', { name: '主导航' })
+      .getByRole('link', { name: '关于我们', exact: true })
+      .first()
+    await about.hover()
+    await expect(page.getByRole('navigation', { name: '关于我们二级导航' }))
+      .toBeVisible()
+    await expect.poll(() => about.locator('svg')
+      .evaluate(element => getComputedStyle(element).transform))
+      .not.toBe('none')
+  })
+
+  test('仅 main 切换，Header/Footer 稳定，离场禁用指针且前进后退归还焦点', async ({ page }) => {
+    await seedCompleteMotionHome(page)
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+
+    const header = page.getByTestId('public-header')
+    const footer = page.getByTestId('public-footer')
+    await header.evaluate(element => element.setAttribute('data-stable-node', 'header'))
+    await footer.evaluate(element => element.setAttribute('data-stable-node', 'footer'))
+
+    await page.getByRole('navigation', { name: '主导航' })
+      .getByRole('link', { name: '作品展示' }).click()
+    const leaving = page.locator('.public-main-leave-active')
+    await expect(leaving).toHaveCSS('pointer-events', 'none')
+    await expect(page).toHaveURL(/\/works$/u)
+    await expect(page.locator('#main-content')).toBeFocused()
+    await expect(header).toHaveAttribute('data-stable-node', 'header')
+    await expect(footer).toHaveAttribute('data-stable-node', 'footer')
+    await expect(page.getByRole('navigation', { name: '主导航' })
+      .getByRole('link', { name: '作品展示' }))
+      .toHaveAttribute('aria-current', 'page')
+
+    await page.goBack()
+    await expect(page).toHaveURL(/\/$/u)
+    await expect(page.locator('#main-content')).toBeFocused()
+    await page.goForward()
+    await expect(page).toHaveURL(/\/works$/u)
+    await expect(page.locator('#main-content')).toBeFocused()
+  })
+
+  test('锚点与错误页可恢复，reduced-motion 不产生位移', async ({ page }) => {
+    await seedCompleteMotionHome(page)
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+
+    const skip = page.getByRole('link', { name: '跳到主要内容' })
+    await skip.focus()
+    await skip.click()
+    await expect(page).toHaveURL(/#main-content$/u)
+    await expect(page.locator('#main-content')).toBeFocused()
+
+    const works = page.getByRole('navigation', { name: '主导航' })
+      .getByRole('link', { name: '作品展示' })
+    await works.hover()
+    await expect(works).toHaveCSS('transform', 'none')
+
+    const response = await page.goto('/r3-c-missing-page')
+    expect(response?.status()).toBe(404)
+    await expect(page.getByRole('heading', { level: 1, name: '页面未找到' })).toBeVisible()
+    await page.getByRole('link', { name: '返回首页' }).click()
+    await expect(page).toHaveURL(/\/$/u)
+    await expect(hero(page)).toBeVisible()
+  })
+})
+
 test.describe('T51-F9 首页明显式动效', () => {
   test('Hero 内容按顺序首次进场，轮播切换不重建内容层', async ({ page }) => {
     await seedCompleteMotionHome(page)
@@ -685,7 +838,6 @@ test.describe('T51-F9 首页明显式动效', () => {
       publicHero.locator('.home-hero__eyebrow'),
       publicHero.locator('.home-hero__title'),
       publicHero.locator('.home-hero__tagline'),
-      publicHero.locator('.home-hero__action'),
       publicHero.locator('.home-hero__controls'),
     ]
     const delays: number[] = []

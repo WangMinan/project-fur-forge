@@ -111,6 +111,9 @@ export function workMediaUpscaleRecipeVersion(role: MediaRole) {
   if (role === 'studio_photo') {
     return STUDIO_PHOTO_UPSCALE_RECIPE_VERSION
   }
+  if (role === 'adoption_cover') {
+    return STUDIO_PHOTO_UPSCALE_RECIPE_VERSION
+  }
   return null
 }
 

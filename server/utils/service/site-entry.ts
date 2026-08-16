@@ -31,12 +31,13 @@ export function commissionEntrySource(
   sqlite: Database.Database,
 ): HomeEntrySourceRow | null {
   return sqlite.prepare(`
-    SELECT slide.landscape_asset_id AS assetId, slide.alt_text AS altText
-    FROM site_hero_slides AS slide
-    JOIN assets AS asset ON asset.id = slide.landscape_asset_id
-    WHERE slide.placement = 'commission' AND slide.enabled = 1
+    SELECT item.asset_id AS assetId, item.alt_text AS altText
+    FROM site_hero_items AS item
+    JOIN assets AS asset ON asset.id = item.asset_id
+    WHERE item.placement = 'commission'
+      AND item.orientation = 'landscape' AND item.enabled = 1
       AND asset.status = 'READY' AND asset.role = 'home_hero_landscape'
-    ORDER BY slide.sort_order, slide.id
+    ORDER BY item.sort_order, item.id
     LIMIT 1
   `).get() as HomeEntrySourceRow | undefined ?? null
 }
