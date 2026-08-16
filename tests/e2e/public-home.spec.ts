@@ -492,8 +492,12 @@ test.describe('T20 首页双源轮播', () => {
           contentPaddingLeft: Number.parseFloat(getComputedStyle(content).paddingLeft),
           controlsBottomGap: heroRect.bottom - controlsRect.bottom,
           heroHeight: heroRect.height,
+          // 以 Hero 自身为基准判断居中：html 预留了滚动条宽度
+          // （scrollbar-gutter: stable），拿视口宽度算会凭空多出半条 gutter 的偏移。
+          // Hero 铺满页宽由同一用例的横向溢出断言保证。
           titleCenterDelta: Math.abs(
-            titleRect.left + titleRect.width / 2 - window.innerWidth / 2,
+            titleRect.left + titleRect.width / 2
+            - (heroRect.left + heroRect.width / 2),
           ),
         }
       })
@@ -782,9 +786,25 @@ test.describe('R3-C 导航与公开主内容切换', () => {
 
     await page.getByRole('navigation', { name: '主导航' })
       .getByRole('link', { name: '作品展示' }).click()
-    const leaving = page.locator('.public-main-leave-active')
-    await expect(leaving).toHaveCSS('pointer-events', 'none')
+    // 离场不再有过渡时长（淡出会露出布局白底），旧主内容在同一次切换里立刻移除，
+    // 抓不到稳定的 .public-main-leave-active 实例。这里改为确定性地验证两件事：
+    // 离场样式仍禁用指针，且切换后不残留第二个主内容容器。
+    const leaveDisablesPointerEvents = await page.evaluate(() => [...document.styleSheets]
+      .flatMap((sheet) => {
+        try {
+          return [...sheet.cssRules]
+        }
+        catch {
+          return []
+        }
+      })
+      .some(rule => (
+        (rule as CSSStyleRule).selectorText?.includes('.public-main-leave-active')
+        && (rule as CSSStyleRule).style?.pointerEvents === 'none'
+      )))
+    expect(leaveDisablesPointerEvents).toBe(true)
     await expect(page).toHaveURL(/\/works$/u)
+    await expect(page.locator('.public-layout__route')).toHaveCount(1)
     await expect(page.locator('#main-content')).toBeFocused()
     await expect(header).toHaveAttribute('data-stable-node', 'header')
     await expect(footer).toHaveAttribute('data-stable-node', 'footer')

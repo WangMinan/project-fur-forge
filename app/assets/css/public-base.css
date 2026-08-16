@@ -135,6 +135,9 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* 始终预留滚动条宽度：否则页面高度一变（切换 tab、换筛选、翻页）滚动条就
+     出现/消失，视口宽度跟着跳 15px，右对齐的导航条会横向颤一下再回来。 */
+  scrollbar-gutter: stable;
 }
 
 body {

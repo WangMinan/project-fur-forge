@@ -12,6 +12,23 @@ watch(() => route.path, (path, previousPath) => {
   pendingMainFocus.value = path !== previousPath && !route.hash
 })
 
+/**
+ * Nuxt 默认 scrollBehavior 在 `to.path === from.path` 时直接 `return false`，
+ * 也就是「同路径只改 query」保持当前滚动位置。作品与领养的分页、筛选和搜索
+ * 全都走 query，翻到第 2 页会停在上一页的位置。跨路径仍交给 Nuxt 默认处理
+ * （它会等页面加载完再滚，这里不重复实现）。
+ */
+watch(() => route.fullPath, (_fullPath, previousFullPath) => {
+  if (!previousFullPath || route.hash) {
+    return
+  }
+  const previousPath = previousFullPath.split(/[?#]/)[0]
+  if (previousPath !== route.path) {
+    return
+  }
+  window.scrollTo({ top: 0, behavior: 'instant' })
+})
+
 function onMainEntered() {
   if (!pendingMainFocus.value) {
     return
@@ -82,37 +99,29 @@ useHead(() => ({
   min-height: inherit;
 }
 
+/* 切换只做位移，且只在新页面入场时做。
+   此前 enter-from 与 leave-to 都淡到 opacity 0：out-in 模式下这两端衔接处
+   整页透明、露出布局白底，就是顶级 tab 切换时看到的「闪一下」；
+   离场那 170ms 又是新页面出现前的纯等待，看起来像「闪完再加载」。
+   现在离场即时移除、入场全程不透明，画面上任何时刻都是完整内容。 */
 .public-main-enter-active {
-  transition:
-    opacity 300ms var(--easing-standard),
-    transform 300ms var(--easing-standard);
+  transition: transform 300ms var(--easing-standard);
 }
 
 .public-main-leave-active {
   pointer-events: none;
-  transition:
-    opacity 170ms var(--easing-exit),
-    transform 170ms var(--easing-exit);
 }
 
 .public-main-enter-from {
-  opacity: 0;
   transform: translateY(0.75rem);
 }
 
-.public-main-leave-to {
-  opacity: 0;
-  transform: translateY(-0.5rem);
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .public-main-enter-active,
-  .public-main-leave-active {
+  .public-main-enter-active {
     transition: none;
   }
 
-  .public-main-enter-from,
-  .public-main-leave-to {
+  .public-main-enter-from {
     transform: none;
   }
 }
