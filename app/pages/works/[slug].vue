@@ -104,6 +104,23 @@ useHead(() => ({
 }))
 
 const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
+
+/**
+ * 返回目标跟着来路走：从设定领养点进来就回设定领养，其余（作品展示、首页精选、
+ * 直达）回作品展示。来路取 vue-router 写在 history state 里的上一条 fullPath，
+ * 不需要自己维护历史栈。
+ *
+ * SSR 拿不到 history，所以先直出默认值，挂载后再按真实来路修正，避免水合不一致。
+ */
+const WORKS_BACK = { href: '/works', label: '返回作品展示' }
+const back = ref(WORKS_BACK)
+
+onMounted(() => {
+  const previous = window.history.state?.back
+  if (typeof previous === 'string' && /^\/adoptions(?:[/?#]|$)/u.test(previous)) {
+    back.value = { href: previous, label: '返回设定领养' }
+  }
+})
 </script>
 
 <template>
@@ -116,8 +133,8 @@ const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
     :data-work-slug="dto.slug"
   >
     <nav class="work-detail__back" aria-label="返回">
-      <NuxtLink to="/works" class="work-detail__back-link">
-        <span aria-hidden="true">←</span> 返回作品展示
+      <NuxtLink :to="back.href" class="work-detail__back-link">
+        <span aria-hidden="true">←</span> {{ back.label }}
       </NuxtLink>
     </nav>
 

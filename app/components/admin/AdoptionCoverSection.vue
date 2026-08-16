@@ -305,6 +305,9 @@ defineExpose({ save: saveCover })
 .cover__input { width: 100%; min-height: var(--admin-control-height-sm); padding: 0 var(--admin-space-2); border: 1px solid var(--admin-border-primary); border-radius: var(--admin-radius-sm); font: inherit; }
 .cover__locked { padding: var(--admin-space-3) var(--admin-space-4); border-radius: var(--admin-radius-md); color: var(--admin-status-info); background: var(--admin-status-info-soft); font-size: var(--admin-font-sm); }
 .cover__empty { padding: var(--admin-space-5); border: 1px dashed var(--admin-border-primary); border-radius: var(--admin-radius-md); color: var(--admin-text-secondary); text-align: center; }
+/* 与「领养设定图」一致：直属本卡片的操作行和上方图像框留出间距，不贴边。
+   `.cover__entry` 内部那一行不受影响——那里的间距由 entry 自己的 grid gap 给。 */
+.editor-card > .cover__actions { margin-top: var(--admin-space-3); }
 .cover__filename { color: var(--admin-text-secondary); font-size: var(--admin-font-sm); }
 .cover__uploads { display: grid; gap: var(--admin-space-3); margin: var(--admin-space-3) 0; padding: 0; list-style: none; }
 .cover__dirty { color: var(--admin-status-warning); font-size: var(--admin-font-xs); font-weight: 600; }

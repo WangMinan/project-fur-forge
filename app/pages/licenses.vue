@@ -108,6 +108,25 @@ const RUNTIME: Dependency[] = [
     purpose: '数据校验',
     url: 'https://github.com/colinhacks/zod',
   },
+  {
+    license: 'MIT',
+    name: 'pdf-lib',
+    purpose: '委托制作单 PDF 生成',
+    url: 'https://github.com/Hopding/pdf-lib',
+  },
+  {
+    license: 'MIT',
+    name: '@pdf-lib/fontkit',
+    purpose: '制作单 PDF 的字体子集嵌入',
+    url: 'https://github.com/Hopding/fontkit',
+  },
+  // 随镜像分发的字体文件，许可证必须与实际分发保持同步。
+  {
+    license: 'SIL OFL 1.1',
+    name: 'Noto Serif SC',
+    purpose: '委托制作单 PDF 正文字体',
+    url: 'https://github.com/notofonts/noto-cjk',
+  },
 ]
 </script>
 

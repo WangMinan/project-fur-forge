@@ -79,3 +79,8 @@ export function compressPngForOss(content: Buffer): Promise<{
     usedPathLookup: false
   }
 }>
+
+export function decodeImageToPng(content: Buffer): Promise<{
+  content: Buffer
+  contentType: 'image/png'
+}>

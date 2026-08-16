@@ -593,7 +593,11 @@ describe('SQLite foundation', () => {
       expect(row.commissionVersion).toBe(before.commission + 1)
       expect(row.aboutStudioFacts).toBe('管理员自定义工作室介绍')
       expect(row.aboutMakingScope).toContain('确认委托前沟通')
-      expect(row.aboutVersion).toBe(before.about + 1)
+      // 半装只做头和爪：0043 必须把 visitor copy 里的尾巴去掉，全装仍含尾巴。
+      expect(row.aboutMakingScope).toContain('半装包括头部和爪')
+      expect(row.aboutMakingScope).not.toMatch(/半装[^。]*尾巴/u)
+      // visitor copy 与 0043 半装范围修正各推进 about 一次。
+      expect(row.aboutVersion).toBe(before.about + 2)
       expect(row.basicTerms).toBe('管理员自定义服务条款')
       expect(row.termsVersion).toBe(before.terms)
       expect(row.privacyPolicy).toContain('原始记录保留 90 天')
@@ -602,7 +606,7 @@ describe('SQLite foundation', () => {
       expect(row.contactAntiScam).toBe('管理员自定义防诈骗提醒')
       // visitor copy 与 0042 默认联系方式各推进 contact 一次。
       expect(row.contactVersion).toBe(before.contact + 2)
-      expect(row.version).toBe(before.version + 6)
+      expect(row.version).toBe(before.version + 7)
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
     }
     finally {

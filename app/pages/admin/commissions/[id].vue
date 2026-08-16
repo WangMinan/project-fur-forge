@@ -99,6 +99,47 @@ function formatTime(value: string | null) {
   }).format(new Date(value))
 }
 
+/**
+ * 导出制作单：已接受的申请才给按钮。
+ *
+ * PDF 由服务端生成（两页 A4 横版：单主信息 + 满页设定图），不走浏览器打印——
+ * 打印结果会被操作员的默认打印机纸张、方向和灰度设置改变，导出的文件必须与打印机无关。
+ */
+const exportable = computed(() => detail.value?.status === 'accepted')
+const exporting = ref(false)
+const exportError = ref<string | null>(null)
+
+async function exportWorkOrder() {
+  if (!detail.value || !exportable.value || exporting.value) {
+    return
+  }
+  exporting.value = true
+  exportError.value = null
+  try {
+    // 走 fetch 而不是直接开链接：失败时能给出提示，而不是把错误 JSON 下载下来。
+    const response = await fetch(
+      `/api/admin/v1/commissions/${detail.value.id}/work-order`,
+      { credentials: 'same-origin' },
+    )
+    if (!response.ok) {
+      throw new Error('export failed')
+    }
+    const blob = await response.blob()
+    const href = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = href
+    anchor.download = `commission-work-order-${detail.value.receiptCode}.pdf`
+    anchor.click()
+    URL.revokeObjectURL(href)
+  }
+  catch {
+    exportError.value = '制作单导出失败，请重试。'
+  }
+  finally {
+    exporting.value = false
+  }
+}
+
 onMounted(() => void load())
 </script>
 
@@ -109,6 +150,14 @@ onMounted(() => void load())
         <div>
           <NuxtLink to="/admin/commissions">← 委托申请</NuxtLink>
           <h1>委托申请详情</h1>
+        </div>
+        <div v-if="exportable" class="commission-detail__export">
+          <button type="button" :disabled="exporting" @click="exportWorkOrder">
+            {{ exporting ? '导出中…' : '导出制作单' }}
+          </button>
+          <p v-if="exportError" role="alert" class="commission-detail__error">
+            {{ exportError }}
+          </p>
         </div>
       </header>
 
@@ -135,15 +184,24 @@ onMounted(() => void load())
           </dl>
         </section>
 
-        <section class="commission-detail__card" aria-labelledby="commission-image-title">
-          <h2 id="commission-image-title">私有设定图</h2>
+        <section
+          class="commission-detail__card commission-detail__card--image"
+          aria-labelledby="commission-image-title"
+        >
+          <h2 id="commission-image-title">设定图</h2>
           <img
             class="commission-detail__image"
             :src="detail.designReferencePreviewHref"
             alt="委托申请私有设定图"
             referrerpolicy="no-referrer"
           >
-          <p>图片仅通过当前管理会话读取，响应禁止缓存。</p>
+          <!-- 放大预览直接新开原图：浏览器自带缩放与拖动，比自制灯箱好用。 -->
+          <a
+            class="commission-detail__zoom"
+            :href="detail.designReferencePreviewHref"
+            target="_blank"
+            rel="noopener noreferrer"
+          >放大预览原图 ↗</a>
         </section>
 
         <section class="commission-detail__card" aria-labelledby="commission-handling-title">
@@ -183,18 +241,46 @@ onMounted(() => void load())
         <p role="alert">为避免覆盖他人的处理结果，当前保存已停止。确认后载入最新内容。</p>
       </AdminConfirmDialog>
     </div>
+
   </AdminShell>
 </template>
 
 <style scoped>
+/* 用满页宽：申请信息与处理表单一栏，设定图另起一栏，右侧不再空一大片。 */
 .commission-detail {
   display: grid;
   gap: var(--admin-space-5);
-  max-width: var(--admin-reading-max);
+  align-content: start;
+}
+
+.commission-detail__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--admin-space-3);
 }
 
 .commission-detail__header h1 {
   margin: var(--admin-space-2) 0 0;
+}
+
+@media (min-width: 1024px) {
+  .commission-detail {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .commission-detail__header,
+  .commission-detail__state {
+    grid-column: 1 / -1;
+  }
+
+  /* 设定图占右栏并跨两行，和左栏的「申请与联系」「处理」并排。 */
+  .commission-detail__card--image {
+    grid-column: 2;
+    grid-row: 2 / span 2;
+  }
 }
 
 .commission-detail__state,
@@ -238,11 +324,26 @@ onMounted(() => void load())
 
 .commission-detail__image {
   display: block;
-  width: min(100%, 38rem);
+  width: 100%;
   max-height: 42rem;
   object-fit: contain;
   border-radius: var(--admin-radius-md);
   background: var(--admin-bg-subtle);
+}
+
+.commission-detail__export {
+  display: grid;
+  justify-items: end;
+  gap: var(--admin-space-2);
+}
+
+.commission-detail__zoom {
+  justify-self: start;
+  font-size: var(--admin-font-sm);
+}
+
+.commission-detail button:disabled {
+  opacity: 0.6;
 }
 
 .commission-detail select,
@@ -285,3 +386,4 @@ onMounted(() => void load())
   }
 }
 </style>
+

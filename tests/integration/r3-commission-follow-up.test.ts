@@ -47,6 +47,16 @@ function migrationsThrough(databaseFile: string, lastTag: string) {
   return folder
 }
 
+/** `lastTag` 之后剩余的迁移数量：再加前向迁移时不用回来改这个数字。 */
+function migrationsAfter(lastTag: string) {
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  return journal.entries.length
+    - (journal.entries.findIndex(entry => entry.tag === lastTag) + 1)
+}
+
 function seedSubmission(
   file: string,
   id: string,
@@ -103,7 +113,9 @@ describe('R3-E commission user follow-up migration', () => {
       rollingRead.sqlite.close()
     }
 
-    await expect(migrateDatabase(file)).resolves.toMatchObject({ applied: 1 })
+    await expect(migrateDatabase(file)).resolves.toMatchObject({
+      applied: migrationsAfter(PRE_FOLLOW_UP_TAG),
+    })
     await expect(migrateDatabase(file)).resolves.toMatchObject({ applied: 0 })
 
     const database = openDatabase(file)

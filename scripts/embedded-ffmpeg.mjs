@@ -427,3 +427,46 @@ export async function compressPngForOss(content) {
   }
   return preprocessImageForOss(content)
 }
+
+/**
+ * 原尺寸转 PNG。制作单 PDF 只能嵌入 JPEG/PNG，WebP 原图先过这里；
+ * 不缩放、不裁切，保持设定图的全部细节。
+ */
+export async function decodeImageToPng(content) {
+  if (!Buffer.isBuffer(content)) {
+    throw new Error('Embedded FFmpeg input must be an image Buffer.')
+  }
+  const result = await runEmbeddedFfmpeg([
+    '-hide_banner',
+    '-loglevel',
+    'error',
+    '-f',
+    'image2pipe',
+    '-c:v',
+    inputCodec(content),
+    '-i',
+    'pipe:0',
+    '-frames:v',
+    '1',
+    '-map_metadata',
+    '-1',
+    '-threads',
+    '1',
+    '-c:v',
+    'png',
+    '-compression_level',
+    '9',
+    '-f',
+    'image2pipe',
+    'pipe:1',
+  ], { input: content })
+  const output = result.stdout
+  if (
+    output.length < 24
+    || output.length > OSS_IMAGE_PROCESSING_MAX_BYTES
+    || !output.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)
+  ) {
+    throw new Error('Embedded FFmpeg PNG decode output is invalid.')
+  }
+  return { content: output, contentType: 'image/png' }
+}

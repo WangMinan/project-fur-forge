@@ -76,8 +76,11 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
         <p class="about-page__text about-page__text--muted">
           委托申请可通过站内表单私密提交；邮箱、QQ 与 QQ群用于后续人工沟通和备用联系。
         </p>
-        <NuxtLink class="about-page__apply" to="/commission/apply">提交委托申请</NuxtLink>
-        <ContactEmailActions :email="contact.email" />
+        <!-- 三个行动同一行：提交申请是主行动，邮件两个按钮跟在后面。 -->
+        <div class="about-page__actions">
+          <NuxtLink class="about-page__apply" to="/commission/apply">提交委托申请</NuxtLink>
+          <ContactEmailActions :email="contact.email" />
+        </div>
         <ContactChannelGrid :channels="contact.officialChannels" />
       </section>
 
@@ -132,6 +135,13 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
 .about-page__text--muted {
   color: var(--public-text-secondary);
   font-size: var(--font-size-sm);
+}
+
+.about-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
 }
 
 .about-page__apply {
