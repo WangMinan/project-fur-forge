@@ -45,7 +45,7 @@ const PREFIX = 'test/t34-f5-interrupt'
 const CHILD = fileURLToPath(
   new URL('../fixtures/operation-interrupt-child.ts', import.meta.url),
 )
-// 一个启用首页 Hero：横版 5 宽度、竖版 3 宽度，各 2 格式，共 16 个公开对象。
+// 首页两个独立方向 item：横版 5 宽度、竖版 3 宽度，各 2 格式，共 16 个公开对象。
 const EXPECTED_CALLS = 16
 
 let directory: string
@@ -79,15 +79,28 @@ function seedEnabledHero() {
   insertActiveWatermarkProfile(sqlite, NOW, { environmentPrefix: PREFIX })
   insertSource('hero-landscape', 'home_hero_landscape', 4000, 2250)
   insertSource('hero-portrait', 'home_hero_portrait', 1800, 3200)
-  sqlite.prepare(`
-    INSERT INTO site_hero_slides (
-      id, placement, landscape_asset_id, portrait_asset_id, alt_text,
+  const insertItem = sqlite.prepare(`
+    INSERT INTO site_hero_items (
+      id, placement, orientation, asset_id, alt_text,
       sort_order, enabled, created_at, updated_at
-    ) VALUES (
-      'hero-slide', 'home', 'hero-landscape', 'hero-portrait', '既有首图',
-      0, 1, ?, ?
-    )
-  `).run(NOW, NOW)
+    ) VALUES (?, 'home', ?, ?, ?, 0, 1, ?, ?)
+  `)
+  insertItem.run(
+    'hero-landscape-item',
+    'landscape',
+    'hero-landscape',
+    '既有横版首图',
+    NOW,
+    NOW,
+  )
+  insertItem.run(
+    'hero-portrait-item',
+    'portrait',
+    'hero-portrait',
+    '既有竖版首图',
+    NOW,
+    NOW,
+  )
 }
 
 function operationRows() {
