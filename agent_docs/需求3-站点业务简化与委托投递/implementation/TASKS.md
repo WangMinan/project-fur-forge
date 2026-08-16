@@ -70,42 +70,44 @@
 
 ## D. 作品与领养
 
-- [ ] **T22 · 作品管理表单收缩**：删除 suit/owner/contact/tags/method/event/旧 progress UI；只维护目标字段和三类图片。
-- [ ] **T23 · PublicWork DTO 与 `/works`**：摘要只含名称、物种、卡图；删除用途/装型筛选，保留名称搜索、分页、发布时间排序。
-- [ ] **T24 · `/works/{slug}` 图片化**：只保留名称、物种、图集、前后和相关作品；SEO/JSON-LD 收缩。
-- [ ] **T25 · Adoption cover 媒体垂直切片**：上传、验证、适配、watermark variant、发布阻断、失败重试、清理和后台预览。
-- [ ] **T26 · 领养人工复核与补图**：所有 NULL 状态由景宸确认；published adoption 补 cover 或下架；缺主 studio photo 修复。
-- [ ] **T27 · `/adoptions` 收缩**：删除 method/count/event；cover only；名称、物种、状态、可选价格；首页当前领养复用。
-- [ ] **T28 · 可选设定图**：0..1，可在详情图集展示；不作列表卡或发布门禁。
-- [ ] **T29 · Works contract**：在 NULL/缺图均为 0 后重建 works/work_assets，删除旧列和 `work_feature_tags`；`commission_email_action`、`contact_qq` 不删除，`contact_douyin` 已在 T04 删除。
+- [x] **T22 · 作品管理表单收缩**：删除 suit/owner/contact/tags/method/event/旧 progress UI；只维护目标字段和三类图片。表单、Schema、service、repository 与目标 DTO 已同步并通过 unit/integration/E2E。
+- [x] **T23 · PublicWork DTO 与 `/works`**：摘要只含名称、物种、卡图；删除用途/装型筛选，保留名称搜索、分页、发布时间排序。公开 DTO 负向断言已证明旧字段消失。
+- [x] **T24 · `/works/{slug}` 图片化**：只保留名称、物种、图集、前后和相关作品；SEO/JSON-LD 已收缩，图片占位尺寸修复后列表/详情 CLS 均小于 0.1。
+- [x] **T25 · Adoption cover 媒体垂直切片**：复用既有上传、验证、适配、水印 publication、lease、recovery、purge 和后台预览；发布阻断、失败重试和清理已由合成媒体验证。
+- [ ] **T26 · 领养人工复核与补图**：复核清单、人工补录、独立 cover、主出厂照门禁和先下架能力均已实现并用合成数据验证；真实生产记录的状态与图片仍必须由景宸逐条判断，未由 Agent 勾选完成。
+- [x] **T27 · `/adoptions` 收缩**：删除 method/count/event；卡片只使用独立 cover，并展示名称、物种、状态、可选价格；首页当前领养复用同一投影。
+- [x] **T28 · 可选设定图**：目标模型保持 0..1，可在详情图片区展示，不参与列表卡或发布门禁。
+- [x] **T29 · Works contract**：前向迁移 `0039_r3_d_works_contract.sql` 只在三项数据门禁为 0 后重建目标表并删除旧列/`work_feature_tags`；失败停止、fresh、既有库、重入、FK/integrity 已在临时库通过。`0041_r3_d_hero_work_fk.sql` 前向修复 Hero 外键；生产未执行，`commission_email_action`、`contact_qq` 均保留。
 
 ### GATE-D · 作品与领养
 
-- [ ] PublicWork DTO 无旧字段；
-- [ ] adoption status NULL=0；
-- [ ] published adoption missing cover=0；
-- [ ] published work missing primary studio photo=0；
-- [ ] works/detail/adoptions 三视口通过；
-- [ ] contract migration、foreign key、integrity 通过。
+- [x] PublicWork DTO 无旧字段；
+- [x] 临时既有库与合成数据的 adoption status NULL=0；
+- [x] 临时既有库与合成数据的 published adoption missing cover=0；
+- [x] 临时既有库与合成数据的 published work missing primary studio photo=0；
+- [x] works/detail/adoptions 在 390×844、768×1024、1440×900 通过；
+- [x] contract migration 的前置阻断、fresh/既有库/重入、foreign key、integrity 通过；
+- [ ] 生产真实记录三项计数与景宸逐条判断待 handoff，未执行生产 contract。
 
 ## E. 委托投递
 
-- [ ] **T30 · 公开上传 API**：create、conditional PUT、complete、cancel/expire/retry/cleanup；一张 20MB 内图片；token/TTL/摘要/MIME/尺寸/API Origin；OSS CORS 不收紧。
-- [ ] **T31 · Submission API**：校验五项字段与 COMPLETED upload，单事务消费 asset、创建 pending、重试 receipt collision；重复/蜜罐/限流完整。
-- [ ] **T32 · `/commission/apply`**：单图预览与上传、可见 label、邻近错误、失败保留内存草稿、过期重选、提交中、成功回执；不写 URL/localStorage/analytics/console。
-- [ ] **T33 · `/admin/commissions`**：三状态列表、私有详情、no-store 图片、状态/备注、version/409/audit。
-- [ ] **T34 · `/commission` 与联系入口**：站内提交主 CTA、QQ/QQ群二维码、about 入口；邮箱仅备用；确认抖音、小红书、Bilibili 不再出现在当前页面或关于页。
-- [ ] **T35 · FAQ 完整退役**：删除 FAQ JSON/version/UI/Schema/API/Card/test；保留 intro、estimate、`commission_email_action`、邮箱、QQ、QQ群；about/privacy 同步。
-- [ ] **T36 · 委托综合门禁**：成功/错误/过期/重复/限流/蜜罐/cleanup/API Origin/PII/admin 409；真实浏览器单图端到端；不要求 OSS 精确 Origin CORS。
+- [x] **T30 · 公开上传 API**：create、conditional PUT、complete、cancel/expire/retry/cleanup 已完成；一张 20MB 内图片，token/TTL/摘要/MIME/尺寸/API Origin 完整保留，OSS CORS 继续 `AllowedOrigin=*`。
+- [x] **T31 · Submission API**：五项字段与 COMPLETED upload 校验、单事务消费/创建 pending、receipt collision 重试、重复/蜜罐/限流已完成。
+- [x] **T32 · `/commission/apply`**：单图预览上传、可见 label、邻近错误、内存草稿、过期重选、提交态和成功回执已完成；浏览器断言 URL/localStorage/analytics/console 无 PII。
+- [x] **T33 · `/admin/commissions`**：三状态列表、认证私有详情、`no-store` 图片、状态/备注、version/409/audit 已完成。
+- [x] **T34 · `/commission` 与联系入口**：站内提交为主 CTA，QQ/QQ群与 about 入口已同步；邮箱为备用；当前委托页/关于页不再包含抖音、小红书、Bilibili。
+- [x] **T35 · FAQ 完整退役**：`0040_r3_e_commission_contract.sql` 删除 FAQ JSON/version，UI/Schema/API/Card/test 均删除；intro、estimate、`commission_email_action`、邮箱、QQ、QQ群保留。
+- [x] **T36 · 委托综合门禁**：成功/错误/过期/重复/限流/蜜罐/cleanup/API Origin/PII/admin 409 已通过；本地真实 Chrome 单图端到端通过；不要求 OSS 精确 Origin CORS。
 
 ### GATE-E · 委托完成
 
-- [ ] private image 仅认证 no-store 可见；
-- [ ] PII 不进公开面、URL、analytics、普通日志、错误；
-- [ ] 签名 PUT 在 `AllowedOrigin=*` 下端到端通过；
-- [ ] FAQ 删除且 email action 未误删；
-- [ ] 公开与管理联系面只包含邮箱、QQ、QQ群；
-- [ ] 管理与公开流程通过。
+- [x] private image 仅认证 `no-store` 可见，未生成 PUBLIC variant 或 ESA 地址；
+- [x] 合成数据验证 PII 不进公开面、URL、localStorage、analytics、console、普通日志和错误正文；
+- [x] 条件签名 PUT 在测试对象存储 `AllowedOrigin=*` 下端到端通过，应用 API 仍拒绝错误 Origin；
+- [x] FAQ 删除且 `commission_email_action`/`contact_qq` 未误删；
+- [x] 公开与管理联系面只包含邮箱、QQ、QQ群；
+- [x] 管理与公开流程在本地真实 Chrome 通过，包括真实 409 对话框停止点；
+- [ ] 真实手机动态地址栏、输入法、图片方向、单图提交和用户验收待用户执行；生产 OSS/ESA/数据库未连接。
 
 ## F. 最终评审与发布
 

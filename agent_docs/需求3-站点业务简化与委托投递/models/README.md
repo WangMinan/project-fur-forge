@@ -2,7 +2,7 @@
 
 > **角色**：定义 contract 完成后的目标持久模型、DTO 和媒体身份。
 > **状态**：目标已锁定；T01～T06 的品牌、代码、清理工具、持久 Contract、本地演练和独立 focused Review 已回填，生产 T07 待执行。
-> **修订**：增加 Hero collection 版本域、明确领养状态人工迁移、沿用既有 `detail` usage、保留 `commission_email_action`；官方渠道收缩为 `qq | qq_group`，OSS CORS 保持通配且不进入模型门禁。
+> **修订**：增加 Hero collection 版本域、明确领养状态人工迁移、沿用既有 `detail` usage、保留 `commission_email_action`；官方渠道收缩为 `qq | qq_group`，FAQ 字段已从目标模型删除，OSS CORS 保持通配且不进入模型门禁。
 
 ## 1. 最终数据域
 
@@ -340,12 +340,7 @@ hero_auto_rotate_interval_ms
 现有保留分区版本
 ```
 
-第一阶段/委托阶段删除：
-
-```text
-commission_faq_json
-commission_faq_version
-```
+`commission_faq_json` 与 `commission_faq_version` 已由前向迁移 `0040_r3_e_commission_contract.sql` 从目标 Schema 删除；新页面、DTO、管理端、service 与测试均不再读写 FAQ。`commission_email_action` 仍是保留字段，不得与 FAQ 一并删除。
 
 ### 7.2 `official_channels_json` 目标结构
 
