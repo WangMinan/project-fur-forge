@@ -4,7 +4,7 @@ import { publicCommissionHeroResponseSchema } from '~~/shared/schemas/home'
 import { publicSiteContentResponseSchema } from '~~/shared/schemas/site-content'
 
 /**
- * T26 自设委托页：SSR 消费 /api/public/v1/site-content（固定内容 + 委托营业状态）
+ * 自设委托页：SSR 消费 /api/public/v1/site-content（固定内容 + 委托营业状态）
  * 与 /api/public/v1/commission-hero（委托页独立代表作品宽图）。自由文案为 null 时整区隐藏；
  * 制作范围、人工逐单估价机制与站内提交为已确认结构性事实，不编造业务文案。
  */
