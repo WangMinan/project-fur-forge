@@ -20,11 +20,15 @@ import {
 } from '../../server/utils/database'
 import {
   COMMISSION_UPLOAD_TTL_MS,
+  cancelCommissionUpload,
+  cleanupExpiredCommissionUploads,
   completeCommissionUpload,
   createCommissionUpload,
+  createCommissionSubmission,
   getCommissionDesignReference,
   getCommissionSubmissionDetail,
   listCommissionSubmissions,
+  retryCommissionUpload,
   updateCommissionSubmission,
 } from '../../server/utils/service/commission-management'
 import { commissionUploadExpectedSchema } from '../../shared/schemas/commission'
@@ -51,7 +55,11 @@ function expected(content = CONTENT) {
   }
 }
 
-async function createAndSeed(id = SESSION_ID, now = NOW) {
+async function createAndSeed(
+  id = SESSION_ID,
+  now = NOW,
+  token = TOKEN,
+) {
   const created = await createCommissionUpload(
     sqlite,
     storage,
@@ -61,8 +69,8 @@ async function createAndSeed(id = SESSION_ID, now = NOW) {
       id,
       keyPrefix: 'test/r3-commission',
       now,
-      objectToken: 'c'.repeat(48),
-      token: TOKEN,
+      objectToken: createHash('sha256').update(id).digest('hex').slice(0, 48),
+      token,
     },
   )
   const key = storage.signedPuts.at(-1)?.objectKey
@@ -165,7 +173,7 @@ describe('R3-B anonymous commission upload', () => {
     expect(sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
   })
 
-  it('allows consumption only through a submission and keeps list/audit output PII-free', async () => {
+  it('consumes atomically through submission, retries receipt collisions, and keeps list/audit output PII-free', async () => {
     await createAndSeed()
     await completeCommissionUpload(
       sqlite,
@@ -187,25 +195,40 @@ describe('R3-B anonymous commission upload', () => {
         id, username, password_hash, password_changed_at, created_at, updated_at
       ) VALUES (?, 'commission-admin', 'hash', ?, ?, ?)
     `).run(USER_ID, NOW, NOW, NOW)
-    sqlite.prepare(`
-      INSERT INTO commission_submissions (
-        id, receipt_code, nickname, phone_number, qq, height_cm,
-        weight_kg_tenths, design_asset_id, created_at, updated_at
-      ) VALUES (?, 'DD-ABC123', '测试称呼', '19900000000', '100001',
-        170, 605, ?, ?, ?)
-    `).run(SESSION_ID, SESSION_ID, NOW + 2, NOW + 2)
-    expect(() => sqlite.prepare(`
-      UPDATE commission_upload_sessions
-      SET status = 'CONSUMED', consumed_at = ?, version = version + 1,
-          updated_at = ?
-      WHERE id = ?
-    `).run(NOW + 2, NOW + 2, SESSION_ID)).not.toThrow()
+    const created = createCommissionSubmission(sqlite, {
+      uploadSessionId: SESSION_ID,
+      expectedUploadVersion: 3,
+      nickname: '合成称呼',
+      phone: { countryCode: '+86', number: '19900000000' },
+      qq: '100001',
+      heightCm: 170,
+      weightKg: 60.5,
+    }, TOKEN, {
+      id: SESSION_ID,
+      now: NOW + 2,
+      receiptCode: () => 'DD-ABC123',
+    })
+    expect(created).toEqual({ receiptCode: 'DD-ABC123' })
+    expect(sqlite.prepare(`
+      SELECT status FROM commission_upload_sessions WHERE id = ?
+    `).pluck().get(SESSION_ID)).toBe('CONSUMED')
+    expect(() => createCommissionSubmission(sqlite, {
+      uploadSessionId: SESSION_ID,
+      expectedUploadVersion: 3,
+      nickname: '合成称呼',
+      phone: { countryCode: '+86', number: '19900000000' },
+      qq: '100001',
+      heightCm: 170,
+      weightKg: 60.5,
+    }, TOKEN, { now: NOW + 3 })).toThrowError(expect.objectContaining({
+      statusCode: 409,
+    }))
 
     const list = listCommissionSubmissions(sqlite)
     expect(list).toEqual([expect.objectContaining({
       id: SESSION_ID,
       receiptCode: 'DD-ABC123',
-      nickname: '测试称呼',
+      nickname: '合成称呼',
       status: 'pending',
     })])
     const serializedList = JSON.stringify(list)
@@ -243,6 +266,139 @@ describe('R3-B anonymous commission upload', () => {
     })
     expect(JSON.stringify(audit)).not.toContain('19900000000')
     expect(JSON.stringify(audit)).not.toContain('100001')
+  })
+
+  it('cancels idempotently and retries into a fresh token/key/session', async () => {
+    const { created, key } = await createAndSeed()
+    const cancelled = await cancelCommissionUpload(
+      sqlite,
+      storage,
+      SESSION_ID,
+      TOKEN,
+      created.session.version,
+      NOW + 1,
+    )
+    expect(cancelled).toMatchObject({ status: 'CANCELLED', version: 2 })
+    expect(storage.deletedPrivateKeys).toContain(key)
+    await expect(cancelCommissionUpload(
+      sqlite,
+      storage,
+      SESSION_ID,
+      TOKEN,
+      created.session.version,
+      NOW + 2,
+    )).resolves.toEqual(cancelled)
+
+    const replacement = await retryCommissionUpload(
+      sqlite,
+      storage,
+      { appEnv: 'test' },
+      SESSION_ID,
+      TOKEN,
+      cancelled.version,
+      NOW + 3,
+    )
+    expect(replacement.session.uploadSessionId).not.toBe(SESSION_ID)
+    expect(replacement.session.status).toBe('AWAITING_UPLOAD')
+    expect(replacement.token).not.toBe(TOKEN)
+    expect(replacement.upload.url).not.toContain(key)
+    expect(JSON.stringify(replacement.session)).not.toContain('/commission/original/')
+  })
+
+  it('retries a receipt collision inside the atomic submission boundary', async () => {
+    const firstId = '11111111-1111-4111-8111-111111111111'
+    const secondId = '22222222-2222-4222-8222-222222222222'
+    const firstToken = 'f'.repeat(43)
+    const secondToken = 'g'.repeat(43)
+    await createAndSeed(firstId, NOW, firstToken)
+    await completeCommissionUpload(sqlite, storage, firstId, firstToken, 1, NOW + 1)
+    createCommissionSubmission(sqlite, {
+      uploadSessionId: firstId,
+      expectedUploadVersion: 3,
+      nickname: '合成申请甲',
+      phone: { countryCode: '+86', number: '19900000000' },
+      qq: '100001',
+      heightCm: 170,
+      weightKg: 60,
+    }, firstToken, {
+      id: firstId,
+      now: NOW + 2,
+      receiptCode: () => 'DD-COLLIDE',
+    })
+
+    await createAndSeed(secondId, NOW, secondToken)
+    await completeCommissionUpload(sqlite, storage, secondId, secondToken, 1, NOW + 1)
+    const attempts: number[] = []
+    const second = createCommissionSubmission(sqlite, {
+      uploadSessionId: secondId,
+      expectedUploadVersion: 3,
+      nickname: '合成申请乙',
+      phone: { countryCode: '+86', number: '19800000000' },
+      qq: '100002',
+      heightCm: 180,
+      weightKg: 70,
+    }, secondToken, {
+      id: secondId,
+      now: NOW + 3,
+      receiptCode: (attempt) => {
+        attempts.push(attempt)
+        return attempt === 0 ? 'DD-COLLIDE' : 'DD-UNIQUE2'
+      },
+    })
+    expect(second.receiptCode).toBe('DD-UNIQUE2')
+    expect(attempts).toEqual([0, 1])
+    expect(sqlite.prepare(`
+      SELECT status FROM commission_upload_sessions WHERE id = ?
+    `).pluck().get(secondId)).toBe('CONSUMED')
+  })
+
+  it('cleans expired pending and completed uploads serially without touching consumed assets', async () => {
+    const pendingId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+    const completedId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd'
+    const pendingToken = 'd'.repeat(43)
+    const completedToken = 'e'.repeat(43)
+    const pending = await createAndSeed(pendingId, NOW, pendingToken)
+    const completed = await createAndSeed(completedId, NOW, completedToken)
+    await completeCommissionUpload(
+      sqlite,
+      storage,
+      completedId,
+      completedToken,
+      1,
+      NOW + 1,
+    )
+
+    const dryRun = await cleanupExpiredCommissionUploads({
+      dryRun: true,
+      now: NOW + COMMISSION_UPLOAD_TTL_MS,
+      sqlite,
+      storage,
+    })
+    expect(dryRun).toMatchObject({ scanned: 2, deletedObjects: 0 })
+    expect(storage.objects.has(pending.key)).toBe(true)
+    expect(storage.objects.has(completed.key)).toBe(true)
+
+    const cleaned = await cleanupExpiredCommissionUploads({
+      dryRun: false,
+      now: NOW + COMMISSION_UPLOAD_TTL_MS,
+      sqlite,
+      storage,
+    })
+    expect(cleaned).toMatchObject({
+      deletedAssets: 1,
+      deletedObjects: 2,
+      deletedSessions: 2,
+      failed: 0,
+      scanned: 2,
+    })
+    expect(sqlite.prepare(`
+      SELECT count(*) FROM commission_upload_sessions
+      WHERE id IN (?, ?)
+    `).pluck().get(pendingId, completedId)).toBe(0)
+    expect(sqlite.prepare(`
+      SELECT count(*) FROM assets WHERE id = ?
+    `).pluck().get(completedId)).toBe(0)
+    expect(sqlite.pragma('foreign_key_check')).toEqual([])
   })
 
   it('expires without creating an asset and rejects images below the 64px contract', async () => {

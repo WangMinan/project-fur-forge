@@ -6,11 +6,13 @@ import {
 } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import {
+  createCommissionSubmissionResponseSchema,
   commissionSubmissionDetailDtoSchema,
   commissionSubmissionListItemDtoSchema,
   commissionUploadSessionDtoSchema,
 } from '../../../shared/schemas/commission'
 import type {
+  CreateCommissionSubmissionRequest,
   CommissionSubmissionDetailDto,
   CommissionSubmissionListItemDto,
   CommissionSubmissionStatus,
@@ -30,6 +32,7 @@ import {
   listCommissionSubmissionRows,
   updateCommissionSubmissionRow,
 } from '../repository/commission-repository'
+import { safeLog } from '../safe-log'
 import type {
   CommissionSubmissionRow,
   CommissionUploadRow,
@@ -40,6 +43,7 @@ import {
 } from './private-image-validation'
 
 export const COMMISSION_UPLOAD_TTL_MS = 10 * 60 * 1_000
+const COMMISSION_RECEIPT_ATTEMPTS = 8
 
 export interface CommissionUploadExpected {
   byteSize: number
@@ -290,6 +294,293 @@ export async function completeCommissionUpload(
     throw new ServiceError(500, 'INTERNAL_ERROR', 'Commission upload could not be persisted.')
   }
   return sessionDto(requireUpload(sqlite, id))
+}
+
+export async function cancelCommissionUpload(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  id: string,
+  token: string,
+  expectedVersion: number,
+  now = Date.now(),
+) {
+  const row = requireUpload(sqlite, id)
+  assertToken(row, token)
+  if (row.status === 'CANCELLED') {
+    return sessionDto(row)
+  }
+  if (row.version !== expectedVersion) {
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+  }
+  if (!['AWAITING_UPLOAD', 'COMPLETED'].includes(row.status)) {
+    throw new ServiceError(409, 'CONFLICT', 'Commission upload cannot be cancelled.')
+  }
+
+  const cancelled = sqlite.transaction(() => {
+    const result = sqlite.prepare(`
+      UPDATE commission_upload_sessions
+      SET status = 'CANCELLED', asset_id = NULL, completed_at = NULL,
+          failure_code = NULL, failure_stage = NULL,
+          version = version + 1, updated_at = ?
+      WHERE id = ? AND status = ? AND version = ?
+    `).run(now, id, row.status, expectedVersion)
+    if (result.changes !== 1) {
+      throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+    }
+    if (row.assetId !== null) {
+      const removed = sqlite.prepare(`
+        DELETE FROM assets
+        WHERE id = ? AND role = 'commission_design_reference'
+          AND NOT EXISTS (
+            SELECT 1 FROM commission_submissions WHERE design_asset_id = assets.id
+          )
+      `).run(row.assetId)
+      if (removed.changes !== 1) {
+        throw new ServiceError(409, 'CONFLICT', 'Commission upload cannot be cancelled.')
+      }
+    }
+    return requireUpload(sqlite, id)
+  })()
+
+  // Exact-key deletion is idempotent. A transient failure stays eligible for
+  // the anonymous cleanup runner after the session TTL.
+  await storage.deletePrivate(row.privateObjectKey).catch(() => {})
+  return sessionDto(cancelled)
+}
+
+export async function retryCommissionUpload(
+  sqlite: Database.Database,
+  storage: MediaStorage,
+  config: Pick<RuntimeConfig, 'appEnv'>,
+  id: string,
+  token: string,
+  expectedVersion: number,
+  now = Date.now(),
+) {
+  let row = requireUpload(sqlite, id)
+  assertToken(row, token)
+  if (row.version !== expectedVersion) {
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+  }
+  if (row.status === 'AWAITING_UPLOAD' && row.expiresAt <= now) {
+    if (expireCommissionUpload(sqlite, id, expectedVersion, now) !== 1) {
+      throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+    }
+    row = requireUpload(sqlite, id)
+  }
+  if (!['FAILED', 'CANCELLED', 'EXPIRED'].includes(row.status)) {
+    throw new ServiceError(409, 'CONFLICT', 'Commission upload cannot be retried.')
+  }
+
+  const replacement = await createCommissionUpload(
+    sqlite,
+    storage,
+    config,
+    {
+      byteSize: row.expectedBytes,
+      contentMd5: row.expectedContentMd5,
+      contentType: row.expectedContentType,
+      height: row.expectedHeight,
+      sha256: row.expectedSha256,
+      width: row.expectedWidth,
+    },
+    { now },
+  )
+  await storage.deletePrivate(row.privateObjectKey).catch(() => {})
+  return replacement
+}
+
+export interface CommissionUploadCleanupResult {
+  deletedAssets: number
+  deletedObjects: number
+  deletedSessions: number
+  dryRun: boolean
+  failed: number
+  scanned: number
+}
+
+interface CleanableCommissionUpload {
+  assetId: string | null
+  id: string
+  privateObjectKey: string
+  status: CommissionUploadRow['status']
+}
+
+export async function cleanupExpiredCommissionUploads(options: {
+  dryRun?: boolean
+  limit?: number
+  now?: number
+  sqlite: Database.Database
+  storage: MediaStorage
+}): Promise<CommissionUploadCleanupResult> {
+  const now = options.now ?? Date.now()
+  const limit = Math.max(1, Math.min(options.limit ?? 200, 1_000))
+  const dryRun = options.dryRun !== false
+  const rows = options.sqlite.prepare(`
+    SELECT session.id, session.private_object_key AS privateObjectKey,
+           session.status, session.asset_id AS assetId
+    FROM commission_upload_sessions AS session
+    WHERE session.status != 'CONSUMED'
+      AND session.expires_at <= ?
+      AND NOT EXISTS (
+        SELECT 1 FROM commission_submissions AS submission
+        WHERE submission.design_asset_id = session.asset_id
+      )
+    ORDER BY session.expires_at, session.id
+    LIMIT ?
+  `).all(now, limit) as CleanableCommissionUpload[]
+  const result: CommissionUploadCleanupResult = {
+    deletedAssets: 0,
+    deletedObjects: 0,
+    deletedSessions: 0,
+    dryRun,
+    failed: 0,
+    scanned: rows.length,
+  }
+  if (dryRun) {
+    return result
+  }
+
+  for (const row of rows) {
+    try {
+      await options.storage.deletePrivate(row.privateObjectKey)
+      const removed = options.sqlite.transaction(() => {
+        const session = options.sqlite.prepare(`
+          DELETE FROM commission_upload_sessions
+          WHERE id = ? AND status != 'CONSUMED' AND expires_at <= ?
+            AND NOT EXISTS (
+              SELECT 1 FROM commission_submissions
+              WHERE design_asset_id = commission_upload_sessions.asset_id
+            )
+        `).run(row.id, now)
+        if (session.changes !== 1) {
+          throw new Error('Commission upload cleanup lost its target.')
+        }
+        const asset = row.assetId === null
+          ? 0
+          : options.sqlite.prepare(`
+              DELETE FROM assets
+              WHERE id = ? AND role = 'commission_design_reference'
+                AND NOT EXISTS (
+                  SELECT 1 FROM commission_submissions
+                  WHERE design_asset_id = assets.id
+                )
+            `).run(row.assetId).changes
+        if (row.assetId !== null && asset !== 1) {
+          throw new Error('Commission upload cleanup could not remove its asset.')
+        }
+        return { asset, session: session.changes }
+      })()
+      result.deletedObjects += 1
+      result.deletedSessions += removed.session
+      result.deletedAssets += removed.asset
+    }
+    catch {
+      result.failed += 1
+    }
+  }
+  safeLog('info', 'Expired commission upload cleanup finished.', {
+    scanned: result.scanned,
+    deletedObjects: result.deletedObjects,
+    deletedSessions: result.deletedSessions,
+    deletedAssets: result.deletedAssets,
+    failed: result.failed,
+  })
+  return result
+}
+
+function randomReceiptCode() {
+  return `DD-${randomBytes(6).toString('hex').toUpperCase()}`
+}
+
+export function createCommissionSubmission(
+  sqlite: Database.Database,
+  input: Omit<CreateCommissionSubmissionRequest, 'website'>,
+  token: string,
+  options: {
+    id?: string
+    now?: number
+    receiptCode?: (attempt: number) => string
+  } = {},
+) {
+  const now = options.now ?? Date.now()
+  const initial = requireUpload(sqlite, input.uploadSessionId)
+  assertToken(initial, token)
+  if (initial.version !== input.expectedUploadVersion) {
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+  }
+  if (initial.status !== 'COMPLETED' || initial.assetId === null) {
+    throw new ServiceError(409, 'CONFLICT', 'Commission upload cannot be submitted.')
+  }
+  if (initial.expiresAt <= now) {
+    throw new ServiceError(409, 'CONFLICT', 'Commission upload has expired.')
+  }
+
+  for (let attempt = 0; attempt < COMMISSION_RECEIPT_ATTEMPTS; attempt += 1) {
+    const receiptCode = (options.receiptCode ?? randomReceiptCode)(attempt)
+    try {
+      return sqlite.transaction(() => {
+        const current = requireUpload(sqlite, input.uploadSessionId)
+        assertToken(current, token)
+        if (
+          current.status !== 'COMPLETED'
+          || current.assetId === null
+          || current.version !== input.expectedUploadVersion
+          || current.expiresAt <= now
+        ) {
+          throw new ServiceError(409, 'CONFLICT', 'Commission upload cannot be submitted.')
+        }
+        const assetReady = sqlite.prepare(`
+          SELECT count(*) FROM assets
+          WHERE id = ? AND role = 'commission_design_reference' AND status = 'READY'
+        `).pluck().get(current.assetId) as number
+        if (assetReady !== 1) {
+          throw new ServiceError(409, 'CONFLICT', 'Commission upload cannot be submitted.')
+        }
+        sqlite.prepare(`
+          INSERT INTO commission_submissions (
+            id, receipt_code, nickname, phone_country_code, phone_number, qq,
+            height_cm, weight_kg_tenths, design_asset_id, status,
+            created_at, updated_at
+          ) VALUES (?, ?, ?, '+86', ?, ?, ?, ?, ?, 'pending', ?, ?)
+        `).run(
+          options.id ?? randomUUID(),
+          receiptCode,
+          input.nickname,
+          input.phone.number,
+          input.qq,
+          input.heightCm,
+          Math.round(input.weightKg * 10),
+          current.assetId,
+          now,
+          now,
+        )
+        const consumed = sqlite.prepare(`
+          UPDATE commission_upload_sessions
+          SET status = 'CONSUMED', consumed_at = ?,
+              version = version + 1, updated_at = ?
+          WHERE id = ? AND status = 'COMPLETED' AND version = ?
+        `).run(now, now, input.uploadSessionId, input.expectedUploadVersion)
+        if (consumed.changes !== 1) {
+          throw new ServiceError(409, 'CONFLICT', 'Commission upload cannot be submitted.')
+        }
+        return createCommissionSubmissionResponseSchema.shape.data.parse({ receiptCode })
+      })()
+    }
+    catch (error) {
+      if (error instanceof ServiceError) {
+        throw error
+      }
+      const collided = sqlite.prepare(`
+        SELECT count(*) FROM commission_submissions WHERE receipt_code = ?
+      `).pluck().get(receiptCode) as number
+      if (collided === 1 && attempt + 1 < COMMISSION_RECEIPT_ATTEMPTS) {
+        continue
+      }
+      throw new ServiceError(500, 'INTERNAL_ERROR', 'Commission submission could not be created.')
+    }
+  }
+  throw new ServiceError(500, 'INTERNAL_ERROR', 'Commission submission could not be created.')
 }
 
 function listItem(row: CommissionSubmissionRow): CommissionSubmissionListItemDto {
