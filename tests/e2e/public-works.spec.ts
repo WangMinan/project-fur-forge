@@ -113,6 +113,7 @@ test.describe('T20 作品列表页', () => {
 
     const first = card(page, 'e2e-public-lanmei')
     await expect(first).toHaveAttribute('href', '/works/e2e-public-lanmei')
+    await expect(first.locator('.work-identity')).toHaveText('蓝湄 · 北极狐')
 
     const frame = first.locator('.work-card__frame')
     const box = await frame.boundingBox()

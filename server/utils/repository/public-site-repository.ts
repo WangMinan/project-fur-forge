@@ -453,7 +453,7 @@ function homeAggregate(
  */
 function featuredEntries(entries: readonly SnapshotEntry[]) {
   return entries
-    .filter(entry => entry.featured && entry.adoption?.status !== 'adopted')
+    .filter(entry => entry.featured)
     .toSorted((left, right) => (
       left.sortOrder - right.sortOrder || (left.id < right.id ? -1 : 1)
     ))
@@ -670,11 +670,6 @@ export function createFakePublicSiteRepository(
   const adoptions = (seed.adoptions ?? []).map(item => (
     publicAdoptionListItemDtoSchema.parse(item)
   ))
-  const adoptedHrefs = new Set(
-    adoptions
-      .filter(item => item.work.adoptionStatus === 'adopted')
-      .map(item => item.href),
-  )
   const summaryFor = (detail: PublicWorkDetailDto) => (
     publicWorkSummaryDtoSchema.parse({
       work: detail.work,
@@ -740,9 +735,7 @@ export function createFakePublicSiteRepository(
       }
       const featured = seed.featuredSlugs.flatMap((slug) => {
         const detail = bySlug.get(slug)
-        return detail && !adoptedHrefs.has(detail.href)
-          ? [summaryFor(detail)]
-          : []
+        return detail ? [summaryFor(detail)] : []
       }).slice(0, PUBLIC_FEATURED_LIMIT)
       return publicHomeAggregateDtoSchema.parse({
         hero: home,

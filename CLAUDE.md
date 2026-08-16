@@ -73,7 +73,7 @@
 - adoption status 仅 `available | adopted`。
 - 旧 `available`/`delivered` 可自动映射；其它旧状态必须人工确认，禁止默认 available。
 - published adoption 必须有独立横版 `adoption_cover` 和 primary `studio_photo`。
-- adopted 作品不得进入首页精选或首页领养区；没有 available 作品时隐藏首页领养区。
+- adopted 作品可以进入首页精选，但不得进入首页领养区；没有 available 作品时隐藏首页领养区。
 - `design_sheet` 0..1、可选，不作卡片或发布门禁。
 - 媒体详情 usage 沿用现有 `detail`，不要新建平行 `work-detail`。
 

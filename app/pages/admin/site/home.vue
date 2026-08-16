@@ -105,7 +105,7 @@ onMounted(() => void load())
     <div class="hero-admin" data-testid="home-admin">
       <header class="hero-admin__header">
         <h1>大图管理</h1>
-        <p>四个集合独立上传、排序、适配、预览与发布；每次写入只更新当前集合版本。</p>
+        <p>分别管理首页与委托页的横版、竖版大图，可独立上传、排序、适配、预览与发布。</p>
       </header>
 
       <nav class="hero-admin__tabs" aria-label="大图集合">
@@ -128,11 +128,12 @@ onMounted(() => void load())
             <header class="hero-admin__collection-head">
               <div>
                 <h2>{{ activeTab.label }}</h2>
-                <p role="status">已启用 {{ enabledItems.length }} / 5 · collection v{{ collection.version }}</p>
+                <p role="status">已启用 {{ enabledItems.length }} / 5</p>
               </div>
               <button
                 v-if="!showDraft"
                 type="button"
+                class="editor__button editor__button--primary"
                 :disabled="mutating"
                 @click="showDraft = true"
               >新增大图项</button>
@@ -259,16 +260,6 @@ onMounted(() => void load())
   align-items: center;
   justify-content: space-between;
   gap: var(--admin-space-3);
-}
-
-.hero-admin__collection-head button {
-  min-height: var(--admin-control-height-sm);
-  padding: 0 var(--admin-space-3);
-  background: var(--admin-bg-primary);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-sm);
-  font: inherit;
-  cursor: pointer;
 }
 
 .hero-item-list-move {

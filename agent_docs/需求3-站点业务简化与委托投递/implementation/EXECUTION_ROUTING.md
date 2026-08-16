@@ -67,8 +67,9 @@ R3-A 是独立第一发布单元。不得为了“等新功能一起上线”继
 - 复用公共导航、抽屉、焦点、列表和上传 UI；
 - SSR/无 JS 默认可见；
 - Hero 桌面/移动不同对齐；
-- 作品卡只显示名称/物种；
-- adoption card 只用 cover；
+- 首页、`/works`、`/adoptions` 作品卡统一显示“名称 · 物种”，点号两侧保留空格并复用名称字体/字号；
+- adoption card 只用 cover，已领养状态使用非绿色中性色；
+- 首页精选不得按 adopted 过滤；首页领养区只取 available；
 - `/about` 只展示邮箱、QQ、QQ群；
 - `/commission` 只直接展示 QQ、QQ群，邮箱作为备用入口；
 - 委托表单不把 PII 写 URL/localStorage/console；

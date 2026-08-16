@@ -77,7 +77,8 @@ test('四个大图集合为独立标签和版本域', async ({ page }) => {
     await expect(page.getByRole('link', { name: tab.label }))
       .toHaveAttribute('aria-current', 'page')
     await expect(heroItemByAlt(page, tab.alt)).toBeVisible()
-    await expect(page.getByText(/collection v\d+/u)).toBeVisible()
+    await expect(page.getByText(/collection v\d+/u)).toHaveCount(0)
+    await expect(page.getByText('已启用 1 / 5')).toBeVisible()
   }
 })
 
@@ -87,7 +88,9 @@ test('单图上传、保存、预览、发布、停用与删除走完同一集�
     portrait: [{ alt: '竖版保留项', sortOrder: 0, enabled: true }],
   })
   await gotoHeroAdmin(page)
-  await page.getByRole('button', { name: '新增大图项' }).click()
+  const addButton = page.getByRole('button', { name: '新增大图项' })
+  await expect(addButton).toHaveClass(/editor__button--primary/u)
+  await addButton.click()
   const draft = page.getByTestId('hero-collection-item').filter({ hasText: '新大图项' })
   await draft.getByLabel('横版原图').setInputFiles({
     name: 'hero-landscape.png',

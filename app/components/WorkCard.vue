@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { PublicWorkSummaryDto } from '~~/shared/types/contracts'
+import WorkIdentityLabel from '~/components/WorkIdentityLabel.vue'
 
 withDefaults(defineProps<{
   work: PublicWorkSummaryDto
@@ -28,9 +29,10 @@ withDefaults(defineProps<{
       />
     </span>
     <span class="work-card__caption">
-      <span class="work-card__name">{{ work.work.characterName }}</span>
-      <span class="work-card__separator" aria-hidden="true">·</span>
-      <span class="work-card__meta">{{ work.work.species }}</span>
+      <WorkIdentityLabel
+        :character-name="work.work.characterName"
+        :species="work.work.species"
+      />
     </span>
   </NuxtLink>
 </template>
@@ -95,24 +97,8 @@ withDefaults(defineProps<{
   }
 }
 
-/* 名称与物种同一行，用「·」分隔；窄屏放不下时整组换行而不是拆散分隔符。 */
 .work-card__caption {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0 var(--space-2);
+  display: block;
   margin-top: var(--space-3);
-}
-
-.work-card__name {
-  font-family: var(--font-public-display);
-  font-size: var(--font-size-md);
-  line-height: var(--line-height-heading);
-}
-
-.work-card__separator,
-.work-card__meta {
-  color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
 }
 </style>

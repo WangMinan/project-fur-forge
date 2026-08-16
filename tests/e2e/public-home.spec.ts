@@ -560,6 +560,9 @@ test.describe('T28 首页完整内容顺序', () => {
       .toHaveAttribute('href', '/commission/apply')
     await expect(entries.locator('[data-entry-kind="adoption"]')).toHaveCount(0)
     await expect(page.getByTestId('home-current-adoptions')).toContainText('云朵')
+    await expect(page.getByTestId('home-current-adoptions')
+      .locator('[data-work-slug="e2e-public-home-adoption"] .work-identity'))
+      .toHaveText('云朵 · 萨摩耶')
     await expect(page.getByTestId('home-current-adoptions').getByRole('heading'))
       .toHaveText('设定领养')
 
@@ -613,7 +616,7 @@ test.describe('T28 首页完整内容顺序', () => {
       .toHaveCount(3)
   })
 
-  test('已领养作品不进入首页精选或设定领养', async ({ page }) => {
+  test('已领养作品保留在首页精选但不进入设定领养', async ({ page }) => {
     await seedPublicCatalog(page, [{
       slug: 'e2e-public-home-adopted',
       characterName: '已领养角色',
@@ -635,8 +638,9 @@ test.describe('T28 首页完整内容顺序', () => {
     await page.goto('/')
 
     await expect(page.getByTestId('home-current-adoptions')).toHaveCount(0)
-    await expect(page.getByTestId('featured-works')).toHaveCount(0)
-    await expect(page.getByText('已领养角色')).toHaveCount(0)
+    const featured = page.getByTestId('featured-works')
+    await expect(featured).toBeVisible()
+    await expect(featured.locator('.work-identity')).toHaveText('已领养角色 · 犬科')
   })
 })
 

@@ -265,7 +265,7 @@ commission / portrait
 - 卡片只显示名称、物种和 3:4 竖版成果图；
 - 删除用途/装型筛选；
 - 保留名称搜索、分页、发布时间倒序；
-- 首页精选复用同一简化摘要。
+- 首页精选复用同一简化摘要，并只由 published/featured/sort order 决定；adoption status 不排除已领养的精选作品。
 
 ### 8.3 `/works/{slug}`
 
@@ -306,7 +306,9 @@ Expand 阶段 `adoption_status` 允许暂时为空。自动迁移只处理语义
 - 删除常规/展会筛选、counts、展会标签和字段；
 - 保留名称搜索、分页；
 - 卡片显示横版 cover、名称、物种、状态、可选价格。
-- adopted 作品继续保留在 `/adoptions`，但不得进入首页精选或首页领养区；没有 available 作品时首页领养区整体隐藏。
+- 首页、`/works`、`/adoptions` 的作品标识统一为“名称 · 物种”，点号两侧保留真实空格，名称字体与字号一致。
+- `available` 状态可使用绿色；`adopted` 必须使用不同的非绿色中性色，且两者都保留文字标签。
+- adopted 作品继续保留在 `/adoptions`，也可按 featured 进入首页精选，但不得进入首页领养区；没有 available 作品时首页领养区整体隐藏。
 
 ## 10. 自设委托
 
@@ -440,6 +442,8 @@ Expand 阶段 `adoption_status` 允许暂时为空。自动迁移只处理语义
 - [ ] adoption 歧义状态均已人工确认。
 - [ ] published adoption 缺 cover 数量为 0。
 - [ ] `/adoptions` 不含 method/展会信息。
+- [ ] 首页精选保留已领养的 featured 作品，首页领养区只含 available。
+- [ ] 首页、`/works`、`/adoptions` 均显示“名称 · 物种”，且已领养状态不是绿色。
 
 ### 15.4 委托与隐私
 
