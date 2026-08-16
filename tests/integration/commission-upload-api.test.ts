@@ -117,6 +117,7 @@ const submissionBody = {
   uploadSessionId: '',
   expectedUploadVersion: 3,
   nickname: '合成接口申请',
+  species: '犬科',
   phone: { countryCode: '+86', number: '19900000000' },
   qq: '100001',
   heightCm: 170,

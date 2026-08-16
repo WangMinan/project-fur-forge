@@ -199,6 +199,7 @@ describe('R3-B anonymous commission upload', () => {
       uploadSessionId: SESSION_ID,
       expectedUploadVersion: 3,
       nickname: '合成称呼',
+      species: '犬科',
       phone: { countryCode: '+86', number: '19900000000' },
       qq: '100001',
       heightCm: 170,
@@ -216,6 +217,7 @@ describe('R3-B anonymous commission upload', () => {
       uploadSessionId: SESSION_ID,
       expectedUploadVersion: 3,
       nickname: '合成称呼',
+      species: '犬科',
       phone: { countryCode: '+86', number: '19900000000' },
       qq: '100001',
       heightCm: 170,
@@ -229,6 +231,7 @@ describe('R3-B anonymous commission upload', () => {
       id: SESSION_ID,
       receiptCode: 'DD-ABC123',
       nickname: '合成称呼',
+      species: '犬科',
       status: 'pending',
     })])
     const serializedList = JSON.stringify(list)
@@ -316,6 +319,7 @@ describe('R3-B anonymous commission upload', () => {
       uploadSessionId: firstId,
       expectedUploadVersion: 3,
       nickname: '合成申请甲',
+      species: '犬科',
       phone: { countryCode: '+86', number: '19900000000' },
       qq: '100001',
       heightCm: 170,
@@ -333,6 +337,7 @@ describe('R3-B anonymous commission upload', () => {
       uploadSessionId: secondId,
       expectedUploadVersion: 3,
       nickname: '合成申请乙',
+      species: '狐科',
       phone: { countryCode: '+86', number: '19800000000' },
       qq: '100002',
       heightCm: 180,
@@ -350,6 +355,46 @@ describe('R3-B anonymous commission upload', () => {
     expect(sqlite.prepare(`
       SELECT status FROM commission_upload_sessions WHERE id = ?
     `).pluck().get(secondId)).toBe('CONSUMED')
+  })
+
+  it('rejects a second pending submission for the same phone without consuming its upload', async () => {
+    const firstId = '11111111-1111-4111-8111-111111111111'
+    const secondId = '22222222-2222-4222-8222-222222222222'
+    const firstToken = 'f'.repeat(43)
+    const secondToken = 'g'.repeat(43)
+    await createAndSeed(firstId, NOW, firstToken)
+    await completeCommissionUpload(sqlite, storage, firstId, firstToken, 1, NOW + 1)
+    createCommissionSubmission(sqlite, {
+      uploadSessionId: firstId,
+      expectedUploadVersion: 3,
+      nickname: '合成申请甲',
+      species: '犬科',
+      phone: { countryCode: '+86', number: '19900000000' },
+      qq: '100001',
+      heightCm: 170,
+      weightKg: 60,
+    }, firstToken, { id: firstId, now: NOW + 2, receiptCode: () => 'DD-FIRST01' })
+
+    await createAndSeed(secondId, NOW, secondToken)
+    await completeCommissionUpload(sqlite, storage, secondId, secondToken, 1, NOW + 1)
+    expect(() => createCommissionSubmission(sqlite, {
+      uploadSessionId: secondId,
+      expectedUploadVersion: 3,
+      nickname: '合成申请乙',
+      species: '狐科',
+      phone: { countryCode: '+86', number: '19900000000' },
+      qq: '100002',
+      heightCm: 180,
+      weightKg: 70,
+    }, secondToken, { id: secondId, now: NOW + 3 })).toThrowError(
+      expect.objectContaining({
+        statusCode: 409,
+        reason: 'COMMISSION_PHONE_PENDING',
+      }),
+    )
+    expect(sqlite.prepare(`
+      SELECT status FROM commission_upload_sessions WHERE id = ?
+    `).pluck().get(secondId)).toBe('COMPLETED')
   })
 
   it('cleans expired pending and completed uploads serially without touching consumed assets', async () => {
