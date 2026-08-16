@@ -49,6 +49,7 @@ works
 - 最终 contract 后 adoption 的 `adoption_status` 必填；
 - 价格为空时 amount/currency 同时为空，存在时为正数 CNY；
 - `sort_order` 只服务首页精选；
+- 首页精选资格由 published、`featured` 和 `sort_order` 决定，不按 `adoption_status` 排除 adopted；首页领养投影单独只取 available；
 - 已发布事实字段继续先下架再改。
 
 最终删除：
