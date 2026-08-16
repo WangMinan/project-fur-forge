@@ -516,6 +516,21 @@ export function createCommissionSubmission(
     throw new ServiceError(409, 'CONFLICT', 'Commission upload has expired.')
   }
 
+  const hasPendingPhone = () => Number(sqlite.prepare(`
+    SELECT count(*)
+    FROM commission_submissions
+    WHERE phone_country_code = '+86' AND phone_number = ? AND status = 'pending'
+  `).pluck().get(input.phone.number)) > 0
+
+  if (hasPendingPhone()) {
+    throw new ServiceError(
+      409,
+      'CONFLICT',
+      'A pending commission submission already exists for this phone number.',
+      'COMMISSION_PHONE_PENDING',
+    )
+  }
+
   for (let attempt = 0; attempt < COMMISSION_RECEIPT_ATTEMPTS; attempt += 1) {
     const receiptCode = (options.receiptCode ?? randomReceiptCode)(attempt)
     try {
@@ -537,16 +552,25 @@ export function createCommissionSubmission(
         if (assetReady !== 1) {
           throw new ServiceError(409, 'CONFLICT', 'Commission upload cannot be submitted.')
         }
+        if (hasPendingPhone()) {
+          throw new ServiceError(
+            409,
+            'CONFLICT',
+            'A pending commission submission already exists for this phone number.',
+            'COMMISSION_PHONE_PENDING',
+          )
+        }
         sqlite.prepare(`
           INSERT INTO commission_submissions (
-            id, receipt_code, nickname, phone_country_code, phone_number, qq,
+            id, receipt_code, nickname, species, phone_country_code, phone_number, qq,
             height_cm, weight_kg_tenths, design_asset_id, status,
             created_at, updated_at
-          ) VALUES (?, ?, ?, '+86', ?, ?, ?, ?, ?, 'pending', ?, ?)
+          ) VALUES (?, ?, ?, ?, '+86', ?, ?, ?, ?, ?, 'pending', ?, ?)
         `).run(
           options.id ?? randomUUID(),
           receiptCode,
           input.nickname,
+          input.species,
           input.phone.number,
           input.qq,
           input.heightCm,
@@ -571,6 +595,15 @@ export function createCommissionSubmission(
       if (error instanceof ServiceError) {
         throw error
       }
+      // 数据库唯一索引是并发兜底；只向调用方返回稳定原因，不回显手机号。
+      if (hasPendingPhone()) {
+        throw new ServiceError(
+          409,
+          'CONFLICT',
+          'A pending commission submission already exists for this phone number.',
+          'COMMISSION_PHONE_PENDING',
+        )
+      }
       const collided = sqlite.prepare(`
         SELECT count(*) FROM commission_submissions WHERE receipt_code = ?
       `).pluck().get(receiptCode) as number
@@ -588,6 +621,7 @@ function listItem(row: CommissionSubmissionRow): CommissionSubmissionListItemDto
     id: row.id,
     receiptCode: row.receiptCode,
     nickname: row.nickname,
+    species: row.species,
     status: row.status,
     createdAt: new Date(row.createdAt).toISOString(),
     version: row.version,
