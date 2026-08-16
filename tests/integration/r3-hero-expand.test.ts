@@ -15,6 +15,7 @@ import {
   it,
 } from 'vitest'
 import {
+  assertDatabaseMigrated,
   DATABASE_MIGRATIONS_FOLDER,
   migrateDatabase,
   openDatabase,
@@ -121,6 +122,40 @@ describe('R3-B Hero expand migration', () => {
     }
     finally {
       database.sqlite.close()
+    }
+  })
+
+  it('continues after the exact pre-fix R3-A contract migration hash', async () => {
+    const file = databaseFile()
+    await migrateDatabase(file, {
+      migrationsFolder: migrationsThrough(file, '0036_r3_a_contract'),
+    })
+    const before = openDatabase(file)
+    const legacyHash = 'ce887498b188937e8ebd57c1dfd06d5e651ea8cc6719741003b22dd6f28ba098'
+    try {
+      expect(before.sqlite.prepare(`
+        UPDATE __drizzle_migrations SET hash = ? WHERE created_at = ?
+      `).run(legacyHash, 1786809600000).changes).toBe(1)
+    }
+    finally {
+      before.sqlite.close()
+    }
+
+    await expect(migrateDatabase(file)).resolves.toMatchObject({
+      applied: migrationCountAfter('0036_r3_a_contract'),
+    })
+    expect(() => assertDatabaseMigrated(file)).not.toThrow()
+
+    const after = openDatabase(file)
+    try {
+      expect(after.sqlite.prepare(`
+        SELECT hash FROM __drizzle_migrations WHERE created_at = ?
+      `).pluck().get(1786809600000)).toBe(legacyHash)
+      expect(after.sqlite.pragma('foreign_key_check')).toEqual([])
+      expect(after.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
+    }
+    finally {
+      after.sqlite.close()
     }
   })
 
