@@ -283,10 +283,10 @@ export default defineEventHandler(async (event) => {
     const workId = randomUUID()
     sqlite.prepare(`
       INSERT INTO works (
-        id, slug, character_name, species, suit_type, purpose,
-        owner_display, publication_status, published_at, created_at, updated_at
-      ) VALUES (?, ?, '品牌舞台', '犬科', 'full', 'showcase',
-                '不公开', 'published', ?, ?, ?)
+        id, slug, character_name, species, purpose,
+        publication_status, published_at, created_at, updated_at
+      ) VALUES (?, ?, '品牌舞台', '犬科', 'showcase',
+                'published', ?, ?, ?)
     `).run(workId, `e2e-branding-${suffix.slice(0, 8)}`, now, now, now)
     sqlite.prepare(`
       INSERT INTO work_assets (

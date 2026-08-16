@@ -22,30 +22,25 @@ test.describe('创建作品', () => {
   test('界面创建草稿后进入编辑页，刷新后读取持久化数据', async ({ page }) => {
     await page.goto(`${adminBaseURL}/admin/works/new`)
     await page.getByLabel(/角色名/).fill('雪团')
-    await page.getByLabel(/链接别名/).fill(`snow-tuan-${Date.now().toString(36)}`)
+    await page.getByLabel(/公开地址/).fill(`snow-tuan-${Date.now().toString(36)}`)
     await page.getByLabel(/物种/).fill('犬')
-    await page.getByRole('button', { name: '不公开' }).click()
-    await page.getByLabel(/联系人/).fill('QQ 123456（仅后台）')
-    await page.getByRole('button', { name: '添加属性' }).click()
-    await page.getByLabel('作品属性第 1 条').fill('蓝白')
+    await expect(page.getByLabel(/装型|主人|联系人|属性|标签/u)).toHaveCount(0)
     await page.getByRole('button', { name: '创建草稿' }).click()
 
     await expect(page).toHaveURL(/\/admin\/works\/[0-9a-f-]{36}$/)
     await expect(page.getByRole('heading', { level: 1, name: '雪团' })).toBeVisible()
     await expect(page.getByLabel(/角色名/)).toHaveValue('雪团')
-    await expect(page.getByLabel('角色主人公开值')).toHaveValue('不公开')
-    await expect(page.getByLabel(/联系人/)).toHaveValue('QQ 123456（仅后台）')
-    await expect(page.getByLabel('作品属性第 1 条')).toHaveValue('蓝白')
+    await expect(page.getByLabel('内部用途')).toHaveValue('commission')
 
     await page.reload()
     await expect(page.getByRole('heading', { level: 1, name: '雪团' })).toBeVisible()
-    await expect(page.getByLabel(/联系人/)).toHaveValue('QQ 123456（仅后台）')
+    await expect(page.getByLabel(/装型|主人|联系人|属性|标签/u)).toHaveCount(0)
 
-    // 列表包含新作品，且不出现联系人。
+    // 列表只保留目标字段，不复活旧联系信息。
     await page.goto(`${adminBaseURL}/admin/works`)
     await page.getByRole('searchbox', { name: '查找作品' }).fill('雪团')
     await expect(page.getByRole('link', { name: '雪团', exact: true }).first()).toBeVisible()
-    await expect(page.getByText(/QQ 123456/)).toHaveCount(0)
+    await expect(page.getByText(/主人|联系人|作品属性/u)).toHaveCount(0)
   })
 
   test('链接别名冲突显示持久错误且输入保留', async ({ page }) => {
@@ -53,7 +48,7 @@ test.describe('创建作品', () => {
     await createWorkViaApi(page, { slug: takenSlug })
     await page.goto(`${adminBaseURL}/admin/works/new`)
     await page.getByLabel(/角色名/).fill('冲突验证')
-    await page.getByLabel(/链接别名/).fill(takenSlug)
+    await page.getByLabel(/公开地址/).fill(takenSlug)
     await page.getByLabel(/物种/).fill('猫')
     await page.getByRole('button', { name: '创建草稿' }).click()
 
@@ -72,7 +67,7 @@ test.describe('创建作品', () => {
 
     await page.getByLabel(/角色名/).fill('校验验证')
     await page.getByLabel(/物种/).fill('犬')
-    await page.getByLabel(/链接别名/).fill('INVALID SLUG')
+    await page.getByLabel(/公开地址/).fill('INVALID SLUG')
     await expect(page.getByText('只能使用小写字母、数字与连字符')).toBeVisible()
     await page.getByRole('button', { name: '创建草稿' }).click()
     await expect(page).toHaveURL(/\/admin\/works\/new$/)
@@ -91,15 +86,15 @@ test.describe('T22 完整字段：三用途、领养、价格与首页精选', (
   ) {
     await page.goto(`${adminBaseURL}/admin/works/new`)
     await page.getByLabel(/角色名/).fill(name)
-    await page.getByLabel(/链接别名/).fill(slug)
+    await page.getByLabel(/公开地址/).fill(slug)
     await page.getByLabel(/物种/).fill('犬')
   }
 
   test('创建委托作品：不提交领养字段，公开预览无领养事实', async ({ page }) => {
     const slug = `t22-commission-${Date.now().toString(36)}`
     await fillBasics(page, 'T22 委托', slug)
-    await expect(page.getByTestId('purpose-note')).toContainText('委托作品')
-    await expect(page.getByTestId('adoption-fields')).toHaveCount(0)
+    await expect(page.getByLabel('内部用途')).toHaveValue('commission')
+    await expect(page.getByLabel(/领养状态|价格/u)).toHaveCount(0)
 
     const request = page.waitForRequest(req =>
       req.url().endsWith('/api/admin/v1/works') && req.method() === 'POST',
@@ -107,8 +102,7 @@ test.describe('T22 完整字段：三用途、领养、价格与首页精选', (
     await page.getByRole('button', { name: '创建草稿' }).click()
     const body = JSON.parse((await request).postData() ?? '{}') as Record<string, unknown>
     expect(body.purpose).toBe('commission')
-    expect(body).not.toHaveProperty('adoptionMethod')
-    expect(body).not.toHaveProperty('businessStatus')
+    expect(body).not.toHaveProperty('adoptionStatus')
     expect(body).not.toHaveProperty('priceCnyMinor')
     expect(body.sortOrder).toBe(0)
     expect(body.featured).toBe(false)
@@ -116,34 +110,31 @@ test.describe('T22 完整字段：三用途、领养、价格与首页精选', (
     await expect(page).toHaveURL(/\/admin\/works\/[0-9a-f-]{36}$/)
     const preview = page.getByTestId('public-preview')
     await expect(preview).toContainText('委托作品')
-    await expect(preview).not.toContainText('领养方式')
+    await expect(preview).not.toContainText('领养状态')
     await expect(preview).not.toContainText('价格')
   })
 
   test('创建展示作品并加入精选，顺序交给精选 Tab 维护', async ({ page }) => {
     const slug = `t22-showcase-${Date.now().toString(36)}`
     await fillBasics(page, 'T22 展示', slug)
-    await page.getByLabel('业务类型').selectOption('showcase')
-    await page.getByLabel('加入首页精选作品').check()
+    await page.getByLabel('内部用途').selectOption('showcase')
+    await page.getByLabel('加入首页精选').check()
     await page.getByRole('button', { name: '创建草稿' }).click()
 
     await expect(page).toHaveURL(/\/admin\/works\/[0-9a-f-]{36}$/)
-    await expect(page.getByTestId('public-preview')).toContainText('展示作品')
+    await expect(page.getByTestId('public-preview')).toContainText('纯展示')
     await expect(page.getByTestId('public-preview')).toContainText('已加入（顺序在精选 Tab 调整）')
     await page.reload()
-    await expect(page.getByLabel('人工排序')).toHaveCount(0)
-    await expect(page.getByLabel('加入首页精选作品')).toBeChecked()
-    await expect(page.getByRole('link', { name: '前往调整精选顺序' })).toBeVisible()
+    await expect(page.getByLabel('加入首页精选')).toBeChecked()
   })
 
-  test('创建常规领养：价格按元输入、按分提交，刷新后往返一致', async ({ page }) => {
+  test('创建领养：人工状态与价格按元输入、按分提交，刷新后往返一致', async ({ page }) => {
     const slug = `t22-adoption-${Date.now().toString(36)}`
     await fillBasics(page, 'T22 领养', slug)
-    await page.getByLabel('业务类型').selectOption('regular_adoption')
-    await expect(page.getByTestId('adoption-fields')).toBeVisible()
-    await expect(page.getByLabel('领养方式')).toHaveValue('常规领养')
-    await page.getByLabel('业务状态').selectOption('available')
-    await page.getByLabel(/领养价格/).fill('8800.50')
+    await page.getByLabel('内部用途').selectOption('adoption')
+    await expect(page.getByLabel('领养状态')).toHaveValue('')
+    await page.getByLabel('领养状态').selectOption('available')
+    await page.getByLabel(/价格/).fill('8800.50')
 
     const request = page.waitForRequest(req =>
       req.url().endsWith('/api/admin/v1/works') && req.method() === 'POST',
@@ -151,24 +142,22 @@ test.describe('T22 完整字段：三用途、领养、价格与首页精选', (
     await page.getByRole('button', { name: '创建草稿' }).click()
     const body = JSON.parse((await request).postData() ?? '{}') as Record<string, unknown>
     expect(body.purpose).toBe('adoption')
-    expect(body.adoptionMethod).toBe('regular')
-    expect(body.businessStatus).toBe('available')
+    expect(body.adoptionStatus).toBe('available')
     expect(body.priceCnyMinor).toBe(880_050)
 
     await expect(page).toHaveURL(/\/admin\/works\/[0-9a-f-]{36}$/)
     await expect(page.getByTestId('public-preview')).toContainText('¥8,800.50')
     await page.reload()
-    await expect(page.getByLabel(/领养价格/)).toHaveValue('8800.50')
-    await expect(page.getByLabel('业务状态')).toHaveValue('available')
-    // T25 后端已开放 regular adoption；缺少 T23 设定图时必须明确阻断。
-    await expect(page.getByTestId('publication-panel')).toContainText('领养作品必须保存一张设定图')
+    await expect(page.getByLabel(/价格/)).toHaveValue('8800.50')
+    await expect(page.getByLabel('领养状态')).toHaveValue('available')
+    await expect(page.getByTestId('publication-panel')).toContainText('领养作品必须保存一张独立横版封面')
   })
 
   test('非法价格在客户端阻断并给出关联错误', async ({ page }) => {
     const work = await createWorkViaApi(page, {
       characterName: '价格校验',
       purpose: 'adoption',
-      businessStatus: 'available',
+      adoptionStatus: 'available',
     })
     await page.goto(`${adminBaseURL}/admin/works/${work.id}`)
     await page.waitForSelector('.editor-card')
@@ -178,66 +167,33 @@ test.describe('T22 完整字段：三用途、领养、价格与首页精选', (
       ['-1', '不接受负数'],
       ['12.345', '请输入最多两位小数的金额'],
     ] as const) {
-      await page.getByLabel(/领养价格/).fill(value)
+      await page.getByLabel(/价格/).fill(value)
       await page.getByRole('button', { name: '保存', exact: true }).click()
       await expect(page.getByRole('alert')).toContainText('请修正下方标注的字段')
       await expect(page.getByText(expected)).toBeVisible()
-      await expect(page.getByLabel(/领养价格/)).toHaveAttribute('aria-invalid', 'true')
+      await expect(page.getByLabel(/价格/)).toHaveAttribute('aria-invalid', 'true')
       await page.getByRole('button', { name: '知道了' }).click()
     }
 
-    await page.getByLabel(/领养价格/).fill('15600')
+    await page.getByLabel(/价格/).fill('15600')
     await page.getByRole('button', { name: '保存', exact: true }).click()
     await expect(page.getByText('已保存。')).toBeVisible()
     await expect(page.getByTestId('public-preview')).toContainText('¥15,600')
   })
 
-  test('短属性重复、空白与超长逐条报错，顺序可调整', async ({ page }) => {
-    const work = await createWorkViaApi(page, {
-      characterName: '属性校验',
-      featureTags: ['蓝白', '长毛'],
-    })
-    await page.goto(`${adminBaseURL}/admin/works/${work.id}`)
-    await page.waitForSelector('.editor-card')
-
-    await page.getByRole('button', { name: '添加属性' }).click()
-    await page.getByLabel('作品属性第 3 条').fill('蓝白')
-    await page.getByRole('button', { name: '保存', exact: true }).click()
-    await expect(page.getByText('与第 1 条重复')).toBeVisible()
-    await page.getByRole('button', { name: '知道了' }).click()
-
-    await page.getByLabel('作品属性第 3 条').fill('   ')
-    await expect(page.getByText('属性不能为空')).toBeVisible()
-
-    await page.getByLabel('作品属性第 3 条').fill('超'.repeat(25))
-    await expect(page.getByText('属性最多 24 个字符')).toBeVisible()
-
-    await page.getByRole('button', { name: '删除第 3 条属性' }).click()
-    await page.getByRole('button', { name: '第 2 条属性上移' }).click()
-    await expect(page.getByLabel('作品属性第 1 条')).toHaveValue('长毛')
-    await page.getByRole('button', { name: '保存', exact: true }).click()
-    await expect(page.getByText('已保存。')).toBeVisible()
-    await expect(page.getByTestId('public-preview')).toContainText('长毛、蓝白')
-
-    await page.reload()
-    await expect(page.getByLabel('作品属性第 1 条')).toHaveValue('长毛')
-  })
-
-  test('切换用途会说明字段变化，并且不提交隐藏字段', async ({ page }) => {
+  test('切换用途不提交隐藏的领养字段', async ({ page }) => {
     const work = await createWorkViaApi(page, {
       characterName: '用途切换',
       purpose: 'adoption',
-      businessStatus: 'available',
+      adoptionStatus: 'available',
       priceCnyMinor: 1_560_000,
     })
     await page.goto(`${adminBaseURL}/admin/works/${work.id}`)
     await page.waitForSelector('.editor-card')
-    await expect(page.getByLabel(/领养价格/)).toHaveValue('15600')
+    await expect(page.getByLabel(/价格/)).toHaveValue('15600')
 
-    await page.getByLabel('业务类型').selectOption('showcase')
-    await expect(page.getByTestId('adoption-fields')).toHaveCount(0)
-    await expect(page.getByTestId('purpose-note')).toContainText('不会提交')
-    await expect(page.getByText('切换离开领养后')).toBeVisible()
+    await page.getByLabel('内部用途').selectOption('showcase')
+    await expect(page.getByLabel(/领养状态|价格/u)).toHaveCount(0)
 
     const request = page.waitForRequest(req =>
       req.url().includes(`/api/admin/v1/works/${work.id}`) && req.method() === 'PUT',
@@ -248,10 +204,10 @@ test.describe('T22 完整字段：三用途、领养、价格与首页精选', (
     }).payload
     expect(payload.purpose).toBe('showcase')
     expect(payload).not.toHaveProperty('priceCnyMinor')
-    expect(payload).not.toHaveProperty('businessStatus')
+    expect(payload).not.toHaveProperty('adoptionStatus')
 
     await expect(page.getByText('已保存。')).toBeVisible()
-    await expect(page.getByTestId('public-preview')).toContainText('展示作品')
+    await expect(page.getByTestId('public-preview')).toContainText('纯展示')
     await expect(page.getByTestId('public-preview')).not.toContainText('¥15,600')
   })
 
@@ -260,7 +216,7 @@ test.describe('T22 完整字段：三用途、领养、价格与首页精选', (
     const work = await createWorkViaApi(page, {
       characterName: `列表领养-${suffix}`,
       purpose: 'adoption',
-      businessStatus: 'available',
+      adoptionStatus: 'available',
       priceCnyMinor: 1_560_000,
     })
     await page.goto(`${adminBaseURL}/admin/works`)
@@ -340,7 +296,7 @@ test.describe('T22 完整字段：三用途、领养、价格与首页精选', (
     await expect(featured).toContainText(secondName)
   })
 
-  test('已发布作品在内层编辑页仍可保存精选成员关系', async ({ page }) => {
+  test('已发布作品在内层编辑页锁定基础字段，精选关系仍可从列表维护', async ({ page }) => {
     const suffix = Date.now().toString(36)
     const firstName = `详情优先-${suffix}`
     const secondName = `详情候选-${suffix}`
@@ -366,17 +322,17 @@ test.describe('T22 完整字段：三用途、领养、价格与首页精选', (
     await page.goto(`${adminBaseURL}/admin/works`)
     await page.getByRole('link', { name: secondName, exact: true }).click()
     await expect(page.getByLabel('人工排序')).toHaveCount(0)
-    await expect(page.getByLabel('加入首页精选作品')).toBeEnabled()
+    await expect(page.getByLabel('加入首页精选')).toBeDisabled()
 
     const saved = page.waitForResponse(response =>
       response.url().endsWith('/presentation')
       && response.request().method() === 'PUT',
     )
-    await page.getByLabel('加入首页精选作品').check()
-    await page.getByRole('button', { name: '保存首页精选' }).click()
+    await page.goto(`${adminBaseURL}/admin/works`)
+    const row = page.getByRole('row').filter({ hasText: secondName })
+    await row.getByLabel('加入首页精选', { exact: true }).check()
     expect((await saved).status()).toBe(200)
-    await expect(page.getByText('首页精选设置已保存，公开端已更新。')).toBeVisible()
-    await expect(page.getByLabel('加入首页精选作品')).toBeChecked()
+    await expect(row.getByLabel('加入首页精选', { exact: true })).toBeChecked()
 
     await page.goto(publicBaseURL)
     const featured = page.getByTestId('featured-works')
@@ -528,43 +484,6 @@ test.describe('编辑与保存', () => {
     await expect(page.getByText('未更改')).toBeVisible()
   })
 
-  test('展会掉落可直接编辑展会名称和时间并保存', async ({ page }) => {
-    const characterName = `展会掉落编辑-${Date.now().toString(36)}`
-    await seedPublicCatalog(page, [{
-      slug: `e2e-public-event-${Date.now().toString(36)}`,
-      characterName,
-      purpose: 'adoption',
-      adoptionMethod: 'event_drop',
-      businessStatus: 'available',
-      eventName: '历史展会',
-      eventTime: '历史展会时间',
-      publicationStatus: 'draft',
-      photos: [{ alt: '历史展会作品照' }],
-    }])
-    await page.goto(`${adminBaseURL}/admin/works`)
-    await page.getByRole('link', { name: characterName, exact: true }).click()
-
-    await expect(page.getByLabel('业务类型')).toHaveValue('event_drop')
-    await expect(page.getByLabel('领养方式')).toHaveValue('展会掉落')
-    await expect(page.getByLabel('展会名称')).toHaveValue('历史展会')
-    await expect(page.getByLabel('展会时间')).toHaveValue('历史展会时间')
-    await page.getByLabel('展会名称').fill('幻夏祭 2026')
-    await page.getByLabel('展会时间').fill('8 月 15 日至 16 日')
-
-    await expect(page.getByText('有未保存更改')).toBeVisible()
-    await expect(page.getByRole('button', { name: '保存', exact: true })).toBeEnabled()
-    await page.getByRole('button', { name: '保存', exact: true }).click()
-    await expect(page.getByText('已保存。')).toBeVisible()
-
-    await page.reload()
-    await expect(page.getByLabel('业务类型')).toHaveValue('event_drop')
-    await expect(page.getByLabel('领养方式')).toHaveValue('展会掉落')
-    await expect(page.getByLabel('业务状态')).toHaveValue('available')
-    await expect(page.getByLabel('展会名称')).toHaveValue('幻夏祭 2026')
-    await expect(page.getByLabel('展会时间')).toHaveValue('8 月 15 日至 16 日')
-    await expect(page.getByText('未更改')).toBeVisible()
-  })
-
   test('未保存离开时浏览器确认提醒', async ({ page }) => {
     const work = await createWorkViaApi(page)
     await page.goto(`${adminBaseURL}/admin/works/${work.id}`)
@@ -678,12 +597,10 @@ test.describe('公开预览与泄漏边界', () => {
     await loginAsAdmin(page)
   })
 
-  test('公开预览展示安全字段，DOM 与响应不含联系人/私有 Key/签名 URL', async ({ page }) => {
-    const contact = `e2e-leak-contact-${Date.now().toString(36)}`
+  test('公开预览只展示目标字段，DOM 与响应不含旧字段/私有 Key/签名 URL', async ({ page }) => {
     const work = await createWorkViaApi(page, {
       characterName: '泄漏验证',
-      ownerContact: contact,
-      featureTags: ['长毛', '蓝白'],
+      species: '犬',
     })
 
     const adminResponses: string[] = []
@@ -702,18 +619,14 @@ test.describe('公开预览与泄漏边界', () => {
     const preview = page.getByTestId('public-preview')
     await expect(preview).toContainText('泄漏验证')
     await expect(preview).toContainText(`/works/${work.slug}`)
-    await expect(preview).toContainText('长毛、蓝白')
+    await expect(preview).toContainText('犬')
     await expect(preview).toContainText('媒体未就绪')
-    await expect(preview).toContainText('不公开')
-
-    // 编辑页详情允许显示联系人（仅后台）；公开预览面板与列表不得出现。
-    await expect(page.getByLabel(/联系人/)).toHaveValue(contact)
-    await expect(preview).not.toContainText(contact)
+    await expect(page.getByLabel(/装型|主人|联系人|属性|标签|领养方式|展会/u)).toHaveCount(0)
 
     await page.goto(`${adminBaseURL}/admin/works`)
-    await expect(page.getByText(contact)).toHaveCount(0)
+    await expect(page.getByText(/主人|联系人|作品属性|领养方式|展会/u)).toHaveCount(0)
 
-    // 全部管理端响应：不含私有 Object Key、签名参数；列表/公开预览不含联系人。
+    // 全部管理端响应不含私有 Object Key、签名参数和已退役字段。
     await expect
       .poll(() => adminResponses.some(text => text.includes('/original/') || text.includes('/processing/')))
       .toBe(false)
@@ -721,12 +634,7 @@ test.describe('公开预览与泄漏边界', () => {
       expect(text).not.toContain('x-oss-')
       expect(text).not.toContain('Signature=')
       expect(text).not.toContain('X-Oss-')
-    }
-    const listOrPreview = adminResponses.filter(text =>
-      text.includes('studioPhotoCount') || text.includes('mediaReady'),
-    )
-    for (const text of listOrPreview) {
-      expect(text).not.toContain(contact)
+      expect(text).not.toMatch(/suitType|ownerDisplay|ownerContact|featureTags|businessStatus|adoptionMethod|eventName|eventTime/u)
     }
   })
 

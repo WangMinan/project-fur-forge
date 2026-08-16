@@ -10,7 +10,6 @@ const T09_WORKS: SeedWork[] = [
     slug: 'e2e-public-t09-naigai',
     characterName: '奶盖',
     species: '布偶猫',
-    suitType: 'full',
     purpose: 'showcase',
     featured: true,
     sortOrder: 0,
@@ -25,13 +24,10 @@ const T09_WORKS: SeedWork[] = [
     slug: 'e2e-public-t09-lanmei',
     characterName: '蓝湄',
     species: '北极狐',
-    suitType: 'full',
     purpose: 'adoption',
-    adoptionMethod: 'event_drop',
-    businessStatus: 'available',
-    eventName: '有点小狗夏日展',
-    eventTime: '2026 年 8 月 15 日',
-    priceMinorUnits: 1_560_000,
+    adoptionStatus: 'available',
+    priceCnyMinor: 1_560_000,
+    adoptionCover: { alt: '蓝湄的独立横版领养封面', width: 1920, height: 1080 },
     featured: true,
     sortOrder: 1,
     photos: [{ alt: '蓝湄的出厂照' }],
@@ -40,9 +36,7 @@ const T09_WORKS: SeedWork[] = [
     slug: 'e2e-public-t09-zhima',
     characterName: '芝麻',
     species: '哈士奇',
-    suitType: 'full',
     purpose: 'commission',
-    ownerDisplay: '阿灰',
     featured: true,
     sortOrder: 2,
     photos: [{ alt: '芝麻的出厂照' }],
@@ -51,7 +45,6 @@ const T09_WORKS: SeedWork[] = [
     slug: 'e2e-public-t09-doudou',
     characterName: '豆豆',
     species: '柴犬',
-    suitType: 'partial',
     purpose: 'commission',
     featured: true,
     sortOrder: 3,
@@ -61,7 +54,6 @@ const T09_WORKS: SeedWork[] = [
     slug: 'e2e-public-t09-lizi',
     characterName: '栗子',
     species: '小熊',
-    suitType: 'partial',
     purpose: 'showcase',
     featured: true,
     sortOrder: 4,
@@ -280,12 +272,12 @@ test.describe('UI-02 首页 Hero 确定性对比度', () => {
 })
 
 test.describe('UI-03 动态参数响应', () => {
-  test('详情→详情：内容、图集、价格、SEO 与 related works 全部更新', async ({ page }) => {
+  test('详情→详情：内容、图集、SEO 与 related works 全部更新', async ({ page }) => {
     await seedT09Catalog(page)
     await page.goto('/works/e2e-public-t09-naigai')
     await expect(page.getByTestId('work-detail')).toHaveAttribute('data-work-slug', 'e2e-public-t09-naigai')
     await expect(page.getByRole('button', { name: /查看第 \d 张，共 4 张/ })).toHaveCount(4)
-    await expect(page.getByTestId('work-price')).toHaveCount(0)
+    await expect(page.getByText('布偶猫')).toBeVisible()
 
     const target = page.locator('.work-detail__related-grid a[href="/works/e2e-public-t09-lanmei"]')
     await expect(target).toBeVisible()
@@ -295,9 +287,7 @@ test.describe('UI-03 动态参数响应', () => {
     await expect(page).toHaveTitle(/蓝湄 · 作品展示 · 有点小狗工作室/)
     await expect(page.getByRole('heading', { level: 1, name: '蓝湄' })).toBeVisible()
     await expect(page.getByTestId('work-detail')).toHaveAttribute('data-work-slug', 'e2e-public-t09-lanmei')
-    // 奶盖无价格、蓝湄有 CNY 价格：价格区随作品切换出现
-    await expect(page.getByTestId('work-price')).toBeVisible()
-    await expect(page.getByText('¥15,600')).toBeVisible()
+    await expect(page.getByText('北极狐')).toBeVisible()
     // 蓝湄为单图作品：缩略图行整体消失
     await expect(page.getByRole('button', { name: /查看第 \d 张，共 \d 张/ })).toHaveCount(0)
     // related works 不再包含当前作品自身
@@ -305,13 +295,13 @@ test.describe('UI-03 动态参数响应', () => {
     // SEO 元信息同步更新
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /蓝湄/)
 
-    // 再从 related works 进入芝麻（委托、无价格）：价格区随之消失
+    // 再从 related works 进入芝麻，目标模型的名称与物种随之更新。
     await page.locator('.work-detail__related-grid a[href="/works/e2e-public-t09-zhima"]').click()
     await expect(page).toHaveURL(/\/works\/e2e-public-t09-zhima$/)
     await expect(page).toHaveTitle(/芝麻 · 作品展示/)
     await expect(page.getByRole('heading', { level: 1, name: '芝麻' })).toBeVisible()
     await expect(page.getByTestId('work-detail')).toHaveAttribute('data-work-slug', 'e2e-public-t09-zhima')
-    await expect(page.getByTestId('work-price')).toHaveCount(0)
+    await expect(page.getByText('哈士奇')).toBeVisible()
     await expect(page.locator('.work-detail__related-grid a[href="/works/e2e-public-t09-zhima"]')).toHaveCount(0)
   })
 
@@ -385,10 +375,7 @@ test.describe('UI-04 dirty 覆盖全部可编辑字段', () => {
   const dirtyBadge = (page: import('@playwright/test').Page) => page.getByText('有未保存更改')
 
   test('基础字段修改与还原均影响 dirty', async ({ page }) => {
-    const work = await createWorkViaApi(page, {
-      characterName: '脏值验证',
-      ownerContact: null,
-    })
+    const work = await createWorkViaApi(page, { characterName: '脏值验证' })
     await page.goto(`${adminBaseURL}/admin/works/${work.id}`)
     await page.waitForSelector('.editor-card')
     await expect(dirtyBadge(page)).toHaveCount(0)
@@ -398,58 +385,43 @@ test.describe('UI-04 dirty 覆盖全部可编辑字段', () => {
     await page.getByLabel(/角色名/).fill('脏值验证')
     await expect(dirtyBadge(page)).toHaveCount(0)
 
-    await page.getByLabel('装型').selectOption('partial')
+    await page.getByLabel(/物种/).fill('猫')
     await expect(dirtyBadge(page)).toBeVisible()
-    await page.getByLabel('装型').selectOption('full')
+    await page.getByLabel(/物种/).fill('犬')
     await expect(dirtyBadge(page)).toHaveCount(0)
 
-    await page.getByLabel('业务类型').selectOption('showcase')
+    await page.getByLabel('内部用途').selectOption('showcase')
     await expect(dirtyBadge(page)).toBeVisible()
-    await page.getByLabel('业务类型').selectOption('commission')
-    await expect(dirtyBadge(page)).toHaveCount(0)
-
-    await page.getByLabel('角色主人公开值').fill('有点小狗工作室')
-    await expect(dirtyBadge(page)).toBeVisible()
-    await page.getByLabel('角色主人公开值').fill('不公开')
+    await page.getByLabel('内部用途').selectOption('commission')
     await expect(dirtyBadge(page)).toHaveCount(0)
 
     await expect(page.getByLabel('人工排序')).toHaveCount(0)
 
-    await page.getByLabel('加入首页精选作品').check()
+    await page.getByLabel('加入首页精选').check()
     await expect(dirtyBadge(page)).toBeVisible()
-    await page.getByLabel('加入首页精选作品').uncheck()
+    await page.getByLabel('加入首页精选').uncheck()
     await expect(dirtyBadge(page)).toHaveCount(0)
 
-    await page.getByLabel(/联系人/).fill('新联系方式')
-    await expect(dirtyBadge(page)).toBeVisible()
-    await page.getByLabel(/联系人/).fill('')
-    await expect(dirtyBadge(page)).toHaveCount(0)
+    await expect(page.getByLabel(/装型|主人|联系人|属性|标签/u)).toHaveCount(0)
   })
 
-  test('短属性：join(‘’) 冲突、增删与内容修改均影响 dirty', async ({ page }) => {
+  test('领养状态与价格修改、还原均影响 dirty', async ({ page }) => {
     const work = await createWorkViaApi(page, {
-      featureTags: ['纯海绵头', '内置风扇'],
+      purpose: 'adoption',
+      adoptionStatus: 'available',
+      priceCnyMinor: 1_560_000,
     })
     await page.goto(`${adminBaseURL}/admin/works/${work.id}`)
     await page.waitForSelector('.editor-card')
 
-    // join('') 冲突用例：['纯海绵头','内置风扇'] → ['纯海绵头内','置风扇']
-    // 拼接结果不变但归属不同，必须判 dirty（旧 join 比较会漏判）。
-    const first = page.getByLabel('作品属性第 1 条')
-    const second = page.getByLabel('作品属性第 2 条')
-    await first.fill('纯海绵头内')
-    await second.fill('置风扇')
+    await page.getByLabel('领养状态').selectOption('adopted')
     await expect(dirtyBadge(page)).toBeVisible()
-    await first.fill('纯海绵头')
-    await second.fill('内置风扇')
+    await page.getByLabel('领养状态').selectOption('available')
     await expect(dirtyBadge(page)).toHaveCount(0)
 
-    // 增删：新增一条（含空值）即 dirty；删除新增的空条目后回到基线
-    await page.getByRole('button', { name: '添加属性' }).click()
+    await page.getByLabel(/价格/).fill('16000')
     await expect(dirtyBadge(page)).toBeVisible()
-    await page.getByLabel('作品属性第 3 条').fill('新属性')
-    await expect(dirtyBadge(page)).toBeVisible()
-    await page.getByRole('button', { name: '删除第 3 条属性' }).click()
+    await page.getByLabel(/价格/).fill('15600')
     await expect(dirtyBadge(page)).toHaveCount(0)
   })
 })

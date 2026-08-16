@@ -8,6 +8,7 @@ import {
   resetFakeMedia,
   setFakeMediaFlags,
   smallStudioPng,
+  uploadAdoptionCoverToEditor,
   uploadDesignSheetToEditor,
   uploadFileToEditor,
 } from './helpers/fake-media'
@@ -56,42 +57,48 @@ test('发布检查阻断项中文映射与发布按钮禁用', async ({ page }) 
   await expect(panel.getByRole('button', { name: '发布', exact: true })).toBeEnabled()
 })
 
-test('发布会先自动保存基础信息、设定图和出厂照，再完成常规领养发布', async ({ page }) => {
+test('发布会先自动保存基础信息、三类媒体，再完成领养作品发布', async ({ page }) => {
   const work = await createWorkViaApi(page, {
-    characterName: '常规领养发布验证',
+    characterName: '领养作品发布验证',
     purpose: 'adoption',
-    businessStatus: 'available',
+    adoptionStatus: 'available',
     priceCnyMinor: 12_800_00,
   })
   await gotoEditor(page, work.id)
 
   const panel = page.getByTestId('publication-panel')
-  await expect(panel).toContainText('领养作品必须保存一张设定图')
+  await expect(panel).toContainText('领养作品必须保存一张独立横版封面')
   await expect(panel.getByRole('button', { name: '发布', exact: true })).toBeDisabled()
 
+  await uploadAdoptionCoverToEditor(page, publishableStudioPng(), 'adoption-cover.png')
+  const adoptionCover = page.locator('.cover__entry')
+  await expect(adoptionCover).toHaveCount(1)
+  await adoptionCover.getByLabel(/图片说明/).fill('领养作品独立横版封面')
   await uploadDesignSheetToEditor(page, publishableStudioPng(), 'adoption-design.png')
   const designSheet = page.locator('.design-sheet__entry')
   await expect(designSheet).toHaveCount(1)
-  await designSheet.getByLabel(/图片说明/).fill('常规领养完整设定图')
+  await designSheet.getByLabel(/图片说明/).fill('领养作品完整设定图')
   await uploadFileToEditor(page, publishableStudioPng(), 'adoption-photo.png')
   await expect(photoCards(page)).toHaveCount(1)
-  await photoCards(page).getByLabel(/图片说明/).fill('常规领养出厂照')
-  await page.getByLabel(/角色名/).fill('常规领养自动保存验证')
+  await photoCards(page).getByLabel(/图片说明/).fill('领养作品出厂照')
+  await page.getByLabel(/角色名/).fill('领养作品自动保存验证')
 
   await expect(page.getByText('有未保存更改', { exact: true })).toBeVisible()
   await expect(panel.getByRole('button', { name: '发布', exact: true })).toBeEnabled()
   await panel.getByRole('button', { name: '发布', exact: true }).click()
   await expect(panel).toContainText('发布成功', { timeout: 60_000 })
-  await expect(page.getByLabel(/角色名/)).toHaveValue('常规领养自动保存验证')
-  await expect(designSheet.getByLabel(/图片说明/)).toHaveValue('常规领养完整设定图')
-  await expect(photoCards(page).getByLabel(/图片说明/)).toHaveValue('常规领养出厂照')
+  await expect(page.getByLabel(/角色名/)).toHaveValue('领养作品自动保存验证')
+  await expect(adoptionCover.getByLabel(/图片说明/)).toHaveValue('领养作品独立横版封面')
+  await expect(designSheet.getByLabel(/图片说明/)).toHaveValue('领养作品完整设定图')
+  await expect(photoCards(page).getByLabel(/图片说明/)).toHaveValue('领养作品出厂照')
   await expect(page.getByTestId('public-preview')).toContainText(`/works/${work.slug}`)
 
   await page.reload()
   await page.waitForSelector('.editor-card')
-  await expect(page.getByLabel(/角色名/)).toHaveValue('常规领养自动保存验证')
-  await expect(page.locator('.design-sheet__entry').getByLabel(/图片说明/)).toHaveValue('常规领养完整设定图')
-  await expect(photoCards(page).getByLabel(/图片说明/)).toHaveValue('常规领养出厂照')
+  await expect(page.getByLabel(/角色名/)).toHaveValue('领养作品自动保存验证')
+  await expect(page.locator('.cover__entry').getByLabel(/图片说明/)).toHaveValue('领养作品独立横版封面')
+  await expect(page.locator('.design-sheet__entry').getByLabel(/图片说明/)).toHaveValue('领养作品完整设定图')
+  await expect(photoCards(page).getByLabel(/图片说明/)).toHaveValue('领养作品出厂照')
 })
 
 test('低分辨率出厂照保留原图、明确提示并经 FFmpeg 适配后发布', async ({ page }) => {
@@ -147,9 +154,13 @@ test('低分辨率设定图保留原图、明确提示并经 FFmpeg 适配后发
   const work = await createWorkViaApi(page, {
     characterName: '低分辨率设定图验证',
     purpose: 'adoption',
-    businessStatus: 'available',
+    adoptionStatus: 'available',
   })
   await gotoEditor(page, work.id)
+  await uploadAdoptionCoverToEditor(page, publishableStudioPng(), 'design-test-cover.png')
+  await page.locator('.cover__entry').getByLabel(/图片说明/).fill('低分辨率测试横版封面')
+  await page.getByRole('button', { name: '保存横版封面' }).click()
+  await makePublishable(page)
   await uploadDesignSheetToEditor(
     page,
     lowResolutionDesignSheetPng(),
@@ -195,7 +206,7 @@ test('低分辨率设定图保留原图、明确提示并经 FFmpeg 适配后发
     key.includes('/design-sheet-upscale-lanczos-v1/'),
   )).toBe(true)
   expect(state.objects.some(key => key.includes('/original/'))).toBe(true)
-  expect(state.publicObjects.filter(key => key.includes('/web/'))).toHaveLength(18)
+  expect(state.publicObjects.filter(key => key.includes('/web/'))).toHaveLength(24)
 })
 
 test('发布成功：状态翻转、编辑锁定、公开预览媒体就绪', async ({ page }) => {

@@ -327,7 +327,7 @@ defineExpose({ save: saveDesignSheet })
     </article>
 
     <p v-else-if="uploads.items.value.length === 0" class="design-sheet__empty">
-      还没有设定图。请先上传并保存一张横版设定图。
+      还没有设定图。此项可选，可按需上传并保存一张完整设定图。
     </p>
 
     <input

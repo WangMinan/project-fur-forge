@@ -8,6 +8,7 @@ import {
   resetFakeMedia,
   setFakeMediaFlags,
   smallStudioPng,
+  uploadAdoptionCoverToEditor,
   uploadDesignSheetToEditor,
   uploadFileToEditor,
 } from './helpers/fake-media'
@@ -431,8 +432,8 @@ test.describe('T24 领养设定图与角色化列表', () => {
     await gotoEditor(page, work.id)
 
     await expect(page.getByRole('heading', { level: 2, name: '领养设定图' })).toBeVisible()
-    await expect(page.getByText('还没有设定图。请先上传并保存一张横版设定图。')).toBeVisible()
-    await expect(page.getByText('还没有出厂照。常规领养可只用设定图发布；添加出厂照后将显示在统一作品详情的作品图集中。')).toBeVisible()
+    await expect(page.getByText('还没有设定图。此项可选，可按需上传并保存一张完整设定图。')).toBeVisible()
+    await expect(page.getByText('还没有出厂照。发布前至少需要一张处理完成的出厂照并设为主图。')).toBeVisible()
     await expect(page.getByTestId('publication-panel')).toContainText('公开图片 0/0')
     const editorText = await page.locator('.editor__main').innerText()
     expect(editorText).not.toContain('design-sheet recipe')
@@ -510,6 +511,11 @@ test.describe('T24 领养设定图与角色化列表', () => {
     })
     await gotoEditor(page, work.id)
 
+    await uploadAdoptionCoverToEditor(page, publishableStudioPng(), 'list-cover.png')
+    await page.locator('.cover__entry').getByLabel(/图片说明/).fill('列表横版封面')
+    await page.getByRole('button', { name: '保存横版封面' }).click()
+    await expect(page.getByText('领养横版封面已保存。')).toBeVisible()
+
     await uploadDesignSheetToEditor(page, publishableStudioPng(), 'list-design.png')
     await designEntry(page).getByLabel(/图片说明/).fill('列表设定图')
     await page.getByRole('button', { name: '保存设定图' }).click()
@@ -525,9 +531,13 @@ test.describe('T24 领养设定图与角色化列表', () => {
     await page.getByRole('searchbox', { name: '查找作品' })
       .fill('列表媒体验证')
     const row = page.getByRole('row').filter({ hasText: '列表媒体验证' })
-    await expect(row).toContainText('设定图 有 · 出厂照 1/5')
+    await expect(row).toContainText('横版封面 有 · 设定图 有 · 出厂照 1/5')
     await expect(row).toContainText('无发布阻断')
     await expect(row.locator('.works-table__thumb img')).toHaveCount(1)
+    await expect(row.getByRole('link', { name: '横版封面' })).toHaveAttribute(
+      'href',
+      `/admin/works/${work.id}#adoption-cover`,
+    )
     await expect(row.getByRole('link', { name: '设定图' })).toHaveAttribute(
       'href',
       `/admin/works/${work.id}#design-sheet`,

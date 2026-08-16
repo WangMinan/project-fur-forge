@@ -19,7 +19,6 @@ const WORKS: SeedWork[] = [
     slug: 'e2e-public-home-naigai',
     characterName: '奶盖',
     species: '布偶猫',
-    suitType: 'full',
     purpose: 'showcase',
     featured: true,
     sortOrder: 0,
@@ -29,13 +28,10 @@ const WORKS: SeedWork[] = [
     slug: 'e2e-public-home-lanmei',
     characterName: '蓝湄',
     species: '北极狐',
-    suitType: 'full',
     purpose: 'adoption',
-    adoptionMethod: 'event_drop',
-    businessStatus: 'available',
-    eventName: '有点小狗夏日展',
-    eventTime: '2026 年 8 月 15 日',
-    priceMinorUnits: 1_560_000,
+    adoptionStatus: 'available',
+    priceCnyMinor: 1_560_000,
+    adoptionCover: { alt: '蓝湄的独立横版领养封面', width: 1920, height: 1080 },
     featured: true,
     sortOrder: 1,
     photos: [{ alt: '蓝湄的出厂照' }],
@@ -44,7 +40,6 @@ const WORKS: SeedWork[] = [
     slug: 'e2e-public-home-zhima',
     characterName: '芝麻',
     species: '哈士奇',
-    suitType: 'full',
     purpose: 'commission',
     featured: true,
     sortOrder: 2,
@@ -54,7 +49,6 @@ const WORKS: SeedWork[] = [
     slug: 'e2e-public-home-doudou',
     characterName: '豆豆',
     species: '柴犬',
-    suitType: 'partial',
     purpose: 'commission',
     featured: false,
     sortOrder: 3,
@@ -103,13 +97,12 @@ async function seedCompleteMotionHome(page: Page, settings?: SeedHomeSettings) {
       slug: 'e2e-public-home-motion-adoption',
       characterName: '动效领养验证',
       species: '犬',
-      suitType: 'partial',
       purpose: 'adoption',
-      adoptionMethod: 'regular',
-      businessStatus: 'available',
+      adoptionStatus: 'available',
       sortOrder: 4,
+      adoptionCover: { alt: '动效领养验证独立横版封面', width: 1920, height: 1080 },
       designSheet: { alt: '动效领养验证设定图' },
-      photos: [],
+      photos: [{ alt: '动效领养验证出厂照' }],
     },
   ])
   await seedHomeSlides(page, SLIDES, settings)
@@ -520,13 +513,12 @@ test.describe('T28 首页完整内容顺序', () => {
         slug: 'e2e-public-home-adoption',
         characterName: '云朵',
         species: '萨摩耶',
-        suitType: 'partial',
         purpose: 'adoption',
-        adoptionMethod: 'regular',
-        businessStatus: 'available',
+        adoptionStatus: 'available',
         sortOrder: 4,
+        adoptionCover: { alt: '云朵独立横版领养封面', width: 1920, height: 1080 },
         designSheet: { alt: '云朵的完整设定图' },
-        photos: [],
+        photos: [{ alt: '云朵的出厂照' }],
       },
     ])
     await seedHomeSlides(page, SLIDES)
@@ -602,7 +594,8 @@ test.describe('T28 首页完整内容顺序', () => {
   })
 
   test('没有真实图片或领养时不渲染对应模块', async ({ page }) => {
-    await seedHome(page)
+    await seedPublicCatalog(page, WORKS.filter(work => work.purpose !== 'adoption'))
+    await seedHomeSlides(page, SLIDES)
     await seedHomeSlides(page, [], undefined, 'commission')
     await page.goto('/')
 
@@ -613,7 +606,8 @@ test.describe('T28 首页完整内容顺序', () => {
   })
 
   test('只有一个真实图片入口时在桌面占满整行', async ({ page }) => {
-    await seedHome(page)
+    await seedPublicCatalog(page, WORKS.filter(work => work.purpose !== 'adoption'))
+    await seedHomeSlides(page, SLIDES)
     await seedHomeSlides(page, [
       { alt: '委托页独立代表作品', sortOrder: 0, enabled: true },
     ], undefined, 'commission')
@@ -675,7 +669,6 @@ test.describe('T20 首页精选轨道', () => {
       slug: `e2e-public-featured-limit-${index}` as `e2e-public-${string}`,
       characterName: `精选上限 ${index + 1}`,
       species: '犬',
-      suitType: 'full',
       purpose: 'showcase',
       featured: true,
       sortOrder: index,
