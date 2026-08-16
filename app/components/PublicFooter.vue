@@ -70,9 +70,16 @@ const { data: filings } = await useFetch("/api/site-meta", {
             <span v-if="filings.icp" aria-hidden="true">|</span>
             <a
               :href="filings.police.url"
+              class="public-footer__police-filing"
               target="_blank"
               rel="noopener noreferrer"
-              >{{ filings.police.number }}</a
+              ><img
+                src="/filings/police-filing.png"
+                alt=""
+                width="18"
+                height="20"
+                aria-hidden="true"
+              ><span>{{ filings.police.number }}</span></a
             >
           </template>
         </p>
@@ -170,6 +177,19 @@ const { data: filings } = await useFetch("/api/site-meta", {
 
 .public-footer__filings a {
   color: inherit;
+}
+
+.public-footer__police-filing {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.public-footer__police-filing img {
+  flex: none;
+  width: 1.125rem;
+  height: 1.25rem;
+  object-fit: contain;
 }
 
 .public-footer__filings a:hover {
