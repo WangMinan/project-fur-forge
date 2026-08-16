@@ -575,8 +575,8 @@ describe('authentication API', () => {
           privacyPolicy: null,
         },
         contact: {
-          email: '3114559925@qq.com',
-          officialChannels: officialChannels('3114559925', null),
+          email: '765678159@qq.com',
+          officialChannels: officialChannels('765678159', '1040925427'),
           antiScam: null,
         },
       },
