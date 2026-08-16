@@ -29,6 +29,28 @@ export const DATABASE_MIGRATIONS_FOLDER = resolve(
   'server/database/migrations',
 )
 
+const MIGRATION_HASH_COMPATIBILITY: Readonly<Record<string, readonly string[]>> = {
+  // 0036 was applied in this form before its publication_operations copy was
+  // made column-explicit. A successful run produces the same contract schema,
+  // so retain the recorded hash while allowing only that exact historical file.
+  '1786809600000:4ccf259f56603f69eb2b7d8f5a20097387b454d4aa84f5a7b30c194317f94684': [
+    'ce887498b188937e8ebd57c1dfd06d5e651ea8cc6719741003b22dd6f28ba098',
+  ],
+}
+
+function migrationHashMatches(
+  appliedHash: string,
+  expected: { folderMillis: number, hash: string },
+) {
+  if (appliedHash === expected.hash) {
+    return true
+  }
+
+  const compatibilityKey = `${expected.folderMillis}:${expected.hash}`
+  return MIGRATION_HASH_COMPATIBILITY[compatibilityKey]?.includes(appliedHash)
+    === true
+}
+
 function isInside(parent: string, child: string) {
   const path = relative(parent, child)
   return path !== ''
@@ -158,10 +180,12 @@ export function migrationState(
         ORDER BY created_at, id
       `).all() as { createdAt: number, hash: string }[]
     : []
-  const historyMatches = applied.every((migration, index) => (
-    migration.createdAt === migrations[index]?.folderMillis
-    && migration.hash === migrations[index]?.hash
-  ))
+  const historyMatches = applied.every((migration, index) => {
+    const expected = migrations[index]
+    return expected !== undefined
+      && migration.createdAt === expected.folderMillis
+      && migrationHashMatches(migration.hash, expected)
+  })
 
   return {
     applied,
