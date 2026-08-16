@@ -323,8 +323,8 @@ describe('SQLite foundation', () => {
       expect(siteContent.privacyPolicy).not.toContain('未来如新增')
       expect(siteContent.contactAntiScam).toContain('另一条已公布渠道核实')
       expect(JSON.parse(siteContent.officialChannelsJson)).toEqual([
-        { platform: 'qq', account: '3114559925', qrCodeAssetId: null },
-        { platform: 'qq_group', account: null, qrCodeAssetId: null },
+        { platform: 'qq', account: '765678159', qrCodeAssetId: null },
+        { platform: 'qq_group', account: '1040925427', qrCodeAssetId: null },
       ])
       expect(database.sqlite.prepare(`
         SELECT kind, tone, label, href
@@ -381,7 +381,7 @@ describe('SQLite foundation', () => {
       expect(row.qq).toBe('123456789')
       expect(JSON.parse(row.channels)).toEqual([
         { platform: 'qq', account: '123456789', qrCodeAssetId: null },
-        { platform: 'qq_group', account: null, qrCodeAssetId: null },
+        { platform: 'qq_group', account: '1040925427', qrCodeAssetId: null },
       ])
       expect((upgraded.sqlite.pragma('table_info(site_content)') as { name: string }[])
         .some(column => column.name === 'contact_douyin')).toBe(false)
@@ -600,8 +600,9 @@ describe('SQLite foundation', () => {
       expect(row.privacyPolicy).not.toContain('未来如新增')
       expect(row.privacyVersion).toBe(before.privacy + 1)
       expect(row.contactAntiScam).toBe('管理员自定义防诈骗提醒')
-      expect(row.contactVersion).toBe(before.contact + 1)
-      expect(row.version).toBe(before.version + 5)
+      // visitor copy 与 0042 默认联系方式各推进 contact 一次。
+      expect(row.contactVersion).toBe(before.contact + 2)
+      expect(row.version).toBe(before.version + 6)
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
     }
     finally {
