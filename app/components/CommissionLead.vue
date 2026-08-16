@@ -6,14 +6,10 @@ import type {
 
 const props = defineProps<{
   description?: string | undefined
-  email?: string | null | undefined
   hero: PublicHeroPlacementDto
   status?: PublicSiteBusinessStatusDto | null | undefined
 }>()
 
-const mailtoHref = computed(() => props.email
-  ? `mailto:${props.email}?subject=${encodeURIComponent('自设委托估价咨询')}`
-  : null)
 const landscape = computed(() => props.hero.landscape[0])
 const portrait = computed(() => props.hero.portrait[0])
 const sources = computed(() => landscape.value?.sources ?? portrait.value?.sources)
@@ -64,14 +60,14 @@ onBeforeUnmount(() => {
         {{ description || '根据角色细节与制作需求逐单沟通、人工估价。' }}
       </p>
       <div class="commission-lead__actions">
-        <a class="commission-lead__action commission-lead__action--primary" href="#commission-details">
-          了解制作范围
-        </a>
-        <a
-          v-if="mailtoHref"
+        <NuxtLink
+          class="commission-lead__action commission-lead__action--primary"
+          to="/commission/apply"
+        >提交委托申请</NuxtLink>
+        <NuxtLink
           class="commission-lead__action commission-lead__action--secondary"
-          :href="mailtoHref"
-        >邮件咨询估价</a>
+          to="/about#contact"
+        >查看其他联系方式</NuxtLink>
       </div>
     </div>
   </section>

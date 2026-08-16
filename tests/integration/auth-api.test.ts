@@ -505,7 +505,7 @@ describe('authentication API', () => {
           UPDATE site_content
           SET commission_intro = NULL,
               commission_estimate_note = NULL, commission_email_action = NULL,
-              commission_faq_json = NULL, about_studio_facts = NULL,
+              about_studio_facts = NULL,
               about_making_scope = NULL, basic_terms = NULL,
               privacy_policy = NULL,
               contact_anti_scam = NULL, version = 1
@@ -548,7 +548,6 @@ describe('authentication API', () => {
     const initialSectionVersions = initial.data.sectionVersions as {
       about: number
       commission: number
-      commissionFaq: number
       contact: number
       privacy: number
       terms: number
@@ -558,7 +557,6 @@ describe('authentication API', () => {
         version: 1,
         sectionVersions: {
           commission: expect.any(Number),
-          commissionFaq: expect.any(Number),
           about: expect.any(Number),
           terms: expect.any(Number),
           privacy: expect.any(Number),
@@ -569,7 +567,6 @@ describe('authentication API', () => {
           intro: null,
           estimateNote: null,
           emailAction: null,
-          faqs: [],
         },
         about: {
           studioFacts: null,
@@ -596,14 +593,10 @@ describe('authentication API', () => {
     expect(publicHostAdmin.status).toBe(404)
     expect(adminHostPublic.status).toBe(404)
 
-    const FAQ_ID = '33333333-3333-4333-8333-333333333333'
     const commissionPayload = {
       intro: '委托说明由工作室确认后填写。',
       estimateNote: '每件作品通过邮件人工估价。',
       emailAction: '发送邮件或复制业务邮箱。',
-    }
-    const faqPayload = {
-      faqs: [{ id: FAQ_ID, question: '如何估价？', answer: '通过业务邮箱逐件沟通。' }],
     }
     const privacyPayload = {
       privacyPolicy: '本站不提供访客账号，不使用营销分析 Cookie。',
@@ -714,7 +707,6 @@ describe('authentication API', () => {
       data: {
         sectionVersions: {
           commission: initialSectionVersions.commission + 1,
-          commissionFaq: initialSectionVersions.commissionFaq,
           about: initialSectionVersions.about,
         },
         commission: commissionPayload,
@@ -722,11 +714,7 @@ describe('authentication API', () => {
     })
 
     // 不同分区各自保存都成功，且只推进自己的版本。
-    expect((await putSection(
-      'commission-faq',
-      initialSectionVersions.commissionFaq,
-      faqPayload,
-    )).status).toBe(200)
+    expect((await putSection('commission-faq', 1, { faqs: [] })).status).toBe(404)
     expect((await putSection(
       'privacy',
       initialSectionVersions.privacy,
@@ -745,7 +733,7 @@ describe('authentication API', () => {
     )).status).toBe(409)
 
     const payload = {
-      commission: { ...commissionPayload, faqs: faqPayload.faqs },
+      commission: commissionPayload,
       about: {
         studioFacts: null,
         makingScope: null,

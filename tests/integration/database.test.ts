@@ -289,7 +289,7 @@ describe('SQLite foundation', () => {
       `).pluck().get()).toBe(currentMigrationCount())
       const siteContent = database.sqlite.prepare(`
         SELECT commission_intro AS commissionIntro,
-               commission_faq_json AS commissionFaqJson,
+               commission_email_action AS commissionEmailAction,
                about_studio_facts AS aboutStudioFacts,
                basic_terms AS basicTerms,
                privacy_policy AS privacyPolicy,
@@ -299,24 +299,21 @@ describe('SQLite foundation', () => {
       `).get() as {
         aboutStudioFacts: string
         basicTerms: string
-        commissionFaqJson: string
+        commissionEmailAction: string
         commissionIntro: string
         contactAntiScam: string
         officialChannelsJson: string
         privacyPolicy: string
       }
       expect(siteContent.commissionIntro).toContain('逐单估价')
-      const commissionFaqs = JSON.parse(siteContent.commissionFaqJson) as Array<{
-        answer: string
-        id: string
-        question: string
-      }>
-      expect(commissionFaqs).toHaveLength(6)
-      expect(commissionFaqs.at(-1)).toEqual({
-        id: '2f7c23c4-8e8a-4cc4-a8c5-3a8f3b8e9d61',
-        question: '邮件估价咨询可以按什么格式填写？',
-        answer: expect.stringContaining('角色名、委托装型、身高/体型、设定图、希望实现的细节、期望时间和其它说明'),
-      })
+      expect(siteContent.commissionEmailAction).toContain('邮箱')
+      const siteContentColumns = database.sqlite.pragma(
+        'table_info(site_content)',
+      ) as { name: string }[]
+      expect(siteContentColumns.map(column => column.name))
+        .not.toContain('commission_faq_json')
+      expect(siteContentColumns.map(column => column.name))
+        .not.toContain('commission_faq_version')
       expect(siteContent.aboutStudioFacts).toBe('有点小狗工作室制作全装和半装兽装，并在本站展示已完成的作品。')
       expect(siteContent.basicTerms).toContain('著作权归有点小狗工作室')
       expect(siteContent.basicTerms).toContain('签收之日起一年')
@@ -395,7 +392,7 @@ describe('SQLite foundation', () => {
     }
   })
 
-  it('appends the commission email FAQ without replacing eight existing items', async () => {
+  it('contracts historical commission FAQ without deleting the backup email action', async () => {
     const databaseFile = temporaryDatabase()
     await migrateDatabase(databaseFile, {
       migrationsFolder: migrationsBeforeCommissionEmailFaq(databaseFile),
@@ -406,14 +403,13 @@ describe('SQLite foundation', () => {
       question: `已有问题 ${index + 1}`,
       answer: `已有回答 ${index + 1}`,
     }))
-    let previousVersion: number
+    const expectedEmailAction = '保留的备用邮件说明。'
     try {
-      previousVersion = legacy.sqlite.prepare(`
-        SELECT commission_faq_version FROM site_content WHERE id = 'site'
-      `).pluck().get() as number
       legacy.sqlite.prepare(`
-        UPDATE site_content SET commission_faq_json = ? WHERE id = 'site'
-      `).run(JSON.stringify(existingFaqs))
+        UPDATE site_content
+        SET commission_faq_json = ?, commission_email_action = ?
+        WHERE id = 'site'
+      `).run(JSON.stringify(existingFaqs), expectedEmailAction)
     }
     finally {
       legacy.sqlite.close()
@@ -425,19 +421,15 @@ describe('SQLite foundation', () => {
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({ applied: 0 })
     const upgraded = openDatabase(databaseFile)
     try {
-      const row = upgraded.sqlite.prepare(`
-        SELECT commission_faq_json AS faqs,
-               commission_faq_version AS version
+      const columns = (upgraded.sqlite.pragma(
+        'table_info(site_content)',
+      ) as { name: string }[]).map(column => column.name)
+      expect(columns).not.toContain('commission_faq_json')
+      expect(columns).not.toContain('commission_faq_version')
+      expect(upgraded.sqlite.prepare(`
+        SELECT commission_email_action
         FROM site_content WHERE id = 'site'
-      `).get() as { faqs: string, version: number }
-      const faqs = JSON.parse(row.faqs) as typeof existingFaqs
-      expect(faqs.slice(0, 8)).toEqual(existingFaqs)
-      expect(faqs).toHaveLength(9)
-      expect(faqs[8]).toMatchObject({
-        id: '2f7c23c4-8e8a-4cc4-a8c5-3a8f3b8e9d61',
-        question: '邮件估价咨询可以按什么格式填写？',
-      })
-      expect(row.version).toBe(previousVersion + 1)
+      `).pluck().get()).toBe(expectedEmailAction)
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
     }
     finally {

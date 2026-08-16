@@ -1052,7 +1052,6 @@ export const siteContent = sqliteTable('site_content', {
   commissionIntro: text('commission_intro'),
   commissionEstimateNote: text('commission_estimate_note'),
   commissionEmailAction: text('commission_email_action'),
-  commissionFaqJson: text('commission_faq_json'),
   aboutStudioFacts: text('about_studio_facts'),
   aboutMakingScope: text('about_making_scope'),
   basicTerms: text('basic_terms'),
@@ -1063,10 +1062,8 @@ export const siteContent = sqliteTable('site_content', {
   heroAutoRotateIntervalMs: integer('hero_auto_rotate_interval_ms')
     .notNull().default(6_000),
   version: integer('version').notNull().default(1),
-  // T34-F3：每个文案分区独立并发域，首屏 Hero 的 version 不再承担全部文案。
+  // 每个现存文案分区独立并发域，首屏 Hero 的 version 不再承担全部文案。
   commissionContentVersion: integer('commission_content_version')
-    .notNull().default(1),
-  commissionFaqVersion: integer('commission_faq_version')
     .notNull().default(1),
   aboutContentVersion: integer('about_content_version')
     .notNull().default(1),
@@ -1081,7 +1078,7 @@ export const siteContent = sqliteTable('site_content', {
   check('site_content_singleton', sql`${table.id} = 'site'`),
   check(
     'site_content_section_versions_positive',
-    sql`${table.commissionContentVersion} > 0 AND ${table.commissionFaqVersion} > 0 AND ${table.aboutContentVersion} > 0 AND ${table.termsContentVersion} > 0 AND ${table.privacyContentVersion} > 0 AND ${table.contactContentVersion} > 0`,
+    sql`${table.commissionContentVersion} > 0 AND ${table.aboutContentVersion} > 0 AND ${table.termsContentVersion} > 0 AND ${table.privacyContentVersion} > 0 AND ${table.contactContentVersion} > 0`,
   ),
   check(
     'site_content_tagline',
@@ -1106,10 +1103,6 @@ export const siteContent = sqliteTable('site_content', {
   check(
     'site_content_commission_email_action',
     sql`${table.commissionEmailAction} IS NULL OR (length(trim(${table.commissionEmailAction})) BETWEEN 1 AND 240 AND ${table.commissionEmailAction} NOT GLOB '*[<>]*')`,
-  ),
-  check(
-    'site_content_commission_faq_json',
-    sql`${table.commissionFaqJson} IS NULL OR (json_valid(${table.commissionFaqJson}) AND json_type(${table.commissionFaqJson}) = 'array' AND length(${table.commissionFaqJson}) <= 12000)`,
   ),
   check(
     'site_content_about_studio_facts',
