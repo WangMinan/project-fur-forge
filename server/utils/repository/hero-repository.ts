@@ -167,7 +167,7 @@ export function findHeroAsset(
         SELECT 1 FROM upload_sessions AS upload
         WHERE upload.asset_id = asset.id
           AND upload.owner_type = 'site'
-          AND upload.owner_id = 'home'
+          AND upload.owner_id LIKE 'hero-%'
           AND upload.status = 'COMPLETED'
       ) AS uploadedForHome
     FROM assets AS asset WHERE asset.id = ?

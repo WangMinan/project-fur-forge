@@ -200,7 +200,7 @@ watch(() => route.fullPath, () => {
 .public-header__nav {
   display: none;
   align-items: center;
-  gap: var(--space-5);
+  gap: var(--space-2);
 }
 
 .public-header__nav-item {
@@ -211,12 +211,24 @@ watch(() => route.fullPath, () => {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
+  min-height: 2.5rem;
+  padding: 0 var(--space-4);
   color: inherit;
   font-size: var(--font-size-sm);
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
   opacity: 0.86;
+  transition:
+    color var(--duration-fast) var(--easing-standard),
+    opacity var(--duration-fast) var(--easing-standard),
+    background-color var(--duration-fast) var(--easing-standard),
+    border-color var(--duration-fast) var(--easing-standard),
+    box-shadow var(--duration-fast) var(--easing-standard),
+    transform var(--duration-fast) var(--easing-standard);
 }
 
-.public-header__link:hover {
+.public-header__link:hover,
+.public-header__link:focus-visible {
   color: inherit;
   opacity: 1;
 }
@@ -224,13 +236,30 @@ watch(() => route.fullPath, () => {
 .public-header__link[aria-current='page'],
 .public-header__nav-item--active > .public-header__link {
   opacity: 1;
-  text-decoration: underline;
-  text-underline-offset: 0.4em;
+  border-color: rgb(127 137 150 / 0.28);
+  background: rgb(127 137 150 / 0.14);
 }
 
 .public-header:not(.public-header--overlay) .public-header__link[aria-current='page'],
 .public-header:not(.public-header--overlay) .public-header__nav-item--active > .public-header__link {
   color: var(--public-accent-primary);
+}
+
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  .public-header__link:hover,
+  .public-header__link:focus-visible,
+  .public-header__nav-item:focus-within > .public-header__link {
+    background: rgb(127 137 150 / 0.14);
+    box-shadow: 0 0.45rem 1.25rem rgb(17 20 25 / 0.12);
+    transform: translateY(-2px);
+  }
+
+  .public-header--overlay .public-header__link:hover,
+  .public-header--overlay .public-header__link:focus-visible,
+  .public-header--overlay .public-header__nav-item:focus-within > .public-header__link {
+    background: rgb(255 255 255 / 0.16);
+    box-shadow: 0 0.45rem 1.25rem rgb(17 20 25 / 0.2);
+  }
 }
 
 .public-header__chevron {
@@ -320,8 +349,15 @@ watch(() => route.fullPath, () => {
 
 @media (prefers-reduced-motion: reduce) {
   .public-header__chevron,
-  .public-header__subnav {
+  .public-header__subnav,
+  .public-header__link {
     transition: none;
+  }
+
+  .public-header__link:hover,
+  .public-header__link:focus-visible,
+  .public-header__nav-item:focus-within > .public-header__link {
+    transform: none;
   }
 }
 </style>

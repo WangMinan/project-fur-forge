@@ -66,16 +66,9 @@ interface ControlBody {
       height?: number
     }>
   }>
-  slides?: Array<{
-    alt: string
-    sortOrder: number
-    enabled: boolean
-    linkedWorkSlug?: string | null
-    landscapeWidth?: number
-    landscapeHeight?: number
-    portraitWidth?: number
-    portraitHeight?: number
-  }>
+  slides?: HeroSeedItem[]
+  landscapeSlides?: HeroSeedItem[]
+  portraitSlides?: HeroSeedItem[]
   settings?: {
     tagline?: string
     autoRotate?: boolean
@@ -85,6 +78,17 @@ interface ControlBody {
   }
   active?: boolean
   slideAlt?: string
+}
+
+interface HeroSeedItem {
+    alt: string
+    sortOrder: number
+    enabled: boolean
+    linkedWorkSlug?: string | null
+    landscapeWidth?: number
+    landscapeHeight?: number
+    portraitWidth?: number
+    portraitHeight?: number
 }
 
 let suspendedProfileId: string | null = null
@@ -103,13 +107,44 @@ const FLAG_KEYS = [
 function restoreBundledWatermarkCandidate(
   fake: ReturnType<typeof getE2eFakeMediaStorage>,
 ) {
+  const sqlite = getDatabase().sqlite
   const content = readFileSync(resolve('public/brand/logo-full-light.png'))
   const sha256 = createHash('sha256').update(content).digest('hex')
-  const keys = getDatabase().sqlite.prepare(`
+  const keys = sqlite.prepare(`
     SELECT private_object_key FROM assets
     WHERE role = 'watermark_logo' AND status = 'READY' AND sha256 = ?
   `).pluck().all(sha256) as string[]
   keys.forEach(key => fake.seedPrivate(key, content, 'image/png', sha256))
+
+  // 品牌管理 E2E 会把活动 profile 切到上传候选；测试 fake reset 只清内存对象，
+  // 不回滚数据库。后续 Hero 预览仍应能消费当前活动 logo，因此按数据库身份
+  // 恢复其私有源对象。这里不进入生产构建，也不伪造 profile 状态。
+  const active = sqlite.prepare(`
+    SELECT asset.private_object_key AS objectKey,
+           asset.sha256, asset.mime_type AS mimeType,
+           asset.width, asset.height
+    FROM site_branding AS branding
+    JOIN watermark_profiles AS profile
+      ON profile.id = branding.active_watermark_profile_id
+    JOIN assets AS asset ON asset.id = profile.source_asset_id
+    WHERE branding.id = 'site' AND asset.status = 'READY'
+  `).get() as {
+    height: number
+    mimeType: string
+    objectKey: string
+    sha256: string
+    width: number
+  } | undefined
+  if (active && !fake.objects.has(active.objectKey)) {
+    const fallback = createSyntheticWatermarkPng() as Buffer
+    fake.seedPrivate(active.objectKey, fallback, active.mimeType, active.sha256, {
+      fileSize: fallback.length,
+      format: active.mimeType === 'image/png' ? 'png' : 'jpeg',
+      height: active.height,
+      orientation: 1,
+      width: active.width,
+    })
+  }
 }
 
 // E2E 控制面：查询内存 fake 状态、注入故障。只在 test 构建注册。
@@ -460,8 +495,7 @@ export default defineEventHandler(async (event) => {
     return { data: { ok: true, slugs: seeded } }
   }
 
-  // T20 首页轮播 E2E：种入横竖配对的首页图；启用项预生成公开 variant。
-  // 公开首页汇集全部启用项，因此清空 site_hero_slides 保证轮播确定。
+  // R3-C 四集合 E2E：横竖数量和顺序可不同，启用项预生成公开 variant。
   if (body?.action === 'seedHomeSlides') {
     const sqlite = getDatabase().sqlite
     const now = Date.now()
@@ -470,8 +504,9 @@ export default defineEventHandler(async (event) => {
     const staleAssetIds = sqlite.prepare(`
       SELECT id FROM assets WHERE private_object_key LIKE ?
     `).pluck().all(`test/e2e-${placement}/%`) as string[]
-    sqlite.prepare('DELETE FROM site_hero_slides WHERE placement = ?')
-      .run(placement)
+    sqlite.prepare('DELETE FROM site_hero_items WHERE placement = ?').run(placement)
+    // 同时清理旧 pair 夹具，避免其 FK 阻止种子资产回收。
+    sqlite.prepare('DELETE FROM site_hero_slides WHERE placement = ?').run(placement)
     if (staleAssetIds.length > 0) {
       const placeholders = staleAssetIds.map(() => '?').join(', ')
       sqlite.prepare(`
@@ -510,70 +545,66 @@ export default defineEventHandler(async (event) => {
       return assetId
     }
 
-    for (const slide of body.slides ?? []) {
-      const landscapeAssetId = insertHeroSource(
-        'home_hero_landscape',
-        slide.landscapeWidth ?? 4000,
-        slide.landscapeHeight ?? 2250,
-      )
-      const portraitAssetId = insertHeroSource(
-        'home_hero_portrait',
-        slide.portraitWidth ?? 1800,
-        slide.portraitHeight ?? 3200,
-      )
-      const linkedWorkId = slide.linkedWorkSlug
-        ? sqlite.prepare(`
-            SELECT id FROM works WHERE slug = ? AND publication_status = 'published'
-          `).pluck().get(slide.linkedWorkSlug) as string | undefined
-        : undefined
-      if (slide.linkedWorkSlug && !linkedWorkId) {
-        setResponseStatus(event, 400)
-        return { error: `linked work is not published: ${slide.linkedWorkSlug}` }
-      }
-      sqlite.prepare(`
-        INSERT INTO site_hero_slides (
-          id, placement, landscape_asset_id, portrait_asset_id, alt_text,
-          sort_order, enabled, linked_work_id, version, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-      `).run(
-        randomUUID(),
-        placement,
-        landscapeAssetId,
-        portraitAssetId,
-        slide.alt,
-        slide.sortOrder,
-        slide.enabled ? 1 : 0,
-        linkedWorkId ?? null,
-        now,
-        now,
-      )
-      if (slide.enabled) {
-        // T51-F7：站点展示位使用无水印 site-display-v2 变体。
-        const usages = SITE_HERO_USAGES[placement]
+    const orientationItems = {
+      landscape: body.landscapeSlides ?? body.slides ?? [],
+      portrait: body.portraitSlides ?? body.slides ?? [],
+    }
+    for (const orientation of ['landscape', 'portrait'] as const) {
+      for (const item of orientationItems[orientation]) {
+        const assetId = orientation === 'landscape'
+          ? insertHeroSource(
+              'home_hero_landscape',
+              item.landscapeWidth ?? 4000,
+              item.landscapeHeight ?? 2250,
+            )
+          : insertHeroSource(
+              'home_hero_portrait',
+              item.portraitWidth ?? 1800,
+              item.portraitHeight ?? 3200,
+            )
+        sqlite.prepare(`
+          INSERT INTO site_hero_items (
+            id, placement, orientation, asset_id, alt_text,
+            sort_order, enabled, version, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+        `).run(
+          randomUUID(),
+          placement,
+          orientation,
+          assetId,
+          item.alt,
+          item.sortOrder,
+          item.enabled ? 1 : 0,
+          now,
+          now,
+        )
+        if (!item.enabled) {
+          continue
+        }
+        // 站点展示位使用无水印 site-display-v2 变体。
+        const usage = SITE_HERO_USAGES[placement][orientation]
         await generateSiteDisplayVariants(
           sqlite,
           fake,
-          landscapeAssetId,
-          [usages.landscape],
+          assetId,
+          [usage],
           now,
         )
-        await generateSiteDisplayVariants(
-          sqlite,
-          fake,
-          portraitAssetId,
-          [usages.portrait],
-          now,
-        )
-        if (placement === 'commission') {
+        if (placement === 'commission' && orientation === 'landscape') {
           await generateSiteDisplayVariants(
             sqlite,
             fake,
-            landscapeAssetId,
+            assetId,
             [HOME_ENTRY_USAGES.commission],
             now,
           )
         }
       }
+      sqlite.prepare(`
+        UPDATE site_hero_collections
+        SET version = version + 1, updated_at = ?
+        WHERE placement = ? AND orientation = ?
+      `).run(now, placement, orientation)
     }
 
     if (body.settings) {

@@ -51,6 +51,13 @@ export const suitTypeSchema = z.enum(SUIT_TYPE_VALUES)
 export const publicationStatusSchema = z.enum(PUBLICATION_STATUS_VALUES)
 export const adoptionMethodSchema = z.enum(ADOPTION_METHOD_VALUES)
 export const businessStatusSchema = z.enum(BUSINESS_STATUS_VALUES)
+export const adoptionStatusSchema = z.enum(['available', 'adopted'])
+export const adoptionStatusReviewItemSchema = z.object({
+  id: resourceIdSchema,
+  characterName: z.string().min(1).max(120),
+  legacyBusinessStatus: businessStatusSchema.nullable(),
+  publicationStatus: publicationStatusSchema,
+}).strict()
 export const regularAdoptionBusinessStatusSchema = z.enum(
   REGULAR_ADOPTION_BUSINESS_STATUS_VALUES,
 )
@@ -329,6 +336,27 @@ export const managedDesignSheetDtoSchema = designSheetInputSchema.extend({
   publicVariantCount: z.number().int().nonnegative(),
 }).strict()
 
+export const adoptionCoverInputSchema = studioPhotoBaseSchema.omit({
+  primary: true,
+}).extend({
+  alt: z.string().trim().min(1).max(500),
+}).strict()
+
+export const replaceAdoptionCoverRequestSchema = versionedRequestSchema(
+  z.object({
+    adoptionCover: adoptionCoverInputSchema.nullable(),
+  }).strict(),
+)
+
+export const managedAdoptionCoverDtoSchema = adoptionCoverInputSchema.extend({
+  version: resourceVersionSchema,
+  status: z.enum(['PENDING', 'READY', 'FAILED']),
+  width: z.number().int().positive().max(12_000),
+  height: z.number().int().positive().max(12_000),
+  position: z.literal(0),
+  publicVariantCount: z.number().int().nonnegative(),
+}).strict()
+
 export const managedStudioPhotoDtoSchema = studioPhotoBaseSchema.extend({
   /** Historical v1 identity only; brand-centered-v2 always uses center. */
   watermarkAnchor: watermarkAnchorSchema,
@@ -353,6 +381,8 @@ const managedWorkBaseSchema = mutableWorkBaseSchema.omit({
 export const managedWorkDtoSchema = z.discriminatedUnion('purpose', [
   managedWorkBaseSchema.extend({
     purpose: z.literal('adoption'),
+    adoptionStatus: adoptionStatusSchema.nullable(),
+    adoptionCover: managedAdoptionCoverDtoSchema.nullable(),
     designSheet: managedDesignSheetDtoSchema.nullable(),
     adoptionMethod: adoptionMethodSchema.nullable(),
     businessStatus: businessStatusSchema.nullable(),
@@ -422,6 +452,8 @@ const publicSafeWorkPreviewBaseSchema = managedWorkBaseSchema.omit({
 export const publicSafeWorkPreviewDtoSchema = z.discriminatedUnion('purpose', [
   publicSafeWorkPreviewBaseSchema.extend({
     purpose: z.literal('adoption'),
+    adoptionStatus: adoptionStatusSchema.nullable(),
+    adoptionCover: managedAdoptionCoverDtoSchema.nullable(),
     designSheet: managedDesignSheetDtoSchema.nullable(),
     adoptionMethod: adoptionMethodSchema.nullable(),
     businessStatus: businessStatusSchema.nullable(),
@@ -450,6 +482,9 @@ export const publicSafeWorkPreviewDtoSchema = z.discriminatedUnion('purpose', [
 export const managedWorkResponseSchema = apiSuccessSchema(managedWorkDtoSchema)
 export const workListResponseSchema = apiSuccessSchema(
   z.array(workListItemDtoSchema),
+)
+export const adoptionStatusReviewResponseSchema = apiSuccessSchema(
+  z.array(adoptionStatusReviewItemSchema),
 )
 
 export const featuredWorkOrderRequestSchema = z.object({

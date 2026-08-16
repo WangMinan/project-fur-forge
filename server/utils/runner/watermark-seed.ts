@@ -9,7 +9,7 @@ import { resolve } from 'node:path'
 import type Database from 'better-sqlite3'
 import { WATERMARK_PROFILE_NAME } from '../../../shared/schemas/watermark'
 import type { MediaStorage } from '../media-storage'
-import { pngHasTransparency } from '../service/media-completion'
+import { pngHasTransparency } from '../service/private-image-validation'
 import type { RuntimeConfig } from '../runtime-config'
 import {
   createWatermarkProfile,

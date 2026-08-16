@@ -158,21 +158,27 @@ export function assertUploadOwner(
   mediaRole: MediaRole,
 ) {
   if (owner.type === 'site') {
-    const validRole = owner.id === 'home'
-      ? mediaRole.startsWith('home_hero_')
-      : owner.id === 'branding'
+    const validRole = owner.id.endsWith('-landscape')
+      ? mediaRole === 'home_hero_landscape'
+      : owner.id.endsWith('-portrait')
+        ? mediaRole === 'home_hero_portrait'
+        : owner.id === 'branding'
         ? mediaRole === 'watermark_logo'
         : owner.id === 'contact' && mediaRole === 'contact_qr'
     if (!validRole) {
       throw new ServiceError(400, 'VALIDATION_ERROR', 'Media role does not match owner.')
     }
-    const current = sqlite.prepare(owner.id === 'branding' ? `
+    const heroContext = /^hero-(home|commission)-(landscape|portrait)$/u.exec(owner.id)
+    const current = sqlite.prepare(heroContext ? `
+      SELECT version FROM site_hero_collections
+      WHERE placement = ? AND orientation = ?
+    ` : owner.id === 'branding' ? `
       SELECT version FROM site_branding WHERE id = 'site'
     ` : owner.id === 'contact' ? `
       SELECT contact_content_version FROM site_content WHERE id = 'site'
-    ` : `
-      SELECT version FROM site_content WHERE id = 'site'
-    `).pluck().get()
+    ` : `SELECT NULL`).pluck().get(...(heroContext
+      ? [heroContext[1], heroContext[2]]
+      : []))
     const version = current === undefined ? 0 : Number(current)
     if (version !== owner.expectedVersion) {
       throw new ServiceError(409, 'CONFLICT', 'Owner version is stale.')
@@ -180,7 +186,7 @@ export function assertUploadOwner(
     return
   }
 
-  if (!['design_sheet', 'studio_photo'].includes(mediaRole)) {
+  if (!['design_sheet', 'studio_photo', 'adoption_cover'].includes(mediaRole)) {
     throw new ServiceError(400, 'VALIDATION_ERROR', 'Media role does not match owner.')
   }
   const work = sqlite.prepare(`
@@ -192,8 +198,11 @@ export function assertUploadOwner(
   if (work.version !== owner.expectedVersion) {
     throw new ServiceError(409, 'CONFLICT', 'Owner version is stale.')
   }
-  if (mediaRole === 'design_sheet' && work.purpose !== 'adoption') {
-    throw new ServiceError(400, 'VALIDATION_ERROR', 'Design sheets require an adoption work.')
+  if (
+    ['design_sheet', 'adoption_cover'].includes(mediaRole)
+    && work.purpose !== 'adoption'
+  ) {
+    throw new ServiceError(400, 'VALIDATION_ERROR', 'Adoption media requires an adoption work.')
   }
 }
 
