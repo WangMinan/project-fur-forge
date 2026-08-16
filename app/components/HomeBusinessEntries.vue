@@ -1,11 +1,6 @@
 <script setup lang="ts">
 import type { PublicHomeEntryCardDto } from '~~/shared/types/contracts'
 
-/**
- * T34-F2 / R3-C T21 统一业务入口：委托与领养共用一张卡的比例、间距、文字层级和交互。
- * 每张卡内部同时给出图片、标题、当前状态、一行短说明和单一行动入口；
- * 整张卡是唯一可访问链接，不出现嵌套链接。
- */
 const props = defineProps<{
   entries: {
     adoption: PublicHomeEntryCardDto | null
@@ -13,10 +8,7 @@ const props = defineProps<{
   }
 }>()
 
-const cards = computed(() => [
-  props.entries.commission,
-  props.entries.adoption,
-].filter((card): card is PublicHomeEntryCardDto => card !== null))
+const commission = computed(() => props.entries.commission)
 
 const TONE_LABELS = {
   open: '开放中',
@@ -27,56 +19,62 @@ const TONE_LABELS = {
 
 <template>
   <section
-    v-if="cards.length > 0"
+    v-if="commission"
     class="home-entries"
     aria-labelledby="home-entries-title"
     data-testid="home-business-entries"
   >
     <h2 id="home-entries-title" class="home-entries__title">
-      委托与领养
+      自设委托
     </h2>
 
     <ul class="home-entries__grid" role="list">
-      <li v-for="card in cards" :key="card.kind" class="home-entries__item">
-        <NuxtLink
-          :to="card.href"
+      <li class="home-entries__item">
+        <article
           class="home-entry"
-          :data-entry-kind="card.kind"
+          :data-entry-kind="commission.kind"
           data-testid="home-business-entry"
         >
-          <span class="home-entry__media">
-            <ResponsivePicture
-              :sources="card.sources"
-              :alt="card.alt"
-              sizes="(min-width: 768px) 50vw, 100vw"
-            />
-          </span>
+          <NuxtLink :to="commission.href" class="home-entry__detail">
+            <span class="home-entry__media">
+              <ResponsivePicture
+                :sources="commission.sources"
+                :alt="commission.alt"
+                sizes="100vw"
+              />
+            </span>
+          </NuxtLink>
 
           <span class="home-entry__body">
             <span class="home-entry__heading">
-              <span class="home-entry__name">{{ card.title }}</span>
+              <span class="home-entry__name">{{ commission.title }}</span>
               <span
-                v-if="card.status"
+                v-if="commission.status"
                 class="home-entry__status"
-                :data-tone="card.status.tone"
+                :data-tone="commission.status.tone"
               >
                 <span class="home-entry__status-dot" aria-hidden="true" />
-                {{ card.status.label }}
+                {{ commission.status.label }}
                 <span class="home-entry__status-tone">
-                  （{{ TONE_LABELS[card.status.tone] }}）
+                  （{{ TONE_LABELS[commission.status.tone] }}）
                 </span>
               </span>
             </span>
 
-            <span v-if="card.summary" class="home-entry__summary">
-              {{ card.summary }}
+            <span v-if="commission.summary" class="home-entry__summary">
+              {{ commission.summary }}
             </span>
 
-            <span class="home-entry__action">
-              查看详情 <span aria-hidden="true">→</span>
+            <span class="home-entry__actions">
+              <NuxtLink :to="commission.href" class="home-entry__action">
+                查看详情 <span aria-hidden="true">→</span>
+              </NuxtLink>
+              <NuxtLink to="/commission/apply" class="home-entry__apply">
+                提交委托申请
+              </NuxtLink>
             </span>
           </span>
-        </NuxtLink>
+        </article>
       </li>
     </ul>
   </section>
@@ -127,7 +125,7 @@ const TONE_LABELS = {
   border-color: var(--public-accent-decorative);
 }
 
-.home-entry:focus-visible {
+.home-entry:focus-within {
   outline: 2px solid var(--public-accent-primary);
   outline-offset: 2px;
 }
@@ -143,6 +141,11 @@ const TONE_LABELS = {
   aspect-ratio: 21 / 9;
   overflow: hidden;
   background: var(--image-placeholder);
+}
+
+.home-entry__detail {
+  display: block;
+  color: inherit;
 }
 
 .home-entry__media :deep(.responsive-picture),
@@ -227,7 +230,17 @@ const TONE_LABELS = {
   line-height: var(--line-height-relaxed);
 }
 
-.home-entry__action {
+.home-entry__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.home-entry__action,
+.home-entry__apply {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
@@ -237,13 +250,25 @@ const TONE_LABELS = {
   font-size: var(--font-size-sm);
 }
 
+.home-entry__apply {
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0 var(--space-5);
+  color: var(--public-text-inverse);
+  background: var(--public-accent-primary);
+  border-radius: var(--radius-full);
+  font-weight: 600;
+}
+
+.home-entry__apply:hover,
+.home-entry__apply:focus-visible {
+  color: var(--public-text-inverse);
+  background: var(--public-accent-hover);
+}
+
 @media (min-width: 768px) {
   .home-entries__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .home-entries__grid > :only-child {
-    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

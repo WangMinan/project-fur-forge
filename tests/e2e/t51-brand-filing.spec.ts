@@ -17,7 +17,18 @@ test('short navigation brand and filed ICP/police links stay truthful at three v
     await page.setViewportSize(viewport)
     await page.goto('/privacy')
     await expect(page.locator('.public-header__brand-name')).toHaveText('有点小狗')
+    await expect(page.locator('.public-header__logo'))
+      .toHaveAttribute('src', '/brand/logo-mark.png')
+    await page.evaluate(() => document.fonts.ready)
+    expect(await page.locator('.public-header__brand-name').evaluate(element => (
+      getComputedStyle(element).fontFamily
+    ))).toContain('Zhuohei Collage')
     const footer = page.getByTestId('public-footer')
+    await expect(footer.locator('.public-footer__logo'))
+      .toHaveAttribute('src', '/brand/logo-mark.png')
+    expect(await footer.locator('.public-footer__name').evaluate(element => (
+      getComputedStyle(element).fontFamily
+    ))).toContain('Zhuohei Collage')
     const icp = footer.getByRole('link', { name: '浙ICP备2026062899号' })
     const police = footer.getByRole('link', { name: '浙公网安备33010202006082号' })
     await expect(icp).toHaveAttribute(
@@ -54,11 +65,31 @@ test('short navigation brand and filed ICP/police links stay truthful at three v
     if (viewport.width === 390) {
       await page.getByRole('button', { name: '打开导航' }).click()
       await expect(page.locator('.mobile-nav__brand')).toHaveText('有点小狗')
+      await expect(page.locator('.mobile-nav__brand img'))
+        .toHaveAttribute('src', '/brand/logo-mark.png')
+      expect(await page.locator('.mobile-nav__brand').evaluate(element => (
+        getComputedStyle(element).fontFamily
+      ))).toContain('Zhuohei Collage')
       await page.getByRole('button', { name: '关闭导航' }).click()
     }
   }
 
   expect(consoleErrors).toEqual([])
+})
+
+test('homepage Chinese brand, English brand and slogan use the supplied brand font', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => document.fonts.ready)
+
+  for (const selector of [
+    '.home-hero__eyebrow',
+    '.home-hero__title',
+    '.home-hero__tagline',
+  ]) {
+    expect(await page.locator(selector).evaluate(element => (
+      getComputedStyle(element).fontFamily
+    ))).toContain('Zhuohei Collage')
+  }
 })
 
 test('configured long filing information renders in the shared login shell', async ({ page }) => {

@@ -45,10 +45,10 @@ watch(() => route.fullPath, () => {
     >
       <img
         class="public-header__logo"
-        :src="overlay ? '/brand/logo-full-light.png' : '/brand/logo-full-dark.png'"
+        src="/brand/logo-mark.png"
         alt=""
-        width="473"
-        height="512"
+        width="1600"
+        height="1600"
       >
       <span class="public-header__brand-name">{{ PUBLIC_NAV_BRAND }}</span>
       <span class="public-header__brand-sub">{{ PROJECT_ENGLISH_NAME }}</span>
@@ -169,10 +169,14 @@ watch(() => route.fullPath, () => {
 }
 
 .public-header__logo {
-  /* 完整堆叠 Logo 与品牌文字行高等高（18px 字号 × 1.55 行高 ≈ 28px）。 */
-  width: auto;
+  width: 1.75rem;
   height: 1.75rem;
   align-self: center;
+  object-fit: contain;
+}
+
+.public-header--overlay .public-header__logo {
+  filter: brightness(0) invert(1);
 }
 
 /* 覆盖态（首页图片大底）文字必须满透明度：半透明反白在图片上无法保证对比度。 */
@@ -185,12 +189,13 @@ watch(() => route.fullPath, () => {
 }
 
 .public-header__brand-name {
-  font-family: var(--font-public-display);
+  font-family: var(--font-brand-display);
   font-size: var(--font-size-md);
   letter-spacing: var(--letter-spacing-normal);
 }
 
 .public-header__brand-sub {
+  font-family: var(--font-brand-display);
   font-size: var(--font-size-xs);
   letter-spacing: var(--letter-spacing-label);
   opacity: 0.72;
