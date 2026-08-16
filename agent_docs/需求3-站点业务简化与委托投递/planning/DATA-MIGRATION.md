@@ -304,6 +304,18 @@ work_feature_tags
 
 `commission_email_action` 和 `contact_qq` 兼容列不在该 contract 中删除；`contact_douyin` 已在 R3-A 删除。
 
+### 7.1 2026-08-16 实现落点与执行边界
+
+阶段 D/E 新增迁移必须保持 journal 顺序串行执行，不允许改写历史迁移：
+
+1. `0039_r3_d_works_contract.sql`：先用临时 gate/trigger 检查 adoption status、published adoption cover、published primary studio photo；任一非零即以稳定错误停止，随后才重建 `works`/`work_assets` 并删除旧字段和 `work_feature_tags`；
+2. `0040_r3_e_commission_contract.sql`：重建 `site_content`，物理删除 FAQ JSON/version，同时明确复制并保留 `commission_email_action`、`contact_qq` 与目标联系渠道；
+3. `0041_r3_d_hero_work_fk.sql`：前向重建 Hero 兼容表，把 `linked_work_id` 外键恢复为目标 `works(id) ON DELETE SET NULL`，并恢复 READY/保护 trigger 与索引。
+
+临时 fresh DB、带合成既有数据的 DB、前置失败停止、成功、重入、foreign key 和 `PRAGMA integrity_check` 已通过。这里的证据不等于生产数据已确认或生产迁移已执行：景宸必须先逐条判断真实歧义领养记录，补 cover/主出厂照或下架，使三项计数归零；任何门禁、外键、integrity 或 readiness 失败均保持停止，只能以前向修复处理。
+
+`0040` 只收缩 FAQ contract，不改变匿名委托私有媒体的保留周期。委托过期/失败/取消/未消费对象继续走匿名 cleanup；不得生成 PUBLIC variant、ESA URL 或把完整 Object Key 写入执行记录。
+
 ## 8. 备份与快照
 
 ### 8.1 应用管理备份
