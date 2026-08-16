@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { adminBaseURL } from './helpers/auth'
 
-test('short navigation brand and empty filing state stay truthful at three viewports', async ({ page }) => {
+test('short navigation brand and filed ICP/police links stay truthful at three viewports', async ({ page }) => {
   const consoleErrors: string[] = []
   page.on('console', (message) => {
     if (message.type() === 'error') {
@@ -18,8 +18,30 @@ test('short navigation brand and empty filing state stay truthful at three viewp
     await page.goto('/privacy')
     await expect(page.locator('.public-header__brand-name')).toHaveText('有点小狗')
     const footer = page.getByTestId('public-footer')
-    await expect(footer).not.toContainText('ICP备案')
-    await expect(footer).not.toContainText('公网安备')
+    const icp = footer.getByRole('link', { name: '浙ICP备2026062899号' })
+    const police = footer.getByRole('link', { name: '浙公网安备33010202006082号' })
+    await expect(icp).toHaveAttribute(
+      'href',
+      'https://beian.miit.gov.cn/#/Integrated/index',
+    )
+    await expect(police).toHaveAttribute(
+      'href',
+      'https://beian.mps.gov.cn/#/query/webSearch?code=33010202006082',
+    )
+    const policeIcon = police.locator('img')
+    await expect(policeIcon).toHaveAttribute('src', '/filings/police-filing.png')
+    await expect(policeIcon).toBeVisible()
+    expect(await police.evaluate((link) => {
+      const icon = link.querySelector('img')
+      const label = link.querySelector('span')
+      return Boolean(icon && label && (
+        icon.compareDocumentPosition(label) & Node.DOCUMENT_POSITION_FOLLOWING
+      ))
+    })).toBe(true)
+    expect(await icp.evaluate((element, policeElement) => (
+      element.compareDocumentPosition(policeElement as Node)
+      & Node.DOCUMENT_POSITION_FOLLOWING
+    ) !== 0, await police.elementHandle())).toBe(true)
     await expect(footer).not.toContainText('待备案')
     await expect(footer.getByRole('link', { name: '开源软件声明' })).toBeVisible()
     expect(await page.evaluate(() =>
