@@ -38,7 +38,8 @@
 
 - 英文名：`DITE DOG`。
 - slogan：`不只做小狗毛 | 只做海绵头`。
-- 首页业务标题：`委托与领养`。
+- 首页业务标题：`自设委托`；领养区标题：`设定领养`。
+- 页头、首页与页脚使用已入库的透明品牌图标；中文/英文品牌名与 slogan 使用已入库的拼贴字体。
 - Hero 删除 action/linked work。
 - 桌面：中文居中，英文/slogan 同行左右。
 - 移动：整组左对齐下移，至少覆盖 100svh/100dvh。
@@ -72,12 +73,13 @@
 - adoption status 仅 `available | adopted`。
 - 旧 `available`/`delivered` 可自动映射；其它旧状态必须人工确认，禁止默认 available。
 - published adoption 必须有独立横版 `adoption_cover` 和 primary `studio_photo`。
+- adopted 作品不得进入首页精选或首页领养区；没有 available 作品时隐藏首页领养区。
 - `design_sheet` 0..1、可选，不作卡片或发布门禁。
 - 媒体详情 usage 沿用现有 `detail`，不要新建平行 `work-detail`。
 
 ### 2.4 Commission
 
-- `/commission/apply`：一张设定图、称呼、+86 手机、QQ、身高、体重。
+- `/commission/apply`：一张设定图、称呼、物种、+86 手机、QQ、身高、体重；同一手机号已有 pending 申请时拒绝重复提交。
 - `/admin/commissions`：pending/accepted/rejected。
 - 不接 SMTP、短信、公开查询、自动建作品。
 - FAQ JSON/version/UI/API/test 全部删除。

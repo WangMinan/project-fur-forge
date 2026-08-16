@@ -217,6 +217,7 @@ commission_submissions
   id                  text PK
   receipt_code        text unique
   nickname            text
+  species             text | null (仅旧申请可为 null)
   phone_country_code  +86
   phone_number        text
   qq                  text
@@ -235,6 +236,7 @@ commission_submissions
 约束：
 
 - nickname 1–50 字；
+- 新申请 species 1–50 字；迁移前旧申请保持 NULL 等待人工补录，不猜测；
 - phone 为 11 位大陆手机号；
 - QQ 5–12 位非零开头数字；
 - height 80–250；
@@ -244,6 +246,7 @@ commission_submissions
 - pending 时 handled 字段为空；
 - accepted/rejected 时写管理员和处理时间；
 - receipt collision 必须重试生成，不能返回数据库错误。
+- `status='pending'` 时 `(phone_country_code, phone_number)` 唯一；accepted/rejected 不占用该唯一域。
 
 ### 5.2 管理 DTO
 
@@ -253,6 +256,7 @@ commission_submissions
 id
 receiptCode
 nickname
+species
 status
 createdAt
 version
@@ -264,6 +268,7 @@ version
 id
 receiptCode
 nickname
+species
 phone { countryCode, number }
 qq
 heightCm
@@ -277,7 +282,7 @@ version
 designReferencePreviewHref
 ```
 
-列表不返回手机号、QQ、体型、备注或图片。
+列表不返回手机号、QQ、体型、备注或图片；species 可为 NULL 仅用于迁移前旧记录的管理端待补录标记。
 
 ## 6. 匿名上传会话
 

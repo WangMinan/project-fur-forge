@@ -92,7 +92,7 @@
 ## E. 委托投递
 
 - [x] **T30 · 公开上传 API**：create、conditional PUT、complete、cancel/expire/retry/cleanup 已完成；一张 20MB 内图片，token/TTL/摘要/MIME/尺寸/API Origin 完整保留，OSS CORS 继续 `AllowedOrigin=*`。
-- [x] **T31 · Submission API**：五项字段与 COMPLETED upload 校验、单事务消费/创建 pending、receipt collision 重试、重复/蜜罐/限流已完成。
+- [x] **T31 · Submission API**：六项字段与 COMPLETED upload 校验、单事务消费/创建 pending、receipt collision 重试、重复/蜜罐/限流已完成。
 - [x] **T32 · `/commission/apply`**：单图预览上传、可见 label、邻近错误、内存草稿、过期重选、提交态和成功回执已完成；浏览器断言 URL/localStorage/analytics/console 无 PII。
 - [x] **T33 · `/admin/commissions`**：三状态列表、认证私有详情、`no-store` 图片、状态/备注、version/409/audit 已完成。
 - [x] **T34 · `/commission` 与联系入口**：站内提交为主 CTA，QQ/QQ群与 about 入口已同步；邮箱为备用；当前委托页/关于页不再包含抖音、小红书、Bilibili。
@@ -108,6 +108,16 @@
 - [x] 公开与管理联系面只包含邮箱、QQ、QQ群；
 - [x] 管理与公开流程在本地真实 Chrome 通过，包括真实 409 对话框停止点；
 - [ ] 真实手机动态地址栏、输入法、图片方向、单图提交和用户验收待用户执行；生产 OSS/ESA/数据库未连接。
+
+## E.1 2026-08-16 用户复核修正（同一任务分支）
+
+- [x] **FU-01 · 委托申请输入与单图交互**：新增必填物种和大陆手机号校验；单图改为可点击/拖拽的卡片预览，409 重复 pending 申请保留当前表单与私有预览。
+- [x] **FU-02 · 委托队列与处理反馈**：旧库列表读取兼容、白底行、“昵称 · 物种”、详情物种和保存成功反馈均已实现；真实 409 仍停止并要求重新载入。
+- [x] **FU-03 · 首页大图管理复核**：沿用作品管理的“选择 → 上传 → 预览”流程；上传完成及既有 enabled/disabled 项默认显示认证 `w=640` 缩略图，不显示原图或 blob；发布显示进度与终态。
+- [x] **FU-04 · 首页入口与领养过滤**：标题切为“自设委托”/“设定领养”，委托卡新增直达申请按钮；adopted 从首页精选和领养区排除，无 available 时隐藏领养区。
+- [x] **FU-05 · 品牌与备案展示**：指定透明 Logo 与拼贴字体已入库并用于页头、首页、移动导航和页脚；公安备案图标保持在编号前并位于 ICP 右侧。
+- [x] **FU-06 · 委托迁移与官方默认联系**：`0042_r3_e_commission_follow_up.sql` 增加 legacy-nullable species、pending 手机号部分唯一索引和受控默认联系方式更新；重复 pending 真实记录保持生产 handoff，不自动处理。
+- [x] **GATE-E-FU · 用户复核修正门禁**：全量 lint/typecheck、unit 186/186、integration 199/199、production build、verify、content guard 与相关 Chromium 38/38 均通过；只使用临时库、合成图和测试对象存储。真实手机、真实数据、独立 Review、用户验收与生产执行未代签。
 
 ## F. 最终评审与发布
 
