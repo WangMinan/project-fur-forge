@@ -43,6 +43,7 @@
   "dependencies": {
     "@alicloud/esa20240910": "3.13.0",
     "@alicloud/openapi-core": "1.0.8",
+    "@pdf-lib/fontkit": "^1.1.1",
     "ali-oss": "6.23.0",
     "better-sqlite3": "13.0.2",
     "drizzle-orm": "^0.45.2",
@@ -50,6 +51,7 @@
     "h3": "1.15.11",
     "nuxt": "4.5.1",
     "nuxt-auth-utils": "0.5.29",
+    "pdf-lib": "^1.17.1",
     "vue": "3.5.40",
     "vue-router": "5.2.0",
     "zod": "4.4.3"

@@ -27,8 +27,11 @@ withDefaults(defineProps<{
         :loading="loading"
       />
     </span>
-    <span class="work-card__name">{{ work.work.characterName }}</span>
-    <span class="work-card__meta">{{ work.work.species }}</span>
+    <span class="work-card__caption">
+      <span class="work-card__name">{{ work.work.characterName }}</span>
+      <span class="work-card__separator" aria-hidden="true">·</span>
+      <span class="work-card__meta">{{ work.work.species }}</span>
+    </span>
   </NuxtLink>
 </template>
 
@@ -92,17 +95,23 @@ withDefaults(defineProps<{
   }
 }
 
-.work-card__name {
-  display: block;
+/* 名称与物种同一行，用「·」分隔；窄屏放不下时整组换行而不是拆散分隔符。 */
+.work-card__caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-2);
   margin-top: var(--space-3);
+}
+
+.work-card__name {
   font-family: var(--font-public-display);
   font-size: var(--font-size-md);
   line-height: var(--line-height-heading);
 }
 
+.work-card__separator,
 .work-card__meta {
-  display: block;
-  margin-top: var(--space-1);
   color: var(--public-text-secondary);
   font-size: var(--font-size-sm);
 }

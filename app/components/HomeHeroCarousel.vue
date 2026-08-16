@@ -412,7 +412,7 @@ onBeforeUnmount(() => {
 
 .home-hero__eyebrow {
   font-family: var(--font-brand-display);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
   letter-spacing: 0.22em;
   text-transform: uppercase;
 }
@@ -423,14 +423,15 @@ onBeforeUnmount(() => {
   font-size: var(--font-size-hero);
   font-weight: 600;
   line-height: var(--line-height-tight);
-  letter-spacing: var(--letter-spacing-tight);
+  /* 拼贴字体的字面已经填满字身框，不再叠 -0.025em 负字距收紧。 */
+  letter-spacing: var(--letter-spacing-normal);
 }
 
 .home-hero__tagline {
   max-width: 32rem;
   margin-top: var(--space-4);
   font-family: var(--font-brand-display);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-lg);
   line-height: var(--line-height-normal);
 }
 

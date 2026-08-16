@@ -1,9 +1,13 @@
+/* 拼贴字体只有一个字重。若只声明 font-weight: 400，Hero 标题等处的
+   font-weight: 600 会让浏览器合成加粗——笔画被整体加厚后，「有」这类
+   笔画密集的字自己的横竖会糊成一块。声明整个字重区间由这一个字面承担，
+   任何 font-weight 都直接命中它，不再合成。 */
 @font-face {
   font-family: "Zhuohei Collage";
   src: url("/fonts/zhuohei-collage.ttf") format("truetype");
   font-display: swap;
   font-style: normal;
-  font-weight: 400;
+  font-weight: 100 900;
 }
 
 /* 公开站生产设计 Token 与基础样式。

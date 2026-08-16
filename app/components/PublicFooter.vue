@@ -50,23 +50,22 @@ const { data: filings } = await useFetch("/api/site-meta", {
         </div>
       </div>
 
-      <div class="public-footer__center">
-        <nav v-if="!brandOnly" class="public-footer__nav" aria-label="页脚导航">
-          <NuxtLink
-            v-for="item in PUBLIC_NAV_ITEMS"
-            :key="item.href"
-            :to="item.href"
-            class="public-footer__link"
-          >
-            {{ item.label }}
-          </NuxtLink>
-        </nav>
-
-        <p
-          v-if="filings.icp || filings.police"
-          class="public-footer__filings"
-          aria-label="网站备案信息"
+      <nav v-if="!brandOnly" class="public-footer__nav" aria-label="页脚导航">
+        <NuxtLink
+          v-for="item in PUBLIC_NAV_ITEMS"
+          :key="item.href"
+          :to="item.href"
+          class="public-footer__link"
         >
+          {{ item.label }}
+        </NuxtLink>
+      </nav>
+
+      <p
+        v-if="filings.icp || filings.police"
+        class="public-footer__filings"
+        aria-label="网站备案信息"
+      >
           <template v-if="filings.icp">
             <a
               :href="filings.icp.url"
@@ -76,7 +75,7 @@ const { data: filings } = await useFetch("/api/site-meta", {
             >
           </template>
           <template v-if="filings.police">
-            <span v-if="filings.icp" aria-hidden="true">|</span>
+            <span v-if="filings.icp" aria-hidden="true">｜</span>
             <a
               :href="filings.police.url"
               class="public-footer__police-filing"
@@ -90,41 +89,39 @@ const { data: filings } = await useFetch("/api/site-meta", {
                 aria-hidden="true"
               ><span>{{ filings.police.number }}</span></a
             >
-          </template>
-        </p>
-      </div>
+        </template>
+      </p>
 
-      <div class="public-footer__legal">
-        <p class="public-footer__copyright">
-          © 2026-{{ shanghaiYear }}
-          <span class="public-footer__brand-copy">{{ PROJECT_NAME }}. {{ PROJECT_ENGLISH_NAME }}.</span>
-          All Rights Reserved.
-        </p>
-        <p class="public-footer__legal-links">
-          <NuxtLink to="/service">服务条款</NuxtLink>
-          <span aria-hidden="true">|</span>
-          <NuxtLink to="/privacy">隐私政策</NuxtLink>
-          <span aria-hidden="true">｜</span>
-          <NuxtLink to="/licenses">开源软件声明</NuxtLink>
-          <span aria-hidden="true">|</span>
-          <span>
-            Design by
-            <a
-              href="https://github.com/wangminan"
-              target="_blank"
-              rel="noopener noreferrer"
-              >Arktouros</a
-            >
-            &amp;
-            <a
-              href="https://github.com/lingxunfurry"
-              target="_blank"
-              rel="noopener noreferrer"
-              >LingXun</a
-            >
-          </span>
-        </p>
-      </div>
+      <p class="public-footer__copyright">
+        © 2026-{{ shanghaiYear }}
+        <span>{{ PROJECT_NAME }}. {{ PROJECT_ENGLISH_NAME }}.</span>
+        All Rights Reserved.
+      </p>
+
+      <p class="public-footer__legal-links">
+        <NuxtLink to="/service">服务条款</NuxtLink>
+        <span aria-hidden="true">｜</span>
+        <NuxtLink to="/privacy">隐私政策</NuxtLink>
+        <span aria-hidden="true">｜</span>
+        <NuxtLink to="/licenses">开源软件声明</NuxtLink>
+        <span aria-hidden="true">｜</span>
+        <span>
+          Design by
+          <a
+            href="https://github.com/wangminan"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Arktouros</a
+          >
+          &amp;
+          <a
+            href="https://github.com/lingxunfurry"
+            target="_blank"
+            rel="noopener noreferrer"
+            >LingXun</a
+          >
+        </span>
+      </p>
     </div>
   </footer>
 </template>
@@ -137,29 +134,52 @@ const { data: filings } = await useFetch("/api/site-meta", {
   border-top: 1px solid var(--public-border-secondary);
 }
 
+/* 五个块在同一个网格里，导航/© 与备案/法务链接各自共享一条行轨，
+   两侧才真的落在同一水平线上；分列嵌套时两列各自排版，行高不同就会错开。 */
 .public-footer__inner {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-2) var(--space-4);
   max-width: var(--public-content-wide);
   margin: 0 auto;
-}
-
-.public-footer__center {
-  display: grid;
-  gap: var(--space-2);
+  grid-template-areas:
+    'brand'
+    'nav'
+    'filings'
+    'copyright'
+    'legal';
 }
 
 .public-footer__brand {
+  grid-area: brand;
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  margin-bottom: var(--space-2);
 }
 
+/* 高度写死成两行文字的高度。不能用 align-self: stretch：图片本身
+   1600×1600，容器高度又由最高的子项决定，会循环回落到内在尺寸而撑爆页脚。 */
 .public-footer__logo {
   flex: none;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: auto;
+  height: 3.5rem;
   object-fit: contain;
+}
+
+.public-footer__nav {
+  grid-area: nav;
+}
+
+.public-footer__filings {
+  grid-area: filings;
+}
+
+.public-footer__copyright {
+  grid-area: copyright;
+}
+
+.public-footer__legal-links {
+  grid-area: legal;
 }
 
 .public-footer__name {
@@ -220,15 +240,11 @@ const { data: filings } = await useFetch("/api/site-meta", {
   color: var(--public-accent-primary);
 }
 
-.public-footer__legal {
-  display: grid;
-  gap: var(--space-2);
+/* © 行保持正文字体：只有左侧品牌名与英文名换拼贴字体。 */
+.public-footer__copyright,
+.public-footer__legal-links {
   color: var(--public-text-secondary);
   font-size: var(--font-size-xs);
-}
-
-.public-footer__brand-copy {
-  font-family: var(--font-brand-display);
 }
 
 .public-footer__legal-links {
@@ -238,24 +254,43 @@ const { data: filings } = await useFetch("/api/site-meta", {
   overflow-wrap: anywhere;
 }
 
-.public-footer__legal a {
+.public-footer__legal-links a {
   color: inherit;
 }
 
-.public-footer__legal a:hover {
+.public-footer__legal-links a:hover {
   color: var(--public-accent-primary);
+}
+
+/* 窄屏一行放不下时，「｜」会落在行尾变成孤立的竖线，看着像排版坏了。
+   这些分隔符只在单行的桌面布局里有意义，换行布局改用间距分组。 */
+@media (max-width: 1199px) {
+  .public-footer__filings > span[aria-hidden='true'],
+  .public-footer__legal-links > span[aria-hidden='true'] {
+    display: none;
+  }
+
+  .public-footer__filings,
+  .public-footer__legal-links {
+    gap: var(--space-2) var(--space-4);
+  }
 }
 
 @media (min-width: 1200px) {
   .public-footer__inner {
     grid-template-columns: max-content minmax(0, 1fr) max-content;
-    align-items: end;
+    /* 第一行：导航 ↔ ©；第二行：备案 ↔ 法务链接。基线对齐让两侧字号不同时
+       也落在同一条水平线上。品牌块跨两行，自己居中。 */
+    grid-template-areas:
+      'brand nav copyright'
+      'brand filings legal';
+    align-items: baseline;
     column-gap: clamp(var(--space-5), 3vw, var(--space-8));
   }
 
-  .public-footer__center {
-    justify-items: center;
-    text-align: center;
+  .public-footer__brand {
+    align-self: center;
+    margin-bottom: 0;
   }
 
   .public-footer__nav,
@@ -263,13 +298,10 @@ const { data: filings } = await useFetch("/api/site-meta", {
     justify-content: center;
   }
 
-  .public-footer__legal {
-    justify-items: end;
-    text-align: right;
-  }
-
   .public-footer__copyright,
   .public-footer__legal-links {
+    justify-self: end;
+    text-align: right;
     white-space: nowrap;
   }
 

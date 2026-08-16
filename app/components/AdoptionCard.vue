@@ -29,16 +29,17 @@ const price = computed(() => props.adoption.work.price
     </span>
     <span class="adoption-card__body">
       <span class="adoption-card__heading">
-        <span class="adoption-card__name">{{ adoption.work.characterName }}</span>
+        <span class="adoption-card__title">
+          <span class="adoption-card__name">{{ adoption.work.characterName }}</span>
+          <span class="adoption-card__separator" aria-hidden="true">·</span>
+          <span class="adoption-card__meta">{{ adoption.work.species }}</span>
+        </span>
         <span class="adoption-card__status">
           {{ ADOPTION_STATUS_LABELS[adoption.work.adoptionStatus] }}
         </span>
       </span>
-      <span class="adoption-card__details">
-        <span class="adoption-card__meta">
-          {{ adoption.work.species }}
-        </span>
-        <span v-if="price" class="adoption-card__price">{{ price }}</span>
+      <span v-if="price" class="adoption-card__details">
+        <span class="adoption-card__price">{{ price }}</span>
       </span>
     </span>
   </NuxtLink>
