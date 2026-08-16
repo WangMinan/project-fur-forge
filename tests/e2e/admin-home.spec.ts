@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { adminBaseURL, loginAsAdmin, publicBaseURL } from './helpers/auth'
-import { heroPng, resetFakeMedia } from './helpers/fake-media'
+import { fakeMediaState, heroPng, resetFakeMedia } from './helpers/fake-media'
 import {
   seedHeroCollections,
   seedHomeSlides,
@@ -94,18 +94,35 @@ test('单图上传、保存、预览、发布、停用与删除走完同一集�
     mimeType: 'image/png',
     buffer: heroPng('landscape'),
   })
+  await expect(draft.getByText('hero-landscape.png')).toBeVisible()
+  await draft.getByRole('button', { name: '上传图片' }).click()
   await expect(draft.getByText('上传并校验完成，请保存。')).toBeVisible()
   await draft.getByLabel('替代文字').fill('新增独立横版')
   await draft.getByLabel('顺位（0–4）').fill('1')
+  const uploadedPreview = draft.getByRole('img', { name: '新增独立横版管理预览' })
+  await expect(uploadedPreview).toBeVisible()
+  await expect(uploadedPreview).toHaveAttribute(
+    'src',
+    /^\/api\/admin\/v1\/media\/assets\/[0-9a-f-]+\/preview\?w=640$/u,
+  )
   await draft.getByRole('button', { name: '新增', exact: true }).click()
+  await expect(draft).toHaveCount(0)
 
   const item = heroItemByAlt(page, '新增独立横版')
   await expect(item).toBeVisible()
-  await item.getByRole('button', { name: '生成预览' }).click()
-  await expect(item.getByRole('img', { name: '新增独立横版管理预览' }))
-    .toBeVisible()
+  const preview = item.getByRole('img', { name: '新增独立横版管理预览' })
+  await expect(preview).toBeVisible()
+  await expect(preview).toHaveAttribute(
+    'src',
+    /^\/api\/admin\/v1\/media\/assets\/[0-9a-f-]+\/preview\?w=640$/u,
+  )
+  await expect.poll(async () => (await fakeMediaState(page)).privateProcessCalls)
+    .toContainEqual({ process: 'image/auto-orient,1/resize,m_lfit,w_640' })
+  await expect(item.getByRole('button', { name: '生成预览' })).toHaveCount(0)
 
   await item.getByRole('button', { name: '发布并启用' }).click()
+  await expect(item.getByRole('progressbar', { name: /发布并启用进度/u }))
+    .toBeVisible()
   await expect(item.getByText('发布完成，公开派生图已校验。'))
     .toBeVisible({ timeout: 20_000 })
   await expect.poll(() => publicHomeAlts(page, 'landscape'))
@@ -117,6 +134,25 @@ test('单图上传、保存、预览、发布、停用与删除走完同一集�
   await item.getByRole('button', { name: '删除', exact: true }).click()
   await expect(heroItemByAlt(page, '新增独立横版'))
     .toHaveCount(0)
+})
+
+test('已启用大图默认展示低清管理预览且不读取原图', async ({ page }) => {
+  await seedHeroCollections(page, {
+    landscape: [{ alt: '即时预览横版', sortOrder: 0, enabled: true }],
+    portrait: [{ alt: '即时预览竖版', sortOrder: 0, enabled: true }],
+  })
+  await gotoHeroAdmin(page)
+
+  const item = heroItemByAlt(page, '即时预览横版')
+  await expect(item).toContainText('已启用')
+  const preview = item.getByRole('img', { name: '即时预览横版管理预览' })
+  await expect(preview).toBeVisible()
+  await expect(preview).not.toHaveAttribute('src', /^blob:/u)
+  await expect(preview).toHaveAttribute('src', /\/preview\?w=640$/u)
+  await expect(preview).not.toHaveAttribute('src', /original=1/u)
+  await expect.poll(async () => (await fakeMediaState(page)).privateProcessCalls)
+    .toContainEqual({ process: 'image/auto-orient,1/resize,m_lfit,w_640' })
+  await expect(item.getByRole('button', { name: '生成预览' })).toHaveCount(0)
 })
 
 test('完整顺序写入产生 FLIP，旧 collection version 稳定返回 409', async ({ page }) => {

@@ -157,6 +157,9 @@ export default defineEventHandler(async (event) => {
         deletedPrivateKeys: [...fake.deletedPrivateKeys],
         deletedPublicKeys: [...fake.deletedPublicKeys],
         objects: [...fake.objects.keys()],
+        privateProcessCalls: fake.privateProcessCalls.map(call => ({
+          process: call.process,
+        })),
         processCalls: fake.processCalls.length,
         publicObjects: [...fake.publicObjects.keys()],
         putRecords: fake.putRecords.map(record => ({

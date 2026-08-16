@@ -1,11 +1,9 @@
 import {
   adminHeroCollectionResponseSchema,
-  adminHeroItemPreviewResponseSchema,
 } from '~~/shared/schemas/home'
 import { publicationOperationResponseSchema } from '~~/shared/schemas/publication'
 import type {
   AdminHeroCollectionDto,
-  AdminHeroItemPreviewDto,
   HeroOrientation,
   HeroPlacement,
   PublicationOperationDto,
@@ -37,8 +35,6 @@ export function useAdminHeroCollection(
   const conflictNotice = ref<string | null>(null)
   const operations = ref<Record<string, PublicationOperationDto>>({})
   const feedback = ref<Record<string, HeroCollectionFeedback>>({})
-  const previews = ref<Record<string, AdminHeroItemPreviewDto>>({})
-  const previewPending = ref<Record<string, boolean>>({})
 
   const scope = () => ({
     placement: toValue(placement),
@@ -249,31 +245,6 @@ export function useAdminHeroCollection(
     }
   }
 
-  async function loadPreview(id: string) {
-    if (!collection.value || previewPending.value[id]) {
-      return null
-    }
-    previewPending.value = { ...previewPending.value, [id]: true }
-    try {
-      const result = await adminApi(`${baseUrl()}/items/${id}/preview`, {
-        method: 'POST',
-        body: body({}),
-        schema: adminHeroItemPreviewResponseSchema,
-      })
-      previews.value = { ...previews.value, [id]: result.data }
-      return null
-    }
-    catch (error) {
-      if (error instanceof AdminApiError && error.status === 409) {
-        await onConflict()
-      }
-      return '生成预览失败，请确认项目已停用。'
-    }
-    finally {
-      previewPending.value = { ...previewPending.value, [id]: false }
-    }
-  }
-
   async function retryOperation(id: string) {
     const operation = operations.value[id]
     if (!operation || mutating.value) {
@@ -306,7 +277,6 @@ export function useAdminHeroCollection(
     collection.value = null
     operations.value = {}
     feedback.value = {}
-    previews.value = {}
     void load()
   })
 
@@ -317,12 +287,9 @@ export function useAdminHeroCollection(
     deleteItem,
     feedback,
     load,
-    loadPreview,
     mutating,
     operations,
     pageStatus,
-    previewPending,
-    previews,
     refresh,
     reorder,
     retryOperation,

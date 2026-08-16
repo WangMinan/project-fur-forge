@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type {
   AdminHeroItemDto,
-  AdminHeroItemPreviewDto,
   HeroOrientation,
   HeroPlacement,
   PublicationOperationDto,
@@ -10,6 +9,9 @@ import type {
   HeroCollectionFeedback,
   HeroCollectionItemInput,
 } from '~/composables/useAdminHeroCollection'
+import { ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
+import { adminMediaPreviewUrl } from '~/utils/admin-media-preview'
+import { PUBLICATION_OPERATION_STATUS_LABELS } from '~/utils/media-labels'
 
 const props = withDefaults(defineProps<{
   canMoveDown?: boolean
@@ -22,16 +24,12 @@ const props = withDefaults(defineProps<{
   operation?: PublicationOperationDto | null
   orientation: HeroOrientation
   placement: HeroPlacement
-  preview?: AdminHeroItemPreviewDto | null
-  previewPending?: boolean
 }>(), {
   canMoveDown: false,
   canMoveUp: false,
   defaultSortOrder: 0,
   feedback: null,
   operation: null,
-  preview: null,
-  previewPending: false,
 })
 
 const emit = defineEmits<{
@@ -40,7 +38,6 @@ const emit = defineEmits<{
   delete: []
   disable: []
   enable: []
-  loadPreview: []
   move: [direction: -1 | 1]
   retryOperation: []
   upscale: []
@@ -51,12 +48,25 @@ const alt = ref('')
 const assetId = ref('')
 const sortOrder = ref(0)
 const upscaleConfirmed = ref(false)
+const showOperationProgress = ref(false)
+const selectedFile = shallowRef<File | null>(null)
+const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
+let syncedItemId: string | null | undefined
 
 function sync() {
+  const nextItemId = props.item?.id ?? null
+  if (syncedItemId !== nextItemId) {
+    showOperationProgress.value = false
+    syncedItemId = nextItemId
+  }
   alt.value = props.item?.alt ?? ''
   assetId.value = props.item?.asset.assetId ?? ''
   sortOrder.value = props.item?.sortOrder ?? props.defaultSortOrder
   upscaleConfirmed.value = false
+  selectedFile.value = null
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
 }
 
 watch(() => [props.item?.id, props.item?.version, props.defaultSortOrder], sync, {
@@ -68,6 +78,10 @@ const upload = useHeroAssetUpload({
   getHomeVersion: () => props.collectionVersion,
   onAssetReady: (_slot, asset) => {
     assetId.value = asset.assetId
+    selectedFile.value = null
+    if (fileInput.value) {
+      fileInput.value.value = ''
+    }
   },
   onConflict: () => emit('conflict'),
   placement: props.placement,
@@ -85,6 +99,28 @@ const valid = computed(() => (
 const busy = computed(() => props.mutating || (
   props.operation ? isPublicationInProgress(props.operation) : false
 ))
+const uploadProcessing = computed(() => [
+  'digesting',
+  'uploading',
+  'validating',
+].includes(upload.item.state))
+const OPERATION_PROGRESS = {
+  PREPARING_SOURCE: 12,
+  GENERATING_PUBLIC: 35,
+  APPLYING_WATERMARK: 56,
+  VERIFYING_PUBLIC: 76,
+  COMMITTING: 91,
+  CLEANING_PUBLIC: 72,
+  DONE: 100,
+  FAILED: 100,
+} as const
+const operationProgress = computed(() => (
+  props.operation ? OPERATION_PROGRESS[props.operation.status] : 0
+))
+const previewUrl = computed(() => assetId.value
+  ? adminMediaPreviewUrl(assetId.value, ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH)
+  : null,
+)
 
 function submit() {
   if (!valid.value || busy.value) {
@@ -103,11 +139,37 @@ function submit() {
   }
 }
 
-function onFile(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0]
-  if (file) {
-    void upload.startUpload(file)
+function pickFile() {
+  if (!fileInput.value || busy.value || props.item?.enabled || uploadProcessing.value) {
+    return
   }
+  fileInput.value.value = ''
+  fileInput.value.click()
+}
+
+function onFile(event: Event) {
+  selectedFile.value = (event.target as HTMLInputElement).files?.[0] ?? null
+}
+
+function uploadSelectedFile() {
+  if (selectedFile.value) {
+    void upload.startUpload(selectedFile.value)
+  }
+}
+
+function requestUpscale() {
+  showOperationProgress.value = true
+  emit('upscale')
+}
+
+function requestEnable() {
+  showOperationProgress.value = true
+  emit('enable')
+}
+
+function requestDisable() {
+  showOperationProgress.value = true
+  emit('disable')
 }
 </script>
 
@@ -135,18 +197,11 @@ function onFile(event: Event) {
 
     <div class="hero-item__preview">
       <img
-        v-if="preview"
-        :src="preview.url"
+        v-if="previewUrl"
+        :src="previewUrl"
         :alt="`${alt || '大图'}管理预览`"
-        :width="preview.width"
-        :height="preview.height"
       >
-      <img
-        v-else-if="upload.item.previewUrl"
-        :src="upload.item.previewUrl"
-        alt="本地待上传大图预览"
-      >
-      <p v-else>停用后可生成服务端预览。</p>
+      <p v-else>上传图片后将在这里显示低清管理预览。</p>
     </div>
 
     <div class="hero-item__fields">
@@ -158,15 +213,39 @@ function onFile(event: Event) {
         <span>顺位（0–4）</span>
         <input v-model.number="sortOrder" type="number" min="0" max="4" :disabled="busy || item?.enabled">
       </label>
-      <label class="hero-item__upload">
+      <div class="hero-item__upload">
         <span>{{ orientation === 'landscape' ? '横版' : '竖版' }}原图</span>
         <input
+          ref="fileInput"
           type="file"
           accept="image/jpeg,image/png,image/webp"
-          :disabled="busy || item?.enabled"
+          hidden
+          :aria-label="`${orientation === 'landscape' ? '横版' : '竖版'}原图`"
+          :disabled="busy || item?.enabled || uploadProcessing"
           @change="onFile"
         >
-      </label>
+        <div class="hero-item__upload-actions">
+          <button
+            type="button"
+            :disabled="busy || item?.enabled || uploadProcessing"
+            @click="pickFile"
+          >选择图片</button>
+          <span class="hero-item__filename">
+            {{ selectedFile?.name ?? upload.item.fileName ?? '未选择图片' }}
+          </span>
+          <button
+            type="button"
+            class="hero-item__upload-submit"
+            :disabled="!selectedFile || busy || item?.enabled || uploadProcessing"
+            @click="uploadSelectedFile"
+          >{{ uploadProcessing ? '上传中…' : '上传图片' }}</button>
+        </div>
+        <small>
+          {{ orientation === 'landscape'
+            ? '单张 JPEG、PNG 或 WebP；推荐至少 1920×1080。'
+            : '单张 JPEG、PNG 或 WebP；推荐至少 1080×1920。' }}
+        </small>
+      </div>
     </div>
 
     <p v-if="upload.item.state !== 'idle'" class="hero-item__upload-state" role="status">
@@ -187,34 +266,45 @@ function onFile(event: Event) {
       role="status"
     >{{ feedback.text }}</p>
 
+    <div
+      v-if="operation && (isPublicationInProgress(operation) || showOperationProgress)"
+      class="hero-item__operation-progress"
+      role="status"
+    >
+      <p>{{ PUBLICATION_OPERATION_STATUS_LABELS[operation.status] }}</p>
+      <progress
+        :value="operationProgress"
+        max="100"
+        :aria-label="`${operation.operationType === 'PUBLISH' ? '发布并启用' : '大图操作'}进度：${PUBLICATION_OPERATION_STATUS_LABELS[operation.status]}`"
+      />
+    </div>
+
     <div class="hero-item__actions">
-      <button type="button" :disabled="busy || !valid || item?.enabled" @click="submit">
+      <button
+        type="button"
+        :disabled="busy || !valid || item?.enabled || Boolean(selectedFile) || uploadProcessing"
+        @click="submit"
+      >
         {{ item ? '保存' : '新增' }}
       </button>
-      <button
-        v-if="item && !item.enabled"
-        type="button"
-        :disabled="busy || previewPending"
-        @click="emit('loadPreview')"
-      >{{ previewPending ? '预览生成中…' : '生成预览' }}</button>
       <button
         v-if="item && !item.enabled && !item.upscaleReady"
         type="button"
         :disabled="busy || !upscaleConfirmed"
-        @click="emit('upscale')"
+        @click="requestUpscale"
       >适配大尺寸</button>
       <button
         v-if="item && !item.enabled && item.upscaleReady"
         type="button"
         class="hero-item__primary"
         :disabled="busy"
-        @click="emit('enable')"
+        @click="requestEnable"
       >发布并启用</button>
       <button
         v-if="item?.enabled"
         type="button"
         :disabled="busy"
-        @click="emit('disable')"
+        @click="requestDisable"
       >停用并撤销公开图</button>
       <button
         v-if="feedback?.retryOperationId"
@@ -294,8 +384,14 @@ function onFile(event: Event) {
   gap: var(--admin-space-3);
 }
 
-.hero-item__fields label,
 .hero-item__upload {
+  display: grid;
+  gap: var(--admin-space-1);
+  font-size: var(--admin-font-xs);
+  font-weight: 600;
+}
+
+.hero-item__fields label {
   display: grid;
   gap: var(--admin-space-1);
   font-size: var(--admin-font-xs);
@@ -306,7 +402,7 @@ function onFile(event: Event) {
   grid-column: 1 / -1;
 }
 
-.hero-item__fields input {
+.hero-item__fields > label input {
   min-height: var(--admin-control-height-sm);
   padding: 0 var(--admin-space-2);
   border: 1px solid var(--admin-border-primary);
@@ -314,11 +410,74 @@ function onFile(event: Event) {
   font: inherit;
 }
 
+.hero-item__upload-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--admin-space-2);
+  padding: var(--admin-space-3);
+  background: var(--admin-bg-subtle);
+  border: 1px solid var(--admin-border-secondary);
+  border-radius: var(--admin-radius-md);
+}
+
+.hero-item__upload-actions button {
+  min-height: var(--admin-control-height-sm);
+  padding: 0 var(--admin-space-3);
+  color: var(--admin-text-primary);
+  background: var(--admin-bg-primary);
+  border: 1px solid var(--admin-border-primary);
+  border-radius: var(--admin-radius-sm);
+  cursor: pointer;
+  font: inherit;
+}
+
+.hero-item__upload-actions .hero-item__upload-submit {
+  color: var(--admin-text-inverse);
+  background: var(--admin-accent-primary);
+  border-color: var(--admin-accent-primary);
+}
+
+.hero-item__upload-actions button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.hero-item__filename {
+  min-width: 8rem;
+  flex: 1;
+  color: var(--admin-text-secondary);
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.hero-item__upload small {
+  color: var(--admin-text-secondary);
+  font-weight: 400;
+}
+
 .hero-item__confirm {
   display: flex;
   align-items: flex-start;
   gap: var(--admin-space-2);
   font-size: var(--admin-font-xs);
+}
+
+.hero-item__operation-progress {
+  display: grid;
+  gap: var(--admin-space-2);
+}
+
+.hero-item__operation-progress p {
+  margin: 0;
+  color: var(--admin-text-secondary);
+  font-size: var(--admin-font-xs);
+}
+
+.hero-item__operation-progress progress {
+  width: 100%;
+  height: 0.5rem;
+  accent-color: var(--admin-accent-primary);
 }
 
 .hero-item__actions {

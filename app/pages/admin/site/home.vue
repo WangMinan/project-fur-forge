@@ -35,12 +35,9 @@ const {
   deleteItem,
   feedback,
   load,
-  loadPreview,
   mutating,
   operations,
   pageStatus,
-  previewPending,
-  previews,
   reorder,
   retryOperation,
   startOperation,
@@ -156,8 +153,6 @@ onMounted(() => void load())
                 :mutating="mutating"
                 :operation="operations[item.id] ?? null"
                 :feedback="feedback[item.id] ?? null"
-                :preview="previews[item.id] ?? null"
-                :preview-pending="previewPending[item.id] ?? false"
                 :can-move-up="moveState(item.id).canMoveUp"
                 :can-move-down="moveState(item.id).canMoveDown"
                 @update="payload => run(() => updateItem(item.id, payload))"
@@ -165,7 +160,6 @@ onMounted(() => void load())
                 @enable="run(() => startOperation(item.id, 'enable'))"
                 @disable="run(() => startOperation(item.id, 'disable'))"
                 @upscale="run(() => startOperation(item.id, 'upscale'))"
-                @load-preview="run(() => loadPreview(item.id))"
                 @retry-operation="run(() => retryOperation(item.id))"
                 @move="direction => onMove(item.id, direction)"
                 @conflict="load()"

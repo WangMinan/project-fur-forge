@@ -9,6 +9,7 @@ export interface FakeMediaState {
   deletedPrivateKeys: string[]
   deletedPublicKeys: string[]
   objects: string[]
+  privateProcessCalls: Array<{ process: string }>
   processCalls: number
   publicObjects: string[]
   putRecords: Array<{
