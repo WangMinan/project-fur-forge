@@ -54,7 +54,7 @@
 - [ ] foundation/SPEC/models/design/PLAN/DATA-MIGRATION/TASKS/STATE/CLAUDE 一致；
 - [ ] 当前产品只用 `DITE DOG`；
 - [ ] 带文字静态资产已审计；
-- [ ] slogan 与“委托与领养”准确；
+- [ ] slogan、“自设委托”与“设定领养”准确；
 - [ ] `/about` 只显示邮箱、QQ、QQ群；
 - [ ] `/commission` 直接显示 QQ、QQ群，邮箱只作备用；
 - [ ] 抖音、小红书、Bilibili 不再可配置、投影或渲染。

@@ -311,10 +311,13 @@ work_feature_tags
 1. `0039_r3_d_works_contract.sql`：先用临时 gate/trigger 检查 adoption status、published adoption cover、published primary studio photo；任一非零即以稳定错误停止，随后才重建 `works`/`work_assets` 并删除旧字段和 `work_feature_tags`；
 2. `0040_r3_e_commission_contract.sql`：重建 `site_content`，物理删除 FAQ JSON/version，同时明确复制并保留 `commission_email_action`、`contact_qq` 与目标联系渠道；
 3. `0041_r3_d_hero_work_fk.sql`：前向重建 Hero 兼容表，把 `linked_work_id` 外键恢复为目标 `works(id) ON DELETE SET NULL`，并恢复 READY/保护 trigger 与索引。
+4. `0042_r3_e_commission_follow_up.sql`：为委托补充 nullable legacy `species`，建立 pending 手机号部分唯一索引；若既有库存在重复 pending 手机号则原子失败停止，不自动处理真实申请；仅更新空值或仓库历史默认联系方式，保留管理员维护的其它值。
 
 临时 fresh DB、带合成既有数据的 DB、前置失败停止、成功、重入、foreign key 和 `PRAGMA integrity_check` 已通过。这里的证据不等于生产数据已确认或生产迁移已执行：景宸必须先逐条判断真实歧义领养记录，补 cover/主出厂照或下架，使三项计数归零；任何门禁、外键、integrity 或 readiness 失败均保持停止，只能以前向修复处理。
 
 `0040` 只收缩 FAQ contract，不改变匿名委托私有媒体的保留周期。委托过期/失败/取消/未消费对象继续走匿名 cleanup；不得生成 PUBLIC variant、ESA URL 或把完整 Object Key 写入执行记录。
+
+`0042` 的生产 handoff 必须先以脱敏计数确认重复 pending 手机号为 0；如非零，由工作室逐条决定接受/拒绝，Agent 不得猜测或自动合并。fresh、既有库、阻断与重入路径只使用临时数据库验证。
 
 ## 8. 备份与快照
 

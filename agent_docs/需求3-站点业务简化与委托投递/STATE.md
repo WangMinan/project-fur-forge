@@ -1,7 +1,7 @@
 # 当前状态：需求3 · 站点业务简化与委托投递
 
 > **最后校准**：2026-08-16。
-> **当前阶段**：GATE-A 已由用户确认发布完成；用户本轮确认阶段 B/C 已完成；阶段 D/E 的 T22～T36 已完成本地工程实现与 GATE-D/GATE-E 验证，真实数据、真实手机、独立 Review、用户验收和生产执行均未由实现者代签。
+> **当前阶段**：GATE-A 已由用户确认发布完成；用户本轮确认阶段 B/C 已完成；阶段 D/E 的 T22～T36 及 2026-08-16 用户复核修正已完成本地工程实现与门禁验证，真实数据、真实手机、独立 Review、用户验收和生产执行均未由实现者代签。
 > **任务权威**：[`implementation/TASKS.md`](./implementation/TASKS.md)。
 > **当前 main 基线**：`206b66a`，已包含阶段 B/C；阶段 D/E 位于任务分支 `codex/r3-phase-d-e-t22-t36`，尚未合并 main；阶段 F 未开始。
 
@@ -16,11 +16,12 @@
 - 公开端增加动效，保留 reduced-motion。
 - 桌面 Hero 中文居中、英文/slogan 同行左右；移动整体左对齐下移。
 - 首页/委托横竖 Hero 四集合独立。
+- 首页业务标题为“自设委托”、领养区标题为“设定领养”；adopted 不进入首页。
 - works/detail 只公开名称、物种和图片。
 - 删除作品 suit、owner、contact、tags、旧 progress、method、event。
 - adoption 状态 available/adopted；歧义旧状态必须人工确认。
 - adoption 使用独立横版 cover；design sheet 最多一张且可选。
-- commission 一张图 + 称呼/手机号/QQ/身高/体重；后台 pending/accepted/rejected。
+- commission 一张图 + 称呼/物种/手机号/QQ/身高/体重；同手机号 pending 申请唯一；后台 pending/accepted/rejected。
 - FAQ 完整删除；`commission_email_action` 保留但不作委托页主行动。
 - 不接 SMTP、短信、用户账号、公开查询或自动建作品。
 
@@ -51,6 +52,7 @@
 | C 动效与 Hero | T15～T21 已完成，用户本轮确认阶段完成 | GATE-C 已完成；本轮不补签历史真实设备/独立 Review 证据 |
 | D 作品与领养 | T22～T25、T27～T29 工程完成；T26 能力与合成验证完成，真实记录待景宸判断 | GATE-D 本地工程门禁已通过；生产数据门禁未执行 |
 | E 委托投递 | T30～T36 工程与本地真实浏览器流程完成 | GATE-E 本地工程门禁已通过；真实手机/验收/生产未执行 |
+| E 用户复核修正 | FU-01～FU-06 工程与全量受影响门禁完成 | GATE-E-FU 本地通过；独立 Review/用户验收/生产未执行 |
 | F 最终评审与发布 | 未开始 | GATE-R3 |
 
 ## 4. 当前风险
@@ -87,12 +89,16 @@ OSS CORS 通配是用户确认的现状和目标，不是风险 finding，也不
 
 `0039_r3_d_works_contract.sql` 在执行前强制检查人工状态、领养封面和主出厂照三项门禁；`0041_r3_d_hero_work_fk.sql` 前向修复 SQLite 重建 works 后 Hero 兼容表外键被重定向的问题。fresh、既有库、失败停止、重入、外键和 integrity 均只在临时数据库验证；生产迁移必须等景宸完成真实记录判断且三项门禁归零后串行执行。
 
+### 4.9 委托 follow-up 迁移
+
+`0042_r3_e_commission_follow_up.sql` 为新申请增加 species 契约与 pending 手机号部分唯一索引。迁移前若存在重复 pending 手机号会失败停止；生产必须先做脱敏计数并由工作室人工决定状态，Agent 不自动接受、拒绝或合并真实申请。联系方式更新只触及空值和仓库历史默认值。
+
 ## 5. 下一步
 
 1. 景宸在生产只读清单逐条判断歧义领养状态、补录独立 cover/主出厂照或先下架；三项计数均为 0 前不得执行 `0039`；
 2. 以任务分支最终 SHA 运行独立 Review/CI；本地测试不代签这些结果；
 3. 用户使用真实手机验证委托表单动态地址栏、输入法、图片方向、单图上传和提交，并单独记录用户验收；
-4. 后续生产发布必须串行执行 `0039`→`0040`→`0041`、readiness/verify，并停在任何前置门禁或 integrity 失败处；
+4. 后续生产发布必须串行执行 `0039`→`0040`→`0041`→`0042`、readiness/verify，并停在任何前置门禁、重复 pending 手机号、外键或 integrity 失败处；
 5. 本任务分支不得自行合并 main，不提前执行阶段 F、生产部署或生产数据迁移。
 
 ## 6. 文档入口
