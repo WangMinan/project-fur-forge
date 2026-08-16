@@ -554,15 +554,17 @@ onBeforeUnmount(() => {
     align-items: end;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    /* 第二行与标题同宽：eyebrow 与 tagline 共用标题所在的 auto 列，
+       分别贴该列左右边缘，而不是各自贴页宽两端。 */
     grid-template-areas:
       ". title ."
-      "eyebrow . tagline";
+      ". meta .";
     gap: var(--space-5) var(--space-6);
-    padding-bottom: max(calc(env(safe-area-inset-bottom) + var(--space-8)), 8rem);
+    padding-bottom: max(calc(env(safe-area-inset-bottom) + var(--space-5)), 5rem);
   }
 
   .home-hero__eyebrow {
-    grid-area: eyebrow;
+    grid-area: meta;
     justify-self: start;
   }
 
@@ -574,7 +576,7 @@ onBeforeUnmount(() => {
   }
 
   .home-hero__tagline {
-    grid-area: tagline;
+    grid-area: meta;
     justify-self: end;
     margin-top: 0;
     text-align: right;

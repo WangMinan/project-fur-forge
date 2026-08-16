@@ -249,9 +249,15 @@ test.describe('T20 作品列表页', () => {
       ))).toBeLessThanOrEqual(1)
     }
 
+    // 分页是「同 path 只改 query」：Nuxt 默认 scrollBehavior 对这一支保持滚动位置，
+    // 翻页后必须自己回到页顶，否则第 2 页一进来就停在上一页列表底部。
+    await page.getByRole('navigation', { name: '作品展示分页' })
+      .getByRole('link', { name: '下一页' }).scrollIntoViewIfNeeded()
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
     await page.getByRole('navigation', { name: '作品展示分页' })
       .getByRole('link', { name: '下一页' }).click()
     await expect(page).toHaveURL(/purpose=commission&page=2$/u)
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
     await expect(page.locator('[data-work-slug]')).toHaveCount(1)
     await expect(page.getByRole('navigation', { name: '作品展示分页' })
       .getByRole('link', { name: '上一页' }))

@@ -60,6 +60,12 @@ defineProps<{
   color: var(--public-text-secondary);
   font-size: var(--font-size-sm);
   line-height: 1.4;
+  transition:
+    color var(--duration-fast) var(--easing-standard),
+    background-color var(--duration-fast) var(--easing-standard),
+    border-color var(--duration-fast) var(--easing-standard),
+    box-shadow var(--duration-fast) var(--easing-standard),
+    transform var(--duration-fast) var(--easing-standard);
 }
 
 .filter-chips__chip:hover {
@@ -72,5 +78,29 @@ defineProps<{
   border-color: var(--public-border-primary);
   color: var(--public-text-primary);
   box-shadow: 0 0.125rem 0.5rem rgb(25 31 42 / 0.12);
+}
+
+/* 与顶级导航同一套悬停语言：抬升 + 投影，只在真实指针设备上生效。 */
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  .filter-chips__chip:hover,
+  .filter-chips__chip:focus-visible,
+  .filter-chips__chip--active:hover {
+    color: var(--public-text-primary);
+    background: var(--public-bg-primary);
+    box-shadow: 0 0.45rem 1.25rem rgb(17 20 25 / 0.12);
+    transform: translateY(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filter-chips__chip {
+    transition: none;
+  }
+
+  .filter-chips__chip:hover,
+  .filter-chips__chip:focus-visible,
+  .filter-chips__chip--active:hover {
+    transform: none;
+  }
 }
 </style>

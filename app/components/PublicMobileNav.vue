@@ -25,6 +25,9 @@ useFullscreenNavigation({
   close,
 })
 
+// 链接自己在点击时就关闭：等 route.fullPath 变会晚一个数据请求，
+// 面板要满屏定住 200ms 才开始淡出；点当前 tab 时路由根本不变，面板会一直卡住不关。
+// 这个 watch 只兜底非点击的路由变化（重定向、后退、程序化跳转）。
 watch(() => route.fullPath, () => {
   if (props.open) {
     close()
@@ -81,6 +84,7 @@ watch(() => route.fullPath, () => {
             :to="item.href"
             class="mobile-nav__link"
             :aria-current="route.path === item.href ? 'page' : undefined"
+            @click="close"
           >
             {{ item.label }}
           </NuxtLink>
@@ -91,6 +95,7 @@ watch(() => route.fullPath, () => {
               :to="child.href"
               class="mobile-nav__sublink"
               :aria-current="route.path === child.href ? 'page' : undefined"
+              @click="close"
             >
               {{ child.label }}
             </NuxtLink>
