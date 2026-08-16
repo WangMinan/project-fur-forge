@@ -83,9 +83,7 @@ import type {
 } from '../schemas/api'
 import type {
   adminWorkDtoSchema,
-  adoptionMethodSchema,
   adoptionStatusSchema,
-  businessStatusSchema,
   managedAdoptionCoverDtoSchema,
   managedDesignSheetDtoSchema,
   managedStudioPhotoDtoSchema,
@@ -94,8 +92,6 @@ import type {
   publicWorkDtoSchema,
   publicAdoptionWorkDtoSchema,
   publicSafeWorkPreviewDtoSchema,
-  regularAdoptionBusinessStatusSchema,
-  suitTypeSchema,
   featuredWorkOrderRequestSchema,
   workListItemDtoSchema,
   workFieldsSchema,
@@ -167,14 +163,8 @@ export type PublicSiteMeta = z.infer<typeof publicSiteMetaSchema>
 export type ErrorCode = z.infer<typeof errorCodeSchema>
 export type ErrorReason = z.infer<typeof errorReasonSchema>
 export type WorkPurpose = z.infer<typeof workPurposeSchema>
-export type SuitType = z.infer<typeof suitTypeSchema>
 export type PublicationStatus = z.infer<typeof publicationStatusSchema>
-export type AdoptionMethod = z.infer<typeof adoptionMethodSchema>
 export type AdoptionStatus = z.infer<typeof adoptionStatusSchema>
-export type BusinessStatus = z.infer<typeof businessStatusSchema>
-export type RegularAdoptionBusinessStatus = z.infer<
-  typeof regularAdoptionBusinessStatusSchema
->
 export type MediaRole = z.infer<typeof mediaRoleSchema>
 export type AssetStatus = z.infer<typeof assetStatusSchema>
 export type AdminAssetDto = z.infer<typeof adminAssetDtoSchema>

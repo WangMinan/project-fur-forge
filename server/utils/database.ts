@@ -405,7 +405,19 @@ export async function migrateDatabase(
     // then validate the completed schema before restoring enforcement.
     database.sqlite.pragma('foreign_keys = OFF')
     try {
-      migrate(database.orm, { migrationsFolder })
+      try {
+        migrate(database.orm, { migrationsFolder })
+      }
+      catch (error) {
+        const causeMessage = error instanceof Error && error.cause instanceof Error
+          ? error.cause.message
+          : ''
+        const contractBlocker = causeMessage.match(/R3_D_CONTRACT_BLOCKED_[A-Z_]+/u)?.[0]
+        if (contractBlocker) {
+          throw new Error(contractBlocker, { cause: error })
+        }
+        throw error
+      }
 
       const foreignKeyViolations = database.sqlite.pragma(
         'foreign_key_check',

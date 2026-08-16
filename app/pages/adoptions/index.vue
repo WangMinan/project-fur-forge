@@ -5,31 +5,24 @@ import { publicSiteContentResponseSchema } from '~~/shared/schemas/site-content'
 
 useSeoMeta({
   title: `设定领养 · ${PROJECT_NAME}`,
-  description: `${PROJECT_NAME}当前公开的常规领养与展会掉落角色，查看完整横版设定图、状态、属性与人民币价格。`,
+  description: `${PROJECT_NAME}当前公开的领养角色，查看横版封面、状态与人民币价格。`,
   ogTitle: `设定领养 · ${PROJECT_NAME}`,
-  ogDescription: `${PROJECT_NAME}当前公开的常规领养与展会掉落角色。`,
+  ogDescription: `${PROJECT_NAME}当前公开的领养角色。`,
 })
 
 const route = useRoute()
 const requestedPage = computed(() => publicPageFromQuery(route.query.page))
 const search = computed(() => publicSearchFromQuery(route.query.q))
 
-/** 筛选参数原样透传（含非法值），由服务端判定 filter.valid。 */
-const filterQuery = computed(() => {
-  const raw = Array.isArray(route.query.method)
-    ? route.query.method[0]
-    : route.query.method
-  return {
-    ...(typeof raw === 'string' && raw !== '' ? { method: raw } : {}),
-    page: requestedPage.value,
-    q: route.query.q,
-  }
-})
+const listQuery = computed(() => ({
+  page: requestedPage.value,
+  q: route.query.q,
+}))
 
 const { data: list, error: listError } = await useFetch('/api/public/v1/adoptions', {
   key: 'public-adoptions-list',
   headers: useRequestHeaders(['host']),
-  query: filterQuery,
+  query: listQuery,
   transform: raw => publicAdoptionListResponseSchema.parse(raw).data,
 })
 
@@ -49,19 +42,10 @@ const page = computed(() => list.value?.page ?? requestedPage.value)
 const pageCount = computed(() => list.value?.pageCount ?? 0)
 const status = computed(() => site.value?.statuses.adoption ?? null)
 const filter = computed(
-  () => list.value?.filter ?? { method: 'all' as const, valid: true },
+  () => list.value?.filter ?? { valid: true },
 )
 
-/** 三个筛选都是普通链接：SSR 直出、无 JavaScript 时可用。 */
-const FILTER_OPTIONS = computed(() => [
-  { key: 'all', label: '全部', to: publicPageHref('/adoptions', { q: search.value.query || null }, 1) },
-  { key: 'regular', label: '常规领养', to: publicPageHref('/adoptions', { method: 'regular', q: search.value.query || null }, 1) },
-  { key: 'event_drop', label: '展会掉落', to: publicPageHref('/adoptions', { method: 'event_drop', q: search.value.query || null }, 1) },
-])
-
-const clearSearchHref = computed(() => publicPageHref('/adoptions', {
-  method: filter.value.method === 'all' ? null : filter.value.method,
-}, 1))
+const clearSearchHref = '/adoptions'
 
 /** 空态只表达真实数据，不编造“即将更新”。 */
 const emptyText = computed(() => {
@@ -72,16 +56,7 @@ const emptyText = computed(() => {
     return { description: '', title: '没有找到这个设定' }
   }
   if (!filter.value.valid) {
-    return {
-      description: '筛选参数无法识别，已显示全部领养。',
-      title: '筛选条件无效',
-    }
-  }
-  if (filter.value.method === 'regular') {
-    return { description: '可以切换到展会掉落。', title: '当前没有常规领养' }
-  }
-  if (filter.value.method === 'event_drop') {
-    return { description: '可以切换到常规领养。', title: '当前没有展会掉落' }
+    return { description: '', title: '搜索条件无效' }
   }
   return { description: '', title: '当前没有可领养的角色' }
 })
@@ -94,7 +69,6 @@ const isOutOfRange = computed(() => (
 
 function hrefFor(target: number) {
   return publicPageHref('/adoptions', {
-    method: filter.value.method === 'all' ? null : filter.value.method,
     q: search.value.query || null,
   }, target)
 }
@@ -121,16 +95,8 @@ function hrefFor(target: number) {
       <PublicCatalogSearch
         action="/adoptions"
         :clear-to="clearSearchHref"
-        :hidden-fields="{
-          method: filter.method === 'all' ? null : filter.method,
-        }"
         :query="search.query"
         :show-clear="search.active"
-      />
-      <PublicFilterChips
-        label="领养方式筛选"
-        :options="FILTER_OPTIONS"
-        :selected="filter.method"
       />
     </div>
 

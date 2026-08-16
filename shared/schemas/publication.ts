@@ -37,10 +37,11 @@ export const EDGE_PURGE_STATUS_VALUES = [
 ] as const
 
 export const PUBLICATION_BLOCKER_VALUES = [
-  /** T37：展会掉落缺少展会名称或展会时间。 */
-  'EVENT_DROP_FIELDS_REQUIRED',
   'WORK_FIELDS_INVALID',
-  'DESIGN_SHEET_REQUIRED',
+  'ADOPTION_STATUS_REQUIRED',
+  'ADOPTION_COVER_REQUIRED',
+  'ADOPTION_COVER_NOT_READY',
+  'ADOPTION_COVER_ALT_REQUIRED',
   'DESIGN_SHEET_NOT_READY',
   'DESIGN_SHEET_SOURCE_TOO_SMALL',
   'DESIGN_SHEET_ALT_REQUIRED',
@@ -83,6 +84,8 @@ export const workPublicationCheckDtoSchema = z.object({
   version: resourceVersionSchema,
   canPublish: z.boolean(),
   blockers: z.array(publicationBlockerSchema),
+  adoptionCoverCount: z.number().int().min(0).max(1),
+  adoptionCoverNeedsPreprocess: z.boolean(),
   designSheetCount: z.number().int().min(0).max(1),
   designSheetNeedsPreprocess: z.boolean(),
   studioPhotoCount: z.number().int().min(0).max(5),

@@ -55,13 +55,10 @@ import { toPublicWorkDto } from '../recipe/work-mapper'
 
 export interface PublicWorksQuery {
   page?: unknown
-  purpose?: unknown
   q?: unknown
-  suitType?: unknown
 }
 
 export interface PublicAdoptionsQuery {
-  method?: unknown
   page?: unknown
   q?: unknown
 }
@@ -77,14 +74,10 @@ export interface PublicSiteRepository {
 }
 
 interface PublishedWorkRow {
-  adoptionMethod: 'regular' | 'event_drop' | null
-  businessStatus: 'preparing' | 'available' | 'event_sale' | 'scheduled' | 'in_production' | 'delivered' | null
+  adoptionStatus: 'available' | 'adopted' | null
   characterName: string
-  eventName: string | null
-  eventTime: string | null
   featured: number
   id: string
-  ownerDisplay: string
   priceAmountMinor: number | null
   priceCurrency: 'CNY' | null
   publicationStatus: 'published'
@@ -92,7 +85,6 @@ interface PublishedWorkRow {
   slug: string
   sortOrder: number
   species: string
-  suitType: 'full' | 'partial'
   version: number
 }
 
@@ -101,7 +93,7 @@ interface WorkMediaRow {
   assetId: string
   position: number
   primary: number
-  role: 'design_sheet' | 'studio_photo'
+  role: 'adoption_cover' | 'design_sheet' | 'studio_photo'
   workId: string
 }
 
@@ -110,6 +102,11 @@ interface PublicVariantRow extends VariantRecord {
 }
 
 interface SnapshotEntry {
+  adoption: {
+    cover: PublicWorkSummaryDto['card']
+    priceCnyMinor: number | null
+    status: 'available' | 'adopted'
+  } | null
   designSheet: {
     alt: string
     assetId: string
@@ -128,7 +125,6 @@ interface SnapshotEntry {
     primary: number
     sources: PublicSourceSetDto
   }>
-  suitType: PublishedWorkRow['suitType']
   summary: PublicWorkSummaryDto
 }
 
@@ -144,7 +140,7 @@ function groupBy<T, K>(values: readonly T[], keyFor: (value: T) => K) {
 function sourceSet(
   variants: readonly PublicVariantRow[],
   mediaBaseUrl: string,
-  usage: 'design-sheet' | 'detail' | 'work-card',
+  usage: 'adoption-card' | 'design-sheet' | 'detail' | 'work-card',
   appEnv: RuntimeConfig['appEnv'],
 ) {
   for (const recipeVersion of PUBLIC_RECIPE_VERSIONS) {
@@ -186,12 +182,7 @@ function loadPublishedWorks(sqlite: Database.Database) {
   return sqlite.prepare(`
     SELECT
       id, version, slug, character_name AS characterName,
-      species, suit_type AS suitType, purpose,
-      adoption_method AS adoptionMethod,
-      business_status AS businessStatus,
-      event_name AS eventName,
-      event_time AS eventTime,
-      owner_display AS ownerDisplay,
+      species, purpose, adoption_status AS adoptionStatus,
       price_amount_minor AS priceAmountMinor,
       price_currency AS priceCurrency,
       publication_status AS publicationStatus,
@@ -200,16 +191,6 @@ function loadPublishedWorks(sqlite: Database.Database) {
     WHERE publication_status = 'published'
     ORDER BY COALESCE(published_at, created_at) DESC, id
   `).all() as PublishedWorkRow[]
-}
-
-function loadTags(sqlite: Database.Database) {
-  return sqlite.prepare(`
-    SELECT tag.work_id AS workId, tag.value
-    FROM work_feature_tags AS tag
-    JOIN works AS work ON work.id = tag.work_id
-    WHERE work.publication_status = 'published'
-    ORDER BY tag.work_id, tag.position
-  `).all() as Array<{ value: string, workId: string }>
 }
 
 function loadWorkMedia(sqlite: Database.Database) {
@@ -225,7 +206,7 @@ function loadWorkMedia(sqlite: Database.Database) {
     JOIN works AS work ON work.id = relation.work_id
     JOIN assets AS asset ON asset.id = relation.asset_id
     WHERE work.publication_status = 'published'
-      AND relation.role IN ('design_sheet', 'studio_photo')
+      AND relation.role IN ('adoption_cover', 'design_sheet', 'studio_photo')
       AND asset.role = relation.role
       AND asset.status = 'READY'
     ORDER BY relation.work_id, relation.position
@@ -258,8 +239,8 @@ function loadCurrentPublicVariants(sqlite: Database.Database) {
       ON profile.id = branding.active_watermark_profile_id
     WHERE variant.storage_scope = 'PUBLIC'
       AND variant.status = 'READY'
-      AND variant.media_role IN ('design_sheet', 'studio_photo')
-      AND variant.usage IN ('work-card', 'detail', 'design-sheet')
+      AND variant.media_role IN ('adoption_cover', 'design_sheet', 'studio_photo')
+      AND variant.usage IN ('adoption-card', 'work-card', 'detail', 'design-sheet')
       AND variant.recipe_version IN ('recipe-v3', 'recipe-v2', 'recipe-v1')
       AND variant.watermark_profile = 'brand-centered-v2'
       AND variant.watermark_profile_id = profile.id
@@ -281,7 +262,6 @@ function snapshot(
   mediaBaseUrl: string,
   appEnv: RuntimeConfig['appEnv'],
 ): SnapshotEntry[] {
-  const tagsByWork = groupBy(loadTags(sqlite), tag => tag.workId)
   const mediaByWork = groupBy(loadWorkMedia(sqlite), media => media.workId)
   const variantsByAsset = groupBy(
     loadCurrentPublicVariants(sqlite),
@@ -292,13 +272,11 @@ function snapshot(
   for (const row of loadPublishedWorks(sqlite)) {
     const facts = toPublicWorkDto({
       ...row,
-      featureTags: (tagsByWork.get(row.id) ?? []).map(tag => tag.value),
       priceCnyMinor: row.priceCurrency === 'CNY'
         ? row.priceAmountMinor
         : null,
       featured: row.featured === 1,
       sortOrder: row.sortOrder,
-      ownerContact: null,
       assetIds: [],
       originalObjectKeys: [],
     })
@@ -343,37 +321,42 @@ function snapshot(
         }]
       })
     const primary = photos.find(photo => photo.primary === 1 && photo.card)
-    const designCard = designSheet
+    const card = primary?.card
+      ? { assetId: primary.assetId, alt: primary.alt, sources: primary.card }
+      : null
+    const coverMedia = media.find(item => item.role === 'adoption_cover')
+    const coverSources = coverMedia
       ? sourceSet(
-          variantsByAsset.get(designSheet.assetId) ?? [],
+          variantsByAsset.get(coverMedia.assetId) ?? [],
           mediaBaseUrl,
-          'work-card',
+          'adoption-card',
           appEnv,
         )
       : null
-    const card = primary?.card
-      ? { assetId: primary.assetId, alt: primary.alt, sources: primary.card }
-      : designSheet && designCard
-        ? { assetId: designSheet.assetId, alt: designSheet.alt, sources: designCard }
-        : null
-    if (
-      !card
-      || (
-        row.purpose === 'adoption'
-        && row.adoptionMethod === 'regular'
-        && !designSheet
-      )
-      || (row.purpose !== 'adoption' && !primary)
-    ) {
+    const adoption = row.purpose === 'adoption'
+      && row.adoptionStatus !== null
+      && coverMedia
+      && coverSources
+      ? {
+          cover: {
+            assetId: coverMedia.assetId,
+            alt: toSafePublicAlt(coverMedia.alt, `${row.characterName}的领养封面`),
+            sources: coverSources,
+          },
+          priceCnyMinor: row.priceCurrency === 'CNY' ? row.priceAmountMinor : null,
+          status: row.adoptionStatus,
+        }
+      : null
+    if (!card || !primary || (row.purpose === 'adoption' && !adoption)) {
       continue
     }
     entries.push({
+      adoption,
       featured: row.featured === 1,
       designSheet,
       id: row.id,
       purpose: row.purpose,
       sortOrder: row.sortOrder,
-      suitType: row.suitType,
       summary: publicWorkSummaryDtoSchema.parse({
         work: facts,
         href: `/works/${row.slug}`,
@@ -475,14 +458,24 @@ function featuredEntries(entries: readonly SnapshotEntry[]) {
     .slice(0, PUBLIC_FEATURED_LIMIT)
 }
 
-/** T37：常规领养与展会掉落共用同一份领养投影和设定图水印变体。 */
 function adoptionItems(entries: readonly SnapshotEntry[]) {
   return entries.flatMap((entry): PublicAdoptionListItemDto[] => (
-    entry.summary.work.purpose === 'adoption' && entry.designSheet
+    entry.adoption
       ? [publicAdoptionListItemDtoSchema.parse({
-          work: entry.summary.work,
+          work: {
+            ...entry.summary.work,
+            adoptionStatus: entry.adoption.status,
+            ...(entry.adoption.priceCnyMinor === null
+              ? {}
+              : {
+                  price: {
+                    currency: 'CNY',
+                    minorUnits: entry.adoption.priceCnyMinor,
+                  },
+                }),
+          },
           href: entry.summary.href,
-          designSheet: entry.designSheet,
+          cover: entry.adoption.cover,
         })]
       : []
   ))
@@ -507,40 +500,22 @@ function paginateCatalog<T>(items: readonly T[], page: number, pageSize: number)
   }
 }
 
-/**
- * 领养列表 DTO：应用筛选并给出各筛选下的真实数量。
- * 非法筛选参数不抛 500，收敛为“全部”并标记 valid=false。
- */
 function adoptionListDto(
   items: readonly PublicAdoptionListItemDto[],
   query: PublicAdoptionsQuery,
 ) {
-  const parsed = publicAdoptionListQuerySchema.safeParse({ method: query.method })
+  const parsed = publicAdoptionListQuerySchema.safeParse({ q: query.q })
   const search = publicCatalogSearchQuerySchema.safeParse(query.q)
-  const method = parsed.success ? parsed.data.method ?? 'all' : 'all'
   const page = catalogPage(query.page)
-  const matches = (item: PublicAdoptionListItemDto) => (
-    method === 'all' || item.work.adoptionMethod === method
-  )
-  const searched = search.success
+  const filtered = parsed.success && search.success
     ? items.filter(item => includesSearchText(
         item.work.characterName,
         search.data ?? '',
       ))
     : []
-  const filtered = searched.filter(matches)
   return publicAdoptionListDtoSchema.parse({
     ...paginateCatalog(filtered, page, PUBLIC_ADOPTIONS_PAGE_SIZE),
-    filter: { valid: parsed.success, method },
-    counts: {
-      all: searched.length,
-      regular: searched.filter(
-        item => item.work.adoptionMethod === 'regular',
-      ).length,
-      event_drop: searched.filter(
-        item => item.work.adoptionMethod === 'event_drop',
-      ).length,
-    },
+    filter: { valid: parsed.success && search.success },
   })
 }
 
@@ -576,10 +551,10 @@ export function createSqlitePublicSiteRepository(
       if (!match) {
         return null
       }
-      const primaryStudioPhotoAssetId = match.current.studioPhotos.find(
+      const primaryAssetId = match.current.studioPhotos.find(
         photo => photo.primary === 1,
       )?.assetId ?? null
-      const studioPhotos = match.current.studioPhotos.map(photo => ({
+      const gallery = match.current.studioPhotos.map(photo => ({
         assetId: photo.assetId,
         alt: photo.alt,
         position: photo.position,
@@ -589,11 +564,9 @@ export function createSqlitePublicSiteRepository(
         work: match.current.summary.work,
         href: match.current.summary.href,
         media: {
-          primaryAssetId: primaryStudioPhotoAssetId,
-          primaryStudioPhotoAssetId,
+          primaryAssetId,
           card: match.current.summary.card,
-          gallery: studioPhotos,
-          studioPhotos,
+          gallery,
           ...(match.current.designSheet
             ? { designSheet: match.current.designSheet }
             : {}),
@@ -622,10 +595,7 @@ export function createSqlitePublicSiteRepository(
 
     listWorks(query = {}) {
       const page = catalogPage(query.page)
-      const parsed = publicWorkListQuerySchema.safeParse({
-        purpose: query.purpose,
-        suitType: query.suitType,
-      })
+      const parsed = publicWorkListQuerySchema.safeParse({ q: query.q })
       const search = publicCatalogSearchQuerySchema.safeParse(query.q)
       if (!parsed.success) {
         return publicWorkListDtoSchema.parse({
@@ -634,15 +604,13 @@ export function createSqlitePublicSiteRepository(
           page,
           pageCount: 0,
           pageSize: PUBLIC_WORKS_PAGE_SIZE,
-          filter: { valid: false, purpose: null, suitType: null },
+          filter: { valid: false },
         })
       }
       const items = search.success ? snapshot(sqlite, mediaBaseUrl, appEnv)
         .filter(entry => entry.studioPhotos.length > 0)
         .filter(entry => (
-          (!parsed.data.purpose || entry.purpose === parsed.data.purpose)
-          && (!parsed.data.suitType || entry.suitType === parsed.data.suitType)
-          && includesSearchText(
+          includesSearchText(
             entry.summary.work.characterName,
             search.data ?? '',
           )
@@ -651,11 +619,7 @@ export function createSqlitePublicSiteRepository(
         : []
       return publicWorkListDtoSchema.parse({
         ...paginateCatalog(items, page, PUBLIC_WORKS_PAGE_SIZE),
-        filter: {
-          valid: true,
-          purpose: parsed.data.purpose ?? null,
-          suitType: parsed.data.suitType ?? null,
-        },
+        filter: { valid: true },
       })
     },
 
@@ -681,6 +645,7 @@ export function createSqlitePublicSiteRepository(
 }
 
 export interface FakePublicSiteSeed {
+  adoptions?: PublicAdoptionListItemDto[]
   details: PublicWorkDetailDto[]
   featuredSlugs: string[]
   home: PublicHomeDto
@@ -700,6 +665,9 @@ export function createFakePublicSiteRepository(
     seed.commissionHero ?? { landscape: [], portrait: [] },
   )
   const bySlug = new Map(details.map(detail => [detail.work.slug, detail]))
+  const adoptions = (seed.adoptions ?? []).map(item => (
+    publicAdoptionListItemDtoSchema.parse(item)
+  ))
   const summaryFor = (detail: PublicWorkDetailDto) => (
     publicWorkSummaryDtoSchema.parse({
       work: detail.work,
@@ -713,29 +681,15 @@ export function createFakePublicSiteRepository(
       return detail ? publicWorkDetailDtoSchema.parse(detail) : null
     },
     listAdoptions(query = {}) {
-      const items = details.flatMap(detail => (
-        detail.work.purpose === 'adoption' && detail.media.designSheet
-          ? [publicAdoptionListItemDtoSchema.parse({
-              work: detail.work,
-              href: detail.href,
-              designSheet: detail.media.designSheet,
-            })]
-          : []
-      ))
-      return adoptionListDto(items, query)
+      return adoptionListDto(adoptions, query)
     },
     listWorks(query = {}) {
       const page = catalogPage(query.page)
-      const parsed = publicWorkListQuerySchema.safeParse({
-        purpose: query.purpose,
-        suitType: query.suitType,
-      })
+      const parsed = publicWorkListQuerySchema.safeParse({ q: query.q })
       const search = publicCatalogSearchQuerySchema.safeParse(query.q)
       const filtered = parsed.success && search.success
         ? details.filter(detail => (
-            detail.media.studioPhotos.length > 0
-            && (!parsed.data.purpose || detail.work.purpose === parsed.data.purpose)
-            && (!parsed.data.suitType || detail.work.suitType === parsed.data.suitType)
+            detail.media.gallery.length > 0
             && includesSearchText(detail.work.characterName, search.data ?? '')
           ))
         : []
@@ -745,13 +699,7 @@ export function createFakePublicSiteRepository(
           page,
           PUBLIC_WORKS_PAGE_SIZE,
         ),
-        filter: parsed.success
-          ? {
-              valid: true,
-              purpose: parsed.data.purpose ?? null,
-              suitType: parsed.data.suitType ?? null,
-            }
-          : { valid: false, purpose: null, suitType: null },
+        filter: { valid: parsed.success && search.success },
       })
     },
     listFeaturedWorks() {

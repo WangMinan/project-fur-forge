@@ -30,11 +30,7 @@ try {
     slug: 'repro-work',
     characterName: '复现',
     species: '犬',
-    suitType: 'full',
     purpose: 'commission',
-    ownerDisplay: '不公开',
-    ownerContact: null,
-    featureTags: ['测试'],
     sortOrder: 0,
     featured: false,
   }, NOW)

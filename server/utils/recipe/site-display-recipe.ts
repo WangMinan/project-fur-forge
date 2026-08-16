@@ -72,7 +72,7 @@ const legacyRecipes = {
     aspect: [3, 2],
   },
   'home-entry-adoption': {
-    roles: ['design_sheet'],
+    roles: ['adoption_cover'],
     widths: [480, 768, 1080],
     aspect: [3, 2],
   },

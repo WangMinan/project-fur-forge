@@ -1,8 +1,4 @@
-import {
-  describe,
-  expect,
-  it,
-} from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
   apiErrorSchema,
   apiSuccessSchema,
@@ -15,9 +11,9 @@ import {
   adminWorkDtoSchema,
   createWorkRequestSchema,
   featuredWorkOrderRequestSchema,
+  publicAdoptionWorkDtoSchema,
   publicWorkDtoSchema,
   updateWorkRequestSchema,
-  workFeatureTagsSchema,
 } from '../../shared/schemas/work'
 import {
   toAdminWorkDto,
@@ -35,25 +31,13 @@ const baseRecord: WorkRecord = {
   slug: 'blue-dog',
   characterName: '蓝犬',
   species: '犬',
-  suitType: 'full',
   purpose: 'adoption',
   publicationStatus: 'published',
-  ownerDisplay: '不公开',
-  featureTags: [
-    '纯海绵头',
-    '内置风扇',
-  ],
-  adoptionMethod: 'event_drop',
-  businessStatus: 'event_sale',
-  eventName: '测试展会',
-  eventTime: '2026 年 8 月 15 日',
+  adoptionStatus: 'available',
   featured: true,
   priceCnyMinor: 1_560_000,
   sortOrder: 4,
-  ownerContact: 'private-contact',
-  assetIds: [
-    'be9c4a94-32cd-4d17-9050-f7f57fed9742',
-  ],
+  assetIds: ['be9c4a94-32cd-4d17-9050-f7f57fed9742'],
   originalObjectKeys: ['private/original/secret.jpg'],
 }
 
@@ -63,9 +47,8 @@ describe('shared API contracts', () => {
     expect(idempotencyKeySchema.parse('work:create:018f47a0')).toBe(
       'work:create:018f47a0',
     )
-    expect(apiSuccessSchema(resourceVersionSchema).parse({
-      data: 2,
-    })).toEqual({ data: 2 })
+    expect(apiSuccessSchema(resourceVersionSchema).parse({ data: 2 }))
+      .toEqual({ data: 2 })
     expect(idempotentRequestSchema(resourceVersionSchema).parse({
       idempotencyKey: 'work:create:018f47a0',
       payload: 0,
@@ -76,29 +59,18 @@ describe('shared API contracts', () => {
     expect(versionedRequestSchema(resourceVersionSchema).parse({
       expectedVersion: 2,
       payload: 3,
-    })).toEqual({
-      expectedVersion: 2,
-      payload: 3,
-    })
+    })).toEqual({ expectedVersion: 2, payload: 3 })
     expect(apiErrorSchema.parse({
-      error: {
-        code: 'CONFLICT',
-        message: 'Resource changed.',
-      },
+      error: { code: 'CONFLICT', message: 'Resource changed.' },
     })).toEqual({
-      error: {
-        code: 'CONFLICT',
-        message: 'Resource changed.',
-      },
+      error: { code: 'CONFLICT', message: 'Resource changed.' },
     })
   })
 
   it('defaults centered watermark controls and rejects out-of-range or disable input', () => {
     const base = {
       expectedVersion: 1,
-      payload: {
-        sourceAssetId: '550e8400-e29b-41d4-a716-446655440000',
-      },
+      payload: { sourceAssetId: '550e8400-e29b-41d4-a716-446655440000' },
     }
     expect(createWatermarkProfileRequestSchema.parse(base).payload)
       .toMatchObject({ opacityPercent: 50, scalePercent: 60 })
@@ -129,7 +101,7 @@ describe('shared API contracts', () => {
     }).success).toBe(false)
   })
 
-  it('accepts a complete versioned featured order and rejects duplicate IDs', () => {
+  it('accepts a complete featured order and rejects duplicate IDs', () => {
     const first = '11111111-1111-4111-8111-111111111111'
     const second = '22222222-2222-4222-8222-222222222222'
     expect(featuredWorkOrderRequestSchema.parse({
@@ -151,61 +123,31 @@ describe('shared API contracts', () => {
   })
 })
 
-describe('work feature tags', () => {
-  it('normalizes 0-8 unique tags with 1-24 characters', () => {
-    expect(workFeatureTagsSchema.parse([])).toEqual([])
-    expect(workFeatureTagsSchema.parse([
-      '  内置风扇  ',
-      ...Array.from({ length: 7 }, (_, index) => `属性${index}`),
-    ])).toHaveLength(8)
-    expect(workFeatureTagsSchema.safeParse(Array.from(
-      { length: 9 },
-      (_, index) => `属性${index}`,
-    )).success).toBe(false)
-    expect(workFeatureTagsSchema.safeParse([
-      '内置风扇',
-      ' 内置风扇 ',
-    ]).success).toBe(false)
-    expect(workFeatureTagsSchema.safeParse(['']).success).toBe(false)
-    expect(workFeatureTagsSchema.safeParse(['犬'.repeat(25)]).success).toBe(
-      false,
-    )
-  })
-})
-
 describe('T22 work mutation contracts', () => {
   const common = {
     slug: 'new-work',
     characterName: ' 新角色 ',
     species: '犬科',
-    suitType: 'partial' as const,
-    ownerDisplay: ' 公开角色主 ',
-    ownerContact: null,
-    featureTags: [' 柔软 ', '大尾巴'],
     sortOrder: 7,
     featured: true,
   }
 
-  it('uses a strict purpose union for commission, showcase and regular adoption', () => {
+  it('uses a strict purpose union and explicit adoption status', () => {
     for (const purpose of ['commission', 'showcase'] as const) {
-      expect(createWorkRequestSchema.parse({ ...common, purpose })).toMatchObject({
+      expect(createWorkRequestSchema.parse({ ...common, purpose })).toEqual({
+        ...common,
+        characterName: '新角色',
         purpose,
-        ownerDisplay: '公开角色主',
-        featureTags: ['柔软', '大尾巴'],
-        sortOrder: 7,
-        featured: true,
       })
     }
     expect(createWorkRequestSchema.parse({
       ...common,
       purpose: 'adoption',
-      adoptionMethod: 'regular',
-      businessStatus: 'available',
+      adoptionStatus: 'available',
       priceCnyMinor: 1,
     })).toMatchObject({
       purpose: 'adoption',
-      adoptionMethod: 'regular',
-      businessStatus: 'available',
+      adoptionStatus: 'available',
       priceCnyMinor: 1,
     })
     expect(updateWorkRequestSchema.parse({
@@ -214,35 +156,46 @@ describe('T22 work mutation contracts', () => {
     }).expectedVersion).toBe(3)
   })
 
-  it('rejects cross-purpose fields, event management and invalid CNY minor units', () => {
+  it('rejects every retired field, cross-purpose fields and invalid prices', () => {
+    const legacyFields = {
+      suitType: 'partial',
+      ownerDisplay: '角色主',
+      ownerContact: 'private',
+      featureTags: ['柔软'],
+      adoptionMethod: 'regular',
+      businessStatus: 'available',
+      eventName: '展会',
+      eventTime: '日期',
+    }
+    for (const [field, value] of Object.entries(legacyFields)) {
+      expect(createWorkRequestSchema.safeParse({
+        ...common,
+        purpose: 'commission',
+        [field]: value,
+      }).success).toBe(false)
+    }
     expect(createWorkRequestSchema.safeParse({
       ...common,
       purpose: 'showcase',
-      adoptionMethod: 'regular',
+      adoptionStatus: 'available',
     }).success).toBe(false)
     expect(createWorkRequestSchema.safeParse({
       ...common,
       purpose: 'adoption',
-      adoptionMethod: 'event_drop',
-      businessStatus: 'event_sale',
-      eventName: '未建模展会',
-      eventTime: '未建模时间',
       priceCnyMinor: 100,
     }).success).toBe(false)
     for (const priceCnyMinor of [0, -1, 1.5]) {
       expect(createWorkRequestSchema.safeParse({
         ...common,
         purpose: 'adoption',
-        adoptionMethod: 'regular',
-        businessStatus: 'available',
+        adoptionStatus: 'available',
         priceCnyMinor,
       }).success).toBe(false)
     }
     expect(createWorkRequestSchema.safeParse({
       ...common,
       purpose: 'adoption',
-      adoptionMethod: 'regular',
-      businessStatus: 'available',
+      adoptionStatus: 'available',
       priceCnyMinor: 100,
       priceCurrency: 'USD',
     }).success).toBe(false)
@@ -250,81 +203,76 @@ describe('T22 work mutation contracts', () => {
 })
 
 describe('work DTO mapping', () => {
-  it('publishes adoption price and ordered tags without private fields', () => {
+  it('publishes only the minimal name/species identity', () => {
     const publicDto = toPublicWorkDto({
       ...baseRecord,
       signedUrl: 'https://oss.test/private.jpg?signature=test-signature',
       passwordHash: 'private-password-hash',
       sessionToken: 'private-session-token',
-      internalErrorMessage: 'private-error-detail',
-      draftVariantUrl: 'https://oss.test/private-draft.jpg',
     } as WorkRecord & {
       signedUrl: string
       passwordHash: string
       sessionToken: string
-      internalErrorMessage: string
-      draftVariantUrl: string
     })
     const serialized = JSON.stringify(publicDto)
 
-    expect(publicDto).toMatchObject({
-      price: {
-        currency: 'CNY',
-        minorUnits: 1_560_000,
-      },
-      featureTags: [
-        '纯海绵头',
-        '内置风扇',
-      ],
+    expect(publicDto).toEqual({
+      id: baseRecord.id,
+      slug: 'blue-dog',
+      characterName: '蓝犬',
+      species: '犬',
     })
-    expect(serialized).not.toContain('private-contact')
-    expect(serialized).not.toContain('test-signature')
-    expect(serialized).not.toContain('secret.jpg')
-    expect(serialized).not.toContain('ownerContact')
-    expect(serialized).not.toContain('originalObjectKeys')
-    expect(serialized).not.toContain('signedUrl')
-    expect(serialized).not.toContain('private-password-hash')
-    expect(serialized).not.toContain('private-session-token')
-    expect(serialized).not.toContain('private-error-detail')
-    expect(serialized).not.toContain('private-draft')
+    for (const forbidden of [
+      'price',
+      'purpose',
+      'adoptionStatus',
+      'private-contact',
+      'test-signature',
+      'secret.jpg',
+      'ownerContact',
+      'originalObjectKeys',
+      'private-password-hash',
+      'private-session-token',
+    ]) {
+      expect(serialized).not.toContain(forbidden)
+    }
     expect(publicWorkDtoSchema.safeParse({
       ...publicDto,
       ownerContact: 'private-contact',
     }).success).toBe(false)
   })
 
-  it('does not project price for non-adoption work', () => {
-    const publicDto = toPublicWorkDto({
-      ...baseRecord,
-      purpose: 'commission',
-      adoptionMethod: null,
-      businessStatus: null,
-    })
-
-    expect(publicDto).not.toHaveProperty('price')
-    expect(adminWorkDtoSchema.safeParse({
-      ...toAdminWorkDto({
-        ...baseRecord,
-        purpose: 'commission',
-        adoptionMethod: null,
-        businessStatus: null,
-        priceCnyMinor: null,
-      }),
-      priceCnyMinor: 1_560_000,
+  it('keeps adoption status and optional CNY price in the adoption-specific DTO', () => {
+    expect(publicAdoptionWorkDtoSchema.parse({
+      id: baseRecord.id,
+      slug: baseRecord.slug,
+      characterName: baseRecord.characterName,
+      species: baseRecord.species,
+      adoptionStatus: 'available',
+      price: { currency: 'CNY', minorUnits: 1_560_000 },
+    })).toMatchObject({ adoptionStatus: 'available' })
+    expect(publicAdoptionWorkDtoSchema.safeParse({
+      id: baseRecord.id,
+      slug: baseRecord.slug,
+      characterName: baseRecord.characterName,
+      species: baseRecord.species,
+      adoptionStatus: 'available',
+      price: { currency: 'USD', minorUnits: 1_560_000 },
     }).success).toBe(false)
   })
 
-  it('keeps drafts private and exposes private fields only in admin DTOs', () => {
+  it('keeps drafts private and never projects storage identities', () => {
     expect(toPublicWorkDto({
       ...baseRecord,
       publicationStatus: 'draft',
     })).toBeNull()
 
     const adminDto = toAdminWorkDto(baseRecord)
-    expect(adminDto.private).toEqual({
-      ownerContact: 'private-contact',
+    expect(adminDto).toMatchObject({
+      adoptionStatus: 'available',
+      assetIds: baseRecord.assetIds,
+      priceCnyMinor: 1_560_000,
     })
-    expect(adminDto.assetIds).toEqual(baseRecord.assetIds)
     expect(JSON.stringify(adminDto)).not.toContain('secret.jpg')
     expect(adminWorkDtoSchema.safeParse({
       ...adminDto,
@@ -332,14 +280,13 @@ describe('work DTO mapping', () => {
     }).success).toBe(false)
   })
 
-  it('rejects non-CNY public prices', () => {
-    const publicDto = toPublicWorkDto(baseRecord)!
-    expect(publicWorkDtoSchema.safeParse({
-      ...publicDto,
-      price: {
-        currency: 'USD',
-        minorUnits: 1_560_000,
-      },
-    }).success).toBe(false)
+  it('clears adoption-only fields from non-adoption admin DTOs', () => {
+    expect(toAdminWorkDto({
+      ...baseRecord,
+      purpose: 'commission',
+    })).toMatchObject({
+      adoptionStatus: null,
+      priceCnyMinor: null,
+    })
   })
 })

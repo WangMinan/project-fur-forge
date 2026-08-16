@@ -169,10 +169,10 @@ describe('current public media generation', () => {
     expect(storage.processCalls).toHaveLength(12)
   })
 
-  it('keeps design sheets complete and uses a safe contain canvas for card fallback', async () => {
+  it('keeps optional design sheets complete without creating card fallbacks', async () => {
     insertReadyAsset({ role: 'design_sheet' })
     const usages = workAssetPublicUsages('design_sheet', false, false)
-    expect(usages).toEqual(['design-sheet', 'work-card'])
+    expect(usages).toEqual(['design-sheet'])
     expect(workAssetPublicUsages('design_sheet', false, true))
       .toEqual(['design-sheet'])
     expect(workAssetPublicUsages('studio_photo', false, true))
@@ -198,12 +198,9 @@ describe('current public media generation', () => {
       usages,
       NOW,
     )
-    expect(variants).toHaveLength(12)
+    expect(variants).toHaveLength(6)
     const designProcesses = storage.processCalls.filter(
       call => call.objectKey.includes('/design-sheet/'),
-    )
-    const fallbackProcesses = storage.processCalls.filter(
-      call => call.objectKey.includes('/work-card/'),
     )
     expect(designProcesses).toHaveLength(6)
     expect(designProcesses.every(call => (
@@ -219,16 +216,9 @@ describe('current public media generation', () => {
           === Math.round(492 * publicVariantWidth(call.objectKey) / 960),
       )
     ))).toBe(true)
-    expect(fallbackProcesses).toHaveLength(6)
-    expect(fallbackProcesses.every(call => (
-      call.process.includes('resize,m_pad')
-      && call.process.includes('color_F7F7F7')
-      && !call.process.includes('resize,m_fill')
-      && watermarkWidths(call.process).length === 1
-      && watermarkWidths(call.process)[0]
-      === Math.round(492 * publicVariantWidth(call.objectKey) / 480)
-      && call.process.includes(',t_50,g_center/')
-    ))).toBe(true)
+    expect(storage.processCalls.some(
+      call => call.objectKey.includes('/work-card/'),
+    )).toBe(false)
   })
 
   it('uses design-sheet twin watermarks for landscape heroes and work-card center watermarks for portrait heroes', async () => {

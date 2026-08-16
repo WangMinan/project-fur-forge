@@ -669,6 +669,7 @@ describe('SQLite foundation', () => {
         triggerNames.filter(name => (
           !name.startsWith('return_photos_')
           && !name.startsWith('work_assets_design_sheet_primary_')
+          && name !== 'works_preserve_design_sheet_purpose'
         )),
       ))
       expect(() => upgraded.sqlite.prepare(`

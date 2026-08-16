@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const props = defineProps<{
   assetId: string
-  usage: 'design-sheet' | 'detail' | 'work-card'
+  usage: 'adoption-card' | 'design-sheet' | 'detail' | 'work-card'
 }>()
 
 const src = shallowRef<string | null>(null)
