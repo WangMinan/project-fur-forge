@@ -1,12 +1,14 @@
 import { randomUUID } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import {
+  managedAdoptionCoverDtoSchema,
   managedDesignSheetDtoSchema,
   managedWorkDtoSchema,
   publicSafeWorkPreviewDtoSchema,
   workListItemDtoSchema,
 } from '../../../shared/schemas/work'
 import type {
+  ManagedAdoptionCoverDto,
   ManagedDesignSheetDto,
   ManagedWorkDto,
   FeaturedWorkOrderItem,
@@ -39,9 +41,18 @@ interface DesignSheetInput {
   assetId: string
 }
 
+interface AdoptionCoverInput {
+  alt: string
+  assetId: string
+  crop: StudioPhotoInput['crop']
+  focalX: number
+  focalY: number
+}
+
 interface WorkRow {
   adoptionMethod: 'regular' | 'event_drop' | null
   businessStatus: 'preparing' | 'available' | 'event_sale' | 'scheduled' | 'in_production' | 'delivered' | null
+  adoptionStatus: 'available' | 'adopted' | null
   characterName: string
   eventName: string | null
   eventTime: string | null
@@ -72,6 +83,7 @@ const selectWork = `
     species, suit_type AS suitType, purpose,
     adoption_method AS adoptionMethod,
     business_status AS businessStatus,
+    adoption_status AS adoptionStatus,
     event_name AS eventName,
     event_time AS eventTime,
     owner_display AS ownerDisplay, owner_contact AS ownerContact,
@@ -183,6 +195,57 @@ function designSheet(
   return row ? managedDesignSheetDtoSchema.parse(row) : null
 }
 
+function adoptionCover(
+  sqlite: Database.Database,
+  workId: string,
+): ManagedAdoptionCoverDto | null {
+  const row = sqlite.prepare(`
+    SELECT
+      relation.asset_id AS assetId,
+      relation.alt_text AS alt,
+      relation.position,
+      relation.focal_x AS focalX,
+      relation.focal_y AS focalY,
+      relation.crop_x AS cropX,
+      relation.crop_y AS cropY,
+      relation.crop_width AS cropWidth,
+      relation.crop_height AS cropHeight,
+      asset.version, asset.status, asset.width, asset.height,
+      (
+        SELECT count(*) FROM asset_variants AS variant
+        WHERE variant.asset_id = asset.id
+          AND variant.storage_scope = 'PUBLIC'
+          AND variant.status = 'READY'
+          AND variant.usage = 'adoption-card'
+          AND variant.watermark_profile_id = (
+            SELECT active_watermark_profile_id
+            FROM site_branding WHERE id = 'site'
+          )
+      ) AS publicVariantCount
+    FROM work_assets AS relation
+    JOIN assets AS asset ON asset.id = relation.asset_id
+    WHERE relation.work_id = ? AND relation.role = 'adoption_cover'
+  `).get(workId) as Record<string, unknown> | undefined
+  return row ? managedAdoptionCoverDtoSchema.parse({
+    assetId: row.assetId,
+    alt: row.alt,
+    focalX: row.focalX,
+    focalY: row.focalY,
+    crop: {
+      x: row.cropX,
+      y: row.cropY,
+      width: row.cropWidth,
+      height: row.cropHeight,
+    },
+    version: row.version,
+    status: row.status,
+    width: row.width,
+    height: row.height,
+    position: row.position,
+    publicVariantCount: row.publicVariantCount,
+  }) : null
+}
+
 function managedWork(
   sqlite: Database.Database,
   row: WorkRow,
@@ -208,6 +271,8 @@ function managedWork(
   return managedWorkDtoSchema.parse(row.purpose === 'adoption'
     ? {
         ...base,
+        adoptionStatus: row.adoptionStatus,
+        adoptionCover: adoptionCover(sqlite, row.id),
         designSheet: designSheet(sqlite, row.id),
         adoptionMethod: row.adoptionMethod,
         businessStatus: row.businessStatus,
@@ -694,7 +759,7 @@ function assertReadyWorkAsset(
   sqlite: Database.Database,
   workId: string,
   assetId: string,
-  role: 'design_sheet' | 'studio_photo',
+  role: 'adoption_cover' | 'design_sheet' | 'studio_photo',
 ) {
   const select = sqlite.prepare(`
     SELECT
@@ -790,6 +855,91 @@ export function replaceManagedDesignSheet(
     translateConstraint(error)
   }
   return getManagedWork(sqlite, workId)
+}
+
+export function replaceManagedAdoptionCover(
+  sqlite: Database.Database,
+  workId: string,
+  expectedVersion: number,
+  input: AdoptionCoverInput | null,
+  now = Date.now(),
+) {
+  const current = requireWork(sqlite, workId)
+  if (current.version !== expectedVersion) {
+    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+  }
+  if (current.purpose !== 'adoption') {
+    throw new ServiceError(409, 'CONFLICT', 'Adoption covers require an adoption work.')
+  }
+  if (current.publicationStatus === 'published') {
+    throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before editing media.', 'WORK_PUBLISHED_READONLY')
+  }
+  if (input) {
+    assertReadyWorkAsset(sqlite, workId, input.assetId, 'adoption_cover')
+  }
+  try {
+    sqlite.transaction(() => {
+      sqlite.prepare(`
+        DELETE FROM work_assets
+        WHERE work_id = ? AND role = 'adoption_cover'
+      `).run(workId)
+      if (input) {
+        sqlite.prepare(`
+          INSERT INTO work_assets (
+            work_id, asset_id, role, alt_text, position, is_primary,
+            focal_x, focal_y, crop_x, crop_y, crop_width, crop_height
+          ) VALUES (?, ?, 'adoption_cover', ?, 0, 0, ?, ?, ?, ?, ?, ?)
+        `).run(
+          workId,
+          input.assetId,
+          input.alt,
+          input.focalX,
+          input.focalY,
+          input.crop.x,
+          input.crop.y,
+          input.crop.width,
+          input.crop.height,
+        )
+        sqlite.prepare(`
+          UPDATE assets
+          SET focal_x = ?, focal_y = ?, version = version + 1, updated_at = ?
+          WHERE id = ? AND status = 'READY' AND role = 'adoption_cover'
+        `).run(input.focalX, input.focalY, now, input.assetId)
+      }
+      const result = sqlite.prepare(`
+        UPDATE works SET version = version + 1, updated_at = ?
+        WHERE id = ? AND version = ? AND publication_status != 'published'
+      `).run(now, workId, expectedVersion)
+      if (result.changes !== 1) {
+        throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+      }
+    })()
+  }
+  catch (error) {
+    if (error instanceof ServiceError) {
+      throw error
+    }
+    translateConstraint(error)
+  }
+  return getManagedWork(sqlite, workId)
+}
+
+/** T11: no PII or legacy owner/contact fields leave this review inventory. */
+export function listAmbiguousAdoptionStatusReviews(sqlite: Database.Database) {
+  return sqlite.prepare(`
+    SELECT
+      id, character_name AS characterName,
+      business_status AS legacyBusinessStatus,
+      publication_status AS publicationStatus
+    FROM works
+    WHERE purpose = 'adoption' AND adoption_status IS NULL
+    ORDER BY publication_status = 'published' DESC, character_name, id
+  `).all() as Array<{
+    characterName: string
+    id: string
+    legacyBusinessStatus: WorkRow['businessStatus']
+    publicationStatus: WorkRow['publicationStatus']
+  }>
 }
 
 export function replaceManagedStudioPhotos(

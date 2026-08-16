@@ -93,6 +93,7 @@ export const createUploadSessionRequestSchema = z.object({
 }).strict().superRefine((input, context) => {
   const workRole = input.mediaRole === 'design_sheet'
     || input.mediaRole === 'studio_photo'
+    || input.mediaRole === 'adoption_cover'
   const siteRoleMatches = input.owner.type === 'site'
     && (
       (input.owner.id.endsWith('-landscape') && input.mediaRole === 'home_hero_landscape')
@@ -107,6 +108,16 @@ export const createUploadSessionRequestSchema = z.object({
       code: 'custom',
       message: '媒体角色与归属类型不匹配',
       path: ['mediaRole'],
+    })
+  }
+  if (
+    input.mediaRole === 'adoption_cover'
+    && input.expected.width <= input.expected.height
+  ) {
+    context.addIssue({
+      code: 'custom',
+      message: '领养封面必须为横版图片',
+      path: ['expected'],
     })
   }
   if (
@@ -194,6 +205,7 @@ export const verifiedAssetDtoSchema = z.object({
   previews: z.array(z.object({
     usage: z.enum([
       'work-card',
+      'adoption-card',
       'detail',
       'design-sheet',
       'home-hero-landscape',

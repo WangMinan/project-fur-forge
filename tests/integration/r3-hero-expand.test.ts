@@ -23,6 +23,22 @@ import { claimHeroCollectionVersion } from '../../server/utils/repository/hero-c
 
 const directories: string[] = []
 
+function migrationCount() {
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  return journal.entries.length
+}
+
+function migrationCountAfter(tag: string) {
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  return journal.entries.length - journal.entries.findIndex(entry => entry.tag === tag) - 1
+}
+
 function databaseFile() {
   const directory = mkdtempSync(resolve(tmpdir(), 'fur-forge-r3-hero-'))
   directories.push(directory)
@@ -85,7 +101,7 @@ afterEach(() => {
 describe('R3-B Hero expand migration', () => {
   it('creates exactly four empty collection domains on a fresh database and is re-entrant', async () => {
     const file = databaseFile()
-    await expect(migrateDatabase(file)).resolves.toMatchObject({ applied: 38 })
+    await expect(migrateDatabase(file)).resolves.toMatchObject({ applied: migrationCount() })
     await expect(migrateDatabase(file)).resolves.toMatchObject({ applied: 0 })
     const database = openDatabase(file)
     try {
@@ -188,7 +204,9 @@ describe('R3-B Hero expand migration', () => {
       before.sqlite.close()
     }
 
-    await expect(migrateDatabase(file)).resolves.toMatchObject({ applied: 1 })
+    await expect(migrateDatabase(file)).resolves.toMatchObject({
+      applied: migrationCountAfter('0036_r3_a_contract'),
+    })
     await expect(migrateDatabase(file)).resolves.toMatchObject({ applied: 0 })
     const after = openDatabase(file)
     try {

@@ -7,6 +7,8 @@ import {
 export const MEDIA_ROLE_VALUES = [
   'design_sheet',
   'studio_photo',
+  'adoption_cover',
+  'commission_design_reference',
   'home_hero_landscape',
   'home_hero_portrait',
   'watermark_logo',
