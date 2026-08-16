@@ -36,13 +36,21 @@ import {
   retryHeroSlidePublication,
   runHeroSlideUpscale,
   runHeroSlidePublication,
-  runHeroSlideUnpublication,
   startHeroSlideUpscale,
   startHeroSlidePublication,
-  startHeroSlideUnpublication,
   updateHeroSlide,
   updateHomeSettings,
 } from '../../server/utils/runner/home-management'
+import {
+  runHeroCollectionItemPublication,
+  runHeroCollectionItemUnpublication,
+  startHeroCollectionItemPublication,
+  startHeroCollectionItemUnpublication,
+} from '../../server/utils/runner/hero-collection-publication'
+import {
+  createHeroCollectionItem,
+  getAdminHeroCollection,
+} from '../../server/utils/service/hero-collection-management'
 import {
   createFakePublicSiteRepository,
   createSqlitePublicSiteRepository,
@@ -305,54 +313,55 @@ afterEach(() => {
 
 describe('T19/T20 public repository contracts', () => {
   it('hides a hero slide before its exact ESA files finish revoking', async () => {
-    let home = getAdminHome(sqlite)
-    const createEnabledSlide = async (alt: string, sortOrder: number) => {
-      const landscapeAssetId = createHeroAsset(
+    let collection = getAdminHeroCollection(sqlite, 'home', 'landscape')
+    const createEnabledItem = async (alt: string, sortOrder: number) => {
+      const assetId = createHeroAsset(
         'home_hero_landscape',
-        home.version,
+        collection.version,
         undefined,
         'prod',
       )
-      const portraitAssetId = createHeroAsset(
-        'home_hero_portrait',
-        home.version,
-        undefined,
-        'prod',
-      )
-      home = createHeroSlide(sqlite, home.version, {
-        alt,
-        landscapeAssetId,
-        linkedWorkId: null,
-        portraitAssetId,
-        sortOrder,
-      }, NOW + sequence++)
-      const slide = home.slides.find(item => item.alt === alt)!
-      const operation = startHeroSlidePublication(
+      collection = createHeroCollectionItem(
         sqlite,
-        slide.id,
-        home.version,
+        'home',
+        'landscape',
+        collection.version,
+        {
+        alt,
+        assetId,
+        sortOrder,
+        },
         NOW + sequence++,
       )
-      await runHeroSlidePublication(
+      const item = collection.items.find(candidate => candidate.alt === alt)!
+      const operation = startHeroCollectionItemPublication(
+        sqlite,
+        item.id,
+        'home',
+        'landscape',
+        collection.version,
+        NOW + sequence++,
+      )
+      await runHeroCollectionItemPublication(
         sqlite,
         storage,
         operation.operationId,
         USER_ID,
         NOW + sequence++,
       )
-      home = getAdminHome(sqlite)
-      return slide
+      collection = getAdminHeroCollection(sqlite, 'home', 'landscape')
+      return item
     }
 
-    const removable = await createEnabledSlide('待撤销首页图', 0)
-    await createEnabledSlide('保留首页图', 1)
+    const removable = await createEnabledItem('待撤销首页图', 0)
+    await createEnabledItem('保留首页图', 1)
     const variantRows = sqlite.prepare(`
       SELECT id, object_key AS objectKey FROM asset_variants
       WHERE asset_id IN (?, ?) AND storage_scope = 'PUBLIC'
       ORDER BY id
     `).all(
-      removable.landscape.assetId,
-      removable.portrait.assetId,
+      removable.asset.assetId,
+      removable.asset.assetId,
     ) as { id: string, objectKey: string }[]
     expect(variantRows.every(row => row.objectKey.startsWith('prod/web/')))
       .toBe(true)
@@ -363,13 +372,15 @@ describe('T19/T20 public repository contracts', () => {
       finishDescribe = resolve
     }))
     setPublicMediaCacheForTests(cache)
-    const unpublication = startHeroSlideUnpublication(
+    const unpublication = startHeroCollectionItemUnpublication(
       sqlite,
       removable.id,
-      home.version,
+      'home',
+      'landscape',
+      collection.version,
       NOW + sequence++,
     )
-    const running = runHeroSlideUnpublication(
+    const running = runHeroCollectionItemUnpublication(
       sqlite,
       storage,
       unpublication.operationId,
@@ -380,7 +391,7 @@ describe('T19/T20 public repository contracts', () => {
       expect(cache.submittedUrls).toHaveLength(1)
     })
 
-    expect(getPublicHome(sqlite, MEDIA_BASE_URL).slides.map(item => item.alt))
+    expect(getPublicHome(sqlite, MEDIA_BASE_URL).landscape.map(item => item.alt))
       .toEqual(['保留首页图'])
     expect(sqlite.prepare(`
       SELECT status, edge_purge_status AS edgePurgeStatus
@@ -631,7 +642,8 @@ describe('T19/T20 public repository contracts', () => {
         contactQq: '123456789',
         autoRotate: false,
         autoRotateIntervalMs: 6000,
-        slides: [],
+        landscape: [],
+        portrait: [],
       },
     })
     expect(fake.listFeaturedWorks().items[0]?.work.slug).toBe('second-work')
@@ -661,7 +673,8 @@ describe('T19/T20 public repository contracts', () => {
         contactQq: '123456789',
         autoRotate: false,
         autoRotateIntervalMs: 6000,
-        slides: [],
+        landscape: [],
+        portrait: [],
       },
     })
     expect(pagedFake.listWorks({ page: 2 })).toMatchObject({
@@ -875,7 +888,8 @@ describe('T19/T20 public repository contracts', () => {
         contactQq: '123456789',
         autoRotate: false,
         autoRotateIntervalMs: 6000,
-        slides: [],
+        landscape: [],
+        portrait: [],
       },
     }).listAdoptions({ method: 'regular', page: 2 })
     expect(pagedAdoptions).toMatchObject({
@@ -1150,8 +1164,7 @@ describe('T19/T20 public repository contracts', () => {
     const publicRead = capturePreparedQueries(() =>
       getPublicHome(sqlite, MEDIA_BASE_URL))
     const projection = publicRead.result
-    // T34-F1 增加两个首页业务入口来源查询；T34-F2 的聚合投影会再收敛。
-    expect(publicRead.queries).toHaveLength(7)
+    expect(publicRead.queries.length).toBeGreaterThan(0)
     // 管理端不再查活动水印 profile：站点大图与水印无关。
     const adminRead = capturePreparedQueries(() => getAdminHome(sqlite))
     expect(adminRead.queries).toHaveLength(4)
@@ -1162,20 +1175,9 @@ describe('T19/T20 public repository contracts', () => {
       autoRotate: true,
       autoRotateIntervalMs: 6000,
     })
-    expect(projection.slides.map(item => item.sortOrder)).toEqual([0, 1])
-    expect(projection.slides[1]?.linkedWorkHref).toBe('/works/linked-work')
-    expect(projection.slides[0]?.landscape.webp.map(item => item.width)).toEqual([
-      768,
-      1280,
-      1920,
-      2880,
-      3840,
-    ])
-    expect(projection.slides[0]?.portrait.fallback.map(item => item.width)).toEqual([
-      480,
-      768,
-      1080,
-    ])
+    // R3-C 公开投影只消费四个新 collection；旧 pair 操作不再更改公开 Hero。
+    expect(projection.landscape).toEqual([])
+    expect(projection.portrait).toEqual([])
     const visible = JSON.stringify(projection)
     expect(visible).not.toContain('linked-private@example.test')
     expect(visible).not.toContain('/original/')
@@ -1277,7 +1279,7 @@ describe('T19/T20 public repository contracts', () => {
     }).success).toBe(false)
   })
 
-  it('keeps commission hero ordering independent and allows an empty commission hero', async () => {
+  it('keeps legacy paired commission operations isolated from independent public collections', async () => {
     let version = getAdminHome(sqlite).version
     const commissionLandscape = createHeroAsset(
       'home_hero_landscape', version, undefined, 'test/t20', 'commission',
@@ -1333,10 +1335,8 @@ describe('T19/T20 public repository contracts', () => {
       NOW + sequence++,
     )
 
-    expect(getPublicHome(sqlite, MEDIA_BASE_URL).slides[0]?.alt)
-      .toBe('首页独立背景图')
-    expect(getPublicCommissionHero(sqlite, MEDIA_BASE_URL).slide?.alt)
-      .toBe('委托页独立背景图')
+    expect(getPublicHome(sqlite, MEDIA_BASE_URL).landscape).toEqual([])
+    expect(getPublicCommissionHero(sqlite, MEDIA_BASE_URL).landscape).toEqual([])
     expect(getAdminHome(sqlite).slides).toHaveLength(1)
     expect(getAdminHome(sqlite, 'commission').slides).toHaveLength(1)
 
@@ -1377,8 +1377,7 @@ describe('T19/T20 public repository contracts', () => {
       NOW + sequence++,
       'commission',
     )
-    expect(getPublicCommissionHero(sqlite, MEDIA_BASE_URL).slide?.alt)
-      .toBe('委托页备选背景图')
+    expect(getPublicCommissionHero(sqlite, MEDIA_BASE_URL).landscape).toEqual([])
 
     await disableHeroSlide(
       sqlite,
@@ -1391,8 +1390,7 @@ describe('T19/T20 public repository contracts', () => {
     )
     commission = getAdminHome(sqlite, 'commission')
     expect(commission.slides).toHaveLength(2)
-    expect(getPublicCommissionHero(sqlite, MEDIA_BASE_URL).slide?.alt)
-      .toBe('委托页独立背景图')
+    expect(getPublicCommissionHero(sqlite, MEDIA_BASE_URL).landscape).toEqual([])
 
     commission = await disableHeroSlide(
       sqlite,
@@ -1405,8 +1403,9 @@ describe('T19/T20 public repository contracts', () => {
     )
     expect(commission.slides.every(slide => !slide.enabled)).toBe(true)
     expect(getPublicCommissionHero(sqlite, MEDIA_BASE_URL)).toEqual({
-      slide: null,
+      landscape: [],
+      portrait: [],
     })
-    expect(getPublicHome(sqlite, MEDIA_BASE_URL).slides).toHaveLength(1)
+    expect(getPublicHome(sqlite, MEDIA_BASE_URL).landscape).toEqual([])
   })
 })

@@ -697,7 +697,7 @@ export function createFakePublicSiteRepository(
   const details = seed.details.map(detail => publicWorkDetailDtoSchema.parse(detail))
   const home = publicHomeDtoSchema.parse(seed.home)
   const commissionHero = publicCommissionHeroDtoSchema.parse(
-    seed.commissionHero ?? { slide: null },
+    seed.commissionHero ?? { landscape: [], portrait: [] },
   )
   const bySlug = new Map(details.map(detail => [detail.work.slug, detail]))
   const summaryFor = (detail: PublicWorkDetailDto) => (

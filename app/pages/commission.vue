@@ -38,7 +38,9 @@ if (heroError.value) {
 const commission = computed(() => site.value?.commission ?? null)
 const contact = computed(() => site.value?.contact ?? null)
 const status = computed(() => site.value?.statuses.commission ?? null)
-const heroSlide = computed(() => hero.value?.slide ?? null)
+const heroReady = computed(() => Boolean(
+  hero.value?.landscape[0] && hero.value?.portrait[0],
+))
 const faqs = computed(() => commission.value?.faqs ?? [])
 
 function paragraphs(value: string | null | undefined) {
@@ -54,12 +56,12 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
   <div class="commission-page" data-testid="commission-page">
     <PublicPageIntro
       title="自设委托"
-      :description="heroSlide ? undefined : introText"
+      :description="heroReady ? undefined : introText"
     />
 
     <div class="commission-page__body">
       <section
-        v-if="status && !heroSlide"
+        v-if="status && !heroReady"
         class="commission-page__status"
         aria-label="当前委托营业状态"
         data-testid="commission-status"
@@ -68,8 +70,8 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
       </section>
 
       <CommissionLead
-        v-if="heroSlide"
-        :slide="heroSlide"
+        v-if="heroReady && hero"
+        :hero="hero"
         :status="status"
         :email="commission?.email"
         :description="introText"

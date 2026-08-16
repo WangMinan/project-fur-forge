@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import type { PublicHomeDto } from '~~/shared/types/contracts'
+import type {
+  HeroOrientation,
+  PublicHomeDto,
+} from '~~/shared/types/contracts'
 import {
   PROJECT_ENGLISH_NAME,
   PROJECT_NAME,
 } from '~~/shared/constants/project'
 
 /**
- * 首页双源轮播（T20）：
- * - 仅渲染当前项 <picture>：SSR 直出第一项，隐藏项不下载图片；无 JS 时第一项完整可用。
- * - 横屏 16:9 / 竖屏 9:16 独立 asset，由 ResponsivePicture 按 orientation 切换。
+ * R3-C 独立方向轮播：
+ * - SSR 只直出横竖各自第一项组成的 <picture>，无 JS 时仍可用。
+ * - 水合后仅操作当前 orientation 的索引，方向变化时夹紧对应索引。
  * - 自动轮播固定开启、10 秒一张；显式暂停/页面隐藏暂停，reduced-motion 停止。
  * - Hero 占据大面积首屏，鼠标停留或操作控件不能成为隐式永久暂停条件。
  */
@@ -16,14 +19,39 @@ const props = defineProps<{
   home: PublicHomeDto
 }>()
 
-const slides = computed(() => props.home.slides)
-const activeIndex = ref(0)
-const activeSlide = computed(() => slides.value[activeIndex.value])
+const activeOrientation = shallowRef<HeroOrientation>('landscape')
+const landscapeIndex = ref(0)
+const portraitIndex = ref(0)
+const items = computed(() => props.home[activeOrientation.value])
+const landscapeItem = computed(() => props.home.landscape[landscapeIndex.value])
+const portraitItem = computed(() => props.home.portrait[portraitIndex.value])
+const activeIndex = computed({
+  get: () => activeOrientation.value === 'landscape'
+    ? landscapeIndex.value
+    : portraitIndex.value,
+  set: (value: number) => {
+    if (activeOrientation.value === 'landscape') {
+      landscapeIndex.value = value
+    }
+    else {
+      portraitIndex.value = value
+    }
+  },
+})
+const activeItem = computed(() => (
+  items.value[activeIndex.value] ?? landscapeItem.value ?? portraitItem.value
+))
+const pictureSources = computed(() => (
+  landscapeItem.value?.sources ?? portraitItem.value?.sources
+))
 const transitionDirection = shallowRef<'next' | 'prev'>('next')
 const transitionName = computed(() => `home-hero-slide-${transitionDirection.value}`)
 
-watch(() => slides.value.length, (count) => {
-  activeIndex.value = clampSlideIndex(activeIndex.value, count)
+watch(() => props.home.landscape.length, (count) => {
+  landscapeIndex.value = clampSlideIndex(landscapeIndex.value, count)
+})
+watch(() => props.home.portrait.length, (count) => {
+  portraitIndex.value = clampSlideIndex(portraitIndex.value, count)
 })
 
 const reduceMotion = ref(false)
@@ -37,7 +65,7 @@ const autoplayInterval = computed(
 
 const autoplayRunning = computed(() =>
   autoplayInterval.value !== null
-  && slides.value.length > 1
+  && items.value.length > 1
   && !userPaused.value
   && !pageHidden.value)
 
@@ -59,7 +87,7 @@ function restartTimer() {
 }
 
 function goTo(index: number) {
-  const target = clampSlideIndex(index, slides.value.length)
+  const target = clampSlideIndex(index, items.value.length)
   if (target === activeIndex.value) {
     return
   }
@@ -69,12 +97,12 @@ function goTo(index: number) {
 
 function goNext() {
   transitionDirection.value = 'next'
-  activeIndex.value = nextSlideIndex(activeIndex.value, slides.value.length)
+  activeIndex.value = nextSlideIndex(activeIndex.value, items.value.length)
 }
 
 function goPrev() {
   transitionDirection.value = 'prev'
-  activeIndex.value = prevSlideIndex(activeIndex.value, slides.value.length)
+  activeIndex.value = prevSlideIndex(activeIndex.value, items.value.length)
 }
 
 function togglePause() {
@@ -122,6 +150,7 @@ function onPointerCancel() {
 }
 
 let motionQuery: MediaQueryList | null = null
+let orientationQuery: MediaQueryList | null = null
 let motionFrame: number | null = null
 
 function onMotionChange(event: MediaQueryListEvent) {
@@ -132,12 +161,24 @@ function onVisibilityChange() {
   pageHidden.value = document.hidden
 }
 
+function setOrientation(portrait: boolean) {
+  activeOrientation.value = portrait ? 'portrait' : 'landscape'
+  activeIndex.value = clampSlideIndex(activeIndex.value, items.value.length)
+}
+
+function onOrientationChange(event: MediaQueryListEvent) {
+  setOrientation(event.matches)
+}
+
 watch([autoplayRunning, autoplayInterval], restartTimer)
 
 onMounted(() => {
   motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
   reduceMotion.value = motionQuery.matches
   motionQuery.addEventListener('change', onMotionChange)
+  orientationQuery = window.matchMedia('(orientation: portrait)')
+  setOrientation(orientationQuery.matches)
+  orientationQuery.addEventListener('change', onOrientationChange)
   document.addEventListener('visibilitychange', onVisibilityChange)
   motionFrame = window.requestAnimationFrame(() => {
     motionReady.value = true
@@ -152,6 +193,7 @@ onBeforeUnmount(() => {
     window.cancelAnimationFrame(motionFrame)
   }
   motionQuery?.removeEventListener('change', onMotionChange)
+  orientationQuery?.removeEventListener('change', onOrientationChange)
   document.removeEventListener('visibilitychange', onVisibilityChange)
 })
 </script>
@@ -160,7 +202,7 @@ onBeforeUnmount(() => {
   <section
     class="home-hero"
     :class="{
-      'home-hero--empty': slides.length === 0,
+      'home-hero--empty': !pictureSources,
       'home-hero--motion-ready': motionReady,
     }"
     role="region"
@@ -172,21 +214,21 @@ onBeforeUnmount(() => {
     @pointerup="onPointerUp"
     @pointercancel="onPointerCancel"
   >
-    <template v-if="activeSlide">
+    <template v-if="pictureSources && activeItem">
       <div class="home-hero__viewport">
-        <Transition :name="transitionName">
+        <Transition :name="transitionName" :css="motionReady">
           <div
-            :key="activeIndex"
+            :key="`${activeOrientation}-${activeIndex}`"
             class="home-hero__slide"
             role="group"
             aria-roledescription="slide"
-            :aria-label="`第 ${activeIndex + 1} 张，共 ${slides.length} 张`"
+            :aria-label="`第 ${activeIndex + 1} 张，共 ${items.length} 张`"
           >
             <ResponsivePicture
               class="home-hero__media"
-              :sources="activeSlide.landscape"
-              :portrait-sources="activeSlide.portrait"
-              :alt="activeSlide.alt"
+              :sources="pictureSources"
+              :portrait-sources="portraitItem?.sources"
+              :alt="activeItem.alt"
               sizes="100vw"
               :loading="activeIndex === 0 ? 'eager' : 'lazy'"
               :fetchpriority="activeIndex === 0 ? 'high' : 'auto'"
@@ -207,23 +249,9 @@ onBeforeUnmount(() => {
       <p class="home-hero__tagline">
         {{ home.tagline }}
       </p>
-      <NuxtLink
-        v-if="activeSlide?.linkedWorkHref"
-        :to="activeSlide.linkedWorkHref"
-        class="home-hero__action"
-      >
-        查看这套作品
-      </NuxtLink>
-      <NuxtLink
-        v-else
-        to="/works"
-        class="home-hero__action"
-      >
-        浏览作品展示
-      </NuxtLink>
     </div>
 
-    <div v-if="slides.length > 1" class="home-hero__controls">
+    <div v-if="items.length > 1" class="home-hero__controls">
       <button
         type="button"
         class="home-hero__arrow"
@@ -236,12 +264,12 @@ onBeforeUnmount(() => {
       </button>
       <div class="home-hero__dots" role="group" aria-label="轮播分页">
         <button
-          v-for="(slide, index) in slides"
+          v-for="(item, index) in items"
           :key="index"
           type="button"
           class="home-hero__dot"
           :class="{ 'home-hero__dot--active': index === activeIndex }"
-          :aria-label="`第 ${index + 1} 张，共 ${slides.length} 张`"
+          :aria-label="`第 ${index + 1} 张，共 ${items.length} 张`"
           :aria-current="index === activeIndex ? 'true' : undefined"
           @click="goTo(index)"
         />
@@ -258,7 +286,7 @@ onBeforeUnmount(() => {
       </button>
       <!-- 自动轮播固定开启，因此暂停按钮常在（无障碍要求可暂停动效）。 -->
       <button
-        v-if="slides.length > 1"
+        v-if="items.length > 1"
         type="button"
         class="home-hero__pause"
         :aria-pressed="userPaused"
@@ -274,21 +302,28 @@ onBeforeUnmount(() => {
       </button>
     </div>
 
-    <p v-if="slides.length > 0" class="home-hero__live" role="status" aria-live="polite">
-      第 {{ activeIndex + 1 }} 张，共 {{ slides.length }} 张
+    <p v-if="items.length > 0" class="home-hero__live" role="status" aria-live="polite">
+      第 {{ activeIndex + 1 }} 张，共 {{ items.length }} 张
     </p>
   </section>
 </template>
 
 <style scoped>
-/* grid 堆叠：固定比例媒体盒与文字内容同占一格，区高取两者较大者。
-   正常情况下 16:9/9:16 比例盒决定高度（低 CLS）；文字超出时区高兜底。 */
+/* 首屏始终占满动态视口，避免移动地址栏变化时露出白底。 */
 .home-hero {
   position: relative;
   display: grid;
-  min-height: 16rem;
+  min-height: 100svh;
+  height: 100svh;
   color: var(--public-text-inverse);
   overflow: hidden;
+}
+
+@supports (height: 100dvh) {
+  .home-hero {
+    min-height: 100dvh;
+    height: 100dvh;
+  }
 }
 
 .home-hero--empty {
@@ -296,11 +331,11 @@ onBeforeUnmount(() => {
 }
 
 .home-hero__viewport {
-  position: relative;
+  position: absolute;
+  inset: 0;
   grid-area: 1 / 1;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  max-height: 100svh;
+  height: 100%;
   background: var(--image-placeholder);
   touch-action: pan-y;
 }
@@ -369,7 +404,10 @@ onBeforeUnmount(() => {
   width: 100%;
   max-width: var(--public-content-wide);
   margin: 0 auto;
-  padding: var(--space-8) var(--public-page-padding) var(--space-9);
+  padding:
+    var(--space-8)
+    var(--public-page-padding)
+    max(calc(env(safe-area-inset-bottom) + var(--space-8)), 8rem);
 }
 
 .home-hero__eyebrow {
@@ -394,28 +432,10 @@ onBeforeUnmount(() => {
   line-height: var(--line-height-normal);
 }
 
-.home-hero__action {
-  display: inline-flex;
-  align-items: center;
-  min-height: 3rem;
-  margin-top: var(--space-6);
-  padding: var(--space-3) var(--space-6);
-  color: var(--public-text-inverse);
-  font-size: var(--font-size-base);
-  background: var(--public-accent-primary);
-  border-radius: var(--radius-sm);
-  transition: background var(--duration-fast) var(--easing-standard);
-}
-
-.home-hero__action:hover {
-  color: var(--public-text-inverse);
-  background: var(--public-accent-hover);
-}
-
 .home-hero__controls {
   position: absolute;
   right: var(--public-page-padding);
-  bottom: var(--space-5);
+  bottom: max(var(--space-5), calc(env(safe-area-inset-bottom) + var(--space-3)));
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -424,7 +444,6 @@ onBeforeUnmount(() => {
 .home-hero--motion-ready .home-hero__eyebrow,
 .home-hero--motion-ready .home-hero__title,
 .home-hero--motion-ready .home-hero__tagline,
-.home-hero--motion-ready .home-hero__action,
 .home-hero--motion-ready .home-hero__controls {
   animation: home-hero-content-in 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -441,12 +460,8 @@ onBeforeUnmount(() => {
   animation-delay: 270ms;
 }
 
-.home-hero--motion-ready .home-hero__action {
-  animation-delay: 360ms;
-}
-
 .home-hero--motion-ready .home-hero__controls {
-  animation-delay: 470ms;
+  animation-delay: 360ms;
 }
 
 @keyframes home-hero-content-in {
@@ -521,14 +536,6 @@ onBeforeUnmount(() => {
   border: 0;
 }
 
-/* 竖屏：9:16 竖版素材，限高避免平板竖屏过高；比例与限高均为视口单位，无 CLS。 */
-@media (orientation: portrait) {
-  .home-hero__viewport {
-    aspect-ratio: 9 / 16;
-    max-height: 88svh;
-  }
-}
-
 @media (max-width: 767px) {
   .home-hero__controls {
     right: var(--public-page-padding);
@@ -542,19 +549,50 @@ onBeforeUnmount(() => {
   }
 }
 
+@media (min-width: 1024px) {
+  .home-hero__content {
+    align-items: end;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-areas:
+      ". title ."
+      "eyebrow . tagline";
+    gap: var(--space-5) var(--space-6);
+    padding-bottom: max(calc(env(safe-area-inset-bottom) + var(--space-8)), 8rem);
+  }
+
+  .home-hero__eyebrow {
+    grid-area: eyebrow;
+    justify-self: start;
+  }
+
+  .home-hero__title {
+    grid-area: title;
+    justify-self: center;
+    margin-top: 0;
+    text-align: center;
+  }
+
+  .home-hero__tagline {
+    grid-area: tagline;
+    justify-self: end;
+    margin-top: 0;
+    text-align: right;
+    white-space: nowrap;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .home-hero-slide-next-enter-active,
   .home-hero-slide-next-leave-active,
   .home-hero-slide-prev-enter-active,
-  .home-hero-slide-prev-leave-active,
-  .home-hero__action {
+  .home-hero-slide-prev-leave-active {
     transition: none;
   }
 
   .home-hero--motion-ready .home-hero__eyebrow,
   .home-hero--motion-ready .home-hero__title,
   .home-hero--motion-ready .home-hero__tagline,
-  .home-hero--motion-ready .home-hero__action,
   .home-hero--motion-ready .home-hero__controls {
     animation: none;
   }

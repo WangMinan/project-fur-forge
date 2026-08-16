@@ -29,6 +29,7 @@ import type {
   adminHeroAssetDtoSchema,
   adminHeroCollectionDtoSchema,
   adminHeroItemDtoSchema,
+  adminHeroItemPreviewDtoSchema,
   adminHeroPreviewDtoSchema,
   adminHeroSlideDtoSchema,
   adminHomeDtoSchema,
@@ -187,6 +188,9 @@ export type AdminHeroCollectionDto = z.infer<
   typeof adminHeroCollectionDtoSchema
 >
 export type AdminHeroPreviewDto = z.infer<typeof adminHeroPreviewDtoSchema>
+export type AdminHeroItemPreviewDto = z.infer<
+  typeof adminHeroItemPreviewDtoSchema
+>
 export type AdminHeroSlideDto = z.infer<typeof adminHeroSlideDtoSchema>
 export type AdminHomeDto = z.infer<typeof adminHomeDtoSchema>
 export type HeroPlacement = z.infer<typeof heroPlacementSchema>

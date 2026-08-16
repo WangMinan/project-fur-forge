@@ -169,7 +169,6 @@ test.describe('UI-02 首页 Hero 确定性对比度', () => {
     { selector: '.home-hero__eyebrow', label: '英文眉标' },
     { selector: '.home-hero__title', label: '主标题', largeText: true },
     { selector: '.home-hero__tagline', label: '口号' },
-    { selector: '.home-hero__action', label: '主行动' },
   ]
 
   // 仅桌面可见的目标（移动视口下桌面导航隐藏，改测菜单按钮）。
@@ -237,7 +236,7 @@ test.describe('UI-02 首页 Hero 确定性对比度', () => {
     }
   }
 
-  test('真实轮播图：桌面与手机视口的导航、口号与行动附近均满足 AA', async ({ page }) => {
+  test('真实轮播图：桌面与手机视口的导航、标题与口号均满足 AA', async ({ page }) => {
     await seedT09Catalog(page)
     await seedT09Home(page)
     await page.setViewportSize({ width: 1440, height: 900 })

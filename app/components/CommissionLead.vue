@@ -1,28 +1,53 @@
 <script setup lang="ts">
 import type {
-  PublicHeroSlideDto,
+  PublicHeroPlacementDto,
   PublicSiteBusinessStatusDto,
 } from '~~/shared/types/contracts'
 
 const props = defineProps<{
   description?: string | undefined
   email?: string | null | undefined
-  slide: PublicHeroSlideDto
+  hero: PublicHeroPlacementDto
   status?: PublicSiteBusinessStatusDto | null | undefined
 }>()
 
 const mailtoHref = computed(() => props.email
   ? `mailto:${props.email}?subject=${encodeURIComponent('自设委托估价咨询')}`
   : null)
+const landscape = computed(() => props.hero.landscape[0])
+const portrait = computed(() => props.hero.portrait[0])
+const sources = computed(() => landscape.value?.sources ?? portrait.value?.sources)
+const portraitActive = shallowRef(false)
+const alt = computed(() => (
+  (portraitActive.value ? portrait.value?.alt : landscape.value?.alt)
+  ?? landscape.value?.alt
+  ?? portrait.value?.alt
+  ?? '委托代表作品'
+))
+let orientationQuery: MediaQueryList | null = null
+
+function onOrientationChange(event: MediaQueryListEvent) {
+  portraitActive.value = event.matches
+}
+
+onMounted(() => {
+  orientationQuery = window.matchMedia('(orientation: portrait)')
+  portraitActive.value = orientationQuery.matches
+  orientationQuery.addEventListener('change', onOrientationChange)
+})
+
+onBeforeUnmount(() => {
+  orientationQuery?.removeEventListener('change', onOrientationChange)
+})
 </script>
 
 <template>
   <section class="commission-lead" aria-labelledby="commission-lead-title">
-    <div class="commission-lead__media">
+    <div v-if="sources" class="commission-lead__media">
       <ResponsivePicture
-        :sources="slide.landscape"
-        :portrait-sources="slide.portrait"
-        :alt="slide.alt"
+        :sources="sources"
+        :portrait-sources="portrait?.sources"
+        :alt="alt"
         sizes="(min-width: 1440px) 1440px, calc(100vw - 2rem)"
         loading="eager"
         fetchpriority="high"
@@ -48,11 +73,6 @@ const mailtoHref = computed(() => props.email
           :href="mailtoHref"
         >邮件咨询估价</a>
       </div>
-      <NuxtLink
-        v-if="slide.linkedWorkHref"
-        :to="slide.linkedWorkHref"
-        class="commission-lead__work-link"
-      >查看这件作品 <span aria-hidden="true">→</span></NuxtLink>
     </div>
   </section>
 </template>
@@ -173,21 +193,6 @@ const mailtoHref = computed(() => props.email
 
 .commission-lead__action--secondary:hover {
   background: rgb(17 20 25 / 0.52);
-}
-
-.commission-lead__work-link {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 2.75rem;
-  color: rgb(255 255 255 / 0.86);
-  font-size: var(--font-size-sm);
-}
-
-.commission-lead__work-link:hover {
-  color: var(--public-text-inverse);
-  text-decoration: underline;
-  text-underline-offset: 0.3em;
 }
 
 @media (min-width: 768px) {
