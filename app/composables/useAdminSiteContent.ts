@@ -12,18 +12,11 @@ import { AdminApiError } from './useAdminApi'
 export type SiteContentSection =
   | 'about'
   | 'commission'
-  | 'commission-faq'
   | 'contact'
   | 'privacy'
   | 'terms'
 
 export type SiteSaveSection = SiteBusinessStatusKind | SiteContentSection
-
-export interface SiteContentFaqRow {
-  id: string
-  question: string
-  answer: string
-}
 
 export interface SiteStatusPayload {
   tone: 'closed' | 'limited' | 'open'
@@ -33,7 +26,6 @@ export interface SiteStatusPayload {
 
 const SECTION_VERSION_KEYS = {
   'commission': 'commission',
-  'commission-faq': 'commissionFaq',
   'about': 'about',
   'terms': 'terms',
   'privacy': 'privacy',

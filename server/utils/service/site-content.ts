@@ -4,7 +4,6 @@ import { CONTACT_PLATFORMS } from '../../../shared/constants/contact'
 import {
   adminSiteContentDtoSchema,
   adminOfficialChannelsSchema,
-  commissionFaqListSchema,
   publicSiteContentDtoSchema,
 } from '../../../shared/schemas/site-content'
 import type {
@@ -29,8 +28,6 @@ interface SiteContentRow {
   commissionContentVersion: number
   commissionEmailAction: string | null
   commissionEstimateNote: string | null
-  commissionFaqJson: string | null
-  commissionFaqVersion: number
   commissionIntro: string | null
   contactAntiScam: string | null
   contactContentVersion: number
@@ -64,14 +61,12 @@ function siteContentRow(sqlite: Database.Database) {
       commission_intro AS commissionIntro,
       commission_estimate_note AS commissionEstimateNote,
       commission_email_action AS commissionEmailAction,
-      commission_faq_json AS commissionFaqJson,
       about_studio_facts AS aboutStudioFacts,
       about_making_scope AS aboutMakingScope,
       basic_terms AS basicTerms,
       privacy_policy AS privacyPolicy,
       contact_anti_scam AS contactAntiScam,
       commission_content_version AS commissionContentVersion,
-      commission_faq_version AS commissionFaqVersion,
       about_content_version AS aboutContentVersion,
       terms_content_version AS termsContentVersion,
       privacy_content_version AS privacyContentVersion,
@@ -111,15 +106,6 @@ export function getPublicBusinessStatuses(sqlite: Database.Database) {
   }
 }
 
-function faqs(raw: string | null) {
-  try {
-    return commissionFaqListSchema.parse(raw ? JSON.parse(raw) : [])
-  }
-  catch {
-    throw new ServiceError(500, 'INTERNAL_ERROR', 'Site FAQ data is invalid.')
-  }
-}
-
 function officialChannels(raw: string) {
   try {
     const value = JSON.parse(raw) as unknown
@@ -146,7 +132,6 @@ function content(sqlite: Database.Database): AdminSiteContentDto {
     version: row.version,
     sectionVersions: {
       commission: row.commissionContentVersion,
-      commissionFaq: row.commissionFaqVersion,
       about: row.aboutContentVersion,
       terms: row.termsContentVersion,
       privacy: row.privacyContentVersion,
@@ -157,7 +142,6 @@ function content(sqlite: Database.Database): AdminSiteContentDto {
       intro: row.commissionIntro,
       estimateNote: row.commissionEstimateNote,
       emailAction: row.commissionEmailAction,
-      faqs: faqs(row.commissionFaqJson),
     },
     about: {
       studioFacts: row.aboutStudioFacts,
@@ -293,7 +277,6 @@ export function getPublicSiteContent(
 export type SiteContentSection =
   | 'about'
   | 'commission'
-  | 'commission-faq'
   | 'contact'
   | 'privacy'
   | 'terms'
@@ -307,11 +290,6 @@ const SECTION_UPDATES = {
     versionColumn: 'commission_content_version',
     action: 'SITE_COMMISSION_CONTENT_UPDATE',
     assignments: 'commission_intro = @intro, commission_estimate_note = @estimateNote, commission_email_action = @emailAction',
-  },
-  'commission-faq': {
-    versionColumn: 'commission_faq_version',
-    action: 'SITE_COMMISSION_FAQ_UPDATE',
-    assignments: 'commission_faq_json = @faqJson',
   },
   'about': {
     versionColumn: 'about_content_version',

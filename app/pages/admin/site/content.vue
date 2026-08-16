@@ -101,13 +101,6 @@ onMounted(() => void load())
               :saving-section="savingSection"
               @save="payload => onSaveSection('commission', payload)"
             />
-            <AdminSiteCommissionFaqCard
-              :content="content"
-              :conflict-section="conflictSection"
-              :saved-section="savedSection"
-              :saving-section="savingSection"
-              @save="payload => onSaveSection('commission-faq', payload)"
-            />
             <AdminSiteAboutContentCard
               :content="content"
               :conflict-section="conflictSection"

@@ -20,7 +20,6 @@ function cleanForm() {
     intro: '',
     estimateNote: '',
     emailAction: '',
-    faqs: [] as Array<{ question: string, answer: string }>,
     studioFacts: '',
     makingScope: '',
     basicTerms: '',
@@ -84,30 +83,6 @@ describe('siteContentFieldIssues', () => {
     expect(issues.basicTerms).toBeTruthy()
     expect(issues.privacyPolicy).toBeTruthy()
     expect(issues.estimateNote).toBeUndefined()
-  })
-
-  it('flags incomplete faq rows and duplicate questions', () => {
-    const form = cleanForm()
-    form.faqs = [
-      { question: '只有一个问题', answer: '' },
-      { question: '重复问题', answer: '回答一' },
-      { question: '重复问题', answer: '回答二' },
-    ]
-    const issues = siteContentFieldIssues(form)
-    expect(issues['faq-0']).toBeTruthy()
-    expect(issues['faq-2']).toBeTruthy()
-    expect(issues['faq-1']).toBeUndefined()
-  })
-
-  it('ignores fully blank faq rows and caps faq count', () => {
-    const form = cleanForm()
-    form.faqs = Array.from({ length: SITE_CONTENT_LIMITS.faqMaxCount + 1 }, () => ({
-      question: '',
-      answer: '',
-    }))
-    const issues = siteContentFieldIssues(form)
-    expect(issues.faqs).toBeTruthy()
-    expect(issues['faq-0']).toBeUndefined()
   })
 
 })
