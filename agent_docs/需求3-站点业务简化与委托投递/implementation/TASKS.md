@@ -114,10 +114,16 @@
 - [x] **FU-01 · 委托申请输入与单图交互**：新增必填物种和大陆手机号校验；单图改为可点击/拖拽的卡片预览，409 重复 pending 申请保留当前表单与私有预览。
 - [x] **FU-02 · 委托队列与处理反馈**：旧库列表读取兼容、白底行、“昵称 · 物种”、详情物种和保存成功反馈均已实现；真实 409 仍停止并要求重新载入。
 - [x] **FU-03 · 首页大图管理复核**：沿用作品管理的“选择 → 上传 → 预览”流程；上传完成及既有 enabled/disabled 项默认显示认证 `w=640` 缩略图，不显示原图或 blob；发布显示进度与终态。
-- [x] **FU-04 · 首页入口与领养过滤**：标题切为“自设委托”/“设定领养”，委托卡新增直达申请按钮；adopted 从首页精选和领养区排除，无 available 时隐藏领养区。
+- [x] **FU-04 · 首页入口与领养过滤（历史实现，后由 FU-07 纠正）**：标题切为“自设委托”/“设定领养”，委托卡新增直达申请按钮；当时误将 adopted 同时从首页精选和领养区排除，FU-07 按用户复核纠正。
 - [x] **FU-05 · 品牌与备案展示**：指定透明 Logo 与拼贴字体已入库并用于页头、首页、移动导航和页脚；公安备案图标保持在编号前并位于 ICP 右侧。
 - [x] **FU-06 · 委托迁移与官方默认联系**：`0042_r3_e_commission_follow_up.sql` 增加 legacy-nullable species、pending 手机号部分唯一索引和受控默认联系方式更新；重复 pending 真实记录保持生产 handoff，不自动处理。
 - [x] **GATE-E-FU · 用户复核修正门禁**：全量 lint/typecheck、unit 186/186、integration 199/199、production build、verify、content guard 与相关 Chromium 38/38 均通过；只使用临时库、合成图和测试对象存储。真实手机、真实数据、独立 Review、用户验收与生产执行未代签。
+
+### E.2 · 2026-08-17 目录展示复核
+
+- [x] **FU-07 · 首页精选与领养边界**：adopted 只从首页“设定领养”排除，仍可按 featured 出现在“精选作品”；repository/fake repository 与 integration/E2E 同步。
+- [x] **FU-08 · 公开卡片与大图后台展示**：首页、`/works`、`/adoptions` 统一“名称 · 物种”的字体、字号和空格；已领养使用非绿色中性色；大图后台隐藏 collection version，新增按钮复用后台主按钮样式。
+- [x] **GATE-E-FU2 · 目录展示复核门禁**：lint/typecheck、unit 186/186、相关 integration 3/3、四个相关 Chromium spec 63/63、production build/content guard、verify 与实际本地数据五视口浏览器检查通过；独立 Review、用户验收与生产执行不由实现者代签。
 
 ## F. 最终评审与发布
 

@@ -141,7 +141,7 @@ describe('R3-D adoption public projection', () => {
     expect(JSON.stringify({ adoption, detail })).not.toContain('/original/')
   })
 
-  it('keeps adopted works out of every home projection while retaining them in the adoption list', async () => {
+  it('keeps adopted works in featured while excluding them from current home adoptions', async () => {
     await seedCompleteAdoption({
       id: '44444444-4444-4444-8444-444444444440',
       name: '栗子',
@@ -163,7 +163,8 @@ describe('R3-D adoption public projection', () => {
     expect(aggregate.currentAdoptions.items).toHaveLength(1)
     expect(aggregate.currentAdoptions.items.map(item => item.work.slug))
       .toEqual(['chestnut'])
-    expect(aggregate.featured.items.map(item => item.work.slug)).toEqual(['chestnut'])
+    expect(aggregate.featured.items.map(item => item.work.slug))
+      .toEqual(['chestnut', 'pinecone'])
     expect(repository.listAdoptions().items.map(item => item.work.slug))
       .toEqual(['chestnut', 'pinecone'])
     expect(serialized).not.toContain('adoptionMethod')

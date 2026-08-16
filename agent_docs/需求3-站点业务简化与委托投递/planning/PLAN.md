@@ -196,7 +196,8 @@ OSS CORS `*` 不作为 GATE-B 的失败条件，不要求测试“只能允许�
 - `/works` 删除用途/装型筛选；
 - `/works/{slug}` 删除 facts/tags/price/status；
 - SEO/JSON-LD 收缩；
-- 名称搜索/分页保留。
+- 名称搜索/分页保留；
+- 首页精选只按 published/featured/order 投影，不因 adopted 排除。
 
 ### D3. Adoption
 
@@ -204,7 +205,10 @@ OSS CORS `*` 不作为 GATE-B 的失败条件，不要求测试“只能允许�
 - published adoption 补 cover 或下架；
 - `/adoptions` 删除 method/count/event；
 - cover only；
-- 名称、物种、状态、可选价格。
+- 名称、物种、状态、可选价格；
+- 首页领养只取 available；已领养继续留在 `/adoptions`，状态使用非绿色中性色。
+
+公开首页、`/works`、`/adoptions` 统一复用“名称 · 物种”展示，点号两侧保留空格，名称字体与字号一致。
 
 ### D4. Works contract
 

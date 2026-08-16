@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { PublicAdoptionListItemDto } from '~~/shared/types/contracts'
+import WorkIdentityLabel from '~/components/WorkIdentityLabel.vue'
 import { formatCnyMinorUnits } from '~/utils/format'
 import { ADOPTION_STATUS_LABELS } from '~/utils/work-labels'
 
@@ -30,11 +31,15 @@ const price = computed(() => props.adoption.work.price
     <span class="adoption-card__body">
       <span class="adoption-card__heading">
         <span class="adoption-card__title">
-          <span class="adoption-card__name">{{ adoption.work.characterName }}</span>
-          <span class="adoption-card__separator" aria-hidden="true">·</span>
-          <span class="adoption-card__meta">{{ adoption.work.species }}</span>
+          <WorkIdentityLabel
+            :character-name="adoption.work.characterName"
+            :species="adoption.work.species"
+          />
         </span>
-        <span class="adoption-card__status">
+        <span
+          class="adoption-card__status"
+          :data-status="adoption.work.adoptionStatus"
+        >
           {{ ADOPTION_STATUS_LABELS[adoption.work.adoptionStatus] }}
         </span>
       </span>
@@ -113,16 +118,18 @@ const price = computed(() => props.adoption.work.price
   gap: var(--space-3);
 }
 
-.adoption-card__name {
-  font-family: var(--font-public-display);
-  font-size: var(--font-size-md);
-  line-height: var(--line-height-heading);
+.adoption-card__title {
+  min-width: 0;
 }
 
 .adoption-card__status {
   flex: none;
-  color: var(--public-status-open);
+  color: var(--public-status-neutral);
   font-size: var(--font-size-sm);
+}
+
+.adoption-card__status[data-status='available'] {
+  color: var(--public-status-open);
 }
 
 .adoption-card__details {
@@ -131,11 +138,6 @@ const price = computed(() => props.adoption.work.price
   gap: var(--space-2) var(--space-4);
   color: var(--public-text-secondary);
   font-size: var(--font-size-sm);
-}
-
-.adoption-card__meta {
-  flex: none;
-  color: var(--public-text-secondary);
 }
 
 .adoption-card__price {

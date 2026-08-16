@@ -230,6 +230,8 @@ NULL
 
 生成只含计数和内部 ID 的后台复核清单，不写仓库。景宸逐条确认后保存目标状态。contract 前 NULL 必须为 0。
 
+状态映射只改变领养业务状态，不改变 `featured`。切换公开投影时，首页精选仍按 published/featured/order 取数；只有首页领养区按 `available` 过滤，`adopted` 继续保留在 `/adoptions`。
+
 ### 4.3 cover 补齐
 
 - 不自动从 studio photo 或 design sheet 生成；
