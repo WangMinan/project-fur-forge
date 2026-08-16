@@ -33,6 +33,7 @@
     "verify:observability": "node scripts/verify-security-observability-policy.mjs",
     "measure:production": "node scripts/measure-production-baseline.mjs",
     "media:cleanup-expired-uploads": "tsx scripts/cleanup-expired-uploads.ts",
+    "commission:cleanup-expired-uploads": "tsx scripts/cleanup-commission-uploads.ts",
     "media:reconcile-site-display": "tsx scripts/reconcile-site-display.ts",
     "media:upgrade-site-display-v2": "tsx scripts/upgrade-site-display-v2.ts",
     "r3-a:cleanup": "tsx scripts/r3-stage-a-cleanup-cli.ts",
