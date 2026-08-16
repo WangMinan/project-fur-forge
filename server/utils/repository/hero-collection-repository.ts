@@ -333,8 +333,13 @@ export function findPublicKeysForHeroItem(
   const usage = item.placement === 'home'
     ? `home-hero-${item.orientation}`
     : `commission-hero-${item.orientation}`
+  const usages = item.placement === 'commission' && item.orientation === 'landscape'
+    ? [usage, 'home-entry-commission']
+    : [usage]
+  const placeholders = usages.map(() => '?').join(', ')
   return sqlite.prepare(`
     SELECT object_key FROM asset_variants
-    WHERE asset_id = ? AND storage_scope = 'PUBLIC' AND usage = ?
-  `).pluck().all(item.assetId, usage) as string[]
+    WHERE asset_id = ? AND storage_scope = 'PUBLIC'
+      AND usage IN (${placeholders})
+  `).pluck().all(item.assetId, ...usages) as string[]
 }

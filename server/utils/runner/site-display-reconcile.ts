@@ -106,46 +106,40 @@ export function findReconcileTargets(
   scope: ReconcileScope = 'all',
 ): ReconcileTarget[] {
   const targets: ReconcileTarget[] = []
-  const slides = sqlite.prepare(`
+  const items = sqlite.prepare(`
     SELECT
-      slide.id, slide.placement,
-      slide.landscape_asset_id AS landscapeAssetId,
-      slide.portrait_asset_id AS portraitAssetId
-    FROM site_hero_slides AS slide
-    JOIN assets AS landscape ON landscape.id = slide.landscape_asset_id
-    JOIN assets AS portrait ON portrait.id = slide.portrait_asset_id
-    WHERE slide.enabled = 1
-      AND landscape.status = 'READY' AND portrait.status = 'READY'
-    ORDER BY slide.placement, slide.sort_order, slide.id
+      item.id, item.placement, item.orientation, item.asset_id AS assetId
+    FROM site_hero_items AS item
+    JOIN assets AS asset ON asset.id = item.asset_id
+    WHERE item.enabled = 1 AND asset.status = 'READY'
+    ORDER BY item.placement, item.orientation, item.sort_order, item.id
   `).all() as Array<{
+    assetId: string
     id: string
-    landscapeAssetId: string
+    orientation: 'landscape' | 'portrait'
     placement: 'home' | 'commission'
-    portraitAssetId: string
   }>
 
-  for (const slide of slides) {
-    const kind = slide.placement === 'home' ? 'home-hero' : 'commission-hero'
+  for (const item of items) {
+    const kind = item.placement === 'home' ? 'home-hero' : 'commission-hero'
     if (!inScope(scope, kind)) {
       continue
     }
-    const usages = SITE_HERO_USAGES[slide.placement]
+    const usage = SITE_HERO_USAGES[item.placement][item.orientation]
     targets.push({
-      assetId: slide.landscapeAssetId,
+      assetId: item.assetId,
       kind,
-      label: `${slide.placement}-hero-landscape`,
-      usages: [usages.landscape],
+      label: `${item.placement}-hero-${item.orientation}`,
+      usages: [usage],
     })
-    targets.push({
-      assetId: slide.portraitAssetId,
-      kind,
-      label: `${slide.placement}-hero-portrait`,
-      usages: [usages.portrait],
-    })
-    if (slide.placement === 'commission' && inScope(scope, 'home-entry')) {
+    if (
+      item.placement === 'commission'
+      && item.orientation === 'landscape'
+      && inScope(scope, 'home-entry')
+    ) {
       // 首页委托入口借用委托 Hero 横版源，但使用独立入口变体与独立公开 URL。
       targets.push({
-        assetId: slide.landscapeAssetId,
+        assetId: item.assetId,
         kind: 'home-entry',
         label: 'home-entry-commission',
         usages: [HOME_ENTRY_USAGES.commission],
