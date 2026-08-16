@@ -21,6 +21,7 @@ import {
 } from '../../server/utils/database'
 import {
   getManagedWork,
+  getPublicSafeWorkPreview,
   listAmbiguousAdoptionStatusReviews,
   replaceManagedAdoptionCover,
 } from '../../server/utils/service/work-management'
@@ -210,6 +211,15 @@ describe('R3-B adoption expand', () => {
         },
       })
       expect(getManagedWork(sqlite, workId).adoptionCover).not.toBeNull()
+      const preview = getPublicSafeWorkPreview(sqlite, workId)
+      expect(preview).toMatchObject({
+        adoptionStatus: null,
+        adoptionCover: {
+          assetId,
+          alt: '横版单头成果图',
+        },
+      })
+      expect(JSON.stringify(preview)).not.toContain('test/original/adoption-cover.png')
       expect(() => sqlite.prepare(`
         INSERT INTO assets (
           id, role, status, private_object_key, sha256, byte_size,
