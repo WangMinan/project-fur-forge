@@ -18,6 +18,15 @@ import {
 const directories: string[] = []
 const PRE_CONTRACT_TAG = '0039_r3_d_works_contract'
 
+function migrationsAfter(tag: string) {
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  const index = journal.entries.findIndex(entry => entry.tag === tag)
+  return journal.entries.length - index - 1
+}
+
 function databaseFile() {
   const directory = mkdtempSync(resolve(tmpdir(), 'fur-forge-r3-commission-contract-'))
   directories.push(directory)
@@ -98,7 +107,9 @@ describe('R3-E commission Contract migration', () => {
       before.sqlite.close()
     }
 
-    await expect(migrateDatabase(file)).resolves.toMatchObject({ applied: 1 })
+    await expect(migrateDatabase(file)).resolves.toMatchObject({
+      applied: migrationsAfter(PRE_CONTRACT_TAG),
+    })
     await expect(migrateDatabase(file)).resolves.toMatchObject({ applied: 0 })
 
     const after = openDatabase(file)

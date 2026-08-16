@@ -18,6 +18,15 @@ import {
 const directories: string[] = []
 const PRE_CONTRACT_TAG = '0038_r3_b_adoption_commission_expand'
 
+function migrationsAfter(tag: string) {
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  const index = journal.entries.findIndex(entry => entry.tag === tag)
+  return journal.entries.length - index - 1
+}
+
 function databaseFile() {
   const directory = mkdtempSync(resolve(tmpdir(), 'fur-forge-r3-contract-'))
   directories.push(directory)
@@ -117,6 +126,28 @@ function insertReadyAsset(
     input.role,
     input.role === 'adoption_cover' ? '合成领养横版封面' : '合成主出厂照',
     input.role === 'studio_photo' ? 1 : 0,
+  )
+}
+
+function insertReadyHeroAsset(
+  sqlite: ReturnType<typeof openDatabase>['sqlite'],
+  input: { id: string, role: 'home_hero_landscape' | 'home_hero_portrait' },
+) {
+  const now = Date.UTC(2026, 7, 16)
+  sqlite.prepare(`
+    INSERT INTO assets (
+      id, role, status, private_object_key, sha256, byte_size,
+      mime_type, width, height, created_at, updated_at
+    ) VALUES (?, ?, 'READY', ?, ?, 1024, 'image/png', ?, ?, ?, ?)
+  `).run(
+    input.id,
+    input.role,
+    `test/r3-contract/${input.id}.png`,
+    input.id.replaceAll('-', '').padEnd(64, 'b').slice(0, 64),
+    input.role === 'home_hero_landscape' ? 1920 : 1080,
+    input.role === 'home_hero_landscape' ? 1080 : 1920,
+    now,
+    now,
   )
 }
 
@@ -263,6 +294,36 @@ describe('R3-D works Contract migration', () => {
         id: 'eligible-draft',
         purpose: 'commission',
       })
+      insertLegacyWork(before.sqlite, {
+        id: 'hero-linked',
+        publicationStatus: 'published',
+        purpose: 'showcase',
+      })
+      insertReadyAsset(before.sqlite, {
+        id: '44444444-4444-4444-8444-444444444444',
+        role: 'studio_photo',
+        workId: 'hero-linked',
+      })
+      insertReadyHeroAsset(before.sqlite, {
+        id: '55555555-5555-4555-8555-555555555555',
+        role: 'home_hero_landscape',
+      })
+      insertReadyHeroAsset(before.sqlite, {
+        id: '66666666-6666-4666-8666-666666666666',
+        role: 'home_hero_portrait',
+      })
+      const now = Date.UTC(2026, 7, 16)
+      before.sqlite.prepare(`
+        INSERT INTO site_hero_slides (
+          id, landscape_asset_id, portrait_asset_id, alt_text,
+          sort_order, enabled, linked_work_id, created_at, updated_at
+        ) VALUES (
+          '77777777-7777-4777-8777-777777777777',
+          '55555555-5555-4555-8555-555555555555',
+          '66666666-6666-4666-8666-666666666666',
+          '合成 Hero', 0, 1, 'hero-linked', ?, ?
+        )
+      `).run(now, now)
       before.sqlite.prepare(`
         INSERT INTO work_feature_tags (work_id, value, position)
         VALUES ('eligible-adoption', '迁移后删除', 0)
@@ -272,7 +333,9 @@ describe('R3-D works Contract migration', () => {
       before.sqlite.close()
     }
 
-    await expect(migrateDatabase(file)).resolves.toMatchObject({ applied: 1 })
+    await expect(migrateDatabase(file)).resolves.toMatchObject({
+      applied: migrationsAfter(PRE_CONTRACT_TAG),
+    })
     await expect(migrateDatabase(file)).resolves.toMatchObject({ applied: 0 })
     const after = openDatabase(file)
     try {
@@ -318,10 +381,21 @@ describe('R3-D works Contract migration', () => {
           featured: 1,
           version: 3,
         },
+        {
+          id: 'hero-linked',
+          purpose: 'showcase',
+          adoptionStatus: null,
+          publicationStatus: 'published',
+          sortOrder: 7,
+          featured: 1,
+          version: 3,
+        },
       ])
       expect(after.sqlite.prepare(`
         SELECT role, alt_text AS alt, is_primary AS isPrimary
-        FROM work_assets ORDER BY role
+        FROM work_assets
+        WHERE work_id = 'eligible-adoption'
+        ORDER BY role
       `).all()).toEqual([
         { role: 'adoption_cover', alt: '合成领养横版封面', isPrimary: 0 },
         { role: 'studio_photo', alt: '合成主出厂照', isPrimary: 1 },
@@ -330,6 +404,20 @@ describe('R3-D works Contract migration', () => {
         SELECT count(*) FROM sqlite_master
         WHERE type = 'table' AND name = 'work_feature_tags'
       `).pluck().get()).toBe(0)
+      const heroWorkForeignKey = (after.sqlite.pragma(
+        'foreign_key_list(site_hero_slides)',
+      ) as Array<{ from: string, table: string }>).find(key => key.from === 'linked_work_id')
+      expect(heroWorkForeignKey?.table).toBe('works')
+      expect(after.sqlite.prepare(`
+        SELECT linked_work_id FROM site_hero_slides
+        WHERE id = '77777777-7777-4777-8777-777777777777'
+      `).pluck().get()).toBe('hero-linked')
+      after.sqlite.prepare("DELETE FROM work_assets WHERE work_id = 'hero-linked'").run()
+      after.sqlite.prepare("DELETE FROM works WHERE id = 'hero-linked'").run()
+      expect(after.sqlite.prepare(`
+        SELECT linked_work_id FROM site_hero_slides
+        WHERE id = '77777777-7777-4777-8777-777777777777'
+      `).pluck().get()).toBeNull()
       expect(after.sqlite.pragma('foreign_key_check')).toEqual([])
       expect(after.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
       expect(() => after.sqlite.prepare(`

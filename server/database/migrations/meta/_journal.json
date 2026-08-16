@@ -288,6 +288,13 @@
       "when": 1787155200000,
       "tag": "0040_r3_e_commission_contract",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "6",
+      "when": 1787241600000,
+      "tag": "0041_r3_d_hero_work_fk",
+      "breakpoints": true
     }
   ]
 }
