@@ -141,18 +141,31 @@ describe('R3-D adoption public projection', () => {
     expect(JSON.stringify({ adoption, detail })).not.toContain('/original/')
   })
 
-  it('includes complete adoptions in the home aggregate without retired event fields', async () => {
+  it('keeps adopted works out of every home projection while retaining them in the adoption list', async () => {
     await seedCompleteAdoption({
       id: '44444444-4444-4444-8444-444444444440',
       name: '栗子',
       slug: 'chestnut',
       status: 'available',
     })
-    const aggregate = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
-      .getHomeAggregate()
+    await seedCompleteAdoption({
+      id: '55555555-5555-4555-8555-555555555550',
+      name: '松果',
+      slug: 'pinecone',
+      status: 'adopted',
+    })
+    sqlite.prepare(`UPDATE works SET featured = 1`).run()
+
+    const repository = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
+    const aggregate = repository.getHomeAggregate()
     const serialized = JSON.stringify(aggregate.currentAdoptions)
 
     expect(aggregate.currentAdoptions.items).toHaveLength(1)
+    expect(aggregate.currentAdoptions.items.map(item => item.work.slug))
+      .toEqual(['chestnut'])
+    expect(aggregate.featured.items.map(item => item.work.slug)).toEqual(['chestnut'])
+    expect(repository.listAdoptions().items.map(item => item.work.slug))
+      .toEqual(['chestnut', 'pinecone'])
     expect(serialized).not.toContain('adoptionMethod')
     expect(serialized).not.toContain('eventName')
     expect(serialized).not.toContain('eventTime')

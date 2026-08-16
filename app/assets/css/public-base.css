@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Zhuohei Collage";
+  src: url("/fonts/zhuohei-collage.ttf") format("truetype");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+}
+
 /* 公开站生产设计 Token 与基础样式。
    契约来源：agent_docs/需求1-兽装工作室主页/.design/public-site/DESIGN_TOKENS.md
    原则：白底、摄影优先；明显蓝色常态 5%–10%，硬上限 15%。 */
@@ -35,6 +43,8 @@
 
   --font-public-display:
     "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+  --font-brand-display:
+    "Zhuohei Collage", "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-public-body:
     "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
   --font-public-mono:

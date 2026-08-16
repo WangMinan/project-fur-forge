@@ -506,7 +506,7 @@ test.describe('T20 首页双源轮播', () => {
 })
 
 test.describe('T28 首页完整内容顺序', () => {
-  test('只用真实数据依次显示图片入口、营业状态和当前领养', async ({ page }) => {
+  test('只用真实数据依次显示自设委托入口、营业状态和设定领养', async ({ page }) => {
     await seedPublicCatalog(page, [
       ...WORKS,
       {
@@ -527,8 +527,7 @@ test.describe('T28 首页完整内容顺序', () => {
     ], undefined, 'commission')
     await page.goto('/')
 
-    // T34-F2：入口与状态合并为统一业务入口卡，不再有独立状态区。
-    // 顺序与公开站 IA 一致：Hero → 精选作品 → 统一业务入口 → 当前领养 → 页脚。
+    // 顺序与公开站 IA 一致：Hero → 精选作品 → 自设委托 → 设定领养 → 页脚。
     const order = await page.locator([
       '[data-testid="public-hero"]',
       '[data-testid="featured-works"]',
@@ -550,42 +549,32 @@ test.describe('T28 首页完整内容顺序', () => {
 
     const entries = page.getByTestId('home-business-entries')
     await expect(entries.getByRole('heading', { level: 2 }))
-      .toHaveText('委托与领养')
+      .toHaveText('自设委托')
     const commission = entries.getByTestId('home-business-entry')
-      .filter({ has: page.locator('[data-entry-kind="commission"]') })
-      .or(entries.locator('[data-entry-kind="commission"]'))
-    const adoption = entries.locator('[data-entry-kind="adoption"]')
-    await expect(commission).toHaveAttribute('href', '/commission')
-    await expect(adoption).toHaveAttribute('href', '/adoptions')
-
-    // 每张卡内部同时包含标题、状态和单一行动入口，且整卡是唯一链接。
-    for (const card of [commission, adoption]) {
-      await expect(card.locator('.home-entry__name')).toBeVisible()
-      await expect(card.locator('.home-entry__status')).toBeVisible()
-      await expect(card.locator('.home-entry__action')).toBeVisible()
-      expect(await card.locator('a').count()).toBe(0)
-    }
+    await expect(commission).toHaveAttribute('data-entry-kind', 'commission')
+    await expect(commission.locator('.home-entry__name')).toBeVisible()
+    await expect(commission.locator('.home-entry__status')).toBeVisible()
+    await expect(commission.getByRole('link', { name: /查看详情/u }))
+      .toHaveAttribute('href', '/commission')
+    await expect(commission.getByRole('link', { name: '提交委托申请' }))
+      .toHaveAttribute('href', '/commission/apply')
+    await expect(entries.locator('[data-entry-kind="adoption"]')).toHaveCount(0)
     await expect(page.getByTestId('home-current-adoptions')).toContainText('云朵')
+    await expect(page.getByTestId('home-current-adoptions').getByRole('heading'))
+      .toHaveText('设定领养')
 
     for (const [width, height] of [[390, 844], [768, 1024], [1440, 900]]) {
       await page.setViewportSize({ width, height })
       await page.goto('/')
       const imageEntries = page.getByTestId('home-business-entries')
       await imageEntries.scrollIntoViewIfNeeded()
-      await expect(imageEntries.getByRole('img')).toHaveCount(2)
-      // 两卡视觉对称：同一断点下宽高一致。
+      await expect(imageEntries.getByRole('img')).toHaveCount(1)
       const boxes = await imageEntries.locator('[data-testid="home-business-entry"]')
         .evaluateAll(cards => cards.map((card) => {
           const rect = card.getBoundingClientRect()
           return [Math.round(rect.width), Math.round(rect.height)]
         }))
-      expect(boxes).toHaveLength(2)
-      expect(boxes[0]![0]).toEqual(boxes[1]![0])
-      // 两卡同宽同比例；≥768px 为两列布局，网格默认拉伸使高度一致。
-      // <768px 单列堆叠时，两张卡各自按真实文案长度自适应高度，不强制相等。
-      if (width >= 768) {
-        expect(boxes[0]).toEqual(boxes[1])
-      }
+      expect(boxes).toHaveLength(1)
       expect(await page.evaluate(() =>
         document.documentElement.scrollWidth - document.documentElement.clientWidth,
       )).toBeLessThanOrEqual(1)
@@ -605,7 +594,7 @@ test.describe('T28 首页完整内容顺序', () => {
     await expect(page.getByTestId('public-hero')).toBeVisible()
   })
 
-  test('只有一个真实图片入口时在桌面占满整行', async ({ page }) => {
+  test('自设委托入口在桌面占满整行并提供详情与申请两个入口', async ({ page }) => {
     await seedPublicCatalog(page, WORKS.filter(work => work.purpose !== 'adoption'))
     await seedHomeSlides(page, SLIDES)
     await seedHomeSlides(page, [
@@ -616,13 +605,38 @@ test.describe('T28 首页完整内容顺序', () => {
 
     const widths = await page.getByTestId('home-business-entries').evaluate((section) => {
       const list = section.querySelector('ul')!
-      const entry = section.querySelector('a')!
+      const entry = section.querySelector('[data-testid="home-business-entry"]')!
       return [list.getBoundingClientRect().width, entry.getBoundingClientRect().width]
     })
     expect(Math.abs(widths[0]! - widths[1]!)).toBeLessThanOrEqual(1)
-    await expect(
-      page.getByTestId('home-business-entries').getByRole('link'),
-    ).toHaveCount(1)
+    await expect(page.getByTestId('home-business-entries').getByRole('link'))
+      .toHaveCount(3)
+  })
+
+  test('已领养作品不进入首页精选或设定领养', async ({ page }) => {
+    await seedPublicCatalog(page, [{
+      slug: 'e2e-public-home-adopted',
+      characterName: '已领养角色',
+      species: '犬科',
+      purpose: 'adoption',
+      adoptionStatus: 'adopted',
+      adoptionCover: { alt: '已领养角色封面', width: 1920, height: 1080 },
+      featured: true,
+      sortOrder: 0,
+      photos: [{ alt: '已领养角色出厂照' }],
+    }])
+    await seedHomeSlides(page, [{
+      alt: '已领养过滤验证首页大图',
+      sortOrder: 0,
+      enabled: true,
+      linkedWorkSlug: null,
+    }])
+    await seedHomeSlides(page, [], undefined, 'commission')
+    await page.goto('/')
+
+    await expect(page.getByTestId('home-current-adoptions')).toHaveCount(0)
+    await expect(page.getByTestId('featured-works')).toHaveCount(0)
+    await expect(page.getByText('已领养角色')).toHaveCount(0)
   })
 })
 

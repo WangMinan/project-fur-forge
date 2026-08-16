@@ -33,12 +33,21 @@ const { data: filings } = await useFetch("/api/site-meta", {
   <footer class="public-footer" data-testid="public-footer">
     <div class="public-footer__inner">
       <div class="public-footer__brand">
-        <p class="public-footer__name">
-          {{ PROJECT_NAME }}
-        </p>
-        <p class="public-footer__sub">
-          {{ PROJECT_ENGLISH_NAME }}
-        </p>
+        <img
+          class="public-footer__logo"
+          src="/brand/logo-mark.png"
+          alt=""
+          width="1600"
+          height="1600"
+        >
+        <div>
+          <p class="public-footer__name">
+            {{ PROJECT_NAME }}
+          </p>
+          <p class="public-footer__sub">
+            {{ PROJECT_ENGLISH_NAME }}
+          </p>
+        </div>
       </div>
 
       <div class="public-footer__center">
@@ -87,8 +96,9 @@ const { data: filings } = await useFetch("/api/site-meta", {
 
       <div class="public-footer__legal">
         <p class="public-footer__copyright">
-          © 2026-{{ shanghaiYear }} {{ PROJECT_NAME }}.
-          {{ PROJECT_ENGLISH_NAME }}. All Rights Reserved.
+          © 2026-{{ shanghaiYear }}
+          <span class="public-footer__brand-copy">{{ PROJECT_NAME }}. {{ PROJECT_ENGLISH_NAME }}.</span>
+          All Rights Reserved.
         </p>
         <p class="public-footer__legal-links">
           <NuxtLink to="/service">服务条款</NuxtLink>
@@ -139,8 +149,21 @@ const { data: filings } = await useFetch("/api/site-meta", {
   gap: var(--space-2);
 }
 
+.public-footer__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.public-footer__logo {
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  object-fit: contain;
+}
+
 .public-footer__name {
-  font-family: var(--font-public-display);
+  font-family: var(--font-brand-display);
   font-size: var(--font-size-lg);
   line-height: var(--line-height-heading);
 }
@@ -148,6 +171,7 @@ const { data: filings } = await useFetch("/api/site-meta", {
 .public-footer__sub {
   margin-top: var(--space-2);
   color: var(--public-text-secondary);
+  font-family: var(--font-brand-display);
   font-size: var(--font-size-sm);
 }
 
@@ -201,6 +225,10 @@ const { data: filings } = await useFetch("/api/site-meta", {
   gap: var(--space-2);
   color: var(--public-text-secondary);
   font-size: var(--font-size-xs);
+}
+
+.public-footer__brand-copy {
+  font-family: var(--font-brand-display);
 }
 
 .public-footer__legal-links {

@@ -411,6 +411,7 @@ onBeforeUnmount(() => {
 }
 
 .home-hero__eyebrow {
+  font-family: var(--font-brand-display);
   font-size: var(--font-size-sm);
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -418,7 +419,7 @@ onBeforeUnmount(() => {
 
 .home-hero__title {
   margin-top: var(--space-3);
-  font-family: var(--font-public-display);
+  font-family: var(--font-brand-display);
   font-size: var(--font-size-hero);
   font-weight: 600;
   line-height: var(--line-height-tight);
@@ -428,6 +429,7 @@ onBeforeUnmount(() => {
 .home-hero__tagline {
   max-width: 32rem;
   margin-top: var(--space-4);
+  font-family: var(--font-brand-display);
   font-size: var(--font-size-md);
   line-height: var(--line-height-normal);
 }

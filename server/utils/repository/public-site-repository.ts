@@ -427,7 +427,9 @@ function homeAggregate(
     const entriesSnapshot = snapshot(sqlite, mediaBaseUrl, appEnv)
     featured = featuredEntries(entriesSnapshot).map(entry => entry.summary)
     // 当前领养取最新两件：快照已按发布时间倒序。
-    currentAdoptions = adoptionItems(entriesSnapshot).slice(0, 2)
+    currentAdoptions = adoptionItems(entriesSnapshot)
+      .filter(item => item.work.adoptionStatus === 'available')
+      .slice(0, 2)
   }
   catch (error) {
     featuredAvailable = false
@@ -451,7 +453,7 @@ function homeAggregate(
  */
 function featuredEntries(entries: readonly SnapshotEntry[]) {
   return entries
-    .filter(entry => entry.featured)
+    .filter(entry => entry.featured && entry.adoption?.status !== 'adopted')
     .toSorted((left, right) => (
       left.sortOrder - right.sortOrder || (left.id < right.id ? -1 : 1)
     ))
@@ -668,6 +670,11 @@ export function createFakePublicSiteRepository(
   const adoptions = (seed.adoptions ?? []).map(item => (
     publicAdoptionListItemDtoSchema.parse(item)
   ))
+  const adoptedHrefs = new Set(
+    adoptions
+      .filter(item => item.work.adoptionStatus === 'adopted')
+      .map(item => item.href),
+  )
   const summaryFor = (detail: PublicWorkDetailDto) => (
     publicWorkSummaryDtoSchema.parse({
       work: detail.work,
@@ -733,7 +740,9 @@ export function createFakePublicSiteRepository(
       }
       const featured = seed.featuredSlugs.flatMap((slug) => {
         const detail = bySlug.get(slug)
-        return detail ? [summaryFor(detail)] : []
+        return detail && !adoptedHrefs.has(detail.href)
+          ? [summaryFor(detail)]
+          : []
       }).slice(0, PUBLIC_FEATURED_LIMIT)
       return publicHomeAggregateDtoSchema.parse({
         hero: home,
@@ -744,7 +753,9 @@ export function createFakePublicSiteRepository(
         featured: { available: true, items: featured },
         currentAdoptions: {
           available: true,
-          items: this.listAdoptions().items.slice(0, 2),
+          items: this.listAdoptions().items
+            .filter(item => item.work.adoptionStatus === 'available')
+            .slice(0, 2),
         },
       })
     },

@@ -21,7 +21,7 @@ const currentAdoptions = computed(() => props.adoptions.slice(0, 2))
     data-testid="home-current-adoptions"
   >
     <header class="home-adoptions__header">
-      <h2 id="home-adoptions-title" class="home-adoptions__title">当前领养</h2>
+      <h2 id="home-adoptions-title" class="home-adoptions__title">设定领养</h2>
       <NuxtLink to="/adoptions" class="home-adoptions__more">
         查看全部 <span aria-hidden="true">→</span>
       </NuxtLink>

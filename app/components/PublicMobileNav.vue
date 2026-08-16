@@ -48,7 +48,10 @@ watch(() => route.fullPath, () => {
       data-testid="public-mobile-nav"
     >
       <div class="mobile-nav__bar">
-        <span class="mobile-nav__brand">{{ PUBLIC_NAV_BRAND }}</span>
+        <span class="mobile-nav__brand">
+          <img src="/brand/logo-mark.png" alt="" width="1600" height="1600">
+          <span>{{ PUBLIC_NAV_BRAND }}</span>
+        </span>
         <button
           type="button"
           class="mobile-nav__close"
@@ -125,8 +128,17 @@ watch(() => route.fullPath, () => {
 }
 
 .mobile-nav__brand {
-  font-family: var(--font-public-display);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-brand-display);
   font-size: var(--font-size-md);
+}
+
+.mobile-nav__brand img {
+  width: 1.75rem;
+  height: 1.75rem;
+  object-fit: contain;
 }
 
 .mobile-nav__close {
