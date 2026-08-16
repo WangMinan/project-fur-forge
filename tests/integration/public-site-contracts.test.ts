@@ -115,7 +115,7 @@ function insertCompletedUpload(
               'COMPLETED', ?, 3, ?, ?, ?)
   `).run(
     randomUUID(),
-    ownerId === 'home' ? 'site' : 'work',
+    role.startsWith('home_hero_') ? 'site' : 'work',
     ownerId,
     ownerVersion,
     role,
@@ -245,6 +245,7 @@ function createHeroAsset(
   ownerVersion: number,
   dimensions?: { height: number, width: number },
   environmentPrefix = 'test/t20',
+  placement: 'commission' | 'home' = 'home',
 ) {
   const assetId = randomUUID()
   const content = createSyntheticWatermarkPng()
@@ -252,13 +253,27 @@ function createHeroAsset(
   const width = dimensions?.width ?? (landscape ? 4000 : 1800)
   const height = dimensions?.height ?? (landscape ? 2250 : 3200)
   const key = `${environmentPrefix}/original/${assetId}/source.png`
+  const orientation = landscape ? 'landscape' : 'portrait'
+  const uploadOwnerVersion = sqlite.prepare(`
+    SELECT version FROM site_hero_collections
+    WHERE placement = ? AND orientation = ?
+  `).pluck().get(placement, orientation) as number
   sqlite.prepare(`
     INSERT INTO assets (
       id, role, status, private_object_key, sha256, byte_size,
       mime_type, width, height, created_at, updated_at
     ) VALUES (?, ?, 'READY', ?, ?, ?, 'image/png', ?, ?, ?, ?)
   `).run(assetId, role, key, digest(content), content.length, width, height, NOW, NOW)
-  insertCompletedUpload('home', ownerVersion, assetId, role, key, content, width, height)
+  insertCompletedUpload(
+    `hero-${placement}-${orientation}`,
+    uploadOwnerVersion,
+    assetId,
+    role,
+    key,
+    content,
+    width,
+    height,
+  )
   storage.seedPrivate(key, content, 'image/png', digest(content), {
     fileSize: content.length,
     format: 'png',
@@ -1264,8 +1279,12 @@ describe('T19/T20 public repository contracts', () => {
 
   it('keeps commission hero ordering independent and allows an empty commission hero', async () => {
     let version = getAdminHome(sqlite).version
-    const commissionLandscape = createHeroAsset('home_hero_landscape', version)
-    const commissionPortrait = createHeroAsset('home_hero_portrait', version)
+    const commissionLandscape = createHeroAsset(
+      'home_hero_landscape', version, undefined, 'test/t20', 'commission',
+    )
+    const commissionPortrait = createHeroAsset(
+      'home_hero_portrait', version, undefined, 'test/t20', 'commission',
+    )
     let commission = createHeroSlide(sqlite, version, {
       alt: '委托页独立背景图',
       sortOrder: 0,
@@ -1322,8 +1341,12 @@ describe('T19/T20 public repository contracts', () => {
     expect(getAdminHome(sqlite, 'commission').slides).toHaveLength(1)
 
     version = getAdminHome(sqlite, 'commission').version
-    const spareLandscape = createHeroAsset('home_hero_landscape', version)
-    const sparePortrait = createHeroAsset('home_hero_portrait', version)
+    const spareLandscape = createHeroAsset(
+      'home_hero_landscape', version, undefined, 'test/t20', 'commission',
+    )
+    const sparePortrait = createHeroAsset(
+      'home_hero_portrait', version, undefined, 'test/t20', 'commission',
+    )
     commission = createHeroSlide(sqlite, version, {
       alt: '委托页备选背景图',
       sortOrder: 1,

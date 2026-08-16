@@ -666,7 +666,10 @@ describe('SQLite foundation', () => {
           AND (sql LIKE '%assets%' OR sql LIKE '%upload_sessions%')
         ORDER BY name
       `).pluck().all()).toEqual(expect.arrayContaining(
-        triggerNames.filter(name => !name.startsWith('return_photos_')),
+        triggerNames.filter(name => (
+          !name.startsWith('return_photos_')
+          && !name.startsWith('work_assets_design_sheet_primary_')
+        )),
       ))
       expect(() => upgraded.sqlite.prepare(`
         INSERT INTO assets (

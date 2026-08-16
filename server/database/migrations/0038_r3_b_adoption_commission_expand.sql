@@ -123,7 +123,16 @@ CREATE TABLE `__new_work_assets` (
 	CONSTRAINT "work_assets_crop" CHECK(`crop_x` BETWEEN 0 AND 1 AND `crop_y` BETWEEN 0 AND 1 AND `crop_width` > 0 AND `crop_width` <= 1 AND `crop_height` > 0 AND `crop_height` <= 1 AND `crop_x` + `crop_width` <= 1 AND `crop_y` + `crop_height` <= 1),
 	CONSTRAINT "work_assets_watermark_anchor" CHECK(`watermark_anchor` IN ('top-left', 'top-right', 'bottom-left', 'bottom-right'))
 );--> statement-breakpoint
-INSERT INTO `__new_work_assets` SELECT * FROM `work_assets`;--> statement-breakpoint
+INSERT INTO `__new_work_assets` (
+  `work_id`, `asset_id`, `role`, `alt_text`, `position`, `is_primary`,
+  `focal_x`, `focal_y`, `crop_x`, `crop_y`, `crop_width`, `crop_height`,
+  `watermark_anchor`
+)
+SELECT
+  `work_id`, `asset_id`, `role`, `alt_text`, `position`, `is_primary`,
+  `focal_x`, `focal_y`, `crop_x`, `crop_y`, `crop_width`, `crop_height`,
+  `watermark_anchor`
+FROM `work_assets`;--> statement-breakpoint
 DROP TABLE `work_assets`;--> statement-breakpoint
 ALTER TABLE `__new_work_assets` RENAME TO `work_assets`;--> statement-breakpoint
 CREATE UNIQUE INDEX `work_assets_asset_unique` ON `work_assets` (`asset_id`);--> statement-breakpoint

@@ -17,7 +17,12 @@ import {
 
 function managedWork(overrides: Record<string, unknown> = {}): ManagedWorkDto {
   const purposeFields = overrides.purpose === 'adoption'
-    ? { designSheet: null, ...overrides }
+    ? {
+        adoptionCover: null,
+        adoptionStatus: null,
+        designSheet: null,
+        ...overrides,
+      }
     : overrides
   return managedWorkDtoSchema.parse({
     id: '11111111-1111-4111-8111-111111111111',
