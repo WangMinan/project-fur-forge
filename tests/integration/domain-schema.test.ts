@@ -309,10 +309,14 @@ describe('P0 schema boundary', () => {
       'assets',
       'audit_logs',
       'business_statuses',
+      'commission_submissions',
+      'commission_upload_sessions',
       'publication_operations',
       'site_branding',
       'site_content',
       'site_display_reconcile_operations',
+      'site_hero_collections',
+      'site_hero_items',
       'site_hero_slides',
       'upload_sessions',
       'users',
@@ -415,7 +419,7 @@ describe('P0 schema boundary', () => {
     expect(() => sqlite.prepare(`
       UPDATE work_assets SET is_primary = 1
       WHERE work_id = 'adoption-work' AND asset_id = 'design'
-    `).run()).toThrow(/design sheet cannot be a studio-photo primary/)
+    `).run()).toThrow(/only studio photos can be primary/)
     expect(() => sqlite.prepare(`
       UPDATE work_assets SET role = 'studio_photo'
       WHERE work_id = 'adoption-work' AND asset_id = 'design'
