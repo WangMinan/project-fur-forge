@@ -52,7 +52,7 @@ test.describe('后台作品列表页', () => {
     await loginAsAdmin(page)
   })
 
-  test('六个管理入口的导航、一级标题和标签页标题一致', async ({ page }) => {
+  test('七个管理入口的导航、一级标题和标签页标题一致', async ({ page }) => {
     for (const entry of [
       { label: '作品管理', path: '/admin/works' },
       { label: '大图管理', path: '/admin/site/home' },
@@ -80,9 +80,10 @@ test.describe('后台作品列表页', () => {
     await expect(page.locator('.admin-list-page__meta')).toHaveText(/共 \d+ 件/u)
 
     const nav = page.getByRole('navigation', { name: '管理导航' })
-    await expect(nav.getByRole('link')).toHaveCount(6)
+    await expect(nav.getByRole('link')).toHaveCount(7)
     expect(await nav.getByRole('link').allTextContents()).toEqual([
       '作品管理',
+      '委托申请',
       '大图管理',
       '文案配置',
       '全局水印',
@@ -131,7 +132,6 @@ test.describe('后台作品列表页', () => {
         characterName: `分页检索-${String(index).padStart(2, '0')}`,
         purpose: index <= 6 ? 'commission' : 'showcase',
         species: index === 11 ? '水鹿' : '狐狸',
-        suitType: index % 2 === 0 ? 'full' : 'partial',
       })
     }
 
@@ -201,11 +201,12 @@ test.describe('管理端移动导航', () => {
     const drawer = page.getByTestId('admin-mobile-nav')
     await expect(drawer).toBeVisible()
     const nav = drawer.getByRole('navigation', { name: '管理导航入口' })
-    await expect(nav.getByRole('link')).toHaveCount(6)
+    await expect(nav.getByRole('link')).toHaveCount(7)
     expect(await nav.getByRole('link').evaluateAll(links => links.map(link => (
       link.firstElementChild?.textContent?.trim()
     )))).toEqual([
       '作品管理',
+      '委托申请',
       '大图管理',
       '文案配置',
       '全局水印',

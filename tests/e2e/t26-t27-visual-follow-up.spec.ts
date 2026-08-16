@@ -6,7 +6,7 @@ import { capture } from './helpers/screenshots'
 const SCREENSHOT_DIR
   = 'agent_docs/需求1-兽装工作室主页/implementation/notes/t26-t27/screenshots'
 
-test('作品与自设委托页名字号一致，委托首图提供引导行动', async ({ page }) => {
+test('作品与自设委托页名字号一致，委托首图引导站内申请并保留备用联系', async ({ page }) => {
   await seedHomeSlides(page, [
     { alt: '自设委托引导图', sortOrder: 0, enabled: true },
   ], {
@@ -35,19 +35,11 @@ test('作品与自设委托页名字号一致，委托首图提供引导行动',
   const hero = page.getByTestId('commission-hero')
   await expect(hero).toBeVisible()
   await expect(hero.getByRole('heading', { name: '从角色设定出发' })).toBeVisible()
-  const detailsLink = hero.getByRole('link', { name: '了解制作范围' })
-  await expect(detailsLink).toHaveAttribute(
-    'href',
-    '#commission-details',
-  )
-  await detailsLink.click()
-  await expect(page).toHaveURL(/#commission-details$/u)
-  await expect.poll(async () => {
-    const header = await page.getByTestId('public-header').boundingBox()
-    const details = await page.locator('#commission-details').boundingBox()
-    return header && details ? details.y - header.height : -1
-  }).toBeGreaterThanOrEqual(0)
-  await expect(hero.getByRole('link', { name: '邮件咨询估价' })).toHaveAttribute(
+  await expect(hero.getByRole('link', { name: '提交委托申请' }))
+    .toHaveAttribute('href', '/commission/apply')
+  await expect(hero.getByRole('link', { name: '查看其他联系方式' }))
+    .toHaveAttribute('href', '/about#contact')
+  await expect(page.getByRole('link', { name: '打开邮件客户端' })).toHaveAttribute(
     'href',
     /^mailto:hello@example\.test/u,
   )
@@ -92,10 +84,14 @@ test('管理导航提供独立文案配置页', async ({ page }) => {
     .toHaveAttribute('aria-current', 'page')
   await expect(page.getByRole('heading', { name: '营业状态', exact: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: '页面内容' })).toBeVisible()
-  const addFaq = page.getByRole('button', { name: '新增问题' })
-  await expect(addFaq).toBeVisible()
-  expect(await addFaq.evaluate(element => Number.parseFloat(
-    getComputedStyle(element).marginTop,
+  await expect(page.getByRole('button', { name: '新增问题' })).toHaveCount(0)
+  await expect(page.getByLabel('邮件联系引导')).toBeVisible()
+  await expect(page.getByLabel('QQ账号')).toBeVisible()
+  await expect(page.getByLabel('QQ群账号')).toBeVisible()
+  const commissionCard = page.getByTestId('site-section-card')
+    .filter({ has: page.getByRole('heading', { name: '委托基础文案' }) })
+  expect(await commissionCard.evaluate(element => Number.parseFloat(
+    getComputedStyle(element).rowGap,
   ))).toBeGreaterThanOrEqual(8)
   await capture(page, 'visual-follow-up-admin-content-1440x900', SCREENSHOT_DIR)
 
