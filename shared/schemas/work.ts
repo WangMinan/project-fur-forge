@@ -452,6 +452,8 @@ const publicSafeWorkPreviewBaseSchema = managedWorkBaseSchema.omit({
 export const publicSafeWorkPreviewDtoSchema = z.discriminatedUnion('purpose', [
   publicSafeWorkPreviewBaseSchema.extend({
     purpose: z.literal('adoption'),
+    adoptionStatus: adoptionStatusSchema.nullable(),
+    adoptionCover: managedAdoptionCoverDtoSchema.nullable(),
     designSheet: managedDesignSheetDtoSchema.nullable(),
     adoptionMethod: adoptionMethodSchema.nullable(),
     businessStatus: businessStatusSchema.nullable(),
