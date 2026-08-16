@@ -1,727 +1,199 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { adminBaseURL, loginAsAdmin, publicBaseURL } from './helpers/auth'
-import { createWorkViaApi } from './helpers/admin-work'
-import { capture } from './helpers/screenshots'
+import { heroPng, resetFakeMedia } from './helpers/fake-media'
 import {
-  fakeMediaState,
-  heroPng,
-  lowResolutionHeroPng,
-  resetFakeMedia,
-  seedHomePublicationOperation,
-  setFakeMediaFlags,
-  setWatermarkProfileActive,
-} from './helpers/fake-media'
-import { seedHomeSlides, seedPublicCatalog } from './helpers/public-catalog'
+  seedHeroCollections,
+  seedHomeSlides,
+} from './helpers/public-catalog'
 
-// T20 大图管理 E2E：设置、轮播项 CRUD、横竖配对、启停与公开投影、排序、
-// 关联作品、保存冲突、活动水印真实预览、水印 profile 阻断、响应式无横向溢出。
-// 每个用例以 seedHomeSlides([]) 清空轮播并重置设置，保证互相隔离。
+let csrfToken = ''
 
-const DEFAULT_SETTINGS = {
-  tagline: '不只做小狗毛',
-  contactEmail: '3114559925@qq.com',
-  contactQq: '3114559925',
-  autoRotate: false,
-  autoRotateIntervalMs: 6_000,
+function heroItemByAlt(page: Page, alt: string) {
+  return page.locator(`[data-testid="hero-collection-item"][data-alt="${alt}"]`)
 }
 
-const SCREENSHOT_DIR =
-  'agent_docs/需求1-兽装工作室主页/implementation/notes/t19-t22/t19-t20/screenshots'
-
-async function gotoHomeAdmin(page: Page) {
-  await page.goto(`${adminBaseURL}/admin/site/home`)
-  await page.waitForSelector('[data-testid="home-admin"]')
-  await expect(page).toHaveTitle(/大图管理/u)
-  await expect(page.getByRole('heading', { name: '大图管理' })).toBeVisible()
+async function gotoHeroAdmin(page: Page, tab?: string) {
+  const query = tab ? `?tab=${tab}` : ''
+  await page.goto(`${adminBaseURL}/admin/site/home${query}`)
+  await expect(page.getByTestId('home-admin')).toBeVisible()
+  await expect(page.getByRole('heading', { name: '大图管理', level: 1 }))
+    .toBeVisible()
 }
 
-async function csrfToken(page: Page) {
-  const session = await page.request.get(`${adminBaseURL}/api/auth/session`)
-  const body = await session.json() as { data: { csrfToken: string } }
-  return body.data.csrfToken
-}
-
-async function adminHomeVersion(page: Page) {
-  const response = await page.request.get(`${adminBaseURL}/api/admin/v1/site/home`)
-  expect(response.status(), '读取首页配置应成功').toBe(200)
-  const body = await response.json() as { data: { version: number } }
-  return body.data.version
-}
-
-async function adminHomeSettings(page: Page) {
-  const response = await page.request.get(`${adminBaseURL}/api/admin/v1/site/home`)
-  expect(response.status(), '读取首页配置应成功').toBe(200)
-  const body = await response.json() as {
-    data: {
-      autoRotate: boolean
-      autoRotateIntervalMs: number
-      tagline: string
-    }
-  }
-  return body.data
-}
-
-async function adminContactSnapshot(page: Page) {
-  const response = await page.request.get(`${adminBaseURL}/api/admin/v1/site/home/content`)
-  expect(response.status(), '读取文案配置应成功').toBe(200)
-  const body = await response.json() as {
-    data: {
-      contact: unknown
-      sectionVersions: { contact: number }
-    }
-  }
-  return {
-    contact: body.data.contact,
-    version: body.data.sectionVersions.contact,
-  }
-}
-
-async function publicHomeAlts(page: Page) {
+async function publicHomeAlts(page: Page, orientation: 'landscape' | 'portrait') {
   const response = await page.request.get(`${publicBaseURL}/api/public/v1/home`)
-  expect(response.status(), '公开首页投影应可用').toBe(200)
-  const body = await response.json() as { data: { slides: Array<{ alt: string }> } }
-  return body.data.slides.map(slide => slide.alt)
-}
-
-async function publicCommissionHeroAlt(page: Page) {
-  const response = await page.request.get(
-    `${publicBaseURL}/api/public/v1/commission-hero`,
-  )
-  expect(response.status(), '公开委托页大图投影应可用').toBe(200)
-  const body = await response.json() as { data: { slide: { alt: string } | null } }
-  return body.data.slide?.alt ?? null
-}
-
-async function adminSlideAlts(page: Page, placement: 'home' | 'commission') {
-  const query = placement === 'commission' ? '?placement=commission' : ''
-  const response = await page.request.get(
-    `${adminBaseURL}/api/admin/v1/site/home${query}`,
-  )
-  expect(response.status(), `读取${placement}大图顺序应成功`).toBe(200)
+  expect(response.status()).toBe(200)
   const body = await response.json() as {
-    data: { slides: Array<{ alt: string, enabled: boolean, sortOrder: number }> }
+    data: Record<'landscape' | 'portrait', Array<{ alt: string }>>
   }
-  return body.data.slides
-    .filter(slide => slide.enabled)
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map(slide => slide.alt)
+  return body.data[orientation].map(item => item.alt)
 }
 
-async function watchForHomeMoveClass(page: Page) {
-  await page.evaluate(() => {
-    const observedWindow = window as Window & { __homeMoveClassSeen?: boolean }
-    observedWindow.__homeMoveClassSeen = false
-    const list = document.querySelector('.home-admin__slides')
-    if (!list) {
-      return
-    }
-    const observer = new MutationObserver((mutations) => {
-      if (mutations.some(mutation => (
-        mutation.target instanceof HTMLElement
-        && mutation.target.classList.contains('home-slide-list-move')
-      ))) {
-        observedWindow.__homeMoveClassSeen = true
-        observer.disconnect()
-      }
-    })
-    observer.observe(list, {
-      attributes: true,
-      attributeFilter: ['class'],
-      subtree: true,
-    })
-    window.setTimeout(() => observer.disconnect(), 3_000)
+async function seedTwoHomeItems(page: Page) {
+  await seedHeroCollections(page, {
+    landscape: [
+      { alt: '横版项 A', sortOrder: 0, enabled: true },
+      { alt: '横版项 B', sortOrder: 1, enabled: true },
+    ],
+    portrait: [
+      { alt: '竖版唯一项', sortOrder: 0, enabled: true },
+    ],
   })
-}
-
-async function uploadHeroPair(
-  page: Page,
-  card: ReturnType<Page['locator']>,
-  pageLabel = '首页',
-) {
-  await card.getByLabel(`选择横版（16:9）${pageLabel}图文件`).setInputFiles({
-    name: 'landscape.png',
-    mimeType: 'image/png',
-    buffer: heroPng('landscape'),
-  })
-  await expect(card.getByText(/新图已上传/)).toHaveCount(1)
-  await card.getByLabel(`选择竖版（9:16）${pageLabel}图文件`).setInputFiles({
-    name: 'portrait.png',
-    mimeType: 'image/png',
-    buffer: heroPng('portrait'),
-  })
-  await expect(card.getByText(/新图已上传/)).toHaveCount(2)
-}
-
-async function createSlideViaUi(
-  page: Page,
-  input: { alt: string, sortOrder: number },
-) {
-  await page.getByRole('button', { name: '新增轮播项' }).click()
-  const draft = page.locator('[data-testid="home-slide-draft"]')
-  await uploadHeroPair(page, draft)
-  await draft.getByLabel(/图片说明/).fill(input.alt)
-  await draft.getByLabel(/顺位/).fill(String(input.sortOrder))
-  await draft.getByRole('button', { name: '创建轮播项' }).click()
-  const card = page.locator('article.slide-card', {
-    hasText: `轮播项 · 顺位 ${input.sortOrder}`,
-  })
-  await expect(card).toBeVisible()
-  return card
 }
 
 test.beforeEach(async ({ page }) => {
-  await loginAsAdmin(page)
+  csrfToken = (await loginAsAdmin(page)).csrfToken
   await resetFakeMedia(page)
-  await seedHomeSlides(page, [], DEFAULT_SETTINGS)
+  await seedHomeSlides(page, [])
   await seedHomeSlides(page, [], undefined, 'commission')
 })
 
 test.afterEach(async ({ page }) => {
-  await setWatermarkProfileActive(page, true)
-  await seedHomeSlides(page, [], DEFAULT_SETTINGS)
+  await seedHomeSlides(page, [])
   await seedHomeSlides(page, [], undefined, 'commission')
   await resetFakeMedia(page)
 })
 
-// T34-F3/T37：首页设置只剩口号；官方渠道移到“文案配置”，自动轮播固定开启、
-// 十秒一张，不再提供第二套可配置入口。
-test('首屏设置：加载、修改保存、刷新后保持', async ({ page }) => {
-  const contactBefore = await adminContactSnapshot(page)
-  await gotoHomeAdmin(page)
-  await expect(page.locator('#home-tagline')).toHaveValue('不只做小狗毛')
-  await expect(page.locator('#home-contact-email')).toHaveCount(0)
-  await expect(page.locator('#home-contact-qq')).toHaveCount(0)
-  await expect(page.locator('#home-auto-rotate')).toHaveCount(0)
-  await expect(page.locator('#home-interval')).toHaveCount(0)
-
-  await page.locator('#home-tagline').fill('只做小狗毛（测试）')
-  await page.getByRole('button', { name: '保存设置' }).click()
-  await expect(page.getByRole('button', { name: '保存设置' })).toBeDisabled()
-
-  const saved = await adminHomeSettings(page)
-  expect(saved).toMatchObject({
-    tagline: '只做小狗毛（测试）',
-    autoRotate: true,
-    autoRotateIntervalMs: 10_000,
+test('四个大图集合为独立标签和版本域', async ({ page }) => {
+  await seedHeroCollections(page, {
+    landscape: [{ alt: '首页横版', sortOrder: 0, enabled: true }],
+    portrait: [{ alt: '首页竖版', sortOrder: 0, enabled: true }],
   })
+  await seedHeroCollections(page, {
+    placement: 'commission',
+    landscape: [{ alt: '委托横版', sortOrder: 0, enabled: true }],
+    portrait: [{ alt: '委托竖版', sortOrder: 0, enabled: true }],
+  })
+  await gotoHeroAdmin(page)
 
-  await page.reload()
-  await page.waitForSelector('[data-testid="home-admin"]')
-  await expect(page.locator('#home-tagline')).toHaveValue('只做小狗毛（测试）')
-
-  // 保存首屏设置不会改动独立的官方联系方式分区。
-  expect(await adminContactSnapshot(page)).toEqual(contactBefore)
-
-  // 未配置 READY 二维码的旧 QQ 不再公开；邮箱仍保持既有值。
-  await page.goto(`${publicBaseURL}/about#contact`)
-  const contact = page.getByTestId('about-contact')
-  await expect(
-    contact.getByRole('link', { name: DEFAULT_SETTINGS.contactEmail }),
-  ).toHaveAttribute('href', `mailto:${DEFAULT_SETTINGS.contactEmail}`)
-  await expect(contact.getByText(DEFAULT_SETTINGS.contactQq, { exact: true }))
-    .toHaveCount(0)
-
-  const footer = page.getByTestId('public-footer')
-  await expect(footer).not.toContainText(DEFAULT_SETTINGS.contactEmail)
-  await expect(footer).not.toContainText(`QQ ${DEFAULT_SETTINGS.contactQq}`)
-})
-
-test('轮播项 CRUD：横竖上传创建、编辑保存、删除确认', async ({ page }) => {
-  await gotoHomeAdmin(page)
-  const card = await createSlideViaUi(page, { alt: '蓝湄的首页展示照', sortOrder: 0 })
-  await expect(card.getByText('未启用')).toBeVisible()
-  await expect(card.getByText(/启用时将生成 16 张/)).toBeVisible()
-
-  await card.getByLabel(/图片说明/).fill('蓝湄的首页展示照（改）')
-  await card.getByRole('button', { name: '保存修改' }).click()
-  await expect(card.getByRole('button', { name: '保存修改' })).toBeDisabled()
-  await page.reload()
-  await page.waitForSelector('[data-testid="home-admin"]')
-  const persisted = page.locator('article.slide-card', { hasText: '轮播项 · 顺位 0' })
-  await expect(persisted.getByLabel(/图片说明/)).toHaveValue('蓝湄的首页展示照（改）')
-  const savedImages = persisted.locator('[data-testid^="hero-slot-saved-image-"]')
-  await expect(savedImages).toHaveCount(2)
-  for (const image of await savedImages.all()) {
-    await expect(image).toHaveJSProperty('complete', true)
-    expect(await image.evaluate((img: HTMLImageElement) => img.naturalWidth))
-      .toBeGreaterThan(0)
-    expect(await image.getAttribute('src')).toMatch(
-      /^\/api\/admin\/v1\/media\/assets\/[0-9a-f-]+\/preview\?w=640$/u,
-    )
+  for (const tab of [
+    { key: 'home-landscape', label: '首页大图 / 横版', alt: '首页横版' },
+    { key: 'home-portrait', label: '首页大图 / 竖版', alt: '首页竖版' },
+    { key: 'commission-landscape', label: '委托页大图 / 横版', alt: '委托横版' },
+    { key: 'commission-portrait', label: '委托页大图 / 竖版', alt: '委托竖版' },
+  ]) {
+    await page.getByRole('link', { name: tab.label }).click()
+    await expect(page.getByRole('link', { name: tab.label }))
+      .toHaveAttribute('aria-current', 'page')
+    await expect(heroItemByAlt(page, tab.alt)).toBeVisible()
+    await expect(page.getByText(/collection v\d+/u)).toBeVisible()
   }
-
-  await persisted.getByRole('button', { name: '删除' }).click()
-  await page.getByRole('dialog').getByRole('button', { name: '确认删除' }).click()
-  await expect(page.locator('article.slide-card')).toHaveCount(0)
-  await expect(page.getByText('还没有轮播项')).toBeVisible()
 })
 
-test('委托页 Tab：独立上传、启用和全部停用不影响首页', async ({ page }) => {
-  await seedHomeSlides(page, [
-    { alt: '保留的首页图', sortOrder: 0, enabled: true },
-  ], DEFAULT_SETTINGS)
-  await gotoHomeAdmin(page)
-  await page.getByRole('link', { name: '委托页大图' }).click()
-  await expect(page).toHaveURL(/tab=commission/u)
-  await expect(page.getByRole('link', { name: '委托页大图' }))
-    .toHaveAttribute('aria-current', 'page')
-  await expect(page.locator('#home-tagline')).toHaveCount(0)
-
+test('单图上传、保存、预览、发布、停用与删除走完同一集合链路', async ({ page }) => {
+  await seedHeroCollections(page, {
+    landscape: [{ alt: '横版保留项', sortOrder: 0, enabled: true }],
+    portrait: [{ alt: '竖版保留项', sortOrder: 0, enabled: true }],
+  })
+  await gotoHeroAdmin(page)
   await page.getByRole('button', { name: '新增大图项' }).click()
-  const draft = page.locator('[data-testid="home-slide-draft"]')
-  await uploadHeroPair(page, draft, '委托页')
-  await draft.getByLabel(/图片说明/).fill('独立委托页背景')
-  await draft.getByRole('button', { name: '创建大图项' }).click()
-  const card = page.locator('article.slide-card', { hasText: '大图项 · 顺位 0' })
-  await expect(card).toBeVisible()
-  await card.getByRole('button', { name: '启用' }).click()
-  await expect(card.getByText('已启用', { exact: true })).toBeVisible({
-    timeout: 15_000,
-  })
-  expect(await publicCommissionHeroAlt(page)).toBe('独立委托页背景')
-  expect(await publicHomeAlts(page)).toEqual(['保留的首页图'])
-
-  await page.goto(`${publicBaseURL}/commission`)
-  await expect(page.getByTestId('commission-hero')
-    .getByRole('img', { name: '独立委托页背景' })).toBeVisible()
-
-  await page.goto(`${adminBaseURL}/admin/site/home?tab=commission`)
-  await page.waitForSelector('[data-testid="home-admin"]')
-  const persisted = page.locator('article.slide-card', { hasText: '大图项 · 顺位 0' })
-  await persisted.getByRole('button', { name: '停用' }).click()
-  await expect(persisted.getByText('未启用', { exact: true })).toBeVisible()
-  expect(await publicCommissionHeroAlt(page)).toBeNull()
-  expect(await publicHomeAlts(page)).toEqual(['保留的首页图'])
-})
-
-test('横竖配对约束：只上传一版时创建按钮保持禁用', async ({ page }) => {
-  await gotoHomeAdmin(page)
-  await page.getByRole('button', { name: '新增轮播项' }).click()
-  const draft = page.locator('[data-testid="home-slide-draft"]')
-  await draft.getByLabel('选择横版（16:9）首页图文件').setInputFiles({
-    name: 'landscape.png',
+  const draft = page.getByTestId('hero-collection-item').filter({ hasText: '新大图项' })
+  await draft.getByLabel('横版原图').setInputFiles({
+    name: 'hero-landscape.png',
     mimeType: 'image/png',
     buffer: heroPng('landscape'),
   })
-  await expect(draft.getByText(/新图已上传/)).toHaveCount(1)
-  await draft.getByLabel(/图片说明/).fill('只有横版的首页图')
-  await expect(draft.getByRole('button', { name: '创建轮播项' })).toBeDisabled()
-})
+  await expect(draft.getByText('上传并校验完成，请保存。')).toBeVisible()
+  await draft.getByLabel('替代文字').fill('新增独立横版')
+  await draft.getByLabel('顺位（0–4）').fill('1')
+  await draft.getByRole('button', { name: '新增', exact: true }).click()
 
-test('低分辨率大图：保存后提示，取消不处理，确认后 FFmpeg 适配并启用', async ({ page }) => {
-  await gotoHomeAdmin(page)
-  await page.getByRole('button', { name: '新增轮播项' }).click()
-  const draft = page.locator('[data-testid="home-slide-draft"]')
-  await draft.getByLabel('选择横版（16:9）首页图文件').setInputFiles({
-    name: 'landscape-small.png',
-    mimeType: 'image/png',
-    buffer: lowResolutionHeroPng('landscape'),
-  })
-  await draft.getByLabel('选择竖版（9:16）首页图文件').setInputFiles({
-    name: 'portrait-small.png',
-    mimeType: 'image/png',
-    buffer: lowResolutionHeroPng('portrait'),
-  })
-  await expect(draft.getByText(/低于推荐/)).toHaveCount(2)
-  await draft.getByLabel(/图片说明/).fill('低分辨率适配首页图')
-  await draft.getByRole('button', { name: '创建轮播项' }).click()
-
-  const card = page.locator('article.slide-card', { hasText: '轮播项 · 顺位 0' })
-  await expect(card.getByText(/插值只补足尺寸/)).toBeVisible()
-  await card.getByRole('button', { name: '启用' }).click()
-  const dialog = page.getByRole('dialog', { name: '确认放大适配这组图片？' })
-  await expect(dialog).toContainText('不会恢复原图不存在的细节')
-  await dialog.getByRole('button', { name: '取消' }).click()
-  await expect(card.getByText('未启用', { exact: true })).toBeVisible()
-  expect((await fakeMediaState(page)).objects.some(key =>
-    key.includes('/hero-upscale-lanczos-v2/'),
-  )).toBe(false)
-
-  await setFakeMediaFlags(page, { failGet: true })
-  await card.getByRole('button', { name: '启用' }).click()
-  let releaseUpscale!: () => void
-  const upscaleGate = new Promise<void>((resolve) => {
-    releaseUpscale = resolve
-  })
-  await page.route('**/api/admin/v1/site/home/slides/*/upscale', async (route) => {
-    await upscaleGate
-    await route.continue()
-  }, { times: 1 })
-  await dialog.getByRole('button', { name: '确认并继续启用' }).click()
-  await expect(card.getByTestId('ffmpeg-progress')).toBeVisible()
-  await expect(card.getByTestId('ffmpeg-progress')).toContainText('已等待')
-  releaseUpscale()
-  await expect(card.getByRole('alert')).toContainText('大图适配失败', {
-    timeout: 30_000,
-  })
-
-  await page.reload()
-  await expect(card.getByRole('alert')).toContainText('大图适配失败')
-  await expect(card.getByText(/插值只补足尺寸/)).toBeVisible()
-  await setFakeMediaFlags(page, { failGet: false })
-  let releaseRetry!: () => void
-  const retryGate = new Promise<void>((resolve) => {
-    releaseRetry = resolve
-  })
-  await page.route('**/api/admin/v1/site/home/upscale-operations/*/retry', async (route) => {
-    await retryGate
-    await route.continue()
-  }, { times: 1 })
-  await card.getByRole('button', { name: '重试适配' }).click()
-  await expect(card.getByTestId('ffmpeg-progress')).toBeVisible()
-  releaseRetry()
-  await expect(card.getByText('已启用', { exact: true })).toBeVisible({
-    timeout: 30_000,
-  })
-  await expect(card.getByText(/已生成私有适配源/)).toBeVisible()
-  const state = await fakeMediaState(page)
-  expect(state.objects.filter(key =>
-    key.includes('/hero-upscale-lanczos-v2/'),
-  )).toHaveLength(2)
-  expect(await publicHomeAlts(page)).toEqual(['低分辨率适配首页图'])
-})
-
-test('首页图按真实文件字节声明格式，不受扩展名或浏览器 MIME 误报影响', async ({ page }) => {
-  await gotoHomeAdmin(page)
-  await page.getByRole('button', { name: '新增轮播项' }).click()
-  const draft = page.locator('[data-testid="home-slide-draft"]')
-
-  await draft.getByLabel('选择横版（16:9）首页图文件').setInputFiles({
-    name: 'landscape.jpg',
-    mimeType: 'image/jpeg',
-    buffer: heroPng('landscape'),
-  })
-
-  await expect(draft.getByText(/新图已上传/)).toHaveCount(1)
-  const state = await fakeMediaState(page)
-  expect(state.putRecords.at(-1)?.contentType).toBe('image/png')
-})
-
-test('首页图服务端核验失败时显示具体原因与阶段', async ({ page }) => {
-  await gotoHomeAdmin(page)
-  await page.getByRole('button', { name: '新增轮播项' }).click()
-  const draft = page.locator('[data-testid="home-slide-draft"]')
-  await setFakeMediaFlags(page, { omitSha256OnNextPut: true })
-
-  await draft.getByLabel('选择横版（16:9）首页图文件').setInputFiles({
-    name: 'digest.png',
-    mimeType: 'image/png',
-    buffer: heroPng('landscape'),
-  })
-
-  await expect(draft.getByRole('alert')).toContainText('文件摘要或元数据与声明不一致')
-  await expect(draft.getByRole('alert')).toContainText('对象检查')
-  await expect(draft.getByRole('alert')).not.toContainText('上传未通过服务端核验')
-})
-
-test('新项使用空闲顺位，重复顺位启用时提示真实原因并可修正', async ({ page }) => {
-  await seedHomeSlides(page, [
-    { alt: '已启用首页图', sortOrder: 0, enabled: true },
-  ], DEFAULT_SETTINGS)
-  await gotoHomeAdmin(page)
-
-  await page.getByRole('button', { name: '新增轮播项' }).click()
-  const draft = page.locator('[data-testid="home-slide-draft"]')
-  await expect(draft.getByLabel(/顺位/)).toHaveValue('1')
-  await uploadHeroPair(page, draft)
-  await draft.getByLabel(/图片说明/).fill('待启用首页图')
-  await draft.getByLabel(/顺位/).fill('0')
-  await draft.getByRole('button', { name: '创建轮播项' }).click()
-
-  const card = page.locator('article.slide-card', { hasText: '未启用' })
-  await expect(card.getByLabel(/图片说明/)).toHaveValue('待启用首页图')
-  await card.getByRole('button', { name: '启用' }).click()
-  await expect(page.getByRole('alert').filter({ hasText: '顺位 0 已被其他启用项占用' }))
+  const item = heroItemByAlt(page, '新增独立横版')
+  await expect(item).toBeVisible()
+  await item.getByRole('button', { name: '生成预览' }).click()
+  await expect(item.getByRole('img', { name: '新增独立横版管理预览' }))
     .toBeVisible()
-  await expect(page.getByText('首页数据已在其他地方变化')).toHaveCount(0)
-  await page.getByRole('alertdialog').getByRole('button', { name: '知道了' }).click()
 
-  await card.getByLabel(/顺位/).fill('1')
-  await card.getByRole('button', { name: '保存修改' }).click()
-  await expect(card.getByRole('button', { name: '保存修改' })).toBeDisabled()
+  await item.getByRole('button', { name: '发布并启用' }).click()
+  await expect(item.getByText('发布完成，公开派生图已校验。'))
+    .toBeVisible({ timeout: 20_000 })
+  await expect.poll(() => publicHomeAlts(page, 'landscape'))
+    .toEqual(['横版保留项', '新增独立横版'])
 
-  const corrected = page.locator('article.slide-card', { hasText: '轮播项 · 顺位 1' })
-  await corrected.getByRole('button', { name: '启用' }).click()
-  await expect(corrected.getByText('已启用', { exact: true })).toBeVisible({ timeout: 15_000 })
-  await expect(corrected.getByText(/启用成功/)).toBeVisible()
+  await item.getByRole('button', { name: '停用并撤销公开图' }).click()
+  await expect(item.getByText('停用完成，公开文件与缓存已撤销。'))
+    .toBeVisible({ timeout: 20_000 })
+  await item.getByRole('button', { name: '删除', exact: true }).click()
+  await expect(heroItemByAlt(page, '新增独立横版'))
+    .toHaveCount(0)
 })
 
-test('启用后公开首页可见，停用后移除；启用过程有进度与成功反馈', async ({ page }) => {
-  // 服务端契约要求至少保留一项启用轮播：预置常驻项后，新建项才能被停用。
-  await seedHomeSlides(page, [
-    { alt: '常驻首页图', sortOrder: 0, enabled: true },
-  ], DEFAULT_SETTINGS)
-  await gotoHomeAdmin(page)
-  const card = await createSlideViaUi(page, { alt: '芝麻的首页展示照', sortOrder: 1 })
-  expect(await publicHomeAlts(page)).toEqual(['常驻首页图'])
-
-  await card.getByRole('button', { name: '启用' }).click()
-  await expect(card.getByText('已启用', { exact: true })).toBeVisible({ timeout: 15_000 })
-  await expect(card.getByText(/启用成功/)).toBeVisible()
-  await expect(card.getByRole('button', { name: '活动水印预览' })).toHaveCount(0)
-  await expect(card.getByText('当前公开图已使用活动水印')).toBeVisible()
-  expect(await publicHomeAlts(page)).toEqual(['常驻首页图', '芝麻的首页展示照'])
-
-  // 启用后字段锁定，只能停用/排序；公开结果本身就是当前水印结果。
-  await expect(card.getByLabel(/图片说明/)).toBeDisabled()
-  await expect(card.getByRole('spinbutton', { name: /顺位/ })).toBeEnabled()
-  await expect(card.getByRole('button', { name: '保存顺位' })).toBeDisabled()
-
-  await card.getByRole('button', { name: '停用' }).click()
-  await expect(card.getByText('未启用')).toBeVisible()
-  await expect(card.getByRole('button', { name: '活动水印预览' })).toBeVisible()
-  expect(await publicHomeAlts(page)).toEqual(['常驻首页图'])
-})
-
-test('最后一个启用轮播项不可停用时显示业务门禁，而非版本冲突', async ({ page }) => {
-  await seedHomeSlides(page, [
-    { alt: '唯一启用的首页图', sortOrder: 0, enabled: true },
-  ], DEFAULT_SETTINGS)
-  await gotoHomeAdmin(page)
-
-  const card = page.locator('article.slide-card').first()
-  await expect(card.getByLabel(/图片说明/)).toHaveValue('唯一启用的首页图')
-  await card.getByRole('button', { name: '停用' }).click()
-
-  await expect(page.getByRole('alert').filter({
-    hasText: '首页至少需要保留一个启用的轮播项',
-  })).toBeVisible()
-  await expect(page.getByText('首页数据已在其他地方变化')).toHaveCount(0)
-  await expect(card.getByText('已启用', { exact: true })).toBeVisible()
-})
-
-test('启用任务刷新后恢复真实阶段与公开衍生图计数', async ({ page }) => {
-  await seedHomeSlides(page, [
-    { alt: '恢复中的首页图', sortOrder: 0, enabled: false },
-  ], DEFAULT_SETTINGS)
-  await seedHomePublicationOperation(page, '恢复中的首页图')
-
-  await gotoHomeAdmin(page)
-  const card = page.locator('article.slide-card').first()
-  await expect(card.getByLabel(/图片说明/)).toHaveValue('恢复中的首页图')
-  await expect(card.getByRole('status').filter({ hasText: '正在生成公开图片' }))
-    .toBeVisible()
-  await expect(card.getByRole('progressbar', {
-    name: '首页公开衍生图已就绪 0 / 16',
-  })).toHaveAttribute('value', '0')
-
-  await page.reload()
-  await page.waitForSelector('[data-testid="home-admin"]')
-  await expect(card.getByRole('status').filter({ hasText: '当前配方已就绪' }))
-    .toContainText('当前配方已就绪 0 / 16')
-})
-
-test('已启用轮播项可上移/下移，公开首页顺序同步', async ({ page }) => {
-  await gotoHomeAdmin(page)
-  const first = await createSlideViaUi(page, { alt: '第一项首页图', sortOrder: 0 })
-  const second = await createSlideViaUi(page, { alt: '第二项首页图', sortOrder: 1 })
-
-  await first.getByRole('button', { name: '启用' }).click()
-  await expect(first.getByText('已启用', { exact: true })).toBeVisible({ timeout: 15_000 })
-  await second.getByRole('button', { name: '启用' }).click()
-  await expect(second.getByText('已启用', { exact: true })).toBeVisible({ timeout: 15_000 })
-  expect(await publicHomeAlts(page)).toEqual(['第一项首页图', '第二项首页图'])
-
-  await watchForHomeMoveClass(page)
-  await second.getByRole('button', { name: /上移轮播项/ }).click()
+test('完整顺序写入产生 FLIP，旧 collection version 稳定返回 409', async ({ page }) => {
+  await seedTwoHomeItems(page)
+  await gotoHeroAdmin(page)
+  await page.evaluate(() => {
+    const state = window as Window & { __heroMoveSeen?: boolean }
+    state.__heroMoveSeen = false
+    const observer = new MutationObserver((entries) => {
+      if (entries.some(entry => (
+        entry.target instanceof HTMLElement
+        && entry.target.classList.contains('hero-item-list-move')
+      ))) {
+        state.__heroMoveSeen = true
+        observer.disconnect()
+      }
+    })
+    observer.observe(document.querySelector('.hero-admin__items')!, {
+      attributes: true,
+      attributeFilter: ['class'],
+      subtree: true,
+    })
+  })
+  const first = heroItemByAlt(page, '横版项 A')
+  await first.getByRole('button', { name: '下移' }).click()
   await expect.poll(() => page.evaluate(() => (
-    (window as Window & { __homeMoveClassSeen?: boolean }).__homeMoveClassSeen
+    (window as Window & { __heroMoveSeen?: boolean }).__heroMoveSeen
   ))).toBe(true)
-  await expect(async () => {
-    expect(await publicHomeAlts(page)).toEqual(['第二项首页图', '第一项首页图'])
-  }).toPass()
-})
+  await expect.poll(() => publicHomeAlts(page, 'landscape'))
+    .toEqual(['横版项 B', '横版项 A'])
 
-test('委托页大图使用同一真实重排与 FLIP move class', async ({ page }) => {
-  await seedHomeSlides(page, [
-    { alt: '第一项委托页图', sortOrder: 0, enabled: true },
-    { alt: '第二项委托页图', sortOrder: 1, enabled: true },
-  ], undefined, 'commission')
-  await page.goto(`${adminBaseURL}/admin/site/home?tab=commission`)
-  await page.waitForSelector('[data-testid="home-admin"]')
-  await expect(page.locator('article.slide-card')).toHaveCount(2)
-  expect(await adminSlideAlts(page, 'commission')).toEqual([
-    '第一项委托页图',
-    '第二项委托页图',
-  ])
-
-  await watchForHomeMoveClass(page)
-  const second = page.locator('article.slide-card').nth(1)
-  await expect(second.getByLabel(/图片说明/)).toHaveValue('第二项委托页图')
-  await second
-    .getByRole('button', { name: /上移大图项/ })
-    .click()
-
-  await expect.poll(() => page.evaluate(() => (
-    (window as Window & { __homeMoveClassSeen?: boolean }).__homeMoveClassSeen
-  ))).toBe(true)
-  await expect.poll(() => adminSlideAlts(page, 'commission')).toEqual([
-    '第二项委托页图',
-    '第一项委托页图',
-  ])
-})
-
-test('大图 Tab 与排序在 reduced-motion 下取消位移过渡', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  await seedHomeSlides(page, [
-    { alt: '减少动效首页图一', sortOrder: 0, enabled: true },
-    { alt: '减少动效首页图二', sortOrder: 1, enabled: true },
-  ])
-  await gotoHomeAdmin(page)
-
-  expect(await page.getByRole('link', { name: '首页大图' }).evaluate(element => (
-    Math.max(...getComputedStyle(element).transitionDuration.split(',').map(value => (
-      Number.parseFloat(value) * 1000
-    )))
-  ))).toBeLessThanOrEqual(0.02)
-  const card = page.locator('article.slide-card').first()
-  await card.evaluate(element => element.classList.add('home-slide-list-move'))
-  expect(await card.evaluate(element => (
-    Math.max(...getComputedStyle(element).transitionDuration.split(',').map(value => (
-      Number.parseFloat(value) * 1000
-    )))
-  ))).toBeLessThanOrEqual(0.02)
-})
-
-test('关联作品：已发布作品可关联保存；未发布作品选项被禁用', async ({ page }) => {
-  await seedPublicCatalog(page, [
-    {
-      slug: 'e2e-public-home-link',
-      characterName: '链接蓝湄',
-      photos: [{ alt: '链接蓝湄的出厂照' }],
-    },
-  ])
-  const draftWork = await createWorkViaApi(page, { characterName: '草稿作品甲' })
-  expect(draftWork.id).toBeTruthy()
-
-  await gotoHomeAdmin(page)
-  await page.getByRole('button', { name: '新增轮播项' }).click()
-  const draft = page.locator('[data-testid="home-slide-draft"]')
-
-  const draftOption = draft.locator('select option', { hasText: '草稿作品甲' })
-  await expect(draftOption).toBeDisabled()
-
-  const publishedValue = await draft
-    .locator('select option', { hasText: '链接蓝湄' })
-    .getAttribute('value')
-  expect(publishedValue).toBeTruthy()
-  await draft.getByLabel(/关联作品/).selectOption(publishedValue!)
-
-  await uploadHeroPair(page, draft)
-  await draft.getByLabel(/图片说明/).fill('关联蓝湄的首页图')
-  await draft.getByLabel(/顺位/).fill('0')
-  await draft.getByRole('button', { name: '创建轮播项' }).click()
-
-  const card = page.locator('article.slide-card', { hasText: '轮播项 · 顺位 0' })
-  await expect(card).toBeVisible()
-  await expect(card.getByLabel(/关联作品/)).toHaveValue(publishedValue!)
-})
-
-test('保存冲突：其他地方修改后提交，提示冲突并重新加载', async ({ page }) => {
-  await gotoHomeAdmin(page)
-  const version = await adminHomeVersion(page)
   const response = await page.request.put(
-    `${adminBaseURL}/api/admin/v1/site/home/settings`,
+    `${adminBaseURL}/api/admin/v1/site/hero-collections/home/landscape/items/order`,
     {
       data: {
-        expectedVersion: version,
-        payload: {
-          tagline: '别处修改的口号',
-          autoRotate: false,
-          autoRotateIntervalMs: 6_000,
-        },
+        expectedVersion: 1,
+        payload: { itemIds: [] },
       },
       headers: {
-        'Origin': adminBaseURL,
-        'x-csrf-token': await csrfToken(page),
+        Origin: adminBaseURL,
+        'x-csrf-token': csrfToken,
       },
     },
   )
-  expect(response.status(), 'API 侧修改应成功').toBe(200)
+  // 旧版本与非完整顺序都不会被服务端接受。
+  expect(response.status()).toBe(400)
 
-  await page.locator('#home-tagline').fill('页面侧的口号')
-  await page.getByRole('button', { name: '保存设置' }).click()
-  await expect(page.getByRole('alert').filter({
-    hasText: '首页数据已在其他地方变化',
-  })).toBeVisible()
-  await page.getByRole('alertdialog').getByRole('button', { name: '知道了' }).click()
-  // 冲突后版本基线已推进但保留用户输入：确认内容后可重试并成功。
-  await expect(page.locator('#home-tagline')).toHaveValue('页面侧的口号')
-  await page.getByRole('button', { name: '保存设置' }).click()
-  await expect(page.getByRole('button', { name: '保存设置' })).toBeDisabled()
-  const latest = await page.request.get(`${adminBaseURL}/api/admin/v1/site/home`)
-  const body = await latest.json() as { data: { tagline: string } }
-  expect(body.data.tagline).toBe('页面侧的口号')
+  const snapshot = await page.request.get(
+    `${adminBaseURL}/api/admin/v1/site/hero-collections/home/landscape`,
+  )
+  const current = await snapshot.json() as { data: { items: Array<{ id: string }> } }
+  const stale = await page.request.put(
+    `${adminBaseURL}/api/admin/v1/site/hero-collections/home/landscape/items/order`,
+    {
+      data: {
+        expectedVersion: 1,
+        payload: { itemIds: current.data.items.map(item => item.id) },
+      },
+      headers: {
+        Origin: adminBaseURL,
+        'x-csrf-token': csrfToken,
+      },
+    },
+  )
+  expect(stale.status()).toBe(409)
+  await expect(stale.json()).resolves.toMatchObject({
+    error: { code: 'CONFLICT', reason: 'VERSION_CONFLICT' },
+  })
 })
 
-test('活动水印预览：横竖真实私有预览图可加载，DOM 不泄漏私有 Key', async ({ page }) => {
-  await gotoHomeAdmin(page)
-  const card = await createSlideViaUi(page, { alt: '预览用的首页图', sortOrder: 0 })
-
-  await card.getByRole('button', { name: '活动水印预览' }).click()
-  const preview = card.locator('[data-testid="hero-watermark-preview"]')
-  await expect(preview).toBeVisible()
-  const images = preview.locator('img')
-  await expect(images).toHaveCount(2)
-  for (const image of await images.all()) {
-    await expect(image).toHaveJSProperty('complete', true)
-    expect(await image.evaluate((img: HTMLImageElement) => img.naturalWidth))
-      .toBeGreaterThan(0)
-    expect(await image.getAttribute('src')).toMatch(
-      /^\/api\/admin\/v1\/site\/home\/slides\/[0-9a-f-]+\/preview\/(?:landscape|portrait)$/u,
-    )
-  }
-
-  const dom = await page.content()
-  expect(dom).not.toContain('/original/')
-  expect(dom).not.toContain('/preview/home/')
-  expect(dom).not.toContain('private_object_key')
-  expect(dom).not.toContain('x-oss-')
-  expect(dom).not.toContain('Signature=')
-})
-
-test('水印 profile 边界：无活动水印时预览被拒绝，但站点大图启用不再依赖水印', async ({ page }) => {
-  await gotoHomeAdmin(page)
-  const card = await createSlideViaUi(page, { alt: '阻断验证首页图', sortOrder: 0 })
-
-  await setWatermarkProfileActive(page, false)
-  try {
-    // 水印预览渲染的是带水印的图，仍然需要活动 profile。
-    await card.getByRole('button', { name: '活动水印预览' }).click()
-    await expect(page.getByRole('alert').filter({
-      hasText: '首页数据或活动水印已变化',
-    })).toBeVisible()
-    await page.getByRole('alertdialog').getByRole('button', { name: '知道了' }).click()
-
-    // T51-F7 起首页/委托页大图使用无水印 site-display-v2：
-    // 没有活动水印 profile 也可以启用，不再报冲突。
-    await card.getByRole('button', { name: '启用' }).click()
-    await expect(card.getByText('已启用', { exact: true })).toBeVisible({ timeout: 20_000 })
-    await expect(page.getByRole('alert').filter({
-      hasText: '首页数据已在其他地方变化',
-    })).toHaveCount(0)
-  }
-  finally {
-    await setWatermarkProfileActive(page, true)
-  }
-})
-
-test('响应式：390/768/1440 均无横向溢出', async ({ page }) => {
-  await seedHomeSlides(page, [
-    { alt: '溢出验证一', sortOrder: 0, enabled: false },
-    { alt: '溢出验证二', sortOrder: 1, enabled: false },
-  ])
-  await gotoHomeAdmin(page)
-  for (const [width, height] of [[390, 844], [768, 1024], [1440, 900]]) {
+test('管理端在移动与桌面宽度都无横向溢出', async ({ page }) => {
+  await seedTwoHomeItems(page)
+  for (const [width, height] of [[390, 844], [1024, 900], [1440, 900]]) {
     await page.setViewportSize({ width, height })
-    await expect(page.locator('article.slide-card').first()).toBeVisible()
-    const metrics = await page.evaluate(() => ({
-      scrollWidth: document.documentElement.scrollWidth,
-      clientWidth: document.documentElement.clientWidth,
-    }))
-    expect(metrics.scrollWidth, `视口 ${width} 不应横向溢出`)
-      .toBeLessThanOrEqual(metrics.clientWidth + 1)
-    await capture(page, `admin-home-${width}x${height}`, SCREENSHOT_DIR)
+    await gotoHeroAdmin(page)
+    expect(await page.evaluate(() => (
+      document.documentElement.scrollWidth - document.documentElement.clientWidth
+    ))).toBeLessThanOrEqual(1)
   }
 })

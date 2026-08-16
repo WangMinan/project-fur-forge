@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import { workListResponseSchema } from '~~/shared/schemas/work'
 import type {
+  HeroOrientation,
   HeroPlacement,
-  WorkListItemDto,
 } from '~~/shared/types/contracts'
-import type { HeroSlideInput } from '~/composables/useAdminHome'
+import type { HeroCollectionItemInput } from '~/composables/useAdminHeroCollection'
 
-// T20/T26-F1 大图管理：首页轮播与委托页大图共用上传、排序、启停和水印预览链路。
-// 所有写操作携带 expectedVersion；409 统一重载并提示。
 definePageMeta({
   layout: 'admin',
   ssr: false,
@@ -18,350 +15,185 @@ useSeoMeta({
   robots: 'noindex, nofollow',
 })
 
-const adminApi = useAdminApi()
+const TABS = [
+  { key: 'home-landscape', label: '首页大图 / 横版', placement: 'home', orientation: 'landscape' },
+  { key: 'home-portrait', label: '首页大图 / 竖版', placement: 'home', orientation: 'portrait' },
+  { key: 'commission-landscape', label: '委托页大图 / 横版', placement: 'commission', orientation: 'landscape' },
+  { key: 'commission-portrait', label: '委托页大图 / 竖版', placement: 'commission', orientation: 'portrait' },
+] as const
+
 const route = useRoute()
-const placement = computed<HeroPlacement>(() => (
-  route.query.tab === 'commission' ? 'commission' : 'home'
+const activeTab = computed(() => (
+  TABS.find(tab => tab.key === route.query.tab) ?? TABS[0]
 ))
-const isHomePlacement = computed(() => placement.value === 'home')
-const placementLabel = computed(() => (
-  isHomePlacement.value ? '首页' : '委托页'
-))
+const placement = computed<HeroPlacement>(() => activeTab.value.placement)
+const orientation = computed<HeroOrientation>(() => activeTab.value.orientation)
 const {
+  collection,
   conflictNotice,
-  createSlide,
-  deleteSlide,
-  disableSlide,
-  enableSlide,
-  ffmpegPending,
+  createItem,
+  deleteItem,
   feedback,
-  home,
   load,
+  loadPreview,
   mutating,
   operations,
   pageStatus,
-  loadPreview,
   previewPending,
   previews,
-  reorderEnabled,
+  reorder,
   retryOperation,
-  saveSettings,
-  updateSlide,
-} = useAdminHome(placement)
+  startOperation,
+  updateItem,
+} = useAdminHeroCollection(placement, orientation)
 
-const works = ref<WorkListItemDto[]>([])
 const actionError = ref<string | null>(null)
 const showDraft = ref(false)
+const enabledItems = computed(() => (
+  collection.value?.items
+    .filter(item => item.enabled)
+    .toSorted((left, right) => left.sortOrder - right.sortOrder) ?? []
+))
+const nextSortOrder = computed(() => {
+  const used = new Set(enabledItems.value.map(item => item.sortOrder))
+  return [0, 1, 2, 3, 4].find(value => !used.has(value)) ?? 4
+})
+const dialogOpen = computed(() => Boolean(actionError.value || conflictNotice.value))
 
-watch(placement, () => {
+watch(activeTab, () => {
   showDraft.value = false
   actionError.value = null
 })
 
-const errorDialogOpen = computed(() =>
-  Boolean(actionError.value || conflictNotice.value),
-)
-
-// 自动轮播固定开启、10 秒一张，因此这里只剩首页口号一个设置。
-const tagline = ref('')
-
-function closeErrorDialog() {
-  actionError.value = null
-  conflictNotice.value = null
-}
-
-function settingsSnapshot() {
-  return JSON.stringify({ tagline: tagline.value })
-}
-
-const settingsBaseline = ref(settingsSnapshot())
-
-function syncSettings() {
-  const current = home.value
-  if (!current) {
-    return
-  }
-  tagline.value = current.tagline
-  settingsBaseline.value = settingsSnapshot()
-}
-
-const settingsDirty = computed(() =>
-  home.value !== null && settingsSnapshot() !== settingsBaseline.value,
-)
-
-const settingsValid = computed(() => {
-  const text = tagline.value.trim()
-  return text.length >= 1 && text.length <= 120
-})
-
-watch(home, (value) => {
-  if (!value) {
-    return
-  }
-  if (!settingsDirty.value) {
-    syncSettings()
-  }
-  else {
-    // 表单有未保存修改时只推进基线（版本随快照更新），保留用户输入；
-    // 自己保存成功时服务端值与表单一致，基线推进后自然回到非 dirty。
-    settingsBaseline.value = JSON.stringify({ tagline: value.tagline })
-  }
-})
-
-const slides = computed(() => home.value?.slides ?? [])
-const enabledSlides = computed(() =>
-  slides.value.filter(slide => slide.enabled)
-    .sort((a, b) => a.sortOrder - b.sortOrder),
-)
-const nextEnabledSortOrder = computed(() => {
-  const used = new Set(enabledSlides.value.map(slide => slide.sortOrder))
-  return [0, 1, 2, 3, 4].find(order => !used.has(order)) ?? 5
-})
-
-function moveStateFor(slideId: string) {
-  const index = enabledSlides.value.findIndex(slide => slide.id === slideId)
+function moveState(id: string) {
+  const index = enabledItems.value.findIndex(item => item.id === id)
   return {
     canMoveUp: index > 0,
-    canMoveDown: index !== -1 && index < enabledSlides.value.length - 1,
+    canMoveDown: index >= 0 && index < enabledItems.value.length - 1,
   }
 }
 
-async function onSaveSettings() {
-  if (!settingsDirty.value || !settingsValid.value) {
-    return
-  }
-  // 自动轮播写死：始终开启、固定 10 秒，不再由界面决定。
-  actionError.value = await saveSettings({
-    tagline: tagline.value.trim(),
-    autoRotate: true,
-    autoRotateIntervalMs: HERO_AUTOPLAY_INTERVAL_MS,
-  })
-}
-
-async function onCreate(payload: HeroSlideInput) {
-  actionError.value = await createSlide(payload)
-  if (actionError.value === null) {
+async function onCreate(payload: HeroCollectionItemInput) {
+  actionError.value = await createItem(payload)
+  if (!actionError.value) {
     showDraft.value = false
   }
 }
 
-async function onSave(id: string, payload: HeroSlideInput) {
-  actionError.value = await updateSlide(id, payload)
-}
-
-async function onDelete(id: string) {
-  actionError.value = await deleteSlide(id)
-}
-
-async function onDisable(id: string) {
-  actionError.value = await disableSlide(id)
-}
-
-async function onEnable(id: string, allowUpscale: boolean) {
-  actionError.value = await enableSlide(id, allowUpscale)
-}
-
-async function onRetry(id: string) {
-  actionError.value = await retryOperation(id)
-}
-
 async function onMove(id: string, direction: -1 | 1) {
-  const ids = enabledSlides.value.map(slide => slide.id)
+  const ids = enabledItems.value.map(item => item.id)
   const index = ids.indexOf(id)
   const target = index + direction
-  if (index === -1 || target < 0 || target >= ids.length) {
+  if (index < 0 || target < 0 || target >= ids.length) {
     return
   }
   ;[ids[index], ids[target]] = [ids[target]!, ids[index]!]
-  actionError.value = await reorderEnabled(ids)
+  actionError.value = await reorder(ids)
 }
 
-/**
- * 已启用项直接保存顺位：把该项插入到目标位置，其余顺序不变。
- *
- * 服务端按数组下标重排已启用序列（0,1,2…），所以这里只需要给出
- * 期望的完整顺序；目标顺位超出范围时收敛到两端。
- */
-async function onReorderTo(id: string, sortOrder: number) {
-  const ids = enabledSlides.value.map(slide => slide.id)
-  const index = ids.indexOf(id)
-  if (index === -1) {
-    return
-  }
-  const target = Math.min(Math.max(sortOrder, 0), ids.length - 1)
-  if (target === index) {
-    return
-  }
-  ids.splice(index, 1)
-  ids.splice(target, 0, id)
-  actionError.value = await reorderEnabled(ids)
+async function run(action: () => Promise<string | null>) {
+  actionError.value = await action()
 }
 
-async function onPreview(id: string) {
-  actionError.value = await loadPreview(id)
+function closeDialog() {
+  actionError.value = null
+  conflictNotice.value = null
 }
 
-async function loadWorks() {
-  try {
-    const result = await adminApi('/api/admin/v1/works', {
-      schema: workListResponseSchema,
-    })
-    works.value = result.data
-  }
-  catch {
-    // 作品列表只用于关联选择：加载失败时保留空选项，不阻塞页面主体。
-  }
-}
-
-onMounted(() => {
-  void load()
-  void loadWorks()
-})
+onMounted(() => void load())
 </script>
 
 <template>
   <AdminShell current="home">
-    <div class="home-admin" data-testid="home-admin">
-      <header class="home-admin__header">
-        <h1 class="home-admin__title">大图管理</h1>
-        <p class="home-admin__meta">
-          {{ isHomePlacement
-            ? '首页轮播最多启用 5 项；启用时会按当前活动水印生成公开衍生图。'
-            : '委托页可准备最多 5 项；公开页只显示排序最前的已启用大图，全部停用时隐藏。' }}
-        </p>
+    <div class="hero-admin" data-testid="home-admin">
+      <header class="hero-admin__header">
+        <h1>大图管理</h1>
+        <p>四个集合独立上传、排序、适配、预览与发布；每次写入只更新当前集合版本。</p>
       </header>
 
-      <nav class="home-admin__tabs" aria-label="大图设置">
+      <nav class="hero-admin__tabs" aria-label="大图集合">
         <NuxtLink
-          id="home-hero-tab"
-          class="home-admin__tab"
-          to="/admin/site/home"
-          :aria-current="isHomePlacement ? 'page' : undefined"
-        >首页大图</NuxtLink>
-        <NuxtLink
-          id="commission-hero-tab"
-          class="home-admin__tab"
-          :to="{ path: '/admin/site/home', query: { tab: 'commission' } }"
-          :aria-current="!isHomePlacement ? 'page' : undefined"
-        >委托页大图</NuxtLink>
+          v-for="tab in TABS"
+          :key="tab.key"
+          class="hero-admin__tab"
+          :to="tab === TABS[0]
+            ? '/admin/site/home'
+            : { path: '/admin/site/home', query: { tab: tab.key } }"
+          :aria-current="activeTab.key === tab.key ? 'page' : undefined"
+        >{{ tab.label }}</NuxtLink>
       </nav>
 
-      <Transition name="home-placement" mode="out-in">
-        <div :key="placement" class="home-admin__placement">
-          <div v-if="pageStatus === 'loading'" class="home-admin__state" role="status">
-            正在加载{{ placementLabel }}大图…
-          </div>
-          <div v-else-if="pageStatus === 'error'" class="home-admin__state" role="alert">
-            {{ placementLabel }}大图加载失败，请刷新重试。
-          </div>
-
-          <div
-            v-else-if="home"
-            id="hero-settings-panel"
-            :aria-labelledby="isHomePlacement ? 'home-hero-tab' : 'commission-hero-tab'"
-            class="home-admin__panel"
-          >
-        <section v-if="isHomePlacement" class="home-admin__card" aria-labelledby="home-settings-title">
-          <h2 id="home-settings-title" class="home-admin__card-title">首屏设置</h2>
-          <div class="home-admin__settings">
-            <div class="home-admin__field home-admin__field--wide">
-              <label class="home-admin__label" for="home-tagline">首页口号</label>
-              <input
-                id="home-tagline"
-                v-model="tagline"
-                class="home-admin__input"
-                type="text"
-                maxlength="120"
-                :disabled="mutating"
-              >
-            </div>
-            <!-- 自动轮播不再是配置项：固定开启、10 秒一张。 -->
-            <div class="home-admin__settings-actions">
+      <Transition name="hero-collection" mode="out-in">
+        <section :key="activeTab.key" class="hero-admin__collection" :aria-label="activeTab.label">
+          <p v-if="pageStatus === 'loading'" role="status">正在加载{{ activeTab.label }}…</p>
+          <p v-else-if="pageStatus === 'error'" role="alert">加载失败，请刷新重试。</p>
+          <template v-else-if="collection">
+            <header class="hero-admin__collection-head">
+              <div>
+                <h2>{{ activeTab.label }}</h2>
+                <p role="status">已启用 {{ enabledItems.length }} / 5 · collection v{{ collection.version }}</p>
+              </div>
               <button
+                v-if="!showDraft"
                 type="button"
-                class="home-admin__button home-admin__button--primary"
-                :disabled="mutating || !settingsDirty || !settingsValid"
-                @click="onSaveSettings"
-              >{{ mutating ? '保存中…' : '保存设置' }}</button>
-            </div>
-          </div>
-        </section>
+                :disabled="mutating"
+                @click="showDraft = true"
+              >新增大图项</button>
+            </header>
 
-        <section class="home-admin__card" aria-labelledby="home-slides-title">
-          <div class="home-admin__slides-head">
-            <h2 id="home-slides-title" class="home-admin__card-title">
-              {{ isHomePlacement ? '首页轮播项' : '委托页大图项' }}
-            </h2>
-            <p class="home-admin__slides-meta" role="status">
-              已启用 {{ enabledSlides.length }} / 5
+            <p v-if="collection.items.length === 0 && !showDraft" class="hero-admin__empty">
+              当前集合为空。上传与方向匹配的图片后可发布。
             </p>
-            <button
-              v-if="!showDraft"
-              type="button"
-              class="home-admin__button"
-              :disabled="mutating"
-              @click="showDraft = true"
-            >新增{{ isHomePlacement ? '轮播项' : '大图项' }}</button>
-          </div>
 
-          <p v-if="slides.length === 0 && !showDraft" class="home-admin__empty">
-            {{ isHomePlacement
-              ? '还没有轮播项。新增一项并上传横竖两版图片后，即可启用到首页。'
-              : '还没有委托页大图。新增一项并上传横竖两版图片后，即可作为委托页背景。' }}
-          </p>
-
-          <TransitionGroup name="home-slide-list" tag="div" class="home-admin__slides">
-            <AdminHomeSlideCard
-              v-for="slide in slides"
-              :key="slide.id"
-              :slide="slide"
-              :placement="placement"
-              :works="works"
-              :home-version="home.version"
-              :mutating="mutating"
-              :ffmpeg-pending="ffmpegPending[slide.id] ?? false"
-              :operation="operations[slide.id] ?? null"
-              :feedback="feedback[slide.id] ?? null"
-              :preview="previews[slide.id] ?? null"
-              :preview-pending="previewPending[slide.id] ?? false"
-              :can-move-up="moveStateFor(slide.id).canMoveUp"
-              :can-move-down="moveStateFor(slide.id).canMoveDown"
-              @save="payload => onSave(slide.id, payload)"
-              @reorder-to="order => onReorderTo(slide.id, order)"
-              @delete="onDelete(slide.id)"
-              @enable="allowUpscale => onEnable(slide.id, allowUpscale)"
-              @disable="onDisable(slide.id)"
-              @move="direction => onMove(slide.id, direction)"
-              @load-preview="onPreview(slide.id)"
-              @retry-operation="onRetry(slide.id)"
-              @conflict="load()"
-            />
-            <AdminHomeSlideCard
-              v-if="showDraft"
-              key="home-slide-draft"
-              :slide="null"
-              :placement="placement"
-              :works="works"
-              :home-version="home.version"
-              :default-sort-order="nextEnabledSortOrder"
-              :mutating="mutating"
-              @create="onCreate"
-              @conflict="load()"
-            />
-          </TransitionGroup>
+            <TransitionGroup name="hero-item-list" tag="div" class="hero-admin__items">
+              <AdminHeroCollectionItemCard
+                v-for="item in collection.items"
+                :key="item.id"
+                :item="item"
+                :placement="placement"
+                :orientation="orientation"
+                :collection-version="collection.version"
+                :mutating="mutating"
+                :operation="operations[item.id] ?? null"
+                :feedback="feedback[item.id] ?? null"
+                :preview="previews[item.id] ?? null"
+                :preview-pending="previewPending[item.id] ?? false"
+                :can-move-up="moveState(item.id).canMoveUp"
+                :can-move-down="moveState(item.id).canMoveDown"
+                @update="payload => run(() => updateItem(item.id, payload))"
+                @delete="run(() => deleteItem(item.id))"
+                @enable="run(() => startOperation(item.id, 'enable'))"
+                @disable="run(() => startOperation(item.id, 'disable'))"
+                @upscale="run(() => startOperation(item.id, 'upscale'))"
+                @load-preview="run(() => loadPreview(item.id))"
+                @retry-operation="run(() => retryOperation(item.id))"
+                @move="direction => onMove(item.id, direction)"
+                @conflict="load()"
+              />
+              <AdminHeroCollectionItemCard
+                v-if="showDraft"
+                key="hero-item-draft"
+                :item="null"
+                :placement="placement"
+                :orientation="orientation"
+                :collection-version="collection.version"
+                :default-sort-order="nextSortOrder"
+                :mutating="mutating"
+                @create="onCreate"
+                @conflict="load()"
+              />
+            </TransitionGroup>
+          </template>
         </section>
-
-          </div>
-        </div>
       </Transition>
 
       <AdminConfirmDialog
-        :open="errorDialogOpen"
+        :open="dialogOpen"
         title="操作未完成"
         confirm-label="知道了"
         :show-cancel="false"
-        @confirm="closeErrorDialog"
-        @cancel="closeErrorDialog"
+        @confirm="closeDialog"
+        @cancel="closeDialog"
       >
         <p v-if="actionError" role="alert">{{ actionError }}</p>
         <p v-if="conflictNotice" role="alert">{{ conflictNotice }}</p>
@@ -371,237 +203,104 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.home-admin {
+.hero-admin,
+.hero-admin__collection,
+.hero-admin__items {
   display: grid;
   gap: var(--admin-space-4);
+}
+
+.hero-admin {
   max-width: 72rem;
 }
 
-.home-admin__header {
+.hero-admin__header,
+.hero-admin__collection-head div {
   display: grid;
   gap: var(--admin-space-1);
 }
 
-.home-admin__title {
+.hero-admin h1,
+.hero-admin h2,
+.hero-admin p {
   margin: 0;
-  font-size: var(--admin-font-lg);
-  font-weight: 700;
 }
 
-.home-admin__meta {
-  margin: 0;
-  font-size: var(--admin-font-sm);
+.hero-admin__header p,
+.hero-admin__collection-head p,
+.hero-admin__empty {
   color: var(--admin-text-secondary);
+  font-size: var(--admin-font-sm);
 }
 
-.home-admin__tabs {
-  display: flex;
+.hero-admin__tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--admin-space-1);
   padding: var(--admin-space-1);
-  width: fit-content;
-  max-width: 100%;
   background: var(--admin-bg-subtle);
   border-radius: var(--admin-radius-md);
 }
 
-.home-admin__tab {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.hero-admin__tab {
+  display: grid;
   min-height: var(--admin-touch-target);
-  padding: 0 var(--admin-space-4);
-  border-radius: var(--admin-radius-sm);
+  padding: var(--admin-space-2) var(--admin-space-3);
   color: var(--admin-text-secondary);
-  font-size: var(--admin-font-sm);
+  border-radius: var(--admin-radius-sm);
+  font-size: var(--admin-font-xs);
   font-weight: 600;
-  text-decoration: none;
-  transition:
-    color var(--admin-duration-fast) var(--admin-easing),
-    background-color var(--admin-duration-fast) var(--admin-easing),
-    box-shadow var(--admin-duration-fast) var(--admin-easing);
+  place-items: center;
+  text-align: center;
 }
 
-.home-admin__tab[aria-current='page'] {
-  background: var(--admin-bg-primary);
+.hero-admin__tab[aria-current='page'] {
   color: var(--admin-text-primary);
+  background: var(--admin-bg-primary);
   box-shadow: 0 1px 3px rgb(25 31 42 / 0.1);
 }
 
-.home-admin__tab:focus-visible {
-  outline: 2px solid var(--admin-border-focus);
-  outline-offset: 2px;
-}
-
-.home-admin__panel {
-  display: grid;
-  gap: var(--admin-space-4);
-}
-
-.home-admin__placement {
-  min-width: 0;
-}
-
-.home-admin__state {
-  padding: var(--admin-space-6);
-  text-align: center;
-  color: var(--admin-text-secondary);
-  font-size: var(--admin-font-sm);
-}
-
-.home-admin__card {
-  display: grid;
-  gap: var(--admin-space-3);
-  padding: var(--admin-space-4);
-  background: var(--admin-bg-primary);
-  border: 1px solid var(--admin-border-secondary);
-  border-radius: var(--admin-radius-md);
-}
-
-.home-admin__card-title {
-  margin: 0;
-  font-size: var(--admin-font-md);
-  font-weight: 600;
-}
-
-.home-admin__settings {
-  display: grid;
-  gap: var(--admin-space-3);
-}
-
-@media (min-width: 768px) {
-  .home-admin__settings {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: end;
-  }
-
-  .home-admin__field--wide,
-  .home-admin__settings-actions {
-    grid-column: 1 / -1;
-  }
-
-  .home-admin__settings-actions {
-    justify-content: flex-end;
-  }
-}
-
-.home-admin__field--inline {
+.hero-admin__collection-head {
   display: flex;
   align-items: center;
-  gap: var(--admin-space-2);
-  min-height: var(--admin-control-height);
+  justify-content: space-between;
+  gap: var(--admin-space-3);
 }
 
-.home-admin__field--inline .home-admin__label {
-  margin: 0;
-}
-
-.home-admin__label {
-  display: block;
-  font-size: var(--admin-font-xs);
-  font-weight: 600;
-  margin-bottom: var(--admin-space-1);
-}
-
-.home-admin__input {
-  width: 100%;
+.hero-admin__collection-head button {
   min-height: var(--admin-control-height-sm);
-  padding: 0 var(--admin-space-2);
+  padding: 0 var(--admin-space-3);
+  background: var(--admin-bg-primary);
   border: 1px solid var(--admin-border-primary);
   border-radius: var(--admin-radius-sm);
   font: inherit;
-  font-size: var(--admin-font-sm);
-  color: var(--admin-text-primary);
-  background: var(--admin-bg-primary);
-}
-
-.home-admin__input--narrow {
-  max-width: 8rem;
-}
-
-.home-admin__settings-actions {
-  display: flex;
-  align-items: center;
-}
-
-.home-admin__button {
-  min-height: var(--admin-control-height-sm);
-  padding: 0 var(--admin-space-3);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-sm);
-  background: var(--admin-bg-primary);
-  color: var(--admin-text-primary);
-  font-size: var(--admin-font-xs);
-  font-family: inherit;
   cursor: pointer;
-  white-space: nowrap;
 }
 
-.home-admin__button:hover:not(:disabled) {
-  background: var(--admin-bg-subtle);
-}
-
-.home-admin__button:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-
-.home-admin__button--primary {
-  background: var(--admin-accent-primary);
-  border-color: var(--admin-accent-primary);
-  color: var(--admin-text-inverse);
-  font-weight: 600;
-}
-
-.home-admin__slides-head {
-  display: flex;
-  align-items: center;
-  gap: var(--admin-space-3);
-  flex-wrap: wrap;
-}
-
-.home-admin__slides-meta {
-  margin: 0;
-  font-size: var(--admin-font-xs);
-  color: var(--admin-text-tertiary);
-}
-
-.home-admin__slides-head .home-admin__button {
-  margin-left: auto;
-}
-
-.home-admin__empty {
-  margin: 0;
-  font-size: var(--admin-font-sm);
-  color: var(--admin-text-tertiary);
-}
-
-.home-admin__slides {
-  display: grid;
-  gap: var(--admin-space-3);
-}
-
-.home-slide-list-move {
+.hero-item-list-move {
   transition: transform var(--admin-duration-normal) var(--admin-easing);
 }
 
-.home-placement-enter-active,
-.home-placement-leave-active {
-  transition:
-    opacity var(--admin-duration-normal) var(--admin-easing),
-    transform var(--admin-duration-normal) var(--admin-easing);
+.hero-collection-enter-active,
+.hero-collection-leave-active {
+  transition: opacity var(--admin-duration-fast) var(--admin-easing);
 }
 
-.home-placement-enter-from,
-.home-placement-leave-to {
+.hero-collection-enter-from,
+.hero-collection-leave-to {
   opacity: 0;
-  transform: translateY(0.5rem);
+}
+
+@media (min-width: 900px) {
+  .hero-admin__tabs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .home-admin__tab,
-  .home-slide-list-move,
-  .home-placement-enter-active,
-  .home-placement-leave-active {
+  .hero-item-list-move,
+  .hero-collection-enter-active,
+  .hero-collection-leave-active {
     transition: none;
   }
 }
