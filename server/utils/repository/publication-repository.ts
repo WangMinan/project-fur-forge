@@ -61,7 +61,7 @@ export interface PublicationAsset {
   cropWidth: number
   height: number
   primary: number
-  role: 'design_sheet' | 'studio_photo'
+  role: 'adoption_cover' | 'design_sheet' | 'studio_photo'
   status: string
   watermarkAnchor: string
   width: number
@@ -465,7 +465,7 @@ export function findWorkMediaAssets(
     FROM work_assets AS relation
     JOIN assets AS asset ON asset.id = relation.asset_id
     WHERE relation.work_id = ?
-      AND relation.role IN ('design_sheet', 'studio_photo')
+      AND relation.role IN ('design_sheet', 'studio_photo', 'adoption_cover')
     ORDER BY relation.role, relation.position
   `).all(workId) as PublicationAsset[]
 }

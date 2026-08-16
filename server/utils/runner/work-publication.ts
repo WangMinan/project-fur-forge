@@ -620,7 +620,7 @@ async function runWorkPublication(
     }
     const targets = publicationTargets(sqlite, workId)
     const preprocessTargets = targets.filter(target => (
-      ['design_sheet', 'studio_photo'].includes(target.asset.role)
+      ['design_sheet', 'studio_photo', 'adoption_cover'].includes(target.asset.role)
       && !assetSupportsPublicUsages(
         sqlite,
         target.asset.assetId,
@@ -633,7 +633,9 @@ async function runWorkPublication(
       for (const target of preprocessTargets) {
         failureCode = target.asset.role === 'design_sheet'
           ? 'DESIGN_SHEET_UPSCALE_FAILED'
-          : 'STUDIO_PHOTO_UPSCALE_FAILED'
+          : target.asset.role === 'adoption_cover'
+            ? 'ADOPTION_COVER_UPSCALE_FAILED'
+            : 'STUDIO_PHOTO_UPSCALE_FAILED'
         requireWorkLease(sqlite, lease)
         await ensureWorkMediaUpscaleSource(
           sqlite,

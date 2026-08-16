@@ -69,6 +69,7 @@ export const CENTERED_WATERMARK_PROFILE = WATERMARK_PROFILE_NAME
 
 export type PublicMediaUsage =
   | 'work-card'
+  | 'adoption-card'
   | 'home-hero-landscape'
   | 'home-hero-portrait'
   | 'design-sheet'
@@ -111,6 +112,11 @@ const recipes = {
     roles: ['design_sheet', 'studio_photo'],
     widths: [480, 768, 1200],
     aspect: [3, 4],
+  },
+  'adoption-card': {
+    roles: ['adoption_cover'],
+    widths: [768, 1200, 1600],
+    aspect: [16, 9],
   },
   'home-hero-landscape': {
     roles: ['home_hero_landscape'],
@@ -244,15 +250,18 @@ function minimumDimensionsForUsages(
   if (sourceAsset.role === 'design_sheet') {
     return { height: 0, width }
   }
-  const workCardHeight = usages.includes('work-card')
-    ? outputHeight('work-card', recipes['work-card'].widths.at(-1)!)!
+  const cardUsage = usages.find(usage => (
+    usage === 'work-card' || usage === 'adoption-card'
+  ))
+  const workCardHeight = cardUsage
+    ? outputHeight(cardUsage, recipes[cardUsage].widths.at(-1)!)!
     : 0
   return {
     height: Math.ceil(workCardHeight / sourceAsset.cropHeight),
     width: Math.max(
       width,
-      usages.includes('work-card')
-        ? Math.ceil(recipes['work-card'].widths.at(-1)! / sourceAsset.cropWidth)
+      cardUsage
+        ? Math.ceil(recipes[cardUsage].widths.at(-1)! / sourceAsset.cropWidth)
         : 0,
     ),
   }
@@ -386,7 +395,10 @@ function defaultUsages(role: MediaRole): PublicMediaUsage[] {
   if (role === 'design_sheet') {
     return ['design-sheet']
   }
-  if (role === 'watermark_logo') {
+  if (role === 'adoption_cover') {
+    return ['adoption-card']
+  }
+  if (role === 'watermark_logo' || role === 'commission_design_reference') {
     return []
   }
   return role === 'home_hero_landscape'
@@ -395,12 +407,15 @@ function defaultUsages(role: MediaRole): PublicMediaUsage[] {
 }
 
 export function workAssetPublicUsages(
-  role: 'design_sheet' | 'studio_photo',
+  role: 'adoption_cover' | 'design_sheet' | 'studio_photo',
   primary: boolean,
   hasPrimaryStudioPhoto: boolean,
 ): PublicMediaUsage[] {
   if (role === 'studio_photo') {
     return primary ? ['work-card', 'detail'] : ['detail']
+  }
+  if (role === 'adoption_cover') {
+    return ['adoption-card']
   }
   return hasPrimaryStudioPhoto
     ? ['design-sheet']
@@ -419,10 +434,11 @@ export function sourceSupportsPublicUsages(
   return usages.every((usage) => {
     const width = recipes[usage].widths.at(-1)!
     const height = outputHeight(usage, width)
-    const availableWidth = usage === 'work-card'
+    const cardUsage = usage === 'work-card' || usage === 'adoption-card'
+    const availableWidth = cardUsage
       ? Math.round(source.width * (source.cropWidth ?? 1))
       : source.width
-    const availableHeight = usage === 'work-card'
+    const availableHeight = cardUsage
       ? Math.round(source.height * (source.cropHeight ?? 1))
       : source.height
     if (height === null) {
@@ -454,7 +470,7 @@ function resizeOperation(
   if (height === null) {
     return `resize,m_lfit,w_${width}`
   }
-  const cropped = usage === 'work-card'
+  const cropped = (usage === 'work-card' || usage === 'adoption-card')
     && (
       sourceAsset.cropX !== 0
       || sourceAsset.cropY !== 0
@@ -495,7 +511,7 @@ function recipeIdentity(
       : sourceAsset.role === 'design_sheet' ? 'pad' : 'cover',
     focalX: sourceAsset.focalX,
     focalY: sourceAsset.focalY,
-    crop: usage === 'work-card'
+    crop: usage === 'work-card' || usage === 'adoption-card'
       ? {
           x: sourceAsset.cropX,
           y: sourceAsset.cropY,
@@ -542,7 +558,7 @@ function watermarkSizingReferenceWidth(
   if (usage === 'home-hero-portrait') {
     return HERO_PORTRAIT_WATERMARK_REFERENCE_WIDTH
   }
-  if (usage === 'work-card') {
+  if (usage === 'work-card' || usage === 'adoption-card') {
     return PORTRAIT_WORK_WATERMARK_REFERENCE_WIDTH
   }
   if (
@@ -918,14 +934,16 @@ export async function renderActiveWatermarkPreview(
   sqlite: Database.Database,
   storage: MediaStorage,
   assetId: string,
-  usage: 'design-sheet' | 'detail' | 'work-card',
+  usage: 'adoption-card' | 'design-sheet' | 'detail' | 'work-card',
 ) {
   const sourceAsset = asset(sqlite, assetId)
   const marker = sourceAsset.privateObjectKey.indexOf('/original/')
   if (marker < 1) {
     throw new ServiceError(409, 'CONFLICT', 'Media asset cannot be previewed.')
   }
-  const width = usage === 'work-card' ? 480 : 960
+  const width = usage === 'work-card'
+    ? 480
+    : usage === 'adoption-card' ? 768 : 960
   const objectKey = `${sourceAsset.privateObjectKey.slice(0, marker)}/preview/work/${assetId}/${randomUUID()}.webp`
   try {
     await generatePrivateWatermarkPreview(sqlite, storage, {

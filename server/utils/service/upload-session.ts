@@ -186,7 +186,7 @@ export function assertUploadOwner(
     return
   }
 
-  if (!['design_sheet', 'studio_photo'].includes(mediaRole)) {
+  if (!['design_sheet', 'studio_photo', 'adoption_cover'].includes(mediaRole)) {
     throw new ServiceError(400, 'VALIDATION_ERROR', 'Media role does not match owner.')
   }
   const work = sqlite.prepare(`
@@ -198,8 +198,11 @@ export function assertUploadOwner(
   if (work.version !== owner.expectedVersion) {
     throw new ServiceError(409, 'CONFLICT', 'Owner version is stale.')
   }
-  if (mediaRole === 'design_sheet' && work.purpose !== 'adoption') {
-    throw new ServiceError(400, 'VALIDATION_ERROR', 'Design sheets require an adoption work.')
+  if (
+    ['design_sheet', 'adoption_cover'].includes(mediaRole)
+    && work.purpose !== 'adoption'
+  ) {
+    throw new ServiceError(400, 'VALIDATION_ERROR', 'Adoption media requires an adoption work.')
   }
 }
 
