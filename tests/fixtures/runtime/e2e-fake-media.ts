@@ -79,6 +79,7 @@ export class E2eFakeMediaStorage extends FakeMediaStorage {
     this.objects.clear()
     this.publicObjects.clear()
     this.privatePuts.length = 0
+    this.privateProcessCalls.length = 0
     this.processCalls.length = 0
     this.signedPuts.length = 0
     this.putRecords.length = 0
