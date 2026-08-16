@@ -118,6 +118,7 @@ import type {
   watermarkProfileStatusSchema,
 } from '../schemas/watermark'
 import type {
+  createCommissionSubmissionRequestSchema,
   commissionSubmissionDetailDtoSchema,
   commissionSubmissionListItemDtoSchema,
   commissionSubmissionStatusSchema,
@@ -131,6 +132,9 @@ export type CommissionUploadStatus = z.infer<
 >
 export type CommissionUploadSessionDto = z.infer<
   typeof commissionUploadSessionDtoSchema
+>
+export type CreateCommissionSubmissionRequest = z.infer<
+  typeof createCommissionSubmissionRequestSchema
 >
 export type CommissionSubmissionStatus = z.infer<
   typeof commissionSubmissionStatusSchema
