@@ -11,8 +11,26 @@ import { getE2eFakeMediaStorage } from './e2e-fake-media'
 
 const ROUTE_PREFIX = '/api/e2e-fake-oss/'
 
+function setCorsHeaders(event: Parameters<typeof setResponseHeader>[0]) {
+  // 对齐已确认的 OSS Bucket CORS 运维契约：浏览器条件 PUT 允许任意 Origin，
+  // 应用 API 自己的 Origin 校验仍由真实路由执行。
+  setResponseHeader(event, 'access-control-allow-origin', '*')
+  setResponseHeader(event, 'access-control-allow-methods', 'GET, PUT, OPTIONS')
+  setResponseHeader(
+    event,
+    'access-control-allow-headers',
+    'Content-Type, Content-MD5, x-oss-meta-sha256, x-oss-forbid-overwrite',
+  )
+  setResponseHeader(event, 'access-control-expose-headers', 'ETag')
+}
+
 // 模拟 OSS 条件 PUT：校验 Content-MD5 与禁止覆盖，按真实头元数据落库到内存 fake。
 export default defineEventHandler(async (event) => {
+  setCorsHeaders(event)
+  if (event.method === 'OPTIONS') {
+    setResponseStatus(event, 204)
+    return null
+  }
   const pathname = getRequestURL(event).pathname
   const objectKey = pathname.startsWith(ROUTE_PREFIX)
     ? pathname.slice(ROUTE_PREFIX.length)
