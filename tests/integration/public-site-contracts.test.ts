@@ -959,8 +959,8 @@ describe('T19/T20 public repository contracts', () => {
     expect(initial).toMatchObject({
       version: expect.any(Number),
       tagline: '不只做小狗毛 | 只做海绵头',
-      contactEmail: '3114559925@qq.com',
-      contactQq: '3114559925',
+      contactEmail: '765678159@qq.com',
+      contactQq: '765678159',
       autoRotate: false,
       autoRotateIntervalMs: 6000,
     })
@@ -1176,8 +1176,8 @@ describe('T19/T20 public repository contracts', () => {
     expect(adminRead.queries).toHaveLength(4)
     expect(projection).toMatchObject({
       tagline: '只让作品说话',
-      contactEmail: '3114559925@qq.com',
-      contactQq: '3114559925',
+      contactEmail: '765678159@qq.com',
+      contactQq: '765678159',
       autoRotate: true,
       autoRotateIntervalMs: 6000,
     })
