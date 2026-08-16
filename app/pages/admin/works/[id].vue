@@ -10,9 +10,7 @@ import type {
 import { AdminApiError } from '~/composables/useAdminApi'
 import type { WorkBasicsForm } from '~/utils/work-form'
 import {
-  businessTypeOf,
   emptyWorkForm,
-  hasLegacyEventSaleStatus,
   hasWorkFormError,
   toWorkFieldsPayload,
   validateWorkForm,
@@ -21,9 +19,7 @@ import {
 } from '~/utils/work-form'
 import { workApiErrorText } from '~/utils/work-errors'
 import {
-  ADOPTION_METHOD_LABELS,
-  BUSINESS_STATUS_LABELS,
-  SUIT_TYPE_LABELS,
+  ADOPTION_STATUS_LABELS,
   WORK_PURPOSE_LABELS,
 } from '~/utils/work-labels'
 import { formatCnyMinorUnits } from '~/utils/format'
@@ -59,8 +55,10 @@ const conflictOpen = ref(false)
 const preview = ref<PublicSafeWorkPreviewDto | null>(null)
 const previewError = ref<string | null>(null)
 
+const adoptionCoverState = ref({ busy: false, dirty: false })
 const designSheetState = ref({ busy: false, dirty: false })
 const photoState = ref({ busy: false, dirty: false })
+const adoptionCoverSection = useTemplateRef<{ save: () => Promise<boolean> }>('adoptionCoverSection')
 const designSheetSection = useTemplateRef<{ save: () => Promise<boolean> }>('designSheetSection')
 const studioPhotoSection = useTemplateRef<{ save: () => Promise<boolean> }>('studioPhotoSection')
 
@@ -78,31 +76,13 @@ function applyMediaWork(next: ManagedWorkDto) {
     form.value = workFormFromDto(next)
     baseline.value = workFormSnapshot(form.value)
     submitted.value = false
-    }
+  }
 }
 
 const locked = computed(() => work.value?.publicationStatus === 'published')
 
 const errors = computed(() => validateWorkForm(form.value))
 const invalid = computed(() => hasWorkFormError(errors.value))
-
-/**
- * T37：展会掉落已是正式可编辑类型，不再需要“先转为常规领养”的阻断流程。
- * 只有旧的 `event_sale` 状态仍需提示改成正式领养状态。
- */
-const legacyEventSale = computed(
-  () => work.value !== null && hasLegacyEventSaleStatus(work.value),
-)
-
-/** 已保存的业务类型：用于提示切换类型会清空哪些字段。 */
-const savedBusinessType = computed(() => (
-  work.value === null
-    ? null
-    : businessTypeOf(
-        work.value.purpose,
-        work.value.purpose === 'adoption' ? work.value.adoptionMethod : null,
-      )
-))
 
 const isDirty = computed(() =>
   work.value !== null
@@ -111,6 +91,8 @@ const isDirty = computed(() =>
 
 const leaveGuardActive = computed(() =>
   isDirty.value
+  || adoptionCoverState.value.dirty
+  || adoptionCoverState.value.busy
   || designSheetState.value.dirty
   || designSheetState.value.busy
   || photoState.value.dirty
@@ -118,11 +100,15 @@ const leaveGuardActive = computed(() =>
 )
 
 const mediaBusy = computed(() =>
-  designSheetState.value.busy || photoState.value.busy,
+  adoptionCoverState.value.busy
+  || designSheetState.value.busy
+  || photoState.value.busy,
 )
 
 const mediaDirty = computed(() =>
-  designSheetState.value.dirty || photoState.value.dirty,
+  adoptionCoverState.value.dirty
+  || designSheetState.value.dirty
+  || photoState.value.dirty,
 )
 
 async function loadWork(options: { initial?: boolean } = {}) {
@@ -231,6 +217,10 @@ async function saveBeforePublish(): Promise<boolean> {
     return false
   }
   await nextTick()
+  if (adoptionCoverState.value.dirty && !(await adoptionCoverSection.value?.save())) {
+    return false
+  }
+  await nextTick()
   if (designSheetState.value.dirty && !(await designSheetSection.value?.save())) {
     return false
   }
@@ -251,6 +241,12 @@ function onPhotosSaved(next: ManagedWorkDto) {
 function onDesignSheetSaved(next: ManagedWorkDto) {
   applyMediaWork(next)
   savedNotice.value = '领养设定图已保存。'
+  void loadPreview()
+}
+
+function onAdoptionCoverSaved(next: ManagedWorkDto) {
+  applyMediaWork(next)
+  savedNotice.value = '领养横版封面已保存。'
   void loadPreview()
 }
 
@@ -334,10 +330,6 @@ useSeoMeta({
       <p v-if="locked" class="editor__locked" role="status">
         作品已发布：基础信息与图片为只读，需要先下架。首页精选仍可直接修改，具体顺序在作品管理的“首页精选”Tab 调整。
       </p>
-      <p v-else-if="legacyEventSale" class="editor__locked" role="status">
-        该作品仍是旧的“展会出售中”状态：保存前请在领养信息里选择一个正式的领养状态。
-      </p>
-
       <p v-if="savedNotice" class="editor__notice" role="status">{{ savedNotice }}</p>
 
       <div class="editor__layout">
@@ -347,9 +339,16 @@ useSeoMeta({
             :disabled="locked || saving"
             :ordering-disabled="saving"
             :errors="errors"
-            :legacy-event-sale="legacyEventSale"
-            :saved-business-type="savedBusinessType"
             :show-errors="submitted"
+          />
+          <AdminAdoptionCoverSection
+            v-if="work.purpose === 'adoption'"
+            ref="adoptionCoverSection"
+            :work="work"
+            :locked="locked"
+            @saved="onAdoptionCoverSaved"
+            @conflict="conflictOpen = true"
+            @state-change="adoptionCoverState = $event"
           />
           <AdminDesignSheetSection
             v-if="work.purpose === 'adoption'"
@@ -393,32 +392,20 @@ useSeoMeta({
                   <dd>{{ preview.characterName }}</dd>
                 </div>
                 <div class="preview-card__fact">
-                  <dt>物种 / 装型</dt>
-                  <dd>{{ preview.species }} · {{ SUIT_TYPE_LABELS[preview.suitType] }}</dd>
+                  <dt>物种</dt>
+                  <dd>{{ preview.species }}</dd>
                 </div>
                 <div class="preview-card__fact">
                   <dt>用途</dt>
                   <dd>{{ WORK_PURPOSE_LABELS[preview.purpose] }}</dd>
                 </div>
-                <div class="preview-card__fact">
-                  <dt>角色主人</dt>
-                  <dd>{{ preview.ownerDisplay }}</dd>
-                </div>
                 <template v-if="preview.purpose === 'adoption'">
                   <div class="preview-card__fact">
-                    <dt>领养方式</dt>
+                    <dt>领养状态</dt>
                     <dd>
-                      {{ preview.adoptionMethod
-                        ? ADOPTION_METHOD_LABELS[preview.adoptionMethod]
-                        : '未记录（公开端不会显示该作品）' }}
-                    </dd>
-                  </div>
-                  <div class="preview-card__fact">
-                    <dt>业务状态</dt>
-                    <dd>
-                      {{ preview.businessStatus
-                        ? BUSINESS_STATUS_LABELS[preview.businessStatus]
-                        : '未记录（公开端不会显示该作品）' }}
+                      {{ preview.adoptionStatus
+                        ? ADOPTION_STATUS_LABELS[preview.adoptionStatus]
+                        : '待负责人人工确认（禁止发布）' }}
                     </dd>
                   </div>
                   <div class="preview-card__fact">
@@ -439,13 +426,10 @@ useSeoMeta({
                   <dd class="preview-card__slug">/works/{{ preview.slug }}</dd>
                 </div>
                 <div class="preview-card__fact">
-                  <dt>属性</dt>
-                  <dd>{{ preview.featureTags.length > 0 ? preview.featureTags.join('、') : '无' }}</dd>
-                </div>
-                <div class="preview-card__fact">
-                  <dt>领养设定图</dt>
+                  <dt>领养横版封面 / 设定图</dt>
                   <dd v-if="preview.purpose === 'adoption'">
-                    {{ preview.designSheet ? '1 张' : '未保存' }}
+                    {{ preview.adoptionCover ? '封面 1 张' : '封面未保存' }}
+                    · {{ preview.designSheet ? '设定图 1 张' : '设定图可选' }}
                   </dd>
                   <dd v-else>不适用</dd>
                 </div>

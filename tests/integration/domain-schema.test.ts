@@ -36,37 +36,30 @@ function insertWork(
   id: string,
   fields: Partial<{
     purpose: string
-    ownerDisplay: string
     publicationStatus: string
-    adoptionMethod: string | null
-    businessStatus: string | null
-    eventName: string | null
-    eventTime: string | null
+    adoptionStatus: string | null
     priceAmountMinor: number | null
     priceCurrency: string | null
   }> = {},
 ) {
+  const purpose = fields.purpose ?? 'showcase'
   sqlite.prepare(`
     INSERT INTO works (
-      id, slug, character_name, species, suit_type, purpose,
-      adoption_method, business_status, event_name, event_time,
-      owner_display, owner_contact, price_amount_minor, price_currency,
+      id, slug, character_name, species, purpose, adoption_status,
+      price_amount_minor, price_currency,
       publication_status, created_at, updated_at
     ) VALUES (
-      @id, @slug, '团子', '犬科', 'full', @purpose,
-      @adoptionMethod, @businessStatus, @eventName, @eventTime,
-      @ownerDisplay, 'private-contact', @priceAmountMinor, @priceCurrency,
+      @id, @slug, '团子', '犬科', @purpose, @adoptionStatus,
+      @priceAmountMinor, @priceCurrency,
       @publicationStatus, @now, @now
     )
   `).run({
     id,
     slug: `work-${id}`,
-    purpose: fields.purpose ?? 'showcase',
-    adoptionMethod: fields.adoptionMethod ?? null,
-    businessStatus: fields.businessStatus ?? null,
-    eventName: fields.eventName ?? null,
-    eventTime: fields.eventTime ?? null,
-    ownerDisplay: fields.ownerDisplay ?? '有点小狗工作室',
+    purpose,
+    adoptionStatus: purpose === 'adoption'
+      ? (fields.adoptionStatus ?? 'available')
+      : null,
     priceAmountMinor: fields.priceAmountMinor ?? null,
     priceCurrency: fields.priceCurrency ?? null,
     publicationStatus: fields.publicationStatus ?? 'draft',
@@ -323,7 +316,6 @@ describe('P0 schema boundary', () => {
       'watermark_operations',
       'watermark_profiles',
       'work_assets',
-      'work_feature_tags',
       'works',
     ])
     expect(workColumns).not.toEqual(expect.arrayContaining([
@@ -355,21 +347,22 @@ describe('P0 schema boundary', () => {
     }
   })
 
-  it('enforces ownerDisplay, CNY and foreign keys', () => {
+  it('enforces the adoption matrix, CNY and foreign keys', () => {
     insertWork('studio')
-    insertWork('private', { ownerDisplay: '不公开' })
     insertWork('adoption', {
       purpose: 'adoption',
-      adoptionMethod: 'regular',
-      businessStatus: 'available',
+      adoptionStatus: 'available',
       priceAmountMinor: 1_560_000,
       priceCurrency: 'CNY',
     })
 
-    expect(() => insertWork('blank', { ownerDisplay: ' ' }))
-      .toThrow(/works_owner_display_nonempty/)
-    expect(() => insertWork('trimmed', { ownerDisplay: ' 不公开 ' }))
-      .toThrow(/works_owner_display_nonempty/)
+    expect(() => sqlite.prepare(`
+      INSERT INTO works (
+        id, slug, character_name, species, purpose, adoption_status,
+        publication_status, created_at, updated_at
+      ) VALUES ('missing-status', 'missing-status', '待确认', '犬科',
+        'adoption', NULL, 'draft', ?, ?)
+    `).run(now, now)).toThrow(/works_adoption_fields/)
     expect(() => insertWork('usd', {
       purpose: 'adoption',
       priceAmountMinor: 100,
@@ -380,30 +373,11 @@ describe('P0 schema boundary', () => {
       priceAmountMinor: 100,
       priceCurrency: 'CNY',
     })).toThrow(/works_adoption_fields|works_price_cny/)
+    insertAsset('missing-work-asset', 'studio_photo')
     expect(() => sqlite.prepare(`
-      INSERT INTO work_feature_tags (work_id, position, value)
-      VALUES ('missing-work', 0, '短属性')
+      INSERT INTO work_assets (work_id, asset_id, role, position)
+      VALUES ('missing-work', 'missing-work-asset', 'studio_photo', 0)
     `).run()).toThrow(/FOREIGN KEY/)
-  })
-
-  it('limits ordered feature tags to eight nonblank unique values', () => {
-    insertWork('tags')
-    const insert = sqlite.prepare(`
-      INSERT INTO work_feature_tags (work_id, position, value)
-      VALUES ('tags', ?, ?)
-    `)
-
-    for (let position = 0; position < 8; position += 1) {
-      insert.run(position, `属性${position}`)
-    }
-
-    expect(() => insert.run(8, '第九条'))
-      .toThrow(/work_feature_tags_position/)
-    expect(() => insert.run(7, '属性0'))
-      .toThrow(/UNIQUE/)
-    expect(() => sqlite.prepare(`
-      UPDATE work_feature_tags SET value = ' ' WHERE work_id = 'tags'
-    `).run()).toThrow(/work_feature_tags_value/)
   })
 
   it('enforces media roles, limits and immutable originals', () => {
@@ -427,7 +401,7 @@ describe('P0 schema boundary', () => {
     expect(() => sqlite.prepare(`
       UPDATE works SET purpose = 'commission'
       WHERE id = 'adoption-work'
-    `).run()).toThrow(/design sheet requires an adoption work/)
+    `).run()).toThrow(/adoption media requires an adoption work/)
     insertAsset('design-second', 'design_sheet')
     expect(() => sqlite.prepare(`
       INSERT INTO work_assets (work_id, asset_id, role, position)
@@ -489,11 +463,17 @@ describe('P0 schema boundary', () => {
       'detail',
     )).not.toThrow()
     expect(() => insertVariant(
-      'design-card-fallback',
+      'design-sheet-public',
+      'matrix-design',
+      'design_sheet',
+      'design-sheet',
+    )).not.toThrow()
+    expect(() => insertVariant(
+      'design-card-retired',
       'matrix-design',
       'design_sheet',
       'work-card',
-    )).not.toThrow()
+    )).toThrow(/variant role and usage are incompatible/)
     expect(() => insertVariant(
       'landscape-public',
       'matrix-landscape',

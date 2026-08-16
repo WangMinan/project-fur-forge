@@ -13,8 +13,6 @@ import { publicSiteBusinessStatusDtoSchema } from './site-content'
 import {
   publicAdoptionWorkDtoSchema,
   publicWorkDtoSchema,
-  suitTypeSchema,
-  workPurposeSchema,
 } from './work'
 
 export const publicWorkCardDtoSchema = z.object({
@@ -47,11 +45,9 @@ export const publicWorkDetailDtoSchema = z.object({
   href: z.string().regex(/^\/works\/[a-z0-9]+(?:-[a-z0-9]+)*$/),
   media: z.object({
     primaryAssetId: resourceIdSchema.nullable(),
-    primaryStudioPhotoAssetId: resourceIdSchema.nullable(),
     card: publicWorkCardDtoSchema,
     gallery: z.array(publicWorkGalleryItemDtoSchema).max(5),
     designSheet: publicDesignSheetDtoSchema.optional(),
-    studioPhotos: z.array(publicWorkGalleryItemDtoSchema).max(5),
   }).strict(),
   navigation: z.object({
     previous: z.object({
@@ -68,8 +64,6 @@ export const publicWorkDetailDtoSchema = z.object({
 
 export const publicWorkFilterStateSchema = z.object({
   valid: z.boolean(),
-  purpose: workPurposeSchema.nullable(),
-  suitType: suitTypeSchema.nullable(),
 }).strict()
 
 /** 公开图片列表固定页长；访客端不提供每页数量选择。 */
@@ -99,26 +93,13 @@ export const publicFeaturedWorksDtoSchema = z.object({
   resultCount: z.number().int().min(0).max(PUBLIC_FEATURED_LIMIT),
 }).strict()
 
-/** T37：领养列表同时容纳常规领养与展会掉落。 */
 export const publicAdoptionListItemDtoSchema = z.object({
   work: publicAdoptionWorkDtoSchema,
   href: z.string().regex(/^\/works\/[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  designSheet: publicDesignSheetDtoSchema,
+  cover: publicWorkCardDtoSchema,
 }).strict()
 
-/** `/adoptions` 的轻量筛选：全部 / 常规领养 / 展会掉落。 */
-export const PUBLIC_ADOPTION_FILTER_VALUES = [
-  'all',
-  'regular',
-  'event_drop',
-] as const
-
-export const publicAdoptionFilterSchema = z.enum(
-  PUBLIC_ADOPTION_FILTER_VALUES,
-)
-
 export const publicAdoptionListQuerySchema = z.object({
-  method: publicAdoptionFilterSchema.optional(),
   q: publicCatalogSearchQuerySchema,
 }).strict()
 
@@ -128,23 +109,11 @@ export const publicAdoptionListDtoSchema = z.object({
   page: z.number().int().min(1),
   pageSize: z.literal(PUBLIC_ADOPTIONS_PAGE_SIZE),
   pageCount: z.number().int().nonnegative(),
-  /** 当前筛选状态；非法值收敛为 all 并标记 valid=false。 */
-  filter: z.object({
-    valid: z.boolean(),
-    method: publicAdoptionFilterSchema,
-  }).strict(),
-  /** 各筛选下的真实数量，用于区分“没有领养”与“没有掉落”。 */
-  counts: z.object({
-    all: z.number().int().nonnegative(),
-    regular: z.number().int().nonnegative(),
-    event_drop: z.number().int().nonnegative(),
-  }).strict(),
+  filter: z.object({ valid: z.boolean() }).strict(),
 }).strict()
 
 export const publicWorkListQuerySchema = z.object({
-  purpose: workPurposeSchema.optional(),
   q: publicCatalogSearchQuerySchema,
-  suitType: suitTypeSchema.optional(),
 }).strict()
 
 /**

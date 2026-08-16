@@ -5,7 +5,6 @@ import { ADMIN_MEDIA_CARD_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-
 import { adminMediaPreviewUrl } from '~/utils/admin-media-preview'
 import {
   PUBLICATION_STATUS_LABELS,
-  SUIT_TYPE_LABELS,
   WORK_PURPOSE_LABELS,
 } from '~/utils/work-labels'
 import type { FeaturedMove } from '~/utils/featured-order'
@@ -32,7 +31,7 @@ const PUBLICATION_TONES = {
 
 function thumbAssetId(work: WorkListItemDto) {
   return work.primaryAssetId
-    ?? (work.purpose === 'adoption' ? work.designSheetAssetId : null)
+    ?? (work.purpose === 'adoption' ? work.adoptionCoverAssetId : null)
 }
 
 function publicRank(index: number) {
@@ -99,8 +98,7 @@ function publicRank(index: number) {
               {{ work.characterName }}
             </NuxtLink>
             <span class="featured-order__meta">
-              {{ work.species }} · {{ SUIT_TYPE_LABELS[work.suitType] }} ·
-              {{ WORK_PURPOSE_LABELS[work.purpose] }}
+              {{ work.species }} · {{ WORK_PURPOSE_LABELS[work.purpose] }}
             </span>
           </div>
           <div class="featured-order__visibility">

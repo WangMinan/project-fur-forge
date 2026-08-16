@@ -54,7 +54,7 @@ export interface StudioUploadContext {
 }
 
 interface StudioPhotoUploadOptions {
-  mediaRole: 'design_sheet' | 'studio_photo'
+  mediaRole: 'adoption_cover' | 'design_sheet' | 'studio_photo'
   onAssetReady: (item: StudioUploadItem, asset: VerifiedAssetDto) => void
   onWorkConflict: () => void
 }

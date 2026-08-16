@@ -60,7 +60,7 @@ watch(error, (err) => {
 
 const dto = computed(() => detail.value?.work)
 const designSheet = computed(() => detail.value?.media.designSheet)
-const studioPhotos = computed(() => detail.value?.media.studioPhotos ?? [])
+const studioPhotos = computed(() => detail.value?.media.gallery ?? [])
 const relatedWorks = computed(() => detail.value?.related ?? [])
 const navigation = computed(() => detail.value?.navigation ?? {
   previous: null,
@@ -72,13 +72,13 @@ useSeoMeta({
     ? `${dto.value.characterName} · 作品展示 · ${PROJECT_NAME}`
     : `作品展示 · ${PROJECT_NAME}`)),
   description: computed(() => (dto.value
-    ? `${dto.value.characterName}：${dto.value.species}，${SUIT_TYPE_LABELS[dto.value.suitType]}。有点小狗工作室兽装作品档案。`
+    ? `${dto.value.characterName}：${dto.value.species}。有点小狗工作室兽装作品档案。`
     : '有点小狗工作室兽装作品档案。')),
   ogTitle: computed(() => (dto.value
     ? `${dto.value.characterName} · ${PROJECT_NAME}`
     : `作品展示 · ${PROJECT_NAME}`)),
   ogDescription: computed(() => (dto.value
-    ? `${dto.value.species} · ${SUIT_TYPE_LABELS[dto.value.suitType]} · 兽装作品档案`
+    ? `${dto.value.species} · 兽装作品档案`
     : '有点小狗工作室兽装作品档案。')),
   ogType: 'article',
 })
@@ -92,7 +92,7 @@ useHead(() => ({
           '@context': 'https://schema.org',
           '@type': 'CreativeWork',
           name: dto.value.characterName,
-          description: `${dto.value.species} · ${SUIT_TYPE_LABELS[dto.value.suitType]} · ${WORK_PURPOSE_LABELS[dto.value.purpose]}`,
+          description: dto.value.species,
           image: detail.value.media.card.sources.fallback.at(-1)?.src,
           creator: {
             '@type': 'Organization',
@@ -102,20 +102,6 @@ useHead(() => ({
       }]
     : [],
 }))
-
-const priceLabel = computed(() => {
-  if (dto.value?.purpose !== 'adoption') {
-    return ''
-  }
-  return dto.value.adoptionMethod === 'event_drop' ? '掉落价格' : '领养价格'
-})
-
-const priceText = computed(() => {
-  if (dto.value?.purpose !== 'adoption' || !dto.value.price) {
-    return null
-  }
-  return formatCnyMinorUnits(dto.value.price.minorUnits)
-})
 
 const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
 </script>
@@ -140,7 +126,7 @@ const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
         {{ dto.characterName }}
       </h1>
       <p class="work-detail__meta">
-        {{ dto.species }} · {{ SUIT_TYPE_LABELS[dto.suitType] }} · {{ WORK_PURPOSE_LABELS[dto.purpose] }}
+        {{ dto.species }}
       </p>
     </header>
 
@@ -155,59 +141,9 @@ const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
           <AdoptionDesignSheet :design-sheet="designSheet" />
         </section>
 
-        <section
-          v-if="dto.purpose === 'adoption' && studioPhotos.length > 0"
-          class="work-detail__media-section"
-          aria-label="出厂照"
-        >
+        <section v-if="studioPhotos.length > 0" class="work-detail__media-section" aria-label="作品图集">
           <h2 id="studio-photos-title" class="work-detail__media-title">出厂照 / 作品图集</h2>
           <WorkDetailGallery :gallery="studioPhotos" :work-name="dto.characterName" />
-        </section>
-
-        <WorkDetailGallery
-          v-else-if="dto.purpose !== 'adoption'"
-          :gallery="studioPhotos"
-          :work-name="dto.characterName"
-        />
-      </div>
-
-      <div class="work-detail__aside">
-        <WorkFacts :dto="dto" />
-
-        <section
-          v-if="dto.featureTags.length > 0"
-          class="work-detail__tags"
-          aria-label="作品属性"
-        >
-          <h2 class="work-detail__section-title">
-            作品属性
-          </h2>
-          <ul class="work-detail__tag-list">
-            <li
-              v-for="tag in dto.featureTags"
-              :key="tag"
-              class="work-detail__tag"
-            >
-              {{ tag }}
-            </li>
-          </ul>
-        </section>
-
-        <section
-          v-if="priceText"
-          class="work-detail__price"
-          aria-label="公开人民币价格"
-          data-testid="work-price"
-        >
-          <h2 class="work-detail__section-title">
-            {{ priceLabel }}
-          </h2>
-          <p class="work-detail__price-value">
-            {{ priceText }}
-          </p>
-          <p class="work-detail__price-note">
-            如需领养，请访问"关于我们"获取联系方式，网站不接受登记、定金或付款。
-          </p>
         </section>
       </div>
     </div>
@@ -314,12 +250,6 @@ const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
   padding: 0 var(--public-page-padding);
 }
 
-.work-detail__aside {
-  display: grid;
-  gap: var(--space-6);
-  align-content: start;
-}
-
 .work-detail__media {
   display: grid;
   gap: var(--space-8);
@@ -344,37 +274,6 @@ const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
   font-size: var(--font-size-sm);
   font-weight: 400;
   letter-spacing: var(--letter-spacing-label);
-}
-
-.work-detail__tag-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin: var(--space-3) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.work-detail__tag {
-  padding: var(--space-1) var(--space-3);
-  color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
-  border: 1px solid var(--public-border-primary);
-  border-radius: var(--radius-full);
-}
-
-.work-detail__price-value {
-  margin-top: var(--space-2);
-  font-family: var(--font-public-display);
-  font-size: var(--font-size-lg);
-  line-height: var(--line-height-heading);
-}
-
-.work-detail__price-note {
-  margin-top: var(--space-2);
-  color: var(--public-text-tertiary);
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-relaxed);
 }
 
 .work-detail__related {
@@ -454,10 +353,4 @@ const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
   }
 }
 
-@media (min-width: 1024px) {
-  .work-detail__layout {
-    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-    gap: var(--space-7);
-  }
-}
 </style>

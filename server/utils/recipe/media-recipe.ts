@@ -409,7 +409,7 @@ function defaultUsages(role: MediaRole): PublicMediaUsage[] {
 export function workAssetPublicUsages(
   role: 'adoption_cover' | 'design_sheet' | 'studio_photo',
   primary: boolean,
-  hasPrimaryStudioPhoto: boolean,
+  _hasPrimaryStudioPhoto: boolean,
 ): PublicMediaUsage[] {
   if (role === 'studio_photo') {
     return primary ? ['work-card', 'detail'] : ['detail']
@@ -417,9 +417,7 @@ export function workAssetPublicUsages(
   if (role === 'adoption_cover') {
     return ['adoption-card']
   }
-  return hasPrimaryStudioPhoto
-    ? ['design-sheet']
-    : ['design-sheet', 'work-card']
+  return ['design-sheet']
 }
 
 function outputHeight(usage: PublicMediaUsage, width: number) {

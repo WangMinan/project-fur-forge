@@ -116,8 +116,14 @@ describe('R3-B adoption expand', () => {
       before.sqlite.close()
     }
 
-    await expect(migrateDatabase(file)).resolves.toMatchObject({ applied: 1 })
-    await expect(migrateDatabase(file)).resolves.toMatchObject({ applied: 0 })
+    const expandMigrations = migrationsThrough(
+      file,
+      '0038_r3_b_adoption_commission_expand',
+    )
+    await expect(migrateDatabase(file, { migrationsFolder: expandMigrations }))
+      .resolves.toMatchObject({ applied: 1 })
+    await expect(migrateDatabase(file, { migrationsFolder: expandMigrations }))
+      .resolves.toMatchObject({ applied: 0 })
     const after = openDatabase(file)
     try {
       expect(after.sqlite.prepare(`
@@ -163,7 +169,12 @@ describe('R3-B adoption expand', () => {
           created_at, updated_at
         ) VALUES (?, 'adoption-admin', 'hash', ?, ?, ?)
       `).run(userId, now, now, now)
-      insertLegacyWork(sqlite, { id: workId, businessStatus: 'available' })
+      sqlite.prepare(`
+        INSERT INTO works (
+          id, slug, character_name, species, purpose, adoption_status,
+          publication_status, created_at, updated_at
+        ) VALUES (?, ?, ?, '犬科', 'adoption', 'available', 'draft', ?, ?)
+      `).run(workId, workId, workId, now, now)
       sqlite.prepare(`
         INSERT INTO assets (
           id, role, status, private_object_key, sha256, byte_size,
@@ -201,7 +212,7 @@ describe('R3-B adoption expand', () => {
       }, now + 1)
       expect(updated).toMatchObject({
         version: 2,
-        adoptionStatus: null,
+        adoptionStatus: 'available',
         adoptionCover: {
           assetId,
           alt: '横版单头成果图',
@@ -213,7 +224,7 @@ describe('R3-B adoption expand', () => {
       expect(getManagedWork(sqlite, workId).adoptionCover).not.toBeNull()
       const preview = getPublicSafeWorkPreview(sqlite, workId)
       expect(preview).toMatchObject({
-        adoptionStatus: null,
+        adoptionStatus: 'available',
         adoptionCover: {
           assetId,
           alt: '横版单头成果图',

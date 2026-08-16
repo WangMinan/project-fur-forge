@@ -4,11 +4,9 @@ import {
 } from '../../../shared/schemas/work'
 import type {
   AdminWorkDto,
-  AdoptionMethod,
-  BusinessStatus,
+  AdoptionStatus,
   PublicationStatus,
   PublicWorkDto,
-  SuitType,
   WorkPurpose,
 } from '../../../shared/types/contracts'
 
@@ -18,130 +16,41 @@ export interface WorkRecord {
   slug: string
   characterName: string
   species: string
-  suitType: SuitType
   purpose: WorkPurpose
   publicationStatus: PublicationStatus
-  ownerDisplay: string
-  featureTags: string[]
-  adoptionMethod: AdoptionMethod | null
-  businessStatus: BusinessStatus | null
-  eventName: string | null
-  eventTime: string | null
+  adoptionStatus: AdoptionStatus | null
   featured: boolean
   priceCnyMinor: number | null
   sortOrder: number
-  ownerContact: string | null
   assetIds: string[]
   /** Service-only storage identities. DTO mappers must never project these. */
   originalObjectKeys: string[]
 }
 
-export function toPublicWorkDto(
-  record: WorkRecord,
-): PublicWorkDto | null {
+export function toPublicWorkDto(record: WorkRecord): PublicWorkDto | null {
   if (record.publicationStatus !== 'published') {
     return null
   }
-
-  if (record.purpose === 'adoption') {
-    if (record.adoptionMethod === null || record.businessStatus === null) {
-      return null
-    }
-    if (record.priceCnyMinor === null) {
-      return publicWorkDtoSchema.parse({
-        id: record.id,
-        version: record.version,
-        slug: record.slug,
-        characterName: record.characterName,
-        species: record.species,
-        suitType: record.suitType,
-        ownerDisplay: record.ownerDisplay,
-        featureTags: [...record.featureTags],
-        purpose: 'adoption',
-        adoptionMethod: record.adoptionMethod,
-        businessStatus: record.businessStatus,
-        // T37：展会字段只对 event_drop 有值，其他领养固定为 null。
-        eventName: record.eventName,
-        eventTime: record.eventTime,
-      })
-    }
-
-    return publicWorkDtoSchema.parse({
-      id: record.id,
-      version: record.version,
-      slug: record.slug,
-      characterName: record.characterName,
-      species: record.species,
-      suitType: record.suitType,
-      ownerDisplay: record.ownerDisplay,
-      featureTags: [...record.featureTags],
-      purpose: 'adoption',
-      adoptionMethod: record.adoptionMethod,
-      businessStatus: record.businessStatus,
-      eventName: record.eventName,
-      eventTime: record.eventTime,
-      price: {
-        currency: 'CNY',
-        minorUnits: record.priceCnyMinor,
-      },
-    })
-  }
-
   return publicWorkDtoSchema.parse({
     id: record.id,
-    version: record.version,
     slug: record.slug,
     characterName: record.characterName,
     species: record.species,
-    suitType: record.suitType,
-    ownerDisplay: record.ownerDisplay,
-    featureTags: [...record.featureTags],
-    purpose: record.purpose,
   })
 }
 
 export function toAdminWorkDto(record: WorkRecord): AdminWorkDto {
-  if (record.purpose === 'adoption') {
-    return adminWorkDtoSchema.parse({
-      id: record.id,
-      version: record.version,
-      slug: record.slug,
-      characterName: record.characterName,
-      species: record.species,
-      suitType: record.suitType,
-      ownerDisplay: record.ownerDisplay,
-      featureTags: [...record.featureTags],
-      purpose: 'adoption',
-      publicationStatus: record.publicationStatus,
-      assetIds: [...record.assetIds],
-      private: {
-        ownerContact: record.ownerContact,
-      },
-      adoptionMethod: record.adoptionMethod,
-      businessStatus: record.businessStatus,
-      eventName: record.eventName,
-      eventTime: record.eventTime,
-      priceCnyMinor: record.priceCnyMinor,
-      sortOrder: record.sortOrder,
-      featured: record.featured,
-    })
-  }
-
   return adminWorkDtoSchema.parse({
     id: record.id,
     version: record.version,
     slug: record.slug,
     characterName: record.characterName,
     species: record.species,
-    suitType: record.suitType,
-    ownerDisplay: record.ownerDisplay,
-    featureTags: [...record.featureTags],
     purpose: record.purpose,
     publicationStatus: record.publicationStatus,
     assetIds: [...record.assetIds],
-    private: {
-      ownerContact: record.ownerContact,
-    },
+    adoptionStatus: record.purpose === 'adoption' ? record.adoptionStatus : null,
+    priceCnyMinor: record.purpose === 'adoption' ? record.priceCnyMinor : null,
     sortOrder: record.sortOrder,
     featured: record.featured,
   })

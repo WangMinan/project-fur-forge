@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { PublicWorkSummaryDto } from '~~/shared/types/contracts'
 
-const props = withDefaults(defineProps<{
+withDefaults(defineProps<{
   work: PublicWorkSummaryDto
   sizes?: string | undefined
   loading?: 'lazy' | 'eager'
@@ -10,15 +10,6 @@ const props = withDefaults(defineProps<{
   loading: 'lazy',
 })
 
-// 只列适用事实：非领养作品不出现业务状态或价格占位。
-const meta = computed(() => {
-  const dto = props.work.work
-  const facts = [dto.species, SUIT_TYPE_LABELS[dto.suitType]]
-  if (dto.purpose === 'adoption') {
-    facts.push(BUSINESS_STATUS_LABELS[dto.businessStatus])
-  }
-  return facts.join(' · ')
-})
 </script>
 
 <template>
@@ -37,7 +28,7 @@ const meta = computed(() => {
       />
     </span>
     <span class="work-card__name">{{ work.work.characterName }}</span>
-    <span class="work-card__meta">{{ meta }}</span>
+    <span class="work-card__meta">{{ work.work.species }}</span>
   </NuxtLink>
 </template>
 
