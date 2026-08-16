@@ -42,6 +42,15 @@ const activeOrientation = computed(() => {
   }
   return image.height > image.width ? 'portrait' : 'landscape'
 })
+
+const activeImageStyle = computed(() => {
+  const image = activeItem.value?.sources.fallback.at(-1)
+  const ratio = image ? image.width / image.height : 4 / 3
+  return {
+    '--gallery-aspect-ratio': String(ratio),
+    aspectRatio: image ? `${image.width} / ${image.height}` : '4 / 3',
+  }
+})
 </script>
 
 <template>
@@ -57,6 +66,7 @@ const activeOrientation = computed(() => {
         class="work-gallery__image"
         :sources="activeItem.sources"
         :alt="activeItem.alt"
+        :style="activeImageStyle"
         loading="eager"
         fetchpriority="high"
         sizes="(min-width: 1024px) 58vw, 100vw"
@@ -105,30 +115,31 @@ const activeOrientation = computed(() => {
 
 /* 竖图：占位背景只包裹图片本身，不铺满整栏。 */
 .work-gallery__stage--portrait :deep(.work-gallery__image) {
-  width: auto;
-  max-width: min(100%, 30rem);
+  width: min(
+    100%,
+    30rem,
+    calc(clamp(24rem, calc(100vh - 12rem), 46rem) * var(--gallery-aspect-ratio))
+  );
   background: var(--image-placeholder);
 }
 
 .work-gallery__stage--portrait :deep(.responsive-picture__image) {
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: clamp(24rem, calc(100vh - 12rem), 46rem);
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 
 @media (min-width: 1024px) {
   .work-gallery__stage--landscape :deep(.work-gallery__image) {
-    width: auto;
-    max-width: 100%;
+    width: min(
+      100%,
+      calc(clamp(20rem, calc(100vh - 15rem), 46rem) * var(--gallery-aspect-ratio))
+    );
   }
 
   .work-gallery__stage--landscape :deep(.responsive-picture__image) {
-    width: auto;
-    height: auto;
-    max-width: 100%;
-    max-height: clamp(20rem, calc(100vh - 15rem), 46rem);
+    width: 100%;
+    height: 100%;
     margin: 0 auto;
     object-fit: contain;
   }
