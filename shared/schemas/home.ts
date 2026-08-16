@@ -7,7 +7,6 @@ import {
 } from './api'
 import {
   publicAltSchema,
-  publicHeroSlideDtoSchema,
   publicSourceSetDtoSchema,
 } from './media'
 import { publicationOperationDtoSchema } from './publication'
@@ -66,7 +65,7 @@ export const adminHeroItemDtoSchema = z.object({
   asset: adminHeroAssetDtoSchema,
   upscaleReady: z.boolean(),
   upscaleOperation: publicationOperationDtoSchema.nullable(),
-  missingVariantCount: z.number().int().min(0).max(8),
+  missingVariantCount: z.number().int().min(0).max(16),
   publicationOperation: publicationOperationDtoSchema.nullable(),
 }).strict()
 
@@ -101,6 +100,15 @@ export const adminHeroPreviewDtoSchema = z.object({
   portrait: adminHeroPreviewImageDtoSchema,
 }).strict()
 
+export const adminHeroItemPreviewDtoSchema = z.object({
+  url: z.string().regex(
+    /^\/api\/admin\/v1\/site\/hero-collections\/(?:home|commission)\/(?:landscape|portrait)\/items\/[0-9a-f-]+(?::(?:landscape|portrait))?\/preview$/u,
+  ),
+  expiresAt: z.string().datetime({ offset: true }),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+}).strict()
+
 export const homeEntryKindSchema = z.enum(['commission', 'adoption'])
 
 /** 首页业务入口大图：独立无水印站点展示派生图，不复用其他页面公开 URL。 */
@@ -116,23 +124,6 @@ export const publicHomeEntriesDtoSchema = z.object({
   adoption: publicHomeEntryDtoSchema.nullable(),
 }).strict()
 
-export const publicHomeDtoSchema = z.object({
-  tagline: homeTaglineSchema,
-  contactEmail: contactEmailSchema,
-  contactQq: contactQqSchema,
-  autoRotate: z.boolean(),
-  autoRotateIntervalMs: z.number().int().min(6_000).max(300_000),
-  slides: z.array(publicHeroSlideDtoSchema).max(5),
-  entries: publicHomeEntriesDtoSchema.default({
-    commission: null,
-    adoption: null,
-  }),
-}).strict()
-
-export const publicCommissionHeroDtoSchema = z.object({
-  slide: publicHeroSlideDtoSchema.nullable(),
-}).strict()
-
 export const publicHeroItemDtoSchema = z.object({
   alt: publicAltSchema,
   sortOrder: z.number().int().min(0).max(4),
@@ -143,6 +134,20 @@ export const publicHeroPlacementDtoSchema = z.object({
   landscape: z.array(publicHeroItemDtoSchema).max(5),
   portrait: z.array(publicHeroItemDtoSchema).max(5),
 }).strict()
+
+export const publicHomeDtoSchema = publicHeroPlacementDtoSchema.extend({
+  tagline: homeTaglineSchema,
+  contactEmail: contactEmailSchema,
+  contactQq: contactQqSchema,
+  autoRotate: z.boolean(),
+  autoRotateIntervalMs: z.number().int().min(6_000).max(300_000),
+  entries: publicHomeEntriesDtoSchema.default({
+    commission: null,
+    adoption: null,
+  }),
+}).strict()
+
+export const publicCommissionHeroDtoSchema = publicHeroPlacementDtoSchema
 
 const heroSlideInputSchema = z.object({
   alt: publicAltSchema,
@@ -222,6 +227,9 @@ export const adminHeroCollectionResponseSchema = apiSuccessSchema(
 )
 export const adminHeroPreviewResponseSchema = apiSuccessSchema(
   adminHeroPreviewDtoSchema,
+)
+export const adminHeroItemPreviewResponseSchema = apiSuccessSchema(
+  adminHeroItemPreviewDtoSchema,
 )
 export const publicHomeResponseSchema = apiSuccessSchema(publicHomeDtoSchema)
 export const publicCommissionHeroResponseSchema = apiSuccessSchema(

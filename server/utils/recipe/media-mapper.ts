@@ -6,11 +6,14 @@ import {
   publicSourceSetDtoSchema,
   publicVariantDtoSchema,
 } from '../../../shared/schemas/media'
+import { publicHeroItemDtoSchema } from '../../../shared/schemas/home'
 import type {
   AdminAssetDto,
   AssetStatus,
   HeroPlacement,
+  HeroOrientation,
   MediaRole,
+  PublicHeroItemDto,
   PublicHeroSlideDto,
   PublicPngSourceSetDto,
   PublicSourceSetDto,
@@ -84,6 +87,15 @@ export interface HeroSlideRecord {
     publicationStatus: 'draft' | 'published' | 'unpublished'
     slug: string
   } | null
+}
+
+export interface HeroItemRecord {
+  activeWatermarkProfileId: string | null
+  altText: string
+  orientation: HeroOrientation
+  placement: HeroPlacement
+  sortOrder: number
+  variants: VariantRecord[]
 }
 
 function assertPublicDerivativeObjectKey(
@@ -289,6 +301,62 @@ export function toPublicHeroSlideDto(
     linkedWorkHref: record.linkedWork
       ? `/works/${record.linkedWork.slug}`
       : null,
+  })
+}
+
+/** R3-C: one independently ordered Hero item for exactly one orientation. */
+export function toPublicHeroItemDto(
+  record: HeroItemRecord,
+  mediaBaseUrl: string,
+  appEnv: RuntimeConfig['appEnv'] = 'development',
+): PublicHeroItemDto {
+  const usage = SITE_HERO_USAGES[record.placement][record.orientation]
+  const completeVersion = (
+    recipeVersion: typeof SITE_DISPLAY_RECIPE_VERSION | typeof LEGACY_SITE_DISPLAY_RECIPE_VERSION,
+  ) => {
+    const variants = completeSiteDisplayVariantsForVersion(
+      usage,
+      record.variants,
+      recipeVersion,
+    )
+    return variants
+      ? {
+          variants,
+          widths: siteDisplayWidthsForVersion(usage, recipeVersion),
+        }
+      : null
+  }
+  const current = completeVersion(SITE_DISPLAY_RECIPE_VERSION)
+    ?? completeVersion(LEGACY_SITE_DISPLAY_RECIPE_VERSION)
+  const role = record.orientation === 'landscape'
+    ? 'home_hero_landscape'
+    : 'home_hero_portrait'
+  const sources = current
+    ? toPublicSourceSetDto(
+        current.variants,
+        mediaBaseUrl,
+        current.widths,
+        appEnv,
+      )
+    : record.activeWatermarkProfileId
+      ? toPublicSourceSetDto(
+          completePublicHeroVariants(
+            role,
+            record.variants,
+            record.activeWatermarkProfileId,
+          ),
+          mediaBaseUrl,
+          HERO_RECIPE[role].widths,
+          appEnv,
+        )
+      : (() => {
+          throw new Error('Enabled hero item has no complete public variants.')
+        })()
+
+  return publicHeroItemDtoSchema.parse({
+    alt: toSafePublicAlt(record.altText, '首页代表作品'),
+    sortOrder: record.sortOrder,
+    sources,
   })
 }
 

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { adminBaseURL, loginAsAdmin } from './helpers/auth'
-import { seedHomeSlides } from './helpers/public-catalog'
+import { seedHeroCollections, seedHomeSlides } from './helpers/public-catalog'
 import { capture } from './helpers/screenshots'
 
 const SCREENSHOT_DIR
@@ -64,6 +64,21 @@ test('作品与自设委托页名字号一致，委托首图提供引导行动',
     expect(overflow, `${width}×${height} 不应横向溢出`).toBeLessThanOrEqual(1)
     await capture(page, `visual-follow-up-commission-${width}x${height}`, SCREENSHOT_DIR)
   }
+})
+
+test('委托页横竖首项可独立维护并随方向更新替代文字', async ({ page }) => {
+  await seedHeroCollections(page, {
+    placement: 'commission',
+    landscape: [{ alt: '委托横版独立首项', sortOrder: 0, enabled: true }],
+    portrait: [{ alt: '委托竖版独立首项', sortOrder: 0, enabled: true }],
+  })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/commission')
+  const hero = page.getByTestId('commission-hero')
+  await expect(hero.getByRole('img', { name: '委托竖版独立首项' })).toBeVisible()
+
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await expect(hero.getByRole('img', { name: '委托横版独立首项' })).toBeVisible()
 })
 
 test('管理导航提供独立文案配置页', async ({ page }) => {

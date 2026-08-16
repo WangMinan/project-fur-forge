@@ -98,3 +98,21 @@ export async function seedHomeSlides(
 ) {
   await control(page, { action: 'seedHomeSlides', placement, slides, settings })
 }
+
+export async function seedHeroCollections(
+  page: Page,
+  input: {
+    landscape: SeedHomeSlide[]
+    placement?: HeroPlacement
+    portrait: SeedHomeSlide[]
+    settings?: SeedHomeSettings
+  },
+) {
+  await control(page, {
+    action: 'seedHomeSlides',
+    placement: input.placement ?? 'home',
+    landscapeSlides: input.landscape,
+    portraitSlides: input.portrait,
+    settings: input.settings,
+  })
+}
