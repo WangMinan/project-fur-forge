@@ -52,6 +52,12 @@ export const publicationStatusSchema = z.enum(PUBLICATION_STATUS_VALUES)
 export const adoptionMethodSchema = z.enum(ADOPTION_METHOD_VALUES)
 export const businessStatusSchema = z.enum(BUSINESS_STATUS_VALUES)
 export const adoptionStatusSchema = z.enum(['available', 'adopted'])
+export const adoptionStatusReviewItemSchema = z.object({
+  id: resourceIdSchema,
+  characterName: z.string().min(1).max(120),
+  legacyBusinessStatus: businessStatusSchema.nullable(),
+  publicationStatus: publicationStatusSchema,
+}).strict()
 export const regularAdoptionBusinessStatusSchema = z.enum(
   REGULAR_ADOPTION_BUSINESS_STATUS_VALUES,
 )
@@ -474,6 +480,9 @@ export const publicSafeWorkPreviewDtoSchema = z.discriminatedUnion('purpose', [
 export const managedWorkResponseSchema = apiSuccessSchema(managedWorkDtoSchema)
 export const workListResponseSchema = apiSuccessSchema(
   z.array(workListItemDtoSchema),
+)
+export const adoptionStatusReviewResponseSchema = apiSuccessSchema(
+  z.array(adoptionStatusReviewItemSchema),
 )
 
 export const featuredWorkOrderRequestSchema = z.object({
