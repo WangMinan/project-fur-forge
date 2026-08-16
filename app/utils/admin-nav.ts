@@ -1,5 +1,6 @@
 export const ADMIN_NAV_ITEMS = [
   { key: 'works', href: '/admin/works', label: '作品管理' },
+  { key: 'commissions', href: '/admin/commissions', label: '委托申请' },
   { key: 'home', href: '/admin/site/home', label: '大图管理' },
   { key: 'content', href: '/admin/site/content', label: '文案配置' },
   { key: 'branding', href: '/admin/site/branding', label: '全局水印' },

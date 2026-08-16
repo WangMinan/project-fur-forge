@@ -638,21 +638,23 @@ export function updateCommissionSubmission(
   },
   now = Date.now(),
 ) {
-  if (updateCommissionSubmissionRow(
-    sqlite,
-    id,
-    expectedVersion,
-    input,
-    now,
-  ) !== 1) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
-  }
-  sqlite.prepare(`
-    INSERT INTO audit_logs (
-      id, actor_user_id, action, entity_type, entity_id, result, created_at
-    ) VALUES (?, ?, 'COMMISSION_SUBMISSION_UPDATE', 'COMMISSION_SUBMISSION', ?, 'SUCCESS', ?)
-  `).run(randomUUID(), input.actorUserId, id, now)
-  return getCommissionSubmissionDetail(sqlite, id)
+  return sqlite.transaction(() => {
+    if (updateCommissionSubmissionRow(
+      sqlite,
+      id,
+      expectedVersion,
+      input,
+      now,
+    ) !== 1) {
+      throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+    }
+    sqlite.prepare(`
+      INSERT INTO audit_logs (
+        id, actor_user_id, action, entity_type, entity_id, result, created_at
+      ) VALUES (?, ?, 'COMMISSION_SUBMISSION_UPDATE', 'COMMISSION_SUBMISSION', ?, 'SUCCESS', ?)
+    `).run(randomUUID(), input.actorUserId, id, now)
+    return getCommissionSubmissionDetail(sqlite, id)
+  })()
 }
 
 export async function getCommissionDesignReference(
