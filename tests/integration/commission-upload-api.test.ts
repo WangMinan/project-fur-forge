@@ -53,7 +53,7 @@ await setup({
     ADMIN_BASE_URL: adminBaseUrl,
     MEDIA_BASE_URL: `http://127.0.0.2:${port}`,
     OSS_UPLOAD_BASE_URL: 'https://upload.test.invalid',
-    SESSION_SECRET: 'commission-test-session-secret-32-characters',
+    SESSION_SECRET: 'test-commission-session-secret-32-characters',
   },
 })
 
