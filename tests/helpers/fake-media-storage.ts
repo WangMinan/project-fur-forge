@@ -47,6 +47,7 @@ export class FakeMediaStorage implements MediaStorage {
   readonly objects = new Map<string, FakeObject>()
   readonly publicObjects = new Map<string, FakeObject>()
   readonly privatePuts: PrivateObjectPutInput[] = []
+  readonly privateProcessCalls: Array<{ objectKey: string, process: string }> = []
   readonly processCalls: PublicProcessInput[] = []
   readonly signedPuts: ConditionalPutInput[] = []
   failDelete = false
@@ -154,7 +155,8 @@ export class FakeMediaStorage implements MediaStorage {
   }
 
   /** 假实现不做真实缩放：只回传原字节，调用方只关心内容与 MIME。 */
-  async getPrivateProcessed(objectKey: string, _process: string) {
+  async getPrivateProcessed(objectKey: string, process: string) {
+    this.privateProcessCalls.push({ objectKey, process })
     const content = await this.getPrivate(objectKey)
     return {
       content,
