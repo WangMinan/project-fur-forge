@@ -176,7 +176,7 @@ OSS CORS `*` 不作为 GATE-B 的失败条件，不要求测试“只能允许�
 - 横竖数量/顺序不同；
 - hydration 无警告；
 - hover/focus/back-forward/error/reduced-motion；
-- 首页业务标题为“委托与领养”。
+- 首页业务标题为“自设委托”，领养区标题为“设定领养”。
 
 ## 6. 阶段 D：作品与领养
 
