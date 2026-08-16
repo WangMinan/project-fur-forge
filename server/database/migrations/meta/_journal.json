@@ -302,6 +302,13 @@
       "when": 1787328000000,
       "tag": "0042_r3_e_commission_follow_up",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "6",
+      "when": 1787414400000,
+      "tag": "0043_half_suit_scope_no_tail",
+      "breakpoints": true
     }
   ]
 }

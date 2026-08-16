@@ -87,9 +87,6 @@ onScopeDispose(() => {
         {{ copyState === 'copied' ? '已复制邮箱' : '复制邮箱' }}
       </button>
     </div>
-    <p class="email-actions__address">
-      <a :href="mailtoHref" class="email-actions__address-link" @click="onEmailOpen">{{ email }}</a>
-    </p>
     <p v-if="copyState === 'failed'" class="email-actions__feedback" role="alert">
       复制失败，请手动选择邮箱地址复制。
     </p>
@@ -145,12 +142,6 @@ onScopeDispose(() => {
 
 .email-actions__copy:hover {
   background: var(--public-bg-secondary);
-}
-
-.email-actions__address {
-  color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
-  overflow-wrap: anywhere;
 }
 
 .email-actions__feedback {

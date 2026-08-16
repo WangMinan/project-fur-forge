@@ -76,53 +76,61 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
         data-testid="commission-hero"
       />
 
-      <section
-        id="commission-details"
-        class="commission-page__section"
-        aria-labelledby="commission-scope-title"
-      >
-        <h2 id="commission-scope-title" class="commission-page__section-title">制作范围</h2>
-        <!--
-          两个并列选项，各只有一句说明。用术语表而不是卡片：
-          一句话撑不起一个灰底方块，反而显得空。
-        -->
-        <dl class="commission-page__scope">
-          <div class="commission-page__scope-row">
-            <dt class="commission-page__scope-name">全装</dt>
-            <dd class="commission-page__scope-detail">完整兽装制作</dd>
-          </div>
-          <div class="commission-page__scope-row">
-            <dt class="commission-page__scope-name">半装</dt>
-            <dd class="commission-page__scope-detail">头、爪、尾巴</dd>
-          </div>
-        </dl>
-      </section>
-
-      <section class="commission-page__section" aria-labelledby="commission-estimate-title">
-        <h2 id="commission-estimate-title" class="commission-page__section-title">估价与联系</h2>
-        <p class="commission-page__mechanism">
-          委托价格由工作室按设定与需求人工逐单估价，本站不提供自动报价或固定价目。
-        </p>
-        <p
-          v-for="(paragraph, index) in estimateParagraphs"
-          :key="index"
-          class="commission-page__text"
+      <!--
+        大图之后不再是一条细长的左对齐文字带：制作范围与估价联系并列成两栏，
+        窄屏回落为上下堆叠。两个「查看…」尾链接收进同一条带分隔线的页脚行，
+        不再单独悬在左下角。
+      -->
+      <div id="commission-details" class="commission-page__grid">
+        <section
+          class="commission-page__section commission-page__section--scope"
+          aria-labelledby="commission-scope-title"
         >
-          {{ paragraph }}
-        </p>
+          <h2 id="commission-scope-title" class="commission-page__section-title">制作范围</h2>
+          <!--
+            两个并列选项，各只有一句说明。用术语表而不是卡片：
+            一句话撑不起一个灰底方块，反而显得空。
+          -->
+          <dl class="commission-page__scope">
+            <div class="commission-page__scope-row">
+              <dt class="commission-page__scope-name">全装</dt>
+              <dd class="commission-page__scope-detail">完整兽装制作</dd>
+            </div>
+            <div class="commission-page__scope-row">
+              <dt class="commission-page__scope-name">半装</dt>
+              <dd class="commission-page__scope-detail">头、爪</dd>
+            </div>
+          </dl>
+        </section>
 
-        <NuxtLink class="commission-page__apply" to="/commission/apply">
-          提交委托申请
-        </NuxtLink>
+        <section class="commission-page__section" aria-labelledby="commission-estimate-title">
+          <h2 id="commission-estimate-title" class="commission-page__section-title">估价与联系</h2>
+          <p class="commission-page__mechanism">
+            委托价格由工作室按设定与需求人工逐单估价，本站不提供自动报价或固定价目。
+          </p>
+          <p
+            v-for="(paragraph, index) in estimateParagraphs"
+            :key="index"
+            class="commission-page__text"
+          >
+            {{ paragraph }}
+          </p>
 
-        <div v-if="commission" class="commission-page__actions">
+          <!-- 三个行动同一行：站内申请是主行动，邮件两个按钮跟在后面。 -->
+          <div class="commission-page__actions">
+            <NuxtLink class="commission-page__apply" to="/commission/apply">
+              提交委托申请
+            </NuxtLink>
+            <ContactEmailActions
+              v-if="commission"
+              :email="commission.email"
+              subject="自设委托估价咨询"
+            />
+          </div>
+
           <p class="commission-page__text commission-page__text--muted">
             邮箱是备用联系渠道；申请请优先使用站内表单。
           </p>
-          <ContactEmailActions
-            :email="commission.email"
-            subject="自设委托估价咨询"
-          />
           <p
             v-for="(paragraph, index) in emailActionParagraphs"
             :key="index"
@@ -130,22 +138,24 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
           >
             {{ paragraph }}
           </p>
-        </div>
 
-        <ContactChannelGrid
-          v-if="contact"
-          :channels="contact.officialChannels"
-        />
-        <NuxtLink class="commission-page__more-contact" to="/about#contact">
-          查看关于页与完整联系说明 →
-        </NuxtLink>
-      </section>
+          <ContactChannelGrid
+            v-if="contact"
+            :channels="contact.officialChannels"
+          />
 
-      <p v-if="commission" class="commission-page__terms">
-        <NuxtLink :to="commission.termsHref" class="commission-page__terms-link">
-          查看服务条款 <span aria-hidden="true">→</span>
-        </NuxtLink>
-      </p>
+          <!-- 两个延伸阅读入口跟在正文后面成一组次级按钮：
+               原来是页面最底一条分隔线、两个链接分列左右，和上文断开，很突兀。 -->
+          <div class="commission-page__links">
+            <NuxtLink v-if="commission" class="commission-page__link" :to="commission.termsHref">
+              服务条款
+            </NuxtLink>
+            <NuxtLink class="commission-page__link" to="/about#contact">
+              完整联系说明
+            </NuxtLink>
+          </div>
+        </section>
+      </div>
     </div>
   </div>
 </template>
@@ -166,17 +176,32 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
 }
 
 /**
- * 文字区块限制在易读宽度，但在 90rem 的页宽里**居中**。
- *
- * 之前是靠左：44rem 的正文贴在 90rem 容器左侧，右边空掉一大片。
- * 居中后与 /service 的阅读版式一致；大图 Hero 仍占满页宽。
+ * 制作范围（窄）与估价联系（阅读宽度）并列，整组在 90rem 页宽里居中。
+ * 单栏时正文仍限制在易读宽度，不会被拉成满页宽的长行。
  */
-.commission-page__section {
+.commission-page__grid {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-8);
   width: 100%;
   max-width: var(--public-content-reading);
   margin-inline: auto;
+}
+
+@media (min-width: 1024px) {
+  .commission-page__grid {
+    grid-template-columns: minmax(0, 16rem) minmax(0, var(--public-content-reading));
+    justify-content: center;
+    align-items: start;
+    column-gap: clamp(var(--space-6), 4vw, var(--space-8));
+    max-width: var(--public-content-wide);
+  }
+}
+
+.commission-page__section {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+  min-width: 0;
 }
 
 #commission-details {
@@ -236,8 +261,10 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
 }
 
 .commission-page__actions {
-  display: grid;
-  gap: var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
   margin-top: var(--space-2);
 }
 
@@ -246,7 +273,7 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
   align-items: center;
   justify-content: center;
   justify-self: start;
-  min-height: 3rem;
+  min-height: 2.75rem;
   padding: 0 var(--space-6);
   border-radius: var(--radius-full);
   color: var(--public-text-inverse);
@@ -259,27 +286,27 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
   background: var(--public-accent-active);
 }
 
-.commission-page__more-contact {
-  color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
+/* 延伸阅读做成一组次级胶囊按钮，跟正文同一栏、同一左边线。 */
+.commission-page__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
 }
 
-.commission-page__inline-link:hover {
-  text-decoration: underline;
-  text-underline-offset: 0.3em;
-}
-
-.commission-page__terms-link {
+.commission-page__link {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
   min-height: 2.75rem;
+  padding: 0 var(--space-5);
+  color: var(--public-text-primary);
+  border: 1px solid var(--public-border-primary);
+  border-radius: var(--radius-full);
   font-size: var(--font-size-sm);
-  font-weight: 600;
 }
 
-.commission-page__terms-link:hover {
-  text-decoration: underline;
-  text-underline-offset: 0.3em;
+.commission-page__link:hover {
+  color: var(--public-accent-primary);
+  background: var(--public-bg-secondary);
 }
 </style>

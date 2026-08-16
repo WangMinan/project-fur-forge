@@ -84,7 +84,10 @@ test('public navigation records a minimal event and a failed collector stays inv
   await page.goto('/about')
   await expect(page.getByTestId('about-contact')).toBeVisible()
   await page.getByRole('button', { name: '复制邮箱' }).click()
-  await expect(page.getByTestId('about-contact')).toContainText('studio@example.test')
+  // 邮箱不再以文本贴在按钮下方，真实地址只出现在 mailto 上。
+  await expect(
+    page.getByTestId('about-contact').getByRole('link', { name: '打开邮件客户端' }),
+  ).toHaveAttribute('href', /^mailto:studio@example\.test/u)
 })
 
 test('public write rejects foreign origin and enforces the per-minute limit', async ({ request }) => {
