@@ -21,14 +21,10 @@ const CATALOG: SeedWork[] = [
     slug: 'e2e-public-lanmei',
     characterName: '蓝湄',
     species: '北极狐',
-    suitType: 'full',
     purpose: 'adoption',
-    adoptionMethod: 'event_drop',
-    businessStatus: 'available',
-    eventName: '有点小狗夏日展',
-    eventTime: '2026 年 8 月 15 日',
-    priceMinorUnits: 1_560_000,
-    featureTags: ['纯海绵头', '内置风扇'],
+    adoptionStatus: 'available',
+    priceCnyMinor: 1_560_000,
+    adoptionCover: { alt: '蓝湄独立横版领养封面', width: 1920, height: 1080 },
     featured: true,
     sortOrder: 0,
     photos: [
@@ -40,10 +36,7 @@ const CATALOG: SeedWork[] = [
     slug: 'e2e-public-zhima',
     characterName: '芝麻',
     species: '哈士奇',
-    suitType: 'full',
     purpose: 'commission',
-    ownerDisplay: '阿灰',
-    featureTags: ['可动颚'],
     featured: true,
     sortOrder: 1,
     photos: [{ alt: '芝麻的出厂照' }],
@@ -52,7 +45,6 @@ const CATALOG: SeedWork[] = [
     slug: 'e2e-public-doudou',
     characterName: '豆豆',
     species: '柴犬',
-    suitType: 'partial',
     purpose: 'commission',
     sortOrder: 2,
     photos: [{ alt: '豆豆的出厂照' }],
@@ -61,7 +53,6 @@ const CATALOG: SeedWork[] = [
     slug: 'e2e-public-lizi',
     characterName: '栗子',
     species: '小熊',
-    suitType: 'partial',
     purpose: 'showcase',
     featured: true,
     sortOrder: 3,
@@ -74,7 +65,7 @@ async function seedCatalog(page: import('@playwright/test').Page) {
 }
 
 test.describe('T20 作品列表页', () => {
-  test('默认按发布时间倒序展示已发布作品与筛选入口，不显示结果总数', async ({ page }) => {
+  test('默认按发布时间倒序展示已发布作品与名称搜索，不显示结果总数', async ({ page }) => {
     await seedCatalog(page)
     await page.goto('/works')
 
@@ -86,8 +77,7 @@ test.describe('T20 作品列表页', () => {
     await expect(pagination.getByLabel('第 1 页，当前页')).toBeVisible()
     await expect(pagination.locator('[aria-disabled="true"]')).toHaveCount(2)
 
-    await expect(page.getByRole('link', { name: '全部用途' })).toHaveAttribute('aria-current', 'true')
-    await expect(page.getByRole('link', { name: '全部装型' })).toHaveAttribute('aria-current', 'true')
+    await expect(page.getByRole('group', { name: /按用途筛选|按装型筛选/u })).toHaveCount(0)
 
     for (const viewport of [
       { width: 390, height: 844 },
@@ -100,35 +90,11 @@ test.describe('T20 作品列表页', () => {
         name: '作品展示',
       }).boundingBox()
       const searchBox = await page.getByRole('search').boundingBox()
-      const filterBox = await page.getByRole('group', {
-        name: '按用途筛选',
-      }).boundingBox()
       expect(titleBox).not.toBeNull()
       expect(searchBox).not.toBeNull()
-      expect(filterBox).not.toBeNull()
       expect(searchBox!.y - (titleBox!.y + titleBox!.height))
         .toBeLessThanOrEqual(32)
-      expect(filterBox!.y - (searchBox!.y + searchBox!.height))
-        .toBeLessThanOrEqual(32)
     }
-
-    const filterAppearance = await page.getByRole('group', { name: '按用途筛选' }).evaluate((group) => {
-      const active = group.querySelector<HTMLElement>('[aria-current="true"]')!
-      const groupStyle = getComputedStyle(group)
-      const activeStyle = getComputedStyle(active)
-      return {
-        groupBorderStyle: groupStyle.borderStyle,
-        groupShadow: groupStyle.boxShadow,
-        activeBackground: activeStyle.backgroundColor,
-        activeBorderStyle: activeStyle.borderStyle,
-        activeShadow: activeStyle.boxShadow,
-      }
-    })
-    expect(filterAppearance.groupBorderStyle).toBe('solid')
-    expect(filterAppearance.groupShadow).not.toBe('none')
-    expect(filterAppearance.activeBackground).not.toBe('rgba(0, 0, 0, 0)')
-    expect(filterAppearance.activeBorderStyle).toBe('solid')
-    expect(filterAppearance.activeShadow).not.toBe('none')
 
     const slugs = await page.locator('[data-work-slug]').evaluateAll(
       cards => cards.map(card => card.getAttribute('data-work-slug')),
@@ -154,44 +120,39 @@ test.describe('T20 作品列表页', () => {
     expect(box!.height / box!.width).toBeCloseTo(4 / 3, 2)
   })
 
-  test('用途筛选：commission 只剩两件，URL 与选中态同步', async ({ page }) => {
+  test('内部用途不进入公开列表筛选或卡片', async ({ page }) => {
     await seedCatalog(page)
     await page.goto('/works')
-    const purposeFilter = page.getByRole('group', { name: '按用途筛选' })
-    await purposeFilter.getByRole('link', { name: '委托', exact: true }).click()
-
-    await expect(page).toHaveURL(/purpose=commission/)
     await expect(card(page, 'e2e-public-zhima')).toBeVisible()
     await expect(card(page, 'e2e-public-doudou')).toBeVisible()
-    await expect(card(page, 'e2e-public-lanmei')).toHaveCount(0)
-    await expect(purposeFilter.getByRole('link', { name: '委托', exact: true }))
-      .toHaveAttribute('aria-current', 'true')
+    await expect(card(page, 'e2e-public-lanmei')).toBeVisible()
+    await expect(page.getByRole('group', { name: '按用途筛选' })).toHaveCount(0)
+    await expect(page.getByText(/委托作品|领养作品|展示作品/u)).toHaveCount(0)
   })
 
-  test('装型筛选：suitType=partial 只剩豆豆与栗子', async ({ page }) => {
+  test('名称搜索只返回匹配作品', async ({ page }) => {
     await seedCatalog(page)
-    await page.goto('/works?suitType=partial')
+    await page.goto('/works?q=豆豆')
     await expect(card(page, 'e2e-public-doudou')).toBeVisible()
-    await expect(card(page, 'e2e-public-lizi')).toBeVisible()
-    await expect(page.getByRole('link', { name: '半装', exact: true })).toHaveAttribute('aria-current', 'true')
+    await expect(card(page, 'e2e-public-lizi')).toHaveCount(0)
+    await expect(card(page, 'e2e-public-lanmei')).toHaveCount(0)
   })
 
-  test('交集为空时展示空状态与清除筛选链接', async ({ page }) => {
+  test('搜索无匹配时展示空状态与清除搜索链接', async ({ page }) => {
     await seedCatalog(page)
-    await page.goto('/works?purpose=adoption&suitType=partial')
-    await expect(page.getByText('没有符合条件的作品')).toBeVisible()
-    const clear = page.getByRole('link', { name: '清除筛选' })
+    await page.goto('/works?q=不存在')
+    await expect(page.getByText('没有找到这个设定')).toBeVisible()
+    const clear = page.getByRole('link', { name: '清除搜索' })
     await expect(clear).toBeVisible()
     await clear.click()
     await expect(page.getByText(/^共 \d+ 件作品$/u)).toHaveCount(0)
   })
 
-  test('非法筛选参数返回空结果并复位筛选选中态', async ({ page }) => {
+  test('已退役筛选参数不改变公开目录结果', async ({ page }) => {
     await seedCatalog(page)
     await page.goto('/works?purpose=bogus&suitType=nope')
-    await expect(page.getByText('没有符合条件的作品')).toBeVisible()
-    await expect(page.getByRole('link', { name: '全部用途' })).toHaveAttribute('aria-current', 'true')
-    await expect(page.getByRole('link', { name: '全部装型' })).toHaveAttribute('aria-current', 'true')
+    await expect(page.locator('[data-work-slug]')).toHaveCount(4)
+    await expect(page.getByRole('group', { name: /按用途筛选|按装型筛选/u })).toHaveCount(0)
   })
 
   test('没有任何已发布作品时展示整理中空态', async ({ page }) => {
@@ -210,18 +171,17 @@ test.describe('T20 作品列表页', () => {
     expect(overflow).toBeLessThanOrEqual(1)
   })
 
-  test('固定 12 件分页保留筛选，支持键盘、三视口、非法与越界页码', async ({ page, request }) => {
+  test('固定 12 件分页保留搜索，支持键盘、三视口、非法与越界页码', async ({ page, request }) => {
     test.setTimeout(120_000)
     const pagedWorks: SeedWork[] = Array.from({ length: 13 }, (_, index) => ({
       slug: `e2e-public-pagination-${index + 1}`,
       characterName: `分页作品 ${index + 1}`,
       purpose: 'commission',
-      suitType: index % 2 === 0 ? 'full' : 'partial',
       photos: [{ alt: `分页作品 ${index + 1} 出厂照` }],
     }))
     await seedPublicCatalog(page, pagedWorks)
 
-    const api = await request.get('/api/public/v1/works?purpose=commission&page=2')
+    const api = await request.get('/api/public/v1/works?page=2')
     expect(api.status()).toBe(200)
     expect((await api.json()).data).toMatchObject({
       page: 2,
@@ -236,12 +196,12 @@ test.describe('T20 作品列表页', () => {
       { width: 1440, height: 900 },
     ]) {
       await page.setViewportSize(viewport)
-      await page.goto('/works?purpose=commission')
+      await page.goto('/works')
       const pagination = page.getByRole('navigation', { name: '作品展示分页' })
       await expect(pagination).toBeVisible()
       await expect(page.locator('[data-work-slug]')).toHaveCount(12)
       await expect(pagination.getByRole('link', { name: '下一页' }))
-        .toHaveAttribute('href', '/works?purpose=commission&page=2')
+        .toHaveAttribute('href', '/works?page=2')
       await pagination.getByRole('link', { name: '下一页' }).focus()
       await expect(pagination.getByRole('link', { name: '下一页' })).toBeFocused()
       expect(await page.evaluate(() => (
@@ -256,24 +216,24 @@ test.describe('T20 作品列表页', () => {
     expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
     await page.getByRole('navigation', { name: '作品展示分页' })
       .getByRole('link', { name: '下一页' }).click()
-    await expect(page).toHaveURL(/purpose=commission&page=2$/u)
+    await expect(page).toHaveURL(/page=2$/u)
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
     await expect(page.locator('[data-work-slug]')).toHaveCount(1)
     await expect(page.getByRole('navigation', { name: '作品展示分页' })
       .getByRole('link', { name: '上一页' }))
-      .toHaveAttribute('href', '/works?purpose=commission')
+      .toHaveAttribute('href', '/works')
 
-    await page.goto('/works?purpose=commission&page=bad')
+    await page.goto('/works?page=bad')
     await expect(page.locator('[data-work-slug]')).toHaveCount(12)
     const currentPage = page.getByRole('navigation', { name: '作品展示分页' })
       .locator('[aria-current="page"]')
     await expect(currentPage).toHaveCount(1)
     await expect(currentPage).toContainText('1')
 
-    await page.goto('/works?purpose=commission&page=99')
+    await page.goto('/works?page=99')
     await expect(page.getByText('这一页没有作品')).toBeVisible()
     await expect(page.getByRole('link', { name: '回到第一页' }))
-      .toHaveAttribute('href', '/works?purpose=commission')
+      .toHaveAttribute('href', '/works')
   })
 
   test('三视口图片真实解码、无横向溢出并留存列表与详情证据', async ({ page }) => {
@@ -348,7 +308,7 @@ test.describe('T19 作品详情页', () => {
     expect(redirected.headers().location).toBe('/works/e2e-public-lanmei')
   })
 
-  test('核心内容齐备：事实、短属性、图集切换与相关浏览', async ({ page }) => {
+  test('核心内容齐备：名称、物种、图集切换与相关浏览', async ({ page }) => {
     await seedCatalog(page)
     await page.goto('/works')
     await card(page, 'e2e-public-lanmei').click()
@@ -356,30 +316,13 @@ test.describe('T19 作品详情页', () => {
     await expect(page).toHaveURL(/\/works\/e2e-public-lanmei$/)
     await expect(page).toHaveTitle(/蓝湄 · 作品展示 · 有点小狗工作室/)
     await expect(page.getByRole('heading', { level: 1, name: '蓝湄' })).toBeVisible()
-    await expect(page.getByText('北极狐 · 全装 · 领养作品')).toBeVisible()
-
-    const facts = page.getByTestId('work-facts')
-    await expect(facts).toContainText('物种')
-    await expect(facts).toContainText('北极狐')
-    await expect(facts).toContainText('装型')
-    await expect(facts).toContainText('全装')
-    await expect(facts).toContainText('角色主人')
-    await expect(facts).toContainText('不公开')
-    await expect(facts).toContainText('领养方式')
-    await expect(facts).toContainText('展会掉落')
-    await expect(facts).toContainText('业务状态')
-    await expect(facts).toContainText('可领养')
-
-    await expect(page.getByText('纯海绵头')).toBeVisible()
-    await expect(page.getByText('内置风扇')).toBeVisible()
-
-    const price = page.getByTestId('work-price')
-    await expect(price).toContainText('掉落价格')
-    await expect(price).toContainText('¥15,600')
-    await expect(price).toContainText(/网站不接受登记、定金或付款/)
+    await expect(page.getByText('北极狐')).toBeVisible()
+    await expect(page.getByTestId('work-facts')).toHaveCount(0)
+    await expect(page.getByTestId('work-price')).toHaveCount(0)
+    await expect(page.getByText(/装型|角色主人|领养方式|业务状态|展会/u)).toHaveCount(0)
 
     // 领养作品图集处于“出厂照”结构分区内
-    await expect(page.locator('section[aria-label="出厂照"] [data-testid="work-gallery"]')).toBeVisible()
+    await expect(page.locator('section[aria-label="作品图集"] [data-testid="work-gallery"]')).toBeVisible()
 
     const thumbs = page.getByRole('button', { name: /查看第 \d 张，共 2 张/ })
     await expect(thumbs).toHaveCount(2)
@@ -423,12 +366,13 @@ test.describe('T19 作品详情页', () => {
     await expect(nextStage).toHaveJSProperty('complete', true)
   })
 
-  test('委托作品展示主人公开值，无价格区', async ({ page }) => {
+  test('委托作品只展示名称与物种，无主人、标签或价格区', async ({ page }) => {
     await seedCatalog(page)
     await page.goto('/works/e2e-public-zhima')
-    await expect(page.getByTestId('work-facts')).toContainText('阿灰')
+    await expect(page.getByText('哈士奇')).toBeVisible()
+    await expect(page.getByTestId('work-facts')).toHaveCount(0)
     await expect(page.getByTestId('work-price')).toHaveCount(0)
-    await expect(page.getByText('可动颚')).toBeVisible()
+    await expect(page.getByText(/角色主人|可动颚/u)).toHaveCount(0)
   })
 
   test('SSR 直出包含详情内容、公开 srcset 与 SEO 描述', async ({ page, request }) => {
@@ -437,7 +381,6 @@ test.describe('T19 作品详情页', () => {
     expect(response.status()).toBe(200)
     const html = await response.text()
     expect(html).toContain('蓝湄')
-    expect(html).toContain('¥15,600')
     expect(html).toContain('og:title')
     expect(html).toContain('蓝湄坐在草地上的出厂照')
     // detail 衍生图宽度描述符
@@ -509,7 +452,6 @@ test.describe('T19 作品详情页', () => {
       slug: 'e2e-public-tall',
       characterName: '高挑',
       species: '犬科',
-      suitType: 'full',
       purpose: 'showcase',
       sortOrder: 0,
       photos: [{ alt: '高挑的纵向出厂照', width: 2400, height: 3200 }],

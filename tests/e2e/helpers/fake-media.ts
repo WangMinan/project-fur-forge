@@ -178,3 +178,16 @@ export async function uploadDesignSheetToEditor(
   })
   await page.getByRole('button', { name: '上传设定图' }).click()
 }
+
+export async function uploadAdoptionCoverToEditor(
+  page: Page,
+  content: Buffer,
+  name = 'adoption-cover.png',
+) {
+  await page.getByLabel('选择领养横版封面文件').setInputFiles({
+    name,
+    mimeType: 'image/png',
+    buffer: content,
+  })
+  await page.getByRole('button', { name: '上传横版封面' }).click()
+}
