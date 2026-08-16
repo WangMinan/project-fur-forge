@@ -20,6 +20,7 @@ const status = ref<CommissionSubmissionStatus>('pending')
 const internalNote = ref('')
 const saving = ref(false)
 const saveError = ref<string | null>(null)
+const saveSuccess = ref<string | null>(null)
 const conflictOpen = ref(false)
 
 function syncForm(value: CommissionSubmissionDetailDto) {
@@ -29,6 +30,7 @@ function syncForm(value: CommissionSubmissionDetailDto) {
 
 async function load() {
   pageStatus.value = 'loading'
+  saveSuccess.value = null
   try {
     const response = await adminApi(
       `/api/admin/v1/commissions/${String(route.params.id)}`,
@@ -48,6 +50,7 @@ async function save() {
     return
   }
   saveError.value = null
+  saveSuccess.value = null
   saving.value = true
   try {
     const response = await adminApi(
@@ -66,6 +69,7 @@ async function save() {
     )
     detail.value = response.data
     syncForm(response.data)
+    saveSuccess.value = '处理结果已保存。'
   }
   catch (error) {
     if (error instanceof AdminApiError && error.status === 409) {
@@ -120,6 +124,7 @@ onMounted(() => void load())
           <h2 id="commission-contact-title">申请与联系</h2>
           <dl class="commission-detail__facts">
             <div><dt>称呼</dt><dd>{{ detail.nickname }}</dd></div>
+            <div><dt>物种</dt><dd>{{ detail.species ?? '待人工补录' }}</dd></div>
             <div><dt>回执</dt><dd>{{ detail.receiptCode }}</dd></div>
             <div><dt>手机号</dt><dd>{{ detail.phone.countryCode }} {{ detail.phone.number }}</dd></div>
             <div><dt>QQ</dt><dd>{{ detail.qq }}</dd></div>
@@ -144,14 +149,23 @@ onMounted(() => void load())
         <section class="commission-detail__card" aria-labelledby="commission-handling-title">
           <h2 id="commission-handling-title">处理</h2>
           <label for="commission-status">状态</label>
-          <select id="commission-status" v-model="status">
+          <select id="commission-status" v-model="status" @change="saveSuccess = null">
             <option value="pending">待处理</option>
             <option value="accepted">已接受</option>
             <option value="rejected">已拒绝</option>
           </select>
           <label for="commission-note">内部备注</label>
-          <textarea id="commission-note" v-model="internalNote" maxlength="2000" rows="6" />
+          <textarea
+            id="commission-note"
+            v-model="internalNote"
+            maxlength="2000"
+            rows="6"
+            @input="saveSuccess = null"
+          />
           <p v-if="saveError" role="alert" class="commission-detail__error">{{ saveError }}</p>
+          <p v-if="saveSuccess" role="status" class="commission-detail__success">
+            {{ saveSuccess }}
+          </p>
           <button type="button" :disabled="saving" @click="save">
             {{ saving ? '保存中…' : '保存处理结果' }}
           </button>
@@ -255,6 +269,13 @@ onMounted(() => void load())
 
 .commission-detail__error {
   color: var(--admin-status-error);
+}
+
+.commission-detail__success {
+  padding: var(--admin-space-3);
+  color: var(--admin-status-success, #246b45);
+  background: color-mix(in srgb, #2f7b5c 10%, var(--admin-bg-primary));
+  border-radius: var(--admin-radius-md);
 }
 
 @media (max-width: 640px) {

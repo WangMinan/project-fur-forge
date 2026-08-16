@@ -15,11 +15,12 @@ useSeoMeta({
   robots: 'noindex, nofollow',
 })
 
-type FieldKey = 'file' | 'heightCm' | 'nickname' | 'phone' | 'qq' | 'weightKg'
+type FieldKey = 'file' | 'heightCm' | 'nickname' | 'phone' | 'qq' | 'species' | 'weightKg'
 type Stage = 'idle' | 'digesting' | 'uploading' | 'validating' | 'submitting' | 'success'
 
 const form = reactive({
   nickname: '',
+  species: '',
   phone: '',
   qq: '',
   heightCm: '',
@@ -32,6 +33,7 @@ const errors = reactive<Record<FieldKey, string>>({
   nickname: '',
   phone: '',
   qq: '',
+  species: '',
   weightKg: '',
 })
 const file = shallowRef<File | null>(null)
@@ -71,6 +73,9 @@ function validateFields() {
   clearErrors()
   if (!form.nickname.trim() || form.nickname.trim().length > 50) {
     errors.nickname = '请填写 1–50 字称呼'
+  }
+  if (!form.species.trim() || form.species.trim().length > 50) {
+    errors.species = '请填写 1–50 字物种'
   }
   if (!/^1[3-9]\d{9}$/u.test(form.phone)) {
     errors.phone = '请填写 11 位中国大陆手机号'
@@ -117,9 +122,7 @@ async function cancelActiveSession() {
   }).catch(() => {})
 }
 
-async function chooseFile(event: Event) {
-  const input = event.target as HTMLInputElement
-  const selected = input.files?.[0] ?? null
+async function chooseFile(selected: File) {
   await cancelActiveSession()
   releasePreview()
   file.value = selected
@@ -130,15 +133,19 @@ async function chooseFile(event: Event) {
   }
 }
 
+async function removeFile() {
+  await cancelActiveSession()
+  releasePreview()
+  file.value = null
+  errors.file = ''
+  submitError.value = null
+}
+
 function requireReselection(message: string) {
   activeSession.value = null
   releasePreview()
   file.value = null
   errors.file = message
-  const input = document.querySelector<HTMLInputElement>('#commission-design-reference')
-  if (input) {
-    input.value = ''
-  }
   stage.value = 'idle'
 }
 
@@ -223,6 +230,14 @@ function responseStatus(error: unknown) {
   return Number(record.statusCode ?? record.status ?? 0)
 }
 
+function responseReason(error: unknown) {
+  if (!error || typeof error !== 'object') {
+    return null
+  }
+  const data = (error as { data?: { error?: { reason?: unknown } } }).data
+  return typeof data?.error?.reason === 'string' ? data.error.reason : null
+}
+
 async function submit() {
   if (busy.value || !validateFields() || !file.value) {
     return
@@ -244,6 +259,7 @@ async function submit() {
           uploadSessionId: session.id,
           expectedUploadVersion: session.version,
           nickname: form.nickname.trim(),
+          species: form.species.trim(),
           phone: { countryCode: '+86', number: form.phone },
           qq: form.qq,
           heightCm: Number(form.heightCm),
@@ -259,6 +275,12 @@ async function submit() {
     stage.value = 'success'
   }
   catch (error) {
+    if (responseStatus(error) === 409 && responseReason(error) === 'COMMISSION_PHONE_PENDING') {
+      stage.value = 'idle'
+      errors.phone = '该手机号已有待处理的委托申请，请等待处理后再提交'
+      submitError.value = '未重复提交：请等待当前申请处理完成。'
+      return
+    }
     if (responseStatus(error) === 409) {
       requireReselection('上传会话已失效，请重新选择图片后提交')
       submitError.value = '本次上传已失效，表单内容仍保留。'
@@ -307,6 +329,19 @@ onBeforeUnmount(() => {
             aria-describedby="commission-nickname-error"
           >
           <p id="commission-nickname-error" class="commission-apply__error">{{ errors.nickname }}</p>
+        </div>
+
+        <div class="commission-apply__field">
+          <label for="commission-species">物种 <span aria-hidden="true">*</span></label>
+          <input
+            id="commission-species"
+            v-model="form.species"
+            maxlength="50"
+            autocomplete="off"
+            :aria-invalid="Boolean(errors.species)"
+            aria-describedby="commission-species-error"
+          >
+          <p id="commission-species-error" class="commission-apply__error">{{ errors.species }}</p>
         </div>
 
         <div class="commission-apply__field">
@@ -373,28 +408,18 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div class="commission-apply__field commission-apply__field--file">
-          <label for="commission-design-reference">设定图 <span aria-hidden="true">*</span></label>
-          <input
-            id="commission-design-reference"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            :disabled="busy"
-            :aria-invalid="Boolean(errors.file)"
-            aria-describedby="commission-file-hint commission-file-error"
-            @change="chooseFile"
-          >
-          <p id="commission-file-hint" class="commission-apply__hint">
-            仅一张 JPEG、PNG 或 WebP，最大 20 MB；不会生成公开图片。
-          </p>
-          <p id="commission-file-error" class="commission-apply__error">{{ errors.file }}</p>
-          <img
-            v-if="previewUrl"
-            class="commission-apply__preview"
-            :src="previewUrl"
-            alt="所选设定图预览"
-          >
-        </div>
+        <ImageDropzoneCard
+          input-id="commission-design-reference"
+          label="设定图"
+          hint="仅一张 JPEG、PNG 或 WebP，最大 20 MB；只用于内部评估，不生成公开图片。"
+          :disabled="busy"
+          :error="errors.file"
+          :file-name="file?.name ?? null"
+          :preview-url="previewUrl"
+          preview-alt="所选设定图预览"
+          @select="chooseFile"
+          @remove="removeFile"
+        />
 
         <div class="commission-apply__honeypot" aria-hidden="true">
           <label for="commission-website">网站</label>
@@ -410,6 +435,13 @@ onBeforeUnmount(() => {
           {{ submitError }}
         </p>
         <p v-if="stageText" class="commission-apply__stage" role="status">{{ stageText }}</p>
+        <progress
+          v-if="stage === 'uploading'"
+          class="commission-apply__progress"
+          :value="progress ?? 0"
+          max="1"
+          :aria-label="`私有设定图上传进度 ${Math.round((progress ?? 0) * 100)}%`"
+        />
         <button type="submit" :disabled="busy">
           {{ busy ? '正在处理…' : '确认提交' }}
         </button>
@@ -490,15 +522,6 @@ onBeforeUnmount(() => {
   font-size: var(--font-size-sm);
 }
 
-.commission-apply__preview {
-  display: block;
-  width: min(100%, 28rem);
-  max-height: 32rem;
-  object-fit: contain;
-  border-radius: var(--radius-image);
-  background: var(--image-placeholder);
-}
-
 .commission-apply__honeypot {
   position: fixed;
   left: -10000px;
@@ -516,6 +539,12 @@ onBeforeUnmount(() => {
 
 .commission-apply__stage {
   color: var(--public-text-secondary);
+}
+
+.commission-apply__progress {
+  width: 100%;
+  height: 0.5rem;
+  accent-color: var(--public-accent-primary);
 }
 
 .commission-apply button {

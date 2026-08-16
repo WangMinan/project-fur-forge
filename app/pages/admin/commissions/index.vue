@@ -59,7 +59,7 @@ onMounted(() => void load())
       <header class="commission-inbox__header">
         <div>
           <h1>委托申请</h1>
-          <p>列表只显示称呼、提交时间、状态与回执；联系方式在详情中按需查看。</p>
+          <p>列表只显示昵称、物种、提交时间、状态与回执；联系方式在详情中按需查看。</p>
         </div>
         <button type="button" :disabled="pageStatus === 'loading'" @click="load">
           {{ pageStatus === 'loading' ? '刷新中…' : '刷新' }}
@@ -88,7 +88,9 @@ onMounted(() => void load())
       <ul v-else class="commission-inbox__list" role="list">
         <li v-for="item in items" :key="item.id">
           <NuxtLink :to="`/admin/commissions/${item.id}`" class="commission-inbox__item">
-            <span class="commission-inbox__name">{{ item.nickname }}</span>
+            <span class="commission-inbox__name">
+              {{ item.nickname }} · {{ item.species ?? '物种待补录' }}
+            </span>
             <span>{{ formatTime(item.createdAt) }}</span>
             <span>{{ item.receiptCode }}</span>
           </NuxtLink>
@@ -172,6 +174,7 @@ onMounted(() => void load())
   padding: var(--admin-space-4);
   border: 1px solid var(--admin-border-secondary);
   border-radius: var(--admin-radius-md);
+  background: var(--admin-bg-primary);
   color: var(--admin-text-secondary);
   font-size: var(--admin-font-sm);
 }
