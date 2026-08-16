@@ -1,7 +1,7 @@
 # 任务清单：站点业务简化与委托投递
 
 > **角色**：需求3唯一任务与勾选权威。
-> **状态**：T01～T06 已完成；本地阶段 A 就绪，生产 T07 待执行。
+> **状态**：GATE-A 已由用户确认发布完成；T08～T21 已实现，GATE-B 已验证，GATE-C 仅余真实手机人工验证。
 > **规则**：任务完成不代签 CI、独立 Review、用户验收或生产执行。所有数据库写、媒体删除和 operation 串行。
 
 ## 决策与文档
@@ -17,56 +17,56 @@
 - [x] **T04 · 第一发布单元数据库 contract**：前向迁移 `0036_r3_a_contract.sql` 在 DROP 前验证 T03 标记/净新库条件，删除 updates/return 表及相关行，重建 assets/upload/variants/publication/analytics 约束；`official_channels_json` 固定 QQ/QQ群，删除 `contact_douyin` 与无其它引用的退役平台 QR 资产，保留 `contact_qq`。focused integration 7 files / 57 tests、lint/typecheck 通过，fresh/re-entrant migration、FK/integrity 通过。
 - [x] **T05 · 本地不可恢复演练**：复杂副本和测试对象在唯一隔离前缀上完成 dry-run、强确认、8 current objects/16 versions/8 delete markers 删除、ESA purge、渠道收缩、孤立 QR 清理、Contract、404、六个联系渠道 E2E、FK/integrity、production build/verify、clean backup 真实恢复、恢复后旧备份删除和零结果重入；未访问任何生产资源。
 - [x] **T06 · 第一发布单元质量与独立复查**：lint/typecheck、unit 38 files / 192 tests、integration 21 files / 177 tests、退役路由 E2E 1/1、官方渠道 E2E 6/6、production build/content guard、verify 和 ops bundle 均通过。独立 Reviewer 对 `e3ed0c6` 首轮给出五项 P1；修复后对 `3e0efa7` 复审 PASS，未发现新的 Stage A blocker。证据见 `review/R3-A-FOCUSED-REVIEW-2026-08-16.md`。
-- [ ] **T07 · 生产立即退役与渠道收缩**：维护窗口停写，用户核对 dry-run 并强确认返图/动态删除；删除媒体/版本/cache，执行渠道/退役 contract，验证服务，创建并恢复 clean backup，再删除旧应用备份；操作员记录外部快照处理状态。
+- [x] **T07 · 生产立即退役与渠道收缩**：维护窗口停写，用户核对 dry-run 并强确认返图/动态删除；删除媒体/版本/cache，执行渠道/退役 contract，验证服务，创建并恢复 clean backup，再删除旧应用备份；操作员记录外部快照处理状态。生产执行证据见 `implementation/notes/R3-A-T07-CLI-HANDOFF-2026-08-16.md`；用户于 2026-08-16 明确确认 GATE-A 发布完成，Agent 未访问云控制台代签。
 
 ### GATE-A · 第一发布单元完成
 
-- [ ] 本地和生产均无返图/动态表、行、私有原图、派生、版本和应用旧备份；
-- [ ] 退役路由 404，导航/首页/sitemap/管理端无入口；
-- [ ] return/update 枚举不可插入；
-- [ ] `official_channels_json` 固定为 `qq | qq_group`，邮箱独立保留；
-- [ ] 抖音、小红书、Bilibili 无枚举、管理槽位、公开卡片、DTO、持久项或孤立二维码资产；
-- [ ] foreign key、integrity、readiness、production verify 通过；
-- [ ] 证据仅含脱敏计数；外部快照由操作员明确记录。
+- [x] 本地和生产均无返图/动态表、行、私有原图、派生、版本和应用旧备份；
+- [x] 退役路由 404，导航/首页/sitemap/管理端无入口；
+- [x] return/update 枚举不可插入；
+- [x] `official_channels_json` 固定为 `qq | qq_group`，邮箱独立保留；
+- [x] 抖音、小红书、Bilibili 无枚举、管理槽位、公开卡片、DTO、持久项或孤立二维码资产；
+- [x] foreign key、integrity、readiness、production verify 通过；
+- [x] 证据仅含脱敏计数；外部快照由操作员明确记录。
 
 ## B. Expand 新模型与安全
 
-- [ ] **T08 · Hero collection/item Schema**：新增四个 collection 并发域和 items；collection version 独立；管理 upload owner context 区分四集合；linked work 从新契约删除。
-- [ ] **T09 · Hero pair 幂等迁移**：旧 pair 确定性拆成两方向 item，保留 placement/alt/order/enabled，归一化顺序；空库/既有库/重复执行测试。
-- [ ] **T10 · Works/adoption Expand**：新增 nullable `adoption_status`、`adoption_cover`、`adoption-card`；复用上传、recipe、publication、lease、recovery、purge；旧字段暂留。
-- [ ] **T11 · 领养状态盘点**：只自动映射 available→available、delivered→adopted；其它状态保持 NULL，生成后台人工复核清单。
-- [ ] **T12 · Commission 持久模型**：新增 `commission_upload_sessions`、`commission_submissions`、private media role、repository/service/audit/no-store preview。
-- [ ] **T13 · Commission 匿名安全与 OSS 上传基线**：API Origin、body、Content-Type、独立限流、token、TTL、蜜罐、日志禁值；OSS CORS 继续保持现网 `AllowedOrigin=*`，不新增精确 Origin 收紧任务；验证签名 PUT/complete 端到端。
-- [ ] **T14 · Expand 综合门禁**：空库/既有库 migration、foreign key/integrity、Hero collection 409、cover identity、upload state machine、签名 PUT、API Origin 与 PII leakage 通过。
+- [x] **T08 · Hero collection/item Schema**：新增四个 collection 并发域和 items；collection version 独立；管理 upload owner context 区分四集合；linked work 从新契约删除。
+- [x] **T09 · Hero pair 幂等迁移**：旧 pair 确定性拆成两方向 item，保留 placement/alt/order/enabled，归一化顺序；空库/既有库/重复执行测试。
+- [x] **T10 · Works/adoption Expand**：新增 nullable `adoption_status`、`adoption_cover`、`adoption-card`；复用上传、recipe、publication、lease、recovery、purge；旧字段暂留。
+- [x] **T11 · 领养状态盘点**：只自动映射 available→available、delivered→adopted；其它状态保持 NULL，生成后台人工复核清单。
+- [x] **T12 · Commission 持久模型**：新增 `commission_upload_sessions`、`commission_submissions`、private media role、repository/service/audit/no-store preview。
+- [x] **T13 · Commission 匿名安全与 OSS 上传基线**：API Origin、body、Content-Type、独立限流、token、TTL、蜜罐、日志禁值；OSS CORS 继续保持现网 `AllowedOrigin=*`，不新增精确 Origin 收紧任务；验证签名 PUT/complete 端到端。
+- [x] **T14 · Expand 综合门禁**：空库/既有库 migration、foreign key/integrity、Hero collection 409、cover identity、upload state machine、签名 PUT、API Origin 与 PII leakage 通过。
 
 ### GATE-B · Expand 稳定
 
-- [ ] 四个 Hero collection 各自 version/上传归属正确；
-- [ ] Hero 拆分幂等；
-- [ ] commission asset 无 PUBLIC variant；
-- [ ] 签名 PUT 在当前通配 CORS 下可用；
-- [ ] API Origin/token/TTL/限流与 PII 负向测试通过；
-- [ ] 旧公开页面仍可运行；
-- [ ] adoption 歧义状态清单可由景宸处理。
+- [x] 四个 Hero collection 各自 version/上传归属正确；
+- [x] Hero 拆分幂等；
+- [x] commission asset 无 PUBLIC variant；
+- [x] 签名 PUT 在当前通配 CORS 下可用；
+- [x] API Origin/token/TTL/限流与 PII 负向测试通过；
+- [x] 旧公开页面仍可运行；
+- [x] adoption 歧义状态清单可由景宸处理。
 
 `AllowedOrigin=*` 是信息项，不是 GATE-B 失败条件；不得添加“只允许精确 public/admin Origin”的断言。
 
 ## C. 公开动效与 Hero
 
-- [ ] **T15 · 导航交互动效**：桌面胶囊底、阴影、轻微上移及等价 focus；移动抽屉沿用无障碍工具。
-- [ ] **T16 · 公开页面切换**：仅 main 过渡，Header/Footer 稳定；back/forward、锚点、错误页、焦点、pointer-events、reduced-motion。
-- [ ] **T17 · 首页区块与卡片动效**：首次入屏揭示、可点击卡 hover；SSR/无 JS 默认可见。
-- [ ] **T18 · 首页 Hero 排版与首屏**：删除 action；桌面中文居中+英文/slogan 左右；移动左对齐下移；100svh/100dvh。
-- [ ] **T19 · Hero 独立序列公开端**：landscape/portrait DTO、SSR first picture、水合、orientation change、懒加载、10 秒轮播、暂停、hidden、reduced-motion。
-- [ ] **T20 · Hero 四集合管理端**：首页/委托×横/竖独立 CRUD、排序、启停、适配、预览、发布；collection expectedVersion、完整顺序、409、FLIP。
-- [ ] **T21 · 首页业务收尾**：“委托投递”改“委托与领养”，确认首页无 latest updates 请求，当前领养到页脚节奏正确。
+- [x] **T15 · 导航交互动效**：桌面胶囊底、阴影、轻微上移及等价 focus；移动抽屉沿用无障碍工具。
+- [x] **T16 · 公开页面切换**：仅 main 过渡，Header/Footer 稳定；back/forward、锚点、错误页、焦点、pointer-events、reduced-motion。
+- [x] **T17 · 首页区块与卡片动效**：首次入屏揭示、可点击卡 hover；SSR/无 JS 默认可见。
+- [x] **T18 · 首页 Hero 排版与首屏**：删除 action；桌面中文居中+英文/slogan 左右；移动左对齐下移；100svh/100dvh。
+- [x] **T19 · Hero 独立序列公开端**：landscape/portrait DTO、SSR first picture、水合、orientation change、懒加载、10 秒轮播、暂停、hidden、reduced-motion。
+- [x] **T20 · Hero 四集合管理端**：首页/委托×横/竖独立 CRUD、排序、启停、适配、预览、发布；collection expectedVersion、完整顺序、409、FLIP。
+- [x] **T21 · 首页业务收尾**：“委托投递”改“委托与领养”，确认首页无 latest updates 请求，当前领养到页脚节奏正确。
 
 ### GATE-C · 首页与动效
 
-- [ ] 390/768/1023/1024/1440 与真实手机通过；
-- [ ] 桌面/移动对齐明确不同，移动首屏无白块；
-- [ ] 横竖数量/顺序可不同且 hydration 无警告；
-- [ ] hover/focus/page transition/back-forward/reduced-motion 通过。
+- [ ] 390/768/1023/1024/1440 与真实手机通过；五档 Playwright 视口已通过，真实手机仍待用户人工验证，因此组合项不勾选；
+- [x] 桌面/移动对齐明确不同，移动首屏无白块；
+- [x] 横竖数量/顺序可不同且 hydration 无警告；
+- [x] hover/focus/page transition/back-forward/reduced-motion 通过。
 
 ## D. 作品与领养
 
