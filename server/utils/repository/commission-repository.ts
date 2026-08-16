@@ -37,6 +37,7 @@ export interface CommissionSubmissionRow {
   id: string
   internalNote: string | null
   nickname: string
+  species: string | null
   phoneCountryCode: '+86'
   phoneNumber: string
   qq: string
@@ -143,23 +144,31 @@ export function expireCommissionUpload(
   `).run(now, id, expectedVersion).changes
 }
 
-const submissionColumns = `
-  id, receipt_code AS receiptCode, nickname,
-  phone_country_code AS phoneCountryCode,
-  phone_number AS phoneNumber, qq,
-  height_cm AS heightCm, weight_kg_tenths AS weightKgTenths,
-  design_asset_id AS designAssetId, status,
-  internal_note AS internalNote,
-  handled_at AS handledAt, handled_by AS handledBy,
-  version, created_at AS createdAt, updated_at AS updatedAt
-`
+function submissionColumns(sqlite: Database.Database) {
+  // 部署窗口内允许新应用先只读旧库，避免管理列表因 species 尚未扩列而整体 500；
+  // 新投递仍要求 0042 完成后才可写入 species。
+  const hasSpecies = (sqlite.pragma(
+    'table_info(commission_submissions)',
+  ) as { name: string }[]).some(column => column.name === 'species')
+  return `
+    id, receipt_code AS receiptCode, nickname,
+    ${hasSpecies ? 'species' : 'NULL AS species'},
+    phone_country_code AS phoneCountryCode,
+    phone_number AS phoneNumber, qq,
+    height_cm AS heightCm, weight_kg_tenths AS weightKgTenths,
+    design_asset_id AS designAssetId, status,
+    internal_note AS internalNote,
+    handled_at AS handledAt, handled_by AS handledBy,
+    version, created_at AS createdAt, updated_at AS updatedAt
+  `
+}
 
 export function listCommissionSubmissionRows(
   sqlite: Database.Database,
   status?: CommissionSubmissionStatus,
 ) {
   return sqlite.prepare(`
-    SELECT ${submissionColumns}
+    SELECT ${submissionColumns(sqlite)}
     FROM commission_submissions
     ${status ? 'WHERE status = ?' : ''}
     ORDER BY created_at DESC, id
@@ -171,7 +180,7 @@ export function findCommissionSubmission(
   id: string,
 ) {
   return sqlite.prepare(`
-    SELECT ${submissionColumns}
+    SELECT ${submissionColumns(sqlite)}
     FROM commission_submissions WHERE id = ?
   `).get(id) as CommissionSubmissionRow | undefined
 }
