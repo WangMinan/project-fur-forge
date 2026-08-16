@@ -45,22 +45,8 @@ export const works = sqliteTable('works', {
   slug: text('slug').notNull(),
   characterName: text('character_name').notNull(),
   species: text('species').notNull(),
-  suitType: text('suit_type').notNull(),
   purpose: text('purpose').notNull(),
-  adoptionMethod: text('adoption_method'),
-  businessStatus: text('business_status'),
   adoptionStatus: text('adoption_status'),
-  /**
-   * T37 轻量展会掉落：只保存展会名称与展会时间展示文本。
-   *
-   * `event_time` 是给访客看的文本（可表达单日、日期范围或已确认时段），
-   * 不解析为调度时间，不驱动定时任务，也不自动改变领养状态。
-   * 不新增 events 表、展会 slug、地点、摊位、主办方或历史归档。
-   */
-  eventName: text('event_name'),
-  eventTime: text('event_time'),
-  ownerDisplay: text('owner_display').notNull(),
-  ownerContact: text('owner_contact'),
   priceAmountMinor: integer('price_amount_minor'),
   priceCurrency: text('price_currency'),
   publicationStatus: text('publication_status').notNull().default('draft'),
@@ -85,46 +71,17 @@ export const works = sqliteTable('works', {
     'works_species_nonempty',
     sql`${table.species} = trim(${table.species}) AND length(${table.species}) BETWEEN 1 AND 100`,
   ),
-  check('works_suit_type', sql`${table.suitType} IN ('full', 'partial')`),
   check(
     'works_purpose',
     sql`${table.purpose} IN ('commission', 'adoption', 'showcase')`,
   ),
   check(
-    'works_adoption_method',
-    sql`${table.adoptionMethod} IS NULL OR ${table.adoptionMethod} IN ('regular', 'event_drop')`,
-  ),
-  check(
     'works_adoption_fields',
-    sql`(${table.purpose} = 'adoption') OR (${table.adoptionMethod} IS NULL AND ${table.businessStatus} IS NULL AND ${table.eventName} IS NULL AND ${table.eventTime} IS NULL AND ${table.priceAmountMinor} IS NULL AND ${table.priceCurrency} IS NULL)`,
-  ),
-  /**
-   * 展会字段成组约束。
-   *
-   * - 非 event_drop 作品两项必须为空：切换离开掉落后不会留下僵尸值；
-   * - event_drop 草稿允许只填一项或都不填（编辑过程中的正常中间状态），
-   *   但**已发布**的掉落两项必须去空白后非空；
-   * - 与 alt、设定图同一套心智：草稿可以不完整，发布检查负责拦截。
-   */
-  check(
-    'works_event_drop_fields',
-    sql`CASE WHEN ${table.purpose} = 'adoption' AND ${table.adoptionMethod} = 'event_drop' THEN (${table.eventName} IS NULL OR length(trim(${table.eventName})) BETWEEN 1 AND 80) AND (${table.eventTime} IS NULL OR length(trim(${table.eventTime})) BETWEEN 1 AND 80) AND (${table.publicationStatus} != 'published' OR (${table.eventName} IS NOT NULL AND ${table.eventTime} IS NOT NULL)) ELSE ${table.eventName} IS NULL AND ${table.eventTime} IS NULL END`,
-  ),
-  check(
-    'works_business_status',
-    sql`${table.businessStatus} IS NULL OR ${table.businessStatus} IN ('preparing', 'available', 'event_sale', 'scheduled', 'in_production', 'delivered')`,
+    sql`(${table.purpose} = 'adoption' AND ${table.adoptionStatus} IS NOT NULL AND ${table.adoptionStatus} IN ('available', 'adopted')) OR (${table.purpose} != 'adoption' AND ${table.adoptionStatus} IS NULL AND ${table.priceAmountMinor} IS NULL AND ${table.priceCurrency} IS NULL)`,
   ),
   check(
     'works_adoption_status',
-    sql`(${table.purpose} = 'adoption' AND (${table.adoptionStatus} IS NULL OR ${table.adoptionStatus} IN ('available', 'adopted'))) OR (${table.purpose} != 'adoption' AND ${table.adoptionStatus} IS NULL)`,
-  ),
-  check(
-    'works_event_sale',
-    sql`${table.businessStatus} != 'event_sale' OR (${table.adoptionMethod} = 'event_drop' AND length(trim(${table.eventName})) > 0)`,
-  ),
-  check(
-    'works_owner_display_nonempty',
-    sql`${table.ownerDisplay} = trim(${table.ownerDisplay}) AND length(${table.ownerDisplay}) BETWEEN 1 AND 100`,
+    sql`${table.adoptionStatus} IS NULL OR ${table.adoptionStatus} IN ('available', 'adopted')`,
   ),
   check(
     'works_price_cny',
@@ -136,25 +93,6 @@ export const works = sqliteTable('works', {
   ),
   check('works_sort_order_nonnegative', sql`${table.sortOrder} >= 0`),
   check('works_version_positive', sql`${table.version} > 0`),
-])
-
-export const workFeatureTags = sqliteTable('work_feature_tags', {
-  workId: text('work_id').notNull()
-    .references(() => works.id, { onDelete: 'cascade' }),
-  position: integer('position').notNull(),
-  value: text('value').notNull(),
-}, table => [
-  primaryKey({ columns: [table.workId, table.position] }),
-  uniqueIndex('work_feature_tags_value_unique')
-    .on(table.workId, table.value),
-  check(
-    'work_feature_tags_position',
-    sql`${table.position} BETWEEN 0 AND 7`,
-  ),
-  check(
-    'work_feature_tags_value',
-    sql`${table.value} = trim(${table.value}) AND length(${table.value}) BETWEEN 1 AND 24`,
-  ),
 ])
 
 export const assets = sqliteTable('assets', {

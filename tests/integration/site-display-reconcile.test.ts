@@ -106,17 +106,16 @@ async function seedLegacyEnabledHero(placement: 'home' | 'commission') {
   await generatePublicVariants(sqlite, storage, portraitId, undefined, NOW)
 }
 
-/** 既有已发布常规领养：只有水印设定图，没有首页入口无水印变体。 */
+/** 既有已发布领养：已有水印横版封面，没有首页入口无水印变体。 */
 async function seedLegacyPublishedAdoption() {
-  insertSource('adoption-sheet', 'design_sheet', 3200, 2400)
+  insertSource('adoption-cover', 'adoption_cover', 3200, 1800)
   sqlite.prepare(`
     INSERT INTO works (
-      id, slug, character_name, species, suit_type, purpose,
-      adoption_method, business_status, owner_display,
+      id, slug, character_name, species, purpose, adoption_status,
       publication_status, sort_order, published_at, created_at, updated_at
     ) VALUES (
-      'adoption-work', 'adoption-work', '云朵', '犬科', 'full', 'adoption',
-      'regular', 'available', '不公开', 'published', 0, ?, ?, ?
+      'adoption-work', 'adoption-work', '云朵', '犬科', 'adoption',
+      'available', 'published', 0, ?, ?, ?
     )
   `).run(NOW, NOW, NOW)
   sqlite.prepare(`
@@ -124,15 +123,15 @@ async function seedLegacyPublishedAdoption() {
       work_id, asset_id, role, alt_text, position, is_primary,
       crop_x, crop_y, crop_width, crop_height, watermark_anchor
     ) VALUES (
-      'adoption-work', 'adoption-sheet', 'design_sheet', '云朵的设定图',
+      'adoption-work', 'adoption-cover', 'adoption_cover', '云朵领养横版封面',
       0, 0, 0, 0, 1, 1, 'top-left'
     )
   `).run()
   await generatePublicVariants(
     sqlite,
     storage,
-    'adoption-sheet',
-    ['design-sheet', 'work-card'],
+    'adoption-cover',
+    ['adoption-card'],
     NOW,
   )
 }
@@ -509,15 +508,14 @@ describe('T34-F1 existing site display reconcile', () => {
   it('records a failure instead of upscaling when a source is too small', async () => {
     // 原图身份不可变，因此换成一件新的、源过小的已发布常规领养作为入口源。
     sqlite.prepare('DELETE FROM works WHERE id = \'adoption-work\'').run()
-    insertSource('tiny-sheet', 'design_sheet', 400, 300)
+    insertSource('tiny-cover', 'adoption_cover', 400, 300)
     sqlite.prepare(`
       INSERT INTO works (
-        id, slug, character_name, species, suit_type, purpose,
-        adoption_method, business_status, owner_display,
+        id, slug, character_name, species, purpose, adoption_status,
         publication_status, sort_order, published_at, created_at, updated_at
       ) VALUES (
-        'tiny-work', 'tiny-work', '小图', '犬科', 'full', 'adoption',
-        'regular', 'available', '不公开', 'published', 0, ?, ?, ?
+        'tiny-work', 'tiny-work', '小图', '犬科', 'adoption',
+        'available', 'published', 0, ?, ?, ?
       )
     `).run(NOW, NOW, NOW)
     sqlite.prepare(`
@@ -525,7 +523,7 @@ describe('T34-F1 existing site display reconcile', () => {
         work_id, asset_id, role, alt_text, position, is_primary,
         crop_x, crop_y, crop_width, crop_height, watermark_anchor
       ) VALUES (
-        'tiny-work', 'tiny-sheet', 'design_sheet', '小图设定图',
+        'tiny-work', 'tiny-cover', 'adoption_cover', '小图横版封面',
         0, 0, 0, 0, 1, 1, 'top-left'
       )
     `).run()

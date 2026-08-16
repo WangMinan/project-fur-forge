@@ -1,7 +1,6 @@
 import type { Ref } from 'vue'
 import type {
   PublicationStatus,
-  SuitType,
   WorkListItemDto,
   WorkPurpose,
 } from '~~/shared/types/contracts'
@@ -14,7 +13,6 @@ import {
 export function useAdminWorkListView(works: Ref<WorkListItemDto[]>) {
   const query = shallowRef('')
   const purpose = shallowRef<WorkPurpose | 'all'>('all')
-  const suitType = shallowRef<SuitType | 'all'>('all')
   const publicationStatus = shallowRef<PublicationStatus | 'all'>('all')
   const page = shallowRef(1)
   const pageSize = shallowRef(10)
@@ -23,7 +21,6 @@ export function useAdminWorkListView(works: Ref<WorkListItemDto[]>) {
     publicationStatus: publicationStatus.value,
     purpose: purpose.value,
     query: query.value,
-    suitType: suitType.value,
   }))
   const pageCount = computed(() => adminWorkPageCount(filteredWorks.value.length, pageSize.value))
   const visibleWorks = computed(() => paginateAdminWorks(
@@ -41,11 +38,10 @@ export function useAdminWorkListView(works: Ref<WorkListItemDto[]>) {
   const filtersActive = computed(() => (
     query.value.trim().length > 0
     || purpose.value !== 'all'
-    || suitType.value !== 'all'
     || publicationStatus.value !== 'all'
   ))
 
-  watch([query, purpose, suitType, publicationStatus, pageSize], () => {
+  watch([query, purpose, publicationStatus, pageSize], () => {
     page.value = 1
   })
   watch(pageCount, (count) => {
@@ -57,7 +53,6 @@ export function useAdminWorkListView(works: Ref<WorkListItemDto[]>) {
   function resetFilters() {
     query.value = ''
     purpose.value = 'all'
-    suitType.value = 'all'
     publicationStatus.value = 'all'
   }
 
@@ -71,7 +66,6 @@ export function useAdminWorkListView(works: Ref<WorkListItemDto[]>) {
     purpose,
     query,
     resetFilters,
-    suitType,
     visibleFrom,
     visibleTo,
     visibleWorks,

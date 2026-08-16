@@ -6,7 +6,7 @@ import { renderActiveWatermarkPreview } from '../../../../../../utils/recipe/med
 import { getMediaStorage } from '../../../../../../utils/media-storage'
 import { asSafeApiError } from '../../../../../../utils/service-error'
 
-const usageSchema = z.enum(['design-sheet', 'detail', 'work-card'])
+const usageSchema = z.enum(['adoption-card', 'design-sheet', 'detail', 'work-card'])
 
 export default defineEventHandler(async (event) => {
   const id = resourceIdSchema.safeParse(getRouterParam(event, 'id'))

@@ -37,20 +37,15 @@ export interface OperationRow {
 }
 
 export interface WorkState {
-  adoptionMethod: string | null
-  businessStatus: string | null
+  adoptionStatus: 'available' | 'adopted' | null
   characterName: string
-  eventName: string | null
-  eventTime: string | null
   id: string
-  ownerDisplay: string
   priceAmountMinor: number | null
   priceCurrency: string | null
   publicationStatus: 'draft' | 'published' | 'unpublished'
   purpose: 'commission' | 'adoption' | 'showcase'
   slug: string
   species: string
-  suitType: string
   version: number
 }
 
@@ -91,13 +86,9 @@ const selectOperation = `
 const selectWork = `
   SELECT
     id, version, slug, character_name AS characterName, species,
-    suit_type AS suitType, purpose, adoption_method AS adoptionMethod,
-    business_status AS businessStatus,
-    event_name AS eventName,
-    event_time AS eventTime,
+    purpose, adoption_status AS adoptionStatus,
     price_amount_minor AS priceAmountMinor,
     price_currency AS priceCurrency,
-    owner_display AS ownerDisplay,
     publication_status AS publicationStatus
   FROM works
 `

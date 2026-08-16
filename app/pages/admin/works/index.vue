@@ -11,9 +11,8 @@ import type {
 import { workPublicationCheckResponseSchema } from '~~/shared/schemas/publication'
 import { AdminApiError } from '~/composables/useAdminApi'
 import {
-  BUSINESS_STATUS_LABELS,
+  ADOPTION_STATUS_LABELS,
   PUBLICATION_STATUS_LABELS,
-  SUIT_TYPE_LABELS,
   WORK_PURPOSE_LABELS,
 } from '~/utils/work-labels'
 import { formatCnyMinorUnits } from '~/utils/format'
@@ -49,7 +48,6 @@ const {
   purpose,
   query,
   resetFilters,
-  suitType,
   visibleFrom,
   visibleTo,
   visibleWorks,
@@ -76,21 +74,20 @@ const publishedFeaturedCount = computed(() => works.value.filter(
 /**
  * 列表缩略图用哪张资产。
  *
- * 领养作品可以只有设定图、没有出厂照（这是允许的发布形态），
- * 这时用设定图当缩略图，不留空。
+ * 领养作品优先使用出厂主图，缺失时以独立横版封面作管理缩略图。
  */
 function thumbAssetId(work: WorkListItemDto) {
   return work.primaryAssetId
-    ?? (work.purpose === 'adoption' ? work.designSheetAssetId : null)
+    ?? (work.purpose === 'adoption' ? work.adoptionCoverAssetId : null)
 }
 
 function adoptionSummary(work: WorkListItemDto) {
   if (work.purpose !== 'adoption') {
     return null
   }
-  const status = work.businessStatus
-    ? BUSINESS_STATUS_LABELS[work.businessStatus]
-    : '状态未记录'
+  const status = work.adoptionStatus
+    ? ADOPTION_STATUS_LABELS[work.adoptionStatus]
+    : '待人工确认状态'
   const price = work.priceCnyMinor === null
     ? '不公开价格'
     : formatCnyMinorUnits(work.priceCnyMinor)
@@ -302,7 +299,6 @@ watch(activeTab, (tab) => {
         v-if="activeTab === 'all' && status === 'ready' && works.length > 0"
         v-model:query="query"
         v-model:purpose="purpose"
-        v-model:suit-type="suitType"
         v-model:publication-status="publicationStatus"
         :filters-active="filtersActive"
         :result-count="filteredWorks.length"
@@ -360,7 +356,7 @@ watch(activeTab, (tab) => {
                       {{ work.characterName }}
                     </NuxtLink>
                     <span class="works-table__species">
-                      {{ work.species }} · {{ SUIT_TYPE_LABELS[work.suitType] }}
+                      {{ work.species }}
                     </span>
                   </span>
                 </div>
@@ -387,10 +383,15 @@ watch(activeTab, (tab) => {
               </td>
               <td>
                 <span class="works-table__media">
-                  设定图 {{ work.purpose === 'adoption' && work.designSheetAssetId ? '有' : work.purpose === 'adoption' ? '无' : '—' }}
+                  横版封面 {{ work.purpose === 'adoption' && work.adoptionCoverAssetId ? '有' : work.purpose === 'adoption' ? '无' : '—' }}
+                  · 设定图 {{ work.purpose === 'adoption' && work.designSheetAssetId ? '有' : work.purpose === 'adoption' ? '无' : '—' }}
                   · 出厂照 {{ work.studioPhotoCount }}/5
                 </span>
                 <span class="works-table__media-links">
+                  <NuxtLink
+                    v-if="work.purpose === 'adoption'"
+                    :to="`/admin/works/${work.id}#adoption-cover`"
+                  >横版封面</NuxtLink>
                   <NuxtLink
                     v-if="work.purpose === 'adoption'"
                     :to="`/admin/works/${work.id}#design-sheet`"
@@ -431,7 +432,7 @@ watch(activeTab, (tab) => {
             <div class="works-card__body">
               <p class="works-card__name">
                 {{ work.characterName }}
-                <span class="works-card__meta">{{ work.species }} · {{ SUIT_TYPE_LABELS[work.suitType] }}</span>
+                <span class="works-card__meta">{{ work.species }}</span>
               </p>
               <p class="works-card__row">
                 {{ WORK_PURPOSE_LABELS[work.purpose] }}
@@ -450,11 +451,16 @@ watch(activeTab, (tab) => {
                 @update="updateOrdering(work, $event)"
               />
               <p class="works-card__row works-card__row--muted">
-                设定图 {{ work.purpose === 'adoption' && work.designSheetAssetId ? '有' : work.purpose === 'adoption' ? '无' : '—' }}
+                横版封面 {{ work.purpose === 'adoption' && work.adoptionCoverAssetId ? '有' : work.purpose === 'adoption' ? '无' : '—' }}
+                · 设定图 {{ work.purpose === 'adoption' && work.designSheetAssetId ? '有' : work.purpose === 'adoption' ? '无' : '—' }}
                 · 出厂照 {{ work.studioPhotoCount }}/5
               </p>
               <p class="works-card__row works-card__row--muted">{{ blockerSummary(work) }}</p>
               <p class="works-card__row works-card__quick-links">
+                <NuxtLink
+                  v-if="work.purpose === 'adoption'"
+                  :to="`/admin/works/${work.id}#adoption-cover`"
+                >编辑横版封面</NuxtLink>
                 <NuxtLink
                   v-if="work.purpose === 'adoption'"
                   :to="`/admin/works/${work.id}#design-sheet`"

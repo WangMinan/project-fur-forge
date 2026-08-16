@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import type { PublicAdoptionListItemDto } from '~~/shared/types/contracts'
 import { formatCnyMinorUnits } from '~/utils/format'
-import {
-  BUSINESS_STATUS_LABELS,
-  SUIT_TYPE_LABELS,
-} from '~/utils/work-labels'
+import { ADOPTION_STATUS_LABELS } from '~/utils/work-labels'
 
 const props = defineProps<{
   adoption: PublicAdoptionListItemDto
@@ -15,15 +12,6 @@ const price = computed(() => props.adoption.work.price
   : null,
 )
 
-/** T37：只有展会掉落显示类型标签与展会信息，常规领养不出现空字段。 */
-const eventDrop = computed(() => (
-  props.adoption.work.adoptionMethod === 'event_drop'
-    ? {
-        name: props.adoption.work.eventName,
-        time: props.adoption.work.eventTime,
-      }
-    : null
-))
 </script>
 
 <template>
@@ -34,8 +22,8 @@ const eventDrop = computed(() => (
   >
     <span class="adoption-card__canvas">
       <ResponsivePicture
-        :sources="adoption.designSheet.sources"
-        :alt="adoption.designSheet.alt"
+        :sources="adoption.cover.sources"
+        :alt="adoption.cover.alt"
         sizes="(min-width: 1024px) 44vw, 100vw"
       />
     </span>
@@ -43,26 +31,14 @@ const eventDrop = computed(() => (
       <span class="adoption-card__heading">
         <span class="adoption-card__name">{{ adoption.work.characterName }}</span>
         <span class="adoption-card__status">
-          {{ BUSINESS_STATUS_LABELS[adoption.work.businessStatus] }}
+          {{ ADOPTION_STATUS_LABELS[adoption.work.adoptionStatus] }}
         </span>
       </span>
       <span class="adoption-card__details">
         <span class="adoption-card__meta">
-          {{ adoption.work.species }} · {{ SUIT_TYPE_LABELS[adoption.work.suitType] }}
-        </span>
-        <span v-if="eventDrop" class="adoption-card__event">
-          <span class="adoption-card__event-tag">展会掉落</span>
-          <span v-if="eventDrop.name" class="adoption-card__event-name">
-            {{ eventDrop.name }}
-          </span>
-          <span v-if="eventDrop.time" class="adoption-card__event-time">
-            {{ eventDrop.time }}
-          </span>
+          {{ adoption.work.species }}
         </span>
         <span v-if="price" class="adoption-card__price">{{ price }}</span>
-      </span>
-      <span v-if="adoption.work.featureTags.length > 0" class="adoption-card__tags">
-        <span v-for="tag in adoption.work.featureTags" :key="tag">{{ tag }}</span>
       </span>
     </span>
   </NuxtLink>
@@ -79,42 +55,12 @@ const eventDrop = computed(() => (
   color: var(--public-text-primary);
 }
 
-/* 展会信息在元信息带内受控折行，不再独占多行并放大整行卡片高度。 */
-.adoption-card__event {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  overflow-wrap: anywhere;
-}
-
-.adoption-card__event-tag {
-  flex: none;
-  padding: 0.05rem 0.5rem;
-  border: 1px solid var(--public-accent-tint);
-  border-radius: var(--radius-full);
-  color: var(--public-accent-primary);
-  font-size: var(--font-size-xs);
-}
-
-.adoption-card__event-name {
-  color: var(--public-text-primary);
-}
-
-.adoption-card__event-time {
-  color: var(--public-text-secondary);
-}
-
 /**
- * 设定图外框：圆角矩形 + 固定比例。
- *
- * 固定比例是为了让并排的两张卡对齐——设定图各自比例不同，
- * 高度自适应时右边卡的文字会比左边高出一截。`contain` 保证
- * 设定图完整可见、不裁切，多余空间由留白承担。
+ * 领养卡固定使用独立横版封面；不以设定图或出厂照自动替代。
  */
 .adoption-card__canvas {
   display: block;
-  aspect-ratio: var(--ratio-design-sheet);
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   border: 1px solid var(--public-border-primary);
   border-radius: var(--radius-image);
@@ -129,7 +75,7 @@ const eventDrop = computed(() => (
 }
 
 .adoption-card__canvas :deep(.responsive-picture__image) {
-  object-fit: contain;
+  object-fit: cover;
   transition: transform var(--duration-section) var(--easing-standard);
 }
 
@@ -189,19 +135,6 @@ const eventDrop = computed(() => (
 .adoption-card__meta {
   flex: none;
   color: var(--public-text-secondary);
-}
-
-.adoption-card__tags {
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-.adoption-card__tags span {
-  padding: var(--space-1) var(--space-3);
-  color: var(--public-text-secondary);
-  font-size: var(--font-size-xs);
-  border: 1px solid var(--public-border-primary);
-  border-radius: var(--radius-full);
 }
 
 .adoption-card__price {

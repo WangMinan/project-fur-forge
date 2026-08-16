@@ -397,10 +397,6 @@ describe('authentication API', () => {
     const common = {
       characterName: '接口角色',
       species: '犬科',
-      suitType: 'full',
-      ownerDisplay: '公开角色主',
-      ownerContact: 'private-contact',
-      featureTags: ['柔软', '大尾巴'],
       sortOrder: 2,
       featured: true,
     }
@@ -430,8 +426,7 @@ describe('authentication API', () => {
       ...common,
       slug: `adoption-${suffix}`,
       purpose: 'adoption',
-      adoptionMethod: 'regular',
-      businessStatus: 'available',
+      adoptionStatus: 'available',
       priceCnyMinor: 1,
     })
     expect(adoptionResponse.status).toBe(201)
@@ -440,11 +435,9 @@ describe('authentication API', () => {
     expect(adoption).toMatchObject({
       data: {
         purpose: 'adoption',
-        adoptionMethod: 'regular',
-        businessStatus: 'available',
+        adoptionStatus: 'available',
         priceCnyMinor: 1,
         sortOrder: 2,
-        private: { ownerContact: 'private-contact' },
       },
     })
 
@@ -452,7 +445,7 @@ describe('authentication API', () => {
       ...common,
       slug: `invalid-${suffix}`,
       purpose: 'showcase',
-      adoptionMethod: 'regular',
+      adoptionStatus: 'available',
     })
     expect(invalid.status).toBe(400)
     expectPrivateResponseHeaders(invalid)
@@ -504,7 +497,6 @@ describe('authentication API', () => {
   }, 30_000)
 
   it('secures versioned site content and refreshes safe public projections', async () => {
-    const privateContact = 'owner-private-site-content@example.test'
     const database = openDatabase(databaseFile)
     try {
       database.sqlite.transaction(() => {
@@ -521,15 +513,12 @@ describe('authentication API', () => {
         `).run()
         database.sqlite.prepare(`
           INSERT INTO works (
-            id, slug, character_name, species, suit_type, purpose,
-            owner_display, owner_contact, publication_status,
+            id, slug, character_name, species, purpose, publication_status,
             created_at, updated_at
-          ) VALUES (?, ?, '隐私守卫', '犬科', 'full', 'showcase',
-            '不公开', ?, 'draft', ?, ?)
+          ) VALUES (?, ?, '隐私守卫', '犬科', 'showcase', 'draft', ?, ?)
         `).run(
           crypto.randomUUID(),
           `site-content-private-${crypto.randomUUID()}`,
-          privateContact,
           Date.now(),
           Date.now(),
         )
@@ -826,7 +815,6 @@ describe('authentication API', () => {
       },
     })
     expect(JSON.stringify(firstProjection)).not.toContain('version')
-    expect(JSON.stringify(firstProjection)).not.toContain(privateContact)
 
     expect((await updateStatus('commission', 1, 'closed', '委托关闭')).status)
       .toBe(200)

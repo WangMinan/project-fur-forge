@@ -43,18 +43,17 @@ interface ControlBody {
     slug: string
     characterName: string
     species?: string
-    suitType?: 'full' | 'partial'
     purpose?: 'commission' | 'showcase' | 'adoption'
-    ownerDisplay?: string
-    featureTags?: string[]
     featured?: boolean
     sortOrder?: number
     publicationStatus?: 'draft' | 'published'
-    adoptionMethod?: 'regular' | 'event_drop'
-    businessStatus?: 'preparing' | 'available' | 'event_sale' | 'scheduled' | 'in_production' | 'delivered'
-    eventName?: string
-    eventTime?: string
-    priceMinorUnits?: number
+    adoptionStatus?: 'available' | 'adopted'
+    priceCnyMinor?: number
+    adoptionCover?: {
+      alt: string
+      width?: number
+      height?: number
+    }
     designSheet?: {
       alt: string
       width?: number
@@ -331,8 +330,7 @@ export default defineEventHandler(async (event) => {
     const staleAssetIds = sqlite.prepare(`
       SELECT id FROM assets WHERE private_object_key LIKE 'test/e2e-public/%'
     `).pluck().all() as string[]
-    // work_assets / work_feature_tags 随 works 级联删除；
-    // 关联作品的首页图 linked_work_id 由 FK 置空。
+    // work_assets 随 works 级联删除；关联作品的首页图 linked_work_id 由 FK 置空。
     sqlite.prepare('DELETE FROM works').run()
     if (staleAssetIds.length > 0) {
       const placeholders = staleAssetIds.map(() => '?').join(', ')
@@ -357,54 +355,37 @@ export default defineEventHandler(async (event) => {
         setResponseStatus(event, 400)
         return { error: 'seeded work slugs must start with e2e-public-' }
       }
+      const publicationStatus = work.publicationStatus ?? 'published'
       if (
         !work.photos
         || work.photos.length > 5
-        || (
-          work.photos.length === 0
-          && !(adoption && work.adoptionMethod !== 'event_drop' && work.designSheet)
-        )
+        || (publicationStatus === 'published' && work.photos.length === 0)
+        || (adoption && publicationStatus === 'published' && !work.adoptionCover)
       ) {
         setResponseStatus(event, 400)
         return { error: 'seeded works need valid role media' }
       }
 
       const workId = randomUUID()
-      const publicationStatus = work.publicationStatus ?? 'published'
       // 公开列表按发布时间倒序。为同一批种子分配不同毫秒，既保持输入顺序，
       // 也避免 SQLite 在 published_at 完全相同时退化为不确定顺序。
       const publishedAt = now - index
-      if (
-        adoption
-        && work.adoptionMethod === 'event_drop'
-        && publicationStatus === 'published'
-        && (!work.eventName?.trim() || !work.eventTime?.trim())
-      ) {
-        setResponseStatus(event, 400)
-        return { error: 'published event-drop seeds need eventName and eventTime' }
-      }
       sqlite.prepare(`
         INSERT INTO works (
-          id, slug, character_name, species, suit_type, purpose,
-          adoption_method, business_status, event_name, event_time,
-          owner_display, price_amount_minor, price_currency,
+          id, slug, character_name, species, purpose, adoption_status,
+          price_amount_minor, price_currency,
           publication_status, sort_order, featured,
           published_at, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         workId,
         work.slug,
         work.characterName,
         work.species ?? '犬科',
-        work.suitType ?? 'full',
         purpose,
-        adoption ? (work.adoptionMethod ?? 'regular') : null,
-        adoption ? (work.businessStatus ?? 'available') : null,
-        adoption ? (work.eventName ?? null) : null,
-        adoption ? (work.eventTime ?? null) : null,
-        work.ownerDisplay ?? '不公开',
-        adoption && work.priceMinorUnits ? work.priceMinorUnits : null,
-        adoption && work.priceMinorUnits ? 'CNY' : null,
+        adoption ? work.adoptionStatus : null,
+        adoption && work.priceCnyMinor ? work.priceCnyMinor : null,
+        adoption && work.priceCnyMinor ? 'CNY' : null,
         publicationStatus,
         work.sortOrder ?? index,
         work.featured ? 1 : 0,
@@ -413,15 +394,8 @@ export default defineEventHandler(async (event) => {
         now,
       )
 
-      for (const [position, tag] of (work.featureTags ?? []).entries()) {
-        sqlite.prepare(`
-          INSERT INTO work_feature_tags (work_id, position, value)
-          VALUES (?, ?, ?)
-        `).run(workId, position, tag)
-      }
-
       const seedWorkMedia = async (
-        role: 'design_sheet' | 'studio_photo',
+        role: 'adoption_cover' | 'design_sheet' | 'studio_photo',
         media: { alt: string, width?: number, height?: number },
         position: number,
         primary: boolean,
@@ -458,16 +432,13 @@ export default defineEventHandler(async (event) => {
           sqlite,
           fake,
           assetId,
-          role === 'design_sheet' && work.photos.length === 0
-            ? ['design-sheet', 'work-card']
-            : undefined,
+          role === 'adoption_cover' ? ['adoption-card'] : undefined,
           now,
         )
-        // T34-F1：常规领养设定图同时预生成首页领养入口无水印变体。
+        // 领养入口只消费独立横版封面，不回退到设定图或出厂照。
         if (
-          role === 'design_sheet'
+          role === 'adoption_cover'
           && work.purpose === 'adoption'
-          && (work.adoptionMethod ?? 'regular') === 'regular'
           && assetSupportsSiteDisplay(
             sqlite,
             assetId,
@@ -484,6 +455,9 @@ export default defineEventHandler(async (event) => {
         }
       }
 
+      if (work.adoptionCover) {
+        await seedWorkMedia('adoption_cover', work.adoptionCover, 0, false)
+      }
       if (work.designSheet) {
         await seedWorkMedia('design_sheet', work.designSheet, 0, false)
       }

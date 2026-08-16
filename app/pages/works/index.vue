@@ -4,42 +4,29 @@ import { PROJECT_NAME } from '~~/shared/constants/project'
 
 /**
  * T20 作品列表：SSR 消费 /api/public/v1/works。
- * 筛选参数原样透传（含非法值），由服务端判定 filter.valid；
- * 空态区分「尚未发布」「无匹配」「参数非法」。
+ * 公开端只按名称搜索并分页，作品用途等内部字段不进入查询或 DTO。
  */
 useSeoMeta({
   title: `作品展示 · ${PROJECT_NAME}`,
-  description: `${PROJECT_NAME}的兽装作品展示，按用途与装型浏览。`,
+  description: `${PROJECT_NAME}的兽装作品展示。`,
   ogTitle: `作品展示 · ${PROJECT_NAME}`,
-  ogDescription: `${PROJECT_NAME}的兽装作品展示，按用途与装型浏览。`,
+  ogDescription: `${PROJECT_NAME}的兽装作品展示。`,
 })
 
 const route = useRoute()
 
-function firstQueryValue(value: unknown): string | undefined {
-  if (typeof value === 'string') {
-    return value
-  }
-  if (Array.isArray(value)) {
-    return typeof value[0] === 'string' ? value[0] : undefined
-  }
-  return undefined
-}
-
 const requestedPage = computed(() => publicPageFromQuery(route.query.page))
 const search = computed(() => publicSearchFromQuery(route.query.q))
 
-const filterQuery = computed(() => ({
+const listQuery = computed(() => ({
   page: requestedPage.value,
-  purpose: firstQueryValue(route.query.purpose),
   q: route.query.q,
-  suitType: firstQueryValue(route.query.suitType),
 }))
 
 const { data: list, error: listError } = await useFetch('/api/public/v1/works', {
   key: 'public-works-list',
   headers: useRequestHeaders(['host']),
-  query: filterQuery,
+  query: listQuery,
   transform: raw => publicWorkListResponseSchema.parse(raw).data,
 })
 
@@ -48,18 +35,12 @@ if (listError.value) {
 }
 
 const items = computed(() => list.value?.items ?? [])
-const filter = computed(() => list.value?.filter ?? { purpose: null, suitType: null, valid: true as const })
+const filter = computed(() => list.value?.filter ?? { valid: true as const })
 const resultCount = computed(() => list.value?.resultCount ?? 0)
 const page = computed(() => list.value?.page ?? requestedPage.value)
 const pageCount = computed(() => list.value?.pageCount ?? 0)
 
-const hasActiveFilter = computed(
-  () => filter.value.purpose !== null || filter.value.suitType !== null,
-)
-const clearSearchHref = computed(() => publicPageHref('/works', {
-  purpose: filter.value.purpose,
-  suitType: filter.value.suitType,
-}, 1))
+const clearSearchHref = '/works'
 
 /**
  * 空态区分尚无作品、筛选无匹配与越界页码。
@@ -79,14 +60,12 @@ const emptyKind = computed<EmptyKind | null>(() => {
   if (search.value.active) {
     return 'search-no-match'
   }
-  return hasActiveFilter.value || !filter.value.valid ? 'no-match' : 'no-works'
+  return !filter.value.valid ? 'no-match' : 'no-works'
 })
 
 function hrefFor(target: number) {
   return publicPageHref('/works', {
-    purpose: filter.value.purpose,
     q: search.value.query || null,
-    suitType: filter.value.suitType,
   }, target)
 }
 </script>
@@ -100,17 +79,8 @@ function hrefFor(target: number) {
         <PublicCatalogSearch
           action="/works"
           :clear-to="clearSearchHref"
-          :hidden-fields="{
-            purpose: filter.purpose,
-            suitType: filter.suitType,
-          }"
           :query="search.query"
           :show-clear="search.active"
-        />
-
-        <WorkFilterBar
-          :filter="filter"
-          :query="search.query"
         />
       </div>
 
@@ -197,10 +167,6 @@ function hrefFor(target: number) {
 
 .works-page__toolbar > :deep(.catalog-search) {
   flex: 1 1 22rem;
-}
-
-.works-page__toolbar > :deep(.work-filter) {
-  flex: 0 1 auto;
 }
 
 @media (min-width: 768px) {

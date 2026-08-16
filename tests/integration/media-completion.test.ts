@@ -51,9 +51,8 @@ function insertFixtures() {
   `).run(USER_ID, NOW, NOW, NOW)
   sqlite.prepare(`
     INSERT INTO works (
-      id, slug, character_name, species, suit_type, purpose,
-      owner_display, created_at, updated_at
-    ) VALUES (?, 'test-work', '团子', '犬科', 'full', 'showcase', '不公开', ?, ?)
+      id, slug, character_name, species, purpose, created_at, updated_at
+    ) VALUES (?, 'test-work', '团子', '犬科', 'showcase', ?, ?)
   `).run(WORK_ID, NOW, NOW)
 }
 

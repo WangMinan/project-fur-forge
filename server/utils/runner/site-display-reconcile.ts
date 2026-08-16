@@ -149,7 +149,7 @@ export function findReconcileTargets(
 
   if (inScope(scope, 'home-entry')) {
     // 至少保证当前入口源可生成 home-entry-adoption；
-    // 其余已发布常规领养设定图一并补齐，避免入口源轮换后再次缺图。
+    // 其余已发布领养横版封面一并补齐，避免入口源轮换后再次缺图。
     const current = adoptionEntrySource(sqlite)
     const adoptionAssets = sqlite.prepare(`
       SELECT DISTINCT relation.asset_id AS assetId
@@ -157,9 +157,9 @@ export function findReconcileTargets(
       JOIN work_assets AS relation ON relation.work_id = work.id
       JOIN assets AS asset ON asset.id = relation.asset_id
       WHERE work.publication_status = 'published'
-        AND work.purpose = 'adoption' AND work.adoption_method = 'regular'
-        AND relation.role = 'design_sheet' AND asset.status = 'READY'
-        AND asset.role = 'design_sheet'
+        AND work.purpose = 'adoption'
+        AND relation.role = 'adoption_cover' AND asset.status = 'READY'
+        AND asset.role = 'adoption_cover'
       ORDER BY work.sort_order, work.id
     `).pluck().all() as string[]
     const ordered = current

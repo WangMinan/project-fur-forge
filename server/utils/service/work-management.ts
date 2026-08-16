@@ -50,16 +50,10 @@ interface AdoptionCoverInput {
 }
 
 interface WorkRow {
-  adoptionMethod: 'regular' | 'event_drop' | null
-  businessStatus: 'preparing' | 'available' | 'event_sale' | 'scheduled' | 'in_production' | 'delivered' | null
   adoptionStatus: 'available' | 'adopted' | null
   characterName: string
-  eventName: string | null
-  eventTime: string | null
   featured: number
   id: string
-  ownerContact: string | null
-  ownerDisplay: string
   priceAmountMinor: number | null
   priceCurrency: 'CNY' | null
   publicationStatus: 'draft' | 'published' | 'unpublished'
@@ -67,7 +61,6 @@ interface WorkRow {
   slug: string
   sortOrder: number
   species: string
-  suitType: 'full' | 'partial'
   version: number
 }
 
@@ -80,13 +73,8 @@ interface FeaturedOrderRow {
 const selectWork = `
   SELECT
     id, version, slug, character_name AS characterName,
-    species, suit_type AS suitType, purpose,
-    adoption_method AS adoptionMethod,
-    business_status AS businessStatus,
+    species, purpose,
     adoption_status AS adoptionStatus,
-    event_name AS eventName,
-    event_time AS eventTime,
-    owner_display AS ownerDisplay, owner_contact AS ownerContact,
     price_amount_minor AS priceAmountMinor,
     price_currency AS priceCurrency,
     publication_status AS publicationStatus,
@@ -105,13 +93,6 @@ function requireWork(sqlite: Database.Database, id: string) {
     throw new ServiceError(404, 'NOT_FOUND', 'Work was not found.', 'RESOURCE_NOT_FOUND')
   }
   return work
-}
-
-function featureTags(sqlite: Database.Database, workId: string) {
-  return sqlite.prepare(`
-    SELECT value FROM work_feature_tags
-    WHERE work_id = ? ORDER BY position
-  `).pluck().all(workId) as string[]
 }
 
 function studioPhotos(sqlite: Database.Database, workId: string) {
@@ -256,17 +237,11 @@ function managedWork(
     slug: row.slug,
     characterName: row.characterName,
     species: row.species,
-    suitType: row.suitType,
     purpose: row.purpose,
-    ownerDisplay: row.ownerDisplay,
-    featureTags: featureTags(sqlite, row.id),
     sortOrder: row.sortOrder,
     featured: Boolean(row.featured),
     publicationStatus: row.publicationStatus,
     studioPhotos: studioPhotos(sqlite, row.id),
-    private: {
-      ownerContact: row.ownerContact,
-    },
   }
   return managedWorkDtoSchema.parse(row.purpose === 'adoption'
     ? {
@@ -274,30 +249,11 @@ function managedWork(
         adoptionStatus: row.adoptionStatus,
         adoptionCover: adoptionCover(sqlite, row.id),
         designSheet: designSheet(sqlite, row.id),
-        adoptionMethod: row.adoptionMethod,
-        businessStatus: row.businessStatus,
-        eventName: row.eventName,
-        eventTime: row.eventTime,
         priceCnyMinor: row.priceCurrency === 'CNY'
           ? row.priceAmountMinor
           : null,
       }
     : base)
-}
-
-/**
- * 展会字段只在“领养 + 展会掉落”下有值。
- * 其他业务类型统一返回 null，保证切换类型后不留僵尸值。
- */
-function eventFieldFor(
-  input: WorkFields,
-  field: 'eventName' | 'eventTime',
-) {
-  if (input.purpose !== 'adoption' || input.adoptionMethod !== 'event_drop') {
-    return null
-  }
-  const value = input[field]
-  return value === undefined ? null : value
 }
 
 function translateConstraint(error: unknown): never {
@@ -312,19 +268,6 @@ function translateConstraint(error: unknown): never {
     throw new ServiceError(409, 'CONFLICT', 'Asset is already linked to a work.', 'ASSET_ALREADY_LINKED')
   }
   throw error
-}
-
-function replaceTags(
-  sqlite: Database.Database,
-  workId: string,
-  values: readonly string[],
-) {
-  sqlite.prepare('DELETE FROM work_feature_tags WHERE work_id = ?').run(workId)
-  const insert = sqlite.prepare(`
-    INSERT INTO work_feature_tags (work_id, position, value)
-    VALUES (?, ?, ?)
-  `)
-  values.forEach((value, position) => insert.run(workId, position, value))
 }
 
 function featuredOrderRows(sqlite: Database.Database) {
@@ -383,12 +326,8 @@ export function listManagedWorks(
     SELECT
       work.id, work.version, work.slug,
       work.character_name AS characterName,
-      work.species, work.suit_type AS suitType, work.purpose,
-      work.adoption_method AS adoptionMethod,
-      work.business_status AS businessStatus,
-      work.event_name AS eventName,
-      work.event_time AS eventTime,
-      work.owner_display AS ownerDisplay,
+      work.species, work.purpose,
+      work.adoption_status AS adoptionStatus,
       work.price_amount_minor AS priceAmountMinor,
       work.price_currency AS priceCurrency,
       work.publication_status AS publicationStatus,
@@ -398,7 +337,11 @@ export function listManagedWorks(
       (
         SELECT asset_id FROM work_assets
         WHERE work_id = work.id AND role = 'design_sheet'
-      ) AS designSheetAssetId
+      ) AS designSheetAssetId,
+      (
+        SELECT asset_id FROM work_assets
+        WHERE work_id = work.id AND role = 'adoption_cover'
+      ) AS adoptionCoverAssetId
     FROM works AS work
     LEFT JOIN work_assets AS photo
       ON photo.work_id = work.id AND photo.role = 'studio_photo'
@@ -408,6 +351,7 @@ export function listManagedWorks(
   return rows.map((value) => {
     const row = value as WorkRow & {
       primaryAssetId: string | null
+      adoptionCoverAssetId: string | null
       designSheetAssetId: string | null
       studioPhotoCount: number
     }
@@ -417,9 +361,7 @@ export function listManagedWorks(
       slug: row.slug,
       characterName: row.characterName,
       species: row.species,
-      suitType: row.suitType,
       purpose: row.purpose,
-      ownerDisplay: row.ownerDisplay,
       publicationStatus: row.publicationStatus,
       sortOrder: row.sortOrder,
       featured: Boolean(row.featured),
@@ -429,11 +371,9 @@ export function listManagedWorks(
     return workListItemDtoSchema.parse(row.purpose === 'adoption'
       ? {
           ...base,
+          adoptionStatus: row.adoptionStatus,
+          adoptionCoverAssetId: row.adoptionCoverAssetId,
           designSheetAssetId: row.designSheetAssetId,
-          adoptionMethod: row.adoptionMethod,
-          businessStatus: row.businessStatus,
-          eventName: row.eventName,
-        eventTime: row.eventTime,
           priceCnyMinor: row.priceCurrency === 'CNY'
             ? row.priceAmountMinor
             : null,
@@ -520,22 +460,17 @@ export function createManagedWork(
       const sortOrder = input.featured ? featuredIds.length : 0
       sqlite.prepare(`
         INSERT INTO works (
-          id, slug, character_name, species, suit_type, purpose,
-          adoption_method, business_status, event_name, event_time,
-          owner_display, owner_contact, price_amount_minor, price_currency,
+          id, slug, character_name, species, purpose, adoption_status,
+          price_amount_minor, price_currency,
           publication_status, sort_order, featured, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?, ?, ?, 'draft', ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?)
       `).run(
         id,
         input.slug,
         input.characterName,
         input.species,
-        input.suitType,
         input.purpose,
-        input.purpose === 'adoption' ? input.adoptionMethod : null,
-        input.purpose === 'adoption' ? input.businessStatus : null,
-        input.ownerDisplay,
-        input.ownerContact,
+        input.purpose === 'adoption' ? input.adoptionStatus : null,
         input.purpose === 'adoption' ? input.priceCnyMinor : null,
         input.purpose === 'adoption' && input.priceCnyMinor !== null
           ? 'CNY'
@@ -545,7 +480,6 @@ export function createManagedWork(
         now,
         now,
       )
-      replaceTags(sqlite, id, input.featureTags)
       if (input.featured) {
         normalizeFeaturedRows(sqlite, [...featuredIds, id], now, id)
       }
@@ -572,15 +506,15 @@ export function updateManagedWork(
     throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before editing it.', 'WORK_PUBLISHED_READONLY')
   }
   if (current.purpose === 'adoption' && input.purpose !== 'adoption') {
-    const designSheetCount = sqlite.prepare(`
+    const adoptionMediaCount = sqlite.prepare(`
       SELECT count(*) FROM work_assets
-      WHERE work_id = ? AND role = 'design_sheet'
+      WHERE work_id = ? AND role IN ('adoption_cover', 'design_sheet')
     `).pluck().get(id) as number
-    if (designSheetCount > 0) {
+    if (adoptionMediaCount > 0) {
       throw new ServiceError(
         409,
         'CONFLICT',
-        'Remove the design sheet before changing the work purpose.',
+        'Remove adoption-only media before changing the work purpose.',
       )
     }
   }
@@ -590,10 +524,8 @@ export function updateManagedWork(
       const sortOrder = input.featured ? featuredIds.indexOf(id) : 0
       const result = sqlite.prepare(`
         UPDATE works
-        SET slug = ?, character_name = ?, species = ?, suit_type = ?,
-            purpose = ?, adoption_method = ?, business_status = ?,
-            event_name = ?, event_time = ?,
-            owner_display = ?, owner_contact = ?,
+        SET slug = ?, character_name = ?, species = ?, purpose = ?,
+            adoption_status = ?,
             price_amount_minor = ?, price_currency = ?,
             sort_order = ?, featured = ?,
             version = version + 1, updated_at = ?
@@ -602,16 +534,8 @@ export function updateManagedWork(
         input.slug,
         input.characterName,
         input.species,
-        input.suitType,
         input.purpose,
-        input.purpose === 'adoption' ? input.adoptionMethod : null,
-        input.purpose === 'adoption' ? input.businessStatus : null,
-        // 只有展会掉落才写展会字段：切换到其他业务类型时这里一律写 NULL，
-        // 因此不会留下僵尸值（数据库 CHECK 同样会拒绝残留）。
-        eventFieldFor(input, 'eventName'),
-        eventFieldFor(input, 'eventTime'),
-        input.ownerDisplay,
-        input.ownerContact,
+        input.purpose === 'adoption' ? input.adoptionStatus : null,
         input.purpose === 'adoption' ? input.priceCnyMinor : null,
         input.purpose === 'adoption' && input.priceCnyMinor !== null
           ? 'CNY'
@@ -625,7 +549,6 @@ export function updateManagedWork(
       if (result.changes !== 1) {
         throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
       }
-      replaceTags(sqlite, id, input.featureTags)
       if (current.featured || input.featured) {
         normalizeFeaturedRows(sqlite, featuredIds, now, id)
       }
@@ -924,12 +847,11 @@ export function replaceManagedAdoptionCover(
   return getManagedWork(sqlite, workId)
 }
 
-/** T11: no PII or legacy owner/contact fields leave this review inventory. */
+/** No PII or inferred status leaves this explicit human-review inventory. */
 export function listAmbiguousAdoptionStatusReviews(sqlite: Database.Database) {
   return sqlite.prepare(`
     SELECT
       id, character_name AS characterName,
-      business_status AS legacyBusinessStatus,
       publication_status AS publicationStatus
     FROM works
     WHERE purpose = 'adoption' AND adoption_status IS NULL
@@ -937,7 +859,6 @@ export function listAmbiguousAdoptionStatusReviews(sqlite: Database.Database) {
   `).all() as Array<{
     characterName: string
     id: string
-    legacyBusinessStatus: WorkRow['businessStatus']
     publicationStatus: WorkRow['publicationStatus']
   }>
 }
@@ -1022,21 +943,16 @@ export function getPublicSafeWorkPreview(
   id: string,
 ): PublicSafeWorkPreviewDto {
   const work = getManagedWork(sqlite, id)
-  const safeWork = Object.fromEntries(
-    Object.entries(work).filter(([key]) => key !== 'private'),
-  )
   return publicSafeWorkPreviewDtoSchema.parse({
-    ...safeWork,
+    ...work,
     mediaReady: (work.purpose === 'adoption'
-      ? work.designSheet !== null
-        && work.designSheet.status === 'READY'
-        && Boolean(work.designSheet.alt?.trim())
-        && (
-          work.studioPhotos.length === 0
-          || work.studioPhotos.filter(photo => photo.primary).length === 1
-        )
-      : work.studioPhotos.length > 0
-        && work.studioPhotos.filter(photo => photo.primary).length === 1)
+      ? work.adoptionStatus !== null
+        && work.adoptionCover !== null
+        && work.adoptionCover.status === 'READY'
+        && Boolean(work.adoptionCover.alt?.trim())
+      : true)
+      && work.studioPhotos.length > 0
+      && work.studioPhotos.filter(photo => photo.primary).length === 1
       && work.studioPhotos.every(photo =>
         photo.status === 'READY' && photo.alt.trim() !== '',
       ),

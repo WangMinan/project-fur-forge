@@ -1,6 +1,5 @@
 import type {
   PublicationStatus,
-  SuitType,
   WorkPurpose,
 } from '../../shared/types/contracts'
 import { includesSearchText } from '~~/shared/utils/search'
@@ -12,14 +11,12 @@ export interface AdminWorkListEntry {
   species: string
   purpose: WorkPurpose
   publicationStatus: PublicationStatus
-  suitType: SuitType
 }
 
 export interface AdminWorkListFilters {
   publicationStatus: PublicationStatus | 'all'
   purpose: WorkPurpose | 'all'
   query: string
-  suitType: SuitType | 'all'
 }
 
 export function filterAdminWorks<T extends AdminWorkListEntry>(
@@ -28,7 +25,6 @@ export function filterAdminWorks<T extends AdminWorkListEntry>(
 ): T[] {
   return works.filter(work => (
     (filters.purpose === 'all' || work.purpose === filters.purpose)
-    && (filters.suitType === 'all' || work.suitType === filters.suitType)
     && (filters.publicationStatus === 'all'
       || work.publicationStatus === filters.publicationStatus)
     && includesSearchText(`${work.characterName} ${work.species}`, filters.query)

@@ -24,19 +24,14 @@ async function currentCsrfToken(page: Page) {
 }
 
 export interface CreateWorkOverrides {
-  adoptionMethod?: 'regular'
-  businessStatus?: 'preparing' | 'available' | 'scheduled' | 'in_production' | 'delivered'
+  adoptionStatus?: 'available' | 'adopted'
   characterName?: string
   featured?: boolean
-  featureTags?: string[]
-  ownerContact?: string | null
-  ownerDisplay?: string
   priceCnyMinor?: number | null
   purpose?: 'adoption' | 'commission' | 'showcase'
   slug?: string
   sortOrder?: number
   species?: string
-  suitType?: 'full' | 'partial'
 }
 
 export async function createWorkViaApi(
@@ -51,12 +46,6 @@ export async function createWorkViaApi(
     slug,
     characterName: overrides.characterName ?? `测试作品${slugCounter}`,
     species: overrides.species ?? '犬',
-    suitType: overrides.suitType ?? 'full',
-    ownerDisplay: overrides.ownerDisplay ?? '不公开',
-    ownerContact: overrides.ownerContact === undefined
-      ? `e2e-private-contact-${slugCounter}`
-      : overrides.ownerContact,
-    featureTags: overrides.featureTags ?? ['测试属性'],
     sortOrder: overrides.sortOrder ?? 0,
     featured: overrides.featured ?? false,
   }
@@ -65,8 +54,7 @@ export async function createWorkViaApi(
       ? {
           ...base,
           purpose,
-          adoptionMethod: overrides.adoptionMethod ?? 'regular',
-          businessStatus: overrides.businessStatus ?? 'preparing',
+          adoptionStatus: overrides.adoptionStatus ?? 'available',
           priceCnyMinor: overrides.priceCnyMinor ?? null,
         }
       : { ...base, purpose },
@@ -90,19 +78,14 @@ export async function bumpWorkViaApi(
   const detail = await page.request.get(`${adminBaseURL}/api/admin/v1/works/${work.id}`)
   const current = (await detail.json() as {
     data: {
-      adoptionMethod?: 'event_drop' | 'regular' | null
-      businessStatus?: string | null
+      adoptionStatus?: 'available' | 'adopted' | null
       characterName: string
       featured: boolean
-      featureTags: string[]
-      ownerDisplay: string
       priceCnyMinor?: number | null
-      private: { ownerContact: string | null }
       purpose: 'adoption' | 'commission' | 'showcase'
       slug: string
       sortOrder: number
       species: string
-      suitType: 'full' | 'partial'
       version: number
     }
   }).data
@@ -110,10 +93,6 @@ export async function bumpWorkViaApi(
     slug: current.slug,
     characterName: fields.characterName ?? `${current.characterName}改`,
     species: current.species,
-    suitType: current.suitType,
-    ownerDisplay: current.ownerDisplay,
-    ownerContact: current.private.ownerContact,
-    featureTags: current.featureTags,
     sortOrder: current.sortOrder,
     featured: current.featured,
   }
@@ -124,8 +103,7 @@ export async function bumpWorkViaApi(
         ? {
             ...base,
             purpose: current.purpose,
-            adoptionMethod: 'regular',
-            businessStatus: current.businessStatus ?? 'preparing',
+            adoptionStatus: current.adoptionStatus ?? 'available',
             priceCnyMinor: current.priceCnyMinor ?? null,
           }
         : { ...base, purpose: current.purpose },

@@ -70,11 +70,11 @@ function insertPublishedTargets() {
   insertSource('hero-portrait', 'home_hero_portrait', 1800, 3200)
   sqlite.prepare(`
     INSERT INTO works (
-      id, slug, character_name, species, suit_type, purpose,
-      owner_display, publication_status, published_at, created_at, updated_at
+      id, slug, character_name, species, purpose,
+      publication_status, published_at, created_at, updated_at
     ) VALUES (
-      'published-work', 'published-work', '团子', '犬科', 'full', 'showcase',
-      '不公开', 'published', ?, ?, ?
+      'published-work', 'published-work', '团子', '犬科', 'showcase',
+      'published', ?, ?, ?
     )
   `).run(NOW, NOW, NOW)
   sqlite.prepare(`
@@ -338,12 +338,11 @@ describe('GATE-07 watermark branding lifecycle', () => {
     insertSource('adoption-design', 'design_sheet', 3200, 1800)
     sqlite.prepare(`
       INSERT INTO works (
-        id, slug, character_name, species, suit_type, purpose,
-        adoption_method, business_status, owner_display,
+        id, slug, character_name, species, purpose, adoption_status,
         publication_status, published_at, created_at, updated_at
       ) VALUES (
-        'adoption-work', 'adoption-work', '待领养角色', '犬科', 'partial',
-        'adoption', 'regular', 'available', '不公开',
+        'adoption-work', 'adoption-work', '待领养角色', '犬科',
+        'adoption', 'available',
         'published', ?, ?, ?
       )
     `).run(NOW, NOW, NOW)
@@ -359,7 +358,7 @@ describe('GATE-07 watermark branding lifecycle', () => {
       sqlite,
       storage,
       'adoption-design',
-      ['design-sheet', 'work-card'],
+      ['design-sheet'],
       NOW,
     )
     const { draft } = await createPreviewedDraft(56)
@@ -369,9 +368,9 @@ describe('GATE-07 watermark branding lifecycle', () => {
       status: 'DONE',
       affectedWorkCount: 2,
       affectedHeroSlideCount: 0,
-      targetVariantCount: 24,
-      generatedVariantCount: 24,
-      verifiedVariantCount: 24,
+      targetVariantCount: 18,
+      generatedVariantCount: 18,
+      verifiedVariantCount: 18,
     })
     expect(sqlite.prepare(`
       SELECT count(*) FROM asset_variants
@@ -380,7 +379,7 @@ describe('GATE-07 watermark branding lifecycle', () => {
         AND watermark_profile_id = ?
         AND watermark_profile = 'brand-centered-v2'
         AND watermark_anchor = 'center'
-    `).pluck().get(draft.id)).toBe(12)
+    `).pluck().get(draft.id)).toBe(6)
   })
 
   it('persists an application operation before rebuilding public variants', async () => {

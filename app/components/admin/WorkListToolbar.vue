@@ -1,17 +1,14 @@
 <script setup lang="ts">
 import {
   PUBLICATION_STATUS_VALUES,
-  SUIT_TYPE_VALUES,
   WORK_PURPOSE_VALUES,
 } from '~~/shared/schemas/work'
 import type {
   PublicationStatus,
-  SuitType,
   WorkPurpose,
 } from '~~/shared/types/contracts'
 import {
   PUBLICATION_STATUS_LABELS,
-  SUIT_TYPE_LABELS,
   WORK_PURPOSE_LABELS,
 } from '~/utils/work-labels'
 
@@ -27,7 +24,6 @@ const emit = defineEmits<{
 
 const query = defineModel<string>('query', { required: true })
 const purpose = defineModel<WorkPurpose | 'all'>('purpose', { required: true })
-const suitType = defineModel<SuitType | 'all'>('suitType', { required: true })
 const publicationStatus = defineModel<PublicationStatus | 'all'>('publicationStatus', {
   required: true,
 })
@@ -55,16 +51,6 @@ const publicationStatus = defineModel<PublicationStatus | 'all'>('publicationSta
         <option value="all">全部用途</option>
         <option v-for="value in WORK_PURPOSE_VALUES" :key="value" :value="value">
           {{ WORK_PURPOSE_LABELS[value] }}
-        </option>
-      </select>
-    </div>
-
-    <div class="admin-list-toolbar__field">
-      <label class="admin-list-toolbar__label" for="admin-work-suit-type">装型</label>
-      <select id="admin-work-suit-type" v-model="suitType" class="admin-list-toolbar__control">
-        <option value="all">全部装型</option>
-        <option v-for="value in SUIT_TYPE_VALUES" :key="value" :value="value">
-          {{ SUIT_TYPE_LABELS[value] }}
         </option>
       </select>
     </div>
@@ -138,7 +124,7 @@ const publicationStatus = defineModel<PublicationStatus | 'all'>('publicationSta
   /* 同时带上共用类，specificity 高于 admin-base.css 的容器规则，
      因此不依赖样式表加载顺序。 */
   .admin-list-toolbar.work-list-toolbar {
-    grid-template-columns: minmax(14rem, 2fr) repeat(3, minmax(8rem, 1fr));
+    grid-template-columns: minmax(14rem, 2fr) repeat(2, minmax(8rem, 1fr));
     align-items: end;
   }
 

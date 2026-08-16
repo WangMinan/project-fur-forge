@@ -57,6 +57,7 @@ import {
 } from '../../server/utils/repository/public-site-repository'
 import {
   createManagedWork,
+  replaceManagedAdoptionCover,
   replaceManagedDesignSheet,
   replaceManagedStudioPhotos,
 } from '../../server/utils/service/work-management'
@@ -106,7 +107,7 @@ function insertCompletedUpload(
   ownerId: string,
   ownerVersion: number,
   assetId: string,
-  role: 'design_sheet' | 'studio_photo' | 'home_hero_landscape' | 'home_hero_portrait',
+  role: 'adoption_cover' | 'design_sheet' | 'studio_photo' | 'home_hero_landscape' | 'home_hero_portrait',
   key: string,
   content: Buffer,
   width: number,
@@ -143,20 +144,14 @@ function insertCompletedUpload(
 
 async function createPublishedWork(input: {
   featured: boolean
-  ownerContact: string
   purpose?: 'adoption' | 'commission' | 'showcase'
   slug: string
   sortOrder: number
-  withStudioPhoto?: boolean
 }) {
   const common = {
     slug: input.slug,
     characterName: input.slug === 'first-work' ? '团子' : '雪球',
     species: '犬科',
-    suitType: input.slug === 'first-work' ? 'full' : 'partial',
-    ownerDisplay: '不公开',
-    ownerContact: input.ownerContact,
-    featureTags: ['软萌'],
     sortOrder: input.sortOrder,
     featured: input.featured,
   } as const
@@ -164,8 +159,7 @@ async function createPublishedWork(input: {
     ? {
         ...common,
         purpose: 'adoption',
-        adoptionMethod: 'regular',
-        businessStatus: 'available',
+        adoptionStatus: 'available',
         priceCnyMinor: 100,
       }
     : {
@@ -190,8 +184,35 @@ async function createPublishedWork(input: {
     orientation: 1,
     width: 3200,
   })
+  let adoptionCoverAssetId: string | null = null
   let designAssetId: string | null = null
   if (input.purpose === 'adoption') {
+    adoptionCoverAssetId = randomUUID()
+    const coverKey = `test/t19/original/${adoptionCoverAssetId}/cover.png`
+    sqlite.prepare(`
+      INSERT INTO assets (
+        id, role, status, private_object_key, sha256, byte_size,
+        mime_type, width, height, created_at, updated_at
+      ) VALUES (?, 'adoption_cover', 'READY', ?, ?, ?,
+                'image/png', 3200, 1800, ?, ?)
+    `).run(adoptionCoverAssetId, coverKey, digest(content), content.length, NOW, NOW)
+    insertCompletedUpload(
+      work.id,
+      work.version,
+      adoptionCoverAssetId,
+      'adoption_cover',
+      coverKey,
+      content,
+      3200,
+      1800,
+    )
+    storage.seedPrivate(coverKey, content, 'image/png', digest(content), {
+      fileSize: content.length,
+      format: 'png',
+      height: 1800,
+      orientation: 1,
+      width: 3200,
+    })
     designAssetId = randomUUID()
     const designKey = `test/t19/original/${designAssetId}/design.png`
     sqlite.prepare(`
@@ -219,16 +240,28 @@ async function createPublishedWork(input: {
       width: 3200,
     })
   }
-  let current = work
-  if (input.withStudioPhoto !== false) {
-    current = replaceManagedStudioPhotos(sqlite, work.id, work.version, [{
-      assetId,
-      alt: `${work.characterName}出厂照`,
-      primary: true,
-      focalX: 0.5,
-      focalY: 0.5,
-      crop: { x: 0, y: 0, width: 1, height: 1 },
-    }], NOW + sequence++)
+  let current = replaceManagedStudioPhotos(sqlite, work.id, work.version, [{
+    assetId,
+    alt: `${work.characterName}出厂照`,
+    primary: true,
+    focalX: 0.5,
+    focalY: 0.5,
+    crop: { x: 0, y: 0, width: 1, height: 1 },
+  }], NOW + sequence++)
+  if (adoptionCoverAssetId) {
+    current = replaceManagedAdoptionCover(
+      sqlite,
+      work.id,
+      current.version,
+      {
+        assetId: adoptionCoverAssetId,
+        alt: `${work.characterName}领养横版封面`,
+        focalX: 0.5,
+        focalY: 0.5,
+        crop: { x: 0, y: 0, width: 1, height: 1 },
+      },
+      NOW + sequence++,
+    )
   }
   if (designAssetId) {
     current = replaceManagedDesignSheet(sqlite, work.id, current.version, {
@@ -245,7 +278,13 @@ async function createPublishedWork(input: {
     NOW + sequence++,
   )
   expect(published.work.publicationStatus).toBe('published')
-  return { assetId, assetSha256: digest(content), designAssetId, workId: work.id }
+  return {
+    adoptionCoverAssetId,
+    assetId,
+    assetSha256: digest(content),
+    designAssetId,
+    workId: work.id,
+  }
 }
 
 function createHeroAsset(
@@ -540,23 +579,17 @@ describe('T19/T20 public repository contracts', () => {
       slug: 'second-work',
       sortOrder: 20,
       featured: true,
-      ownerContact: 'private-second@example.test',
     })
     const first = await createPublishedWork({
       slug: 'first-work',
       sortOrder: 10,
       featured: true,
-      ownerContact: 'private-first@example.test',
     })
     const draft = createManagedWork(sqlite, {
       slug: 'draft-work',
       characterName: '草稿',
       species: '犬科',
-      suitType: 'full',
       purpose: 'showcase',
-      ownerDisplay: '不公开',
-      ownerContact: 'draft-private@example.test',
-      featureTags: [],
       sortOrder: 0,
       featured: false,
     }, NOW + sequence++)
@@ -573,7 +606,7 @@ describe('T19/T20 public repository contracts', () => {
     `).run(
       randomUUID(),
       first.assetId,
-      'test/t19/web/legacy-contact@example.test.jpg',
+      'test/t19/web/legacy-retired-field-marker.jpg',
       first.assetSha256,
       'b'.repeat(64),
       'c'.repeat(64),
@@ -588,19 +621,15 @@ describe('T19/T20 public repository contracts', () => {
       'second-work',
     ])
     expect(list.resultCount).toBe(2)
-    expect(repository.listWorks({ suitType: 'full' }).items)
-      .toHaveLength(1)
+    expect(repository.listWorks({ suitType: 'retired' }).items)
+      .toHaveLength(2)
     expect(repository.listWorks({ q: '  团子  ' }).items.map(item => item.work.slug))
       .toEqual(['first-work'])
     expect(repository.listWorks({ q: ['团子'] })).toMatchObject({
       items: [],
       resultCount: 0,
     })
-    expect(repository.listWorks({ purpose: 'bad-value' })).toMatchObject({
-      items: [],
-      resultCount: 0,
-      filter: { valid: false },
-    })
+    expect(repository.listWorks({ purpose: 'retired' }).resultCount).toBe(2)
     expect(repository.listFeaturedWorks().items.map(item => item.work.slug))
       .toEqual(['second-work', 'first-work'])
     expect(repository.getWorkBySlug(draft.slug)).toBeNull()
@@ -625,8 +654,7 @@ describe('T19/T20 public repository contracts', () => {
       },
     })
     const visible = JSON.stringify(detail)
-    expect(visible).not.toContain('private-first@example.test')
-    expect(visible).not.toContain('legacy-contact@example.test')
+    expect(visible).not.toContain('legacy-retired-field-marker')
     expect(visible).not.toContain('/original/')
     expect(visible).not.toContain('watermarkProfile')
     expect(visible).not.toContain('variantId')
@@ -647,7 +675,7 @@ describe('T19/T20 public repository contracts', () => {
       },
     })
     expect(fake.listFeaturedWorks().items[0]?.work.slug).toBe('second-work')
-    expect(fake.listWorks({ suitType: 'full' }).resultCount).toBe(1)
+    expect(fake.listWorks({ suitType: 'retired' }).resultCount).toBe(2)
 
     const pagedDetails = Array.from({ length: 13 }, (_, index) => {
       const slug = `paged-work-${index + 1}`
@@ -697,7 +725,6 @@ describe('T19/T20 public repository contracts', () => {
         slug: `featured-extra-${index}`,
         sortOrder: 30 + index,
         featured: true,
-        ownerContact: `private-extra-${index}@example.test`,
       })
     }
     expect(repository.listFeaturedWorks().items.map(item => item.work.slug))
@@ -721,7 +748,6 @@ describe('T19/T20 public repository contracts', () => {
       slug: 'published-after-first-read',
       sortOrder: 3,
       featured: false,
-      ownerContact: 'later-private@example.test',
     })
     expect(repository.listWorks().items.map(item => item.work.slug))
       .toContain('published-after-first-read')
@@ -738,7 +764,6 @@ describe('T19/T20 public repository contracts', () => {
       slug: 'legacy-recipe-work',
       sortOrder: 0,
       featured: false,
-      ownerContact: 'private-legacy@example.test',
     })
     sqlite.prepare(`
       INSERT INTO asset_variants (
@@ -797,37 +822,34 @@ describe('T19/T20 public repository contracts', () => {
       slug: 'commission-purpose',
       sortOrder: 1,
       featured: false,
-      ownerContact: 'private-commission@example.test',
       purpose: 'commission',
     })
     await createPublishedWork({
       slug: 'adoption-purpose',
       sortOrder: 2,
       featured: false,
-      ownerContact: 'private-adoption@example.test',
       purpose: 'adoption',
     })
     await createPublishedWork({
       slug: 'showcase-purpose',
       sortOrder: 3,
       featured: false,
-      ownerContact: 'private-showcase@example.test',
       purpose: 'showcase',
     })
 
     const repository = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
     // T35-F5：公开列表按发布时间倒序，越新的越靠前。
     // 三件作品按 commission → adoption → showcase 顺序发布，因此这里反序。
-    expect(repository.listWorks().items.map(item => item.work.purpose)).toEqual([
-      'showcase',
-      'adoption',
-      'commission',
+    expect(repository.listWorks().items.map(item => item.work.slug)).toEqual([
+      'showcase-purpose',
+      'adoption-purpose',
+      'commission-purpose',
     ])
-    expect(repository.getWorkBySlug('adoption-purpose')?.work).toMatchObject({
-      purpose: 'adoption',
-      adoptionMethod: 'regular',
-      businessStatus: 'available',
-      price: { currency: 'CNY', minorUnits: 100 },
+    expect(repository.getWorkBySlug('adoption-purpose')?.work).toEqual({
+      id: expect.any(String),
+      slug: 'adoption-purpose',
+      characterName: '雪球',
+      species: '犬科',
     })
     const adoptionList = repository.listAdoptions()
     expect(adoptionList).toMatchObject({
@@ -835,17 +857,14 @@ describe('T19/T20 public repository contracts', () => {
       items: [{
         work: {
           slug: 'adoption-purpose',
-          purpose: 'adoption',
-          adoptionMethod: 'regular',
-          businessStatus: 'available',
+          adoptionStatus: 'available',
           price: { currency: 'CNY', minorUnits: 100 },
-          featureTags: ['软萌'],
         },
         href: '/works/adoption-purpose',
       }],
     })
-    expect(adoptionList.items[0]?.designSheet.sources.webp.map(item => item.width))
-      .toEqual([960, 1600, 2400])
+    expect(adoptionList.items[0]?.cover.sources.webp.map(item => item.width))
+      .toEqual([768, 1200, 1600])
     expect(repository.listAdoptions({ q: '雪球' })).toMatchObject({
       items: [{ work: { slug: 'adoption-purpose' } }],
       resultCount: 1,
@@ -853,34 +872,33 @@ describe('T19/T20 public repository contracts', () => {
     expect(repository.listAdoptions({ q: { invalid: true } })).toMatchObject({
       items: [],
       resultCount: 0,
-      counts: { all: 0, regular: 0, event_drop: 0 },
+      filter: { valid: false },
     })
     const adoptionDetail = repository.getWorkBySlug('adoption-purpose')
     expect(adoptionDetail?.media.designSheet?.assetId)
-      .toBe(adoptionList.items[0]?.designSheet.assetId)
-    expect(adoptionDetail?.media.primaryStudioPhotoAssetId)
-      .toBe(adoptionDetail?.media.studioPhotos[0]?.assetId)
-    expect(adoptionDetail?.media.primaryStudioPhotoAssetId)
+      .toBeTruthy()
+    expect(adoptionDetail?.media.primaryAssetId)
+      .toBe(adoptionDetail?.media.gallery[0]?.assetId)
+    expect(adoptionDetail?.media.primaryAssetId)
       .not.toBe(adoptionDetail?.media.designSheet?.assetId)
-    expect(adoptionDetail?.media.studioPhotos).toHaveLength(1)
+    expect(adoptionDetail?.media.gallery).toHaveLength(1)
 
-    const pagedAdoptionDetails = Array.from({ length: 9 }, (_, index) => {
+    const pagedAdoptionItems = Array.from({ length: 9 }, (_, index) => {
       const slug = `paged-adoption-${index + 1}`
       return {
-        ...adoptionDetail!,
+        ...adoptionList.items[0]!,
         work: {
-          ...adoptionDetail!.work,
+          ...adoptionList.items[0]!.work,
           id: randomUUID(),
           slug,
           characterName: `分页领养 ${index + 1}`,
         },
         href: `/works/${slug}`,
-        navigation: { previous: null, next: null },
-        related: [],
       }
     })
     const pagedAdoptions = createFakePublicSiteRepository({
-      details: pagedAdoptionDetails,
+      adoptions: pagedAdoptionItems,
+      details: [],
       featuredSlugs: [],
       home: {
         tagline: '不只做小狗毛',
@@ -891,14 +909,13 @@ describe('T19/T20 public repository contracts', () => {
         landscape: [],
         portrait: [],
       },
-    }).listAdoptions({ method: 'regular', page: 2 })
+    }).listAdoptions({ page: 2 })
     expect(pagedAdoptions).toMatchObject({
       page: 2,
       pageCount: 2,
       pageSize: 8,
       resultCount: 9,
       items: [{ work: { slug: 'paged-adoption-9' } }],
-      counts: { all: 9, regular: 9, event_drop: 0 },
     })
     expect(repository.getWorkBySlug('commission-purpose')?.media)
       .not.toHaveProperty('designSheet')
@@ -909,37 +926,27 @@ describe('T19/T20 public repository contracts', () => {
       detail: adoptionDetail,
       works: repository.listWorks(),
     })
-    expect(serialized).not.toContain('private-adoption@example.test')
     expect(serialized).not.toContain('/original/')
     expect(serialized).not.toContain('ownerContact')
     expect(serialized).not.toContain('privateObjectKey')
   })
 
-  it('uses a design sheet as the public visual without making it a studio primary', async () => {
+  it('keeps the optional design sheet separate from the adoption cover and studio primary', async () => {
     const created = await createPublishedWork({
-      slug: 'design-only-adoption',
+      slug: 'three-media-adoption',
       sortOrder: 1,
       featured: false,
-      ownerContact: 'design-only-private@example.test',
       purpose: 'adoption',
-      withStudioPhoto: false,
     })
     const repository = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
     const listItem = repository.listAdoptions().items[0]
-    const detail = repository.getWorkBySlug('design-only-adoption')
+    const detail = repository.getWorkBySlug('three-media-adoption')
 
-    expect(listItem?.designSheet.assetId).toBe(created.designAssetId)
-    expect(detail?.media).toMatchObject({
-      primaryAssetId: null,
-      primaryStudioPhotoAssetId: null,
-      gallery: [],
-      studioPhotos: [],
-    })
-    expect(detail?.media.card.assetId).toBe(created.designAssetId)
+    expect(listItem?.cover.assetId).toBe(created.adoptionCoverAssetId)
+    expect(detail?.media.primaryAssetId).toBe(created.assetId)
+    expect(detail?.media.card.assetId).toBe(created.assetId)
     expect(detail?.media.designSheet?.assetId).toBe(created.designAssetId)
-    expect(repository.listWorks().items).toHaveLength(0)
-    expect(JSON.stringify({ detail, listItem }))
-      .not.toContain('design-only-private@example.test')
+    expect(repository.listWorks().items).toHaveLength(1)
   })
 
   it('publishes complete hero pairs atomically and exposes only safe public fields', async () => {
@@ -947,7 +954,6 @@ describe('T19/T20 public repository contracts', () => {
       slug: 'linked-work',
       sortOrder: 1,
       featured: false,
-      ownerContact: 'linked-private@example.test',
     })
     const initial = getAdminHome(sqlite)
     expect(initial).toMatchObject({
@@ -1179,7 +1185,6 @@ describe('T19/T20 public repository contracts', () => {
     expect(projection.landscape).toEqual([])
     expect(projection.portrait).toEqual([])
     const visible = JSON.stringify(projection)
-    expect(visible).not.toContain('linked-private@example.test')
     expect(visible).not.toContain('/original/')
     expect(visible).not.toContain('version')
     expect(visible).not.toContain('enabled')

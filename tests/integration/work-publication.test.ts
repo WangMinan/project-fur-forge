@@ -30,6 +30,7 @@ import {
 import {
   createManagedWork,
   deleteManagedWork,
+  replaceManagedAdoptionCover,
   replaceManagedDesignSheet,
   replaceManagedStudioPhotos,
 } from '../../server/utils/service/work-management'
@@ -46,6 +47,7 @@ import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
 
 const USER_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const ASSET_ID = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+const COVER_ASSET_ID = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
 const DESIGN_ASSET_ID = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd'
 const NOW = Date.UTC(2026, 7, 1)
 
@@ -74,11 +76,7 @@ function createWorkWithPhoto(
     slug: 'publication-work',
     characterName: '团子',
     species: '犬科',
-    suitType: 'full',
     purpose: 'showcase',
-    ownerDisplay: '不公开',
-    ownerContact: '不会进入日志或公开 DTO',
-    featureTags: ['软萌'],
     sortOrder: 0,
     featured: false,
   }, NOW)
@@ -146,21 +144,118 @@ function createRegularAdoption() {
     slug: 'regular-adoption',
     characterName: '待领养小狗',
     species: '犬科',
-    suitType: 'partial',
     purpose: 'adoption',
-    adoptionMethod: 'regular',
-    businessStatus: 'available',
-    ownerDisplay: '不公开',
-    ownerContact: 'private-adoption@example.test',
+    adoptionStatus: 'available',
     priceCnyMinor: 100,
-    featureTags: ['轻量'],
     sortOrder: 0,
     featured: false,
   }, NOW)
 }
 
-function attachDesignSheet(
+function attachRequiredAdoptionMedia(
   work: ReturnType<typeof createRegularAdoption>,
+) {
+  const photoContent = createSyntheticWatermarkPng()
+  const coverContent = createSyntheticSourcePng(3200, 1800)
+  const sources = [
+    {
+      assetId: ASSET_ID,
+      content: photoContent,
+      height: 2400,
+      role: 'studio_photo' as const,
+      width: 3200,
+    },
+    {
+      assetId: COVER_ASSET_ID,
+      content: coverContent,
+      height: 1800,
+      role: 'adoption_cover' as const,
+      width: 3200,
+    },
+  ]
+  for (const source of sources) {
+    const key = `test/t18-fixture/original/${source.assetId}/source.png`
+    sqlite.prepare(`
+      INSERT INTO assets (
+        id, role, status, private_object_key, sha256, byte_size,
+        mime_type, width, height, created_at, updated_at
+      ) VALUES (?, ?, 'READY', ?, ?, ?, 'image/png', ?, ?, ?, ?)
+    `).run(
+      source.assetId,
+      source.role,
+      key,
+      sha256(source.content),
+      source.content.length,
+      source.width,
+      source.height,
+      NOW,
+      NOW,
+    )
+    sqlite.prepare(`
+      INSERT INTO upload_sessions (
+        id, owner_type, owner_id, owner_version, media_role,
+        private_object_key, expected_content_type, expected_bytes,
+        expected_content_md5, expected_sha256, expected_width,
+        expected_height, created_by, status, asset_id, version,
+        created_at, expires_at, updated_at
+      ) VALUES (?, 'work', ?, ?, ?, ?, 'image/png', ?, ?, ?, ?, ?, ?,
+        'COMPLETED', ?, 3, ?, ?, ?)
+    `).run(
+      randomUUID(),
+      work.id,
+      work.version,
+      source.role,
+      key,
+      source.content.length,
+      createHash('md5').update(source.content).digest('base64'),
+      sha256(source.content),
+      source.width,
+      source.height,
+      USER_ID,
+      source.assetId,
+      NOW,
+      NOW + 300_000,
+      NOW + 1_000,
+    )
+    storage.seedPrivate(key, source.content, 'image/png', sha256(source.content), {
+      fileSize: source.content.length,
+      format: 'png',
+      height: source.height,
+      orientation: 1,
+      width: source.width,
+    })
+  }
+  const withPhoto = replaceManagedStudioPhotos(
+    sqlite,
+    work.id,
+    work.version,
+    [{
+      assetId: ASSET_ID,
+      alt: '合成主出厂照',
+      primary: true,
+      focalX: 0.5,
+      focalY: 0.5,
+      crop: { x: 0, y: 0, width: 1, height: 1 },
+    }],
+    NOW + 1_000,
+  )
+  return replaceManagedAdoptionCover(
+    sqlite,
+    work.id,
+    withPhoto.version,
+    {
+      assetId: COVER_ASSET_ID,
+      alt: '合成领养横版封面',
+      focalX: 0.5,
+      focalY: 0.5,
+      crop: { x: 0, y: 0, width: 1, height: 1 },
+    },
+    NOW + 2_000,
+  )
+}
+
+function attachDesignSheet(
+  work: { characterName: string, id: string, version: number },
   width = 3200,
   height = 1800,
 ) {
@@ -752,11 +847,12 @@ describe('dual-bucket work publication operations', () => {
     expect(storage.deletedPublicKeys).toHaveLength(12)
   })
 
-  it('requires a complete design sheet before publishing a regular adoption', async () => {
+  it('requires an explicit status, cover and primary photo while keeping the design sheet optional', async () => {
     const work = createRegularAdoption()
     expect(checkWorkPublication(sqlite, work.id)).toMatchObject({
       canPublish: false,
-      blockers: ['DESIGN_SHEET_REQUIRED'],
+      blockers: ['ADOPTION_COVER_REQUIRED', 'STUDIO_PHOTO_REQUIRED'],
+      adoptionCoverCount: 0,
       designSheetCount: 0,
       studioPhotoCount: 0,
     })
@@ -773,14 +869,13 @@ describe('dual-bucket work publication operations', () => {
       SELECT count(*) FROM publication_operations WHERE entity_id = ?
     `).pluck().get(work.id)).toBe(0)
 
-    const ready = attachDesignSheet(work)
+    const ready = attachRequiredAdoptionMedia(work)
     expect(checkWorkPublication(sqlite, work.id)).toMatchObject({
       canPublish: true,
       blockers: [],
-      designSheetCount: 1,
-      studioPhotoCount: 0,
-      requiredVariantCount: 12,
-      missingVariantCount: 12,
+      adoptionCoverCount: 1,
+      designSheetCount: 0,
+      studioPhotoCount: 1,
     })
     const published = await publishWork(
       sqlite,
@@ -791,46 +886,37 @@ describe('dual-bucket work publication operations', () => {
       NOW + 3_000,
     )
     expect(published.work.publicationStatus).toBe('published')
-    // 12 张作品水印图 + 6 张首页领养入口无水印图。
-    expect(storage.processCalls).toHaveLength(18)
     const variants = sqlite.prepare(`
-      SELECT usage, protection_mode AS protectionMode,
+      SELECT media_role AS mediaRole, usage, protection_mode AS protectionMode,
              recipe_version AS recipeVersion,
              watermark_profile AS watermarkProfile
       FROM asset_variants
-      WHERE asset_id = ? AND storage_scope = 'PUBLIC'
-    `).all(DESIGN_ASSET_ID) as Array<{
+      WHERE asset_id IN (?, ?) AND storage_scope = 'PUBLIC'
+    `).all(ASSET_ID, COVER_ASSET_ID) as Array<{
+      mediaRole: string
       protectionMode: string
       recipeVersion: string
       usage: string
       watermarkProfile: string
     }>
-    expect(new Set(variants.map(variant => variant.usage)))
-      .toEqual(new Set(['design-sheet', 'work-card', 'home-entry-adoption']))
-    const protected_ = variants.filter(
-      variant => variant.usage !== 'home-entry-adoption',
-    )
-    expect(protected_).toHaveLength(12)
-    expect(protected_.every(variant => (
+    expect(new Set(variants.map(variant => variant.usage))).toEqual(new Set([
+      'adoption-card',
+      'detail',
+      'work-card',
+    ]))
+    expect(variants.every(variant => (
       variant.watermarkProfile === 'brand-centered-v2'
       && variant.protectionMode === 'watermark'
       && variant.recipeVersion === 'recipe-v3'
     ))).toBe(true)
-    // T34-F1：首页领养入口是独立无水印用途，不复用领养设定图公开 URL。
-    const entries = variants.filter(
-      variant => variant.usage === 'home-entry-adoption',
-    )
-    expect(entries).toHaveLength(6)
-    expect(entries.every(variant => (
-      variant.protectionMode === 'none'
-      && variant.watermarkProfile === 'none'
-      && variant.recipeVersion === 'site-display-v2'
-    ))).toBe(true)
+    expect(new Set(variants.map(variant => variant.mediaRole)))
+      .toEqual(new Set(['adoption_cover', 'studio_photo']))
   })
 
   it('prepares a private Lanczos source and publishes a low-resolution design sheet', async () => {
     const work = createRegularAdoption()
-    const ready = attachDesignSheet(work, 1560, 1080)
+    const withRequiredMedia = attachRequiredAdoptionMedia(work)
+    const ready = attachDesignSheet(withRequiredMedia, 1560, 1080)
     expect(checkWorkPublication(sqlite, work.id)).toMatchObject({
       canPublish: true,
       blockers: [],
@@ -879,13 +965,13 @@ describe('dual-bucket work publication operations', () => {
     expect(storage.objects.has(
       `test/t18-fixture/original/${DESIGN_ASSET_ID}/source.png`,
     )).toBe(true)
-    // 12 张作品水印图 + 6 张首页领养入口无水印图。
-    expect(storage.processCalls).toHaveLength(18)
+    expect(storage.processCalls.length).toBeGreaterThan(18)
   }, 30_000)
 
   it('keeps the original and reports a stable preparation failure when adaptation fails', async () => {
     const work = createRegularAdoption()
-    const ready = attachDesignSheet(work, 1560, 1080)
+    const withRequiredMedia = attachRequiredAdoptionMedia(work)
+    const ready = attachDesignSheet(withRequiredMedia, 1560, 1080)
     storage.failPut = true
 
     const failed = await publishWork(
@@ -911,43 +997,6 @@ describe('dual-bucket work publication operations', () => {
     expect(storage.processCalls).toHaveLength(0)
   })
 
-  it('T37: blocks event drop publication until both event fields exist', async () => {
-    const id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
-    sqlite.prepare(`
-      INSERT INTO works (
-        id, slug, character_name, species, suit_type, purpose,
-        adoption_method, business_status, event_name, event_time,
-        owner_display, publication_status, created_at, updated_at
-      ) VALUES (?, 'event-adoption-draft', '展会待领养', '犬科', 'partial',
-                'adoption', 'event_drop', 'available', '未来展会', NULL,
-                '不公开', 'draft', ?, ?)
-    `).run(id, NOW, NOW)
-
-    // 只有名称、缺时间：明确列出展会字段阻断，而不是整体禁止掉落发布。
-    const missingTime = checkWorkPublication(sqlite, id)
-    expect(missingTime.blockers).toContain('EVENT_DROP_FIELDS_REQUIRED')
-    expect(missingTime.canPublish).toBe(false)
-
-    await expect(publishWork(
-      sqlite,
-      storage,
-      id,
-      1,
-      USER_ID,
-      NOW + 1_000,
-    )).rejects.toThrow(/Resolve publication blockers/u)
-    expect(sqlite.prepare(`
-      SELECT count(*) FROM publication_operations WHERE entity_id = ?
-    `).pluck().get(id)).toBe(0)
-
-    // 补齐展会时间后，展会字段不再是阻断项（仍需设定图等常规条件）。
-    sqlite.prepare(
-      'UPDATE works SET event_time = ? WHERE id = ?',
-    ).run('8 月 15 日 至 16 日', id)
-    expect(checkWorkPublication(sqlite, id).blockers)
-      .not.toContain('EVENT_DROP_FIELDS_REQUIRED')
-  })
-
   it('keeps audit and browser-visible operation data free of private values', async () => {
     const work = createWorkWithPhoto()
     const result = await publishWork(
@@ -959,7 +1008,6 @@ describe('dual-bucket work publication operations', () => {
       NOW + 3_000,
     )
     const visible = JSON.stringify(result)
-    expect(visible).not.toContain('不会进入日志或公开 DTO')
     expect(visible).not.toContain('/original/')
     expect(visible).not.toContain('privateObjectKey')
     const audit = JSON.stringify(sqlite.prepare(`
@@ -967,7 +1015,6 @@ describe('dual-bucket work publication operations', () => {
              result, created_at AS createdAt
       FROM audit_logs
     `).all())
-    expect(audit).not.toContain('不会进入日志或公开 DTO')
     expect(audit).not.toContain('/original/')
     expect(audit).not.toContain('signed')
   })

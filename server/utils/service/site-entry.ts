@@ -43,8 +43,7 @@ export function commissionEntrySource(
 }
 
 /**
- * 首页领养入口源：当前已发布的第一件常规领养设定图。
- * 领养列表与详情继续引用有水印变体。
+ * 首页领养入口源：当前已发布领养的独立横版封面。
  */
 export function adoptionEntrySource(
   sqlite: Database.Database,
@@ -55,9 +54,9 @@ export function adoptionEntrySource(
     JOIN work_assets AS relation ON relation.work_id = work.id
     JOIN assets AS asset ON asset.id = relation.asset_id
     WHERE work.publication_status = 'published'
-      AND work.purpose = 'adoption' AND work.adoption_method = 'regular'
-      AND relation.role = 'design_sheet' AND asset.status = 'READY'
-      AND asset.role = 'design_sheet'
+      AND work.purpose = 'adoption'
+      AND relation.role = 'adoption_cover' AND asset.status = 'READY'
+      AND asset.role = 'adoption_cover'
     ORDER BY work.sort_order, work.id
     LIMIT 1
   `).get() as HomeEntrySourceRow | undefined ?? null
@@ -74,7 +73,7 @@ export function homeEntrySource(
 
 const ENTRY_LABELS = {
   commission: { alt: '自设委托作品照片', href: '/commission' },
-  adoption: { alt: '角色领养设定图', href: '/adoptions' },
+  adoption: { alt: '角色领养横版封面', href: '/adoptions' },
 } as const satisfies Record<HomeEntryKind, { alt: string, href: string }>
 
 export function homeEntryUsageReady(

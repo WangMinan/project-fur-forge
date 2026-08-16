@@ -9,9 +9,7 @@ export default defineEventHandler((event) => {
     return publicWorkListResponseSchema.parse({
       data: getPublicSiteRepository().listWorks({
         page: query.page,
-        purpose: query.purpose,
         q: query.q,
-        suitType: query.suitType,
       }),
     })
   }

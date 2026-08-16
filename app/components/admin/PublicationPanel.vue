@@ -69,7 +69,8 @@ const publishCompleted = computed(() => publishProgress.value
 const ffmpegPublishActive = computed(() => pending.value === 'publish'
   && publishProgress.value !== null
   && (
-    check.value?.designSheetNeedsPreprocess === true
+    check.value?.adoptionCoverNeedsPreprocess === true
+    || check.value?.designSheetNeedsPreprocess === true
     || check.value?.studioPhotoNeedsPreprocess === true
   ),
 )
@@ -366,7 +367,8 @@ onUnmounted(() => {
 
     <template v-else-if="check">
       <p class="publication__summary">
-        设定图 {{ check.designSheetCount }}/1 · 出厂照 {{ check.studioPhotoCount }}/5 ·
+        横版封面 {{ check.adoptionCoverCount }}/1 · 设定图 {{ check.designSheetCount }}/1 ·
+        出厂照 {{ check.studioPhotoCount }}/5 ·
         公开图片 {{ check.requiredVariantCount - check.missingVariantCount }}/{{ check.requiredVariantCount }}
       </p>
       <div v-if="!check.canPublish" class="publication__blocked">
@@ -377,6 +379,13 @@ onUnmounted(() => {
           </li>
         </ul>
       </div>
+      <p
+        v-if="check.adoptionCoverNeedsPreprocess"
+        class="publication__preprocess"
+        role="status"
+      >
+        横版封面原图分辨率较低，但可以发布。系统会先生成私有适配源，再生成公开封面。
+      </p>
       <p
         v-if="check.designSheetNeedsPreprocess"
         class="publication__preprocess"

@@ -49,11 +49,7 @@ const workInput = {
   slug: 'tuan-zi',
   characterName: '团子',
   species: '犬科',
-  suitType: 'full' as const,
   purpose: 'showcase' as const,
-  ownerDisplay: '不公开' as const,
-  ownerContact: '仅后台联系人',
-  featureTags: ['软萌', '大尾巴'],
   sortOrder: 10,
   featured: false,
 }
@@ -151,9 +147,6 @@ describe('T22 work management', () => {
     expect(created).toMatchObject({
       version: 1,
       publicationStatus: 'draft',
-      ownerDisplay: '不公开',
-      featureTags: ['软萌', '大尾巴'],
-      private: { ownerContact: '仅后台联系人' },
       studioPhotos: [],
       sortOrder: 0,
       featured: false,
@@ -174,10 +167,7 @@ describe('T22 work management', () => {
       {
         ...workInput,
         slug: 'tuan-zi-v2',
-        ownerDisplay: '有点小狗工作室',
-        ownerContact: null,
         purpose: 'commission',
-        featureTags: ['大尾巴'],
         sortOrder: 2,
         featured: true,
       },
@@ -187,9 +177,6 @@ describe('T22 work management', () => {
       version: 2,
       slug: 'tuan-zi-v2',
       purpose: 'commission',
-      ownerDisplay: '有点小狗工作室',
-      featureTags: ['大尾巴'],
-      private: { ownerContact: null },
       sortOrder: 0,
       featured: true,
     })
@@ -300,14 +287,12 @@ describe('T22 work management', () => {
       ...workInput,
       slug: 'commission-work',
       purpose: 'commission',
-      ownerDisplay: '公开角色主',
     }, NOW)
     const adoption = createManagedWork(sqlite, {
       ...workInput,
       slug: 'adoption-work',
       purpose: 'adoption',
-      adoptionMethod: 'regular',
-      businessStatus: 'available',
+      adoptionStatus: 'available',
       priceCnyMinor: 1,
       sortOrder: 0,
       featured: true,
@@ -315,12 +300,10 @@ describe('T22 work management', () => {
 
     expect(commission).toMatchObject({
       purpose: 'commission',
-      ownerDisplay: '公开角色主',
     })
     expect(adoption).toMatchObject({
       purpose: 'adoption',
-      adoptionMethod: 'regular',
-      businessStatus: 'available',
+      adoptionStatus: 'available',
       priceCnyMinor: 1,
       sortOrder: 0,
       featured: true,
@@ -341,16 +324,12 @@ describe('T22 work management', () => {
       purpose: 'showcase',
       sortOrder: 0,
     })
-    expect(showcased).not.toHaveProperty('adoptionMethod')
+    expect(showcased).not.toHaveProperty('adoptionStatus')
     expect(sqlite.prepare(`
-      SELECT adoption_method, business_status, event_name, event_time,
-             price_amount_minor, price_currency
+      SELECT adoption_status, price_amount_minor, price_currency
       FROM works WHERE id = ?
     `).get(adoption.id)).toEqual({
-      adoption_method: null,
-      business_status: null,
-      event_name: null,
-      event_time: null,
+      adoption_status: null,
       price_amount_minor: null,
       price_currency: null,
     })
@@ -359,82 +338,16 @@ describe('T22 work management', () => {
       ...workInput,
       slug: 'showcase-became-adoption',
       purpose: 'adoption',
-      adoptionMethod: 'regular',
-      businessStatus: 'preparing',
+      adoptionStatus: 'adopted',
       priceCnyMinor: null,
       sortOrder: 4,
     }, NOW + 3)
     expect(adoptedAgain).toMatchObject({
       version: 3,
       purpose: 'adoption',
-      adoptionMethod: 'regular',
-      businessStatus: 'preparing',
+      adoptionStatus: 'adopted',
       priceCnyMinor: null,
     })
-  })
-
-  it('T37: edits event drop fields and clears them when switching away', () => {
-    const id = crypto.randomUUID()
-    sqlite.prepare(`
-      INSERT INTO works (
-        id, slug, character_name, species, suit_type, purpose,
-        adoption_method, business_status, event_name, event_time,
-        owner_display, owner_contact, price_amount_minor, price_currency,
-        publication_status, sort_order, featured, created_at, updated_at
-      ) VALUES (?, 'legacy-event-drop', '旧展会角色', '犬科', 'partial',
-                'adoption', 'event_drop', 'available', '旧展会文本', NULL,
-                '不公开', '旧联系人', 100, 'CNY', 'draft', 8, 0, ?, ?)
-    `).run(id, NOW, NOW)
-
-    // 历史掉落记录的展会名称原样可读；时间尚未补齐时为 null。
-    expect(getManagedWork(sqlite, id)).toMatchObject({
-      purpose: 'adoption',
-      adoptionMethod: 'event_drop',
-      eventName: '旧展会文本',
-      eventTime: null,
-      priceCnyMinor: 100,
-      private: { ownerContact: '旧联系人' },
-    })
-
-    // 补齐两项展会字段。
-    const filled = updateManagedWork(sqlite, id, 1, {
-      ...workInput,
-      slug: 'legacy-event-drop',
-      purpose: 'adoption',
-      adoptionMethod: 'event_drop',
-      businessStatus: 'available',
-      priceCnyMinor: 100,
-      sortOrder: 8,
-      eventName: '幻夏祭 2026',
-      eventTime: '8 月 15 日 至 16 日',
-    }, NOW + 1)
-    expect(filled).toMatchObject({
-      version: 2,
-      adoptionMethod: 'event_drop',
-      eventName: '幻夏祭 2026',
-      eventTime: '8 月 15 日 至 16 日',
-    })
-
-    // 切换到常规领养时展会字段被清空，不留僵尸值。
-    const migrated = updateManagedWork(sqlite, id, 2, {
-      ...workInput,
-      slug: 'legacy-event-drop',
-      purpose: 'adoption',
-      adoptionMethod: 'regular',
-      businessStatus: 'available',
-      priceCnyMinor: 100,
-      sortOrder: 8,
-    }, NOW + 2)
-    expect(migrated).toMatchObject({
-      version: 3,
-      adoptionMethod: 'regular',
-      businessStatus: 'available',
-      eventName: null,
-      eventTime: null,
-    })
-    expect(sqlite.prepare(
-      'SELECT event_name, event_time FROM works WHERE id = ?',
-    ).get(id)).toEqual({ event_name: null, event_time: null })
   })
 
   it('returns a readable conflict before leaving an adoption design sheet behind', () => {
@@ -442,8 +355,7 @@ describe('T22 work management', () => {
       ...workInput,
       slug: 'adoption-with-design',
       purpose: 'adoption',
-      adoptionMethod: 'regular',
-      businessStatus: 'preparing',
+      adoptionStatus: 'available',
       priceCnyMinor: null,
     }, NOW)
     const assetId = crypto.randomUUID()
@@ -469,7 +381,7 @@ describe('T22 work management', () => {
       ...workInput,
       slug: 'adoption-with-design',
       purpose: 'showcase',
-    })).toThrow(/Remove the design sheet/u)
+    })).toThrow(/Remove adoption-only media/u)
     expect(getManagedWork(sqlite, work.id).purpose).toBe('adoption')
   })
 
@@ -598,8 +510,7 @@ describe('T22 work management', () => {
       ...workInput,
       slug: 'design-sheet-work',
       purpose: 'adoption',
-      adoptionMethod: 'regular',
-      businessStatus: 'preparing',
+      adoptionStatus: 'available',
       priceCnyMinor: null,
     }, NOW)
     const firstId = '11111111-1111-4111-8111-111111111111'
@@ -699,7 +610,7 @@ describe('T22 work management', () => {
   it('rejects forbidden fields, invalid ownership and incomplete primary selection', () => {
     expect(createWorkRequestSchema.safeParse({
       ...workInput,
-      ownerDisplay: '',
+      featureTags: ['retired'],
     }).success).toBe(false)
     expect(createWorkRequestSchema.safeParse({
       ...workInput,

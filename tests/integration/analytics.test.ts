@@ -67,10 +67,10 @@ function contactAction(
 function seedPublishedEntities() {
   sqlite.prepare(`
     INSERT INTO works (
-      id, slug, character_name, species, suit_type, purpose,
-      owner_display, publication_status, published_at, created_at, updated_at
-    ) VALUES (?, 'tuanzi', '团子', '犬科', 'full', 'showcase',
-      '不公开', 'published', ?, ?, ?)
+      id, slug, character_name, species, purpose,
+      publication_status, published_at, created_at, updated_at
+    ) VALUES (?, 'tuanzi', '团子', '犬科', 'showcase',
+      'published', ?, ?, ?)
   `).run(WORK_ID, NOW, NOW, NOW)
 }
 

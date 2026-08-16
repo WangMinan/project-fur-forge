@@ -59,13 +59,7 @@ import {
 } from '../repository/operation-lease'
 import type { OperationLease } from '../repository/operation-lease'
 import { registerOperationResumer } from './operation-recovery'
-import { safeLog } from '../safe-log'
 import { ServiceError } from '../service-error'
-import {
-  assetSupportsSiteDisplay,
-  generateSiteDisplayVariants,
-  HOME_ENTRY_USAGES,
-} from '../recipe/site-display-recipe'
 import { activeWatermarkProfileId } from './watermark-branding'
 import { requireWatermarkProfile } from '../service/watermark-profile'
 import {
@@ -220,6 +214,18 @@ export function checkWorkPublication(
   const designSheets = targets
     .map(target => target.asset)
     .filter(asset => asset.role === 'design_sheet')
+  const adoptionCovers = targets
+    .map(target => target.asset)
+    .filter(asset => asset.role === 'adoption_cover')
+  const adoptionCoverNeedsPreprocess = targets.some(target => (
+    target.asset.role === 'adoption_cover'
+    && target.asset.status === 'READY'
+    && !assetSupportsPublicUsages(
+      sqlite,
+      target.asset.assetId,
+      target.usages,
+    )
+  ))
   const designSheetNeedsPreprocess = targets.some(target => (
     target.asset.role === 'design_sheet'
     && target.asset.status === 'READY'
@@ -243,25 +249,12 @@ export function checkWorkPublication(
     work.slug.trim() === ''
     || work.characterName.trim() === ''
     || work.species.trim() === ''
-    || !['full', 'partial'].includes(work.suitType)
-    || work.ownerDisplay.trim() === ''
   ) {
     blockers.push('WORK_FIELDS_INVALID')
   }
   if (work.purpose === 'adoption') {
-    const isEventDrop = work.adoptionMethod === 'event_drop'
     if (
-      !['regular', 'event_drop'].includes(work.adoptionMethod ?? '')
-      || ![
-        'preparing',
-        'available',
-        'scheduled',
-        'in_production',
-        'delivered',
-      ].includes(work.businessStatus ?? '')
-      // 非掉落作品不得残留展会字段。
-      || (!isEventDrop && (work.eventName !== null || work.eventTime !== null))
-      || (
+      (
         work.priceAmountMinor === null
           ? work.priceCurrency !== null
           : work.priceAmountMinor <= 0 || work.priceCurrency !== 'CNY'
@@ -269,20 +262,17 @@ export function checkWorkPublication(
     ) {
       blockers.push('WORK_FIELDS_INVALID')
     }
-    // T37：展会掉落额外要求展会名称与展会时间；
-    // 不再以“缺少独立展会表”为由整体阻断掉落发布。
-    if (
-      isEventDrop
-      && (
-        (work.eventName ?? '').trim() === ''
-        || (work.eventTime ?? '').trim() === ''
-      )
-    ) {
-      blockers.push('EVENT_DROP_FIELDS_REQUIRED')
+    if (work.adoptionStatus === null) {
+      blockers.push('ADOPTION_STATUS_REQUIRED')
     }
-    // 掉落与常规领养共用设定图要求。
-    if (designSheets.length === 0) {
-      blockers.push('DESIGN_SHEET_REQUIRED')
+    if (adoptionCovers.length === 0) {
+      blockers.push('ADOPTION_COVER_REQUIRED')
+    }
+    if (adoptionCovers.some(cover => cover.status !== 'READY')) {
+      blockers.push('ADOPTION_COVER_NOT_READY')
+    }
+    if (adoptionCovers.some(cover => !cover.alt?.trim())) {
+      blockers.push('ADOPTION_COVER_ALT_REQUIRED')
     }
     if (designSheets.some(sheet => sheet.status !== 'READY')) {
       blockers.push('DESIGN_SHEET_NOT_READY')
@@ -291,7 +281,7 @@ export function checkWorkPublication(
       blockers.push('DESIGN_SHEET_ALT_REQUIRED')
     }
   }
-  else if (publicationPhotos.length === 0) {
+  if (publicationPhotos.length === 0) {
     blockers.push('STUDIO_PHOTO_REQUIRED')
   }
   if (
@@ -314,6 +304,8 @@ export function checkWorkPublication(
     version: work.version,
     canPublish: blockers.length === 0,
     blockers,
+    adoptionCoverCount: adoptionCovers.length,
+    adoptionCoverNeedsPreprocess,
     designSheetCount: designSheets.length,
     designSheetNeedsPreprocess,
     studioPhotoCount: publicationPhotos.length,
@@ -486,52 +478,6 @@ async function cleanOperationKeys(
   return requireOperation(sqlite, operationId)
 }
 
-/**
- * 常规领养设定图同时预生成首页领养入口的无水印变体。
- * 入口是站点展示位，缺失时首页受控隐藏，因此不阻塞作品发布。
- */
-async function generateAdoptionEntryVariants(
-  sqlite: Database.Database,
-  storage: MediaStorage,
-  work: WorkState,
-  targets: readonly PublicationTarget[],
-  now: number,
-) {
-  if (work.purpose !== 'adoption' || work.adoptionMethod !== 'regular') {
-    return
-  }
-  for (const target of targets) {
-    if (target.asset.role !== 'design_sheet') {
-      continue
-    }
-    if (!assetSupportsSiteDisplay(
-      sqlite,
-      target.asset.assetId,
-      [HOME_ENTRY_USAGES.adoption],
-    )) {
-      safeLog('warn', 'Adoption entry source is too small for site display.', {
-        assetId: target.asset.assetId,
-      })
-      continue
-    }
-    try {
-      await generateSiteDisplayVariants(
-        sqlite,
-        storage,
-        target.asset.assetId,
-        [HOME_ENTRY_USAGES.adoption],
-        now,
-      )
-    }
-    catch (error) {
-      safeLog('error', 'Adoption entry variant generation failed.', {
-        assetId: target.asset.assetId,
-        errorCode: (error as { code?: unknown }).code,
-      })
-    }
-  }
-}
-
 function repeatedOperation(
   sqlite: Database.Database,
   workId: string,
@@ -675,7 +621,6 @@ async function runWorkPublication(
       }
       requireWorkLease(sqlite, lease)
     }
-    await generateAdoptionEntryVariants(sqlite, storage, work, targets, now)
     const generatedKeys = newlyCreatedKeys(sqlite, workId, before)
     stage = 'VERIFYING_PUBLIC'
     failureCode = 'PUBLIC_MEDIA_VERIFICATION_FAILED'

@@ -44,10 +44,16 @@ function insertFixtures(purpose = 'showcase') {
   `).run(USER_ID, NOW, NOW, NOW)
   sqlite.prepare(`
     INSERT INTO works (
-      id, slug, character_name, species, suit_type, purpose,
-      owner_display, created_at, updated_at
-    ) VALUES (?, 'test-work', '团子', '犬科', 'full', ?, '不公开', ?, ?)
-  `).run(WORK_ID, purpose, NOW, NOW)
+      id, slug, character_name, species, purpose, adoption_status,
+      created_at, updated_at
+    ) VALUES (?, 'test-work', '团子', '犬科', ?, ?, ?, ?)
+  `).run(
+    WORK_ID,
+    purpose,
+    purpose === 'adoption' ? 'available' : null,
+    NOW,
+    NOW,
+  )
 }
 
 function input(role: 'studio_photo' | 'design_sheet' = 'studio_photo') {
