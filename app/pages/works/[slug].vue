@@ -60,9 +60,26 @@ watch(error, (err) => {
 
 const dto = computed(() => detail.value?.work)
 const designSheet = computed(() => detail.value?.media.designSheet)
-const studioPhotos = computed(() => detail.value?.media.gallery ?? [])
-const relatedWorks = computed(() => detail.value?.related ?? [])
-const adoptionCover = computed(() => detail.value?.media.adoptionCover)
+/**
+ * 单一媒体区：出厂照在前、领养封面在后。合成一个图集而不是两个独立区块，
+ * 主图位置因此只有一处，不会在限宽居中与靠左之间跳动。
+ * 只做了单头的领养作品图集内只有封面一张，缩略图行按长度自动隐藏。
+ */
+const gallery = computed(() => {
+  const media = detail.value?.media
+  if (!media) {
+    return []
+  }
+  const cover = media.adoptionCover
+  return cover
+    ? [...media.gallery, {
+        assetId: cover.assetId,
+        alt: cover.alt,
+        position: media.gallery.length,
+        sources: cover.sources,
+      }]
+    : media.gallery
+})
 
 useSeoMeta({
   title: computed(() => (dto.value
@@ -99,8 +116,6 @@ useHead(() => ({
       }]
     : [],
 }))
-
-const RELATED_SIZES = '(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw'
 
 /**
  * 返回目标跟着来路走：从设定领养点进来就回设定领养，其余（作品展示、首页精选、
@@ -147,24 +162,6 @@ onMounted(() => {
     <div class="work-detail__layout">
       <div class="work-detail__media">
         <section
-          v-if="adoptionCover"
-          class="work-detail__media-section"
-          aria-labelledby="adoption-cover-title"
-          data-testid="work-detail-adoption-cover"
-        >
-          <h2 id="adoption-cover-title" class="work-detail__media-title">领养封面</h2>
-          <span class="work-detail__cover">
-            <ResponsivePicture
-              :sources="adoptionCover.sources"
-              :alt="adoptionCover.alt"
-              sizes="(min-width: 1024px) 46rem, 100vw"
-              loading="eager"
-              fetchpriority="high"
-            />
-          </span>
-        </section>
-
-        <section
           v-if="designSheet"
           class="work-detail__media-section"
           aria-labelledby="design-sheet-title"
@@ -173,35 +170,13 @@ onMounted(() => {
           <AdoptionDesignSheet :design-sheet="designSheet" />
         </section>
 
-        <section v-if="studioPhotos.length > 0" class="work-detail__media-section" aria-label="作品图集">
+        <section v-if="gallery.length > 0" class="work-detail__media-section" aria-label="作品图集">
           <h2 id="studio-photos-title" class="work-detail__media-title">出厂照 / 作品图集</h2>
-          <WorkDetailGallery :gallery="studioPhotos" :work-name="dto.characterName" />
+          <WorkDetailGallery :gallery="gallery" :work-name="dto.characterName" />
         </section>
       </div>
     </div>
 
-    <section
-      v-if="relatedWorks.length > 0"
-      class="work-detail__related"
-      aria-labelledby="work-related-title"
-    >
-      <div class="work-detail__related-header">
-        <h2 id="work-related-title" class="work-detail__section-title">
-          继续浏览
-        </h2>
-        <NuxtLink to="/works" class="work-detail__related-more">
-          查看全部作品 <span aria-hidden="true">→</span>
-        </NuxtLink>
-      </div>
-      <div class="work-detail__related-grid">
-        <WorkCard
-          v-for="entry in relatedWorks"
-          :key="entry.work.id"
-          :work="entry"
-          :sizes="RELATED_SIZES"
-        />
-      </div>
-    </section>
   </article>
 </template>
 
@@ -282,73 +257,6 @@ onMounted(() => {
   font-size: var(--font-size-sm);
   font-weight: 400;
   letter-spacing: var(--letter-spacing-label);
-}
-
-.work-detail__related {
-  max-width: var(--public-content-wide);
-  margin: var(--space-9) auto 0;
-  padding: 0 var(--public-page-padding);
-}
-
-/* 领养封面是横版单头成果图：限宽居中，占位背景只包裹图片本身。 */
-.work-detail__cover {
-  display: block;
-  width: 100%;
-  max-width: 46rem;
-  aspect-ratio: var(--ratio-work-hero);
-  background: var(--image-placeholder);
-  border-radius: var(--radius-image);
-  overflow: hidden;
-}
-
-.work-detail__cover :deep(.responsive-picture),
-.work-detail__cover :deep(.responsive-picture__image) {
-  width: 100%;
-  height: 100%;
-}
-
-.work-detail__cover :deep(.responsive-picture__image) {
-  object-fit: cover;
-}
-
-.work-detail__related-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-4);
-  margin-bottom: var(--space-5);
-}
-
-.work-detail__related-header .work-detail__section-title {
-  color: var(--public-text-primary);
-  font-family: var(--font-public-display);
-  font-size: var(--font-size-lg);
-  letter-spacing: var(--letter-spacing-normal);
-}
-
-.work-detail__related-more {
-  flex-shrink: 0;
-  font-size: var(--font-size-sm);
-}
-
-.work-detail__related-more:hover {
-  text-decoration: underline;
-  text-underline-offset: 0.3em;
-}
-
-.work-detail__related-grid {
-  display: grid;
-  /* 竖版出厂照与横版领养封面混排：卡片按自身高度顶端对齐。 */
-  align-items: start;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-5) var(--space-4);
-}
-
-@media (min-width: 768px) {
-  .work-detail__related-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-6) var(--space-5);
-  }
 }
 
 </style>

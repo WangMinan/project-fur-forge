@@ -117,7 +117,6 @@ interface SnapshotEntry {
   featured: boolean
   /** 只用于首页精选排序；公开列表按发布时间倒序，不看这个值。 */
   id: string
-  purpose: PublishedWorkRow['purpose']
   sortOrder: number
   studioPhotos: Array<{
     alt: string
@@ -368,7 +367,6 @@ function snapshot(
       featured: row.featured === 1,
       designSheet,
       id: row.id,
-      purpose: row.purpose,
       sortOrder: row.sortOrder,
       summary: publicWorkSummaryDtoSchema.parse({
         work: facts,
@@ -536,20 +534,7 @@ function adoptionListDto(
 }
 
 function detailFor(entries: readonly SnapshotEntry[], slug: string) {
-  const current = entries.find(entry => entry.summary.work.slug === slug)
-  if (!current) {
-    return null
-  }
-  const samePurpose = entries.filter(entry => (
-    entry !== current && entry.purpose === current.purpose
-  ))
-  const others = entries.filter(entry => (
-    entry !== current && entry.purpose !== current.purpose
-  ))
-  return {
-    current,
-    related: [...samePurpose, ...others].slice(0, 3),
-  }
+  return entries.find(entry => entry.summary.work.slug === slug) ?? null
 }
 
 export function createSqlitePublicSiteRepository(
@@ -564,32 +549,31 @@ export function createSqlitePublicSiteRepository(
       if (!match) {
         return null
       }
-      const primaryAssetId = match.current.studioPhotos.find(
+      const primaryAssetId = match.studioPhotos.find(
         photo => photo.primary === 1,
       )?.assetId ?? null
-      const gallery = match.current.studioPhotos.map(photo => ({
+      const gallery = match.studioPhotos.map(photo => ({
         assetId: photo.assetId,
         alt: photo.alt,
         position: photo.position,
         sources: photo.sources,
       }))
       return publicWorkDetailDtoSchema.parse({
-        work: match.current.summary.work,
-        href: match.current.summary.href,
+        work: match.summary.work,
+        href: match.summary.href,
         media: {
           primaryAssetId,
-          card: match.current.summary.card,
-          cardOrientation: match.current.cardOrientation,
+          card: match.summary.card,
+          cardOrientation: match.cardOrientation,
           // 领养作品详情必须能看到横版封面，只做了单头时它是唯一的成果图。
-          ...(match.current.adoption
-            ? { adoptionCover: match.current.adoption.cover }
+          ...(match.adoption
+            ? { adoptionCover: match.adoption.cover }
             : {}),
           gallery,
-          ...(match.current.designSheet
-            ? { designSheet: match.current.designSheet }
+          ...(match.designSheet
+            ? { designSheet: match.designSheet }
             : {}),
         },
-        related: match.related.map(entry => entry.summary),
       })
     },
 

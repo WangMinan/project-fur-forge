@@ -107,7 +107,7 @@ test.describe('T20 作品列表页', () => {
     ])
   })
 
-  test('卡片为普通作品链接且图片框保持 3:4', async ({ page }) => {
+  test('卡片为普通作品链接且竖版图片框保持 3:4', async ({ page }) => {
     await seedCatalog(page)
     await page.goto('/works')
 
@@ -116,13 +116,14 @@ test.describe('T20 作品列表页', () => {
     await expect(first.locator('.work-identity')).toHaveText('蓝湄 · 北极狐')
 
     const frame = first.locator('.work-card__frame')
+    await expect(frame).toHaveAttribute('data-orientation', 'portrait')
     const box = await frame.boundingBox()
     expect(box).not.toBeNull()
     expect(box!.height / box!.width).toBeCloseTo(4 / 3, 2)
   })
 
-  test('只做了单头的领养作品用 16:9 横版封面进入作品展示与首页精选', async ({ page }) => {
-    // 客户尚未提供 DTD，作品只有横版领养封面，没有竖版出厂照。
+  test('FU-17：横竖卡片等高铺满，横版更宽且右边缘对齐', async ({ page }) => {
+    // 第一件只做了单头（只有横版领养封面），其余是竖版出厂照，构成混排。
     await seedPublicCatalog(page, [
       {
         slug: 'e2e-public-headonly',
@@ -135,32 +136,74 @@ test.describe('T20 作品列表页', () => {
         sortOrder: 0,
         photos: [],
       },
+      {
+        slug: 'e2e-public-mixed-a',
+        characterName: '竖版甲',
+        purpose: 'commission',
+        featured: true,
+        sortOrder: 1,
+        photos: [{ alt: '竖版甲出厂照', width: 2400, height: 3200 }],
+      },
+      {
+        slug: 'e2e-public-mixed-b',
+        characterName: '竖版乙',
+        purpose: 'commission',
+        featured: true,
+        sortOrder: 2,
+        photos: [{ alt: '竖版乙出厂照', width: 2400, height: 3200 }],
+      },
     ])
 
+    await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/works')
     const headOnly = card(page, 'e2e-public-headonly')
     await expect(headOnly).toBeVisible()
     await expect(headOnly.locator('.work-identity')).toHaveText('小绿狗 · 狗')
+    await expect(headOnly.locator('.work-card__frame'))
+      .toHaveAttribute('data-orientation', 'landscape')
 
-    const frame = headOnly.locator('.work-card__frame')
-    await expect(frame).toHaveAttribute('data-orientation', 'landscape')
-    const box = await frame.boundingBox()
-    expect(box!.width / box!.height).toBeCloseTo(16 / 9, 1)
+    const layout = await page.locator('.works-grid').evaluate((grid) => {
+      const frames = Array.from(grid.querySelectorAll('.work-card__frame'))
+        .map(frame => frame.getBoundingClientRect())
+      const gridBox = grid.getBoundingClientRect()
+      // 只比较第一行：取 top 与首张一致的卡片。
+      const firstRow = frames.filter(box => Math.abs(box.top - frames[0]!.top) < 2)
+      return {
+        rowCount: firstRow.length,
+        heights: firstRow.map(box => Math.round(box.height)),
+        ratios: firstRow.map(box => +(box.width / box.height).toFixed(2)),
+        rightGap: Math.round(gridBox.right - firstRow.at(-1)!.right),
+      }
+    })
+
+    // 等高：同一行内高度完全一致。
+    expect(layout.rowCount).toBe(3)
+    expect(new Set(layout.heights).size).toBe(1)
+    // 横版明显更宽，且两种比例都未被压缩。
+    expect(layout.ratios[0]).toBeCloseTo(16 / 9, 1)
+    expect(layout.ratios[1]).toBeCloseTo(3 / 4, 1)
+    // 铺满：行尾与容器右边缘对齐，不留大面积空白。
+    expect(layout.rightGap).toBeLessThanOrEqual(2)
     expect(await page.evaluate(() =>
       document.scrollingElement!.scrollWidth - document.documentElement.clientWidth,
     )).toBeLessThanOrEqual(1)
 
-    // 首页精选同样容纳横版卡片。
+    // 首页精选轨道同样等高。
     await page.goto('/')
-    await expect(
-      page.getByTestId('featured-works').locator('[data-work-slug="e2e-public-headonly"]'),
-    ).toBeVisible()
+    const trackHeights = await page.getByTestId('featured-track').evaluate(track =>
+      Array.from(track.querySelectorAll('.work-card__frame'))
+        .map(frame => Math.round(frame.getBoundingClientRect().height)),
+    )
+    expect(trackHeights.length).toBeGreaterThanOrEqual(2)
+    expect(new Set(trackHeights).size).toBe(1)
 
-    // 详情展示领养封面，且没有空的出厂照分区。
+    // 详情在唯一的图集区展示领养封面；只有一张时不出现缩略图行。
     await page.goto('/works/e2e-public-headonly')
-    await expect(page.getByTestId('work-detail-adoption-cover')).toBeVisible()
-    await expect(page.getByRole('heading', { level: 2, name: '领养封面' })).toBeVisible()
-    await expect(page.locator('section[aria-label="作品图集"]')).toHaveCount(0)
+    const stage = page.locator('[data-testid="work-gallery"] .work-gallery__stage img')
+    await expect(stage).toHaveAttribute('alt', '小绿狗横版领养封面')
+    await expect(page.getByRole('button', { name: /查看第/u })).toHaveCount(0)
+    await expect(page.getByTestId('work-detail-adoption-cover')).toHaveCount(0)
+    await expect(page.getByRole('heading', { level: 2, name: '领养封面' })).toHaveCount(0)
 
     // /adoptions 卡片仍固定横版进入。
     await page.goto('/adoptions')
@@ -359,46 +402,56 @@ test.describe('T19 作品详情页', () => {
     await expect(page.getByTestId('work-price')).toHaveCount(0)
     await expect(page.getByText(/装型|角色主人|领养方式|业务状态|展会/u)).toHaveCount(0)
 
-    // 领养作品图集处于“出厂照”结构分区内
+    // FU-18：单一媒体区。两张出厂照 + 领养封面合成同一个图集，封面排在最后。
     await expect(page.locator('section[aria-label="作品图集"] [data-testid="work-gallery"]')).toBeVisible()
+    await expect(page.getByTestId('work-detail-adoption-cover')).toHaveCount(0)
+    await expect(page.getByRole('heading', { level: 2, name: '领养封面' })).toHaveCount(0)
 
-    const thumbs = page.getByRole('button', { name: /查看第 \d 张，共 2 张/ })
-    await expect(thumbs).toHaveCount(2)
+    const thumbs = page.getByRole('button', { name: /查看第 \d 张，共 3 张/ })
+    await expect(thumbs).toHaveCount(3)
     await expect(thumbs.first()).toHaveAttribute('aria-pressed', 'true')
     await thumbs.nth(1).click()
     await expect(thumbs.nth(1)).toHaveAttribute('aria-pressed', 'true')
     await expect(thumbs.first()).toHaveAttribute('aria-pressed', 'false')
 
-    // 相关浏览：不含自身，同用途优先
-    const related = page.locator('.work-detail__related-grid a[href^="/works/"]')
-    expect(await related.count()).toBeGreaterThanOrEqual(1)
-    await expect(page.locator('.work-detail__related-grid a[href="/works/e2e-public-lanmei"]')).toHaveCount(0)
+    // 最后一张是领养封面。
+    await thumbs.nth(2).click()
+    await expect(page.locator('[data-testid="work-gallery"] .work-gallery__stage img'))
+      .toHaveAttribute('alt', '蓝湄独立横版领养封面')
+
+    // FU-19：不再提供「继续浏览」。
+    await expect(page.locator('.work-detail__related-grid')).toHaveCount(0)
+    await expect(page.getByRole('heading', { level: 2, name: '继续浏览' })).toHaveCount(0)
 
     // 返回链接
     await expect(page.getByRole('link', { name: '返回作品展示' })).toHaveAttribute('href', '/works')
   })
 
-  test('T34-F2：竖图按方向限宽居中，路由复用切换作品后选中索引复位', async ({ page }) => {
+  test('FU-18：主图与缩略图成组居中，切换作品后选中索引复位', async ({ page }) => {
     await seedCatalog(page)
+    await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/works/e2e-public-lanmei')
 
-    const stage = page.locator('[data-testid="work-gallery"] .work-gallery__stage')
+    const gallery = page.getByTestId('work-gallery')
+    const stage = gallery.locator('.work-gallery__stage')
     await expect(stage).toHaveAttribute('data-orientation', 'landscape')
 
-    const thumbs = page.getByRole('button', { name: /查看第 \d 张，共 2 张/ })
+    const thumbs = page.getByRole('button', { name: /查看第 \d 张，共 3 张/ })
     await thumbs.nth(1).click()
     await expect(stage).toHaveAttribute('data-orientation', 'portrait')
 
-    // 竖图舞台不出现两侧灰色留白：图片实际渲染宽度明显小于舞台宽度。
-    const stageBox = await stage.boundingBox()
-    const imageBox = await stage.locator('img').boundingBox()
-    expect(imageBox!.width).toBeLessThan(stageBox!.width * 0.9)
-    expect(imageBox!.height).toBeGreaterThan(0)
+    // 缩略图紧贴主图右侧，不被推到远处；主图不铺满整栏。
+    const galleryBox = (await gallery.boundingBox())!
+    const imageBox = (await stage.locator('img').boundingBox())!
+    const thumbsBox = (await gallery.locator('.work-gallery__thumbs').boundingBox())!
+    expect(thumbsBox.x - (imageBox.x + imageBox.width)).toBeLessThanOrEqual(24)
+    expect(imageBox.width).toBeLessThan(galleryBox.width * 0.9)
+    expect(imageBox.height).toBeGreaterThan(0)
 
-    // 同组件实例内经「继续浏览」跳到只有 1 张图的作品：选中索引必须复位，
+    // 同组件实例内经列表跳到只有 1 张图的作品：选中索引必须复位，
     // 不带着索引 1 越界。
-    await page.locator('.work-detail__related-grid [data-work-slug="e2e-public-zhima"]')
-      .click()
+    await page.goto('/works')
+    await card(page, 'e2e-public-zhima').click()
     await expect(page).toHaveURL(/\/works\/e2e-public-zhima$/u)
     await expect(page.getByRole('button', { name: /查看第/u })).toHaveCount(0)
     const nextStage = page.locator('[data-testid="work-gallery"] .work-gallery__stage img')
@@ -425,8 +478,8 @@ test.describe('T19 作品详情页', () => {
     // detail 衍生图宽度描述符
     expect(html).toContain('960w')
     expect(html).toContain('2400w')
-    // 相关浏览链接 SSR 直出
-    expect(html).toContain('href="/works/e2e-public-zhima"')
+    // FU-19：不再直出「继续浏览」的其它作品链接。
+    expect(html).not.toContain('href="/works/e2e-public-zhima"')
   })
 
   test('详情页不泄漏联系人、私有键、签名 URL 与草稿对象', async ({ page, request }) => {

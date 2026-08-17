@@ -272,37 +272,38 @@ test.describe('UI-02 首页 Hero 确定性对比度', () => {
 })
 
 test.describe('UI-03 动态参数响应', () => {
-  test('详情→详情：内容、图集、SEO 与 related works 全部更新', async ({ page }) => {
+  test('详情→详情：内容、图集与 SEO 全部更新', async ({ page }) => {
     await seedT09Catalog(page)
     await page.goto('/works/e2e-public-t09-naigai')
     await expect(page.getByTestId('work-detail')).toHaveAttribute('data-work-slug', 'e2e-public-t09-naigai')
     await expect(page.getByRole('button', { name: /查看第 \d 张，共 4 张/ })).toHaveCount(4)
     await expect(page.getByText('布偶猫')).toBeVisible()
 
-    const target = page.locator('.work-detail__related-grid a[href="/works/e2e-public-t09-lanmei"]')
-    await expect(target).toBeVisible()
-    await target.click()
+    // FU-19 删除「继续浏览」后，同组件实例内切换 slug 经列表卡片完成。
+    await expect(page.locator('.work-detail__related-grid')).toHaveCount(0)
+    await page.goto('/works')
+    await page.locator('[data-work-slug="e2e-public-t09-lanmei"]').click()
 
     await expect(page).toHaveURL(/\/works\/e2e-public-t09-lanmei$/)
     await expect(page).toHaveTitle(/蓝湄 · 作品展示 · 有点小狗工作室/)
     await expect(page.getByRole('heading', { level: 1, name: '蓝湄' })).toBeVisible()
     await expect(page.getByTestId('work-detail')).toHaveAttribute('data-work-slug', 'e2e-public-t09-lanmei')
     await expect(page.getByText('北极狐')).toBeVisible()
-    // 蓝湄为单图作品：缩略图行整体消失
-    await expect(page.getByRole('button', { name: /查看第 \d 张，共 \d 张/ })).toHaveCount(0)
-    // related works 不再包含当前作品自身
-    await expect(page.locator('.work-detail__related-grid a[href="/works/e2e-public-t09-lanmei"]')).toHaveCount(0)
+    // 蓝湄是领养作品：一张出厂照 + 领养封面合成同一图集，共 2 张。
+    await expect(page.getByRole('button', { name: /查看第 \d 张，共 2 张/ })).toHaveCount(2)
     // SEO 元信息同步更新
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /蓝湄/)
 
-    // 再从 related works 进入芝麻，目标模型的名称与物种随之更新。
-    await page.locator('.work-detail__related-grid a[href="/works/e2e-public-t09-zhima"]').click()
+    // 再切到芝麻，目标模型的名称与物种随之更新。
+    await page.goto('/works')
+    await page.locator('[data-work-slug="e2e-public-t09-zhima"]').click()
     await expect(page).toHaveURL(/\/works\/e2e-public-t09-zhima$/)
     await expect(page).toHaveTitle(/芝麻 · 作品展示/)
     await expect(page.getByRole('heading', { level: 1, name: '芝麻' })).toBeVisible()
     await expect(page.getByTestId('work-detail')).toHaveAttribute('data-work-slug', 'e2e-public-t09-zhima')
     await expect(page.getByText('哈士奇')).toBeVisible()
-    await expect(page.locator('.work-detail__related-grid a[href="/works/e2e-public-t09-zhima"]')).toHaveCount(0)
+    // 芝麻是单图委托作品：缩略图行整体消失，选中索引已复位。
+    await expect(page.getByRole('button', { name: /查看第 \d 张，共 \d 张/ })).toHaveCount(0)
   })
 
   test('详情→不存在 slug 进入 404 错误页，再进有效 slug 完整恢复', async ({ page }) => {
