@@ -509,6 +509,9 @@ describe('P0 schema boundary', () => {
     insertAsset('other-source', 'studio_photo', {
       sha256: SHA_B,
     })
+    insertAsset('long-design-source', 'design_sheet', {
+      byteSize: 25_000_000,
+    })
 
     expect(() => insertVariant(
       'small-direct',
@@ -554,6 +557,54 @@ describe('P0 schema boundary', () => {
         storageScope: 'PRIVATE',
       },
     )).toThrow(/variant processing source is invalid/)
+    insertVariant(
+      'long-portrait-preprocess',
+      'large-source',
+      'studio_photo',
+      'preprocess',
+      {
+        byteSize: 4_000_000,
+        height: 4390,
+        outputSha256: SHA_C,
+        recipeVersion: 'studio-photo-upscale-lanczos-v1',
+        storageScope: 'PRIVATE',
+        width: 2400,
+      },
+    )
+    expect(() => insertVariant(
+      'long-portrait-public',
+      'large-source',
+      'studio_photo',
+      'detail',
+      {
+        inputSha256: SHA_C,
+        sourceVariantId: 'long-portrait-preprocess',
+      },
+    )).not.toThrow()
+    insertVariant(
+      'long-design-preprocess',
+      'long-design-source',
+      'design_sheet',
+      'preprocess',
+      {
+        byteSize: 4_000_000,
+        height: 4390,
+        outputSha256: SHA_C,
+        recipeVersion: 'design-sheet-upscale-lanczos-v1',
+        storageScope: 'PRIVATE',
+        width: 2400,
+      },
+    )
+    expect(() => insertVariant(
+      'long-design-public',
+      'long-design-source',
+      'design_sheet',
+      'design-sheet',
+      {
+        inputSha256: SHA_C,
+        sourceVariantId: 'long-design-preprocess',
+      },
+    )).not.toThrow()
     expect(() => insertVariant(
       'large-public',
       'large-source',

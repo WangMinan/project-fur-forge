@@ -314,6 +314,7 @@ work_feature_tags
 2. `0040_r3_e_commission_contract.sql`：重建 `site_content`，物理删除 FAQ JSON/version，同时明确复制并保留 `commission_email_action`、`contact_qq` 与目标联系渠道；
 3. `0041_r3_d_hero_work_fk.sql`：前向重建 Hero 兼容表，把 `linked_work_id` 外键恢复为目标 `works(id) ON DELETE SET NULL`，并恢复 READY/保护 trigger 与索引。
 4. `0042_r3_e_commission_follow_up.sql`：为委托补充 nullable legacy `species`，建立 pending 手机号部分唯一索引；若既有库存在重复 pending 手机号则原子失败停止，不自动处理真实申请；仅更新空值或仓库历史默认联系方式，保留管理员维护的其它值。
+5. `0043_half_suit_scope_no_tail.sql`：只替换仓库历史默认制作范围文案，不覆盖管理员维护值；`0044_work_upscale_long_portrait.sql`：前向替换处理源触发器，只为固定作品 Lanczos 角色/配方放行超过 4096 px 的长竖适配源，保留 20MB、12000 px、PRIVATE、lineage 和普通 preprocess 边界。
 
 临时 fresh DB、带合成既有数据的 DB、前置失败停止、成功、重入、foreign key 和 `PRAGMA integrity_check` 已通过。这里的证据不等于生产数据已确认或生产迁移已执行：景宸必须先逐条判断真实歧义领养记录，补 cover/主出厂照或下架，使三项计数归零；任何门禁、外键、integrity 或 readiness 失败均保持停止，只能以前向修复处理。
 

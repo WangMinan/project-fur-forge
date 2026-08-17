@@ -174,7 +174,7 @@ test('官方渠道 Card：邮箱、QQ、QQ群和防诈骗提醒一次保存并�
   await page.goto(`${publicBaseURL}/about#contact`)
   const contact = page.getByTestId('about-contact')
   await expect(
-    contact.getByRole('link', { name: 'channels@example.test' }),
+    contact.getByRole('link', { name: /打开邮件客户端/u }),
   ).toHaveAttribute('href', 'mailto:channels@example.test')
   const about = page.getByTestId('about-page')
   const antiScam = about.locator('.about-page__antiscam')
