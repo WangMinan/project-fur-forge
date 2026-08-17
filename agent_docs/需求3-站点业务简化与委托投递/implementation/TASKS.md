@@ -189,6 +189,26 @@
   五视口零横向溢出、焦点归还 `main-content`、管理端 HTML 无 `public-page-*` 类。
   独立 Review、用户验收与生产执行不由实现者代签。
 
+### E.7 · 2026-08-17 分区标题、领养联系入口、锚点偏移与 CI 修复
+
+- [x] **FU-25 · 移除图集分区标题**：所有图片已并入同一查看序列，删除「出厂照 / 作品图集」标题；
+  `aria-label="作品图集"` 保留，屏幕阅读器仍可识别该区域。
+- [x] **FU-26 · `/adoptions` 联系入口**：搜索条收窄为 `flex: 0 1 26rem`，右侧并排「联系我们申请领养」
+  按钮跳 `/about#contact`，复用委托页 secondary 按钮观感，与输入框/搜索按钮同为 2.75rem 高、同基线。
+- [x] **FU-27 · 锚点让开粘性页头**：实测页头 73px，原 `scroll-margin-top: var(--space-8)`（64px）不足，
+  标题被压住 9px。改为在 `html` 上统一 `scroll-padding-top: var(--public-anchor-offset)`（5.5rem），
+  并删除 `about.vue` 的单点 `scroll-margin-top` 以免叠加。修复后标题下沿距页头 +7px。
+- [x] **FU-28 · CI E2E 修复**：`actions/runs/32045006958`（SHA `f32cee2`）失败项为
+  `t08-selfcheck.spec.ts:349`「详情页图集缩略图可 Tab 到达并响应 Enter」——该 fixture 是 2 张出厂照 +
+  1 张领养封面，并入同一序列后总数变 3，断言仍写「共 2 张」。已更正为「共 3 张」。这是 FU-21 合并
+  序列的连带影响，非新缺陷；本轮改为运行完整 `pnpm test:e2e`（240/240）而非只跑受影响 spec，避免
+  再次漏掉未运行的 spec。
+- [x] **GATE-E-FU7 · 本地门禁**：lint/typecheck、unit 193/193、integration 204/204、production build
+  （含 content guard）、verify、**完整 E2E 240/240** 通过。CDP 实测：`green-doggy` 详情无任何 h2 分区
+  标题且图集正常、`/adoptions` 三个控件同为 44px 高同基线（输入框 334px、按钮 x=489）、`/adoptions`
+  与 `/commission` 两处 `#contact` 跳转后标题距页头 +7px（修复前为 −9px 遮挡）、零横向溢出。
+  独立 Review、用户验收与生产执行不由实现者代签。
+
 ## F. 最终评审与发布
 
 - [ ] **T37 · 全量质量门禁**：lint、typecheck、unit、integration、E2E、production build、verify、content guard。
