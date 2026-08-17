@@ -797,9 +797,9 @@ test.describe('R3-C 导航与公开主内容切换', () => {
 
     await page.getByRole('navigation', { name: '主导航' })
       .getByRole('link', { name: '作品展示' }).click()
-    // 离场不再有过渡时长（淡出会露出布局白底），旧主内容在同一次切换里立刻移除，
-    // 抓不到稳定的 .public-main-leave-active 实例。这里改为确定性地验证两件事：
-    // 离场样式仍禁用指针，且切换后不残留第二个主内容容器。
+    // 过渡已移交 Nuxt pageTransition（层内自包 Transition 会在新页面渲染后才补
+    // 入场起始态，表现为「加载完再闪一下」）。离场样式仍禁用指针；out-in 模式下
+    // 切换后 main 内只有一个页面根节点。
     const leaveDisablesPointerEvents = await page.evaluate(() => [...document.styleSheets]
       .flatMap((sheet) => {
         try {
@@ -810,12 +810,12 @@ test.describe('R3-C 导航与公开主内容切换', () => {
         }
       })
       .some(rule => (
-        (rule as CSSStyleRule).selectorText?.includes('.public-main-leave-active')
+        (rule as CSSStyleRule).selectorText?.includes('.public-page-leave-active')
         && (rule as CSSStyleRule).style?.pointerEvents === 'none'
       )))
     expect(leaveDisablesPointerEvents).toBe(true)
     await expect(page).toHaveURL(/\/works$/u)
-    await expect(page.locator('.public-layout__route')).toHaveCount(1)
+    await expect(page.locator('#main-content > *')).toHaveCount(1)
     await expect(page.locator('#main-content')).toBeFocused()
     await expect(header).toHaveAttribute('data-stable-node', 'header')
     await expect(footer).toHaveAttribute('data-stable-node', 'footer')

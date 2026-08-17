@@ -414,10 +414,11 @@ test.describe('T19 作品详情页', () => {
     await expect(thumbs.nth(1)).toHaveAttribute('aria-pressed', 'true')
     await expect(thumbs.first()).toHaveAttribute('aria-pressed', 'false')
 
-    // 最后一张是领养封面。
+    // 最后一张是领养封面。交叉淡化期间舞台内短暂有两张图，等只剩一张再断言。
     await thumbs.nth(2).click()
-    await expect(page.locator('[data-testid="work-gallery"] .work-gallery__stage img'))
-      .toHaveAttribute('alt', '蓝湄独立横版领养封面')
+    const coverStage = page.locator('[data-testid="work-gallery"] .work-gallery__stage img')
+    await expect(coverStage).toHaveCount(1)
+    await expect(coverStage).toHaveAttribute('alt', '蓝湄独立横版领养封面')
 
     // FU-19：不再提供「继续浏览」。
     await expect(page.locator('.work-detail__related-grid')).toHaveCount(0)
@@ -427,24 +428,45 @@ test.describe('T19 作品详情页', () => {
     await expect(page.getByRole('link', { name: '返回作品展示' })).toHaveAttribute('href', '/works')
   })
 
-  test('FU-18：主图与缩略图成组居中，切换作品后选中索引复位', async ({ page }) => {
+  test('FU-18：缩略图列固定在右侧，横图不被截断，切换作品后选中索引复位', async ({ page }) => {
     await seedCatalog(page)
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/works/e2e-public-lanmei')
 
     const gallery = page.getByTestId('work-gallery')
     const stage = gallery.locator('.work-gallery__stage')
+    const thumbsColumn = gallery.locator('.work-gallery__thumbs')
     await expect(stage).toHaveAttribute('data-orientation', 'landscape')
+
+    // 横图完整显示：渲染比例等于原始比例，且没有溢出舞台被裁掉。
+    const landscape = await stage.evaluate((el) => {
+      const img = el.querySelector('img')!
+      const ib = img.getBoundingClientRect()
+      const sb = el.getBoundingClientRect()
+      return {
+        ratio: +(ib.width / ib.height).toFixed(2),
+        naturalRatio: +(img.naturalWidth / img.naturalHeight).toFixed(2),
+        clipped: Math.round(ib.right) > Math.round(sb.right) + 1,
+      }
+    })
+    expect(landscape.ratio).toBeCloseTo(landscape.naturalRatio, 1)
+    expect(landscape.clipped).toBe(false)
+
+    // 缩略图列贴住图集右边缘，位置与当前图片宽度无关。
+    const galleryBox = (await gallery.boundingBox())!
+    const thumbsBefore = (await thumbsColumn.boundingBox())!
+    expect(galleryBox.x + galleryBox.width - (thumbsBefore.x + thumbsBefore.width))
+      .toBeLessThanOrEqual(2)
 
     const thumbs = page.getByRole('button', { name: /查看第 \d 张，共 3 张/ })
     await thumbs.nth(1).click()
     await expect(stage).toHaveAttribute('data-orientation', 'portrait')
+    await expect(stage.locator('img')).toHaveCount(1)
 
-    // 缩略图紧贴主图右侧，不被推到远处；主图不铺满整栏。
-    const galleryBox = (await gallery.boundingBox())!
+    // 切成竖图后缩略图列不左右移动。
+    const thumbsAfter = (await thumbsColumn.boundingBox())!
+    expect(Math.round(thumbsAfter.x)).toBe(Math.round(thumbsBefore.x))
     const imageBox = (await stage.locator('img').boundingBox())!
-    const thumbsBox = (await gallery.locator('.work-gallery__thumbs').boundingBox())!
-    expect(thumbsBox.x - (imageBox.x + imageBox.width)).toBeLessThanOrEqual(24)
     expect(imageBox.width).toBeLessThan(galleryBox.width * 0.9)
     expect(imageBox.height).toBeGreaterThan(0)
 
