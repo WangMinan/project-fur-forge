@@ -86,7 +86,11 @@ function hrefFor(target: number) {
 
       <template v-if="items.length > 0">
         <ul class="works-grid">
-          <li v-for="work in items" :key="work.work.id">
+          <li
+            v-for="work in items"
+            :key="work.work.id"
+            :class="`works-grid__item works-grid__item--${work.cardOrientation}`"
+          >
             <WorkCard
               :work="work"
               sizes="(min-width: 1024px) 30vw, (min-width: 768px) 45vw, 100vw"
@@ -147,16 +151,42 @@ function hrefFor(target: number) {
   padding-left: var(--public-page-padding);
 }
 
+/*
+ * 等高铺满：竖版出厂照（3:4）与横版领养封面（16:9）混排时，同一行内所有卡片
+ * 高度一致、宽度按自身比例伸展、行宽铺满，右边缘对齐，不留大面积空白。
+ *
+ * 原理：`flex-basis` 与 `flex-grow` 都正比于 `--card-ratio`，因此 flex 分配剩余
+ * 空间时同一行内每张卡的放大系数相同 → 宽度比恒等于比例比 → 高度必然相等。
+ * 框比例等于公开变体比例，所以铺满不产生裁切。
+ */
 .works-grid {
-  display: grid;
-  /* 竖版出厂照与横版领养封面混排：卡片按自身高度顶端对齐，不被拉伸。 */
-  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--space-8) var(--space-6);
   margin-top: var(--space-6);
   /* 作品网格是语义列表，但不显示项目符号与列表缩进：
      缺少这条重置时浏览器默认 marker 会出现在角色名左侧。 */
   padding: 0;
   list-style: none;
+}
+
+.works-grid__item {
+  flex-grow: var(--card-ratio);
+  flex-basis: calc(var(--card-ratio) * var(--works-row-height));
+  /*
+   * 末行未填满时孤卡不被拉高：上限贴近行高本身，只留一点伸展余量，
+   * 因此末行卡片高度与前面几行基本一致，不会突然变成巨图。
+   */
+  max-width: calc(var(--card-ratio) * var(--works-row-height) * 1.25);
+  min-width: 0;
+}
+
+/* 移动端单列：不做 justified，避免横版卡被压得过矮。 */
+@media (max-width: 767px) {
+  .works-grid__item {
+    flex-basis: 100%;
+    max-width: 100%;
+  }
 }
 
 .works-page__toolbar {
@@ -171,15 +201,22 @@ function hrefFor(target: number) {
   flex: 1 1 22rem;
 }
 
+/* 只调行高：列数由行宽与各卡比例自然决定，不再固定列数。 */
 @media (min-width: 768px) {
   .works-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    --works-row-height: 16rem;
   }
 }
 
 @media (min-width: 1024px) {
   .works-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    --works-row-height: 19rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .works-grid {
+    --works-row-height: 21rem;
   }
 }
 

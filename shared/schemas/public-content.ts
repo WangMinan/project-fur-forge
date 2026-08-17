@@ -61,7 +61,6 @@ export const publicWorkDetailDtoSchema = z.object({
     gallery: z.array(publicWorkGalleryItemDtoSchema).max(5),
     designSheet: publicDesignSheetDtoSchema.optional(),
   }).strict(),
-  related: z.array(publicWorkSummaryDtoSchema).max(3),
 }).strict()
 
 export const publicWorkFilterStateSchema = z.object({
