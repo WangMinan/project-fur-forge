@@ -646,13 +646,8 @@ describe('T19/T20 public repository contracts', () => {
       2400,
     ])
     expect(detail.related[0]?.work.slug).toBe('second-work')
-    expect(detail.navigation).toEqual({
-      previous: null,
-      next: {
-        characterName: '雪球',
-        href: '/works/second-work',
-      },
-    })
+    // FU-15：详情不再提供上一件/下一件导航。
+    expect(detail).not.toHaveProperty('navigation')
     const visible = JSON.stringify(detail)
     expect(visible).not.toContain('legacy-retired-field-marker')
     expect(visible).not.toContain('/original/')
@@ -688,7 +683,6 @@ describe('T19/T20 public repository contracts', () => {
           characterName: `分页作品 ${index + 1}`,
         },
         href: `/works/${slug}`,
-        navigation: { previous: null, next: null },
         related: [],
       }
     })

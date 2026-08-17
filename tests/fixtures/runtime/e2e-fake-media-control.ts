@@ -359,10 +359,11 @@ export default defineEventHandler(async (event) => {
         return { error: 'seeded work slugs must start with e2e-public-' }
       }
       const publicationStatus = work.publicationStatus ?? 'published'
+      // 只做了单头的领养作品只有横版封面，没有出厂照；普通作品仍必须有出厂照。
       if (
         !work.photos
         || work.photos.length > 5
-        || (publicationStatus === 'published' && work.photos.length === 0)
+        || (publicationStatus === 'published' && work.photos.length === 0 && !adoption)
         || (adoption && publicationStatus === 'published' && !work.adoptionCover)
       ) {
         setResponseStatus(event, 400)

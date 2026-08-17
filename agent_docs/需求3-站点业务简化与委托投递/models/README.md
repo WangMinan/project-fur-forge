@@ -96,8 +96,12 @@ adoption_cover  adoption 作品 0..1，position=0
 发布资格：
 
 - commission/showcase：至少一张 READY studio photo 且恰好一张 primary；
-- adoption：上述条件 + 恰好一张 READY adoption cover；
+- adoption：恰好一张 READY adoption cover；studio photo 可选（只做了单头、客户尚未提供
+  DTD 时没有出厂照），有出厂照时仍必须恰好一张 primary 且全部 READY/有 alt；
 - design sheet 永远可选。
+
+只有 cover 的 adoption 只生成 `adoption-card` 变体，卡片以横版封面进入首页精选、`/works`
+与 `/adoptions`，不合成 `work-card` 或 `detail`。
 
 ### 3.3 公开 usage
 
@@ -446,11 +450,14 @@ PublicWorkDetail
   media
     primaryAssetId
     card
+    cardOrientation      portrait | landscape
+    adoptionCover?       仅 adoption
     gallery[]
     designSheet?
-  navigation
   related[]
 ```
+
+不提供上一件/下一件导航：它无法维护来路，切换后返回目标会退化。
 
 不返回内部 purpose、价格、adoption status 或旧字段。
 

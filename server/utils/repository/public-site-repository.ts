@@ -107,6 +107,8 @@ interface SnapshotEntry {
     priceCnyMinor: number | null
     status: 'available' | 'adopted'
   } | null
+  /** 卡片方向：竖版 primary 出厂照，或仅横版领养封面。 */
+  cardOrientation: 'landscape' | 'portrait'
   designSheet: {
     alt: string
     assetId: string
@@ -321,9 +323,6 @@ function snapshot(
         }]
       })
     const primary = photos.find(photo => photo.primary === 1 && photo.card)
-    const card = primary?.card
-      ? { assetId: primary.assetId, alt: primary.alt, sources: primary.card }
-      : null
     const coverMedia = media.find(item => item.role === 'adoption_cover')
     const coverSources = coverMedia
       ? sourceSet(
@@ -347,11 +346,25 @@ function snapshot(
           status: row.adoptionStatus,
         }
       : null
-    if (!card || !primary || (row.purpose === 'adoption' && !adoption)) {
+    /*
+     * 只做了单头的领养作品没有竖版出厂照，卡片回落到横版领养封面；
+     * 有 primary 出厂照时仍优先竖版出厂照。commission/showcase 没有封面可回落，
+     * 缺少卡片时依旧整条丢弃。
+     */
+    const card = primary?.card
+      ? {
+          card: { assetId: primary.assetId, alt: primary.alt, sources: primary.card },
+          orientation: 'portrait' as const,
+        }
+      : adoption
+        ? { card: adoption.cover, orientation: 'landscape' as const }
+        : null
+    if (!card || (row.purpose === 'adoption' && !adoption)) {
       continue
     }
     entries.push({
       adoption,
+      cardOrientation: card.orientation,
       featured: row.featured === 1,
       designSheet,
       id: row.id,
@@ -360,7 +373,8 @@ function snapshot(
       summary: publicWorkSummaryDtoSchema.parse({
         work: facts,
         href: `/works/${row.slug}`,
-        card,
+        card: card.card,
+        cardOrientation: card.orientation,
       }),
       studioPhotos: photos,
     })
@@ -522,8 +536,7 @@ function adoptionListDto(
 }
 
 function detailFor(entries: readonly SnapshotEntry[], slug: string) {
-  const currentIndex = entries.findIndex(entry => entry.summary.work.slug === slug)
-  const current = entries[currentIndex]
+  const current = entries.find(entry => entry.summary.work.slug === slug)
   if (!current) {
     return null
   }
@@ -535,8 +548,6 @@ function detailFor(entries: readonly SnapshotEntry[], slug: string) {
   ))
   return {
     current,
-    next: entries[currentIndex + 1]?.summary ?? null,
-    previous: entries[currentIndex - 1]?.summary ?? null,
     related: [...samePurpose, ...others].slice(0, 3),
   }
 }
@@ -568,24 +579,15 @@ export function createSqlitePublicSiteRepository(
         media: {
           primaryAssetId,
           card: match.current.summary.card,
+          cardOrientation: match.current.cardOrientation,
+          // 领养作品详情必须能看到横版封面，只做了单头时它是唯一的成果图。
+          ...(match.current.adoption
+            ? { adoptionCover: match.current.adoption.cover }
+            : {}),
           gallery,
           ...(match.current.designSheet
             ? { designSheet: match.current.designSheet }
             : {}),
-        },
-        navigation: {
-          previous: match.previous
-            ? {
-                characterName: match.previous.work.characterName,
-                href: match.previous.href,
-              }
-            : null,
-          next: match.next
-            ? {
-                characterName: match.next.work.characterName,
-                href: match.next.href,
-              }
-            : null,
         },
         related: match.related.map(entry => entry.summary),
       })
@@ -609,8 +611,8 @@ export function createSqlitePublicSiteRepository(
           filter: { valid: false },
         })
       }
+      // 快照只保留有卡片的作品；仅横版封面的领养作品同样要出现在作品展示中。
       const items = search.success ? snapshot(sqlite, mediaBaseUrl, appEnv)
-        .filter(entry => entry.studioPhotos.length > 0)
         .filter(entry => (
           includesSearchText(
             entry.summary.work.characterName,
@@ -675,6 +677,7 @@ export function createFakePublicSiteRepository(
       work: detail.work,
       href: detail.href,
       card: detail.media.card,
+      cardOrientation: detail.media.cardOrientation,
     })
   )
   return {
@@ -689,10 +692,10 @@ export function createFakePublicSiteRepository(
       const page = catalogPage(query.page)
       const parsed = publicWorkListQuerySchema.safeParse({ q: query.q })
       const search = publicCatalogSearchQuerySchema.safeParse(query.q)
+      // 只做了单头的领养作品图集为空但有横版封面卡片，同样进入作品展示。
       const filtered = parsed.success && search.success
         ? details.filter(detail => (
-            detail.media.gallery.length > 0
-            && includesSearchText(detail.work.characterName, search.data ?? '')
+            includesSearchText(detail.work.characterName, search.data ?? '')
           ))
         : []
       return publicWorkListDtoSchema.parse({

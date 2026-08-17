@@ -121,6 +121,52 @@ test.describe('T20 作品列表页', () => {
     expect(box!.height / box!.width).toBeCloseTo(4 / 3, 2)
   })
 
+  test('只做了单头的领养作品用 16:9 横版封面进入作品展示与首页精选', async ({ page }) => {
+    // 客户尚未提供 DTD，作品只有横版领养封面，没有竖版出厂照。
+    await seedPublicCatalog(page, [
+      {
+        slug: 'e2e-public-headonly',
+        characterName: '小绿狗',
+        species: '狗',
+        purpose: 'adoption',
+        adoptionStatus: 'available',
+        adoptionCover: { alt: '小绿狗横版领养封面', width: 1920, height: 1080 },
+        featured: true,
+        sortOrder: 0,
+        photos: [],
+      },
+    ])
+
+    await page.goto('/works')
+    const headOnly = card(page, 'e2e-public-headonly')
+    await expect(headOnly).toBeVisible()
+    await expect(headOnly.locator('.work-identity')).toHaveText('小绿狗 · 狗')
+
+    const frame = headOnly.locator('.work-card__frame')
+    await expect(frame).toHaveAttribute('data-orientation', 'landscape')
+    const box = await frame.boundingBox()
+    expect(box!.width / box!.height).toBeCloseTo(16 / 9, 1)
+    expect(await page.evaluate(() =>
+      document.scrollingElement!.scrollWidth - document.documentElement.clientWidth,
+    )).toBeLessThanOrEqual(1)
+
+    // 首页精选同样容纳横版卡片。
+    await page.goto('/')
+    await expect(
+      page.getByTestId('featured-works').locator('[data-work-slug="e2e-public-headonly"]'),
+    ).toBeVisible()
+
+    // 详情展示领养封面，且没有空的出厂照分区。
+    await page.goto('/works/e2e-public-headonly')
+    await expect(page.getByTestId('work-detail-adoption-cover')).toBeVisible()
+    await expect(page.getByRole('heading', { level: 2, name: '领养封面' })).toBeVisible()
+    await expect(page.locator('section[aria-label="作品图集"]')).toHaveCount(0)
+
+    // /adoptions 卡片仍固定横版进入。
+    await page.goto('/adoptions')
+    await expect(card(page, 'e2e-public-headonly')).toBeVisible()
+  })
+
   test('内部用途不进入公开列表筛选或卡片', async ({ page }) => {
     await seedCatalog(page)
     await page.goto('/works')
@@ -285,22 +331,13 @@ test.describe('T20 作品列表页', () => {
 })
 
 test.describe('T19 作品详情页', () => {
-  test('按发布时间顺序前后浏览，领养旧路径永久跳到统一详情', async ({ page, request }) => {
+  test('详情无前后导航，领养旧路径永久跳到统一详情', async ({ page, request }) => {
     await seedCatalog(page)
     await page.goto('/works/e2e-public-zhima')
 
-    const navigation = page.getByTestId('work-detail-navigation')
-    await expect(navigation.getByRole('link', { name: /上一件\s*蓝湄/u })).toHaveAttribute(
-      'href',
-      '/works/e2e-public-lanmei',
-    )
-    await expect(navigation.getByRole('link', { name: /下一件\s*豆豆/u })).toHaveAttribute(
-      'href',
-      '/works/e2e-public-doudou',
-    )
-    await navigation.getByRole('link', { name: /下一件\s*豆豆/u }).click()
-    await expect(page).toHaveURL(/\/works\/e2e-public-doudou$/u)
-    await expect(page.getByRole('heading', { level: 1, name: '豆豆' })).toBeVisible()
+    // FU-15：上一件/下一件已删除，避免切换后返回目标退化。
+    await expect(page.getByTestId('work-detail-navigation')).toHaveCount(0)
+    await expect(page.getByRole('link', { name: /上一件|下一件/u })).toHaveCount(0)
 
     const redirected = await request.get('/adoptions/e2e-public-lanmei', {
       maxRedirects: 0,
@@ -358,9 +395,10 @@ test.describe('T19 作品详情页', () => {
     expect(imageBox!.width).toBeLessThan(stageBox!.width * 0.9)
     expect(imageBox!.height).toBeGreaterThan(0)
 
-    // 同组件实例内跳到下一件只有 1 张图的作品：选中索引必须复位，不带着索引 1 越界。
-    await page.getByTestId('work-detail-navigation')
-      .getByRole('link', { name: /下一件/u }).click()
+    // 同组件实例内经「继续浏览」跳到只有 1 张图的作品：选中索引必须复位，
+    // 不带着索引 1 越界。
+    await page.locator('.work-detail__related-grid [data-work-slug="e2e-public-zhima"]')
+      .click()
     await expect(page).toHaveURL(/\/works\/e2e-public-zhima$/u)
     await expect(page.getByRole('button', { name: /查看第/u })).toHaveCount(0)
     const nextStage = page.locator('[data-testid="work-gallery"] .work-gallery__stage img')

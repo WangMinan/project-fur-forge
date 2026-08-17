@@ -62,10 +62,7 @@ const dto = computed(() => detail.value?.work)
 const designSheet = computed(() => detail.value?.media.designSheet)
 const studioPhotos = computed(() => detail.value?.media.gallery ?? [])
 const relatedWorks = computed(() => detail.value?.related ?? [])
-const navigation = computed(() => detail.value?.navigation ?? {
-  previous: null,
-  next: null,
-})
+const adoptionCover = computed(() => detail.value?.media.adoptionCover)
 
 useSeoMeta({
   title: computed(() => (dto.value
@@ -150,6 +147,24 @@ onMounted(() => {
     <div class="work-detail__layout">
       <div class="work-detail__media">
         <section
+          v-if="adoptionCover"
+          class="work-detail__media-section"
+          aria-labelledby="adoption-cover-title"
+          data-testid="work-detail-adoption-cover"
+        >
+          <h2 id="adoption-cover-title" class="work-detail__media-title">领养封面</h2>
+          <span class="work-detail__cover">
+            <ResponsivePicture
+              :sources="adoptionCover.sources"
+              :alt="adoptionCover.alt"
+              sizes="(min-width: 1024px) 46rem, 100vw"
+              loading="eager"
+              fetchpriority="high"
+            />
+          </span>
+        </section>
+
+        <section
           v-if="designSheet"
           class="work-detail__media-section"
           aria-labelledby="design-sheet-title"
@@ -164,30 +179,6 @@ onMounted(() => {
         </section>
       </div>
     </div>
-
-    <nav
-      v-if="navigation.previous || navigation.next"
-      class="work-detail__navigation"
-      aria-label="前后浏览作品"
-      data-testid="work-detail-navigation"
-    >
-      <NuxtLink
-        v-if="navigation.previous"
-        :to="navigation.previous.href"
-        class="work-detail__navigation-link"
-      >
-        <span class="work-detail__navigation-direction"><span aria-hidden="true">←</span> 上一件</span>
-        <span>{{ navigation.previous.characterName }}</span>
-      </NuxtLink>
-      <NuxtLink
-        v-if="navigation.next"
-        :to="navigation.next.href"
-        class="work-detail__navigation-link work-detail__navigation-link--next"
-      >
-        <span class="work-detail__navigation-direction">下一件 <span aria-hidden="true">→</span></span>
-        <span>{{ navigation.next.characterName }}</span>
-      </NuxtLink>
-    </nav>
 
     <section
       v-if="relatedWorks.length > 0"
@@ -299,37 +290,25 @@ onMounted(() => {
   padding: 0 var(--public-page-padding);
 }
 
-.work-detail__navigation {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
-  max-width: var(--public-content-wide);
-  margin: var(--space-9) auto 0;
-  padding: 0 var(--public-page-padding);
+/* 领养封面是横版单头成果图：限宽居中，占位背景只包裹图片本身。 */
+.work-detail__cover {
+  display: block;
+  width: 100%;
+  max-width: 46rem;
+  aspect-ratio: var(--ratio-work-hero);
+  background: var(--image-placeholder);
+  border-radius: var(--radius-image);
+  overflow: hidden;
 }
 
-.work-detail__navigation-link {
-  display: grid;
-  gap: var(--space-1);
-  min-height: 4.5rem;
-  padding: var(--space-4) var(--space-5);
-  color: var(--public-text-primary);
-  background: var(--public-bg-secondary);
-  border-radius: var(--radius-md);
+.work-detail__cover :deep(.responsive-picture),
+.work-detail__cover :deep(.responsive-picture__image) {
+  width: 100%;
+  height: 100%;
 }
 
-.work-detail__navigation-link--next {
-  grid-column: 2;
-  text-align: right;
-}
-
-.work-detail__navigation-link:hover {
-  color: var(--public-accent-primary);
-}
-
-.work-detail__navigation-direction {
-  color: var(--public-text-tertiary);
-  font-size: var(--font-size-xs);
+.work-detail__cover :deep(.responsive-picture__image) {
+  object-fit: cover;
 }
 
 .work-detail__related-header {
@@ -359,6 +338,8 @@ onMounted(() => {
 
 .work-detail__related-grid {
   display: grid;
+  /* 竖版出厂照与横版领养封面混排：卡片按自身高度顶端对齐。 */
+  align-items: start;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-5) var(--space-4);
 }

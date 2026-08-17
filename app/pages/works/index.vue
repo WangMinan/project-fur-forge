@@ -149,6 +149,8 @@ function hrefFor(target: number) {
 
 .works-grid {
   display: grid;
+  /* 竖版出厂照与横版领养封面混排：卡片按自身高度顶端对齐，不被拉伸。 */
+  align-items: start;
   gap: var(--space-8) var(--space-6);
   margin-top: var(--space-6);
   /* 作品网格是语义列表，但不显示项目符号与列表缩进：
