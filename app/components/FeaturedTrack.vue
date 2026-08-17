@@ -153,8 +153,6 @@ onBeforeUnmount(() => {
 
 .featured-track__rail {
   display: flex;
-  /* 竖版出厂照与横版领养封面混排：卡片按自身高度顶端对齐。 */
-  align-items: flex-start;
   gap: var(--space-4);
   padding-bottom: var(--space-2);
   overflow-x: auto;
@@ -167,20 +165,26 @@ onBeforeUnmount(() => {
   display: none;
 }
 
+/*
+ * 等高：轨道内所有卡片高度固定为 --featured-row-height，宽度按各自
+ * --card-ratio 伸展，因此横版领养封面卡更宽、竖版出厂照卡更窄但高度一致。
+ * 横向轨道不需要铺满行宽，只需高度统一。
+ */
 .featured-track__item {
-  flex: 0 0 68%;
+  flex: 0 0 calc(var(--card-ratio) * var(--featured-row-height));
+  max-width: 100%;
   scroll-snap-align: start;
 }
 
-@media (min-width: 768px) {
-  .featured-track__item {
-    flex-basis: 40%;
+@media (max-width: 767px) {
+  .featured-track__rail {
+    --featured-row-height: 15rem;
   }
 }
 
 @media (min-width: 1024px) {
-  .featured-track__item {
-    flex-basis: 24rem;
+  .featured-track__rail {
+    --featured-row-height: 22rem;
   }
 }
 </style>

@@ -71,7 +71,6 @@ describe('public work detail media', () => {
       adoptionCover: card,
       gallery: [],
     },
-    related: [],
   }
 
   it('accepts an adoption cover with an empty gallery', () => {
@@ -85,6 +84,13 @@ describe('public work detail media', () => {
     expect(() => publicWorkDetailDtoSchema.parse({
       ...detail,
       navigation: { previous: null, next: null },
+    })).toThrow()
+  })
+
+  it('no longer accepts related works', () => {
+    expect(() => publicWorkDetailDtoSchema.parse({
+      ...detail,
+      related: [],
     })).toThrow()
   })
 })

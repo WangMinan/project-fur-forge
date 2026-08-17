@@ -105,6 +105,13 @@
   /** 领养卡设定图框：横版设定图的常见比例，用于让并排卡片对齐。 */
   --ratio-design-sheet: 16 / 9;
   --ratio-work-hero: 16 / 9;
+
+  /**
+   * 作品卡等高排版的行高：同一行内所有卡片高度取这个值，
+   * 宽度由各自的 --card-ratio 决定，因此横版卡更宽、竖版卡更窄但高度一致。
+   */
+  --works-row-height: 15rem;
+  --featured-row-height: 20rem;
   --hero-min-height: 100svh;
   --image-placeholder: #f1f3f6;
   --image-hover-scale: 1.02;
@@ -195,6 +202,22 @@ button {
   outline: 3px solid var(--public-focus-ring);
   outline-offset: 2px;
   border-radius: var(--radius-xs);
+}
+
+/**
+ * 作品卡宽高比的唯一真值，与公开变体自身比例一致：
+ * primary 出厂照 `work-card` 恒 3:4，仅横版领养封面 `adoption-card` 恒 16:9。
+ * 定义在全局是因为等高排版的容器（/works 网格项、首页轨道项）也要按同一比例
+ * 计算宽度；CSS 变量只向下继承，放在卡片内部父级读不到。
+ */
+.work-card--portrait,
+.works-grid__item--portrait {
+  --card-ratio: 0.75;
+}
+
+.work-card--landscape,
+.works-grid__item--landscape {
+  --card-ratio: 1.7778;
 }
 
 .skip-link {

@@ -645,9 +645,9 @@ describe('T19/T20 public repository contracts', () => {
       1600,
       2400,
     ])
-    expect(detail.related[0]?.work.slug).toBe('second-work')
-    // FU-15：详情不再提供上一件/下一件导航。
+    // FU-15/FU-19：详情不再提供上一件/下一件导航，也不再提供「继续浏览」。
     expect(detail).not.toHaveProperty('navigation')
+    expect(detail).not.toHaveProperty('related')
     const visible = JSON.stringify(detail)
     expect(visible).not.toContain('legacy-retired-field-marker')
     expect(visible).not.toContain('/original/')
@@ -683,7 +683,6 @@ describe('T19/T20 public repository contracts', () => {
           characterName: `分页作品 ${index + 1}`,
         },
         href: `/works/${slug}`,
-        related: [],
       }
     })
     const pagedFake = createFakePublicSiteRepository({

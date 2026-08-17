@@ -143,6 +143,32 @@
 - [x] **FU-16 · 测试与文档**：新增 cover-only 发布/投影/契约用例与 E2E 混排用例，更新 SPEC §8.2/8.3/9.2、models §3.2/§9.2、DATA-MIGRATION §12.1 与 STATE。
 - [x] **GATE-E-FU4 · 仅横版领养本地门禁**：lint/typecheck、unit 192/192、integration 204/204、production build（含 content guard）、Chromium public-works 21/21、public-home/adoptions/search/seo 44/44、admin-publication/r3-stage-d/admin-home 18/18 通过；真实本地数据在 390/768/1023/1024/1440 五视口验证混排比例、顶端对齐、零横向溢出、封面解码与返回来路，console 无错误。独立 Review、用户验收与生产执行不由实现者代签。
 
+### E.5 · 2026-08-17 混排排版复核（等高铺满与单一图集）
+
+用户复核 FU-11～FU-16 的展示结果：等宽混排「很难看、大面积空白」，详情主图「忽左忽居中」，
+且「继续浏览」不需要。
+
+- [x] **FU-17 · 卡片等高铺满**：`--card-ratio`（3:4 / 16:9）成为卡片比例唯一真值，定义在
+  `public-base.css` 以便容器同读。`/works` 由固定列数 grid 改为 flex justified：`flex-grow` 与
+  `flex-basis` 同时正比于比例，同行放大系数相同 → 高度一致且行宽铺满、右边缘对齐；末行孤卡
+  上限为行高 1.25 倍，不拉成巨图。首页轨道改为按比例 × 固定行高，只统一高度。
+- [x] **FU-18 · 详情单一图集**：领养封面追加到 `gallery` 末尾，删除独立「领养封面」分区与
+  `.work-detail__cover`；主图与缩略图成组居中、缩略图紧贴右侧竖排（<768px 回落单列横排）；
+  主图尺寸由 `clamp(20rem, 100vh - 15rem, 46rem)` 高度上限 × 自身比例决定。
+- [x] **FU-19 · 删除「继续浏览」**：移除详情页 related 区块与样式、`publicWorkDetailDtoSchema.related`、
+  `detailFor()` 的 same/other purpose 计算与 `SnapshotEntry.purpose`。原经 related 跳转的两个
+  E2E 用例改为经 `/works` 列表卡片进入，保留「同组件实例内 slug 变化后内容/图集/SEO 更新」原意。
+- [x] **FU-20 · 测试与文档**：新增等高铺满 E2E（同行等高、比例、右边缘 gap ≤ 2、轨道等高）与
+  单一图集断言；更新 SPEC §8.2/8.3、models §9.2、STATE §2。
+- [x] **GATE-E-FU5 · 混排排版本地门禁**：lint/typecheck、unit 193/193、integration 204/204、
+  production build（含 content guard）、verify、Chromium public-works/adoptions/t09-ui 43/43 与
+  public-home/search/seo/r3-stage-d 38/38 通过。真实本地数据以 CDP 在 390/768/1023/1024/1440
+  五视口实测：`/works` 同行等高且 rightGap=0、首页轨道三卡同高 352px、详情主图 468×702 且缩略图
+  间距 16px、零横向溢出。独立 Review、用户验收与生产执行不由实现者代签。
+
+  说明：一次 `pnpm test:integration` 曾因 dev server 抢占 CPU 使 FFmpeg Lanczos 用例 30s 超时；
+  停掉 dev server 后单文件 18/18、全量 204/204 通过，非本轮改动导致。
+
 ## F. 最终评审与发布
 
 - [ ] **T37 · 全量质量门禁**：lint、typecheck、unit、integration、E2E、production build、verify、content guard。

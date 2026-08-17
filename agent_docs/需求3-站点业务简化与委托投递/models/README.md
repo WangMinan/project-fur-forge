@@ -454,10 +454,10 @@ PublicWorkDetail
     adoptionCover?       仅 adoption
     gallery[]
     designSheet?
-  related[]
 ```
 
-不提供上一件/下一件导航：它无法维护来路，切换后返回目标会退化。
+不提供上一件/下一件导航，也不提供 `related`：两者都无法维护来路，切换后返回目标会退化。
+前端把 `adoptionCover` 追加到 `gallery` 之后渲染为同一个图集。
 
 不返回内部 purpose、价格、adoption status 或旧字段。
 
