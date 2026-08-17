@@ -945,16 +945,18 @@ export function getPublicSafeWorkPreview(
   const work = getManagedWork(sqlite, id)
   return publicSafeWorkPreviewDtoSchema.parse({
     ...work,
+    // 与 checkWorkPublication 同一规则：领养作品有合格横版封面时出厂照可选，
+    // 只做了单头、尚未拿到 DTD 的领养作品也算媒体就绪。
     mediaReady: (work.purpose === 'adoption'
       ? work.adoptionStatus !== null
         && work.adoptionCover !== null
         && work.adoptionCover.status === 'READY'
         && Boolean(work.adoptionCover.alt?.trim())
-      : true)
-      && work.studioPhotos.length > 0
-      && work.studioPhotos.filter(photo => photo.primary).length === 1
-      && work.studioPhotos.every(photo =>
-        photo.status === 'READY' && photo.alt.trim() !== '',
-      ),
+      : work.studioPhotos.length > 0)
+      && (work.studioPhotos.length === 0
+        || (work.studioPhotos.filter(photo => photo.primary).length === 1
+          && work.studioPhotos.every(photo =>
+            photo.status === 'READY' && photo.alt.trim() !== '',
+          ))),
   })
 }

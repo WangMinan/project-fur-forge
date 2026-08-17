@@ -281,8 +281,19 @@ export function checkWorkPublication(
       blockers.push('DESIGN_SHEET_ALT_REQUIRED')
     }
   }
+  /*
+   * 领养常见场景是只做单头：有横版 cover，客户交付 DTD 前做不出身体，因此没有出厂照。
+   * 这类作品允许发布，出厂照退化为 0..5 可选；commission/showcase 仍必须有出厂照。
+   * cover 自身的 READY/alt 由上面的 ADOPTION_COVER_* 阻断项负责。
+   */
   if (publicationPhotos.length === 0) {
-    blockers.push('STUDIO_PHOTO_REQUIRED')
+    if (work.purpose !== 'adoption') {
+      blockers.push('STUDIO_PHOTO_REQUIRED')
+    }
+    else if (adoptionCovers.length === 0) {
+      // cover 与出厂照都没有：领养作品没有任何可公开的成果图。
+      blockers.push('ADOPTION_MEDIA_REQUIRED')
+    }
   }
   if (
     publicationPhotos.length > 0

@@ -262,7 +262,10 @@ commission / portrait
 
 ### 8.2 `/works`
 
-- 卡片只显示名称、物种和 3:4 竖版成果图；
+- 卡片只显示名称、物种和成果图；
+- 卡片默认使用 3:4 竖版 primary 出厂照。只有横版 `adoption_cover` 的领养作品回落到 16:9 横版
+  封面，并在首页精选与 `/works` 网格中与竖版卡片混排（顶端对齐，不拉伸、不裁成竖版）；有竖版
+  出厂照时仍优先出厂照。`/adoptions` 卡片始终固定横版封面进入；
 - 删除用途/装型筛选；
 - 保留名称搜索、分页、发布时间倒序；
 - 首页精选复用同一简化摘要，并只由 published/featured/sort order 决定；adoption status 不排除已领养的精选作品。
@@ -270,7 +273,10 @@ commission / portrait
 ### 8.3 `/works/{slug}`
 
 - 只显示名称、物种、图集；
-- 可保留前后浏览和相关作品；
+- 领养作品必须展示横版 `adoption_cover`；只做了单头时它是唯一成果图，此时不渲染空的出厂照分区；
+- 保留「继续浏览」相关作品；不提供上一件/下一件导航（它无法维护来路，切换后返回目标会从
+  `/adoptions` 退化为 `/works`）；
+- 返回链接按 `history.state.back` 区分 `/adoptions` 与 `/works`；
 - 不显示主人、装型、用途、状态、价格、属性或展会信息；
 - SEO/JSON-LD 只使用名称、物种、图片和工作室事实。
 
@@ -295,10 +301,14 @@ Expand 阶段 `adoption_status` 允许暂时为空。自动迁移只处理语义
 每件已发布 adoption 必须具备：
 
 - 恰好一张 READY `adoption_cover`：横版单头成果照，用于 `/adoptions` 和首页当前领养；
-- 至少一张 READY `studio_photo`，且恰好一张 primary：用于 `/works` 和详情；
+- 0..5 张 READY `studio_photo`：可选。领养常见场景是只做了单头，客户提供 DTD 前做不出身体，
+  因此没有竖版出厂照，这类作品允许发布。有出厂照时必须恰好一张 primary，且全部 READY、有
+  alt；用于 `/works` 卡片和详情图集；
 - 0..1 张 `design_sheet`：只作可选详情素材，不是列表图或发布门禁。
 
-不得自动生成 cover。
+commission/showcase 不变：仍必须至少一张 READY `studio_photo` 且恰好一张 primary。
+
+不得自动生成 cover，也不得用 cover 合成 `work-card` 或 `detail` 变体。
 
 低分辨率 `studio_photo` / `design_sheet` 发布时复用需求1的私有 FFmpeg Lanczos 适配链并保留永久原图。普通大文件压缩 preprocess 的最长边仍为 4096 px；仅固定角色与 `studio-photo-upscale-lanczos-v1` / `design-sheet-upscale-lanczos-v1` 精确匹配的作品适配源，可为保持原比例并满足公开用途最小尺寸而超过 4096 px，但仍不得超过通用 12000 px 边长和 20MB OSS 处理输入上限。
 

@@ -318,6 +318,20 @@ work_feature_tags
 
 临时 fresh DB、带合成既有数据的 DB、前置失败停止、成功、重入、foreign key 和 `PRAGMA integrity_check` 已通过。这里的证据不等于生产数据已确认或生产迁移已执行：景宸必须先逐条判断真实歧义领养记录，补 cover/主出厂照或下架，使三项计数归零；任何门禁、外键、integrity 或 readiness 失败均保持停止，只能以前向修复处理。
 
+### 12.1 `0039` primary studio photo 停止点与仅横版领养的关系
+
+FU-11 之后 adoption 的**运行时**发布门禁只要求合格 `adoption_cover`，出厂照可选。但
+`0039` 的第三个停止点仍要求每件 published work 具备 READY 主出厂照，这是**已冻结的历史迁移**，
+不改写：
+
+- `0039` 是一次性 contract 前置校验，不是运行时约束；数据库没有「已发布必须有主出厂照」的
+  trigger，因此它不会阻止应用发布只有 cover 的领养作品；
+- 顺序约束：生产库执行 `0039` 时，若已存在只有 cover 的 published adoption，迁移会以
+  `R3_D_CONTRACT_BLOCKED_PRIMARY_STUDIO_PHOTO` 停止。因此在 `0039` 执行完成前，不得在生产
+  发布只有横版封面的领养作品；`0039` 之后再发布不受影响；
+- 如果生产已经出现这种记录并需要先跑 `0039`，只能新增前向迁移放宽该计数（不重写 `0039`），
+  并单独记录该决定，不得在本轮顺手执行。
+
 `0040` 只收缩 FAQ contract，不改变匿名委托私有媒体的保留周期。委托过期/失败/取消/未消费对象继续走匿名 cleanup；不得生成 PUBLIC variant、ESA URL 或把完整 Object Key 写入执行记录。
 
 `0042` 的生产 handoff 必须先以脱敏计数确认重复 pending 手机号为 0；如非零，由工作室逐条决定接受/拒绝，Agent 不得猜测或自动合并。fresh、既有库、阻断与重入路径只使用临时数据库验证。

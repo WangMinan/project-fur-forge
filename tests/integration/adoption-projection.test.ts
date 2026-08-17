@@ -138,7 +138,55 @@ describe('R3-D adoption public projection', () => {
     expect(detail?.media.primaryAssetId)
       .toBe('33333333-3333-4333-8333-333333333332')
     expect(detail?.media.designSheet).toBeUndefined()
+    // 有出厂照时卡片仍优先竖版出厂照，封面同时进入详情。
+    expect(detail?.media.cardOrientation).toBe('portrait')
+    expect(detail?.media.card.assetId).toBe('33333333-3333-4333-8333-333333333332')
+    expect(detail?.media.adoptionCover?.assetId)
+      .toBe('33333333-3333-4333-8333-333333333331')
     expect(JSON.stringify({ adoption, detail })).not.toContain('/original/')
+  })
+
+  it('publishes a head-only adoption into works, featured and detail from its cover alone', async () => {
+    const id = '66666666-6666-4666-8666-666666666660'
+    const coverId = '66666666-6666-4666-8666-666666666661'
+    insertAdoption({ id, name: '小绿狗', slug: 'green-doggy', status: 'available' })
+    await attachPublicAsset({ id: coverId, role: 'adoption_cover', workId: id })
+    sqlite.prepare(`UPDATE works SET featured = 1`).run()
+
+    const repository = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
+    const detail = repository.getWorkBySlug('green-doggy')
+
+    // 只有横版封面：作品展示、首页精选与详情都必须能看到它。
+    expect(repository.listWorks().items.map(item => item.work.slug))
+      .toEqual(['green-doggy'])
+    expect(repository.listFeaturedWorks().items.map(item => item.work.slug))
+      .toEqual(['green-doggy'])
+    expect(repository.listAdoptions().items.map(item => item.cover.assetId))
+      .toEqual([coverId])
+
+    // 卡片回落到横版封面；详情没有出厂照但有封面。
+    expect(detail?.media.cardOrientation).toBe('landscape')
+    expect(detail?.media.card.assetId).toBe(coverId)
+    expect(detail?.media.adoptionCover?.assetId).toBe(coverId)
+    expect(detail?.media.gallery).toEqual([])
+    expect(detail?.media.primaryAssetId).toBeNull()
+    expect(JSON.stringify(detail)).not.toContain('/original/')
+  })
+
+  it('still hides a published commission work that has no primary studio photo', () => {
+    sqlite.prepare(`
+      INSERT INTO works (
+        id, slug, character_name, species, purpose, publication_status,
+        sort_order, featured, version, published_at, created_at, updated_at
+      ) VALUES (?, 'photoless', '无照委托', '犬科', 'commission',
+        'published', 0, 1, 1, ?, ?, ?)
+    `).run('77777777-7777-4777-8777-777777777770', NOW, NOW, NOW)
+
+    const repository = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
+    // 普通作品没有封面可回落，缺少卡片时行为不变。
+    expect(repository.listWorks().items).toEqual([])
+    expect(repository.listFeaturedWorks().items).toEqual([])
+    expect(repository.getWorkBySlug('photoless')).toBeNull()
   })
 
   it('keeps adopted works in featured while excluding them from current home adoptions', async () => {
