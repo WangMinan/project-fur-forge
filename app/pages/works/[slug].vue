@@ -59,26 +59,27 @@ watch(error, (err) => {
 })
 
 const dto = computed(() => detail.value?.work)
-const designSheet = computed(() => detail.value?.media.designSheet)
 /**
- * 单一媒体区：出厂照在前、领养封面在后。合成一个图集而不是两个独立区块，
- * 主图位置因此只有一处，不会在限宽居中与靠左之间跳动。
- * 只做了单头的领养作品图集内只有封面一张，缩略图行按长度自动隐藏。
+ * 单一媒体区：出厂照 → 领养封面 → 设定图 合成同一个查看序列。
+ * 成果图（出厂照、封面）在前，参考图（设定图）在后。三类图片共用左大图 +
+ * 右缩略图布局，主图位置因此只有一处，不会在限宽居中与靠左之间跳动。
+ * 只有单张时缩略图行按长度自动隐藏。
  */
 const gallery = computed(() => {
   const media = detail.value?.media
   if (!media) {
     return []
   }
-  const cover = media.adoptionCover
-  return cover
-    ? [...media.gallery, {
-        assetId: cover.assetId,
-        alt: cover.alt,
-        position: media.gallery.length,
-        sources: cover.sources,
-      }]
-    : media.gallery
+  const extras = [media.adoptionCover, media.designSheet].filter(Boolean)
+  return [
+    ...media.gallery,
+    ...extras.map((item, index) => ({
+      assetId: item!.assetId,
+      alt: item!.alt,
+      position: media.gallery.length + index,
+      sources: item!.sources,
+    })),
+  ]
 })
 
 useSeoMeta({
@@ -161,15 +162,6 @@ onMounted(() => {
 
     <div class="work-detail__layout">
       <div class="work-detail__media">
-        <section
-          v-if="designSheet"
-          class="work-detail__media-section"
-          aria-labelledby="design-sheet-title"
-        >
-          <h2 id="design-sheet-title" class="work-detail__media-title">设定图</h2>
-          <AdoptionDesignSheet :design-sheet="designSheet" />
-        </section>
-
         <section v-if="gallery.length > 0" class="work-detail__media-section" aria-label="作品图集">
           <h2 id="studio-photos-title" class="work-detail__media-title">出厂照 / 作品图集</h2>
           <WorkDetailGallery :gallery="gallery" :work-name="dto.characterName" />

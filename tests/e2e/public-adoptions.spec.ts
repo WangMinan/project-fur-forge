@@ -114,21 +114,32 @@ test('状态与价格收敛为紧凑信息带，不放大两行图片间距', as
   expect(nextCanvas!.y - (firstCanvas!.y + firstCanvas!.height)).toBeLessThanOrEqual(180)
 })
 
-test('卡片进入统一详情并明确分开设定图与出厂照', async ({ page }) => {
+test('卡片进入统一详情，设定图并入同一查看序列', async ({ page }) => {
   await page.goto('/adoptions')
   await page.locator(`[data-work-slug="${regularSlug}"]`).click()
   await expect(page).toHaveURL(new RegExp(`/works/${regularSlug}$`, 'u'))
 
-  await expect(page.getByRole('heading', { level: 2, name: '设定图' })).toBeVisible()
-  await expect(page.getByTestId('public-design-sheet')).toBeVisible()
+  // 出厂照、领养封面与设定图合成同一个图集，不再有独立「设定图」分区。
   await expect(page.getByRole('heading', { level: 2, name: '出厂照 / 作品图集' })).toBeVisible()
   await expect(page.getByTestId('work-gallery')).toBeVisible()
-  expect(await page.getByTestId('public-design-sheet').locator('img').evaluate(
-    node => getComputedStyle(node).objectFit,
-  )).toBe('contain')
+  await expect(page.getByRole('heading', { level: 2, name: '设定图' })).toHaveCount(0)
+  await expect(page.getByTestId('public-design-sheet')).toHaveCount(0)
+
+  // 设定图作为序列最后一张可切换查看，且以 contain 完整显示。
+  const thumbs = page.getByRole('button', { name: /查看第 \d 张，共 3 张/ })
+  await expect(thumbs).toHaveCount(3)
+  await thumbs.nth(2).click()
+  // 交叉淡化期间舞台内短暂有两张图，等过渡结束只剩一张再断言。
+  const stage = page.locator('[data-testid="work-gallery"] .work-gallery__stage img')
+  await expect(stage).toHaveCount(1)
+  await expect(stage).toHaveAttribute(
+    'alt',
+    '星糖完整横版设定图，含正面、侧面、背面与色板',
+  )
+  expect(await stage.evaluate(node => getComputedStyle(node).objectFit)).toBe('contain')
 })
 
-test('普通委托详情不渲染空设定图区', async ({ page }) => {
+test('普通委托详情只有出厂照序列', async ({ page }) => {
   await page.goto('/works/e2e-public-commission-no-design')
   await expect(page.getByTestId('public-design-sheet')).toHaveCount(0)
   await expect(page.getByRole('heading', { level: 2, name: '设定图' })).toHaveCount(0)
@@ -243,7 +254,7 @@ test('三视口图片解码、contain、无横向溢出且 DOM 无私有 Key', a
       await page.goto(path, { waitUntil: 'domcontentloaded' })
       const image = path === '/adoptions'
         ? page.locator(`[data-work-slug="${regularSlug}"] img`)
-        : page.getByTestId('public-design-sheet').locator('img')
+        : page.locator('[data-testid="work-gallery"] .work-gallery__stage img')
       await expect(image).toHaveJSProperty('complete', true)
       expect(await image.evaluate(node => (node as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
       expect(await image.evaluate(node => getComputedStyle(node).objectFit)).toBe(

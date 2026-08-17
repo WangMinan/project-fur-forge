@@ -74,6 +74,11 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+/*
+ * 底色用深色而非浅色 --image-placeholder：大图解码完成前占位底先出现，浅底会
+ * 造成切到本页时「浅色闪一下再变成图」。深底与图片上方的暗渐变同色系，解码前后
+ * 亮度接近，闪动不可见；白色文字也始终压在深底上，对比度不会瞬时下降。
+ */
 .commission-lead {
   position: relative;
   display: grid;
@@ -81,7 +86,7 @@ onBeforeUnmount(() => {
   overflow: hidden;
   isolation: isolate;
   border-radius: var(--radius-md);
-  background: var(--image-placeholder);
+  background: #191f2a;
 }
 
 .commission-lead::after {

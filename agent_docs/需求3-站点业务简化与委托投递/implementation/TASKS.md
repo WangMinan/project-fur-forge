@@ -169,6 +169,26 @@
   说明：一次 `pnpm test:integration` 曾因 dev server 抢占 CPU 使 FFmpeg Lanczos 用例 30s 超时；
   停掉 dev server 后单文件 18/18、全量 204/204 通过，非本轮改动导致。
 
+### E.6 · 2026-08-17 查看序列、切换动效与页面切换修复
+
+- [x] **FU-21 · 设定图并入查看序列**：详情页删除独立「设定图」分区，`designSheet` 追加到
+  `gallery`（出厂照 → 领养封面 → 设定图），三类图片共用同一套左大图 + 右缩略图布局。
+  `AdoptionDesignSheet.vue` 公开端不再使用。
+- [x] **FU-22 · 缩略图切换动效**：主图交叉淡化 250ms。舞台改 grid 单格并让新旧两图共用
+  `grid-area`，过渡期间两图叠放，不会并排撑宽布局。
+- [x] **FU-23 · 缩略图列固定在右侧**：桌面改为「舞台 `flex: 1 1 auto` + 缩略图列 `flex: 0 0 auto`」。
+  缩略图贴住内容容器右边缘，位置与当前图片宽度无关，切换竖图/横图不再左右移动；舞台吃掉剩余
+  宽度，主图宽度取「高度上限 × 自身比例」与舞台宽度的较小值，横图铺满且不被截断，也不浪费屏幕宽度。
+- [x] **FU-24 · 页面切换闪烁修复**：过渡从 layout 自包 `<Transition>` 迁移到 Nuxt `pageTransition`。
+  CDP 逐帧取证：修复前新页面 1007ms 已 opacity 1 渲染、3023ms 才被打回 0.6；修复后 358ms 首帧即为
+  `enter-from` 0.6 并单调升到 1。focus 归还改用 `router.afterEach`，管理端不参与动效。
+- [x] **GATE-E-FU6 · 本地门禁**：lint/typecheck、unit 193/193、integration 204/204、production
+  build（含 content guard）、Chromium public-works/adoptions/r3-stage-d/t09-ui 46/46 与
+  public-home/search/seo/information/analytics 42/42 通过。CDP 实测：`green-doggy` 横图 1173×660
+  按原始 1.78 比例不截断、设定图 1096×660 按 1.66 不截断、缩略图列在切换前后恒定 x=1280、
+  五视口零横向溢出、焦点归还 `main-content`、管理端 HTML 无 `public-page-*` 类。
+  独立 Review、用户验收与生产执行不由实现者代签。
+
 ## F. 最终评审与发布
 
 - [ ] **T37 · 全量质量门禁**：lint、typecheck、unit、integration、E2E、production build、verify、content guard。

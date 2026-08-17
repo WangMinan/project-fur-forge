@@ -60,17 +60,23 @@ const activeImageStyle = computed(() => {
       :class="`work-gallery__stage--${activeOrientation}`"
       :data-orientation="activeOrientation"
     >
-      <ResponsivePicture
-        v-if="activeItem"
-        :key="activeItem.assetId"
-        class="work-gallery__image"
-        :sources="activeItem.sources"
-        :alt="activeItem.alt"
-        :style="activeImageStyle"
-        loading="eager"
-        fetchpriority="high"
-        sizes="(min-width: 1024px) 58vw, 100vw"
-      />
+      <!--
+        切换主图时做淡入淡出。out-in 会先等旧图移出再放新图，中间露出占位底色；
+        默认的同时模式让两张图重叠交叉淡化，视觉上是一次连续过渡。
+      -->
+      <Transition name="work-gallery-fade">
+        <ResponsivePicture
+          v-if="activeItem"
+          :key="activeItem.assetId"
+          class="work-gallery__image"
+          :sources="activeItem.sources"
+          :alt="activeItem.alt"
+          :style="activeImageStyle"
+          loading="eager"
+          fetchpriority="high"
+          sizes="(min-width: 1024px) 58vw, 100vw"
+        />
+      </Transition>
     </div>
 
     <div
@@ -100,33 +106,63 @@ const activeImageStyle = computed(() => {
 
 <style scoped>
 /*
- * 主图在自己那一列内居中，缩略图固定在右侧竖排：横图与竖图共用同一套规则，
- * 不再出现「横图靠左、竖图居中」的跳动。两种方向都用 contain，不裁掉作品。
+ * 两列：左侧舞台吃掉全部剩余宽度，右侧缩略图列定宽。
+ *
+ * 舞台宽度与当前图片宽度无关，所以缩略图列的位置固定，不会随竖图/横图切换左右
+ * 移动；同时横图能用满整个舞台宽度，不被截断，也不浪费屏幕宽度。
  * 窄屏回落为单列，缩略图横排在主图下方。
  */
 .work-gallery {
   display: flex;
   flex-wrap: wrap;
-  /* 主图与缩略图作为一组整体居中：缩略图紧贴主图右侧，不被推到远处。 */
-  justify-content: center;
   align-items: flex-start;
   gap: var(--space-3);
 }
 
+/*
+ * grid 单格：交叉淡化期间新旧两张图占同一格并叠在一起，不会并排把布局挤宽。
+ * 不设 overflow: hidden——圆角在图片自身上，裁切只会切掉宽图。
+ */
 .work-gallery__stage {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-areas: 'stage';
+  flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
+}
+
+.work-gallery__stage :deep(.work-gallery__image) {
+  grid-area: stage;
+  place-self: center;
+}
+
+/* 淡入淡出：离场图脱离文档流交给 grid 叠放，不影响入场图的尺寸计算。 */
+.work-gallery-fade-enter-active,
+.work-gallery-fade-leave-active {
+  transition: opacity var(--duration-normal) var(--easing-standard);
+}
+
+.work-gallery-fade-enter-from,
+.work-gallery-fade-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .work-gallery-fade-enter-active,
+  .work-gallery-fade-leave-active {
+    transition: none;
+  }
 }
 
 /*
- * 高度上限决定实际尺寸：宽度 = 上限高度 × 图片自身比例。竖图因此不会顶穿一屏，
- * 横图也能用足可用宽度。占位背景只包裹图片矩形本身，不铺满整栏。
+ * 尺寸取「高度上限换算出的宽度」与「舞台可用宽度」的较小值：
+ * 竖图受高度上限约束，不顶穿一屏；横图一路放大到铺满舞台宽度，既不被截断
+ * 也不浪费屏幕宽度。占位背景只包裹图片矩形本身，不铺满整栏。
  */
 .work-gallery__stage :deep(.work-gallery__image) {
-  width: calc(clamp(20rem, calc(100vh - 15rem), 46rem) * var(--gallery-aspect-ratio));
-  max-width: 100%;
+  width: min(
+    100%,
+    calc(clamp(20rem, calc(100vh - 15rem), 46rem) * var(--gallery-aspect-ratio))
+  );
   background: var(--image-placeholder);
   border-radius: var(--radius-image);
   overflow: hidden;
@@ -144,19 +180,20 @@ const activeImageStyle = computed(() => {
   gap: var(--space-2);
 }
 
-/* 桌面：缩略图竖排在主图右侧。 */
+/*
+ * 桌面：缩略图列定宽贴在右边缘，舞台吃掉剩余宽度。
+ *
+ * 缩略图位置因此与当前图片宽度无关，切换竖图/横图时不会左右移动；舞台是整块
+ * 剩余宽度，横图能一直放大到铺满它为止。
+ */
 @media (min-width: 768px) {
   .work-gallery {
     flex-wrap: nowrap;
     gap: var(--space-4);
   }
 
-  .work-gallery__stage {
-    flex: 0 1 auto;
-  }
-
   .work-gallery__thumbs {
-    flex: none;
+    flex: 0 0 auto;
     flex-direction: column;
     flex-wrap: nowrap;
   }

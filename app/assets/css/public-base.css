@@ -205,6 +205,39 @@ button {
 }
 
 /**
+ * 公开端页面切换动效。
+ *
+ * 必须用 Nuxt 的 `pageTransition`（app.vue 上的 `:transition`）而不是在 layout 里
+ * 自己包一层 `<Transition :key="route.path">`：`NuxtPage` 外面有 Suspense，会先把
+ * 新页面的 useFetch 解析完再交换内容。layout 层的 Transition 在那之外，等它收到
+ * key 变化时新页面已经以 opacity 1 画在屏幕上了，此时才补 enter-from 就会把已显示的
+ * 内容瞬间打回半透明——表现为「先完整加载，再闪一下，然后才走动效」。
+ * `pageTransition` 挂在 Suspense 内部，入场从第一帧就是正确的起始状态。
+ *
+ * 入场 opacity 从 0.6 起步而非 0：任何时刻画面都有内容，不会闪白底。
+ * out-in 模式让旧页先离场，避免两页并排导致布局跳动。
+ */
+.public-page-enter-active {
+  transition:
+    opacity var(--duration-normal) var(--easing-standard),
+    transform var(--duration-normal) var(--easing-standard);
+}
+
+.public-page-leave-active {
+  pointer-events: none;
+  transition: opacity var(--duration-fast) var(--easing-exit);
+}
+
+.public-page-enter-from {
+  opacity: 0.6;
+  transform: translateY(0.5rem);
+}
+
+.public-page-leave-to {
+  opacity: 0;
+}
+
+/**
  * 作品卡宽高比的唯一真值，与公开变体自身比例一致：
  * primary 出厂照 `work-card` 恒 3:4，仅横版领养封面 `adoption-card` 恒 16:9。
  * 定义在全局是因为等高排版的容器（/works 网格项、首页轨道项）也要按同一比例
