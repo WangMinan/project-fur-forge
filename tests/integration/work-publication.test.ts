@@ -152,19 +152,27 @@ function createRegularAdoption() {
   }, NOW)
 }
 
+/**
+ * `studioPhoto: false` 复现只做了单头的领养作品：只有横版封面，客户尚未提供 DTD
+ * 因此没有竖版出厂照。
+ */
 function attachRequiredAdoptionMedia(
   work: ReturnType<typeof createRegularAdoption>,
+  options: { studioPhoto?: boolean } = {},
 ) {
+  const withStudioPhoto = options.studioPhoto ?? true
   const photoContent = createSyntheticWatermarkPng()
   const coverContent = createSyntheticSourcePng(3200, 1800)
   const sources = [
-    {
-      assetId: ASSET_ID,
-      content: photoContent,
-      height: 2400,
-      role: 'studio_photo' as const,
-      width: 3200,
-    },
+    ...(withStudioPhoto
+      ? [{
+          assetId: ASSET_ID,
+          content: photoContent,
+          height: 2400,
+          role: 'studio_photo' as const,
+          width: 3200,
+        }]
+      : []),
     {
       assetId: COVER_ASSET_ID,
       content: coverContent,
@@ -225,20 +233,22 @@ function attachRequiredAdoptionMedia(
       width: source.width,
     })
   }
-  const withPhoto = replaceManagedStudioPhotos(
-    sqlite,
-    work.id,
-    work.version,
-    [{
-      assetId: ASSET_ID,
-      alt: '合成主出厂照',
-      primary: true,
-      focalX: 0.5,
-      focalY: 0.5,
-      crop: { x: 0, y: 0, width: 1, height: 1 },
-    }],
-    NOW + 1_000,
-  )
+  const withPhoto = withStudioPhoto
+    ? replaceManagedStudioPhotos(
+        sqlite,
+        work.id,
+        work.version,
+        [{
+          assetId: ASSET_ID,
+          alt: '合成主出厂照',
+          primary: true,
+          focalX: 0.5,
+          focalY: 0.5,
+          crop: { x: 0, y: 0, width: 1, height: 1 },
+        }],
+        NOW + 1_000,
+      )
+    : work
   return replaceManagedAdoptionCover(
     sqlite,
     work.id,
@@ -889,11 +899,12 @@ describe('dual-bucket work publication operations', () => {
     expect(storage.deletedPublicKeys).toHaveLength(12)
   })
 
-  it('requires an explicit status, cover and primary photo while keeping the design sheet optional', async () => {
+  it('requires an explicit status and cover while keeping photos and the design sheet optional', async () => {
     const work = createRegularAdoption()
     expect(checkWorkPublication(sqlite, work.id)).toMatchObject({
       canPublish: false,
-      blockers: ['ADOPTION_COVER_REQUIRED', 'STUDIO_PHOTO_REQUIRED'],
+      // 领养作品既没有封面也没有出厂照：没有任何可公开的成果图。
+      blockers: ['ADOPTION_COVER_REQUIRED', 'ADOPTION_MEDIA_REQUIRED'],
       adoptionCoverCount: 0,
       designSheetCount: 0,
       studioPhotoCount: 0,
@@ -953,6 +964,54 @@ describe('dual-bucket work publication operations', () => {
     ))).toBe(true)
     expect(new Set(variants.map(variant => variant.mediaRole)))
       .toEqual(new Set(['adoption_cover', 'studio_photo']))
+  })
+
+  it('publishes a head-only adoption that has just a landscape cover', async () => {
+    const work = createRegularAdoption()
+    const ready = attachRequiredAdoptionMedia(work, { studioPhoto: false })
+    expect(checkWorkPublication(sqlite, work.id)).toMatchObject({
+      canPublish: true,
+      blockers: [],
+      adoptionCoverCount: 1,
+      studioPhotoCount: 0,
+    })
+
+    const published = await publishWork(
+      sqlite,
+      storage,
+      work.id,
+      ready.version,
+      USER_ID,
+      NOW + 3_000,
+    )
+    expect(published).toMatchObject({
+      operation: { status: 'DONE' },
+      work: { publicationStatus: 'published' },
+    })
+    // 只生成横版领养卡变体，不凭空合成 work-card 或 detail。
+    const variants = sqlite.prepare(`
+      SELECT DISTINCT media_role AS mediaRole, usage
+      FROM asset_variants WHERE storage_scope = 'PUBLIC'
+    `).all() as Array<{ mediaRole: string, usage: string }>
+    expect(variants).toEqual([
+      { mediaRole: 'adoption_cover', usage: 'adoption-card' },
+    ])
+  })
+
+  it('still requires a primary photo for commission and showcase works', () => {
+    const work = createManagedWork(sqlite, {
+      slug: 'photoless-commission',
+      characterName: '无照委托',
+      species: '犬科',
+      purpose: 'commission',
+      sortOrder: 0,
+      featured: false,
+    }, NOW)
+    expect(checkWorkPublication(sqlite, work.id)).toMatchObject({
+      canPublish: false,
+      blockers: ['STUDIO_PHOTO_REQUIRED'],
+      studioPhotoCount: 0,
+    })
   })
 
   it('prepares a private Lanczos source and publishes a low-resolution design sheet', async () => {

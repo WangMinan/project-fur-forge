@@ -131,6 +131,18 @@
 - [x] **FU-10 · CI 确定性修复**：Playwright webServer 显式提供备案测试配置；官方邮箱公开投影断言改为当前“打开邮件客户端”可访问名称并继续校验真实 `mailto:`；目录物种断言沿用 FU-08 当前结构。
 - [x] **GATE-E-FU3 · 长竖作品与 CI 修复本地门禁**：lint/typecheck、unit 187/187、integration 200/200、失败相关 Chromium 20/20、production build/content guard 与 verify 通过；远端修复 SHA 尚未产生，旧失败流水线和当前基线失败流水线均不代签本地改动 CI。
 
+### E.4 · 2026-08-17 仅横版领养封面的发布与展示
+
+见 [`notes/2026-08-17-adoption-cover-only-follow-up.md`](./notes/2026-08-17-adoption-cover-only-follow-up.md)。
+
+- [x] **FU-11 · 领养发布门禁放宽**：adoption 只要求合格 `adoption_cover`，`studio_photo` 变为 0..5 可选；有出厂照时仍必须恰好一张 primary、全部 READY、全部有 alt；commission/showcase 不变。新增 `ADOPTION_MEDIA_REQUIRED` 覆盖既无 cover 又无出厂照的情况，`mediaReady` 预览同步同一规则。
+- [x] **FU-12 · 公开投影允许仅横版领养**：快照卡片优先 primary 出厂照的 `work-card`，领养作品缺失时回落到 `adoption-card` 并带 `cardOrientation`；`listWorks` 的出厂照数量过滤改为「有卡片即可」；commission/showcase 缺卡片仍整条丢弃。
+- [x] **FU-13 · 详情展示领养封面**：详情 DTO 增加 `media.adoptionCover`（仅领养），详情页在图集之上单独渲染「领养封面」区块，只有横版封面时不再出现空的出厂照分区。
+- [x] **FU-14 · 混排卡片布局**：`WorkCard` 按 `cardOrientation` 在 3:4 与 16:9 之间切换，首页精选轨道、`/works` 网格与详情相关网格顶端对齐容纳混排；`/adoptions` 仍固定横版进入。
+- [x] **FU-15 · 删除详情前后导航**：移除 `publicWorkDetailDtoSchema.navigation`、`detailFor()` 的 previous/next 与详情页导航区块和样式；保留「继续浏览」与按 `history.state.back` 区分的返回链接。
+- [x] **FU-16 · 测试与文档**：新增 cover-only 发布/投影/契约用例与 E2E 混排用例，更新 SPEC §8.2/8.3/9.2、models §3.2/§9.2、DATA-MIGRATION §12.1 与 STATE。
+- [x] **GATE-E-FU4 · 仅横版领养本地门禁**：lint/typecheck、unit 192/192、integration 204/204、production build（含 content guard）、Chromium public-works 21/21、public-home/adoptions/search/seo 44/44、admin-publication/r3-stage-d/admin-home 18/18 通过；真实本地数据在 390/768/1023/1024/1440 五视口验证混排比例、顶端对齐、零横向溢出、封面解码与返回来路，console 无错误。独立 Review、用户验收与生产执行不由实现者代签。
+
 ## F. 最终评审与发布
 
 - [ ] **T37 · 全量质量门禁**：lint、typecheck、unit、integration、E2E、production build、verify、content guard。

@@ -153,6 +153,8 @@ onBeforeUnmount(() => {
 
 .featured-track__rail {
   display: flex;
+  /* 竖版出厂照与横版领养封面混排：卡片按自身高度顶端对齐。 */
+  align-items: flex-start;
   gap: var(--space-4);
   padding-bottom: var(--space-2);
   overflow-x: auto;

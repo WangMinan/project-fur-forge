@@ -19,7 +19,11 @@ withDefaults(defineProps<{
     class="work-card"
     :data-work-slug="work.work.slug"
   >
-    <span class="work-card__frame">
+    <span
+      class="work-card__frame"
+      :class="`work-card__frame--${work.cardOrientation}`"
+      :data-orientation="work.cardOrientation"
+    >
       <ResponsivePicture
         class="work-card__image"
         :sources="work.card.sources"
@@ -48,6 +52,10 @@ withDefaults(defineProps<{
   color: var(--public-text-primary);
 }
 
+/*
+ * 竖版 3:4 是主出厂照卡片；只做了单头的领养作品回落到横版领养封面，
+ * 用 16:9 承载，不把横图裁成竖版。
+ */
 .work-card__frame {
   display: block;
   aspect-ratio: var(--ratio-work-card);
@@ -55,6 +63,10 @@ withDefaults(defineProps<{
   border-radius: var(--radius-image);
   overflow: hidden;
   transition: box-shadow var(--duration-normal) var(--easing-standard);
+}
+
+.work-card__frame--landscape {
+  aspect-ratio: var(--ratio-work-hero);
 }
 
 .work-card__frame :deep(.responsive-picture) {

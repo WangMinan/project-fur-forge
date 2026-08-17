@@ -34,10 +34,19 @@ export const publicDesignSheetDtoSchema = z.object({
   sources: publicSourceSetDtoSchema,
 }).strict()
 
+/**
+ * 卡片方向：`portrait` 为 3:4 primary 出厂照，`landscape` 为仅有横版领养封面
+ * （只做了单头、客户尚未提供 DTD 的领养作品）时的回落。默认竖版保持既有行为。
+ */
+export const publicWorkCardOrientationSchema = z
+  .enum(['landscape', 'portrait'])
+  .default('portrait')
+
 export const publicWorkSummaryDtoSchema = z.object({
   work: publicWorkDtoSchema,
   href: z.string().regex(/^\/works\/[a-z0-9]+(?:-[a-z0-9]+)*$/),
   card: publicWorkCardDtoSchema,
+  cardOrientation: publicWorkCardOrientationSchema,
 }).strict()
 
 export const publicWorkDetailDtoSchema = z.object({
@@ -46,19 +55,12 @@ export const publicWorkDetailDtoSchema = z.object({
   media: z.object({
     primaryAssetId: resourceIdSchema.nullable(),
     card: publicWorkCardDtoSchema,
+    cardOrientation: publicWorkCardOrientationSchema,
+    /** 领养作品的横版封面；只做了单头时是详情页唯一的成果图。 */
+    adoptionCover: publicWorkCardDtoSchema.optional(),
     gallery: z.array(publicWorkGalleryItemDtoSchema).max(5),
     designSheet: publicDesignSheetDtoSchema.optional(),
   }).strict(),
-  navigation: z.object({
-    previous: z.object({
-      characterName: z.string().trim().min(1).max(120),
-      href: z.string().regex(/^\/works\/[a-z0-9]+(?:-[a-z0-9]+)*$/),
-    }).strict().nullable(),
-    next: z.object({
-      characterName: z.string().trim().min(1).max(120),
-      href: z.string().regex(/^\/works\/[a-z0-9]+(?:-[a-z0-9]+)*$/),
-    }).strict().nullable(),
-  }).strict().default({ previous: null, next: null }),
   related: z.array(publicWorkSummaryDtoSchema).max(3),
 }).strict()
 
