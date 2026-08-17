@@ -350,7 +350,8 @@ test.describe('键盘可达性', () => {
     await seedPublicPages(page)
     await page.goto(`/works/${DETAIL_SLUG}`)
 
-    const secondThumb = page.getByRole('button', { name: '查看第 2 张，共 2 张' })
+    // 两张出厂照 + 领养封面并入同一查看序列，共 3 张。
+    const secondThumb = page.getByRole('button', { name: '查看第 2 张，共 3 张' })
     await expect(secondThumb).toBeVisible()
     await secondThumb.focus()
     await expect(secondThumb).toBeFocused()

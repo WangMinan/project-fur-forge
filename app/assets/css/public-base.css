@@ -112,6 +112,13 @@
    */
   --works-row-height: 15rem;
   --featured-row-height: 20rem;
+
+  /**
+   * 粘性页头的实测高度（1440×900 下为 73px），锚点跳转必须让开这段距离，
+   * 否则目标标题会被页头压住。留一点呼吸空间，取整到 5.5rem。
+   */
+  --public-header-height: 4.5rem;
+  --public-anchor-offset: 5.5rem;
   --hero-min-height: 100svh;
   --image-placeholder: #f1f3f6;
   --image-hover-scale: 1.02;
@@ -159,6 +166,9 @@ html {
   /* 始终预留滚动条宽度：否则页面高度一变（切换 tab、换筛选、翻页）滚动条就
      出现/消失，视口宽度跟着跳 15px，右对齐的导航条会横向颤一下再回来。 */
   scrollbar-gutter: stable;
+  /* 锚点跳转统一让开粘性页头：加在滚动容器上，所有 #hash 目标一次性生效，
+     不需要在每个目标元素上分别维护 scroll-margin-top。 */
+  scroll-padding-top: var(--public-anchor-offset);
 }
 
 body {

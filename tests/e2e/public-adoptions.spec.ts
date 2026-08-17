@@ -66,6 +66,49 @@ test.beforeEach(async ({ page }) => {
   await seedAdoptions(page)
 })
 
+test('FU-26：搜索条右侧的联系入口与搜索控件等高，锚点不被页头遮挡', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/adoptions')
+
+  const action = page.getByTestId('adoption-contact-action')
+  await expect(action).toHaveText('联系我们申请领养')
+  await expect(action).toHaveAttribute('href', '/about#contact')
+
+  // 输入框、搜索按钮与联系按钮同高、同基线，构成一条操作带。
+  const band = await page.evaluate(() => {
+    const box = (selector: string) => {
+      const rect = document.querySelector(selector)!.getBoundingClientRect()
+      return { h: Math.round(rect.height), top: Math.round(rect.top), right: Math.round(rect.right) }
+    }
+    const input = box('.catalog-search__input')
+    const submit = box('.catalog-search__submit')
+    const contact = box('[data-testid="adoption-contact-action"]')
+    return {
+      heights: [input.h, submit.h, contact.h],
+      tops: [input.top, submit.top, contact.top],
+      // 联系按钮在搜索按钮右侧
+      contactIsRightmost: contact.right > submit.right,
+    }
+  })
+  expect(new Set(band.heights).size).toBe(1)
+  expect(new Set(band.tops).size).toBe(1)
+  expect(band.contactIsRightmost).toBe(true)
+
+  // 跳转后目标标题必须完整落在粘性页头下方。
+  await action.click()
+  await expect(page).toHaveURL(/\/about#contact$/u)
+  // 等目标区块真正挂载并滚动到位后再测量，避免读到切换过程中的中间状态。
+  await expect(page.getByTestId('about-contact')).toBeVisible()
+  const clearance = await page.evaluate(() => {
+    const header = document.querySelector('[data-testid="public-header"]')!
+    const target = document.getElementById('contact')!
+    return Math.round(
+      target.getBoundingClientRect().top - header.getBoundingClientRect().bottom,
+    )
+  })
+  expect(clearance).toBeGreaterThanOrEqual(0)
+})
+
 test('默认展示全部领养，并只保留状态、价格、物种与独立封面', async ({ page }) => {
   await page.goto('/adoptions')
 
@@ -119,10 +162,11 @@ test('卡片进入统一详情，设定图并入同一查看序列', async ({ pa
   await page.locator(`[data-work-slug="${regularSlug}"]`).click()
   await expect(page).toHaveURL(new RegExp(`/works/${regularSlug}$`, 'u'))
 
-  // 出厂照、领养封面与设定图合成同一个图集，不再有独立「设定图」分区。
-  await expect(page.getByRole('heading', { level: 2, name: '出厂照 / 作品图集' })).toBeVisible()
+  // 出厂照、领养封面与设定图合成同一个图集：既无独立「设定图」分区，
+  // 也不再需要「出厂照 / 作品图集」这类分区标题（FU-25）。
   await expect(page.getByTestId('work-gallery')).toBeVisible()
   await expect(page.getByRole('heading', { level: 2, name: '设定图' })).toHaveCount(0)
+  await expect(page.getByRole('heading', { level: 2, name: '出厂照 / 作品图集' })).toHaveCount(0)
   await expect(page.getByTestId('public-design-sheet')).toHaveCount(0)
 
   // 设定图作为序列最后一张可切换查看，且以 contain 完整显示。

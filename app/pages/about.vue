@@ -123,9 +123,7 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
   line-height: var(--line-height-heading);
 }
 
-.about-page__contact {
-  scroll-margin-top: var(--space-8);
-}
+/* 锚点让位由 html 的 scroll-padding-top 统一处理，这里不再单独设置。 */
 
 .about-page__text {
   line-height: var(--line-height-relaxed);

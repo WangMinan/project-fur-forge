@@ -39,6 +39,14 @@ test('关于二级导航、独立条款页、页脚与兼容跳转连通', async
   await page.goto('/contact')
   await expect(page).toHaveURL(/\/about#contact$/u)
   await expect(page.getByTestId('about-contact')).toBeVisible()
+  // FU-27：锚点必须让开粘性页头，目标标题不能被压住。
+  expect(await page.evaluate(() => {
+    const header = document.querySelector('[data-testid="public-header"]')!
+    const target = document.getElementById('contact')!
+    return Math.round(
+      target.getBoundingClientRect().top - header.getBoundingClientRect().bottom,
+    )
+  })).toBeGreaterThanOrEqual(0)
   await page.goto('/terms')
   await expect(page).toHaveURL(/\/service$/u)
 })

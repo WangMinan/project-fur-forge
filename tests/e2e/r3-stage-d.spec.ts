@@ -110,9 +110,10 @@ test('作品与领养在 390、768、1440 三视口无旧筛选、无溢出且�
   }
 
   await page.goto(`/works/${adoptionSlug}`)
-  // 出厂照、领养封面与设定图并入同一查看序列，不再有独立「设定图」分区。
-  await expect(page.getByRole('heading', { level: 2, name: '出厂照 / 作品图集' })).toBeVisible()
+  // 三类图片并入同一查看序列：无独立「设定图」分区，也不再有分区标题（FU-25）。
+  await expect(page.getByTestId('work-gallery')).toBeVisible()
   await expect(page.getByRole('heading', { level: 2, name: '设定图' })).toHaveCount(0)
+  await expect(page.getByRole('heading', { level: 2, name: '出厂照 / 作品图集' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /查看第 \d 张，共 3 张/ })).toHaveCount(3)
 })
 

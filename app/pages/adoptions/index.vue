@@ -98,6 +98,15 @@ function hrefFor(target: number) {
         :query="search.query"
         :show-clear="search.active"
       />
+      <!--
+        领养需要人工沟通，所以在搜索条右侧直接给出联系入口，
+        高度与搜索输入框/搜索按钮一致，视觉上同属一条操作带。
+      -->
+      <NuxtLink
+        class="adoptions-page__contact-action"
+        to="/about#contact"
+        data-testid="adoption-contact-action"
+      >联系我们申请领养</NuxtLink>
     </div>
 
     <div v-if="items.length > 0" class="adoptions-page__content">
@@ -159,16 +168,49 @@ function hrefFor(target: number) {
 .adoptions-page__filters-wrap {
   display: flex;
   flex-wrap: wrap;
+  /* 搜索条与联系按钮同属一条操作带：底部对齐保证两者高度一致地并排。 */
   align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4) var(--space-6);
+  gap: var(--space-3) var(--space-4);
   max-width: var(--public-content-wide);
   margin: 0 auto var(--space-6);
   padding: 0 var(--public-page-padding);
 }
 
+/*
+ * 搜索条收窄，把右侧空间让给联系按钮；两者共用 2.75rem 行高，
+ * 与 .catalog-search__input / __submit 一致。
+ */
 .adoptions-page__filters-wrap > :deep(.catalog-search) {
-  flex: 1 1 22rem;
+  flex: 0 1 26rem;
+  width: auto;
+}
+
+.adoptions-page__contact-action {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-5);
+  color: var(--public-text-primary);
+  background: var(--public-bg-primary);
+  border: 1px solid var(--public-border-primary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  transition:
+    color var(--duration-fast) var(--easing-standard),
+    border-color var(--duration-fast) var(--easing-standard);
+}
+
+.adoptions-page__contact-action:hover {
+  color: var(--public-accent-active);
+  border-color: var(--public-text-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adoptions-page__contact-action {
+    transition: none;
+  }
 }
 
 .adoptions-page__grid {
