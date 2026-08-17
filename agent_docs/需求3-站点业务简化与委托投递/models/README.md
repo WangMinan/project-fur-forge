@@ -112,6 +112,13 @@ adoption-card   横版，adoption_cover，公开水印
 
 不新增 `work-detail` usage。`return-wall` 与 `return-display-v1` 第一阶段删除。
 
+### 3.4 私有适配源边界
+
+- 普通大文件压缩 `preprocess` 继续限制最长边 4096 px、READY 字节数不超过 20MB；
+- `studio_photo + studio-photo-upscale-lanczos-v1` 与 `design_sheet + design-sheet-upscale-lanczos-v1` 是固定角色/配方例外：为保持原比例并满足公开 usage 最小几何尺寸，单边可以超过 4096 px；
+- 例外仍受 `asset_variants` 通用 1..12000 px、READY 20MB、PRIVATE、同资产/同角色 lineage 和不可变身份约束；
+- 公开变体只能引用验证完成的上述处理源，永久原图不覆盖。
+
 ## 4. Hero collection 与 item
 
 横竖解耦需要两个表，不能只给 item 加 version 后虚构集合级并发。

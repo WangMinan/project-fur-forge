@@ -309,6 +309,13 @@
       "when": 1787414400000,
       "tag": "0043_half_suit_scope_no_tail",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "6",
+      "when": 1787500800000,
+      "tag": "0044_work_upscale_long_portrait",
+      "breakpoints": true
     }
   ]
 }
