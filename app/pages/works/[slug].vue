@@ -162,8 +162,11 @@ onMounted(() => {
 
     <div class="work-detail__layout">
       <div class="work-detail__media">
+        <!--
+          所有图片已并入同一查看序列，不再需要「出厂照 / 作品图集」这类分区标题。
+          aria-label 保留，屏幕阅读器仍能识别这个区域。
+        -->
         <section v-if="gallery.length > 0" class="work-detail__media-section" aria-label="作品图集">
-          <h2 id="studio-photos-title" class="work-detail__media-title">出厂照 / 作品图集</h2>
           <WorkDetailGallery :gallery="gallery" :work-name="dto.characterName" />
         </section>
       </div>
