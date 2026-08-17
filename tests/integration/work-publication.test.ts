@@ -395,6 +395,48 @@ describe('dual-bucket work publication operations', () => {
     `).pluck().get(ASSET_ID, ASSET_ID)).toBe(12)
   }, 30_000)
 
+  it('publishes a long portrait studio photo whose Lanczos source exceeds 4096px', async () => {
+    const work = createWorkWithPhoto(1139, 2083)
+
+    expect(checkWorkPublication(sqlite, work.id)).toMatchObject({
+      canPublish: true,
+      blockers: [],
+      studioPhotoNeedsPreprocess: true,
+    })
+    const published = await publishWork(
+      sqlite,
+      storage,
+      work.id,
+      work.version,
+      USER_ID,
+      NOW + 3_000,
+    )
+
+    expect(published).toMatchObject({
+      operation: { status: 'DONE' },
+      work: { publicationStatus: 'published' },
+    })
+    expect(sqlite.prepare(`
+      SELECT storage_scope AS storageScope, status,
+             recipe_version AS recipeVersion, width, height
+      FROM asset_variants
+      WHERE asset_id = ? AND recipe_version = 'studio-photo-upscale-lanczos-v1'
+    `).get(ASSET_ID)).toMatchObject({
+      height: 4390,
+      recipeVersion: 'studio-photo-upscale-lanczos-v1',
+      status: 'READY',
+      storageScope: 'PRIVATE',
+      width: 2400,
+    })
+    expect(storage.objects.has(
+      `test/t18-fixture/original/${ASSET_ID}/source.png`,
+    )).toBe(true)
+    expect(sqlite.prepare(`
+      SELECT count(*) FROM asset_variants
+      WHERE asset_id = ? AND storage_scope = 'PUBLIC'
+    `).pluck().get(ASSET_ID)).toBe(12)
+  }, 60_000)
+
   it('keeps the studio original and reports a stable preparation failure', async () => {
     const work = createWorkWithPhoto(480, 640)
     storage.failPut = true

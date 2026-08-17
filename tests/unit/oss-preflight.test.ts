@@ -177,6 +177,21 @@ describe('T10 synthetic media', () => {
     )
   }, 30_000)
 
+  it('keeps a long portrait proportional when its required detail source exceeds 4096px', async () => {
+    const source = createSyntheticSourcePng(1139, 2083)
+    const adapted = await upscaleImageToMinimum(source, {
+      width: 2400,
+      height: 1600,
+    })
+
+    expect(adapted.dimensions).toEqual({ width: 2400, height: 4390 })
+    expect(adapted.dimensions.width / adapted.dimensions.height)
+      .toBeCloseTo(1139 / 2083, 2)
+    expect(adapted.content.length).toBeLessThanOrEqual(
+      OSS_IMAGE_PROCESSING_MAX_BYTES,
+    )
+  }, 60_000)
+
   it('contains a non-square QR source on a white square canvas without cropping', async () => {
     const source = createSyntheticSourcePng(640, 320)
     const adapted = await fitImageToSquare(source, 640)

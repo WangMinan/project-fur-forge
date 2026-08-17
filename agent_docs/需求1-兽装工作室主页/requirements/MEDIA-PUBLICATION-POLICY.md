@@ -70,6 +70,8 @@ profile 或配方像素改变都生成新 Key，在完整校验后原子切换�
 
 低分辨率 `studio_photo` 采用同一发布链，但使用独立 `studio-photo-upscale-lanczos-v1` 身份。发布检查不以像素不足阻断；同一 publication operation 在 `PREPARING_SOURCE` 阶段按当前用途计算最小几何尺寸，主图同时覆盖 2400 px `detail` 与 1200 × 1600 `work-card`，非主图覆盖 `detail`。FFmpeg Lanczos 保持原比例生成 READY 私有 `preprocess` 变体，永久原图不覆盖；卡片焦点/裁切按处理源实际尺寸执行，后续 `recipe-v3` 只消费验证完成的处理源。适配失败保持作品未发布并保留原图，可重新发布重试。
 
+普通大文件压缩 `preprocess` 继续遵守最长边 4096 px；作品低分辨率适配是受控例外。仅当 `media_role` 与 `studio-photo-upscale-lanczos-v1` 或 `design-sheet-upscale-lanczos-v1` 精确匹配时，保持原比例并满足公开用途所需最小尺寸的 READY 私有处理源可以超过 4096 px，但仍受通用 12000 px 边长、20MB OSS 处理输入上限、不可变身份和原图保留约束。公开变体只能引用验证完成的同资产、同角色处理源，不得借配方名放宽其它 preprocess。
+
 ### 3.3 返图
 
 ```text

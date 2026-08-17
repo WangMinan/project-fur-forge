@@ -300,6 +300,8 @@ Expand 阶段 `adoption_status` 允许暂时为空。自动迁移只处理语义
 
 不得自动生成 cover。
 
+低分辨率 `studio_photo` / `design_sheet` 发布时复用需求1的私有 FFmpeg Lanczos 适配链并保留永久原图。普通大文件压缩 preprocess 的最长边仍为 4096 px；仅固定角色与 `studio-photo-upscale-lanczos-v1` / `design-sheet-upscale-lanczos-v1` 精确匹配的作品适配源，可为保持原比例并满足公开用途最小尺寸而超过 4096 px，但仍不得超过通用 12000 px 边长和 20MB OSS 处理输入上限。
+
 ### 9.3 `/adoptions`
 
 - 不再接受 `method`；

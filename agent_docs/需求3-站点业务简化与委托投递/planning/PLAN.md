@@ -302,3 +302,4 @@ OSS CORS 继续保持通配，不在本阶段建立精确 Origin 配置或对应
 | 文档误把 `*` 当 blocker | 明确 OSS CORS 通配是用户确认目标，不进入门禁。 |
 | PII 泄漏 | DTO 分层、日志禁值、no-store、负向测试。 |
 | 动效影响可用性 | SSR 默认可见、短时、键盘、back-forward、reduced-motion。 |
+| 长竖作品适配超过旧 4096px preprocess 上限 | 普通 preprocess 边界不变；只按固定作品角色/配方放行，保留 12000px、20MB、lineage 与原图约束，并用 1139×2083 → 2400×4390 回归。 |

@@ -125,6 +125,12 @@
 - [x] **FU-08 · 公开卡片与大图后台展示**：首页、`/works`、`/adoptions` 统一“名称 · 物种”的字体、字号和空格；已领养使用非绿色中性色；大图后台隐藏 collection version，新增按钮复用后台主按钮样式。
 - [x] **GATE-E-FU2 · 目录展示复核门禁**：lint/typecheck、unit 186/186、相关 integration 3/3、四个相关 Chromium spec 63/63、production build/content guard、verify 与实际本地数据五视口浏览器检查通过；独立 Review、用户验收与生产执行不由实现者代签。
 
+### E.3 · 2026-08-17 长竖作品适配与 CI 修复
+
+- [x] **FU-09 · 长竖出厂照适配契约**：`0044_work_upscale_long_portrait.sql` 只为固定作品 Lanczos 角色/配方放行超过旧 4096 px 的私有处理源；普通 preprocess 的 4096 px、全部 READY preprocess 的 20MB、通用 12000 px、lineage 和永久原图保留边界不变。1139×2083 出厂照已验证生成 2400×4390 处理源并完成 12 个公开变体。
+- [x] **FU-10 · CI 确定性修复**：Playwright webServer 显式提供备案测试配置；官方邮箱公开投影断言改为当前“打开邮件客户端”可访问名称并继续校验真实 `mailto:`；目录物种断言沿用 FU-08 当前结构。
+- [x] **GATE-E-FU3 · 长竖作品与 CI 修复本地门禁**：lint/typecheck、unit 187/187、integration 200/200、失败相关 Chromium 20/20、production build/content guard 与 verify 通过；远端修复 SHA 尚未产生，旧失败流水线和当前基线失败流水线均不代签本地改动 CI。
+
 ## F. 最终评审与发布
 
 - [ ] **T37 · 全量质量门禁**：lint、typecheck、unit、integration、E2E、production build、verify、content guard。
