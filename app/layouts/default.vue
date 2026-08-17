@@ -6,11 +6,6 @@ const requestUrl = useRequestURL()
 const canonical = computed(() => new URL(route.path, requestUrl.origin).href)
 const sharingImage = computed(() => new URL('/brand/og-default.png', requestUrl.origin).href)
 const mainRef = useTemplateRef<HTMLElement>('mainRef')
-const pendingMainFocus = shallowRef(false)
-
-watch(() => route.path, (path, previousPath) => {
-  pendingMainFocus.value = path !== previousPath && !route.hash
-})
 
 /**
  * Nuxt 默认 scrollBehavior 在 `to.path === from.path` 时直接 `return false`，
@@ -29,13 +24,19 @@ watch(() => route.fullPath, (_fullPath, previousFullPath) => {
   window.scrollTo({ top: 0, behavior: 'instant' })
 })
 
-function onMainEntered() {
-  if (!pendingMainFocus.value) {
+/**
+ * 跨路径切换后把焦点交回 main，键盘用户不必从页头重新 Tab。
+ * 过渡已移交 Nuxt `pageTransition`（见 app/app.vue），这里改为在导航完成后处理，
+ * 不再依赖 Transition 的 after-enter 钩子。
+ */
+const router = useRouter()
+
+router.afterEach((to, from) => {
+  if (to.path === from.path || to.hash) {
     return
   }
-  pendingMainFocus.value = false
-  mainRef.value?.focus({ preventScroll: true })
-}
+  requestAnimationFrame(() => mainRef.value?.focus({ preventScroll: true }))
+})
 
 useSeoMeta({
   ogSiteName: PROJECT_NAME,
@@ -70,15 +71,7 @@ useHead(() => ({
       class="public-layout__content"
       tabindex="-1"
     >
-      <Transition
-        name="public-main"
-        mode="out-in"
-        @after-enter="onMainEntered"
-      >
-        <div :key="route.path" class="public-layout__route">
-          <slot />
-        </div>
-      </Transition>
+      <slot />
     </main>
     <PublicFooter />
   </div>
@@ -95,34 +88,5 @@ useHead(() => ({
   min-height: 60vh;
 }
 
-.public-layout__route {
-  min-height: inherit;
-}
-
-/* 切换只做位移，且只在新页面入场时做。
-   此前 enter-from 与 leave-to 都淡到 opacity 0：out-in 模式下这两端衔接处
-   整页透明、露出布局白底，就是顶级 tab 切换时看到的「闪一下」；
-   离场那 170ms 又是新页面出现前的纯等待，看起来像「闪完再加载」。
-   现在离场即时移除、入场全程不透明，画面上任何时刻都是完整内容。 */
-.public-main-enter-active {
-  transition: transform 300ms var(--easing-standard);
-}
-
-.public-main-leave-active {
-  pointer-events: none;
-}
-
-.public-main-enter-from {
-  transform: translateY(0.75rem);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .public-main-enter-active {
-    transition: none;
-  }
-
-  .public-main-enter-from {
-    transform: none;
-  }
-}
+/* 页面切换动效由 Nuxt pageTransition 提供，样式在 public-base.css（全局）。 */
 </style>
