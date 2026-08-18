@@ -1,68 +1,86 @@
 # agent_docs
 
-本目录是项目的 spec-driven 工作区。每个需求目录维护自己的边界、规格、模型、计划、任务、状态和证据。后续需求只在明确条款上覆盖旧行为；未覆盖的安全、媒体、隐私和部署基线继续继承。
+本目录是 `project-fur-forge` 的 spec-driven 工作区。每个需求目录维护自己的地基、规格、模型、设计、计划、任务、状态、实施记录和评审证据。后续需求只在明确条款上覆盖旧行为；未覆盖的安全、媒体、隐私和部署基线继续继承。
 
 ## 当前需求
 
-- [`需求1-兽装工作室主页/`](./需求1-兽装工作室主页/)：已经落地的双 Host、私有媒体、OSS/ESA、安全、发布、恢复和部署基线。
-- [`需求2-站点导航与内容增强/`](./需求2-站点导航与内容增强/)：已经落地的二维码媒体链、名称搜索、FAQ、最新动态和五平台渠道等历史增量。
-- [`需求3-站点业务简化与委托投递/`](./需求3-站点业务简化与委托投递/)：当前活跃需求。
+- [`需求1-兽装工作室主页/`](./需求1-兽装工作室主页/)：已落地的双 Host、私有媒体、OSS/ESA、安全、发布、恢复和部署基线。
+- [`需求2-站点导航与内容增强/`](./需求2-站点导航与内容增强/)：二维码媒体链、名称搜索等历史增量；五平台、返图、FAQ 和最新动态等行为已被后续需求覆盖。
+- [`需求3-站点业务简化与委托投递/`](./需求3-站点业务简化与委托投递/)：当前已实现的业务基线，包括 `DITE DOG`、退役内容、Hero 横竖集合、简化作品/领养和私密委托投递。
+- [`需求4-站点视觉升级与内容合规/`](./需求4-站点视觉升级与内容合规/)：**当前活跃需求**。在需求3代码基础上升级首页设计/动效、Hero 焦点、委托告知与人工删除、服务条款和第三方声明。
 
-需求3明确覆盖：
+## 需求4明确覆盖
 
-- 英文名改为 `DITE DOG`；
-- 返图墙、最新动态及其数据/媒体立即永久退役；
-- 官方联系方式收缩为邮箱、QQ、QQ群，不再维护抖音、小红书和 Bilibili；
-- OSS Bucket CORS 保持当前通配 `*`，不把精确 Origin 或禁止 wildcard 作为门禁；
-- Hero 横竖独立；
-- 作品/详情仅名称、物种和图集；
-- 删除装型、主人、联系人、属性、旧进度、领养方式和展会字段；
-- 领养增加独立横版 cover；
-- 新增 `/commission/apply` 与 `/admin/commissions`；
-- FAQ 删除，`commission_email_action` 保留为备用邮件说明；
-- 公开端动效升级，同时保留 reduced-motion。
+### 视觉和首页
 
-需求1的媒体、安全、Host、部署和质量基线没有被放宽。需求2的二维码上传/派生和名称搜索继续生效；其五平台列表只作为历史实现事实，当前目标渠道由需求3限定为 `qq | qq_group`，邮箱继续单独维护。
+- 首页继续覆盖完整核心业务，但重排为“品牌 Hero → 代表作品 → 自设委托 → 设定领养”四幕；
+- PC Web 为第一视觉基准，移动端同步做等价重排；
+- 一个视口一个主要注意力中心，以真实大图、短文案和克制行动建立品牌节奏；
+- 动效只表达反馈、阅读进程、媒体序列和对象连续性；
+- 不做 scroll-jacking、长时间 pinned scroll、强制横向叙事、持续视差或为“Apple 感”强行弹跳；
+- Hero 焦点复用现有 `assets.focal_x/focal_y`，首版只提供可选九宫格。
 
-## 权威顺序
+### 委托、隐私和条款
 
-需求3编码前按以下顺序读：
+- 站内表单负责结构化投递；官方 QQ 私聊负责优先后续沟通和逐单确认；邮箱备用；QQ群不是默认订单确认渠道；
+- 申请人必须确认已满 18 周岁、已阅读当前隐私政策，并理解提交不等于接单；
+- 新申请记录确认版本；历史申请保留 legacy，不回填虚假确认；
+- 个人信息和私有设定图按业务、保修、争议和法律必要期限保存；
+- 人工决定清理时机，受控 CLI 完成 DB/OSS 一体删除；不建设自动定时任务或通用生命周期引擎；
+- 网站服务条款是一般规则；具体价格、付款、排期、修改和特殊约定在官方 QQ 中逐单确认；
+- 默认关于我们、委托、隐私、服务条款和防诈骗文案按真实功能重写。
 
-1. `foundation/README.md`
-2. `requirements/SPEC.md`
-3. `models/README.md`
-4. `.design/README.md`
-5. `planning/PLAN.md`
-6. `planning/DATA-MIGRATION.md`
-7. `implementation/TASKS.md`
-8. `implementation/EXECUTION_ROUTING.md`
-9. `STATE.md`
+### 第三方声明
 
-TASKS 是唯一勾选权威；dated notes、旧 Review、截图和历史 commit 只说明当时事实。
+- npm 生产依赖声明从实际 lockfile/安装结果确定性生成；
+- FFmpeg 按“自有服务器容器内部使用、当前不对外分发”记录；
+- Noto Serif SC 按 SIL OFL 1.1；
+- 拙黑拼贴体来自 Lemi Font 免费商用声明，作为第三方授权字体留档，不误称开源；
+- 不新增 GitHub required check 或独立重型工作流。
+
+## 需求4权威顺序
+
+编码前按以下顺序阅读：
+
+1. [`需求4-站点视觉升级与内容合规/STATE.md`](./需求4-站点视觉升级与内容合规/STATE.md)
+2. [`foundation/README.md`](./需求4-站点视觉升级与内容合规/foundation/README.md)
+3. [`requirements/SPEC.md`](./需求4-站点视觉升级与内容合规/requirements/SPEC.md)
+4. [`requirements/COPY.md`](./需求4-站点视觉升级与内容合规/requirements/COPY.md)
+5. [`models/README.md`](./需求4-站点视觉升级与内容合规/models/README.md)
+6. [`.design/README.md`](./需求4-站点视觉升级与内容合规/.design/README.md)
+7. [`planning/PLAN.md`](./需求4-站点视觉升级与内容合规/planning/PLAN.md)
+8. [`planning/DATA-MIGRATION.md`](./需求4-站点视觉升级与内容合规/planning/DATA-MIGRATION.md)
+9. [`implementation/TASKS.md`](./需求4-站点视觉升级与内容合规/implementation/TASKS.md)
+10. [`review/REVIEW.md`](./需求4-站点视觉升级与内容合规/review/REVIEW.md)
+
+`TASKS.md` 是唯一勾选权威；`STATE.md` 记录当前事实；dated notes、旧 Review、截图、聊天摘要和历史 commit 只能说明当时状态。
 
 ## 当前阶段
 
-需求3文档已合入并于 2026-08-15 完成二次复查和本轮渠道/CORS 决策同步。应用代码、数据库和生产环境尚未实施需求3。
+需求4文档已于 2026-08-19 锁定，应用代码、数据库迁移、默认文案、视觉改版、人工删除工具和生产环境尚未实施。
 
 正确顺序：
 
 ```text
-A 立即永久退役返图/动态并收缩联系渠道
-  → B Expand 新模型与安全
-  → C 动效与 Hero
-  → D 作品与领养
-  → E 委托投递
-  → F 最终 Review、用户验收与发布
+A 内容/隐私地基
+  → B 人工删除与第三方声明
+  → C 设计系统与 Hero 焦点
+  → D 首页四幕与对象连续性
+  → E 全站 Review、用户验收与发布
 ```
 
-不得把返图/动态数据或已经取消的三类平台联系方式保留到其它功能完成后再处理。
+视觉工作不得先于隐私/申请告知发布门禁完成。
 
 ## 执行纪律
 
-- 默认通过任务分支与 PR 合入；用户对单次直接 main 写入的明确授权只适用于该次操作。
-- 契约变化先同步 foundation、SPEC、models、PLAN、DATA-MIGRATION、TASKS 和 STATE。
-- 后端/数据/安全 → 前端 → 本地演练 → 独立 Review → 用户验收 → 生产执行。
-- 不重写已执行历史迁移，不删除 `.env`，不记录 Secret、PII、真实图片或完整 Object Key。
-- 永久清理必须默认 dry-run、脱敏计数、强确认、停机、对象验证和 clean backup restore。
-- 公开匿名上传仍需应用层 Origin/token/TTL/限流和签名 PUT 校验；OSS CORS 保持 `AllowedOrigin=*`，不设置收紧门禁。
-- 自动化不能替代真实浏览器、真实手机、用户验收或生产控制台核对。
+- 默认使用任务分支与 PR；只有用户对当前操作明确授权直接 main 时才例外。
+- 写前 fetch，核对 main SHA；不 force push、不 hard reset、不覆盖用户改动。
+- 契约变化先同步需求4 foundation/SPEC/COPY/models/design/PLAN/DATA-MIGRATION/TASKS/STATE。
+- 不重写已执行历史迁移，只新增前向迁移。
+- 不记录 Secret、token、签名 URL、PII、真实私有图片、QQ 聊天或完整 Object Key。
+- 数据/媒体删除默认 dry-run、脱敏计数、强确认、精确对象、验证和幂等重入。
+- 人工清理是“人判断 + 工具执行”，不是手工 SQL/控制台漏删。
+- 需求1的 Host、私有媒体、OSS/ESA、发布、恢复、备份和部署纪律继续生效。
+- OSS Bucket CORS 保持当前 `AllowedOrigin=*`；匿名 API 仍需应用层 Origin/token/TTL/限流/蜜罐。
+- 当前 Actions 和 main 规则保持不变；不新增 required check。
+- 实现、focused review、独立 Review、用户验收和生产发布互不代签。
