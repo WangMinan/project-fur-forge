@@ -46,12 +46,17 @@ const {
 
 const actionError = ref<string | null>(null)
 const showDraft = ref(false)
+// 首页集合是最多 5 张的轮播；委托页不轮播，每个方向只启用一张，可下架替换。
+const slotLimit = computed(() => placement.value === 'commission' ? 1 : 5)
 const enabledItems = computed(() => (
   collection.value?.items
     .filter(item => item.enabled)
     .toSorted((left, right) => left.sortOrder - right.sortOrder) ?? []
 ))
 const nextSortOrder = computed(() => {
+  if (placement.value === 'commission') {
+    return 0
+  }
   const used = new Set(enabledItems.value.map(item => item.sortOrder))
   return [0, 1, 2, 3, 4].find(value => !used.has(value)) ?? 4
 })
@@ -63,6 +68,9 @@ watch(activeTab, () => {
 })
 
 function moveState(id: string) {
+  if (placement.value === 'commission') {
+    return { canMoveDown: false, canMoveUp: false }
+  }
   const index = enabledItems.value.findIndex(item => item.id === id)
   return {
     canMoveUp: index > 0,
@@ -105,7 +113,7 @@ onMounted(() => void load())
     <div class="hero-admin" data-testid="home-admin">
       <header class="hero-admin__header">
         <h1>大图管理</h1>
-        <p>分别管理首页与委托页的横版、竖版大图，可独立上传、排序、适配、预览与发布。</p>
+        <p>首页每个方向是最多 5 张的轮播；委托页每个方向只启用一张大图，先停用旧图即可替换。</p>
       </header>
 
       <nav class="hero-admin__tabs" aria-label="大图集合">
@@ -128,7 +136,7 @@ onMounted(() => void load())
             <header class="hero-admin__collection-head">
               <div>
                 <h2>{{ activeTab.label }}</h2>
-                <p role="status">已启用 {{ enabledItems.length }} / 5</p>
+                <p role="status">已启用 {{ enabledItems.length }} / {{ slotLimit }}</p>
               </div>
               <button
                 v-if="!showDraft"

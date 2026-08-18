@@ -91,6 +91,14 @@ function itemUsage(item: Pick<HeroItemRow, 'orientation' | 'placement'>) {
   return SITE_HERO_USAGES[item.placement][item.orientation]
 }
 
+/*
+ * 首页集合做多图轮播（最多 5 张）；委托页只展示一张大图、不轮播，
+ * 因此委托集合同时只允许 1 张启用，替换流程是先停用旧图再启用新图。
+ */
+function enabledLimit(placement: HeroPlacement) {
+  return placement === 'commission' ? 1 : 5
+}
+
 function assertItemCanEnable(sqlite: Database.Database, item: HeroItemRow) {
   if (item.enabled === 1) {
     throw new ServiceError(409, 'CONFLICT', 'Hero item is already enabled.')
@@ -99,7 +107,7 @@ function assertItemCanEnable(sqlite: Database.Database, item: HeroItemRow) {
     throw new ServiceError(409, 'CONFLICT', 'Hero item order is stale.', 'HERO_ORDER_STALE')
   }
   if (
-    countEnabledHeroItems(sqlite, item.placement, item.orientation) >= 5
+    countEnabledHeroItems(sqlite, item.placement, item.orientation) >= enabledLimit(item.placement)
     || hasEnabledHeroItemAtOrder(
       sqlite,
       item.placement,
@@ -118,7 +126,11 @@ function assertItemCanDisable(sqlite: Database.Database, item: HeroItemRow) {
   if (item.enabled !== 1) {
     throw new ServiceError(409, 'CONFLICT', 'Hero item is already disabled.')
   }
-  if (countEnabledHeroItems(sqlite, item.placement, item.orientation) <= 1) {
+  // 委托页允许下架唯一一张大图以便替换；首页轮播仍必须保留至少一张。
+  if (
+    item.placement !== 'commission'
+    && countEnabledHeroItems(sqlite, item.placement, item.orientation) <= 1
+  ) {
     throw new ServiceError(
       409,
       'CONFLICT',

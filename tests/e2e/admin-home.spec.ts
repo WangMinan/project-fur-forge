@@ -68,17 +68,22 @@ test('四个大图集合为独立标签和版本域', async ({ page }) => {
   await gotoHeroAdmin(page)
 
   for (const tab of [
-    { key: 'home-landscape', label: '首页大图 / 横版', alt: '首页横版' },
-    { key: 'home-portrait', label: '首页大图 / 竖版', alt: '首页竖版' },
-    { key: 'commission-landscape', label: '委托页大图 / 横版', alt: '委托横版' },
-    { key: 'commission-portrait', label: '委托页大图 / 竖版', alt: '委托竖版' },
+    { key: 'home-landscape', label: '首页大图 / 横版', alt: '首页横版', limit: 5 },
+    { key: 'home-portrait', label: '首页大图 / 竖版', alt: '首页竖版', limit: 5 },
+    { key: 'commission-landscape', label: '委托页大图 / 横版', alt: '委托横版', limit: 1 },
+    { key: 'commission-portrait', label: '委托页大图 / 竖版', alt: '委托竖版', limit: 1 },
   ]) {
     await page.getByRole('link', { name: tab.label }).click()
     await expect(page.getByRole('link', { name: tab.label }))
       .toHaveAttribute('aria-current', 'page')
     await expect(heroItemByAlt(page, tab.alt)).toBeVisible()
     await expect(page.getByText(/collection v\d+/u)).toHaveCount(0)
-    await expect(page.getByText('已启用 1 / 5')).toBeVisible()
+    await expect(page.getByText(`已启用 1 / ${tab.limit}`)).toBeVisible()
+    if (tab.limit === 1) {
+      // 委托页大图不轮播：没有顺位字段与排序按钮。
+      await expect(heroItemByAlt(page, tab.alt).getByLabel('顺位（0–4）')).toHaveCount(0)
+      await expect(heroItemByAlt(page, tab.alt).getByRole('button', { name: '上移' })).toHaveCount(0)
+    }
   }
 })
 

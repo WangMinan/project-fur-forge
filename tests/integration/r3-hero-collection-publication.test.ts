@@ -313,18 +313,12 @@ describe('R3-C independent Hero collection publication', () => {
       .toBe(portrait.version)
   })
 
-  it('cleans the commission entry variant when a landscape hero item is unpublished', async () => {
+  it('keeps commission collections to a single enabled item and allows replacing it', async () => {
     const first = await createAndPublish({
       alt: '委托横版 A',
       orientation: 'landscape',
       placement: 'commission',
       sortOrder: 0,
-    })
-    await createAndPublish({
-      alt: '委托横版 B',
-      orientation: 'landscape',
-      placement: 'commission',
-      sortOrder: 1,
     })
     const entryKeys = sqlite.prepare(`
       SELECT variant.object_key
@@ -334,6 +328,39 @@ describe('R3-C independent Hero collection publication', () => {
     `).pluck().all(first) as string[]
     expect(entryKeys.length).toBeGreaterThan(0)
 
+    // 委托集合同时只允许一张启用：第二张必须先停用旧图。
+    const before = getAdminHeroCollection(sqlite, 'commission', 'landscape')
+    const assetId = seedHeroAsset({
+      orientation: 'landscape',
+      ownerVersion: before.version,
+      placement: 'commission',
+    })
+    const created = createHeroCollectionItem(
+      sqlite,
+      'commission',
+      'landscape',
+      before.version,
+      { alt: '委托横版 B', assetId, sortOrder: 0 },
+      NOW + sequence++,
+    )
+    const second = created.items.find(candidate => candidate.asset.assetId === assetId)!
+    let slotError: unknown
+    try {
+      startHeroCollectionItemPublication(
+        sqlite,
+        second.id,
+        'commission',
+        'landscape',
+        created.version,
+        NOW + sequence++,
+      )
+    }
+    catch (error) {
+      slotError = error
+    }
+    expect(slotError).toMatchObject({ reason: 'HERO_SLOT_LIMIT' })
+
+    // 与首页不同：委托集合允许停用最后一张启用图，下架即清空公开入口图。
     const collection = getAdminHeroCollection(sqlite, 'commission', 'landscape')
     const operation = startHeroCollectionItemUnpublication(
       sqlite,
@@ -350,7 +377,6 @@ describe('R3-C independent Hero collection publication', () => {
       USER_ID,
       NOW + sequence++,
     )
-
     expect(completed.status).toBe('DONE')
     expect(storage.deletedPublicKeys).toEqual(expect.arrayContaining(entryKeys))
     expect(sqlite.prepare(`
@@ -358,5 +384,28 @@ describe('R3-C independent Hero collection publication', () => {
         SELECT value FROM json_each(?)
       )
     `).pluck().get(JSON.stringify(entryKeys))).toBe(0)
+    expect(getAdminHeroCollection(sqlite, 'commission', 'landscape').items
+      .filter(item => item.enabled)).toHaveLength(0)
+
+    // 停用旧图后新图可直接发布启用，完成替换。
+    const draft = getAdminHeroCollection(sqlite, 'commission', 'landscape')
+    const republish = startHeroCollectionItemPublication(
+      sqlite,
+      second.id,
+      'commission',
+      'landscape',
+      draft.version,
+      NOW + sequence++,
+    )
+    const replaced = await runHeroCollectionItemPublication(
+      sqlite,
+      storage,
+      republish.operationId,
+      USER_ID,
+      NOW + sequence++,
+    )
+    expect(replaced.status).toBe('DONE')
+    expect(getAdminHeroCollection(sqlite, 'commission', 'landscape').items
+      .filter(item => item.enabled).map(item => item.alt)).toEqual(['委托横版 B'])
   })
 })

@@ -51,6 +51,8 @@ const upscaleConfirmed = ref(false)
 const showOperationProgress = ref(false)
 const selectedFile = shallowRef<File | null>(null)
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
+// 委托页大图不轮播：单张启用、无顺位概念。
+const singleSlot = computed(() => props.placement === 'commission')
 let syncedItemId: string | null | undefined
 
 function sync() {
@@ -61,7 +63,9 @@ function sync() {
   }
   alt.value = props.item?.alt ?? ''
   assetId.value = props.item?.asset.assetId ?? ''
-  sortOrder.value = props.item?.sortOrder ?? props.defaultSortOrder
+  sortOrder.value = singleSlot.value
+    ? 0
+    : props.item?.sortOrder ?? props.defaultSortOrder
   upscaleConfirmed.value = false
   selectedFile.value = null
   if (fileInput.value) {
@@ -183,13 +187,13 @@ function requestDisable() {
     <header class="hero-item__head">
       <div>
         <h3 class="hero-item__title">
-          {{ item ? `顺位 ${item.sortOrder}` : '新大图项' }}
+          {{ item ? (singleSlot ? '当前大图' : `顺位 ${item.sortOrder}`) : '新大图项' }}
         </h3>
         <p v-if="item" class="hero-item__state">
           {{ item.enabled ? '已启用' : '已停用' }} · {{ item.asset.width }}×{{ item.asset.height }}
         </p>
       </div>
-      <div v-if="item?.enabled" class="hero-item__move" aria-label="调整顺序">
+      <div v-if="item?.enabled && !singleSlot" class="hero-item__move" aria-label="调整顺序">
         <button type="button" :disabled="busy || !canMoveUp" @click="emit('move', -1)">上移</button>
         <button type="button" :disabled="busy || !canMoveDown" @click="emit('move', 1)">下移</button>
       </div>
@@ -209,7 +213,7 @@ function requestDisable() {
         <span>替代文字</span>
         <input v-model="alt" type="text" maxlength="500" :disabled="busy || item?.enabled">
       </label>
-      <label>
+      <label v-if="!singleSlot">
         <span>顺位（0–4）</span>
         <input v-model.number="sortOrder" type="number" min="0" max="4" :disabled="busy || item?.enabled">
       </label>
