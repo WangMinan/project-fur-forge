@@ -1,26 +1,40 @@
-# project-fur-paws
+# project-fur-forge
 
-为“有点小狗工作室”（暂用英文名 `dite dog`）建设的图片主导型主页与内容管理站。
+为“有点小狗工作室”建设的图片主导型公开站与轻量内容管理后台。
+
+- 中文品牌：有点小狗工作室
+- 英文品牌：`DITE DOG`
+- 公开站：Nuxt SSR
+- 管理端：Nuxt CSR
+- 媒体：私有 OSS 原图、受控公开派生、ESA 分发
+- 当前活跃增量：[`agent_docs/需求4-站点视觉升级与内容合规/`](./agent_docs/需求4-站点视觉升级与内容合规/)
 
 ## 环境
 
-- Node.js 24 LTS
+- Node.js 24
 - Corepack
 - pnpm 11.18
 
-## 本地命令
+## 本地启动
 
 ```bash
 corepack enable
 pnpm install --frozen-lockfile
-Copy-Item .env.example .env
-# 在 .env 中填写 PUBLIC_BASE_URL、ADMIN_BASE_URL、MEDIA_BASE_URL、OSS_UPLOAD_BASE_URL
+cp .env.example .env
+# 填写 PUBLIC_BASE_URL、ADMIN_BASE_URL、MEDIA_BASE_URL、OSS_UPLOAD_BASE_URL 等配置
+pnpm db:migrate
 pnpm dev
 ```
 
-非测试环境不提供域名 fallback；四个 origin 必须由 `.env`、进程环境变量或活动配置文件显式提供。Nuxt 原生加载 `.env`，已有进程环境变量优先于文件值。
+PowerShell 可使用：
 
-质量门禁：
+```powershell
+Copy-Item .env.example .env
+```
+
+非测试环境不提供域名 fallback；公开、管理、媒体和浏览器上传 origin 必须由环境变量或活动配置显式提供。
+
+## 质量命令
 
 ```bash
 pnpm lint
@@ -29,6 +43,13 @@ pnpm test
 pnpm test:integration
 pnpm test:e2e
 pnpm build
+pnpm run verify:production
 ```
 
-公开站默认使用 SSR；`/admin/**` 使用 CSR。当前阶段状态、任务依赖与验收证据以 `agent_docs/需求1-兽装工作室主页/` 为准。
+仓库当前不要求 GitHub required check；执行者仍须按改动风险运行对应门禁，并在公开 UI 结构变化时完成真实浏览器验收。
+
+## 文档入口
+
+- 编码 Agent 稳定入口：[`CLAUDE.md`](./CLAUDE.md)
+- 需求与任务索引：[`agent_docs/README.md`](./agent_docs/README.md)
+- 生产部署基线：[`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md)
