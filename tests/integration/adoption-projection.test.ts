@@ -37,7 +37,7 @@ function insertAdoption(input: {
 
 async function attachPublicAsset(input: {
   id: string
-  role: 'adoption_cover' | 'studio_photo'
+  role: 'adoption_cover' | 'design_sheet' | 'studio_photo'
   workId: string
 }) {
   const width = input.role === 'adoption_cover' ? 1920 : 2400
@@ -60,7 +60,9 @@ async function attachPublicAsset(input: {
     input.workId,
     input.id,
     input.role,
-    input.role === 'adoption_cover' ? '合成领养横版封面' : '合成主出厂照',
+    input.role === 'adoption_cover'
+      ? '合成领养横版封面'
+      : input.role === 'design_sheet' ? '合成完整设定图' : '合成主出厂照',
     input.role === 'studio_photo' ? 1 : 0,
   )
   await generatePublicVariants(sqlite, storage, input.id, undefined, NOW)
@@ -187,6 +189,29 @@ describe('R3-D adoption public projection', () => {
     expect(repository.listWorks().items).toEqual([])
     expect(repository.listFeaturedWorks().items).toEqual([])
     expect(repository.getWorkBySlug('photoless')).toBeNull()
+  })
+
+  it('shows a sheet-only adoption in adoptions, works and detail without a cover', async () => {
+    const id = '88888888-8888-4888-8888-888888888880'
+    const sheetId = '88888888-8888-4888-8888-888888888881'
+    insertAdoption({ id, name: '图纸小狗', slug: 'sheet-doggy', status: 'available' })
+    await attachPublicAsset({ id: sheetId, role: 'design_sheet', workId: id })
+
+    const repository = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
+    const detail = repository.getWorkBySlug('sheet-doggy')
+
+    // 没有横版封面：/adoptions、作品展示与详情都回落到完整设定图。
+    expect(repository.listAdoptions().items.map(item => item.cover.assetId))
+      .toEqual([sheetId])
+    expect(repository.listWorks().items.map(item => item.work.slug))
+      .toEqual(['sheet-doggy'])
+    expect(detail?.media.cardOrientation).toBe('landscape')
+    expect(detail?.media.card.assetId).toBe(sheetId)
+    // 封面回落为设定图时详情不重复展示同一张图。
+    expect(detail?.media.adoptionCover).toBeUndefined()
+    expect(detail?.media.designSheet?.assetId).toBe(sheetId)
+    expect(detail?.media.gallery).toEqual([])
+    expect(JSON.stringify(detail)).not.toContain('/original/')
   })
 
   it('keeps adopted works in featured while excluding them from current home adoptions', async () => {

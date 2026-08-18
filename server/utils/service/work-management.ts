@@ -945,13 +945,14 @@ export function getPublicSafeWorkPreview(
   const work = getManagedWork(sqlite, id)
   return publicSafeWorkPreviewDtoSchema.parse({
     ...work,
-    // 与 checkWorkPublication 同一规则：领养作品有合格横版封面时出厂照可选，
+    // 与 checkWorkPublication 同一规则：领养作品的成果图是封面或设定图二选一，
     // 只做了单头、尚未拿到 DTD 的领养作品也算媒体就绪。
+    // 非领养作品的 DTO 不带这两个字段，因此用可空判断而不是 === null。
     mediaReady: (work.purpose === 'adoption'
-      ? work.adoptionStatus !== null
-        && work.adoptionCover !== null
-        && work.adoptionCover.status === 'READY'
-        && Boolean(work.adoptionCover.alt?.trim())
+      ? work.adoptionStatus !== null && (
+        Boolean(work.adoptionCover?.status === 'READY' && work.adoptionCover.alt?.trim())
+        || Boolean(work.designSheet?.status === 'READY' && work.designSheet.alt?.trim())
+      )
       : work.studioPhotos.length > 0)
       && (work.studioPhotos.length === 0
         || (work.studioPhotos.filter(photo => photo.primary).length === 1

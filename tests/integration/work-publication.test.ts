@@ -154,13 +154,14 @@ function createRegularAdoption() {
 
 /**
  * `studioPhoto: false` 复现只做了单头的领养作品：只有横版封面，客户尚未提供 DTD
- * 因此没有竖版出厂照。
+ * 因此没有竖版出厂照。`cover: false` 复现只有出厂照、没有封面/设定图的领养作品。
  */
 function attachRequiredAdoptionMedia(
   work: ReturnType<typeof createRegularAdoption>,
-  options: { studioPhoto?: boolean } = {},
+  options: { cover?: boolean, studioPhoto?: boolean } = {},
 ) {
   const withStudioPhoto = options.studioPhoto ?? true
+  const withCover = options.cover ?? true
   const photoContent = createSyntheticWatermarkPng()
   const coverContent = createSyntheticSourcePng(3200, 1800)
   const sources = [
@@ -173,13 +174,15 @@ function attachRequiredAdoptionMedia(
           width: 3200,
         }]
       : []),
-    {
-      assetId: COVER_ASSET_ID,
-      content: coverContent,
-      height: 1800,
-      role: 'adoption_cover' as const,
-      width: 3200,
-    },
+    ...(withCover
+      ? [{
+          assetId: COVER_ASSET_ID,
+          content: coverContent,
+          height: 1800,
+          role: 'adoption_cover' as const,
+          width: 3200,
+        }]
+      : []),
   ]
   for (const source of sources) {
     const key = `test/t18-fixture/original/${source.assetId}/source.png`
@@ -249,6 +252,9 @@ function attachRequiredAdoptionMedia(
         NOW + 1_000,
       )
     : work
+  if (!withCover) {
+    return withPhoto
+  }
   return replaceManagedAdoptionCover(
     sqlite,
     work.id,
@@ -899,12 +905,12 @@ describe('dual-bucket work publication operations', () => {
     expect(storage.deletedPublicKeys).toHaveLength(12)
   })
 
-  it('requires an explicit status and cover while keeping photos and the design sheet optional', async () => {
+  it('requires an explicit status and at least one of cover or design sheet', async () => {
     const work = createRegularAdoption()
     expect(checkWorkPublication(sqlite, work.id)).toMatchObject({
       canPublish: false,
-      // 领养作品既没有封面也没有出厂照：没有任何可公开的成果图。
-      blockers: ['ADOPTION_COVER_REQUIRED', 'ADOPTION_MEDIA_REQUIRED'],
+      // 领养作品既没有封面也没有设定图：没有任何可公开的成果图。
+      blockers: ['ADOPTION_MEDIA_REQUIRED'],
       adoptionCoverCount: 0,
       designSheetCount: 0,
       studioPhotoCount: 0,
@@ -996,6 +1002,52 @@ describe('dual-bucket work publication operations', () => {
     expect(variants).toEqual([
       { mediaRole: 'adoption_cover', usage: 'adoption-card' },
     ])
+  })
+
+  it('publishes an adoption that has only a design sheet and no cover', async () => {
+    const work = createRegularAdoption()
+    const ready = attachDesignSheet(work)
+    expect(checkWorkPublication(sqlite, work.id)).toMatchObject({
+      canPublish: true,
+      blockers: [],
+      adoptionCoverCount: 0,
+      designSheetCount: 1,
+      studioPhotoCount: 0,
+    })
+
+    const published = await publishWork(
+      sqlite,
+      storage,
+      work.id,
+      ready.version,
+      USER_ID,
+      NOW + 3_000,
+    )
+    expect(published).toMatchObject({
+      operation: { status: 'DONE' },
+      work: { publicationStatus: 'published' },
+    })
+    // 只生成设定图公开变体；没有封面时不合成 adoption-card。
+    const variants = sqlite.prepare(`
+      SELECT DISTINCT media_role AS mediaRole, usage
+      FROM asset_variants WHERE storage_scope = 'PUBLIC'
+    `).all() as Array<{ mediaRole: string, usage: string }>
+    expect(variants).toEqual([
+      { mediaRole: 'design_sheet', usage: 'design-sheet' },
+    ])
+  })
+
+  it('blocks an adoption that has studio photos but neither cover nor design sheet', () => {
+    const work = createRegularAdoption()
+    attachRequiredAdoptionMedia(work, { cover: false })
+    expect(checkWorkPublication(sqlite, work.id)).toMatchObject({
+      canPublish: false,
+      // 出厂照不能替代封面/设定图：/adoptions 卡片没有可展示的成果图。
+      blockers: ['ADOPTION_MEDIA_REQUIRED'],
+      adoptionCoverCount: 0,
+      designSheetCount: 0,
+      studioPhotoCount: 1,
+    })
   })
 
   it('still requires a primary photo for commission and showcase works', () => {

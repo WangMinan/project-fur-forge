@@ -150,7 +150,7 @@ test.describe('T22 完整字段：三用途、领养、价格与首页精选', (
     await page.reload()
     await expect(page.getByLabel(/价格/)).toHaveValue('8800.50')
     await expect(page.getByLabel('领养状态')).toHaveValue('available')
-    await expect(page.getByTestId('publication-panel')).toContainText('领养作品必须保存一张独立横版封面')
+    await expect(page.getByTestId('publication-panel')).toContainText('领养作品至少需要一张横版封面或设定图')
   })
 
   test('非法价格在客户端阻断并给出关联错误', async ({ page }) => {

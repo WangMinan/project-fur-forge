@@ -331,22 +331,28 @@ function snapshot(
           appEnv,
         )
       : null
+    /*
+     * 封面缺失时以完整设定图代替：发布门禁允许二者存其一，
+     * /adoptions 卡片、首页当前领养与详情都沿这一回落。
+     */
+    const adoptionCover = coverMedia && coverSources
+      ? {
+          assetId: coverMedia.assetId,
+          alt: toSafePublicAlt(coverMedia.alt, `${row.characterName}的领养封面`),
+          sources: coverSources,
+        }
+      : designSheet
     const adoption = row.purpose === 'adoption'
       && row.adoptionStatus !== null
-      && coverMedia
-      && coverSources
+      && adoptionCover
       ? {
-          cover: {
-            assetId: coverMedia.assetId,
-            alt: toSafePublicAlt(coverMedia.alt, `${row.characterName}的领养封面`),
-            sources: coverSources,
-          },
+          cover: adoptionCover,
           priceCnyMinor: row.priceCurrency === 'CNY' ? row.priceAmountMinor : null,
           status: row.adoptionStatus,
         }
       : null
     /*
-     * 只做了单头的领养作品没有竖版出厂照，卡片回落到横版领养封面；
+     * 只做了单头的领养作品没有竖版出厂照，卡片回落到横版领养封面或设定图；
      * 有 primary 出厂照时仍优先竖版出厂照。commission/showcase 没有封面可回落，
      * 缺少卡片时依旧整条丢弃。
      */
@@ -565,8 +571,9 @@ export function createSqlitePublicSiteRepository(
           primaryAssetId,
           card: match.summary.card,
           cardOrientation: match.cardOrientation,
-          // 领养作品详情必须能看到横版封面，只做了单头时它是唯一的成果图。
-          ...(match.adoption
+          // 领养作品详情必须能看到横版封面，只做了单头时它是唯一的成果图；
+          // 封面回落为设定图时不再重复进图集，设定图分区已展示同一张。
+          ...(match.adoption && match.adoption.cover.assetId !== match.designSheet?.assetId
             ? { adoptionCover: match.adoption.cover }
             : {}),
           gallery,
