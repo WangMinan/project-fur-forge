@@ -126,6 +126,16 @@ export function useAdminHeroCollection(
     pageStatus.value = result ? 'ready' : 'error'
   }
 
+  function conflictText(reason: string | null | undefined) {
+    if (reason === 'HERO_LAST_ENABLED_ITEM') {
+      return '首页大图集合至少保留一个已启用项。'
+    }
+    if (reason === 'HERO_SLOT_LIMIT' && toValue(placement) === 'commission') {
+      return '委托页每个方向只启用一张大图；请先停用当前大图，再启用新图。'
+    }
+    return '版本或状态已变化，请确认后重试。'
+  }
+
   async function onConflict() {
     conflictNotice.value = `${label()}已在其他地方变化，已重新加载。`
     await refresh()
@@ -154,9 +164,7 @@ export function useAdminHeroCollection(
       }
       if (error instanceof AdminApiError && error.status === 409) {
         await onConflict()
-        return error.reason === 'HERO_LAST_ENABLED_ITEM'
-          ? '每个大图集合至少保留一个已启用项。'
-          : '版本或状态已变化，请确认后重试。'
+        return conflictText(error.reason)
       }
       return errorText
     }
@@ -234,8 +242,8 @@ export function useAdminHeroCollection(
       }
       if (error instanceof AdminApiError && error.status === 409) {
         await onConflict()
-        return error.reason === 'HERO_LAST_ENABLED_ITEM'
-          ? '每个大图集合至少保留一个已启用项。'
+        return error.reason === 'HERO_LAST_ENABLED_ITEM' || error.reason === 'HERO_SLOT_LIMIT'
+          ? conflictText(error.reason)
           : '操作未提交：版本、顺位或大图状态已变化。'
       }
       return '无法启动长任务，请稍后重试。'
