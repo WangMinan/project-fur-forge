@@ -37,7 +37,7 @@
 - OSS Bucket CORS 继续保持当前 `AllowedOrigin=*`，不要求收紧为精确 Origin，也不把 wildcard 作为门禁失败。
 - 应用自己的匿名 API 继续校验 Origin、Content-Type、token、TTL、限流、蜜罐和一次性消费；OSS CORS 通配不能替代这些校验。
 - 公开端取消“尽量少动效”的旧审美限制，但必须保留 `prefers-reduced-motion`。
-- Hero 四个集合独立维护：`home|commission × landscape|portrait`；每个集合允许 1–5 张已启用图片。
+- Hero 四个集合独立维护：`home|commission × landscape|portrait`；首页集合允许 1–5 张已启用图片轮播，委托集合每方向同时只启用 1 张、允许全部停用后替换。
 - 桌面 Hero：中文主标题居中；`DITE DOG` 与 slogan 位于下一行左右两侧。
 - 移动 Hero：整组文字左对齐并下移；不得强行复用桌面居中布局。
 - `/works` 与 `/works/{slug}` 只公开名称、物种和图片。

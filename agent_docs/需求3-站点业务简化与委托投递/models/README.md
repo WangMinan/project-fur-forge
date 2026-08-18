@@ -96,12 +96,15 @@ adoption_cover  adoption 作品 0..1，position=0
 发布资格：
 
 - commission/showcase：至少一张 READY studio photo 且恰好一张 primary；
-- adoption：恰好一张 READY adoption cover；studio photo 可选（只做了单头、客户尚未提供
-  DTD 时没有出厂照），有出厂照时仍必须恰好一张 primary 且全部 READY/有 alt；
-- design sheet 永远可选。
+- adoption：合格 adoption cover 或 design sheet 至少其一（READY 且有 alt）；studio photo
+  可选（只做了单头、客户尚未提供 DTD 时没有出厂照），有出厂照时仍必须恰好一张 primary
+  且全部 READY/有 alt；出厂照不能单独支撑领养发布；
+- design sheet 最多一张；单独一张设定图即可支撑领养发布。
 
 只有 cover 的 adoption 只生成 `adoption-card` 变体，卡片以横版封面进入首页精选、`/works`
-与 `/adoptions`，不合成 `work-card` 或 `detail`。
+与 `/adoptions`，不合成 `work-card` 或 `detail`；封面缺失时这些位置回落到设定图。水印重建
+（`WATERMARK_REBUILD`）的生成目标与清理清单必须同时覆盖 `adoption_cover`：清理会删除全部旧
+profile 的水印公开变体，生成漏掉封面会让已发布领养作品在重建后失去公开图。
 
 ### 3.3 公开 usage
 
@@ -172,7 +175,9 @@ site_hero_items
 - landscape 只能引用 `home_hero_landscape`；
 - portrait 只能引用 `home_hero_portrait`；
 - enabled 的 `(placement, orientation, sort_order)` 唯一；
-- 每个 collection 最多 5 个 enabled，完整保存后顺序连续为 `0..n-1`；
+- home collection 最多 5 个 enabled 且至少保留 1 个，完整保存后顺序连续为 `0..n-1`；
+  commission collection 不轮播，同时最多 1 个 enabled，允许全部停用（下架即替换），
+  `sort_order` 列保留但恒为 0；
 - 不保存 linked work。
 
 ### 4.3 Hero 上传归属

@@ -44,7 +44,7 @@
 - 桌面：中文居中，英文/slogan 同行左右。
 - 移动：整组左对齐下移，至少覆盖 100svh/100dvh。
 - 首页/委托×横/竖四个集合独立，集合级 version、排序、启停和上传归属互不干扰。
-- 首页固定 10 秒轮播，保留暂停、hidden pause 和 reduced-motion。
+- 首页集合固定 10 秒轮播、1–5 张启用，保留暂停、hidden pause 和 reduced-motion；委托集合不轮播，每方向同时只启用 1 张，允许停用唯一启用图以下架替换。
 
 ### 2.2 第一阶段立即退役与联系渠道收缩
 
@@ -72,7 +72,8 @@
 - 删除 suit、owner、contact、tags、old progress、method、event。
 - adoption status 仅 `available | adopted`。
 - 旧 `available`/`delivered` 可自动映射；其它旧状态必须人工确认，禁止默认 available。
-- published adoption 必须有独立横版 `adoption_cover` 和 primary `studio_photo`。
+- published adoption 至少有一张合格 `adoption_cover` 或 `design_sheet`（二选一，READY + alt）；公开端封面位在封面缺失时回落到设定图。
+- `studio_photo` 0..5 可选，有出厂照时必须恰好一张 primary、全部 READY、有 alt；出厂照不能单独支撑领养发布。
 - adopted 作品可以进入首页精选，但不得进入首页领养区；没有 available 作品时隐藏首页领养区。
 - `design_sheet` 0..1、可选，不作卡片或发布门禁。
 - 媒体详情 usage 沿用现有 `detail`，不要新建平行 `work-detail`。
