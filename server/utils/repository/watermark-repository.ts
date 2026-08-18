@@ -333,7 +333,7 @@ export function findWatermarkTargets(sqlite: Database.Database) {
     JOIN work_assets AS relation ON relation.work_id = work.id
     JOIN assets AS asset ON asset.id = relation.asset_id
     WHERE work.publication_status = 'published' AND asset.status = 'READY'
-      AND relation.role IN ('studio_photo', 'design_sheet')
+      AND relation.role IN ('studio_photo', 'design_sheet', 'adoption_cover')
   `).all() as WatermarkTargetRow[]
 }
 

@@ -382,6 +382,71 @@ describe('GATE-07 watermark branding lifecycle', () => {
     `).pluck().get(draft.id)).toBe(6)
   })
 
+  /*
+   * 回归：重建曾只重新生成 studio_photo/design_sheet，清理却删除全部旧 profile
+   * 公开变体，导致已发布领养作品的 adoption_cover 公开图被删且不再生成，
+   * /adoptions 因此变空。封面必须与出厂照一起进入重建目标。
+   */
+  it('rebuilds published adoption-cover variants instead of dropping them', async () => {
+    insertSource('adoption-cover', 'adoption_cover', 3200, 1800)
+    sqlite.prepare(`
+      INSERT INTO works (
+        id, slug, character_name, species, purpose, adoption_status,
+        publication_status, published_at, created_at, updated_at
+      ) VALUES (
+        'cover-only-work', 'cover-only-work', '小绿狗', '犬科',
+        'adoption', 'available',
+        'published', ?, ?, ?
+      )
+    `).run(NOW, NOW, NOW)
+    sqlite.prepare(`
+      INSERT INTO work_assets (
+        work_id, asset_id, role, alt_text, position, is_primary,
+        crop_x, crop_y, crop_width, crop_height, watermark_anchor
+      ) VALUES (
+        'cover-only-work', 'adoption-cover', 'adoption_cover',
+        '小绿狗领养横版封面', 0, 0, 0, 0, 1, 1, 'top-left'
+      )
+    `).run()
+    await generatePublicVariants(
+      sqlite,
+      storage,
+      'adoption-cover',
+      ['adoption-card'],
+      NOW,
+    )
+    const oldCoverKeys = sqlite.prepare(`
+      SELECT object_key FROM asset_variants
+      WHERE asset_id = 'adoption-cover' AND storage_scope = 'PUBLIC'
+    `).pluck().all() as string[]
+    expect(oldCoverKeys.length).toBeGreaterThan(0)
+    const { draft } = await createPreviewedDraft(56)
+
+    const applied = await applyDraft(draft.id, draft.version)
+
+    // 12 张出厂照 + 6 张横版领养卡；封面变体全部换成新 profile。
+    expect(applied).toMatchObject({
+      status: 'DONE',
+      affectedWorkCount: 2,
+      targetVariantCount: 18,
+      generatedVariantCount: 18,
+      verifiedVariantCount: 18,
+      cleanupPendingCount: 0,
+    })
+    expect(sqlite.prepare(`
+      SELECT count(*) FROM asset_variants
+      WHERE asset_id = 'adoption-cover'
+        AND storage_scope = 'PUBLIC' AND status = 'READY'
+        AND usage = 'adoption-card' AND watermark_profile_id = ?
+    `).pluck().get(draft.id)).toBe(6)
+    expect(sqlite.prepare(`
+      SELECT count(*) FROM asset_variants
+      WHERE asset_id = 'adoption-cover' AND storage_scope = 'PUBLIC'
+        AND watermark_profile_id = ?
+    `).pluck().get(seededProfileId)).toBe(0)
+    expect(storage.deletedPublicKeys).toEqual(expect.arrayContaining(oldCoverKeys))
+  })
+
   it('persists an application operation before rebuilding public variants', async () => {
     const { draft } = await createPreviewedDraft()
     const started = startWatermarkProfileApplication(
