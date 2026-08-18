@@ -320,15 +320,17 @@ work_feature_tags
 
 ### 12.1 `0039` primary studio photo 停止点与仅横版领养的关系
 
-FU-11 之后 adoption 的**运行时**发布门禁只要求合格 `adoption_cover`，出厂照可选。但
-`0039` 的第三个停止点仍要求每件 published work 具备 READY 主出厂照，这是**已冻结的历史迁移**，
-不改写：
+2026-08-19 起 adoption 的**运行时**发布门禁只要求合格 `adoption_cover` 或 `design_sheet`
+至少其一，出厂照可选。但 `0039` 的停止点仍要求每件 published adoption 具备 READY
+`adoption_cover`、每件 published work 具备 READY 主出厂照，这是**已冻结的历史迁移**，不改写：
 
 - `0039` 是一次性 contract 前置校验，不是运行时约束；数据库没有「已发布必须有主出厂照」的
-  trigger，因此它不会阻止应用发布只有 cover 的领养作品；
+  trigger，因此它不会阻止应用发布只有 cover 或只有设定图的领养作品；
 - 顺序约束：生产库执行 `0039` 时，若已存在只有 cover 的 published adoption，迁移会以
-  `R3_D_CONTRACT_BLOCKED_PRIMARY_STUDIO_PHOTO` 停止。因此在 `0039` 执行完成前，不得在生产
-  发布只有横版封面的领养作品；`0039` 之后再发布不受影响；
+  `R3_D_CONTRACT_BLOCKED_PRIMARY_STUDIO_PHOTO` 停止；只有设定图而没有 cover 的 published
+  adoption 会以 `R3_D_CONTRACT_BLOCKED_ADOPTION_COVER`（并且通常同时以
+  `R3_D_CONTRACT_BLOCKED_PRIMARY_STUDIO_PHOTO`）停止。因此在 `0039` 执行完成前，不得在生产
+  发布这两类作品；`0039` 之后再发布不受影响；
 - 如果生产已经出现这种记录并需要先跑 `0039`，只能新增前向迁移放宽该计数（不重写 `0039`），
   并单独记录该决定，不得在本轮顺手执行。
 

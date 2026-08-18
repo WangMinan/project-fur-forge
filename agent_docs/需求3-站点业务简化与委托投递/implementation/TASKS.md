@@ -209,6 +209,29 @@
   与 `/commission` 两处 `#contact` 跳转后标题距页头 +7px（修复前为 −9px 遮挡）、零横向溢出。
   独立 Review、用户验收与生产执行不由实现者代签。
 
+### E.8 · 2026-08-19 委托页单图、领养门禁二选一、委托申请分页与水印重建修复
+
+见 [`notes/2026-08-19-hero-single-commission-adoption-gate-commissions-list.md`](./notes/2026-08-19-hero-single-commission-adoption-gate-commissions-list.md)。本轮由用户明确授权直接在 main 上执行。
+
+- [x] **FU-29 · 委托页大图单图可替换**：委托集合同时只允许 1 张启用（`HERO_SLOT_LIMIT`），
+  并豁免 `HERO_LAST_ENABLED_ITEM`（先停用旧图再启用新图即替换）；管理端委托 Tab 隐藏顺位与
+  排序按钮、显示「已启用 X / 1」，首页集合规则不变。
+- [x] **FU-30 · 领养发布门禁二选一**：`ADOPTION_COVER_REQUIRED` 退役；published adoption 要求
+  合格 `adoption_cover` 或 `design_sheet` 至少其一，`ADOPTION_MEDIA_REQUIRED` 覆盖二者皆无；
+  出厂照不能单独支撑领养发布。`mediaReady` 预览同规则。公开快照封面位回落到设定图，同一张图
+  不在详情图集重复出现。
+- [x] **FU-31 · 水印重建覆盖领养封面（根因修复）**：`WATERMARK_REBUILD` 生成目标纳入
+  `adoption_cover`；此前重建清理删掉旧 profile 的全部水印公开变体却只重建出厂照/设定图，
+  导致已发布领养作品封面公开图丢失、`/adoptions` 变空。新增重建回归用例（封面换新 profile、
+  旧键进清理清单）。
+- [x] **FU-32 · 委托申请查找与分页**：`/admin/commissions` 复用 `AdminPagination` 与
+  `admin-work-list` 分页工具，按昵称/物种/回执编号客户端查找；E2E 覆盖查找命中、空态与清除。
+- [x] **GATE-E-FU8 · 本地门禁**：lint/typecheck、unit 193/193、integration 208/208（全量复跑；
+  早前一次全量运行复现了既有 FFmpeg 30s 超时 flake，dev server 停止后复跑全绿）、production
+  build（含 content guard）、完整 E2E 240 例（首跑 238/240，两处沿用旧门禁文案的断言更新后
+  复跑 41/41，r3-stage-e 新增查找/分页断言 1/1）通过。真实浏览器 UI 验证本轮用户明确跳过。
+  独立 Review、用户验收与生产执行不由实现者代签。
+
 ## F. 最终评审与发布
 
 - [ ] **T37 · 全量质量门禁**：lint、typecheck、unit、integration、E2E、production build、verify、content guard。
