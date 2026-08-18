@@ -4,6 +4,11 @@ import type {
   CommissionSubmissionListItemDto,
   CommissionSubmissionStatus,
 } from '~~/shared/types/contracts'
+import { includesSearchText } from '~~/shared/utils/search'
+import {
+  adminWorkPageCount,
+  paginateAdminWorks,
+} from '~/utils/admin-work-list'
 
 definePageMeta({ layout: 'admin', ssr: false })
 useSeoMeta({ title: '委托申请', robots: 'noindex, nofollow' })
@@ -12,6 +17,9 @@ const route = useRoute()
 const adminApi = useAdminApi()
 const items = ref<CommissionSubmissionListItemDto[]>([])
 const pageStatus = ref<'error' | 'loading' | 'ready'>('loading')
+const query = shallowRef('')
+const page = shallowRef(1)
+const pageSize = shallowRef(10)
 const activeStatus = computed<CommissionSubmissionStatus>(() => (
   ['accepted', 'rejected'].includes(String(route.query.status))
     ? route.query.status as CommissionSubmissionStatus
@@ -22,6 +30,26 @@ const tabs: Array<{ label: string, status: CommissionSubmissionStatus }> = [
   { label: '已接受', status: 'accepted' },
   { label: '已拒绝', status: 'rejected' },
 ]
+
+const filteredItems = computed(() => items.value.filter(item => (
+  includesSearchText(
+    `${item.nickname} ${item.species ?? ''} ${item.receiptCode}`,
+    query.value,
+  )
+)))
+const pageCount = computed(() => adminWorkPageCount(filteredItems.value.length, pageSize.value))
+const visibleItems = computed(() => paginateAdminWorks(
+  filteredItems.value,
+  page.value,
+  pageSize.value,
+))
+const visibleFrom = computed(() => filteredItems.value.length === 0
+  ? 0
+  : (page.value - 1) * pageSize.value + 1)
+const visibleTo = computed(() => Math.min(
+  page.value * pageSize.value,
+  filteredItems.value.length,
+))
 
 function tabHref(status: CommissionSubmissionStatus) {
   return status === 'pending' ? '/admin/commissions' : `/admin/commissions?status=${status}`
@@ -49,6 +77,14 @@ async function load() {
   }
 }
 
+watch([query, pageSize, activeStatus], () => {
+  page.value = 1
+})
+watch(pageCount, (count) => {
+  if (page.value > count) {
+    page.value = count
+  }
+})
 watch(activeStatus, () => void load())
 onMounted(() => void load())
 </script>
@@ -75,6 +111,27 @@ onMounted(() => void load())
         >{{ tab.label }}</NuxtLink>
       </nav>
 
+      <section
+        v-if="pageStatus === 'ready' && items.length > 0"
+        class="admin-list-toolbar commission-inbox__toolbar"
+        aria-label="查找委托申请"
+      >
+        <div class="admin-list-toolbar__field">
+          <label class="admin-list-toolbar__label" for="admin-commission-search">查找申请</label>
+          <input
+            id="admin-commission-search"
+            v-model="query"
+            class="admin-list-toolbar__control"
+            type="search"
+            placeholder="昵称、物种或回执编号"
+            autocomplete="off"
+          >
+        </div>
+        <p class="commission-inbox__count" role="status">
+          {{ query.trim() ? `找到 ${filteredItems.length} / ${items.length} 条` : `共 ${items.length} 条` }}
+        </p>
+      </section>
+
       <div v-if="pageStatus === 'loading'" class="commission-inbox__state" role="status">
         正在加载申请…
       </div>
@@ -85,17 +142,33 @@ onMounted(() => void load())
       <div v-else-if="items.length === 0" class="commission-inbox__state">
         当前状态下没有申请。
       </div>
-      <ul v-else class="commission-inbox__list" role="list">
-        <li v-for="item in items" :key="item.id">
-          <NuxtLink :to="`/admin/commissions/${item.id}`" class="commission-inbox__item">
-            <span class="commission-inbox__name">
-              {{ item.nickname }} · {{ item.species ?? '物种待补录' }}
-            </span>
-            <span>{{ formatTime(item.createdAt) }}</span>
-            <span>{{ item.receiptCode }}</span>
-          </NuxtLink>
-        </li>
-      </ul>
+      <div v-else-if="filteredItems.length === 0" class="commission-inbox__state">
+        <p>没有符合条件的申请。</p>
+        <button type="button" @click="query = ''">清除查找</button>
+      </div>
+      <template v-else>
+        <ul class="commission-inbox__list" role="list">
+          <li v-for="item in visibleItems" :key="item.id">
+            <NuxtLink :to="`/admin/commissions/${item.id}`" class="commission-inbox__item">
+              <span class="commission-inbox__name">
+                {{ item.nickname }} · {{ item.species ?? '物种待补录' }}
+              </span>
+              <span>{{ formatTime(item.createdAt) }}</span>
+              <span>{{ item.receiptCode }}</span>
+            </NuxtLink>
+          </li>
+        </ul>
+        <AdminPagination
+          v-model:page="page"
+          v-model:page-size="pageSize"
+          :page-count="pageCount"
+          :result-count="filteredItems.length"
+          :visible-from="visibleFrom"
+          :visible-to="visibleTo"
+          label="委托申请分页"
+          unit="条"
+        />
+      </template>
     </div>
   </AdminShell>
 </template>
@@ -157,6 +230,21 @@ onMounted(() => void load())
   padding: var(--admin-space-6);
   border-radius: var(--admin-radius-md);
   background: var(--admin-bg-subtle);
+}
+
+.commission-inbox__count {
+  margin: 0;
+  align-self: end;
+  color: var(--admin-text-secondary);
+  font-size: var(--admin-font-sm);
+}
+
+@media (min-width: 768px) {
+  /* 与作品列表同一工具条模式：查找框为主，计数行贴底对齐。 */
+  .admin-list-toolbar.commission-inbox__toolbar {
+    grid-template-columns: minmax(14rem, 2fr) auto;
+    align-items: end;
+  }
 }
 
 .commission-inbox__list {
