@@ -88,6 +88,15 @@ test('本地真实浏览器完成单图私密申请、管理查看与 409 停止
   await expect(row).toContainText(`${nickname} · ${species}`)
   expect(await row.evaluate(element => getComputedStyle(element).backgroundColor))
     .toBe('rgb(255, 255, 255)')
+
+  // 查找：昵称/物种/回执编号命中；无命中时给出空态与清除入口。
+  await page.getByLabel('查找申请').fill('不存在的角色')
+  await expect(page.locator('.commission-inbox__item')).toHaveCount(0)
+  await expect(page.getByText('没有符合条件的申请。')).toBeVisible()
+  await page.getByRole('button', { name: '清除查找' }).click()
+  await expect(row).toBeVisible()
+  await expect(page.getByRole('navigation', { name: '委托申请分页' })).toBeVisible()
+
   await row.click()
   await expect(page.getByRole('heading', { name: '委托申请详情' })).toBeVisible()
   await expect(page.getByText(nickname, { exact: true })).toBeVisible()
