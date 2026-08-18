@@ -169,7 +169,11 @@ function targetUsages(
   primary = false,
   hasPrimaryStudioPhoto = false,
 ): PublicMediaUsage[] {
-  if (role === 'studio_photo' || role === 'design_sheet') {
+  /*
+   * adoption_cover 必须参与重建：清理阶段会删除全部旧 profile 的水印公开变体，
+   * 若生成阶段漏掉封面，已发布领养作品会在重建后失去全部公开图。
+   */
+  if (role === 'studio_photo' || role === 'design_sheet' || role === 'adoption_cover') {
     return workAssetPublicUsages(role, primary, hasPrimaryStudioPhoto)
   }
   throw new Error('Unsupported public watermark target role.')
