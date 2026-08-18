@@ -222,7 +222,7 @@ defineExpose({ save: saveCover })
   <section id="adoption-cover" class="editor-card" aria-labelledby="adoption-cover-title">
     <div class="editor-card__head">
       <h2 id="adoption-cover-title" class="editor-card__title">领养横版封面</h2>
-      <p class="editor-card__hint">{{ entry ? '1/1' : '0/1' }} · 发布必需</p>
+      <p class="editor-card__hint">{{ entry ? '1/1' : '0/1' }} · 与设定图至少上传其一</p>
     </div>
     <p class="cover__note">请上传真实横版单头成果图；系统不会从设定图或出厂照自动裁切替代。</p>
     <p v-if="locked" class="cover__locked" role="status">作品已发布，横版封面为只读；如需替换请先下架。</p>

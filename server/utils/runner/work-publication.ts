@@ -265,9 +265,6 @@ export function checkWorkPublication(
     if (work.adoptionStatus === null) {
       blockers.push('ADOPTION_STATUS_REQUIRED')
     }
-    if (adoptionCovers.length === 0) {
-      blockers.push('ADOPTION_COVER_REQUIRED')
-    }
     if (adoptionCovers.some(cover => cover.status !== 'READY')) {
       blockers.push('ADOPTION_COVER_NOT_READY')
     }
@@ -280,20 +277,20 @@ export function checkWorkPublication(
     if (designSheets.some(sheet => !sheet.alt?.trim())) {
       blockers.push('DESIGN_SHEET_ALT_REQUIRED')
     }
-  }
-  /*
-   * 领养常见场景是只做单头：有横版 cover，客户交付 DTD 前做不出身体，因此没有出厂照。
-   * 这类作品允许发布，出厂照退化为 0..5 可选；commission/showcase 仍必须有出厂照。
-   * cover 自身的 READY/alt 由上面的 ADOPTION_COVER_* 阻断项负责。
-   */
-  if (publicationPhotos.length === 0) {
-    if (work.purpose !== 'adoption') {
-      blockers.push('STUDIO_PHOTO_REQUIRED')
-    }
-    else if (adoptionCovers.length === 0) {
-      // cover 与出厂照都没有：领养作品没有任何可公开的成果图。
+    /*
+     * 领养作品的公开成果图可以是横版封面或完整设定图，二者至少其一；
+     * 没有任一时即使叠加工厂照也不足以支撑 /adoptions 卡片。
+     */
+    if (adoptionCovers.length === 0 && designSheets.length === 0) {
       blockers.push('ADOPTION_MEDIA_REQUIRED')
     }
+  }
+  /*
+   * 领养常见场景是只做单头：有横版封面或设定图，客户交付 DTD 前做不出身体，因此没有出厂照。
+   * 这类作品允许发布，出厂照退化为 0..5 可选；commission/showcase 仍必须有出厂照。
+   */
+  if (publicationPhotos.length === 0 && work.purpose !== 'adoption') {
+    blockers.push('STUDIO_PHOTO_REQUIRED')
   }
   if (
     publicationPhotos.length > 0

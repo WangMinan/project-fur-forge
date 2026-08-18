@@ -67,7 +67,7 @@ test('发布会先自动保存基础信息、三类媒体，再完成领养作�
   await gotoEditor(page, work.id)
 
   const panel = page.getByTestId('publication-panel')
-  await expect(panel).toContainText('领养作品必须保存一张独立横版封面')
+  await expect(panel).toContainText('领养作品至少需要一张横版封面或设定图')
   await expect(panel.getByRole('button', { name: '发布', exact: true })).toBeDisabled()
 
   // 空态下横版封面的操作行不能贴着虚线图像框，和「领养设定图」一致留出间距。

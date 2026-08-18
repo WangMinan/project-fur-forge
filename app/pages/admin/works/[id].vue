@@ -428,8 +428,9 @@ useSeoMeta({
                 <div class="preview-card__fact">
                   <dt>领养横版封面 / 设定图</dt>
                   <dd v-if="preview.purpose === 'adoption'">
-                    {{ preview.adoptionCover ? '封面 1 张' : '封面未保存' }}
-                    · {{ preview.designSheet ? '设定图 1 张' : '设定图可选' }}
+                    {{ preview.adoptionCover ? '封面 1 张' : '无封面' }}
+                    · {{ preview.designSheet ? '设定图 1 张' : '无设定图' }}
+                    · 二者至少其一
                   </dd>
                   <dd v-else>不适用</dd>
                 </div>
