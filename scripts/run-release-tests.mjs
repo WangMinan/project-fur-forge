@@ -1,6 +1,9 @@
 import { spawnSync } from 'node:child_process'
 
-const pnpm = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
+const pnpmCli = process.env.npm_execpath
+if (!pnpmCli) {
+  throw new Error('pnpm did not provide npm_execpath to the release test runner.')
+}
 const steps = [
   { args: ['test:smoke'], env: { APP_ENV: 'test' } },
   { args: ['build'], env: { APP_ENV: 'production' } },
@@ -10,7 +13,7 @@ const steps = [
 ]
 
 for (const step of steps) {
-  const result = spawnSync(pnpm, step.args, {
+  const result = spawnSync(process.execPath, [pnpmCli, ...step.args], {
     env: { ...process.env, ...step.env },
     shell: false,
     stdio: 'inherit',
