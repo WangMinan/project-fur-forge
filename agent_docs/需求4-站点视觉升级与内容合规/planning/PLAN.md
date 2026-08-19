@@ -52,7 +52,7 @@ A 组件与进度地基
 
 - 保留四集合和现有 API/composable。
 - `admin/site/home` 改为 placement 一级、orientation 二级。
-- 委托页宽屏横/竖两个单槽并排；首页显示横/竖摘要并按方向编辑多项。
+- 首页与委托页都显示横/竖摘要，并通过二级 Tab 只编辑当前方向；不在宽屏同时展开委托横/竖单槽。
 - 统一 editor/card、设备画框预览和长任务反馈。
 
 ### GATE-A

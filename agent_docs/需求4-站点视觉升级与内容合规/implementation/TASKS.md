@@ -33,7 +33,7 @@
 - [x] **T08 · OSS 上传进度接入**：Hero、作品图、二维码、水印 Logo 至少四类上传复用真实 XHR progress 和统一组件；digest/session/validating/processing 使用统一阶段标签。
 - [x] **T09 · FFmpeg 与 operation 进度接入**：FFmpeg 使用 indeterminate + elapsed；publication/branding/Hero 使用真实阶段/计数；删除 `PREPARING_SOURCE=12%` 等伪精确映射和局部 progress DOM。
 - [x] **T10 · 上传展示层收敛**：抽取共享状态映射/展示 helper；只在确有重复时继续抽取 composable，不以大重写阻塞组件落地。
-- [x] **T11 · Hero 管理信息架构**：一级“首页/委托”、二级“横/竖”；顶部显示两方向摘要，委托宽屏双槽并排、首页按方向编辑；底层四集合/API/CAS 不变。
+- [x] **T11 · Hero 管理信息架构**：一级“首页/委托”、二级“横/竖”；顶部显示两方向摘要，首页与委托页都只编辑当前方向；底层四集合/API/CAS 不变。
 - [x] **T12 · Hero 设备预览**：增加桌面/手机画框切换和当前方向/状态/operation 摘要，复用统一进度和行动组件。
 
 ### GATE-A · 新开发不再复制组件债
@@ -56,6 +56,7 @@
 - [x] **T19 · `/adoptions` 唯一排序**：repository 携带 `updated_at`；available 在前、adopted 在后，组内 updatedAt 倒序、ID 稳定；搜索后保持顺序再分页。
 - [x] **T20 · 排序核心测试**：只保留一组稳定用例证明状态 bucket、组内修改时间、搜索和分页；新改为 adopted 的作品不得排到 available 前。
 - [x] **T21 · 首页单项开放领养**：聚合最多投影第一项 available；`HomeCurrentAdoptions` 删除双项 slice/双列布局；无 available 时隐藏，adopted 仍可进入精选。
+- [x] **T21-F1 · 用户复核修正**：作品发布操作区与进度卡增加间距；Hero 编辑卡改为白底、方向筛选条只高亮选中项并移除完成态“已就绪”；低分辨率适配自动接续发布且完成态为“已完成发布”；委托横/竖按 Tab 分开渲染。
 
 ### GATE-B · 反馈更快、业务顺序正确
 

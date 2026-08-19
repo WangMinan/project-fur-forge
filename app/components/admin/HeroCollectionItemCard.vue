@@ -116,6 +116,19 @@ const operationStatus = computed(() => props.operation?.status === 'DONE'
   : props.operation?.status === 'FAILED'
     ? 'error' as const
     : 'active' as const)
+const operationLabel = computed(() => {
+  const operation = props.operation
+  if (!operation) {
+    return ''
+  }
+  if (operation.operationType === 'PUBLISH') {
+    return operation.status === 'DONE' ? '已完成发布' : '发布并启用大图'
+  }
+  if (operation.operationType === 'UNPUBLISH') {
+    return operation.status === 'DONE' ? '已完成停用' : '停用并撤销大图'
+  }
+  return operation.status === 'DONE' ? '已完成适配' : '适配大图尺寸'
+})
 const previewUrl = computed(() => assetId.value
   ? adminMediaPreviewUrl(assetId.value, ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH)
   : null,
@@ -262,11 +275,7 @@ function requestDisable() {
     <AdminTaskProgress
       v-if="operation"
       :mode="operationMode"
-      :label="operation.operationType === 'PUBLISH'
-        ? '发布并启用大图'
-        : operation.operationType === 'UNPUBLISH'
-          ? '停用并撤销大图'
-          : '适配大图尺寸'"
+      :label="operationLabel"
       :stage="PUBLICATION_OPERATION_STATUS_LABELS[operation.status]"
       :status="operationStatus"
       :detail="feedback?.text ?? null"
