@@ -1,12 +1,12 @@
 # 数据迁移与运维计划：需求4
 
 > **角色**：固定需求4的前向文案迁移、无 Schema 变更项、生产停止点与人工删除流程。
-> **状态**：2026-08-19 第二轮 Review 后定稿待实现。
+> **状态**：2026-08-19 第二轮 Review 与空上下文文档复核后定稿待实现。
 > **原则**：本轮不为轻量确认新增数据库结构；不重写需求1～3已经执行的迁移。
 
 ## 1. 当前基线
 
-- 当前代码基线：`main@aa8e5b70be0913f02ceddccdc262ec6fe0769df1`。
+- 第二轮应用代码审查基线：`main@aa8e5b70be0913f02ceddccdc262ec6fe0769df1`；对应文档合入基线：`main@ea3ae0a1269676db8c06c28ed32a9a29f4bd7109`（无应用代码变更）。
 - `site_content` 已有 about、commission、terms、privacy、contact 分区版本。
 - `commission_submissions` 已有 pending/accepted/rejected、手机号、QQ、身高、体重、私有设定图关系和资源版本。
 - `assets` 已有归一化 `focal_x/focal_y`；需求4不新增焦点表。
@@ -255,7 +255,7 @@ release/manual：
 实现增加确定性生成输入/产物：
 
 ```text
-config/third-party-assets.(json|ts)
+config/third-party-registry.(json|ts)
 app/assets/licenses/third-party-notices.json
 app/assets/licenses/THIRD_PARTY_NOTICES.txt
 ```
@@ -264,7 +264,9 @@ app/assets/licenses/THIRD_PARTY_NOTICES.txt
 - 不写生成时间；
 - 排序稳定；
 - npm 事实来自生产依赖；
-- FFmpeg、Noto Serif SC、ZhuoHei Collage 由人工 registry 补充；
+- `ffmpeg-static` 包与镜像内实际 FFmpeg 二进制分开记录；Linux 发布镜像中的二进制由 runtime registry 补充精确版本、SHA-256、许可证、对应源码、补丁和构建配置；
+- Noto Serif SC、ZhuoHei Collage 由 asset registry 补充；
+- release 前核对 Docker Hub 可见性；当前公开仓库按分发场景生成容器内声明和 `/licenses` 数据，禁止输出“未分发”文案；
 - 缺失/未知许可证时失败，不猜测；
 - `/licenses` 不再维护平行手写运行时数组。
 

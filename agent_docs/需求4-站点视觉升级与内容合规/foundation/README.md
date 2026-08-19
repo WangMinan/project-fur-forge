@@ -1,8 +1,8 @@
 # 阶段 0 · 地基（Foundation）
 
 > **角色**：固定需求4的模块边界、继承关系、数据/安全口径与不可扩散的非目标。
-> **状态**：2026-08-19 第二轮 Review 后锁定。任何偏离必须先同步本文件、SPEC、PLAN、TASKS 和 STATE。
-> **代码基线**：`main@aa8e5b70be0913f02ceddccdc262ec6fe0769df1`。
+> **状态**：2026-08-19 第二轮 Review 与空上下文文档复核后锁定。任何偏离必须先同步本文件、SPEC、PLAN、TASKS 和 STATE。
+> **评审基线**：第二轮应用代码审查基于 `main@aa8e5b70be0913f02ceddccdc262ec6fe0769df1`；对应文档随后以 `main@ea3ae0a1269676db8c06c28ed32a9a29f4bd7109` 合入，后者没有应用代码变更。
 
 ## 1. 继承与覆盖
 
@@ -38,7 +38,7 @@
 - `shared/schemas/commission.ts` 与提交 service：只增加两个 `z.literal(true)` 请求字段并在消费上传前校验；不持久化确认、不新增版本握手。
 - `site_content` 现有 about/commission/terms/privacy/contact 字段与管理端：继续承担真实经营主体、隐私政策、服务条款和联系信息；不新增通用 CMS 或专用处理者字段。
 - `scripts/`、现有 repository/service/storage：单条申请 retention Review 与精确删除 CLI；不提供自动批量删除。
-- `/licenses`、生成脚本与第三方资产 registry：第三方声明事实源。
+- `/licenses`、生成脚本与第三方 runtime/asset registry：第三方声明事实源。当前 release workflow 把包含 FFmpeg 的镜像发布到公开 Docker Hub，因此 FFmpeg 必须按分发场景留存精确二进制、许可证、对应源码和构建信息。
 
 以下模块只继承、不在本轮重构：管理员认证、作品/水印领域模型、OSS CORS、Nginx/Compose、支付外部流程、QQ 平台本身。
 

@@ -13,7 +13,7 @@
 - [x] **T00 · 需求4文档地基**：按 `_template` 建立 foundation、SPEC、COPY、design、models、PLAN、DATA-MIGRATION、TASKS、notes、review、artifacts 和 STATE。
 - [x] **T01 · 第一轮代码/历史基线复核**：对照 `main@913d257` 的首页聚合、Hero、焦点字段、委托 Schema、默认文案与 licenses 页面。
 - [x] **T02 · 外部设计资料复核**：评估 Apple、渔屋、万物通行和 Apple Design Skill；只采纳可解释原则，不复制品牌或把动效库当默认依赖。
-- [x] **T03 · 第二轮代码与文档 Review**：对照 `main@aa8e5b7` 修正单项领养、领养排序、组件优先、轻量隐私、测试减负、Hero 管理和统一进度口径。
+- [x] **T03 · 第二轮代码与文档 Review**：先对照 `main@aa8e5b7` 修正单项领养、领养排序、组件优先、轻量隐私、测试减负、Hero 管理和统一进度口径；再以空上下文对照谈话记录、`main@ea3ae0a`、现有委托字段与发布工作流，修正评审基线表述、表单/QQ 文案分工、服务条款接受节点，以及公开 Docker Hub 下的 FFmpeg 分发口径。
 
 ### GATE-0 · 文档可实施
 
@@ -72,7 +72,7 @@
 - [ ] **T24 · 两项申请确认 UI**：成年/设定权利、隐私/用途/非接单两项未预勾选；错误邻近、键盘/屏幕阅读器可用，提交失败保留表单与图片。
 - [ ] **T25 · 严格请求校验**：Schema 增加 `adultConfirmed: true`、`privacyNoticeAcknowledged: true`；service 在消费 upload 前校验；缺失/false 返回普通 validation error。
 - [ ] **T26 · 删除旧复杂方案残留**：确认无 `privacy_controller_name`、intake metadata API、contract version、确认 DB 列、legacy/v2 管理 UI、客户端 policy version 或 stale 409。
-- [ ] **T27 · 隐私/服务/关于/委托展示**：使用现有内容投影，QQ 优先、邮箱备用；隐私政策真实描述站内收集与人工清理；不把 checkbox 写成合同签署。
+- [ ] **T27 · 隐私/服务/关于/委托展示**：使用现有内容投影，QQ 优先、邮箱备用；隐私政策真实描述站内收集与人工清理；不把 checkbox 写成合同签署；工作室在 QQ 接单/收款前明确提供或引用当时服务条款并提示重大事项。
 - [ ] **T28 · 轻量隐私负向验证**：确认 PII 不进入公开 DTO、HTML、URL、analytics、普通日志、错误和 local/session storage；只保留必要 core 测试。
 
 ### GATE-C · 确认清楚但工程轻量
@@ -91,9 +91,9 @@
 - [ ] **T31 · 单条删除 execute**：固定强确认，current/version/delete marker/preview/pending 删除并验证后事务删行；每次只一条，不支持时间批量 execute。
 - [ ] **T32 · 删除重入与隔离演练**：对象已不存在、DB commit 失败、异常引用、重复执行和备份恢复后复核均有明确行为；只保留核心不变量测试。
 - [ ] **T33 · 人工 SOP**：记录月度上传清理、半年度申请 Review、用户删除请求、操作员和下一次日期；不存 PII/manifest。
-- [ ] **T34 · 第三方声明生成**：从实际生产依赖生成稳定 JSON/TXT，无生成时间、排序稳定、未知许可证失败。
-- [ ] **T35 · 人工资产 registry**：登记 FFmpeg、Noto Serif SC、ZhuoHei Collage；保存授权来源/摘要边界，不误标免费商用字体为开源。
-- [ ] **T36 · `/licenses` 收口**：页面消费生成事实并提供完整声明；删除手写平行运行时数组和“均为 MIT/Apache”错误总括。
+- [ ] **T34 · 第三方声明生成**：从实际生产依赖生成稳定 JSON/TXT，无生成时间、排序稳定、未知许可证失败；`ffmpeg-static` 包记录与实际二进制记录分开。
+- [ ] **T35 · Runtime/资产 registry**：从 Linux 发布镜像登记 FFmpeg 版本、SHA-256、许可证、对应源码、补丁和构建配置；另登记 Noto Serif SC、ZhuoHei Collage，不误标免费商用字体为开源。
+- [ ] **T36 · `/licenses` 与分发产物收口**：页面和公开 Docker Hub 镜像消费同一生成事实；镜像内含许可证/声明，release evidence 给出接收者可访问的对应源码与构建信息；删除手写平行运行时数组、“均为 MIT/Apache”和“未分发 FFmpeg”错误总括。
 
 ### GATE-D · 人工运维可执行
 

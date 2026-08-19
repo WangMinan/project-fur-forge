@@ -1,8 +1,8 @@
 # 规格说明：站点视觉升级与内容合规
 
 > **角色**：定义需求4“做什么、为什么、验收什么”，是实现与评审的产品真理来源。
-> **状态**：2026-08-19 第二轮 Review 后锁定待实现。
-> **代码基线**：`main@aa8e5b70be0913f02ceddccdc262ec6fe0769df1`。
+> **状态**：2026-08-19 第二轮 Review 与空上下文文档复核后锁定待实现。
+> **评审基线**：第二轮应用代码审查基于 `main@aa8e5b70be0913f02ceddccdc262ec6fe0769df1`；对应文档随后以 `main@ea3ae0a1269676db8c06c28ed32a9a29f4bd7109` 合入，后者没有应用代码变更。
 
 ## 1. 资料来源
 
@@ -17,6 +17,10 @@
 | `https://github.com/emilkowalski/skills/blob/main/skills/apple-design/SKILL.md` | 即时反馈、空间一致性、可中断交互、排版与 reduced-motion |
 | `https://pnpm.io/cli/licenses` | 生产依赖许可证清单的机器来源 |
 | `https://font.leminet.cn/#/` | 拙黑拼贴体来源与免费商用声明 |
+| `.github/workflows/release-image.yml` 与 `https://hub.docker.com/r/wangminan/project-fur-forge` | 当前容器镜像的外部发布与公开可见性事实 |
+| `https://ffmpeg.org/legal.html` | FFmpeg 二进制分发的许可证、对应源码与构建信息基线 |
+| `https://www.cac.gov.cn/2021-08/20/c_1631050028355286.htm` | 个人信息告知、最短保存期限、删除与权利入口 |
+| `https://wb.flk.npc.gov.cn/flfg/PDF/bd53dd912c1048f2aecbaa229238334b.pdf` | 格式条款的公平、提示说明与效力边界 |
 
 ## 2. 目标
 
@@ -49,7 +53,7 @@
 - 不强制启用 GitHub required check，不让每个普通提交执行镜像/恢复/完整历史 E2E。
 - 不为每次视觉修正增加永久回归用例，不以机械修正老测试作为功能完成证明。
 - 不合并 Hero 横版和竖版数据，不要求数量、排序或图片一一配对。
-- 不因 FFmpeg 服务器内部使用而虚构对外分发场景。
+- 不因网页没有 FFmpeg 下载入口就把公开容器发布写成“未分发”；镜像发布方式或仓库可见性变化后重新核对实际义务。
 
 ## 4. 开放问题（OQ）
 
@@ -349,10 +353,11 @@ Playwright 精简为少量用户旅程，不断言审美和内部 DOM：
 ## 13. 服务条款与第三方声明契约
 
 - 网站服务条款是一般规则；具体范围、价格、付款、排期、修改、交付和特殊约定在官方 QQ 中逐单书面确认。
+- 工作室在确认接单或收取约定款项前，应在官方 QQ 中提供或明确引用当时适用的服务条款，并提示取消、费用、责任限制、公开展示等重大事项；不能只依赖网页公开可读来推定客户接受。
 - 条款不得以“所有解释权归工作室”或不合理单方免责兜底。
 - 客户角色设定、实体所有权、工作室版型/工艺/照片、合理维修和商业复刻边界按 `COPY.md`。
 - npm 生产依赖声明从实际 lockfile/安装结果确定性生成。
-- FFmpeg 当前只在自有服务器容器内使用，不对外分发。
+- FFmpeg 在自有服务器容器内运行，但当前 release workflow 会把包含 FFmpeg 的镜像发布到公开 Docker Hub；按二进制分发场景保存并向镜像接收者提供精确版本/摘要、许可证、可访问的对应源码、补丁与构建配置。网页不提供单独下载入口不改变该事实。
 - Noto Serif SC 按 SIL OFL 1.1。
 - `zhuohei-collage.ttf` 来源为 Lemi Font 免费商用声明，作为第三方授权资产，不称为开源软件。
 - 不新增 required check 或独立重型许可证 workflow。

@@ -1,8 +1,8 @@
 # 计划：站点视觉升级与内容合规
 
 > **角色**：把 SPEC 翻译成有序、可执行的技术实现计划。
-> **状态**：2026-08-19 第二轮 Review 后定稿；无未答 OQ。
-> **代码基线**：`main@aa8e5b70be0913f02ceddccdc262ec6fe0769df1`。
+> **状态**：2026-08-19 第二轮 Review 与空上下文文档复核后定稿；无未答 OQ。
+> **评审基线**：第二轮应用代码审查基于 `main@aa8e5b70be0913f02ceddccdc262ec6fe0769df1`；对应文档随后以 `main@ea3ae0a1269676db8c06c28ed32a9a29f4bd7109` 合入，后者没有应用代码变更。
 
 ## 执行结论
 
@@ -117,6 +117,7 @@ A 组件与进度地基
 - 不覆盖管理员改写，也不在经营主体未知时把带占位符的 privacy 文本写入数据库。
 - 实际经营主体和完整隐私政策通过现有编辑能力人工写入，不新增字段。
 - QQ 优先、邮箱备用在 about/commission/privacy/anti-scam 一致。
+- 服务条款公开可读不等于客户已经接受；工作室在 QQ 确认接单或收取约定款项前明确提供/引用当时条款并提示重大事项。
 
 ### C2. 两项提交确认
 
@@ -137,7 +138,9 @@ A 组件与进度地基
 ### C4. 第三方声明
 
 - 从 production dependencies 生成稳定 JSON/TXT。
-- FFmpeg、Noto Serif SC、ZhuoHei Collage 进入人工 registry。
+- `ffmpeg-static` 包与镜像内实际 FFmpeg 二进制分开登记；后者从 Linux 发布镜像提取版本、SHA-256、许可证、对应源码、补丁和构建配置，并确保镜像接收者能访问对应源码。
+- Noto Serif SC、ZhuoHei Collage 进入人工资产 registry。
+- 当前 Docker Hub 仓库公开，release 视为二进制分发；容器与 `/licenses` 必须消费同一份声明事实，不能保留“仅内部使用、未分发”文案。
 - `/licenses` 使用生成事实，不保留平行手写依赖数组。
 - 未知许可证失败，不猜测。
 

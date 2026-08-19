@@ -1,7 +1,7 @@
 # 模型说明：需求4
 
 > **角色**：记录需求4的数据/领域/UI 模型现状、目标字段和迁移规则。
-> **代码基线**：`main@aa8e5b70be0913f02ceddccdc262ec6fe0769df1`。
+> **评审基线**：第二轮应用代码审查基于 `main@aa8e5b70be0913f02ceddccdc262ec6fe0769df1`；对应文档随后以 `main@ea3ae0a1269676db8c06c28ed32a9a29f4bd7109` 合入，后者没有应用代码变更。
 > **边界**：SPEC 定产品契约；本文件定字段和处理细节。
 
 ## 1. 现有模型复用
@@ -333,15 +333,21 @@ interface ThirdPartyNotice {
   homepage: string | null
   copyright: string[]
   noticeText: string | null
-  source: 'pnpm-prod' | 'manual-asset'
+  source: 'pnpm-prod' | 'manual-runtime' | 'manual-asset'
   usage: string
+  artifactSha256: string | null
+  correspondingSourceUrl: string | null
+  sourceRevision: string | null
+  buildConfiguration: string | null
+  patches: string[]
 }
 ```
 
 规则：
 
-- `pnpm-prod` 来自生产依赖；
-- `manual-asset` 至少包含 FFmpeg、Noto Serif SC、ZhuoHei Collage；
+- `pnpm-prod` 来自生产依赖；`ffmpeg-static` 包记录与实际 FFmpeg 二进制记录分开；
+- `manual-runtime` 至少包含发布镜像内实际 FFmpeg 二进制的版本、SHA-256、许可证、接收者可访问的对应源码、源码 revision、补丁和构建配置；
+- `manual-asset` 至少包含 Noto Serif SC 与 ZhuoHei Collage；
 - 排序稳定，不写生成时间；
 - 未知许可证不猜测；
 - 免费商用字体不伪造 SPDX。
