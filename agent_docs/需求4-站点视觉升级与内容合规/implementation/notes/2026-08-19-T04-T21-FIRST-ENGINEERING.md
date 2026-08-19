@@ -61,6 +61,39 @@
 
 结论：GATE-A 六项满足；本轮未实现焦点编辑、动效 token、首页四幕或 T22+。
 
-### Gate B
+### Gate B（通过）
 
-待 B 阶段完成后回填。本节不会记录 Secret、PII、私有 Object Key、签名 URL 或生产数据。
+测试逐文件分类落在 `tests/test-groups.ts`，并由 `pnpm test:groups` 拒绝漏分组、重复分组和未知文件：
+
+| 组 | 文件数 | 主要边界 |
+| --- | ---: | --- |
+| core | 47 | Host/session/CSRF/Origin、上传 token/TTL/一次消费、PII/私有媒体、migration/FK/integrity、operation/publication、受控删除和领养排序 |
+| smoke | 1 文件 / 8 旅程 | 首页、works/adoptions 目录与详情、委托成功/重复失败、admin 登录、真实 XHR progress、发布/下架、privacy/service/licenses |
+| legacy Vitest | 21 | 历史展示、内容默认、发布工具与重复层级覆盖；保留可显式运行但不作默认门禁 |
+| legacy Playwright | 24 | `0.68s`、局部 class/DOM、完整文案、历史截图/视觉修复和旧四平级 Hero Tab 等实现型断言 |
+
+主要决定与证据：
+
+- `check:fast = test:groups + lint + typecheck + test:core`；最终通过，core 为 47 文件 / 308 项。
+- `test:smoke` 使用 dev server，不重复 production build；最终 8/8 通过。
+- `test:release` 在 Windows/Linux 都通过 pnpm 当前 CLI 串行运行 smoke、production build、production verify、ESA/observability policy 和 Secret scan；最终通过，Secret scan 覆盖 572 个 tracked 文件。
+- `test:legacy` 只显式运行 legacy Vitest + 历史 Playwright，不进入默认 Actions。本轮没有为了 legacy 全绿修改旧 DOM/文案/毫秒断言。
+- 默认 `quality` 对 markdown/`agent_docs/**` 使用 `paths-ignore`，代码 push/PR 只执行 `check:fast`。`release=true` 才执行 `test:release`、image-build、Compose/restore/Nginx 等重任务；`release-image` 继续是手动工作流并显式传入 `release: true`，外部发布确认未放宽。
+- `/adoptions` comparator 唯一位于 repository：状态 bucket → `updated_at DESC` → ID；名称搜索只过滤已排序集合，分页最后执行。综合 core 用例同时证明同时间 ID、搜索、跨页和 `/works` 原公开时间顺序不受影响。
+- 首页聚合只返回第一项 available；`HomeCurrentAdoptions` 只消费第一项，不再 `.slice(0, 2)` 或建立双列。
+
+真实浏览器：
+
+- 2026-08-20 使用隔离 test SQLite、合成公开图片和真实 Chrome 检查 390×844、768×1024、1440×900。
+- 公开首页三视口均只有一项 current adoption，无正向水平溢出，键盘从 skip link 进入品牌链接，登录后 console error 为 0。
+- Hero 管理刷新后恢复 `GENERATING_PUBLIC` 的真实阶段与 elapsed；将隔离 operation 改为 FAILED 后，统一 error 终态和真实“重试长任务”入口可见。
+- 委托宽屏横/竖双槽并排，390/768 上下堆叠；两方向摘要、16:9 / 9:16 画框、disabled 上传和 3px focus outline 均可见。
+- 截图位于 `implementation/evidence/T04-T21-2026-08-20/`。合成棋盘素材不能证明真实角色构图或审美，王旻安/景宸视觉验收仍开放。
+
+未运行/未代签：
+
+- `pnpm test:legacy`：按新契约为 non-gating，且包含已确认的旧实现型失败；本轮不以修旧套件换取结论。
+- Docker image-build、Compose、restore、Nginx、destructive drill：只在显式 release/manual 路径，当前未触发。
+- 远端 Actions、独立 Review、真实 OSS/ESA、生产 Secret/数据、真实手机与生产发布：均未执行或代签。
+
+结论：GATE-B 五项满足，本轮严格停止在 T22 之前。本节未记录 Secret、PII、私有 Object Key、签名 URL 或生产数据。

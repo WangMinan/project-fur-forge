@@ -6,10 +6,17 @@
 
 ## 当前阶段
 
-阶段 3 · 2026-08-19 完成第二轮代码与文档 Review 及空上下文文档复核；需求4尚未开始应用实现，实施顺序已调整为“组件与反馈地基 → 测试减负与领养排序 → 轻量内容/隐私 → 视觉与首页 → 人工验收和发布”。
+阶段 4 · 2026-08-20 完成第一批工程实施 T04～T21，GATE-A/GATE-B 已由实现与本地证据关闭。当前停在 C 阶段 T22 之前；轻量内容/隐私、删除、第三方声明、Hero 焦点、动效体系和首页四幕均未开始。
 
 ## 最近验证
 
+- 2026-08-20：任务分支 `codex/r4-t04-t21-foundation` 从 `main@cbaf98fec4868e94af5b28faf5c3d9a23344d859` 开始；Gate A 提交为 `767a1d4`，领养排序提交为 `16e4288`，测试/Actions 提交为 `daacff2`，文档与浏览器证据由本轮末次提交收口。
+- 2026-08-20：公开 `PublicAction`、管理 `AdminAction` 与 `AdminTaskProgress` 已落地；Hero、作品图、二维码、水印 Logo 四类上传使用 XHR 字节进度；FFmpeg 为阶段 + elapsed + indeterminate；Hero/branding/publication operation 使用持久状态并可刷新恢复。
+- 2026-08-20：Hero 管理改为“首页/委托”一级与“横/竖（桌面/手机画框）”二级；委托宽屏双槽并排、窄屏堆叠。四个 collection 的 API、version、owner context、CAS、items 与 operation 仍独立。
+- 2026-08-20：`tests/test-groups.ts` 将 47 个 Vitest 文件归为 core、21 个归为 legacy，24 个历史 Playwright 文件归为 legacy；新 smoke 为 8 条黑盒主旅程。`pnpm check:fast` 通过，core 为 47 文件/308 项；`pnpm test:smoke` 8/8 通过。
+- 2026-08-20：`pnpm test:release` 通过 8 条 smoke、production build、production output verify、ESA/observability policy 与 572 个 tracked 文件 Secret scan；没有触发镜像、Compose、Nginx、恢复或生产发布。
+- 2026-08-20：`/adoptions` 在 repository 唯一按 `available → adopted`、组内 `updated_at DESC → id ASC` 排序，搜索保持相对顺序后分页；`/works` 保留原公开时间顺序。首页聚合最多一项 available，组件不再二次双项 slice/双列。
+- 2026-08-20：真实 Chrome 使用合成隔离数据复核 390×844、768×1024、1440×900；公开首页和 Hero 管理无正向水平溢出，登录后无 console error，焦点、disabled、错误终态、retry 和 operation 刷新恢复可见。该证据不代签真实图片审美、真实手机、王旻安/景宸验收或独立 Review。
 - 2026-08-19：确认 `/adoptions` 当前沿用全站发布时间顺序，尚未满足“开放领养优先、已完成在后、组内按修改时间降序”。
 - 2026-08-19：确认首页当前领养仍取前两项并使用双列布局；需求4目标改为只投影并完整展示一项开放领养。
 - 2026-08-19：确认 Hero 横/竖四集合及 CAS/发布模型应继续独立；问题主要在管理端四个扁平 Tab 的操作心智，而不是数据模型。
@@ -44,4 +51,4 @@
 
 ## 下一步交接
 
-从 `implementation/TASKS.md` 的 A 阶段开始：先清点并统一公开/管理行动、上传与长任务进度组件；随后完成测试减负和领养排序，再处理轻量隐私与首页视觉。不得从原 T04 的复杂隐私 Schema 方案继续实施。
+本轮停止于 GATE-B。下一轮只能从 `implementation/TASKS.md` 的 T22 开始轻量内容/隐私阶段；不得把本轮本地自动化当作独立 Review、王旻安/景宸视觉验收或生产发布，也不得恢复旧复杂 intake Schema 方案。
