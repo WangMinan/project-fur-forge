@@ -10,12 +10,12 @@ const props = defineProps<{
   available: boolean
 }>()
 
-const currentAdoptions = computed(() => props.adoptions.slice(0, 2))
+const currentAdoption = computed(() => props.adoptions[0] ?? null)
 </script>
 
 <template>
   <section
-    v-if="available && currentAdoptions.length > 0"
+    v-if="available && currentAdoption"
     class="home-adoptions"
     aria-labelledby="home-adoptions-title"
     data-testid="home-current-adoptions"
@@ -27,8 +27,8 @@ const currentAdoptions = computed(() => props.adoptions.slice(0, 2))
       </PublicAction>
     </header>
     <ul class="home-adoptions__grid" role="list">
-      <li v-for="adoption in currentAdoptions" :key="adoption.work.id">
-        <AdoptionCard :adoption="adoption" />
+      <li :key="currentAdoption.work.id">
+        <AdoptionCard :adoption="currentAdoption" />
       </li>
     </ul>
   </section>
@@ -68,9 +68,4 @@ const currentAdoptions = computed(() => props.adoptions.slice(0, 2))
   list-style: none;
 }
 
-@media (min-width: 768px) {
-  .home-adoptions__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
 </style>
