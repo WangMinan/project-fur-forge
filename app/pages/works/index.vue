@@ -107,9 +107,9 @@ function hrefFor(target: number) {
 
       <div v-else-if="emptyKind === 'out-of-range'" class="works-empty">
         <p class="works-empty__title">这一页没有作品</p>
-        <NuxtLink :to="hrefFor(1)" class="works-empty__reset">
+        <PublicAction :to="hrefFor(1)" variant="secondary" class="works-empty__reset">
           回到第一页
-        </NuxtLink>
+        </PublicAction>
       </div>
 
       <div v-else-if="emptyKind === 'no-works'" class="works-empty">
@@ -118,24 +118,24 @@ function hrefFor(target: number) {
 
       <div v-else-if="emptyKind === 'invalid-search'" class="works-empty">
         <p class="works-empty__title">搜索条件无效</p>
-        <NuxtLink :to="clearSearchHref" class="works-empty__reset">
+        <PublicAction :to="clearSearchHref" variant="secondary" class="works-empty__reset">
           清除搜索
-        </NuxtLink>
+        </PublicAction>
       </div>
 
       <div v-else-if="emptyKind === 'search-no-match'" class="works-empty">
         <p class="works-empty__title">没有找到这个设定</p>
-        <NuxtLink :to="clearSearchHref" class="works-empty__reset">
+        <PublicAction :to="clearSearchHref" variant="secondary" class="works-empty__reset">
           清除搜索
-        </NuxtLink>
+        </PublicAction>
       </div>
 
       <!-- 无匹配与参数非法对访客是同一件事：这套条件下没有作品。 -->
       <div v-else class="works-empty">
         <p class="works-empty__title">没有符合条件的作品</p>
-        <NuxtLink to="/works" class="works-empty__reset">
+        <PublicAction to="/works" variant="secondary" class="works-empty__reset">
           清除筛选
-        </NuxtLink>
+        </PublicAction>
       </div>
     </div>
   </div>
@@ -239,16 +239,6 @@ function hrefFor(target: number) {
 }
 
 .works-empty__reset {
-  display: inline-block;
   margin-top: var(--space-4);
-  padding: var(--space-2) var(--space-5);
-  border: 1px solid var(--public-border-primary);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-}
-
-.works-empty__reset:hover {
-  background: var(--public-bg-inverse);
-  color: var(--public-text-inverse);
 }
 </style>

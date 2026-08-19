@@ -304,24 +304,25 @@ defineExpose({ save: saveDesignSheet })
         <p v-if="entry.status === 'FAILED'" class="design-sheet__error" role="alert">
           私有处理源生成失败；原图仍保留，可重试处理。
         </p>
-        <AdminFfmpegProgress
+        <AdminTaskProgress
           v-if="processing"
+          mode="indeterminate"
           label="设定图：FFmpeg 私有预处理中"
+          stage="正在生成私有处理源"
+          show-elapsed
         />
         <div class="design-sheet__entry-actions">
-          <button
+          <AdminAction
             v-if="entry.status === 'FAILED'"
-            type="button"
-            class="editor__button editor__button--secondary"
             :disabled="locked || processing"
+            :loading="processing"
+            loading-label="处理中…"
             @click="retryEntryProcessing"
-          >{{ processing ? '处理中…' : '重试处理' }}</button>
-          <button
-            type="button"
-            class="editor__button editor__button--secondary"
+          >重试处理</AdminAction>
+          <AdminAction
             :disabled="locked || processing"
             @click="entry = null"
-          >移除设定图</button>
+          >移除设定图</AdminAction>
         </div>
       </div>
     </article>
@@ -339,19 +340,18 @@ defineExpose({ save: saveDesignSheet })
       @change="onFileChange"
     >
     <div v-if="!entry" class="design-sheet__uploader">
-      <button
-        type="button"
-        class="editor__button editor__button--secondary"
+      <AdminAction
         :disabled="locked || busyUploads > 0"
         @click="pickFile"
-      >选择设定图</button>
+      >选择设定图</AdminAction>
       <span class="design-sheet__filename">{{ selectedFile?.name ?? '未选择图片' }}</span>
-      <button
-        type="button"
-        class="editor__button editor__button--primary"
+      <AdminAction
+        variant="primary"
         :disabled="!selectedFile || locked || busyUploads > 0"
+        :loading="busyUploads > 0"
+        loading-label="处理中…"
         @click="uploadSelectedFile"
-      >{{ busyUploads > 0 ? '处理中…' : '上传设定图' }}</button>
+      >上传设定图</AdminAction>
     </div>
 
     <ul v-if="uploads.items.value.length > 0" class="design-sheet__uploads" role="list">
@@ -370,18 +370,17 @@ defineExpose({ save: saveDesignSheet })
     </ul>
 
     <div v-if="isDirty" class="design-sheet__actions">
-      <button
-        type="button"
-        class="editor__button editor__button--primary"
+      <AdminAction
+        variant="primary"
         :disabled="saving || locked"
+        :loading="saving"
+        loading-label="保存中…"
         @click="saveDesignSheet"
-      >{{ saving ? '保存中…' : '保存设定图' }}</button>
-      <button
-        type="button"
-        class="editor__button editor__button--secondary"
+      >保存设定图</AdminAction>
+      <AdminAction
         :disabled="saving"
         @click="resetFromWork(work)"
-      >放弃更改</button>
+      >放弃更改</AdminAction>
       <span class="design-sheet__dirty">设定图有未保存更改</span>
     </div>
     <p class="design-sheet__note">“移除”只解除作品关系，私有原图保留；保存后生效。</p>

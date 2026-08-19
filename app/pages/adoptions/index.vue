@@ -102,11 +102,12 @@ function hrefFor(target: number) {
         领养需要人工沟通，所以在搜索条右侧直接给出联系入口，
         高度与搜索输入框/搜索按钮一致，视觉上同属一条操作带。
       -->
-      <NuxtLink
+      <PublicAction
+        variant="secondary"
         class="adoptions-page__contact-action"
         to="/about#contact"
         data-testid="adoption-contact-action"
-      >联系我们申请领养</NuxtLink>
+      >联系我们申请领养</PublicAction>
     </div>
 
     <div v-if="items.length > 0" class="adoptions-page__content">
@@ -128,7 +129,7 @@ function hrefFor(target: number) {
       title="这一页没有可领养角色"
       description="可以回到当前筛选的第一页继续浏览。"
     >
-      <NuxtLink :to="hrefFor(1)">回到第一页</NuxtLink>
+      <PublicAction :to="hrefFor(1)" variant="secondary">回到第一页</PublicAction>
     </PublicEmptyState>
 
     <PublicEmptyState
@@ -136,8 +137,8 @@ function hrefFor(target: number) {
       :title="emptyText.title"
       :description="emptyText.description"
     >
-      <NuxtLink v-if="search.active" :to="clearSearchHref">清除搜索</NuxtLink>
-      <NuxtLink v-else to="/works">浏览作品展示</NuxtLink>
+      <PublicAction v-if="search.active" :to="clearSearchHref" variant="secondary">清除搜索</PublicAction>
+      <PublicAction v-else to="/works" variant="secondary">浏览作品展示</PublicAction>
     </PublicEmptyState>
   </div>
 </template>
@@ -186,31 +187,9 @@ function hrefFor(target: number) {
 }
 
 .adoptions-page__contact-action {
-  display: inline-flex;
   flex: none;
-  align-items: center;
-  justify-content: center;
-  min-height: 2.75rem;
-  padding: var(--space-2) var(--space-5);
-  color: var(--public-text-primary);
-  background: var(--public-bg-primary);
-  border: 1px solid var(--public-border-primary);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-base);
-  transition:
-    color var(--duration-fast) var(--easing-standard),
-    border-color var(--duration-fast) var(--easing-standard);
-}
-
-.adoptions-page__contact-action:hover {
-  color: var(--public-accent-active);
-  border-color: var(--public-text-primary);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .adoptions-page__contact-action {
-    transition: none;
-  }
 }
 
 .adoptions-page__grid {

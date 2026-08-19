@@ -66,12 +66,12 @@ const TONE_LABELS = {
             </span>
 
             <span class="home-entry__actions">
-              <NuxtLink :to="commission.href" class="home-entry__action">
+              <PublicAction :to="commission.href" variant="text">
                 查看详情 <span aria-hidden="true">→</span>
-              </NuxtLink>
-              <NuxtLink to="/commission/apply" class="home-entry__apply">
+              </PublicAction>
+              <PublicAction to="/commission/apply">
                 提交委托申请
-              </NuxtLink>
+              </PublicAction>
             </span>
           </span>
         </article>
@@ -237,33 +237,6 @@ const TONE_LABELS = {
   justify-content: space-between;
   gap: var(--space-3);
   margin-top: var(--space-2);
-}
-
-.home-entry__action,
-.home-entry__apply {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  /* 移动端触控目标足够高。 */
-  min-height: 2.75rem;
-  color: var(--public-accent-primary);
-  font-size: var(--font-size-sm);
-}
-
-.home-entry__apply {
-  justify-content: center;
-  min-height: 2.75rem;
-  padding: 0 var(--space-5);
-  color: var(--public-text-inverse);
-  background: var(--public-accent-primary);
-  border-radius: var(--radius-full);
-  font-weight: 600;
-}
-
-.home-entry__apply:hover,
-.home-entry__apply:focus-visible {
-  color: var(--public-text-inverse);
-  background: var(--public-accent-hover);
 }
 
 @media (min-width: 768px) {

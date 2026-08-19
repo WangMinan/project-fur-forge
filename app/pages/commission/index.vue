@@ -118,9 +118,9 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
 
           <!-- 三个行动同一行：站内申请是主行动，邮件两个按钮跟在后面。 -->
           <div class="commission-page__actions">
-            <NuxtLink class="commission-page__apply" to="/commission/apply">
+            <PublicAction to="/commission/apply">
               提交委托申请
-            </NuxtLink>
+            </PublicAction>
             <ContactEmailActions
               v-if="commission"
               :email="commission.email"
@@ -147,12 +147,12 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
           <!-- 两个延伸阅读入口跟在正文后面成一组次级按钮：
                原来是页面最底一条分隔线、两个链接分列左右，和上文断开，很突兀。 -->
           <div class="commission-page__links">
-            <NuxtLink v-if="commission" class="commission-page__link" :to="commission.termsHref">
+            <PublicAction v-if="commission" variant="secondary" :to="commission.termsHref">
               服务条款
-            </NuxtLink>
-            <NuxtLink class="commission-page__link" to="/about#contact">
+            </PublicAction>
+            <PublicAction variant="secondary" to="/about#contact">
               完整联系说明
-            </NuxtLink>
+            </PublicAction>
           </div>
         </section>
       </div>
@@ -268,24 +268,6 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
   margin-top: var(--space-2);
 }
 
-.commission-page__apply {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  justify-self: start;
-  min-height: 2.75rem;
-  padding: 0 var(--space-6);
-  border-radius: var(--radius-full);
-  color: var(--public-text-inverse);
-  background: var(--public-bg-inverse);
-  font-weight: 600;
-}
-
-.commission-page__apply:hover {
-  color: var(--public-text-inverse);
-  background: var(--public-accent-active);
-}
-
 /* 延伸阅读做成一组次级胶囊按钮，跟正文同一栏、同一左边线。 */
 .commission-page__links {
   display: flex;
@@ -294,19 +276,4 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
   margin-top: var(--space-2);
 }
 
-.commission-page__link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.75rem;
-  padding: 0 var(--space-5);
-  color: var(--public-text-primary);
-  border: 1px solid var(--public-border-primary);
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-sm);
-}
-
-.commission-page__link:hover {
-  color: var(--public-accent-primary);
-  background: var(--public-bg-secondary);
-}
 </style>

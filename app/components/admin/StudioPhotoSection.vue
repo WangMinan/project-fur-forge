@@ -333,21 +333,20 @@ defineExpose({ save: savePhotos })
     >
 
     <div class="photo-section__uploader">
-      <button
-        type="button"
-        class="editor__button editor__button--secondary"
+      <AdminAction
         :disabled="locked || uploadSlotsFull || busyUploads > 0"
         @click="pickFile"
-      >选择照片</button>
+      >选择照片</AdminAction>
       <span class="photo-section__filename" aria-live="polite">
         {{ selectedFile?.name ?? '未选择照片' }}
       </span>
-      <button
-        type="button"
-        class="editor__button editor__button--primary"
+      <AdminAction
+        variant="primary"
         :disabled="!selectedFile || locked || uploadSlotsFull || busyUploads > 0"
+        :loading="busyUploads > 0"
+        loading-label="处理中…"
         @click="uploadSelectedFile"
-      >{{ busyUploads > 0 ? '处理中…' : '上传出厂照' }}</button>
+      >上传出厂照</AdminAction>
     </div>
 
     <ul v-if="uploads.items.value.length > 0" class="photo-section__uploads" role="list">
@@ -366,18 +365,17 @@ defineExpose({ save: savePhotos })
     </ul>
 
     <div v-if="isDirty" class="photo-section__actions">
-      <button
-        type="button"
-        class="editor__button editor__button--primary"
+      <AdminAction
+        variant="primary"
         :disabled="saving || locked"
+        :loading="saving"
+        loading-label="保存中…"
         @click="savePhotos"
-      >{{ saving ? '保存中…' : '保存出厂照' }}</button>
-      <button
-        type="button"
-        class="editor__button editor__button--secondary"
+      >保存出厂照</AdminAction>
+      <AdminAction
         :disabled="saving"
         @click="resetFromWork(work)"
-      >放弃更改</button>
+      >放弃更改</AdminAction>
       <span v-if="isDirty" class="photo-section__dirty">出厂照有未保存更改</span>
     </div>
     <p v-if="uploadSlotsFull && !locked" class="photo-section__hint" role="status">

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { StudioUploadItem } from '~/composables/useStudioPhotoUpload'
+import { adminUploadProgressModel } from '~/utils/admin-upload-progress'
 
 const props = defineProps<{
   item: StudioUploadItem
@@ -66,6 +67,29 @@ const retryable = computed(() =>
   props.item.file !== null
   && ['failed', 'cancelled', 'expired'].includes(props.item.state),
 )
+const processingRetryable = computed(() => (
+  props.item.state === 'completed' && props.item.asset?.status === 'FAILED'
+))
+const progressModel = computed(() => adminUploadProgressModel({
+  failureText: props.item.failureText
+    ?? (processingRetryable.value
+      ? '私有处理源生成失败；原图仍保留在私有存储中。'
+      : null),
+  ffmpeg: ffmpegActive.value,
+  label: props.item.fileName,
+  progress: props.item.progress,
+  stage: processingRetryable.value ? 'failed' : props.item.state,
+  stageLabel: stateLabel.value,
+}))
+
+function retry() {
+  if (processingRetryable.value) {
+    emit('retryProcessing')
+  }
+  else {
+    emit('retryUpload')
+  }
+}
 </script>
 
 <template>
@@ -83,23 +107,14 @@ const retryable = computed(() =>
       <p class="upload-card__state">
         <AdminStatusBadge :tone="stateTone" :label="stateLabel" />
       </p>
-      <div
-        v-if="item.state === 'uploading'"
-        class="upload-card__progress"
-        role="progressbar"
-        :aria-valuenow="progressPercent ?? 0"
-        aria-valuemin="0"
-        aria-valuemax="100"
-        :aria-label="`${item.fileName} 上传进度`"
-      >
-        <span
-          class="upload-card__progress-bar"
-          :style="{ width: `${progressPercent ?? 0}%` }"
-        />
-      </div>
-      <AdminFfmpegProgress
-        v-if="ffmpegActive"
-        :label="`${item.fileName}：FFmpeg 私有预处理中`"
+      <AdminTaskProgress
+        v-if="inFlight || retryable || processingRetryable || item.state === 'cancelled'"
+        v-bind="progressModel"
+        :can-cancel="item.state === 'uploading'"
+        :can-retry="retryable || processingRetryable"
+        :retry-label="processingRetryable ? '重试处理' : '重新上传'"
+        @cancel="emit('cancel')"
+        @retry="retry"
       />
       <p v-if="item.failureText" class="upload-card__failure" role="alert">
         {{ item.failureText }}
@@ -113,30 +128,12 @@ const retryable = computed(() =>
       </p>
     </div>
     <div class="upload-card__actions">
-      <button
-        v-if="item.state === 'uploading'"
-        type="button"
-        class="upload-card__action"
-        @click="emit('cancel')"
-      >取消</button>
-      <button
-        v-if="retryable"
-        type="button"
-        class="upload-card__action"
-        @click="emit('retryUpload')"
-      >重新上传</button>
-      <button
-        v-if="item.state === 'completed' && item.asset?.status === 'FAILED'"
-        type="button"
-        class="upload-card__action"
-        @click="emit('retryProcessing')"
-      >重试处理</button>
-      <button
+      <AdminAction
         v-if="!inFlight"
-        type="button"
-        class="upload-card__action upload-card__action--danger"
+        variant="danger"
+        size="small"
         @click="emit('dismiss')"
-      >移除</button>
+      >移除</AdminAction>
     </div>
   </article>
 </template>
@@ -196,20 +193,6 @@ const retryable = computed(() =>
   margin: 0;
 }
 
-.upload-card__progress {
-  height: 0.375rem;
-  border-radius: 999px;
-  background: var(--admin-bg-subtle);
-  overflow: hidden;
-}
-
-.upload-card__progress-bar {
-  display: block;
-  height: 100%;
-  background: var(--admin-accent-primary);
-  transition: width var(--admin-duration-fast) linear;
-}
-
 .upload-card__failure {
   margin: 0;
   font-size: var(--admin-font-xs);
@@ -223,25 +206,4 @@ const retryable = computed(() =>
   gap: var(--admin-space-1);
 }
 
-.upload-card__action {
-  min-height: var(--admin-control-height-sm);
-  padding: 0 var(--admin-space-3);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-sm);
-  background: var(--admin-bg-primary);
-  color: var(--admin-text-primary);
-  font-size: var(--admin-font-xs);
-  font-family: inherit;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.upload-card__action:hover:not(:disabled) {
-  background: var(--admin-bg-subtle);
-}
-
-.upload-card__action--danger {
-  color: var(--admin-danger);
-  border-color: var(--admin-danger);
-}
 </style>

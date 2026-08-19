@@ -307,6 +307,12 @@ export function checkWorkPublication(
   if (!activeWatermarkProfileId(sqlite)) {
     blockers.push('WATERMARK_PROFILE_REQUIRED')
   }
+  const latestOperation = findLatestOperations(sqlite, 'WORK', [workId])
+    .map(operationDto)
+    .toSorted((left, right) => (
+      Date.parse(right.startedAt) - Date.parse(left.startedAt)
+      || right.operationId.localeCompare(left.operationId)
+    ))[0] ?? null
   return {
     workId,
     version: work.version,
@@ -320,6 +326,7 @@ export function checkWorkPublication(
     studioPhotoNeedsPreprocess,
     requiredVariantCount: requiredVariantCount(targets),
     missingVariantCount: missingVariantCount(sqlite, targets),
+    latestOperation,
   }
 }
 
