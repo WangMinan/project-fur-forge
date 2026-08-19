@@ -85,6 +85,7 @@ interface PublishedWorkRow {
   slug: string
   sortOrder: number
   species: string
+  updatedAt: number
   version: number
 }
 
@@ -127,6 +128,8 @@ interface SnapshotEntry {
     sources: PublicSourceSetDto
   }>
   summary: PublicWorkSummaryDto
+  /** 只用于领养状态 bucket 内排序，不进入公开 DTO。 */
+  updatedAt: number
 }
 
 function groupBy<T, K>(values: readonly T[], keyFor: (value: T) => K) {
@@ -187,7 +190,8 @@ function loadPublishedWorks(sqlite: Database.Database) {
       price_amount_minor AS priceAmountMinor,
       price_currency AS priceCurrency,
       publication_status AS publicationStatus,
-      sort_order AS sortOrder, featured
+      sort_order AS sortOrder, featured,
+      updated_at AS updatedAt
     FROM works
     WHERE publication_status = 'published'
     ORDER BY COALESCE(published_at, created_at) DESC, id
@@ -381,6 +385,7 @@ function snapshot(
         cardOrientation: card.orientation,
       }),
       studioPhotos: photos,
+      updatedAt: row.updatedAt,
     })
   }
 
@@ -444,10 +449,10 @@ function homeAggregate(
   try {
     const entriesSnapshot = snapshot(sqlite, mediaBaseUrl, appEnv)
     featured = featuredEntries(entriesSnapshot).map(entry => entry.summary)
-    // 当前领养取最新两件：快照已按发布时间倒序。
+    // 首页与目录共用同一个领养 comparator；只投影第一件开放领养。
     currentAdoptions = adoptionItems(entriesSnapshot)
       .filter(item => item.work.adoptionStatus === 'available')
-      .slice(0, 2)
+      .slice(0, 1)
   }
   catch (error) {
     featuredAvailable = false
@@ -479,26 +484,37 @@ function featuredEntries(entries: readonly SnapshotEntry[]) {
 }
 
 function adoptionItems(entries: readonly SnapshotEntry[]) {
-  return entries.flatMap((entry): PublicAdoptionListItemDto[] => (
-    entry.adoption
-      ? [publicAdoptionListItemDtoSchema.parse({
-          work: {
-            ...entry.summary.work,
-            adoptionStatus: entry.adoption.status,
-            ...(entry.adoption.priceCnyMinor === null
-              ? {}
-              : {
-                  price: {
-                    currency: 'CNY',
-                    minorUnits: entry.adoption.priceCnyMinor,
-                  },
-                }),
-          },
-          href: entry.summary.href,
-          cover: entry.adoption.cover,
-        })]
-      : []
-  ))
+  return entries
+    .filter((entry): entry is SnapshotEntry & { adoption: NonNullable<SnapshotEntry['adoption']> } => (
+      entry.adoption !== null
+    ))
+    .toSorted(comparePublicAdoptions)
+    .map((entry): PublicAdoptionListItemDto => publicAdoptionListItemDtoSchema.parse({
+      work: {
+        ...entry.summary.work,
+        adoptionStatus: entry.adoption.status,
+        ...(entry.adoption.priceCnyMinor === null
+          ? {}
+          : {
+              price: {
+                currency: 'CNY',
+                minorUnits: entry.adoption.priceCnyMinor,
+              },
+            }),
+      },
+      href: entry.summary.href,
+      cover: entry.adoption.cover,
+    }))
+}
+
+function comparePublicAdoptions(
+  left: SnapshotEntry & { adoption: NonNullable<SnapshotEntry['adoption']> },
+  right: SnapshotEntry & { adoption: NonNullable<SnapshotEntry['adoption']> },
+) {
+  const bucket = { available: 0, adopted: 1 } as const
+  return bucket[left.adoption.status] - bucket[right.adoption.status]
+    || right.updatedAt - left.updatedAt
+    || left.id.localeCompare(right.id)
 }
 
 function catalogPage(value: unknown) {

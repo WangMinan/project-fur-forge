@@ -24,6 +24,7 @@ function insertAdoption(input: {
   name: string
   slug: string
   status: 'available' | 'adopted'
+  updatedAt?: number
 }) {
   sqlite.prepare(`
     INSERT INTO works (
@@ -32,7 +33,7 @@ function insertAdoption(input: {
       sort_order, version, published_at, created_at, updated_at
     ) VALUES (?, ?, ?, '犬科', 'adoption', ?, 128000, 'CNY',
       'published', 0, 1, ?, ?, ?)
-  `).run(input.id, input.slug, input.name, input.status, NOW, NOW, NOW)
+  `).run(input.id, input.slug, input.name, input.status, NOW, NOW, input.updatedAt ?? NOW)
 }
 
 async function attachPublicAsset(input: {
@@ -102,27 +103,51 @@ afterEach(() => {
 })
 
 describe('R3-D adoption public projection', () => {
-  it('lists both explicit statuses and supports name-only search', async () => {
-    await seedCompleteAdoption({
-      id: '11111111-1111-4111-8111-111111111110',
-      name: '云朵',
-      slug: 'cloud',
-      status: 'available',
-    })
-    await seedCompleteAdoption({
-      id: '22222222-2222-4222-8222-222222222220',
-      name: '团子',
-      slug: 'tuanzi',
-      status: 'adopted',
-    })
+  it('sorts status, updated time and stable id before search and pagination without changing works order', async () => {
+    const rows = [
+      { id: '10000000-0000-4000-8000-000000000010', slug: 'available-a', status: 'available', updatedAt: NOW + 300 },
+      { id: '10000000-0000-4000-8000-000000000020', slug: 'available-b', status: 'available', updatedAt: NOW + 300 },
+      { id: '20000000-0000-4000-8000-000000000030', slug: 'available-c', status: 'available', updatedAt: NOW + 250 },
+      { id: '30000000-0000-4000-8000-000000000040', slug: 'available-d', status: 'available', updatedAt: NOW + 200 },
+      { id: '40000000-0000-4000-8000-000000000050', slug: 'available-e', status: 'available', updatedAt: NOW + 150 },
+      { id: '50000000-0000-4000-8000-000000000060', slug: 'available-f', status: 'available', updatedAt: NOW + 100 },
+      { id: '60000000-0000-4000-8000-000000000070', slug: 'available-g', status: 'available', updatedAt: NOW + 50 },
+      { id: '00000000-0000-4000-8000-000000000001', slug: 'adopted-new', status: 'adopted', updatedAt: NOW + 1_000 },
+      { id: '90000000-0000-4000-8000-000000000090', slug: 'adopted-old', status: 'adopted', updatedAt: NOW + 500 },
+    ] as const
+    for (const [index, row] of rows.entries()) {
+      insertAdoption({
+        ...row,
+        name: `排序角色 ${index + 1}`,
+      })
+      await attachPublicAsset({
+        id: `${row.id.slice(0, -1)}${index + 1}`,
+        role: 'adoption_cover',
+        workId: row.id,
+      })
+    }
 
     const repository = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
-    expect(repository.listAdoptions().items.map(item => item.work.adoptionStatus))
-      .toEqual(['available', 'adopted'])
-    const searched = repository.listAdoptions({ q: ' 团子 ' })
-    expect(searched.filter).toEqual({ valid: true })
-    expect(searched.items.map(item => item.work.slug)).toEqual(['tuanzi'])
-    expect(repository.listAdoptions({ q: '' }).resultCount).toBe(2)
+    const firstPage = repository.listAdoptions({ q: ' 排序角色 ', page: 1 })
+    const secondPage = repository.listAdoptions({ q: '排序角色', page: 2 })
+
+    expect(firstPage.items.map(item => item.work.slug)).toEqual([
+      'available-a',
+      'available-b',
+      'available-c',
+      'available-d',
+      'available-e',
+      'available-f',
+      'available-g',
+      'adopted-new',
+    ])
+    expect(secondPage.items.map(item => item.work.slug)).toEqual(['adopted-old'])
+    expect(firstPage.pageCount).toBe(2)
+    expect(firstPage.resultCount).toBe(9)
+    expect(repository.listAdoptions({ q: '排序角色 9' }).items.map(item => item.work.slug))
+      .toEqual(['adopted-old'])
+    // /works 仍使用原公开时间 + ID 稳定顺序；最新 adopted 不套用领养 bucket。
+    expect(repository.listWorks().items[0]?.work.slug).toBe('adopted-new')
   })
 
   it('uses the independent cover for the adoption card and primary studio photo for detail', async () => {
