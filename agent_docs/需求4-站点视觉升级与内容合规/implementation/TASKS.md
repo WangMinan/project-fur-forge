@@ -26,44 +26,44 @@
 
 ## A. 公共组件、上传与长任务进度地基
 
-- [ ] **T04 · 行动/上传/进度清单**：盘点公开/管理按钮、Hero/作品/QR/水印上传、FFmpeg/publication/branding/Hero operation 的现有状态、组件、CSS 和真实进度来源；输出去重矩阵，不先改业务。
-- [ ] **T05 · `PublicAction`**：实现 link/button 双语义与 primary/secondary/text、loading/disabled/focus/active；迁移首页、commission、about、adoptions、空态的现有行动并删除重复 CSS。
-- [ ] **T06 · 管理端行动 primitive**：统一普通/主/danger/link/loading/disabled 视觉和交互；先迁移大图、作品上传/发布、联系配置中最常用行动。
-- [ ] **T07 · `AdminTaskProgress`**：实现 determinate、stage、indeterminate、elapsed、success/error/cancelled 与可选 retry/cancel；不绑定具体业务。
-- [ ] **T08 · OSS 上传进度接入**：Hero、作品图、二维码、水印 Logo 至少四类上传复用真实 XHR progress 和统一组件；digest/session/validating/processing 使用统一阶段标签。
-- [ ] **T09 · FFmpeg 与 operation 进度接入**：FFmpeg 使用 indeterminate + elapsed；publication/branding/Hero 使用真实阶段/计数；删除 `PREPARING_SOURCE=12%` 等伪精确映射和局部 progress DOM。
-- [ ] **T10 · 上传展示层收敛**：抽取共享状态映射/展示 helper；只在确有重复时继续抽取 composable，不以大重写阻塞组件落地。
-- [ ] **T11 · Hero 管理信息架构**：一级“首页/委托”、二级“横/竖”；顶部显示两方向摘要，委托宽屏双槽并排、首页按方向编辑；底层四集合/API/CAS 不变。
-- [ ] **T12 · Hero 设备预览**：增加桌面/手机画框切换和当前方向/状态/operation 摘要，复用统一进度和行动组件。
+- [x] **T04 · 行动/上传/进度清单**：盘点公开/管理按钮、Hero/作品/QR/水印上传、FFmpeg/publication/branding/Hero operation 的现有状态、组件、CSS 和真实进度来源；输出去重矩阵，不先改业务。
+- [x] **T05 · `PublicAction`**：实现 link/button 双语义与 primary/secondary/text、loading/disabled/focus/active；迁移首页、commission、about、adoptions、空态的现有行动并删除重复 CSS。
+- [x] **T06 · 管理端行动 primitive**：统一普通/主/danger/link/loading/disabled 视觉和交互；先迁移大图、作品上传/发布、联系配置中最常用行动。
+- [x] **T07 · `AdminTaskProgress`**：实现 determinate、stage、indeterminate、elapsed、success/error/cancelled 与可选 retry/cancel；不绑定具体业务。
+- [x] **T08 · OSS 上传进度接入**：Hero、作品图、二维码、水印 Logo 至少四类上传复用真实 XHR progress 和统一组件；digest/session/validating/processing 使用统一阶段标签。
+- [x] **T09 · FFmpeg 与 operation 进度接入**：FFmpeg 使用 indeterminate + elapsed；publication/branding/Hero 使用真实阶段/计数；删除 `PREPARING_SOURCE=12%` 等伪精确映射和局部 progress DOM。
+- [x] **T10 · 上传展示层收敛**：抽取共享状态映射/展示 helper；只在确有重复时继续抽取 composable，不以大重写阻塞组件落地。
+- [x] **T11 · Hero 管理信息架构**：一级“首页/委托”、二级“横/竖”；顶部显示两方向摘要，委托宽屏双槽并排、首页按方向编辑；底层四集合/API/CAS 不变。
+- [x] **T12 · Hero 设备预览**：增加桌面/手机画框切换和当前方向/状态/operation 摘要，复用统一进度和行动组件。
 
 ### GATE-A · 新开发不再复制组件债
 
-- [ ] 公开端新增行动只使用统一 component；
-- [ ] 管理端新增耗时操作只使用统一 progress；
-- [ ] OSS 上传显示真实百分比；
-- [ ] FFmpeg 不显示虚构百分比；
-- [ ] operation 刷新后可恢复真实状态；
-- [ ] Hero 四集合仍独立且功能无回退。
+- [x] 公开端新增行动只使用统一 component；
+- [x] 管理端新增耗时操作只使用统一 progress；
+- [x] OSS 上传显示真实百分比；
+- [x] FFmpeg 不显示虚构百分比；
+- [x] operation 刷新后可恢复真实状态；
+- [x] Hero 四集合仍独立且功能无回退。
 
 ## B. 测试减负与领养排序
 
-- [ ] **T13 · 测试分类审计**：把现有 unit/integration/E2E 标记为 core/smoke/legacy；识别精确文案、DOM、CSS class、动画毫秒、重复覆盖和历史 bug 专用测试。
-- [ ] **T14 · 快速命令**：建立 `check:fast`、`test:core`、`test:smoke`、`test:release`；迁移期可保留 `test:legacy`，但不作默认门禁。
-- [ ] **T15 · Core 套件**：只保留 Host/session/CSRF/Origin、上传 token/TTL/一次消费、PII/私有媒体隔离、migration/FK/integrity、publication/deletion 和明确排序不变量；同一事实不跨三层重复。
-- [ ] **T16 · Smoke 套件**：收敛为少量首页/目录/委托申请/admin 登录/上传进度/发布下架/privacy-service-licenses 主旅程；不断言精确动画时长、完整文案或局部 DOM。
-- [ ] **T17 · Legacy 清理**：删除或降级 `0.68s` 等实现型断言、逐次视觉修复用例和重复 fixture；测试失败先分类，不机械改写为新实现。
-- [ ] **T18 · 默认 Actions 减重**：普通 push/PR 仅执行快速 checks（文档-only 跳过应用重型任务）；image-build/Compose/restore/Nginx/必要 destructive drill 移入显式 release/manual 流程；不新增 required check。
-- [ ] **T19 · `/adoptions` 唯一排序**：repository 携带 `updated_at`；available 在前、adopted 在后，组内 updatedAt 倒序、ID 稳定；搜索后保持顺序再分页。
-- [ ] **T20 · 排序核心测试**：只保留一组稳定用例证明状态 bucket、组内修改时间、搜索和分页；新改为 adopted 的作品不得排到 available 前。
-- [ ] **T21 · 首页单项开放领养**：聚合最多投影第一项 available；`HomeCurrentAdoptions` 删除双项 slice/双列布局；无 available 时隐藏，adopted 仍可进入精选。
+- [x] **T13 · 测试分类审计**：把现有 unit/integration/E2E 标记为 core/smoke/legacy；识别精确文案、DOM、CSS class、动画毫秒、重复覆盖和历史 bug 专用测试。
+- [x] **T14 · 快速命令**：建立 `check:fast`、`test:core`、`test:smoke`、`test:release`；迁移期可保留 `test:legacy`，但不作默认门禁。
+- [x] **T15 · Core 套件**：只保留 Host/session/CSRF/Origin、上传 token/TTL/一次消费、PII/私有媒体隔离、migration/FK/integrity、publication/deletion 和明确排序不变量；同一事实不跨三层重复。
+- [x] **T16 · Smoke 套件**：收敛为少量首页/目录/委托申请/admin 登录/上传进度/发布下架/privacy-service-licenses 主旅程；不断言精确动画时长、完整文案或局部 DOM。
+- [x] **T17 · Legacy 清理**：删除或降级 `0.68s` 等实现型断言、逐次视觉修复用例和重复 fixture；测试失败先分类，不机械改写为新实现。
+- [x] **T18 · 默认 Actions 减重**：普通 push/PR 仅执行快速 checks（文档-only 跳过应用重型任务）；image-build/Compose/restore/Nginx/必要 destructive drill 移入显式 release/manual 流程；不新增 required check。
+- [x] **T19 · `/adoptions` 唯一排序**：repository 携带 `updated_at`；available 在前、adopted 在后，组内 updatedAt 倒序、ID 稳定；搜索后保持顺序再分页。
+- [x] **T20 · 排序核心测试**：只保留一组稳定用例证明状态 bucket、组内修改时间、搜索和分页；新改为 adopted 的作品不得排到 available 前。
+- [x] **T21 · 首页单项开放领养**：聚合最多投影第一项 available；`HomeCurrentAdoptions` 删除双项 slice/双列布局；无 available 时隐藏，adopted 仍可进入精选。
 
 ### GATE-B · 反馈更快、业务顺序正确
 
-- [ ] 普通改动不再默认执行历史全量 unit/integration/E2E；
-- [ ] 快速路径失败只对应稳定不变量或静态错误；
-- [ ] release/manual 仍可执行部署 smoke；
-- [ ] `/adoptions` 排序和首页单项通过 core + 人工浏览器；
-- [ ] 用户人工视觉验收未被自动化代签。
+- [x] 普通改动不再默认执行历史全量 unit/integration/E2E；
+- [x] 快速路径失败只对应稳定不变量或静态错误；
+- [x] release/manual 仍可执行部署 smoke；
+- [x] `/adoptions` 排序和首页单项通过 core + 人工浏览器；
+- [x] 用户人工视觉验收未被自动化代签。
 
 ## C. 轻量内容、隐私与申请确认
 
