@@ -310,6 +310,7 @@ interface HeroOrientationSummary {
 
 - 一级 selection 是 placement；二级是 orientation。
 - 首页 summary 为横/竖 `X/5`；委托为横/竖 `X/1`。
+- 两种 placement 都只渲染当前 orientation 对应的 editor；切换 Tab 不合并或重建另一集合。
 - 预览画框可选 desktop/mobile，但只改变管理预览，不改变数据契约。
 - 底层继续调用现有独立 collection API/composable。
 

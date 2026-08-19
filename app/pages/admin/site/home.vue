@@ -147,8 +147,8 @@ watch(placement, () => {
           >
             <span>{{ item.label }}</span>
             <small>{{ item.frame }}</small>
-            <span class="hero-admin__orientation-state">
-              {{ summaries[item.key].ready ? '已就绪' : '待检查' }}
+            <span v-if="!summaries[item.key].ready" class="hero-admin__orientation-state">
+              待检查
             </span>
           </NuxtLink>
         </nav>
@@ -160,7 +160,7 @@ watch(placement, () => {
         >
           <div
             v-for="item in ORIENTATIONS"
-            v-show="placement === 'commission' || orientation === item.key"
+            v-show="orientation === item.key"
             :key="`${placement}-${item.key}`"
             class="hero-admin__editor"
             :data-selected="orientation === item.key"
@@ -266,14 +266,5 @@ watch(placement, () => {
 
 .hero-admin__editor[data-selected='true'] :deep(.hero-collection-editor) {
   border-color: var(--admin-accent-decorative);
-}
-
-@media (min-width: 960px) {
-  .hero-admin__editors[data-placement='commission'] {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--admin-space-4);
-    align-items: start;
-  }
 }
 </style>

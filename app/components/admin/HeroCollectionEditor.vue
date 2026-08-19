@@ -196,7 +196,7 @@ onMounted(() => void load())
 .hero-collection-editor {
   min-width: 0;
   padding: var(--admin-space-4);
-  background: var(--admin-bg-workspace);
+  background: var(--admin-bg-primary);
   border: 1px solid var(--admin-border-secondary);
   border-radius: var(--admin-radius-lg);
 }

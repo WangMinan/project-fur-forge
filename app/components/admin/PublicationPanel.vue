@@ -476,6 +476,7 @@ onUnmounted(() => {
 
     <AdminTaskProgress
       v-if="showTask"
+      class="publication__progress"
       :mode="taskMode"
       :label="lastOperation?.operationType === 'UNPUBLISH' || pending === 'unpublish'
         ? '作品下架与公开撤销'
@@ -510,6 +511,7 @@ onUnmounted(() => {
     />
     <AdminTaskProgress
       v-else-if="feedback"
+      class="publication__progress"
       mode="stage"
       label="操作未完成"
       stage="请按提示处理后重试"
@@ -597,6 +599,10 @@ onUnmounted(() => {
   align-items: center;
   gap: var(--admin-space-2);
   flex-wrap: wrap;
+}
+
+.publication__progress {
+  margin-block-start: var(--admin-space-3);
 }
 
 </style>
