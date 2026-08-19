@@ -34,7 +34,7 @@ Copy-Item .env.example .env
 
 非测试环境不提供域名 fallback；公开、管理、媒体和浏览器上传 origin 必须由环境变量或活动配置显式提供。
 
-## 质量命令
+## 当前可用验证命令
 
 ```bash
 pnpm lint
@@ -46,7 +46,9 @@ pnpm build
 pnpm run verify:production
 ```
 
-仓库当前不要求 GitHub required check；执行者仍须按改动风险运行对应门禁，并在公开 UI 结构变化时完成真实浏览器验收。
+这些是当前仓库仍可调用的命令，不表示每次改动都要顺序执行全套。需求4将把验证收敛为快速 core、少量 smoke 和显式 release 流程；在新脚本落地前，测试选择、人工浏览器门禁和 legacy 套件边界以 [`CLAUDE.md`](./CLAUDE.md) 为准。
+
+仓库当前不要求 GitHub required check。公开视觉、真实图片、动效和文案最终由王旻安/景宸人工验收，自动化只保护稳定不变量和基础可运行性。
 
 ## 文档入口
 

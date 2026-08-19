@@ -1,140 +1,151 @@
 # 任务清单：站点视觉升级与内容合规
 
 > **角色**：需求4唯一任务与勾选权威；每个任务均可由 Agent 独立实现、验证和交接。
-> **状态**：文档阶段已完成；应用实现尚未开始。
-> **规则**：完成即勾选；不删除历史项；实现、独立 Review、用户验收和生产发布互不代签。
+> **状态**：2026-08-19 完成第二轮代码/文档 Review；应用实现尚未开始。
+> **规则**：完成即勾选；不删除已完成历史项；实现、独立 Review、用户验收和生产发布互不代签。
 
 ## 当前目标
 
-先修正真实信息收集、确认、保存和删除边界，再以低维护成本完成首页四幕、统一动效、Hero 九宫格焦点和第三方声明；不得新增自动清理调度、在线合同、required check 或复杂裁切器。
+先统一按钮、上传和长任务进度，再减轻测试体系并修正领养排序；随后用现有字段完成轻量隐私、单条删除和第三方声明，最后推进 Hero 焦点、灵动动效与首页四幕。不得从旧版复杂 intake Schema 方案继续实施。
 
 ## 0. 文档与基线
 
-- [x] **T00 · 需求4文档地基**：按 `_template` 完成 foundation、SPEC、COPY、design、models、PLAN、DATA-MIGRATION、TASKS、notes、review、artifacts 和 STATE。
-- [x] **T01 · 代码/历史基线复核**：对照 `main@913d257` 的首页聚合、Hero、焦点字段、站点展示配方、委托 Schema、默认文案与 licenses 页面。
+- [x] **T00 · 需求4文档地基**：按 `_template` 建立 foundation、SPEC、COPY、design、models、PLAN、DATA-MIGRATION、TASKS、notes、review、artifacts 和 STATE。
+- [x] **T01 · 第一轮代码/历史基线复核**：对照 `main@913d257` 的首页聚合、Hero、焦点字段、委托 Schema、默认文案与 licenses 页面。
 - [x] **T02 · 外部设计资料复核**：评估 Apple、渔屋、万物通行和 Apple Design Skill；只采纳可解释原则，不复制品牌或把动效库当默认依赖。
-- [x] **T03 · 文档交叉 Review**：统一 DITE DOG、QQ 优先、邮箱备用、四幕、移动端、人工清理、QQ 逐单确认、字体/FFmpeg和 Git 规则。
+- [x] **T03 · 第二轮代码与文档 Review**：对照 `main@aa8e5b7` 修正单项领养、领养排序、组件优先、轻量隐私、测试减负、Hero 管理和统一进度口径。
 
 ### GATE-0 · 文档可实施
 
 - [x] SPEC/PLAN 无未答 OQ；
-- [x] 需求4目录遵循 `_template`；
-- [x] 与需求1～3未覆盖基线无冲突；
-- [x] 未将视觉升级写成恢复退役业务；
-- [x] 未虚构经营主体、授权证照、生产清理或法律结论。
+- [x] 领养单项与排序已跨文档统一；
+- [x] 已删除复杂处理者字段、metadata API、intake contract 和版本握手计划；
+- [x] 公开/管理行动和进度组件被前置；
+- [x] 测试与人工门禁边界已写入 `CLAUDE.md`；
+- [x] 未将“灵动”写成持续噪声或恢复退役业务。
 
-## A. 内容、隐私与申请确认
+## A. 公共组件、上传与长任务进度地基
 
-- [ ] **T04 · 经营主体字段 expand**：新增 `privacy_controller_name`、Schema/DTO/repository/service/管理配置和分区版本；迁移默认 NULL。
-- [ ] **T05 · 申请确认字段 expand**：新增 intake contract、成年、政策版本、申请告知版本和确认时间；legacy 行保持 NULL。
-- [ ] **T06 · Expand/contract 迁移验证**：expand 支持 legacy/v2；新代码显式写 v2；contract 默认收口为 2；fresh/当前既有库副本/重入/FK/integrity 均通过。
-- [ ] **T07 · Intake metadata 投影**：公开返回最低年龄、处理者、隐私/告知版本和页面链接；配置缺失时稳定不可用。
-- [ ] **T08 · 申请页即时告知**：加入三个未预勾选确认、政策链接、QQ 优先和非接单说明；键盘/屏幕阅读器可用。
-- [ ] **T09 · 提交版本校验**：API 要求 literal true 和当前版本；stale 返回稳定 409，不消费 upload、不清空页面。
-- [ ] **T10 · Legacy/v2 管理展示**：详情只读显示确认摘要；历史申请明确标记 legacy，不推断年龄。
-- [ ] **T11 · 默认文案前向迁移**：按 `COPY.md` 只替换 NULL/空值/精确历史默认；正确递增 section version。
-- [ ] **T12 · 隐私与条款页面**：结构化显示处理者、邮箱、版本、更新时间；无占位泄漏。
-- [ ] **T13 · 内容人工 Review**：列出未自动覆盖的管理员文案，由工作室确认，不在日志输出全文/PII。
-- [ ] **T14 · 申请隐私门禁**：PII leakage、错误、日志、analytics、URL、sessionStorage/localStorage、SSR HTML 负向测试。
+- [ ] **T04 · 行动/上传/进度清单**：盘点公开/管理按钮、Hero/作品/QR/水印上传、FFmpeg/publication/branding/Hero operation 的现有状态、组件、CSS 和真实进度来源；输出去重矩阵，不先改业务。
+- [ ] **T05 · `PublicAction`**：实现 link/button 双语义与 primary/secondary/text、loading/disabled/focus/active；迁移首页、commission、about、adoptions、空态的现有行动并删除重复 CSS。
+- [ ] **T06 · 管理端行动 primitive**：统一普通/主/danger/link/loading/disabled 视觉和交互；先迁移大图、作品上传/发布、联系配置中最常用行动。
+- [ ] **T07 · `AdminTaskProgress`**：实现 determinate、stage、indeterminate、elapsed、success/error/cancelled 与可选 retry/cancel；不绑定具体业务。
+- [ ] **T08 · OSS 上传进度接入**：Hero、作品图、二维码、水印 Logo 至少四类上传复用真实 XHR progress 和统一组件；digest/session/validating/processing 使用统一阶段标签。
+- [ ] **T09 · FFmpeg 与 operation 进度接入**：FFmpeg 使用 indeterminate + elapsed；publication/branding/Hero 使用真实阶段/计数；删除 `PREPARING_SOURCE=12%` 等伪精确映射和局部 progress DOM。
+- [ ] **T10 · 上传展示层收敛**：抽取共享状态映射/展示 helper；只在确有重复时继续抽取 composable，不以大重写阻塞组件落地。
+- [ ] **T11 · Hero 管理信息架构**：一级“首页/委托”、二级“横/竖”；顶部显示两方向摘要，委托宽屏双槽并排、首页按方向编辑；底层四集合/API/CAS 不变。
+- [ ] **T12 · Hero 设备预览**：增加桌面/手机画框切换和当前方向/状态/operation 摘要，复用统一进度和行动组件。
 
-### GATE-A · 新申请真实、可告知
+### GATE-A · 新开发不再复制组件债
 
-- [ ] 真实经营主体名称与邮箱可配置但未被假默认填充；
-- [ ] 新申请只能显式写 v2，contract 后缺确认字段或 v1 默认插入均失败；
-- [ ] legacy 申请保持可读可处理；
-- [ ] 隐私政策描述实际表单、体型和私有设定图；
-- [ ] 提交不等于接单，官方 QQ 私聊是后续优先渠道；
-- [ ] 未成年人不能提交，系统不额外收集身份证件。
+- [ ] 公开端新增行动只使用统一 component；
+- [ ] 管理端新增耗时操作只使用统一 progress；
+- [ ] OSS 上传显示真实百分比；
+- [ ] FFmpeg 不显示虚构百分比；
+- [ ] operation 刷新后可恢复真实状态；
+- [ ] Hero 四集合仍独立且功能无回退。
 
-## B. 人工保留、精确删除与第三方声明
+## B. 测试减负与领养排序
 
-- [ ] **T15 · 保留复核 CLI**：提供失效上传、pending 总览、rejected cutoff 和显式 accepted/请求删除候选；默认掩码/dry-run。
-- [ ] **T16 · 删除关系盘点**：按 submission 枚举 session、asset、PRIVATE variants、preview、pending、versions/delete marker；异常外部引用阻断。
-- [ ] **T17 · 单条精确删除**：强确认、对象验证、事务删行、最小审计、幂等重入；不碰作品/其它申请。
-- [ ] **T18 · 受限批量删除**：只允许 `rejected + before`，逐条串行；pending/accepted 不允许时间批删。
-- [ ] **T19 · 删除测试与隔离演练**：current/version/delete marker、部分 NotFound、OSS 失败、DB 失败、重入和外部引用负向用例。
-- [ ] **T20 · 人工 SOP**：形成月度未消费上传、半年度申请复核、用户请求和灾备恢复后复核步骤；不建设 scheduler。
-- [ ] **T21 · 生产许可证事实生成**：从 pnpm 生产依赖确定性生成 JSON/TXT，稳定排序、无时间噪声。
-- [ ] **T22 · 第三方资产 registry**：登记 FFmpeg、Noto Serif SC、ZhuoHei Collage 的实际版本/来源/用途/授权分类和内部证据要求。
-- [ ] **T23 · `/licenses` 改造**：页面从生成清单读取；纠正“均为 MIT/Apache”；提供完整声明入口。
-- [ ] **T24 · 声明 drift/边界测试**：lockfile、人工 registry、页面和文件一致；FFmpeg 明确服务器内部使用；无新增 required check。
+- [ ] **T13 · 测试分类审计**：把现有 unit/integration/E2E 标记为 core/smoke/legacy；识别精确文案、DOM、CSS class、动画毫秒、重复覆盖和历史 bug 专用测试。
+- [ ] **T14 · 快速命令**：建立 `check:fast`、`test:core`、`test:smoke`、`test:release`；迁移期可保留 `test:legacy`，但不作默认门禁。
+- [ ] **T15 · Core 套件**：只保留 Host/session/CSRF/Origin、上传 token/TTL/一次消费、PII/私有媒体隔离、migration/FK/integrity、publication/deletion 和明确排序不变量；同一事实不跨三层重复。
+- [ ] **T16 · Smoke 套件**：收敛为少量首页/目录/委托申请/admin 登录/上传进度/发布下架/privacy-service-licenses 主旅程；不断言精确动画时长、完整文案或局部 DOM。
+- [ ] **T17 · Legacy 清理**：删除或降级 `0.68s` 等实现型断言、逐次视觉修复用例和重复 fixture；测试失败先分类，不机械改写为新实现。
+- [ ] **T18 · 默认 Actions 减重**：普通 push/PR 仅执行快速 checks（文档-only 跳过应用重型任务）；image-build/Compose/restore/Nginx/必要 destructive drill 移入显式 release/manual 流程；不新增 required check。
+- [ ] **T19 · `/adoptions` 唯一排序**：repository 携带 `updated_at`；available 在前、adopted 在后，组内 updatedAt 倒序、ID 稳定；搜索后保持顺序再分页。
+- [ ] **T20 · 排序核心测试**：只保留一组稳定用例证明状态 bucket、组内修改时间、搜索和分页；新改为 adopted 的作品不得排到 available 前。
+- [ ] **T21 · 首页单项开放领养**：聚合最多投影第一项 available；`HomeCurrentAdoptions` 删除双项 slice/双列布局；无 available 时隐藏，adopted 仍可进入精选。
 
-### GATE-B · 数据可人工退出、声明可核对
+### GATE-B · 反馈更快、业务顺序正确
 
-- [ ] 删除 CLI 默认无副作用，正式执行必须强确认；
-- [ ] 一次删除覆盖 DB 和私有 OSS，不产生可恢复 PII manifest；
-- [ ] accepted 不按时间批量猜测；
-- [ ] 月度/半年度流程可以由操作员手工执行；
-- [ ] `/licenses` 与实际生产依赖及静态资产一致；
-- [ ] 免费商用字体不被误称开源，FFmpeg不被误称对外分发。
+- [ ] 普通改动不再默认执行历史全量 unit/integration/E2E；
+- [ ] 快速路径失败只对应稳定不变量或静态错误；
+- [ ] release/manual 仍可执行部署 smoke；
+- [ ] `/adoptions` 排序和首页单项通过 core + 人工浏览器；
+- [ ] 用户人工视觉验收未被自动化代签。
 
-## C. 设计系统、导航与 Hero 焦点
+## C. 轻量内容、隐私与申请确认
 
-- [ ] **T25 · 真实素材基线**：用当前生产风格大图记录 1440/1024/768/430/390 首页、Header、Footer 和 LCP/CLS 基线。
-- [ ] **T26 · Motion token 收敛**：统一反馈/内容/媒体/page duration、easing、distance；移除 620/680/750ms 平行常量。
-- [ ] **T27 · 公开行动组件**：凝练 primary/secondary/text，替换重复胶囊样式，保持功能和无障碍。
-- [ ] **T28 · Header/Footer 克制化**：降低导航浮起和阴影；一层材料；reduced transparency/contrast；保留备案和法务。
-- [ ] **T29 · 焦点管理 API/CAS**：复用 asset focal，限制未启用 Hero；集合版本冲突稳定；不新增 crop 表。
-- [ ] **T30 · 九宫格管理 UI**：目标比例预览、九预设、默认中心、历史自定义提示；不显示小数/自由裁切。
-- [ ] **T31 · 焦点 publication 链**：变体 identity、preview、发布、清理、ESA 与失败恢复正确；新变体验证后才切换。
-- [ ] **T32 · 焦点回归**：首页/委托×横/竖，中心/四角、共享 asset 冲突、已启用禁止和 reduced-motion 管理反馈。
+- [ ] **T22 · 默认文案前向迁移**：按 `COPY.md` 自动处理 about/commission/terms/contact 的 NULL/空白/精确历史默认；不在经营主体未知时把带占位符的 privacy 文本写入数据库；各分区版本正确递增。
+- [ ] **T23 · 隐私政策人工成文**：不新增字段；工作室通过现有 privacy 编辑能力写入包含实际经营主体与现有邮箱的完整政策，保存后递增隐私分区版本；生产页面阻断 `{{...}}` 占位与旧错误政策。
+- [ ] **T24 · 两项申请确认 UI**：成年/设定权利、隐私/用途/非接单两项未预勾选；错误邻近、键盘/屏幕阅读器可用，提交失败保留表单与图片。
+- [ ] **T25 · 严格请求校验**：Schema 增加 `adultConfirmed: true`、`privacyNoticeAcknowledged: true`；service 在消费 upload 前校验；缺失/false 返回普通 validation error。
+- [ ] **T26 · 删除旧复杂方案残留**：确认无 `privacy_controller_name`、intake metadata API、contract version、确认 DB 列、legacy/v2 管理 UI、客户端 policy version 或 stale 409。
+- [ ] **T27 · 隐私/服务/关于/委托展示**：使用现有内容投影，QQ 优先、邮箱备用；隐私政策真实描述站内收集与人工清理；不把 checkbox 写成合同签署。
+- [ ] **T28 · 轻量隐私负向验证**：确认 PII 不进入公开 DTO、HTML、URL、analytics、普通日志、错误和 local/session storage；只保留必要 core 测试。
 
-### GATE-C · 设计地基稳定
+### GATE-C · 确认清楚但工程轻量
 
-- [ ] 公开动效 token 有唯一语义来源；
-- [ ] Header/Footer 更克制且真实图片上可读；
-- [ ] 九宫格不增加日常必填维护；
-- [ ] 既有任意 focal 不被破坏；
-- [ ] 焦点修改不产生混代、残留公开对象或热更新闪烁；
-- [ ] 管理端未被品牌动效污染。
+- [ ] 两项确认未预勾选且服务端严格；
+- [ ] 校验失败不消费 upload；
+- [ ] commission submission 表无新增确认字段；
+- [ ] 无专用 metadata/version 协议；
+- [ ] 真实经营主体和邮箱由工作室人工核对；
+- [ ] 隐私文案与真实功能一致。
 
-## D. 首页四幕与对象连续性
+## D. 人工 retention、单条删除与第三方声明
 
-- [ ] **T33 · 首页聚合投影复核**：保持单聚合请求和独立降级；不增加纯版式 CMS/表。
-- [ ] **T34 · 四幕语义骨架**：Hero → 代表作品 → 自设委托 → 设定领养；heading/空态/SSR正确。
-- [ ] **T35 · 品牌 Hero 收口**：真实图片对比保护、控制器降权、PC冲击力、移动安全区；保持横竖/10秒/暂停。
-- [ ] **T36 · Lead work**：精选第一项大图，剩余精选次级；横竖自然比例，零项隐藏，移动有“查看全部”。
-- [ ] **T37 · 自设委托幕**：移除 21:9 描边卡；同源委托图、非对称分栏、一个主 CTA、状态与短文案。
-- [ ] **T38 · 设定领养幕**：available 前两项、一/二/零项布局、cover→design sheet 回落、adopted 边界。
-- [ ] **T39 · 区块进入与媒体交接**：统一语义、一次揭示、移动简化、无JS默认可见、无持续 rAF。
-- [ ] **T40 · 共享对象渐进增强**：lead/commission/adoption 到内页；唯一 name、后退/锚点/错误回退；无 polyfill。
-- [ ] **T41 · 内页节奏同步**：works/commission/adoptions 只做必要留白、动作和图像连续性，不恢复退役字段。
-- [ ] **T42 · 响应式/偏好验收**：1440/1024/768/430/390、reduced motion/transparency/contrast、键盘和触控。
-- [ ] **T43 · 性能验收**：LCP 优先、懒加载、CLS < 0.1、无白闪/双图/空闲动画和横向溢出。
+- [ ] **T29 · Retention review 命令**：列出 masked rejected/pending 候选；pending 只提示复核，accepted 只按显式 ID 查看；不输出 PII/Key。
+- [ ] **T30 · 单条删除 dry-run**：输入一个 submission ID/回执，枚举 DB/OSS 精确关系、异常引用和脱敏计数；默认不写不删。
+- [ ] **T31 · 单条删除 execute**：固定强确认，current/version/delete marker/preview/pending 删除并验证后事务删行；每次只一条，不支持时间批量 execute。
+- [ ] **T32 · 删除重入与隔离演练**：对象已不存在、DB commit 失败、异常引用、重复执行和备份恢复后复核均有明确行为；只保留核心不变量测试。
+- [ ] **T33 · 人工 SOP**：记录月度上传清理、半年度申请 Review、用户删除请求、操作员和下一次日期；不存 PII/manifest。
+- [ ] **T34 · 第三方声明生成**：从实际生产依赖生成稳定 JSON/TXT，无生成时间、排序稳定、未知许可证失败。
+- [ ] **T35 · 人工资产 registry**：登记 FFmpeg、Noto Serif SC、ZhuoHei Collage；保存授权来源/摘要边界，不误标免费商用字体为开源。
+- [ ] **T36 · `/licenses` 收口**：页面消费生成事实并提供完整声明；删除手写平行运行时数组和“均为 MIT/Apache”错误总括。
 
-### GATE-D · 首页品牌体验完成
+### GATE-D · 人工运维可执行
 
-- [ ] 四幕覆盖完整核心业务且视觉权重不等；
-- [ ] 一个视口一个主要注意力中心；
-- [ ] 代表作品能接住 Hero，不立即退化为小卡轨道；
-- [ ] 委托与领养是完整章节，不是同权业务卡；
-- [ ] PC Web 达到用户审美目标；
-- [ ] 移动端完成同一任务，不依赖 hover/强制横轨；
-- [ ] reduced-motion 与无 JS 内容完整；
-- [ ] 王旻安和景宸完成真实素材人工验收。
+- [ ] 单条删除 DB/OSS 一体、默认 dry-run、可重入；
+- [ ] 无 scheduler/批量自动删除；
+- [ ] 用户请求可单独处理；
+- [ ] notices 与实际依赖/资产一致；
+- [ ] 人工下次复核日期已登记。
 
-## E. 全站收口、Review 与发布
+## E. 动效、Hero 焦点与首页四幕
 
-- [ ] **T44 · SEO/README/活文档审计**：DITE DOG 固定，去除暂用名/旧渠道/旧隐私/邮件优先；同步需求4状态。
-- [ ] **T45 · 完整质量门禁**：lint/typecheck/unit/integration/production build/verify/完整 E2E；不新增 required check。
-- [ ] **T46 · 真实浏览器与手机**：六档视口、输入法、二维码、焦点、图片 decode、network/console、LCP/CLS。
-- [ ] **T47 · 独立代码与内容 Review**：迁移、PII、删除、许可证、动效、性能、法务一致性；修复 findings 后复审。
-- [ ] **T48 · 工作室验收**：真实经营主体、默认文案、条款、隐私、首页图片/焦点/节奏、移动端由用户签字确认。
-- [ ] **T49 · 生产发布准备**：备份/恢复、迁移顺序、真实配置、notices、retention dry-run、回滚边界。
-- [ ] **T50 · 生产发布与 smoke**：home/privacy/service/licenses/apply/admin；提交 v2/stale；媒体和私有预览。
-- [ ] **T51 · 人工清理交接**：记录责任人、下次月度/半年度日期和用户删除请求入口。
-- [ ] **T52 · 需求4闭环**：STATE/ARTIFACTS/REVIEW/notes/任务勾选与最终证据同步。
+- [ ] **T37 · Motion token**：建立 feedback/content/media/page 与 standard/playful easing；迁移散落 620/680ms，不让测试断言精确值。
+- [ ] **T38 · Header/Footer/页面切换**：降低 SaaS 胶囊浮起感；一层材料、清楚 active/focus；页面/锚点/后退/焦点和 reduced preferences 无回退。
+- [ ] **T39 · Hero 焦点写入契约**：未启用 item 通过 CAS 修改现有 asset focal；共享 asset 冲突阻断；焦点变化重建不可变变体。
+- [ ] **T40 · 九宫格与目标裁切预览**：横/竖目标比例、中心/四角/边预设、已有任意坐标最近提示；复用 Hero 管理统一 UI。
+- [ ] **T41 · 首页静态四幕骨架**：先完成 Hero/lead work/commission/single adoption 的尺寸、空态和响应式，不加复杂动画。
+- [ ] **T42 · Hero 角色感**：图片聚焦、品牌 mask/clip 错峰、控制器一次轻回弹；自动轮播/reduced-motion/隐藏项加载保持正确。
+- [ ] **T43 · 代表作品幕**：lead 大图、短 caption、一个行动、剩余精选次级；桌面 fine pointer 有轻聚焦，触控无 tilt。
+- [ ] **T44 · 自设委托幕**：非对称分栏、同源媒体连续性、一个主行动、QQ 优先/邮箱备用短说明。
+- [ ] **T45 · 单项设定领养幕**：唯一 available 单幅完整展示；无 available 隐藏；caption/行动不遮主体。
+- [ ] **T46 · 区块与共享对象动效**：遮罩、图文错峰、轻弹性和 View Transitions 渐进增强；一个视口一个主要大对象运动。
+- [ ] **T47 · 移动/reduced/性能**：390/430/768/1024/1440、真实手机、LCP/CLS/decode/GPU、safe area、输入法、键盘/焦点、prefers-*。
 
-## 验证
+### GATE-E · 既简洁又有生命感
 
-- [ ] 静态：文档链接、Schema、类型、lint、文案 grep、notices drift、secret/content scan。
-- [ ] 数据：fresh/既有库/重入/FK/integrity、legacy/v2、默认文案保护、删除关系与重入。
-- [ ] API：intake metadata、literal true、stale 409、pending 唯一、Origin/token/TTL/限流/蜜罐。
-- [ ] 媒体：九宫格、publication/lease/recovery/purge、OSS current/version/delete marker、ESA。
-- [ ] UI：完整 E2E + 六档真实浏览器 + 真实手机 + reduced preferences。
-- [ ] 内容：工作室读者 Review；必要时另行专业法律意见。
-- [ ] 生产：备份恢复、配置、迁移、smoke、隔离删除演练和人工 SOP。
+- [ ] 四幕顺序与主次明确；
+- [ ] 领养只展示一项；
+- [ ] 角色感动效一次性、有因、无持续噪声；
+- [ ] 移动端不是桌面缩小版；
+- [ ] Hero 横竖独立维护清楚；
+- [ ] 王旻安/景宸人工视觉验收通过。
+
+## F. 最终 Review、发布与闭环
+
+- [ ] **T48 · SEO/固定入口同步**：DITE DOG、QQ 优先、隐私/条款/licenses 和新首页结构同步 SEO/JSON-LD/README/活文档；不恢复退役入口。
+- [ ] **T49 · 最小自动验证**：`check:fast`、受影响 core、`test:smoke`、production build/verify、PII/notices scan；不要求 legacy 全绿。
+- [ ] **T50 · Release/manual smoke**：显式镜像/Compose/Nginx/恢复；相关时执行 destructive drill；真实 Host home/adoptions/apply/privacy/service/licenses/admin。
+- [ ] **T51 · 独立 Review**：聚焦稳定不变量、删除精确性、媒体/进度、性能和文档一致性；不以测试数量代替判断。
+- [ ] **T52 · 用户验收**：王旻安/景宸确认真实图片、动效性格、首页节奏、领养排序/单项、Hero 管理、进度、文案和手机体验。
+- [ ] **T53 · 生产准备**：备份/恢复、文案迁移、真实经营主体、人工 retention 责任人/日期、冻结镜像和回滚候选。
+- [ ] **T54 · 发布与 smoke**：执行迁移和镜像发布，验证 readiness、公开/管理主流程和边缘媒体；失败按现有恢复手册处理。
+- [ ] **T55 · 闭环**：回写 TASKS/STATE/review/artifacts/CLAUDE，记录未覆盖后续项和下一次人工复核日期。
+
+### GATE-R4 · 需求4完成
+
+- [ ] GATE-A～E 全部通过；
+- [ ] 稳定 core/smoke 与 release smoke 通过；
+- [ ] legacy 全量不作为放行条件；
+- [ ] 独立 Review 与用户人工验收通过；
+- [ ] 生产 smoke 通过；
+- [ ] 自动化、Reviewer、用户和生产操作员没有互相代签。
 
 ## 闭环结论
 
-- 尚未实施；需求4文档已完成，可从 T04 开始。
+- 尚未实施。
