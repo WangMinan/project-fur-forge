@@ -1,225 +1,255 @@
 # 计划：站点视觉升级与内容合规
 
-> **角色**：把需求4规格翻译成有序、可执行的技术计划。
-> **状态**：2026-08-19 已定稿；所有计划 OQ 已答。
-> **原则**：先把真实信息收集和删除边界做正确，再进行视觉升级；不让首页改版掩盖隐私缺口。
+> **角色**：把 SPEC 翻译成有序、可执行的技术实现计划。
+> **状态**：2026-08-19 第二轮 Review 后定稿；无未答 OQ。
+> **代码基线**：`main@aa8e5b70be0913f02ceddccdc262ec6fe0769df1`。
 
-## 1. 执行结论
+## 执行结论
 
-需求4按五个发布单元推进：
+本轮不再从复杂隐私 Schema 开始。正确顺序是：
 
 ```text
-A 内容/隐私地基
-  → B 人工删除与第三方声明
-  → C 设计系统与 Hero 焦点
-  → D 首页四幕与对象连续性
-  → E 全站文案、独立 Review、用户验收和发布
+A 组件与进度地基
+  → B 测试减负与领养排序
+  → C 轻量内容/隐私、单条删除与第三方声明
+  → D Hero 管理、动效和首页四幕
+  → E 人工验收、release smoke 与发布
 ```
 
-A/B 可以先独立发布，避免现有表单继续使用过时隐私政策。C/D 必须使用真实图片和真实浏览器迭代，不由纯代码评审代签。E 才完成需求4闭环。
+理由：当前最显著的工程债是按钮、上传和进度呈现碎片化；若先继续开发隐私和首页，重复实现会进一步扩大。测试体系也应在大规模视觉变更前减重，避免每次小改都被历史实现型断言拖慢。
 
-## 2. 执行顺序
+## A. 组件与进度地基
 
-### A. 内容与隐私地基
+### A1. 盘点重复面
 
-#### A1. Schema expand
+- 列出公开端所有 primary/secondary/text 行动和局部 CSS。
+- 列出管理端普通、主、danger、link、loading 按钮。
+- 列出 Hero、作品、二维码、水印上传和 commission 上传的状态机/进度呈现。
+- 列出 FFmpeg、publication、branding、Hero operation 的进度/反馈组件。
+- 只统计职责和差异，不先做视觉重构。
 
-- 新增 `site_content.privacy_controller_name`。
-- 为 `commission_submissions` 增加 intake contract version 与确认字段。
-- 旧申请保持 legacy/NULL，不伪造成年或隐私确认。
-- 先 expand 支持 v1/v2，再由新代码显式写 v2；稳定后用 contract 将默认值收口为 2。
-- 更新 Drizzle schema、迁移 journal、unit/integration fixture 和 DTO。
-- expand/contract 均在 fresh、当前既有库副本、重复执行和回滚演练中验证。
+### A2. 公开行动组件
 
-#### A2. 公开 intake metadata
+- 建立 `PublicAction` 或等价组件，支持 `NuxtLink`/`button`、primary/secondary/text、loading/disabled/focus/active。
+- 先迁移 about、commission、adoptions 和首页现有行动，再开始四幕新 UI。
+- 删除迁移完成后的局部按钮 CSS；保留业务页面布局 CSS。
 
-- 增加 `/api/public/v1/commission-intake-meta` 或等价投影。
-- 只返回处理者公开身份、最低年龄、当前隐私/申请告知版本和页面链接。
-- 未配置真实处理者名称/邮箱时返回明确不可用状态；管理端给出配置缺失，不把假值公开。
-- 版本来自现有 `privacy_content_version` 与代码常量。
+### A3. 管理行动与进度
 
-#### A3. 提交确认
+- 建立 admin action primitive，统一主/次/danger/link/loading。
+- 建立 `AdminTaskProgress`：determinate、stage、indeterminate 三模式。
+- 真实 OSS upload 使用现有 XHR progress。
+- FFmpeg 使用阶段 + elapsed + indeterminate；不解析伪百分比。
+- publication/Hero/branding 使用真实 operation 状态和计数，移除阶段硬编码百分比。
 
-- 在申请页 SSR 获取 intake metadata。
-- 增加三个未预勾选确认，保留 field-level 错误与键盘可达性。
-- 提交 API 要求字面量 true 和版本一致。
-- 版本 stale 返回 409，保留表单与图片；不消费有效 upload session。
-- 成功显式记录 v2 contract 和确认时间。
-- 证明部署后不再新增 v1，再执行 intake contract。
-- 真实 QQ/邮箱/年龄口径同步页面、测试和错误文案。
+### A4. 上传展示收敛
 
-#### A4. 目标默认文案
+- 不要求一次性重写所有 composable；先把状态映射和进度 UI 收敛为共享层。
+- Hero、QR、水印、作品图分别接入同一进度组件。
+- 后续再视重复度抽取共享 upload state helper，避免为抽象而抽象。
 
-- 按 `requirements/COPY.md` 更新 about、commission、anti-scam、privacy、terms。
-- 前向迁移只替换 NULL/空值/精确历史默认值。
-- 管理员真实改写进入人工 Review，不自动覆盖。
-- `/privacy` 顶部结构化显示处理者、邮箱、版本和更新时间。
-- `/service` 保持普通网页一般条款，不把申请 checkbox 伪装成订单合同。
+### A5. Hero 管理信息架构
 
-### B. 人工删除与第三方声明
+- 保留四集合和现有 API/composable。
+- `admin/site/home` 改为 placement 一级、orientation 二级。
+- 委托页宽屏横/竖两个单槽并排；首页显示横/竖摘要并按方向编辑多项。
+- 统一 editor/card、设备画框预览和长任务反馈。
 
-#### B1. 保留复核 CLI
+### GATE-A
 
-- 扩展既有 `commission:cleanup-expired-uploads` 的运维说明，或统一到 `commission:retention`。
-- 提供：
-  - `review-expired-uploads`
-  - `review-submissions`
-  - `delete --submission-id`
-  - 受限 `delete --status rejected --before`
-- 默认 dry-run、掩码输出、固定强确认、严格参数组合。
-- accepted 禁止仅按日期批删；pending 只列出人工复核。
-- CLI 可从容器 one-shot operation 运行，不需要常驻进程。
+- 新页面可只用统一行动/进度 primitive；
+- OSS 上传至少一个真实流程显示真实百分比；
+- FFmpeg/operation 不再显示伪精确百分比；
+- Hero 管理数据契约未被合并或配对。
 
-#### B2. 精确删除实现
+## B. 测试减负与领养业务修正
 
-- 在 DB 关系存在时获取 exact private object keys。
-- 阻断任何异常外部引用。
-- 删除当前对象、版本/delete marker（若启用）、PRIVATE variants/preview/pending。
-- 验证不可达后事务删除 submission/session/asset/非必要 note。
-- 已缺失对象视为重入成功，其它失败保留可重入状态。
-- 审计日志脱敏；测试覆盖只删目标申请、不碰作品和其它申请。
-- 形成手工月度/半年度 SOP，不建设 scheduler。
+### B1. 测试分类
 
-#### B3. 第三方声明生成
+对现有测试逐文件标记：
 
-- 使用 `pnpm licenses list --prod --json --long` 作为 npm 生产依赖事实。
-- 编写确定性生成脚本，将 JSON/TXT 产物写入仓库或构建输入目录。
-- 人工 registry 覆盖 FFmpeg、Noto Serif SC、ZhuoHei Collage。
-- `/licenses` 从生成清单渲染，不保留手工 `RUNTIME` 数组为唯一真理。
-- 生成/校验命令复用现有 checks 或本地验证；不新增 workflow/job/required check。
-- 未知许可证、缺失 NOTICE 或生成差异时失败并提示人工修正。
+- `core`：安全、隐私、数据、迁移、删除、上传、发布状态机等稳定不变量；
+- `smoke`：少量完整用户流程；
+- `legacy`：历史实现、精确 DOM/文案/动画时长或重复覆盖。
 
-### C. 设计系统与 Hero 焦点
+先分类再修改；测试失败时不直接把旧断言改成新 UI。
 
-#### C1. 设计 token 收敛
+### B2. 快速命令与 workflow
 
-- 清点公开 CSS 中硬编码 duration/easing/distance/shadow/radius。
-- 建立 feedback/content/media/page 五类 motion token。
-- 移除或替换 HomeHero/HomeMotionReveal 等 620/680ms 局部常量。
-- 新建/凝练公开行动组件：primary、secondary、text。
-- 保持管理端样式独立，不把品牌动效扩散到后台表单。
+- 增加 `check:fast`、`test:core`、`test:smoke`、`test:release`；迁移期可保留 `test:legacy`。
+- 默认 quality 只运行快速 checks；docs-only 跳过应用重型任务。
+- image build、Compose/restore/Nginx 和完整 release smoke 由 `workflow_dispatch` 或 release 流程显式运行。
+- 不新增 required check。
 
-#### C2. Header/Footer 与材料
+### B3. 精简 Playwright
 
-- 降低桌面导航每项明显浮起/阴影，保留 active、hover、focus。
-- 首页 Header 只使用一层轻量材料；内页保持稳定 sticky。
-- 增加 reduced-transparency/contrast 渐进样式。
-- Footer 调整节奏与留白，不改变备案、法务或设计署名。
-- 真实 Hero 图上验证对比，不只测纯色 fixture。
+- 保留约 8–12 条主旅程。
+- 删除精确 `transitionDuration`、全文文案、局部 class/DOM、每次历史视觉修正等断言。
+- Playwright 只验证路由、主要行动、关键状态、无明显溢出/错误和 reduced-motion 基础可用。
+- 真实观感由人工浏览器验收。
 
-#### C3. 九宫格焦点
+### B4. 领养排序
 
-- 复用 `assets.focal_x/focal_y`。
-- 未启用 Hero item 管理 Card 增加九宫格与目标比例预览。
-- 通过集合 expectedVersion/CAS 更新。
-- 已启用 item 返回稳定冲突，指引先下架/替换。
-- 修改后清理过期 preview/站点变体；重新发布生成新 identity。
-- 不新增 crop 表，不增加拖拽/缩放编辑器。
-- 横版/竖版与首页/委托四集合分别测试。
+- `loadPublishedWorks` 或专用投影携带 `updated_at`。
+- `adoptionItems` 使用状态 bucket + updatedAt + ID 的唯一 comparator。
+- 名称搜索在排序后过滤，再分页。
+- 添加一条稳定 core test：新近 adopted 仍位于所有 available 之后；组内 updatedAt 倒序。
 
-#### C4. 动效基础
+### B5. 首页单项领养
 
-- 保留 Nuxt `pageTransition`，不回退到 layout 外层 Transition。
-- `HomeMotionReveal` 改为统一 token、较少错峰、移动简化。
-- 建立 `prefers-reduced-motion`、transparency、contrast 的统一 helper/CSS。
-- active 反馈在 pointer down 可见；长任务状态不延迟。
-- 不引入 motion 库，除非实现过程中出现无法用 CSS/WAAPI满足的连续手势，并先写设计变更记录。
+- 聚合最多投影一项 available。
+- `HomeCurrentAdoptions` 删除双项 slice 和双列布局。
+- 没有 available 时隐藏；adopted 仍可在精选中出现。
+- 只保留一条 smoke 证明首页/目录入口可达，不测试具体卡片数量之外的版式细节。
 
-### D. 首页四幕与对象连续性
+### GATE-B
 
-#### D1. 首页骨架
+- 普通代码反馈路径显著短于现有全量 workflow；
+- old legacy 失败不再阻止日常开发；
+- `/adoptions` 和首页单项满足业务排序；
+- 用户人工验收仍是视觉门禁。
 
-- `index.vue` 保持单聚合请求。
-- 调整顺序为 Hero → Lead Work/精选 → Commission Chapter → Adoption Chapter。
-- 每幕独立空态，不因次级数据错误整页 500。
-- 页面各幕使用语义 section 和正确 heading 层级。
+## C. 轻量内容、隐私、删除与第三方声明
 
-#### D2. 品牌 Hero
+### C1. 默认文案
 
-- 调整控制器视觉权重和真实图片局部对比保护。
-- 保持横竖独立、10 秒、暂停、hidden、reduced-motion。
-- PC 优先完成视觉，390/430 同步完成重排。
-- 不一次 eager 加载全部大图。
+- 按 `COPY.md` 前向替换 about/commission/terms/contact 的 NULL/空值/精确历史默认。
+- 不覆盖管理员改写，也不在经营主体未知时把带占位符的 privacy 文本写入数据库。
+- 实际经营主体和完整隐私政策通过现有编辑能力人工写入，不新增字段。
+- QQ 优先、邮箱备用在 about/commission/privacy/anti-scam 一致。
 
-#### D3. 代表作品
+### C2. 两项提交确认
 
-- 第一精选映射为 lead；剩余精选进入次级轨道/网格。
-- Lead 图按媒体方向完整展示，不强制海报化裁切。
-- 复用“名称 · 物种”与详情链接。
-- 移动端主要任务不依赖横向滚动；提供“查看全部作品”。
+- 页面增加成年/设定权利确认和隐私/非接单确认。
+- 两项不可预勾选，错误邻近显示。
+- request Schema 使用 literal true。
+- service 在消费 upload 前验证。
+- 不新增 DB 列、metadata API、版本传递、stale 409 或 legacy 管理 UI。
 
-#### D4. 自设委托幕
+### C3. 单条申请删除
 
-- 用现有 commission entry source/variant 建大幅非对称章节。
-- 移除 21:9 描边业务卡视觉。
-- 只保留一个主 CTA，QQ/邮箱信息留给委托页/关于页。
-- 状态、短说明和行动层级清楚。
-- 与 `/commission` 使用同源图和相近裁切。
+- `review` 命令输出 masked 候选；accepted 不按时间标可删。
+- `delete` 正式每次一个 ID/回执；默认 dry-run、固定确认。
+- 关系存在时枚举精确 DB/OSS 集合，对象验证后删行。
+- 隔离数据验证 execute 和重入；不实现批量 execute。
+- 补充人工月度/半年度 SOP。
 
-#### D5. 设定领养幕
+### C4. 第三方声明
 
-- 使用当前 available 前两项和既有 cover/design sheet 回落。
-- 桌面一大一小/同高有主次；移动纵向。
-- 一项/零项受控。
-- adopted 不进入此幕，但精选逻辑不受影响。
+- 从 production dependencies 生成稳定 JSON/TXT。
+- FFmpeg、Noto Serif SC、ZhuoHei Collage 进入人工 registry。
+- `/licenses` 使用生成事实，不保留平行手写依赖数组。
+- 未知许可证失败，不猜测。
 
-#### D6. 共享对象渐进增强
+### GATE-C
 
-- 先保证普通导航、返回、锚点和焦点正确。
-- 再为 lead work、commission image、adoption image 添加 View Transition。
-- 不支持/减少动效时回退 crossfade。
-- 保证同一页面 `view-transition-name` 唯一；分页/搜索变化不产生残留名。
-- 逐帧检查白闪、双图、布局跳动和历史导航。
+- 表单确认严格但无新增隐私平台复杂度；
+- 隐私政策与真实收集行为一致且无占位；
+- 单条删除 DB/OSS 一体可重入；
+- licenses 与实际依赖/资产一致。
 
-### E. 全站收口与发布
+## D. Hero 焦点、灵动动效与首页四幕
 
-#### E1. 读者/法务一致性 Review
+### D1. 动效 token
 
-- 对比 `COPY.md`、数据库迁移、页面固定文案、SEO、测试 fixture。
-- 删除邮件优先、永久保存、网站不收集设定图、半装带尾巴等旧文案。
-- 工作室确认真实经营主体、QQ、邮箱、保修和逐单流程。
-- 如需专业法律意见，由工作室另行取得；Agent 不代签。
+- 建立 feedback/content/media/page 和 standard/playful easing。
+- 替换局部 620/680ms 等散落常量。
+- 保留 standard 底盘，playful 只用于角色图片、控制器、CTA 图标和一次性完成反馈。
+- reduced-motion/移动端同步实现。
 
-#### E2. 完整验证
+### D2. Header/Footer 与页面切换
 
-- lint、typecheck、unit、integration、production build、verify。
-- 涉及公开 UI 结构时运行完整 E2E，避免只跑 focused spec 漏回归。
-- 真实浏览器六档视口、真实手机、键盘、输入法、reduced preferences。
-- 媒体焦点/发布/清理、申请版本、PII 泄漏、删除重入和 notices drift 测试。
-- 性能检查 LCP/CLS/图片请求/空闲 CPU。
+- Header 降低 SaaS 式浮起/阴影感，保持一层材料和清楚 active/focus。
+- Footer 保持静态收尾。
+- 页面切换使用统一 token；View Transitions 渐进增强，不破坏历史/锚点/焦点。
 
-#### E3. 独立 Review 与用户验收
+### D3. 焦点与 Hero 管理
 
-- 独立 Reviewer 只读审查代码、迁移、删除工具、PII、许可证和视觉回归。
-- 修复后重跑受影响与完整门禁。
-- 王旻安/景宸人工确认首页四幕、真实图裁切、动效、移动端和文案。
-- 不由实现 Agent 代签。
+- 为未启用 Hero item 提供九宫格。
+- 预览使用目标横/竖比例和真实 cover。
+- 修改焦点后走既有变体生成/验证/清理。
+- 检测共享 asset 焦点冲突并阻断。
 
-#### E4. 生产发布
+### D4. 首页骨架
 
-- 先备份并验证恢复。
-- 执行 expand migration，填写真实处理者名称，生成 notices。
-- 部署兼容新旧申请的镜像。
-- smoke：privacy/service/licenses/apply/home/admin。
-- 对隔离/合成申请执行 retention dry-run + delete 演练。
-- 记录月度上传清理、半年度申请复核责任人和下次日期。
-- 发布后监控错误、图片变体、提交 409、私有预览和页面性能。
+- 重排为四幕，不新增版式表或多余公开请求。
+- 建立每幕响应式尺寸、空态和 lazy/prefetch 策略。
+- 先静态成立，再加动效。
 
-## 3. 技术决策
+### D5. 四幕实现
 
-- **不增加首页 CMS 模型**：现有 aggregate + featured order 足以驱动四幕，减少运营负担。
-- **焦点复用 asset 字段**：现有 recipe 已将 focal 纳入 gravity 和 identity；只补可理解 UI。
-- **只编辑未启用 Hero 焦点**：避免为热变更引入新的跨对象原子切换复杂度。
-- **不新增 motion 依赖**：当前主要是滚动揭示、媒体切换和页面连续性，CSS/WAAPI足够；Apple Design Skill 是原则，不是安装清单。
-- **View Transitions 渐进增强**：不阻塞基线，不使用 polyfill。
-- **确认版本独立**：隐私 policy version + 固定 application notice version，避免普通委托介绍编辑改变法律语义。
-- **legacy 明示**：历史申请不回填假确认。
-- **人工调度、工具执行**：人的业务判断决定何时删；CLI 保证 DB/OSS 删除完整。
-- **accepted 不批量按时间删**：网站没有订单完成时间，禁止猜测。
-- **声明生成但不新增 required check**：保持用户确认的仓库治理与流水线成本。
-- **免费商用与开源分层**：ZhuoHei Collage 作为授权资产，Noto/包按许可证，FFmpeg按实际内部使用边界。
-- **网站一般条款 + QQ 特别约定**：不建设站内合同，但网页必须公平说明一般边界。
+- Hero：品牌揭示、轮播控制和焦点。
+- 代表作品：lead 大图 + 次级精选。
+- 委托：大图分栏 + 一个主行动。
+- 领养：唯一开放项单幅完整展示。
 
-## 4. 开放问题（OQ）
+### D6. 角色感动效
 
-无（所有计划 OQ 已答）。
+- 图片/标题/CTA 使用有因的遮罩、错峰、聚焦和轻弹性。
+- fine pointer 可轻 tilt/scale；触控使用按压/淡化。
+- 一个视口一个主要大对象运动。
+- success/selection 允许一次低幅回弹，不持续循环。
+
+### D7. 性能与无障碍
+
+- Hero 第一帧唯一高优先级，后续大图 lazy。
+- 精确 sizes/srcset，避免不必要 3840 下载。
+- 检查 LCP/CLS、decode、GPU、prefers-*、键盘、焦点、后退、锚点。
+- 真实图片与手机人工验收。
+
+### GATE-D
+
+- 首页既简洁又具有角色生命感；
+- 设定领养只一项；
+- Hero 横竖维护清楚且进度统一；
+- 移动/reduced 可用；
+- 人工验收通过。
+
+## E. 评审、发布与闭环
+
+### E1. 最小自动验证
+
+- `check:fast`；
+- 与改动相关的 core；
+- `test:smoke`；
+- production build/verify；
+- notices drift/PII scan。
+
+不要求把 legacy 全量套件修到全绿作为放行条件。
+
+### E2. Release 验证
+
+- 显式运行镜像/Compose/Nginx/恢复 smoke；
+- 涉及删除时运行隔离 destructive drill；
+- 真实公开/管理 Host smoke；
+- 真实手机和多视口人工浏览。
+
+### E3. 独立 Review 与用户验收
+
+- 独立 Review 聚焦安全/数据/删除/性能，不以历史测试数量评估质量。
+- 王旻安/景宸确认首页节奏、动效性格、真实图片、admin 进度、文案与业务流程。
+- 未通过人工视觉验收不得发布，即使自动 smoke 全绿。
+
+### E4. 发布
+
+- 备份/恢复验证；
+- 前向文案迁移；
+- 配置真实经营主体并核对联系渠道；
+- 发布新镜像；
+- readiness/home/adoptions/apply/privacy/service/licenses/admin smoke；
+- 记录人工 retention 下次执行日期；
+- 更新 STATE/TASKS/artifacts/review。
+
+## 技术决策
+
+- **组件先于页面**：先还公共按钮/上传/进度债，避免新首页继续复制。
+- **四集合不合并**：横竖是真实艺术指导差异，统一 UI 不等于统一数据。
+- **进度必须诚实**：有字节/计数才显示百分比；未知任务用阶段和 elapsed。
+- **隐私轻量化**：两个严格 checkbox，不建设新表/API/版本协议。
+- **单条删除**：人工判断和逐条 execute 比自动批量更安全、也更符合小工作室维护能力。
+- **测试保护不变量**：不让精确文案、DOM 和动画时长支配开发；用户人工门禁是视觉权威。
+- **灵动但不噪声**：允许角色感强调，不恢复持续漂浮和无目的特效。
+
+## 开放问题（OQ）
+
+无。实现发现必须改变上述边界时，先回到 SPEC/PLAN 登记，不在代码中自行扩张。
