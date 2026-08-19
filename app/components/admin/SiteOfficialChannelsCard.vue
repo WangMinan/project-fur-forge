@@ -13,6 +13,7 @@ import {
   normalizeNullableText,
   SITE_CONTENT_LIMITS,
 } from '~/utils/site-content'
+import { adminUploadProgressModel } from '~/utils/admin-upload-progress'
 
 const props = defineProps<{
   content: AdminSiteContentDto
@@ -95,6 +96,29 @@ function completeness(channel: AdminOfficialChannel) {
   return account
     ? '还缺少二维码，公开页暂不显示。'
     : '还缺少账号，公开页暂不显示。'
+}
+
+function processingRetryable(platform: ContactPlatform) {
+  const code = upload.items[platform].asset?.processingFailureCode
+  return code === 'UPLOAD_DERIVATIVE_FAILURE' || code === 'UPLOAD_PREPROCESS_FAILURE'
+}
+
+function uploadProgress(platform: ContactPlatform) {
+  const item = upload.items[platform]
+  return adminUploadProgressModel({
+    failureText: item.failureText,
+    ffmpeg: item.state === 'validating' && item.ffmpegExpected,
+    label: `${CONTACT_PLATFORM_LABELS[platform]}二维码上传`,
+    progress: item.progress,
+    stage: item.state,
+    stageLabel: item.state === 'validating'
+      ? item.ffmpegExpected
+        ? '正在用 FFmpeg Lanczos 生成私有适配源'
+        : '正在生成并核验公开二维码图片'
+      : item.state === 'ready'
+        ? '新二维码已上传，保存联系方式后生效'
+        : null,
+  })
 }
 
 function setQrAsset(platform: ContactPlatform, asset: VerifiedAssetDto) {
@@ -247,9 +271,8 @@ function save() {
               >
               <span v-else>未上传</span>
             </div>
-            <button
-              type="button"
-              class="channel-row__button"
+            <AdminAction
+              size="small"
               :disabled="upload.busy.value || card.saving.value"
               @click="pickFile(channel.platform)"
             >
@@ -258,54 +281,17 @@ function save() {
                 || upload.items[channel.platform].state === 'validating'
                 ? '处理中…'
                 : channel.qrCodeAssetId ? '替换二维码' : '上传二维码' }}
-            </button>
+            </AdminAction>
           </div>
         </div>
 
-        <progress
-          v-if="upload.items[channel.platform].state === 'uploading'
-            && upload.items[channel.platform].progress !== null"
-          class="channel-row__progress"
-          :value="upload.items[channel.platform].progress ?? 0"
-          max="1"
-          :aria-label="`${CONTACT_PLATFORM_LABELS[channel.platform]}二维码上传进度`"
+        <AdminTaskProgress
+          v-if="upload.items[channel.platform].state !== 'idle'"
+          v-bind="uploadProgress(channel.platform)"
+          :can-retry="processingRetryable(channel.platform)"
+          retry-label="重试处理"
+          @retry="upload.retryProcessing(channel.platform)"
         />
-        <AdminFfmpegProgress
-          v-if="upload.items[channel.platform].state === 'validating'
-            && upload.items[channel.platform].ffmpegExpected"
-          :label="`${CONTACT_PLATFORM_LABELS[channel.platform]}二维码：正在用 FFmpeg Lanczos 生成私有适配源`"
-        />
-        <p
-          v-else-if="upload.items[channel.platform].state === 'validating'"
-          class="channels-hint"
-          role="status"
-        >
-          正在生成并核验公开二维码图片…
-        </p>
-        <p
-          v-if="upload.items[channel.platform].state === 'ready'"
-          class="channel-row__ready"
-          role="status"
-        >
-          新二维码已上传，保存联系方式后生效。
-        </p>
-        <p
-          v-if="upload.items[channel.platform].failureText"
-          class="channels-issue"
-          role="alert"
-        >
-          {{ upload.items[channel.platform].failureText }}
-        </p>
-        <button
-          v-if="upload.items[channel.platform].asset?.processingFailureCode === 'UPLOAD_DERIVATIVE_FAILURE'
-            || upload.items[channel.platform].asset?.processingFailureCode === 'UPLOAD_PREPROCESS_FAILURE'"
-          type="button"
-          class="channel-row__retry"
-          :disabled="upload.busy.value"
-          @click="upload.retryProcessing(channel.platform)"
-        >
-          重试处理
-        </button>
       </section>
     </div>
 
@@ -368,7 +354,6 @@ function save() {
 
 .channels-hint,
 .channels-issue,
-.channel-row__ready,
 .channel-row__completeness {
   margin: 0;
   font-size: var(--admin-font-xs);
@@ -382,10 +367,6 @@ function save() {
 
 .channels-issue {
   color: var(--admin-status-error);
-}
-
-.channel-row__ready {
-  color: var(--admin-status-success);
 }
 
 .channels-field,
@@ -471,35 +452,6 @@ function save() {
   width: 100%;
   height: 100%;
   object-fit: contain;
-}
-
-.channel-row__button,
-.channel-row__retry {
-  min-height: var(--admin-control-height-sm);
-  padding: 0 var(--admin-space-3);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-sm);
-  background: var(--admin-bg-primary);
-  color: var(--admin-text-primary);
-  font: inherit;
-  font-size: var(--admin-font-xs);
-  cursor: pointer;
-}
-
-.channel-row__button:disabled,
-.channel-row__retry:disabled {
-  cursor: default;
-  opacity: 0.55;
-}
-
-.channel-row__progress {
-  width: 100%;
-  height: 0.375rem;
-  accent-color: var(--admin-accent-primary);
-}
-
-.channel-row__retry {
-  justify-self: start;
 }
 
 @media (max-width: 560px) {

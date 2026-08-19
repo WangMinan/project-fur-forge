@@ -12,6 +12,7 @@ import { PUBLICATION_STATUS_LABELS } from '~/utils/work-labels'
 import {
   PUBLICATION_BLOCKER_LABELS,
   PUBLICATION_FAILURE_STAGE_LABELS,
+  PUBLICATION_OPERATION_STATUS_LABELS,
   publicationFailureLabel,
 } from '~/utils/media-labels'
 import { AdminApiError } from '~/composables/useAdminApi'
@@ -39,6 +40,7 @@ interface Feedback {
 }
 
 const adminApi = useAdminApi()
+const polling = usePublicationPolling()
 const check = ref<WorkPublicationCheckDto | null>(null)
 const checkError = ref<string | null>(null)
 const checkLoading = ref(false)
@@ -46,7 +48,6 @@ const pending = ref<'cleanup' | 'publish' | 'unpublish' | null>(null)
 const feedback = ref<Feedback | null>(null)
 const lastOperation = ref<PublicationOperationDto | null>(null)
 const confirmUnpublish = ref(false)
-const publishProgress = ref<{ remaining: number, total: number } | null>(null)
 let publishProgressTimer: ReturnType<typeof setInterval> | null = null
 
 const STATUS_TONES = {
@@ -58,22 +59,37 @@ const STATUS_TONES = {
 const canStartPublish = computed(() =>
   (check.value?.canPublish === true || props.dirty)
   && pending.value === null
+  && !(lastOperation.value && isPublicationInProgress(lastOperation.value))
   && !props.busy
   && props.work.publicationStatus !== 'published',
 )
 
-const publishCompleted = computed(() => publishProgress.value
-  ? Math.max(0, publishProgress.value.total - publishProgress.value.remaining)
-  : 0,
-)
-const ffmpegPublishActive = computed(() => pending.value === 'publish'
-  && publishProgress.value !== null
-  && (
+const publishCompleted = computed(() => Math.max(
+  0,
+  (check.value?.requiredVariantCount ?? 0) - (check.value?.missingVariantCount ?? 0),
+))
+const operationActive = computed(() => Boolean(
+  lastOperation.value && isPublicationInProgress(lastOperation.value),
+))
+const ffmpegPublishActive = computed(() => (
+  lastOperation.value?.status === 'PREPARING_SOURCE'
+  || ((pending.value === 'publish' || operationActive.value)
+    && !lastOperation.value
+    && (
     check.value?.adoptionCoverNeedsPreprocess === true
     || check.value?.designSheetNeedsPreprocess === true
     || check.value?.studioPhotoNeedsPreprocess === true
-  ),
-)
+    ))
+))
+const taskMode = computed(() => ffmpegPublishActive.value
+  ? 'indeterminate' as const
+  : 'stage' as const)
+const taskStatus = computed(() => lastOperation.value?.status === 'DONE'
+  ? 'success' as const
+  : lastOperation.value?.status === 'FAILED'
+    ? 'error' as const
+    : 'active' as const)
+const showTask = computed(() => pending.value !== null || lastOperation.value !== null)
 
 async function refreshPublishProgress() {
   try {
@@ -81,13 +97,7 @@ async function refreshPublishProgress() {
       `/api/admin/v1/works/${props.work.id}/publication-check`,
       { schema: workPublicationCheckResponseSchema },
     )
-    check.value = result.data
-    if (publishProgress.value) {
-      publishProgress.value.remaining = Math.min(
-        publishProgress.value.total,
-        result.data.missingVariantCount,
-      )
-    }
+    adoptCheck(result.data, false)
   }
   catch {
     // The publish response remains authoritative; a missed progress poll is harmless.
@@ -95,11 +105,42 @@ async function refreshPublishProgress() {
 }
 
 function startPublishProgress() {
-  const total = check.value?.missingVariantCount ?? 0
-  publishProgress.value = { remaining: total, total }
+  stopPublishProgress()
   publishProgressTimer = setInterval(() => {
     void refreshPublishProgress()
   }, 1_000)
+}
+
+function adoptCheck(next: WorkPublicationCheckDto, restore = true) {
+  check.value = next
+  if (!next.latestOperation) {
+    return
+  }
+  lastOperation.value = next.latestOperation
+  if (restore && isPublicationInProgress(next.latestOperation)) {
+    void pollOperation(next.latestOperation)
+  }
+  else if (restore && !isPublicationInProgress(next.latestOperation)) {
+    handleOperationOutcome(next.latestOperation)
+  }
+}
+
+async function pollOperation(operation: PublicationOperationDto) {
+  if (polling.isPolling('work-publication')) {
+    return
+  }
+  await polling.poll('work-publication', operation.operationId, {
+    onTick: async (current) => {
+      lastOperation.value = current
+      await refreshPublishProgress()
+    },
+    onSettled: async (current) => {
+      lastOperation.value = current
+      handleOperationOutcome(current)
+      await refreshPublishProgress()
+      emit('mutated')
+    },
+  })
 }
 
 function stopPublishProgress() {
@@ -117,7 +158,7 @@ async function loadCheck(): Promise<boolean> {
       `/api/admin/v1/works/${props.work.id}/publication-check`,
       { schema: workPublicationCheckResponseSchema },
     )
-    check.value = result.data
+    adoptCheck(result.data)
     return true
   }
   catch (error) {
@@ -134,13 +175,12 @@ async function loadCheck(): Promise<boolean> {
 
 function handleOperationOutcome(
   operation: PublicationOperationDto,
-  publicationStatus: 'draft' | 'published' | 'unpublished',
 ) {
   lastOperation.value = operation
   if (operation.status === 'DONE') {
     feedback.value = {
       cleanupRetry: false,
-      text: publicationStatus === 'published'
+      text: operation.operationType === 'PUBLISH'
         ? '发布成功：公开图片已生成并通过校验。'
         : '已下架：公开页面不再可访问，公开文件与 ESA 缓存已撤销。',
       tone: 'success',
@@ -206,10 +246,8 @@ async function publish() {
         schema: publicationActionResponseSchema,
       },
     )
-    if (result.data.operation.status === 'DONE' && publishProgress.value) {
-      publishProgress.value.remaining = 0
-    }
-    handleOperationOutcome(result.data.operation, result.data.work.publicationStatus)
+    lastOperation.value = result.data.operation
+    handleOperationOutcome(result.data.operation)
     emit('mutated')
   }
   catch (error) {
@@ -250,7 +288,8 @@ async function unpublish() {
         schema: publicationActionResponseSchema,
       },
     )
-    handleOperationOutcome(result.data.operation, result.data.work.publicationStatus)
+    lastOperation.value = result.data.operation
+    handleOperationOutcome(result.data.operation)
     emit('mutated')
   }
   catch (error) {
@@ -407,70 +446,76 @@ onUnmounted(() => {
 
     <p v-if="checkError" class="publication__error" role="alert">
       {{ checkError }}
-      <button type="button" class="publication__link" @click="loadCheck">重新加载</button>
+      <AdminAction variant="text" @click="loadCheck">重新加载</AdminAction>
     </p>
 
     <div class="publication__actions">
-      <button
+      <AdminAction
         v-if="work.publicationStatus !== 'published'"
-        type="button"
-        class="editor__button editor__button--primary"
+        variant="primary"
         :disabled="!canStartPublish"
+        :loading="pending === 'publish'"
+        loading-label="保存并发布中…"
         :title="dirty ? '将先保存页面修改，再检查并发布' : check?.canPublish ? undefined : '请先完成发布检查中的所有待办项'"
         @click="publish"
-      >{{ pending === 'publish' ? '保存并发布中…' : '发布' }}</button>
-      <button
+      >发布</AdminAction>
+      <AdminAction
         v-if="work.publicationStatus === 'published'"
-        type="button"
-        class="editor__button editor__button--danger"
-        :disabled="pending !== null || busy"
+        variant="danger"
+        :disabled="pending !== null || operationActive || busy"
         @click="confirmUnpublish = true"
-      >下架</button>
-      <button
-        type="button"
-        class="publication__link"
+      >下架</AdminAction>
+      <AdminAction
+        variant="text"
         :disabled="checkLoading"
+        :loading="checkLoading"
+        loading-label="检查中…"
         @click="loadCheck"
-      >刷新检查</button>
+      >刷新检查</AdminAction>
     </div>
 
-    <div v-if="pending === 'publish'" class="publication__progress">
-      <AdminFfmpegProgress
-        v-if="ffmpegPublishActive"
-        label="正在用 FFmpeg 准备低分辨率图片，再生成带水印的公开图片，请勿关闭页面…"
-      />
-      <p v-else class="publication__state" role="status">
-        正在生成带水印的公开图片并检查图片是否可用，请勿关闭页面…
-      </p>
-      <template v-if="publishProgress && publishProgress.total > 0">
-        <p class="publication__progress-label">已生成 {{ publishCompleted }} / {{ publishProgress.total }}，剩余 {{ publishProgress.remaining }} 张</p>
-        <progress
-          class="publication__progress-bar"
-          :value="publishCompleted"
-          :max="publishProgress.total"
-          :aria-label="`公开图片生成进度：${publishCompleted}/${publishProgress.total}`"
-        />
-      </template>
-    </div>
-    <p v-else-if="pending === 'unpublish'" class="publication__state" role="status">
-      正在下架并清理公开文件…
-    </p>
-
-    <div
-      v-if="feedback"
-      class="publication__feedback"
-      :data-tone="feedback.tone"
-      :role="feedback.tone === 'error' ? 'alert' : 'status'"
-    >
-      <p class="publication__feedback-text">{{ feedback.text }}</p>
-      <button
-        v-if="feedback.cleanupRetry"
-        type="button"
-        class="editor__button editor__button--secondary"
-        :disabled="pending !== null"
-        @click="retryCleanup"
-      >{{ pending === 'cleanup' ? '清理中…' : '重试清理公开文件' }}</button>
-    </div>
+    <AdminTaskProgress
+      v-if="showTask"
+      :mode="taskMode"
+      :label="lastOperation?.operationType === 'UNPUBLISH' || pending === 'unpublish'
+        ? '作品下架与公开撤销'
+        : lastOperation?.operationType === 'UPSCALE'
+          ? '作品图片适配'
+          : '作品发布'"
+      :stage="lastOperation
+        ? PUBLICATION_OPERATION_STATUS_LABELS[lastOperation.status]
+        : pending === 'cleanup'
+          ? '重试公开文件与缓存撤销'
+          : pending === 'unpublish'
+            ? '正在创建下架任务'
+            : '正在创建发布任务'"
+      :status="taskStatus"
+      :completed-count="(lastOperation?.operationType === 'PUBLISH' || pending === 'publish')
+        && (check?.requiredVariantCount ?? 0) > 0
+        ? publishCompleted
+        : null"
+      :total-count="(lastOperation?.operationType === 'PUBLISH' || pending === 'publish')
+        ? check?.requiredVariantCount ?? null
+        : null"
+      :detail="feedback?.text ?? (ffmpegPublishActive
+        ? '正在用 FFmpeg 准备低分辨率图片；单图处理没有可信百分比。'
+        : check && (lastOperation?.operationType === 'PUBLISH' || pending === 'publish')
+          ? `公开图片已就绪 ${publishCompleted}/${check.requiredVariantCount}`
+          : null)"
+      :show-elapsed="taskStatus === 'active'"
+      :started-at="lastOperation?.startedAt ?? null"
+      :can-retry="feedback?.cleanupRetry === true"
+      retry-label="重试清理公开文件"
+      @retry="retryCleanup"
+    />
+    <AdminTaskProgress
+      v-else-if="feedback"
+      mode="stage"
+      label="操作未完成"
+      stage="请按提示处理后重试"
+      :status="feedback.tone === 'error' ? 'error' : 'success'"
+      :detail="feedback.text"
+    />
 
     <AdminConfirmDialog
       :open="confirmUnpublish"
@@ -490,27 +535,6 @@ onUnmounted(() => {
   margin: 0 0 var(--admin-space-3);
   font-size: var(--admin-font-sm);
   color: var(--admin-text-secondary);
-}
-
-.publication__progress {
-  margin: var(--admin-space-3) 0 0;
-}
-
-.publication__progress .publication__state {
-  margin-bottom: var(--admin-space-2);
-}
-
-.publication__progress-label {
-  margin: 0 0 var(--admin-space-2);
-  font-size: var(--admin-font-xs);
-  color: var(--admin-text-secondary);
-}
-
-.publication__progress-bar {
-  display: block;
-  width: 100%;
-  height: 0.5rem;
-  accent-color: var(--admin-accent-primary);
 }
 
 .publication__ok {
@@ -575,65 +599,4 @@ onUnmounted(() => {
   flex-wrap: wrap;
 }
 
-.publication__link {
-  border: none;
-  background: none;
-  padding: 0 var(--admin-space-2);
-  min-height: var(--admin-touch-target);
-  font: inherit;
-  font-size: var(--admin-font-sm);
-  color: var(--admin-accent-primary);
-  cursor: pointer;
-}
-
-.publication__link:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-
-.publication__feedback {
-  margin-top: var(--admin-space-4);
-  padding: var(--admin-space-3) var(--admin-space-4);
-  border-radius: var(--admin-radius-md);
-  display: grid;
-  gap: var(--admin-space-2);
-  justify-items: start;
-}
-
-.publication__feedback[data-tone='success'] {
-  background: var(--admin-status-success-soft);
-  color: var(--admin-status-success);
-}
-
-.publication__feedback[data-tone='error'] {
-  background: var(--admin-status-error-soft);
-  color: var(--admin-status-error);
-}
-
-.publication__feedback-text {
-  margin: 0;
-  font-size: var(--admin-font-sm);
-  line-height: var(--admin-line-normal);
-}
-
-.editor__button--danger {
-  border: none;
-  background: var(--admin-danger);
-  color: var(--admin-text-inverse);
-  min-height: var(--admin-control-height);
-  padding: 0 var(--admin-space-5);
-  border-radius: var(--admin-radius-md);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.editor__button--danger:hover:not(:disabled) {
-  background: var(--admin-danger-hover);
-}
-
-.editor__button--danger:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
 </style>

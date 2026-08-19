@@ -12,6 +12,7 @@ import type {
 import { ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
 import { adminMediaPreviewUrl } from '~/utils/admin-media-preview'
 import { PUBLICATION_OPERATION_STATUS_LABELS } from '~/utils/media-labels'
+import { adminUploadProgressModel } from '~/utils/admin-upload-progress'
 
 const props = withDefaults(defineProps<{
   canMoveDown?: boolean
@@ -48,19 +49,11 @@ const alt = ref('')
 const assetId = ref('')
 const sortOrder = ref(0)
 const upscaleConfirmed = ref(false)
-const showOperationProgress = ref(false)
 const selectedFile = shallowRef<File | null>(null)
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 // 委托页大图不轮播：单张启用、无顺位概念。
 const singleSlot = computed(() => props.placement === 'commission')
-let syncedItemId: string | null | undefined
-
 function sync() {
-  const nextItemId = props.item?.id ?? null
-  if (syncedItemId !== nextItemId) {
-    showOperationProgress.value = false
-    syncedItemId = nextItemId
-  }
   alt.value = props.item?.alt ?? ''
   assetId.value = props.item?.asset.assetId ?? ''
   sortOrder.value = singleSlot.value
@@ -108,19 +101,21 @@ const uploadProcessing = computed(() => [
   'uploading',
   'validating',
 ].includes(upload.item.state))
-const OPERATION_PROGRESS = {
-  PREPARING_SOURCE: 12,
-  GENERATING_PUBLIC: 35,
-  APPLYING_WATERMARK: 56,
-  VERIFYING_PUBLIC: 76,
-  COMMITTING: 91,
-  CLEANING_PUBLIC: 72,
-  DONE: 100,
-  FAILED: 100,
-} as const
-const operationProgress = computed(() => (
-  props.operation ? OPERATION_PROGRESS[props.operation.status] : 0
-))
+const uploadProgress = computed(() => adminUploadProgressModel({
+  failureText: upload.item.failureText,
+  ffmpeg: upload.item.state === 'validating' && upload.item.ffmpegPreprocessExpected,
+  label: `${props.orientation === 'landscape' ? '横版' : '竖版'}大图上传`,
+  progress: upload.item.progress,
+  stage: upload.item.state === 'completed' ? 'completed' : upload.item.state,
+}))
+const operationMode = computed(() => props.operation?.status === 'PREPARING_SOURCE'
+  ? 'indeterminate' as const
+  : 'stage' as const)
+const operationStatus = computed(() => props.operation?.status === 'DONE'
+  ? 'success' as const
+  : props.operation?.status === 'FAILED'
+    ? 'error' as const
+    : 'active' as const)
 const previewUrl = computed(() => assetId.value
   ? adminMediaPreviewUrl(assetId.value, ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH)
   : null,
@@ -162,17 +157,14 @@ function uploadSelectedFile() {
 }
 
 function requestUpscale() {
-  showOperationProgress.value = true
   emit('upscale')
 }
 
 function requestEnable() {
-  showOperationProgress.value = true
   emit('enable')
 }
 
 function requestDisable() {
-  showOperationProgress.value = true
   emit('disable')
 }
 </script>
@@ -194,18 +186,21 @@ function requestDisable() {
         </p>
       </div>
       <div v-if="item?.enabled && !singleSlot" class="hero-item__move" aria-label="调整顺序">
-        <button type="button" :disabled="busy || !canMoveUp" @click="emit('move', -1)">上移</button>
-        <button type="button" :disabled="busy || !canMoveDown" @click="emit('move', 1)">下移</button>
+        <AdminAction size="small" :disabled="busy || !canMoveUp" @click="emit('move', -1)">上移</AdminAction>
+        <AdminAction size="small" :disabled="busy || !canMoveDown" @click="emit('move', 1)">下移</AdminAction>
       </div>
     </header>
 
-    <div class="hero-item__preview">
+    <div class="hero-item__preview" :data-orientation="orientation">
       <img
         v-if="previewUrl"
         :src="previewUrl"
         :alt="`${alt || '大图'}管理预览`"
       >
       <p v-else>上传图片后将在这里显示低清管理预览。</p>
+      <span class="hero-item__frame-label">
+        {{ orientation === 'landscape' ? '桌面 16:9 画框' : '手机 9:16 画框' }}
+      </span>
     </div>
 
     <div class="hero-item__fields">
@@ -229,20 +224,22 @@ function requestDisable() {
           @change="onFile"
         >
         <div class="hero-item__upload-actions">
-          <button
-            type="button"
+          <AdminAction
+            size="small"
             :disabled="busy || item?.enabled || uploadProcessing"
             @click="pickFile"
-          >选择图片</button>
+          >选择图片</AdminAction>
           <span class="hero-item__filename">
             {{ selectedFile?.name ?? upload.item.fileName ?? '未选择图片' }}
           </span>
-          <button
-            type="button"
-            class="hero-item__upload-submit"
+          <AdminAction
+            variant="primary"
+            size="small"
             :disabled="!selectedFile || busy || item?.enabled || uploadProcessing"
+            :loading="uploadProcessing"
+            loading-label="上传中…"
             @click="uploadSelectedFile"
-          >{{ uploadProcessing ? '上传中…' : '上传图片' }}</button>
+          >上传图片</AdminAction>
         </div>
         <small>
           {{ orientation === 'landscape'
@@ -252,77 +249,63 @@ function requestDisable() {
       </div>
     </div>
 
-    <p v-if="upload.item.state !== 'idle'" class="hero-item__upload-state" role="status">
-      {{ upload.item.state === 'completed'
-        ? '上传并校验完成，请保存。'
-        : upload.item.failureText || `上传处理中：${upload.item.state}` }}
-    </p>
+    <AdminTaskProgress
+      v-if="upload.item.state !== 'idle'"
+      v-bind="uploadProgress"
+    />
 
     <label v-if="item && !item.enabled && !item.upscaleReady" class="hero-item__confirm">
       <input v-model="upscaleConfirmed" type="checkbox" :disabled="busy">
       <span>我已确认允许生成私有放大处理源，原图保留。</span>
     </label>
 
-    <p
-      v-if="feedback"
-      class="hero-item__feedback"
-      :data-tone="feedback.tone"
-      role="status"
-    >{{ feedback.text }}</p>
-
-    <div
-      v-if="operation && (isPublicationInProgress(operation) || showOperationProgress)"
-      class="hero-item__operation-progress"
-      role="status"
-    >
-      <p>{{ PUBLICATION_OPERATION_STATUS_LABELS[operation.status] }}</p>
-      <progress
-        :value="operationProgress"
-        max="100"
-        :aria-label="`${operation.operationType === 'PUBLISH' ? '发布并启用' : '大图操作'}进度：${PUBLICATION_OPERATION_STATUS_LABELS[operation.status]}`"
-      />
-    </div>
+    <AdminTaskProgress
+      v-if="operation"
+      :mode="operationMode"
+      :label="operation.operationType === 'PUBLISH'
+        ? '发布并启用大图'
+        : operation.operationType === 'UNPUBLISH'
+          ? '停用并撤销大图'
+          : '适配大图尺寸'"
+      :stage="PUBLICATION_OPERATION_STATUS_LABELS[operation.status]"
+      :status="operationStatus"
+      :detail="feedback?.text ?? null"
+      :show-elapsed="operationStatus === 'active'"
+      :started-at="operation.startedAt"
+      :can-retry="Boolean(feedback?.retryOperationId)"
+      retry-label="重试长任务"
+      @retry="emit('retryOperation')"
+    />
 
     <div class="hero-item__actions">
-      <button
-        type="button"
+      <AdminAction
         :disabled="busy || !valid || item?.enabled || Boolean(selectedFile) || uploadProcessing"
         @click="submit"
       >
         {{ item ? '保存' : '新增' }}
-      </button>
-      <button
+      </AdminAction>
+      <AdminAction
         v-if="item && !item.enabled && !item.upscaleReady"
-        type="button"
         :disabled="busy || !upscaleConfirmed"
         @click="requestUpscale"
-      >适配大尺寸</button>
-      <button
+      >适配大尺寸</AdminAction>
+      <AdminAction
         v-if="item && !item.enabled && item.upscaleReady"
-        type="button"
-        class="hero-item__primary"
+        variant="primary"
         :disabled="busy"
         @click="requestEnable"
-      >发布并启用</button>
-      <button
+      >发布并启用</AdminAction>
+      <AdminAction
         v-if="item?.enabled"
-        type="button"
         :disabled="busy"
         @click="requestDisable"
-      >停用并撤销公开图</button>
-      <button
-        v-if="feedback?.retryOperationId"
-        type="button"
-        :disabled="busy"
-        @click="emit('retryOperation')"
-      >重试长任务</button>
-      <button
+      >停用并撤销公开图</AdminAction>
+      <AdminAction
         v-if="item && !item.enabled"
-        type="button"
-        class="hero-item__danger"
+        variant="danger"
         :disabled="busy"
         @click="emit('delete')"
-      >删除</button>
+      >删除</AdminAction>
     </div>
   </article>
 </template>
@@ -360,26 +343,45 @@ function requestDisable() {
   font-size: var(--admin-font-md);
 }
 
-.hero-item__state,
-.hero-item__upload-state,
-.hero-item__feedback {
+.hero-item__state {
   color: var(--admin-text-secondary);
   font-size: var(--admin-font-xs);
 }
 
 .hero-item__preview {
+  position: relative;
   display: grid;
-  min-height: 10rem;
+  width: min(100%, 52rem);
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   background: var(--admin-bg-subtle);
+  border: 0.5rem solid var(--admin-text-primary);
   border-radius: var(--admin-radius-sm);
   place-items: center;
 }
 
+.hero-item__preview[data-orientation='portrait'] {
+  width: min(100%, 20rem);
+  aspect-ratio: 9 / 16;
+  border-width: 0.65rem;
+  border-radius: 1.5rem;
+}
+
 .hero-item__preview img {
   width: 100%;
-  max-height: 24rem;
-  object-fit: contain;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-item__frame-label {
+  position: absolute;
+  right: var(--admin-space-2);
+  bottom: var(--admin-space-2);
+  padding: var(--admin-space-1) var(--admin-space-2);
+  color: var(--admin-text-inverse);
+  background: rgb(25 31 42 / 0.72);
+  border-radius: var(--admin-radius-sm);
+  font-size: var(--admin-font-xs);
 }
 
 .hero-item__fields {
@@ -425,28 +427,6 @@ function requestDisable() {
   border-radius: var(--admin-radius-md);
 }
 
-.hero-item__upload-actions button {
-  min-height: var(--admin-control-height-sm);
-  padding: 0 var(--admin-space-3);
-  color: var(--admin-text-primary);
-  background: var(--admin-bg-primary);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-sm);
-  cursor: pointer;
-  font: inherit;
-}
-
-.hero-item__upload-actions .hero-item__upload-submit {
-  color: var(--admin-text-inverse);
-  background: var(--admin-accent-primary);
-  border-color: var(--admin-accent-primary);
-}
-
-.hero-item__upload-actions button:disabled {
-  cursor: default;
-  opacity: 0.5;
-}
-
 .hero-item__filename {
   min-width: 8rem;
   flex: 1;
@@ -467,55 +447,8 @@ function requestDisable() {
   font-size: var(--admin-font-xs);
 }
 
-.hero-item__operation-progress {
-  display: grid;
-  gap: var(--admin-space-2);
-}
-
-.hero-item__operation-progress p {
-  margin: 0;
-  color: var(--admin-text-secondary);
-  font-size: var(--admin-font-xs);
-}
-
-.hero-item__operation-progress progress {
-  width: 100%;
-  height: 0.5rem;
-  accent-color: var(--admin-accent-primary);
-}
-
 .hero-item__actions {
   justify-content: flex-start;
-}
-
-.hero-item__actions button,
-.hero-item__move button {
-  min-height: var(--admin-control-height-sm);
-  padding: 0 var(--admin-space-3);
-  color: var(--admin-text-primary);
-  background: var(--admin-bg-primary);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-sm);
-  font: inherit;
-  font-size: var(--admin-font-xs);
-  cursor: pointer;
-}
-
-.hero-item__actions button:disabled,
-.hero-item__move button:disabled {
-  cursor: default;
-  opacity: 0.5;
-}
-
-.hero-item__actions .hero-item__primary {
-  color: var(--admin-text-inverse);
-  background: var(--admin-accent-primary);
-  border-color: var(--admin-accent-primary);
-}
-
-.hero-item__actions .hero-item__danger,
-.hero-item__feedback[data-tone='error'] {
-  color: var(--admin-danger);
 }
 
 @media (max-width: 640px) {

@@ -51,14 +51,13 @@ const canSave = computed(() =>
         你的修改仍然保留：可以选择改用最新内容，或核对后重新保存。
       </p>
       <div class="site-section__conflict-actions">
-        <button
-          type="button"
-          class="site-section__button"
+        <AdminAction
+          size="small"
           data-testid="site-section-adopt-latest"
           @click="emit('adoptLatest')"
         >
           改用最新内容
-        </button>
+        </AdminAction>
       </div>
       <slot name="latest" />
     </div>
@@ -74,24 +73,25 @@ const canSave = computed(() =>
         <span v-else-if="dirty" data-testid="site-section-dirty">有未保存修改</span>
       </p>
       <div class="site-section__actions">
-        <button
+        <AdminAction
           v-if="dirty"
-          type="button"
-          class="site-section__button"
+          size="small"
           :disabled="saving"
           @click="emit('reset')"
         >
           放弃修改
-        </button>
-        <button
-          type="button"
-          class="site-section__button site-section__button--primary"
+        </AdminAction>
+        <AdminAction
+          variant="primary"
+          size="small"
           :disabled="!canSave"
+          :loading="saving"
+          loading-label="保存中…"
           data-testid="site-section-save"
           @click="emit('save')"
         >
           保存
-        </button>
+        </AdminAction>
       </div>
     </footer>
   </section>
@@ -159,26 +159,4 @@ const canSave = computed(() =>
   gap: var(--admin-space-2);
 }
 
-.site-section__button {
-  min-height: var(--admin-control-height-sm);
-  padding: 0 var(--admin-space-3);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-sm);
-  background: var(--admin-bg-primary);
-  color: var(--admin-text-primary);
-  font: inherit;
-  font-size: var(--admin-font-xs);
-  cursor: pointer;
-}
-
-.site-section__button--primary {
-  background: var(--admin-accent-primary, #1f6feb);
-  border-color: var(--admin-accent-primary, #1f6feb);
-  color: #fff;
-}
-
-.site-section__button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 </style>

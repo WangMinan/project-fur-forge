@@ -56,10 +56,11 @@ const progressValue = computed(() => {
     + Math.min(current.verifiedVariantCount, current.targetVariantCount)
 })
 
-const progressPercent = computed(() => progressValue.value === undefined
-  ? null
-  : Math.round(progressValue.value / progressMax.value * 100),
-)
+const operationStatus = computed(() => props.operation?.status === 'DONE'
+  ? 'success' as const
+  : props.operation?.status === 'FAILED'
+    ? 'error' as const
+    : 'active' as const)
 
 const canApply = computed(() =>
   props.sourceReady
@@ -145,69 +146,35 @@ function onConfirmApply() {
     </p>
 
     <div class="branding-apply__actions">
-      <button
-        type="button"
-        class="editor__button editor__button--primary"
+      <AdminAction
+        variant="primary"
         :disabled="!canApply"
+        :loading="mutating"
+        loading-label="正在提交…"
         @click="confirmOpen = true"
-      >{{ mutating ? '正在提交…' : actionLabel }}</button>
+      >{{ actionLabel }}</AdminAction>
       <p v-if="applyBlockReason" class="branding-apply__block" role="status">
         {{ applyBlockReason }}
       </p>
     </div>
 
-    <div
+    <AdminTaskProgress
       v-if="operation"
-      class="branding-apply__operation"
-      role="status"
-      aria-live="polite"
       data-testid="watermark-operation"
-    >
-      <p class="branding-apply__operation-title">
-        {{ WATERMARK_OPERATION_TYPE_LABELS[operation.operationType] }}：
-        <AdminStatusBadge
-          :tone="operation.status === 'DONE'
-            ? 'success'
-            : operation.status === 'FAILED'
-              ? 'error'
-              : 'info'"
-          :label="WATERMARK_OPERATION_STATUS_LABELS[operation.status]"
-        />
-      </p>
-      <p class="branding-apply__operation-counts">
-        已生成 {{ operation.generatedVariantCount }}/{{ operation.targetVariantCount }}
-        · 已核验 {{ operation.verifiedVariantCount }}/{{ operation.targetVariantCount }}
-        · 待清理 {{ operation.cleanupPendingCount }}
-      </p>
-      <div v-if="rebuildOperation" class="branding-apply__progress">
-        <p class="branding-apply__progress-label">
-          <span>公开图生成与核验进度</span>
-          <span>{{ progressPercent === null ? '正在统计…' : `${progressPercent}%` }}</span>
-        </p>
-        <progress
-          class="branding-apply__progress-bar"
-          :max="progressMax"
-          :value="progressValue"
-          :aria-label="progressPercent === null
-            ? '正在统计全站水印应用进度'
-            : `全站水印应用进度：${progressPercent}%`"
-        />
-      </div>
-      <template v-if="operation.status === 'FAILED'">
-        <p class="branding-apply__failure" role="alert">
-          {{ watermarkFailureHint(operation.failureCode) }}
-        </p>
-        <button
-          type="button"
-          class="editor__button editor__button--secondary"
-          :disabled="mutating"
-          @click="emit('retry')"
-        >重试</button>
-      </template>
-      <p v-else-if="operation.status === 'DONE'" class="branding-apply__done">
-        操作已完成。
-      </p>
-    </div>
+      mode="stage"
+      :label="WATERMARK_OPERATION_TYPE_LABELS[operation.operationType]"
+      :stage="WATERMARK_OPERATION_STATUS_LABELS[operation.status]"
+      :status="operationStatus"
+      :completed-count="rebuildOperation ? progressValue ?? 0 : null"
+      :total-count="rebuildOperation && operation.targetVariantCount > 0 ? progressMax : null"
+      :detail="operation.status === 'FAILED'
+        ? watermarkFailureHint(operation.failureCode)
+        : `已生成 ${operation.generatedVariantCount}/${operation.targetVariantCount} · 已核验 ${operation.verifiedVariantCount}/${operation.targetVariantCount} · 待清理 ${operation.cleanupPendingCount}`"
+      :show-elapsed="operationStatus === 'active'"
+      :started-at="operation.startedAt"
+      :can-retry="operation.status === 'FAILED'"
+      @retry="emit('retry')"
+    />
 
     <AdminConfirmDialog
       :open="confirmOpen"
@@ -290,64 +257,6 @@ function onConfirmApply() {
   margin: 0;
   font-size: var(--admin-font-sm);
   color: var(--admin-text-secondary);
-}
-
-
-.branding-apply__operation {
-  display: grid;
-  gap: var(--admin-space-2);
-  justify-items: start;
-  padding: var(--admin-space-3) var(--admin-space-4);
-  border: 1px solid var(--admin-border-secondary);
-  border-radius: var(--admin-radius-md);
-  background: var(--admin-bg-subtle);
-}
-
-.branding-apply__operation-title {
-  margin: 0;
-  font-size: var(--admin-font-sm);
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: var(--admin-space-2);
-}
-
-.branding-apply__operation-counts {
-  margin: 0;
-  font-size: var(--admin-font-sm);
-  color: var(--admin-text-secondary);
-}
-
-.branding-apply__progress {
-  width: 100%;
-}
-
-.branding-apply__progress-label {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--admin-space-3);
-  margin: 0 0 var(--admin-space-2);
-  font-size: var(--admin-font-xs);
-  color: var(--admin-text-secondary);
-}
-
-.branding-apply__progress-bar {
-  display: block;
-  width: 100%;
-  height: 0.5rem;
-  accent-color: var(--admin-accent-primary);
-}
-
-.branding-apply__failure {
-  margin: 0;
-  font-size: var(--admin-font-sm);
-  color: var(--admin-status-error);
-}
-
-.branding-apply__done {
-  margin: 0;
-  font-size: var(--admin-font-sm);
-  color: var(--admin-status-success);
 }
 
 </style>

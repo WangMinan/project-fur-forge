@@ -44,18 +44,4 @@ defineProps<{
   margin-top: var(--space-5);
 }
 
-.empty-state__actions :deep(a) {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.75rem;
-  padding: var(--space-2) var(--space-5);
-  color: var(--public-accent-primary);
-  border: 1px solid var(--public-accent-primary);
-  border-radius: var(--radius-full);
-}
-
-.empty-state__actions :deep(a:hover) {
-  color: var(--public-accent-hover);
-  border-color: var(--public-accent-hover);
-}
 </style>

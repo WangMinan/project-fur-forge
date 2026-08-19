@@ -92,6 +92,7 @@ export const workPublicationCheckDtoSchema = z.object({
   studioPhotoNeedsPreprocess: z.boolean(),
   requiredVariantCount: z.number().int().nonnegative(),
   missingVariantCount: z.number().int().nonnegative(),
+  latestOperation: publicationOperationDtoSchema.nullable(),
 }).strict()
 
 export const publicationWorkStateDtoSchema = z.object({

@@ -24,10 +24,10 @@ const works = computed(() => (props.available ? props.works : []))
       <h2 id="featured-works-title" class="featured-works__title">
         精选作品
       </h2>
-      <NuxtLink to="/works" class="featured-works__more">
+      <PublicAction to="/works" variant="text" class="featured-works__more">
         查看全部作品
         <span aria-hidden="true">→</span>
-      </NuxtLink>
+      </PublicAction>
     </header>
 
     <FeaturedTrack :works="works" />
@@ -57,13 +57,5 @@ const works = computed(() => (props.available ? props.works : []))
   letter-spacing: var(--letter-spacing-tight);
 }
 
-.featured-works__more {
-  flex-shrink: 0;
-  font-size: var(--font-size-sm);
-}
-
-.featured-works__more:hover {
-  text-decoration: underline;
-  text-underline-offset: 0.3em;
-}
+.featured-works__more { flex-shrink: 0; }
 </style>

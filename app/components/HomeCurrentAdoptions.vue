@@ -22,9 +22,9 @@ const currentAdoptions = computed(() => props.adoptions.slice(0, 2))
   >
     <header class="home-adoptions__header">
       <h2 id="home-adoptions-title" class="home-adoptions__title">设定领养</h2>
-      <NuxtLink to="/adoptions" class="home-adoptions__more">
+      <PublicAction to="/adoptions" variant="text" class="home-adoptions__more">
         查看全部 <span aria-hidden="true">→</span>
-      </NuxtLink>
+      </PublicAction>
     </header>
     <ul class="home-adoptions__grid" role="list">
       <li v-for="adoption in currentAdoptions" :key="adoption.work.id">
@@ -58,18 +58,7 @@ const currentAdoptions = computed(() => props.adoptions.slice(0, 2))
   gap: var(--space-4);
 }
 
-.home-adoptions__more {
-  flex: none;
-  color: var(--public-text-link);
-  font-size: var(--font-size-sm);
-}
-
-.home-adoptions__more:hover,
-.home-adoptions__more:focus-visible {
-  color: var(--public-accent-hover);
-  text-decoration: underline;
-  text-underline-offset: 0.3em;
-}
+.home-adoptions__more { flex: none; }
 
 .home-adoptions__grid {
   display: grid;

@@ -78,7 +78,7 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
         </p>
         <!-- 三个行动同一行：提交申请是主行动，邮件两个按钮跟在后面。 -->
         <div class="about-page__actions">
-          <NuxtLink class="about-page__apply" to="/commission/apply">提交委托申请</NuxtLink>
+          <PublicAction to="/commission/apply">提交委托申请</PublicAction>
           <ContactEmailActions :email="contact.email" />
         </div>
         <ContactChannelGrid :channels="contact.officialChannels" />
@@ -140,18 +140,6 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
-}
-
-.about-page__apply {
-  justify-self: start;
-  min-height: 2.75rem;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 var(--space-5);
-  border-radius: var(--radius-full);
-  color: var(--public-text-inverse);
-  background: var(--public-bg-inverse);
-  font-weight: 600;
 }
 
 </style>

@@ -60,14 +60,13 @@ onBeforeUnmount(() => {
         {{ description || '根据角色细节与制作需求逐单沟通、人工估价。' }}
       </p>
       <div class="commission-lead__actions">
-        <NuxtLink
-          class="commission-lead__action commission-lead__action--primary"
+        <PublicAction
           to="/commission/apply"
-        >提交委托申请</NuxtLink>
-        <NuxtLink
-          class="commission-lead__action commission-lead__action--secondary"
+        >提交委托申请</PublicAction>
+        <PublicAction
+          variant="secondary"
           to="/about#contact"
-        >查看其他联系方式</NuxtLink>
+        >查看其他联系方式</PublicAction>
       </div>
     </div>
   </section>
@@ -158,42 +157,22 @@ onBeforeUnmount(() => {
 }
 
 .commission-lead__actions {
+  --public-action-primary-text: var(--public-text-primary);
+  --public-action-primary-bg: var(--public-bg-primary);
+  --public-action-primary-border: rgb(255 255 255 / 0.7);
+  --public-action-primary-hover-text: var(--public-accent-active);
+  --public-action-primary-hover-bg: var(--public-bg-secondary);
+  --public-action-primary-hover-border: rgb(255 255 255 / 0.7);
+  --public-action-secondary-text: var(--public-text-inverse);
+  --public-action-secondary-bg: rgb(17 20 25 / 0.3);
+  --public-action-secondary-border: rgb(255 255 255 / 0.7);
+  --public-action-secondary-hover-text: var(--public-text-inverse);
+  --public-action-secondary-hover-bg: rgb(17 20 25 / 0.52);
+  --public-action-secondary-hover-border: rgb(255 255 255 / 0.7);
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
   margin-top: var(--space-2);
-}
-
-.commission-lead__action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 2.75rem;
-  padding: 0 var(--space-5);
-  border: 1px solid rgb(255 255 255 / 0.7);
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-}
-
-.commission-lead__action--primary {
-  color: var(--public-text-primary);
-  background: var(--public-bg-primary);
-}
-
-.commission-lead__action--primary:hover {
-  color: var(--public-accent-active);
-  background: var(--public-bg-secondary);
-}
-
-.commission-lead__action--secondary,
-.commission-lead__action--secondary:hover {
-  color: var(--public-text-inverse);
-  background: rgb(17 20 25 / 0.3);
-}
-
-.commission-lead__action--secondary:hover {
-  background: rgb(17 20 25 / 0.52);
 }
 
 @media (min-width: 768px) {

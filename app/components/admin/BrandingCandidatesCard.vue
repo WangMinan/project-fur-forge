@@ -2,6 +2,7 @@
 import type { WatermarkCandidateDto } from '~~/shared/types/contracts'
 import { formatWatermarkDateTime } from '~/utils/watermark-labels'
 import type { useWatermarkLogoUpload } from '~/composables/useWatermarkLogoUpload'
+import { adminUploadProgressModel } from '~/utils/admin-upload-progress'
 
 const props = defineProps<{
   brandingVersion: number
@@ -18,11 +19,13 @@ const emit = defineEmits<{
 const fileInput = ref<HTMLInputElement | null>(null)
 const pendingFile = ref<File | null>(null)
 
-const uploadStageLabels: Record<string, string> = {
-  digesting: '正在计算摘要…',
-  uploading: '正在上传到私有库…',
-  validating: '服务端核验中…',
-}
+const uploadProgress = computed(() => adminUploadProgressModel({
+  failureText: props.upload.failureText.value,
+  label: props.upload.fileName.value ?? '水印 Logo 上传',
+  progress: props.upload.progress.value,
+  stage: props.upload.stage.value === 'done' ? 'completed' : props.upload.stage.value,
+  stageLabel: props.upload.failureStage.value,
+}))
 
 function pickFile() {
   fileInput.value?.click()
@@ -62,45 +65,26 @@ async function startUpload() {
         aria-label="选择水印 Logo 文件"
         @change="onFileChange"
       >
-      <button
-        type="button"
-        class="editor__button editor__button--secondary"
+      <AdminAction
         :disabled="disabled || upload.busy.value"
         @click="pickFile"
-      >选择 PNG</button>
+      >选择 PNG</AdminAction>
       <span class="branding-candidates__filename" aria-live="polite">
         {{ pendingFile?.name ?? '未选择文件' }}
       </span>
-      <button
-        type="button"
-        class="editor__button editor__button--primary"
+      <AdminAction
+        variant="primary"
         :disabled="!pendingFile || disabled || upload.busy.value"
+        :loading="upload.busy.value"
+        loading-label="上传中…"
         @click="startUpload"
-      >{{ upload.busy.value ? '上传中…' : '上传候选' }}</button>
+      >上传候选</AdminAction>
     </div>
 
-    <div
-      v-if="upload.busy.value"
-      class="branding-candidates__upload-status"
-      role="status"
-    >
-      <span>{{ uploadStageLabels[upload.stage.value] }}</span>
-      <progress
-        v-if="upload.stage.value === 'uploading' && upload.progress.value !== null"
-        class="branding-candidates__progress"
-        max="1"
-        :value="upload.progress.value"
-        :aria-label="`${upload.fileName.value ?? '文件'}上传进度`"
-      />
-    </div>
-    <p
-      v-if="upload.stage.value === 'failed' && upload.failureText.value"
-      class="branding-candidates__upload-error"
-      role="alert"
-    >
-      {{ upload.fileName.value }}：{{ upload.failureText.value }}
-      <span v-if="upload.failureStage.value">（{{ upload.failureStage.value }}）</span>
-    </p>
+    <AdminTaskProgress
+      v-if="upload.stage.value !== 'idle'"
+      v-bind="uploadProgress"
+    />
 
     <p v-if="candidates.length === 0" class="branding-candidates__empty">
       还没有 Logo 候选。上传一张透明 PNG 后开始配置水印。
@@ -163,30 +147,6 @@ async function startUpload() {
   font-size: var(--admin-font-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.branding-candidates__upload-status {
-  display: flex;
-  align-items: center;
-  gap: var(--admin-space-3);
-  margin-bottom: var(--admin-space-3);
-  font-size: var(--admin-font-sm);
-  color: var(--admin-text-secondary);
-}
-
-.branding-candidates__progress {
-  flex: 1;
-  max-width: 12rem;
-  height: 0.5rem;
-}
-
-.branding-candidates__upload-error {
-  margin: 0 0 var(--admin-space-3);
-  padding: var(--admin-space-2) var(--admin-space-3);
-  border-radius: var(--admin-radius-md);
-  background: var(--admin-status-error-soft);
-  color: var(--admin-status-error);
-  font-size: var(--admin-font-sm);
 }
 
 .branding-candidates__empty {
