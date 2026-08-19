@@ -19,6 +19,9 @@ const embeddedFfmpegRuntime = fileURLToPath(
 const esaSdkRuntime = fileURLToPath(
   new URL('./scripts/esa-sdk.mjs', import.meta.url),
 ).replaceAll('\\', '/')
+const ossPreflightCoreRuntime = fileURLToPath(
+  new URL('./scripts/oss-preflight-core.mjs', import.meta.url),
+).replaceAll('\\', '/')
 const e2eFakeOssPutFixture = fileURLToPath(
   new URL('./tests/fixtures/runtime/e2e-fake-oss-put.ts', import.meta.url),
 ).replaceAll('\\', '/')
@@ -104,7 +107,7 @@ export default defineNuxtConfig({
     ...(e2eOutputDir ? { output: { dir: e2eOutputDir } } : {}),
     errorHandler: './server/error.ts',
     externals: {
-      inline: [embeddedFfmpegRuntime, esaSdkRuntime],
+      inline: [embeddedFfmpegRuntime, esaSdkRuntime, ossPreflightCoreRuntime],
     },
     handlers: includeRuntimeErrorFixtures
       ? [

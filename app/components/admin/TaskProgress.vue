@@ -39,6 +39,7 @@ const emit = defineEmits<{
 const now = shallowRef(Date.now())
 const mountedAt = Date.now()
 let timer: ReturnType<typeof setInterval> | null = null
+let mounted = false
 
 const startedAtMs = computed(() => {
   if (typeof props.startedAt === 'number') {
@@ -98,15 +99,28 @@ const progressMax = computed(() => {
   return undefined
 })
 
-onMounted(() => {
-  if (props.showElapsed && props.status === 'active') {
+function syncTimer() {
+  if (timer !== null) {
+    clearInterval(timer)
+    timer = null
+  }
+  if (mounted && props.showElapsed && props.status === 'active') {
+    now.value = Date.now()
     timer = setInterval(() => {
       now.value = Date.now()
     }, 1_000)
   }
+}
+
+watch(() => [props.showElapsed, props.status], syncTimer)
+
+onMounted(() => {
+  mounted = true
+  syncTimer()
 })
 
 onScopeDispose(() => {
+  mounted = false
   if (timer !== null) {
     clearInterval(timer)
   }
@@ -116,6 +130,7 @@ onScopeDispose(() => {
 <template>
   <div
     class="admin-task-progress"
+    data-testid="admin-task-progress"
     :data-mode="mode"
     :data-status="status"
     :role="status === 'error' ? 'alert' : 'status'"
