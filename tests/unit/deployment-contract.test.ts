@@ -85,7 +85,10 @@ describe('T52-E6 production deployment contract', () => {
 
     expect(config).toContain("new URL('./scripts/embedded-ffmpeg.mjs', import.meta.url)")
     expect(config).toContain("new URL('./scripts/esa-sdk.mjs', import.meta.url)")
-    expect(config).toContain('inline: [embeddedFfmpegRuntime, esaSdkRuntime]')
+    expect(config).toContain("new URL('./scripts/oss-preflight-core.mjs', import.meta.url)")
+    expect(config).toContain(
+      'inline: [embeddedFfmpegRuntime, esaSdkRuntime, ossPreflightCoreRuntime]',
+    )
   })
 
   it('keeps the production example intentionally blocked until real values exist', () => {
@@ -191,9 +194,14 @@ describe('T52-E6 production deployment contract', () => {
     expect(release).not.toContain('frozen_sha:')
     expect(release).not.toContain('REQUESTED_SHA')
     expect(release).toContain('steps.build.outputs.digest')
+    expect(release).toContain('release: true')
     expect(release).not.toMatch(/^\s+push:$/mu)
     expect(release).not.toContain('push:\n    tags:')
-    expect(quality).toContain('test "$(docker compose -f docker-compose.yaml config --services)" = "app"')
+    expect(quality).toContain("paths-ignore:\n      - '**/*.md'")
+    expect(quality).toContain('run: pnpm check:fast')
+    expect(quality).toContain('run: pnpm test:release')
+    expect(quality.match(/if: \$\{\{ inputs\.release == true \}\}/gu)).toHaveLength(2)
+    expect(quality).not.toContain('run: pnpm test:e2e')
     expect(quality).toContain('node ops/ops.mjs restore-verify')
     expect(quality).toContain('node ops/ops.mjs recover-operations')
     expect(quality).toContain('node ops/ops.mjs reset-admin-password')

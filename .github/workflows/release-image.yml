@@ -22,6 +22,8 @@ permissions:
 jobs:
   quality:
     uses: ./.github/workflows/quality.yml
+    with:
+      release: true
 
   publish:
     name: publish
