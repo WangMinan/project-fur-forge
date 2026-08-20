@@ -64,7 +64,7 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
     <div class="featured-works__lead-scene" data-home-scroll-scene>
       <header class="featured-works__header">
         <div>
-          <p class="featured-works__eyebrow">SELECTED WORK</p>
+          <p class="featured-works__eyebrow">SELECTED WORK · 01</p>
           <h2 id="featured-works-title" class="featured-works__title">代表作品</h2>
         </div>
       </header>
@@ -82,7 +82,6 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
           />
         </div>
         <div ref="caption" class="featured-lead__caption">
-          <p class="featured-lead__number">01</p>
           <h3 class="featured-lead__name">
             <WorkIdentityLabel
               :character-name="lead.work.characterName"
@@ -108,10 +107,13 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
     <div
       v-if="secondary.length > 0"
       class="featured-works__secondary"
+      role="group"
+      aria-label="更多精选作品"
       data-home-scroll-scene
     >
       <header class="featured-works__secondary-head">
-        <h3>继续浏览</h3>
+        <p class="featured-works__eyebrow">SELECTED WORK · 02</p>
+        <h3>代表作品</h3>
       </header>
       <FeaturedTrack :works="secondary" />
     </div>
@@ -140,8 +142,7 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   gap: var(--space-2);
 }
 
-.featured-works__eyebrow,
-.featured-lead__number {
+.featured-works__eyebrow {
   color: var(--public-text-tertiary);
   font-size: var(--font-size-xs);
   font-weight: 700;
@@ -204,28 +205,13 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
 }
 
 .featured-works__secondary {
-  position: relative;
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-5);
   min-width: 0;
 }
 
 .featured-works__secondary-head {
-  padding-right: 6.5rem;
-}
-
-.featured-works__secondary :deep(.featured-track__controls) {
-  position: absolute;
-  top: -0.5rem;
-  right: 0;
-  margin: 0;
-}
-
-.featured-works__secondary-head h3 {
-  margin: 0;
-  font-family: var(--font-public-display);
-  font-size: var(--font-size-lg);
-  font-weight: 600;
+  display: none;
 }
 
 .featured-works__all {
@@ -248,14 +234,22 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   }
 
   .featured-works__secondary {
-    --secondary-scene-padding-top: clamp(6rem, 13svh, 8rem);
-
     align-content: start;
-    padding-top: var(--secondary-scene-padding-top);
+    padding-top: var(--space-6);
   }
 
-  .featured-works__secondary :deep(.featured-track__controls) {
-    top: calc(var(--secondary-scene-padding-top) - 0.5rem);
+  .featured-works__secondary-head {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .featured-works__secondary-head h3 {
+    margin: 0;
+    font-family: var(--font-public-display);
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    line-height: var(--line-height-heading);
+    letter-spacing: var(--letter-spacing-tight);
   }
 }
 

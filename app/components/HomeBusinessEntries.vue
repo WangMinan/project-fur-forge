@@ -78,17 +78,11 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
         class="home-commission__media"
         :style="{ viewTransitionName: 'home-commission-media' }"
       >
-        <NuxtLink
-          :to="commissionTo"
-          class="home-commission__media-link"
-          aria-label="了解自设委托"
-        >
-          <ResponsivePicture
-            :sources="commission.sources"
-            :alt="commission.alt"
-            sizes="(min-width: 1024px) 70vw, 100vw"
-          />
-        </NuxtLink>
+        <ResponsivePicture
+          :sources="commission.sources"
+          :alt="commission.alt"
+          sizes="(min-width: 1024px) 70vw, 100vw"
+        />
       </div>
 
       <div ref="body" class="home-commission__body">
@@ -162,11 +156,6 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
 .home-commission__media :deep(.responsive-picture),
 .home-commission__media :deep(.responsive-picture__image) {
   width: 100%;
-  height: 100%;
-}
-
-.home-commission__media-link {
-  display: block;
   height: 100%;
 }
 

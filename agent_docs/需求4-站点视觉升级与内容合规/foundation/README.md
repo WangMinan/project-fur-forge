@@ -170,7 +170,8 @@ privacyNoticeAcknowledged: true
 ## 9. 编码与命名约定
 
 - 动效 token 使用 `motion-*` 语义命名；组件不得继续散落 620ms、680ms 等局部常量。
-- 首页桌面逐幕滚动只允许一个 composable 管理 Hero、代表作品 lead/继续浏览、自设委托、设定领养与 Footer 的顺序；普通路由和其它页面不得复用 wheel 拦截。
+- 首页桌面逐幕滚动只允许一个 composable 管理 Hero、代表作品 01/02、自设委托、设定领养与 Footer 的顺序；普通路由和其它页面不得复用 wheel 拦截。
+- 公开非 hash 导航由统一 router scroll behavior 在新路由第一帧定位页面顶部；浏览器返回/前进保留 saved position，真实 hash 继续使用统一 Header offset。不得在每个首页按钮上分别补 `scrollTo`。
 - 纵向运动表示阅读进程；横向运动表示媒体关系；轻微旋转/弹性只用于角色感强调和直接反馈。
 - 一个视口最多一个主要大对象运动；移动端减少幅度并移除 hover-only 行为。
 - 公开行动统一为 primary / secondary / text；管理端行动使用独立但统一的 admin primitive。

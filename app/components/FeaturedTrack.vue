@@ -74,6 +74,24 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="featured-track" data-testid="featured-track">
+    <div
+      ref="trackRef"
+      class="featured-track__rail"
+      role="group"
+      aria-label="精选作品横向轨道"
+      tabindex="0"
+      @scroll.passive="updateEdges"
+      @keydown="onKeydown"
+    >
+      <WorkCard
+        v-for="work in works"
+        :key="work.work.id"
+        :work="work"
+        :sizes="TRACK_SIZES"
+        class="featured-track__item"
+      />
+    </div>
+
     <div class="featured-track__controls">
       <button
         type="button"
@@ -98,29 +116,13 @@ onBeforeUnmount(() => {
         </svg>
       </button>
     </div>
-
-    <div
-      ref="trackRef"
-      class="featured-track__rail"
-      role="group"
-      aria-label="精选作品横向轨道"
-      tabindex="0"
-      @scroll.passive="updateEdges"
-      @keydown="onKeydown"
-    >
-      <WorkCard
-        v-for="work in works"
-        :key="work.work.id"
-        :work="work"
-        :sizes="TRACK_SIZES"
-        class="featured-track__item"
-      />
-    </div>
   </div>
 </template>
 
 <style scoped>
 .featured-track {
+  display: grid;
+  gap: var(--space-4);
   min-width: 0;
   max-width: 100%;
 }
@@ -129,7 +131,6 @@ onBeforeUnmount(() => {
   display: flex;
   gap: var(--space-2);
   justify-content: flex-end;
-  margin-bottom: var(--space-4);
 }
 
 .featured-track__button {

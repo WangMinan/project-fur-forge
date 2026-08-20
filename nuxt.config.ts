@@ -63,6 +63,13 @@ export default defineNuxtConfig({
     head: {
       link: [
         {
+          rel: 'preload',
+          as: 'font',
+          type: 'font/ttf',
+          href: '/fonts/zhuohei-collage.ttf',
+          crossorigin: 'anonymous',
+        },
+        {
           rel: 'icon',
           type: 'image/png',
           sizes: '16x16',
