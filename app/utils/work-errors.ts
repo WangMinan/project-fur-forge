@@ -38,22 +38,18 @@ const REASON_MESSAGES: Partial<Record<ErrorReason, string>> = {
     '找不到可用的图片处理源，请重新上传原图。',
   UPLOAD_SESSION_EXPIRED:
     '上传会话已过期，请重新开始上传。',
-  HERO_LAST_ENABLED_SLIDE:
-    '首页至少要保留一张启用的大图。',
-  HERO_SLIDE_ENABLED:
+  HERO_ITEM_ENABLED:
     '这张大图正在启用中：请先停用，再修改、预览或删除。',
-  HERO_ASSETS_NOT_READY:
-    '横版与竖版大图还没准备好，请确认两张图都已上传成功。',
+  HERO_ASSET_NOT_READY:
+    '这张大图还没准备好，请确认图片已上传成功。',
   HERO_ASSET_ALREADY_ASSIGNED:
     '这张图片已经被另一条大图使用了。',
-  HERO_ASSETS_REQUIRE_UPSCALE:
+  HERO_ASSET_REQUIRES_UPSCALE:
     '图片清晰度不足：请先确认生成适配图，再启用。',
   HERO_ORDER_STALE:
     '大图顺序已在其他地方变化，请刷新后重新调整。',
   HERO_SLOT_LIMIT:
     '启用的大图需要 1 到 5 个不重复的位置。',
-  LINKED_WORK_NOT_PUBLISHED:
-    '关联的作品还没有发布，请先发布该作品。',
   WATERMARK_DRAFT_STALE:
     '水印草稿已过期，请重新创建草稿。',
   WATERMARK_PREVIEW_REQUIRED:

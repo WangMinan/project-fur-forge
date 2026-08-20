@@ -129,6 +129,12 @@
 
 如果同一 asset 被多个 item 复用且焦点需求冲突，本轮阻断并要求上传独立资产，不静默覆盖。
 
+### 7.1 旧 paired Hero 退役
+
+- `0047_r4_retire_paired_hero.sql` 删除旧 `site_hero_slides`、linked-work 保护触发器，并把资产保护触发器收敛到 `site_hero_items`。
+- 当前 Schema、API、DTO、runner、repository 与测试只保留四个独立 collection；历史 `0037` pair 拆分迁移继续保留，不改写。
+- 用户确认生产采用完整重新部署；本轮不保留旧客户端/API 兼容层，也不把旧 operation 排空作为代码删除停止点。
+
 ## 8. 人工保留复核
 
 ### 8.1 调度
@@ -206,15 +212,15 @@ DELETE COMMISSION APPLICATION DATA
 
 ## 10. 测试体系迁移
 
-### 10.1 先降级，再精选
+### 10.1 先分类，再精选并退役
 
-现有测试不要求一次性全部删除：
+测试体系按以下顺序完成迁移：
 
 1. 给现有 unit/integration/E2E 标注 `core / smoke / legacy`；
 2. 默认脚本只执行 core；
 3. 建立少量 smoke；
 4. legacy 从默认 workflow 移除；
-5. 逐项 Review：证明稳定不变量则提升，否则删除；
+5. 逐项 Review：证明稳定不变量则提升，否则删除，最终物理删除平行 legacy 套件；
 6. 不为全绿机械修改旧文案、DOM 或动画毫秒断言。
 
 ### 10.2 目标命令
@@ -226,7 +232,6 @@ pnpm check:fast    # lint + typecheck + core
 pnpm test:core     # 稳定不变量
 pnpm test:smoke    # 少量 Playwright 主流程
 pnpm test:release  # build/verify + 必要部署 smoke，由人显式启动
-pnpm test:legacy   # 迁移期可选，不作门禁，最终可删除
 ```
 
 ### 10.3 Workflow
@@ -256,7 +261,8 @@ release/manual：
 ```text
 config/third-party-registry.(json|ts)
 app/assets/licenses/third-party-notices.json
-app/assets/licenses/THIRD_PARTY_NOTICES.txt
+app/assets/licenses/third-party-summary.json
+public/THIRD_PARTY_NOTICES.txt
 ```
 
 - JSON/TXT 由同一输入生成；

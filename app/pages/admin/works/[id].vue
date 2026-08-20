@@ -304,7 +304,7 @@ useSeoMeta({
     <div v-else-if="pageStatus === 'error'" class="editor-state editor-state--missing">
       <p class="editor-state__title" role="alert">作品加载失败</p>
       <p class="editor-state__text">请检查网络连接后重试。</p>
-      <button type="button" class="editor-state__retry" @click="loadWork()">重试</button>
+      <AdminAction @click="loadWork()">重试</AdminAction>
     </div>
 
     <div v-else-if="work" class="editor">
@@ -318,12 +318,12 @@ useSeoMeta({
           />
         </div>
         <div class="editor__actions">
-          <button
-            type="button"
-            class="editor__button editor__button--secondary"
+          <AdminAction
             :disabled="!isDirty || saving"
+            :loading="saving"
+            loading-label="保存中…"
             @click="saveWork"
-          >{{ saving ? '保存中…' : locked ? '保存首页精选' : '保存' }}</button>
+          >{{ locked ? '保存首页精选' : '保存' }}</AdminAction>
         </div>
       </header>
 
@@ -382,7 +382,7 @@ useSeoMeta({
           <section class="preview-card" aria-labelledby="preview-title" data-testid="public-preview">
             <div class="editor-card__head">
               <h2 id="preview-title" class="editor-card__title">公开预览</h2>
-              <button type="button" class="preview-card__refresh" @click="loadPreview">刷新</button>
+              <AdminAction class="preview-card__refresh" variant="text" @click="loadPreview">刷新</AdminAction>
             </div>
             <p v-if="previewError" class="preview-card__error" role="alert">{{ previewError }}</p>
             <template v-else-if="preview">
@@ -519,18 +519,6 @@ useSeoMeta({
   font-weight: 600;
 }
 
-.editor-state__retry {
-  min-height: var(--admin-control-height);
-  padding: 0 var(--admin-space-5);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-md);
-  background: var(--admin-bg-primary);
-  color: var(--admin-accent-primary);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
 .editor__header {
   display: flex;
   align-items: flex-end;
@@ -620,14 +608,7 @@ useSeoMeta({
 }
 
 .preview-card__refresh {
-  border: none;
-  background: none;
-  padding: 0 var(--admin-space-2);
   min-height: var(--admin-touch-target);
-  font: inherit;
-  font-size: var(--admin-font-sm);
-  color: var(--admin-accent-primary);
-  cursor: pointer;
 }
 
 .preview-card__error {

@@ -337,13 +337,6 @@ export function buildExactPurgeInput(siteId, mediaUrl, mediaOrigin) {
   }
 }
 
-export function isAccessDenied(error) {
-  const status = Number(error?.statusCode ?? error?.status ?? error?.response?.status)
-  const code = String(error?.code ?? error?.name ?? '')
-
-  return status === 403 || /(?:accessdenied|forbidden|unauthorized)/iu.test(code)
-}
-
 export function safeErrorSummary(error) {
   const requestId = String(
     error?.requestId

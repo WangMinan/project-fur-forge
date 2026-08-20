@@ -501,14 +501,6 @@ export async function reconcileSiteDisplay(options: {
   return runReconcile(sqlite, storage, operation.id, now)
 }
 
-export function getSiteDisplayReconcileOperation(
-  sqlite: Database.Database,
-  operationId: string,
-) {
-  const row = findOperation(sqlite, operationId)
-  return row ? summarize(sqlite, operationId, false) : null
-}
-
 registerOperationResumer({
   table: RECONCILE_TABLE,
   matches: (sqlite, operationId) => Boolean(findOperation(sqlite, operationId)),

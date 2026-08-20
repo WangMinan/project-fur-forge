@@ -259,9 +259,9 @@ watch(activeTab, (tab) => {
         <p v-else-if="activeTab === 'featured' && featuredOrder.status.value === 'ready'" class="admin-list-page__meta">
           共 {{ featuredOrder.items.value.length }} 件精选
         </p>
-        <NuxtLink to="/admin/works/new" class="admin-list-page__create">
+        <AdminAction class="works-page__create" to="/admin/works/new" variant="primary">
           创建作品
-        </NuxtLink>
+        </AdminAction>
       </header>
 
       <nav class="works-tabs" aria-label="作品管理视图">
@@ -283,7 +283,7 @@ watch(activeTab, (tab) => {
 
       <div v-else-if="activeTab === 'all' && status === 'error'" class="works-page__notice works-page__notice--error">
         <p role="alert">作品列表加载失败，请检查网络连接后重试。</p>
-        <button type="button" class="works-page__retry" @click="loadWorks">重试</button>
+        <AdminAction @click="loadWorks">重试</AdminAction>
       </div>
 
       <p
@@ -309,9 +309,9 @@ watch(activeTab, (tab) => {
       <div v-if="activeTab === 'all' && status === 'ready' && works.length === 0" class="works-page__empty">
         <p class="works-page__empty-title">暂无作品</p>
         <p class="works-page__empty-text">创建第一件作品，上传出厂照后即可发布。</p>
-        <NuxtLink to="/admin/works/new" class="admin-list-page__create">
+        <AdminAction to="/admin/works/new" variant="primary">
           创建第一件作品
-        </NuxtLink>
+        </AdminAction>
       </div>
 
       <div
@@ -320,7 +320,7 @@ watch(activeTab, (tab) => {
       >
         <p class="works-page__empty-title">没有符合条件的作品</p>
         <p class="works-page__empty-text">换一个关键词或筛选条件后再试。</p>
-        <button type="button" class="works-page__reset" @click="resetFilters">清除查找与筛选</button>
+        <AdminAction @click="resetFilters">清除查找与筛选</AdminAction>
       </div>
 
       <template v-else-if="activeTab === 'all' && status === 'ready'">
@@ -404,13 +404,13 @@ watch(activeTab, (tab) => {
               </td>
               <td>
                 <div class="works-table__actions">
-                  <NuxtLink :to="`/admin/works/${work.id}`" class="works-table__edit">编辑</NuxtLink>
-                  <button
-                    type="button"
+                  <AdminAction :to="`/admin/works/${work.id}`" class="works-table__edit" variant="text">编辑</AdminAction>
+                  <AdminAction
                     class="works-table__delete"
+                    variant="text"
                     :aria-label="`删除 ${work.characterName}`"
                     @click="deleteTarget = work"
-                  >删除</button>
+                  >删除</AdminAction>
                 </div>
               </td>
             </tr>
@@ -469,13 +469,13 @@ watch(activeTab, (tab) => {
               </p>
             </div>
             <div class="works-card__actions">
-              <NuxtLink :to="`/admin/works/${work.id}`" class="works-card__edit">编辑</NuxtLink>
-              <button
-                type="button"
+              <AdminAction :to="`/admin/works/${work.id}`" class="works-card__edit" variant="text">编辑</AdminAction>
+              <AdminAction
                 class="works-card__delete"
+                variant="text"
                 :aria-label="`删除 ${work.characterName}`"
                 @click="deleteTarget = work"
-              >删除</button>
+              >删除</AdminAction>
             </div>
           </li>
         </ul>
@@ -608,34 +608,6 @@ watch(activeTab, (tab) => {
 }
 
 
-.works-page__retry {
-  min-height: var(--admin-control-height);
-  padding: 0 var(--admin-space-5);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-md);
-  background: var(--admin-bg-primary);
-  color: var(--admin-accent-primary);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.works-page__reset {
-  min-height: var(--admin-control-height);
-  padding: 0 var(--admin-space-5);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-md);
-  color: var(--admin-text-primary);
-  background: var(--admin-bg-primary);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.works-page__reset:hover {
-  background: var(--admin-bg-subtle);
-}
-
 .works-page__empty {
   background: var(--admin-bg-primary);
   border: 1px dashed var(--admin-border-primary);
@@ -659,9 +631,8 @@ watch(activeTab, (tab) => {
   color: var(--admin-text-secondary);
 }
 
-/* 空态里的按钮居中，不沿用页头那条靠右的 margin-left: auto。 */
-.works-page__empty .admin-list-page__create {
-  margin-left: 0;
+.works-page__create {
+  margin-left: auto;
 }
 
 /* 表格本体样式来自 .admin-list-table；这里只控制窄屏改用卡片列表。 */
@@ -735,12 +706,11 @@ watch(activeTab, (tab) => {
   line-height: var(--admin-line-normal);
 }
 
-.works-table__edit {
-  display: inline-flex;
-  align-items: center;
+.works-table__edit,
+.works-card__edit,
+.works-table__delete,
+.works-card__delete {
   min-height: var(--admin-touch-target);
-  color: var(--admin-accent-primary);
-  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -753,14 +723,7 @@ watch(activeTab, (tab) => {
 
 .works-table__delete,
 .works-card__delete {
-  min-height: var(--admin-touch-target);
-  padding: 0;
   color: var(--admin-danger);
-  background: none;
-  border: none;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .works-cards {
@@ -835,14 +798,6 @@ watch(activeTab, (tab) => {
 
 .works-card__quick-links a {
   color: var(--admin-accent-primary);
-}
-
-.works-card__edit {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--admin-touch-target);
-  color: var(--admin-accent-primary);
-  font-weight: 600;
 }
 
 .works-card__actions {

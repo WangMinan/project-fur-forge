@@ -645,24 +645,6 @@ describe('authentication API', () => {
     expectPrivateResponseHeaders(missingCsrf)
     expectPrivateResponseHeaders(wrongOrigin)
 
-    const invalidChannels = await fetch(
-      `${adminBaseUrl}/api/admin/v1/site/home/settings`,
-      {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify({
-          expectedVersion: 1,
-          payload: {
-            tagline: '不只做小狗毛',
-            // 首屏设置不再接受官方邮箱与 QQ：strict 拒绝旧字段。
-            contactEmail: 'studio@example.test',
-            contactQq: '3114559925',
-            autoRotate: false,
-            autoRotateIntervalMs: 6000,
-          },
-        }),
-      },
-    )
     const invalidContent = await fetch(sectionUrl('commission'), {
       method: 'PUT',
       headers,
@@ -682,7 +664,6 @@ describe('authentication API', () => {
         },
       }),
     })
-    expect(invalidChannels.status).toBe(400)
     expect(invalidContent.status).toBe(400)
     expect(invalidContact.status).toBe(400)
 

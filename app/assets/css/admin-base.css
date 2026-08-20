@@ -132,40 +132,6 @@
   color: var(--admin-text-tertiary);
 }
 
-.admin-surface .editor__button {
-  min-height: var(--admin-control-height);
-  padding: 0 var(--admin-space-5);
-  border-radius: var(--admin-radius-md);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.admin-surface .editor__button--primary {
-  color: var(--admin-text-inverse);
-  background: var(--admin-accent-primary);
-  border: none;
-}
-
-.admin-surface .editor__button--primary:hover:not(:disabled) {
-  background: var(--admin-accent-hover);
-}
-
-.admin-surface .editor__button--secondary {
-  color: var(--admin-text-primary);
-  background: var(--admin-bg-primary);
-  border: 1px solid var(--admin-border-primary);
-}
-
-.admin-surface .editor__button--secondary:hover:not(:disabled) {
-  background: var(--admin-bg-subtle);
-}
-
-.admin-surface .editor__button:disabled {
-  cursor: default;
-  opacity: 0.55;
-}
-
 /**
  * 管理端列表页的共用外壳：页头、主操作按钮、查找条与表格。
  *
@@ -197,25 +163,6 @@
   margin: 0;
   color: var(--admin-text-secondary);
   font-size: var(--admin-font-sm);
-}
-
-/* 主操作固定在页头右端。 */
-.admin-surface .admin-list-page__create {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--admin-control-height);
-  margin-left: auto;
-  padding: 0 var(--admin-space-5);
-  border-radius: var(--admin-radius-md);
-  background: var(--admin-accent-primary);
-  color: var(--admin-text-inverse);
-  font-size: var(--admin-font-base);
-  font-weight: 600;
-}
-
-.admin-surface .admin-list-page__create:hover {
-  background: var(--admin-accent-hover);
-  color: var(--admin-text-inverse);
 }
 
 .admin-surface .admin-list-toolbar {

@@ -45,8 +45,8 @@
 - 领养状态收敛为 `available | adopted`，价格继续可选。
 - adopted 作品仍可按 `featured` 进入首页精选；首页“设定领养”只投影 available，若无 available 则整区隐藏。
 - 首页、作品列表和领养列表统一以“名称 · 物种”展示作品标识，点号两侧保留空格；已领养状态使用非绿色中性色。
-- 每件已发布领养作品必须有独立横版 `adoption_cover` 和竖版主 `studio_photo`。
-- 设定图最多一张，只作为可选详情素材。
+- 每件已发布领养作品至少有一张合格的 `adoption_cover` 或 `design_sheet`（READY 且有 alt）；`studio_photo` 为 0..5 可选，不能单独支撑领养发布。
+- 设定图最多一张；既可单独支撑领养发布，也可作为详情素材。卡片、首页当前领养和详情封面位按现行规则从 `adoption_cover` 回落到 `design_sheet`。
 - 委托申请恰好一张设定图；称呼、+86 手机号、QQ、身高、体重均必填。
 - 委托后台状态固定为 `pending | accepted | rejected`。
 - 不接 SMTP、短信、用户账号、公开查询或自动建作品。
@@ -85,7 +85,7 @@
 - 公开作品、领养和 Hero 只消费验证完成的 ESA HTTPS 派生图。
 - `studio_photo`：作品 3:4 主图与详情图集。
 - `adoption_cover`：横版单头成果图，只服务领养卡及首页当前领养。
-- `design_sheet`：每件作品 0..1，仅作可选详情素材。
+- `design_sheet`：每件作品 0..1；可单独支撑领养发布，并按现行规则作为领养封面回落和详情素材。
 - `commission_design_reference`：只保存私有源图和必要私有验证结果，不生成 PUBLIC variant、不进 ESA、不加水印。
 - `contact_qr` 继续服务 QQ 与 QQ群；抖音、小红书、Bilibili 的二维码引用取消后，孤立资产必须按现有安全清理流程处理。
 - Hero 横竖继续使用无水印 site-display 派生，但按独立集合发布。

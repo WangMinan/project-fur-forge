@@ -762,46 +762,6 @@ export const analyticsEvents = sqliteTable('analytics_events', {
   ),
 ])
 
-export const siteHeroSlides = sqliteTable('site_hero_slides', {
-  id: text('id').primaryKey(),
-  placement: text('placement').notNull().default('home'),
-  landscapeAssetId: text('landscape_asset_id').notNull()
-    .references(() => assets.id),
-  portraitAssetId: text('portrait_asset_id').notNull()
-    .references(() => assets.id),
-  altText: text('alt_text').notNull(),
-  sortOrder: integer('sort_order').notNull(),
-  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
-  linkedWorkId: text('linked_work_id')
-    .references(() => works.id, { onDelete: 'set null' }),
-  landscapePreviewObjectKey: text('landscape_preview_object_key'),
-  portraitPreviewObjectKey: text('portrait_preview_object_key'),
-  previewExpiresAt: integer('preview_expires_at'),
-  version: integer('version').notNull().default(1),
-  ...timestampColumns(),
-}, table => [
-  uniqueIndex('site_hero_slides_enabled_sort_unique')
-    .on(table.placement, table.sortOrder)
-    .where(sql`${table.enabled} = 1`),
-  check(
-    'site_hero_slides_placement',
-    sql`${table.placement} IN ('home', 'commission')`,
-  ),
-  check(
-    'site_hero_slides_pair_distinct',
-    sql`${table.landscapeAssetId} != ${table.portraitAssetId}`,
-  ),
-  check(
-    'site_hero_slides_alt_nonempty',
-    sql`${table.altText} = trim(${table.altText}) AND length(${table.altText}) BETWEEN 1 AND 500`,
-  ),
-  check(
-    'site_hero_slides_sort',
-    sql`${table.sortOrder} >= 0 AND (${table.enabled} = 0 OR ${table.sortOrder} <= 4)`,
-  ),
-  check('site_hero_slides_version_positive', sql`${table.version} > 0`),
-])
-
 /** R3-B expand: four collection rows are independent optimistic-lock domains. */
 export const siteHeroCollections = sqliteTable('site_hero_collections', {
   placement: text('placement').notNull(),
@@ -880,7 +840,6 @@ export const watermarkOperations = sqliteTable('watermark_operations', {
   brandingVersion: integer('branding_version').notNull(),
   status: text('status').notNull(),
   affectedWorkCount: integer('affected_work_count').notNull().default(0),
-  affectedHeroSlideCount: integer('affected_hero_slide_count').notNull().default(0),
   targetVariantCount: integer('target_variant_count').notNull().default(0),
   generatedVariantCount: integer('generated_variant_count').notNull().default(0),
   verifiedVariantCount: integer('verified_variant_count').notNull().default(0),
@@ -923,7 +882,7 @@ export const watermarkOperations = sqliteTable('watermark_operations', {
   ),
   check(
     'watermark_operations_counts',
-    sql`${table.brandingVersion} >= 0 AND ${table.affectedWorkCount} >= 0 AND ${table.affectedHeroSlideCount} >= 0 AND ${table.targetVariantCount} >= 0 AND ${table.generatedVariantCount} >= 0 AND ${table.verifiedVariantCount} >= 0`,
+    sql`${table.brandingVersion} >= 0 AND ${table.affectedWorkCount} >= 0 AND ${table.targetVariantCount} >= 0 AND ${table.generatedVariantCount} >= 0 AND ${table.verifiedVariantCount} >= 0`,
   ),
   check(
     'watermark_operations_failure_state',

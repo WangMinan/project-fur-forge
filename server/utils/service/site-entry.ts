@@ -9,11 +9,8 @@ import {
   toSafePublicAlt,
 } from '../recipe/media-mapper'
 import type { VariantRecord } from '../recipe/media-mapper'
-import type { MediaStorage } from '../media-storage'
 import type { RuntimeConfig } from '../runtime-config'
 import {
-  assetSupportsSiteDisplay,
-  generateSiteDisplayVariants,
   HOME_ENTRY_USAGES,
   resolveCompleteSiteDisplayVariants,
 } from '../recipe/site-display-recipe'
@@ -76,16 +73,6 @@ const ENTRY_LABELS = {
   adoption: { alt: '角色领养横版封面', href: '/adoptions' },
 } as const satisfies Record<HomeEntryKind, { alt: string, href: string }>
 
-export function homeEntryUsageReady(
-  sqlite: Database.Database,
-  kind: HomeEntryKind,
-) {
-  const source = homeEntrySource(sqlite, kind)
-  return source
-    ? assetSupportsSiteDisplay(sqlite, source.assetId, [HOME_ENTRY_USAGES[kind]])
-    : false
-}
-
 /** 入口变体缺失时受控隐藏，不回退到作品水印图或私有原图。 */
 export function projectHomeEntry(
   kind: HomeEntryKind,
@@ -113,23 +100,4 @@ export function projectHomeEntry(
       appEnv,
     ),
   })
-}
-
-export async function ensureHomeEntryVariants(
-  sqlite: Database.Database,
-  storage: MediaStorage,
-  kind: HomeEntryKind,
-  now = Date.now(),
-) {
-  const source = homeEntrySource(sqlite, kind)
-  if (!source) {
-    return []
-  }
-  return generateSiteDisplayVariants(
-    sqlite,
-    storage,
-    source.assetId,
-    [HOME_ENTRY_USAGES[kind]],
-    now,
-  )
 }

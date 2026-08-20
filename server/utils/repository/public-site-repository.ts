@@ -1,9 +1,5 @@
 import type Database from 'better-sqlite3'
 import {
-  publicCommissionHeroDtoSchema,
-  publicHomeDtoSchema,
-} from '../../../shared/schemas/home'
-import {
   PUBLIC_ADOPTIONS_PAGE_SIZE,
   PUBLIC_WORKS_PAGE_SIZE,
   publicCatalogSearchQuerySchema,
@@ -26,7 +22,6 @@ import type {
   PublicFeaturedWorksDto,
   PublicHomeAggregateDto,
   PublicHomeDto,
-  PublicSiteBusinessStatusDto,
   PublicSourceSetDto,
   PublicWorkDetailDto,
   PublicWorkListDto,
@@ -651,116 +646,6 @@ export function createSqlitePublicSiteRepository(
     },
     getHomeAggregate() {
       return homeAggregate(sqlite, mediaBaseUrl, appEnv)
-    },
-  }
-}
-
-export interface FakePublicSiteSeed {
-  adoptions?: PublicAdoptionListItemDto[]
-  details: PublicWorkDetailDto[]
-  featuredSlugs: string[]
-  home: PublicHomeDto
-  commissionHero?: PublicCommissionHeroDto
-  statuses?: {
-    adoption: PublicSiteBusinessStatusDto | null
-    commission: PublicSiteBusinessStatusDto | null
-  }
-}
-
-export function createFakePublicSiteRepository(
-  seed: FakePublicSiteSeed,
-): PublicSiteRepository {
-  const details = seed.details.map(detail => publicWorkDetailDtoSchema.parse(detail))
-  const home = publicHomeDtoSchema.parse(seed.home)
-  const commissionHero = publicCommissionHeroDtoSchema.parse(
-    seed.commissionHero ?? { landscape: [], portrait: [] },
-  )
-  const bySlug = new Map(details.map(detail => [detail.work.slug, detail]))
-  const adoptions = (seed.adoptions ?? []).map(item => (
-    publicAdoptionListItemDtoSchema.parse(item)
-  ))
-  const summaryFor = (detail: PublicWorkDetailDto) => (
-    publicWorkSummaryDtoSchema.parse({
-      work: detail.work,
-      href: detail.href,
-      card: detail.media.card,
-      cardOrientation: detail.media.cardOrientation,
-    })
-  )
-  return {
-    getWorkBySlug(slug) {
-      const detail = bySlug.get(slug)
-      return detail ? publicWorkDetailDtoSchema.parse(detail) : null
-    },
-    listAdoptions(query = {}) {
-      return adoptionListDto(adoptions, query)
-    },
-    listWorks(query = {}) {
-      const page = catalogPage(query.page)
-      const parsed = publicWorkListQuerySchema.safeParse({ q: query.q })
-      const search = publicCatalogSearchQuerySchema.safeParse(query.q)
-      // 只做了单头的领养作品图集为空但有横版封面卡片，同样进入作品展示。
-      const filtered = parsed.success && search.success
-        ? details.filter(detail => (
-            includesSearchText(detail.work.characterName, search.data ?? '')
-          ))
-        : []
-      return publicWorkListDtoSchema.parse({
-        ...paginateCatalog(
-          filtered.map(summaryFor),
-          page,
-          PUBLIC_WORKS_PAGE_SIZE,
-        ),
-        filter: { valid: parsed.success && search.success },
-      })
-    },
-    listFeaturedWorks() {
-      const items = seed.featuredSlugs.flatMap((slug) => {
-        const detail = bySlug.get(slug)
-        return detail ? [summaryFor(detail)] : []
-      }).slice(0, PUBLIC_FEATURED_LIMIT)
-      return publicFeaturedWorksDtoSchema.parse({
-        items,
-        resultCount: items.length,
-      })
-    },
-    getHome() {
-      return publicHomeDtoSchema.parse(home)
-    },
-    getCommissionHero() {
-      return publicCommissionHeroDtoSchema.parse(commissionHero)
-    },
-    getHomeAggregate() {
-      const entryCard = (kind: 'adoption' | 'commission') => {
-        const entry = home.entries[kind]
-        const status = seed.statuses?.[kind] ?? null
-        return entry
-          ? {
-              ...entry,
-              title: ENTRY_TITLES[kind],
-              status,
-              summary: status?.detail ?? null,
-            }
-          : null
-      }
-      const featured = seed.featuredSlugs.flatMap((slug) => {
-        const detail = bySlug.get(slug)
-        return detail ? [summaryFor(detail)] : []
-      }).slice(0, PUBLIC_FEATURED_LIMIT)
-      return publicHomeAggregateDtoSchema.parse({
-        hero: home,
-        entries: {
-          commission: entryCard('commission'),
-          adoption: entryCard('adoption'),
-        },
-        featured: { available: true, items: featured },
-        currentAdoptions: {
-          available: true,
-          items: this.listAdoptions().items
-            .filter(item => item.work.adoptionStatus === 'available')
-            .slice(0, 2),
-        },
-      })
     },
   }
 }

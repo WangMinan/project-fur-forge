@@ -48,7 +48,7 @@
 ## B. 测试减负与领养排序
 
 - [x] **T13 · 测试分类审计**：把现有 unit/integration/E2E 标记为 core/smoke/legacy；识别精确文案、DOM、CSS class、动画毫秒、重复覆盖和历史 bug 专用测试。
-- [x] **T14 · 快速命令**：建立 `check:fast`、`test:core`、`test:smoke`、`test:release`；迁移期可保留 `test:legacy`，但不作默认门禁。
+- [x] **T14 · 快速命令**：建立 `check:fast`、`test:core`、`test:smoke`、`test:release`；迁移期曾保留 `test:legacy`，后由 M03 完成物理退役。
 - [x] **T15 · Core 套件**：只保留 Host/session/CSRF/Origin、上传 token/TTL/一次消费、PII/私有媒体隔离、migration/FK/integrity、publication/deletion 和明确排序不变量；同一事实不跨三层重复。
 - [x] **T16 · Smoke 套件**：收敛为少量首页/目录/委托申请/admin 登录/上传进度/发布下架/privacy-service-licenses 主旅程；不断言精确动画时长、完整文案或局部 DOM。
 - [x] **T17 · Legacy 清理**：删除或降级 `0.68s` 等实现型断言、逐次视觉修复用例和重复 fixture；测试失败先分类，不机械改写为新实现。
@@ -105,6 +105,20 @@
 - [x] notices 与当前 npm 生产依赖/已核实字体资产一致；
 - [ ] T35/T36 部署分发证据完成。
 
+## D.1 仓库简化维护（不改变产品行为）
+
+- [x] **M01 · 范围冻结**：素材继续由 Git 管理；固定版式委托制作单 PDF 及其字体/依赖保留；业务逻辑、动效设计和现有 UI 不因简化而改变。
+- [x] **M02 · 文档口径校准**：按 `_template` 保留各文档职责，修正需求3 foundation 的领养发布冲突，并同步测试与 notices 的当前事实。
+- [x] **M03 · Legacy 物理退役**：删除 21 个 legacy Vitest、24 个 legacy Playwright、旧脚本/配置与分类数组；`pnpm test` 收敛为 core 别名。
+- [x] **M04 · 无引用文件清理**：删除无运行时引用的 3 个 Vue 组件、2 个旧 Hero composable、4 个临时诊断脚本和确认无调用的导出函数。
+- [x] **M05 · Notices 单一文本产物**：只生成 `public/THIRD_PARTY_NOTICES.txt`，保留 JSON/summary 各自用途，不再提交相同 TXT 副本。
+- [x] **M06 · 测试 fake 收敛**：删除只被测试自身调用、复制公开搜索/分页/精选逻辑的 `createFakePublicSiteRepository` 及验证 fake 自身的断言。
+- [x] **M07 · 上传 session runner**：抽取 `runAdminUploadSession`/`completeAdminUploadSession`，统一声明、创建、XHR PUT、状态码、complete 与失败状态查询；四套业务 composable 只保留 owner/role、额外校验、业务文案、恢复和回调。
+- [x] **M08 · 旧 paired Hero 服务端链退役**：用户确认生产将完整重新部署；删除旧 pair routes/DTO/Schema/repository/recipe/runner/测试夹具兼容面，以 `0047_r4_retire_paired_hero.sql` 前向删除 `site_hero_slides` 和旧触发器；四个独立 collection、version、CAS、item 与 operation 保持不变。
+- [x] **M09 · 本轮验证**：test group（core 52、smoke 1）、lint、typecheck、notices drift、core 327/327、smoke 9/9 与 production build 通过；不代签 UI/动效人工验收或生产状态。
+- [x] **M10 · AdminAction 完成迁移**：精选排序、作品列表/编辑、内容加载、营业状态和筛选行动改用统一 primitive；保留容器布局与移动触控高度，删除重复 hover/focus/disabled/button CSS。
+- [x] **M11 · 跟进验证**：lint、typecheck、notices drift、focused 48/48、auth/database 28/28、完整 core 315/315、smoke 9/9、production build 与 diff check 通过；不代签 UI/动效人工验收或生产状态。
+
 ## E. 动效、Hero 焦点与首页四幕
 
 - [ ] **T37 · Motion token**：建立 feedback/content/media/page 与 standard/playful easing；迁移散落 620/680ms，不让测试断言精确值。
@@ -143,7 +157,7 @@
 
 - [ ] GATE-A～E 全部通过；
 - [ ] 稳定 core/smoke 与 release smoke 通过；
-- [ ] legacy 全量不作为放行条件；
+- [ ] 已退役实现型套件不恢复为放行条件；
 - [ ] 独立 Review 与用户人工验收通过；
 - [ ] 生产 smoke 通过；
 - [ ] 自动化、Reviewer、用户和生产操作员没有互相代签。

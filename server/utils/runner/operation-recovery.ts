@@ -65,10 +65,6 @@ export function registerOperationResumer(resumer: OperationResumer) {
   }
 }
 
-export function registeredOperationResumers() {
-  return [...resumers]
-}
-
 async function inBatches<T>(
   items: readonly T[],
   size: number,

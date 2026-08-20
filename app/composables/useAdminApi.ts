@@ -105,3 +105,5 @@ export function useAdminApi() {
     return parsed.data
   }
 }
+
+export type AdminApi = ReturnType<typeof useAdminApi>

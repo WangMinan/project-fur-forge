@@ -73,12 +73,10 @@ const publicationStatus = defineModel<PublicationStatus | 'all'>('publicationSta
       <p class="work-list-toolbar__count" role="status">
         {{ filtersActive ? `找到 ${resultCount} / ${totalCount} 件` : `共 ${totalCount} 件` }}
       </p>
-      <button
-        type="button"
-        class="work-list-toolbar__reset"
+      <AdminAction
         :disabled="!filtersActive"
         @click="emit('reset')"
-      >清除</button>
+      >清除</AdminAction>
     </div>
   </section>
 </template>
@@ -97,27 +95,6 @@ const publicationStatus = defineModel<PublicationStatus | 'all'>('publicationSta
   margin: 0;
   color: var(--admin-text-secondary);
   font-size: var(--admin-font-sm);
-}
-
-.work-list-toolbar__reset {
-  min-height: var(--admin-control-height);
-  padding: 0 var(--admin-space-4);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-md);
-  color: var(--admin-text-primary);
-  background: var(--admin-bg-primary);
-  font: inherit;
-  font-size: var(--admin-font-sm);
-  cursor: pointer;
-}
-
-.work-list-toolbar__reset:hover:not(:disabled) {
-  background: var(--admin-bg-subtle);
-}
-
-.work-list-toolbar__reset:disabled {
-  opacity: 0.5;
-  cursor: default;
 }
 
 @media (min-width: 768px) {
