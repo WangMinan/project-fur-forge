@@ -1,7 +1,7 @@
 # 产物索引：需求4
 
 > **角色**：登记需求4文档、实施证据与外部依据。
-> **状态**：2026-08-20 已收口 T04～T22、T24～T34 开发产物与本地证据；T23 人工成文、T35/T36 部署分发证据、独立 Review、用户验收与生产执行仍待补。
+> **状态**：2026-08-20 已收口 T04～T34 开发产物与本地证据；T35/T36 部署分发证据、独立 Review、用户验收与生产执行仍待补。
 
 ## 文档产物
 
@@ -9,7 +9,7 @@
 | --- | --- | --- | --- | --- |
 | 0 地基 | 地基 | `../foundation/README.md` | 定稿 | 继承、模块、安全、Git与非目标 |
 | 1 规格 | 需求规格 | `../requirements/SPEC.md` | 定稿 | 产品与验收唯一真理来源 |
-| 1 规格 | 目标文案 | `../requirements/COPY.md` | 定稿待工作室终审 | about/commission/privacy/terms/licenses |
+| 1 规格 | 目标文案 | `../requirements/COPY.md` | 定稿 | about/commission/privacy/terms/licenses；处理者名称已确认 |
 | 1 设计 | 设计说明 | `../.design/README.md` | 定稿待视觉实现 | 四幕、动效、焦点、移动和验收 |
 | 2 模型 | 模型说明 | `../models/README.md` | 定稿 | 焦点复用、轻量申请确认、单条删除和 notices |
 | 2 计划 | 实施计划 | `../planning/PLAN.md` | 定稿 | A～E 执行顺序 |
@@ -37,6 +37,7 @@
 ## 已实施产物
 
 - 前向文案迁移：`../../../server/database/migrations/0045_r4_default_copy.sql`；
+- 已确认处理者隐私政策迁移：`../../../server/database/migrations/0046_r4_privacy_controller.sql`；
 - 两项申请确认、service 再校验与 upload 未消费负向测试；
 - 单条 retention/deletion repository/service/API/CLI/UI 与隔离 fake-storage 核心测试；
 - 人工 SOP：`../implementation/COMMISSION-RETENTION-SOP.md`；
@@ -46,7 +47,7 @@
 
 ## 待实施/人工产物
 
-- 真实经营主体隐私政策人工成文与工作室终审；
+- 生产迁移执行后的隐私政策公开投影核对；
 - Linux 发布镜像内 FFmpeg 二进制、对应源码、构建信息与 Docker Hub 可见性证据；
 - 真实素材多视口截图/录像；
 - 九宫格裁切与 publication 证据；

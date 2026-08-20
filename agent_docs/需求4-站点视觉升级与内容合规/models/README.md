@@ -141,7 +141,7 @@ privacyNoticeAcknowledged: z.literal(true)
 
 不新增 DTO/字段：
 
-- 实际经营主体名称写入现有 `privacy_policy` 文本；
+- 已确认的个人信息处理者名称“有点小狗工作室”写入现有 `privacy_policy` 文本；
 - 联系邮箱复用 `site_content.contact_email`；
 - 发布前通过现有管理端人工 Review，页面不渲染占位符。
 

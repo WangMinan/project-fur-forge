@@ -363,6 +363,12 @@ test('隐私、服务条款和开源软件声明可读', async ({ page }) => {
       expect(await page.evaluate(() => (
         document.documentElement.scrollWidth - document.documentElement.clientWidth
       ))).toBeLessThanOrEqual(1)
+      if (path === '/privacy') {
+        await expect(page.locator('body')).toContainText('个人信息处理者：有点小狗工作室')
+        await expect(page.locator('body')).toContainText('隐私联系邮箱：765678159@qq.com')
+        await expect(page.locator('body')).toContainText('称呼、物种、手机号码、QQ、身高、体重')
+        await expect(page.locator('body')).not.toContainText('不提供访客账号')
+      }
       if (path === '/licenses') {
         await expect(page.getByText(/Linux 发布镜像内实际二进制/u)).toBeVisible()
         await expect(page.getByRole('link', { name: '下载完整 TXT 声明' }))

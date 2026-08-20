@@ -118,8 +118,8 @@ A 组件与进度地基
 ### C1. 默认文案
 
 - 按 `COPY.md` 前向替换 about/commission/terms/contact 的 NULL/空值/精确历史默认。
-- 不覆盖管理员改写，也不在经营主体未知时把带占位符的 privacy 文本写入数据库。
-- 实际经营主体和完整隐私政策通过现有编辑能力人工写入，不新增字段。
+- 不覆盖管理员改写；已确认的处理者名称“有点小狗工作室”只写入 NULL、空白或精确历史默认的 privacy 文本。
+- 完整隐私政策继续通过现有 `privacy_policy` 编辑能力维护，联系邮箱复用 `contact_email`，不新增字段。
 - QQ 优先、邮箱备用在 about/commission/privacy/anti-scam 一致。
 - 服务条款公开可读不等于客户已经接受；工作室在 QQ 确认接单或收取约定款项前明确提供/引用当时条款并提示重大事项。
 
@@ -244,7 +244,7 @@ A 组件与进度地基
 
 - 备份/恢复验证；
 - 前向文案迁移；
-- 配置真实经营主体并核对联系渠道；
+- 执行隐私文案前向迁移，核对处理者“有点小狗工作室”与当前联系渠道；
 - 发布新镜像；
 - readiness/home/adoptions/apply/privacy/service/licenses/admin smoke；
 - 记录人工 retention 下次执行日期；

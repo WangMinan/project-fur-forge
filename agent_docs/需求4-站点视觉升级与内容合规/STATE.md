@@ -6,9 +6,11 @@
 
 ## 当前阶段
 
-阶段 4 · 2026-08-20 已完成 T04～T22、T24～T34 的当前工程实施和本地证据。T23 真实经营主体/隐私政策人工成文未由 Agent 代签；T35/T36 的 Linux FFmpeg runtime registry、容器嵌入、Docker Hub 分发核验与 release evidence 已明确后置。本轮停在 T37 之前，未进入 Hero 焦点、动效体系或首页四幕。
+阶段 4 · 2026-08-20 已完成 T04～T34 的当前工程实施和本地证据。用户已确认个人信息处理者的精确名称为“有点小狗工作室”，T23 通过前向迁移和完整隐私政策目标文本收口。T35/T36 的 Linux FFmpeg runtime registry、容器嵌入、Docker Hub 分发核验与 release evidence 已明确后置。本轮停在 T37 之前，未进入 Hero 焦点、动效体系或首页四幕。
 
 ## 最近验证
+
+- 2026-08-20：用户确认个人信息处理者的精确名称为“有点小狗工作室”。`0046_r4_privacy_controller` 只对 NULL、空白或精确历史默认的 `privacy_policy` 写入完整政策并复用当前 `contact_email`；管理员自定义文本保持不变。
 
 - 2026-08-20：PR #21 Review 修复提交 `55487b9`；PublicationPanel 按“pending action → active persisted operation → terminal operation → feedback”展示，cleanup retry 具备 active/loading/disabled/防重/失败后可再试。目标 Playwright 2/2 通过。
 - 2026-08-20：轻量确认与文案迁移提交 `5d4c7f8`；`0045_r4_default_copy` 只处理 NULL/空白/精确历史默认，不自动写 privacy 占位。半装目标文案明确为“仅头部和爪，不含尾巴”。迁移/委托 integration 26/26，确认/重复申请 smoke 2/2 通过。
@@ -53,8 +55,8 @@
 
 ## 待确认问题（OQ 汇总）
 
-无（所有阶段 OQ 已答）。真实经营主体名称仍由工作室在发布前通过现有文案维护能力写入隐私政策，并由工作室最终核对。
+无（所有阶段 OQ 已答）。个人信息处理者名称已确认为“有点小狗工作室”；邮箱继续复用 `contact_email`。
 
 ## 下一步交接
 
-本轮开发停在 T37 之前。下一棒先由工作室完成 T23 真实经营主体/隐私政策人工成文，并在部署阶段完成 T35/T36 的 Linux FFmpeg runtime registry、容器分发与 release evidence。本地自动化不代签独立 Review、王旻安/景宸验收、真实手机、生产迁移/删除、镜像构建或发布。
+本轮开发停在 T37 之前。下一棒在部署阶段执行隐私文案前向迁移并核对公开投影，同时完成 T35/T36 的 Linux FFmpeg runtime registry、容器分发与 release evidence。本地自动化不代签独立 Review、王旻安/景宸验收、真实手机、生产迁移/删除、镜像构建或发布。

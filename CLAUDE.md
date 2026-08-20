@@ -119,7 +119,7 @@
   - 已阅读隐私政策，理解信息用途和提交不等于接单/报价/排期/合同。
 - request Schema 使用两个 `z.literal(true)`；service 在消费 upload 前校验。
 - 不新增 `privacy_controller_name`、intake metadata API、contract version、确认数据库列、客户端版本握手、stale 409 或 legacy/v2 管理 UI。
-- 实际经营主体名称通过现有 `privacy_policy` 编辑能力写入；联系邮箱复用 `contact_email`。
+- 用户已确认个人信息处理者名称为“有点小狗工作室”；通过现有 `privacy_policy` 文本和前向迁移维护，联系邮箱复用 `contact_email`，不新增处理者字段。
 - checkbox 是提交门槛，不是电子签名；具体委托继续在官方 QQ 逐单确认。
 
 ### 3.6 保存与删除

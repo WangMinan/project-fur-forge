@@ -68,12 +68,12 @@
 
 ## C. 轻量内容、隐私与申请确认
 
-- [x] **T22 · 默认文案前向迁移**：按 `COPY.md` 自动处理 about/commission/terms/contact 的 NULL/空白/精确历史默认；不在经营主体未知时把带占位符的 privacy 文本写入数据库；各分区版本正确递增。
-- [ ] **T23 · 隐私政策人工成文**：不新增字段；工作室通过现有 privacy 编辑能力写入包含实际经营主体与现有邮箱的完整政策，保存后递增隐私分区版本；生产页面阻断 `{{...}}` 占位与旧错误政策。
+- [x] **T22 · 默认文案前向迁移**：按 `COPY.md` 自动处理 about/commission/terms/contact 的 NULL/空白/精确历史默认；初始迁移未写入处理者占位符，后续由 T23 的已确认处理者前向迁移收口；各分区版本正确递增。
+- [x] **T23 · 隐私政策处理者成文**：用户确认个人信息处理者为“有点小狗工作室”；不新增字段，前向迁移只对空值/精确历史默认写入包含当前 `contact_email` 的完整政策，保留管理员自定义文本。
 - [x] **T24 · 两项申请确认 UI**：成年/设定权利、隐私/用途/非接单两项未预勾选；错误邻近、键盘/屏幕阅读器可用，提交失败保留表单与图片。
 - [x] **T25 · 严格请求校验**：Schema 增加 `adultConfirmed: true`、`privacyNoticeAcknowledged: true`；service 在消费 upload 前校验；缺失/false 返回普通 validation error。
 - [x] **T26 · 删除旧复杂方案残留**：确认无 `privacy_controller_name`、intake metadata API、contract version、确认 DB 列、legacy/v2 管理 UI、客户端 policy version 或 stale 409。
-- [x] **T27 · 隐私/服务/关于/委托展示（工程范围）**：使用现有内容投影，QQ 优先、邮箱备用；目标隐私/服务文案与展示保护已完成。真实经营主体写入与工作室法务终审仍属 T23 人工边界。
+- [x] **T27 · 隐私/服务/关于/委托展示**：使用现有内容投影，QQ 优先、邮箱备用；目标隐私/服务文案与展示保护已完成，隐私政策已写入确认处理者名称。
 - [x] **T28 · 轻量隐私负向验证**：确认 PII 不进入公开 DTO、HTML、URL、analytics、普通日志、错误和 local/session storage；只保留必要 core 测试。
 
 ### GATE-C · 确认清楚但工程轻量
@@ -82,8 +82,8 @@
 - [x] 校验失败不消费 upload；
 - [x] commission submission 表无新增确认字段；
 - [x] 无专用 metadata/version 协议；
-- [ ] 真实经营主体和邮箱由工作室人工核对；
-- [ ] 隐私文案与真实功能一致（工程目标稿已完成；待工作室写入真实经营主体并终审）。
+- [x] 个人信息处理者名称由用户确认为“有点小狗工作室”，邮箱复用当前 `contact_email`；
+- [x] 隐私文案与真实功能一致，无处理者占位符或旧“不收集联系方式/设定图”默认。
 
 ## D. 人工 retention、单条删除与第三方声明
 
@@ -134,7 +134,7 @@
 - [ ] **T50 · Release/manual smoke**：显式镜像/Compose/Nginx/恢复；相关时执行 destructive drill；真实 Host home/adoptions/apply/privacy/service/licenses/admin。
 - [ ] **T51 · 独立 Review**：聚焦稳定不变量、删除精确性、媒体/进度、性能和文档一致性；不以测试数量代替判断。
 - [ ] **T52 · 用户验收**：王旻安/景宸确认真实图片、动效性格、首页节奏、领养排序/单项、Hero 管理、进度、文案和手机体验。
-- [ ] **T53 · 生产准备**：备份/恢复、文案迁移、真实经营主体、人工 retention 责任人/日期、冻结镜像和回滚候选。
+- [ ] **T53 · 生产准备**：备份/恢复、文案迁移执行、隐私政策公开投影核对、人工 retention 责任人/日期、冻结镜像和回滚候选。
 - [ ] **T54 · 发布与 smoke**：执行迁移和镜像发布，验证 readiness、公开/管理主流程和边缘媒体；失败按现有恢复手册处理。
 - [ ] **T55 · 闭环**：回写 TASKS/STATE/review/artifacts/CLAUDE，记录未覆盖后续项和下一次人工复核日期。
 
@@ -149,7 +149,6 @@
 
 ## 闭环结论
 
-- T04～T22、T24～T34 已完成当前开发范围与本地证据。
-- T23 真实经营主体/隐私政策人工成文仍由工作室完成。
+- T04～T34 的当前开发范围与本地证据已完成；用户已确认个人信息处理者名称为“有点小狗工作室”。
 - T35/T36 的 Linux FFmpeg runtime registry、容器嵌入、Docker Hub 分发核验与 release evidence 已后置；GATE-D 未完整关闭。
 - 本轮未进入 T37 及之后的 Hero 焦点、动效和首页四幕。

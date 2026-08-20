@@ -176,11 +176,11 @@
 
 缓解：明确本轮确认只是提交门槛，不冒充电子签名；正式范围/价格/付款/排期/合同继续在官方 QQ 中逐单确认并由工作室保存。
 
-### 5.7 默认文案与真实经营主体
+### 5.7 默认文案与已确认处理者
 
-风险：`{{controller_name}}` 未替换或文案与真实流程不一致。
+风险：生产未执行新迁移，或管理员自定义政策仍保留旧“不收集联系方式/设定图”表述。
 
-缓解：不新增字段；生产 readiness 检查占位；王旻安/景宸逐段人工 Review；Agent 不把文档评审称为法律保证。
+缓解：用户确认处理者名称为“有点小狗工作室”；不新增字段；前向迁移只覆盖空值/精确历史默认；生产 readiness/smoke 核对完整政策与当前 `contact_email`。
 
 ### 5.8 容器可见性或 FFmpeg 构建漂移
 
@@ -219,8 +219,9 @@
 
 - PR #21 已确认的 PublicationPanel 旧 terminal operation 覆盖新任务问题已修复；两条目标 Playwright 覆盖发布后立即下架、cleanup retry active/防重/失败后可再试。
 - `0045_r4_default_copy` 已验证只替换 NULL/空白/精确历史默认，保留管理员自定义内容，不写入 privacy 占位。半装写入值明确不含尾巴。
+- `0046_r4_privacy_controller` 把已确认处理者“有点小狗工作室”与当前 `contact_email` 写入完整目标隐私政策，仍只替换空值/精确历史默认。
 - 两项确认在客户端上传前与 service 消费前双重校验；缺失/false 不消费 upload、不创建 submission。
 - retention/deletion 只提供单条能力；rejected 立即进候选，pending 只复核，accepted 不按时间候选。隔离 fake storage 已覆盖 dry-run、current/version/delete marker、异常引用、OSS 失败、DB 失败后重入与重复执行。
 - `/admin/commissions` 列表和详情共用同一删除组件/API；真实浏览器已覆盖未认证 401、dry-run 脱敏、防重、失败可再试和成功刷新。
 - notices 生成器消费实际安装的 production closure，去除本机路径/时间、稳定排序并对未知许可证失败。`/licenses` 不再声称 Windows/gyan.dev 构建或旧源码 revision。
-- T23 真实经营主体/隐私政策终审、T35/T36 Linux runtime/容器分发、生产删除、独立 Review、用户验收和发布均保持开放。
+- T35/T36 Linux runtime/容器分发、生产迁移/删除、隐私政策正式投影 smoke、独立 Review、用户验收和发布均保持开放。
