@@ -280,15 +280,29 @@ test('下架确认、公开影响说明与下架后恢复可编辑', async ({ pa
   await gotoEditor(page, work.id)
   await makePublishable(page)
   await page.getByRole('button', { name: '发布', exact: true }).click()
-  await expect(page.getByTestId('publication-panel')).toContainText('已发布', { timeout: 60_000 })
+  const panel = page.getByTestId('publication-panel')
+  await expect(panel).toContainText('已发布', { timeout: 60_000 })
+
+  let releaseUnpublish!: () => void
+  const unpublishGate = new Promise<void>((resolve) => {
+    releaseUnpublish = resolve
+  })
+  await page.route(`**/api/admin/v1/works/${work.id}/unpublish`, async (route) => {
+    await unpublishGate
+    await route.continue()
+  }, { times: 1 })
 
   await page.getByRole('button', { name: '下架', exact: true }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog).toContainText('下架后公开页面立即对访客不可见')
   await expect(dialog).toContainText('完整原图与作品内容保留')
   await dialog.getByRole('button', { name: '确认下架' }).click()
+  const progress = panel.getByTestId('admin-task-progress')
+  await expect(progress).toContainText('作品下架与公开撤销')
+  await expect(progress).toContainText('正在创建下架任务')
+  await expect(progress).not.toContainText('发布成功')
+  releaseUnpublish()
 
-  const panel = page.getByTestId('publication-panel')
   await expect(panel).toContainText('已下架', { timeout: 60_000 })
   await expect(panel).toContainText('已下架：公开页面不再可访问')
   // 公开对象已删除；编辑器恢复可编辑。
@@ -297,7 +311,7 @@ test('下架确认、公开影响说明与下架后恢复可编辑', async ({ pa
   await expect(page.getByLabel(/角色名/)).toBeEnabled()
 })
 
-test('下架清理失败：持久“待清理”反馈与重试清理成功', async ({ page }) => {
+test('下架清理失败：重试期间显示当前任务、防重并可再试', async ({ page }) => {
   const work = await createWorkViaApi(page, { characterName: '清理验证' })
   await gotoEditor(page, work.id)
   await makePublishable(page)
@@ -319,8 +333,41 @@ test('下架清理失败：持久“待清理”反馈与重试清理成功', as
   // 清理失败时公开对象仍在；重试清理成功后删除。
   const before = await fakeMediaState(page)
   expect(before.publicObjects.length).toBeGreaterThan(0)
+  let retryRequests = 0
+  let releaseRetry!: () => void
+  const retryGate = new Promise<void>((resolve) => {
+    releaseRetry = resolve
+  })
+  await page.route('**/api/admin/v1/publication-operations/*/retry-cleanup', async (route) => {
+    retryRequests += 1
+    await retryGate
+    await route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        error: { code: 'TEST_RETRY_FAILED', message: 'test retry failure' },
+      }),
+    })
+  }, { times: 1 })
+
   await setFakeMediaFlags(page, { failDelete: false })
-  await panel.getByRole('button', { name: '重试清理公开文件' }).click()
+  const retryButton = panel.getByRole('button', { name: '重试清理公开文件' })
+  await retryButton.evaluate((button) => {
+    button.click()
+    button.click()
+  })
+  const retryProgress = panel.getByTestId('admin-task-progress')
+  await expect(retryProgress).toHaveAttribute('data-status', 'active')
+  await expect(retryProgress).toContainText('重试公开文件与缓存撤销')
+  await expect(retryProgress).not.toContainText('作品已下架，但公开文件或 ESA 缓存撤销未完成')
+  await expect(retryProgress.locator('button')).toBeDisabled()
+  await expect.poll(() => retryRequests).toBe(1)
+  releaseRetry()
+
+  await expect(panel.getByRole('alert')).toContainText('重试清理失败，请稍后重试')
+  const retryAgain = panel.getByRole('button', { name: '重试清理公开文件' })
+  await expect(retryAgain).toBeEnabled()
+  await retryAgain.click()
   await expect(panel).toContainText('公开文件与 ESA 缓存撤销完成', { timeout: 60_000 })
   const after = await fakeMediaState(page)
   expect(after.publicObjects).toHaveLength(0)

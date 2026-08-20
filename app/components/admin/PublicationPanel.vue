@@ -71,25 +71,76 @@ const publishCompleted = computed(() => Math.max(
 const operationActive = computed(() => Boolean(
   lastOperation.value && isPublicationInProgress(lastOperation.value),
 ))
+const taskOperation = computed(() => pending.value === null
+  ? lastOperation.value
+  : null)
 const ffmpegPublishActive = computed(() => (
-  lastOperation.value?.status === 'PREPARING_SOURCE'
-  || ((pending.value === 'publish' || operationActive.value)
-    && !lastOperation.value
-    && (
+  pending.value === 'publish'
+    ? (
     check.value?.adoptionCoverNeedsPreprocess === true
     || check.value?.designSheetNeedsPreprocess === true
     || check.value?.studioPhotoNeedsPreprocess === true
-    ))
+      )
+    : taskOperation.value?.status === 'PREPARING_SOURCE'
 ))
 const taskMode = computed(() => ffmpegPublishActive.value
   ? 'indeterminate' as const
   : 'stage' as const)
-const taskStatus = computed(() => lastOperation.value?.status === 'DONE'
-  ? 'success' as const
-  : lastOperation.value?.status === 'FAILED'
-    ? 'error' as const
-    : 'active' as const)
-const showTask = computed(() => pending.value !== null || lastOperation.value !== null)
+const taskStatus = computed(() => pending.value !== null
+  ? 'active' as const
+  : taskOperation.value?.status === 'DONE'
+    ? 'success' as const
+    : taskOperation.value?.status === 'FAILED'
+      ? 'error' as const
+      : 'active' as const)
+const showTask = computed(() => pending.value !== null || taskOperation.value !== null)
+const taskIsPublish = computed(() => pending.value === 'publish'
+  || taskOperation.value?.operationType === 'PUBLISH')
+const taskLabel = computed(() => {
+  if (pending.value === 'cleanup') {
+    return '公开文件与 ESA 缓存撤销'
+  }
+  if (pending.value === 'unpublish'
+    || taskOperation.value?.operationType === 'UNPUBLISH') {
+    return '作品下架与公开撤销'
+  }
+  if (pending.value === 'publish') {
+    return '作品发布'
+  }
+  return taskOperation.value?.operationType === 'UPSCALE'
+    ? '作品图片适配'
+    : '作品发布'
+})
+const taskStage = computed(() => {
+  if (pending.value === 'cleanup') {
+    return '重试公开文件与缓存撤销'
+  }
+  if (pending.value === 'unpublish') {
+    return '正在创建下架任务'
+  }
+  if (pending.value === 'publish') {
+    return '正在创建发布任务'
+  }
+  return taskOperation.value
+    ? PUBLICATION_OPERATION_STATUS_LABELS[taskOperation.value.status]
+    : null
+})
+const taskDetail = computed(() => {
+  if (pending.value === 'cleanup') {
+    return '正在重试删除精确公开对象并撤销 ESA 缓存。'
+  }
+  if (pending.value !== null || (taskOperation.value
+    && isPublicationInProgress(taskOperation.value))) {
+    if (ffmpegPublishActive.value) {
+      return '正在用 FFmpeg 准备低分辨率图片；单图处理没有可信百分比。'
+    }
+    if (check.value && taskIsPublish.value) {
+      return `公开图片已就绪 ${publishCompleted.value}/${check.value.requiredVariantCount}`
+    }
+    return null
+  }
+  return feedback.value?.text ?? null
+})
 
 async function refreshPublishProgress() {
   try {
@@ -317,6 +368,9 @@ async function unpublish() {
 }
 
 async function retryCleanup() {
+  if (pending.value !== null) {
+    return
+  }
   const operation = lastOperation.value
   if (!operation) {
     return
@@ -478,35 +532,24 @@ onUnmounted(() => {
       v-if="showTask"
       class="publication__progress"
       :mode="taskMode"
-      :label="lastOperation?.operationType === 'UNPUBLISH' || pending === 'unpublish'
-        ? '作品下架与公开撤销'
-        : lastOperation?.operationType === 'UPSCALE'
-          ? '作品图片适配'
-          : '作品发布'"
-      :stage="lastOperation
-        ? PUBLICATION_OPERATION_STATUS_LABELS[lastOperation.status]
-        : pending === 'cleanup'
-          ? '重试公开文件与缓存撤销'
-          : pending === 'unpublish'
-            ? '正在创建下架任务'
-            : '正在创建发布任务'"
+      :label="taskLabel"
+      :stage="taskStage"
       :status="taskStatus"
-      :completed-count="(lastOperation?.operationType === 'PUBLISH' || pending === 'publish')
+      :completed-count="taskIsPublish
         && (check?.requiredVariantCount ?? 0) > 0
         ? publishCompleted
         : null"
-      :total-count="(lastOperation?.operationType === 'PUBLISH' || pending === 'publish')
+      :total-count="taskIsPublish
         ? check?.requiredVariantCount ?? null
         : null"
-      :detail="feedback?.text ?? (ffmpegPublishActive
-        ? '正在用 FFmpeg 准备低分辨率图片；单图处理没有可信百分比。'
-        : check && (lastOperation?.operationType === 'PUBLISH' || pending === 'publish')
-          ? `公开图片已就绪 ${publishCompleted}/${check.requiredVariantCount}`
-          : null)"
+      :detail="taskDetail"
       :show-elapsed="taskStatus === 'active'"
-      :started-at="lastOperation?.startedAt ?? null"
-      :can-retry="feedback?.cleanupRetry === true"
+      :started-at="taskOperation?.startedAt ?? null"
+      :can-retry="pending === 'cleanup' || feedback?.cleanupRetry === true"
       retry-label="重试清理公开文件"
+      retry-loading-label="正在重试清理…"
+      :retry-busy="pending === 'cleanup'"
+      :retry-disabled="pending === 'cleanup'"
       @retry="retryCleanup"
     />
     <AdminTaskProgress
