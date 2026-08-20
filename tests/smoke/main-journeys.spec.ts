@@ -111,6 +111,19 @@ test('首页加载、主要入口与单项开放领养在三种视口可达', as
       document.documentElement.scrollWidth - document.documentElement.clientWidth
     ))).toBeLessThanOrEqual(1)
   }
+
+  await page.getByTestId('featured-works')
+    .locator('[data-work-slug="e2e-public-smoke-work"]')
+    .click()
+  await expect(page.getByRole('link', { name: '返回作品展示' }))
+    .toHaveAttribute('href', '/works')
+
+  await page.goto('/')
+  await page.getByTestId('home-current-adoptions')
+    .locator('[data-work-slug="e2e-public-smoke-available"]')
+    .click()
+  await expect(page.getByRole('link', { name: '返回设定领养' }))
+    .toHaveAttribute('href', '/adoptions')
 })
 
 test('作品目录与作品详情可达', async ({ page }) => {
@@ -130,7 +143,9 @@ test('领养目录保持开放在前并可进入统一详情', async ({ page }) 
   await expect(cards.first()).toContainText('云雀')
   await expect(cards.nth(1)).toContainText('月桂')
   await cards.first().click()
-  await expect(page).toHaveURL(/\/works\/e2e-public-smoke-available$/u)
+  await expect(page).toHaveURL(/\/works\/e2e-public-smoke-available\?from=adoptions$/u)
+  await expect(page.getByRole('link', { name: '返回设定领养' }))
+    .toHaveAttribute('href', '/adoptions')
 })
 
 test('委托申请成功并且私有设定图不生成公开对象', async ({ page }) => {
