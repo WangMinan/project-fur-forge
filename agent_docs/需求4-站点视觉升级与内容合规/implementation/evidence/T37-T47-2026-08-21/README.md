@@ -1,0 +1,20 @@
+# 阶段 E 本地证据索引
+
+> 日期：2026-08-21  
+> 分支：PR #21 `codex/r4-t04-t21-foundation`  
+> 边界：以下均为本地/隔离浏览器证据，不代签真实手机、王旻安/景宸人工验收、独立 Review 或生产状态。
+
+## T37
+
+- 动效机会与拒绝清单：`../../../.design/MOTION_OPPORTUNITIES.md`。
+
+## T38 / T38-F1
+
+- 五视口、无 JavaScript、用户反馈、双营业状态与水合时间序列：`t38-static/README.md`。
+
+## T39 / T40
+
+- `r3-hero-collection-publication` + error reason focused core：2 files / 9 tests 通过。
+- 核心不变量覆盖：未启用 item 的 collection + asset 双 CAS、任意浮点焦点精度、共享 asset 冲突阻断、停用清理后按新焦点生成不重用旧 Key 的不可变公开变体。
+- 隔离 Playwright：登录管理端、上传 3840×2160 横图、九宫格从中心改为右上、创建 item、重新读取 100% / 0%、按钮 pressed 与预览 `object-position: 100% 0%`，1/1 通过。
+- 截图：`t39-t40-admin-hero-1440x900.png`。测试使用临时用例并已删除，没有把精确文案、DOM 或像素审美加入永久 smoke。

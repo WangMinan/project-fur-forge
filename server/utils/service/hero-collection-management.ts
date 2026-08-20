@@ -19,6 +19,7 @@ import {
 } from '../recipe/site-display-recipe'
 import {
   claimHeroCollectionVersion,
+  countHeroItemAssetAssignments,
   deleteDisabledHeroItem,
   findHeroCollection,
   findHeroItem,
@@ -28,6 +29,7 @@ import {
   insertHeroItem,
   isHeroItemAssetAssigned,
   replaceEnabledHeroItemOrder,
+  updateHeroAssetFocal,
   updateDisabledHeroItem,
 } from '../repository/hero-collection-repository'
 import type {
@@ -41,6 +43,9 @@ import { getLatestPublicationOperations } from '../runner/work-publication'
 export interface HeroItemInput {
   alt: string
   assetId: string
+  assetVersion: number
+  focalX: number
+  focalY: number
   sortOrder: number
 }
 
@@ -148,8 +153,11 @@ function itemDto(
     enabled: row.enabled === 1,
     asset: {
       assetId: row.assetId,
+      version: row.assetVersion,
       width: row.width,
       height: row.height,
+      focalX: row.focalX,
+      focalY: row.focalY,
     },
     upscaleReady: heroItemUpscaleReady(row, variants),
     upscaleOperation: operations.get(`${row.id}:UPSCALE`) ?? null,
@@ -219,7 +227,10 @@ function assertHeroItemAsset(
       'HERO_ASSET_NOT_READY',
     )
   }
-  if (isHeroItemAssetAssigned(sqlite, assetId, exceptItemId)) {
+  if (
+    isHeroItemAssetAssigned(sqlite, assetId, exceptItemId)
+    && !legacyMigratedAsset
+  ) {
     throw new ServiceError(
       409,
       'CONFLICT',
@@ -228,6 +239,44 @@ function assertHeroItemAsset(
     )
   }
   return asset
+}
+
+function assertHeroAssetFocalMutation(
+  sqlite: Database.Database,
+  asset: ReturnType<typeof assertHeroItemAsset>,
+  input: HeroItemInput,
+  exceptItemId?: string,
+) {
+  if (asset.version !== input.assetVersion) {
+    throw new ServiceError(
+      409,
+      'CONFLICT',
+      'Hero asset version is stale.',
+      'VERSION_CONFLICT',
+    )
+  }
+  const changed = asset.focalX !== input.focalX || asset.focalY !== input.focalY
+  if (!changed) {
+    return false
+  }
+  if (countHeroItemAssetAssignments(sqlite, asset.assetId, exceptItemId) > 0) {
+    throw new ServiceError(
+      409,
+      'CONFLICT',
+      'A shared hero asset cannot change focal coordinates.',
+      'HERO_FOCAL_SHARED_ASSET_CONFLICT',
+    )
+  }
+  const variants = findHeroItemVariants(sqlite, [asset.assetId]).get(asset.assetId) ?? []
+  if (variants.some(variant => variant.storageScope === 'PUBLIC')) {
+    throw new ServiceError(
+      409,
+      'CONFLICT',
+      'Public hero variants must be cleaned before changing focal coordinates.',
+      'PUBLICATION_CLEANUP_PENDING',
+    )
+  }
+  return true
 }
 
 function translateConstraint(error: unknown): never {
@@ -254,7 +303,7 @@ export function createHeroCollectionItem(
   now = Date.now(),
 ) {
   requireCollectionVersion(sqlite, placement, orientation, expectedVersion)
-  assertHeroItemAsset(sqlite, placement, orientation, input.assetId)
+  const asset = assertHeroItemAsset(sqlite, placement, orientation, input.assetId)
   try {
     sqlite.transaction(() => {
       claimHeroCollectionVersion(
@@ -264,6 +313,16 @@ export function createHeroCollectionItem(
         expectedVersion,
         now,
       )
+      if (assertHeroAssetFocalMutation(sqlite, asset, input)) {
+        updateHeroAssetFocal(
+          sqlite,
+          asset.assetId,
+          input.assetVersion,
+          input.focalX,
+          input.focalY,
+          now,
+        )
+      }
       insertHeroItem(sqlite, {
         ...input,
         id: randomUUID(),
@@ -297,7 +356,13 @@ export function updateHeroCollectionItem(
       'HERO_ITEM_ENABLED',
     )
   }
-  assertHeroItemAsset(sqlite, placement, orientation, input.assetId, id)
+  const asset = assertHeroItemAsset(
+    sqlite,
+    placement,
+    orientation,
+    input.assetId,
+    id,
+  )
   try {
     sqlite.transaction(() => {
       claimHeroCollectionVersion(
@@ -307,6 +372,16 @@ export function updateHeroCollectionItem(
         expectedVersion,
         now,
       )
+      if (assertHeroAssetFocalMutation(sqlite, asset, input, id)) {
+        updateHeroAssetFocal(
+          sqlite,
+          asset.assetId,
+          input.assetVersion,
+          input.focalX,
+          input.focalY,
+          now,
+        )
+      }
       if (updateDisabledHeroItem(
         sqlite,
         id,
