@@ -32,11 +32,13 @@ test('本地真实浏览器完成单图私密申请、管理查看与 409 停止
   await page.getByLabel(/^QQ/u).fill(qq)
   await page.getByLabel(/身高/u).fill('170')
   await page.getByLabel(/体重/u).fill('60.5')
-  await page.getByLabel(/设定图/u).setInputFiles({
+  await page.getByLabel('设定图', { exact: true }).setInputFiles({
     name: 'synthetic-design-reference.png',
     mimeType: 'image/png',
     buffer: smallStudioPng(),
   })
+  await page.getByLabel(/已年满 18 周岁/u).check()
+  await page.getByLabel(/已阅读《隐私政策》/u).check()
   await expect(page.getByAltText('所选设定图预览')).toBeVisible()
   await page.getByRole('button', { name: '确认提交' }).click()
 
@@ -70,11 +72,13 @@ test('本地真实浏览器完成单图私密申请、管理查看与 409 停止
   await page.getByLabel(/^QQ/u).fill(qq)
   await page.getByLabel(/身高/u).fill('170')
   await page.getByLabel(/体重/u).fill('60.5')
-  await page.getByLabel(/设定图/u).setInputFiles({
+  await page.getByLabel('设定图', { exact: true }).setInputFiles({
     name: 'synthetic-design-reference-repeat.png',
     mimeType: 'image/png',
     buffer: smallStudioPng(),
   })
+  await page.getByLabel(/已年满 18 周岁/u).check()
+  await page.getByLabel(/已阅读《隐私政策》/u).check()
   await page.getByRole('button', { name: '确认提交' }).click()
   await expect(page.getByText('未重复提交')).toBeVisible()
   await expect(page.getByText('该手机号已有待处理的委托申请')).toBeVisible()

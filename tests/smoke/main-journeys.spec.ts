@@ -7,6 +7,7 @@ import {
   publicBaseURL,
 } from '../e2e/helpers/auth'
 import {
+  fakeMediaState,
   publishableStudioPng,
   resetFakeMedia,
   smallStudioPng,
@@ -66,12 +67,17 @@ async function fillCommission(
   await page.getByLabel(/身高/u).fill('170')
   await page.getByLabel(/体重/u).fill('60.5')
   await expect(page.getByLabel(/称呼/u)).toHaveValue(input.nickname)
-  await page.getByLabel(/设定图/u).setInputFiles({
+  await page.getByLabel('设定图', { exact: true }).setInputFiles({
     name: 'smoke-design-reference.png',
     mimeType: 'image/png',
     buffer: smallStudioPng(),
   })
   await expect(page.getByAltText('所选设定图预览')).toBeVisible()
+}
+
+async function confirmCommission(page: import('@playwright/test').Page) {
+  await page.getByLabel(/已年满 18 周岁/u).check()
+  await page.getByLabel(/已阅读《隐私政策》/u).check()
 }
 
 test('首页加载、主要入口与单项开放领养在三种视口可达', async ({ page }) => {
@@ -133,6 +139,14 @@ test('委托申请成功并且私有设定图不生成公开对象', async ({ pa
     nickname: 'Smoke 成功申请',
     phone: '19900000001',
   })
+  await expect(page.getByLabel(/已年满 18 周岁/u)).not.toBeChecked()
+  await expect(page.getByLabel(/已阅读《隐私政策》/u)).not.toBeChecked()
+  await page.getByRole('button', { name: '确认提交' }).click()
+  await expect(page.getByText('请确认已年满 18 周岁')).toBeVisible()
+  await expect(page.getByText('请阅读隐私政策并确认')).toBeVisible()
+  await expect(page.getByAltText('所选设定图预览')).toBeVisible()
+  expect((await fakeMediaState(page)).putRecords).toHaveLength(0)
+  await confirmCommission(page)
   await page.getByRole('button', { name: '确认提交' }).click()
   await expect(page.getByText('申请已收到')).toBeVisible()
 })
@@ -143,6 +157,7 @@ test('同手机号待处理申请拒绝重复提交并保留所选图片', async
     nickname: 'Smoke 首次申请',
     phone: '19900000002',
   })
+  await confirmCommission(page)
   await page.getByRole('button', { name: '确认提交' }).click()
   await expect(page.getByText('申请已收到')).toBeVisible()
 
@@ -150,6 +165,7 @@ test('同手机号待处理申请拒绝重复提交并保留所选图片', async
     nickname: 'Smoke 重复申请',
     phone: '19900000002',
   })
+  await confirmCommission(page)
   await page.getByRole('button', { name: '确认提交' }).click()
   await expect(page.getByText('该手机号已有待处理的委托申请')).toBeVisible()
   await expect(page.getByAltText('所选设定图预览')).toBeVisible()

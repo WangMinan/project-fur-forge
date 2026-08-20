@@ -15,23 +15,28 @@ useSeoMeta({
   robots: 'noindex, nofollow',
 })
 
-type FieldKey = 'file' | 'heightCm' | 'nickname' | 'phone' | 'qq' | 'species' | 'weightKg'
+type FieldKey = 'adultConfirmed' | 'file' | 'heightCm' | 'nickname' | 'phone'
+  | 'privacyNoticeAcknowledged' | 'qq' | 'species' | 'weightKg'
 type Stage = 'idle' | 'digesting' | 'uploading' | 'validating' | 'submitting' | 'success'
 
 const form = reactive({
+  adultConfirmed: false,
   nickname: '',
   species: '',
   phone: '',
+  privacyNoticeAcknowledged: false,
   qq: '',
   heightCm: '',
   weightKg: '',
   website: '',
 })
 const errors = reactive<Record<FieldKey, string>>({
+  adultConfirmed: '',
   file: '',
   heightCm: '',
   nickname: '',
   phone: '',
+  privacyNoticeAcknowledged: '',
   qq: '',
   species: '',
   weightKg: '',
@@ -98,6 +103,12 @@ function validateFields() {
   }
   if (!file.value) {
     errors.file = '请选择一张设定图'
+  }
+  if (!form.adultConfirmed) {
+    errors.adultConfirmed = '请确认已年满 18 周岁并有权提交设定图'
+  }
+  if (!form.privacyNoticeAcknowledged) {
+    errors.privacyNoticeAcknowledged = '请阅读隐私政策并确认理解信息用途'
   }
   return !Object.values(errors).some(Boolean)
 }
@@ -256,11 +267,13 @@ async function submit() {
         method: 'POST',
         headers: { authorization: `Bearer ${session.token}` },
         body: {
+          adultConfirmed: form.adultConfirmed,
           uploadSessionId: session.id,
           expectedUploadVersion: session.version,
           nickname: form.nickname.trim(),
           species: form.species.trim(),
           phone: { countryCode: '+86', number: form.phone },
+          privacyNoticeAcknowledged: form.privacyNoticeAcknowledged,
           qq: form.qq,
           heightCm: Number(form.heightCm),
           weightKg: Number(form.weightKg),
@@ -315,7 +328,7 @@ onBeforeUnmount(() => {
 
       <form v-else class="commission-apply__form" novalidate @submit.prevent="submit">
         <p class="commission-apply__privacy">
-          请勿在图片文件名或称呼中填写不必要的个人信息。全部字段仅用于本次委托评估。
+          我们会使用你提交的设定图、联系方式和体型信息评估申请、与你沟通，并在接单后用于委托履行和售后。设定图不会公开展示。请勿在文件名或称呼中填写不必要的个人信息。
         </p>
 
         <div class="commission-apply__field">
@@ -421,6 +434,47 @@ onBeforeUnmount(() => {
           @remove="removeFile"
         />
 
+        <fieldset class="commission-apply__confirmations">
+          <legend>提交前确认</legend>
+          <div class="commission-apply__confirmation">
+            <div class="commission-apply__checkbox-row">
+              <input
+                id="commission-adult-confirmed"
+                v-model="form.adultConfirmed"
+                type="checkbox"
+                :aria-invalid="Boolean(errors.adultConfirmed)"
+                aria-describedby="commission-adult-confirmed-error"
+              >
+              <label for="commission-adult-confirmed">
+                我确认已年满 18 周岁，并有权提交这张设定图。
+              </label>
+            </div>
+            <p id="commission-adult-confirmed-error" class="commission-apply__error">
+              {{ errors.adultConfirmed }}
+            </p>
+          </div>
+          <div class="commission-apply__confirmation">
+            <div class="commission-apply__checkbox-row">
+              <input
+                id="commission-privacy-acknowledged"
+                v-model="form.privacyNoticeAcknowledged"
+                type="checkbox"
+                :aria-invalid="Boolean(errors.privacyNoticeAcknowledged)"
+                aria-describedby="commission-privacy-acknowledged-error commission-privacy-link"
+              >
+              <label for="commission-privacy-acknowledged">
+                我已阅读《隐私政策》，并理解这些信息将用于申请评估、后续沟通以及接单后的委托履行和售后；提交申请不代表工作室已经接单，也不构成最终报价、排期或合同确认。
+              </label>
+            </div>
+            <p id="commission-privacy-link" class="commission-apply__hint">
+              <NuxtLink to="/privacy" target="_blank">在新窗口阅读隐私政策</NuxtLink>
+            </p>
+            <p id="commission-privacy-acknowledged-error" class="commission-apply__error">
+              {{ errors.privacyNoticeAcknowledged }}
+            </p>
+          </div>
+        </fieldset>
+
         <div class="commission-apply__honeypot" aria-hidden="true">
           <label for="commission-website">网站</label>
           <input
@@ -514,6 +568,53 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
+}
+
+.commission-apply__confirmations {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--public-border-primary);
+  border-radius: var(--radius-sm);
+}
+
+.commission-apply__confirmations legend {
+  padding: 0 var(--space-2);
+  font-weight: 600;
+}
+
+.commission-apply__confirmation {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.commission-apply__checkbox-row {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-2);
+}
+
+.commission-apply__checkbox-row input {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0.2em 0 0;
+  accent-color: var(--public-accent-primary);
+}
+
+.commission-apply__checkbox-row input:focus-visible {
+  outline: 2px solid var(--public-accent-primary);
+  outline-offset: 2px;
+}
+
+.commission-apply__checkbox-row label {
+  line-height: var(--line-height-relaxed);
+}
+
+.commission-apply__confirmation .commission-apply__hint {
+  margin: 0 0 0 calc(1.25rem + var(--space-2));
 }
 
 .commission-apply__error {
