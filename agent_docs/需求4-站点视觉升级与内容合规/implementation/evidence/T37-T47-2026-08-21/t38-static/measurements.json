@@ -1,0 +1,632 @@
+[
+  {
+    "name": "390x844",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "horizontalOverflow": -15,
+    "section": {
+      "top": -0.15625,
+      "bottom": 711.328125,
+      "height": 711.484375
+    },
+    "title": {
+      "x": 16,
+      "y": 90.4375,
+      "width": 343,
+      "height": 43.1875,
+      "top": 90.4375,
+      "right": 359,
+      "bottom": 133.625,
+      "left": 16
+    },
+    "media": {
+      "x": 16,
+      "y": 165.625,
+      "width": 343,
+      "height": 362.90625,
+      "top": 165.625,
+      "right": 359,
+      "bottom": 528.53125,
+      "left": 16
+    },
+    "identity": {
+      "x": 16,
+      "y": 586.21875,
+      "width": 89,
+      "height": 33.03125,
+      "top": 586.21875,
+      "right": 105,
+      "bottom": 619.25,
+      "left": 16
+    },
+    "status": {
+      "x": 16,
+      "y": 552.53125,
+      "width": 45.375,
+      "height": 21.6875,
+      "top": 552.53125,
+      "right": 61.375,
+      "bottom": 574.21875,
+      "left": 16
+    },
+    "action": {
+      "x": 16,
+      "y": 667.328125,
+      "width": 134,
+      "height": 44,
+      "top": 667.328125,
+      "right": 150,
+      "bottom": 711.328125,
+      "left": 16
+    },
+    "oneViewportComplete": true,
+    "images": [
+      {
+        "alt": "",
+        "complete": true,
+        "naturalWidth": 1600,
+        "naturalHeight": 1600
+      },
+      {
+        "alt": "小狗竖版",
+        "complete": true,
+        "naturalWidth": 389,
+        "naturalHeight": 693
+      },
+      {
+        "alt": "小狗海报",
+        "complete": true,
+        "naturalWidth": 389,
+        "naturalHeight": 519
+      },
+      {
+        "alt": "横版正面",
+        "complete": true,
+        "naturalWidth": 265,
+        "naturalHeight": 149
+      },
+      {
+        "alt": "正面全身",
+        "complete": true,
+        "naturalWidth": 265,
+        "naturalHeight": 353
+      },
+      {
+        "alt": "委托大图横版",
+        "complete": true,
+        "naturalWidth": 389,
+        "naturalHeight": 259
+      },
+      {
+        "alt": "横版正面",
+        "complete": true,
+        "naturalWidth": 390,
+        "naturalHeight": 219
+      },
+      {
+        "alt": "",
+        "complete": true,
+        "naturalWidth": 1600,
+        "naturalHeight": 1600
+      },
+      {
+        "alt": "",
+        "complete": true,
+        "naturalWidth": 36,
+        "naturalHeight": 40
+      }
+    ],
+    "consoleErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "430x932",
+    "viewport": {
+      "width": 430,
+      "height": 932
+    },
+    "horizontalOverflow": -15,
+    "section": {
+      "top": -0.484375,
+      "bottom": 748.84375,
+      "height": 749.328125
+    },
+    "title": {
+      "x": 16,
+      "y": 90.109375,
+      "width": 383,
+      "height": 43.1875,
+      "top": 90.109375,
+      "right": 399,
+      "bottom": 133.296875,
+      "left": 16
+    },
+    "media": {
+      "x": 16,
+      "y": 165.296875,
+      "width": 383,
+      "height": 400.75,
+      "top": 165.296875,
+      "right": 399,
+      "bottom": 566.046875,
+      "left": 16
+    },
+    "identity": {
+      "x": 16,
+      "y": 623.734375,
+      "width": 89,
+      "height": 33.03125,
+      "top": 623.734375,
+      "right": 105,
+      "bottom": 656.765625,
+      "left": 16
+    },
+    "status": {
+      "x": 16,
+      "y": 590.046875,
+      "width": 45.375,
+      "height": 21.6875,
+      "top": 590.046875,
+      "right": 61.375,
+      "bottom": 611.734375,
+      "left": 16
+    },
+    "action": {
+      "x": 16,
+      "y": 704.84375,
+      "width": 134,
+      "height": 44,
+      "top": 704.84375,
+      "right": 150,
+      "bottom": 748.84375,
+      "left": 16
+    },
+    "oneViewportComplete": true,
+    "images": [
+      {
+        "alt": "",
+        "complete": true,
+        "naturalWidth": 1600,
+        "naturalHeight": 1600
+      },
+      {
+        "alt": "小狗竖版",
+        "complete": true,
+        "naturalWidth": 430,
+        "naturalHeight": 764
+      },
+      {
+        "alt": "小狗海报",
+        "complete": true,
+        "naturalWidth": 430,
+        "naturalHeight": 573
+      },
+      {
+        "alt": "横版正面",
+        "complete": true,
+        "naturalWidth": 292,
+        "naturalHeight": 164
+      },
+      {
+        "alt": "正面全身",
+        "complete": true,
+        "naturalWidth": 292,
+        "naturalHeight": 389
+      },
+      {
+        "alt": "委托大图横版",
+        "complete": true,
+        "naturalWidth": 430,
+        "naturalHeight": 286
+      },
+      {
+        "alt": "横版正面",
+        "complete": true,
+        "naturalWidth": 430,
+        "naturalHeight": 241
+      },
+      {
+        "alt": "",
+        "complete": true,
+        "naturalWidth": 1600,
+        "naturalHeight": 1600
+      },
+      {
+        "alt": "",
+        "complete": true,
+        "naturalWidth": 36,
+        "naturalHeight": 40
+      }
+    ],
+    "consoleErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "768x1024",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "horizontalOverflow": -15,
+    "section": {
+      "top": -0.125,
+      "bottom": 795.328125,
+      "height": 795.453125
+    },
+    "title": {
+      "x": 24,
+      "y": 90.46875,
+      "width": 705,
+      "height": 49.75,
+      "top": 90.46875,
+      "right": 729,
+      "bottom": 140.21875,
+      "left": 24
+    },
+    "media": {
+      "x": 24,
+      "y": 172.21875,
+      "width": 705,
+      "height": 440.3125,
+      "top": 172.21875,
+      "right": 729,
+      "bottom": 612.53125,
+      "left": 24
+    },
+    "identity": {
+      "x": 24,
+      "y": 670.21875,
+      "width": 89,
+      "height": 33.03125,
+      "top": 670.21875,
+      "right": 113,
+      "bottom": 703.25,
+      "left": 24
+    },
+    "status": {
+      "x": 24,
+      "y": 636.53125,
+      "width": 45.375,
+      "height": 21.6875,
+      "top": 636.53125,
+      "right": 69.375,
+      "bottom": 658.21875,
+      "left": 24
+    },
+    "action": {
+      "x": 24,
+      "y": 751.328125,
+      "width": 134,
+      "height": 44,
+      "top": 751.328125,
+      "right": 158,
+      "bottom": 795.328125,
+      "left": 24
+    },
+    "oneViewportComplete": true,
+    "images": [
+      {
+        "alt": "",
+        "complete": true,
+        "naturalWidth": 1600,
+        "naturalHeight": 1600
+      },
+      {
+        "alt": "小狗竖版",
+        "complete": true,
+        "naturalWidth": 768,
+        "naturalHeight": 1365
+      },
+      {
+        "alt": "小狗海报",
+        "complete": true,
+        "naturalWidth": 768,
+        "naturalHeight": 1024
+      },
+      {
+        "alt": "横版正面",
+        "complete": true,
+        "naturalWidth": 307,
+        "naturalHeight": 172
+      },
+      {
+        "alt": "正面全身",
+        "complete": true,
+        "naturalWidth": 307,
+        "naturalHeight": 409
+      },
+      {
+        "alt": "委托大图横版",
+        "complete": true,
+        "naturalWidth": 768,
+        "naturalHeight": 512
+      },
+      {
+        "alt": "横版正面",
+        "complete": true,
+        "naturalWidth": 768,
+        "naturalHeight": 432
+      },
+      {
+        "alt": "",
+        "complete": true,
+        "naturalWidth": 1600,
+        "naturalHeight": 1600
+      },
+      {
+        "alt": "",
+        "complete": true,
+        "naturalWidth": 36,
+        "naturalHeight": 40
+      }
+    ],
+    "consoleErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "1024x900",
+    "viewport": {
+      "width": 1024,
+      "height": 900
+    },
+    "horizontalOverflow": -15,
+    "section": {
+      "top": 0.109375,
+      "bottom": 746.953125,
+      "height": 746.84375
+    },
+    "title": {
+      "x": 40.953125,
+      "y": 108.609375,
+      "width": 927.09375,
+      "height": 66.34375,
+      "top": 108.609375,
+      "right": 968.046875,
+      "bottom": 174.953125,
+      "left": 40.953125
+    },
+    "media": {
+      "x": 40.953125,
+      "y": 206.953125,
+      "width": 615.09375,
+      "height": 540,
+      "top": 206.953125,
+      "right": 656.046875,
+      "bottom": 746.953125,
+      "left": 40.953125
+    },
+    "identity": {
+      "x": 680.046875,
+      "y": 414.578125,
+      "width": 89,
+      "height": 42.28125,
+      "top": 414.578125,
+      "right": 769.046875,
+      "bottom": 456.859375,
+      "left": 680.046875
+    },
+    "status": {
+      "x": 680.046875,
+      "y": 380.890625,
+      "width": 45.375,
+      "height": 21.6875,
+      "top": 380.890625,
+      "right": 725.421875,
+      "bottom": 402.578125,
+      "left": 680.046875
+    },
+    "action": {
+      "x": 680.046875,
+      "y": 529.015625,
+      "width": 134,
+      "height": 44,
+      "top": 529.015625,
+      "right": 814.046875,
+      "bottom": 573.015625,
+      "left": 680.046875
+    },
+    "oneViewportComplete": true,
+    "images": [
+      {
+        "alt": "",
+        "complete": true,
+        "naturalWidth": 1600,
+        "naturalHeight": 1600
+      },
+      {
+        "alt": "小狗横版大图",
+        "complete": true,
+        "naturalWidth": 1024,
+        "naturalHeight": 576
+      },
+      {
+        "alt": "小狗海报",
+        "complete": true,
+        "naturalWidth": 696,
+        "naturalHeight": 928
+      },
+      {
+        "alt": "横版正面",
+        "complete": true,
+        "naturalWidth": 384,
+        "naturalHeight": 216
+      },
+      {
+        "alt": "正面全身",
+        "complete": true,
+        "naturalWidth": 384,
+        "naturalHeight": 512
+      },
+      {
+        "alt": "委托大图横版",
+        "complete": true,
+        "naturalWidth": 716,
+        "naturalHeight": 477
+      },
+      {
+        "alt": "横版正面",
+        "complete": true,
+        "naturalWidth": 696,
+        "naturalHeight": 391
+      },
+      {
+        "alt": "",
+        "complete": true,
+        "naturalWidth": 1600,
+        "naturalHeight": 1600
+      },
+      {
+        "alt": "",
+        "complete": true,
+        "naturalWidth": 36,
+        "naturalHeight": 40
+      }
+    ],
+    "consoleErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "1440x900",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "horizontalOverflow": -15,
+    "section": {
+      "top": 0.078125,
+      "bottom": 807.171875,
+      "height": 807.09375
+    },
+    "title": {
+      "x": 57.59375,
+      "y": 141.859375,
+      "width": 1309.8125,
+      "height": 93.3125,
+      "top": 141.859375,
+      "right": 1367.40625,
+      "bottom": 235.171875,
+      "left": 57.59375
+    },
+    "media": {
+      "x": 57.59375,
+      "y": 267.171875,
+      "width": 942.921875,
+      "height": 540,
+      "top": 267.171875,
+      "right": 1000.515625,
+      "bottom": 807.171875,
+      "left": 57.59375
+    },
+    "identity": {
+      "x": 1024.515625,
+      "y": 478.234375,
+      "width": 89,
+      "height": 59.46875,
+      "top": 478.234375,
+      "right": 1113.515625,
+      "bottom": 537.703125,
+      "left": 1024.515625
+    },
+    "status": {
+      "x": 1024.515625,
+      "y": 444.546875,
+      "width": 45.375,
+      "height": 21.6875,
+      "top": 444.546875,
+      "right": 1069.890625,
+      "bottom": 466.234375,
+      "left": 1024.515625
+    },
+    "action": {
+      "x": 1024.515625,
+      "y": 585.78125,
+      "width": 134,
+      "height": 44,
+      "top": 585.78125,
+      "right": 1158.515625,
+      "bottom": 629.78125,
+      "left": 1024.515625
+    },
+    "oneViewportComplete": true,
+    "images": [
+      {
+        "alt": "",
+        "complete": true,
+        "naturalWidth": 1600,
+        "naturalHeight": 1600
+      },
+      {
+        "alt": "小狗横版大图",
+        "complete": true,
+        "naturalWidth": 1440,
+        "naturalHeight": 810
+      },
+      {
+        "alt": "小狗海报",
+        "complete": true,
+        "naturalWidth": 979,
+        "naturalHeight": 1305
+      },
+      {
+        "alt": "横版正面",
+        "complete": true,
+        "naturalWidth": 384,
+        "naturalHeight": 216
+      },
+      {
+        "alt": "正面全身",
+        "complete": true,
+        "naturalWidth": 384,
+        "naturalHeight": 512
+      },
+      {
+        "alt": "委托大图横版",
+        "complete": true,
+        "naturalWidth": 1008,
+        "naturalHeight": 672
+      },
+      {
+        "alt": "横版正面",
+        "complete": true,
+        "naturalWidth": 979,
+        "naturalHeight": 550
+      },
+      {
+        "alt": "",
+        "complete": true,
+        "naturalWidth": 1600,
+        "naturalHeight": 1600
+      },
+      {
+        "alt": "",
+        "complete": true,
+        "naturalWidth": 36,
+        "naturalHeight": 40
+      }
+    ],
+    "consoleErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "390x844-no-js",
+    "noJs": {
+      "h1": "有点小狗工作室",
+      "featured": true,
+      "commission": true,
+      "adoption": true,
+      "visibleText": true
+    }
+  },
+  {
+    "name": "1440x900-no-js",
+    "noJs": {
+      "h1": "有点小狗工作室",
+      "featured": true,
+      "commission": true,
+      "adoption": true,
+      "visibleText": true
+    }
+  }
+]

@@ -120,6 +120,11 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.featured-track {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .featured-track__controls {
   display: flex;
   gap: var(--space-2);
@@ -153,6 +158,8 @@ onBeforeUnmount(() => {
 
 .featured-track__rail {
   display: flex;
+  min-width: 0;
+  max-width: 100%;
   gap: var(--space-4);
   padding-bottom: var(--space-2);
   overflow-x: auto;

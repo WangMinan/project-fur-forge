@@ -122,7 +122,7 @@
 ## E. 动效、Hero 焦点与首页四幕
 
 - [x] **T37 · 动效机会审计与拒绝清单**：只读盘点 reveal/hover/carousel/route/menu/状态反馈/共享对象路径；按频率、目的、速度、功能筛选约 5～7 个高置信机会，记录 rejected candidates、输入模态、reduced 版本和中断策略；不改应用代码、不预装动效库。证据：`.design/MOTION_OPPORTUNITIES.md`。
-- [ ] **T38 · 首页静态四幕骨架**：先完成 Hero、lead work、非对称 commission、single adoption 的尺寸、空态和响应式，不加复杂动画；内容 SSR/无 JavaScript 默认可见，删除通用 section 上浮 reveal 假设；领养在全部目标视口一屏看见标题、角色、名称/物种、状态和唯一行动。
+- [x] **T38 · 首页静态四幕骨架**：先完成 Hero、lead work、非对称 commission、single adoption 的尺寸、空态和响应式，不加复杂动画；内容 SSR/无 JavaScript 默认可见，删除通用 section 上浮 reveal 假设；领养在全部目标视口一屏看见标题、角色、名称/物种、状态和唯一行动。证据：`implementation/evidence/T37-T47-2026-08-21/t38-static/`。
 - [ ] **T39 · Hero 焦点写入契约**：未启用 item 通过 CAS 修改现有 asset focal；共享 asset 冲突阻断；焦点变化重建不可变变体。
 - [ ] **T40 · 九宫格与目标裁切预览**：横/竖目标比例、中心/四角/边预设、已有任意坐标最近提示；复用 Hero 管理统一 UI。
 - [ ] **T41 · Token、输入模态与 reduced**：在已通过机会后建立 feedback/state/content/media 与 standard/playful easing，迁移散落 620/680ms；autoplay、pointer/touch、keyboard 分开时序，reduced 保留短状态淡化；drag 未满足 1:1 跟手/反向/中断/速度/纵向滚动门槛时不实施。

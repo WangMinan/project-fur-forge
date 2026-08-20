@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import HomeMotionReveal from '~/components/HomeMotionReveal.vue'
 import {
   PROJECT_ENGLISH_NAME,
   PROJECT_NAME,
@@ -37,23 +36,17 @@ if (homeError.value) {
   <div v-if="home" class="public-home home-page" data-testid="public-home">
     <HomeHeroCarousel :home="home.hero" />
 
-    <HomeMotionReveal data-testid="home-featured-reveal">
-      <FeaturedWorks
-        :works="home.featured.items"
-        :available="home.featured.available"
-      />
-    </HomeMotionReveal>
+    <FeaturedWorks
+      :works="home.featured.items"
+      :available="home.featured.available"
+    />
 
-    <HomeMotionReveal data-testid="home-entries-reveal">
-      <HomeBusinessEntries :entries="home.entries" />
-    </HomeMotionReveal>
+    <HomeBusinessEntries :entries="home.entries" />
 
-    <HomeMotionReveal data-testid="home-adoptions-reveal">
-      <HomeCurrentAdoptions
-        :adoptions="home.currentAdoptions.items"
-        :available="home.currentAdoptions.available"
-      />
-    </HomeMotionReveal>
+    <HomeCurrentAdoptions
+      :adoptions="home.currentAdoptions.items"
+      :available="home.currentAdoptions.available"
+    />
 
   </div>
 </template>
