@@ -1,0 +1,87 @@
+[
+  {
+    "name": "390x844",
+    "businessStatuses": [
+      "委托咨询开放有限开放",
+      "领养信息以页面为准有限开放"
+    ],
+    "mediaHeights": [
+      438.875,
+      438.875,
+      438.875
+    ],
+    "exactMediaHeight": true,
+    "horizontalOverflow": 0,
+    "oneViewportComplete": true,
+    "lastActionBottom": 743.171875,
+    "consoleErrors": []
+  },
+  {
+    "name": "430x932",
+    "businessStatuses": [
+      "委托咨询开放有限开放",
+      "领养信息以页面为准有限开放"
+    ],
+    "mediaHeights": [
+      484.625,
+      484.625,
+      484.625
+    ],
+    "exactMediaHeight": true,
+    "horizontalOverflow": 0,
+    "oneViewportComplete": true,
+    "lastActionBottom": 788.421875,
+    "consoleErrors": []
+  },
+  {
+    "name": "768x1024",
+    "businessStatuses": [
+      "委托咨询开放有限开放",
+      "领养信息以页面为准有限开放"
+    ],
+    "mediaHeights": [
+      532.46875,
+      532.46875,
+      532.46875
+    ],
+    "exactMediaHeight": true,
+    "horizontalOverflow": 0,
+    "oneViewportComplete": true,
+    "lastActionBottom": 836.875,
+    "consoleErrors": []
+  },
+  {
+    "name": "1024x900",
+    "businessStatuses": [
+      "委托咨询开放有限开放",
+      "领养信息以页面为准有限开放"
+    ],
+    "mediaHeights": [
+      612,
+      612,
+      612
+    ],
+    "exactMediaHeight": true,
+    "horizontalOverflow": 0,
+    "oneViewportComplete": true,
+    "lastActionBottom": 516.109375,
+    "consoleErrors": []
+  },
+  {
+    "name": "1440x900",
+    "businessStatuses": [
+      "委托咨询开放有限开放",
+      "领养信息以页面为准有限开放"
+    ],
+    "mediaHeights": [
+      612,
+      612,
+      612
+    ],
+    "exactMediaHeight": true,
+    "horizontalOverflow": 0,
+    "oneViewportComplete": true,
+    "lastActionBottom": 538.625,
+    "consoleErrors": []
+  }
+]

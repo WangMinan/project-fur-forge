@@ -24,8 +24,10 @@ const secondary = computed(() => works.value.slice(1))
     data-testid="featured-works"
   >
     <header class="featured-works__header">
-      <p class="featured-works__eyebrow">SELECTED WORK</p>
-      <h2 id="featured-works-title" class="featured-works__title">代表作品</h2>
+      <div>
+        <p class="featured-works__eyebrow">SELECTED WORK</p>
+        <h2 id="featured-works-title" class="featured-works__title">代表作品</h2>
+      </div>
     </header>
 
     <article class="featured-lead" :data-orientation="lead.cardOrientation">
@@ -44,21 +46,20 @@ const secondary = computed(() => works.value.slice(1))
             :species="lead.work.species"
           />
         </h3>
-        <p class="featured-lead__description">
-          从真实作品开始认识有点小狗。角色、毛色与轮廓由画面自己说话。
-        </p>
-        <PublicAction :to="lead.href" variant="text">
-          查看作品 <span aria-hidden="true">→</span>
-        </PublicAction>
+        <div class="featured-lead__actions">
+          <PublicAction to="/works" variant="secondary">
+            浏览作品展示
+          </PublicAction>
+          <PublicAction :to="lead.href">
+            查看当前作品
+          </PublicAction>
+        </div>
       </div>
     </article>
 
     <div v-if="secondary.length > 0" class="featured-works__secondary">
       <header class="featured-works__secondary-head">
         <h3>继续浏览</h3>
-        <PublicAction to="/works" variant="text">
-          查看全部作品 <span aria-hidden="true">→</span>
-        </PublicAction>
       </header>
       <FeaturedTrack :works="secondary" />
     </div>
@@ -73,13 +74,17 @@ const secondary = computed(() => works.value.slice(1))
   display: grid;
   max-width: var(--public-content-wide);
   margin: 0 auto;
-  padding: clamp(var(--space-8), 8vw, var(--space-11)) var(--public-page-padding) 0;
+  padding: var(--space-6) var(--public-page-padding) 0;
 }
 
 .featured-works__header {
   display: grid;
-  gap: var(--space-2);
   margin-bottom: var(--space-6);
+}
+
+.featured-works__header > div {
+  display: grid;
+  gap: var(--space-2);
 }
 
 .featured-works__eyebrow,
@@ -92,9 +97,9 @@ const secondary = computed(() => works.value.slice(1))
 
 .featured-works__title {
   font-family: var(--font-public-display);
-  font-size: clamp(2.5rem, 6vw, 5.5rem);
+  font-size: var(--font-size-xl);
   font-weight: 600;
-  line-height: var(--line-height-tight);
+  line-height: var(--line-height-heading);
   letter-spacing: var(--letter-spacing-tight);
 }
 
@@ -105,8 +110,7 @@ const secondary = computed(() => works.value.slice(1))
 
 .featured-lead__media {
   display: grid;
-  min-height: 24rem;
-  height: min(66svh, 44rem);
+  height: var(--home-scene-media-height);
   overflow: hidden;
   background: var(--public-bg-secondary);
   border-radius: var(--radius-image);
@@ -131,6 +135,12 @@ const secondary = computed(() => works.value.slice(1))
   max-width: 28rem;
 }
 
+.featured-lead__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
 .featured-lead__name {
   margin: 0;
   font-family: var(--font-public-display);
@@ -139,23 +149,23 @@ const secondary = computed(() => works.value.slice(1))
   line-height: var(--line-height-heading);
 }
 
-.featured-lead__description {
-  color: var(--public-text-secondary);
-  line-height: var(--line-height-relaxed);
-}
-
 .featured-works__secondary {
+  position: relative;
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-3);
   min-width: 0;
-  margin-top: clamp(var(--space-8), 8vw, var(--space-10));
+  margin-top: var(--space-6);
 }
 
 .featured-works__secondary-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-4);
+  padding-right: 6.5rem;
+}
+
+.featured-works__secondary :deep(.featured-track__controls) {
+  position: absolute;
+  top: -0.5rem;
+  right: 0;
+  margin: 0;
 }
 
 .featured-works__secondary-head h3 {
@@ -172,13 +182,7 @@ const secondary = computed(() => works.value.slice(1))
 
 @media (max-width: 767px) {
   .featured-lead__media {
-    min-height: 0;
-    height: auto;
-    aspect-ratio: 4 / 5;
-  }
-
-  .featured-lead[data-orientation='landscape'] .featured-lead__media {
-    aspect-ratio: 16 / 10;
+    height: var(--home-scene-media-height);
   }
 }
 

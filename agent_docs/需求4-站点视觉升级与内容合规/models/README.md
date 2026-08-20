@@ -55,6 +55,7 @@ interface PublicHomeAggregate {
   currentAdoptions: {
     available: boolean
     items: PublicAdoptionListItemDto[]
+    status: PublicSiteBusinessStatusDto | null
   }
 }
 ```
@@ -65,6 +66,7 @@ interface PublicHomeAggregate {
 - `featured.items.slice(1)` 为次级精选；
 - `entries.commission` 为委托幕视觉源；
 - `currentAdoptions.items` 最多一项，且只能是排序后的第一件 `available`；
+- `currentAdoptions.status` 直接投影现有领养营业状态，不依赖 `entries.adoption` 是否有媒体；
 - 无 available 时 `items=[]`，前端隐藏整幕。
 
 如为了兼容暂时保留数组类型，也必须在 repository 层只投影一项，不由组件再次 `slice(0, 2)`。
