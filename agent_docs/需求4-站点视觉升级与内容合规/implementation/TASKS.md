@@ -1,12 +1,12 @@
 # 任务清单：站点视觉升级与内容合规
 
 > **角色**：需求4唯一任务与勾选权威；每个任务均可由 Agent 独立实现、验证和交接。
-> **状态**：2026-08-20 已完成 T04～T34 的当前工程实现；T35/T36 的 Linux runtime/容器分发证据保持开放，当前在进入 T37 前收口独立 Review finding。
+> **状态**：2026-08-20 已完成 T04～T34、T34-F1 与 M01～M11 的当前工程实现；T35/T36 的 Linux runtime/容器分发证据保持开放，但不阻塞本地进入 T37～T47。阶段 E 文档 Review 已完成，T37 仍未开始。
 > **规则**：完成即勾选；不删除已完成历史项；实现、独立 Review、用户验收和生产发布互不代签。
 
 ## 当前目标
 
-先统一按钮、上传和长任务进度，再减轻测试体系并修正领养排序；随后用现有字段完成轻量隐私、单条删除和第三方声明，最后推进 Hero 焦点、灵动动效与首页四幕。不得从旧版复杂 intake Schema 方案继续实施。
+已完成按钮、上传、长任务进度、测试减负、领养排序、轻量隐私、单条删除和当前生成环境第三方声明。下一步从 T37 只读动效机会审计开始阶段 E，再完成静态四幕、焦点、输入模态和场景动效。不得从 motion token、全局页面转场或旧版复杂 intake Schema 方案直接开工。
 
 ## 0. 文档与基线
 
@@ -121,22 +121,24 @@
 
 ## E. 动效、Hero 焦点与首页四幕
 
-- [ ] **T37 · Motion token**：建立 feedback/content/media/page 与 standard/playful easing；迁移散落 620/680ms，不让测试断言精确值。
-- [ ] **T38 · Header/Footer/页面切换**：降低 SaaS 胶囊浮起感；一层材料、清楚 active/focus；页面/锚点/后退/焦点和 reduced preferences 无回退。
+- [ ] **T37 · 动效机会审计与拒绝清单**：只读盘点 reveal/hover/carousel/route/menu/状态反馈/共享对象路径；按频率、目的、速度、功能筛选约 5～7 个高置信机会，记录 rejected candidates、输入模态、reduced 版本和中断策略；不改应用代码、不预装动效库。
+- [ ] **T38 · 首页静态四幕骨架**：先完成 Hero、lead work、非对称 commission、single adoption 的尺寸、空态和响应式，不加复杂动画；内容 SSR/无 JavaScript 默认可见，删除通用 section 上浮 reveal 假设；领养在全部目标视口一屏看见标题、角色、名称/物种、状态和唯一行动。
 - [ ] **T39 · Hero 焦点写入契约**：未启用 item 通过 CAS 修改现有 asset focal；共享 asset 冲突阻断；焦点变化重建不可变变体。
 - [ ] **T40 · 九宫格与目标裁切预览**：横/竖目标比例、中心/四角/边预设、已有任意坐标最近提示；复用 Hero 管理统一 UI。
-- [ ] **T41 · 首页静态四幕骨架**：先完成 Hero/lead work/commission/single adoption 的尺寸、空态和响应式，不加复杂动画。
-- [ ] **T42 · Hero 角色感**：图片聚焦、品牌 mask/clip 错峰、控制器一次轻回弹；自动轮播/reduced-motion/隐藏项加载保持正确。
+- [ ] **T41 · Token、输入模态与 reduced**：在已通过机会后建立 feedback/state/content/media 与 standard/playful easing，迁移散落 620/680ms；autoplay、pointer/touch、keyboard 分开时序，reduced 保留短状态淡化；drag 未满足 1:1 跟手/反向/中断/速度/纵向滚动门槛时不实施。
+- [ ] **T42 · Hero 角色感与静默控制器**：图片聚焦、品牌 mask/clip 错峰；默认只显示低权重分页/进度，箭头与暂停/继续按键盘、fine pointer 边缘/控制区和触控显式唤起，暂停后恢复入口持续可见；自动轮播/页面隐藏/reduced/隐藏项加载保持正确。
 - [ ] **T43 · 代表作品幕**：lead 大图、短 caption、一个行动、剩余精选次级；桌面 fine pointer 有轻聚焦，触控无 tilt。
 - [ ] **T44 · 自设委托幕**：非对称分栏、同源媒体连续性、一个主行动、QQ 优先/邮箱备用短说明。
-- [ ] **T45 · 单项设定领养幕**：唯一 available 单幅完整展示；无 available 隐藏；caption/行动不遮主体。
-- [ ] **T46 · 区块与共享对象动效**：遮罩、图文错峰、轻弹性和 View Transitions 渐进增强；一个视口一个主要大对象运动。
-- [ ] **T47 · 移动/reduced/性能**：390/430/768/1024/1440、真实手机、LCP/CLS/decode/GPU、safe area、输入法、键盘/焦点、prefers-*。
+- [ ] **T45 · 单项设定领养幕**：唯一 available 单幅完整展示；无 available 隐藏；1440×900、1024×900、768×1024、430×932、390×844 从章节起点进入后，无需第二次滚动即可看到标题、角色、名称/物种、状态和唯一行动；caption/行动不遮主体。
+- [ ] **T46 · Header、菜单、路由与共享对象**：Header 降低 SaaS 胶囊感、Footer 静态；普通路由即时或短 opacity，不做全站 `out-in + translateY`；View Transitions 只增强三条确认路径；不恢复通用 section reveal、全面 tilt 或 CTA 回弹。
+- [ ] **T47 · 连续移动/reduced/性能验收**：每个机会同步检查中断/反向、autoplay/pointer/touch/keyboard、390/430/768/1024/1440、真实手机、LCP/CLS/decode/GPU、safe area、输入法、键盘/焦点、prefers-*；drag 实施时另验跟手、速度和纵向滚动。
 
 ### GATE-E · 既简洁又有生命感
 
 - [ ] 四幕顺序与主次明确；
-- [ ] 领养只展示一项；
+- [ ] Hero 默认静默且控制器对键盘/触控可获得，暂停后恢复入口清楚；
+- [ ] 领养只展示一项，并在全部目标视口一屏完成标题、角色、身份、状态和行动表达；
+- [ ] autoplay、pointer/touch、keyboard 使用不同节奏，未达完整门槛时不做 drag；
 - [ ] 角色感动效一次性、有因、无持续噪声；
 - [ ] 移动端不是桌面缩小版；
 - [ ] Hero 横竖独立维护清楚；
@@ -165,5 +167,5 @@
 ## 闭环结论
 
 - T04～T34 的当前开发范围与本地证据已完成；用户已确认个人信息处理者名称为“有点小狗工作室”。
-- T35/T36 的 Linux FFmpeg runtime registry、容器嵌入、Docker Hub 分发核验与 release evidence 已后置；GATE-D 未完整关闭。
-- 本轮未进入 T37 及之后的 Hero 焦点、动效和首页四幕。
+- T35/T36 的 Linux FFmpeg runtime registry、容器嵌入、Docker Hub 分发核验与 release evidence 已后置；GATE-D 未完整关闭，不阻塞本地 T37～T47，但最终 Review、镜像冻结和发布不得绕过。
+- 阶段 E 文档 Review 已完成；T37 及之后的 Hero 焦点、动效和首页四幕实现仍未开始。
