@@ -97,3 +97,7 @@
 - 远端 Actions、独立 Review、真实 OSS/ESA、生产 Secret/数据、真实手机与生产发布：均未执行或代签。
 
 结论：GATE-B 五项满足，本轮严格停止在 T22 之前。本节未记录 Secret、PII、私有 Object Key、签名 URL 或生产数据。
+
+## 2026-08-20 follow-up
+
+本记录中的“委托宽屏横/竖双槽并排”是首轮实现当时的历史事实，不是最终产品契约。用户复核后，首页和委托 placement 都通过横/竖二级 Tab 只渲染当前方向；顶部仍显示另一方向的计数摘要，四个 collection 的 version、items、owner context、CAS 和 operation 继续独立。

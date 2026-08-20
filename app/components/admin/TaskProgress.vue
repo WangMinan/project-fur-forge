@@ -9,6 +9,9 @@ const props = withDefaults(defineProps<{
   max?: number | null
   mode: 'determinate' | 'indeterminate' | 'stage'
   retryLabel?: string
+  retryBusy?: boolean
+  retryDisabled?: boolean
+  retryLoadingLabel?: string
   showElapsed?: boolean
   stage?: string | null
   startedAt?: number | string | null
@@ -23,6 +26,9 @@ const props = withDefaults(defineProps<{
   detail: null,
   max: null,
   retryLabel: '重试',
+  retryBusy: false,
+  retryDisabled: false,
+  retryLoadingLabel: '重试中…',
   showElapsed: false,
   stage: null,
   startedAt: null,
@@ -156,7 +162,14 @@ onScopeDispose(() => {
     />
     <p v-if="detail" class="admin-task-progress__detail">{{ detail }}</p>
     <div v-if="canRetry || canCancel" class="admin-task-progress__actions">
-      <AdminAction v-if="canRetry" size="small" @click="emit('retry')">
+      <AdminAction
+        v-if="canRetry"
+        size="small"
+        :disabled="retryDisabled || retryBusy"
+        :loading="retryBusy"
+        :loading-label="retryLoadingLabel"
+        @click="emit('retry')"
+      >
         {{ retryLabel }}
       </AdminAction>
       <AdminAction v-if="canCancel" size="small" @click="emit('cancel')">
