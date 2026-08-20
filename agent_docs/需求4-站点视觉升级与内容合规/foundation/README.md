@@ -37,7 +37,7 @@
 - `app/pages/commission/apply.vue`：两个未预勾选确认——成年/设定权利、隐私已读并理解提交非接单。
 - `shared/schemas/commission.ts` 与提交 service：只增加两个 `z.literal(true)` 请求字段并在消费上传前校验；不持久化确认、不新增版本握手。
 - `site_content` 现有 about/commission/terms/privacy/contact 字段与管理端：继续承担真实经营主体、隐私政策、服务条款和联系信息；不新增通用 CMS 或专用处理者字段。
-- `scripts/`、现有 repository/service/storage：单条申请 retention Review 与精确删除 CLI；不提供自动批量删除。
+- 现有 repository/service/storage：为 CLI 和 `/admin/commissions` 提供同一套单条 retention Review、dry-run 与精确删除能力；不提供自动批量删除。
 - `/licenses`、生成脚本与第三方 runtime/asset registry：第三方声明事实源。当前 release workflow 把包含 FFmpeg 的镜像发布到公开 Docker Hub，因此 FFmpeg 必须按分发场景留存精确二进制、许可证、对应源码和构建信息。
 
 以下模块只继承、不在本轮重构：管理员认证、作品/水印领域模型、OSS CORS、Nginx/Compose、支付外部流程、QQ 平台本身。
@@ -101,7 +101,7 @@ privacyNoticeAcknowledged: true
 
 ### 4.4 删除能力
 
-- 首版为受控 CLI/容器 one-shot operation，不提供匿名公开删除接口。
+- 首版同时提供受控 CLI/容器 one-shot operation 与认证管理端的单条删除入口；不提供匿名公开删除接口。
 - Review 命令可以按状态/日期列出脱敏候选；正式删除每次只接受一个 submission ID/回执。
 - 默认 dry-run；正式执行要求显式 `--execute` 与固定强确认短语。
 - 不建设自动调度、通用规则引擎、时间批量删除或后台“一键清空”。

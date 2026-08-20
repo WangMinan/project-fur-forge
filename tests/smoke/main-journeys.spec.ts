@@ -135,6 +135,19 @@ test('领养目录保持开放在前并可进入统一详情', async ({ page }) 
 
 test('委托申请成功并且私有设定图不生成公开对象', async ({ page }) => {
   await resetFakeMedia(page)
+  for (const [width, height] of [
+    [390, 844],
+    [768, 1024],
+    [1440, 900],
+  ] as const) {
+    await page.setViewportSize({ width, height })
+    await page.goto(`${publicBaseURL}/commission/apply`)
+    await expect(page.getByLabel(/已年满 18 周岁/u)).not.toBeChecked()
+    await expect(page.getByLabel(/已阅读《隐私政策》/u)).not.toBeChecked()
+    expect(await page.evaluate(() => (
+      document.documentElement.scrollWidth - document.documentElement.clientWidth
+    ))).toBeLessThanOrEqual(1)
+  }
   await fillCommission(page, {
     nickname: 'Smoke 成功申请',
     phone: '19900000001',
@@ -146,7 +159,10 @@ test('委托申请成功并且私有设定图不生成公开对象', async ({ pa
   await expect(page.getByText('请阅读隐私政策并确认')).toBeVisible()
   await expect(page.getByAltText('所选设定图预览')).toBeVisible()
   expect((await fakeMediaState(page)).putRecords).toHaveLength(0)
-  await confirmCommission(page)
+  await page.getByLabel(/已年满 18 周岁/u).focus()
+  await page.keyboard.press('Space')
+  await page.getByLabel(/已阅读《隐私政策》/u).focus()
+  await page.keyboard.press('Space')
   await page.getByRole('button', { name: '确认提交' }).click()
   await expect(page.getByText('申请已收到')).toBeVisible()
 })
@@ -191,8 +207,20 @@ test('管理端对已拒绝申请先脱敏 dry-run，再单条删除', async ({ 
   const submissionId = new URL(page.url()).pathname.split('/').at(-1)!
 
   await page.goto(`${adminBaseURL}/admin/commissions?status=rejected`)
+  for (const [width, height] of [
+    [390, 844],
+    [768, 1024],
+    [1440, 900],
+  ] as const) {
+    await page.setViewportSize({ width, height })
+    await page.goto(`${adminBaseURL}/admin/commissions?status=rejected`)
+    const row = page.locator('.commission-inbox__row').filter({ hasText: nickname })
+    await expect(row.getByRole('button', { name: '删除申请数据' })).toBeVisible()
+    expect(await page.evaluate(() => (
+      document.documentElement.scrollWidth - document.documentElement.clientWidth
+    ))).toBeLessThanOrEqual(1)
+  }
   const rejectedRow = page.locator('.commission-inbox__row').filter({ hasText: nickname })
-  await expect(rejectedRow.getByRole('button', { name: '删除申请数据' })).toBeVisible()
   await rejectedRow.locator('.commission-inbox__item').click()
   await expect(page.getByRole('heading', { name: '删除申请数据' })).toBeVisible()
 
@@ -322,21 +350,27 @@ test('作品上传显示真实 XHR determinate 进度，并可发布和下架', 
 })
 
 test('隐私、服务条款和开源软件声明可读', async ({ page }) => {
-  for (const [path, heading] of [
-    ['/privacy', '隐私政策'],
-    ['/service', '服务条款'],
-    ['/licenses', '开源软件声明'],
-  ] as const) {
-    await page.goto(path)
-    await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible()
-    await expect(page.locator('body')).not.toContainText('{{controller_name}}')
-    if (path === '/licenses') {
-      await expect(page.getByText(/Linux 发布镜像内实际二进制/u)).toBeVisible()
-      await expect(page.getByRole('link', { name: '下载完整 TXT 声明' }))
-        .toHaveAttribute('href', '/THIRD_PARTY_NOTICES.txt')
-      await expect(page.locator('body')).not.toContainText('gyan.dev')
-      await expect(page.locator('body')).not.toContainText('e38092ef93')
-      await expect(page.locator('body')).not.toContainText('以下组件以 MIT 或 Apache-2.0 发布')
+  for (const [width, height] of [[390, 844], [768, 1024], [1440, 900]] as const) {
+    await page.setViewportSize({ width, height })
+    for (const [path, heading] of [
+      ['/privacy', '隐私政策'],
+      ['/service', '服务条款'],
+      ['/licenses', '开源软件声明'],
+    ] as const) {
+      await page.goto(path)
+      await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible()
+      await expect(page.locator('body')).not.toContainText('{{controller_name}}')
+      expect(await page.evaluate(() => (
+        document.documentElement.scrollWidth - document.documentElement.clientWidth
+      ))).toBeLessThanOrEqual(1)
+      if (path === '/licenses') {
+        await expect(page.getByText(/Linux 发布镜像内实际二进制/u)).toBeVisible()
+        await expect(page.getByRole('link', { name: '下载完整 TXT 声明' }))
+          .toHaveAttribute('href', '/THIRD_PARTY_NOTICES.txt')
+        await expect(page.locator('body')).not.toContainText('gyan.dev')
+        await expect(page.locator('body')).not.toContainText('e38092ef93')
+        await expect(page.locator('body')).not.toContainText('以下组件以 MIT 或 Apache-2.0 发布')
+      }
     }
   }
 })

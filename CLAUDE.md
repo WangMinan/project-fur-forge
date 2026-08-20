@@ -125,7 +125,7 @@
 ### 3.6 保存与删除
 
 - 委托 PII/私有设定图只在评估、履行、1 年保修、争议及法律必要期限内保存。
-- 失效上传至少每月人工清理；申请至少每半年复核；rejected 处理满 180 天进入候选。
+- 失效上传至少每月人工清理；申请至少每半年复核；rejected 一经拒绝即可进入人工删除候选。
 - accepted 只有业务/保修/争议/法定期限结束后才人工确认。
 - 不建设 cron、Worker、TTL 或通用生命周期引擎。
 - Review 可以列 masked 候选；正式 execute 每次只允许一条申请，不提供按时间批量删除。
@@ -279,7 +279,7 @@ pnpm dev --host 0.0.0.0 --port 3000
 - `/adoptions` 排序在 repository/service 唯一实现，页面不二次排序。
 - Hero/works/adoption 复用现有 publication/lease/recovery/purge。
 - Hero admin 统一 UI，不合并四集合数据。
-- retention/deletion CLI 复用 repository/service/storage，不复制 OSS 客户端。
+- retention/deletion CLI 与管理端 API/UI 复用同一 repository/service/storage，不复制 OSS 客户端。
 - 公开内容 SSR 默认可见；动效不能先隐藏后等 JS。
 - 管理列表、对话框、行动、上传、进度和分页优先复用现有组件。
 - 新 upload flow 必须接入统一 progress；不得新增业务专属进度条 CSS。
