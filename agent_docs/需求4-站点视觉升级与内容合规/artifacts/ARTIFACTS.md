@@ -11,6 +11,7 @@
 | 1 规格 | 需求规格 | `../requirements/SPEC.md` | 定稿 | 产品与验收唯一真理来源 |
 | 1 规格 | 目标文案 | `../requirements/COPY.md` | 定稿 | about/commission/privacy/terms/licenses；处理者名称已确认 |
 | 1 设计 | 设计说明 | `../.design/README.md` | 定稿待视觉实现 | 四幕、动效、焦点、移动和验收 |
+| E 审计 | T37 动效机会审计 | `../.design/MOTION_OPPORTUNITIES.md` | 已完成 | 7 个通过机会、拒绝清单、输入/reduced/中断交接 |
 | 2 模型 | 模型说明 | `../models/README.md` | 定稿 | 焦点复用、轻量申请确认、单条删除和 notices |
 | 2 计划 | 实施计划 | `../planning/PLAN.md` | 定稿 | A～E 执行顺序 |
 | 2 迁移 | 数据迁移 | `../planning/DATA-MIGRATION.md` | 定稿 | 无 Schema 变更项、文案、删除、回滚与证据 |

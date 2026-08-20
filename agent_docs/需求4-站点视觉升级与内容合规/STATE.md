@@ -6,10 +6,11 @@
 
 ## 当前阶段
 
-阶段 E 准备 · 2026-08-20 已完成 T04～T34、T34-F1 与 M01～M11 的当前工程实施和本地证据，并完成阶段 E 文档 Review。下一步从 T37 只读动效机会审计开始；T37～T47 的本地设计、实现和视觉迭代不等待 T35/T36。Linux FFmpeg runtime registry、容器嵌入、Docker Hub 分发核验与 release evidence 仍保持开放，GATE-D 未关闭，最终独立 Review、镜像冻结和生产发布不得绕过。
+阶段 E 实施 · 2026-08-21 已完成 T04～T34、T34-F1、M01～M11 与 T37。只读动效机会审计筛出 7 个高置信机会并明确拒绝通用 section reveal、全站纵向路由转场、全面 tilt/CTA 回弹、Footer 入场和未达完整手势门槛的 drag；下一步按 T38 建立静态四幕。T38～T47 的本地设计、实现和视觉迭代不等待 T35/T36。Linux FFmpeg runtime registry、容器嵌入、Docker Hub 分发核验与 release evidence 仍保持开放，GATE-D 未关闭，最终独立 Review、镜像冻结和生产发布不得绕过。
 
 ## 最近验证
 
+- 2026-08-21：PR #21、本地分支和上游共同指向 `2920214`，工作树在开工前干净。T37 只读审计覆盖 reveal/hover/carousel/route/menu/状态反馈与三条共享对象路径；7 个机会通过频率、目的、速度和功能门禁，逐项记录 autoplay/pointer/touch/keyboard、reduced 与中断策略。审计没有修改应用代码或安装动效依赖；证据为 `.design/MOTION_OPPORTUNITIES.md`。
 - 2026-08-20：阶段 E 文档 Review 对照历史设计讨论、当前代码与 1440×900、768×1024、390×844 浏览器截图，确认 Hero 控制器静默态和首页领养一屏表达此前未进入可验收契约。1440×900 下当前领养 section 实测 949px、媒体 737px，caption 落到下一屏；空上下文读者也无法从旧文档判断控件显隐、一屏边界、输入模态或普通路由范围。本轮已把这些事实同步到 design/SPEC/PLAN/TASKS/REVIEW，未修改应用代码或代签视觉验收。
 - 2026-08-20：阶段编号统一为 A 组件/进度、B 测试/领养、C 内容/隐私、D retention/删除/声明、E 动效/Hero/四幕、F Review/发布。阶段 E 顺序改为 `T37 机会审计 → T38 静态四幕 → T39/T40 焦点与预览 → T41 token/输入模态/reduced → T42～T46 场景动效 → T47 连续验收`；T35/T36 只继续阻塞最终发布闭环。
 - 2026-08-20：修复后空上下文 Reader Test 已能明确回答 Hero 静默态、领养一屏、T37～T47 顺序、T35/T36 边界、输入模态、路由/View Transitions/Footer/reveal 与勾选状态；测试指出旧 `page-in: 300ms` token 与普通路由 120～180ms 上限冲突，已删除 page token 并统一由 `state: 180ms` 承担短路由 opacity。
@@ -69,4 +70,4 @@
 
 ## 下一步交接
 
-下一棒从 T37 只读动效机会审计开始，先形成最多 5～7 个高置信机会和 rejected list，再进入 T38 静态四幕；不得从 token、全局页面转场或通用 reveal 直接开工。T35/T36 与生产隐私文案投影仍在最终独立 Review、镜像冻结和发布前完成。当前文档修订和浏览器证据不代签应用实现、王旻安/景宸验收、真实手机、生产迁移/删除、镜像构建或发布。
+下一步执行 T38 静态四幕：先退役通用 section reveal 与全站纵向 page transition，再让 Hero、lead work、非对称委托与单项领养在五个目标视口静态成立；不得跳到 token 或全面场景动效。T35/T36 与生产隐私文案投影仍在最终独立 Review、镜像冻结和发布前完成。当前 T37 审计不代签应用实现、王旻安/景宸验收、真实手机、生产迁移/删除、镜像构建或发布。
