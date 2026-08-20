@@ -1,7 +1,7 @@
 # 任务清单：站点视觉升级与内容合规
 
 > **角色**：需求4唯一任务与勾选权威；每个任务均可由 Agent 独立实现、验证和交接。
-> **状态**：2026-08-20 已完成 T04～T21 与用户复核修正；GATE-A/GATE-B 已有本地证据，当前从 T22 继续。
+> **状态**：2026-08-20 已完成 T04～T34 的当前工程实现；T35/T36 的 Linux runtime/容器分发证据保持开放，当前在进入 T37 前收口独立 Review finding。
 > **规则**：完成即勾选；不删除已完成历史项；实现、独立 Review、用户验收和生产发布互不代签。
 
 ## 当前目标
@@ -92,7 +92,8 @@
 - [x] **T31 · 单条删除 execute**：固定强确认，current/version/delete marker/preview/pending 删除并验证后事务删行；每次只一条，管理端与 CLI 共用，不支持时间批量 execute。
 - [x] **T32 · 管理端入口、重入与隔离演练**：`/admin/commissions` 列表/详情先展示单条脱敏 dry-run，再强确认 execute；对象已不存在、DB commit 失败、异常引用、重复执行和备份恢复后复核均有明确行为。
 - [x] **T33 · 人工 SOP**：只维护月度上传清理、半年度申请 Review、用户权利请求、accepted 人工判断、单条 dry-run/execute 与备份恢复后复核流程；不建调度/提醒，不写虚构生产记录。
-- [x] **T34 · 第三方声明生成**：从实际生产依赖生成稳定 JSON/TXT，无生成时间、排序稳定、未知许可证失败；`ffmpeg-static` 包记录与实际二进制记录分开。
+- [x] **T34 · 第三方声明生成**：从当前生成环境已安装的 production dependencies 生成稳定 JSON/TXT，无生成时间、排序稳定、未知许可证失败；平台可选包不冒充目标 Linux runtime closure，`ffmpeg-static` 包记录与实际二进制记录分开。
+- [x] **T34-F1 · 阶段 E 前独立 Review 修复**：统一隐私政策 readiness 并接入申请页、上传/提交、health 与 live preflight；确认门禁提升为小型 core；notices 平台口径、`SEE LICENSE IN ...`、`/licenses` SSR 载荷、统一提交行动、busy 对话框和删除审计文档模型完成收口。
 - [ ] **T35 · Runtime/资产 registry（部分后置）**：本轮登记 Noto Serif SC 与 ZhuoHei Collage 已核实授权类型；Linux 发布镜像的 FFmpeg 版本、SHA-256、对应源码、补丁与构建配置后置到部署阶段，本轮不勾选。
 - [ ] **T36 · `/licenses` 与分发产物收口（部分后置）**：本轮让页面消费生成 notices，删除手写平行数组与已知错误 FFmpeg 文案；完整 runtime registry 嵌入容器、Docker Hub 分发核验与 release evidence 后置，本轮不勾选。
 

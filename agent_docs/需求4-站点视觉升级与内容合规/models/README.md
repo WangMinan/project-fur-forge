@@ -214,21 +214,18 @@ interface DeleteCommissionSubmissionCommand {
 
 ### 4.5 删除审计
 
-保留：
+复用现有 `audit_logs`，只持久保留：
 
 ```ts
 interface CommissionDeletionAudit {
-  actorUserId: string
+  actorUserId: string | null
   deletedAt: number
   submissionIdDigest: string
-  databaseRowCounts: Record<string, number>
-  objectCounts: Record<string, number>
-  result: 'SUCCESS' | 'FAILED'
-  failureCode?: string
+  result: 'SUCCESS' | 'FAILURE'
 }
 ```
 
-不保留 PII、完整 Key、内容摘要或可恢复 manifest。
+本次 dry-run/execute 响应仍返回数据库关系和对象的脱敏计数，供操作员当次核对；这些计数、失败阶段和失败码不写入长期审计。当前小型单管理员场景不为此新增删除审计表、通用详情 JSON 或第二套 operation。审计不保留 PII、完整 Key、内容摘要或可恢复 manifest。
 
 ## 5. 统一行动与进度 UI 模型
 
@@ -346,7 +343,7 @@ interface ThirdPartyNotice {
 
 规则：
 
-- `pnpm-prod` 来自生产依赖；`ffmpeg-static` 包记录与实际 FFmpeg 二进制记录分开；
+- `pnpm-prod` 来自生成环境已安装的 production dependencies；平台可选包只代表该环境快照，不冒充目标 Linux runtime closure；`ffmpeg-static` 包记录与实际 FFmpeg 二进制记录分开；
 - `manual-runtime` 最终至少包含发布镜像内实际 FFmpeg 二进制的版本、SHA-256、许可证、接收者可访问的对应源码、源码 revision、补丁和构建配置；该记录在 Linux 发布镜像部署阶段提取，本轮未生成 registry 时不创建占位事实或猜测值；
 - `manual-asset` 至少包含 Noto Serif SC 与 ZhuoHei Collage；
 - 排序稳定，不写生成时间；

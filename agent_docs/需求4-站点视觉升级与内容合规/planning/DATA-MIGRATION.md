@@ -183,7 +183,7 @@ DELETE COMMISSION APPLICATION DATA
 4. 删除 versions/delete markers（若启用）；
 5. 验证对象不可达；
 6. 事务删除/去标识 submission、session、asset variants、asset 和非必要备注；
-7. 写最小化删除审计；
+7. 写最小化删除审计（actor、时间、submission ID 摘要与 SUCCESS/FAILURE）；本次数据库/对象计数保留在 dry-run/execute 响应，不持久化第二套详情；
 8. 再次查询确保零残留。
 
 不得提供 `--status rejected --before ... --execute` 之类时间批量执行。人工批次通过逐条重复命令完成。
@@ -262,12 +262,13 @@ app/assets/licenses/THIRD_PARTY_NOTICES.txt
 - JSON/TXT 由同一输入生成；
 - 不写生成时间；
 - 排序稳定；
-- npm 事实来自生产依赖；
+- npm 事实来自当前生成环境已安装的 production dependencies；平台可选包明确为生成环境快照，不称为目标 Linux runtime closure；
 - `ffmpeg-static` 包与镜像内实际 FFmpeg 二进制分开记录；本轮只完成 npm/asset 事实。Linux 发布镜像中的二进制 registry、容器嵌入与分发核验后置到部署阶段；
 - Noto Serif SC、ZhuoHei Collage 由 asset registry 补充；
 - release 前核对 Docker Hub 可见性；当前公开仓库按分发场景生成容器内声明和 `/licenses` 数据，禁止输出“未分发”文案；
 - 缺失/未知许可证时失败，不猜测；
 - `/licenses` 不再维护平行手写运行时数组。
+- 页面只消费生成的紧凑 summary；完整 transitive JSON/TXT 保留为构建产物和下载，不进入 SSR/DOM。跨平台 drift 在显式 release 检查处理，不加入日常 `check:fast`。
 
 ## 12. 发布与回滚
 
