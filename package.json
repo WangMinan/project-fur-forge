@@ -33,7 +33,7 @@
     "test:smoke": "playwright test --config playwright.smoke.config.ts",
     "test:release": "node scripts/run-release-tests.mjs",
     "test:legacy": "vitest run --config vitest.legacy.config.ts && playwright test",
-    "check:fast": "pnpm test:groups && pnpm notices:check && pnpm lint && pnpm typecheck && pnpm test:core",
+    "check:fast": "pnpm test:groups && pnpm lint && pnpm typecheck && pnpm test:core",
     "preflight:oss": "node scripts/oss-preflight.mjs",
     "preflight:watermark": "node scripts/oss-watermark-centered-v2.mjs",
     "verify:production": "node scripts/verify-production.mjs",

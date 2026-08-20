@@ -5,6 +5,7 @@ if (!pnpmCli) {
   throw new Error('pnpm did not provide npm_execpath to the release test runner.')
 }
 const steps = [
+  { args: ['notices:check'] },
   { args: ['test:smoke'], env: { APP_ENV: 'test' } },
   { args: ['build'], env: { APP_ENV: 'production' } },
   { args: ['verify:production'] },

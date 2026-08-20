@@ -1,0 +1,101 @@
+{
+  "generatorScope": "installed-production-snapshot",
+  "packageCount": 796,
+  "licenseCounts": [
+    {
+      "license": "(BSD-3-Clause OR GPL-2.0)",
+      "count": 1
+    },
+    {
+      "license": "(MIT AND Zlib)",
+      "count": 2
+    },
+    {
+      "license": "(MIT OR Apache2)",
+      "count": 1
+    },
+    {
+      "license": "(MIT OR CC0-1.0)",
+      "count": 1
+    },
+    {
+      "license": "0BSD",
+      "count": 1
+    },
+    {
+      "license": "Apache License 2.0",
+      "count": 1
+    },
+    {
+      "license": "Apache-2.0",
+      "count": 36
+    },
+    {
+      "license": "BlueOak-1.0.0",
+      "count": 13
+    },
+    {
+      "license": "BSD",
+      "count": 1
+    },
+    {
+      "license": "BSD-2-Clause",
+      "count": 17
+    },
+    {
+      "license": "BSD-3-Clause",
+      "count": 12
+    },
+    {
+      "license": "CC-BY-4.0",
+      "count": 1
+    },
+    {
+      "license": "CC0-1.0",
+      "count": 3
+    },
+    {
+      "license": "GPL-3.0-or-later",
+      "count": 1
+    },
+    {
+      "license": "ISC",
+      "count": 51
+    },
+    {
+      "license": "MIT",
+      "count": 651
+    },
+    {
+      "license": "MIT OR Apache-2.0",
+      "count": 1
+    },
+    {
+      "license": "MPL-2.0",
+      "count": 2
+    }
+  ],
+  "ffmpegPackage": {
+    "name": "ffmpeg-static",
+    "version": "5.3.0",
+    "license": "GPL-3.0-or-later"
+  },
+  "assets": [
+    {
+      "name": "Noto Serif SC",
+      "version": "repository-asset",
+      "license": "OFL-1.1",
+      "homepage": "https://github.com/notofonts/noto-cjk",
+      "noticeText": "SIL Open Font License 1.1",
+      "usage": "委托制作单 PDF 正文字体。"
+    },
+    {
+      "name": "ZhuoHei Collage",
+      "version": "repository-asset",
+      "license": "Lemi Font free commercial-use license",
+      "homepage": "https://font.leminet.cn/#/",
+      "noticeText": "来源页面声明可免费商用；这是第三方授权资产，不表示开源软件。",
+      "usage": "DITE DOG 展示文字与品牌排版。"
+    }
+  ]
+}

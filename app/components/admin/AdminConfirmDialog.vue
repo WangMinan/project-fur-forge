@@ -41,7 +41,14 @@ watch(() => props.open, async (open) => {
 })
 
 function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape') {
+  if (event.key === 'Escape' && !props.busy) {
+    event.preventDefault()
+    emit('cancel')
+  }
+}
+
+function dismiss() {
+  if (!props.busy) {
     emit('cancel')
   }
 }
@@ -53,13 +60,14 @@ function onKeydown(event: KeyboardEvent) {
       v-if="open"
       class="confirm-dialog__overlay"
       @keydown="onKeydown"
-      @click.self="emit('cancel')"
+      @click.self="dismiss"
     >
       <div
         ref="dialog"
         class="confirm-dialog admin-surface"
         :role="showCancel ? 'dialog' : 'alertdialog'"
         aria-modal="true"
+        :aria-busy="busy || undefined"
         :aria-labelledby="'confirm-dialog-title'"
       >
         <h2 id="confirm-dialog-title" class="confirm-dialog__title">{{ title }}</h2>
@@ -73,7 +81,7 @@ function onKeydown(event: KeyboardEvent) {
             class="confirm-dialog__button confirm-dialog__button--secondary"
             data-cancel
             :disabled="busy"
-            @click="emit('cancel')"
+            @click="dismiss"
           >{{ cancelLabel }}</button>
           <button
             type="button"
