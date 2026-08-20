@@ -85,10 +85,17 @@ describe('T52-E6 production deployment contract', () => {
 
     expect(config).toContain("new URL('./scripts/embedded-ffmpeg.mjs', import.meta.url)")
     expect(config).toContain("new URL('./scripts/esa-sdk.mjs', import.meta.url)")
+    expect(config).toContain("new URL('./shared/utils/privacy-policy-readiness.mjs', import.meta.url)")
     expect(config).toContain("new URL('./scripts/oss-preflight-core.mjs', import.meta.url)")
-    expect(config).toContain(
-      'inline: [embeddedFfmpegRuntime, esaSdkRuntime, ossPreflightCoreRuntime]',
-    )
+    for (const runtime of [
+      'embeddedFfmpegRuntime',
+      'esaSdkRuntime',
+      'ossPreflightCoreRuntime',
+      'privacyPolicyReadinessRuntime',
+    ]) {
+      expect(config.slice(config.indexOf('externals:'), config.indexOf('handlers:')))
+        .toContain(runtime)
+    }
   })
 
   it('keeps the production example intentionally blocked until real values exist', () => {

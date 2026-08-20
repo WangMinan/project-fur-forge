@@ -5,7 +5,9 @@ import {
   createCommissionSubmissionResponseSchema,
   createCommissionUploadResponseSchema,
 } from '~~/shared/schemas/commission'
+import { publicSiteContentResponseSchema } from '~~/shared/schemas/site-content'
 import type { ConditionalPutDto } from '~~/shared/types/contracts'
+import { privacyPolicyReadiness } from '~~/shared/utils/privacy-policy-readiness.mjs'
 import { buildUploadDeclaration } from '~/utils/upload-declaration'
 import { putFileToSignedUrl } from '~/utils/signed-put'
 
@@ -14,6 +16,23 @@ useSeoMeta({
   description: '向有点小狗工作室私密提交一张设定图与委托联系信息。',
   robots: 'noindex, nofollow',
 })
+
+const { data: site, error: siteError } = await useFetch(
+  '/api/public/v1/site-content',
+  {
+    key: 'public-commission-apply-site-content',
+    headers: useRequestHeaders(['host']),
+    transform: raw => publicSiteContentResponseSchema.parse(raw).data,
+  },
+)
+
+const applicationAvailable = computed(() => (
+  !siteError.value
+  && privacyPolicyReadiness(
+    site.value?.about.privacyPolicy,
+    site.value?.contact.email,
+  ).ready
+))
 
 type FieldKey = 'adultConfirmed' | 'file' | 'heightCm' | 'nickname' | 'phone'
   | 'privacyNoticeAcknowledged' | 'qq' | 'species' | 'weightKg'
@@ -326,6 +345,19 @@ onBeforeUnmount(() => {
         <NuxtLink to="/commission">返回自设委托</NuxtLink>
       </section>
 
+      <section
+        v-else-if="!applicationAvailable"
+        class="commission-apply__unavailable"
+        role="status"
+      >
+        <h2>委托申请暂不可提交</h2>
+        <p>隐私政策和联系信息正在核对。完成后才会开放设定图上传与申请提交。</p>
+        <div class="commission-apply__unavailable-actions">
+          <PublicAction to="/privacy">查看隐私政策</PublicAction>
+          <PublicAction to="/commission" variant="secondary">返回自设委托</PublicAction>
+        </div>
+      </section>
+
       <form v-else class="commission-apply__form" novalidate @submit.prevent="submit">
         <p class="commission-apply__privacy">
           我们会使用你提交的设定图、联系方式和体型信息评估申请、与你沟通，并在接单后用于委托履行和售后。设定图不会公开展示。请勿在文件名或称呼中填写不必要的个人信息。
@@ -496,9 +528,11 @@ onBeforeUnmount(() => {
           max="1"
           :aria-label="`私有设定图上传进度 ${Math.round((progress ?? 0) * 100)}%`"
         />
-        <button type="submit" :disabled="busy">
-          {{ busy ? '正在处理…' : '确认提交' }}
-        </button>
+        <PublicAction
+          type="submit"
+          :loading="busy"
+          loading-label="正在处理…"
+        >确认提交</PublicAction>
       </form>
     </div>
   </div>
@@ -512,7 +546,8 @@ onBeforeUnmount(() => {
 }
 
 .commission-apply__form,
-.commission-apply__success {
+.commission-apply__success,
+.commission-apply__unavailable {
   display: grid;
   gap: var(--space-5);
 }
@@ -648,26 +683,19 @@ onBeforeUnmount(() => {
   accent-color: var(--public-accent-primary);
 }
 
-.commission-apply button {
-  min-height: 3rem;
-  padding: 0 var(--space-6);
-  border: 0;
-  border-radius: var(--radius-full);
-  color: var(--public-text-inverse);
-  background: var(--public-bg-inverse);
-  font: inherit;
-  font-weight: 600;
-}
-
-.commission-apply button:disabled {
-  opacity: 0.55;
-}
-
-.commission-apply__success {
+.commission-apply__success,
+.commission-apply__unavailable {
   padding: var(--space-7);
   border-radius: var(--radius-md);
   background: var(--public-bg-secondary);
   text-align: center;
+}
+
+.commission-apply__unavailable-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
 }
 
 .commission-apply__eyebrow {
