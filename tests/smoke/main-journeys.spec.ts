@@ -171,6 +171,83 @@ test('同手机号待处理申请拒绝重复提交并保留所选图片', async
   await expect(page.getByAltText('所选设定图预览')).toBeVisible()
 })
 
+test('管理端对已拒绝申请先脱敏 dry-run，再单条删除', async ({ page, request }) => {
+  await resetFakeMedia(page)
+  const nickname = `Smoke 删除-${Date.now().toString(36)}`
+  const phone = '19900000003'
+  const qq = '999999'
+  await fillCommission(page, { nickname, phone })
+  await confirmCommission(page)
+  await page.getByRole('button', { name: '确认提交' }).click()
+  await expect(page.getByText('申请已收到')).toBeVisible()
+
+  await loginAsAdmin(page)
+  await page.goto(`${adminBaseURL}/admin/commissions`)
+  await page.locator('.commission-inbox__item').filter({ hasText: nickname }).click()
+  await expect(page).toHaveURL(/\/admin\/commissions\/[0-9a-f-]+$/u)
+  await page.locator('#commission-status').selectOption('rejected')
+  await page.getByRole('button', { name: '保存处理结果' }).click()
+  await expect(page.getByRole('status')).toContainText('处理结果已保存')
+  const submissionId = new URL(page.url()).pathname.split('/').at(-1)!
+
+  await page.goto(`${adminBaseURL}/admin/commissions?status=rejected`)
+  const rejectedRow = page.locator('.commission-inbox__row').filter({ hasText: nickname })
+  await expect(rejectedRow.getByRole('button', { name: '删除申请数据' })).toBeVisible()
+  await rejectedRow.locator('.commission-inbox__item').click()
+  await expect(page.getByRole('heading', { name: '删除申请数据' })).toBeVisible()
+
+  const unauthenticated = await request.post(
+    `${adminBaseURL}/api/admin/v1/commissions/${submissionId}/deletion`,
+    {
+      data: { execute: false },
+      headers: { origin: adminBaseURL },
+    },
+  )
+  expect(unauthenticated.status()).toBe(401)
+
+  await page.getByRole('button', { name: '删除申请数据' }).click()
+  const dialog = page.getByRole('dialog', { name: '确认删除这一条申请？' })
+  await expect(dialog).toContainText('dry-run')
+  await expect(dialog).toContainText('数据库直接关联行')
+  await expect(dialog).toContainText('私有对象 Key：1')
+  await expect(dialog).not.toContainText(phone)
+  await expect(dialog).not.toContainText(qq)
+  await expect(dialog).not.toContainText('test/commission')
+
+  let executeRequests = 0
+  let releaseExecute!: () => void
+  const executeGate = new Promise<void>((resolve) => {
+    releaseExecute = resolve
+  })
+  await page.route('**/api/admin/v1/commissions/*/deletion', async (route) => {
+    executeRequests += 1
+    await executeGate
+    await route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        error: { code: 'INTERNAL_ERROR', message: 'synthetic deletion failure' },
+      }),
+    })
+  }, { times: 1 })
+  const confirm = dialog.locator('[data-confirm]')
+  await confirm.evaluate((button) => {
+    button.click()
+    button.click()
+  })
+  await expect(confirm).toBeDisabled()
+  await expect.poll(() => executeRequests).toBe(1)
+  releaseExecute()
+
+  await expect(dialog).toContainText('删除失败，数据库关系已保留或可安全重入')
+  await expect(confirm).toBeEnabled()
+  await confirm.click()
+
+  await expect(page).toHaveURL(/\/admin\/commissions\?status=rejected$/u)
+  await expect(page.locator('.commission-inbox__row').filter({ hasText: nickname })).toHaveCount(0)
+  expect((await fakeMediaState(page)).objects.some(key => key.includes('/commission/'))).toBe(false)
+})
+
 test('管理员可通过登录表单进入后台', async ({ page }) => {
   await page.goto(`${adminBaseURL}/admin/login`)
   await page.getByLabel('用户名').fill(E2E_ADMIN.username)
