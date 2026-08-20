@@ -17,7 +17,10 @@ const price = computed(() => props.adoption.work.price
 
 <template>
   <NuxtLink
-    :to="adoption.href"
+    :to="{
+      path: adoption.href,
+      query: { from: 'adoptions' },
+    }"
     class="adoption-card"
     :data-work-slug="adoption.work.slug"
   >
