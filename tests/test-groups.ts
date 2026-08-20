@@ -28,6 +28,7 @@ export const coreTestFiles = [
   'tests/unit/runtime-boundaries.test.ts',
   'tests/unit/search.test.ts',
   'tests/unit/site-display-recipe.test.ts',
+  'tests/unit/third-party-notices.test.ts',
   'tests/unit/work-form.test.ts',
   'tests/integration/adoption-projection.test.ts',
   'tests/integration/analytics.test.ts',
