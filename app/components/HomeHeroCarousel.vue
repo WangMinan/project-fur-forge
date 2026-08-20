@@ -547,7 +547,6 @@ onBeforeUnmount(() => {
 }
 
 .home-hero__eyebrow,
-.home-hero__title,
 .home-hero__tagline {
   animation: home-hero-brand-in var(--motion-duration-content) var(--motion-ease-standard) both;
 }
@@ -556,12 +555,8 @@ onBeforeUnmount(() => {
   animation-delay: 0ms;
 }
 
-.home-hero__title {
-  animation-delay: 90ms;
-}
-
 .home-hero__tagline {
-  animation-delay: 180ms;
+  animation-delay: 90ms;
 }
 
 .home-hero__controls {

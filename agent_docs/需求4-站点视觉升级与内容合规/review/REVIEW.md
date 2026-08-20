@@ -1,7 +1,7 @@
 # 评审记录：需求4
 
 > **角色**：记录 SPEC ↔ COPY ↔ design ↔ models ↔ PLAN ↔ TASKS ↔ 当前代码的一致性与风险。
-> **状态**：2026-08-21 已完成 T04～T34 与阶段 E T37～T46 当前工程实现/用户连续实画面修正；T47 真实手机/连续性能、最终应用独立 Review 与王旻安/景宸验收仍未执行，本文不代签。
+> **状态**：2026-08-21 已完成 T04～T34 与阶段 E T37～T46-F4 当前工程实现/用户连续实画面修正；T47 真实手机/连续性能、最终应用独立 Review 与王旻安/景宸验收仍未执行，本文不代签。
 > **评审基线**：第二轮应用代码审查基于 `main@aa8e5b70be0913f02ceddccdc262ec6fe0769df1`；对应文档随后以 `main@ea3ae0a1269676db8c06c28ed32a9a29f4bd7109` 合入，后者没有应用代码变更。
 
 ## 1. 评审对象
@@ -307,3 +307,11 @@
 - 用户否决已完成的九宫格，T40 保留为历史事实并新增 T40-F1：目标画面内连续拖动焦点 + 水平/垂直滑杆。
 - 首屏动画 class 在 RAF 后添加会造成完整显示后重启，改为首次 CSS 绘制直接运行；复制邮箱反馈导致父 flex 居中错位，改为顶边对齐并固定复制按钮最小宽度。
 - 随后用户要求 Header 逐幕滚动时固定；继续浏览提高媒体占比并靠近视口上部；三张主媒体 hover 从整幕命中缩到图片命中，回落由 content 420ms 改为 state 180ms。首版 fixed offset 叠加两次造成上一幕残片，已收敛为单一 scroll-padding。
+
+## 16. 2026-08-21 T46-F4 用户复核修正
+
+- 用户在刷新首页时观察到“有点小狗工作室”主标题发生一次先大后小/跳动。运行时逐帧测量确认标题 DOM 尺寸恒定，但现有标题仍参与 420ms clip/位移入场，且关键拼贴字体未预加载。修复将中文主标题从首载动画中移除并预加载字体；英文品牌与 slogan 保留错峰。新时间线中标题从首个可见采样起始终为 `transform:none`、`opacity:1`、`clip-path:none`。
+- 用户报告首页离站到 `/works`、委托和两条作品详情时新页面短暂继承首页深处的滚动位置。根因是 Nuxt 默认 scroll behavior 会等待页面/共享对象 transition 完成后才返回顶部，目标页面在过渡期间先以旧 `scrollY` 呈现。修复在 `app/router.options.ts` 统一同步返回新路由位置：普通 push 导航 `{top:0,left:0}`，back/forward 使用 `savedPosition`，hash 使用现有 scroll padding + target margin。四条首页离站路径在 URL 切换第一帧均为 `scrollY=0`；`/about#contact` 仍以 87.9px 顶距让开 73px Header。
+- 自设委托大图的整图 `NuxtLink` 已删除，图片只承担展示和共享对象源；两个明确按钮保持原目标。
+- 代表作品 lead 删除角色信息旁无含义的孤立 `01`。用户先复核无标题画廊仍缺少上下文，最终 PC 两个停靠点都显示“代表作品”，并以 `SELECTED WORK · 01/02` 说明页次；移动端第二处标题隐藏。次级轨道控制位于媒体下方，不与标题争抢顶部。
+- 验证包含 lint、typecheck、production build/content guard 与针对上述行为的真实 Chrome 测量/截图；没有新增永久测试，也没有运行无关 core/smoke。1440×900 与 390×844 无正向水平溢出，console error 为 0。证据见 `implementation/evidence/T46-F4-2026-08-21/`。T47 真实手机、连续 wheel/性能、最终人工验收和独立 Review 保持开放。

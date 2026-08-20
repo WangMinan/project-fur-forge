@@ -6,10 +6,11 @@
 
 ## 当前阶段
 
-阶段 E 工程交接 · 2026-08-21 已完成 T04～T34、T34-F1、M01～M11 与 T37～T46（含 T38-F1、T40-F1、T46-F1～F3）当前工程实现。首页 ≥1024px 按 Hero → lead → 继续浏览 → 委托 → 领养 → Footer 逐幕 wheel，1023px 以下原生滚动；Header 固定且单一 offset 不覆盖内容；Hero 焦点使用可拖标记和双滑杆。T47 真实手机/连续性能、王旻安/景宸人工验收、T35/T36 分发证据和最终独立 Review 保持开放。
+阶段 E 工程交接 · 2026-08-21 已完成 T04～T34、T34-F1、M01～M11 与 T37～T46（含 T38-F1、T40-F1、T46-F1～F4）当前工程实现。首页 ≥1024px 按 Hero → 代表作品 01 → 代表作品 02 → 委托 → 领养 → Footer 逐幕 wheel，1023px 以下原生滚动；Header 固定且单一 offset 不覆盖内容；Hero 焦点使用可拖标记和双滑杆。T47 真实手机/连续性能、王旻安/景宸人工验收、T35/T36 分发证据和最终独立 Review 保持开放。
 
 ## 最近验证
 
+- 2026-08-21：完成 T46-F4 用户复核修正。首页中文主标题取消首载 clip/位移动画并预加载拼贴字体，刷新后从第一帧保持最终字号；公开路由使用单一同步 `scrollBehavior`，`/works`、`/commission?view=home-commission` 与两条作品详情共享对象路径在导航完成第一帧均为 `scrollY=0`，返回/前进仍保留 saved position，真实 hash 仍按 Header offset 定位。自设委托主图改为纯展示，只有两个明确行动可导航。代表作品删除角色信息旁无语义的孤立 `01`，PC 两个停靠点改为同一“代表作品”标题与 `SELECTED WORK · 01/02` 眉题；移动端只显示第一处标题。lint、typecheck、production build/content guard、1440×900/390×844 真实 Chrome 通过；证据见 `implementation/evidence/T46-F4-2026-08-21/`。本条不代签 T47 真实手机、人工视觉验收或最终独立 Review。
 - 2026-08-21：最终交接的 lint、typecheck 通过；全部运行逻辑与 Nuxt 配置完成后 production build/content guard 成功。构建后只追加 Header 单一 offset、“继续浏览”按钮对齐两处 CSS 与文档修正，按用户明确要求未再重跑 build、临时 Playwright、core 或 smoke。T47 真实手机/连续性能和人工验收保持开放，不由构建结果代签。
 - 2026-08-21：本轮最终用户反馈要求首页 Header 固定、继续浏览减少空旷、hover 离图即回落，并在完成后 commit/push/结束 goal。Header 改为首页 fixed、滚动后浅色实底；逐幕 offset 最初同时写入 scroll-padding 与 scroll-margin 导致上一幕露出，已删除重复 scene margin，只保留容器 offset。次级媒体提高到约 56svh，hover 回落改为 180ms state。
 - 2026-08-21：最终对齐修正：继续浏览标题此前受 scene padding 下推，而绝对定位轨道按钮仍按 section 顶部定位；现改为共享 `--secondary-scene-padding-top`，按钮与标题同一行。
