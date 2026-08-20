@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { PublicWorkSummaryDto } from '~~/shared/types/contracts'
+import WorkIdentityLabel from '~/components/WorkIdentityLabel.vue'
 
 /**
  * 首页精选轨道：人工顺序由服务端聚合投影保证。
@@ -11,51 +12,184 @@ const props = defineProps<{
 }>()
 
 const works = computed(() => (props.available ? props.works : []))
+const lead = computed(() => works.value[0] ?? null)
+const secondary = computed(() => works.value.slice(1))
 </script>
 
 <template>
   <section
-    v-if="works.length > 0"
+    v-if="lead"
     class="featured-works"
     aria-labelledby="featured-works-title"
     data-testid="featured-works"
   >
     <header class="featured-works__header">
-      <h2 id="featured-works-title" class="featured-works__title">
-        精选作品
-      </h2>
-      <PublicAction to="/works" variant="text" class="featured-works__more">
-        查看全部作品
-        <span aria-hidden="true">→</span>
-      </PublicAction>
+      <p class="featured-works__eyebrow">SELECTED WORK</p>
+      <h2 id="featured-works-title" class="featured-works__title">代表作品</h2>
     </header>
 
-    <FeaturedTrack :works="works" />
+    <article class="featured-lead" :data-orientation="lead.cardOrientation">
+      <div class="featured-lead__media">
+        <ResponsivePicture
+          :sources="lead.card.sources"
+          :alt="lead.card.alt"
+          sizes="(min-width: 1024px) 68vw, 100vw"
+        />
+      </div>
+      <div class="featured-lead__caption">
+        <p class="featured-lead__number">01</p>
+        <h3 class="featured-lead__name">
+          <WorkIdentityLabel
+            :character-name="lead.work.characterName"
+            :species="lead.work.species"
+          />
+        </h3>
+        <p class="featured-lead__description">
+          从真实作品开始认识有点小狗。角色、毛色与轮廓由画面自己说话。
+        </p>
+        <PublicAction :to="lead.href" variant="text">
+          查看作品 <span aria-hidden="true">→</span>
+        </PublicAction>
+      </div>
+    </article>
+
+    <div v-if="secondary.length > 0" class="featured-works__secondary">
+      <header class="featured-works__secondary-head">
+        <h3>继续浏览</h3>
+        <PublicAction to="/works" variant="text">
+          查看全部作品 <span aria-hidden="true">→</span>
+        </PublicAction>
+      </header>
+      <FeaturedTrack :works="secondary" />
+    </div>
+    <PublicAction v-else to="/works" variant="text" class="featured-works__all">
+      查看全部作品 <span aria-hidden="true">→</span>
+    </PublicAction>
   </section>
 </template>
 
 <style scoped>
 .featured-works {
+  display: grid;
   max-width: var(--public-content-wide);
   margin: 0 auto;
-  padding: var(--space-9) var(--public-page-padding) 0;
+  padding: clamp(var(--space-8), 8vw, var(--space-11)) var(--public-page-padding) 0;
 }
 
 .featured-works__header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-4);
+  display: grid;
+  gap: var(--space-2);
   margin-bottom: var(--space-6);
+}
+
+.featured-works__eyebrow,
+.featured-lead__number {
+  color: var(--public-text-tertiary);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.16em;
 }
 
 .featured-works__title {
   font-family: var(--font-public-display);
-  font-size: var(--font-size-xl);
+  font-size: clamp(2.5rem, 6vw, 5.5rem);
   font-weight: 600;
-  line-height: var(--line-height-heading);
+  line-height: var(--line-height-tight);
   letter-spacing: var(--letter-spacing-tight);
 }
 
-.featured-works__more { flex-shrink: 0; }
+.featured-lead {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.featured-lead__media {
+  display: grid;
+  min-height: 24rem;
+  height: min(66svh, 44rem);
+  overflow: hidden;
+  background: var(--public-bg-secondary);
+  border-radius: var(--radius-image);
+  place-items: center;
+}
+
+.featured-lead__media :deep(.responsive-picture),
+.featured-lead__media :deep(.responsive-picture__image) {
+  width: 100%;
+  height: 100%;
+}
+
+.featured-lead__media :deep(.responsive-picture__image) {
+  object-fit: contain;
+}
+
+.featured-lead__caption {
+  display: grid;
+  align-content: end;
+  justify-items: start;
+  gap: var(--space-3);
+  max-width: 28rem;
+}
+
+.featured-lead__name {
+  margin: 0;
+  font-family: var(--font-public-display);
+  font-size: clamp(1.75rem, 3vw, 3rem);
+  font-weight: 600;
+  line-height: var(--line-height-heading);
+}
+
+.featured-lead__description {
+  color: var(--public-text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+.featured-works__secondary {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+  margin-top: clamp(var(--space-8), 8vw, var(--space-10));
+}
+
+.featured-works__secondary-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.featured-works__secondary-head h3 {
+  margin: 0;
+  font-family: var(--font-public-display);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.featured-works__all {
+  justify-self: end;
+  margin-top: var(--space-5);
+}
+
+@media (max-width: 767px) {
+  .featured-lead__media {
+    min-height: 0;
+    height: auto;
+    aspect-ratio: 4 / 5;
+  }
+
+  .featured-lead[data-orientation='landscape'] .featured-lead__media {
+    aspect-ratio: 16 / 10;
+  }
+}
+
+@media (min-width: 1024px) {
+  .featured-lead {
+    grid-template-columns: minmax(0, 2.35fr) minmax(18rem, 0.65fr);
+    align-items: stretch;
+  }
+
+  .featured-lead__caption {
+    padding: var(--space-6) 0 var(--space-4);
+  }
+}
 </style>
