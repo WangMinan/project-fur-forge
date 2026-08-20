@@ -80,6 +80,7 @@ const commissionPhoneSchema = z.object({
 }).strict()
 
 export const createCommissionSubmissionRequestSchema = z.object({
+  adultConfirmed: z.literal(true),
   uploadSessionId: resourceIdSchema,
   expectedUploadVersion: resourceVersionSchema,
   nickname: z.string().trim().min(1).max(50),
@@ -88,6 +89,7 @@ export const createCommissionSubmissionRequestSchema = z.object({
   qq: z.string().regex(/^[1-9]\d{4,11}$/u),
   heightCm: z.number().int().min(80).max(250),
   weightKg: z.number().min(20).max(300).multipleOf(0.1),
+  privacyNoticeAcknowledged: z.literal(true),
   // Honeypot: real clients leave this absent or empty.
   website: z.string().max(0).optional(),
 }).strict()

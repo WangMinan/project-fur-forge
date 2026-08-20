@@ -195,12 +195,35 @@ describe('R3-B anonymous commission upload', () => {
         id, username, password_hash, password_changed_at, created_at, updated_at
       ) VALUES (?, 'commission-admin', 'hash', ?, ?, ?)
     `).run(USER_ID, NOW, NOW, NOW)
+    expect(() => createCommissionSubmission(sqlite, {
+      adultConfirmed: false as true,
+      uploadSessionId: SESSION_ID,
+      expectedUploadVersion: 3,
+      nickname: '未确认申请',
+      species: '犬科',
+      phone: { countryCode: '+86', number: '19900000000' },
+      privacyNoticeAcknowledged: true,
+      qq: '100001',
+      heightCm: 170,
+      weightKg: 60.5,
+    }, TOKEN, { now: NOW + 2 })).toThrowError(expect.objectContaining({
+      statusCode: 400,
+    }))
+    expect(sqlite.prepare(`
+      SELECT status FROM commission_upload_sessions WHERE id = ?
+    `).pluck().get(SESSION_ID)).toBe('COMPLETED')
+    expect(sqlite.prepare(`
+      SELECT count(*) FROM commission_submissions
+    `).pluck().get()).toBe(0)
+
     const created = createCommissionSubmission(sqlite, {
+      adultConfirmed: true,
       uploadSessionId: SESSION_ID,
       expectedUploadVersion: 3,
       nickname: '合成称呼',
       species: '犬科',
       phone: { countryCode: '+86', number: '19900000000' },
+      privacyNoticeAcknowledged: true,
       qq: '100001',
       heightCm: 170,
       weightKg: 60.5,
@@ -214,11 +237,13 @@ describe('R3-B anonymous commission upload', () => {
       SELECT status FROM commission_upload_sessions WHERE id = ?
     `).pluck().get(SESSION_ID)).toBe('CONSUMED')
     expect(() => createCommissionSubmission(sqlite, {
+      adultConfirmed: true,
       uploadSessionId: SESSION_ID,
       expectedUploadVersion: 3,
       nickname: '合成称呼',
       species: '犬科',
       phone: { countryCode: '+86', number: '19900000000' },
+      privacyNoticeAcknowledged: true,
       qq: '100001',
       heightCm: 170,
       weightKg: 60.5,
@@ -316,11 +341,13 @@ describe('R3-B anonymous commission upload', () => {
     await createAndSeed(firstId, NOW, firstToken)
     await completeCommissionUpload(sqlite, storage, firstId, firstToken, 1, NOW + 1)
     createCommissionSubmission(sqlite, {
+      adultConfirmed: true,
       uploadSessionId: firstId,
       expectedUploadVersion: 3,
       nickname: '合成申请甲',
       species: '犬科',
       phone: { countryCode: '+86', number: '19900000000' },
+      privacyNoticeAcknowledged: true,
       qq: '100001',
       heightCm: 170,
       weightKg: 60,
@@ -334,11 +361,13 @@ describe('R3-B anonymous commission upload', () => {
     await completeCommissionUpload(sqlite, storage, secondId, secondToken, 1, NOW + 1)
     const attempts: number[] = []
     const second = createCommissionSubmission(sqlite, {
+      adultConfirmed: true,
       uploadSessionId: secondId,
       expectedUploadVersion: 3,
       nickname: '合成申请乙',
       species: '狐科',
       phone: { countryCode: '+86', number: '19800000000' },
+      privacyNoticeAcknowledged: true,
       qq: '100002',
       heightCm: 180,
       weightKg: 70,
@@ -365,11 +394,13 @@ describe('R3-B anonymous commission upload', () => {
     await createAndSeed(firstId, NOW, firstToken)
     await completeCommissionUpload(sqlite, storage, firstId, firstToken, 1, NOW + 1)
     createCommissionSubmission(sqlite, {
+      adultConfirmed: true,
       uploadSessionId: firstId,
       expectedUploadVersion: 3,
       nickname: '合成申请甲',
       species: '犬科',
       phone: { countryCode: '+86', number: '19900000000' },
+      privacyNoticeAcknowledged: true,
       qq: '100001',
       heightCm: 170,
       weightKg: 60,
@@ -378,11 +409,13 @@ describe('R3-B anonymous commission upload', () => {
     await createAndSeed(secondId, NOW, secondToken)
     await completeCommissionUpload(sqlite, storage, secondId, secondToken, 1, NOW + 1)
     expect(() => createCommissionSubmission(sqlite, {
+      adultConfirmed: true,
       uploadSessionId: secondId,
       expectedUploadVersion: 3,
       nickname: '合成申请乙',
       species: '狐科',
       phone: { countryCode: '+86', number: '19900000000' },
+      privacyNoticeAcknowledged: true,
       qq: '100002',
       heightCm: 180,
       weightKg: 70,

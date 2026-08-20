@@ -503,6 +503,9 @@ export function createCommissionSubmission(
     receiptCode?: (attempt: number) => string
   } = {},
 ) {
+  if (input.adultConfirmed !== true || input.privacyNoticeAcknowledged !== true) {
+    throw new ServiceError(400, 'VALIDATION_ERROR', 'Commission confirmations are required.')
+  }
   const now = options.now ?? Date.now()
   const initial = requireUpload(sqlite, input.uploadSessionId)
   assertToken(initial, token)

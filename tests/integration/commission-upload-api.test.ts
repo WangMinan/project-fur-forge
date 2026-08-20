@@ -114,11 +114,13 @@ function sessionActionRequest(
 }
 
 const submissionBody = {
+  adultConfirmed: true,
   uploadSessionId: '',
   expectedUploadVersion: 3,
   nickname: '合成接口申请',
   species: '犬科',
   phone: { countryCode: '+86', number: '19900000000' },
+  privacyNoticeAcknowledged: true,
   qq: '100001',
   heightCm: 170,
   weightKg: 60.5,
@@ -127,7 +129,11 @@ const submissionBody = {
 function submissionRequest(
   id: string,
   token: string,
-  options: { origin?: string, website?: string } = {},
+  options: {
+    body?: Record<string, unknown>
+    origin?: string
+    website?: string
+  } = {},
 ) {
   return fetch(`${publicBaseUrl}/api/public/v1/commission-submissions`, {
     method: 'POST',
@@ -139,6 +145,7 @@ function submissionRequest(
     body: JSON.stringify({
       ...submissionBody,
       uploadSessionId: id,
+      ...options.body,
       ...(options.website === undefined ? {} : { website: options.website }),
     }),
   })
@@ -247,6 +254,31 @@ describe('commission upload public API boundaries', () => {
     )
     expect(submissionHoneypot.status).toBe(400)
     expect(JSON.stringify(await submissionHoneypot.json())).not.toContain('filled')
+
+    const missingConfirmations = await submissionRequest(
+      created.data.session.uploadSessionId,
+      created.data.token,
+      { body: { adultConfirmed: undefined, privacyNoticeAcknowledged: undefined } },
+    )
+    expect(missingConfirmations.status).toBe(400)
+    const falseConfirmation = await submissionRequest(
+      created.data.session.uploadSessionId,
+      created.data.token,
+      { body: { adultConfirmed: false } },
+    )
+    expect(falseConfirmation.status).toBe(400)
+    const beforeConfirmedSubmit = openDatabase(databaseFile)
+    try {
+      expect(beforeConfirmedSubmit.sqlite.prepare(`
+        SELECT status FROM commission_upload_sessions WHERE id = ?
+      `).pluck().get(created.data.session.uploadSessionId)).toBe('COMPLETED')
+      expect(beforeConfirmedSubmit.sqlite.prepare(`
+        SELECT count(*) FROM commission_submissions
+      `).pluck().get()).toBe(0)
+    }
+    finally {
+      beforeConfirmedSubmit.sqlite.close()
+    }
 
     const submittedResponse = await submissionRequest(
       created.data.session.uploadSessionId,
