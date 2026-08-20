@@ -167,7 +167,7 @@ watch(() => route.fullPath, () => {
 
 .mobile-nav__item {
   display: grid;
-  animation: mobile-nav-item-in var(--duration-normal) var(--easing-standard) both;
+  animation: mobile-nav-item-in var(--motion-duration-state) var(--motion-ease-standard) both;
 }
 
 .mobile-nav__link {
@@ -225,8 +225,8 @@ watch(() => route.fullPath, () => {
 .mobile-nav-enter-active,
 .mobile-nav-leave-active {
   transition:
-    opacity var(--duration-normal) var(--easing-standard),
-    transform var(--duration-normal) var(--easing-standard);
+    opacity var(--motion-duration-state) var(--motion-ease-standard),
+    transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .mobile-nav-enter-from,
@@ -250,7 +250,12 @@ watch(() => route.fullPath, () => {
 @media (prefers-reduced-motion: reduce) {
   .mobile-nav-enter-active,
   .mobile-nav-leave-active {
-    transition: none;
+    transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
+  }
+
+  .mobile-nav-enter-from,
+  .mobile-nav-leave-to {
+    transform: none;
   }
 
   .mobile-nav__item {

@@ -224,12 +224,12 @@ watch(() => route.fullPath, () => {
   border-radius: var(--radius-full);
   opacity: 0.86;
   transition:
-    color var(--duration-fast) var(--easing-standard),
-    opacity var(--duration-fast) var(--easing-standard),
-    background-color var(--duration-fast) var(--easing-standard),
-    border-color var(--duration-fast) var(--easing-standard),
-    box-shadow var(--duration-fast) var(--easing-standard),
-    transform var(--duration-fast) var(--easing-standard);
+    color var(--motion-duration-state) var(--motion-ease-standard),
+    opacity var(--motion-duration-state) var(--motion-ease-standard),
+    background-color var(--motion-duration-state) var(--motion-ease-standard),
+    border-color var(--motion-duration-state) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-state) var(--motion-ease-standard),
+    transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .public-header__link:hover,
@@ -268,7 +268,7 @@ watch(() => route.fullPath, () => {
 }
 
 .public-header__chevron {
-  transition: transform var(--duration-fast) var(--easing-standard);
+  transition: transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .public-header__subnav {
@@ -283,9 +283,9 @@ watch(() => route.fullPath, () => {
   pointer-events: none;
   transform: translateY(-0.25rem);
   transition:
-    opacity var(--duration-fast) var(--easing-standard),
-    transform var(--duration-fast) var(--easing-standard),
-    visibility var(--duration-fast) var(--easing-standard);
+    opacity var(--motion-duration-state) var(--motion-ease-standard),
+    transform var(--motion-duration-state) var(--motion-ease-standard),
+    visibility var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .public-header__subnav-panel {
@@ -363,6 +363,12 @@ watch(() => route.fullPath, () => {
   .public-header__link:focus-visible,
   .public-header__nav-item:focus-within > .public-header__link {
     transform: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .public-header--overlay {
+    background: #111419;
   }
 }
 </style>

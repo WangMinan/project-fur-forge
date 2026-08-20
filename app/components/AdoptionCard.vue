@@ -57,7 +57,7 @@ const price = computed(() => props.adoption.work.price
 .adoption-card {
   display: block;
   color: var(--public-text-primary);
-  transition: transform var(--duration-normal) var(--easing-standard);
+  transition: transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .adoption-card:hover {
@@ -74,7 +74,7 @@ const price = computed(() => props.adoption.work.price
   border: 1px solid var(--public-border-primary);
   border-radius: var(--radius-image);
   background: var(--image-placeholder);
-  transition: box-shadow var(--duration-normal) var(--easing-standard);
+  transition: box-shadow var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .adoption-card__canvas :deep(.responsive-picture),
@@ -85,7 +85,7 @@ const price = computed(() => props.adoption.work.price
 
 .adoption-card__canvas :deep(.responsive-picture__image) {
   object-fit: cover;
-  transition: transform var(--duration-section) var(--easing-standard);
+  transition: transform var(--motion-duration-content) var(--motion-ease-standard);
 }
 
 @media (hover: hover) and (pointer: fine) {

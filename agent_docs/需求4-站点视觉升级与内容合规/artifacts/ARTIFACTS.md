@@ -14,6 +14,7 @@
 | E 审计 | T37 动效机会审计 | `../.design/MOTION_OPPORTUNITIES.md` | 已完成 | 7 个通过机会、拒绝清单、输入/reduced/中断交接 |
 | E 实施 | T38 静态四幕证据 | `../implementation/evidence/T37-T47-2026-08-21/t38-static/` | 已完成 | 五视口一屏领养、无 JS、图片解码、溢出与 console/network |
 | E 实施 | T39/T40 Hero 焦点证据 | `../implementation/evidence/T37-T47-2026-08-21/` | 已完成 | 双 CAS、冲突阻断、九宫格、不可变变体与隔离浏览器 |
+| E 实施 | T41 输入/reduced 证据 | `../implementation/evidence/T37-T47-2026-08-21/` | 已完成 | 统一 token、三类输入、reduced motion/transparency/contrast |
 | 2 模型 | 模型说明 | `../models/README.md` | 定稿 | 焦点复用、轻量申请确认、单条删除和 notices |
 | 2 计划 | 实施计划 | `../planning/PLAN.md` | 定稿 | A～E 执行顺序 |
 | 2 迁移 | 数据迁移 | `../planning/DATA-MIGRATION.md` | 定稿 | 无 Schema 变更项、文案、删除、回滚与证据 |
