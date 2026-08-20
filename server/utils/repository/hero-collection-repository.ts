@@ -58,7 +58,10 @@ export interface HeroCollectionRow {
 export interface HeroItemRow {
   alt: string
   assetId: string
+  assetVersion: number
   enabled: number
+  focalX: number
+  focalY: number
   height: number
   id: string
   orientation: HeroOrientation
@@ -76,6 +79,9 @@ export interface HeroItemRow {
 
 export interface HeroItemAssetRow {
   assetId: string
+  version: number
+  focalX: number
+  focalY: number
   height: number
   privateObjectKey: string
   role: 'home_hero_landscape' | 'home_hero_portrait'
@@ -92,6 +98,8 @@ const selectItems = `
     item.preview_object_key AS previewObjectKey,
     item.preview_expires_at AS previewExpiresAt,
     asset.id AS assetId, asset.role, asset.status,
+    asset.version AS assetVersion,
+    asset.focal_x AS focalX, asset.focal_y AS focalY,
     asset.width, asset.height, asset.sha256,
     asset.private_object_key AS privateObjectKey
   FROM site_hero_items AS item
@@ -197,6 +205,7 @@ export function findHeroItemAsset(
   return sqlite.prepare(`
     SELECT
       asset.id AS assetId, asset.role, asset.status,
+      asset.version, asset.focal_x AS focalX, asset.focal_y AS focalY,
       asset.width, asset.height, asset.sha256,
       asset.private_object_key AS privateObjectKey,
       EXISTS (
@@ -226,6 +235,40 @@ export function isHeroItemAssetAssigned(
     SELECT 1 FROM site_hero_items
     WHERE asset_id = ? AND id != COALESCE(?, '') LIMIT 1
   `).pluck().get(assetId, exceptItemId ?? null))
+}
+
+export function countHeroItemAssetAssignments(
+  sqlite: Database.Database,
+  assetId: string,
+  exceptItemId?: string,
+) {
+  return Number(sqlite.prepare(`
+    SELECT count(*) FROM site_hero_items
+    WHERE asset_id = ? AND id != COALESCE(?, '')
+  `).pluck().get(assetId, exceptItemId ?? null))
+}
+
+export function updateHeroAssetFocal(
+  sqlite: Database.Database,
+  assetId: string,
+  expectedVersion: number,
+  focalX: number,
+  focalY: number,
+  now: number,
+) {
+  const result = sqlite.prepare(`
+    UPDATE assets
+    SET focal_x = ?, focal_y = ?, version = version + 1, updated_at = ?
+    WHERE id = ? AND version = ?
+  `).run(focalX, focalY, now, assetId, expectedVersion)
+  if (result.changes !== 1) {
+    throw new ServiceError(
+      409,
+      'CONFLICT',
+      'Hero asset version is stale.',
+      'VERSION_CONFLICT',
+    )
+  }
 }
 
 export function insertHeroItem(

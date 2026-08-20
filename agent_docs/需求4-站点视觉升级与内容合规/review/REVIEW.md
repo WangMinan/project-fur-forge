@@ -285,3 +285,10 @@
 - 用户随后指出营业状态消失/领养未显示。实现抽取 `HomeBusinessStatus`，并将 `currentAdoptions.status` 从既有业务状态直接加入聚合 DTO；浏览器分别确认委托与领养两条状态存在。
 - 单帧检查曾漏掉委托状态在水合后消失；时间序列定位为 dev 客户端未解析新自动导入组件。两个调用方显式 import 后连续 12 秒稳定，SSR/客户端 DOM 一致。
 - 五视口测量确认三标题同字号、三媒体同高度、领养两个行动仍在一屏，且无水平溢出、console error；最终整体观感仍由后续人工验收确认。
+
+## 13. 2026-08-21 T39/T40 focused 自检
+
+- 焦点写入复用 `assets.focal_x/focal_y`，不新增表；collection version 与 asset version 同时校验，enabled item 继续拒绝编辑。
+- 同一 asset 已被另一 Hero item 引用且焦点要变化时稳定返回 `HERO_FOCAL_SHARED_ASSET_CONFLICT`；不静默覆盖。残留 PUBLIC variant 时停止焦点修改，要求先完成清理。
+- 任意浮点焦点通过 service/DTO 原样保留；九宫格只在用户点击预设时写 0/0.5/1，任意坐标只显示最近提示。
+- 委托横版隔离演练证明中心首次发布/停用后改焦点会生成与旧 Key 不相交的新公开变体；浏览器完成上传、右上选择、保存和重新读取。

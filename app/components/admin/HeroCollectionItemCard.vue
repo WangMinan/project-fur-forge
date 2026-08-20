@@ -13,6 +13,7 @@ import { ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH } from '~~/shared/constants/admin-medi
 import { adminMediaPreviewUrl } from '~/utils/admin-media-preview'
 import { PUBLICATION_OPERATION_STATUS_LABELS } from '~/utils/media-labels'
 import { adminUploadProgressModel } from '~/utils/admin-upload-progress'
+import HeroFocalPicker from '~/components/admin/HeroFocalPicker.vue'
 
 const props = withDefaults(defineProps<{
   canMoveDown?: boolean
@@ -47,6 +48,9 @@ const emit = defineEmits<{
 
 const alt = ref('')
 const assetId = ref('')
+const assetVersion = ref(0)
+const focalX = ref(0.5)
+const focalY = ref(0.5)
 const sortOrder = ref(0)
 const upscaleConfirmed = ref(false)
 const selectedFile = shallowRef<File | null>(null)
@@ -56,6 +60,9 @@ const singleSlot = computed(() => props.placement === 'commission')
 function sync() {
   alt.value = props.item?.alt ?? ''
   assetId.value = props.item?.asset.assetId ?? ''
+  assetVersion.value = props.item?.asset.version ?? 0
+  focalX.value = props.item?.asset.focalX ?? 0.5
+  focalY.value = props.item?.asset.focalY ?? 0.5
   sortOrder.value = singleSlot.value
     ? 0
     : props.item?.sortOrder ?? props.defaultSortOrder
@@ -75,6 +82,9 @@ const upload = useHeroAssetUpload({
   getHomeVersion: () => props.collectionVersion,
   onAssetReady: (_slot, asset) => {
     assetId.value = asset.assetId
+    assetVersion.value = asset.version
+    focalX.value = asset.focalX
+    focalY.value = asset.focalY
     selectedFile.value = null
     if (fileInput.value) {
       fileInput.value.value = ''
@@ -89,6 +99,7 @@ const valid = computed(() => (
   alt.value.trim().length >= 1
   && alt.value.trim().length <= 500
   && assetId.value.length > 0
+  && assetVersion.value > 0
   && Number.isInteger(sortOrder.value)
   && sortOrder.value >= 0
   && sortOrder.value <= 4
@@ -141,6 +152,9 @@ function submit() {
   const payload = {
     alt: alt.value.trim(),
     assetId: assetId.value,
+    assetVersion: assetVersion.value,
+    focalX: focalX.value,
+    focalY: focalY.value,
     sortOrder: sortOrder.value,
   }
   if (props.item) {
@@ -180,6 +194,11 @@ function requestEnable() {
 function requestDisable() {
   emit('disable')
 }
+
+function updateFocal(value: { focalX: number, focalY: number }) {
+  focalX.value = value.focalX
+  focalY.value = value.focalY
+}
 </script>
 
 <template>
@@ -204,17 +223,15 @@ function requestDisable() {
       </div>
     </header>
 
-    <div class="hero-item__preview" :data-orientation="orientation">
-      <img
-        v-if="previewUrl"
-        :src="previewUrl"
-        :alt="`${alt || '大图'}管理预览`"
-      >
-      <p v-else>上传图片后将在这里显示低清管理预览。</p>
-      <span class="hero-item__frame-label">
-        {{ orientation === 'landscape' ? '桌面 16:9 画框' : '手机 9:16 画框' }}
-      </span>
-    </div>
+    <HeroFocalPicker
+      :preview-url="previewUrl"
+      :alt="alt"
+      :orientation="orientation"
+      :focal-x="focalX"
+      :focal-y="focalY"
+      :disabled="busy || Boolean(item?.enabled)"
+      @update="updateFocal"
+    />
 
     <div class="hero-item__fields">
       <label>
@@ -354,42 +371,6 @@ function requestDisable() {
 
 .hero-item__state {
   color: var(--admin-text-secondary);
-  font-size: var(--admin-font-xs);
-}
-
-.hero-item__preview {
-  position: relative;
-  display: grid;
-  width: min(100%, 52rem);
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  background: var(--admin-bg-subtle);
-  border: 0.5rem solid var(--admin-text-primary);
-  border-radius: var(--admin-radius-sm);
-  place-items: center;
-}
-
-.hero-item__preview[data-orientation='portrait'] {
-  width: min(100%, 20rem);
-  aspect-ratio: 9 / 16;
-  border-width: 0.65rem;
-  border-radius: 1.5rem;
-}
-
-.hero-item__preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.hero-item__frame-label {
-  position: absolute;
-  right: var(--admin-space-2);
-  bottom: var(--admin-space-2);
-  padding: var(--admin-space-1) var(--admin-space-2);
-  color: var(--admin-text-inverse);
-  background: rgb(25 31 42 / 0.72);
-  border-radius: var(--admin-radius-sm);
   font-size: var(--admin-font-xs);
 }
 

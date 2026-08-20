@@ -32,8 +32,11 @@ export const heroItemIdSchema = z.union([
 
 export const adminHeroAssetDtoSchema = z.object({
   assetId: resourceIdSchema,
+  version: resourceVersionSchema,
   width: z.number().int().positive().max(12_000),
   height: z.number().int().positive().max(12_000),
+  focalX: z.number().min(0).max(1),
+  focalY: z.number().min(0).max(1),
 }).strict()
 
 export const adminHeroItemDtoSchema = z.object({
@@ -109,6 +112,9 @@ const heroItemInputSchema = z.object({
   alt: publicAltSchema,
   sortOrder: z.number().int().min(0).max(9_999),
   assetId: resourceIdSchema,
+  assetVersion: resourceVersionSchema,
+  focalX: z.number().min(0).max(1),
+  focalY: z.number().min(0).max(1),
 }).strict()
 
 export const createHeroItemRequestSchema = versionedRequestSchema(
