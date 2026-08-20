@@ -91,10 +91,10 @@ function preventBlockedNavigation(event: Event) {
   text-align: center;
   cursor: pointer;
   transition:
-    color var(--duration-fast) var(--easing-standard),
-    background-color var(--duration-fast) var(--easing-standard),
-    border-color var(--duration-fast) var(--easing-standard),
-    transform var(--duration-fast) var(--easing-standard);
+    color var(--motion-duration-feedback) var(--motion-ease-standard),
+    background-color var(--motion-duration-feedback) var(--motion-ease-standard),
+    border-color var(--motion-duration-feedback) var(--motion-ease-standard),
+    transform var(--motion-duration-feedback) var(--motion-ease-standard);
 }
 
 .public-action--primary {
@@ -159,9 +159,14 @@ function preventBlockedNavigation(event: Event) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .public-action,
+  .public-action {
+    transition:
+      color var(--motion-duration-feedback) var(--motion-ease-standard),
+      background-color var(--motion-duration-feedback) var(--motion-ease-standard),
+      border-color var(--motion-duration-feedback) var(--motion-ease-standard);
+  }
+
   .public-action__spinner {
-    transition: none;
     animation: none;
   }
 

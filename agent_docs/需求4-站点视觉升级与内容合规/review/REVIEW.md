@@ -292,3 +292,10 @@
 - 同一 asset 已被另一 Hero item 引用且焦点要变化时稳定返回 `HERO_FOCAL_SHARED_ASSET_CONFLICT`；不静默覆盖。残留 PUBLIC variant 时停止焦点修改，要求先完成清理。
 - 任意浮点焦点通过 service/DTO 原样保留；九宫格只在用户点击预设时写 0/0.5/1，任意坐标只显示最近提示。
 - 委托横版隔离演练证明中心首次发布/停用后改焦点会生成与旧 Key 不相交的新公开变体；浏览器完成上传、右上选择、保存和重新读取。
+
+## 14. 2026-08-21 T41 focused 自检
+
+- 统一 token 已替换旧公共端 duration/easing；Hero 不再硬编码 680ms，其他公开组件不再消费旧 token。
+- Hero 触发来源进入 DOM 状态：autoplay 使用媒体时序，pointer/touch 使用内容时序，keyboard 只使用短 opacity；精选轨道键盘滚动改为即时。
+- reduced-motion 关闭 autoplay/位移并保留短 opacity，reduced-transparency 让覆盖 Header/Hero 控制成为实底，contrast 提高正文/边界对比。
+- 浏览器状态验证不把精确毫秒写入永久测试；drag 因不满足完整门槛保持拒绝。

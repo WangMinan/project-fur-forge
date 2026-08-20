@@ -125,7 +125,7 @@
 - [x] **T38 · 首页静态四幕骨架**：先完成 Hero、lead work、非对称 commission、single adoption 的尺寸、空态和响应式，不加复杂动画；内容 SSR/无 JavaScript 默认可见，删除通用 section 上浮 reveal 假设；三幕标题同级、主媒体等高，桌面图片左—右—左交替，委托/领养营业状态复用同一组件，领养在全部目标视口一屏看见标题、角色、名称/物种、状态和两个行动。证据：`implementation/evidence/T37-T47-2026-08-21/t38-static/`。
 - [x] **T39 · Hero 焦点写入契约**：未启用 item 通过 collection version + asset version 双 CAS 修改现有 asset focal；共享 asset 冲突阻断；公开旧变体未清理时阻断，下一次发布按新焦点生成不可变变体。
 - [x] **T40 · 九宫格与目标裁切预览**：横/竖目标比例、中心/四角/边预设、已有任意坐标最近提示；复用 Hero 管理统一 UI。证据：`implementation/evidence/T37-T47-2026-08-21/`。
-- [ ] **T41 · Token、输入模态与 reduced**：在已通过机会后建立 feedback/state/content/media 与 standard/playful easing，迁移散落 620/680ms；autoplay、pointer/touch、keyboard 分开时序，reduced 保留短状态淡化；drag 未满足 1:1 跟手/反向/中断/速度/纵向滚动门槛时不实施。
+- [x] **T41 · Token、输入模态与 reduced**：在已通过机会后建立 feedback/state/content/media 与 standard/playful easing，删除旧公共 duration/easing 与散落 620/680ms；Hero autoplay、pointer/touch、keyboard 分开 intent/时序，reduced 保留短状态淡化并覆盖 transparency/contrast；drag 未满足 1:1 跟手/反向/中断/速度/纵向滚动门槛，因此未实施。证据：`implementation/evidence/T37-T47-2026-08-21/`。
 - [ ] **T42 · Hero 角色感与静默控制器**：图片聚焦、品牌 mask/clip 错峰；默认只显示低权重分页/进度，箭头与暂停/继续按键盘、fine pointer 边缘/控制区和触控显式唤起，暂停后恢复入口持续可见；自动轮播/页面隐藏/reduced/隐藏项加载保持正确。
 - [ ] **T43 · 代表作品幕**：lead 大图、短 caption、`/works` 与当前作品两个圆角行动、剩余精选次级；桌面 fine pointer 有轻聚焦，触控无 tilt。
 - [ ] **T44 · 自设委托幕**：非对称分栏、桌面图片在右、同源媒体连续性，只保留 QQ 优先短说明、`/commission` 与申请表单两个行动。

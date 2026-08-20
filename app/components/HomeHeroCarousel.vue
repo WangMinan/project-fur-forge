@@ -45,6 +45,7 @@ const pictureSources = computed(() => (
   landscapeItem.value?.sources ?? portraitItem.value?.sources
 ))
 const transitionDirection = shallowRef<'next' | 'prev'>('next')
+const transitionIntent = shallowRef<'autoplay' | 'keyboard' | 'pointer'>('autoplay')
 const transitionName = computed(() => `home-hero-slide-${transitionDirection.value}`)
 
 watch(() => props.home.landscape.length, (count) => {
@@ -82,25 +83,28 @@ function restartTimer() {
   stopTimer()
   const interval = autoplayInterval.value
   if (autoplayRunning.value && interval !== null) {
-    timer = setInterval(goNext, interval)
+    timer = setInterval(() => goNext('autoplay'), interval)
   }
 }
 
-function goTo(index: number) {
+function goTo(index: number, intent: 'autoplay' | 'keyboard' | 'pointer' = 'pointer') {
   const target = clampSlideIndex(index, items.value.length)
   if (target === activeIndex.value) {
     return
   }
+  transitionIntent.value = intent
   transitionDirection.value = target > activeIndex.value ? 'next' : 'prev'
   activeIndex.value = target
 }
 
-function goNext() {
+function goNext(intent: 'autoplay' | 'keyboard' | 'pointer' = 'pointer') {
+  transitionIntent.value = intent
   transitionDirection.value = 'next'
   activeIndex.value = nextSlideIndex(activeIndex.value, items.value.length)
 }
 
-function goPrev() {
+function goPrev(intent: 'autoplay' | 'keyboard' | 'pointer' = 'pointer') {
+  transitionIntent.value = intent
   transitionDirection.value = 'prev'
   activeIndex.value = prevSlideIndex(activeIndex.value, items.value.length)
 }
@@ -112,11 +116,11 @@ function togglePause() {
 function onKeydown(event: KeyboardEvent) {
   if (event.key === 'ArrowLeft') {
     event.preventDefault()
-    goPrev()
+    goPrev('keyboard')
   }
   else if (event.key === 'ArrowRight') {
     event.preventDefault()
-    goNext()
+    goNext('keyboard')
   }
 }
 
@@ -138,10 +142,10 @@ function onPointerUp(event: PointerEvent) {
   const direction = resolveSwipeDirection(event.clientX - pointerStartX)
   pointerStartX = null
   if (direction === 'next') {
-    goNext()
+    goNext('pointer')
   }
   else if (direction === 'prev') {
-    goPrev()
+    goPrev('pointer')
   }
 }
 
@@ -205,6 +209,7 @@ onBeforeUnmount(() => {
       'home-hero--empty': !pictureSources,
       'home-hero--motion-ready': motionReady,
     }"
+    :data-transition-intent="transitionIntent"
     role="region"
     aria-roledescription="carousel"
     aria-label="代表作品轮播"
@@ -256,7 +261,7 @@ onBeforeUnmount(() => {
         type="button"
         class="home-hero__arrow"
         aria-label="上一张"
-        @click="goPrev"
+        @click="goPrev('pointer')"
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
           <path d="M11.5 3.5L6 9l5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
@@ -271,14 +276,14 @@ onBeforeUnmount(() => {
           :class="{ 'home-hero__dot--active': index === activeIndex }"
           :aria-label="`第 ${index + 1} 张，共 ${items.length} 张`"
           :aria-current="index === activeIndex ? 'true' : undefined"
-          @click="goTo(index)"
+          @click="goTo(index, 'pointer')"
         />
       </div>
       <button
         type="button"
         class="home-hero__arrow"
         aria-label="下一张"
-        @click="goNext"
+        @click="goNext('pointer')"
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
           <path d="M6.5 3.5L12 9l-5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
@@ -353,15 +358,36 @@ onBeforeUnmount(() => {
   object-fit: cover;
 }
 
-/* 离场项只在切换的 680ms 内保留；下一张仍在用户/计时器触发后才挂载和下载。 */
+/* 自动轮播使用完整媒体时序；下一张仍在用户/计时器触发后才挂载和下载。 */
 .home-hero-slide-next-enter-active,
 .home-hero-slide-next-leave-active,
 .home-hero-slide-prev-enter-active,
 .home-hero-slide-prev-leave-active {
   transition:
-    opacity 680ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 680ms cubic-bezier(0.22, 1, 0.36, 1);
+    opacity var(--motion-duration-media) var(--motion-ease-standard),
+    transform var(--motion-duration-media) var(--motion-ease-standard);
   will-change: opacity, transform;
+}
+
+.home-hero[data-transition-intent='pointer'] .home-hero-slide-next-enter-active,
+.home-hero[data-transition-intent='pointer'] .home-hero-slide-next-leave-active,
+.home-hero[data-transition-intent='pointer'] .home-hero-slide-prev-enter-active,
+.home-hero[data-transition-intent='pointer'] .home-hero-slide-prev-leave-active {
+  transition-duration: var(--motion-duration-content);
+}
+
+.home-hero[data-transition-intent='keyboard'] .home-hero-slide-next-enter-active,
+.home-hero[data-transition-intent='keyboard'] .home-hero-slide-next-leave-active,
+.home-hero[data-transition-intent='keyboard'] .home-hero-slide-prev-enter-active,
+.home-hero[data-transition-intent='keyboard'] .home-hero-slide-prev-leave-active {
+  transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
+}
+
+.home-hero[data-transition-intent='keyboard'] .home-hero-slide-next-enter-from,
+.home-hero[data-transition-intent='keyboard'] .home-hero-slide-next-leave-to,
+.home-hero[data-transition-intent='keyboard'] .home-hero-slide-prev-enter-from,
+.home-hero[data-transition-intent='keyboard'] .home-hero-slide-prev-leave-to {
+  transform: none;
 }
 
 .home-hero-slide-next-enter-from,
@@ -448,7 +474,7 @@ onBeforeUnmount(() => {
 .home-hero--motion-ready .home-hero__title,
 .home-hero--motion-ready .home-hero__tagline,
 .home-hero--motion-ready .home-hero__controls {
-  animation: home-hero-content-in 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: home-hero-content-in var(--motion-duration-content) var(--motion-ease-standard) both;
 }
 
 .home-hero--motion-ready .home-hero__eyebrow {
@@ -592,7 +618,14 @@ onBeforeUnmount(() => {
   .home-hero-slide-next-leave-active,
   .home-hero-slide-prev-enter-active,
   .home-hero-slide-prev-leave-active {
-    transition: none;
+    transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
+  }
+
+  .home-hero-slide-next-enter-from,
+  .home-hero-slide-next-leave-to,
+  .home-hero-slide-prev-enter-from,
+  .home-hero-slide-prev-leave-to {
+    transform: none;
   }
 
   .home-hero--motion-ready .home-hero__eyebrow,
@@ -600,6 +633,31 @@ onBeforeUnmount(() => {
   .home-hero--motion-ready .home-hero__tagline,
   .home-hero--motion-ready .home-hero__controls {
     animation: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .home-hero__arrow,
+  .home-hero__pause {
+    background: #111419;
+    border-color: #ffffff;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .home-hero__arrow,
+  .home-hero__pause {
+    background: rgb(17 20 25 / 0.9);
+    border-color: #ffffff;
+  }
+
+  .home-hero__dot::before {
+    background: rgb(255 255 255 / 0.72);
+    box-shadow: 0 0 0 1px #111419;
+  }
+
+  .home-hero__dot--active::before {
+    background: #ffffff;
   }
 }
 </style>

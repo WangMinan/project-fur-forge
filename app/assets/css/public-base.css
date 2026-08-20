@@ -129,13 +129,13 @@
    */
   --radius-image: 12px;
 
-  --duration-instant: 50ms;
-  --duration-fast: 150ms;
-  --duration-normal: 250ms;
-  --duration-section: 400ms;
-  --duration-hero: 750ms;
-  --easing-standard: cubic-bezier(0.22, 1, 0.36, 1);
-  --easing-exit: cubic-bezier(0.4, 0, 1, 1);
+  --motion-duration-feedback: 120ms;
+  --motion-duration-state: 180ms;
+  --motion-duration-content: 420ms;
+  --motion-duration-media: 720ms;
+  --motion-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-playful: cubic-bezier(0.2, 1.16, 0.32, 1);
+  --motion-ease-linear-progress: linear;
   --distance-subtle: 0.75rem;
 
   --breakpoint-sm: 390px;
@@ -231,13 +231,13 @@ button {
  */
 .public-page-enter-active {
   transition:
-    opacity var(--duration-normal) var(--easing-standard),
-    transform var(--duration-normal) var(--easing-standard);
+    opacity var(--motion-duration-state) var(--motion-ease-standard),
+    transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .public-page-leave-active {
   pointer-events: none;
-  transition: opacity var(--duration-fast) var(--easing-exit);
+  transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .public-page-enter-from {
@@ -275,7 +275,7 @@ button {
   background: var(--public-accent-primary);
   border-radius: var(--radius-sm);
   transform: translateY(-300%);
-  transition: transform var(--duration-fast) var(--easing-standard);
+  transition: transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .skip-link:focus-visible {
@@ -283,12 +283,40 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  html {
     scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+  }
+
+  :root {
+    --motion-duration-content: var(--motion-duration-state);
+    --motion-duration-media: var(--motion-duration-state);
+    --motion-ease-playful: var(--motion-ease-standard);
+  }
+
+  .public-page-enter-active,
+  .public-page-leave-active {
+    transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
+  }
+
+  .public-page-enter-from,
+  .public-page-leave-to {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --public-overlay-soft: rgb(17 20 25 / 0.72);
+    --public-overlay-strong: rgb(17 20 25 / 0.9);
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --public-text-secondary: #3f4650;
+    --public-text-tertiary: #555d68;
+    --public-border-primary: #9ba3af;
+    --public-border-secondary: #c3c8d0;
+    --public-focus-ring: rgb(29 45 90 / 0.72);
   }
 }

@@ -39,22 +39,22 @@ function step() {
   return track ? track.clientWidth * 0.72 : 320
 }
 
-function scrollPrev() {
-  trackRef.value?.scrollBy({ left: -step(), behavior: scrollBehavior() })
+function scrollPrev(behavior: ScrollBehavior = scrollBehavior()) {
+  trackRef.value?.scrollBy({ left: -step(), behavior })
 }
 
-function scrollNext() {
-  trackRef.value?.scrollBy({ left: step(), behavior: scrollBehavior() })
+function scrollNext(behavior: ScrollBehavior = scrollBehavior()) {
+  trackRef.value?.scrollBy({ left: step(), behavior })
 }
 
 function onKeydown(event: KeyboardEvent) {
   if (event.key === 'ArrowLeft') {
     event.preventDefault()
-    scrollPrev()
+    scrollPrev('auto')
   }
   else if (event.key === 'ArrowRight') {
     event.preventDefault()
-    scrollNext()
+    scrollNext('auto')
   }
 }
 
@@ -80,7 +80,7 @@ onBeforeUnmount(() => {
         class="featured-track__button"
         aria-label="上一批作品"
         :disabled="!canPrev"
-        @click="scrollPrev"
+        @click="scrollPrev()"
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
           <path d="M11.5 3.5L6 9l5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
@@ -91,7 +91,7 @@ onBeforeUnmount(() => {
         class="featured-track__button"
         aria-label="下一批作品"
         :disabled="!canNext"
-        @click="scrollNext"
+        @click="scrollNext()"
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
           <path d="M6.5 3.5L12 9l-5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
@@ -143,7 +143,7 @@ onBeforeUnmount(() => {
   border-radius: var(--radius-full);
   cursor: pointer;
   place-items: center;
-  transition: border-color var(--duration-fast) var(--easing-standard);
+  transition: border-color var(--motion-duration-feedback) var(--motion-ease-standard);
 }
 
 .featured-track__button:hover:not(:disabled) {

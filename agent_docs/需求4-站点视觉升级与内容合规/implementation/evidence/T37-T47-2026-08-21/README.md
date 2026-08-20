@@ -18,3 +18,9 @@
 - 核心不变量覆盖：未启用 item 的 collection + asset 双 CAS、任意浮点焦点精度、共享 asset 冲突阻断、停用清理后按新焦点生成不重用旧 Key 的不可变公开变体。
 - 隔离 Playwright：登录管理端、上传 3840×2160 横图、九宫格从中心改为右上、创建 item、重新读取 100% / 0%、按钮 pressed 与预览 `object-position: 100% 0%`，1/1 通过。
 - 截图：`t39-t40-admin-hero-1440x900.png`。测试使用临时用例并已删除，没有把精确文案、DOM 或像素审美加入永久 smoke。
+
+## T41
+
+- `t41-input-reduced.json`：pointer/keyboard intent、reduced-motion 10.6 秒 autoplay 停止与手动切换、reduced-transparency/contrast 媒体特性结果。
+- `t41-reduced-motion-390x844.png`：reduced-motion 下的移动 Hero 静态画面。
+- 旧公共端 duration/easing 与 620/680ms 扫描为零；drag 未实施。
