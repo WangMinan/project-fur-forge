@@ -10,7 +10,7 @@
 
 ## 最近验证
 
-- 2026-08-21：最终交接静态门禁通过：lint、typecheck、production build 与 content guard 成功；按用户明确要求未再运行临时 Playwright、core 或 smoke。T47 真实手机/连续性能和人工验收保持开放，不由构建结果代签。
+- 2026-08-21：最终交接的 lint、typecheck 通过；全部运行逻辑与 Nuxt 配置完成后 production build/content guard 成功。构建后只追加 Header 单一 offset、“继续浏览”按钮对齐两处 CSS 与文档修正，按用户明确要求未再重跑 build、临时 Playwright、core 或 smoke。T47 真实手机/连续性能和人工验收保持开放，不由构建结果代签。
 - 2026-08-21：本轮最终用户反馈要求首页 Header 固定、继续浏览减少空旷、hover 离图即回落，并在完成后 commit/push/结束 goal。Header 改为首页 fixed、滚动后浅色实底；逐幕 offset 最初同时写入 scroll-padding 与 scroll-margin 导致上一幕露出，已删除重复 scene margin，只保留容器 offset。次级媒体提高到约 56svh，hover 回落改为 180ms state。
 - 2026-08-21：最终对齐修正：继续浏览标题此前受 scene padding 下推，而绝对定位轨道按钮仍按 section 顶部定位；现改为共享 `--secondary-scene-padding-top`，按钮与标题同一行。
 - 2026-08-21：用户新增阶段 E 反馈：参考 `lingxun.me` 的桌面逐幕结构，但沿用本项目 1024px PC 断点；1023px/768/移动端不采用外站 768px wheel 边界。用户否决 T40 九宫格，改为作品编辑器同类的画面拖动焦点和水平/垂直滑杆；另要求首屏无重启动画、三幕同款 hover、领养到 Footer 间距收紧和复制邮箱按钮组稳定。代码已修改，文档同步中，浏览器验收待执行。
