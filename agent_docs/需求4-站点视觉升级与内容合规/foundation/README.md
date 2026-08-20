@@ -36,7 +36,7 @@
 
 - `app/pages/commission/apply.vue`：两个未预勾选确认——成年/设定权利、隐私已读并理解提交非接单。
 - `shared/schemas/commission.ts` 与提交 service：只增加两个 `z.literal(true)` 请求字段并在消费上传前校验；不持久化确认、不新增版本握手。
-- `site_content` 现有 about/commission/terms/privacy/contact 字段与管理端：继续承担真实经营主体、隐私政策、服务条款和联系信息；不新增通用 CMS 或专用处理者字段。
+- `site_content` 现有 about/commission/terms/privacy/contact 字段与管理端：继续承担已确认处理者“有点小狗工作室”、隐私政策、服务条款和联系信息；不新增通用 CMS 或专用处理者字段。
 - 现有 repository/service/storage：为 CLI 和 `/admin/commissions` 提供同一套单条 retention Review、dry-run 与精确删除能力；不提供自动批量删除。
 - `/licenses`、生成脚本与第三方 runtime/asset registry：第三方声明事实源。当前 release workflow 把包含 FFmpeg 的镜像发布到公开 Docker Hub，因此 FFmpeg 必须按分发场景留存精确二进制、许可证、对应源码和构建信息。
 

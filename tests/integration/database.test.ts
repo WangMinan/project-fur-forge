@@ -274,6 +274,30 @@ function migrationsBeforeR4DefaultCopy(databaseFile: string) {
   return folder
 }
 
+function migrationsBeforeR4PrivacyController(databaseFile: string) {
+  const folder = resolve(dirname(databaseFile), 'pre-r4-privacy-controller-migrations')
+  const meta = resolve(folder, 'meta')
+  mkdirSync(meta, { recursive: true })
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  const entries = journal.entries.slice(0, journal.entries.findIndex(
+    entry => entry.tag === '0046_r4_privacy_controller',
+  ))
+  for (const { tag } of entries) {
+    copyFileSync(
+      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
+      resolve(folder, `${tag}.sql`),
+    )
+  }
+  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
+    ...journal,
+    entries,
+  }))
+  return folder
+}
+
 afterEach(() => {
   temporaryDirectories.splice(0).forEach(directory => rmSync(
     directory,
@@ -341,9 +365,12 @@ describe('SQLite foundation', () => {
       expect(siteContent.aboutStudioFacts).toContain('不只做小狗毛，但只做海绵头')
       expect(siteContent.basicTerms).toContain('逐单特别约定')
       expect(siteContent.basicTerms).toContain('签收之日起一年')
-      expect(siteContent.privacyPolicy).toContain('不提供访客账号')
-      expect(siteContent.privacyPolicy).toContain('不接入第三方统计平台')
-      expect(siteContent.privacyPolicy).toContain('原始记录保留 90 天')
+      expect(siteContent.privacyPolicy).toContain('个人信息处理者：有点小狗工作室')
+      expect(siteContent.privacyPolicy).toContain('隐私联系邮箱：765678159@qq.com')
+      expect(siteContent.privacyPolicy).toContain('称呼、物种、手机号码、QQ、身高、体重')
+      expect(siteContent.privacyPolicy).toContain('拒绝后即进入人工删除候选')
+      expect(siteContent.privacyPolicy).toContain('不接入第三方广告或营销统计平台')
+      expect(siteContent.privacyPolicy).toContain('原始统计记录保留 90 天')
       expect(siteContent.privacyPolicy).not.toContain('未来如新增')
       expect(siteContent.contactAntiScam).toContain('另一条已公布渠道核实')
       expect(JSON.parse(siteContent.officialChannelsJson)).toEqual([
@@ -450,6 +477,60 @@ describe('SQLite foundation', () => {
       expect(row.contactAntiScam).toContain('QQ群用于社群或一般交流')
       expect(row.contactVersion).toBe(Number(before.contact) + 1)
       expect(row.version).toBe(Number(before.version) + 4)
+      expect(upgraded.sqlite.pragma('foreign_key_check')).toEqual([])
+      expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
+    }
+    finally {
+      upgraded.sqlite.close()
+    }
+  })
+
+  it('writes the confirmed privacy controller only over the exact historical default', async () => {
+    const databaseFile = temporaryDatabase()
+    await migrateDatabase(databaseFile, {
+      migrationsFolder: migrationsBeforeR4PrivacyController(databaseFile),
+    })
+    const legacy = openDatabase(databaseFile)
+    let before!: { privacyVersion: number, version: number }
+    try {
+      legacy.sqlite.prepare(`
+        UPDATE site_content SET contact_email = 'privacy-owner@example.test'
+        WHERE id = 'site'
+      `).run()
+      before = legacy.sqlite.prepare(`
+        SELECT version, privacy_content_version AS privacyVersion
+        FROM site_content WHERE id = 'site'
+      `).get() as { privacyVersion: number, version: number }
+      expect(legacy.sqlite.prepare(`
+        SELECT privacy_policy FROM site_content WHERE id = 'site'
+      `).pluck().get()).toContain('不提供访客账号')
+    }
+    finally {
+      legacy.sqlite.close()
+    }
+
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
+      applied: migrationCountFrom('0046_r4_privacy_controller'),
+    })
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({ applied: 0 })
+    const upgraded = openDatabase(databaseFile)
+    try {
+      const row = upgraded.sqlite.prepare(`
+        SELECT version, privacy_content_version AS privacyVersion,
+               privacy_policy AS privacyPolicy
+        FROM site_content WHERE id = 'site'
+      `).get() as {
+        privacyPolicy: string
+        privacyVersion: number
+        version: number
+      }
+      expect(row.privacyPolicy).toContain('个人信息处理者：有点小狗工作室')
+      expect(row.privacyPolicy).toContain('隐私联系邮箱：privacy-owner@example.test')
+      expect(row.privacyPolicy).toContain('私有设定图、上传会话')
+      expect(row.privacyPolicy).not.toContain('{{')
+      expect(row.privacyPolicy).not.toContain('不提供访客账号')
+      expect(row.privacyVersion).toBe(before.privacyVersion + 1)
+      expect(row.version).toBe(before.version + 1)
       expect(upgraded.sqlite.pragma('foreign_key_check')).toEqual([])
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
     }
@@ -709,13 +790,13 @@ describe('SQLite foundation', () => {
       expect(row.aboutVersion).toBe(before.about + 3)
       expect(row.basicTerms).toBe('管理员自定义服务条款')
       expect(row.termsVersion).toBe(before.terms)
-      expect(row.privacyPolicy).toContain('原始记录保留 90 天')
+      expect(row.privacyPolicy).toContain('原始统计记录保留 90 天')
       expect(row.privacyPolicy).not.toContain('未来如新增')
-      expect(row.privacyVersion).toBe(before.privacy + 1)
+      expect(row.privacyVersion).toBe(before.privacy + 2)
       expect(row.contactAntiScam).toBe('管理员自定义防诈骗提醒')
       // visitor copy 与 0042 默认联系方式各推进 contact 一次。
       expect(row.contactVersion).toBe(before.contact + 2)
-      expect(row.version).toBe(before.version + 9)
+      expect(row.version).toBe(before.version + 10)
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
     }
     finally {

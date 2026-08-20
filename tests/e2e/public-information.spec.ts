@@ -19,8 +19,9 @@ test('关于二级导航、独立条款页、页脚与兼容跳转连通', async
 
   await page.goto('/privacy')
   await expect(page.getByRole('heading', { level: 1, name: '隐私政策' })).toBeVisible()
-  await expect(page.getByText('公开站不提供访客账号', { exact: false })).toBeVisible()
-  await expect(page.getByText('原始记录保留 90 天', { exact: false })).toBeVisible()
+  await expect(page.getByText('个人信息处理者：有点小狗工作室', { exact: false })).toBeVisible()
+  await expect(page.getByText('称呼、物种、手机号码、QQ、身高、体重', { exact: false })).toBeVisible()
+  await expect(page.getByText('原始统计记录保留 90 天', { exact: false })).toBeVisible()
   await expect(page.getByText('未来如新增会影响访客的信息处理功能', { exact: false }))
     .toHaveCount(0)
 
