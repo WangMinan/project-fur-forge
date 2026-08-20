@@ -1,7 +1,7 @@
 # 产物索引：需求4
 
 > **角色**：登记需求4文档、实施证据与外部依据。
-> **状态**：2026-08-19 空上下文复核后，文档阶段产物已同步；实现、评审和生产产物待补。
+> **状态**：2026-08-20 已收口 T04～T22、T24～T34 开发产物与本地证据；T23 人工成文、T35/T36 部署分发证据、独立 Review、用户验收与生产执行仍待补。
 
 ## 文档产物
 
@@ -34,13 +34,19 @@
 | 分发事实 | `https://hub.docker.com/r/wangminan/project-fur-forge` | 当前公开容器镜像发布面 |
 | 字体来源 | `https://font.leminet.cn/#/` | 拙黑拼贴体免费商用来源 |
 
-## 待实施产物
+## 已实施产物
 
-- 默认文案前向迁移与验证记录；
-- `PublicAction`、管理行动和统一上传/长任务进度证据；
-- 两个 literal-true 申请确认的 UI/service 契约测试；
-- 人工 retention/deletion CLI 与 SOP；
-- `third-party-notices.json` / `THIRD_PARTY_NOTICES.txt`；
+- 前向文案迁移：`../../../server/database/migrations/0045_r4_default_copy.sql`；
+- 两项申请确认、service 再校验与 upload 未消费负向测试；
+- 单条 retention/deletion repository/service/API/CLI/UI 与隔离 fake-storage 核心测试；
+- 人工 SOP：`../implementation/COMMISSION-RETENTION-SOP.md`；
+- notices JSON：`../../../app/assets/licenses/third-party-notices.json`；
+- notices TXT：`../../../app/assets/licenses/THIRD_PARTY_NOTICES.txt` 与公开下载副本；
+- 390×844、768×1024、1440×900 的委托确认、rejected 删除入口与 privacy/service/licenses 浏览器 smoke。
+
+## 待实施/人工产物
+
+- 真实经营主体隐私政策人工成文与工作室终审；
 - Linux 发布镜像内 FFmpeg 二进制、对应源码、构建信息与 Docker Hub 可见性证据；
 - 真实素材多视口截图/录像；
 - 九宫格裁切与 publication 证据；

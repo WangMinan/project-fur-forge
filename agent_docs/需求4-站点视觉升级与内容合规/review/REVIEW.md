@@ -1,7 +1,7 @@
 # 评审记录：需求4
 
 > **角色**：记录 SPEC ↔ COPY ↔ design ↔ models ↔ PLAN ↔ TASKS ↔ 当前代码的一致性与风险。
-> **状态**：2026-08-19 完成第二轮预实施代码/文档 Review 及空上下文文档复核；应用实现后的独立 Review 仍未执行。
+> **状态**：2026-08-20 已完成 T04～T22、T24～T34 工程实施与 focused 自检；应用实现后的独立 Review 仍未执行，本文不以实现者自检代签。
 > **评审基线**：第二轮应用代码审查基于 `main@aa8e5b70be0913f02ceddccdc262ec6fe0769df1`；对应文档随后以 `main@ea3ae0a1269676db8c06c28ed32a9a29f4bd7109` 合入，后者没有应用代码变更。
 
 ## 1. 评审对象
@@ -214,3 +214,13 @@
 - 2026-08-19：GPT-5.6 Pro 第二轮代码/文档 Review，按用户反馈修正单项领养、排序、轻量隐私、组件优先、测试减负、Hero admin、统一进度与灵动动效。
 - 2026-08-19：Codex 空上下文文档复核，对照谈话记录、当前 main、真实表单字段、发布工作流与公开 Docker Hub 元数据，修正文案、条款接受节点和 FFmpeg 分发边界。
 - 代码实现后的 independent Reviewer：待执行。
+
+## 9. 2026-08-20 工程 focused 自检（非 independent Review）
+
+- PR #21 已确认的 PublicationPanel 旧 terminal operation 覆盖新任务问题已修复；两条目标 Playwright 覆盖发布后立即下架、cleanup retry active/防重/失败后可再试。
+- `0045_r4_default_copy` 已验证只替换 NULL/空白/精确历史默认，保留管理员自定义内容，不写入 privacy 占位。半装写入值明确不含尾巴。
+- 两项确认在客户端上传前与 service 消费前双重校验；缺失/false 不消费 upload、不创建 submission。
+- retention/deletion 只提供单条能力；rejected 立即进候选，pending 只复核，accepted 不按时间候选。隔离 fake storage 已覆盖 dry-run、current/version/delete marker、异常引用、OSS 失败、DB 失败后重入与重复执行。
+- `/admin/commissions` 列表和详情共用同一删除组件/API；真实浏览器已覆盖未认证 401、dry-run 脱敏、防重、失败可再试和成功刷新。
+- notices 生成器消费实际安装的 production closure，去除本机路径/时间、稳定排序并对未知许可证失败。`/licenses` 不再声称 Windows/gyan.dev 构建或旧源码 revision。
+- T23 真实经营主体/隐私政策终审、T35/T36 Linux runtime/容器分发、生产删除、独立 Review、用户验收和发布均保持开放。

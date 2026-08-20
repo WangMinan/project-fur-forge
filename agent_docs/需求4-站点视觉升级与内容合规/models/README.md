@@ -163,7 +163,7 @@ accepted 委托的业务结束发生在 QQ/线下流程，数据库无法可靠�
 
 ### 4.2 Review 候选
 
-CLI 可以返回只读脱敏候选：
+repository/service 向 CLI 和管理端返回同一只读脱敏候选：
 
 ```ts
 interface CommissionRetentionCandidate {
@@ -173,14 +173,14 @@ interface CommissionRetentionCandidate {
   createdAt: string
   handledAt: string | null
   reason:
-    | 'REJECTED_RETENTION_ELAPSED'
+    | 'REJECTED_READY_FOR_DELETION'
     | 'STALE_PENDING_REVIEW'
     | 'MANUAL_REQUEST'
 }
 ```
 
 - pending 只提示复核；
-- rejected 满 180 天可列为候选；
+- rejected 一经拒绝即可列为删除候选；
 - accepted 不由时间自动列为可删，除非操作员显式查询该申请；
 - 输出不含手机号、QQ、体型、文件名或 Object Key。
 
@@ -347,7 +347,7 @@ interface ThirdPartyNotice {
 规则：
 
 - `pnpm-prod` 来自生产依赖；`ffmpeg-static` 包记录与实际 FFmpeg 二进制记录分开；
-- `manual-runtime` 至少包含发布镜像内实际 FFmpeg 二进制的版本、SHA-256、许可证、接收者可访问的对应源码、源码 revision、补丁和构建配置；
+- `manual-runtime` 最终至少包含发布镜像内实际 FFmpeg 二进制的版本、SHA-256、许可证、接收者可访问的对应源码、源码 revision、补丁和构建配置；该记录在 Linux 发布镜像部署阶段提取，本轮未生成 registry 时不创建占位事实或猜测值；
 - `manual-asset` 至少包含 Noto Serif SC 与 ZhuoHei Collage；
 - 排序稳定，不写生成时间；
 - 未知许可证不猜测；

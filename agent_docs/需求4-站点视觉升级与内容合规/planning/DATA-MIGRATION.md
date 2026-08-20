@@ -141,18 +141,18 @@
 - 用户删除请求：收到后单独执行；
 - accepted：业务、保修、争议和法定必要期限结束后逐条确认。
 
-SOP 记录：执行日期、操作员、环境、dry-run 计数、逐条结果和下一次复核日期；不记录 PII、完整 Key 或可恢复 manifest。
+SOP 只维护流程、停止点与建议频率；不建调度/提醒，不在仓库文档填写虚构的生产执行日期、操作员或删除结果。真实执行证据若后续由操作员保留，仍不记录 PII、完整 Key 或可恢复 manifest。
 
 ### 8.2 Review 候选
 
 只读候选可以按：
 
 ```text
-rejected AND handled_at < cutoff
+rejected
 pending AND created_at < review_cutoff   # 只提示复核
 ```
 
-- 默认 rejected 业务 cutoff 为处理满 180 天；
+- rejected 在拒绝后立即成为单条删除候选；
 - pending 不标记为自动可删；
 - accepted 只通过显式 ID 人工查看；
 - legal hold/争议由操作员排除。
@@ -264,7 +264,7 @@ app/assets/licenses/THIRD_PARTY_NOTICES.txt
 - 不写生成时间；
 - 排序稳定；
 - npm 事实来自生产依赖；
-- `ffmpeg-static` 包与镜像内实际 FFmpeg 二进制分开记录；Linux 发布镜像中的二进制由 runtime registry 补充精确版本、SHA-256、许可证、对应源码、补丁和构建配置；
+- `ffmpeg-static` 包与镜像内实际 FFmpeg 二进制分开记录；本轮只完成 npm/asset 事实。Linux 发布镜像中的二进制 registry、容器嵌入与分发核验后置到部署阶段；
 - Noto Serif SC、ZhuoHei Collage 由 asset registry 补充；
 - release 前核对 Docker Hub 可见性；当前公开仓库按分发场景生成容器内声明和 `/licenses` 数据，禁止输出“未分发”文案；
 - 缺失/未知许可证时失败，不猜测；

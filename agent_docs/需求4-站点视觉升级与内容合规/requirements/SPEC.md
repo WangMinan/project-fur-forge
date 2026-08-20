@@ -295,13 +295,14 @@ privacyNoticeAcknowledged: true
 - 上传会话继续按现有 TTL 失效。
 - 失效/失败/取消且未消费上传至少每月人工运行现有清理。
 - 委托申请至少每半年人工复核。
-- rejected（含明确放弃）处理满 180 天后进入人工候选。
+- rejected（含明确放弃）一经拒绝即进入人工删除候选，不再等待 180 天。
 - accepted 在委托履行、1 年保修、争议处理与法律必要期限结束后，由工作室人工判断。
 - 存在投诉、争议或合法保留理由时，只延长直接相关信息。
 
 ### 11.2 工具边界
 
 - Review 可以列出脱敏候选和状态。
+- `/admin/commissions` 与 CLI 使用同一单条 dry-run/execute 能力；列表与详情入口不得引入批量删除。
 - 正式执行每次只允许一个 submission ID/回执，不提供按日期批量 execute。
 - 默认 dry-run；execute 需要固定强确认。
 - 一次删除覆盖 submission、upload session、私有 asset/variants/current/version/delete marker/preview/pending 和非必要备注。
@@ -368,33 +369,33 @@ Playwright 精简为少量用户旅程，不断言审美和内部 DOM：
 
 - [x] 第二轮代码 Review 已识别领养排序、首页双项、按钮/上传/进度重复、Hero 管理心智和测试过重问题。
 - [x] SPEC/PLAN/TASKS/design/models/data migration/STATE/CLAUDE 口径一致。
-- [ ] 公共行动、管理行动和统一进度组件完成，新增页面不复制局部实现。
+- [x] 公共行动、管理行动和统一进度组件完成，新增页面不复制局部实现。
 
 ### 14.2 领养
 
-- [ ] `/adoptions` 始终 available 在前、adopted 在后，组内 updated_at 倒序。
-- [ ] 名称搜索与分页保持服务端排序。
-- [ ] 首页最多只返回/展示一项 available；无 available 时隐藏。
-- [ ] 将某项改成 adopted 后不会排到 available 之前。
+- [x] `/adoptions` 始终 available 在前、adopted 在后，组内 updated_at 倒序。
+- [x] 名称搜索与分页保持服务端排序。
+- [x] 首页最多只返回/展示一项 available；无 available 时隐藏。
+- [x] 将某项改成 adopted 后不会排到 available 之前。
 
 ### 14.3 隐私与删除
 
-- [ ] 表单两个确认均不可预勾选，服务端严格拒绝 false/缺失。
-- [ ] 不新增 intake schema/metadata/版本协议，现有申请表结构保持不变。
+- [x] 表单两个确认均不可预勾选，服务端严格拒绝 false/缺失。
+- [x] 不新增 intake schema/metadata/版本协议，现有申请表结构保持不变。
 - [ ] 目标隐私政策由工作室写入真实经营主体并描述真实收集行为。
-- [ ] 单条删除 dry-run/execute/重入完整覆盖 DB 与 OSS，不提供时间批量 execute。
+- [x] 单条删除 dry-run/execute/重入完整覆盖 DB 与 OSS，不提供时间批量 execute。
 
 ### 14.4 视觉、Hero 与进度
 
 - [ ] 首页四幕顺序和单一视觉中心符合契约；设定领养为单幅完整展示。
 - [ ] 动效具备角色感但无持续噪声，移动端和 reduced-motion 等价可用。
-- [ ] Hero 数据仍四集合独立，管理端 placement/orientation 心智清楚。
-- [ ] OSS upload 显示真实字节进度；FFmpeg/operation 使用诚实阶段模式。
+- [x] Hero 数据仍四集合独立，管理端 placement/orientation 心智清楚。
+- [x] OSS upload 显示真实字节进度；FFmpeg/operation 使用诚实阶段模式。
 - [ ] 1440/1024/768/430/390 与真实手机由王旻安/景宸人工验收。
 
 ### 14.5 测试与发布
 
-- [ ] `core` 与 `smoke` 脚本/配置建立，普通改动反馈时间显著下降。
-- [ ] 旧精确文案/DOM/动画时长测试已删除或降级为 legacy non-gating。
-- [ ] 默认 Actions 不再自动执行完整镜像/恢复/全量 E2E；release/manual 路径仍可执行必要部署验证。
+- [x] `core` 与 `smoke` 脚本/配置建立，普通改动反馈时间显著下降。
+- [x] 旧精确文案/DOM/动画时长测试已删除或降级为 legacy non-gating。
+- [x] 默认 Actions 不再自动执行完整镜像/恢复/全量 E2E；release/manual 路径仍可执行必要部署验证。
 - [ ] 用户人工门禁、独立 Review 和生产 smoke 均单独留证，不互相代签。

@@ -6,9 +6,14 @@
 
 ## 当前阶段
 
-阶段 4 · 2026-08-20 完成第一批工程实施 T04～T21，GATE-A/GATE-B 已由实现与本地证据关闭。当前停在 C 阶段 T22 之前；轻量内容/隐私、删除、第三方声明、Hero 焦点、动效体系和首页四幕均未开始。
+阶段 4 · 2026-08-20 已完成 T04～T22、T24～T34 的当前工程实施和本地证据。T23 真实经营主体/隐私政策人工成文未由 Agent 代签；T35/T36 的 Linux FFmpeg runtime registry、容器嵌入、Docker Hub 分发核验与 release evidence 已明确后置。本轮停在 T37 之前，未进入 Hero 焦点、动效体系或首页四幕。
 
 ## 最近验证
+
+- 2026-08-20：PR #21 Review 修复提交 `55487b9`；PublicationPanel 按“pending action → active persisted operation → terminal operation → feedback”展示，cleanup retry 具备 active/loading/disabled/防重/失败后可再试。目标 Playwright 2/2 通过。
+- 2026-08-20：轻量确认与文案迁移提交 `5d4c7f8`；`0045_r4_default_copy` 只处理 NULL/空白/精确历史默认，不自动写 privacy 占位。半装目标文案明确为“仅头部和爪，不含尾巴”。迁移/委托 integration 26/26，确认/重复申请 smoke 2/2 通过。
+- 2026-08-20：retention 与单条删除提交 `bf33c85`，非 rejected 人工批准覆盖修正 `f84f3c9`；rejected 立即进入脱敏候选，CLI 与 `/admin/commissions` 共用单条 dry-run/execute service，覆盖精确 current/version/delete marker、OSS/DB 失败、异常引用、重入与幂等。核心测试 6/6、CLI 1/1、管理端 smoke 1/1 通过。
+- 2026-08-20：第三方 notices 提交 `e7c60bc`：从实际安装的 production closure 生成 798 条包/版本+资产记录、20 种许可证表达；未知许可证失败，JSON/TXT 无本机路径与生成时间。`/licenses` 已删除 Windows/gyan.dev/旧 source revision 声称，Linux runtime 事实明确待部署 registry。
 
 - 2026-08-20：任务分支 `codex/r4-t04-t21-foundation` 从 `main@cbaf98fec4868e94af5b28faf5c3d9a23344d859` 开始；Gate A 提交为 `767a1d4`，领养排序提交为 `16e4288`，测试/Actions 提交为 `daacff2`，文档与浏览器证据由本轮末次提交收口。
 - 2026-08-20：公开 `PublicAction`、管理 `AdminAction` 与 `AdminTaskProgress` 已落地；Hero、作品图、二维码、水印 Logo 四类上传使用 XHR 字节进度；FFmpeg 为阶段 + elapsed + indeterminate；Hero/branding/publication operation 使用持久状态并可刷新恢复。
@@ -39,7 +44,7 @@
 - OSS 上传使用真实字节进度；持久 operation 使用真实阶段/计数；FFmpeg 无可信百分比时显示阶段、经过时间和终态，不伪造进度。
 - Hero 横版/竖版素材继续分别维护，四集合版本和顺序互不耦合；管理端只统一信息架构和组件，不合并数据或强迫横竖一一配对。
 - 隐私实现保持轻量：通过现有 `privacy_policy` 和 `contact_email` 维护真实处理者/联系信息；申请页只有两个未预勾选确认，服务端校验字面量 `true`，不新增确认持久字段或版本协议。
-- 人工保留复核继续采用“人的判断 + 工具执行”；首版正式删除只支持单条申请精确执行，不建设定时任务、Worker、批量自动删除或通用生命周期引擎。
+- 人工保留复核继续采用“人的判断 + 工具执行”；rejected 拒绝后立即进入候选，管理端与 CLI 只支持单条精确 dry-run/execute，不建设定时任务、Worker、批量自动删除或通用生命周期引擎。
 - 测试只保护稳定不变量；视觉、排版、文案语气和真实图片效果以王旻安/景宸人工验收为最终门禁。
 - 普通改动不默认跑历史全量 unit/integration/E2E；先运行快速静态检查和受影响的核心不变量，发布前再运行精简 smoke、构建/部署验证与人工浏览器验收。
 - 不新增 GitHub required check；默认质量 workflow 需要在实现阶段减重，重型镜像/恢复/完整历史套件改为显式 release/manual 路径。
@@ -52,4 +57,4 @@
 
 ## 下一步交接
 
-本轮停止于 GATE-B。下一轮只能从 `implementation/TASKS.md` 的 T22 开始轻量内容/隐私阶段；不得把本轮本地自动化当作独立 Review、王旻安/景宸视觉验收或生产发布，也不得恢复旧复杂 intake Schema 方案。
+本轮开发停在 T37 之前。下一棒先由工作室完成 T23 真实经营主体/隐私政策人工成文，并在部署阶段完成 T35/T36 的 Linux FFmpeg runtime registry、容器分发与 release evidence。本地自动化不代签独立 Review、王旻安/景宸验收、真实手机、生产迁移/删除、镜像构建或发布。

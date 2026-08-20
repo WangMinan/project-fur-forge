@@ -68,41 +68,41 @@
 
 ## C. 轻量内容、隐私与申请确认
 
-- [ ] **T22 · 默认文案前向迁移**：按 `COPY.md` 自动处理 about/commission/terms/contact 的 NULL/空白/精确历史默认；不在经营主体未知时把带占位符的 privacy 文本写入数据库；各分区版本正确递增。
+- [x] **T22 · 默认文案前向迁移**：按 `COPY.md` 自动处理 about/commission/terms/contact 的 NULL/空白/精确历史默认；不在经营主体未知时把带占位符的 privacy 文本写入数据库；各分区版本正确递增。
 - [ ] **T23 · 隐私政策人工成文**：不新增字段；工作室通过现有 privacy 编辑能力写入包含实际经营主体与现有邮箱的完整政策，保存后递增隐私分区版本；生产页面阻断 `{{...}}` 占位与旧错误政策。
-- [ ] **T24 · 两项申请确认 UI**：成年/设定权利、隐私/用途/非接单两项未预勾选；错误邻近、键盘/屏幕阅读器可用，提交失败保留表单与图片。
-- [ ] **T25 · 严格请求校验**：Schema 增加 `adultConfirmed: true`、`privacyNoticeAcknowledged: true`；service 在消费 upload 前校验；缺失/false 返回普通 validation error。
-- [ ] **T26 · 删除旧复杂方案残留**：确认无 `privacy_controller_name`、intake metadata API、contract version、确认 DB 列、legacy/v2 管理 UI、客户端 policy version 或 stale 409。
-- [ ] **T27 · 隐私/服务/关于/委托展示**：使用现有内容投影，QQ 优先、邮箱备用；隐私政策真实描述站内收集与人工清理；不把 checkbox 写成合同签署；工作室在 QQ 接单/收款前明确提供或引用当时服务条款并提示重大事项。
-- [ ] **T28 · 轻量隐私负向验证**：确认 PII 不进入公开 DTO、HTML、URL、analytics、普通日志、错误和 local/session storage；只保留必要 core 测试。
+- [x] **T24 · 两项申请确认 UI**：成年/设定权利、隐私/用途/非接单两项未预勾选；错误邻近、键盘/屏幕阅读器可用，提交失败保留表单与图片。
+- [x] **T25 · 严格请求校验**：Schema 增加 `adultConfirmed: true`、`privacyNoticeAcknowledged: true`；service 在消费 upload 前校验；缺失/false 返回普通 validation error。
+- [x] **T26 · 删除旧复杂方案残留**：确认无 `privacy_controller_name`、intake metadata API、contract version、确认 DB 列、legacy/v2 管理 UI、客户端 policy version 或 stale 409。
+- [x] **T27 · 隐私/服务/关于/委托展示（工程范围）**：使用现有内容投影，QQ 优先、邮箱备用；目标隐私/服务文案与展示保护已完成。真实经营主体写入与工作室法务终审仍属 T23 人工边界。
+- [x] **T28 · 轻量隐私负向验证**：确认 PII 不进入公开 DTO、HTML、URL、analytics、普通日志、错误和 local/session storage；只保留必要 core 测试。
 
 ### GATE-C · 确认清楚但工程轻量
 
-- [ ] 两项确认未预勾选且服务端严格；
-- [ ] 校验失败不消费 upload；
-- [ ] commission submission 表无新增确认字段；
-- [ ] 无专用 metadata/version 协议；
+- [x] 两项确认未预勾选且服务端严格；
+- [x] 校验失败不消费 upload；
+- [x] commission submission 表无新增确认字段；
+- [x] 无专用 metadata/version 协议；
 - [ ] 真实经营主体和邮箱由工作室人工核对；
-- [ ] 隐私文案与真实功能一致。
+- [ ] 隐私文案与真实功能一致（工程目标稿已完成；待工作室写入真实经营主体并终审）。
 
 ## D. 人工 retention、单条删除与第三方声明
 
-- [ ] **T29 · Retention review 命令**：列出 masked rejected/pending 候选；pending 只提示复核，accepted 只按显式 ID 查看；不输出 PII/Key。
-- [ ] **T30 · 单条删除 dry-run**：输入一个 submission ID/回执，枚举 DB/OSS 精确关系、异常引用和脱敏计数；默认不写不删。
-- [ ] **T31 · 单条删除 execute**：固定强确认，current/version/delete marker/preview/pending 删除并验证后事务删行；每次只一条，不支持时间批量 execute。
-- [ ] **T32 · 删除重入与隔离演练**：对象已不存在、DB commit 失败、异常引用、重复执行和备份恢复后复核均有明确行为；只保留核心不变量测试。
-- [ ] **T33 · 人工 SOP**：记录月度上传清理、半年度申请 Review、用户删除请求、操作员和下一次日期；不存 PII/manifest。
-- [ ] **T34 · 第三方声明生成**：从实际生产依赖生成稳定 JSON/TXT，无生成时间、排序稳定、未知许可证失败；`ffmpeg-static` 包记录与实际二进制记录分开。
-- [ ] **T35 · Runtime/资产 registry**：从 Linux 发布镜像登记 FFmpeg 版本、SHA-256、许可证、对应源码、补丁和构建配置；另登记 Noto Serif SC、ZhuoHei Collage，不误标免费商用字体为开源。
-- [ ] **T36 · `/licenses` 与分发产物收口**：页面和公开 Docker Hub 镜像消费同一生成事实；镜像内含许可证/声明，release evidence 给出接收者可访问的对应源码与构建信息；删除手写平行运行时数组、“均为 MIT/Apache”和“未分发 FFmpeg”错误总括。
+- [x] **T29 · Retention review repository/service**：rejected 拒绝后立即列入 masked 删除候选；pending 只提示复核，accepted 不按时间列入；CLI 与管理端共用且不输出 PII/Key。
+- [x] **T30 · 单条删除 dry-run**：输入一个 submission ID/回执，统一 service/API/CLI 枚举 DB/OSS 精确关系、异常引用和脱敏计数；默认不写不删。
+- [x] **T31 · 单条删除 execute**：固定强确认，current/version/delete marker/preview/pending 删除并验证后事务删行；每次只一条，管理端与 CLI 共用，不支持时间批量 execute。
+- [x] **T32 · 管理端入口、重入与隔离演练**：`/admin/commissions` 列表/详情先展示单条脱敏 dry-run，再强确认 execute；对象已不存在、DB commit 失败、异常引用、重复执行和备份恢复后复核均有明确行为。
+- [x] **T33 · 人工 SOP**：只维护月度上传清理、半年度申请 Review、用户权利请求、accepted 人工判断、单条 dry-run/execute 与备份恢复后复核流程；不建调度/提醒，不写虚构生产记录。
+- [x] **T34 · 第三方声明生成**：从实际生产依赖生成稳定 JSON/TXT，无生成时间、排序稳定、未知许可证失败；`ffmpeg-static` 包记录与实际二进制记录分开。
+- [ ] **T35 · Runtime/资产 registry（部分后置）**：本轮登记 Noto Serif SC 与 ZhuoHei Collage 已核实授权类型；Linux 发布镜像的 FFmpeg 版本、SHA-256、对应源码、补丁与构建配置后置到部署阶段，本轮不勾选。
+- [ ] **T36 · `/licenses` 与分发产物收口（部分后置）**：本轮让页面消费生成 notices，删除手写平行数组与已知错误 FFmpeg 文案；完整 runtime registry 嵌入容器、Docker Hub 分发核验与 release evidence 后置，本轮不勾选。
 
 ### GATE-D · 人工运维可执行
 
-- [ ] 单条删除 DB/OSS 一体、默认 dry-run、可重入；
-- [ ] 无 scheduler/批量自动删除；
-- [ ] 用户请求可单独处理；
-- [ ] notices 与实际依赖/资产一致；
-- [ ] 人工下次复核日期已登记。
+- [x] 单条删除 DB/OSS 一体、默认 dry-run、可重入；
+- [x] 无 scheduler/批量自动删除；
+- [x] 用户请求可单独处理；
+- [x] notices 与当前 npm 生产依赖/已核实字体资产一致；
+- [ ] T35/T36 部署分发证据完成。
 
 ## E. 动效、Hero 焦点与首页四幕
 
@@ -149,4 +149,7 @@
 
 ## 闭环结论
 
-- 尚未实施。
+- T04～T22、T24～T34 已完成当前开发范围与本地证据。
+- T23 真实经营主体/隐私政策人工成文仍由工作室完成。
+- T35/T36 的 Linux FFmpeg runtime registry、容器嵌入、Docker Hub 分发核验与 release evidence 已后置；GATE-D 未完整关闭。
+- 本轮未进入 T37 及之后的 Hero 焦点、动效和首页四幕。

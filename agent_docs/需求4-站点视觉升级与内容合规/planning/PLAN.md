@@ -6,6 +6,10 @@
 
 ## 执行结论
 
+### 2026-08-20 本轮执行窗口
+
+保留 TASKS 的原编号：本轮先完成 T22～T28，再完成 T29～T34 及 `/admin/commissions` 单条删除入口。T35/T36 中 Linux 发布镜像 runtime registry、容器嵌入和 Docker Hub 分发核验后置到部署阶段；本地 notices 与 `/licenses` 开发完成也不会强行关闭 GATE-D。
+
 本轮不再从复杂隐私 Schema 开始。正确顺序是：
 
 ```text
@@ -130,15 +134,18 @@ A 组件与进度地基
 ### C3. 单条申请删除
 
 - `review` 命令输出 masked 候选；accepted 不按时间标可删。
+- rejected 一经拒绝即列为候选；pending 只提示人工复核。
 - `delete` 正式每次一个 ID/回执；默认 dry-run、固定确认。
 - 关系存在时枚举精确 DB/OSS 集合，对象验证后删行。
 - 隔离数据验证 execute 和重入；不实现批量 execute。
-- 补充人工月度/半年度 SOP。
+- `/admin/commissions` 列表与详情使用同一后端能力，先 dry-run 展示脱敏计数/阻断，再确认单条 execute。
+- 补充人工月度/半年度 SOP 文档；不建调度/提醒，不填写虚构的生产执行记录。
 
 ### C4. 第三方声明
 
 - 从 production dependencies 生成稳定 JSON/TXT。
-- `ffmpeg-static` 包与镜像内实际 FFmpeg 二进制分开登记；后者从 Linux 发布镜像提取版本、SHA-256、许可证、对应源码、补丁和构建配置，并确保镜像接收者能访问对应源码。
+- 本轮从 production dependency closure 生成稳定 JSON/TXT，`/licenses` 消费生成事实；`ffmpeg-static` npm 包与实际 FFmpeg 二进制概念分开。
+- Linux 发布镜像中实际 FFmpeg 的版本、SHA-256、对应源码、补丁、构建配置和容器分发核验后置到 T35/T36 部署阶段；缺少 registry 时不宣称具体二进制事实。
 - Noto Serif SC、ZhuoHei Collage 进入人工资产 registry。
 - 当前 Docker Hub 仓库公开，release 视为二进制分发；容器与 `/licenses` 必须消费同一份声明事实，不能保留“仅内部使用、未分发”文案。
 - `/licenses` 使用生成事实，不保留平行手写依赖数组。
