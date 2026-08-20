@@ -79,7 +79,7 @@ onScopeDispose(() => {
         打开邮件客户端
         <span aria-hidden="true">↗</span>
       </PublicAction>
-      <PublicAction variant="secondary" @click="onCopy">
+      <PublicAction class="email-actions__copy" variant="secondary" @click="onCopy">
         {{ copyState === 'copied' ? '已复制邮箱' : '复制邮箱' }}
       </PublicAction>
     </div>
@@ -103,6 +103,10 @@ onScopeDispose(() => {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
+}
+
+.email-actions__copy {
+  min-width: 7.5rem;
 }
 
 .email-actions__feedback {

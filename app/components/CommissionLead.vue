@@ -8,6 +8,7 @@ const props = defineProps<{
   description?: string | undefined
   hero: PublicHeroPlacementDto
   status?: PublicSiteBusinessStatusDto | null | undefined
+  viewTransitionName?: string | undefined
 }>()
 
 const landscape = computed(() => props.hero.landscape[0])
@@ -39,7 +40,11 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="commission-lead" aria-labelledby="commission-lead-title">
-    <div v-if="sources" class="commission-lead__media">
+    <div
+      v-if="sources"
+      class="commission-lead__media"
+      :style="{ viewTransitionName }"
+    >
       <ResponsivePicture
         :sources="sources"
         :portrait-sources="portrait?.sources"

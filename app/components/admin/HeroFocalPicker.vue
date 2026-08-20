@@ -14,34 +14,55 @@ const emit = defineEmits<{
   update: [value: { focalX: number, focalY: number }]
 }>()
 
-const PRESETS = [
-  { key: 'top-left', label: '左上', x: 0, y: 0 },
-  { key: 'top', label: '上', x: 0.5, y: 0 },
-  { key: 'top-right', label: '右上', x: 1, y: 0 },
-  { key: 'left', label: '左', x: 0, y: 0.5 },
-  { key: 'center', label: '中心', x: 0.5, y: 0.5 },
-  { key: 'right', label: '右', x: 1, y: 0.5 },
-  { key: 'bottom-left', label: '左下', x: 0, y: 1 },
-  { key: 'bottom', label: '下', x: 0.5, y: 1 },
-  { key: 'bottom-right', label: '右下', x: 1, y: 1 },
-] as const
-
-const closest = computed(() => PRESETS.toSorted((left, right) => (
-  ((left.x - props.focalX) ** 2 + (left.y - props.focalY) ** 2)
-  - ((right.x - props.focalX) ** 2 + (right.y - props.focalY) ** 2)
-))[0]!)
-const exactPreset = computed(() => PRESETS.find(preset => (
-  preset.x === props.focalX && preset.y === props.focalY
-)) ?? null)
+const dragging = shallowRef(false)
 const focalPercent = computed(() => ({
-  x: Math.round(props.focalX * 100),
-  y: Math.round(props.focalY * 100),
+  x: Math.round(props.focalX * 1000) / 10,
+  y: Math.round(props.focalY * 1000) / 10,
 }))
 
-function select(x: number, y: number) {
-  if (!props.disabled) {
-    emit('update', { focalX: x, focalY: y })
+function clamp(value: number) {
+  return Math.min(1, Math.max(0, value))
+}
+
+function updateFromPointer(event: PointerEvent) {
+  if (props.disabled) {
+    return
   }
+  const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  emit('update', {
+    focalX: clamp((event.clientX - bounds.left) / bounds.width),
+    focalY: clamp((event.clientY - bounds.top) / bounds.height),
+  })
+}
+
+function onPointerDown(event: PointerEvent) {
+  if (props.disabled) {
+    return
+  }
+  dragging.value = true
+  ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
+  updateFromPointer(event)
+}
+
+function onPointerMove(event: PointerEvent) {
+  if (dragging.value) {
+    updateFromPointer(event)
+  }
+}
+
+function onPointerEnd(event: PointerEvent) {
+  dragging.value = false
+  const element = event.currentTarget as HTMLElement
+  if (element.hasPointerCapture(event.pointerId)) {
+    element.releasePointerCapture(event.pointerId)
+  }
+}
+
+function onRangeInput(axis: 'x' | 'y', event: Event) {
+  const value = Number((event.target as HTMLInputElement).value) / 100
+  emit('update', axis === 'x'
+    ? { focalX: value, focalY: props.focalY }
+    : { focalX: props.focalX, focalY: value })
 }
 </script>
 
@@ -64,6 +85,17 @@ function select(x: number, y: number) {
         }"
         aria-hidden="true"
       />
+      <button
+        v-if="previewUrl"
+        type="button"
+        class="hero-focal-picker__drag-surface"
+        :disabled="disabled"
+        aria-label="拖动设置大图焦点"
+        @pointerdown="onPointerDown"
+        @pointermove="onPointerMove"
+        @pointerup="onPointerEnd"
+        @pointercancel="onPointerEnd"
+      />
       <span class="hero-focal-picker__frame-label">
         {{ orientation === 'landscape' ? '桌面 16:9 目标裁切' : '手机 9:16 目标裁切' }}
       </span>
@@ -71,25 +103,35 @@ function select(x: number, y: number) {
 
     <div class="hero-focal-picker__controls">
       <div>
-        <h4>九宫格焦点</h4>
-        <p>
-          当前 {{ focalPercent.x }}% / {{ focalPercent.y }}% ·
-          {{ exactPreset ? `已选${exactPreset.label}` : `最近${closest.label}，原坐标保持精度` }}
-        </p>
+        <h4>图片焦点</h4>
+        <p>拖动画面中的焦点，或使用水平、垂直控制条微调主体位置。</p>
       </div>
-      <div class="hero-focal-picker__grid" role="group" aria-label="选择图片焦点">
-        <button
-          v-for="preset in PRESETS"
-          :key="preset.key"
-          type="button"
+
+      <label>
+        <span>水平焦点 {{ focalPercent.x }}%</span>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          step="0.1"
+          :value="focalPercent.x"
           :disabled="disabled"
-          :aria-pressed="exactPreset?.key === preset.key"
-          :data-nearest="!exactPreset && closest.key === preset.key"
-          @click="select(preset.x, preset.y)"
+          @input="onRangeInput('x', $event)"
         >
-          {{ preset.label }}
-        </button>
-      </div>
+      </label>
+      <label>
+        <span>垂直焦点 {{ focalPercent.y }}%</span>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          step="0.1"
+          :value="focalPercent.y"
+          :disabled="disabled"
+          @input="onRangeInput('y', $event)"
+        >
+      </label>
+
       <p class="hero-focal-picker__hint">
         只影响启用后生成的目标画框；横版与竖版素材仍分别维护。
       </p>
@@ -141,6 +183,7 @@ function select(x: number, y: number) {
 
 .hero-focal-picker__marker {
   position: absolute;
+  z-index: 2;
   width: 1rem;
   height: 1rem;
   margin: -0.5rem 0 0 -0.5rem;
@@ -151,8 +194,24 @@ function select(x: number, y: number) {
   pointer-events: none;
 }
 
+.hero-focal-picker__drag-surface {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.hero-focal-picker__drag-surface:disabled {
+  cursor: not-allowed;
+}
+
 .hero-focal-picker__frame-label {
   position: absolute;
+  z-index: 3;
   right: var(--admin-space-2);
   bottom: var(--admin-space-2);
   padding: var(--admin-space-1) var(--admin-space-2);
@@ -160,13 +219,14 @@ function select(x: number, y: number) {
   background: rgb(25 31 42 / 0.72);
   border-radius: var(--admin-radius-sm);
   font-size: var(--admin-font-xs);
+  pointer-events: none;
 }
 
 .hero-focal-picker__controls {
   display: grid;
   align-content: start;
-  gap: var(--admin-space-3);
-  max-width: 22rem;
+  gap: var(--admin-space-4);
+  max-width: 24rem;
 }
 
 .hero-focal-picker__controls > div:first-child {
@@ -174,8 +234,10 @@ function select(x: number, y: number) {
   gap: var(--admin-space-1);
 }
 
-.hero-focal-picker__controls h4 {
+.hero-focal-picker__controls h4,
+.hero-focal-picker__controls label span {
   font-size: var(--admin-font-sm);
+  font-weight: 700;
 }
 
 .hero-focal-picker__controls p {
@@ -184,45 +246,19 @@ function select(x: number, y: number) {
   line-height: var(--admin-line-normal);
 }
 
-.hero-focal-picker__grid {
+.hero-focal-picker__controls label {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--admin-space-1);
+  gap: var(--admin-space-2);
 }
 
-.hero-focal-picker__grid button {
-  min-height: var(--admin-touch-target);
-  padding: var(--admin-space-1);
-  color: var(--admin-text-secondary);
-  background: var(--admin-bg-primary);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-sm);
-  cursor: pointer;
-  font: inherit;
-  font-size: var(--admin-font-xs);
-}
-
-.hero-focal-picker__grid button[aria-pressed='true'] {
-  color: var(--admin-text-inverse);
-  background: var(--admin-accent-primary);
-  border-color: var(--admin-accent-primary);
-  font-weight: 700;
-}
-
-.hero-focal-picker__grid button[data-nearest='true'] {
-  color: var(--admin-accent-primary);
-  border-color: var(--admin-accent-primary);
-  border-style: dashed;
-}
-
-.hero-focal-picker__grid button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
+.hero-focal-picker__controls input[type='range'] {
+  width: 100%;
+  accent-color: var(--admin-accent-primary);
 }
 
 @media (min-width: 960px) {
   .hero-focal-picker {
-    grid-template-columns: minmax(0, 52rem) minmax(16rem, 22rem);
+    grid-template-columns: minmax(0, 52rem) minmax(18rem, 24rem);
     align-items: start;
   }
 }

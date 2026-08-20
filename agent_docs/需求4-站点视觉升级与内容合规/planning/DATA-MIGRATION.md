@@ -1,7 +1,7 @@
 # 数据迁移与运维计划：需求4
 
 > **角色**：固定需求4的前向文案迁移、无 Schema 变更项、生产停止点与人工删除流程。
-> **状态**：2026-08-19 第二轮 Review 与空上下文文档复核后定稿待实现。
+> **状态**：2026-08-21 阶段 E 焦点交互已改为复用现有字段的可拖标记与双滑杆；本轮仍无新增 Schema 迁移。
 > **原则**：本轮不为轻量确认新增数据库结构；不重写需求1～3已经执行的迁移。
 
 ## 1. 当前基线
@@ -122,7 +122,7 @@
 
 - 复用 `assets.focal_x/focal_y`；
 - 已有任意坐标原样保留；
-- UI 九宫格写入 0 / 0.5 / 1；
+- UI 通过画面内拖动与水平/垂直滑杆写入归一化 `[0,1]` 浮点值，不再量化到九宫格；
 - recipe identity 已含焦点，修改后必须通过既有 publication operation 生成新变体；
 - 不直接 UPDATE 已启用 Hero 对应资产后让公开 URL 与数据库身份失配；
 - 四集合继续独立，管理端重组不改变 collection version 或 owner context。
@@ -294,7 +294,7 @@ public/THIRD_PARTY_NOTICES.txt
 - `/adoptions` 排序和首页单项结果；
 - 单条删除 dry-run/execute/重入计数；
 - third-party notices 生成与 drift 结果；
-- Hero 焦点中心/四角与横竖管理体验；
+- Hero 焦点拖动、水平/垂直控制条与横竖管理体验；
 - 统一上传/FFmpeg/operation 进度截图；
 - `check:fast`、`test:smoke`、release smoke；
 - 王旻安/景宸人工视觉验收。

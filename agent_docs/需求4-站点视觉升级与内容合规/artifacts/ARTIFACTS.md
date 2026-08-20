@@ -1,7 +1,7 @@
 # 产物索引：需求4
 
 > **角色**：登记需求4文档、实施证据与外部依据。
-> **状态**：2026-08-20 已收口 T04～T34 开发产物与本地证据；T35/T36 部署分发证据、独立 Review、用户验收与生产执行仍待补。
+> **状态**：2026-08-21 已收口 T04～T34 与阶段 E T37～T46 当前开发产物；T35/T36 部署分发、T47 真实手机/连续性能、独立 Review、用户验收与生产执行仍待补。
 
 ## 文档产物
 
@@ -13,7 +13,7 @@
 | 1 设计 | 设计说明 | `../.design/README.md` | 定稿待视觉实现 | 四幕、动效、焦点、移动和验收 |
 | E 审计 | T37 动效机会审计 | `../.design/MOTION_OPPORTUNITIES.md` | 已完成 | 7 个通过机会、拒绝清单、输入/reduced/中断交接 |
 | E 实施 | T38 静态四幕证据 | `../implementation/evidence/T37-T47-2026-08-21/t38-static/` | 已完成 | 五视口一屏领养、无 JS、图片解码、溢出与 console/network |
-| E 实施 | T39/T40 Hero 焦点证据 | `../implementation/evidence/T37-T47-2026-08-21/` | 已完成 | 双 CAS、冲突阻断、九宫格、不可变变体与隔离浏览器 |
+| E 实施 | T39/T40 Hero 焦点证据 | `../implementation/evidence/T37-T47-2026-08-21/` | 历史首版 | 双 CAS、冲突阻断、九宫格与不可变变体；九宫格已被 T40-F1 取代 |
 | E 实施 | T41 输入/reduced 证据 | `../implementation/evidence/T37-T47-2026-08-21/` | 已完成 | 统一 token、三类输入、reduced motion/transparency/contrast |
 | 2 模型 | 模型说明 | `../models/README.md` | 定稿 | 焦点复用、轻量申请确认、单条删除和 notices |
 | 2 计划 | 实施计划 | `../planning/PLAN.md` | 定稿 | A～E 执行顺序 |
@@ -54,7 +54,7 @@
 - 生产迁移执行后的隐私政策公开投影核对；
 - Linux 发布镜像内 FFmpeg 二进制、对应源码、构建信息与 Docker Hub 可见性证据；
 - 真实素材多视口截图/录像；
-- 九宫格裁切与 publication 证据；
+- 可拖焦点、水平/垂直滑杆与 publication 证据；
 - core/smoke/release、性能和 PII leakage 结果；
 - independent Review；
 - 用户验收；

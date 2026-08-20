@@ -6,12 +6,16 @@
 
 ## 当前阶段
 
-阶段 E 实施 · 2026-08-21 已完成 T04～T34、T34-F1、M01～M11 与 T37～T41。首页静态层、用户反馈、Hero 焦点/九宫格和统一 motion token/输入模态/reduced preferences 已落地；drag 因未达到完整手势门槛保持未实施。下一步按 T42～T46 依次完成场景动效、静默 Hero 控制器、Header/路由与共享对象整合。T42～T47 的本地设计、实现和视觉迭代不等待 T35/T36。Linux FFmpeg runtime registry、容器嵌入、Docker Hub 分发核验与 release evidence 仍保持开放，GATE-D 未关闭，最终独立 Review、镜像冻结和生产发布不得绕过。
+阶段 E 工程交接 · 2026-08-21 已完成 T04～T34、T34-F1、M01～M11 与 T37～T46（含 T38-F1、T40-F1、T46-F1～F3）当前工程实现。首页 ≥1024px 按 Hero → lead → 继续浏览 → 委托 → 领养 → Footer 逐幕 wheel，1023px 以下原生滚动；Header 固定且单一 offset 不覆盖内容；Hero 焦点使用可拖标记和双滑杆。T47 真实手机/连续性能、王旻安/景宸人工验收、T35/T36 分发证据和最终独立 Review 保持开放。
 
 ## 最近验证
 
+- 2026-08-21：最终交接静态门禁通过：lint、typecheck、production build 与 content guard 成功；按用户明确要求未再运行临时 Playwright、core 或 smoke。T47 真实手机/连续性能和人工验收保持开放，不由构建结果代签。
+- 2026-08-21：本轮最终用户反馈要求首页 Header 固定、继续浏览减少空旷、hover 离图即回落，并在完成后 commit/push/结束 goal。Header 改为首页 fixed、滚动后浅色实底；逐幕 offset 最初同时写入 scroll-padding 与 scroll-margin 导致上一幕露出，已删除重复 scene margin，只保留容器 offset。次级媒体提高到约 56svh，hover 回落改为 180ms state。
+- 2026-08-21：最终对齐修正：继续浏览标题此前受 scene padding 下推，而绝对定位轨道按钮仍按 section 顶部定位；现改为共享 `--secondary-scene-padding-top`，按钮与标题同一行。
+- 2026-08-21：用户新增阶段 E 反馈：参考 `lingxun.me` 的桌面逐幕结构，但沿用本项目 1024px PC 断点；1023px/768/移动端不采用外站 768px wheel 边界。用户否决 T40 九宫格，改为作品编辑器同类的画面拖动焦点和水平/垂直滑杆；另要求首屏无重启动画、三幕同款 hover、领养到 Footer 间距收紧和复制邮箱按钮组稳定。代码已修改，文档同步中，浏览器验收待执行。
 - 2026-08-21：完成 T41。公共端只保留 `motion-duration-feedback/state/content/media` 与 `motion-ease-standard/playful/linear-progress`，旧 duration/easing 与散落 620/680ms 已清零；全局 reduced 不再用 0.01ms 杀死全部反馈。浏览器确认 pointer/keyboard intent 分离；reduced-motion 等待 10.6 秒不自动换片但可手动切换；reduced-transparency 使用实底，contrast 提高文字/边界变量。lint、typecheck 通过；状态证据为 `t41-input-reduced.json`，390 截图为 `t41-reduced-motion-390x844.png`。
-- 2026-08-21：完成 T39/T40。`AdminHeroItemDto.asset` 增加 version/focal，create/update 请求携带 asset version 与焦点；service 只允许 disabled item，在 collection version + asset version 双 CAS 中更新焦点，共享 asset 焦点变化返回 `HERO_FOCAL_SHARED_ASSET_CONFLICT`，残留 PUBLIC variant 返回 cleanup pending。九宫格覆盖中心/四角/四边，任意坐标显示最近预设但保持精度。focused core 2 files/9 tests、lint、typecheck 通过；隔离 Playwright 真实上传/右上保存 1/1 通过，截图为 `implementation/evidence/T37-T47-2026-08-21/t39-t40-admin-hero-1440x900.png`。
+- 2026-08-21：完成 T39/T40 历史首版。`AdminHeroItemDto.asset` 增加 version/focal，create/update 请求携带 asset version 与焦点；service 只允许 disabled item，在 collection version + asset version 双 CAS 中更新焦点，共享 asset 焦点变化返回 `HERO_FOCAL_SHARED_ASSET_CONFLICT`，残留 PUBLIC variant 返回 cleanup pending。首版九宫格曾通过 focused core 与隔离浏览器，后由用户 T40-F1 明确替换为可拖焦点和双滑杆；底层 CAS/变体结论继续有效，旧截图不代表当前 UI。
 - 2026-08-21：根据用户连续两轮首页实画面反馈完成 T38-F1。三个章节标题复用 `/works` 标题 token，三个主媒体在 390/430/768/1024/1440 下分别统一为 439/485/532/612/612px，章节起始间距压至 32px；桌面图片按左—右—左交替。六个目录/详情行动统一为圆角 primary/secondary，标题右侧箭头入口和冗余营销/邮箱说明已删除。`currentAdoptions.status` 直接投影现有领养营业状态，委托与领养分别显示 `委托咨询开放 · 有限开放`、`领养信息以页面为准 · 有限开放`；五视口无水平溢出或 console error，领养最后行动仍在一屏内。focused adoption projection 6/6、lint、typecheck 通过。
 - 2026-08-21：用户进一步发现委托状态 SSR 闪现后在客户端消失。12 秒时间序列复现 0ms 存在、500ms 水合后节点被移除，并捕获 `Failed to resolve component: HomeBusinessStatus` / hydration mismatch；两个调用方改为显式 import 后，0/0.5/2/5/12 秒委托与领养状态均持续可见，控制台不再出现解析或水合错误。证据为 `t38-static/status-timeline.json`。
 - 2026-08-21：T38 首版静态四幕在当前本地展示数据上通过五视口检查并修复次级精选轨道横向撑宽；随后版式与行动已按上方 T38-F1 用户反馈继续修订，本条只保留首版无 JavaScript、图片解码和零 console/request failure 证据，不代表当前最终尺寸或行动数量。
@@ -56,7 +60,7 @@
 - 委托和领养首页营业状态复用同一组件；领养状态由 `currentAdoptions.status` 直接投影，不依赖旧 entry 图片。
 - 首页领养在 1440×900、1024×900、768×1024、430×932、390×844 从章节起点进入后，无需第二次滚动即可同时看到标题、角色、名称/物种、营业/单项状态和两个行动；单幅不等于强制全宽铺满。
 - `/adoptions` 固定排序：`available` 在前、`adopted` 在后；每组按 `works.updated_at DESC`，再以稳定 ID 打破平局；搜索后仍保持该顺序，再分页。
-- PC Web 是第一视觉基准；移动端同步等价重排，不依赖 hover，不使用 scroll-jacking、长时间 pinned scroll 或强制横向叙事。
+- PC Web 是第一视觉基准；首页仅 ≥1024px 使用逐幕 wheel，1023px 及以下原生纵向滚动并沿用 Hero 横竖素材逻辑；普通页面不使用 scroll-jacking，不使用长时间 pinned scroll 或强制横向叙事。
 - 公开视觉以简洁、摄影优先为底盘，但允许有节制的角色感动效：遮罩揭示、轻微弹性、图片聚焦、图文错峰和一次性成功反馈；不做持续摇摆、粒子、全屏视差或多对象同时抢动。
 - Hero 默认只保留低权重分页/进度；箭头和暂停/继续不常驻，但必须在键盘焦点、fine pointer 边缘/控制区和触控显式唤起时可获得，暂停后恢复入口持续可见。
 - autoplay、pointer/touch、keyboard 使用不同节奏；drag 只有完整跟手/反向/中断/速度/纵向滚动模型成立时实施。普通路由默认即时或短 opacity，不做全站位移模板。
@@ -77,4 +81,4 @@
 
 ## 下一步交接
 
-下一步执行 T42～T46：先完成 Hero 角色感与静默控制器，再依次收口代表作品、委托、领养、Header/菜单、普通路由与三条共享对象路径；每项继续复用 T41 token 和输入/reduced 契约。T35/T36 与生产隐私文案投影仍在最终独立 Review、镜像冻结和发布前完成。当前证据不代签王旻安/景宸验收、真实手机、生产迁移/删除、镜像构建或发布。
+下一步由人工/独立 Review 继续 T47：真实手机、连续逐幕方向/锁定、性能与最终视觉验收；T35/T36 与生产隐私文案投影仍在镜像冻结和发布前完成。本轮按用户要求 commit/push 后结束，不进入 T48+，不代签王旻安/景宸验收、生产迁移/删除、镜像构建或发布。

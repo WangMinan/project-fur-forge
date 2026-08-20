@@ -16,8 +16,8 @@
 
 - `r3-hero-collection-publication` + error reason focused core：2 files / 9 tests 通过。
 - 核心不变量覆盖：未启用 item 的 collection + asset 双 CAS、任意浮点焦点精度、共享 asset 冲突阻断、停用清理后按新焦点生成不重用旧 Key 的不可变公开变体。
-- 隔离 Playwright：登录管理端、上传 3840×2160 横图、九宫格从中心改为右上、创建 item、重新读取 100% / 0%、按钮 pressed 与预览 `object-position: 100% 0%`，1/1 通过。
-- 截图：`t39-t40-admin-hero-1440x900.png`。测试使用临时用例并已删除，没有把精确文案、DOM 或像素审美加入永久 smoke。
+- 历史首版隔离 Playwright：登录管理端、上传 3840×2160 横图、九宫格从中心改为右上、创建 item、重新读取 100% / 0%、按钮 pressed 与预览 `object-position: 100% 0%`，1/1 通过。
+- 历史截图：`t39-t40-admin-hero-1440x900.png`。用户随后否决九宫格，当前 T40-F1 改为可拖焦点与双滑杆；该截图只证明当时双 CAS/焦点写入成立，不代表当前 UI。
 
 ## T41
 

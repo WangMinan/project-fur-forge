@@ -59,6 +59,7 @@ const reduceMotion = ref(false)
 const userPaused = ref(false)
 const pageHidden = ref(false)
 const motionReady = shallowRef(false)
+const controlsRevealed = shallowRef(false)
 
 const autoplayInterval = computed(
   () => resolveAutoplayIntervalMs(reduceMotion.value),
@@ -71,11 +72,30 @@ const autoplayRunning = computed(() =>
   && !pageHidden.value)
 
 let timer: ReturnType<typeof setInterval> | null = null
+let controlsTimer: ReturnType<typeof setTimeout> | null = null
 
 function stopTimer() {
   if (timer !== null) {
     clearInterval(timer)
     timer = null
+  }
+}
+
+function stopControlsTimer() {
+  if (controlsTimer !== null) {
+    clearTimeout(controlsTimer)
+    controlsTimer = null
+  }
+}
+
+function revealControls(timeout = 2_400) {
+  controlsRevealed.value = true
+  stopControlsTimer()
+  if (!userPaused.value) {
+    controlsTimer = setTimeout(() => {
+      controlsRevealed.value = false
+      controlsTimer = null
+    }, timeout)
   }
 }
 
@@ -111,6 +131,12 @@ function goPrev(intent: 'autoplay' | 'keyboard' | 'pointer' = 'pointer') {
 
 function togglePause() {
   userPaused.value = !userPaused.value
+  if (userPaused.value) {
+    revealControls()
+  }
+  else {
+    revealControls(2_400)
+  }
 }
 
 function onKeydown(event: KeyboardEvent) {
@@ -127,6 +153,9 @@ function onKeydown(event: KeyboardEvent) {
 let pointerStartX: number | null = null
 
 function onPointerDown(event: PointerEvent) {
+  if (event.pointerType === 'touch') {
+    revealControls(4_000)
+  }
   // 手势起点在按钮/链接上时不介入，避免误吞控件交互
   if ((event.target as HTMLElement | null)?.closest('button, a')) {
     pointerStartX = null
@@ -151,6 +180,41 @@ function onPointerUp(event: PointerEvent) {
 
 function onPointerCancel() {
   pointerStartX = null
+}
+
+function onPointerMove(event: PointerEvent) {
+  if (event.pointerType !== 'mouse') {
+    return
+  }
+  revealForFinePointer(event)
+}
+
+function revealForFinePointer(event: MouseEvent) {
+  const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const x = (event.clientX - bounds.left) / bounds.width
+  const y = (event.clientY - bounds.top) / bounds.height
+  if (
+    !controlsRevealed.value
+    && (x <= 0.16 || x >= 0.84 || y >= 0.72)
+  ) {
+    revealControls()
+  }
+}
+
+function onPointerLeave() {
+  if (!userPaused.value) {
+    stopControlsTimer()
+    controlsRevealed.value = false
+  }
+}
+
+function onHeroClick(event: MouseEvent) {
+  if ((event.target as HTMLElement | null)?.closest('button, a')) {
+    return
+  }
+  if (!matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    revealControls(4_000)
+  }
 }
 
 let motionQuery: MediaQueryList | null = null
@@ -193,6 +257,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   stopTimer()
+  stopControlsTimer()
   if (motionFrame !== null) {
     window.cancelAnimationFrame(motionFrame)
   }
@@ -207,15 +272,22 @@ onBeforeUnmount(() => {
     class="home-hero"
     :class="{
       'home-hero--empty': !pictureSources,
-      'home-hero--motion-ready': motionReady,
     }"
     :data-transition-intent="transitionIntent"
+    :data-controls-revealed="controlsRevealed"
+    :data-paused="userPaused"
+    :data-reduced-motion="reduceMotion"
     role="region"
     aria-roledescription="carousel"
     aria-label="代表作品轮播"
+    data-home-scroll-scene
     data-testid="public-hero"
     @keydown="onKeydown"
+    @click="onHeroClick"
     @pointerdown="onPointerDown"
+    @pointermove="onPointerMove"
+    @mousemove="revealForFinePointer"
+    @pointerleave="onPointerLeave"
     @pointerup="onPointerUp"
     @pointercancel="onPointerCancel"
   >
@@ -402,6 +474,10 @@ onBeforeUnmount(() => {
   transform: translate3d(-3%, 0, 0) scale(1.01);
 }
 
+.home-hero__slide :deep(.responsive-picture__image) {
+  animation: home-hero-media-in var(--motion-duration-media) var(--motion-ease-standard) both;
+}
+
 .home-hero__scrim {
   position: absolute;
   inset: 0;
@@ -470,38 +546,61 @@ onBeforeUnmount(() => {
   gap: var(--space-3);
 }
 
-.home-hero--motion-ready .home-hero__eyebrow,
-.home-hero--motion-ready .home-hero__title,
-.home-hero--motion-ready .home-hero__tagline,
-.home-hero--motion-ready .home-hero__controls {
-  animation: home-hero-content-in var(--motion-duration-content) var(--motion-ease-standard) both;
+.home-hero__eyebrow,
+.home-hero__title,
+.home-hero__tagline {
+  animation: home-hero-brand-in var(--motion-duration-content) var(--motion-ease-standard) both;
 }
 
-.home-hero--motion-ready .home-hero__eyebrow {
-  animation-delay: 100ms;
+.home-hero__eyebrow {
+  animation-delay: 0ms;
 }
 
-.home-hero--motion-ready .home-hero__title {
+.home-hero__title {
+  animation-delay: 90ms;
+}
+
+.home-hero__tagline {
   animation-delay: 180ms;
 }
 
-.home-hero--motion-ready .home-hero__tagline {
-  animation-delay: 270ms;
+.home-hero__controls {
+  animation: home-hero-controls-in var(--motion-duration-state) var(--motion-ease-playful) 270ms both;
 }
 
-.home-hero--motion-ready .home-hero__controls {
-  animation-delay: 360ms;
+@keyframes home-hero-media-in {
+  from {
+    transform: scale(0.99);
+  }
+
+  to {
+    transform: scale(1);
+  }
 }
 
-@keyframes home-hero-content-in {
+@keyframes home-hero-brand-in {
   from {
     opacity: 0;
-    transform: translateY(1rem);
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(12px);
   }
 
   to {
     opacity: 1;
+    clip-path: inset(0 0 0 0);
     transform: translateY(0);
+  }
+}
+
+@keyframes home-hero-controls-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -516,12 +615,30 @@ onBeforeUnmount(() => {
   border: 1px solid rgb(255 255 255 / 0.35);
   border-radius: var(--radius-full);
   cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px) scale(0.96);
+  transition:
+    opacity var(--motion-duration-state) var(--motion-ease-standard),
+    transform var(--motion-duration-state) var(--motion-ease-playful),
+    background-color var(--motion-duration-feedback) var(--motion-ease-standard);
   place-items: center;
 }
 
-.home-hero__arrow:hover,
-.home-hero__pause:hover {
-  background: rgb(17 20 25 / 0.65);
+.home-hero[data-controls-revealed='true'] .home-hero__arrow,
+.home-hero[data-controls-revealed='true'] .home-hero__pause,
+.home-hero[data-paused='true'] .home-hero__arrow,
+.home-hero[data-paused='true'] .home-hero__pause,
+.home-hero:focus-within .home-hero__arrow,
+.home-hero:focus-within .home-hero__pause {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.home-hero__arrow:active,
+.home-hero__pause:active {
+  transform: scale(0.96);
 }
 
 .home-hero__dots {
@@ -547,10 +664,21 @@ onBeforeUnmount(() => {
   content: '';
   background: rgb(255 255 255 / 0.45);
   border-radius: var(--radius-full);
+  transition:
+    background-color var(--motion-duration-state) var(--motion-ease-standard),
+    transform var(--motion-duration-state) var(--motion-ease-playful);
 }
 
 .home-hero__dot--active::before {
   background: var(--public-text-inverse);
+  transform: scale(1.18);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .home-hero__arrow:hover,
+  .home-hero__pause:hover {
+    background: rgb(17 20 25 / 0.65);
+  }
 }
 
 .home-hero__live {
@@ -628,11 +756,28 @@ onBeforeUnmount(() => {
     transform: none;
   }
 
-  .home-hero--motion-ready .home-hero__eyebrow,
-  .home-hero--motion-ready .home-hero__title,
-  .home-hero--motion-ready .home-hero__tagline,
-  .home-hero--motion-ready .home-hero__controls {
+  .home-hero__eyebrow,
+  .home-hero__title,
+  .home-hero__tagline,
+  .home-hero__controls,
+  .home-hero__slide :deep(.responsive-picture__image) {
     animation: none;
+  }
+
+  .home-hero__arrow,
+  .home-hero__pause,
+  .home-hero__dot::before {
+    transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
+  }
+
+  .home-hero__arrow,
+  .home-hero__pause,
+  .home-hero__dot--active::before {
+    transform: none;
+  }
+
+  .home-hero[data-reduced-motion='true'] .home-hero__pause {
+    display: none;
   }
 }
 

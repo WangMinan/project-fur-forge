@@ -1,7 +1,7 @@
 # 任务清单：站点视觉升级与内容合规
 
 > **角色**：需求4唯一任务与勾选权威；每个任务均可由 Agent 独立实现、验证和交接。
-> **状态**：2026-08-21 已完成 T04～T34、T34-F1、M01～M11 与 T37；T35/T36 的 Linux runtime/容器分发证据保持开放，但不阻塞本地继续 T38～T47。阶段 E 已按机会审计进入静态四幕实现。
+> **状态**：2026-08-21 已完成 T04～T34、T34-F1、M01～M11 与阶段 E T37～T46（含 T38-F1、T40-F1、T46-F1～F3）当前工程实现；T35/T36、T47 真实手机/连续性能、王旻安/景宸人工验收和最终独立 Review 保持开放。
 > **规则**：完成即勾选；不删除已完成历史项；实现、独立 Review、用户验收和生产发布互不代签。
 
 ## 当前目标
@@ -124,14 +124,18 @@
 - [x] **T37 · 动效机会审计与拒绝清单**：只读盘点 reveal/hover/carousel/route/menu/状态反馈/共享对象路径；按频率、目的、速度、功能筛选约 5～7 个高置信机会，记录 rejected candidates、输入模态、reduced 版本和中断策略；不改应用代码、不预装动效库。证据：`.design/MOTION_OPPORTUNITIES.md`。
 - [x] **T38 · 首页静态四幕骨架**：先完成 Hero、lead work、非对称 commission、single adoption 的尺寸、空态和响应式，不加复杂动画；内容 SSR/无 JavaScript 默认可见，删除通用 section 上浮 reveal 假设；三幕标题同级、主媒体等高，桌面图片左—右—左交替，委托/领养营业状态复用同一组件，领养在全部目标视口一屏看见标题、角色、名称/物种、状态和两个行动。证据：`implementation/evidence/T37-T47-2026-08-21/t38-static/`。
 - [x] **T39 · Hero 焦点写入契约**：未启用 item 通过 collection version + asset version 双 CAS 修改现有 asset focal；共享 asset 冲突阻断；公开旧变体未清理时阻断，下一次发布按新焦点生成不可变变体。
-- [x] **T40 · 九宫格与目标裁切预览**：横/竖目标比例、中心/四角/边预设、已有任意坐标最近提示；复用 Hero 管理统一 UI。证据：`implementation/evidence/T37-T47-2026-08-21/`。
+- [x] **T40 · 九宫格与目标裁切预览（历史首版）**：曾完成横/竖目标比例与九宫格预设；用户后续明确拒绝该交互，由 T40-F1 替代。
+- [x] **T40-F1 · 可拖焦点与双滑杆**：目标画框内 1:1 拖动焦点，水平/垂直滑杆 0.1% 步进；仅 disabled item 可改，双 CAS、共享冲突和不可变变体规则不变。
 - [x] **T41 · Token、输入模态与 reduced**：在已通过机会后建立 feedback/state/content/media 与 standard/playful easing，删除旧公共 duration/easing 与散落 620/680ms；Hero autoplay、pointer/touch、keyboard 分开 intent/时序，reduced 保留短状态淡化并覆盖 transparency/contrast；drag 未满足 1:1 跟手/反向/中断/速度/纵向滚动门槛，因此未实施。证据：`implementation/evidence/T37-T47-2026-08-21/`。
-- [ ] **T42 · Hero 角色感与静默控制器**：图片聚焦、品牌 mask/clip 错峰；默认只显示低权重分页/进度，箭头与暂停/继续按键盘、fine pointer 边缘/控制区和触控显式唤起，暂停后恢复入口持续可见；自动轮播/页面隐藏/reduced/隐藏项加载保持正确。
-- [ ] **T43 · 代表作品幕**：lead 大图、短 caption、`/works` 与当前作品两个圆角行动、剩余精选次级；桌面 fine pointer 有轻聚焦，触控无 tilt。
-- [ ] **T44 · 自设委托幕**：非对称分栏、桌面图片在右、同源媒体连续性，只保留 QQ 优先短说明、`/commission` 与申请表单两个行动。
-- [ ] **T45 · 单项设定领养幕**：唯一 available 单幅完整展示；无 available 隐藏；1440×900、1024×900、768×1024、430×932、390×844 从章节起点进入后，无需第二次滚动即可看到标题、角色、名称/物种、状态、目录与当前角色两个行动；caption/行动不遮主体。
-- [ ] **T46 · Header、菜单、路由与共享对象**：Header 降低 SaaS 胶囊感、Footer 静态；普通路由即时或短 opacity，不做全站 `out-in + translateY`；View Transitions 只增强三条确认路径；不恢复通用 section reveal、全面 tilt 或 CTA 回弹。
-- [ ] **T47 · 连续移动/reduced/性能验收**：每个机会同步检查中断/反向、autoplay/pointer/touch/keyboard、390/430/768/1024/1440、真实手机、LCP/CLS/decode/GPU、safe area、输入法、键盘/焦点、prefers-*；drag 实施时另验跟手、速度和纵向滚动。
+- [x] **T42 · Hero 角色感与静默控制器**：首屏动画从首次绘制直接开始，无完整显示后重启；图片聚焦、品牌 mask/clip 错峰；默认只显示低权重分页/进度，箭头与暂停/继续按键盘、fine pointer 边缘/控制区和触控显式唤起，暂停后恢复入口持续可见；自动轮播/页面隐藏/reduced/隐藏项加载保持正确。
+- [x] **T43 · 代表作品幕**：lead 大图、短 caption、`/works` 与当前作品两个圆角行动、剩余精选次级；桌面 fine pointer 有轻聚焦，触控无 tilt；桌面逐幕导航时 lead/继续浏览为两个停靠点。
+- [x] **T44 · 自设委托幕**：非对称分栏、桌面图片在右、同源媒体连续性，只保留 QQ 优先短说明、`/commission` 与申请表单两个行动；主媒体使用与 lead 相同的 fine-pointer 聚焦。
+- [x] **T45 · 单项设定领养幕**：唯一 available 单幅完整展示；无 available 隐藏；1440×900、1024×900、768×1024、430×932、390×844 从章节起点进入后，无需第二次滚动即可看到标题、角色、名称/物种、状态、目录与当前角色两个行动；主媒体同款聚焦，删除到 Footer 的额外尾部 padding。
+- [x] **T46 · Header、菜单、路由与共享对象**：Header 降低 SaaS 胶囊感、Footer 静态；普通路由即时或短 opacity，不做全站 `out-in + translateY`；View Transitions 只增强三条确认路径；不恢复通用 section reveal、全面 tilt 或 CTA 回弹。
+- [x] **T46-F1 · 首页桌面逐幕与委托反馈**：仅 ≥1024px 拦截 wheel，按 Hero → lead → 继续浏览 → 委托 → 领养 → Footer 移动；1023px 以下原生滚动。复制邮箱前后提交/邮箱按钮顶边不移动。
+- [x] **T46-F2 · 固定 Header 与次级作品布局**：首页 Header 固定并在离开 Hero 后切换实底；滚动 offset 不叠加、不覆盖当前幕或露出上一幕；“继续浏览”提高媒体高度、从 Header 下方开始；三张主媒体 hover 只在图片内生效并以 state 时序回落。
+- [x] **T46-F3 · 次级轨道控制对齐**：“继续浏览”标题与左右轨道按钮共享顶部 padding 并在同一行对齐。
+- [ ] **T47 · 连续移动/reduced/性能验收**：每个机会同步检查中断/反向、autoplay/pointer/touch/keyboard、390/430/768/1023/1024/1440、真实手机、LCP/CLS/decode/GPU、safe area、输入法、键盘/焦点、prefers-*；另验桌面逐幕顺序/反向/锁定与 1023px 逃生；Hero drag 未实施。
 
 ### GATE-E · 既简洁又有生命感
 
@@ -141,6 +145,7 @@
 - [ ] autoplay、pointer/touch、keyboard 使用不同节奏，未达完整门槛时不做 drag；
 - [ ] 角色感动效一次性、有因、无持续噪声；
 - [ ] 移动端不是桌面缩小版；
+- [ ] 首页 ≥1024px 逐幕 wheel 顺序正确，1023px 以下不拦截原生滚动；
 - [ ] Hero 横竖独立维护清楚；
 - [ ] 王旻安/景宸人工视觉验收通过。
 

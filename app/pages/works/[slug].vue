@@ -9,6 +9,13 @@ import { PROJECT_NAME } from '~~/shared/constants/project'
  */
 const route = useRoute()
 const slug = computed(() => String(route.params.slug ?? ''))
+const sharedViewTransitionName = computed(() => (
+  route.query.view === 'home-featured'
+    ? 'home-featured-media'
+    : route.query.view === 'home-adoption'
+      ? 'home-adoption-media'
+      : undefined
+))
 
 // 不提供显式 key：Nuxt 4 中静态 key 会让重挂载的详情页复用旧 slug 的缓存
 // （status === 'success' 时跳过 initialFetch）。自动 key 含 URL，slug 变化即
@@ -175,7 +182,11 @@ onMounted(() => {
           aria-label 保留，屏幕阅读器仍能识别这个区域。
         -->
         <section v-if="gallery.length > 0" class="work-detail__media-section" aria-label="作品图集">
-          <WorkDetailGallery :gallery="gallery" :work-name="dto.characterName" />
+          <WorkDetailGallery
+            :gallery="gallery"
+            :work-name="dto.characterName"
+            :view-transition-name="sharedViewTransitionName"
+          />
         </section>
       </div>
     </div>
