@@ -329,5 +329,14 @@ test('隐私、服务条款和开源软件声明可读', async ({ page }) => {
   ] as const) {
     await page.goto(path)
     await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible()
+    await expect(page.locator('body')).not.toContainText('{{controller_name}}')
+    if (path === '/licenses') {
+      await expect(page.getByText(/Linux 发布镜像内实际二进制/u)).toBeVisible()
+      await expect(page.getByRole('link', { name: '下载完整 TXT 声明' }))
+        .toHaveAttribute('href', '/THIRD_PARTY_NOTICES.txt')
+      await expect(page.locator('body')).not.toContainText('gyan.dev')
+      await expect(page.locator('body')).not.toContainText('e38092ef93')
+      await expect(page.locator('body')).not.toContainText('以下组件以 MIT 或 Apache-2.0 发布')
+    }
   }
 })

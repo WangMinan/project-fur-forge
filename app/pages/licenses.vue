@@ -1,133 +1,30 @@
 <script setup lang="ts">
 import { PROJECT_NAME } from '~~/shared/constants/project'
 import gplText from '~/assets/licenses/gpl-3.0.txt?raw'
+import generatedNotices from '~/assets/licenses/third-party-notices.json'
 
-/**
- * 开源软件声明。
- *
- * 内容写死在代码里，不进文案编辑：这是许可证义务，不该被后台改错。
- *
- * 分两类处理，因为义务不同：
- * - copyleft（GPL）依赖必须随分发提供许可证全文与源码获取途径，
- *   因此这里内嵌完整正文（`app/assets/licenses/gpl-3.0.txt`，
- *   原样取自我们实际分发的 FFmpeg 二进制所带的 LICENSE）；
- * - MIT / Apache-2.0 依赖给出项目地址即可，许可证正文在其仓库内。
- *
- * 升级依赖时同步本页：清单对应 `package.json` 的运行时依赖。
- */
 useSeoMeta({
   title: `开源软件声明 · ${PROJECT_NAME}`,
   description: `${PROJECT_NAME}网站使用的开源软件及其许可证。`,
   robots: 'index, nofollow',
 })
 
-/**
- * 我们实际分发的 FFmpeg 构建事实，取自 `ffmpeg-static` 随包的
- * `ffmpeg.exe.README`：版本、许可证与对应上游源码提交。
- */
-const FFMPEG = {
-  build: 'FFmpeg 6.1.1-essentials_build（www.gyan.dev 静态构建）',
-  license: 'GPL-3.0-or-later',
-  packageUrl: 'https://github.com/eugeneware/ffmpeg-static',
-  sourceUrl: 'https://github.com/FFmpeg/FFmpeg/commit/e38092ef93',
-  upstreamUrl: 'https://www.ffmpeg.org/legal.html',
-}
-
-interface Dependency {
+interface Notice {
+  artifactSha256: string | null
+  homepage: string | null
   license: string
   name: string
-  purpose: string
-  url: string
+  noticeText: string | null
+  source: 'manual-asset' | 'pnpm-prod'
+  usage: string
+  version: string
 }
 
-/** 直接运行时依赖，与 `package.json` 的 dependencies 对应。 */
-const RUNTIME: Dependency[] = [
-  {
-    license: 'MIT',
-    name: 'Nuxt',
-    purpose: '网站框架',
-    url: 'https://github.com/nuxt/nuxt',
-  },
-  {
-    license: 'MIT',
-    name: 'H3',
-    purpose: '服务端请求处理',
-    url: 'https://github.com/h3js/h3',
-  },
-  {
-    license: 'MIT',
-    name: 'Vue',
-    purpose: '界面渲染',
-    url: 'https://github.com/vuejs/core',
-  },
-  {
-    license: 'MIT',
-    name: 'Vue Router',
-    purpose: '页面路由',
-    url: 'https://github.com/vuejs/router',
-  },
-  {
-    license: 'MIT',
-    name: 'better-sqlite3',
-    purpose: '数据库读写',
-    url: 'https://github.com/WiseLibs/better-sqlite3',
-  },
-  {
-    license: 'Apache-2.0',
-    name: 'Drizzle ORM',
-    purpose: '数据库结构与迁移',
-    url: 'https://github.com/drizzle-team/drizzle-orm',
-  },
-  {
-    license: 'MIT',
-    name: 'ali-oss',
-    purpose: '图片存储',
-    url: 'https://github.com/ali-sdk/ali-oss',
-  },
-  {
-    license: 'Apache-2.0',
-    name: 'Alibaba Cloud ESA SDK for TypeScript',
-    purpose: 'ESA 精确缓存刷新与任务查询',
-    url: 'https://github.com/aliyun/alibabacloud-typescript-sdk',
-  },
-  {
-    license: 'ISC',
-    name: 'Alibaba Cloud OpenAPI Core',
-    purpose: '阿里云 SDK 运行配置',
-    url: 'https://github.com/aliyun/darabonba-openapi',
-  },
-  {
-    license: 'MIT',
-    name: 'nuxt-auth-utils',
-    purpose: '管理端登录会话',
-    url: 'https://github.com/atinux/nuxt-auth-utils',
-  },
-  {
-    license: 'MIT',
-    name: 'Zod',
-    purpose: '数据校验',
-    url: 'https://github.com/colinhacks/zod',
-  },
-  {
-    license: 'MIT',
-    name: 'pdf-lib',
-    purpose: '委托制作单 PDF 生成',
-    url: 'https://github.com/Hopding/pdf-lib',
-  },
-  {
-    license: 'MIT',
-    name: '@pdf-lib/fontkit',
-    purpose: '制作单 PDF 的字体子集嵌入',
-    url: 'https://github.com/Hopding/fontkit',
-  },
-  // 随镜像分发的字体文件，许可证必须与实际分发保持同步。
-  {
-    license: 'SIL OFL 1.1',
-    name: 'Noto Serif SC',
-    purpose: '委托制作单 PDF 正文字体',
-    url: 'https://github.com/notofonts/noto-cjk',
-  },
-]
+const notices = generatedNotices as Notice[]
+const packages = notices.filter(notice => notice.source === 'pnpm-prod')
+const assets = notices.filter(notice => notice.source === 'manual-asset')
+const ffmpegPackage = packages.find(notice => notice.name === 'ffmpeg-static')
+const licenseCount = new Set(notices.map(notice => notice.license)).size
 </script>
 
 <template>
@@ -136,82 +33,66 @@ const RUNTIME: Dependency[] = [
 
     <div class="licenses">
       <p class="licenses__lead">
-        本站基于以下开源软件构建。各软件的版权与许可证归其作者所有。
+        本站使用开源软件和经授权的第三方字体、工具。开源项目的版权与许可证归各自作者所有；“免费商用”资产不等同于开源软件。
       </p>
 
-      <!--
-        FFmpeg 单独成节并附全文：它是本站唯一的 copyleft 依赖，
-        义务与其余 MIT / Apache 依赖不同。混在清单里会让唯一
-        需要注意的那一条消失。
-      -->
       <section class="license-entry" aria-labelledby="license-ffmpeg">
         <div class="license-entry__head">
           <h2 id="license-ffmpeg" class="license-entry__name">FFmpeg</h2>
-          <p class="license-entry__license">{{ FFMPEG.license }}</p>
+          <p class="license-entry__license">{{ ffmpegPackage?.license ?? '待登记' }}</p>
         </div>
 
         <p class="license-entry__text">
-          本站使用 FFmpeg 生成适配尺寸的图片。分发的构建为
-          {{ FFMPEG.build }}，以 GNU 通用公共许可证第 3 版或更新版本发布。
-          本站未修改 FFmpeg。
+          本站在工作室服务器容器中使用 FFmpeg 处理图片，网页不提供单独的 FFmpeg 下载入口。当前发布流程会把包含 FFmpeg 的容器镜像发布到公开 Docker Hub，因此按二进制分发场景维护声明。
         </p>
-
-        <dl class="license-entry__facts">
-          <div class="license-entry__fact">
-            <dt>对应源代码</dt>
-            <dd>
-              <a :href="FFMPEG.sourceUrl" target="_blank" rel="noopener noreferrer">
-                FFmpeg/FFmpeg@e38092ef93
-              </a>
-            </dd>
-          </div>
-          <div class="license-entry__fact">
-            <dt>分发方式</dt>
-            <dd>
-              <a :href="FFMPEG.packageUrl" target="_blank" rel="noopener noreferrer">
-                eugeneware/ffmpeg-static
-              </a>
-            </dd>
-          </div>
-          <div class="license-entry__fact">
-            <dt>上游许可说明</dt>
-            <dd>
-              <a :href="FFMPEG.upstreamUrl" target="_blank" rel="noopener noreferrer">
-                ffmpeg.org/legal.html
-              </a>
-            </dd>
-          </div>
-        </dl>
-
         <p class="license-entry__note">
-          FFmpeg 上游以 LGPL-2.1 或更新版本为基线；启用了 GPL 部件的构建
-          （如本站使用的这一版）整体适用 GPL。
+          当前只确认 npm 包 {{ ffmpegPackage?.name }}@{{ ffmpegPackage?.version }}（{{ ffmpegPackage?.license }}）的安装事实。Linux 发布镜像内实际二进制的版本、SHA-256、对应源码 revision、补丁和构建配置尚未从发布产物提取；完成部署阶段 registry 前，本页不声称任何具体 FFmpeg 二进制构建事实。
         </p>
 
         <!-- 原生 details：无 JavaScript 可用、键盘可达，不需要自制折叠组件。 -->
         <details class="license-full">
           <summary class="license-full__summary">
-            GNU General Public License v3 全文
+            GNU General Public License v3 标准全文
           </summary>
           <pre class="license-full__text">{{ gplText }}</pre>
         </details>
       </section>
 
-      <h2 class="licenses__title">其他开源组件</h2>
-      <p class="licenses__subtitle">
-        以下组件以 MIT 或 Apache-2.0 发布，许可证全文见各自项目仓库。
-      </p>
+      <h2 class="licenses__title">第三方字体与授权资产</h2>
       <dl class="licenses__list">
-        <div v-for="item in RUNTIME" :key="item.name" class="licenses__row">
+        <div v-for="item in assets" :key="`${item.name}@${item.version}`" class="licenses__row">
           <dt class="licenses__name">
-            <a :href="item.url" target="_blank" rel="noopener noreferrer">
+            <a v-if="item.homepage" :href="item.homepage" target="_blank" rel="noopener noreferrer">
               {{ item.name }}
             </a>
+            <template v-else>{{ item.name }}</template>
           </dt>
-          <dd class="licenses__purpose">{{ item.purpose }}</dd>
+          <dd class="licenses__purpose">
+            {{ item.usage }}<template v-if="item.noticeText"> {{ item.noticeText }}</template>
+          </dd>
           <dd class="licenses__license">{{ item.license }}</dd>
         </div>
       </dl>
+
+      <h2 class="licenses__title">npm 生产依赖声明</h2>
+      <p class="licenses__subtitle">
+        以下 {{ packages.length }} 条包/版本记录由当前 lockfile 与已安装生产依赖生成，共 {{ licenseCount }} 种许可证表达。<a href="/THIRD_PARTY_NOTICES.txt" download>下载完整 TXT 声明</a>。
+      </p>
+      <details class="license-full">
+        <summary class="license-full__summary">展开 npm 生产依赖清单</summary>
+        <dl class="licenses__list">
+          <div v-for="item in packages" :key="`${item.name}@${item.version}`" class="licenses__row">
+            <dt class="licenses__name">
+              <a v-if="item.homepage" :href="item.homepage" target="_blank" rel="noopener noreferrer">
+                {{ item.name }}@{{ item.version }}
+              </a>
+              <template v-else>{{ item.name }}@{{ item.version }}</template>
+            </dt>
+            <dd class="licenses__purpose">{{ item.usage }}</dd>
+            <dd class="licenses__license">{{ item.license }}</dd>
+          </div>
+        </dl>
+      </details>
     </div>
   </div>
 </template>
