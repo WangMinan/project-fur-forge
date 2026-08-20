@@ -1,7 +1,7 @@
 # 评审记录：需求4
 
 > **角色**：记录 SPEC ↔ COPY ↔ design ↔ models ↔ PLAN ↔ TASKS ↔ 当前代码的一致性与风险。
-> **状态**：2026-08-20 已完成 T04～T34 与阶段 E 前 GPT-5.6 Pro Review finding 修复；最终应用独立 Review 仍未执行，本文不以实现者修复和自检代签。
+> **状态**：2026-08-20 已完成 T04～T34、阶段 E 前 GPT-5.6 Pro Review finding 修复，以及阶段 E 文档/浏览器 Review；最终应用独立 Review 仍未执行，本文不以实现者修复和自检代签。
 > **评审基线**：第二轮应用代码审查基于 `main@aa8e5b70be0913f02ceddccdc262ec6fe0769df1`；对应文档随后以 `main@ea3ae0a1269676db8c06c28ed32a9a29f4bd7109` 合入，后者没有应用代码变更。
 
 ## 1. 评审对象
@@ -202,6 +202,10 @@
 - 单条删除是否覆盖 current/version/delete marker/preview；
 - Hero 管理是否统一心智但不耦合四集合；
 - 真实页面是否同时满足简洁和灵动，而不是退化为统一动画模板。
+- Hero 是否默认保持低权重静默态，同时让键盘、fine pointer、触控用户获得方向与暂停/继续；暂停后恢复入口是否持续可见。
+- 首页单项领养在 1440×900、1024×900、768×1024、430×932、390×844 是否无需第二次滚动即可看见标题、角色、名称/物种、状态和唯一行动。
+- autoplay、pointer/touch、keyboard 是否使用不同节奏；drag 未满足完整手势门槛时是否保持离散切换。
+- 普通路由是否避免全站位移模板，首页各幕是否不再依赖通用 section reveal 才可见。
 - release 镜像中的 FFmpeg 版本/摘要/源码/构建信息是否与 `/licenses` 一致，Docker Hub 公开时是否仍存在“未分发”文案。
 
 ## 7. 预实施放行结论
@@ -236,3 +240,39 @@
 - 验证：privacy/notices unit 4/4；confirmation/readiness integration 13/13；`check:fast` 52 文件/327 项；smoke 9/9；`test:release`（notices drift、smoke、build、production verify、ESA/observability、Secret scan）通过。
 
 本节是对独立 finding 的实现者修复记录，不等于 T51 最终独立 Review、T52 用户验收或生产执行。
+
+## 11. 2026-08-20 阶段 E 文档与浏览器 Review
+
+### F10 · Hero 控制器默认显隐没有进入需求4
+
+**现状**：需求4只写“控制器是辅助层”“最后出现”“一次轻回弹”，没有定义默认态、触发显示和退出条件；需求2遗留契约仍要求可见暂停按钮。当前 `HomeHeroCarousel.vue` 始终渲染上一张、分页点、下一张与暂停按钮，CSS 始终 `display: flex`。
+
+**历史依据**：更早的首页设计讨论已经提出“桌面默认只显示简洁页码或进度，箭头在 hover/focus/靠近边缘时出现，暂停保留能力但不与全部控件一起抢注意力”。该结论此前没有进入活文档。
+
+**修复**：design/SPEC/TASKS/STATE 已明确默认只保留低权重分页/进度；方向和暂停/继续在键盘焦点、fine pointer 边缘/控制区或触控显式唤起时出现。暂停状态和恢复入口持续可见；视觉隐藏不破坏 Tab 顺序、可访问语义或布局稳定。
+
+### F11 · 单项领养没有形成一屏信息闭环
+
+**现状**：旧文档只要求单项、单图、caption 不遮角色，没有规定目标视口同屏边界。当前首页复用全宽 16:9 `AdoptionCard`；1440×900 实测 section 高 949px、媒体高 737px，从章节起点进入后名称与状态仍在下一屏。
+
+**修复**：design/SPEC/PLAN/TASKS/STATE 已把 1440×900、1024×900、768×1024、430×932、390×844 的一屏表达写成契约和 GATE-E：标题、角色、名称/物种、状态、唯一行动无需第二次滚动即可同时理解。图片可以限制高度、居中留白或改为桌面图文编排；不强制全宽，也不把 caption 压到角色脸部。
+
+### F12 · 阶段 E 顺序和阶段名称漂移
+
+**现状**：旧 PLAN 使用 D=Hero/动效/四幕、E=发布，TASKS 使用 E/F；T37 从 token 开始、T41 才做静态四幕。STATE 还把 T35/T36 写成进入 T37 的停止点。引用对话曾声称已推送对应文档修复，但远端 `codex/r4-t04-t21-foundation@fb3dd44` 不包含该提交。
+
+**修复**：全部活文档统一为 A 组件/进度、B 测试/领养、C 内容/隐私、D retention/删除/声明、E 动效/Hero/四幕、F Review/发布。T37～T47 改为 `机会审计 → 静态四幕 → 焦点/预览 → token/输入模态/reduced → 场景动效 → 连续验收`。T35/T36 不阻塞本地阶段 E，但继续阻塞最终独立 Review、镜像冻结和生产发布。
+
+### F13 · 输入模态、普通路由和 rejected candidates 不明确
+
+**现状**：旧文档没有分别约束 autoplay、pointer/touch、keyboard、drag；PLAN 的“页面切换使用统一 token”容易被实现成全站 `out-in + translateY`；通用 `HomeMotionReveal` 仍可能被继续复用。
+
+**修复**：autoplay 可使用完整媒体时序，pointer/touch 先即时反馈，keyboard 即时或只做短 crossfade；drag 未满足 1:1 跟手、反向、中断、速度连续和纵向滚动门槛时不实施。普通路由默认即时或 120～180ms opacity；View Transitions 只增强三条确认路径。统一 section 上浮、全面 tilt、所有 CTA 回弹、Footer 入场、键盘长动画和持续循环已进入 rejected list。
+
+### 证据与边界
+
+- 设计 Review 与六张截图：`.design/DESIGN_REVIEW.md`、`.design/screenshots/`；
+- 浏览器视口：1440×900、768×1024、390×844；
+- 修复前空上下文读者无法回答控件显隐、一屏边界、输入模态和普通路由范围，并会按旧权威从 T37 token 开始、等待 T35/T36；
+- 修复后空上下文读者已明确回答全部行为、顺序、停止点和勾选状态；唯一发现的 `page-in: 300ms` 与普通路由 120～180ms 冲突已删除，短路由 opacity 统一消费 `state: 180ms`；
+- 本节只关闭文档歧义，不表示当前页面已经实现静默控制器、一屏领养或新动效顺序，也不勾选 T37～T47/GATE-E。

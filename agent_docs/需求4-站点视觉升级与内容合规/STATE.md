@@ -6,10 +6,13 @@
 
 ## 当前阶段
 
-阶段 4 · 2026-08-20 已完成 T04～T34、T34-F1 与 M01～M11 的当前工程实施和本地证据。仓库简化维护已统一活文档事实，退役 legacy、无引用壳层和旧 paired Hero，收敛 notices/test fake/上传 session runner/AdminAction；素材仍由 Git 管理，固定版式 PDF、业务逻辑、动效设计和界面布局不变。T35/T36 的 Linux FFmpeg runtime registry、容器嵌入、Docker Hub 分发核验与 release evidence 仍是进入 T37 前的部署停止点。
+阶段 E 准备 · 2026-08-20 已完成 T04～T34、T34-F1 与 M01～M11 的当前工程实施和本地证据，并完成阶段 E 文档 Review。下一步从 T37 只读动效机会审计开始；T37～T47 的本地设计、实现和视觉迭代不等待 T35/T36。Linux FFmpeg runtime registry、容器嵌入、Docker Hub 分发核验与 release evidence 仍保持开放，GATE-D 未关闭，最终独立 Review、镜像冻结和生产发布不得绕过。
 
 ## 最近验证
 
+- 2026-08-20：阶段 E 文档 Review 对照历史设计讨论、当前代码与 1440×900、768×1024、390×844 浏览器截图，确认 Hero 控制器静默态和首页领养一屏表达此前未进入可验收契约。1440×900 下当前领养 section 实测 949px、媒体 737px，caption 落到下一屏；空上下文读者也无法从旧文档判断控件显隐、一屏边界、输入模态或普通路由范围。本轮已把这些事实同步到 design/SPEC/PLAN/TASKS/REVIEW，未修改应用代码或代签视觉验收。
+- 2026-08-20：阶段编号统一为 A 组件/进度、B 测试/领养、C 内容/隐私、D retention/删除/声明、E 动效/Hero/四幕、F Review/发布。阶段 E 顺序改为 `T37 机会审计 → T38 静态四幕 → T39/T40 焦点与预览 → T41 token/输入模态/reduced → T42～T46 场景动效 → T47 连续验收`；T35/T36 只继续阻塞最终发布闭环。
+- 2026-08-20：修复后空上下文 Reader Test 已能明确回答 Hero 静默态、领养一屏、T37～T47 顺序、T35/T36 边界、输入模态、路由/View Transitions/Footer/reveal 与勾选状态；测试指出旧 `page-in: 300ms` token 与普通路由 120～180ms 上限冲突，已删除 page token 并统一由 `state: 180ms` 承担短路由 opacity。
 - 2026-08-20：用户确认生产采用完整重新部署后，完成 M07/M08/M10/M11。四套管理上传统一走 `runAdminUploadSession`，精选排序、作品列表/编辑、内容与营业状态行动统一使用 `AdminAction`；`0047_r4_retire_paired_hero` 前向删除旧 pair 表/触发器，运行时删除旧 routes/DTO/Schema/repository/recipe/runner，四集合不变。累计 diff 为新增 608 行、删除 22,579 行，净减少 21,971 行。lint、typecheck、notices drift、focused 48/48、auth/database 28/28、完整 core 315/315、smoke 9/9、production build 与 diff check 通过。
 - 2026-08-20：完成仓库简化 M01～M07/M09。删除 21 个 legacy Vitest、24 个 legacy Playwright、3 个旧 Vitest 配置、3 个无引用 Vue 组件、2 个无引用 Hero composable、4 个临时诊断脚本、测试专用 fake、重复 notices TXT 与确认无调用的导出；净删除约 1.74 万行。`pnpm test:groups`（core 52、smoke 1）、`pnpm notices:check`、lint、typecheck、core 327/327、smoke 9/9 与 production build 通过。首轮 core 暴露的内部 `findHeroItemAsset` import 过删已恢复，目标 12/12 与完整 core 复跑通过。
 - 2026-08-20：PR #21 GPT-5.6 Pro Review 的阶段 E 前 finding 已在当前 HEAD 重新核验并修复。隐私政策共享校验同时保护申请页、上传会话、submission、health readiness 和 live preflight；空白、占位、旧“不收集”、处理者/收集范围/当前邮箱不完整时申请 fail closed，管理端仍可修正文案。确认不变量新增小型 core integration，申请提交改用 `PublicAction`，删除 busy 对话框不再被 Escape/遮罩关闭。
@@ -43,9 +46,12 @@
 - 英文品牌固定为 `DITE DOG`，不得恢复 `DITE DOG FURSUIT` 或“暂用英文名”。
 - 首页固定四幕：品牌 Hero → 代表作品 → 自设委托 → 设定领养。
 - 首页设定领养只展示一项开放领养；无开放项时整幕隐藏，不展示第二项、已完成项或商品式拼版。
+- 首页领养在 1440×900、1024×900、768×1024、430×932、390×844 从章节起点进入后，无需第二次滚动即可同时看到标题、角色、名称/物种、状态和唯一行动；单幅不等于强制全宽铺满。
 - `/adoptions` 固定排序：`available` 在前、`adopted` 在后；每组按 `works.updated_at DESC`，再以稳定 ID 打破平局；搜索后仍保持该顺序，再分页。
 - PC Web 是第一视觉基准；移动端同步等价重排，不依赖 hover，不使用 scroll-jacking、长时间 pinned scroll 或强制横向叙事。
 - 公开视觉以简洁、摄影优先为底盘，但允许有节制的角色感动效：遮罩揭示、轻微弹性、图片聚焦、图文错峰和一次性成功反馈；不做持续摇摆、粒子、全屏视差或多对象同时抢动。
+- Hero 默认只保留低权重分页/进度；箭头和暂停/继续不常驻，但必须在键盘焦点、fine pointer 边缘/控制区和触控显式唤起时可获得，暂停后恢复入口持续可见。
+- autoplay、pointer/touch、keyboard 使用不同节奏；drag 只有完整跟手/反向/中断/速度/纵向滚动模型成立时实施。普通路由默认即时或短 opacity，不做全站位移模板。
 - 公开行动组件、管理端行动样式、上传进度和长 operation 反馈必须先于首页重构收敛；不得继续复制局部按钮和 progress CSS。
 - OSS 上传使用真实字节进度；持久 operation 使用真实阶段/计数；FFmpeg 无可信百分比时显示阶段、经过时间和终态，不伪造进度。
 - Hero 横版/竖版素材继续分别维护，四集合版本和顺序互不耦合；管理端只统一信息架构和组件，不合并数据或强迫横竖一一配对。
@@ -63,4 +69,4 @@
 
 ## 下一步交接
 
-本轮仓库简化 M01～M11 已完成。下一棒先在部署阶段执行隐私文案前向迁移并核对公开投影，同时完成 T35/T36 的 Linux FFmpeg runtime registry、容器分发与 release evidence；GATE-D 关闭后再进入 T37。当前修复和本地自动化不代签最终独立 Review、王旻安/景宸验收、真实手机、生产迁移/删除、镜像构建或发布。
+下一棒从 T37 只读动效机会审计开始，先形成最多 5～7 个高置信机会和 rejected list，再进入 T38 静态四幕；不得从 token、全局页面转场或通用 reveal 直接开工。T35/T36 与生产隐私文案投影仍在最终独立 Review、镜像冻结和发布前完成。当前文档修订和浏览器证据不代签应用实现、王旻安/景宸验收、真实手机、生产迁移/删除、镜像构建或发布。
