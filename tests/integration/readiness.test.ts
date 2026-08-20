@@ -82,6 +82,7 @@ describe('T34-F6 strict migration readiness', () => {
         databaseOpen: true,
         migrationsCurrent: true,
         baselineRecords: true,
+        privacyPolicyReady: true,
       },
     })
   })
@@ -166,6 +167,26 @@ describe('T34-F6 strict migration readiness', () => {
     expect(result.ready).toBe(false)
     expect(result.checks.migrationsCurrent).toBe(true)
     expect(result.checks.baselineRecords).toBe(false)
+    expect(result.checks.privacyPolicyReady).toBe(false)
+  })
+
+  it('is unready when the commission privacy policy contradicts collection', async () => {
+    await migrateDatabase(databaseFile)
+    const sqlite = openDatabase(databaseFile).sqlite
+    sqlite.prepare(`
+      UPDATE site_content
+      SET privacy_policy = '本站不主动收集联系方式或角色设定图。'
+      WHERE id = 'site'
+    `).run()
+    sqlite.close()
+
+    const result = evaluateReadiness({ databaseFile })
+
+    expect(result.ready).toBe(false)
+    expect(result.checks.databaseOpen).toBe(true)
+    expect(result.checks.migrationsCurrent).toBe(true)
+    expect(result.checks.baselineRecords).toBe(true)
+    expect(result.checks.privacyPolicyReady).toBe(false)
   })
 
   it('never exposes paths, SQL, object keys or stacks in the result', async () => {
