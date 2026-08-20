@@ -77,6 +77,10 @@ async function load() {
   }
 }
 
+function removeDeleted(id: string) {
+  items.value = items.value.filter(item => item.id !== id)
+}
+
 watch([query, pageSize, activeStatus], () => {
   page.value = 1
 })
@@ -148,7 +152,7 @@ onMounted(() => void load())
       </div>
       <template v-else>
         <ul class="commission-inbox__list" role="list">
-          <li v-for="item in visibleItems" :key="item.id">
+          <li v-for="item in visibleItems" :key="item.id" class="commission-inbox__row">
             <NuxtLink :to="`/admin/commissions/${item.id}`" class="commission-inbox__item">
               <span class="commission-inbox__name">
                 {{ item.nickname }} · {{ item.species ?? '物种待补录' }}
@@ -156,6 +160,11 @@ onMounted(() => void load())
               <span>{{ formatTime(item.createdAt) }}</span>
               <span>{{ item.receiptCode }}</span>
             </NuxtLink>
+            <AdminCommissionDeletionAction
+              :submission-id="item.id"
+              :status="item.status"
+              @deleted="removeDeleted(item.id)"
+            />
           </li>
         </ul>
         <AdminPagination
@@ -267,12 +276,23 @@ onMounted(() => void load())
   font-size: var(--admin-font-sm);
 }
 
+.commission-inbox__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--admin-space-3);
+}
+
 .commission-inbox__name {
   color: var(--admin-text-primary);
   font-weight: 600;
 }
 
 @media (max-width: 767px) {
+  .commission-inbox__row {
+    grid-template-columns: 1fr;
+  }
+
   .commission-inbox__item {
     grid-template-columns: 1fr;
     gap: var(--admin-space-1);

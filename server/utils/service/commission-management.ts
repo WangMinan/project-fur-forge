@@ -41,6 +41,7 @@ import {
   PrivateImageValidationError,
   verifyConditionalImageUpload,
 } from './private-image-validation'
+import { assertCommissionDeletionUnlocked } from './commission-retention'
 
 export const COMMISSION_UPLOAD_TTL_MS = 10 * 60 * 1_000
 const COMMISSION_RECEIPT_ATTEMPTS = 8
@@ -675,6 +676,7 @@ export function updateCommissionSubmission(
   },
   now = Date.now(),
 ) {
+  assertCommissionDeletionUnlocked(id)
   return sqlite.transaction(() => {
     if (updateCommissionSubmissionRow(
       sqlite,

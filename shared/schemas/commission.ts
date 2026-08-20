@@ -145,3 +145,61 @@ export const updateCommissionSubmissionRequestSchema = z.object({
 }).strict()
 export const updateCommissionSubmissionResponseSchema
   = commissionSubmissionDetailResponseSchema
+
+export const COMMISSION_DELETE_CONFIRMATION
+  = 'DELETE COMMISSION APPLICATION DATA' as const
+
+export const commissionRetentionCandidateDtoSchema = z.object({
+  submissionIdDigest: z.string().regex(/^[0-9a-f]{16}$/u),
+  maskedReceiptCode: z.string().min(3).max(24),
+  status: z.enum(['pending', 'rejected']),
+  createdAt: z.string().datetime({ offset: true }),
+  handledAt: z.string().datetime({ offset: true }).nullable(),
+  reason: z.enum([
+    'REJECTED_READY_FOR_DELETION',
+    'STALE_PENDING_REVIEW',
+  ]),
+}).strict()
+
+export const commissionRetentionListResponseSchema = apiSuccessSchema(
+  z.array(commissionRetentionCandidateDtoSchema),
+)
+
+export const commissionDeletionBlockerSchema = z.enum([
+  'ASSET_RELATION_INVALID',
+  'EXTERNAL_REFERENCE_FOUND',
+  'PRIVATE_VARIANT_INVALID',
+  'STATUS_NOT_REJECTED',
+  'STORAGE_INSPECTION_FAILED',
+  'UPLOAD_SESSION_RELATION_INVALID',
+])
+
+export const commissionDeletionResultDtoSchema = z.object({
+  status: z.enum(['already_deleted', 'blocked', 'deleted', 'ready']),
+  databaseRows: z.object({
+    assets: z.number().int().nonnegative(),
+    auditRelations: z.number().int().nonnegative(),
+    submissions: z.number().int().nonnegative(),
+    uploadSessions: z.number().int().nonnegative(),
+    variants: z.number().int().nonnegative(),
+  }).strict(),
+  privateObjects: z.object({
+    current: z.number().int().nonnegative(),
+    deleteMarkers: z.number().int().nonnegative(),
+    keys: z.number().int().nonnegative(),
+    versions: z.number().int().nonnegative(),
+  }).strict(),
+  blockers: z.array(commissionDeletionBlockerSchema),
+}).strict()
+
+export const commissionDeletionRequestSchema = z.discriminatedUnion('execute', [
+  z.object({ execute: z.literal(false) }).strict(),
+  z.object({
+    execute: z.literal(true),
+    confirmation: z.literal(COMMISSION_DELETE_CONFIRMATION),
+  }).strict(),
+])
+
+export const commissionDeletionResponseSchema = apiSuccessSchema(
+  commissionDeletionResultDtoSchema,
+)

@@ -18,6 +18,7 @@ const COMMANDS = [
   'restore-verify',
   'preflight',
   'cleanup-expired-uploads',
+  'commission-retention',
   'reconcile-site-display',
   'upgrade-site-display-v2',
   'recover-operations',
@@ -168,6 +169,11 @@ async function run() {
         dryRun: values['dry-run'] !== false,
         limit: values.limit ? Number(values.limit) : undefined,
       })
+    }
+
+    case 'commission-retention': {
+      const { runCommissionRetentionCli } = await import('./commission-retention')
+      return await runCommissionRetentionCli(argv())
     }
 
     case 'reconcile-site-display':

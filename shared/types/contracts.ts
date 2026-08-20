@@ -119,6 +119,9 @@ import type {
 } from '../schemas/watermark'
 import type {
   createCommissionSubmissionRequestSchema,
+  commissionDeletionBlockerSchema,
+  commissionDeletionResultDtoSchema,
+  commissionRetentionCandidateDtoSchema,
   commissionSubmissionDetailDtoSchema,
   commissionSubmissionListItemDtoSchema,
   commissionSubmissionStatusSchema,
@@ -144,6 +147,15 @@ export type CommissionSubmissionListItemDto = z.infer<
 >
 export type CommissionSubmissionDetailDto = z.infer<
   typeof commissionSubmissionDetailDtoSchema
+>
+export type CommissionDeletionBlocker = z.infer<
+  typeof commissionDeletionBlockerSchema
+>
+export type CommissionDeletionResultDto = z.infer<
+  typeof commissionDeletionResultDtoSchema
+>
+export type CommissionRetentionCandidateDto = z.infer<
+  typeof commissionRetentionCandidateDtoSchema
 >
 export type AnalyticsEventType = z.infer<typeof analyticsEventTypeSchema>
 export type AnalyticsRouteKey = z.infer<typeof analyticsRouteKeySchema>

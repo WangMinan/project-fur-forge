@@ -1,13 +1,19 @@
 <script setup lang="ts">
 const props = withDefaults(defineProps<{
   cancelLabel?: string
+  busy?: boolean
   confirmLabel: string
+  confirmDisabled?: boolean
+  confirmLoadingLabel?: string
   open: boolean
   showCancel?: boolean
   title: string
   tone?: 'danger' | 'primary'
 }>(), {
   cancelLabel: '取消',
+  busy: false,
+  confirmDisabled: false,
+  confirmLoadingLabel: '处理中…',
   showCancel: true,
   tone: 'primary',
 })
@@ -24,7 +30,9 @@ watch(() => props.open, async (open) => {
   if (open) {
     returnFocus = document.activeElement as HTMLElement | null
     await nextTick()
-    dialog.value?.querySelector<HTMLElement>('[data-confirm]')?.focus()
+    dialog.value?.querySelector<HTMLElement>(
+      props.confirmDisabled ? '[data-cancel]' : '[data-confirm]',
+    )?.focus()
   }
   else {
     returnFocus?.focus()
@@ -63,6 +71,8 @@ function onKeydown(event: KeyboardEvent) {
             v-if="showCancel"
             type="button"
             class="confirm-dialog__button confirm-dialog__button--secondary"
+            data-cancel
+            :disabled="busy"
             @click="emit('cancel')"
           >{{ cancelLabel }}</button>
           <button
@@ -72,8 +82,10 @@ function onKeydown(event: KeyboardEvent) {
               ? 'confirm-dialog__button--danger'
               : 'confirm-dialog__button--primary'"
             data-confirm
+            :disabled="busy || confirmDisabled"
+            :aria-busy="busy || undefined"
             @click="emit('confirm')"
-          >{{ confirmLabel }}</button>
+          >{{ busy ? confirmLoadingLabel : confirmLabel }}</button>
         </div>
       </div>
     </div>
@@ -127,6 +139,11 @@ function onKeydown(event: KeyboardEvent) {
   font: inherit;
   font-weight: 600;
   cursor: pointer;
+}
+
+.confirm-dialog__button:disabled {
+  cursor: default;
+  opacity: 0.55;
 }
 
 .confirm-dialog__button--primary {
