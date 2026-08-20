@@ -6,10 +6,12 @@
 
 ## 当前阶段
 
-阶段 4 · 2026-08-20 已完成 T04～T34 与 T34-F1 阶段 E 前独立 Review 修复的当前工程实施和本地证据。用户已确认个人信息处理者的精确名称为“有点小狗工作室”，T23 通过前向迁移、完整目标政策和统一 fail-closed readiness 收口。T35/T36 的 Linux FFmpeg runtime registry、容器嵌入、Docker Hub 分发核验与 release evidence 仍是进入 T37 前的部署停止点。本轮未进入 Hero 焦点、动效体系或首页四幕。
+阶段 4 · 2026-08-20 已完成 T04～T34、T34-F1 与 M01～M11 的当前工程实施和本地证据。仓库简化维护已统一活文档事实，退役 legacy、无引用壳层和旧 paired Hero，收敛 notices/test fake/上传 session runner/AdminAction；素材仍由 Git 管理，固定版式 PDF、业务逻辑、动效设计和界面布局不变。T35/T36 的 Linux FFmpeg runtime registry、容器嵌入、Docker Hub 分发核验与 release evidence 仍是进入 T37 前的部署停止点。
 
 ## 最近验证
 
+- 2026-08-20：用户确认生产采用完整重新部署后，完成 M07/M08/M10/M11。四套管理上传统一走 `runAdminUploadSession`，精选排序、作品列表/编辑、内容与营业状态行动统一使用 `AdminAction`；`0047_r4_retire_paired_hero` 前向删除旧 pair 表/触发器，运行时删除旧 routes/DTO/Schema/repository/recipe/runner，四集合不变。累计 diff 为新增 608 行、删除 22,579 行，净减少 21,971 行。lint、typecheck、notices drift、focused 48/48、auth/database 28/28、完整 core 315/315、smoke 9/9、production build 与 diff check 通过。
+- 2026-08-20：完成仓库简化 M01～M07/M09。删除 21 个 legacy Vitest、24 个 legacy Playwright、3 个旧 Vitest 配置、3 个无引用 Vue 组件、2 个无引用 Hero composable、4 个临时诊断脚本、测试专用 fake、重复 notices TXT 与确认无调用的导出；净删除约 1.74 万行。`pnpm test:groups`（core 52、smoke 1）、`pnpm notices:check`、lint、typecheck、core 327/327、smoke 9/9 与 production build 通过。首轮 core 暴露的内部 `findHeroItemAsset` import 过删已恢复，目标 12/12 与完整 core 复跑通过。
 - 2026-08-20：PR #21 GPT-5.6 Pro Review 的阶段 E 前 finding 已在当前 HEAD 重新核验并修复。隐私政策共享校验同时保护申请页、上传会话、submission、health readiness 和 live preflight；空白、占位、旧“不收集”、处理者/收集范围/当前邮箱不完整时申请 fail closed，管理端仍可修正文案。确认不变量新增小型 core integration，申请提交改用 `PublicAction`，删除 busy 对话框不再被 Escape/遮罩关闭。
 - 2026-08-20：notices 明确为当前生成环境安装快照，平台可选包不冒充 Linux runtime closure；`SEE LICENSE IN ...` 视为未知许可证；drift 从 `check:fast` 移入显式 release。`/licenses` 只导入 1,995 字节 summary，436,715 字节完整 JSON 不进入应用 bundle，完整 TXT 保留下载。`check:fast` 52 文件/327 项、smoke 9/9、production build/verify、ESA/observability、notices drift 与 586 tracked files Secret scan 通过。
 - 2026-08-20：用户确认个人信息处理者的精确名称为“有点小狗工作室”。`0046_r4_privacy_controller` 只对 NULL、空白或精确历史默认的 `privacy_policy` 写入完整政策并复用当前 `contact_email`；管理员自定义文本保持不变。
@@ -50,8 +52,8 @@
 - 隐私实现保持轻量：通过现有 `privacy_policy` 和 `contact_email` 维护真实处理者/联系信息；申请页只有两个未预勾选确认，服务端校验字面量 `true`，不新增确认持久字段或版本协议。
 - 人工保留复核继续采用“人的判断 + 工具执行”；rejected 拒绝后立即进入候选，管理端与 CLI 只支持单条精确 dry-run/execute，不建设定时任务、Worker、批量自动删除或通用生命周期引擎。
 - 测试只保护稳定不变量；视觉、排版、文案语气和真实图片效果以王旻安/景宸人工验收为最终门禁。
-- 普通改动不默认跑历史全量 unit/integration/E2E；先运行快速静态检查和受影响的核心不变量，发布前再运行精简 smoke、构建/部署验证与人工浏览器验收。
-- 不新增 GitHub required check；默认质量 workflow 需要在实现阶段减重，重型镜像/恢复/完整历史套件改为显式 release/manual 路径。
+- 普通改动先运行快速静态检查和受影响的核心不变量；实现型 legacy 套件已物理退役，发布前再运行精简 smoke、构建/部署验证与人工浏览器验收。
+- 不新增 GitHub required check；默认质量 workflow 保持轻量，重型镜像/恢复验证只由显式 release/manual 路径启动。
 - 当前公开发布的容器镜像包含 FFmpeg，按二进制分发场景维护精确版本/摘要、许可证、对应源码与构建信息；网页没有单独下载入口不能被写成“未分发”。
 - 需求1的 Host、媒体、OSS/ESA、安全、发布、恢复和部署基线，以及需求3仍适用的业务与匿名上传安全边界继续生效。
 
@@ -61,4 +63,4 @@
 
 ## 下一步交接
 
-本轮开发停在 T37 之前。下一棒先在部署阶段执行隐私文案前向迁移并核对公开投影，同时完成 T35/T36 的 Linux FFmpeg runtime registry、容器分发与 release evidence；GATE-D 关闭后再进入 T37。当前修复和本地自动化不代签最终独立 Review、王旻安/景宸验收、真实手机、生产迁移/删除、镜像构建或发布。
+本轮仓库简化 M01～M11 已完成。下一棒先在部署阶段执行隐私文案前向迁移并核对公开投影，同时完成 T35/T36 的 Linux FFmpeg runtime registry、容器分发与 release evidence；GATE-D 关闭后再进入 T37。当前修复和本地自动化不代签最终独立 Review、王旻安/景宸验收、真实手机、生产迁移/删除、镜像构建或发布。

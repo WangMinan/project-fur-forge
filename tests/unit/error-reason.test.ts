@@ -17,15 +17,15 @@ describe('stable business error reasons', () => {
     const error = new ServiceError(
       409,
       'CONFLICT',
-      'At least one hero slide must remain enabled.',
-      'HERO_LAST_ENABLED_SLIDE',
+      'Disable the hero item before editing it.',
+      'HERO_ITEM_ENABLED',
     )
-    expect(error.reason).toBe('HERO_LAST_ENABLED_SLIDE')
+    expect(error.reason).toBe('HERO_ITEM_ENABLED')
 
     expect(apiErrorSchema.safeParse({
       error: {
         code: 'CONFLICT',
-        reason: 'HERO_LAST_ENABLED_SLIDE',
+        reason: 'HERO_ITEM_ENABLED',
         message: 'anything',
       },
     }).success).toBe(true)

@@ -80,7 +80,7 @@ A 组件与进度地基
 
 ### B2. 快速命令与 workflow
 
-- 增加 `check:fast`、`test:core`、`test:smoke`、`test:release`；迁移期可保留 `test:legacy`。
+- 保留 `check:fast`、`test:core`、`test:smoke`、`test:release`；分类完成后删除 `test:legacy` 及实现型测试文件。
 - 默认 quality 只运行快速 checks；docs-only 跳过应用重型任务。
 - image build、Compose/restore/Nginx 和完整 release smoke 由 `workflow_dispatch` 或 release 流程显式运行。
 - 不新增 required check。
@@ -109,7 +109,7 @@ A 组件与进度地基
 ### GATE-B
 
 - 普通代码反馈路径显著短于现有全量 workflow；
-- old legacy 失败不再阻止日常开发；
+- 不再维护或运行平行 legacy 套件；
 - `/adoptions` 和首页单项满足业务排序；
 - 用户人工验收仍是视觉门禁。
 
@@ -226,7 +226,7 @@ A 组件与进度地基
 - production build/verify；
 - notices drift/PII scan。
 
-不要求把 legacy 全量套件修到全绿作为放行条件。
+已退役的实现型套件不作为放行条件，也不恢复为平行门禁。
 
 ### E2. Release 验证
 

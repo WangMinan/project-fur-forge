@@ -855,6 +855,7 @@ describe('SQLite foundation', () => {
       `).pluck().all()).toEqual(expect.arrayContaining(
         triggerNames.filter(name => (
           !name.startsWith('return_photos_')
+          && !name.startsWith('site_hero_slides_')
           && !name.startsWith('work_assets_design_sheet_primary_')
           && name !== 'works_preserve_design_sheet_purpose'
         )),

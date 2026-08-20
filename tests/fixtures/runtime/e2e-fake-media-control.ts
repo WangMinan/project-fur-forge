@@ -237,10 +237,8 @@ export default defineEventHandler(async (event) => {
     if (staleAssetIds.length > 0) {
       const placeholders = staleAssetIds.map(() => '?').join(', ')
       sqlite.prepare(`
-        DELETE FROM site_hero_slides
-        WHERE landscape_asset_id IN (${placeholders})
-           OR portrait_asset_id IN (${placeholders})
-      `).run(...staleAssetIds, ...staleAssetIds)
+        DELETE FROM site_hero_items WHERE asset_id IN (${placeholders})
+      `).run(...staleAssetIds)
       sqlite.prepare(`
         DELETE FROM works WHERE slug LIKE 'e2e-branding-%'
       `).run()
@@ -299,11 +297,16 @@ export default defineEventHandler(async (event) => {
                 0, 0, 1, 1, 'top-left')
     `).run(workId, photoId)
     sqlite.prepare(`
-      INSERT INTO site_hero_slides (
-        id, landscape_asset_id, portrait_asset_id, alt_text,
-        sort_order, enabled, created_at, updated_at
-      ) VALUES (?, ?, ?, '品牌舞台首页图', 0, 1, ?, ?)
-    `).run(randomUUID(), landscapeId, portraitId, now, now)
+      INSERT INTO site_hero_items (
+        id, placement, orientation, asset_id, alt_text,
+        sort_order, enabled, version, created_at, updated_at
+      ) VALUES
+        (?, 'home', 'landscape', ?, '品牌舞台首页横图', 0, 1, 1, ?, ?),
+        (?, 'home', 'portrait', ?, '品牌舞台首页竖图', 0, 1, 1, ?, ?)
+    `).run(
+      randomUUID(), landscapeId, now, now,
+      randomUUID(), portraitId, now, now,
+    )
 
     await generatePublicVariants(sqlite, fake, photoId, undefined, now)
     await generateSiteDisplayVariants(
@@ -338,10 +341,8 @@ export default defineEventHandler(async (event) => {
     if (staleAssetIds.length > 0) {
       const placeholders = staleAssetIds.map(() => '?').join(', ')
       sqlite.prepare(`
-        DELETE FROM site_hero_slides
-        WHERE landscape_asset_id IN (${placeholders})
-           OR portrait_asset_id IN (${placeholders})
-      `).run(...staleAssetIds, ...staleAssetIds)
+        DELETE FROM site_hero_items WHERE asset_id IN (${placeholders})
+      `).run(...staleAssetIds)
       sqlite.prepare(`
         DELETE FROM asset_variants WHERE asset_id IN (${placeholders})
       `).run(...staleAssetIds)
@@ -483,8 +484,6 @@ export default defineEventHandler(async (event) => {
       SELECT id FROM assets WHERE private_object_key LIKE ?
     `).pluck().all(`test/e2e-${placement}/%`) as string[]
     sqlite.prepare('DELETE FROM site_hero_items WHERE placement = ?').run(placement)
-    // 同时清理旧 pair 夹具，避免其 FK 阻止种子资产回收。
-    sqlite.prepare('DELETE FROM site_hero_slides WHERE placement = ?').run(placement)
     if (staleAssetIds.length > 0) {
       const placeholders = staleAssetIds.map(() => '?').join(', ')
       sqlite.prepare(`
@@ -622,30 +621,6 @@ export default defineEventHandler(async (event) => {
       )
     }
     return { data: { ok: true } }
-  }
-
-  if (body?.action === 'seedHomePublicationOperation') {
-    const sqlite = getDatabase().sqlite
-    const slide = sqlite.prepare(`
-      SELECT id FROM site_hero_slides
-      WHERE placement = 'home' AND alt_text = ? AND enabled = 0
-    `).get(body.slideAlt) as { id: string } | undefined
-    if (!slide) {
-      setResponseStatus(event, 404)
-      return { error: 'disabled slide not found' }
-    }
-    const id = randomUUID()
-    const now = Date.now()
-    const version = sqlite.prepare(`
-      SELECT version FROM site_content WHERE id = 'site'
-    `).pluck().get() as number
-    sqlite.prepare(`
-      INSERT INTO publication_operations (
-        id, operation_type, entity_type, entity_id, requested_version,
-        status, started_at, updated_at
-      ) VALUES (?, 'PUBLISH', 'HOME', ?, ?, 'GENERATING_PUBLIC', ?, ?)
-    `).run(id, slide.id, version, now, now)
-    return { data: { id } }
   }
 
   // T20 大图管理 E2E：临时悬空/恢复活动水印 profile 指向，验证预览与启用的

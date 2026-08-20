@@ -31,13 +31,12 @@ import {
   updateDisabledHeroItem,
 } from '../repository/hero-collection-repository'
 import type {
-  HeroItemAssetRow,
   HeroItemRow,
+  HeroVariantRow,
 } from '../repository/hero-collection-repository'
 import { hasBlockingPublicationCleanup } from '../repository/publication-repository'
 import { ServiceError } from '../service-error'
 import { getLatestPublicationOperations } from '../runner/work-publication'
-import type { HeroVariantRow } from '../repository/hero-repository'
 
 export interface HeroItemInput {
   alt: string
@@ -217,7 +216,7 @@ function assertHeroItemAsset(
       409,
       'CONFLICT',
       'Hero asset is not ready for this collection.',
-      'HERO_ASSETS_NOT_READY',
+      'HERO_ASSET_NOT_READY',
     )
   }
   if (isHeroItemAssetAssigned(sqlite, assetId, exceptItemId)) {
@@ -295,7 +294,7 @@ export function updateHeroCollectionItem(
       409,
       'CONFLICT',
       'Disable the hero item before editing it.',
-      'HERO_SLIDE_ENABLED',
+      'HERO_ITEM_ENABLED',
     )
   }
   assertHeroItemAsset(sqlite, placement, orientation, input.assetId, id)
@@ -399,13 +398,4 @@ export function reorderEnabledHeroCollectionItems(
     replaceEnabledHeroItemOrder(sqlite, placement, orientation, itemIds, now)
   })()
   return getAdminHeroCollection(sqlite, placement, orientation)
-}
-
-export function heroItemAssetForCollection(
-  sqlite: Database.Database,
-  placement: HeroPlacement,
-  orientation: HeroOrientation,
-  assetId: string,
-): HeroItemAssetRow | undefined {
-  return findHeroItemAsset(sqlite, assetId, placement, orientation)
 }

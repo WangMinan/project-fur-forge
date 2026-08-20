@@ -188,7 +188,6 @@ pnpm check:fast
 pnpm test:core
 pnpm test:smoke
 pnpm test:release   # 仅发布/人工显式启动
-pnpm test:legacy    # 迁移期可选，non-gating，最终可删除
 ```
 
 脚本落地前：
@@ -227,7 +226,7 @@ Playwright 只保留少量主旅程：
 
 - 默认 `quality` 应在需求4 T18 中减重为 lint/typecheck/core/必要 build；docs-only 跳过应用重型任务。
 - image-build、Compose/restore/Nginx、destructive drill 和 release smoke 改为 `workflow_dispatch` 或发布路径显式执行。
-- 旧 `pnpm test`、`pnpm test:integration`、`pnpm test:e2e` 在迁移期属于 legacy 事实，不因存在就自动成为每次改动门禁。
+- `pnpm test` 等价于 `pnpm test:core`；旧 `test:integration`、`test:e2e`、`test:legacy` 及其实现型套件已退役，必要的稳定不变量进入 core，主旅程进入 smoke。
 - 不新增 required check。
 - 即使自动 smoke 全绿，未通过王旻安/景宸人工验收也不得宣称视觉完成。
 

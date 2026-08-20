@@ -42,7 +42,7 @@
 - 单条 retention/deletion repository/service/API/CLI/UI 与隔离 fake-storage 核心测试；
 - 人工 SOP：`../implementation/COMMISSION-RETENTION-SOP.md`；
 - notices JSON：`../../../app/assets/licenses/third-party-notices.json`；
-- notices TXT：`../../../app/assets/licenses/THIRD_PARTY_NOTICES.txt` 与公开下载副本；
+- notices TXT：`../../../public/THIRD_PARTY_NOTICES.txt`（唯一可下载文本产物）；
 - 390×844、768×1024、1440×900 的委托确认、rejected 删除入口与 privacy/service/licenses 浏览器 smoke。
 
 ## 待实施/人工产物

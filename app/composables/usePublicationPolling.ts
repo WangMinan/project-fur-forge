@@ -3,7 +3,7 @@ import type { PublicationOperationDto } from '~~/shared/types/contracts'
 import { AdminApiError } from './useAdminApi'
 
 /**
- * T34-F4：长任务轮询从 useAdminHome 抽出。
+ * 发布长任务的共享轮询状态。
  * 只负责定时器生命周期与拉取操作状态；不知道 Hero、不知道发布规则。
  */
 export const PUBLICATION_IN_PROGRESS_STATUSES = new Set([

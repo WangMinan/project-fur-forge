@@ -10,8 +10,7 @@ import { dirname, resolve } from 'node:path'
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const JSON_OUTPUT = 'app/assets/licenses/third-party-notices.json'
 const SUMMARY_OUTPUT = 'app/assets/licenses/third-party-summary.json'
-const TEXT_OUTPUT = 'app/assets/licenses/THIRD_PARTY_NOTICES.txt'
-const PUBLIC_TEXT_OUTPUT = 'public/THIRD_PARTY_NOTICES.txt'
+const TEXT_OUTPUT = 'public/THIRD_PARTY_NOTICES.txt'
 const MANUAL_ASSETS = 'config/third-party-assets.json'
 
 function stableCompare(left, right) {
@@ -200,7 +199,6 @@ function run() {
     [JSON_OUTPUT, artifacts.json],
     [SUMMARY_OUTPUT, artifacts.summary],
     [TEXT_OUTPUT, artifacts.text],
-    [PUBLIC_TEXT_OUTPUT, artifacts.text],
   ]
   if (check) {
     const drift = outputs.filter(([path, expected]) => {

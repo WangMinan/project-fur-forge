@@ -66,8 +66,6 @@ function insertSource(id: string, role: string, width: number, height: number) {
 
 function insertPublishedTargets() {
   insertSource('work-photo', 'studio_photo', 3200, 2400)
-  insertSource('hero-landscape', 'home_hero_landscape', 4000, 2250)
-  insertSource('hero-portrait', 'home_hero_portrait', 1800, 3200)
   sqlite.prepare(`
     INSERT INTO works (
       id, slug, character_name, species, purpose,
@@ -86,21 +84,10 @@ function insertPublishedTargets() {
       0, 0, 1, 1, 'top-left'
     )
   `).run()
-  sqlite.prepare(`
-    INSERT INTO site_hero_slides (
-      id, landscape_asset_id, portrait_asset_id, alt_text,
-      sort_order, enabled, created_at, updated_at
-    ) VALUES (
-      'hero-slide', 'hero-landscape', 'hero-portrait', '团子首页图',
-      0, 1, ?, ?
-    )
-  `).run(NOW, NOW)
 }
 
 async function generateActiveVariants() {
   await generatePublicVariants(sqlite, storage, 'work-photo', undefined, NOW)
-  await generatePublicVariants(sqlite, storage, 'hero-landscape', undefined, NOW)
-  await generatePublicVariants(sqlite, storage, 'hero-portrait', undefined, NOW)
   return sqlite.prepare(`
     SELECT object_key FROM asset_variants
     WHERE storage_scope = 'PUBLIC' AND watermark_profile_id = ?
@@ -302,7 +289,6 @@ describe('GATE-07 watermark branding lifecycle', () => {
     expect(applied).toMatchObject({
       status: 'DONE',
       affectedWorkCount: 1,
-      affectedHeroSlideCount: 0,
       targetVariantCount: 12,
       generatedVariantCount: 12,
       verifiedVariantCount: 12,
@@ -367,7 +353,6 @@ describe('GATE-07 watermark branding lifecycle', () => {
     expect(applied).toMatchObject({
       status: 'DONE',
       affectedWorkCount: 2,
-      affectedHeroSlideCount: 0,
       targetVariantCount: 18,
       generatedVariantCount: 18,
       verifiedVariantCount: 18,
@@ -479,7 +464,6 @@ describe('GATE-07 watermark branding lifecycle', () => {
   })
 
   it('previews artwork ratios before homepage hero assets exist', async () => {
-    sqlite.prepare('DELETE FROM site_hero_slides').run()
     sqlite.prepare(`
       DELETE FROM assets
       WHERE role IN ('home_hero_landscape', 'home_hero_portrait')
@@ -501,7 +485,6 @@ describe('GATE-07 watermark branding lifecycle', () => {
   })
 
   it('records a retryable failure instead of leaving a preview active', async () => {
-    sqlite.prepare('DELETE FROM site_hero_slides').run()
     sqlite.prepare('DELETE FROM work_assets').run()
     sqlite.prepare(`
       DELETE FROM assets WHERE role != 'watermark_logo'

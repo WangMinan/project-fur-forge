@@ -313,11 +313,12 @@ interface HeroOrientationSummary {
 
 ## 7. 第三方声明模型
 
-生成两个产物：
+生成三个用途互不重复的产物：
 
 ```text
 app/assets/licenses/third-party-notices.json
-app/assets/licenses/THIRD_PARTY_NOTICES.txt
+app/assets/licenses/third-party-summary.json
+public/THIRD_PARTY_NOTICES.txt
 ```
 
 建议结构：
@@ -356,4 +357,4 @@ interface ThirdPartyNotice {
 - 申请确认只扩展请求 Schema；既有 submission 表和历史行不变。
 - 默认文案继续使用前向迁移和现有 section version，不新增处理者字段。
 - 焦点模型不迁移；既有 `(0.5,0.5)` 或任意坐标原样保留。
-- 旧全量测试先降级为 legacy non-gating，不要求一次性改写全部；逐项提升或删除。
+- 旧全量测试已经完成分类和退役；稳定不变量位于 core，主旅程位于 smoke，不再维护 legacy 模型或配置。

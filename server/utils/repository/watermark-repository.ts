@@ -12,7 +12,6 @@ import type { WatermarkOperationStatus } from '../../../shared/types/contracts'
  */
 
 export interface WatermarkOperationRow {
-  affectedHeroSlideCount: number
   affectedWorkCount: number
   brandingVersion: number
   cleanupObjectKeysJson: string
@@ -55,7 +54,6 @@ const selectOperation = `
     id, operation_type AS operationType, profile_id AS profileId,
     branding_version AS brandingVersion, status,
     affected_work_count AS affectedWorkCount,
-    affected_hero_slide_count AS affectedHeroSlideCount,
     target_variant_count AS targetVariantCount,
     generated_variant_count AS generatedVariantCount,
     verified_variant_count AS verifiedVariantCount,
@@ -92,17 +90,6 @@ export function hasActiveWatermarkOperation(sqlite: Database.Database) {
     SELECT 1 FROM watermark_operations
     WHERE status NOT IN ('FAILED', 'DONE') LIMIT 1
   `).pluck().get())
-}
-
-export function hasVerifiedPreview(
-  sqlite: Database.Database,
-  profileId: string,
-) {
-  return Boolean(sqlite.prepare(`
-    SELECT 1 FROM watermark_operations
-    WHERE operation_type = 'WATERMARK_PREVIEW' AND profile_id = ?
-      AND status = 'DONE' AND verified_variant_count = 3 LIMIT 1
-  `).pluck().get(profileId))
 }
 
 export function insertWatermarkOperation(
@@ -258,7 +245,7 @@ export function finishWatermarkRebuild(
  *
  * T34-F5 之后 runner 必须先抢到 lease 才推进，而 lease 不会授予终态记录；
  * 因此重试必须先离开 FAILED，否则 runRebuild 会静默什么都不做。
- * 与 retryHeroSlidePublication 的处理方式一致。
+ * 与其它持久 operation 的重试处理一致。
  */
 export function reopenFailedWatermarkOperation(
   sqlite: Database.Database,
@@ -428,7 +415,6 @@ export function setRebuildCounts(
   sqlite: Database.Database,
   id: string,
   counts: {
-    affectedHeroSlideCount: number
     affectedWorkCount: number
     targetVariantCount: number
   },
@@ -436,13 +422,11 @@ export function setRebuildCounts(
 ) {
   sqlite.prepare(`
     UPDATE watermark_operations
-    SET affected_work_count = ?, affected_hero_slide_count = ?,
-        target_variant_count = ?, generated_variant_count = 0,
+    SET affected_work_count = ?, target_variant_count = ?, generated_variant_count = 0,
         verified_variant_count = 0, version = version + 1, updated_at = ?
     WHERE id = ?
   `).run(
     counts.affectedWorkCount,
-    counts.affectedHeroSlideCount,
     counts.targetVariantCount,
     now,
     id,

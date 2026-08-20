@@ -2,8 +2,6 @@ import { readdirSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import {
   coreTestFiles,
-  legacyE2eFiles,
-  legacyTestFiles,
   smokeTestFiles,
 } from '../tests/test-groups'
 
@@ -41,13 +39,8 @@ assertPartition(
     ...relativeFiles('tests/unit', '.test.ts'),
     ...relativeFiles('tests/integration', '.test.ts'),
   ],
-  [[...coreTestFiles], [...legacyTestFiles]],
+  [[...coreTestFiles]],
   'Vitest',
-)
-assertPartition(
-  relativeFiles('tests/e2e', '.spec.ts'),
-  [[...legacyE2eFiles]],
-  'legacy Playwright',
 )
 assertPartition(
   relativeFiles('tests/smoke', '.spec.ts'),
@@ -57,7 +50,5 @@ assertPartition(
 
 console.log(JSON.stringify({
   core: coreTestFiles.length,
-  legacyE2e: legacyE2eFiles.length,
-  legacyVitest: legacyTestFiles.length,
   smoke: smokeTestFiles.length,
 }))

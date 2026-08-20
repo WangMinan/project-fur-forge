@@ -404,20 +404,12 @@ describe('R3-D works Contract migration', () => {
         SELECT count(*) FROM sqlite_master
         WHERE type = 'table' AND name = 'work_feature_tags'
       `).pluck().get()).toBe(0)
-      const heroWorkForeignKey = (after.sqlite.pragma(
-        'foreign_key_list(site_hero_slides)',
-      ) as Array<{ from: string, table: string }>).find(key => key.from === 'linked_work_id')
-      expect(heroWorkForeignKey?.table).toBe('works')
       expect(after.sqlite.prepare(`
-        SELECT linked_work_id FROM site_hero_slides
-        WHERE id = '77777777-7777-4777-8777-777777777777'
-      `).pluck().get()).toBe('hero-linked')
+        SELECT count(*) FROM sqlite_master
+        WHERE type = 'table' AND name = 'site_hero_slides'
+      `).pluck().get()).toBe(0)
       after.sqlite.prepare("DELETE FROM work_assets WHERE work_id = 'hero-linked'").run()
       after.sqlite.prepare("DELETE FROM works WHERE id = 'hero-linked'").run()
-      expect(after.sqlite.prepare(`
-        SELECT linked_work_id FROM site_hero_slides
-        WHERE id = '77777777-7777-4777-8777-777777777777'
-      `).pluck().get()).toBeNull()
       expect(after.sqlite.pragma('foreign_key_check')).toEqual([])
       expect(after.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
       expect(() => after.sqlite.prepare(`

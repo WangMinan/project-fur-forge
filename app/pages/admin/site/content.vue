@@ -67,7 +67,7 @@ onMounted(() => void load())
       </div>
       <div v-else-if="pageStatus === 'error'" class="content-admin__state" role="alert">
         <p>文案配置加载失败。</p>
-        <button type="button" class="content-admin__button" @click="load">重试</button>
+        <AdminAction size="small" @click="load">重试</AdminAction>
       </div>
 
       <template v-else-if="content">
@@ -204,17 +204,6 @@ onMounted(() => void load())
   gap: var(--admin-space-3);
 }
 
-.content-admin__button {
-  min-height: var(--admin-control-height-sm);
-  padding: 0 var(--admin-space-3);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-sm);
-  background: var(--admin-bg-primary);
-  color: var(--admin-text-primary);
-  font: inherit;
-  font-size: var(--admin-font-xs);
-  cursor: pointer;
-}
 
 @media (min-width: 1024px) {
   .content-admin__statuses {

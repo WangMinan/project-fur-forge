@@ -301,10 +301,6 @@ export function findCommissionDeletionTarget(
   const references = {
     adminUploads: count('SELECT count(*) FROM upload_sessions WHERE asset_id = ?', submission.designAssetId),
     heroItems: count('SELECT count(*) FROM site_hero_items WHERE asset_id = ?', submission.designAssetId),
-    heroSlides: count(`
-      SELECT count(*) FROM site_hero_slides
-      WHERE landscape_asset_id = ? OR portrait_asset_id = ?
-    `, submission.designAssetId, submission.designAssetId),
     officialChannels: count(`
       SELECT count(*) FROM site_content
       WHERE instr(official_channels_json, ?) > 0

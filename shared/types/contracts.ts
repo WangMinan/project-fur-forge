@@ -20,7 +20,6 @@ import type {
   adminAssetDtoSchema,
   assetStatusSchema,
   mediaRoleSchema,
-  publicHeroSlideDtoSchema,
   publicPngSourceSetDtoSchema,
   publicSourceSetDtoSchema,
   publicVariantDtoSchema,
@@ -30,9 +29,6 @@ import type {
   adminHeroCollectionDtoSchema,
   adminHeroItemDtoSchema,
   adminHeroItemPreviewDtoSchema,
-  adminHeroPreviewDtoSchema,
-  adminHeroSlideDtoSchema,
-  adminHomeDtoSchema,
   heroPlacementSchema,
   heroOrientationSchema,
   homeEntryKindSchema,
@@ -187,18 +183,14 @@ export type AdminAssetDto = z.infer<typeof adminAssetDtoSchema>
 export type PublicVariantDto = z.infer<typeof publicVariantDtoSchema>
 export type PublicSourceSetDto = z.infer<typeof publicSourceSetDtoSchema>
 export type PublicPngSourceSetDto = z.infer<typeof publicPngSourceSetDtoSchema>
-export type PublicHeroSlideDto = z.infer<typeof publicHeroSlideDtoSchema>
 export type AdminHeroAssetDto = z.infer<typeof adminHeroAssetDtoSchema>
 export type AdminHeroItemDto = z.infer<typeof adminHeroItemDtoSchema>
 export type AdminHeroCollectionDto = z.infer<
   typeof adminHeroCollectionDtoSchema
 >
-export type AdminHeroPreviewDto = z.infer<typeof adminHeroPreviewDtoSchema>
 export type AdminHeroItemPreviewDto = z.infer<
   typeof adminHeroItemPreviewDtoSchema
 >
-export type AdminHeroSlideDto = z.infer<typeof adminHeroSlideDtoSchema>
-export type AdminHomeDto = z.infer<typeof adminHomeDtoSchema>
 export type HeroPlacement = z.infer<typeof heroPlacementSchema>
 export type HeroOrientation = z.infer<typeof heroOrientationSchema>
 export type PublicHeroItemDto = z.infer<typeof publicHeroItemDtoSchema>

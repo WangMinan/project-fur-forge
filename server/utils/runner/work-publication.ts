@@ -34,7 +34,6 @@ import {
   findWorkPublicKeys,
   findWorkState,
   hasActiveWorkOperation,
-  hasEnabledHeroSlideForWork,
   insertWorkAuditLog,
   insertWorkOperation,
   markOperationFailed,
@@ -740,17 +739,6 @@ export async function unpublishWork(
   )
   if (work.publicationStatus === 'unpublished' && repeated) {
     return { operation: operationDto(repeated), work: workState(work) }
-  }
-  if (
-    work.version === expectedVersion
-    && work.publicationStatus === 'published'
-    && hasEnabledHeroSlideForWork(sqlite, workId)
-  ) {
-    throw new ServiceError(
-      409,
-      'CONFLICT',
-      'Disable or unlink enabled hero slides before unpublishing.',
-    )
   }
   const operation = createOperation(
     sqlite,

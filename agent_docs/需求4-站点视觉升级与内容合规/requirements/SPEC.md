@@ -349,7 +349,7 @@ Playwright 精简为少量用户旅程，不断言审美和内部 DOM：
 
 - 默认 push/PR workflow 只运行快速 checks；文档改动不触发应用全量套件。
 - 镜像、Compose、恢复、Nginx、destructive drill 和历史全量套件移入显式 release/manual 流程。
-- 旧全量测试先标为 legacy non-gating，再逐项删除或提升为 core/smoke。
+- 旧全量测试完成分类后，稳定不变量提升为 core、主旅程提升为 smoke，其余实现型覆盖物理删除；不保留平行 legacy 套件。
 - 王旻安/景宸对真实图片、页面层级、动效节奏、文案和手机体验拥有最终验收权。
 
 ## 13. 服务条款与第三方声明契约
@@ -397,6 +397,6 @@ Playwright 精简为少量用户旅程，不断言审美和内部 DOM：
 ### 14.5 测试与发布
 
 - [x] `core` 与 `smoke` 脚本/配置建立，普通改动反馈时间显著下降。
-- [x] 旧精确文案/DOM/动画时长测试已删除或降级为 legacy non-gating。
+- [x] 旧精确文案/DOM/动画时长测试已完成退役；稳定不变量只保留在 core，主旅程只保留在 smoke。
 - [x] 默认 Actions 不再自动执行完整镜像/恢复/全量 E2E；release/manual 路径仍可执行必要部署验证。
 - [ ] 用户人工门禁、独立 Review 和生产 smoke 均单独留证，不互相代签。

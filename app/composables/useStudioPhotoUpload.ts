@@ -7,19 +7,16 @@ import {
   verifiedAssetResponseSchema,
 } from '~~/shared/schemas/upload'
 import type {
-  ConditionalPutDto,
   UploadSessionDto,
   VerifiedAssetDto,
 } from '~~/shared/types/contracts'
 import {
-  UPLOAD_FAILURE_CODE_LABELS,
-  UPLOAD_FAILURE_STAGE_LABELS,
-} from '~/utils/media-labels'
-import { putFileToSignedUrl } from '~/utils/signed-put'
-import {
-  buildUploadDeclaration,
-  DECLARATION_FAILURE_LABELS,
-} from '~/utils/upload-declaration'
+  completeAdminUploadSession,
+  runAdminUploadSession,
+} from '~/utils/admin-upload-session'
+import type { AdminUploadResult } from '~/utils/admin-upload-session'
+import { uploadSessionFailureLabel } from '~/utils/media-labels'
+import { DECLARATION_FAILURE_LABELS } from '~/utils/upload-declaration'
 import { ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
 import { adminMediaPreviewUrl } from '~/utils/admin-media-preview'
 import { AdminApiError } from './useAdminApi'
@@ -44,8 +41,6 @@ export interface StudioUploadItem {
   progress: number | null
   session: UploadSessionDto | null
   state: StudioUploadState
-  // 签名 URL 只在当前上传动作的内存中短暂存在，不持久化、不上报。
-  upload: ConditionalPutDto | null
 }
 
 export interface StudioUploadContext {
@@ -62,26 +57,6 @@ interface StudioPhotoUploadOptions {
 interface PersistedUpload {
   fileName: string
   uploadSessionId: string
-}
-
-function sessionFailureText(session: UploadSessionDto) {
-  return {
-    stage: session.failureStage
-      ? UPLOAD_FAILURE_STAGE_LABELS[session.failureStage]
-      : null,
-    text: session.failureCode
-      ? UPLOAD_FAILURE_CODE_LABELS[session.failureCode]
-      : '上传未通过服务端核验，请重新上传',
-  }
-}
-
-function putFile(
-  upload: ConditionalPutDto,
-  file: File,
-  onProgress: (ratio: number) => void,
-  registerXhr: (xhr: XMLHttpRequest | null) => void,
-) {
-  return putFileToSignedUrl(upload, file, onProgress, registerXhr)
 }
 
 // 出厂照上传状态机：预检查/摘要 → 会话 → 条件 PUT（带进度）→ 服务端核验 →
@@ -193,55 +168,6 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
     return fresh?.data ?? null
   }
 
-  async function putThenComplete(item: StudioUploadItem) {
-    const upload = item.upload
-    const session = item.session
-    const file = item.file
-    if (!upload || !session || !file) {
-      failItem(item, '上传会话缺少签名信息，请重新上传')
-      return
-    }
-
-    item.state = 'uploading'
-    item.progress = 0
-    let putStatus: number
-    try {
-      putStatus = await putFile(upload, file, (ratio) => {
-        item.progress = ratio
-      }, (xhr) => {
-        if (xhr) {
-          activeXhrs.set(item.id, xhr)
-        }
-        else {
-          activeXhrs.delete(item.id)
-        }
-      })
-    }
-    catch {
-      activeXhrs.delete(item.id)
-      failItem(item, '上传中断（网络异常或已取消），可重新上传')
-      return
-    }
-    finally {
-      item.progress = null
-      activeXhrs.delete(item.id)
-    }
-    // PUT 完成后签名 URL 立即丢弃。
-    item.upload = null
-
-    if (putStatus === 403) {
-      expireItem(item)
-      return
-    }
-    if (putStatus < 200 || putStatus >= 300) {
-      failItem(item, '文件未能写入私有存储，可重新上传')
-      return
-    }
-
-    item.state = 'validating'
-    await completeItem(item)
-  }
-
   async function completeItem(item: StudioUploadItem) {
     const session = item.session
     if (!session) {
@@ -286,7 +212,7 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
           return
         }
         if (fresh?.status === 'FAILED') {
-          const failure = sessionFailureText(fresh)
+          const failure = uploadSessionFailureLabel(fresh)
           failItem(item, failure.text, failure.stage)
           return
         }
@@ -307,6 +233,78 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
     }
   }
 
+  async function applyUploadResult(
+    item: StudioUploadItem,
+    result: AdminUploadResult,
+  ) {
+    if (result.ok) {
+      item.session = result.session
+      item.asset = result.asset
+      item.state = 'completed'
+      if (result.asset.status === 'READY') {
+        options.onAssetReady(item, result.asset)
+      }
+      return
+    }
+    if (result.step === 'declaration') {
+      failItem(item, DECLARATION_FAILURE_LABELS[result.reason])
+      return
+    }
+    if (result.step === 'validation') {
+      failItem(item, result.message)
+      return
+    }
+    if (result.step === 'put') {
+      if (result.reason === 'expired') {
+        expireItem(item)
+      }
+      else {
+        failItem(item, result.reason === 'network'
+          ? '上传中断（网络异常或已取消），可重新上传'
+          : '文件未能写入私有存储，可重新上传')
+      }
+      return
+    }
+
+    const error = result.error
+    if (error instanceof AdminApiError && error.status === 401) {
+      return
+    }
+    if (result.step === 'create') {
+      if (error instanceof AdminApiError && error.status === 409) {
+        failItem(item, '作品数据已在其他地方变化，请刷新后重试')
+        options.onWorkConflict()
+      }
+      else {
+        failItem(item, '无法创建上传会话，请稍后重试')
+      }
+      return
+    }
+
+    if (result.session) {
+      item.session = result.session
+      if (result.session.status === 'EXPIRED') {
+        expireItem(item)
+        return
+      }
+      if (result.session.status === 'FAILED') {
+        const failure = uploadSessionFailureLabel(result.session)
+        failItem(item, failure.text, failure.stage)
+        return
+      }
+      if (result.session.status === 'CANCELLED') {
+        item.state = 'cancelled'
+        item.failureText = '上传会话已取消，请重新上传'
+        return
+      }
+    }
+    failItem(item, error instanceof AdminApiError && error.status === 400
+      ? '上传未通过服务端核验，请重新上传'
+      : error instanceof AdminApiError && error.status === 409
+        ? '上传会话状态冲突，请重新上传'
+        : '服务端处理失败，请稍后重试')
+  }
+
   async function startUpload(file: File, context: StudioUploadContext) {
     const item = reactive({
       asset: null,
@@ -319,19 +317,13 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
       progress: null,
       session: null,
       state: 'digesting',
-      upload: null,
     }) as StudioUploadItem
     items.value.push(item)
 
-    const declaration = await buildUploadDeclaration(file)
-    if (!declaration.ok) {
-      failItem(item, DECLARATION_FAILURE_LABELS[declaration.reason])
-      return
-    }
-
-    let created
-    try {
-      created = await adminApi('/api/admin/v1/media/upload-sessions', {
+    const result = await runAdminUploadSession({
+      adminApi,
+      file,
+      createSession: declaration => adminApi('/api/admin/v1/media/upload-sessions', {
         method: 'POST',
         body: {
           owner: {
@@ -340,28 +332,26 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
             expectedVersion: context.workVersion,
           },
           mediaRole: options.mediaRole,
-          expected: declaration.declaration,
+          expected: declaration,
         },
         schema: createUploadSessionResponseSchema,
-      })
-    }
-    catch (error) {
-      if (error instanceof AdminApiError && error.status === 401) {
-        return
-      }
-      if (error instanceof AdminApiError && error.status === 409) {
-        failItem(item, '作品数据已在其他地方变化，请刷新后重试')
-        options.onWorkConflict()
-        return
-      }
-      failItem(item, '无法创建上传会话，请稍后重试')
-      return
-    }
-
-    item.session = created.data.session
-    item.upload = created.data.upload
-    remember(item, context)
-    await putThenComplete(item)
+      }),
+      onCreated: (created) => {
+        item.session = created.data.session
+        remember(item, context)
+      },
+      onProgress: ratio => (item.progress = ratio),
+      onStage: stage => (item.state = stage),
+      registerXhr: (xhr) => {
+        if (xhr) {
+          activeXhrs.set(item.id, xhr)
+        }
+        else {
+          activeXhrs.delete(item.id)
+        }
+      },
+    })
+    await applyUploadResult(item, result)
   }
 
   async function cancelUpload(item: StudioUploadItem) {
@@ -406,7 +396,7 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
       return
     }
     try {
-      const result = await adminApi(
+      const retried = await adminApi(
         `/api/admin/v1/media/upload-sessions/${session.uploadSessionId}/retry`,
         {
           method: 'POST',
@@ -415,12 +405,28 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
         },
       )
       forget(item)
-      item.session = result.data.session
-      item.upload = result.data.upload
-      remember(item, context)
       item.failureText = null
       item.failureStage = null
-      await putThenComplete(item)
+      const result = await completeAdminUploadSession({
+        adminApi,
+        created: retried,
+        file,
+        onCreated: (created) => {
+          item.session = created.data.session
+          remember(item, context)
+        },
+        onProgress: ratio => (item.progress = ratio),
+        onStage: stage => (item.state = stage),
+        registerXhr: (xhr) => {
+          if (xhr) {
+            activeXhrs.set(item.id, xhr)
+          }
+          else {
+            activeXhrs.delete(item.id)
+          }
+        },
+      })
+      await applyUploadResult(item, result)
     }
     catch (error) {
       if (error instanceof AdminApiError && error.status === 401) {
@@ -569,7 +575,6 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
               : session.status === 'EXPIRED'
                 ? 'expired'
                 : 'failed',
-        upload: null,
       }) as StudioUploadItem
       items.value.push(item)
 
@@ -589,7 +594,7 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
           await recoverCompleted(item)
         }
         else if (current?.status === 'FAILED') {
-          const failure = sessionFailureText(current)
+          const failure = uploadSessionFailureLabel(current)
           failItem(item, failure.text, failure.stage)
         }
         else if (current?.status === 'CANCELLED') {

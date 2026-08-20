@@ -1,8 +1,8 @@
 /**
  * 需求4 T13 的逐文件分类清单。
  *
- * core 只放稳定安全/数据/媒体/operation/排序不变量；smoke 是独立小旅程；
- * legacy 保留历史实现型覆盖但不参与默认门禁。新增测试文件必须先在这里归类。
+ * core 只放稳定安全/数据/媒体/operation/排序不变量；smoke 是独立小旅程。
+ * 历史实现型覆盖已经完成退役。新增测试文件必须先在这里归类。
  */
 export const coreTestFiles = [
   'tests/unit/admin-media-preview.test.ts',
@@ -59,57 +59,6 @@ export const coreTestFiles = [
   'tests/integration/work-publication.test.ts',
 ] as const
 
-export const legacyTestFiles = [
-  'tests/unit/admin-work-list.test.ts',
-  'tests/unit/esa-cache-policy.test.ts',
-  'tests/unit/esa-sdk.test.ts',
-  'tests/unit/featured-order.test.ts',
-  'tests/unit/hero-carousel.test.ts',
-  'tests/unit/oss-preflight.test.ts',
-  'tests/unit/production-measurement.test.ts',
-  'tests/unit/production-preflight.test.ts',
-  'tests/unit/project.test.ts',
-  'tests/unit/public-nav.test.ts',
-  'tests/unit/public-work-card-orientation.test.ts',
-  'tests/unit/security-observability-policy.test.ts',
-  'tests/unit/site-content-presentation.test.ts',
-  'tests/unit/site-content.test.ts',
-  'tests/unit/site-display-upgrade-options.test.ts',
-  'tests/unit/work-presentation.test.ts',
-  'tests/integration/commission-upload-api.test.ts',
-  'tests/integration/contact-qr-media.test.ts',
-  'tests/integration/r3-commission-upload.test.ts',
-  'tests/integration/site-content-sections.test.ts',
-  'tests/integration/site-display-reconcile.test.ts',
-] as const
-
 export const smokeTestFiles = [
   'tests/smoke/main-journeys.spec.ts',
-] as const
-
-export const legacyE2eFiles = [
-  'tests/e2e/access-surfaces.spec.ts',
-  'tests/e2e/admin-auth.spec.ts',
-  'tests/e2e/admin-branding.spec.ts',
-  'tests/e2e/admin-content-sections.spec.ts',
-  'tests/e2e/admin-home.spec.ts',
-  'tests/e2e/admin-media.spec.ts',
-  'tests/e2e/admin-publication.spec.ts',
-  'tests/e2e/admin-works.spec.ts',
-  'tests/e2e/admin.spec.ts',
-  'tests/e2e/analytics.spec.ts',
-  'tests/e2e/public-adoptions.spec.ts',
-  'tests/e2e/public-home.spec.ts',
-  'tests/e2e/public-information.spec.ts',
-  'tests/e2e/public-search.spec.ts',
-  'tests/e2e/public-seo.spec.ts',
-  'tests/e2e/public-works.spec.ts',
-  'tests/e2e/r3-stage-a-retirement.spec.ts',
-  'tests/e2e/r3-stage-d.spec.ts',
-  'tests/e2e/r3-stage-e.spec.ts',
-  'tests/e2e/requirement-2-acceptance.spec.ts',
-  'tests/e2e/t08-selfcheck.spec.ts',
-  'tests/e2e/t09-ui.spec.ts',
-  'tests/e2e/t26-t27-visual-follow-up.spec.ts',
-  'tests/e2e/t51-brand-filing.spec.ts',
 ] as const

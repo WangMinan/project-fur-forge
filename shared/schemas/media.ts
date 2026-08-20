@@ -73,11 +73,3 @@ export const publicPngSourceSetDtoSchema = z.object({
     format: z.literal('png'),
   })).min(1),
 }).strict()
-
-export const publicHeroSlideDtoSchema = z.object({
-  alt: publicAltSchema,
-  sortOrder: z.number().int().min(0).max(4),
-  landscape: publicSourceSetDtoSchema,
-  portrait: publicSourceSetDtoSchema,
-  linkedWorkHref: z.string().regex(/^\/works\/[a-z0-9]+(?:-[a-z0-9]+)*$/).nullable(),
-}).strict()
