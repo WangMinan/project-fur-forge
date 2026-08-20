@@ -144,12 +144,13 @@ A 组件与进度地基
 ### C4. 第三方声明
 
 - 从 production dependencies 生成稳定 JSON/TXT。
-- 本轮从 production dependency closure 生成稳定 JSON/TXT，`/licenses` 消费生成事实；`ffmpeg-static` npm 包与实际 FFmpeg 二进制概念分开。
+- 本轮从当前生成环境已安装的 production dependencies 生成稳定 JSON/TXT，并明确平台可选包只代表该环境快照；`/licenses` 消费紧凑 summary，完整清单只作下载/构建产物；`ffmpeg-static` npm 包与实际 FFmpeg 二进制概念分开。
 - Linux 发布镜像中实际 FFmpeg 的版本、SHA-256、对应源码、补丁、构建配置和容器分发核验后置到 T35/T36 部署阶段；缺少 registry 时不宣称具体二进制事实。
 - Noto Serif SC、ZhuoHei Collage 进入人工资产 registry。
 - 当前 Docker Hub 仓库公开，release 视为二进制分发；容器与 `/licenses` 必须消费同一份声明事实，不能保留“仅内部使用、未分发”文案。
-- `/licenses` 使用生成事实，不保留平行手写依赖数组。
+- `/licenses` 使用生成 summary，不保留平行手写依赖数组，也不把全部 transitive 清单渲染进 SSR/DOM。
 - 未知许可证失败，不猜测。
+- notices drift 从 `check:fast` 移到显式 release 检查；Linux 运行闭包由 T35/T36 的固定发布产物核验。
 
 ### GATE-C
 

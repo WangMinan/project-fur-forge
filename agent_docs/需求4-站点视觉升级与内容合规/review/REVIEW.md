@@ -1,7 +1,7 @@
 # 评审记录：需求4
 
 > **角色**：记录 SPEC ↔ COPY ↔ design ↔ models ↔ PLAN ↔ TASKS ↔ 当前代码的一致性与风险。
-> **状态**：2026-08-20 已完成 T04～T22、T24～T34 工程实施与 focused 自检；应用实现后的独立 Review 仍未执行，本文不以实现者自检代签。
+> **状态**：2026-08-20 已完成 T04～T34 与阶段 E 前 GPT-5.6 Pro Review finding 修复；最终应用独立 Review 仍未执行，本文不以实现者修复和自检代签。
 > **评审基线**：第二轮应用代码审查基于 `main@aa8e5b70be0913f02ceddccdc262ec6fe0769df1`；对应文档随后以 `main@ea3ae0a1269676db8c06c28ed32a9a29f4bd7109` 合入，后者没有应用代码变更。
 
 ## 1. 评审对象
@@ -223,5 +223,16 @@
 - 两项确认在客户端上传前与 service 消费前双重校验；缺失/false 不消费 upload、不创建 submission。
 - retention/deletion 只提供单条能力；rejected 立即进候选，pending 只复核，accepted 不按时间候选。隔离 fake storage 已覆盖 dry-run、current/version/delete marker、异常引用、OSS 失败、DB 失败后重入与重复执行。
 - `/admin/commissions` 列表和详情共用同一删除组件/API；真实浏览器已覆盖未认证 401、dry-run 脱敏、防重、失败可再试和成功刷新。
-- notices 生成器消费实际安装的 production closure，去除本机路径/时间、稳定排序并对未知许可证失败。`/licenses` 不再声称 Windows/gyan.dev 构建或旧源码 revision。
+- notices 生成器消费当前生成环境已安装的 production dependencies，去除本机路径/时间、稳定排序并对未知许可证（含 `SEE LICENSE IN ...`）失败；平台可选包不冒充 Linux runtime closure，`/licenses` 不再声称 Windows/gyan.dev 构建或旧源码 revision。
 - T35/T36 Linux runtime/容器分发、生产迁移/删除、隐私政策正式投影 smoke、独立 Review、用户验收和发布均保持开放。
+
+## 10. 2026-08-20 阶段 E 前 GPT-5.6 Pro Review 修复
+
+- 隐私政策建立唯一共享 readiness：拒绝空白、`{{...}}`、旧“不收集联系方式/设定图”、缺少已确认处理者/真实收集范围或未引用当前有效邮箱。申请页在未就绪时不渲染表单，匿名上传会话和 submission 均在副作用/消费前返回稳定 503；health readiness 与 production live preflight 使用同一判定。
+- 两项确认从 legacy 大文件抽出小型 core integration：缺失和 false 都不消费 COMPLETED upload，两项 true 保持原事务成功；不把两个历史大文件整体提升为 core。
+- notices 诚实收缩为生成环境安装快照，平台 drift 在显式 release 检查处理；页面只渲染 FFmpeg、字体资产和许可证表达统计，完整 transitive JSON 不进入 SSR/DOM，TXT 继续下载。
+- `PublicAction` 替换申请页局部提交按钮；`AdminConfirmDialog` busy 时禁止 Escape、遮罩和取消按钮 dismiss，既有删除 smoke 覆盖该行为。
+- 删除审计模型收缩到现有 `audit_logs` 的 actor、时间、submission ID 摘要和 SUCCESS/FAILURE；对象/数据库计数只在当次 dry-run/execute 响应中核对，不新增表或通用审计平台。
+- 验证：privacy/notices unit 4/4；confirmation/readiness integration 13/13；`check:fast` 52 文件/327 项；smoke 9/9；`test:release`（notices drift、smoke、build、production verify、ESA/observability、Secret scan）通过。
+
+本节是对独立 finding 的实现者修复记录，不等于 T51 最终独立 Review、T52 用户验收或生产执行。

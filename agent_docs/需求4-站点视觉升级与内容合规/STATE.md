@@ -6,16 +6,18 @@
 
 ## 当前阶段
 
-阶段 4 · 2026-08-20 已完成 T04～T34 的当前工程实施和本地证据。用户已确认个人信息处理者的精确名称为“有点小狗工作室”，T23 通过前向迁移和完整隐私政策目标文本收口。T35/T36 的 Linux FFmpeg runtime registry、容器嵌入、Docker Hub 分发核验与 release evidence 已明确后置。本轮停在 T37 之前，未进入 Hero 焦点、动效体系或首页四幕。
+阶段 4 · 2026-08-20 已完成 T04～T34 与 T34-F1 阶段 E 前独立 Review 修复的当前工程实施和本地证据。用户已确认个人信息处理者的精确名称为“有点小狗工作室”，T23 通过前向迁移、完整目标政策和统一 fail-closed readiness 收口。T35/T36 的 Linux FFmpeg runtime registry、容器嵌入、Docker Hub 分发核验与 release evidence 仍是进入 T37 前的部署停止点。本轮未进入 Hero 焦点、动效体系或首页四幕。
 
 ## 最近验证
 
+- 2026-08-20：PR #21 GPT-5.6 Pro Review 的阶段 E 前 finding 已在当前 HEAD 重新核验并修复。隐私政策共享校验同时保护申请页、上传会话、submission、health readiness 和 live preflight；空白、占位、旧“不收集”、处理者/收集范围/当前邮箱不完整时申请 fail closed，管理端仍可修正文案。确认不变量新增小型 core integration，申请提交改用 `PublicAction`，删除 busy 对话框不再被 Escape/遮罩关闭。
+- 2026-08-20：notices 明确为当前生成环境安装快照，平台可选包不冒充 Linux runtime closure；`SEE LICENSE IN ...` 视为未知许可证；drift 从 `check:fast` 移入显式 release。`/licenses` 只导入 1,995 字节 summary，436,715 字节完整 JSON 不进入应用 bundle，完整 TXT 保留下载。`check:fast` 52 文件/327 项、smoke 9/9、production build/verify、ESA/observability、notices drift 与 586 tracked files Secret scan 通过。
 - 2026-08-20：用户确认个人信息处理者的精确名称为“有点小狗工作室”。`0046_r4_privacy_controller` 只对 NULL、空白或精确历史默认的 `privacy_policy` 写入完整政策并复用当前 `contact_email`；管理员自定义文本保持不变。
 
 - 2026-08-20：PR #21 Review 修复提交 `55487b9`；PublicationPanel 按“pending action → active persisted operation → terminal operation → feedback”展示，cleanup retry 具备 active/loading/disabled/防重/失败后可再试。目标 Playwright 2/2 通过。
 - 2026-08-20：轻量确认与文案迁移提交 `5d4c7f8`；`0045_r4_default_copy` 只处理 NULL/空白/精确历史默认，不自动写 privacy 占位。半装目标文案明确为“仅头部和爪，不含尾巴”。迁移/委托 integration 26/26，确认/重复申请 smoke 2/2 通过。
 - 2026-08-20：retention 与单条删除提交 `bf33c85`，非 rejected 人工批准覆盖修正 `f84f3c9`；rejected 立即进入脱敏候选，CLI 与 `/admin/commissions` 共用单条 dry-run/execute service，覆盖精确 current/version/delete marker、OSS/DB 失败、异常引用、重入与幂等。核心测试 6/6、CLI 1/1、管理端 smoke 1/1 通过。
-- 2026-08-20：第三方 notices 提交 `e7c60bc`：从实际安装的 production closure 生成 798 条包/版本+资产记录、20 种许可证表达；未知许可证失败，JSON/TXT 无本机路径与生成时间。`/licenses` 已删除 Windows/gyan.dev/旧 source revision 声称，Linux runtime 事实明确待部署 registry。
+- 2026-08-20：第三方 notices 提交 `e7c60bc` 初始生成 798 条包/版本+资产记录；T34-F1 已把口径修正为当前生成环境安装快照，并将页面收敛为摘要。Linux runtime 事实明确待部署 registry。
 
 - 2026-08-20：任务分支 `codex/r4-t04-t21-foundation` 从 `main@cbaf98fec4868e94af5b28faf5c3d9a23344d859` 开始；Gate A 提交为 `767a1d4`，领养排序提交为 `16e4288`，测试/Actions 提交为 `daacff2`，文档与浏览器证据由本轮末次提交收口。
 - 2026-08-20：公开 `PublicAction`、管理 `AdminAction` 与 `AdminTaskProgress` 已落地；Hero、作品图、二维码、水印 Logo 四类上传使用 XHR 字节进度；FFmpeg 为阶段 + elapsed + indeterminate；Hero/branding/publication operation 使用持久状态并可刷新恢复。
@@ -59,4 +61,4 @@
 
 ## 下一步交接
 
-本轮开发停在 T37 之前。下一棒在部署阶段执行隐私文案前向迁移并核对公开投影，同时完成 T35/T36 的 Linux FFmpeg runtime registry、容器分发与 release evidence。本地自动化不代签独立 Review、王旻安/景宸验收、真实手机、生产迁移/删除、镜像构建或发布。
+本轮开发停在 T37 之前。下一棒先在部署阶段执行隐私文案前向迁移并核对公开投影，同时完成 T35/T36 的 Linux FFmpeg runtime registry、容器分发与 release evidence；GATE-D 关闭后再进入 T37。当前修复和本地自动化不代签最终独立 Review、王旻安/景宸验收、真实手机、生产迁移/删除、镜像构建或发布。
