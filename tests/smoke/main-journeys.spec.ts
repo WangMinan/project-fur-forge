@@ -265,6 +265,12 @@ test('管理端对已拒绝申请先脱敏 dry-run，再单条删除', async ({ 
   })
   await expect(confirm).toBeDisabled()
   await expect.poll(() => executeRequests).toBe(1)
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeVisible()
+  await dialog.evaluate((element) => {
+    element.parentElement?.click()
+  })
+  await expect(dialog).toBeVisible()
   releaseExecute()
 
   await expect(dialog).toContainText('删除失败，数据库关系已保留或可安全重入')

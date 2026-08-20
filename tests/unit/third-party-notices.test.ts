@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildThirdPartyNotices,
+  buildThirdPartyNoticeSummary,
   renderThirdPartyNoticesText,
 } from '../../scripts/third-party-notices.mjs'
 
@@ -35,12 +36,30 @@ describe('third-party notice generation', () => {
     expect(notices[0]!.artifactSha256).toMatch(/^[0-9a-f]{64}$/u)
     expect(JSON.stringify(notices)).not.toContain('C:\\private')
     expect(renderThirdPartyNoticesText(notices)).toContain('No Linux FFmpeg runtime-binary')
+    expect(buildThirdPartyNoticeSummary(notices)).toMatchObject({
+      generatorScope: 'installed-production-snapshot',
+      packageCount: 2,
+      licenseCounts: [{ license: 'MIT', count: 2 }],
+      assets: [{ name: 'A Font', license: 'OFL-1.1' }],
+    })
   })
 
   it('fails instead of guessing an unknown license', () => {
     expect(() => buildThirdPartyNotices({
       licenseReport: {
         UNKNOWN: [{ name: 'mystery', versions: ['1.0.0'], paths: [] }],
+      },
+      manualAssets: [],
+      readAsset: () => Buffer.alloc(0),
+    })).toThrow(/Unknown license/u)
+
+    expect(() => buildThirdPartyNotices({
+      licenseReport: {
+        'SEE LICENSE IN LICENSE.md': [{
+          name: 'placeholder-license',
+          versions: ['1.0.0'],
+          paths: [],
+        }],
       },
       manualAssets: [],
       readAsset: () => Buffer.alloc(0),

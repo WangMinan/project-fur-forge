@@ -9,6 +9,7 @@ import { dirname, resolve } from 'node:path'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const JSON_OUTPUT = 'app/assets/licenses/third-party-notices.json'
+const SUMMARY_OUTPUT = 'app/assets/licenses/third-party-summary.json'
 const TEXT_OUTPUT = 'app/assets/licenses/THIRD_PARTY_NOTICES.txt'
 const PUBLIC_TEXT_OUTPUT = 'public/THIRD_PARTY_NOTICES.txt'
 const MANUAL_ASSETS = 'config/third-party-assets.json'
@@ -21,7 +22,7 @@ function stableCompare(left, right) {
 
 function assertKnownLicense(license, name) {
   if (!license
-    || /^(?:unknown|unlicensed|none|see license)$/iu.test(license.trim())) {
+    || /^(?:unknown|unlicensed|none|see license(?:\s+in\b.*)?)$/iu.test(license.trim())) {
     throw new Error(`Unknown license for ${name}.`)
   }
 }
@@ -51,7 +52,7 @@ function npmNotices(licenseReport) {
           source: 'pnpm-prod',
           usage: name === 'ffmpeg-static'
             ? 'Platform-specific FFmpeg executable provider npm package; separate from the Linux release-image binary registry.'
-            : 'Installed production dependency in the application runtime closure.',
+            : 'Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.',
           artifactSha256: null,
           correspondingSourceUrl: null,
           sourceRevision: null,
@@ -111,7 +112,8 @@ export function renderThirdPartyNoticesText(notices) {
   const lines = [
     'DITE DOG - THIRD-PARTY NOTICES',
     '',
-    'Generated deterministically from the installed production dependency closure and the reviewed asset registry.',
+    'Generated deterministically from the production dependencies installed in the generator environment and the reviewed asset registry.',
+    'Platform-selected optional packages reflect that generator environment; this list is not the target Linux runtime closure.',
     'No Linux FFmpeg runtime-binary version, digest, source revision, patches, or build configuration is asserted until the release-image registry is completed.',
     '',
   ]
@@ -126,6 +128,42 @@ export function renderThirdPartyNoticesText(notices) {
     lines.push('')
   }
   return `${lines.join('\n').trimEnd()}\n`
+}
+
+export function buildThirdPartyNoticeSummary(notices) {
+  const packages = notices.filter(notice => notice.source === 'pnpm-prod')
+  const licenseCounts = new Map()
+  for (const notice of packages) {
+    licenseCounts.set(
+      notice.license,
+      (licenseCounts.get(notice.license) ?? 0) + 1,
+    )
+  }
+  const ffmpegPackage = packages.find(notice => notice.name === 'ffmpeg-static')
+  return {
+    generatorScope: 'installed-production-snapshot',
+    packageCount: packages.length,
+    licenseCounts: [...licenseCounts.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([license, count]) => ({ license, count })),
+    ffmpegPackage: ffmpegPackage
+      ? {
+          name: ffmpegPackage.name,
+          version: ffmpegPackage.version,
+          license: ffmpegPackage.license,
+        }
+      : null,
+    assets: notices
+      .filter(notice => notice.source === 'manual-asset')
+      .map(notice => ({
+        name: notice.name,
+        version: notice.version,
+        license: notice.license,
+        homepage: notice.homepage,
+        noticeText: notice.noticeText,
+        usage: notice.usage,
+      })),
+  }
 }
 
 function loadPnpmLicenseReport() {
@@ -150,6 +188,7 @@ export function generateThirdPartyNoticeArtifacts() {
   })
   return {
     json: `${JSON.stringify(notices, null, 2)}\n`,
+    summary: `${JSON.stringify(buildThirdPartyNoticeSummary(notices), null, 2)}\n`,
     text: renderThirdPartyNoticesText(notices),
   }
 }
@@ -159,6 +198,7 @@ function run() {
   const artifacts = generateThirdPartyNoticeArtifacts()
   const outputs = [
     [JSON_OUTPUT, artifacts.json],
+    [SUMMARY_OUTPUT, artifacts.summary],
     [TEXT_OUTPUT, artifacts.text],
     [PUBLIC_TEXT_OUTPUT, artifacts.text],
   ]

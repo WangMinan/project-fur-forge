@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { PROJECT_NAME } from '~~/shared/constants/project'
 import gplText from '~/assets/licenses/gpl-3.0.txt?raw'
-import generatedNotices from '~/assets/licenses/third-party-notices.json'
+import generatedSummary from '~/assets/licenses/third-party-summary.json'
 
 useSeoMeta({
   title: `开源软件声明 · ${PROJECT_NAME}`,
@@ -9,22 +9,30 @@ useSeoMeta({
   robots: 'index, nofollow',
 })
 
-interface Notice {
-  artifactSha256: string | null
+interface AssetNotice {
   homepage: string | null
   license: string
   name: string
   noticeText: string | null
-  source: 'manual-asset' | 'pnpm-prod'
   usage: string
   version: string
 }
 
-const notices = generatedNotices as Notice[]
-const packages = notices.filter(notice => notice.source === 'pnpm-prod')
-const assets = notices.filter(notice => notice.source === 'manual-asset')
-const ffmpegPackage = packages.find(notice => notice.name === 'ffmpeg-static')
-const licenseCount = new Set(notices.map(notice => notice.license)).size
+interface NoticeSummary {
+  assets: AssetNotice[]
+  ffmpegPackage: {
+    license: string
+    name: string
+    version: string
+  } | null
+  generatorScope: 'installed-production-snapshot'
+  licenseCounts: Array<{ count: number, license: string }>
+  packageCount: number
+}
+
+const summary = generatedSummary as NoticeSummary
+const assets = summary.assets
+const ffmpegPackage = summary.ffmpegPackage
 </script>
 
 <template>
@@ -76,20 +84,14 @@ const licenseCount = new Set(notices.map(notice => notice.license)).size
 
       <h2 class="licenses__title">npm 生产依赖声明</h2>
       <p class="licenses__subtitle">
-        以下 {{ packages.length }} 条包/版本记录由当前 lockfile 与已安装生产依赖生成，共 {{ licenseCount }} 种许可证表达。<a href="/THIRD_PARTY_NOTICES.txt" download>下载完整 TXT 声明</a>。
+        当前生成环境的 production 安装快照包含 {{ summary.packageCount }} 条包/版本记录，共 {{ summary.licenseCounts.length }} 种许可证表达。平台可选包反映生成环境，不代表目标 Linux runtime closure。<a href="/THIRD_PARTY_NOTICES.txt" download>下载完整 TXT 声明</a>。
       </p>
       <details class="license-full">
-        <summary class="license-full__summary">展开 npm 生产依赖清单</summary>
+        <summary class="license-full__summary">查看许可证表达统计</summary>
         <dl class="licenses__list">
-          <div v-for="item in packages" :key="`${item.name}@${item.version}`" class="licenses__row">
-            <dt class="licenses__name">
-              <a v-if="item.homepage" :href="item.homepage" target="_blank" rel="noopener noreferrer">
-                {{ item.name }}@{{ item.version }}
-              </a>
-              <template v-else>{{ item.name }}@{{ item.version }}</template>
-            </dt>
-            <dd class="licenses__purpose">{{ item.usage }}</dd>
-            <dd class="licenses__license">{{ item.license }}</dd>
+          <div v-for="item in summary.licenseCounts" :key="item.license" class="licenses__row licenses__row--summary">
+            <dt class="licenses__name">{{ item.license }}</dt>
+            <dd class="licenses__license-count">{{ item.count }} 条</dd>
           </div>
         </dl>
       </details>
@@ -253,9 +255,23 @@ const licenseCount = new Set(notices.map(notice => notice.license)).size
   white-space: nowrap;
 }
 
+.licenses__row--summary {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.licenses__license-count {
+  margin: 0;
+  color: var(--public-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
 @media (min-width: 768px) {
   .licenses__row {
     grid-template-columns: 12rem 1fr auto;
+  }
+
+  .licenses__row--summary {
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .licenses__purpose {
