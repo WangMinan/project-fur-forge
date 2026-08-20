@@ -16,23 +16,32 @@ export function parseCommissionRetentionCommand(args: string[]) {
       confirm: { type: 'string' },
       execute: { type: 'boolean' },
       identifier: { type: 'string' },
+      'manual-approved': { type: 'boolean' },
     },
   })
   if (!values.identifier) {
-    if (values.execute || values.confirm) {
+    if (values.execute || values.confirm || values['manual-approved']) {
       throw new Error('Deletion requires one --identifier.')
     }
     return { kind: 'list' as const }
   }
   if (!values.execute) {
-    return { identifier: values.identifier, kind: 'preview' as const }
+    return {
+      identifier: values.identifier,
+      kind: 'preview' as const,
+      manualApproved: values['manual-approved'] === true,
+    }
   }
   if (values.confirm !== COMMISSION_DELETE_CONFIRMATION) {
     throw new Error(
       `Refusing deletion: pass --confirm "${COMMISSION_DELETE_CONFIRMATION}"`,
     )
   }
-  return { identifier: values.identifier, kind: 'execute' as const }
+  return {
+    identifier: values.identifier,
+    kind: 'execute' as const,
+    manualApproved: values['manual-approved'] === true,
+  }
 }
 
 export async function runCommissionRetentionCli(args = process.argv.slice(2)) {
@@ -43,6 +52,7 @@ export async function runCommissionRetentionCli(args = process.argv.slice(2)) {
   }
   if (command.kind === 'preview') {
     return await previewCommissionDeletion({
+      allowNonRejected: command.manualApproved,
       identifier: command.identifier,
       objectStore: getExactObjectStore(),
       sqlite,
@@ -50,6 +60,7 @@ export async function runCommissionRetentionCli(args = process.argv.slice(2)) {
   }
   return await executeCommissionDeletion({
     actorUserId: null,
+    allowNonRejected: command.manualApproved,
     identifier: command.identifier,
     objectStore: getExactObjectStore(),
     sqlite,

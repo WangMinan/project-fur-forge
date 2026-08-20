@@ -304,6 +304,34 @@ describe('commission retention and exact single deletion', () => {
     })).resolves.toMatchObject({ status: 'deleted' })
   })
 
+  it('requires an explicit manual approval for a non-rejected single deletion', async () => {
+    seedSubmission()
+    sqlite.prepare(`
+      UPDATE commission_submissions SET status = 'accepted' WHERE id = ?
+    `).run(SUBMISSION_ID)
+    await expect(previewCommissionDeletion({
+      identifier: SUBMISSION_ID,
+      objectStore: store,
+      sqlite,
+    })).resolves.toMatchObject({
+      status: 'blocked',
+      blockers: ['STATUS_NOT_REJECTED'],
+    })
+    await expect(previewCommissionDeletion({
+      allowNonRejected: true,
+      identifier: SUBMISSION_ID,
+      objectStore: store,
+      sqlite,
+    })).resolves.toMatchObject({ status: 'ready', blockers: [] })
+    await expect(executeCommissionDeletion({
+      actorUserId: null,
+      allowNonRejected: true,
+      identifier: SUBMISSION_ID,
+      objectStore: store,
+      sqlite,
+    })).resolves.toMatchObject({ status: 'deleted' })
+  })
+
   it('re-enters safely after objects were deleted but the database commit failed', async () => {
     seedSubmission()
     sqlite.exec(`

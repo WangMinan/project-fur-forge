@@ -95,13 +95,14 @@ async function buildDeletionPlan(
   sqlite: Database.Database,
   objectStore: R3StageAObjectStore,
   identifier: string,
+  allowNonRejected = false,
 ): Promise<InternalDeletionPlan> {
   const target = findCommissionDeletionTarget(sqlite, identifier)
   if (!target) {
     return { dto: emptyResult('already_deleted'), objectKeys: [], target: null }
   }
   const blockers: CommissionDeletionBlocker[] = []
-  if (target.submission.status !== 'rejected') {
+  if (target.submission.status !== 'rejected' && !allowNonRejected) {
     blockers.push('STATUS_NOT_REJECTED')
   }
   if (!target.asset
@@ -165,6 +166,7 @@ async function buildDeletionPlan(
 }
 
 export async function previewCommissionDeletion(options: {
+  allowNonRejected?: boolean
   identifier: string
   objectStore: R3StageAObjectStore
   sqlite: Database.Database
@@ -173,11 +175,13 @@ export async function previewCommissionDeletion(options: {
     options.sqlite,
     options.objectStore,
     options.identifier,
+    options.allowNonRejected,
   )).dto
 }
 
 export async function executeCommissionDeletion(options: {
   actorUserId: string | null
+  allowNonRejected?: boolean
   identifier: string
   now?: number
   objectStore: R3StageAObjectStore
@@ -191,6 +195,7 @@ export async function executeCommissionDeletion(options: {
       options.sqlite,
       options.objectStore,
       options.identifier,
+      options.allowNonRejected,
     )
     if (!plan.target) {
       return plan.dto

@@ -7,13 +7,28 @@ describe('commission retention CLI boundary', () => {
     expect(parseCommissionRetentionCommand([])).toEqual({ kind: 'list' })
     expect(parseCommissionRetentionCommand([
       '--identifier', 'DD-RETENTION01',
-    ])).toEqual({ kind: 'preview', identifier: 'DD-RETENTION01' })
+    ])).toEqual({
+      kind: 'preview',
+      identifier: 'DD-RETENTION01',
+      manualApproved: false,
+    })
     expect(() => parseCommissionRetentionCommand([
       '--identifier', 'DD-RETENTION01', '--execute', '--confirm', 'wrong',
     ])).toThrow(/Refusing deletion/u)
     expect(parseCommissionRetentionCommand([
       '--identifier', 'DD-RETENTION01',
       '--execute', '--confirm', COMMISSION_DELETE_CONFIRMATION,
-    ])).toEqual({ kind: 'execute', identifier: 'DD-RETENTION01' })
+    ])).toEqual({
+      kind: 'execute',
+      identifier: 'DD-RETENTION01',
+      manualApproved: false,
+    })
+    expect(parseCommissionRetentionCommand([
+      '--identifier', 'DD-RETENTION01', '--manual-approved',
+    ])).toEqual({
+      kind: 'preview',
+      identifier: 'DD-RETENTION01',
+      manualApproved: true,
+    })
   })
 })
