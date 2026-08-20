@@ -143,7 +143,9 @@ export const publicHomeAggregateDtoSchema = z.object({
     adoption: publicHomeEntryCardDtoSchema.nullable(),
   }).strict(),
   featured: homeSectionSchema(publicWorkSummaryDtoSchema),
-  currentAdoptions: homeSectionSchema(publicAdoptionListItemDtoSchema),
+  currentAdoptions: homeSectionSchema(publicAdoptionListItemDtoSchema).extend({
+    status: publicSiteBusinessStatusDtoSchema.nullable(),
+  }).strict(),
 }).strict()
 
 export const publicHomeAggregateResponseSchema = apiSuccessSchema(

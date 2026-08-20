@@ -461,7 +461,11 @@ function homeAggregate(
     hero,
     entries,
     featured: { available: featuredAvailable, items: featured },
-    currentAdoptions: { available: adoptionsAvailable, items: currentAdoptions },
+    currentAdoptions: {
+      available: adoptionsAvailable,
+      items: currentAdoptions,
+      status: statuses.adoption,
+    },
   })
 }
 

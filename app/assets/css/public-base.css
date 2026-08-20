@@ -120,6 +120,7 @@
   --public-header-height: 4.5rem;
   --public-anchor-offset: 5.5rem;
   --hero-min-height: 100svh;
+  --home-scene-media-height: clamp(19rem, 52svh, 35rem);
   --image-placeholder: #f1f3f6;
   --image-hover-scale: 1.02;
 
@@ -151,6 +152,7 @@
 
   @media (min-width: 1024px) {
     --public-page-padding: var(--public-page-padding-desktop);
+    --home-scene-media-height: min(68svh, 40rem);
   }
 }
 

@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import type { PublicAdoptionListItemDto } from '~~/shared/types/contracts'
+import type {
+  PublicAdoptionListItemDto,
+  PublicSiteBusinessStatusDto,
+} from '~~/shared/types/contracts'
 import WorkIdentityLabel from '~/components/WorkIdentityLabel.vue'
+import HomeBusinessStatus from '~/components/HomeBusinessStatus.vue'
 import { formatCnyMinorUnits } from '~/utils/format'
 import { ADOPTION_STATUS_LABELS } from '~/utils/work-labels'
 
@@ -11,6 +15,7 @@ import { ADOPTION_STATUS_LABELS } from '~/utils/work-labels'
 const props = defineProps<{
   adoptions: PublicAdoptionListItemDto[]
   available: boolean
+  status: PublicSiteBusinessStatusDto | null
 }>()
 
 const currentAdoption = computed(() => (
@@ -37,8 +42,10 @@ const detailTo = computed(() => currentAdoption.value
     data-testid="home-current-adoptions"
   >
     <header class="home-adoptions__header">
-      <p class="home-adoptions__eyebrow">CURRENT ADOPTION</p>
-      <h2 id="home-adoptions-title" class="home-adoptions__title">设定领养</h2>
+      <div>
+        <p class="home-adoptions__eyebrow">CURRENT ADOPTION</p>
+        <h2 id="home-adoptions-title" class="home-adoptions__title">设定领养</h2>
+      </div>
     </header>
 
     <article class="home-adoption-poster" :data-work-slug="currentAdoption.work.slug">
@@ -50,6 +57,7 @@ const detailTo = computed(() => currentAdoption.value
         />
       </div>
       <div class="home-adoption-poster__caption">
+        <HomeBusinessStatus v-if="status" :status="status" />
         <p class="home-adoption-poster__status">
           {{ ADOPTION_STATUS_LABELS[currentAdoption.work.adoptionStatus] }}
         </p>
@@ -60,10 +68,14 @@ const detailTo = computed(() => currentAdoption.value
           />
         </h3>
         <p v-if="price" class="home-adoption-poster__price">{{ price }}</p>
-        <p class="home-adoption-poster__note">当前开放的角色设定。完整信息与沟通入口在详情中。</p>
-        <PublicAction :to="detailTo">
-          查看领养详情
-        </PublicAction>
+        <div class="home-adoption-poster__actions">
+          <PublicAction to="/adoptions" variant="secondary">
+            浏览设定领养
+          </PublicAction>
+          <PublicAction :to="detailTo">
+            查看当前角色
+          </PublicAction>
+        </div>
       </div>
     </article>
   </section>
@@ -75,10 +87,14 @@ const detailTo = computed(() => currentAdoption.value
   gap: var(--space-6);
   max-width: var(--public-content-wide);
   margin: 0 auto;
-  padding: clamp(var(--space-8), 8vw, var(--space-11)) var(--public-page-padding) 0;
+  padding: var(--space-6) var(--public-page-padding) 0;
 }
 
 .home-adoptions__header {
+  display: grid;
+}
+
+.home-adoptions__header > div {
   display: grid;
   gap: var(--space-2);
 }
@@ -92,9 +108,9 @@ const detailTo = computed(() => currentAdoption.value
 
 .home-adoptions__title {
   font-family: var(--font-public-display);
-  font-size: clamp(2.5rem, 6vw, 5.5rem);
+  font-size: var(--font-size-xl);
   font-weight: 600;
-  line-height: var(--line-height-tight);
+  line-height: var(--line-height-heading);
   letter-spacing: var(--letter-spacing-tight);
 }
 
@@ -105,7 +121,7 @@ const detailTo = computed(() => currentAdoption.value
 
 .home-adoption-poster__media {
   display: grid;
-  height: clamp(15rem, 43svh, 30rem);
+  height: var(--home-scene-media-height);
   overflow: hidden;
   background: var(--image-placeholder);
   border-radius: var(--radius-image);
@@ -150,10 +166,10 @@ const detailTo = computed(() => currentAdoption.value
   font-size: var(--font-size-md);
 }
 
-.home-adoption-poster__note {
-  color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-relaxed);
+.home-adoption-poster__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
 }
 
 @media (min-width: 1024px) {
@@ -162,8 +178,5 @@ const detailTo = computed(() => currentAdoption.value
     align-items: stretch;
   }
 
-  .home-adoption-poster__media {
-    height: min(60svh, 34rem);
-  }
 }
 </style>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { PublicHomeEntryCardDto } from '~~/shared/types/contracts'
+import HomeBusinessStatus from '~/components/HomeBusinessStatus.vue'
 
 const props = defineProps<{
   entries: {
@@ -10,11 +11,6 @@ const props = defineProps<{
 
 const commission = computed(() => props.entries.commission)
 
-const TONE_LABELS = {
-  open: '开放中',
-  limited: '有限开放',
-  closed: '暂不开放',
-} as const
 </script>
 
 <template>
@@ -25,8 +21,10 @@ const TONE_LABELS = {
     data-testid="home-business-entries"
   >
     <header class="home-commission__header">
-      <p class="home-commission__eyebrow">CUSTOM COMMISSION</p>
-      <h2 id="home-entries-title" class="home-commission__title">自设委托</h2>
+      <div>
+        <p class="home-commission__eyebrow">CUSTOM COMMISSION</p>
+        <h2 id="home-entries-title" class="home-commission__title">自设委托</h2>
+      </div>
     </header>
 
     <article
@@ -43,26 +41,22 @@ const TONE_LABELS = {
       </NuxtLink>
 
       <div class="home-commission__body">
-        <div
+        <HomeBusinessStatus
           v-if="commission.status"
-          class="home-commission__status"
-          :data-tone="commission.status.tone"
-        >
-          <span class="home-commission__status-dot" aria-hidden="true" />
-          <span>{{ commission.status.label }}</span>
-          <small>{{ TONE_LABELS[commission.status.tone] }}</small>
-        </div>
+          :status="commission.status"
+        />
 
-        <h3>{{ commission.title }}</h3>
-        <p v-if="commission.summary" class="home-commission__summary">
-          {{ commission.summary }}
-        </p>
         <p class="home-commission__process">
-          先通过站内表单提交。工作室评估后优先使用官方 QQ 私聊沟通，邮箱作为备用渠道。
+          先通过站内表单提交。工作室评估后优先使用官方 QQ 私聊沟通。
         </p>
-        <PublicAction to="/commission/apply">
-          提交委托申请
-        </PublicAction>
+        <div class="home-commission__actions">
+          <PublicAction to="/commission" variant="secondary">
+            了解自设委托
+          </PublicAction>
+          <PublicAction to="/commission/apply">
+            提交委托申请
+          </PublicAction>
+        </div>
       </div>
     </article>
   </section>
@@ -74,10 +68,14 @@ const TONE_LABELS = {
   gap: var(--space-6);
   max-width: var(--public-content-wide);
   margin: 0 auto;
-  padding: clamp(var(--space-8), 8vw, var(--space-11)) var(--public-page-padding) 0;
+  padding: var(--space-6) var(--public-page-padding) 0;
 }
 
 .home-commission__header {
+  display: grid;
+}
+
+.home-commission__header > div {
   display: grid;
   gap: var(--space-2);
 }
@@ -91,9 +89,9 @@ const TONE_LABELS = {
 
 .home-commission__title {
   font-family: var(--font-public-display);
-  font-size: clamp(2.5rem, 6vw, 5.5rem);
+  font-size: var(--font-size-xl);
   font-weight: 600;
-  line-height: var(--line-height-tight);
+  line-height: var(--line-height-heading);
   letter-spacing: var(--letter-spacing-tight);
 }
 
@@ -104,7 +102,7 @@ const TONE_LABELS = {
 
 .home-commission__media {
   display: block;
-  aspect-ratio: 3 / 2;
+  height: var(--home-scene-media-height);
   overflow: hidden;
   background: var(--image-placeholder);
   border-radius: var(--radius-image);
@@ -128,46 +126,6 @@ const TONE_LABELS = {
   max-width: 30rem;
 }
 
-.home-commission__body h3 {
-  margin: 0;
-  font-family: var(--font-public-display);
-  font-size: clamp(2rem, 4vw, 3.75rem);
-  font-weight: 600;
-  line-height: var(--line-height-tight);
-}
-
-.home-commission__status {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.home-commission__status small {
-  color: var(--public-text-tertiary);
-}
-
-.home-commission__status-dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: var(--radius-full);
-  background: var(--public-text-tertiary);
-}
-
-.home-commission__status[data-tone='open'] .home-commission__status-dot {
-  background: var(--status-open, #2f7a4d);
-}
-
-.home-commission__status[data-tone='limited'] .home-commission__status-dot {
-  background: var(--status-limited, #a8701a);
-}
-
-.home-commission__status[data-tone='closed'] .home-commission__status-dot {
-  background: var(--status-closed, #8a8f98);
-}
-
-.home-commission__summary,
 .home-commission__process {
   color: var(--public-text-secondary);
   line-height: var(--line-height-relaxed);
@@ -177,13 +135,26 @@ const TONE_LABELS = {
   font-size: var(--font-size-sm);
 }
 
+.home-commission__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
 @media (min-width: 1024px) {
   .home-commission__stage {
-    grid-template-columns: minmax(0, 2.25fr) minmax(18rem, 0.75fr);
+    grid-template-columns: minmax(18rem, 0.75fr) minmax(0, 2.25fr);
     align-items: stretch;
   }
 
+  .home-commission__media {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
   .home-commission__body {
+    grid-column: 1;
+    grid-row: 1;
     padding: var(--space-6) 0;
   }
 }
