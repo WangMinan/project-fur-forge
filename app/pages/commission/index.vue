@@ -15,6 +15,8 @@ useSeoMeta({
   ogDescription: `${PROJECT_NAME}的自设委托：制作范围、营业状态与站内申请。`,
 })
 
+const route = useRoute()
+
 const { data: site, error: siteError } = await useFetch('/api/public/v1/site-content', {
   key: 'public-site-content',
   headers: useRequestHeaders(['host']),
@@ -38,6 +40,9 @@ if (heroError.value) {
 const commission = computed(() => site.value?.commission ?? null)
 const contact = computed(() => site.value?.contact ?? null)
 const status = computed(() => site.value?.statuses.commission ?? null)
+const sharedViewTransitionName = computed(() => (
+  route.query.view === 'home-commission' ? 'home-commission-media' : undefined
+))
 const heroReady = computed(() => Boolean(
   hero.value?.landscape[0] && hero.value?.portrait[0],
 ))
@@ -73,6 +78,7 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
         :hero="hero"
         :status="status"
         :description="introText"
+        :view-transition-name="sharedViewTransitionName"
         data-testid="commission-hero"
       />
 
@@ -263,7 +269,7 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
 .commission-page__actions {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-3);
   margin-top: var(--space-2);
 }

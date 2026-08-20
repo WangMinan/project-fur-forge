@@ -51,10 +51,15 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     'nuxt-auth-utils',
   ],
+  experimental: {
+    // 插件保持可用，但默认关闭；全局 route middleware 只为首页三条确认路径启用。
+    viewTransition: true,
+  },
   auth: {
     loadStrategy: 'none',
   },
   app: {
+    viewTransition: false,
     head: {
       link: [
         {

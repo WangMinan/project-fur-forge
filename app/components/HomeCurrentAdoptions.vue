@@ -7,6 +7,7 @@ import WorkIdentityLabel from '~/components/WorkIdentityLabel.vue'
 import HomeBusinessStatus from '~/components/HomeBusinessStatus.vue'
 import { formatCnyMinorUnits } from '~/utils/format'
 import { ADOPTION_STATUS_LABELS } from '~/utils/work-labels'
+import { useMotionEntrance } from '~/composables/useMotionEntrance'
 
 /**
  * T34-F2 当前领养：入口与状态已合并到 HomeBusinessEntries，本区只保留真实领养。
@@ -25,20 +26,63 @@ const price = computed(() => currentAdoption.value?.work.price
   ? formatCnyMinorUnits(currentAdoption.value.work.price.minorUnits)
   : null,
 )
+const rootRef = useTemplateRef<HTMLElement>('root')
+const mediaRef = useTemplateRef<HTMLElement>('media')
+const captionRef = useTemplateRef<HTMLElement>('caption')
 const detailTo = computed(() => currentAdoption.value
   ? {
       path: currentAdoption.value.href,
-      query: { from: 'adoptions' },
+      query: { from: 'adoptions', view: 'home-adoption' },
     }
   : '/adoptions',
 )
+
+useMotionEntrance(rootRef, ({ reduced, tokens }) => {
+  const media = mediaRef.value
+  const caption = captionRef.value
+  if (!media || !caption) {
+    return []
+  }
+  if (reduced) {
+    return [media, caption].map(element => element.animate(
+      [{ opacity: 0.72 }, { opacity: 1 }],
+      { duration: tokens.state, easing: tokens.easing, fill: 'both' },
+    ))
+  }
+  return [
+    media.animate(
+      [
+        {
+          clipPath: 'inset(0 0 8% 0 round 12px)',
+          opacity: 0.72,
+          transform: 'scale(0.99)',
+        },
+        {
+          clipPath: 'inset(0 0 0 0 round 12px)',
+          opacity: 1,
+          transform: 'scale(1)',
+        },
+      ],
+      { duration: tokens.media, easing: tokens.easing, fill: 'both' },
+    ),
+    caption.animate(
+      [
+        { opacity: 0, transform: 'translateY(8px)' },
+        { opacity: 1, transform: 'translateY(0)' },
+      ],
+      { duration: tokens.content, delay: 100, easing: tokens.easing, fill: 'both' },
+    ),
+  ]
+})
 </script>
 
 <template>
   <section
     v-if="available && currentAdoption"
+    ref="root"
     class="home-adoptions"
     aria-labelledby="home-adoptions-title"
+    data-home-scroll-scene
     data-testid="home-current-adoptions"
   >
     <header class="home-adoptions__header">
@@ -49,14 +93,18 @@ const detailTo = computed(() => currentAdoption.value
     </header>
 
     <article class="home-adoption-poster" :data-work-slug="currentAdoption.work.slug">
-      <div class="home-adoption-poster__media">
+      <div
+        ref="media"
+        class="home-adoption-poster__media"
+        :style="{ viewTransitionName: 'home-adoption-media' }"
+      >
         <ResponsivePicture
           :sources="currentAdoption.cover.sources"
           :alt="currentAdoption.cover.alt"
           sizes="(min-width: 1024px) 68vw, 100vw"
         />
       </div>
-      <div class="home-adoption-poster__caption">
+      <div ref="caption" class="home-adoption-poster__caption">
         <HomeBusinessStatus v-if="status" :status="status" />
         <p class="home-adoption-poster__status">
           {{ ADOPTION_STATUS_LABELS[currentAdoption.work.adoptionStatus] }}
@@ -136,6 +184,23 @@ const detailTo = computed(() => currentAdoption.value
 
 .home-adoption-poster__media :deep(.responsive-picture__image) {
   object-fit: cover;
+  transition: transform var(--motion-duration-state) var(--motion-ease-standard);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .home-adoption-poster__media:hover :deep(.responsive-picture__image) {
+    transform: scale(1.025) rotate(0.35deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-adoption-poster__media :deep(.responsive-picture__image) {
+    transition: none;
+  }
+
+  .home-adoption-poster__media:hover :deep(.responsive-picture__image) {
+    transform: none;
+  }
 }
 
 .home-adoption-poster__caption {
@@ -170,6 +235,14 @@ const detailTo = computed(() => currentAdoption.value
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
+}
+
+@media (min-width: 1024px) {
+  .home-adoptions {
+    min-height: calc(100svh - var(--public-header-height));
+    align-content: center;
+    padding-block: var(--space-6);
+  }
 }
 
 @media (min-width: 1024px) {

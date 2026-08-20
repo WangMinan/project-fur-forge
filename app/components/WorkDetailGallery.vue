@@ -7,6 +7,7 @@ import type { PublicWorkGalleryItemDto } from '~~/shared/types/contracts'
  */
 const props = defineProps<{
   gallery: PublicWorkGalleryItemDto[]
+  viewTransitionName?: string | undefined
   workName: string
 }>()
 
@@ -49,6 +50,7 @@ const activeImageStyle = computed(() => {
   return {
     '--gallery-aspect-ratio': String(ratio),
     aspectRatio: image ? `${image.width} / ${image.height}` : '4 / 3',
+    viewTransitionName: props.viewTransitionName,
   }
 })
 </script>

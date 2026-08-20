@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { PublicHomeEntryCardDto } from '~~/shared/types/contracts'
 import HomeBusinessStatus from '~/components/HomeBusinessStatus.vue'
+import { useMotionEntrance } from '~/composables/useMotionEntrance'
 
 const props = defineProps<{
   entries: {
@@ -10,14 +11,54 @@ const props = defineProps<{
 }>()
 
 const commission = computed(() => props.entries.commission)
+const rootRef = useTemplateRef<HTMLElement>('root')
+const mediaRef = useTemplateRef<HTMLElement>('media')
+const bodyRef = useTemplateRef<HTMLElement>('body')
+
+const commissionTo = {
+  path: '/commission',
+  query: { view: 'home-commission' },
+} as const
+
+useMotionEntrance(rootRef, ({ reduced, tokens }) => {
+  const media = mediaRef.value
+  const body = bodyRef.value
+  if (!media || !body) {
+    return []
+  }
+  if (reduced) {
+    return [media, body].map(element => element.animate(
+      [{ opacity: 0.72 }, { opacity: 1 }],
+      { duration: tokens.state, easing: tokens.easing, fill: 'both' },
+    ))
+  }
+  return [
+    media.animate(
+      [
+        { opacity: 0.72, transform: 'translateY(16px) scale(0.99)' },
+        { opacity: 1, transform: 'translateY(0) scale(1)' },
+      ],
+      { duration: tokens.content, easing: tokens.easing, fill: 'both' },
+    ),
+    body.animate(
+      [
+        { opacity: 0, transform: 'translateY(8px)' },
+        { opacity: 1, transform: 'translateY(0)' },
+      ],
+      { duration: tokens.content, delay: 90, easing: tokens.easing, fill: 'both' },
+    ),
+  ]
+})
 
 </script>
 
 <template>
   <section
     v-if="commission"
+    ref="root"
     class="home-commission"
     aria-labelledby="home-entries-title"
+    data-home-scroll-scene
     data-testid="home-business-entries"
   >
     <header class="home-commission__header">
@@ -32,15 +73,25 @@ const commission = computed(() => props.entries.commission)
       :data-entry-kind="commission.kind"
       data-testid="home-business-entry"
     >
-      <NuxtLink :to="commission.href" class="home-commission__media" aria-label="了解自设委托">
-        <ResponsivePicture
-          :sources="commission.sources"
-          :alt="commission.alt"
-          sizes="(min-width: 1024px) 70vw, 100vw"
-        />
-      </NuxtLink>
+      <div
+        ref="media"
+        class="home-commission__media"
+        :style="{ viewTransitionName: 'home-commission-media' }"
+      >
+        <NuxtLink
+          :to="commissionTo"
+          class="home-commission__media-link"
+          aria-label="了解自设委托"
+        >
+          <ResponsivePicture
+            :sources="commission.sources"
+            :alt="commission.alt"
+            sizes="(min-width: 1024px) 70vw, 100vw"
+          />
+        </NuxtLink>
+      </div>
 
-      <div class="home-commission__body">
+      <div ref="body" class="home-commission__body">
         <HomeBusinessStatus
           v-if="commission.status"
           :status="commission.status"
@@ -50,7 +101,7 @@ const commission = computed(() => props.entries.commission)
           先通过站内表单提交。工作室评估后优先使用官方 QQ 私聊沟通。
         </p>
         <div class="home-commission__actions">
-          <PublicAction to="/commission" variant="secondary">
+          <PublicAction :to="commissionTo" variant="secondary">
             了解自设委托
           </PublicAction>
           <PublicAction to="/commission/apply">
@@ -114,8 +165,30 @@ const commission = computed(() => props.entries.commission)
   height: 100%;
 }
 
+.home-commission__media-link {
+  display: block;
+  height: 100%;
+}
+
 .home-commission__media :deep(.responsive-picture__image) {
   object-fit: cover;
+  transition: transform var(--motion-duration-state) var(--motion-ease-standard);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .home-commission__media:hover :deep(.responsive-picture__image) {
+    transform: scale(1.025) rotate(0.35deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-commission__media :deep(.responsive-picture__image) {
+    transition: none;
+  }
+
+  .home-commission__media:hover :deep(.responsive-picture__image) {
+    transform: none;
+  }
 }
 
 .home-commission__body {
@@ -139,6 +212,14 @@ const commission = computed(() => props.entries.commission)
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
+}
+
+@media (min-width: 1024px) {
+  .home-commission {
+    min-height: calc(100svh - var(--public-header-height));
+    align-content: center;
+    padding-block: var(--space-6);
+  }
 }
 
 @media (min-width: 1024px) {

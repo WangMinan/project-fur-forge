@@ -191,7 +191,7 @@ onBeforeUnmount(() => {
 
 @media (min-width: 1024px) {
   .featured-track__rail {
-    --featured-row-height: 22rem;
+    --featured-row-height: min(56svh, 31.5rem);
   }
 }
 </style>

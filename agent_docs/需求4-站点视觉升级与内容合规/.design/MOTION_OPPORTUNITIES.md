@@ -3,6 +3,7 @@
 > 日期：2026-08-21  
 > 基线：PR #21 `codex/r4-t04-t21-foundation@2920214`  
 > 范围：只读检查当前公开端 reveal、hover、carousel、route、menu、状态反馈与三条共享对象路径；本文件不修改应用代码，也不引入动效依赖。  
+> 后续覆盖：用户于 2026-08-21 新确认首页 ≥1024px 逐幕 wheel，作为仅首页的产品级例外；本审计对普通路由、Footer 不入场与 Hero drag 的拒绝仍有效。
 > 判定：每项依次通过频率、目的、速度和功能门禁；精确值沿用需求4已锁定的未来 token（feedback 120ms、state 180ms、content 420ms、media 720ms、standard `cubic-bezier(.22, 1, .36, 1)`、playful `cubic-bezier(.2, 1.16, .32, 1)`），由 T41 统一落地。
 
 ## 侦察结论

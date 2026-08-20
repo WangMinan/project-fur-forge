@@ -173,6 +173,23 @@ html {
   scroll-padding-top: var(--public-anchor-offset);
 }
 
+@media (min-width: 1024px) {
+  html.home-scroll-navigation {
+    scroll-padding-top: var(--public-header-height);
+    scroll-snap-type: y mandatory;
+  }
+
+  .home-scroll-navigation [data-home-scroll-scene] {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  .home-scroll-navigation .public-footer {
+    scroll-snap-align: end;
+    scroll-snap-stop: always;
+  }
+}
+
 body {
   margin: 0;
   color: var(--public-text-primary);
@@ -226,13 +243,11 @@ button {
  * 内容瞬间打回半透明——表现为「先完整加载，再闪一下，然后才走动效」。
  * `pageTransition` 挂在 Suspense 内部，入场从第一帧就是正确的起始状态。
  *
- * 入场 opacity 从 0.6 起步而非 0：任何时刻画面都有内容，不会闪白底。
- * out-in 模式让旧页先离场，避免两页并排导致布局跳动。
+ * 普通公开路由只做不阻塞的短 opacity，不等待旧页离场，也不统一纵向位移。
+ * 首页三条确认的对象连续性由原生 View Transitions 渐进增强。
  */
 .public-page-enter-active {
-  transition:
-    opacity var(--motion-duration-state) var(--motion-ease-standard),
-    transform var(--motion-duration-state) var(--motion-ease-standard);
+  transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .public-page-leave-active {
@@ -241,8 +256,7 @@ button {
 }
 
 .public-page-enter-from {
-  opacity: 0.6;
-  transform: translateY(0.5rem);
+  opacity: 0.72;
 }
 
 .public-page-leave-to {
@@ -287,6 +301,10 @@ button {
     scroll-behavior: auto !important;
   }
 
+  html.home-scroll-navigation {
+    scroll-behavior: auto;
+  }
+
   :root {
     --motion-duration-content: var(--motion-duration-state);
     --motion-duration-media: var(--motion-duration-state);
@@ -301,6 +319,30 @@ button {
   .public-page-enter-from,
   .public-page-leave-to {
     transform: none;
+  }
+}
+
+::view-transition-group(home-featured-media),
+::view-transition-group(home-commission-media),
+::view-transition-group(home-adoption-media) {
+  animation-duration: var(--motion-duration-media);
+  animation-timing-function: var(--motion-ease-standard);
+}
+
+::view-transition-old(home-featured-media),
+::view-transition-new(home-featured-media),
+::view-transition-old(home-commission-media),
+::view-transition-new(home-commission-media),
+::view-transition-old(home-adoption-media),
+::view-transition-new(home-adoption-media) {
+  mix-blend-mode: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(home-featured-media),
+  ::view-transition-group(home-commission-media),
+  ::view-transition-group(home-adoption-media) {
+    animation-duration: 0.01ms;
   }
 }
 
