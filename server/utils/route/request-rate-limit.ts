@@ -16,24 +16,6 @@ const RATE_LIMIT_WINDOW_MS = 60_000
 /** 桶数量上限，防止伪造大量 subject 撑爆内存。 */
 const MAX_BUCKETS_PER_TIER = 4_096
 
-export function createFixedWindowLimiter(limit: number, windowMs: number) {
-  let count = 0
-  let resetAt = 0
-
-  return (now = Date.now()) => {
-    if (now >= resetAt) {
-      count = 0
-      resetAt = now + windowMs
-    }
-    if (count >= limit) {
-      return Math.max(1, Math.ceil((resetAt - now) / 1_000))
-    }
-
-    count += 1
-    return 0
-  }
-}
-
 interface Bucket {
   count: number
   resetAt: number

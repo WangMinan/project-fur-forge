@@ -70,12 +70,6 @@ export const resourceVersionSchema = z.number()
   .int()
   .nonnegative()
 
-export const idempotencyKeySchema = z.string()
-  .trim()
-  .min(16)
-  .max(128)
-  .regex(/^[A-Za-z0-9._:-]+$/)
-
 export const apiErrorSchema = z.object({
   error: z.object({
     code: errorCodeSchema,
@@ -88,13 +82,6 @@ export const apiErrorSchema = z.object({
 export function apiSuccessSchema<T extends z.ZodType>(data: T) {
   return z.object({
     data,
-  }).strict()
-}
-
-export function idempotentRequestSchema<T extends z.ZodType>(payload: T) {
-  return z.object({
-    idempotencyKey: idempotencyKeySchema,
-    payload,
   }).strict()
 }
 

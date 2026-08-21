@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   apiErrorSchema,
   apiSuccessSchema,
-  idempotentRequestSchema,
-  idempotencyKeySchema,
   resourceVersionSchema,
   versionedRequestSchema,
 } from '../../shared/schemas/api'
@@ -42,20 +40,10 @@ const baseRecord: WorkRecord = {
 }
 
 describe('shared API contracts', () => {
-  it('validates resource versions, idempotency keys and envelopes', () => {
+  it('validates resource versions and envelopes', () => {
     expect(resourceVersionSchema.parse(0)).toBe(0)
-    expect(idempotencyKeySchema.parse('work:create:018f47a0')).toBe(
-      'work:create:018f47a0',
-    )
     expect(apiSuccessSchema(resourceVersionSchema).parse({ data: 2 }))
       .toEqual({ data: 2 })
-    expect(idempotentRequestSchema(resourceVersionSchema).parse({
-      idempotencyKey: 'work:create:018f47a0',
-      payload: 0,
-    })).toEqual({
-      idempotencyKey: 'work:create:018f47a0',
-      payload: 0,
-    })
     expect(versionedRequestSchema(resourceVersionSchema).parse({
       expectedVersion: 2,
       payload: 3,
