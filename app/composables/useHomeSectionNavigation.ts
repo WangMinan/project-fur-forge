@@ -6,8 +6,18 @@ const SCENE_SELECTOR = '[data-home-scroll-scene]'
 export function useHomeSectionNavigation(
   root: Readonly<Ref<HTMLElement | null>>,
 ) {
-  let locked = false
+  let pending: { direction: -1 | 1, from: number, to: number } | null = null
   let unlockTimer: ReturnType<typeof setTimeout> | null = null
+
+  function unlockAfterMotion() {
+    if (unlockTimer !== null) {
+      clearTimeout(unlockTimer)
+    }
+    unlockTimer = setTimeout(() => {
+      pending = null
+      unlockTimer = null
+    }, 620)
+  }
 
   function scenes() {
     const homeScenes = Array.from(
@@ -46,29 +56,39 @@ export function useHomeSectionNavigation(
       return
     }
     event.preventDefault()
-    if (locked) {
+    const direction = event.deltaY > 0 ? 1 : -1
+    if (pending) {
+      if (pending.direction === direction) {
+        return
+      }
+      pending = {
+        direction,
+        from: pending.to,
+        to: pending.from,
+      }
+      items[pending.to]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      unlockAfterMotion()
       return
     }
 
     const current = closestSceneIndex(items)
     const next = Math.max(
       0,
-      Math.min(items.length - 1, current + (event.deltaY > 0 ? 1 : -1)),
+      Math.min(items.length - 1, current + direction),
     )
     if (next === current) {
       return
     }
 
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
-    locked = true
     items[next]!.scrollIntoView({
       behavior: reduced ? 'auto' : 'smooth',
       block: 'start',
     })
-    unlockTimer = setTimeout(() => {
-      locked = false
-      unlockTimer = null
-    }, reduced ? 0 : 620)
+    if (!reduced) {
+      pending = { direction, from: current, to: next }
+      unlockAfterMotion()
+    }
   }
 
   onMounted(() => window.addEventListener('wheel', onWheel, { passive: false }))

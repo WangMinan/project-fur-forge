@@ -59,6 +59,7 @@ const reduceMotion = ref(false)
 const userPaused = ref(false)
 const pageHidden = ref(false)
 const motionReady = shallowRef(false)
+const initialMediaEntrance = shallowRef(true)
 const controlsRevealed = shallowRef(false)
 
 const autoplayInterval = computed(
@@ -112,18 +113,21 @@ function goTo(index: number, intent: 'autoplay' | 'keyboard' | 'pointer' = 'poin
   if (target === activeIndex.value) {
     return
   }
+  initialMediaEntrance.value = false
   transitionIntent.value = intent
   transitionDirection.value = target > activeIndex.value ? 'next' : 'prev'
   activeIndex.value = target
 }
 
 function goNext(intent: 'autoplay' | 'keyboard' | 'pointer' = 'pointer') {
+  initialMediaEntrance.value = false
   transitionIntent.value = intent
   transitionDirection.value = 'next'
   activeIndex.value = nextSlideIndex(activeIndex.value, items.value.length)
 }
 
 function goPrev(intent: 'autoplay' | 'keyboard' | 'pointer' = 'pointer') {
+  initialMediaEntrance.value = false
   transitionIntent.value = intent
   transitionDirection.value = 'prev'
   activeIndex.value = prevSlideIndex(activeIndex.value, items.value.length)
@@ -223,6 +227,15 @@ let motionFrame: number | null = null
 
 function onMotionChange(event: MediaQueryListEvent) {
   reduceMotion.value = event.matches
+  if (event.matches) {
+    initialMediaEntrance.value = false
+  }
+}
+
+function onInitialMediaAnimationEnd(event: AnimationEvent) {
+  if (event.animationName.includes('home-hero-media-in')) {
+    initialMediaEntrance.value = false
+  }
 }
 
 function onVisibilityChange() {
@@ -243,6 +256,9 @@ watch([autoplayRunning, autoplayInterval], restartTimer)
 onMounted(() => {
   motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
   reduceMotion.value = motionQuery.matches
+  if (reduceMotion.value) {
+    initialMediaEntrance.value = false
+  }
   motionQuery.addEventListener('change', onMotionChange)
   orientationQuery = window.matchMedia('(orientation: portrait)')
   setOrientation(orientationQuery.matches)
@@ -274,6 +290,7 @@ onBeforeUnmount(() => {
       'home-hero--empty': !pictureSources,
     }"
     :data-transition-intent="transitionIntent"
+    :data-initial-media-entrance="initialMediaEntrance"
     :data-controls-revealed="controlsRevealed"
     :data-paused="userPaused"
     :data-reduced-motion="reduceMotion"
@@ -290,6 +307,7 @@ onBeforeUnmount(() => {
     @pointerleave="onPointerLeave"
     @pointerup="onPointerUp"
     @pointercancel="onPointerCancel"
+    @animationend="onInitialMediaAnimationEnd"
   >
     <template v-if="pictureSources && activeItem">
       <div class="home-hero__viewport">
@@ -474,7 +492,7 @@ onBeforeUnmount(() => {
   transform: translate3d(-3%, 0, 0) scale(1.01);
 }
 
-.home-hero__slide :deep(.responsive-picture__image) {
+.home-hero[data-initial-media-entrance='true'] .home-hero__slide :deep(.responsive-picture__image) {
   animation: home-hero-media-in var(--motion-duration-media) var(--motion-ease-standard) both;
 }
 

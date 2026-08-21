@@ -85,7 +85,7 @@ const price = computed(() => props.adoption.work.price
 
 .adoption-card__canvas :deep(.responsive-picture__image) {
   object-fit: cover;
-  transition: transform var(--motion-duration-content) var(--motion-ease-standard);
+  transition: transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 @media (hover: hover) and (pointer: fine) {

@@ -75,7 +75,7 @@ withDefaults(defineProps<{
 }
 
 .work-card__image {
-  transition: transform var(--motion-duration-content) var(--motion-ease-standard);
+  transition: transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 @media (hover: hover) and (pointer: fine) {
