@@ -70,6 +70,4 @@ useHead(() => ({
 .public-layout__content {
   min-height: 60vh;
 }
-
-/* 页面切换动效由 Nuxt pageTransition 提供，样式在 public-base.css（全局）。 */
 </style>

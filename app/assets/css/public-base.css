@@ -5,7 +5,9 @@
 @font-face {
   font-family: "Zhuohei Collage";
   src: url("/fonts/zhuohei-collage.ttf") format("truetype");
-  font-display: swap;
+  /* 品牌字是 Hero 首帧内容。预加载期间短暂阻塞回退字形，避免先显示系统字体
+     再换成拼贴字体造成一次可见的字号/字面跳变。 */
+  font-display: block;
   font-style: normal;
   font-weight: 100 900;
 }
@@ -234,36 +236,6 @@ button {
 }
 
 /**
- * 公开端页面切换动效。
- *
- * 必须用 Nuxt 的 `pageTransition`（app.vue 上的 `:transition`）而不是在 layout 里
- * 自己包一层 `<Transition :key="route.path">`：`NuxtPage` 外面有 Suspense，会先把
- * 新页面的 useFetch 解析完再交换内容。layout 层的 Transition 在那之外，等它收到
- * key 变化时新页面已经以 opacity 1 画在屏幕上了，此时才补 enter-from 就会把已显示的
- * 内容瞬间打回半透明——表现为「先完整加载，再闪一下，然后才走动效」。
- * `pageTransition` 挂在 Suspense 内部，入场从第一帧就是正确的起始状态。
- *
- * 普通公开路由只做不阻塞的短 opacity，不等待旧页离场，也不统一纵向位移。
- * 首页三条确认的对象连续性由原生 View Transitions 渐进增强。
- */
-.public-page-enter-active {
-  transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
-}
-
-.public-page-leave-active {
-  pointer-events: none;
-  transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
-}
-
-.public-page-enter-from {
-  opacity: 0.72;
-}
-
-.public-page-leave-to {
-  opacity: 0;
-}
-
-/**
  * 作品卡宽高比的唯一真值，与公开变体自身比例一致：
  * primary 出厂照 `work-card` 恒 3:4，仅横版领养封面 `adoption-card` 恒 16:9。
  * 定义在全局是因为等高排版的容器（/works 网格项、首页轨道项）也要按同一比例
@@ -309,16 +281,6 @@ button {
     --motion-duration-content: var(--motion-duration-state);
     --motion-duration-media: var(--motion-duration-state);
     --motion-ease-playful: var(--motion-ease-standard);
-  }
-
-  .public-page-enter-active,
-  .public-page-leave-active {
-    transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
-  }
-
-  .public-page-enter-from,
-  .public-page-leave-to {
-    transform: none;
   }
 }
 

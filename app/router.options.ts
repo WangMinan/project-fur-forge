@@ -24,8 +24,15 @@ function restoreAfterPageLoad(position: SavedPosition) {
   })
 }
 
+function disableHomeScrollSnap(toPath: string, fromPath: string) {
+  if (fromPath === '/' && toPath !== '/' && typeof document !== 'undefined') {
+    document.documentElement.classList.remove('home-scroll-navigation')
+  }
+}
+
 export default {
   scrollBehavior(to, from, savedPosition) {
+    disableHomeScrollSnap(to.path, from.path)
     if (savedPosition) {
       return restoreAfterPageLoad(savedPosition)
     }
@@ -37,6 +44,9 @@ export default {
     }
     if (to.fullPath === from.fullPath) {
       return { left: 0, top: 0 }
+    }
+    if (to.path !== from.path) {
+      return restoreAfterPageLoad({ left: 0, top: 0 })
     }
     return { left: 0, top: 0 }
   },
