@@ -2864,6 +2864,22 @@
     "patches": []
   },
   {
+    "name": "ZhuoHei Collage Critical Subset",
+    "version": "repository-asset",
+    "license": "Lemi Font free commercial-use license",
+    "repository": null,
+    "homepage": "https://font.leminet.cn/#/",
+    "copyright": [],
+    "noticeText": "由仓库内 ZhuoHei Collage 字体派生；来源页面声明可免费商用。",
+    "source": "manual-asset",
+    "usage": "DITE DOG 首屏品牌文字的预加载 WOFF2 子集。",
+    "artifactSha256": "446165deb991a90bffd5e031e559ced892c5923e7d567490eaad5cdd99eb0be3",
+    "correspondingSourceUrl": "https://font.leminet.cn/#/",
+    "sourceRevision": null,
+    "buildConfiguration": null,
+    "patches": []
+  },
+  {
     "name": "abbrev",
     "version": "3.0.1",
     "license": "ISC",

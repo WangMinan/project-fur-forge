@@ -65,8 +65,8 @@ export default defineNuxtConfig({
         {
           rel: 'preload',
           as: 'font',
-          type: 'font/ttf',
-          href: '/fonts/zhuohei-collage.ttf',
+          type: 'font/woff2',
+          href: '/fonts/zhuohei-collage-critical.woff2',
           crossorigin: 'anonymous',
         },
         {

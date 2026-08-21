@@ -344,10 +344,7 @@ function updateFocal(value: { focalX: number, focalY: number }) {
   background: var(--admin-bg-primary);
   border: 1px solid var(--admin-border-secondary);
   border-radius: var(--admin-radius-md);
-}
-
-.hero-item[data-enabled='true'] {
-  box-shadow: inset 3px 0 0 var(--admin-accent-primary);
+  box-shadow: 0 0.35rem 1.25rem rgb(25 31 42 / 0.055);
 }
 
 .hero-item__head,
