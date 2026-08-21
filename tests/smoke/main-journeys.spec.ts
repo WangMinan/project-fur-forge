@@ -112,6 +112,27 @@ test('首页加载、主要入口与单项开放领养在三种视口可达', as
     ))).toBeLessThanOrEqual(1)
   }
 
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await page.mouse.wheel(0, 800)
+  await page.mouse.wheel(0, 800)
+  await expect.poll(() => page.evaluate(() => {
+    const scenes = [...document.querySelectorAll<HTMLElement>('[data-home-scroll-scene]')]
+    return scenes.reduce((closest, scene, index) => (
+      Math.abs(scene.getBoundingClientRect().top)
+        < Math.abs(scenes[closest]!.getBoundingClientRect().top)
+        ? index
+        : closest
+    ), 0)
+  })).toBe(1)
+
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await page.mouse.wheel(0, 800)
+  await expect.poll(() => page.evaluate(() => Math.round(window.scrollY)))
+    .toBeGreaterThan(0)
+  await page.mouse.wheel(0, -800)
+  await expect.poll(() => page.evaluate(() => Math.round(window.scrollY)))
+    .toBe(0)
+
   await page.getByTestId('featured-works')
     .locator('a[href^="/works/e2e-public-smoke-work"]')
     .click()
