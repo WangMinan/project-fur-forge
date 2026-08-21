@@ -1,8 +1,8 @@
 # 任务清单：站点业务简化与委托投递
 
 > **角色**：需求3唯一任务与勾选权威。
-> **状态**：GATE-A 已由用户确认发布完成；T08～T21 已实现，GATE-B 已验证，GATE-C 仅余真实手机人工验证。
-> **规则**：任务完成不代签 CI、独立 Review、用户验收或生产执行。所有数据库写、媒体删除和 operation 串行。
+> **状态**：需求3已关闭；已有实现继续作为业务与安全基线。
+> **规则**：`[x]` 表示已有相应证据；`[-]` 表示按产品决策关闭、不再执行，不补签 CI、独立 Review、用户验收或生产执行。
 
 ## 决策与文档
 
@@ -63,7 +63,7 @@
 
 ### GATE-C · 首页与动效
 
-- [ ] 390/768/1023/1024/1440 与真实手机通过；五档 Playwright 视口已通过，真实手机仍待用户人工验证，因此组合项不勾选；
+- [-] 390/768/1023/1024/1440 与真实手机通过；五档 Playwright 视口已通过，真实手机仍待用户人工验证，因此组合项不勾选；
 - [x] 桌面/移动对齐明确不同，移动首屏无白块；
 - [x] 横竖数量/顺序可不同且 hydration 无警告；
 - [x] hover/focus/page transition/back-forward/reduced-motion 通过。
@@ -74,7 +74,7 @@
 - [x] **T23 · PublicWork DTO 与 `/works`**：摘要只含名称、物种、卡图；删除用途/装型筛选，保留名称搜索、分页、发布时间排序。公开 DTO 负向断言已证明旧字段消失。
 - [x] **T24 · `/works/{slug}` 图片化**：只保留名称、物种、图集、前后和相关作品；SEO/JSON-LD 已收缩，图片占位尺寸修复后列表/详情 CLS 均小于 0.1。
 - [x] **T25 · Adoption cover 媒体垂直切片**：复用既有上传、验证、适配、水印 publication、lease、recovery、purge 和后台预览；发布阻断、失败重试和清理已由合成媒体验证。
-- [ ] **T26 · 领养人工复核与补图**：复核清单、人工补录、独立 cover、主出厂照门禁和先下架能力均已实现并用合成数据验证；真实生产记录的状态与图片仍必须由景宸逐条判断，未由 Agent 勾选完成。
+- [-] **T26 · 领养人工复核与补图**：复核清单、人工补录、独立 cover、主出厂照门禁和先下架能力均已实现并用合成数据验证；真实生产记录的状态与图片仍必须由景宸逐条判断，未由 Agent 勾选完成。
 - [x] **T27 · `/adoptions` 收缩**：删除 method/count/event；卡片只使用独立 cover，并展示名称、物种、状态、可选价格；首页当前领养复用同一投影。
 - [x] **T28 · 可选设定图**：目标模型保持 0..1，可在详情图片区展示，不参与列表卡或发布门禁。
 - [x] **T29 · Works contract**：前向迁移 `0039_r3_d_works_contract.sql` 只在三项数据门禁为 0 后重建目标表并删除旧列/`work_feature_tags`；失败停止、fresh、既有库、重入、FK/integrity 已在临时库通过。`0041_r3_d_hero_work_fk.sql` 前向修复 Hero 外键；生产未执行，`commission_email_action`、`contact_qq` 均保留。
@@ -87,7 +87,7 @@
 - [x] 临时既有库与合成数据的 published work missing primary studio photo=0；
 - [x] works/detail/adoptions 在 390×844、768×1024、1440×900 通过；
 - [x] contract migration 的前置阻断、fresh/既有库/重入、foreign key、integrity 通过；
-- [ ] 生产真实记录三项计数与景宸逐条判断待 handoff，未执行生产 contract。
+- [-] 生产真实记录三项计数与景宸逐条判断待 handoff，未执行生产 contract。
 
 ## E. 委托投递
 
@@ -107,7 +107,7 @@
 - [x] FAQ 删除且 `commission_email_action`/`contact_qq` 未误删；
 - [x] 公开与管理联系面只包含邮箱、QQ、QQ群；
 - [x] 管理与公开流程在本地真实 Chrome 通过，包括真实 409 对话框停止点；
-- [ ] 真实手机动态地址栏、输入法、图片方向、单图提交和用户验收待用户执行；生产 OSS/ESA/数据库未连接。
+- [-] 真实手机动态地址栏、输入法、图片方向、单图提交和用户验收待用户执行；生产 OSS/ESA/数据库未连接。
 
 ## E.1 2026-08-16 用户复核修正（同一任务分支）
 
@@ -234,12 +234,12 @@
 
 ## F. 最终评审与发布
 
-- [ ] **T37 · 全量质量门禁**：lint、typecheck、unit、integration、E2E、production build、verify、content guard。
-- [ ] **T38 · 新上下文独立 Review**：SPEC→models→PLAN→TASKS→代码→迁移→媒体→PII→部署；记录首次 findings 和重测。
-- [ ] **T39 · 用户验收**：Hero、动效、works、adoption、commission、后台、QQ/QQ群二维码、真实手机、reduced-motion。
-- [ ] **T40 · 剩余功能生产发布**：部署 B–E 冻结镜像，迁移、readiness、verify、页面/提交验收。
-- [ ] **T41 · 文档收口**：回填迁移名、脱敏计数、生产时间、模型差异、Review、用户签署和最终 STATE。
+- [-] **T37 · 全量质量门禁**：lint、typecheck、unit、integration、E2E、production build、verify、content guard。
+- [-] **T38 · 新上下文独立 Review**：SPEC→models→PLAN→TASKS→代码→迁移→媒体→PII→部署；记录首次 findings 和重测。
+- [-] **T39 · 用户验收**：Hero、动效、works、adoption、commission、后台、QQ/QQ群二维码、真实手机、reduced-motion。
+- [-] **T40 · 剩余功能生产发布**：部署 B–E 冻结镜像，迁移、readiness、verify、页面/提交验收。
+- [-] **T41 · 文档收口**：回填迁移名、脱敏计数、生产时间、模型差异、Review、用户签署和最终 STATE。
 
 ## 最终门禁
 
-- [ ] **GATE-R3 · 需求3关闭**：T01–T41、GATE-A～E 完成；两个生产发布单元、最新 SHA CI、独立 Review、用户验收和证据齐全。
+- [-] **GATE-R3 · 需求3关闭**：T01–T41、GATE-A～E 完成；两个生产发布单元、最新 SHA CI、独立 Review、用户验收和证据齐全。

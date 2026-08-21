@@ -41,6 +41,8 @@ import {
   PrivateImageValidationError,
   verifyConditionalImageUpload,
 } from './private-image-validation'
+import { assertCommissionDeletionUnlocked } from './commission-retention'
+import { assertCommissionPrivacyPolicyReady } from './privacy-policy-readiness'
 
 export const COMMISSION_UPLOAD_TTL_MS = 10 * 60 * 1_000
 const COMMISSION_RECEIPT_ATTEMPTS = 8
@@ -125,6 +127,7 @@ export async function createCommissionUpload(
   token: string
   upload: ConditionalPutDto
 }> {
+  assertCommissionPrivacyPolicyReady(sqlite)
   const id = options.id ?? randomUUID()
   const token = options.token ?? randomBytes(32).toString('base64url')
   const objectToken = options.objectToken ?? randomBytes(24).toString('hex')
@@ -503,6 +506,10 @@ export function createCommissionSubmission(
     receiptCode?: (attempt: number) => string
   } = {},
 ) {
+  if (input.adultConfirmed !== true || input.privacyNoticeAcknowledged !== true) {
+    throw new ServiceError(400, 'VALIDATION_ERROR', 'Commission confirmations are required.')
+  }
+  assertCommissionPrivacyPolicyReady(sqlite)
   const now = options.now ?? Date.now()
   const initial = requireUpload(sqlite, input.uploadSessionId)
   assertToken(initial, token)
@@ -672,6 +679,7 @@ export function updateCommissionSubmission(
   },
   now = Date.now(),
 ) {
+  assertCommissionDeletionUnlocked(id)
   return sqlite.transaction(() => {
     if (updateCommissionSubmissionRow(
       sqlite,

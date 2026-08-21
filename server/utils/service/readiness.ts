@@ -6,11 +6,13 @@ import {
 } from '../database'
 import { getRuntimeConfig } from '../runtime-config'
 import { safeLog } from '../safe-log'
+import { getCommissionPrivacyPolicyReadiness } from './privacy-policy-readiness'
 
 export type ReadinessCheck =
   | 'baselineRecords'
   | 'databaseOpen'
   | 'migrationsCurrent'
+  | 'privacyPolicyReady'
 
 export interface ReadinessResult {
   checks: Record<ReadinessCheck, boolean>
@@ -35,6 +37,7 @@ export function evaluateReadiness(options: {
     databaseOpen: false,
     migrationsCurrent: false,
     baselineRecords: false,
+    privacyPolicyReady: false,
   }
 
   let sqlite: Database.Database | undefined
@@ -62,6 +65,8 @@ export function evaluateReadiness(options: {
     `).pluck().get()
     checks.baselineRecords = Number(siteContent) === 1
       && Number(siteBranding) === 1
+    checks.privacyPolicyReady = checks.baselineRecords
+      && getCommissionPrivacyPolicyReadiness(sqlite).ready
   }
   catch (error) {
     safeLog('warn', 'Readiness check failed.', {

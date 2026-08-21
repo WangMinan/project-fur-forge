@@ -20,7 +20,6 @@ import type {
   adminAssetDtoSchema,
   assetStatusSchema,
   mediaRoleSchema,
-  publicHeroSlideDtoSchema,
   publicPngSourceSetDtoSchema,
   publicSourceSetDtoSchema,
   publicVariantDtoSchema,
@@ -30,9 +29,6 @@ import type {
   adminHeroCollectionDtoSchema,
   adminHeroItemDtoSchema,
   adminHeroItemPreviewDtoSchema,
-  adminHeroPreviewDtoSchema,
-  adminHeroSlideDtoSchema,
-  adminHomeDtoSchema,
   heroPlacementSchema,
   heroOrientationSchema,
   homeEntryKindSchema,
@@ -119,6 +115,9 @@ import type {
 } from '../schemas/watermark'
 import type {
   createCommissionSubmissionRequestSchema,
+  commissionDeletionBlockerSchema,
+  commissionDeletionResultDtoSchema,
+  commissionRetentionCandidateDtoSchema,
   commissionSubmissionDetailDtoSchema,
   commissionSubmissionListItemDtoSchema,
   commissionSubmissionStatusSchema,
@@ -144,6 +143,15 @@ export type CommissionSubmissionListItemDto = z.infer<
 >
 export type CommissionSubmissionDetailDto = z.infer<
   typeof commissionSubmissionDetailDtoSchema
+>
+export type CommissionDeletionBlocker = z.infer<
+  typeof commissionDeletionBlockerSchema
+>
+export type CommissionDeletionResultDto = z.infer<
+  typeof commissionDeletionResultDtoSchema
+>
+export type CommissionRetentionCandidateDto = z.infer<
+  typeof commissionRetentionCandidateDtoSchema
 >
 export type AnalyticsEventType = z.infer<typeof analyticsEventTypeSchema>
 export type AnalyticsRouteKey = z.infer<typeof analyticsRouteKeySchema>
@@ -175,18 +183,14 @@ export type AdminAssetDto = z.infer<typeof adminAssetDtoSchema>
 export type PublicVariantDto = z.infer<typeof publicVariantDtoSchema>
 export type PublicSourceSetDto = z.infer<typeof publicSourceSetDtoSchema>
 export type PublicPngSourceSetDto = z.infer<typeof publicPngSourceSetDtoSchema>
-export type PublicHeroSlideDto = z.infer<typeof publicHeroSlideDtoSchema>
 export type AdminHeroAssetDto = z.infer<typeof adminHeroAssetDtoSchema>
 export type AdminHeroItemDto = z.infer<typeof adminHeroItemDtoSchema>
 export type AdminHeroCollectionDto = z.infer<
   typeof adminHeroCollectionDtoSchema
 >
-export type AdminHeroPreviewDto = z.infer<typeof adminHeroPreviewDtoSchema>
 export type AdminHeroItemPreviewDto = z.infer<
   typeof adminHeroItemPreviewDtoSchema
 >
-export type AdminHeroSlideDto = z.infer<typeof adminHeroSlideDtoSchema>
-export type AdminHomeDto = z.infer<typeof adminHomeDtoSchema>
 export type HeroPlacement = z.infer<typeof heroPlacementSchema>
 export type HeroOrientation = z.infer<typeof heroOrientationSchema>
 export type PublicHeroItemDto = z.infer<typeof publicHeroItemDtoSchema>

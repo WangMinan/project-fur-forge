@@ -1,20 +1,15 @@
 import { CONTACT_PLATFORMS } from '~~/shared/constants/contact'
 import {
-  completeUploadSessionResponseSchema,
   createUploadSessionResponseSchema,
   retryAssetProcessingResponseSchema,
 } from '~~/shared/schemas/upload'
 import type {
-  ConditionalPutDto,
   ContactPlatform,
-  UploadSessionDto,
   VerifiedAssetDto,
 } from '~~/shared/types/contracts'
-import { putFileToSignedUrl } from '~/utils/signed-put'
-import {
-  buildUploadDeclaration,
-  DECLARATION_FAILURE_LABELS,
-} from '~/utils/upload-declaration'
+import { runAdminUploadSession } from '~/utils/admin-upload-session'
+import { uploadSessionFailureLabel } from '~/utils/media-labels'
+import { DECLARATION_FAILURE_LABELS } from '~/utils/upload-declaration'
 import { AdminApiError } from './useAdminApi'
 
 export type ContactQrUploadState
@@ -92,48 +87,6 @@ export function useContactQrUpload(options: {
         : '二维码处理未完成，请重新上传')
   }
 
-  async function complete(
-    platform: ContactPlatform,
-    item: ContactQrUploadItem,
-    session: UploadSessionDto,
-  ) {
-    item.state = 'validating'
-    item.progress = null
-    try {
-      const result = await adminApi(
-        `/api/admin/v1/media/upload-sessions/${session.uploadSessionId}/complete`,
-        {
-          method: 'POST',
-          body: {
-            expectedVersion: session.version,
-            payload: { focalX: 0.5, focalY: 0.5 },
-          },
-          schema: completeUploadSessionResponseSchema,
-        },
-      )
-      item.asset = result.data.asset
-      if (result.data.asset.status !== 'READY') {
-        processingFailure(item, result.data.asset)
-        return
-      }
-      item.state = 'ready'
-      options.onReady(platform, result.data.asset)
-    }
-    catch (error) {
-      if (error instanceof AdminApiError && error.status === 401) {
-        return
-      }
-      if (error instanceof AdminApiError && error.status === 409) {
-        fail(item, '联系方式已在其他地方变化，请核对最新内容后重试')
-        await options.onConflict()
-        return
-      }
-      fail(item, error instanceof AdminApiError && error.status === 400
-        ? '服务端核验未通过，请确认图片完整且符合二维码要求'
-        : '服务端处理失败，请稍后重试')
-    }
-  }
-
   async function start(file: File, platform: ContactPlatform) {
     if (busy.value) {
       return
@@ -142,31 +95,10 @@ export function useContactQrUpload(options: {
     const item = items[platform]
     item.fileName = file.name
     item.previewUrl = URL.createObjectURL(file)
-    item.state = 'digesting'
-
-    const declaration = await buildUploadDeclaration(file)
-    if (!declaration.ok) {
-      fail(item, DECLARATION_FAILURE_LABELS[declaration.reason])
-      return
-    }
-    if (declaration.declaration.byteSize > 20_000_000) {
-      fail(item, '二维码图片不能超过 20 MB')
-      return
-    }
-    if (
-      declaration.declaration.width < 64
-      || declaration.declaration.height < 64
-    ) {
-      fail(item, '二维码图片任一边至少需要 64 px；更小的图片无法保证可读性')
-      return
-    }
-    item.ffmpegExpected = true
-
-    let created: {
-      data: { session: UploadSessionDto, upload: ConditionalPutDto }
-    }
-    try {
-      created = await adminApi('/api/admin/v1/media/upload-sessions', {
+    const result = await runAdminUploadSession({
+      adminApi,
+      file,
+      createSession: declaration => adminApi('/api/admin/v1/media/upload-sessions', {
         method: 'POST',
         body: {
           owner: {
@@ -175,48 +107,66 @@ export function useContactQrUpload(options: {
             expectedVersion: options.getContactVersion(),
           },
           mediaRole: 'contact_qr',
-          expected: declaration.declaration,
+          expected: declaration,
         },
         schema: createUploadSessionResponseSchema,
-      })
-    }
-    catch (error) {
-      if (error instanceof AdminApiError && error.status === 401) {
-        return
+      }),
+      onProgress: ratio => (item.progress = ratio),
+      onStage: stage => (item.state = stage),
+      validate: (declaration) => {
+        if (declaration.byteSize > 20_000_000) {
+          return '二维码图片不能超过 20 MB'
+        }
+        if (declaration.width < 64 || declaration.height < 64) {
+          return '二维码图片任一边至少需要 64 px；更小的图片无法保证可读性'
+        }
+        item.ffmpegExpected = true
+        return null
+      },
+    })
+    if (!result.ok) {
+      if (result.step === 'declaration') {
+        fail(item, DECLARATION_FAILURE_LABELS[result.reason])
       }
-      if (error instanceof AdminApiError && error.status === 409) {
-        fail(item, '联系方式已在其他地方变化，请核对最新内容后重试')
-        await options.onConflict()
-        return
+      else if (result.step === 'validation') {
+        fail(item, result.message)
       }
-      fail(item, '无法创建上传会话，请稍后重试')
+      else if (result.step === 'put') {
+        fail(item, result.reason === 'expired'
+          ? '上传签名已过期，请重新上传'
+          : result.reason === 'network'
+            ? '上传中断，请检查网络后重试'
+            : '文件未能写入私有存储，请重新上传')
+      }
+      else {
+        const error = result.error
+        if (error instanceof AdminApiError && error.status === 401) {
+          return
+        }
+        if (error instanceof AdminApiError && error.status === 409) {
+          fail(item, '联系方式已在其他地方变化，请核对最新内容后重试')
+          await options.onConflict()
+          return
+        }
+        if (result.step === 'complete' && result.session?.status === 'FAILED') {
+          fail(item, uploadSessionFailureLabel(result.session).text)
+          return
+        }
+        fail(item, result.step === 'create'
+          ? '无法创建上传会话，请稍后重试'
+          : error instanceof AdminApiError && error.status === 400
+            ? '服务端核验未通过，请确认图片完整且符合二维码要求'
+            : '服务端处理失败，请稍后重试')
+      }
       return
     }
-
-    item.state = 'uploading'
-    item.progress = 0
-    let status: number
-    try {
-      status = await putFileToSignedUrl(
-        created.data.upload,
-        file,
-        ratio => (item.progress = ratio),
-        () => {},
-      )
-    }
-    catch {
-      fail(item, '上传中断，请检查网络后重试')
+    item.asset = result.asset
+    if (result.asset.status !== 'READY') {
+      processingFailure(item, result.asset)
       return
     }
-    if (status === 403) {
-      fail(item, '上传签名已过期，请重新上传')
-      return
-    }
-    if (status < 200 || status >= 300) {
-      fail(item, '文件未能写入私有存储，请重新上传')
-      return
-    }
-    await complete(platform, item, created.data.session)
+    item.state = 'ready'
+    options.onReady(platform, result.asset)
   }
 
   async function retryProcessing(platform: ContactPlatform) {

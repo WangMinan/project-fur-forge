@@ -64,7 +64,7 @@ function publicRank(index: number) {
     </div>
     <div v-else-if="status === 'error'" class="featured-order__state featured-order__state--error">
       <p role="alert">首页精选加载失败，请检查网络后重试。</p>
-      <button type="button" class="featured-order__retry" @click="emit('reload')">重试</button>
+      <AdminAction size="small" @click="emit('reload')">重试</AdminAction>
     </div>
     <div v-else-if="items.length === 0" class="featured-order__state">
       <p>还没有首页精选作品。</p>
@@ -116,37 +116,42 @@ function publicRank(index: number) {
             <span v-else class="featured-order__public">发布后才进入首页</span>
           </div>
           <div class="featured-order__actions" aria-label="精选顺序操作">
-            <button
-              type="button"
+            <AdminAction
+              class="featured-order__action"
+              size="small"
               :disabled="index === 0 || pendingId !== null || removingId !== null"
               :aria-label="`将 ${work.characterName} 置顶`"
               @click="emit('move', work.id, 'top')"
-            >置顶</button>
-            <button
-              type="button"
+            >置顶</AdminAction>
+            <AdminAction
+              class="featured-order__action"
+              size="small"
               :disabled="index === 0 || pendingId !== null || removingId !== null"
               :aria-label="`将 ${work.characterName} 上移`"
               @click="emit('move', work.id, 'up')"
-            >上移</button>
-            <button
-              type="button"
+            >上移</AdminAction>
+            <AdminAction
+              class="featured-order__action"
+              size="small"
               :disabled="index === items.length - 1 || pendingId !== null || removingId !== null"
               :aria-label="`将 ${work.characterName} 下移`"
               @click="emit('move', work.id, 'down')"
-            >下移</button>
-            <button
-              type="button"
+            >下移</AdminAction>
+            <AdminAction
+              class="featured-order__action"
+              size="small"
               :disabled="index === items.length - 1 || pendingId !== null || removingId !== null"
               :aria-label="`将 ${work.characterName} 置底`"
               @click="emit('move', work.id, 'bottom')"
-            >置底</button>
-            <button
-              type="button"
+            >置底</AdminAction>
+            <AdminAction
               class="featured-order__remove"
+              size="small"
+              variant="danger"
               :disabled="pendingId !== null || removingId !== null"
               :aria-label="`将 ${work.characterName} 移出首页精选`"
               @click="emit('remove', work)"
-            >移出精选</button>
+            >移出精选</AdminAction>
           </div>
           <span v-if="pendingId === work.id || removingId === work.id" class="featured-order__saving" role="status">
             保存中…
@@ -210,31 +215,6 @@ function publicRank(index: number) {
   border-radius: var(--admin-radius-md);
   background: var(--admin-status-error-soft);
   font-size: var(--admin-font-sm);
-}
-
-.featured-order__retry,
-.featured-order__actions button {
-  min-height: var(--admin-control-height-sm);
-  padding: 0 var(--admin-space-3);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-sm);
-  background: var(--admin-bg-primary);
-  color: var(--admin-text-primary);
-  font: inherit;
-  font-size: var(--admin-font-xs);
-  cursor: pointer;
-}
-
-.featured-order__actions button:focus-visible,
-.featured-order__retry:focus-visible {
-  outline: none;
-  border-color: var(--admin-border-focus);
-  box-shadow: 0 0 0 var(--admin-focus-width) var(--admin-focus-ring);
-}
-
-.featured-order__actions button:disabled {
-  opacity: 0.45;
-  cursor: default;
 }
 
 .featured-order__list {
@@ -315,10 +295,6 @@ function publicRank(index: number) {
   flex-wrap: wrap;
 }
 
-.featured-order__actions .featured-order__remove {
-  color: var(--admin-danger);
-}
-
 .featured-order__saving {
   position: absolute;
   right: var(--admin-space-3);
@@ -369,7 +345,8 @@ function publicRank(index: number) {
     grid-column: 2;
   }
 
-  .featured-order__actions button {
+  .featured-order__action,
+  .featured-order__remove {
     min-height: var(--admin-touch-target);
   }
 }

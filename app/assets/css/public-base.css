@@ -120,6 +120,7 @@
   --public-header-height: 4.5rem;
   --public-anchor-offset: 5.5rem;
   --hero-min-height: 100svh;
+  --home-scene-media-height: clamp(19rem, 52svh, 35rem);
   --image-placeholder: #f1f3f6;
   --image-hover-scale: 1.02;
 
@@ -128,13 +129,13 @@
    */
   --radius-image: 12px;
 
-  --duration-instant: 50ms;
-  --duration-fast: 150ms;
-  --duration-normal: 250ms;
-  --duration-section: 400ms;
-  --duration-hero: 750ms;
-  --easing-standard: cubic-bezier(0.22, 1, 0.36, 1);
-  --easing-exit: cubic-bezier(0.4, 0, 1, 1);
+  --motion-duration-feedback: 120ms;
+  --motion-duration-state: 180ms;
+  --motion-duration-content: 420ms;
+  --motion-duration-media: 720ms;
+  --motion-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-playful: cubic-bezier(0.2, 1.16, 0.32, 1);
+  --motion-ease-linear-progress: linear;
   --distance-subtle: 0.75rem;
 
   --breakpoint-sm: 390px;
@@ -151,6 +152,7 @@
 
   @media (min-width: 1024px) {
     --public-page-padding: var(--public-page-padding-desktop);
+    --home-scene-media-height: min(68svh, 40rem);
   }
 }
 
@@ -169,6 +171,23 @@ html {
   /* 锚点跳转统一让开粘性页头：加在滚动容器上，所有 #hash 目标一次性生效，
      不需要在每个目标元素上分别维护 scroll-margin-top。 */
   scroll-padding-top: var(--public-anchor-offset);
+}
+
+@media (min-width: 1024px) {
+  html.home-scroll-navigation {
+    scroll-padding-top: var(--public-header-height);
+    scroll-snap-type: y mandatory;
+  }
+
+  .home-scroll-navigation [data-home-scroll-scene] {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  .home-scroll-navigation .public-footer {
+    scroll-snap-align: end;
+    scroll-snap-stop: always;
+  }
 }
 
 body {
@@ -224,23 +243,20 @@ button {
  * 内容瞬间打回半透明——表现为「先完整加载，再闪一下，然后才走动效」。
  * `pageTransition` 挂在 Suspense 内部，入场从第一帧就是正确的起始状态。
  *
- * 入场 opacity 从 0.6 起步而非 0：任何时刻画面都有内容，不会闪白底。
- * out-in 模式让旧页先离场，避免两页并排导致布局跳动。
+ * 普通公开路由只做不阻塞的短 opacity，不等待旧页离场，也不统一纵向位移。
+ * 首页三条确认的对象连续性由原生 View Transitions 渐进增强。
  */
 .public-page-enter-active {
-  transition:
-    opacity var(--duration-normal) var(--easing-standard),
-    transform var(--duration-normal) var(--easing-standard);
+  transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .public-page-leave-active {
   pointer-events: none;
-  transition: opacity var(--duration-fast) var(--easing-exit);
+  transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .public-page-enter-from {
-  opacity: 0.6;
-  transform: translateY(0.5rem);
+  opacity: 0.72;
 }
 
 .public-page-leave-to {
@@ -273,7 +289,7 @@ button {
   background: var(--public-accent-primary);
   border-radius: var(--radius-sm);
   transform: translateY(-300%);
-  transition: transform var(--duration-fast) var(--easing-standard);
+  transition: transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .skip-link:focus-visible {
@@ -281,12 +297,68 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  html {
     scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+  }
+
+  html.home-scroll-navigation {
+    scroll-behavior: auto;
+  }
+
+  :root {
+    --motion-duration-content: var(--motion-duration-state);
+    --motion-duration-media: var(--motion-duration-state);
+    --motion-ease-playful: var(--motion-ease-standard);
+  }
+
+  .public-page-enter-active,
+  .public-page-leave-active {
+    transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
+  }
+
+  .public-page-enter-from,
+  .public-page-leave-to {
+    transform: none;
+  }
+}
+
+::view-transition-group(home-featured-media),
+::view-transition-group(home-commission-media),
+::view-transition-group(home-adoption-media) {
+  animation-duration: var(--motion-duration-media);
+  animation-timing-function: var(--motion-ease-standard);
+}
+
+::view-transition-old(home-featured-media),
+::view-transition-new(home-featured-media),
+::view-transition-old(home-commission-media),
+::view-transition-new(home-commission-media),
+::view-transition-old(home-adoption-media),
+::view-transition-new(home-adoption-media) {
+  mix-blend-mode: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(home-featured-media),
+  ::view-transition-group(home-commission-media),
+  ::view-transition-group(home-adoption-media) {
+    animation-duration: 0.01ms;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --public-overlay-soft: rgb(17 20 25 / 0.72);
+    --public-overlay-strong: rgb(17 20 25 / 0.9);
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --public-text-secondary: #3f4650;
+    --public-text-tertiary: #555d68;
+    --public-border-primary: #9ba3af;
+    --public-border-secondary: #c3c8d0;
+    --public-focus-ring: rgb(29 45 90 / 0.72);
   }
 }

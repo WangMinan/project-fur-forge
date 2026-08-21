@@ -49,7 +49,7 @@ withDefaults(defineProps<{
 .work-card {
   display: block;
   color: var(--public-text-primary);
-  transition: transform var(--duration-normal) var(--easing-standard);
+  transition: transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .work-card:hover {
@@ -62,7 +62,7 @@ withDefaults(defineProps<{
   background: var(--image-placeholder);
   border-radius: var(--radius-image);
   overflow: hidden;
-  transition: box-shadow var(--duration-normal) var(--easing-standard);
+  transition: box-shadow var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .work-card__frame :deep(.responsive-picture) {
@@ -75,7 +75,7 @@ withDefaults(defineProps<{
 }
 
 .work-card__image {
-  transition: transform var(--duration-section) var(--easing-standard);
+  transition: transform var(--motion-duration-content) var(--motion-ease-standard);
 }
 
 @media (hover: hover) and (pointer: fine) {

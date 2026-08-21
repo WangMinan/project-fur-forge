@@ -545,16 +545,6 @@ export function unpublishWorkRow(
   `).run(now, workId, expectedVersion).changes
 }
 
-export function hasEnabledHeroSlideForWork(
-  sqlite: Database.Database,
-  workId: string,
-) {
-  return Boolean(sqlite.prepare(`
-    SELECT 1 FROM site_hero_slides
-    WHERE linked_work_id = ? AND enabled = 1 LIMIT 1
-  `).pluck().get(workId))
-}
-
 export function insertWorkAuditLog(
   sqlite: Database.Database,
   input: {

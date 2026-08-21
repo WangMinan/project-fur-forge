@@ -75,17 +75,13 @@ onScopeDispose(() => {
 <template>
   <div class="email-actions">
     <div class="email-actions__buttons">
-      <a class="email-actions__primary" :href="mailtoHref" @click="onEmailOpen">
+      <PublicAction :href="mailtoHref" @click="onEmailOpen">
         打开邮件客户端
         <span aria-hidden="true">↗</span>
-      </a>
-      <button
-        type="button"
-        class="email-actions__copy"
-        @click="onCopy"
-      >
+      </PublicAction>
+      <PublicAction class="email-actions__copy" variant="secondary" @click="onCopy">
         {{ copyState === 'copied' ? '已复制邮箱' : '复制邮箱' }}
-      </button>
+      </PublicAction>
     </div>
     <p v-if="copyState === 'failed'" class="email-actions__feedback" role="alert">
       复制失败，请手动选择邮箱地址复制。
@@ -109,39 +105,8 @@ onScopeDispose(() => {
   gap: var(--space-3);
 }
 
-.email-actions__primary {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 2.75rem;
-  padding: 0 var(--space-5);
-  color: var(--public-text-inverse);
-  background: var(--public-accent-primary);
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-}
-
-.email-actions__primary:hover {
-  color: var(--public-text-inverse);
-  background: var(--public-accent-hover);
-}
-
 .email-actions__copy {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.75rem;
-  padding: 0 var(--space-5);
-  color: var(--public-text-primary);
-  background: none;
-  border: 1px solid var(--public-border-primary);
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-}
-
-.email-actions__copy:hover {
-  background: var(--public-bg-secondary);
+  min-width: 7.5rem;
 }
 
 .email-actions__feedback {

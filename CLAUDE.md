@@ -1,286 +1,108 @@
 # CLAUDE.md
 
-本文件是 `project-fur-forge` 编码 Agent 的稳定入口；`AGENTS.md` 指向本文件。临时 SHA、Actions run、一次性 finding、截图和任务进度写入对应 `agent_docs/`，不在本文件固化。
+本文件是 `project-fur-forge` Coding Agent 的稳定入口；`AGENTS.md` 指向本文件。临时 SHA、Actions run、截图、一次性 finding 和阶段过程只写入对应 `agent_docs/` 记录，不在这里固化。
 
-## 1. 项目与权威文档
+## 1. 当前范围与权威文档
 
-项目为“有点小狗工作室”提供图片优先的公开站和轻量管理后台。英文品牌固定为 `DITE DOG`，不得再使用 `DITE DOG FURSUIT` 或“暂用英文名”。
+项目为“有点小狗工作室”提供图片优先的公开站和轻量管理后台。中文短品牌为“有点小狗”，英文品牌固定为 `DITE DOG`。
 
-需求1继续提供双 Host、私有媒体、OSS/ESA、安全、发布、恢复和部署基线。需求3提供当前已经实现的业务基线。**当前活跃产品增量是需求4：站点视觉升级与内容合规。**
+| 需求 | 状态 | 作用 |
+| --- | --- | --- |
+| 需求1 | 已关闭、历史基线 | Host、媒体、安全、OSS/ESA、发布、恢复与部署约束 |
+| 需求2 | 已关闭、历史增量 | 仅供追溯，后续需求已覆盖部分功能 |
+| 需求3 | 已关闭、当前业务基线 | 退役边界、简化作品/领养、Hero、委托投递 |
+| 需求4 | **仅阶段 E 开放** | UI 美化、布局、响应式、Hero 焦点与动效优化 |
 
-开工前至少完整阅读：
+“关闭”不等于补签未发生的生产执行、独立 Review、真实手机或用户验收；未完成项在任务文档中标为“按产品决策关闭”。需求1～3不再接受新功能，后续代码不得恢复它们已退役的行为。
 
-### 需求1稳定基线
+开始工作前按任务读取：
 
-- `agent_docs/需求1-兽装工作室主页/requirements/MEDIA-PUBLICATION-POLICY.md`
-- `agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md`
-- 与任务直接相关的需求1 STATE/SPEC/PLAN/models
+- 当前状态与唯一勾选权威：[`需求4 STATE`](agent_docs/需求4-站点视觉升级与内容合规/STATE.md)、[`需求4 TASKS`](agent_docs/需求4-站点视觉升级与内容合规/implementation/TASKS.md)；
+- 产品、文案、模型和视觉契约：[`SPEC`](agent_docs/需求4-站点视觉升级与内容合规/requirements/SPEC.md)、[`COPY`](agent_docs/需求4-站点视觉升级与内容合规/requirements/COPY.md)、[`models`](agent_docs/需求4-站点视觉升级与内容合规/models/README.md)、[`design`](agent_docs/需求4-站点视觉升级与内容合规/.design/README.md)；
+- 已实现业务边界：[`需求3 foundation`](agent_docs/需求3-站点业务简化与委托投递/foundation/README.md)；
+- 媒体事实源：[`MEDIA-PUBLICATION-POLICY`](agent_docs/需求1-兽装工作室主页/requirements/MEDIA-PUBLICATION-POLICY.md)；
+- 部署和恢复：[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) 与 [`PRODUCTION-LAUNCH-HANDBOOK`](agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md)。
 
-### 需求3当前产品基线
+权威顺序：SPEC 定产品契约；COPY 定成文；models 定字段/UI 模型；design 定视觉行为；TASKS 定任务状态；STATE 定当前事实。代码和测试证明实现，不覆盖产品契约；历史 notes、截图、旧 Review 和聊天摘要只说明当时状态。
 
-- `agent_docs/需求3-站点业务简化与委托投递/STATE.md`
-- `foundation/README.md`
-- `requirements/SPEC.md`
-- `models/README.md`
-- `planning/DATA-MIGRATION.md`
+## 2. 稳定产品边界
 
-### 需求4活文档
-
-1. `agent_docs/需求4-站点视觉升级与内容合规/STATE.md`
-2. `foundation/README.md`
-3. `requirements/SPEC.md`
-4. `requirements/COPY.md`
-5. `models/README.md`
-6. `.design/README.md`
-7. `planning/PLAN.md`
-8. `planning/DATA-MIGRATION.md`
-9. `implementation/TASKS.md`
-10. `review/REVIEW.md`
-
-权威顺序：SPEC 定产品契约；COPY 定目标成文；models 定字段/UI 模型；design 定视觉行为；PLAN/DATA-MIGRATION 定顺序与停止点；TASKS 定勾选；STATE 定当前事实。聊天摘要、dated notes、旧 Review、历史 commit 和自动化测试不能覆盖活文档。
-
-## 2. 当前产品基线
-
-### 2.1 品牌与退役边界
-
-- 中文：`有点小狗工作室`；短品牌：`有点小狗`。
-- 英文：`DITE DOG`。
-- slogan：`不只做小狗毛 | 只做海绵头`。
 - 返图墙、最新动态、FAQ、抖音、小红书和 Bilibili 已退役，不得恢复入口、表、DTO、媒体或占位。
-- 当前官方联系面只有邮箱、QQ、QQ群。
+- 当前官方联系面只有邮箱、QQ、QQ群；站内表单负责结构化委托投递，官方 QQ 私聊负责后续逐单确认。
+- 首页固定为品牌 Hero、代表作品、自设委托、设定领养四幕；首页领养只显示一项 `available`。
+- `/adoptions` 唯一排序为 `available → adopted`，组内 `works.updated_at DESC → id ASC`；页面不二次排序。
+- 首页/委托 × 横/竖四个 Hero 集合、version、CAS、顺序和 operation 独立；不建立 pair 或共享 version。
+- 公开源图与私有媒体严格分离；委托设定图不生成 PUBLIC variant、ESA URL 或水印。
+- PII 不进入公开 DTO、HTML、URL、analytics、普通日志、错误、localStorage 或真实 fixture。
+- 不新增交易、订单、支付、SMTP、短信、公开申请查询、自动建作品或通用 CMS。
 
-### 2.2 Hero、作品和领养
+需求4阶段 E 的设计目标是“简洁底盘 + 灵动角色感 + 摄影主导的编辑式工作室网站”。后续 PR 只做 UI、布局、响应式、可访问性和动效质量；若工作会改变数据库、业务契约、媒体/安全边界或部署拓扑，必须先取得用户明确授权并重新开放对应范围。
 
-- 首页/委托 × 横/竖四个 Hero 集合独立。
-- 首页每方向 1–5 张、10 秒轮播、暂停、页面隐藏暂停、reduced-motion 停止。
-- 委托每方向同时只启用一张，可以先下架再替换，不轮播。
-- 横版和竖版素材分别维护；不自动拿横图裁竖图，不强迫数量/顺序配对。
-- 普通作品公开只含名称、物种和媒体。
-- adoption status 只有 `available | adopted`。
-- published adoption 至少有合格 `adoption_cover` 或 `design_sheet`；卡片/详情按现行回落规则。
-- adopted 可以进入精选，不进入首页当前领养。
-- 作品详情保持名称、物种和单一查看序列；不恢复事实表、related、前后导航。
-- 水印、publication operation、lease、recovery、purge 和媒体配方沿用现有实现。
+## 3. Git 与写入
 
-### 2.3 委托
+先 `git fetch`，核对 `origin/main`、当前分支和工作树；不 force push、不 hard reset、不覆盖用户改动。只暂存本任务文件，提交保持小而可审查。
 
-- `/commission/apply`：一张私有设定图、称呼、物种、+86 手机、QQ、身高、体重。
-- 同一手机号已有 pending 时拒绝重复提交。
-- `/admin/commissions`：pending/accepted/rejected。
-- 不接 SMTP、短信、公开查询、自动建作品、在线合同、订单或支付。
-- 私有设定图无 PUBLIC variant、无 ESA、无水印。
-- PII 不进入公开 DTO、HTML、URL、localStorage、analytics、普通日志、错误或真实 fixture。
+默认通过 `codex/*` 任务分支与 PR 合入 `main`。唯一小修例外：
 
-## 3. 需求4新增边界
+1. 请求者明确是王旻安；如果上下文无法确认，使用 `git config user.email` 是否精确等于 `wangminan0811@hotmail.com`（大小写不敏感）确认；
+2. 请求明确针对 `main` 上的**小型 bug**；
+3. 改动局部、可回滚，不涉及 Schema/迁移、数据或媒体删除、安全/隐私边界、依赖大升级、部署/发布契约或产品范围。
 
-### 3.1 首页和领养
+同时满足时，直接在 `main` 修复和验证，不创建或切换任务分支。若任一条件不满足，仍走任务分支与 PR。身份例外不授权生产发布、云配置、破坏性操作或跳过测试。
 
-- 首页固定四幕：品牌 Hero → 代表作品 → 自设委托 → 设定领养。
-- 首页仍是完整业务地图，但各幕面积和视觉权重不等；不得退化为同权卡片平铺。
-- 首页设定领养只展示一项开放领养；无 `available` 时隐藏整幕。
-- `/adoptions` 唯一排序：`available` 在前、`adopted` 在后；组内 `works.updated_at DESC`，再以 ID 稳定排序；搜索后保持顺序再分页。
-- `/works` 继续使用现有公开时间顺序，不被领养 comparator 覆盖。
+当前 `main` 不配置 required checks，不擅自改变。实现、自动测试、独立 Review、用户视觉验收、远程 CI、部署和生产状态互不代签。
 
-### 3.2 视觉与动效
+## 4. 云上部署结构与数据流
 
-- 设计定义：**简洁底盘 + 灵动角色感 + 摄影主导的编辑式工作室网站**。
-- PC Web 是第一视觉基准；390/430 移动端必须同步等价重排。
-- 不使用 scroll-jacking、长时间 pinned scroll、强制横向叙事、持续视差、全屏粒子或背景音效。
-- 允许有因的一次性遮罩揭示、图文错峰、图片聚焦/轻 tilt、控制器/成功状态轻回弹；不允许持续摇摆或所有元素都弹。
-- 一个视口最多一个主要大对象运动。
-- 普通页面动效使用 CSS/WAAPI 和统一 token；Apple Design Skill 是空间纪律来源，不是压低全部情绪或安装 spring 库的命令。
-- View Transitions 只做渐进增强，不支持或 reduced-motion 时自然回退。
-- SSR/无 JavaScript 内容默认可见。
+权威命令以 [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) 为准；部署前同时阅读 [`PRODUCTION-LAUNCH-HANDBOOK`](agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md)。配置落点见 [`docker-compose.yaml`](docker-compose.yaml)、[`deploy/nginx/app.conf.template`](deploy/nginx/app.conf.template)、[`deploy/esa/cache-policy.json`](deploy/esa/cache-policy.json) 与 [`deploy/esa/security-observability-policy.json`](deploy/esa/security-observability-policy.json)。
 
-### 3.3 组件与长任务进度
+```text
+访客/管理员 --HTTPS--> ESA
+  页面/API --HTTP:80--> 宿主机 Nginx --> 127.0.0.1:3000 --> Nuxt/Nitro app --> SQLite 持久卷
+  公开媒体 ------------> ESA 托管 STS 私有回源 --> 网页衍生 Bucket
 
-- 新公开行动只使用统一 primary/secondary/text 组件；不在页面内继续复制胶囊按钮 CSS。
-- 管理端行动使用统一 admin primitive。
-- 所有管理端耗时操作必须立即展示进度：
-  - OSS XHR upload：真实字节百分比；
-  - publication/branding/Hero operation：服务端真实阶段和计数；
-  - FFmpeg/未知工作量：阶段 + elapsed + indeterminate。
-- 禁止把 operation 阶段映射成 12/35/56/91 等伪精确百分比。
-- 长 operation 刷新页面后恢复状态；可重试/取消时显示真实入口。
+管理员浏览器 --条件签名 PUT--> 私有原图 Bucket 的公网 OSS 地址
+app / one-shot ops --OSS SDK Endpoint--> 私有原图 Bucket + 网页衍生 Bucket
+```
 
-### 3.4 Hero 管理
+部署不变量：
 
-- 四集合的 version、item、排序、owner context 和 operation 继续独立。
-- admin 信息架构改为一级“首页/委托”、二级“横/竖”；显示另一个方向摘要。
-- 委托页宽屏可并排显示横/竖单槽；首页按方向编辑多项并显示 `横版 X/5 · 竖版 Y/5`。
-- 提供桌面/手机画框预览和九宫格焦点；不新增 pair/crop/focal 表。
-- 同一 asset 多处复用但焦点冲突时阻断，不静默覆盖。
+- Compose 只有一个常驻 `app`；migrate、preflight、backup、restore、recover 使用同一冻结镜像的一次性容器。
+- app 只绑定 `127.0.0.1:3000`；Nginx 运行在宿主机，只监听 HTTP/80；TLS 在 ESA 边缘终止。
+- 公开、管理、媒体 Host 精确隔离；未知 Host 和到达 Nuxt 的媒体 Host 返回 `421`。
+- 两只 OSS Bucket 都是 private；公开页面只消费 `public-media.ditedog.com` 上 READY 的网页派生物。
+- `OSS_ENDPOINT` 供服务端 SDK，`OSS_UPLOAD_BASE_URL` 供浏览器条件 PUT，`MEDIA_BASE_URL` 供公开 ESA URL，三者不得混用。
+- API、管理、会话和写操作绕过共享缓存；不可变 `/_nuxt/**` 和公开派生媒体可长缓存；下架先撤销公开投影，再精确 purge。
+- 服务器按 `repository@sha256:digest` 部署，不在服务器 build，不用 `latest` 作为部署身份。
+- `.env`、Secret、签名 URL、私有 Object Key 和生产 PII 不进入 Git、日志、截图或聊天。
 
-### 3.5 轻量申请确认
+任何目标环境事实都必须现场验证；本地测试和配置文件不能代签云配置、备份恢复、生产迁移或正式发布。
 
-- 站内表单负责结构化投递；工作室官方 QQ 私聊负责优先后续沟通、报价和逐单确认；邮箱备用；QQ群非默认订单确认渠道。
-- 表单只新增两个未预勾选确认：
-  - 已满 18 周岁并有权提交设定图；
-  - 已阅读隐私政策，理解信息用途和提交不等于接单/报价/排期/合同。
-- request Schema 使用两个 `z.literal(true)`；service 在消费 upload 前校验。
-- 不新增 `privacy_controller_name`、intake metadata API、contract version、确认数据库列、客户端版本握手、stale 409 或 legacy/v2 管理 UI。
-- 实际经营主体名称通过现有 `privacy_policy` 编辑能力写入；联系邮箱复用 `contact_email`。
-- checkbox 是提交门槛，不是电子签名；具体委托继续在官方 QQ 逐单确认。
-
-### 3.6 保存与删除
-
-- 委托 PII/私有设定图只在评估、履行、1 年保修、争议及法律必要期限内保存。
-- 失效上传至少每月人工清理；申请至少每半年复核；rejected 处理满 180 天进入候选。
-- accepted 只有业务/保修/争议/法定期限结束后才人工确认。
-- 不建设 cron、Worker、TTL 或通用生命周期引擎。
-- Review 可以列 masked 候选；正式 execute 每次只允许一条申请，不提供按时间批量删除。
-- 删除工具默认 dry-run、强确认、精确 Key、DB/OSS 一体、对象验证和幂等重入。
-- 用户删除请求单独处理，不等待周期批次。
-
-### 3.7 服务条款和第三方声明
-
-- 网站服务条款是一般规则；具体范围、价格、付款、排期、修改、交付和特殊约定在官方 QQ 中逐单书面确认。
-- 工作室在确认接单或收取约定款项前，应在官方 QQ 中提供或明确引用当时适用的服务条款并提示重大事项；不得只因网页公开可读就推定客户接受。
-- 条款不得以“所有解释权归工作室”或不合理单方免责兜底。
-- npm 生产依赖声明从实际 lockfile/安装结果确定性生成。
-- FFmpeg 在自有服务器容器内运行，但当前 release workflow 会把包含 FFmpeg 的镜像发布到公开 Docker Hub；按二进制分发场景维护精确版本/摘要、许可证、对应源码、补丁与构建信息，不能因网页没有单独下载入口而写成“未分发”。
-- Noto Serif SC 按 SIL OFL 1.1。
-- `zhuohei-collage.ttf` 来源为 Lemi Font 免费商用声明，作为第三方授权资产，不称为开源软件。
-- 当前 main 不增加 required check。
-
-## 4. Git 与写入
-
-默认所有代码、文档、Review 和修复通过任务分支与 PR 合入 main。只有用户对当前操作给出明确直接 main 授权时，才可按该次授权执行。
-
-- 写前 fetch，核对 main/upstream SHA；
-- 不 force push、不 hard reset、不覆盖用户改动；
-- 写操作、迁移、媒体删除和门禁串行；
-- 提交小而可审查；用户要求一个 commit 时使用原子 tree/commit；
-- 最新 PR/commit CI 只代表对应 SHA；
-- 实现、focused review、最终 independent review、用户验收和生产执行互不代签；
-- 当前 main 不配置 required checks，不擅自改变。
-
-## 5. 验证与测试纪律
-
-### 5.1 权威和目的
-
-- **用户人工验收是公开视觉、真实图片、动效节奏和访客文案的最终门禁。** 自动化不能代签“好看、自然、适合角色”。
-- 自动化测试只保护稳定不变量和基础可运行性，不是业务规格来源。
-- 测试失败后先分类：
-  1. 稳定不变量回归：修代码，或在产品契约确已改变时调整测试；
-  2. 旧文案/DOM/class/毫秒/历史截图语义：删除、合并或降级该测试，不机械改成新数值。
-- 不为每个历史 bug 默认增加永久用例；只有高影响、易复发、可稳定断言的问题进入 core。
-- 同一事实不在 unit/integration/E2E 三层重复证明；选择最低成本、最接近风险的一层。
-
-### 5.2 禁止的测试耦合
-
-普通测试不得依赖：
-
-- 精确动画时长、easing 字符串或中间帧数量；
-- 完整营销/法务文案全文（除 content guard/禁词等稳定约束）；
-- scoped class、非语义 DOM 层级或组件内部实现；
-- 为某次历史视觉修正专门固定的 test-id/像素；
-- 只为让旧套件全绿而存在的 fixture 和分支。
-
-Playwright 不负责评判审美；不要用截图像素比较取代人工 Review。
-
-### 5.3 目标测试层级
-
-实现 T14 后使用：
+## 5. 测试与 Actions
 
 ```powershell
 pnpm check:fast
 pnpm test:core
 pnpm test:smoke
-pnpm test:release   # 仅发布/人工显式启动
-pnpm test:legacy    # 迁移期可选，non-gating，最终可删除
+pnpm test:release   # 仅显式 release/manual 验证
 ```
 
-脚本落地前：
+- 文档-only 只做链接、状态和口径检查。
+- 普通代码跑 lint、typecheck 和受影响 core；Nuxt/runtime/config 再跑 build。
+- UI 用真实浏览器检查；自动化只保护可达性、稳定业务不变量和明显回归，不评判审美。
+- release 路径负责 smoke、production build/verify、notices/Secret/ESA policy；镜像、Compose、恢复和 Nginx 只在显式 release/manual 路径执行。
+- 测试失败先区分稳定不变量与过时的文案/DOM/class/毫秒断言；不为全绿回退产品行为。
+- GitHub 无步骤且标注 billing/spending limit 的失败是基础设施状态，不是代码测试结论。
 
-- 文档：链接/占位/交叉口径 Review，不跑应用套件；
-- 普通代码：`pnpm lint`、`pnpm typecheck`、直接受影响的少量 vitest；
-- Nuxt/runtime/config：再运行 `pnpm build`；
-- UI：启动真实浏览器人工核验，按需要运行一两个相关 Playwright smoke；
-- 迁移/安全/媒体/删除：运行对应稳定 integration/core，不跑无关历史套件。
+视觉人工检查至少覆盖 390×844、430×932、768×1024、1023×900、1024×900、1440×900，并检查键盘、焦点、reduced-motion/transparency/contrast、console/network、图片 decode、LCP/CLS、safe area 和水平溢出。真实手机与王旻安/景宸人工验收仍是最终视觉门禁。
 
-### 5.4 Core 必须保护的范围
+## 6. 代码、安全与破坏性操作
 
-- Host、session、CSRF、Origin、限流；
-- 匿名上传 token/TTL/摘要/MIME/尺寸/一次消费；
-- PII 和私有媒体不进入公开投影、HTML、普通日志；
-- migration、foreign key、integrity、前向重入；
-- publication/lease/recovery/deletion 的关键状态和精确对象；
-- `/adoptions` 排序等明确业务不变量；
-- production build/readiness 的基础可用性。
+`server/utils/` 分层：`repository/` 负责 SQL/CAS/lease，`service/` 负责校验/DTO/事务入口，`runner/` 负责持久 operation 与 OSS 副作用，`recipe/` 负责纯媒体身份，`route/` 负责 Host/Session/Origin/CSRF/body/error。
 
-### 5.5 Smoke 范围
-
-Playwright 只保留少量主旅程：
-
-- 首页加载和主要入口；
-- works/adoptions 列表与详情；
-- 委托申请成功/主要失败；
-- admin 登录；
-- 一条上传与长任务进度；
-- 一条作品发布/下架；
-- privacy/service/licenses 可读。
-
-每条 smoke 只断言用户可观察结果，不断言内部实现。
-
-### 5.6 Workflow 与发布
-
-- 默认 `quality` 应在需求4 T18 中减重为 lint/typecheck/core/必要 build；docs-only 跳过应用重型任务。
-- image-build、Compose/restore/Nginx、destructive drill 和 release smoke 改为 `workflow_dispatch` 或发布路径显式执行。
-- 旧 `pnpm test`、`pnpm test:integration`、`pnpm test:e2e` 在迁移期属于 legacy 事实，不因存在就自动成为每次改动门禁。
-- 不新增 required check。
-- 即使自动 smoke 全绿，未通过王旻安/景宸人工验收也不得宣称视觉完成。
-
-## 6. 浏览器与 Host
-
-```powershell
-pnpm db:migrate
-pnpm dev --host 0.0.0.0 --port 3000
-```
-
-- 管理：`http://localhost:3000`
-- 公开：`http://127.0.0.1:3000`
-- 不混用 Host。
-- 视觉至少人工验证：390×844、430×932、768×1024、1023×900、1024×900、1440×900。
-- 至少一台真实手机验证动态地址栏、safe area、输入法、触控、图片、确认和提交。
-- 检查键盘、焦点、reduced-motion/transparency/contrast、console/network、decode、404、LCP/CLS 和水平溢出。
-- 保存关键截图/短视频与人工结论，但不把像素比较变成新门禁。
-
-## 7. 媒体、安全与生产
-
-- 私有源图与公开派生分离；公开只消费 ESA HTTPS READY variants。
-- 服务端 OSS Endpoint、浏览器上传地址和 ESA 回源配置不能混用。
-- 条件 PUT 使用 `OSS_UPLOAD_BASE_URL`；服务端 SDK 使用 `OSS_ENDPOINT`。
-- OSS CORS 保持 `AllowedOrigin=*`；应用匿名 API 仍严格校验 Origin、token、TTL、限流、蜜罐、摘要、MIME、尺寸和图片解码。
-- production 环境由 `APP_ENV` 判定。
-- 下架立即移除公开查询并对精确 URL purge。
-- `.env*`、runtime schema、tests 和部署文档同步；不输出 Secret。
-- app-only Compose，Nuxt/Nitro 绑定 `127.0.0.1:3000`；Nginx 在宿主机，ESA 终止 TLS。
-- 正式 Host 精确隔离；原始 loopback Host 421 不得放宽。
-- `/_nuxt/**` 可长缓存；API、管理、会话和写操作绕过共享缓存。
+- 首页继续消费单个聚合 DTO；Hero/works/adoption 复用现有 publication/lease/recovery/purge。
+- 公开内容 SSR 默认可见；动效不能先隐藏再等 JavaScript。
+- 新行动、上传与长任务反馈复用现有公共组件；OSS 显示真实字节进度，FFmpeg 显示阶段 + elapsed + indeterminate，禁止伪百分比。
 - 不重写历史 migration，只新增前向 migration。
-- 长 operation 保持 lease/heartbeat/recovery；不在请求中假装同步完成。
-- 删除默认 dry-run、强确认、精确 Key、对象验证、数据库完整性和 clean backup 边界。
+- 删除默认 dry-run、脱敏、强确认、精确 Key、对象验证、数据库完整性和幂等重入；生产媒体、数据库和备份删除必须另获明确授权。
 - 外部 ECS/云盘快照由操作员确认，Agent 不代签。
-
-## 8. 代码组织
-
-`server/utils/`：
-
-| 目录 | 职责 |
-| --- | --- |
-| `repository/` | SQL、行映射、CAS、lease |
-| `service/` | 同步规则、校验、DTO、事务入口 |
-| `runner/` | 持久 operation、OSS 副作用、恢复、清理 |
-| `recipe/` | 纯媒体身份、处理串、Key、尺寸 |
-| `route/` | Host、Session、Origin、CSRF、body、错误 |
-
-- 首页继续消费单个聚合 DTO，不为四幕复制请求或新增版式表。
-- `/adoptions` 排序在 repository/service 唯一实现，页面不二次排序。
-- Hero/works/adoption 复用现有 publication/lease/recovery/purge。
-- Hero admin 统一 UI，不合并四集合数据。
-- retention/deletion CLI 复用 repository/service/storage，不复制 OSS 客户端。
-- 公开内容 SSR 默认可见；动效不能先隐藏后等 JS。
-- 管理列表、对话框、行动、上传、进度和分页优先复用现有组件。
-- 新 upload flow 必须接入统一 progress；不得新增业务专属进度条 CSS。
-- `/licenses` 不进入 CMS；生成声明与人工资产 registry 是事实来源。

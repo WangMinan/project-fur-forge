@@ -9,6 +9,13 @@ import { PROJECT_NAME } from '~~/shared/constants/project'
  */
 const route = useRoute()
 const slug = computed(() => String(route.params.slug ?? ''))
+const sharedViewTransitionName = computed(() => (
+  route.query.view === 'home-featured'
+    ? 'home-featured-media'
+    : route.query.view === 'home-adoption'
+      ? 'home-adoption-media'
+      : undefined
+))
 
 // 不提供显式 key：Nuxt 4 中静态 key 会让重挂载的详情页复用旧 slug 的缓存
 // （status === 'success' 时跳过 initialFetch）。自动 key 含 URL，slug 变化即
@@ -119,19 +126,27 @@ useHead(() => ({
 }))
 
 /**
- * 返回目标跟着来路走：从设定领养点进来就回设定领养，其余（作品展示、首页精选、
- * 直达）回作品展示。来路取 vue-router 写在 history state 里的上一条 fullPath，
- * 不需要自己维护历史栈。
+ * 返回目标跟着入口语义走：领养卡通过 URL 标记来源，因此 SSR、尚未水合和刷新
+ * 都能得到正确结果；从领养目录进入时也可以直接从上一条 fullPath 判断。其余
+ * （作品展示、首页精选、直达）回作品展示，不需要自己维护历史栈。
  *
- * SSR 拿不到 history，所以先直出默认值，挂载后再按真实来路修正，避免水合不一致。
+ * SSR 拿不到 history，所以先按 URL 来源标记直出；挂载后再用真实上一页恢复
+ * 领养目录的搜索/分页地址，避免水合不一致。
  */
 const WORKS_BACK = { href: '/works', label: '返回作品展示' }
-const back = ref(WORKS_BACK)
+const ADOPTIONS_BACK = { href: '/adoptions', label: '返回设定领养' }
+const back = ref(route.query.from === 'adoptions' ? ADOPTIONS_BACK : WORKS_BACK)
 
 onMounted(() => {
   const previous = window.history.state?.back
-  if (typeof previous === 'string' && /^\/adoptions(?:[/?#]|$)/u.test(previous)) {
-    back.value = { href: previous, label: '返回设定领养' }
+  const fromAdoptions = route.query.from === 'adoptions'
+  const adoptionPrevious = typeof previous === 'string'
+    && /^\/adoptions(?:[/?#]|$)/u.test(previous)
+  if (fromAdoptions || adoptionPrevious) {
+    back.value = {
+      href: adoptionPrevious ? previous : '/adoptions',
+      label: '返回设定领养',
+    }
   }
 })
 </script>
@@ -167,7 +182,11 @@ onMounted(() => {
           aria-label 保留，屏幕阅读器仍能识别这个区域。
         -->
         <section v-if="gallery.length > 0" class="work-detail__media-section" aria-label="作品图集">
-          <WorkDetailGallery :gallery="gallery" :work-name="dto.characterName" />
+          <WorkDetailGallery
+            :gallery="gallery"
+            :work-name="dto.characterName"
+            :view-transition-name="sharedViewTransitionName"
+          />
         </section>
       </div>
     </div>

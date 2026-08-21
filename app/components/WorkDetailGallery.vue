@@ -7,6 +7,7 @@ import type { PublicWorkGalleryItemDto } from '~~/shared/types/contracts'
  */
 const props = defineProps<{
   gallery: PublicWorkGalleryItemDto[]
+  viewTransitionName?: string | undefined
   workName: string
 }>()
 
@@ -49,6 +50,7 @@ const activeImageStyle = computed(() => {
   return {
     '--gallery-aspect-ratio': String(ratio),
     aspectRatio: image ? `${image.width} / ${image.height}` : '4 / 3',
+    viewTransitionName: props.viewTransitionName,
   }
 })
 </script>
@@ -138,7 +140,7 @@ const activeImageStyle = computed(() => {
 /* 淡入淡出：离场图脱离文档流交给 grid 叠放，不影响入场图的尺寸计算。 */
 .work-gallery-fade-enter-active,
 .work-gallery-fade-leave-active {
-  transition: opacity var(--duration-normal) var(--easing-standard);
+  transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .work-gallery-fade-enter-from,

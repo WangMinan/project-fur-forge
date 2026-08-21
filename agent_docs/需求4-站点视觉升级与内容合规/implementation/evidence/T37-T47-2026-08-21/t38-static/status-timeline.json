@@ -1,0 +1,138 @@
+{
+  "samples": [
+    {
+      "at": 0,
+      "commission": {
+        "present": true,
+        "text": "委托咨询开放有限开放",
+        "display": "flex",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 154.640625,
+        "height": 21.6875,
+        "connected": true
+      },
+      "adoption": {
+        "present": true,
+        "text": "领养信息以页面为准有限开放",
+        "display": "flex",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 196.640625,
+        "height": 21.6875,
+        "connected": true
+      },
+      "pageTextHasCommissionStatus": true
+    },
+    {
+      "at": 500,
+      "commission": {
+        "present": true,
+        "text": "委托咨询开放有限开放",
+        "display": "flex",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 154.640625,
+        "height": 21.6875,
+        "connected": true
+      },
+      "adoption": {
+        "present": true,
+        "text": "领养信息以页面为准有限开放",
+        "display": "flex",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 196.640625,
+        "height": 21.6875,
+        "connected": true
+      },
+      "pageTextHasCommissionStatus": true
+    },
+    {
+      "at": 2000,
+      "commission": {
+        "present": true,
+        "text": "委托咨询开放有限开放",
+        "display": "flex",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 154.640625,
+        "height": 21.6875,
+        "connected": true
+      },
+      "adoption": {
+        "present": true,
+        "text": "领养信息以页面为准有限开放",
+        "display": "flex",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 196.640625,
+        "height": 21.6875,
+        "connected": true
+      },
+      "pageTextHasCommissionStatus": true
+    },
+    {
+      "at": 5000,
+      "commission": {
+        "present": true,
+        "text": "委托咨询开放有限开放",
+        "display": "flex",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 154.640625,
+        "height": 21.6875,
+        "connected": true
+      },
+      "adoption": {
+        "present": true,
+        "text": "领养信息以页面为准有限开放",
+        "display": "flex",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 196.640625,
+        "height": 21.6875,
+        "connected": true
+      },
+      "pageTextHasCommissionStatus": true
+    },
+    {
+      "at": 12000,
+      "commission": {
+        "present": true,
+        "text": "委托咨询开放有限开放",
+        "display": "flex",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 154.640625,
+        "height": 21.6875,
+        "connected": true
+      },
+      "adoption": {
+        "present": true,
+        "text": "领养信息以页面为准有限开放",
+        "display": "flex",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 196.640625,
+        "height": 21.6875,
+        "connected": true
+      },
+      "pageTextHasCommissionStatus": true
+    }
+  ],
+  "events": [
+    {
+      "type": "console:debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "console:debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "console:info",
+      "text": "<Suspense> is an experimental feature and its API will likely change."
+    }
+  ]
+}

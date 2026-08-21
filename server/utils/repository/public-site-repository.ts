@@ -1,9 +1,5 @@
 import type Database from 'better-sqlite3'
 import {
-  publicCommissionHeroDtoSchema,
-  publicHomeDtoSchema,
-} from '../../../shared/schemas/home'
-import {
   PUBLIC_ADOPTIONS_PAGE_SIZE,
   PUBLIC_WORKS_PAGE_SIZE,
   publicCatalogSearchQuerySchema,
@@ -26,7 +22,6 @@ import type {
   PublicFeaturedWorksDto,
   PublicHomeAggregateDto,
   PublicHomeDto,
-  PublicSiteBusinessStatusDto,
   PublicSourceSetDto,
   PublicWorkDetailDto,
   PublicWorkListDto,
@@ -85,6 +80,7 @@ interface PublishedWorkRow {
   slug: string
   sortOrder: number
   species: string
+  updatedAt: number
   version: number
 }
 
@@ -127,6 +123,8 @@ interface SnapshotEntry {
     sources: PublicSourceSetDto
   }>
   summary: PublicWorkSummaryDto
+  /** 只用于领养状态 bucket 内排序，不进入公开 DTO。 */
+  updatedAt: number
 }
 
 function groupBy<T, K>(values: readonly T[], keyFor: (value: T) => K) {
@@ -187,7 +185,8 @@ function loadPublishedWorks(sqlite: Database.Database) {
       price_amount_minor AS priceAmountMinor,
       price_currency AS priceCurrency,
       publication_status AS publicationStatus,
-      sort_order AS sortOrder, featured
+      sort_order AS sortOrder, featured,
+      updated_at AS updatedAt
     FROM works
     WHERE publication_status = 'published'
     ORDER BY COALESCE(published_at, created_at) DESC, id
@@ -381,6 +380,7 @@ function snapshot(
         cardOrientation: card.orientation,
       }),
       studioPhotos: photos,
+      updatedAt: row.updatedAt,
     })
   }
 
@@ -444,10 +444,10 @@ function homeAggregate(
   try {
     const entriesSnapshot = snapshot(sqlite, mediaBaseUrl, appEnv)
     featured = featuredEntries(entriesSnapshot).map(entry => entry.summary)
-    // 当前领养取最新两件：快照已按发布时间倒序。
+    // 首页与目录共用同一个领养 comparator；只投影第一件开放领养。
     currentAdoptions = adoptionItems(entriesSnapshot)
       .filter(item => item.work.adoptionStatus === 'available')
-      .slice(0, 2)
+      .slice(0, 1)
   }
   catch (error) {
     featuredAvailable = false
@@ -461,7 +461,11 @@ function homeAggregate(
     hero,
     entries,
     featured: { available: featuredAvailable, items: featured },
-    currentAdoptions: { available: adoptionsAvailable, items: currentAdoptions },
+    currentAdoptions: {
+      available: adoptionsAvailable,
+      items: currentAdoptions,
+      status: statuses.adoption,
+    },
   })
 }
 
@@ -479,26 +483,37 @@ function featuredEntries(entries: readonly SnapshotEntry[]) {
 }
 
 function adoptionItems(entries: readonly SnapshotEntry[]) {
-  return entries.flatMap((entry): PublicAdoptionListItemDto[] => (
-    entry.adoption
-      ? [publicAdoptionListItemDtoSchema.parse({
-          work: {
-            ...entry.summary.work,
-            adoptionStatus: entry.adoption.status,
-            ...(entry.adoption.priceCnyMinor === null
-              ? {}
-              : {
-                  price: {
-                    currency: 'CNY',
-                    minorUnits: entry.adoption.priceCnyMinor,
-                  },
-                }),
-          },
-          href: entry.summary.href,
-          cover: entry.adoption.cover,
-        })]
-      : []
-  ))
+  return entries
+    .filter((entry): entry is SnapshotEntry & { adoption: NonNullable<SnapshotEntry['adoption']> } => (
+      entry.adoption !== null
+    ))
+    .toSorted(comparePublicAdoptions)
+    .map((entry): PublicAdoptionListItemDto => publicAdoptionListItemDtoSchema.parse({
+      work: {
+        ...entry.summary.work,
+        adoptionStatus: entry.adoption.status,
+        ...(entry.adoption.priceCnyMinor === null
+          ? {}
+          : {
+              price: {
+                currency: 'CNY',
+                minorUnits: entry.adoption.priceCnyMinor,
+              },
+            }),
+      },
+      href: entry.summary.href,
+      cover: entry.adoption.cover,
+    }))
+}
+
+function comparePublicAdoptions(
+  left: SnapshotEntry & { adoption: NonNullable<SnapshotEntry['adoption']> },
+  right: SnapshotEntry & { adoption: NonNullable<SnapshotEntry['adoption']> },
+) {
+  const bucket = { available: 0, adopted: 1 } as const
+  return bucket[left.adoption.status] - bucket[right.adoption.status]
+    || right.updatedAt - left.updatedAt
+    || left.id.localeCompare(right.id)
 }
 
 function catalogPage(value: unknown) {
@@ -635,116 +650,6 @@ export function createSqlitePublicSiteRepository(
     },
     getHomeAggregate() {
       return homeAggregate(sqlite, mediaBaseUrl, appEnv)
-    },
-  }
-}
-
-export interface FakePublicSiteSeed {
-  adoptions?: PublicAdoptionListItemDto[]
-  details: PublicWorkDetailDto[]
-  featuredSlugs: string[]
-  home: PublicHomeDto
-  commissionHero?: PublicCommissionHeroDto
-  statuses?: {
-    adoption: PublicSiteBusinessStatusDto | null
-    commission: PublicSiteBusinessStatusDto | null
-  }
-}
-
-export function createFakePublicSiteRepository(
-  seed: FakePublicSiteSeed,
-): PublicSiteRepository {
-  const details = seed.details.map(detail => publicWorkDetailDtoSchema.parse(detail))
-  const home = publicHomeDtoSchema.parse(seed.home)
-  const commissionHero = publicCommissionHeroDtoSchema.parse(
-    seed.commissionHero ?? { landscape: [], portrait: [] },
-  )
-  const bySlug = new Map(details.map(detail => [detail.work.slug, detail]))
-  const adoptions = (seed.adoptions ?? []).map(item => (
-    publicAdoptionListItemDtoSchema.parse(item)
-  ))
-  const summaryFor = (detail: PublicWorkDetailDto) => (
-    publicWorkSummaryDtoSchema.parse({
-      work: detail.work,
-      href: detail.href,
-      card: detail.media.card,
-      cardOrientation: detail.media.cardOrientation,
-    })
-  )
-  return {
-    getWorkBySlug(slug) {
-      const detail = bySlug.get(slug)
-      return detail ? publicWorkDetailDtoSchema.parse(detail) : null
-    },
-    listAdoptions(query = {}) {
-      return adoptionListDto(adoptions, query)
-    },
-    listWorks(query = {}) {
-      const page = catalogPage(query.page)
-      const parsed = publicWorkListQuerySchema.safeParse({ q: query.q })
-      const search = publicCatalogSearchQuerySchema.safeParse(query.q)
-      // 只做了单头的领养作品图集为空但有横版封面卡片，同样进入作品展示。
-      const filtered = parsed.success && search.success
-        ? details.filter(detail => (
-            includesSearchText(detail.work.characterName, search.data ?? '')
-          ))
-        : []
-      return publicWorkListDtoSchema.parse({
-        ...paginateCatalog(
-          filtered.map(summaryFor),
-          page,
-          PUBLIC_WORKS_PAGE_SIZE,
-        ),
-        filter: { valid: parsed.success && search.success },
-      })
-    },
-    listFeaturedWorks() {
-      const items = seed.featuredSlugs.flatMap((slug) => {
-        const detail = bySlug.get(slug)
-        return detail ? [summaryFor(detail)] : []
-      }).slice(0, PUBLIC_FEATURED_LIMIT)
-      return publicFeaturedWorksDtoSchema.parse({
-        items,
-        resultCount: items.length,
-      })
-    },
-    getHome() {
-      return publicHomeDtoSchema.parse(home)
-    },
-    getCommissionHero() {
-      return publicCommissionHeroDtoSchema.parse(commissionHero)
-    },
-    getHomeAggregate() {
-      const entryCard = (kind: 'adoption' | 'commission') => {
-        const entry = home.entries[kind]
-        const status = seed.statuses?.[kind] ?? null
-        return entry
-          ? {
-              ...entry,
-              title: ENTRY_TITLES[kind],
-              status,
-              summary: status?.detail ?? null,
-            }
-          : null
-      }
-      const featured = seed.featuredSlugs.flatMap((slug) => {
-        const detail = bySlug.get(slug)
-        return detail ? [summaryFor(detail)] : []
-      }).slice(0, PUBLIC_FEATURED_LIMIT)
-      return publicHomeAggregateDtoSchema.parse({
-        hero: home,
-        entries: {
-          commission: entryCard('commission'),
-          adoption: entryCard('adoption'),
-        },
-        featured: { available: true, items: featured },
-        currentAdoptions: {
-          available: true,
-          items: this.listAdoptions().items
-            .filter(item => item.work.adoptionStatus === 'available')
-            .slice(0, 2),
-        },
-      })
     },
   }
 }

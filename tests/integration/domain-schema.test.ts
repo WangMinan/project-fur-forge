@@ -16,7 +16,6 @@ import {
   migrateDatabase,
   openDatabase,
 } from '../../server/utils/database'
-import { validateHeroSlidesForPublication } from '../../server/utils/recipe/hero-publication'
 import {
   insertActiveWatermarkProfile,
   TEST_WATERMARK_PROFILE_ID,
@@ -182,77 +181,6 @@ function insertVariant(
   })
 }
 
-function insertHeroRecipe(
-  assetId: string,
-  role: 'home_hero_landscape' | 'home_hero_portrait',
-  formats: readonly ('webp' | 'jpeg' | 'png')[] = ['webp', 'jpeg'],
-  overrides: Partial<{
-    logoDigest: string
-    storageScope: string
-    usage: string
-    watermarkAnchor: string
-    watermarkProfile: string
-  }> = {},
-) {
-  const widths = role === 'home_hero_landscape'
-    ? [768, 1280, 1920]
-    : [480, 768, 1080]
-  const usage = role === 'home_hero_landscape'
-    ? 'home-hero-landscape'
-    : 'home-hero-portrait'
-
-  for (const width of widths) {
-    for (const format of formats) {
-      insertVariant(
-        `${assetId}-${width}-${format}`,
-        assetId,
-        role,
-        overrides.usage ?? usage,
-        {
-          format,
-          height: role === 'home_hero_landscape'
-            ? Math.round(width * 9 / 16)
-            : Math.round(width * 16 / 9),
-          logoDigest: overrides.logoDigest,
-          storageScope: overrides.storageScope,
-          watermarkAnchor: overrides.watermarkAnchor,
-          watermarkProfile: overrides.watermarkProfile,
-          width,
-        },
-      )
-    }
-  }
-}
-
-function insertHeroPair(
-  index: number,
-  linkedWorkId: string | null = null,
-  withVariants = true,
-) {
-  const landscapeId = `landscape-${index}`
-  const portraitId = `portrait-${index}`
-  insertAsset(landscapeId, 'home_hero_landscape')
-  insertAsset(portraitId, 'home_hero_portrait')
-  if (withVariants) {
-    insertHeroRecipe(landscapeId, 'home_hero_landscape')
-    insertHeroRecipe(portraitId, 'home_hero_portrait')
-  }
-  sqlite.prepare(`
-    INSERT INTO site_hero_slides (
-      id, landscape_asset_id, portrait_asset_id, alt_text,
-      sort_order, enabled, linked_work_id, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)
-  `).run(
-    `slide-${index}`,
-    landscapeId,
-    portraitId,
-    `第 ${index + 1} 张首页作品图`,
-    index,
-    linkedWorkId,
-    now,
-    now,
-  )
-}
 
 beforeEach(async () => {
   directory = mkdtempSync(resolve(tmpdir(), 'fur-forge-domain-'))
@@ -310,7 +238,6 @@ describe('P0 schema boundary', () => {
       'site_display_reconcile_operations',
       'site_hero_collections',
       'site_hero_items',
-      'site_hero_slides',
       'upload_sessions',
       'users',
       'watermark_operations',
@@ -796,168 +723,6 @@ describe('P0 schema boundary', () => {
         storageScope: 'PRIVATE',
       },
     )).toThrow(/asset_variants_site_display_recipe/)
-  })
-
-  it('isolates enabled hero order by home and commission placement', () => {
-    insertHeroPair(0)
-    expect(() => sqlite.prepare(`
-      UPDATE site_hero_slides SET placement = 'unknown' WHERE id = 'slide-0'
-    `).run()).toThrow(/CHECK constraint failed/u)
-
-    insertAsset('commission-landscape', 'home_hero_landscape')
-    insertAsset('commission-portrait', 'home_hero_portrait')
-    insertHeroRecipe('commission-landscape', 'home_hero_landscape')
-    insertHeroRecipe('commission-portrait', 'home_hero_portrait')
-    sqlite.prepare(`
-      INSERT INTO site_hero_slides (
-        id, placement, landscape_asset_id, portrait_asset_id, alt_text,
-        sort_order, enabled, created_at, updated_at
-      ) VALUES ('commission-slide', 'commission', ?, ?, '委托页背景', 0, 1, ?, ?)
-    `).run('commission-landscape', 'commission-portrait', now, now)
-
-    expect(validateHeroSlidesForPublication(sqlite)).toBe(1)
-    expect(validateHeroSlidesForPublication(sqlite, 'commission')).toBe(1)
-  })
-
-  it('requires 1–5 READY landscape/portrait pairs for hero publication', () => {
-    expect(() => validateHeroSlidesForPublication(sqlite))
-      .toThrow(/1 to 5/)
-
-    insertWork('published-link', { publicationStatus: 'published' })
-    for (let index = 0; index < 5; index += 1) {
-      insertHeroPair(index, index === 0 ? 'published-link' : null)
-    }
-    expect(validateHeroSlidesForPublication(sqlite)).toBe(5)
-
-    insertAsset('sixth-landscape', 'home_hero_landscape')
-    insertAsset('sixth-portrait', 'home_hero_portrait')
-    expect(() => sqlite.prepare(`
-      INSERT INTO site_hero_slides (
-        id, landscape_asset_id, portrait_asset_id, alt_text,
-        sort_order, enabled, created_at, updated_at
-      ) VALUES (
-        'slide-5', 'sixth-landscape', 'sixth-portrait', '第六张', 5, 1, ?, ?
-      )
-    `).run(now, now)).toThrow(/site_hero_slides_sort/)
-    expect(() => sqlite.prepare(`
-      UPDATE works SET publication_status = 'unpublished'
-      WHERE id = 'published-link'
-    `).run()).toThrow(/published work is linked/)
-  })
-
-  it('requires both directions and every WebP/fallback hero width', () => {
-    insertHeroPair(0, null, false)
-
-    expect(() => validateHeroSlidesForPublication(sqlite))
-      .toThrow(/complete public recipe/)
-    insertHeroRecipe('landscape-0', 'home_hero_landscape')
-    expect(() => validateHeroSlidesForPublication(sqlite))
-      .toThrow(/complete public recipe/)
-    insertHeroRecipe(
-      'portrait-0',
-      'home_hero_portrait',
-      ['webp'],
-    )
-    expect(() => validateHeroSlidesForPublication(sqlite))
-      .toThrow(/complete public recipe/)
-    insertHeroRecipe(
-      'portrait-0',
-      'home_hero_portrait',
-      ['jpeg'],
-    )
-    expect(validateHeroSlidesForPublication(sqlite)).toBe(1)
-  })
-
-  it('rejects hero variants with wrong usage or watermark identity', () => {
-    insertHeroPair(0, null, false)
-    sqlite.pragma('ignore_check_constraints = ON')
-    try {
-      insertHeroRecipe(
-        'landscape-0',
-        'home_hero_landscape',
-        ['webp', 'jpeg'],
-        {
-          storageScope: 'PUBLIC',
-          usage: 'preprocess',
-        },
-      )
-      insertHeroRecipe(
-        'portrait-0',
-        'home_hero_portrait',
-        ['webp', 'jpeg'],
-        {
-          logoDigest: 'none',
-          watermarkAnchor: 'none',
-          watermarkProfile: 'none',
-        },
-      )
-    }
-    finally {
-      sqlite.pragma('ignore_check_constraints = OFF')
-    }
-
-    expect(() => validateHeroSlidesForPublication(sqlite))
-      .toThrow(/complete public recipe/)
-  })
-
-  it('rejects incomplete hero pairs and ACL publication states', () => {
-    insertAsset('ready-landscape', 'home_hero_landscape')
-    insertAsset('pending-portrait', 'home_hero_portrait', {
-      status: 'PENDING',
-    })
-    expect(() => sqlite.prepare(`
-      INSERT INTO site_hero_slides (
-        id, landscape_asset_id, portrait_asset_id, alt_text,
-        sort_order, enabled, created_at, updated_at
-      ) VALUES (
-        'invalid-slide', 'ready-landscape', 'pending-portrait',
-        '未就绪轮播', 0, 1, ?, ?
-      )
-    `).run(now, now)).toThrow(/not publication-ready/)
-    expect(() => sqlite.prepare(`
-      INSERT INTO site_hero_slides (
-        id, landscape_asset_id, portrait_asset_id, alt_text,
-        sort_order, enabled, created_at, updated_at
-      ) VALUES (
-        'blank-alt', 'ready-landscape', 'pending-portrait', ' ', 0, 0, ?, ?
-      )
-    `).run(now, now)).toThrow(/site_hero_slides_alt_nonempty/)
-
-    const insertOperation = sqlite.prepare(`
-      INSERT INTO publication_operations (
-        id, entity_type, entity_id, requested_version, status,
-        started_at, updated_at
-      ) VALUES (?, 'HOME', 'site', 1, ?, ?, ?)
-    `)
-    for (const status of [
-      'GENERATING_PUBLIC',
-      'APPLYING_WATERMARK',
-      'VERIFYING_PUBLIC',
-      'COMMITTING',
-      'CLEANING_PUBLIC',
-      'DONE',
-    ]) {
-      insertOperation.run(`operation-${status}`, status, now, now)
-    }
-    sqlite.prepare(`
-      INSERT INTO publication_operations (
-        id, entity_type, entity_id, requested_version, status,
-        internal_error_code, failure_stage, started_at, updated_at
-      ) VALUES (
-        'operation-FAILED', 'HOME', 'site', 1, 'FAILED',
-        'TEST_FAILURE', 'VALIDATING', ?, ?
-      )
-    `).run(now, now)
-    expect(() => insertOperation.run(
-      'operation-acl',
-      'SWITCHING_ACL',
-      now,
-      now,
-    )).toThrow(/publication_operations_status/)
-    expect(() => sqlite.prepare(`
-      UPDATE publication_operations SET edge_purge_status = 'SITE_WIDE'
-      WHERE id = 'operation-DONE'
-    `).run()).toThrow(/publication_operations_edge_purge_status/)
   })
 
   it('constrains independent site statuses and restricted content columns', () => {

@@ -1,0 +1,17 @@
+{
+  "input": {
+    "pointerIntent": "pointer",
+    "keyboardIntent": "keyboard"
+  },
+  "reducedMotion": {
+    "before": " 第 1 张，共 2 张 ",
+    "after": " 第 1 张，共 2 张 ",
+    "manual": " 第 2 张，共 2 张 "
+  },
+  "preferences": {
+    "reducedTransparency": true,
+    "moreContrast": true,
+    "headerBackground": "rgb(17, 20, 25)",
+    "secondaryText": "#3f4650"
+  }
+}

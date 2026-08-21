@@ -1,7 +1,7 @@
 # 阶段 0 · 地基（Foundation）
 
 > **角色**：固定需求4的模块边界、继承关系、数据/安全口径与不可扩散的非目标。
-> **状态**：2026-08-19 第二轮 Review 与空上下文文档复核后锁定。任何偏离必须先同步本文件、SPEC、PLAN、TASKS 和 STATE。
+> **状态**：2026-08-21 仅阶段 E 开放；A～D 与原阶段 F 已关闭。任何阶段 E 偏离必须先同步本文件、SPEC、TASKS 和 STATE。
 > **评审基线**：第二轮应用代码审查基于 `main@aa8e5b70be0913f02ceddccdc262ec6fe0769df1`；对应文档随后以 `main@ea3ae0a1269676db8c06c28ed32a9a29f4bd7109` 合入，后者没有应用代码变更。
 
 ## 1. 继承与覆盖
@@ -36,8 +36,8 @@
 
 - `app/pages/commission/apply.vue`：两个未预勾选确认——成年/设定权利、隐私已读并理解提交非接单。
 - `shared/schemas/commission.ts` 与提交 service：只增加两个 `z.literal(true)` 请求字段并在消费上传前校验；不持久化确认、不新增版本握手。
-- `site_content` 现有 about/commission/terms/privacy/contact 字段与管理端：继续承担真实经营主体、隐私政策、服务条款和联系信息；不新增通用 CMS 或专用处理者字段。
-- `scripts/`、现有 repository/service/storage：单条申请 retention Review 与精确删除 CLI；不提供自动批量删除。
+- `site_content` 现有 about/commission/terms/privacy/contact 字段与管理端：继续承担已确认处理者“有点小狗工作室”、隐私政策、服务条款和联系信息；不新增通用 CMS 或专用处理者字段。
+- 现有 repository/service/storage：为 CLI 和 `/admin/commissions` 提供同一套单条 retention Review、dry-run 与精确删除能力；不提供自动批量删除。
 - `/licenses`、生成脚本与第三方 runtime/asset registry：第三方声明事实源。当前 release workflow 把包含 FFmpeg 的镜像发布到公开 Docker Hub，因此 FFmpeg 必须按分发场景留存精确二进制、许可证、对应源码和构建信息。
 
 以下模块只继承、不在本轮重构：管理员认证、作品/水印领域模型、OSS CORS、Nginx/Compose、支付外部流程、QQ 平台本身。
@@ -55,7 +55,7 @@ Apple Design Skill 提供“动作为什么发生、从哪里来、怎样返回�
 
 > **简洁底盘 + 灵动角色感**。
 
-允许一次性、可解释的轻弹性、遮罩揭示、图文错峰、媒体聚焦和成功反馈；不允许持续漂浮、无意义弹跳、粒子、全屏视差或多个大对象同时抢动。普通实现仍优先 CSS/WAAPI，不把 Motion/Framer Motion 作为默认依赖。
+允许一次性、可解释的轻弹性、遮罩揭示、图文错峰、媒体聚焦和成功反馈；不允许持续漂浮、无意义弹跳、粒子、全屏视差或多个大对象同时抢动。普通实现仍优先 CSS/WAAPI，不把 Motion/Framer Motion 作为默认依赖。首页桌面逐幕 wheel 是用户新确认的唯一例外，只在 `min-width: 1024px` 生效；1023px 及以下不拦截原生滚动。
 
 ## 4. 接口与排序口径
 
@@ -101,7 +101,7 @@ privacyNoticeAcknowledged: true
 
 ### 4.4 删除能力
 
-- 首版为受控 CLI/容器 one-shot operation，不提供匿名公开删除接口。
+- 首版同时提供受控 CLI/容器 one-shot operation 与认证管理端的单条删除入口；不提供匿名公开删除接口。
 - Review 命令可以按状态/日期列出脱敏候选；正式删除每次只接受一个 submission ID/回执。
 - 默认 dry-run；正式执行要求显式 `--execute` 与固定强确认短语。
 - 不建设自动调度、通用规则引擎、时间批量删除或后台“一键清空”。
@@ -170,6 +170,8 @@ privacyNoticeAcknowledged: true
 ## 9. 编码与命名约定
 
 - 动效 token 使用 `motion-*` 语义命名；组件不得继续散落 620ms、680ms 等局部常量。
+- 首页桌面逐幕滚动只允许一个 composable 管理 Hero、代表作品 01/02、自设委托、设定领养与 Footer 的顺序；普通路由和其它页面不得复用 wheel 拦截。
+- 公开非 hash 导航由统一 router scroll behavior 在新路由第一帧定位页面顶部；点击当前路由的品牌/导航入口也回到该页页头；浏览器返回/前进只在目标页加载完成后恢复 saved position，真实 hash 继续使用统一 Header offset。不得在每个首页按钮上分别补 `scrollTo`。
 - 纵向运动表示阅读进程；横向运动表示媒体关系；轻微旋转/弹性只用于角色感强调和直接反馈。
 - 一个视口最多一个主要大对象运动；移动端减少幅度并移除 hover-only 行为。
 - 公开行动统一为 primary / secondary / text；管理端行动使用独立但统一的 admin primitive。

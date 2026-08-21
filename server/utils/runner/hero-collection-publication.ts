@@ -19,11 +19,11 @@ import {
   findHeroItemVariants,
   findPublicKeysForHeroItem,
   hasEnabledHeroItemAtOrder,
+  insertHeroAuditLog,
   setHeroItemEnabled,
   setHeroItemPreview,
 } from '../repository/hero-collection-repository'
 import type { HeroItemRow } from '../repository/hero-collection-repository'
-import { insertHomeAuditLog } from '../repository/hero-repository'
 import {
   completeOperation,
   deletePublicVariant,
@@ -118,7 +118,7 @@ function assertItemCanEnable(sqlite: Database.Database, item: HeroItemRow) {
     throw new ServiceError(409, 'CONFLICT', 'Hero item position is occupied.', 'HERO_SLOT_LIMIT')
   }
   if (!assetSupportsSiteDisplay(sqlite, item.assetId, [itemUsage(item)])) {
-    throw new ServiceError(409, 'CONFLICT', 'Hero asset requires confirmed upscale.', 'HERO_ASSETS_REQUIRE_UPSCALE')
+    throw new ServiceError(409, 'CONFLICT', 'Hero asset requires confirmed upscale.', 'HERO_ASSET_REQUIRES_UPSCALE')
   }
 }
 
@@ -248,7 +248,7 @@ export async function createHeroCollectionItemPreview(
     throw new ServiceError(404, 'NOT_FOUND', 'Hero item was not found.')
   }
   if (item.enabled === 1) {
-    throw new ServiceError(409, 'CONFLICT', 'Disable the hero item before previewing it.', 'HERO_SLIDE_ENABLED')
+    throw new ServiceError(409, 'CONFLICT', 'Disable the hero item before previewing it.', 'HERO_ITEM_ENABLED')
   }
   const profileId = activeWatermarkProfileId(sqlite)
   if (!profileId) {
@@ -305,7 +305,7 @@ export function startHeroCollectionItemUpscale(
     throw new ServiceError(404, 'NOT_FOUND', 'Hero item was not found.')
   }
   if (item.enabled === 1) {
-    throw new ServiceError(409, 'CONFLICT', 'Enabled hero items cannot be upscaled.', 'HERO_SLIDE_ENABLED')
+    throw new ServiceError(409, 'CONFLICT', 'Enabled hero items cannot be upscaled.', 'HERO_ITEM_ENABLED')
   }
   const variants = findHeroItemVariants(sqlite, [item.assetId]).get(item.assetId) ?? []
   if (heroItemUpscaleReady(item, variants)) {
@@ -378,7 +378,7 @@ export async function runHeroCollectionItemUpscale(
       if (changed.changes !== 1) {
         throw new Error('Hero upscale commit lost its lease.')
       }
-      insertHomeAuditLog(sqlite, {
+      insertHeroAuditLog(sqlite, {
         action: 'HERO_COLLECTION_ITEM_UPSCALE',
         actorUserId,
         entityId: item.id,
@@ -523,7 +523,7 @@ export async function runHeroCollectionItemPublication(
       if (changed.changes !== 1) {
         throw new Error('Hero publication commit lost its lease.')
       }
-      insertHomeAuditLog(sqlite, {
+      insertHeroAuditLog(sqlite, {
         action: 'HERO_COLLECTION_ITEM_ENABLE',
         actorUserId,
         entityId: item.id,
@@ -712,7 +712,7 @@ export async function runHeroCollectionItemUnpublication(
       markVariantsCleanupPending(sqlite, keys, now)
       updateOperationStatus(sqlite, operationId, 'CLEANING_PUBLIC', keys, now)
       setOperationEdgePurgeManifest(sqlite, operationId, edgeUrls, now)
-      insertHomeAuditLog(sqlite, {
+      insertHeroAuditLog(sqlite, {
         action: 'HERO_COLLECTION_ITEM_DISABLE',
         actorUserId,
         entityId: item.id,

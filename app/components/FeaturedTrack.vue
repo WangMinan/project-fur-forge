@@ -39,22 +39,22 @@ function step() {
   return track ? track.clientWidth * 0.72 : 320
 }
 
-function scrollPrev() {
-  trackRef.value?.scrollBy({ left: -step(), behavior: scrollBehavior() })
+function scrollPrev(behavior: ScrollBehavior = scrollBehavior()) {
+  trackRef.value?.scrollBy({ left: -step(), behavior })
 }
 
-function scrollNext() {
-  trackRef.value?.scrollBy({ left: step(), behavior: scrollBehavior() })
+function scrollNext(behavior: ScrollBehavior = scrollBehavior()) {
+  trackRef.value?.scrollBy({ left: step(), behavior })
 }
 
 function onKeydown(event: KeyboardEvent) {
   if (event.key === 'ArrowLeft') {
     event.preventDefault()
-    scrollPrev()
+    scrollPrev('auto')
   }
   else if (event.key === 'ArrowRight') {
     event.preventDefault()
-    scrollNext()
+    scrollNext('auto')
   }
 }
 
@@ -74,31 +74,6 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="featured-track" data-testid="featured-track">
-    <div class="featured-track__controls">
-      <button
-        type="button"
-        class="featured-track__button"
-        aria-label="上一批作品"
-        :disabled="!canPrev"
-        @click="scrollPrev"
-      >
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-          <path d="M11.5 3.5L6 9l5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        class="featured-track__button"
-        aria-label="下一批作品"
-        :disabled="!canNext"
-        @click="scrollNext"
-      >
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-          <path d="M6.5 3.5L12 9l-5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-      </button>
-    </div>
-
     <div
       ref="trackRef"
       class="featured-track__rail"
@@ -116,15 +91,46 @@ onBeforeUnmount(() => {
         class="featured-track__item"
       />
     </div>
+
+    <div class="featured-track__controls">
+      <button
+        type="button"
+        class="featured-track__button"
+        aria-label="上一批作品"
+        :disabled="!canPrev"
+        @click="scrollPrev()"
+      >
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+          <path d="M11.5 3.5L6 9l5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="featured-track__button"
+        aria-label="下一批作品"
+        :disabled="!canNext"
+        @click="scrollNext()"
+      >
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+          <path d="M6.5 3.5L12 9l-5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+    </div>
   </div>
 </template>
 
 <style scoped>
+.featured-track {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+  max-width: 100%;
+}
+
 .featured-track__controls {
   display: flex;
   gap: var(--space-2);
   justify-content: flex-end;
-  margin-bottom: var(--space-4);
 }
 
 .featured-track__button {
@@ -138,7 +144,7 @@ onBeforeUnmount(() => {
   border-radius: var(--radius-full);
   cursor: pointer;
   place-items: center;
-  transition: border-color var(--duration-fast) var(--easing-standard);
+  transition: border-color var(--motion-duration-feedback) var(--motion-ease-standard);
 }
 
 .featured-track__button:hover:not(:disabled) {
@@ -153,6 +159,8 @@ onBeforeUnmount(() => {
 
 .featured-track__rail {
   display: flex;
+  min-width: 0;
+  max-width: 100%;
   gap: var(--space-4);
   padding-bottom: var(--space-2);
   overflow-x: auto;
@@ -184,7 +192,7 @@ onBeforeUnmount(() => {
 
 @media (min-width: 1024px) {
   .featured-track__rail {
-    --featured-row-height: 22rem;
+    --featured-row-height: min(56svh, 31.5rem);
   }
 }
 </style>

@@ -1,7 +1,7 @@
 # 数据迁移与运维计划：需求4
 
 > **角色**：固定需求4的前向文案迁移、无 Schema 变更项、生产停止点与人工删除流程。
-> **状态**：2026-08-19 第二轮 Review 与空上下文文档复核后定稿待实现。
+> **状态**：2026-08-21 仅阶段 E 开放且不新增 Schema；焦点交互复用现有字段的可拖标记与双滑杆。历史迁移/生产事项已从活跃 backlog 关闭，但未来部署仍须按停止点现场核对。
 > **原则**：本轮不为轻量确认新增数据库结构；不重写需求1～3已经执行的迁移。
 
 ## 1. 当前基线
@@ -55,12 +55,11 @@
 
 目标全文来自 `../requirements/COPY.md`。
 
-### 4.2 实际经营主体
+### 4.2 个人信息处理者
 
-- 仓库不提交真实经营主体证照信息，也不新增结构化字段。
-- `privacy_policy` 不在不知道真实经营主体时自动写入带占位符的数据库默认值。
-- 发布前由工作室依据 `COPY.md` 通过现有管理端写入完整隐私政策，把 `{{controller_name}}` 替换为实际经营主体名称，并核对 `contact_email`。
-- 只有最终成文保存完成后才递增隐私分区版本；readiness/发布 smoke 验证公开文本不存在 `{{...}}` 占位和旧“网站不收集联系方式/设定图”表述，不读取或记录证照详情。
+- 用户已确认个人信息处理者名称为“有点小狗工作室”；仓库不提交证照信息，也不新增结构化字段。
+- `0046_r4_privacy_controller.sql` 只对 NULL、空白或精确历史默认的 `privacy_policy` 写入完整目标政策，并动态复用当前 `contact_email`；管理员自定义政策不覆盖。
+- 迁移实际改写时才递增隐私分区版本；readiness/发布 smoke 验证公开文本不存在 `{{...}}` 占位和旧“网站不收集联系方式/设定图”表述。
 
 ### 4.3 不可自动替换
 
@@ -83,7 +82,7 @@
 
 ```text
 1. 完成目标隐私政策/服务条款默认迁移
-2. 工作室人工写入真实经营主体名称并核对邮箱/QQ
+2. 前向迁移对精确旧默认写入“有点小狗工作室”并复用当前邮箱，管理员自定义政策保留
 3. 申请页增加两个未预勾选确认
 4. 请求 Schema 增加两个 literal true
 5. service 在消费 upload 前校验
@@ -94,7 +93,7 @@
 停止点：
 
 - 隐私政策仍声称网站不收集联系方式/设定图；
-- 页面出现 `{{controller_name}}` 等占位；
+- 页面出现 `{{...}}` 占位；
 - 两项确认被预勾选；
 - 缺失/false 仍可提交；
 - 校验失败后 upload 被消费或表单/图片丢失；
@@ -123,12 +122,18 @@
 
 - 复用 `assets.focal_x/focal_y`；
 - 已有任意坐标原样保留；
-- UI 九宫格写入 0 / 0.5 / 1；
+- UI 通过画面内拖动与水平/垂直滑杆写入归一化 `[0,1]` 浮点值，不再量化到九宫格；
 - recipe identity 已含焦点，修改后必须通过既有 publication operation 生成新变体；
 - 不直接 UPDATE 已启用 Hero 对应资产后让公开 URL 与数据库身份失配；
 - 四集合继续独立，管理端重组不改变 collection version 或 owner context。
 
 如果同一 asset 被多个 item 复用且焦点需求冲突，本轮阻断并要求上传独立资产，不静默覆盖。
+
+### 7.1 旧 paired Hero 退役
+
+- `0047_r4_retire_paired_hero.sql` 删除旧 `site_hero_slides`、linked-work 保护触发器，并把资产保护触发器收敛到 `site_hero_items`。
+- 当前 Schema、API、DTO、runner、repository 与测试只保留四个独立 collection；历史 `0037` pair 拆分迁移继续保留，不改写。
+- 用户确认生产采用完整重新部署；本轮不保留旧客户端/API 兼容层，也不把旧 operation 排空作为代码删除停止点。
 
 ## 8. 人工保留复核
 
@@ -141,18 +146,18 @@
 - 用户删除请求：收到后单独执行；
 - accepted：业务、保修、争议和法定必要期限结束后逐条确认。
 
-SOP 记录：执行日期、操作员、环境、dry-run 计数、逐条结果和下一次复核日期；不记录 PII、完整 Key 或可恢复 manifest。
+SOP 只维护流程、停止点与建议频率；不建调度/提醒，不在仓库文档填写虚构的生产执行日期、操作员或删除结果。真实执行证据若后续由操作员保留，仍不记录 PII、完整 Key 或可恢复 manifest。
 
 ### 8.2 Review 候选
 
 只读候选可以按：
 
 ```text
-rejected AND handled_at < cutoff
+rejected
 pending AND created_at < review_cutoff   # 只提示复核
 ```
 
-- 默认 rejected 业务 cutoff 为处理满 180 天；
+- rejected 在拒绝后立即成为单条删除候选；
 - pending 不标记为自动可删；
 - accepted 只通过显式 ID 人工查看；
 - legal hold/争议由操作员排除。
@@ -184,7 +189,7 @@ DELETE COMMISSION APPLICATION DATA
 4. 删除 versions/delete markers（若启用）；
 5. 验证对象不可达；
 6. 事务删除/去标识 submission、session、asset variants、asset 和非必要备注；
-7. 写最小化删除审计；
+7. 写最小化删除审计（actor、时间、submission ID 摘要与 SUCCESS/FAILURE）；本次数据库/对象计数保留在 dry-run/execute 响应，不持久化第二套详情；
 8. 再次查询确保零残留。
 
 不得提供 `--status rejected --before ... --execute` 之类时间批量执行。人工批次通过逐条重复命令完成。
@@ -207,15 +212,15 @@ DELETE COMMISSION APPLICATION DATA
 
 ## 10. 测试体系迁移
 
-### 10.1 先降级，再精选
+### 10.1 先分类，再精选并退役
 
-现有测试不要求一次性全部删除：
+测试体系按以下顺序完成迁移：
 
 1. 给现有 unit/integration/E2E 标注 `core / smoke / legacy`；
 2. 默认脚本只执行 core；
 3. 建立少量 smoke；
 4. legacy 从默认 workflow 移除；
-5. 逐项 Review：证明稳定不变量则提升，否则删除；
+5. 逐项 Review：证明稳定不变量则提升，否则删除，最终物理删除平行 legacy 套件；
 6. 不为全绿机械修改旧文案、DOM 或动画毫秒断言。
 
 ### 10.2 目标命令
@@ -227,7 +232,6 @@ pnpm check:fast    # lint + typecheck + core
 pnpm test:core     # 稳定不变量
 pnpm test:smoke    # 少量 Playwright 主流程
 pnpm test:release  # build/verify + 必要部署 smoke，由人显式启动
-pnpm test:legacy   # 迁移期可选，不作门禁，最终可删除
 ```
 
 ### 10.3 Workflow
@@ -257,18 +261,20 @@ release/manual：
 ```text
 config/third-party-registry.(json|ts)
 app/assets/licenses/third-party-notices.json
-app/assets/licenses/THIRD_PARTY_NOTICES.txt
+app/assets/licenses/third-party-summary.json
+public/THIRD_PARTY_NOTICES.txt
 ```
 
 - JSON/TXT 由同一输入生成；
 - 不写生成时间；
 - 排序稳定；
-- npm 事实来自生产依赖；
-- `ffmpeg-static` 包与镜像内实际 FFmpeg 二进制分开记录；Linux 发布镜像中的二进制由 runtime registry 补充精确版本、SHA-256、许可证、对应源码、补丁和构建配置；
+- npm 事实来自当前生成环境已安装的 production dependencies；平台可选包明确为生成环境快照，不称为目标 Linux runtime closure；
+- `ffmpeg-static` 包与镜像内实际 FFmpeg 二进制分开记录；本轮只完成 npm/asset 事实。Linux 发布镜像中的二进制 registry、容器嵌入与分发核验后置到部署阶段；
 - Noto Serif SC、ZhuoHei Collage 由 asset registry 补充；
 - release 前核对 Docker Hub 可见性；当前公开仓库按分发场景生成容器内声明和 `/licenses` 数据，禁止输出“未分发”文案；
 - 缺失/未知许可证时失败，不猜测；
 - `/licenses` 不再维护平行手写运行时数组。
+- 页面只消费生成的紧凑 summary；完整 transitive JSON/TXT 保留为构建产物和下载，不进入 SSR/DOM。跨平台 drift 在显式 release 检查处理，不加入日常 `check:fast`。
 
 ## 12. 发布与回滚
 
@@ -288,7 +294,7 @@ app/assets/licenses/THIRD_PARTY_NOTICES.txt
 - `/adoptions` 排序和首页单项结果；
 - 单条删除 dry-run/execute/重入计数；
 - third-party notices 生成与 drift 结果；
-- Hero 焦点中心/四角与横竖管理体验；
+- Hero 焦点拖动、水平/垂直控制条与横竖管理体验；
 - 统一上传/FFmpeg/operation 进度截图；
 - `check:fast`、`test:smoke`、release smoke；
 - 王旻安/景宸人工视觉验收。

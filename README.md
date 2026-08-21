@@ -7,7 +7,7 @@
 - 公开站：Nuxt SSR
 - 管理端：Nuxt CSR
 - 媒体：私有 OSS 原图、受控公开派生、ESA 分发
-- 当前活跃增量：[`agent_docs/需求4-站点视觉升级与内容合规/`](./agent_docs/需求4-站点视觉升级与内容合规/)
+- 当前活跃增量：[`需求4阶段 E`](./agent_docs/需求4-站点视觉升级与内容合规/)（仅 UI、布局、响应式与动效优化）
 
 ## 环境
 
@@ -39,14 +39,15 @@ Copy-Item .env.example .env
 ```bash
 pnpm lint
 pnpm typecheck
-pnpm test
-pnpm test:integration
-pnpm test:e2e
+pnpm test            # 等价于 test:core
+pnpm test:core
+pnpm test:smoke
+pnpm test:release    # 人工/发布路径
 pnpm build
 pnpm run verify:production
 ```
 
-这些是当前仓库仍可调用的命令，不表示每次改动都要顺序执行全套。需求4将把验证收敛为快速 core、少量 smoke 和显式 release 流程；在新脚本落地前，测试选择、人工浏览器门禁和 legacy 套件边界以 [`CLAUDE.md`](./CLAUDE.md) 为准。
+这些是当前仓库仍可调用的命令，不表示每次改动都要顺序执行全套。验证已经收敛为快速 core、少量 smoke 和显式 release 流程；旧实现型 unit/integration/E2E 套件已退役，测试选择与人工浏览器门禁以 [`CLAUDE.md`](./CLAUDE.md) 为准。
 
 仓库当前不要求 GitHub required check。公开视觉、真实图片、动效和文案最终由王旻安/景宸人工验收，自动化只保护稳定不变量和基础可运行性。
 

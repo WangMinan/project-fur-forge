@@ -142,7 +142,6 @@ function operationDto(row: WatermarkOperationRow): WatermarkOperationDto {
     profileId: row.profileId,
     status: row.status,
     affectedWorkCount: row.affectedWorkCount,
-    affectedHeroSlideCount: row.affectedHeroSlideCount,
     targetVariantCount: row.targetVariantCount,
     generatedVariantCount: row.generatedVariantCount,
     verifiedVariantCount: row.verifiedVariantCount,
@@ -524,8 +523,6 @@ async function runRebuild(
     const targets = watermarkTargets(sqlite)
     const counts = impact(sqlite, targets)
     setRebuildCounts(sqlite, operationId, {
-      // 站点 Hero 不再随 profile 重建，受影响轮播项恒为 0。
-      affectedHeroSlideCount: 0,
       affectedWorkCount: counts.publishedWorkCount,
       targetVariantCount: counts.targetVariantCount,
     }, now)

@@ -1,7 +1,6 @@
 import {
   adminAssetDtoSchema,
   publicAltSchema,
-  publicHeroSlideDtoSchema,
   publicPngSourceSetDtoSchema,
   publicSourceSetDtoSchema,
   publicVariantDtoSchema,
@@ -14,16 +13,11 @@ import type {
   HeroOrientation,
   MediaRole,
   PublicHeroItemDto,
-  PublicHeroSlideDto,
   PublicPngSourceSetDto,
   PublicSourceSetDto,
   PublicVariantDto,
 } from '../../../shared/types/contracts'
 import type { RuntimeConfig } from '../runtime-config'
-import {
-  completePublicHeroVariants,
-  HERO_RECIPE,
-} from './hero-publication'
 import {
   completeSiteDisplayVariantsForVersion,
   LEGACY_SITE_DISPLAY_RECIPE_VERSION,
@@ -72,25 +66,7 @@ export interface VariantRecord {
   watermarkScalePercent: number | null
 }
 
-export interface HeroSlideRecord {
-  /** 迁移期兼容读取旧水印 Hero 变体时使用；新变体不需要 profile 身份。 */
-  activeWatermarkProfileId: string | null
-  id: string
-  version: number
-  enabled: boolean
-  altText: string
-  placement: HeroPlacement
-  sortOrder: number
-  landscapeVariants: VariantRecord[]
-  portraitVariants: VariantRecord[]
-  linkedWork: {
-    publicationStatus: 'draft' | 'published' | 'unpublished'
-    slug: string
-  } | null
-}
-
 export interface HeroItemRecord {
-  activeWatermarkProfileId: string | null
   altText: string
   orientation: HeroOrientation
   placement: HeroPlacement
@@ -232,78 +208,6 @@ export function toPublicSourceSetDto(
   return publicSourceSetDtoSchema.parse({ webp, fallback })
 }
 
-export function toPublicHeroSlideDto(
-  record: HeroSlideRecord,
-  mediaBaseUrl: string,
-  appEnv: RuntimeConfig['appEnv'] = 'development',
-): PublicHeroSlideDto | null {
-  if (!record.enabled) {
-    return null
-  }
-
-  if (
-    record.linkedWork
-    && record.linkedWork.publicationStatus !== 'published'
-  ) {
-    throw new Error('Enabled hero slide links to an unpublished work.')
-  }
-
-  const usages = SITE_HERO_USAGES[record.placement]
-  const completeHeroVersion = (recipeVersion: typeof SITE_DISPLAY_RECIPE_VERSION | typeof LEGACY_SITE_DISPLAY_RECIPE_VERSION) => {
-    const landscape = completeSiteDisplayVariantsForVersion(
-      usages.landscape,
-      record.landscapeVariants,
-      recipeVersion,
-    )
-    const portrait = completeSiteDisplayVariantsForVersion(
-      usages.portrait,
-      record.portraitVariants,
-      recipeVersion,
-    )
-    return landscape && portrait
-      ? {
-          landscape: {
-            variants: landscape,
-            widths: siteDisplayWidthsForVersion(usages.landscape, recipeVersion),
-          },
-          portrait: {
-            variants: portrait,
-            widths: siteDisplayWidthsForVersion(usages.portrait, recipeVersion),
-          },
-        }
-      : null
-  }
-  const unwatermarked = completeHeroVersion(SITE_DISPLAY_RECIPE_VERSION)
-    ?? completeHeroVersion(LEGACY_SITE_DISPLAY_RECIPE_VERSION)
-  // T51-F7：完整 v2 优先、完整 v1 次之；只在两者都缺失时回退历史水印 Hero。
-  const sources = unwatermarked
-    ? {
-        landscape: toPublicSourceSetDto(
-          unwatermarked.landscape.variants,
-          mediaBaseUrl,
-          unwatermarked.landscape.widths,
-          appEnv,
-        ),
-        portrait: toPublicSourceSetDto(
-          unwatermarked.portrait.variants,
-          mediaBaseUrl,
-          unwatermarked.portrait.widths,
-          appEnv,
-        ),
-      }
-    : legacyWatermarkedHeroSources(record, mediaBaseUrl, appEnv)
-
-  return publicHeroSlideDtoSchema.parse({
-    alt: toSafePublicAlt(record.altText, '首页代表作品'),
-    sortOrder: record.sortOrder,
-    landscape: sources.landscape,
-    portrait: sources.portrait,
-    linkedWorkHref: record.linkedWork
-      ? `/works/${record.linkedWork.slug}`
-      : null,
-  })
-}
-
 /** R3-C: one independently ordered Hero item for exactly one orientation. */
 export function toPublicHeroItemDto(
   record: HeroItemRecord,
@@ -331,63 +235,19 @@ export function toPublicHeroItemDto(
   const role = record.orientation === 'landscape'
     ? 'home_hero_landscape'
     : 'home_hero_portrait'
-  const sources = current
-    ? toPublicSourceSetDto(
-        current.variants,
-        mediaBaseUrl,
-        current.widths,
-        appEnv,
-      )
-    : record.activeWatermarkProfileId
-      ? toPublicSourceSetDto(
-          completePublicHeroVariants(
-            role,
-            record.variants,
-            record.activeWatermarkProfileId,
-          ),
-          mediaBaseUrl,
-          HERO_RECIPE[role].widths,
-          appEnv,
-        )
-      : (() => {
-          throw new Error('Enabled hero item has no complete public variants.')
-        })()
+  if (!current) {
+    throw new Error(`Enabled ${role} item has no complete site display variants.`)
+  }
+  const sources = toPublicSourceSetDto(
+    current.variants,
+    mediaBaseUrl,
+    current.widths,
+    appEnv,
+  )
 
   return publicHeroItemDtoSchema.parse({
     alt: toSafePublicAlt(record.altText, '首页代表作品'),
     sortOrder: record.sortOrder,
     sources,
   })
-}
-
-function legacyWatermarkedHeroSources(
-  record: HeroSlideRecord,
-  mediaBaseUrl: string,
-  appEnv: RuntimeConfig['appEnv'],
-) {
-  if (!record.activeWatermarkProfileId) {
-    throw new Error('Enabled hero slide has no complete site display variants.')
-  }
-  return {
-    landscape: toPublicSourceSetDto(
-      completePublicHeroVariants(
-        'home_hero_landscape',
-        record.landscapeVariants,
-        record.activeWatermarkProfileId,
-      ),
-      mediaBaseUrl,
-      HERO_RECIPE.home_hero_landscape.widths,
-      appEnv,
-    ),
-    portrait: toPublicSourceSetDto(
-      completePublicHeroVariants(
-        'home_hero_portrait',
-        record.portraitVariants,
-        record.activeWatermarkProfileId,
-      ),
-      mediaBaseUrl,
-      HERO_RECIPE.home_hero_portrait.widths,
-      appEnv,
-    ),
-  }
 }

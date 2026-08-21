@@ -127,7 +127,6 @@ export const watermarkOperationDtoSchema = z.object({
   profileId: resourceIdSchema,
   status: watermarkOperationStatusSchema,
   affectedWorkCount: z.number().int().nonnegative(),
-  affectedHeroSlideCount: z.number().int().nonnegative(),
   targetVariantCount: z.number().int().nonnegative(),
   generatedVariantCount: z.number().int().nonnegative(),
   verifiedVariantCount: z.number().int().nonnegative(),

@@ -137,7 +137,7 @@ export async function seedBundledWatermark(
     const publicContentCount = Number(sqlite.prepare(`
       SELECT
         (SELECT count(*) FROM works WHERE publication_status = 'published')
-        + (SELECT count(*) FROM site_hero_slides WHERE enabled = 1)
+        + (SELECT count(*) FROM site_hero_items WHERE enabled = 1)
     `).pluck().get())
     if (publicContentCount === 0) {
       sqlite.transaction(() => {
