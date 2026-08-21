@@ -201,7 +201,7 @@ onMounted(() => {
 }
 
 .work-detail__back {
-  max-width: var(--public-content-wide);
+  max-width: var(--public-content-article);
   margin: 0 auto;
   padding: var(--space-5) var(--public-page-padding) 0;
 }
@@ -220,7 +220,7 @@ onMounted(() => {
 }
 
 .work-detail__header {
-  max-width: var(--public-content-wide);
+  max-width: var(--public-content-article);
   margin: 0 auto;
   padding: 0 var(--public-page-padding) var(--space-6);
 }
@@ -242,7 +242,7 @@ onMounted(() => {
 .work-detail__layout {
   display: grid;
   gap: var(--space-6);
-  max-width: var(--public-content-wide);
+  max-width: var(--public-content-article);
   margin: 0 auto;
   padding: 0 var(--public-page-padding);
 }
