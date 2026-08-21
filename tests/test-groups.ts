@@ -26,6 +26,7 @@ export const coreTestFiles = [
   'tests/unit/r3-stage-a-remote-cleanup.test.ts',
   'tests/unit/request-body.test.ts',
   'tests/unit/request-rate-limit.test.ts',
+  'tests/unit/router-scroll-behavior.test.ts',
   'tests/unit/runtime-boundaries.test.ts',
   'tests/unit/search.test.ts',
   'tests/unit/site-display-recipe.test.ts',

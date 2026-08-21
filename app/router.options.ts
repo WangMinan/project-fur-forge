@@ -1,4 +1,7 @@
 import type { RouterConfig } from '@nuxt/schema'
+import type { RouterScrollBehavior } from 'vue-router'
+
+type SavedPosition = NonNullable<Parameters<RouterScrollBehavior>[2]>
 
 function anchorOffset(hash: string) {
   try {
@@ -11,10 +14,20 @@ function anchorOffset(hash: string) {
   }
 }
 
+function restoreAfterPageLoad(position: SavedPosition) {
+  const nuxtApp = useNuxtApp()
+
+  return new Promise<SavedPosition>((resolve) => {
+    nuxtApp.hooks.hookOnce('page:loading:end', () => {
+      requestAnimationFrame(() => resolve(position))
+    })
+  })
+}
+
 export default {
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
-      return savedPosition
+      return restoreAfterPageLoad(savedPosition)
     }
     if (to.hash) {
       return {
@@ -23,7 +36,7 @@ export default {
       }
     }
     if (to.fullPath === from.fullPath) {
-      return false
+      return { left: 0, top: 0 }
     }
     return { left: 0, top: 0 }
   },

@@ -209,7 +209,7 @@ DITE DOG 的动效不是科技产品展示页的机械减法，也不是娱乐�
 - `prefers-reduced-transparency` 关闭 blur，使用更实背景。
 - `prefers-contrast: more` 提高背景与边界对比。
 - 任何内容 SSR/无 JavaScript 默认可见。
-- 公开非 hash 路由在导航完成第一帧位于页面顶部；浏览器返回/前进恢复历史位置，真实 hash 继续按统一 Header offset 定位。
+- 公开非 hash 路由在导航完成第一帧位于页面顶部；再次点击当前页的品牌/导航入口也回到该页页头；浏览器返回/前进等待目标页加载完成后恢复历史位置，真实 hash 继续按统一 Header offset 定位。
 
 ### 7.6 对象连续性
 

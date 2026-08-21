@@ -214,7 +214,7 @@ A 组件与进度地基
 - T46-F1：首页 ≥1024px 增加 Hero/lead/继续浏览/委托/领养/Footer 的逐幕 wheel；1023px 及以下原生滚动。修复 Hero 首屏动画重启、Hero 焦点拖动/滑杆和委托复制邮箱布局。
 - T46-F2：首页 Header 固定并在离开 Hero 后切换实底；只保留 scroll container 的单一 Header offset；“继续浏览”提高媒体高度并从 Header 下方开始；三张主媒体 hover 命中区缩到图片本身、回落改用 state 时序。
 - T46-F3：“继续浏览”标题与轨道按钮共享 scene 顶部 padding，修复按钮悬在 Header 下方而标题位于内容区的问题。
-- T46-F4：按用户实画面复核取消中文主标题首载动效并预加载拼贴字体；以 router scroll behavior 统一保证非 hash 新路由第一帧到顶且不破坏返回/前进/hash；委托主图取消整图链接；代表作品删除 caption 内孤立 `01`，PC 两个停靠点都使用“代表作品”标题与 `SELECTED WORK · 01/02` 眉题，移动端只显示第一处标题，轨道控制下置。
+- T46-F4：按用户实画面复核取消中文主标题首载动效并预加载拼贴字体；以 router scroll behavior 统一保证非 hash 导航第一帧到顶、当前页入口回页头，并在目标页加载完成后恢复返回/前进位置，hash 仍使用 Header offset；委托主图取消整图链接；代表作品删除 caption 内孤立 `01`，PC 两个停靠点都使用“代表作品”标题与 `SELECTED WORK · 01/02` 眉题，移动端只显示第一处标题，轨道控制下置。
 
 ### E6. 连续验收
 
