@@ -61,11 +61,9 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
     data-home-scroll-scene
     data-testid="home-business-entries"
   >
-    <header class="home-commission__header">
-      <div>
-        <p class="home-commission__eyebrow">CUSTOM COMMISSION</p>
-        <h2 id="home-entries-title" class="home-commission__title">自设委托</h2>
-      </div>
+    <header class="home-scene-heading">
+      <p class="home-scene-heading__eyebrow">CUSTOM COMMISSION</p>
+      <h2 id="home-entries-title" class="home-scene-heading__title">自设委托</h2>
     </header>
 
     <article
@@ -114,30 +112,6 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   max-width: var(--public-content-wide);
   margin: 0 auto;
   padding: var(--space-6) var(--public-page-padding) 0;
-}
-
-.home-commission__header {
-  display: grid;
-}
-
-.home-commission__header > div {
-  display: grid;
-  gap: var(--space-2);
-}
-
-.home-commission__eyebrow {
-  color: var(--public-text-tertiary);
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  letter-spacing: 0.16em;
-}
-
-.home-commission__title {
-  font-family: var(--font-public-display);
-  font-size: var(--font-size-xl);
-  font-weight: 600;
-  line-height: var(--line-height-heading);
-  letter-spacing: var(--letter-spacing-tight);
 }
 
 .home-commission__stage {

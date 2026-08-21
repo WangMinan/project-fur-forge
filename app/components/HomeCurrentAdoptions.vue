@@ -85,11 +85,9 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
     data-home-scroll-scene
     data-testid="home-current-adoptions"
   >
-    <header class="home-adoptions__header">
-      <div>
-        <p class="home-adoptions__eyebrow">CURRENT ADOPTION</p>
-        <h2 id="home-adoptions-title" class="home-adoptions__title">设定领养</h2>
-      </div>
+    <header class="home-scene-heading">
+      <p class="home-scene-heading__eyebrow">CURRENT ADOPTION</p>
+      <h2 id="home-adoptions-title" class="home-scene-heading__title">设定领养</h2>
     </header>
 
     <article class="home-adoption-poster" :data-work-slug="currentAdoption.work.slug">
@@ -136,30 +134,6 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   max-width: var(--public-content-wide);
   margin: 0 auto;
   padding: var(--space-6) var(--public-page-padding) 0;
-}
-
-.home-adoptions__header {
-  display: grid;
-}
-
-.home-adoptions__header > div {
-  display: grid;
-  gap: var(--space-2);
-}
-
-.home-adoptions__eyebrow {
-  color: var(--public-text-tertiary);
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  letter-spacing: 0.16em;
-}
-
-.home-adoptions__title {
-  font-family: var(--font-public-display);
-  font-size: var(--font-size-xl);
-  font-weight: 600;
-  line-height: var(--line-height-heading);
-  letter-spacing: var(--letter-spacing-tight);
 }
 
 .home-adoption-poster {

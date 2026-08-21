@@ -1,11 +1,12 @@
 # 实施备注
 
 > **角色**：阶段 4 实施过程中的执行痕迹；正式契约只回写 SPEC/models/PLAN/TASKS/STATE。
-> **状态**：T37～T46-F7 当前工程实现已记录；T47/GATE-E 真实手机与最终人工验收仍开放。
+> **状态**：T37～T46-F8 当前工程实现已记录；T47/GATE-E 真实手机与最终人工验收仍开放。
 
 ## 当前备注
 
 - 2026-08-22 代表作品资格、单幕双图与作品目录最终口径见 [`2026-08-22-T46-F5-F7-FEATURED-WORKS.md`](./2026-08-22-T46-F5-F7-FEATURED-WORKS.md)。
+- 2026-08-22 代表作品左上标题、双图留白与详情切换修正见 [`2026-08-22-T46-F8-FEATURED-LAYOUT-TRANSITION.md`](./2026-08-22-T46-F8-FEATURED-LAYOUT-TRANSITION.md)。
 
 - 第二轮应用代码审查基线为 `main@<ARCHIVED_COMMIT>`；修订后的文档已以 `main@<ARCHIVED_COMMIT>` 合入，后者没有应用代码变更。
 - 实现前先重新 fetch main；若代码已变化，必须先做影响分析，不照搬本文中的示意类型/迁移编号。

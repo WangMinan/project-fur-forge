@@ -10,11 +10,9 @@ import { PROJECT_NAME } from '~~/shared/constants/project'
 const route = useRoute()
 const slug = computed(() => String(route.params.slug ?? ''))
 const sharedViewTransitionName = computed(() => (
-  route.query.view === 'home-featured'
-    ? 'home-featured-media'
-    : route.query.view === 'home-adoption'
-      ? 'home-adoption-media'
-      : undefined
+  route.query.view === 'home-adoption'
+    ? 'home-adoption-media'
+    : undefined
 ))
 
 // 不提供显式 key：Nuxt 4 中静态 key 会让重挂载的详情页复用旧 slug 的缓存

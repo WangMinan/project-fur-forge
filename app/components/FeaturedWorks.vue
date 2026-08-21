@@ -24,36 +24,40 @@ function workTo(work: PublicWorkSummaryDto) {
     data-testid="featured-works"
     data-home-scroll-scene
   >
-    <div class="featured-works__media-grid">
-      <article
-        v-for="(work, index) in works"
-        :key="work.work.id"
-        class="featured-work"
-      >
-        <NuxtLink
-          :to="workTo(work)"
-          class="featured-work__media"
-          :data-work-slug="work.work.slug"
-          :style="index === 0 ? { viewTransitionName: 'home-featured-media' } : undefined"
-        >
-          <ResponsivePicture
-            :sources="work.card.sources"
-            :alt="work.card.alt"
-            sizes="(min-width: 1024px) 28rem, (min-width: 768px) 42vw, 100vw"
-          />
-        </NuxtLink>
-      </article>
-    </div>
+    <header class="home-scene-heading">
+      <p class="home-scene-heading__eyebrow">SELECTED WORKS</p>
+      <h2 id="featured-works-title" class="home-scene-heading__title">代表作品</h2>
+    </header>
 
-    <div class="featured-works__content">
-      <p class="featured-works__eyebrow">SELECTED WORKS</p>
-      <h2 id="featured-works-title" class="featured-works__title">代表作品</h2>
-      <p class="featured-works__description">
-        这里展示两件竖版出厂照。更多角色与制作细节，请前往完整作品展示。
-      </p>
-      <PublicAction to="/works" class="featured-works__action">
-        浏览作品展示
-      </PublicAction>
+    <div class="featured-works__stage">
+      <div class="featured-works__media-grid">
+        <article
+          v-for="work in works"
+          :key="work.work.id"
+          class="featured-work"
+        >
+          <NuxtLink
+            :to="workTo(work)"
+            class="featured-work__media"
+            :data-work-slug="work.work.slug"
+          >
+            <ResponsivePicture
+              :sources="work.card.sources"
+              :alt="work.card.alt"
+              sizes="(min-width: 1280px) 22.5rem, (min-width: 1024px) 31vw, (min-width: 768px) 44vw, 46vw"
+            />
+          </NuxtLink>
+        </article>
+      </div>
+
+      <div class="featured-works__content">
+        <p class="featured-works__description">
+          更多角色与制作细节，请前往完整作品展示。
+        </p>
+        <PublicAction to="/works" class="featured-works__action">
+          浏览作品展示
+        </PublicAction>
+      </div>
     </div>
   </section>
 </template>
@@ -61,13 +65,15 @@ function workTo(work: PublicWorkSummaryDto) {
 <style scoped>
 .featured-works {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
-  align-items: center;
-  gap: clamp(2.5rem, 6vw, 6rem);
-  width: 100%;
+  gap: var(--space-6);
   max-width: var(--public-content-wide);
   margin: 0 auto;
-  padding: var(--space-5) clamp(1rem, 2vw, 2rem);
+  padding: var(--space-6) var(--public-page-padding) 0;
+}
+
+.featured-works__stage {
+  display: grid;
+  gap: var(--space-5);
 }
 
 .featured-works__content {
@@ -78,31 +84,15 @@ function workTo(work: PublicWorkSummaryDto) {
   max-width: 20rem;
 }
 
-.featured-works__eyebrow {
-  color: var(--public-text-tertiary);
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  letter-spacing: 0.16em;
-}
-
-.featured-works__title {
-  font-family: var(--font-public-display);
-  font-size: var(--font-size-xl);
-  font-weight: 600;
-  line-height: var(--line-height-heading);
-  letter-spacing: var(--letter-spacing-tight);
-}
-
 .featured-works__media-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 25.5rem));
-  justify-content: center;
-  gap: clamp(1rem, 2vw, 2rem);
+  grid-template-columns: repeat(2, minmax(0, 22.5rem));
+  gap: clamp(1.75rem, 4vw, 3.5rem);
 }
 
 .featured-work {
   min-width: 0;
-  max-width: 25.5rem;
+  max-width: 22.5rem;
 }
 
 .featured-work__media {
@@ -130,11 +120,6 @@ function workTo(work: PublicWorkSummaryDto) {
 }
 
 @media (max-width: 1023px) {
-  .featured-works {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-5);
-  }
-
   .featured-works__content {
     order: -1;
     max-width: 32rem;
@@ -144,6 +129,14 @@ function workTo(work: PublicWorkSummaryDto) {
 @media (min-width: 1024px) {
   .featured-works {
     min-height: calc(100svh - var(--public-header-height));
+    align-content: center;
+    padding-block: var(--space-6);
+  }
+
+  .featured-works__stage {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+    align-items: center;
+    gap: clamp(2.5rem, 6vw, 6rem);
   }
 }
 
