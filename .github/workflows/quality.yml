@@ -26,8 +26,8 @@ on:
         type: boolean
 
 concurrency:
-  group: quality-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: quality-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_call' }}
 
 permissions:
   contents: read
@@ -36,12 +36,13 @@ env:
   APP_ENV: test
   NODE_VERSION: 24.18.0
   PNPM_VERSION: 11.18.0
+  DOCKER_BUILD_RECORD_UPLOAD: false
 
 jobs:
   checks:
     name: checks
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -62,59 +63,21 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Fast checks
         run: pnpm check:fast
 
-      - name: Upload check artifacts
-        if: always() && !cancelled()
-        uses: actions/upload-artifact@v7.0.1
-        with:
-          name: check-artifacts
-          path: |
-            test-results/
-            playwright-report/
-          if-no-files-found: ignore
-          retention-days: 7
-
-  release-tests:
-    name: release-tests
-    if: ${{ inputs.release == true }}
-    needs:
-      - checks
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Set up pnpm
-        uses: pnpm/setup@v2.0.2
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7.0.0
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
       - name: Install Chromium
+        if: ${{ inputs.release == true }}
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run release verification
+        if: ${{ inputs.release == true }}
         run: pnpm test:release
 
-      - name: Upload release-test artifacts
-        if: always() && !cancelled()
+      - name: Upload failed release-test artifacts
+        if: ${{ inputs.release == true && failure() && !cancelled() }}
         uses: actions/upload-artifact@v7.0.1
         with:
           name: release-test-artifacts
@@ -122,16 +85,15 @@ jobs:
             test-results/
             playwright-report/
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 3
 
   image-build:
     name: image-build
     if: ${{ inputs.release == true }}
     needs:
       - checks
-      - release-tests
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
@@ -151,8 +113,8 @@ jobs:
           push: false
           load: true
           tags: project-fur-forge:quality
-          cache-from: type=gha,scope=quality-image
-          cache-to: type=gha,mode=max,scope=quality-image
+          cache-from: type=gha,scope=release-image
+          cache-to: type=gha,mode=max,scope=release-image
 
       - name: Exercise app-only Compose and one-shot operations
         env:

@@ -100,11 +100,11 @@ test('首页加载、主要入口与单项开放领养在三种视口可达', as
     await page.setViewportSize(viewport)
     await page.goto('/')
     await expect(page.getByTestId('public-home')).toBeVisible()
-    await expect(page.getByRole('link', { name: '查看全部作品' })).toBeVisible()
+    await expect(page.getByTestId('featured-works').locator('a[href="/works"]').first()).toBeVisible()
     await expect(page.getByRole('link', { name: /提交委托申请/u }).first()).toBeVisible()
     const current = page.getByTestId('home-current-adoptions')
     await expect(current).toBeVisible()
-    await expect(current.getByRole('listitem')).toHaveCount(1)
+    await expect(current.getByRole('article')).toHaveCount(1)
     await expect(current).toContainText('云雀')
     await expect(current).not.toContainText('月桂')
     expect(await page.evaluate(() => (
@@ -113,14 +113,14 @@ test('首页加载、主要入口与单项开放领养在三种视口可达', as
   }
 
   await page.getByTestId('featured-works')
-    .locator('[data-work-slug="e2e-public-smoke-work"]')
+    .locator('a[href^="/works/e2e-public-smoke-work"]')
     .click()
   await expect(page.getByRole('link', { name: '返回作品展示' }))
     .toHaveAttribute('href', '/works')
 
   await page.goto('/')
   await page.getByTestId('home-current-adoptions')
-    .locator('[data-work-slug="e2e-public-smoke-available"]')
+    .locator('a[href^="/works/e2e-public-smoke-available"]')
     .click()
   await expect(page.getByRole('link', { name: '返回设定领养' }))
     .toHaveAttribute('href', '/adoptions')
