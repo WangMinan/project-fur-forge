@@ -30,6 +30,9 @@ function isActive(item: PublicNavItem) {
 
 watch(() => route.fullPath, () => {
   navOpen.value = false
+  if (route.path === '/') {
+    scrolled.value = false
+  }
 })
 
 function updateScrolled() {
