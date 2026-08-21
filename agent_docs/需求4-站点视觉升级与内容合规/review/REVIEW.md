@@ -311,7 +311,7 @@
 ## 16. 2026-08-21 T46-F4 用户复核修正
 
 - 用户在刷新首页时观察到“有点小狗工作室”主标题发生一次先大后小/跳动。运行时逐帧测量确认标题 DOM 尺寸恒定，但现有标题仍参与 420ms clip/位移入场，且关键拼贴字体未预加载。修复将中文主标题从首载动画中移除并预加载字体；英文品牌与 slogan 保留错峰。新时间线中标题从首个可见采样起始终为 `transform:none`、`opacity:1`、`clip-path:none`。
-- 用户报告首页离站到 `/works`、委托和两条作品详情时新页面短暂继承首页深处的滚动位置。根因是 Nuxt 默认 scroll behavior 会等待页面/共享对象 transition 完成后才返回顶部，目标页面在过渡期间先以旧 `scrollY` 呈现。修复在 `app/router.options.ts` 统一同步返回新路由位置：普通 push 导航 `{top:0,left:0}`，back/forward 使用 `savedPosition`，hash 使用现有 scroll padding + target margin。四条首页离站路径在 URL 切换第一帧均为 `scrollY=0`；`/about#contact` 仍以 87.9px 顶距让开 73px Header。
+- 用户报告首页离站到 `/works`、委托和两条作品详情时新页面短暂继承首页深处的滚动位置。根因是 Nuxt 默认 scroll behavior 会等待页面/共享对象 transition 完成后才返回顶部，目标页面在过渡期间先以旧 `scrollY` 呈现。修复在 `app/router.options.ts` 统一返回导航位置：普通 push 和当前页入口重复激活同步返回 `{top:0,left:0}`；back/forward 单独等待 `page:loading:end` 后恢复 `savedPosition`，避免目标页尚无足够高度时被夹到 0；hash 使用现有 scroll padding + target margin。首页全部可见内部行动、精选图片和 Header/Footer 内链逐项点击后均到目标页头；`/about#contact` 仍让开 73px Header。
 - 自设委托大图的整图 `NuxtLink` 已删除，图片只承担展示和共享对象源；两个明确按钮保持原目标。
 - 代表作品 lead 删除角色信息旁无含义的孤立 `01`。用户先复核无标题画廊仍缺少上下文，最终 PC 两个停靠点都显示“代表作品”，并以 `SELECTED WORK · 01/02` 说明页次；移动端第二处标题隐藏。次级轨道控制位于媒体下方，不与标题争抢顶部。
-- 验证包含 lint、typecheck、production build/content guard 与针对上述行为的真实 Chrome 测量/截图；没有新增永久测试，也没有运行无关 core/smoke。1440×900 与 390×844 无正向水平溢出，console error 为 0。证据见 `implementation/evidence/T46-F4-2026-08-21/`。T47 真实手机、连续 wheel/性能、最终人工验收和独立 Review 保持开放。
+- 验证包含 router scroll behavior 的小型 core、lint、typecheck、production build/content guard 与针对上述行为的真实 Chrome 测量/截图；没有为字号、动画毫秒或 DOM 结构增加脆弱断言，也没有运行无关 smoke。1440×900 与 390×844 无正向水平溢出，console error 为 0。证据见 `implementation/evidence/T46-F4-2026-08-21/`。T47 真实手机、连续 wheel/性能、最终人工验收和独立 Review 保持开放。
