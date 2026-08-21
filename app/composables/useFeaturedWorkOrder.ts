@@ -72,7 +72,7 @@ export function useFeaturedWorkOrder() {
         error.value = '精选作品或版本已在其他地方变化，已重新加载，请再操作一次。'
         return
       }
-      error.value = '精选顺序未保存，请稍后重试。'
+      error.value = '代表作品顺序未保存，请稍后重试。'
     }
     finally {
       pendingId.value = null

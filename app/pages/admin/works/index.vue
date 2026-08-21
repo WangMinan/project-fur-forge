@@ -70,6 +70,7 @@ const PUBLICATION_TONES = {
 const publishedFeaturedCount = computed(() => works.value.filter(
   work => work.featured && work.publicationStatus === 'published',
 ).length)
+const featuredCount = computed(() => works.value.filter(work => work.featured).length)
 
 /**
  * 列表缩略图用哪张资产。
@@ -163,7 +164,7 @@ async function updateOrdering(
       return
     }
     actionError.value = {
-      title: '精选设置未保存',
+      title: '代表作品设置未保存',
       message: workApiErrorText(error, '保存失败，请刷新后重试。'),
     }
     // 原生 checkbox 在 change 后会先改变 DOM 状态；失败时重新读取服务端真值，
@@ -196,7 +197,7 @@ async function removeFeatured(work: WorkListItemDto) {
       return
     }
     actionError.value = {
-      title: '未移出首页精选',
+      title: '未移出代表作品',
       message: workApiErrorText(error, '保存失败，已保留原顺序，请重新加载后重试。'),
     }
     await featuredOrder.load()
@@ -257,7 +258,7 @@ watch(activeTab, (tab) => {
           共 {{ works.length }} 件作品
         </p>
         <p v-else-if="activeTab === 'featured' && featuredOrder.status.value === 'ready'" class="admin-list-page__meta">
-          共 {{ featuredOrder.items.value.length }} 件精选
+          共 {{ featuredOrder.items.value.length }} 件代表作品
         </p>
         <AdminAction class="works-page__create" to="/admin/works/new" variant="primary">
           创建作品
@@ -274,7 +275,7 @@ watch(activeTab, (tab) => {
           to="/admin/works?tab=featured"
           class="works-tabs__item"
           :aria-current="activeTab === 'featured' ? 'page' : undefined"
-        >首页精选</NuxtLink>
+        >代表作品</NuxtLink>
       </nav>
 
       <div v-if="activeTab === 'all' && status === 'loading'" class="works-page__notice" role="status">
@@ -291,7 +292,7 @@ watch(activeTab, (tab) => {
         class="works-page__featured-warning"
         role="status"
       >
-        已发布精选 {{ publishedFeaturedCount }} 件，首页只显示排序最前的
+        已发布代表作品 {{ publishedFeaturedCount }} 件，首页只显示排序最前的
         {{ PUBLIC_FEATURED_LIMIT }} 件。
       </p>
 
@@ -329,7 +330,7 @@ watch(activeTab, (tab) => {
             <tr>
               <th scope="col">作品</th>
               <th scope="col">用途</th>
-              <th scope="col">首页精选</th>
+              <th scope="col">代表作品</th>
               <th scope="col">发布状态</th>
               <th scope="col">媒体</th>
               <th scope="col">发布阻断</th>
@@ -371,6 +372,7 @@ watch(activeTab, (tab) => {
                 <AdminWorkOrderingControls
                   scope="table"
                   :work="work"
+                  :limit-reached="featuredCount >= PUBLIC_FEATURED_LIMIT"
                   :pending="orderingPendingId === work.id"
                   @update="updateOrdering(work, $event)"
                 />
@@ -447,6 +449,7 @@ watch(activeTab, (tab) => {
               <AdminWorkOrderingControls
                 scope="card"
                 :work="work"
+                :limit-reached="featuredCount >= PUBLIC_FEATURED_LIMIT"
                 :pending="orderingPendingId === work.id"
                 @update="updateOrdering(work, $event)"
               />

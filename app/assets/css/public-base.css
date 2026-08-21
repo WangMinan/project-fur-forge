@@ -121,7 +121,6 @@
    * 宽度由各自的 --card-ratio 决定，因此横版卡更宽、竖版卡更窄但高度一致。
    */
   --works-row-height: 15rem;
-  --featured-row-height: 20rem;
 
   /**
    * 粘性页头的实测高度（1440×900 下为 73px），锚点跳转必须让开这段距离，

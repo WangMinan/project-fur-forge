@@ -406,8 +406,8 @@ export default defineEventHandler(async (event) => {
         primary: boolean,
       ) => {
         const assetId = randomUUID()
-        const width = media.width ?? 3200
-        const height = media.height ?? 2400
+        const width = media.width ?? (role === 'studio_photo' ? 2400 : 3200)
+        const height = media.height ?? (role === 'studio_photo' ? 3200 : 2400)
         const content = Buffer.concat([
           createSyntheticWatermarkPng() as Buffer,
           randomBytes(16),

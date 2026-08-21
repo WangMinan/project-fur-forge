@@ -41,8 +41,12 @@ async function attachPublicAsset(input: {
   role: 'adoption_cover' | 'design_sheet' | 'studio_photo'
   workId: string
 }) {
-  const width = input.role === 'adoption_cover' ? 1920 : 2400
-  const height = input.role === 'adoption_cover' ? 1080 : 1600
+  const width = input.role === 'studio_photo'
+    ? 2400
+    : input.role === 'adoption_cover' ? 1920 : 2400
+  const height = input.role === 'studio_photo'
+    ? 3200
+    : input.role === 'adoption_cover' ? 1080 : 1600
   const content = createSyntheticWatermarkPng(width, height)
   const sha = createHash('sha256').update(content).digest('hex')
   const key = `${PREFIX}/original/${input.id}.png`
@@ -159,13 +163,16 @@ describe('R3-D adoption public projection', () => {
     })
     const repository = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
     const adoption = repository.listAdoptions().items[0]!
+    const catalogWork = repository.listWorks().items[0]!
     const detail = repository.getWorkBySlug('star-candy')
 
     expect(adoption.cover.assetId).toBe('33333333-3333-4333-8333-333333333331')
+    expect(catalogWork.cardOrientation).toBe('portrait')
+    expect(catalogWork.card.assetId).toBe('33333333-3333-4333-8333-333333333332')
     expect(detail?.media.primaryAssetId)
       .toBe('33333333-3333-4333-8333-333333333332')
     expect(detail?.media.designSheet).toBeUndefined()
-    // 有出厂照时卡片仍优先竖版出厂照，封面同时进入详情。
+    // /works 与详情都有出厂照时优先出厂照；领养封面仍进入详情。
     expect(detail?.media.cardOrientation).toBe('portrait')
     expect(detail?.media.card.assetId).toBe('33333333-3333-4333-8333-333333333332')
     expect(detail?.media.adoptionCover?.assetId)
@@ -173,7 +180,7 @@ describe('R3-D adoption public projection', () => {
     expect(JSON.stringify({ adoption, detail })).not.toContain('/original/')
   })
 
-  it('publishes a head-only adoption into works, featured and detail from its cover alone', async () => {
+  it('keeps a head-only adoption in works and detail but excludes it from featured', async () => {
     const id = '66666666-6666-4666-8666-666666666660'
     const coverId = '66666666-6666-4666-8666-666666666661'
     insertAdoption({ id, name: '小绿狗', slug: 'green-doggy', status: 'available' })
@@ -183,11 +190,11 @@ describe('R3-D adoption public projection', () => {
     const repository = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
     const detail = repository.getWorkBySlug('green-doggy')
 
-    // 只有横版封面：作品展示、首页精选与详情都必须能看到它。
+    // 只有横版封面：作品展示与详情仍可看到，但不能进入首页代表作品。
     expect(repository.listWorks().items.map(item => item.work.slug))
       .toEqual(['green-doggy'])
     expect(repository.listFeaturedWorks().items.map(item => item.work.slug))
-      .toEqual(['green-doggy'])
+      .toEqual([])
     expect(repository.listAdoptions().items.map(item => item.cover.assetId))
       .toEqual([coverId])
 

@@ -63,14 +63,20 @@ interface PublicHomeAggregate {
 
 目标投影：
 
-- `featured.items[0]` 为 lead；
-- `featured.items.slice(1)` 为次级精选；
+- `featured.items` 最多两项，按人工顺序投影；
+- 每项必须能映射到至少一张 READY 竖版出厂照；不满足时不进入公开代表作品投影；
 - `entries.commission` 为委托幕视觉源；
 - `currentAdoptions.items` 最多一项，且只能是排序后的第一件 `available`；
 - `currentAdoptions.status` 直接投影现有领养营业状态，不依赖 `entries.adoption` 是否有媒体；
 - 无 available 时 `items=[]`，前端隐藏整幕。
 
 如为了兼容暂时保留数组类型，也必须在 repository 层只投影一项，不由组件再次 `slice(0, 2)`。
+
+管理端 `WorkListItemDto` 增加内部字段 `portraitStudioPhotoAssetId: string | null`：
+
+- 非空表示作品具备代表作品资格，并同时作为代表作品排序页的竖版缩略图；
+- 为空时管理 UI 禁止新选择，服务层仍须拒绝绕过 UI 的写入；
+- 该字段不进入公开 DTO，不新增数据库列或迁移。
 
 ## 2. 领养排序模型
 

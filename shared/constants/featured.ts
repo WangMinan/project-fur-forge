@@ -1,2 +1,2 @@
-/** 公开首页横向精选轨道最多投影的已发布作品数。 */
-export const PUBLIC_FEATURED_LIMIT = 12
+/** 首页代表作品的业务上限；管理端成员数量与公开投影共用。 */
+export const PUBLIC_FEATURED_LIMIT = 2

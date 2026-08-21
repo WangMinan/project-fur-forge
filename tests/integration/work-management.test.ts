@@ -67,7 +67,10 @@ function insertReadyWorkAsset(
   workVersion: number,
   assetId: string,
   role: 'design_sheet' | 'studio_photo',
+  dimensions?: { height: number, width: number },
 ) {
+  const width = dimensions?.width ?? (role === 'studio_photo' ? 2400 : 3000)
+  const height = dimensions?.height ?? (role === 'studio_photo' ? 3000 : 2400)
   const sha = assetId.replaceAll('-', '').padEnd(64, 'a').slice(0, 64)
     .replaceAll(/[^0-9a-f]/gu, 'a')
   const key = `test/t17-fixture/original/${assetId}/source.png`
@@ -76,8 +79,8 @@ function insertReadyWorkAsset(
       id, role, status, private_object_key, sha256, byte_size,
       mime_type, width, height, created_at, updated_at
     ) VALUES (?, ?, 'READY', ?, ?, 1024,
-              'image/png', 3000, 2400, ?, ?)
-  `).run(assetId, role, key, sha, NOW, NOW)
+              'image/png', ?, ?, ?, ?)
+  `).run(assetId, role, key, sha, width, height, NOW, NOW)
   sqlite.prepare(`
     INSERT INTO upload_sessions (
       id, owner_type, owner_id, owner_version, media_role,
@@ -86,7 +89,7 @@ function insertReadyWorkAsset(
       expected_height, created_by, status, asset_id, version,
       created_at, expires_at, updated_at
     ) VALUES (?, 'work', ?, ?, ?, ?, 'image/png', 1024,
-              'AAAAAAAAAAAAAAAAAAAAAA==', ?, 3000, 2400, ?, 'COMPLETED', ?, 3,
+              'AAAAAAAAAAAAAAAAAAAAAA==', ?, ?, ?, ?, 'COMPLETED', ?, 3,
               ?, ?, ?)
   `).run(
     crypto.randomUUID(),
@@ -95,6 +98,8 @@ function insertReadyWorkAsset(
     role,
     key,
     sha,
+    width,
+    height,
     USER_ID,
     assetId,
     NOW,
@@ -110,6 +115,33 @@ function insertReadyPhoto(workId: string, workVersion: number, assetId: string) 
     workVersion,
     assetId,
     'studio_photo',
+  )
+}
+
+function addPortraitPhoto(work: { id: string, version: number }, now: number) {
+  const assetId = crypto.randomUUID()
+  insertReadyPhoto(work.id, work.version, assetId)
+  return replaceManagedStudioPhotos(
+    sqlite,
+    work.id,
+    work.version,
+    [photo(assetId, true, '竖版出厂照')],
+    now,
+  )
+}
+
+function createFeaturedWork(
+  input: typeof workInput & { characterName?: string, slug: string },
+  now: number,
+) {
+  const created = createManagedWork(sqlite, { ...input, featured: false }, now)
+  const withPhoto = addPortraitPhoto(created, now + 1)
+  return updateManagedWorkPresentation(
+    sqlite,
+    created.id,
+    withPhoto.version,
+    { featured: true },
+    now + 2,
   )
 }
 
@@ -160,10 +192,11 @@ describe('T22 work management', () => {
     ])
     expect(getManagedWork(sqlite, created.id)).toEqual(created)
 
+    const withPhoto = addPortraitPhoto(created, NOW + 500)
     const updated = updateManagedWork(
       sqlite,
       created.id,
-      1,
+      withPhoto.version,
       {
         ...workInput,
         slug: 'tuan-zi-v2',
@@ -174,7 +207,7 @@ describe('T22 work management', () => {
       NOW + 1_000,
     )
     expect(updated).toMatchObject({
-      version: 2,
+      version: 3,
       slug: 'tuan-zi-v2',
       purpose: 'commission',
       sortOrder: 0,
@@ -189,23 +222,22 @@ describe('T22 work management', () => {
   })
 
   it('updates presentation fields on a published work without opening full editing', () => {
-    createManagedWork(sqlite, {
+    createFeaturedWork({
       ...workInput,
       slug: 'occupied-featured-order',
       sortOrder: 0,
-      featured: true,
     }, NOW - 1)
-    const work = createManagedWork(sqlite, workInput, NOW)
+    const work = addPortraitPhoto(createManagedWork(sqlite, workInput, NOW), NOW + 1)
     sqlite.prepare(`
       UPDATE works SET publication_status = 'published' WHERE id = ?
     `).run(work.id)
 
-    const updated = updateManagedWorkPresentation(sqlite, work.id, 1, {
+    const updated = updateManagedWorkPresentation(sqlite, work.id, work.version, {
       sortOrder: 0,
       featured: true,
     }, NOW + 1)
     expect(updated).toMatchObject({
-      version: 2,
+      version: 3,
       publicationStatus: 'published',
       sortOrder: 1,
       featured: true,
@@ -222,34 +254,98 @@ describe('T22 work management', () => {
     )).toThrow(/Unpublish the work before editing/u)
   })
 
-  it('appends, compacts, normalizes and atomically reorders featured works', () => {
-    const created = Array.from({ length: 4 }, (_, index) => createManagedWork(
+  it('requires a portrait studio photo before and while a work is featured', () => {
+    const work = createManagedWork(sqlite, {
+      ...workInput,
+      slug: 'portrait-required',
+    }, NOW)
+    const landscapeId = crypto.randomUUID()
+    insertReadyWorkAsset(
+      work.id,
+      work.version,
+      landscapeId,
+      'studio_photo',
+      { width: 3000, height: 2400 },
+    )
+    const landscapeOnly = replaceManagedStudioPhotos(
       sqlite,
+      work.id,
+      work.version,
+      [photo(landscapeId, true, '横版出厂照')],
+      NOW + 1,
+    )
+    expect(listManagedWorks(sqlite)[0]?.portraitStudioPhotoAssetId).toBeNull()
+    expect(() => updateManagedWorkPresentation(
+      sqlite,
+      work.id,
+      landscapeOnly.version,
+      { featured: true },
+      NOW + 2,
+    )).toThrowError(expect.objectContaining({
+      reason: 'FEATURED_PORTRAIT_PHOTO_REQUIRED',
+    }))
+
+    const portraitId = crypto.randomUUID()
+    insertReadyPhoto(work.id, landscapeOnly.version, portraitId)
+    const withPortrait = replaceManagedStudioPhotos(
+      sqlite,
+      work.id,
+      landscapeOnly.version,
+      [photo(portraitId, true, '竖版出厂照')],
+      NOW + 3,
+    )
+    const featured = updateManagedWorkPresentation(
+      sqlite,
+      work.id,
+      withPortrait.version,
+      { featured: true },
+      NOW + 4,
+    )
+    expect(() => replaceManagedStudioPhotos(
+      sqlite,
+      work.id,
+      featured.version,
+      [photo(landscapeId, true, '横版出厂照')],
+      NOW + 5,
+    )).toThrowError(expect.objectContaining({
+      reason: 'FEATURED_PORTRAIT_PHOTO_REQUIRED',
+    }))
+  })
+
+  it('appends, compacts, normalizes and atomically reorders featured works', () => {
+    const created = Array.from({ length: 2 }, (_, index) => createFeaturedWork(
       {
         ...workInput,
         slug: `featured-${index}`,
         characterName: `精选 ${index}`,
-        featured: true,
         sortOrder: 99 - index,
       },
       NOW + index,
     ))
-    expect(created.map(work => work.sortOrder)).toEqual([0, 1, 2, 3])
+    expect(created.map(work => work.sortOrder)).toEqual([0, 1])
+
+    const third = addPortraitPhoto(createManagedWork(sqlite, {
+      ...workInput,
+      slug: 'featured-third',
+    }, NOW + 5), NOW + 6)
+    expect(() => updateManagedWorkPresentation(
+      sqlite,
+      third.id,
+      third.version,
+      { featured: true },
+      NOW + 7,
+    )).toThrowError(expect.objectContaining({ reason: 'FEATURED_LIMIT_REACHED' }))
 
     const before = listFeaturedManagedWorks(sqlite)
     const reordered = saveFeaturedManagedWorkOrder(sqlite, [
-      before[3]!,
-      before[0]!,
       before[1]!,
-      before[2]!,
+      before[0]!,
     ].map(work => ({ id: work.id, expectedVersion: work.version })), NOW + 10)
     expect(reordered.map(work => work.slug)).toEqual([
-      'featured-3',
-      'featured-0',
       'featured-1',
-      'featured-2',
+      'featured-0',
     ])
-    expect(reordered.map(work => work.sortOrder)).toEqual([0, 1, 2, 3])
+    expect(reordered.map(work => work.sortOrder)).toEqual([0, 1])
 
     expect(() => saveFeaturedManagedWorkOrder(sqlite, before.map(work => ({
       id: work.id,
@@ -267,7 +363,7 @@ describe('T22 work management', () => {
     )
     expect(removed).toMatchObject({ featured: false, sortOrder: 0 })
     expect(listFeaturedManagedWorks(sqlite).map(work => work.sortOrder))
-      .toEqual([0, 1, 2])
+      .toEqual([0])
 
     sqlite.prepare('UPDATE works SET sort_order = 8 WHERE featured = 1').run()
     const sparse = listFeaturedManagedWorks(sqlite)
@@ -279,7 +375,7 @@ describe('T22 work management', () => {
       NOW + 13,
     )
     expect(listFeaturedManagedWorks(sqlite).map(work => work.sortOrder))
-      .toEqual([0, 1, 2])
+      .toEqual([0])
   })
 
   it('creates and updates all purposes while preserving the adoption matrix', () => {
@@ -295,7 +391,7 @@ describe('T22 work management', () => {
       adoptionStatus: 'available',
       priceCnyMinor: 1,
       sortOrder: 0,
-      featured: true,
+      featured: false,
     }, NOW + 1)
 
     expect(commission).toMatchObject({
@@ -306,7 +402,7 @@ describe('T22 work management', () => {
       adoptionStatus: 'available',
       priceCnyMinor: 1,
       sortOrder: 0,
-      featured: true,
+      featured: false,
     })
     expect(listManagedWorks(sqlite).map(work => work.slug)).toEqual([
       'adoption-work',

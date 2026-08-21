@@ -202,6 +202,7 @@ const workListItemBaseSchema = managedWorkBaseSchema.omit({
 }).extend({
   studioPhotoCount: z.number().int().min(0).max(5),
   primaryAssetId: resourceIdSchema.nullable(),
+  portraitStudioPhotoAssetId: resourceIdSchema.nullable(),
 })
 
 export const workListItemDtoSchema = z.discriminatedUnion('purpose', [

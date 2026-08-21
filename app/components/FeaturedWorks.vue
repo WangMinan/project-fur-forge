@@ -1,121 +1,59 @@
 <script setup lang="ts">
 import type { PublicWorkSummaryDto } from '~~/shared/types/contracts'
-import WorkIdentityLabel from '~/components/WorkIdentityLabel.vue'
-import { useMotionEntrance } from '~/composables/useMotionEntrance'
+import { PUBLIC_FEATURED_LIMIT } from '~~/shared/constants/featured'
 
-/**
- * 首页精选轨道：人工顺序由服务端聚合投影保证。
- * T34-F2 起由首页聚合传入，不再自行请求，精选异常不再放大为整页 500。
- */
 const props = defineProps<{
   available: boolean
   works: PublicWorkSummaryDto[]
 }>()
 
-const works = computed(() => (props.available ? props.works : []))
-const lead = computed(() => works.value[0] ?? null)
-const secondary = computed(() => works.value.slice(1))
-const leadTo = computed(() => lead.value
-  ? { path: lead.value.href, query: { view: 'home-featured' } }
-  : '/works')
-const rootRef = useTemplateRef<HTMLElement>('root')
-const mediaRef = useTemplateRef<HTMLElement>('media')
-const captionRef = useTemplateRef<HTMLElement>('caption')
+const works = computed(() => (
+  props.available ? props.works.slice(0, PUBLIC_FEATURED_LIMIT) : []
+))
 
-useMotionEntrance(rootRef, ({ reduced, tokens }) => {
-  const media = mediaRef.value
-  const caption = captionRef.value
-  if (!media || !caption) {
-    return []
-  }
-  if (reduced) {
-    return [media, caption].map(element => element.animate(
-      [{ opacity: 0.72 }, { opacity: 1 }],
-      { duration: tokens.state, easing: tokens.easing, fill: 'both' },
-    ))
-  }
-  return [
-    media.animate(
-      [
-        { opacity: 0.72, transform: 'translateY(12px) scale(0.99)' },
-        { opacity: 1, transform: 'translateY(0) scale(1)' },
-      ],
-      { duration: tokens.content, easing: tokens.easing, fill: 'both' },
-    ),
-    caption.animate(
-      [
-        { opacity: 0, transform: 'translateY(8px)' },
-        { opacity: 1, transform: 'translateY(0)' },
-      ],
-      { duration: tokens.content, delay: 80, easing: tokens.easing, fill: 'both' },
-    ),
-  ]
-})
+function workTo(work: PublicWorkSummaryDto) {
+  return { path: work.href, query: { view: 'home-featured' } }
+}
 </script>
 
 <template>
   <section
-    v-if="lead"
-    ref="root"
+    v-if="works.length > 0"
     class="featured-works"
     aria-labelledby="featured-works-title"
     data-testid="featured-works"
+    data-home-scroll-scene
   >
-    <div class="featured-works__lead-scene" data-home-scroll-scene>
-      <header class="featured-works__header">
-        <div>
-          <p class="featured-works__eyebrow">SELECTED WORK · 01</p>
-          <h2 id="featured-works-title" class="featured-works__title">代表作品</h2>
-        </div>
-      </header>
-
-      <article class="featured-lead" :data-orientation="lead.cardOrientation">
-        <div
-          ref="media"
-          class="featured-lead__media"
-          :style="{ viewTransitionName: 'home-featured-media' }"
+    <div class="featured-works__media-grid">
+      <article
+        v-for="(work, index) in works"
+        :key="work.work.id"
+        class="featured-work"
+      >
+        <NuxtLink
+          :to="workTo(work)"
+          class="featured-work__media"
+          :data-work-slug="work.work.slug"
+          :style="index === 0 ? { viewTransitionName: 'home-featured-media' } : undefined"
         >
           <ResponsivePicture
-            :sources="lead.card.sources"
-            :alt="lead.card.alt"
-            sizes="(min-width: 1024px) 68vw, 100vw"
+            :sources="work.card.sources"
+            :alt="work.card.alt"
+            sizes="(min-width: 1024px) 28rem, (min-width: 768px) 42vw, 100vw"
           />
-        </div>
-        <div ref="caption" class="featured-lead__caption">
-          <h3 class="featured-lead__name">
-            <WorkIdentityLabel
-              :character-name="lead.work.characterName"
-              :species="lead.work.species"
-            />
-          </h3>
-          <div class="featured-lead__actions">
-            <PublicAction to="/works" variant="secondary">
-              浏览作品展示
-            </PublicAction>
-            <PublicAction :to="leadTo">
-              查看当前作品
-            </PublicAction>
-          </div>
-        </div>
+        </NuxtLink>
       </article>
-
-      <PublicAction v-if="secondary.length === 0" to="/works" variant="text" class="featured-works__all">
-        查看全部作品 <span aria-hidden="true">→</span>
-      </PublicAction>
     </div>
 
-    <div
-      v-if="secondary.length > 0"
-      class="featured-works__secondary"
-      role="group"
-      aria-label="更多精选作品"
-      data-home-scroll-scene
-    >
-      <header class="featured-works__secondary-head">
-        <p class="featured-works__eyebrow">SELECTED WORK · 02</p>
-        <h3>代表作品</h3>
-      </header>
-      <FeaturedTrack :works="secondary" />
+    <div class="featured-works__content">
+      <p class="featured-works__eyebrow">SELECTED WORKS</p>
+      <h2 id="featured-works-title" class="featured-works__title">代表作品</h2>
+      <p class="featured-works__description">
+        这里展示两件竖版出厂照。更多角色与制作细节，请前往完整作品展示。
+      </p>
+      <PublicAction to="/works" class="featured-works__action">
+        浏览作品展示
+      </PublicAction>
     </div>
   </section>
 </template>
@@ -123,23 +61,21 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
 <style scoped>
 .featured-works {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+  align-items: center;
+  gap: clamp(2.5rem, 6vw, 6rem);
+  width: 100%;
   max-width: var(--public-content-wide);
   margin: 0 auto;
+  padding: var(--space-5) clamp(1rem, 2vw, 2rem);
 }
 
-.featured-works__lead-scene,
-.featured-works__secondary {
-  padding: var(--space-6) var(--public-page-padding);
-}
-
-.featured-works__header {
+.featured-works__content {
   display: grid;
-  margin-bottom: var(--space-6);
-}
-
-.featured-works__header > div {
-  display: grid;
-  gap: var(--space-2);
+  align-content: center;
+  justify-items: start;
+  gap: var(--space-3);
+  max-width: 20rem;
 }
 
 .featured-works__eyebrow {
@@ -157,125 +93,72 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   letter-spacing: var(--letter-spacing-tight);
 }
 
-.featured-lead {
+.featured-works__media-grid {
   display: grid;
-  gap: var(--space-6);
+  grid-template-columns: repeat(2, minmax(0, 25.5rem));
+  justify-content: center;
+  gap: clamp(1rem, 2vw, 2rem);
 }
 
-.featured-lead__media {
-  display: grid;
-  height: var(--home-scene-media-height);
+.featured-work {
+  min-width: 0;
+  max-width: 25.5rem;
+}
+
+.featured-work__media {
+  display: block;
+  aspect-ratio: 3 / 4;
   overflow: hidden;
-  background: var(--public-bg-secondary);
+  background: var(--image-placeholder);
   border-radius: var(--radius-image);
-  place-items: center;
 }
 
-.featured-lead__media :deep(.responsive-picture),
-.featured-lead__media :deep(.responsive-picture__image) {
+.featured-work__media :deep(.responsive-picture),
+.featured-work__media :deep(.responsive-picture__image) {
   width: 100%;
   height: 100%;
 }
 
-.featured-lead__media :deep(.responsive-picture__image) {
-  object-fit: contain;
+.featured-work__media :deep(.responsive-picture__image) {
+  object-fit: cover;
   transition: transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
-.featured-lead__caption {
-  display: grid;
-  align-content: end;
-  justify-items: start;
-  gap: var(--space-3);
-  max-width: 28rem;
+.featured-works__description {
+  color: var(--public-text-secondary);
+  line-height: var(--line-height-relaxed);
 }
 
-.featured-lead__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-}
+@media (max-width: 1023px) {
+  .featured-works {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+  }
 
-.featured-lead__name {
-  margin: 0;
-  font-family: var(--font-public-display);
-  font-size: clamp(1.75rem, 3vw, 3rem);
-  font-weight: 600;
-  line-height: var(--line-height-heading);
-}
-
-.featured-works__secondary {
-  display: grid;
-  gap: var(--space-5);
-  min-width: 0;
-}
-
-.featured-works__secondary-head {
-  display: none;
-}
-
-.featured-works__all {
-  justify-self: end;
-  margin-top: var(--space-5);
-}
-
-@media (max-width: 767px) {
-  .featured-lead__media {
-    height: var(--home-scene-media-height);
+  .featured-works__content {
+    order: -1;
+    max-width: 32rem;
   }
 }
 
 @media (min-width: 1024px) {
-  .featured-works__lead-scene,
-  .featured-works__secondary {
-    display: grid;
+  .featured-works {
     min-height: calc(100svh - var(--public-header-height));
-    align-content: center;
-  }
-
-  .featured-works__secondary {
-    align-content: start;
-    padding-top: var(--space-6);
-  }
-
-  .featured-works__secondary-head {
-    display: grid;
-    gap: var(--space-2);
-  }
-
-  .featured-works__secondary-head h3 {
-    margin: 0;
-    font-family: var(--font-public-display);
-    font-size: var(--font-size-xl);
-    font-weight: 600;
-    line-height: var(--line-height-heading);
-    letter-spacing: var(--letter-spacing-tight);
-  }
-}
-
-@media (min-width: 1024px) {
-  .featured-lead {
-    grid-template-columns: minmax(0, 2.35fr) minmax(18rem, 0.65fr);
-    align-items: stretch;
-  }
-
-  .featured-lead__caption {
-    padding: var(--space-6) 0 var(--space-4);
   }
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .featured-lead__media:hover :deep(.responsive-picture__image) {
-    transform: scale(1.025) rotate(0.35deg);
+  .featured-work__media:hover :deep(.responsive-picture__image) {
+    transform: scale(1.025) rotate(0.2deg);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .featured-lead__media :deep(.responsive-picture__image) {
+  .featured-work__media :deep(.responsive-picture__image) {
     transition: none;
   }
 
-  .featured-lead__media:hover :deep(.responsive-picture__image) {
+  .featured-work__media:hover :deep(.responsive-picture__image) {
     transform: none;
   }
 }
