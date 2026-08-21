@@ -275,6 +275,28 @@ button {
   transform: translateY(0);
 }
 
+/* 首页三幕共用同一左上标题结构，避免各章节在位置、字阶和间距上漂移。 */
+.home-scene-heading {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+}
+
+.home-scene-heading__eyebrow {
+  color: var(--public-text-tertiary);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.home-scene-heading__title {
+  font-family: var(--font-public-display);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  line-height: var(--line-height-heading);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto !important;
@@ -291,15 +313,12 @@ button {
   }
 }
 
-::view-transition-group(home-featured-media),
 ::view-transition-group(home-commission-media),
 ::view-transition-group(home-adoption-media) {
   animation-duration: var(--motion-duration-media);
   animation-timing-function: var(--motion-ease-standard);
 }
 
-::view-transition-old(home-featured-media),
-::view-transition-new(home-featured-media),
 ::view-transition-old(home-commission-media),
 ::view-transition-new(home-commission-media),
 ::view-transition-old(home-adoption-media),
@@ -308,7 +327,6 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(home-featured-media),
   ::view-transition-group(home-commission-media),
   ::view-transition-group(home-adoption-media) {
     animation-duration: 0.01ms;
