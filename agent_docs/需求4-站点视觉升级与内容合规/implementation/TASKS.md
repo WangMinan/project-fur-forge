@@ -1,12 +1,12 @@
 # 任务清单：站点视觉升级与内容合规
 
 > **角色**：需求4唯一任务与勾选权威；每个任务均可由 Agent 独立实现、验证和交接。
-> **状态**：2026-08-21 已完成 T04～T34、T34-F1、M01～M11 与阶段 E T37～T46（含 T38-F1、T40-F1、T46-F1～F4）当前工程实现；T35/T36、T47 真实手机/连续性能、王旻安/景宸人工验收和最终独立 Review 保持开放。
-> **规则**：完成即勾选；不删除已完成历史项；实现、独立 Review、用户验收和生产发布互不代签。
+> **状态**：仅阶段 E 开放。A～D 已关闭；原阶段 F 按产品决策关闭，不再作为需求4 backlog。
+> **规则**：`[x]` 表示已有证据；`[ ]` 仅用于阶段 E 开放项；`[-]` 表示按产品决策关闭、不再执行，不补签独立 Review、用户验收或生产发布。
 
 ## 当前目标
 
-已完成按钮、上传、长任务进度、测试减负、领养排序、轻量隐私、单条删除和当前生成环境第三方声明。下一步从 T37 只读动效机会审计开始阶段 E，再完成静态四幕、焦点、输入模态和场景动效。不得从 motion token、全局页面转场或旧版复杂 intake Schema 方案直接开工。
+只继续阶段 E 的 UI 美化、布局/响应式、可访问性、Hero 焦点和动效质量。T37～T46-F4 已完成当前实现，T47 与 GATE-E 保持开放；不得从本清单启动数据库、业务、隐私、安全、分发或生产发布工作。
 
 ## 0. 文档与基线
 
@@ -94,8 +94,8 @@
 - [x] **T33 · 人工 SOP**：只维护月度上传清理、半年度申请 Review、用户权利请求、accepted 人工判断、单条 dry-run/execute 与备份恢复后复核流程；不建调度/提醒，不写虚构生产记录。
 - [x] **T34 · 第三方声明生成**：从当前生成环境已安装的 production dependencies 生成稳定 JSON/TXT，无生成时间、排序稳定、未知许可证失败；平台可选包不冒充目标 Linux runtime closure，`ffmpeg-static` 包记录与实际二进制记录分开。
 - [x] **T34-F1 · 阶段 E 前独立 Review 修复**：统一隐私政策 readiness 并接入申请页、上传/提交、health 与 live preflight；确认门禁提升为小型 core；notices 平台口径、`SEE LICENSE IN ...`、`/licenses` SSR 载荷、统一提交行动、busy 对话框和删除审计文档模型完成收口。
-- [ ] **T35 · Runtime/资产 registry（部分后置）**：本轮登记 Noto Serif SC 与 ZhuoHei Collage 已核实授权类型；Linux 发布镜像的 FFmpeg 版本、SHA-256、对应源码、补丁与构建配置后置到部署阶段，本轮不勾选。
-- [ ] **T36 · `/licenses` 与分发产物收口（部分后置）**：本轮让页面消费生成 notices，删除手写平行数组与已知错误 FFmpeg 文案；完整 runtime registry 嵌入容器、Docker Hub 分发核验与 release evidence 后置，本轮不勾选。
+- [-] **T35 · Runtime/资产 registry**：按产品决策从活跃 backlog 关闭；若未来实际发布 Linux 镜像，仍须在发布边界核对 FFmpeg 版本、SHA-256、对应源码、补丁与构建配置。
+- [-] **T36 · `/licenses` 与分发产物收口**：按产品决策从活跃 backlog 关闭；当前页面继续消费生成 notices，未来镜像发布时仍须核对 runtime registry 与 release evidence。
 
 ### GATE-D · 人工运维可执行
 
@@ -103,7 +103,7 @@
 - [x] 无 scheduler/批量自动删除；
 - [x] 用户请求可单独处理；
 - [x] notices 与当前 npm 生产依赖/已核实字体资产一致；
-- [ ] T35/T36 部署分发证据完成。
+- [-] T35/T36 部署分发证据不再作为需求4任务；实际发布时按 Runbook 现场核对。
 
 ## D.1 仓库简化维护（不改变产品行为）
 
@@ -150,28 +150,28 @@
 - [ ] Hero 横竖独立维护清楚；
 - [ ] 王旻安/景宸人工视觉验收通过。
 
-## F. 最终 Review、发布与闭环
+## F. 最终 Review、发布与闭环（按产品决策关闭）
 
-- [ ] **T48 · SEO/固定入口同步**：DITE DOG、QQ 优先、隐私/条款/licenses 和新首页结构同步 SEO/JSON-LD/README/活文档；不恢复退役入口。
-- [ ] **T49 · 最小自动验证**：`check:fast`、受影响 core、`test:smoke`、production build/verify、PII/notices scan；不要求 legacy 全绿。
-- [ ] **T50 · Release/manual smoke**：显式镜像/Compose/Nginx/恢复；相关时执行 destructive drill；真实 Host home/adoptions/apply/privacy/service/licenses/admin。
-- [ ] **T51 · 独立 Review**：聚焦稳定不变量、删除精确性、媒体/进度、性能和文档一致性；不以测试数量代替判断。
-- [ ] **T52 · 用户验收**：王旻安/景宸确认真实图片、动效性格、首页节奏、领养排序/单项、Hero 管理、进度、文案和手机体验。
-- [ ] **T53 · 生产准备**：备份/恢复、文案迁移执行、隐私政策公开投影核对、人工 retention 责任人/日期、冻结镜像和回滚候选。
-- [ ] **T54 · 发布与 smoke**：执行迁移和镜像发布，验证 readiness、公开/管理主流程和边缘媒体；失败按现有恢复手册处理。
-- [ ] **T55 · 闭环**：回写 TASKS/STATE/review/artifacts/CLAUDE，记录未覆盖后续项和下一次人工复核日期。
+- [-] **T48 · SEO/固定入口同步**：从需求4 backlog 关闭；后续 UI PR 只在实际影响 SEO 时同步稳定入口。
+- [-] **T49 · 最小自动验证**：从阶段任务关闭；测试继续按 `CLAUDE.md` 和工作流作为每次改动的交付纪律执行。
+- [-] **T50 · Release/manual smoke**：从活跃 backlog 关闭；实际发布时仍按显式 release/manual 工作流执行。
+- [-] **T51 · 独立 Review**：不再作为一次性需求闭环任务；高风险改动仍按其风险单独 Review。
+- [-] **T52 · 用户验收**：发布闭环任务关闭；阶段 E 的视觉人工验收仍由 T47/GATE-E 承担。
+- [-] **T53 · 生产准备**：从需求4 backlog 关闭；未来部署时按部署 Runbook 重新核对。
+- [-] **T54 · 发布与 smoke**：未执行，按产品决策关闭；不得据此声明已发布。
+- [-] **T55 · 闭环**：由本次状态收口替代，不补写未发生的生产事实。
 
 ### GATE-R4 · 需求4完成
 
-- [ ] GATE-A～E 全部通过；
-- [ ] 稳定 core/smoke 与 release smoke 通过；
-- [ ] 已退役实现型套件不恢复为放行条件；
-- [ ] 独立 Review 与用户人工验收通过；
-- [ ] 生产 smoke 通过；
-- [ ] 自动化、Reviewer、用户和生产操作员没有互相代签。
+- [-] GATE-R4 不再作为发布完成门禁；仅 GATE-E 保持开放。
+- [-] 稳定 core/smoke 与 release smoke 仍按实际改动/发布运行，不作为一次性 backlog。
+- [-] 已退役实现型套件不恢复为放行条件。
+- [-] 独立 Review 与生产验收未因关闭而补签。
+- [-] 生产 smoke 未因关闭而补签。
+- [-] 自动化、Reviewer、用户和生产操作员继续互不代签。
 
 ## 闭环结论
 
 - T04～T34 的当前开发范围与本地证据已完成；用户已确认个人信息处理者名称为“有点小狗工作室”。
-- T35/T36 的 Linux FFmpeg runtime registry、容器嵌入、Docker Hub 分发核验与 release evidence 已后置；GATE-D 未完整关闭，不阻塞本地 T37～T47，但最终 Review、镜像冻结和发布不得绕过。
-- 阶段 E T37～T46-F4 当前工程实现已完成；T47 真实手机/连续性能、最终独立 Review 与王旻安/景宸人工验收仍开放。
+- T35/T36 与阶段 F 按产品决策关闭；实际镜像发布/部署时仍须履行 notices、Runbook 和安全检查，不能把关闭写成已完成。
+- 阶段 E T37～T46-F4 当前工程实现已完成；只有 T47、GATE-E 与王旻安/景宸视觉验收保持开放。
