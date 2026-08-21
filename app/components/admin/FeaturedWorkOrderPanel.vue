@@ -30,8 +30,7 @@ const PUBLICATION_TONES = {
 } as const
 
 function thumbAssetId(work: WorkListItemDto) {
-  return work.primaryAssetId
-    ?? (work.purpose === 'adoption' ? work.adoptionCoverAssetId : null)
+  return work.portraitStudioPhotoAssetId
 }
 
 function publicRank(index: number) {
@@ -39,7 +38,8 @@ function publicRank(index: number) {
     return null
   }
   return props.items.slice(0, index + 1).filter(
-    item => item.publicationStatus === 'published',
+    item => item.publicationStatus === 'published'
+      && item.portraitStudioPhotoAssetId !== null,
   ).length
 }
 </script>
@@ -48,27 +48,27 @@ function publicRank(index: number) {
   <section class="featured-order" aria-labelledby="featured-order-title">
     <header class="featured-order__header">
       <div>
-        <h2 id="featured-order-title" class="featured-order__title">首页精选顺序</h2>
+        <h2 id="featured-order-title" class="featured-order__title">代表作品顺序</h2>
         <p class="featured-order__intro">
-          使用按钮直接调整，系统会一次保存完整顺序。首页只展示排序最前的
-          {{ PUBLIC_FEATURED_LIMIT }} 件已发布作品。
+          最多 {{ PUBLIC_FEATURED_LIMIT }} 件，且每件必须有竖版出厂照。使用按钮调整后，
+          系统会一次保存完整顺序。
         </p>
       </div>
       <span v-if="status === 'ready'" class="featured-order__count">
-        {{ items.length }} 件精选
+        {{ items.length }} 件代表作品
       </span>
     </header>
 
     <div v-if="status === 'loading'" class="featured-order__state" role="status">
-      正在加载首页精选…
+      正在加载代表作品…
     </div>
     <div v-else-if="status === 'error'" class="featured-order__state featured-order__state--error">
-      <p role="alert">首页精选加载失败，请检查网络后重试。</p>
+      <p role="alert">代表作品加载失败，请检查网络后重试。</p>
       <AdminAction size="small" @click="emit('reload')">重试</AdminAction>
     </div>
     <div v-else-if="items.length === 0" class="featured-order__state">
-      <p>还没有首页精选作品。</p>
-      <p>请在“全部作品”中勾选“加入首页精选”，新作品会自动排在末尾。</p>
+      <p>还没有代表作品。</p>
+      <p>请先上传竖版出厂照，再到“全部作品”中选择代表作品。</p>
     </div>
 
     <template v-else>
@@ -100,6 +100,9 @@ function publicRank(index: number) {
             <span class="featured-order__meta">
               {{ work.species }} · {{ WORK_PURPOSE_LABELS[work.purpose] }}
             </span>
+            <span v-if="!work.portraitStudioPhotoAssetId" class="featured-order__invalid">
+              缺少竖版出厂照，请移出代表作品
+            </span>
           </div>
           <div class="featured-order__visibility">
             <AdminStatusBadge
@@ -115,7 +118,7 @@ function publicRank(index: number) {
             </span>
             <span v-else class="featured-order__public">发布后才进入首页</span>
           </div>
-          <div class="featured-order__actions" aria-label="精选顺序操作">
+          <div class="featured-order__actions" aria-label="代表作品顺序操作">
             <AdminAction
               class="featured-order__action"
               size="small"
@@ -149,9 +152,9 @@ function publicRank(index: number) {
               size="small"
               variant="danger"
               :disabled="pendingId !== null || removingId !== null"
-              :aria-label="`将 ${work.characterName} 移出首页精选`"
+              :aria-label="`将 ${work.characterName} 移出代表作品`"
               @click="emit('remove', work)"
-            >移出精选</AdminAction>
+            >移出代表作品</AdminAction>
           </div>
           <span v-if="pendingId === work.id || removingId === work.id" class="featured-order__saving" role="status">
             保存中…
@@ -277,10 +280,16 @@ function publicRank(index: number) {
 }
 
 .featured-order__meta,
+.featured-order__invalid,
 .featured-order__public,
 .featured-order__saving {
   color: var(--admin-text-tertiary);
   font-size: var(--admin-font-xs);
+}
+
+.featured-order__invalid {
+  color: var(--admin-status-warning);
+  font-weight: 600;
 }
 
 .featured-order__public--yes {

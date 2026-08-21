@@ -80,6 +80,9 @@ function applyMediaWork(next: ManagedWorkDto) {
 }
 
 const locked = computed(() => work.value?.publicationStatus === 'published')
+const featuredEligible = computed(() => work.value?.studioPhotos.some(
+  photo => photo.height > photo.width,
+) ?? false)
 
 const errors = computed(() => validateWorkForm(form.value))
 const invalid = computed(() => hasWorkFormError(errors.value))
@@ -184,7 +187,7 @@ async function saveWork(): Promise<boolean> {
     )
     applyWork(result.data)
     savedNotice.value = presentationOnly
-      ? '首页精选设置已保存，公开端已更新。'
+      ? '代表作品设置已保存，公开端已更新。'
       : '已保存。'
     void loadPreview()
     return true
@@ -323,12 +326,12 @@ useSeoMeta({
             :loading="saving"
             loading-label="保存中…"
             @click="saveWork"
-          >{{ locked ? '保存首页精选' : '保存' }}</AdminAction>
+          >{{ locked ? '保存代表作品' : '保存' }}</AdminAction>
         </div>
       </header>
 
       <p v-if="locked" class="editor__locked" role="status">
-        作品已发布：基础信息与图片为只读，需要先下架。首页精选仍可直接修改，具体顺序在作品管理的“首页精选”Tab 调整。
+        作品已发布：基础信息与图片为只读，需要先下架。代表作品设置仍可直接修改，具体顺序在作品管理的“代表作品”Tab 调整。
       </p>
       <p v-if="savedNotice" class="editor__notice" role="status">{{ savedNotice }}</p>
 
@@ -338,6 +341,7 @@ useSeoMeta({
             v-model="form"
             :disabled="locked || saving"
             :ordering-disabled="saving"
+            :featured-eligible="featuredEligible"
             :errors="errors"
             :show-errors="submitted"
           />
@@ -418,7 +422,7 @@ useSeoMeta({
                   </div>
                 </template>
                 <div class="preview-card__fact">
-                  <dt>首页精选</dt>
+                  <dt>代表作品</dt>
                   <dd>{{ preview.featured ? '已加入（顺序在精选 Tab 调整）' : '未加入' }}</dd>
                 </div>
                 <div class="preview-card__fact">

@@ -398,7 +398,7 @@ describe('authentication API', () => {
       characterName: '接口角色',
       species: '犬科',
       sortOrder: 2,
-      featured: true,
+      featured: false,
     }
     const create = (payload: Record<string, unknown>) => fetch(
       `${adminBaseUrl}/api/admin/v1/works`,
@@ -409,7 +409,7 @@ describe('authentication API', () => {
       },
     )
 
-    for (const [index, purpose] of (['commission', 'showcase'] as const).entries()) {
+    for (const purpose of ['commission', 'showcase'] as const) {
       const response = await create({
         ...common,
         slug: `${purpose}-${suffix}`,
@@ -418,7 +418,7 @@ describe('authentication API', () => {
       expect(response.status).toBe(201)
       expectPrivateResponseHeaders(response)
       await expect(response.json()).resolves.toMatchObject({
-        data: { purpose, sortOrder: index, featured: true, version: 1 },
+        data: { purpose, sortOrder: 0, featured: false, version: 1 },
       })
     }
 
@@ -437,8 +437,19 @@ describe('authentication API', () => {
         purpose: 'adoption',
         adoptionStatus: 'available',
         priceCnyMinor: 1,
-        sortOrder: 2,
+        sortOrder: 0,
       },
+    })
+
+    const noPortraitFeatured = await create({
+      ...common,
+      featured: true,
+      slug: `featured-without-photo-${suffix}`,
+      purpose: 'showcase',
+    })
+    expect(noPortraitFeatured.status).toBe(409)
+    await expect(noPortraitFeatured.json()).resolves.toMatchObject({
+      error: { reason: 'FEATURED_PORTRAIT_PHOTO_REQUIRED' },
     })
 
     const invalid = await create({

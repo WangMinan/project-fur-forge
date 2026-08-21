@@ -20,6 +20,10 @@ const REASON_MESSAGES: Partial<Record<ErrorReason, string>> = {
     '该领养作品已有领养设定图：请先移除设定图，才能改为非领养用途。',
   WORK_PUBLICATION_BLOCKED:
     '还有未解决的发布阻塞项，请先按提示补齐后再发布。',
+  FEATURED_LIMIT_REACHED:
+    '代表作品最多设置 4 件；请先移出一件，再选择新的代表作品。',
+  FEATURED_PORTRAIT_PHOTO_REQUIRED:
+    '代表作品必须至少有一张已就绪的竖版出厂照；请先上传竖版出厂照。',
   ASSET_ALREADY_LINKED:
     '该图片已经关联到另一件作品。',
   RESOURCE_NOT_FOUND:

@@ -6,10 +6,12 @@ import { WORK_PURPOSE_LABELS } from '~/utils/work-labels'
 const props = withDefaults(defineProps<{
   disabled?: boolean
   errors: WorkFormErrors
+  featuredEligible?: boolean
   orderingDisabled?: boolean
   showErrors?: boolean
 }>(), {
   disabled: false,
+  featuredEligible: false,
   orderingDisabled: false,
   showErrors: false,
 })
@@ -120,10 +122,17 @@ function errorFor(key: keyof WorkFormErrors) {
 
       <div class="field">
         <label class="checkbox">
-          <input v-model="form.featured" class="checkbox__input" type="checkbox" :disabled="disabled">
-          <span>加入首页精选</span>
+          <input
+            v-model="form.featured"
+            class="checkbox__input"
+            type="checkbox"
+            :disabled="disabled || (!form.featured && !featuredEligible)"
+          >
+          <span>设为代表作品</span>
         </label>
-        <p class="field__hint">首页最多展示 {{ PUBLIC_FEATURED_LIMIT }} 件已发布精选作品。</p>
+        <p class="field__hint">
+          最多 {{ PUBLIC_FEATURED_LIMIT }} 件；必须先上传至少一张竖版出厂照。
+        </p>
       </div>
 
       <div class="field">
@@ -138,7 +147,7 @@ function errorFor(key: keyof WorkFormErrors) {
           :disabled="disabled || orderingDisabled"
           :aria-invalid="errorFor('sortOrder') ? 'true' : undefined"
         >
-        <p class="field__hint">精选顺序请在作品列表的“首页精选”视图维护。</p>
+        <p class="field__hint">代表作品顺序请在作品列表的“代表作品”视图维护。</p>
         <p v-if="errorFor('sortOrder')" class="field__error">{{ errorFor('sortOrder') }}</p>
       </div>
     </div>

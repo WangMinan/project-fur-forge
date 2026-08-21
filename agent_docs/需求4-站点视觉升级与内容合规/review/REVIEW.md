@@ -315,3 +315,11 @@
 - 自设委托大图的整图 `NuxtLink` 已删除，图片只承担展示和共享对象源；两个明确按钮保持原目标。
 - 代表作品 lead 删除角色信息旁无含义的孤立 `01`。用户先复核无标题画廊仍缺少上下文，最终 PC 两个停靠点都显示“代表作品”，并以 `SELECTED WORK · 01/02` 说明页次；移动端第二处标题隐藏。次级轨道控制位于媒体下方，不与标题争抢顶部。
 - 验证包含 router scroll behavior 的小型 core、lint、typecheck、production build/content guard 与针对上述行为的真实 Chrome 测量/截图；没有为字号、动画毫秒或 DOM 结构增加脆弱断言，也没有运行无关 smoke。1440×900 与 390×844 无正向水平溢出，console error 为 0。证据见 `implementation/evidence/T46-F4-2026-08-21/`。T47 真实手机、连续 wheel/性能、最终人工验收和独立 Review 保持开放。
+
+## 17. 2026-08-22 T46-F5～F7 景宸/王旻安复核修正
+
+- 最终产品口径覆盖此前两屏 lead/轨道和中途四图方案：首页代表作品最多两件，必须有 READY 竖版出厂照；桌面左侧双图、右侧说明与唯一 `/works` 按钮，整幕一屏，第二次有效 wheel 进入委托。
+- service 拒绝无竖版图或超过两件的成员写入，并阻止代表作品移除最后一张竖版出厂照；管理端提前禁用并显示稳定中文原因。未新增数据库列或迁移。
+- `/works` 没有复用首页资格过滤：有出厂照优先出厂主图，完全没有出厂照的领养作品才回落横版封面/设定图，目录继续允许横竖等高混排。
+- 相关 integration 23/23、`check:fast` 52 文件/313 项、smoke 10/10、production build/content guard 与六视口真实 Chrome 布局测量通过；console error 为 0。详细记录见 `implementation/notes/2026-08-22-T46-F5-F7-FEATURED-WORKS.md`。
+- T47 真实手机、连续性能与景宸/王旻安最终视觉验收仍保持开放；本节不代签远程 CI、部署或生产状态。

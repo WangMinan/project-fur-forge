@@ -87,9 +87,11 @@ interface PublishedWorkRow {
 interface WorkMediaRow {
   alt: string | null
   assetId: string
+  height: number
   position: number
   primary: number
   role: 'adoption_cover' | 'design_sheet' | 'studio_photo'
+  width: number
   workId: string
 }
 
@@ -103,7 +105,7 @@ interface SnapshotEntry {
     priceCnyMinor: number | null
     status: 'available' | 'adopted'
   } | null
-  /** 卡片方向：竖版 primary 出厂照，或仅横版领养封面。 */
+  /** 卡片方向：竖版出厂照，或仅横版领养封面。 */
   cardOrientation: 'landscape' | 'portrait'
   designSheet: {
     alt: string
@@ -111,6 +113,7 @@ interface SnapshotEntry {
     sources: PublicSourceSetDto
   } | null
   featured: boolean
+  hasPortraitStudioPhoto: boolean
   /** 只用于首页精选排序；公开列表按发布时间倒序，不看这个值。 */
   id: string
   sortOrder: number
@@ -120,7 +123,9 @@ interface SnapshotEntry {
     card: PublicSourceSetDto | null
     position: number
     primary: number
+    height: number
     sources: PublicSourceSetDto
+    width: number
   }>
   summary: PublicWorkSummaryDto
   /** 只用于领养状态 bucket 内排序，不进入公开 DTO。 */
@@ -201,7 +206,8 @@ function loadWorkMedia(sqlite: Database.Database) {
       relation.alt_text AS alt,
       relation.position,
       relation.is_primary AS "primary",
-      relation.role
+      relation.role,
+      asset.width, asset.height
     FROM work_assets AS relation
     JOIN works AS work ON work.id = relation.work_id
     JOIN assets AS asset ON asset.id = relation.asset_id
@@ -321,6 +327,9 @@ function snapshot(
         }]
       })
     const primary = photos.find(photo => photo.primary === 1 && photo.card)
+    const portrait = photos.find(photo => (
+      photo.primary === 1 && photo.height > photo.width && photo.card
+    )) ?? photos.find(photo => photo.height > photo.width && photo.card)
     const coverMedia = media.find(item => item.role === 'adoption_cover')
     const coverSources = coverMedia
       ? sourceSet(
@@ -351,13 +360,18 @@ function snapshot(
         }
       : null
     /*
-     * 只做了单头的领养作品没有竖版出厂照，卡片回落到横版领养封面或设定图；
-     * 有 primary 出厂照时仍优先竖版出厂照。commission/showcase 没有封面可回落，
-     * 缺少卡片时依旧整条丢弃。
+     * 作品卡优先使用竖版出厂照（主图优先、其次按位置）；没有竖版时仍可用
+     * primary 出厂照生成的 3:4 卡片。只做了单头的领养作品最后回落到横版
+     * 领养封面或设定图；commission/showcase 缺少卡片时整条丢弃。
      */
-    const card = primary?.card
+    const cardPhoto = portrait ?? primary
+    const card = cardPhoto?.card
       ? {
-          card: { assetId: primary.assetId, alt: primary.alt, sources: primary.card },
+          card: {
+            assetId: cardPhoto.assetId,
+            alt: cardPhoto.alt,
+            sources: cardPhoto.card,
+          },
           orientation: 'portrait' as const,
         }
       : adoption
@@ -370,6 +384,7 @@ function snapshot(
       adoption,
       cardOrientation: card.orientation,
       featured: row.featured === 1,
+      hasPortraitStudioPhoto: portrait !== undefined,
       designSheet,
       id: row.id,
       sortOrder: row.sortOrder,
@@ -475,7 +490,7 @@ function homeAggregate(
  */
 function featuredEntries(entries: readonly SnapshotEntry[]) {
   return entries
-    .filter(entry => entry.featured)
+    .filter(entry => entry.featured && entry.hasPortraitStudioPhoto)
     .toSorted((left, right) => (
       left.sortOrder - right.sortOrder || (left.id < right.id ? -1 : 1)
     ))

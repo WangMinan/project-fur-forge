@@ -20,6 +20,7 @@ import type {
 import type { MediaStorage } from '../media-storage'
 import { ServiceError } from '../service-error'
 import { hasBlockingPublicationCleanup } from '../repository/publication-repository'
+import { PUBLIC_FEATURED_LIMIT } from '../../../shared/constants/featured'
 
 interface StudioPhotoInput {
   alt: string
@@ -279,6 +280,38 @@ function featuredOrderRows(sqlite: Database.Database) {
   `).all() as FeaturedOrderRow[]
 }
 
+function portraitStudioPhotoAssetId(
+  sqlite: Database.Database,
+  workId: string,
+) {
+  return sqlite.prepare(`
+    SELECT relation.asset_id
+    FROM work_assets AS relation
+    JOIN assets AS asset ON asset.id = relation.asset_id
+    WHERE relation.work_id = ?
+      AND relation.role = 'studio_photo'
+      AND asset.role = 'studio_photo'
+      AND asset.status = 'READY'
+      AND asset.height > asset.width
+    ORDER BY relation.is_primary DESC, relation.position, relation.asset_id
+    LIMIT 1
+  `).pluck().get(workId) as string | undefined
+}
+
+function assertFeaturedPortraitPhoto(
+  sqlite: Database.Database,
+  workId: string,
+) {
+  if (!portraitStudioPhotoAssetId(sqlite, workId)) {
+    throw new ServiceError(
+      409,
+      'CONFLICT',
+      'Featured works require a portrait studio photo.',
+      'FEATURED_PORTRAIT_PHOTO_REQUIRED',
+    )
+  }
+}
+
 function featuredIdsForMembership(
   sqlite: Database.Database,
   id: string,
@@ -291,6 +324,14 @@ function featuredIdsForMembership(
   }
   if (existingIndex >= 0) {
     return ids
+  }
+  if (ids.length >= PUBLIC_FEATURED_LIMIT) {
+    throw new ServiceError(
+      409,
+      'CONFLICT',
+      'Featured work limit was reached.',
+      'FEATURED_LIMIT_REACHED',
+    )
   }
   return [...ids, id]
 }
@@ -335,6 +376,19 @@ export function listManagedWorks(
       count(photo.asset_id) AS studioPhotoCount,
       max(CASE WHEN photo.is_primary = 1 THEN photo.asset_id END) AS primaryAssetId,
       (
+        SELECT portrait_relation.asset_id
+        FROM work_assets AS portrait_relation
+        JOIN assets AS portrait_asset ON portrait_asset.id = portrait_relation.asset_id
+        WHERE portrait_relation.work_id = work.id
+          AND portrait_relation.role = 'studio_photo'
+          AND portrait_asset.role = 'studio_photo'
+          AND portrait_asset.status = 'READY'
+          AND portrait_asset.height > portrait_asset.width
+        ORDER BY portrait_relation.is_primary DESC,
+          portrait_relation.position, portrait_relation.asset_id
+        LIMIT 1
+      ) AS portraitStudioPhotoAssetId,
+      (
         SELECT asset_id FROM work_assets
         WHERE work_id = work.id AND role = 'design_sheet'
       ) AS designSheetAssetId,
@@ -351,6 +405,7 @@ export function listManagedWorks(
   return rows.map((value) => {
     const row = value as WorkRow & {
       primaryAssetId: string | null
+      portraitStudioPhotoAssetId: string | null
       adoptionCoverAssetId: string | null
       designSheetAssetId: string | null
       studioPhotoCount: number
@@ -367,6 +422,7 @@ export function listManagedWorks(
       featured: Boolean(row.featured),
       studioPhotoCount: row.studioPhotoCount,
       primaryAssetId: row.primaryAssetId,
+      portraitStudioPhotoAssetId: row.portraitStudioPhotoAssetId,
     }
     return workListItemDtoSchema.parse(row.purpose === 'adoption'
       ? {
@@ -452,18 +508,22 @@ export function createManagedWork(
   now = Date.now(),
 ) {
   const id = randomUUID()
+  if (input.featured) {
+    throw new ServiceError(
+      409,
+      'CONFLICT',
+      'Upload a portrait studio photo before featuring a work.',
+      'FEATURED_PORTRAIT_PHOTO_REQUIRED',
+    )
+  }
   try {
     sqlite.transaction(() => {
-      const featuredIds = input.featured
-        ? featuredOrderRows(sqlite).map(row => row.id)
-        : []
-      const sortOrder = input.featured ? featuredIds.length : 0
       sqlite.prepare(`
         INSERT INTO works (
           id, slug, character_name, species, purpose, adoption_status,
           price_amount_minor, price_currency,
           publication_status, sort_order, featured, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'draft', 0, 0, ?, ?)
       `).run(
         id,
         input.slug,
@@ -475,14 +535,9 @@ export function createManagedWork(
         input.purpose === 'adoption' && input.priceCnyMinor !== null
           ? 'CNY'
           : null,
-        sortOrder,
-        input.featured ? 1 : 0,
         now,
         now,
       )
-      if (input.featured) {
-        normalizeFeaturedRows(sqlite, [...featuredIds, id], now, id)
-      }
     })()
   }
   catch (error) {
@@ -504,6 +559,9 @@ export function updateManagedWork(
   }
   if (current.publicationStatus === 'published') {
     throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before editing it.', 'WORK_PUBLISHED_READONLY')
+  }
+  if (input.featured && !current.featured) {
+    assertFeaturedPortraitPhoto(sqlite, id)
   }
   if (current.purpose === 'adoption' && input.purpose !== 'adoption') {
     const adoptionMediaCount = sqlite.prepare(`
@@ -574,6 +632,9 @@ export function updateManagedWorkPresentation(
   const current = requireWork(sqlite, id)
   if (current.version !== expectedVersion) {
     throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+  }
+  if (input.featured && !current.featured) {
+    assertFeaturedPortraitPhoto(sqlite, id)
   }
   sqlite.transaction(() => {
     const featuredIds = featuredIdsForMembership(sqlite, id, input.featured)
@@ -729,6 +790,18 @@ function assertStudioPhotoAssets(
   ))
 }
 
+function hasPortraitStudioPhotoAsset(
+  sqlite: Database.Database,
+  photos: readonly StudioPhotoInput[],
+) {
+  const isPortrait = sqlite.prepare(`
+    SELECT 1 FROM assets
+    WHERE id = ? AND role = 'studio_photo' AND status = 'READY'
+      AND height > width
+  `)
+  return photos.some(photo => Boolean(isPortrait.get(photo.assetId)))
+}
+
 export function replaceManagedDesignSheet(
   sqlite: Database.Database,
   workId: string,
@@ -878,6 +951,14 @@ export function replaceManagedStudioPhotos(
     throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before editing media.', 'WORK_PUBLISHED_READONLY')
   }
   assertStudioPhotoAssets(sqlite, workId, photos)
+  if (current.featured && !hasPortraitStudioPhotoAsset(sqlite, photos)) {
+    throw new ServiceError(
+      409,
+      'CONFLICT',
+      'Featured works require a portrait studio photo.',
+      'FEATURED_PORTRAIT_PHOTO_REQUIRED',
+    )
+  }
   try {
     sqlite.transaction(() => {
       sqlite.prepare(`

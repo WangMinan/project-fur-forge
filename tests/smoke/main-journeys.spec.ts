@@ -105,7 +105,10 @@ test('首页加载、主要入口与单项开放领养在三种视口可达', as
       (document.querySelector('#__nuxt') as Element & { __vue_app__?: unknown })
         ?.__vue_app__,
     ))
-    await expect(page.getByTestId('featured-works').locator('a[href="/works"]').first()).toBeVisible()
+    await expect(page.getByTestId('featured-works')
+      .locator('a[href^="/works/e2e-public-smoke-work"]')).toBeVisible()
+    await expect(page.getByTestId('featured-works')
+      .getByRole('link', { name: '浏览作品展示' })).toBeVisible()
     await expect(page.getByRole('link', { name: /提交委托申请/u }).first()).toBeVisible()
     const current = page.getByTestId('home-current-adoptions')
     await expect(current).toBeVisible()
@@ -119,6 +122,7 @@ test('首页加载、主要入口与单项开放领养在三种视口可达', as
 
   await page.evaluate(() => window.scrollTo(0, 0))
   await page.mouse.wheel(0, 800)
+  await page.waitForTimeout(700)
   await page.mouse.wheel(0, 800)
   await expect.poll(() => page.evaluate(() => {
     const scenes = [...document.querySelectorAll<HTMLElement>('[data-home-scroll-scene]')]
@@ -128,12 +132,14 @@ test('首页加载、主要入口与单项开放领养在三种视口可达', as
         ? index
         : closest
     ), 0)
-  })).toBe(1)
+  })).toBe(2)
 
   await page.evaluate(() => window.scrollTo(0, 0))
+  await page.waitForTimeout(700)
   await page.mouse.wheel(0, 800)
   await expect.poll(() => page.evaluate(() => Math.round(window.scrollY)))
     .toBeGreaterThan(0)
+  await page.waitForTimeout(700)
   await page.mouse.wheel(0, -800)
   await expect.poll(() => page.evaluate(() => Math.round(window.scrollY)))
     .toBe(0)
@@ -401,6 +407,7 @@ test('作品上传显示真实 XHR determinate 进度，并可发布和下架', 
   await photo.getByLabel(/图片说明/u).fill('Smoke 发布图')
   await page.getByRole('button', { name: '保存出厂照' }).click()
   await expect(page.getByText('出厂照已保存。')).toBeVisible()
+  await expect(page.getByLabel('设为代表作品')).toBeDisabled()
 
   const panel = page.getByTestId('publication-panel')
   await panel.getByRole('button', { name: '发布', exact: true }).click()
@@ -410,6 +417,11 @@ test('作品上传显示真实 XHR determinate 进度，并可发布和下架', 
   await panel.getByRole('button', { name: '下架', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: '确认下架' }).click()
   await expect(panel).toContainText('已下架', { timeout: 60_000 })
+
+  await page.goto(`${adminBaseURL}/admin/works`)
+  const workRow = page.locator('tbody tr').filter({ hasText: 'Smoke 发布作品' })
+  await expect(workRow.getByLabel('设为代表作品')).toBeDisabled()
+  await expect(workRow).toContainText('需先上传至少一张竖版出厂照')
 })
 
 test('隐私、服务条款和开源软件声明可读', async ({ page }) => {

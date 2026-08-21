@@ -29,6 +29,7 @@ import {
   replaceManagedAdoptionCover,
   replaceManagedDesignSheet,
   replaceManagedStudioPhotos,
+  updateManagedWorkPresentation,
 } from '../../server/utils/service/work-management'
 import { publishWork } from '../../server/utils/runner/work-publication'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
@@ -106,7 +107,7 @@ async function createPublishedWork(input: {
     characterName: input.slug === 'first-work' ? '团子' : '雪球',
     species: '犬科',
     sortOrder: input.sortOrder,
-    featured: input.featured,
+    featured: false,
   } as const
   const work = createManagedWork(sqlite, input.purpose === 'adoption'
     ? {
@@ -127,15 +128,15 @@ async function createPublishedWork(input: {
       id, role, status, private_object_key, sha256, byte_size,
       mime_type, width, height, created_at, updated_at
     ) VALUES (?, 'studio_photo', 'READY', ?, ?, ?,
-              'image/png', 3200, 2400, ?, ?)
+              'image/png', 2400, 3200, ?, ?)
   `).run(assetId, key, digest(content), content.length, NOW, NOW)
-  insertCompletedUpload(work.id, work.version, assetId, 'studio_photo', key, content, 3200, 2400)
+  insertCompletedUpload(work.id, work.version, assetId, 'studio_photo', key, content, 2400, 3200)
   storage.seedPrivate(key, content, 'image/png', digest(content), {
     fileSize: content.length,
     format: 'png',
-    height: 2400,
+    height: 3200,
     orientation: 1,
-    width: 3200,
+    width: 2400,
   })
   let adoptionCoverAssetId: string | null = null
   let designAssetId: string | null = null
@@ -221,6 +222,15 @@ async function createPublishedWork(input: {
       assetId: designAssetId,
       alt: `${work.characterName}完整设定图`,
     }, NOW + sequence++)
+  }
+  if (input.featured) {
+    current = updateManagedWorkPresentation(
+      sqlite,
+      work.id,
+      current.version,
+      { featured: true },
+      NOW + sequence++,
+    )
   }
   const published = await publishWork(
     sqlite,
@@ -345,29 +355,12 @@ describe('T19/T20 public repository contracts', () => {
     expect(visible).toContain(MEDIA_BASE_URL)
     expect(second.workId).not.toBe(first.workId)
 
-    for (let index = 0; index < 11; index += 1) {
-      await createPublishedWork({
-        slug: `featured-extra-${index}`,
-        sortOrder: 30 + index,
-        featured: true,
-      })
-    }
     expect(repository.listFeaturedWorks().items.map(item => item.work.slug))
       .toEqual([
         'second-work',
         'first-work',
-        'featured-extra-0',
-        'featured-extra-1',
-        'featured-extra-2',
-        'featured-extra-3',
-        'featured-extra-4',
-        'featured-extra-5',
-        'featured-extra-6',
-        'featured-extra-7',
-        'featured-extra-8',
-        'featured-extra-9',
       ])
-    expect(repository.listFeaturedWorks().resultCount).toBe(12)
+    expect(repository.listFeaturedWorks().resultCount).toBe(2)
 
     await createPublishedWork({
       slug: 'published-after-first-read',
