@@ -60,6 +60,8 @@ const errors = reactive<Record<FieldKey, string>>({
   species: '',
   weightKg: '',
 })
+const validationErrorCount = computed(() => Object.values(errors).filter(Boolean).length)
+const validationSummary = useTemplateRef<HTMLElement>('validationSummary')
 const file = shallowRef<File | null>(null)
 const previewUrl = ref<string | null>(null)
 const stage = ref<Stage>('idle')
@@ -269,7 +271,12 @@ function responseReason(error: unknown) {
 }
 
 async function submit() {
-  if (busy.value || !validateFields() || !file.value) {
+  if (busy.value) {
+    return
+  }
+  if (!validateFields() || !file.value) {
+    await nextTick()
+    validationSummary.value?.focus()
     return
   }
   try {
@@ -362,6 +369,14 @@ onBeforeUnmount(() => {
         <p class="commission-apply__privacy">
           我们会使用你提交的设定图、联系方式和体型信息评估申请、与你沟通，并在接单后用于委托履行和售后。设定图不会公开展示。请勿在文件名或称呼中填写不必要的个人信息。
         </p>
+
+        <p
+          v-if="validationErrorCount > 0"
+          ref="validationSummary"
+          class="commission-apply__validation-summary"
+          role="alert"
+          tabindex="-1"
+        >请检查下方 {{ validationErrorCount }} 项信息后再提交。</p>
 
         <div class="commission-apply__field">
           <label for="commission-nickname">称呼 <span aria-hidden="true">*</span></label>
@@ -557,6 +572,15 @@ onBeforeUnmount(() => {
   color: var(--public-text-secondary);
   font-size: var(--font-size-sm);
   line-height: var(--line-height-relaxed);
+}
+
+.commission-apply__validation-summary {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  color: var(--public-status-error);
+  background: color-mix(in srgb, var(--public-status-error) 8%, white);
+  border: 1px solid color-mix(in srgb, var(--public-status-error) 28%, white);
+  border-radius: var(--radius-md);
 }
 
 .commission-apply__field {

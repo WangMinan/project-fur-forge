@@ -10,7 +10,7 @@
 
   --admin-text-primary: #20242b;
   --admin-text-secondary: #626a75;
-  --admin-text-tertiary: #8b929c;
+  --admin-text-tertiary: #646c77;
   --admin-text-inverse: #ffffff;
 
   --admin-border-primary: #d9dee6;
@@ -85,6 +85,16 @@
   --admin-duration-fast: 120ms;
   --admin-duration-normal: 180ms;
   --admin-easing: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (max-width: 767px) {
+  :root {
+    --admin-control-height-sm: var(--admin-touch-target);
+  }
+
+  .admin-surface input[type='range'] {
+    min-height: var(--admin-touch-target);
+  }
 }
 
 .admin-surface {

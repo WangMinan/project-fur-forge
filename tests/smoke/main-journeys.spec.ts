@@ -126,6 +126,14 @@ test('首页加载、主要入口与单项开放领养在三种视口可达', as
     .toHaveAttribute('href', '/adoptions')
 })
 
+test('旧联系页保持 301 跳转到关于页联系区', async ({ request }) => {
+  const response = await request.get(`${publicBaseURL}/contact`, {
+    maxRedirects: 0,
+  })
+  expect(response.status()).toBe(301)
+  expect(response.headers().location).toBe('/about#contact')
+})
+
 test('作品目录与作品详情可达', async ({ page }) => {
   await seedSmokeCatalog(page)
   await page.goto('/works')
@@ -170,6 +178,10 @@ test('委托申请成功并且私有设定图不生成公开对象', async ({ pa
   await expect(page.getByLabel(/已年满 18 周岁/u)).not.toBeChecked()
   await expect(page.getByLabel(/已阅读《隐私政策》/u)).not.toBeChecked()
   await page.getByRole('button', { name: '确认提交' }).click()
+  const validationSummary = page.getByRole('alert')
+    .filter({ hasText: '请检查下方 2 项信息后再提交' })
+  await expect(validationSummary).toContainText('请检查下方 2 项信息后再提交')
+  await expect(validationSummary).toBeFocused()
   await expect(page.getByText('请确认已年满 18 周岁')).toBeVisible()
   await expect(page.getByText('请阅读隐私政策并确认')).toBeVisible()
   await expect(page.getByAltText('所选设定图预览')).toBeVisible()
