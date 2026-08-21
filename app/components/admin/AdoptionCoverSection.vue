@@ -262,17 +262,17 @@ defineExpose({ save: saveCover })
       <input :id="`cover-y-${entry.assetId}`" type="range" min="0" max="100" :value="focalPercent.y" :disabled="locked || processing" @input="onFocalInput('y', $event)">
       <AdminWatermarkedMediaPreview :asset-id="entry.assetId" usage="adoption-card" />
       <div class="cover__actions">
-        <button v-if="entry.status === 'FAILED'" type="button" class="editor__button editor__button--secondary" :disabled="locked || processing" @click="retryProcessing">重试处理</button>
-        <button type="button" class="editor__button editor__button--secondary" :disabled="locked || processing" @click="entry = null">移除横版封面</button>
+        <AdminAction v-if="entry.status === 'FAILED'" :disabled="locked || processing" :loading="processing" loading-label="处理中…" @click="retryProcessing">重试处理</AdminAction>
+        <AdminAction :disabled="locked || processing" @click="entry = null">移除横版封面</AdminAction>
       </div>
     </article>
 
     <p v-else-if="uploads.items.value.length === 0" class="cover__empty">还没有领养横版封面。</p>
     <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp" hidden aria-label="选择领养横版封面文件" @change="onFileChange">
     <div v-if="!entry" class="cover__actions">
-      <button type="button" class="editor__button editor__button--secondary" :disabled="locked || busyUploads > 0" @click="fileInput?.click()">选择横版封面</button>
+      <AdminAction :disabled="locked || busyUploads > 0" @click="fileInput?.click()">选择横版封面</AdminAction>
       <span class="cover__filename">{{ selectedFile?.name ?? '未选择图片' }}</span>
-      <button type="button" class="editor__button editor__button--primary" :disabled="!selectedFile || locked || busyUploads > 0" @click="uploadSelectedFile">{{ busyUploads > 0 ? '处理中…' : '上传横版封面' }}</button>
+      <AdminAction variant="primary" :disabled="!selectedFile || locked || busyUploads > 0" :loading="busyUploads > 0" loading-label="处理中…" @click="uploadSelectedFile">上传横版封面</AdminAction>
     </div>
     <ul v-if="uploads.items.value.length > 0" class="cover__uploads" role="list">
       <li v-for="item in uploads.items.value" :key="item.id">
@@ -286,8 +286,8 @@ defineExpose({ save: saveCover })
       </li>
     </ul>
     <div v-if="isDirty" class="cover__actions">
-      <button type="button" class="editor__button editor__button--primary" :disabled="saving || locked" @click="saveCover">{{ saving ? '保存中…' : '保存横版封面' }}</button>
-      <button type="button" class="editor__button editor__button--secondary" :disabled="saving" @click="resetFromWork(work)">放弃更改</button>
+      <AdminAction variant="primary" :disabled="saving || locked" :loading="saving" loading-label="保存中…" @click="saveCover">保存横版封面</AdminAction>
+      <AdminAction :disabled="saving" @click="resetFromWork(work)">放弃更改</AdminAction>
       <span class="cover__dirty">横版封面有未保存更改</span>
     </div>
     <p v-if="saveError" class="cover__error" role="alert">{{ saveError }}</p>

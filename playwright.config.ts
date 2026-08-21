@@ -32,6 +32,7 @@ const databaseFile = resolve(runDirectory, 'database.db')
 const baseURL = `http://127.0.0.1:${port}`
 const adminBaseURL = `http://localhost:${port}`
 const mediaBaseURL = `http://127.0.0.2:${port}`
+const smokeRun = process.env.E2E_SMOKE === '1'
 
 Object.assign(process.env, {
   E2E_ADMIN_BASE_URL: adminBaseURL,
@@ -60,7 +61,9 @@ export default defineConfig({
   webServer: {
     // 生产构建产物：dev 服务器按页/按路由编译，串行套件下首击抖动大；
     // 构建一次约 80s，换来 128 例的确定性页面加载。E2E_SKIP_BUILD=1 可跳过重建。
-    command: 'node scripts/e2e-server.mjs',
+    command: smokeRun
+      ? `pnpm dev --host 0.0.0.0 --port ${port}`
+      : 'node scripts/e2e-server.mjs',
     env: {
       APP_ENV: 'test',
       DATABASE_FILE: databaseFile,
@@ -84,6 +87,6 @@ export default defineConfig({
     url: `${baseURL}/api/health/live`,
     reuseExistingServer: false,
     // 含一次冷构建（约 80s）的启动预算。
-    timeout: 300_000,
+    timeout: smokeRun ? 120_000 : 300_000,
   },
 })

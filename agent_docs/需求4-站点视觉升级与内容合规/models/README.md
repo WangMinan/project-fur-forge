@@ -21,10 +21,11 @@
 
 目标行为：
 
-- 九宫格 UI 写回现有 asset 焦点；
+- 目标画面内可拖焦点与水平/垂直滑杆写回现有 asset 焦点；
 - 默认 `(0.5, 0.5)`；
 - 预设值为 `0 | 0.5 | 1` 的笛卡尔组合；
 - 现有任意浮点焦点继续合法；
+- 滑杆允许 0.1% UI 步进，request/DB 继续保存归一化浮点值，不量化为九宫格；
 - 只允许未启用 item 修改；
 - 焦点变化后清理/重建该 item 的站点展示变体，recipe identity 继续包含焦点。
 
@@ -55,6 +56,7 @@ interface PublicHomeAggregate {
   currentAdoptions: {
     available: boolean
     items: PublicAdoptionListItemDto[]
+    status: PublicSiteBusinessStatusDto | null
   }
 }
 ```
@@ -65,6 +67,7 @@ interface PublicHomeAggregate {
 - `featured.items.slice(1)` 为次级精选；
 - `entries.commission` 为委托幕视觉源；
 - `currentAdoptions.items` 最多一项，且只能是排序后的第一件 `available`；
+- `currentAdoptions.status` 直接投影现有领养营业状态，不依赖 `entries.adoption` 是否有媒体；
 - 无 available 时 `items=[]`，前端隐藏整幕。
 
 如为了兼容暂时保留数组类型，也必须在 repository 层只投影一项，不由组件再次 `slice(0, 2)`。
@@ -141,7 +144,7 @@ privacyNoticeAcknowledged: z.literal(true)
 
 不新增 DTO/字段：
 
-- 实际经营主体名称写入现有 `privacy_policy` 文本；
+- 已确认的个人信息处理者名称“有点小狗工作室”写入现有 `privacy_policy` 文本；
 - 联系邮箱复用 `site_content.contact_email`；
 - 发布前通过现有管理端人工 Review，页面不渲染占位符。
 
@@ -163,7 +166,7 @@ accepted 委托的业务结束发生在 QQ/线下流程，数据库无法可靠�
 
 ### 4.2 Review 候选
 
-CLI 可以返回只读脱敏候选：
+repository/service 向 CLI 和管理端返回同一只读脱敏候选：
 
 ```ts
 interface CommissionRetentionCandidate {
@@ -173,14 +176,14 @@ interface CommissionRetentionCandidate {
   createdAt: string
   handledAt: string | null
   reason:
-    | 'REJECTED_RETENTION_ELAPSED'
+    | 'REJECTED_READY_FOR_DELETION'
     | 'STALE_PENDING_REVIEW'
     | 'MANUAL_REQUEST'
 }
 ```
 
 - pending 只提示复核；
-- rejected 满 180 天可列为候选；
+- rejected 一经拒绝即可列为删除候选；
 - accepted 不由时间自动列为可删，除非操作员显式查询该申请；
 - 输出不含手机号、QQ、体型、文件名或 Object Key。
 
@@ -214,21 +217,18 @@ interface DeleteCommissionSubmissionCommand {
 
 ### 4.5 删除审计
 
-保留：
+复用现有 `audit_logs`，只持久保留：
 
 ```ts
 interface CommissionDeletionAudit {
-  actorUserId: string
+  actorUserId: string | null
   deletedAt: number
   submissionIdDigest: string
-  databaseRowCounts: Record<string, number>
-  objectCounts: Record<string, number>
-  result: 'SUCCESS' | 'FAILED'
-  failureCode?: string
+  result: 'SUCCESS' | 'FAILURE'
 }
 ```
 
-不保留 PII、完整 Key、内容摘要或可恢复 manifest。
+本次 dry-run/execute 响应仍返回数据库关系和对象的脱敏计数，供操作员当次核对；这些计数、失败阶段和失败码不写入长期审计。当前小型单管理员场景不为此新增删除审计表、通用详情 JSON 或第二套 operation。审计不保留 PII、完整 Key、内容摘要或可恢复 manifest。
 
 ## 5. 统一行动与进度 UI 模型
 
@@ -310,16 +310,18 @@ interface HeroOrientationSummary {
 
 - 一级 selection 是 placement；二级是 orientation。
 - 首页 summary 为横/竖 `X/5`；委托为横/竖 `X/1`。
+- 两种 placement 都只渲染当前 orientation 对应的 editor；切换 Tab 不合并或重建另一集合。
 - 预览画框可选 desktop/mobile，但只改变管理预览，不改变数据契约。
 - 底层继续调用现有独立 collection API/composable。
 
 ## 7. 第三方声明模型
 
-生成两个产物：
+生成三个用途互不重复的产物：
 
 ```text
 app/assets/licenses/third-party-notices.json
-app/assets/licenses/THIRD_PARTY_NOTICES.txt
+app/assets/licenses/third-party-summary.json
+public/THIRD_PARTY_NOTICES.txt
 ```
 
 建议结构：
@@ -345,8 +347,8 @@ interface ThirdPartyNotice {
 
 规则：
 
-- `pnpm-prod` 来自生产依赖；`ffmpeg-static` 包记录与实际 FFmpeg 二进制记录分开；
-- `manual-runtime` 至少包含发布镜像内实际 FFmpeg 二进制的版本、SHA-256、许可证、接收者可访问的对应源码、源码 revision、补丁和构建配置；
+- `pnpm-prod` 来自生成环境已安装的 production dependencies；平台可选包只代表该环境快照，不冒充目标 Linux runtime closure；`ffmpeg-static` 包记录与实际 FFmpeg 二进制记录分开；
+- `manual-runtime` 最终至少包含发布镜像内实际 FFmpeg 二进制的版本、SHA-256、许可证、接收者可访问的对应源码、源码 revision、补丁和构建配置；该记录在 Linux 发布镜像部署阶段提取，本轮未生成 registry 时不创建占位事实或猜测值；
 - `manual-asset` 至少包含 Noto Serif SC 与 ZhuoHei Collage；
 - 排序稳定，不写生成时间；
 - 未知许可证不猜测；
@@ -358,4 +360,4 @@ interface ThirdPartyNotice {
 - 申请确认只扩展请求 Schema；既有 submission 表和历史行不变。
 - 默认文案继续使用前向迁移和现有 section version，不新增处理者字段。
 - 焦点模型不迁移；既有 `(0.5,0.5)` 或任意坐标原样保留。
-- 旧全量测试先降级为 legacy non-gating，不要求一次性改写全部；逐项提升或删除。
+- 旧全量测试已经完成分类和退役；稳定不变量位于 core，主旅程位于 smoke，不再维护 legacy 模型或配置。

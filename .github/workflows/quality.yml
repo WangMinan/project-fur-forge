@@ -4,13 +4,30 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '**/*.md'
+      - 'agent_docs/**'
   pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - 'agent_docs/**'
   workflow_dispatch:
+    inputs:
+      release:
+        description: Run explicit release/build/deployment verification
+        required: false
+        default: false
+        type: boolean
   workflow_call:
+    inputs:
+      release:
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
-  group: quality-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: quality-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_call' }}
 
 permissions:
   contents: read
@@ -19,12 +36,13 @@ env:
   APP_ENV: test
   NODE_VERSION: 24.18.0
   PNPM_VERSION: 11.18.0
+  DOCKER_BUILD_RECORD_UPLOAD: false
 
 jobs:
   checks:
     name: checks
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -45,85 +63,37 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Lint
-        run: pnpm lint
+      - name: Fast checks
+        run: pnpm check:fast
 
-      - name: Typecheck
-        run: pnpm typecheck
+      - name: Install Chromium
+        if: ${{ inputs.release == true }}
+        run: pnpm exec playwright install --with-deps chromium
 
-      - name: Unit tests
-        run: pnpm test
+      - name: Run release verification
+        if: ${{ inputs.release == true }}
+        run: pnpm test:release
 
-      - name: Integration tests
-        env:
-          PUBLIC_BASE_URL: https://public.test.invalid
-          ADMIN_BASE_URL: https://admin.test.invalid
-          MEDIA_BASE_URL: https://media.test.invalid
-          OSS_UPLOAD_BASE_URL: https://upload.test.invalid
-        run: pnpm test:integration
-
-      # 生产产物必须在 APP_ENV=production 下构建：workflow 级的 APP_ENV=test 会让
-      # nuxt.config.ts 把 tests/fixtures/runtime/* 编进 .output，随后 pnpm build
-      # 内置的 guard-production-content 必然拒收夹具产物。lint/typecheck/test 仍
-      # 需要 test 才能覆盖夹具，因此只在这一步覆盖。
-      - name: Production build
-        env:
-          APP_ENV: production
-        run: pnpm build
-
-      # verify:production 自己会用 APP_ENV=test 起服务（scripts/verify-production.mjs），
-      # 校验的是上一步已经构建好的 .output，不重新构建。
-      - name: Verify production output
-        run: pnpm verify:production
-
-      - name: Secret and content scan
-        run: node scripts/ci-secret-scan.mjs
-
-      - name: Verify ESA and observability baselines
-        run: |
-          pnpm verify:esa-cache
-          pnpm verify:observability
-
-      - name: Compose static config check
-        env:
-          APP_IMAGE_REF: example/project-fur-forge@sha256:1111111111111111111111111111111111111111111111111111111111111111
-          DATABASE_FILE: /app/data/studio.db
-          PUBLIC_BASE_URL: https://public.test.invalid
-          ADMIN_BASE_URL: https://admin.test.invalid
-          MEDIA_BASE_URL: https://public-media.ditedog.com
-          OSS_UPLOAD_BASE_URL: https://project-furry-forge-private.oss-cn-hangzhou.aliyuncs.com
-          OSS_REGION: oss-cn-hangzhou
-          OSS_ENDPOINT: https://oss-cn-hangzhou-internal.aliyuncs.com
-          OSS_PRIVATE_BUCKET: project-furry-forge-private
-          OSS_PUBLIC_BUCKET: project-furry-forge-public
-          OSS_ACCESS_KEY_ID: ci-oss-access-key-id
-          OSS_ACCESS_KEY_SECRET: ci-oss-access-key-secret
-          ESA_SITE_ID: "1234567890"
-          ESA_API_ENDPOINT: https://esa.cn-hangzhou.aliyuncs.com
-          SESSION_SECRET: ci-placeholder-session-secret-at-least-32-chars
-          POLICE_FILING_STATUS: unconfigured
-          TRUSTED_PROXY_CIDRS: 172.30.250.1/32,192.0.2.0/24
-        run: |
-          docker compose -f docker-compose.yaml config --quiet
-          test "$(docker compose -f docker-compose.yaml config --services)" = "app"
-
-      - name: Upload check artifacts
-        if: always() && !cancelled()
+      - name: Upload failed release-test artifacts
+        if: ${{ inputs.release == true && failure() && !cancelled() }}
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: check-artifacts
+          name: release-test-artifacts
           path: |
             test-results/
             playwright-report/
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 3
 
   image-build:
     name: image-build
+    if: ${{ inputs.release == true }}
+    needs:
+      - checks
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
@@ -143,8 +113,8 @@ jobs:
           push: false
           load: true
           tags: project-fur-forge:quality
-          cache-from: type=gha,scope=quality-image
-          cache-to: type=gha,mode=max,scope=quality-image
+          cache-from: type=gha,scope=release-image
+          cache-to: type=gha,mode=max,scope=release-image
 
       - name: Exercise app-only Compose and one-shot operations
         env:
@@ -368,48 +338,3 @@ jobs:
         run: |
           docker rm --force fur-forge-nginx-test 2>/dev/null || true
           docker compose down --volumes --remove-orphans
-
-  e2e:
-    name: e2e
-    needs:
-      - checks
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Set up pnpm
-        uses: pnpm/setup@v2.0.2
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7.0.0
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Run E2E
-        run: pnpm test:e2e
-
-      - name: Upload E2E artifacts
-        if: always() && !cancelled()
-        uses: actions/upload-artifact@v7.0.1
-        with:
-          name: e2e-artifacts
-          path: |
-            test-results/
-            playwright-report/
-          if-no-files-found: ignore
-          retention-days: 7

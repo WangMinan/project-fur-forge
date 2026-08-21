@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import HomeMotionReveal from '~/components/HomeMotionReveal.vue'
 import {
   PROJECT_ENGLISH_NAME,
   PROJECT_NAME,
 } from '~~/shared/constants/project'
 import { publicHomeAggregateResponseSchema } from '~~/shared/schemas/public-content'
+import { useHomeSectionNavigation } from '~/composables/useHomeSectionNavigation'
 
 useSeoMeta({
   title: `${PROJECT_NAME} · 兽装作品主页`,
@@ -31,29 +31,36 @@ const { data: home, error: homeError } = await useFetch(
 if (homeError.value) {
   throw createError({ statusCode: 500, statusMessage: '首页暂时无法显示' })
 }
+
+const homeRef = useTemplateRef<HTMLElement>('home')
+useHomeSectionNavigation(homeRef)
+
+useHead({
+  htmlAttrs: { class: 'home-scroll-navigation' },
+})
 </script>
 
 <template>
-  <div v-if="home" class="public-home home-page" data-testid="public-home">
+  <div
+    v-if="home"
+    ref="home"
+    class="public-home home-page"
+    data-testid="public-home"
+  >
     <HomeHeroCarousel :home="home.hero" />
 
-    <HomeMotionReveal data-testid="home-featured-reveal">
-      <FeaturedWorks
-        :works="home.featured.items"
-        :available="home.featured.available"
-      />
-    </HomeMotionReveal>
+    <FeaturedWorks
+      :works="home.featured.items"
+      :available="home.featured.available"
+    />
 
-    <HomeMotionReveal data-testid="home-entries-reveal">
-      <HomeBusinessEntries :entries="home.entries" />
-    </HomeMotionReveal>
+    <HomeBusinessEntries :entries="home.entries" />
 
-    <HomeMotionReveal data-testid="home-adoptions-reveal">
-      <HomeCurrentAdoptions
-        :adoptions="home.currentAdoptions.items"
-        :available="home.currentAdoptions.available"
-      />
-    </HomeMotionReveal>
+    <HomeCurrentAdoptions
+      :adoptions="home.currentAdoptions.items"
+      :available="home.currentAdoptions.available"
+      :status="home.currentAdoptions.status"
+    />
 
   </div>
 </template>
@@ -61,6 +68,6 @@ if (homeError.value) {
 <style scoped>
 /* 首页收尾留白由自己提供；内页页脚间距更紧凑。 */
 .home-page {
-  padding-bottom: var(--space-9);
+  padding-bottom: 0;
 }
 </style>

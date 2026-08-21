@@ -19,6 +19,12 @@ const embeddedFfmpegRuntime = fileURLToPath(
 const esaSdkRuntime = fileURLToPath(
   new URL('./scripts/esa-sdk.mjs', import.meta.url),
 ).replaceAll('\\', '/')
+const ossPreflightCoreRuntime = fileURLToPath(
+  new URL('./scripts/oss-preflight-core.mjs', import.meta.url),
+).replaceAll('\\', '/')
+const privacyPolicyReadinessRuntime = fileURLToPath(
+  new URL('./shared/utils/privacy-policy-readiness.mjs', import.meta.url),
+).replaceAll('\\', '/')
 const e2eFakeOssPutFixture = fileURLToPath(
   new URL('./tests/fixtures/runtime/e2e-fake-oss-put.ts', import.meta.url),
 ).replaceAll('\\', '/')
@@ -45,12 +51,24 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     'nuxt-auth-utils',
   ],
+  experimental: {
+    // 插件保持可用，但默认关闭；全局 route middleware 只为首页三条确认路径启用。
+    viewTransition: true,
+  },
   auth: {
     loadStrategy: 'none',
   },
   app: {
+    viewTransition: false,
     head: {
       link: [
+        {
+          rel: 'preload',
+          as: 'font',
+          type: 'font/ttf',
+          href: '/fonts/zhuohei-collage.ttf',
+          crossorigin: 'anonymous',
+        },
         {
           rel: 'icon',
           type: 'image/png',
@@ -104,7 +122,12 @@ export default defineNuxtConfig({
     ...(e2eOutputDir ? { output: { dir: e2eOutputDir } } : {}),
     errorHandler: './server/error.ts',
     externals: {
-      inline: [embeddedFfmpegRuntime, esaSdkRuntime],
+      inline: [
+        embeddedFfmpegRuntime,
+        esaSdkRuntime,
+        ossPreflightCoreRuntime,
+        privacyPolicyReadinessRuntime,
+      ],
     },
     handlers: includeRuntimeErrorFixtures
       ? [

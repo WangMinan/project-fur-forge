@@ -45,6 +45,7 @@ const pictureSources = computed(() => (
   landscapeItem.value?.sources ?? portraitItem.value?.sources
 ))
 const transitionDirection = shallowRef<'next' | 'prev'>('next')
+const transitionIntent = shallowRef<'autoplay' | 'keyboard' | 'pointer'>('autoplay')
 const transitionName = computed(() => `home-hero-slide-${transitionDirection.value}`)
 
 watch(() => props.home.landscape.length, (count) => {
@@ -58,6 +59,7 @@ const reduceMotion = ref(false)
 const userPaused = ref(false)
 const pageHidden = ref(false)
 const motionReady = shallowRef(false)
+const controlsRevealed = shallowRef(false)
 
 const autoplayInterval = computed(
   () => resolveAutoplayIntervalMs(reduceMotion.value),
@@ -70,6 +72,7 @@ const autoplayRunning = computed(() =>
   && !pageHidden.value)
 
 let timer: ReturnType<typeof setInterval> | null = null
+let controlsTimer: ReturnType<typeof setTimeout> | null = null
 
 function stopTimer() {
   if (timer !== null) {
@@ -78,51 +81,81 @@ function stopTimer() {
   }
 }
 
+function stopControlsTimer() {
+  if (controlsTimer !== null) {
+    clearTimeout(controlsTimer)
+    controlsTimer = null
+  }
+}
+
+function revealControls(timeout = 2_400) {
+  controlsRevealed.value = true
+  stopControlsTimer()
+  if (!userPaused.value) {
+    controlsTimer = setTimeout(() => {
+      controlsRevealed.value = false
+      controlsTimer = null
+    }, timeout)
+  }
+}
+
 function restartTimer() {
   stopTimer()
   const interval = autoplayInterval.value
   if (autoplayRunning.value && interval !== null) {
-    timer = setInterval(goNext, interval)
+    timer = setInterval(() => goNext('autoplay'), interval)
   }
 }
 
-function goTo(index: number) {
+function goTo(index: number, intent: 'autoplay' | 'keyboard' | 'pointer' = 'pointer') {
   const target = clampSlideIndex(index, items.value.length)
   if (target === activeIndex.value) {
     return
   }
+  transitionIntent.value = intent
   transitionDirection.value = target > activeIndex.value ? 'next' : 'prev'
   activeIndex.value = target
 }
 
-function goNext() {
+function goNext(intent: 'autoplay' | 'keyboard' | 'pointer' = 'pointer') {
+  transitionIntent.value = intent
   transitionDirection.value = 'next'
   activeIndex.value = nextSlideIndex(activeIndex.value, items.value.length)
 }
 
-function goPrev() {
+function goPrev(intent: 'autoplay' | 'keyboard' | 'pointer' = 'pointer') {
+  transitionIntent.value = intent
   transitionDirection.value = 'prev'
   activeIndex.value = prevSlideIndex(activeIndex.value, items.value.length)
 }
 
 function togglePause() {
   userPaused.value = !userPaused.value
+  if (userPaused.value) {
+    revealControls()
+  }
+  else {
+    revealControls(2_400)
+  }
 }
 
 function onKeydown(event: KeyboardEvent) {
   if (event.key === 'ArrowLeft') {
     event.preventDefault()
-    goPrev()
+    goPrev('keyboard')
   }
   else if (event.key === 'ArrowRight') {
     event.preventDefault()
-    goNext()
+    goNext('keyboard')
   }
 }
 
 let pointerStartX: number | null = null
 
 function onPointerDown(event: PointerEvent) {
+  if (event.pointerType === 'touch') {
+    revealControls(4_000)
+  }
   // 手势起点在按钮/链接上时不介入，避免误吞控件交互
   if ((event.target as HTMLElement | null)?.closest('button, a')) {
     pointerStartX = null
@@ -138,15 +171,50 @@ function onPointerUp(event: PointerEvent) {
   const direction = resolveSwipeDirection(event.clientX - pointerStartX)
   pointerStartX = null
   if (direction === 'next') {
-    goNext()
+    goNext('pointer')
   }
   else if (direction === 'prev') {
-    goPrev()
+    goPrev('pointer')
   }
 }
 
 function onPointerCancel() {
   pointerStartX = null
+}
+
+function onPointerMove(event: PointerEvent) {
+  if (event.pointerType !== 'mouse') {
+    return
+  }
+  revealForFinePointer(event)
+}
+
+function revealForFinePointer(event: MouseEvent) {
+  const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const x = (event.clientX - bounds.left) / bounds.width
+  const y = (event.clientY - bounds.top) / bounds.height
+  if (
+    !controlsRevealed.value
+    && (x <= 0.16 || x >= 0.84 || y >= 0.72)
+  ) {
+    revealControls()
+  }
+}
+
+function onPointerLeave() {
+  if (!userPaused.value) {
+    stopControlsTimer()
+    controlsRevealed.value = false
+  }
+}
+
+function onHeroClick(event: MouseEvent) {
+  if ((event.target as HTMLElement | null)?.closest('button, a')) {
+    return
+  }
+  if (!matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    revealControls(4_000)
+  }
 }
 
 let motionQuery: MediaQueryList | null = null
@@ -189,6 +257,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   stopTimer()
+  stopControlsTimer()
   if (motionFrame !== null) {
     window.cancelAnimationFrame(motionFrame)
   }
@@ -203,14 +272,22 @@ onBeforeUnmount(() => {
     class="home-hero"
     :class="{
       'home-hero--empty': !pictureSources,
-      'home-hero--motion-ready': motionReady,
     }"
+    :data-transition-intent="transitionIntent"
+    :data-controls-revealed="controlsRevealed"
+    :data-paused="userPaused"
+    :data-reduced-motion="reduceMotion"
     role="region"
     aria-roledescription="carousel"
     aria-label="代表作品轮播"
+    data-home-scroll-scene
     data-testid="public-hero"
     @keydown="onKeydown"
+    @click="onHeroClick"
     @pointerdown="onPointerDown"
+    @pointermove="onPointerMove"
+    @mousemove="revealForFinePointer"
+    @pointerleave="onPointerLeave"
     @pointerup="onPointerUp"
     @pointercancel="onPointerCancel"
   >
@@ -256,7 +333,7 @@ onBeforeUnmount(() => {
         type="button"
         class="home-hero__arrow"
         aria-label="上一张"
-        @click="goPrev"
+        @click="goPrev('pointer')"
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
           <path d="M11.5 3.5L6 9l5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
@@ -271,14 +348,14 @@ onBeforeUnmount(() => {
           :class="{ 'home-hero__dot--active': index === activeIndex }"
           :aria-label="`第 ${index + 1} 张，共 ${items.length} 张`"
           :aria-current="index === activeIndex ? 'true' : undefined"
-          @click="goTo(index)"
+          @click="goTo(index, 'pointer')"
         />
       </div>
       <button
         type="button"
         class="home-hero__arrow"
         aria-label="下一张"
-        @click="goNext"
+        @click="goNext('pointer')"
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
           <path d="M6.5 3.5L12 9l-5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
@@ -353,15 +430,36 @@ onBeforeUnmount(() => {
   object-fit: cover;
 }
 
-/* 离场项只在切换的 680ms 内保留；下一张仍在用户/计时器触发后才挂载和下载。 */
+/* 自动轮播使用完整媒体时序；下一张仍在用户/计时器触发后才挂载和下载。 */
 .home-hero-slide-next-enter-active,
 .home-hero-slide-next-leave-active,
 .home-hero-slide-prev-enter-active,
 .home-hero-slide-prev-leave-active {
   transition:
-    opacity 680ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 680ms cubic-bezier(0.22, 1, 0.36, 1);
+    opacity var(--motion-duration-media) var(--motion-ease-standard),
+    transform var(--motion-duration-media) var(--motion-ease-standard);
   will-change: opacity, transform;
+}
+
+.home-hero[data-transition-intent='pointer'] .home-hero-slide-next-enter-active,
+.home-hero[data-transition-intent='pointer'] .home-hero-slide-next-leave-active,
+.home-hero[data-transition-intent='pointer'] .home-hero-slide-prev-enter-active,
+.home-hero[data-transition-intent='pointer'] .home-hero-slide-prev-leave-active {
+  transition-duration: var(--motion-duration-content);
+}
+
+.home-hero[data-transition-intent='keyboard'] .home-hero-slide-next-enter-active,
+.home-hero[data-transition-intent='keyboard'] .home-hero-slide-next-leave-active,
+.home-hero[data-transition-intent='keyboard'] .home-hero-slide-prev-enter-active,
+.home-hero[data-transition-intent='keyboard'] .home-hero-slide-prev-leave-active {
+  transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
+}
+
+.home-hero[data-transition-intent='keyboard'] .home-hero-slide-next-enter-from,
+.home-hero[data-transition-intent='keyboard'] .home-hero-slide-next-leave-to,
+.home-hero[data-transition-intent='keyboard'] .home-hero-slide-prev-enter-from,
+.home-hero[data-transition-intent='keyboard'] .home-hero-slide-prev-leave-to {
+  transform: none;
 }
 
 .home-hero-slide-next-enter-from,
@@ -374,6 +472,10 @@ onBeforeUnmount(() => {
 .home-hero-slide-prev-enter-from {
   opacity: 0;
   transform: translate3d(-3%, 0, 0) scale(1.01);
+}
+
+.home-hero__slide :deep(.responsive-picture__image) {
+  animation: home-hero-media-in var(--motion-duration-media) var(--motion-ease-standard) both;
 }
 
 .home-hero__scrim {
@@ -444,38 +546,56 @@ onBeforeUnmount(() => {
   gap: var(--space-3);
 }
 
-.home-hero--motion-ready .home-hero__eyebrow,
-.home-hero--motion-ready .home-hero__title,
-.home-hero--motion-ready .home-hero__tagline,
-.home-hero--motion-ready .home-hero__controls {
-  animation: home-hero-content-in 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
+.home-hero__eyebrow,
+.home-hero__tagline {
+  animation: home-hero-brand-in var(--motion-duration-content) var(--motion-ease-standard) both;
 }
 
-.home-hero--motion-ready .home-hero__eyebrow {
-  animation-delay: 100ms;
+.home-hero__eyebrow {
+  animation-delay: 0ms;
 }
 
-.home-hero--motion-ready .home-hero__title {
-  animation-delay: 180ms;
+.home-hero__tagline {
+  animation-delay: 90ms;
 }
 
-.home-hero--motion-ready .home-hero__tagline {
-  animation-delay: 270ms;
+.home-hero__controls {
+  animation: home-hero-controls-in var(--motion-duration-state) var(--motion-ease-playful) 270ms both;
 }
 
-.home-hero--motion-ready .home-hero__controls {
-  animation-delay: 360ms;
+@keyframes home-hero-media-in {
+  from {
+    transform: scale(0.99);
+  }
+
+  to {
+    transform: scale(1);
+  }
 }
 
-@keyframes home-hero-content-in {
+@keyframes home-hero-brand-in {
   from {
     opacity: 0;
-    transform: translateY(1rem);
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(12px);
   }
 
   to {
     opacity: 1;
+    clip-path: inset(0 0 0 0);
     transform: translateY(0);
+  }
+}
+
+@keyframes home-hero-controls-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -490,12 +610,30 @@ onBeforeUnmount(() => {
   border: 1px solid rgb(255 255 255 / 0.35);
   border-radius: var(--radius-full);
   cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px) scale(0.96);
+  transition:
+    opacity var(--motion-duration-state) var(--motion-ease-standard),
+    transform var(--motion-duration-state) var(--motion-ease-playful),
+    background-color var(--motion-duration-feedback) var(--motion-ease-standard);
   place-items: center;
 }
 
-.home-hero__arrow:hover,
-.home-hero__pause:hover {
-  background: rgb(17 20 25 / 0.65);
+.home-hero[data-controls-revealed='true'] .home-hero__arrow,
+.home-hero[data-controls-revealed='true'] .home-hero__pause,
+.home-hero[data-paused='true'] .home-hero__arrow,
+.home-hero[data-paused='true'] .home-hero__pause,
+.home-hero:focus-within .home-hero__arrow,
+.home-hero:focus-within .home-hero__pause {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.home-hero__arrow:active,
+.home-hero__pause:active {
+  transform: scale(0.96);
 }
 
 .home-hero__dots {
@@ -521,10 +659,21 @@ onBeforeUnmount(() => {
   content: '';
   background: rgb(255 255 255 / 0.45);
   border-radius: var(--radius-full);
+  transition:
+    background-color var(--motion-duration-state) var(--motion-ease-standard),
+    transform var(--motion-duration-state) var(--motion-ease-playful);
 }
 
 .home-hero__dot--active::before {
   background: var(--public-text-inverse);
+  transform: scale(1.18);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .home-hero__arrow:hover,
+  .home-hero__pause:hover {
+    background: rgb(17 20 25 / 0.65);
+  }
 }
 
 .home-hero__live {
@@ -592,14 +741,63 @@ onBeforeUnmount(() => {
   .home-hero-slide-next-leave-active,
   .home-hero-slide-prev-enter-active,
   .home-hero-slide-prev-leave-active {
-    transition: none;
+    transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
   }
 
-  .home-hero--motion-ready .home-hero__eyebrow,
-  .home-hero--motion-ready .home-hero__title,
-  .home-hero--motion-ready .home-hero__tagline,
-  .home-hero--motion-ready .home-hero__controls {
+  .home-hero-slide-next-enter-from,
+  .home-hero-slide-next-leave-to,
+  .home-hero-slide-prev-enter-from,
+  .home-hero-slide-prev-leave-to {
+    transform: none;
+  }
+
+  .home-hero__eyebrow,
+  .home-hero__title,
+  .home-hero__tagline,
+  .home-hero__controls,
+  .home-hero__slide :deep(.responsive-picture__image) {
     animation: none;
+  }
+
+  .home-hero__arrow,
+  .home-hero__pause,
+  .home-hero__dot::before {
+    transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
+  }
+
+  .home-hero__arrow,
+  .home-hero__pause,
+  .home-hero__dot--active::before {
+    transform: none;
+  }
+
+  .home-hero[data-reduced-motion='true'] .home-hero__pause {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .home-hero__arrow,
+  .home-hero__pause {
+    background: #111419;
+    border-color: #ffffff;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .home-hero__arrow,
+  .home-hero__pause {
+    background: rgb(17 20 25 / 0.9);
+    border-color: #ffffff;
+  }
+
+  .home-hero__dot::before {
+    background: rgb(255 255 255 / 0.72);
+    box-shadow: 0 0 0 1px #111419;
+  }
+
+  .home-hero__dot--active::before {
+    background: #ffffff;
   }
 }
 </style>

@@ -80,7 +80,7 @@ watch(() => route.fullPath, () => {
           v-for="(item, index) in PUBLIC_NAV_ITEMS"
           :key="item.href"
           class="mobile-nav__item"
-          :style="{ animationDelay: `${70 + index * 38}ms` }"
+          :style="{ animationDelay: `${index * 40}ms` }"
         >
           <NuxtLink
             v-if="!item.children"
@@ -167,7 +167,7 @@ watch(() => route.fullPath, () => {
 
 .mobile-nav__item {
   display: grid;
-  animation: mobile-nav-item-in var(--duration-normal) var(--easing-standard) both;
+  animation: mobile-nav-item-in var(--motion-duration-state) var(--motion-ease-standard) both;
 }
 
 .mobile-nav__link {
@@ -225,32 +225,35 @@ watch(() => route.fullPath, () => {
 .mobile-nav-enter-active,
 .mobile-nav-leave-active {
   transition:
-    opacity var(--duration-normal) var(--easing-standard),
-    transform var(--duration-normal) var(--easing-standard);
+    opacity var(--motion-duration-state) var(--motion-ease-standard),
+    transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .mobile-nav-enter-from,
 .mobile-nav-leave-to {
   opacity: 0;
-  transform: translateY(-0.75rem);
+  transform: translateY(-4px);
 }
 
 @keyframes mobile-nav-item-in {
   from {
     opacity: 0;
-    transform: translateY(0.65rem);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .mobile-nav-enter-active,
   .mobile-nav-leave-active {
-    transition: none;
+    transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
+  }
+
+  .mobile-nav-enter-from,
+  .mobile-nav-leave-to {
+    transform: none;
   }
 
   .mobile-nav__item {

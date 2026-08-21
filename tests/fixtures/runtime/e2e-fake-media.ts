@@ -3,6 +3,7 @@ import type {
   MediaStorage,
   PrivateImageInfo,
 } from '../../../server/utils/media-storage'
+import { setExactObjectStoreForTesting } from '../../../server/utils/exact-object-storage'
 import { setMediaStorageForTesting } from '../../../server/utils/media-storage'
 import { getRuntimeConfig } from '../../../server/utils/runtime-config'
 import { FakeMediaStorage } from '../../helpers/fake-media-storage'
@@ -98,5 +99,26 @@ export function getE2eFakeMediaStorage() {
 export function installE2eFakeMediaStorage(): MediaStorage {
   e2eFakeMediaStorage ??= new E2eFakeMediaStorage()
   setMediaStorageForTesting(e2eFakeMediaStorage)
+  setExactObjectStoreForTesting({
+    async inspect(scope, objectKey) {
+      const objects = scope === 'private'
+        ? e2eFakeMediaStorage!.objects
+        : e2eFakeMediaStorage!.publicObjects
+      return {
+        current: objects.has(objectKey),
+        deleteMarkers: 0,
+        versionBytes: 0,
+        versions: 0,
+      }
+    },
+    async deleteAll(scope, objectKey) {
+      if (scope === 'private') {
+        await e2eFakeMediaStorage!.deletePrivate(objectKey)
+      }
+      else {
+        await e2eFakeMediaStorage!.deletePublic(objectKey)
+      }
+    },
+  })
   return e2eFakeMediaStorage
 }

@@ -4,6 +4,7 @@ import { dirname, resolve } from 'node:path'
 import { loadEnvFile } from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
+import Database from 'better-sqlite3'
 import {
   EsaClient,
   DescribePurgeTasksRequest,
@@ -11,6 +12,7 @@ import {
   PurgeCachesRequestContent,
 } from './esa-sdk.mjs'
 import OSS from 'ali-oss'
+import { privacyPolicyReadiness } from '../shared/utils/privacy-policy-readiness.mjs'
 import {
   contentDigests,
   createSyntheticSourcePng,
@@ -784,6 +786,37 @@ async function main() {
         'production-database-missing',
         'Production DATABASE_FILE does not exist.',
       )
+    }
+
+    const sqlite = new Database(config.databaseFile, {
+      fileMustExist: true,
+      readonly: true,
+    })
+    try {
+      const row = sqlite.prepare(`
+        SELECT privacy_policy AS privacyPolicy, contact_email AS contactEmail
+        FROM site_content
+        WHERE id = 'site'
+      `).get()
+      const policy = privacyPolicyReadiness(
+        row?.privacyPolicy,
+        row?.contactEmail,
+      )
+      addCheck(
+        evidence,
+        'commission-privacy-policy-ready',
+        policy.ready ? 'pass' : 'fail',
+        { reasonCodes: policy.reasons },
+      )
+    }
+    finally {
+      sqlite.close()
+    }
+
+    if (evidence.checks.some(check => check.status === 'fail')) {
+      evidence.status = 'blocked'
+      process.exitCode = 2
+      return
     }
 
     const privateClient = createOssClient(config, config.privateBucket)

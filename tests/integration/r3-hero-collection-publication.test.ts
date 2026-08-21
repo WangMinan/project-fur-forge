@@ -24,6 +24,7 @@ import {
   createHeroCollectionItem,
   getAdminHeroCollection,
   reorderEnabledHeroCollectionItems,
+  updateHeroCollectionItem,
 } from '../../server/utils/service/hero-collection-management'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
@@ -95,6 +96,22 @@ function seedHeroAsset(input: {
   return id
 }
 
+function heroItemInput(
+  assetId: string,
+  alt: string,
+  sortOrder: number,
+  focal = { x: 0.5, y: 0.5 },
+) {
+  return {
+    alt,
+    assetId,
+    assetVersion: 1,
+    focalX: focal.x,
+    focalY: focal.y,
+    sortOrder,
+  }
+}
+
 async function createAndPublish(input: {
   alt: string
   orientation: 'landscape' | 'portrait'
@@ -113,7 +130,7 @@ async function createAndPublish(input: {
     placement,
     input.orientation,
     before.version,
-    { alt: input.alt, assetId, sortOrder: input.sortOrder },
+    heroItemInput(assetId, input.alt, input.sortOrder),
     NOW + sequence++,
   )
   const item = created.items.find(candidate => candidate.asset.assetId === assetId)!
@@ -180,7 +197,7 @@ describe('R3-C independent Hero collection publication', () => {
       'home',
       'landscape',
       before.version,
-      { alt: '待预览横版', assetId, sortOrder: 0 },
+      heroItemInput(assetId, '待预览横版', 0),
       NOW + sequence++,
     )
     const item = created.items.find(candidate => candidate.asset.assetId === assetId)!
@@ -340,7 +357,7 @@ describe('R3-C independent Hero collection publication', () => {
       'commission',
       'landscape',
       before.version,
-      { alt: '委托横版 B', assetId, sortOrder: 0 },
+      heroItemInput(assetId, '委托横版 B', 0),
       NOW + sequence++,
     )
     const second = created.items.find(candidate => candidate.asset.assetId === assetId)!
@@ -407,5 +424,139 @@ describe('R3-C independent Hero collection publication', () => {
     expect(replaced.status).toBe('DONE')
     expect(getAdminHeroCollection(sqlite, 'commission', 'landscape').items
       .filter(item => item.enabled).map(item => item.alt)).toEqual(['委托横版 B'])
+  })
+
+  it('updates disabled focal coordinates through CAS and publishes new immutable variants', async () => {
+    const before = getAdminHeroCollection(sqlite, 'commission', 'landscape')
+    const assetId = seedHeroAsset({
+      orientation: 'landscape',
+      ownerVersion: before.version,
+      placement: 'commission',
+    })
+    const created = createHeroCollectionItem(
+      sqlite,
+      'commission',
+      'landscape',
+      before.version,
+      heroItemInput(assetId, '焦点重建', 0),
+      NOW + sequence++,
+    )
+    const item = created.items.find(candidate => candidate.asset.assetId === assetId)!
+    const firstOperation = startHeroCollectionItemPublication(
+      sqlite,
+      item.id,
+      'commission',
+      'landscape',
+      created.version,
+      NOW + sequence++,
+    )
+    expect((await runHeroCollectionItemPublication(
+      sqlite,
+      storage,
+      firstOperation.operationId,
+      USER_ID,
+      NOW + sequence++,
+    )).status).toBe('DONE')
+    const firstKeys = [...storage.publicObjects.keys()]
+
+    const published = getAdminHeroCollection(sqlite, 'commission', 'landscape')
+    const unpublish = startHeroCollectionItemUnpublication(
+      sqlite,
+      item.id,
+      'commission',
+      'landscape',
+      published.version,
+      NOW + sequence++,
+    )
+    expect((await runHeroCollectionItemUnpublication(
+      sqlite,
+      storage,
+      unpublish.operationId,
+      USER_ID,
+      NOW + sequence++,
+    )).status).toBe('DONE')
+
+    const disabled = getAdminHeroCollection(sqlite, 'commission', 'landscape')
+    const disabledItem = disabled.items.find(candidate => candidate.id === item.id)!
+    const updated = updateHeroCollectionItem(
+      sqlite,
+      item.id,
+      'commission',
+      'landscape',
+      disabled.version,
+      {
+        alt: disabledItem.alt,
+        assetId,
+        assetVersion: disabledItem.asset.version,
+        focalX: 0.37,
+        focalY: 0.64,
+        sortOrder: disabledItem.sortOrder,
+      },
+      NOW + sequence++,
+    )
+    const focused = updated.items.find(candidate => candidate.id === item.id)!
+    expect(focused.asset).toMatchObject({ focalX: 0.37, focalY: 0.64, version: 2 })
+
+    const secondOperation = startHeroCollectionItemPublication(
+      sqlite,
+      item.id,
+      'commission',
+      'landscape',
+      updated.version,
+      NOW + sequence++,
+    )
+    expect((await runHeroCollectionItemPublication(
+      sqlite,
+      storage,
+      secondOperation.operationId,
+      USER_ID,
+      NOW + sequence++,
+    )).status).toBe('DONE')
+    const secondKeys = [...storage.publicObjects.keys()]
+    expect(secondKeys).not.toEqual([])
+    expect(secondKeys.some(key => firstKeys.includes(key))).toBe(false)
+  })
+
+  it('blocks focal changes when a legacy asset is shared by another Hero item', () => {
+    const before = getAdminHeroCollection(sqlite, 'commission', 'landscape')
+    const assetId = seedHeroAsset({
+      orientation: 'landscape',
+      ownerVersion: before.version,
+      placement: 'commission',
+    })
+    const created = createHeroCollectionItem(
+      sqlite,
+      'commission',
+      'landscape',
+      before.version,
+      heroItemInput(assetId, '共享焦点', 0),
+      NOW + sequence++,
+    )
+    const item = created.items.find(candidate => candidate.asset.assetId === assetId)!
+    sqlite.prepare(`
+      INSERT INTO site_hero_items (
+        id, placement, orientation, asset_id, alt_text, sort_order,
+        enabled, version, created_at, updated_at
+      ) VALUES (?, 'home', 'landscape', ?, '历史共享项', 4, 0, 1, ?, ?)
+    `).run(randomUUID(), assetId, NOW, NOW)
+
+    expect(() => updateHeroCollectionItem(
+      sqlite,
+      item.id,
+      'commission',
+      'landscape',
+      created.version,
+      {
+        alt: item.alt,
+        assetId,
+        assetVersion: item.asset.version,
+        focalX: 0,
+        focalY: 1,
+        sortOrder: item.sortOrder,
+      },
+      NOW + sequence++,
+    )).toThrow(expect.objectContaining({
+      reason: 'HERO_FOCAL_SHARED_ASSET_CONFLICT',
+    }))
   })
 })

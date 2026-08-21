@@ -250,6 +250,54 @@ function migrationsBeforeVisitorCopy(databaseFile: string) {
   return folder
 }
 
+function migrationsBeforeR4DefaultCopy(databaseFile: string) {
+  const folder = resolve(dirname(databaseFile), 'pre-r4-default-copy-migrations')
+  const meta = resolve(folder, 'meta')
+  mkdirSync(meta, { recursive: true })
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  const entries = journal.entries.slice(0, journal.entries.findIndex(
+    entry => entry.tag === '0045_r4_default_copy',
+  ))
+  for (const { tag } of entries) {
+    copyFileSync(
+      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
+      resolve(folder, `${tag}.sql`),
+    )
+  }
+  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
+    ...journal,
+    entries,
+  }))
+  return folder
+}
+
+function migrationsBeforeR4PrivacyController(databaseFile: string) {
+  const folder = resolve(dirname(databaseFile), 'pre-r4-privacy-controller-migrations')
+  const meta = resolve(folder, 'meta')
+  mkdirSync(meta, { recursive: true })
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  const entries = journal.entries.slice(0, journal.entries.findIndex(
+    entry => entry.tag === '0046_r4_privacy_controller',
+  ))
+  for (const { tag } of entries) {
+    copyFileSync(
+      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
+      resolve(folder, `${tag}.sql`),
+    )
+  }
+  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
+    ...journal,
+    entries,
+  }))
+  return folder
+}
+
 afterEach(() => {
   temporaryDirectories.splice(0).forEach(directory => rmSync(
     directory,
@@ -305,8 +353,8 @@ describe('SQLite foundation', () => {
         officialChannelsJson: string
         privacyPolicy: string
       }
-      expect(siteContent.commissionIntro).toContain('逐单估价')
-      expect(siteContent.commissionEmailAction).toContain('邮箱')
+      expect(siteContent.commissionIntro).toContain('官方 QQ')
+      expect(siteContent.commissionEmailAction).toContain('备用联系渠道')
       const siteContentColumns = database.sqlite.pragma(
         'table_info(site_content)',
       ) as { name: string }[]
@@ -314,12 +362,15 @@ describe('SQLite foundation', () => {
         .not.toContain('commission_faq_json')
       expect(siteContentColumns.map(column => column.name))
         .not.toContain('commission_faq_version')
-      expect(siteContent.aboutStudioFacts).toBe('有点小狗工作室制作全装和半装兽装，并在本站展示已完成的作品。')
-      expect(siteContent.basicTerms).toContain('著作权归有点小狗工作室')
+      expect(siteContent.aboutStudioFacts).toContain('不只做小狗毛，但只做海绵头')
+      expect(siteContent.basicTerms).toContain('逐单特别约定')
       expect(siteContent.basicTerms).toContain('签收之日起一年')
-      expect(siteContent.privacyPolicy).toContain('不提供访客账号')
-      expect(siteContent.privacyPolicy).toContain('不接入第三方统计平台')
-      expect(siteContent.privacyPolicy).toContain('原始记录保留 90 天')
+      expect(siteContent.privacyPolicy).toContain('个人信息处理者：有点小狗工作室')
+      expect(siteContent.privacyPolicy).toContain('隐私联系邮箱：765678159@qq.com')
+      expect(siteContent.privacyPolicy).toContain('称呼、物种、手机号码、QQ、身高、体重')
+      expect(siteContent.privacyPolicy).toContain('拒绝后即进入人工删除候选')
+      expect(siteContent.privacyPolicy).toContain('不接入第三方广告或营销统计平台')
+      expect(siteContent.privacyPolicy).toContain('原始统计记录保留 90 天')
       expect(siteContent.privacyPolicy).not.toContain('未来如新增')
       expect(siteContent.contactAntiScam).toContain('另一条已公布渠道核实')
       expect(JSON.parse(siteContent.officialChannelsJson)).toEqual([
@@ -346,6 +397,145 @@ describe('SQLite foundation', () => {
     }
     finally {
       database.sqlite.close()
+    }
+  })
+
+  it('updates only blank or exact historical defaults for requirement 4 copy', async () => {
+    const databaseFile = temporaryDatabase()
+    await migrateDatabase(databaseFile, {
+      migrationsFolder: migrationsBeforeR4DefaultCopy(databaseFile),
+    })
+    const legacy = openDatabase(databaseFile)
+    let before!: Record<string, number | string>
+    try {
+      legacy.sqlite.pragma('ignore_check_constraints = ON')
+      legacy.sqlite.prepare(`
+        UPDATE site_content
+        SET commission_intro = '   ',
+            commission_estimate_note = '管理员自定义估价说明',
+            about_studio_facts = '管理员自定义工作室介绍',
+            about_making_scope = NULL,
+            privacy_policy = '管理员已填写真实经营主体的隐私政策',
+            contact_anti_scam = ''
+        WHERE id = 'site'
+      `).run()
+      legacy.sqlite.pragma('ignore_check_constraints = OFF')
+      before = legacy.sqlite.prepare(`
+        SELECT version,
+               commission_content_version AS commission,
+               about_content_version AS about,
+               terms_content_version AS terms,
+               privacy_content_version AS privacy,
+               contact_content_version AS contact,
+               privacy_policy AS privacyPolicy
+        FROM site_content WHERE id = 'site'
+      `).get() as Record<string, number | string>
+    }
+    finally {
+      legacy.sqlite.close()
+    }
+
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
+      applied: migrationCountFrom('0045_r4_default_copy'),
+    })
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({ applied: 0 })
+    const upgraded = openDatabase(databaseFile)
+    try {
+      const row = upgraded.sqlite.prepare(`
+        SELECT version,
+               commission_intro AS commissionIntro,
+               commission_estimate_note AS commissionEstimateNote,
+               commission_email_action AS commissionEmailAction,
+               commission_content_version AS commissionVersion,
+               about_studio_facts AS aboutStudioFacts,
+               about_making_scope AS aboutMakingScope,
+               about_content_version AS aboutVersion,
+               basic_terms AS basicTerms,
+               terms_content_version AS termsVersion,
+               privacy_policy AS privacyPolicy,
+               privacy_content_version AS privacyVersion,
+               contact_anti_scam AS contactAntiScam,
+               contact_content_version AS contactVersion
+        FROM site_content WHERE id = 'site'
+      `).get() as Record<string, number | string>
+
+      expect(row.commissionIntro).toContain('官方 QQ')
+      expect(row.commissionEstimateNote).toBe('管理员自定义估价说明')
+      expect(row.commissionEmailAction).toContain('邮箱为备用联系渠道')
+      expect(row.commissionVersion).toBe(Number(before.commission) + 1)
+      expect(row.aboutStudioFacts).toBe('管理员自定义工作室介绍')
+      expect(row.aboutMakingScope).toContain('半装仅包括头部和爪，不含尾巴')
+      expect(row.aboutMakingScope).toContain('官方 QQ 沟通')
+      expect(row.aboutMakingScope).not.toMatch(/半装[^。；]*爪和尾巴/u)
+      expect(row.aboutVersion).toBe(Number(before.about) + 1)
+      expect(row.basicTerms).toContain('逐单特别约定')
+      expect(row.basicTerms).not.toContain('所有解释权')
+      expect(row.termsVersion).toBe(Number(before.terms) + 1)
+      expect(row.privacyPolicy).toBe(before.privacyPolicy)
+      expect(row.privacyPolicy).not.toContain('{{controller_name}}')
+      expect(row.privacyVersion).toBe(before.privacy)
+      expect(row.contactAntiScam).toContain('QQ群用于社群或一般交流')
+      expect(row.contactVersion).toBe(Number(before.contact) + 1)
+      expect(row.version).toBe(Number(before.version) + 4)
+      expect(upgraded.sqlite.pragma('foreign_key_check')).toEqual([])
+      expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
+    }
+    finally {
+      upgraded.sqlite.close()
+    }
+  })
+
+  it('writes the confirmed privacy controller only over the exact historical default', async () => {
+    const databaseFile = temporaryDatabase()
+    await migrateDatabase(databaseFile, {
+      migrationsFolder: migrationsBeforeR4PrivacyController(databaseFile),
+    })
+    const legacy = openDatabase(databaseFile)
+    let before!: { privacyVersion: number, version: number }
+    try {
+      legacy.sqlite.prepare(`
+        UPDATE site_content SET contact_email = 'privacy-owner@example.test'
+        WHERE id = 'site'
+      `).run()
+      before = legacy.sqlite.prepare(`
+        SELECT version, privacy_content_version AS privacyVersion
+        FROM site_content WHERE id = 'site'
+      `).get() as { privacyVersion: number, version: number }
+      expect(legacy.sqlite.prepare(`
+        SELECT privacy_policy FROM site_content WHERE id = 'site'
+      `).pluck().get()).toContain('不提供访客账号')
+    }
+    finally {
+      legacy.sqlite.close()
+    }
+
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
+      applied: migrationCountFrom('0046_r4_privacy_controller'),
+    })
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({ applied: 0 })
+    const upgraded = openDatabase(databaseFile)
+    try {
+      const row = upgraded.sqlite.prepare(`
+        SELECT version, privacy_content_version AS privacyVersion,
+               privacy_policy AS privacyPolicy
+        FROM site_content WHERE id = 'site'
+      `).get() as {
+        privacyPolicy: string
+        privacyVersion: number
+        version: number
+      }
+      expect(row.privacyPolicy).toContain('个人信息处理者：有点小狗工作室')
+      expect(row.privacyPolicy).toContain('隐私联系邮箱：privacy-owner@example.test')
+      expect(row.privacyPolicy).toContain('私有设定图、上传会话')
+      expect(row.privacyPolicy).not.toContain('{{')
+      expect(row.privacyPolicy).not.toContain('不提供访客账号')
+      expect(row.privacyVersion).toBe(before.privacyVersion + 1)
+      expect(row.version).toBe(before.version + 1)
+      expect(upgraded.sqlite.pragma('foreign_key_check')).toEqual([])
+      expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
+    }
+    finally {
+      upgraded.sqlite.close()
     }
   })
 
@@ -587,26 +777,26 @@ describe('SQLite foundation', () => {
         FROM site_content WHERE id = 'site'
       `).get() as Record<string, number | string>
 
-      expect(row.commissionIntro).toContain('确认可行性后逐单估价')
+      expect(row.commissionIntro).toContain('官方 QQ')
       expect(row.commissionEstimateNote).toBe('管理员自定义估价说明')
-      expect(row.commissionEmailAction).toContain('复制邮箱地址发送')
-      expect(row.commissionVersion).toBe(before.commission + 1)
+      expect(row.commissionEmailAction).toContain('邮箱为备用联系渠道')
+      expect(row.commissionVersion).toBe(before.commission + 2)
       expect(row.aboutStudioFacts).toBe('管理员自定义工作室介绍')
-      expect(row.aboutMakingScope).toContain('确认委托前沟通')
+      expect(row.aboutMakingScope).toContain('确认委托前通过工作室官方 QQ 沟通')
       // 半装只做头和爪：0043 必须把 visitor copy 里的尾巴去掉，全装仍含尾巴。
-      expect(row.aboutMakingScope).toContain('半装包括头部和爪')
-      expect(row.aboutMakingScope).not.toMatch(/半装[^。]*尾巴/u)
-      // visitor copy 与 0043 半装范围修正各推进 about 一次。
-      expect(row.aboutVersion).toBe(before.about + 2)
+      expect(row.aboutMakingScope).toContain('半装仅包括头部和爪，不含尾巴')
+      expect(row.aboutMakingScope).not.toMatch(/半装[^。；]*爪和尾巴/u)
+      // visitor copy、0043 范围修正与 0045 目标默认各推进 about 一次。
+      expect(row.aboutVersion).toBe(before.about + 3)
       expect(row.basicTerms).toBe('管理员自定义服务条款')
       expect(row.termsVersion).toBe(before.terms)
-      expect(row.privacyPolicy).toContain('原始记录保留 90 天')
+      expect(row.privacyPolicy).toContain('原始统计记录保留 90 天')
       expect(row.privacyPolicy).not.toContain('未来如新增')
-      expect(row.privacyVersion).toBe(before.privacy + 1)
+      expect(row.privacyVersion).toBe(before.privacy + 2)
       expect(row.contactAntiScam).toBe('管理员自定义防诈骗提醒')
       // visitor copy 与 0042 默认联系方式各推进 contact 一次。
       expect(row.contactVersion).toBe(before.contact + 2)
-      expect(row.version).toBe(before.version + 7)
+      expect(row.version).toBe(before.version + 10)
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
     }
     finally {
@@ -665,6 +855,7 @@ describe('SQLite foundation', () => {
       `).pluck().all()).toEqual(expect.arrayContaining(
         triggerNames.filter(name => (
           !name.startsWith('return_photos_')
+          && !name.startsWith('site_hero_slides_')
           && !name.startsWith('work_assets_design_sheet_primary_')
           && name !== 'works_preserve_design_sheet_purpose'
         )),

@@ -18,6 +18,7 @@ const props = withDefaults(defineProps<{
 
 const route = useRoute()
 const navOpen = ref(false)
+const scrolled = shallowRef(false)
 
 /** 首页图片覆盖态；内页白底态。 */
 const overlay = computed(() => route.path === '/' && !props.brandOnly)
@@ -30,12 +31,26 @@ function isActive(item: PublicNavItem) {
 watch(() => route.fullPath, () => {
   navOpen.value = false
 })
+
+function updateScrolled() {
+  scrolled.value = window.scrollY > 32
+}
+
+onMounted(() => {
+  updateScrolled()
+  window.addEventListener('scroll', updateScrolled, { passive: true })
+})
+
+onBeforeUnmount(() => window.removeEventListener('scroll', updateScrolled))
 </script>
 
 <template>
   <header
     class="public-header"
-    :class="{ 'public-header--overlay': overlay }"
+    :class="{
+      'public-header--overlay': overlay,
+      'public-header--scrolled': scrolled,
+    }"
     data-testid="public-header"
   >
     <NuxtLink
@@ -147,7 +162,15 @@ watch(() => route.fullPath, () => {
 }
 
 .public-header--overlay {
+  position: fixed;
   color: var(--public-text-inverse);
+}
+
+.public-header--overlay.public-header--scrolled {
+  color: var(--public-text-primary);
+  background: rgb(255 255 255 / 0.94);
+  border-bottom: 1px solid var(--public-border-secondary);
+  backdrop-filter: blur(14px) saturate(140%);
 }
 
 .public-header:not(.public-header--overlay) {
@@ -177,6 +200,10 @@ watch(() => route.fullPath, () => {
 
 .public-header--overlay .public-header__logo {
   filter: brightness(0) invert(1);
+}
+
+.public-header--overlay.public-header--scrolled .public-header__logo {
+  filter: none;
 }
 
 /* 覆盖态（首页图片大底）文字必须满透明度：半透明反白在图片上无法保证对比度。 */
@@ -213,6 +240,7 @@ watch(() => route.fullPath, () => {
 }
 
 .public-header__link {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
@@ -220,16 +248,23 @@ watch(() => route.fullPath, () => {
   padding: 0 var(--space-4);
   color: inherit;
   font-size: var(--font-size-sm);
-  border: 1px solid transparent;
-  border-radius: var(--radius-full);
   opacity: 0.86;
   transition:
-    color var(--duration-fast) var(--easing-standard),
-    opacity var(--duration-fast) var(--easing-standard),
-    background-color var(--duration-fast) var(--easing-standard),
-    border-color var(--duration-fast) var(--easing-standard),
-    box-shadow var(--duration-fast) var(--easing-standard),
-    transform var(--duration-fast) var(--easing-standard);
+    color var(--motion-duration-state) var(--motion-ease-standard),
+    opacity var(--motion-duration-state) var(--motion-ease-standard);
+}
+
+.public-header__link::after {
+  position: absolute;
+  right: var(--space-3);
+  bottom: 0.2rem;
+  left: var(--space-3);
+  height: 2px;
+  content: '';
+  background: currentcolor;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .public-header__link:hover,
@@ -241,8 +276,11 @@ watch(() => route.fullPath, () => {
 .public-header__link[aria-current='page'],
 .public-header__nav-item--active > .public-header__link {
   opacity: 1;
-  border-color: rgb(127 137 150 / 0.28);
-  background: rgb(127 137 150 / 0.14);
+}
+
+.public-header__link[aria-current='page']::after,
+.public-header__nav-item--active > .public-header__link::after {
+  transform: scaleX(1);
 }
 
 .public-header:not(.public-header--overlay) .public-header__link[aria-current='page'],
@@ -254,21 +292,18 @@ watch(() => route.fullPath, () => {
   .public-header__link:hover,
   .public-header__link:focus-visible,
   .public-header__nav-item:focus-within > .public-header__link {
-    background: rgb(127 137 150 / 0.14);
-    box-shadow: 0 0.45rem 1.25rem rgb(17 20 25 / 0.12);
-    transform: translateY(-2px);
+    opacity: 1;
   }
 
-  .public-header--overlay .public-header__link:hover,
-  .public-header--overlay .public-header__link:focus-visible,
-  .public-header--overlay .public-header__nav-item:focus-within > .public-header__link {
-    background: rgb(255 255 255 / 0.16);
-    box-shadow: 0 0.45rem 1.25rem rgb(17 20 25 / 0.2);
+  .public-header__link:hover::after,
+  .public-header__link:focus-visible::after,
+  .public-header__nav-item:focus-within > .public-header__link::after {
+    transform: scaleX(1);
   }
 }
 
 .public-header__chevron {
-  transition: transform var(--duration-fast) var(--easing-standard);
+  transition: transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .public-header__subnav {
@@ -283,9 +318,9 @@ watch(() => route.fullPath, () => {
   pointer-events: none;
   transform: translateY(-0.25rem);
   transition:
-    opacity var(--duration-fast) var(--easing-standard),
-    transform var(--duration-fast) var(--easing-standard),
-    visibility var(--duration-fast) var(--easing-standard);
+    opacity var(--motion-duration-state) var(--motion-ease-standard),
+    transform var(--motion-duration-state) var(--motion-ease-standard),
+    visibility var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .public-header__subnav-panel {
@@ -355,7 +390,8 @@ watch(() => route.fullPath, () => {
 @media (prefers-reduced-motion: reduce) {
   .public-header__chevron,
   .public-header__subnav,
-  .public-header__link {
+  .public-header__link,
+  .public-header__link::after {
     transition: none;
   }
 
@@ -363,6 +399,17 @@ watch(() => route.fullPath, () => {
   .public-header__link:focus-visible,
   .public-header__nav-item:focus-within > .public-header__link {
     transform: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .public-header--overlay {
+    background: #111419;
+  }
+
+  .public-header--overlay.public-header--scrolled {
+    background: var(--public-bg-primary);
+    backdrop-filter: none;
   }
 }
 </style>

@@ -19,24 +19,16 @@ concurrency:
 permissions:
   contents: read
 
-jobs:
-  quality:
-    uses: ./.github/workflows/quality.yml
+env:
+  DOCKER_BUILD_RECORD_UPLOAD: false
 
-  publish:
-    name: publish
-    needs:
-      - quality
+jobs:
+  authorize:
+    name: authorize
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 3
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7.0.1
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-
       - name: Validate publish inputs
         shell: bash
         env:
@@ -66,6 +58,26 @@ jobs:
             echo "The mutable latest tag is forbidden for the frozen image." >&2
             exit 1
           fi
+
+  quality:
+    needs:
+      - authorize
+    uses: ./.github/workflows/quality.yml
+    with:
+      release: true
+
+  publish:
+    name: publish
+    needs:
+      - quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4.2.0

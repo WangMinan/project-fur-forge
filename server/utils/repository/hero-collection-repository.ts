@@ -3,9 +3,51 @@ import type {
   HeroOrientation,
   HeroPlacement,
 } from '../../../shared/types/contracts'
-import type { HeroVariantRow } from './hero-repository'
-import { findVariantsForAssets } from './hero-repository'
+import type { VariantRecord } from '../recipe/media-mapper'
 import { ServiceError } from '../service-error'
+
+export interface HeroVariantRow extends VariantRecord {
+  assetId: string
+}
+
+const selectHeroVariants = `
+  SELECT
+    id, asset_id AS assetId, byte_size AS byteSize,
+    storage_scope AS storageScope, status, object_key AS objectKey,
+    width, height, format, input_sha256 AS inputSha256,
+    internal_error_code AS internalErrorCode,
+    logo_digest AS logoDigest, media_role AS mediaRole,
+    protection_mode AS protectionMode,
+    recipe_version AS recipeVersion, sha256, usage,
+    watermark_anchor AS watermarkAnchor,
+    watermark_config_digest AS watermarkConfigDigest,
+    watermark_opacity_percent AS watermarkOpacityPercent,
+    watermark_profile AS watermarkProfile,
+    watermark_profile_id AS watermarkProfileId,
+    watermark_scale_percent AS watermarkScalePercent
+  FROM asset_variants
+`
+
+function findVariantsForAssets(
+  sqlite: Database.Database,
+  assetIds: readonly string[],
+) {
+  const ids = [...new Set(assetIds)]
+  const grouped = new Map(ids.map(id => [id, [] as HeroVariantRow[]]))
+  if (ids.length === 0) {
+    return grouped
+  }
+  const placeholders = ids.map(() => '?').join(', ')
+  const rows = sqlite.prepare(`
+    ${selectHeroVariants}
+    WHERE asset_id IN (${placeholders})
+    ORDER BY asset_id, usage, width, format
+  `).all(...ids) as HeroVariantRow[]
+  for (const row of rows) {
+    grouped.get(row.assetId)!.push(row)
+  }
+  return grouped
+}
 
 export interface HeroCollectionRow {
   orientation: HeroOrientation
@@ -16,7 +58,10 @@ export interface HeroCollectionRow {
 export interface HeroItemRow {
   alt: string
   assetId: string
+  assetVersion: number
   enabled: number
+  focalX: number
+  focalY: number
   height: number
   id: string
   orientation: HeroOrientation
@@ -34,6 +79,9 @@ export interface HeroItemRow {
 
 export interface HeroItemAssetRow {
   assetId: string
+  version: number
+  focalX: number
+  focalY: number
   height: number
   privateObjectKey: string
   role: 'home_hero_landscape' | 'home_hero_portrait'
@@ -50,11 +98,38 @@ const selectItems = `
     item.preview_object_key AS previewObjectKey,
     item.preview_expires_at AS previewExpiresAt,
     asset.id AS assetId, asset.role, asset.status,
+    asset.version AS assetVersion,
+    asset.focal_x AS focalX, asset.focal_y AS focalY,
     asset.width, asset.height, asset.sha256,
     asset.private_object_key AS privateObjectKey
   FROM site_hero_items AS item
   JOIN assets AS asset ON asset.id = item.asset_id
 `
+
+export function insertHeroAuditLog(
+  sqlite: Database.Database,
+  input: {
+    action: string
+    actorUserId: string
+    entityId: string
+    id: string
+    result: 'SUCCESS' | 'FAILURE'
+  },
+  now: number,
+) {
+  sqlite.prepare(`
+    INSERT INTO audit_logs (
+      id, actor_user_id, action, entity_type, entity_id, result, created_at
+    ) VALUES (?, ?, ?, 'HOME', ?, ?, ?)
+  `).run(
+    input.id,
+    input.actorUserId,
+    input.action,
+    input.entityId,
+    input.result,
+    now,
+  )
+}
 
 export function heroOwnerId(
   placement: HeroPlacement,
@@ -130,6 +205,7 @@ export function findHeroItemAsset(
   return sqlite.prepare(`
     SELECT
       asset.id AS assetId, asset.role, asset.status,
+      asset.version, asset.focal_x AS focalX, asset.focal_y AS focalY,
       asset.width, asset.height, asset.sha256,
       asset.private_object_key AS privateObjectKey,
       EXISTS (
@@ -159,6 +235,40 @@ export function isHeroItemAssetAssigned(
     SELECT 1 FROM site_hero_items
     WHERE asset_id = ? AND id != COALESCE(?, '') LIMIT 1
   `).pluck().get(assetId, exceptItemId ?? null))
+}
+
+export function countHeroItemAssetAssignments(
+  sqlite: Database.Database,
+  assetId: string,
+  exceptItemId?: string,
+) {
+  return Number(sqlite.prepare(`
+    SELECT count(*) FROM site_hero_items
+    WHERE asset_id = ? AND id != COALESCE(?, '')
+  `).pluck().get(assetId, exceptItemId ?? null))
+}
+
+export function updateHeroAssetFocal(
+  sqlite: Database.Database,
+  assetId: string,
+  expectedVersion: number,
+  focalX: number,
+  focalY: number,
+  now: number,
+) {
+  const result = sqlite.prepare(`
+    UPDATE assets
+    SET focal_x = ?, focal_y = ?, version = version + 1, updated_at = ?
+    WHERE id = ? AND version = ?
+  `).run(focalX, focalY, now, assetId, expectedVersion)
+  if (result.changes !== 1) {
+    throw new ServiceError(
+      409,
+      'CONFLICT',
+      'Hero asset version is stale.',
+      'VERSION_CONFLICT',
+    )
+  }
 }
 
 export function insertHeroItem(

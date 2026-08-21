@@ -14,6 +14,9 @@ import { AdminApiError } from './useAdminApi'
 export interface HeroCollectionItemInput {
   alt: string
   assetId: string
+  assetVersion: number
+  focalX: number
+  focalY: number
   sortOrder: number
 }
 
@@ -78,6 +81,18 @@ export function useAdminHeroCollection(
       },
       onSettled: async (operation) => {
         operations.value = { ...operations.value, [id]: operation }
+        if (operation.operationType === 'UPSCALE' && operation.status === 'DONE') {
+          await refresh()
+          const error = await startOperation(id, 'enable')
+          if (error) {
+            setFeedback(id, {
+              retryOperationId: null,
+              text: error,
+              tone: 'error',
+            })
+          }
+          return
+        }
         setFeedback(id, operationFeedback(operation))
         await refresh()
       },
@@ -86,7 +101,8 @@ export function useAdminHeroCollection(
 
   function restoreOperations(snapshot: AdminHeroCollectionDto) {
     for (const item of snapshot.items) {
-      const operation = item.publicationOperation ?? item.upscaleOperation
+      const operation = item.publicationOperation
+        ?? (item.enabled ? null : item.upscaleOperation)
       if (!operation) {
         continue
       }
@@ -132,6 +148,9 @@ export function useAdminHeroCollection(
     }
     if (reason === 'HERO_SLOT_LIMIT' && toValue(placement) === 'commission') {
       return '委托页每个方向只启用一张大图；请先停用当前大图，再启用新图。'
+    }
+    if (reason === 'HERO_FOCAL_SHARED_ASSET_CONFLICT') {
+      return '这张原图正在多个大图项中复用，不能静默覆盖其它位置的焦点；请上传独立素材。'
     }
     return '版本或状态已变化，请确认后重试。'
   }

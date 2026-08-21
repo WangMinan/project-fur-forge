@@ -34,7 +34,6 @@ import {
   findWorkPublicKeys,
   findWorkState,
   hasActiveWorkOperation,
-  hasEnabledHeroSlideForWork,
   insertWorkAuditLog,
   insertWorkOperation,
   markOperationFailed,
@@ -307,6 +306,12 @@ export function checkWorkPublication(
   if (!activeWatermarkProfileId(sqlite)) {
     blockers.push('WATERMARK_PROFILE_REQUIRED')
   }
+  const latestOperation = findLatestOperations(sqlite, 'WORK', [workId])
+    .map(operationDto)
+    .toSorted((left, right) => (
+      Date.parse(right.startedAt) - Date.parse(left.startedAt)
+      || right.operationId.localeCompare(left.operationId)
+    ))[0] ?? null
   return {
     workId,
     version: work.version,
@@ -320,6 +325,7 @@ export function checkWorkPublication(
     studioPhotoNeedsPreprocess,
     requiredVariantCount: requiredVariantCount(targets),
     missingVariantCount: missingVariantCount(sqlite, targets),
+    latestOperation,
   }
 }
 
@@ -733,17 +739,6 @@ export async function unpublishWork(
   )
   if (work.publicationStatus === 'unpublished' && repeated) {
     return { operation: operationDto(repeated), work: workState(work) }
-  }
-  if (
-    work.version === expectedVersion
-    && work.publicationStatus === 'published'
-    && hasEnabledHeroSlideForWork(sqlite, workId)
-  ) {
-    throw new ServiceError(
-      409,
-      'CONFLICT',
-      'Disable or unlink enabled hero slides before unpublishing.',
-    )
   }
   const operation = createOperation(
     sqlite,

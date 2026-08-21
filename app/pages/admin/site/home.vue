@@ -3,7 +3,6 @@ import type {
   HeroOrientation,
   HeroPlacement,
 } from '~~/shared/types/contracts'
-import type { HeroCollectionItemInput } from '~/composables/useAdminHeroCollection'
 
 definePageMeta({
   layout: 'admin',
@@ -15,97 +14,94 @@ useSeoMeta({
   robots: 'noindex, nofollow',
 })
 
-const TABS = [
-  { key: 'home-landscape', label: '首页大图 / 横版', placement: 'home', orientation: 'landscape' },
-  { key: 'home-portrait', label: '首页大图 / 竖版', placement: 'home', orientation: 'portrait' },
-  { key: 'commission-landscape', label: '委托页大图 / 横版', placement: 'commission', orientation: 'landscape' },
-  { key: 'commission-portrait', label: '委托页大图 / 竖版', placement: 'commission', orientation: 'portrait' },
+interface OrientationSummary {
+  enabledCount: number
+  hasOperation: boolean
+  limit: number
+  orientation: HeroOrientation
+  ready: boolean
+}
+
+const PLACEMENTS = [
+  { key: 'home', label: '首页大图' },
+  { key: 'commission', label: '委托页大图' },
+] as const
+const ORIENTATIONS = [
+  { key: 'landscape', label: '横版', frame: '桌面 16:9' },
+  { key: 'portrait', label: '竖版', frame: '手机 9:16' },
 ] as const
 
 const route = useRoute()
-const activeTab = computed(() => (
-  TABS.find(tab => tab.key === route.query.tab) ?? TABS[0]
-))
-const placement = computed<HeroPlacement>(() => activeTab.value.placement)
-const orientation = computed<HeroOrientation>(() => activeTab.value.orientation)
-const {
-  collection,
-  conflictNotice,
-  createItem,
-  deleteItem,
-  feedback,
-  load,
-  mutating,
-  operations,
-  pageStatus,
-  reorder,
-  retryOperation,
-  startOperation,
-  updateItem,
-} = useAdminHeroCollection(placement, orientation)
-
-const actionError = ref<string | null>(null)
-const showDraft = ref(false)
-// 首页集合是最多 5 张的轮播；委托页不轮播，每个方向只启用一张，可下架替换。
-const slotLimit = computed(() => placement.value === 'commission' ? 1 : 5)
-const enabledItems = computed(() => (
-  collection.value?.items
-    .filter(item => item.enabled)
-    .toSorted((left, right) => left.sortOrder - right.sortOrder) ?? []
-))
-const nextSortOrder = computed(() => {
-  if (placement.value === 'commission') {
-    return 0
-  }
-  const used = new Set(enabledItems.value.map(item => item.sortOrder))
-  return [0, 1, 2, 3, 4].find(value => !used.has(value)) ?? 4
-})
-const dialogOpen = computed(() => Boolean(actionError.value || conflictNotice.value))
-
-watch(activeTab, () => {
-  showDraft.value = false
-  actionError.value = null
-})
-
-function moveState(id: string) {
-  if (placement.value === 'commission') {
-    return { canMoveDown: false, canMoveUp: false }
-  }
-  const index = enabledItems.value.findIndex(item => item.id === id)
+const legacyTab = computed(() => {
+  const value = typeof route.query.tab === 'string' ? route.query.tab : ''
+  const [placement, orientation] = value.split('-')
   return {
-    canMoveUp: index > 0,
-    canMoveDown: index >= 0 && index < enabledItems.value.length - 1,
+    placement: placement === 'commission' ? 'commission' : 'home',
+    orientation: orientation === 'portrait' ? 'portrait' : 'landscape',
+  } as const
+})
+const placement = computed<HeroPlacement>(() => (
+  route.query.placement === 'commission'
+    ? 'commission'
+    : route.query.placement === 'home'
+      ? 'home'
+      : legacyTab.value.placement
+))
+const orientation = computed<HeroOrientation>(() => (
+  route.query.orientation === 'portrait'
+    ? 'portrait'
+    : route.query.orientation === 'landscape'
+      ? 'landscape'
+      : legacyTab.value.orientation
+))
+const summaries = reactive<Record<HeroOrientation, OrientationSummary>>({
+  landscape: {
+    enabledCount: 0,
+    hasOperation: false,
+    limit: 5,
+    orientation: 'landscape',
+    ready: false,
+  },
+  portrait: {
+    enabledCount: 0,
+    hasOperation: false,
+    limit: 5,
+    orientation: 'portrait',
+    ready: false,
+  },
+})
+
+function placementTo(next: HeroPlacement) {
+  return next === 'home'
+    ? '/admin/site/home'
+    : {
+        path: '/admin/site/home',
+        query: { placement: next, orientation: orientation.value },
+      }
+}
+
+function orientationTo(next: HeroOrientation) {
+  return {
+    path: '/admin/site/home',
+    query: {
+      placement: placement.value,
+      orientation: next,
+    },
   }
 }
 
-async function onCreate(payload: HeroCollectionItemInput) {
-  actionError.value = await createItem(payload)
-  if (!actionError.value) {
-    showDraft.value = false
+function updateSummary(summary: OrientationSummary) {
+  summaries[summary.orientation] = summary
+}
+
+watch(placement, () => {
+  for (const current of Object.values(summaries)) {
+    current.enabledCount = 0
+    current.hasOperation = false
+    current.limit = placement.value === 'commission' ? 1 : 5
+    current.ready = false
   }
-}
-
-async function onMove(id: string, direction: -1 | 1) {
-  const ids = enabledItems.value.map(item => item.id)
-  const index = ids.indexOf(id)
-  const target = index + direction
-  if (index < 0 || target < 0 || target >= ids.length) {
-    return
-  }
-  ;[ids[index], ids[target]] = [ids[target]!, ids[index]!]
-  actionError.value = await reorder(ids)
-}
-
-async function run(action: () => Promise<string | null>) {
-  actionError.value = await action()
-}
-
-function closeDialog() {
-  actionError.value = null
-  conflictNotice.value = null
-}
-
-onMounted(() => void load())
+})
 </script>
 
 <template>
@@ -113,112 +109,87 @@ onMounted(() => void load())
     <div class="hero-admin" data-testid="home-admin">
       <header class="hero-admin__header">
         <h1>大图管理</h1>
-        <p>首页每个方向是最多 5 张的轮播；委托页每个方向只启用一张大图，先停用旧图即可替换。</p>
+        <p>首页每个方向独立维护 1–5 张轮播；委托页横版与竖版各自维护一个可下架替换的单槽。</p>
       </header>
 
-      <nav class="hero-admin__tabs" aria-label="大图集合">
+      <nav class="hero-admin__placement-tabs" aria-label="大图页面">
         <NuxtLink
-          v-for="tab in TABS"
-          :key="tab.key"
-          class="hero-admin__tab"
-          :to="tab === TABS[0]
-            ? '/admin/site/home'
-            : { path: '/admin/site/home', query: { tab: tab.key } }"
-          :aria-current="activeTab.key === tab.key ? 'page' : undefined"
-        >{{ tab.label }}</NuxtLink>
+          v-for="item in PLACEMENTS"
+          :key="item.key"
+          class="hero-admin__placement-tab"
+          :to="placementTo(item.key)"
+          :aria-current="placement === item.key ? 'page' : undefined"
+        >{{ item.label }}</NuxtLink>
       </nav>
 
-      <Transition name="hero-collection" mode="out-in">
-        <section :key="activeTab.key" class="hero-admin__collection" :aria-label="activeTab.label">
-          <p v-if="pageStatus === 'loading'" role="status">正在加载{{ activeTab.label }}…</p>
-          <p v-else-if="pageStatus === 'error'" role="alert">加载失败，请刷新重试。</p>
-          <template v-else-if="collection">
-            <header class="hero-admin__collection-head">
-              <div>
-                <h2>{{ activeTab.label }}</h2>
-                <p role="status">已启用 {{ enabledItems.length }} / {{ slotLimit }}</p>
-              </div>
-              <button
-                v-if="!showDraft"
-                type="button"
-                class="editor__button editor__button--primary"
-                :disabled="mutating"
-                @click="showDraft = true"
-              >新增大图项</button>
-            </header>
-
-            <p v-if="collection.items.length === 0 && !showDraft" class="hero-admin__empty">
-              当前集合为空。上传与方向匹配的图片后可发布。
+      <section class="hero-admin__workspace" :aria-label="placement === 'home' ? '首页大图' : '委托页大图'">
+        <header class="hero-admin__workspace-head">
+          <div>
+            <h2>{{ placement === 'home' ? '首页大图' : '委托页大图' }}</h2>
+            <p class="hero-admin__summary" role="status">
+              横版 {{ summaries.landscape.enabledCount }}/{{ summaries.landscape.limit }}
+              <span aria-hidden="true">·</span>
+              竖版 {{ summaries.portrait.enabledCount }}/{{ summaries.portrait.limit }}
+              <template v-if="summaries.landscape.hasOperation || summaries.portrait.hasOperation">
+                <span aria-hidden="true">·</span> 有长任务进行中
+              </template>
             </p>
+          </div>
+        </header>
 
-            <TransitionGroup name="hero-item-list" tag="div" class="hero-admin__items">
-              <AdminHeroCollectionItemCard
-                v-for="item in collection.items"
-                :key="item.id"
-                :item="item"
-                :placement="placement"
-                :orientation="orientation"
-                :collection-version="collection.version"
-                :mutating="mutating"
-                :operation="operations[item.id] ?? null"
-                :feedback="feedback[item.id] ?? null"
-                :can-move-up="moveState(item.id).canMoveUp"
-                :can-move-down="moveState(item.id).canMoveDown"
-                @update="payload => run(() => updateItem(item.id, payload))"
-                @delete="run(() => deleteItem(item.id))"
-                @enable="run(() => startOperation(item.id, 'enable'))"
-                @disable="run(() => startOperation(item.id, 'disable'))"
-                @upscale="run(() => startOperation(item.id, 'upscale'))"
-                @retry-operation="run(() => retryOperation(item.id))"
-                @move="direction => onMove(item.id, direction)"
-                @conflict="load()"
-              />
-              <AdminHeroCollectionItemCard
-                v-if="showDraft"
-                key="hero-item-draft"
-                :item="null"
-                :placement="placement"
-                :orientation="orientation"
-                :collection-version="collection.version"
-                :default-sort-order="nextSortOrder"
-                :mutating="mutating"
-                @create="onCreate"
-                @conflict="load()"
-              />
-            </TransitionGroup>
-          </template>
-        </section>
-      </Transition>
+        <nav class="hero-admin__orientation-tabs" aria-label="设备画框与图片方向">
+          <NuxtLink
+            v-for="item in ORIENTATIONS"
+            :key="item.key"
+            class="hero-admin__orientation-tab"
+            :to="orientationTo(item.key)"
+            :aria-current="orientation === item.key ? 'page' : undefined"
+          >
+            <span>{{ item.label }}</span>
+            <small>{{ item.frame }}</small>
+            <span v-if="!summaries[item.key].ready" class="hero-admin__orientation-state">
+              待检查
+            </span>
+          </NuxtLink>
+        </nav>
 
-      <AdminConfirmDialog
-        :open="dialogOpen"
-        title="操作未完成"
-        confirm-label="知道了"
-        :show-cancel="false"
-        @confirm="closeDialog"
-        @cancel="closeDialog"
-      >
-        <p v-if="actionError" role="alert">{{ actionError }}</p>
-        <p v-if="conflictNotice" role="alert">{{ conflictNotice }}</p>
-      </AdminConfirmDialog>
+        <div
+          class="hero-admin__editors"
+          :data-placement="placement"
+          :data-active-orientation="orientation"
+        >
+          <div
+            v-for="item in ORIENTATIONS"
+            v-show="orientation === item.key"
+            :key="`${placement}-${item.key}`"
+            class="hero-admin__editor"
+            :data-selected="orientation === item.key"
+          >
+            <AdminHeroCollectionEditor
+              :placement="placement"
+              :orientation="item.key"
+              @summary="updateSummary"
+            />
+          </div>
+        </div>
+      </section>
     </div>
   </AdminShell>
 </template>
 
 <style scoped>
 .hero-admin,
-.hero-admin__collection,
-.hero-admin__items {
+.hero-admin__workspace {
   display: grid;
   gap: var(--admin-space-4);
 }
 
 .hero-admin {
-  max-width: 72rem;
+  max-width: 92rem;
 }
 
 .hero-admin__header,
-.hero-admin__collection-head div {
+.hero-admin__workspace-head > div {
   display: grid;
   gap: var(--admin-space-1);
 }
@@ -230,71 +201,70 @@ onMounted(() => void load())
 }
 
 .hero-admin__header p,
-.hero-admin__collection-head p,
-.hero-admin__empty {
+.hero-admin__summary {
   color: var(--admin-text-secondary);
   font-size: var(--admin-font-sm);
 }
 
-.hero-admin__tabs {
+.hero-admin__placement-tabs,
+.hero-admin__orientation-tabs {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--admin-space-1);
   padding: var(--admin-space-1);
   background: var(--admin-bg-subtle);
   border-radius: var(--admin-radius-md);
 }
 
-.hero-admin__tab {
+.hero-admin__placement-tabs,
+.hero-admin__orientation-tabs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.hero-admin__placement-tab,
+.hero-admin__orientation-tab {
   display: grid;
   min-height: var(--admin-touch-target);
   padding: var(--admin-space-2) var(--admin-space-3);
   color: var(--admin-text-secondary);
+  border: 1px solid transparent;
   border-radius: var(--admin-radius-sm);
-  font-size: var(--admin-font-xs);
+  font-size: var(--admin-font-sm);
   font-weight: 600;
   place-items: center;
   text-align: center;
 }
 
-.hero-admin__tab[aria-current='page'] {
+.hero-admin__orientation-tab {
+  grid-template-columns: auto auto;
+  gap: 0 var(--admin-space-2);
+}
+
+.hero-admin__orientation-tab small,
+.hero-admin__orientation-state {
+  color: var(--admin-text-tertiary);
+  font-size: var(--admin-font-xs);
+  font-weight: 400;
+}
+
+.hero-admin__orientation-state {
+  grid-column: 1 / -1;
+}
+
+.hero-admin__placement-tab[aria-current='page'],
+.hero-admin__orientation-tab[aria-current='page'] {
   color: var(--admin-text-primary);
   background: var(--admin-bg-primary);
+  border-color: var(--admin-border-primary);
   box-shadow: 0 1px 3px rgb(25 31 42 / 0.1);
 }
 
-.hero-admin__collection-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--admin-space-3);
+.hero-admin__workspace,
+.hero-admin__editors,
+.hero-admin__editor {
+  min-width: 0;
 }
 
-.hero-item-list-move {
-  transition: transform var(--admin-duration-normal) var(--admin-easing);
-}
-
-.hero-collection-enter-active,
-.hero-collection-leave-active {
-  transition: opacity var(--admin-duration-fast) var(--admin-easing);
-}
-
-.hero-collection-enter-from,
-.hero-collection-leave-to {
-  opacity: 0;
-}
-
-@media (min-width: 900px) {
-  .hero-admin__tabs {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-item-list-move,
-  .hero-collection-enter-active,
-  .hero-collection-leave-active {
-    transition: none;
-  }
+.hero-admin__editor[data-selected='true'] :deep(.hero-collection-editor) {
+  border-color: var(--admin-accent-decorative);
 }
 </style>

@@ -144,12 +144,14 @@ function onSave() {
 
     <div class="status-card__actions">
       <p v-if="showSaved" class="status-card__saved" role="status">已保存</p>
-      <button
-        type="button"
-        class="status-card__button"
+      <AdminAction
+        size="small"
+        variant="primary"
         :disabled="!canSubmit"
+        :loading="mutating"
+        loading-label="保存中…"
         @click="onSave"
-      >{{ mutating ? '保存中…' : (status ? '保存状态' : '创建状态') }}</button>
+      >{{ status ? '保存状态' : '创建状态' }}</AdminAction>
     </div>
   </section>
 </template>
@@ -251,22 +253,4 @@ function onSave() {
   color: var(--admin-status-success);
 }
 
-.status-card__button {
-  min-height: var(--admin-control-height-sm);
-  padding: 0 var(--admin-space-3);
-  border: 1px solid var(--admin-accent-primary);
-  border-radius: var(--admin-radius-sm);
-  background: var(--admin-accent-primary);
-  color: var(--admin-text-inverse);
-  font-size: var(--admin-font-xs);
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.status-card__button:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
 </style>

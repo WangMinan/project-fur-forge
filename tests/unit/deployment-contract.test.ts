@@ -85,7 +85,17 @@ describe('T52-E6 production deployment contract', () => {
 
     expect(config).toContain("new URL('./scripts/embedded-ffmpeg.mjs', import.meta.url)")
     expect(config).toContain("new URL('./scripts/esa-sdk.mjs', import.meta.url)")
-    expect(config).toContain('inline: [embeddedFfmpegRuntime, esaSdkRuntime]')
+    expect(config).toContain("new URL('./shared/utils/privacy-policy-readiness.mjs', import.meta.url)")
+    expect(config).toContain("new URL('./scripts/oss-preflight-core.mjs', import.meta.url)")
+    for (const runtime of [
+      'embeddedFfmpegRuntime',
+      'esaSdkRuntime',
+      'ossPreflightCoreRuntime',
+      'privacyPolicyReadinessRuntime',
+    ]) {
+      expect(config.slice(config.indexOf('externals:'), config.indexOf('handlers:')))
+        .toContain(runtime)
+    }
   })
 
   it('keeps the production example intentionally blocked until real values exist', () => {
@@ -180,6 +190,7 @@ describe('T52-E6 production deployment contract', () => {
   it('keeps publication manual and exercises the target deployment shape in CI', () => {
     const quality = source('.github/workflows/quality.yml')
     const release = source('.github/workflows/release-image.yml')
+    const dependabot = source('.github/dependabot.yml')
     expect(release).toContain('workflow_dispatch:')
     expect(release).toContain('PUBLISH_GATE_E_IMAGE')
     expect(release).toContain('if [[ "${GITHUB_REF}" != "refs/heads/main" ]]')
@@ -191,9 +202,21 @@ describe('T52-E6 production deployment contract', () => {
     expect(release).not.toContain('frozen_sha:')
     expect(release).not.toContain('REQUESTED_SHA')
     expect(release).toContain('steps.build.outputs.digest')
+    expect(release).toContain('release: true')
+    expect(release.indexOf('authorize:')).toBeLessThan(release.indexOf('quality:'))
+    expect(release).toContain('DOCKER_BUILD_RECORD_UPLOAD: false')
     expect(release).not.toMatch(/^\s+push:$/mu)
     expect(release).not.toContain('push:\n    tags:')
-    expect(quality).toContain('test "$(docker compose -f docker-compose.yaml config --services)" = "app"')
+    expect(quality).toContain("paths-ignore:\n      - '**/*.md'")
+    expect(quality).toContain('run: pnpm check:fast')
+    expect(quality).toContain('run: pnpm test:release')
+    expect(quality).not.toContain('release-tests:')
+    expect(quality).not.toContain('check-artifacts')
+    expect(quality).toContain('Upload failed release-test artifacts')
+    expect(quality).toContain('retention-days: 3')
+    expect(quality).toContain('DOCKER_BUILD_RECORD_UPLOAD: false')
+    expect(quality).toContain('scope=release-image')
+    expect(quality).not.toContain('run: pnpm test:e2e')
     expect(quality).toContain('node ops/ops.mjs restore-verify')
     expect(quality).toContain('node ops/ops.mjs recover-operations')
     expect(quality).toContain('node ops/ops.mjs reset-admin-password')
@@ -206,5 +229,8 @@ describe('T52-E6 production deployment contract', () => {
     expect(quality).toContain('docker exec fur-forge-nginx-test nginx -s reload')
     expect(quality).toContain("'Origin: https://admin.test.invalid'")
     expect(quality).toContain('http://127.0.0.1/api/auth/logout')
+    expect(dependabot.match(/interval: monthly/gu)).toHaveLength(3)
+    expect(dependabot.match(/open-pull-requests-limit: 1/gu)).toHaveLength(3)
+    expect(dependabot.match(/rebase-strategy: disabled/gu)).toHaveLength(3)
   })
 })

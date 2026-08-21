@@ -5,6 +5,7 @@ import type {
   PublicationOperationStatus,
   UploadFailureCode,
   UploadFailureStage,
+  UploadSessionDto,
   UploadSessionStatus,
   WatermarkAnchor,
 } from '~~/shared/types/contracts'
@@ -38,6 +39,17 @@ export const UPLOAD_FAILURE_CODE_LABELS: Record<UploadFailureCode, string> = {
   UPLOAD_PREPROCESS_FAILURE: '大原图私有处理源生成失败，可重试处理',
   UPLOAD_DERIVATIVE_FAILURE: '二维码网页图片生成失败，可重试处理',
   UPLOAD_CLEANUP_FAILED: '临时文件清理失败，请联系维护人员',
+}
+
+export function uploadSessionFailureLabel(session: UploadSessionDto) {
+  return {
+    stage: session.failureStage
+      ? UPLOAD_FAILURE_STAGE_LABELS[session.failureStage]
+      : null,
+    text: session.failureCode
+      ? UPLOAD_FAILURE_CODE_LABELS[session.failureCode]
+      : '上传未通过服务端核验，请重新上传',
+  }
 }
 
 export const ASSET_STATUS_LABELS: Record<AssetStatus, string> = {

@@ -159,9 +159,12 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
       <p v-if="entry.status === 'FAILED'" class="photo-card__failure" role="alert">
         私有处理源生成失败，可重试处理；原图仍在私有库中。
       </p>
-      <AdminFfmpegProgress
+      <AdminTaskProgress
         v-if="processing"
+        mode="indeterminate"
         :label="`第 ${index + 1} 张出厂照：FFmpeg 私有预处理中`"
+        stage="正在生成私有处理源"
+        show-elapsed
       />
 
       <div class="photo-card__field">
@@ -209,40 +212,39 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
     </div>
 
     <div class="photo-card__actions">
-      <button
+      <AdminAction
         v-if="!entry.primary && entry.status === 'READY'"
-        type="button"
-        class="photo-card__action"
+        variant="primary"
+        size="small"
         :disabled="locked || processing"
         @click="emit('setPrimary')"
-      >设为主图</button>
-      <button
-        type="button"
-        class="photo-card__action"
+      >设为主图</AdminAction>
+      <AdminAction
+        size="small"
         :disabled="locked || processing || index === 0"
         :aria-label="`上移第 ${index + 1} 张`"
         @click="emit('move', -1)"
-      >上移</button>
-      <button
-        type="button"
-        class="photo-card__action"
+      >上移</AdminAction>
+      <AdminAction
+        size="small"
         :disabled="locked || processing || index === total - 1"
         :aria-label="`下移第 ${index + 1} 张`"
         @click="emit('move', 1)"
-      >下移</button>
-      <button
+      >下移</AdminAction>
+      <AdminAction
         v-if="entry.status === 'FAILED'"
-        type="button"
-        class="photo-card__action"
+        size="small"
         :disabled="locked || processing"
+        :loading="processing"
+        loading-label="处理中…"
         @click="emit('retryProcessing')"
-      >{{ processing ? '处理中…' : '重试处理' }}</button>
-      <button
-        type="button"
-        class="photo-card__action photo-card__action--danger"
+      >重试处理</AdminAction>
+      <AdminAction
+        variant="danger"
+        size="small"
         :disabled="locked || processing"
         @click="emit('remove')"
-      >移除</button>
+      >移除</AdminAction>
     </div>
   </article>
 </template>
@@ -447,33 +449,6 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
   flex-wrap: wrap;
   gap: var(--admin-space-1);
   align-content: flex-start;
-}
-
-.photo-card__action {
-  min-height: var(--admin-control-height-sm);
-  padding: 0 var(--admin-space-3);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-sm);
-  background: var(--admin-bg-primary);
-  color: var(--admin-text-primary);
-  font-size: var(--admin-font-xs);
-  font-family: inherit;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.photo-card__action:hover:not(:disabled) {
-  background: var(--admin-bg-subtle);
-}
-
-.photo-card__action:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-
-.photo-card__action--danger {
-  color: var(--admin-danger);
-  border-color: var(--admin-danger);
 }
 
 @media (min-width: 768px) {
