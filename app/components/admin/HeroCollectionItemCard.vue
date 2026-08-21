@@ -347,7 +347,7 @@ function updateFocal(value: { focalX: number, focalY: number }) {
 }
 
 .hero-item[data-enabled='true'] {
-  border-color: var(--admin-accent-primary);
+  box-shadow: inset 3px 0 0 var(--admin-accent-primary);
 }
 
 .hero-item__head,

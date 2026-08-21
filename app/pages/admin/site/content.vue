@@ -32,6 +32,14 @@ const {
 } = useAdminSiteContent()
 
 const actionError = ref<string | null>(null)
+const CONTENT_ANCHORS = [
+  { href: '#content-status', label: '营业状态' },
+  { href: '#content-commission', label: '委托' },
+  { href: '#content-about', label: '关于' },
+  { href: '#content-terms', label: '服务' },
+  { href: '#content-privacy', label: '隐私' },
+  { href: '#content-contact', label: '联系方式' },
+] as const
 
 function closeErrorDialog() {
   actionError.value = null
@@ -71,7 +79,21 @@ onMounted(() => void load())
       </div>
 
       <template v-else-if="content">
-        <section class="content-admin__group" aria-labelledby="business-statuses-title">
+        <nav class="content-admin__anchors" aria-label="文案配置分区">
+          <AdminAction
+            v-for="anchor in CONTENT_ANCHORS"
+            :key="anchor.href"
+            :href="anchor.href"
+            variant="text"
+            size="small"
+          >{{ anchor.label }}</AdminAction>
+        </nav>
+
+        <section
+          id="content-status"
+          class="content-admin__group content-admin__anchor"
+          aria-labelledby="business-statuses-title"
+        >
           <h2 id="business-statuses-title" class="content-admin__group-title">营业状态</h2>
           <div class="content-admin__statuses">
             <AdminSiteBusinessStatusCard
@@ -95,6 +117,8 @@ onMounted(() => void load())
           <h2 id="content-sections-title" class="content-admin__group-title">页面内容</h2>
           <div class="content-admin__sections">
             <AdminSiteCommissionContentCard
+              id="content-commission"
+              class="content-admin__anchor"
               :content="content"
               :conflict-section="conflictSection"
               :saved-section="savedSection"
@@ -102,6 +126,8 @@ onMounted(() => void load())
               @save="payload => onSaveSection('commission', payload)"
             />
             <AdminSiteAboutContentCard
+              id="content-about"
+              class="content-admin__anchor"
               :content="content"
               :conflict-section="conflictSection"
               :saved-section="savedSection"
@@ -109,6 +135,8 @@ onMounted(() => void load())
               @save="payload => onSaveSection('about', payload)"
             />
             <AdminSiteLegalContentCard
+              id="content-terms"
+              class="content-admin__anchor"
               section="terms"
               :content="content"
               :conflict-section="conflictSection"
@@ -117,6 +145,8 @@ onMounted(() => void load())
               @save="payload => onSaveSection('terms', payload)"
             />
             <AdminSiteLegalContentCard
+              id="content-privacy"
+              class="content-admin__anchor"
               section="privacy"
               :content="content"
               :conflict-section="conflictSection"
@@ -125,6 +155,8 @@ onMounted(() => void load())
               @save="payload => onSaveSection('privacy', payload)"
             />
             <AdminSiteOfficialChannelsCard
+              id="content-contact"
+              class="content-admin__anchor"
               :content="content"
               :conflict-section="conflictSection"
               :saved-section="savedSection"
@@ -202,6 +234,18 @@ onMounted(() => void load())
 .content-admin__sections {
   display: grid;
   gap: var(--admin-space-3);
+}
+
+.content-admin__anchors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--admin-space-2) var(--admin-space-4);
+  padding-bottom: var(--admin-space-3);
+  border-bottom: 1px solid var(--admin-border-secondary);
+}
+
+.content-admin__anchor {
+  scroll-margin-top: calc(var(--admin-touch-target) + var(--admin-space-4));
 }
 
 
