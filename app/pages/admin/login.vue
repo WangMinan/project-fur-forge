@@ -73,6 +73,7 @@ async function onSubmit() {
         <header class="login__header">
           <!-- 品牌已由页头给出，卡片里不再重复一遍。 -->
           <h1 class="login__title">管理端登录</h1>
+          <p class="login__subtitle">仅供工作室内部管理使用。</p>
         </header>
 
         <p
@@ -145,7 +146,7 @@ async function onSubmit() {
 
 .login__card {
   width: 100%;
-  max-width: 24rem;
+  max-width: 26rem;
   background: var(--admin-bg-primary);
   border: 1px solid var(--admin-border-secondary);
   border-radius: var(--admin-radius-lg);
@@ -162,6 +163,12 @@ async function onSubmit() {
   font-size: var(--admin-font-xl);
   font-weight: 600;
   line-height: var(--admin-line-tight);
+}
+
+.login__subtitle {
+  margin: var(--admin-space-2) 0 0;
+  color: var(--admin-text-secondary);
+  font-size: var(--admin-font-sm);
 }
 
 .login__notice {
