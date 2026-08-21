@@ -3,11 +3,19 @@
    笔画密集的字自己的横竖会糊成一块。声明整个字重区间由这一个字面承担，
    任何 font-weight 都直接命中它，不再合成。 */
 @font-face {
+  font-family: "Zhuohei Collage Critical";
+  src: url("/fonts/zhuohei-collage-critical.woff2") format("woff2");
+  /* 关键字形只有约 19KB 且由 head 预加载；阻止任何回退字形先被绘制。 */
+  font-display: block;
+  font-style: normal;
+  font-weight: 100 900;
+}
+
+@font-face {
   font-family: "Zhuohei Collage";
   src: url("/fonts/zhuohei-collage.ttf") format("truetype");
-  /* 品牌字是 Hero 首帧内容。预加载期间短暂阻塞回退字形，避免先显示系统字体
-     再换成拼贴字体造成一次可见的字号/字面跳变。 */
-  font-display: block;
+  /* 关键子集以外的动态字符不在本次页面晚换字形。 */
+  font-display: optional;
   font-style: normal;
   font-weight: 100 900;
 }
@@ -50,7 +58,7 @@
   --font-public-display:
     "Songti SC", "STSong", "Noto Serif CJK SC", serif;
   --font-brand-display:
-    "Zhuohei Collage", "PingFang SC", "Microsoft YaHei", sans-serif;
+    "Zhuohei Collage Critical", "Zhuohei Collage", "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-public-body:
     "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
   --font-public-mono:

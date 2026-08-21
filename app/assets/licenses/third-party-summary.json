@@ -96,6 +96,14 @@
       "homepage": "https://font.leminet.cn/#/",
       "noticeText": "来源页面声明可免费商用；这是第三方授权资产，不表示开源软件。",
       "usage": "DITE DOG 展示文字与品牌排版。"
+    },
+    {
+      "name": "ZhuoHei Collage Critical Subset",
+      "version": "repository-asset",
+      "license": "Lemi Font free commercial-use license",
+      "homepage": "https://font.leminet.cn/#/",
+      "noticeText": "由仓库内 ZhuoHei Collage 字体派生；来源页面声明可免费商用。",
+      "usage": "DITE DOG 首屏品牌文字的预加载 WOFF2 子集。"
     }
   ]
 }

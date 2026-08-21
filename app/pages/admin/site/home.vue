@@ -108,6 +108,7 @@ watch(placement, () => {
   <AdminShell current="home">
     <div class="hero-admin" data-testid="home-admin">
       <header class="hero-admin__header">
+        <p class="hero-admin__kicker">站点媒体</p>
         <h1>大图管理</h1>
         <p>首页每个方向独立维护 1–5 张轮播；委托页横版与竖版各自维护一个可下架替换的单槽。</p>
       </header>
@@ -181,11 +182,11 @@ watch(placement, () => {
 .hero-admin,
 .hero-admin__workspace {
   display: grid;
-  gap: var(--admin-space-4);
+  gap: var(--admin-space-5);
 }
 
 .hero-admin {
-  max-width: 92rem;
+  max-width: 88rem;
 }
 
 .hero-admin__header,
@@ -194,13 +195,29 @@ watch(placement, () => {
   gap: var(--admin-space-1);
 }
 
+.hero-admin__header {
+  max-width: 52rem;
+}
+
 .hero-admin h1,
 .hero-admin h2,
 .hero-admin p {
   margin: 0;
 }
 
-.hero-admin__header p,
+.hero-admin h1 {
+  font-size: var(--admin-font-xl);
+  line-height: var(--admin-line-tight);
+}
+
+.hero-admin__kicker {
+  color: var(--admin-accent-primary);
+  font-size: var(--admin-font-xs);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.hero-admin__header p:not(.hero-admin__kicker),
 .hero-admin__summary {
   color: var(--admin-text-secondary);
   font-size: var(--admin-font-sm);
@@ -208,21 +225,24 @@ watch(placement, () => {
 
 .hero-admin__placement-tabs,
 .hero-admin__orientation-tabs {
-  display: grid;
+  display: flex;
   gap: var(--admin-space-1);
+  width: fit-content;
+  max-width: 100%;
   padding: var(--admin-space-1);
   background: var(--admin-bg-subtle);
   border-radius: var(--admin-radius-md);
 }
 
-.hero-admin__placement-tabs,
 .hero-admin__orientation-tabs {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  background: var(--admin-bg-workspace);
 }
 
 .hero-admin__placement-tab,
 .hero-admin__orientation-tab {
-  display: grid;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: var(--admin-touch-target);
   padding: var(--admin-space-2) var(--admin-space-3);
   color: var(--admin-text-secondary);
@@ -230,11 +250,11 @@ watch(placement, () => {
   border-radius: var(--admin-radius-sm);
   font-size: var(--admin-font-sm);
   font-weight: 600;
-  place-items: center;
   text-align: center;
 }
 
 .hero-admin__orientation-tab {
+  display: grid;
   grid-template-columns: auto auto;
   gap: 0 var(--admin-space-2);
 }
@@ -252,10 +272,9 @@ watch(placement, () => {
 
 .hero-admin__placement-tab[aria-current='page'],
 .hero-admin__orientation-tab[aria-current='page'] {
-  color: var(--admin-text-primary);
+  color: var(--admin-accent-primary);
   background: var(--admin-bg-primary);
-  border-color: var(--admin-border-primary);
-  box-shadow: 0 1px 3px rgb(25 31 42 / 0.1);
+  border-color: var(--admin-border-secondary);
 }
 
 .hero-admin__workspace,
@@ -264,7 +283,26 @@ watch(placement, () => {
   min-width: 0;
 }
 
-.hero-admin__editor[data-selected='true'] :deep(.hero-collection-editor) {
-  border-color: var(--admin-accent-decorative);
+.hero-admin__workspace {
+  padding: var(--admin-space-5);
+  background: var(--admin-bg-subtle);
+  border: 1px solid var(--admin-border-secondary);
+  border-radius: var(--admin-radius-lg);
+}
+
+@media (max-width: 767px) {
+  .hero-admin__placement-tabs,
+  .hero-admin__orientation-tabs {
+    width: 100%;
+  }
+
+  .hero-admin__placement-tab,
+  .hero-admin__orientation-tab {
+    flex: 1;
+  }
+
+  .hero-admin__workspace {
+    padding: var(--admin-space-3);
+  }
 }
 </style>

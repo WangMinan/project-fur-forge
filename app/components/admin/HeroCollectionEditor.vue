@@ -195,10 +195,6 @@ onMounted(() => void load())
 
 .hero-collection-editor {
   min-width: 0;
-  padding: var(--admin-space-4);
-  background: var(--admin-bg-primary);
-  border: 1px solid var(--admin-border-secondary);
-  border-radius: var(--admin-radius-lg);
 }
 
 .hero-collection-editor__head {
@@ -222,6 +218,13 @@ onMounted(() => void load())
 .hero-collection-editor__empty {
   color: var(--admin-text-secondary);
   font-size: var(--admin-font-sm);
+}
+
+.hero-collection-editor__empty {
+  padding: var(--admin-space-5);
+  background: var(--admin-bg-primary);
+  border: 1px dashed var(--admin-border-primary);
+  border-radius: var(--admin-radius-md);
 }
 
 .hero-item-list-move {
