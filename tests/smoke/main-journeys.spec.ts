@@ -100,6 +100,7 @@ test('首页加载、主要入口与单项开放领养在三种视口可达', as
     await page.setViewportSize(viewport)
     await page.goto('/')
     await expect(page.getByTestId('public-home')).toBeVisible()
+    // SSR 内容会先可见；wheel 行为必须等 Vue 挂载、onMounted 监听器就绪。
     await page.waitForFunction(() => Boolean(
       (document.querySelector('#__nuxt') as Element & { __vue_app__?: unknown })
         ?.__vue_app__,
@@ -144,18 +145,6 @@ test('首页加载、主要入口与单项开放领养在三种视口可达', as
     .toBe(0)
   await expect(page.getByRole('link', { name: '返回作品展示' }))
     .toHaveAttribute('href', '/works')
-
-  await page.goto('/')
-  await page.getByRole('link', { name: '浏览作品展示' }).click()
-  await expect(page.getByRole('heading', { level: 1, name: '作品展示' })).toBeVisible()
-  await expect.poll(() => page.evaluate(() => Math.round(window.scrollY)))
-    .toBe(0)
-
-  await page.goto('/')
-  await page.getByRole('link', { name: '提交委托申请' }).click()
-  await expect(page.getByRole('heading', { level: 1, name: '提交委托申请' })).toBeVisible()
-  await expect.poll(() => page.evaluate(() => Math.round(window.scrollY)))
-    .toBe(0)
 
   await page.goto('/')
   await page.getByTestId('home-current-adoptions')

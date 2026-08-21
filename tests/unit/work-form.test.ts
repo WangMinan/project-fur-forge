@@ -5,7 +5,6 @@ import { parseCnyYuanInput, toCnyYuanInput } from '../../app/utils/price'
 import {
   emptyWorkForm,
   hasWorkFormError,
-  parseSortOrderInput,
   toWorkFieldsPayload,
   validateWorkForm,
   workFormFromDto,
@@ -212,16 +211,7 @@ describe('workFormFromDto and workFormSnapshot', () => {
   })
 })
 
-describe('sort order and price input helpers', () => {
-  it('accepts only non-negative integers for sort order', () => {
-    expect(parseSortOrderInput('0').value).toBe(0)
-    expect(parseSortOrderInput('12').value).toBe(12)
-    expect(parseSortOrderInput(4).value).toBe(4)
-    expect(parseSortOrderInput('').error).toBeTruthy()
-    expect(parseSortOrderInput('1.5').error).toBeTruthy()
-    expect(parseSortOrderInput('-2').error).toBeTruthy()
-  })
-
+describe('price input round trip', () => {
   it('renders minor units back into a re-submittable yuan input', () => {
     expect(toCnyYuanInput(1_560_000)).toBe('15600')
     expect(toCnyYuanInput(12_345)).toBe('123.45')

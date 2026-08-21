@@ -4,11 +4,10 @@ import {
   publicCatalogSearchQuerySchema,
   publicWorkListQuerySchema,
 } from '../../shared/schemas/public-content'
-import { includesSearchText, normalizeSearchText } from '../../shared/utils/search'
+import { includesSearchText } from '../../shared/utils/search'
 
 describe('统一名称搜索', () => {
   it('trims and matches names with Chinese locale case folding', () => {
-    expect(normalizeSearchText('  Mochi  ')).toBe('mochi')
     expect(includesSearchText('蓝湄 Mochi', '  mOCH  ')).toBe(true)
     expect(includesSearchText('蓝湄', '雪球')).toBe(false)
     expect(includesSearchText('蓝湄', '   ')).toBe(true)

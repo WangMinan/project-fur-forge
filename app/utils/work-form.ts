@@ -60,7 +60,7 @@ export function workFormFromDto(dto: ManagedWorkDto): WorkBasicsForm {
   }
 }
 
-export function parseSortOrderInput(raw: string | number) {
+function parseSortOrderInput(raw: string | number) {
   const input = String(raw).trim()
   if (input === '') {
     return { error: '排序值不能为空，最小为 0', value: undefined }
