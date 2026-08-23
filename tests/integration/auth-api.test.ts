@@ -560,6 +560,7 @@ describe('authentication API', () => {
       about: number
       commission: number
       contact: number
+      homeCopy: number
       privacy: number
       terms: number
     }
@@ -572,8 +573,9 @@ describe('authentication API', () => {
           terms: expect.any(Number),
           privacy: expect.any(Number),
           contact: expect.any(Number),
+          homeCopy: expect.any(Number),
         },
-        statuses: { commission: null, adoption: null },
+        statuses: { commission: null },
         commission: {
           intro: null,
           estimateNote: null,
@@ -724,6 +726,44 @@ describe('authentication API', () => {
       commissionPayload,
     )).status).toBe(409)
 
+    // R4-E 首页章节导语：独立分区，独立版本，超长与不安全文本被拒。
+    const homeCopyPayload = {
+      featuredLead: '两件近期完成的作品出厂照。',
+      commissionLead: '带着你的角色设定图来。',
+      adoptionLead: null,
+    }
+    expect((await putSection(
+      'home-copy',
+      initialSectionVersions.homeCopy,
+      { ...homeCopyPayload, featuredLead: '<script>x</script>' },
+    )).status).toBe(400)
+    expect((await putSection(
+      'home-copy',
+      initialSectionVersions.homeCopy,
+      { ...homeCopyPayload, featuredLead: '长'.repeat(121) },
+    )).status).toBe(400)
+    const updatedHomeCopy = await putSection(
+      'home-copy',
+      initialSectionVersions.homeCopy,
+      homeCopyPayload,
+    )
+    expect(updatedHomeCopy.status).toBe(200)
+    await expect(updatedHomeCopy.json()).resolves.toMatchObject({
+      data: {
+        sectionVersions: {
+          homeCopy: initialSectionVersions.homeCopy + 1,
+          about: initialSectionVersions.about,
+        },
+        homeCopy: homeCopyPayload,
+      },
+    })
+    // 旧版本重放拿到 409，草稿不被静默覆盖。
+    expect((await putSection(
+      'home-copy',
+      initialSectionVersions.homeCopy,
+      homeCopyPayload,
+    )).status).toBe(409)
+
     const payload = {
       commission: commissionPayload,
       about: {
@@ -735,10 +775,12 @@ describe('authentication API', () => {
       contact: contactPayload,
     }
 
+    // R4-E：领养营业状态已退役，只维护委托；开放程度只有 open / closed 两档。
+    // 参数放宽为 string，以便断言退役后的 kind 与 tone 都被服务端拒绝。
     const updateStatus = (
-      kind: 'commission' | 'adoption',
+      kind: string,
       expectedVersion: number,
-      tone: 'open' | 'limited' | 'closed',
+      tone: string,
       label: string,
     ) => fetch(
       `${adminBaseUrl}/api/admin/v1/site/home/business-statuses/${kind}`,
@@ -751,17 +793,19 @@ describe('authentication API', () => {
         }),
       },
     )
-    expect((await updateStatus('commission', 0, 'limited', '委托有限开放')).status)
-      .toBe(200)
-    const adoption = await updateStatus('adoption', 0, 'open', '领养开放')
-    expect(adoption.status).toBe(200)
-    await expect(adoption.json()).resolves.toMatchObject({
+    // 退役后的 kind 与不再支持的 tone 都必须被拒绝，而不是静默写入。
+    expect((await updateStatus('adoption', 0, 'open', '领养开放')).status)
+      .not.toBe(200)
+    expect((await updateStatus('commission', 0, 'limited', '有限开放')).status)
+      .toBe(400)
+    const commissionStatus = await updateStatus('commission', 0, 'open', '现在可以接委托')
+    expect(commissionStatus.status).toBe(200)
+    await expect(commissionStatus.json()).resolves.toMatchObject({
       data: {
         // T34-F3：文案与营业状态各自独立版本；全局 site_content.version 不再随文案推进。
         version: 1,
         statuses: {
-          commission: { version: 1, tone: 'limited' },
-          adoption: { version: 1, tone: 'open' },
+          commission: { version: 1, tone: 'open' },
         },
       },
     })
@@ -775,8 +819,7 @@ describe('authentication API', () => {
     expect(firstProjection).toMatchObject({
       data: {
         statuses: {
-          commission: { tone: 'limited', href: '/commission' },
-          adoption: { tone: 'open', href: '/adoptions' },
+          commission: { tone: 'open', href: '/commission' },
         },
         commission: {
           ...payload.commission,
@@ -794,6 +837,8 @@ describe('authentication API', () => {
         },
       },
     })
+    // 领养营业状态不再出现在公开投影里。
+    expect(firstProjection.data.statuses.adoption).toBeUndefined()
     expect(JSON.stringify(firstProjection)).not.toContain('version')
 
     expect((await updateStatus('commission', 1, 'closed', '委托关闭')).status)
@@ -803,7 +848,6 @@ describe('authentication API', () => {
       data: {
         statuses: {
           commission: { tone: 'closed', label: '委托关闭' },
-          adoption: { tone: 'open', label: '领养开放' },
         },
       },
     })

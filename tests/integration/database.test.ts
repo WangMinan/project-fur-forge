@@ -377,20 +377,15 @@ describe('SQLite foundation', () => {
         { platform: 'qq', account: '765678159', qrCodeAssetId: null },
         { platform: 'qq_group', account: '1040925427', qrCodeAssetId: null },
       ])
+      // R4-E：领养营业状态已退役（0049）；只剩委托一行，且默认开放。
       expect(database.sqlite.prepare(`
         SELECT kind, tone, label, href
         FROM business_statuses ORDER BY kind
       `).all()).toEqual([
         {
-          kind: 'adoption',
-          tone: 'limited',
-          label: '领养信息以页面为准',
-          href: '/adoptions',
-        },
-        {
           kind: 'commission',
-          tone: 'limited',
-          label: '委托咨询开放',
+          tone: 'open',
+          label: '现在可以接委托',
           href: '/commission',
         },
       ])

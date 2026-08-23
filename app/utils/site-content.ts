@@ -5,20 +5,18 @@ import type {
 
 /** T26–T27 站点内容与营业状态的纯展示映射/长度上限；与服务端 Schema 保持一致，不改变契约值。 */
 
+/** R4-E：领养营业状态已退役；开放程度只有开放与不开放两档。 */
 export const SITE_STATUS_KIND_LABELS: Record<SiteBusinessStatusKind, string> = {
   commission: '委托营业状态',
-  adoption: '领养营业状态',
 }
 
 export const SITE_STATUS_TONE_LABELS: Record<SiteBusinessStatusTone, string> = {
   open: '开放',
-  limited: '限量开放',
-  closed: '暂停',
+  closed: '暂不开放',
 }
 
 export const SITE_STATUS_TONE_VALUES: SiteBusinessStatusTone[] = [
   'open',
-  'limited',
   'closed',
 ]
 
@@ -31,6 +29,9 @@ export const SITE_CONTENT_LIMITS = {
   basicTerms: 8_000,
   privacyPolicy: 8_000,
   antiScam: 600,
+  homeFeaturedLead: 120,
+  homeCommissionLead: 120,
+  homeAdoptionLead: 120,
   statusLabel: 40,
   statusDetail: 240,
   emailMax: 254,

@@ -84,7 +84,7 @@ withDefaults(defineProps<{
   }
 
   .work-card:hover .work-card__frame {
-    box-shadow: 0 1rem 2.25rem rgb(17 20 25 / 0.14);
+    box-shadow: var(--shadow-card-hover);
   }
 
   .work-card:hover .work-card__image {

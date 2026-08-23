@@ -52,14 +52,18 @@ useHead({
     <FeaturedWorks
       :works="home.featured.items"
       :available="home.featured.available"
+      :lead="home.homeCopy.featuredLead"
     />
 
-    <HomeBusinessEntries :entries="home.entries" />
+    <HomeBusinessEntries
+      :entries="home.entries"
+      :lead="home.homeCopy.commissionLead"
+    />
 
     <HomeCurrentAdoptions
       :adoptions="home.currentAdoptions.items"
       :available="home.currentAdoptions.available"
-      :status="home.currentAdoptions.status"
+      :lead="home.homeCopy.adoptionLead"
     />
 
   </div>

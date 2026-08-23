@@ -268,7 +268,8 @@ describe('R3-D adoption public projection', () => {
     expect(aggregate.currentAdoptions.items).toHaveLength(1)
     expect(aggregate.currentAdoptions.items.map(item => item.work.slug))
       .toEqual(['chestnut'])
-    expect(aggregate.currentAdoptions.status).not.toBeUndefined()
+    // R4-E：领养营业状态已退役，不再进入首页聚合投影。
+    expect(aggregate.currentAdoptions.status).toBeUndefined()
     expect(aggregate.featured.items.map(item => item.work.slug))
       .toEqual(['chestnut', 'pinecone'])
     expect(repository.listAdoptions().items.map(item => item.work.slug))

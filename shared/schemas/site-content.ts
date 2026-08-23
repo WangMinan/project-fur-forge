@@ -13,13 +13,15 @@ function plainTextSchema(max: number) {
   )
 }
 
+/**
+ * R4-E：领养营业状态已退役，只保留委托；开放程度只有开放与不开放两档。
+ * 领养是否可领取由每个作品自己的 adoptionStatus 表达。
+ */
 export const siteBusinessStatusKindSchema = z.enum([
   'commission',
-  'adoption',
 ])
 export const siteBusinessStatusToneSchema = z.enum([
   'open',
-  'limited',
   'closed',
 ])
 const siteBusinessStatusFields = {
@@ -27,7 +29,7 @@ const siteBusinessStatusFields = {
   tone: siteBusinessStatusToneSchema,
   label: plainTextSchema(40),
   detail: plainTextSchema(240),
-  href: z.enum(['/commission', '/adoptions']),
+  href: z.enum(['/commission']),
 }
 
 export const adminSiteBusinessStatusDtoSchema = z.object({
@@ -52,6 +54,16 @@ export const aboutBasicContentSchema = z.object({
   makingScope: plainTextSchema(1_200).nullable(),
 }).strict()
 
+/**
+ * R4-E 首页 2-4 幕文字块导语。
+ * 章节标题、英文 eyebrow 与按钮文字是业务语义/视觉元素，写死在组件中不入库。
+ */
+export const homeCopyContentSchema = z.object({
+  featuredLead: plainTextSchema(120).nullable(),
+  commissionLead: plainTextSchema(120).nullable(),
+  adoptionLead: plainTextSchema(120).nullable(),
+}).strict()
+
 export const termsContentSchema = z.object({
   basicTerms: plainTextSchema(8_000).nullable(),
 }).strict()
@@ -71,15 +83,19 @@ export const adminOfficialChannelSchema = z.object({
   platform: contactPlatformSchema,
   account: plainTextSchema(120).nullable(),
   qrCodeAssetId: z.string().uuid().nullable(),
+  /**
+   * 二维码里编码的官方跳转链接，由服务端在保存时解码得出，客户端不提交。
+   * QQ 短链 token 不可从账号推导，因此只能来自二维码本身。
+   */
+  qrLinkUrl: z.string().url().nullable().default(null),
 }).strict()
 
-function isValidOfficialChannelAccount(
-  channel: z.infer<typeof adminOfficialChannelSchema>,
-) {
-  if (channel.account === null) {
+/** 只校验账号本身，因此不绑定整个渠道对象的形状。 */
+function isValidOfficialChannelAccount(account: string | null) {
+  if (account === null) {
     return true
   }
-  return contactQqSchema.safeParse(channel.account).success
+  return contactQqSchema.safeParse(account).success
 }
 
 export const adminOfficialChannelsSchema = z.array(adminOfficialChannelSchema)
@@ -93,7 +109,7 @@ export const adminOfficialChannelsSchema = z.array(adminOfficialChannelSchema)
           path: [index, 'platform'],
         })
       }
-      if (!isValidOfficialChannelAccount(channel)) {
+      if (!isValidOfficialChannelAccount(channel.account)) {
         context.addIssue({
           code: 'custom',
           message: '平台账号格式不正确',
@@ -125,11 +141,7 @@ export const publicOfficialChannelsSchema = z.array(publicOfficialChannelSchema)
         })
       }
       previous = order
-      if (!isValidOfficialChannelAccount({
-        platform: channel.platform,
-        account: channel.account,
-        qrCodeAssetId: null,
-      })) {
+      if (!isValidOfficialChannelAccount(channel.account)) {
         context.addIssue({
           code: 'custom',
           message: '平台账号格式不正确',
@@ -152,9 +164,9 @@ const publicContactContentSchema = z.object({
   antiScam: plainTextSchema(600).nullable(),
 }).strict()
 
+/** R4-E：领养状态退役后只剩委托一档，但仍保留对象形状以免调用方全面改写。 */
 const statusPairSchema = <T extends z.ZodType>(status: T) => z.object({
   commission: status.nullable(),
-  adoption: status.nullable(),
 }).strict()
 
 export const updateSiteBusinessStatusRequestSchema = versionedRequestSchema(
@@ -165,13 +177,14 @@ export const updateSiteBusinessStatusRequestSchema = versionedRequestSchema(
   }).strict(),
 )
 
-/** 五个文案分区各自的乐观并发版本。 */
+/** 六个文案分区各自的乐观并发版本。 */
 export const siteContentSectionVersionsSchema = z.object({
   commission: resourceVersionSchema,
   about: resourceVersionSchema,
   terms: resourceVersionSchema,
   privacy: resourceVersionSchema,
   contact: resourceVersionSchema,
+  homeCopy: resourceVersionSchema,
 }).strict()
 
 export const SITE_CONTENT_SECTIONS = [
@@ -180,6 +193,7 @@ export const SITE_CONTENT_SECTIONS = [
   'terms',
   'privacy',
   'contact',
+  'home-copy',
 ] as const
 
 export const siteContentSectionSchema = z.enum(SITE_CONTENT_SECTIONS)
@@ -191,6 +205,7 @@ export const adminSiteContentDtoSchema = z.object({
   commission: commissionBasicContentSchema,
   about: aboutContentSchema,
   contact: mutableContactContentSchema,
+  homeCopy: homeCopyContentSchema,
 }).strict()
 
 export const updateCommissionContentRequestSchema = versionedRequestSchema(
@@ -207,6 +222,9 @@ export const updatePrivacyContentRequestSchema = versionedRequestSchema(
 )
 export const updateContactContentRequestSchema = versionedRequestSchema(
   mutableContactContentSchema,
+)
+export const updateHomeCopyContentRequestSchema = versionedRequestSchema(
+  homeCopyContentSchema,
 )
 
 export const publicSiteContentDtoSchema = z.object({

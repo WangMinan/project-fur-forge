@@ -34,6 +34,7 @@ const {
 const actionError = ref<string | null>(null)
 const CONTENT_ANCHORS = [
   { href: '#content-status', label: '营业状态' },
+  { href: '#content-home-copy', label: '首页' },
   { href: '#content-commission', label: '委托' },
   { href: '#content-about', label: '关于' },
   { href: '#content-terms', label: '服务' },
@@ -96,6 +97,7 @@ onMounted(() => void load())
         >
           <h2 id="business-statuses-title" class="content-admin__group-title">营业状态</h2>
           <div class="content-admin__statuses">
+            <!-- R4-E：领养营业状态已退役，这里只维护委托。 -->
             <AdminSiteBusinessStatusCard
               kind="commission"
               :status="content.statuses.commission"
@@ -103,19 +105,21 @@ onMounted(() => void load())
               :saved="savedSection === 'commission'"
               @save="payload => onSaveStatus('commission', payload)"
             />
-            <AdminSiteBusinessStatusCard
-              kind="adoption"
-              :status="content.statuses.adoption"
-              :mutating="savingSection === 'adoption'"
-              :saved="savedSection === 'adoption'"
-              @save="payload => onSaveStatus('adoption', payload)"
-            />
           </div>
         </section>
 
         <section class="content-admin__group" aria-labelledby="content-sections-title">
           <h2 id="content-sections-title" class="content-admin__group-title">页面内容</h2>
           <div class="content-admin__sections">
+            <AdminSiteHomeCopyCard
+              id="content-home-copy"
+              class="content-admin__anchor"
+              :content="content"
+              :conflict-section="conflictSection"
+              :saved-section="savedSection"
+              :saving-section="savingSection"
+              @save="payload => onSaveSection('home-copy', payload)"
+            />
             <AdminSiteCommissionContentCard
               id="content-commission"
               class="content-admin__anchor"
@@ -251,7 +255,8 @@ onMounted(() => void load())
 
 @media (min-width: 1024px) {
   .content-admin__statuses {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    /* R4-E：领养状态退役后只剩委托一张卡，占满整行。 */
+    grid-template-columns: minmax(0, 1fr);
     align-items: start;
   }
 }

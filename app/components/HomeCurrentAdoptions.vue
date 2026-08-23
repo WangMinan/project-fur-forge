@@ -1,34 +1,28 @@
 <script setup lang="ts">
-import type {
-  PublicAdoptionListItemDto,
-  PublicSiteBusinessStatusDto,
-} from '~~/shared/types/contracts'
+import type { PublicAdoptionListItemDto } from '~~/shared/types/contracts'
 import WorkIdentityLabel from '~/components/WorkIdentityLabel.vue'
-import HomeBusinessStatus from '~/components/HomeBusinessStatus.vue'
-import { formatCnyMinorUnits } from '~/utils/format'
 import { ADOPTION_STATUS_LABELS } from '~/utils/work-labels'
 import { useMotionEntrance } from '~/composables/useMotionEntrance'
 
 /**
  * T34-F2 当前领养：入口与状态已合并到 HomeBusinessEntries，本区只保留真实领养。
  * 聚合投影标记该区块不可用时整区隐藏，不显示服务端错误详情。
+ *
+ * R4-E：名称·物种与领养状态合并到同一行；不展示价格（价格逐单在官方 QQ 确认）。
+ * 领养营业状态已退役，本幕不再展示状态组件；能否领取由角色自己的领养状态表达。
  */
 const props = defineProps<{
   adoptions: PublicAdoptionListItemDto[]
   available: boolean
-  status: PublicSiteBusinessStatusDto | null
+  lead: string | null
 }>()
 
 const currentAdoption = computed(() => (
   props.adoptions.find(item => item.work.adoptionStatus === 'available') ?? null
 ))
-const price = computed(() => currentAdoption.value?.work.price
-  ? formatCnyMinorUnits(currentAdoption.value.work.price.minorUnits)
-  : null,
-)
 const rootRef = useTemplateRef<HTMLElement>('root')
 const mediaRef = useTemplateRef<HTMLElement>('media')
-const captionRef = useTemplateRef<HTMLElement>('caption')
+const introRef = useTemplateRef<{ root: HTMLElement | null }>('intro')
 const detailTo = computed(() => currentAdoption.value
   ? {
       path: currentAdoption.value.href,
@@ -39,7 +33,7 @@ const detailTo = computed(() => currentAdoption.value
 
 useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   const media = mediaRef.value
-  const caption = captionRef.value
+  const caption = introRef.value?.root ?? null
   if (!media || !caption) {
     return []
   }
@@ -80,47 +74,62 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   <section
     v-if="available && currentAdoption"
     ref="root"
-    class="home-adoptions"
+    class="home-scene home-adoptions"
     aria-labelledby="home-adoptions-title"
     data-home-scroll-scene
     data-testid="home-current-adoptions"
   >
-    <header class="home-scene-heading">
-      <p class="home-scene-heading__eyebrow">CURRENT ADOPTION</p>
-      <h2 id="home-adoptions-title" class="home-scene-heading__title">设定领养</h2>
-    </header>
-
-    <article class="home-adoption-poster" :data-work-slug="currentAdoption.work.slug">
-      <div
-        ref="media"
-        class="home-adoption-poster__media"
-        :style="{ viewTransitionName: 'home-adoption-media' }"
+    <article
+      class="home-scene__stage home-scene__stage--media-end home-adoption-poster"
+      :data-work-slug="currentAdoption.work.slug"
+    >
+      <HomeSceneIntro
+        ref="intro"
+        class="home-scene__text"
+        eyebrow="CURRENT ADOPTION"
+        title="设定领养"
+        title-id="home-adoptions-title"
+        :lead="lead"
       >
-        <ResponsivePicture
-          :sources="currentAdoption.cover.sources"
-          :alt="currentAdoption.cover.alt"
-          sizes="(min-width: 1024px) 68vw, 100vw"
-        />
-      </div>
-      <div ref="caption" class="home-adoption-poster__caption">
-        <HomeBusinessStatus v-if="status" :status="status" />
-        <p class="home-adoption-poster__status">
-          {{ ADOPTION_STATUS_LABELS[currentAdoption.work.adoptionStatus] }}
-        </p>
-        <h3>
-          <WorkIdentityLabel
-            :character-name="currentAdoption.work.characterName"
-            :species="currentAdoption.work.species"
-          />
-        </h3>
-        <p v-if="price" class="home-adoption-poster__price">{{ price }}</p>
-        <div class="home-adoption-poster__actions">
+        <template #meta>
+          <!--
+            名称·物种与领养状态同一行；两者保持独立文本节点，
+            读屏仍可分别识别。
+          -->
+          <p class="home-adoption-poster__identity">
+            <span class="home-adoption-poster__name">
+              <WorkIdentityLabel
+                :character-name="currentAdoption.work.characterName"
+                :species="currentAdoption.work.species"
+              />
+            </span>
+            <span class="home-adoption-poster__state">
+              {{ ADOPTION_STATUS_LABELS[currentAdoption.work.adoptionStatus] }}
+            </span>
+          </p>
+        </template>
+
+        <template #actions>
           <PublicAction to="/adoptions" variant="secondary">
             浏览设定领养
           </PublicAction>
           <PublicAction :to="detailTo">
             查看当前角色
           </PublicAction>
+        </template>
+      </HomeSceneIntro>
+
+      <div class="home-scene__media home-scene__media-framed">
+        <div
+          ref="media"
+          class="home-adoption-poster__media"
+          :style="{ viewTransitionName: 'home-adoption-media' }"
+        >
+          <ResponsivePicture
+            :sources="currentAdoption.cover.sources"
+            :alt="currentAdoption.cover.alt"
+            sizes="(min-width: 1024px) 52vw, 100vw"
+          />
         </div>
       </div>
     </article>
@@ -128,19 +137,6 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
 </template>
 
 <style scoped>
-.home-adoptions {
-  display: grid;
-  gap: var(--space-6);
-  max-width: var(--public-content-wide);
-  margin: 0 auto;
-  padding: var(--space-6) var(--public-page-padding) 0;
-}
-
-.home-adoption-poster {
-  display: grid;
-  gap: var(--space-5);
-}
-
 .home-adoption-poster__media {
   display: grid;
   height: var(--home-scene-media-height);
@@ -161,13 +157,30 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   transition: transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
+@media (min-width: 1024px) {
+  /* 画幅已吃下整段媒体高度；图片填满 inset 后的剩余空间，空隙留给引导线。 */
+  .home-adoption-poster__media {
+    height: 100%;
+  }
+}
+
 @media (hover: hover) and (pointer: fine) {
+  .home-adoption-poster__media {
+    transition: box-shadow var(--motion-duration-state) var(--motion-ease-standard);
+  }
+
+  /* 与 /works 卡片同一套 hover 观感（T6）。 */
+  .home-adoption-poster__media:hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+
   .home-adoption-poster__media:hover :deep(.responsive-picture__image) {
-    transform: scale(1.025) rotate(0.35deg);
+    transform: scale(var(--image-hover-scale));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .home-adoption-poster__media,
   .home-adoption-poster__media :deep(.responsive-picture__image) {
     transition: none;
   }
@@ -177,53 +190,26 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   }
 }
 
-.home-adoption-poster__caption {
-  display: grid;
-  align-content: center;
-  justify-items: start;
-  gap: var(--space-3);
-  max-width: 28rem;
+/* 名称与状态同一行：名称为主、状态为辅，靠字号与颜色分级而不是换行。 */
+.home-adoption-poster__identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
 }
 
-.home-adoption-poster__caption h3 {
-  margin: 0;
+.home-adoption-poster__name {
   font-family: var(--font-public-display);
-  font-size: clamp(1.75rem, 3.5vw, 3.5rem);
+  font-size: var(--font-size-md);
   font-weight: 600;
   line-height: var(--line-height-heading);
 }
 
-.home-adoption-poster__status {
+.home-adoption-poster__state {
   color: var(--public-status-open);
   font-size: var(--font-size-sm);
   font-weight: 700;
   letter-spacing: var(--letter-spacing-label);
-}
-
-.home-adoption-poster__price {
-  font-family: var(--font-public-display);
-  font-size: var(--font-size-md);
-}
-
-.home-adoption-poster__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-}
-
-@media (min-width: 1024px) {
-  .home-adoptions {
-    min-height: calc(100svh - var(--public-header-height));
-    align-content: center;
-    padding-block: var(--space-6);
-  }
-}
-
-@media (min-width: 1024px) {
-  .home-adoption-poster {
-    grid-template-columns: minmax(0, 2.2fr) minmax(18rem, 0.8fr);
-    align-items: stretch;
-  }
-
 }
 </style>

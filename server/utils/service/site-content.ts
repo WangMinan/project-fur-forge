@@ -32,6 +32,10 @@ interface SiteContentRow {
   contactAntiScam: string | null
   contactContentVersion: number
   contactEmail: string
+  homeAdoptionLead: string | null
+  homeCommissionLead: string | null
+  homeCopyContentVersion: number
+  homeFeaturedLead: string | null
   officialChannelsJson: string
   privacyContentVersion: number
   privacyPolicy: string | null
@@ -41,7 +45,7 @@ interface SiteContentRow {
 
 interface BusinessStatusRow {
   detail: string
-  href: '/commission' | '/adoptions'
+  href: '/commission'
   kind: SiteBusinessStatusKind
   label: string
   tone: SiteBusinessStatusTone
@@ -50,7 +54,6 @@ interface BusinessStatusRow {
 
 const statusHref = {
   commission: '/commission',
-  adoption: '/adoptions',
 } as const
 
 function siteContentRow(sqlite: Database.Database) {
@@ -66,11 +69,15 @@ function siteContentRow(sqlite: Database.Database) {
       basic_terms AS basicTerms,
       privacy_policy AS privacyPolicy,
       contact_anti_scam AS contactAntiScam,
+      home_featured_lead AS homeFeaturedLead,
+      home_commission_lead AS homeCommissionLead,
+      home_adoption_lead AS homeAdoptionLead,
       commission_content_version AS commissionContentVersion,
       about_content_version AS aboutContentVersion,
       terms_content_version AS termsContentVersion,
       privacy_content_version AS privacyContentVersion,
-      contact_content_version AS contactContentVersion
+      contact_content_version AS contactContentVersion,
+      home_copy_version AS homeCopyContentVersion
     FROM site_content WHERE id = 'site'
   `).get() as SiteContentRow | undefined
   if (!row || !row.contactEmail) {
@@ -87,7 +94,6 @@ function businessStatuses(sqlite: Database.Database) {
   `).all() as BusinessStatusRow[]
   return {
     commission: rows.find(row => row.kind === 'commission') ?? null,
-    adoption: rows.find(row => row.kind === 'adoption') ?? null,
   }
 }
 
@@ -102,7 +108,6 @@ export function getPublicBusinessStatuses(sqlite: Database.Database) {
   })
   return {
     commission: project(current.commission),
-    adoption: project(current.adoption),
   }
 }
 
@@ -136,6 +141,7 @@ function content(sqlite: Database.Database): AdminSiteContentDto {
       terms: row.termsContentVersion,
       privacy: row.privacyContentVersion,
       contact: row.contactContentVersion,
+      homeCopy: row.homeCopyContentVersion,
     },
     statuses: businessStatuses(sqlite),
     commission: {
@@ -153,6 +159,11 @@ function content(sqlite: Database.Database): AdminSiteContentDto {
       email: row.contactEmail,
       officialChannels: officialChannels(row.officialChannelsJson),
       antiScam: row.contactAntiScam,
+    },
+    homeCopy: {
+      featuredLead: row.homeFeaturedLead,
+      commissionLead: row.homeCommissionLead,
+      adoptionLead: row.homeAdoptionLead,
     },
   })
 }
@@ -252,6 +263,8 @@ export function getPublicSiteContent(
       return qrCodeSources ? [{
         platform: channel.platform,
         account: channel.account,
+        // 保存二维码时解出的官方跳转链接；解不出则为 null，卡片回退为不可点击。
+        qrLinkUrl: channel.qrLinkUrl,
         qrCodeSources,
       }] : []
     })
@@ -278,6 +291,7 @@ export type SiteContentSection =
   | 'about'
   | 'commission'
   | 'contact'
+  | 'home-copy'
   | 'privacy'
   | 'terms'
 
@@ -310,6 +324,11 @@ const SECTION_UPDATES = {
     versionColumn: 'contact_content_version',
     action: 'SITE_CONTACT_CONTENT_UPDATE',
     assignments: 'contact_email = @email, official_channels_json = @officialChannelsJson, contact_anti_scam = @antiScam',
+  },
+  'home-copy': {
+    versionColumn: 'home_copy_version',
+    action: 'SITE_HOME_COPY_CONTENT_UPDATE',
+    assignments: 'home_featured_lead = @featuredLead, home_commission_lead = @commissionLead, home_adoption_lead = @adoptionLead',
   },
 } as const satisfies Record<SiteContentSection, {
   action: string

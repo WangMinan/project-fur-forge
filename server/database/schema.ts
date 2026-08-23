@@ -984,6 +984,11 @@ export const publicationOperations = sqliteTable('publication_operations', {
   check('publication_operations_version_positive', sql`${table.version} > 0`),
 ])
 
+/**
+ * R4-E：只维护委托营业状态。领养营业状态已退役（迁移 0049 删除该行并收紧 CHECK），
+ * 领养是否可领取由每个作品自己的 adoption_status 表达。
+ * 开放程度只有 open / closed 两档，默认 open。
+ */
 export const businessStatuses = sqliteTable('business_statuses', {
   kind: text('kind').primaryKey(),
   tone: text('tone').notNull(),
@@ -995,11 +1000,11 @@ export const businessStatuses = sqliteTable('business_statuses', {
 }, table => [
   check(
     'business_statuses_kind',
-    sql`${table.kind} IN ('commission', 'adoption')`,
+    sql`${table.kind} IN ('commission')`,
   ),
   check(
     'business_statuses_tone',
-    sql`${table.tone} IN ('open', 'limited', 'closed')`,
+    sql`${table.tone} IN ('open', 'closed')`,
   ),
   check(
     'business_statuses_text',
@@ -1007,7 +1012,7 @@ export const businessStatuses = sqliteTable('business_statuses', {
   ),
   check(
     'business_statuses_href',
-    sql`(${table.kind} = 'commission' AND ${table.href} = '/commission') OR (${table.kind} = 'adoption' AND ${table.href} = '/adoptions')`,
+    sql`${table.kind} = 'commission' AND ${table.href} = '/commission'`,
   ),
   check('business_statuses_version_positive', sql`${table.version} > 0`),
 ])
@@ -1026,6 +1031,10 @@ export const siteContent = sqliteTable('site_content', {
   basicTerms: text('basic_terms'),
   privacyPolicy: text('privacy_policy'),
   contactAntiScam: text('contact_anti_scam'),
+  // R4-E 首页 2-4 幕文字块导语；章节标题与按钮文字仍写死在组件中。
+  homeFeaturedLead: text('home_featured_lead'),
+  homeCommissionLead: text('home_commission_lead'),
+  homeAdoptionLead: text('home_adoption_lead'),
   heroAutoRotate: integer('hero_auto_rotate', { mode: 'boolean' })
     .notNull().default(false),
   heroAutoRotateIntervalMs: integer('hero_auto_rotate_interval_ms')
@@ -1041,6 +1050,8 @@ export const siteContent = sqliteTable('site_content', {
   privacyContentVersion: integer('privacy_content_version')
     .notNull().default(1),
   contactContentVersion: integer('contact_content_version')
+    .notNull().default(1),
+  homeCopyContentVersion: integer('home_copy_version')
     .notNull().default(1),
   ...timestampColumns(),
 }, table => [
@@ -1092,6 +1103,22 @@ export const siteContent = sqliteTable('site_content', {
   check(
     'site_content_contact_anti_scam',
     sql`${table.contactAntiScam} IS NULL OR (length(trim(${table.contactAntiScam})) BETWEEN 1 AND 600 AND ${table.contactAntiScam} NOT GLOB '*[<>]*')`,
+  ),
+  check(
+    'site_content_home_featured_lead',
+    sql`${table.homeFeaturedLead} IS NULL OR (length(trim(${table.homeFeaturedLead})) BETWEEN 1 AND 120 AND ${table.homeFeaturedLead} NOT GLOB '*[<>]*')`,
+  ),
+  check(
+    'site_content_home_commission_lead',
+    sql`${table.homeCommissionLead} IS NULL OR (length(trim(${table.homeCommissionLead})) BETWEEN 1 AND 120 AND ${table.homeCommissionLead} NOT GLOB '*[<>]*')`,
+  ),
+  check(
+    'site_content_home_adoption_lead',
+    sql`${table.homeAdoptionLead} IS NULL OR (length(trim(${table.homeAdoptionLead})) BETWEEN 1 AND 120 AND ${table.homeAdoptionLead} NOT GLOB '*[<>]*')`,
+  ),
+  check(
+    'site_content_home_copy_version_positive',
+    sql`${table.homeCopyContentVersion} > 0`,
   ),
   check('site_content_version_positive', sql`${table.version} > 0`),
 ])

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { PROJECT_NAME } from '~~/shared/constants/project'
 import { publicAdoptionListResponseSchema } from '~~/shared/schemas/public-content'
-import { publicSiteContentResponseSchema } from '~~/shared/schemas/site-content'
 
 useSeoMeta({
   title: `设定领养 · ${PROJECT_NAME}`,
@@ -26,13 +25,8 @@ const { data: list, error: listError } = await useFetch('/api/public/v1/adoption
   transform: raw => publicAdoptionListResponseSchema.parse(raw).data,
 })
 
-const { data: site, error: siteError } = await useFetch('/api/public/v1/site-content', {
-  key: 'public-adoptions-site-content',
-  headers: useRequestHeaders(['host']),
-  transform: raw => publicSiteContentResponseSchema.parse(raw).data,
-})
-
-if (listError.value || siteError.value) {
+// R4-E：领养营业状态退役后本页不再消费 site-content，去掉该请求。
+if (listError.value) {
   throw createError({ statusCode: 500, statusMessage: '设定领养暂时无法显示' })
 }
 
@@ -40,7 +34,6 @@ const items = computed(() => list.value?.items ?? [])
 const resultCount = computed(() => list.value?.resultCount ?? 0)
 const page = computed(() => list.value?.page ?? requestedPage.value)
 const pageCount = computed(() => list.value?.pageCount ?? 0)
-const status = computed(() => site.value?.statuses.adoption ?? null)
 const filter = computed(
   () => list.value?.filter ?? { valid: true },
 )
@@ -77,19 +70,6 @@ function hrefFor(target: number) {
 <template>
   <div class="adoptions-page">
     <PublicPageIntro title="设定领养" />
-
-    <div
-      v-if="status"
-      class="adoptions-page__status-wrap"
-    >
-      <section
-        class="adoptions-page__status"
-        aria-label="当前领养营业状态"
-        data-testid="adoption-status"
-      >
-        <PublicBusinessStatus :status="status" />
-      </section>
-    </div>
 
     <div class="adoptions-page__filters-wrap">
       <PublicCatalogSearch
@@ -152,18 +132,6 @@ function hrefFor(target: number) {
   max-width: var(--public-content-wide);
   margin: 0 auto;
   padding: 0 var(--public-page-padding) var(--space-7);
-}
-
-.adoptions-page__status-wrap {
-  max-width: var(--public-content-wide);
-  margin: 0 auto var(--space-6);
-  padding: 0 var(--public-page-padding);
-}
-
-.adoptions-page__status {
-  padding: var(--space-4) var(--space-5);
-  background: var(--public-bg-secondary);
-  border-radius: var(--radius-md);
 }
 
 .adoptions-page__filters-wrap {

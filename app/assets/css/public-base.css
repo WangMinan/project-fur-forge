@@ -110,6 +110,8 @@
 
   --shadow-raised: 0 0.75rem 2.5rem rgb(25 31 42 / 0.1);
   --shadow-overlay: 0 1.5rem 4rem rgb(25 31 42 / 0.18);
+  /* 卡片 hover 投影：/works 卡片与首页各幕共用同一个值，不各写一份魔法数。 */
+  --shadow-card-hover: 0 1rem 2.25rem rgb(17 20 25 / 0.14);
 
   --ratio-work-card: 3 / 4;
   /** 领养卡设定图框：横版设定图的常见比例，用于让并排卡片对齐。 */
@@ -130,6 +132,27 @@
   --public-anchor-offset: 5.5rem;
   --hero-min-height: 100svh;
   --home-scene-media-height: clamp(19rem, 52svh, 35rem);
+  /**
+   * 首页 2-4 幕三条统一量：章节块边距、文字卡内边距、内容宽度。
+   * 三幕必须共用这三个值，否则各幕四周留白会互相漂移。
+   * 左右宽度沿用全站 --public-content-wide，本轮只收窄上下。
+   */
+  --home-scene-max-width: var(--public-content-wide);
+  --home-scene-block-padding: var(--space-8);
+  --home-scene-card-padding: var(--space-6);
+  /**
+   * 委托与领养幕的引导线画幅：图片向内缩这一段，缩出来的空隙容纳左上/右下
+   * 两条 L 形括弧。外层画幅本身与文字卡等高，所以缩图不会破坏图文对位。
+   */
+  --home-scene-frame-inset: var(--space-6);
+  --home-scene-guide-length: clamp(2rem, 4vw, 3.5rem);
+  /**
+   * 引导线仍是细线，但 1px + 极浅边框色在白底上基本看不见。
+   * 加粗到 2px 并使用品牌蓝（与 primary 按钮同色），保证可见且属于品牌语言；
+   * 两幕共用这两个令牌，不各写一份。
+   */
+  --home-scene-guide-width: 2px;
+  --home-scene-guide-color: var(--public-accent-primary);
   --image-placeholder: #f1f3f6;
   --image-hover-scale: 1.02;
 
@@ -161,7 +184,7 @@
 
   @media (min-width: 1024px) {
     --public-page-padding: var(--public-page-padding-desktop);
-    --home-scene-media-height: min(68svh, 40rem);
+    --home-scene-media-height: min(56svh, 36rem);
   }
 }
 
@@ -275,26 +298,111 @@ button {
   transform: translateY(0);
 }
 
-/* 首页三幕共用同一左上标题结构，避免各章节在位置、字阶和间距上漂移。 */
-.home-scene-heading {
+/**
+ * 首页 2-4 幕共用骨架。三幕的容器、栏宽、gap 和上下留白全部由这里决定，
+ * 各幕 scoped CSS 只负责自己的图片和特有元素，避免四周留白逐幕漂移。
+ */
+.home-scene {
   display: grid;
-  justify-items: start;
-  gap: var(--space-2);
+  max-width: var(--home-scene-max-width);
+  margin: 0 auto;
+  padding: var(--home-scene-block-padding) var(--public-page-padding);
 }
 
-.home-scene-heading__eyebrow {
-  color: var(--public-text-tertiary);
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  letter-spacing: 0.16em;
+.home-scene__stage {
+  display: grid;
+  gap: var(--space-6);
 }
 
-.home-scene-heading__title {
-  font-family: var(--font-public-display);
-  font-size: var(--font-size-xl);
-  font-weight: 600;
-  line-height: var(--line-height-heading);
-  letter-spacing: var(--letter-spacing-tight);
+@media (min-width: 1024px) {
+  .home-scene {
+    /* 桌面 snap 逐幕停靠：内容居中，上下留白对称，不再下方偏空。 */
+    min-height: calc(100svh - var(--public-header-height));
+    align-content: center;
+  }
+
+  /**
+   * 栏比与 gap 只在这里定义一次，三幕共用，保证 2-4 幕左右边界完全等宽。
+   * 图片栏略宽于文字栏；文字卡与图片等高对位。
+   */
+  .home-scene__stage {
+    align-items: stretch;
+    gap: clamp(2.5rem, 6vw, 6rem);
+  }
+
+  /* 图片在左（第二幕、第四幕）。 */
+  .home-scene__stage--media-start {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  }
+
+  .home-scene__stage--media-start .home-scene__media {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .home-scene__stage--media-start .home-scene__text {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  /* 图片在右（第三幕）。DOM 顺序始终是文字在前，这里只换视觉左右。 */
+  .home-scene__stage--media-end {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  }
+
+  .home-scene__stage--media-end .home-scene__text {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .home-scene__stage--media-end .home-scene__media {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  /**
+   * 引导线画幅（委托幕与领养幕）。
+   * 画幅本身与文字卡等高（stretch + min-height 兜住媒体高度），图片向内缩
+   * 一个 inset，缩出来的空隙正好容纳左上与右下两条 L 形括弧。
+   * 括弧用伪元素画：不进无障碍树，也不需要额外 DOM 或 SVG。
+   */
+  .home-scene__media-framed {
+    position: relative;
+    min-height: var(--home-scene-media-height);
+    padding: var(--home-scene-frame-inset);
+  }
+
+  .home-scene__media-framed::before,
+  .home-scene__media-framed::after {
+    position: absolute;
+    width: var(--home-scene-guide-length);
+    height: var(--home-scene-guide-length);
+    /* 括弧必须是直角：显式归零，不受任何图片圆角或继承影响。 */
+    border-radius: 0;
+    content: "";
+    pointer-events: none;
+  }
+
+  /* 左上括弧。 */
+  .home-scene__media-framed::before {
+    top: 0;
+    left: 0;
+    border-top: var(--home-scene-guide-width) solid var(--home-scene-guide-color);
+    border-left: var(--home-scene-guide-width) solid var(--home-scene-guide-color);
+  }
+
+  /* 右下括弧。 */
+  .home-scene__media-framed::after {
+    right: 0;
+    bottom: 0;
+    border-right: var(--home-scene-guide-width) solid var(--home-scene-guide-color);
+    border-bottom: var(--home-scene-guide-width) solid var(--home-scene-guide-color);
+  }
+
+  /* 画幅内的图片自己不再吃固定高度，改为填满 inset 后的剩余空间。 */
+  .home-scene__media-framed > * {
+    height: 100%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

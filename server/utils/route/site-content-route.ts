@@ -12,11 +12,15 @@ import { asSafeApiError } from '../service-error'
 /**
  * T34-F3 分区写入入口：所有分区共用同一套管理 Host、认证、Origin、CSRF、
  * no-store 与 Schema 校验，只在赋值列和版本列上不同。
+ *
+ * `toValues` 允许异步：contact 分区需要在保存时解码二维码里的官方跳转链接。
  */
 export function defineSiteContentSectionHandler<T>(options: {
   requestSchema: ZodType<{ expectedVersion: number, payload: T }>
   section: SiteContentSection
-  toValues: (payload: T) => Record<string, string | null>
+  toValues: (payload: T) =>
+    | Promise<Record<string, string | null>>
+    | Record<string, string | null>
 }) {
   return async (event: H3Event) => {
     const body = options.requestSchema.safeParse(
@@ -31,7 +35,7 @@ export function defineSiteContentSectionHandler<T>(options: {
           getDatabase().sqlite,
           options.section,
           body.data.expectedVersion,
-          options.toValues(body.data.payload),
+          await options.toValues(body.data.payload),
           adminSessionFor(event).user.id,
         ),
       })

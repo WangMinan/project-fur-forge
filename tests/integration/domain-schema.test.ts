@@ -736,12 +736,23 @@ describe('P0 schema boundary', () => {
       UPDATE site_content SET official_channels_json = '[]'
       WHERE id = 'site'
     `).run()).toThrow(/site_content_official_channels_json/)
+    // R4-E：领养营业状态已退役（0049），只剩委托一行。
     expect(sqlite.prepare('SELECT count(*) FROM business_statuses').pluck().get())
-      .toBe(2)
+      .toBe(1)
     expect(() => sqlite.prepare(`
       UPDATE business_statuses SET tone = 'busy'
-      WHERE kind = 'adoption'
+      WHERE kind = 'commission'
     `).run()).toThrow(/business_statuses_tone/)
+    // 退役后的 limited 与 adoption 都必须被 CHECK 拒绝。
+    expect(() => sqlite.prepare(`
+      UPDATE business_statuses SET tone = 'limited'
+      WHERE kind = 'commission'
+    `).run()).toThrow(/business_statuses_tone/)
+    expect(() => sqlite.prepare(`
+      INSERT INTO business_statuses (
+        kind, tone, label, detail, href, version, created_at, updated_at
+      ) VALUES ('adoption', 'open', '领养', '说明。', '/adoptions', 1, 0, 0)
+    `).run()).toThrow(/business_statuses_kind/)
     expect(() => sqlite.prepare(`
       UPDATE business_statuses SET href = '/adoptions'
       WHERE kind = 'commission'

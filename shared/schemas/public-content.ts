@@ -142,10 +142,14 @@ export const publicHomeAggregateDtoSchema = z.object({
     commission: publicHomeEntryCardDtoSchema.nullable(),
     adoption: publicHomeEntryCardDtoSchema.nullable(),
   }).strict(),
-  featured: homeSectionSchema(publicWorkSummaryDtoSchema),
-  currentAdoptions: homeSectionSchema(publicAdoptionListItemDtoSchema).extend({
-    status: publicSiteBusinessStatusDtoSchema.nullable(),
+  /** R4-E 首页 2-4 幕文字块导语；读取失败时整组降级为 null，不影响首页可用。 */
+  homeCopy: z.object({
+    featuredLead: z.string().nullable(),
+    commissionLead: z.string().nullable(),
+    adoptionLead: z.string().nullable(),
   }).strict(),
+  featured: homeSectionSchema(publicWorkSummaryDtoSchema),
+  currentAdoptions: homeSectionSchema(publicAdoptionListItemDtoSchema).strict(),
 }).strict()
 
 export const publicHomeAggregateResponseSchema = apiSuccessSchema(

@@ -107,6 +107,9 @@ const { data: filings } = await useFetch("/api/site-meta", {
         <span aria-hidden="true">｜</span>
         <span>
           Design by
+          <!-- Jece 暂无公开主页链接，先以纯文本署名；拿到链接后再补 <a>。 -->
+          <span>Jece</span>
+          &amp;
           <a
             href="https://github.com/wangminan"
             target="_blank"

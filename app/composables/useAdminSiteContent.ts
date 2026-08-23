@@ -13,13 +13,14 @@ export type SiteContentSection =
   | 'about'
   | 'commission'
   | 'contact'
+  | 'home-copy'
   | 'privacy'
   | 'terms'
 
 export type SiteSaveSection = SiteBusinessStatusKind | SiteContentSection
 
 export interface SiteStatusPayload {
-  tone: 'closed' | 'limited' | 'open'
+  tone: 'closed' | 'open'
   label: string
   detail: string
 }
@@ -30,6 +31,7 @@ const SECTION_VERSION_KEYS = {
   'terms': 'terms',
   'privacy': 'privacy',
   'contact': 'contact',
+  'home-copy': 'homeCopy',
 } as const satisfies Record<
   SiteContentSection,
   keyof AdminSiteContentDto['sectionVersions']

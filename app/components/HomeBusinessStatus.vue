@@ -7,7 +7,6 @@ defineProps<{
 
 const TONE_LABELS = {
   open: '开放中',
-  limited: '有限开放',
   closed: '暂不开放',
 } as const
 </script>
@@ -47,10 +46,6 @@ const TONE_LABELS = {
 
 .home-business-status[data-tone='open'] .home-business-status__dot {
   background: var(--status-open, #2f7a4d);
-}
-
-.home-business-status[data-tone='limited'] .home-business-status__dot {
-  background: var(--status-limited, #a8701a);
 }
 
 .home-business-status[data-tone='closed'] .home-business-status__dot {

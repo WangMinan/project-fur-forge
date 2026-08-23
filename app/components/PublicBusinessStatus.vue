@@ -37,10 +37,6 @@ defineProps<{
   background: var(--public-status-open);
 }
 
-.business-status[data-tone='limited'] .business-status__dot {
-  background: var(--public-status-paused);
-}
-
 .business-status[data-tone='closed'] .business-status__dot {
   background: var(--public-status-neutral);
 }

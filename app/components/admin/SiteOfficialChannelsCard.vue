@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { CONTACT_PLATFORM_LABELS } from '~~/shared/constants/contact'
 import type {
-  AdminOfficialChannel,
   AdminSiteContentDto,
   ContactPlatform,
   VerifiedAssetDto,
@@ -27,6 +26,16 @@ const emit = defineEmits<{
   save: [payload: Record<string, unknown>]
 }>()
 
+/**
+ * 草稿里的渠道形状：只包含管理员可编辑的字段。
+ * `qrLinkUrl` 由服务端在保存时从二维码解码得出，不属于草稿（见 extract）。
+ */
+interface ChannelDraft {
+  account: string | null
+  platform: ContactPlatform
+  qrCodeAssetId: string | null
+}
+
 const card = useSiteContentSectionCard({
   section: 'contact',
   content: () => props.content,
@@ -35,7 +44,16 @@ const card = useSiteContentSectionCard({
   savingSection: () => props.savingSection,
   extract: dto => ({
     email: dto.contact.email,
-    officialChannels: dto.contact.officialChannels,
+    /*
+     * 只取可编辑字段。`qrLinkUrl` 是服务端保存时解码出来的派生值：
+     * 若把它放进草稿，上传新二维码保存后服务端返回的新链接会与草稿里的旧值不等，
+     * isDirty 永远为 true —— 保存按钮不变灰，并持续提示有未保存修改。
+     */
+    officialChannels: dto.contact.officialChannels.map<ChannelDraft>(channel => ({
+      platform: channel.platform,
+      account: channel.account,
+      qrCodeAssetId: channel.qrCodeAssetId,
+    })),
     antiScam: dto.contact.antiScam ?? '',
   }),
 })
@@ -49,7 +67,7 @@ const upload = useContactQrUpload({
   onReady: (platform, asset) => setQrAsset(platform, asset),
 })
 
-function channelAccountIssue(channel: AdminOfficialChannel) {
+function channelAccountIssue(channel: ChannelDraft) {
   const account = channel.account?.trim() ?? ''
   if (!account) {
     return null
@@ -85,7 +103,7 @@ const issues = computed(() => {
   return found
 })
 
-function completeness(channel: AdminOfficialChannel) {
+function completeness(channel: ChannelDraft) {
   const account = channel.account?.trim()
   if (account && channel.qrCodeAssetId) {
     return '信息完整，保存后可在公开页显示。'

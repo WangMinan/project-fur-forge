@@ -411,6 +411,39 @@ function publicBusinessStatuses(sqlite: Database.Database) {
   return getPublicBusinessStatuses(sqlite)
 }
 
+const EMPTY_HOME_COPY = {
+  featuredLead: null,
+  commissionLead: null,
+  adoptionLead: null,
+} as const
+
+/**
+ * R4-E 首页文字块导语：首页首次消费 site_content 自由文本。
+ * 缺列、缺行或读取异常时整组降级为 null，各幕隐藏导语但仍完整可用，不放大成首页 500。
+ */
+function homeSceneCopy(sqlite: Database.Database) {
+  try {
+    const row = sqlite.prepare(`
+      SELECT
+        home_featured_lead AS featuredLead,
+        home_commission_lead AS commissionLead,
+        home_adoption_lead AS adoptionLead
+      FROM site_content WHERE id = 'site'
+    `).get() as {
+      adoptionLead: string | null
+      commissionLead: string | null
+      featuredLead: string | null
+    } | undefined
+    return row ?? EMPTY_HOME_COPY
+  }
+  catch (error) {
+    safeLog('error', 'Home scene copy projection failed.', {
+      errorName: (error as { name?: unknown }).name,
+    })
+    return EMPTY_HOME_COPY
+  }
+}
+
 /**
  * 首页聚合投影：Hero 与业务入口为关键区块，精选作品和当前领养失败时受控降级。
  * 单次 SSR 只构建一份作品快照，避免精选与领养各自重复扫描。
@@ -427,7 +460,8 @@ function homeAggregate(
     if (!entry) {
       return null
     }
-    const status = statuses[kind]
+    // R4-E：领养营业状态已退役，只有委托幕仍有状态与由状态派生的摘要。
+    const status = kind === 'commission' ? statuses.commission : null
     return {
       ...entry,
       title: ENTRY_TITLES[kind],
@@ -475,11 +509,11 @@ function homeAggregate(
   return publicHomeAggregateDtoSchema.parse({
     hero,
     entries,
+    homeCopy: homeSceneCopy(sqlite),
     featured: { available: featuredAvailable, items: featured },
     currentAdoptions: {
       available: adoptionsAvailable,
       items: currentAdoptions,
-      status: statuses.adoption,
     },
   })
 }

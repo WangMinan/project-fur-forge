@@ -134,9 +134,8 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
             />
           </div>
 
-          <p class="commission-page__text commission-page__text--muted">
-            邮箱是备用联系渠道；申请请优先使用站内表单。
-          </p>
+          <!-- 邮箱说明只由可编辑的 commission.emailAction 承担：
+               这里原本还写死了一句同义的「邮箱是备用联系渠道」，与它内容重复。 -->
           <p
             v-for="(paragraph, index) in emailActionParagraphs"
             :key="index"

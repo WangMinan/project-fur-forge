@@ -8,12 +8,13 @@ const props = defineProps<{
     adoption: PublicHomeEntryCardDto | null
     commission: PublicHomeEntryCardDto | null
   }
+  lead: string | null
 }>()
 
 const commission = computed(() => props.entries.commission)
 const rootRef = useTemplateRef<HTMLElement>('root')
 const mediaRef = useTemplateRef<HTMLElement>('media')
-const bodyRef = useTemplateRef<HTMLElement>('body')
+const introRef = useTemplateRef<{ root: HTMLElement | null }>('intro')
 
 const commissionTo = {
   path: '/commission',
@@ -22,7 +23,7 @@ const commissionTo = {
 
 useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   const media = mediaRef.value
-  const body = bodyRef.value
+  const body = introRef.value?.root ?? null
   if (!media || !body) {
     return []
   }
@@ -49,56 +50,56 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
     ),
   ]
 })
-
 </script>
 
 <template>
   <section
     v-if="commission"
     ref="root"
-    class="home-commission"
+    class="home-scene home-commission"
     aria-labelledby="home-entries-title"
     data-home-scroll-scene
     data-testid="home-business-entries"
   >
-    <header class="home-scene-heading">
-      <p class="home-scene-heading__eyebrow">CUSTOM COMMISSION</p>
-      <h2 id="home-entries-title" class="home-scene-heading__title">自设委托</h2>
-    </header>
-
     <article
-      class="home-commission__stage"
+      class="home-scene__stage home-scene__stage--media-start"
       :data-entry-kind="commission.kind"
       data-testid="home-business-entry"
     >
-      <div
-        ref="media"
-        class="home-commission__media"
-        :style="{ viewTransitionName: 'home-commission-media' }"
+      <HomeSceneIntro
+        ref="intro"
+        class="home-scene__text"
+        eyebrow="CUSTOM COMMISSION"
+        title="自设委托"
+        title-id="home-entries-title"
+        heading-align="center"
+        :lead="lead"
       >
-        <ResponsivePicture
-          :sources="commission.sources"
-          :alt="commission.alt"
-          sizes="(min-width: 1024px) 70vw, 100vw"
-        />
-      </div>
-
-      <div ref="body" class="home-commission__body">
-        <HomeBusinessStatus
-          v-if="commission.status"
-          :status="commission.status"
-        />
-
-        <p class="home-commission__process">
-          先通过站内表单提交。工作室评估后优先使用官方 QQ 私聊沟通。
-        </p>
-        <div class="home-commission__actions">
+        <template v-if="commission.status" #status>
+          <HomeBusinessStatus :status="commission.status" />
+        </template>
+        <template #actions>
           <PublicAction :to="commissionTo" variant="secondary">
             了解自设委托
           </PublicAction>
           <PublicAction to="/commission/apply">
             提交委托申请
           </PublicAction>
+        </template>
+      </HomeSceneIntro>
+
+      <!-- 主图只承担展示与共享对象连续性，不作为整图链接（SPEC 5.3）。 -->
+      <div class="home-scene__media home-scene__media-framed">
+        <div
+          ref="media"
+          class="home-commission__media"
+          :style="{ viewTransitionName: 'home-commission-media' }"
+        >
+          <ResponsivePicture
+            :sources="commission.sources"
+            :alt="commission.alt"
+            sizes="(min-width: 1024px) 52vw, 100vw"
+          />
         </div>
       </div>
     </article>
@@ -106,19 +107,6 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
 </template>
 
 <style scoped>
-.home-commission {
-  display: grid;
-  gap: var(--space-6);
-  max-width: var(--public-content-wide);
-  margin: 0 auto;
-  padding: var(--space-6) var(--public-page-padding) 0;
-}
-
-.home-commission__stage {
-  display: grid;
-  gap: var(--space-6);
-}
-
 .home-commission__media {
   display: block;
   height: var(--home-scene-media-height);
@@ -138,68 +126,41 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   transition: transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
+@media (min-width: 1024px) {
+  /**
+   * 画幅已经用 min-height 吃下整段媒体高度（border-box 含 padding），
+   * 图片改为填满 inset 之后的剩余空间 —— 这就是「缩小图片」的实现，
+   * 缩出来的一圈空隙留给 L 形引导线。
+   * scoped 选择器带 data 属性，特异性高于全局规则，必须在这里覆盖。
+   */
+  .home-commission__media {
+    height: 100%;
+  }
+}
+
 @media (hover: hover) and (pointer: fine) {
+  .home-commission__media {
+    transition: box-shadow var(--motion-duration-state) var(--motion-ease-standard);
+  }
+
+  /* 与 /works 卡片同一套 hover 观感（T6）。 */
+  .home-commission__media:hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+
   .home-commission__media:hover :deep(.responsive-picture__image) {
-    transform: scale(1.025) rotate(0.35deg);
+    transform: scale(var(--image-hover-scale));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .home-commission__media,
   .home-commission__media :deep(.responsive-picture__image) {
     transition: none;
   }
 
   .home-commission__media:hover :deep(.responsive-picture__image) {
     transform: none;
-  }
-}
-
-.home-commission__body {
-  display: grid;
-  align-content: center;
-  justify-items: start;
-  gap: var(--space-4);
-  max-width: 30rem;
-}
-
-.home-commission__process {
-  color: var(--public-text-secondary);
-  line-height: var(--line-height-relaxed);
-}
-
-.home-commission__process {
-  font-size: var(--font-size-sm);
-}
-
-.home-commission__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-}
-
-@media (min-width: 1024px) {
-  .home-commission {
-    min-height: calc(100svh - var(--public-header-height));
-    align-content: center;
-    padding-block: var(--space-6);
-  }
-}
-
-@media (min-width: 1024px) {
-  .home-commission__stage {
-    grid-template-columns: minmax(18rem, 0.75fr) minmax(0, 2.25fr);
-    align-items: stretch;
-  }
-
-  .home-commission__media {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .home-commission__body {
-    grid-column: 1;
-    grid-row: 1;
-    padding: var(--space-6) 0;
   }
 }
 </style>
