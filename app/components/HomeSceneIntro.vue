@@ -11,16 +11,12 @@
  *
  * 标题必须渲染真实 `<h2 :id>`：各幕的 `aria-labelledby` 指向它。
  */
-const props = withDefaults(defineProps<{
+defineProps<{
   eyebrow: string
-  /** 标题簇是否居中。只有自设委托幕用，用来平衡该幕左右观感。 */
-  headingAlign?: 'center' | 'start'
   lead: string | null
   title: string
   titleId: string
-}>(), {
-  headingAlign: 'start',
-})
+}>()
 
 /** 各幕入场动效需要真实根元素调用 `animate()`；组件实例本身没有该方法。 */
 const rootRef = useTemplateRef<HTMLElement>('root')
@@ -29,10 +25,7 @@ defineExpose({ root: rootRef })
 
 <template>
   <div ref="root" class="home-scene-intro" data-testid="home-scene-intro">
-    <div
-      class="home-scene-intro__heading"
-      :data-align="props.headingAlign"
-    >
+    <div class="home-scene-intro__heading">
       <p class="home-scene-intro__eyebrow">{{ eyebrow }}</p>
       <h2 :id="titleId" class="home-scene-intro__title">{{ title }}</h2>
     </div>
@@ -66,15 +59,6 @@ defineExpose({ root: rootRef })
   width: 100%;
   padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--public-border-secondary);
-}
-
-/**
- * 只有自设委托幕居中标题簇，用来平衡该幕左右观感。
- * 居中只作用于标题簇：导语与行动仍左对齐，否则整卡会散。
- */
-.home-scene-intro__heading[data-align='center'] {
-  justify-items: center;
-  text-align: center;
 }
 
 .home-scene-intro__eyebrow {

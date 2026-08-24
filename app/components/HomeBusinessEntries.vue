@@ -72,7 +72,6 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
         eyebrow="CUSTOM COMMISSION"
         title="自设委托"
         title-id="home-entries-title"
-        heading-align="center"
         :lead="lead"
       >
         <template v-if="commission.status" #status>
