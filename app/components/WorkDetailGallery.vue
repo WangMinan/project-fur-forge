@@ -53,6 +53,11 @@ const activeImageStyle = computed(() => {
     viewTransitionName: props.viewTransitionName,
   }
 })
+
+/** 舞台比例跟随当前图片，写在舞台上让高度变化可过渡。 */
+const stageStyle = computed(() => ({
+  '--stage-aspect-ratio': activeImageStyle.value['--gallery-aspect-ratio'],
+}))
 </script>
 
 <template>
@@ -60,6 +65,7 @@ const activeImageStyle = computed(() => {
     <div
       class="work-gallery__stage"
       :class="`work-gallery__stage--${activeOrientation}`"
+      :style="stageStyle"
       :data-orientation="activeOrientation"
     >
       <!--
@@ -115,6 +121,9 @@ const activeImageStyle = computed(() => {
  * 窄屏回落为单列，缩略图横排在主图下方。
  */
 .work-gallery {
+  /* 图片与舞台共用同一个高度上限，两者的高度因此恒等。 */
+  --gallery-max-height: clamp(20rem, calc(100vh - 15rem), 46rem);
+
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
@@ -124,12 +133,21 @@ const activeImageStyle = computed(() => {
 /*
  * grid 单格：交叉淡化期间新旧两张图占同一格并叠在一起，不会并排把布局挤宽。
  * 不设 overflow: hidden——圆角在图片自身上，裁切只会切掉宽图。
+ *
+ * 竖图与横图高度不同，切换方向时舞台高度必然变化。高度不由内容算（auto →
+ * auto 不是计算值变化，无法过渡），而是由当前图片的比例算：舞台自己带
+ * aspect-ratio 并用同一个高度上限收口，得到的高度与图片一致，且 aspect-ratio
+ * 可以过渡，于是高度变化与淡化同时进行，不再是一次瞬间跳格。
  */
 .work-gallery__stage {
+  position: relative;
   display: grid;
   grid-template-areas: 'stage';
   flex: 1 1 auto;
   min-width: 0;
+  aspect-ratio: var(--stage-aspect-ratio, 4 / 3);
+  max-height: var(--gallery-max-height);
+  transition: aspect-ratio var(--motion-duration-content) var(--motion-ease-standard);
 }
 
 .work-gallery__stage :deep(.work-gallery__image) {
@@ -137,10 +155,21 @@ const activeImageStyle = computed(() => {
   place-self: center;
 }
 
-/* 淡入淡出：离场图脱离文档流交给 grid 叠放，不影响入场图的尺寸计算。 */
+/* 淡化与高度同时长，两件事同起同落，读作一次动作。 */
 .work-gallery-fade-enter-active,
 .work-gallery-fade-leave-active {
-  transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
+  transition: opacity var(--motion-duration-content) var(--motion-ease-standard);
+}
+
+/*
+ * 离场图移出文档流，只保留水平居中（`margin-inline: auto` + 左右 inset）。
+ * 不写 `inset: 0`：那会同时约束上下边，把离场竖图压扁到新的舞台高度。
+ */
+.work-gallery-fade-leave-active {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  margin-inline: auto;
 }
 
 .work-gallery-fade-enter-from,
@@ -149,6 +178,7 @@ const activeImageStyle = computed(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .work-gallery__stage,
   .work-gallery-fade-enter-active,
   .work-gallery-fade-leave-active {
     transition: none;
@@ -161,10 +191,7 @@ const activeImageStyle = computed(() => {
  * 也不浪费屏幕宽度。占位背景只包裹图片矩形本身，不铺满整栏。
  */
 .work-gallery__stage :deep(.work-gallery__image) {
-  width: min(
-    100%,
-    calc(clamp(20rem, calc(100vh - 15rem), 46rem) * var(--gallery-aspect-ratio))
-  );
+  width: min(100%, calc(var(--gallery-max-height) * var(--gallery-aspect-ratio)));
   background: var(--image-placeholder);
   border-radius: var(--radius-image);
   overflow: hidden;

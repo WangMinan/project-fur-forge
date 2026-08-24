@@ -76,12 +76,17 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
         <p class="about-page__text about-page__text--muted">
           委托申请可通过站内表单私密提交；邮箱、QQ 与 QQ群用于后续人工沟通和备用联系。
         </p>
-        <!-- 三个行动同一行：提交申请是主行动，邮件两个按钮跟在后面。 -->
+        <!--
+          邮箱与两个 QQ 渠道收进同一张联系清单，每行自带行动，
+          页面不再另外堆一排按钮。提交申请仍是本区唯一主行动。
+        -->
+        <ContactChannelList
+          :channels="contact.officialChannels"
+          :email="contact.email"
+        />
         <div class="about-page__actions">
           <PublicAction to="/commission/apply">提交委托申请</PublicAction>
-          <ContactEmailActions :email="contact.email" />
         </div>
-        <ContactChannelGrid :channels="contact.officialChannels" />
       </section>
 
       <section

@@ -12,6 +12,7 @@ import {
 import { publicSiteBusinessStatusDtoSchema } from './site-content'
 import {
   publicAdoptionWorkDtoSchema,
+  publicWorkDetailWorkDtoSchema,
   publicWorkDtoSchema,
 } from './work'
 
@@ -50,7 +51,7 @@ export const publicWorkSummaryDtoSchema = z.object({
 }).strict()
 
 export const publicWorkDetailDtoSchema = z.object({
-  work: publicWorkDtoSchema,
+  work: publicWorkDetailWorkDtoSchema,
   href: z.string().regex(/^\/works\/[a-z0-9]+(?:-[a-z0-9]+)*$/),
   media: z.object({
     primaryAssetId: resourceIdSchema.nullable(),

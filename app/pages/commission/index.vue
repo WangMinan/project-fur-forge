@@ -122,18 +122,6 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
             {{ paragraph }}
           </p>
 
-          <!-- 三个行动同一行：站内申请是主行动，邮件两个按钮跟在后面。 -->
-          <div class="commission-page__actions">
-            <PublicAction to="/commission/apply">
-              提交委托申请
-            </PublicAction>
-            <ContactEmailActions
-              v-if="commission"
-              :email="commission.email"
-              subject="自设委托估价咨询"
-            />
-          </div>
-
           <!-- 邮箱说明只由可编辑的 commission.emailAction 承担：
                这里原本还写死了一句同义的「邮箱是备用联系渠道」，与它内容重复。 -->
           <p
@@ -144,18 +132,23 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
             {{ paragraph }}
           </p>
 
-          <ContactChannelGrid
-            v-if="contact"
+          <!--
+            邮箱与两个 QQ 渠道收进同一张联系清单，行动跟在各自号码后面。
+            「提交委托申请」只保留在上方大图里一次，正文不再重复主按钮；
+            延伸阅读退为文字链接，不与联系行动争视觉权重。
+          -->
+          <ContactChannelList
+            v-if="contact && commission"
             :channels="contact.officialChannels"
+            :email="commission.email"
+            email-subject="自设委托估价咨询"
           />
 
-          <!-- 两个延伸阅读入口跟在正文后面成一组次级按钮：
-               原来是页面最底一条分隔线、两个链接分列左右，和上文断开，很突兀。 -->
           <div class="commission-page__links">
-            <PublicAction v-if="commission" variant="secondary" :to="commission.termsHref">
+            <PublicAction v-if="commission" variant="text" :to="commission.termsHref">
               服务条款
             </PublicAction>
-            <PublicAction variant="secondary" to="/about#contact">
+            <PublicAction variant="text" to="/about#contact">
               完整联系说明
             </PublicAction>
           </div>
@@ -273,12 +266,12 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
   margin-top: var(--space-2);
 }
 
-/* 延伸阅读做成一组次级胶囊按钮，跟正文同一栏、同一左边线。 */
+/* 延伸阅读是两个文字链接，跟正文同一栏、同一左边线。 */
 .commission-page__links {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3);
-  margin-top: var(--space-2);
+  align-items: center;
+  gap: var(--space-2) var(--space-5);
 }
 
 </style>

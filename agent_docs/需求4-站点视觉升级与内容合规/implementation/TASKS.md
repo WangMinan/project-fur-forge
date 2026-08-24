@@ -142,6 +142,13 @@
 - [x] **T46-F8 · 代表作品标题、留白与详情切换修正**：三业务幕复用同一左上标题 CSS；代表作品标题移到左上，桌面双图上限收敛为 360×480，并在 1440px 宽视口使用 56px 间距，右侧只保留精简说明和目录按钮。代表作品详情取消 720ms 共享媒体形变，保留 `view=home-featured` 入口语义并使用直接路由切换，避免第二张链接误让第一张图片参与跨页形变。
 - [ ] **T47 · 连续移动/reduced/性能验收**：每个机会同步检查中断/反向、autoplay/pointer/touch/keyboard、390/430/768/1023/1024/1440、真实手机、LCP/CLS/decode/GPU、safe area、输入法、键盘/焦点、prefers-*；另验桌面逐幕顺序/反向/锁定与 1023px 逃生；Hero drag 未实施。
 
+### 阶段 E 迭代记录
+
+阶段 E 的逐轮 UI 迭代各自留有独立设计记录，均不改变 T37～T46-F8 的已完成状态，也不代签 T47/GATE-E：
+
+- [`.design/home-scene-typography/`](../.design/home-scene-typography/)：首页 2-4 幕图文协调重排。
+- [`.design/contact-and-identity-lines/`](../.design/contact-and-identity-lines/)：官方联系面按钮化、领养身份行单行收敛、详情页领养事实与图集方向切换过渡（2026-08-24）。
+
 ### GATE-E · 既简洁又有生命感
 
 - [ ] 四幕顺序与主次明确；

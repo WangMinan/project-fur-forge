@@ -463,9 +463,18 @@ describe('T19/T20 public repository contracts', () => {
       'adoption-purpose',
       'commission-purpose',
     ])
+    // 领养详情带状态与价格（与 /adoptions 卡片同源）；其它用途没有这两个字段。
     expect(repository.getWorkBySlug('adoption-purpose')?.work).toEqual({
       id: expect.any(String),
       slug: 'adoption-purpose',
+      characterName: '雪球',
+      species: '犬科',
+      adoptionStatus: 'available',
+      price: { currency: 'CNY', minorUnits: 100 },
+    })
+    expect(repository.getWorkBySlug('commission-purpose')?.work).toEqual({
+      id: expect.any(String),
+      slug: 'commission-purpose',
       characterName: '雪球',
       species: '犬科',
     })

@@ -44,6 +44,15 @@ export const publicAdoptionWorkDtoSchema = publicWorkBaseSchema.extend({
 
 export const publicWorkDtoSchema = publicWorkBaseSchema
 
+/**
+ * 详情页作品事实：领养作品额外带领养状态与已录入价格，其它用途没有这两个字段。
+ * 两个字段与 `/adoptions` 卡片同源（同一公开投影），详情页因此不需要额外请求。
+ */
+export const publicWorkDetailWorkDtoSchema = publicWorkBaseSchema.extend({
+  adoptionStatus: adoptionStatusSchema.optional(),
+  price: cnyPriceSchema.optional(),
+}).strict()
+
 const mutableWorkBaseSchema = z.object({
   slug: slugSchema,
   characterName: z.string().trim().min(1).max(100),

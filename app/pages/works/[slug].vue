@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { publicWorkDetailResponseSchema } from '~~/shared/schemas/public-content'
 import { PROJECT_NAME } from '~~/shared/constants/project'
+import { formatCnyMinorUnits } from '~/utils/format'
+import { ADOPTION_STATUS_LABELS } from '~/utils/work-labels'
 
 /**
  * T19 真实作品详情：SSR 消费 GET /api/public/v1/works/{slug}。
@@ -64,6 +66,10 @@ watch(error, (err) => {
 })
 
 const dto = computed(() => detail.value?.work)
+const price = computed(() => dto.value?.price
+  ? formatCnyMinorUnits(dto.value.price.minorUnits)
+  : null,
+)
 /**
  * 单一媒体区：出厂照 → 领养封面 → 设定图 合成同一个查看序列。
  * 成果图（出厂照、封面）在前，参考图（设定图）在后。三类图片共用左大图 +
@@ -164,12 +170,22 @@ onMounted(() => {
       </NuxtLink>
     </nav>
 
+    <!--
+      两行：名称独占第一行，物种与领养事实（价格在状态之前，与 /adoptions
+      卡片同序）合成第二行。第二行各项同字号、中线对齐，宋体价格不会显得偏高。
+    -->
     <header class="work-detail__header">
-      <h1 class="work-detail__name">
-        {{ dto.characterName }}
-      </h1>
+      <h1 class="work-detail__name">{{ dto.characterName }}</h1>
       <p class="work-detail__meta">
-        {{ dto.species }}
+        <span class="work-detail__species">{{ dto.species }}</span>
+        <span v-if="price" class="work-detail__price">{{ price }}</span>
+        <span
+          v-if="dto.adoptionStatus"
+          class="work-detail__status"
+          :data-status="dto.adoptionStatus"
+        >
+          {{ ADOPTION_STATUS_LABELS[dto.adoptionStatus] }}
+        </span>
       </p>
     </header>
 
@@ -231,10 +247,32 @@ onMounted(() => {
   letter-spacing: var(--letter-spacing-tight);
 }
 
+/* 第二行统一字号与行高，只用颜色分层；价格用等宽数字，位数变化不抖。 */
 .work-detail__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
   margin-top: var(--space-2);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-heading);
+}
+
+.work-detail__species {
   color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
+}
+
+.work-detail__price {
+  color: var(--public-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.work-detail__status {
+  color: var(--public-status-neutral);
+}
+
+.work-detail__status[data-status='available'] {
+  color: var(--public-status-open);
 }
 
 .work-detail__layout {

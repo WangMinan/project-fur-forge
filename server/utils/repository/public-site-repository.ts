@@ -629,7 +629,21 @@ export function createSqlitePublicSiteRepository(
         sources: photo.sources,
       }))
       return publicWorkDetailDtoSchema.parse({
-        work: match.summary.work,
+        // 领养作品详情要显示状态与价格，与 /adoptions 卡片同源，不额外查询。
+        work: match.adoption
+          ? {
+              ...match.summary.work,
+              adoptionStatus: match.adoption.status,
+              ...(match.adoption.priceCnyMinor === null
+                ? {}
+                : {
+                    price: {
+                      currency: 'CNY',
+                      minorUnits: match.adoption.priceCnyMinor,
+                    },
+                  }),
+            }
+          : match.summary.work,
         href: match.summary.href,
         media: {
           primaryAssetId,

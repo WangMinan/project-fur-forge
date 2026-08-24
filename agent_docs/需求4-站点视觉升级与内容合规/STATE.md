@@ -1,6 +1,6 @@
 # 当前状态：需求4 · 站点视觉升级与内容合规
 
-> **最后校准**：2026-08-22
+> **最后校准**：2026-08-24
 > **状态**：仅阶段 E 开放。
 > **任务权威**：[`implementation/TASKS.md`](./implementation/TASKS.md)。
 
@@ -31,11 +31,15 @@ T35/T36 的 Linux runtime/分发证据与原阶段 F 的 Review、镜像和生�
 - 领养营业状态已退役（迁移 0049）：只维护委托营业状态，开放程度只有开放/不开放两档，默认开放；首页领养幕与 `/adoptions` 都不再展示营业状态。
 - 行动、上传与长任务进度已收敛；OSS 使用真实字节，FFmpeg/未知任务不伪造百分比。
 - 两项委托确认、隐私 readiness、人工 retention/单条删除和生成式 notices 已落地。
+- 官方联系面为单张联系清单（`ContactChannelList`，邮箱/QQ/QQ群 同卡 hairline 行），`/about` 与 `/commission` 共用；二维码在桌面 fine pointer 收进 hover 浮层，触屏与无跳转链接的行保持常驻。`ContactChannelGrid` 已删除。
+- `/adoptions` 卡片与 `/works/{slug}` 详情展示同源的领养价格与状态（价格在状态之前）；详情 work DTO 的 `adoptionStatus`/`price` 为 optional，仅领养作品带，服务端复用既有 snapshot，未新增查询或迁移。
 
 ## 阶段 E 后续边界
 
 后续 PR 只做 UI、布局、响应式、可访问性、性能和动效优化。不得恢复退役业务，不新增隐私/安全能力、媒体拓扑、交易能力或部署流程；如确需改变，先由用户重新开放范围。
 
 数据库范围例外（已发生，2026-08-23/24 由王旻安逐次明确授权）：迁移 `0048` 新增首页导语可配置字段，迁移 `0049` 退役领养营业状态并把委托开放程度收敛为两档。除这两条已授权改动外，仍不新增数据库/迁移；后续如再需要，同样必须先取得明确授权。
+
+本轮（2026-08-24）联系面与身份行迭代的设计记录见 [`.design/contact-and-identity-lines/`](./.design/contact-and-identity-lines/)。
 
 视觉权威：[`requirements/SPEC.md`](./requirements/SPEC.md) 与 [`.design/README.md`](./.design/README.md)。最近证据见 [`implementation/evidence/T37-T47-2026-08-21/`](./implementation/evidence/T37-T47-2026-08-21/) 和 [`implementation/evidence/T46-F4-2026-08-21/`](./implementation/evidence/T46-F4-2026-08-21/)。

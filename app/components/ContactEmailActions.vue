@@ -74,43 +74,76 @@ onScopeDispose(() => {
 
 <template>
   <div class="email-actions">
-    <div class="email-actions__buttons">
-      <PublicAction :href="mailtoHref" @click="onEmailOpen">
-        打开邮件客户端
-        <span aria-hidden="true">↗</span>
+    <PublicAction :href="mailtoHref" @click="onEmailOpen">
+      打开邮件客户端
+      <span aria-hidden="true">↗</span>
+    </PublicAction>
+    <!--
+      复制反馈做成按钮上方的浮层，不再在按钮下方插入一段文字：
+      插入文字会把整行推开、把同行按钮挤走（下方 __feedback 注释）。
+      按钮文字保持"复制邮箱"不变，宽度因此也不随状态跳动。
+    -->
+    <span class="email-actions__copy-anchor">
+      <PublicAction variant="secondary" @click="onCopy">
+        复制邮箱
       </PublicAction>
-      <PublicAction class="email-actions__copy" variant="secondary" @click="onCopy">
-        {{ copyState === 'copied' ? '已复制邮箱' : '复制邮箱' }}
-      </PublicAction>
-    </div>
-    <p v-if="copyState === 'failed'" class="email-actions__feedback" role="alert">
-      复制失败，请手动选择邮箱地址复制。
-    </p>
-    <p v-else-if="copyState === 'copied'" class="email-actions__feedback" role="status">
-      邮箱地址已复制到剪贴板。
-    </p>
+      <span
+        v-if="copyState !== 'idle'"
+        class="email-actions__feedback"
+        :class="`email-actions__feedback--${copyState}`"
+        :role="copyState === 'failed' ? 'alert' : 'status'"
+      >
+        {{ copyState === 'copied' ? '已复制到剪贴板' : '复制失败，请手动选择' }}
+      </span>
+    </span>
   </div>
 </template>
 
 <style scoped>
 .email-actions {
-  display: grid;
-  gap: var(--space-3);
-  justify-items: start;
-}
-
-.email-actions__buttons {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-3);
 }
 
-.email-actions__copy {
-  min-width: 7.5rem;
+.email-actions__copy-anchor {
+  position: relative;
+  display: inline-flex;
 }
 
+/*
+ * 绝对定位的浮层：反馈不参与布局，因此出现和消失都不会推开同行的其它按钮。
+ * 贴按钮右端展开（浮层比按钮宽，居中会探出容器），文字不折行。
+ */
 .email-actions__feedback {
-  color: var(--public-text-secondary);
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + var(--space-2));
+  z-index: 2;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--public-text-inverse);
+  background: var(--public-text-primary);
   font-size: var(--font-size-sm);
+  white-space: nowrap;
+  animation: email-actions-feedback-in var(--motion-duration-state) var(--motion-ease-standard);
+}
+
+.email-actions__feedback--failed {
+  background: var(--public-status-paused);
+}
+
+@keyframes email-actions-feedback-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.25rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .email-actions__feedback {
+    animation: none;
+  }
 }
 </style>
