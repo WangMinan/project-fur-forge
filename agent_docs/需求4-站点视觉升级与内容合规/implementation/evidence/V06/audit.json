@@ -1,0 +1,297 @@
+{
+  "capturedAt": "2026-08-23T10:04:06.169Z",
+  "routes": {
+    "works-390x844": {
+      "imagesDecoded": true,
+      "cardCount": 9,
+      "cardWidths": [
+        343,
+        343,
+        343,
+        343,
+        343,
+        343,
+        343,
+        343,
+        343
+      ],
+      "orientations": [
+        "portrait",
+        "portrait",
+        "portrait",
+        "landscape",
+        "landscape",
+        "landscape",
+        "portrait",
+        "portrait",
+        "portrait"
+      ],
+      "hasSearch": true,
+      "hasPagination": true,
+      "scrollWidth": 375,
+      "clientWidth": 390
+    },
+    "adoptions-390x844": {
+      "imagesDecoded": true,
+      "cardCount": 5,
+      "cardWidths": [
+        343,
+        343,
+        343,
+        343,
+        343
+      ],
+      "orientations": [],
+      "hasSearch": true,
+      "hasPagination": true,
+      "scrollWidth": 375,
+      "clientWidth": 390
+    },
+    "works-430x932": {
+      "imagesDecoded": true,
+      "cardCount": 9,
+      "cardWidths": [
+        383,
+        383,
+        383,
+        383,
+        383,
+        383,
+        383,
+        383,
+        383
+      ],
+      "orientations": [
+        "portrait",
+        "portrait",
+        "portrait",
+        "landscape",
+        "landscape",
+        "landscape",
+        "portrait",
+        "portrait",
+        "portrait"
+      ],
+      "hasSearch": true,
+      "hasPagination": true,
+      "scrollWidth": 415,
+      "clientWidth": 430
+    },
+    "adoptions-430x932": {
+      "imagesDecoded": true,
+      "cardCount": 5,
+      "cardWidths": [
+        383,
+        383,
+        383,
+        383,
+        383
+      ],
+      "orientations": [],
+      "hasSearch": true,
+      "hasPagination": true,
+      "scrollWidth": 415,
+      "clientWidth": 430
+    },
+    "works-768x1024": {
+      "imagesDecoded": true,
+      "cardCount": 9,
+      "cardWidths": [
+        214,
+        214,
+        214,
+        569,
+        569,
+        473,
+        200,
+        240,
+        240
+      ],
+      "orientations": [
+        "portrait",
+        "portrait",
+        "portrait",
+        "landscape",
+        "landscape",
+        "landscape",
+        "portrait",
+        "portrait",
+        "portrait"
+      ],
+      "hasSearch": true,
+      "hasPagination": true,
+      "scrollWidth": 753,
+      "clientWidth": 768
+    },
+    "adoptions-768x1024": {
+      "imagesDecoded": true,
+      "cardCount": 5,
+      "cardWidths": [
+        337,
+        337,
+        337,
+        337,
+        337
+      ],
+      "orientations": [],
+      "hasSearch": true,
+      "hasPagination": true,
+      "scrollWidth": 753,
+      "clientWidth": 768
+    },
+    "works-1024x900": {
+      "imagesDecoded": true,
+      "cardCount": 9,
+      "cardWidths": [
+        285,
+        285,
+        285,
+        676,
+        676,
+        630,
+        266,
+        285,
+        285
+      ],
+      "orientations": [
+        "portrait",
+        "portrait",
+        "portrait",
+        "landscape",
+        "landscape",
+        "landscape",
+        "portrait",
+        "portrait",
+        "portrait"
+      ],
+      "hasSearch": true,
+      "hasPagination": true,
+      "scrollWidth": 1009,
+      "clientWidth": 1024
+    },
+    "adoptions-1024x900": {
+      "imagesDecoded": true,
+      "cardCount": 5,
+      "cardWidths": [
+        448,
+        448,
+        448,
+        448,
+        448
+      ],
+      "orientations": [],
+      "hasSearch": true,
+      "hasPagination": true,
+      "scrollWidth": 1009,
+      "clientWidth": 1024
+    },
+    "works-1440x900": {
+      "imagesDecoded": true,
+      "cardCount": 9,
+      "cardWidths": [
+        315,
+        315,
+        315,
+        639,
+        639,
+        676,
+        285,
+        285,
+        315
+      ],
+      "orientations": [
+        "portrait",
+        "portrait",
+        "portrait",
+        "landscape",
+        "landscape",
+        "landscape",
+        "portrait",
+        "portrait",
+        "portrait"
+      ],
+      "hasSearch": true,
+      "hasPagination": true,
+      "scrollWidth": 1425,
+      "clientWidth": 1440
+    },
+    "adoptions-1440x900": {
+      "imagesDecoded": true,
+      "cardCount": 5,
+      "cardWidths": [
+        639,
+        639,
+        639,
+        639,
+        639
+      ],
+      "orientations": [],
+      "hasSearch": true,
+      "hasPagination": true,
+      "scrollWidth": 1425,
+      "clientWidth": 1440
+    }
+  },
+  "interactions": {
+    "workSearch": {
+      "pathname": "/works",
+      "query": "?q=%E8%99%BE%E7%89%87",
+      "results": 1,
+      "hasSearch": true,
+      "keyboardStart": "INPUT",
+      "keyboardNext": "BUTTON"
+    },
+    "workInvalidSearch": {
+      "title": "搜索条件无效",
+      "clearVisible": true
+    },
+    "workOutOfRange": {
+      "title": "这一页没有作品",
+      "firstPageVisible": true
+    },
+    "adoptionEmpty": {
+      "title": "没有找到这个设定",
+      "clearVisible": true
+    },
+    "adoptionTouchSearch": {
+      "results": 3,
+      "targets": [
+        {
+          "height": 44,
+          "width": 284
+        },
+        {
+          "height": 44,
+          "width": 66
+        },
+        {
+          "height": 44,
+          "width": 178
+        }
+      ]
+    },
+    "reducedMotion": {
+      "cardTransition": "0s",
+      "imageTransition": "0s"
+    },
+    "longIdentity": {
+      "contained": true,
+      "noHorizontalOverflow": true
+    }
+  },
+  "checks": {
+    "allRouteViewports": true,
+    "allImagesDecoded": true,
+    "allRoutesSearchable": true,
+    "noHorizontalOverflow": true,
+    "mobileWorksSingleColumn": true,
+    "mixedWorkOrientations": true,
+    "workSearch": true,
+    "workInvalidSearch": true,
+    "workOutOfRange": true,
+    "adoptionEmpty": true,
+    "adoptionTouchSearch": true,
+    "reducedMotion": true,
+    "longIdentity": true
+  }
+}

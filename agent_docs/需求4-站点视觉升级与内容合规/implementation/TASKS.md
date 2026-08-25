@@ -2,11 +2,11 @@
 
 > **角色**：需求4唯一任务与勾选权威；每个任务均可由 Agent 独立实现、验证和交接。
 > **状态**：仅阶段 E 开放。A～D 已关闭；原阶段 F 按产品决策关闭，不再作为需求4 backlog。
-> **规则**：`[x]` 表示已有证据；`[ ]` 仅用于阶段 E 开放项；`[-]` 表示按产品决策关闭、不再执行，不补签独立 Review、用户验收或生产发布。
+> **规则**：`[x]` 表示对应历史任务与 Evidence 已完成，不代表凌巽已认可其为最终视觉设计；`[ ]` 仅用于阶段 E 开放项；`[-]` 表示按产品决策关闭、不再执行，不补签独立 Review、用户验收或生产发布。
 
 ## 当前目标
 
-只继续阶段 E 的 UI 美化、布局/响应式、可访问性、Hero 焦点和动效质量。T37～T46-F8 已完成当前实现，T47 与 GATE-E 保持开放；不得从本清单启动数据库、隐私、安全、分发或生产发布工作。T46-F5 的代表作品资格与数量是用户 2026-08-22 明确重新授权的轻量业务约束。
+只继续阶段 E 的全站静态视觉重构、Signature Motion、UI/Controls、响应式/输入/可访问性与最终一致性验收。V08-F1、只读的 V08-F2、方向重置的 V08-F3、`GATE-V08-R`、V09、V10、V10-F1、V11、V12-A、V12-B 与 V12-C 已完成；当前停在 V12-C Handoff，不进入 V12-D。不得从本清单启动数据库、隐私、安全、分发或生产发布工作。T46-F5 的代表作品资格与数量是用户 2026-08-22 明确重新授权的轻量业务约束。
 
 ## 0. 文档与基线
 
@@ -56,6 +56,7 @@
 - [x] **T19 · `/adoptions` 唯一排序**：repository 携带 `updated_at`；available 在前、adopted 在后，组内 updatedAt 倒序、ID 稳定；搜索后保持顺序再分页。
 - [x] **T20 · 排序核心测试**：只保留一组稳定用例证明状态 bucket、组内修改时间、搜索和分页；新改为 adopted 的作品不得排到 available 前。
 - [x] **T21 · 首页单项开放领养**：聚合最多投影第一项 available；`HomeCurrentAdoptions` 删除双项 slice/双列布局；无 available 时隐藏，adopted 仍可进入精选。
+  - **SUPERSEDED BY V11**：`V11 supersedes T21 homepage single-adoption projection. Homepage Adoption now intentionally exposes up to 3 current available entries to improve discoverability; this is an explicit user-authorized product change.` 当前有效首页规则以 V11 为准，不得把 Homepage Adoption 修回单项；`/adoptions` 的排序、搜索、分页等既有业务逻辑不变。
 - [x] **T21-F1 · 用户复核修正**：作品发布操作区与进度卡增加间距；Hero 编辑卡改为白底、方向筛选条只高亮选中项并移除完成态“已就绪”；低分辨率适配自动接续发布且完成态为“已完成发布”；委托横/竖按 Tab 分开渲染。
 
 ### GATE-B · 反馈更快、业务顺序正确
@@ -140,20 +141,161 @@
 - [x] **T46-F6 · 单屏双图代表作品与目录回调**：首页代表作品合并为一个停靠幕；桌面左侧并排最多两张较小 3:4 竖图，右侧显示短说明与唯一“浏览作品展示”按钮，隐藏名称/物种并取消 lead/次级轨道与左右按钮，全部保持在一屏内。`/works` 恢复横竖等高混排，有出厂照优先出厂照，完全没有时才回落领养横版封面。
 - [x] **T46-F7 · 景宸反馈回归与文档同步**：同步 STATE/SPEC/design/models/PLAN/foundation，补充竖版资格、两件上限、出厂照目录优先与单幕 wheel 稳定断言；自动验证只证明实现，不代签景宸/王旻安真实手机和最终观感。
 - [x] **T46-F8 · 代表作品标题、留白与详情切换修正**：三业务幕复用同一左上标题 CSS；代表作品标题移到左上，桌面双图上限收敛为 360×480，并在 1440px 宽视口使用 56px 间距，右侧只保留精简说明和目录按钮。代表作品详情取消 720ms 共享媒体形变，保留 `view=home-featured` 入口语义并使用直接路由切换，避免第二张链接误让第一张图片参与跨页形变。
+
+> **当前视觉执行状态**：`Homepage Featured Works Visual Baseline: B + M3`、V01～V08-F3 与全站公开内容覆盖审计均作为第一轮布局/视觉覆盖历史保留；这些 `[x]` 不代表全站方案已获最终视觉认可。`GATE-V08-R` 已由凌巽本人明确放行，V09、V10、V10-F1、V11、V12-A、V12-B 与 V12-C 已分别完成独立 Evidence/Handoff；当前停在 V12-C，V12-D 及后续阶段未启动。
+
+- [x] **V00 · Visual Art Direction & Motion Prototype**：使用同一张 Homepage Featured Works 竖版摄影、同一文案、同一 Header 和同一 CTA，完成 A Editorial Offset、B Typography × Media、C Living Media Window 三个真实可运行候选，并完成 M1–M3 Motion Character 与 Shared Continuity 技术原型。所有候选独立可恢复，已提供 1440×900 与 390×844 截图、arrival / settle / next / previous / interrupt、shared forward / fallback / reduced / interruption evidence、Design Card、Accessibility / Reduced Motion、复杂度和依赖说明。原型仅通过 dev-only `/__prototype/v00/...` 展示，production build 不注册、不索引，正式首页、业务数据、API、数据库和发布逻辑不变。证据索引：`.design/prototypes/v00/INDEX.md`。
+
+### GATE-V00 · Visual Direction Selected
+
+- [x] A、B、C 至少三个真实候选已可运行、可截图、可比较；不是只改 gap、字号、圆角或图片尺寸。
+- [x] 所有候选使用同一内容并拥有统一 Desktop / Mobile 截图；Motion 候选拥有短动态 evidence。
+- [x] 所有候选代码仍可独立恢复，`.design/prototypes/v00/INDEX.md` 完整，production build 不暴露 prototype route。
+- [x] 用户 / 客户明确记录选择组合 `B + M3`；Recommended 不等于 Selected。
+- [x] 未通过本 Gate 前未开始 V01 正式生产实现。
+
+- [x] **V00-F1 · Homepage Featured Works Visual Baseline**：将客户选定的 B + M3 精修为可交接基线。摄影 / 中文标题 / meta 与说明 / CTA 的 Directional Motion 振幅依次为 66 / 40 / 24～20 / 10px；Next / Previous 真正反向，reverse / interrupt 最终无残留；`SELECTED WORKS` 与 folio `01` 完全静止。Mobile 独立降低 `01` 权重，摄影保持第一焦点；轻量画册式 Previous / Next 保留 44px target。已验证 1440×900、390×844、430×932、Keyboard、Touch、Reduced Motion、图片解码与五段 WebM。证据：`implementation/evidence/V00/featured-b-m3/`；Handoff：`implementation/notes/2026-08-23-V00-B-M3-REFINEMENT.md`。
+
+- [x] **V00-F2 · Full Public Surface Coverage Audit**：对照运行中的公开站、`app/pages`、共享公共组件与 V01～V12，确认 13 个公开路由文件中有 3 个重定向；连同全局错误入口，实际归并为 11 个独立视觉页面状态：`/adoptions/[slug]` 复用 `/works/[slug]`，`/contact` 重定向 `/about#contact`，`/terms` 重定向 `/service`。在 1280×800、768×1024、375×812 保存 33 张全页证据，补出此前遗漏的统一详情页、委托独立内容页、法务/许可证、404/500 与媒体失败状态任务；明确 V00 Gate 只选择 Art Direction，不代签全站完成。证据：`.design/screenshots/coverage-audit-2026-08-23/`；报告：`implementation/notes/2026-08-23-PUBLIC-VISUAL-COVERAGE-AUDIT.md`。
+
+- [x] **V01 · Hero Art Direction & Homepage Opening Continuity**：复用并修改 `HomeHeroCarousel.vue`，把 Hero 设计为 Quiet / Cinematic Opening，并建立 Hero → Featured 的连续性；不照抄 B + M3，不改业务数据、横/竖独立集合、focal/CAS、SSR 可见性或 1023/1024 滚动边界。证据：`implementation/evidence/V01/`；Handoff：`implementation/notes/2026-08-23-V01-HANDOFF.md`。
+  - **BRAND LOCK · Desktop 与 Mobile 默认规则**：“有点小狗工作室”的文案内容、字体身份/字体资产、font-weight、letter-spacing、line-height、品牌整体视觉身份和已确认的一次性首次入场逻辑继续锁定。Desktop 的最终视觉尺寸、位置、对齐和排版关系继续冻结；Mobile 的 visual size、核心位置、alignment 及与 viewport 的空间关系也不得因进入 Mobile Art Direction 而自动修改，必须优先在当前品牌文字终态约束下重构其周围 Hero composition。
+  - **MOBILE HERO 可独立设计范围**：Photography、crop/focal、media size、scrim/overlay、background composition、Hero controls、arrows、pagination、pause/resume、controls grouping、wayfinding、`NEXT / destination` 表现、supporting copy、Negative Space、media/copy relationship 与 Hero → Featured continuity。
+  - **EXPLICIT EXCEPTION APPROVAL**：仅当真实 390×844 / 430×932 构图证明现有品牌字号、核心位置或对齐造成角色主体遮挡、摄影焦点严重受损、不可接受的换行/裁切、controls/wayfinding 无法合理布置或首屏层级明显失效时，V12-F 才可记录具体冲突、提供 Mobile-specific alternative、输出 before/after screenshot，并说明为何周边构图不足以解决。获得用户明确批准前，不得修改品牌字的字号、核心位置或对齐关系。
+  - **REOPENED**：摄影、crop/focal/media composition、scrim、mask/clip、图片切换与 autoplay 表现、箭头/分页/暂停恢复、控件 grouping/appearance/reveal、pointer/touch/keyboard 呈现、media settle、directional motion、scene arrival/departure、Hero → Featured 连续性和 Mobile Hero 构图。
+  - **Acceptance**：允许品牌文字做一次性 stagger / reveal / 轻位移入场，但结束后必须精准回到冻结终态，换图时不重复，Reduced Motion 直接显示终态；阅读顺序以 Media → Brand → Supporting Copy → Controls 为起点。每完成 Desktop 构图立即验证 390×844、430×932、Keyboard、Touch、Reduced Motion并保存证据。
+
+- [x] **V02 · Homepage Commission / Adoption Scenes**：修改 `HomeBusinessEntries.vue`、`CommissionLead.vue`、`HomeCurrentAdoptions.vue`、`AdoptionCard.vue`，分别建立 Media-led Service Scene 与 Display / Character Scene；只继承摄影主导、黑白灰 UI、Typography / Negative Space 和克制 motion，不机械复制 B + M3 版式。Commission Mobile 重新安排 media/copy/CTA，不压缩 Desktop 非对称布局；Adoption 以设定图完整性优先，使用 contain / art-directed canvas，禁止严重 cover 裁切。每个 Scene 完成时立即验证 390/430。证据：`implementation/evidence/V02/`；Handoff：`implementation/notes/2026-08-23-V02-HANDOFF.md`。
+
+- [x] **V03 · Homepage Overall Scene Composition & Continuity**：把 V00-F1 基线正式落入 `FeaturedWorks.vue`，并整体验收 Hero → Featured → Commission → Adoption → Footer。Scene 强度固定为 Hero Quiet/Cinematic Opening、Featured Editorial Visual Peak、Commission Media-led Service、Adoption Display/Character、Footer Quiet Closure；检查第一焦点、第二落点、媒体尺寸节奏、Negative Space、Typography / Motion 强弱、构图与转场重复、Hero → Featured 同站感、≥1024 staged wheel 与 390/430 独立成立。依赖 V01、V02；Featured 竖图规则不得传播到其他页面。证据：`implementation/evidence/V03/`；Handoff：`implementation/notes/2026-08-23-V03-HANDOFF.md`。
+
+- [x] **V04 · Homepage Mobile / Responsive Structural Pass**：在 V01～V03 已逐 Scene 做 390/430 检查的基础上，完成首页跨 Scene 移动重构与 768/1023/1024 边界复核。Mobile 是同一 Art Direction 下的重新构图，不是 Desktop CSS 缩小版；允许 Hero controls 的 position/grouping/density/reveal strategy 与 Desktop 不同，但功能、44px target、键盘/触控、暂停恢复和 Reduced Motion 不得丢失。Featured 保持摄影第一、背景 `SELECTED WORKS` 静止；正式产品按单幕双图契约不恢复 V00 测试 folio/翻页。Commission / Adoption 遵守 V02 的移动规则。**Historical only; the active Featured visual contract is superseded by V09+ and the current GATE-E criteria.** 该旧描述只保留为 V04 历史实现/Evidence 记录，不再约束当前 Type × Media Scene 或 Featured switching。证据：`implementation/evidence/V04/`；Handoff：`implementation/notes/2026-08-23-V04-HANDOFF.md`。
+
+- [x] **V05 · Homepage Shared Design Language / Tokens / Media Rules**：从已完成的 Homepage Scenes 中收束摄影主导、黑白灰 UI、Typography 空间构图、Negative Space、无普通 Card/Shadow 层级、Directional Motion、Media Settle 与安静背景字为最小生产语义 token；明确 Hero、Featured、Commission、Adoption 各自布局不可互相复制。同步 Hero 横/竖 focal、Commission 媒体策略、Works/Detail 真实混合比例和 Adoption contain 边界；不改变上传、Schema、发布或水印策略。证据：`implementation/evidence/V05/`；Handoff：`implementation/notes/2026-08-23-V05-HANDOFF.md`。
+
+- [x] **V06 · Works / Adoption Catalog 内容节奏**：修改 `/works`、`/adoptions`、`WorkCard`、`AdoptionCard`、`PublicCatalogSearch`、`PublicPagination` 与目录空态，复用 V05 的真实比例边界，建立横竖混排、角色封面、长名称/物种、状态/价格、搜索、分页、无内容、无匹配、非法筛选与越界页的完整视觉节奏；不改搜索、排序、数据、详情链接或新增瀑布流。验证 390/430/768/1024/1440、Keyboard、Touch、图片解码和极端比例。证据：`implementation/evidence/V06/`；Handoff：`implementation/notes/2026-08-23-V06-HANDOFF.md`。
+
+- [x] **V06-F1 · Unified Work / Adoption Detail Scene**：修改 `/works/[slug]` 与 `WorkDetailGallery`，把作品入口和领养入口复用的同一详情模板设计成完整 Media-led Archive Scene；覆盖单图/多图、横图/竖图/混合图、缩略图选中与切换、返回作品/返回领养、长名称/物种、无图库和现有 404/500 路径。`/adoptions/[slug]` 只保留既有 301，不另造详情模板；不新增 DTO、状态/价格字段、灯箱或业务说明。验证 390/430/768/1024/1440、Keyboard、Touch、Reduced Motion、切图无位移和图片解码。证据：`implementation/evidence/V06-F1/`；Handoff：`implementation/notes/2026-08-23-V06-F1-HANDOFF.md`。
+
+- [x] **V07 · About / Contact Editorial Information Page**：修改 `/about`、`PublicPageIntro`、`ContactChannelGrid` 与 `ContactEmailActions`，建立工作室事实、制作范围、联系和防诈骗提示的编辑式信息层级；Email / QQ / QQ群 QR 使用紧凑且可扫描的网格，1/2 个渠道和长号码均成立。`/contact` 继续 301 到 `/about#contact`，不创建第二套页面；不扩展五平台、不改后台字段、文案或二维码数据。验证 390/430 的二维码可读性、44px target、锚点让位和键盘焦点。证据：`implementation/evidence/V07/`；Handoff：`implementation/notes/2026-08-23-V07-HANDOFF.md`。
+
+- [x] **V07-F1 · Commission Service Page**：修改 `/commission`、`CommissionLead`、制作范围、估价联系、联系行动与二维码区域，把当前已有摄影主导页收口为独立的 Media-led Service Narrative；覆盖横/竖 Hero、Hero 缺失回落、营业状态、制作范围、长短文案、Email/QQ/QQ群与服务条款入口。保留现有内容投影、共享媒体入口和业务逻辑，不把首页 Commission Scene 机械复制到内页。验证 390/430/768/1024/1440、Keyboard、Touch、Reduced Motion、二维码可读性与共享媒体 fallback。证据：`implementation/evidence/V07-F1/`；Handoff：`implementation/notes/2026-08-23-V07-F1-HANDOFF.md`。
+
+- [x] **V07-F2 · Legal / Privacy / Licenses Reading System**：修改 `PublicLegalDocument`、`/service`、`/privacy` 与 `/licenses`，建立适合长篇中文条款、编号段落、许可证清单、原生 `details`、等宽信息和下载链接的阅读系统；`/terms` 继续 301 到 `/service`。重点修正 Mobile 许可证多列挤压、长段落扫描性、行长、段落节奏、锚点/focus 和展开内容溢出；不改法律/许可证文本、生成数据、下载产物或 Footer。证据：`implementation/evidence/V07-F2/`；Handoff：`implementation/notes/2026-08-23-V07-F2-HANDOFF.md`。
+
+- [x] **V08 · Commission Apply Complete Form States**：修改 `/commission/apply` 与现有上传/表单组件，统一引导、字段、单位前缀、双列测量、上传区、确认项和主行动的阅读节奏，移除空错误位并控制 CLS；保留字段、校验、隐私、确认、上传与提交逻辑。验证不可用、空白、部分填写、字段错误、文件拒绝、上传/处理中、提交错误、可提交与成功回执状态，以及 390/430/768、Keyboard、Touch、软键盘和 44px target。证据：`implementation/evidence/V08/after/`；Handoff：`implementation/notes/2026-08-23-V08-HANDOFF.md`。
+
+- [x] **V08-F1 · Public Error / Empty / Media Failure States**：修改 `error.vue`、`PublicEmptyState` 与 `ResponsivePicture` 的现有公开失败呈现，把 404、500、空内容、无匹配、图片加载/解码失败和无 JavaScript 回落纳入同一视觉语言；页面错误保留明确返回路径，图片失败不改变容器尺寸或让关键文字/行动消失。不新增重试 API、监控平台或第二套状态组件。五视口、Keyboard、Touch、Reduced Motion、无 JavaScript、无水平溢出、图片比例稳定与 500 非泄露测试均通过。证据：`implementation/evidence/V08-F1/after/`；Handoff：`implementation/notes/2026-08-23-V08-F1-HANDOFF.md`。
+
+- [x] **V08-F2 · Full Public Static Surface Review & User Stop**：在 V08-F1 完成后，对 V00-F2 确认的 11 个独立公开视觉状态及三个重定向终点完成一次全站静态页面审查；覆盖 390/430/768/1024/1440、默认/长文/空态/失败态与 Footer 邻接，逐页核对层级、摄影、排版、间距、控制器、表单、法务、overflow、decode、Keyboard、Touch 与 reduced preferences。该任务只采集证据、写 Review 和形成按优先级排序的问题清单，未修改应用代码；现已暂停等待凌巽验收。证据：`implementation/evidence/V08-F2/after/`；Review：`implementation/notes/2026-08-24-V08-F2-STATIC-REVIEW.md`。
+
+### GATE-V08 · 原静态审查人工验收（已由方向重置接管）
+
+
+- [x] 凌巽已查看 V08-F2 审查并以新的方向重置要求提出明确修正范围；原 Gate 不构成进入 V09 的放行。
+- [x] 所有已授权修正已登记为 `V08-F3`，并在新的证据与任务对齐报告中收口。
+- [-] 原 Gate 的放行判断由 `GATE-V08-R` 替代，避免将旧“静态审查”误当作新的“全站视觉重构”授权。
+
+- [x] **V08-F3 · Direction Reset Bug Fix & Task Reconciliation**：修复首页品牌标题刷新时的字体替换闪动，同时按凌巽 2026-08-24 的验收反馈恢复 V01 已确认的 `560ms + 180ms delay` 一次性标题入场；关键 WOFF2 继续 preload，`font-display: block` 阻止 fallback 字形先绘制，reduced-motion 仍直接显示终态，最终字体、字号、位置和排版不变。将共享 Hero 自动轮播默认间隔从 10s 收敛为 4s，保留暂停/恢复、页面隐藏和 reduced-motion 行为；定位图片填充异常为本地全量测试数据把 `cover` 资源错误生成为 `contain + pad`，从无边原图按现有 focal 重建当前启用 Hero 的 44 个本地横/竖、JPEG/WebP 变体并同步本地校验元数据，修复前后像素采样由左右各 15/192 列纯色补边归零。正式 OSS `m_fill` 配方、媒体拓扑、Vue 容器和通用 `ResponsivePicture` 均不改。证据：`implementation/evidence/V08-F3/after/`；Bug Fix Report：`implementation/notes/2026-08-24-V08-F3-BUG-FIX-REPORT.md`；任务重排：`implementation/notes/2026-08-24-TASK-RECONCILIATION-RESET.md`。
+
+### GATE-V08-R · 凌巽方向重置人工验收（后续视觉重构阻断点）
+
+- [x] 凌巽本人已查看 V08-F3 的 bug 证据、第二次 `TASKS.md` Patch 和 `2026-08-24-TASK-RECONCILIATION-STATIC-MOTION-UI.md`。
+- [x] 凌巽本人曾明确确认 Static → Static Gate → Motion → UI → Final 的阶段原则；2026-08-24 的后续客户授权将原单一静态 Gate 细化为 Desktop Gate 与 Mobile Gate，以下 Phase S 新路线为当前权威顺序。
+- [x] 凌巽本人已明确允许从 V09 开始；自动化、设计 Review、王旻安/景宸或其他成员不得代签。
+- [x] 本 Gate 已通过；V09 依授权执行。V10～V12-C 已完成；V12-D～V12-E、V12-E-F1、V12-F～V12-G、`GATE-DESKTOP`、`GATE-MOBILE`、V13～V16、T47 与 GATE-E 仍须继续遵守下方逐项前置依赖。
+
+### Open-source Resource Policy · 全阶段适用
+
+- 可以主动评估和采用许可清晰、维护状态合理、与当前视觉方向一致的 GitHub / 开源 icon、motion、carousel、interaction、small UI 或 typography/layout primitive；“当前没有依赖”不得成为拒绝大胆设计的理由。
+- 采用前必须记录 license、来源、bundle/维护成本，并验证 SSR、Accessibility 与 Reduced Motion；不得引入无关大型 framework、为了使用库而使用库、复制其他品牌设计或破坏现有业务契约。
+- 原生 CSS / WAAPI 能可靠满足 reverse、interrupt、最终状态与可访问性时继续优先使用；出现可复现缺口后再选择最小合适资源。
+
+### Phase S · Full Static Visual Redesign
+
+本阶段先在完全静止的状态下解决 Composition、Typography、Media Placement、Negative Space、Scene Identity、Visual Hierarchy、Shared Visual Grammar 和 Desktop / Mobile 静态构图。“有动画”不是完成标准；关闭所有非必要动画后仍须像完整设计稿。统一的是 typography、directional/wayfinding grammar、media treatment、monochrome UI、spacing rhythm、control geometry 和 motion philosophy，不是把所有页面做成 `eyebrow + 中文标题 + 左图右文` 模板。
+
+> **2026-08-24 Mobile 路线校准**：V09～V11 的完成状态、实现、Evidence 与 Handoff 保持关闭，不重新打开。其既有 390/430 Evidence 只证明当时版本没有溢出、遮挡、功能丢失等 **Mobile Structural Safety**，不等于 Mobile Final Art Direction 已获批准。V12-A～V12-E 与 V12-E-F1 仍为 Desktop 静态方向的收口任务；其中要求的 390/430 证据同样先证明结构安全和字体渲染可靠。Desktop 全站方向在 `GATE-DESKTOP` 单独验收后，再进入 V12-F/V12-G 的 Mobile 独立构图，最后由 `GATE-MOBILE` 验收。
+
+- [x] **V09 · Shared Visual Language Contract & Featured Works Static Redesign**：**前置依赖：`GATE-V08-R` 已由凌巽本人明确放行。** 已把 Shared Visual Language 写成可执行契约，并将 `FeaturedWorks.vue` 重做为 Type × Media 静态 scene：Desktop 使用明确 Typography / Media overlap，Mobile 独立采用 Typography 明确让开摄影的纵向构图；摄影为第一视觉 anchor，信息组错轴，Hero 的 `NEXT ─ SELECTED WORKS` 由 Featured 的 `NEXT ─ CUSTOM COMMISSION` 语义延续。代表作品继续最多两项；只有两项真实内容时显示可操作的上一项/下一项与连续 `01 / 02`、`02 / 02`，单项时不显示孤立编号或伪造 `03`。切换为无动画 hard cut，不实现 Featured autoplay 或 Motion choreography；Hero 4s autoplay、字体闪动修复、品牌终态与一次性入场未回退。证据：`implementation/evidence/V09/after/`；Handoff：`implementation/notes/2026-08-24-V09-HANDOFF.md`。
+  - 用户后续响应式复核已收口：移除 Desktop 固定 `39rem` 舞台造成的短视口溢出，`1440×768` 与 `1440×900` 均显示完整 `NEXT ─ CUSTOM COMMISSION`；Mobile 在 375/390/430 内同屏显示标题、Typography、摄影、双项切换、内容、CTA 和 destination rail。CTA 与 Desktop 切换器保留 36px，Mobile 切换器与内容保留 16px；Hero Mobile 不再隐藏 `NEXT`。
+
+- [x] **V10 · Homepage Commission + `/commission` Static Redesign**：**前置依赖：V09 已完成并获该任务交接确认。** 已将首页委托重做为摄影主导的 Service Docket：保留四幕标题尺度一致性，以背景 Typography、横版摄影和沿媒体下缘展开的三段服务信息栏建立焦点，不使用右下完整白色 UI Card；摄影与信息栏使用独立网格行和硬间距，在 1280×800、1440×900、2048×1080 等宽屏/短屏均不相交。`/commission` 使用独立 Photographic Service Ledger：横/竖 Hero 后接身份、营业状态、说明与行动台账，制作范围和估价联系形成非机械复制的双列内容面。两处复用既有 `PublicBusinessStatus`、`PublicAction`、横竖媒体、内容投影、申请/QQ/Email/条款与共享媒体入口；业务数据、focal、媒体拓扑、Footer 与 Hero 品牌锁不变。摄影统一复用 `--radius-image`；按用户维护性决定删除 Featured 中写死的说明段，不新增字段、DTO 或迁移。Desktop、390、430、375、768、1280 与 2048 静态 Evidence、自动审计和独立 Handoff 已完成。证据：`implementation/evidence/V10/after/`；Handoff：`implementation/notes/2026-08-24-V10-HANDOFF.md`。
+
+- [x] **V10-F1 · Commission Composition & Chinese Wayfinding Refinement**：按人工复核把首页委托收口为约 65% Media / 35% Service Narrative 的非对称构图，摄影保持第一锚点，“从角色设定出发”成为第二锚点；`/commission` 首屏使用左侧服务叙事、右侧摄影，并以可点击的 `继续查看 / 制作范围与估价 ↓` 明确提示下方内容。Hero、Featured、Homepage Commission 与 Commission 申请入口的同类引导统一为 `下一幕 / 代表作品`、`下一幕 / 自设委托`、`下一幕 / 设定领养`、`开始申请 / 填写委托表单 →`；英文仅保留为非必需的 scene metadata。Featured、Homepage Commission 与 `/commission` 顶栏中无信息作用的右侧 register 已统一移除，标题下规则线收至 32rem 上限。未进入 Motion、V11、业务字段或数据层。证据：`implementation/evidence/V10-F1/after/`；Handoff：`implementation/notes/2026-08-24-V10-F1-HANDOFF.md`。
+
+- [x] **V11 · Adoption Character Archive Static Redesign**：**前置依赖：V10 已完成并获该任务交接确认。** V11 以用户明确授权的产品调整 supersede T21 首页单项投影：为提高领养内容可见性，首页按既有排序自动读取最多三项当前 `available`，排除 `adopted`，不足三项按真实数量展示；多项提供循环“上一个 / 下一个”和媒体下方角色索引，主图与主行动均进入当前详情，单项隐藏伪切换或孤立编号。不得把 Homepage Adoption 修回单项；`/adoptions` 的排序、搜索、分页等既有业务逻辑保持不变。`/adoptions` Desktop 使用双列、Mobile 使用单列；目录优先投影既有完整设定图，缺失时才回退横版领养封面。每项采用“完整 `contain` 媒体 + 独立信息面板”：Desktop 左右并置、Mobile 上下重排；信息面板只保留横排角色名称、以 `·` 和留白分开的无字段名物种/价格/状态三行值、进入详情的单一行动，以及右下方以圆润无衬线字体呈现并被容器轻微裁切的真实列表顺序 `01 / 02…`。整项可点击，无英文档案标签、容器阴影、字段分隔线、卡片间横线或额外详情按钮。目录页头删除可领养数量与营业提示，保留放大的 `ADOPTIONS / 设定领养`，并用现有工作室标志形成右上斜向淡色水印；搜索框位于无上下边线的右侧操作组中并紧邻“联系我们申请领养”，搜索结果数量仅在搜索生效时显示，清除后隐藏。1440×900 首屏完整显示前两个角色，390/430 完整显示第一项。领养详情新增真实领养状态、价格和“联系咨询领养”，并保留返回目录。复用既有排序、搜索、分页、路由、媒体记录和数据库结构；后端仍返回 `availableCount`，但目录页不再展示；编号由当前公开排序与分页位置推导，不暴露 UUID、不误用精选 `sortOrder`，不新增字段、Schema、迁移或依赖。Desktop、390/430 静态 Evidence、自动审计与独立 Handoff 已完成。证据：`implementation/evidence/V11/after/`；Handoff：`implementation/notes/2026-08-24-V11-HANDOFF.md`。
+
+- [x] **V12-A · Works Catalog & Work Detail Static Redesign**：**前置依赖：V11 已完成并获该任务交接确认。** `/works` 已重做为等权作品目录：Desktop 统一四列且不按角色或媒体比例分配视觉权重，统一 4:5 圆角媒体画布与底部渐变身份层；竖版摄影保持主视觉填充，横版设定图使用 `contain` 保证完整展示。页头以背景 `WORKS`、中文标题/说明和右侧搜索建立 archive/editorial identity，搜索、结果数、分页、路由与空态行为不变。统一 Work / Adoption Detail 在 Desktop 保持左侧 gallery + 右侧 sticky 信息账本的一屏优先结构，gallery 舞台、缩略图和媒体统一圆角；领养详情继续保留真实状态、价格、咨询入口、返回目录和 V11 媒体优先级。公共布局只通过 flex 让短内容页 Footer 贴近视口底部，未修改 Footer 组件。1440×900、390×844、430×932 的 before/after、图片解码、无横向溢出、Reduced Motion 静态审计与独立 Handoff 已完成。证据：`implementation/evidence/V12-A/`；Handoff：`implementation/notes/2026-08-25-V12-A-HANDOFF.md`。
+
+- [x] **V12-B · About / Contact Static Redesign**：**前置依赖：V12-A 已完成并获该任务交接确认。** About 已重做为紧凑的 `ABOUT / 关于我们` masthead 与工作室/制作范围 editorial story；Contact 使用独立浅灰 scene，Desktop 左侧为联系说明和委托主行动，右侧以竖线分隔邮箱与横向 QQ/QQ群二维码，防诈骗提示紧接下方并只用淡灰竖线强调。Mobile 保持纵向阅读顺序与两枚 152px 二维码横排。后台内容投影、渠道数据、Email/复制、申请入口、`/contact` 301、锚点、Footer 和业务功能均未改变。1440、2048、768、1023、1024、390、430 截图、单渠道/长账号/图片解码/44px/键盘/Reduced Motion/复制邮箱/重定向自动审计与独立 Handoff 已完成。证据：`implementation/evidence/V12-B/`；Handoff：`implementation/notes/2026-08-25-V12-B-HANDOFF.md`。
+
+- [x] **V12-C · Commission Apply Static Redesign**：**前置依赖：V12-B 已完成并获该任务交接确认。** 按用户复核保留申请页原有竖向阅读顺序，不改成 Desktop 左右分栏；页名、隐私说明和表单统一到 56rem 主轴，字段在 Desktop/Tablet 内部双列、390/430 单列，身高/体重继续作为并列 measurement group。原页头右侧孤立的“只用于内部评估”并入表单首段隐私提示；现有工作室 Logo 在 Desktop/Tablet 页名左侧作为 5% 灰度水印并逆时针旋转 15°，放大后纵向覆盖标题与内部评估说明，Mobile 隐藏该装饰。上传区改为紧凑圆角媒体面、预览与轻量更换/移除行动，确认、错误、进度、失败保留、成功与不可用状态保持去卡片化静态层级。字段、校验、上传、提交、两项确认、QQ/Email、失败保留、后台内容投影与安全边界均未改变。1440、768、390、430、输入法安全、错误、预览、失败保留、成功和不可用 Evidence、自动审计与独立 Handoff 已完成。证据：`implementation/evidence/V12-C/`；Handoff：`implementation/notes/2026-08-25-V12-C-HANDOFF.md`。
+
+- [ ] **V12-D · Legal / Privacy / Licenses Reading Design**：**前置依赖：V12-C 已完成并获该任务交接确认。** 修改 `PublicLegalDocument.vue`、`PublicPageIntro.vue` 与 `/service`、`/privacy`、`/licenses` 视觉组合，建立克制但同站的 reading rhythm、typography、长页导航、details、code/license block 和 long-page structure；不要求强装饰或强 Motion，不改法务内容、重定向和许可证数据。输出独立 Desktop、390/430 长页截图、Evidence 与 Handoff。
+
+- [ ] **V12-E · Error / Empty / Media Failure Static States**：**前置依赖：V12-D 已完成并获该任务交接确认。** 修改 `error.vue`、`PublicEmptyState.vue` 与现有媒体失败呈现，使 404、500、empty、no result、image failure 属于同一品牌系统且行动清楚；保持错误语义、恢复路径、搜索行为和媒体安全边界。输出每种状态的独立 Desktop、390/430 截图、Evidence 与 Handoff。
+
+- [ ] **V12-E-F1 · Sitewide Typography Audit & Governance**：**前置依赖：V12-E 已完成并获该任务交接确认。** 先盘点公开页面、共享 UI、管理端外壳及 PDF/许可证资产中实际使用的中文、英文、数字与等宽字体，记录运行时 computed font、来源文件/selector、字重、语言覆盖、字体资产与授权，不凭 CSS 声明猜测实际渲染。随后以现有 `public-base.css` / `admin-base.css` 字体 token 和共享组件为基础，明确并落地 `Display`、`Body`、`Metadata`、`UI`、`Legal/Code` 五类语义角色；清除页面各自直接指定字体或重复维护字号、字重、行高、字距、英文大小写与数字风格的问题，使同类信息跨页面使用同一角色，同时保证中文/英文/数字混排的字面、基线、标点与 fallback 不割裂。必须逐类评估当前字体是否适合角色；不合适时可以选择 GitHub 上许可清晰、维护可靠且语言覆盖合适的最小开源字体，但采用前须记录来源、固定版本、license、文件体积/子集策略与 notices 影响，字体必须自托管且不得引入大而全 UI/framework。`有点小狗工作室` Hero 品牌字的字体身份/资产、font-weight、letter-spacing、line-height、视觉尺寸、核心位置、对齐、终态与已确认的一次性首次入场继续遵守专属 Brand Lock，不得借字体治理修改。完成时须核对每个字体文件的授权、关键字体 preload、非关键字体是否误 preload、fallback 顺序、`font-display`、无字体替换闪动/不可接受 FOIT、CLS、移动端裁切与 390×844 / 430×932 实际渲染；输出字体清单与决策记录、Desktop/Mobile typography specimen（覆盖五类角色、中文/英文/数字/等宽及混排）、全部 11 个公开视觉状态的代表性 before/after 页面对照、自动 computed-style/font-loading 审计、Evidence 与独立 Handoff。只统一 Typography，不重排已确认 scene、不修改 Footer、业务文案、数据、路由、Motion 或后台功能。
+
+### GATE-DESKTOP · Full Desktop Static Art Direction Approval
+
+- [ ] V09～V12-E 与 V12-E-F1 均已完成各自实现、Desktop 静态 Evidence 与独立 Handoff；不得用 Mobile Structural Safety 或一份总报告代替每个子任务的 Desktop 交接。
+- [ ] V12-E-F1 已证明 Display、Body、Metadata、UI、Legal/Code 五类角色在同类内容中一致，中文/英文/数字/等宽及混排成立；字体来源、授权、preload、fallback、`font-display`、Desktop/Mobile specimen 与页面 before/after 证据完整，Hero 品牌字专属锁与 Footer 均未被改动。
+- [ ] 凌巽本人已在关闭所有非必要动画的条件下浏览 Hero、Featured、Homepage Commission、Homepage Adoption、Works、统一 Detail、`/adoptions`、`/commission`、About/Contact、Apply、Service、Privacy、Licenses、Error/Empty/Media Failure 的完整 Desktop 静态构图。
+- [ ] 凌巽本人已明确确认“Desktop 静态 Art Direction 满意，可以冻结 Desktop 并开始 Mobile 独立构图”；Agent、自动测试、设计 Review 或其他成员不得代签。
+- [ ] 未通过本 Gate 前不得开始 V12-F、V12-G、`GATE-MOBILE`、V13、V14、V15、V16、T47 或 GATE-E。
+
+### Mobile Independent Art Direction Contract
+
+Mobile 的核心原则是：**Same visual language, different composition.** Mobile 必须继续继承同一品牌语言、业务内容、功能语义、数据来源、路由与 Accessibility 义务，但不要求继承 Desktop grid，也不得把 Desktop 版式机械缩小。
+
+在 390/430 等 Mobile 视口内，V12-F/V12-G 可独立修改 `media position / size`、`crop / contain`、页面级 `typography scale`、非品牌标题与 metadata 位置、CTA grouping、wayfinding、背景 Typography、Negative Space、overlay strategy，以及 controls 的位置与分组。Featured、Commission、Adoption 若 Desktop 结构不能自然成立，可以完全重新构图。Mobile Hero 可以独立重新设计 Photography、media composition、controls、wayfinding、supporting copy 与周边空间关系；“有点小狗工作室”品牌文字默认继续遵守既有 Brand Lock，优先重新设计品牌字周围空间。只有在 390×844 / 430×932 实际构图证明无法优雅成立时，才可提交带具体冲突、理由和 before/after screenshot 的 Mobile-specific brand placement/scale exception 供用户人工批准；不得自动解除品牌锁。Desktop 已通过的 Art Direction 冻结，不因 Mobile 重构被反向改写。
+
+- [ ] **V12-F · Mobile Homepage Independent Art Direction**：**前置依赖：`GATE-DESKTOP` 已由凌巽本人明确放行。** 修改 Homepage Hero、Featured、Commission、Adoption 在 390/430 下的静态构图；复用既有业务状态、轮播/切换语义、CTA 目标、Hero 媒体与品牌内容，但按 Mobile Independent Art Direction Contract 独立决定媒体、非品牌 Typography、标题/meta、CTA、wayfinding、背景字、overlay、Negative Space 与 controls 的位置/分组。Hero 必须先在既有 Brand Lock 下重构品牌字周围空间；若仍有明确冲突，只能提交 exception 方案并等待用户批准，批准前不得修改品牌字字号、核心位置或对齐。V12-F 只决定 Mobile 静态终态和 controls/wayfinding 静态布局，不重新设计最终 Motion choreography；已有一次性首次入场继续保留，换图不重复整套品牌入场，Reduced Motion 直接进入终态，font flash 修复不得回退，Hero autoplay 当前默认 4s，最终动画仍由 V13 负责。完成时四幕必须在 Mobile 上各自拥有明确焦点和阅读顺序，而不是压缩 Desktop grid；不得改动已冻结 Desktop 构图或进入 Motion。输出 390×844、430×932 的默认/多项/长文/边界静态 Evidence 与独立 Handoff。
+
+- [ ] **V12-G · Remaining Public Mobile Art Direction**：**前置依赖：V12-F 已完成并获该任务交接确认。** 对 Works Catalog、统一 Work/Adoption Detail、`/adoptions`、`/commission`、About/Contact、Apply、Service、Privacy、Licenses、Error/Empty/Media Failure 建立独立 Mobile Art Direction；允许每类页面选择适合其内容密度与媒体比例的 Mobile composition，不要求继承 Desktop grid，但保留搜索、分页、表单、二维码、法务阅读、错误恢复、媒体完整性、路由和后台内容投影。输出所有公开状态的 390×844、430×932、长文/空态/失败态 Mobile Final Evidence 与独立 Handoff，不改动已冻结 Desktop 构图。
+
+### GATE-MOBILE · Full Mobile Static Art Direction Approval
+
+- [ ] V12-F 与 V12-G 均已完成 Mobile 独立实现、390/430 Final Art Direction Evidence 与独立 Handoff；V09～V12-E 与 V12-E-F1 的旧 Mobile Structural Safety / Typography Evidence 不得代替本 Gate 证据。
+- [ ] 凌巽本人已在关闭所有非必要动画的条件下浏览 Homepage 四幕与全部其余公开状态的 390/430 最终静态构图，并确认媒体、Typography、CTA、wayfinding、背景字、Negative Space、overlay 与 controls 在 Mobile 上独立成立。
+- [ ] 凌巽本人已明确确认“Mobile 静态 Art Direction 满意，可以与已通过的 Desktop 方向一起进入 Motion”；Agent、自动测试、设计 Review 或其他成员不得代签。
+- [ ] `GATE-DESKTOP` 与 `GATE-MOBILE` 未同时通过前，不得开始 V13、V14、V15、V16、T47 或 GATE-E。
+
+### Phase M · Signature Motion / Carousel / Scene Continuity
+
+- [ ] **V13 · Signature Motion / Carousel / Scene Continuity**：**前置依赖：`GATE-DESKTOP` 与 `GATE-MOBILE` 均已由凌巽本人明确放行。** 在分别冻结的 Desktop 与 Mobile 静态构图上修改 `HomeHeroCarousel.vue`、`FeaturedWorks.vue` 与相关 Homepage scene，统一 Hero/Featured carousel、4s autoplay 基准、pause/resume、next/previous、directional reverse、interrupt、Media Settle、title/meta/CTA motion hierarchy、scene arrival/departure，以及 Hero → Featured → Commission → Adoption 和有价值时 Featured → Detail 的连续性。背景 Typography 不做抽搐式大运动；不做全站统一 reveal、持续 breathing 或果冻；所有方向行为可中断、可反向、最终状态可靠，Reduced Motion 正确退化。采用新依赖时必须符合 Open-source Resource Policy。输出 Desktop/Mobile arrival/next/previous/reverse/interrupt/reduced 录屏、Evidence 与独立 Handoff。
+
+### Phase UI · Controls / Header / Navigation / Interaction Polish
+
+- [ ] **V14 · Controls / Header / Navigation / Interaction Final Integration**：**前置依赖：V13 已完成并获该任务交接确认。** 修改 `PublicHeader.vue`、`PublicMobileNav.vue`、Hero/Featured controls、`PublicCatalogSearch.vue`、`PublicPagination.vue`、gallery thumbnails、actions 与 icons，统一 control geometry 及 hover/focus/active/disabled/loading；Hero arrows、pagination、pause/resume 的视觉形式允许重设计，但功能语义、44px target、键盘、触控、Accessibility 与 Reduced Motion 不得丢失。Footer 完全冻结。输出控制状态矩阵、Desktop/Mobile/Input Evidence 与独立 Handoff。
+
+### Final · Responsive / Accessibility / Consistency
+
+- [ ] **V15 · Full Responsive / Input / Accessibility Final QA**：**前置依赖：V14 已完成并获该任务交接确认。** 对已分别通过 Desktop/Mobile Gate 的所有公开状态统一验证并修正 390/430/768/1023/1024/1440、键盘、触控、fine pointer、输入法、safe area、`prefers-reduced-motion`、`prefers-reduced-transparency`、`prefers-contrast`、SSR/无 JavaScript、焦点顺序和语义；只处理跨断点衔接、Input 与 Accessibility 回归，不承担首次 Mobile Art Direction，也不重新设计已由两道静态 Gate 冻结的构图。输出跨视口/输入矩阵、Evidence 与独立 Handoff。
+
+- [ ] **V16 · Consistency & Evidence Review**：**前置依赖：V15 已完成并获该任务交接确认。** 对照 V09 Shared Visual Language、V00-F2 公开面矩阵、V09～V15 Evidence 与全部 Handoff，审查每个 scene 是否同站但不模板化、wayfinding 是否有语义延续、Footer/品牌锁是否保持、开源来源/license 是否登记、所有状态是否有证据；只修复一致性缺口，不开始新方向。输出最终 Evidence Index、Review 与独立 Handoff。
+
+> **逐项执行纪律**：每次只能执行最前面的一个 `[ ]` Task。每项必须完成 implementation、指定 Desktop/Mobile/Input/Reduced Evidence、TASKS 状态和包含 `Completed / Locked Decisions / Open Issues / Regression Risks / Next Task / Do Not Start Yet` 的独立 Handoff；禁止顺手开始后续任务。后续会话必须先读取本文件与 latest Handoff，不依赖聊天记忆。V12-C 已完成，当前停在 V12-C Handoff，不顺手开始 V12-D；V12-E 完成后必须继续执行 V12-E-F1，V12-E-F1 后必须停在 `GATE-DESKTOP`；V12-G 后必须停在 `GATE-MOBILE`，两道 Gate 均由凌巽本人放行后才能进入 V13。
+
 - [ ] **T47 · 连续移动/reduced/性能验收**：每个机会同步检查中断/反向、autoplay/pointer/touch/keyboard、390/430/768/1023/1024/1440、真实手机、LCP/CLS/decode/GPU、safe area、输入法、键盘/焦点、prefers-*；另验桌面逐幕顺序/反向/锁定与 1023px 逃生；Hero drag 未实施。
 
 ### GATE-E · 既简洁又有生命感
 
-- [ ] 四幕顺序与主次明确；
-- [ ] Hero 默认静默且控制器对键盘/触控可获得，暂停后恢复入口清楚；
-- [ ] 领养只展示一项，并在全部目标视口一屏完成标题、角色、身份、状态和行动表达；
-- [ ] autoplay、pointer/touch、keyboard 使用不同节奏，未达完整门槛时不做 drag；
-- [ ] 角色感动效一次性、有因、无持续噪声；
-- [ ] 移动端不是桌面缩小版；
+- [ ] `GATE-DESKTOP` 与 `GATE-MOBILE` 均已由凌巽本人通过，V13～V16、T47 均已完成并有独立 Evidence/Handoff；
+- [ ] Hero、Featured、Homepage Commission、Homepage Adoption 与后续公共 scene 的主次明确，共享 typography/directional/wayfinding/media grammar 但不套用统一模板；
+- [ ] Hero 默认静默且控制器对键盘/触控可获得，暂停后恢复入口清楚；已确认的一次性品牌标题入场保留，换图不重复整套品牌入场，Reduced Motion 直接进入终态，font flash 不回退。Desktop 品牌终态继续冻结；Mobile 默认继续遵守品牌文字 Brand Lock，优先重构周边 Hero composition。任何 Mobile 品牌字号、核心位置或对齐变更都必须有 390/430 冲突证据、before/after 和用户本人显式 exception approval，不得由 `GATE-MOBILE` 自动解除；
+- [ ] Featured 以重新设计后的正式 Selected Baseline 为准：Type × Media scene 成立，Photography 是第一视觉 anchor，代表作品最多两件的业务规则和清晰 `/works` 入口保持，切换方式在 Desktop/Mobile 均成立；不得恢复“左上标题 + 下方双竖图 + 右侧说明”的普通双栏 section 作为最终硬条件；
+- [ ] Featured/Hero 自动轮播如实施均以 4s 为默认基准且可暂停；Motion 可 reverse/interrupt、终态可靠，Reduced Motion 正确退化；
+- [ ] Header、Mobile Nav、Hero/Featured/gallery/search/pagination/actions/icons 的 hover/focus/active/disabled/loading、44px target、键盘与触控语义完整；
+- [ ] 11 个独立公开视觉状态均已按 V00-F2 矩阵完成，`/contact`、`/terms`、`/adoptions/[slug]` 继续复用既有终点而没有重复页面；
+- [ ] 作品/领养统一详情、委托内容/申请、About/Contact、法务/许可证、404/500、目录/表单/媒体失败状态均有 Desktop/Mobile 截图与可访问性证据；
+- [ ] Display、Body、Metadata、UI、Legal/Code 五类字体角色在最终 Desktop/Mobile 页面保持一致，中文/英文/数字/等宽混排可靠；字体资产授权、preload、fallback、`font-display` 与 notices 均可追溯，Hero 品牌字专属锁未回退；
+- [ ] Footer 内容、布局、样式、响应式和交互未被修改；
 - [ ] 首页 ≥1024px 逐幕 wheel 顺序正确，1023px 以下不拦截原生滚动；
-- [ ] 代表作品单幕左上标题、下方最多两张竖图、右侧精简说明与唯一 `/works` 按钮且全部一屏可见，第二次有效 wheel 进入委托；双图在 1440×900 中保持较大画幅、明确间距与底部留白；`/works` 有出厂照优先出厂照、无出厂照才回落领养横版封面；
 - [ ] Hero 横竖独立维护清楚；
-- [ ] 王旻安/景宸人工视觉验收通过。
+- [ ] 凌巽及指定人工验收者完成最终视觉验收；Agent 与自动化不得代签。
 
 ## F. 最终 Review、发布与闭环（按产品决策关闭）
 
@@ -179,4 +321,4 @@
 
 - T04～T34 的当前开发范围与本地证据已完成；用户已确认个人信息处理者名称为“有点小狗工作室”。
 - T35/T36 与阶段 F 按产品决策关闭；实际镜像发布/部署时仍须履行 notices、Runbook 和安全检查，不能把关闭写成已完成。
-- 阶段 E T37～T46-F8 当前工程实现已完成；只有 T47、GATE-E 与王旻安/景宸视觉验收保持开放。
+- 阶段 E T37～T46-F8、V00、GATE-V00、V00-F1、V00-F2、V01～V08-F3、`GATE-V08-R`、V09、V10、V10-F1、V11、V12-A、V12-B 与 V12-C 已完成；当前停在 V12-C Handoff，V12-D 为下一项但本轮不得开始。之后只能依序执行：V12-D → V12-E → V12-E-F1 → `GATE-DESKTOP` → V12-F → V12-G → `GATE-MOBILE` → V13 → V14 → V15 → V16 → T47 → GATE-E；两道静态 Gate 均须由凌巽本人明确放行。

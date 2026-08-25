@@ -70,6 +70,44 @@ export function splitPlainTextParagraphs(value: string): string[] {
     .filter(paragraph => paragraph.length > 0)
 }
 
+export interface PlainTextSection {
+  id: string
+  number: string
+  paragraphs: string[]
+  title: string
+}
+
+export interface StructuredPlainText {
+  preface: string[]
+  sections: PlainTextSection[]
+}
+
+/** 将管理员纯文本中的“数字. 标题”提升为可导航章节，其余文字保持原样。 */
+export function structureNumberedPlainText(value: string): StructuredPlainText {
+  const result: StructuredPlainText = { preface: [], sections: [] }
+  for (const paragraph of splitPlainTextParagraphs(value)) {
+    const [firstLine = '', ...remainingLines] = paragraph.split(/\r?\n/u)
+    const heading = /^(\d{1,3})[.．、]\s*(.+)$/u.exec(firstLine.trim())
+    if (heading) {
+      const section: PlainTextSection = {
+        id: `section-${result.sections.length + 1}`,
+        number: heading[1]!,
+        paragraphs: [],
+        title: heading[2]!,
+      }
+      const openingParagraph = remainingLines.join('\n').trim()
+      if (openingParagraph) section.paragraphs.push(openingParagraph)
+      result.sections.push(section)
+      continue
+    }
+
+    const currentSection = result.sections.at(-1)
+    if (currentSection) currentSection.paragraphs.push(paragraph)
+    else result.preface.push(paragraph)
+  }
+  return result
+}
+
 export interface SiteContentFormFields {
   intro: string
   estimateNote: string

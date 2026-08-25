@@ -1,0 +1,451 @@
+{
+  "capturedAt": "2026-08-24T08:49:03.843Z",
+  "captures": {
+    "featured-1440x768": {
+      "activeAnimations": 0,
+      "backgroundMediaOverlap": true,
+      "content": {
+        "x": 166.734375,
+        "y": 455.484375,
+        "width": 464,
+        "height": 179.328125,
+        "top": 455.484375,
+        "right": 630.734375,
+        "bottom": 634.8125,
+        "left": 166.734375
+      },
+      "contentControlGap": -259.328125,
+      "controls": {
+        "x": 185.125,
+        "y": 670.8125,
+        "width": 304,
+        "height": 44,
+        "top": 670.8125,
+        "right": 489.125,
+        "bottom": 714.8125,
+        "left": 185.125
+      },
+      "controlsVisibleInInitialViewport": true,
+      "controlStatus": "01 / 02",
+      "decodedImages": [
+        {
+          "complete": true,
+          "naturalHeight": 533,
+          "naturalWidth": 400
+        }
+      ],
+      "destination": "NEXTCUSTOM COMMISSION",
+      "detailHref": "/works/return-xiapian?view=home-featured",
+      "display": {
+        "x": 49.59375,
+        "y": 183.765625,
+        "width": 1325.8125,
+        "height": 260.46875,
+        "top": 183.765625,
+        "right": 1375.40625,
+        "bottom": 444.234375,
+        "left": 49.59375
+      },
+      "folio": null,
+      "media": {
+        "x": 821.640625,
+        "y": 193.6875,
+        "width": 396,
+        "height": 528,
+        "top": 193.6875,
+        "right": 1217.640625,
+        "bottom": 721.6875,
+        "left": 821.640625
+      },
+      "noHorizontalOverflow": true,
+      "section": {
+        "x": 0,
+        "y": 72,
+        "width": 1425,
+        "height": 696,
+        "top": 72,
+        "right": 1425,
+        "bottom": 768,
+        "left": 0
+      },
+      "sectionFitsViewport": true,
+      "title": {
+        "x": 166.734375,
+        "y": 475.0625,
+        "width": 288,
+        "height": 67.671875,
+        "top": 475.0625,
+        "right": 454.734375,
+        "bottom": 542.734375,
+        "left": 166.734375
+      },
+      "typeMediaGap": -250.546875,
+      "viewport": {
+        "width": 1440,
+        "height": 768
+      },
+      "wayfindingInViewport": true,
+      "worksHref": "/works",
+      "heroContinuation": {
+        "bottom": 760,
+        "display": "block",
+        "text": "NEXT"
+      },
+      "manualSwitch": {
+        "initialSlug": "return-xiapian",
+        "next": {
+          "activeAnimations": 0,
+          "slug": "adoption-green-dog-test",
+          "status": "02 / 02",
+          "title": "小绿狗测试领养"
+        },
+        "restored": {
+          "activeAnimations": 0,
+          "slug": "return-xiapian",
+          "status": "01 / 02"
+        }
+      }
+    },
+    "featured-1440x900": {
+      "activeAnimations": 0,
+      "backgroundMediaOverlap": true,
+      "content": {
+        "x": 166.734375,
+        "y": 466.5625,
+        "width": 464,
+        "height": 179.328125,
+        "top": 466.5625,
+        "right": 630.734375,
+        "bottom": 645.890625,
+        "left": 166.734375
+      },
+      "contentControlGap": -259.328125,
+      "controls": {
+        "x": 185.125,
+        "y": 681.890625,
+        "width": 304,
+        "height": 44,
+        "top": 681.890625,
+        "right": 489.125,
+        "bottom": 725.890625,
+        "left": 185.125
+      },
+      "controlsVisibleInInitialViewport": true,
+      "controlStatus": "01 / 02",
+      "decodedImages": [
+        {
+          "complete": true,
+          "naturalHeight": 533,
+          "naturalWidth": 400
+        }
+      ],
+      "destination": "NEXTCUSTOM COMMISSION",
+      "detailHref": "/works/return-xiapian?view=home-featured",
+      "display": {
+        "x": 49.59375,
+        "y": 183.765625,
+        "width": 1325.8125,
+        "height": 260.46875,
+        "top": 183.765625,
+        "right": 1375.40625,
+        "bottom": 444.234375,
+        "left": 49.59375
+      },
+      "folio": null,
+      "media": {
+        "x": 821.640625,
+        "y": 196.5625,
+        "width": 400,
+        "height": 533.328125,
+        "top": 196.5625,
+        "right": 1221.640625,
+        "bottom": 729.890625,
+        "left": 821.640625
+      },
+      "noHorizontalOverflow": true,
+      "section": {
+        "x": 0,
+        "y": 72,
+        "width": 1425,
+        "height": 828,
+        "top": 72,
+        "right": 1425,
+        "bottom": 900,
+        "left": 0
+      },
+      "sectionFitsViewport": true,
+      "title": {
+        "x": 166.734375,
+        "y": 486.140625,
+        "width": 288,
+        "height": 67.671875,
+        "top": 486.140625,
+        "right": 454.734375,
+        "bottom": 553.8125,
+        "left": 166.734375
+      },
+      "typeMediaGap": -247.671875,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "wayfindingInViewport": true,
+      "worksHref": "/works",
+      "heroContinuation": {
+        "bottom": 892,
+        "display": "block",
+        "text": "NEXT"
+      },
+      "manualSwitch": {
+        "initialSlug": "return-xiapian",
+        "next": {
+          "activeAnimations": 0,
+          "slug": "adoption-green-dog-test",
+          "status": "02 / 02",
+          "title": "小绿狗测试领养"
+        },
+        "restored": {
+          "activeAnimations": 0,
+          "slug": "return-xiapian",
+          "status": "01 / 02"
+        }
+      }
+    },
+    "featured-390x844": {
+      "activeAnimations": 0,
+      "backgroundMediaOverlap": false,
+      "content": {
+        "x": 16,
+        "y": 581.515625,
+        "width": 343,
+        "height": 135.359375,
+        "top": 581.515625,
+        "right": 359,
+        "bottom": 716.875,
+        "left": 16
+      },
+      "contentControlGap": 16,
+      "controls": {
+        "x": 16,
+        "y": 521.515625,
+        "width": 343,
+        "height": 44,
+        "top": 521.515625,
+        "right": 359,
+        "bottom": 565.515625,
+        "left": 16
+      },
+      "controlsVisibleInInitialViewport": true,
+      "controlStatus": "01 / 02",
+      "decodedImages": [
+        {
+          "complete": true,
+          "naturalHeight": 374,
+          "naturalWidth": 280
+        }
+      ],
+      "destination": "NEXTCUSTOM COMMISSION",
+      "detailHref": "/works/return-xiapian?view=home-featured",
+      "display": {
+        "x": 11.203125,
+        "y": 168.5625,
+        "width": 352.59375,
+        "height": 85.09375,
+        "top": 168.5625,
+        "right": 363.796875,
+        "bottom": 253.65625,
+        "left": 11.203125
+      },
+      "folio": null,
+      "media": {
+        "x": 173.78125,
+        "y": 262.5625,
+        "width": 185.21875,
+        "height": 246.953125,
+        "top": 262.5625,
+        "right": 359,
+        "bottom": 509.515625,
+        "left": 173.78125
+      },
+      "noHorizontalOverflow": true,
+      "section": {
+        "x": 0,
+        "y": 88,
+        "width": 375,
+        "height": 664.875,
+        "top": 88,
+        "right": 375,
+        "bottom": 752.875,
+        "left": 0
+      },
+      "sectionFitsViewport": true,
+      "title": {
+        "x": 16,
+        "y": 599.5,
+        "width": 150.375,
+        "height": 35.703125,
+        "top": 599.5,
+        "right": 166.375,
+        "bottom": 635.203125,
+        "left": 16
+      },
+      "typeMediaGap": 8.90625,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "wayfindingInViewport": true,
+      "worksHref": "/works",
+      "heroContinuation": {
+        "bottom": 836,
+        "display": "block",
+        "text": "NEXT"
+      },
+      "manualSwitch": {
+        "initialSlug": "return-xiapian",
+        "next": {
+          "activeAnimations": 0,
+          "slug": "adoption-green-dog-test",
+          "status": "02 / 02",
+          "title": "小绿狗测试领养"
+        },
+        "restored": {
+          "activeAnimations": 0,
+          "slug": "return-xiapian",
+          "status": "01 / 02"
+        }
+      }
+    },
+    "featured-430x932": {
+      "activeAnimations": 0,
+      "backgroundMediaOverlap": false,
+      "content": {
+        "x": 16,
+        "y": 610.3125,
+        "width": 383,
+        "height": 135.359375,
+        "top": 610.3125,
+        "right": 399,
+        "bottom": 745.671875,
+        "left": 16
+      },
+      "contentControlGap": 16,
+      "controls": {
+        "x": 16,
+        "y": 550.3125,
+        "width": 383,
+        "height": 44,
+        "top": 550.3125,
+        "right": 399,
+        "bottom": 594.3125,
+        "left": 16
+      },
+      "controlsVisibleInInitialViewport": true,
+      "controlStatus": "01 / 02",
+      "decodedImages": [
+        {
+          "complete": true,
+          "naturalHeight": 412,
+          "naturalWidth": 309
+        }
+      ],
+      "destination": "NEXTCUSTOM COMMISSION",
+      "detailHref": "/works/return-xiapian?view=home-featured",
+      "display": {
+        "x": 11.203125,
+        "y": 168.5625,
+        "width": 392.59375,
+        "height": 85.09375,
+        "top": 168.5625,
+        "right": 403.796875,
+        "bottom": 253.65625,
+        "left": 11.203125
+      },
+      "folio": null,
+      "media": {
+        "x": 192.1875,
+        "y": 262.5625,
+        "width": 206.8125,
+        "height": 275.75,
+        "top": 262.5625,
+        "right": 399,
+        "bottom": 538.3125,
+        "left": 192.1875
+      },
+      "noHorizontalOverflow": true,
+      "section": {
+        "x": 0,
+        "y": 88,
+        "width": 415,
+        "height": 693.671875,
+        "top": 88,
+        "right": 415,
+        "bottom": 781.671875,
+        "left": 0
+      },
+      "sectionFitsViewport": true,
+      "title": {
+        "x": 16,
+        "y": 628.296875,
+        "width": 150.375,
+        "height": 35.703125,
+        "top": 628.296875,
+        "right": 166.375,
+        "bottom": 664,
+        "left": 16
+      },
+      "typeMediaGap": 8.90625,
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "wayfindingInViewport": true,
+      "worksHref": "/works",
+      "heroContinuation": {
+        "bottom": 924,
+        "display": "block",
+        "text": "NEXT"
+      },
+      "manualSwitch": {
+        "initialSlug": "return-xiapian",
+        "next": {
+          "activeAnimations": 0,
+          "slug": "adoption-green-dog-test",
+          "status": "02 / 02",
+          "title": "小绿狗测试领养"
+        },
+        "restored": {
+          "activeAnimations": 0,
+          "slug": "return-xiapian",
+          "status": "01 / 02"
+        }
+      }
+    }
+  },
+  "heroRegression": {
+    "advancedSlide": "第 2 张，共 2 张",
+    "entrance": {
+      "animationName": "home-hero-title-in-3a6e51d8",
+      "fontFamily": "\"Zhuohei Collage Critical\", \"Zhuohei Collage\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif"
+    },
+    "initialSlide": "第 1 张，共 2 张",
+    "terminal": {
+      "clipPath": "inset(0px 0px 0%)",
+      "opacity": "1",
+      "transform": "matrix(1, 0, 0, 1, 0, 0)"
+    }
+  },
+  "checks": {
+    "allImagesDecoded": true,
+    "desktopComposition": true,
+    "heroAutoplayPreserved": true,
+    "heroTitleEntrancePreserved": true,
+    "mobileComposition": true,
+    "manualSelection": true,
+    "noFeaturedMotion": true,
+    "noHorizontalOverflow": true,
+    "sceneWayfinding": true,
+    "heroWayfindingPreserved": true,
+    "workingNavigation": true
+  }
+}

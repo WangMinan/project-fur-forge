@@ -1,0 +1,156 @@
+{
+  "mode": "after",
+  "capturedAt": "2026-08-23T14:19:04.907Z",
+  "routes": {
+    "390x844": {
+      "status": 200,
+      "noHorizontalOverflow": true,
+      "formVisible": true
+    },
+    "430x932": {
+      "status": 200,
+      "noHorizontalOverflow": true,
+      "formVisible": true
+    },
+    "768x1024": {
+      "status": 200,
+      "noHorizontalOverflow": true,
+      "formVisible": true
+    },
+    "1024x900": {
+      "status": 200,
+      "noHorizontalOverflow": true,
+      "formVisible": true
+    },
+    "1440x900": {
+      "status": 200,
+      "noHorizontalOverflow": true,
+      "formVisible": true
+    },
+    "review-mobile-375": {
+      "status": 200,
+      "noHorizontalOverflow": true,
+      "formVisible": true
+    },
+    "review-tablet-768": {
+      "status": 200,
+      "noHorizontalOverflow": true,
+      "formVisible": true
+    },
+    "review-desktop-1280": {
+      "status": 200,
+      "noHorizontalOverflow": true,
+      "formVisible": true
+    }
+  },
+  "states": {
+    "partial": {
+      "captured": true
+    },
+    "errors": {
+      "count": 8,
+      "emptySlots": 0,
+      "cls": 0
+    },
+    "fileRejected": {
+      "visible": true
+    },
+    "ready": {
+      "visible": true
+    },
+    "uploading": {
+      "visible": true
+    },
+    "validating": {
+      "visible": true
+    },
+    "submitting": {
+      "visible": true
+    },
+    "submitError": {
+      "imageRetained": true
+    },
+    "success": {
+      "receipt": "DITE-EVIDENCE-08"
+    },
+    "unavailable": {
+      "formHidden": true
+    }
+  },
+  "interactions": {
+    "keyboard": {
+      "focusVisible": true
+    },
+    "targets": [
+      {
+        "height": 44,
+        "width": 343
+      },
+      {
+        "height": 44,
+        "width": 343
+      },
+      {
+        "height": 44,
+        "width": 298.359375
+      },
+      {
+        "height": 44,
+        "width": 343
+      },
+      {
+        "height": 44,
+        "width": 136.296875
+      },
+      {
+        "height": 44,
+        "width": 136.296875
+      },
+      {
+        "height": 192,
+        "width": 339
+      },
+      {
+        "height": 55.03125,
+        "width": 315
+      },
+      {
+        "height": 110.0625,
+        "width": 315
+      },
+      {
+        "height": 44,
+        "width": 106
+      }
+    ],
+    "softKeyboard": {
+      "focused": true,
+      "top": 285.4375,
+      "bottom": 303.4375,
+      "viewport": 500
+    },
+    "touch": {
+      "checked": true
+    },
+    "reducedMotion": {
+      "matches": true,
+      "runningAnimations": 0
+    }
+  },
+  "checks": {
+    "allRoutes200": true,
+    "noHorizontalOverflow": true,
+    "formsVisible": true,
+    "allStates": true,
+    "noEmptyErrorSlots": true,
+    "lowCls": true,
+    "retainedAfterError": true,
+    "successReceipt": true,
+    "unavailable": true,
+    "keyboardFocus": true,
+    "targets44": true,
+    "softKeyboard": true,
+    "touch": true,
+    "reducedMotion": true
+  }
+}

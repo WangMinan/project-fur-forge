@@ -17,24 +17,34 @@ defineProps<{
 
 <style scoped>
 .work-identity {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: baseline;
+  display: grid;
+  gap: var(--space-1);
+  max-width: 100%;
 }
 
 .work-identity__name {
+  min-width: 0;
   font-family: var(--font-public-display);
-  font-size: var(--font-size-md);
+  font-size: clamp(1rem, 1.7vw, 1.25rem);
+  font-weight: 600;
   line-height: var(--line-height-heading);
+  overflow-wrap: anywhere;
 }
 
 .work-identity__details {
-  color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
-  white-space: nowrap;
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  color: rgb(255 255 255 / 0.82);
+  font-size: var(--font-size-xs);
+}
+
+.work-identity__species {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .work-identity__separator {
-  white-space: pre;
+  display: none;
 }
 </style>

@@ -1,0 +1,498 @@
+{
+  "capturedAt": "2026-08-24T07:52:18.331Z",
+  "phase": "after",
+  "viewports": {
+    "desktop-short-1440x768": {
+      "featured": {
+        "content": {
+          "x": 166.734375,
+          "y": 388.453125,
+          "width": 464,
+          "height": 246.359375,
+          "top": 388.453125,
+          "right": 630.734375,
+          "bottom": 634.8125,
+          "left": 166.734375
+        },
+        "controls": {
+          "x": 185.125,
+          "y": 670.8125,
+          "width": 304,
+          "height": 44,
+          "top": 670.8125,
+          "right": 489.125,
+          "bottom": 714.8125,
+          "left": 185.125
+        },
+        "media": {
+          "x": 821.640625,
+          "y": 193.6875,
+          "width": 396,
+          "height": 528,
+          "top": 193.6875,
+          "right": 1217.640625,
+          "bottom": 721.6875,
+          "left": 821.640625
+        },
+        "noHorizontalOverflow": true,
+        "section": {
+          "x": 0,
+          "y": 72,
+          "width": 1425,
+          "height": 696,
+          "top": 72,
+          "right": 1425,
+          "bottom": 768,
+          "left": 0
+        },
+        "sectionFitsViewport": true,
+        "wayfinding": {
+          "x": 57.59375,
+          "y": 734.8125,
+          "width": 1309.8125,
+          "height": 13.1875,
+          "top": 734.8125,
+          "right": 1367.40625,
+          "bottom": 748,
+          "left": 57.59375
+        },
+        "wayfindingInViewport": true
+      },
+      "hero": {
+        "continuation": {
+          "x": 57.59375,
+          "y": 744.5,
+          "width": 1309.8125,
+          "height": 15.5,
+          "top": 744.5,
+          "right": 1367.40625,
+          "bottom": 760,
+          "left": 57.59375
+        },
+        "continuationInViewport": true,
+        "nextDisplay": "block",
+        "nextText": "NEXT",
+        "section": {
+          "x": 0,
+          "y": 0,
+          "width": 1425,
+          "height": 768,
+          "top": 0,
+          "right": 1425,
+          "bottom": 768,
+          "left": 0
+        }
+      }
+    },
+    "desktop-1440x900": {
+      "featured": {
+        "content": {
+          "x": 166.734375,
+          "y": 399.53125,
+          "width": 464,
+          "height": 246.359375,
+          "top": 399.53125,
+          "right": 630.734375,
+          "bottom": 645.890625,
+          "left": 166.734375
+        },
+        "controls": {
+          "x": 185.125,
+          "y": 681.890625,
+          "width": 304,
+          "height": 44,
+          "top": 681.890625,
+          "right": 489.125,
+          "bottom": 725.890625,
+          "left": 185.125
+        },
+        "media": {
+          "x": 821.640625,
+          "y": 196.5625,
+          "width": 400,
+          "height": 533.328125,
+          "top": 196.5625,
+          "right": 1221.640625,
+          "bottom": 729.890625,
+          "left": 821.640625
+        },
+        "noHorizontalOverflow": true,
+        "section": {
+          "x": 0,
+          "y": 72,
+          "width": 1425,
+          "height": 828,
+          "top": 72,
+          "right": 1425,
+          "bottom": 900,
+          "left": 0
+        },
+        "sectionFitsViewport": true,
+        "wayfinding": {
+          "x": 57.59375,
+          "y": 866.8125,
+          "width": 1309.8125,
+          "height": 13.1875,
+          "top": 866.8125,
+          "right": 1367.40625,
+          "bottom": 880,
+          "left": 57.59375
+        },
+        "wayfindingInViewport": true
+      },
+      "hero": {
+        "continuation": {
+          "x": 57.59375,
+          "y": 876.5,
+          "width": 1309.8125,
+          "height": 15.5,
+          "top": 876.5,
+          "right": 1367.40625,
+          "bottom": 892,
+          "left": 57.59375
+        },
+        "continuationInViewport": true,
+        "nextDisplay": "block",
+        "nextText": "NEXT",
+        "section": {
+          "x": 0,
+          "y": 0,
+          "width": 1425,
+          "height": 900,
+          "top": 0,
+          "right": 1425,
+          "bottom": 900,
+          "left": 0
+        }
+      }
+    },
+    "tablet-768x1024": {
+      "featured": {
+        "content": {
+          "x": 82.75,
+          "y": 333.796875,
+          "width": 293.75,
+          "height": 235.078125,
+          "top": 333.796875,
+          "right": 376.5,
+          "bottom": 568.875,
+          "left": 82.75
+        },
+        "controls": {
+          "x": 101.140625,
+          "y": 604.875,
+          "width": 293.75,
+          "height": 44,
+          "top": 604.875,
+          "right": 394.890625,
+          "bottom": 648.875,
+          "left": 101.140625
+        },
+        "media": {
+          "x": 435.25,
+          "y": 212.5625,
+          "width": 330.234375,
+          "height": 440.3125,
+          "top": 212.5625,
+          "right": 765.484375,
+          "bottom": 652.875,
+          "left": 435.25
+        },
+        "noHorizontalOverflow": true,
+        "section": {
+          "x": 0,
+          "y": 88,
+          "width": 753,
+          "height": 936,
+          "top": 88,
+          "right": 753,
+          "bottom": 1024,
+          "left": 0
+        },
+        "sectionFitsViewport": true,
+        "wayfinding": {
+          "x": 24,
+          "y": 990.8125,
+          "width": 705,
+          "height": 13.1875,
+          "top": 990.8125,
+          "right": 729,
+          "bottom": 1004,
+          "left": 24
+        },
+        "wayfindingInViewport": true
+      },
+      "hero": {
+        "continuation": {
+          "x": 24,
+          "y": 1000.5,
+          "width": 705,
+          "height": 15.5,
+          "top": 1000.5,
+          "right": 729,
+          "bottom": 1016,
+          "left": 24
+        },
+        "continuationInViewport": true,
+        "nextDisplay": "block",
+        "nextText": "NEXT",
+        "section": {
+          "x": 0,
+          "y": 0,
+          "width": 753,
+          "height": 1024,
+          "top": 0,
+          "right": 753,
+          "bottom": 1024,
+          "left": 0
+        }
+      }
+    },
+    "mobile-375x812": {
+      "featured": {
+        "content": {
+          "x": 16,
+          "y": 568.703125,
+          "width": 328,
+          "height": 188.125,
+          "top": 568.703125,
+          "right": 344,
+          "bottom": 756.828125,
+          "left": 16
+        },
+        "controls": {
+          "x": 16,
+          "y": 508.703125,
+          "width": 328,
+          "height": 44,
+          "top": 508.703125,
+          "right": 344,
+          "bottom": 552.703125,
+          "left": 16
+        },
+        "media": {
+          "x": 166.890625,
+          "y": 260.5625,
+          "width": 177.109375,
+          "height": 236.140625,
+          "top": 260.5625,
+          "right": 344,
+          "bottom": 496.703125,
+          "left": 166.890625
+        },
+        "noHorizontalOverflow": true,
+        "section": {
+          "x": 0,
+          "y": 88,
+          "width": 360,
+          "height": 704.828125,
+          "top": 88,
+          "right": 360,
+          "bottom": 792.828125,
+          "left": 0
+        },
+        "sectionFitsViewport": true,
+        "wayfinding": {
+          "x": 16,
+          "y": 768.828125,
+          "width": 328,
+          "height": 12,
+          "top": 768.828125,
+          "right": 344,
+          "bottom": 780.828125,
+          "left": 16
+        },
+        "wayfindingInViewport": true
+      },
+      "hero": {
+        "continuation": {
+          "x": 16,
+          "y": 790.0625,
+          "width": 328,
+          "height": 13.9375,
+          "top": 790.0625,
+          "right": 344,
+          "bottom": 804,
+          "left": 16
+        },
+        "continuationInViewport": true,
+        "nextDisplay": "block",
+        "nextText": "NEXT",
+        "section": {
+          "x": 0,
+          "y": 0,
+          "width": 360,
+          "height": 812,
+          "top": 0,
+          "right": 360,
+          "bottom": 812,
+          "left": 0
+        }
+      }
+    },
+    "mobile-390x844": {
+      "featured": {
+        "content": {
+          "x": 16,
+          "y": 579.515625,
+          "width": 343,
+          "height": 188.125,
+          "top": 579.515625,
+          "right": 359,
+          "bottom": 767.640625,
+          "left": 16
+        },
+        "controls": {
+          "x": 16,
+          "y": 519.515625,
+          "width": 343,
+          "height": 44,
+          "top": 519.515625,
+          "right": 359,
+          "bottom": 563.515625,
+          "left": 16
+        },
+        "media": {
+          "x": 173.78125,
+          "y": 260.5625,
+          "width": 185.21875,
+          "height": 246.953125,
+          "top": 260.5625,
+          "right": 359,
+          "bottom": 507.515625,
+          "left": 173.78125
+        },
+        "noHorizontalOverflow": true,
+        "section": {
+          "x": 0,
+          "y": 88,
+          "width": 375,
+          "height": 715.640625,
+          "top": 88,
+          "right": 375,
+          "bottom": 803.640625,
+          "left": 0
+        },
+        "sectionFitsViewport": true,
+        "wayfinding": {
+          "x": 16,
+          "y": 779.640625,
+          "width": 343,
+          "height": 12,
+          "top": 779.640625,
+          "right": 359,
+          "bottom": 791.640625,
+          "left": 16
+        },
+        "wayfindingInViewport": true
+      },
+      "hero": {
+        "continuation": {
+          "x": 16,
+          "y": 822.0625,
+          "width": 343,
+          "height": 13.9375,
+          "top": 822.0625,
+          "right": 359,
+          "bottom": 836,
+          "left": 16
+        },
+        "continuationInViewport": true,
+        "nextDisplay": "block",
+        "nextText": "NEXT",
+        "section": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 844,
+          "top": 0,
+          "right": 375,
+          "bottom": 844,
+          "left": 0
+        }
+      }
+    },
+    "mobile-430x932": {
+      "featured": {
+        "content": {
+          "x": 16,
+          "y": 608.3125,
+          "width": 383,
+          "height": 188.125,
+          "top": 608.3125,
+          "right": 399,
+          "bottom": 796.4375,
+          "left": 16
+        },
+        "controls": {
+          "x": 16,
+          "y": 548.3125,
+          "width": 383,
+          "height": 44,
+          "top": 548.3125,
+          "right": 399,
+          "bottom": 592.3125,
+          "left": 16
+        },
+        "media": {
+          "x": 192.1875,
+          "y": 260.5625,
+          "width": 206.8125,
+          "height": 275.75,
+          "top": 260.5625,
+          "right": 399,
+          "bottom": 536.3125,
+          "left": 192.1875
+        },
+        "noHorizontalOverflow": true,
+        "section": {
+          "x": 0,
+          "y": 88,
+          "width": 415,
+          "height": 744.4375,
+          "top": 88,
+          "right": 415,
+          "bottom": 832.4375,
+          "left": 0
+        },
+        "sectionFitsViewport": true,
+        "wayfinding": {
+          "x": 16,
+          "y": 808.4375,
+          "width": 383,
+          "height": 12,
+          "top": 808.4375,
+          "right": 399,
+          "bottom": 820.4375,
+          "left": 16
+        },
+        "wayfindingInViewport": true
+      },
+      "hero": {
+        "continuation": {
+          "x": 16,
+          "y": 910.0625,
+          "width": 383,
+          "height": 13.9375,
+          "top": 910.0625,
+          "right": 399,
+          "bottom": 924,
+          "left": 16
+        },
+        "continuationInViewport": true,
+        "nextDisplay": "block",
+        "nextText": "NEXT",
+        "section": {
+          "x": 0,
+          "y": 0,
+          "width": 415,
+          "height": 932,
+          "top": 0,
+          "right": 415,
+          "bottom": 932,
+          "left": 0
+        }
+      }
+    }
+  }
+}

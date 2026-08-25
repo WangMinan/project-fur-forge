@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { PROJECT_NAME } from '~~/shared/constants/project'
-import { publicAdoptionListResponseSchema } from '~~/shared/schemas/public-content'
-import { publicSiteContentResponseSchema } from '~~/shared/schemas/site-content'
+import {
+  PUBLIC_ADOPTIONS_PAGE_SIZE,
+  publicAdoptionListResponseSchema,
+} from '~~/shared/schemas/public-content'
 
 useSeoMeta({
   title: `设定领养 · ${PROJECT_NAME}`,
-  description: `${PROJECT_NAME}当前公开的领养角色，查看横版封面、状态与人民币价格。`,
+  description: `${PROJECT_NAME}当前公开的领养角色，查看完整设定图、状态与人民币价格。`,
   ogTitle: `设定领养 · ${PROJECT_NAME}`,
   ogDescription: `${PROJECT_NAME}当前公开的领养角色。`,
 })
@@ -26,21 +28,15 @@ const { data: list, error: listError } = await useFetch('/api/public/v1/adoption
   transform: raw => publicAdoptionListResponseSchema.parse(raw).data,
 })
 
-const { data: site, error: siteError } = await useFetch('/api/public/v1/site-content', {
-  key: 'public-adoptions-site-content',
-  headers: useRequestHeaders(['host']),
-  transform: raw => publicSiteContentResponseSchema.parse(raw).data,
-})
-
-if (listError.value || siteError.value) {
+if (listError.value) {
   throw createError({ statusCode: 500, statusMessage: '设定领养暂时无法显示' })
 }
 
 const items = computed(() => list.value?.items ?? [])
 const resultCount = computed(() => list.value?.resultCount ?? 0)
 const page = computed(() => list.value?.page ?? requestedPage.value)
+const pageSize = computed(() => list.value?.pageSize ?? PUBLIC_ADOPTIONS_PAGE_SIZE)
 const pageCount = computed(() => list.value?.pageCount ?? 0)
-const status = computed(() => site.value?.statuses.adoption ?? null)
 const filter = computed(
   () => list.value?.filter ?? { valid: true },
 )
@@ -72,50 +68,45 @@ function hrefFor(target: number) {
     q: search.value.query || null,
   }, target)
 }
+
 </script>
 
 <template>
-  <div class="adoptions-page">
-    <PublicPageIntro title="设定领养" />
+  <main class="adoptions-page" aria-labelledby="adoptions-page-title">
+    <AdoptionArchiveHeader />
 
-    <div
-      v-if="status"
-      class="adoptions-page__status-wrap"
-    >
-      <section
-        class="adoptions-page__status"
-        aria-label="当前领养营业状态"
-        data-testid="adoption-status"
-      >
-        <PublicBusinessStatus :status="status" />
-      </section>
-    </div>
-
-    <div class="adoptions-page__filters-wrap">
-      <PublicCatalogSearch
-        action="/adoptions"
-        :clear-to="clearSearchHref"
-        :query="search.query"
-        :show-clear="search.active"
-      />
-      <!--
-        领养需要人工沟通，所以在搜索条右侧直接给出联系入口，
-        高度与搜索输入框/搜索按钮一致，视觉上同属一条操作带。
-      -->
-      <PublicAction
-        variant="secondary"
-        class="adoptions-page__contact-action"
-        to="/about#contact"
-        data-testid="adoption-contact-action"
-      >联系我们申请领养</PublicAction>
-    </div>
+    <section class="adoptions-page__tools" aria-label="搜索领养角色">
+      <div class="adoptions-page__tools-panel">
+        <div class="adoptions-page__tools-meta">
+          <span>搜索角色</span>
+          <span v-if="search.active">{{ String(resultCount).padStart(2, '0') }} 项结果</span>
+        </div>
+        <div class="adoptions-page__filters-wrap">
+          <PublicCatalogSearch
+            action="/adoptions"
+            :clear-to="clearSearchHref"
+            :query="search.query"
+            :show-clear="search.active"
+          />
+          <PublicAction
+            variant="primary"
+            class="adoptions-page__contact-action"
+            to="/about#contact"
+            data-testid="adoption-contact-action"
+          >联系我们申请领养</PublicAction>
+        </div>
+      </div>
+    </section>
 
     <div v-if="items.length > 0" class="adoptions-page__content">
-      <ul class="adoptions-page__grid" role="list">
-        <li v-for="adoption in items" :key="adoption.work.id">
-          <AdoptionCard :adoption="adoption" />
+      <ol class="adoptions-page__grid">
+        <li v-for="(adoption, index) in items" :key="adoption.work.id">
+          <AdoptionCard
+            :adoption="adoption"
+            :folio="(page - 1) * pageSize + index + 1"
+          />
         </li>
-      </ul>
+      </ol>
       <PublicPagination
         :page="page"
         :page-count="pageCount"
@@ -140,7 +131,7 @@ function hrefFor(target: number) {
       <PublicAction v-if="search.active" :to="clearSearchHref" variant="secondary">清除搜索</PublicAction>
       <PublicAction v-else to="/works" variant="secondary">浏览作品展示</PublicAction>
     </PublicEmptyState>
-  </div>
+  </main>
 </template>
 
 <style scoped>
@@ -154,57 +145,77 @@ function hrefFor(target: number) {
   padding: 0 var(--public-page-padding) var(--space-7);
 }
 
-.adoptions-page__status-wrap {
+.adoptions-page__tools {
   max-width: var(--public-content-wide);
-  margin: 0 auto var(--space-6);
-  padding: 0 var(--public-page-padding);
+  margin: 0 auto var(--space-3);
+  padding: var(--space-2) var(--public-page-padding);
 }
 
-.adoptions-page__status {
-  padding: var(--space-4) var(--space-5);
-  background: var(--public-bg-secondary);
-  border-radius: var(--radius-md);
+.adoptions-page__tools-panel {
+  width: min(100%, 39rem);
+  margin-left: auto;
+}
+
+.adoptions-page__tools-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-2);
+  color: var(--public-text-secondary);
+  font-family: var(--font-public-mono);
+  font-size: var(--font-size-xs);
 }
 
 .adoptions-page__filters-wrap {
-  display: flex;
-  flex-wrap: wrap;
-  /* 搜索条与联系按钮同属一条操作带：底部对齐保证两者高度一致地并排。 */
-  align-items: flex-start;
-  gap: var(--space-3) var(--space-4);
-  max-width: var(--public-content-wide);
-  margin: 0 auto var(--space-6);
-  padding: 0 var(--public-page-padding);
+  display: grid;
+  grid-template-columns: minmax(18rem, 1fr) auto;
+  align-items: start;
+  gap: var(--space-3);
 }
 
-/*
- * 搜索条收窄，把右侧空间让给联系按钮；两者共用 2.75rem 行高，
- * 与 .catalog-search__input / __submit 一致。
- */
 .adoptions-page__filters-wrap > :deep(.catalog-search) {
-  flex: 0 1 26rem;
-  width: auto;
+  width: 100%;
 }
 
 .adoptions-page__contact-action {
   flex: none;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-base);
 }
 
 .adoptions-page__grid {
   display: grid;
-  gap: var(--space-6);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-@media (min-width: 768px) {
+.adoptions-page__grid > li {
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
   .adoptions-page__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    /* 并排卡片顶端对齐；设定图框已固定比例，文字区不会互相错位。 */
-    align-items: start;
+    column-gap: clamp(2.5rem, 5vw, 5rem);
+  }
+}
+
+@media (max-width: 767px) {
+  .adoptions-page__tools {
+    margin-bottom: var(--space-3);
+  }
+
+  .adoptions-page__filters-wrap {
+    display: grid;
+    gap: var(--space-2);
+    grid-template-columns: 1fr;
+  }
+
+  .adoptions-page__filters-wrap > :deep(.catalog-search) {
+    width: 100%;
+  }
+
+  .adoptions-page__contact-action {
+    justify-self: start;
   }
 }
 </style>

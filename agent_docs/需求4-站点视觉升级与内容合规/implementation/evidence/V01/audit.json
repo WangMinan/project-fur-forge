@@ -1,0 +1,53 @@
+{
+  "capturedAt": "2026-08-23T08:47:49.720Z",
+  "baseURL": "http://127.0.0.1:3000/",
+  "checks": {
+    "keyboard": true,
+    "titleTerminalGeometryStable": true,
+    "touchSwipe": true,
+    "touchTargets": true,
+    "reducedMotionStopsAutoplay": true,
+    "reducedMotionTerminalState": true,
+    "ssrDefaultVisible": true,
+    "noHorizontalOverflow": true,
+    "allImagesDecoded": true
+  },
+  "viewports": {
+    "hero-desktop-1440x900": {
+      "clientWidth": 1440,
+      "scrollWidth": 1425,
+      "heroHeight": 900,
+      "imageDecoded": true,
+      "title": {
+        "height": 108.859375,
+        "width": 705.609375,
+        "x": 359.6875,
+        "y": 651.421875
+      }
+    },
+    "hero-mobile-390x844": {
+      "clientWidth": 390,
+      "scrollWidth": 375,
+      "heroHeight": 844,
+      "imageDecoded": true,
+      "title": {
+        "height": 43.1875,
+        "width": 343,
+        "x": 16,
+        "y": 625.8125
+      }
+    },
+    "hero-mobile-430x932": {
+      "clientWidth": 430,
+      "scrollWidth": 415,
+      "heroHeight": 932,
+      "imageDecoded": true,
+      "title": {
+        "height": 43.1875,
+        "width": 383,
+        "x": 16,
+        "y": 713.8125
+      }
+    }
+  }
+}

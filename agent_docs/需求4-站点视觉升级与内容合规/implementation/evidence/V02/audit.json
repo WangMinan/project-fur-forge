@@ -1,0 +1,68 @@
+{
+  "capturedAt": "2026-08-23T09:03:23.558Z",
+  "viewports": {
+    "commission-desktop-1440x900": {
+      "imageDecoded": true,
+      "imageObjectFit": "cover",
+      "mediaHeight": 611.71435546875,
+      "text": "CUSTOM COMMISSION自设委托委托咨询开放有限开放 先通过站内表单提交。工作室评估后优先使用官方 QQ 私聊沟通。 了解自设委托 提交委托申请",
+      "scrollWidth": 1425,
+      "clientWidth": 1440
+    },
+    "adoption-desktop-1440x900": {
+      "imageDecoded": true,
+      "imageObjectFit": "contain",
+      "mediaHeight": 610.110595703125,
+      "text": "CURRENT ADOPTION设定领养领养信息以页面为准有限开放可领养常规领养测试3 · 幻想兽¥690 浏览设定领养 查看当前角色",
+      "scrollWidth": 1425,
+      "clientWidth": 1440
+    },
+    "commission-mobile-390x844": {
+      "imageDecoded": true,
+      "imageObjectFit": "cover",
+      "mediaHeight": 414.2405700683594,
+      "text": "CUSTOM COMMISSION自设委托委托咨询开放有限开放 先通过站内表单提交。工作室评估后优先使用官方 QQ 私聊沟通。 了解自设委托 提交委托申请",
+      "scrollWidth": 375,
+      "clientWidth": 390
+    },
+    "adoption-mobile-390x844": {
+      "imageDecoded": true,
+      "imageObjectFit": "contain",
+      "mediaHeight": 302.3363037109375,
+      "text": "CURRENT ADOPTION设定领养领养信息以页面为准有限开放可领养常规领养测试3 · 幻想兽¥690 浏览设定领养 查看当前角色",
+      "scrollWidth": 375,
+      "clientWidth": 390
+    },
+    "commission-mobile-430x932": {
+      "imageDecoded": true,
+      "imageObjectFit": "cover",
+      "mediaHeight": 414.24072265625,
+      "text": "CUSTOM COMMISSION自设委托委托咨询开放有限开放 先通过站内表单提交。工作室评估后优先使用官方 QQ 私聊沟通。 了解自设委托 提交委托申请",
+      "scrollWidth": 415,
+      "clientWidth": 430
+    },
+    "adoption-mobile-430x932": {
+      "imageDecoded": true,
+      "imageObjectFit": "contain",
+      "mediaHeight": 302.3380126953125,
+      "text": "CURRENT ADOPTION设定领养领养信息以页面为准有限开放可领养常规领养测试3 · 幻想兽¥690 浏览设定领养 查看当前角色",
+      "scrollWidth": 415,
+      "clientWidth": 430
+    },
+    "commission-page-mobile-390x844": {
+      "imageDecoded": true,
+      "imageObjectFit": "cover",
+      "mediaHeight": 640,
+      "text": "委托咨询开放可通过邮件发送设定图与需求，是否接单及排期以工作室回复为准。全装 · 半装从角色设定出发提交设定图和基本信息后，工作室会先评估是否可接，并优先通过官方 QQ 与你沟通制作方案和报价。提交委托申请查看其他联系方式",
+      "scrollWidth": 375,
+      "clientWidth": 390
+    }
+  },
+  "checks": {
+    "noHorizontalOverflow": true,
+    "allImagesDecoded": true,
+    "adoptionUsesContain": true,
+    "commissionHasActions": true,
+    "adoptionHasIdentityAndActions": true
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "mode": "after",
+  "capturedAt": "2026-08-24T18:08:58.647Z",
+  "routes": {
+    "390x844": {
+      "status": 200,
+      "noHorizontalOverflow": true,
+      "imageCount": 4,
+      "imagesDecoded": true,
+      "fieldColumns": "343px"
+    },
+    "430x932": {
+      "status": 200,
+      "noHorizontalOverflow": true,
+      "imageCount": 4,
+      "imagesDecoded": true,
+      "fieldColumns": "383px"
+    },
+    "768x1024": {
+      "status": 200,
+      "noHorizontalOverflow": true,
+      "imageCount": 4,
+      "imagesDecoded": true,
+      "fieldColumns": "340.5px 340.5px"
+    },
+    "1440x900": {
+      "status": 200,
+      "noHorizontalOverflow": true,
+      "imageCount": 4,
+      "imagesDecoded": true,
+      "fieldColumns": "378.406px 378.406px"
+    }
+  },
+  "states": {
+    "partial": true,
+    "errors": 8,
+    "ready": true,
+    "submitError": true,
+    "success": true,
+    "unavailable": true
+  },
+  "interactions": {
+    "softKeyboard": {
+      "focused": true,
+      "top": 285.375,
+      "bottom": 303.375,
+      "viewport": 500
+    }
+  },
+  "checks": {
+    "allRoutes200": true,
+    "allImagesDecoded": true,
+    "noHorizontalOverflow": true,
+    "desktopFieldColumns": true,
+    "mobileFieldColumn": true,
+    "validationSummary": true,
+    "preview": true,
+    "retainedAfterError": true,
+    "successReceipt": true,
+    "unavailable": true,
+    "softKeyboardSafe": true
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "mode": "after",
+  "capturedAt": "2026-08-23T10:50:02.877Z",
+  "routes": {
+    "about-390x844": {
+      "responseStatus": 200,
+      "status": "complete",
+      "noHorizontalOverflow": true,
+      "channelCount": 2,
+      "imagesDecoded": true
+    },
+    "about-430x932": {
+      "responseStatus": 200,
+      "status": "complete",
+      "noHorizontalOverflow": true,
+      "channelCount": 2,
+      "imagesDecoded": true
+    },
+    "about-768x1024": {
+      "responseStatus": 200,
+      "status": "complete",
+      "noHorizontalOverflow": true,
+      "channelCount": 2,
+      "imagesDecoded": true
+    },
+    "about-1024x900": {
+      "responseStatus": 200,
+      "status": "complete",
+      "noHorizontalOverflow": true,
+      "channelCount": 2,
+      "imagesDecoded": true
+    },
+    "about-1440x900": {
+      "responseStatus": 200,
+      "status": "complete",
+      "noHorizontalOverflow": true,
+      "channelCount": 2,
+      "imagesDecoded": true
+    }
+  },
+  "interactions": {
+    "mobile": {
+      "qrSizes": [
+        {
+          "width": 152,
+          "height": 152,
+          "decoded": true
+        },
+        {
+          "width": 152,
+          "height": 152,
+          "decoded": true
+        }
+      ],
+      "actionTargets": [
+        {
+          "width": 134,
+          "height": 44
+        },
+        {
+          "width": 166.171875,
+          "height": 44
+        },
+        {
+          "width": 120,
+          "height": 44
+        }
+      ],
+      "focusVisible": true
+    },
+    "oneChannel": {
+      "count": 1,
+      "contained": true,
+      "cardWidth": 152
+    },
+    "longAccount": {
+      "contained": true
+    },
+    "anchor": {
+      "path": "/about",
+      "hash": "#contact",
+      "top": 87.859375,
+      "headerBottom": 77
+    },
+    "redirect": {
+      "status": 301,
+      "location": "/about#contact"
+    }
+  },
+  "review": {
+    "mobile": {
+      "responseStatus": 200,
+      "status": "complete",
+      "noHorizontalOverflow": true,
+      "channelCount": 2,
+      "imagesDecoded": true
+    },
+    "tablet": {
+      "responseStatus": 200,
+      "status": "complete",
+      "noHorizontalOverflow": true,
+      "channelCount": 2,
+      "imagesDecoded": true
+    },
+    "desktop": {
+      "responseStatus": 200,
+      "status": "complete",
+      "noHorizontalOverflow": true,
+      "channelCount": 2,
+      "imagesDecoded": true
+    }
+  },
+  "checks": {
+    "allRoutes200": true,
+    "allImagesDecoded": true,
+    "noHorizontalOverflow": true,
+    "qrReadable": true,
+    "actionTargets44": true,
+    "keyboardFocus": true,
+    "oneChannel": true,
+    "longAccount": true,
+    "redirect301": true,
+    "anchorOffset": true
+  }
+}

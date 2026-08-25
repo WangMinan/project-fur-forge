@@ -68,8 +68,9 @@ const displayChannels = computed(() => props.channels.map(channel => ({
 <style scoped>
 .contact-channel-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 9.5rem));
+  justify-content: start;
+  gap: var(--space-4);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -80,10 +81,6 @@ const displayChannels = computed(() => props.channels.map(channel => ({
   min-width: 0;
   gap: var(--space-3);
   align-content: start;
-  padding: var(--space-3);
-  border: 1px solid var(--public-border-secondary);
-  border-radius: var(--radius-sm);
-  background: var(--public-bg-primary);
 }
 
 .contact-channel-grid__heading {
@@ -113,39 +110,25 @@ const displayChannels = computed(() => props.channels.map(channel => ({
   width: 100%;
   height: auto;
   aspect-ratio: 1;
-  border-radius: var(--radius-xs);
-  background: var(--image-placeholder);
+  border-radius: var(--radius-image);
+  background: var(--public-bg-primary);
   object-fit: contain;
 }
 
 .contact-channel-grid__account {
   min-width: 0;
   color: var(--public-text-secondary);
-  font-size: var(--font-size-base);
+  font-family: var(--font-public-mono);
+  font-size: var(--font-size-sm);
   line-height: var(--line-height-normal);
-  text-align: center;
+  text-align: left;
   overflow-wrap: anywhere;
 }
 
 @media (min-width: 768px) {
   .contact-channel-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-4);
-  }
-
-  .contact-channel-grid__item {
-    padding: var(--space-4);
-  }
-}
-
-@media (min-width: 1024px) {
-  .contact-channel-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-4);
-  }
-
-  .contact-channel-grid__item {
-    padding: var(--space-4);
+    grid-template-columns: repeat(auto-fit, 10.5rem);
+    gap: var(--space-6);
   }
 }
 </style>

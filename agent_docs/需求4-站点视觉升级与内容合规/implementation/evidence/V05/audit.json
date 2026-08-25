@@ -1,0 +1,121 @@
+{
+  "capturedAt": "2026-08-23T09:44:24.126Z",
+  "viewports": {
+    "1440x900": {
+      "tokens": {
+        "editorialInk": "#111317",
+        "backgroundType": "#eef0f3",
+        "mediaCanvas": "#ecebf2",
+        "motionFeedback": "120ms",
+        "motionState": "180ms",
+        "motionContent": "420ms",
+        "motionMedia": "720ms"
+      },
+      "media": {
+        "hero": "cover",
+        "featured": "cover",
+        "commission": "cover",
+        "adoption": "contain"
+      },
+      "overflow": true
+    },
+    "390x844": {
+      "tokens": {
+        "editorialInk": "#111317",
+        "backgroundType": "#eef0f3",
+        "mediaCanvas": "#ecebf2",
+        "motionFeedback": "120ms",
+        "motionState": "180ms",
+        "motionContent": "420ms",
+        "motionMedia": "720ms"
+      },
+      "media": {
+        "hero": "cover",
+        "featured": "cover",
+        "commission": "cover",
+        "adoption": "contain"
+      },
+      "overflow": true
+    },
+    "430x932": {
+      "tokens": {
+        "editorialInk": "#111317",
+        "backgroundType": "#eef0f3",
+        "mediaCanvas": "#ecebf2",
+        "motionFeedback": "120ms",
+        "motionState": "180ms",
+        "motionContent": "420ms",
+        "motionMedia": "720ms"
+      },
+      "media": {
+        "hero": "cover",
+        "featured": "cover",
+        "commission": "cover",
+        "adoption": "contain"
+      },
+      "overflow": true
+    }
+  },
+  "mediaRules": {
+    "works": [
+      {
+        "orientation": "portrait",
+        "objectFit": "cover",
+        "ratio": "0.75 / 1"
+      },
+      {
+        "orientation": "portrait",
+        "objectFit": "cover",
+        "ratio": "0.75 / 1"
+      },
+      {
+        "orientation": "portrait",
+        "objectFit": "cover",
+        "ratio": "0.75 / 1"
+      },
+      {
+        "orientation": "landscape",
+        "objectFit": "cover",
+        "ratio": "1.7778 / 1"
+      },
+      {
+        "orientation": "landscape",
+        "objectFit": "cover",
+        "ratio": "1.7778 / 1"
+      },
+      {
+        "orientation": "landscape",
+        "objectFit": "cover",
+        "ratio": "1.7778 / 1"
+      },
+      {
+        "orientation": "portrait",
+        "objectFit": "cover",
+        "ratio": "0.75 / 1"
+      },
+      {
+        "orientation": "portrait",
+        "objectFit": "cover",
+        "ratio": "0.75 / 1"
+      },
+      {
+        "orientation": "portrait",
+        "objectFit": "cover",
+        "ratio": "0.75 / 1"
+      }
+    ],
+    "adoption": {
+      "objectFit": "contain",
+      "canvas": "rgb(236, 235, 242)"
+    }
+  },
+  "checks": {
+    "targetViewports": true,
+    "semanticTokensPresent": true,
+    "motionTokensPresent": true,
+    "homepageMediaRules": true,
+    "catalogPreservesRatios": true,
+    "adoptionUsesCanvasContain": true,
+    "noHorizontalOverflow": true
+  }
+}

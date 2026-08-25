@@ -1,5 +1,7 @@
 # Design Review：阶段 E 动效与首页领养
 
+> **2026-08-23 覆盖审查补充**：当前 `GATE-V00` 只完成 B + M3 Art Direction 选择，不代签全站美术优化。13 个公开路由文件（含 3 个重定向）与全局错误入口已归并为 11 个独立视觉状态；统一作品/领养详情、Commission 内页、Service / Privacy / Licenses、404 / 500、目录/表单/媒体失败状态已分别补入 `V06-F1`、`V07-F1`、`V07-F2`、`V08-F1`。Footer 内容、布局、样式、响应式和交互全部冻结。完整矩阵与 33 张截图见 [`implementation/notes/2026-08-23-PUBLIC-VISUAL-COVERAGE-AUDIT.md`](../implementation/notes/2026-08-23-PUBLIC-VISUAL-COVERAGE-AUDIT.md)。
+
 > 日期：2026-08-20
 >
 > Review 基线：`codex/r4-t04-t21-foundation@fb3dd44` 及同名远端分支
@@ -111,3 +113,272 @@ PLAN 仍要求“页面切换使用统一 token”，SPEC 仍给出通用页面�
 - 移动与平板领养幕当前已能在一屏内看到标题、图片和 caption，可作为桌面压缩后的参考。
 - Hero 横竖素材、10 秒轮播、暂停、页面隐藏暂停与 reduced-motion 基线仍然清楚。
 - 首页真实图片的主角感成立；需要收敛的是控制器权重和 Hero 之后各幕的编辑式构图，而不是推翻摄影优先方向。
+
+## V06-F1 · Unified Work / Adoption Detail Scene Review
+
+日期：2026-08-23
+评审方向：Photography-led Editorial / Media-led Archive Scene。
+
+### Screenshots Captured
+
+| Screenshot | Breakpoint | Description |
+| --- | --- | --- |
+| `.design/screenshots/review-work-detail-mobile-375.png` | 375px Mobile | 统一详情的移动信息与媒体顺序 |
+| `.design/screenshots/review-work-detail-tablet-768.png` | 768px Tablet | 中间断点的身份和媒体节奏 |
+| `.design/screenshots/review-work-detail-desktop-1280.png` | 1280px Desktop | 媒体主列、缩略图与右侧身份列 |
+
+### Summary
+
+详情页已经从普通大图页面收口为清楚的 Archive Scene：桌面摄影先行、身份信息安静承接，移动端改为先确认角色再浏览媒体。混合横竖图使用稳定舞台后切换不再重排，且没有引入灯箱或第二套领养模板。
+
+### Must Fix
+
+无。
+
+### Should Fix
+
+无。缩略图与全站控制器的最终几何统一留给 V10，不在本任务重复处理。
+
+### Could Improve
+
+- V09 可在不改变舞台几何的前提下复核交叉淡化与整站 Media Settle 的节奏。
+- V11 可在真实手机补看超长身份和横竖切换的滚动位置。
+
+### What Works Well
+
+- `contain` 保留横图与竖图的完整性，媒体仍是桌面第一视觉中心。
+- 单图不显示无作用的缩略图，多图缩略图具备 44px 以上目标与明确选中状态。
+- 作品/领养来源、301、404、无图库和无 JavaScript 状态均沿用现有单一业务路径。
+
+## V07 · About / Contact Editorial Information Page Review
+
+日期：2026-08-23
+评审方向：Quiet Editorial Information Page。
+
+### Screenshots Captured
+
+| Screenshot | Breakpoint | Description |
+| --- | --- | --- |
+| `.design/screenshots/review-about-mobile-375.png` | 375px Mobile | 单列信息层级、双列 QR 与行动换行 |
+| `.design/screenshots/review-about-tablet-768.png` | 768px Tablet | 工作室双列与联系信息带 |
+| `.design/screenshots/review-about-desktop-1280.png` | 1280px Desktop | 宽版开场、编辑式两列与安静收尾 |
+
+### Summary
+
+About 已从窄列 CMS 文本页变成安静的编辑式信息页：桌面通过宽版开场、工作室双列、联系/防诈骗信息带形成明确节奏，移动端保持自然单列。QR 从大卡片收为 152px 固定轨道，375/390/430 都能并排两个渠道，且一项渠道不会被拉宽。
+
+### Must Fix
+
+无。
+
+### Should Fix
+
+无。Header、行动与图标的最终全站几何统一留给 V10。
+
+### Could Improve
+
+- V11 在真实手机复核二维码实扫、长号码和中文系统字体差异。
+- 若后台只保留一个渠道，当前固定 152px 左对齐是预期，不扩成大卡。
+
+### What Works Well
+
+- 工作室、制作范围、联系、防诈骗的层级清楚，但没有引入卡片墙、背景大字或装饰动画。
+- 站内申请保持唯一主行动，邮件打开和复制按辅助层级排列，键盘焦点与 44px 目标完整。
+- `/contact` 继续复用 `/about#contact`，目标在粘性 Header 下方可见，没有第二套模板。
+
+## V07-F1 · Commission Service Page Review
+
+日期：2026-08-23
+评审方向：Media-led Service Narrative。
+
+### Screenshots Captured
+
+| Screenshot | Breakpoint | Description |
+| --- | --- | --- |
+| `.design/screenshots/review-commission-mobile-375.png` | 375px Mobile | 竖版 Hero、单列服务信息与双列 QR |
+| `.design/screenshots/review-commission-tablet-768.png` | 768px Tablet | 竖版媒体与完整服务叙事 |
+| `.design/screenshots/review-commission-desktop-1280.png` | 1280px Desktop | 横版 Hero 与 40/60 服务信息列 |
+
+### Summary
+
+委托页已经从摄影开场加窄文字带收口为独立服务叙事：横/竖 Hero 保持摄影第一焦点，营业状态融入媒体，制作范围与估价联系形成明确的事实/说明层级。联系渠道、条款入口与主行动均保持可发现，但不与主视觉竞争。
+
+### Must Fix
+
+无。
+
+### Should Fix
+
+无。Header、行动与图标的最终全站几何统一留给 V10。
+
+### Could Improve
+
+- V11 在真实手机复核二维码实扫、软键盘返回后的滚动位置与系统字体差异。
+- V09 可复核首页到委托页的共享媒体节奏，但不得改变当前布局终态。
+
+### What Works Well
+
+- 横向状态 scrim 在亮色竖图和复杂横图上均保持清晰，同时没有形成圆角悬浮卡片。
+- 390/430/768/1024/1440 均无水平溢出，横竖媒体选择与 focal 保持现有业务路径。
+- 站内申请是唯一主行动，邮件、复制、条款与完整联系说明按任务优先级递减。
+
+## V07-F2 · Legal / Privacy / Licenses Reading System Review
+
+日期：2026-08-23
+评审方向：Quiet Editorial Reading System。
+
+### Screenshots Captured
+
+| Screenshot | Breakpoint | Description |
+| --- | --- | --- |
+| `.design/screenshots/review-service-mobile-375.png` | 375px Mobile | 服务条款目录与编号章节 |
+| `.design/screenshots/review-service-tablet-768.png` | 768px Tablet | 中间断点的长文节奏 |
+| `.design/screenshots/review-service-desktop-1280.png` | 1280px Desktop | Sticky 目录与固定阅读列 |
+| `.design/screenshots/review-privacy-mobile-375.png` | 375px Mobile | 隐私政策目录与长段落 |
+| `.design/screenshots/review-privacy-tablet-768.png` | 768px Tablet | 隐私章节节奏 |
+| `.design/screenshots/review-privacy-desktop-1280.png` | 1280px Desktop | 隐私双列阅读系统 |
+| `.design/screenshots/review-licenses-mobile-375.png` | 375px Mobile | 许可证单列信息 |
+| `.design/screenshots/review-licenses-tablet-768.png` | 768px Tablet | 许可证宽单列扫描 |
+| `.design/screenshots/review-licenses-desktop-1280.png` | 1280px Desktop | 许可证三列信息与下载入口 |
+
+### Summary
+
+服务条款与隐私政策已经从连续普通段落变成可扫描、可链接的长文系统：目录、编号、标题、规则线和固定行长建立清楚阅读节奏。许可证移动端不再因长授权名称形成窄竖正文，原生展开与下载入口保留平台行为并融入相同结构线语言。
+
+### Must Fix
+
+无。
+
+### Should Fix
+
+无。全站 Header、controls 与 focus 几何的最后统一留给 V10。
+
+### Could Improve
+
+- V11 在真实手机复核系统字体下的目录密度与 GPL 内部惯性滚动。
+- 未来只有在后台明确引入非编号文档格式时，才评估更广泛的内容结构；当前不需要 Markdown。
+
+### What Works Well
+
+- 目录完全由现有纯文本标题派生，没有复制或写死法律文字。
+- 390/430/768/1024/1440 与 GPL 展开状态均无水平溢出，章节 hash 让开固定 Header。
+- 许可证移动/平板以单列换取可读性，桌面三列仍保持名称、用途和许可证的快速对照。
+
+## V08-F3 · Direction Reset Bug Acceptance Review
+
+日期：2026-08-24
+评审范围：品牌标题刷新稳定性、Hero 媒体填充、4s 自动轮播；不评审或提前实现 V09 视觉重构。
+
+### Screenshots Captured
+
+| Screenshot | Breakpoint | Description |
+| --- | --- | --- |
+| `implementation/evidence/V08-F3/after/review-home-desktop-1280.png` | 1280×800 Desktop | 首页全页与横版 Hero |
+| `implementation/evidence/V08-F3/after/review-home-tablet-768.png` | 768×1024 Tablet | 首页全页响应式重排 |
+| `implementation/evidence/V08-F3/after/review-home-mobile-375.png` | 375×812 Mobile | 首页竖版 Hero 与完整四幕 |
+| `implementation/evidence/V08-F3/after/review-commission-desktop-1280.png` | 1280×800 Desktop | 委托横版 Hero 与完整内容 |
+| `implementation/evidence/V08-F3/after/review-commission-tablet-768.png` | 768×1024 Tablet | 委托竖版媒体和单列内容 |
+| `implementation/evidence/V08-F3/after/review-commission-mobile-375.png` | 375×812 Mobile | 委托移动端与双列二维码 |
+
+### Summary
+
+三项 bug 范围内未发现阻断项。品牌标题使用已预载的最终字体完成一次性 clip/位移入场，结束后稳定在冻结终态；首页与委托的横竖 Hero 均不再出现衍生图内部补边，且全页截图无水平溢出；轮播在暂停、恢复和 reduced-motion 分支下保持原有能力。
+
+### Must Fix
+
+无。
+
+### Should Fix
+
+无。本轮不把已登记的 V09～V12 scene redesign 提前混入 bug 修复。
+
+### What Works Well
+
+- 像素审计能区分“DOM 已填满”和“图片内部仍有纯色补边”，避免再次误判。
+- 1280/768/375 全页截图中的媒体均已实际解码，移动端使用竖图而非缩小横图。
+- 标题入场与 4s 暂停/恢复均有独立录屏；标题验收同时检查关键字体已加载和动画终态稳定，自动化证据不代签 `GATE-V08-R`。
+
+## V09 · Featured / Hero Responsive Wayfinding Review
+
+日期：2026-08-24
+评审方向：Editorial / Swiss-informed Type × Media；只复核 V09 响应式收口，不进入 V10。
+
+### Screenshots Captured
+
+| Screenshot | Breakpoint | Description |
+| --- | --- | --- |
+| `.design/screenshots/v09-responsive-fix/after/featured-desktop-short-1440x768.png` | 1440×768 Desktop | 宽屏短视口完整 Featured 与 destination rail |
+| `.design/screenshots/v09-responsive-fix/after/featured-desktop-1440x900.png` | 1440×900 Desktop | 标准 Desktop Type × Media 构图 |
+| `.design/screenshots/v09-responsive-fix/after/featured-tablet-768x1024.png` | 768×1024 Tablet | Tablet 场景高度与双项控制 |
+| `.design/screenshots/v09-responsive-fix/after/featured-mobile-375x812.png` | 375×812 Mobile | 最小参考视口完整 Featured scene |
+| `.design/screenshots/v09-responsive-fix/after/featured-mobile-390x844.png` | 390×844 Mobile | 标准 Mobile 首项与下一幕起点 |
+| `.design/screenshots/v09-responsive-fix/after/featured-mobile-430x932.png` | 430×932 Mobile | 宽 Mobile 首项与下一幕起点 |
+| `.design/screenshots/v09-responsive-fix/after/hero-mobile-390x844.png` | 390×844 Mobile | Hero `NEXT ─ SELECTED WORKS` 完整可见 |
+
+### Summary
+
+原实现的语义内容完整，但固定 `39rem` Desktop 舞台会在宽屏短视口把 Featured destination rail 推到屏外；Mobile 的完整 Featured scene 高于参考视口，同时 Hero CSS 直接隐藏了 `NEXT`。修正后六个参考视口均在当前屏内显示完整 Featured 与 destination rail，Hero Mobile 恢复完整 wayfinding；没有删除内容或引入 V13 Motion。
+
+### Must Fix
+
+无。截图与几何审计中的 Featured section、wayfinding、Hero continuation 均位于视口内，无水平溢出。
+
+### Should Fix
+
+无。用户指出的 CTA / switch 拥挤已通过 Desktop 36px 与 Mobile 16px 的明确间隔收口；44px 命中区不变。
+
+### Could Improve
+
+- V13 只在静态构图 Gate 通过后加入切换 Motion，不得以动画重新挤占当前高度预算。
+- V14 可继续统一 Hero/Featured controls 的 hover/focus geometry，但不得缩小 Mobile 命中区。
+
+### What Works Well
+
+- Desktop 通过视口高度约束摄影而不是隐藏 destination rail，`1440×768` 仍保留 Type × Media 的尺度关系。
+- Mobile 缩小的是装饰性背景字和摄影，不删除标题、说明、CTA、双项选择或章节去向。
+- `01 / 02` 与 `02 / 02` 两个真实状态均有截图，较长的第二项标题仍在当前 scene 内完成阅读。
+
+## V10 · Commission Service Scenes Static Review
+
+日期：2026-08-24
+评审方向：Editorial / Swiss-informed Media-led Service Scenes；只评审 V10 静态构图，不进入 V11、V13 Motion 或 V14 UI polish。
+
+### Screenshots Captured
+
+| Screenshot | Breakpoint | Description |
+| --- | --- | --- |
+| `implementation/evidence/V10/after/home-commission-1440x900.png` | 1440×900 Desktop | Homepage Service Docket、媒体下缘信息栏与 Adoption wayfinding |
+| `implementation/evidence/V10/after/home-commission-390x844.png` | 390×844 Mobile | 完整标题、背景字、摄影、服务信息、双行动与 destination rail |
+| `implementation/evidence/V10/after/home-commission-430x932.png` | 430×932 Mobile | 宽 Mobile 完整 Service Docket 与下一幕起点 |
+| `.design/screenshots/v10/after/review-home-commission-2048x1080.png` | 2048×1080 Wide Desktop | 超宽/短高媒体与信息栏硬间距回归 |
+| `implementation/evidence/V10/after/commission-1440x900.png` | 1440×900 Desktop | `/commission` 横版 Hero、三段 Service Ledger 与双列详情 |
+| `implementation/evidence/V10/after/commission-390x844.png` | 390×844 Mobile | 竖版 Hero、单列台账、估价联系与双二维码 |
+| `implementation/evidence/V10/after/commission-430x932.png` | 430×932 Mobile | 宽 Mobile 独立内页构图 |
+| `.design/screenshots/v10/after/review-commission-768x1024.png` | 768×1024 Tablet | Tablet 横竖媒体与内容重排 |
+
+### Summary
+
+Homepage Commission 保留大横图与 editorial wayfinding，但已去掉右下完整白色 UI Card。中文标题恢复为与 Featured 相同的 scene title 尺度；背景 Typography 建立空间场，摄影承担第一媒体焦点，状态、流程和 CTA 沿媒体下缘形成三段 Service Docket。摄影和信息栏现在使用独立网格行：Mobile 最小间距为 12px，Desktop 自动审计下不低于 16px，2048×1080 超宽场景不再出现图片或顶线侵入信息区。
+
+`/commission` 没有复制 Homepage Docket，而是采用 Photographic Service Ledger：宽屏横版摄影、移动竖版摄影之后，身份、营业状态、说明和行动横向/纵向重组；制作范围与估价联系继续使用同一编辑网格，但保持独立长页阅读节奏。已有申请、QQ/Email、QR、服务条款与共享媒体切换均保留。
+
+### Must Fix
+
+无。正式与 Review 视口均为 200，图片完成解码，无水平溢出；媒体/信息不相交，摄影统一为 12px 圆角，内页横竖媒体选择和二维码可读性通过。
+
+### Should Fix
+
+无。用户指出的超宽信息栏重叠和标题尺度不一致已分别通过硬网格间距与共享 scene title 尺度修正。
+
+### Could Improve
+
+- CTA 颜色和全站 controls 几何按用户指示留给 V14；V10 不提前改变 UI token。
+- 真实 Edge 与手机上的最终观感仍由凌巽在 V10 Handoff 后人工验收；自动证据不代签。
+- V13 只有在整个 Static Gate 通过后才可为现有共享媒体切换与 Scene 连续性增加 Motion，不得反向改变本轮静态终态。
+
+### What Works Well
+
+- Homepage 和内页共享摄影圆角、等宽 metadata、细线与 wayfinding，但媒体尺度和信息组织明显不同，没有退回统一模板。
+- 390×844 的 Homepage Commission 能在当前屏内看到标题、摄影、完整服务信息、两个行动和下一幕去向；430px 自然露出 Adoption 开头。
+- 2048×1080、1280×800、768×1024、375×812 与正式三视口均通过 media/body gap、scene fit、wayfinding、decode、overflow 和静态动画审计。
+- `home-commission-media` 的既有平滑共享切换被原样保留；V10 没有把它误记为新业务或新 Motion 功能。

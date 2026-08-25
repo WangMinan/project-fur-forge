@@ -27,8 +27,8 @@
 
 ### 2.2 公开站与业务投影
 
-- `server/utils/repository/public-site-repository.ts`：领养排序、首页单项开放领养投影；不得改变 `/works` 的现有排序语义。
-- `app/pages/adoptions/index.vue`、`HomeCurrentAdoptions.vue`、`AdoptionCard.vue`：消费服务端顺序；首页只完整展示一项，目录继续搜索/分页全部领养。
+- `server/utils/repository/public-site-repository.ts`：领养排序、首页最多三项开放领养投影；不得改变 `/works` 的现有排序语义。
+- `app/pages/adoptions/index.vue`、`HomeCurrentAdoptions.vue`、`AdoptionCard.vue`：消费服务端顺序；首页以一个主角色牌和最多三个真实索引展示最新开放角色，目录继续搜索/分页全部领养。
 - `app/pages/index.vue`、`app/components/Home*`、`Featured*`、`CommissionLead.vue`：首页四幕与图片优先编排。
 - `PublicHeader.vue`、`PublicFooter.vue`、公开行动组件：导航、材料、行动与动效语义。
 
@@ -64,7 +64,7 @@ Apple Design Skill 提供“动作为什么发生、从哪里来、怎样返回�
 - 首页继续只消费一个聚合投影，不为了四幕拆成多组公开请求。
 - 代表作品最多两件且必须有竖版出厂照；首页以左侧双图、右侧说明和唯一目录按钮在一个停靠幕内完整展示，不再拆 lead/次级浏览。
 - 委托幕复用现有 commission entry source/variant。
-- 当前领养只返回或消费排序后的第一件 `available`；无开放项时整幕隐藏。
+- 当前领养返回排序后的前三件 `available`；不足三件时返回真实的一件或两件，无开放项时整幕隐藏。
 - 公开 DTO 不因视觉重构暴露内部 purpose、PII、Object Key、媒体状态或管理版本。
 
 ### 4.2 `/adoptions` 排序
@@ -80,7 +80,7 @@ available → adopted
 
 - 状态分组优先于修改时间，因此刚改为 adopted 的作品不会跑到开放领养之前。
 - 名称搜索在完整有序集合上过滤，过滤后保持相对顺序，再分页。
-- 首页单项领养从同一有序集合中取第一件 `available`，不能维护另一套“最新”口径。
+- 首页领养从同一有序集合中取前三件 `available`，不能维护另一套“最新”口径，也不新增后台手动精选字段。
 - `/works` 继续按其现有公开时间口径，不被此规则覆盖。
 
 ### 4.3 轻量申请确认

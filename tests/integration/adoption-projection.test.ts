@@ -148,6 +148,8 @@ describe('R3-D adoption public projection', () => {
     expect(secondPage.items.map(item => item.work.slug)).toEqual(['adopted-old'])
     expect(firstPage.pageCount).toBe(2)
     expect(firstPage.resultCount).toBe(9)
+    expect(firstPage.availableCount).toBe(7)
+    expect(secondPage.availableCount).toBe(7)
     expect(repository.listAdoptions({ q: '排序角色 9' }).items.map(item => item.work.slug))
       .toEqual(['adopted-old'])
     // /works 仍使用原公开时间 + ID 稳定顺序；最新 adopted 不套用领养 bucket。
@@ -177,6 +179,13 @@ describe('R3-D adoption public projection', () => {
     expect(detail?.media.card.assetId).toBe('33333333-3333-4333-8333-333333333332')
     expect(detail?.media.adoptionCover?.assetId)
       .toBe('33333333-3333-4333-8333-333333333331')
+    expect(detail?.adoption).toEqual({
+      adoptionStatus: 'available',
+      price: {
+        currency: 'CNY',
+        minorUnits: 128_000,
+      },
+    })
     expect(JSON.stringify({ adoption, detail })).not.toContain('/original/')
   })
 
@@ -204,6 +213,7 @@ describe('R3-D adoption public projection', () => {
     expect(detail?.media.adoptionCover?.assetId).toBe(coverId)
     expect(detail?.media.gallery).toEqual([])
     expect(detail?.media.primaryAssetId).toBeNull()
+    expect(detail?.adoption?.adoptionStatus).toBe('available')
     expect(JSON.stringify(detail)).not.toContain('/original/')
   })
 
@@ -246,7 +256,7 @@ describe('R3-D adoption public projection', () => {
     expect(JSON.stringify(detail)).not.toContain('/original/')
   })
 
-  it('keeps adopted works in featured while excluding them from current home adoptions', async () => {
+  it('projects at most the latest three available adoptions while keeping adopted works in featured', async () => {
     await seedCompleteAdoption({
       id: '44444444-4444-4444-8444-444444444440',
       name: '栗子',
@@ -259,20 +269,55 @@ describe('R3-D adoption public projection', () => {
       slug: 'pinecone',
       status: 'adopted',
     })
+    const repository = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
+    expect(repository.getHomeAggregate().currentAdoptions.items.map(item => item.work.slug))
+      .toEqual(['chestnut'])
+
+    await seedCompleteAdoption({
+      id: '66666666-6666-4666-8666-666666666660',
+      name: '薄荷',
+      slug: 'mint',
+      status: 'available',
+    })
+    expect(repository.getHomeAggregate().currentAdoptions.items.map(item => item.work.slug))
+      .toEqual(['chestnut', 'mint'])
+
+    await seedCompleteAdoption({
+      id: '77777777-7777-4777-8777-777777777770',
+      name: '云朵',
+      slug: 'cloud',
+      status: 'available',
+    })
+    await seedCompleteAdoption({
+      id: '88888888-8888-4888-8888-888888888880',
+      name: '星河',
+      slug: 'galaxy',
+      status: 'available',
+    })
+    sqlite.prepare(`
+      UPDATE works
+      SET updated_at = CASE slug
+        WHEN 'chestnut' THEN ?
+        WHEN 'mint' THEN ?
+        WHEN 'cloud' THEN ?
+        WHEN 'galaxy' THEN ?
+        WHEN 'pinecone' THEN ?
+        ELSE updated_at
+      END
+    `).run(NOW + 100, NOW + 400, NOW + 300, NOW + 200, NOW + 1_000)
     sqlite.prepare(`UPDATE works SET featured = 1`).run()
 
-    const repository = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
     const aggregate = repository.getHomeAggregate()
     const serialized = JSON.stringify(aggregate.currentAdoptions)
 
-    expect(aggregate.currentAdoptions.items).toHaveLength(1)
+    expect(aggregate.currentAdoptions.items).toHaveLength(3)
     expect(aggregate.currentAdoptions.items.map(item => item.work.slug))
-      .toEqual(['chestnut'])
+      .toEqual(['mint', 'cloud', 'galaxy'])
     expect(aggregate.currentAdoptions.status).not.toBeUndefined()
     expect(aggregate.featured.items.map(item => item.work.slug))
-      .toEqual(['chestnut', 'pinecone'])
+      .toContain('pinecone')
     expect(repository.listAdoptions().items.map(item => item.work.slug))
-      .toEqual(['chestnut', 'pinecone'])
+      .toEqual(['mint', 'cloud', 'galaxy', 'chestnut', 'pinecone'])
     expect(serialized).not.toContain('adoptionMethod')
     expect(serialized).not.toContain('eventName')
     expect(serialized).not.toContain('eventTime')

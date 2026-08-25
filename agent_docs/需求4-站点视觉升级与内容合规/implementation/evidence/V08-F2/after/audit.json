@@ -1,0 +1,1239 @@
+{
+  "capturedAt": "2026-08-23T15:19:06.262Z",
+  "routes": {
+    "home-390x844": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "有点小狗工作室"
+      ],
+      "footerCount": 1,
+      "imageCount": 7,
+      "decodedImages": 7,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 375,
+      "viewportWidth": 390,
+      "documentHeight": 3190,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 42.239990234375,
+        "height": 42.239990234375
+      }
+    },
+    "works-390x844": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "作品展示"
+      ],
+      "footerCount": 1,
+      "imageCount": 12,
+      "decodedImages": 12,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 375,
+      "viewportWidth": 390,
+      "documentHeight": 4837,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 269,
+        "height": 44
+      }
+    },
+    "adoptions-390x844": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "设定领养"
+      ],
+      "footerCount": 1,
+      "imageCount": 8,
+      "decodedImages": 8,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 375,
+      "viewportWidth": 390,
+      "documentHeight": 2323,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 269,
+        "height": 44
+      }
+    },
+    "work-detail-390x844": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "品牌素材测试 B"
+      ],
+      "footerCount": 1,
+      "imageCount": 9,
+      "decodedImages": 9,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 375,
+      "viewportWidth": 390,
+      "documentHeight": 1267,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 106,
+        "height": 44
+      }
+    },
+    "commission-390x844": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "自设委托"
+      ],
+      "footerCount": 1,
+      "imageCount": 8,
+      "decodedImages": 8,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 375,
+      "viewportWidth": 390,
+      "documentHeight": 2246,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 134,
+        "height": 44
+      }
+    },
+    "commission-apply-390x844": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "提交委托申请"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 375,
+      "viewportWidth": 390,
+      "documentHeight": 2095,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 343,
+        "height": 44
+      }
+    },
+    "about-390x844": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "关于我们"
+      ],
+      "footerCount": 1,
+      "imageCount": 7,
+      "decodedImages": 7,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 375,
+      "viewportWidth": 390,
+      "documentHeight": 1761,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 134,
+        "height": 44
+      }
+    },
+    "service-390x844": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "服务条款"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 375,
+      "viewportWidth": 390,
+      "documentHeight": 5271,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 165.5,
+        "height": 44
+      }
+    },
+    "privacy-390x844": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "隐私政策"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 375,
+      "viewportWidth": 390,
+      "documentHeight": 4371,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 165.5,
+        "height": 44
+      }
+    },
+    "licenses-390x844": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "开源软件声明"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 375,
+      "viewportWidth": 390,
+      "documentHeight": 1787,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 317,
+        "height": 44
+      }
+    },
+    "not-found-390x844": {
+      "expectedStatus": 404,
+      "responseStatus": 404,
+      "h1": [
+        "页面未找到"
+      ],
+      "footerCount": 0,
+      "imageCount": 0,
+      "decodedImages": 0,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 375,
+      "viewportWidth": 390,
+      "documentHeight": 844,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 106,
+        "height": 44
+      }
+    },
+    "home-430x932": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "有点小狗工作室"
+      ],
+      "footerCount": 1,
+      "imageCount": 7,
+      "decodedImages": 7,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 415,
+      "viewportWidth": 430,
+      "documentHeight": 3283,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 42.239990234375,
+        "height": 42.239990234375
+      }
+    },
+    "works-430x932": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "作品展示"
+      ],
+      "footerCount": 1,
+      "imageCount": 12,
+      "decodedImages": 12,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 415,
+      "viewportWidth": 430,
+      "documentHeight": 5206,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 309,
+        "height": 44
+      }
+    },
+    "adoptions-430x932": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "设定领养"
+      ],
+      "footerCount": 1,
+      "imageCount": 8,
+      "decodedImages": 8,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 415,
+      "viewportWidth": 430,
+      "documentHeight": 2417,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 309,
+        "height": 44
+      }
+    },
+    "work-detail-430x932": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "品牌素材测试 B"
+      ],
+      "footerCount": 1,
+      "imageCount": 9,
+      "decodedImages": 9,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 415,
+      "viewportWidth": 430,
+      "documentHeight": 1269,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 106,
+        "height": 44
+      }
+    },
+    "commission-430x932": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "自设委托"
+      ],
+      "footerCount": 1,
+      "imageCount": 8,
+      "decodedImages": 8,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 415,
+      "viewportWidth": 430,
+      "documentHeight": 2175,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 134,
+        "height": 44
+      }
+    },
+    "commission-apply-430x932": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "提交委托申请"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 415,
+      "viewportWidth": 430,
+      "documentHeight": 2041,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 383,
+        "height": 44
+      }
+    },
+    "about-430x932": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "关于我们"
+      ],
+      "footerCount": 1,
+      "imageCount": 7,
+      "decodedImages": 7,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 415,
+      "viewportWidth": 430,
+      "documentHeight": 1715,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 134,
+        "height": 44
+      }
+    },
+    "service-430x932": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "服务条款"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 415,
+      "viewportWidth": 430,
+      "documentHeight": 5070,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 185.5,
+        "height": 44
+      }
+    },
+    "privacy-430x932": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "隐私政策"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 415,
+      "viewportWidth": 430,
+      "documentHeight": 4109,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 185.5,
+        "height": 44
+      }
+    },
+    "licenses-430x932": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "开源软件声明"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 415,
+      "viewportWidth": 430,
+      "documentHeight": 1675,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 357,
+        "height": 44
+      }
+    },
+    "not-found-430x932": {
+      "expectedStatus": 404,
+      "responseStatus": 404,
+      "h1": [
+        "页面未找到"
+      ],
+      "footerCount": 0,
+      "imageCount": 0,
+      "decodedImages": 0,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 415,
+      "viewportWidth": 430,
+      "documentHeight": 932,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 106,
+        "height": 44
+      }
+    },
+    "home-768x1024": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "有点小狗工作室"
+      ],
+      "footerCount": 1,
+      "imageCount": 7,
+      "decodedImages": 7,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 753,
+      "viewportWidth": 768,
+      "documentHeight": 3684,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 42.239990234375,
+        "height": 42.239990234375
+      }
+    },
+    "works-768x1024": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "作品展示"
+      ],
+      "footerCount": 1,
+      "imageCount": 12,
+      "decodedImages": 12,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 753,
+      "viewportWidth": 768,
+      "documentHeight": 2581,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 623,
+        "height": 44
+      }
+    },
+    "adoptions-768x1024": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "设定领养"
+      ],
+      "footerCount": 1,
+      "imageCount": 8,
+      "decodedImages": 8,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 753,
+      "viewportWidth": 768,
+      "documentHeight": 1598,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 334,
+        "height": 44
+      }
+    },
+    "work-detail-768x1024": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "品牌素材测试 B"
+      ],
+      "footerCount": 1,
+      "imageCount": 9,
+      "decodedImages": 9,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 753,
+      "viewportWidth": 768,
+      "documentHeight": 1270,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 106,
+        "height": 44
+      }
+    },
+    "commission-768x1024": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "自设委托"
+      ],
+      "footerCount": 1,
+      "imageCount": 8,
+      "decodedImages": 8,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 753,
+      "viewportWidth": 768,
+      "documentHeight": 1882,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 134,
+        "height": 44
+      }
+    },
+    "commission-apply-768x1024": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "提交委托申请"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 753,
+      "viewportWidth": 768,
+      "documentHeight": 1743,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 340.5,
+        "height": 44
+      }
+    },
+    "about-768x1024": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "关于我们"
+      ],
+      "footerCount": 1,
+      "imageCount": 7,
+      "decodedImages": 7,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 753,
+      "viewportWidth": 768,
+      "documentHeight": 1327,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 134,
+        "height": 44
+      }
+    },
+    "service-768x1024": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "服务条款"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 753,
+      "viewportWidth": 768,
+      "documentHeight": 3949,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 346.5,
+        "height": 44
+      }
+    },
+    "privacy-768x1024": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "隐私政策"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 753,
+      "viewportWidth": 768,
+      "documentHeight": 3353,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 346.5,
+        "height": 44
+      }
+    },
+    "licenses-768x1024": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "开源软件声明"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 753,
+      "viewportWidth": 768,
+      "documentHeight": 1472,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 679,
+        "height": 44
+      }
+    },
+    "not-found-768x1024": {
+      "expectedStatus": 404,
+      "responseStatus": 404,
+      "h1": [
+        "页面未找到"
+      ],
+      "footerCount": 0,
+      "imageCount": 0,
+      "decodedImages": 0,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 753,
+      "viewportWidth": 768,
+      "documentHeight": 1024,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 106,
+        "height": 44
+      }
+    },
+    "home-1024x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "有点小狗工作室"
+      ],
+      "footerCount": 1,
+      "imageCount": 7,
+      "decodedImages": 7,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1009,
+      "viewportWidth": 1024,
+      "documentHeight": 3596,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 42.239990234375,
+        "height": 42.239990234375
+      }
+    },
+    "works-1024x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "作品展示"
+      ],
+      "footerCount": 1,
+      "imageCount": 12,
+      "decodedImages": 12,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1009,
+      "viewportWidth": 1024,
+      "documentHeight": 2943,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 845.09375,
+        "height": 44
+      }
+    },
+    "adoptions-1024x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "设定领养"
+      ],
+      "footerCount": 1,
+      "imageCount": 8,
+      "decodedImages": 8,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1009,
+      "viewportWidth": 1024,
+      "documentHeight": 1755,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 334,
+        "height": 44
+      }
+    },
+    "work-detail-1024x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "品牌素材测试 B"
+      ],
+      "footerCount": 1,
+      "imageCount": 9,
+      "decodedImages": 9,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1009,
+      "viewportWidth": 1024,
+      "documentHeight": 1069,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 106,
+        "height": 44
+      }
+    },
+    "commission-1024x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "自设委托"
+      ],
+      "footerCount": 1,
+      "imageCount": 8,
+      "decodedImages": 8,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1009,
+      "viewportWidth": 1024,
+      "documentHeight": 1747,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 134,
+        "height": 44
+      }
+    },
+    "commission-apply-1024x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "提交委托申请"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1009,
+      "viewportWidth": 1024,
+      "documentHeight": 1812,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 395.046875,
+        "height": 44
+      }
+    },
+    "about-1024x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "关于我们"
+      ],
+      "footerCount": 1,
+      "imageCount": 7,
+      "decodedImages": 7,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1009,
+      "viewportWidth": 1024,
+      "documentHeight": 1364,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 134,
+        "height": 44
+      }
+    },
+    "service-1024x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "服务条款"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1009,
+      "viewportWidth": 1024,
+      "documentHeight": 3837,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 256,
+        "height": 44
+      }
+    },
+    "privacy-1024x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "隐私政策"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1009,
+      "viewportWidth": 1024,
+      "documentHeight": 3168,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 256,
+        "height": 44
+      }
+    },
+    "licenses-1024x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "开源软件声明"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1009,
+      "viewportWidth": 1024,
+      "documentHeight": 1314,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 724.09375,
+        "height": 44
+      }
+    },
+    "not-found-1024x900": {
+      "expectedStatus": 404,
+      "responseStatus": 404,
+      "h1": [
+        "页面未找到"
+      ],
+      "footerCount": 0,
+      "imageCount": 0,
+      "decodedImages": 0,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1009,
+      "viewportWidth": 1024,
+      "documentHeight": 900,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 106,
+        "height": 44
+      }
+    },
+    "home-1440x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "有点小狗工作室"
+      ],
+      "footerCount": 1,
+      "imageCount": 7,
+      "decodedImages": 7,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1425,
+      "viewportWidth": 1440,
+      "documentHeight": 3478,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 42.239990234375,
+        "height": 42.239990234375
+      }
+    },
+    "works-1440x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "作品展示"
+      ],
+      "footerCount": 1,
+      "imageCount": 12,
+      "decodedImages": 12,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1425,
+      "viewportWidth": 1440,
+      "documentHeight": 2444,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 1227.8125,
+        "height": 44
+      }
+    },
+    "adoptions-1440x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "设定领养"
+      ],
+      "footerCount": 1,
+      "imageCount": 8,
+      "decodedImages": 8,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1425,
+      "viewportWidth": 1440,
+      "documentHeight": 1975,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 334,
+        "height": 44
+      }
+    },
+    "work-detail-1440x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "品牌素材测试 B"
+      ],
+      "footerCount": 1,
+      "imageCount": 9,
+      "decodedImages": 9,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1425,
+      "viewportWidth": 1440,
+      "documentHeight": 951,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 106,
+        "height": 44
+      }
+    },
+    "commission-1440x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "自设委托"
+      ],
+      "footerCount": 1,
+      "imageCount": 8,
+      "decodedImages": 8,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1425,
+      "viewportWidth": 1440,
+      "documentHeight": 1736,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 134,
+        "height": 44
+      }
+    },
+    "commission-apply-1440x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "提交委托申请"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1425,
+      "viewportWidth": 1440,
+      "documentHeight": 1703,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 378.40625,
+        "height": 44
+      }
+    },
+    "about-1440x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "关于我们"
+      ],
+      "footerCount": 1,
+      "imageCount": 7,
+      "decodedImages": 7,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1425,
+      "viewportWidth": 1440,
+      "documentHeight": 1236,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 134,
+        "height": 44
+      }
+    },
+    "service-1440x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "服务条款"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1425,
+      "viewportWidth": 1440,
+      "documentHeight": 3500,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 256,
+        "height": 44
+      }
+    },
+    "privacy-1440x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "隐私政策"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1425,
+      "viewportWidth": 1440,
+      "documentHeight": 2945,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 256,
+        "height": 44
+      }
+    },
+    "licenses-1440x900": {
+      "expectedStatus": 200,
+      "responseStatus": 200,
+      "h1": [
+        "开源软件声明"
+      ],
+      "footerCount": 1,
+      "imageCount": 3,
+      "decodedImages": 3,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1425,
+      "viewportWidth": 1440,
+      "documentHeight": 1266,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 690.8125,
+        "height": 44
+      }
+    },
+    "not-found-1440x900": {
+      "expectedStatus": 404,
+      "responseStatus": 404,
+      "h1": [
+        "页面未找到"
+      ],
+      "footerCount": 0,
+      "imageCount": 0,
+      "decodedImages": 0,
+      "unresolvedImages": 0,
+      "fallbackCount": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1425,
+      "viewportWidth": 1440,
+      "documentHeight": 900,
+      "focusVisible": true,
+      "focusTarget": {
+        "width": 106,
+        "height": 44
+      }
+    }
+  },
+  "reducedMotion": {
+    "home": {
+      "matches": true,
+      "runningAnimations": 0
+    },
+    "works": {
+      "matches": true,
+      "runningAnimations": 0
+    },
+    "adoptions": {
+      "matches": true,
+      "runningAnimations": 0
+    },
+    "work-detail": {
+      "matches": true,
+      "runningAnimations": 0
+    },
+    "commission": {
+      "matches": true,
+      "runningAnimations": 0
+    },
+    "commission-apply": {
+      "matches": true,
+      "runningAnimations": 0
+    },
+    "about": {
+      "matches": true,
+      "runningAnimations": 0
+    },
+    "service": {
+      "matches": true,
+      "runningAnimations": 0
+    },
+    "privacy": {
+      "matches": true,
+      "runningAnimations": 0
+    },
+    "licenses": {
+      "matches": true,
+      "runningAnimations": 0
+    },
+    "not-found": {
+      "matches": true,
+      "runningAnimations": 0
+    }
+  },
+  "redirects": {
+    "contact": {
+      "status": 301,
+      "location": "/about#contact",
+      "expectedLocation": "/about#contact"
+    },
+    "terms": {
+      "status": 301,
+      "location": "/service",
+      "expectedLocation": "/service"
+    },
+    "adoption-detail": {
+      "status": 301,
+      "location": "/works/adoption-green-dog-test",
+      "expectedLocation": "/works/adoption-green-dog-test"
+    }
+  },
+  "interactions": {
+    "touchHomeToWorks": "/works",
+    "touchWorksToDetail": "/works/brand-assets-c"
+  },
+  "checks": {
+    "completeCoverage": true,
+    "expectedStatuses": true,
+    "headingsPresent": true,
+    "noHorizontalOverflow": true,
+    "noUnresolvedImages": true,
+    "regularPagesHaveOneFooter": true,
+    "keyboardFocus": true,
+    "reducedMotion": true,
+    "redirects": true,
+    "touch": true
+  }
+}

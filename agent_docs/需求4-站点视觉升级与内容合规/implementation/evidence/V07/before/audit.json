@@ -1,0 +1,42 @@
+{
+  "mode": "before",
+  "capturedAt": "2026-08-23T10:43:37.483Z",
+  "routes": {
+    "about-390x844": {
+      "responseStatus": 200,
+      "status": "complete",
+      "noHorizontalOverflow": true,
+      "channelCount": 2,
+      "imagesDecoded": true
+    },
+    "about-430x932": {
+      "responseStatus": 200,
+      "status": "complete",
+      "noHorizontalOverflow": true,
+      "channelCount": 2,
+      "imagesDecoded": true
+    },
+    "about-768x1024": {
+      "responseStatus": 200,
+      "status": "complete",
+      "noHorizontalOverflow": true,
+      "channelCount": 2,
+      "imagesDecoded": true
+    },
+    "about-1024x900": {
+      "responseStatus": 200,
+      "status": "complete",
+      "noHorizontalOverflow": true,
+      "channelCount": 2,
+      "imagesDecoded": true
+    },
+    "about-1440x900": {
+      "responseStatus": 200,
+      "status": "complete",
+      "noHorizontalOverflow": true,
+      "channelCount": 2,
+      "imagesDecoded": true
+    }
+  },
+  "interactions": {}
+}

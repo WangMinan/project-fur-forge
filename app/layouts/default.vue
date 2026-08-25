@@ -62,12 +62,17 @@ useHead(() => ({
 
 <style scoped>
 .public-layout {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
+  min-height: 100svh;
   color: var(--public-text-primary);
   background: var(--public-bg-primary);
 }
 
 .public-layout__content {
+  flex: 1 0 auto;
+  width: 100%;
   min-height: 60vh;
 }
 </style>

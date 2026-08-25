@@ -1,0 +1,98 @@
+{
+  "capturedAt": "2026-08-23T09:24:57.717Z",
+  "viewports": {
+    "featured-desktop-1440x900": {
+      "imageCount": 1,
+      "allImagesDecoded": true,
+      "imageAspectRatios": [
+        "360:480"
+      ],
+      "displayTransform": "none",
+      "displayAnimation": "none",
+      "actionCount": 1,
+      "hasControls": false,
+      "hasIdentityText": false,
+      "scrollWidth": 1425,
+      "clientWidth": 1440,
+      "text": "SELECTEDWORKSSELECTED WORKS代表作品 更多角色与制作细节，请前往完整作品展示。 浏览作品展示"
+    },
+    "featured-mobile-390x844": {
+      "imageCount": 1,
+      "allImagesDecoded": true,
+      "imageAspectRatios": [
+        "179:239"
+      ],
+      "displayTransform": "none",
+      "displayAnimation": "none",
+      "actionCount": 1,
+      "hasControls": false,
+      "hasIdentityText": false,
+      "scrollWidth": 375,
+      "clientWidth": 390,
+      "text": "SELECTEDWORKSSELECTED WORKS代表作品 更多角色与制作细节，请前往完整作品展示。 浏览作品展示"
+    },
+    "featured-mobile-430x932": {
+      "imageCount": 1,
+      "allImagesDecoded": true,
+      "imageAspectRatios": [
+        "197:263"
+      ],
+      "displayTransform": "none",
+      "displayAnimation": "none",
+      "actionCount": 1,
+      "hasControls": false,
+      "hasIdentityText": false,
+      "scrollWidth": 415,
+      "clientWidth": 430,
+      "text": "SELECTEDWORKSSELECTED WORKS代表作品 更多角色与制作细节，请前往完整作品展示。 浏览作品展示"
+    }
+  },
+  "navigation": {
+    "wheel": {
+      "afterFirstWheel": {
+        "featuredTop": 72,
+        "commissionTop": 900,
+        "activeSection": "featured-works"
+      },
+      "afterSecondWheel": {
+        "featuredTop": -756,
+        "commissionTop": 72,
+        "activeSection": "home-business-entries"
+      },
+      "afterReverseWheel": {
+        "featuredTop": 72,
+        "commissionTop": 900,
+        "activeSection": "featured-works"
+      }
+    },
+    "directRoute": {
+      "pathname": "/works/return-xiapian",
+      "query": "?view=home-featured"
+    },
+    "keyboardRoute": {
+      "pathname": "/works/return-xiapian",
+      "query": "?view=home-featured"
+    }
+  },
+  "reducedMotion": {
+    "mediaTransforms": [
+      "none"
+    ],
+    "displayTransform": "none"
+  },
+  "checks": {
+    "targetViewports": true,
+    "twoOrFewerImages": true,
+    "allImagesDecoded": true,
+    "staticBackgroundType": true,
+    "singleDirectoryAction": true,
+    "noPrototypeControls": true,
+    "noIdentityCopy": true,
+    "noHorizontalOverflow": true,
+    "directRoute": true,
+    "stagedWheel": true,
+    "reverseWheel": true,
+    "keyboardRoute": true,
+    "reducedMotionStatic": true
+  }
+}

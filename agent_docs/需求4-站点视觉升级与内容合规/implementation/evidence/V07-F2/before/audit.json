@@ -1,0 +1,262 @@
+{
+  "mode": "before",
+  "capturedAt": "2026-08-23T11:15:25.639Z",
+  "routes": {
+    "service-390x844": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "服务条款"
+        }
+      ]
+    },
+    "privacy-390x844": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "隐私政策"
+        }
+      ]
+    },
+    "licenses-390x844": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "开源软件声明"
+        },
+        {
+          "id": "license-ffmpeg",
+          "level": "H2",
+          "text": "FFmpeg"
+        },
+        {
+          "id": "",
+          "level": "H2",
+          "text": "第三方字体与授权资产"
+        },
+        {
+          "id": "",
+          "level": "H2",
+          "text": "npm 生产依赖声明"
+        }
+      ]
+    },
+    "service-430x932": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "服务条款"
+        }
+      ]
+    },
+    "privacy-430x932": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "隐私政策"
+        }
+      ]
+    },
+    "licenses-430x932": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "开源软件声明"
+        },
+        {
+          "id": "license-ffmpeg",
+          "level": "H2",
+          "text": "FFmpeg"
+        },
+        {
+          "id": "",
+          "level": "H2",
+          "text": "第三方字体与授权资产"
+        },
+        {
+          "id": "",
+          "level": "H2",
+          "text": "npm 生产依赖声明"
+        }
+      ]
+    },
+    "service-768x1024": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "服务条款"
+        }
+      ]
+    },
+    "privacy-768x1024": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "隐私政策"
+        }
+      ]
+    },
+    "licenses-768x1024": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "开源软件声明"
+        },
+        {
+          "id": "license-ffmpeg",
+          "level": "H2",
+          "text": "FFmpeg"
+        },
+        {
+          "id": "",
+          "level": "H2",
+          "text": "第三方字体与授权资产"
+        },
+        {
+          "id": "",
+          "level": "H2",
+          "text": "npm 生产依赖声明"
+        }
+      ]
+    },
+    "service-1024x900": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "服务条款"
+        }
+      ]
+    },
+    "privacy-1024x900": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "隐私政策"
+        }
+      ]
+    },
+    "licenses-1024x900": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "开源软件声明"
+        },
+        {
+          "id": "license-ffmpeg",
+          "level": "H2",
+          "text": "FFmpeg"
+        },
+        {
+          "id": "",
+          "level": "H2",
+          "text": "第三方字体与授权资产"
+        },
+        {
+          "id": "",
+          "level": "H2",
+          "text": "npm 生产依赖声明"
+        }
+      ]
+    },
+    "service-1440x900": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "服务条款"
+        }
+      ]
+    },
+    "privacy-1440x900": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "隐私政策"
+        }
+      ]
+    },
+    "licenses-1440x900": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "开源软件声明"
+        },
+        {
+          "id": "license-ffmpeg",
+          "level": "H2",
+          "text": "FFmpeg"
+        },
+        {
+          "id": "",
+          "level": "H2",
+          "text": "第三方字体与授权资产"
+        },
+        {
+          "id": "",
+          "level": "H2",
+          "text": "npm 生产依赖声明"
+        }
+      ]
+    }
+  },
+  "interactions": {}
+}

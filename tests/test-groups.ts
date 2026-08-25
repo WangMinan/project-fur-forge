@@ -28,6 +28,7 @@ export const coreTestFiles = [
   'tests/unit/router-scroll-behavior.test.ts',
   'tests/unit/runtime-boundaries.test.ts',
   'tests/unit/search.test.ts',
+  'tests/unit/site-content.test.ts',
   'tests/unit/site-display-recipe.test.ts',
   'tests/unit/third-party-notices.test.ts',
   'tests/unit/work-form.test.ts',

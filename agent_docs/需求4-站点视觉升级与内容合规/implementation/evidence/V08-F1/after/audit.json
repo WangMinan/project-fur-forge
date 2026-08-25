@@ -1,0 +1,115 @@
+{
+  "capturedAt": "2026-08-23T15:08:09.375Z",
+  "routes": {
+    "404-390x844": {
+      "status": 404,
+      "title": "页面未找到",
+      "noHorizontalOverflow": true,
+      "scrollWidth": 375,
+      "viewportWidth": 390
+    },
+    "works-no-match-390x844": {
+      "status": 200,
+      "title": "没有找到这个设定",
+      "noHorizontalOverflow": true,
+      "scrollWidth": 375,
+      "viewportWidth": 390
+    },
+    "404-430x932": {
+      "status": 404,
+      "title": "页面未找到",
+      "noHorizontalOverflow": true,
+      "scrollWidth": 415,
+      "viewportWidth": 430
+    },
+    "works-no-match-430x932": {
+      "status": 200,
+      "title": "没有找到这个设定",
+      "noHorizontalOverflow": true,
+      "scrollWidth": 415,
+      "viewportWidth": 430
+    },
+    "404-768x1024": {
+      "status": 404,
+      "title": "页面未找到",
+      "noHorizontalOverflow": true,
+      "scrollWidth": 753,
+      "viewportWidth": 768
+    },
+    "works-no-match-768x1024": {
+      "status": 200,
+      "title": "没有找到这个设定",
+      "noHorizontalOverflow": true,
+      "scrollWidth": 753,
+      "viewportWidth": 768
+    },
+    "404-1024x900": {
+      "status": 404,
+      "title": "页面未找到",
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1009,
+      "viewportWidth": 1024
+    },
+    "works-no-match-1024x900": {
+      "status": 200,
+      "title": "没有找到这个设定",
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1009,
+      "viewportWidth": 1024
+    },
+    "404-1440x900": {
+      "status": 404,
+      "title": "页面未找到",
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1425,
+      "viewportWidth": 1440
+    },
+    "works-no-match-1440x900": {
+      "status": 200,
+      "title": "没有找到这个设定",
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1425,
+      "viewportWidth": 1440
+    },
+    "mediaFailure": {
+      "failedPictures": 3,
+      "fallbackText": " 图片暂时无法显示：小狗竖版轮播图一",
+      "noHorizontalOverflow": true,
+      "scrollWidth": 375,
+      "viewportWidth": 390
+    },
+    "noJavaScript": {
+      "images": 9,
+      "fallbackVisible": 0,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 375,
+      "viewportWidth": 390
+    }
+  },
+  "interactions": {
+    "keyboard": {
+      "focusVisible": true,
+      "target": {
+        "width": 106,
+        "height": 44
+      }
+    },
+    "touch": {
+      "returnHome": true
+    },
+    "reducedMotion": {
+      "matches": true,
+      "runningAnimations": 0
+    }
+  },
+  "checks": {
+    "errorsAre404": true,
+    "noMatch": true,
+    "noOverflow": true,
+    "keyboard": true,
+    "touch": true,
+    "mediaFailure": true,
+    "noJavaScript": true,
+    "reducedMotion": true
+  }
+}

@@ -52,6 +52,10 @@ export const publicWorkSummaryDtoSchema = z.object({
 export const publicWorkDetailDtoSchema = z.object({
   work: publicWorkDtoSchema,
   href: z.string().regex(/^\/works\/[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  adoption: publicAdoptionWorkDtoSchema.pick({
+    adoptionStatus: true,
+    price: true,
+  }).optional(),
   media: z.object({
     primaryAssetId: resourceIdSchema.nullable(),
     card: publicWorkCardDtoSchema,
@@ -106,6 +110,7 @@ export const publicAdoptionListQuerySchema = z.object({
 
 export const publicAdoptionListDtoSchema = z.object({
   items: z.array(publicAdoptionListItemDtoSchema),
+  availableCount: z.number().int().nonnegative(),
   resultCount: z.number().int().nonnegative(),
   page: z.number().int().min(1),
   pageSize: z.literal(PUBLIC_ADOPTIONS_PAGE_SIZE),
