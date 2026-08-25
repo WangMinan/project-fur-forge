@@ -22,60 +22,27 @@ useHead(() => ({
 </script>
 
 <template>
-  <main class="error-page">
-    <p class="error-page__code">
-      {{ statusCode }}
-    </p>
-    <h1 class="error-page__title">
-      {{ title }}
-    </h1>
-    <p class="error-page__description">
-      {{ description }}
-    </p>
-    <a
-      class="error-page__link"
+  <main class="error-page" data-testid="public-error-page">
+    <PublicEmptyState
+      :eyebrow="String(statusCode)"
+      :title="title"
+      :description="description"
+      heading="h1"
+    >
+      <PublicAction
       href="/"
       @click.prevent="clearError({ redirect: '/' })"
-    >
-      返回首页
-    </a>
+      >返回首页</PublicAction>
+    </PublicEmptyState>
   </main>
 </template>
 
 <style scoped>
 .error-page {
   display: grid;
-  min-height: 100vh;
-  padding: 2rem;
-  color: var(--public-text-primary);
+  min-height: 100svh;
+  padding: var(--public-page-padding);
   background: var(--public-bg-primary);
   place-content: center;
-  justify-items: start;
-}
-
-.error-page__code {
-  color: var(--public-accent-primary);
-  font-size: var(--font-size-sm);
-  letter-spacing: var(--letter-spacing-label);
-}
-
-.error-page__title {
-  margin-top: var(--space-2);
-  font-family: var(--font-public-display);
-  font-size: var(--font-size-xl);
-  line-height: var(--line-height-heading);
-}
-
-.error-page__description {
-  max-width: 32rem;
-  margin-top: var(--space-3);
-  color: var(--public-text-secondary);
-  line-height: var(--line-height-relaxed);
-}
-
-.error-page__link {
-  margin-top: var(--space-5);
-  color: var(--public-text-link);
-  text-underline-offset: 0.25em;
 }
 </style>

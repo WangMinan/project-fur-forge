@@ -71,11 +71,18 @@ function hrefFor(target: number) {
 </script>
 
 <template>
-  <div class="public-page">
-    <PublicPageIntro title="作品展示" />
+  <main class="works-page">
+    <header class="works-page__intro">
+      <span class="works-page__background-type" aria-hidden="true">WORKS</span>
+      <div class="works-page__identity">
+        <h1>作品展示</h1>
+        <p>查看工作室已公开的角色作品与设定。</p>
+      </div>
 
-    <div class="public-container works-page">
       <div class="works-page__toolbar">
+        <span v-if="search.active" class="works-page__result-count">
+          {{ String(resultCount).padStart(2, '0') }} 项结果
+        </span>
         <PublicCatalogSearch
           action="/works"
           :clear-to="clearSearchHref"
@@ -83,17 +90,19 @@ function hrefFor(target: number) {
           :show-clear="search.active"
         />
       </div>
+    </header>
 
+    <div class="works-page__content">
       <template v-if="items.length > 0">
         <ul class="works-grid">
           <li
             v-for="work in items"
             :key="work.work.id"
-            :class="`works-grid__item works-grid__item--${work.cardOrientation}`"
+            class="works-grid__item"
           >
             <WorkCard
               :work="work"
-              sizes="(min-width: 1024px) 30vw, (min-width: 768px) 45vw, 100vw"
+              sizes="(min-width: 1024px) 23vw, (min-width: 768px) 31vw, 48vw"
             />
           </li>
         </ul>
@@ -105,140 +114,141 @@ function hrefFor(target: number) {
         />
       </template>
 
-      <div v-else-if="emptyKind === 'out-of-range'" class="works-empty">
-        <p class="works-empty__title">这一页没有作品</p>
-        <PublicAction :to="hrefFor(1)" variant="secondary" class="works-empty__reset">
+      <PublicEmptyState v-else-if="emptyKind === 'out-of-range'" title="这一页没有作品">
+        <PublicAction :to="hrefFor(1)" variant="secondary">
           回到第一页
         </PublicAction>
-      </div>
+      </PublicEmptyState>
 
-      <div v-else-if="emptyKind === 'no-works'" class="works-empty">
-        <p class="works-empty__title">作品正在整理中。</p>
-      </div>
+      <PublicEmptyState v-else-if="emptyKind === 'no-works'" title="作品正在整理中。" />
 
-      <div v-else-if="emptyKind === 'invalid-search'" class="works-empty">
-        <p class="works-empty__title">搜索条件无效</p>
-        <PublicAction :to="clearSearchHref" variant="secondary" class="works-empty__reset">
+      <PublicEmptyState v-else-if="emptyKind === 'invalid-search'" title="搜索条件无效">
+        <PublicAction :to="clearSearchHref" variant="secondary">
           清除搜索
         </PublicAction>
-      </div>
+      </PublicEmptyState>
 
-      <div v-else-if="emptyKind === 'search-no-match'" class="works-empty">
-        <p class="works-empty__title">没有找到这个设定</p>
-        <PublicAction :to="clearSearchHref" variant="secondary" class="works-empty__reset">
+      <PublicEmptyState v-else-if="emptyKind === 'search-no-match'" title="没有找到这个设定">
+        <PublicAction :to="clearSearchHref" variant="secondary">
           清除搜索
         </PublicAction>
-      </div>
+      </PublicEmptyState>
 
       <!-- 无匹配与参数非法对访客是同一件事：这套条件下没有作品。 -->
-      <div v-else class="works-empty">
-        <p class="works-empty__title">没有符合条件的作品</p>
-        <PublicAction to="/works" variant="secondary" class="works-empty__reset">
+      <PublicEmptyState v-else title="没有符合条件的作品">
+        <PublicAction to="/works" variant="secondary">
           清除筛选
         </PublicAction>
-      </div>
+      </PublicEmptyState>
     </div>
-  </div>
+  </main>
 </template>
 
 <style scoped>
 .works-page {
-  max-width: var(--public-content-wide);
-  margin: 0 auto;
-  padding-top: 0;
-  padding-right: var(--public-page-padding);
-  padding-bottom: var(--space-7);
-  padding-left: var(--public-page-padding);
+  min-height: 60svh;
 }
 
-/*
- * 等高铺满：竖版出厂照（3:4）与横版领养封面（16:9）混排时，同一行内所有卡片
- * 高度一致、宽度按自身比例伸展、行宽铺满，右边缘对齐，不留大面积空白。
- *
- * 原理：`flex-basis` 与 `flex-grow` 都正比于 `--card-ratio`，因此 flex 分配剩余
- * 空间时同一行内每张卡的放大系数相同 → 宽度比恒等于比例比 → 高度必然相等。
- * 框比例等于公开变体比例，所以铺满不产生裁切。
- */
+.works-page__intro,
+.works-page__content {
+  max-width: var(--public-content-wide);
+  margin: 0 auto;
+  padding-inline: var(--public-page-padding);
+}
+
+.works-page__intro {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  gap: var(--space-6);
+  padding-top: var(--space-7);
+  padding-bottom: var(--space-6);
+  overflow: hidden;
+}
+
+.works-page__background-type {
+  position: absolute;
+  z-index: -1;
+  inset: clamp(0.75rem, 2vw, 2rem) auto auto var(--public-page-padding);
+  color: var(--public-background-type);
+  font-family: var(--font-public-body);
+  font-size: clamp(5.75rem, 15vw, 13rem);
+  font-weight: 700;
+  line-height: 0.8;
+  pointer-events: none;
+  user-select: none;
+}
+
+.works-page__identity {
+  align-self: end;
+  padding-top: clamp(5rem, 10vw, 8rem);
+}
+
+.works-page__identity h1 {
+  font-family: var(--font-public-display);
+  font-size: clamp(2.75rem, 5vw, 5rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+.works-page__identity p {
+  max-width: 28rem;
+  margin-top: var(--space-4);
+  color: var(--public-text-secondary);
+}
+
+.works-page__content {
+  padding-bottom: var(--space-7);
+}
+
 .works-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-8) var(--space-6);
-  margin-top: var(--space-6);
-  /* 作品网格是语义列表，但不显示项目符号与列表缩进：
-     缺少这条重置时浏览器默认 marker 会出现在角色名左侧。 */
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .works-grid__item {
-  flex-grow: var(--card-ratio);
-  flex-basis: calc(var(--card-ratio) * var(--works-row-height));
-  /*
-   * 末行未填满时孤卡不被拉高：上限贴近行高本身，只留一点伸展余量，
-   * 因此末行卡片高度与前面几行基本一致，不会突然变成巨图。
-   */
-  max-width: calc(var(--card-ratio) * var(--works-row-height) * 1.25);
   min-width: 0;
 }
 
-/* 移动端单列：不做 justified，避免横版卡被压得过矮。 */
-@media (max-width: 767px) {
-  .works-grid__item {
-    flex-basis: 100%;
-    max-width: 100%;
-  }
-}
-
 .works-page__toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4) var(--space-6);
+  display: grid;
+  align-content: end;
+  gap: var(--space-2);
 }
 
 .works-page__toolbar > :deep(.catalog-search) {
-  flex: 1 1 22rem;
+  width: 100%;
 }
 
-/* 只调行高：列数由行宽与各卡比例自然决定，不再固定列数。 */
+.works-page__result-count {
+  color: var(--public-text-secondary);
+  font-family: var(--font-public-mono);
+  font-size: var(--font-size-xs);
+}
+
 @media (min-width: 768px) {
+  .works-page__intro {
+    grid-template-columns: minmax(0, 0.9fr) minmax(22rem, 1.1fr);
+    align-items: end;
+    min-height: 20rem;
+  }
+
   .works-grid {
-    --works-row-height: 16rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-5);
   }
 }
 
 @media (min-width: 1024px) {
   .works-grid {
-    --works-row-height: 19rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-6);
   }
 }
 
-@media (min-width: 1280px) {
-  .works-grid {
-    --works-row-height: 21rem;
-  }
-}
-
-.works-empty {
-  margin-top: var(--space-8);
-  padding: var(--space-10) var(--space-6);
-  text-align: center;
-  background: var(--public-bg-secondary);
-  border-radius: var(--radius-md);
-}
-
-.works-empty__title {
-  font-size: var(--font-size-md);
-}
-
-.works-empty__description {
-  margin-top: var(--space-2);
-  color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.works-empty__reset {
-  margin-top: var(--space-4);
-}
 </style>

@@ -459,10 +459,10 @@ function homeAggregate(
   try {
     const entriesSnapshot = snapshot(sqlite, mediaBaseUrl, appEnv)
     featured = featuredEntries(entriesSnapshot).map(entry => entry.summary)
-    // 首页与目录共用同一个领养 comparator；只投影第一件开放领养。
+    // 首页与目录共用同一个领养 comparator；最多投影最新三件开放领养。
     currentAdoptions = adoptionItems(entriesSnapshot)
       .filter(item => item.work.adoptionStatus === 'available')
-      .slice(0, 1)
+      .slice(0, 3)
   }
   catch (error) {
     featuredAvailable = false
@@ -517,7 +517,11 @@ function adoptionItems(entries: readonly SnapshotEntry[]) {
             }),
       },
       href: entry.summary.href,
-      cover: entry.adoption.cover,
+      /*
+       * 公开领养列表与首页优先展示完整设定图，避免横版封面裁掉角色设定内容。
+       * 尚未配置设定图的旧内容继续回退到独立领养封面。
+       */
+      cover: entry.designSheet ?? entry.adoption.cover,
     }))
 }
 
@@ -565,6 +569,9 @@ function adoptionListDto(
     : []
   return publicAdoptionListDtoSchema.parse({
     ...paginateCatalog(filtered, page, PUBLIC_ADOPTIONS_PAGE_SIZE),
+    availableCount: items.filter(item => (
+      item.work.adoptionStatus === 'available'
+    )).length,
     filter: { valid: parsed.success && search.success },
   })
 }
@@ -597,6 +604,21 @@ export function createSqlitePublicSiteRepository(
       return publicWorkDetailDtoSchema.parse({
         work: match.summary.work,
         href: match.summary.href,
+        ...(match.adoption
+          ? {
+              adoption: {
+                adoptionStatus: match.adoption.status,
+                ...(match.adoption.priceCnyMinor === null
+                  ? {}
+                  : {
+                      price: {
+                        currency: 'CNY',
+                        minorUnits: match.adoption.priceCnyMinor,
+                      },
+                    }),
+              },
+            }
+          : {}),
         media: {
           primaryAssetId,
           card: match.summary.card,

@@ -12,7 +12,7 @@ import {
  * R3-C 独立方向轮播：
  * - SSR 只直出横竖各自第一项组成的 <picture>，无 JS 时仍可用。
  * - 水合后仅操作当前 orientation 的索引，方向变化时夹紧对应索引。
- * - 自动轮播固定开启、10 秒一张；显式暂停/页面隐藏暂停，reduced-motion 停止。
+ * - 自动轮播固定开启、4 秒一张；显式暂停/页面隐藏暂停，reduced-motion 停止。
  * - Hero 占据大面积首屏，鼠标停留或操作控件不能成为隐式永久暂停条件。
  */
 const props = defineProps<{
@@ -20,8 +20,8 @@ const props = defineProps<{
 }>()
 
 const activeOrientation = shallowRef<HeroOrientation>('landscape')
-const landscapeIndex = ref(0)
-const portraitIndex = ref(0)
+const landscapeIndex = shallowRef(0)
+const portraitIndex = shallowRef(0)
 const items = computed(() => props.home[activeOrientation.value])
 const landscapeItem = computed(() => props.home.landscape[landscapeIndex.value])
 const portraitItem = computed(() => props.home.portrait[portraitIndex.value])
@@ -47,6 +47,8 @@ const pictureSources = computed(() => (
 const transitionDirection = shallowRef<'next' | 'prev'>('next')
 const transitionIntent = shallowRef<'autoplay' | 'keyboard' | 'pointer'>('autoplay')
 const transitionName = computed(() => `home-hero-slide-${transitionDirection.value}`)
+const activeFrameLabel = computed(() => String(activeIndex.value + 1).padStart(2, '0'))
+const totalFrameLabel = computed(() => String(items.value.length).padStart(2, '0'))
 
 watch(() => props.home.landscape.length, (count) => {
   landscapeIndex.value = clampSlideIndex(landscapeIndex.value, count)
@@ -55,9 +57,9 @@ watch(() => props.home.portrait.length, (count) => {
   portraitIndex.value = clampSlideIndex(portraitIndex.value, count)
 })
 
-const reduceMotion = ref(false)
-const userPaused = ref(false)
-const pageHidden = ref(false)
+const reduceMotion = shallowRef(false)
+const userPaused = shallowRef(false)
+const pageHidden = shallowRef(false)
 const motionReady = shallowRef(false)
 const initialMediaEntrance = shallowRef(true)
 const controlsRevealed = shallowRef(false)
@@ -296,7 +298,7 @@ onBeforeUnmount(() => {
     :data-reduced-motion="reduceMotion"
     role="region"
     aria-roledescription="carousel"
-    aria-label="代表作品轮播"
+    aria-label="首页影像轮播"
     data-home-scroll-scene
     data-testid="public-hero"
     @keydown="onKeydown"
@@ -347,6 +349,9 @@ onBeforeUnmount(() => {
     </div>
 
     <div v-if="items.length > 1" class="home-hero__controls">
+      <p class="home-hero__counter" aria-hidden="true">
+        {{ activeFrameLabel }} / {{ totalFrameLabel }}
+      </p>
       <button
         type="button"
         class="home-hero__arrow"
@@ -395,6 +400,12 @@ onBeforeUnmount(() => {
           <path d="M3.5 2.5v9M10.5 2.5v9" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
         </svg>
       </button>
+    </div>
+
+    <div class="home-hero__continuation" aria-hidden="true">
+      <span class="home-hero__continuation-index">下一幕</span>
+      <span class="home-hero__continuation-line" />
+      <span>代表作品</span>
     </div>
 
     <p v-if="items.length > 0" class="home-hero__live" role="status" aria-live="polite">
@@ -483,13 +494,13 @@ onBeforeUnmount(() => {
 .home-hero-slide-next-enter-from,
 .home-hero-slide-prev-leave-to {
   opacity: 0;
-  transform: translate3d(3%, 0, 0) scale(1.01);
+  transform: translate3d(clamp(1.25rem, 3vw, 3rem), 0, 0) scale(1.008);
 }
 
 .home-hero-slide-next-leave-to,
 .home-hero-slide-prev-enter-from {
   opacity: 0;
-  transform: translate3d(-3%, 0, 0) scale(1.01);
+  transform: translate3d(clamp(-3rem, -3vw, -1.25rem), 0, 0) scale(1.008);
 }
 
 .home-hero[data-initial-media-entrance='true'] .home-hero__slide :deep(.responsive-picture__image) {
@@ -512,8 +523,15 @@ onBeforeUnmount(() => {
     linear-gradient(
       to bottom,
       rgb(17 20 25 / 0) 40%,
-      rgb(17 20 25 / 0.62) 52%,
-      rgb(17 20 25 / 0.68) 100%
+      rgb(17 20 25 / 0.28) 55%,
+      rgb(17 20 25 / 0.78) 100%
+    ),
+    linear-gradient(
+      to right,
+      rgb(17 20 25 / 0.16) 0%,
+      rgb(17 20 25 / 0) 28%,
+      rgb(17 20 25 / 0) 72%,
+      rgb(17 20 25 / 0.12) 100%
     );
 }
 
@@ -558,44 +576,50 @@ onBeforeUnmount(() => {
 .home-hero__controls {
   position: absolute;
   right: var(--public-page-padding);
-  bottom: max(var(--space-5), calc(env(safe-area-inset-bottom) + var(--space-3)));
+  bottom: max(var(--space-7), calc(env(safe-area-inset-bottom) + var(--space-6)));
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-1);
+  min-height: 2.75rem;
 }
 
-.home-hero__eyebrow,
-.home-hero__tagline {
-  animation: home-hero-brand-in var(--motion-duration-content) var(--motion-ease-standard) both;
+.home-hero__title {
+  animation: home-hero-title-in 560ms var(--motion-ease-standard) 180ms both;
 }
 
 .home-hero__eyebrow {
-  animation-delay: 0ms;
+  animation: home-hero-support-in var(--motion-duration-content) var(--motion-ease-standard) 400ms both;
 }
 
 .home-hero__tagline {
-  animation-delay: 90ms;
+  animation: home-hero-support-in var(--motion-duration-content) var(--motion-ease-standard) 500ms both;
 }
 
 .home-hero__controls {
-  animation: home-hero-controls-in var(--motion-duration-state) var(--motion-ease-playful) 270ms both;
+  animation: home-hero-controls-in var(--motion-duration-content) var(--motion-ease-standard) 680ms both;
+}
+
+.home-hero__continuation {
+  animation: home-hero-controls-in var(--motion-duration-content) var(--motion-ease-standard) 760ms both;
 }
 
 @keyframes home-hero-media-in {
   from {
-    transform: scale(0.99);
+    filter: saturate(0.88) contrast(0.96);
+    transform: scale(1.025);
   }
 
   to {
+    filter: saturate(1) contrast(1);
     transform: scale(1);
   }
 }
 
-@keyframes home-hero-brand-in {
+@keyframes home-hero-title-in {
   from {
     opacity: 0;
-    clip-path: inset(0 0 100% 0);
-    transform: translateY(12px);
+    clip-path: inset(0 0 22% 0);
+    transform: translateY(10px);
   }
 
   to {
@@ -605,27 +629,49 @@ onBeforeUnmount(() => {
   }
 }
 
-@keyframes home-hero-controls-in {
+@keyframes home-hero-support-in {
   from {
     opacity: 0;
-    transform: translateY(4px) scale(0.98);
+    transform: translateY(8px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
+}
+
+@keyframes home-hero-controls-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.home-hero__counter {
+  min-width: 3.75rem;
+  margin-right: var(--space-2);
+  color: rgb(255 255 255 / 0.72);
+  font-family: var(--font-public-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 
 .home-hero__arrow,
 .home-hero__pause {
   display: grid;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: max(2.75rem, 44px);
+  height: max(2.75rem, 44px);
   padding: 0;
   color: var(--public-text-inverse);
-  background: rgb(17 20 25 / 0.45);
-  border: 1px solid rgb(255 255 255 / 0.35);
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: var(--radius-full);
   cursor: pointer;
   opacity: 0;
@@ -633,8 +679,9 @@ onBeforeUnmount(() => {
   transform: translateY(4px) scale(0.96);
   transition:
     opacity var(--motion-duration-state) var(--motion-ease-standard),
-    transform var(--motion-duration-state) var(--motion-ease-playful),
-    background-color var(--motion-duration-feedback) var(--motion-ease-standard);
+    transform var(--motion-duration-state) var(--motion-ease-standard),
+    background-color var(--motion-duration-feedback) var(--motion-ease-standard),
+    border-color var(--motion-duration-feedback) var(--motion-ease-standard);
   place-items: center;
 }
 
@@ -656,13 +703,13 @@ onBeforeUnmount(() => {
 
 .home-hero__dots {
   display: flex;
-  gap: var(--space-2);
+  gap: 0.1875rem;
 }
 
 .home-hero__dot {
   display: grid;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: max(2.75rem, 44px);
+  height: max(2.75rem, 44px);
   padding: 0;
   background: transparent;
   border: none;
@@ -672,25 +719,51 @@ onBeforeUnmount(() => {
 }
 
 .home-hero__dot::before {
-  width: 0.625rem;
-  height: 0.625rem;
+  width: 1.75rem;
+  height: 1px;
   content: '';
-  background: rgb(255 255 255 / 0.45);
-  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 0.4);
+  transform: scaleX(0.55);
   transition:
     background-color var(--motion-duration-state) var(--motion-ease-standard),
-    transform var(--motion-duration-state) var(--motion-ease-playful);
+    transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .home-hero__dot--active::before {
   background: var(--public-text-inverse);
-  transform: scale(1.18);
+  transform: scaleX(1);
+}
+
+.home-hero__continuation {
+  position: absolute;
+  right: var(--public-page-padding);
+  bottom: max(var(--space-2), env(safe-area-inset-bottom));
+  left: var(--public-page-padding);
+  display: grid;
+  grid-template-columns: auto minmax(2rem, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  color: rgb(255 255 255 / 0.58);
+  font-family: var(--font-public-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  pointer-events: none;
+}
+
+.home-hero__continuation-index {
+  color: rgb(255 255 255 / 0.82);
+}
+
+.home-hero__continuation-line {
+  height: 1px;
+  background: rgb(255 255 255 / 0.28);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .home-hero__arrow:hover,
   .home-hero__pause:hover {
-    background: rgb(17 20 25 / 0.65);
+    background: rgb(17 20 25 / 0.28);
+    border-color: rgb(255 255 255 / 0.3);
   }
 }
 
@@ -709,13 +782,24 @@ onBeforeUnmount(() => {
 @media (max-width: 767px) {
   .home-hero__controls {
     right: var(--public-page-padding);
-    bottom: var(--space-4);
+    bottom: max(var(--space-7), calc(env(safe-area-inset-bottom) + var(--space-6)));
   }
 
   .home-hero__arrow,
   .home-hero__pause {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: max(2.75rem, 44px);
+    height: max(2.75rem, 44px);
+  }
+
+  .home-hero__counter {
+    display: none;
+  }
+
+  .home-hero__continuation {
+    grid-template-columns: auto minmax(1.5rem, 1fr) auto;
+    gap: 0.625rem;
+    font-size: 0.5625rem;
+    letter-spacing: 0.08em;
   }
 }
 
@@ -773,6 +857,7 @@ onBeforeUnmount(() => {
   .home-hero__title,
   .home-hero__tagline,
   .home-hero__controls,
+  .home-hero__continuation,
   .home-hero__slide :deep(.responsive-picture__image) {
     animation: none;
   }

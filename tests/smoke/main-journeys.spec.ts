@@ -67,7 +67,7 @@ async function fillCommission(
   await page.getByLabel(/身高/u).fill('170')
   await page.getByLabel(/体重/u).fill('60.5')
   await expect(page.getByLabel(/称呼/u)).toHaveValue(input.nickname)
-  await page.getByLabel('设定图', { exact: true }).setInputFiles({
+  await page.getByRole('button', { name: '设定图', exact: true }).setInputFiles({
     name: 'smoke-design-reference.png',
     mimeType: 'image/png',
     buffer: smallStudioPng(),
@@ -154,7 +154,7 @@ test('首页加载、主要入口与单项开放领养在三种视口可达', as
 
   await page.goto('/')
   await page.getByTestId('home-current-adoptions')
-    .locator('a[href^="/works/e2e-public-smoke-available"]')
+    .getByTestId('home-adoption-media-link')
     .click()
   await expect.poll(() => page.evaluate(() => Math.round(window.scrollY)))
     .toBe(0)

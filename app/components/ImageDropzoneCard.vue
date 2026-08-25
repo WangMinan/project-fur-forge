@@ -31,6 +31,7 @@ const input = useTemplateRef<HTMLInputElement>('input')
 const dragging = ref(false)
 const hintId = computed(() => `${props.inputId}-hint`)
 const errorId = computed(() => `${props.inputId}-error`)
+const describedBy = computed(() => props.error ? `${hintId.value} ${errorId.value}` : hintId.value)
 
 function choose() {
   if (props.disabled || !input.value) {
@@ -68,7 +69,7 @@ function onDrop(event: DragEvent) {
       :disabled="disabled"
       :aria-label="label"
       :aria-invalid="Boolean(error)"
-      :aria-describedby="`${hintId} ${errorId}`"
+      :aria-describedby="describedBy"
       @change="selectFirst(($event.target as HTMLInputElement).files)"
     >
 
@@ -113,7 +114,7 @@ function onDrop(event: DragEvent) {
     </div>
 
     <p :id="hintId" class="image-dropzone__hint">{{ hint }}</p>
-    <p :id="errorId" class="image-dropzone__error" role="alert">{{ error }}</p>
+    <p v-if="error" :id="errorId" class="image-dropzone__error" role="alert">{{ error }}</p>
   </div>
 </template>
 
@@ -155,12 +156,12 @@ function onDrop(event: DragEvent) {
 }
 
 .image-dropzone__card {
-  min-height: clamp(14rem, 34vw, 21rem);
+  min-height: clamp(12rem, 26vw, 17rem);
   overflow: hidden;
   color: var(--dropzone-text);
   background: var(--dropzone-bg);
   border: 2px dashed var(--dropzone-border);
-  border-radius: 1rem;
+  border-radius: var(--radius-sm);
   transition: border-color 150ms ease, background-color 150ms ease;
 }
 
@@ -239,7 +240,7 @@ function onDrop(event: DragEvent) {
 }
 
 .image-dropzone__actions button {
-  min-height: 2.5rem;
+  min-height: 2.75rem;
   padding: 0 0.9rem;
   color: var(--dropzone-text);
   background: transparent;
@@ -264,8 +265,37 @@ function onDrop(event: DragEvent) {
 }
 
 .image-dropzone__error {
-  min-height: 1.4em;
   color: var(--dropzone-error);
+}
+
+.image-dropzone[data-theme='public'] .image-dropzone__card {
+  border: 1px solid var(--public-border-primary);
+  border-radius: var(--radius-image);
+}
+
+.image-dropzone[data-theme='public'] .image-dropzone__card--dragging {
+  border-color: var(--dropzone-accent);
+}
+
+.image-dropzone[data-theme='public'] .image-dropzone__card--preview {
+  border-color: var(--public-border-secondary);
+  border-radius: var(--radius-image);
+}
+
+.image-dropzone[data-theme='public'] .image-dropzone__picker {
+  padding: var(--space-6);
+  gap: var(--space-3);
+}
+
+.image-dropzone[data-theme='public'] .image-dropzone__preview-meta {
+  padding: var(--space-3) var(--space-4);
+}
+
+.image-dropzone[data-theme='public'] .image-dropzone__actions button {
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  border-radius: 0;
+  padding-inline: 0.15rem;
 }
 
 @media (max-width: 480px) {

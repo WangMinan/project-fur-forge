@@ -40,10 +40,33 @@ const portraitWebpSrcset = computed(() =>
 const portraitFallbackSrcset = computed(() =>
   props.portraitSources ? buildSrcset(props.portraitSources.fallback) : undefined,
 )
+const imageFailed = shallowRef(false)
+const fallbackAspectRatio = computed(() => `${fallbackImg.value.width} / ${fallbackImg.value.height}`)
+const portraitFallbackAspectRatio = computed(() =>
+  portraitFallbackImg.value
+    ? `${portraitFallbackImg.value.width} / ${portraitFallbackImg.value.height}`
+    : fallbackAspectRatio.value,
+)
+
+watch(() => fallbackImg.value.src, () => {
+  imageFailed.value = false
+})
+
+function handleImageError() {
+  imageFailed.value = true
+  emit('error')
+}
 </script>
 
 <template>
-  <picture class="responsive-picture">
+  <picture
+    class="responsive-picture"
+    :class="{ 'responsive-picture--failed': imageFailed }"
+    :style="{
+      '--responsive-picture-aspect-ratio': fallbackAspectRatio,
+      '--responsive-picture-portrait-aspect-ratio': portraitFallbackAspectRatio,
+    }"
+  >
     <template v-if="portraitSources">
       <source
         type="image/webp"
@@ -69,6 +92,7 @@ const portraitFallbackSrcset = computed(() =>
       :height="fallbackImg.height"
     >
     <img
+      v-if="!imageFailed"
       class="responsive-picture__image"
       :src="fallbackImg.src"
       :srcset="fallbackSrcset"
@@ -79,8 +103,11 @@ const portraitFallbackSrcset = computed(() =>
       :loading="loading"
       :fetchpriority="fetchpriority"
       decoding="async"
-      @error="emit('error')"
+      @error="handleImageError"
     >
+    <span v-else class="responsive-picture__fallback" role="status">
+      图片暂时无法显示{{ alt ? `：${alt}` : '' }}
+    </span>
   </picture>
 </template>
 
@@ -90,9 +117,33 @@ const portraitFallbackSrcset = computed(() =>
   width: 100%;
 }
 
+.responsive-picture--failed {
+  display: grid;
+  min-height: 100%;
+  aspect-ratio: var(--responsive-picture-aspect-ratio);
+  overflow: hidden;
+  color: var(--public-text-secondary);
+  background: var(--public-bg-secondary);
+  place-items: center;
+}
+
+@media (orientation: portrait) {
+  .responsive-picture--failed {
+    aspect-ratio: var(--responsive-picture-portrait-aspect-ratio);
+  }
+}
+
 .responsive-picture__image {
   display: block;
   width: 100%;
   height: auto;
+}
+
+.responsive-picture__fallback {
+  max-width: 26rem;
+  padding: var(--space-4);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+  text-align: center;
 }
 </style>

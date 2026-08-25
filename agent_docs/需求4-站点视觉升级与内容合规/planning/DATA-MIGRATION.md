@@ -35,7 +35,7 @@
 1. 公共行动、管理行动和统一进度组件；
 2. 上传/长 operation 进度接入；
 3. 测试分类、脚本和 workflow 减重；
-4. `/adoptions` 排序与首页单项领养。
+4. `/adoptions` 排序与首页领养投影。
 
 该顺序允许后续隐私、首页和 Hero 工作直接复用统一组件，避免先继续复制按钮和 progress。
 
@@ -101,7 +101,7 @@
 
 本单元没有 expand/contract，也不需要旧镜像/新字段兼容演练。
 
-## 6. 领养排序与首页单项
+## 6. 领养排序与首页动态三项
 
 无数据库迁移。
 
@@ -110,8 +110,8 @@
 1. repository 查询携带 `works.updated_at`；
 2. 建立 `available → adopted`、组内 `updated_at DESC → id ASC` 的唯一 comparator；
 3. `/adoptions` 搜索前排序、过滤后保持顺序、最后分页；
-4. 首页聚合从同一有序集合取第一项 available；
-5. `HomeCurrentAdoptions` 删除 `.slice(0, 2)` 和双列假设；
+4. 首页聚合从同一有序集合取前三项 available，不足三项按真实数量返回；
+5. `HomeCurrentAdoptions` 使用单一主角色牌和真实索引，不新增后台精选字段；
 6. 验证修改为 adopted 的作品不会跑到 available 前面。
 
 不改变 `/works` 的现有发布时间排序，不重写作品 `sort_order`。
@@ -291,7 +291,7 @@ public/THIRD_PARTY_NOTICES.txt
 - 文案 migration SHA/镜像 digest；
 - 隐私政策无占位、真实收集行为和联系邮箱的人工核对；
 - 两项确认缺失/false 拒绝与成功提交结果；
-- `/adoptions` 排序和首页单项结果；
+- `/adoptions` 排序和首页一项/两项/最多三项结果；
 - 单条删除 dry-run/execute/重入计数；
 - third-party notices 生成与 drift 结果；
 - Hero 焦点拖动、水平/垂直控制条与横竖管理体验；

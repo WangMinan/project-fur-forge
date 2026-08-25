@@ -31,25 +31,21 @@ withDefaults(defineProps<{
         :sizes="sizes"
         :loading="loading"
       />
-    </span>
-    <span class="work-card__caption">
-      <WorkIdentityLabel
-        :character-name="work.work.characterName"
-        :species="work.work.species"
-      />
+      <span class="work-card__caption">
+        <WorkIdentityLabel
+          :character-name="work.work.characterName"
+          :species="work.work.species"
+        />
+      </span>
     </span>
   </NuxtLink>
 </template>
 
 <style scoped>
-/*
- * `--card-ratio` 由 public-base.css 的 .work-card--portrait / --landscape 提供
- * （容器也要读同一个值来做等高排版）。这里只消费，不重复定义。
- */
 .work-card {
   display: block;
+  min-width: 0;
   color: var(--public-text-primary);
-  transition: transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .work-card:hover {
@@ -57,12 +53,12 @@ withDefaults(defineProps<{
 }
 
 .work-card__frame {
+  position: relative;
   display: block;
-  aspect-ratio: var(--card-ratio);
-  background: var(--image-placeholder);
+  aspect-ratio: 4 / 5;
+  background: var(--public-media-canvas);
   border-radius: var(--radius-image);
   overflow: hidden;
-  transition: box-shadow var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .work-card__frame :deep(.responsive-picture) {
@@ -70,43 +66,40 @@ withDefaults(defineProps<{
 }
 
 .work-card__frame :deep(.responsive-picture__image) {
+  width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.work-card__image {
-  transition: transform var(--motion-duration-state) var(--motion-ease-standard);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .work-card:hover {
-    transform: translateY(-0.25rem);
-  }
-
-  .work-card:hover .work-card__frame {
-    box-shadow: 0 1rem 2.25rem rgb(17 20 25 / 0.14);
-  }
-
-  .work-card:hover .work-card__image {
-    transform: scale(var(--image-hover-scale));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .work-card,
-  .work-card__frame,
-  .work-card__image {
-    transition: none;
-  }
-
-  .work-card:hover,
-  .work-card:hover .work-card__image {
-    transform: none;
-  }
+.work-card__frame[data-orientation='landscape'] :deep(.responsive-picture__image) {
+  object-fit: contain;
 }
 
 .work-card__caption {
-  display: block;
-  margin-top: var(--space-3);
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 1;
+  display: flex;
+  align-items: end;
+  min-height: 42%;
+  padding: clamp(0.75rem, 2vw, 1.25rem);
+  color: var(--public-text-inverse);
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgb(10 12 17 / 0.16) 24%,
+    rgb(10 12 17 / 0.84) 100%
+  );
+  pointer-events: none;
+}
+
+.work-card__caption :deep(.work-identity__details) {
+  color: rgb(255 255 255 / 0.82);
+}
+
+.work-card:focus-visible {
+  outline: 3px solid var(--public-focus-ring);
+  outline-offset: 4px;
+  border-radius: var(--radius-image);
 }
 </style>

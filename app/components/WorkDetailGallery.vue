@@ -11,7 +11,8 @@ const props = defineProps<{
   workName: string
 }>()
 
-const activeIndex = ref(0)
+const activeIndex = shallowRef(0)
+const isSingle = computed(() => props.gallery.length === 1)
 
 /**
  * T34-F2：同一组件复用到上一件/下一件作品时，必须把选中项校正回有效范围，
@@ -49,14 +50,18 @@ const activeImageStyle = computed(() => {
   const ratio = image ? image.width / image.height : 4 / 3
   return {
     '--gallery-aspect-ratio': String(ratio),
-    aspectRatio: image ? `${image.width} / ${image.height}` : '4 / 3',
+    aspectRatio: isSingle.value && image ? `${image.width} / ${image.height}` : 'auto',
     viewTransitionName: props.viewTransitionName,
   }
 })
 </script>
 
 <template>
-  <div class="work-gallery" data-testid="work-gallery">
+  <div
+    class="work-gallery"
+    :class="{ 'work-gallery--single': isSingle }"
+    data-testid="work-gallery"
+  >
     <div
       class="work-gallery__stage"
       :class="`work-gallery__stage--${activeOrientation}`"
@@ -107,37 +112,27 @@ const activeImageStyle = computed(() => {
 </template>
 
 <style scoped>
-/*
- * 两列：左侧舞台吃掉全部剩余宽度，右侧缩略图列定宽。
- *
- * 舞台宽度与当前图片宽度无关，所以缩略图列的位置固定，不会随竖图/横图切换左右
- * 移动；同时横图能用满整个舞台宽度，不被截断，也不浪费屏幕宽度。
- * 窄屏回落为单列，缩略图横排在主图下方。
- */
 .work-gallery {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   align-items: flex-start;
   gap: var(--space-3);
 }
 
-/*
- * grid 单格：交叉淡化期间新旧两张图占同一格并叠在一起，不会并排把布局挤宽。
- * 不设 overflow: hidden——圆角在图片自身上，裁切只会切掉宽图。
- */
 .work-gallery__stage {
-  display: grid;
-  grid-template-areas: 'stage';
-  flex: 1 1 auto;
+  position: relative;
+  width: 100%;
+  height: clamp(18rem, 58svh, 34rem);
   min-width: 0;
+  overflow: hidden;
+  background: var(--public-media-canvas);
+  border-radius: var(--radius-image);
 }
 
 .work-gallery__stage :deep(.work-gallery__image) {
-  grid-area: stage;
-  place-self: center;
+  position: absolute;
+  inset: 0;
 }
 
-/* 淡入淡出：离场图脱离文档流交给 grid 叠放，不影响入场图的尺寸计算。 */
 .work-gallery-fade-enter-active,
 .work-gallery-fade-leave-active {
   transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
@@ -155,19 +150,9 @@ const activeImageStyle = computed(() => {
   }
 }
 
-/*
- * 尺寸取「高度上限换算出的宽度」与「舞台可用宽度」的较小值：
- * 竖图受高度上限约束，不顶穿一屏；横图一路放大到铺满舞台宽度，既不被截断
- * 也不浪费屏幕宽度。占位背景只包裹图片矩形本身，不铺满整栏。
- */
 .work-gallery__stage :deep(.work-gallery__image) {
-  width: min(
-    100%,
-    calc(clamp(20rem, calc(100vh - 15rem), 46rem) * var(--gallery-aspect-ratio))
-  );
-  background: var(--image-placeholder);
-  border-radius: var(--radius-image);
-  overflow: hidden;
+  width: 100%;
+  height: 100%;
 }
 
 .work-gallery__stage :deep(.responsive-picture__image) {
@@ -176,26 +161,49 @@ const activeImageStyle = computed(() => {
   object-fit: contain;
 }
 
+.work-gallery--single .work-gallery__stage {
+  position: static;
+  display: grid;
+  place-items: center;
+  height: auto;
+  overflow: visible;
+  background: transparent;
+}
+
+.work-gallery--single .work-gallery__stage :deep(.work-gallery__image) {
+  position: static;
+  inset: auto;
+  width: min(
+    100%,
+    calc(clamp(20rem, calc(100vh - 15rem), 46rem) * var(--gallery-aspect-ratio))
+  );
+  height: auto;
+  overflow: hidden;
+  background: var(--image-placeholder);
+  border-radius: var(--radius-image);
+}
+
 .work-gallery__thumbs {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
 }
 
-/*
- * 桌面：缩略图列定宽贴在右边缘，舞台吃掉剩余宽度。
- *
- * 缩略图位置因此与当前图片宽度无关，切换竖图/横图时不会左右移动；舞台是整块
- * 剩余宽度，横图能一直放大到铺满它为止。
- */
 @media (min-width: 768px) {
   .work-gallery {
-    flex-wrap: nowrap;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: var(--space-4);
   }
 
+  .work-gallery__stage {
+    height: clamp(24rem, calc(100svh - 20rem), 38rem);
+  }
+
+  .work-gallery--single {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .work-gallery__thumbs {
-    flex: 0 0 auto;
     flex-direction: column;
     flex-wrap: nowrap;
   }
@@ -203,6 +211,8 @@ const activeImageStyle = computed(() => {
 
 .work-gallery__thumb {
   width: 4.5rem;
+  min-height: 4.5rem;
+  aspect-ratio: 1;
   padding: 0;
   background: var(--image-placeholder);
   border: 2px solid transparent;
@@ -232,6 +242,7 @@ const activeImageStyle = computed(() => {
 @media (min-width: 768px) {
   .work-gallery__thumb {
     width: 5.5rem;
+    min-height: 5.5rem;
   }
 }
 </style>

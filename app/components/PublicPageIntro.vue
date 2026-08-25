@@ -1,13 +1,17 @@
 <script setup lang="ts">
 /** 内页紧凑页名区：页名 + 一句必要说明，不与作品图争夺层级。 */
-defineProps<{
+const props = withDefaults(defineProps<{
   title: string
   description?: string | undefined
-}>()
+  wide?: boolean
+}>(), {
+  description: undefined,
+  wide: false,
+})
 </script>
 
 <template>
-  <header class="page-intro">
+  <header class="page-intro" :class="{ 'page-intro--wide': props.wide }">
     <h1 class="page-intro__title">
       {{ title }}
     </h1>
@@ -37,5 +41,19 @@ defineProps<{
   margin-top: var(--space-3);
   color: var(--public-text-secondary);
   line-height: var(--line-height-relaxed);
+}
+
+@media (min-width: 1024px) {
+  .page-intro--wide {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.42fr);
+    align-items: end;
+    gap: var(--space-8);
+    padding-bottom: var(--space-7);
+  }
+
+  .page-intro--wide .page-intro__description {
+    margin-top: 0;
+  }
 }
 </style>

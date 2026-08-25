@@ -66,11 +66,11 @@ interface PublicHomeAggregate {
 - `featured.items` 最多两项，按人工顺序投影；
 - 每项必须能映射到至少一张 READY 竖版出厂照；不满足时不进入公开代表作品投影；
 - `entries.commission` 为委托幕视觉源；
-- `currentAdoptions.items` 最多一项，且只能是排序后的第一件 `available`；
+- `currentAdoptions.items` 最多三项，且只能是按领养目录同一排序得到的最新 `available`；
 - `currentAdoptions.status` 直接投影现有领养营业状态，不依赖 `entries.adoption` 是否有媒体；
 - 无 available 时 `items=[]`，前端隐藏整幕。
 
-如为了兼容暂时保留数组类型，也必须在 repository 层只投影一项，不由组件再次 `slice(0, 2)`。
+数量上限必须在 repository 层投影为三项；前端只防御性过滤 `available`，不得维护另一套“最新”排序，也不得伪造不足三项的占位角色。
 
 管理端 `WorkListItemDto` 增加内部字段 `portraitStudioPhotoAssetId: string | null`：
 
@@ -109,7 +109,7 @@ function comparePublicAdoptions(left, right) {
 - 组内 `updatedAt` 越新越靠前；
 - ID 提供确定性平局顺序；
 - 搜索只过滤，分页后置；
-- 首页单项从同一排序结果中取第一件 available；
+- 首页从同一排序结果中取前三件 available；不足三件时按真实数量返回；
 - `/works` 继续使用原公开时间顺序，不复用该 comparator。
 
 ## 3. 轻量申请确认
@@ -362,7 +362,7 @@ interface ThirdPartyNotice {
 
 ## 8. 版本与兼容
 
-- 领养排序、首页单项、UI 组件和 Hero 管理不需要数据库迁移。
+- 领养排序、首页动态三项投影、UI 组件和 Hero 管理不需要数据库迁移。
 - 申请确认只扩展请求 Schema；既有 submission 表和历史行不变。
 - 默认文案继续使用前向迁移和现有 section version，不新增处理者字段。
 - 焦点模型不迁移；既有 `(0.5,0.5)` 或任意坐标原样保留。

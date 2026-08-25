@@ -471,6 +471,7 @@ describe('T19/T20 public repository contracts', () => {
     })
     const adoptionList = repository.listAdoptions()
     expect(adoptionList).toMatchObject({
+      availableCount: 1,
       resultCount: 1,
       items: [{
         work: {
@@ -482,7 +483,7 @@ describe('T19/T20 public repository contracts', () => {
       }],
     })
     expect(adoptionList.items[0]?.cover.sources.webp.map(item => item.width))
-      .toEqual([768, 1200, 1600])
+      .toEqual([960, 1600, 2400])
     expect(repository.listAdoptions({ q: '雪球' })).toMatchObject({
       items: [{ work: { slug: 'adoption-purpose' } }],
       resultCount: 1,
@@ -515,7 +516,7 @@ describe('T19/T20 public repository contracts', () => {
     expect(serialized).not.toContain('privateObjectKey')
   })
 
-  it('keeps the optional design sheet separate from the adoption cover and studio primary', async () => {
+  it('uses the complete design sheet for adoption listings while keeping detail media separate', async () => {
     const created = await createPublishedWork({
       slug: 'three-media-adoption',
       sortOrder: 1,
@@ -526,7 +527,7 @@ describe('T19/T20 public repository contracts', () => {
     const listItem = repository.listAdoptions().items[0]
     const detail = repository.getWorkBySlug('three-media-adoption')
 
-    expect(listItem?.cover.assetId).toBe(created.adoptionCoverAssetId)
+    expect(listItem?.cover.assetId).toBe(created.designAssetId)
     expect(detail?.media.primaryAssetId).toBe(created.assetId)
     expect(detail?.media.card.assetId).toBe(created.assetId)
     expect(detail?.media.designSheet?.assetId).toBe(created.designAssetId)

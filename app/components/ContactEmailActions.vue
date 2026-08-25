@@ -3,8 +3,10 @@
 // 邮箱只来自公开投影；复制反馈用 aria-live 宣告，键盘按原生按钮操作。
 const props = withDefaults(defineProps<{
   email: string
+  showAddress?: boolean
   subject?: string | undefined
 }>(), {
+  showAddress: false,
   subject: undefined,
 })
 
@@ -74,12 +76,16 @@ onScopeDispose(() => {
 
 <template>
   <div class="email-actions">
+    <div v-if="showAddress" class="email-actions__identity">
+      <h3 class="email-actions__label">邮箱</h3>
+      <p class="email-actions__address">{{ email }}</p>
+    </div>
     <div class="email-actions__buttons">
-      <PublicAction :href="mailtoHref" @click="onEmailOpen">
+      <PublicAction :href="mailtoHref" variant="secondary" @click="onEmailOpen">
         打开邮件客户端
         <span aria-hidden="true">↗</span>
       </PublicAction>
-      <PublicAction class="email-actions__copy" variant="secondary" @click="onCopy">
+      <PublicAction class="email-actions__copy" variant="text" @click="onCopy">
         {{ copyState === 'copied' ? '已复制邮箱' : '复制邮箱' }}
       </PublicAction>
     </div>
@@ -95,8 +101,28 @@ onScopeDispose(() => {
 <style scoped>
 .email-actions {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-4);
   justify-items: start;
+}
+
+.email-actions__identity {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.email-actions__label {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  line-height: var(--line-height-heading);
+}
+
+.email-actions__address {
+  max-width: 100%;
+  color: var(--public-text-secondary);
+  font-family: var(--font-public-mono);
+  font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
 }
 
 .email-actions__buttons {
