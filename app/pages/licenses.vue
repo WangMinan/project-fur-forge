@@ -66,35 +66,39 @@ const ffmpegPackage = summary.ffmpegPackage
         </details>
       </section>
 
-      <h2 class="licenses__title">第三方字体与授权资产</h2>
-      <dl class="licenses__list">
-        <div v-for="item in assets" :key="`${item.name}@${item.version}`" class="licenses__row">
-          <dt class="licenses__name">
-            <a v-if="item.homepage" :href="item.homepage" target="_blank" rel="noopener noreferrer">
-              {{ item.name }}
-            </a>
-            <template v-else>{{ item.name }}</template>
-          </dt>
-          <dd class="licenses__purpose">
-            {{ item.usage }}<template v-if="item.noticeText"> {{ item.noticeText }}</template>
-          </dd>
-          <dd class="licenses__license">{{ item.license }}</dd>
-        </div>
-      </dl>
-
-      <h2 class="licenses__title">npm 生产依赖声明</h2>
-      <p class="licenses__subtitle">
-        当前生成环境的 production 安装快照包含 {{ summary.packageCount }} 条包/版本记录，共 {{ summary.licenseCounts.length }} 种许可证表达。平台可选包反映生成环境，不代表目标 Linux runtime closure。<a href="/THIRD_PARTY_NOTICES.txt" download>下载完整 TXT 声明</a>。
-      </p>
-      <details class="license-full">
-        <summary class="license-full__summary">查看许可证表达统计</summary>
+      <section class="licenses__section" aria-labelledby="license-assets">
+        <h2 id="license-assets" class="licenses__title">第三方字体与授权资产</h2>
         <dl class="licenses__list">
-          <div v-for="item in summary.licenseCounts" :key="item.license" class="licenses__row licenses__row--summary">
-            <dt class="licenses__name">{{ item.license }}</dt>
-            <dd class="licenses__license-count">{{ item.count }} 条</dd>
+          <div v-for="item in assets" :key="`${item.name}@${item.version}`" class="licenses__row">
+            <dt class="licenses__name">
+              <a v-if="item.homepage" :href="item.homepage" target="_blank" rel="noopener noreferrer">
+                {{ item.name }}
+              </a>
+              <template v-else>{{ item.name }}</template>
+            </dt>
+            <dd class="licenses__purpose">
+              {{ item.usage }}<template v-if="item.noticeText"> {{ item.noticeText }}</template>
+            </dd>
+            <dd class="licenses__license">{{ item.license }}</dd>
           </div>
         </dl>
-      </details>
+      </section>
+
+      <section class="licenses__section" aria-labelledby="license-npm">
+        <h2 id="license-npm" class="licenses__title">npm 生产依赖声明</h2>
+        <p class="licenses__subtitle">
+          当前生成环境的 production 安装快照包含 {{ summary.packageCount }} 条包/版本记录，共 {{ summary.licenseCounts.length }} 种许可证表达。平台可选包反映生成环境，不代表目标 Linux runtime closure。<a href="/THIRD_PARTY_NOTICES.txt" download>下载完整 TXT 声明</a>。
+        </p>
+        <details class="license-full">
+          <summary class="license-full__summary">查看许可证表达统计</summary>
+          <dl class="licenses__list">
+            <div v-for="item in summary.licenseCounts" :key="item.license" class="licenses__row licenses__row--summary">
+              <dt class="licenses__name">{{ item.license }}</dt>
+              <dd class="licenses__license-count">{{ item.count }} 条</dd>
+            </div>
+          </dl>
+        </details>
+      </section>
     </div>
   </div>
 </template>
@@ -174,11 +178,13 @@ const ffmpegPackage = summary.ffmpegPackage
 
 .license-full {
   margin-top: var(--space-4);
+  border-block: 1px solid var(--public-border-secondary);
 }
 
 .license-full__summary {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  width: 100%;
   min-height: 2.75rem;
   color: var(--public-text-link);
   font-size: var(--font-size-sm);
@@ -192,10 +198,13 @@ const ffmpegPackage = summary.ffmpegPackage
 
 /* 许可证正文按原文换行呈现，限制高度以免顶开整页。 */
 .license-full__text {
+  min-width: 0;
+  max-width: 100%;
   max-height: 30rem;
-  margin-top: var(--space-3);
+  margin: 0 0 var(--space-4);
   padding: var(--space-4);
   overflow: auto;
+  overscroll-behavior: contain;
   background: var(--public-bg-secondary);
   border-radius: var(--radius-sm);
   color: var(--public-text-secondary);
@@ -206,8 +215,11 @@ const ffmpegPackage = summary.ffmpegPackage
   overflow-wrap: anywhere;
 }
 
-.licenses__title {
+.licenses__section {
   margin-top: var(--space-8);
+}
+
+.licenses__title {
   font-family: var(--font-public-display);
   font-size: var(--font-size-md);
   line-height: var(--line-height-heading);
@@ -226,9 +238,9 @@ const ffmpegPackage = summary.ffmpegPackage
 
 .licenses__row {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: var(--space-1) var(--space-4);
-  padding: var(--space-3) 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  padding: var(--space-4) 0;
   border-bottom: 1px solid var(--public-border-secondary);
 }
 
@@ -237,22 +249,18 @@ const ffmpegPackage = summary.ffmpegPackage
 }
 
 .licenses__purpose {
-  grid-column: 1;
   margin: 0;
   color: var(--public-text-secondary);
   font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
 }
 
-/* 许可证名右对齐、等宽：一列扫一眼就能对照。 */
 .licenses__license {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  align-self: center;
   margin: 0;
   color: var(--public-text-tertiary);
   font-family: var(--font-public-mono, monospace);
   font-size: var(--font-size-xs);
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .licenses__row--summary {
@@ -265,9 +273,11 @@ const ffmpegPackage = summary.ffmpegPackage
   font-variant-numeric: tabular-nums;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .licenses__row {
     grid-template-columns: 12rem 1fr auto;
+    gap: var(--space-1) var(--space-4);
+    padding: var(--space-3) 0;
   }
 
   .licenses__row--summary {
@@ -281,6 +291,8 @@ const ffmpegPackage = summary.ffmpegPackage
   .licenses__license {
     grid-column: 3;
     grid-row: 1;
+    align-self: center;
+    white-space: nowrap;
   }
 }
 </style>

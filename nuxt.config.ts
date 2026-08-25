@@ -7,11 +7,19 @@ const includeRuntimeErrorFixtures = (
     && process.env.VITEST === 'true'
   )
 )
+const includeV00Prototypes = (
+  process.env.V00_PROTOTYPES === 'true'
+  && process.env.APP_ENV !== 'production'
+  && process.env.NODE_ENV !== 'production'
+)
 const runtimeApiErrorFixture = fileURLToPath(
   new URL('./tests/fixtures/runtime/api-error.ts', import.meta.url),
 ).replaceAll('\\', '/')
 const runtimePageErrorFixture = fileURLToPath(
   new URL('./tests/fixtures/runtime/page-error.vue', import.meta.url),
+).replaceAll('\\', '/')
+const v00PrototypePage = fileURLToPath(
+  new URL('./app/components/prototypes/v00/V00PrototypePage.vue', import.meta.url),
 ).replaceAll('\\', '/')
 const embeddedFfmpegRuntime = fileURLToPath(
   new URL('./scripts/embedded-ffmpeg.mjs', import.meta.url),
@@ -158,14 +166,23 @@ export default defineNuxtConfig({
       : [],
     preset: 'node-server',
   },
-  hooks: includeRuntimeErrorFixtures
+  hooks: includeRuntimeErrorFixtures || includeV00Prototypes
     ? {
         'pages:extend': (pages) => {
-          pages.push({
-            name: 'runtime-page-error-fixture',
-            path: '/__test__/page-error',
-            file: runtimePageErrorFixture,
-          })
+          if (includeRuntimeErrorFixtures) {
+            pages.push({
+              name: 'runtime-page-error-fixture',
+              path: '/__test__/page-error',
+              file: runtimePageErrorFixture,
+            })
+          }
+          if (includeV00Prototypes) {
+            pages.push({
+              name: 'v00-prototype',
+              path: '/__prototype/v00/:view?',
+              file: v00PrototypePage,
+            })
+          }
         },
       }
     : {},
@@ -176,6 +193,15 @@ export default defineNuxtConfig({
         'x-robots-tag': 'noindex, nofollow, noarchive',
       },
     },
+    ...(includeV00Prototypes
+      ? {
+          '/__prototype/v00/**': {
+            headers: {
+              'x-robots-tag': 'noindex, nofollow, noarchive',
+            },
+          },
+        }
+      : {}),
   },
   typescript: {
     strict: true,

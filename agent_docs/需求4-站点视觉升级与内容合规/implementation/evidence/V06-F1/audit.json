@@ -1,0 +1,165 @@
+{
+  "capturedAt": "2026-08-23T10:33:11.388Z",
+  "routes": {
+    "mixed-gallery-390x844": {
+      "status": 200,
+      "imageCount": 6,
+      "imagesDecoded": true,
+      "noHorizontalOverflow": true,
+      "thumbCount": 5,
+      "responseStatus": 200
+    },
+    "mixed-gallery-430x932": {
+      "status": 200,
+      "imageCount": 6,
+      "imagesDecoded": true,
+      "noHorizontalOverflow": true,
+      "thumbCount": 5,
+      "responseStatus": 200
+    },
+    "mixed-gallery-768x1024": {
+      "status": 200,
+      "imageCount": 6,
+      "imagesDecoded": true,
+      "noHorizontalOverflow": true,
+      "thumbCount": 5,
+      "responseStatus": 200
+    },
+    "mixed-gallery-1024x900": {
+      "status": 200,
+      "imageCount": 6,
+      "imagesDecoded": true,
+      "noHorizontalOverflow": true,
+      "thumbCount": 5,
+      "responseStatus": 200
+    },
+    "mixed-gallery-1440x900": {
+      "status": 200,
+      "imageCount": 6,
+      "imagesDecoded": true,
+      "noHorizontalOverflow": true,
+      "thumbCount": 5,
+      "responseStatus": 200
+    },
+    "single-landscape-390x844": {
+      "status": 200,
+      "imageCount": 1,
+      "imagesDecoded": true,
+      "noHorizontalOverflow": true,
+      "thumbCount": 0,
+      "responseStatus": 200
+    },
+    "single-landscape-1440x900": {
+      "status": 200,
+      "imageCount": 1,
+      "imagesDecoded": true,
+      "noHorizontalOverflow": true,
+      "thumbCount": 0,
+      "responseStatus": 200
+    },
+    "portrait-mixed-390x844": {
+      "status": 200,
+      "imageCount": 4,
+      "imagesDecoded": true,
+      "noHorizontalOverflow": true,
+      "thumbCount": 3,
+      "responseStatus": 200
+    },
+    "portrait-mixed-1440x900": {
+      "status": 200,
+      "imageCount": 4,
+      "imagesDecoded": true,
+      "noHorizontalOverflow": true,
+      "thumbCount": 3,
+      "responseStatus": 200
+    }
+  },
+  "interactions": {
+    "keyboardSwitch": {
+      "before": {
+        "imageSrc": "http://127.0.0.1:3001/dev/web/e0b40a2f-e62f-57b6-a4d0-55fdd1929fa0/recipe-v3/detail/2400/1a2f35e6eca40d55f32a68055ae78870c010c6ca7f2eea29528cb9d62c5136f7.png",
+        "stage": {
+          "x": 57.59375,
+          "y": 149,
+          "width": 799.421875,
+          "height": 660
+        },
+        "thumbs": {
+          "x": 873.015625,
+          "y": 149,
+          "width": 88,
+          "height": 472
+        }
+      },
+      "after": {
+        "imageSrc": "http://127.0.0.1:3001/dev/web/3c18e4c7-aa69-53e5-830d-8502a296fa7f/recipe-v3/detail/2400/29c0d8ff25e0c29b7be15c72a8f24ddb73d0c0476888797db7fff2a0048951f4.png",
+        "stage": {
+          "x": 57.59375,
+          "y": 149,
+          "width": 799.421875,
+          "height": 660
+        },
+        "thumbs": {
+          "x": 873.015625,
+          "y": 149,
+          "width": 88,
+          "height": 472
+        },
+        "selected": "true",
+        "focused": true
+      }
+    },
+    "longIdentity": {
+      "noHorizontalOverflow": true,
+      "nameContained": true
+    },
+    "touchSwitch": {
+      "selected": "true",
+      "target": {
+        "x": 176,
+        "y": 809.578125,
+        "width": 72,
+        "height": 72
+      }
+    },
+    "reducedMotion": {
+      "animationCount": 0,
+      "selected": "true"
+    },
+    "emptyGallery": {
+      "usesSharedEmptyState": true
+    },
+    "routes": {
+      "adoptionRedirect": {
+        "status": 301,
+        "location": "/works/adoption-green-dog-test"
+      },
+      "missingStatus": 404
+    },
+    "backLinks": {
+      "adoption": "/adoptions",
+      "works": "/works"
+    },
+    "noJavaScript": {
+      "headingVisible": true,
+      "mainImageVisible": true,
+      "backVisible": true
+    }
+  },
+  "checks": {
+    "allRouteViewports": true,
+    "allImagesDecoded": true,
+    "noHorizontalOverflow": true,
+    "singleImageHasNoThumbs": true,
+    "keyboardSwitch": true,
+    "stableMixedStage": true,
+    "touchSwitch": true,
+    "reducedMotion": true,
+    "emptyGallery": true,
+    "longIdentity": true,
+    "adoptionRedirect": true,
+    "missing404": true,
+    "backLinks": true,
+    "noJavaScript": true
+  }
+}

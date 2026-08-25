@@ -1,0 +1,918 @@
+{
+  "capturedAt": "2026-08-24T10:07:13.228Z",
+  "home": {
+    "1440x900": {
+      "viewport": {
+        "name": "1440x900",
+        "width": 1440,
+        "height": 900
+      },
+      "scrollY": 1656,
+      "scrollState": {
+        "bodyHeight": 3478,
+        "bodyOverflow": "visible",
+        "htmlHeight": 3478,
+        "htmlOverflow": "visible",
+        "scrollingElement": "HTML"
+      },
+      "section": {
+        "x": 0,
+        "y": 72,
+        "width": 1425,
+        "height": 828,
+        "top": 72,
+        "right": 1425,
+        "bottom": 900,
+        "left": 0
+      },
+      "media": {
+        "x": 57.59375,
+        "y": 270.78125,
+        "width": 841.203125,
+        "height": 531,
+        "top": 270.78125,
+        "right": 898.796875,
+        "bottom": 801.78125,
+        "left": 57.59375
+      },
+      "narrative": {
+        "x": 918.796875,
+        "y": 357.625,
+        "width": 448.59375,
+        "height": 357.296875,
+        "top": 357.625,
+        "right": 1367.390625,
+        "bottom": 714.921875,
+        "left": 918.796875
+      },
+      "mediaShare": 0.6521981416647485,
+      "headingWidth": 512,
+      "registerPresent": false,
+      "promise": "从角色设定出发",
+      "wayfindingLanguage": {
+        "hero": "下一幕代表作品",
+        "featured": "下一幕自设委托",
+        "commission": "下一幕设定领养"
+      },
+      "destination": "下一幕 / 设定领养",
+      "mediaBorderRadius": "12px",
+      "layoutOrder": true,
+      "sceneFitsViewport": true,
+      "wayfindingInViewport": true,
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "responseStatus": 200,
+      "decodedImages": [
+        {
+          "complete": true,
+          "naturalHeight": 614,
+          "naturalWidth": 921
+        }
+      ]
+    },
+    "390x844": {
+      "viewport": {
+        "name": "390x844",
+        "width": 390,
+        "height": 844
+      },
+      "scrollY": 1421,
+      "scrollState": {
+        "bodyHeight": 3145,
+        "bodyOverflow": "visible",
+        "htmlHeight": 3145,
+        "htmlOverflow": "visible",
+        "scrollingElement": "HTML"
+      },
+      "section": {
+        "x": 0,
+        "y": 87.875,
+        "width": 375,
+        "height": 730.859375,
+        "top": 87.875,
+        "right": 375,
+        "bottom": 818.734375,
+        "left": 0
+      },
+      "media": {
+        "x": 32,
+        "y": 240.4375,
+        "width": 327,
+        "height": 236.3125,
+        "top": 240.4375,
+        "right": 359,
+        "bottom": 476.75,
+        "left": 32
+      },
+      "narrative": {
+        "x": 44,
+        "y": 492.75,
+        "width": 315,
+        "height": 289.984375,
+        "top": 492.75,
+        "right": 359,
+        "bottom": 782.734375,
+        "left": 44
+      },
+      "mediaShare": 0.5093457943925234,
+      "headingWidth": 343,
+      "registerPresent": false,
+      "promise": "从角色设定出发",
+      "wayfindingLanguage": {
+        "hero": "下一幕代表作品",
+        "featured": "下一幕自设委托",
+        "commission": "下一幕设定领养"
+      },
+      "destination": "下一幕 / 设定领养",
+      "mediaBorderRadius": "12px",
+      "layoutOrder": true,
+      "sceneFitsViewport": true,
+      "wayfindingInViewport": true,
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "responseStatus": 200,
+      "decodedImages": [
+        {
+          "complete": true,
+          "naturalHeight": 259,
+          "naturalWidth": 389
+        }
+      ]
+    },
+    "430x932": {
+      "viewport": {
+        "name": "430x932",
+        "width": 430,
+        "height": 932
+      },
+      "scrollY": 1538,
+      "scrollState": {
+        "bodyHeight": 3267,
+        "bodyOverflow": "visible",
+        "htmlHeight": 3267,
+        "htmlOverflow": "visible",
+        "scrollingElement": "HTML"
+      },
+      "section": {
+        "x": 0,
+        "y": 87.671875,
+        "width": 415,
+        "height": 754.546875,
+        "top": 87.671875,
+        "right": 415,
+        "bottom": 842.21875,
+        "left": 0
+      },
+      "media": {
+        "x": 32,
+        "y": 240.234375,
+        "width": 367,
+        "height": 260,
+        "top": 240.234375,
+        "right": 399,
+        "bottom": 500.234375,
+        "left": 32
+      },
+      "narrative": {
+        "x": 44,
+        "y": 516.234375,
+        "width": 355,
+        "height": 289.984375,
+        "top": 516.234375,
+        "right": 399,
+        "bottom": 806.21875,
+        "left": 44
+      },
+      "mediaShare": 0.5083102493074793,
+      "headingWidth": 383,
+      "registerPresent": false,
+      "promise": "从角色设定出发",
+      "wayfindingLanguage": {
+        "hero": "下一幕代表作品",
+        "featured": "下一幕自设委托",
+        "commission": "下一幕设定领养"
+      },
+      "destination": "下一幕 / 设定领养",
+      "mediaBorderRadius": "12px",
+      "layoutOrder": true,
+      "sceneFitsViewport": true,
+      "wayfindingInViewport": true,
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "responseStatus": 200,
+      "decodedImages": [
+        {
+          "complete": true,
+          "naturalHeight": 286,
+          "naturalWidth": 430
+        }
+      ]
+    }
+  },
+  "featured": {
+    "1440x900": {
+      "viewport": {
+        "name": "1440x900",
+        "width": 1440,
+        "height": 900
+      },
+      "headingWidth": 512,
+      "registerPresent": false,
+      "mediaBorderRadius": "12px",
+      "destination": "下一幕自设委托",
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "responseStatus": 200,
+      "decodedImages": [
+        {
+          "complete": true,
+          "naturalHeight": 533,
+          "naturalWidth": 400
+        }
+      ]
+    },
+    "390x844": {
+      "viewport": {
+        "name": "390x844",
+        "width": 390,
+        "height": 844
+      },
+      "headingWidth": 343,
+      "registerPresent": false,
+      "mediaBorderRadius": "12px",
+      "destination": "下一幕自设委托",
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "responseStatus": 200,
+      "decodedImages": [
+        {
+          "complete": true,
+          "naturalHeight": 374,
+          "naturalWidth": 280
+        }
+      ]
+    },
+    "430x932": {
+      "viewport": {
+        "name": "430x932",
+        "width": 430,
+        "height": 932
+      },
+      "headingWidth": 383,
+      "registerPresent": false,
+      "mediaBorderRadius": "12px",
+      "destination": "下一幕自设委托",
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "responseStatus": 200,
+      "decodedImages": [
+        {
+          "complete": true,
+          "naturalHeight": 412,
+          "naturalWidth": 309
+        }
+      ]
+    }
+  },
+  "commission": {
+    "1440x900": {
+      "viewport": {
+        "name": "1440x900",
+        "width": 1440,
+        "height": 900
+      },
+      "media": {
+        "x": 506.1875,
+        "y": 205,
+        "width": 861.21875,
+        "height": 558,
+        "top": 205,
+        "right": 1367.40625,
+        "bottom": 763,
+        "left": 506.1875
+      },
+      "content": {
+        "x": 57.59375,
+        "y": 270.953125,
+        "width": 412.59375,
+        "height": 426.09375,
+        "top": 270.953125,
+        "right": 470.1875,
+        "bottom": 697.046875,
+        "left": 57.59375
+      },
+      "h1Count": 1,
+      "promise": "从角色设定出发",
+      "continuationHref": "#commission-details",
+      "continuationLabel": "继续查看制作范围与估价 ↓",
+      "continuationInFirstViewport": true,
+      "mastheadWidth": 512,
+      "mastheadChildCount": 1,
+      "mediaBorderRadius": "12px",
+      "layoutOrder": true,
+      "applicationHref": "/commission/apply",
+      "applicationWayfinding": "开始申请填写委托表单→",
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "responseStatus": 200,
+      "decodedImages": [
+        {
+          "complete": true,
+          "naturalHeight": 518,
+          "naturalWidth": 921
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 128,
+          "naturalWidth": 128
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 128,
+          "naturalWidth": 128
+        }
+      ],
+      "continuationTarget": {
+        "hash": "#commission-details",
+        "top": 168
+      }
+    },
+    "390x844": {
+      "viewport": {
+        "name": "390x844",
+        "width": 390,
+        "height": 844
+      },
+      "media": {
+        "x": 16,
+        "y": 225,
+        "width": 327,
+        "height": 472.625,
+        "top": 225,
+        "right": 343,
+        "bottom": 697.625,
+        "left": 16
+      },
+      "content": {
+        "x": 16,
+        "y": 713.625,
+        "width": 343,
+        "height": 422.875,
+        "top": 713.625,
+        "right": 359,
+        "bottom": 1136.5,
+        "left": 16
+      },
+      "h1Count": 1,
+      "promise": "从角色设定出发",
+      "continuationHref": "#commission-details",
+      "continuationLabel": "继续查看制作范围与估价 ↓",
+      "continuationInFirstViewport": false,
+      "mastheadWidth": 343,
+      "mastheadChildCount": 1,
+      "mediaBorderRadius": "12px",
+      "layoutOrder": true,
+      "applicationHref": "/commission/apply",
+      "applicationWayfinding": "开始申请填写委托表单→",
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "responseStatus": 200,
+      "decodedImages": [
+        {
+          "complete": true,
+          "naturalHeight": 636,
+          "naturalWidth": 358
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 149,
+          "naturalWidth": 149
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 149,
+          "naturalWidth": 149
+        }
+      ]
+    },
+    "430x932": {
+      "viewport": {
+        "name": "430x932",
+        "width": 430,
+        "height": 932
+      },
+      "media": {
+        "x": 16,
+        "y": 225,
+        "width": 367,
+        "height": 521.90625,
+        "top": 225,
+        "right": 383,
+        "bottom": 746.90625,
+        "left": 16
+      },
+      "content": {
+        "x": 16,
+        "y": 762.90625,
+        "width": 383,
+        "height": 395.359375,
+        "top": 762.90625,
+        "right": 399,
+        "bottom": 1158.265625,
+        "left": 16
+      },
+      "h1Count": 1,
+      "promise": "从角色设定出发",
+      "continuationHref": "#commission-details",
+      "continuationLabel": "继续查看制作范围与估价 ↓",
+      "continuationInFirstViewport": false,
+      "mastheadWidth": 383,
+      "mastheadChildCount": 1,
+      "mediaBorderRadius": "12px",
+      "layoutOrder": true,
+      "applicationHref": "/commission/apply",
+      "applicationWayfinding": "开始申请填写委托表单→",
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "responseStatus": 200,
+      "decodedImages": [
+        {
+          "complete": true,
+          "naturalHeight": 707,
+          "naturalWidth": 398
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 149,
+          "naturalWidth": 149
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 149,
+          "naturalWidth": 149
+        }
+      ]
+    }
+  },
+  "review": {
+    "home": {
+      "1280x800": {
+        "viewport": {
+          "name": "1280x800",
+          "width": 1280,
+          "height": 800
+        },
+        "scrollY": 1456,
+        "scrollState": {
+          "bodyHeight": 3077,
+          "bodyOverflow": "visible",
+          "htmlHeight": 3077,
+          "htmlOverflow": "visible",
+          "scrollingElement": "HTML"
+        },
+        "section": {
+          "x": 0,
+          "y": 72,
+          "width": 1265,
+          "height": 728,
+          "top": 72,
+          "right": 1265,
+          "bottom": 800,
+          "left": 0
+        },
+        "media": {
+          "x": 51.1875,
+          "y": 250.28125,
+          "width": 745.203125,
+          "height": 472,
+          "top": 250.28125,
+          "right": 796.390625,
+          "bottom": 722.28125,
+          "left": 51.1875
+        },
+        "narrative": {
+          "x": 815.59375,
+          "y": 307.625,
+          "width": 398.21875,
+          "height": 357.296875,
+          "top": 307.625,
+          "right": 1213.8125,
+          "bottom": 664.921875,
+          "left": 815.59375
+        },
+        "mediaShare": 0.6517306877656158,
+        "headingWidth": 512,
+        "registerPresent": false,
+        "promise": "从角色设定出发",
+        "wayfindingLanguage": {
+          "hero": "下一幕代表作品",
+          "featured": "下一幕自设委托",
+          "commission": "下一幕设定领养"
+        },
+        "destination": "下一幕 / 设定领养",
+        "mediaBorderRadius": "12px",
+        "layoutOrder": true,
+        "sceneFitsViewport": true,
+        "wayfindingInViewport": true,
+        "noHorizontalOverflow": true,
+        "runningAnimations": 0,
+        "responseStatus": 200,
+        "decodedImages": [
+          {
+            "complete": true,
+            "naturalHeight": 546,
+            "naturalWidth": 819
+          }
+        ]
+      },
+      "768x1024": {
+        "viewport": {
+          "name": "768x1024",
+          "width": 768,
+          "height": 1024
+        },
+        "scrollY": 1872,
+        "scrollState": {
+          "bodyHeight": 3984,
+          "bodyOverflow": "visible",
+          "htmlHeight": 3984,
+          "htmlOverflow": "visible",
+          "scrollingElement": "HTML"
+        },
+        "section": {
+          "x": 0,
+          "y": 88,
+          "width": 753,
+          "height": 936,
+          "top": 88,
+          "right": 753,
+          "bottom": 1024,
+          "left": 0
+        },
+        "media": {
+          "x": 24,
+          "y": 334.28125,
+          "width": 451.328125,
+          "height": 544,
+          "top": 334.28125,
+          "right": 475.328125,
+          "bottom": 878.28125,
+          "left": 24
+        },
+        "narrative": {
+          "x": 483.328125,
+          "y": 412.109375,
+          "width": 245.671875,
+          "height": 388.34375,
+          "top": 412.109375,
+          "right": 729,
+          "bottom": 800.453125,
+          "left": 483.328125
+        },
+        "mediaShare": 0.6475295911047346,
+        "headingWidth": 512,
+        "registerPresent": false,
+        "promise": "从角色设定出发",
+        "wayfindingLanguage": {
+          "hero": "下一幕代表作品",
+          "featured": "下一幕自设委托",
+          "commission": "下一幕设定领养"
+        },
+        "destination": "下一幕 / 设定领养",
+        "mediaBorderRadius": "12px",
+        "layoutOrder": true,
+        "sceneFitsViewport": true,
+        "wayfindingInViewport": true,
+        "noHorizontalOverflow": true,
+        "runningAnimations": 0,
+        "responseStatus": 200,
+        "decodedImages": [
+          {
+            "complete": true,
+            "naturalHeight": 512,
+            "naturalWidth": 768
+          }
+        ]
+      },
+      "375x812": {
+        "viewport": {
+          "name": "375x812",
+          "width": 375,
+          "height": 812
+        },
+        "scrollY": 1378,
+        "scrollState": {
+          "bodyHeight": 3120,
+          "bodyOverflow": "visible",
+          "htmlHeight": 3120,
+          "htmlOverflow": "visible",
+          "scrollingElement": "HTML"
+        },
+        "section": {
+          "x": 0,
+          "y": 88.0625,
+          "width": 360,
+          "height": 721.90625,
+          "top": 88.0625,
+          "right": 360,
+          "bottom": 809.96875,
+          "left": 0
+        },
+        "media": {
+          "x": 32,
+          "y": 240.625,
+          "width": 312,
+          "height": 227.359375,
+          "top": 240.625,
+          "right": 344,
+          "bottom": 467.984375,
+          "left": 32
+        },
+        "narrative": {
+          "x": 44,
+          "y": 483.984375,
+          "width": 300,
+          "height": 289.984375,
+          "top": 483.984375,
+          "right": 344,
+          "bottom": 773.96875,
+          "left": 44
+        },
+        "mediaShare": 0.5098039215686274,
+        "headingWidth": 328,
+        "registerPresent": false,
+        "promise": "从角色设定出发",
+        "wayfindingLanguage": {
+          "hero": "下一幕代表作品",
+          "featured": "下一幕自设委托",
+          "commission": "下一幕设定领养"
+        },
+        "destination": "下一幕 / 设定领养",
+        "mediaBorderRadius": "12px",
+        "layoutOrder": true,
+        "sceneFitsViewport": true,
+        "wayfindingInViewport": true,
+        "noHorizontalOverflow": true,
+        "runningAnimations": 0,
+        "responseStatus": 200,
+        "decodedImages": [
+          {
+            "complete": true,
+            "naturalHeight": 250,
+            "naturalWidth": 375
+          }
+        ]
+      }
+    },
+    "commission": {
+      "1280x800": {
+        "viewport": {
+          "name": "1280x800",
+          "width": 1280,
+          "height": 800
+        },
+        "media": {
+          "x": 449.390625,
+          "y": 205,
+          "width": 764.421875,
+          "height": 496,
+          "top": 205,
+          "right": 1213.8125,
+          "bottom": 701,
+          "left": 449.390625
+        },
+        "content": {
+          "x": 51.1875,
+          "y": 232.015625,
+          "width": 366.203125,
+          "height": 441.953125,
+          "top": 232.015625,
+          "right": 417.390625,
+          "bottom": 673.96875,
+          "left": 51.1875
+        },
+        "h1Count": 1,
+        "promise": "从角色设定出发",
+        "continuationHref": "#commission-details",
+        "continuationLabel": "继续查看制作范围与估价 ↓",
+        "continuationInFirstViewport": true,
+        "mastheadWidth": 512,
+        "mastheadChildCount": 1,
+        "mediaBorderRadius": "12px",
+        "layoutOrder": true,
+        "applicationHref": "/commission/apply",
+        "applicationWayfinding": "开始申请填写委托表单→",
+        "noHorizontalOverflow": true,
+        "runningAnimations": 0,
+        "responseStatus": 200,
+        "decodedImages": [
+          {
+            "complete": true,
+            "naturalHeight": 460,
+            "naturalWidth": 819
+          },
+          {
+            "complete": true,
+            "naturalHeight": 150,
+            "naturalWidth": 150
+          },
+          {
+            "complete": true,
+            "naturalHeight": 128,
+            "naturalWidth": 128
+          },
+          {
+            "complete": true,
+            "naturalHeight": 150,
+            "naturalWidth": 150
+          },
+          {
+            "complete": true,
+            "naturalHeight": 128,
+            "naturalWidth": 128
+          }
+        ]
+      },
+      "768x1024": {
+        "viewport": {
+          "name": "768x1024",
+          "width": 768,
+          "height": 1024
+        },
+        "media": {
+          "x": 85.453125,
+          "y": 201,
+          "width": 643.546875,
+          "height": 593.90625,
+          "top": 201,
+          "right": 729,
+          "bottom": 794.90625,
+          "left": 85.453125
+        },
+        "content": {
+          "x": 24,
+          "y": 810.90625,
+          "width": 705,
+          "height": 223.234375,
+          "top": 810.90625,
+          "right": 729,
+          "bottom": 1034.140625,
+          "left": 24
+        },
+        "h1Count": 1,
+        "promise": "从角色设定出发",
+        "continuationHref": "#commission-details",
+        "continuationLabel": "继续查看制作范围与估价 ↓",
+        "continuationInFirstViewport": false,
+        "mastheadWidth": 512,
+        "mastheadChildCount": 1,
+        "mediaBorderRadius": "12px",
+        "layoutOrder": true,
+        "applicationHref": "/commission/apply",
+        "applicationWayfinding": "开始申请填写委托表单→",
+        "noHorizontalOverflow": true,
+        "runningAnimations": 0,
+        "responseStatus": 200,
+        "decodedImages": [
+          {
+            "complete": true,
+            "naturalHeight": 1308,
+            "naturalWidth": 736
+          },
+          {
+            "complete": true,
+            "naturalHeight": 150,
+            "naturalWidth": 150
+          },
+          {
+            "complete": true,
+            "naturalHeight": 180,
+            "naturalWidth": 180
+          },
+          {
+            "complete": true,
+            "naturalHeight": 150,
+            "naturalWidth": 150
+          },
+          {
+            "complete": true,
+            "naturalHeight": 180,
+            "naturalWidth": 180
+          }
+        ]
+      },
+      "375x812": {
+        "viewport": {
+          "name": "375x812",
+          "width": 375,
+          "height": 812
+        },
+        "media": {
+          "x": 16,
+          "y": 225,
+          "width": 312,
+          "height": 454.71875,
+          "top": 225,
+          "right": 328,
+          "bottom": 679.71875,
+          "left": 16
+        },
+        "content": {
+          "x": 16,
+          "y": 695.71875,
+          "width": 328,
+          "height": 422.875,
+          "top": 695.71875,
+          "right": 344,
+          "bottom": 1118.59375,
+          "left": 16
+        },
+        "h1Count": 1,
+        "promise": "从角色设定出发",
+        "continuationHref": "#commission-details",
+        "continuationLabel": "继续查看制作范围与估价 ↓",
+        "continuationInFirstViewport": false,
+        "mastheadWidth": 328,
+        "mastheadChildCount": 1,
+        "mediaBorderRadius": "12px",
+        "layoutOrder": true,
+        "applicationHref": "/commission/apply",
+        "applicationWayfinding": "开始申请填写委托表单→",
+        "noHorizontalOverflow": true,
+        "runningAnimations": 0,
+        "responseStatus": 200,
+        "decodedImages": [
+          {
+            "complete": true,
+            "naturalHeight": 609,
+            "naturalWidth": 343
+          },
+          {
+            "complete": true,
+            "naturalHeight": 150,
+            "naturalWidth": 150
+          },
+          {
+            "complete": true,
+            "naturalHeight": 149,
+            "naturalWidth": 149
+          },
+          {
+            "complete": true,
+            "naturalHeight": 150,
+            "naturalWidth": 150
+          },
+          {
+            "complete": true,
+            "naturalHeight": 149,
+            "naturalWidth": 149
+          }
+        ]
+      }
+    }
+  },
+  "checks": {
+    "allRoutes200": true,
+    "allImagesDecoded": true,
+    "noHorizontalOverflow": true,
+    "sharedImageRadius": true,
+    "homeNarrative": true,
+    "desktopHomeBalance": true,
+    "compactHeadings": true,
+    "noRightRegisters": true,
+    "featuredHeading": true,
+    "commissionLead": true,
+    "desktopContinuationVisible": true,
+    "desktopContinuationTarget": true
+  }
+}

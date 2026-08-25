@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { publicWorkDetailResponseSchema } from '~~/shared/schemas/public-content'
 import { PROJECT_NAME } from '~~/shared/constants/project'
+import { formatCnyMinorUnits } from '~/utils/format'
+import { ADOPTION_STATUS_LABELS } from '~/utils/work-labels'
 
 /**
  * T19 真实作品详情：SSR 消费 GET /api/public/v1/works/{slug}。
@@ -64,6 +66,15 @@ watch(error, (err) => {
 })
 
 const dto = computed(() => detail.value?.work)
+const isAdoptionArchive = computed(() => Boolean(
+  detail.value?.adoption
+  || detail.value?.media.adoptionCover
+  || detail.value?.media.designSheet,
+))
+const adoptionPrice = computed(() => {
+  const price = detail.value?.adoption?.price
+  return price ? formatCnyMinorUnits(price.minorUnits) : null
+})
 /**
  * 单一媒体区：出厂照 → 领养封面 → 设定图 合成同一个查看序列。
  * 成果图（出厂照、封面）在前，参考图（设定图）在后。三类图片共用左大图 +
@@ -89,16 +100,16 @@ const gallery = computed(() => {
 
 useSeoMeta({
   title: computed(() => (dto.value
-    ? `${dto.value.characterName} · 作品展示 · ${PROJECT_NAME}`
+    ? `${dto.value.characterName} · ${isAdoptionArchive.value ? '设定领养' : '作品展示'} · ${PROJECT_NAME}`
     : `作品展示 · ${PROJECT_NAME}`)),
   description: computed(() => (dto.value
-    ? `${dto.value.characterName}：${dto.value.species}。有点小狗工作室兽装作品档案。`
+    ? `${dto.value.characterName}：${dto.value.species}。有点小狗工作室${isAdoptionArchive.value ? '设定领养角色详情' : '兽装作品档案'}。`
     : '有点小狗工作室兽装作品档案。')),
   ogTitle: computed(() => (dto.value
     ? `${dto.value.characterName} · ${PROJECT_NAME}`
     : `作品展示 · ${PROJECT_NAME}`)),
   ogDescription: computed(() => (dto.value
-    ? `${dto.value.species} · 兽装作品档案`
+    ? `${dto.value.species} · ${isAdoptionArchive.value ? '设定领养角色详情' : '兽装作品档案'}`
     : '有点小狗工作室兽装作品档案。')),
   ogType: 'article',
 })
@@ -133,7 +144,7 @@ useHead(() => ({
  */
 const WORKS_BACK = { href: '/works', label: '返回作品展示' }
 const ADOPTIONS_BACK = { href: '/adoptions', label: '返回设定领养' }
-const back = ref(route.query.from === 'adoptions' ? ADOPTIONS_BACK : WORKS_BACK)
+const back = shallowRef(route.query.from === 'adoptions' ? ADOPTIONS_BACK : WORKS_BACK)
 
 onMounted(() => {
   const previous = window.history.state?.back
@@ -153,7 +164,9 @@ onMounted(() => {
   <article
     v-if="dto"
     class="work-detail"
+    :class="{ 'work-detail--adoption': isAdoptionArchive }"
     data-testid="work-detail"
+    :data-detail-kind="isAdoptionArchive ? 'adoption' : 'work'"
     data-analytics-entity-type="work"
     :data-analytics-entity-id="dto.id"
     :data-work-slug="dto.slug"
@@ -164,16 +177,46 @@ onMounted(() => {
       </NuxtLink>
     </nav>
 
-    <header class="work-detail__header">
-      <h1 class="work-detail__name">
-        {{ dto.characterName }}
-      </h1>
-      <p class="work-detail__meta">
-        {{ dto.species }}
-      </p>
-    </header>
-
     <div class="work-detail__layout">
+      <header class="work-detail__header">
+        <h1 class="work-detail__name">
+          {{ dto.characterName }}
+        </h1>
+        <dl class="work-detail__identity-ledger">
+          <div>
+            <dt>物种</dt>
+            <dd>{{ dto.species }}</dd>
+          </div>
+          <div v-if="isAdoptionArchive">
+            <dt>内容类型</dt>
+            <dd>设定领养</dd>
+          </div>
+          <div v-if="detail?.adoption">
+            <dt>领养状态</dt>
+            <dd
+              class="work-detail__adoption-status"
+              :data-status="detail.adoption.adoptionStatus"
+              data-testid="adoption-detail-status"
+            >{{ ADOPTION_STATUS_LABELS[detail.adoption.adoptionStatus] }}</dd>
+          </div>
+          <div v-if="detail?.adoption">
+            <dt>领养价格</dt>
+            <dd data-testid="adoption-detail-price">{{ adoptionPrice ?? '以详情为准' }}</dd>
+          </div>
+        </dl>
+        <div v-if="isAdoptionArchive" class="work-detail__adoption-actions">
+          <PublicAction to="/about#contact">
+            联系咨询领养
+          </PublicAction>
+          <NuxtLink
+            to="/adoptions"
+            class="work-detail__archive-link"
+          >
+            浏览全部领养角色 <span aria-hidden="true">→</span>
+          </NuxtLink>
+        </div>
+      </header>
+
       <div class="work-detail__media">
         <!--
           所有图片已并入同一查看序列，不再需要「出厂照 / 作品图集」这类分区标题。
@@ -186,6 +229,11 @@ onMounted(() => {
             :view-transition-name="sharedViewTransitionName"
           />
         </section>
+        <PublicEmptyState
+          v-else
+          title="作品图片正在整理中。"
+          description="当前作品暂时没有可公开查看的图片。"
+        />
       </div>
     </div>
 
@@ -193,13 +241,12 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* 详情页自己提供收尾留白；页脚只留一段小间距。 */
 .work-detail {
-  padding-bottom: var(--space-7);
+  padding-bottom: var(--space-6);
 }
 
 .work-detail__back {
-  max-width: var(--public-content-article);
+  max-width: var(--public-content-wide);
   margin: 0 auto;
   padding: var(--space-5) var(--public-page-padding) 0;
 }
@@ -218,57 +265,121 @@ onMounted(() => {
 }
 
 .work-detail__header {
-  max-width: var(--public-content-article);
-  margin: 0 auto;
-  padding: 0 var(--public-page-padding) var(--space-6);
+  display: grid;
+  grid-area: copy;
+  align-content: start;
+  justify-items: start;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
 .work-detail__name {
+  max-width: 100%;
   font-family: var(--font-public-display);
   font-size: var(--font-size-xl);
   font-weight: 600;
   line-height: var(--line-height-heading);
   letter-spacing: var(--letter-spacing-tight);
+  overflow-wrap: anywhere;
 }
 
-.work-detail__meta {
-  margin-top: var(--space-2);
+.work-detail__identity-ledger {
+  display: grid;
+  width: 100%;
+  margin: var(--space-2) 0 0;
+  border-top: 1px solid var(--public-border-primary);
+}
+
+.work-detail__identity-ledger div {
+  display: grid;
+  grid-template-columns: minmax(5rem, 0.75fr) minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+}
+
+.work-detail__identity-ledger div + div {
+  border-top: 1px solid var(--public-border-primary);
+}
+
+.work-detail__identity-ledger dt {
   color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
+  font-family: var(--font-public-mono);
+  font-size: var(--font-size-xs);
+}
+
+.work-detail__identity-ledger dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.work-detail__adoption-status[data-status='available'] {
+  color: var(--public-status-open);
+}
+
+.work-detail__archive-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: 2.75rem;
+  color: var(--public-text-primary);
+  font-weight: 600;
+}
+
+.work-detail__adoption-actions {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
+.work-detail__adoption-actions :deep(.public-action) {
+  justify-content: center;
+  width: 100%;
+}
+
+.work-detail__archive-link:hover {
+  color: var(--public-accent-hover);
 }
 
 .work-detail__layout {
   display: grid;
-  gap: var(--space-6);
-  max-width: var(--public-content-article);
+  grid-template-areas:
+    'copy'
+    'media';
+  gap: clamp(2rem, 6vw, 6rem);
+  max-width: var(--public-content-wide);
   margin: 0 auto;
-  padding: 0 var(--public-page-padding);
+  padding: var(--space-2) var(--public-page-padding) 0;
 }
 
 .work-detail__media {
   display: grid;
+  grid-area: media;
   gap: var(--space-8);
   min-width: 0;
   align-content: start;
+  min-height: 0;
 }
 
 .work-detail__media-section {
   min-width: 0;
 }
 
-.work-detail__media-title {
-  margin: 0 0 var(--space-3);
-  color: var(--public-text-tertiary);
-  font-size: var(--font-size-sm);
-  font-weight: 400;
-  letter-spacing: var(--letter-spacing-label);
-}
+@media (min-width: 1024px) {
+  .work-detail__layout {
+    grid-template-areas: 'media copy';
+    grid-template-columns: minmax(0, 1fr) minmax(17rem, 23rem);
+    align-items: start;
+  }
 
-.work-detail__section-title {
-  color: var(--public-text-tertiary);
-  font-size: var(--font-size-sm);
-  font-weight: 400;
-  letter-spacing: var(--letter-spacing-label);
+  .work-detail__header {
+    position: sticky;
+    top: calc(var(--public-header-height) + var(--space-6));
+    padding-top: var(--space-3);
+  }
 }
 
 </style>

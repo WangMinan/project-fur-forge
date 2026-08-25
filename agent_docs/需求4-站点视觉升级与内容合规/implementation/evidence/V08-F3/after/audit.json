@@ -1,0 +1,119 @@
+{
+  "capturedAt": "2026-08-24T06:00:10.061Z",
+  "commission": {
+    "desktop": {
+      "responseStatus": 200,
+      "decoded": true,
+      "image": {
+        "height": 608,
+        "width": 1309.8125
+      },
+      "imageHeight": 810,
+      "imageWidth": 1440,
+      "media": {
+        "height": 608,
+        "width": 1309.8125
+      },
+      "noHorizontalOverflow": true,
+      "objectFit": "cover",
+      "picture": {
+        "height": 608,
+        "width": 1309.8125
+      },
+      "source": "http://127.0.0.1:3001/dev/web/212e33ca-fbf9-5bca-9571-4fcba7c8e1b7/site-display-v2/commission-hero-landscape/1920/fe56ac913da175832d4e7462e1fd634a2e4bc45e15c7808a0392043dd50a3453.webp"
+    },
+    "mobile": {
+      "responseStatus": 200,
+      "decoded": true,
+      "image": {
+        "height": 640,
+        "width": 343
+      },
+      "imageHeight": 636,
+      "imageWidth": 358,
+      "media": {
+        "height": 640,
+        "width": 343
+      },
+      "noHorizontalOverflow": true,
+      "objectFit": "cover",
+      "picture": {
+        "height": 640,
+        "width": 343
+      },
+      "source": "http://127.0.0.1:3001/dev/web/b7eb8c9a-b433-5074-9062-a11d999e88b3/site-display-v2/commission-hero-portrait/480/5bde904cca06b16fa468156eed565d851441184e43518c775713d35ad9a6cde9.webp"
+    }
+  },
+  "hero": {
+    "titleEntrance": {
+      "start": {
+        "animationName": "home-hero-title-in-3a6e51d8",
+        "clipPath": "inset(0px 0px 22%)",
+        "fontFamily": "\"Zhuohei Collage Critical\", \"Zhuohei Collage\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+        "opacity": "0",
+        "transform": "matrix(1, 0, 0, 1, 0, 10)"
+      },
+      "terminal": {
+        "animationName": "home-hero-title-in-3a6e51d8",
+        "clipPath": "inset(0px 0px 0%)",
+        "fontFamily": "\"Zhuohei Collage Critical\", \"Zhuohei Collage\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+        "opacity": "1",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)"
+      }
+    },
+    "font": {
+      "criticalLoaded": true,
+      "status": "loaded"
+    },
+    "autoplay": {
+      "advanced": 1,
+      "first": 0,
+      "paused": 1,
+      "remainedPaused": 1,
+      "resumeElapsedMs": 4031,
+      "resumed": 0
+    },
+    "reducedMotion": {
+      "matches": true,
+      "titleAnimation": "none"
+    }
+  },
+  "mediaPixels": {
+    "commission": {
+      "before": {
+        "leftColumns": 15,
+        "rightColumns": 15,
+        "sampleWidth": 192
+      },
+      "after": {
+        "leftColumns": 0,
+        "rightColumns": 0,
+        "sampleWidth": 192
+      }
+    },
+    "homeSecond": {
+      "before": {
+        "leftColumns": 15,
+        "rightColumns": 15,
+        "sampleWidth": 192
+      },
+      "after": {
+        "leftColumns": 0,
+        "rightColumns": 0,
+        "sampleWidth": 192
+      }
+    }
+  },
+  "checks": {
+    "autoplayAdvanced": true,
+    "autoplayPaused": true,
+    "autoplayResumed": true,
+    "autoplayResumeTiming": true,
+    "commissionDesktopFilled": true,
+    "commissionMobileFilled": true,
+    "commissionNoOverflow": true,
+    "titleEntrancePreserved": true,
+    "mediaPixelBandsRemoved": true,
+    "reducedMotion": true
+  }
+}

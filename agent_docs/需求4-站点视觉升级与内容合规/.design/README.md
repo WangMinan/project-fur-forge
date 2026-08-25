@@ -1,8 +1,10 @@
 # 需求4 · 站点视觉与交互设计说明
 
 > **角色**：把需求4的品牌、首页、响应式、动效、管理端编辑和进度反馈转成可验收的设计约束。
-> **状态**：2026-08-22 仅阶段 E 开放；T37～T46-F7 当前实现与景宸/王旻安连续实画面反馈已同步，真实手机和最终人工视觉验收待执行。
+> **状态**：2026-08-24 仅阶段 E 开放；`GATE-V08-R` 已由凌巽本人放行，V09 Shared Visual Language / Homepage Featured Works 与 V10 Homepage Commission / `/commission` 静态重构已完成。当前停在 V10 Handoff，等待凌巽人工验收，不进入 V11；真实手机和最终人工视觉验收仍待执行。
 > **风格定义**：**简洁底盘 + 灵动角色感 + 摄影主导的编辑式工作室网站。**
+
+V09 起的跨页面静态语法以 [`SHARED_VISUAL_LANGUAGE.md`](./SHARED_VISUAL_LANGUAGE.md) 为执行契约；V10 已将其扩展到 Homepage Commission Service Docket 与 `/commission` Photographic Service Ledger。契约统一 wayfinding、摄影圆角、摄影/文字关系与响应式原则，但禁止把所有页面做成同一模板。
 
 ## 1. 设计方向
 
@@ -33,22 +35,19 @@ Apple Design Skill 在本需求中的价值是即时反馈、空间一致性、�
 ### 2.1 第一幕：品牌 Hero
 
 - 继续使用全视口横/竖独立图片。
-- 中文、英文与 slogan 保持需求3已经确认的桌面/移动排版关系。
-- 控制器是辅助层，不与品牌文字争夺第一注意力；默认静默态只保留低权重分页点或等价进度提示。
-- 左右箭头和暂停/继续不常驻：键盘焦点进入时显示全部；fine pointer 靠近画面边缘或控制区时显示；触控端由明确点击/轻触唤起，并继续支持横向手势。暂停后恢复入口与暂停状态保持可见，直到继续播放。
-- 控件视觉隐藏时仍保留可访问语义和可预测的 Tab 顺序，不使用 `display: none` 让键盘用户失去暂停能力，也不因显隐造成布局位移。
-- 渐变只保护导航和文字安全区，不统一压暗整张图。
-- 第一张图片尽早可见；文字随后进入；控制器最后出现。
-- 中文主标题与关键拼贴字体从首次绘制起保持最终字号和位置；字体预加载，标题不做缩放、clip 或位移动画。英文品牌、slogan 和控制器可以错峰，但不得让主标题刷新时先大后小。
+- 仅冻结“有点小狗工作室”品牌文字的最终状态：内容、字体资产、最终视觉尺寸、weight、letter-spacing、line-height、最终位置、对齐和最终排版关系。
+- 品牌文字允许一次性 stagger / reveal / 小幅 translate + opacity / clip / mask / 极轻 settle；动画结束后必须精准回到冻结终态，后续换图不重复，Reduced Motion 直接显示终态。
+- DITE DOG 与 slogan 文案不改，但视觉层级和一次性进入时序可在 V01 重新设计。
+- Photography、crop/focal presentation、media composition、scrim、mask/clip、image transition、autoplay presentation、arrows/pagination/pause-resume、controls grouping/appearance/reveal、pointer/touch/keyboard presentation、media settle、directional motion、scene arrival/departure、Hero → Featured continuity 与 Mobile Hero composition 均在 V01 开放。
+- 控制器继续是辅助层，必须保留可暂停、可恢复、键盘/触控可获得、可预测焦点与不因显隐造成布局位移的语义；具体外观、分组、位置和唤起策略不冻结。
+- V01 的阅读顺序以 Media → Brand → Supporting Copy → Controls 为探索起点；Hero 应比 Featured 更安静、更电影感、摄影更大、UI 更少。
 - Hero 轮播仍为 10 秒、可暂停、页面隐藏暂停、reduced-motion 停止。
 
-推荐进入：
-
-- 图片从约 `scale(.99)` 回到 1，600–850ms；
-- 英文/中文/slogan 通过 clip/mask + 轻纵向位移错峰 70–130ms；
-- 首访可以让完整控制器在最后短暂出现一次，再收回静默态；历史返回不重复完整入场。控制器只做短淡入和一次轻回弹，不做常驻漂浮。
+建议阅读时序为 Photography 初始可见 → Media settle → 中文品牌一次性入场 → DITE DOG → slogan → controls；具体数值由 V01 实画面确定，不预锁。
 
 ### 2.2 第二幕：代表作品
+
+以下条目描述 V00 之前的当前生产基线，不是后续视觉冻结项。V03 将在保留代表作品资格、最多两项、真实链接和业务数据契约的前提下，把 V00-F1 B + M3 baseline 正式落地；不得把旧双图布局或 B + M3 具体轴线机械复制到其他 Scene。
 
 - 只保留一个停靠幕，最多两件代表作品；标题复用委托/领养的左上结构，桌面标题下方左侧并排两张 3:4 竖图，右侧承担说明和行动。
 - 代表作品必须至少有一张 READY 竖版出厂照；图片优先使用竖版主图，否则使用顺序最前的竖版出厂照。
@@ -121,6 +120,8 @@ Apple Design Skill 在本需求中的价值是即时反馈、空间一致性、�
 
 ## 4. 动效语言
 
+本节的通用原则仍有效；具体 Homepage Directional Motion 以 [Visual Direction v2](./VISUAL_DIRECTION_V2_2026-08-22.md) 为当前解释。V00-F1 已确认 Media 振幅最大、Main Title 次之、Meta / Description 更小、CTA 最小，背景 Typography 与 folio 静止。
+
 ### 4.1 两层性格
 
 **底层：安静、准确。**
@@ -175,7 +176,7 @@ Apple Design Skill 在本需求中的价值是即时反馈、空间一致性、�
 ### 4.5 动效预算与拒绝项
 
 - 一个视口最多一个主要大对象运动。
-- 大图切换时，标题只做辅助淡化，不同时进行大位移。
+- 大图切换时，Media 承担最大方向位移；标题、Meta / Description、CTA 逐级减弱，禁止所有层同距离一起横移。
 - 页面切换期间不启动 section reveal。
 - 自动轮播之外不使用空闲循环动画。
 - hover 离开沿同一路径返回，不突然切换方向。
@@ -191,10 +192,11 @@ Apple Design Skill 在本需求中的价值是即时反馈、空间一致性、�
 
 - 1023px 及以下保持原生纵向滚动、`100svh/100dvh`、safe area 和动态地址栏。
 - 不依赖 hover，不在触控端应用 tilt。
-- 内容位移和错峰比桌面减少约 30%–50%。
-- 大图切换更偏向 crossfade，避免整屏横向扫动。
+- Mobile 是同一 Art Direction 下的重新构图，不是 Desktop CSS 缩小版；允许与 Desktop 使用不同 position、grouping、density、reveal strategy 和 motion 参数。
+- 每完成一个 Homepage Scene 立即检查 390×844 与 430×932，不等 Desktop 全部完成后再首次检查 Mobile。
+- Hero 独立检查 focal/crop、品牌与主体冲突、scrim、controls、pagination、pause/resume、44px target、品牌入场时长和 Hero → Featured continuity。
+- Featured 保持摄影第一焦点、folio 降权、背景 Typography 静止和轻量 44px 翻页；Commission 重新安排 media/copy/CTA；Adoption 以完整设定图和 contain / art-directed canvas 优先。
 - 表单输入法打开时，字段错误、确认项、进度和主按钮仍可见可达。
-- 390px 和 430px 在每个组件完成时同步验收。
 
 ### 5.2 Reduced preferences
 
@@ -231,10 +233,9 @@ Apple Design Skill 在本需求中的价值是即时反馈、空间一致性、�
 
 ### 7.2 Footer
 
-- 保留品牌、导航、备案、版权、法务和设计署名。
-- 通过留白和排版完成收尾，不添加持续动画。
-- 可以让法务链接使用统一 text action 的轻微箭头/下划线反馈。
-- 首页设定领养后不再添加额外收尾 padding；桌面逐幕导航把 Footer 作为最后一个停靠点，但 Footer 自身保持静态。
+- Footer 的品牌、导航、备案、版权、法务和设计署名内容全部冻结。
+- Footer 的布局、样式、响应式和交互全部冻结；不添加持续动画、链接反馈或新的收尾 padding。
+- 桌面逐幕导航仍把 Footer 作为最后一个停靠点，但后续任务只验证相邻页面不会覆盖或挤压 Footer，不修改 `PublicFooter.vue`。
 
 ## 8. Hero 管理端
 

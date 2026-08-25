@@ -1,0 +1,1258 @@
+{
+  "mode": "after",
+  "capturedAt": "2026-08-23T11:20:10.406Z",
+  "routes": {
+    "service-390x844": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "服务条款"
+        },
+        {
+          "id": "section-1",
+          "level": "H2",
+          "text": "适用范围与委托成立"
+        },
+        {
+          "id": "section-2",
+          "level": "H2",
+          "text": "申请人和设定权利"
+        },
+        {
+          "id": "section-3",
+          "level": "H2",
+          "text": "报价、付款与开工"
+        },
+        {
+          "id": "section-4",
+          "level": "H2",
+          "text": "客户确认、修改与延误"
+        },
+        {
+          "id": "section-5",
+          "level": "H2",
+          "text": "取消与无法继续履行"
+        },
+        {
+          "id": "section-6",
+          "level": "H2",
+          "text": "手工作品差异与验收"
+        },
+        {
+          "id": "section-7",
+          "level": "H2",
+          "text": "交付与运输"
+        },
+        {
+          "id": "section-8",
+          "level": "H2",
+          "text": "保修与维修"
+        },
+        {
+          "id": "section-9",
+          "level": "H2",
+          "text": "实体、角色与创作成果"
+        },
+        {
+          "id": "section-10",
+          "level": "H2",
+          "text": "作品展示与隐私"
+        },
+        {
+          "id": "section-11",
+          "level": "H2",
+          "text": "官方渠道、成年人和条款更新"
+        }
+      ]
+    },
+    "privacy-390x844": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "隐私政策"
+        },
+        {
+          "id": "section-1",
+          "level": "H2",
+          "text": "适用范围和处理者"
+        },
+        {
+          "id": "section-2",
+          "level": "H2",
+          "text": "我们处理的信息和用途"
+        },
+        {
+          "id": "section-3",
+          "level": "H2",
+          "text": "设定图与私有媒体"
+        },
+        {
+          "id": "section-4",
+          "level": "H2",
+          "text": "访问统计与必要技术信息"
+        },
+        {
+          "id": "section-5",
+          "level": "H2",
+          "text": "官方联系渠道与服务商"
+        },
+        {
+          "id": "section-6",
+          "level": "H2",
+          "text": "保存期限与人工清理"
+        },
+        {
+          "id": "section-7",
+          "level": "H2",
+          "text": "查询、更正和删除"
+        },
+        {
+          "id": "section-8",
+          "level": "H2",
+          "text": "成年申请人"
+        },
+        {
+          "id": "section-9",
+          "level": "H2",
+          "text": "安全与变更"
+        }
+      ]
+    },
+    "licenses-390x844": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "开源软件声明"
+        },
+        {
+          "id": "license-ffmpeg",
+          "level": "H2",
+          "text": "FFmpeg"
+        },
+        {
+          "id": "license-assets",
+          "level": "H2",
+          "text": "第三方字体与授权资产"
+        },
+        {
+          "id": "license-npm",
+          "level": "H2",
+          "text": "npm 生产依赖声明"
+        }
+      ]
+    },
+    "service-430x932": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "服务条款"
+        },
+        {
+          "id": "section-1",
+          "level": "H2",
+          "text": "适用范围与委托成立"
+        },
+        {
+          "id": "section-2",
+          "level": "H2",
+          "text": "申请人和设定权利"
+        },
+        {
+          "id": "section-3",
+          "level": "H2",
+          "text": "报价、付款与开工"
+        },
+        {
+          "id": "section-4",
+          "level": "H2",
+          "text": "客户确认、修改与延误"
+        },
+        {
+          "id": "section-5",
+          "level": "H2",
+          "text": "取消与无法继续履行"
+        },
+        {
+          "id": "section-6",
+          "level": "H2",
+          "text": "手工作品差异与验收"
+        },
+        {
+          "id": "section-7",
+          "level": "H2",
+          "text": "交付与运输"
+        },
+        {
+          "id": "section-8",
+          "level": "H2",
+          "text": "保修与维修"
+        },
+        {
+          "id": "section-9",
+          "level": "H2",
+          "text": "实体、角色与创作成果"
+        },
+        {
+          "id": "section-10",
+          "level": "H2",
+          "text": "作品展示与隐私"
+        },
+        {
+          "id": "section-11",
+          "level": "H2",
+          "text": "官方渠道、成年人和条款更新"
+        }
+      ]
+    },
+    "privacy-430x932": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "隐私政策"
+        },
+        {
+          "id": "section-1",
+          "level": "H2",
+          "text": "适用范围和处理者"
+        },
+        {
+          "id": "section-2",
+          "level": "H2",
+          "text": "我们处理的信息和用途"
+        },
+        {
+          "id": "section-3",
+          "level": "H2",
+          "text": "设定图与私有媒体"
+        },
+        {
+          "id": "section-4",
+          "level": "H2",
+          "text": "访问统计与必要技术信息"
+        },
+        {
+          "id": "section-5",
+          "level": "H2",
+          "text": "官方联系渠道与服务商"
+        },
+        {
+          "id": "section-6",
+          "level": "H2",
+          "text": "保存期限与人工清理"
+        },
+        {
+          "id": "section-7",
+          "level": "H2",
+          "text": "查询、更正和删除"
+        },
+        {
+          "id": "section-8",
+          "level": "H2",
+          "text": "成年申请人"
+        },
+        {
+          "id": "section-9",
+          "level": "H2",
+          "text": "安全与变更"
+        }
+      ]
+    },
+    "licenses-430x932": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "开源软件声明"
+        },
+        {
+          "id": "license-ffmpeg",
+          "level": "H2",
+          "text": "FFmpeg"
+        },
+        {
+          "id": "license-assets",
+          "level": "H2",
+          "text": "第三方字体与授权资产"
+        },
+        {
+          "id": "license-npm",
+          "level": "H2",
+          "text": "npm 生产依赖声明"
+        }
+      ]
+    },
+    "service-768x1024": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "服务条款"
+        },
+        {
+          "id": "section-1",
+          "level": "H2",
+          "text": "适用范围与委托成立"
+        },
+        {
+          "id": "section-2",
+          "level": "H2",
+          "text": "申请人和设定权利"
+        },
+        {
+          "id": "section-3",
+          "level": "H2",
+          "text": "报价、付款与开工"
+        },
+        {
+          "id": "section-4",
+          "level": "H2",
+          "text": "客户确认、修改与延误"
+        },
+        {
+          "id": "section-5",
+          "level": "H2",
+          "text": "取消与无法继续履行"
+        },
+        {
+          "id": "section-6",
+          "level": "H2",
+          "text": "手工作品差异与验收"
+        },
+        {
+          "id": "section-7",
+          "level": "H2",
+          "text": "交付与运输"
+        },
+        {
+          "id": "section-8",
+          "level": "H2",
+          "text": "保修与维修"
+        },
+        {
+          "id": "section-9",
+          "level": "H2",
+          "text": "实体、角色与创作成果"
+        },
+        {
+          "id": "section-10",
+          "level": "H2",
+          "text": "作品展示与隐私"
+        },
+        {
+          "id": "section-11",
+          "level": "H2",
+          "text": "官方渠道、成年人和条款更新"
+        }
+      ]
+    },
+    "privacy-768x1024": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "隐私政策"
+        },
+        {
+          "id": "section-1",
+          "level": "H2",
+          "text": "适用范围和处理者"
+        },
+        {
+          "id": "section-2",
+          "level": "H2",
+          "text": "我们处理的信息和用途"
+        },
+        {
+          "id": "section-3",
+          "level": "H2",
+          "text": "设定图与私有媒体"
+        },
+        {
+          "id": "section-4",
+          "level": "H2",
+          "text": "访问统计与必要技术信息"
+        },
+        {
+          "id": "section-5",
+          "level": "H2",
+          "text": "官方联系渠道与服务商"
+        },
+        {
+          "id": "section-6",
+          "level": "H2",
+          "text": "保存期限与人工清理"
+        },
+        {
+          "id": "section-7",
+          "level": "H2",
+          "text": "查询、更正和删除"
+        },
+        {
+          "id": "section-8",
+          "level": "H2",
+          "text": "成年申请人"
+        },
+        {
+          "id": "section-9",
+          "level": "H2",
+          "text": "安全与变更"
+        }
+      ]
+    },
+    "licenses-768x1024": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "开源软件声明"
+        },
+        {
+          "id": "license-ffmpeg",
+          "level": "H2",
+          "text": "FFmpeg"
+        },
+        {
+          "id": "license-assets",
+          "level": "H2",
+          "text": "第三方字体与授权资产"
+        },
+        {
+          "id": "license-npm",
+          "level": "H2",
+          "text": "npm 生产依赖声明"
+        }
+      ]
+    },
+    "service-1024x900": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "服务条款"
+        },
+        {
+          "id": "section-1",
+          "level": "H2",
+          "text": "适用范围与委托成立"
+        },
+        {
+          "id": "section-2",
+          "level": "H2",
+          "text": "申请人和设定权利"
+        },
+        {
+          "id": "section-3",
+          "level": "H2",
+          "text": "报价、付款与开工"
+        },
+        {
+          "id": "section-4",
+          "level": "H2",
+          "text": "客户确认、修改与延误"
+        },
+        {
+          "id": "section-5",
+          "level": "H2",
+          "text": "取消与无法继续履行"
+        },
+        {
+          "id": "section-6",
+          "level": "H2",
+          "text": "手工作品差异与验收"
+        },
+        {
+          "id": "section-7",
+          "level": "H2",
+          "text": "交付与运输"
+        },
+        {
+          "id": "section-8",
+          "level": "H2",
+          "text": "保修与维修"
+        },
+        {
+          "id": "section-9",
+          "level": "H2",
+          "text": "实体、角色与创作成果"
+        },
+        {
+          "id": "section-10",
+          "level": "H2",
+          "text": "作品展示与隐私"
+        },
+        {
+          "id": "section-11",
+          "level": "H2",
+          "text": "官方渠道、成年人和条款更新"
+        }
+      ]
+    },
+    "privacy-1024x900": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "隐私政策"
+        },
+        {
+          "id": "section-1",
+          "level": "H2",
+          "text": "适用范围和处理者"
+        },
+        {
+          "id": "section-2",
+          "level": "H2",
+          "text": "我们处理的信息和用途"
+        },
+        {
+          "id": "section-3",
+          "level": "H2",
+          "text": "设定图与私有媒体"
+        },
+        {
+          "id": "section-4",
+          "level": "H2",
+          "text": "访问统计与必要技术信息"
+        },
+        {
+          "id": "section-5",
+          "level": "H2",
+          "text": "官方联系渠道与服务商"
+        },
+        {
+          "id": "section-6",
+          "level": "H2",
+          "text": "保存期限与人工清理"
+        },
+        {
+          "id": "section-7",
+          "level": "H2",
+          "text": "查询、更正和删除"
+        },
+        {
+          "id": "section-8",
+          "level": "H2",
+          "text": "成年申请人"
+        },
+        {
+          "id": "section-9",
+          "level": "H2",
+          "text": "安全与变更"
+        }
+      ]
+    },
+    "licenses-1024x900": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "开源软件声明"
+        },
+        {
+          "id": "license-ffmpeg",
+          "level": "H2",
+          "text": "FFmpeg"
+        },
+        {
+          "id": "license-assets",
+          "level": "H2",
+          "text": "第三方字体与授权资产"
+        },
+        {
+          "id": "license-npm",
+          "level": "H2",
+          "text": "npm 生产依赖声明"
+        }
+      ]
+    },
+    "service-1440x900": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "服务条款"
+        },
+        {
+          "id": "section-1",
+          "level": "H2",
+          "text": "适用范围与委托成立"
+        },
+        {
+          "id": "section-2",
+          "level": "H2",
+          "text": "申请人和设定权利"
+        },
+        {
+          "id": "section-3",
+          "level": "H2",
+          "text": "报价、付款与开工"
+        },
+        {
+          "id": "section-4",
+          "level": "H2",
+          "text": "客户确认、修改与延误"
+        },
+        {
+          "id": "section-5",
+          "level": "H2",
+          "text": "取消与无法继续履行"
+        },
+        {
+          "id": "section-6",
+          "level": "H2",
+          "text": "手工作品差异与验收"
+        },
+        {
+          "id": "section-7",
+          "level": "H2",
+          "text": "交付与运输"
+        },
+        {
+          "id": "section-8",
+          "level": "H2",
+          "text": "保修与维修"
+        },
+        {
+          "id": "section-9",
+          "level": "H2",
+          "text": "实体、角色与创作成果"
+        },
+        {
+          "id": "section-10",
+          "level": "H2",
+          "text": "作品展示与隐私"
+        },
+        {
+          "id": "section-11",
+          "level": "H2",
+          "text": "官方渠道、成年人和条款更新"
+        }
+      ]
+    },
+    "privacy-1440x900": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "隐私政策"
+        },
+        {
+          "id": "section-1",
+          "level": "H2",
+          "text": "适用范围和处理者"
+        },
+        {
+          "id": "section-2",
+          "level": "H2",
+          "text": "我们处理的信息和用途"
+        },
+        {
+          "id": "section-3",
+          "level": "H2",
+          "text": "设定图与私有媒体"
+        },
+        {
+          "id": "section-4",
+          "level": "H2",
+          "text": "访问统计与必要技术信息"
+        },
+        {
+          "id": "section-5",
+          "level": "H2",
+          "text": "官方联系渠道与服务商"
+        },
+        {
+          "id": "section-6",
+          "level": "H2",
+          "text": "保存期限与人工清理"
+        },
+        {
+          "id": "section-7",
+          "level": "H2",
+          "text": "查询、更正和删除"
+        },
+        {
+          "id": "section-8",
+          "level": "H2",
+          "text": "成年申请人"
+        },
+        {
+          "id": "section-9",
+          "level": "H2",
+          "text": "安全与变更"
+        }
+      ]
+    },
+    "licenses-1440x900": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "开源软件声明"
+        },
+        {
+          "id": "license-ffmpeg",
+          "level": "H2",
+          "text": "FFmpeg"
+        },
+        {
+          "id": "license-assets",
+          "level": "H2",
+          "text": "第三方字体与授权资产"
+        },
+        {
+          "id": "license-npm",
+          "level": "H2",
+          "text": "npm 生产依赖声明"
+        }
+      ]
+    },
+    "review-service-mobile-375": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "服务条款"
+        },
+        {
+          "id": "section-1",
+          "level": "H2",
+          "text": "适用范围与委托成立"
+        },
+        {
+          "id": "section-2",
+          "level": "H2",
+          "text": "申请人和设定权利"
+        },
+        {
+          "id": "section-3",
+          "level": "H2",
+          "text": "报价、付款与开工"
+        },
+        {
+          "id": "section-4",
+          "level": "H2",
+          "text": "客户确认、修改与延误"
+        },
+        {
+          "id": "section-5",
+          "level": "H2",
+          "text": "取消与无法继续履行"
+        },
+        {
+          "id": "section-6",
+          "level": "H2",
+          "text": "手工作品差异与验收"
+        },
+        {
+          "id": "section-7",
+          "level": "H2",
+          "text": "交付与运输"
+        },
+        {
+          "id": "section-8",
+          "level": "H2",
+          "text": "保修与维修"
+        },
+        {
+          "id": "section-9",
+          "level": "H2",
+          "text": "实体、角色与创作成果"
+        },
+        {
+          "id": "section-10",
+          "level": "H2",
+          "text": "作品展示与隐私"
+        },
+        {
+          "id": "section-11",
+          "level": "H2",
+          "text": "官方渠道、成年人和条款更新"
+        }
+      ]
+    },
+    "review-privacy-mobile-375": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "隐私政策"
+        },
+        {
+          "id": "section-1",
+          "level": "H2",
+          "text": "适用范围和处理者"
+        },
+        {
+          "id": "section-2",
+          "level": "H2",
+          "text": "我们处理的信息和用途"
+        },
+        {
+          "id": "section-3",
+          "level": "H2",
+          "text": "设定图与私有媒体"
+        },
+        {
+          "id": "section-4",
+          "level": "H2",
+          "text": "访问统计与必要技术信息"
+        },
+        {
+          "id": "section-5",
+          "level": "H2",
+          "text": "官方联系渠道与服务商"
+        },
+        {
+          "id": "section-6",
+          "level": "H2",
+          "text": "保存期限与人工清理"
+        },
+        {
+          "id": "section-7",
+          "level": "H2",
+          "text": "查询、更正和删除"
+        },
+        {
+          "id": "section-8",
+          "level": "H2",
+          "text": "成年申请人"
+        },
+        {
+          "id": "section-9",
+          "level": "H2",
+          "text": "安全与变更"
+        }
+      ]
+    },
+    "review-licenses-mobile-375": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "开源软件声明"
+        },
+        {
+          "id": "license-ffmpeg",
+          "level": "H2",
+          "text": "FFmpeg"
+        },
+        {
+          "id": "license-assets",
+          "level": "H2",
+          "text": "第三方字体与授权资产"
+        },
+        {
+          "id": "license-npm",
+          "level": "H2",
+          "text": "npm 生产依赖声明"
+        }
+      ]
+    },
+    "review-service-tablet-768": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "服务条款"
+        },
+        {
+          "id": "section-1",
+          "level": "H2",
+          "text": "适用范围与委托成立"
+        },
+        {
+          "id": "section-2",
+          "level": "H2",
+          "text": "申请人和设定权利"
+        },
+        {
+          "id": "section-3",
+          "level": "H2",
+          "text": "报价、付款与开工"
+        },
+        {
+          "id": "section-4",
+          "level": "H2",
+          "text": "客户确认、修改与延误"
+        },
+        {
+          "id": "section-5",
+          "level": "H2",
+          "text": "取消与无法继续履行"
+        },
+        {
+          "id": "section-6",
+          "level": "H2",
+          "text": "手工作品差异与验收"
+        },
+        {
+          "id": "section-7",
+          "level": "H2",
+          "text": "交付与运输"
+        },
+        {
+          "id": "section-8",
+          "level": "H2",
+          "text": "保修与维修"
+        },
+        {
+          "id": "section-9",
+          "level": "H2",
+          "text": "实体、角色与创作成果"
+        },
+        {
+          "id": "section-10",
+          "level": "H2",
+          "text": "作品展示与隐私"
+        },
+        {
+          "id": "section-11",
+          "level": "H2",
+          "text": "官方渠道、成年人和条款更新"
+        }
+      ]
+    },
+    "review-privacy-tablet-768": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "隐私政策"
+        },
+        {
+          "id": "section-1",
+          "level": "H2",
+          "text": "适用范围和处理者"
+        },
+        {
+          "id": "section-2",
+          "level": "H2",
+          "text": "我们处理的信息和用途"
+        },
+        {
+          "id": "section-3",
+          "level": "H2",
+          "text": "设定图与私有媒体"
+        },
+        {
+          "id": "section-4",
+          "level": "H2",
+          "text": "访问统计与必要技术信息"
+        },
+        {
+          "id": "section-5",
+          "level": "H2",
+          "text": "官方联系渠道与服务商"
+        },
+        {
+          "id": "section-6",
+          "level": "H2",
+          "text": "保存期限与人工清理"
+        },
+        {
+          "id": "section-7",
+          "level": "H2",
+          "text": "查询、更正和删除"
+        },
+        {
+          "id": "section-8",
+          "level": "H2",
+          "text": "成年申请人"
+        },
+        {
+          "id": "section-9",
+          "level": "H2",
+          "text": "安全与变更"
+        }
+      ]
+    },
+    "review-licenses-tablet-768": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "开源软件声明"
+        },
+        {
+          "id": "license-ffmpeg",
+          "level": "H2",
+          "text": "FFmpeg"
+        },
+        {
+          "id": "license-assets",
+          "level": "H2",
+          "text": "第三方字体与授权资产"
+        },
+        {
+          "id": "license-npm",
+          "level": "H2",
+          "text": "npm 生产依赖声明"
+        }
+      ]
+    },
+    "review-service-desktop-1280": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "服务条款"
+        },
+        {
+          "id": "section-1",
+          "level": "H2",
+          "text": "适用范围与委托成立"
+        },
+        {
+          "id": "section-2",
+          "level": "H2",
+          "text": "申请人和设定权利"
+        },
+        {
+          "id": "section-3",
+          "level": "H2",
+          "text": "报价、付款与开工"
+        },
+        {
+          "id": "section-4",
+          "level": "H2",
+          "text": "客户确认、修改与延误"
+        },
+        {
+          "id": "section-5",
+          "level": "H2",
+          "text": "取消与无法继续履行"
+        },
+        {
+          "id": "section-6",
+          "level": "H2",
+          "text": "手工作品差异与验收"
+        },
+        {
+          "id": "section-7",
+          "level": "H2",
+          "text": "交付与运输"
+        },
+        {
+          "id": "section-8",
+          "level": "H2",
+          "text": "保修与维修"
+        },
+        {
+          "id": "section-9",
+          "level": "H2",
+          "text": "实体、角色与创作成果"
+        },
+        {
+          "id": "section-10",
+          "level": "H2",
+          "text": "作品展示与隐私"
+        },
+        {
+          "id": "section-11",
+          "level": "H2",
+          "text": "官方渠道、成年人和条款更新"
+        }
+      ]
+    },
+    "review-privacy-desktop-1280": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "隐私政策"
+        },
+        {
+          "id": "section-1",
+          "level": "H2",
+          "text": "适用范围和处理者"
+        },
+        {
+          "id": "section-2",
+          "level": "H2",
+          "text": "我们处理的信息和用途"
+        },
+        {
+          "id": "section-3",
+          "level": "H2",
+          "text": "设定图与私有媒体"
+        },
+        {
+          "id": "section-4",
+          "level": "H2",
+          "text": "访问统计与必要技术信息"
+        },
+        {
+          "id": "section-5",
+          "level": "H2",
+          "text": "官方联系渠道与服务商"
+        },
+        {
+          "id": "section-6",
+          "level": "H2",
+          "text": "保存期限与人工清理"
+        },
+        {
+          "id": "section-7",
+          "level": "H2",
+          "text": "查询、更正和删除"
+        },
+        {
+          "id": "section-8",
+          "level": "H2",
+          "text": "成年申请人"
+        },
+        {
+          "id": "section-9",
+          "level": "H2",
+          "text": "安全与变更"
+        }
+      ]
+    },
+    "review-licenses-desktop-1280": {
+      "navigationStatus": 200,
+      "responseStatus": 200,
+      "noHorizontalOverflow": true,
+      "headingOrder": [
+        {
+          "id": "",
+          "level": "H1",
+          "text": "开源软件声明"
+        },
+        {
+          "id": "license-ffmpeg",
+          "level": "H2",
+          "text": "FFmpeg"
+        },
+        {
+          "id": "license-assets",
+          "level": "H2",
+          "text": "第三方字体与授权资产"
+        },
+        {
+          "id": "license-npm",
+          "level": "H2",
+          "text": "npm 生产依赖声明"
+        }
+      ]
+    }
+  },
+  "interactions": {
+    "licenses": {
+      "focusVisible": true,
+      "summaryTargets": [
+        {
+          "height": 44,
+          "width": 317
+        },
+        {
+          "height": 44,
+          "width": 343
+        }
+      ],
+      "downloadHref": "/THIRD_PARTY_NOTICES.txt",
+      "detailsOpen": true,
+      "noOverflowWhenOpen": true
+    },
+    "anchor": {
+      "exists": true,
+      "top": 87.90625,
+      "headerOffset": 72
+    },
+    "terms": {
+      "destination": "/service",
+      "redirectStatus": 301
+    },
+    "reducedMotion": {
+      "matches": true,
+      "runningAnimations": 0
+    }
+  },
+  "checks": {
+    "allRoutes200": true,
+    "noHorizontalOverflow": true,
+    "semanticLegalHeadings": true,
+    "keyboardFocus": true,
+    "summaryTargets44": true,
+    "detailsOpen": true,
+    "detailsNoOverflow": true,
+    "downloadLink": true,
+    "anchorOffset": true,
+    "termsRedirect": true,
+    "reducedMotion": true
+  }
+}

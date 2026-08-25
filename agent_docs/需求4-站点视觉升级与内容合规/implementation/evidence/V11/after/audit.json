@@ -1,0 +1,1001 @@
+{
+  "capturedAt": "2026-08-24T13:11:32.650Z",
+  "source": {
+    "firstAvailableSlug": "adoption-green-dog-test",
+    "homepageSlugs": [
+      "adoption-green-dog-test",
+      "adoption-regular-3",
+      "adoption-regular-2"
+    ],
+    "publicItemCount": 5,
+    "availableCount": 5,
+    "responseStatus": 200
+  },
+  "home": {
+    "1440x900": {
+      "viewport": {
+        "name": "1440x900",
+        "width": 1440,
+        "height": 900
+      },
+      "slug": "adoption-green-dog-test",
+      "title": "小绿狗测试领养",
+      "species": "小狗",
+      "folio": "01 / 03",
+      "facts": "角色状态可领养领养价格¥980",
+      "actionHrefs": [
+        "/works/adoption-green-dog-test?from=adoptions&view=home-adoption",
+        "/adoptions"
+      ],
+      "mediaHref": "/works/adoption-green-dog-test?from=adoptions&view=home-adoption",
+      "selectorCount": 3,
+      "selectorSlugs": [
+        "adoption-green-dog-test",
+        "adoption-regular-3",
+        "adoption-regular-2"
+      ],
+      "selectorLabels": [
+        "小绿狗测试领养",
+        "常规领养测试3",
+        "常规领养测试2"
+      ],
+      "stepperLabels": [
+        "← 上一个",
+        "下一个 →"
+      ],
+      "stepperDisabled": [
+        false,
+        false
+      ],
+      "mediaBorderRadius": "12px",
+      "mediaRecordOverlap": true,
+      "mobileOrder": true,
+      "sectionFitsViewport": true,
+      "visibleContentFitsViewport": true,
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "decorativeEnglishLabelCount": 0,
+      "responseStatus": 200,
+      "images": [
+        {
+          "complete": true,
+          "naturalHeight": 550,
+          "naturalWidth": 979,
+          "objectFit": "contain"
+        }
+      ],
+      "stepperResults": [
+        "adoption-regular-2",
+        "adoption-green-dog-test",
+        "adoption-regular-3",
+        "adoption-green-dog-test"
+      ],
+      "selectionResults": [
+        {
+          "slug": "adoption-green-dog-test",
+          "title": "小绿狗测试领养",
+          "titleFontSize": 54.72,
+          "titleLineCount": 1,
+          "currentIndex": "adoption-green-dog-test",
+          "mediaHref": "/works/adoption-green-dog-test?from=adoptions&view=home-adoption",
+          "runningAnimations": 0
+        },
+        {
+          "slug": "adoption-regular-3",
+          "title": "常规领养测试3",
+          "titleFontSize": 54.72,
+          "titleLineCount": 1,
+          "currentIndex": "adoption-regular-3",
+          "mediaHref": "/works/adoption-regular-3?from=adoptions&view=home-adoption",
+          "runningAnimations": 0
+        },
+        {
+          "slug": "adoption-regular-2",
+          "title": "常规领养测试2",
+          "titleFontSize": 54.72,
+          "titleLineCount": 1,
+          "currentIndex": "adoption-regular-2",
+          "mediaHref": "/works/adoption-regular-2?from=adoptions&view=home-adoption",
+          "runningAnimations": 0
+        }
+      ]
+    },
+    "390x844": {
+      "viewport": {
+        "name": "390x844",
+        "width": 390,
+        "height": 844
+      },
+      "slug": "adoption-green-dog-test",
+      "title": "小绿狗测试领养",
+      "species": "小狗",
+      "folio": "01 / 03",
+      "facts": "角色状态可领养领养价格¥980",
+      "actionHrefs": [
+        "/works/adoption-green-dog-test?from=adoptions&view=home-adoption",
+        "/adoptions"
+      ],
+      "mediaHref": "/works/adoption-green-dog-test?from=adoptions&view=home-adoption",
+      "selectorCount": 3,
+      "selectorSlugs": [
+        "adoption-green-dog-test",
+        "adoption-regular-3",
+        "adoption-regular-2"
+      ],
+      "selectorLabels": [
+        "小绿狗测试领养",
+        "常规领养测试3",
+        "常规领养测试2"
+      ],
+      "stepperLabels": [
+        "← 上一个",
+        "下一个 →"
+      ],
+      "stepperDisabled": [
+        false,
+        false
+      ],
+      "mediaBorderRadius": "12px",
+      "mediaRecordOverlap": false,
+      "mobileOrder": true,
+      "sectionFitsViewport": false,
+      "visibleContentFitsViewport": true,
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "decorativeEnglishLabelCount": 0,
+      "responseStatus": 200,
+      "images": [
+        {
+          "complete": true,
+          "naturalHeight": 219,
+          "naturalWidth": 390,
+          "objectFit": "contain"
+        }
+      ],
+      "stepperResults": [
+        "adoption-regular-2",
+        "adoption-green-dog-test",
+        "adoption-regular-3",
+        "adoption-green-dog-test"
+      ],
+      "selectionResults": [
+        {
+          "slug": "adoption-green-dog-test",
+          "title": "小绿狗测试领养",
+          "titleFontSize": 35.1,
+          "titleLineCount": 1,
+          "currentIndex": "adoption-green-dog-test",
+          "mediaHref": "/works/adoption-green-dog-test?from=adoptions&view=home-adoption",
+          "runningAnimations": 0
+        },
+        {
+          "slug": "adoption-regular-3",
+          "title": "常规领养测试3",
+          "titleFontSize": 35.1,
+          "titleLineCount": 1,
+          "currentIndex": "adoption-regular-3",
+          "mediaHref": "/works/adoption-regular-3?from=adoptions&view=home-adoption",
+          "runningAnimations": 0
+        },
+        {
+          "slug": "adoption-regular-2",
+          "title": "常规领养测试2",
+          "titleFontSize": 35.1,
+          "titleLineCount": 1,
+          "currentIndex": "adoption-regular-2",
+          "mediaHref": "/works/adoption-regular-2?from=adoptions&view=home-adoption",
+          "runningAnimations": 0
+        }
+      ]
+    },
+    "430x932": {
+      "viewport": {
+        "name": "430x932",
+        "width": 430,
+        "height": 932
+      },
+      "slug": "adoption-green-dog-test",
+      "title": "小绿狗测试领养",
+      "species": "小狗",
+      "folio": "01 / 03",
+      "facts": "角色状态可领养领养价格¥980",
+      "actionHrefs": [
+        "/works/adoption-green-dog-test?from=adoptions&view=home-adoption",
+        "/adoptions"
+      ],
+      "mediaHref": "/works/adoption-green-dog-test?from=adoptions&view=home-adoption",
+      "selectorCount": 3,
+      "selectorSlugs": [
+        "adoption-green-dog-test",
+        "adoption-regular-3",
+        "adoption-regular-2"
+      ],
+      "selectorLabels": [
+        "小绿狗测试领养",
+        "常规领养测试3",
+        "常规领养测试2"
+      ],
+      "stepperLabels": [
+        "← 上一个",
+        "下一个 →"
+      ],
+      "stepperDisabled": [
+        false,
+        false
+      ],
+      "mediaBorderRadius": "12px",
+      "mediaRecordOverlap": false,
+      "mobileOrder": true,
+      "sectionFitsViewport": false,
+      "visibleContentFitsViewport": true,
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "decorativeEnglishLabelCount": 0,
+      "responseStatus": 200,
+      "images": [
+        {
+          "complete": true,
+          "naturalHeight": 241,
+          "naturalWidth": 430,
+          "objectFit": "contain"
+        }
+      ],
+      "stepperResults": [
+        "adoption-regular-2",
+        "adoption-green-dog-test",
+        "adoption-regular-3",
+        "adoption-green-dog-test"
+      ],
+      "selectionResults": [
+        {
+          "slug": "adoption-green-dog-test",
+          "title": "小绿狗测试领养",
+          "titleFontSize": 38.7,
+          "titleLineCount": 1,
+          "currentIndex": "adoption-green-dog-test",
+          "mediaHref": "/works/adoption-green-dog-test?from=adoptions&view=home-adoption",
+          "runningAnimations": 0
+        },
+        {
+          "slug": "adoption-regular-3",
+          "title": "常规领养测试3",
+          "titleFontSize": 38.7,
+          "titleLineCount": 1,
+          "currentIndex": "adoption-regular-3",
+          "mediaHref": "/works/adoption-regular-3?from=adoptions&view=home-adoption",
+          "runningAnimations": 0
+        },
+        {
+          "slug": "adoption-regular-2",
+          "title": "常规领养测试2",
+          "titleFontSize": 38.7,
+          "titleLineCount": 1,
+          "currentIndex": "adoption-regular-2",
+          "mediaHref": "/works/adoption-regular-2?from=adoptions&view=home-adoption",
+          "runningAnimations": 0
+        }
+      ]
+    }
+  },
+  "directory": {
+    "1440x900": {
+      "viewport": {
+        "name": "1440x900",
+        "width": 1440,
+        "height": 900
+      },
+      "h1Count": 1,
+      "headerTitle": "设定领养",
+      "headerLedgerAbsent": true,
+      "headerTitleFontSize": 79.2,
+      "headerDisplayFontSize": 158.4,
+      "headerMark": {
+        "src": "/brand/logo-mark.png",
+        "opacity": 0.055,
+        "transform": "matrix(0.978148, 0.207912, -0.207912, 0.978148, 20.735, -20.735)",
+        "objectFit": "contain"
+      },
+      "cardCount": 5,
+      "gridColumnCount": 2,
+      "slugs": [
+        "adoption-green-dog-test",
+        "adoption-regular-3",
+        "adoption-regular-2",
+        "adoption-regular-1",
+        "adoption-dog-test"
+      ],
+      "detailHrefs": [
+        "/works/adoption-green-dog-test?from=adoptions",
+        "/works/adoption-regular-3?from=adoptions",
+        "/works/adoption-regular-2?from=adoptions",
+        "/works/adoption-regular-1?from=adoptions",
+        "/works/adoption-dog-test?from=adoptions"
+      ],
+      "allRecordsComplete": true,
+      "allRecordsMinimal": true,
+      "factValues": [
+        [
+          "小狗",
+          "¥980",
+          "可领养"
+        ],
+        [
+          "幻想兽",
+          "¥690",
+          "可领养"
+        ],
+        [
+          "幻想兽",
+          "¥680",
+          "可领养"
+        ],
+        [
+          "幻想兽",
+          "¥670",
+          "可领养"
+        ],
+        [
+          "小狗",
+          "¥1,200",
+          "可领养"
+        ]
+      ],
+      "factRulesAbsent": true,
+      "factMarkersPresent": true,
+      "folios": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05"
+      ],
+      "folioVisibleWidths": [
+        95.15625,
+        95.15625,
+        95.15625,
+        95.15625,
+        95.15625
+      ],
+      "allRecordsUnified": true,
+      "mediaInfoRelationships": [
+        {
+          "profileAfterMedia": true,
+          "mediaArea": 148863,
+          "profileArea": 68986.5
+        },
+        {
+          "profileAfterMedia": true,
+          "mediaArea": 148863,
+          "profileArea": 68986.5
+        },
+        {
+          "profileAfterMedia": true,
+          "mediaArea": 148863,
+          "profileArea": 68986.5
+        },
+        {
+          "profileAfterMedia": true,
+          "mediaArea": 148863,
+          "profileArea": 68986.5
+        },
+        {
+          "profileAfterMedia": true,
+          "mediaArea": 252997.05615234375,
+          "profileArea": 117244.59008789062
+        }
+      ],
+      "mediaRadii": [
+        "12px",
+        "12px",
+        "12px",
+        "12px",
+        "12px"
+      ],
+      "cardShadows": [
+        "none",
+        "none",
+        "none",
+        "none",
+        "none"
+      ],
+      "cardTopBorders": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "firstCardFocusVisible": true,
+      "firstCardOutline": "solid",
+      "contactHref": "/about#contact",
+      "searchAction": "/adoptions",
+      "searchLabel": "搜索角色",
+      "searchContactRelationship": true,
+      "toolsPanelRightAligned": true,
+      "toolsBordersAbsent": true,
+      "unsearchedResultSummaryVisible": false,
+      "firstCardHeight": 384,
+      "firstCardBottom": 686.1875,
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "decorativeEnglishLabelCount": 0,
+      "responseStatus": 200,
+      "images": [
+        {
+          "complete": true,
+          "naturalHeight": 1600,
+          "naturalWidth": 1600,
+          "objectFit": "contain"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 243,
+          "naturalWidth": 432,
+          "objectFit": "contain"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 298,
+          "naturalWidth": 432,
+          "objectFit": "contain"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 216,
+          "naturalWidth": 432,
+          "objectFit": "contain"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 240,
+          "naturalWidth": 432,
+          "objectFit": "contain"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 611,
+          "naturalWidth": 432,
+          "objectFit": "contain"
+        }
+      ]
+    },
+    "390x844": {
+      "viewport": {
+        "name": "390x844",
+        "width": 390,
+        "height": 844
+      },
+      "h1Count": 1,
+      "headerTitle": "设定领养",
+      "headerLedgerAbsent": true,
+      "headerTitleFontSize": 54.6,
+      "headerDisplayFontSize": 85.8,
+      "headerMark": {
+        "src": "/brand/logo-mark.png",
+        "opacity": 0.045,
+        "transform": "matrix(0.984808, 0.173648, -0.173648, 0.984808, 0, 0)",
+        "objectFit": "contain"
+      },
+      "cardCount": 5,
+      "gridColumnCount": 1,
+      "slugs": [
+        "adoption-green-dog-test",
+        "adoption-regular-3",
+        "adoption-regular-2",
+        "adoption-regular-1",
+        "adoption-dog-test"
+      ],
+      "detailHrefs": [
+        "/works/adoption-green-dog-test?from=adoptions",
+        "/works/adoption-regular-3?from=adoptions",
+        "/works/adoption-regular-2?from=adoptions",
+        "/works/adoption-regular-1?from=adoptions",
+        "/works/adoption-dog-test?from=adoptions"
+      ],
+      "allRecordsComplete": true,
+      "allRecordsMinimal": true,
+      "factValues": [
+        [
+          "小狗",
+          "¥980",
+          "可领养"
+        ],
+        [
+          "幻想兽",
+          "¥690",
+          "可领养"
+        ],
+        [
+          "幻想兽",
+          "¥680",
+          "可领养"
+        ],
+        [
+          "幻想兽",
+          "¥670",
+          "可领养"
+        ],
+        [
+          "小狗",
+          "¥1,200",
+          "可领养"
+        ]
+      ],
+      "factRulesAbsent": true,
+      "factMarkersPresent": true,
+      "folios": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05"
+      ],
+      "folioVisibleWidths": [
+        75.921875,
+        75.921875,
+        75.921875,
+        75.921875,
+        75.921875
+      ],
+      "allRecordsUnified": true,
+      "mediaInfoRelationships": [
+        {
+          "profileAfterMedia": true,
+          "mediaArea": 88236.75,
+          "profileArea": 105000.875
+        },
+        {
+          "profileAfterMedia": true,
+          "mediaArea": 88236.75,
+          "profileArea": 105000.875
+        },
+        {
+          "profileAfterMedia": true,
+          "mediaArea": 88236.75,
+          "profileArea": 105000.875
+        },
+        {
+          "profileAfterMedia": true,
+          "mediaArea": 88236.75,
+          "profileArea": 105000.875
+        },
+        {
+          "profileAfterMedia": true,
+          "mediaArea": 88236.75,
+          "profileArea": 107905.65625
+        }
+      ],
+      "mediaRadii": [
+        "12px",
+        "12px",
+        "12px",
+        "12px",
+        "12px"
+      ],
+      "cardShadows": [
+        "none",
+        "none",
+        "none",
+        "none",
+        "none"
+      ],
+      "cardTopBorders": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "firstCardFocusVisible": true,
+      "firstCardOutline": "solid",
+      "contactHref": "/about#contact",
+      "searchAction": "/adoptions",
+      "searchLabel": "搜索角色",
+      "searchContactRelationship": true,
+      "toolsPanelRightAligned": true,
+      "toolsBordersAbsent": true,
+      "unsearchedResultSummaryVisible": false,
+      "firstCardHeight": 595.375,
+      "firstCardBottom": 763.96875,
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "decorativeEnglishLabelCount": 0,
+      "responseStatus": 200,
+      "images": [
+        {
+          "complete": true,
+          "naturalHeight": 1600,
+          "naturalWidth": 1600,
+          "objectFit": "contain"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 201,
+          "naturalWidth": 358,
+          "objectFit": "contain"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 248,
+          "naturalWidth": 358,
+          "objectFit": "contain"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 179,
+          "naturalWidth": 358,
+          "objectFit": "contain"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 199,
+          "naturalWidth": 358,
+          "objectFit": "contain"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 507,
+          "naturalWidth": 358,
+          "objectFit": "contain"
+        }
+      ]
+    },
+    "430x932": {
+      "viewport": {
+        "name": "430x932",
+        "width": 430,
+        "height": 932
+      },
+      "h1Count": 1,
+      "headerTitle": "设定领养",
+      "headerLedgerAbsent": true,
+      "headerTitleFontSize": 60,
+      "headerDisplayFontSize": 94.6,
+      "headerMark": {
+        "src": "/brand/logo-mark.png",
+        "opacity": 0.045,
+        "transform": "matrix(0.984808, 0.173648, -0.173648, 0.984808, 0, 0)",
+        "objectFit": "contain"
+      },
+      "cardCount": 5,
+      "gridColumnCount": 1,
+      "slugs": [
+        "adoption-green-dog-test",
+        "adoption-regular-3",
+        "adoption-regular-2",
+        "adoption-regular-1",
+        "adoption-dog-test"
+      ],
+      "detailHrefs": [
+        "/works/adoption-green-dog-test?from=adoptions",
+        "/works/adoption-regular-3?from=adoptions",
+        "/works/adoption-regular-2?from=adoptions",
+        "/works/adoption-regular-1?from=adoptions",
+        "/works/adoption-dog-test?from=adoptions"
+      ],
+      "allRecordsComplete": true,
+      "allRecordsMinimal": true,
+      "factValues": [
+        [
+          "小狗",
+          "¥980",
+          "可领养"
+        ],
+        [
+          "幻想兽",
+          "¥690",
+          "可领养"
+        ],
+        [
+          "幻想兽",
+          "¥680",
+          "可领养"
+        ],
+        [
+          "幻想兽",
+          "¥670",
+          "可领养"
+        ],
+        [
+          "小狗",
+          "¥1,200",
+          "可领养"
+        ]
+      ],
+      "factRulesAbsent": true,
+      "factMarkersPresent": true,
+      "folios": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05"
+      ],
+      "folioVisibleWidths": [
+        82.140625,
+        82.140625,
+        82.140625,
+        82.140625,
+        82.140625
+      ],
+      "allRecordsUnified": true,
+      "mediaInfoRelationships": [
+        {
+          "profileAfterMedia": true,
+          "mediaArea": 110016.75,
+          "profileArea": 118945.4375
+        },
+        {
+          "profileAfterMedia": true,
+          "mediaArea": 110016.75,
+          "profileArea": 118945.4375
+        },
+        {
+          "profileAfterMedia": true,
+          "mediaArea": 110016.75,
+          "profileArea": 118945.4375
+        },
+        {
+          "profileAfterMedia": true,
+          "mediaArea": 110016.75,
+          "profileArea": 118945.4375
+        },
+        {
+          "profileAfterMedia": true,
+          "mediaArea": 110016.75,
+          "profileArea": 122452.28125
+        }
+      ],
+      "mediaRadii": [
+        "12px",
+        "12px",
+        "12px",
+        "12px",
+        "12px"
+      ],
+      "cardShadows": [
+        "none",
+        "none",
+        "none",
+        "none",
+        "none"
+      ],
+      "cardTopBorders": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "firstCardFocusVisible": true,
+      "firstCardOutline": "solid",
+      "contactHref": "/about#contact",
+      "searchAction": "/adoptions",
+      "searchLabel": "搜索角色",
+      "searchContactRelationship": true,
+      "toolsPanelRightAligned": true,
+      "toolsBordersAbsent": true,
+      "unsearchedResultSummaryVisible": false,
+      "firstCardHeight": 629.8125,
+      "firstCardBottom": 824.40625,
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "decorativeEnglishLabelCount": 0,
+      "responseStatus": 200,
+      "images": [
+        {
+          "complete": true,
+          "naturalHeight": 1600,
+          "naturalWidth": 1600,
+          "objectFit": "contain"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 222,
+          "naturalWidth": 395,
+          "objectFit": "contain"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 273,
+          "naturalWidth": 395,
+          "objectFit": "contain"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 197,
+          "naturalWidth": 395,
+          "objectFit": "contain"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 220,
+          "naturalWidth": 395,
+          "objectFit": "contain"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 559,
+          "naturalWidth": 395,
+          "objectFit": "contain"
+        }
+      ]
+    }
+  },
+  "detail": {
+    "1440x900": {
+      "viewport": {
+        "name": "1440x900",
+        "width": 1440,
+        "height": 900
+      },
+      "detailKind": "adoption",
+      "slug": "adoption-green-dog-test",
+      "ledger": "物种小狗内容类型设定领养领养状态可领养领养价格¥980",
+      "adoptionStatus": "可领养",
+      "adoptionPrice": "¥980",
+      "archiveHref": "/adoptions",
+      "contactHref": "/about#contact",
+      "backHref": "/adoptions",
+      "backLabel": "← 返回设定领养",
+      "mediaStageRadius": "12px",
+      "stageObjectFits": [
+        "contain"
+      ],
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "decorativeEnglishLabelCount": 0,
+      "responseStatus": 200,
+      "images": [
+        {
+          "complete": true,
+          "naturalHeight": 1252,
+          "naturalWidth": 835,
+          "objectFit": "contain"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 144,
+          "naturalWidth": 96,
+          "objectFit": "cover"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 144,
+          "naturalWidth": 96,
+          "objectFit": "cover"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 54,
+          "naturalWidth": 96,
+          "objectFit": "cover"
+        }
+      ]
+    },
+    "390x844": {
+      "viewport": {
+        "name": "390x844",
+        "width": 390,
+        "height": 844
+      },
+      "detailKind": "adoption",
+      "slug": "adoption-green-dog-test",
+      "ledger": "物种小狗内容类型设定领养领养状态可领养领养价格¥980",
+      "adoptionStatus": "可领养",
+      "adoptionPrice": "¥980",
+      "archiveHref": "/adoptions",
+      "contactHref": "/about#contact",
+      "backHref": "/adoptions",
+      "backLabel": "← 返回设定领养",
+      "mediaStageRadius": "12px",
+      "stageObjectFits": [
+        "contain"
+      ],
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "decorativeEnglishLabelCount": 0,
+      "responseStatus": 200,
+      "images": [
+        {
+          "complete": true,
+          "naturalHeight": 584,
+          "naturalWidth": 389,
+          "objectFit": "contain"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 144,
+          "naturalWidth": 96,
+          "objectFit": "cover"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 144,
+          "naturalWidth": 96,
+          "objectFit": "cover"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 54,
+          "naturalWidth": 96,
+          "objectFit": "cover"
+        }
+      ]
+    },
+    "430x932": {
+      "viewport": {
+        "name": "430x932",
+        "width": 430,
+        "height": 932
+      },
+      "detailKind": "adoption",
+      "slug": "adoption-green-dog-test",
+      "ledger": "物种小狗内容类型设定领养领养状态可领养领养价格¥980",
+      "adoptionStatus": "可领养",
+      "adoptionPrice": "¥980",
+      "archiveHref": "/adoptions",
+      "contactHref": "/about#contact",
+      "backHref": "/adoptions",
+      "backLabel": "← 返回设定领养",
+      "mediaStageRadius": "12px",
+      "stageObjectFits": [
+        "contain"
+      ],
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "decorativeEnglishLabelCount": 0,
+      "responseStatus": 200,
+      "images": [
+        {
+          "complete": true,
+          "naturalHeight": 645,
+          "naturalWidth": 430,
+          "objectFit": "contain"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 144,
+          "naturalWidth": 96,
+          "objectFit": "cover"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 144,
+          "naturalWidth": 96,
+          "objectFit": "cover"
+        },
+        {
+          "complete": true,
+          "naturalHeight": 54,
+          "naturalWidth": 96,
+          "objectFit": "cover"
+        }
+      ]
+    }
+  },
+  "search": {
+    "query": "小绿狗",
+    "resultCount": 1,
+    "resultSummary": "01 项结果",
+    "titles": [
+      "小绿狗测试领养"
+    ],
+    "clearHref": "/adoptions",
+    "resultSummaryAfterClear": 1
+  },
+  "checks": {
+    "allRoutes200": true,
+    "allImagesDecoded": true,
+    "containMedia": true,
+    "noHorizontalOverflow": true,
+    "noStaticMotion": true,
+    "homepageUsesLatestAvailable": true,
+    "desktopHomepageOverlap": true,
+    "archiveDirectory": true,
+    "desktopDirectoryDensity": true,
+    "searchPreserved": true,
+    "adoptionDetailVariant": true,
+    "decorativeEnglishLabelsRemoved": true
+  }
+}

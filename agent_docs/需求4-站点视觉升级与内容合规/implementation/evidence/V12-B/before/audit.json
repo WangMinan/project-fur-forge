@@ -1,0 +1,109 @@
+{
+  "variant": "before",
+  "routes": {
+    "1440x900": {
+      "viewport": {
+        "name": "1440x900",
+        "width": 1440,
+        "height": 900
+      },
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "channelCount": 2,
+      "contactComposition": null,
+      "images": [
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 128,
+          "naturalWidth": 128
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 128,
+          "naturalWidth": 128
+        }
+      ],
+      "responseStatus": 200
+    },
+    "390x844": {
+      "viewport": {
+        "name": "390x844",
+        "width": 390,
+        "height": 844
+      },
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "channelCount": 2,
+      "contactComposition": null,
+      "images": [
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 149,
+          "naturalWidth": 149
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 149,
+          "naturalWidth": 149
+        }
+      ],
+      "responseStatus": 200
+    },
+    "430x932": {
+      "viewport": {
+        "name": "430x932",
+        "width": 430,
+        "height": 932
+      },
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "channelCount": 2,
+      "contactComposition": null,
+      "images": [
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 149,
+          "naturalWidth": 149
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 149,
+          "naturalWidth": 149
+        }
+      ],
+      "responseStatus": 200
+    }
+  },
+  "interactions": {},
+  "checks": {}
+}

@@ -39,7 +39,16 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="commission-lead" aria-labelledby="commission-lead-title">
+  <section
+    class="commission-lead"
+    :class="{ 'commission-lead--without-media': !sources }"
+    aria-labelledby="commission-lead-title"
+  >
+    <div class="commission-lead__display" aria-hidden="true">
+      <span>CUSTOM</span>
+      <span>COMMISSION</span>
+    </div>
+
     <div
       v-if="sources"
       class="commission-lead__media"
@@ -49,63 +58,85 @@ onBeforeUnmount(() => {
         :sources="sources"
         :portrait-sources="portrait?.sources"
         :alt="alt"
-        sizes="(min-width: 1440px) 1440px, calc(100vw - 2rem)"
+        sizes="(min-width: 1024px) 64vw, calc(100vw - 2rem)"
         loading="eager"
         fetchpriority="high"
       />
     </div>
 
     <div class="commission-lead__content">
-      <div v-if="status" class="commission-lead__status" aria-label="当前委托营业状态">
-        <PublicBusinessStatus :status="status" />
+      <div class="commission-lead__identity">
+        <h1 id="commission-lead-title" class="commission-lead__title">自设委托</h1>
+        <p class="commission-lead__promise">从角色设定出发</p>
       </div>
-      <p class="commission-lead__eyebrow">全装 · 半装</p>
-      <h2 id="commission-lead-title" class="commission-lead__title">从角色设定出发</h2>
-      <p class="commission-lead__description">
-        {{ description || '根据角色细节与制作需求逐单沟通、人工估价。' }}
-      </p>
+
+      <div class="commission-lead__narrative">
+        <div v-if="status" class="commission-lead__status" aria-label="当前委托营业状态">
+          <PublicBusinessStatus :status="status" />
+        </div>
+        <p class="commission-lead__description">
+          {{ description || '根据角色细节与制作需求逐单沟通、人工估价。' }}
+        </p>
+      </div>
+
       <div class="commission-lead__actions">
-        <PublicAction
-          to="/commission/apply"
-        >提交委托申请</PublicAction>
-        <PublicAction
-          variant="secondary"
-          to="/about#contact"
-        >查看其他联系方式</PublicAction>
+        <PublicAction to="/commission/apply">提交委托申请</PublicAction>
+        <PublicAction variant="text" to="/about#contact">查看其他联系方式 →</PublicAction>
       </div>
     </div>
+
+    <NuxtLink
+      class="commission-lead__continuation"
+      to="#commission-details"
+      aria-label="继续查看制作范围和估价联系"
+    >
+      <span>继续查看</span>
+      <span class="commission-lead__continuation-rule" aria-hidden="true" />
+      <span class="commission-lead__continuation-destination">制作范围与估价 ↓</span>
+    </NuxtLink>
   </section>
 </template>
 
 <style scoped>
-/*
- * 底色用深色而非浅色 --image-placeholder：大图解码完成前占位底先出现，浅底会
- * 造成切到本页时「浅色闪一下再变成图」。深底与图片上方的暗渐变同色系，解码前后
- * 亮度接近，闪动不可见；白色文字也始终压在深底上，对比度不会瞬时下降。
- */
 .commission-lead {
   position: relative;
   display: grid;
-  min-height: clamp(30rem, 68svh, 36rem);
+  grid-template-rows: auto auto auto;
+  gap: 1rem;
+  min-width: 0;
   overflow: hidden;
+  color: var(--public-text-primary);
+  background: var(--public-bg-primary);
   isolation: isolate;
-  border-radius: var(--radius-md);
-  background: #191f2a;
 }
 
-.commission-lead::after {
+.commission-lead__display {
   position: absolute;
+  inset: 3.2rem -0.3rem auto;
   z-index: 0;
-  inset: 0;
-  content: '';
-  background:
-    linear-gradient(180deg, rgb(17 20 25 / 0.04) 20%, rgb(17 20 25 / 0.78) 100%),
-    linear-gradient(90deg, rgb(17 20 25 / 0.5) 0%, transparent 68%);
+  display: grid;
+  color: var(--public-background-type);
+  font-family: var(--font-public-body);
+  font-size: 3.75rem;
+  font-weight: 800;
+  line-height: 0.76;
+  pointer-events: none;
+  user-select: none;
+}
+
+.commission-lead__display span:last-child {
+  justify-self: end;
 }
 
 .commission-lead__media {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  z-index: 1;
+  width: calc(100% - 1rem);
+  height: min(56svh, 34rem);
+  margin-top: 5rem;
+  overflow: hidden;
+  border-radius: var(--radius-image);
+  background: #191f2a;
 }
 
 .commission-lead__media :deep(.responsive-picture),
@@ -120,69 +151,210 @@ onBeforeUnmount(() => {
 
 .commission-lead__content {
   position: relative;
-  z-index: 1;
-  align-self: end;
+  z-index: 3;
   display: grid;
+  gap: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--public-text-primary);
+}
+
+.commission-lead__identity,
+.commission-lead__narrative,
+.commission-lead__actions {
+  display: grid;
+  align-content: start;
   justify-items: start;
-  gap: var(--space-3);
-  max-width: 48rem;
-  padding: clamp(1.5rem, 5vw, 4.5rem);
-  color: var(--public-text-inverse);
 }
 
-.commission-lead__status {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid rgb(255 255 255 / 0.38);
-  border-radius: var(--radius-lg);
-  background: rgb(17 20 25 / 0.48);
-}
-
-.commission-lead__status :deep(.business-status__detail) {
-  color: rgb(255 255 255 / 0.78);
-}
-
-.commission-lead__eyebrow {
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  letter-spacing: var(--letter-spacing-label);
+.commission-lead__identity {
+  gap: 0.35rem;
 }
 
 .commission-lead__title {
   font-family: var(--font-public-display);
-  font-size: clamp(2.25rem, 7vw, 4.75rem);
+  font-size: 3.25rem;
   font-weight: 600;
-  line-height: var(--line-height-tight);
-  letter-spacing: var(--letter-spacing-tight);
+  line-height: 0.94;
+}
+
+.commission-lead__promise {
+  color: var(--public-text-secondary);
+  font-family: var(--font-public-display);
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.commission-lead__narrative {
+  gap: 0.75rem;
 }
 
 .commission-lead__description {
-  max-width: 34rem;
-  color: rgb(255 255 255 / 0.9);
+  max-width: 30rem;
+  color: var(--public-text-secondary);
   line-height: var(--line-height-relaxed);
 }
 
 .commission-lead__actions {
-  --public-action-primary-text: var(--public-text-primary);
-  --public-action-primary-bg: var(--public-bg-primary);
-  --public-action-primary-border: rgb(255 255 255 / 0.7);
-  --public-action-primary-hover-text: var(--public-accent-active);
-  --public-action-primary-hover-bg: var(--public-bg-secondary);
-  --public-action-primary-hover-border: rgb(255 255 255 / 0.7);
-  --public-action-secondary-text: var(--public-text-inverse);
-  --public-action-secondary-bg: rgb(17 20 25 / 0.3);
-  --public-action-secondary-border: rgb(255 255 255 / 0.7);
-  --public-action-secondary-hover-text: var(--public-text-inverse);
-  --public-action-secondary-hover-bg: rgb(17 20 25 / 0.52);
-  --public-action-secondary-hover-border: rgb(255 255 255 / 0.7);
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  margin-top: var(--space-2);
+  gap: 0.5rem;
+}
+
+.commission-lead__continuation {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: auto minmax(2rem, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2.75rem;
+  color: var(--public-text-secondary);
+  font-family: var(--font-public-mono);
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.commission-lead__continuation-rule {
+  height: 1px;
+  background: var(--public-border-primary);
+}
+
+.commission-lead__continuation-destination {
+  color: var(--public-text-primary);
+  font-family: var(--font-public-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.commission-lead__continuation:hover {
+  color: var(--public-text-primary);
+}
+
+.commission-lead__continuation:focus-visible {
+  outline: 1px solid currentcolor;
+  outline-offset: 4px;
 }
 
 @media (min-width: 768px) {
+  .commission-lead__display {
+    inset: 3.35rem -0.6rem auto;
+    font-size: 8rem;
+  }
+
+  .commission-lead__media {
+    justify-self: end;
+    width: calc(100% - clamp(2rem, 8vw, 8rem));
+    height: min(58svh, 38rem);
+    margin-top: 3.5rem;
+  }
+
+  .commission-lead__content {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 1.5rem;
+    padding-top: 1.5rem;
+  }
+
+  .commission-lead__identity {
+    grid-column: 1 / 6;
+  }
+
+  .commission-lead__narrative {
+    grid-column: 6 / 10;
+  }
+
+  .commission-lead__actions {
+    grid-column: 10 / 13;
+  }
+
+  .commission-lead__title {
+    font-size: clamp(3.75rem, 6vw, 5.75rem);
+  }
+
+  .commission-lead__promise {
+    font-size: 1.5rem;
+  }
+
+  .commission-lead--without-media .commission-lead__content {
+    margin-top: 8rem;
+  }
+}
+
+@media (min-width: 1024px) {
   .commission-lead {
-    min-height: clamp(30rem, 48vw, 38rem);
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-rows: auto minmax(34rem, auto) auto;
+    column-gap: clamp(1.5rem, 2.5vw, 3rem);
+  }
+
+  .commission-lead__media {
+    grid-column: 5 / 13;
+    grid-row: 2;
+    align-self: center;
+    justify-self: stretch;
+    width: auto;
+    height: min(62svh, 38rem);
+    margin-top: 4rem;
+  }
+
+  .commission-lead__content {
+    grid-column: 1 / 5;
+    grid-row: 2;
+    align-self: center;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    margin-top: 4rem;
+    padding: 0 clamp(0.5rem, 1.5vw, 1.5rem) 0 0;
+    border-top: 0;
+  }
+
+  .commission-lead__continuation {
+    grid-column: 1 / 13;
+    grid-row: 3;
+  }
+
+  .commission-lead__identity,
+  .commission-lead__narrative,
+  .commission-lead__actions {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .commission-lead__identity {
+    gap: 0.65rem;
+  }
+
+  .commission-lead__title {
+    font-size: clamp(3.75rem, 5.2vw, 4.8rem);
+  }
+
+  .commission-lead__promise {
+    max-width: 8em;
+    font-size: clamp(1.5rem, 2vw, 1.9rem);
+  }
+
+  .commission-lead__description {
+    max-width: 24rem;
+  }
+
+  .commission-lead--without-media {
+    grid-template-rows: auto auto auto;
+  }
+
+  .commission-lead--without-media .commission-lead__content {
+    grid-column: 1 / 8;
+    margin-top: 8rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .commission-lead__display {
+    font-size: 11rem;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .commission-lead__display {
+    color: var(--public-border-secondary);
   }
 }
 </style>

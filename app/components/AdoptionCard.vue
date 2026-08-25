@@ -1,18 +1,26 @@
 <script setup lang="ts">
-import type { PublicAdoptionListItemDto } from '~~/shared/types/contracts'
-import WorkIdentityLabel from '~/components/WorkIdentityLabel.vue'
 import { formatCnyMinorUnits } from '~/utils/format'
 import { ADOPTION_STATUS_LABELS } from '~/utils/work-labels'
+import type { PublicAdoptionListItemDto } from '~~/shared/types/contracts'
 
 const props = defineProps<{
   adoption: PublicAdoptionListItemDto
+  folio: number
 }>()
 
-const price = computed(() => props.adoption.work.price
-  ? formatCnyMinorUnits(props.adoption.work.price.minorUnits)
-  : null,
-)
-
+const hasLongCharacterName = computed(() => (
+  props.adoption.work.characterName.length >= 7
+))
+const folioLabel = computed(() => String(props.folio).padStart(2, '0'))
+const priceLabel = computed(() => (
+  props.adoption.work.price
+    ? formatCnyMinorUnits(props.adoption.work.price.minorUnits)
+    : null
+))
+const mediaOrientation = computed(() => {
+  const image = props.adoption.cover.sources.fallback.at(-1)
+  return image && image.height > image.width ? 'portrait' : 'landscape'
+})
 </script>
 
 <template>
@@ -23,31 +31,39 @@ const price = computed(() => props.adoption.work.price
     }"
     class="adoption-card"
     :data-work-slug="adoption.work.slug"
+    :aria-label="`查看领养角色：${adoption.work.characterName}`"
   >
-    <span class="adoption-card__canvas">
-      <ResponsivePicture
-        :sources="adoption.cover.sources"
-        :alt="adoption.cover.alt"
-        sizes="(min-width: 1024px) 44vw, 100vw"
-      />
-    </span>
-    <span class="adoption-card__body">
-      <span class="adoption-card__heading">
-        <span class="adoption-card__title">
-          <WorkIdentityLabel
-            :character-name="adoption.work.characterName"
-            :species="adoption.work.species"
-          />
-        </span>
-        <span
-          class="adoption-card__status"
-          :data-status="adoption.work.adoptionStatus"
-        >
-          {{ ADOPTION_STATUS_LABELS[adoption.work.adoptionStatus] }}
-        </span>
+    <span class="adoption-card__record">
+      <span class="adoption-card__canvas" :data-orientation="mediaOrientation">
+        <ResponsivePicture
+          :sources="adoption.cover.sources"
+          :alt="adoption.cover.alt"
+          sizes="(min-width: 1024px) 30vw, (min-width: 768px) 58vw, 92vw"
+        />
       </span>
-      <span v-if="price" class="adoption-card__details">
-        <span class="adoption-card__price">{{ price }}</span>
+
+      <span class="adoption-card__profile">
+        <span class="adoption-card__folio" aria-hidden="true">{{ folioLabel }}</span>
+
+        <span class="adoption-card__identity">
+          <span
+            class="adoption-card__title"
+            :class="{ 'adoption-card__title--long': hasLongCharacterName }"
+          >{{ adoption.work.characterName }}</span>
+        </span>
+
+        <span class="adoption-card__facts" aria-label="角色简要信息">
+          <span>{{ adoption.work.species }}</span>
+          <span v-if="priceLabel">{{ priceLabel }}</span>
+          <span class="adoption-card__availability">
+            {{ ADOPTION_STATUS_LABELS[adoption.work.adoptionStatus] }}
+          </span>
+        </span>
+
+        <span class="adoption-card__action">
+          <span>查看当前角色</span>
+          <span aria-hidden="true">→</span>
+        </span>
       </span>
     </span>
   </NuxtLink>
@@ -56,25 +72,36 @@ const price = computed(() => props.adoption.work.price
 <style scoped>
 .adoption-card {
   display: block;
+  min-width: 0;
+  padding: 0 0 var(--space-6);
   color: var(--public-text-primary);
-  transition: transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .adoption-card:hover {
   color: var(--public-text-primary);
 }
 
-/**
- * 领养卡固定使用独立横版封面；不以设定图或出厂照自动替代。
- */
-.adoption-card__canvas {
-  display: block;
-  aspect-ratio: 16 / 9;
+.adoption-card:focus-visible {
+  outline: 2px solid var(--public-border-focus);
+  outline-offset: 4px;
+}
+
+.adoption-card__record {
+  display: grid;
+  min-width: 0;
   overflow: hidden;
-  border: 1px solid var(--public-border-primary);
   border-radius: var(--radius-image);
-  background: var(--image-placeholder);
-  transition: box-shadow var(--motion-duration-state) var(--motion-ease-standard);
+  background: color-mix(in srgb, var(--public-media-canvas) 46%, white);
+}
+
+/** 完整设定图优先；媒体画布只留白，不以 cover 统一裁切角色内容。 */
+.adoption-card__canvas {
+  display: grid;
+  min-width: 0;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  background: var(--public-media-canvas);
+  place-items: center;
 }
 
 .adoption-card__canvas :deep(.responsive-picture),
@@ -84,82 +111,133 @@ const price = computed(() => props.adoption.work.price
 }
 
 .adoption-card__canvas :deep(.responsive-picture__image) {
-  object-fit: cover;
-  transition: transform var(--motion-duration-state) var(--motion-ease-standard);
+  object-fit: contain;
+  transition: none;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .adoption-card:hover {
-    transform: translateY(-0.25rem);
-  }
-
-  .adoption-card:hover .adoption-card__canvas {
-    box-shadow: 0 1rem 2.25rem rgb(17 20 25 / 0.12);
-  }
-
-  .adoption-card:hover .adoption-card__canvas :deep(.responsive-picture__image) {
-    transform: scale(var(--image-hover-scale));
-  }
-}
-
-.adoption-card__body,
-.adoption-card__heading,
-.adoption-card__details,
-.adoption-card__tags {
+.adoption-card__profile,
+.adoption-card__identity,
+.adoption-card__action {
   display: flex;
 }
 
-.adoption-card__body {
+.adoption-card__profile {
+  position: relative;
+  isolation: isolate;
   flex-direction: column;
-  gap: var(--space-2);
-  padding-top: var(--space-3);
+  min-width: 0;
+  padding: var(--space-5);
 }
 
-.adoption-card__heading {
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-3);
+.adoption-card__identity,
+.adoption-card__facts,
+.adoption-card__action {
+  position: relative;
+  z-index: 1;
+}
+
+.adoption-card__folio {
+  position: absolute;
+  inset: auto -0.45rem -0.85rem auto;
+  z-index: 0;
+  color: color-mix(in srgb, var(--public-text-primary) 21%, transparent);
+  font-family: ui-rounded, "Arial Rounded MT Bold", "SF Pro Rounded", var(--font-public-body);
+  font-size: clamp(4.75rem, 19vw, 7rem);
+  font-weight: 600;
+  line-height: 0.8;
+  letter-spacing: -0.07em;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  user-select: none;
 }
 
 .adoption-card__title {
+  max-width: 11ch;
+  font-family: var(--font-public-display);
+  font-size: clamp(2rem, 8vw, 2.75rem);
+  font-weight: 500;
+  line-height: 1.06;
+  letter-spacing: var(--letter-spacing-tight);
+  overflow-wrap: anywhere;
+}
+
+.adoption-card__title--long {
+  font-size: clamp(1.75rem, 7vw, 2.375rem);
+}
+
+.adoption-card__facts {
+  display: grid;
+  width: min(100%, 8rem);
   min-width: 0;
-}
-
-.adoption-card__status {
-  flex: none;
-  color: var(--public-status-neutral);
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  color: var(--public-text-secondary);
   font-size: var(--font-size-sm);
+  line-height: 1.4;
 }
 
-.adoption-card__status[data-status='available'] {
+.adoption-card__facts > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.adoption-card__facts > span::before {
+  content: "·";
+  margin-inline-end: var(--space-2);
+  color: var(--public-text-primary);
+  font-weight: 700;
+}
+
+.adoption-card__availability {
   color: var(--public-status-open);
 }
 
-.adoption-card__details {
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
-  color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.adoption-card__price {
-  margin-inline-start: auto;
+.adoption-card__action {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-4);
+  padding-top: var(--space-3);
   color: var(--public-text-primary);
-  font-family: var(--font-public-display);
-  font-size: var(--font-size-md);
+  border-top: 1px solid var(--public-border-primary);
+  font-weight: 600;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .adoption-card,
-  .adoption-card__canvas,
-  .adoption-card__canvas :deep(.responsive-picture__image) {
-    transition: none;
+@media (min-width: 768px) {
+  .adoption-card__record {
+    grid-template-columns: minmax(0, 2.05fr) minmax(10.75rem, 0.95fr);
+    min-height: clamp(20rem, 25vw, 22rem);
   }
 
-  .adoption-card:hover,
-  .adoption-card:hover .adoption-card__canvas :deep(.responsive-picture__image) {
-    transform: none;
+  .adoption-card__canvas {
+    height: 100%;
+    aspect-ratio: auto;
+    border-radius: var(--radius-image) 0 0 var(--radius-image);
+  }
+
+  .adoption-card__profile {
+    padding: clamp(1.25rem, 2vw, 2rem) clamp(1rem, 1.6vw, 1.5rem);
+  }
+
+  .adoption-card__folio {
+    inset: auto -0.45rem -0.85rem auto;
+    font-size: clamp(4.5rem, 6.5vw, 6.25rem);
+  }
+
+  .adoption-card__title {
+    font-size: clamp(1.75rem, 2.35vw, 2.375rem);
+  }
+
+  .adoption-card__title--long {
+    font-size: clamp(1.5rem, 2vw, 2rem);
+  }
+
+  .adoption-card__action {
+    margin-top: auto;
+    margin-bottom: var(--space-5);
   }
 }
 </style>

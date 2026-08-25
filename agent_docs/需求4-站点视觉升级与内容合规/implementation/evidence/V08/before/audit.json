@@ -1,0 +1,33 @@
+{
+  "mode": "before",
+  "capturedAt": "2026-08-23T11:31:26.737Z",
+  "routes": {
+    "390x844": {
+      "status": 200,
+      "noHorizontalOverflow": true,
+      "formVisible": true
+    },
+    "430x932": {
+      "status": 200,
+      "noHorizontalOverflow": true,
+      "formVisible": true
+    },
+    "768x1024": {
+      "status": 200,
+      "noHorizontalOverflow": true,
+      "formVisible": true
+    },
+    "1024x900": {
+      "status": 200,
+      "noHorizontalOverflow": true,
+      "formVisible": true
+    },
+    "1440x900": {
+      "status": 200,
+      "noHorizontalOverflow": true,
+      "formVisible": true
+    }
+  },
+  "states": {},
+  "interactions": {}
+}

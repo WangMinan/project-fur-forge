@@ -1,0 +1,1036 @@
+{
+  "capturedAt": "2026-08-24T09:06:14.981Z",
+  "home": {
+    "1440x900": {
+      "responseStatus": 200,
+      "viewport": {
+        "name": "1440x900",
+        "width": 1440,
+        "height": 900
+      },
+      "section": {
+        "x": 0,
+        "y": 72,
+        "width": 1425,
+        "height": 828,
+        "top": 72,
+        "right": 1425,
+        "bottom": 900,
+        "left": 0
+      },
+      "heading": {
+        "x": 57.59375,
+        "y": 96,
+        "width": 1309.8125,
+        "height": 62.171875,
+        "top": 96,
+        "right": 1367.40625,
+        "bottom": 158.171875,
+        "left": 57.59375
+      },
+      "media": {
+        "x": 166.734375,
+        "y": 190.015625,
+        "width": 982.359375,
+        "height": 513,
+        "top": 190.015625,
+        "right": 1149.09375,
+        "bottom": 703.015625,
+        "left": 166.734375
+      },
+      "body": {
+        "x": 385.046875,
+        "y": 734.859375,
+        "width": 982.34375,
+        "height": 115.953125,
+        "top": 734.859375,
+        "right": 1367.390625,
+        "bottom": 850.8125,
+        "left": 385.046875
+      },
+      "wayfinding": {
+        "x": 57.59375,
+        "y": 866.8125,
+        "width": 1309.8125,
+        "height": 13.1875,
+        "top": 866.8125,
+        "right": 1367.40625,
+        "bottom": 880,
+        "left": 57.59375
+      },
+      "destination": "NEXT / CHARACTER ADOPTION",
+      "mediaBorderRadius": "12px",
+      "mediaBodyGap": 31.84375,
+      "mediaBeforeBody": true,
+      "decodedImages": [
+        {
+          "complete": true,
+          "naturalHeight": 672,
+          "naturalWidth": 1008
+        }
+      ],
+      "noHorizontalOverflow": true,
+      "sceneFitsViewport": true,
+      "wayfindingInViewport": true,
+      "applicationHref": "/commission/apply",
+      "detailHref": "/commission?view=home-commission",
+      "runningAnimations": 0
+    },
+    "390x844": {
+      "responseStatus": 200,
+      "viewport": {
+        "name": "390x844",
+        "width": 390,
+        "height": 844
+      },
+      "section": {
+        "x": 0,
+        "y": 87.875,
+        "width": 375,
+        "height": 720.125,
+        "top": 87.875,
+        "right": 375,
+        "bottom": 808,
+        "left": 0
+      },
+      "heading": {
+        "x": 16,
+        "y": 99.875,
+        "width": 343,
+        "height": 52.5625,
+        "top": 99.875,
+        "right": 359,
+        "bottom": 152.4375,
+        "left": 16
+      },
+      "media": {
+        "x": 32,
+        "y": 240.4375,
+        "width": 327,
+        "height": 303.828125,
+        "top": 240.4375,
+        "right": 359,
+        "bottom": 544.265625,
+        "left": 32
+      },
+      "body": {
+        "x": 16,
+        "y": 556.265625,
+        "width": 343,
+        "height": 215.734375,
+        "top": 556.265625,
+        "right": 359,
+        "bottom": 772,
+        "left": 16
+      },
+      "wayfinding": {
+        "x": 16,
+        "y": 784,
+        "width": 343,
+        "height": 12,
+        "top": 784,
+        "right": 359,
+        "bottom": 796,
+        "left": 16
+      },
+      "destination": "NEXT / CHARACTER ADOPTION",
+      "mediaBorderRadius": "12px",
+      "mediaBodyGap": 12,
+      "mediaBeforeBody": true,
+      "decodedImages": [
+        {
+          "complete": true,
+          "naturalHeight": 259,
+          "naturalWidth": 389
+        }
+      ],
+      "noHorizontalOverflow": true,
+      "sceneFitsViewport": true,
+      "wayfindingInViewport": true,
+      "applicationHref": "/commission/apply",
+      "detailHref": "/commission?view=home-commission",
+      "runningAnimations": 0
+    },
+    "430x932": {
+      "responseStatus": 200,
+      "viewport": {
+        "name": "430x932",
+        "width": 430,
+        "height": 932
+      },
+      "section": {
+        "x": 0,
+        "y": 87.671875,
+        "width": 415,
+        "height": 736.296875,
+        "top": 87.671875,
+        "right": 415,
+        "bottom": 823.96875,
+        "left": 0
+      },
+      "heading": {
+        "x": 16,
+        "y": 99.671875,
+        "width": 383,
+        "height": 52.5625,
+        "top": 99.671875,
+        "right": 399,
+        "bottom": 152.234375,
+        "left": 16
+      },
+      "media": {
+        "x": 32,
+        "y": 240.234375,
+        "width": 367,
+        "height": 320,
+        "top": 240.234375,
+        "right": 399,
+        "bottom": 560.234375,
+        "left": 32
+      },
+      "body": {
+        "x": 16,
+        "y": 572.234375,
+        "width": 383,
+        "height": 215.734375,
+        "top": 572.234375,
+        "right": 399,
+        "bottom": 787.96875,
+        "left": 16
+      },
+      "wayfinding": {
+        "x": 16,
+        "y": 799.96875,
+        "width": 383,
+        "height": 12,
+        "top": 799.96875,
+        "right": 399,
+        "bottom": 811.96875,
+        "left": 16
+      },
+      "destination": "NEXT / CHARACTER ADOPTION",
+      "mediaBorderRadius": "12px",
+      "mediaBodyGap": 12,
+      "mediaBeforeBody": true,
+      "decodedImages": [
+        {
+          "complete": true,
+          "naturalHeight": 286,
+          "naturalWidth": 430
+        }
+      ],
+      "noHorizontalOverflow": true,
+      "sceneFitsViewport": true,
+      "wayfindingInViewport": true,
+      "applicationHref": "/commission/apply",
+      "detailHref": "/commission?view=home-commission",
+      "runningAnimations": 0
+    }
+  },
+  "commission": {
+    "1440x900": {
+      "responseStatus": 200,
+      "viewport": {
+        "name": "1440x900",
+        "width": 1440,
+        "height": 900
+      },
+      "h1Count": 1,
+      "leadWithoutMedia": false,
+      "media": {
+        "x": 172.796875,
+        "y": 197,
+        "width": 1194.609375,
+        "height": 522,
+        "top": 197,
+        "right": 1367.40625,
+        "bottom": 719,
+        "left": 172.796875
+      },
+      "mediaBorderRadius": "12px",
+      "mediaBeforeContent": true,
+      "currentHeroRatio": 1.778532608695652,
+      "scopeRows": 2,
+      "statusVisible": true,
+      "applicationHref": "/commission/apply",
+      "contactHref": "/about#contact",
+      "termsHref": "/service",
+      "wayfindingHref": "/commission/apply",
+      "decodedImages": [
+        {
+          "complete": true,
+          "naturalHeight": 736,
+          "naturalWidth": 1309
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 128,
+          "naturalWidth": 128
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 128,
+          "naturalWidth": 128
+        }
+      ],
+      "qrSizes": [
+        {
+          "width": 152,
+          "height": 152
+        },
+        {
+          "width": 152,
+          "height": 152
+        }
+      ],
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0
+    },
+    "390x844": {
+      "responseStatus": 200,
+      "viewport": {
+        "name": "390x844",
+        "width": 390,
+        "height": 844
+      },
+      "h1Count": 1,
+      "leadWithoutMedia": false,
+      "media": {
+        "x": 16,
+        "y": 225,
+        "width": 327,
+        "height": 472.625,
+        "top": 225,
+        "right": 343,
+        "bottom": 697.625,
+        "left": 16
+      },
+      "mediaBorderRadius": "12px",
+      "mediaBeforeContent": true,
+      "currentHeroRatio": 0.5628930817610063,
+      "scopeRows": 2,
+      "statusVisible": true,
+      "applicationHref": "/commission/apply",
+      "contactHref": "/about#contact",
+      "termsHref": "/service",
+      "wayfindingHref": "/commission/apply",
+      "decodedImages": [
+        {
+          "complete": true,
+          "naturalHeight": 636,
+          "naturalWidth": 358
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 149,
+          "naturalWidth": 149
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 149,
+          "naturalWidth": 149
+        }
+      ],
+      "qrSizes": [
+        {
+          "width": 152,
+          "height": 152
+        },
+        {
+          "width": 152,
+          "height": 152
+        }
+      ],
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0
+    },
+    "430x932": {
+      "responseStatus": 200,
+      "viewport": {
+        "name": "430x932",
+        "width": 430,
+        "height": 932
+      },
+      "h1Count": 1,
+      "leadWithoutMedia": false,
+      "media": {
+        "x": 16,
+        "y": 225,
+        "width": 367,
+        "height": 521.90625,
+        "top": 225,
+        "right": 383,
+        "bottom": 746.90625,
+        "left": 16
+      },
+      "mediaBorderRadius": "12px",
+      "mediaBeforeContent": true,
+      "currentHeroRatio": 0.562942008486563,
+      "scopeRows": 2,
+      "statusVisible": true,
+      "applicationHref": "/commission/apply",
+      "contactHref": "/about#contact",
+      "termsHref": "/service",
+      "wayfindingHref": "/commission/apply",
+      "decodedImages": [
+        {
+          "complete": true,
+          "naturalHeight": 707,
+          "naturalWidth": 398
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 149,
+          "naturalWidth": 149
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 149,
+          "naturalWidth": 149
+        }
+      ],
+      "qrSizes": [
+        {
+          "width": 152,
+          "height": 152
+        },
+        {
+          "width": 152,
+          "height": 152
+        }
+      ],
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0
+    }
+  },
+  "review": {
+    "home": {
+      "2048x1080": {
+        "responseStatus": 200,
+        "viewport": {
+          "name": "2048x1080",
+          "width": 2048,
+          "height": 1080
+        },
+        "section": {
+          "x": 296.5,
+          "y": 72,
+          "width": 1440,
+          "height": 1008,
+          "top": 72,
+          "right": 1736.5,
+          "bottom": 1080,
+          "left": 296.5
+        },
+        "heading": {
+          "x": 368.5,
+          "y": 96,
+          "width": 1296,
+          "height": 62.171875,
+          "top": 96,
+          "right": 1664.5,
+          "bottom": 158.171875,
+          "left": 368.5
+        },
+        "media": {
+          "x": 476.5,
+          "y": 264.515625,
+          "width": 972,
+          "height": 544,
+          "top": 264.515625,
+          "right": 1448.5,
+          "bottom": 808.515625,
+          "left": 476.5
+        },
+        "body": {
+          "x": 692.5,
+          "y": 914.859375,
+          "width": 972,
+          "height": 115.953125,
+          "top": 914.859375,
+          "right": 1664.5,
+          "bottom": 1030.8125,
+          "left": 692.5
+        },
+        "wayfinding": {
+          "x": 368.5,
+          "y": 1046.8125,
+          "width": 1296,
+          "height": 13.1875,
+          "top": 1046.8125,
+          "right": 1664.5,
+          "bottom": 1060,
+          "left": 368.5
+        },
+        "destination": "NEXT / CHARACTER ADOPTION",
+        "mediaBorderRadius": "12px",
+        "mediaBodyGap": 106.34375,
+        "mediaBeforeBody": true,
+        "decodedImages": [
+          {
+            "complete": true,
+            "naturalHeight": 955,
+            "naturalWidth": 1433
+          }
+        ],
+        "noHorizontalOverflow": true,
+        "sceneFitsViewport": true,
+        "wayfindingInViewport": true,
+        "applicationHref": "/commission/apply",
+        "detailHref": "/commission?view=home-commission",
+        "runningAnimations": 0
+      },
+      "1280x800": {
+        "responseStatus": 200,
+        "viewport": {
+          "name": "1280x800",
+          "width": 1280,
+          "height": 800
+        },
+        "section": {
+          "x": 0,
+          "y": 72,
+          "width": 1265,
+          "height": 728,
+          "top": 72,
+          "right": 1265,
+          "bottom": 800,
+          "left": 0
+        },
+        "heading": {
+          "x": 51.1875,
+          "y": 96,
+          "width": 1162.625,
+          "height": 62.171875,
+          "top": 96,
+          "right": 1213.8125,
+          "bottom": 158.171875,
+          "left": 51.1875
+        },
+        "media": {
+          "x": 148.0625,
+          "y": 174.171875,
+          "width": 871.96875,
+          "height": 423,
+          "top": 174.171875,
+          "right": 1020.03125,
+          "bottom": 597.171875,
+          "left": 148.0625
+        },
+        "body": {
+          "x": 341.84375,
+          "y": 613.171875,
+          "width": 871.953125,
+          "height": 137.640625,
+          "top": 613.171875,
+          "right": 1213.796875,
+          "bottom": 750.8125,
+          "left": 341.84375
+        },
+        "wayfinding": {
+          "x": 51.1875,
+          "y": 766.8125,
+          "width": 1162.625,
+          "height": 13.1875,
+          "top": 766.8125,
+          "right": 1213.8125,
+          "bottom": 780,
+          "left": 51.1875
+        },
+        "destination": "NEXT / CHARACTER ADOPTION",
+        "mediaBorderRadius": "12px",
+        "mediaBodyGap": 16,
+        "mediaBeforeBody": true,
+        "decodedImages": [
+          {
+            "complete": true,
+            "naturalHeight": 597,
+            "naturalWidth": 895
+          }
+        ],
+        "noHorizontalOverflow": true,
+        "sceneFitsViewport": true,
+        "wayfindingInViewport": true,
+        "applicationHref": "/commission/apply",
+        "detailHref": "/commission?view=home-commission",
+        "runningAnimations": 0
+      },
+      "768x1024": {
+        "responseStatus": 200,
+        "viewport": {
+          "name": "768x1024",
+          "width": 768,
+          "height": 1024
+        },
+        "section": {
+          "x": 0,
+          "y": 88,
+          "width": 753,
+          "height": 936,
+          "top": 88,
+          "right": 753,
+          "bottom": 1024,
+          "left": 0
+        },
+        "heading": {
+          "x": 24,
+          "y": 112,
+          "width": 705,
+          "height": 62.171875,
+          "top": 112,
+          "right": 729,
+          "bottom": 174.171875,
+          "left": 24
+        },
+        "media": {
+          "x": 82.75,
+          "y": 241.671875,
+          "width": 528.75,
+          "height": 528,
+          "top": 241.671875,
+          "right": 611.5,
+          "bottom": 769.671875,
+          "left": 82.75
+        },
+        "body": {
+          "x": 200.25,
+          "y": 837.171875,
+          "width": 528.75,
+          "height": 137.640625,
+          "top": 837.171875,
+          "right": 729,
+          "bottom": 974.8125,
+          "left": 200.25
+        },
+        "wayfinding": {
+          "x": 24,
+          "y": 990.8125,
+          "width": 705,
+          "height": 13.1875,
+          "top": 990.8125,
+          "right": 729,
+          "bottom": 1004,
+          "left": 24
+        },
+        "destination": "NEXT / CHARACTER ADOPTION",
+        "mediaBorderRadius": "12px",
+        "mediaBodyGap": 67.5,
+        "mediaBeforeBody": true,
+        "decodedImages": [
+          {
+            "complete": true,
+            "naturalHeight": 512,
+            "naturalWidth": 768
+          }
+        ],
+        "noHorizontalOverflow": true,
+        "sceneFitsViewport": true,
+        "wayfindingInViewport": true,
+        "applicationHref": "/commission/apply",
+        "detailHref": "/commission?view=home-commission",
+        "runningAnimations": 0
+      },
+      "375x812": {
+        "responseStatus": 200,
+        "viewport": {
+          "name": "375x812",
+          "width": 375,
+          "height": 812
+        },
+        "section": {
+          "x": 0,
+          "y": 88.0625,
+          "width": 360,
+          "height": 708.609375,
+          "top": 88.0625,
+          "right": 360,
+          "bottom": 796.671875,
+          "left": 0
+        },
+        "heading": {
+          "x": 16,
+          "y": 100.0625,
+          "width": 328,
+          "height": 52.5625,
+          "top": 100.0625,
+          "right": 344,
+          "bottom": 152.625,
+          "left": 16
+        },
+        "media": {
+          "x": 32,
+          "y": 240.625,
+          "width": 312,
+          "height": 292.3125,
+          "top": 240.625,
+          "right": 344,
+          "bottom": 532.9375,
+          "left": 32
+        },
+        "body": {
+          "x": 16,
+          "y": 544.9375,
+          "width": 328,
+          "height": 215.734375,
+          "top": 544.9375,
+          "right": 344,
+          "bottom": 760.671875,
+          "left": 16
+        },
+        "wayfinding": {
+          "x": 16,
+          "y": 772.671875,
+          "width": 328,
+          "height": 12,
+          "top": 772.671875,
+          "right": 344,
+          "bottom": 784.671875,
+          "left": 16
+        },
+        "destination": "NEXT / CHARACTER ADOPTION",
+        "mediaBorderRadius": "12px",
+        "mediaBodyGap": 12,
+        "mediaBeforeBody": true,
+        "decodedImages": [
+          {
+            "complete": true,
+            "naturalHeight": 250,
+            "naturalWidth": 375
+          }
+        ],
+        "noHorizontalOverflow": true,
+        "sceneFitsViewport": true,
+        "wayfindingInViewport": true,
+        "applicationHref": "/commission/apply",
+        "detailHref": "/commission?view=home-commission",
+        "runningAnimations": 0
+      }
+    },
+    "commission": {
+      "2048x1080": {
+        "responseStatus": 200,
+        "viewport": {
+          "name": "2048x1080",
+          "width": 2048,
+          "height": 1080
+        },
+        "h1Count": 1,
+        "leadWithoutMedia": false,
+        "media": {
+          "x": 496.5,
+          "y": 197,
+          "width": 1168,
+          "height": 608,
+          "top": 197,
+          "right": 1664.5,
+          "bottom": 805,
+          "left": 496.5
+        },
+        "mediaBorderRadius": "12px",
+        "mediaBeforeContent": true,
+        "currentHeroRatio": 1.778532608695652,
+        "scopeRows": 2,
+        "statusVisible": true,
+        "applicationHref": "/commission/apply",
+        "contactHref": "/about#contact",
+        "termsHref": "/service",
+        "wayfindingHref": "/commission/apply",
+        "decodedImages": [
+          {
+            "complete": true,
+            "naturalHeight": 736,
+            "naturalWidth": 1309
+          },
+          {
+            "complete": true,
+            "naturalHeight": 150,
+            "naturalWidth": 150
+          },
+          {
+            "complete": true,
+            "naturalHeight": 128,
+            "naturalWidth": 128
+          },
+          {
+            "complete": true,
+            "naturalHeight": 150,
+            "naturalWidth": 150
+          },
+          {
+            "complete": true,
+            "naturalHeight": 128,
+            "naturalWidth": 128
+          }
+        ],
+        "qrSizes": [
+          {
+            "width": 152,
+            "height": 152
+          },
+          {
+            "width": 152,
+            "height": 152
+          }
+        ],
+        "noHorizontalOverflow": true,
+        "runningAnimations": 0
+      },
+      "1280x800": {
+        "responseStatus": 200,
+        "viewport": {
+          "name": "1280x800",
+          "width": 1280,
+          "height": 800
+        },
+        "h1Count": 1,
+        "leadWithoutMedia": false,
+        "media": {
+          "x": 153.59375,
+          "y": 197,
+          "width": 1060.21875,
+          "height": 464,
+          "top": 197,
+          "right": 1213.8125,
+          "bottom": 661,
+          "left": 153.59375
+        },
+        "mediaBorderRadius": "12px",
+        "mediaBeforeContent": true,
+        "currentHeroRatio": 1.7777777777777777,
+        "scopeRows": 2,
+        "statusVisible": true,
+        "applicationHref": "/commission/apply",
+        "contactHref": "/about#contact",
+        "termsHref": "/service",
+        "wayfindingHref": "/commission/apply",
+        "decodedImages": [
+          {
+            "complete": true,
+            "naturalHeight": 702,
+            "naturalWidth": 1248
+          },
+          {
+            "complete": true,
+            "naturalHeight": 150,
+            "naturalWidth": 150
+          },
+          {
+            "complete": true,
+            "naturalHeight": 128,
+            "naturalWidth": 128
+          },
+          {
+            "complete": true,
+            "naturalHeight": 150,
+            "naturalWidth": 150
+          },
+          {
+            "complete": true,
+            "naturalHeight": 128,
+            "naturalWidth": 128
+          }
+        ],
+        "qrSizes": [
+          {
+            "width": 152,
+            "height": 152
+          },
+          {
+            "width": 152,
+            "height": 152
+          }
+        ],
+        "noHorizontalOverflow": true,
+        "runningAnimations": 0
+      },
+      "768x1024": {
+        "responseStatus": 200,
+        "viewport": {
+          "name": "768x1024",
+          "width": 768,
+          "height": 1024
+        },
+        "h1Count": 1,
+        "leadWithoutMedia": false,
+        "media": {
+          "x": 85.453125,
+          "y": 201,
+          "width": 643.546875,
+          "height": 593.90625,
+          "top": 201,
+          "right": 729,
+          "bottom": 794.90625,
+          "left": 85.453125
+        },
+        "mediaBorderRadius": "12px",
+        "mediaBeforeContent": true,
+        "currentHeroRatio": 0.5626911314984709,
+        "scopeRows": 2,
+        "statusVisible": true,
+        "applicationHref": "/commission/apply",
+        "contactHref": "/about#contact",
+        "termsHref": "/service",
+        "wayfindingHref": "/commission/apply",
+        "decodedImages": [
+          {
+            "complete": true,
+            "naturalHeight": 1308,
+            "naturalWidth": 736
+          },
+          {
+            "complete": true,
+            "naturalHeight": 150,
+            "naturalWidth": 150
+          },
+          {
+            "complete": true,
+            "naturalHeight": 180,
+            "naturalWidth": 180
+          },
+          {
+            "complete": true,
+            "naturalHeight": 150,
+            "naturalWidth": 150
+          },
+          {
+            "complete": true,
+            "naturalHeight": 180,
+            "naturalWidth": 180
+          }
+        ],
+        "qrSizes": [
+          {
+            "width": 152,
+            "height": 152
+          },
+          {
+            "width": 152,
+            "height": 152
+          }
+        ],
+        "noHorizontalOverflow": true,
+        "runningAnimations": 0
+      },
+      "375x812": {
+        "responseStatus": 200,
+        "viewport": {
+          "name": "375x812",
+          "width": 375,
+          "height": 812
+        },
+        "h1Count": 1,
+        "leadWithoutMedia": false,
+        "media": {
+          "x": 16,
+          "y": 225,
+          "width": 312,
+          "height": 454.71875,
+          "top": 225,
+          "right": 328,
+          "bottom": 679.71875,
+          "left": 16
+        },
+        "mediaBorderRadius": "12px",
+        "mediaBeforeContent": true,
+        "currentHeroRatio": 0.5632183908045977,
+        "scopeRows": 2,
+        "statusVisible": true,
+        "applicationHref": "/commission/apply",
+        "contactHref": "/about#contact",
+        "termsHref": "/service",
+        "wayfindingHref": "/commission/apply",
+        "decodedImages": [
+          {
+            "complete": true,
+            "naturalHeight": 609,
+            "naturalWidth": 343
+          },
+          {
+            "complete": true,
+            "naturalHeight": 150,
+            "naturalWidth": 150
+          },
+          {
+            "complete": true,
+            "naturalHeight": 149,
+            "naturalWidth": 149
+          },
+          {
+            "complete": true,
+            "naturalHeight": 150,
+            "naturalWidth": 150
+          },
+          {
+            "complete": true,
+            "naturalHeight": 149,
+            "naturalWidth": 149
+          }
+        ],
+        "qrSizes": [
+          {
+            "width": 152,
+            "height": 152
+          },
+          {
+            "width": 152,
+            "height": 152
+          }
+        ],
+        "noHorizontalOverflow": true,
+        "runningAnimations": 0
+      }
+    }
+  },
+  "fallbackContract": {
+    "emptyPlacementReachesLead": true,
+    "noMediaClass": true,
+    "mediaConditional": true,
+    "contentOutsideMediaCondition": true
+  },
+  "sharedMedia": {
+    "query": "?view=home-commission",
+    "transitionName": "home-commission-media"
+  },
+  "checks": {
+    "allRoutes200": true,
+    "allImagesDecoded": true,
+    "noHorizontalOverflow": true,
+    "sharedImageRadius": true,
+    "homeScene": true,
+    "commissionScene": true,
+    "responsiveCommissionMedia": true,
+    "qrReadable": true,
+    "fallbackContract": true,
+    "sharedMedia": true
+  }
+}

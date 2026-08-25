@@ -1,0 +1,311 @@
+{
+  "variant": "after",
+  "routes": {
+    "1440x900": {
+      "viewport": {
+        "name": "1440x900",
+        "width": 1440,
+        "height": 900
+      },
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "channelCount": 2,
+      "contactComposition": true,
+      "images": [
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 128,
+          "naturalWidth": 128
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 128,
+          "naturalWidth": 128
+        }
+      ],
+      "responseStatus": 200
+    },
+    "2048x1080": {
+      "viewport": {
+        "name": "2048x1080",
+        "width": 2048,
+        "height": 1080
+      },
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "channelCount": 2,
+      "contactComposition": true,
+      "images": [
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 128,
+          "naturalWidth": 128
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 128,
+          "naturalWidth": 128
+        }
+      ],
+      "responseStatus": 200
+    },
+    "768x1024": {
+      "viewport": {
+        "name": "768x1024",
+        "width": 768,
+        "height": 1024
+      },
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "channelCount": 2,
+      "contactComposition": true,
+      "images": [
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 180,
+          "naturalWidth": 180
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 180,
+          "naturalWidth": 180
+        }
+      ],
+      "responseStatus": 200
+    },
+    "1023x900": {
+      "viewport": {
+        "name": "1023x900",
+        "width": 1023,
+        "height": 900
+      },
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "channelCount": 2,
+      "contactComposition": true,
+      "images": [
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 180,
+          "naturalWidth": 180
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 180,
+          "naturalWidth": 180
+        }
+      ],
+      "responseStatus": 200
+    },
+    "1024x900": {
+      "viewport": {
+        "name": "1024x900",
+        "width": 1024,
+        "height": 900
+      },
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "channelCount": 2,
+      "contactComposition": true,
+      "images": [
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 128,
+          "naturalWidth": 128
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 128,
+          "naturalWidth": 128
+        }
+      ],
+      "responseStatus": 200
+    },
+    "390x844": {
+      "viewport": {
+        "name": "390x844",
+        "width": 390,
+        "height": 844
+      },
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "channelCount": 2,
+      "contactComposition": true,
+      "images": [
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 149,
+          "naturalWidth": 149
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 149,
+          "naturalWidth": 149
+        }
+      ],
+      "responseStatus": 200
+    },
+    "430x932": {
+      "viewport": {
+        "name": "430x932",
+        "width": 430,
+        "height": 932
+      },
+      "noHorizontalOverflow": true,
+      "runningAnimations": 0,
+      "channelCount": 2,
+      "contactComposition": true,
+      "images": [
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 149,
+          "naturalWidth": 149
+        },
+        {
+          "complete": true,
+          "naturalHeight": 150,
+          "naturalWidth": 150
+        },
+        {
+          "complete": true,
+          "naturalHeight": 149,
+          "naturalWidth": 149
+        }
+      ],
+      "responseStatus": 200
+    }
+  },
+  "interactions": {
+    "mobile": {
+      "qrSizes": [
+        {
+          "width": 152,
+          "height": 152,
+          "decoded": true
+        },
+        {
+          "width": 152,
+          "height": 152,
+          "decoded": true
+        }
+      ],
+      "actionTargets": [
+        {
+          "width": 134,
+          "height": 44
+        },
+        {
+          "width": 166.171875,
+          "height": 44
+        },
+        {
+          "width": 120,
+          "height": 44
+        }
+      ],
+      "focusVisible": true
+    },
+    "email": {
+      "address": "765678159@qq.com",
+      "copyFeedback": "邮箱地址已复制到剪贴板。",
+      "mailtoHref": "mailto:765678159@qq.com"
+    },
+    "oneChannel": {
+      "count": 1,
+      "contained": true
+    },
+    "longAccount": {
+      "contained": true
+    },
+    "anchor": {
+      "hash": "#contact",
+      "path": "/about",
+      "top": 87.59375,
+      "headerBottom": 77
+    },
+    "redirect": {
+      "location": "/about#contact",
+      "status": 301
+    }
+  },
+  "checks": {
+    "allRoutes200": true,
+    "allImagesDecoded": true,
+    "noHorizontalOverflow": true,
+    "staticUnderReducedMotion": true,
+    "contactComposition": true,
+    "qrReadable": true,
+    "actionTargets44": true,
+    "keyboardFocus": true,
+    "emailActions": true,
+    "oneChannel": true,
+    "longAccount": true,
+    "redirect301": true,
+    "anchorOffset": true
+  }
+}

@@ -4,11 +4,11 @@
  */
 
 /**
- * 自动轮播固定 10 秒一张，且始终开启（不再是可配置项）。
+ * 自动轮播固定 4 秒一张，且始终开启（不再是可配置项）。
  *
  * 唯一例外是 `prefers-reduced-motion`：那是无障碍要求，不是偏好设置。
  */
-export const HERO_AUTOPLAY_INTERVAL_MS = 10_000
+export const HERO_AUTOPLAY_INTERVAL_MS = 4_000
 
 export function nextSlideIndex(current: number, count: number): number {
   if (count <= 0) {

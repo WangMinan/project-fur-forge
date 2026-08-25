@@ -337,11 +337,16 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="commission-apply">
-    <PublicPageIntro
-      title="提交委托申请"
-      description="设定图只用于工作室内部评估，不会公开展示。"
-    />
+  <div class="commission-apply" data-testid="commission-apply-page">
+    <div class="commission-apply__intro">
+      <PublicPageIntro title="提交委托申请" />
+      <img
+        class="commission-apply__watermark"
+        src="/brand/logo-mark.png"
+        alt=""
+        aria-hidden="true"
+      >
+    </div>
 
     <div class="commission-apply__body">
       <section v-if="receiptCode" class="commission-apply__success" role="status">
@@ -366,120 +371,146 @@ onBeforeUnmount(() => {
       </section>
 
       <form v-else class="commission-apply__form" novalidate @submit.prevent="submit">
-        <p class="commission-apply__privacy">
-          我们会使用你提交的设定图、联系方式和体型信息评估申请、与你沟通，并在接单后用于委托履行和售后。设定图不会公开展示。请勿在文件名或称呼中填写不必要的个人信息。
-        </p>
+        <div class="commission-apply__preface">
+          <p class="commission-apply__privacy">
+            设定图只用于工作室内部评估，不会公开展示。我们会使用你提交的设定图、联系方式和体型信息评估申请、与你沟通，并在接单后用于委托履行和售后。请勿在文件名或称呼中填写不必要的个人信息。
+          </p>
+        </div>
 
         <p
           v-if="validationErrorCount > 0"
           ref="validationSummary"
           class="commission-apply__validation-summary"
+          data-testid="commission-apply-validation-summary"
           role="alert"
           tabindex="-1"
         >请检查下方 {{ validationErrorCount }} 项信息后再提交。</p>
 
-        <div class="commission-apply__field">
-          <label for="commission-nickname">称呼 <span aria-hidden="true">*</span></label>
-          <input
-            id="commission-nickname"
-            v-model="form.nickname"
-            maxlength="50"
-            autocomplete="nickname"
-            :aria-invalid="Boolean(errors.nickname)"
-            aria-describedby="commission-nickname-error"
-          >
-          <p id="commission-nickname-error" class="commission-apply__error">{{ errors.nickname }}</p>
-        </div>
-
-        <div class="commission-apply__field">
-          <label for="commission-species">物种 <span aria-hidden="true">*</span></label>
-          <input
-            id="commission-species"
-            v-model="form.species"
-            maxlength="50"
-            autocomplete="off"
-            :aria-invalid="Boolean(errors.species)"
-            aria-describedby="commission-species-error"
-          >
-          <p id="commission-species-error" class="commission-apply__error">{{ errors.species }}</p>
-        </div>
-
-        <div class="commission-apply__field">
-          <label for="commission-phone">中国大陆手机号 <span aria-hidden="true">*</span></label>
-          <div class="commission-apply__phone">
-            <span aria-hidden="true">+86</span>
+        <section class="commission-apply__fields" aria-labelledby="commission-details-title">
+            <h2 id="commission-details-title">申请信息</h2>
+            <div class="commission-apply__field">
+            <label for="commission-nickname">称呼 <span aria-hidden="true">*</span></label>
             <input
-              id="commission-phone"
-              v-model="form.phone"
+              id="commission-nickname"
+              v-model="form.nickname"
+              maxlength="50"
+              autocomplete="nickname"
+              :aria-invalid="Boolean(errors.nickname)"
+              :aria-describedby="errors.nickname ? 'commission-nickname-error' : undefined"
+            >
+            <p v-if="errors.nickname" id="commission-nickname-error" class="commission-apply__error">
+              {{ errors.nickname }}
+            </p>
+            </div>
+
+            <div class="commission-apply__field">
+            <label for="commission-species">物种 <span aria-hidden="true">*</span></label>
+            <input
+              id="commission-species"
+              v-model="form.species"
+              maxlength="50"
+              autocomplete="off"
+              :aria-invalid="Boolean(errors.species)"
+              :aria-describedby="errors.species ? 'commission-species-error' : undefined"
+            >
+            <p v-if="errors.species" id="commission-species-error" class="commission-apply__error">
+              {{ errors.species }}
+            </p>
+            </div>
+
+            <div class="commission-apply__field">
+            <label for="commission-phone">中国大陆手机号 <span aria-hidden="true">*</span></label>
+            <div class="commission-apply__phone">
+              <span aria-hidden="true">+86</span>
+              <input
+                id="commission-phone"
+                v-model="form.phone"
+                inputmode="numeric"
+                autocomplete="tel-national"
+                maxlength="11"
+                :aria-invalid="Boolean(errors.phone)"
+                :aria-describedby="errors.phone ? 'commission-phone-error' : undefined"
+              >
+            </div>
+            <p v-if="errors.phone" id="commission-phone-error" class="commission-apply__error">
+              {{ errors.phone }}
+            </p>
+            </div>
+
+            <div class="commission-apply__field">
+            <label for="commission-qq">QQ <span aria-hidden="true">*</span></label>
+            <input
+              id="commission-qq"
+              v-model="form.qq"
               inputmode="numeric"
-              autocomplete="tel-national"
-              maxlength="11"
-              :aria-invalid="Boolean(errors.phone)"
-              aria-describedby="commission-phone-error"
+              autocomplete="off"
+              maxlength="12"
+              :aria-invalid="Boolean(errors.qq)"
+              :aria-describedby="errors.qq ? 'commission-qq-error' : undefined"
             >
-          </div>
-          <p id="commission-phone-error" class="commission-apply__error">{{ errors.phone }}</p>
-        </div>
+            <p v-if="errors.qq" id="commission-qq-error" class="commission-apply__error">
+              {{ errors.qq }}
+            </p>
+            </div>
 
-        <div class="commission-apply__field">
-          <label for="commission-qq">QQ <span aria-hidden="true">*</span></label>
-          <input
-            id="commission-qq"
-            v-model="form.qq"
-            inputmode="numeric"
-            autocomplete="off"
-            maxlength="12"
-            :aria-invalid="Boolean(errors.qq)"
-            aria-describedby="commission-qq-error"
-          >
-          <p id="commission-qq-error" class="commission-apply__error">{{ errors.qq }}</p>
-        </div>
+            <div class="commission-apply__measurements">
+              <div class="commission-apply__field">
+              <label for="commission-height">身高 <span aria-hidden="true">*</span></label>
+              <div class="commission-apply__unit-input">
+                <input
+                  id="commission-height"
+                  v-model="form.heightCm"
+                  type="number"
+                  min="80"
+                  max="250"
+                  step="1"
+                  inputmode="numeric"
+                  :aria-invalid="Boolean(errors.heightCm)"
+                  :aria-describedby="errors.heightCm ? 'commission-height-error' : undefined"
+                >
+                <span aria-hidden="true">cm</span>
+              </div>
+              <p v-if="errors.heightCm" id="commission-height-error" class="commission-apply__error">
+                {{ errors.heightCm }}
+              </p>
+              </div>
+              <div class="commission-apply__field">
+              <label for="commission-weight">体重 <span aria-hidden="true">*</span></label>
+              <div class="commission-apply__unit-input">
+                <input
+                  id="commission-weight"
+                  v-model="form.weightKg"
+                  type="number"
+                  min="20"
+                  max="300"
+                  step="0.1"
+                  inputmode="decimal"
+                  :aria-invalid="Boolean(errors.weightKg)"
+                  :aria-describedby="errors.weightKg ? 'commission-weight-error' : undefined"
+                >
+                <span aria-hidden="true">kg</span>
+              </div>
+              <p v-if="errors.weightKg" id="commission-weight-error" class="commission-apply__error">
+                {{ errors.weightKg }}
+              </p>
+              </div>
+            </div>
+        </section>
 
-        <div class="commission-apply__measurements">
-          <div class="commission-apply__field">
-            <label for="commission-height">身高（cm） <span aria-hidden="true">*</span></label>
-            <input
-              id="commission-height"
-              v-model="form.heightCm"
-              type="number"
-              min="80"
-              max="250"
-              step="1"
-              inputmode="numeric"
-              :aria-invalid="Boolean(errors.heightCm)"
-              aria-describedby="commission-height-error"
-            >
-            <p id="commission-height-error" class="commission-apply__error">{{ errors.heightCm }}</p>
-          </div>
-          <div class="commission-apply__field">
-            <label for="commission-weight">体重（kg） <span aria-hidden="true">*</span></label>
-            <input
-              id="commission-weight"
-              v-model="form.weightKg"
-              type="number"
-              min="20"
-              max="300"
-              step="0.1"
-              inputmode="decimal"
-              :aria-invalid="Boolean(errors.weightKg)"
-              aria-describedby="commission-weight-error"
-            >
-            <p id="commission-weight-error" class="commission-apply__error">{{ errors.weightKg }}</p>
-          </div>
-        </div>
-
-        <ImageDropzoneCard
-          input-id="commission-design-reference"
-          label="设定图"
-          hint="仅一张 JPEG、PNG 或 WebP，最大 20 MB；只用于内部评估，不生成公开图片。"
-          :disabled="busy"
-          :error="errors.file"
-          :file-name="file?.name ?? null"
-          :preview-url="previewUrl"
-          preview-alt="所选设定图预览"
-          @select="chooseFile"
-          @remove="removeFile"
-        />
+        <section class="commission-apply__upload" aria-label="设定图">
+            <ImageDropzoneCard
+              input-id="commission-design-reference"
+              label="设定图"
+              hint="仅一张 JPEG、PNG 或 WebP，最大 20 MB；只用于内部评估，不生成公开图片。"
+              :disabled="busy"
+              :error="errors.file"
+              :file-name="file?.name ?? null"
+              :preview-url="previewUrl"
+              preview-alt="所选设定图预览"
+              @select="chooseFile"
+              @remove="removeFile"
+            />
+        </section>
 
         <fieldset class="commission-apply__confirmations">
           <legend>提交前确认</legend>
@@ -532,30 +563,47 @@ onBeforeUnmount(() => {
           >
         </div>
 
-        <p v-if="submitError" class="commission-apply__submit-error" role="alert">
-          {{ submitError }}
-        </p>
-        <p v-if="stageText" class="commission-apply__stage" role="status">{{ stageText }}</p>
-        <progress
-          v-if="stage === 'uploading'"
-          class="commission-apply__progress"
-          :value="progress ?? 0"
-          max="1"
-          :aria-label="`私有设定图上传进度 ${Math.round((progress ?? 0) * 100)}%`"
-        />
-        <PublicAction
-          type="submit"
-          :loading="busy"
-          loading-label="正在处理…"
-        >确认提交</PublicAction>
+        <div v-if="submitError || stageText" class="commission-apply__feedback">
+          <p v-if="submitError" class="commission-apply__submit-error" role="alert">
+            {{ submitError }}
+          </p>
+          <p v-if="stageText" class="commission-apply__stage" role="status">{{ stageText }}</p>
+          <progress
+            v-if="stage === 'uploading'"
+            class="commission-apply__progress"
+            :value="progress ?? 0"
+            max="1"
+            :aria-label="`私有设定图上传进度 ${Math.round((progress ?? 0) * 100)}%`"
+          />
+        </div>
+        <div class="commission-apply__submit">
+          <PublicAction
+            type="submit"
+            :loading="busy"
+            loading-label="正在处理…"
+          >确认提交</PublicAction>
+        </div>
       </form>
     </div>
   </div>
 </template>
 
 <style scoped>
+.commission-apply__intro {
+  position: relative;
+  max-width: 56rem;
+  margin: 0 auto;
+  isolation: isolate;
+}
+
+.commission-apply__intro :deep(.page-intro) {
+  position: relative;
+  z-index: 1;
+  max-width: none;
+}
+
 .commission-apply__body {
-  max-width: 46rem;
+  max-width: 56rem;
   margin: 0 auto;
   padding: 0 var(--public-page-padding) var(--space-8);
 }
@@ -564,7 +612,7 @@ onBeforeUnmount(() => {
 .commission-apply__success,
 .commission-apply__unavailable {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-6);
 }
 
 .commission-apply__privacy,
@@ -574,14 +622,65 @@ onBeforeUnmount(() => {
   line-height: var(--line-height-relaxed);
 }
 
+.commission-apply__preface {
+  position: relative;
+  display: grid;
+  align-items: center;
+  overflow: clip;
+}
+
+.commission-apply__privacy {
+  position: relative;
+  z-index: 1;
+  max-width: 68rem;
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--public-accent-tint);
+}
+
+.commission-apply__watermark {
+  position: absolute;
+  z-index: 0;
+  top: var(--space-5);
+  left: -2.5rem;
+  width: 14rem;
+  height: auto;
+  opacity: 0.05;
+  filter: grayscale(1);
+  transform: rotate(-15deg);
+  transform-origin: center;
+  pointer-events: none;
+  user-select: none;
+}
+
 .commission-apply__validation-summary {
   margin: 0;
   padding: var(--space-3) var(--space-4);
   color: var(--public-status-error);
   background: color-mix(in srgb, var(--public-status-error) 8%, white);
-  border: 1px solid color-mix(in srgb, var(--public-status-error) 28%, white);
-  border-radius: var(--radius-md);
+  border-left: 2px solid var(--public-status-error);
 }
+
+.commission-apply__fields {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.commission-apply__fields h2,
+.commission-apply__confirmations legend {
+  font-family: var(--font-public-display);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  line-height: var(--line-height-heading);
+}
+
+.commission-apply__fields h2 {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--public-border-secondary);
+}
+
 
 .commission-apply__field {
   display: grid;
@@ -589,26 +688,37 @@ onBeforeUnmount(() => {
 }
 
 .commission-apply__field label {
+  color: var(--public-text-secondary);
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
-.commission-apply__field input {
+.commission-apply__field > input,
+.commission-apply__phone,
+.commission-apply__unit-input {
   min-width: 0;
   min-height: 2.75rem;
-  padding: 0 var(--space-3);
   border: 1px solid var(--public-border-primary);
   border-radius: var(--radius-sm);
   background: var(--public-bg-primary);
+}
+
+.commission-apply__field > input {
+  padding: 0 var(--space-3);
   font: inherit;
 }
 
-.commission-apply__field input:focus {
+.commission-apply__field > input:focus,
+.commission-apply__phone:focus-within,
+.commission-apply__unit-input:focus-within {
   border-color: var(--public-accent-primary);
   outline: 2px solid color-mix(in srgb, var(--public-accent-primary) 24%, transparent);
   outline-offset: 1px;
 }
 
-.commission-apply__field input[aria-invalid='true'] {
+.commission-apply__field > input[aria-invalid='true'],
+.commission-apply__phone:has(input[aria-invalid='true']),
+.commission-apply__unit-input:has(input[aria-invalid='true']) {
   border-color: var(--public-status-error);
 }
 
@@ -616,11 +726,36 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: center;
-  gap: var(--space-2);
 }
 
 .commission-apply__phone span {
+  padding-left: var(--space-3);
   color: var(--public-text-secondary);
+}
+
+.commission-apply__phone input,
+.commission-apply__unit-input input {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0 var(--space-3);
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font: inherit;
+}
+
+.commission-apply__unit-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.commission-apply__unit-input span {
+  padding-right: var(--space-3);
+  color: var(--public-text-tertiary);
+  font-family: var(--font-public-mono);
+  font-size: var(--font-size-xs);
 }
 
 .commission-apply__measurements {
@@ -629,19 +764,25 @@ onBeforeUnmount(() => {
   gap: var(--space-4);
 }
 
+.commission-apply__upload {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--public-border-secondary);
+}
+
 .commission-apply__confirmations {
   display: grid;
   gap: var(--space-3);
   min-width: 0;
   margin: 0;
-  padding: var(--space-4);
-  border: 1px solid var(--public-border-primary);
-  border-radius: var(--radius-sm);
+  padding: var(--space-5) 0 var(--space-4);
+  border: 0;
+  border-top: 1px solid var(--public-border-secondary);
 }
 
 .commission-apply__confirmations legend {
-  padding: 0 var(--space-2);
-  font-weight: 600;
+  padding: 0 0 var(--space-3);
 }
 
 .commission-apply__confirmation {
@@ -659,7 +800,7 @@ onBeforeUnmount(() => {
 .commission-apply__checkbox-row input {
   width: 1.125rem;
   height: 1.125rem;
-  margin: 0.2em 0 0;
+  margin: 0.8rem 0 0;
   accent-color: var(--public-accent-primary);
 }
 
@@ -669,6 +810,9 @@ onBeforeUnmount(() => {
 }
 
 .commission-apply__checkbox-row label {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
   line-height: var(--line-height-relaxed);
 }
 
@@ -677,9 +821,9 @@ onBeforeUnmount(() => {
 }
 
 .commission-apply__error {
-  min-height: 1.25em;
   color: var(--public-status-error);
   font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
 }
 
 .commission-apply__honeypot {
@@ -693,12 +837,17 @@ onBeforeUnmount(() => {
 .commission-apply__submit-error {
   padding: var(--space-3) var(--space-4);
   color: var(--public-status-error);
-  background: var(--public-bg-secondary);
-  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--public-status-error) 7%, white);
+  border-left: 2px solid var(--public-status-error);
 }
 
 .commission-apply__stage {
   color: var(--public-text-secondary);
+}
+
+.commission-apply__feedback {
+  display: grid;
+  gap: var(--space-2);
 }
 
 .commission-apply__progress {
@@ -707,17 +856,18 @@ onBeforeUnmount(() => {
   accent-color: var(--public-accent-primary);
 }
 
+.commission-apply__submit {
+  padding-top: var(--space-2);
+}
+
 .commission-apply__success,
 .commission-apply__unavailable {
-  padding: var(--space-7);
-  border-radius: var(--radius-md);
-  background: var(--public-bg-secondary);
-  text-align: center;
+  padding: var(--space-7) 0;
+  border-block: 1px solid var(--public-border-secondary);
 }
 
 .commission-apply__unavailable-actions {
   display: flex;
-  justify-content: center;
   flex-wrap: wrap;
   gap: var(--space-3);
 }
@@ -734,9 +884,30 @@ onBeforeUnmount(() => {
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 480px) {
+@media (min-width: 768px) {
+  .commission-apply__fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-5);
+    row-gap: var(--space-6);
+  }
+
+  .commission-apply__fields h2,
   .commission-apply__measurements {
-    grid-template-columns: 1fr;
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 767px) {
+  .commission-apply__form {
+    gap: var(--space-5);
+  }
+
+  .commission-apply__privacy {
+    padding-left: var(--space-3);
+  }
+
+  .commission-apply__watermark {
+    display: none;
   }
 }
 </style>

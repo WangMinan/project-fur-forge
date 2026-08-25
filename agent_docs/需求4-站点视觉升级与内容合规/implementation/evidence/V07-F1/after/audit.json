@@ -1,0 +1,156 @@
+{
+  "mode": "after",
+  "capturedAt": "2026-08-23T11:06:43.391Z",
+  "routes": {
+    "commission-390x844": {
+      "responseStatus": 200,
+      "readyState": "complete",
+      "noHorizontalOverflow": true,
+      "imagesDecoded": true,
+      "heroCurrentSrc": "http://127.0.0.1:3001/dev/web/b7eb8c9a-b433-5074-9062-a11d999e88b3/site-display-v2/commission-hero-portrait/480/5bde904cca06b16fa468156eed565d851441184e43518c775713d35ad9a6cde9.webp",
+      "heroNaturalRatio": 0.5628930817610063
+    },
+    "commission-430x932": {
+      "responseStatus": 200,
+      "readyState": "complete",
+      "noHorizontalOverflow": true,
+      "imagesDecoded": true,
+      "heroCurrentSrc": "http://127.0.0.1:3001/dev/web/b7eb8c9a-b433-5074-9062-a11d999e88b3/site-display-v2/commission-hero-portrait/480/5bde904cca06b16fa468156eed565d851441184e43518c775713d35ad9a6cde9.webp",
+      "heroNaturalRatio": 0.562942008486563
+    },
+    "commission-768x1024": {
+      "responseStatus": 200,
+      "readyState": "complete",
+      "noHorizontalOverflow": true,
+      "imagesDecoded": true,
+      "heroCurrentSrc": "http://127.0.0.1:3001/dev/web/b7eb8c9a-b433-5074-9062-a11d999e88b3/site-display-v2/commission-hero-portrait/768/29b459dd8c67baa2116e072c1aa68d5eb4ae0dcb9572b0f732db05eda54d131d.webp",
+      "heroNaturalRatio": 0.5626911314984709
+    },
+    "commission-1024x900": {
+      "responseStatus": 200,
+      "readyState": "complete",
+      "noHorizontalOverflow": true,
+      "imagesDecoded": true,
+      "heroCurrentSrc": "http://127.0.0.1:3001/dev/web/212e33ca-fbf9-5bca-9571-4fcba7c8e1b7/site-display-v2/commission-hero-landscape/1280/3693d40b5b0a9cb082c92d08f0badda1215637af9ba70ed03991faf600643acd.webp",
+      "heroNaturalRatio": 1.7777777777777777
+    },
+    "commission-1440x900": {
+      "responseStatus": 200,
+      "readyState": "complete",
+      "noHorizontalOverflow": true,
+      "imagesDecoded": true,
+      "heroCurrentSrc": "http://127.0.0.1:3001/dev/web/212e33ca-fbf9-5bca-9571-4fcba7c8e1b7/site-display-v2/commission-hero-landscape/1920/fe56ac913da175832d4e7462e1fd634a2e4bc45e15c7808a0392043dd50a3453.webp",
+      "heroNaturalRatio": 1.7777777777777777
+    }
+  },
+  "interactions": {
+    "mobile": {
+      "actionTargets": [
+        {
+          "width": 134,
+          "height": 44
+        },
+        {
+          "width": 162,
+          "height": 44
+        },
+        {
+          "width": 134,
+          "height": 44
+        },
+        {
+          "width": 166.171875,
+          "height": 44
+        },
+        {
+          "width": 120,
+          "height": 44
+        },
+        {
+          "width": 58,
+          "height": 44
+        },
+        {
+          "width": 86,
+          "height": 44
+        }
+      ],
+      "focusVisible": true,
+      "qrSizes": [
+        {
+          "width": 152,
+          "height": 152,
+          "decoded": true
+        },
+        {
+          "width": 152,
+          "height": 152,
+          "decoded": true
+        }
+      ],
+      "termsHref": "/service"
+    },
+    "longCopy": {
+      "noHorizontalOverflow": true
+    },
+    "heroFallback": {
+      "derivesBothOrientations": true,
+      "hidesHero": true,
+      "showsStatus": true,
+      "showsIntro": true
+    },
+    "sharedMedia": {
+      "query": "?view=home-commission",
+      "transitionName": "home-commission-media"
+    },
+    "touch": {
+      "destination": "/about#contact"
+    },
+    "reducedMotion": {
+      "matches": true,
+      "runningAnimations": 0
+    }
+  },
+  "review": {
+    "mobile": {
+      "responseStatus": 200,
+      "readyState": "complete",
+      "noHorizontalOverflow": true,
+      "imagesDecoded": true,
+      "heroCurrentSrc": "http://127.0.0.1:3001/dev/web/b7eb8c9a-b433-5074-9062-a11d999e88b3/site-display-v2/commission-hero-portrait/480/5bde904cca06b16fa468156eed565d851441184e43518c775713d35ad9a6cde9.webp",
+      "heroNaturalRatio": 0.5632183908045977
+    },
+    "tablet": {
+      "responseStatus": 200,
+      "readyState": "complete",
+      "noHorizontalOverflow": true,
+      "imagesDecoded": true,
+      "heroCurrentSrc": "http://127.0.0.1:3001/dev/web/b7eb8c9a-b433-5074-9062-a11d999e88b3/site-display-v2/commission-hero-portrait/768/29b459dd8c67baa2116e072c1aa68d5eb4ae0dcb9572b0f732db05eda54d131d.webp",
+      "heroNaturalRatio": 0.5626911314984709
+    },
+    "desktop": {
+      "responseStatus": 200,
+      "readyState": "complete",
+      "noHorizontalOverflow": true,
+      "imagesDecoded": true,
+      "heroCurrentSrc": "http://127.0.0.1:3001/dev/web/212e33ca-fbf9-5bca-9571-4fcba7c8e1b7/site-display-v2/commission-hero-landscape/1280/3693d40b5b0a9cb082c92d08f0badda1215637af9ba70ed03991faf600643acd.webp",
+      "heroNaturalRatio": 1.7777777777777777
+    }
+  },
+  "checks": {
+    "allRoutes200": true,
+    "allImagesDecoded": true,
+    "noHorizontalOverflow": true,
+    "portraitHero": true,
+    "landscapeHero": true,
+    "actionTargets44": true,
+    "keyboardFocus": true,
+    "qrReadable": true,
+    "termsEntry": true,
+    "longCopy": true,
+    "heroFallback": true,
+    "sharedMedia": true,
+    "touch": true,
+    "reducedMotion": true
+  }
+}
