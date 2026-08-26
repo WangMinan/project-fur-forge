@@ -97,7 +97,7 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
           <p class="about-contact__label">联系方式</p>
           <h2 id="about-contact-title" class="about-contact__title">联系我们</h2>
           <p class="about-contact__description">
-            委托申请可通过站内表单私密提交；邮箱、QQ 与 QQ群用于后续人工沟通和备用联系。
+            委托请先提交站内申请；确认可以制作后，我们会通过官方 QQ 继续沟通。
           </p>
           <PublicAction class="about-contact__primary" to="/commission/apply">
             提交委托申请
@@ -105,12 +105,10 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
         </div>
 
         <div class="about-contact__directory">
-          <ContactEmailActions class="about-contact__email" :email="contact.email" show-address />
-
-          <div v-if="contact.officialChannels.length > 0" class="about-contact__channels">
-            <h3 class="about-contact__channels-title">官方 QQ 渠道</h3>
-            <ContactChannelGrid :channels="contact.officialChannels" />
-          </div>
+          <ContactChannelList
+            :channels="contact.officialChannels"
+            :email="contact.email"
+          />
         </div>
 
         <aside
@@ -232,7 +230,6 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
 }
 
 .about-story__title,
-.about-contact__channels-title,
 .about-contact__notice-title {
   font-size: var(--font-size-sm);
   font-weight: 700;
@@ -269,7 +266,7 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
 }
 
 .about-contact {
-  background: var(--public-bg-secondary);
+  background: var(--public-bg-primary);
   border-top: 1px solid var(--public-border-secondary);
   border-bottom: 1px solid var(--public-border-secondary);
 }
@@ -314,14 +311,6 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
   min-width: 0;
 }
 
-.about-contact__channels {
-  display: grid;
-  gap: var(--space-5);
-  min-width: 0;
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--public-border-primary);
-}
-
 .about-contact__notice {
   display: grid;
   gap: var(--space-4);
@@ -363,31 +352,6 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
     padding-left: var(--space-6);
     border-top: 0;
     border-left: 1px solid var(--public-border-primary);
-  }
-
-  .about-contact__directory {
-    grid-template-columns: minmax(11rem, 0.7fr) minmax(0, 1.3fr);
-    gap: 0;
-  }
-
-  .about-contact__channels {
-    padding-top: 0;
-    padding-left: var(--space-5);
-    border-top: 0;
-    border-left: 1px solid var(--public-border-primary);
-  }
-
-  .about-contact__email {
-    align-self: center;
-  }
-
-  .about-contact__email :deep(.email-actions__address) {
-    font-size: var(--font-size-base);
-  }
-
-  .about-contact__channels :deep(.contact-channel-grid) {
-    grid-template-columns: repeat(2, minmax(0, 9.5rem));
-    gap: var(--space-5);
   }
 
   .about-contact__notice {

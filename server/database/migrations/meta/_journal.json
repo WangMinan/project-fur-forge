@@ -337,6 +337,13 @@
       "when": 1787760000000,
       "tag": "0047_r4_retire_paired_hero",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "6",
+      "when": 1788019200000,
+      "tag": "0048_r4_commission_contact_refresh",
+      "breakpoints": true
     }
   ]
 }

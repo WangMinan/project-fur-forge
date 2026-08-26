@@ -312,7 +312,7 @@ describe('R3-D adoption public projection', () => {
     expect(aggregate.currentAdoptions.items).toHaveLength(3)
     expect(aggregate.currentAdoptions.items.map(item => item.work.slug))
       .toEqual(['mint', 'cloud', 'galaxy'])
-    expect(aggregate.currentAdoptions.status).not.toBeUndefined()
+    expect(aggregate.currentAdoptions).not.toHaveProperty('status')
     expect(aggregate.featured.items.map(item => item.work.slug))
       .toContain('pinecone')
     expect(repository.listAdoptions().items.map(item => item.work.slug))

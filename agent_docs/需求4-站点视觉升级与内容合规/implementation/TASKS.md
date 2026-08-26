@@ -6,7 +6,7 @@
 
 ## 当前目标
 
-只继续阶段 E 的全站静态视觉重构、Signature Motion、UI/Controls、响应式/输入/可访问性与最终一致性验收。V08-F1、只读的 V08-F2、方向重置的 V08-F3、`GATE-V08-R`、V09～V16 与 T47 implementation/evidence/docs 已完成，`GATE-DESKTOP` 与 `GATE-MOBILE` 均已由凌巽本人放行；V13～V16 已获凌巽确认。T47 本地/自动化验收已完成，真实 iOS/Android 与最终人工观感继续留给 GATE-E，不由 Agent 代签。不得从本清单启动数据库、隐私、安全、分发或生产发布工作。T46-F5 的代表作品资格与数量是用户 2026-08-22 明确重新授权的轻量业务约束。
+只继续阶段 E 的全站静态视觉重构、Signature Motion、UI/Controls、响应式/输入/可访问性与最终一致性验收。V08-F1、只读的 V08-F2、方向重置的 V08-F3、`GATE-V08-R`、V09～V16、T47 与 T47-F1 implementation/docs 已完成，`GATE-DESKTOP` 与 `GATE-MOBILE` 均已由凌巽本人放行；V13～V16 已获凌巽确认。真实 iOS/Android 与最终人工观感继续留给 GATE-E，不由 Agent 代签。不得从本清单启动其他数据库、隐私、安全、分发或生产发布工作；T47-F1 是用户 2026-08-26 对委托文案、营业状态、QQ 联系派生与代表作品上限的精确重新授权。
 
 ## 0. 文档与基线
 
@@ -289,13 +289,14 @@ Mobile 的核心原则是：**Same visual language, different composition.** Mob
 > **逐项执行纪律**：每次只能执行最前面的一个已获授权 Task。每项必须完成 implementation、指定 Desktop/Mobile/Input/Reduced Evidence、TASKS 状态和包含 `Completed / Locked Decisions / Open Issues / Regression Risks / Next Task / Do Not Start Yet` 的独立 Handoff；禁止顺手开始后续任务。后续会话必须先读取本文件与 latest Handoff，不依赖聊天记忆。T47 已完成本地/自动化 Evidence 与独立 Handoff；当前停止实现工作，只等待 GATE-E 人工验收。
 
 - [x] **T47 · 连续移动/reduced/性能验收**：完成 390/430/768/1023/1024/1440 的中断/反向、autoplay、pointer/touch/keyboard、LCP/CLS/decode、compositor-only motion、safe area、输入法、键盘/焦点、prefers-*、桌面逐幕顺序/反向/锁定、1023px 原生滚动逃生与 Homepage → Works 离场回归验证。用户在交接前明确删除 Homepage Adoption 独立上一项/下一项/分页线/暂停控件；该幕保留 4s autoplay、下方真实角色选择、swipe 与键盘方向切换，Reduced Motion 停止自动播放。随后将 Mobile Adoption 的强制整屏最小高度改为内容高度，行动到底部 Footer 仅保留约 19px 呼吸，不修改 Footer 组件。自动化 hard checks 全部通过；真实 iOS/Android 和最终观感仍由 GATE-E 人工验收，不由 Agent 代签。证据：`implementation/evidence/T47/INDEX.md`；Handoff：`implementation/notes/2026-08-26-T47-HANDOFF.md`；Hero drag 未实施。
+- [x] **T47-F1 · 委托内容与联系契约收口**：按用户明确重新授权，重写去重复的委托默认文案；退役领养全局营业状态，委托只保留开放/暂停与标签；用 `jsqr` 从 READY 官方二维码派生限定为 `qm.qq.com` 的直达链接；About/Commission 复用白底等高联系目录，fine pointer hover/focus 显示二维码，触控端保留按钮，复制邮箱用不占位浮层反馈；代表作品上限提高到 5。0048 只替换空值/精确历史默认，保留自定义文案。Handoff：`implementation/notes/2026-08-26-T47-F1-COMMISSION-CONTACT-REFRESH.md`。
 
 ### GATE-E · 既简洁又有生命感
 
 - [x] `GATE-DESKTOP` 与 `GATE-MOBILE` 均已由凌巽本人通过，V13～V16、T47 均已完成并有独立 Evidence/Handoff；
 - [ ] Hero、Featured、Homepage Commission、Homepage Adoption 与后续公共 scene 的主次明确，共享 typography/directional/wayfinding/media grammar 但不套用统一模板；
 - [ ] Hero 默认静默且控制器对键盘/触控可获得，暂停后恢复入口清楚；已确认的一次性品牌标题入场保留，换图不重复整套品牌入场，Reduced Motion 直接进入终态，font flash 不回退。Desktop 品牌终态继续冻结；Mobile 默认继续遵守品牌文字 Brand Lock，优先重构周边 Hero composition。任何 Mobile 品牌字号、核心位置或对齐变更都必须有 390/430 冲突证据、before/after 和用户本人显式 exception approval，不得由 `GATE-MOBILE` 自动解除；
-- [ ] Featured 以重新设计后的正式 Selected Baseline 为准：Type × Media scene 成立，Photography 是第一视觉 anchor，代表作品最多两件的业务规则和清晰 `/works` 入口保持，切换方式在 Desktop/Mobile 均成立；不得恢复“左上标题 + 下方双竖图 + 右侧说明”的普通双栏 section 作为最终硬条件；
+- [ ] Featured 以重新设计后的正式 Selected Baseline 为准：Type × Media scene 成立，Photography 是第一视觉 anchor，代表作品最多五件的业务规则和清晰 `/works` 入口保持，切换方式在 Desktop/Mobile 均成立；不得恢复“左上标题 + 下方双竖图 + 右侧说明”的普通双栏 section 作为最终硬条件；
 - [ ] Hero 与 Featured 自动轮播以 4s 为默认基准且可暂停；Homepage Adoption 按用户明确决定移除独立播放控制条，但保留 4s autoplay、下方角色选择、swipe、键盘方向切换与页面隐藏暂停。Motion 可 reverse/interrupt、终态可靠，Reduced Motion 停止自动播放并正确退化；普通公开页统一使用一次克制的 opacity 渐入，正式站点不启用跨页 shared-media morph 或命名 View Transition；
 - [ ] Header、Mobile Nav、Hero/Featured/gallery/search/pagination/actions/icons 的 hover/focus/active/disabled/loading、44px target、键盘与触控语义完整；
 - [ ] 11 个独立公开视觉状态均已按 V00-F2 矩阵完成，`/contact`、`/terms`、`/adoptions/[slug]` 继续复用既有终点而没有重复页面；

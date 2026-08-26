@@ -2742,6 +2742,12 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: http://json5.org/
 
+jsqr@1.4.0
+License: Apache-2.0
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/cozmo/jsQR#readme
+
 jstoxml@2.2.9
 License: MIT
 Source class: pnpm-prod

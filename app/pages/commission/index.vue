@@ -43,6 +43,10 @@ function paragraphs(value: string | null | undefined) {
 
 const introText = computed(() => commission.value?.intro ?? undefined)
 const estimateParagraphs = computed(() => paragraphs(commission.value?.estimateNote))
+const estimateLead = computed(() => estimateParagraphs.value[0]
+  ?? '每个角色都不一样，所以这里没有固定价目表。',
+)
+const estimateDetails = computed(() => estimateParagraphs.value.slice(1))
 const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailAction))
 </script>
 
@@ -88,30 +92,16 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
         <section class="commission-page__section" aria-labelledby="commission-estimate-title">
           <h2 id="commission-estimate-title" class="commission-page__section-title">估价与联系</h2>
           <p class="commission-page__mechanism">
-            委托价格由工作室按设定与需求人工逐单估价，本站不提供自动报价或固定价目。
+            {{ estimateLead }}
           </p>
           <p
-            v-for="(paragraph, index) in estimateParagraphs"
+            v-for="(paragraph, index) in estimateDetails"
             :key="index"
             class="commission-page__text"
           >
             {{ paragraph }}
           </p>
 
-          <div class="commission-page__actions">
-            <PublicAction to="/commission/apply">
-              提交委托申请
-            </PublicAction>
-            <ContactEmailActions
-              v-if="commission"
-              :email="commission.email"
-              subject="自设委托估价咨询"
-            />
-          </div>
-
-          <p class="commission-page__text commission-page__text--muted">
-            邮箱是备用联系渠道；申请请优先使用站内表单。
-          </p>
           <p
             v-for="(paragraph, index) in emailActionParagraphs"
             :key="index"
@@ -120,9 +110,11 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
             {{ paragraph }}
           </p>
 
-          <ContactChannelGrid
-            v-if="contact"
+          <ContactChannelList
+            v-if="contact && commission"
             :channels="contact.officialChannels"
+            :email="commission.email"
+            email-subject="自设委托估价咨询"
           />
 
           <div class="commission-page__links">
@@ -234,14 +226,6 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
 .commission-page__text--muted {
   color: var(--public-text-secondary);
   font-size: var(--font-size-sm);
-}
-
-.commission-page__actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: var(--space-3);
-  margin-top: var(--space-2);
 }
 
 .commission-page__links {

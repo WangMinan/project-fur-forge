@@ -103,13 +103,6 @@ onMounted(() => void load())
               :saved="savedSection === 'commission'"
               @save="payload => onSaveStatus('commission', payload)"
             />
-            <AdminSiteBusinessStatusCard
-              kind="adoption"
-              :status="content.statuses.adoption"
-              :mutating="savingSection === 'adoption'"
-              :saved="savedSection === 'adoption'"
-              @save="payload => onSaveStatus('adoption', payload)"
-            />
           </div>
         </section>
 

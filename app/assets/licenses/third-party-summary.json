@@ -1,6 +1,6 @@
 {
   "generatorScope": "installed-production-snapshot",
-  "packageCount": 796,
+  "packageCount": 797,
   "licenseCounts": [
     {
       "license": "(BSD-3-Clause OR GPL-2.0)",
@@ -28,7 +28,7 @@
     },
     {
       "license": "Apache-2.0",
-      "count": 36
+      "count": 37
     },
     {
       "license": "BlueOak-1.0.0",

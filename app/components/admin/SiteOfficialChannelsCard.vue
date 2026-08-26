@@ -35,7 +35,12 @@ const card = useSiteContentSectionCard({
   savingSection: () => props.savingSection,
   extract: dto => ({
     email: dto.contact.email,
-    officialChannels: dto.contact.officialChannels,
+    // qrLinkUrl 是服务端从二维码派生的只读值，不进入草稿或提交体。
+    officialChannels: dto.contact.officialChannels.map(channel => ({
+      platform: channel.platform,
+      account: channel.account,
+      qrCodeAssetId: channel.qrCodeAssetId,
+    })),
     antiScam: dto.contact.antiScam ?? '',
   }),
 })
@@ -49,7 +54,12 @@ const upload = useContactQrUpload({
   onReady: (platform, asset) => setQrAsset(platform, asset),
 })
 
-function channelAccountIssue(channel: AdminOfficialChannel) {
+type EditableOfficialChannel = Pick<
+  AdminOfficialChannel,
+  'account' | 'platform' | 'qrCodeAssetId'
+>
+
+function channelAccountIssue(channel: EditableOfficialChannel) {
   const account = channel.account?.trim() ?? ''
   if (!account) {
     return null
@@ -85,7 +95,7 @@ const issues = computed(() => {
   return found
 })
 
-function completeness(channel: AdminOfficialChannel) {
+function completeness(channel: EditableOfficialChannel) {
   const account = channel.account?.trim()
   if (account && channel.qrCodeAssetId) {
     return '信息完整，保存后可在公开页显示。'
@@ -163,8 +173,9 @@ function save() {
   upload.reset()
   const email = card.draft.value.email.trim()
   const officialChannels = card.draft.value.officialChannels.map(channel => ({
-    ...channel,
+    platform: channel.platform,
     account: normalizeNullableText(channel.account ?? ''),
+    qrCodeAssetId: channel.qrCodeAssetId,
   }))
   const antiScam = normalizeNullableText(card.draft.value.antiScam)
 

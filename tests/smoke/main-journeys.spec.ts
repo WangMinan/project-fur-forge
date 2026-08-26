@@ -230,13 +230,13 @@ test('作品目录与作品详情可达', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: '烟火' })).toBeVisible()
 })
 
-test('领养目录保持开放在前并可进入统一详情', async ({ page }) => {
+test('领养目录只公开 available 并可进入统一详情', async ({ page }) => {
   await seedSmokeCatalog(page)
   await page.goto('/adoptions')
   const cards = page.locator('.adoptions-page__grid [data-work-slug]')
-  await expect(cards).toHaveCount(2)
+  await expect(cards).toHaveCount(1)
   await expect(cards.first()).toContainText('云雀')
-  await expect(cards.nth(1)).toContainText('月桂')
+  await expect(page.locator('.adoptions-page__grid')).not.toContainText('月桂')
   await cards.first().click()
   await expect(page).toHaveURL(/\/works\/e2e-public-smoke-available\?from=adoptions$/u)
   await expect(page.getByRole('link', { name: '返回设定领养' }))

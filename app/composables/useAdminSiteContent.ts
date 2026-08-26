@@ -19,9 +19,8 @@ export type SiteContentSection =
 export type SiteSaveSection = SiteBusinessStatusKind | SiteContentSection
 
 export interface SiteStatusPayload {
-  tone: 'closed' | 'limited' | 'open'
+  tone: 'closed' | 'open'
   label: string
-  detail: string
 }
 
 const SECTION_VERSION_KEYS = {

@@ -7,18 +7,15 @@ import type {
 
 export const SITE_STATUS_KIND_LABELS: Record<SiteBusinessStatusKind, string> = {
   commission: '委托营业状态',
-  adoption: '领养营业状态',
 }
 
 export const SITE_STATUS_TONE_LABELS: Record<SiteBusinessStatusTone, string> = {
   open: '开放',
-  limited: '限量开放',
   closed: '暂停',
 }
 
 export const SITE_STATUS_TONE_VALUES: SiteBusinessStatusTone[] = [
   'open',
-  'limited',
   'closed',
 ]
 
@@ -32,7 +29,6 @@ export const SITE_CONTENT_LIMITS = {
   privacyPolicy: 8_000,
   antiScam: 600,
   statusLabel: 40,
-  statusDetail: 240,
   emailMax: 254,
   qqMax: 12,
 } as const
@@ -121,7 +117,6 @@ export interface SiteContentFormFields {
 
 export interface SiteStatusFormFields {
   label: string
-  detail: string
 }
 
 /** 管理端保存前的字段级校验，与服务端 Schema 同边界；返回字段键 → 中文提示。 */
@@ -152,7 +147,6 @@ export function siteContentFieldIssues(form: SiteContentFormFields): Record<stri
 export function siteStatusFieldIssues(form: SiteStatusFormFields): Record<string, string> {
   const issues: Record<string, string> = {}
   const label = form.label.trim()
-  const detail = form.detail.trim()
   if (!label) {
     issues.label = '请填写公开标签'
   }
@@ -161,15 +155,6 @@ export function siteStatusFieldIssues(form: SiteStatusFormFields): Record<string
   }
   else if (hasUnsafePlainText(label)) {
     issues.label = '只允许安全纯文本'
-  }
-  if (!detail) {
-    issues.detail = '请填写短说明'
-  }
-  else if (detail.length > SITE_CONTENT_LIMITS.statusDetail) {
-    issues.detail = `最多 ${SITE_CONTENT_LIMITS.statusDetail} 字`
-  }
-  else if (hasUnsafePlainText(detail)) {
-    issues.detail = '只允许安全纯文本'
   }
   return issues
 }

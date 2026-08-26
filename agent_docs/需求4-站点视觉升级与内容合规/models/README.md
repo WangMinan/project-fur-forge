@@ -56,21 +56,26 @@ interface PublicHomeAggregate {
   currentAdoptions: {
     available: boolean
     items: PublicAdoptionListItemDto[]
-    status: PublicSiteBusinessStatusDto | null
   }
 }
 ```
 
 目标投影：
 
-- `featured.items` 最多两项，按人工顺序投影；
+- `featured.items` 最多五项，按人工顺序投影；
 - 每项必须能映射到至少一张 READY 竖版出厂照；不满足时不进入公开代表作品投影；
 - `entries.commission` 为委托幕视觉源；
 - `currentAdoptions.items` 最多三项，且只能是按领养目录同一排序得到的最新 `available`；
-- `currentAdoptions.status` 直接投影现有领养营业状态，不依赖 `entries.adoption` 是否有媒体；
 - 无 available 时 `items=[]`，前端隐藏整幕。
 
 数量上限必须在 repository 层投影为三项；前端只防御性过滤 `available`，不得维护另一套“最新”排序，也不得伪造不足三项的占位角色。
+
+### 1.3 营业状态与联系派生字段
+
+- `statuses` 只保留 `commission`；`kind='adoption'`、`tone='limited'` 和 `detail` 字段均退役。
+- 委托状态 `tone` 只能为 `open | closed`，前端分别表达“开放 / 暂停”。
+- `AdminOfficialChannel` / `PublicOfficialChannel` 投影 `qrLinkUrl: string | null`；它由服务端从 `qrCodeAssetId` 指向的 READY 私有二维码解析产生，管理端请求不直接接收该值。
+- 同一 `qrCodeAssetId` 复用已有解析结果（包括 `null`）；换图时重新解析，非 `https://qm.qq.com/q/*` 结果保持 `null`。
 
 管理端 `WorkListItemDto` 增加内部字段 `portraitStudioPhotoAssetId: string | null`：
 

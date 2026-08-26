@@ -10,7 +10,7 @@
 
 > **阶段 E：UI 美化、布局与响应式优化、Hero 焦点体验、动效质量和人工视觉验收。**
 
-T37～T47、V00、GATE-V00、V00-F1、V00-F2、V01～V08-F3、`GATE-V08-R` 与 V09～V16 implementation/evidence/docs 已完成。Shared Visual Language、Homepage Featured Works、Commission、Adoption、Works Catalog、统一 Detail、About/Contact、Commission Apply、Legal/Privacy/Licenses、Error/Empty/Media Failure、Sitewide Typography、Desktop/Mobile Art Direction、Signature Motion、UI/Controls、Full Responsive/Input/Accessibility Final QA、Consistency/Evidence Review 与连续移动/reduced/性能本地验收均有独立 Evidence 和 Handoff。`GATE-DESKTOP` 与 `GATE-MOBILE` 已由凌巽本人于 2026-08-25 明确放行；V14～V16 Handoff 已于 2026-08-26 获凌巽确认。T47 自动化 hard checks 全部通过；真实 iOS/Android 与最终人工观感继续留给 GATE-E，不由 Agent 代签。
+T37～T47、V00、GATE-V00、V00-F1、V00-F2、V01～V08-F3、`GATE-V08-R` 与 V09～V16 implementation/evidence/docs 已完成。Shared Visual Language、Homepage Featured Works、Commission、Adoption、Works Catalog、统一 Detail、About/Contact、Commission Apply、Legal/Privacy/Licenses、Error/Empty/Media Failure、Sitewide Typography、Desktop/Mobile Art Direction、Signature Motion、UI/Controls、Full Responsive/Input/Accessibility Final QA、Consistency/Evidence Review 与连续移动/reduced/性能本地验收均有独立 Evidence 和 Handoff。2026-08-26 用户另行明确授权 T47-F1 的委托文案、营业状态、QQ 联系与代表作品上限收口。`GATE-DESKTOP` 与 `GATE-MOBILE` 已由凌巽本人于 2026-08-25 明确放行；真实 iOS/Android 与最终人工观感继续留给 GATE-E，不由 Agent 代签。
 
 V08-F3 的字体闪动、标题入场、Hero 4s 自动轮播与本地 Hero 衍生图修复继续保持。V09 的 Featured 继续使用 Desktop overlap / Mobile clear 的 Type × Media scene；V10/V10-F1 将首页委托和内页委托重做为两种不同的 Media-led Service Scene。V11 将首页领养、双列目录和统一详情入口收口为完整设定图优先的 Character Display / Directory，同时保留搜索、分页、排序、路由与营业状态。V12-A～V12-E-F4 已完成剩余公开页、状态、字体与 Desktop 验收修正。V12-F/V12-G 完成 Homepage 与其余公开页面的 Mobile Final Art Direction。V13 已为 Hero、Featured、Homepage Adoption 补齐 4s autoplay、directional reverse、interrupt、Reduced Motion 与分层 motion；Hero/Featured 继续提供 pause/resume。T47 按用户最终决定删除 Homepage Adoption 独立上一项/下一项/分页线/暂停控制条，只保留 4s autoplay、下方角色选择、swipe、键盘方向与 Reduced Motion 停播；同时收短 Mobile Adoption 尾部高度，让 Footer 紧接内容但不修改 Footer 自身。V14 已统一 Header、导航、轮播、搜索、分页、行动和详情缩略图交互；V15 已完成六档视口、输入模式、偏好、SSR/无 JavaScript、语义、图片解码、safe area 与错误状态的最终 QA。V16 已完成三档 fresh review、全证据索引、OSS/license 追溯和活动契约校准。正式公开路由继续使用短 opacity 入场并关闭跨页媒体 morph；Featured 保留与 Homepage Adoption 同源的图片与角色名/物种方向切换，CTA、媒体外框和保留的 controls 保持静止。当前停止实现工作，只等待 GATE-E 人工验收。
 
@@ -26,7 +26,7 @@ T35/T36 的 Linux runtime/分发证据与原阶段 F 的 Review、镜像和生�
 
 - 客户选择 B + M3；dev-only V00-F1 已收成 `Homepage Featured Works Visual Baseline`，包含 Desktop/390/430、Next/Previous/reverse/interrupt、Keyboard/Touch/Reduced Motion 证据。它不是全站模板，正式落地属于 V03。
 - 首页固定四幕；桌面 `>=1024px` 为 Hero → 代表作品 → 委托 → 领养 → Footer 逐幕 wheel，1023px 以下原生滚动。
-- 代表作品最多 2 件且必须有竖版出厂照；当前 Type × Media scene 一次展示一件真实作品，双项时提供无动画上一项/下一项与连续编号，单项隐藏控制器和数字。可维护性复核后已删除前端写死的作品说明，只显示既有角色名、物种和 `/works` 行动，不新增后台字段。代表作品详情继续使用直接路由切换；`/works` 有出厂照时优先出厂照，完全没有时才回落领养横版封面。
+- 代表作品最多 5 件且必须有竖版出厂照；当前 Type × Media scene 一次展示一件真实作品，多项时提供循环上一项/下一项与连续编号，单项隐藏控制器和数字。可维护性复核后已删除前端写死的作品说明，只显示既有角色名、物种和 `/works` 行动，不新增后台字段。代表作品详情继续使用直接路由切换；`/works` 有出厂照时优先出厂照，完全没有时才回落领养横版封面。
 - Header 使用单一 offset；公开非 hash 导航到页头，back/forward 恢复 saved position，hash 让开 Header。
 - Hero 横/竖四集合独立，管理端提供画面拖动焦点和水平/垂直滑杆。
 - V01 已将正式 Hero 收口为 Quiet / Cinematic Opening；保留品牌中文标题冻结终态，完成 Media → Brand → Supporting Copy → Controls 的一次性入场、低权重控制器和 Hero → Featured 章节提示。
@@ -36,8 +36,8 @@ T35/T36 的 Linux runtime/分发证据与原阶段 F 的 Review、镜像和生�
 - V05 只新增 Editorial ink、背景 Typography 与 Adoption canvas 三个语义 token；四幕媒体规则保持 Hero/Featured/Commission cover、Adoption contain，作品目录继续真实横竖混排。
 - V06 已完成 Works/Adoption 目录五断点视觉与输入复核；Works 横竖等高混排、Adoption contain、共享空态、长名称/物种、搜索/分页、非法/越界状态、键盘/触控与图片解码均有证据。
 - V06-F1 已将作品与领养入口的统一详情收口为 Media-led Archive Scene；多图横竖切换使用稳定舞台，单图保留真实比例，无图库复用共享空态，返回来源、301/404、Keyboard/Touch/Reduced Motion 与无 JavaScript 均有证据。
-- V07 已将 About/Contact 收口为编辑式信息页；工作室/制作范围双列、联系/防诈骗信息带、152px 紧凑二维码、1/2 渠道、长号码、44px 行动、键盘焦点与 `/contact` 301/Header 锚点让位均有证据。
-- V07-F1 已将 `/commission` 收口为独立 Media-led Service Narrative；横/竖 Hero、缺图回落、营业状态、制作范围、估价联系、紧凑二维码、服务条款入口、共享媒体、Keyboard/Touch/Reduced Motion 均有证据。
+- V07 已将 About/Contact 收口为编辑式信息页；T47-F1 进一步将 Contact scene 改为白底，并把 Email/QQ/QQ 群统一为等高联系目录。QQ 按钮带 Logo，fine pointer hover/focus 显示二维码，触控端保留直达按钮；复制邮箱使用不占位反馈浮层。
+- V07-F1 已将 `/commission` 收口为独立 Media-led Service Narrative；T47-F1 以更短、去重复的默认文案和共享联系目录更新委托内页。委托营业状态现只保留开放/暂停与标签，领养全局营业状态和委托独立短说明已退役。
 - V07-F2 已将服务条款与隐私政策收口为带内容目录、编号章节、语义锚点和固定行长的阅读系统；许可证在 1024px 以下使用单列信息，原生 `details`、等宽许可证、TXT 下载、301、Keyboard 与 Reduced Motion 均有证据。
 - V08 已将 `/commission/apply` 收口为稳定的完整表单状态：字段、单位前缀、双列测量、上传预览、两项确认和提交反馈拥有同一阅读节奏；空错误节点不渲染，成功与不可用状态保持静态分隔结构。390/430/768/1024/1440、Keyboard、Touch、软键盘、44px、Reduced Motion、CLS 和上传/核验/提交各状态均有证据。
 - V08-F1 已将 404/500、公开空态与媒体失败收口为同一编辑式状态语言：错误页不泄露底层信息、图片失败保留横竖比例且提供回落文字、无 JavaScript 保留原始图片。五视口与 Keyboard/Touch/Reduced Motion 证据以及 500 非泄露核心测试均已通过。
@@ -59,6 +59,7 @@ T35/T36 的 Linux runtime/分发证据与原阶段 F 的 Review、镜像和生�
 - V13 为 Hero、Featured、Homepage Adoption 建立完整 carousel 行为：4s autoplay、pause/resume、页面隐藏暂停、next/previous 反向、interrupt 与 Reduced Motion 终态可靠。Featured 只移动媒体与角色名/物种，删除名称高度引起的布局位置补间，Desktop 名称固定单行且 CTA/controls 终态不移动；Homepage Adoption 使用 Media → Name → Facts → Action 的递减方向层级。V13 的 shared-media forward/reverse Evidence 作为历史记录保留；当前正式公开路由统一短 opacity 入场且不启用跨页媒体 morph。背景 Typography、Hero 品牌锁与 Footer 均未回退。
 - V15 对 6 个视口 × 15 个公开状态完成 90 项页面矩阵、30 项无 JavaScript SSR、36 项 Design Review 与 6 项 500 页证据；634 个可见控制的最小目标为 44×44，全部图片完成解码，所有自动检查为 true。Safe Area 采用浏览器约束默认视口，不启用 `viewport-fit=cover`；真实懒加载图片由证据脚本滚动触发后再验证。详情主图复用共享圆角，装饰 Logo 补齐显式尺寸；Footer、Hero 品牌锁、冻结构图、业务投影和依赖未改。
 - V16 对 375×812、768×1024、1280×800 的 15 个公开状态、媒体失败和 500 重新采集 51 张单页截图与 3 张联系表；10 项 checks 全部为 true。交接确认前用户补充发现 Homepage 非 Hero scene → `/works` 单帧闪动，逐帧证明确为 Header 定位过早切换；修复后旧 scene 位移由 77px 降为 0，新增 before/after 与 smoke 回归。其余 V16 工作只校准 SPEC/PLAN/Design/CLAUDE 历史口径，并建立 V00-F2、V09～V16 与 OSS/font/license 的最终 Evidence Index。
+- T47-F1 在用户明确重新开放该范围后完成 0048 前向迁移：退役领养全局营业状态、将委托收口为开放/暂停、删除独立短说明；同时从官方二维码安全派生 `qm.qq.com` 直达链接，代表作品上限调为 5。迁移只替换空值或精确历史默认委托文案，管理员自定义文案保留。
 - 行动、上传与长任务进度已收敛；OSS 使用真实字节，FFmpeg/未知任务不伪造百分比。
 - 两项委托确认、隐私 readiness、人工 retention/单条删除和生成式 notices 已落地。
 - 13 个公开路由文件（含 3 个重定向）与全局错误入口已归并为 11 个独立视觉状态：首页、作品/领养目录、统一详情、委托、申请、关于/联系、服务、隐私、许可证和 404/500；目录、表单、空态与媒体失败状态也已分配到 V06～V08-F1。
@@ -68,4 +69,4 @@ T35/T36 的 Linux runtime/分发证据与原阶段 F 的 Review、镜像和生�
 
 后续 PR 只做 UI、布局、响应式、可访问性、性能和动效优化。不得恢复退役业务，不新增数据库/迁移、隐私/安全能力、媒体拓扑、交易能力或部署流程；如确需改变，先由用户重新开放范围。
 
-视觉权威：[`requirements/SPEC.md`](./requirements/SPEC.md)、[`.design/README.md`](./.design/README.md)、[`SHARED_VISUAL_LANGUAGE.md`](./.design/SHARED_VISUAL_LANGUAGE.md) 与 [`VISUAL_DIRECTION_V2_2026-08-22.md`](./.design/VISUAL_DIRECTION_V2_2026-08-22.md)。Latest completed Handoff 为 [`2026-08-26-T47-HANDOFF.md`](./implementation/notes/2026-08-26-T47-HANDOFF.md)，Evidence 见 [`implementation/evidence/T47/`](./implementation/evidence/T47/)；V16 及更早任务继续保留各自 Evidence/Handoff。T47 本地/自动化验收已完成，GATE-E 仍等待真实设备与最终人工视觉验收。
+视觉权威：[`requirements/SPEC.md`](./requirements/SPEC.md)、[`.design/README.md`](./.design/README.md)、[`SHARED_VISUAL_LANGUAGE.md`](./.design/SHARED_VISUAL_LANGUAGE.md) 与 [`VISUAL_DIRECTION_V2_2026-08-22.md`](./.design/VISUAL_DIRECTION_V2_2026-08-22.md)。Latest completed Handoff 为 [`2026-08-26-T47-F1-COMMISSION-CONTACT-REFRESH.md`](./implementation/notes/2026-08-26-T47-F1-COMMISSION-CONTACT-REFRESH.md)；T47 连续移动证据见 [`implementation/evidence/T47/`](./implementation/evidence/T47/)，V16 及更早任务继续保留各自 Evidence/Handoff。GATE-E 仍等待真实设备与最终人工视觉验收。

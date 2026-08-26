@@ -59,7 +59,6 @@ useHead({
     <HomeCurrentAdoptions
       :adoptions="home.currentAdoptions.items"
       :available="home.currentAdoptions.available"
-      :status="home.currentAdoptions.status"
     />
 
   </div>
