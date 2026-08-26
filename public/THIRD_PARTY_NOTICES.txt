@@ -354,7 +354,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/KazariEX/dxup#readme
 
-@esbuild/win32-x64@0.28.1
+@esbuild/linux-x64@0.28.1
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -588,7 +588,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://nuxt.com
 
-@oxc-parser/binding-win32-x64-msvc@0.140.0
+@oxc-parser/binding-linux-x64-gnu@0.140.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -684,13 +684,13 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/poppinss/utils#readme
 
-@rolldown/binding-win32-x64-msvc@1.1.5
+@rolldown/binding-linux-x64-gnu@1.1.5
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://rolldown.rs/
 
-@rolldown/binding-win32-x64-msvc@1.2.0
+@rolldown/binding-linux-x64-gnu@1.2.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -750,13 +750,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/rollup/plugins/tree/master/packages/pluginutils#readme
 
-@rollup/rollup-win32-x64-gnu@4.62.3
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://rollupjs.org/
-
-@rollup/rollup-win32-x64-msvc@4.62.3
+@rollup/rollup-linux-x64-gnu@4.62.3
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2808,7 +2802,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/parcel-bundler/lightningcss#readme
 
-lightningcss-win32-x64-msvc@1.33.0
+lightningcss-linux-x64-gnu@1.33.0
 License: MPL-2.0
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
