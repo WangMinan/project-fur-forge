@@ -573,7 +573,7 @@ describe('authentication API', () => {
           privacy: expect.any(Number),
           contact: expect.any(Number),
         },
-        statuses: { commission: null, adoption: null },
+        statuses: { commission: null },
         commission: {
           intro: null,
           estimateNote: null,
@@ -738,7 +738,7 @@ describe('authentication API', () => {
     const updateStatus = (
       kind: 'commission' | 'adoption',
       expectedVersion: number,
-      tone: 'open' | 'limited' | 'closed',
+      tone: 'open' | 'closed',
       label: string,
     ) => fetch(
       `${adminBaseUrl}/api/admin/v1/site/home/business-statuses/${kind}`,
@@ -747,24 +747,14 @@ describe('authentication API', () => {
         headers,
         body: JSON.stringify({
           expectedVersion,
-          payload: { tone, label, detail: `${label}的公开说明。` },
+          payload: { tone, label },
         }),
       },
     )
-    expect((await updateStatus('commission', 0, 'limited', '委托有限开放')).status)
+    expect((await updateStatus('commission', 0, 'open', '接受委托中')).status)
       .toBe(200)
     const adoption = await updateStatus('adoption', 0, 'open', '领养开放')
-    expect(adoption.status).toBe(200)
-    await expect(adoption.json()).resolves.toMatchObject({
-      data: {
-        // T34-F3：文案与营业状态各自独立版本；全局 site_content.version 不再随文案推进。
-        version: 1,
-        statuses: {
-          commission: { version: 1, tone: 'limited' },
-          adoption: { version: 1, tone: 'open' },
-        },
-      },
-    })
+    expect(adoption.status).toBe(400)
     expect((await updateStatus('commission', 0, 'closed', '陈旧更新')).status)
       .toBe(409)
 
@@ -775,8 +765,7 @@ describe('authentication API', () => {
     expect(firstProjection).toMatchObject({
       data: {
         statuses: {
-          commission: { tone: 'limited', href: '/commission' },
-          adoption: { tone: 'open', href: '/adoptions' },
+          commission: { tone: 'open', href: '/commission' },
         },
         commission: {
           ...payload.commission,
@@ -803,7 +792,6 @@ describe('authentication API', () => {
       data: {
         statuses: {
           commission: { tone: 'closed', label: '委托关闭' },
-          adoption: { tone: 'open', label: '领养开放' },
         },
       },
     })

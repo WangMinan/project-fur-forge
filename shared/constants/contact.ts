@@ -12,3 +12,8 @@ export const CONTACT_PLATFORM_LOGO_PATHS = {
   qq: '/contact-platforms/qq.svg',
   qq_group: '/contact-platforms/qq.svg',
 } as const satisfies Record<typeof CONTACT_PLATFORMS[number], string>
+
+export const CONTACT_PLATFORM_ACTION_LABELS = {
+  qq: '添加好友',
+  qq_group: '加入群聊',
+} as const satisfies Record<typeof CONTACT_PLATFORMS[number], string>

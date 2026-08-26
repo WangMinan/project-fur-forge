@@ -15,19 +15,16 @@ function plainTextSchema(max: number) {
 
 export const siteBusinessStatusKindSchema = z.enum([
   'commission',
-  'adoption',
 ])
 export const siteBusinessStatusToneSchema = z.enum([
   'open',
-  'limited',
   'closed',
 ])
 const siteBusinessStatusFields = {
   kind: siteBusinessStatusKindSchema,
   tone: siteBusinessStatusToneSchema,
   label: plainTextSchema(40),
-  detail: plainTextSchema(240),
-  href: z.enum(['/commission', '/adoptions']),
+  href: z.literal('/commission'),
 }
 
 export const adminSiteBusinessStatusDtoSchema = z.object({
@@ -66,20 +63,24 @@ const aboutContentSchema = aboutBasicContentSchema
   .strict()
 
 export const contactPlatformSchema = z.enum(CONTACT_PLATFORMS)
+export const contactQrLinkSchema = z.string()
+  .regex(/^https:\/\/qm\.qq\.com\/q\/[A-Za-z0-9]{4,64}$/u)
 
 export const adminOfficialChannelSchema = z.object({
   platform: contactPlatformSchema,
   account: plainTextSchema(120).nullable(),
   qrCodeAssetId: z.string().uuid().nullable(),
+  /** 服务端从已上传二维码中解出的 QQ 官方短链；客户端不负责填写。 */
+  qrLinkUrl: contactQrLinkSchema.nullable().default(null),
 }).strict()
 
 function isValidOfficialChannelAccount(
-  channel: z.infer<typeof adminOfficialChannelSchema>,
+  account: string | null,
 ) {
-  if (channel.account === null) {
+  if (account === null) {
     return true
   }
-  return contactQqSchema.safeParse(channel.account).success
+  return contactQqSchema.safeParse(account).success
 }
 
 export const adminOfficialChannelsSchema = z.array(adminOfficialChannelSchema)
@@ -93,7 +94,32 @@ export const adminOfficialChannelsSchema = z.array(adminOfficialChannelSchema)
           path: [index, 'platform'],
         })
       }
-      if (!isValidOfficialChannelAccount(channel)) {
+      if (!isValidOfficialChannelAccount(channel.account)) {
+        context.addIssue({
+          code: 'custom',
+          message: '平台账号格式不正确',
+          path: [index, 'account'],
+        })
+      }
+    })
+  })
+
+const mutableOfficialChannelSchema = adminOfficialChannelSchema
+  .omit({ qrLinkUrl: true })
+  .strict()
+
+const mutableOfficialChannelsSchema = z.array(mutableOfficialChannelSchema)
+  .length(CONTACT_PLATFORMS.length)
+  .superRefine((channels, context) => {
+    channels.forEach((channel, index) => {
+      if (channel.platform !== CONTACT_PLATFORMS[index]) {
+        context.addIssue({
+          code: 'custom',
+          message: '官方渠道必须按固定平台顺序提交',
+          path: [index, 'platform'],
+        })
+      }
+      if (!isValidOfficialChannelAccount(channel.account)) {
         context.addIssue({
           code: 'custom',
           message: '平台账号格式不正确',
@@ -125,11 +151,7 @@ export const publicOfficialChannelsSchema = z.array(publicOfficialChannelSchema)
         })
       }
       previous = order
-      if (!isValidOfficialChannelAccount({
-        platform: channel.platform,
-        account: channel.account,
-        qrCodeAssetId: null,
-      })) {
+      if (!isValidOfficialChannelAccount(channel.account)) {
         context.addIssue({
           code: 'custom',
           message: '平台账号格式不正确',
@@ -140,9 +162,15 @@ export const publicOfficialChannelsSchema = z.array(publicOfficialChannelSchema)
   })
 
 /** 需求3阶段 A：邮箱、QQ、QQ群和防诈骗提醒共用 contact 分区版本。 */
-const mutableContactContentSchema = z.object({
+const adminContactContentSchema = z.object({
   email: contactEmailSchema,
   officialChannels: adminOfficialChannelsSchema,
+  antiScam: plainTextSchema(600).nullable(),
+}).strict()
+
+const mutableContactContentSchema = z.object({
+  email: contactEmailSchema,
+  officialChannels: mutableOfficialChannelsSchema,
   antiScam: plainTextSchema(600).nullable(),
 }).strict()
 
@@ -154,14 +182,12 @@ const publicContactContentSchema = z.object({
 
 const statusPairSchema = <T extends z.ZodType>(status: T) => z.object({
   commission: status.nullable(),
-  adoption: status.nullable(),
 }).strict()
 
 export const updateSiteBusinessStatusRequestSchema = versionedRequestSchema(
   z.object({
     tone: siteBusinessStatusToneSchema,
     label: plainTextSchema(40),
-    detail: plainTextSchema(240),
   }).strict(),
 )
 
@@ -190,7 +216,7 @@ export const adminSiteContentDtoSchema = z.object({
   statuses: statusPairSchema(adminSiteBusinessStatusDtoSchema),
   commission: commissionBasicContentSchema,
   about: aboutContentSchema,
-  contact: mutableContactContentSchema,
+  contact: adminContactContentSchema,
 }).strict()
 
 export const updateCommissionContentRequestSchema = versionedRequestSchema(

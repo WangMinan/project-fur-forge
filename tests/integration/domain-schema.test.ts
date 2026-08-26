@@ -737,15 +737,22 @@ describe('P0 schema boundary', () => {
       WHERE id = 'site'
     `).run()).toThrow(/site_content_official_channels_json/)
     expect(sqlite.prepare('SELECT count(*) FROM business_statuses').pluck().get())
-      .toBe(2)
+      .toBe(1)
     expect(() => sqlite.prepare(`
       UPDATE business_statuses SET tone = 'busy'
-      WHERE kind = 'adoption'
+      WHERE kind = 'commission'
     `).run()).toThrow(/business_statuses_tone/)
+    expect(() => sqlite.prepare(`
+      INSERT INTO business_statuses (
+        kind, tone, label, href, version, created_at, updated_at
+      ) VALUES ('adoption', 'open', '领养开放', '/adoptions', 1, 1, 1)
+    `).run()).toThrow(/business_statuses_kind/)
     expect(() => sqlite.prepare(`
       UPDATE business_statuses SET href = '/adoptions'
       WHERE kind = 'commission'
     `).run()).toThrow(/business_statuses_href/)
+    expect((sqlite.pragma('table_info(business_statuses)') as { name: string }[])
+      .map(column => column.name)).not.toContain('detail')
     expect(() => sqlite.prepare(`
       UPDATE site_content SET basic_terms = '<script>x</script>'
       WHERE id = 'site'

@@ -298,6 +298,30 @@ function migrationsBeforeR4PrivacyController(databaseFile: string) {
   return folder
 }
 
+function migrationsBeforeCommissionContactRefresh(databaseFile: string) {
+  const folder = resolve(dirname(databaseFile), 'pre-commission-contact-refresh-migrations')
+  const meta = resolve(folder, 'meta')
+  mkdirSync(meta, { recursive: true })
+  const journal = JSON.parse(readFileSync(
+    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
+    'utf8',
+  )) as { entries: { tag: string }[] }
+  const entries = journal.entries.slice(0, journal.entries.findIndex(
+    entry => entry.tag === '0048_r4_commission_contact_refresh',
+  ))
+  for (const { tag } of entries) {
+    copyFileSync(
+      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
+      resolve(folder, `${tag}.sql`),
+    )
+  }
+  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
+    ...journal,
+    entries,
+  }))
+  return folder
+}
+
 afterEach(() => {
   temporaryDirectories.splice(0).forEach(directory => rmSync(
     directory,
@@ -353,8 +377,10 @@ describe('SQLite foundation', () => {
         officialChannelsJson: string
         privacyPolicy: string
       }
-      expect(siteContent.commissionIntro).toContain('官方 QQ')
-      expect(siteContent.commissionEmailAction).toContain('备用联系渠道')
+      expect(siteContent.commissionIntro).toContain('先把角色设定和想做的范围发给我们')
+      expect(siteContent.commissionEmailAction).toBe(
+        '建议先提交站内申请；如果表单暂时无法使用，也可以发邮件。',
+      )
       const siteContentColumns = database.sqlite.pragma(
         'table_info(site_content)',
       ) as { name: string }[]
@@ -382,18 +408,14 @@ describe('SQLite foundation', () => {
         FROM business_statuses ORDER BY kind
       `).all()).toEqual([
         {
-          kind: 'adoption',
-          tone: 'limited',
-          label: '领养信息以页面为准',
-          href: '/adoptions',
-        },
-        {
           kind: 'commission',
-          tone: 'limited',
-          label: '委托咨询开放',
+          tone: 'open',
+          label: '接受委托中',
           href: '/commission',
         },
       ])
+      expect((database.sqlite.pragma('table_info(business_statuses)') as { name: string }[])
+        .map(column => column.name)).not.toContain('detail')
     }
     finally {
       database.sqlite.close()
@@ -461,8 +483,8 @@ describe('SQLite foundation', () => {
 
       expect(row.commissionIntro).toContain('官方 QQ')
       expect(row.commissionEstimateNote).toBe('管理员自定义估价说明')
-      expect(row.commissionEmailAction).toContain('邮箱为备用联系渠道')
-      expect(row.commissionVersion).toBe(Number(before.commission) + 1)
+      expect(row.commissionEmailAction).toBe('建议先提交站内申请；如果表单暂时无法使用，也可以发邮件。')
+      expect(row.commissionVersion).toBe(Number(before.commission) + 2)
       expect(row.aboutStudioFacts).toBe('管理员自定义工作室介绍')
       expect(row.aboutMakingScope).toContain('半装仅包括头部和爪，不含尾巴')
       expect(row.aboutMakingScope).toContain('官方 QQ 沟通')
@@ -476,7 +498,7 @@ describe('SQLite foundation', () => {
       expect(row.privacyVersion).toBe(before.privacy)
       expect(row.contactAntiScam).toContain('QQ群用于社群或一般交流')
       expect(row.contactVersion).toBe(Number(before.contact) + 1)
-      expect(row.version).toBe(Number(before.version) + 4)
+      expect(row.version).toBe(Number(before.version) + 5)
       expect(upgraded.sqlite.pragma('foreign_key_check')).toEqual([])
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
     }
@@ -530,7 +552,64 @@ describe('SQLite foundation', () => {
       expect(row.privacyPolicy).not.toContain('{{')
       expect(row.privacyPolicy).not.toContain('不提供访客账号')
       expect(row.privacyVersion).toBe(before.privacyVersion + 1)
-      expect(row.version).toBe(before.version + 1)
+      // 0046 更新隐私分区，0048 另外更新委托默认文案。
+      expect(row.version).toBe(before.version + 2)
+      expect(upgraded.sqlite.pragma('foreign_key_check')).toEqual([])
+      expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
+    }
+    finally {
+      upgraded.sqlite.close()
+    }
+  })
+
+  it('retires adoption status, contracts commission status and refreshes only default copy', async () => {
+    const databaseFile = temporaryDatabase()
+    await migrateDatabase(databaseFile, {
+      migrationsFolder: migrationsBeforeCommissionContactRefresh(databaseFile),
+    })
+    const legacy = openDatabase(databaseFile)
+    try {
+      legacy.sqlite.prepare(`
+        UPDATE business_statuses
+        SET tone = 'limited', label = '今天可以聊委托', version = 4
+        WHERE kind = 'commission'
+      `).run()
+      legacy.sqlite.prepare(`
+        UPDATE site_content
+        SET commission_intro = '管理员保留的自定义简介'
+        WHERE id = 'site'
+      `).run()
+    }
+    finally {
+      legacy.sqlite.close()
+    }
+
+    await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
+      applied: migrationCountFrom('0048_r4_commission_contact_refresh'),
+    })
+    const upgraded = openDatabase(databaseFile)
+    try {
+      expect(upgraded.sqlite.prepare(`
+        SELECT kind, tone, label, href, version
+        FROM business_statuses ORDER BY kind
+      `).all()).toEqual([{
+        kind: 'commission',
+        tone: 'open',
+        label: '今天可以聊委托',
+        href: '/commission',
+        version: 4,
+      }])
+      expect((upgraded.sqlite.pragma('table_info(business_statuses)') as { name: string }[])
+        .map(column => column.name)).not.toContain('detail')
+      const copy = upgraded.sqlite.prepare(`
+        SELECT commission_intro AS intro,
+               commission_estimate_note AS estimateNote,
+               commission_email_action AS emailAction
+        FROM site_content WHERE id = 'site'
+      `).get() as { emailAction: string, estimateNote: string, intro: string }
+      expect(copy.intro).toBe('管理员保留的自定义简介')
+      expect(copy.estimateNote).toContain('每个角色都不一样')
+      expect(copy.emailAction).toContain('表单暂时无法使用')
       expect(upgraded.sqlite.pragma('foreign_key_check')).toEqual([])
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
     }
@@ -779,8 +858,8 @@ describe('SQLite foundation', () => {
 
       expect(row.commissionIntro).toContain('官方 QQ')
       expect(row.commissionEstimateNote).toBe('管理员自定义估价说明')
-      expect(row.commissionEmailAction).toContain('邮箱为备用联系渠道')
-      expect(row.commissionVersion).toBe(before.commission + 2)
+      expect(row.commissionEmailAction).toBe('建议先提交站内申请；如果表单暂时无法使用，也可以发邮件。')
+      expect(row.commissionVersion).toBe(before.commission + 3)
       expect(row.aboutStudioFacts).toBe('管理员自定义工作室介绍')
       expect(row.aboutMakingScope).toContain('确认委托前通过工作室官方 QQ 沟通')
       // 半装只做头和爪：0043 必须把 visitor copy 里的尾巴去掉，全装仍含尾巴。
@@ -796,7 +875,7 @@ describe('SQLite foundation', () => {
       expect(row.contactAntiScam).toBe('管理员自定义防诈骗提醒')
       // visitor copy 与 0042 默认联系方式各推进 contact 一次。
       expect(row.contactVersion).toBe(before.contact + 2)
-      expect(row.version).toBe(before.version + 10)
+      expect(row.version).toBe(before.version + 11)
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
     }
     finally {

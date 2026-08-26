@@ -40,18 +40,12 @@ interface SiteContentRow {
 }
 
 interface BusinessStatusRow {
-  detail: string
-  href: '/commission' | '/adoptions'
+  href: '/commission'
   kind: SiteBusinessStatusKind
   label: string
   tone: SiteBusinessStatusTone
   version: number
 }
-
-const statusHref = {
-  commission: '/commission',
-  adoption: '/adoptions',
-} as const
 
 function siteContentRow(sqlite: Database.Database) {
   const row = sqlite.prepare(`
@@ -81,13 +75,12 @@ function siteContentRow(sqlite: Database.Database) {
 
 function businessStatuses(sqlite: Database.Database) {
   const rows = sqlite.prepare(`
-    SELECT kind, tone, label, detail, href, version
+    SELECT kind, tone, label, href, version
     FROM business_statuses
     ORDER BY kind
   `).all() as BusinessStatusRow[]
   return {
     commission: rows.find(row => row.kind === 'commission') ?? null,
-    adoption: rows.find(row => row.kind === 'adoption') ?? null,
   }
 }
 
@@ -97,12 +90,10 @@ export function getPublicBusinessStatuses(sqlite: Database.Database) {
     kind: status.kind,
     tone: status.tone,
     label: status.label,
-    detail: status.detail,
     href: status.href,
   })
   return {
     commission: project(current.commission),
-    adoption: project(current.adoption),
   }
 }
 
@@ -252,6 +243,7 @@ export function getPublicSiteContent(
       return qrCodeSources ? [{
         platform: channel.platform,
         account: channel.account,
+        qrLinkUrl: channel.qrLinkUrl,
         qrCodeSources,
       }] : []
     })
@@ -353,7 +345,6 @@ export function updateSiteBusinessStatus(
   input: {
     tone: SiteBusinessStatusTone
     label: string
-    detail: string
   },
   actorUserId: string,
   now = Date.now(),
@@ -368,20 +359,19 @@ export function updateSiteBusinessStatus(
       }
       sqlite.prepare(`
         INSERT INTO business_statuses (
-          kind, tone, label, detail, href, version, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, 1, ?, ?)
-      `).run(kind, input.tone, input.label, input.detail, statusHref[kind], now, now)
+          kind, tone, label, href, version, created_at, updated_at
+        ) VALUES (?, ?, ?, '/commission', 1, ?, ?)
+      `).run(kind, input.tone, input.label, now, now)
     }
     else {
       const result = sqlite.prepare(`
         UPDATE business_statuses
-        SET tone = ?, label = ?, detail = ?, version = version + 1,
+        SET tone = ?, label = ?, version = version + 1,
             updated_at = ?
         WHERE kind = ? AND version = ?
       `).run(
         input.tone,
         input.label,
-        input.detail,
         now,
         kind,
         expectedVersion,

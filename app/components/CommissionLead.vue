@@ -73,7 +73,7 @@ onBeforeUnmount(() => {
           <PublicBusinessStatus :status="status" />
         </div>
         <p class="commission-lead__description">
-          {{ description || '根据角色细节与制作需求逐单沟通、人工估价。' }}
+          {{ description || '先看设定，再一起确认做法、价格和排期。' }}
         </p>
       </div>
 

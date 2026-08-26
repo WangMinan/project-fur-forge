@@ -10,6 +10,7 @@ export const coreTestFiles = [
   'tests/unit/auth.test.ts',
   'tests/unit/client-address.test.ts',
   'tests/unit/commission-retention-cli.test.ts',
+  'tests/unit/contact-qr-link.test.ts',
   'tests/unit/contracts.test.ts',
   'tests/unit/deployment-contract.test.ts',
   'tests/unit/error-reason.test.ts',

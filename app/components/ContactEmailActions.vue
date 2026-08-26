@@ -85,16 +85,20 @@ onScopeDispose(() => {
         打开邮件客户端
         <span aria-hidden="true">↗</span>
       </PublicAction>
-      <PublicAction class="email-actions__copy" variant="text" @click="onCopy">
-        {{ copyState === 'copied' ? '已复制邮箱' : '复制邮箱' }}
-      </PublicAction>
+      <span class="email-actions__copy-anchor">
+        <PublicAction class="email-actions__copy" variant="secondary" @click="onCopy">
+          复制邮箱
+        </PublicAction>
+        <span
+          v-if="copyState !== 'idle'"
+          class="email-actions__feedback"
+          :class="`email-actions__feedback--${copyState}`"
+          :role="copyState === 'failed' ? 'alert' : 'status'"
+        >
+          {{ copyState === 'copied' ? '已复制到剪贴板' : '复制失败，请手动选择' }}
+        </span>
+      </span>
     </div>
-    <p v-if="copyState === 'failed'" class="email-actions__feedback" role="alert">
-      复制失败，请手动选择邮箱地址复制。
-    </p>
-    <p v-else-if="copyState === 'copied'" class="email-actions__feedback" role="status">
-      邮箱地址已复制到剪贴板。
-    </p>
   </div>
 </template>
 
@@ -137,8 +141,39 @@ onScopeDispose(() => {
   min-width: 7.5rem;
 }
 
+.email-actions__copy-anchor {
+  position: relative;
+  display: inline-flex;
+}
+
 .email-actions__feedback {
-  color: var(--public-text-secondary);
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + var(--space-2));
+  z-index: 4;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--public-text-inverse);
+  background: var(--public-text-primary);
   font-size: var(--font-size-sm);
+  white-space: nowrap;
+  animation: email-feedback-in var(--motion-duration-state) var(--motion-ease-standard);
+}
+
+.email-actions__feedback--failed {
+  background: var(--public-status-paused);
+}
+
+@keyframes email-feedback-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.25rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .email-actions__feedback {
+    animation: none;
+  }
 }
 </style>

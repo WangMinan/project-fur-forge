@@ -7312,6 +7312,22 @@
     "patches": []
   },
   {
+    "name": "jsqr",
+    "version": "1.4.0",
+    "license": "Apache-2.0",
+    "repository": null,
+    "homepage": "https://github.com/cozmo/jsQR#readme",
+    "copyright": [],
+    "noticeText": null,
+    "source": "pnpm-prod",
+    "usage": "Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.",
+    "artifactSha256": null,
+    "correspondingSourceUrl": null,
+    "sourceRevision": null,
+    "buildConfiguration": null,
+    "patches": []
+  },
+  {
     "name": "jstoxml",
     "version": "2.2.9",
     "license": "MIT",

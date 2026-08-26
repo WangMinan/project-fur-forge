@@ -427,12 +427,12 @@ function homeAggregate(
     if (!entry) {
       return null
     }
-    const status = statuses[kind]
+    const status = kind === 'commission' ? statuses.commission : null
     return {
       ...entry,
       title: ENTRY_TITLES[kind],
       status,
-      summary: status?.detail ?? null,
+      summary: null,
     }
   }
 
@@ -479,7 +479,6 @@ function homeAggregate(
     currentAdoptions: {
       available: adoptionsAvailable,
       items: currentAdoptions,
-      status: statuses.adoption,
     },
   })
 }

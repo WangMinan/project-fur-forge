@@ -313,7 +313,7 @@ describe('T22 work management', () => {
   })
 
   it('appends, compacts, normalizes and atomically reorders featured works', () => {
-    const created = Array.from({ length: 2 }, (_, index) => createFeaturedWork(
+    const created = Array.from({ length: 5 }, (_, index) => createFeaturedWork(
       {
         ...workInput,
         slug: `featured-${index}`,
@@ -322,30 +322,31 @@ describe('T22 work management', () => {
       },
       NOW + index,
     ))
-    expect(created.map(work => work.sortOrder)).toEqual([0, 1])
+    expect(created.map(work => work.sortOrder)).toEqual([0, 1, 2, 3, 4])
 
-    const third = addPortraitPhoto(createManagedWork(sqlite, {
+    const sixth = addPortraitPhoto(createManagedWork(sqlite, {
       ...workInput,
-      slug: 'featured-third',
+      slug: 'featured-sixth',
     }, NOW + 5), NOW + 6)
     expect(() => updateManagedWorkPresentation(
       sqlite,
-      third.id,
-      third.version,
+      sixth.id,
+      sixth.version,
       { featured: true },
       NOW + 7,
     )).toThrowError(expect.objectContaining({ reason: 'FEATURED_LIMIT_REACHED' }))
 
     const before = listFeaturedManagedWorks(sqlite)
-    const reordered = saveFeaturedManagedWorkOrder(sqlite, [
-      before[1]!,
-      before[0]!,
-    ].map(work => ({ id: work.id, expectedVersion: work.version })), NOW + 10)
+    const reordered = saveFeaturedManagedWorkOrder(sqlite, before.toReversed()
+      .map(work => ({ id: work.id, expectedVersion: work.version })), NOW + 10)
     expect(reordered.map(work => work.slug)).toEqual([
+      'featured-4',
+      'featured-3',
+      'featured-2',
       'featured-1',
       'featured-0',
     ])
-    expect(reordered.map(work => work.sortOrder)).toEqual([0, 1])
+    expect(reordered.map(work => work.sortOrder)).toEqual([0, 1, 2, 3, 4])
 
     expect(() => saveFeaturedManagedWorkOrder(sqlite, before.map(work => ({
       id: work.id,
@@ -363,7 +364,7 @@ describe('T22 work management', () => {
     )
     expect(removed).toMatchObject({ featured: false, sortOrder: 0 })
     expect(listFeaturedManagedWorks(sqlite).map(work => work.sortOrder))
-      .toEqual([0])
+      .toEqual([0, 1, 2, 3])
 
     sqlite.prepare('UPDATE works SET sort_order = 8 WHERE featured = 1').run()
     const sparse = listFeaturedManagedWorks(sqlite)
@@ -375,7 +376,7 @@ describe('T22 work management', () => {
       NOW + 13,
     )
     expect(listFeaturedManagedWorks(sqlite).map(work => work.sortOrder))
-      .toEqual([0])
+      .toEqual([0, 1, 2, 3])
   })
 
   it('creates and updates all purposes while preserving the adoption matrix', () => {

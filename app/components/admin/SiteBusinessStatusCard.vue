@@ -13,8 +13,8 @@ import {
   siteStatusFieldIssues,
 } from '~/utils/site-content'
 
-// T26–T27 单类营业状态卡片：状态不存在时首次保存即创建（expectedVersion 0）；
-// 状态链接由服务端固定指向 /commission 或 /adoptions，不接受表单提交。
+// 委托营业状态卡片：状态不存在时首次保存即创建（expectedVersion 0）；
+// 公开链接由服务端固定指向 /commission，不接受表单提交。
 const props = defineProps<{
   kind: SiteBusinessStatusKind
   mutating: boolean
@@ -28,10 +28,9 @@ const emit = defineEmits<{
 
 const tone = ref<SiteBusinessStatusTone>(props.status?.tone ?? 'open')
 const label = ref(props.status?.label ?? '')
-const detail = ref(props.status?.detail ?? '')
 
 function snapshotOf() {
-  return JSON.stringify({ tone: tone.value, label: label.value, detail: detail.value })
+  return JSON.stringify({ tone: tone.value, label: label.value })
 }
 
 const baseline = ref(snapshotOf())
@@ -39,7 +38,6 @@ const baseline = ref(snapshotOf())
 function syncFromStatus(status: AdminSiteBusinessStatusDto | null) {
   tone.value = status?.tone ?? 'open'
   label.value = status?.label ?? ''
-  detail.value = status?.detail ?? ''
   baseline.value = snapshotOf()
 }
 
@@ -54,14 +52,12 @@ watch(() => props.status, (status) => {
     baseline.value = JSON.stringify({
       tone: status?.tone ?? 'open',
       label: status?.label ?? '',
-      detail: status?.detail ?? '',
     })
   }
 })
 
 const issues = computed(() => siteStatusFieldIssues({
   label: label.value,
-  detail: detail.value,
 }))
 
 const canSubmit = computed(() =>
@@ -77,7 +73,6 @@ function onSave() {
   emit('save', {
     tone: tone.value,
     label: label.value.trim(),
-    detail: detail.value.trim(),
   })
 }
 </script>
@@ -107,7 +102,7 @@ function onSave() {
             {{ SITE_STATUS_TONE_LABELS[value] }}
           </option>
         </select>
-        <p class="status-card__hint">只决定公开页状态点颜色；访客看到的文字以下方两项为准。</p>
+        <p class="status-card__hint">开放显示绿色状态点，暂停显示暖色状态点。</p>
       </div>
 
       <div class="status-card__field">
@@ -122,23 +117,8 @@ function onSave() {
           :maxlength="SITE_CONTENT_LIMITS.statusLabel"
           :disabled="mutating"
         >
-        <p class="status-card__hint">例如“接受委托中”；随状态一起显示在公开页。</p>
+        <p class="status-card__hint">例如“接受委托中”或“委托暂停”；随状态点一起显示。</p>
         <p v-if="issues.label" class="status-card__issue" role="alert">{{ issues.label }}</p>
-      </div>
-
-      <div class="status-card__field status-card__field--wide">
-        <label class="status-card__label" :for="`status-detail-${kind}`">
-          短说明（{{ detail.trim().length }}/{{ SITE_CONTENT_LIMITS.statusDetail }}）
-        </label>
-        <textarea
-          :id="`status-detail-${kind}`"
-          v-model="detail"
-          class="status-card__textarea"
-          rows="2"
-          :maxlength="SITE_CONTENT_LIMITS.statusDetail"
-          :disabled="mutating"
-        />
-        <p v-if="issues.detail" class="status-card__issue" role="alert">{{ issues.detail }}</p>
       </div>
     </div>
 
@@ -194,9 +174,6 @@ function onSave() {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .status-card__field--wide {
-    grid-column: 1 / -1;
-  }
 }
 
 .status-card__label {
@@ -206,8 +183,7 @@ function onSave() {
   margin-bottom: var(--admin-space-1);
 }
 
-.status-card__input,
-.status-card__textarea {
+.status-card__input {
   width: 100%;
   padding: 0 var(--admin-space-2);
   border: 1px solid var(--admin-border-primary);
@@ -220,12 +196,6 @@ function onSave() {
 
 .status-card__input {
   min-height: var(--admin-control-height-sm);
-}
-
-.status-card__textarea {
-  padding: var(--admin-space-2);
-  resize: vertical;
-  line-height: var(--admin-line-normal);
 }
 
 .status-card__hint {

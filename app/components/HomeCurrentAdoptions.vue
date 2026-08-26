@@ -1,9 +1,5 @@
 <script setup lang="ts">
-import type {
-  PublicAdoptionListItemDto,
-  PublicSiteBusinessStatusDto,
-} from '~~/shared/types/contracts'
-import HomeBusinessStatus from '~/components/HomeBusinessStatus.vue'
+import type { PublicAdoptionListItemDto } from '~~/shared/types/contracts'
 import { formatCnyMinorUnits } from '~/utils/format'
 import { useMotionEntrance } from '~/composables/useMotionEntrance'
 import {
@@ -19,7 +15,6 @@ import {
 const props = defineProps<{
   adoptions: PublicAdoptionListItemDto[]
   available: boolean
-  status: PublicSiteBusinessStatusDto | null
 }>()
 
 const visibleAdoptions = computed(() => props.adoptions
@@ -41,7 +36,6 @@ const mediaRef = useTemplateRef<HTMLElement>('media')
 const captionRef = useTemplateRef<HTMLElement>('caption')
 const titleRef = useTemplateRef<HTMLElement>('title')
 const factsRef = useTemplateRef<HTMLElement>('facts')
-const statusRef = useTemplateRef<HTMLElement>('status')
 const actionsRef = useTemplateRef<HTMLElement>('actions')
 const transitionDirection = shallowRef<'next' | 'prev'>('next')
 const transitionIntent = shallowRef<'autoplay' | 'pointer'>('autoplay')
@@ -104,7 +98,6 @@ function animateRecord(direction: 'next' | 'prev', sequence: number) {
   const layers = [
     { element: titleRef.value, distance: 24, duration: 380, delay: 30 },
     { element: factsRef.value, distance: 16, duration: 340, delay: 75 },
-    { element: statusRef.value, distance: 10, duration: 300, delay: 110 },
     { element: actionsRef.value, distance: 8, duration: 280, delay: 145 },
   ]
   recordAnimations = layers.flatMap(layer => layer.element
@@ -368,10 +361,6 @@ onBeforeUnmount(() => {
             <dd>{{ price }}</dd>
           </div>
         </dl>
-
-        <div v-if="status" ref="status" class="home-adoption-poster__status">
-          <HomeBusinessStatus :status="status" />
-        </div>
 
         <div ref="actions" class="home-adoption-poster__actions">
           <PublicAction :to="detailTo">
@@ -733,10 +722,6 @@ onBeforeUnmount(() => {
   .home-adoption-poster__identity,
   .home-adoption-poster__facts,
   .home-adoption-poster__actions,
-  .home-adoption-poster__status {
-    grid-column: 1 / -1;
-  }
-
   .home-adoption-poster__identity {
     gap: 0.35rem;
   }

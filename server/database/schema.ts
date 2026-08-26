@@ -988,26 +988,25 @@ export const businessStatuses = sqliteTable('business_statuses', {
   kind: text('kind').primaryKey(),
   tone: text('tone').notNull(),
   label: text('label').notNull(),
-  detail: text('detail').notNull(),
   href: text('href').notNull(),
   version: integer('version').notNull().default(1),
   ...timestampColumns(),
 }, table => [
   check(
     'business_statuses_kind',
-    sql`${table.kind} IN ('commission', 'adoption')`,
+    sql`${table.kind} IN ('commission')`,
   ),
   check(
     'business_statuses_tone',
-    sql`${table.tone} IN ('open', 'limited', 'closed')`,
+    sql`${table.tone} IN ('open', 'closed')`,
   ),
   check(
     'business_statuses_text',
-    sql`length(trim(${table.label})) > 0 AND length(trim(${table.detail})) > 0`,
+    sql`length(trim(${table.label})) > 0`,
   ),
   check(
     'business_statuses_href',
-    sql`(${table.kind} = 'commission' AND ${table.href} = '/commission') OR (${table.kind} = 'adoption' AND ${table.href} = '/adoptions')`,
+    sql`${table.kind} = 'commission' AND ${table.href} = '/commission'`,
   ),
   check('business_statuses_version_positive', sql`${table.version} > 0`),
 ])
