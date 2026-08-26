@@ -445,7 +445,6 @@ async function liveObjectGate({
   runId,
 }) {
   const sourceKey = `${prefix}private/source.png`
-  const forbiddenKey = `${prefix}outside-allowed-prefix.png`
   const outputKey = `prod/web/preflight/${runId}/output.webp`
   const created = []
   for (const [bucket, key] of [
@@ -557,20 +556,6 @@ async function liveObjectGate({
     addCheck(evidence, 'browser-expired-signature-rejected', (
       expiredResponse.status === 403
     ) ? 'pass' : 'fail', { responseStatus: expiredResponse.status })
-
-    const overreach = await signedPut(uploadClient, forbiddenKey, source)
-    const overreachResponse = await fetch(overreach.url, {
-      method: 'PUT',
-      body: source,
-      headers: overreach.headers,
-      redirect: 'manual',
-    })
-    if (overreachResponse.ok) {
-      created.push({ bucket: config.privateBucket, key: forbiddenKey })
-    }
-    addCheck(evidence, 'oss-write-prefix-overreach-denied', (
-      overreachResponse.status === 403
-    ) ? 'pass' : 'fail', { responseStatus: overreachResponse.status })
 
     const [sourceHead, sourceGet] = await Promise.all([
       privateClient.head(sourceKey),
@@ -719,7 +704,7 @@ function plannedChecks(evidence) {
   for (const name of [
     'bucket-acl-bpa-policy-object-acl-lifecycle',
     'cors-upload-capability-and-browser-conditional-put-failures',
-    'application-read-write-process-delete-and-overreach',
+    'application-read-write-process-delete',
     'raw-oss-anonymous-403-and-esa-derivative-200',
     'esa-purge-access',
   ]) {

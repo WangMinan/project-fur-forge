@@ -1,11 +1,17 @@
 import { spawnSync } from 'node:child_process'
 import { pnpmInvocation } from './pnpm-invocation.mjs'
 
+const verifyProductionOnHost
+  = process.env.RELEASE_PRODUCTION_VERIFIED_BY_IMAGE !== '1'
 const steps = [
   { args: ['notices:check'] },
   { args: ['test:smoke'], env: { APP_ENV: 'test' } },
-  { args: ['build'], env: { APP_ENV: 'production' } },
-  { args: ['verify:production'] },
+  ...(verifyProductionOnHost
+    ? [
+        { args: ['build'], env: { APP_ENV: 'production' } },
+        { args: ['verify:production'] },
+      ]
+    : []),
   { args: ['verify:esa-cache'] },
   { args: ['verify:observability'] },
 ]

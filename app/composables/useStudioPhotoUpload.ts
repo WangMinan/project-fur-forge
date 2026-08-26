@@ -1,5 +1,4 @@
 import {
-  completeUploadSessionResponseSchema,
   createUploadSessionResponseSchema,
   retryAssetProcessingResponseSchema,
   retryUploadSessionResponseSchema,
@@ -12,6 +11,7 @@ import type {
 } from '~~/shared/types/contracts'
 import {
   completeAdminUploadSession,
+  finishAdminUploadSession,
   runAdminUploadSession,
 } from '~/utils/admin-upload-session'
 import type { AdminUploadResult } from '~/utils/admin-upload-session'
@@ -173,64 +173,8 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
     if (!session) {
       return
     }
-    try {
-      const result = await adminApi(
-        `/api/admin/v1/media/upload-sessions/${session.uploadSessionId}/complete`,
-        {
-          method: 'POST',
-          body: {
-            expectedVersion: session.version,
-            payload: {
-              focalX: 0.5,
-              focalY: 0.5,
-            },
-          },
-          schema: completeUploadSessionResponseSchema,
-        },
-      )
-      item.session = result.data.session
-      item.asset = result.data.asset
-      item.state = 'completed'
-      if (result.data.asset.status === 'READY') {
-        options.onAssetReady(item, result.data.asset)
-      }
-      return
-    }
-    catch (error) {
-      if (!(error instanceof AdminApiError)) {
-        failItem(item, '网络异常，请稍后重试')
-        return
-      }
-      if (error.status === 401) {
-        return
-      }
-      if (error.status === 400 || error.status === 409) {
-        // 核验失败/过期/版本漂移：以服务端会话状态为准呈现。
-        const fresh = await refreshSession(item)
-        if (fresh?.status === 'EXPIRED') {
-          expireItem(item)
-          return
-        }
-        if (fresh?.status === 'FAILED') {
-          const failure = uploadSessionFailureLabel(fresh)
-          failItem(item, failure.text, failure.stage)
-          return
-        }
-        if (fresh?.status === 'CANCELLED') {
-          item.state = 'cancelled'
-          item.failureText = '上传会话已取消，请重新上传'
-          return
-        }
-        failItem(
-          item,
-          error.status === 400
-            ? '上传未通过服务端核验，请重新上传'
-            : '上传会话状态冲突，请重新上传',
-        )
-        return
-      }
-      failItem(item, '服务端处理失败，请稍后重试')
-    }
+    const result = await finishAdminUploadSession({ adminApi, session })
+    await applyUploadResult(item, result)
   }
 
   async function applyUploadResult(

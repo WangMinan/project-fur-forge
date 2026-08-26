@@ -1,14 +1,15 @@
 import {
   completeUploadSessionResponseSchema,
   uploadSessionResponseSchema,
+  verifiedAssetResponseSchema,
 } from '~~/shared/schemas/upload'
 import type {
   ConditionalPutDto,
   UploadSessionDto,
   VerifiedAssetDto,
 } from '~~/shared/types/contracts'
-import type { AdminApi } from '~/composables/useAdminApi'
-import { AdminApiError } from '~/composables/useAdminApi'
+import type { AdminApi } from '../composables/useAdminApi'
+import { AdminApiError } from '../composables/useAdminApi'
 import {
   buildUploadDeclaration,
 } from './upload-declaration'
@@ -54,6 +55,101 @@ interface CompleteAdminUploadOptions {
   registerXhr?: (xhr: XMLHttpRequest | null) => void
 }
 
+const COMPLETION_POLL_INTERVAL_MS = 1_000
+const COMPLETION_POLL_ATTEMPTS = 180
+
+async function recoverAdminUploadCompletion(
+  adminApi: AdminApi,
+  uploadSessionId: string,
+) {
+  let session: UploadSessionDto | null = null
+  for (let attempt = 0; attempt < COMPLETION_POLL_ATTEMPTS; attempt += 1) {
+    const fresh = await adminApi(
+      `/api/admin/v1/media/upload-sessions/${uploadSessionId}`,
+      { schema: uploadSessionResponseSchema },
+    ).catch(() => null)
+    if (!fresh) {
+      return { asset: null, session }
+    }
+    session = fresh.data
+    if (session.status === 'COMPLETED' && session.assetId) {
+      const recovered = await adminApi(
+        `/api/admin/v1/media/assets/${session.assetId}`,
+        { schema: verifiedAssetResponseSchema },
+      ).catch(() => null)
+      return { asset: recovered?.data ?? null, session }
+    }
+    if (session.status !== 'VALIDATING') {
+      return { asset: null, session }
+    }
+    if (attempt + 1 < COMPLETION_POLL_ATTEMPTS) {
+      await new Promise(resolve => setTimeout(resolve, COMPLETION_POLL_INTERVAL_MS))
+    }
+  }
+  return { asset: null, session }
+}
+
+export async function finishAdminUploadSession(options: {
+  adminApi: AdminApi
+  session: UploadSessionDto
+}): Promise<AdminUploadResult> {
+  let session = options.session
+  let completionError: unknown = null
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const completed = await options.adminApi(
+        `/api/admin/v1/media/upload-sessions/${session.uploadSessionId}/complete`,
+        {
+          method: 'POST',
+          body: {
+            expectedVersion: session.version,
+            payload: { focalX: 0.5, focalY: 0.5 },
+          },
+          schema: completeUploadSessionResponseSchema,
+        },
+      )
+      return {
+        ok: true,
+        asset: completed.data.asset,
+        session: completed.data.session,
+      }
+    }
+    catch (error) {
+      completionError = error
+      if (error instanceof AdminApiError && error.status === 401) {
+        break
+      }
+      const recovered = await recoverAdminUploadCompletion(
+        options.adminApi,
+        session.uploadSessionId,
+      )
+      if (recovered.asset && recovered.session) {
+        return {
+          ok: true,
+          asset: recovered.asset,
+          session: recovered.session,
+        }
+      }
+      if (attempt === 0 && recovered.session?.status === 'AWAITING_UPLOAD') {
+        session = recovered.session
+        continue
+      }
+      return {
+        ok: false,
+        step: 'complete',
+        error,
+        session: recovered.session,
+      }
+    }
+  }
+  return {
+    ok: false,
+    step: 'complete',
+    error: completionError,
+    session: null,
+  }
+}
+
 export async function completeAdminUploadSession(
   options: CompleteAdminUploadOptions,
 ): Promise<AdminUploadResult> {
@@ -87,39 +183,7 @@ export async function completeAdminUploadSession(
   }
 
   options.onStage('validating')
-  try {
-    const completed = await options.adminApi(
-      `/api/admin/v1/media/upload-sessions/${session.uploadSessionId}/complete`,
-      {
-        method: 'POST',
-        body: {
-          expectedVersion: session.version,
-          payload: { focalX: 0.5, focalY: 0.5 },
-        },
-        schema: completeUploadSessionResponseSchema,
-      },
-    )
-    return {
-      ok: true,
-      asset: completed.data.asset,
-      session: completed.data.session,
-    }
-  }
-  catch (error) {
-    const current = error instanceof AdminApiError
-      && (error.status === 400 || error.status === 409)
-      ? await options.adminApi(
-          `/api/admin/v1/media/upload-sessions/${session.uploadSessionId}`,
-          { schema: uploadSessionResponseSchema },
-        ).catch(() => null)
-      : null
-    return {
-      ok: false,
-      step: 'complete',
-      error,
-      session: current?.data ?? null,
-    }
-  }
+  return finishAdminUploadSession({ adminApi: options.adminApi, session })
 }
 
 export async function runAdminUploadSession(options: {

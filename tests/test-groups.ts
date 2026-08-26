@@ -5,6 +5,7 @@
  * 历史实现型覆盖已经完成退役。新增测试文件必须先在这里归类。
  */
 export const coreTestFiles = [
+  'tests/unit/admin-upload-session.test.ts',
   'tests/unit/admin-media-preview.test.ts',
   'tests/unit/analytics.test.ts',
   'tests/unit/auth.test.ts',
