@@ -115,6 +115,7 @@ describe('T52-E6 production deployment contract', () => {
     expect(dockerfile).toMatch(/^USER node$/mu)
     expect(dockerfile).not.toMatch(/apt-get install[^\n]*(?:nginx|certbot|cron)/iu)
     expect(dockerfile).toContain('scripts/esa-sdk.mjs')
+    expect(dockerfile).toContain('/app/shared/utils/privacy-policy-readiness.mjs ./shared/utils/privacy-policy-readiness.mjs')
     expect(dockerfile).toContain('new EsaClient(')
     expect(dockerfile).toContain('new PurgeCachesRequest(')
     expect(containerOps).toContain('confirmation: values.confirm')

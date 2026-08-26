@@ -86,6 +86,7 @@ RUN apt-get update \
 COPY --from=build --chown=node:node /app/.output ./.output
 COPY --from=build --chown=node:node /app/runtime-deploy/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/ops-dist ./ops
+COPY --from=build --chown=node:node /app/shared/utils/privacy-policy-readiness.mjs ./shared/utils/privacy-policy-readiness.mjs
 COPY --from=build --chown=node:node /app/server/database/migrations ./server/database/migrations
 COPY --from=build --chown=node:node /app/package.json ./package.json
 
