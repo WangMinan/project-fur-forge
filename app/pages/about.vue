@@ -141,7 +141,6 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
   position: relative;
   min-height: 18rem;
   overflow: hidden;
-  border-bottom: 1px solid var(--public-border-secondary);
 }
 
 .about-masthead__word {
@@ -255,7 +254,6 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
 
 .about-story__scope {
   padding-top: var(--space-5);
-  border-top: 1px solid var(--public-border-primary);
 }
 
 .about-story__text,
@@ -268,7 +266,6 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
 .about-contact {
   background: var(--public-bg-primary);
   border-top: 1px solid var(--public-border-secondary);
-  border-bottom: 1px solid var(--public-border-secondary);
 }
 
 .about-contact__inner {
@@ -349,9 +346,6 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
 
   .about-story__scope {
     padding-top: 0;
-    padding-left: var(--space-6);
-    border-top: 0;
-    border-left: 1px solid var(--public-border-primary);
   }
 
   .about-contact__notice {

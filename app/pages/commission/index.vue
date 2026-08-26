@@ -44,7 +44,7 @@ function paragraphs(value: string | null | undefined) {
 const introText = computed(() => commission.value?.intro ?? undefined)
 const estimateParagraphs = computed(() => paragraphs(commission.value?.estimateNote))
 const estimateLead = computed(() => estimateParagraphs.value[0]
-  ?? '每个角色都不一样，所以这里没有固定价目表。',
+  ?? '请使用提交委托申请按钮提供清晰的设定图和个人基本信息，如果工作室确认接单，我们将使用官方 QQ 与你进一步沟通。',
 )
 const estimateDetails = computed(() => estimateParagraphs.value.slice(1))
 const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailAction))
@@ -212,10 +212,11 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
 }
 
 .commission-page__mechanism {
-  max-width: 32rem;
+  width: 100%;
+  max-width: none;
   font-family: var(--font-role-display);
-  font-size: clamp(1.35rem, 2.3vw, 2rem);
-  line-height: 1.45;
+  font-size: clamp(1.125rem, 1.5vw, 1.5rem);
+  line-height: 1.6;
 }
 
 .commission-page__text {

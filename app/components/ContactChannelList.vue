@@ -101,10 +101,6 @@ const displayChannels = computed(() => props.channels.map(channel => ({
   padding: var(--space-4);
 }
 
-.contact-list__row + .contact-list__row {
-  border-top: 1px solid var(--public-border-secondary);
-}
-
 .contact-list__label {
   color: var(--public-text-secondary);
   font-size: var(--font-size-sm);
