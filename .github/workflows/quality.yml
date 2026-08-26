@@ -68,12 +68,14 @@ jobs:
       - name: Fast checks
         run: pnpm check:fast
 
-      - name: Install Chromium
+      - name: Verify system Chrome
         if: ${{ inputs.release == true }}
-        run: pnpm exec playwright install --with-deps chromium
+        run: google-chrome --version
 
       - name: Run release verification
         if: ${{ inputs.release == true }}
+        env:
+          RELEASE_PRODUCTION_VERIFIED_BY_IMAGE: "1"
         run: pnpm test:release
 
       - name: Upload failed release-test artifacts
@@ -285,6 +287,45 @@ jobs:
             --header 'Host: media.test.invalid' http://127.0.0.1/)" = "421"
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
             --header 'Host: public.test.invalid' http://127.0.0.1/)" = "200"
+          curl --fail --silent --show-error \
+            --header 'Host: public.test.invalid' http://127.0.0.1/api/health \
+            | jq -e '.status == "ok"' >/dev/null
+
+          public_projection="${nginx_test}/public-projection.txt"
+          : >"${public_projection}"
+          for path in / /api/public/v1/home-aggregate /api/public/v1/works /api/public/v1/adoptions; do
+            curl --fail --silent --show-error \
+              --header 'Host: public.test.invalid' "http://127.0.0.1${path}" \
+              >>"${public_projection}"
+            echo >>"${public_projection}"
+          done
+          grep -Fq 'data-testid="public-home"' "${public_projection}"
+          grep -Fq '有点小狗' "${public_projection}"
+          grep -Fq 'DITE DOG' "${public_projection}"
+          for forbidden in \
+            '.oss-cn-hangzhou.aliyuncs.com' \
+            '/prod/original/' \
+            '/prod/processing/' \
+            '/prod/preview/' \
+            'privateObjectKey' \
+            'signedUrl'; do
+            ! grep -Fq "${forbidden}" "${public_projection}"
+          done
+          if grep -Eo 'https?://[^"[:space:]]+/prod/web/[^"[:space:]]+' \
+            "${public_projection}" \
+            | grep -Fv 'https://public-media.ditedog.com/prod/web/'; then
+            echo 'Public projection used a non-ESA production media URL.' >&2
+            exit 1
+          fi
+
+          admin_page_headers="${nginx_test}/admin-page-headers.txt"
+          admin_page_body="${nginx_test}/admin-page.html"
+          curl --fail --silent --show-error \
+            --dump-header "${admin_page_headers}" --output "${admin_page_body}" \
+            --header 'Host: admin.test.invalid' http://127.0.0.1/admin/login
+          grep -Eiq '^x-robots-tag: noindex, nofollow, noarchive' "${admin_page_headers}"
+          ! grep -Fq 'data-testid="admin-login"' "${admin_page_body}"
+          ! grep -Fq '管理端最小 CSR 切片已运行' "${admin_page_body}"
 
           auth_headers="${nginx_test}/auth-headers.txt"
           auth_body="${nginx_test}/auth-body.json"
