@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { PublicWorkSummaryDto } from '~~/shared/types/contracts'
 import { PUBLIC_FEATURED_LIMIT } from '~~/shared/constants/featured'
+import { resolveAutoplayIntervalMs } from '~/utils/hero-carousel'
 
 const props = defineProps<{
   available: boolean
@@ -13,17 +14,222 @@ const works = computed(() => (
 const activeIndex = shallowRef(0)
 const activeWork = computed(() => works.value[activeIndex.value] ?? works.value[0] ?? null)
 const canNavigate = computed(() => works.value.length > 1)
-const frameLabel = computed(() => String(activeIndex.value + 1).padStart(2, '0'))
-const frameCount = computed(() => String(works.value.length).padStart(2, '0'))
+const activeFrameLabel = computed(() => String(activeIndex.value + 1).padStart(2, '0'))
+const totalFrameLabel = computed(() => String(works.value.length).padStart(2, '0'))
+const titleRef = useTemplateRef<HTMLElement>('title')
+const speciesRef = useTemplateRef<HTMLElement>('species')
+const transitionDirection = shallowRef<'next' | 'prev'>('next')
+const motionSequence = shallowRef(0)
+const reduceMotion = shallowRef(false)
+const userPaused = shallowRef(false)
+const pageHidden = shallowRef(false)
+const controlsRevealed = shallowRef(false)
+const mediaTransitionName = computed(() => `featured-media-${transitionDirection.value}`)
+const autoplayInterval = computed(() => resolveAutoplayIntervalMs(reduceMotion.value))
+const autoplayRunning = computed(() => (
+  autoplayInterval.value !== null
+  && canNavigate.value
+  && !userPaused.value
+  && !pageHidden.value
+))
 
-function workTo(work: PublicWorkSummaryDto) {
-  return { path: work.href, query: { view: 'home-featured' } }
+let timer: ReturnType<typeof setInterval> | null = null
+let controlsTimer: ReturnType<typeof setTimeout> | null = null
+let motionQuery: MediaQueryList | null = null
+let textAnimations: Animation[] = []
+
+function stopTimer() {
+  if (timer !== null) {
+    clearInterval(timer)
+    timer = null
+  }
 }
 
-function selectWork(step: -1 | 1) {
+function stopControlsTimer() {
+  if (controlsTimer !== null) {
+    clearTimeout(controlsTimer)
+    controlsTimer = null
+  }
+}
+
+function revealControls(timeout = 2_400) {
+  controlsRevealed.value = true
+  stopControlsTimer()
+  if (!userPaused.value) {
+    controlsTimer = setTimeout(() => {
+      controlsRevealed.value = false
+      controlsTimer = null
+    }, timeout)
+  }
+}
+
+function restartTimer() {
+  stopTimer()
+  if (autoplayRunning.value && autoplayInterval.value !== null) {
+    timer = setInterval(() => selectWork(1, false), autoplayInterval.value)
+  }
+}
+
+function animateText(direction: -1 | 1, sequence: number) {
+  for (const animation of textAnimations) animation.cancel()
+  textAnimations = []
+  if (reduceMotion.value || sequence !== motionSequence.value) return
+  const easing = getComputedStyle(document.documentElement)
+    .getPropertyValue('--motion-ease-standard')
+    .trim()
+  const layers = [
+    { element: titleRef.value, distance: 24, duration: 380, delay: 30 },
+    { element: speciesRef.value, distance: 16, duration: 340, delay: 75 },
+  ]
+  textAnimations = layers.flatMap(layer => layer.element
+    ? [layer.element.animate(
+        [
+          { opacity: 0.001, transform: `translate3d(${direction * layer.distance}px, 0, 0)` },
+          { opacity: 1, transform: 'translate3d(0, 0, 0)' },
+        ],
+        {
+          delay: layer.delay,
+          duration: layer.duration,
+          easing,
+          fill: 'both',
+        },
+      )]
+    : [])
+  for (const animation of textAnimations) {
+    animation.finished
+      .then(() => animation.cancel())
+      .catch(() => undefined)
+  }
+}
+
+function selectWork(step: -1 | 1, restartAutoplay = true) {
   if (!canNavigate.value) return
+  transitionDirection.value = step === 1 ? 'next' : 'prev'
+  motionSequence.value += 1
+  const sequence = motionSequence.value
   activeIndex.value = (activeIndex.value + step + works.value.length) % works.value.length
+  void nextTick(() => animateText(step, sequence))
+  if (restartAutoplay) restartTimer()
 }
+
+function selectWorkAt(index: number) {
+  if (!canNavigate.value || index === activeIndex.value) return
+  const step = index > activeIndex.value ? 1 : -1
+  transitionDirection.value = step === 1 ? 'next' : 'prev'
+  motionSequence.value += 1
+  const sequence = motionSequence.value
+  activeIndex.value = index
+  void nextTick(() => animateText(step, sequence))
+  restartTimer()
+}
+
+function togglePause() {
+  userPaused.value = !userPaused.value
+  revealControls()
+}
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault()
+    selectWork(-1)
+  }
+  else if (event.key === 'ArrowRight') {
+    event.preventDefault()
+    selectWork(1)
+  }
+}
+
+function revealForFinePointer(event: MouseEvent) {
+  const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const x = (event.clientX - bounds.left) / bounds.width
+  const y = (event.clientY - bounds.top) / bounds.height
+  if (!controlsRevealed.value && (x <= 0.16 || x >= 0.84 || y >= 0.72)) {
+    revealControls()
+  }
+}
+
+let pointerStartX: number | null = null
+
+function onPointerDown(event: PointerEvent) {
+  if (event.pointerType === 'touch') {
+    revealControls(4_000)
+  }
+  if ((event.target as HTMLElement | null)?.closest('button, a')) {
+    pointerStartX = null
+    return
+  }
+  pointerStartX = event.clientX
+}
+
+function onPointerUp(event: PointerEvent) {
+  if (pointerStartX === null) {
+    return
+  }
+  const direction = resolveSwipeDirection(event.clientX - pointerStartX)
+  pointerStartX = null
+  if (direction === 'next') {
+    selectWork(1)
+  }
+  else if (direction === 'prev') {
+    selectWork(-1)
+  }
+}
+
+function onPointerCancel() {
+  pointerStartX = null
+}
+
+function onPointerMove(event: PointerEvent) {
+  if (event.pointerType === 'mouse') {
+    revealForFinePointer(event)
+  }
+}
+
+function onPointerLeave() {
+  if (!userPaused.value) {
+    stopControlsTimer()
+    controlsRevealed.value = false
+  }
+}
+
+function onHeroClick(event: MouseEvent) {
+  if ((event.target as HTMLElement | null)?.closest('button, a')) {
+    return
+  }
+  if (!matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    revealControls(4_000)
+  }
+}
+
+function onVisibilityChange() {
+  pageHidden.value = document.hidden
+}
+
+function onMotionChange(event: MediaQueryListEvent) {
+  reduceMotion.value = event.matches
+}
+
+watch(() => works.value.length, (count) => {
+  activeIndex.value = clampSlideIndex(activeIndex.value, count)
+})
+watch([autoplayRunning, autoplayInterval], restartTimer)
+
+onMounted(() => {
+  motionQuery = matchMedia('(prefers-reduced-motion: reduce)')
+  reduceMotion.value = motionQuery.matches
+  motionQuery.addEventListener('change', onMotionChange)
+  pageHidden.value = document.hidden
+  document.addEventListener('visibilitychange', onVisibilityChange)
+  restartTimer()
+})
+
+onBeforeUnmount(() => {
+  stopTimer()
+  stopControlsTimer()
+  for (const animation of textAnimations) animation.cancel()
+  motionQuery?.removeEventListener('change', onMotionChange)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
+})
 </script>
 
 <template>
@@ -33,6 +239,19 @@ function selectWork(step: -1 | 1) {
     aria-labelledby="featured-works-title"
     data-testid="featured-works"
     data-home-scroll-scene
+    :data-paused="userPaused"
+    :data-controls-revealed="controlsRevealed"
+    :data-reduced-motion="reduceMotion"
+    role="region"
+    aria-roledescription="carousel"
+    @keydown="onKeydown"
+    @click="onHeroClick"
+    @pointerdown="onPointerDown"
+    @pointermove="onPointerMove"
+    @mousemove="revealForFinePointer"
+    @pointerleave="onPointerLeave"
+    @pointerup="onPointerUp"
+    @pointercancel="onPointerCancel"
   >
     <header class="featured-works__heading">
       <h2 id="featured-works-title" class="featured-works__section-title">代表作品</h2>
@@ -45,40 +264,103 @@ function selectWork(step: -1 | 1) {
       </div>
 
       <NuxtLink
-        :to="workTo(activeWork)"
+        :to="activeWork.href"
         class="featured-works__media"
         :data-work-slug="activeWork.work.slug"
         :aria-label="`查看代表作品：${activeWork.work.characterName}`"
       >
-        <ResponsivePicture
-          :sources="activeWork.card.sources"
-          :alt="activeWork.card.alt"
-          loading="eager"
-          fetchpriority="high"
-          sizes="(min-width: 1200px) 400px, (min-width: 768px) 352px, 72vw"
-        />
+        <Transition :name="mediaTransitionName">
+          <span :key="activeWork.work.slug" class="featured-works__media-surface">
+            <ResponsivePicture
+              :sources="activeWork.card.sources"
+              :alt="activeWork.card.alt"
+              loading="eager"
+              fetchpriority="high"
+              sizes="(min-width: 1200px) 400px, (min-width: 768px) 352px, 72vw"
+            />
+          </span>
+        </Transition>
       </NuxtLink>
 
-      <div v-if="canNavigate" class="featured-works__controls" aria-label="代表作品切换">
-        <button type="button" data-featured-action="previous" @click="selectWork(-1)">
-          <span aria-hidden="true">←</span>
-          <span>上一项</span>
-        </button>
-        <span class="featured-works__control-status" aria-label="当前代表作品序号">
-          {{ frameLabel }} / {{ frameCount }}
-        </span>
-        <button type="button" data-featured-action="next" @click="selectWork(1)">
-          <span>下一项</span>
-          <span aria-hidden="true">→</span>
-        </button>
-      </div>
+      <div class="featured-works__info">
+        <div
+          v-if="canNavigate"
+          class="featured-works__controls"
+          aria-label="代表作品切换"
+          data-featured-layout="controls"
+          role="group"
+        >
+          <p class="featured-works__counter" aria-hidden="true">
+            {{ activeFrameLabel }} / {{ totalFrameLabel }}
+          </p>
+          <button
+            type="button"
+            class="featured-works__control-arrow"
+            data-featured-action="previous"
+            aria-label="上一项代表作品"
+            @click="selectWork(-1)"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <path d="M11.5 3.5 6 9l5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <div class="featured-works__dots" role="group" aria-label="代表作品分页">
+            <button
+              v-for="(work, index) in works"
+              :key="work.work.id"
+              type="button"
+              class="featured-works__dot"
+              :class="{ 'featured-works__dot--active': index === activeIndex }"
+              :aria-label="`第 ${index + 1} 件代表作品，共 ${works.length} 件`"
+              :aria-current="index === activeIndex ? 'true' : undefined"
+              @click="selectWorkAt(index)"
+            />
+          </div>
+          <button
+            type="button"
+            class="featured-works__control-arrow"
+            data-featured-action="next"
+            aria-label="下一项代表作品"
+            @click="selectWork(1)"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <path d="M6.5 3.5 12 9l-5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <button
+            v-if="!reduceMotion"
+            type="button"
+            class="featured-works__pause"
+            data-featured-action="pause"
+            :aria-pressed="userPaused"
+            :aria-label="userPaused ? '继续自动轮播' : '暂停自动轮播'"
+            @click="togglePause"
+          >
+            <svg v-if="userPaused" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M4 2.5v9l7-4.5-7-4.5z" fill="currentColor" />
+            </svg>
+            <svg v-else width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M3.5 2.5v9M10.5 2.5v9" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
 
-      <div class="featured-works__content" aria-live="polite">
-        <h3 class="featured-works__title">{{ activeWork.work.characterName }}</h3>
-        <p class="featured-works__species">{{ activeWork.work.species }}</p>
-        <PublicAction to="/works" class="featured-works__action">
-          浏览作品展示
-        </PublicAction>
+        <div class="featured-works__content-stack" aria-live="polite">
+          <div class="featured-works__text-stack">
+            <div
+              class="featured-works__content"
+              :data-featured-content="activeWork.work.slug"
+            >
+              <h3 ref="title" class="featured-works__title" data-featured-layout="title">{{ activeWork.work.characterName }}</h3>
+              <p ref="species" class="featured-works__species" data-featured-layout="species">{{ activeWork.work.species }}</p>
+            </div>
+          </div>
+          <div class="featured-works__action-layer" data-featured-layout="action">
+            <PublicAction to="/works" class="featured-works__action">
+              浏览作品展示
+            </PublicAction>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -97,6 +379,7 @@ function selectWork(step: -1 | 1) {
   grid-template-rows: auto 1fr auto;
   gap: 1.25rem;
   min-width: 0;
+  min-height: calc(100svh - var(--public-header-height));
   max-width: var(--public-content-wide);
   margin: 0 auto;
   padding: 1.25rem var(--public-page-padding) 1rem;
@@ -104,6 +387,12 @@ function selectWork(step: -1 | 1) {
   color: var(--public-text-primary);
   background: var(--public-bg-primary);
   isolation: isolate;
+}
+
+@supports (height: 100dvh) {
+  .featured-works {
+    min-height: calc(100dvh - var(--public-header-height));
+  }
 }
 
 .featured-works__heading {
@@ -116,7 +405,7 @@ function selectWork(step: -1 | 1) {
 
 .featured-works__controls,
 .featured-works__wayfinding {
-  font-family: var(--font-public-mono);
+  font-family: var(--font-role-metadata);
   font-size: 0.6875rem;
   line-height: 1.2;
   letter-spacing: 0;
@@ -124,7 +413,7 @@ function selectWork(step: -1 | 1) {
 
 .featured-works__section-title {
   margin-top: 0.35rem;
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: 2rem;
   font-weight: 600;
   line-height: 1;
@@ -145,7 +434,7 @@ function selectWork(step: -1 | 1) {
   z-index: 0;
   display: grid;
   color: var(--public-background-type);
-  font-family: var(--font-public-body);
+  font-family: var(--font-role-display-sans);
   font-size: 4rem;
   font-weight: 800;
   line-height: 0.74;
@@ -162,95 +451,219 @@ function selectWork(step: -1 | 1) {
   position: relative;
   z-index: 2;
   justify-self: end;
-  display: block;
+  display: grid;
   width: min(72%, 17.5rem);
   margin-top: 2.6rem;
   aspect-ratio: 3 / 4;
-  overflow: hidden;
   border-radius: var(--radius-image);
-  background: var(--image-placeholder);
 }
 
-.featured-works__media :deep(.responsive-picture),
-.featured-works__media :deep(.responsive-picture__image) {
+.featured-works__media-surface {
+  grid-area: 1 / 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-image);
+}
+
+.featured-works__media-surface :deep(.responsive-picture),
+.featured-works__media-surface :deep(.responsive-picture__image) {
   width: 100%;
   height: 100%;
 }
 
-.featured-works__media :deep(.responsive-picture__image) {
+.featured-works__media-surface :deep(.responsive-picture) {
+  overflow: hidden;
+  border-radius: var(--radius-image);
+}
+
+.featured-works__media-surface :deep(.responsive-picture__image) {
+  border-radius: var(--radius-image);
   object-fit: cover;
+}
+
+.featured-media-next-enter-active,
+.featured-media-next-leave-active,
+.featured-media-prev-enter-active,
+.featured-media-prev-leave-active {
+  transition:
+    opacity 420ms var(--motion-ease-standard),
+    transform var(--motion-duration-media) var(--motion-ease-standard);
+}
+
+.featured-media-next-enter-from,
+.featured-media-prev-leave-to {
+  opacity: 0;
+  transform: translate3d(42px, 0, 0) scale(0.99);
+}
+
+.featured-media-next-leave-to,
+.featured-media-prev-enter-from {
+  opacity: 0;
+  transform: translate3d(-42px, 0, 0) scale(0.99);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .featured-media-next-enter-active,
+  .featured-media-next-leave-active,
+  .featured-media-prev-enter-active,
+  .featured-media-prev-leave-active {
+    transition: none;
+  }
+}
+
+.featured-works__info {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  min-width: 0;
+}
+
+.featured-works__content-stack {
+  display: block;
+  min-width: 0;
+  animation: none;
+  transition: none;
+}
+
+.featured-works__text-stack {
+  display: block;
+  min-width: 0;
 }
 
 .featured-works__content {
   position: relative;
-  z-index: 3;
   display: grid;
   justify-items: start;
   width: min(94%, 23rem);
   margin-top: -1.4rem;
+  transition: none;
 }
 
 .featured-works__title {
   margin-top: 0.4rem;
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: 3rem;
   font-weight: 600;
   line-height: 0.94;
   letter-spacing: 0;
-  overflow-wrap: anywhere;
-  text-wrap: balance;
+  animation: none;
+  transition: none;
 }
 
 .featured-works__species {
   margin: 0.65rem 0 0 0.8rem;
   color: var(--public-text-secondary);
   font-size: var(--font-size-sm);
+  animation: none;
+  transition: none;
 }
 
 .featured-works__action {
-  --public-action-primary-bg: var(--public-editorial-ink);
-  --public-action-primary-border: var(--public-editorial-ink);
-  --public-action-primary-hover-bg: #2a2d33;
-  --public-action-primary-hover-border: #2a2d33;
   margin: 1rem 0 0 0.8rem;
 }
 
-.featured-works__controls {
+.featured-works__action-layer {
   display: grid;
-  grid-template-columns: auto minmax(4rem, 1fr) auto;
+  justify-items: start;
+  animation: none;
+  transition: none;
+}
+
+.featured-works__controls {
+  display: flex;
   align-items: center;
-  gap: 0.65rem;
-  width: min(100%, 19rem);
+  gap: 0.2rem;
+  width: fit-content;
   margin: 1.15rem 0 0 0.8rem;
   color: var(--public-text-secondary);
 }
 
+.featured-works__counter {
+  min-width: 3.75rem;
+  margin-right: var(--space-2);
+  color: var(--public-text-secondary);
+  font-family: var(--font-role-metadata);
+  font-size: 0.6875rem;
+  letter-spacing: var(--type-metadata-letter-spacing);
+  white-space: nowrap;
+}
+
 .featured-works__controls button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-height: 2.75rem;
-  padding: 0 0.25rem;
+  display: grid;
+  width: max(2.75rem, 44px);
+  height: max(2.75rem, 44px);
+  padding: 0;
   color: inherit;
   background: transparent;
   border: 0;
   cursor: pointer;
+  place-items: center;
 }
 
-.featured-works__controls button:last-child {
-  justify-self: end;
+.featured-works__control-arrow,
+.featured-works__pause {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px) scale(0.96);
+  transition:
+    color var(--motion-duration-feedback) var(--motion-ease-standard),
+    opacity var(--motion-duration-state) var(--motion-ease-standard),
+    transform var(--motion-duration-state) var(--motion-ease-standard);
+}
+
+.featured-works[data-controls-revealed='true'] .featured-works__control-arrow,
+.featured-works[data-controls-revealed='true'] .featured-works__pause,
+.featured-works[data-paused='true'] .featured-works__control-arrow,
+.featured-works[data-paused='true'] .featured-works__pause,
+.featured-works:focus-within .featured-works__control-arrow,
+.featured-works:focus-within .featured-works__pause {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.featured-works__dots {
+  display: flex;
+  align-items: center;
+  gap: 0.1875rem;
+}
+
+.featured-works__dot::before {
+  display: block;
+  width: 1.75rem;
+  height: 1px;
+  background: currentcolor;
+  content: '';
+  opacity: 0.4;
+  transform: scaleX(0.55);
+  transition:
+    opacity var(--motion-duration-state) var(--motion-ease-standard),
+    transform var(--motion-duration-state) var(--motion-ease-standard);
+}
+
+.featured-works__dot--active::before {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.featured-works__dot:active::before {
+  transform: scaleX(0.8);
+}
+
+.featured-works[data-reduced-motion='true'] .featured-works__pause {
+  display: none;
 }
 
 .featured-works__controls button:focus-visible {
   color: var(--public-text-primary);
-  outline: 1px solid currentcolor;
-  outline-offset: 2px;
+  outline: 3px solid var(--public-focus-ring);
+  outline-offset: 3px;
 }
 
-.featured-works__control-status {
-  padding-top: 0.35rem;
-  border-top: 1px solid var(--public-border-primary);
-  text-align: center;
+.featured-works__controls button:active:not(:disabled) {
+  color: var(--public-accent-active);
 }
 
 .featured-works__wayfinding-rule {
@@ -271,7 +684,6 @@ function selectWork(step: -1 | 1) {
 @media (max-width: 767px) {
   .featured-works {
     gap: 0.75rem;
-    min-height: 0;
     padding-top: 0.75rem;
     padding-bottom: 0.75rem;
   }
@@ -287,9 +699,11 @@ function selectWork(step: -1 | 1) {
 
   .featured-works__stage {
     min-height: 0;
+    padding-top: clamp(1.5rem, 4dvh, 2.5rem);
   }
 
   .featured-works__display {
+    top: clamp(1.5rem, 4dvh, 2.5rem);
     font-size: 3.5rem;
     line-height: 0.76;
   }
@@ -301,13 +715,24 @@ function selectWork(step: -1 | 1) {
   }
 
   .featured-works__media {
-    width: min(54%, 14rem);
-    margin-top: 6.125rem;
+    width: min(64%, 16rem, calc((100dvh - 25rem) * 0.8));
+    margin-top: 5.75rem;
+  }
+
+  .featured-works__media::before {
+    position: absolute;
+    top: 42%;
+    left: clamp(-2.5rem, -10vw, -1.5rem);
+    width: 0.9rem;
+    height: 1.05rem;
+    background: var(--public-accent-primary);
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+    content: '';
   }
 
   .featured-works__content {
     width: 100%;
-    margin-top: 1rem;
+    margin-top: clamp(1rem, 2.5dvh, 1.5rem);
   }
 
   .featured-works__title {
@@ -332,7 +757,7 @@ function selectWork(step: -1 | 1) {
 
   .featured-works__controls {
     width: 100%;
-    margin: 0.75rem 0 0;
+    margin: 1rem 0 0;
   }
 }
 
@@ -363,25 +788,41 @@ function selectWork(step: -1 | 1) {
     justify-self: start;
     width: min(23rem, 43vw, calc((100svh - var(--public-anchor-offset) - 10rem) * 0.75));
     margin-top: 1.4rem;
+    transform: translateY(-1.75rem);
+  }
+
+  .featured-works__info {
+    grid-column: 2 / 7;
+    grid-row: 1;
+    align-self: center;
+    gap: clamp(1.75rem, 3vh, 2.5rem);
+    width: min(100%, 31rem);
+    margin-top: clamp(2.5rem, 6vh, 4.5rem);
+  }
+
+  .featured-works__content-stack {
+    order: 1;
   }
 
   .featured-works__content {
-    grid-column: 2 / 7;
-    grid-row: 1;
-    align-self: end;
     width: min(100%, 29rem);
-    margin: 0 0 5.25rem;
+    margin: 0;
   }
 
   .featured-works__controls {
-    grid-column: 2 / 7;
-    grid-row: 1;
-    align-self: end;
-    margin: 0 0 0.25rem 1.15rem;
+    order: 2;
+    margin: 0 0 0 1.15rem;
   }
 
   .featured-works__title {
-    font-size: 3.75rem;
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    font-size: 3.25rem;
+    white-space: nowrap;
+    overflow-wrap: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .featured-works__species,
@@ -400,11 +841,13 @@ function selectWork(step: -1 | 1) {
   }
 
   .featured-works__media {
-    width: min(25rem, 29vw, calc((100svh - var(--public-header-height) - 10.5rem) * 0.75));
+    grid-column: 7 / 12;
+    width: min(34rem, 36vw, calc((100svh - var(--public-header-height) - 8.75rem) * 0.75));
   }
 
   .featured-works__title {
-    font-size: 4.5rem;
+    font-size: 3.75rem;
+    white-space: nowrap;
   }
 }
 
@@ -413,4 +856,5 @@ function selectWork(step: -1 | 1) {
     color: var(--public-border-secondary);
   }
 }
+
 </style>

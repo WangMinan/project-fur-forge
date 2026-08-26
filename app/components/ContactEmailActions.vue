@@ -120,8 +120,10 @@ onScopeDispose(() => {
 .email-actions__address {
   max-width: 100%;
   color: var(--public-text-secondary);
-  font-family: var(--font-public-mono);
-  font-size: var(--font-size-sm);
+  font-family: var(--font-role-metadata);
+  font-size: var(--type-ui-size);
+  line-height: var(--type-ui-line-height);
+  font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
 

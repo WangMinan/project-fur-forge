@@ -5,8 +5,12 @@ import type {
 } from '~~/shared/types/contracts'
 import HomeBusinessStatus from '~/components/HomeBusinessStatus.vue'
 import { formatCnyMinorUnits } from '~/utils/format'
-import { ADOPTION_STATUS_LABELS } from '~/utils/work-labels'
 import { useMotionEntrance } from '~/composables/useMotionEntrance'
+import {
+  nextSlideIndex,
+  prevSlideIndex,
+  resolveAutoplayIntervalMs,
+} from '~/utils/hero-carousel'
 
 /**
  * T34-F2 当前领养：入口与状态已合并到 HomeBusinessEntries，本区只保留真实领养。
@@ -22,7 +26,7 @@ const visibleAdoptions = computed(() => props.adoptions
   .filter(item => item.work.adoptionStatus === 'available')
   .slice(0, 3),
 )
-const activeIndex = ref(0)
+const activeIndex = shallowRef(0)
 const hasMultipleAdoptions = computed(() => visibleAdoptions.value.length > 1)
 const currentAdoption = computed(() => visibleAdoptions.value[activeIndex.value] ?? null)
 const hasLongCharacterName = computed(() => (
@@ -35,18 +39,39 @@ const price = computed(() => currentAdoption.value?.work.price
 const rootRef = useTemplateRef<HTMLElement>('root')
 const mediaRef = useTemplateRef<HTMLElement>('media')
 const captionRef = useTemplateRef<HTMLElement>('caption')
+const titleRef = useTemplateRef<HTMLElement>('title')
+const factsRef = useTemplateRef<HTMLElement>('facts')
+const statusRef = useTemplateRef<HTMLElement>('status')
+const actionsRef = useTemplateRef<HTMLElement>('actions')
+const transitionDirection = shallowRef<'next' | 'prev'>('next')
+const transitionIntent = shallowRef<'autoplay' | 'pointer'>('autoplay')
+const motionSequence = shallowRef(0)
+const reduceMotion = shallowRef(false)
+const pageHidden = shallowRef(false)
+const mediaTransitionName = computed(() => `home-adoption-media-${transitionDirection.value}`)
+const autoplayInterval = computed(() => resolveAutoplayIntervalMs(reduceMotion.value))
+const autoplayRunning = computed(() => (
+  autoplayInterval.value !== null
+  && hasMultipleAdoptions.value
+  && !pageHidden.value
+))
 const detailTo = computed(() => currentAdoption.value
   ? {
       path: currentAdoption.value.href,
-      query: { from: 'adoptions', view: 'home-adoption' },
+      query: { from: 'adoptions' },
     }
   : '/adoptions',
 )
+
+let timer: ReturnType<typeof setInterval> | null = null
+let motionQuery: MediaQueryList | null = null
+let recordAnimations: Animation[] = []
 
 watch(
   () => visibleAdoptions.value.map(item => item.work.slug).join('|'),
   () => {
     activeIndex.value = 0
+    restartTimer()
   },
 )
 
@@ -54,26 +79,142 @@ function formatFolio(index: number) {
   return String(index + 1).padStart(2, '0')
 }
 
-function selectAdoption(index: number) {
-  if (index < 0 || index >= visibleAdoptions.value.length) {
+function stopTimer() {
+  if (timer !== null) {
+    clearInterval(timer)
+    timer = null
+  }
+}
+
+function restartTimer() {
+  stopTimer()
+  if (autoplayRunning.value && autoplayInterval.value !== null) {
+    timer = setInterval(() => selectNextAdoption('autoplay'), autoplayInterval.value)
+  }
+}
+
+function animateRecord(direction: 'next' | 'prev', sequence: number) {
+  for (const animation of recordAnimations) animation.cancel()
+  recordAnimations = []
+  if (reduceMotion.value || sequence !== motionSequence.value) return
+  const easing = getComputedStyle(document.documentElement)
+    .getPropertyValue('--motion-ease-standard')
+    .trim()
+  const sign = direction === 'next' ? 1 : -1
+  const layers = [
+    { element: titleRef.value, distance: 24, duration: 380, delay: 30 },
+    { element: factsRef.value, distance: 16, duration: 340, delay: 75 },
+    { element: statusRef.value, distance: 10, duration: 300, delay: 110 },
+    { element: actionsRef.value, distance: 8, duration: 280, delay: 145 },
+  ]
+  recordAnimations = layers.flatMap(layer => layer.element
+    ? [layer.element.animate(
+        [
+          { opacity: 0.001, transform: `translate3d(${sign * layer.distance}px, 0, 0)` },
+          { opacity: 1, transform: 'translate3d(0, 0, 0)' },
+        ],
+        {
+          delay: layer.delay,
+          duration: layer.duration,
+          easing,
+          fill: 'both',
+        },
+      )]
+    : [])
+  for (const animation of recordAnimations) {
+    animation.finished
+      .then(() => animation.cancel())
+      .catch(() => undefined)
+  }
+}
+
+function setAdoption(
+  index: number,
+  direction: 'next' | 'prev',
+  intent: 'autoplay' | 'pointer' = 'pointer',
+) {
+  if (
+    index < 0
+    || index >= visibleAdoptions.value.length
+    || index === activeIndex.value
+  ) {
     return
   }
+  transitionDirection.value = direction
+  transitionIntent.value = intent
+  motionSequence.value += 1
+  const sequence = motionSequence.value
   activeIndex.value = index
+  void nextTick(() => animateRecord(direction, sequence))
+  if (intent !== 'autoplay') restartTimer()
 }
 
-function selectPreviousAdoption() {
+function selectAdoption(index: number) {
+  setAdoption(index, index > activeIndex.value ? 'next' : 'prev')
+}
+
+function selectPreviousAdoption(intent: 'autoplay' | 'pointer' = 'pointer') {
   const count = visibleAdoptions.value.length
   if (count > 1) {
-    activeIndex.value = (activeIndex.value - 1 + count) % count
+    setAdoption(prevSlideIndex(activeIndex.value, count), 'prev', intent)
   }
 }
 
-function selectNextAdoption() {
+function selectNextAdoption(intent: 'autoplay' | 'pointer' = 'pointer') {
   const count = visibleAdoptions.value.length
   if (count > 1) {
-    activeIndex.value = (activeIndex.value + 1) % count
+    setAdoption(nextSlideIndex(activeIndex.value, count), 'next', intent)
   }
 }
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault()
+    selectPreviousAdoption()
+  }
+  else if (event.key === 'ArrowRight') {
+    event.preventDefault()
+    selectNextAdoption()
+  }
+}
+
+let pointerStartX: number | null = null
+
+function onPointerDown(event: PointerEvent) {
+  if ((event.target as HTMLElement | null)?.closest('button, a')) {
+    pointerStartX = null
+    return
+  }
+  pointerStartX = event.clientX
+}
+
+function onPointerUp(event: PointerEvent) {
+  if (pointerStartX === null) {
+    return
+  }
+  const direction = resolveSwipeDirection(event.clientX - pointerStartX)
+  pointerStartX = null
+  if (direction === 'next') {
+    selectNextAdoption()
+  }
+  else if (direction === 'prev') {
+    selectPreviousAdoption()
+  }
+}
+
+function onPointerCancel() {
+  pointerStartX = null
+}
+
+function onVisibilityChange() {
+  pageHidden.value = document.hidden
+}
+
+function onMotionChange(event: MediaQueryListEvent) {
+  reduceMotion.value = event.matches
+}
+
+watch([autoplayRunning, autoplayInterval], restartTimer)
 
 useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   const media = mediaRef.value
@@ -81,12 +222,7 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   if (!media || !caption) {
     return []
   }
-  if (reduced) {
-    return [media, caption].map(element => element.animate(
-      [{ opacity: 0.72 }, { opacity: 1 }],
-      { duration: tokens.state, easing: tokens.easing, fill: 'both' },
-    ))
-  }
+  if (reduced) return []
   return [
     media.animate(
       [
@@ -112,6 +248,22 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
     ),
   ]
 })
+
+onMounted(() => {
+  motionQuery = matchMedia('(prefers-reduced-motion: reduce)')
+  reduceMotion.value = motionQuery.matches
+  motionQuery.addEventListener('change', onMotionChange)
+  pageHidden.value = document.hidden
+  document.addEventListener('visibilitychange', onVisibilityChange)
+  restartTimer()
+})
+
+onBeforeUnmount(() => {
+  stopTimer()
+  for (const animation of recordAnimations) animation.cancel()
+  motionQuery?.removeEventListener('change', onMotionChange)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
+})
 </script>
 
 <template>
@@ -122,6 +274,16 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
     aria-labelledby="home-adoptions-title"
     data-home-scroll-scene
     data-testid="home-current-adoptions"
+    :data-motion-direction="transitionDirection"
+    :data-motion-intent="transitionIntent"
+    :data-motion-sequence="motionSequence"
+    :data-reduced-motion="reduceMotion"
+    role="region"
+    aria-roledescription="carousel"
+    @keydown="onKeydown"
+    @pointerdown="onPointerDown"
+    @pointerup="onPointerUp"
+    @pointercancel="onPointerCancel"
   >
     <header class="home-adoptions__heading">
       <h2 id="home-adoptions-title" class="home-adoptions__title">设定领养</h2>
@@ -137,18 +299,25 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
       </div>
 
       <NuxtLink
-        ref="media"
         class="home-adoption-poster__media"
         :to="detailTo"
         :aria-label="`查看${currentAdoption.work.characterName}领养详情`"
         data-testid="home-adoption-media-link"
-        :style="{ viewTransitionName: 'home-adoption-media' }"
       >
-        <ResponsivePicture
-          :sources="currentAdoption.cover.sources"
-          :alt="currentAdoption.cover.alt"
-          sizes="(min-width: 1024px) 68vw, 100vw"
-        />
+        <Transition :name="mediaTransitionName">
+          <span
+            :key="currentAdoption.work.slug"
+            ref="media"
+            class="home-adoption-poster__media-surface"
+          >
+            <ResponsivePicture
+              :sources="currentAdoption.cover.sources"
+              :alt="currentAdoption.cover.alt"
+              sizes="(min-width: 1024px) 68vw, 100vw"
+              loading="eager"
+            />
+          </span>
+        </Transition>
       </NuxtLink>
 
       <nav
@@ -182,40 +351,17 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
         </p>
 
         <div
-          v-if="hasMultipleAdoptions"
-          class="home-adoption-poster__stepper"
-          aria-label="切换领养角色"
-          data-testid="home-adoption-stepper"
-        >
-          <button
-            type="button"
-            aria-label="上一个领养角色"
-            @click="selectPreviousAdoption"
-          >
-            <span aria-hidden="true">←</span> 上一个
-          </button>
-          <span class="home-adoption-poster__stepper-rule" aria-hidden="true" />
-          <button
-            type="button"
-            aria-label="下一个领养角色"
-            @click="selectNextAdoption"
-          >
-            下一个 <span aria-hidden="true">→</span>
-          </button>
-        </div>
-
-        <div
+          ref="title"
           class="home-adoption-poster__identity"
           :class="{ 'home-adoption-poster__identity--long-name': hasLongCharacterName }"
         >
           <h3>{{ currentAdoption.work.characterName }}</h3>
-          <p class="home-adoption-poster__species">{{ currentAdoption.work.species }}</p>
         </div>
 
-        <dl class="home-adoption-poster__facts">
+        <dl ref="facts" class="home-adoption-poster__facts">
           <div>
-            <dt>角色状态</dt>
-            <dd>{{ ADOPTION_STATUS_LABELS[currentAdoption.work.adoptionStatus] }}</dd>
+            <dt>物种</dt>
+            <dd>{{ currentAdoption.work.species }}</dd>
           </div>
           <div v-if="price">
             <dt>领养价格</dt>
@@ -223,9 +369,11 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
           </div>
         </dl>
 
-        <HomeBusinessStatus v-if="status" :status="status" />
+        <div v-if="status" ref="status" class="home-adoption-poster__status">
+          <HomeBusinessStatus :status="status" />
+        </div>
 
-        <div class="home-adoption-poster__actions">
+        <div ref="actions" class="home-adoption-poster__actions">
           <PublicAction :to="detailTo">
             查看领养详情
           </PublicAction>
@@ -252,6 +400,12 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   isolation: isolate;
 }
 
+@supports (height: 100dvh) {
+  .home-adoptions {
+    min-height: calc(100dvh - var(--public-header-height));
+  }
+}
+
 .home-adoptions__heading {
   position: relative;
   z-index: 4;
@@ -263,14 +417,14 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
 .home-adoption-poster__folio,
 .home-adoption-poster__facts dt {
   color: var(--public-text-secondary);
-  font-family: var(--font-public-mono);
+  font-family: var(--font-role-metadata);
   font-size: 0.6875rem;
   line-height: 1.2;
 }
 
 .home-adoptions__title {
   margin-top: 0.35rem;
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: 2rem;
   font-weight: 600;
   line-height: 1;
@@ -290,11 +444,11 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   z-index: 0;
   display: grid;
   color: var(--public-background-type);
-  font-family: var(--font-public-body);
+  font-family: var(--font-role-display-sans);
   font-size: clamp(4.25rem, 15vw, 13rem);
   font-weight: 700;
   line-height: 0.68;
-  letter-spacing: -0.08em;
+  letter-spacing: var(--type-display-letter-spacing);
   pointer-events: none;
   user-select: none;
 }
@@ -315,6 +469,38 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
 .home-adoption-poster__media:focus-visible {
   outline: 2px solid var(--public-border-focus);
   outline-offset: 4px;
+}
+
+.home-adoption-poster__media-surface {
+  grid-area: 1 / 1;
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  place-items: center;
+}
+
+.home-adoption-media-next-enter-active,
+.home-adoption-media-next-leave-active,
+.home-adoption-media-prev-enter-active,
+.home-adoption-media-prev-leave-active {
+  transition:
+    opacity 420ms var(--motion-ease-standard),
+    transform var(--motion-duration-media) var(--motion-ease-standard);
+}
+
+.home-adoption-media-next-enter-from,
+.home-adoption-media-prev-leave-to {
+  opacity: 0;
+  transform: translate3d(42px, 0, 0) scale(0.99);
+}
+
+.home-adoption-media-next-leave-to,
+.home-adoption-media-prev-enter-from {
+  opacity: 0;
+  transform: translate3d(-42px, 0, 0) scale(0.99);
 }
 
 .home-adoption-poster__media :deep(.responsive-picture),
@@ -379,6 +565,9 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   border: 0;
   border-bottom: 2px solid transparent;
   cursor: pointer;
+  transition:
+    color var(--motion-duration-state) var(--motion-ease-standard),
+    border-color var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .home-adoption-poster__selector-item + .home-adoption-poster__selector-item {
@@ -386,14 +575,14 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
 }
 
 .home-adoption-poster__selector-item span {
-  font-family: var(--font-public-mono);
+  font-family: var(--font-role-metadata);
   font-size: 0.6875rem;
 }
 
 .home-adoption-poster__selector-item strong {
   min-width: 0;
   overflow: hidden;
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: var(--font-size-sm);
   font-weight: 500;
   text-overflow: ellipsis;
@@ -410,36 +599,8 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   outline-offset: -2px;
 }
 
-.home-adoption-poster__stepper {
-  display: grid;
-  grid-template-columns: auto minmax(1.5rem, 1fr) auto;
-  align-items: center;
-  gap: var(--space-2);
-  width: 100%;
-  min-height: 2.75rem;
-}
-
-.home-adoption-poster__stepper button {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 2.75rem;
-  padding: 0;
-  color: var(--public-text-primary);
-  font-size: var(--font-size-sm);
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-}
-
-.home-adoption-poster__stepper button:focus-visible {
-  outline: 2px solid var(--public-border-focus);
-  outline-offset: 3px;
-}
-
-.home-adoption-poster__stepper-rule {
-  height: 1px;
-  background: var(--public-border-primary);
+.home-adoption-poster__selector-item:active {
+  color: var(--public-accent-active);
 }
 
 .home-adoption-poster__folio {
@@ -453,11 +614,11 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
 
 .home-adoption-poster__folio strong {
   color: var(--public-text-primary);
-  font-family: var(--font-public-mono);
+  font-family: var(--font-role-display-rounded);
   font-size: clamp(1.125rem, 1.5vw, 1.5rem);
   font-weight: 500;
   line-height: 1;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--type-display-letter-spacing);
 }
 
 .home-adoption-poster__identity {
@@ -467,21 +628,16 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
 
 .home-adoption-poster__identity h3 {
   margin: 0;
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: clamp(2.5rem, 4.6vw, 4.75rem);
   font-weight: 600;
   line-height: 0.9;
-  letter-spacing: var(--letter-spacing-tight);
+  letter-spacing: var(--type-display-letter-spacing);
   overflow-wrap: anywhere;
 }
 
 .home-adoption-poster__identity--long-name h3 {
   font-size: clamp(2.25rem, 3.8vw, 4rem);
-}
-
-.home-adoption-poster__species {
-  color: var(--public-text-secondary);
-  font-size: var(--font-size-base);
 }
 
 .home-adoption-poster__facts {
@@ -505,7 +661,7 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
 
 .home-adoption-poster__facts dd {
   margin: 0;
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: var(--font-size-md);
 }
 
@@ -516,20 +672,32 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
 }
 
 @media (max-width: 767px) {
+  .home-adoptions {
+    grid-template-rows: auto auto;
+    min-height: auto;
+    padding-bottom: clamp(1.25rem, 5vw, 2rem);
+  }
+
   .home-adoption-poster {
     grid-template-rows: auto auto auto;
+    align-self: start;
     align-content: start;
-    gap: 0.75rem;
+    gap: 0.625rem;
+    padding-top: clamp(0.75rem, 2dvh, 1.25rem);
+  }
+
+  .home-adoption-poster__display {
+    top: clamp(0.75rem, 2dvh, 1.25rem);
   }
 
   .home-adoption-poster__media {
-    height: min(34svh, 17rem);
-    margin-top: clamp(3.5rem, 15vw, 5rem);
+    height: min(32svh, 16rem);
+    margin-top: clamp(3.25rem, 14vw, 4.5rem);
     padding: 0.5rem;
   }
 
   .home-adoption-poster--multiple .home-adoption-poster__media {
-    height: min(28svh, 13.75rem);
+    height: min(31dvh, 16.5rem);
   }
 
   .home-adoption-poster__selector-item {
@@ -545,7 +713,28 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   }
 
   .home-adoption-poster__caption {
-    gap: 0.65rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.65rem 1rem;
+  }
+
+  .home-adoption-poster__folio {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    width: auto;
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .home-adoption-poster__folio > span {
+    display: none;
+  }
+
+  .home-adoption-poster__identity,
+  .home-adoption-poster__facts,
+  .home-adoption-poster__actions,
+  .home-adoption-poster__status {
+    grid-column: 1 / -1;
   }
 
   .home-adoption-poster__identity {
@@ -571,6 +760,16 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   .home-adoption-poster__actions :deep(.public-action) {
     min-height: 2.75rem;
     padding-inline: var(--space-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-adoption-media-next-enter-active,
+  .home-adoption-media-next-leave-active,
+  .home-adoption-media-prev-enter-active,
+  .home-adoption-media-prev-leave-active,
+  .home-adoption-poster__selector-item {
+    transition: none;
   }
 }
 

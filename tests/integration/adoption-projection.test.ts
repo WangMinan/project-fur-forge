@@ -107,7 +107,7 @@ afterEach(() => {
 })
 
 describe('R3-D adoption public projection', () => {
-  it('sorts status, updated time and stable id before search and pagination without changing works order', async () => {
+  it('projects only available adoptions while keeping works order unchanged', async () => {
     const rows = [
       { id: '10000000-0000-4000-8000-000000000010', slug: 'available-a', status: 'available', updatedAt: NOW + 300 },
       { id: '10000000-0000-4000-8000-000000000020', slug: 'available-b', status: 'available', updatedAt: NOW + 300 },
@@ -143,15 +143,14 @@ describe('R3-D adoption public projection', () => {
       'available-e',
       'available-f',
       'available-g',
-      'adopted-new',
     ])
-    expect(secondPage.items.map(item => item.work.slug)).toEqual(['adopted-old'])
-    expect(firstPage.pageCount).toBe(2)
-    expect(firstPage.resultCount).toBe(9)
+    expect(secondPage.items).toEqual([])
+    expect(firstPage.pageCount).toBe(1)
+    expect(firstPage.resultCount).toBe(7)
     expect(firstPage.availableCount).toBe(7)
     expect(secondPage.availableCount).toBe(7)
     expect(repository.listAdoptions({ q: '排序角色 9' }).items.map(item => item.work.slug))
-      .toEqual(['adopted-old'])
+      .toEqual([])
     // /works 仍使用原公开时间 + ID 稳定顺序；最新 adopted 不套用领养 bucket。
     expect(repository.listWorks().items[0]?.work.slug).toBe('adopted-new')
   })
@@ -317,7 +316,7 @@ describe('R3-D adoption public projection', () => {
     expect(aggregate.featured.items.map(item => item.work.slug))
       .toContain('pinecone')
     expect(repository.listAdoptions().items.map(item => item.work.slug))
-      .toEqual(['mint', 'cloud', 'galaxy', 'chestnut', 'pinecone'])
+      .toEqual(['mint', 'cloud', 'galaxy', 'chestnut'])
     expect(serialized).not.toContain('adoptionMethod')
     expect(serialized).not.toContain('eventName')
     expect(serialized).not.toContain('eventTime')

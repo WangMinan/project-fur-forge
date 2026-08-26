@@ -1,14 +1,14 @@
 # 计划：站点视觉升级与内容合规
 
 > **角色**：把 SPEC 翻译成有序、可执行的技术实现计划。
-> **状态**：2026-08-24 仅阶段 E 开放；T37～T46-F8、V00、GATE-V00、V00-F1、V00-F2、V01～V08-F2 已完成，当前停在 GATE-V08 凌巽人工验收。必要的 V08-F3、V09～V12（含补充 F 子任务）、T47 与人工视觉验收须等凌巽本人明确确认修改满意并允许继续后才开放；A～D 和原阶段 F 已关闭。
+> **状态**：2026-08-26 仅阶段 E 开放；V09～V16、T47 与 Desktop/Mobile 静态 Gate 已完成。T47 本地/自动化 hard checks 全部通过；当前不再启动实现任务，只等待 GATE-E 的真实设备和最终人工视觉验收。A～D 和原阶段 F 已关闭。
 > **评审基线**：第二轮应用代码审查基于 `main@aa8e5b70be0913f02ceddccdc262ec6fe0769df1`；对应文档随后以 `main@ea3ae0a1269676db8c06c28ed32a9a29f4bd7109` 合入，后者没有应用代码变更。
 
 ## 执行结论
 
 ### 2026-08-23 唯一开放窗口
 
-T04～T34、T34-F1、M01～M11、T37～T46-F8、V00、GATE-V00、V00-F1、V00-F2 与 V01～V08-F2 已完成。T35/T36 和原阶段 F 从需求4 backlog 关闭；它们未被补签为完成，未来实际发布/部署仍按 notices 与 Runbook 现场核对。当前严格停在独立的 GATE-V08 凌巽人工验收；必要时先执行 V08-F3 与再次验收，只有凌巽本人明确放行后才可依次进入 V09～V12、T47、GATE-E。详细依赖与验收只以 `implementation/TASKS.md` 为准。
+T04～T34、T34-F1、M01～M11、T37～T47、V00～V16 implementation/evidence/docs 已完成；T35/T36 和原阶段 F 从需求4 backlog 关闭。当前停止实现工作，详细依赖与验收只以 `implementation/TASKS.md` 为准。下方 T38～T46-F8 的分步文字保留为历史实施计划；当前视觉和运行时事实以 SPEC、Shared Visual Language、V13～T47 Handoff 为准。
 
 历史顺序保留如下，只有 E 仍开放：
 
@@ -96,9 +96,9 @@ A 组件与进度地基
 ### B4. 领养排序
 
 - `loadPublishedWorks` 或专用投影携带 `updated_at`。
-- `adoptionItems` 使用状态 bucket + updatedAt + ID 的唯一 comparator。
+- `/adoptions` 先过滤 `available`，再使用 updatedAt + ID 的唯一 comparator；`adopted` 继续保留在 `/works`。
 - 名称搜索在排序后过滤，再分页。
-- 添加一条稳定 core test：新近 adopted 仍位于所有 available 之后；组内 updatedAt 倒序。
+- 稳定 core test 覆盖 adopted 退出首页领养与 `/adoptions`、但仍保留在 `/works`；available 组内 updatedAt 倒序。
 
 ### B5. 首页动态领养（V11 决策覆盖原单项基线）
 
@@ -111,7 +111,7 @@ A 组件与进度地基
 
 - 普通代码反馈路径显著短于现有全量 workflow；
 - 不再维护或运行平行 legacy 套件；
-- `/adoptions` 和首页动态三项满足同一业务排序；
+- `/adoptions` available-only 和首页最多三项 available 投影满足同一业务排序；
 - 用户人工验收仍是视觉门禁。
 
 ## C. 轻量内容与隐私确认
@@ -186,9 +186,9 @@ A 组件与进度地基
 - 每项通过频率、目的、速度、功能四项门禁，记录位置、触发、输入模态、reduced 版本和中断策略。
 - 最终只保留约 5～7 个高置信机会，并维护 rejected candidates；本任务不修改应用代码、不预装动效库。
 
-### E2. 静态四幕
+### E2. 静态四幕（历史计划；当前由 V09+ / V11 / V12-F supersede）
 
-- T38 先让 Hero、lead representative work、非对称自设委托和单项 available 领养在桌面、平板、手机静态成立；三幕标题同级、主媒体等高，桌面按图片左—右—左交替。
+- T38 当时先让 Hero、lead representative work、非对称自设委托和单项 available 领养在桌面、平板、手机静态成立；当前 Featured 为 Type × Media、Homepage Adoption 为最多三项 available 可切换，且 Mobile 使用独立 Art Direction。
 - 领养从章节起点进入目标视口后，同屏包含标题、角色图、名称/物种、状态、目录入口和当前角色入口；图片不因全宽 16:9 把 caption 推到下一屏。
 - 内容 SSR/无 JavaScript 默认可见；删除所有章节共用同一种上浮 reveal 的假设。
 
@@ -204,7 +204,9 @@ A 组件与进度地基
 - drag 只有真正 1:1 跟手、可反向、可中断、释放速度连续且不抢纵向滚动时实施，否则保留离散切换。
 - reduced-motion 关闭自动轮播、大位移、错峰、tilt、overshoot 和共享对象飞行，但保留约 120～180ms 的 opacity/color/state 反馈。
 
-### E5. 场景动效与整合
+### E5. 场景动效与整合（历史任务记录）
+
+> 当前有效运行时由 V13/V14/T47 supersede：Hero、Featured 与 Homepage Adoption 均为 4s 页面内 carousel；Hero/Featured 可暂停，Homepage Adoption 按用户最终决定删除独立播放控制条并保留下方角色选择、swipe、键盘方向与 Reduced Motion 停播。正式公开路由只使用短 opacity 入场，不启用命名 View Transition 或跨页媒体 morph。T43～T46-F8 的旧 layout/shared-media 描述不得作为 Active Visual Contract。
 
 - T42 Hero：图片聚焦、品牌 mask/clip 错峰；默认只保留低权重分页/进度，箭头与暂停/继续按键盘、fine pointer 和触控显式唤起，暂停后恢复入口常在。
 - T43 代表作品：lead 大图、短 caption、`/works` 与当前作品两个圆角行动和低权重次级浏览；次级作品不逐卡 reveal。
@@ -230,7 +232,7 @@ A 组件与进度地基
 
 - 四幕静态层级与主次成立；
 - Hero 控制器默认静默且键盘/触控可获得，暂停后恢复入口清楚；
-- 首页领养在全部目标视口一屏完成标题、当前角色、最多三个真实索引、身份、状态和行动表达；
+- 首页领养在全部目标视口完成标题、当前角色、最多三个真实索引、名称/物种/价格和行动表达；
 - autoplay、pointer/touch、keyboard 节奏分开，未达完整门槛时不做 drag；
 - 角色感动效一次性、有因、无持续噪声；
 - 移动/reduced 可用，王旻安/景宸人工视觉验收通过。
@@ -281,7 +283,7 @@ A 组件与进度地基
 - **灵动但不噪声**：允许角色感强调，不恢复持续漂浮和无目的特效。
 - **先结构后动效**：阶段 E 从只读机会审计与静态四幕开始，不从 token 或全局页面转场开始。
 - **控制器默认静默**：低权重分页/进度保持可见，方向和暂停/继续按输入意图出现；视觉减法不牺牲键盘暂停能力。
-- **领养一屏闭环**：单项不等于全宽铺满；目标视口必须同时看见角色身份、状态和行动。
+- **领养一屏闭环**：最多三项不等于多卡平铺；目标视口一次完整展示当前角色，并同时看见真实切换、身份、价格和行动。
 
 ## 开放问题（OQ）
 

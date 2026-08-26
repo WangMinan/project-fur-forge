@@ -1,0 +1,276 @@
+{
+  "capturedAt": "2026-08-25T10:32:18.108Z",
+  "adoptionProjection": {
+    "resultCount": 5,
+    "statuses": [
+      "available",
+      "available",
+      "available",
+      "available",
+      "available"
+    ]
+  },
+  "viewports": {
+    "1440x900": {
+      "errors": [],
+      "home": {
+        "text": "设定领养 ADOPTIONS 01 小绿狗测试领养 02 常规领养测试3 03 常规领养测试2 角色选择 01 / 03 ← 上一个 下一个 → 小绿狗测试领养 物种 小狗 领养价格 ¥980 领养信息以页面为准 有限开放 查看领养详情 浏览全部角色 →",
+        "noHorizontalOverflow": true
+      },
+      "works": {
+        "markOpacity": "0.055",
+        "markVisible": true,
+        "pagination": {
+          "currentBorderBottom": "2px",
+          "stepBackground": "rgba(0, 0, 0, 0)",
+          "stepHeight": 48
+        },
+        "noHorizontalOverflow": true
+      },
+      "adoptions": {
+        "text": "ADOPTIONS 设定领养 搜索角色 搜索 联系我们申请领养 01 小绿狗测试领养 小狗 ¥980 查看当前角色 → 02 常规领养测试3 幻想兽 ¥690 查看当前角色 → 03 常规领养测试2 幻想兽 ¥680 查看当前角色 → 04 常规领养测试1 幻想兽 ¥670 查看当前角色 → 05 小狗测试领养 小狗 ¥1,200 查看当前角色 → ‹ 上一页 1 下一页 ›",
+        "noHorizontalOverflow": true
+      },
+      "commission": {
+        "kickerCount": 0,
+        "ratio": 0.2999927088902931
+      },
+      "detail": {
+        "text": "← 返回作品展示 小绿狗测试领养 物种 小狗 内容类型 设定领养 领养价格 ¥980 联系咨询领养 浏览全部领养角色 →",
+        "noHorizontalOverflow": true
+      }
+    },
+    "390x844": {
+      "errors": [],
+      "home": {
+        "text": "设定领养 ADOPTIONS 01 小绿狗测试领养 02 常规领养测试3 03 常规领养测试2 角色选择 01 / 03 ← 上一个 下一个 → 小绿狗测试领养 物种 小狗 领养价格 ¥980 领养信息以页面为准 有限开放 查看领养详情 浏览全部角色 →",
+        "noHorizontalOverflow": true
+      },
+      "works": {
+        "markOpacity": "0.045",
+        "markVisible": true,
+        "pagination": {
+          "currentBorderBottom": "2px",
+          "stepBackground": "rgba(0, 0, 0, 0)",
+          "stepHeight": 44
+        },
+        "noHorizontalOverflow": true
+      },
+      "adoptions": {
+        "text": "ADOPTIONS 设定领养 搜索角色 搜索 联系我们申请领养 01 小绿狗测试领养 小狗 ¥980 查看当前角色 → 02 常规领养测试3 幻想兽 ¥690 查看当前角色 → 03 常规领养测试2 幻想兽 ¥680 查看当前角色 → 04 常规领养测试1 幻想兽 ¥670 查看当前角色 → 05 小狗测试领养 小狗 ¥1,200 查看当前角色 → ‹ 上一页 1 下一页 ›",
+        "noHorizontalOverflow": true
+      },
+      "commission": {
+        "kickerCount": 0,
+        "ratio": 0.5
+      },
+      "detail": {
+        "text": "← 返回作品展示 小绿狗测试领养 物种 小狗 内容类型 设定领养 领养价格 ¥980 联系咨询领养 浏览全部领养角色 →",
+        "noHorizontalOverflow": true
+      }
+    },
+    "430x932": {
+      "errors": [],
+      "home": {
+        "text": "设定领养 ADOPTIONS 01 小绿狗测试领养 02 常规领养测试3 03 常规领养测试2 角色选择 01 / 03 ← 上一个 下一个 → 小绿狗测试领养 物种 小狗 领养价格 ¥980 领养信息以页面为准 有限开放 查看领养详情 浏览全部角色 →",
+        "noHorizontalOverflow": true
+      },
+      "works": {
+        "markOpacity": "0.045",
+        "markVisible": true,
+        "pagination": {
+          "currentBorderBottom": "2px",
+          "stepBackground": "rgba(0, 0, 0, 0)",
+          "stepHeight": 44
+        },
+        "noHorizontalOverflow": true
+      },
+      "adoptions": {
+        "text": "ADOPTIONS 设定领养 搜索角色 搜索 联系我们申请领养 01 小绿狗测试领养 小狗 ¥980 查看当前角色 → 02 常规领养测试3 幻想兽 ¥690 查看当前角色 → 03 常规领养测试2 幻想兽 ¥680 查看当前角色 → 04 常规领养测试1 幻想兽 ¥670 查看当前角色 → 05 小狗测试领养 小狗 ¥1,200 查看当前角色 → ‹ 上一页 1 下一页 ›",
+        "noHorizontalOverflow": true
+      },
+      "commission": {
+        "kickerCount": 0,
+        "ratio": 0.5
+      },
+      "detail": {
+        "text": "← 返回作品展示 小绿狗测试领养 物种 小狗 内容类型 设定领养 领养价格 ¥980 联系咨询领养 浏览全部领养角色 →",
+        "noHorizontalOverflow": true
+      }
+    }
+  },
+  "mediaFailure": {
+    "1440x900": {
+      "detailFallbacksContained": true,
+      "heroCenterDelta": {
+        "x": 0,
+        "y": -0.0078125
+      },
+      "worksFallbacks": [
+        {
+          "contained": true,
+          "x": -0.0078125,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": -0.0078125,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": -0.0078125,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": -0.0078125,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": -0.0078125,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": -0.0078125,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": -0.0078125,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": -0.0078125,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": -0.0078125,
+          "y": -0.0078125
+        }
+      ]
+    },
+    "390x844": {
+      "detailFallbacksContained": true,
+      "heroCenterDelta": {
+        "x": 0,
+        "y": -0.0078125
+      },
+      "worksFallbacks": [
+        {
+          "contained": true,
+          "x": 0,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": 0,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": 0,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": 0,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": 0,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": 0,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": 0,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": 0,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": 0,
+          "y": -0.0078125
+        }
+      ]
+    },
+    "430x932": {
+      "detailFallbacksContained": true,
+      "heroCenterDelta": {
+        "x": 0,
+        "y": -0.0078125
+      },
+      "worksFallbacks": [
+        {
+          "contained": true,
+          "x": 0,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": 0,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": 0,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": 0,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": 0,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": 0,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": 0,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": 0,
+          "y": -0.0078125
+        },
+        {
+          "contained": true,
+          "x": 0,
+          "y": -0.0078125
+        }
+      ]
+    }
+  },
+  "checks": {
+    "availableOnly": true,
+    "noStatusCopy": true,
+    "noHorizontalOverflow": true,
+    "worksWatermark": true,
+    "commission": true,
+    "pagination": true,
+    "mediaCentered": true,
+    "noRuntimeErrors": true
+  }
+}

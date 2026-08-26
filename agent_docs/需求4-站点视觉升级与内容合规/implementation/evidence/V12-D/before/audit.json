@@ -1,0 +1,103 @@
+{
+  "mode": "before",
+  "capturedAt": "2026-08-25T04:39:50.793Z",
+  "routes": {
+    "service": {
+      "390x844": {
+        "noHorizontalOverflow": true,
+        "imagesDecoded": true,
+        "contentWidth": 343,
+        "navLinkCount": 11,
+        "minNavTargetHeight": 44,
+        "footerVisible": true,
+        "status": 200,
+        "contentHash": "88635dc1eb204f336772b21ee7a0e3dd7d25726826a7ec354909945f9b8c7ada"
+      },
+      "430x932": {
+        "noHorizontalOverflow": true,
+        "imagesDecoded": true,
+        "contentWidth": 383,
+        "navLinkCount": 11,
+        "minNavTargetHeight": 44,
+        "footerVisible": true,
+        "status": 200,
+        "contentHash": "88635dc1eb204f336772b21ee7a0e3dd7d25726826a7ec354909945f9b8c7ada"
+      },
+      "1440x900": {
+        "noHorizontalOverflow": true,
+        "imagesDecoded": true,
+        "contentWidth": 704,
+        "navLinkCount": 11,
+        "minNavTargetHeight": 44,
+        "footerVisible": true,
+        "status": 200,
+        "contentHash": "88635dc1eb204f336772b21ee7a0e3dd7d25726826a7ec354909945f9b8c7ada"
+      }
+    },
+    "privacy": {
+      "390x844": {
+        "noHorizontalOverflow": true,
+        "imagesDecoded": true,
+        "contentWidth": 343,
+        "navLinkCount": 9,
+        "minNavTargetHeight": 44,
+        "footerVisible": true,
+        "status": 200,
+        "contentHash": "5ddb503bc58d36471eeb002496d7586c9459de953812447d71eed5e4a301055b"
+      },
+      "430x932": {
+        "noHorizontalOverflow": true,
+        "imagesDecoded": true,
+        "contentWidth": 383,
+        "navLinkCount": 9,
+        "minNavTargetHeight": 44,
+        "footerVisible": true,
+        "status": 200,
+        "contentHash": "5ddb503bc58d36471eeb002496d7586c9459de953812447d71eed5e4a301055b"
+      },
+      "1440x900": {
+        "noHorizontalOverflow": true,
+        "imagesDecoded": true,
+        "contentWidth": 704,
+        "navLinkCount": 9,
+        "minNavTargetHeight": 44,
+        "footerVisible": true,
+        "status": 200,
+        "contentHash": "5ddb503bc58d36471eeb002496d7586c9459de953812447d71eed5e4a301055b"
+      }
+    },
+    "licenses": {
+      "390x844": {
+        "noHorizontalOverflow": true,
+        "imagesDecoded": true,
+        "contentWidth": 375,
+        "navLinkCount": 0,
+        "minNavTargetHeight": null,
+        "footerVisible": true,
+        "status": 200,
+        "contentHash": "59238378f46a09e2adf28b4e66fc45314a6190ed1d6851e3a2964dc13a19c1ea"
+      },
+      "430x932": {
+        "noHorizontalOverflow": true,
+        "imagesDecoded": true,
+        "contentWidth": 415,
+        "navLinkCount": 0,
+        "minNavTargetHeight": null,
+        "footerVisible": true,
+        "status": 200,
+        "contentHash": "59238378f46a09e2adf28b4e66fc45314a6190ed1d6851e3a2964dc13a19c1ea"
+      },
+      "1440x900": {
+        "noHorizontalOverflow": true,
+        "imagesDecoded": true,
+        "contentWidth": 832,
+        "navLinkCount": 0,
+        "minNavTargetHeight": null,
+        "footerVisible": true,
+        "status": 200,
+        "contentHash": "59238378f46a09e2adf28b4e66fc45314a6190ed1d6851e3a2964dc13a19c1ea"
+      }
+    }
+  },
+  "interactions": {}
+}

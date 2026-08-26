@@ -212,9 +212,11 @@ watch(placement, () => {
 
 .hero-admin__kicker {
   color: var(--admin-accent-primary);
+  font-family: var(--font-admin-metadata);
   font-size: var(--admin-font-xs);
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font-weight: var(--admin-type-metadata-weight);
+  line-height: var(--admin-type-metadata-line-height);
+  letter-spacing: 0;
 }
 
 .hero-admin__header p:not(.hero-admin__kicker),

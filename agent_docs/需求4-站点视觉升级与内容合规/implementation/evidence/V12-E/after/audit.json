@@ -1,0 +1,183 @@
+{
+  "mode": "after",
+  "capturedAt": "2026-08-25T05:38:29.558Z",
+  "routes": {
+    "404": {
+      "390x844": {
+        "status": 404,
+        "noHorizontalOverflow": true,
+        "targetText": "404页面未找到访问的页面不存在、尚未发布或已经下架。返回首页",
+        "minActionHeight": 44,
+        "minActionWidth": 106,
+        "footerPresent": false,
+        "brandPresent": true
+      },
+      "430x932": {
+        "status": 404,
+        "noHorizontalOverflow": true,
+        "targetText": "404页面未找到访问的页面不存在、尚未发布或已经下架。返回首页",
+        "minActionHeight": 44,
+        "minActionWidth": 106,
+        "footerPresent": false,
+        "brandPresent": true
+      },
+      "1440x900": {
+        "status": 404,
+        "noHorizontalOverflow": true,
+        "targetText": "404页面未找到访问的页面不存在、尚未发布或已经下架。返回首页",
+        "minActionHeight": 44,
+        "minActionWidth": 106,
+        "footerPresent": false,
+        "brandPresent": true
+      }
+    },
+    "500": {
+      "390x844": {
+        "status": 500,
+        "noHorizontalOverflow": true,
+        "targetText": "500页面暂时无法显示服务器暂时无法完成请求，请稍后重试。返回首页",
+        "minActionHeight": 44,
+        "minActionWidth": 106,
+        "footerPresent": false,
+        "brandPresent": true
+      },
+      "430x932": {
+        "status": 500,
+        "noHorizontalOverflow": true,
+        "targetText": "500页面暂时无法显示服务器暂时无法完成请求，请稍后重试。返回首页",
+        "minActionHeight": 44,
+        "minActionWidth": 106,
+        "footerPresent": false,
+        "brandPresent": true
+      },
+      "1440x900": {
+        "status": 500,
+        "noHorizontalOverflow": true,
+        "targetText": "500页面暂时无法显示服务器暂时无法完成请求，请稍后重试。返回首页",
+        "minActionHeight": 44,
+        "minActionWidth": 106,
+        "footerPresent": false,
+        "brandPresent": true
+      }
+    },
+    "empty": {
+      "390x844": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "targetText": "这一页没有作品 回到第一页",
+        "minActionHeight": 44,
+        "minActionWidth": 120,
+        "footerPresent": true,
+        "brandPresent": true
+      },
+      "430x932": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "targetText": "这一页没有作品 回到第一页",
+        "minActionHeight": 44,
+        "minActionWidth": 120,
+        "footerPresent": true,
+        "brandPresent": true
+      },
+      "1440x900": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "targetText": "这一页没有作品 回到第一页",
+        "minActionHeight": 44,
+        "minActionWidth": 120,
+        "footerPresent": true,
+        "brandPresent": true
+      }
+    },
+    "no-result": {
+      "390x844": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "targetText": "没有找到这个设定 清除搜索",
+        "minActionHeight": 44,
+        "minActionWidth": 106,
+        "footerPresent": true,
+        "brandPresent": true
+      },
+      "430x932": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "targetText": "没有找到这个设定 清除搜索",
+        "minActionHeight": 44,
+        "minActionWidth": 106,
+        "footerPresent": true,
+        "brandPresent": true
+      },
+      "1440x900": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "targetText": "没有找到这个设定 清除搜索",
+        "minActionHeight": 44,
+        "minActionWidth": 106,
+        "footerPresent": true,
+        "brandPresent": true
+      }
+    },
+    "mediaFailure": {
+      "390x844": {
+        "failedPictures": 9,
+        "fallbackText": " 图片暂时无法显示：品牌素材 C-1",
+        "noHorizontalOverflow": true,
+        "targetText": "WORKS作品展示查看工作室已公开的角色作品与设定。 搜索 图片暂时无法显示：品牌素材 C-1品牌素材测试 C · 工作室品牌 图片暂时无法显示：品牌素材 B-1品牌素材测试 B · 工作室品牌 图片暂时无法显示：品牌素材 A-1品牌素材测试 A · 工作室品牌 图片暂时无法显示：常规领养设定图3常规领养测试3 · 幻想兽 图片暂时无法显示：常规领养设定图2常规领养测试2 · 幻想兽 图片暂时无法显示：常规领养设定图1常规领养测试1 · 幻想兽 图片暂时无法显示：小绿狗展示图一小绿狗测试领养 · 小狗 图片暂时无法显示：小狗展示图4小狗测试领养 · 小狗 图片暂时无法显示：虾片返图一虾片返图 · 犬科‹上一页1下一页›",
+        "minActionHeight": 44,
+        "minActionWidth": 66,
+        "footerPresent": true,
+        "brandPresent": true
+      },
+      "430x932": {
+        "failedPictures": 9,
+        "fallbackText": " 图片暂时无法显示：品牌素材 C-1",
+        "noHorizontalOverflow": true,
+        "targetText": "WORKS作品展示查看工作室已公开的角色作品与设定。 搜索 图片暂时无法显示：品牌素材 C-1品牌素材测试 C · 工作室品牌 图片暂时无法显示：品牌素材 B-1品牌素材测试 B · 工作室品牌 图片暂时无法显示：品牌素材 A-1品牌素材测试 A · 工作室品牌 图片暂时无法显示：常规领养设定图3常规领养测试3 · 幻想兽 图片暂时无法显示：常规领养设定图2常规领养测试2 · 幻想兽 图片暂时无法显示：常规领养设定图1常规领养测试1 · 幻想兽 图片暂时无法显示：小绿狗展示图一小绿狗测试领养 · 小狗 图片暂时无法显示：小狗展示图4小狗测试领养 · 小狗 图片暂时无法显示：虾片返图一虾片返图 · 犬科‹上一页1下一页›",
+        "minActionHeight": 44,
+        "minActionWidth": 66,
+        "footerPresent": true,
+        "brandPresent": true
+      },
+      "1440x900": {
+        "failedPictures": 9,
+        "fallbackText": " 图片暂时无法显示：品牌素材 C-1",
+        "noHorizontalOverflow": true,
+        "targetText": "WORKS作品展示查看工作室已公开的角色作品与设定。 搜索 图片暂时无法显示：品牌素材 C-1品牌素材测试 C · 工作室品牌 图片暂时无法显示：品牌素材 B-1品牌素材测试 B · 工作室品牌 图片暂时无法显示：品牌素材 A-1品牌素材测试 A · 工作室品牌 图片暂时无法显示：常规领养设定图3常规领养测试3 · 幻想兽 图片暂时无法显示：常规领养设定图2常规领养测试2 · 幻想兽 图片暂时无法显示：常规领养设定图1常规领养测试1 · 幻想兽 图片暂时无法显示：小绿狗展示图一小绿狗测试领养 · 小狗 图片暂时无法显示：小狗展示图4小狗测试领养 · 小狗 图片暂时无法显示：虾片返图一虾片返图 · 犬科‹上一页1下一页›",
+        "minActionHeight": 44,
+        "minActionWidth": 66,
+        "footerPresent": true,
+        "brandPresent": true
+      }
+    }
+  },
+  "interactions": {
+    "keyboard": {
+      "focusVisible": true,
+      "target": {
+        "height": 44,
+        "width": 106
+      }
+    },
+    "noJavaScript": {
+      "images": 9,
+      "fallbacks": 0
+    },
+    "reducedMotion": {
+      "matches": true,
+      "runningAnimations": 0
+    }
+  },
+  "checks": {
+    "statusCodes": true,
+    "noHorizontalOverflow": true,
+    "brandedErrors": true,
+    "emptyRecovery": true,
+    "noResultRecovery": true,
+    "actionTargets": true,
+    "mediaFailure": true,
+    "keyboard": true,
+    "noJavaScript": true,
+    "reducedMotion": true
+  }
+}

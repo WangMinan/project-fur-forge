@@ -132,11 +132,15 @@ async function onLogout() {
 .admin-shell__brand-name {
   font-size: var(--admin-font-md);
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
 }
 
 .admin-shell__brand-role {
+  font-family: var(--font-admin-metadata);
   font-size: var(--admin-font-xs);
+  font-weight: var(--admin-type-metadata-weight);
+  line-height: var(--admin-type-metadata-line-height);
+  letter-spacing: 0;
   color: var(--admin-accent-primary);
   border: 1px solid var(--admin-accent-tint);
   border-radius: 999px;

@@ -53,6 +53,11 @@ export function useMotionEntrance(
       observer?.disconnect()
       observer = null
       animations = play({ reduced, tokens: motionTokens() })
+      for (const animation of animations) {
+        animation.finished
+          .then(() => animation.cancel())
+          .catch(() => undefined)
+      }
     }, {
       threshold: 0.16,
       rootMargin: '0px 0px -8% 0px',

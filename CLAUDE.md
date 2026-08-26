@@ -29,8 +29,8 @@
 
 - 返图墙、最新动态、FAQ、抖音、小红书和 Bilibili 已退役，不得恢复入口、表、DTO、媒体或占位。
 - 当前官方联系面只有邮箱、QQ、QQ群；站内表单负责结构化委托投递，官方 QQ 私聊负责后续逐单确认。
-- 首页固定为品牌 Hero、代表作品、自设委托、设定领养四幕；首页领养只显示一项 `available`。
-- `/adoptions` 唯一排序为 `available → adopted`，组内 `works.updated_at DESC → id ASC`；页面不二次排序。
+- 首页固定为品牌 Hero、代表作品、自设委托、设定领养四幕；首页领养按现有排序投影最多三项 `available` 并提供切换，不足三项按真实数量退化。
+- `/adoptions` 只公开 `available`，按 `works.updated_at DESC → id ASC` 排序后搜索、分页；`adopted` 只保留在 `/works` 归档中。
 - 首页/委托 × 横/竖四个 Hero 集合、version、CAS、顺序和 operation 独立；不建立 pair 或共享 version。
 - 公开源图与私有媒体严格分离；委托设定图不生成 PUBLIC variant、ESA URL 或水印。
 - PII 不进入公开 DTO、HTML、URL、analytics、普通日志、错误、localStorage 或真实 fixture。

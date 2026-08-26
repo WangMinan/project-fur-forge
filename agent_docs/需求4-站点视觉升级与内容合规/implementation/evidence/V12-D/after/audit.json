@@ -1,0 +1,127 @@
+{
+  "mode": "after",
+  "capturedAt": "2026-08-25T05:00:11.848Z",
+  "routes": {
+    "service": {
+      "390x844": {
+        "noHorizontalOverflow": true,
+        "imagesDecoded": true,
+        "contentWidth": 343,
+        "navLinkCount": 11,
+        "minNavTargetHeight": 44,
+        "footerVisible": true,
+        "status": 200,
+        "contentHash": "3e730f38abe9bf8dd5b351bb848b7212c9cf4576286f1e02e73512144c9051da"
+      },
+      "430x932": {
+        "noHorizontalOverflow": true,
+        "imagesDecoded": true,
+        "contentWidth": 383,
+        "navLinkCount": 11,
+        "minNavTargetHeight": 44,
+        "footerVisible": true,
+        "status": 200,
+        "contentHash": "3e730f38abe9bf8dd5b351bb848b7212c9cf4576286f1e02e73512144c9051da"
+      },
+      "1440x900": {
+        "noHorizontalOverflow": true,
+        "imagesDecoded": true,
+        "contentWidth": 736,
+        "navLinkCount": 11,
+        "minNavTargetHeight": 44,
+        "footerVisible": true,
+        "status": 200,
+        "contentHash": "3e730f38abe9bf8dd5b351bb848b7212c9cf4576286f1e02e73512144c9051da"
+      }
+    },
+    "privacy": {
+      "390x844": {
+        "noHorizontalOverflow": true,
+        "imagesDecoded": true,
+        "contentWidth": 343,
+        "navLinkCount": 9,
+        "minNavTargetHeight": 44,
+        "footerVisible": true,
+        "status": 200,
+        "contentHash": "30c037601e92c2ff1cfb53050480535435bae6d9874090f000ade02ef698e144"
+      },
+      "430x932": {
+        "noHorizontalOverflow": true,
+        "imagesDecoded": true,
+        "contentWidth": 383,
+        "navLinkCount": 9,
+        "minNavTargetHeight": 44,
+        "footerVisible": true,
+        "status": 200,
+        "contentHash": "30c037601e92c2ff1cfb53050480535435bae6d9874090f000ade02ef698e144"
+      },
+      "1440x900": {
+        "noHorizontalOverflow": true,
+        "imagesDecoded": true,
+        "contentWidth": 736,
+        "navLinkCount": 9,
+        "minNavTargetHeight": 44,
+        "footerVisible": true,
+        "status": 200,
+        "contentHash": "30c037601e92c2ff1cfb53050480535435bae6d9874090f000ade02ef698e144"
+      }
+    },
+    "licenses": {
+      "390x844": {
+        "noHorizontalOverflow": true,
+        "imagesDecoded": true,
+        "contentWidth": 343,
+        "navLinkCount": 3,
+        "minNavTargetHeight": 44,
+        "footerVisible": true,
+        "status": 200,
+        "contentHash": "ad6594a0f2b90c420eb09e1e354a9d8b783c6fbd46a6b2127e44abe9d818c8fd"
+      },
+      "430x932": {
+        "noHorizontalOverflow": true,
+        "imagesDecoded": true,
+        "contentWidth": 383,
+        "navLinkCount": 3,
+        "minNavTargetHeight": 44,
+        "footerVisible": true,
+        "status": 200,
+        "contentHash": "ad6594a0f2b90c420eb09e1e354a9d8b783c6fbd46a6b2127e44abe9d818c8fd"
+      },
+      "1440x900": {
+        "noHorizontalOverflow": true,
+        "imagesDecoded": true,
+        "contentWidth": 736,
+        "navLinkCount": 3,
+        "minNavTargetHeight": 44,
+        "footerVisible": true,
+        "status": 200,
+        "contentHash": "ad6594a0f2b90c420eb09e1e354a9d8b783c6fbd46a6b2127e44abe9d818c8fd"
+      }
+    }
+  },
+  "interactions": {
+    "anchor": {
+      "hash": "#section-1",
+      "top": 88.078125,
+      "viewportHeight": 900
+    },
+    "details-390x844": {
+      "opened": true,
+      "targetHeight": 48
+    },
+    "details-1440x900": {
+      "opened": true,
+      "targetHeight": 48
+    }
+  },
+  "checks": {
+    "allRoutes200": true,
+    "allImagesDecoded": true,
+    "noHorizontalOverflow": true,
+    "allFootersPresent": true,
+    "readableLineLength": true,
+    "mobileNavTargets": true,
+    "anchorSafe": true,
+    "detailsKeyboard": true
+  }
+}

@@ -31,7 +31,7 @@ function stubPageLoad() {
 }
 
 describe('public router scroll behavior', () => {
-  it('leaves homepage snap and places a new page at the top after loading', async () => {
+  it('leaves homepage snap and places the rendered target page at the top', async () => {
     const remove = vi.fn()
     vi.stubGlobal('document', { documentElement: { classList: { remove } } })
     const finishPageLoad = stubPageLoad()
