@@ -1,9 +1,6 @@
 import { spawnSync } from 'node:child_process'
+import { pnpmInvocation } from './pnpm-invocation.mjs'
 
-const pnpmCli = process.env.npm_execpath
-if (!pnpmCli) {
-  throw new Error('pnpm did not provide npm_execpath to the release test runner.')
-}
 const steps = [
   { args: ['notices:check'] },
   { args: ['test:smoke'], env: { APP_ENV: 'test' } },
@@ -14,7 +11,8 @@ const steps = [
 ]
 
 for (const step of steps) {
-  const result = spawnSync(process.execPath, [pnpmCli, ...step.args], {
+  const invocation = pnpmInvocation(step.args)
+  const result = spawnSync(invocation.command, invocation.args, {
     env: { ...process.env, ...step.env },
     shell: false,
     stdio: 'inherit',
