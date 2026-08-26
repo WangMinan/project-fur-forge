@@ -344,6 +344,13 @@
       "when": 1788019200000,
       "tag": "0048_r4_commission_contact_refresh",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "6",
+      "when": 1788105600000,
+      "tag": "0049_r4_commission_copy_polish",
+      "breakpoints": true
     }
   ]
 }

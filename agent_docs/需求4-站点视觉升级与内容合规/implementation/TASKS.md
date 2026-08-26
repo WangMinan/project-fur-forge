@@ -6,7 +6,7 @@
 
 ## 当前目标
 
-只继续阶段 E 的全站静态视觉重构、Signature Motion、UI/Controls、响应式/输入/可访问性与最终一致性验收。V08-F1、只读的 V08-F2、方向重置的 V08-F3、`GATE-V08-R`、V09～V16、T47 与 T47-F1 implementation/docs 已完成，`GATE-DESKTOP` 与 `GATE-MOBILE` 均已由凌巽本人放行；V13～V16 已获凌巽确认。真实 iOS/Android 与最终人工观感继续留给 GATE-E，不由 Agent 代签。不得从本清单启动其他数据库、隐私、安全、分发或生产发布工作；T47-F1 是用户 2026-08-26 对委托文案、营业状态、QQ 联系派生与代表作品上限的精确重新授权。
+只继续阶段 E 的全站静态视觉重构、Signature Motion、UI/Controls、响应式/输入/可访问性与最终一致性验收。V08-F1、只读的 V08-F2、方向重置的 V08-F3、`GATE-V08-R`、V09～V16、T47 与 T47-F1/F2 implementation/docs 已完成，`GATE-DESKTOP` 与 `GATE-MOBILE` 均已由凌巽本人放行；V13～V16 已获凌巽确认。真实 iOS/Android 与最终人工观感继续留给 GATE-E，不由 Agent 代签。不得从本清单启动其他数据库、隐私、安全、分发或生产发布工作；T47-F1/F2 是用户 2026-08-26 对委托与联系范围的精确重新授权。
 
 ## 0. 文档与基线
 
@@ -286,10 +286,11 @@ Mobile 的核心原则是：**Same visual language, different composition.** Mob
 
 - [x] **V16 · Consistency & Evidence Review**：**前置依赖：V15 已完成并获该任务交接确认（已满足）；凌巽于 2026-08-26 明确确认 V16 并要求完成首页离场闪帧修复后进入 T47。** 已对照 V09 Shared Visual Language、V00-F2 公开面矩阵、V09～V15 Evidence/Handoff 审查全部公开 scene；375/768/1280 × 15 个状态、媒体失败和 500 共 51 张 fresh screenshot，加 3 张 contact sheet。10 项自动 checks 全部为 true。用户在交接确认前补充发现 Homepage 非 Hero scene → `/works` 的单帧位移；逐帧定位为 persistent Header 抢先从 `fixed` 切换 `sticky`，把仍在离场的首页下推 77px。现已让 Header 的 visual path 等页面交换边界后再提交，前向旧 scene 位移从 77px 降为 0，并补充 Playwright 回归断言与 before/after Evidence。旧文档同时统一到 V11 最多三项 available、`/adoptions` available-only、V09+ Type × Media、4s 页面内 carousel 和无跨页 media morph 的当前契约，并完成 OSS/font/license traceability。证据索引：`implementation/evidence/V16/INDEX.md`；Review：`.design/DESIGN_REVIEW.md`；Handoff：`implementation/notes/2026-08-26-V16-HANDOFF.md`。
 
-> **逐项执行纪律**：每次只能执行最前面的一个已获授权 Task。每项必须完成 implementation、指定 Desktop/Mobile/Input/Reduced Evidence、TASKS 状态和包含 `Completed / Locked Decisions / Open Issues / Regression Risks / Next Task / Do Not Start Yet` 的独立 Handoff；禁止顺手开始后续任务。后续会话必须先读取本文件与 latest Handoff，不依赖聊天记忆。T47 已完成本地/自动化 Evidence 与独立 Handoff；当前停止实现工作，只等待 GATE-E 人工验收。
+> **逐项执行纪律**：每次只能执行最前面的一个已获授权 Task。每项必须完成 implementation、指定 Desktop/Mobile/Input/Reduced Evidence、TASKS 状态和包含 `Completed / Locked Decisions / Open Issues / Regression Risks / Next Task / Do Not Start Yet` 的独立 Handoff；禁止顺手开始后续任务。后续会话必须先读取本文件与 latest Handoff，不依赖聊天记忆。T47-F2 已完成本地/自动化验收与独立 Handoff；当前停止实现工作，只等待 GATE-E 人工验收。
 
 - [x] **T47 · 连续移动/reduced/性能验收**：完成 390/430/768/1023/1024/1440 的中断/反向、autoplay、pointer/touch/keyboard、LCP/CLS/decode、compositor-only motion、safe area、输入法、键盘/焦点、prefers-*、桌面逐幕顺序/反向/锁定、1023px 原生滚动逃生与 Homepage → Works 离场回归验证。用户在交接前明确删除 Homepage Adoption 独立上一项/下一项/分页线/暂停控件；该幕保留 4s autoplay、下方真实角色选择、swipe 与键盘方向切换，Reduced Motion 停止自动播放。随后将 Mobile Adoption 的强制整屏最小高度改为内容高度，行动到底部 Footer 仅保留约 19px 呼吸，不修改 Footer 组件。自动化 hard checks 全部通过；真实 iOS/Android 和最终观感仍由 GATE-E 人工验收，不由 Agent 代签。证据：`implementation/evidence/T47/INDEX.md`；Handoff：`implementation/notes/2026-08-26-T47-HANDOFF.md`；Hero drag 未实施。
 - [x] **T47-F1 · 委托内容与联系契约收口**：按用户明确重新授权，重写去重复的委托默认文案；退役领养全局营业状态，委托只保留开放/暂停与标签；用 `jsqr` 从 READY 官方二维码派生限定为 `qm.qq.com` 的直达链接；About/Commission 复用白底等高联系目录，fine pointer hover/focus 显示二维码，触控端保留按钮，复制邮箱用不占位浮层反馈；代表作品上限提高到 5。0048 只替换空值/精确历史默认，保留自定义文案。Handoff：`implementation/notes/2026-08-26-T47-F1-COMMISSION-CONTACT-REFRESH.md`。
+- [x] **T47-F2 · 委托与联系视觉减法**：将估价说明改为用户确认的短文案，字号缩小并与联系目录等宽；About 只保留 story 与 Contact 之间的分割线；联系目录只保留外轮廓；委托营业状态卡改为全宽。0049 仅替换空值/精确旧默认。Handoff：`implementation/notes/2026-08-26-T47-F2-COMMISSION-CONTACT-POLISH.md`。
 
 ### GATE-E · 既简洁又有生命感
 

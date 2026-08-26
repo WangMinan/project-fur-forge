@@ -552,8 +552,8 @@ describe('SQLite foundation', () => {
       expect(row.privacyPolicy).not.toContain('{{')
       expect(row.privacyPolicy).not.toContain('不提供访客账号')
       expect(row.privacyVersion).toBe(before.privacyVersion + 1)
-      // 0046 更新隐私分区，0048 另外更新委托默认文案。
-      expect(row.version).toBe(before.version + 2)
+      // 0046 更新隐私分区，0048/0049 两次收敛委托默认文案。
+      expect(row.version).toBe(before.version + 3)
       expect(upgraded.sqlite.pragma('foreign_key_check')).toEqual([])
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
     }
@@ -608,7 +608,7 @@ describe('SQLite foundation', () => {
         FROM site_content WHERE id = 'site'
       `).get() as { emailAction: string, estimateNote: string, intro: string }
       expect(copy.intro).toBe('管理员保留的自定义简介')
-      expect(copy.estimateNote).toContain('每个角色都不一样')
+      expect(copy.estimateNote).toBe('请使用提交委托申请按钮提供清晰的设定图和个人基本信息，如果工作室确认接单，我们将使用官方 QQ 与你进一步沟通。')
       expect(copy.emailAction).toContain('表单暂时无法使用')
       expect(upgraded.sqlite.pragma('foreign_key_check')).toEqual([])
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
