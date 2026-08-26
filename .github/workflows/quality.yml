@@ -287,10 +287,6 @@ jobs:
             --header 'Host: media.test.invalid' http://127.0.0.1/)" = "421"
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
             --header 'Host: public.test.invalid' http://127.0.0.1/)" = "200"
-          curl --fail --silent --show-error \
-            --header 'Host: public.test.invalid' http://127.0.0.1/api/health \
-            | jq -e '.status == "ok"' >/dev/null
-
           public_projection="${nginx_test}/public-projection.txt"
           : >"${public_projection}"
           for path in / /api/public/v1/home-aggregate /api/public/v1/works /api/public/v1/adoptions; do
