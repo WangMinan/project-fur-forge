@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  assertNoticePlatform,
   buildThirdPartyNotices,
   buildThirdPartyNoticeSummary,
   renderThirdPartyNoticesText,
@@ -7,6 +8,11 @@ import {
 import { pnpmInvocation } from '../../scripts/pnpm-invocation.mjs'
 
 describe('third-party notice generation', () => {
+  it('pins generated snapshots to the release image platform', () => {
+    expect(() => assertNoticePlatform('linux', 'x64')).not.toThrow()
+    expect(() => assertNoticePlatform('win32', 'x64')).toThrow(/linux\/x64/u)
+  })
+
   it('runs pnpm command names directly and JavaScript entrypoints through Node', () => {
     expect(pnpmInvocation(['test:release'], 'pnpm')).toEqual({
       command: 'pnpm',

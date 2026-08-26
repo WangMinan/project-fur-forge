@@ -960,7 +960,7 @@
     "patches": []
   },
   {
-    "name": "@esbuild/win32-x64",
+    "name": "@esbuild/linux-x64",
     "version": "0.28.1",
     "license": "MIT",
     "repository": null,
@@ -1584,7 +1584,7 @@
     "patches": []
   },
   {
-    "name": "@oxc-parser/binding-win32-x64-msvc",
+    "name": "@oxc-parser/binding-linux-x64-gnu",
     "version": "0.140.0",
     "license": "MIT",
     "repository": null,
@@ -1840,7 +1840,7 @@
     "patches": []
   },
   {
-    "name": "@rolldown/binding-win32-x64-msvc",
+    "name": "@rolldown/binding-linux-x64-gnu",
     "version": "1.1.5",
     "license": "MIT",
     "repository": null,
@@ -1856,7 +1856,7 @@
     "patches": []
   },
   {
-    "name": "@rolldown/binding-win32-x64-msvc",
+    "name": "@rolldown/binding-linux-x64-gnu",
     "version": "1.2.0",
     "license": "MIT",
     "repository": null,
@@ -2016,23 +2016,7 @@
     "patches": []
   },
   {
-    "name": "@rollup/rollup-win32-x64-gnu",
-    "version": "4.62.3",
-    "license": "MIT",
-    "repository": null,
-    "homepage": "https://rollupjs.org/",
-    "copyright": [],
-    "noticeText": null,
-    "source": "pnpm-prod",
-    "usage": "Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.",
-    "artifactSha256": null,
-    "correspondingSourceUrl": null,
-    "sourceRevision": null,
-    "buildConfiguration": null,
-    "patches": []
-  },
-  {
-    "name": "@rollup/rollup-win32-x64-msvc",
+    "name": "@rollup/rollup-linux-x64-gnu",
     "version": "4.62.3",
     "license": "MIT",
     "repository": null,
@@ -7488,7 +7472,7 @@
     "patches": []
   },
   {
-    "name": "lightningcss-win32-x64-msvc",
+    "name": "lightningcss-linux-x64-gnu",
     "version": "1.33.0",
     "license": "MPL-2.0",
     "repository": null,

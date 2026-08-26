@@ -14,6 +14,12 @@ const SUMMARY_OUTPUT = 'app/assets/licenses/third-party-summary.json'
 const TEXT_OUTPUT = 'public/THIRD_PARTY_NOTICES.txt'
 const MANUAL_ASSETS = 'config/third-party-assets.json'
 
+export function assertNoticePlatform(platform = process.platform, arch = process.arch) {
+  if (platform !== 'linux' || arch !== 'x64') {
+    throw new Error('Third-party notices must be generated and checked on linux/x64 to match the release image target.')
+  }
+}
+
 function stableCompare(left, right) {
   const leftKey = `${left.name}\u0000${left.version}\u0000${left.source}`
   const rightKey = `${right.name}\u0000${right.version}\u0000${right.source}`
@@ -191,6 +197,7 @@ export function generateThirdPartyNoticeArtifacts() {
 }
 
 function run() {
+  assertNoticePlatform()
   const check = process.argv.slice(2).includes('--check')
   const artifacts = generateThirdPartyNoticeArtifacts()
   const outputs = [
