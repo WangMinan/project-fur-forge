@@ -33,25 +33,22 @@ function paragraphs(value: string | null | undefined) {
 
 const factParagraphs = computed(() => paragraphs(about.value?.studioFacts))
 const scopeParagraphs = computed(() => paragraphs(about.value?.makingScope))
-const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
 </script>
 
 <template>
   <div class="about-page" data-testid="about-page">
     <header class="about-masthead">
       <p class="about-masthead__word" aria-hidden="true">ABOUT</p>
-      <div class="about-masthead__inner">
-        <div class="about-masthead__heading">
-          <p class="about-masthead__studio">有点小狗工作室</p>
-          <h1 class="about-masthead__title">关于我们</h1>
-        </div>
-        <div class="about-masthead__summary">
-          <p>了解工作室、制作范围与官方联系方式。</p>
-          <a class="about-masthead__wayfinding" href="#contact">
-            前往联系方式
-            <span aria-hidden="true">↓</span>
-          </a>
-        </div>
+      <img
+        class="about-masthead__mark"
+        src="/brand/logo-mark.png"
+        alt=""
+        aria-hidden="true"
+        width="1600"
+        height="1600"
+      >
+      <div class="about-masthead__title-group">
+        <h1 class="about-masthead__title">关于我们</h1>
       </div>
     </header>
 
@@ -110,23 +107,6 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
             :email="contact.email"
           />
         </div>
-
-        <aside
-          v-if="antiScamParagraphs.length > 0"
-          class="about-contact__notice"
-          aria-labelledby="about-antiscam-title"
-        >
-          <h3 id="about-antiscam-title" class="about-contact__notice-title">防诈骗提示</h3>
-          <div class="about-contact__notice-copy">
-            <p
-              v-for="(paragraph, index) in antiScamParagraphs"
-              :key="index"
-              class="about-contact__notice-text"
-            >
-              {{ paragraph }}
-            </p>
-          </div>
-        </aside>
       </div>
     </section>
   </div>
@@ -139,41 +119,45 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
 
 .about-masthead {
   position: relative;
-  min-height: 18rem;
-  overflow: hidden;
+  display: grid;
+  align-content: end;
+  min-height: clamp(10rem, 14vw, 13rem);
+  max-width: var(--public-content-wide);
+  margin: 0 auto;
+  padding: var(--space-4) var(--public-page-padding);
+  overflow: clip;
+  isolation: isolate;
 }
 
 .about-masthead__word {
   position: absolute;
-  top: 1.5rem;
-  left: max(var(--public-page-padding), calc((100% - var(--public-content-wide)) / 2));
+  inset: clamp(1rem, 2vw, 1.75rem) 0 auto;
+  z-index: -1;
   color: var(--public-background-type);
   font-family: var(--font-role-display-sans);
-  font-size: 5rem;
+  font-size: clamp(6rem, 11vw, 10rem);
   font-weight: 700;
-  line-height: 0.8;
+  line-height: 0.66;
+  letter-spacing: var(--type-display-letter-spacing);
   pointer-events: none;
   user-select: none;
 }
 
-.about-masthead__inner {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  min-height: 18rem;
-  align-content: end;
-  gap: var(--space-6);
-  max-width: var(--public-content-wide);
-  margin: 0 auto;
-  padding: var(--space-8) var(--public-page-padding) var(--space-6);
+.about-masthead__mark {
+  position: absolute;
+  inset: clamp(-1.5rem, -1.2vw, -0.75rem) clamp(0.5rem, 3vw, 3rem) auto auto;
+  z-index: -1;
+  width: clamp(13rem, 18vw, 17rem);
+  height: auto;
+  object-fit: contain;
+  opacity: 0.055;
+  filter: grayscale(1);
+  transform: translate(8%, -8%) rotate(12deg);
+  transform-origin: center;
+  pointer-events: none;
+  user-select: none;
 }
 
-.about-masthead__heading {
-  display: grid;
-  gap: var(--space-3);
-}
-
-.about-masthead__studio,
 .about-contact__label {
   color: var(--public-text-tertiary);
   font-size: var(--font-size-xs);
@@ -181,35 +165,19 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
   letter-spacing: 0;
 }
 
+.about-masthead__title-group {
+  width: min(100%, 38rem);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--public-text-primary);
+}
+
 .about-masthead__title {
+  margin-top: var(--space-1);
   font-family: var(--font-role-display);
-  font-size: 3rem;
-  font-weight: 600;
-  line-height: var(--line-height-tight);
-  letter-spacing: 0;
-}
-
-.about-masthead__summary {
-  display: grid;
-  justify-items: start;
-  gap: var(--space-4);
-  max-width: 28rem;
-  color: var(--public-text-secondary);
-  line-height: var(--line-height-relaxed);
-}
-
-.about-masthead__wayfinding {
-  display: inline-flex;
-  min-height: 2.75rem;
-  align-items: center;
-  gap: var(--space-2);
-  color: var(--public-text-primary);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-}
-
-.about-masthead__wayfinding:hover {
-  color: var(--public-accent-hover);
+  font-size: clamp(3.5rem, 5.5vw, 5.5rem);
+  font-weight: var(--type-display-weight);
+  line-height: 0.9;
+  letter-spacing: var(--type-display-letter-spacing);
 }
 
 .about-story {
@@ -228,15 +196,13 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
   min-width: 0;
 }
 
-.about-story__title,
-.about-contact__notice-title {
+.about-story__title {
   font-size: var(--font-size-sm);
   font-weight: 700;
   line-height: var(--line-height-heading);
 }
 
-.about-story__facts-copy,
-.about-contact__notice-copy {
+.about-story__facts-copy {
   display: grid;
   gap: var(--space-4);
   min-width: 0;
@@ -257,8 +223,7 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
 }
 
 .about-story__text,
-.about-contact__description,
-.about-contact__notice-text {
+.about-contact__description {
   line-height: var(--line-height-relaxed);
   white-space: pre-line;
 }
@@ -308,37 +273,7 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
   min-width: 0;
 }
 
-.about-contact__notice {
-  display: grid;
-  gap: var(--space-4);
-  width: 100%;
-  min-width: 0;
-  padding-left: var(--space-4);
-  border-left: 2px solid var(--public-border-primary);
-}
-
-.about-contact__notice-copy {
-  max-width: var(--public-content-reading);
-  color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
-}
-
 @media (min-width: 768px) {
-  .about-masthead__inner {
-    grid-template-columns: minmax(0, 1.3fr) minmax(20rem, 0.7fr);
-    align-items: end;
-    gap: var(--space-8);
-  }
-
-  .about-masthead__title {
-    font-size: 4rem;
-  }
-
-  .about-masthead__word {
-    top: 2rem;
-    font-size: 7.5rem;
-  }
-
   .about-story {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-7);
@@ -347,32 +282,9 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
   .about-story__scope {
     padding-top: 0;
   }
-
-  .about-contact__notice {
-    grid-template-columns: minmax(10rem, 0.3fr) minmax(0, 1fr);
-    gap: var(--space-6);
-  }
 }
 
 @media (min-width: 1024px) {
-  .about-masthead,
-  .about-masthead__inner {
-    min-height: 15rem;
-  }
-
-  .about-masthead__inner {
-    padding-top: var(--space-7);
-    padding-bottom: var(--space-5);
-  }
-
-  .about-masthead__title {
-    font-size: 4rem;
-  }
-
-  .about-masthead__word {
-    font-size: 7rem;
-  }
-
   .about-story {
     padding-top: var(--space-6);
     padding-bottom: var(--space-6);
@@ -393,9 +305,30 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
   .about-contact__directory {
     align-self: center;
   }
+}
 
-  .about-contact__notice {
-    grid-column: 1 / -1;
+@media (max-width: 767px) {
+  .about-masthead {
+    min-height: 10.5rem;
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-3);
+  }
+
+  .about-masthead__word {
+    inset-block-start: 2.25rem;
+    font-size: clamp(2.35rem, 9.8vw, 4rem);
+    line-height: 0.72;
+  }
+
+  .about-masthead__mark {
+    inset: 0.5rem -1rem auto auto;
+    width: 7.5rem;
+    opacity: 0.045;
+    transform: rotate(12deg);
+  }
+
+  .about-masthead__title {
+    font-size: clamp(3rem, 14vw, 3.75rem);
   }
 }
 </style>

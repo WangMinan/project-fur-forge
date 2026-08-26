@@ -29,7 +29,6 @@ interface SiteContentRow {
   commissionEmailAction: string | null
   commissionEstimateNote: string | null
   commissionIntro: string | null
-  contactAntiScam: string | null
   contactContentVersion: number
   contactEmail: string
   officialChannelsJson: string
@@ -59,7 +58,6 @@ function siteContentRow(sqlite: Database.Database) {
       about_making_scope AS aboutMakingScope,
       basic_terms AS basicTerms,
       privacy_policy AS privacyPolicy,
-      contact_anti_scam AS contactAntiScam,
       commission_content_version AS commissionContentVersion,
       about_content_version AS aboutContentVersion,
       terms_content_version AS termsContentVersion,
@@ -143,7 +141,6 @@ function content(sqlite: Database.Database): AdminSiteContentDto {
     contact: {
       email: row.contactEmail,
       officialChannels: officialChannels(row.officialChannelsJson),
-      antiScam: row.contactAntiScam,
     },
   })
 }
@@ -261,7 +258,6 @@ export function getPublicSiteContent(
     contact: {
       email: current.contact.email,
       officialChannels: publicChannels,
-      antiScam: current.contact.antiScam,
     },
   })
 }
@@ -301,7 +297,7 @@ const SECTION_UPDATES = {
   'contact': {
     versionColumn: 'contact_content_version',
     action: 'SITE_CONTACT_CONTENT_UPDATE',
-    assignments: 'contact_email = @email, official_channels_json = @officialChannelsJson, contact_anti_scam = @antiScam',
+    assignments: 'contact_email = @email, official_channels_json = @officialChannelsJson',
   },
 } as const satisfies Record<SiteContentSection, {
   action: string

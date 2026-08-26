@@ -76,6 +76,7 @@ interface PublicHomeAggregate {
 - 委托状态 `tone` 只能为 `open | closed`，前端分别表达“开放 / 暂停”。
 - `AdminOfficialChannel` / `PublicOfficialChannel` 投影 `qrLinkUrl: string | null`；它由服务端从 `qrCodeAssetId` 指向的 READY 私有二维码解析产生，管理端请求不直接接收该值。
 - 同一 `qrCodeAssetId` 复用已有解析结果（包括 `null`）；换图时重新解析，非 `https://qm.qq.com/q/*` 结果保持 `null`。
+- `antiScam` 已从管理、更新与公开 contact DTO 退役；`site_content.contact_anti_scam` 仅作为历史兼容列保留并由 0050 清空，不再读写。
 
 管理端 `WorkListItemDto` 增加内部字段 `portraitStudioPhotoAssetId: string | null`：
 

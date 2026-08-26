@@ -71,7 +71,7 @@ function hrefFor(target: number) {
 </script>
 
 <template>
-  <main class="works-page">
+  <main class="works-page" aria-labelledby="works-page-title">
     <header class="works-page__intro">
       <span class="works-page__background-type" aria-hidden="true">WORKS</span>
       <img
@@ -82,11 +82,12 @@ function hrefFor(target: number) {
         width="1600"
         height="1600"
       >
-      <div class="works-page__identity">
-        <h1>作品展示</h1>
-        <p>查看工作室已公开的角色作品与设定。</p>
+      <div class="works-page__title-group">
+        <h1 id="works-page-title" class="works-page__title">作品展示</h1>
       </div>
+    </header>
 
+    <section class="works-page__tools" aria-label="搜索作品">
       <div class="works-page__toolbar">
         <span v-if="search.active" class="works-page__result-count">
           {{ String(resultCount).padStart(2, '0') }} 项结果
@@ -98,7 +99,7 @@ function hrefFor(target: number) {
           :show-clear="search.active"
         />
       </div>
-    </header>
+    </section>
 
     <div class="works-page__content">
       <template v-if="items.length > 0">
@@ -158,31 +159,33 @@ function hrefFor(target: number) {
 }
 
 .works-page__intro,
+.works-page__tools,
 .works-page__content {
   max-width: var(--public-content-wide);
   margin: 0 auto;
-  padding-inline: var(--public-page-padding);
 }
 
 .works-page__intro {
   position: relative;
-  isolation: isolate;
   display: grid;
-  gap: var(--space-6);
-  padding-top: var(--space-7);
-  padding-bottom: var(--space-6);
-  overflow: hidden;
+  align-content: end;
+  min-height: clamp(10rem, 14vw, 13rem);
+  padding: var(--space-4) var(--public-page-padding);
+  overflow: clip;
+  isolation: isolate;
 }
 
 .works-page__background-type {
   position: absolute;
+  inset: clamp(1rem, 2vw, 1.75rem) 0 auto;
   z-index: -1;
-  inset: clamp(0.75rem, 2vw, 2rem) auto auto var(--public-page-padding);
+  display: grid;
   color: var(--public-background-type);
   font-family: var(--font-role-display-sans);
-  font-size: clamp(5.75rem, 15vw, 13rem);
+  font-size: clamp(6rem, 11vw, 10rem);
   font-weight: 700;
-  line-height: 0.8;
+  line-height: 0.66;
+  letter-spacing: var(--type-display-letter-spacing);
   pointer-events: none;
   user-select: none;
 }
@@ -202,27 +205,28 @@ function hrefFor(target: number) {
   user-select: none;
 }
 
-.works-page__identity {
-  align-self: end;
-  padding-top: clamp(5rem, 10vw, 8rem);
+.works-page__title-group {
+  width: min(100%, 38rem);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--public-text-primary);
 }
 
-.works-page__identity h1 {
+.works-page__title {
+  margin-top: var(--space-1);
   font-family: var(--font-role-display);
-  font-size: clamp(2.75rem, 5vw, 5rem);
+  font-size: clamp(3.5rem, 5.5vw, 5.5rem);
   font-weight: var(--type-display-weight);
-  line-height: 1;
+  line-height: 0.9;
   letter-spacing: var(--type-display-letter-spacing);
 }
 
-.works-page__identity p {
-  max-width: 28rem;
-  margin-top: var(--space-4);
-  color: var(--public-text-secondary);
+.works-page__tools {
+  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--public-page-padding);
 }
 
 .works-page__content {
-  padding-bottom: var(--space-7);
+  padding: 0 var(--public-page-padding) var(--space-7);
 }
 
 .works-grid {
@@ -242,6 +246,8 @@ function hrefFor(target: number) {
   display: grid;
   align-content: end;
   gap: var(--space-2);
+  width: min(100%, 39rem);
+  margin-left: auto;
 }
 
 .works-page__toolbar > :deep(.catalog-search) {
@@ -257,12 +263,6 @@ function hrefFor(target: number) {
 }
 
 @media (min-width: 768px) {
-  .works-page__intro {
-    grid-template-columns: minmax(0, 0.9fr) minmax(22rem, 1.1fr);
-    align-items: end;
-    min-height: 20rem;
-  }
-
   .works-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-5);
@@ -270,8 +270,16 @@ function hrefFor(target: number) {
 }
 
 @media (max-width: 767px) {
+  .works-page__intro {
+    min-height: 10.5rem;
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-3);
+  }
+
   .works-page__background-type {
-    font-size: clamp(3.25rem, 14.8vw, 4.75rem);
+    inset-block-start: 2.25rem;
+    font-size: clamp(2.35rem, 9.8vw, 4rem);
+    line-height: 0.72;
   }
 
   .works-page__mark {
@@ -279,6 +287,10 @@ function hrefFor(target: number) {
     width: 7.5rem;
     opacity: 0.045;
     transform: rotate(12deg);
+  }
+
+  .works-page__title {
+    font-size: clamp(3rem, 14vw, 3.75rem);
   }
 }
 

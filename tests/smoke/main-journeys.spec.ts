@@ -403,6 +403,11 @@ test('管理员可通过登录表单进入后台', async ({ page }) => {
   await page.getByRole('button', { name: '登录' }).click()
   await expect(page).toHaveURL(/\/admin\/works/u)
   await expect(page.getByTestId('admin-shell')).toBeVisible()
+
+  await page.goto(`${adminBaseURL}/admin/site/content`)
+  await expect(page.getByTestId('content-admin')).toBeVisible()
+  await expect(page.getByRole('heading', { name: '官方联系方式' })).toBeVisible()
+  await expect(page.getByText('防诈骗')).toHaveCount(0)
 })
 
 test('作品上传显示真实 XHR determinate 进度，并可发布和下架', async ({ page }) => {
