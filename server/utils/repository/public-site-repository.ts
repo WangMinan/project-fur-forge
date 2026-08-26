@@ -500,7 +500,7 @@ function featuredEntries(entries: readonly SnapshotEntry[]) {
 function adoptionItems(entries: readonly SnapshotEntry[]) {
   return entries
     .filter((entry): entry is SnapshotEntry & { adoption: NonNullable<SnapshotEntry['adoption']> } => (
-      entry.adoption !== null
+      entry.adoption?.status === 'available'
     ))
     .toSorted(comparePublicAdoptions)
     .map((entry): PublicAdoptionListItemDto => publicAdoptionListItemDtoSchema.parse({

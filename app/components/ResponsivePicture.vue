@@ -106,7 +106,17 @@ function handleImageError() {
       @error="handleImageError"
     >
     <span v-else class="responsive-picture__fallback" role="status">
-      图片暂时无法显示{{ alt ? `：${alt}` : '' }}
+      <img
+        class="responsive-picture__fallback-mark"
+        src="/brand/logo-mark.png"
+        alt=""
+        aria-hidden="true"
+        width="1600"
+        height="1600"
+      >
+      <span class="responsive-picture__fallback-message">
+        无法显示
+      </span>
     </span>
   </picture>
 </template>
@@ -118,6 +128,8 @@ function handleImageError() {
 }
 
 .responsive-picture--failed {
+  position: relative;
+  isolation: isolate;
   display: grid;
   min-height: 100%;
   aspect-ratio: var(--responsive-picture-aspect-ratio);
@@ -140,8 +152,31 @@ function handleImageError() {
 }
 
 .responsive-picture__fallback {
-  max-width: 26rem;
+  position: absolute;
+  inset: 0;
+  display: grid;
+  width: 100%;
+  height: 100%;
   padding: var(--space-4);
+  overflow: hidden;
+  pointer-events: none;
+  place-items: center;
+}
+
+.responsive-picture__fallback-mark {
+  position: absolute;
+  width: min(72%, 16rem);
+  height: auto;
+  opacity: 0.075;
+  filter: grayscale(1);
+  transform: rotate(10deg);
+  pointer-events: none;
+  user-select: none;
+}
+
+.responsive-picture__fallback-message {
+  z-index: 1;
+  max-width: 26rem;
   font-size: var(--font-size-sm);
   line-height: var(--line-height-relaxed);
   text-align: center;

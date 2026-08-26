@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import type { RouteLocationRaw } from 'vue-router'
 import { publicWorkDetailResponseSchema } from '~~/shared/schemas/public-content'
 import { PROJECT_NAME } from '~~/shared/constants/project'
 import { formatCnyMinorUnits } from '~/utils/format'
-import { ADOPTION_STATUS_LABELS } from '~/utils/work-labels'
 
 /**
  * T19 真实作品详情：SSR 消费 GET /api/public/v1/works/{slug}。
@@ -11,11 +11,6 @@ import { ADOPTION_STATUS_LABELS } from '~/utils/work-labels'
  */
 const route = useRoute()
 const slug = computed(() => String(route.params.slug ?? ''))
-const sharedViewTransitionName = computed(() => (
-  route.query.view === 'home-adoption'
-    ? 'home-adoption-media'
-    : undefined
-))
 
 // 不提供显式 key：Nuxt 4 中静态 key 会让重挂载的详情页复用旧 slug 的缓存
 // （status === 'success' 时跳过 initialFetch）。自动 key 含 URL，slug 变化即
@@ -97,6 +92,13 @@ const gallery = computed(() => {
     })),
   ]
 })
+const initialGalleryAssetId = computed(() => {
+  const media = detail.value?.media
+  if (!media) return undefined
+  return route.query.from === 'adoptions'
+    ? media.designSheet?.assetId ?? media.adoptionCover?.assetId
+    : media.card.assetId
+})
 
 useSeoMeta({
   title: computed(() => (dto.value
@@ -142,9 +144,30 @@ useHead(() => ({
  * SSR 拿不到 history，所以先按 URL 来源标记直出；挂载后再用真实上一页恢复
  * 领养目录的搜索/分页地址，避免水合不一致。
  */
-const WORKS_BACK = { href: '/works', label: '返回作品展示' }
-const ADOPTIONS_BACK = { href: '/adoptions', label: '返回设定领养' }
-const back = shallowRef(route.query.from === 'adoptions' ? ADOPTIONS_BACK : WORKS_BACK)
+interface BackLink {
+  href: RouteLocationRaw
+  label: string
+}
+
+function workBack(href: RouteLocationRaw = '/works'): BackLink {
+  return {
+    href,
+    label: '返回作品展示',
+  }
+}
+
+function adoptionBack(href: RouteLocationRaw = '/adoptions'): BackLink {
+  return {
+    href,
+    label: '返回设定领养',
+  }
+}
+
+const back = shallowRef<BackLink>(
+  route.query.from === 'adoptions'
+    ? adoptionBack()
+    : workBack(),
+)
 
 onMounted(() => {
   const previous = window.history.state?.back
@@ -152,10 +175,13 @@ onMounted(() => {
   const adoptionPrevious = typeof previous === 'string'
     && /^\/adoptions(?:[/?#]|$)/u.test(previous)
   if (fromAdoptions || adoptionPrevious) {
-    back.value = {
-      href: adoptionPrevious ? previous : '/adoptions',
-      label: '返回设定领养',
-    }
+    back.value = adoptionBack(adoptionPrevious ? previous : '/adoptions')
+    return
+  }
+  const worksPrevious = typeof previous === 'string'
+    && /^\/works(?:[?#]|$)/u.test(previous)
+  if (worksPrevious) {
+    back.value = workBack(previous)
   }
 })
 </script>
@@ -192,14 +218,6 @@ onMounted(() => {
             <dd>设定领养</dd>
           </div>
           <div v-if="detail?.adoption">
-            <dt>领养状态</dt>
-            <dd
-              class="work-detail__adoption-status"
-              :data-status="detail.adoption.adoptionStatus"
-              data-testid="adoption-detail-status"
-            >{{ ADOPTION_STATUS_LABELS[detail.adoption.adoptionStatus] }}</dd>
-          </div>
-          <div v-if="detail?.adoption">
             <dt>领养价格</dt>
             <dd data-testid="adoption-detail-price">{{ adoptionPrice ?? '以详情为准' }}</dd>
           </div>
@@ -225,8 +243,8 @@ onMounted(() => {
         <section v-if="gallery.length > 0" class="work-detail__media-section" aria-label="作品图集">
           <WorkDetailGallery
             :gallery="gallery"
+            :initial-asset-id="initialGalleryAssetId"
             :work-name="dto.characterName"
-            :view-transition-name="sharedViewTransitionName"
           />
         </section>
         <PublicEmptyState
@@ -275,11 +293,11 @@ onMounted(() => {
 
 .work-detail__name {
   max-width: 100%;
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: var(--font-size-xl);
-  font-weight: 600;
-  line-height: var(--line-height-heading);
-  letter-spacing: var(--letter-spacing-tight);
+  font-weight: var(--type-display-weight);
+  line-height: var(--type-display-line-height);
+  letter-spacing: var(--type-display-letter-spacing);
   overflow-wrap: anywhere;
 }
 
@@ -303,18 +321,16 @@ onMounted(() => {
 
 .work-detail__identity-ledger dt {
   color: var(--public-text-secondary);
-  font-family: var(--font-public-mono);
-  font-size: var(--font-size-xs);
+  font-family: var(--font-role-metadata);
+  font-size: var(--type-metadata-size);
+  font-weight: var(--type-metadata-weight);
+  line-height: var(--type-metadata-line-height);
 }
 
 .work-detail__identity-ledger dd {
   min-width: 0;
   margin: 0;
   overflow-wrap: anywhere;
-}
-
-.work-detail__adoption-status[data-status='available'] {
-  color: var(--public-status-open);
 }
 
 .work-detail__archive-link {

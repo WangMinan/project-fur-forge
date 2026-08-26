@@ -13,11 +13,7 @@ const commission = computed(() => props.entries.commission)
 const rootRef = useTemplateRef<HTMLElement>('root')
 const mediaRef = useTemplateRef<HTMLElement>('media')
 const bodyRef = useTemplateRef<HTMLElement>('body')
-
-const commissionTo = {
-  path: '/commission',
-  query: { view: 'home-commission' },
-} as const
+const commissionTo = '/commission'
 
 useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   const media = mediaRef.value
@@ -25,12 +21,7 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   if (!media || !body) {
     return []
   }
-  if (reduced) {
-    return [media, body].map(element => element.animate(
-      [{ opacity: 0.72 }, { opacity: 1 }],
-      { duration: tokens.state, easing: tokens.easing, fill: 'both' },
-    ))
-  }
+  if (reduced) return []
   return [
     media.animate(
       [
@@ -73,11 +64,7 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
         <span>COMMISSION</span>
       </div>
 
-      <div
-        ref="media"
-        class="home-commission__media"
-        :style="{ viewTransitionName: 'home-commission-media' }"
-      >
+      <div ref="media" class="home-commission__media">
         <ResponsivePicture
           :sources="commission.sources"
           :alt="commission.alt"
@@ -105,7 +92,10 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
           <PublicAction to="/commission/apply">
             提交委托申请
           </PublicAction>
-          <PublicAction :to="commissionTo" variant="secondary">
+          <PublicAction
+            :to="commissionTo"
+            variant="secondary"
+          >
             了解自设委托
           </PublicAction>
         </div>
@@ -126,6 +116,7 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   display: grid;
   grid-template-rows: auto 1fr auto;
   gap: 0.75rem;
+  min-height: calc(100svh - var(--public-header-height));
   max-width: var(--public-content-wide);
   margin: 0 auto;
   padding: 0.75rem var(--public-page-padding);
@@ -133,6 +124,12 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   color: var(--public-text-primary);
   background: var(--public-bg-primary);
   isolation: isolate;
+}
+
+@supports (height: 100dvh) {
+  .home-commission {
+    min-height: calc(100dvh - var(--public-header-height));
+  }
 }
 
 .home-commission__heading {
@@ -144,14 +141,14 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
 }
 
 .home-commission__wayfinding {
-  font-family: var(--font-public-mono);
+  font-family: var(--font-role-metadata);
   font-size: 0.6875rem;
   line-height: 1.2;
 }
 
 .home-commission__title {
   margin-top: 0.35rem;
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: 2rem;
   font-weight: 600;
   line-height: 1;
@@ -171,7 +168,7 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   z-index: 0;
   display: grid;
   color: var(--public-background-type);
-  font-family: var(--font-public-body);
+  font-family: var(--font-role-display-sans);
   font-size: 3.55rem;
   font-weight: 800;
   line-height: 0.76;
@@ -251,7 +248,7 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
 }
 
 .home-commission__promise {
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: 2.35rem;
   font-weight: 600;
   line-height: 0.98;
@@ -309,6 +306,30 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
 .home-commission__wayfinding {
   gap: 0.5rem;
   font-size: 0.625rem;
+}
+
+@media (max-width: 767px) {
+  .home-commission__stage {
+    align-self: center;
+  }
+
+  .home-commission__media {
+    justify-self: stretch;
+    width: 100%;
+    height: min(30svh, 17rem);
+    margin-top: 4.35rem;
+  }
+
+  .home-commission__narrative {
+    gap: 0.7rem;
+    width: calc(100% - 1rem);
+    margin-top: 0.85rem;
+    margin-left: 1rem;
+  }
+
+  .home-commission__promise {
+    font-size: 2.25rem;
+  }
 }
 
 @media (min-width: 768px) {

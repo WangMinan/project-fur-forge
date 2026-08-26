@@ -22,27 +22,35 @@ useHead(() => ({
 </script>
 
 <template>
-  <main class="error-page" data-testid="public-error-page">
-    <PublicEmptyState
-      :eyebrow="String(statusCode)"
-      :title="title"
-      :description="description"
-      heading="h1"
-    >
-      <PublicAction
-      href="/"
-      @click.prevent="clearError({ redirect: '/' })"
-      >返回首页</PublicAction>
-    </PublicEmptyState>
-  </main>
+  <div class="error-shell public-error-enter">
+    <PublicHeader brand-only />
+    <main class="error-page" data-testid="public-error-page">
+      <PublicEmptyState
+        :eyebrow="String(statusCode)"
+        :title="title"
+        :description="description"
+        heading="h1"
+      >
+        <PublicAction
+          href="/"
+          @click.prevent="clearError({ redirect: '/' })"
+        >返回首页</PublicAction>
+      </PublicEmptyState>
+    </main>
+  </div>
 </template>
 
 <style scoped>
-.error-page {
+.error-shell {
   display: grid;
   min-height: 100svh;
-  padding: var(--public-page-padding);
   background: var(--public-bg-primary);
+  grid-template-rows: auto 1fr;
+}
+
+.error-page {
+  display: grid;
+  padding: var(--public-page-padding);
   place-content: center;
 }
 </style>

@@ -74,6 +74,14 @@ function hrefFor(target: number) {
   <main class="works-page">
     <header class="works-page__intro">
       <span class="works-page__background-type" aria-hidden="true">WORKS</span>
+      <img
+        class="works-page__mark"
+        src="/brand/logo-mark.png"
+        alt=""
+        aria-hidden="true"
+        width="1600"
+        height="1600"
+      >
       <div class="works-page__identity">
         <h1>作品展示</h1>
         <p>查看工作室已公开的角色作品与设定。</p>
@@ -171,10 +179,25 @@ function hrefFor(target: number) {
   z-index: -1;
   inset: clamp(0.75rem, 2vw, 2rem) auto auto var(--public-page-padding);
   color: var(--public-background-type);
-  font-family: var(--font-public-body);
+  font-family: var(--font-role-display-sans);
   font-size: clamp(5.75rem, 15vw, 13rem);
   font-weight: 700;
   line-height: 0.8;
+  pointer-events: none;
+  user-select: none;
+}
+
+.works-page__mark {
+  position: absolute;
+  inset: clamp(-1.5rem, -1.2vw, -0.75rem) clamp(0.5rem, 3vw, 3rem) auto auto;
+  z-index: -1;
+  width: clamp(13rem, 18vw, 17rem);
+  height: auto;
+  object-fit: contain;
+  opacity: 0.055;
+  filter: grayscale(1);
+  transform: translate(8%, -8%) rotate(12deg);
+  transform-origin: center;
   pointer-events: none;
   user-select: none;
 }
@@ -185,11 +208,11 @@ function hrefFor(target: number) {
 }
 
 .works-page__identity h1 {
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: clamp(2.75rem, 5vw, 5rem);
-  font-weight: 500;
+  font-weight: var(--type-display-weight);
   line-height: 1;
-  letter-spacing: var(--letter-spacing-tight);
+  letter-spacing: var(--type-display-letter-spacing);
 }
 
 .works-page__identity p {
@@ -227,8 +250,10 @@ function hrefFor(target: number) {
 
 .works-page__result-count {
   color: var(--public-text-secondary);
-  font-family: var(--font-public-mono);
-  font-size: var(--font-size-xs);
+  font-family: var(--font-role-metadata);
+  font-size: var(--type-metadata-size);
+  font-weight: var(--type-metadata-weight);
+  line-height: var(--type-metadata-line-height);
 }
 
 @media (min-width: 768px) {
@@ -241,6 +266,19 @@ function hrefFor(target: number) {
   .works-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-5);
+  }
+}
+
+@media (max-width: 767px) {
+  .works-page__background-type {
+    font-size: clamp(3.25rem, 14.8vw, 4.75rem);
+  }
+
+  .works-page__mark {
+    inset: 0.5rem -1rem auto auto;
+    width: 7.5rem;
+    opacity: 0.045;
+    transform: rotate(12deg);
   }
 }
 

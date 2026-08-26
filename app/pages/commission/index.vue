@@ -14,8 +14,6 @@ useSeoMeta({
   ogDescription: `${PROJECT_NAME}的自设委托：制作范围、营业状态与站内申请。`,
 })
 
-const route = useRoute()
-
 const { data: site, error: siteError } = await useFetch('/api/public/v1/site-content', {
   key: 'public-site-content',
   headers: useRequestHeaders(['host']),
@@ -39,10 +37,6 @@ if (heroError.value) {
 const commission = computed(() => site.value?.commission ?? null)
 const contact = computed(() => site.value?.contact ?? null)
 const status = computed(() => site.value?.statuses.commission ?? null)
-const sharedViewTransitionName = computed(() => (
-  route.query.view === 'home-commission' ? 'home-commission-media' : undefined
-))
-
 function paragraphs(value: string | null | undefined) {
   return value ? splitPlainTextParagraphs(value) : []
 }
@@ -60,7 +54,6 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
         :hero="hero"
         :status="status"
         :description="introText"
-        :view-transition-name="sharedViewTransitionName"
         data-testid="commission-hero"
       />
 
@@ -69,7 +62,6 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
           class="commission-page__section commission-page__section--scope"
           aria-labelledby="commission-scope-title"
         >
-          <p class="commission-page__section-kicker">制作范围 / 01</p>
           <h2 id="commission-scope-title" class="commission-page__section-title">制作范围</h2>
           <dl class="commission-page__scope">
             <div class="commission-page__scope-row">
@@ -94,7 +86,6 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
         </section>
 
         <section class="commission-page__section" aria-labelledby="commission-estimate-title">
-          <p class="commission-page__section-kicker">估价与联系 / 02</p>
           <h2 id="commission-estimate-title" class="commission-page__section-title">估价与联系</h2>
           <p class="commission-page__mechanism">
             委托价格由工作室按设定与需求人工逐单估价，本站不提供自动报价或固定价目。
@@ -180,11 +171,9 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
   min-width: 0;
 }
 
-.commission-page__section-kicker {
-  color: var(--public-text-secondary);
-  font-family: var(--font-public-mono);
-  font-size: 0.6875rem;
-  line-height: 1.2;
+.commission-page__section:not(.commission-page__section--scope) {
+  padding-top: 3.5rem;
+  border-top: 1px solid var(--public-border-secondary);
 }
 
 #commission-details {
@@ -192,7 +181,7 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
 }
 
 .commission-page__section-title {
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: clamp(2rem, 4vw, 3.75rem);
   font-weight: 600;
   line-height: 1;
@@ -214,12 +203,12 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
 
 .commission-page__scope-index {
   color: var(--public-text-secondary);
-  font-family: var(--font-public-mono);
+  font-family: var(--font-role-metadata);
   font-size: 0.6875rem;
 }
 
 .commission-page__scope-name {
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: 1.75rem;
   line-height: 1;
 }
@@ -232,7 +221,7 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
 
 .commission-page__mechanism {
   max-width: 32rem;
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: clamp(1.35rem, 2.3vw, 2rem);
   line-height: 1.45;
 }
@@ -270,7 +259,7 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
   gap: 0.75rem;
   min-height: 2.75rem;
   color: var(--public-text-secondary);
-  font-family: var(--font-public-mono);
+  font-family: var(--font-role-metadata);
   font-size: 0.6875rem;
   line-height: 1.2;
   text-decoration: none;
@@ -292,17 +281,21 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
 
 @media (min-width: 1024px) {
   .commission-page__grid {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 3fr) minmax(0, 7fr);
     align-items: start;
     column-gap: 1.5rem;
   }
 
   .commission-page__section--scope {
-    grid-column: 1 / 6;
+    grid-column: 1;
   }
 
   .commission-page__section:not(.commission-page__section--scope) {
-    grid-column: 7 / 13;
+    grid-column: 2;
+    padding-top: 0;
+    padding-left: 1.5rem;
+    border-top: 0;
+    border-left: 1px solid var(--public-border-secondary);
   }
 }
 </style>

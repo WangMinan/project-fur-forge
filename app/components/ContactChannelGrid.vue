@@ -118,9 +118,10 @@ const displayChannels = computed(() => props.channels.map(channel => ({
 .contact-channel-grid__account {
   min-width: 0;
   color: var(--public-text-secondary);
-  font-family: var(--font-public-mono);
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-normal);
+  font-family: var(--font-role-metadata);
+  font-size: var(--type-ui-size);
+  line-height: var(--type-ui-line-height);
+  font-variant-numeric: tabular-nums;
   text-align: left;
   overflow-wrap: anywhere;
 }

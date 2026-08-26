@@ -158,6 +158,15 @@ watch(() => route.fullPath, () => {
   background: var(--public-bg-tertiary);
 }
 
+.mobile-nav__close:focus-visible {
+  outline: 3px solid var(--public-focus-ring);
+  outline-offset: 2px;
+}
+
+.mobile-nav__close:active {
+  background: var(--public-bg-secondary);
+}
+
 .mobile-nav__links {
   display: flex;
   flex-direction: column;
@@ -171,9 +180,12 @@ watch(() => route.fullPath, () => {
 }
 
 .mobile-nav__link {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
   padding: var(--space-3) var(--space-2);
   color: var(--public-text-primary);
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-ui);
   font-size: var(--font-size-lg);
   line-height: var(--line-height-heading);
   border-radius: var(--radius-sm);
@@ -182,6 +194,17 @@ watch(() => route.fullPath, () => {
 .mobile-nav__link:hover {
   color: var(--public-accent-primary);
   background: var(--public-bg-secondary);
+}
+
+.mobile-nav__link:focus-visible,
+.mobile-nav__sublink:focus-visible {
+  outline: 3px solid var(--public-focus-ring);
+  outline-offset: -2px;
+}
+
+.mobile-nav__link:active,
+.mobile-nav__sublink:active {
+  color: var(--public-accent-active);
 }
 
 .mobile-nav__link[aria-current='page'] {
@@ -202,14 +225,20 @@ watch(() => route.fullPath, () => {
 }
 
 .mobile-nav__sublinks--top-level .mobile-nav__sublink {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
   padding: var(--space-3) var(--space-2);
   color: var(--public-text-primary);
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-ui);
   font-size: var(--font-size-lg);
   line-height: var(--line-height-heading);
 }
 
 .mobile-nav__sublink {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
   padding: var(--space-2);
   color: var(--public-text-secondary);
   font-size: var(--font-size-sm);

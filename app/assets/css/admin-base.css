@@ -38,10 +38,16 @@
   --admin-focus-ring: rgb(50 77 175 / 0.3);
   --admin-overlay: rgb(24 28 35 / 0.55);
 
-  --font-admin:
+  --font-admin-display:
     "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
-  --font-admin-mono:
-    ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --font-admin-body: var(--font-admin-display);
+  --font-admin-metadata: var(--font-admin-body);
+  --font-admin-ui: var(--font-admin-body);
+  --font-admin-legal: var(--font-admin-body);
+  --font-admin-code:
+    ui-monospace, "SFMono-Regular", Consolas, "Microsoft YaHei", monospace;
+  --font-admin: var(--font-admin-body);
+  --font-admin-mono: var(--font-admin-code);
 
   --admin-font-xs: 0.75rem;
   --admin-font-sm: 0.875rem;
@@ -53,6 +59,16 @@
   --admin-line-tight: 1.2;
   --admin-line-normal: 1.5;
   --admin-line-dense: 1.35;
+
+  --admin-type-display-weight: 600;
+  --admin-type-display-line-height: var(--admin-line-tight);
+  --admin-type-body-weight: 400;
+  --admin-type-body-line-height: var(--admin-line-normal);
+  --admin-type-metadata-weight: 600;
+  --admin-type-metadata-line-height: var(--admin-line-dense);
+  --admin-type-ui-weight: 600;
+  --admin-type-ui-line-height: var(--admin-line-dense);
+  --admin-type-code-line-height: 1.6;
 
   --admin-space-0: 0;
   --admin-space-1: 0.25rem;
@@ -100,7 +116,7 @@
 .admin-surface {
   color: var(--admin-text-primary);
   background: var(--admin-bg-workspace);
-  font-family: var(--font-admin);
+  font-family: var(--font-admin-body);
   font-size: var(--admin-font-base);
   line-height: var(--admin-line-normal);
 }
@@ -121,7 +137,9 @@
 .admin-surface .editor-card__title {
   margin: 0 0 var(--admin-space-4);
   font-size: var(--admin-font-md);
-  font-weight: 600;
+  font-family: var(--font-admin-display);
+  font-weight: var(--admin-type-display-weight);
+  line-height: var(--admin-type-display-line-height);
 }
 
 .admin-surface .editor-card__head {
@@ -140,6 +158,8 @@
   margin: 0 0 0 auto;
   font-size: var(--admin-font-xs);
   color: var(--admin-text-tertiary);
+  font-family: var(--font-admin-metadata);
+  line-height: var(--admin-type-metadata-line-height);
 }
 
 /**
@@ -165,14 +185,17 @@
 .admin-surface .admin-list-page__title {
   margin: 0;
   font-size: var(--admin-font-xl);
-  font-weight: 600;
-  line-height: var(--admin-line-tight);
+  font-family: var(--font-admin-display);
+  font-weight: var(--admin-type-display-weight);
+  line-height: var(--admin-type-display-line-height);
 }
 
 .admin-surface .admin-list-page__meta {
   margin: 0;
   color: var(--admin-text-secondary);
   font-size: var(--admin-font-sm);
+  font-family: var(--font-admin-metadata);
+  line-height: var(--admin-type-metadata-line-height);
 }
 
 .admin-surface .admin-list-toolbar {
@@ -194,7 +217,9 @@
   margin-bottom: var(--admin-space-1);
   color: var(--admin-text-secondary);
   font-size: var(--admin-font-xs);
-  font-weight: 600;
+  font-family: var(--font-admin-metadata);
+  font-weight: var(--admin-type-metadata-weight);
+  line-height: var(--admin-type-metadata-line-height);
 }
 
 .admin-surface .admin-list-toolbar__control {
@@ -206,6 +231,7 @@
   color: var(--admin-text-primary);
   background: var(--admin-bg-primary);
   font: inherit;
+  font-family: var(--font-admin-ui);
   font-size: var(--admin-font-base);
 }
 
@@ -220,7 +246,9 @@
   border-bottom: 1px solid var(--admin-border-secondary);
   color: var(--admin-text-secondary);
   font-size: var(--admin-font-xs);
-  font-weight: 600;
+  font-family: var(--font-admin-metadata);
+  font-weight: var(--admin-type-metadata-weight);
+  line-height: var(--admin-type-metadata-line-height);
   text-align: left;
   white-space: nowrap;
 }

@@ -144,6 +144,39 @@ test('首页加载、主要入口与单项开放领养在三种视口可达', as
   await expect.poll(() => page.evaluate(() => Math.round(window.scrollY)))
     .toBe(0)
 
+  await page.getByTestId('featured-works').evaluate(element => (
+    element.scrollIntoView({ block: 'start', behavior: 'instant' })
+  ))
+  await page.evaluate(() => {
+    const featured = document.querySelector<HTMLElement>('[data-testid="featured-works"]')
+    const initialTop = featured?.getBoundingClientRect().top ?? 0
+    const probe = { initialTop, maxShift: 0 }
+    ;(window as typeof window & { __homeExitLayoutProbe?: typeof probe })
+      .__homeExitLayoutProbe = probe
+
+    const measure = () => {
+      const current = document.querySelector<HTMLElement>('[data-testid="featured-works"]')
+      if (!current) {
+        return
+      }
+      probe.maxShift = Math.max(
+        probe.maxShift,
+        Math.abs(current.getBoundingClientRect().top - probe.initialTop),
+      )
+      requestAnimationFrame(measure)
+    }
+    requestAnimationFrame(measure)
+  })
+  await page.getByTestId('featured-works')
+    .getByRole('link', { name: '浏览作品展示' })
+    .click()
+  expect(await page.evaluate(() => (
+    (window as typeof window & {
+      __homeExitLayoutProbe?: { maxShift: number }
+    }).__homeExitLayoutProbe?.maxShift ?? Number.POSITIVE_INFINITY
+  ))).toBeLessThanOrEqual(1)
+
+  await page.goto('/')
   await page.getByTestId('featured-works')
     .locator('a[href^="/works/e2e-public-smoke-work"]')
     .click()
@@ -168,6 +201,24 @@ test('旧联系页保持 301 跳转到关于页联系区', async ({ request }) =
   })
   expect(response.status()).toBe(301)
   expect(response.headers().location).toBe('/about#contact')
+})
+
+test('首页滚出 Hero 后移动导航仍覆盖完整视口', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await page.waitForFunction(() => Boolean(
+    (document.querySelector('#__nuxt') as Element & { __vue_app__?: unknown })
+      ?.__vue_app__,
+  ))
+  await page.evaluate(() => window.scrollTo(0, 900))
+  await expect(page.getByTestId('public-header')).toHaveClass(/public-header--scrolled/u)
+
+  await page.getByRole('button', { name: '打开导航' }).click()
+  const panel = page.getByTestId('public-mobile-nav')
+  await expect(panel).toBeVisible()
+  await expect.poll(() => panel.evaluate(element => (
+    Math.round(element.getBoundingClientRect().height)
+  ))).toBe(844)
 })
 
 test('作品目录与作品详情可达', async ({ page }) => {

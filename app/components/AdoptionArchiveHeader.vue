@@ -12,6 +12,8 @@
       src="/brand/logo-mark.png"
       alt=""
       aria-hidden="true"
+      width="1600"
+      height="1600"
     >
 
     <div class="adoption-archive-header__title-group">
@@ -39,13 +41,17 @@
   z-index: -1;
   display: grid;
   color: var(--public-background-type);
-  font-family: var(--font-public-body);
+  font-family: var(--font-role-display-sans);
   font-size: clamp(6rem, 11vw, 10rem);
   font-weight: 700;
   line-height: 0.66;
-  letter-spacing: -0.08em;
+  letter-spacing: var(--type-display-letter-spacing);
   pointer-events: none;
   user-select: none;
+}
+
+.adoption-archive-header__display span {
+  justify-self: start;
 }
 
 .adoption-archive-header__mark {
@@ -71,11 +77,11 @@
 
 .adoption-archive-header__title {
   margin-top: var(--space-1);
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: clamp(3.5rem, 5.5vw, 5.5rem);
-  font-weight: 600;
+  font-weight: var(--type-display-weight);
   line-height: 0.9;
-  letter-spacing: var(--letter-spacing-tight);
+  letter-spacing: var(--type-display-letter-spacing);
 }
 
 @media (max-width: 767px) {
@@ -87,15 +93,15 @@
 
   .adoption-archive-header__display {
     inset-block-start: 2.25rem;
-    font-size: clamp(4.75rem, 22vw, 6rem);
+    font-size: clamp(2.35rem, 9.8vw, 4rem);
     line-height: 0.72;
   }
 
   .adoption-archive-header__mark {
-    inset: 1rem -1.25rem auto auto;
-    width: 8.5rem;
+    inset: 0.5rem -1rem auto auto;
+    width: 7.5rem;
     opacity: 0.045;
-    transform: rotate(10deg);
+    transform: rotate(12deg);
   }
 
   .adoption-archive-header__title {

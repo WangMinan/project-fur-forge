@@ -345,6 +345,8 @@ onBeforeUnmount(() => {
         src="/brand/logo-mark.png"
         alt=""
         aria-hidden="true"
+        width="1600"
+        height="1600"
       >
     </div>
 
@@ -646,7 +648,7 @@ onBeforeUnmount(() => {
   height: auto;
   opacity: 0.05;
   filter: grayscale(1);
-  transform: rotate(-15deg);
+  transform: rotate(0deg);
   transform-origin: center;
   pointer-events: none;
   user-select: none;
@@ -667,7 +669,7 @@ onBeforeUnmount(() => {
 
 .commission-apply__fields h2,
 .commission-apply__confirmations legend {
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: var(--font-size-lg);
   font-weight: 600;
   line-height: var(--line-height-heading);
@@ -754,7 +756,7 @@ onBeforeUnmount(() => {
 .commission-apply__unit-input span {
   padding-right: var(--space-3);
   color: var(--public-text-tertiary);
-  font-family: var(--font-public-mono);
+  font-family: var(--font-role-ui);
   font-size: var(--font-size-xs);
 }
 
@@ -878,9 +880,9 @@ onBeforeUnmount(() => {
 }
 
 .commission-apply__receipt {
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-code);
   font-size: var(--font-size-xl);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--type-code-letter-spacing, 0);
   overflow-wrap: anywhere;
 }
 

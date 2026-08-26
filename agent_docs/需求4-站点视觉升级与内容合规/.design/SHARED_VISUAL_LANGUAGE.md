@@ -1,8 +1,8 @@
 # Shared Visual Language Contract
 
-> Task: V09 contract, extended by V10 Service Scenes, V10-F1 Chinese wayfinding and V11 Adoption
+> Task: V09 baseline, extended through V16 consistency review
 > Baseline: Editorial / Swiss-informed Type × Media
-> Scope: public-site static composition. Motion choreography belongs to Phase M.
+> Scope: public-site composition, runtime motion semantics, controls and state consistency. V09～V12 historical implementation notes remain below; V13+ active runtime rules supersede their earlier hard-cut/shared-media wording.
 
 ## 1. Core Principle
 
@@ -91,7 +91,7 @@ This contract prohibits a universal `eyebrow + Chinese title + left image + righ
 - Components: `CommissionLead.vue` plus the `/commission` composition surface.
 - It uses a wide landscape photograph on Desktop and the existing portrait placement on portrait Mobile, followed by a three-part identity/status/action ledger.
 - The content page then separates `SERVICE RANGE / 01` and `ESTIMATE & CONTACT / 02` into an editorial service record. This is intentionally different from the Homepage Docket and must not inherit its compact one-scene geometry.
-- Existing business status, application, QQ/Email, QR, terms, focal, media fallback and `home-commission-media` shared transition remain authoritative.
+- Existing business status, application, QQ/Email, QR, terms, focal and media fallback remain authoritative. The historical `home-commission-media` shared transition was later removed; the active V13+ runtime uses only short page opacity entry.
 - The first viewport closes with `继续查看 / 制作范围与估价 ↓`; the page-level application rail uses `开始申请 / 填写委托表单 →`. Both are real links and keep the long-rule grammar.
 
 ### Deferred UI decisions
@@ -105,7 +105,7 @@ This contract prohibits a universal `eyebrow + Chinese title + left image + righ
 
 - Component: `HomeCurrentAdoptions.vue`.
 - The existing adoption comparator remains authoritative. The repository projects at most the newest three `available` roles; one or two real roles remain one or two, `adopted` roles are excluded, and no manual Homepage-featured field is introduced.
-- The scene shows one active Character Display plus a truthful role index. Multiple roles provide explicit circular `上一个 / 下一个` controls and the media-edge role index, both operating the same immediate hard-cut state; first previous wraps to last and last next wraps to first. A single role has neither a fake switcher nor an isolated numeric folio.
+- The scene shows one active Character Display plus a truthful role index. Multiple roles provide the lower character selector, circular swipe/keyboard switching and a truthful folio. V13 supersedes the historical hard-cut state with 4s autoplay and layered directional switching; T47 then supersedes its dedicated previous/next/pagination-line/pause controller after explicit user review. A single role has neither a fake switcher nor an isolated numeric folio.
 - The main setting image and primary action both open the active adoption detail. The destination updates with the selected role and remains keyboard/touch operable.
 - Long character names use a lower display-size tier instead of truncation. Index count, status, price and business status remain subordinate to the role name and contain media.
 - `ADOPTIONS / ADOPTION` is the only retained English business label. Search, status, actions and required navigation use direct Chinese; `ARCHIVE` remains an internal composition classification rather than public copy.
@@ -124,4 +124,64 @@ This contract prohibits a universal `eyebrow + Chinese title + left image + righ
 
 - The unified `/works/[slug]` base remains shared for future V12-A. V11 only adds the adoption-specific label, identity ledger, direct `联系咨询领养` action and return to all adoption roles.
 - The detail does not infer status or price absent from its DTO. V11 changes only which existing public media record is preferred by the list projection; it introduces no endpoint, schema, database, migration or media-topology change.
-- V11 is static: no adoption autoplay or transition choreography is added. Those decisions remain outside this task.
+- V11 was static at delivery; V13 now supplies the active adoption autoplay and transition choreography contract.
+
+## 9. V12-D Document Reading System
+
+- `/service`, `/privacy` and `/licenses` share a document-specific page intro, factual metadata, numbered chapter navigation, a restrained reading width and a clear return-to-top action. This is a long-form reading grammar, not a card system.
+- Desktop uses a narrow sticky chapter index beside a maximum 46rem reading column. Mobile returns to normal document flow; navigation targets remain at least 44px and may use two columns when labels fit without truncation.
+- Rules separate chapters and code/license blocks without shadows, floating containers or decorative motion. Native `details` is retained for long license text so keyboard and no-JavaScript behavior remain reliable.
+
+## 10. V12-E Error / Empty / Media Failure States
+
+- 404、500、普通 empty 与搜索 no result 复用 `PublicEmptyState` 的单一状态面：上下规则线、清楚的标题/原因/恢复行动，以及低对比度工作室 Logo。它是页面中的状态记录，不是浮动 Card。
+- 状态 Logo 复用 `/brand/logo-mark.png`，使用灰度、约 5% 不透明度和轻微旋转；必须绝对定位、裁切在状态面内、`aria-hidden`，不得改变内容尺寸或遮挡恢复行动。
+- 404/500 保留真实状态码并显示 brand-only Header。500 只使用安全通用说明，不投影 `statusMessage`、邮箱、内部路径、私有媒体信息或异常详情。
+- `ResponsivePicture` 仍是图片失败的唯一入口。失败时保留当前横/竖比例，在原媒体面内显示同款淡色 Logo 与回落文字；无 JavaScript 时继续输出原始 `<picture>`，不伪造图片、不自动重试、不新增占位资源。
+- V12-E-F1 已统一跨站字体角色；Legal text、license data、redirects 与 Footer 仍是内容契约，不因字体治理改变。
+
+## 11. V12-E-F1 Typography Governance
+
+- `Display`：中文页面/章节/角色标题使用宋体系统栈；Windows/Edge 实测命中 STSong。装饰性无衬线背景字使用 `Display Sans`，领养 folio 使用系统 rounded 栈。
+- `Body`：连续正文使用无衬线中文系统栈；Windows/Edge 实测命中 Microsoft YaHei。
+- `Metadata`：编号、状态、eyebrow、wayfinding 使用同一无衬线栈、tabular numerals 和零字距，不再把普通元数据伪装成 code。
+- `UI`：按钮、输入、导航、折叠控件使用无衬线 UI 栈；保持继承式表单字体和既有 44px 目标。
+- `Legal`：法务正文使用 Body 同源的无衬线阅读栈和独立行高；`Code` 只用于许可证表达、回执编号和机器文本，Windows/Edge 实测命中 Consolas。
+- Hero 的 `有点小狗工作室` 继续使用现有 ZhuoHeiPinTieTi 品牌字体、关键子集 preload、冻结终态与首次入场；Footer 完全冻结。
+- Noto Serif SC 继续只用于委托制作单 PDF，采用 SIL OFL 1.1 并在 PDF 中按字形子集嵌入；网页不得请求或 preload 该 11.6MB 文件。
+- PingFang SC、Microsoft YaHei、Songti/STSong、Arial Rounded、Consolas 只作为访问者操作系统字体引用，不作为仓库资产分发。没有跨平台一致性硬需求时，不新增 Web Font。
+
+## 12. V12-E-F2 Desktop Acceptance Corrections
+
+- 图片失败层必须覆盖并居中于实际媒体框；大媒体、目录卡片、详情舞台和小缩略图复用同一 `ResponsivePicture` 规则，不使用页面级偏移补丁。
+- 公开领养界面只展示 `available`；`adopted` 退出首页和 `/adoptions`，但后台状态模型与 `/works` 作品归档保持不变。前台身份信息保留物种与价格，不重复展示领养状态。
+- Works 与 Adoptions 继续共用 editorial pagination；箭头、中文标签、规则线和当前页下划线不改变 SSR、无 JavaScript、键盘、44px、current 或 disabled 语义。
+- `/commission` 的制作范围与估价联系使用 3:7 内容权重；Desktop 以淡灰竖线、Mobile 以淡灰横线建立结构分隔，不恢复重复 kicker 或卡片容器。
+- Works masthead 的工作室 Logo 与既有 Adoptions 水印属于低对比度构图平衡层，绝对定位、`aria-hidden` 且不改变页面布局。
+
+## 13. V12-E-F3 / F4 Homepage Acceptance Corrections
+
+- Homepage Featured 与 Commission 的同语义 primary action 统一使用共享蓝色 token；局部 scene 不再覆盖主按钮颜色。
+- Featured Desktop 的名称、物种、CTA 和切换器组成单一信息组；内容先读、切换器随后，整体位于左侧中部，不再坠到场景底部。
+- Desktop 主摄影向 12-column field 中部延伸并使用视口高度上限；更大的媒体与背景 `SELECTED WORKS` 建立明确 overlap，同时给底部 wayfinding 保留稳定空间。
+- Featured 复用 Homepage Adoption 的 `--public-media-canvas` 作为浅灰媒体承托：外框保持场景尺度，照片通过响应式 padding 在内部缩小；画布使用共享 `12px` 图片圆角，内层照片使用 `8px` 圆角并真实裁切。该处理不把摄影改成 `contain`，也不新增颜色 token。
+- Tablet/Mobile 不继承 Desktop 的视觉顺序，继续保持图片 → 切换器 → 信息；本轮截图只证明 Structural Safety，不代签 Mobile Final Art Direction。
+
+## 14. V12-F Mobile Homepage Art Direction
+
+- Mobile Homepage 继续使用 Hero → Featured → Commission → Adoption 的内容顺序，但每幕在 390×844 / 430×932 下独立组织媒体、信息和 controls，不复制 Desktop 12-column grid。
+- Hero 品牌文字继续遵守 Brand Lock。V12-F 只调整移动端 scrim、supporting copy 与周边留白；未修改“有点小狗工作室”的内容、字体、字号、字重、行高、字距、核心位置、对齐或一次性首次入场。
+- Featured 的浅灰媒体画布与 `12px / 8px` 外内圆角继续作为摄影承托；Mobile 保留显式上一项/下一项、真实双项编号、角色名、物种与 `/works` 行动，且 controls 与信息之间有明确间距。
+- Commission 在 Mobile 使用满宽媒体和轻微错轴的信息组，收紧纵向节奏但不删除状态、说明、申请与详情行动。
+- Adoption 在 Mobile 保留最多三个真实 `available` 角色、显式三项选择、循环上一项/下一项、当前 `01 / 03`、完整 `contain` 设定图、物种/价格与两个行动；页码与切换器合并为同一稳定控制行。
+- Hero 4s autoplay、换图不重启品牌标题入场、Reduced Motion 直接终态、font flash 修复和 Desktop 冻结构图继续有效。V12-F 不新增 Motion choreography、依赖、数据字段、路由或业务投影。
+- 收口时按用户直接反馈修正 `/works` 与 `/adoptions` 的 Mobile masthead 装饰冲突，并压缩 `AdoptionCard`；这属于已完成的局部回归修正，不能替代 V12-G 对其余公开页面的完整 Mobile Art Direction。
+
+## 15. V13–V16 Active Runtime and Consistency Contract
+
+- Hero、Featured 与 Homepage Adoption 默认 4s autoplay；Hero/Featured 具备 pause/resume，Homepage Adoption 依 T47 最终用户决定只保留下方角色选择、swipe 与键盘方向。三者均具备页面隐藏暂停、Next/Previous 方向语义、interrupt 与 Reduced Motion 可靠终态。背景 Typography、CTA、保留的 controls 和稳定媒体外框不参与无意义的大幅位移。
+- Featured 只让摄影与角色名/物种承担方向切换；Homepage Adoption 使用 Media → Name → Facts → Action 的递减运动层级。Hero/Featured 轮播控制与 Homepage Adoption 下方角色选择的焦点、触控目标和语义状态统一遵守 V14 的 44px 规则。
+- 正式公开路由统一使用短 opacity 入场，不启用命名 View Transition、跨页媒体 morph 或共享对象飞行。V10/V13 中相关 shared-media 文字和 Evidence 仅保留为历史实现记录。
+- V11 明确 supersede T21 首页单项投影：Homepage Adoption 最多展示三项当前 `available`；`/adoptions` 只公开 `available`，`adopted` 继续保留在 `/works`。
+- Footer 内容、布局、样式、响应式与交互保持冻结；Hero `有点小狗工作室` 的品牌文字身份、确认终态和一次性首次入场保持锁定。
+- 公开页共享 Display/Body/Metadata/UI/Legal/Code 字体角色、摄影圆角、中文 wayfinding、错误/空态/媒体失败语言和可访问性状态；各 scene 必须保持独立 Composition，不能因为共享 token 而模板化。

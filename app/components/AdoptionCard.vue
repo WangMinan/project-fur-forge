@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { formatCnyMinorUnits } from '~/utils/format'
-import { ADOPTION_STATUS_LABELS } from '~/utils/work-labels'
 import type { PublicAdoptionListItemDto } from '~~/shared/types/contracts'
 
 const props = defineProps<{
@@ -9,7 +8,7 @@ const props = defineProps<{
 }>()
 
 const hasLongCharacterName = computed(() => (
-  props.adoption.work.characterName.length >= 7
+  props.adoption.work.characterName.length >= 10
 ))
 const folioLabel = computed(() => String(props.folio).padStart(2, '0'))
 const priceLabel = computed(() => (
@@ -21,20 +20,24 @@ const mediaOrientation = computed(() => {
   const image = props.adoption.cover.sources.fallback.at(-1)
   return image && image.height > image.width ? 'portrait' : 'landscape'
 })
+const adoptionTo = computed(() => ({
+  path: props.adoption.href,
+  query: { from: 'adoptions' },
+}))
 </script>
 
 <template>
   <NuxtLink
-    :to="{
-      path: adoption.href,
-      query: { from: 'adoptions' },
-    }"
+    :to="adoptionTo"
     class="adoption-card"
     :data-work-slug="adoption.work.slug"
     :aria-label="`查看领养角色：${adoption.work.characterName}`"
   >
     <span class="adoption-card__record">
-      <span class="adoption-card__canvas" :data-orientation="mediaOrientation">
+      <span
+        class="adoption-card__canvas"
+        :data-orientation="mediaOrientation"
+      >
         <ResponsivePicture
           :sources="adoption.cover.sources"
           :alt="adoption.cover.alt"
@@ -55,9 +58,6 @@ const mediaOrientation = computed(() => {
         <span class="adoption-card__facts" aria-label="角色简要信息">
           <span>{{ adoption.work.species }}</span>
           <span v-if="priceLabel">{{ priceLabel }}</span>
-          <span class="adoption-card__availability">
-            {{ ADOPTION_STATUS_LABELS[adoption.work.adoptionStatus] }}
-          </span>
         </span>
 
         <span class="adoption-card__action">
@@ -100,6 +100,7 @@ const mediaOrientation = computed(() => {
   min-width: 0;
   overflow: hidden;
   aspect-ratio: 4 / 3;
+  padding: var(--space-2);
   background: var(--public-media-canvas);
   place-items: center;
 }
@@ -111,8 +112,14 @@ const mediaOrientation = computed(() => {
 }
 
 .adoption-card__canvas :deep(.responsive-picture__image) {
+  border-radius: calc(var(--radius-image) - 4px);
   object-fit: contain;
   transition: none;
+}
+
+.adoption-card__canvas :deep(.responsive-picture) {
+  overflow: hidden;
+  border-radius: calc(var(--radius-image) - 4px);
 }
 
 .adoption-card__profile,
@@ -141,11 +148,11 @@ const mediaOrientation = computed(() => {
   inset: auto -0.45rem -0.85rem auto;
   z-index: 0;
   color: color-mix(in srgb, var(--public-text-primary) 21%, transparent);
-  font-family: ui-rounded, "Arial Rounded MT Bold", "SF Pro Rounded", var(--font-public-body);
+  font-family: var(--font-role-display-rounded);
   font-size: clamp(4.75rem, 19vw, 7rem);
   font-weight: 600;
   line-height: 0.8;
-  letter-spacing: -0.07em;
+  letter-spacing: var(--type-display-letter-spacing);
   font-variant-numeric: tabular-nums;
   pointer-events: none;
   user-select: none;
@@ -153,11 +160,11 @@ const mediaOrientation = computed(() => {
 
 .adoption-card__title {
   max-width: 11ch;
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: clamp(2rem, 8vw, 2.75rem);
   font-weight: 500;
   line-height: 1.06;
-  letter-spacing: var(--letter-spacing-tight);
+  letter-spacing: var(--type-display-letter-spacing);
   overflow-wrap: anywhere;
 }
 
@@ -188,10 +195,6 @@ const mediaOrientation = computed(() => {
   font-weight: 700;
 }
 
-.adoption-card__availability {
-  color: var(--public-status-open);
-}
-
 .adoption-card__action {
   flex-direction: row;
   align-items: center;
@@ -204,6 +207,50 @@ const mediaOrientation = computed(() => {
   color: var(--public-text-primary);
   border-top: 1px solid var(--public-border-primary);
   font-weight: 600;
+}
+
+@media (max-width: 767px) {
+  .adoption-card {
+    padding-bottom: var(--space-4);
+  }
+
+  .adoption-card__canvas {
+    aspect-ratio: 16 / 9;
+  }
+
+  .adoption-card__profile {
+    padding: var(--space-4);
+  }
+
+  .adoption-card__title {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    font-size: clamp(1.625rem, 7vw, 2rem);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .adoption-card__title--long {
+    font-size: clamp(1.4rem, 6vw, 1.75rem);
+  }
+
+  .adoption-card__facts {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: var(--space-2) var(--space-5);
+    margin-top: var(--space-2);
+  }
+
+  .adoption-card__facts > span {
+    white-space: nowrap;
+  }
+
+  .adoption-card__action {
+    margin-top: var(--space-4);
+    margin-bottom: 0;
+  }
 }
 
 @media (min-width: 768px) {

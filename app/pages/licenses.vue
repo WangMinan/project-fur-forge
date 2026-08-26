@@ -33,104 +33,200 @@ interface NoticeSummary {
 const summary = generatedSummary as NoticeSummary
 const assets = summary.assets
 const ffmpegPackage = summary.ffmpegPackage
+const documentMeta = `${assets.length} 项授权资产 · ${summary.packageCount} 条依赖记录`
 </script>
 
 <template>
-  <div class="public-page">
-    <PublicPageIntro title="开源软件声明" />
+  <div id="document-top" class="public-page">
+    <PublicPageIntro title="开源软件声明" :meta="documentMeta" variant="document" />
 
-    <div class="licenses">
-      <p class="licenses__lead">
-        本站使用开源软件和经授权的第三方字体、工具。开源项目的版权与许可证归各自作者所有；“免费商用”资产不等同于开源软件。
-      </p>
-
-      <section class="license-entry" aria-labelledby="license-ffmpeg">
-        <div class="license-entry__head">
-          <h2 id="license-ffmpeg" class="license-entry__name">FFmpeg</h2>
-          <p class="license-entry__license">{{ ffmpegPackage?.license ?? '待登记' }}</p>
+    <div class="licenses-layout">
+      <nav class="licenses-nav" aria-label="开源软件声明目录">
+        <div class="licenses-nav__heading">
+          <p class="licenses-nav__label">章节导航</p>
+          <p class="licenses-nav__count">03 节</p>
         </div>
+        <ol class="licenses-nav__list">
+          <li>
+            <a class="licenses-nav__link" href="#license-ffmpeg">
+              <span>01</span><span>FFmpeg</span>
+            </a>
+          </li>
+          <li>
+            <a class="licenses-nav__link" href="#license-assets">
+              <span>02</span><span>第三方字体与授权资产</span>
+            </a>
+          </li>
+          <li>
+            <a class="licenses-nav__link" href="#license-npm">
+              <span>03</span><span>npm 生产依赖声明</span>
+            </a>
+          </li>
+        </ol>
+      </nav>
 
-        <p class="license-entry__text">
-          本站在工作室服务器容器中使用 FFmpeg 处理图片，网页不提供单独的 FFmpeg 下载入口。当前发布流程会把包含 FFmpeg 的容器镜像发布到公开 Docker Hub，因此按二进制分发场景维护声明。
+      <div class="licenses">
+        <p class="licenses__lead">
+          本站使用开源软件和经授权的第三方字体、工具。开源项目的版权与许可证归各自作者所有；“免费商用”资产不等同于开源软件。
         </p>
-        <p class="license-entry__note">
-          当前只确认 npm 包 {{ ffmpegPackage?.name }}@{{ ffmpegPackage?.version }}（{{ ffmpegPackage?.license }}）的安装事实。Linux 发布镜像内实际二进制的版本、SHA-256、对应源码 revision、补丁和构建配置尚未从发布产物提取；完成部署阶段 registry 前，本页不声称任何具体 FFmpeg 二进制构建事实。
-        </p>
 
-        <!-- 原生 details：无 JavaScript 可用、键盘可达，不需要自制折叠组件。 -->
-        <details class="license-full">
-          <summary class="license-full__summary">
-            GNU General Public License v3 标准全文
-          </summary>
-          <pre class="license-full__text">{{ gplText }}</pre>
-        </details>
-      </section>
-
-      <section class="licenses__section" aria-labelledby="license-assets">
-        <h2 id="license-assets" class="licenses__title">第三方字体与授权资产</h2>
-        <dl class="licenses__list">
-          <div v-for="item in assets" :key="`${item.name}@${item.version}`" class="licenses__row">
-            <dt class="licenses__name">
-              <a v-if="item.homepage" :href="item.homepage" target="_blank" rel="noopener noreferrer">
-                {{ item.name }}
-              </a>
-              <template v-else>{{ item.name }}</template>
-            </dt>
-            <dd class="licenses__purpose">
-              {{ item.usage }}<template v-if="item.noticeText"> {{ item.noticeText }}</template>
-            </dd>
-            <dd class="licenses__license">{{ item.license }}</dd>
+        <section class="license-entry" aria-labelledby="license-ffmpeg">
+          <div class="license-entry__head">
+            <h2 id="license-ffmpeg" class="license-entry__name">FFmpeg</h2>
+            <p class="license-entry__license">{{ ffmpegPackage?.license ?? '待登记' }}</p>
           </div>
-        </dl>
-      </section>
 
-      <section class="licenses__section" aria-labelledby="license-npm">
-        <h2 id="license-npm" class="licenses__title">npm 生产依赖声明</h2>
-        <p class="licenses__subtitle">
-          当前生成环境的 production 安装快照包含 {{ summary.packageCount }} 条包/版本记录，共 {{ summary.licenseCounts.length }} 种许可证表达。平台可选包反映生成环境，不代表目标 Linux runtime closure。<a href="/THIRD_PARTY_NOTICES.txt" download>下载完整 TXT 声明</a>。
-        </p>
-        <details class="license-full">
-          <summary class="license-full__summary">查看许可证表达统计</summary>
+          <p class="license-entry__text">
+            本站在工作室服务器容器中使用 FFmpeg 处理图片，网页不提供单独的 FFmpeg 下载入口。当前发布流程会把包含 FFmpeg 的容器镜像发布到公开 Docker Hub，因此按二进制分发场景维护声明。
+          </p>
+          <p class="license-entry__note">
+            当前只确认 npm 包 {{ ffmpegPackage?.name }}@{{ ffmpegPackage?.version }}（{{ ffmpegPackage?.license }}）的安装事实。Linux 发布镜像内实际二进制的版本、SHA-256、对应源码 revision、补丁和构建配置尚未从发布产物提取；完成部署阶段 registry 前，本页不声称任何具体 FFmpeg 二进制构建事实。
+          </p>
+
+          <!-- 原生 details：无 JavaScript 可用、键盘可达，不需要自制折叠组件。 -->
+          <details class="license-full">
+            <summary class="license-full__summary">
+              GNU General Public License v3 标准全文
+            </summary>
+            <pre class="license-full__text">{{ gplText }}</pre>
+          </details>
+        </section>
+
+        <section class="licenses__section" aria-labelledby="license-assets">
+          <h2 id="license-assets" class="licenses__title">第三方字体与授权资产</h2>
           <dl class="licenses__list">
-            <div v-for="item in summary.licenseCounts" :key="item.license" class="licenses__row licenses__row--summary">
-              <dt class="licenses__name">{{ item.license }}</dt>
-              <dd class="licenses__license-count">{{ item.count }} 条</dd>
+            <div v-for="item in assets" :key="`${item.name}@${item.version}`" class="licenses__row">
+              <dt class="licenses__name">
+                <a v-if="item.homepage" :href="item.homepage" target="_blank" rel="noopener noreferrer">
+                  {{ item.name }}
+                </a>
+                <template v-else>{{ item.name }}</template>
+              </dt>
+              <dd class="licenses__purpose">
+                {{ item.usage }}<template v-if="item.noticeText"> {{ item.noticeText }}</template>
+              </dd>
+              <dd class="licenses__license">{{ item.license }}</dd>
             </div>
           </dl>
-        </details>
-      </section>
+        </section>
+
+        <section class="licenses__section" aria-labelledby="license-npm">
+          <h2 id="license-npm" class="licenses__title">npm 生产依赖声明</h2>
+          <p class="licenses__subtitle">
+            当前生成环境的 production 安装快照包含 {{ summary.packageCount }} 条包/版本记录，共 {{ summary.licenseCounts.length }} 种许可证表达。平台可选包反映生成环境，不代表目标 Linux runtime closure。<a href="/THIRD_PARTY_NOTICES.txt" download>下载完整 TXT 声明</a>。
+          </p>
+          <details class="license-full">
+            <summary class="license-full__summary">查看许可证表达统计</summary>
+            <dl class="licenses__list">
+              <div v-for="item in summary.licenseCounts" :key="item.license" class="licenses__row licenses__row--summary">
+                <dt class="licenses__name">{{ item.license }}</dt>
+                <dd class="licenses__license-count">{{ item.count }} 条</dd>
+              </div>
+            </dl>
+          </details>
+        </section>
+
+        <a class="licenses__back-to-top" href="#document-top">
+          返回页首 <span aria-hidden="true">↑</span>
+        </a>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.licenses {
-  max-width: var(--public-content-article);
+.licenses-layout {
+  display: grid;
+  gap: var(--space-8);
+  max-width: var(--public-content-wide);
   margin: 0 auto;
-  padding: 0 var(--public-page-padding) var(--space-7);
+  padding: var(--space-6) var(--public-page-padding) var(--space-9);
+}
+
+.licenses-nav {
+  padding-block: var(--space-3);
+  border-top: 2px solid var(--public-text-primary);
+  border-bottom: 1px solid var(--public-border-primary);
+}
+
+.licenses-nav__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.licenses-nav__label {
+  color: var(--public-text-tertiary);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+.licenses-nav__count {
+  color: var(--public-text-tertiary);
+  font-family: var(--font-role-metadata);
+  font-size: var(--font-size-xs);
+}
+
+.licenses-nav__list {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.licenses-nav__link {
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  align-items: center;
+  min-height: 2.75rem;
+  color: var(--public-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  text-underline-offset: 0.2em;
+}
+
+.licenses-nav__link span:first-child {
+  color: var(--public-text-tertiary);
+  font-family: var(--font-role-metadata);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.licenses-nav__link:hover,
+.licenses-nav__link:focus-visible {
+  color: var(--public-text-link);
+  text-decoration: underline;
+}
+
+.licenses {
+  display: grid;
+  min-width: 0;
+  max-width: 46rem;
 }
 
 .licenses__lead {
   color: var(--public-text-secondary);
-  line-height: var(--line-height-relaxed);
+  font-size: var(--font-size-md);
+  line-height: 1.82;
 }
 
-/* 唯一的 copyleft 依赖：用左侧竖线标出，与下面的等宽清单区分。 */
 .license-entry {
-  margin-top: var(--space-6);
-  padding-left: var(--space-5);
-  border-left: 2px solid var(--public-accent-primary);
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--public-border-primary);
 }
 
 .license-entry__head {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: baseline;
-  flex-wrap: wrap;
   gap: var(--space-3);
 }
 
 .license-entry__name {
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: var(--font-size-lg);
   line-height: var(--line-height-heading);
 }
@@ -138,40 +234,19 @@ const ffmpegPackage = summary.ffmpegPackage
 .license-entry__license {
   color: var(--public-text-tertiary);
   font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-label);
+  letter-spacing: var(--type-metadata-letter-spacing);
 }
 
 .license-entry__text {
-  margin-top: var(--space-3);
-  line-height: var(--line-height-relaxed);
-}
-
-.license-entry__facts {
   margin-top: var(--space-4);
-}
-
-.license-entry__fact {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-3);
-  padding: var(--space-2) 0;
-  border-bottom: 1px solid var(--public-border-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.license-entry__fact dt {
-  min-width: 7rem;
-  color: var(--public-text-secondary);
-}
-
-.license-entry__fact dd {
-  margin: 0;
-  overflow-wrap: anywhere;
+  line-height: 1.88;
 }
 
 .license-entry__note {
   margin-top: var(--space-4);
+  padding-left: var(--space-4);
   color: var(--public-text-secondary);
+  border-left: 2px solid var(--public-border-primary);
   font-size: var(--font-size-sm);
   line-height: var(--line-height-relaxed);
 }
@@ -182,13 +257,29 @@ const ffmpegPackage = summary.ffmpegPackage
 }
 
 .license-full__summary {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
   align-items: center;
   width: 100%;
-  min-height: 2.75rem;
+  min-height: 3rem;
   color: var(--public-text-link);
   font-size: var(--font-size-sm);
   cursor: pointer;
+  list-style: none;
+}
+
+.license-full__summary::-webkit-details-marker {
+  display: none;
+}
+
+.license-full__summary::before {
+  content: "+";
+  color: var(--public-text-tertiary);
+  font-family: var(--font-role-ui);
+}
+
+.license-full[open] .license-full__summary::before {
+  content: "−";
 }
 
 .license-full__summary:focus-visible {
@@ -208,7 +299,7 @@ const ffmpegPackage = summary.ffmpegPackage
   background: var(--public-bg-secondary);
   border-radius: var(--radius-sm);
   color: var(--public-text-secondary);
-  font-family: var(--font-public-mono, monospace);
+  font-family: var(--font-role-code);
   font-size: var(--font-size-xs);
   line-height: 1.6;
   white-space: pre-wrap;
@@ -216,12 +307,14 @@ const ffmpegPackage = summary.ffmpegPackage
 }
 
 .licenses__section {
-  margin-top: var(--space-8);
+  margin-top: var(--space-9);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--public-border-primary);
 }
 
 .licenses__title {
-  font-family: var(--font-public-display);
-  font-size: var(--font-size-md);
+  font-family: var(--font-role-display);
+  font-size: var(--font-size-lg);
   line-height: var(--line-height-heading);
 }
 
@@ -258,7 +351,7 @@ const ffmpegPackage = summary.ffmpegPackage
 .licenses__license {
   margin: 0;
   color: var(--public-text-tertiary);
-  font-family: var(--font-public-mono, monospace);
+  font-family: var(--font-role-code);
   font-size: var(--font-size-xs);
   overflow-wrap: anywhere;
 }
@@ -273,7 +366,37 @@ const ffmpegPackage = summary.ffmpegPackage
   font-variant-numeric: tabular-nums;
 }
 
+.licenses__back-to-top {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  min-height: 2.75rem;
+  margin-top: var(--space-8);
+  color: var(--public-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.licenses__back-to-top:hover,
+.licenses__back-to-top:focus-visible {
+  color: var(--public-text-link);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
 @media (min-width: 1024px) {
+  .licenses-layout {
+    grid-template-columns: minmax(13rem, 15rem) minmax(0, 46rem);
+    justify-content: center;
+    align-items: start;
+    gap: var(--space-10);
+    padding-top: var(--space-8);
+  }
+
+  .licenses-nav {
+    position: sticky;
+    top: calc(var(--public-header-height) + var(--space-5));
+  }
+
   .licenses__row {
     grid-template-columns: 12rem 1fr auto;
     gap: var(--space-1) var(--space-4);

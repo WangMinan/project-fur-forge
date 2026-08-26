@@ -151,9 +151,9 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
   top: 1.5rem;
   left: max(var(--public-page-padding), calc((100% - var(--public-content-wide)) / 2));
   color: var(--public-background-type);
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display-sans);
   font-size: 5rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 0.8;
   pointer-events: none;
   user-select: none;
@@ -185,7 +185,7 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
 }
 
 .about-masthead__title {
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: 3rem;
   font-weight: 600;
   line-height: var(--line-height-tight);
@@ -251,7 +251,7 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
   display: grid;
   gap: var(--space-4);
   min-width: 0;
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-body);
   font-size: var(--font-size-md);
   line-height: var(--line-height-relaxed);
 }
@@ -291,7 +291,7 @@ const antiScamParagraphs = computed(() => paragraphs(contact.value?.antiScam))
 }
 
 .about-contact__title {
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: 2.25rem;
   font-weight: 600;
   line-height: var(--line-height-heading);

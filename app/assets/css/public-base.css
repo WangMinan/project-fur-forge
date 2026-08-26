@@ -58,14 +58,26 @@
   --public-overlay-strong: rgb(17 20 25 / 0.62);
   --public-focus-ring: rgb(50 77 175 / 0.32);
 
-  --font-public-display:
+  /* 六个语义 token；Legal/Code 同属文档角色，但正文与机器文本保留各自字面。 */
+  --font-role-display:
     "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+  --font-role-body:
+    "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+  --font-role-display-sans: var(--font-role-body);
+  --font-role-display-rounded:
+    ui-rounded, "Arial Rounded MT Bold", "SF Pro Rounded", var(--font-role-body);
+  --font-role-metadata: var(--font-role-body);
+  --font-role-ui: var(--font-role-body);
+  --font-role-legal: var(--font-role-body);
+  --font-role-code:
+    ui-monospace, "SFMono-Regular", Consolas, "Microsoft YaHei", monospace;
+
+  /* 兼容历史原型；正式公开页面应直接消费上方语义角色。 */
+  --font-public-display: var(--font-role-display);
   --font-brand-display:
     "Zhuohei Collage Critical", "Zhuohei Collage", "PingFang SC", "Microsoft YaHei", sans-serif;
-  --font-public-body:
-    "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
-  --font-public-mono:
-    ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --font-public-body: var(--font-role-body);
+  --font-public-mono: var(--font-role-code);
 
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
@@ -84,6 +96,32 @@
   --letter-spacing-tight: -0.025em;
   --letter-spacing-normal: 0;
   --letter-spacing-label: 0.08em;
+
+  --type-display-page-size: clamp(2.25rem, 4vw, 3.5rem);
+  --type-display-section-size: var(--font-size-xl);
+  --type-display-item-size: var(--font-size-lg);
+  --type-display-weight: 600;
+  --type-display-line-height: var(--line-height-heading);
+  --type-display-letter-spacing: 0;
+  --type-body-size: var(--font-size-base);
+  --type-body-small-size: var(--font-size-sm);
+  --type-body-weight: 400;
+  --type-body-line-height: var(--line-height-normal);
+  --type-body-letter-spacing: 0;
+  --type-metadata-size: var(--font-size-xs);
+  --type-metadata-weight: 600;
+  --type-metadata-line-height: 1.4;
+  --type-metadata-letter-spacing: 0;
+  --type-ui-size: var(--font-size-sm);
+  --type-ui-weight: 600;
+  --type-ui-line-height: 1.35;
+  --type-ui-letter-spacing: 0;
+  --type-legal-size: var(--font-size-base);
+  --type-legal-weight: 400;
+  --type-legal-line-height: 1.8;
+  --type-code-size: var(--font-size-xs);
+  --type-code-weight: 400;
+  --type-code-line-height: 1.6;
 
   --space-0: 0;
   --space-1: 0.25rem;
@@ -206,9 +244,10 @@ body {
   margin: 0;
   color: var(--public-text-primary);
   background: var(--public-bg-primary);
-  font-family: var(--font-public-body);
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-normal);
+  font-family: var(--font-role-body);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-line-height);
+  letter-spacing: var(--type-body-letter-spacing);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -235,8 +274,12 @@ a:hover {
   color: var(--public-accent-hover);
 }
 
-button {
+button,
+input,
+select,
+textarea {
   font: inherit;
+  font-family: var(--font-role-ui);
 }
 
 :focus-visible {
@@ -287,17 +330,20 @@ button {
 
 .home-scene-heading__eyebrow {
   color: var(--public-text-tertiary);
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  font-family: var(--font-role-metadata);
+  font-size: var(--type-metadata-size);
+  font-weight: var(--type-metadata-weight);
+  line-height: var(--type-metadata-line-height);
+  letter-spacing: var(--type-metadata-letter-spacing);
+  font-variant-numeric: tabular-nums;
 }
 
 .home-scene-heading__title {
-  font-family: var(--font-public-display);
-  font-size: var(--font-size-xl);
-  font-weight: 600;
-  line-height: var(--line-height-heading);
-  letter-spacing: var(--letter-spacing-tight);
+  font-family: var(--font-role-display);
+  font-size: var(--type-display-section-size);
+  font-weight: var(--type-display-weight);
+  line-height: var(--type-display-line-height);
+  letter-spacing: var(--type-display-letter-spacing);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -316,24 +362,31 @@ button {
   }
 }
 
-::view-transition-group(home-commission-media),
-::view-transition-group(home-adoption-media) {
-  animation-duration: var(--motion-duration-media);
-  animation-timing-function: var(--motion-ease-standard);
+.public-page-enter-active {
+  transition: opacity var(--motion-duration-content) var(--motion-ease-standard);
 }
 
-::view-transition-old(home-commission-media),
-::view-transition-new(home-commission-media),
-::view-transition-old(home-adoption-media),
-::view-transition-new(home-adoption-media) {
-  mix-blend-mode: normal;
+.public-page-enter-from {
+  opacity: 0;
+}
+
+.public-error-enter {
+  animation: public-page-enter var(--motion-duration-content) var(--motion-ease-standard) both;
+}
+
+@keyframes public-page-enter {
+  from { opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(home-commission-media),
-  ::view-transition-group(home-adoption-media) {
-    animation-duration: 0.01ms;
+  .public-page-enter-active {
+    transition: none;
   }
+
+  .public-error-enter {
+    animation: none;
+  }
+
 }
 
 @media (prefers-reduced-transparency: reduce) {
