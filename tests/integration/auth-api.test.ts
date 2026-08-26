@@ -588,7 +588,6 @@ describe('authentication API', () => {
         contact: {
           email: '765678159@qq.com',
           officialChannels: officialChannels('765678159', '1040925427'),
-          antiScam: null,
         },
       },
     })
@@ -616,7 +615,6 @@ describe('authentication API', () => {
     const contactPayload = {
       email: 'studio@example.test',
       officialChannels: officialChannels('3114559925', '456789012'),
-      antiScam: null,
     }
     const missingCsrf = await fetch(sectionUrl('commission'), {
       method: 'PUT',

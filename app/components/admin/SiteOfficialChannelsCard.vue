@@ -41,7 +41,6 @@ const card = useSiteContentSectionCard({
       account: channel.account,
       qrCodeAssetId: channel.qrCodeAssetId,
     })),
-    antiScam: dto.contact.antiScam ?? '',
   }),
 })
 
@@ -84,13 +83,6 @@ const issues = computed(() => {
     if (issue) {
       found[`account-${channel.platform}`] = issue
     }
-  }
-  const antiScam = card.draft.value.antiScam.trim()
-  if (antiScam.length > SITE_CONTENT_LIMITS.antiScam) {
-    found.antiScam = `最多 ${SITE_CONTENT_LIMITS.antiScam} 字`
-  }
-  else if (hasUnsafePlainText(antiScam)) {
-    found.antiScam = '只允许安全纯文本，不能包含 HTML 或脚本'
   }
   return found
 })
@@ -177,21 +169,18 @@ function save() {
     account: normalizeNullableText(channel.account ?? ''),
     qrCodeAssetId: channel.qrCodeAssetId,
   }))
-  const antiScam = normalizeNullableText(card.draft.value.antiScam)
-
   // 与服务端相同地归一化空字符串；否则保存成功后 draft 的 '' 与响应的 null
   // 仍会被判为 dirty，成功提示消失、保存按钮也不会回到稳定状态。
   card.draft.value.email = email
   card.draft.value.officialChannels = officialChannels
-  card.draft.value.antiScam = antiScam ?? ''
-  emit('save', { email, officialChannels, antiScam })
+  emit('save', { email, officialChannels })
 }
 </script>
 
 <template>
   <AdminSiteSectionCardShell
     section="contact"
-    title="官方联系方式与防诈骗提醒"
+    title="官方联系方式"
     hint="这些内容会公开显示，请只填写你愿意公开的官方渠道。"
     :conflict="card.conflict.value"
     :dirty="card.isDirty.value"
@@ -317,16 +306,6 @@ function save() {
       @change="onFileChange"
     >
 
-    <AdminSiteSectionTextField
-      v-model="card.draft.value.antiScam"
-      field="antiScam"
-      label="防诈骗提醒"
-      hint="提醒访客只认这些官方渠道，避免被冒充。"
-      :max="SITE_CONTENT_LIMITS.antiScam"
-      :rows="4"
-      :issue="issues.antiScam"
-    />
-
     <template #latest>
       <dl class="channels-fixed">
         <dt>官方邮箱</dt>
@@ -338,8 +317,6 @@ function save() {
             {{ channel.qrCodeAssetId ? '已关联二维码' : '未关联二维码' }}
           </dd>
         </template>
-        <dt>防诈骗提醒</dt>
-        <dd>{{ card.latest.value.antiScam || '（未填写）' }}</dd>
       </dl>
     </template>
   </AdminSiteSectionCardShell>

@@ -161,23 +161,20 @@ export const publicOfficialChannelsSchema = z.array(publicOfficialChannelSchema)
     })
   })
 
-/** 需求3阶段 A：邮箱、QQ、QQ群和防诈骗提醒共用 contact 分区版本。 */
+/** 邮箱、QQ 和 QQ群共用 contact 分区版本。 */
 const adminContactContentSchema = z.object({
   email: contactEmailSchema,
   officialChannels: adminOfficialChannelsSchema,
-  antiScam: plainTextSchema(600).nullable(),
 }).strict()
 
 const mutableContactContentSchema = z.object({
   email: contactEmailSchema,
   officialChannels: mutableOfficialChannelsSchema,
-  antiScam: plainTextSchema(600).nullable(),
 }).strict()
 
 const publicContactContentSchema = z.object({
   email: contactEmailSchema,
   officialChannels: publicOfficialChannelsSchema,
-  antiScam: plainTextSchema(600).nullable(),
 }).strict()
 
 const statusPairSchema = <T extends z.ZodType>(status: T) => z.object({

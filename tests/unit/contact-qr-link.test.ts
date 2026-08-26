@@ -61,7 +61,6 @@ describe('contact QR link derivation', () => {
             qrCodeAssetId: '00000000-0000-4000-8000-000000000002',
           },
         ],
-        antiScam: null,
       },
     }
     expect(updateContactContentRequestSchema.safeParse(request).success).toBe(false)

@@ -27,7 +27,6 @@ export const SITE_CONTENT_LIMITS = {
   makingScope: 1_200,
   basicTerms: 8_000,
   privacyPolicy: 8_000,
-  antiScam: 600,
   statusLabel: 40,
   emailMax: 254,
   qqMax: 12,
@@ -112,7 +111,6 @@ export interface SiteContentFormFields {
   makingScope: string
   basicTerms: string
   privacyPolicy: string
-  antiScam: string
 }
 
 export interface SiteStatusFormFields {
@@ -130,7 +128,6 @@ export function siteContentFieldIssues(form: SiteContentFormFields): Record<stri
     ['makingScope', form.makingScope, SITE_CONTENT_LIMITS.makingScope],
     ['basicTerms', form.basicTerms, SITE_CONTENT_LIMITS.basicTerms],
     ['privacyPolicy', form.privacyPolicy, SITE_CONTENT_LIMITS.privacyPolicy],
-    ['antiScam', form.antiScam, SITE_CONTENT_LIMITS.antiScam],
   ] as const
   for (const [field, raw, max] of nullableTextFields) {
     const value = raw.trim()

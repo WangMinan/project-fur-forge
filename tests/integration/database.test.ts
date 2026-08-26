@@ -363,6 +363,7 @@ describe('SQLite foundation', () => {
         SELECT commission_intro AS commissionIntro,
                commission_email_action AS commissionEmailAction,
                about_studio_facts AS aboutStudioFacts,
+               about_making_scope AS aboutMakingScope,
                basic_terms AS basicTerms,
                privacy_policy AS privacyPolicy,
                contact_anti_scam AS contactAntiScam,
@@ -370,14 +371,17 @@ describe('SQLite foundation', () => {
         FROM site_content WHERE id = 'site'
       `).get() as {
         aboutStudioFacts: string
+        aboutMakingScope: string
         basicTerms: string
         commissionEmailAction: string
         commissionIntro: string
-        contactAntiScam: string
+        contactAntiScam: string | null
         officialChannelsJson: string
         privacyPolicy: string
       }
-      expect(siteContent.commissionIntro).toContain('先把角色设定和想做的范围发给我们')
+      expect(siteContent.commissionIntro).toBe(
+        '先通过站内表单提交。工作室评估后优先使用官方 QQ 私聊沟通。',
+      )
       expect(siteContent.commissionEmailAction).toBe(
         '建议先提交站内申请；如果表单暂时无法使用，也可以发邮件。',
       )
@@ -388,7 +392,12 @@ describe('SQLite foundation', () => {
         .not.toContain('commission_faq_json')
       expect(siteContentColumns.map(column => column.name))
         .not.toContain('commission_faq_version')
-      expect(siteContent.aboutStudioFacts).toContain('不只做小狗毛，但只做海绵头')
+      expect(siteContent.aboutStudioFacts).toBe(
+        '有点小狗工作室由景宸制作全装与半装兽装。我们不只做小狗毛！所有兽装头骨都是景宸制作的手削海绵头。欢迎在本站提交自设估价或者领养设定。',
+      )
+      expect(siteContent.aboutMakingScope).toBe(
+        '目前制作全装与半装。全装包括头部、身体、爪和尾巴；半装仅包括头部和爪。具体结构、材料、细节与实现方式会在确认委托前通过工作室官方 QQ 沟通。',
+      )
       expect(siteContent.basicTerms).toContain('逐单特别约定')
       expect(siteContent.basicTerms).toContain('签收之日起一年')
       expect(siteContent.privacyPolicy).toContain('个人信息处理者：有点小狗工作室')
@@ -398,7 +407,7 @@ describe('SQLite foundation', () => {
       expect(siteContent.privacyPolicy).toContain('不接入第三方广告或营销统计平台')
       expect(siteContent.privacyPolicy).toContain('原始统计记录保留 90 天')
       expect(siteContent.privacyPolicy).not.toContain('未来如新增')
-      expect(siteContent.contactAntiScam).toContain('另一条已公布渠道核实')
+      expect(siteContent.contactAntiScam).toBeNull()
       expect(JSON.parse(siteContent.officialChannelsJson)).toEqual([
         { platform: 'qq', account: '765678159', qrCodeAssetId: null },
         { platform: 'qq_group', account: '1040925427', qrCodeAssetId: null },
@@ -479,26 +488,29 @@ describe('SQLite foundation', () => {
                contact_anti_scam AS contactAntiScam,
                contact_content_version AS contactVersion
         FROM site_content WHERE id = 'site'
-      `).get() as Record<string, number | string>
+      `).get() as Record<string, null | number | string>
 
-      expect(row.commissionIntro).toContain('官方 QQ')
+      expect(row.commissionIntro).toBe(
+        '先通过站内表单提交。工作室评估后优先使用官方 QQ 私聊沟通。',
+      )
       expect(row.commissionEstimateNote).toBe('管理员自定义估价说明')
       expect(row.commissionEmailAction).toBe('建议先提交站内申请；如果表单暂时无法使用，也可以发邮件。')
-      expect(row.commissionVersion).toBe(Number(before.commission) + 2)
+      expect(row.commissionVersion).toBe(Number(before.commission) + 3)
       expect(row.aboutStudioFacts).toBe('管理员自定义工作室介绍')
-      expect(row.aboutMakingScope).toContain('半装仅包括头部和爪，不含尾巴')
-      expect(row.aboutMakingScope).toContain('官方 QQ 沟通')
+      expect(row.aboutMakingScope).toBe(
+        '目前制作全装与半装。全装包括头部、身体、爪和尾巴；半装仅包括头部和爪。具体结构、材料、细节与实现方式会在确认委托前通过工作室官方 QQ 沟通。',
+      )
       expect(row.aboutMakingScope).not.toMatch(/半装[^。；]*爪和尾巴/u)
-      expect(row.aboutVersion).toBe(Number(before.about) + 1)
+      expect(row.aboutVersion).toBe(Number(before.about) + 2)
       expect(row.basicTerms).toContain('逐单特别约定')
       expect(row.basicTerms).not.toContain('所有解释权')
       expect(row.termsVersion).toBe(Number(before.terms) + 1)
       expect(row.privacyPolicy).toBe(before.privacyPolicy)
       expect(row.privacyPolicy).not.toContain('{{controller_name}}')
       expect(row.privacyVersion).toBe(before.privacy)
-      expect(row.contactAntiScam).toContain('QQ群用于社群或一般交流')
-      expect(row.contactVersion).toBe(Number(before.contact) + 1)
-      expect(row.version).toBe(Number(before.version) + 5)
+      expect(row.contactAntiScam).toBeNull()
+      expect(row.contactVersion).toBe(Number(before.contact) + 2)
+      expect(row.version).toBe(Number(before.version) + 8)
       expect(upgraded.sqlite.pragma('foreign_key_check')).toEqual([])
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
     }
@@ -552,8 +564,8 @@ describe('SQLite foundation', () => {
       expect(row.privacyPolicy).not.toContain('{{')
       expect(row.privacyPolicy).not.toContain('不提供访客账号')
       expect(row.privacyVersion).toBe(before.privacyVersion + 1)
-      // 0046 更新隐私分区，0048/0049 两次收敛委托默认文案。
-      expect(row.version).toBe(before.version + 3)
+      // 0046 更新隐私分区，0048/0049 收敛委托文案，0050 更新三处分区。
+      expect(row.version).toBe(before.version + 6)
       expect(upgraded.sqlite.pragma('foreign_key_check')).toEqual([])
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
     }
@@ -854,28 +866,31 @@ describe('SQLite foundation', () => {
                contact_anti_scam AS contactAntiScam,
                contact_content_version AS contactVersion
         FROM site_content WHERE id = 'site'
-      `).get() as Record<string, number | string>
+      `).get() as Record<string, null | number | string>
 
-      expect(row.commissionIntro).toContain('官方 QQ')
+      expect(row.commissionIntro).toBe(
+        '先通过站内表单提交。工作室评估后优先使用官方 QQ 私聊沟通。',
+      )
       expect(row.commissionEstimateNote).toBe('管理员自定义估价说明')
       expect(row.commissionEmailAction).toBe('建议先提交站内申请；如果表单暂时无法使用，也可以发邮件。')
-      expect(row.commissionVersion).toBe(before.commission + 3)
+      expect(row.commissionVersion).toBe(before.commission + 4)
       expect(row.aboutStudioFacts).toBe('管理员自定义工作室介绍')
-      expect(row.aboutMakingScope).toContain('确认委托前通过工作室官方 QQ 沟通')
-      // 半装只做头和爪：0043 必须把 visitor copy 里的尾巴去掉，全装仍含尾巴。
-      expect(row.aboutMakingScope).toContain('半装仅包括头部和爪，不含尾巴')
+      expect(row.aboutMakingScope).toBe(
+        '目前制作全装与半装。全装包括头部、身体、爪和尾巴；半装仅包括头部和爪。具体结构、材料、细节与实现方式会在确认委托前通过工作室官方 QQ 沟通。',
+      )
+      // 半装只做头和爪，全装仍含尾巴。
       expect(row.aboutMakingScope).not.toMatch(/半装[^。；]*爪和尾巴/u)
-      // visitor copy、0043 范围修正与 0045 目标默认各推进 about 一次。
-      expect(row.aboutVersion).toBe(before.about + 3)
+      // visitor copy、0043、0045 与 0050 各推进 about 一次。
+      expect(row.aboutVersion).toBe(before.about + 4)
       expect(row.basicTerms).toBe('管理员自定义服务条款')
       expect(row.termsVersion).toBe(before.terms)
       expect(row.privacyPolicy).toContain('原始统计记录保留 90 天')
       expect(row.privacyPolicy).not.toContain('未来如新增')
       expect(row.privacyVersion).toBe(before.privacy + 2)
-      expect(row.contactAntiScam).toBe('管理员自定义防诈骗提醒')
-      // visitor copy 与 0042 默认联系方式各推进 contact 一次。
-      expect(row.contactVersion).toBe(before.contact + 2)
-      expect(row.version).toBe(before.version + 11)
+      expect(row.contactAntiScam).toBeNull()
+      // visitor copy、0042 默认联系方式与 0050 退役提醒各推进 contact 一次。
+      expect(row.contactVersion).toBe(before.contact + 3)
+      expect(row.version).toBe(before.version + 14)
       expect(upgraded.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
     }
     finally {

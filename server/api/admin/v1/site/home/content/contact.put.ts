@@ -21,7 +21,6 @@ export default defineEventHandler(defineSiteContentSectionHandler({
     return {
       email: payload.email,
       officialChannelsJson: JSON.stringify(channels),
-      antiScam: payload.antiScam,
     }
   },
 }))
