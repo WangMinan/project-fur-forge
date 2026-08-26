@@ -41,6 +41,7 @@
 - 2026-08-26 V15 六档响应式矩阵、键盘/触控/fine pointer/IME、偏好、无 JavaScript SSR、safe area、语义与图片解码最终 QA 见 [`2026-08-26-V15-HANDOFF.md`](./2026-08-26-V15-HANDOFF.md)；凌巽已明确确认并允许进入 V16。
 - 2026-08-26 V16 全站一致性审查、375/768/1280 fresh evidence、最终 Evidence Index、活动契约校准、OSS/font/license 追溯及 Homepage 离场单帧位移修复见 [`2026-08-26-V16-HANDOFF.md`](./2026-08-26-V16-HANDOFF.md)；凌巽已确认并授权进入 T47，GATE-E 仍未开放。
 - 2026-08-27 T47-F3 默认文案更新、防诈骗提醒退役，以及 Works/Adoptions/About 等高页名区与统一 Logo 水印见 [`2026-08-27-T47-F3-COPY-HEADER-ALIGNMENT.md`](./2026-08-27-T47-F3-COPY-HEADER-ALIGNMENT.md)。
+- 2026-08-27 release runner 在 GitHub Actions 将 `npm_execpath=pnpm` 误作 Node 模块的问题、共享调用修复与完整本地 release 验证见 [`2026-08-27-RELEASE-RUNNER-PNPM-FIX.md`](./2026-08-27-RELEASE-RUNNER-PNPM-FIX.md)。
 - 2026-08-26 T47 六档连续移动/reduced/性能本地验收、Homepage Adoption 控制条删除、Mobile 尾部收束与最终自动化证据见 [`2026-08-26-T47-HANDOFF.md`](./2026-08-26-T47-HANDOFF.md)；真实 iOS/Android 和最终人工视觉验收仍未代签。
 
 - 第二轮应用代码审查基线为 `main@aa8e5b70be0913f02ceddccdc262ec6fe0769df1`；修订后的文档已以 `main@ea3ae0a1269676db8c06c28ed32a9a29f4bd7109` 合入，后者没有应用代码变更。

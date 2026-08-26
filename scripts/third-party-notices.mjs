@@ -6,6 +6,7 @@ import {
 } from 'node:fs'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { dirname, resolve } from 'node:path'
+import { pnpmInvocation } from './pnpm-invocation.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const JSON_OUTPUT = 'app/assets/licenses/third-party-notices.json'
@@ -166,13 +167,10 @@ export function buildThirdPartyNoticeSummary(notices) {
 }
 
 function loadPnpmLicenseReport() {
-  const pnpmEntry = process.env.npm_execpath
-  if (!pnpmEntry) {
-    throw new Error('Run through pnpm so the exact package-manager entrypoint is available.')
-  }
+  const invocation = pnpmInvocation(['licenses', 'list', '--prod', '--json'])
   const output = execFileSync(
-    process.execPath,
-    [pnpmEntry, 'licenses', 'list', '--prod', '--json'],
+    invocation.command,
+    invocation.args,
     { cwd: ROOT, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 },
   )
   return JSON.parse(output)

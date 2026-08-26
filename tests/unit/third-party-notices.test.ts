@@ -4,8 +4,21 @@ import {
   buildThirdPartyNoticeSummary,
   renderThirdPartyNoticesText,
 } from '../../scripts/third-party-notices.mjs'
+import { pnpmInvocation } from '../../scripts/pnpm-invocation.mjs'
 
 describe('third-party notice generation', () => {
+  it('runs pnpm command names directly and JavaScript entrypoints through Node', () => {
+    expect(pnpmInvocation(['test:release'], 'pnpm')).toEqual({
+      command: 'pnpm',
+      args: ['test:release'],
+    })
+    expect(pnpmInvocation(['notices:check'], '/opt/pnpm/pnpm.mjs')).toEqual({
+      command: process.execPath,
+      args: ['/opt/pnpm/pnpm.mjs', 'notices:check'],
+    })
+    expect(() => pnpmInvocation([], '')).toThrow(/npm_execpath/u)
+  })
+
   it('splits exact package versions, removes local paths, hashes assets, and sorts stably', () => {
     const notices = buildThirdPartyNotices({
       licenseReport: {
