@@ -1,0 +1,1981 @@
+{
+  "capturedAt": "2026-08-26T03:36:04.620Z",
+  "baseURL": "http://127.0.0.1:3000/",
+  "viewports": {
+    "desktop-1440x900": {
+      "home": {
+        "errors": [
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+        ],
+        "controls": [
+          {
+            "selector": ".public-header__brand",
+            "tag": "a",
+            "width": 173,
+            "height": 44,
+            "visualWidth": 172.640625,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 60,
+            "height": 44,
+            "visualWidth": 60,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 88,
+            "height": 44,
+            "visualWidth": 88,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 88,
+            "height": 44,
+            "visualWidth": 88,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 88,
+            "height": 44,
+            "visualWidth": 88,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 104,
+            "height": 44,
+            "visualWidth": 104,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".home-hero__arrow",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 42.239990234375,
+            "visualHeight": 42.239990234375,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".home-hero__arrow",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 42.239990234375,
+            "visualHeight": 42.239990234375,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".home-hero__dot",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".home-hero__dot",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".home-hero__pause",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 42.239990234375,
+            "visualHeight": 42.239990234375,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-featured-action]",
+            "tag": "button",
+            "width": 58,
+            "height": 44,
+            "visualWidth": 58.390625,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-featured-action]",
+            "tag": "button",
+            "width": 58,
+            "height": 44,
+            "visualWidth": 58.390625,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-featured-action]",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-selector\"] button",
+            "tag": "button",
+            "width": 287,
+            "height": 44,
+            "visualWidth": 287.0625,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-selector\"] button",
+            "tag": "button",
+            "width": 287,
+            "height": 44,
+            "visualWidth": 287.0625,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-selector\"] button",
+            "tag": "button",
+            "width": 287,
+            "height": 44,
+            "visualWidth": 287.078125,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-stepper\"] button",
+            "tag": "button",
+            "width": 64,
+            "height": 44,
+            "visualWidth": 64,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-stepper\"] button",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-stepper\"] button",
+            "tag": "button",
+            "width": 64,
+            "height": 44,
+            "visualWidth": 64,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-pause\"]",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-action",
+            "tag": "a",
+            "width": 134,
+            "height": 44,
+            "visualWidth": 134,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-action",
+            "tag": "a",
+            "width": 134,
+            "height": 44,
+            "visualWidth": 134,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-action",
+            "tag": "a",
+            "width": 134,
+            "height": 44,
+            "visualWidth": 134,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-action",
+            "tag": "a",
+            "width": 134,
+            "height": 44,
+            "visualWidth": 134,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-action",
+            "tag": "a",
+            "width": 104,
+            "height": 44,
+            "visualWidth": 104.171875,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          }
+        ],
+        "activeElement": {
+          "tag": "a",
+          "className": "router-link-active router-link-exact-active public-header__link",
+          "focused": true,
+          "focusVisible": true
+        },
+        "interactiveStates": {
+          "hoverCandidates": 5,
+          "activeCandidates": 5,
+          "disabledCandidates": 0,
+          "loadingCandidates": 0
+        },
+        "namedViewTransitions": [],
+        "noHorizontalOverflow": true
+      },
+      "works": {
+        "errors": [
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+        ],
+        "controls": [
+          {
+            "selector": ".public-header__brand",
+            "tag": "a",
+            "width": 173,
+            "height": 44,
+            "visualWidth": 172.640625,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 60,
+            "height": 44,
+            "visualWidth": 60,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 88,
+            "height": 44,
+            "visualWidth": 88,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 88,
+            "height": 44,
+            "visualWidth": 88,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 88,
+            "height": 44,
+            "visualWidth": 88,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 104,
+            "height": 44,
+            "visualWidth": 104,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".catalog-search__input",
+            "tag": "input",
+            "width": 621,
+            "height": 44,
+            "visualWidth": 620.796875,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".catalog-search__submit",
+            "tag": "button",
+            "width": 66,
+            "height": 44,
+            "visualWidth": 66,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".pagination__page",
+            "tag": "span",
+            "width": 48,
+            "height": 48,
+            "visualWidth": 48,
+            "visualHeight": 48,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".pagination__step",
+            "tag": "span",
+            "width": 108,
+            "height": 48,
+            "visualWidth": 108,
+            "visualHeight": 48,
+            "disabled": true,
+            "busy": false
+          },
+          {
+            "selector": ".pagination__step",
+            "tag": "span",
+            "width": 108,
+            "height": 48,
+            "visualWidth": 108,
+            "visualHeight": 48,
+            "disabled": true,
+            "busy": false
+          }
+        ],
+        "activeElement": {
+          "tag": "a",
+          "className": "public-header__link",
+          "focused": true,
+          "focusVisible": true
+        },
+        "interactiveStates": {
+          "hoverCandidates": 4,
+          "activeCandidates": 3,
+          "disabledCandidates": 2,
+          "loadingCandidates": 0
+        },
+        "namedViewTransitions": [],
+        "noHorizontalOverflow": true
+      },
+      "adoptions": {
+        "errors": [
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+        ],
+        "controls": [
+          {
+            "selector": ".public-header__brand",
+            "tag": "a",
+            "width": 173,
+            "height": 44,
+            "visualWidth": 172.640625,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 60,
+            "height": 44,
+            "visualWidth": 60,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 88,
+            "height": 44,
+            "visualWidth": 88,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 88,
+            "height": 44,
+            "visualWidth": 88,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 88,
+            "height": 44,
+            "visualWidth": 88,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 104,
+            "height": 44,
+            "visualWidth": 104,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".catalog-search__input",
+            "tag": "input",
+            "width": 368,
+            "height": 44,
+            "visualWidth": 368,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".catalog-search__submit",
+            "tag": "button",
+            "width": 66,
+            "height": 44,
+            "visualWidth": 66,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".pagination__page",
+            "tag": "span",
+            "width": 48,
+            "height": 48,
+            "visualWidth": 48,
+            "visualHeight": 48,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".pagination__step",
+            "tag": "span",
+            "width": 108,
+            "height": 48,
+            "visualWidth": 108,
+            "visualHeight": 48,
+            "disabled": true,
+            "busy": false
+          },
+          {
+            "selector": ".pagination__step",
+            "tag": "span",
+            "width": 108,
+            "height": 48,
+            "visualWidth": 108,
+            "visualHeight": 48,
+            "disabled": true,
+            "busy": false
+          },
+          {
+            "selector": ".public-action",
+            "tag": "a",
+            "width": 162,
+            "height": 44,
+            "visualWidth": 162,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          }
+        ],
+        "activeElement": {
+          "tag": "a",
+          "className": "public-header__link",
+          "focused": true,
+          "focusVisible": true
+        },
+        "interactiveStates": {
+          "hoverCandidates": 5,
+          "activeCandidates": 3,
+          "disabledCandidates": 2,
+          "loadingCandidates": 0
+        },
+        "namedViewTransitions": [],
+        "noHorizontalOverflow": true
+      },
+      "works-search-empty": {
+        "errors": [
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+        ],
+        "controls": [
+          {
+            "selector": ".public-header__brand",
+            "tag": "a",
+            "width": 173,
+            "height": 44,
+            "visualWidth": 172.640625,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 60,
+            "height": 44,
+            "visualWidth": 60,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 88,
+            "height": 44,
+            "visualWidth": 88,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 88,
+            "height": 44,
+            "visualWidth": 88,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 88,
+            "height": 44,
+            "visualWidth": 88,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 104,
+            "height": 44,
+            "visualWidth": 104,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".catalog-search__input",
+            "tag": "input",
+            "width": 565,
+            "height": 44,
+            "visualWidth": 564.796875,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".catalog-search__submit",
+            "tag": "button",
+            "width": 66,
+            "height": 44,
+            "visualWidth": 66,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".catalog-search__clear",
+            "tag": "a",
+            "width": 56,
+            "height": 44,
+            "visualWidth": 56,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-action",
+            "tag": "a",
+            "width": 106,
+            "height": 44,
+            "visualWidth": 106,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          }
+        ],
+        "activeElement": {
+          "tag": "a",
+          "className": "public-header__link",
+          "focused": true,
+          "focusVisible": true
+        },
+        "interactiveStates": {
+          "hoverCandidates": 2,
+          "activeCandidates": 4,
+          "disabledCandidates": 0,
+          "loadingCandidates": 0
+        },
+        "namedViewTransitions": [],
+        "noHorizontalOverflow": true
+      },
+      "workDetail": {
+        "errors": [
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+        ],
+        "controls": [
+          {
+            "selector": ".public-header__brand",
+            "tag": "a",
+            "width": 173,
+            "height": 44,
+            "visualWidth": 172.640625,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 60,
+            "height": 44,
+            "visualWidth": 60,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 88,
+            "height": 44,
+            "visualWidth": 88,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 88,
+            "height": 44,
+            "visualWidth": 88,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 88,
+            "height": 44,
+            "visualWidth": 88,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__link",
+            "tag": "a",
+            "width": 104,
+            "height": 44,
+            "visualWidth": 104,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".work-gallery__thumb",
+            "tag": "button",
+            "width": 88,
+            "height": 88,
+            "visualWidth": 88,
+            "visualHeight": 88,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".work-gallery__thumb",
+            "tag": "button",
+            "width": 88,
+            "height": 88,
+            "visualWidth": 88,
+            "visualHeight": 88,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".work-gallery__thumb",
+            "tag": "button",
+            "width": 88,
+            "height": 88,
+            "visualWidth": 88,
+            "visualHeight": 88,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".work-gallery__thumb",
+            "tag": "button",
+            "width": 88,
+            "height": 88,
+            "visualWidth": 88,
+            "visualHeight": 88,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".work-gallery__thumb",
+            "tag": "button",
+            "width": 88,
+            "height": 88,
+            "visualWidth": 88,
+            "visualHeight": 88,
+            "disabled": false,
+            "busy": false
+          }
+        ],
+        "activeElement": {
+          "tag": "a",
+          "className": "public-header__link",
+          "focused": true,
+          "focusVisible": true
+        },
+        "interactiveStates": {
+          "hoverCandidates": 5,
+          "activeCandidates": 1,
+          "disabledCandidates": 0,
+          "loadingCandidates": 0
+        },
+        "namedViewTransitions": [],
+        "noHorizontalOverflow": true
+      }
+    },
+    "mobile-390x844": {
+      "home": {
+        "errors": [
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+        ],
+        "controls": [
+          {
+            "selector": ".public-header__brand",
+            "tag": "a",
+            "width": 173,
+            "height": 44,
+            "visualWidth": 172.640625,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__menu",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".home-hero__arrow",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 42.239990234375,
+            "visualHeight": 42.239990234375,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".home-hero__arrow",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 42.239990234375,
+            "visualHeight": 42.239990234375,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".home-hero__dot",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".home-hero__dot",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".home-hero__pause",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 42.239990234375,
+            "visualHeight": 42.239990234375,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-featured-action]",
+            "tag": "button",
+            "width": 58,
+            "height": 44,
+            "visualWidth": 58.390625,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-featured-action]",
+            "tag": "button",
+            "width": 58,
+            "height": 44,
+            "visualWidth": 58.390625,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-featured-action]",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-selector\"] button",
+            "tag": "button",
+            "width": 114,
+            "height": 50,
+            "visualWidth": 114.328125,
+            "visualHeight": 50.421875,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-selector\"] button",
+            "tag": "button",
+            "width": 114,
+            "height": 50,
+            "visualWidth": 114.328125,
+            "visualHeight": 50.421875,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-selector\"] button",
+            "tag": "button",
+            "width": 114,
+            "height": 50,
+            "visualWidth": 114.34375,
+            "visualHeight": 50.421875,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-stepper\"] button",
+            "tag": "button",
+            "width": 64,
+            "height": 44,
+            "visualWidth": 64,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-stepper\"] button",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-stepper\"] button",
+            "tag": "button",
+            "width": 64,
+            "height": 44,
+            "visualWidth": 64,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-pause\"]",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-action",
+            "tag": "a",
+            "width": 134,
+            "height": 44,
+            "visualWidth": 134,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-action",
+            "tag": "a",
+            "width": 134,
+            "height": 44,
+            "visualWidth": 134,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-action",
+            "tag": "a",
+            "width": 134,
+            "height": 44,
+            "visualWidth": 134,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-action",
+            "tag": "a",
+            "width": 118,
+            "height": 44,
+            "visualWidth": 118,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-action",
+            "tag": "a",
+            "width": 136,
+            "height": 44,
+            "visualWidth": 136.171875,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          }
+        ],
+        "activeElement": {
+          "tag": "a",
+          "className": "router-link-active router-link-exact-active public-header__link",
+          "focused": false,
+          "focusVisible": false
+        },
+        "interactiveStates": {
+          "hoverCandidates": 5,
+          "activeCandidates": 5,
+          "disabledCandidates": 0,
+          "loadingCandidates": 0
+        },
+        "namedViewTransitions": [],
+        "noHorizontalOverflow": true
+      },
+      "works": {
+        "errors": [
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+        ],
+        "controls": [
+          {
+            "selector": ".public-header__brand",
+            "tag": "a",
+            "width": 173,
+            "height": 44,
+            "visualWidth": 172.640625,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__menu",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".catalog-search__input",
+            "tag": "input",
+            "width": 269,
+            "height": 44,
+            "visualWidth": 269,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".catalog-search__submit",
+            "tag": "button",
+            "width": 66,
+            "height": 44,
+            "visualWidth": 66,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".pagination__page",
+            "tag": "span",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".pagination__step",
+            "tag": "span",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": true,
+            "busy": false
+          },
+          {
+            "selector": ".pagination__step",
+            "tag": "span",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": true,
+            "busy": false
+          }
+        ],
+        "activeElement": {
+          "tag": "a",
+          "className": "public-header__link",
+          "focused": false,
+          "focusVisible": false
+        },
+        "interactiveStates": {
+          "hoverCandidates": 4,
+          "activeCandidates": 3,
+          "disabledCandidates": 2,
+          "loadingCandidates": 0
+        },
+        "namedViewTransitions": [],
+        "noHorizontalOverflow": true
+      },
+      "adoptions": {
+        "errors": [
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+        ],
+        "controls": [
+          {
+            "selector": ".public-header__brand",
+            "tag": "a",
+            "width": 173,
+            "height": 44,
+            "visualWidth": 172.640625,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__menu",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".catalog-search__input",
+            "tag": "input",
+            "width": 269,
+            "height": 44,
+            "visualWidth": 269,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".catalog-search__submit",
+            "tag": "button",
+            "width": 66,
+            "height": 44,
+            "visualWidth": 66,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".pagination__page",
+            "tag": "span",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".pagination__step",
+            "tag": "span",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": true,
+            "busy": false
+          },
+          {
+            "selector": ".pagination__step",
+            "tag": "span",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": true,
+            "busy": false
+          },
+          {
+            "selector": ".public-action",
+            "tag": "a",
+            "width": 162,
+            "height": 44,
+            "visualWidth": 162,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          }
+        ],
+        "activeElement": {
+          "tag": "a",
+          "className": "public-header__link",
+          "focused": false,
+          "focusVisible": false
+        },
+        "interactiveStates": {
+          "hoverCandidates": 5,
+          "activeCandidates": 3,
+          "disabledCandidates": 2,
+          "loadingCandidates": 0
+        },
+        "namedViewTransitions": [],
+        "noHorizontalOverflow": true
+      },
+      "works-search-empty": {
+        "errors": [
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+        ],
+        "controls": [
+          {
+            "selector": ".public-header__brand",
+            "tag": "a",
+            "width": 173,
+            "height": 44,
+            "visualWidth": 172.640625,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__menu",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".catalog-search__input",
+            "tag": "input",
+            "width": 269,
+            "height": 44,
+            "visualWidth": 269,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".catalog-search__submit",
+            "tag": "button",
+            "width": 66,
+            "height": 44,
+            "visualWidth": 66,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".catalog-search__clear",
+            "tag": "a",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-action",
+            "tag": "a",
+            "width": 106,
+            "height": 44,
+            "visualWidth": 106,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          }
+        ],
+        "activeElement": {
+          "tag": "a",
+          "className": "public-header__link",
+          "focused": false,
+          "focusVisible": false
+        },
+        "interactiveStates": {
+          "hoverCandidates": 2,
+          "activeCandidates": 4,
+          "disabledCandidates": 0,
+          "loadingCandidates": 0
+        },
+        "namedViewTransitions": [],
+        "noHorizontalOverflow": true
+      },
+      "mobileNav": {
+        "errors": [
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+        ],
+        "controls": [
+          {
+            "selector": ".public-header__brand",
+            "tag": "a",
+            "width": 173,
+            "height": 44,
+            "visualWidth": 172.640625,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__menu",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".mobile-nav__close",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".mobile-nav__link",
+            "tag": "a",
+            "width": 343,
+            "height": 48,
+            "visualWidth": 343,
+            "visualHeight": 47.59375762939453,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".mobile-nav__link",
+            "tag": "a",
+            "width": 343,
+            "height": 48,
+            "visualWidth": 343,
+            "visualHeight": 47.59375,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".mobile-nav__link",
+            "tag": "a",
+            "width": 343,
+            "height": 48,
+            "visualWidth": 343,
+            "visualHeight": 47.59375,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".mobile-nav__link",
+            "tag": "a",
+            "width": 343,
+            "height": 48,
+            "visualWidth": 343,
+            "visualHeight": 47.59375,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".mobile-nav__sublink",
+            "tag": "a",
+            "width": 343,
+            "height": 48,
+            "visualWidth": 343,
+            "visualHeight": 47.59375,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".mobile-nav__sublink",
+            "tag": "a",
+            "width": 343,
+            "height": 48,
+            "visualWidth": 343,
+            "visualHeight": 47.59375,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".mobile-nav__sublink",
+            "tag": "a",
+            "width": 343,
+            "height": 48,
+            "visualWidth": 343,
+            "visualHeight": 47.59375,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".home-hero__arrow",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 42.239990234375,
+            "visualHeight": 42.239990234375,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".home-hero__arrow",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 42.239990234375,
+            "visualHeight": 42.239990234375,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".home-hero__dot",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".home-hero__dot",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".home-hero__pause",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 42.239990234375,
+            "visualHeight": 42.239990234375,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-featured-action]",
+            "tag": "button",
+            "width": 58,
+            "height": 44,
+            "visualWidth": 58.390625,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-featured-action]",
+            "tag": "button",
+            "width": 58,
+            "height": 44,
+            "visualWidth": 58.390625,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-featured-action]",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-selector\"] button",
+            "tag": "button",
+            "width": 114,
+            "height": 50,
+            "visualWidth": 114.328125,
+            "visualHeight": 50.421875,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-selector\"] button",
+            "tag": "button",
+            "width": 114,
+            "height": 50,
+            "visualWidth": 114.328125,
+            "visualHeight": 50.421875,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-selector\"] button",
+            "tag": "button",
+            "width": 114,
+            "height": 50,
+            "visualWidth": 114.34375,
+            "visualHeight": 50.421875,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-stepper\"] button",
+            "tag": "button",
+            "width": 64,
+            "height": 44,
+            "visualWidth": 64,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-stepper\"] button",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-stepper\"] button",
+            "tag": "button",
+            "width": 64,
+            "height": 44,
+            "visualWidth": 64,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": "[data-testid=\"home-adoption-pause\"]",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-action",
+            "tag": "a",
+            "width": 134,
+            "height": 44,
+            "visualWidth": 134,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-action",
+            "tag": "a",
+            "width": 134,
+            "height": 44,
+            "visualWidth": 134,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-action",
+            "tag": "a",
+            "width": 134,
+            "height": 44,
+            "visualWidth": 134,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-action",
+            "tag": "a",
+            "width": 118,
+            "height": 44,
+            "visualWidth": 118,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-action",
+            "tag": "a",
+            "width": 136,
+            "height": 44,
+            "visualWidth": 136.171875,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          }
+        ],
+        "noHorizontalOverflow": true
+      },
+      "workDetail": {
+        "errors": [
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+          "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+        ],
+        "controls": [
+          {
+            "selector": ".public-header__brand",
+            "tag": "a",
+            "width": 173,
+            "height": 44,
+            "visualWidth": 172.640625,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".public-header__menu",
+            "tag": "button",
+            "width": 44,
+            "height": 44,
+            "visualWidth": 44,
+            "visualHeight": 44,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".work-gallery__thumb",
+            "tag": "button",
+            "width": 62,
+            "height": 72,
+            "visualWidth": 62.390625,
+            "visualHeight": 72,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".work-gallery__thumb",
+            "tag": "button",
+            "width": 62,
+            "height": 72,
+            "visualWidth": 62.390625,
+            "visualHeight": 72,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".work-gallery__thumb",
+            "tag": "button",
+            "width": 62,
+            "height": 72,
+            "visualWidth": 62.390625,
+            "visualHeight": 72,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".work-gallery__thumb",
+            "tag": "button",
+            "width": 62,
+            "height": 72,
+            "visualWidth": 62.390625,
+            "visualHeight": 72,
+            "disabled": false,
+            "busy": false
+          },
+          {
+            "selector": ".work-gallery__thumb",
+            "tag": "button",
+            "width": 62,
+            "height": 72,
+            "visualWidth": 62.390625,
+            "visualHeight": 72,
+            "disabled": false,
+            "busy": false
+          }
+        ],
+        "activeElement": {
+          "tag": "a",
+          "className": "public-header__link",
+          "focused": false,
+          "focusVisible": false
+        },
+        "interactiveStates": {
+          "hoverCandidates": 5,
+          "activeCandidates": 1,
+          "disabledCandidates": 0,
+          "loadingCandidates": 0
+        },
+        "namedViewTransitions": [],
+        "noHorizontalOverflow": true
+      }
+    }
+  },
+  "checks": {
+    "noErrors": false,
+    "noHorizontalOverflow": true,
+    "controlsHaveStableTarget": true,
+    "keyboardFocusEvidence": true,
+    "activeStateEvidence": true,
+    "disabledStateEvidence": true,
+    "noSharedMediaTransitions": false,
+    "adoptionReturnWorks": true,
+    "featuredFadeWorks": true,
+    "reducedMotionDetected": true
+  },
+  "interactions": {
+    "adoptionReturns": [
+      {
+        "card": 2,
+        "available": true,
+        "returned": true,
+        "slug": "adoption-regular-3"
+      },
+      {
+        "card": 4,
+        "available": true,
+        "returned": true,
+        "slug": "adoption-regular-1"
+      }
+    ],
+    "featuredFade": {
+      "after": "adoption-green-dog-test",
+      "before": "return-xiapian",
+      "changed": true,
+      "transitionClasses": 2
+    }
+  },
+  "reduced": {
+    "media": true,
+    "rootAnimations": 0,
+    "noHorizontalOverflow": true,
+    "controls": [
+      {
+        "selector": "home-hero__arrow",
+        "width": 44,
+        "height": 44
+      },
+      {
+        "selector": "home-hero__dot--active home-hero__dot",
+        "width": 44,
+        "height": 44
+      },
+      {
+        "selector": "home-hero__dot",
+        "width": 44,
+        "height": 44
+      },
+      {
+        "selector": "home-hero__arrow",
+        "width": 44,
+        "height": 44
+      },
+      {
+        "selector": "home-hero__pause",
+        "width": 0,
+        "height": 0
+      }
+    ]
+  }
+}

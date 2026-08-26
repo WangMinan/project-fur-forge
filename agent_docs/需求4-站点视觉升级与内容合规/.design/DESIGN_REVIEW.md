@@ -382,3 +382,396 @@ Homepage Commission 保留大横图与 editorial wayfinding，但已去掉右下
 - 390×844 的 Homepage Commission 能在当前屏内看到标题、摄影、完整服务信息、两个行动和下一幕去向；430px 自然露出 Adoption 开头。
 - 2048×1080、1280×800、768×1024、375×812 与正式三视口均通过 media/body gap、scene fit、wayfinding、decode、overflow 和静态动画审计。
 - `home-commission-media` 的既有平滑共享切换被原样保留；V10 没有把它误记为新业务或新 Motion 功能。
+
+## V12-D · Legal / Privacy / Licenses Static Review
+
+日期：2026-08-25
+评审方向：Editorial Document Reading System；只评审 V12-D 长文静态结构，不进入 V12-E 或字体治理。
+
+### Screenshots Captured
+
+| Screenshot | Breakpoint | Description |
+| --- | --- | --- |
+| `implementation/evidence/V12-D/after/service-1440x900.png` | 1440×900 Desktop | 服务条款 sticky 章节导航与长文阅读轴 |
+| `implementation/evidence/V12-D/after/service-390x844.png` | 390×844 Mobile | 服务条款移动目录与单列正文 |
+| `implementation/evidence/V12-D/after/service-430x932.png` | 430×932 Mobile | 宽 Mobile 长文节奏 |
+| `implementation/evidence/V12-D/after/privacy-1440x900.png` | 1440×900 Desktop | 隐私政策九章结构 |
+| `implementation/evidence/V12-D/after/privacy-390x844.png` | 390×844 Mobile | 隐私政策移动长页 |
+| `implementation/evidence/V12-D/after/privacy-430x932.png` | 430×932 Mobile | 宽 Mobile 隐私正文 |
+| `implementation/evidence/V12-D/after/licenses-1440x900.png` | 1440×900 Desktop | 许可证三章导航与资产对照 |
+| `implementation/evidence/V12-D/after/licenses-390x844.png` | 390×844 Mobile | 许可证移动阅读结构 |
+| `implementation/evidence/V12-D/after/licenses-430x932.png` | 430×932 Mobile | 宽 Mobile 许可证结构 |
+| `implementation/evidence/V12-D/after/licenses-details-open-1440x900.png` | 1440×900 Desktop | 键盘展开 GPL 全文 |
+| `implementation/evidence/V12-D/after/licenses-details-open-390x844.png` | 390×844 Mobile | Mobile 键盘展开与焦点环 |
+
+### Summary
+
+三页已经形成同站的长文阅读系统，同时没有变成重复卡片模板。Desktop 目录承担位置感但不抢正文；Mobile 目录回到自然流并保留 44px 目标。许可证的资产对照、原生折叠和等宽全文仍保留各自信息密度。截图未发现横向溢出、粘性层级错位、图片失败或 Footer 回归。
+
+### Must Fix
+
+无。
+
+### Should Fix
+
+无。Evidence 脚本中由自动聚焦引发的 sticky Header 全页截图伪影已通过截图前恢复页首消除，未修改页面交互。
+
+### Could Improve
+
+- Display、Body、Metadata、UI 与 Legal/Code 的最终字体身份和混排一致性继续由 V12-E-F1 统一，不在 V12-D 提前修改。
+- 390/430 当前结果只证明结构安全；最终 Mobile 独立 Art Direction 仍归 V12-G。
+
+### What Works Well
+
+- document 页首只显示页名和事实，不添加无意义英文或装饰。
+- 章节编号、细线、固定阅读行长和返回页首形成连续阅读节奏，长页仍可快速定位。
+- 原生 `details` 保留键盘、无 JavaScript 和平台语义，未为视觉样式引入额外组件或依赖。
+
+## V12-E · Error / Empty / Media Failure Static Review
+
+日期：2026-08-25
+评审方向：Editorial State Record；只评审 V12-E 静态状态，不进入字体治理或 Mobile Final Art Direction。
+
+### Screenshots Captured
+
+| Screenshot | Breakpoint | Description |
+| --- | --- | --- |
+| `implementation/evidence/V12-E/after/404-1440x900.png` | 1440×900 Desktop | 404 状态、品牌栏、恢复行动与淡色 Logo |
+| `implementation/evidence/V12-E/after/404-390x844.png` | 390×844 Mobile | 404 Mobile 状态面 |
+| `implementation/evidence/V12-E/after/404-430x932.png` | 430×932 Mobile | 404 宽 Mobile 状态面 |
+| `implementation/evidence/V12-E/after/500-1440x900.png` | 1440×900 Desktop | 500 安全通用说明与品牌归属 |
+| `implementation/evidence/V12-E/after/500-390x844.png` | 390×844 Mobile | 500 Mobile 状态面 |
+| `implementation/evidence/V12-E/after/500-430x932.png` | 430×932 Mobile | 500 宽 Mobile 状态面 |
+| `implementation/evidence/V12-E/after/empty-1440x900.png` | 1440×900 Desktop | 越界 empty 与回到第一页 |
+| `implementation/evidence/V12-E/after/empty-390x844.png` | 390×844 Mobile | 越界 empty Mobile |
+| `implementation/evidence/V12-E/after/empty-430x932.png` | 430×932 Mobile | 越界 empty 宽 Mobile |
+| `implementation/evidence/V12-E/after/no-result-1440x900.png` | 1440×900 Desktop | 搜索无结果与清除搜索 |
+| `implementation/evidence/V12-E/after/no-result-390x844.png` | 390×844 Mobile | 搜索无结果 Mobile |
+| `implementation/evidence/V12-E/after/no-result-430x932.png` | 430×932 Mobile | 搜索无结果宽 Mobile |
+| `implementation/evidence/V12-E/after/media-failure-1440x900.png` | 1440×900 Desktop | 全目录图片失败与比例内 Logo |
+| `implementation/evidence/V12-E/after/media-failure-390x844.png` | 390×844 Mobile | 图片失败 Mobile 双列 |
+| `implementation/evidence/V12-E/after/media-failure-430x932.png` | 430×932 Mobile | 图片失败宽 Mobile 双列 |
+| `implementation/evidence/V12-E/after/404-keyboard-390x844.png` | 390×844 Keyboard | 恢复行动焦点环 |
+
+### Summary
+
+五类状态现在共享规则线、放大标题、恢复行动和同一淡色工作室 Logo，但仍保留各自语义。404/500 具有明确品牌入口和真实状态码；目录空态继续处在原页面上下文中；媒体失败不改变横竖比例，也没有伪造图片或重试能力。
+
+### Must Fix
+
+无。全部状态在 1440、390、430 下无水平溢出；404/500 状态码正确，恢复行动不小于 44px，500 未显示底层错误信息。
+
+### Should Fix
+
+无。Logo 为低对比度装饰层且不进入读屏；标题、说明和行动在三档视口内保持清楚。
+
+### Could Improve
+
+- 390/430 当前截图证明结构安全；最终 Mobile 独立构图仍属于 V12-G。
+- Display、Body、Metadata、UI 与 Legal/Code 的最终字体角色由 V12-E-F1 统一，本轮不提前修改。
+
+### What Works Well
+
+- 复用现有 Logo 和两个共享组件即可覆盖所有调用页，没有新增状态组件、依赖或页面级重复样式。
+- 图片失败水印在媒体内部建立品牌归属；作品卡按底部身份渐变做视觉中心补偿，回落文字、Logo 和作品身份均保持可读。
+- 键盘、无 JavaScript 与 Reduced Motion 审计通过；静态水印不产生动画或布局位移。
+
+## V12-E-F1 · Sitewide Typography Audit & Governance Review
+
+日期：2026-08-25
+评审方向：语义字体角色、中文/英文/数字混排、授权与加载可靠性；不重排 scene，不进入 Mobile Final Art Direction。
+
+### Screenshots Captured
+
+| Screenshot | Breakpoint | Description |
+| --- | --- | --- |
+| `implementation/evidence/V12-E-F1/after/specimen-1440x900.png` | 1440×900 Desktop | Display、Body、Metadata、UI、Legal/Code 混排样本 |
+| `implementation/evidence/V12-E-F1/after/specimen-390x844.png` | 390×844 Mobile | 五类角色的移动换行与标点样本 |
+| `implementation/evidence/V12-E-F1/after/home-1440x900.png` | 1440×900 Desktop | Hero 品牌锁、四幕标题、metadata 与 UI 关系 |
+| `implementation/evidence/V12-E-F1/after/licenses-1440x900.png` | 1440×900 Desktop | Legal 正文、metadata 与 Code 的可见区分 |
+
+### Summary
+
+正式公开页和共享 UI 已从历史 `display/body/mono` 别名收口到 Display、Body、Metadata、UI、Legal、Code 语义 token；管理端外壳同步使用 display/body/metadata/ui/code 角色。普通编号、wayfinding、状态和目录 metadata 不再使用等宽字体，Code 只保留给许可证表达、回执编号和机器文本。未新增字体、依赖、页面结构或文案。
+
+Windows/Edge 的 platform-font 实测为：Display → STSong，Body/Metadata/UI/Legal → Microsoft YaHei，Code → Consolas；Hero 品牌字继续命中 ZhuoHeiPinTieTi。用户已明确接受现有拼贴体，不以其授权复核阻塞本任务；仓库分发的其他字体 Noto Serif SC 为 OFL-1.1，且只用于 PDF。
+
+### Must Fix
+
+无。11 个公开状态 × 3 视口全部 200/预期 404、无横向溢出，字体状态为 loaded，最大 CLS 0.000237。
+
+### Should Fix
+
+无。网页只 preload 19KB 品牌关键子集，没有请求 2.8MB 品牌完整字体或 11.6MB Noto PDF 字体。
+
+### Could Improve
+
+- 系统字体会随 Windows/macOS/Linux 环境略有字面差异；只有客户未来要求跨平台像素一致时，才评估一个许可证清晰的最小中文 Web Font 子集。
+- 390/430 证据只证明字体结构安全；最终 Mobile composition 仍属于 V12-F/V12-G，且必须先通过 `GATE-DESKTOP`。
+
+### What Works Well
+
+- 宋体 Display 与无衬线 Body/UI 的分工清楚，Metadata 不再呈现不必要的“代码感”。
+- 中英文、数字、价格、日期、标点和五位数扩展样本在 Desktop/Mobile 都没有裁切或不可接受换行。
+- Hero 品牌选择器和 Footer 样式未改变，原有 font flash 修复、关键子集 preload 与品牌首次入场保持。
+
+## V12-E-F2 · Desktop Acceptance Corrections Review
+
+日期：2026-08-25
+评审方向：`GATE-DESKTOP` 反馈收口；只修正失败媒体、领养公开投影、Works 水印、Commission 信息比例/分隔和共享分页，不进入 Mobile Final Art Direction。
+
+### Screenshots Captured
+
+| Screenshot | Breakpoint | Description |
+| --- | --- | --- |
+| `implementation/evidence/V12-E-F2/after/media-failure-hero-1440x900.png` | 1440×900 Desktop | Hero 实际媒体框居中失败态 |
+| `implementation/evidence/V12-E-F2/after/media-failure-detail-390x844.png` | 390×844 Mobile | 详情舞台与缩略图失败态 containment |
+| `implementation/evidence/V12-E-F2/after/home-adoption-1440x900.png` | 1440×900 Desktop | Homepage Adoption 物种/价格与无状态文案 |
+| `implementation/evidence/V12-E-F2/after/adoptions-grid-1440x900.png` | 1440×900 Desktop | 仅 available 的领养目录 |
+| `implementation/evidence/V12-E-F2/after/works-intro-1440x900.png` | 1440×900 Desktop | Works 页首低对比度 Logo 水印 |
+| `implementation/evidence/V12-E-F2/after/commission-details-1440x900.png` | 1440×900 Desktop | Commission 3:7 与淡灰竖线 |
+| `implementation/evidence/V12-E-F2/after/works-pagination-390x844.png` | 390×844 Mobile | 共享 editorial 分页与 44px 目标 |
+
+### Summary
+
+本轮把用户在 Desktop Gate 指出的跨页面小问题收束到共享入口：媒体失败只改 `ResponsivePicture`，分页只改 `PublicPagination`，领养可见性只改公开 repository 投影。Commission 以一条响应式灰线明确 3:7 信息关系，Works 页首水印平衡右上留白；没有新增组件、依赖、字段或数据库迁移。
+
+### Must Fix
+
+无。三视口自动审计的 `availableOnly`、`noStatusCopy`、`noHorizontalOverflow`、`worksWatermark`、`commission`、`pagination`、`mediaCentered` 与 `noRuntimeErrors` 全部通过。
+
+### Should Fix
+
+无。共享分页继续保留 SSR、无 JavaScript、键盘、44px、current/disabled 语义；失败缩略图短提示被约束在媒体框内。
+
+### Could Improve
+
+- 390/430 Evidence 只证明本轮修正没有结构回归；最终 Mobile Art Direction 仍属于 V12-F/V12-G，且必须先通过 `GATE-DESKTOP`。
+- 分页的最终 hover/focus/active/disabled 视觉统一仍属于 V14；本轮只修正用户指出的样式断层。
+
+### What Works Well
+
+- `adopted` 退出领养销售面但继续存在于 Works 归档，产品语义和历史作品完整性没有互相污染。
+- 一处共享失败态修正覆盖全部媒体消费者，移除了页面级视觉补偿的必要性。
+- Hero 品牌文字、Footer、Motion、Schema、媒体 DTO 与依赖均未改变。
+
+## V12-E-F4 · Featured Desktop Composition Density Review
+
+日期：2026-08-25
+评审方向：在既有 Type × Media / B + M3 静态方向内收紧 Featured 空场；不新增内容、装饰或 Motion。
+
+### Screenshots Captured
+
+| Screenshot | Breakpoint | Description |
+| --- | --- | --- |
+| `.design/screenshots/v12-e-f4-featured-after-desktop-1280.png` | 1280×800 Desktop | 高度受限场景、完整摄影与底部 wayfinding |
+| `.design/screenshots/v12-e-f4-featured-after-desktop-1440.png` | 1440×900 Desktop | 标准 Desktop 信息组与摄影平衡 |
+| `.design/screenshots/v12-e-f4-featured-after-desktop-1920.png` | 1920×1080 Wide Desktop | 宽屏媒体尺度与 Typography overlap |
+| `.design/screenshots/v12-e-f4-featured-after-tablet-768.png` | 768×1024 Tablet | 窄屏阅读顺序与双项切换 |
+| `.design/screenshots/v12-e-f4-featured-after-mobile-390.png` | 390×844 Mobile | Mobile Structural Safety |
+
+### Summary
+
+空场来自 Desktop 信息组过低、摄影偏窄以及两者缺少共同视觉重心，而不是内容不足。修正将名称、物种、CTA 与切换器收成左侧单一 editorial grouping 并上移；摄影外框向中部延伸、随可用高度放大，与背景 `SELECTED WORKS` 建立明确 overlap。后续人工复核加入与 Homepage Adoption 相同的浅灰 media canvas，在不改变外框的前提下缩小照片，并补齐 `12px / 8px` 外内圆角。没有增加文案、Card、独立色值或依赖。
+
+### Must Fix
+
+无。1280×800 与 1920×1080 均无水平溢出，底部 wayfinding 可见；1440 实测浅灰 canvas 为 `rgb(236, 235, 242)`、外内圆角为 `12px / 8px`；768/390 的两个切换按钮和原阅读顺序保持。
+
+### Could Improve
+
+- 最终 Mobile composition 仍属于 V12-F/V12-G，必须先通过 `GATE-DESKTOP`；本轮不把 Desktop grouping 机械缩到窄屏。
+- V13 只能在本轮静态终态上加入分层 Motion，不得让 transform 或 settle 改写最终布局。
+
+### What Works Well
+
+- 以一处现有组件的 CSS/DOM grouping 解决密度问题，没有用新内容掩盖空间关系。
+- 1440/1920 的媒体画布承担更清楚的第一视觉 anchor；缩小后的照片不再压迫，左侧信息仍保留足够呼吸感而不显空散。
+- Hero 品牌文字、Footer、业务 DTO、Schema、Motion 与其余 Homepage scene 均未改变。
+
+## V12-F · Mobile Homepage Independent Art Direction Review
+
+日期：2026-08-25
+评审方向：390×844 / 430×932 Homepage 四幕独立静态构图；不进入 V12-G 或 V13 Motion。
+
+### Screenshots Captured
+
+| Screenshot | Breakpoint | Description |
+| --- | --- | --- |
+| `implementation/evidence/V12-F/after/hero-default-390x844.png` | 390×844 Mobile | Hero 品牌锁、摄影、controls 与下一幕 |
+| `implementation/evidence/V12-F/after/featured-default-430x932.png` | 430×932 Mobile | Featured 浅灰媒体承托、信息与双项控制 |
+| `implementation/evidence/V12-F/after/commission-long-copy-390x844.png` | 390×844 Mobile | Commission 长说明换行与双行动 |
+| `implementation/evidence/V12-F/after/adoption-multi-next-430x932.png` | 430×932 Mobile | Adoption 三项选择、循环切换与当前页码 |
+| `implementation/evidence/V12-F/after/homepage-boundary-390x844.png` | 390×844 Full page | 四幕边界、阅读连续性与 Footer 起点 |
+| `implementation/evidence/V12-F/after/homepage-boundary-430x932.png` | 430×932 Full page | 宽 Mobile 四幕边界 |
+
+### Summary
+
+Homepage 四幕没有机械缩小 Desktop grid。Hero 保持品牌文字终态，只加强摄影周边 scrim 和 supporting copy 的可读区域；Featured 以浅灰画布和明确的 controls → 信息间距维持摄影焦点；Commission 采用满宽媒体与轻微错轴叙事；Adoption 将三项选择、当前页码和循环切换收为稳定控制行。默认、多项、长文和整页边界在两档视口均成立。
+
+### Must Fix
+
+无。自动审计的两档视口、无水平溢出、四幕高度、44px 目标、图片解码、Hero Brand Lock、Featured `12px / 8px` 圆角、Adoption control row、4s autoplay、标题入场不重启、Reduced Motion 和 runtime error 均通过。
+
+### Should Fix
+
+无。用户在最终复核中指出的 `/works`、`/adoptions` 背景英文与右上 Logo 重叠已同时检查：390px 间距分别为 28px / 25px，430px 为 45px / 46px，均无横向溢出；Mobile AdoptionCard 同时压缩为 16:9 完整 `contain` 媒体、单行名称及同排物种/价格。
+
+### Could Improve
+
+- V12-G 仍需独立审查所有非 Homepage 公开页面；本轮两个局部页面修正不能代签该任务。
+- V13 才负责最终 Motion hierarchy、reverse、interrupt 与 settle；不得以 Motion 改写本轮静态终态。
+
+### What Works Well
+
+- Hero 品牌字、4s autoplay、一次性首次入场和 font flash 修复均未因 Mobile 重构回退。
+- 四幕各自保留不同 scene identity，同时共享圆角、背景 Typography、细线、metadata 与 wayfinding 语言。
+- 1440×900 回归保持无水平溢出、Hero 品牌字体锁、Featured Desktop 信息列与 `12px / 8px` 圆角；Footer 未改。
+
+## V12-G · Remaining Public Mobile Art Direction Review
+
+日期：2026-08-25
+评审方向：390×844 / 430×932 其余公开页面与失败/空态的最终 Mobile Art Direction；Desktop 构图冻结。
+
+### Screenshots Captured
+
+| Screenshot | Breakpoint | Description |
+| --- | --- | --- |
+| `implementation/evidence/V12-G/after/works-390x844.png` | 390×844 Mobile | Works Catalog 密度、搜索与分页 |
+| `implementation/evidence/V12-G/after/work-detail-430x932.png` | 430×932 Mobile | 多图 Detail 舞台与五图缩略导航 |
+| `implementation/evidence/V12-G/after/adoption-detail-390x844.png` | 390×844 Mobile | 单图设定详情完整展示 |
+| `implementation/evidence/V12-G/after/commission-apply-validation-430x932.png` | 430×932 Mobile | 表单校验聚焦与纵向流程 |
+| `implementation/evidence/V12-G/after/licenses-details-open-390x844.png` | 390×844 Mobile | 法务长文与原生许可证展开 |
+| `implementation/evidence/V12-G/after/detail-media-failure-430x932.png` | 430×932 Mobile | Detail 媒体失败恢复 |
+| `implementation/evidence/V12-G/after/work-detail-1440x900.png` | 1440×900 Desktop | Desktop 冻结回归 |
+
+### Summary
+
+逐页检查证明，Works、Adoptions、Detail、Commission、About、Apply、Legal 与状态页已经使用适合自身内容的 Mobile 构图，无需再套统一模板。唯一明确失衡是多图 Detail 舞台在短屏中过高；收紧后主图、五张缩略图和身份信息在 390/430 的阅读顺序更清楚，单图设定详情未受影响。
+
+### Must Fix
+
+无。两档 Mobile 与 1440 Desktop 自动审计的状态码、横向溢出、图片解码、Footer、主要控件、表单、法务与失败恢复均通过。
+
+### Should Fix
+
+无。各页面保留自己的信息密度、媒体比例和恢复语义；Footer、Hero 品牌锁与 Desktop Art Direction 未改变。
+
+### Could Improve
+
+- Motion hierarchy、reverse、interrupt、settle 与跨页 shared-media transition 仅属于 V13，不应回写本轮静态终态。
+- V14 再统一 controls 的 hover/focus/active/disabled/loading 视觉，本轮不提前打磨控件皮肤。
+
+### What Works Well
+
+- 只修改一个共享 Gallery 的 Mobile 尺寸即可解决唯一证据明确的问题，没有制造页面级例外或新依赖。
+- 多图与单图的比例策略保持分离：作品缩略导航更紧凑，设定图仍完整展示。
+- 390/430 全量状态与 1440 Desktop 共用同一验证脚本，证明修正没有反向破坏冻结构图。
+
+## V15 · Full Responsive / Input / Accessibility Final QA Review
+
+日期：2026-08-26
+评审方向：冻结 Desktop/Mobile Art Direction 后的跨断点、输入方式、可访问性、SSR 与状态回归；不开始新的静态方向或 V16 一致性修正。
+
+### Screenshots Captured
+
+| Screenshot | Breakpoint | Description |
+| --- | --- | --- |
+| `.design/screenshots/v15-final-review/contact-sheet-mobile-375.png` | 375×812 Mobile | 12 个关键公开页面整页缩略索引 |
+| `.design/screenshots/v15-final-review/contact-sheet-tablet-768.png` | 768×1024 Tablet | Tablet 整页缩略索引 |
+| `.design/screenshots/v15-final-review/contact-sheet-desktop-1280.png` | 1280×800 Desktop | Desktop 整页缩略索引 |
+| `implementation/evidence/V15/matrix/1023x900/home.png` | 1023×900 Boundary | 折叠导航、原生滚动与 Homepage 四幕 |
+| `implementation/evidence/V15/matrix/1024x900/home.png` | 1024×900 Boundary | Desktop 导航、staged Homepage 与布局切换 |
+| `implementation/evidence/V15/work-detail-rounded-1440x900.png` | 1440×900 Desktop | Detail 实际主图层共享圆角 |
+| `implementation/evidence/V15/reduced-motion-390x844.png` | 390×844 Preference | Reduced Motion 可靠终态 |
+| `implementation/evidence/V15/no-js-home-390x844.png` | 390×844 No JavaScript | SSR Homepage 公开内容 |
+
+> 全部 36 张 375/768/1280 单页截图位于 `.design/screenshots/v15-final-review/`；六档 × 15 状态及 500 页原图位于 `implementation/evidence/V15/matrix/`。
+
+### Summary
+
+六档响应式矩阵和三档人工联系表证明，已冻结的各页面 Art Direction 在 Mobile、Tablet、1023/1024 边界和 Desktop 之间能够重排而不是机械缩放。未发现确认的文字/Logo 重叠、横向溢出、媒体裁切或断点层级回归；详情主图补齐共享圆角后与全站媒体语言一致。
+
+`/commission` 375px 首轮整页截图中的空二维码并非页面数据或图片加载故障，而是浏览器未滚动到原生 lazy image。SSR HTML、公开 DTO 与真实滚动后的 `naturalWidth/naturalHeight` 均正常；证据脚本现先触发懒加载并把图片解码纳入硬门禁，最终 Mobile/Tablet/Desktop 截图均显示二维码。
+
+### Must Fix
+
+无。90 项页面矩阵、30 项 No-JS、6 项 500 页以及全部输入/偏好检查通过；634 个可见控制的最小目标为 44×44，全部可见图片完成解码。
+
+### Should Fix
+
+无。1023px 保持折叠导航和原生滚动，1024px 正确切换 Desktop 导航、四列 Works、双列 Adoption 与 staged Homepage；两侧没有跳变造成的内容丢失。
+
+### Could Improve
+
+- 真实 iOS/Android 刘海设备和用户本人视觉验收仍应在后续人工 Gate 执行；自动化不能代签。
+- 只有未来确需 edge-to-edge Mobile 构图时，才评估 `viewport-fit=cover` 与完整 safe-area inset 适配；当前浏览器约束视口更简单且已验证。
+
+### What Works Well
+
+- 页面保留各自 scene identity，同时共享圆角、字体、细线、背景 Typography、状态与控件语言，没有在最终 QA 中重新模板化。
+- 证据层区分了真实生产缺陷和自动化懒加载限制，没有通过取消原生 lazy loading 制造性能回退。
+- Keyboard、Touch、Fine Pointer、IME、Soft Keyboard、Reduced Motion/Transparency/Contrast、No-JS 与真实 500 状态共同进入同一 `audit.json`，后续可重复验证。
+
+## V16 · Consistency & Evidence Review
+
+日期：2026-08-26
+
+评审方向：对照 V09 Shared Visual Language、V00-F2 公开面矩阵、V09～V15 Evidence/Handoff，确认全站同源但不模板化，并收口最终 Evidence Index。
+
+范围边界：只修确认的一致性缺口；不开始新视觉方向，不进入 T47 或 GATE-E。
+
+### Screenshots Captured
+
+全部 fresh screenshot 位于 `.design/screenshots/v16-final-consistency/`：
+
+| Screenshot group | Breakpoints | Description |
+| --- | --- | --- |
+| `review-home-{mobile-375,tablet-768,desktop-1280}.png` | 375×812 / 768×1024 / 1280×800 | Homepage 四幕与 Footer 邻接 |
+| `review-works-{mobile-375,tablet-768,desktop-1280}.png` | 三档 | Works catalog |
+| `review-adoptions-{mobile-375,tablet-768,desktop-1280}.png` | 三档 | Adoption catalog |
+| `review-work-detail-{mobile-375,tablet-768,desktop-1280}.png` | 三档 | Work detail |
+| `review-adoption-detail-{mobile-375,tablet-768,desktop-1280}.png` | 三档 | Adoption detail |
+| `review-commission-{mobile-375,tablet-768,desktop-1280}.png` | 三档 | Commission content |
+| `review-commission-apply-{mobile-375,tablet-768,desktop-1280}.png` | 三档 | Commission form |
+| `review-about-{mobile-375,tablet-768,desktop-1280}.png` | 三档 | About / Contact |
+| `review-service-{mobile-375,tablet-768,desktop-1280}.png` | 三档 | Service document |
+| `review-privacy-{mobile-375,tablet-768,desktop-1280}.png` | 三档 | Privacy document |
+| `review-licenses-{mobile-375,tablet-768,desktop-1280}.png` | 三档 | Licenses document |
+| `review-not-found-{mobile-375,tablet-768,desktop-1280}.png` | 三档 | 404 state |
+| `review-works-empty-{mobile-375,tablet-768,desktop-1280}.png` | 三档 | Empty catalog |
+| `review-works-no-result-{mobile-375,tablet-768,desktop-1280}.png` | 三档 | Works no result |
+| `review-adoptions-no-result-{mobile-375,tablet-768,desktop-1280}.png` | 三档 | Adoptions no result |
+| `review-media-failure-{mobile-375,tablet-768,desktop-1280}.png` | 三档 | Forced media failure |
+| `review-server-error-{mobile-375,tablet-768,desktop-1280}.png` | 三档 | Real 500 fixture |
+| `contact-sheet-{mobile-375,tablet-768,desktop-1280}.png` | 三档 | 15 个主要状态总览索引 |
+
+合计 51 张单页证据和 3 张联系表，共 54 张。项目没有独立 Dark Mode 设计契约，本轮不伪造 Dark Mode 变体。
+
+### Summary
+
+V16 fresh 静态矩阵未确认生产 UI 缺陷。Homepage 四幕、两个 Catalog、统一 Detail、Commission、Apply、About/Contact、Document 与 State surfaces 通过不同 Composition 保持各自身份，同时共享字体、中文 wayfinding、摄影圆角、细线、行动和状态语言；375、768、1280 三档没有横向溢出、图片解码失败、运行时错误或关键层级回退。
+
+交接确认前的真实连续操作随后暴露一项静态矩阵无法捕捉的单帧缺陷：Homepage 非 Hero scene 跳转 `/works` 时，persistent Header 先按 incoming route 从 fixed 切成 sticky，把仍在离场的旧 scene 下推 77px并露出 Hero 尾部。修复将 Header visual path 的提交延后到页面交换边界；Edge 逐帧复核中旧 Featured top 从原先 72→149px 改为始终 72px。该修正不改变页面静态构图、Header 最终状态或正式路由的短 opacity 入场。
+
+本轮唯一 Must Fix 是文档漂移：旧 SPEC/PLAN/Design/CLAUDE 仍把 Homepage Adoption 写成单项、把 `/adoptions` 写成 available + adopted、把 Featured 写成旧双图，并保留已删除的 shared-media 运行时口径。现已统一为 V11 最多三项 available、`/adoptions` available-only、V09+ Type × Media、4s 页面内 carousel，以及正式路由短 opacity/无跨页 media morph；未修改生产页面代码。
+
+### Must Fix
+
+已解决：产品、设计、仓库规范与当前实现的四项契约漂移，以及 Homepage 非 Hero scene 离场时的 Header 定位单帧错位。文档修正位置为 `CLAUDE.md`、`requirements/SPEC.md`、`planning/PLAN.md`、`.design/README.md` 与 `.design/SHARED_VISUAL_LANGUAGE.md`；运行时修正与回归位于 `PublicHeader.vue`、`tests/smoke/main-journeys.spec.ts` 和 `implementation/evidence/V16/transition-regression/`。
+
+### Should Fix
+
+无。V16 `audit.json` 的 expected status、selector、overflow、semantics、image decode、runtime error、Footer continuity、Hero brand lock、media failure 和 server error 共 10 项 checks 全部为 `true`。
+
+### Could Improve
+
+- T47 仍需按任务契约执行真实手机、连续交互与性能验收；V16 自动化和截图不能代签。
+- GATE-E 仍需凌巽及指定人工验收者完成最终观感判断；本轮只证明一致性与证据闭环。
+
+### What Works Well
+
+- Homepage 的 Hero / Type × Media / Service Docket / Character Display 共享站点语法但没有变成四张同构卡片。
+- Catalog、Detail、Document、Form 与 Error/Empty/Media Failure 状态各自按内容任务重排，Mobile 不只是 Desktop 缩小版。
+- Footer 与 Hero 品牌锁保持；当前短 opacity 路由入场没有恢复已删除的跨页平滑媒体位移。
+- OSS 与字体来源可从 `config/third-party-assets.json`、`third-party-summary.json` 和 `public/THIRD_PARTY_NOTICES.txt` 追溯。

@@ -24,10 +24,11 @@ defineProps<{
 
 .work-identity__name {
   min-width: 0;
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: clamp(1rem, 1.7vw, 1.25rem);
-  font-weight: 600;
-  line-height: var(--line-height-heading);
+  font-weight: var(--type-display-weight);
+  line-height: var(--type-display-line-height);
+  letter-spacing: var(--type-display-letter-spacing);
   overflow-wrap: anywhere;
 }
 
@@ -36,7 +37,10 @@ defineProps<{
   min-width: 0;
   max-width: 100%;
   color: rgb(255 255 255 / 0.82);
-  font-size: var(--font-size-xs);
+  font-family: var(--font-role-metadata);
+  font-size: var(--type-metadata-size);
+  font-weight: var(--type-metadata-weight);
+  line-height: var(--type-metadata-line-height);
 }
 
 .work-identity__species {

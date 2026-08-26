@@ -1,0 +1,680 @@
+{
+  "capturedAt": "2026-08-26T13:20:12.538Z",
+  "baseURL": "http://127.0.0.1:3000/",
+  "browser": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+  "viewports": {
+    "390x844": {
+      "errors": [],
+      "structure": {
+        "navVisible": false,
+        "menuVisible": true,
+        "scrollSnapType": "none",
+        "noHorizontalOverflow": true,
+        "viewportMeta": "width=device-width, initial-scale=1",
+        "adoptionSteppers": 0,
+        "adoptionFolios": 1,
+        "adoptionSelectorItems": 3,
+        "featuredControls": 1
+      },
+      "carousels": {
+        "hero": {
+          "before": "第 1 张，共 2 张",
+          "terminal": "第 1 张，共 2 张",
+          "nextActive": true,
+          "previousActive": true,
+          "animatedProperties": [
+            "offset",
+            "easing",
+            "composite",
+            "opacity",
+            "computedOffset",
+            "transform"
+          ],
+          "compositorOnly": true,
+          "runningAnimations": 0,
+          "activeMediaCount": 1,
+          "horizontalOverflow": -15
+        },
+        "featured": {
+          "before": "adoption-green-dog-test",
+          "terminal": "adoption-green-dog-test",
+          "nextActive": true,
+          "previousActive": true,
+          "animatedProperties": [
+            "offset",
+            "easing",
+            "composite",
+            "opacity",
+            "computedOffset",
+            "transform"
+          ],
+          "compositorOnly": true,
+          "runningAnimations": 0,
+          "activeMediaCount": 1,
+          "horizontalOverflow": -15
+        },
+        "adoption": {
+          "before": "adoption-regular-2",
+          "terminal": "adoption-regular-2",
+          "nextActive": true,
+          "previousActive": true,
+          "animatedProperties": [
+            "offset",
+            "easing",
+            "composite",
+            "opacity",
+            "computedOffset",
+            "transform"
+          ],
+          "compositorOnly": true,
+          "runningAnimations": 0,
+          "activeMediaCount": 1,
+          "horizontalOverflow": -15
+        }
+      },
+      "keyboard": {
+        "before": "第 1 张，共 2 张",
+        "after": "第 2 张，共 2 张",
+        "changed": true
+      },
+      "adoptionSelector": {
+        "before": "adoption-regular-2",
+        "after": "adoption-green-dog-test",
+        "changed": true
+      },
+      "scrolling": {
+        "before": 0,
+        "after": 420,
+        "nativeEscape": true
+      }
+    },
+    "430x932": {
+      "errors": [],
+      "structure": {
+        "navVisible": false,
+        "menuVisible": true,
+        "scrollSnapType": "none",
+        "noHorizontalOverflow": true,
+        "viewportMeta": "width=device-width, initial-scale=1",
+        "adoptionSteppers": 0,
+        "adoptionFolios": 1,
+        "adoptionSelectorItems": 3,
+        "featuredControls": 1
+      },
+      "carousels": {
+        "hero": {
+          "before": "第 1 张，共 2 张",
+          "terminal": "第 1 张，共 2 张",
+          "nextActive": true,
+          "previousActive": true,
+          "animatedProperties": [
+            "offset",
+            "easing",
+            "composite",
+            "opacity",
+            "computedOffset",
+            "transform"
+          ],
+          "compositorOnly": true,
+          "runningAnimations": 0,
+          "activeMediaCount": 1,
+          "horizontalOverflow": -15
+        },
+        "featured": {
+          "before": "adoption-green-dog-test",
+          "terminal": "adoption-green-dog-test",
+          "nextActive": true,
+          "previousActive": true,
+          "animatedProperties": [
+            "offset",
+            "easing",
+            "composite",
+            "opacity",
+            "computedOffset",
+            "transform"
+          ],
+          "compositorOnly": true,
+          "runningAnimations": 0,
+          "activeMediaCount": 1,
+          "horizontalOverflow": -15
+        },
+        "adoption": {
+          "before": "adoption-regular-2",
+          "terminal": "adoption-regular-2",
+          "nextActive": true,
+          "previousActive": true,
+          "animatedProperties": [
+            "offset",
+            "easing",
+            "composite",
+            "opacity",
+            "computedOffset",
+            "transform"
+          ],
+          "compositorOnly": true,
+          "runningAnimations": 0,
+          "activeMediaCount": 1,
+          "horizontalOverflow": -15
+        }
+      },
+      "keyboard": {
+        "before": "第 1 张，共 2 张",
+        "after": "第 2 张，共 2 张",
+        "changed": true
+      },
+      "adoptionSelector": {
+        "before": "adoption-regular-2",
+        "after": "adoption-green-dog-test",
+        "changed": true
+      },
+      "scrolling": {
+        "before": 0,
+        "after": 420,
+        "nativeEscape": true
+      }
+    },
+    "768x1024": {
+      "errors": [],
+      "structure": {
+        "navVisible": false,
+        "menuVisible": true,
+        "scrollSnapType": "none",
+        "noHorizontalOverflow": true,
+        "viewportMeta": "width=device-width, initial-scale=1",
+        "adoptionSteppers": 0,
+        "adoptionFolios": 1,
+        "adoptionSelectorItems": 3,
+        "featuredControls": 1
+      },
+      "carousels": {
+        "hero": {
+          "before": "第 1 张，共 2 张",
+          "terminal": "第 1 张，共 2 张",
+          "nextActive": true,
+          "previousActive": true,
+          "animatedProperties": [
+            "offset",
+            "easing",
+            "composite",
+            "opacity",
+            "computedOffset",
+            "transform"
+          ],
+          "compositorOnly": true,
+          "runningAnimations": 0,
+          "activeMediaCount": 1,
+          "horizontalOverflow": -15
+        },
+        "featured": {
+          "before": "adoption-green-dog-test",
+          "terminal": "adoption-green-dog-test",
+          "nextActive": true,
+          "previousActive": true,
+          "animatedProperties": [
+            "offset",
+            "easing",
+            "composite",
+            "opacity",
+            "computedOffset",
+            "transform"
+          ],
+          "compositorOnly": true,
+          "runningAnimations": 0,
+          "activeMediaCount": 1,
+          "horizontalOverflow": -15
+        },
+        "adoption": {
+          "before": "adoption-regular-2",
+          "terminal": "adoption-regular-2",
+          "nextActive": true,
+          "previousActive": true,
+          "animatedProperties": [
+            "offset",
+            "easing",
+            "composite",
+            "opacity",
+            "computedOffset",
+            "transform"
+          ],
+          "compositorOnly": true,
+          "runningAnimations": 0,
+          "activeMediaCount": 1,
+          "horizontalOverflow": -15
+        }
+      },
+      "keyboard": {
+        "before": "第 1 张，共 2 张",
+        "after": "第 2 张，共 2 张",
+        "changed": true
+      },
+      "adoptionSelector": {
+        "before": "adoption-regular-2",
+        "after": "adoption-green-dog-test",
+        "changed": true
+      },
+      "scrolling": {
+        "before": 0,
+        "after": 420,
+        "nativeEscape": true
+      }
+    },
+    "1023x900": {
+      "errors": [],
+      "structure": {
+        "navVisible": false,
+        "menuVisible": true,
+        "scrollSnapType": "none",
+        "noHorizontalOverflow": true,
+        "viewportMeta": "width=device-width, initial-scale=1",
+        "adoptionSteppers": 0,
+        "adoptionFolios": 1,
+        "adoptionSelectorItems": 3,
+        "featuredControls": 1
+      },
+      "carousels": {
+        "hero": {
+          "before": "第 1 张，共 2 张",
+          "terminal": "第 1 张，共 2 张",
+          "nextActive": true,
+          "previousActive": true,
+          "animatedProperties": [
+            "offset",
+            "easing",
+            "composite",
+            "opacity",
+            "computedOffset",
+            "transform"
+          ],
+          "compositorOnly": true,
+          "runningAnimations": 0,
+          "activeMediaCount": 1,
+          "horizontalOverflow": -15
+        },
+        "featured": {
+          "before": "adoption-green-dog-test",
+          "terminal": "adoption-green-dog-test",
+          "nextActive": true,
+          "previousActive": true,
+          "animatedProperties": [
+            "offset",
+            "easing",
+            "composite",
+            "opacity",
+            "computedOffset",
+            "transform"
+          ],
+          "compositorOnly": true,
+          "runningAnimations": 0,
+          "activeMediaCount": 1,
+          "horizontalOverflow": -15
+        },
+        "adoption": {
+          "before": "adoption-regular-2",
+          "terminal": "adoption-regular-2",
+          "nextActive": true,
+          "previousActive": true,
+          "animatedProperties": [
+            "offset",
+            "easing",
+            "composite",
+            "opacity",
+            "computedOffset",
+            "transform"
+          ],
+          "compositorOnly": true,
+          "runningAnimations": 0,
+          "activeMediaCount": 1,
+          "horizontalOverflow": -15
+        }
+      },
+      "keyboard": {
+        "before": "第 1 张，共 2 张",
+        "after": "第 2 张，共 2 张",
+        "changed": true
+      },
+      "adoptionSelector": {
+        "before": "adoption-regular-2",
+        "after": "adoption-green-dog-test",
+        "changed": true
+      },
+      "scrolling": {
+        "before": 0,
+        "after": 420,
+        "nativeEscape": true
+      }
+    },
+    "1024x900": {
+      "errors": [],
+      "structure": {
+        "navVisible": true,
+        "menuVisible": false,
+        "scrollSnapType": "y mandatory",
+        "noHorizontalOverflow": true,
+        "viewportMeta": "width=device-width, initial-scale=1",
+        "adoptionSteppers": 0,
+        "adoptionFolios": 1,
+        "adoptionSelectorItems": 3,
+        "featuredControls": 1
+      },
+      "carousels": {
+        "hero": {
+          "before": "第 1 张，共 2 张",
+          "terminal": "第 1 张，共 2 张",
+          "nextActive": true,
+          "previousActive": true,
+          "animatedProperties": [
+            "offset",
+            "easing",
+            "composite",
+            "opacity",
+            "computedOffset",
+            "transform"
+          ],
+          "compositorOnly": true,
+          "runningAnimations": 0,
+          "activeMediaCount": 1,
+          "horizontalOverflow": -15
+        },
+        "featured": {
+          "before": "adoption-green-dog-test",
+          "terminal": "adoption-green-dog-test",
+          "nextActive": true,
+          "previousActive": true,
+          "animatedProperties": [
+            "offset",
+            "easing",
+            "composite",
+            "opacity",
+            "computedOffset",
+            "transform"
+          ],
+          "compositorOnly": true,
+          "runningAnimations": 0,
+          "activeMediaCount": 1,
+          "horizontalOverflow": -15
+        },
+        "adoption": {
+          "before": "adoption-regular-2",
+          "terminal": "adoption-regular-2",
+          "nextActive": true,
+          "previousActive": true,
+          "animatedProperties": [
+            "offset",
+            "easing",
+            "composite",
+            "transform",
+            "computedOffset",
+            "opacity"
+          ],
+          "compositorOnly": true,
+          "runningAnimations": 0,
+          "activeMediaCount": 1,
+          "horizontalOverflow": -15
+        }
+      },
+      "keyboard": {
+        "before": "第 1 张，共 2 张",
+        "after": "第 2 张，共 2 张",
+        "changed": true
+      },
+      "adoptionSelector": {
+        "before": "adoption-regular-2",
+        "after": "adoption-green-dog-test",
+        "changed": true
+      },
+      "scrolling": {
+        "first": 1,
+        "second": 2,
+        "reverse": 1,
+        "locked": 1
+      }
+    },
+    "1440x900": {
+      "errors": [],
+      "structure": {
+        "navVisible": true,
+        "menuVisible": false,
+        "scrollSnapType": "y mandatory",
+        "noHorizontalOverflow": true,
+        "viewportMeta": "width=device-width, initial-scale=1",
+        "adoptionSteppers": 0,
+        "adoptionFolios": 1,
+        "adoptionSelectorItems": 3,
+        "featuredControls": 1
+      },
+      "carousels": {
+        "hero": {
+          "before": "第 1 张，共 2 张",
+          "terminal": "第 1 张，共 2 张",
+          "nextActive": true,
+          "previousActive": true,
+          "animatedProperties": [
+            "offset",
+            "easing",
+            "composite",
+            "opacity",
+            "computedOffset",
+            "transform"
+          ],
+          "compositorOnly": true,
+          "runningAnimations": 0,
+          "activeMediaCount": 1,
+          "horizontalOverflow": -15
+        },
+        "featured": {
+          "before": "adoption-green-dog-test",
+          "terminal": "adoption-green-dog-test",
+          "nextActive": true,
+          "previousActive": true,
+          "animatedProperties": [
+            "offset",
+            "easing",
+            "composite",
+            "opacity",
+            "computedOffset",
+            "transform"
+          ],
+          "compositorOnly": true,
+          "runningAnimations": 0,
+          "activeMediaCount": 1,
+          "horizontalOverflow": -15
+        },
+        "adoption": {
+          "before": "adoption-regular-2",
+          "terminal": "adoption-regular-2",
+          "nextActive": true,
+          "previousActive": true,
+          "animatedProperties": [
+            "offset",
+            "easing",
+            "composite",
+            "transform",
+            "computedOffset",
+            "opacity"
+          ],
+          "compositorOnly": true,
+          "runningAnimations": 0,
+          "activeMediaCount": 1,
+          "horizontalOverflow": -15
+        }
+      },
+      "keyboard": {
+        "before": "第 1 张，共 2 张",
+        "after": "第 2 张，共 2 张",
+        "changed": true
+      },
+      "adoptionSelector": {
+        "before": "adoption-regular-2",
+        "after": "adoption-green-dog-test",
+        "changed": true
+      },
+      "scrolling": {
+        "first": 1,
+        "second": 2,
+        "reverse": 1,
+        "locked": 1
+      }
+    }
+  },
+  "autoplay": {
+    "390x844": {
+      "initial": {
+        "hero": "第 1 张，共 2 张",
+        "featured": "return-xiapian",
+        "adoption": "adoption-green-dog-test"
+      },
+      "advanced": {
+        "hero": "第 2 张，共 2 张",
+        "featured": "adoption-green-dog-test",
+        "adoption": "adoption-regular-3"
+      },
+      "paused": {
+        "hero": "第 2 张，共 2 张",
+        "featured": "adoption-green-dog-test",
+        "adoption": "adoption-regular-3"
+      },
+      "remainedPaused": {
+        "hero": "第 2 张，共 2 张",
+        "featured": "adoption-green-dog-test",
+        "adoption": "adoption-regular-2"
+      }
+    },
+    "1440x900": {
+      "initial": {
+        "hero": "第 1 张，共 2 张",
+        "featured": "return-xiapian",
+        "adoption": "adoption-green-dog-test"
+      },
+      "advanced": {
+        "hero": "第 2 张，共 2 张",
+        "featured": "adoption-green-dog-test",
+        "adoption": "adoption-regular-3"
+      },
+      "paused": {
+        "hero": "第 2 张，共 2 张",
+        "featured": "adoption-green-dog-test",
+        "adoption": "adoption-regular-3"
+      },
+      "remainedPaused": {
+        "hero": "第 2 张，共 2 张",
+        "featured": "adoption-green-dog-test",
+        "adoption": "adoption-regular-2"
+      }
+    }
+  },
+  "reducedMotion": {
+    "390x844": {
+      "initial": {
+        "hero": "第 1 张，共 2 张",
+        "featured": "return-xiapian",
+        "adoption": "adoption-green-dog-test"
+      },
+      "afterWait": {
+        "hero": "第 1 张，共 2 张",
+        "featured": "return-xiapian",
+        "adoption": "adoption-green-dog-test"
+      },
+      "manual": {
+        "hero": "第 2 张，共 2 张",
+        "featured": "adoption-green-dog-test",
+        "adoption": "adoption-regular-3"
+      },
+      "matches": true,
+      "runningAnimations": 0,
+      "visiblePauseButtons": 0
+    },
+    "1440x900": {
+      "initial": {
+        "hero": "第 1 张，共 2 张",
+        "featured": "return-xiapian",
+        "adoption": "adoption-green-dog-test"
+      },
+      "afterWait": {
+        "hero": "第 1 张，共 2 张",
+        "featured": "return-xiapian",
+        "adoption": "adoption-green-dog-test"
+      },
+      "manual": {
+        "hero": "第 2 张，共 2 张",
+        "featured": "adoption-green-dog-test",
+        "adoption": "adoption-regular-3"
+      },
+      "matches": true,
+      "runningAnimations": 0,
+      "visiblePauseButtons": 0
+    }
+  },
+  "input": {
+    "keyboard": {
+      "firstFocus": {
+        "href": "#main-content",
+        "focusVisible": true
+      },
+      "skipTarget": true
+    },
+    "mobileNav": {
+      "focusInside": true,
+      "trapped": true,
+      "restored": true
+    },
+    "ime": {
+      "query": "虾片返图",
+      "value": "虾片返图"
+    }
+  },
+  "preferences": {
+    "reducedTransparency": {
+      "matches": true,
+      "overlaySoft": "rgb(17 20 25 / 0.72)",
+      "borderPrimary": "#dde1e7"
+    },
+    "moreContrast": {
+      "matches": true,
+      "overlaySoft": "rgb(17 20 25 / 0.18)",
+      "borderPrimary": "#9ba3af"
+    }
+  },
+  "performance": {
+    "cls": 0,
+    "lcp": 152,
+    "longTasks": 0,
+    "domContentLoadedMs": 136.29999999701977,
+    "loadEventMs": 143.29999999701977,
+    "failedImages": [],
+    "noHorizontalOverflow": true
+  },
+  "transitionRegression": {
+    "initialTop": 72,
+    "maxShift": 0,
+    "positions": [
+      72,
+      72
+    ]
+  },
+  "manual": {
+    "realIOSOrAndroid": "pending-user-device-check"
+  },
+  "checks": {
+    "noRuntimeErrors": true,
+    "responsiveNavigation": true,
+    "noHorizontalOverflow": true,
+    "adoptionControlsRemoved": true,
+    "safeAreaStrategy": true,
+    "carouselDirectionInterrupt": true,
+    "compositorFriendlyMotion": true,
+    "keyboardCarousel": true,
+    "desktopSceneSequenceReverseLock": true,
+    "below1024NativeEscape": true,
+    "autoplayFourSecondsAndPause": true,
+    "reducedMotion": true,
+    "keyboardAndFocus": true,
+    "mobileNavFocus": true,
+    "ime": true,
+    "prefersTransparencyAndContrast": true,
+    "imagesDecoded": true,
+    "clsAcceptable": true,
+    "lcpObserved": true,
+    "transitionFlashFixed": true,
+    "realDeviceManual": false
+  }
+}

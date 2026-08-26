@@ -7,11 +7,16 @@ import type { PublicWorkGalleryItemDto } from '~~/shared/types/contracts'
  */
 const props = defineProps<{
   gallery: PublicWorkGalleryItemDto[]
-  viewTransitionName?: string | undefined
+  initialAssetId?: string | undefined
   workName: string
 }>()
 
-const activeIndex = shallowRef(0)
+function initialIndex() {
+  const index = props.gallery.findIndex(item => item.assetId === props.initialAssetId)
+  return index >= 0 ? index : 0
+}
+
+const activeIndex = shallowRef(initialIndex())
 const isSingle = computed(() => props.gallery.length === 1)
 
 /**
@@ -22,7 +27,7 @@ const galleryIdentity = computed(() =>
   props.gallery.map(item => item.assetId).join('|'))
 
 watch(galleryIdentity, () => {
-  activeIndex.value = 0
+  activeIndex.value = initialIndex()
 })
 
 watch(() => props.gallery.length, (length) => {
@@ -51,7 +56,6 @@ const activeImageStyle = computed(() => {
   return {
     '--gallery-aspect-ratio': String(ratio),
     aspectRatio: isSingle.value && image ? `${image.width} / ${image.height}` : 'auto',
-    viewTransitionName: props.viewTransitionName,
   }
 })
 </script>
@@ -159,6 +163,7 @@ const activeImageStyle = computed(() => {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  border-radius: var(--radius-image);
 }
 
 .work-gallery--single .work-gallery__stage {
@@ -187,6 +192,19 @@ const activeImageStyle = computed(() => {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+}
+
+@media (max-width: 767px) {
+  .work-gallery__stage {
+    height: clamp(17rem, 92vw, 24rem);
+  }
+
+  .work-gallery__thumbs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
 }
 
 @media (min-width: 768px) {
@@ -235,8 +253,24 @@ const activeImageStyle = computed(() => {
   border-color: var(--public-accent-decorative);
 }
 
+.work-gallery__thumb:focus-visible {
+  outline: 3px solid var(--public-focus-ring);
+  outline-offset: 3px;
+}
+
+.work-gallery__thumb:active {
+  border-color: var(--public-accent-active);
+}
+
 .work-gallery__thumb[aria-pressed='true'] {
   border-color: var(--public-accent-primary);
+}
+
+@media (max-width: 767px) {
+  .work-gallery__thumb {
+    flex: 0 0 clamp(3.5rem, 16vw, 4.5rem);
+    width: clamp(3.5rem, 16vw, 4.5rem);
+  }
 }
 
 @media (min-width: 768px) {

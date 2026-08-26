@@ -1,0 +1,591 @@
+{
+  "generatedAt": "2026-08-26T07:46:31.520Z",
+  "baseURL": "http://127.0.0.1:3000/",
+  "viewports": {
+    "mobile-375": {
+      "home": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 1,
+        "errors": []
+      },
+      "works": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "adoptions": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "work-detail": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "adoption-detail": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "commission": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "commission-apply": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "about": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "service": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "privacy": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "licenses": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "not-found": {
+        "status": 404,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 0,
+        "heroBrandCount": 0,
+        "errors": [
+          "Failed to load resource: the server responded with a status of 404 (Page Not Found)"
+        ]
+      },
+      "works-empty": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "works-no-result": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "adoptions-no-result": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      }
+    },
+    "tablet-768": {
+      "home": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 1,
+        "errors": []
+      },
+      "works": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "adoptions": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "work-detail": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "adoption-detail": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "commission": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "commission-apply": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "about": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "service": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "privacy": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "licenses": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "not-found": {
+        "status": 404,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 0,
+        "heroBrandCount": 0,
+        "errors": [
+          "Failed to load resource: the server responded with a status of 404 (Page Not Found)"
+        ]
+      },
+      "works-empty": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "works-no-result": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "adoptions-no-result": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      }
+    },
+    "desktop-1280": {
+      "home": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 1,
+        "errors": []
+      },
+      "works": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "adoptions": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "work-detail": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "adoption-detail": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "commission": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "commission-apply": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "about": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "service": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "privacy": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "licenses": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "not-found": {
+        "status": 404,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 0,
+        "heroBrandCount": 0,
+        "errors": [
+          "Failed to load resource: the server responded with a status of 404 (Page Not Found)"
+        ]
+      },
+      "works-empty": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "works-no-result": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      },
+      "adoptions-no-result": {
+        "status": 200,
+        "selectorFound": true,
+        "noHorizontalOverflow": true,
+        "h1Count": 1,
+        "mainPresent": true,
+        "missingImageAlts": 0,
+        "failedImages": [],
+        "footerCount": 1,
+        "heroBrandCount": 0,
+        "errors": []
+      }
+    }
+  },
+  "specialStates": {
+    "media-failure-mobile-375": {
+      "failures": 9
+    },
+    "media-failure-tablet-768": {
+      "failures": 9
+    },
+    "media-failure-desktop-1280": {
+      "failures": 9
+    },
+    "errorFixtureStatus": 500,
+    "server-error-mobile-375": {
+      "status": 500
+    },
+    "server-error-tablet-768": {
+      "status": 500
+    },
+    "server-error-desktop-1280": {
+      "status": 500
+    }
+  },
+  "checks": {
+    "expectedStatuses": true,
+    "selectorsFound": true,
+    "noHorizontalOverflow": true,
+    "semantics": true,
+    "imagesDecoded": true,
+    "noRuntimeErrors": true,
+    "footerContinuity": true,
+    "heroBrandLock": true,
+    "mediaFailure": true,
+    "serverError": true
+  }
+}

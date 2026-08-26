@@ -119,6 +119,9 @@ function goTo(index: number, intent: 'autoplay' | 'keyboard' | 'pointer' = 'poin
   transitionIntent.value = intent
   transitionDirection.value = target > activeIndex.value ? 'next' : 'prev'
   activeIndex.value = target
+  if (intent !== 'autoplay') {
+    restartTimer()
+  }
 }
 
 function goNext(intent: 'autoplay' | 'keyboard' | 'pointer' = 'pointer') {
@@ -126,6 +129,9 @@ function goNext(intent: 'autoplay' | 'keyboard' | 'pointer' = 'pointer') {
   transitionIntent.value = intent
   transitionDirection.value = 'next'
   activeIndex.value = nextSlideIndex(activeIndex.value, items.value.length)
+  if (intent !== 'autoplay') {
+    restartTimer()
+  }
 }
 
 function goPrev(intent: 'autoplay' | 'keyboard' | 'pointer' = 'pointer') {
@@ -133,6 +139,9 @@ function goPrev(intent: 'autoplay' | 'keyboard' | 'pointer' = 'pointer') {
   transitionIntent.value = intent
   transitionDirection.value = 'prev'
   activeIndex.value = prevSlideIndex(activeIndex.value, items.value.length)
+  if (intent !== 'autoplay') {
+    restartTimer()
+  }
 }
 
 function togglePause() {
@@ -473,22 +482,12 @@ onBeforeUnmount(() => {
 .home-hero[data-transition-intent='pointer'] .home-hero-slide-next-enter-active,
 .home-hero[data-transition-intent='pointer'] .home-hero-slide-next-leave-active,
 .home-hero[data-transition-intent='pointer'] .home-hero-slide-prev-enter-active,
-.home-hero[data-transition-intent='pointer'] .home-hero-slide-prev-leave-active {
-  transition-duration: var(--motion-duration-content);
-}
-
+.home-hero[data-transition-intent='pointer'] .home-hero-slide-prev-leave-active,
 .home-hero[data-transition-intent='keyboard'] .home-hero-slide-next-enter-active,
 .home-hero[data-transition-intent='keyboard'] .home-hero-slide-next-leave-active,
 .home-hero[data-transition-intent='keyboard'] .home-hero-slide-prev-enter-active,
 .home-hero[data-transition-intent='keyboard'] .home-hero-slide-prev-leave-active {
-  transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
-}
-
-.home-hero[data-transition-intent='keyboard'] .home-hero-slide-next-enter-from,
-.home-hero[data-transition-intent='keyboard'] .home-hero-slide-next-leave-to,
-.home-hero[data-transition-intent='keyboard'] .home-hero-slide-prev-enter-from,
-.home-hero[data-transition-intent='keyboard'] .home-hero-slide-prev-leave-to {
-  transform: none;
+  transition-duration: var(--motion-duration-content);
 }
 
 .home-hero-slide-next-enter-from,
@@ -657,9 +656,9 @@ onBeforeUnmount(() => {
   min-width: 3.75rem;
   margin-right: var(--space-2);
   color: rgb(255 255 255 / 0.72);
-  font-family: var(--font-public-mono);
+  font-family: var(--font-role-metadata);
   font-size: 0.6875rem;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--type-metadata-letter-spacing);
   white-space: nowrap;
 }
 
@@ -698,7 +697,14 @@ onBeforeUnmount(() => {
 
 .home-hero__arrow:active,
 .home-hero__pause:active {
-  transform: scale(0.96);
+  transform: translateY(1px);
+}
+
+.home-hero__arrow:focus-visible,
+.home-hero__pause:focus-visible,
+.home-hero__dot:focus-visible {
+  outline: 3px solid rgb(255 255 255 / 0.9);
+  outline-offset: 3px;
 }
 
 .home-hero__dots {
@@ -734,6 +740,10 @@ onBeforeUnmount(() => {
   transform: scaleX(1);
 }
 
+.home-hero__dot:active::before {
+  transform: scaleX(0.8);
+}
+
 .home-hero__continuation {
   position: absolute;
   right: var(--public-page-padding);
@@ -744,9 +754,9 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: var(--space-3);
   color: rgb(255 255 255 / 0.58);
-  font-family: var(--font-public-mono);
+  font-family: var(--font-role-metadata);
   font-size: 0.625rem;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--type-metadata-letter-spacing);
   pointer-events: none;
 }
 
@@ -780,6 +790,31 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 767px) {
+  .home-hero__scrim {
+    background:
+      linear-gradient(
+        to bottom,
+        rgb(17 20 25 / 0.66) 0%,
+        rgb(17 20 25 / 0.42) 10%,
+        rgb(17 20 25 / 0) 22%
+      ),
+      linear-gradient(
+        to top,
+        rgb(17 20 25 / 0.82) 0%,
+        rgb(17 20 25 / 0.5) 25%,
+        rgb(17 20 25 / 0) 58%
+      ),
+      linear-gradient(
+        to right,
+        rgb(17 20 25 / 0.2) 0%,
+        rgb(17 20 25 / 0) 72%
+      );
+  }
+
+  .home-hero__tagline {
+    max-width: 20rem;
+  }
+
   .home-hero__controls {
     right: var(--public-page-padding);
     bottom: max(var(--space-7), calc(env(safe-area-inset-bottom) + var(--space-6)));
@@ -799,7 +834,7 @@ onBeforeUnmount(() => {
     grid-template-columns: auto minmax(1.5rem, 1fr) auto;
     gap: 0.625rem;
     font-size: 0.5625rem;
-    letter-spacing: 0.08em;
+    letter-spacing: var(--type-metadata-letter-spacing);
   }
 }
 
@@ -858,8 +893,9 @@ onBeforeUnmount(() => {
   .home-hero__tagline,
   .home-hero__controls,
   .home-hero__continuation,
-  .home-hero__slide :deep(.responsive-picture__image) {
-    animation: none;
+  .home-hero__slide :deep(.responsive-picture__image),
+  .home-hero[data-initial-media-entrance='true'] .home-hero__slide :deep(.responsive-picture__image) {
+    animation: none !important;
   }
 
   .home-hero__arrow,

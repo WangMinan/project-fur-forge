@@ -1,0 +1,351 @@
+{
+  "capturedAt": "2026-08-25T11:57:32.839Z",
+  "viewports": {
+    "390x844": {
+      "noHorizontalOverflow": true,
+      "scenes": {
+        "hero": {
+          "height": 844,
+          "fitsViewport": true,
+          "scrollWidth": 375,
+          "interactive": [
+            {
+              "label": "上一张",
+              "height": 44,
+              "width": 44,
+              "contained": true
+            },
+            {
+              "label": "第 1 张，共 2 张",
+              "height": 44,
+              "width": 44,
+              "contained": true
+            },
+            {
+              "label": "第 2 张，共 2 张",
+              "height": 44,
+              "width": 44,
+              "contained": true
+            },
+            {
+              "label": "下一张",
+              "height": 44,
+              "width": 44,
+              "contained": true
+            }
+          ]
+        },
+        "featured": {
+          "height": 690.5,
+          "fitsViewport": true,
+          "scrollWidth": 375,
+          "interactive": [
+            {
+              "label": "查看代表作品：小绿狗测试领养",
+              "height": 265.25,
+              "width": 198.9375,
+              "contained": true
+            },
+            {
+              "label": "←上一项",
+              "height": 44,
+              "width": 58.390625,
+              "contained": true
+            },
+            {
+              "label": "下一项→",
+              "height": 44,
+              "width": 58.390625,
+              "contained": true
+            },
+            {
+              "label": "浏览作品展示",
+              "height": 44,
+              "width": 134,
+              "contained": true
+            }
+          ]
+        },
+        "commission": {
+          "height": 719.3125,
+          "fitsViewport": true,
+          "scrollWidth": 414,
+          "interactive": [
+            {
+              "label": "提交委托申请",
+              "height": 44,
+              "width": 134,
+              "contained": true
+            },
+            {
+              "label": "了解自设委托",
+              "height": 44,
+              "width": 134,
+              "contained": true
+            }
+          ]
+        },
+        "adoption": {
+          "height": 772,
+          "fitsViewport": true,
+          "scrollWidth": 436,
+          "interactive": [
+            {
+              "label": "查看常规领养测试3领养详情",
+              "height": 232,
+              "width": 343,
+              "contained": true
+            },
+            {
+              "label": "01青岚森林守望者领养测试1",
+              "height": 50.421875,
+              "width": 114.328125,
+              "contained": true
+            },
+            {
+              "label": "02青岚森林守望者领养测试2",
+              "height": 50.421875,
+              "width": 114.328125,
+              "contained": true
+            },
+            {
+              "label": "03青岚森林守望者领养测试3",
+              "height": 50.421875,
+              "width": 114.34375,
+              "contained": true
+            },
+            {
+              "label": "上一个领养角色",
+              "height": 44,
+              "width": 64,
+              "contained": true
+            },
+            {
+              "label": "下一个领养角色",
+              "height": 44,
+              "width": 64,
+              "contained": true
+            },
+            {
+              "label": "查看领养详情",
+              "height": 44,
+              "width": 118,
+              "contained": true
+            },
+            {
+              "label": "浏览全部角色 →",
+              "height": 44,
+              "width": 136.171875,
+              "contained": true
+            }
+          ]
+        }
+      },
+      "allTargetsAtLeast44": true,
+      "allTargetsContained": true,
+      "allImagesDecoded": true,
+      "hero": {
+        "reduced": "true",
+        "titleFont": "\"Zhuohei Collage Critical\", \"Zhuohei Collage\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+        "titleSize": "40px",
+        "titleWeight": "600",
+        "titleLineHeight": "43.2px",
+        "titleLetterSpacing": "normal",
+        "titleAnimation": "none",
+        "continuationVisible": true,
+        "fontReady": true
+      },
+      "featured": {
+        "canvasRadius": "12px",
+        "imageRadius": "8px"
+      },
+      "adoption": {
+        "stepperFolioCenterDelta": 0,
+        "selectorCount": 3
+      },
+      "errors": []
+    },
+    "430x932": {
+      "noHorizontalOverflow": true,
+      "scenes": {
+        "hero": {
+          "height": 932,
+          "fitsViewport": true,
+          "scrollWidth": 415,
+          "interactive": [
+            {
+              "label": "上一张",
+              "height": 44,
+              "width": 44,
+              "contained": true
+            },
+            {
+              "label": "第 1 张，共 2 张",
+              "height": 44,
+              "width": 44,
+              "contained": true
+            },
+            {
+              "label": "第 2 张，共 2 张",
+              "height": 44,
+              "width": 44,
+              "contained": true
+            },
+            {
+              "label": "下一张",
+              "height": 44,
+              "width": 44,
+              "contained": true
+            }
+          ]
+        },
+        "featured": {
+          "height": 721.40625,
+          "fitsViewport": true,
+          "scrollWidth": 415,
+          "interactive": [
+            {
+              "label": "查看代表作品：小绿狗测试领养",
+              "height": 296.15625,
+              "width": 222.125,
+              "contained": true
+            },
+            {
+              "label": "←上一项",
+              "height": 44,
+              "width": 58.390625,
+              "contained": true
+            },
+            {
+              "label": "下一项→",
+              "height": 44,
+              "width": 58.390625,
+              "contained": true
+            },
+            {
+              "label": "浏览作品展示",
+              "height": 44,
+              "width": 134,
+              "contained": true
+            }
+          ]
+        },
+        "commission": {
+          "height": 738.125,
+          "fitsViewport": true,
+          "scrollWidth": 415,
+          "interactive": [
+            {
+              "label": "提交委托申请",
+              "height": 44,
+              "width": 134,
+              "contained": true
+            },
+            {
+              "label": "了解自设委托",
+              "height": 44,
+              "width": 134,
+              "contained": true
+            }
+          ]
+        },
+        "adoption": {
+          "height": 860,
+          "fitsViewport": true,
+          "scrollWidth": 436,
+          "interactive": [
+            {
+              "label": "查看常规领养测试3领养详情",
+              "height": 232,
+              "width": 383,
+              "contained": true
+            },
+            {
+              "label": "01青岚森林守望者领养测试1",
+              "height": 50.421875,
+              "width": 127.65625,
+              "contained": true
+            },
+            {
+              "label": "02青岚森林守望者领养测试2",
+              "height": 50.421875,
+              "width": 127.671875,
+              "contained": true
+            },
+            {
+              "label": "03青岚森林守望者领养测试3",
+              "height": 50.421875,
+              "width": 127.65625,
+              "contained": true
+            },
+            {
+              "label": "上一个领养角色",
+              "height": 44,
+              "width": 64,
+              "contained": true
+            },
+            {
+              "label": "下一个领养角色",
+              "height": 44,
+              "width": 64,
+              "contained": true
+            },
+            {
+              "label": "查看领养详情",
+              "height": 44,
+              "width": 118,
+              "contained": true
+            },
+            {
+              "label": "浏览全部角色 →",
+              "height": 44,
+              "width": 136.171875,
+              "contained": true
+            }
+          ]
+        }
+      },
+      "allTargetsAtLeast44": true,
+      "allTargetsContained": true,
+      "allImagesDecoded": true,
+      "hero": {
+        "reduced": "true",
+        "titleFont": "\"Zhuohei Collage Critical\", \"Zhuohei Collage\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+        "titleSize": "40px",
+        "titleWeight": "600",
+        "titleLineHeight": "43.2px",
+        "titleLetterSpacing": "normal",
+        "titleAnimation": "none",
+        "continuationVisible": true,
+        "fontReady": true
+      },
+      "featured": {
+        "canvasRadius": "12px",
+        "imageRadius": "8px"
+      },
+      "adoption": {
+        "stepperFolioCenterDelta": 0,
+        "selectorCount": 3
+      },
+      "errors": []
+    }
+  },
+  "motion": {
+    "before": "第 1 张，共 2 张",
+    "after": "第 2 张，共 2 张",
+    "autoplayAdvancedAt4s": true,
+    "titleEntranceDidNotRestart": true
+  },
+  "checks": {
+    "bothViewports": true,
+    "noHorizontalOverflow": true,
+    "fourScenesFit": true,
+    "touchTargets": true,
+    "imagesDecoded": true,
+    "heroBrandLock": true,
+    "sharedRadii": true,
+    "adoptionControlRow": true,
+    "motionFactsPreserved": true,
+    "noRuntimeErrors": true
+  }
+}

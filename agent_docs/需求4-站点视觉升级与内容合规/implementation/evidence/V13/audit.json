@@ -1,0 +1,1730 @@
+{
+  "capturedAt": "2026-08-25T18:35:33.737Z",
+  "baseURL": "http://127.0.0.1:3002/",
+  "motion": {
+    "desktop-1440x900": {
+      "standard": {
+        "errors": [],
+        "hero": {
+          "before": {
+            "text": "有点小狗工作室",
+            "rect": {
+              "x": 359.6875,
+              "y": 651.421875,
+              "width": 705.609375,
+              "height": 108.859375
+            },
+            "fontFamily": "\"Zhuohei Collage Critical\", \"Zhuohei Collage\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+            "fontSize": "100.8px",
+            "fontWeight": "600",
+            "letterSpacing": "normal",
+            "lineHeight": "108.864px",
+            "entrance": "home-hero-title-in-3a6e51d8"
+          },
+          "after": {
+            "text": "有点小狗工作室",
+            "rect": {
+              "x": 359.6875,
+              "y": 651.421875,
+              "width": 705.609375,
+              "height": 108.859375
+            },
+            "fontFamily": "\"Zhuohei Collage Critical\", \"Zhuohei Collage\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+            "fontSize": "100.8px",
+            "fontWeight": "600",
+            "letterSpacing": "normal",
+            "lineHeight": "108.864px",
+            "slideCount": 1
+          },
+          "next": true,
+          "previous": true
+        },
+        "featured": {
+          "layers": {
+            "media": 56,
+            "title": 34,
+            "species": 18,
+            "action": 10
+          },
+          "layout": {
+            "before": {
+              "slug": "return-xiapian",
+              "title": "虾片返图",
+              "titleY": 425.859375,
+              "speciesY": 492.640625,
+              "actionY": 514.328125,
+              "controlsY": 602.328125
+            },
+            "after": {
+              "slug": "adoption-green-dog-test",
+              "title": "小绿狗测试领养",
+              "titleY": 425.859375,
+              "speciesY": 492.640625,
+              "actionY": 514.328125,
+              "controlsY": 602.328125
+            }
+          },
+          "previous": true,
+          "terminal": {
+            "contentCount": 1,
+            "mediaCount": 1,
+            "displayAnimations": 0,
+            "runningAnimations": 0,
+            "noHorizontalOverflow": true,
+            "imagesDecoded": true,
+            "footerPresent": true
+          }
+        },
+        "adoption": {
+          "before": "adoption-regular-3",
+          "next": true,
+          "nextLayers": {
+            "title": "translate3d(24px, 0px, 0px)",
+            "facts": "translate3d(16px, 0px, 0px)",
+            "action": "translate3d(8px, 0px, 0px)"
+          },
+          "previous": true,
+          "previousLayers": {
+            "title": "translate3d(-24px, 0px, 0px)",
+            "facts": "translate3d(-16px, 0px, 0px)",
+            "action": "translate3d(-8px, 0px, 0px)"
+          },
+          "terminal": {
+            "slug": "adoption-regular-2",
+            "mediaCount": 1,
+            "runningAnimations": 0,
+            "imageHref": "/works/adoption-regular-2?from=adoptions&view=homeAdoption",
+            "actionHref": "/works/adoption-regular-2?from=adoptions&view=homeAdoption"
+          }
+        }
+      },
+      "reduced": {
+        "initial": {
+          "hero": "第 1 张，共 2 张",
+          "featured": "return-xiapian",
+          "adoption": "adoption-green-dog-test"
+        },
+        "terminal": {
+          "hero": "第 1 张，共 2 张",
+          "featured": "return-xiapian",
+          "adoption": "adoption-green-dog-test",
+          "heroReduced": "true",
+          "featuredReduced": "true",
+          "adoptionReduced": "true",
+          "pauseCount": 0
+        },
+        "manualTerminal": {
+          "runningAnimations": 0,
+          "contentCount": 1,
+          "mediaCount": 1,
+          "adoptionMediaCount": 1
+        }
+      }
+    },
+    "mobile-390x844": {
+      "standard": {
+        "errors": [],
+        "hero": {
+          "before": {
+            "text": "有点小狗工作室",
+            "rect": {
+              "x": 16,
+              "y": 625.8125,
+              "width": 343,
+              "height": 43.1875
+            },
+            "fontFamily": "\"Zhuohei Collage Critical\", \"Zhuohei Collage\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+            "fontSize": "40px",
+            "fontWeight": "600",
+            "letterSpacing": "normal",
+            "lineHeight": "43.2px",
+            "entrance": "home-hero-title-in-3a6e51d8"
+          },
+          "after": {
+            "text": "有点小狗工作室",
+            "rect": {
+              "x": 16,
+              "y": 625.8125,
+              "width": 343,
+              "height": 43.1875
+            },
+            "fontFamily": "\"Zhuohei Collage Critical\", \"Zhuohei Collage\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+            "fontSize": "40px",
+            "fontWeight": "600",
+            "letterSpacing": "normal",
+            "lineHeight": "43.2px",
+            "slideCount": 1
+          },
+          "next": true,
+          "previous": true
+        },
+        "featured": {
+          "layers": {
+            "media": 56,
+            "title": 34,
+            "species": 18,
+            "action": 10
+          },
+          "layout": {
+            "before": {
+              "slug": "return-xiapian",
+              "title": "虾片返图",
+              "titleY": 655.703125,
+              "speciesY": 697,
+              "actionY": 718.6875,
+              "controlsY": 585.8125
+            },
+            "after": {
+              "slug": "adoption-green-dog-test",
+              "title": "小绿狗测试领养",
+              "titleY": 655.703125,
+              "speciesY": 697,
+              "actionY": 718.6875,
+              "controlsY": 585.8125
+            }
+          },
+          "previous": true,
+          "terminal": {
+            "contentCount": 1,
+            "mediaCount": 1,
+            "displayAnimations": 0,
+            "runningAnimations": 0,
+            "noHorizontalOverflow": true,
+            "imagesDecoded": true,
+            "footerPresent": true
+          }
+        },
+        "adoption": {
+          "before": "adoption-regular-3",
+          "next": true,
+          "nextLayers": {
+            "title": "translate3d(24px, 0px, 0px)",
+            "facts": "translate3d(16px, 0px, 0px)",
+            "action": "translate3d(8px, 0px, 0px)"
+          },
+          "previous": true,
+          "previousLayers": {
+            "title": "translate3d(-24px, 0px, 0px)",
+            "facts": "translate3d(-16px, 0px, 0px)",
+            "action": "translate3d(-8px, 0px, 0px)"
+          },
+          "terminal": {
+            "slug": "adoption-regular-2",
+            "mediaCount": 1,
+            "runningAnimations": 0,
+            "imageHref": "/works/adoption-regular-2?from=adoptions&view=homeAdoption",
+            "actionHref": "/works/adoption-regular-2?from=adoptions&view=homeAdoption"
+          }
+        }
+      },
+      "reduced": {
+        "initial": {
+          "hero": "第 1 张，共 2 张",
+          "featured": "return-xiapian",
+          "adoption": "adoption-green-dog-test"
+        },
+        "terminal": {
+          "hero": "第 1 张，共 2 张",
+          "featured": "return-xiapian",
+          "adoption": "adoption-green-dog-test",
+          "heroReduced": "true",
+          "featuredReduced": "true",
+          "adoptionReduced": "true",
+          "pauseCount": 0
+        },
+        "manualTerminal": {
+          "runningAnimations": 0,
+          "contentCount": 1,
+          "mediaCount": 1,
+          "adoptionMediaCount": 1
+        }
+      }
+    }
+  },
+  "autoplay": {
+    "desktop-1440x900": {
+      "initial": {
+        "hero": "第 1 张，共 2 张",
+        "featured": "return-xiapian",
+        "adoption": "adoption-green-dog-test"
+      },
+      "advanced": {
+        "hero": "第 2 张，共 2 张",
+        "featured": "adoption-green-dog-test",
+        "adoption": "adoption-regular-3"
+      },
+      "paused": {
+        "hero": "第 2 张，共 2 张",
+        "featured": "adoption-green-dog-test",
+        "adoption": "adoption-regular-3"
+      },
+      "remainedPaused": {
+        "hero": "第 2 张，共 2 张",
+        "featured": "adoption-green-dog-test",
+        "adoption": "adoption-regular-3"
+      },
+      "resumed": {
+        "hero": "第 1 张，共 2 张",
+        "featured": "return-xiapian",
+        "adoption": "adoption-regular-2"
+      },
+      "hidden": {
+        "hero": "第 1 张，共 2 张",
+        "featured": "return-xiapian",
+        "adoption": "adoption-regular-2"
+      },
+      "remainedHidden": {
+        "hero": "第 1 张，共 2 张",
+        "featured": "return-xiapian",
+        "adoption": "adoption-regular-2"
+      },
+      "visibleAgain": {
+        "hero": "第 2 张，共 2 张",
+        "featured": "adoption-green-dog-test",
+        "adoption": "adoption-green-dog-test"
+      }
+    },
+    "mobile-390x844": {
+      "initial": {
+        "hero": "第 1 张，共 2 张",
+        "featured": "return-xiapian",
+        "adoption": "adoption-green-dog-test"
+      },
+      "advanced": {
+        "hero": "第 2 张，共 2 张",
+        "featured": "adoption-green-dog-test",
+        "adoption": "adoption-regular-3"
+      },
+      "paused": {
+        "hero": "第 2 张，共 2 张",
+        "featured": "adoption-green-dog-test",
+        "adoption": "adoption-regular-3"
+      },
+      "remainedPaused": {
+        "hero": "第 2 张，共 2 张",
+        "featured": "adoption-green-dog-test",
+        "adoption": "adoption-regular-3"
+      },
+      "resumed": {
+        "hero": "第 1 张，共 2 张",
+        "featured": "return-xiapian",
+        "adoption": "adoption-regular-2"
+      },
+      "hidden": {
+        "hero": "第 1 张，共 2 张",
+        "featured": "return-xiapian",
+        "adoption": "adoption-regular-2"
+      },
+      "remainedHidden": {
+        "hero": "第 1 张，共 2 张",
+        "featured": "return-xiapian",
+        "adoption": "adoption-regular-2"
+      },
+      "visibleAgain": {
+        "hero": "第 2 张，共 2 张",
+        "featured": "adoption-green-dog-test",
+        "adoption": "adoption-green-dog-test"
+      }
+    }
+  },
+  "publicPages": {
+    "desktop-1440x900": {
+      "standard": {
+        "navigations": {
+          "homepage": {
+            "pageEntrances": [
+              "public-page"
+            ],
+            "runningAnimations": 6,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "works": {
+            "pageEntrances": [
+              "public-page"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "adoptions": {
+            "pageEntrances": [
+              "public-page"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "commission": {
+            "pageEntrances": [
+              "public-page"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "commission-apply": {
+            "pageEntrances": [
+              "public-page"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "about": {
+            "pageEntrances": [
+              "public-page"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "service": {
+            "pageEntrances": [
+              "public-page"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "privacy": {
+            "pageEntrances": [
+              "public-page"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "licenses": {
+            "pageEntrances": [
+              "public-page"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          }
+        },
+        "routes": {
+          "homepage": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 6,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "works": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "work-detail": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "adoptions": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "adoption-detail": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "commission": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "commission-apply": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "about": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "service": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "privacy": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "licenses": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "not-found": {
+            "expectedStatus": 404,
+            "reduced": false,
+            "pageEntrances": [
+              "public-error"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 404,
+            "errors": []
+          },
+          "server-error": {
+            "expectedStatus": 500,
+            "reduced": false,
+            "pageEntrances": [
+              "public-error"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 500,
+            "errors": []
+          },
+          "empty": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "no-result": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "media-failure": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          }
+        }
+      },
+      "reduced": {
+        "navigations": {
+          "homepage": {
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "works": {
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "adoptions": {
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "commission": {
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "commission-apply": {
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "about": {
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "service": {
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "privacy": {
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "licenses": {
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          }
+        },
+        "routes": {
+          "homepage": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "works": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "work-detail": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "adoptions": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "adoption-detail": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "commission": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "commission-apply": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "about": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "service": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "privacy": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "licenses": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "not-found": {
+            "expectedStatus": 404,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 404,
+            "errors": []
+          },
+          "server-error": {
+            "expectedStatus": 500,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 500,
+            "errors": []
+          },
+          "empty": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "no-result": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "media-failure": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          }
+        }
+      }
+    },
+    "mobile-390x844": {
+      "standard": {
+        "navigations": {
+          "homepage": {
+            "pageEntrances": [
+              "public-page"
+            ],
+            "runningAnimations": 6,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "works": {
+            "pageEntrances": [
+              "public-page"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "adoptions": {
+            "pageEntrances": [
+              "public-page"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "commission": {
+            "pageEntrances": [
+              "public-page"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "commission-apply": {
+            "pageEntrances": [
+              "public-page"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "about": {
+            "pageEntrances": [
+              "public-page"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "service": {
+            "pageEntrances": [
+              "public-page"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "privacy": {
+            "pageEntrances": [
+              "public-page"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "licenses": {
+            "pageEntrances": [
+              "public-page"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          }
+        },
+        "routes": {
+          "homepage": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 6,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "works": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "work-detail": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "adoptions": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "adoption-detail": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "commission": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "commission-apply": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "about": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "service": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "privacy": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "licenses": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "not-found": {
+            "expectedStatus": 404,
+            "reduced": false,
+            "pageEntrances": [
+              "public-error"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 404,
+            "errors": []
+          },
+          "server-error": {
+            "expectedStatus": 500,
+            "reduced": false,
+            "pageEntrances": [
+              "public-error"
+            ],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 500,
+            "errors": []
+          },
+          "empty": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "no-result": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "media-failure": {
+            "expectedStatus": 200,
+            "reduced": false,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          }
+        }
+      },
+      "reduced": {
+        "navigations": {
+          "homepage": {
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "works": {
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "adoptions": {
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "commission": {
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "commission-apply": {
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "about": {
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "service": {
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "privacy": {
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          },
+          "licenses": {
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "errors": []
+          }
+        },
+        "routes": {
+          "homepage": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "works": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "work-detail": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "adoptions": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "adoption-detail": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "commission": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "commission-apply": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "about": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "service": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "privacy": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "licenses": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "not-found": {
+            "expectedStatus": 404,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 404,
+            "errors": []
+          },
+          "server-error": {
+            "expectedStatus": 500,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 500,
+            "errors": []
+          },
+          "empty": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "no-result": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          },
+          "media-failure": {
+            "expectedStatus": 200,
+            "reduced": true,
+            "pageEntrances": [],
+            "runningAnimations": 0,
+            "rootViewTransitionNames": [],
+            "noHorizontalOverflow": true,
+            "mediaFailurePresent": true,
+            "status": 200,
+            "errors": []
+          }
+        }
+      }
+    }
+  },
+  "transitions": {
+    "home-commission": {
+      "forward": {
+        "sourceHref": "/commission?view=homeCommission",
+        "beforeNames": [],
+        "path": "/commission",
+        "query": "?view=homeCommission",
+        "supported": true,
+        "calls": [
+          [
+            {
+              "className": "home-commission__media",
+              "name": "home-commission-media"
+            }
+          ]
+        ],
+        "pageEntrances": [],
+        "destinationNames": [
+          "home-commission-media"
+        ],
+        "expectedDuration": "0.72s",
+        "rootOldAnimation": "none",
+        "rootNewAnimation": "none",
+        "runningAnimations": 0,
+        "imagesDecoded": true
+      },
+      "fallback": {
+        "sourceHref": "/commission?view=homeCommission",
+        "beforeNames": [],
+        "path": "/commission",
+        "query": "?view=homeCommission",
+        "supported": true,
+        "calls": [],
+        "pageEntrances": [],
+        "destinationNames": [
+          "home-commission-media"
+        ],
+        "expectedDuration": "0.72s",
+        "rootOldAnimation": "none",
+        "rootNewAnimation": "none",
+        "runningAnimations": 0,
+        "imagesDecoded": true
+      },
+      "reduced": {
+        "sourceHref": "/commission?view=homeCommission",
+        "beforeNames": [],
+        "path": "/commission",
+        "query": "?view=homeCommission",
+        "supported": true,
+        "calls": [],
+        "pageEntrances": [],
+        "destinationNames": [
+          "home-commission-media"
+        ],
+        "expectedDuration": "1e-05s",
+        "rootOldAnimation": "none",
+        "rootNewAnimation": "none",
+        "runningAnimations": 0,
+        "imagesDecoded": true
+      }
+    },
+    "home-featured": {
+      "forward": {
+        "sourceHref": "/works/return-xiapian?view=homeFeatured",
+        "beforeNames": [],
+        "path": "/works/return-xiapian",
+        "query": "?view=homeFeatured",
+        "supported": true,
+        "calls": [
+          [
+            {
+              "className": "featured-works__media",
+              "name": "home-featured-media"
+            }
+          ]
+        ],
+        "pageEntrances": [],
+        "destinationNames": [
+          "home-featured-media"
+        ],
+        "expectedDuration": "0.72s",
+        "rootOldAnimation": "none",
+        "rootNewAnimation": "none",
+        "runningAnimations": 0,
+        "imagesDecoded": true
+      },
+      "fallback": {
+        "sourceHref": "/works/return-xiapian?view=homeFeatured",
+        "beforeNames": [],
+        "path": "/works/return-xiapian",
+        "query": "?view=homeFeatured",
+        "supported": true,
+        "calls": [],
+        "pageEntrances": [],
+        "destinationNames": [
+          "home-featured-media"
+        ],
+        "expectedDuration": "0.72s",
+        "rootOldAnimation": "none",
+        "rootNewAnimation": "none",
+        "runningAnimations": 0,
+        "imagesDecoded": true
+      },
+      "reduced": {
+        "sourceHref": "/works/return-xiapian?view=homeFeatured",
+        "beforeNames": [],
+        "path": "/works/return-xiapian",
+        "query": "?view=homeFeatured",
+        "supported": true,
+        "calls": [],
+        "pageEntrances": [],
+        "destinationNames": [
+          "home-featured-media"
+        ],
+        "expectedDuration": "1e-05s",
+        "rootOldAnimation": "none",
+        "rootNewAnimation": "none",
+        "runningAnimations": 0,
+        "imagesDecoded": true
+      }
+    },
+    "home-adoption": {
+      "forward": {
+        "sourceHref": "/works/adoption-green-dog-test?from=adoptions&view=homeAdoption",
+        "beforeNames": [],
+        "path": "/works/adoption-green-dog-test",
+        "query": "?from=adoptions&view=homeAdoption",
+        "supported": true,
+        "calls": [
+          [
+            {
+              "className": "home-adoption-poster__media",
+              "name": "home-adoption-media"
+            }
+          ]
+        ],
+        "pageEntrances": [],
+        "destinationNames": [
+          "home-adoption-media"
+        ],
+        "expectedDuration": "0.72s",
+        "rootOldAnimation": "none",
+        "rootNewAnimation": "none",
+        "runningAnimations": 0,
+        "imagesDecoded": true
+      },
+      "fallback": {
+        "sourceHref": "/works/adoption-green-dog-test?from=adoptions&view=homeAdoption",
+        "beforeNames": [],
+        "path": "/works/adoption-green-dog-test",
+        "query": "?from=adoptions&view=homeAdoption",
+        "supported": true,
+        "calls": [],
+        "pageEntrances": [],
+        "destinationNames": [
+          "home-adoption-media"
+        ],
+        "expectedDuration": "0.72s",
+        "rootOldAnimation": "none",
+        "rootNewAnimation": "none",
+        "runningAnimations": 0,
+        "imagesDecoded": true
+      },
+      "reduced": {
+        "sourceHref": "/works/adoption-green-dog-test?from=adoptions&view=homeAdoption",
+        "beforeNames": [],
+        "path": "/works/adoption-green-dog-test",
+        "query": "?from=adoptions&view=homeAdoption",
+        "supported": true,
+        "calls": [],
+        "pageEntrances": [],
+        "destinationNames": [
+          "home-adoption-media"
+        ],
+        "expectedDuration": "1e-05s",
+        "rootOldAnimation": "none",
+        "rootNewAnimation": "none",
+        "runningAnimations": 0,
+        "imagesDecoded": true
+      }
+    },
+    "works-card": {
+      "forward": {
+        "sourceHref": "/works/brand-assets-c?view=worksCard",
+        "beforeNames": [],
+        "path": "/works/brand-assets-c",
+        "query": "?view=worksCard",
+        "supported": true,
+        "calls": [
+          [
+            {
+              "className": "work-card__frame",
+              "name": "works-card-media"
+            }
+          ]
+        ],
+        "pageEntrances": [],
+        "destinationNames": [
+          "works-card-media"
+        ],
+        "expectedDuration": "0.72s",
+        "rootOldAnimation": "none",
+        "rootNewAnimation": "none",
+        "runningAnimations": 0,
+        "imagesDecoded": true
+      },
+      "fallback": {
+        "sourceHref": "/works/brand-assets-c?view=worksCard",
+        "beforeNames": [],
+        "path": "/works/brand-assets-c",
+        "query": "?view=worksCard",
+        "supported": true,
+        "calls": [],
+        "pageEntrances": [],
+        "destinationNames": [
+          "works-card-media"
+        ],
+        "expectedDuration": "0.72s",
+        "rootOldAnimation": "none",
+        "rootNewAnimation": "none",
+        "runningAnimations": 0,
+        "imagesDecoded": true
+      },
+      "reduced": {
+        "sourceHref": "/works/brand-assets-c?view=worksCard",
+        "beforeNames": [],
+        "path": "/works/brand-assets-c",
+        "query": "?view=worksCard",
+        "supported": true,
+        "calls": [],
+        "pageEntrances": [],
+        "destinationNames": [
+          "works-card-media"
+        ],
+        "expectedDuration": "1e-05s",
+        "rootOldAnimation": "none",
+        "rootNewAnimation": "none",
+        "runningAnimations": 0,
+        "imagesDecoded": true
+      },
+      "reverse": {
+        "slug": "brand-assets-c",
+        "path": "/works",
+        "query": "?view=worksCard&slug=brand-assets-c",
+        "calls": [
+          [
+            {
+              "className": "work-card__frame",
+              "name": "works-card-media"
+            }
+          ],
+          [
+            {
+              "className": "responsive-picture work-gallery__image",
+              "name": "works-card-media"
+            }
+          ]
+        ],
+        "destinationNames": [
+          "works-card-media"
+        ],
+        "runningAnimations": 0,
+        "imagesDecoded": true,
+        "expectedDuration": "0.72s"
+      }
+    },
+    "adoption-card": {
+      "forward": {
+        "sourceHref": "/works/adoption-green-dog-test?from=adoptions&view=adoptionCard",
+        "beforeNames": [],
+        "path": "/works/adoption-green-dog-test",
+        "query": "?from=adoptions&view=adoptionCard",
+        "supported": true,
+        "calls": [
+          [
+            {
+              "className": "adoption-card__canvas",
+              "name": "adoption-card-media"
+            }
+          ]
+        ],
+        "pageEntrances": [],
+        "destinationNames": [
+          "adoption-card-media"
+        ],
+        "expectedDuration": "0.72s",
+        "rootOldAnimation": "none",
+        "rootNewAnimation": "none",
+        "runningAnimations": 0,
+        "imagesDecoded": true
+      },
+      "fallback": {
+        "sourceHref": "/works/adoption-green-dog-test?from=adoptions&view=adoptionCard",
+        "beforeNames": [],
+        "path": "/works/adoption-green-dog-test",
+        "query": "?from=adoptions&view=adoptionCard",
+        "supported": true,
+        "calls": [],
+        "pageEntrances": [],
+        "destinationNames": [
+          "adoption-card-media"
+        ],
+        "expectedDuration": "0.72s",
+        "rootOldAnimation": "none",
+        "rootNewAnimation": "none",
+        "runningAnimations": 0,
+        "imagesDecoded": true
+      },
+      "reduced": {
+        "sourceHref": "/works/adoption-green-dog-test?from=adoptions&view=adoptionCard",
+        "beforeNames": [],
+        "path": "/works/adoption-green-dog-test",
+        "query": "?from=adoptions&view=adoptionCard",
+        "supported": true,
+        "calls": [],
+        "pageEntrances": [],
+        "destinationNames": [
+          "adoption-card-media"
+        ],
+        "expectedDuration": "1e-05s",
+        "rootOldAnimation": "none",
+        "rootNewAnimation": "none",
+        "runningAnimations": 0,
+        "imagesDecoded": true
+      },
+      "reverse": {
+        "slug": "adoption-green-dog-test",
+        "path": "/adoptions",
+        "query": "?view=adoptionCard&slug=adoption-green-dog-test",
+        "calls": [
+          [
+            {
+              "className": "adoption-card__canvas",
+              "name": "adoption-card-media"
+            }
+          ],
+          [
+            {
+              "className": "responsive-picture work-gallery__image",
+              "name": "adoption-card-media"
+            }
+          ]
+        ],
+        "destinationNames": [
+          "adoption-card-media"
+        ],
+        "runningAnimations": 0,
+        "imagesDecoded": true,
+        "expectedDuration": "0.72s"
+      }
+    }
+  },
+  "checks": {
+    "heroBrandLock": true,
+    "heroEntranceAndDirection": true,
+    "featuredHierarchy": true,
+    "featuredLayoutStaysFixed": true,
+    "featuredDirectionAndInterrupt": true,
+    "adoptionHierarchyDirectionAndInterrupt": true,
+    "autoplayFourSecondsAndPausable": true,
+    "reducedMotionStopsAutoplay": true,
+    "noRuntimeErrors": true,
+    "noOverflowAndImagesDecoded": true,
+    "publicPageEntranceMatrix": true,
+    "transitionWhitelistForward": true,
+    "transitionFallback": true,
+    "transitionReduced": true,
+    "clickedCardSourcesOnly": true,
+    "catalogReverseTransitions": true
+  }
+}

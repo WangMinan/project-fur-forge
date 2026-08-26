@@ -1,0 +1,35 @@
+{
+  "date": "2026-08-26",
+  "route": "Homepage non-Hero scene -> /works",
+  "viewport": {
+    "width": 1280,
+    "height": 800
+  },
+  "before": {
+    "oldPage": "Homepage Featured Works",
+    "incomingPath": "/works",
+    "headerPositionBeforeRoute": "fixed",
+    "headerPositionWhileOldPageVisible": "sticky",
+    "headerHeightPx": 77,
+    "featuredTopBeforePx": 72,
+    "featuredTopDuringExitPx": 149,
+    "maximumOldSceneShiftPx": 77,
+    "visibleFlash": "Homepage Hero tail",
+    "screenshot": "before-home-to-works-flash.png"
+  },
+  "after": {
+    "headerPositionWhileOldPageVisible": "fixed",
+    "featuredTopBeforePx": 72,
+    "featuredTopDuringExitPx": 72,
+    "maximumOldSceneShiftPx": 0,
+    "screenshot": "after-home-to-works-stable.png"
+  },
+  "cause": "PublicHeader overlay positioning followed the incoming route before Nuxt removed the outgoing Homepage.",
+  "resolution": "Commit the Header displayed visual path after the Nuxt page transition swap promise, then on the next animation frame.",
+  "checks": {
+    "oldSceneDoesNotShift": true,
+    "headerFinalPositionOnWorksIsSticky": true,
+    "namedViewTransitionRemainsDisabled": true,
+    "crossPageMediaMorphRemainsDisabled": true
+  }
+}

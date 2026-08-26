@@ -162,8 +162,10 @@ function hrefFor(target: number) {
   gap: var(--space-4);
   margin-bottom: var(--space-2);
   color: var(--public-text-secondary);
-  font-family: var(--font-public-mono);
-  font-size: var(--font-size-xs);
+  font-family: var(--font-role-metadata);
+  font-size: var(--type-metadata-size);
+  font-weight: var(--type-metadata-weight);
+  line-height: var(--type-metadata-line-height);
 }
 
 .adoptions-page__filters-wrap {

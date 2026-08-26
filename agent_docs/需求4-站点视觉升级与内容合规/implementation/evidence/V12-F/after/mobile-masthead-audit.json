@@ -1,0 +1,29 @@
+{
+  "capturedAt": "2026-08-25T12:05:58.1833230Z",
+  "viewports": {
+    "390x844": {
+      "works": {
+        "typeLogoGap": 28,
+        "horizontalOverflow": 0
+      },
+      "adoptions": {
+        "typeLogoGap": 25,
+        "horizontalOverflow": 0
+      }
+    },
+    "430x932": {
+      "works": {
+        "typeLogoGap": 45,
+        "horizontalOverflow": 0
+      },
+      "adoptions": {
+        "typeLogoGap": 46,
+        "horizontalOverflow": 0
+      }
+    }
+  },
+  "checks": {
+    "allGapsPositive": true,
+    "noHorizontalOverflow": true
+  }
+}

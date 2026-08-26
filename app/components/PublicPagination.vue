@@ -142,10 +142,15 @@ const pages = computed(() => {
   align-items: center;
   justify-content: center;
   min-height: 3rem;
-  border: 1px solid var(--public-border-primary);
-  background: var(--public-bg-primary);
+  border: 0;
+  background: transparent;
   color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
+  font-family: var(--font-role-ui);
+  font-size: var(--type-ui-size);
+  font-weight: var(--type-ui-weight);
+  line-height: var(--type-ui-line-height);
+  letter-spacing: var(--type-ui-letter-spacing);
+  font-variant-numeric: tabular-nums;
   transition:
     color var(--motion-duration-feedback) var(--motion-ease-standard),
     background-color var(--motion-duration-feedback) var(--motion-ease-standard),
@@ -155,21 +160,25 @@ const pages = computed(() => {
 .pagination__page {
   width: 3rem;
   padding: 0;
-  border-radius: var(--radius-full);
+  border-bottom: 2px solid transparent;
 }
 
 .pagination__step {
   gap: var(--space-2);
   min-width: 6.75rem;
   padding: 0 var(--space-4);
-  border-radius: var(--radius-full);
+  border-bottom: 1px solid var(--public-border-primary);
 }
 
 .pagination__page:hover,
 .pagination__step:hover {
-  border-color: var(--public-accent-tint);
-  background: var(--public-bg-secondary);
+  border-bottom-color: var(--public-accent-primary);
   color: var(--public-text-primary);
+}
+
+.pagination__page:active,
+.pagination__step:active {
+  color: var(--public-accent-active);
 }
 
 .pagination__page:focus-visible,
@@ -179,26 +188,23 @@ const pages = computed(() => {
 }
 
 .pagination__page--current {
-  border-color: var(--public-accent-primary);
-  background: var(--public-accent-primary);
-  color: var(--public-text-inverse);
-  font-weight: 600;
+  border-bottom-color: var(--public-accent-primary);
+  color: var(--public-text-primary);
+  font-weight: var(--type-ui-weight);
 }
 
 .pagination__page--current:hover {
-  background: var(--public-accent-primary);
-  color: var(--public-text-inverse);
+  color: var(--public-text-primary);
 }
 
 .pagination__step--disabled {
-  border-color: var(--public-border-secondary);
-  background: var(--public-bg-secondary);
+  border-bottom-color: var(--public-border-secondary);
   color: var(--public-text-tertiary);
   opacity: 0.58;
 }
 
 .pagination__step--disabled:hover {
-  background: var(--public-bg-secondary);
+  border-bottom-color: var(--public-border-secondary);
   color: var(--public-text-tertiary);
 }
 

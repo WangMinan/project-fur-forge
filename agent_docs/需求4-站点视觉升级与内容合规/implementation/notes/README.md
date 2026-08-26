@@ -1,7 +1,7 @@
 # 实施备注
 
 > **角色**：阶段 4 实施过程中的执行痕迹；正式契约只回写 SPEC/models/PLAN/TASKS/STATE。
-> **状态**：T37～T46-F8、V00～V08-F3、`GATE-V08-R`、V09、V10、V10-F1、V11、V12-A、V12-B 与 V12-C 已记录；当前强制停在 V12-C Handoff，不进入 V12-D。
+> **状态**：T37～T47、V00～V08-F3、`GATE-V08-R` 与 V09～V16 已记录；V13～V16 已获确认，T47 本地/自动化验收已完成。真实设备与最终人工观感仍由 GATE-E 承担。
 
 ## 当前备注
 
@@ -28,6 +28,19 @@
 - 2026-08-25 V12-A 等权四列 Works Catalog、统一 Work/Adoption Detail 左右构图、短页 Footer 贴底与 Desktop/390/430 证据见 [`2026-08-25-V12-A-HANDOFF.md`](./2026-08-25-V12-A-HANDOFF.md)。
 - 2026-08-25 V12-B 紧凑 About masthead/story、平衡 Contact directory、防诈骗竖线提示与七视口证据见 [`2026-08-25-V12-B-HANDOFF.md`](./2026-08-25-V12-B-HANDOFF.md)。
 - 2026-08-25 V12-C Commission Apply 竖向流程精修、上传/确认/完整状态与输入法安全证据见 [`2026-08-25-V12-C-HANDOFF.md`](./2026-08-25-V12-C-HANDOFF.md)。
+- 2026-08-25 V12-D Legal/Privacy/Licenses 长文阅读系统与证据见 [`2026-08-25-V12-D-HANDOFF.md`](./2026-08-25-V12-D-HANDOFF.md)。
+- 2026-08-25 V12-E Error/Empty/Media Failure 共享状态面与证据见 [`2026-08-25-V12-E-HANDOFF.md`](./2026-08-25-V12-E-HANDOFF.md)。
+- 2026-08-25 V12-E-F1 全站语义字体治理、授权与加载证据见 [`2026-08-25-V12-E-F1-HANDOFF.md`](./2026-08-25-V12-E-F1-HANDOFF.md)。
+- 2026-08-25 V12-E-F2 Desktop 验收修正、三视口证据与 Gate 交接见 [`2026-08-25-V12-E-F2-HANDOFF.md`](./2026-08-25-V12-E-F2-HANDOFF.md)。
+- 2026-08-25 V12-E-F3 Homepage 主 CTA 颜色统一、V13 跨页 Motion 白名单与三视口证据见 [`2026-08-25-V12-E-F3-HANDOFF.md`](./2026-08-25-V12-E-F3-HANDOFF.md)。
+- 2026-08-25 V12-E-F4 Featured Desktop 构图密度、宽屏摄影尺度与窄屏结构安全证据见 [`2026-08-25-V12-E-F4-HANDOFF.md`](./2026-08-25-V12-E-F4-HANDOFF.md)。
+- 2026-08-25 V12-F Homepage 四幕 390/430 独立静态构图、长文/多项/边界证据、Hero Brand Lock 与 Desktop 冻结回归见 [`2026-08-25-V12-F-HANDOFF.md`](./2026-08-25-V12-F-HANDOFF.md)。
+- 2026-08-25 V12-G 其余公开页面与状态的 390/430 独立构图审查、多图 Detail 收紧及 1440 Desktop 冻结回归见 [`2026-08-25-V12-G-HANDOFF.md`](./2026-08-25-V12-G-HANDOFF.md)。
+- 2026-08-26 V13 三套 Homepage carousel、全站公开页入场、五条 shared-media forward、两条目录 reverse 与 Desktop/Mobile/Reduced Motion 证据见 [`2026-08-26-V13-HANDOFF.md`](./2026-08-26-V13-HANDOFF.md)。
+- 2026-08-26 V14 Header/导航/轮播控制、搜索、分页、行动和详情缩略图的交互统一，以及 Desktop/Mobile/Input/Reduced Motion 证据见 [`2026-08-26-V14-HANDOFF.md`](./2026-08-26-V14-HANDOFF.md)。
+- 2026-08-26 V15 六档响应式矩阵、键盘/触控/fine pointer/IME、偏好、无 JavaScript SSR、safe area、语义与图片解码最终 QA 见 [`2026-08-26-V15-HANDOFF.md`](./2026-08-26-V15-HANDOFF.md)；凌巽已明确确认并允许进入 V16。
+- 2026-08-26 V16 全站一致性审查、375/768/1280 fresh evidence、最终 Evidence Index、活动契约校准、OSS/font/license 追溯及 Homepage 离场单帧位移修复见 [`2026-08-26-V16-HANDOFF.md`](./2026-08-26-V16-HANDOFF.md)；凌巽已确认并授权进入 T47，GATE-E 仍未开放。
+- 2026-08-26 T47 六档连续移动/reduced/性能本地验收、Homepage Adoption 控制条删除、Mobile 尾部收束与最终自动化证据见 [`2026-08-26-T47-HANDOFF.md`](./2026-08-26-T47-HANDOFF.md)；真实 iOS/Android 和最终人工视觉验收仍未代签。
 
 - 第二轮应用代码审查基线为 `main@aa8e5b70be0913f02ceddccdc262ec6fe0769df1`；修订后的文档已以 `main@ea3ae0a1269676db8c06c28ed32a9a29f4bd7109` 合入，后者没有应用代码变更。
 - 实现前先重新 fetch main；若代码已变化，必须先做影响分析，不照搬本文中的示意类型/迁移编号。

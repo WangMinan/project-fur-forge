@@ -19,7 +19,10 @@ function restoreAfterPageLoad(position: SavedPosition) {
 
   return new Promise<SavedPosition>((resolve) => {
     nuxtApp.hooks.hookOnce('page:loading:end', () => {
-      requestAnimationFrame(() => resolve(position))
+      const finish = () => requestAnimationFrame(() => resolve(position))
+      const transition = nuxtApp['~transitionPromise']
+      if (transition) transition.then(finish)
+      else finish()
     })
   })
 }

@@ -1,0 +1,5141 @@
+{
+  "mode": "after",
+  "capturedAt": "2026-08-25T06:26:10.884Z",
+  "baseURL": "http://127.0.0.1:3000/",
+  "routes": {
+    "home": {
+      "390x844": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 375,
+        "viewportWidth": 390,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "loaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0.0017865380727850122,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage.ttf",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage.ttf",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "brand": {
+            "role": "brand",
+            "selector": ".home-hero__title",
+            "text": "有点小狗工作室",
+            "tag": "h1",
+            "className": "home-hero__title",
+            "fontFamily": "\"Zhuohei Collage Critical\", \"Zhuohei Collage\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+            "fontSize": "40px",
+            "fontWeight": "600",
+            "lineHeight": "43.2px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 43.1875,
+            "platformFonts": [
+              {
+                "familyName": "ZhuoHeiPinTieTi",
+                "postScriptName": "ZhuoHeiPinTieTi-Regular",
+                "glyphCount": 7,
+                "isCustomFont": true
+              }
+            ]
+          },
+          "display": {
+            "role": "display",
+            "selector": ".featured-works__section-title",
+            "text": "代表作品",
+            "tag": "h2",
+            "className": "featured-works__section-title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "28px",
+            "fontWeight": "600",
+            "lineHeight": "28px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 28,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": ".featured-works__species",
+            "text": "犬科",
+            "tag": "p",
+            "className": "featured-works__species",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "lineHeight": "21.7px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 28,
+            "height": 21.6875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 2,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": ".featured-works__wayfinding",
+            "text": "下一幕自设委托",
+            "tag": "div",
+            "className": "featured-works__wayfinding",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "10px",
+            "fontWeight": "400",
+            "lineHeight": "12px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 12,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 7,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".public-action",
+            "text": "浏览作品展示",
+            "tag": "a",
+            "className": "featured-works__action public-action public-action--primary",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 134,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 6,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "430x932": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 415,
+        "viewportWidth": 430,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "loaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0.0013288057411947342,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage.ttf",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage.ttf",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "brand": {
+            "role": "brand",
+            "selector": ".home-hero__title",
+            "text": "有点小狗工作室",
+            "tag": "h1",
+            "className": "home-hero__title",
+            "fontFamily": "\"Zhuohei Collage Critical\", \"Zhuohei Collage\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+            "fontSize": "40px",
+            "fontWeight": "600",
+            "lineHeight": "43.2px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 43.1875,
+            "platformFonts": [
+              {
+                "familyName": "ZhuoHeiPinTieTi",
+                "postScriptName": "ZhuoHeiPinTieTi-Regular",
+                "glyphCount": 7,
+                "isCustomFont": true
+              }
+            ]
+          },
+          "display": {
+            "role": "display",
+            "selector": ".featured-works__section-title",
+            "text": "代表作品",
+            "tag": "h2",
+            "className": "featured-works__section-title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "28px",
+            "fontWeight": "600",
+            "lineHeight": "28px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 28,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": ".featured-works__species",
+            "text": "犬科",
+            "tag": "p",
+            "className": "featured-works__species",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "lineHeight": "21.7px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 28,
+            "height": 21.6875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 2,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": ".featured-works__wayfinding",
+            "text": "下一幕自设委托",
+            "tag": "div",
+            "className": "featured-works__wayfinding",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "10px",
+            "fontWeight": "400",
+            "lineHeight": "12px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 12,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 7,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".public-action",
+            "text": "浏览作品展示",
+            "tag": "a",
+            "className": "featured-works__action public-action public-action--primary",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 134,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 6,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "1440x900": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 1425,
+        "viewportWidth": 1440,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "loaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0.0003940009725437243,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage.ttf",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage.ttf",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage.ttf",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "brand": {
+            "role": "brand",
+            "selector": ".home-hero__title",
+            "text": "有点小狗工作室",
+            "tag": "h1",
+            "className": "home-hero__title",
+            "fontFamily": "\"Zhuohei Collage Critical\", \"Zhuohei Collage\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+            "fontSize": "100.8px",
+            "fontWeight": "600",
+            "lineHeight": "108.864px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 705.609375,
+            "height": 108.859375,
+            "platformFonts": [
+              {
+                "familyName": "ZhuoHeiPinTieTi",
+                "postScriptName": "ZhuoHeiPinTieTi-Regular",
+                "glyphCount": 7,
+                "isCustomFont": true
+              }
+            ]
+          },
+          "display": {
+            "role": "display",
+            "selector": ".featured-works__section-title",
+            "text": "代表作品",
+            "tag": "h2",
+            "className": "featured-works__section-title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "32px",
+            "fontWeight": "600",
+            "lineHeight": "32px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 512,
+            "height": 32,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": ".featured-works__species",
+            "text": "犬科",
+            "tag": "p",
+            "className": "featured-works__species",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "lineHeight": "21.7px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 28,
+            "height": 21.6875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 2,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": ".featured-works__wayfinding",
+            "text": "下一幕自设委托",
+            "tag": "div",
+            "className": "featured-works__wayfinding",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "11px",
+            "fontWeight": "400",
+            "lineHeight": "13.2px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 1309.8125,
+            "height": 13.1875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 7,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".public-action",
+            "text": "浏览作品展示",
+            "tag": "a",
+            "className": "featured-works__action public-action public-action--primary",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 134,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 6,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "works": {
+      "390x844": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 375,
+        "viewportWidth": 390,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "作品展示",
+            "tag": "h1",
+            "className": "",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "44px",
+            "fontWeight": "600",
+            "lineHeight": "44px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": ".works-page__identity p",
+            "text": "查看工作室已公开的角色作品与设定。",
+            "tag": "p",
+            "className": "",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "24.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 24.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 17,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "上一页",
+            "tag": "span",
+            "className": "pagination__step-label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 1,
+            "height": 1,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 3,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".catalog-search__submit",
+            "text": "搜索",
+            "tag": "button",
+            "className": "catalog-search__submit",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "600",
+            "lineHeight": "21.6px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 66,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 2,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "430x932": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 415,
+        "viewportWidth": 430,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "作品展示",
+            "tag": "h1",
+            "className": "",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "44px",
+            "fontWeight": "600",
+            "lineHeight": "44px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": ".works-page__identity p",
+            "text": "查看工作室已公开的角色作品与设定。",
+            "tag": "p",
+            "className": "",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "24.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 24.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 17,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "上一页",
+            "tag": "span",
+            "className": "pagination__step-label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 1,
+            "height": 1,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 3,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".catalog-search__submit",
+            "text": "搜索",
+            "tag": "button",
+            "className": "catalog-search__submit",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "600",
+            "lineHeight": "21.6px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 66,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 2,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "1440x900": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 1425,
+        "viewportWidth": 1440,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "作品展示",
+            "tag": "h1",
+            "className": "",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "72px",
+            "fontWeight": "600",
+            "lineHeight": "72px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 575.015625,
+            "height": 72,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": ".works-page__identity p",
+            "text": "查看工作室已公开的角色作品与设定。",
+            "tag": "p",
+            "className": "",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "24.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 448,
+            "height": 24.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 17,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "上一页",
+            "tag": "span",
+            "className": "pagination__step-label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 42,
+            "height": 18.890625,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 3,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".catalog-search__submit",
+            "text": "搜索",
+            "tag": "button",
+            "className": "catalog-search__submit",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "600",
+            "lineHeight": "21.6px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 66,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 2,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "adoptions": {
+      "390x844": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 375,
+        "viewportWidth": 390,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "设定领养",
+            "tag": "h1",
+            "className": "adoption-archive-header__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "54.6px",
+            "fontWeight": "600",
+            "lineHeight": "49.14px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 49.125,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "上一页",
+            "tag": "span",
+            "className": "pagination__step-label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 1,
+            "height": 1,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 3,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".public-action",
+            "text": "联系我们申请领养",
+            "tag": "a",
+            "className": "adoptions-page__contact-action public-action public-action--primary",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 162,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 8,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "430x932": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 415,
+        "viewportWidth": 430,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "设定领养",
+            "tag": "h1",
+            "className": "adoption-archive-header__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "60px",
+            "fontWeight": "600",
+            "lineHeight": "54px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 54,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "上一页",
+            "tag": "span",
+            "className": "pagination__step-label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 1,
+            "height": 1,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 3,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".public-action",
+            "text": "联系我们申请领养",
+            "tag": "a",
+            "className": "adoptions-page__contact-action public-action public-action--primary",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 162,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 8,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "1440x900": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 1425,
+        "viewportWidth": 1440,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "设定领养",
+            "tag": "h1",
+            "className": "adoption-archive-header__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "79.2px",
+            "fontWeight": "600",
+            "lineHeight": "71.28px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 608,
+            "height": 71.28125,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "上一页",
+            "tag": "span",
+            "className": "pagination__step-label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 42,
+            "height": 18.890625,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 3,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".public-action",
+            "text": "联系我们申请领养",
+            "tag": "a",
+            "className": "adoptions-page__contact-action public-action public-action--primary",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 162,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 8,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "work-detail": {
+      "390x844": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 375,
+        "viewportWidth": 390,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "品牌素材测试 B",
+            "tag": "h1",
+            "className": "work-detail__name",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "28px",
+            "fontWeight": "600",
+            "lineHeight": "33.04px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 192.234375,
+            "height": 33.03125,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 8,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "main dt",
+            "text": "物种",
+            "tag": "dt",
+            "className": "",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 141.84375,
+            "height": 24.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 2,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": "main button",
+            "text": "",
+            "tag": "button",
+            "className": "work-gallery__thumb",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "24.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 72,
+            "height": 72,
+            "platformFonts": []
+          }
+        }
+      },
+      "430x932": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 415,
+        "viewportWidth": 430,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "品牌素材测试 B",
+            "tag": "h1",
+            "className": "work-detail__name",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "28px",
+            "fontWeight": "600",
+            "lineHeight": "33.04px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 192.234375,
+            "height": 33.03125,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 8,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "main dt",
+            "text": "物种",
+            "tag": "dt",
+            "className": "",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 159,
+            "height": 24.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 2,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": "main button",
+            "text": "",
+            "tag": "button",
+            "className": "work-gallery__thumb",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "24.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 72,
+            "height": 72,
+            "platformFonts": []
+          }
+        }
+      },
+      "1440x900": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 1425,
+        "viewportWidth": 1440,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "品牌素材测试 B",
+            "tag": "h1",
+            "className": "work-detail__name",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "43.2px",
+            "fontWeight": "600",
+            "lineHeight": "50.976px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 296.578125,
+            "height": 50.96875,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 8,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "main dt",
+            "text": "物种",
+            "tag": "dt",
+            "className": "",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 152.5625,
+            "height": 24.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 2,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": "main button",
+            "text": "",
+            "tag": "button",
+            "className": "work-gallery__thumb",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "24.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 88,
+            "height": 88,
+            "platformFonts": []
+          }
+        }
+      }
+    },
+    "commission": {
+      "390x844": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 375,
+        "viewportWidth": 390,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "自设委托",
+            "tag": "h1",
+            "className": "commission-lead__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "52px",
+            "fontWeight": "600",
+            "lineHeight": "48.88px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 208,
+            "height": 48.875,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": ".commission-page__text",
+            "text": "站内表单请提供清晰的角色设定图、称呼、物种、身高和体重。工作室完成初步评估后，会在官方 QQ 中继续确认希望制作的装型、细节和期望时间；提交申请不代表已经接单，也不构成最终报价或排期确认。",
+            "tag": "p",
+            "className": "commission-page__text",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "27.52px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 137.578125,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 94,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": ".commission-page__section-kicker",
+            "text": "制作范围 / 01",
+            "tag": "p",
+            "className": "commission-page__section-kicker",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "11px",
+            "fontWeight": "400",
+            "lineHeight": "13.2px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 13.1875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 9,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".public-action",
+            "text": "提交委托申请",
+            "tag": "a",
+            "className": "public-action public-action--primary",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 134,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 6,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "430x932": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 415,
+        "viewportWidth": 430,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "自设委托",
+            "tag": "h1",
+            "className": "commission-lead__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "52px",
+            "fontWeight": "600",
+            "lineHeight": "48.88px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 208,
+            "height": 48.875,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": ".commission-page__text",
+            "text": "站内表单请提供清晰的角色设定图、称呼、物种、身高和体重。工作室完成初步评估后，会在官方 QQ 中继续确认希望制作的装型、细节和期望时间；提交申请不代表已经接单，也不构成最终报价或排期确认。",
+            "tag": "p",
+            "className": "commission-page__text",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "27.52px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 110.0625,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 94,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": ".commission-page__section-kicker",
+            "text": "制作范围 / 01",
+            "tag": "p",
+            "className": "commission-page__section-kicker",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "11px",
+            "fontWeight": "400",
+            "lineHeight": "13.2px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 13.1875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 9,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".public-action",
+            "text": "提交委托申请",
+            "tag": "a",
+            "className": "public-action public-action--primary",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 134,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 6,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "1440x900": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 1425,
+        "viewportWidth": 1440,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "自设委托",
+            "tag": "h1",
+            "className": "commission-lead__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "74.88px",
+            "fontWeight": "600",
+            "lineHeight": "70.3872px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 299.484375,
+            "height": 70.375,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": ".commission-page__text",
+            "text": "站内表单请提供清晰的角色设定图、称呼、物种、身高和体重。工作室完成初步评估后，会在官方 QQ 中继续确认希望制作的装型、细节和期望时间；提交申请不代表已经接单，也不构成最终报价或排期确认。",
+            "tag": "p",
+            "className": "commission-page__text",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "27.52px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 642.921875,
+            "height": 82.546875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 94,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": ".commission-page__section-kicker",
+            "text": "制作范围 / 01",
+            "tag": "p",
+            "className": "commission-page__section-kicker",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "11px",
+            "fontWeight": "400",
+            "lineHeight": "13.2px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 531.75,
+            "height": 13.1875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 9,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".public-action",
+            "text": "提交委托申请",
+            "tag": "a",
+            "className": "public-action public-action--primary",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 134,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 6,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "commission-apply": {
+      "390x844": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 375,
+        "viewportWidth": 390,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "提交委托申请",
+            "tag": "h1",
+            "className": "page-intro__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "28px",
+            "fontWeight": "600",
+            "lineHeight": "33.04px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 33.03125,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 6,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": "main p",
+            "text": "设定图只用于工作室内部评估，不会公开展示。我们会使用你提交的设定图、联系方式和体型信息评估申请、与你沟通，并在接单后用于委托履行和售后。请勿在文件名或称呼中填写不必要的个人信息。",
+            "tag": "p",
+            "className": "commission-apply__privacy",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "lineHeight": "24.08px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 96.3125,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 89,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "设定图 *",
+            "tag": "p",
+            "className": "image-dropzone__label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "600",
+            "lineHeight": "24.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 24.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 5,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".public-action",
+            "text": "确认提交",
+            "tag": "button",
+            "className": "public-action public-action--primary",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 106,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "430x932": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 415,
+        "viewportWidth": 430,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "提交委托申请",
+            "tag": "h1",
+            "className": "page-intro__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "28px",
+            "fontWeight": "600",
+            "lineHeight": "33.04px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 33.03125,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 6,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": "main p",
+            "text": "设定图只用于工作室内部评估，不会公开展示。我们会使用你提交的设定图、联系方式和体型信息评估申请、与你沟通，并在接单后用于委托履行和售后。请勿在文件名或称呼中填写不必要的个人信息。",
+            "tag": "p",
+            "className": "commission-apply__privacy",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "lineHeight": "24.08px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 96.3125,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 89,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "设定图 *",
+            "tag": "p",
+            "className": "image-dropzone__label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "600",
+            "lineHeight": "24.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 24.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 5,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".public-action",
+            "text": "确认提交",
+            "tag": "button",
+            "className": "public-action public-action--primary",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 106,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "1440x900": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 1425,
+        "viewportWidth": 1440,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "提交委托申请",
+            "tag": "h1",
+            "className": "page-intro__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "43.2px",
+            "fontWeight": "600",
+            "lineHeight": "50.976px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 780.8125,
+            "height": 50.96875,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 6,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": "main p",
+            "text": "设定图只用于工作室内部评估，不会公开展示。我们会使用你提交的设定图、联系方式和体型信息评估申请、与你沟通，并在接单后用于委托履行和售后。请勿在文件名或称呼中填写不必要的个人信息。",
+            "tag": "p",
+            "className": "commission-apply__privacy",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "lineHeight": "24.08px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 780.8125,
+            "height": 48.15625,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 89,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "设定图 *",
+            "tag": "p",
+            "className": "image-dropzone__label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "600",
+            "lineHeight": "24.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 780.8125,
+            "height": 24.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 5,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".public-action",
+            "text": "确认提交",
+            "tag": "button",
+            "className": "public-action public-action--primary",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 106,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "about": {
+      "390x844": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 375,
+        "viewportWidth": 390,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "关于我们",
+            "tag": "h1",
+            "className": "about-masthead__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "48px",
+            "fontWeight": "600",
+            "lineHeight": "51.84px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 51.828125,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": ".about-contact__description",
+            "text": "委托申请可通过站内表单私密提交；邮箱、QQ 与 QQ群用于后续人工沟通和备用联系。",
+            "tag": "p",
+            "className": "about-contact__description",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "27.52px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 55.03125,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 40,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "联系方式",
+            "tag": "p",
+            "className": "about-contact__label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "700",
+            "lineHeight": "18.6px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 48,
+            "height": 18.59375,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".public-action",
+            "text": "提交委托申请",
+            "tag": "a",
+            "className": "about-contact__primary public-action public-action--primary",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 134,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 6,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "430x932": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 415,
+        "viewportWidth": 430,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "关于我们",
+            "tag": "h1",
+            "className": "about-masthead__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "48px",
+            "fontWeight": "600",
+            "lineHeight": "51.84px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 51.828125,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": ".about-contact__description",
+            "text": "委托申请可通过站内表单私密提交；邮箱、QQ 与 QQ群用于后续人工沟通和备用联系。",
+            "tag": "p",
+            "className": "about-contact__description",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "27.52px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 55.03125,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 41,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "联系方式",
+            "tag": "p",
+            "className": "about-contact__label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "700",
+            "lineHeight": "18.6px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 48,
+            "height": 18.59375,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".public-action",
+            "text": "提交委托申请",
+            "tag": "a",
+            "className": "about-contact__primary public-action public-action--primary",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 134,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 6,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "1440x900": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 1425,
+        "viewportWidth": 1440,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "关于我们",
+            "tag": "h1",
+            "className": "about-masthead__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "64px",
+            "fontWeight": "600",
+            "lineHeight": "69.12px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 809.765625,
+            "height": 69.109375,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": ".about-contact__description",
+            "text": "委托申请可通过站内表单私密提交；邮箱、QQ 与 QQ群用于后续人工沟通和备用联系。",
+            "tag": "p",
+            "className": "about-contact__description",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "27.52px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 419.125,
+            "height": 55.03125,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 41,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "联系方式",
+            "tag": "p",
+            "className": "about-contact__label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "700",
+            "lineHeight": "18.6px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 48,
+            "height": 18.59375,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".public-action",
+            "text": "提交委托申请",
+            "tag": "a",
+            "className": "about-contact__primary public-action public-action--primary",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 134,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 6,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "service": {
+      "390x844": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 375,
+        "viewportWidth": 390,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "服务条款",
+            "tag": "h1",
+            "className": "page-intro__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "36px",
+            "fontWeight": "600",
+            "lineHeight": "42.48px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 42.46875,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": ".legal-document__text",
+            "text": "本条款说明有点小狗工作室自设委托、设定领养、作品使用和售后的一般规则。提交站内申请只代表进入评估，不表示工作室已经接单，也不构成最终报价、排期或合同确认。",
+            "tag": "p",
+            "className": "legal-document__text",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "28.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 115.1875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 77,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "章节导航",
+            "tag": "p",
+            "className": "legal-document__contents-label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 48,
+            "height": 16.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": "main a",
+            "text": "01适用范围与委托成立",
+            "tag": "a",
+            "className": "legal-document__contents-link",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 163.5,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 11,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "legalCode": {
+            "role": "legalCode",
+            "selector": ".legal-document__text",
+            "text": "本条款说明有点小狗工作室自设委托、设定领养、作品使用和售后的一般规则。提交站内申请只代表进入评估，不表示工作室已经接单，也不构成最终报价、排期或合同确认。",
+            "tag": "p",
+            "className": "legal-document__text",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "28.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 115.1875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 77,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "430x932": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 415,
+        "viewportWidth": 430,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "服务条款",
+            "tag": "h1",
+            "className": "page-intro__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "36px",
+            "fontWeight": "600",
+            "lineHeight": "42.48px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 42.46875,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": ".legal-document__text",
+            "text": "本条款说明有点小狗工作室自设委托、设定领养、作品使用和售后的一般规则。提交站内申请只代表进入评估，不表示工作室已经接单，也不构成最终报价、排期或合同确认。",
+            "tag": "p",
+            "className": "legal-document__text",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "28.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 115.1875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 77,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "章节导航",
+            "tag": "p",
+            "className": "legal-document__contents-label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 48,
+            "height": 16.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": "main a",
+            "text": "01适用范围与委托成立",
+            "tag": "a",
+            "className": "legal-document__contents-link",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 183.5,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 11,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "legalCode": {
+            "role": "legalCode",
+            "selector": ".legal-document__text",
+            "text": "本条款说明有点小狗工作室自设委托、设定领养、作品使用和售后的一般规则。提交站内申请只代表进入评估，不表示工作室已经接单，也不构成最终报价、排期或合同确认。",
+            "tag": "p",
+            "className": "legal-document__text",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "28.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 115.1875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 77,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "1440x900": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 1425,
+        "viewportWidth": 1440,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "服务条款",
+            "tag": "h1",
+            "className": "page-intro__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "56px",
+            "fontWeight": "600",
+            "lineHeight": "66.08px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 1231.4375,
+            "height": 66.078125,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": ".legal-document__text",
+            "text": "本条款说明有点小狗工作室自设委托、设定领养、作品使用和售后的一般规则。提交站内申请只代表进入评估，不表示工作室已经接单，也不构成最终报价、排期或合同确认。",
+            "tag": "p",
+            "className": "legal-document__text",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "28.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 736,
+            "height": 57.59375,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 77,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "章节导航",
+            "tag": "p",
+            "className": "legal-document__contents-label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 48,
+            "height": 16.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": "main a",
+            "text": "01适用范围与委托成立",
+            "tag": "a",
+            "className": "legal-document__contents-link",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 240,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 11,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "legalCode": {
+            "role": "legalCode",
+            "selector": ".legal-document__text",
+            "text": "本条款说明有点小狗工作室自设委托、设定领养、作品使用和售后的一般规则。提交站内申请只代表进入评估，不表示工作室已经接单，也不构成最终报价、排期或合同确认。",
+            "tag": "p",
+            "className": "legal-document__text",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "28.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 736,
+            "height": 57.59375,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 77,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "privacy": {
+      "390x844": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 375,
+        "viewportWidth": 390,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "隐私政策",
+            "tag": "h1",
+            "className": "page-intro__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "36px",
+            "fontWeight": "600",
+            "lineHeight": "42.48px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 42.46875,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": ".legal-document__text",
+            "text": "本政策说明你浏览 DITE DOG（有点小狗工作室）网站、提交委托申请和使用本网站公布的官方联系方式时，个人信息如何被处理。",
+            "tag": "p",
+            "className": "legal-document__text",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "28.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 86.390625,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 62,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "章节导航",
+            "tag": "p",
+            "className": "legal-document__contents-label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 48,
+            "height": 16.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": "main a",
+            "text": "01适用范围和处理者",
+            "tag": "a",
+            "className": "legal-document__contents-link",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 163.5,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 10,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "legalCode": {
+            "role": "legalCode",
+            "selector": ".legal-document__text",
+            "text": "本政策说明你浏览 DITE DOG（有点小狗工作室）网站、提交委托申请和使用本网站公布的官方联系方式时，个人信息如何被处理。",
+            "tag": "p",
+            "className": "legal-document__text",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "28.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 86.390625,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 62,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "430x932": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 415,
+        "viewportWidth": 430,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "隐私政策",
+            "tag": "h1",
+            "className": "page-intro__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "36px",
+            "fontWeight": "600",
+            "lineHeight": "42.48px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 42.46875,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": ".legal-document__text",
+            "text": "本政策说明你浏览 DITE DOG（有点小狗工作室）网站、提交委托申请和使用本网站公布的官方联系方式时，个人信息如何被处理。",
+            "tag": "p",
+            "className": "legal-document__text",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "28.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 86.390625,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 62,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "章节导航",
+            "tag": "p",
+            "className": "legal-document__contents-label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 48,
+            "height": 16.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": "main a",
+            "text": "01适用范围和处理者",
+            "tag": "a",
+            "className": "legal-document__contents-link",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 183.5,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 10,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "legalCode": {
+            "role": "legalCode",
+            "selector": ".legal-document__text",
+            "text": "本政策说明你浏览 DITE DOG（有点小狗工作室）网站、提交委托申请和使用本网站公布的官方联系方式时，个人信息如何被处理。",
+            "tag": "p",
+            "className": "legal-document__text",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "28.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 86.390625,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 62,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "1440x900": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 1425,
+        "viewportWidth": 1440,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "隐私政策",
+            "tag": "h1",
+            "className": "page-intro__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "56px",
+            "fontWeight": "600",
+            "lineHeight": "66.08px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 1238.828125,
+            "height": 66.078125,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": ".legal-document__text",
+            "text": "本政策说明你浏览 DITE DOG（有点小狗工作室）网站、提交委托申请和使用本网站公布的官方联系方式时，个人信息如何被处理。",
+            "tag": "p",
+            "className": "legal-document__text",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "28.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 736,
+            "height": 57.59375,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 62,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "章节导航",
+            "tag": "p",
+            "className": "legal-document__contents-label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 48,
+            "height": 16.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": "main a",
+            "text": "01适用范围和处理者",
+            "tag": "a",
+            "className": "legal-document__contents-link",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 240,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 10,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "legalCode": {
+            "role": "legalCode",
+            "selector": ".legal-document__text",
+            "text": "本政策说明你浏览 DITE DOG（有点小狗工作室）网站、提交委托申请和使用本网站公布的官方联系方式时，个人信息如何被处理。",
+            "tag": "p",
+            "className": "legal-document__text",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "28.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 736,
+            "height": 57.59375,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 62,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "licenses": {
+      "390x844": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 375,
+        "viewportWidth": 390,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "开源软件声明",
+            "tag": "h1",
+            "className": "page-intro__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "36px",
+            "fontWeight": "600",
+            "lineHeight": "42.48px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 42.46875,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 6,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": "main p",
+            "text": "3 项授权资产 · 796 条依赖记录",
+            "tag": "p",
+            "className": "page-intro__meta",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 16.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 19,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "章节导航",
+            "tag": "p",
+            "className": "licenses-nav__label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "700",
+            "lineHeight": "18.6px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 48,
+            "height": 18.59375,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": "main a",
+            "text": "01FFmpeg",
+            "tag": "a",
+            "className": "licenses-nav__link",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "lineHeight": "21.7px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 8,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "legalCode": {
+            "role": "legalCode",
+            "selector": ".licenses__license",
+            "text": "OFL-1.1",
+            "tag": "dd",
+            "className": "licenses__license",
+            "fontFamily": "ui-monospace, SFMono-Regular, Consolas, \"Microsoft YaHei\", monospace",
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "lineHeight": "18.6px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 343,
+            "height": 18.59375,
+            "platformFonts": [
+              {
+                "familyName": "Consolas",
+                "postScriptName": "Consolas",
+                "glyphCount": 7,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "430x932": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 415,
+        "viewportWidth": 430,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "开源软件声明",
+            "tag": "h1",
+            "className": "page-intro__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "36px",
+            "fontWeight": "600",
+            "lineHeight": "42.48px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 42.46875,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 6,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": "main p",
+            "text": "3 项授权资产 · 796 条依赖记录",
+            "tag": "p",
+            "className": "page-intro__meta",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 16.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 19,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "章节导航",
+            "tag": "p",
+            "className": "licenses-nav__label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "700",
+            "lineHeight": "18.6px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 48,
+            "height": 18.59375,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": "main a",
+            "text": "01FFmpeg",
+            "tag": "a",
+            "className": "licenses-nav__link",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "lineHeight": "21.7px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 8,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "legalCode": {
+            "role": "legalCode",
+            "selector": ".licenses__license",
+            "text": "OFL-1.1",
+            "tag": "dd",
+            "className": "licenses__license",
+            "fontFamily": "ui-monospace, SFMono-Regular, Consolas, \"Microsoft YaHei\", monospace",
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "lineHeight": "18.6px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 383,
+            "height": 18.59375,
+            "platformFonts": [
+              {
+                "familyName": "Consolas",
+                "postScriptName": "Consolas",
+                "glyphCount": 7,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "1440x900": {
+        "status": 200,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 1425,
+        "viewportWidth": 1440,
+        "footerCount": 1,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "开源软件声明",
+            "tag": "h1",
+            "className": "page-intro__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "56px",
+            "fontWeight": "600",
+            "lineHeight": "66.08px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 1116.640625,
+            "height": 66.078125,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 6,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": "main p",
+            "text": "3 项授权资产 · 796 条依赖记录",
+            "tag": "p",
+            "className": "page-intro__meta",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 169.171875,
+            "height": 24.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 19,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"label\"]",
+            "text": "章节导航",
+            "tag": "p",
+            "className": "licenses-nav__label",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "700",
+            "lineHeight": "18.6px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 48,
+            "height": 18.59375,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": "main a",
+            "text": "01FFmpeg",
+            "tag": "a",
+            "className": "licenses-nav__link",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "lineHeight": "21.7px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 240,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei",
+                "glyphCount": 8,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "legalCode": {
+            "role": "legalCode",
+            "selector": ".licenses__license",
+            "text": "OFL-1.1",
+            "tag": "dd",
+            "className": "licenses__license",
+            "fontFamily": "ui-monospace, SFMono-Regular, Consolas, \"Microsoft YaHei\", monospace",
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "lineHeight": "18.6px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 46.1875,
+            "height": 18.59375,
+            "platformFonts": [
+              {
+                "familyName": "Consolas",
+                "postScriptName": "Consolas",
+                "glyphCount": 7,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "not-found": {
+      "390x844": {
+        "status": 404,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 375,
+        "viewportWidth": 390,
+        "footerCount": 0,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "页面未找到",
+            "tag": "h1",
+            "className": "empty-state__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "28px",
+            "fontWeight": "600",
+            "lineHeight": "33.04px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 304,
+            "height": 33.03125,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 5,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": "main p",
+            "text": "404",
+            "tag": "p",
+            "className": "empty-state__eyebrow",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 304,
+            "height": 16.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 3,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"eyebrow\"]",
+            "text": "404",
+            "tag": "p",
+            "className": "empty-state__eyebrow",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 304,
+            "height": 16.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 3,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".public-action",
+            "text": "返回首页",
+            "tag": "a",
+            "className": "public-action public-action--primary",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 106,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "430x932": {
+        "status": 404,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 415,
+        "viewportWidth": 430,
+        "footerCount": 0,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "页面未找到",
+            "tag": "h1",
+            "className": "empty-state__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "28px",
+            "fontWeight": "600",
+            "lineHeight": "33.04px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 304,
+            "height": 33.03125,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 5,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": "main p",
+            "text": "404",
+            "tag": "p",
+            "className": "empty-state__eyebrow",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 304,
+            "height": 16.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 3,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"eyebrow\"]",
+            "text": "404",
+            "tag": "p",
+            "className": "empty-state__eyebrow",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 304,
+            "height": 16.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 3,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".public-action",
+            "text": "返回首页",
+            "tag": "a",
+            "className": "public-action public-action--primary",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 106,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      },
+      "1440x900": {
+        "status": 404,
+        "noHorizontalOverflow": true,
+        "scrollWidth": 1425,
+        "viewportWidth": 1440,
+        "footerCount": 0,
+        "documentFontsStatus": "loaded",
+        "fontFaces": [
+          {
+            "family": "Zhuohei Collage Critical",
+            "status": "loaded",
+            "display": "block",
+            "weight": "100 900",
+            "style": "normal"
+          },
+          {
+            "family": "Zhuohei Collage",
+            "status": "unloaded",
+            "display": "optional",
+            "weight": "100 900",
+            "style": "normal"
+          }
+        ],
+        "fontPreloads": [
+          "/fonts/zhuohei-collage-critical.woff2"
+        ],
+        "semanticTokens": {
+          "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+          "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+        },
+        "cls": 0,
+        "fontResponses": [
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 200
+          },
+          {
+            "url": "http://127.0.0.1:3000/fonts/zhuohei-collage-critical.woff2",
+            "status": 304
+          }
+        ],
+        "samples": {
+          "display": {
+            "role": "display",
+            "selector": "main h1",
+            "text": "页面未找到",
+            "tag": "h1",
+            "className": "empty-state__title",
+            "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+            "fontSize": "52px",
+            "fontWeight": "600",
+            "lineHeight": "61.36px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 304,
+            "height": 61.359375,
+            "platformFonts": [
+              {
+                "familyName": "STSong",
+                "postScriptName": "STSong",
+                "glyphCount": 5,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "body": {
+            "role": "body",
+            "selector": "main p",
+            "text": "404",
+            "tag": "p",
+            "className": "empty-state__eyebrow",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 304,
+            "height": 16.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 3,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "metadata": {
+            "role": "metadata",
+            "selector": "[class*=\"eyebrow\"]",
+            "text": "404",
+            "tag": "p",
+            "className": "empty-state__eyebrow",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16.8px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 304,
+            "height": 16.796875,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 3,
+                "isCustomFont": false
+              }
+            ]
+          },
+          "ui": {
+            "role": "ui",
+            "selector": ".public-action",
+            "text": "返回首页",
+            "tag": "a",
+            "className": "public-action public-action--primary",
+            "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "lineHeight": "18.9px",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "width": 106,
+            "height": 44,
+            "platformFonts": [
+              {
+                "familyName": "Microsoft YaHei",
+                "postScriptName": "MicrosoftYaHei-Bold",
+                "glyphCount": 4,
+                "isCustomFont": false
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "specimens": {
+    "390x844": {
+      "status": null,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 375,
+      "viewportWidth": 390,
+      "footerCount": 0,
+      "documentFontsStatus": "loaded",
+      "fontFaces": [
+        {
+          "family": "Zhuohei Collage Critical",
+          "status": "unloaded",
+          "display": "block",
+          "weight": "100 900",
+          "style": "normal"
+        },
+        {
+          "family": "Zhuohei Collage",
+          "status": "unloaded",
+          "display": "optional",
+          "weight": "100 900",
+          "style": "normal"
+        }
+      ],
+      "fontPreloads": [
+        "/fonts/zhuohei-collage-critical.woff2"
+      ],
+      "semanticTokens": {
+        "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+        "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+        "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+        "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+        "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+        "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+      },
+      "cls": 0,
+      "fontResponses": [],
+      "samples": {
+        "display": {
+          "role": "display",
+          "selector": "main h1",
+          "text": "字体语义样本",
+          "tag": "h1",
+          "className": "",
+          "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+          "fontSize": "48px",
+          "fontWeight": "600",
+          "lineHeight": "56.64px",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "width": 343,
+          "height": 56.625,
+          "platformFonts": [
+            {
+              "familyName": "STSong",
+              "postScriptName": "STSong",
+              "glyphCount": 6,
+              "isCustomFont": false
+            }
+          ]
+        },
+        "body": {
+          "role": "body",
+          "selector": "main p",
+          "text": "V12-E-F1 · TYPOGRAPHY GOVERNANCE",
+          "tag": "p",
+          "className": "type-specimen__kicker",
+          "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "fontSize": "12px",
+          "fontWeight": "600",
+          "lineHeight": "16.8px",
+          "letterSpacing": "0.96px",
+          "textTransform": "none",
+          "width": 343,
+          "height": 16.796875,
+          "platformFonts": [
+            {
+              "familyName": "Microsoft YaHei",
+              "postScriptName": "MicrosoftYaHei-Bold",
+              "glyphCount": 32,
+              "isCustomFont": false
+            }
+          ]
+        },
+        "metadata": {
+          "role": "metadata",
+          "selector": "[class*=\"metadata\"]",
+          "text": "03 · METADATAAVAILABLE · ¥12800 · 2026/08/25 物种：北极狐 · 状态：可领养 · Folio 03",
+          "tag": "section",
+          "className": "type-specimen__row type-specimen__metadata",
+          "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "fontSize": "12px",
+          "fontWeight": "600",
+          "lineHeight": "16.8px",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "width": 343,
+          "height": 120.171875,
+          "platformFonts": [
+            {
+              "familyName": "Microsoft YaHei",
+              "postScriptName": "MicrosoftYaHei-Bold",
+              "glyphCount": 70,
+              "isCustomFont": false
+            }
+          ]
+        },
+        "legalCode": {
+          "role": "legalCode",
+          "selector": "main code",
+          "text": "font-family: \"Noto Serif SC\"; sha256:e8f396de…",
+          "tag": "code",
+          "className": "",
+          "fontFamily": "ui-monospace, SFMono-Regular, Consolas, \"Microsoft YaHei\", monospace",
+          "fontSize": "12px",
+          "fontWeight": "400",
+          "lineHeight": "19.2px",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "width": 343,
+          "height": 19.1875,
+          "platformFonts": [
+            {
+              "familyName": "Consolas",
+              "postScriptName": "Consolas",
+              "glyphCount": 46,
+              "isCustomFont": false
+            }
+          ]
+        }
+      }
+    },
+    "1440x900": {
+      "status": null,
+      "noHorizontalOverflow": true,
+      "scrollWidth": 1425,
+      "viewportWidth": 1440,
+      "footerCount": 0,
+      "documentFontsStatus": "loaded",
+      "fontFaces": [
+        {
+          "family": "Zhuohei Collage Critical",
+          "status": "unloaded",
+          "display": "block",
+          "weight": "100 900",
+          "style": "normal"
+        },
+        {
+          "family": "Zhuohei Collage",
+          "status": "unloaded",
+          "display": "optional",
+          "weight": "100 900",
+          "style": "normal"
+        }
+      ],
+      "fontPreloads": [
+        "/fonts/zhuohei-collage-critical.woff2"
+      ],
+      "semanticTokens": {
+        "display": "\"Songti SC\", \"STSong\", \"Noto Serif CJK SC\", serif",
+        "body": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+        "metadata": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+        "ui": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+        "legal": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+        "code": "ui-monospace, \"SFMono-Regular\", Consolas, \"Microsoft YaHei\", monospace"
+      },
+      "cls": 0,
+      "fontResponses": [],
+      "samples": {
+        "display": {
+          "role": "display",
+          "selector": "main h1",
+          "text": "字体语义样本",
+          "tag": "h1",
+          "className": "",
+          "fontFamily": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+          "fontSize": "96px",
+          "fontWeight": "600",
+          "lineHeight": "113.28px",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "width": 1152,
+          "height": 113.265625,
+          "platformFonts": [
+            {
+              "familyName": "STSong",
+              "postScriptName": "STSong",
+              "glyphCount": 6,
+              "isCustomFont": false
+            }
+          ]
+        },
+        "body": {
+          "role": "body",
+          "selector": "main p",
+          "text": "V12-E-F1 · TYPOGRAPHY GOVERNANCE",
+          "tag": "p",
+          "className": "type-specimen__kicker",
+          "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "fontSize": "12px",
+          "fontWeight": "600",
+          "lineHeight": "16.8px",
+          "letterSpacing": "0.96px",
+          "textTransform": "none",
+          "width": 1152,
+          "height": 16.796875,
+          "platformFonts": [
+            {
+              "familyName": "Microsoft YaHei",
+              "postScriptName": "MicrosoftYaHei-Bold",
+              "glyphCount": 32,
+              "isCustomFont": false
+            }
+          ]
+        },
+        "metadata": {
+          "role": "metadata",
+          "selector": "[class*=\"metadata\"]",
+          "text": "03 · METADATAAVAILABLE · ¥12800 · 2026/08/25 物种：北极狐 · 状态：可领养 · Folio 03",
+          "tag": "section",
+          "className": "type-specimen__row type-specimen__metadata",
+          "fontFamily": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", system-ui, sans-serif",
+          "fontSize": "12px",
+          "fontWeight": "600",
+          "lineHeight": "16.8px",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "width": 1152,
+          "height": 92.984375,
+          "platformFonts": [
+            {
+              "familyName": "Microsoft YaHei",
+              "postScriptName": "MicrosoftYaHei-Bold",
+              "glyphCount": 70,
+              "isCustomFont": false
+            }
+          ]
+        },
+        "legalCode": {
+          "role": "legalCode",
+          "selector": "main code",
+          "text": "font-family: \"Noto Serif SC\"; sha256:e8f396de…",
+          "tag": "code",
+          "className": "",
+          "fontFamily": "ui-monospace, SFMono-Regular, Consolas, \"Microsoft YaHei\", monospace",
+          "fontSize": "12px",
+          "fontWeight": "400",
+          "lineHeight": "19.2px",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "width": 981.609375,
+          "height": 19.1875,
+          "platformFonts": [
+            {
+              "familyName": "Consolas",
+              "postScriptName": "Consolas",
+              "glyphCount": 46,
+              "isCustomFont": false
+            }
+          ]
+        }
+      }
+    }
+  },
+  "checks": {
+    "completeCoverage": true,
+    "expectedStatuses": true,
+    "noHorizontalOverflow": true,
+    "fontsSettled": true,
+    "acceptableCls": true,
+    "semanticTokens": true,
+    "heroBrandLock": true,
+    "onlyCriticalFontPreloaded": true,
+    "noNotoWebRequest": true
+  }
+}

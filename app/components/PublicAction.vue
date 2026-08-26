@@ -85,9 +85,11 @@ function preventBlockedNavigation(event: Event) {
   border: 1px solid transparent;
   border-radius: var(--radius-full);
   font: inherit;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  line-height: 1;
+  font-family: var(--font-role-ui);
+  font-size: var(--type-ui-size);
+  font-weight: var(--type-ui-weight);
+  line-height: var(--type-ui-line-height);
+  letter-spacing: var(--type-ui-letter-spacing);
   text-align: center;
   cursor: pointer;
   transition:
@@ -139,6 +141,11 @@ function preventBlockedNavigation(event: Event) {
   transform: translateY(1px) scale(0.99);
 }
 
+.public-action:focus-visible {
+  outline: 3px solid var(--public-focus-ring);
+  outline-offset: 3px;
+}
+
 .public-action:disabled,
 .public-action[aria-disabled='true'] {
   cursor: default;
@@ -148,6 +155,7 @@ function preventBlockedNavigation(event: Event) {
 .public-action__spinner {
   width: 0.9rem;
   height: 0.9rem;
+  flex: 0 0 0.9rem;
   border: 2px solid currentcolor;
   border-right-color: transparent;
   border-radius: 50%;

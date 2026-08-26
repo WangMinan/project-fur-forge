@@ -8,7 +8,6 @@ const props = defineProps<{
   description?: string | undefined
   hero: PublicHeroPlacementDto
   status?: PublicSiteBusinessStatusDto | null | undefined
-  viewTransitionName?: string | undefined
 }>()
 
 const landscape = computed(() => props.hero.landscape[0])
@@ -52,7 +51,6 @@ onBeforeUnmount(() => {
     <div
       v-if="sources"
       class="commission-lead__media"
-      :style="{ viewTransitionName }"
     >
       <ResponsivePicture
         :sources="sources"
@@ -112,20 +110,24 @@ onBeforeUnmount(() => {
 
 .commission-lead__display {
   position: absolute;
-  inset: 3.2rem -0.3rem auto;
+  inset: 3.2rem 1rem auto;
   z-index: 0;
-  display: grid;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
   color: var(--public-background-type);
-  font-family: var(--font-public-body);
-  font-size: 3.75rem;
+  font-family: var(--font-role-display-sans);
+  font-size: clamp(1.25rem, 6vw, 1.75rem);
   font-weight: 800;
-  line-height: 0.76;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
   pointer-events: none;
   user-select: none;
 }
 
 .commission-lead__display span:last-child {
-  justify-self: end;
+  margin-left: auto;
 }
 
 .commission-lead__media {
@@ -171,7 +173,7 @@ onBeforeUnmount(() => {
 }
 
 .commission-lead__title {
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: 3.25rem;
   font-weight: 600;
   line-height: 0.94;
@@ -179,7 +181,7 @@ onBeforeUnmount(() => {
 
 .commission-lead__promise {
   color: var(--public-text-secondary);
-  font-family: var(--font-public-display);
+  font-family: var(--font-role-display);
   font-size: 1.35rem;
   line-height: 1.2;
 }
@@ -207,7 +209,7 @@ onBeforeUnmount(() => {
   gap: 0.75rem;
   min-height: 2.75rem;
   color: var(--public-text-secondary);
-  font-family: var(--font-public-mono);
+  font-family: var(--font-role-metadata);
   font-size: 0.6875rem;
   line-height: 1.2;
   text-decoration: none;
@@ -220,7 +222,7 @@ onBeforeUnmount(() => {
 
 .commission-lead__continuation-destination {
   color: var(--public-text-primary);
-  font-family: var(--font-public-body);
+  font-family: var(--font-role-ui);
   font-size: 0.8125rem;
   font-weight: 600;
 }
@@ -237,7 +239,16 @@ onBeforeUnmount(() => {
 @media (min-width: 768px) {
   .commission-lead__display {
     inset: 3.35rem -0.6rem auto;
+    display: grid;
+    gap: 0;
     font-size: 8rem;
+    line-height: 0.76;
+    letter-spacing: normal;
+  }
+
+  .commission-lead__display span:last-child {
+    justify-self: end;
+    margin-left: 0;
   }
 
   .commission-lead__media {
