@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { PublicWorkSummaryDto } from '~~/shared/types/contracts'
 import { PUBLIC_FEATURED_LIMIT } from '~~/shared/constants/featured'
-import { resolveAutoplayIntervalMs } from '~/utils/hero-carousel'
+import { animateDirectionalLayers } from '~/utils/hero-carousel'
 
 const props = defineProps<{
   available: boolean
@@ -20,30 +20,17 @@ const titleRef = useTemplateRef<HTMLElement>('title')
 const speciesRef = useTemplateRef<HTMLElement>('species')
 const transitionDirection = shallowRef<'next' | 'prev'>('next')
 const motionSequence = shallowRef(0)
-const reduceMotion = shallowRef(false)
 const userPaused = shallowRef(false)
-const pageHidden = shallowRef(false)
 const controlsRevealed = shallowRef(false)
 const mediaTransitionName = computed(() => `featured-media-${transitionDirection.value}`)
-const autoplayInterval = computed(() => resolveAutoplayIntervalMs(reduceMotion.value))
-const autoplayRunning = computed(() => (
-  autoplayInterval.value !== null
-  && canNavigate.value
-  && !userPaused.value
-  && !pageHidden.value
-))
 
-let timer: ReturnType<typeof setInterval> | null = null
+const { reduceMotion, restart: restartAutoplayTimer } = useCarouselPlayback({
+  advance: () => selectWork(1, false),
+  enabled: () => canNavigate.value && !userPaused.value,
+})
+
 let controlsTimer: ReturnType<typeof setTimeout> | null = null
-let motionQuery: MediaQueryList | null = null
 let textAnimations: Animation[] = []
-
-function stopTimer() {
-  if (timer !== null) {
-    clearInterval(timer)
-    timer = null
-  }
-}
 
 function stopControlsTimer() {
   if (controlsTimer !== null) {
@@ -63,13 +50,6 @@ function revealControls(timeout = 2_400) {
   }
 }
 
-function restartTimer() {
-  stopTimer()
-  if (autoplayRunning.value && autoplayInterval.value !== null) {
-    timer = setInterval(() => selectWork(1, false), autoplayInterval.value)
-  }
-}
-
 function animateText(direction: -1 | 1, sequence: number) {
   for (const animation of textAnimations) animation.cancel()
   textAnimations = []
@@ -81,25 +61,7 @@ function animateText(direction: -1 | 1, sequence: number) {
     { element: titleRef.value, distance: 24, duration: 380, delay: 30 },
     { element: speciesRef.value, distance: 16, duration: 340, delay: 75 },
   ]
-  textAnimations = layers.flatMap(layer => layer.element
-    ? [layer.element.animate(
-        [
-          { opacity: 0.001, transform: `translate3d(${direction * layer.distance}px, 0, 0)` },
-          { opacity: 1, transform: 'translate3d(0, 0, 0)' },
-        ],
-        {
-          delay: layer.delay,
-          duration: layer.duration,
-          easing,
-          fill: 'both',
-        },
-      )]
-    : [])
-  for (const animation of textAnimations) {
-    animation.finished
-      .then(() => animation.cancel())
-      .catch(() => undefined)
-  }
+  textAnimations = animateDirectionalLayers(layers, direction, easing)
 }
 
 function selectWork(step: -1 | 1, restartAutoplay = true) {
@@ -109,7 +71,7 @@ function selectWork(step: -1 | 1, restartAutoplay = true) {
   const sequence = motionSequence.value
   activeIndex.value = (activeIndex.value + step + works.value.length) % works.value.length
   void nextTick(() => animateText(step, sequence))
-  if (restartAutoplay) restartTimer()
+  if (restartAutoplay) restartAutoplayTimer()
 }
 
 function selectWorkAt(index: number) {
@@ -120,7 +82,7 @@ function selectWorkAt(index: number) {
   const sequence = motionSequence.value
   activeIndex.value = index
   void nextTick(() => animateText(step, sequence))
-  restartTimer()
+  restartAutoplayTimer()
 }
 
 function togglePause() {
@@ -201,34 +163,13 @@ function onHeroClick(event: MouseEvent) {
   }
 }
 
-function onVisibilityChange() {
-  pageHidden.value = document.hidden
-}
-
-function onMotionChange(event: MediaQueryListEvent) {
-  reduceMotion.value = event.matches
-}
-
 watch(() => works.value.length, (count) => {
   activeIndex.value = clampSlideIndex(activeIndex.value, count)
 })
-watch([autoplayRunning, autoplayInterval], restartTimer)
-
-onMounted(() => {
-  motionQuery = matchMedia('(prefers-reduced-motion: reduce)')
-  reduceMotion.value = motionQuery.matches
-  motionQuery.addEventListener('change', onMotionChange)
-  pageHidden.value = document.hidden
-  document.addEventListener('visibilitychange', onVisibilityChange)
-  restartTimer()
-})
 
 onBeforeUnmount(() => {
-  stopTimer()
   stopControlsTimer()
   for (const animation of textAnimations) animation.cancel()
-  motionQuery?.removeEventListener('change', onMotionChange)
-  document.removeEventListener('visibilitychange', onVisibilityChange)
 })
 </script>
 

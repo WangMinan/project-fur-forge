@@ -84,8 +84,3 @@ export function workApiErrorText(error: unknown, fallback: string): string {
   }
   return (error.status !== null && STATUS_FALLBACKS[error.status]) || fallback
 }
-
-/** 供非作品场景复用同一张中文映射表。 */
-export function adminReasonText(reason: ErrorReason | null): string | null {
-  return reason ? REASON_MESSAGES[reason] ?? null : null
-}
