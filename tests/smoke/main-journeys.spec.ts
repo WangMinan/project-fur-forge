@@ -221,6 +221,32 @@ test('首页滚出 Hero 后移动导航仍覆盖完整视口', async ({ page }) 
   ))).toBe(844)
 })
 
+test('1024px 触控 Header 首次点击展开关于我们二级菜单', async ({ browser }) => {
+  const page = await browser.newPage({
+    hasTouch: true,
+    viewport: { width: 1024, height: 900 },
+  })
+  await page.goto(`${publicBaseURL}/`)
+  await page.waitForFunction(() => Boolean(
+    (document.querySelector('#__nuxt') as Element & { __vue_app__?: unknown })
+      ?.__vue_app__,
+  ))
+  await page.waitForTimeout(500)
+
+  const trigger = page.getByRole('button', { name: '关于我们' })
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  await trigger.tap()
+
+  await expect(page).toHaveURL(`${publicBaseURL}/`)
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true')
+  const subnav = page.getByRole('navigation', { name: '关于我们二级导航' })
+  await expect(subnav).toBeVisible()
+  await subnav.getByRole('link', { name: '关于我们', exact: true }).tap()
+  await expect(page).toHaveURL(`${publicBaseURL}/about`)
+
+  await page.close()
+})
+
 test('作品目录与作品详情可达', async ({ page }) => {
   await seedSmokeCatalog(page)
   await page.goto('/works')
