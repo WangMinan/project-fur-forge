@@ -21,6 +21,7 @@ const nuxtApp = useNuxtApp()
 const navOpen = ref(false)
 const scrolled = shallowRef(false)
 const displayedPath = shallowRef(route.path)
+const expandedSubnav = shallowRef<string | null>(null)
 
 /**
  * 页头定位跟随当前真正显示的页面，而不是抢先跟随已更新的 route。
@@ -50,8 +51,23 @@ function isActive(item: PublicNavItem) {
   return route.path === item.href || item.children?.some(child => route.path === child.href)
 }
 
+function toggleSubnav(href: string) {
+  expandedSubnav.value = expandedSubnav.value === href ? null : href
+}
+
+function closeSubnav(href: string, event?: KeyboardEvent) {
+  if (expandedSubnav.value !== href) return
+  expandedSubnav.value = null
+  if (event) {
+    (event.currentTarget as HTMLElement)
+      .querySelector<HTMLButtonElement>('.public-header__link')
+      ?.focus()
+  }
+}
+
 watch(() => route.fullPath, () => {
   navOpen.value = false
+  expandedSubnav.value = null
   if (route.path === '/') {
     scrolled.value = false
   }
@@ -103,17 +119,23 @@ onBeforeUnmount(() => {
         v-for="item in PUBLIC_NAV_ITEMS"
         :key="item.href"
         class="public-header__nav-item"
-        :class="{ 'public-header__nav-item--active': isActive(item) }"
+        :class="{
+          'public-header__nav-item--active': isActive(item),
+          'public-header__nav-item--expanded': expandedSubnav === item.href,
+        }"
+        @keydown.esc.prevent.stop="closeSubnav(item.href, $event)"
       >
-        <NuxtLink
-          :to="item.href"
+        <button
+          v-if="item.children"
+          type="button"
           class="public-header__link"
-          :aria-current="route.path === item.href ? 'page' : undefined"
-          :aria-haspopup="item.children ? 'true' : undefined"
+          aria-haspopup="true"
+          :aria-expanded="expandedSubnav === item.href"
+          :aria-controls="`public-subnav-${item.href.slice(1)}`"
+          @click="toggleSubnav(item.href)"
         >
           {{ item.label }}
           <svg
-            v-if="item.children"
             class="public-header__chevron"
             width="12"
             height="12"
@@ -123,9 +145,21 @@ onBeforeUnmount(() => {
           >
             <path d="m3 4.5 3 3 3-3" stroke="currentColor" stroke-width="1.2" />
           </svg>
+        </button>
+        <NuxtLink
+          v-else
+          :to="item.href"
+          class="public-header__link"
+          :aria-current="route.path === item.href ? 'page' : undefined"
+        >
+          {{ item.label }}
         </NuxtLink>
 
-        <div v-if="item.children" class="public-header__subnav">
+        <div
+          v-if="item.children"
+          :id="`public-subnav-${item.href.slice(1)}`"
+          class="public-header__subnav"
+        >
           <nav class="public-header__subnav-panel" :aria-label="`${item.label}二级导航`">
             <NuxtLink
               v-for="child in item.children"
@@ -295,6 +329,10 @@ onBeforeUnmount(() => {
   min-height: 2.75rem;
   padding: 0 var(--space-4);
   color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
   font-size: var(--font-size-sm);
   opacity: 0.86;
   transition:
@@ -409,14 +447,14 @@ onBeforeUnmount(() => {
   background: var(--public-bg-secondary);
 }
 
-.public-header__nav-item:focus-within .public-header__subnav {
+.public-header__nav-item--expanded .public-header__subnav {
   visibility: visible;
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
 }
 
-.public-header__nav-item:focus-within .public-header__chevron {
+.public-header__nav-item--expanded .public-header__chevron {
   transform: rotate(180deg);
 }
 
