@@ -10,12 +10,6 @@ export const WORK_PURPOSE_LABELS: Record<WorkPurpose, string> = {
   showcase: '纯展示',
 }
 
-export const WORK_PURPOSE_FILTER_LABELS: Record<WorkPurpose, string> = {
-  commission: '委托',
-  adoption: '领养',
-  showcase: '展示',
-}
-
 export const ADOPTION_STATUS_LABELS: Record<AdoptionStatus, string> = {
   available: '可领养',
   adopted: '已领养',

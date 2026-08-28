@@ -4,11 +4,4 @@ export const PROJECT_ENGLISH_NAME = 'DITE DOG'
 /** 公开导航只显示短品牌；法务主体与正文继续用 PROJECT_NAME。 */
 export const PUBLIC_NAV_BRAND = '有点小狗'
 
-export const ACCESS_SURFACES = [
-  'public',
-  'admin',
-] as const
-
-export type AccessSurface = typeof ACCESS_SURFACES[number]
-
 export const ORIGINAL_IMAGE_MAX_BYTES = 30_000_000

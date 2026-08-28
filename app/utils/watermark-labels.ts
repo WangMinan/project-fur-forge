@@ -1,6 +1,5 @@
 import type {
   WatermarkOperationStatus,
-  WatermarkPreviewKind,
   WatermarkProfileStatus,
 } from '~~/shared/types/contracts'
 
@@ -59,16 +58,4 @@ const dateTimeFormatter = new Intl.DateTimeFormat('zh-CN', {
 
 export function formatWatermarkDateTime(iso: string) {
   return dateTimeFormatter.format(new Date(iso))
-}
-
-export const WATERMARK_PREVIEW_KIND_LABELS: Record<WatermarkPreviewKind, string> = {
-  'work-card': '作品卡片',
-  'detail': '作品详情',
-  'design-sheet': '领养设定图',
-}
-
-export const WATERMARK_PREVIEW_ASPECT_LABELS: Record<WatermarkPreviewKind, string> = {
-  'work-card': '3:4',
-  'detail': '原比例',
-  'design-sheet': '原比例',
 }

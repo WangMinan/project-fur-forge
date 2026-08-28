@@ -90,8 +90,6 @@ function recipesForVersion(version: SiteDisplayRecipeVersion) {
   return version === SITE_DISPLAY_RECIPE_VERSION ? recipes : legacyRecipes
 }
 
-export const SITE_DISPLAY_USAGES = Object.keys(recipes) as SiteDisplayUsage[]
-
 export const HOME_ENTRY_USAGES = {
   commission: 'home-entry-commission',
   adoption: 'home-entry-adoption',

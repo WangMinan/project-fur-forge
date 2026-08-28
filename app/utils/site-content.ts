@@ -103,42 +103,8 @@ export function structureNumberedPlainText(value: string): StructuredPlainText {
   return result
 }
 
-export interface SiteContentFormFields {
-  intro: string
-  estimateNote: string
-  emailAction: string
-  studioFacts: string
-  makingScope: string
-  basicTerms: string
-  privacyPolicy: string
-}
-
-export interface SiteStatusFormFields {
+interface SiteStatusFormFields {
   label: string
-}
-
-/** 管理端保存前的字段级校验，与服务端 Schema 同边界；返回字段键 → 中文提示。 */
-export function siteContentFieldIssues(form: SiteContentFormFields): Record<string, string> {
-  const issues: Record<string, string> = {}
-  const nullableTextFields = [
-    ['intro', form.intro, SITE_CONTENT_LIMITS.intro],
-    ['estimateNote', form.estimateNote, SITE_CONTENT_LIMITS.estimateNote],
-    ['emailAction', form.emailAction, SITE_CONTENT_LIMITS.emailAction],
-    ['studioFacts', form.studioFacts, SITE_CONTENT_LIMITS.studioFacts],
-    ['makingScope', form.makingScope, SITE_CONTENT_LIMITS.makingScope],
-    ['basicTerms', form.basicTerms, SITE_CONTENT_LIMITS.basicTerms],
-    ['privacyPolicy', form.privacyPolicy, SITE_CONTENT_LIMITS.privacyPolicy],
-  ] as const
-  for (const [field, raw, max] of nullableTextFields) {
-    const value = raw.trim()
-    if (value.length > max) {
-      issues[field] = `最多 ${max} 字`
-    }
-    else if (hasUnsafePlainText(value)) {
-      issues[field] = '只允许安全纯文本，不能包含 HTML 或脚本'
-    }
-  }
-  return issues
 }
 
 export function siteStatusFieldIssues(form: SiteStatusFormFields): Record<string, string> {

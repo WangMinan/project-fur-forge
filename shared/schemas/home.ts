@@ -16,12 +16,6 @@ export const contactEmailSchema = z.string().trim().email().max(254)
 export const contactQqSchema = z.string().trim().regex(/^[1-9]\d{4,11}$/u)
 export const heroPlacementSchema = z.enum(['home', 'commission'])
 export const heroOrientationSchema = z.enum(['landscape', 'portrait'])
-export const heroCollectionOwnerIdSchema = z.enum([
-  'hero-home-landscape',
-  'hero-home-portrait',
-  'hero-commission-landscape',
-  'hero-commission-portrait',
-])
 
 // Migrated rows use the deterministic `<legacy UUID>:<orientation>` identity;
 // all rows created after R3-B continue to use random UUIDs.

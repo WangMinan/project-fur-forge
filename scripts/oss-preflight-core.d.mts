@@ -14,13 +14,6 @@ export function contentDigests(content: Buffer): {
 export function sha256(content: Buffer): string
 export function urlSafeBase64(value: string): string
 export function createRunId(now?: Date, entropy?: Buffer): string
-export function testPrefixFor(runId: string): string
-export function assertExactObjectScope(options: {
-  bucket: string
-  expectedBucket: string
-  key: string
-  prefix: string
-}): void
 export function evaluateCorsRules(
   rules: ReadonlyArray<{
     allowedOrigin?: string | readonly string[]

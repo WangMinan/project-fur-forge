@@ -197,16 +197,6 @@ export const siteContentSectionVersionsSchema = z.object({
   contact: resourceVersionSchema,
 }).strict()
 
-export const SITE_CONTENT_SECTIONS = [
-  'commission',
-  'about',
-  'terms',
-  'privacy',
-  'contact',
-] as const
-
-export const siteContentSectionSchema = z.enum(SITE_CONTENT_SECTIONS)
-
 export const adminSiteContentDtoSchema = z.object({
   version: resourceVersionSchema,
   sectionVersions: siteContentSectionVersionsSchema,

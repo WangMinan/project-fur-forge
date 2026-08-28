@@ -19,7 +19,6 @@ export const REQUIRED_PUT_HEADERS = [
 ]
 
 const PNG_SIGNATURE = Buffer.from('89504e470d0a1a0a', 'hex')
-const RUN_ID_PATTERN = /^t10-\d{8}T\d{6}Z-[a-f0-9]{8}$/u
 
 function pngChunk(type, data) {
   const typeBytes = Buffer.from(type, 'ascii')
@@ -167,36 +166,6 @@ export function createRunId(now = new Date(), entropy = randomBytes(4)) {
     .replace(/\.\d{3}Z$/u, 'Z')
 
   return `t10-${timestamp}-${Buffer.from(entropy).toString('hex')}`
-}
-
-export function testPrefixFor(runId) {
-  if (!RUN_ID_PATTERN.test(runId)) {
-    throw new Error('Run ID does not match the T10 preflight format.')
-  }
-
-  return `test/${runId}/`
-}
-
-export function assertExactObjectScope({
-  bucket,
-  expectedBucket,
-  key,
-  prefix,
-}) {
-  if (bucket !== expectedBucket) {
-    throw new Error('Cleanup bucket does not match the configured T10 bucket.')
-  }
-
-  if (
-    !prefix.startsWith('test/t10-')
-    || !prefix.endsWith('/')
-    || key.length <= prefix.length
-    || !key.startsWith(prefix)
-    || key.includes('\\')
-    || key.split('/').includes('..')
-  ) {
-    throw new Error('Object key is outside the exact T10 test prefix.')
-  }
 }
 
 function stringValues(value) {

@@ -3,9 +3,9 @@ import type { PublicAdoptionListItemDto } from '~~/shared/types/contracts'
 import { formatCnyMinorUnits } from '~/utils/format'
 import { useMotionEntrance } from '~/composables/useMotionEntrance'
 import {
+  animateDirectionalLayers,
   nextSlideIndex,
   prevSlideIndex,
-  resolveAutoplayIntervalMs,
 } from '~/utils/hero-carousel'
 
 /**
@@ -40,15 +40,7 @@ const actionsRef = useTemplateRef<HTMLElement>('actions')
 const transitionDirection = shallowRef<'next' | 'prev'>('next')
 const transitionIntent = shallowRef<'autoplay' | 'pointer'>('autoplay')
 const motionSequence = shallowRef(0)
-const reduceMotion = shallowRef(false)
-const pageHidden = shallowRef(false)
 const mediaTransitionName = computed(() => `home-adoption-media-${transitionDirection.value}`)
-const autoplayInterval = computed(() => resolveAutoplayIntervalMs(reduceMotion.value))
-const autoplayRunning = computed(() => (
-  autoplayInterval.value !== null
-  && hasMultipleAdoptions.value
-  && !pageHidden.value
-))
 const detailTo = computed(() => currentAdoption.value
   ? {
       path: currentAdoption.value.href,
@@ -57,34 +49,23 @@ const detailTo = computed(() => currentAdoption.value
   : '/adoptions',
 )
 
-let timer: ReturnType<typeof setInterval> | null = null
-let motionQuery: MediaQueryList | null = null
+const { reduceMotion, restart: restartAutoplay } = useCarouselPlayback({
+  advance: () => selectNextAdoption('autoplay'),
+  enabled: () => hasMultipleAdoptions.value,
+})
+
 let recordAnimations: Animation[] = []
 
 watch(
   () => visibleAdoptions.value.map(item => item.work.slug).join('|'),
   () => {
     activeIndex.value = 0
-    restartTimer()
+    restartAutoplay()
   },
 )
 
 function formatFolio(index: number) {
   return String(index + 1).padStart(2, '0')
-}
-
-function stopTimer() {
-  if (timer !== null) {
-    clearInterval(timer)
-    timer = null
-  }
-}
-
-function restartTimer() {
-  stopTimer()
-  if (autoplayRunning.value && autoplayInterval.value !== null) {
-    timer = setInterval(() => selectNextAdoption('autoplay'), autoplayInterval.value)
-  }
 }
 
 function animateRecord(direction: 'next' | 'prev', sequence: number) {
@@ -100,25 +81,7 @@ function animateRecord(direction: 'next' | 'prev', sequence: number) {
     { element: factsRef.value, distance: 16, duration: 340, delay: 75 },
     { element: actionsRef.value, distance: 8, duration: 280, delay: 145 },
   ]
-  recordAnimations = layers.flatMap(layer => layer.element
-    ? [layer.element.animate(
-        [
-          { opacity: 0.001, transform: `translate3d(${sign * layer.distance}px, 0, 0)` },
-          { opacity: 1, transform: 'translate3d(0, 0, 0)' },
-        ],
-        {
-          delay: layer.delay,
-          duration: layer.duration,
-          easing,
-          fill: 'both',
-        },
-      )]
-    : [])
-  for (const animation of recordAnimations) {
-    animation.finished
-      .then(() => animation.cancel())
-      .catch(() => undefined)
-  }
+  recordAnimations = animateDirectionalLayers(layers, sign, easing)
 }
 
 function setAdoption(
@@ -139,7 +102,7 @@ function setAdoption(
   const sequence = motionSequence.value
   activeIndex.value = index
   void nextTick(() => animateRecord(direction, sequence))
-  if (intent !== 'autoplay') restartTimer()
+  if (intent !== 'autoplay') restartAutoplay()
 }
 
 function selectAdoption(index: number) {
@@ -199,16 +162,6 @@ function onPointerCancel() {
   pointerStartX = null
 }
 
-function onVisibilityChange() {
-  pageHidden.value = document.hidden
-}
-
-function onMotionChange(event: MediaQueryListEvent) {
-  reduceMotion.value = event.matches
-}
-
-watch([autoplayRunning, autoplayInterval], restartTimer)
-
 useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   const media = mediaRef.value
   const caption = captionRef.value
@@ -242,20 +195,8 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   ]
 })
 
-onMounted(() => {
-  motionQuery = matchMedia('(prefers-reduced-motion: reduce)')
-  reduceMotion.value = motionQuery.matches
-  motionQuery.addEventListener('change', onMotionChange)
-  pageHidden.value = document.hidden
-  document.addEventListener('visibilitychange', onVisibilityChange)
-  restartTimer()
-})
-
 onBeforeUnmount(() => {
-  stopTimer()
   for (const animation of recordAnimations) animation.cancel()
-  motionQuery?.removeEventListener('change', onMotionChange)
-  document.removeEventListener('visibilitychange', onVisibilityChange)
 })
 </script>
 

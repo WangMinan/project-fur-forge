@@ -24,12 +24,6 @@ import { safeLog } from '../safe-log'
 export const RECOVERY_CONCURRENCY = 2
 export const RECOVERY_SCAN_LIMIT = 50
 
-export interface RecoveryOutcome {
-  operationId: string
-  outcome: 'resumed' | 'failed' | 'skipped'
-  table: OperationTable
-}
-
 export interface RecoverySummary {
   failed: number
   resumed: number

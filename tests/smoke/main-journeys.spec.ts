@@ -501,7 +501,7 @@ test('隐私、服务条款和开源软件声明可读', async ({ page }) => {
         await expect(page.locator('body')).not.toContainText('不提供访客账号')
       }
       if (path === '/licenses') {
-        await expect(page.getByText(/Linux 发布镜像内实际二进制/u)).toBeVisible()
+        await expect(page.getByText(/当前生成环境的 production 安装快照/u)).toBeVisible()
         await expect(page.getByRole('link', { name: '下载完整 TXT 声明' }))
           .toHaveAttribute('href', '/THIRD_PARTY_NOTICES.txt')
         await expect(page.locator('body')).not.toContainText('gyan.dev')

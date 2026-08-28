@@ -57,32 +57,17 @@ watch(() => props.home.portrait.length, (count) => {
   portraitIndex.value = clampSlideIndex(portraitIndex.value, count)
 })
 
-const reduceMotion = shallowRef(false)
 const userPaused = shallowRef(false)
-const pageHidden = shallowRef(false)
 const motionReady = shallowRef(false)
 const initialMediaEntrance = shallowRef(true)
 const controlsRevealed = shallowRef(false)
 
-const autoplayInterval = computed(
-  () => resolveAutoplayIntervalMs(reduceMotion.value),
-)
+const { reduceMotion, restart: restartAutoplay } = useCarouselPlayback({
+  advance: () => goNext('autoplay'),
+  enabled: () => items.value.length > 1 && !userPaused.value,
+})
 
-const autoplayRunning = computed(() =>
-  autoplayInterval.value !== null
-  && items.value.length > 1
-  && !userPaused.value
-  && !pageHidden.value)
-
-let timer: ReturnType<typeof setInterval> | null = null
 let controlsTimer: ReturnType<typeof setTimeout> | null = null
-
-function stopTimer() {
-  if (timer !== null) {
-    clearInterval(timer)
-    timer = null
-  }
-}
 
 function stopControlsTimer() {
   if (controlsTimer !== null) {
@@ -102,14 +87,6 @@ function revealControls(timeout = 2_400) {
   }
 }
 
-function restartTimer() {
-  stopTimer()
-  const interval = autoplayInterval.value
-  if (autoplayRunning.value && interval !== null) {
-    timer = setInterval(() => goNext('autoplay'), interval)
-  }
-}
-
 function goTo(index: number, intent: 'autoplay' | 'keyboard' | 'pointer' = 'pointer') {
   const target = clampSlideIndex(index, items.value.length)
   if (target === activeIndex.value) {
@@ -120,7 +97,7 @@ function goTo(index: number, intent: 'autoplay' | 'keyboard' | 'pointer' = 'poin
   transitionDirection.value = target > activeIndex.value ? 'next' : 'prev'
   activeIndex.value = target
   if (intent !== 'autoplay') {
-    restartTimer()
+    restartAutoplay()
   }
 }
 
@@ -130,7 +107,7 @@ function goNext(intent: 'autoplay' | 'keyboard' | 'pointer' = 'pointer') {
   transitionDirection.value = 'next'
   activeIndex.value = nextSlideIndex(activeIndex.value, items.value.length)
   if (intent !== 'autoplay') {
-    restartTimer()
+    restartAutoplay()
   }
 }
 
@@ -140,7 +117,7 @@ function goPrev(intent: 'autoplay' | 'keyboard' | 'pointer' = 'pointer') {
   transitionDirection.value = 'prev'
   activeIndex.value = prevSlideIndex(activeIndex.value, items.value.length)
   if (intent !== 'autoplay') {
-    restartTimer()
+    restartAutoplay()
   }
 }
 
@@ -232,25 +209,13 @@ function onHeroClick(event: MouseEvent) {
   }
 }
 
-let motionQuery: MediaQueryList | null = null
 let orientationQuery: MediaQueryList | null = null
 let motionFrame: number | null = null
-
-function onMotionChange(event: MediaQueryListEvent) {
-  reduceMotion.value = event.matches
-  if (event.matches) {
-    initialMediaEntrance.value = false
-  }
-}
 
 function onInitialMediaAnimationEnd(event: AnimationEvent) {
   if (event.animationName.includes('home-hero-media-in')) {
     initialMediaEntrance.value = false
   }
-}
-
-function onVisibilityChange() {
-  pageHidden.value = document.hidden
 }
 
 function setOrientation(portrait: boolean) {
@@ -262,35 +227,28 @@ function onOrientationChange(event: MediaQueryListEvent) {
   setOrientation(event.matches)
 }
 
-watch([autoplayRunning, autoplayInterval], restartTimer)
-
-onMounted(() => {
-  motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-  reduceMotion.value = motionQuery.matches
-  if (reduceMotion.value) {
+watch(reduceMotion, (reduced) => {
+  if (reduced) {
     initialMediaEntrance.value = false
   }
-  motionQuery.addEventListener('change', onMotionChange)
+})
+
+onMounted(() => {
   orientationQuery = window.matchMedia('(orientation: portrait)')
   setOrientation(orientationQuery.matches)
   orientationQuery.addEventListener('change', onOrientationChange)
-  document.addEventListener('visibilitychange', onVisibilityChange)
   motionFrame = window.requestAnimationFrame(() => {
     motionReady.value = true
     motionFrame = null
   })
-  restartTimer()
 })
 
 onBeforeUnmount(() => {
-  stopTimer()
   stopControlsTimer()
   if (motionFrame !== null) {
     window.cancelAnimationFrame(motionFrame)
   }
-  motionQuery?.removeEventListener('change', onMotionChange)
   orientationQuery?.removeEventListener('change', onOrientationChange)
-  document.removeEventListener('visibilitychange', onVisibilityChange)
 })
 </script>
 

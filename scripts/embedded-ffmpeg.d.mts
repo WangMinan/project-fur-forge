@@ -63,23 +63,6 @@ export function fitImageToSquare(
   }
 }>
 
-export const upscaleDesignSheetImage: typeof upscaleImageToMinimum
-
-export function compressPngForOss(content: Buffer): Promise<{
-  content: Buffer
-  contentType: 'image/png'
-  dimensions: {
-    width: number
-    height: number
-  }
-  binary: {
-    provider: 'ffmpeg-static'
-    version: string
-    sha256: string
-    usedPathLookup: false
-  }
-}>
-
 export function decodeImageToPng(content: Buffer): Promise<{
   content: Buffer
   contentType: 'image/png'
