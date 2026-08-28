@@ -6,20 +6,9 @@ import type {
   UploadFailureCode,
   UploadFailureStage,
   UploadSessionDto,
-  UploadSessionStatus,
-  WatermarkAnchor,
 } from '~~/shared/types/contracts'
 
 // 稳定失败码/阶段的中文映射：界面只展示这些安全文案，不解析服务端英文 message。
-
-export const UPLOAD_SESSION_STATUS_LABELS: Record<UploadSessionStatus, string> = {
-  AWAITING_UPLOAD: '等待上传',
-  VALIDATING: '校验中',
-  COMPLETED: '已完成',
-  FAILED: '上传失败',
-  CANCELLED: '已取消',
-  EXPIRED: '已过期',
-}
 
 export const UPLOAD_FAILURE_STAGE_LABELS: Record<UploadFailureStage, string> = {
   HEAD: '对象检查',
@@ -56,13 +45,6 @@ export const ASSET_STATUS_LABELS: Record<AssetStatus, string> = {
   PENDING: '处理中',
   READY: '已就绪',
   FAILED: '处理失败',
-}
-
-export const WATERMARK_ANCHOR_LABELS: Record<WatermarkAnchor, string> = {
-  'top-left': '左上角',
-  'top-right': '右上角',
-  'bottom-left': '左下角',
-  'bottom-right': '右下角',
 }
 
 export const PUBLICATION_BLOCKER_LABELS: Record<PublicationBlocker, string> = {

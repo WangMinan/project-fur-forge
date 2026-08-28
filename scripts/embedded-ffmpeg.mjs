@@ -418,16 +418,6 @@ export async function fitImageToSquare(content, side) {
   }
 }
 
-/** Backward-compatible name retained for the existing design-sheet call sites. */
-export const upscaleDesignSheetImage = upscaleImageToMinimum
-
-export async function compressPngForOss(content) {
-  if (!Buffer.isBuffer(content) || inputCodec(content) !== 'png') {
-    throw new Error('Embedded FFmpeg preflight input must be a PNG Buffer.')
-  }
-  return preprocessImageForOss(content)
-}
-
 /**
  * 原尺寸转 PNG。制作单 PDF 只能嵌入 JPEG/PNG，WebP 原图先过这里；
  * 不缩放、不裁切，保持设定图的全部细节。

@@ -1,6 +1,5 @@
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
-import { coreTestFiles } from './tests/test-groups'
 
 Object.assign(process.env, {
   APP_ENV: 'test',
@@ -18,7 +17,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: [...coreTestFiles],
+    include: ['tests/{unit,integration}/**/*.test.ts'],
     testTimeout: 120_000,
   },
 })
