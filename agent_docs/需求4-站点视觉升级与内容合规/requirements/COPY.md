@@ -258,7 +258,9 @@
 ### FFmpeg
 
 ```text
-本站在工作室自有服务器容器中使用 FFmpeg 处理图片，网页不提供单独的 FFmpeg 下载入口。当前发布流程会把包含 FFmpeg 的容器镜像发布到公开 Docker Hub，因此按二进制分发场景维护声明。当前只确认 `ffmpeg-static` npm 包事实；Linux 发布镜像尚未生成 runtime registry，因此不声称具体二进制版本、摘要、源码 revision 或构建配置。部署阶段提取并验证实际产物后再补齐这些信息；镜像发布方式或可见性改变后重新评审。
+本站使用 FFmpeg 7.0.2-static 处理图片。该软件以 GNU GPL v3 或更高版本授权，并随本站公开发布的 Linux 容器镜像分发；网页不提供单独的 FFmpeg 下载。
+
+当前二进制由 `ffmpeg-static@5.3.0` 提供，本站未对其进行修改。FFmpeg 项目与 7.0.2 源码可在官方仓库（https://github.com/FFmpeg/FFmpeg/tree/n7.0.2）查看，许可证全文见下方；使用版本或分发方式变化后，本页会同步更新。
 ```
 
 ### npm 生产依赖

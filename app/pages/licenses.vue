@@ -77,10 +77,10 @@ const documentMeta = `${assets.length} 项授权资产 · ${summary.packageCount
           </div>
 
           <p class="license-entry__text">
-            本站在工作室服务器容器中使用 FFmpeg 处理图片，网页不提供单独的 FFmpeg 下载入口。当前发布流程会把包含 FFmpeg 的容器镜像发布到公开 Docker Hub，因此按二进制分发场景维护声明。
+            本站使用 FFmpeg 7.0.2-static 处理图片。该软件以 GNU GPL v3 或更高版本授权，并随本站公开发布的 Linux 容器镜像分发；网页不提供单独的 FFmpeg 下载。
           </p>
           <p class="license-entry__note">
-            当前只确认 npm 包 {{ ffmpegPackage?.name }}@{{ ffmpegPackage?.version }}（{{ ffmpegPackage?.license }}）的安装事实。Linux 发布镜像内实际二进制的版本、SHA-256、对应源码 revision、补丁和构建配置尚未从发布产物提取；完成部署阶段 registry 前，本页不声称任何具体 FFmpeg 二进制构建事实。
+            当前二进制由 {{ ffmpegPackage?.name }}@{{ ffmpegPackage?.version }} 提供，本站未对其进行修改。FFmpeg 项目与 7.0.2 源码可在<a href="https://github.com/FFmpeg/FFmpeg/tree/n7.0.2" target="_blank" rel="noopener noreferrer">官方仓库</a>查看，许可证全文见下方；使用版本或分发方式变化后，本页会同步更新。
           </p>
 
           <!-- 原生 details：无 JavaScript 可用、键盘可达，不需要自制折叠组件。 -->
