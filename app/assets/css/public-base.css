@@ -59,10 +59,9 @@
   --public-focus-ring: rgb(50 77 175 / 0.32);
 
   /* 六个语义 token；Legal/Code 同属文档角色，但正文与机器文本保留各自字面。 */
-  --font-role-display:
-    "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+  --font-role-display: var(--font-role-body);
   --font-role-body:
-    "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+    "Noto Sans CJK SC", "PingFang SC", system-ui, sans-serif;
   --font-role-display-sans: var(--font-role-body);
   --font-role-display-rounded:
     ui-rounded, "Arial Rounded MT Bold", "SF Pro Rounded", var(--font-role-body);
@@ -70,12 +69,12 @@
   --font-role-ui: var(--font-role-body);
   --font-role-legal: var(--font-role-body);
   --font-role-code:
-    ui-monospace, "SFMono-Regular", Consolas, "Microsoft YaHei", monospace;
+    ui-monospace, "SFMono-Regular", Consolas, var(--font-role-body);
 
   /* 兼容历史原型；正式公开页面应直接消费上方语义角色。 */
   --font-public-display: var(--font-role-display);
   --font-brand-display:
-    "Zhuohei Collage Critical", "Zhuohei Collage", "PingFang SC", "Microsoft YaHei", sans-serif;
+    "Zhuohei Collage Critical", "Zhuohei Collage", var(--font-role-body);
   --font-public-body: var(--font-role-body);
   --font-public-mono: var(--font-role-code);
 
