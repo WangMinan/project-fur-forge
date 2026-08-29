@@ -113,7 +113,7 @@ async function confirmCommission(page: import('@playwright/test').Page) {
   await page.getByLabel(/已阅读《隐私政策》/u).check()
 }
 
-test('首页加载、主要入口与单项开放领养在四种视口可达', async ({ page }) => {
+test('首页加载、主要入口与单项开放领养在六种视口可达', async ({ page }) => {
   await seedSmokeCatalog(page)
   await seedHeroCollections(page, {
     landscape: [{ alt: 'Smoke 首页横版', sortOrder: 0, enabled: true }],
@@ -128,7 +128,9 @@ test('首页加载、主要入口与单项开放领养在四种视口可达', as
   for (const viewport of [
     { width: 375, height: 734 },
     { width: 390, height: 844 },
+    { width: 767, height: 1024 },
     { width: 768, height: 1024 },
+    { width: 1024, height: 900 },
     { width: 1440, height: 900 },
   ]) {
     await page.setViewportSize(viewport)
@@ -157,6 +159,8 @@ test('首页加载、主要入口与单项开放领养在四种视口可达', as
           fontFamily: style.fontFamily,
           fontSize: style.fontSize,
           fontWeight: style.fontWeight,
+          letterSpacing: style.letterSpacing,
+          lineHeight: style.lineHeight,
         }
       }
       return {
@@ -193,17 +197,31 @@ test('首页加载、主要入口与单项开放领养在四种视口可达', as
           document.querySelector('.home-adoption-poster__caption')!.getBoundingClientRect().top
           - document.querySelector('.home-adoption-poster__media')!.getBoundingClientRect().bottom,
         ),
+        nameSpeciesGap: {
+          adoption: Math.round(
+            document.querySelector('.home-adoption-poster__species')!.getBoundingClientRect().top
+            - document.querySelector('.home-adoption-poster__identity h3')!.getBoundingClientRect().bottom,
+          ),
+          featured: Math.round(
+            document.querySelector('.featured-works__species')!.getBoundingClientRect().top
+            - document.querySelector('.featured-works__title')!.getBoundingClientRect().bottom,
+          ),
+        },
       }
     })
     expect(identityAlignment.adoption).toBeLessThanOrEqual(1)
     expect(identityAlignment.featured).toBeLessThanOrEqual(1)
     expect(identityAlignment.factsBorderTopWidth === '0px')
-      .toBe(viewport.width < 1024)
+      .toBe(viewport.width <= 1024)
     expect(identityAlignment.speciesLabelDisplay === 'none')
-      .toBe(viewport.width < 1024)
+      .toBe(viewport.width <= 1024)
     expect(identityAlignment.folioDisplay === 'none')
-      .toBe(viewport.width < 1024)
-    if (viewport.width >= 768 && viewport.width < 1024)
+      .toBe(viewport.width <= 1024)
+    if (viewport.width <= 1024) {
+      expect(identityAlignment.nameSpeciesGap.adoption)
+        .toBe(identityAlignment.nameSpeciesGap.featured)
+    }
+    if (viewport.width >= 768 && viewport.width <= 1024)
       expect(identityAlignment.mediaCaptionGap).toBeGreaterThanOrEqual(23)
     if (viewport.width <= 480) {
       const layout = await current.evaluate((element) => {

@@ -244,7 +244,7 @@ onBeforeUnmount(() => {
             <ResponsivePicture
               :sources="currentAdoption.cover.sources"
               :alt="currentAdoption.cover.alt"
-              sizes="(min-width: 1024px) 68vw, 100vw"
+              sizes="(min-width: 1025px) 68vw, 100vw"
               loading="eager"
             />
           </span>
@@ -547,12 +547,12 @@ onBeforeUnmount(() => {
 }
 
 .home-adoption-poster__identity h3 {
-  margin: 0;
+  margin: 0.4rem 0 0;
   font-family: var(--font-role-display);
   font-size: var(--type-display-page-size);
   font-weight: var(--type-display-weight);
-  line-height: 0.9;
-  letter-spacing: var(--type-display-letter-spacing);
+  line-height: 0.94;
+  letter-spacing: 0;
   overflow-wrap: anywhere;
 }
 
@@ -636,21 +636,8 @@ onBeforeUnmount(() => {
   }
 
   .home-adoption-poster__caption {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.65rem 1rem;
-  }
-
-  .home-adoption-poster__folio {
-    grid-column: 2;
-    grid-row: 1;
-    align-self: center;
-    width: auto;
-    padding-bottom: 0;
-    border-bottom: 0;
-  }
-
-  .home-adoption-poster__folio > span {
-    display: none;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
   }
 
   .home-adoption-poster__identity,
@@ -662,17 +649,24 @@ onBeforeUnmount(() => {
 
   .home-adoption-poster__identity h3 {
     max-width: 100%;
+    margin-top: 0.3rem;
+    line-height: 0.95;
     overflow-wrap: normal;
     white-space: nowrap;
   }
 
   .home-adoption-poster__facts div {
-    padding-top: 0.5rem;
+    padding-top: 0;
+  }
+
+  .home-adoption-poster__facts {
+    margin-top: 0.35rem;
   }
 
   .home-adoption-poster__actions {
     gap: var(--space-2);
     flex-wrap: nowrap;
+    margin-top: 0.65rem;
   }
 
   .home-adoption-poster__actions :deep(.public-action) {
@@ -689,13 +683,26 @@ onBeforeUnmount(() => {
   }
 }
 
-@media (min-width: 768px) and (max-width: 1023px) {
+@media (min-width: 768px) and (max-width: 1024px) {
   .home-adoption-poster__caption {
+    gap: 0;
     margin-top: var(--space-5);
+  }
+
+  .home-adoption-poster__facts {
+    margin-top: 0.65rem;
+  }
+
+  .home-adoption-poster__facts div {
+    padding-top: 0;
+  }
+
+  .home-adoption-poster__actions {
+    margin-top: var(--space-4);
   }
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 1024px) {
   .home-adoption-poster__folio {
     display: none;
   }
@@ -719,7 +726,7 @@ onBeforeUnmount(() => {
   }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1025px) {
   .home-adoption-poster {
     grid-template-columns: repeat(12, minmax(0, 1fr));
     grid-template-rows: minmax(0, 1fr) auto;
