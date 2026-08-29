@@ -330,7 +330,9 @@ onBeforeUnmount(() => {
               class="featured-works__content"
               :data-featured-content="activeWork.work.slug"
             >
-              <h3 ref="title" class="featured-works__title" data-featured-layout="title">{{ activeWork.work.characterName }}</h3>
+              <h3 ref="title" class="featured-works__title" data-featured-layout="title">
+                <span class="featured-works__title-text">{{ activeWork.work.characterName }}</span>
+              </h3>
               <p ref="species" class="featured-works__species" data-featured-layout="species">{{ activeWork.work.species }}</p>
             </div>
           </div>
@@ -804,6 +806,13 @@ onBeforeUnmount(() => {
     font-size: 3.25rem;
     white-space: nowrap;
     overflow-wrap: normal;
+  }
+
+  .featured-works__title-text {
+    display: block;
+    max-width: 100%;
+    padding-block: 0.15em;
+    margin-block: -0.15em;
     overflow: hidden;
     text-overflow: ellipsis;
   }
