@@ -27,9 +27,14 @@ export function clampSlideIndex(index: number, count: number): number {
 /** 触控/指针滑动超过阈值才翻页；向右滑（正位移）回上一张。 */
 export function resolveSwipeDirection(
   deltaX: number,
+  deltaY = 0,
   thresholdPx = 40,
+  dominanceRatio = 1.2,
 ): 'prev' | 'next' | null {
-  if (Math.abs(deltaX) < thresholdPx) {
+  if (
+    Math.abs(deltaX) < thresholdPx
+    || Math.abs(deltaX) < Math.abs(deltaY) * dominanceRatio
+  ) {
     return null
   }
   return deltaX > 0 ? 'prev' : 'next'

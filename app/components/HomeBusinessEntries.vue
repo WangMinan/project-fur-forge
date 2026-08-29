@@ -73,12 +73,6 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
       </div>
 
       <div ref="body" class="home-commission__narrative">
-        <div class="home-commission__service-heading">
-          <h3 class="home-commission__promise">
-            <span>从角色设定</span>
-            <span>出发</span>
-          </h3>
-        </div>
         <div class="home-commission__service-facts">
           <PublicBusinessStatus
             v-if="commission.status"
@@ -227,29 +221,13 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   margin-left: 1.75rem;
 }
 
-.home-commission__service-heading,
 .home-commission__service-facts {
   display: grid;
   justify-items: start;
 }
 
-.home-commission__service-heading {
-  gap: 0.35rem;
-}
-
 .home-commission__service-facts {
   gap: 0.6rem;
-}
-
-.home-commission__promise {
-  font-family: var(--font-role-display);
-  font-size: 2.35rem;
-  font-weight: 600;
-  line-height: 0.98;
-}
-
-.home-commission__promise span {
-  display: block;
 }
 
 .home-commission__process {
@@ -320,9 +298,20 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
     margin-top: 0.85rem;
     margin-left: 1rem;
   }
+}
 
-  .home-commission__promise {
-    font-size: 2.25rem;
+@media (orientation: portrait) and (max-width: 767px) {
+  .home-commission {
+    min-height: auto;
+    padding-bottom: 2rem;
+  }
+
+  .home-commission__stage {
+    align-self: start;
+  }
+
+  .home-commission__media {
+    margin-top: 3.75rem;
   }
 }
 
@@ -367,10 +356,6 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
     margin: 3.5rem 0 0 clamp(-2.5rem, -2.5vw, -1.5rem);
     padding-left: clamp(0.25rem, 1vw, 1rem);
     background: transparent;
-  }
-
-  .home-commission__promise {
-    font-size: clamp(2.75rem, 5.4vw, 3.8rem);
   }
 
   .home-commission__process {

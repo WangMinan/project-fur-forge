@@ -1053,10 +1053,18 @@ Homepage: https://github.com/vuejs/core/tree/main/packages/shared#readme
 Noto Serif SC@repository-asset
 License: OFL-1.1
 Source class: manual-asset
-Usage: 委托制作单 PDF 正文字体。
+Usage: 委托制作单 PDF 生僻字兜底正文字体。
 Homepage: https://github.com/notofonts/noto-cjk
 Artifact SHA-256: e8f396decc1f0963a016a989c3d8852e863d1350996f573860a80767c83a1cd3
 Notice: SIL Open Font License 1.1
+
+Noto Serif SC Work Order Common Subset@repository-asset
+License: OFL-1.1
+Source class: manual-asset
+Usage: 委托制作单 PDF 常用简体中文正文字体；缺字时回退完整字体。
+Homepage: https://github.com/notofonts/noto-cjk
+Artifact SHA-256: 4670c11afc40a3d20a3878cfbdd1165fa3bbf49f22b8f10ffd28b32a2c499587
+Notice: 由仓库内 Noto Serif SC 派生；SIL Open Font License 1.1
 
 ZhuoHei Collage@repository-asset
 License: Lemi Font free commercial-use license

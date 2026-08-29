@@ -83,16 +83,18 @@ This contract prohibits a universal `eyebrow + Chinese title + left image + righ
 - Component: `HomeBusinessEntries.vue`.
 - It answers Featured's `下一幕 / 自设委托` cue and closes with `下一幕 / 设定领养`.
 - The standard Homepage scene title scale remains shared with Featured; service identity is established by the large media field, background Typography and the service register rather than by inflating the Chinese title.
+- It does not use `从角色设定出发` or a replacement slogan; status, process copy and actions form the service narrative directly.
 - Desktop uses a horizontal photograph followed by an edge-aligned three-part information ledger: status/metadata, process copy and actions. These occupy a separate grid row with a hard gap from the media; no complete white UI card overlays the photograph.
-- Mobile independently composes title, background type, rounded photograph, service information, actions and destination rail within the reference viewport.
+- Mobile independently composes title, background type, rounded photograph, service information, actions and destination rail. Portrait phone layouts use content height instead of vertically centering the stage inside a forced full-height scene; top and bottom whitespace remain short and unequal only where the content requires it.
 
 ### `/commission` · Photographic Service Ledger
 
 - Components: `CommissionLead.vue` plus the `/commission` composition surface.
-- It uses a wide landscape photograph on Desktop and the existing portrait placement on portrait Mobile, followed by a three-part identity/status/action ledger.
+- It uses a wide landscape photograph on Desktop. Below `1024px`, the independent portrait asset remains but is cropped into a `4:5` frame capped at `50svh`; the historical full `9:16` lead is retired.
+- It does not use `从角色设定出发` or a replacement slogan. Identity, status, description and the primary application action must appear in the first viewport at the target phone/tablet sizes.
 - The content page then separates `SERVICE RANGE / 01` and `ESTIMATE & CONTACT / 02` into an editorial service record. This is intentionally different from the Homepage Docket and must not inherit its compact one-scene geometry.
 - Existing business status, application, QQ/Email, QR, terms, focal and media fallback remain authoritative. The historical `home-commission-media` shared transition was later removed; the active V13+ runtime uses only short page opacity entry.
-- The first viewport closes with `继续查看 / 制作范围与估价 ↓`; the page-level application rail uses `开始申请 / 填写委托表单 →`. Both are real links and keep the long-rule grammar.
+- Desktop closes the first viewport with `继续查看 / 制作范围与估价 ↓`; on phone/tablet that continuation follows the visible identity/status/action group. The page-level application rail uses `开始申请 / 填写委托表单 →`. Both are real links and keep the long-rule grammar.
 
 ### Deferred UI decisions
 

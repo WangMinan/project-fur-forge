@@ -5,8 +5,17 @@
     "license": "OFL-1.1",
     "homepage": "https://github.com/notofonts/noto-cjk",
     "assetPath": "public/fonts/noto-serif-sc-regular.otf",
-    "usage": "委托制作单 PDF 正文字体。",
+    "usage": "委托制作单 PDF 生僻字兜底正文字体。",
     "noticeText": "SIL Open Font License 1.1"
+  },
+  {
+    "name": "Noto Serif SC Work Order Common Subset",
+    "version": "repository-asset",
+    "license": "OFL-1.1",
+    "homepage": "https://github.com/notofonts/noto-cjk",
+    "assetPath": "public/fonts/noto-serif-sc-work-order-common.otf",
+    "usage": "委托制作单 PDF 常用简体中文正文字体；缺字时回退完整字体。",
+    "noticeText": "由仓库内 Noto Serif SC 派生；SIL Open Font License 1.1"
   },
   {
     "name": "ZhuoHei Collage",
