@@ -10,7 +10,7 @@ import {
   expect,
   it,
 } from 'vitest'
-import { createSyntheticWatermarkPng } from '../../scripts/oss-preflight-core.mjs'
+import { createSyntheticTransparentPng } from '../../scripts/oss-preflight-core.mjs'
 import { migrateDatabase, openDatabase } from '../../server/utils/database'
 import { getPublicHome } from '../../server/utils/runner/home-management'
 import {
@@ -27,7 +27,6 @@ import {
   updateHeroCollectionItem,
 } from '../../server/utils/service/hero-collection-management'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
-import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
 
 const USER_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const NOW = Date.UTC(2026, 7, 16)
@@ -48,7 +47,7 @@ function seedHeroAsset(input: {
   placement: 'commission' | 'home'
 }) {
   const id = randomUUID()
-  const content = createSyntheticWatermarkPng()
+  const content = createSyntheticTransparentPng()
   const landscape = input.orientation === 'landscape'
   const width = landscape ? 3840 : 1080
   const height = landscape ? 2160 : 1920
@@ -165,18 +164,6 @@ beforeEach(async () => {
       id, username, password_hash, password_changed_at, created_at, updated_at
     ) VALUES (?, 'admin', 'hash', ?, ?, ?)
   `).run(USER_ID, NOW, NOW, NOW)
-  const watermark = insertActiveWatermarkProfile(sqlite, NOW)
-  const logo = createSyntheticWatermarkPng()
-  const logoKey = sqlite.prepare(`
-    SELECT private_object_key FROM assets WHERE id = ?
-  `).pluck().get(watermark.assetId) as string
-  storage.seedPrivate(logoKey, logo, 'image/png', watermark.logoDigest, {
-    fileSize: logo.length,
-    format: 'png',
-    height: 512,
-    orientation: 1,
-    width: 512,
-  })
 })
 
 afterEach(() => {

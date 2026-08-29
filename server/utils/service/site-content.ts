@@ -154,7 +154,6 @@ interface ContactQrVariantRow {
   format: 'png'
   height: number
   objectKey: string
-  protectionMode: 'none'
   recipeVersion: 'contact-qr-v1'
   sha256: string
   status: 'READY'
@@ -192,12 +191,12 @@ function contactQrSources(
   const variants = sqlite.prepare(`
     SELECT storage_scope AS storageScope, status, object_key AS objectKey,
            width, height, format, recipe_version AS recipeVersion,
-           protection_mode AS protectionMode, usage, sha256,
+           usage, sha256,
            byte_size AS byteSize
     FROM asset_variants
     WHERE asset_id = ? AND storage_scope = 'PUBLIC' AND status = 'READY'
       AND usage = 'contact-qr' AND recipe_version = 'contact-qr-v1'
-      AND protection_mode = 'none' AND sha256 IS NOT NULL AND byte_size > 0
+      AND sha256 IS NOT NULL AND byte_size > 0
   `).all(assetId) as ContactQrVariantRow[]
   const complete = completeContactQrVariants(asset.width, variants)
   if (!complete) {

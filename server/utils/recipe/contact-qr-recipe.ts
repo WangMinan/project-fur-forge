@@ -47,7 +47,6 @@ export interface ReadyContactQrVariant {
   inputSha256: string
   mediaRole: typeof CONTACT_QR_MEDIA_ROLE
   objectKey: string
-  protectionMode: 'none'
   recipeVersion: typeof CONTACT_QR_RECIPE_VERSION
   sha256: string
   sourceVariantId: string | null
@@ -90,7 +89,6 @@ function identity(
 ) {
   return digest('sha256', Buffer.from(JSON.stringify({
     recipeVersion: CONTACT_QR_RECIPE_VERSION,
-    protectionMode: 'none',
     sourceSha256: source.inputSha256,
     sourceVariantId: source.sourceVariantId,
     mediaRole: CONTACT_QR_MEDIA_ROLE,
@@ -101,7 +99,7 @@ function identity(
     height: width,
     fit: 'contain',
     crop: 'none',
-    watermark: 'none',
+    protection: 'none',
     format: 'png',
     quality: 100,
   })))
@@ -368,7 +366,7 @@ export async function generateContactQrVariants(
 
 export type ContactQrVariantCandidate = Pick<ReadyContactQrVariant,
   'byteSize' | 'format' | 'height' | 'sha256' | 'status' | 'storageScope'
-  | 'objectKey' | 'protectionMode' | 'recipeVersion' | 'usage' | 'width'>
+  | 'objectKey' | 'recipeVersion' | 'usage' | 'width'>
 
 export function completeContactQrVariants<T extends ContactQrVariantCandidate>(
   sourceWidth: number,
@@ -378,7 +376,6 @@ export function completeContactQrVariants<T extends ContactQrVariantCandidate>(
   const eligible = variants.filter(variant => (
     variant.storageScope === 'PUBLIC'
     && variant.status === 'READY'
-    && variant.protectionMode === 'none'
     && variant.recipeVersion === CONTACT_QR_RECIPE_VERSION
     && variant.usage === CONTACT_QR_USAGE
     && variant.format === 'png'

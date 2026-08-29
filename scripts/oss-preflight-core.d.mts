@@ -5,7 +5,7 @@ export const PREFLIGHT_IMAGE_MIN_BYTES: 20_000_000
 export const REQUIRED_PUT_HEADERS: readonly string[]
 
 export function createLargeSyntheticPng(): Buffer
-export function createSyntheticWatermarkPng(): Buffer
+export function createSyntheticTransparentPng(): Buffer
 export function contentDigests(content: Buffer): {
   md5Base64: string
   md5Hex: string

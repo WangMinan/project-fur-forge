@@ -12,7 +12,7 @@ import {
  * R3-C 独立方向轮播：
  * - SSR 只直出横竖各自第一项组成的 <picture>，无 JS 时仍可用。
  * - 水合后仅操作当前 orientation 的索引，方向变化时夹紧对应索引。
- * - 自动轮播固定开启、4 秒一张；显式暂停/页面隐藏暂停，reduced-motion 停止。
+ * - 自动轮播固定开启、3 秒一张；显式暂停/页面隐藏暂停，reduced-motion 停止。
  * - Hero 占据大面积首屏，鼠标停留或操作控件不能成为隐式永久暂停条件。
  */
 const props = defineProps<{
@@ -65,6 +65,7 @@ const controlsRevealed = shallowRef(false)
 const { reduceMotion, restart: restartAutoplay } = useCarouselPlayback({
   advance: () => goNext('autoplay'),
   enabled: () => items.value.length > 1 && !userPaused.value,
+  intervalMs: 3_000,
 })
 
 let controlsTimer: ReturnType<typeof setTimeout> | null = null
@@ -786,6 +787,12 @@ onBeforeUnmount(() => {
     gap: 0.625rem;
     font-size: 0.5625rem;
     letter-spacing: var(--type-metadata-letter-spacing);
+  }
+}
+
+@media (max-width: 1023px) {
+  .home-hero__continuation {
+    display: none;
   }
 }
 

@@ -112,7 +112,7 @@ export function createLargeSyntheticPng() {
   return image
 }
 
-export function createSyntheticWatermarkPng() {
+export function createSyntheticTransparentPng() {
   return createPng({
     width: 160,
     height: 64,

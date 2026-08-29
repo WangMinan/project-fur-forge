@@ -9,7 +9,6 @@ import { AdminApiError } from './useAdminApi'
 export const PUBLICATION_IN_PROGRESS_STATUSES = new Set([
   'PREPARING_SOURCE',
   'GENERATING_PUBLIC',
-  'APPLYING_WATERMARK',
   'VERIFYING_PUBLIC',
   'COMMITTING',
   'CLEANING_PUBLIC',

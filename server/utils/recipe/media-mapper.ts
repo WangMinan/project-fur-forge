@@ -52,18 +52,10 @@ export interface VariantRecord {
   /** Service-only fields. */
   inputSha256: string
   internalErrorCode: string | null
-  logoDigest: string
   mediaRole: MediaRole
-  protectionMode: string
   recipeVersion: string
   sha256: string | null
   usage: string
-  watermarkAnchor: string
-  watermarkConfigDigest: string
-  watermarkOpacityPercent: number | null
-  watermarkProfile: string
-  watermarkProfileId: string | null
-  watermarkScalePercent: number | null
 }
 
 export interface HeroItemRecord {

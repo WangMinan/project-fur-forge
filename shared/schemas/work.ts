@@ -5,7 +5,6 @@ import {
   resourceVersionSchema,
   versionedRequestSchema,
 } from './api'
-import { watermarkAnchorSchema } from './upload'
 
 export const WORK_PURPOSE_VALUES = ['commission', 'adoption', 'showcase'] as const
 export const PUBLICATION_STATUS_VALUES = ['draft', 'published', 'unpublished'] as const
@@ -94,10 +93,7 @@ const studioPhotoBaseSchema = z.object({
   }),
 }).strict()
 
-export const studioPhotoInputSchema = studioPhotoBaseSchema.extend({
-  /** Historical v1 identity only; brand-centered-v2 always uses center. */
-  watermarkAnchor: watermarkAnchorSchema.optional(),
-}).strict()
+export const studioPhotoInputSchema = studioPhotoBaseSchema
 
 export const studioPhotoCollectionSchema = z.array(studioPhotoInputSchema)
   .max(5)
@@ -153,7 +149,6 @@ export const managedAdoptionCoverDtoSchema = adoptionCoverInputSchema.extend({
 }).strict()
 
 export const managedStudioPhotoDtoSchema = studioPhotoBaseSchema.extend({
-  watermarkAnchor: watermarkAnchorSchema,
   version: resourceVersionSchema,
   status: z.enum(['PENDING', 'READY', 'FAILED']),
   width: z.number().int().positive().max(12_000),

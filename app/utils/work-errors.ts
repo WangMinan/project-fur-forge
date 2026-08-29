@@ -54,12 +54,6 @@ const REASON_MESSAGES: Partial<Record<ErrorReason, string>> = {
     '大图顺序已在其他地方变化，请刷新后重新调整。',
   HERO_SLOT_LIMIT:
     '启用的大图需要 1 到 5 个不重复的位置。',
-  WATERMARK_DRAFT_STALE:
-    '水印草稿已过期，请重新创建草稿。',
-  WATERMARK_PREVIEW_REQUIRED:
-    '请先生成并核验水印预览，再应用到全站。',
-  WATERMARK_PROFILE_UNAVAILABLE:
-    '当前没有可用的水印配置。',
 }
 
 const STATUS_FALLBACKS: Record<number, string> = {

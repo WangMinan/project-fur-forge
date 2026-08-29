@@ -19,13 +19,12 @@ import {
   expect,
   it,
 } from 'vitest'
-import { createSyntheticWatermarkPng } from '../../scripts/oss-preflight-core.mjs'
+import { createSyntheticTransparentPng } from '../../scripts/oss-preflight-core.mjs'
 import {
   migrateDatabase,
   openDatabase,
 } from '../../server/utils/database'
 import { SITE_DISPLAY_RECIPE_VERSION } from '../../server/utils/recipe/site-display-recipe'
-import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
 
 /**
  * T34-F5 真实进程中断测试。
@@ -37,7 +36,7 @@ import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
  * 覆盖 site-display reconcile 这条 operation：它与 Hero 发布、作品发布、
  * 水印应用共用同一套 lease/heartbeat/恢复基础设施，因此对该基础设施的
  * 中断行为验证对四类 operation 同样成立；各 operation 自身的状态机由
- * work-publication / watermark-branding / site-display-reconcile 的用例覆盖。
+ * work-publication / site-display-reconcile 的用例覆盖。
  */
 
 const NOW = Date.UTC(2026, 7, 6)
@@ -55,7 +54,7 @@ let sqlite: Database.Database
 const children: ChildProcess[] = []
 
 function insertSource(id: string, role: string, width: number, height: number) {
-  const content = createSyntheticWatermarkPng() as Buffer
+  const content = createSyntheticTransparentPng() as Buffer
   const sha256 = createHash('sha256').update(content).digest('hex')
   sqlite.prepare(`
     INSERT INTO assets (
@@ -76,7 +75,6 @@ function insertSource(id: string, role: string, width: number, height: number) {
 }
 
 function seedEnabledHero() {
-  insertActiveWatermarkProfile(sqlite, NOW, { environmentPrefix: PREFIX })
   insertSource('hero-landscape', 'home_hero_landscape', 4000, 2250)
   insertSource('hero-portrait', 'home_hero_portrait', 1800, 3200)
   const insertItem = sqlite.prepare(`

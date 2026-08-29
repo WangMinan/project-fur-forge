@@ -182,14 +182,13 @@ function variantsForAsset(sqlite: Database.Database, assetId: string) {
   return sqlite.prepare(`
     SELECT
       storage_scope AS storageScope, status, usage, width, height, format,
-      recipe_version AS recipeVersion, protection_mode AS protectionMode,
+      recipe_version AS recipeVersion,
       sha256, byte_size AS byteSize
     FROM asset_variants WHERE asset_id = ?
   `).all(assetId) as Array<{
     byteSize: number | null
     format: 'webp' | 'jpeg' | 'png'
     height: number
-    protectionMode: string
     recipeVersion: string
     sha256: string | null
     status: string

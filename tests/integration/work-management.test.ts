@@ -35,9 +35,8 @@ import {
   updateManagedWorkPresentation,
 } from '../../server/utils/service/work-management'
 import { generatePublicVariants } from '../../server/utils/recipe/media-recipe'
-import { createSyntheticWatermarkPng } from '../../scripts/oss-preflight-core.mjs'
+import { createSyntheticTransparentPng } from '../../scripts/oss-preflight-core.mjs'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
-import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
 
 const USER_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const NOW = Date.UTC(2026, 7, 1)
@@ -153,7 +152,6 @@ function photo(assetId: string, primary: boolean, alt: string) {
     focalX: 0.25,
     focalY: 0.75,
     crop: { x: 0.1, y: 0.1, width: 0.8, height: 0.8 },
-    watermarkAnchor: 'bottom-right' as const,
   }
 }
 
@@ -163,9 +161,6 @@ beforeEach(async () => {
   await migrateDatabase(databaseFile)
   sqlite = openDatabase(databaseFile).sqlite
   insertUser()
-  insertActiveWatermarkProfile(sqlite, NOW, {
-    environmentPrefix: 'test/t17-fixture',
-  })
 })
 
 afterEach(() => {
@@ -487,7 +482,7 @@ describe('T22 work management', () => {
     const work = createManagedWork(sqlite, workInput, NOW)
     const assetId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
     const privateKey = insertReadyPhoto(work.id, work.version, assetId)
-    storage.seedPrivate(privateKey, createSyntheticWatermarkPng(), 'image/png')
+    storage.seedPrivate(privateKey, createSyntheticTransparentPng(), 'image/png')
     const attached = replaceManagedStudioPhotos(
       sqlite,
       work.id,
@@ -572,12 +567,12 @@ describe('T22 work management', () => {
     ])
     expect(sqlite.prepare(`
       SELECT focal_x AS focalX, focal_y AS focalY,
-             watermark_anchor AS watermarkAnchor
+             version
       FROM assets WHERE id = ?
     `).get(firstId)).toEqual({
       focalX: 0.25,
       focalY: 0.75,
-      watermarkAnchor: 'top-left',
+      version: 2,
     })
 
     const replaced = replaceManagedStudioPhotos(

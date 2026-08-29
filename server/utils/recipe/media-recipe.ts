@@ -7,7 +7,6 @@ import {
   upscaleHeroImage,
   upscaleImageToMinimum,
 } from '../../../scripts/embedded-ffmpeg.mjs'
-import { WATERMARK_PROFILE_NAME } from '../../../shared/schemas/watermark'
 import type {
   MediaRole,
 } from '../../../shared/types/contracts'
@@ -24,7 +23,6 @@ import {
   processingSource,
   readyAssetSource,
   workMediaUpscaleRecipeVersion,
-  urlSafeBase64,
 } from './media-source'
 import type {
   AssetSource,
@@ -34,36 +32,21 @@ import type {
 import type { MediaStorage } from '../media-storage'
 import { safeLog } from '../safe-log'
 import {
-  findReadyWatermarkVariant,
+  findReadySiteDisplayVariant,
   findVariantIdByObjectKey,
-  insertPublicVariant,
+  insertSiteDisplayVariant,
   insertUpscaleVariant,
   refreshVariantContent,
 } from '../repository/variant-repository'
 import { ServiceError } from '../service-error'
-import {
-  requireActiveWatermarkProfile,
-  requireWatermarkProfile,
-  watermarkSource,
-} from '../service/watermark-profile'
-import type {
-  WatermarkProfileRow,
-  WatermarkSource,
-} from '../service/watermark-profile'
 
-export const PUBLIC_RECIPE_VERSION = 'recipe-v3'
-export const LEGACY_PUBLIC_RECIPE_VERSION = 'recipe-v2'
-export const OLDEST_PUBLIC_RECIPE_VERSION = 'recipe-v1'
+export const PUBLIC_RECIPE_VERSION = 'recipe-v4'
 export const PUBLIC_RECIPE_VERSIONS = [
   PUBLIC_RECIPE_VERSION,
-  LEGACY_PUBLIC_RECIPE_VERSION,
-  OLDEST_PUBLIC_RECIPE_VERSION,
+  'recipe-v3',
+  'recipe-v2',
+  'recipe-v1',
 ] as const
-const WATERMARK_SIZE_MULTIPLIER = 1.6
-const HERO_LANDSCAPE_WATERMARK_REFERENCE_WIDTH = 960
-const HERO_PORTRAIT_WATERMARK_REFERENCE_WIDTH = 480
-const PORTRAIT_WORK_WATERMARK_REFERENCE_WIDTH = 480
-export const CENTERED_WATERMARK_PROFILE = WATERMARK_PROFILE_NAME
 
 export type PublicMediaUsage =
   | 'work-card'
@@ -88,20 +71,12 @@ export interface ReadyPublicVariant {
   height: number
   id: string
   inputSha256: string
-  logoDigest: string
   mediaRole: MediaRole
   objectKey: string
-  protectionMode: 'watermark'
   recipeVersion: typeof PUBLIC_RECIPE_VERSION
   sha256: string
   sourceVariantId: string | null
   usage: PublicMediaUsage
-  watermarkAnchor: 'center'
-  watermarkConfigDigest: string
-  watermarkOpacityPercent: number
-  watermarkProfile: typeof CENTERED_WATERMARK_PROFILE
-  watermarkProfileId: string
-  watermarkScalePercent: number
   width: number
 }
 
@@ -396,7 +371,7 @@ function defaultUsages(role: MediaRole): PublicMediaUsage[] {
   if (role === 'adoption_cover') {
     return ['adoption-card']
   }
-  if (role === 'watermark_logo' || role === 'commission_design_reference') {
+  if (role === 'commission_design_reference' || role === 'contact_qr') {
     return []
   }
   return role === 'home_hero_landscape'
@@ -488,7 +463,6 @@ function resizeOperation(
 function recipeIdentity(
   sourceAsset: AssetSource,
   source: ProcessingSource,
-  profile: WatermarkProfileRow,
   usage: PublicMediaUsage,
   width: number,
   format: PublicFormat,
@@ -520,50 +494,8 @@ function recipeIdentity(
       : null,
     format,
     quality: format === 'webp' ? 82 : format === 'jpeg' ? 86 : 100,
-    watermarkProfile: profile.profileName,
-    watermarkProfileId: profile.id,
-    watermarkConfigDigest: profile.configDigest,
-    logoDigest: profile.logoDigest,
-    watermarkPosition: profile.position,
-    watermarkOpacityPercent: profile.opacityPercent,
-    watermarkScalePercent: profile.scalePercent,
-    watermarkSizeMultiplier: WATERMARK_SIZE_MULTIPLIER,
-    watermarkLayout: watermarkLayout(usage),
-    watermarkSizingReferenceWidth: watermarkSizingReferenceWidth(usage, source),
   })
-  return {
-    hash: digest('sha256', Buffer.from(identity)),
-    identity,
-  }
-}
-
-function watermarkLayout(usage: PublicMediaUsage) {
-  return usage === 'design-sheet'
-    || usage === 'home-hero-landscape'
-    ? 'west-east' as const
-    : 'center' as const
-}
-
-function watermarkSizingReferenceWidth(
-  usage: PublicMediaUsage,
-  processingGeometry: Pick<ProcessingSource, 'height' | 'width'>,
-) {
-  if (usage === 'design-sheet' || usage === 'home-hero-landscape') {
-    return HERO_LANDSCAPE_WATERMARK_REFERENCE_WIDTH
-  }
-  if (usage === 'home-hero-portrait') {
-    return HERO_PORTRAIT_WATERMARK_REFERENCE_WIDTH
-  }
-  if (usage === 'work-card' || usage === 'adoption-card') {
-    return PORTRAIT_WORK_WATERMARK_REFERENCE_WIDTH
-  }
-  if (
-    usage === 'detail'
-    && processingGeometry.height > processingGeometry.width
-  ) {
-    return PORTRAIT_WORK_WATERMARK_REFERENCE_WIDTH
-  }
-  return null
+  return digest('sha256', Buffer.from(identity))
 }
 
 function publicObjectKey(
@@ -577,34 +509,15 @@ function publicObjectKey(
   return `${environmentPrefix(sourceAsset.privateObjectKey)}/web/${sourceAsset.id}/${PUBLIC_RECIPE_VERSION}/${usage}/${width}/${identityHash}.${extension}`
 }
 
-export function buildWatermarkProcess(
+export function buildPublicMediaProcess(
   sourceAsset: AssetSource,
-  logo: WatermarkSource,
-  profile: WatermarkProfileRow,
   usage: PublicMediaUsage,
   width: number,
   format: PublicFormat,
   processingGeometry: Pick<ProcessingSource, 'height' | 'width'> = sourceAsset,
 ) {
-  const layout = watermarkLayout(usage)
-  const configuredWatermarkWidth = Math.round(
-    logo.width * profile.scalePercent * WATERMARK_SIZE_MULTIPLIER / 100,
-  )
-  const referenceWidth = watermarkSizingReferenceWidth(usage, processingGeometry)
-  const watermarkWidth = referenceWidth === null
-    ? configuredWatermarkWidth
-    : Math.round(configuredWatermarkWidth * width / referenceWidth)
-  const resizedLogo = `${logo.objectKey}?x-oss-process=image/resize,w_${watermarkWidth},limit_0`
-  const watermark = (position: 'center' | 'east' | 'west') => [
-    `watermark,image_${urlSafeBase64(resizedLogo)}`,
-    `t_${profile.opacityPercent}`,
-    `g_${position}`,
-  ].join(',')
   return [
     `image/${resizeOperation(sourceAsset, usage, width, processingGeometry)}`,
-    ...(layout === 'west-east'
-      ? [watermark('west'), watermark('east')]
-      : [watermark('center')]),
     formatOperation(format),
   ].join('/')
 }
@@ -615,7 +528,11 @@ function existingVariant(
   sqlite: Database.Database,
   objectKey: string,
 ) {
-  return findReadyWatermarkVariant<ReadyPublicVariant>(sqlite, objectKey)
+  return findReadySiteDisplayVariant<ReadyPublicVariant>(
+    sqlite,
+    objectKey,
+    PUBLIC_RECIPE_VERSION,
+  )
 }
 
 async function verifyPublicVariant(
@@ -644,8 +561,6 @@ async function generateOne(
   storage: MediaStorage,
   sourceAsset: AssetSource,
   source: ProcessingSource,
-  profile: WatermarkProfileRow,
-  logo: WatermarkSource,
   usage: PublicMediaUsage,
   width: number,
   format: PublicFormat,
@@ -654,7 +569,6 @@ async function generateOne(
   const identity = recipeIdentity(
     sourceAsset,
     source,
-    profile,
     usage,
     width,
     format,
@@ -663,7 +577,7 @@ async function generateOne(
     sourceAsset,
     usage,
     width,
-    identity.hash,
+    identity,
     format,
   )
   const existing = existingVariant(sqlite, objectKey)
@@ -675,10 +589,8 @@ async function generateOne(
     await storage.processPrivateToPublic({
       sourceObjectKey: source.objectKey,
       objectKey,
-      process: buildWatermarkProcess(
+      process: buildPublicMediaProcess(
         sourceAsset,
-        logo,
-        profile,
         usage,
         width,
         format,
@@ -708,7 +620,7 @@ async function generateOne(
 
     const id = deterministicUuid(digest(
       'sha256',
-      Buffer.from(`${sourceAsset.id}:${identity.hash}`),
+      Buffer.from(`${sourceAsset.id}:${identity}`),
     ))
     try {
       const stale = findVariantIdByObjectKey(sqlite, objectKey)
@@ -716,28 +628,21 @@ async function generateOne(
         refreshVariantContent(sqlite, stale.id, sha256, head.byteSize, now)
       }
       else {
-        insertPublicVariant(sqlite, {
+        insertSiteDisplayVariant(sqlite, {
           byteSize: head.byteSize,
-          configDigest: profile.configDigest,
-          cropIdentity: identity.hash,
+          cropIdentity: identity,
           format,
           height: info.height,
           id,
           inputSha256: source.inputSha256,
-          logoDigest: profile.logoDigest,
           mediaRole: sourceAsset.role,
           objectKey,
-          opacityPercent: profile.opacityPercent,
-          profileId: profile.id,
           quality: format === 'webp' ? 82 : format === 'jpeg' ? 86 : 100,
           recipeVersion: PUBLIC_RECIPE_VERSION,
-          scalePercent: profile.scalePercent,
           sha256,
           sourceAssetId: sourceAsset.id,
           sourceVariantId: source.sourceVariantId,
           usage,
-          watermarkAnchor: profile.position,
-          watermarkProfile: profile.profileName,
           width: info.width,
         }, now)
       }
@@ -792,11 +697,10 @@ export function publicVariantCountForUsages(
   )
 }
 
-export async function generatePublicVariantsForProfile(
+export async function generatePublicVariants(
   sqlite: Database.Database,
   storage: MediaStorage,
   assetId: string,
-  profileId: string,
   usages?: readonly PublicMediaUsage[],
   now = Date.now(),
 ) {
@@ -819,11 +723,6 @@ export async function generatePublicVariantsForProfile(
   }, selectedUsages)) {
     throw new ServiceError(409, 'CONFLICT', 'Media source does not meet public recipe dimensions.', 'MEDIA_SOURCE_TOO_SMALL')
   }
-  const profile = requireWatermarkProfile(sqlite, profileId)
-  if (!['APPLYING', 'ACTIVE'].includes(profile.status)) {
-    throw new ServiceError(409, 'CONFLICT', 'Watermark profile is not usable.')
-  }
-  const logo = watermarkSource(sqlite, profile)
   const fallback: PublicFormat = sourceAsset.mimeType === 'image/png'
     ? 'png'
     : 'jpeg'
@@ -836,8 +735,6 @@ export async function generatePublicVariantsForProfile(
           storage,
           sourceAsset,
           source,
-          profile,
-          logo,
           usage,
           width,
           format,
@@ -849,30 +746,12 @@ export async function generatePublicVariantsForProfile(
   return variants
 }
 
-export async function generatePublicVariants(
-  sqlite: Database.Database,
-  storage: MediaStorage,
-  assetId: string,
-  usages?: readonly PublicMediaUsage[],
-  now = Date.now(),
-) {
-  return generatePublicVariantsForProfile(
-    sqlite,
-    storage,
-    assetId,
-    requireActiveWatermarkProfile(sqlite).id,
-    usages,
-    now,
-  )
-}
-
-export async function generatePrivateWatermarkPreview(
+export async function generatePrivatePublicPreview(
   sqlite: Database.Database,
   storage: MediaStorage,
   input: {
     assetId: string
     objectKey: string
-    profileId: string
     usage: PublicMediaUsage
     width: number
   },
@@ -882,15 +761,8 @@ export async function generatePrivateWatermarkPreview(
     throw new ServiceError(400, 'VALIDATION_ERROR', 'Preview width is invalid.')
   }
   const source = processingSource(sqlite, sourceAsset)
-  const profile = requireWatermarkProfile(sqlite, input.profileId)
-  if (!['DRAFT', 'FAILED', 'ACTIVE'].includes(profile.status)) {
-    throw new ServiceError(409, 'CONFLICT', 'Watermark profile cannot be previewed.')
-  }
-  const logo = watermarkSource(sqlite, profile)
-  const process = buildWatermarkProcess(
+  const process = buildPublicMediaProcess(
     sourceAsset,
-    logo,
-    profile,
     input.usage,
     input.width,
     'webp',
@@ -917,41 +789,11 @@ export async function generatePrivateWatermarkPreview(
     || info.width !== input.width
     || (height !== null && info.height !== height)
   ) {
-    throw new ServiceError(500, 'INTERNAL_ERROR', 'Watermark preview verification failed.')
+    throw new ServiceError(500, 'INTERNAL_ERROR', 'Media preview verification failed.')
   }
   return {
     format: 'webp' as const,
     height: info.height,
     width: info.width,
-  }
-}
-
-export async function renderActiveWatermarkPreview(
-  sqlite: Database.Database,
-  storage: MediaStorage,
-  assetId: string,
-  usage: 'adoption-card' | 'design-sheet' | 'detail' | 'work-card',
-) {
-  const sourceAsset = asset(sqlite, assetId)
-  const marker = sourceAsset.privateObjectKey.indexOf('/original/')
-  if (marker < 1) {
-    throw new ServiceError(409, 'CONFLICT', 'Media asset cannot be previewed.')
-  }
-  const width = usage === 'work-card'
-    ? 480
-    : usage === 'adoption-card' ? 768 : 960
-  const objectKey = `${sourceAsset.privateObjectKey.slice(0, marker)}/preview/work/${assetId}/${randomUUID()}.webp`
-  try {
-    await generatePrivateWatermarkPreview(sqlite, storage, {
-      assetId,
-      objectKey,
-      profileId: requireActiveWatermarkProfile(sqlite).id,
-      usage,
-      width,
-    })
-    return await storage.getPrivate(objectKey)
-  }
-  finally {
-    await storage.deletePrivate(objectKey)
   }
 }

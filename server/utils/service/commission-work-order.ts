@@ -17,7 +17,7 @@ import { ServiceError } from '../service-error'
  * 服务端自己生成而不是走浏览器打印——操作员的默认打印机（纸张、方向、灰度）
  * 会决定打印结果，导出的文件必须与打印机无关。
  *
- * pdf-lib 只子集嵌入实际用到的字形，因此源字体上百万字形也不会让产物变大。
+ * 该 CJK OTF 必须完整嵌入：fontkit 的子集输出会被部分 PDF 阅读器判为无效。
  */
 
 /** A4 横版，单位 pt。 */
@@ -29,7 +29,14 @@ const MARGIN = 40
  * 不用首页那套拼贴品牌字体：制作单是内部正式文件。
  * 也不用系统宋体：SimSun 是商业授权字体，不能随仓库和镜像分发。
  */
-const BODY_FONT_FILE = 'public/fonts/noto-serif-sc-regular.otf'
+export function commissionWorkOrderFontFile(
+  nodeEnv = process.env.NODE_ENV,
+  cwd = process.cwd(),
+) {
+  return resolve(cwd, nodeEnv === 'production'
+    ? '.output/public/fonts/noto-serif-sc-regular.otf'
+    : 'public/fonts/noto-serif-sc-regular.otf')
+}
 
 /** pdf-lib 只能嵌入 JPEG 与 PNG；WebP 原图先用内置 FFmpeg 转成 PNG。 */
 async function embeddableImage(content: Buffer, mimeType: string) {
@@ -75,8 +82,8 @@ export async function buildCommissionWorkOrderPdf(
   pdf.setProducer('DITE DOG Studio')
   pdf.setCreator('DITE DOG Studio')
 
-  const fontBytes = await readFile(resolve(process.cwd(), BODY_FONT_FILE))
-  const font = await pdf.embedFont(fontBytes, { subset: true })
+  const fontBytes = await readFile(commissionWorkOrderFontFile())
+  const font = await pdf.embedFont(fontBytes, { subset: false })
 
   const infoPage = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT])
   const ink = rgb(0, 0, 0)
