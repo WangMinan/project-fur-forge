@@ -7,11 +7,13 @@
 ## 2026-08-29 当前校准
 
 - Hero 自动轮播固定为 3s；Featured 与 Homepage Adoption 仍为 4s。
+- Hero/Featured 在粗指针设备上使用整幕横向 swipe，并以横向主导判定容忍轻微纵向漂移；代表作品图片 swipe 不触发详情导航，保留轻触进入详情。手机/平板的箭头与暂停入口持续可见。
+- 领养统一详情显示真实“可领养 / 已领养”；已领养时咨询行动为不可导航的禁用按钮“已被领养”。
 - 1023px 以下保持原生滚动，并移除首页全部“下一幕”导线与文案；窄屏领养角色名保持单行，主行动保持 44px 可达但采用更紧凑的字号与内边距。
-- 生产委托制作单从 `.output/public/fonts/` 读取随镜像发布的 Noto Serif SC；本地仍从 `public/fonts/` 读取。字体完整嵌入，避免 CJK 子集在部分 PDF 阅读器中变成方框。
+- 生产委托制作单从 `.output/public/fonts/` 读取随镜像发布的 Noto Serif SC；本地仍从 `public/fonts/` 读取。常用单据完整嵌入 2.77MB 离线派生字体，存在生僻字时完整回退 11.63MB 原字体；两条路径均不使用运行时 CJK 子集。私有设定图保持原始像素与画质，不做导出压缩；前端按生成阶段及响应真实字节展示下载进度。
 - 自动图片叠加能力已退役：管理入口/API、profile/operation/branding 表、媒体身份字段、上传角色、脚本及专项 fixture 均删除。当前作品公开配方为无叠加 `recipe-v4`；0051 是只向前迁移，部署时停写并通过同一冻结镜像运行备份、migrate、旧公开媒体 dry-run/强确认退役、第二次 migrate 与 ready 校验。
 - 页面内低对比度工作室 Logo 只是 CSS 背景标记，不参与媒体生成，也不属于已退役的后台能力；旧文档中称其为“水印”的视觉描述统一按“背景标记”理解。
-- Latest completed Handoff：[`2026-08-29-T47-F4-MOBILE-PDF-MEDIA-RETIREMENT.md`](./implementation/notes/2026-08-29-T47-F4-MOBILE-PDF-MEDIA-RETIREMENT.md)。
+- Latest completed Handoff：[`2026-08-29-T47-F5-TOUCH-ADOPTION-PDF-FONT.md`](./implementation/notes/2026-08-29-T47-F5-TOUCH-ADOPTION-PDF-FONT.md)。
 
 ## 当前阶段
 

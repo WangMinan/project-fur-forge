@@ -70,6 +70,12 @@ const adoptionPrice = computed(() => {
   const price = detail.value?.adoption?.price
   return price ? formatCnyMinorUnits(price.minorUnits) : null
 })
+const isAdopted = computed(() => (
+  detail.value?.adoption?.adoptionStatus === 'adopted'
+))
+const adoptionStatusLabel = computed(() => (
+  isAdopted.value ? '已领养' : '可领养'
+))
 /**
  * 单一媒体区：出厂照 → 领养封面 → 设定图 合成同一个查看序列。
  * 成果图（出厂照、封面）在前，参考图（设定图）在后。三类图片共用左大图 +
@@ -218,13 +224,21 @@ onMounted(() => {
             <dd>设定领养</dd>
           </div>
           <div v-if="detail?.adoption">
+            <dt>领养状态</dt>
+            <dd data-testid="adoption-detail-status">{{ adoptionStatusLabel }}</dd>
+          </div>
+          <div v-if="detail?.adoption">
             <dt>领养价格</dt>
             <dd data-testid="adoption-detail-price">{{ adoptionPrice ?? '以详情为准' }}</dd>
           </div>
         </dl>
         <div v-if="isAdoptionArchive" class="work-detail__adoption-actions">
-          <PublicAction to="/about#contact">
-            联系咨询领养
+          <PublicAction
+            :to="isAdopted ? undefined : '/about#contact'"
+            :disabled="isAdopted"
+            data-testid="adoption-contact-action"
+          >
+            {{ isAdopted ? '已被领养' : '联系咨询领养' }}
           </PublicAction>
           <NuxtLink
             to="/adoptions"

@@ -24,6 +24,7 @@ export default defineEventHandler(async (event) => {
     setResponseHeader(event, 'cache-control', 'no-store, max-age=0')
     setResponseHeader(event, 'pragma', 'no-cache')
     setResponseHeader(event, 'content-type', 'application/pdf')
+    setResponseHeader(event, 'content-length', result.content.byteLength)
     setResponseHeader(event, 'x-content-type-options', 'nosniff')
     setResponseHeader(
       event,
