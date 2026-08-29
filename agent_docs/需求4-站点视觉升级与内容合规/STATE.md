@@ -10,10 +10,11 @@
 - Hero/Featured 在粗指针设备上使用整幕横向 swipe，并以横向主导判定容忍轻微纵向漂移；代表作品图片 swipe 不触发详情导航，保留轻触进入详情。手机/平板的箭头与暂停入口持续可见。
 - 领养统一详情显示真实“可领养 / 已领养”；已领养时咨询行动为不可导航的禁用按钮“已被领养”。
 - 1023px 以下保持原生滚动，并移除首页全部“下一幕”导线与文案；窄屏领养角色名保持单行，主行动保持 44px 可达但采用更紧凑的字号与内边距。
+- 首页自设委托幕与 `/commission` 已删除“从角色设定出发”且不补替代 slogan；`/commission` 在 `1023px` 以下保留竖版素材但使用不高于 `50svh` 的 `4:5` 画框，使核心说明与主行动进入目标手机/平板第一视口。
 - 生产委托制作单从 `.output/public/fonts/` 读取随镜像发布的 Noto Serif SC；本地仍从 `public/fonts/` 读取。常用单据完整嵌入 2.77MB 离线派生字体，存在生僻字时完整回退 11.63MB 原字体；两条路径均不使用运行时 CJK 子集。私有设定图保持原始像素与画质，不做导出压缩；前端按生成阶段及响应真实字节展示下载进度。
 - 自动图片叠加能力已退役：管理入口/API、profile/operation/branding 表、媒体身份字段、上传角色、脚本及专项 fixture 均删除。当前作品公开配方为无叠加 `recipe-v4`；0051 是只向前迁移，部署时停写并通过同一冻结镜像运行备份、migrate、旧公开媒体 dry-run/强确认退役、第二次 migrate 与 ready 校验。
 - 页面内低对比度工作室 Logo 只是 CSS 背景标记，不参与媒体生成，也不属于已退役的后台能力；旧文档中称其为“水印”的视觉描述统一按“背景标记”理解。
-- Latest completed Handoff：[`2026-08-29-T47-F5-TOUCH-ADOPTION-PDF-FONT.md`](./implementation/notes/2026-08-29-T47-F5-TOUCH-ADOPTION-PDF-FONT.md)。
+- Latest completed Handoff：[`2026-08-29-T47-F6-COMMISSION-LEAD-FLOW.md`](./implementation/notes/2026-08-29-T47-F6-COMMISSION-LEAD-FLOW.md)。
 
 ## 当前阶段
 
@@ -48,13 +49,13 @@ T35/T36 的 Linux runtime/分发证据与原阶段 F 的 Review、镜像和生�
 - V06 已完成 Works/Adoption 目录五断点视觉与输入复核；Works 横竖等高混排、Adoption contain、共享空态、长名称/物种、搜索/分页、非法/越界状态、键盘/触控与图片解码均有证据。
 - V06-F1 已将作品与领养入口的统一详情收口为 Media-led Archive Scene；多图横竖切换使用稳定舞台，单图保留真实比例，无图库复用共享空态，返回来源、301/404、Keyboard/Touch/Reduced Motion 与无 JavaScript 均有证据。
 - V07 已将 About/Contact 收口为编辑式信息页；T47-F1/F2 将 Contact scene 改为白底、等高联系目录与单一外轮廓，并删除 About 内部多余分割线。QQ 直达/二维码与复制邮箱浮层行为保持。
-- V07-F1 已将 `/commission` 收口为独立 Media-led Service Narrative；T47-F1/F2 使用更短的默认文案，并将估价说明缩小到正文尺度、与联系目录等宽。委托营业状态只保留开放/暂停与标签，其管理卡占满内容宽度。
+- V07-F1 已将 `/commission` 收口为独立 Media-led Service Narrative；T47-F1/F2 使用更短的默认文案，并将估价说明缩小到正文尺度、与联系目录等宽。T47-F6 删除无意义 slogan，并将窄屏完整 `9:16` 竖图收为 `4:5`、不高于 `50svh` 的媒体锚点。委托营业状态只保留开放/暂停与标签，其管理卡占满内容宽度。
 - V07-F2 已将服务条款与隐私政策收口为带内容目录、编号章节、语义锚点和固定行长的阅读系统；许可证在 1024px 以下使用单列信息，原生 `details`、等宽许可证、TXT 下载、301、Keyboard 与 Reduced Motion 均有证据。
 - V08 已将 `/commission/apply` 收口为稳定的完整表单状态：字段、单位前缀、双列测量、上传预览、两项确认和提交反馈拥有同一阅读节奏；空错误节点不渲染，成功与不可用状态保持静态分隔结构。390/430/768/1024/1440、Keyboard、Touch、软键盘、44px、Reduced Motion、CLS 和上传/核验/提交各状态均有证据。
 - V08-F1 已将 404/500、公开空态与媒体失败收口为同一编辑式状态语言：错误页不泄露底层信息、图片失败保留横竖比例且提供回落文字、无 JavaScript 保留原始图片。五视口与 Keyboard/Touch/Reduced Motion 证据以及 500 非泄露核心测试均已通过。
 - V09 已建立 Shared Visual Language 可执行契约，并把 Homepage Featured Works 重做为摄影优先的 Type × Media scene：Desktop 明确 overlap，Mobile 明确让开且在摄影下方直接展示 44px 切换控制；双项编号连续真实，单项不显示孤立 `01`。后续用户复核修正使 1440×768/900、768×1024、375×812、390×844、430×932 的当前 Featured scene 与 destination rail 同屏，Desktop CTA/切换器间隔 36px、Mobile 切换器/内容间隔 16px，并恢复 Hero Mobile 的“下一幕”。Featured 未加入 autoplay、transition 或 Motion choreography，Hero 与 Footer 锁保持。
 - V10 已将 Homepage Commission 重做为去卡片化的 Service Docket：四幕标题字号保持一致，横版摄影为第一媒体锚点，营业状态、说明和 CTA 沿媒体下缘分三段排列，摄影与信息栏使用独立网格行和硬间距；390/430 与 1280×800、1440×900、2048×1080 均完整显示且不相交。`/commission` 使用不同的 Photographic Service Ledger，以横/竖 Hero、身份/状态/行动台账、制作范围与估价联系双列构成独立内页。两处继续使用既有内容投影、申请、QQ/Email、条款与 `home-commission-media` 共享切换，不新增业务字段、迁移或依赖；摄影统一使用 `--radius-image`，Footer 与 Hero 品牌锁未改。
-- V10-F1 将 Homepage Commission 调整为约 65% Media / 35% Service Narrative，并让“从角色设定出发”承担第二视觉锚点；`/commission` 首屏改为叙事左、摄影右，并增加可点击的“继续查看 / 制作范围与估价 ↓”。Hero、Featured、Homepage Commission 与 Commission 申请入口的同类方向引导统一为中文；英文继续只作为小型 scene metadata，不承担必要导航含义。三处场景顶栏中无信息作用的右侧 register 已删除，标题下规则线统一收至 32rem 上限。
+- V10-F1 将 Homepage Commission 调整为约 65% Media / 35% Service Narrative，并把 `/commission` 首屏改为叙事左、摄影右，增加可点击的“继续查看 / 制作范围与估价 ↓”。其历史“从角色设定出发”第二视觉锚点已由 T47-F6 supersede；当前两处委托入口均直接使用标题、营业状态、说明和行动建立阅读顺序。
 - V11 将首页领养改为按既有排序自动投影最新三项 `available`，排除 `adopted`，真实 1/2/3 项分别渲染；多项循环切换，媒体和主行动均进入当前详情。`/adoptions` 继续按状态 bucket、修改时间和 ID 排序，Desktop 双列、Mobile 单列；目录优先使用既有完整设定图，缺失时才回退横版封面。每项以完整 `contain` 媒体和独立信息面板共同构成角色记录：Desktop 左右并置、Mobile 上下重排；名称横排，物种/价格/状态仅显示真实值并以 `·` 与三行留白容纳未来长数据，右下角圆润数字按公开列表位置连续编号并保留足够可辨认面积。字段线和卡片间横线均删除。目录页头保留放大的 `ADOPTIONS / 设定领养` 和右上斜向淡色工作室标志，不显示可领养数量或营业提示；搜索与“联系我们申请领养”在无上下边线的右侧操作组中紧邻排列，搜索结果数量仅在搜索生效时显示。整项可点击；1440×900 首屏完整显示前两个角色，390/430 完整显示第一项。详情新增真实状态、价格与“联系咨询领养”；未新增后台精选字段、Schema、迁移或依赖。
 - V12-A 将 `/works` 重做为角色等权的目录：Desktop 四列、统一 4:5 圆角媒体画布与底部身份层，横版设定图使用 `contain` 保证完整展示；页头使用背景 `WORKS`、中文标题/说明和右侧搜索。统一 Work / Adoption Detail 在 Desktop 保持左侧 gallery、右侧 sticky 信息账本，gallery 舞台与缩略图统一圆角，领养详情继续保留状态、价格、咨询入口和 V11 媒体优先级。公共布局只以 flex 让短内容页 Footer 贴底，Footer 组件未修改；V12-A 的 390/430 证据仍只代表 Mobile Structural Safety，最终 Mobile Art Direction 留给 V12-G。
 - V12-B 的 About/Contact 初版属于历史实现；T47-F1/F2/F3 已将 Contact 改为白底与单一外轮廓，并退役独立防诈骗提醒。当前 `/about`、`/works`、`/adoptions` 页名区等高、带标题下分割线、英文背景字与右上工作室 Logo 水印。
@@ -73,6 +74,7 @@ T35/T36 的 Linux runtime/分发证据与原阶段 F 的 Review、镜像和生�
 - T47-F1 在用户明确重新开放该范围后完成 0048 前向迁移：退役领养全局营业状态、将委托收口为开放/暂停、删除独立短说明；同时从官方二维码安全派生 `qm.qq.com` 直达链接，代表作品上限调为 5。迁移只替换空值或精确历史默认委托文案，管理员自定义文案保留。
 - T47-F2 使用 0049 只替换空值或精确旧默认估价文案，不覆盖管理员自定义内容；页面与管理端的四项视觉减法同步完成。
 - T47-F3 使用 0050 更新仍为仓库默认的委托简介、工作室介绍与制作范围，清空并停止投影独立防诈骗提醒；`/works`、`/adoptions`、`/about` 页名区按 `/adoptions` 对齐，About 同步使用工作室 Logo 水印。
+- T47-F6 删除首页与委托页硬编码 slogan，并用现有竖版素材的受限 `4:5` 裁切修复 768×1024 与 390×844 的首屏动线；未新增字段、媒体派生、断点组件或依赖。
 - 行动、上传与长任务进度已收敛；OSS 使用真实字节，FFmpeg/未知任务不伪造百分比。
 - 两项委托确认、隐私 readiness、人工 retention/单条删除和生成式 notices 已落地。
 - 13 个公开路由文件（含 3 个重定向）与全局错误入口已归并为 11 个独立视觉状态：首页、作品/领养目录、统一详情、委托、申请、关于/联系、服务、隐私、许可证和 404/500；目录、表单、空态与媒体失败状态也已分配到 V06～V08-F1。
@@ -82,4 +84,4 @@ T35/T36 的 Linux runtime/分发证据与原阶段 F 的 Review、镜像和生�
 
 后续 PR 只做 UI、布局、响应式、可访问性、性能和动效优化。不得恢复退役业务，不新增数据库/迁移、隐私/安全能力、媒体拓扑、交易能力或部署流程；如确需改变，先由用户重新开放范围。
 
-视觉权威：[`requirements/SPEC.md`](./requirements/SPEC.md)、[`.design/README.md`](./.design/README.md)、[`SHARED_VISUAL_LANGUAGE.md`](./.design/SHARED_VISUAL_LANGUAGE.md) 与 [`VISUAL_DIRECTION_V2_2026-08-22.md`](./.design/VISUAL_DIRECTION_V2_2026-08-22.md)。Latest completed Handoff 为 [`2026-08-27-T47-F3-COPY-HEADER-ALIGNMENT.md`](./implementation/notes/2026-08-27-T47-F3-COPY-HEADER-ALIGNMENT.md)；T47 连续移动证据见 [`implementation/evidence/T47/`](./implementation/evidence/T47/)，V16 及更早任务继续保留各自 Evidence/Handoff。GATE-E 仍等待真实设备与最终人工视觉验收。
+视觉权威：[`requirements/SPEC.md`](./requirements/SPEC.md)、[`.design/README.md`](./.design/README.md)、[`SHARED_VISUAL_LANGUAGE.md`](./.design/SHARED_VISUAL_LANGUAGE.md) 与 [`VISUAL_DIRECTION_V2_2026-08-22.md`](./.design/VISUAL_DIRECTION_V2_2026-08-22.md)。Latest completed Handoff 为 [`2026-08-29-T47-F6-COMMISSION-LEAD-FLOW.md`](./implementation/notes/2026-08-29-T47-F6-COMMISSION-LEAD-FLOW.md)；T47 连续移动证据见 [`implementation/evidence/T47/`](./implementation/evidence/T47/)，V16 及更早任务继续保留各自 Evidence/Handoff。GATE-E 仍等待真实设备与最终人工视觉验收。
