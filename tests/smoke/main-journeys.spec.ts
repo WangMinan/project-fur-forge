@@ -113,7 +113,7 @@ async function confirmCommission(page: import('@playwright/test').Page) {
   await page.getByLabel(/已阅读《隐私政策》/u).check()
 }
 
-test('首页加载、主要入口与单项开放领养在三种视口可达', async ({ page }) => {
+test('首页加载、主要入口与单项开放领养在四种视口可达', async ({ page }) => {
   await seedSmokeCatalog(page)
   await seedHeroCollections(page, {
     landscape: [{ alt: 'Smoke 首页横版', sortOrder: 0, enabled: true }],
@@ -126,6 +126,7 @@ test('首页加载、主要入口与单项开放领养在三种视口可达', as
   })
 
   for (const viewport of [
+    { width: 375, height: 734 },
     { width: 390, height: 844 },
     { width: 768, height: 1024 },
     { width: 1440, height: 900 },
@@ -148,6 +149,30 @@ test('首页加载、主要入口与单项开放领养在三种视口可达', as
     await expect(current.getByRole('article')).toHaveCount(1)
     await expect(current).toContainText('云雀')
     await expect(current).not.toContainText('月桂')
+    if (viewport.width <= 480) {
+      const layout = await current.evaluate((element) => {
+        const facts = element.querySelector<HTMLElement>('.home-adoption-poster__facts')!
+        const actions = element.querySelector<HTMLElement>('.home-adoption-poster__actions')!
+        const factsRect = facts.getBoundingClientRect()
+        const actionsRect = actions.getBoundingClientRect()
+        return {
+          factsOverflow: facts.scrollWidth - facts.clientWidth,
+          overlap: factsRect.left < actionsRect.right
+            && factsRect.right > actionsRect.left
+            && factsRect.top < actionsRect.bottom
+            && factsRect.bottom > actionsRect.top,
+        }
+      })
+      expect(layout.factsOverflow).toBeLessThanOrEqual(1)
+      expect(layout.overlap).toBe(false)
+    }
+    if (viewport.width >= 768) {
+      const title = page.getByTestId('featured-works')
+        .locator('.featured-works__title-text')
+      expect(await title.evaluate(element => (
+        element.scrollHeight - element.clientHeight
+      ))).toBeLessThanOrEqual(1)
+    }
     expect(await page.evaluate(() => (
       document.documentElement.scrollWidth - document.documentElement.clientWidth
     ))).toBeLessThanOrEqual(1)

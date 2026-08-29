@@ -688,6 +688,13 @@ onBeforeUnmount(() => {
   }
 }
 
+@media (max-width: 480px) {
+  .home-adoption-poster__facts,
+  .home-adoption-poster__actions {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .home-adoption-media-next-enter-active,
   .home-adoption-media-next-leave-active,
