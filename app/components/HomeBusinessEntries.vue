@@ -126,12 +126,6 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   isolation: isolate;
 }
 
-@supports (height: 100dvh) {
-  .home-commission {
-    min-height: calc(100dvh - var(--public-header-height));
-  }
-}
-
 .home-commission__heading {
   position: relative;
   z-index: 4;
