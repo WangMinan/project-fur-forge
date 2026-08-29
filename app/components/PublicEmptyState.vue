@@ -15,7 +15,7 @@ const props = withDefaults(defineProps<{
 <template>
   <div class="empty-state" data-testid="public-empty-state">
     <img
-      class="empty-state__watermark"
+      class="empty-state__background-mark"
       src="/brand/logo-mark.png"
       alt=""
       aria-hidden="true"
@@ -56,7 +56,7 @@ const props = withDefaults(defineProps<{
   place-items: center start;
 }
 
-.empty-state__watermark {
+.empty-state__background-mark {
   position: absolute;
   z-index: -1;
   right: clamp(-4rem, -3vw, -1.5rem);
@@ -116,7 +116,7 @@ const props = withDefaults(defineProps<{
     padding: var(--space-7) var(--space-4);
   }
 
-  .empty-state__watermark {
+  .empty-state__background-mark {
     right: -4.5rem;
     bottom: -3.5rem;
     width: 17rem;

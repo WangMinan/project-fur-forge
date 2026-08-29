@@ -55,7 +55,6 @@ const asset: VerifiedAssetDto = {
   focalX: 0.5,
   focalY: 0.5,
   fitMode: 'cover',
-  watermarkAnchor: 'top-left',
   processingFailureCode: null,
   processingFailureStage: null,
   previews: [{

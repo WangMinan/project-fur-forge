@@ -773,6 +773,12 @@ onBeforeUnmount(() => {
   }
 }
 
+@media (max-width: 1023px) {
+  .featured-works__wayfinding {
+    display: none;
+  }
+}
+
 @media (min-width: 1200px) {
   .featured-works {
     height: calc(100svh - var(--public-header-height));

@@ -341,7 +341,7 @@ onBeforeUnmount(() => {
     <div class="commission-apply__intro">
       <PublicPageIntro title="提交委托申请" />
       <img
-        class="commission-apply__watermark"
+        class="commission-apply__background-mark"
         src="/brand/logo-mark.png"
         alt=""
         aria-hidden="true"
@@ -639,7 +639,7 @@ onBeforeUnmount(() => {
   border-left: 2px solid var(--public-accent-tint);
 }
 
-.commission-apply__watermark {
+.commission-apply__background-mark {
   position: absolute;
   z-index: 0;
   top: var(--space-5);
@@ -908,7 +908,7 @@ onBeforeUnmount(() => {
     padding-left: var(--space-3);
   }
 
-  .commission-apply__watermark {
+  .commission-apply__background-mark {
     display: none;
   }
 }

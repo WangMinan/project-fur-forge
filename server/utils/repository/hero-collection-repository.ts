@@ -16,15 +16,8 @@ const selectHeroVariants = `
     storage_scope AS storageScope, status, object_key AS objectKey,
     width, height, format, input_sha256 AS inputSha256,
     internal_error_code AS internalErrorCode,
-    logo_digest AS logoDigest, media_role AS mediaRole,
-    protection_mode AS protectionMode,
-    recipe_version AS recipeVersion, sha256, usage,
-    watermark_anchor AS watermarkAnchor,
-    watermark_config_digest AS watermarkConfigDigest,
-    watermark_opacity_percent AS watermarkOpacityPercent,
-    watermark_profile AS watermarkProfile,
-    watermark_profile_id AS watermarkProfileId,
-    watermark_scale_percent AS watermarkScalePercent
+    media_role AS mediaRole,
+    recipe_version AS recipeVersion, sha256, usage
   FROM asset_variants
 `
 

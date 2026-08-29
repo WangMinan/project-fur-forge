@@ -380,6 +380,12 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   }
 }
 
+@media (max-width: 1023px) {
+  .home-commission__wayfinding {
+    display: none;
+  }
+}
+
 @media (min-width: 1024px) {
   .home-commission {
     height: calc(100svh - var(--public-header-height));

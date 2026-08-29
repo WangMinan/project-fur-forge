@@ -1,12 +1,11 @@
 import { getDatabase } from '../utils/database'
 import { getMediaStorage } from '../utils/media-storage'
 // 导入这些模块会注册各自的 resumer（Hero 发布/放大、作品发布/下架、
-// 水印预览/应用、站点展示 reconcile），
+// 站点展示 reconcile），
 // recovery 本身不反向依赖业务细节。
 import '../utils/runner/home-management'
 import '../utils/runner/hero-collection-publication'
 import '../utils/runner/site-display-reconcile'
-import '../utils/runner/watermark-branding'
 import '../utils/runner/work-publication'
 import { recoverPendingOperations } from '../utils/runner/operation-recovery'
 import { getRuntimeConfig } from '../utils/runtime-config'

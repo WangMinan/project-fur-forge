@@ -4,12 +4,11 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import type Database from 'better-sqlite3'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { createSyntheticWatermarkPng } from '../../scripts/oss-preflight-core.mjs'
+import { createSyntheticTransparentPng } from '../../scripts/oss-preflight-core.mjs'
 import { migrateDatabase, openDatabase } from '../../server/utils/database'
 import { generatePublicVariants } from '../../server/utils/recipe/media-recipe'
 import { createSqlitePublicSiteRepository } from '../../server/utils/repository/public-site-repository'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
-import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
 
 const NOW = Date.UTC(2026, 7, 16)
 const MEDIA_BASE_URL = 'https://media.example.com'
@@ -47,7 +46,7 @@ async function attachPublicAsset(input: {
   const height = input.role === 'studio_photo'
     ? 3200
     : input.role === 'adoption_cover' ? 1080 : 1600
-  const content = createSyntheticWatermarkPng(width, height)
+  const content = createSyntheticTransparentPng()
   const sha = createHash('sha256').update(content).digest('hex')
   const key = `${PREFIX}/original/${input.id}.png`
   storage.seedPrivate(key, content, 'image/png', sha)
@@ -98,7 +97,6 @@ beforeEach(async () => {
   await migrateDatabase(databaseFile)
   sqlite = openDatabase(databaseFile).sqlite
   storage = new FakeMediaStorage()
-  insertActiveWatermarkProfile(sqlite, NOW, { environmentPrefix: PREFIX, storage })
 })
 
 afterEach(() => {

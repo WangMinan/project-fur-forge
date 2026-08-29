@@ -60,14 +60,12 @@ export const PUBLICATION_BLOCKER_LABELS: Record<PublicationBlocker, string> = {
   PRIMARY_STUDIO_PHOTO_REQUIRED: '需要设置唯一一张主图',
   STUDIO_PHOTO_NOT_READY: '有出厂照尚未处理完成',
   STUDIO_PHOTO_ALT_REQUIRED: '有出厂照缺少图片说明',
-  WATERMARK_PROFILE_REQUIRED: '需要先初始化并启用站点水印',
 }
 
 export const PUBLICATION_OPERATION_STATUS_LABELS
   : Record<PublicationOperationStatus, string> = {
     PREPARING_SOURCE: '生成私有适配源中',
     GENERATING_PUBLIC: '生成公开图片中',
-    APPLYING_WATERMARK: '烘焙水印中',
     VERIFYING_PUBLIC: '校验公开图片中',
     COMMITTING: '提交中',
     CLEANING_PUBLIC: '清理公开文件中',
@@ -80,7 +78,6 @@ export const PUBLICATION_FAILURE_STAGE_LABELS
     PREPARING_SOURCE: '生成私有适配源',
     VALIDATING: '发布检查',
     GENERATING_PUBLIC: '生成公开图片',
-    APPLYING_WATERMARK: '烘焙水印',
     VERIFYING_PUBLIC: '校验公开图片',
     COMMITTING: '提交',
     CLEANING_PUBLIC: '公开文件清理',

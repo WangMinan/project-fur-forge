@@ -225,7 +225,7 @@ interface DeleteCommissionSubmissionCommand {
 - current object、version/delete marker（若启用）；
 - 非必要内部备注和直接关联临时数据。
 
-作品、work assets、公开 variants、水印和 Hero 不在集合内。发现异常引用时正式删除阻断，不级联猜测。
+作品、work assets、公开 variants 和 Hero 不在集合内。发现异常引用时正式删除阻断，不级联猜测。
 
 ### 4.5 删除审计
 
@@ -280,9 +280,13 @@ interface AdminTaskProgressModel {
 映射规则：
 
 - XHR upload → determinate，`value/max` 来自真实字节；
-- publication/branding/Hero operation → stage，使用服务端状态和计数；
+- publication/Hero operation → stage，使用服务端状态和计数；
 - FFmpeg/未知服务端处理 → indeterminate + elapsed；
 - 不在模型中加入人为“阶段百分比”。
+
+公开作品媒体只保留普通变体身份：asset/source、usage、尺寸、格式、质量、crop、
+recipe、摘要与字节数。当前 recipe 为 `recipe-v4`；不再有自动叠加 profile、Logo
+摘要、位置、不透明度、缩放、protection mode 或 branding operation 字段。
 
 ### 5.3 上传状态
 

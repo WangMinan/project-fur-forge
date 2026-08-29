@@ -321,7 +321,6 @@ export function findCommissionDeletionTarget(
           WHERE source_variant_id IN (${variantIds.map(() => '?').join(',')})
             AND asset_id != ?
         `, ...variantIds, submission.designAssetId),
-    watermarkProfiles: count('SELECT count(*) FROM watermark_profiles WHERE source_asset_id = ?', submission.designAssetId),
     workAssets: count('SELECT count(*) FROM work_assets WHERE asset_id = ?', submission.designAssetId),
   }
   return {

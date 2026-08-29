@@ -56,15 +56,11 @@ export function evaluateReadiness(options: {
       DATABASE_MIGRATIONS_FOLDER,
     ).complete
 
-    // 基础记录：单例站点内容与品牌行必须已由迁移种入。
+    // 基础记录：单例站点内容必须已由迁移种入。
     const siteContent = sqlite.prepare(`
       SELECT count(*) FROM site_content WHERE id = 'site'
     `).pluck().get()
-    const siteBranding = sqlite.prepare(`
-      SELECT count(*) FROM site_branding WHERE id = 'site'
-    `).pluck().get()
     checks.baselineRecords = Number(siteContent) === 1
-      && Number(siteBranding) === 1
     checks.privacyPolicyReady = checks.baselineRecords
       && getCommissionPrivacyPolicyReadiness(sqlite).ready
   }

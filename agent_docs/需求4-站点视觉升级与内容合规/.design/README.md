@@ -1,7 +1,7 @@
 # 需求4 · 站点视觉与交互设计说明
 
 > **角色**：把需求4的品牌、首页、响应式、动效、管理端编辑和进度反馈转成可验收的设计约束。
-> **状态**：2026-08-26 仅阶段 E 开放；V09～V16、T47 与 Desktop/Mobile 静态 Gate 已完成。T47-F1/F2 按用户当日明确授权收口委托文案、联系目录与相关布局；真实手机和最终人工视觉验收仍由 GATE-E 承担。
+> **状态**：2026-08-29 仅阶段 E 开放；V09～V16、T47 与 Desktop/Mobile 静态 Gate 已完成。T47-F4 收口移动端、PDF 与公开媒体退役；真实手机和最终人工视觉验收仍由 GATE-E 承担。
 > **风格定义**：**简洁底盘 + 灵动角色感 + 摄影主导的编辑式工作室网站。**
 
 V09 起的跨页面静态语法以 [`SHARED_VISUAL_LANGUAGE.md`](./SHARED_VISUAL_LANGUAGE.md) 为执行契约；当前 Active Visual Contract 已延伸到 V16 的 Motion、Controls、响应式、状态、可访问性与证据一致性终态。契约统一 wayfinding、摄影圆角、摄影/文字关系与响应式原则，但禁止把所有页面做成同一模板。
@@ -41,7 +41,7 @@ Apple Design Skill 在本需求中的价值是即时反馈、空间一致性、�
 - Photography、crop/focal presentation、media composition、scrim、mask/clip、image transition、autoplay presentation、arrows/pagination/pause-resume、controls grouping/appearance/reveal、pointer/touch/keyboard presentation、media settle、directional motion、scene arrival/departure、Hero → Featured continuity 与 Mobile Hero composition 均在 V01 开放。
 - 控制器继续是辅助层，必须保留可暂停、可恢复、键盘/触控可获得、可预测焦点与不因显隐造成布局位移的语义；具体外观、分组、位置和唤起策略不冻结。
 - V01 的阅读顺序以 Media → Brand → Supporting Copy → Controls 为探索起点；Hero 应比 Featured 更安静、更电影感、摄影更大、UI 更少。
-- Hero 轮播默认 4 秒、可暂停、页面隐藏暂停、reduced-motion 停止；换图不重复品牌标题入场。
+- Hero 轮播固定 3 秒、可暂停、页面隐藏暂停、reduced-motion 停止；换图不重复品牌标题入场。
 
 建议阅读时序为 Photography 初始可见 → Media settle → 中文品牌一次性入场 → DITE DOG → slogan → controls；具体数值由 V01 实画面确定，不预锁。
 
@@ -96,7 +96,7 @@ V11 明确 supersede T21 的首页单项投影：最多取三项当前 `availabl
 
 ### 3.1 `/works`
 
-- 页名区与 `/adoptions`、`/about` 使用同一高度、标题尺度和标题下分割线；浅色英文背景字与右上工作室 Logo 水印可以被前景标题覆盖。
+- 页名区与 `/adoptions`、`/about` 使用同一高度、标题尺度和标题下分割线；浅色英文背景字与右上工作室 Logo 背景标记可以被前景标题覆盖。
 - 目录继续展示全部可公开作品、搜索和分页，不把“代表作品资格”误用成完整目录过滤条件。
 - Desktop 使用角色等权四列目录和统一 4:5 圆角媒体画布；任何作品有出厂照时先用出厂主图，完全没有出厂照的领养作品才回落领养封面，封面缺失时再沿既有规则回落设定图。
 - 横版设定图在统一画布内使用 `contain` 保证完整展示；Mobile 使用紧凑双列并按真实宽度调整信息层级，不通过权重差异暗示角色等级。
@@ -104,7 +104,7 @@ V11 明确 supersede T21 的首页单项投影：最多取三项当前 `availabl
 
 ### 3.2 `/adoptions`
 
-- 页名区作为 `/works` 与 `/about` 的高度、标题尺度、分割线和装饰水印基准。
+- 页名区作为 `/works` 与 `/about` 的高度、标题尺度、分割线和 Logo 背景标记基准。
 - 目录只公开当前 `available`，保留搜索和分页；`adopted` 继续保留在 `/works` 归档。
 - 服务端先过滤 `available`，再按修改时间倒序和 ID 稳定排序；页面不按价格、发布时间或 DOM 状态二次排序。
 - 公开角色记录保留名称、物种和价格，不重复显示“领养状态”标签或状态值。
@@ -114,7 +114,7 @@ V11 明确 supersede T21 的首页单项投影：最多取三项当前 `availabl
 ### 3.3 About / Commission 联系目录
 
 - `/about` 的 Contact scene 使用白底，不再以整块浅灰背景与其他内容断开；`/commission` 与 `/about` 复用同一联系目录组件。
-- `/about` 页名区与 `/adoptions` 等高，保留 `ABOUT` 背景字、右上浅色工作室 Logo 水印和标题下分割线；masthead 不再重复工作室标签、概述或联系方式跳转。
+- `/about` 页名区与 `/adoptions` 等高，保留 `ABOUT` 背景字、右上浅色工作室 Logo 背景标记和标题下分割线；masthead 不再重复工作室标签、概述或联系方式跳转。
 - About masthead 与工作室/制作范围之间不画线，工作室与制作范围之间也不画线；只在 story 与“联系我们”大块之间保留一条分割线。
 - Email、QQ 和 QQ 群行动使用白底、等高、等最小宽度的辅助按钮；QQ/QQ 群以 QQ Logo 为前缀，文案分别为“添加好友 / 加入群聊”。
 - 联系目录只保留卡片外轮廓，Email、QQ 和 QQ 群行之间不画横线。
@@ -196,6 +196,8 @@ V11 明确 supersede T21 的首页单项投影：最多取三项当前 `availabl
 ### 5.1 移动端
 
 - 1023px 及以下保持原生纵向滚动、`100svh/100dvh`、safe area 和动态地址栏。
+- 1023px 以下隐藏所有“下一幕”导线与文案；动态工具栏改变可视高度时不触发整幕布局模式切换。
+- 窄屏 Homepage Adoption 名称保持单行，两个行动保持 44px 命中区并缩小字体与水平内边距。
 - 不依赖 hover，不在触控端应用 tilt。
 - Mobile 是同一 Art Direction 下的重新构图，不是 Desktop CSS 缩小版；允许与 Desktop 使用不同 position、grouping、density、reveal strategy 和 motion 参数。
 - 每完成一个 Homepage Scene 立即检查 390×844 与 430×932，不等 Desktop 全部完成后再首次检查 Mobile。
@@ -304,8 +306,9 @@ V11 明确 supersede T21 的首页单项投影：最多取三项当前 `availabl
 
 - digest、创建会话、上传、服务端校验形成同一可见阶段链。
 - uploading 使用 XHR 已发送字节的真实百分比。
-- Hero、二维码、水印、作品图上传都复用同一进度表达，不只显示“上传中…”。
+- Hero、二维码和作品图上传都复用同一进度表达，不只显示“上传中…”。
 - 上传失败保留用户文件/预览和明确重试入口。
+- 管理端不再展示自动图片叠加配置、Logo 候选、参数、预览或全站应用状态；作品编辑器只显示私有编辑预览，公开发布统一生成无叠加 `recipe-v4`。
 
 ### 9.3 FFmpeg
 

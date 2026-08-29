@@ -169,7 +169,6 @@ export interface ReadySiteDisplayVariant {
   inputSha256: string
   mediaRole: MediaRole
   objectKey: string
-  protectionMode: 'none'
   recipeVersion: typeof SITE_DISPLAY_RECIPE_VERSION
   sha256: string
   sourceVariantId: string | null
@@ -202,7 +201,7 @@ function formatOperation(usage: SiteDisplayUsage, format: PublicFormat) {
   }`
 }
 
-/** 无水印处理串：只有缩放、格式与质量，不携带任何水印算子。 */
+/** 公开展示处理串：只有缩放、格式与质量。 */
 export function buildSiteDisplayProcess(
   source: AssetSource,
   usage: SiteDisplayUsage,
@@ -238,7 +237,6 @@ function recipeIdentity(
 ) {
   const identity = JSON.stringify({
     recipeVersion: SITE_DISPLAY_RECIPE_VERSION,
-    protectionMode: 'none',
     sourceSha256: source.inputSha256,
     sourceVariantId: source.sourceVariantId,
     mediaRole: sourceAsset.role,
@@ -466,7 +464,6 @@ export interface SiteDisplayVariantCandidate {
   byteSize: number | null
   format: 'webp' | 'jpeg' | 'png'
   height: number
-  protectionMode: string
   recipeVersion: string
   sha256: string | null
   status: string
@@ -489,7 +486,6 @@ function eligible<T extends SiteDisplayVariantCandidate>(
     && variant.status === 'READY'
     && variant.usage === usage
     && variant.recipeVersion === recipeVersion
-    && variant.protectionMode === 'none'
     && variant.sha256 !== null
     && digestPattern.test(variant.sha256)
     && variant.byteSize !== null

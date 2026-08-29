@@ -46,7 +46,7 @@ import {
   releaseOperationLease,
 } from '../repository/operation-lease'
 import type { OperationLease } from '../repository/operation-lease'
-import { ensureHeroUpscaleSource, generatePrivateWatermarkPreview } from '../recipe/media-recipe'
+import { ensureHeroUpscaleSource, generatePrivatePublicPreview } from '../recipe/media-recipe'
 import {
   assetSupportsSiteDisplay,
   generateSiteDisplayVariants,
@@ -61,7 +61,6 @@ import {
   edgePurgeUrlsForObjectKeys,
   runOperationEdgePurge,
 } from './public-media-purge'
-import { activeWatermarkProfileId } from './watermark-branding'
 import { getPublicationOperation } from './work-publication'
 
 const HERO_PREVIEW_TTL_MS = 5 * 60 * 1_000
@@ -250,24 +249,16 @@ export async function createHeroCollectionItemPreview(
   if (item.enabled === 1) {
     throw new ServiceError(409, 'CONFLICT', 'Disable the hero item before previewing it.', 'HERO_ITEM_ENABLED')
   }
-  const profileId = activeWatermarkProfileId(sqlite)
-  if (!profileId) {
-    throw new ServiceError(409, 'CONFLICT', 'Active watermark profile is unavailable.', 'WATERMARK_PROFILE_UNAVAILABLE')
-  }
   const objectKey = previewKey(item)
   const expiresAt = now + HERO_PREVIEW_TTL_MS
   setHeroItemPreview(sqlite, item.id, objectKey, expiresAt)
-  const dimensions = await generatePrivateWatermarkPreview(sqlite, storage, {
+  const dimensions = await generatePrivatePublicPreview(sqlite, storage, {
     assetId: item.assetId,
     objectKey,
-    profileId,
     usage: orientation === 'landscape' ? 'home-hero-landscape' : 'home-hero-portrait',
     width: orientation === 'landscape' ? 768 : 480,
   })
   requireCollectionVersion(sqlite, placement, orientation, expectedVersion)
-  if (activeWatermarkProfileId(sqlite) !== profileId) {
-    throw new ServiceError(409, 'CONFLICT', 'Active watermark profile changed.')
-  }
   return adminHeroItemPreviewDtoSchema.parse({
     url: `/api/admin/v1/site/hero-collections/${placement}/${orientation}/items/${item.id}/preview`,
     expiresAt: new Date(expiresAt).toISOString(),

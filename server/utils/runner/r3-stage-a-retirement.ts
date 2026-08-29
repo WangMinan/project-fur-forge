@@ -240,7 +240,6 @@ function hasNonQrAssetReference(sqlite: Database.Database, assetId: string) {
   const references: [string, string][] = [
     ['work_assets', 'asset_id'],
     ['return_photos', 'asset_id'],
-    ['watermark_profiles', 'source_asset_id'],
     ['site_hero_items', 'asset_id'],
   ]
   return references.some(([table, column]) => (

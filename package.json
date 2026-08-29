@@ -18,7 +18,6 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/db-migrate.ts",
     "db:restore": "tsx scripts/db-restore.ts",
-    "watermark:seed": "tsx scripts/watermark-seed.ts",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint app server shared scripts tests drizzle.config.ts nuxt.config.ts vitest.core.config.ts playwright.config.ts playwright.smoke.config.ts eslint.config.mjs",
@@ -31,7 +30,6 @@
     "test:release": "node scripts/run-release-tests.mjs",
     "check:fast": "pnpm lint && pnpm typecheck && pnpm test:core",
     "preflight:oss": "node scripts/oss-preflight.mjs",
-    "preflight:watermark": "node scripts/oss-watermark-centered-v2.mjs",
     "verify:production": "node scripts/verify-production.mjs",
     "verify:esa-cache": "node scripts/verify-esa-cache-policy.mjs",
     "verify:observability": "node scripts/verify-security-observability-policy.mjs",
@@ -41,6 +39,7 @@
     "commission:retention": "tsx scripts/commission-retention.ts",
     "media:reconcile-site-display": "tsx scripts/reconcile-site-display.ts",
     "media:upgrade-site-display-v2": "tsx scripts/upgrade-site-display-v2.ts",
+    "media:retire-legacy-public": "tsx scripts/retire-legacy-public-media.ts",
     "r3-a:cleanup": "tsx scripts/r3-stage-a-cleanup-cli.ts",
     "r3-a:prune-backups": "tsx scripts/r3-stage-a-prune-backups-cli.ts",
     "ops:build": "esbuild scripts/container-ops.ts --bundle --platform=node --target=node24 --format=esm --outfile=.output/ops/ops.mjs --external:better-sqlite3 --external:ffmpeg-static --external:ali-oss --external:drizzle-orm"

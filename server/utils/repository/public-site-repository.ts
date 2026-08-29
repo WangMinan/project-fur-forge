@@ -229,33 +229,15 @@ function loadCurrentPublicVariants(sqlite: Database.Database) {
       variant.width, variant.height, variant.format,
       variant.input_sha256 AS inputSha256,
       variant.internal_error_code AS internalErrorCode,
-      variant.logo_digest AS logoDigest,
       variant.media_role AS mediaRole,
       variant.recipe_version AS recipeVersion,
-      variant.sha256, variant.usage,
-      variant.watermark_anchor AS watermarkAnchor,
-      variant.watermark_config_digest AS watermarkConfigDigest,
-      variant.watermark_opacity_percent AS watermarkOpacityPercent,
-      variant.watermark_profile AS watermarkProfile,
-      variant.watermark_profile_id AS watermarkProfileId,
-      variant.watermark_scale_percent AS watermarkScalePercent
+      variant.sha256, variant.usage
     FROM asset_variants AS variant
-    JOIN site_branding AS branding ON branding.id = 'site'
-    JOIN watermark_profiles AS profile
-      ON profile.id = branding.active_watermark_profile_id
     WHERE variant.storage_scope = 'PUBLIC'
       AND variant.status = 'READY'
       AND variant.media_role IN ('adoption_cover', 'design_sheet', 'studio_photo')
       AND variant.usage IN ('adoption-card', 'work-card', 'detail', 'design-sheet')
-      AND variant.recipe_version IN ('recipe-v3', 'recipe-v2', 'recipe-v1')
-      AND variant.watermark_profile = 'brand-centered-v2'
-      AND variant.watermark_profile_id = profile.id
-      AND variant.watermark_config_digest = profile.config_digest
-      AND variant.logo_digest = profile.logo_digest
-      AND variant.watermark_anchor = 'center'
-      AND variant.watermark_opacity_percent = profile.opacity_percent
-      AND variant.watermark_scale_percent = profile.scale_percent
-      AND profile.status = 'ACTIVE'
+      AND variant.recipe_version IN ('recipe-v4', 'recipe-v3', 'recipe-v2', 'recipe-v1')
       AND length(variant.sha256) = 64
       AND variant.sha256 NOT GLOB '*[^0-9a-f]*'
       AND variant.byte_size > 0

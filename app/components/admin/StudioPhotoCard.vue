@@ -49,10 +49,6 @@ const focalPercent = computed(() => ({
   y: Math.round(props.entry.focalY * 100),
 }))
 
-const publicPreviewUsage = computed(() =>
-  previewAspect.value === 'card' ? 'work-card' as const : 'detail' as const,
-)
-
 function onPreviewPointer(event: PointerEvent) {
   if (props.locked || previewAspect.value !== 'original') {
     return
@@ -127,17 +123,13 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
         >3:4 卡片</button>
       </div>
       <p class="photo-card__preview-note">
-        640 px 编辑预览 · 无水印 · 仅管理员可查看 ·
+        640 px 编辑预览 · 仅管理员可查看 ·
         <a
           :href="adminMediaOriginalUrl(entry.assetId)"
           target="_blank"
           rel="noopener"
         >查看原图</a>
       </p>
-      <AdminWatermarkedMediaPreview
-        :asset-id="entry.assetId"
-        :usage="publicPreviewUsage"
-      />
     </div>
 
     <div class="photo-card__body">

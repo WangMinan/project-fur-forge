@@ -59,8 +59,6 @@ import {
 import type { OperationLease } from '../repository/operation-lease'
 import { registerOperationResumer } from './operation-recovery'
 import { ServiceError } from '../service-error'
-import { activeWatermarkProfileId } from './watermark-branding'
-import { requireWatermarkProfile } from '../service/watermark-profile'
 import {
   edgePurgeUrlsForObjectKeys,
   parseEdgePurgeUrls,
@@ -168,24 +166,14 @@ function missingVariantCount(
   sqlite: Database.Database,
   targets: readonly PublicationTarget[],
 ) {
-  const profileId = activeWatermarkProfileId(sqlite)
-  if (!profileId) {
-    return requiredVariantCount(targets)
-  }
-  const profile = requireWatermarkProfile(sqlite, profileId)
   let missing = 0
   for (const target of targets) {
     for (const usage of target.usages) {
       for (const width of publicRecipeWidths(usage)) {
         const values = new Set(findReadyVariantFormats(sqlite, {
           assetId: target.asset.assetId,
-          configDigest: profile.configDigest,
-          logoDigest: profile.logoDigest,
-          opacityPercent: profile.opacityPercent,
-          profileId: profile.id,
           recipeVersion: PUBLIC_RECIPE_VERSION,
           role: target.asset.role,
-          scalePercent: profile.scalePercent,
           usage,
           width,
         }))
@@ -302,9 +290,6 @@ export function checkWorkPublication(
   }
   if (publicationPhotos.some(photo => !photo.alt || photo.alt.trim() === '')) {
     blockers.push('STUDIO_PHOTO_ALT_REQUIRED')
-  }
-  if (!activeWatermarkProfileId(sqlite)) {
-    blockers.push('WATERMARK_PROFILE_REQUIRED')
   }
   const latestOperation = findLatestOperations(sqlite, 'WORK', [workId])
     .map(operationDto)
@@ -607,9 +592,9 @@ async function runWorkPublication(
         requireWorkLease(sqlite, lease)
       }
     }
-    stage = 'APPLYING_WATERMARK'
+    stage = 'GENERATING_PUBLIC'
     failureCode = 'PUBLIC_MEDIA_GENERATION_FAILED'
-    updateOperation(sqlite, operationId, 'APPLYING_WATERMARK', [], now)
+    updateOperation(sqlite, operationId, 'GENERATING_PUBLIC', [], now)
     for (const target of targets) {
       requireWorkLease(sqlite, lease)
       try {

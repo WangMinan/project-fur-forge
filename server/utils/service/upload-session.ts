@@ -162,8 +162,6 @@ export function assertUploadOwner(
       ? mediaRole === 'home_hero_landscape'
       : owner.id.endsWith('-portrait')
         ? mediaRole === 'home_hero_portrait'
-        : owner.id === 'branding'
-        ? mediaRole === 'watermark_logo'
         : owner.id === 'contact' && mediaRole === 'contact_qr'
     if (!validRole) {
       throw new ServiceError(400, 'VALIDATION_ERROR', 'Media role does not match owner.')
@@ -172,8 +170,6 @@ export function assertUploadOwner(
     const current = sqlite.prepare(heroContext ? `
       SELECT version FROM site_hero_collections
       WHERE placement = ? AND orientation = ?
-    ` : owner.id === 'branding' ? `
-      SELECT version FROM site_branding WHERE id = 'site'
     ` : owner.id === 'contact' ? `
       SELECT contact_content_version FROM site_content WHERE id = 'site'
     ` : `SELECT NULL`).pluck().get(...(heroContext

@@ -87,17 +87,7 @@ import type {
   uploadSessionDtoSchema,
   uploadSessionStatusSchema,
   verifiedAssetDtoSchema,
-  watermarkAnchorSchema,
 } from '../schemas/upload'
-import type {
-  watermarkBrandingDtoSchema,
-  watermarkCandidateDtoSchema,
-  watermarkOperationDtoSchema,
-  watermarkOperationStatusSchema,
-  watermarkPreviewKindSchema,
-  watermarkProfileDtoSchema,
-  watermarkProfileStatusSchema,
-} from '../schemas/watermark'
 import type {
   createCommissionSubmissionRequestSchema,
   commissionDeletionBlockerSchema,
@@ -245,12 +235,4 @@ export type UploadFailureCode = z.infer<typeof uploadFailureCodeSchema>
 export type UploadFailureStage = z.infer<typeof uploadFailureStageSchema>
 export type UploadSessionDto = z.infer<typeof uploadSessionDtoSchema>
 export type ConditionalPutDto = z.infer<typeof conditionalPutDtoSchema>
-export type WatermarkAnchor = z.infer<typeof watermarkAnchorSchema>
 export type VerifiedAssetDto = z.infer<typeof verifiedAssetDtoSchema>
-export type WatermarkProfileStatus = z.infer<typeof watermarkProfileStatusSchema>
-export type WatermarkOperationStatus = z.infer<typeof watermarkOperationStatusSchema>
-export type WatermarkProfileDto = z.infer<typeof watermarkProfileDtoSchema>
-export type WatermarkCandidateDto = z.infer<typeof watermarkCandidateDtoSchema>
-export type WatermarkBrandingDto = z.infer<typeof watermarkBrandingDtoSchema>
-export type WatermarkOperationDto = z.infer<typeof watermarkOperationDtoSchema>
-export type WatermarkPreviewKind = z.infer<typeof watermarkPreviewKindSchema>

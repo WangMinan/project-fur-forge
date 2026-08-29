@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import { expect } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { createLargeSyntheticPng, createSyntheticSourcePng, createSyntheticWatermarkPng } from '../../../scripts/oss-preflight-core.mjs'
+import { createLargeSyntheticPng, createSyntheticSourcePng, createSyntheticTransparentPng } from '../../../scripts/oss-preflight-core.mjs'
 import { CONTACT_QR_PNG } from '../../helpers/contact-qr-fixture'
 import { adminBaseURL } from './auth'
 
@@ -69,11 +69,6 @@ export async function resetOfficialChannels(page: Page) {
   await control(page, { action: 'resetOfficialChannels' })
 }
 
-// GATE-07：种入已发布作品照 + 启用的横竖首页图，并预生成当前活动水印的公开 variant。
-export async function seedBrandingStage(page: Page) {
-  await control(page, { action: 'seedBrandingStage' })
-}
-
 // 公开衍生图按配方身份哈希决定 asset_variants.id（不含资产 ID），E2E 库跨用例、
 // 跨运行复用；固定内容会让两次上传得到相同身份并在发布时触发 UNIQUE 冲突。
 // 追加随机尾字节（PNG 解码器在 IEND 后停止读取）使每次上传内容唯一。
@@ -83,7 +78,7 @@ function uniquePng(base: Buffer): Buffer {
 
 // 160×64 小 PNG：常规上传链路。
 export function smallStudioPng(): Buffer {
-  return uniquePng(createSyntheticWatermarkPng() as Buffer)
+  return uniquePng(createSyntheticTransparentPng() as Buffer)
 }
 
 let publishableStudioSource: Buffer | null = null
@@ -135,11 +130,6 @@ export function lowResolutionContactQrPng(): Buffer {
 
 export function nonSquareContactQrPng(): Buffer {
   return uniquePng(createSyntheticSourcePng(640, 320) as Buffer)
-}
-
-// T20 大图管理 E2E：临时停用/恢复活动水印 profile（验证预览与启用阻断）。
-export async function setWatermarkProfileActive(page: Page, active: boolean) {
-  await control(page, { action: 'setWatermarkProfileActive', active })
 }
 
 export function pngDimensions(content: Buffer) {

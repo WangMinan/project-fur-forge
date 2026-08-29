@@ -16,7 +16,7 @@ import {
   expect,
   it,
 } from 'vitest'
-import { createSyntheticWatermarkPng } from '../../scripts/oss-preflight-core.mjs'
+import { createSyntheticTransparentPng } from '../../scripts/oss-preflight-core.mjs'
 import {
   migrateDatabase,
   openDatabase,
@@ -33,7 +33,6 @@ import {
 } from '../../server/utils/service/work-management'
 import { publishWork } from '../../server/utils/runner/work-publication'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
-import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
 import { setPublicMediaCacheForTests } from '../../server/utils/public-media-cache'
 
 const USER_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
@@ -121,7 +120,7 @@ async function createPublishedWork(input: {
         purpose: input.purpose ?? 'showcase',
       }, NOW + sequence++)
   const assetId = randomUUID()
-  const content = createSyntheticWatermarkPng()
+  const content = createSyntheticTransparentPng()
   const key = `test/t19/original/${assetId}/source.png`
   sqlite.prepare(`
     INSERT INTO assets (
@@ -261,9 +260,6 @@ beforeEach(async () => {
   storage = new FakeMediaStorage()
   sequence = 1
   insertUser()
-  insertActiveWatermarkProfile(sqlite, NOW, {
-    environmentPrefix: 'test/t19-t20',
-  })
 })
 
 afterEach(() => {
@@ -296,18 +292,14 @@ describe('T19/T20 public repository contracts', () => {
       INSERT INTO asset_variants (
         id, asset_id, storage_scope, status, object_key, input_sha256,
         media_role, usage, width, height, format, quality, crop_identity,
-        recipe_version, protection_mode, watermark_profile,
-        watermark_config_digest, logo_digest, watermark_anchor,
-        sha256, byte_size, created_at, updated_at
+        recipe_version, sha256, byte_size, created_at, updated_at
       ) VALUES (?, ?, 'PUBLIC', 'READY', ?, ?, 'studio_photo', 'work-card',
-                480, 640, 'jpeg', 86, 'legacy', 'recipe-v1', 'watermark',
-                'brand-standard-v1', 'none', ?, 'top-left', ?, 10, ?, ?)
+                480, 640, 'jpeg', 86, 'legacy', 'recipe-v1', ?, 10, ?, ?)
     `).run(
       randomUUID(),
       first.assetId,
       'test/t19/web/legacy-retired-field-marker.jpg',
       first.assetSha256,
-      'b'.repeat(64),
       'c'.repeat(64),
       NOW,
       NOW,
@@ -377,7 +369,7 @@ describe('T19/T20 public repository contracts', () => {
       .not.toContain('second-work')
   })
 
-  it('uses one complete recipe-v2 source set while recipe-v3 is incomplete', async () => {
+  it('uses one complete recipe-v3 source set while recipe-v4 is incomplete', async () => {
     const legacy = await createPublishedWork({
       slug: 'legacy-recipe-work',
       sortOrder: 0,
@@ -387,29 +379,25 @@ describe('T19/T20 public repository contracts', () => {
       INSERT INTO asset_variants (
         id, asset_id, source_variant_id, storage_scope, status, object_key,
         input_sha256, media_role, usage, width, height, format, quality,
-        crop_identity, recipe_version, protection_mode, watermark_profile,
-        watermark_profile_id, watermark_config_digest, logo_digest,
-        watermark_anchor, watermark_opacity_percent, watermark_scale_percent,
+        crop_identity, recipe_version,
         sha256, byte_size, version, internal_error_code, created_at, updated_at
       )
       SELECT
         lower(hex(randomblob(16))), asset_id, source_variant_id, storage_scope,
-        status, replace(object_key, '/recipe-v3/', '/recipe-v2/'), input_sha256,
+        status, replace(object_key, '/recipe-v4/', '/recipe-v3/'), input_sha256,
         media_role, usage, width, height, format, quality, crop_identity,
-        'recipe-v2', protection_mode, watermark_profile, watermark_profile_id,
-        watermark_config_digest, logo_digest, watermark_anchor,
-        watermark_opacity_percent, watermark_scale_percent, sha256, byte_size,
+        'recipe-v3', sha256, byte_size,
         version, internal_error_code, created_at, updated_at
       FROM asset_variants
-      WHERE asset_id = ? AND recipe_version = 'recipe-v3'
+      WHERE asset_id = ? AND recipe_version = 'recipe-v4'
     `).run(legacy.assetId)
     sqlite.prepare(`
       UPDATE asset_variants
       SET status = 'FAILED'
-      WHERE asset_id = ? AND recipe_version = 'recipe-v3'
+      WHERE asset_id = ? AND recipe_version = 'recipe-v4'
         AND id != (
           SELECT id FROM asset_variants
-          WHERE asset_id = ? AND recipe_version = 'recipe-v3'
+          WHERE asset_id = ? AND recipe_version = 'recipe-v4'
           ORDER BY usage, width, format
           LIMIT 1
         )
@@ -426,8 +414,8 @@ describe('T19/T20 public repository contracts', () => {
       ]),
     ].map(item => item.src)
     expect(urls.length).toBeGreaterThan(0)
-    expect(urls.every(url => url.includes('/recipe-v2/'))).toBe(true)
-    expect(urls.some(url => url.includes('/recipe-v3/'))).toBe(false)
+    expect(urls.every(url => url.includes('/recipe-v3/'))).toBe(true)
+    expect(urls.some(url => url.includes('/recipe-v4/'))).toBe(false)
   })
 
   it('projects all three published purposes without private fields', async () => {

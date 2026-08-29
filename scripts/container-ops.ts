@@ -22,6 +22,7 @@ const COMMANDS = [
   'reconcile-site-display',
   'upgrade-site-display-v2',
   'recover-operations',
+  'retire-legacy-public-media',
   'r3-stage-a-cleanup',
   'r3-stage-a-prune-backups',
 ] as const
@@ -190,10 +191,30 @@ async function run() {
       const { getMediaStorage } = await import('../server/utils/media-storage')
       await import('../server/utils/runner/home-management')
       await import('../server/utils/runner/site-display-reconcile')
-      await import('../server/utils/runner/watermark-branding')
       await import('../server/utils/runner/work-publication')
       const { recoverPendingOperations } = await import('../server/utils/runner/operation-recovery')
       return await recoverPendingOperations({
+        sqlite: getDatabase().sqlite,
+        storage: getMediaStorage(),
+      })
+    }
+
+    case 'retire-legacy-public-media': {
+      const { values } = parseArgs({
+        args: argv(),
+        options: {
+          confirm: { type: 'string' },
+          execute: { type: 'boolean', default: false },
+        },
+      })
+      const { getDatabase } = await import('../server/utils/database')
+      const { getMediaStorage } = await import('../server/utils/media-storage')
+      const { getPublicMediaCache } = await import('../server/utils/public-media-cache')
+      const { retireLegacyPublicMedia } = await import('../server/utils/runner/legacy-public-media-retirement')
+      return await retireLegacyPublicMedia({
+        cache: getPublicMediaCache(),
+        confirmation: values.confirm,
+        execute: values.execute,
         sqlite: getDatabase().sqlite,
         storage: getMediaStorage(),
       })

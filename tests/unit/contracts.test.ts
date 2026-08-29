@@ -17,10 +17,6 @@ import {
   toAdminWorkDto,
   toPublicWorkDto,
 } from '../../server/utils/recipe/work-mapper'
-import {
-  createWatermarkProfileRequestSchema,
-  createWatermarkUploadSessionRequestSchema,
-} from '../../shared/schemas/watermark'
 import type { WorkRecord } from '../../server/utils/recipe/work-mapper'
 
 const baseRecord: WorkRecord = {
@@ -53,40 +49,6 @@ describe('shared API contracts', () => {
     })).toEqual({
       error: { code: 'CONFLICT', message: 'Resource changed.' },
     })
-  })
-
-  it('defaults centered watermark controls and rejects out-of-range or disable input', () => {
-    const base = {
-      expectedVersion: 1,
-      payload: { sourceAssetId: '550e8400-e29b-41d4-a716-446655440000' },
-    }
-    expect(createWatermarkProfileRequestSchema.parse(base).payload)
-      .toMatchObject({ opacityPercent: 50, scalePercent: 60 })
-    expect(createWatermarkProfileRequestSchema.safeParse({
-      ...base,
-      payload: { ...base.payload, opacityPercent: 9 },
-    }).success).toBe(false)
-    expect(createWatermarkProfileRequestSchema.safeParse({
-      ...base,
-      payload: { ...base.payload, scalePercent: 91 },
-    }).success).toBe(false)
-    expect(createWatermarkProfileRequestSchema.safeParse({
-      ...base,
-      payload: { ...base.payload, enabled: false },
-    }).success).toBe(false)
-    expect(createWatermarkUploadSessionRequestSchema.safeParse({
-      expectedVersion: 1,
-      payload: {
-        expected: {
-          contentType: 'image/jpeg',
-          byteSize: 1024,
-          contentMd5: 'AAAAAAAAAAAAAAAAAAAAAA==',
-          sha256: 'a'.repeat(64),
-          width: 512,
-          height: 512,
-        },
-      },
-    }).success).toBe(false)
   })
 
   it('accepts a complete featured order and rejects duplicate IDs', () => {

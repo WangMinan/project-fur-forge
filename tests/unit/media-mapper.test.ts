@@ -38,16 +38,9 @@ const publicVariant: VariantRecord = {
   internalErrorCode: null,
   logoDigest: 'b'.repeat(64),
   mediaRole: 'studio_photo',
-  protectionMode: 'watermark',
   recipeVersion: 'recipe-v1',
   sha256: 'c'.repeat(64),
   usage: 'work-card',
-  watermarkAnchor: 'center',
-  watermarkConfigDigest: 'd'.repeat(64),
-  watermarkOpacityPercent: 50,
-  watermarkProfile: 'brand-centered-v2',
-  watermarkProfileId: '550e8400-e29b-41d4-a716-446655440009',
-  watermarkScalePercent: 60,
 }
 
 describe('media DTO mapping', () => {

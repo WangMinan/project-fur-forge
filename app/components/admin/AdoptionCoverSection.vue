@@ -260,7 +260,6 @@ defineExpose({ save: saveCover })
       <input :id="`cover-x-${entry.assetId}`" type="range" min="0" max="100" :value="focalPercent.x" :disabled="locked || processing" @input="onFocalInput('x', $event)">
       <label class="cover__label" :for="`cover-y-${entry.assetId}`">垂直焦点 {{ focalPercent.y }}%</label>
       <input :id="`cover-y-${entry.assetId}`" type="range" min="0" max="100" :value="focalPercent.y" :disabled="locked || processing" @input="onFocalInput('y', $event)">
-      <AdminWatermarkedMediaPreview :asset-id="entry.assetId" usage="adoption-card" />
       <div class="cover__actions">
         <AdminAction v-if="entry.status === 'FAILED'" :disabled="locked || processing" :loading="processing" loading-label="处理中…" @click="retryProcessing">重试处理</AdminAction>
         <AdminAction :disabled="locked || processing" @click="entry = null">移除横版封面</AdminAction>

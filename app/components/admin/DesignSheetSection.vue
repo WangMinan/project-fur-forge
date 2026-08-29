@@ -257,7 +257,7 @@ defineExpose({ save: saveDesignSheet })
           >
         </div>
         <p class="design-sheet__note">
-          {{ entry.width }}×{{ entry.height }} · 640 px 编辑预览 · 无水印 · 仅管理员可查看
+          {{ entry.width }}×{{ entry.height }} · 640 px 编辑预览 · 仅管理员可查看
           · <a
             :href="adminMediaOriginalUrl(entry.assetId)"
             target="_blank"
@@ -271,10 +271,6 @@ defineExpose({ save: saveDesignSheet })
         >
           这张原图分辨率较低，仍可保存和发布。发布时会用 FFmpeg Lanczos 生成私有适配源，然后才会执行上传。
         </p>
-        <AdminWatermarkedMediaPreview
-          :asset-id="entry.assetId"
-          usage="design-sheet"
-        />
       </div>
 
       <div class="design-sheet__body">

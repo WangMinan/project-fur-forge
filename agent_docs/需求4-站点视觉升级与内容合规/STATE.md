@@ -1,8 +1,17 @@
 # 当前状态：需求4 · 站点视觉升级与内容合规
 
-> **最后校准**：2026-08-26
+> **最后校准**：2026-08-29
 > **状态**：仅阶段 E 开放。
 > **任务权威**：[`implementation/TASKS.md`](./implementation/TASKS.md)。
+
+## 2026-08-29 当前校准
+
+- Hero 自动轮播固定为 3s；Featured 与 Homepage Adoption 仍为 4s。
+- 1023px 以下保持原生滚动，并移除首页全部“下一幕”导线与文案；窄屏领养角色名保持单行，主行动保持 44px 可达但采用更紧凑的字号与内边距。
+- 生产委托制作单从 `.output/public/fonts/` 读取随镜像发布的 Noto Serif SC；本地仍从 `public/fonts/` 读取。字体完整嵌入，避免 CJK 子集在部分 PDF 阅读器中变成方框。
+- 自动图片叠加能力已退役：管理入口/API、profile/operation/branding 表、媒体身份字段、上传角色、脚本及专项 fixture 均删除。当前作品公开配方为无叠加 `recipe-v4`；0051 是只向前迁移，部署时停写并通过同一冻结镜像运行备份、migrate、旧公开媒体 dry-run/强确认退役、第二次 migrate 与 ready 校验。
+- 页面内低对比度工作室 Logo 只是 CSS 背景标记，不参与媒体生成，也不属于已退役的后台能力；旧文档中称其为“水印”的视觉描述统一按“背景标记”理解。
+- Latest completed Handoff：[`2026-08-29-T47-F4-MOBILE-PDF-MEDIA-RETIREMENT.md`](./implementation/notes/2026-08-29-T47-F4-MOBILE-PDF-MEDIA-RETIREMENT.md)。
 
 ## 当前阶段
 

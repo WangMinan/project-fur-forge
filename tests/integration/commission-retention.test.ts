@@ -130,12 +130,10 @@ function seedSubmission(options: { variantScope?: 'PRIVATE' | 'PUBLIC' } = {}) {
       INSERT INTO asset_variants (
         id, asset_id, storage_scope, status, object_key, input_sha256,
         media_role, usage, width, height, format, quality, crop_identity,
-        recipe_version, protection_mode, watermark_profile,
-        watermark_config_digest, logo_digest, watermark_anchor,
-        sha256, byte_size, created_at, updated_at
+        recipe_version, sha256, byte_size, created_at, updated_at
       ) VALUES (?, ?, ?, 'READY', ?, ?, 'commission_design_reference',
         'preprocess', 640, 640, 'png', 82, 'contain', 'preprocess-v1',
-        'none', 'none', 'none', 'none', 'none', ?, 100, ?, ?)
+        ?, 100, ?, ?)
     `).run(
       VARIANT_ID,
       ASSET_ID,

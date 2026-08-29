@@ -18,7 +18,7 @@ import {
 } from 'vitest'
 import {
   createSyntheticSourcePng,
-  createSyntheticWatermarkPng,
+  createSyntheticTransparentPng,
 } from '../../scripts/oss-preflight-core.mjs'
 import {
   migrateDatabase,
@@ -44,7 +44,6 @@ import { recoverPendingOperations } from '../../server/utils/runner/operation-re
 import { runOperationEdgePurge } from '../../server/utils/runner/public-media-purge'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 import { FakePublicMediaCache } from '../helpers/fake-public-media-cache'
-import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
 
 const USER_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const ASSET_ID = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
@@ -83,7 +82,7 @@ function createWorkWithPhoto(
   }, NOW)
   const content = width < 2400 || height < 1600
     ? createSyntheticSourcePng(width, height)
-    : createSyntheticWatermarkPng()
+    : createSyntheticTransparentPng()
   const key = `${environmentPrefix}/original/${ASSET_ID}/source.png`
   sqlite.prepare(`
     INSERT INTO assets (
@@ -134,7 +133,6 @@ function createWorkWithPhoto(
       focalX: 0.5,
       focalY: 0.5,
       crop: { x: 0, y: 0, width: 1, height: 1 },
-      watermarkAnchor: 'top-left',
     }],
     NOW + 2_000,
   )
@@ -163,7 +161,7 @@ function attachRequiredAdoptionMedia(
 ) {
   const withStudioPhoto = options.studioPhoto ?? true
   const withCover = options.cover ?? true
-  const photoContent = createSyntheticWatermarkPng()
+  const photoContent = createSyntheticTransparentPng()
   const coverContent = createSyntheticSourcePng(3200, 1800)
   const sources = [
     ...(withStudioPhoto
@@ -339,9 +337,6 @@ beforeEach(async () => {
   sqlite = openDatabase(databaseFile).sqlite
   storage = new FakeMediaStorage()
   insertUser()
-  insertActiveWatermarkProfile(sqlite, NOW, {
-    environmentPrefix: 'test/t18-fixture',
-  })
 })
 
 afterEach(() => {
@@ -1026,28 +1021,20 @@ describe('dual-bucket work publication operations', () => {
     )
     expect(published.work.publicationStatus).toBe('published')
     const variants = sqlite.prepare(`
-      SELECT media_role AS mediaRole, usage, protection_mode AS protectionMode,
-             recipe_version AS recipeVersion,
-             watermark_profile AS watermarkProfile
+      SELECT media_role AS mediaRole, usage, recipe_version AS recipeVersion
       FROM asset_variants
       WHERE asset_id IN (?, ?) AND storage_scope = 'PUBLIC'
     `).all(ASSET_ID, COVER_ASSET_ID) as Array<{
       mediaRole: string
-      protectionMode: string
       recipeVersion: string
       usage: string
-      watermarkProfile: string
     }>
     expect(new Set(variants.map(variant => variant.usage))).toEqual(new Set([
       'adoption-card',
       'detail',
       'work-card',
     ]))
-    expect(variants.every(variant => (
-      variant.watermarkProfile === 'brand-centered-v2'
-      && variant.protectionMode === 'watermark'
-      && variant.recipeVersion === 'recipe-v3'
-    ))).toBe(true)
+    expect(variants.every(variant => variant.recipeVersion === 'recipe-v4')).toBe(true)
     expect(new Set(variants.map(variant => variant.mediaRole)))
       .toEqual(new Set(['adoption_cover', 'studio_photo']))
   })

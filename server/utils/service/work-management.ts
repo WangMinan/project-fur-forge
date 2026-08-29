@@ -13,7 +13,6 @@ import type {
   ManagedWorkDto,
   FeaturedWorkOrderItem,
   PublicSafeWorkPreviewDto,
-  WatermarkAnchor,
   WorkFields,
   WorkListItemDto,
 } from '../../../shared/types/contracts'
@@ -34,7 +33,6 @@ interface StudioPhotoInput {
   focalX: number
   focalY: number
   primary: boolean
-  watermarkAnchor?: WatermarkAnchor | undefined
 }
 
 interface DesignSheetInput {
@@ -109,17 +107,12 @@ function studioPhotos(sqlite: Database.Database, workId: string) {
       relation.crop_y AS cropY,
       relation.crop_width AS cropWidth,
       relation.crop_height AS cropHeight,
-      relation.watermark_anchor AS watermarkAnchor,
       asset.version, asset.status, asset.width, asset.height,
       (
         SELECT count(*) FROM asset_variants AS variant
         WHERE variant.asset_id = asset.id
           AND variant.storage_scope = 'PUBLIC'
           AND variant.status = 'READY'
-          AND variant.watermark_profile_id = (
-            SELECT active_watermark_profile_id
-            FROM site_branding WHERE id = 'site'
-          )
       ) AS publicVariantCount
     FROM work_assets AS relation
     JOIN assets AS asset ON asset.id = relation.asset_id
@@ -139,7 +132,6 @@ function studioPhotos(sqlite: Database.Database, workId: string) {
         width: photo.cropWidth,
         height: photo.cropHeight,
       },
-      watermarkAnchor: photo.watermarkAnchor,
       version: photo.version,
       status: photo.status,
       width: photo.width,
@@ -165,10 +157,6 @@ function designSheet(
         WHERE variant.asset_id = asset.id
           AND variant.storage_scope = 'PUBLIC'
           AND variant.status = 'READY'
-          AND variant.watermark_profile_id = (
-            SELECT active_watermark_profile_id
-            FROM site_branding WHERE id = 'site'
-          )
       ) AS publicVariantCount
     FROM work_assets AS relation
     JOIN assets AS asset ON asset.id = relation.asset_id
@@ -199,10 +187,6 @@ function adoptionCover(
           AND variant.storage_scope = 'PUBLIC'
           AND variant.status = 'READY'
           AND variant.usage = 'adoption-card'
-          AND variant.watermark_profile_id = (
-            SELECT active_watermark_profile_id
-            FROM site_branding WHERE id = 'site'
-          )
       ) AS publicVariantCount
     FROM work_assets AS relation
     JOIN assets AS asset ON asset.id = relation.asset_id
@@ -968,13 +952,12 @@ export function replaceManagedStudioPhotos(
       const insert = sqlite.prepare(`
         INSERT INTO work_assets (
           work_id, asset_id, role, alt_text, position, is_primary,
-          focal_x, focal_y, crop_x, crop_y, crop_width, crop_height,
-          watermark_anchor
-        ) VALUES (?, ?, 'studio_photo', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          focal_x, focal_y, crop_x, crop_y, crop_width, crop_height
+        ) VALUES (?, ?, 'studio_photo', ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
       const updateAssetPresentation = sqlite.prepare(`
         UPDATE assets
-        SET focal_x = ?, focal_y = ?, watermark_anchor = ?,
+        SET focal_x = ?, focal_y = ?,
             version = version + 1, updated_at = ?
         WHERE id = ? AND status = 'READY' AND role = 'studio_photo'
       `)
@@ -991,12 +974,10 @@ export function replaceManagedStudioPhotos(
           photo.crop.y,
           photo.crop.width,
           photo.crop.height,
-          'top-left',
         )
         updateAssetPresentation.run(
           photo.focalX,
           photo.focalY,
-          'top-left',
           now,
           photo.assetId,
         )

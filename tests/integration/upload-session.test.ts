@@ -153,49 +153,6 @@ describe('persistent conditional upload sessions', () => {
     expect(storage.signedPuts).toHaveLength(0)
   })
 
-  it('allows watermark candidates only under site branding ownership', async () => {
-    insertFixtures()
-    const expected = input().expected
-    await expect(createUploadSession(
-      sqlite,
-      storage,
-      { appEnv: 'test' },
-      USER_ID,
-      {
-        owner: { type: 'site', id: 'branding', expectedVersion: 1 },
-        mediaRole: 'watermark_logo',
-        expected,
-      },
-    )).resolves.toMatchObject({
-      session: {
-        owner: { type: 'site', id: 'branding' },
-        mediaRole: 'watermark_logo',
-      },
-    })
-    await expect(createUploadSession(
-      sqlite,
-      storage,
-      { appEnv: 'test' },
-      USER_ID,
-      {
-        owner: { type: 'work', id: WORK_ID, expectedVersion: 1 },
-        mediaRole: 'watermark_logo',
-        expected,
-      },
-    )).rejects.toMatchObject({ statusCode: 400 })
-    await expect(createUploadSession(
-      sqlite,
-      storage,
-      { appEnv: 'test' },
-      USER_ID,
-      {
-        owner: { type: 'site', id: 'home', expectedVersion: 1 },
-        mediaRole: 'watermark_logo',
-        expected,
-      },
-    )).rejects.toMatchObject({ statusCode: 400 })
-  })
-
   it('cancels by exact key and retries with a new session and key', async () => {
     insertFixtures()
     const created = await createUploadSession(

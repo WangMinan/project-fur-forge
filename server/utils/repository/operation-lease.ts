@@ -9,8 +9,7 @@ import { safeLog } from '../safe-log'
  * T34-F5 长任务 lease / heartbeat / attempt 仓储层。
  *
  * 这一层只做 SQL 与条件更新（CAS），不含业务规则、不做 OSS 调用。
- * publication_operations 与 watermark_operations 共用同一组列，
- * 因此共用同一套语句，由表名参数区分。
+ * 各持久 operation 表共用同一套语句，由表名参数区分。
  *
  * 边界：
  * - 抢占在单条 UPDATE ... WHERE 内完成，两个 runner 不可能同时持有同一 lease；
@@ -31,7 +30,6 @@ export const OPERATION_HEARTBEAT_INTERVAL_MS = Math.floor(
  */
 export type OperationTable =
   | 'publication_operations'
-  | 'watermark_operations'
   | 'site_display_reconcile_operations'
 
 export type OperationRecoveryReason =

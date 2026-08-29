@@ -109,7 +109,6 @@ export const assets = sqliteTable('assets', {
   focalX: real('focal_x').notNull().default(0.5),
   focalY: real('focal_y').notNull().default(0.5),
   fitMode: text('fit_mode').notNull().default('cover'),
-  watermarkAnchor: text('watermark_anchor').notNull().default('top-left'),
   version: integer('version').notNull().default(1),
   internalErrorCode: text('internal_error_code'),
   ...timestampColumns(),
@@ -118,7 +117,7 @@ export const assets = sqliteTable('assets', {
     .on(table.privateObjectKey),
   check(
     'assets_role',
-    sql`${table.role} IN ('design_sheet', 'studio_photo', 'adoption_cover', 'commission_design_reference', 'home_hero_landscape', 'home_hero_portrait', 'watermark_logo', 'contact_qr')`,
+    sql`${table.role} IN ('design_sheet', 'studio_photo', 'adoption_cover', 'commission_design_reference', 'home_hero_landscape', 'home_hero_portrait', 'contact_qr')`,
   ),
   check(
     'assets_status',
@@ -153,10 +152,6 @@ export const assets = sqliteTable('assets', {
     sql`${table.fitMode} IN ('cover', 'contain')`,
   ),
   check(
-    'assets_watermark_anchor',
-    sql`${table.watermarkAnchor} IN ('top-left', 'top-right', 'bottom-left', 'bottom-right')`,
-  ),
-  check(
     'assets_hero_orientation',
     sql`(${table.role} != 'home_hero_landscape' OR ${table.width} > ${table.height}) AND (${table.role} != 'home_hero_portrait' OR ${table.height} > ${table.width})`,
   ),
@@ -173,59 +168,10 @@ export const assets = sqliteTable('assets', {
     sql`${table.mimeType} IN ('image/jpeg', 'image/png', 'image/webp')`,
   ),
   check(
-    'assets_watermark_logo_png',
-    sql`${table.role} != 'watermark_logo' OR (${table.mimeType} = 'image/png' AND ${table.byteSize} <= 20000000)`,
-  ),
-  check(
     'assets_contact_qr_source',
     sql`${table.role} != 'contact_qr' OR (${table.mimeType} IN ('image/jpeg', 'image/png', 'image/webp') AND ${table.byteSize} <= 20000000 AND ${table.width} >= 64 AND ${table.height} >= 64 AND ${table.fitMode} = 'contain')`,
   ),
   check('assets_version_positive', sql`${table.version} > 0`),
-])
-
-export const watermarkProfiles = sqliteTable('watermark_profiles', {
-  id: text('id').primaryKey(),
-  profileName: text('profile_name').notNull(),
-  sourceAssetId: text('source_asset_id').notNull()
-    .references(() => assets.id, { onDelete: 'restrict' }),
-  logoDigest: text('logo_digest').notNull(),
-  position: text('position').notNull().default('center'),
-  opacityPercent: integer('opacity_percent').notNull().default(50),
-  scalePercent: integer('scale_percent').notNull().default(60),
-  configDigest: text('config_digest').notNull(),
-  status: text('status').notNull().default('DRAFT'),
-  version: integer('version').notNull().default(1),
-  ...timestampColumns(),
-}, table => [
-  index('watermark_profiles_config_digest_idx')
-    .on(table.configDigest),
-  index('watermark_profiles_source_asset_idx').on(table.sourceAssetId),
-  check(
-    'watermark_profiles_name',
-    sql`${table.profileName} = 'brand-centered-v2'`,
-  ),
-  check('watermark_profiles_position', sql`${table.position} = 'center'`),
-  check(
-    'watermark_profiles_opacity',
-    sql`${table.opacityPercent} BETWEEN 10 AND 90`,
-  ),
-  check(
-    'watermark_profiles_scale',
-    sql`${table.scalePercent} BETWEEN 20 AND 90`,
-  ),
-  check(
-    'watermark_profiles_logo_digest',
-    sql`length(${table.logoDigest}) = 64 AND ${table.logoDigest} = lower(${table.logoDigest}) AND ${table.logoDigest} NOT GLOB '*[^0-9a-f]*'`,
-  ),
-  check(
-    'watermark_profiles_config_digest',
-    sql`length(${table.configDigest}) = 64 AND ${table.configDigest} = lower(${table.configDigest}) AND ${table.configDigest} NOT GLOB '*[^0-9a-f]*'`,
-  ),
-  check(
-    'watermark_profiles_status',
-    sql`${table.status} IN ('DRAFT', 'APPLYING', 'ACTIVE', 'RETIRED', 'FAILED')`,
-  ),
-  check('watermark_profiles_version_positive', sql`${table.version} > 0`),
 ])
 
 export const uploadSessions = sqliteTable('upload_sessions', {
@@ -267,7 +213,7 @@ export const uploadSessions = sqliteTable('upload_sessions', {
   ),
   check(
     'upload_sessions_owner_id',
-    sql`length(trim(${table.ownerId})) > 0 AND (${table.ownerType} != 'site' OR ${table.ownerId} IN ('hero-home-landscape', 'hero-home-portrait', 'hero-commission-landscape', 'hero-commission-portrait', 'branding', 'contact'))`,
+    sql`length(trim(${table.ownerId})) > 0 AND (${table.ownerType} != 'site' OR ${table.ownerId} IN ('hero-home-landscape', 'hero-home-portrait', 'hero-commission-landscape', 'hero-commission-portrait', 'contact'))`,
   ),
   check(
     'upload_sessions_owner_version',
@@ -275,7 +221,7 @@ export const uploadSessions = sqliteTable('upload_sessions', {
   ),
   check(
     'upload_sessions_media_role',
-    sql`(${table.ownerType} = 'work' AND ${table.mediaRole} IN ('design_sheet', 'studio_photo', 'adoption_cover')) OR (${table.ownerType} = 'site' AND ${table.ownerId} IN ('hero-home-landscape', 'hero-commission-landscape') AND ${table.mediaRole} = 'home_hero_landscape') OR (${table.ownerType} = 'site' AND ${table.ownerId} IN ('hero-home-portrait', 'hero-commission-portrait') AND ${table.mediaRole} = 'home_hero_portrait') OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'branding' AND ${table.mediaRole} = 'watermark_logo') OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'contact' AND ${table.mediaRole} = 'contact_qr')`,
+    sql`(${table.ownerType} = 'work' AND ${table.mediaRole} IN ('design_sheet', 'studio_photo', 'adoption_cover')) OR (${table.ownerType} = 'site' AND ${table.ownerId} IN ('hero-home-landscape', 'hero-commission-landscape') AND ${table.mediaRole} = 'home_hero_landscape') OR (${table.ownerType} = 'site' AND ${table.ownerId} IN ('hero-home-portrait', 'hero-commission-portrait') AND ${table.mediaRole} = 'home_hero_portrait') OR (${table.ownerType} = 'site' AND ${table.ownerId} = 'contact' AND ${table.mediaRole} = 'contact_qr')`,
   ),
   check(
     'upload_sessions_private_key_relative',
@@ -284,10 +230,6 @@ export const uploadSessions = sqliteTable('upload_sessions', {
   check(
     'upload_sessions_content_type',
     sql`${table.expectedContentType} IN ('image/jpeg', 'image/png', 'image/webp')`,
-  ),
-  check(
-    'upload_sessions_watermark_logo_png',
-    sql`${table.mediaRole} != 'watermark_logo' OR (${table.expectedContentType} = 'image/png' AND ${table.expectedBytes} <= 20000000)`,
   ),
   check(
     'upload_sessions_contact_qr_source',
@@ -498,15 +440,6 @@ export const assetVariants = sqliteTable('asset_variants', {
   quality: integer('quality').notNull(),
   cropIdentity: text('crop_identity').notNull(),
   recipeVersion: text('recipe_version').notNull(),
-  protectionMode: text('protection_mode').notNull().default('watermark'),
-  watermarkProfile: text('watermark_profile').notNull(),
-  watermarkProfileId: text('watermark_profile_id')
-    .references(() => watermarkProfiles.id, { onDelete: 'restrict' }),
-  watermarkConfigDigest: text('watermark_config_digest').notNull().default('none'),
-  logoDigest: text('logo_digest').notNull(),
-  watermarkAnchor: text('watermark_anchor').notNull(),
-  watermarkOpacityPercent: integer('watermark_opacity_percent'),
-  watermarkScalePercent: integer('watermark_scale_percent'),
   sha256: text('sha256'),
   byteSize: integer('byte_size'),
   version: integer('version').notNull().default(1),
@@ -514,7 +447,7 @@ export const assetVariants = sqliteTable('asset_variants', {
   ...timestampColumns(),
 }, table => [
   uniqueIndex('asset_variants_object_key_unique').on(table.objectKey),
-  uniqueIndex('asset_variants_legacy_identity_unique').on(
+  uniqueIndex('asset_variants_identity_unique').on(
     table.assetId,
     table.inputSha256,
     table.mediaRole,
@@ -525,32 +458,9 @@ export const assetVariants = sqliteTable('asset_variants', {
     table.quality,
     table.cropIdentity,
     table.recipeVersion,
-    table.watermarkProfile,
-    table.logoDigest,
-    table.watermarkAnchor,
-  ).where(sql`${table.watermarkProfileId} IS NULL`),
-  uniqueIndex('asset_variants_profile_identity_unique').on(
-    table.assetId,
-    table.inputSha256,
-    table.mediaRole,
-    table.usage,
-    table.width,
-    table.height,
-    table.format,
-    table.quality,
-    table.cropIdentity,
-    table.recipeVersion,
-    table.watermarkProfileId,
-    table.watermarkConfigDigest,
-    table.logoDigest,
-    table.watermarkAnchor,
-    table.watermarkOpacityPercent,
-    table.watermarkScalePercent,
-  ).where(sql`${table.watermarkProfileId} IS NOT NULL`),
+  ),
   index('asset_variants_public_lookup_idx')
     .on(table.assetId, table.storageScope, table.status, table.usage),
-  index('asset_variants_protection_idx')
-    .on(table.storageScope, table.protectionMode, table.usage, table.status),
   check(
     'asset_variants_storage_scope',
     sql`${table.storageScope} IN ('PRIVATE', 'PUBLIC')`,
@@ -589,39 +499,15 @@ export const assetVariants = sqliteTable('asset_variants', {
   ),
   check(
     'asset_variants_identity_text',
-    sql`length(trim(${table.cropIdentity})) > 0 AND length(trim(${table.recipeVersion})) > 0 AND length(trim(${table.watermarkProfile})) > 0`,
-  ),
-  check(
-    'asset_variants_logo_digest',
-    sql`${table.logoDigest} = 'none' OR (length(${table.logoDigest}) = 64 AND ${table.logoDigest} = lower(${table.logoDigest}) AND ${table.logoDigest} NOT GLOB '*[^0-9a-f]*')`,
-  ),
-  check(
-    'asset_variants_watermark_anchor',
-    sql`${table.watermarkAnchor} IN ('none', 'top-left', 'top-right', 'bottom-left', 'bottom-right', 'center')`,
-  ),
-  check(
-    'asset_variants_watermark_config_digest',
-    sql`${table.watermarkConfigDigest} = 'none' OR (length(${table.watermarkConfigDigest}) = 64 AND ${table.watermarkConfigDigest} = lower(${table.watermarkConfigDigest}) AND ${table.watermarkConfigDigest} NOT GLOB '*[^0-9a-f]*')`,
-  ),
-  check(
-    'asset_variants_protection_mode',
-    sql`${table.protectionMode} IN ('none', 'watermark')`,
-  ),
-  check(
-    'asset_variants_unprotected_identity',
-    sql`${table.protectionMode} != 'none' OR (${table.watermarkProfile} = 'none' AND ${table.watermarkProfileId} IS NULL AND ${table.watermarkConfigDigest} = 'none' AND ${table.logoDigest} = 'none' AND ${table.watermarkAnchor} = 'none' AND ${table.watermarkOpacityPercent} IS NULL AND ${table.watermarkScalePercent} IS NULL)`,
+    sql`length(trim(${table.cropIdentity})) > 0 AND length(trim(${table.recipeVersion})) > 0`,
   ),
   check(
     'asset_variants_site_display_recipe',
-    sql`${table.recipeVersion} NOT IN ('site-display-v1', 'site-display-v2') OR (${table.storageScope} = 'PUBLIC' AND ${table.protectionMode} = 'none' AND ${table.usage} IN ('home-hero-landscape', 'home-hero-portrait', 'commission-hero-landscape', 'commission-hero-portrait', 'home-entry-commission', 'home-entry-adoption'))`,
+    sql`${table.recipeVersion} NOT IN ('site-display-v1', 'site-display-v2') OR (${table.storageScope} = 'PUBLIC' AND ${table.usage} IN ('home-hero-landscape', 'home-hero-portrait', 'commission-hero-landscape', 'commission-hero-portrait', 'home-entry-commission', 'home-entry-adoption'))`,
   ),
   check(
     'asset_variants_site_display_usage',
-    sql`${table.usage} NOT IN ('commission-hero-landscape', 'commission-hero-portrait', 'home-entry-commission', 'home-entry-adoption') OR (${table.storageScope} = 'PUBLIC' AND ${table.protectionMode} = 'none' AND ${table.recipeVersion} IN ('site-display-v1', 'site-display-v2'))`,
-  ),
-  check(
-    'asset_variants_public_protection',
-    sql`${table.storageScope} != 'PUBLIC' OR ${table.protectionMode} = 'watermark' OR ${table.recipeVersion} IN ('site-display-v1', 'site-display-v2', 'contact-qr-v1')`,
+    sql`${table.usage} NOT IN ('commission-hero-landscape', 'commission-hero-portrait', 'home-entry-commission', 'home-entry-adoption') OR (${table.storageScope} = 'PUBLIC' AND ${table.recipeVersion} IN ('site-display-v1', 'site-display-v2'))`,
   ),
   check(
     'asset_variants_commission_private',
@@ -629,27 +515,19 @@ export const assetVariants = sqliteTable('asset_variants', {
   ),
   check(
     'asset_variants_contact_qr_recipe',
-    sql`${table.recipeVersion} != 'contact-qr-v1' OR (${table.storageScope} = 'PUBLIC' AND ${table.protectionMode} = 'none' AND ${table.usage} = 'contact-qr' AND ${table.mediaRole} = 'contact_qr' AND ${table.format} = 'png' AND ${table.width} = ${table.height})`,
+    sql`${table.recipeVersion} != 'contact-qr-v1' OR (${table.storageScope} = 'PUBLIC' AND ${table.usage} = 'contact-qr' AND ${table.mediaRole} = 'contact_qr' AND ${table.format} = 'png' AND ${table.width} = ${table.height})`,
   ),
   check(
     'asset_variants_contact_qr_usage',
-    sql`${table.usage} != 'contact-qr' OR (${table.storageScope} = 'PUBLIC' AND ${table.protectionMode} = 'none' AND ${table.recipeVersion} = 'contact-qr-v1' AND ${table.mediaRole} = 'contact_qr' AND ${table.format} = 'png' AND ${table.width} = ${table.height})`,
+    sql`${table.usage} != 'contact-qr' OR (${table.storageScope} = 'PUBLIC' AND ${table.recipeVersion} = 'contact-qr-v1' AND ${table.mediaRole} = 'contact_qr' AND ${table.format} = 'png' AND ${table.width} = ${table.height})`,
   ),
   check(
     'asset_variants_contact_qr_role',
     sql`${table.mediaRole} != 'contact_qr' OR ${table.usage} IN ('preprocess', 'contact-qr')`,
   ),
   check(
-    'asset_variants_public_watermark',
-    sql`${table.storageScope} != 'PUBLIC' OR ${table.protectionMode} != 'watermark' OR ((${table.watermarkProfile} = 'brand-standard-v1' AND ${table.watermarkProfileId} IS NULL AND ${table.watermarkConfigDigest} = 'none' AND ${table.logoDigest} != 'none' AND ${table.watermarkAnchor} IN ('top-left', 'top-right', 'bottom-left', 'bottom-right') AND ${table.watermarkOpacityPercent} IS NULL AND ${table.watermarkScalePercent} IS NULL) OR (${table.watermarkProfile} = 'brand-centered-v2' AND ${table.watermarkProfileId} IS NOT NULL AND ${table.watermarkConfigDigest} != 'none' AND ${table.logoDigest} != 'none' AND ${table.watermarkAnchor} = 'center' AND ${table.watermarkOpacityPercent} BETWEEN 10 AND 90 AND ${table.watermarkScalePercent} BETWEEN 20 AND 90))`,
-  ),
-  check(
     'asset_variants_preprocess_private',
-    sql`${table.usage} != 'preprocess' OR (${table.storageScope} = 'PRIVATE' AND ${table.protectionMode} = 'none' AND ${table.watermarkProfile} = 'none' AND ${table.watermarkProfileId} IS NULL AND ${table.watermarkConfigDigest} = 'none' AND ${table.logoDigest} = 'none' AND ${table.watermarkAnchor} = 'none' AND ${table.watermarkOpacityPercent} IS NULL AND ${table.watermarkScalePercent} IS NULL)`,
-  ),
-  check(
-    'asset_variants_private_unprotected',
-    sql`${table.storageScope} != 'PRIVATE' OR ${table.protectionMode} = 'none'`,
+    sql`${table.usage} != 'preprocess' OR ${table.storageScope} = 'PRIVATE'`,
   ),
   check(
     'asset_variants_ready_output',
@@ -673,7 +551,6 @@ export const workAssets = sqliteTable('work_assets', {
   cropY: real('crop_y').notNull().default(0),
   cropWidth: real('crop_width').notNull().default(1),
   cropHeight: real('crop_height').notNull().default(1),
-  watermarkAnchor: text('watermark_anchor').notNull().default('top-left'),
 }, table => [
   primaryKey({ columns: [table.workId, table.assetId] }),
   uniqueIndex('work_assets_asset_unique').on(table.assetId),
@@ -705,10 +582,6 @@ export const workAssets = sqliteTable('work_assets', {
   check(
     'work_assets_crop',
     sql`${table.cropX} BETWEEN 0 AND 1 AND ${table.cropY} BETWEEN 0 AND 1 AND ${table.cropWidth} > 0 AND ${table.cropWidth} <= 1 AND ${table.cropHeight} > 0 AND ${table.cropHeight} <= 1 AND ${table.cropX} + ${table.cropWidth} <= 1 AND ${table.cropY} + ${table.cropHeight} <= 1`,
-  ),
-  check(
-    'work_assets_watermark_anchor',
-    sql`${table.watermarkAnchor} IN ('top-left', 'top-right', 'bottom-left', 'bottom-right')`,
   ),
 ])
 
@@ -832,84 +705,6 @@ export const siteHeroItems = sqliteTable('site_hero_items', {
   check('site_hero_items_version_positive', sql`${table.version} > 0`),
 ])
 
-export const watermarkOperations = sqliteTable('watermark_operations', {
-  id: text('id').primaryKey(),
-  operationType: text('operation_type').notNull(),
-  profileId: text('profile_id').notNull()
-    .references(() => watermarkProfiles.id, { onDelete: 'restrict' }),
-  brandingVersion: integer('branding_version').notNull(),
-  status: text('status').notNull(),
-  affectedWorkCount: integer('affected_work_count').notNull().default(0),
-  targetVariantCount: integer('target_variant_count').notNull().default(0),
-  generatedVariantCount: integer('generated_variant_count').notNull().default(0),
-  verifiedVariantCount: integer('verified_variant_count').notNull().default(0),
-  previewManifestJson: text('preview_manifest_json').notNull().default('[]'),
-  cleanupObjectKeysJson: text('cleanup_object_keys_json').notNull().default('[]'),
-  internalErrorCode: text('internal_error_code'),
-  failureStage: text('failure_stage'),
-  version: integer('version').notNull().default(1),
-  // T34-F5 恢复基础设施：attempt/lease/heartbeat 由迁移 0020 增加。
-  attempt: integer('attempt').notNull().default(0),
-  leaseOwner: text('lease_owner'),
-  leaseExpiresAt: integer('lease_expires_at'),
-  heartbeatAt: integer('heartbeat_at'),
-  recoveryReason: text('recovery_reason'),
-  nextRetryAt: integer('next_retry_at'),
-  startedAt: integer('started_at').notNull(),
-  updatedAt: integer('updated_at').notNull(),
-  completedAt: integer('completed_at'),
-}, table => [
-  index('watermark_operations_profile_idx')
-    .on(table.profileId, table.startedAt),
-  index('watermark_operations_lease_idx')
-    .on(table.status, table.leaseExpiresAt),
-  check('watermark_operations_attempt', sql`${table.attempt} >= 0`),
-  check(
-    'watermark_operations_lease_owner',
-    sql`${table.leaseOwner} IS NULL OR length(trim(${table.leaseOwner})) BETWEEN 1 AND 200`,
-  ),
-  check(
-    'watermark_operations_recovery_reason',
-    sql`${table.recoveryReason} IS NULL OR ${table.recoveryReason} IN ('LEASE_EXPIRED', 'STARTUP_SCAN', 'ALREADY_COMMITTED', 'NOT_RESUMABLE')`,
-  ),
-  check(
-    'watermark_operations_type',
-    sql`${table.operationType} IN ('WATERMARK_PREVIEW', 'WATERMARK_REBUILD')`,
-  ),
-  check(
-    'watermark_operations_status',
-    sql`${table.status} IN ('GENERATING_PUBLIC', 'VERIFYING_PUBLIC', 'SWITCHING_PROFILE', 'CLEANING_PUBLIC', 'FAILED', 'DONE')`,
-  ),
-  check(
-    'watermark_operations_counts',
-    sql`${table.brandingVersion} >= 0 AND ${table.affectedWorkCount} >= 0 AND ${table.targetVariantCount} >= 0 AND ${table.generatedVariantCount} >= 0 AND ${table.verifiedVariantCount} >= 0`,
-  ),
-  check(
-    'watermark_operations_failure_state',
-    sql`(${table.status} = 'FAILED' AND ${table.internalErrorCode} IS NOT NULL AND ${table.failureStage} IS NOT NULL) OR (${table.status} != 'FAILED' AND ${table.internalErrorCode} IS NULL AND ${table.failureStage} IS NULL)`,
-  ),
-  check('watermark_operations_version_positive', sql`${table.version} > 0`),
-])
-
-export const siteBranding = sqliteTable('site_branding', {
-  id: text('id').primaryKey().default('site'),
-  activeWatermarkProfileId: text('active_watermark_profile_id')
-    .references(() => watermarkProfiles.id, { onDelete: 'restrict' }),
-  draftWatermarkProfileId: text('draft_watermark_profile_id')
-    .references(() => watermarkProfiles.id, { onDelete: 'restrict' }),
-  lastWatermarkOperationId: text('last_watermark_operation_id')
-    .references(() => watermarkOperations.id, { onDelete: 'set null' }),
-  version: integer('version').notNull().default(1),
-  ...timestampColumns(),
-}, table => [
-  check('site_branding_singleton', sql`${table.id} = 'site'`),
-  check(
-    'site_branding_profile_distinct',
-    sql`${table.activeWatermarkProfileId} IS NULL OR ${table.draftWatermarkProfileId} IS NULL OR ${table.activeWatermarkProfileId} != ${table.draftWatermarkProfileId}`,
-  ),
-  check('site_branding_version_positive', sql`${table.version} > 0`),
-])
-
 export const publicationOperations = sqliteTable('publication_operations', {
   id: text('id').primaryKey(),
   operationType: text('operation_type').notNull().default('PUBLISH'),
@@ -963,7 +758,7 @@ export const publicationOperations = sqliteTable('publication_operations', {
   ),
   check(
     'publication_operations_status',
-    sql`${table.status} IN ('PREPARING_SOURCE', 'GENERATING_PUBLIC', 'APPLYING_WATERMARK', 'VERIFYING_PUBLIC', 'COMMITTING', 'CLEANING_PUBLIC', 'FAILED', 'DONE')`,
+    sql`${table.status} IN ('PREPARING_SOURCE', 'GENERATING_PUBLIC', 'VERIFYING_PUBLIC', 'COMMITTING', 'CLEANING_PUBLIC', 'FAILED', 'DONE')`,
   ),
   check(
     'publication_operations_requested_version',
@@ -971,7 +766,7 @@ export const publicationOperations = sqliteTable('publication_operations', {
   ),
   check(
     'publication_operations_failure_stage',
-    sql`${table.failureStage} IS NULL OR ${table.failureStage} IN ('PREPARING_SOURCE', 'VALIDATING', 'GENERATING_PUBLIC', 'APPLYING_WATERMARK', 'VERIFYING_PUBLIC', 'COMMITTING', 'CLEANING_PUBLIC')`,
+    sql`${table.failureStage} IS NULL OR ${table.failureStage} IN ('PREPARING_SOURCE', 'VALIDATING', 'GENERATING_PUBLIC', 'VERIFYING_PUBLIC', 'COMMITTING', 'CLEANING_PUBLIC')`,
   ),
   check(
     'publication_operations_failure_state',
