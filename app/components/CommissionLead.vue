@@ -363,6 +363,15 @@ onBeforeUnmount(() => {
   }
 }
 
+@media (orientation: portrait) and (max-width: 1023px) {
+  .commission-lead__media {
+    justify-self: center;
+    width: min(100%, 27rem);
+    height: auto;
+    aspect-ratio: 9 / 16;
+  }
+}
+
 @media (prefers-contrast: more) {
   .commission-lead__display {
     color: var(--public-border-secondary);
