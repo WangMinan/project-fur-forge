@@ -39,13 +39,13 @@
   --admin-overlay: rgb(24 28 35 / 0.55);
 
   --font-admin-display:
-    "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+    "Noto Sans CJK SC", "PingFang SC", system-ui, sans-serif;
   --font-admin-body: var(--font-admin-display);
   --font-admin-metadata: var(--font-admin-body);
   --font-admin-ui: var(--font-admin-body);
   --font-admin-legal: var(--font-admin-body);
   --font-admin-code:
-    ui-monospace, "SFMono-Regular", Consolas, "Microsoft YaHei", monospace;
+    ui-monospace, "SFMono-Regular", Consolas, var(--font-admin-body);
   --font-admin: var(--font-admin-body);
   --font-admin-mono: var(--font-admin-code);
 
