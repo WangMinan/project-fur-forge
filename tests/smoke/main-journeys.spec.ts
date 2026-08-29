@@ -186,6 +186,13 @@ test('首页加载、主要入口与单项开放领养在四种视口可达', as
         speciesLabelDisplay: getComputedStyle(
           document.querySelector('.home-adoption-poster__species-label')!,
         ).display,
+        folioDisplay: getComputedStyle(
+          document.querySelector('.home-adoption-poster__folio')!,
+        ).display,
+        mediaCaptionGap: Math.round(
+          document.querySelector('.home-adoption-poster__caption')!.getBoundingClientRect().top
+          - document.querySelector('.home-adoption-poster__media')!.getBoundingClientRect().bottom,
+        ),
       }
     })
     expect(identityAlignment.adoption).toBeLessThanOrEqual(1)
@@ -194,6 +201,10 @@ test('首页加载、主要入口与单项开放领养在四种视口可达', as
       .toBe(viewport.width < 1024)
     expect(identityAlignment.speciesLabelDisplay === 'none')
       .toBe(viewport.width < 1024)
+    expect(identityAlignment.folioDisplay === 'none')
+      .toBe(viewport.width < 1024)
+    if (viewport.width >= 768 && viewport.width < 1024)
+      expect(identityAlignment.mediaCaptionGap).toBeGreaterThanOrEqual(23)
     if (viewport.width <= 480) {
       const layout = await current.evaluate((element) => {
         const facts = element.querySelector<HTMLElement>('.home-adoption-poster__facts')!
