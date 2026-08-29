@@ -415,7 +415,49 @@ docker compose run --rm --no-deps app node ops/ops.mjs migrate
 迁移命令会先校验历史迁移，并在需要时创建验证备份。不要进入容器手改 SQLite，
 不要在线覆盖当前数据库。
 
-## 5.1 离线重置唯一管理员密码
+## 5.1 0051 水印能力退役升级
+
+包含 `0051_r4_retire_watermark.sql` 的镜像必须停写升级。使用同一待部署摘要的
+一次性容器先备份、迁移，再把已发布作品完整生成到 `recipe-v4`。退役命令默认
+只输出计数；确认计数后才精确删除旧 `recipe-v1/v2/v3` 公开对象、提交 ESA
+file purge 并删除旧变体行。命令幂等，中途失败保持 app 停止并原命令重试。
+
+```bash
+cd /root/project-fur-forge
+
+docker compose config --quiet
+IMAGE_REF="$(docker compose config --images)"
+printf '%s\n' "$IMAGE_REF" | grep -Eq '@sha256:[0-9a-f]{64}$'
+
+docker compose stop app
+BACKUP_FILE="/app/backups/pre-0051-$(date -u +%Y%m%dT%H%M%SZ).db"
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs backup --output "$BACKUP_FILE"
+docker compose run --rm --no-deps app node ops/ops.mjs migrate
+
+# 先核对 publishedWorkCount、publishedAssetCount、legacyVariantCount。
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs retire-legacy-public-media
+
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs retire-legacy-public-media \
+  --execute --confirm "RETIRE LEGACY PUBLIC MEDIA"
+
+# 第二次 migrate 必须输出 applied=0，并再次完成 integrity/FK 校验。
+docker compose run --rm --no-deps app node ops/ops.mjs migrate
+docker compose up --detach --no-build --no-deps app
+
+curl --fail --silent --show-error \
+  --header "Host: $PUBLIC_HOST" \
+  http://127.0.0.1:3000/api/health/ready
+```
+
+验收数据库中不存在 `site_branding`、`watermark_profiles`、
+`watermark_operations`，公开作品只消费 `recipe-v4`。回滚不能只换旧镜像：必须
+同时恢复 `BACKUP_FILE`，并按对象存储版本/删除标记恢复旧公开对象；验收前保留
+旧镜像、数据库备份和对象版本。
+
+## 5.2 离线重置唯一管理员密码
 
 停止 app 后，在仓库根目录执行下面的交互命令。新密码可包含 `@`、`!`、`$`
 等特殊字符，输入不会回显。重置会清除登录失败锁定并使既有 Session 失效：

@@ -7,7 +7,6 @@ import type {
   UploadFailureStage,
   UploadOwner,
   VerifiedAssetDto,
-  WatermarkAnchor,
 } from '../../../shared/types/contracts'
 import type { MediaStorage } from '../media-storage'
 import { ServiceError } from '../service-error'
@@ -30,7 +29,6 @@ interface CompleteUploadInput {
   expectedVersion: number
   focalX: number
   focalY: number
-  watermarkAnchor?: WatermarkAnchor | undefined
 }
 
 interface AssetRow {
@@ -45,7 +43,6 @@ interface AssetRow {
   focalX: number
   focalY: number
   fitMode: VerifiedAssetDto['fitMode']
-  watermarkAnchor: WatermarkAnchor
   version: number
   internalErrorCode: UploadFailureCode | null
   privateObjectKey: string
@@ -63,8 +60,7 @@ const selectAsset = `
   SELECT
     id, role, status, byte_size AS byteSize, mime_type AS mimeType,
     width, height, exif_orientation AS exifOrientation,
-    focal_x AS focalX, focal_y AS focalY, fit_mode AS fitMode,
-    watermark_anchor AS watermarkAnchor, version,
+    focal_x AS focalX, focal_y AS focalY, fit_mode AS fitMode, version,
     internal_error_code AS internalErrorCode,
     private_object_key AS privateObjectKey, sha256
   FROM assets
@@ -80,9 +76,6 @@ function requireAsset(sqlite: Database.Database, id: string) {
 }
 
 function previewsFor(role: AssetRow['role']): VerifiedAssetDto['previews'] {
-  if (role === 'watermark_logo') {
-    return []
-  }
   if (role === 'design_sheet') {
     return [
       { usage: 'design-sheet', aspect: 'original', fitMode: 'contain' },
@@ -124,7 +117,6 @@ function assetDto(row: AssetRow): VerifiedAssetDto {
     focalX: row.focalX,
     focalY: row.focalY,
     fitMode: row.fitMode,
-    watermarkAnchor: row.watermarkAnchor,
     processingFailureCode: row.internalErrorCode,
     processingFailureStage: row.internalErrorCode === 'UPLOAD_PREPROCESS_FAILURE'
       ? 'PREPROCESS'
@@ -278,8 +270,8 @@ function insertAsset(
     INSERT INTO assets (
       id, role, status, private_object_key, sha256, byte_size, mime_type,
       width, height, exif_orientation, focal_x, focal_y, fit_mode,
-      watermark_anchor, internal_error_code, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      internal_error_code, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     row.id,
     row.mediaRole,
@@ -296,7 +288,6 @@ function insertAsset(
     ['design_sheet', 'commission_design_reference', 'contact_qr'].includes(row.mediaRole)
       ? 'contain'
       : 'cover',
-    input.watermarkAnchor ?? 'top-left',
     status === 'FAILED' ? 'UPLOAD_PREPROCESS_FAILURE' : null,
     now,
     now,
@@ -453,10 +444,9 @@ export async function completeUploadSession(
           INSERT INTO asset_variants (
             id, asset_id, storage_scope, status, object_key, input_sha256,
             media_role, usage, width, height, format, quality, crop_identity,
-            recipe_version, protection_mode, watermark_profile, logo_digest,
-            watermark_anchor, sha256, byte_size, created_at, updated_at
+            recipe_version, sha256, byte_size, created_at, updated_at
           ) VALUES (?, ?, 'PRIVATE', 'READY', ?, ?, ?, 'preprocess', ?, ?,
-                    'png', 100, ?, ?, 'none', 'none', 'none', 'none', ?, ?, ?, ?)
+                    'png', 100, ?, ?, ?, ?, ?, ?)
         `).run(
           `${row.id}:preprocess-v1`,
           row.id,
@@ -553,10 +543,9 @@ export async function retryAssetProcessing(
         INSERT OR IGNORE INTO asset_variants (
           id, asset_id, storage_scope, status, object_key, input_sha256,
           media_role, usage, width, height, format, quality, crop_identity,
-          recipe_version, protection_mode, watermark_profile, logo_digest,
-          watermark_anchor, sha256, byte_size, created_at, updated_at
+          recipe_version, sha256, byte_size, created_at, updated_at
         ) VALUES (?, ?, 'PRIVATE', 'READY', ?, ?, ?, 'preprocess', ?, ?,
-                  'png', 100, ?, ?, 'none', 'none', 'none', 'none', ?, ?, ?, ?)
+                  'png', 100, ?, ?, ?, ?, ?, ?)
       `).run(
         `${asset.id}:preprocess-v1`,
         asset.id,

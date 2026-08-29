@@ -201,6 +201,12 @@ ss -lntp | grep '127.0.0.1:3000'
 
 `init-admin` 只在唯一管理员不存在时创建账号，不会覆盖已有密码。需要离线重置时，先停止 app，再使用同一冻结镜像交互输入用户名和新密码；新密码同样可包含特殊字符：
 
+包含 `0051_r4_retire_watermark.sql` 的升级不得直接在常驻 app 写入期间执行；按
+[`docs/DEPLOYMENT.md` 5.1](../../../../docs/DEPLOYMENT.md#51-0051-水印能力退役升级)
+使用同一冻结镜像完成停写、显式备份、migrate、旧公开媒体 dry-run/强确认退役、
+第二次 migrate 校验和 ready 验证。回滚必须成对恢复旧镜像、升级前数据库和对象
+存储版本，不能只换镜像。
+
 ```bash
 docker compose stop app
 docker compose run --rm --no-deps app \

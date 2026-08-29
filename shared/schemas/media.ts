@@ -11,7 +11,6 @@ export const MEDIA_ROLE_VALUES = [
   'commission_design_reference',
   'home_hero_landscape',
   'home_hero_portrait',
-  'watermark_logo',
   'contact_qr',
 ] as const
 

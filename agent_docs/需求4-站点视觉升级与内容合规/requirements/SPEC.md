@@ -122,7 +122,7 @@
 - 全局领养营业状态已退役；委托营业状态只保留“开放 / 暂停”两种语义和单条标签，不再有 `limited` 或独立短说明。
 - 设定领养最多投影三项 `available`，一次完整展示当前一项并提供循环切换；媒体、名称、物种、价格和详情行动按方向分层切换，无可领养项时隐藏整幕。
 - `/works` 与 `/adoptions` 继续承担完整目录、搜索和分页；`/works` 为角色等权四列目录，存在出厂照时优先出厂主图，完全没有出厂照的领养作品才回落领养封面或设定图；`/adoptions` 只公开当前 `available`。
-- `/works`、`/adoptions` 与 `/about` 的页名区复用 `/adoptions` 的高度、标题尺度和下方分割线；三者均保留浅色英文背景字与右上工作室 Logo 水印。`/commission` 保持自己的特殊构图。
+- `/works`、`/adoptions` 与 `/about` 的页名区复用 `/adoptions` 的高度、标题尺度和下方分割线；三者均保留浅色英文背景字与右上工作室 Logo 背景标记。`/commission` 保持自己的特殊构图。
 
 ## 6. 领养排序契约
 
@@ -194,7 +194,7 @@ DITE DOG 的动效不是科技产品展示页的机械减法，也不是娱乐�
 
 ### 7.4 输入模态
 
-- Hero、Featured 与 Homepage Adoption autoplay 默认 4s；鼠标/触控点击先提供 90–160ms 即时反馈，再执行更短媒体交接。
+- Hero autoplay 固定为 3s；Featured 与 Homepage Adoption 保持 4s。鼠标/触控点击先提供 90–160ms 即时反馈，再执行更短媒体交接。
 - keyboard 导航即时生效，图片只允许即时替换或约 120–180ms 的短 crossfade，不让键盘用户等待完整媒体动画。
 - Hero drag 只有在 1:1 跟手、可反向、可中断、释放速度连续且不抢占纵向滚动时才允许实施；否则继续使用离散切换。首页桌面逐幕 wheel 是页面级章节导航，不等同于 Hero drag。
 - 同一命令被再次触发、反向触发或路由离开时，动画必须可中断，不锁住焦点或控制器。
@@ -207,6 +207,8 @@ DITE DOG 的动效不是科技产品展示页的机械减法，也不是娱乐�
 - 代表作品幕从固定 Header 下方开始，Type × Media scene、角色信息、切换控制与 `/works` 行动在同一动态视口内完成；没有第二屏或第二个停靠点。
 - 1023px 及以下继续原生纵向滚动；Hero 仍按现有方向逻辑选择横/竖素材，不照搬外部站点的 768px 断点。
 - 移动端保持原生纵向滚动、safe area 和动态地址栏适配。
+- 1023px 以下不显示任何“下一幕”导线或文案；Safari 动态工具栏改变可视高度时，不据此连续切换整幕布局或最小高度。
+- 窄屏 Homepage Adoption 的角色名保持单行，主行动保持至少 44px 命中区但使用紧凑字号和内边距。
 - 移动端不依赖 hover；不使用 tilt；按压反馈和短淡化承担等价作用。
 - `prefers-reduced-motion` 关闭自动轮播、大位移、错峰、tilt 与 overshoot，直接进入可靠终态；普通路由仍只允许必要的短淡化。
 - `prefers-reduced-transparency` 关闭 blur，使用更实背景。
@@ -246,7 +248,7 @@ DITE DOG 的动效不是科技产品展示页的机械减法，也不是娱乐�
 | 模式 | 适用 | 显示 |
 | --- | --- | --- |
 | determinate | OSS XHR、可计数的变体生成 | 真实值/总量、百分比或数量 |
-| stage | publication/branding/Hero operation | 当前服务端阶段、已完成计数、终态 |
+| stage | publication/Hero operation | 当前服务端阶段、已完成计数、终态 |
 | indeterminate | 单图 FFmpeg、无法估算的服务端处理 | 阶段、经过时间、仍在处理 |
 
 - 不把阶段常量映射成 12/35/56/91 之类伪精确百分比。
@@ -254,6 +256,14 @@ DITE DOG 的动效不是科技产品展示页的机械减法，也不是娱乐�
 - FFmpeg 若没有可验证的总帧/总工作量，只显示 indeterminate；不得为了进度条解析不可靠百分比。
 - 长 operation 刷新页面后应恢复服务端状态；短时 XHR 页面离开后可明确终止。
 - 所有进行中状态立即可见，成功/失败/重试/取消使用同一组件语义。
+
+### 8.4 公开媒体处理
+
+- 后台不再提供自动图片叠加配置、Logo 上传、预览或全站重建入口。
+- 当前作品公开图统一生成无叠加 `recipe-v4`；公开投影优先且最终只保留 v4。
+- 当前数据库不得存在对应 profile/operation/branding 表、媒体身份列或上传角色。
+- 0051 只向前迁移；部署必须停写并使用同一冻结镜像显式备份、migrate、dry-run/强确认退役旧 v1-v3 媒体、再次 migrate 和 ready。失败时原命令幂等重试，不进入容器手改 SQLite。
+- 页面中的浅色工作室 Logo 是 CSS 背景标记，不进入图片派生链。
 
 ## 9. Hero 管理契约
 
@@ -329,7 +339,7 @@ privacyNoticeAcknowledged: true
 - 默认 dry-run；execute 需要固定强确认。
 - 一次删除覆盖 submission、upload session、私有 asset/variants/current/version/delete marker/preview/pending 和非必要备注。
 - DB 关系存在时先枚举精确 Key；对象验证后再删行。
-- 不影响作品、Hero、水印或其它申请。
+- 不影响作品、Hero 或其它申请。
 - 用户删除请求单独处理，不等待周期批次。
 
 ## 12. 测试与门禁契约

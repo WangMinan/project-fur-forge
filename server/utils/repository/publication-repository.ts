@@ -58,7 +58,6 @@ export interface PublicationAsset {
   primary: number
   role: 'adoption_cover' | 'design_sheet' | 'studio_photo'
   status: string
-  watermarkAnchor: string
   width: number
 }
 
@@ -449,7 +448,6 @@ export function findWorkMediaAssets(
       relation.alt_text AS alt,
       relation.is_primary AS "primary",
       relation.role,
-      relation.watermark_anchor AS watermarkAnchor,
       relation.crop_width AS cropWidth,
       relation.crop_height AS cropHeight,
       asset.status, asset.width, asset.height
@@ -480,13 +478,8 @@ export function findReadyVariantFormats(
   sqlite: Database.Database,
   input: {
     assetId: string
-    configDigest: string
-    logoDigest: string
-    opacityPercent: number
-    profileId: string
     recipeVersion: string
     role: string
-    scalePercent: number
     usage: string
     width: number
   },
@@ -496,10 +489,6 @@ export function findReadyVariantFormats(
     WHERE asset_id = ? AND storage_scope = 'PUBLIC' AND status = 'READY'
       AND media_role = ? AND usage = ? AND width = ?
       AND recipe_version = ?
-      AND watermark_profile = 'brand-centered-v2'
-      AND watermark_profile_id = ? AND watermark_config_digest = ?
-      AND logo_digest = ? AND watermark_anchor = 'center'
-      AND watermark_opacity_percent = ? AND watermark_scale_percent = ?
       AND sha256 NOT GLOB '*[^0-9a-f]*' AND length(sha256) = 64
       AND byte_size > 0
   `).pluck().all(
@@ -508,11 +497,6 @@ export function findReadyVariantFormats(
     input.usage,
     input.width,
     input.recipeVersion,
-    input.profileId,
-    input.configDigest,
-    input.logoDigest,
-    input.opacityPercent,
-    input.scalePercent,
   ) as string[]
 }
 

@@ -292,6 +292,7 @@ Mobile 的核心原则是：**Same visual language, different composition.** Mob
 - [x] **T47-F1 · 委托内容与联系契约收口**：按用户明确重新授权，重写去重复的委托默认文案；退役领养全局营业状态，委托只保留开放/暂停与标签；用 `jsqr` 从 READY 官方二维码派生限定为 `qm.qq.com` 的直达链接；About/Commission 复用白底等高联系目录，fine pointer hover/focus 显示二维码，触控端保留按钮，复制邮箱用不占位浮层反馈；代表作品上限提高到 5。0048 只替换空值/精确历史默认，保留自定义文案。Handoff：`implementation/notes/2026-08-26-T47-F1-COMMISSION-CONTACT-REFRESH.md`。
 - [x] **T47-F2 · 委托与联系视觉减法**：将估价说明改为用户确认的短文案，字号缩小并与联系目录等宽；About 只保留 story 与 Contact 之间的分割线；联系目录只保留外轮廓；委托营业状态卡改为全宽。0049 仅替换空值/精确旧默认。Handoff：`implementation/notes/2026-08-26-T47-F2-COMMISSION-CONTACT-POLISH.md`。
 - [x] **T47-F3 · 默认文案与目录页名对齐**：0050 只替换空值/精确仓库默认的委托简介、工作室介绍和制作范围，并清空历史防诈骗提醒；`antiScam` 从管理、更新和公开 DTO 退役。`/works`、`/adoptions`、`/about` 页名区按 `/adoptions` 对齐高度、标题尺度与分割线，三者保留英文背景字和右上工作室 Logo 水印；`/commission` 保持特殊。Handoff：`implementation/notes/2026-08-27-T47-F3-COPY-HEADER-ALIGNMENT.md`。
+- [x] **T47-F4 · 移动/PDF 修复与自动媒体叠加退役**：生产 PDF 字体改从 `.output/public/fonts/` 读取；窄屏领养名称单行、按钮紧凑，1023px 以下删除全部“下一幕”导线/文案，Hero 固定 3s，Featured/Adoption 保持 4s。0051 前向迁移删除自动叠加相关表列与上传角色；管理页/API、runner/repository/schema、脚本和专项 fixture 同步删除；作品使用无叠加 `recipe-v4`。新增同镜像 `retire-legacy-public-media` 默认 dry-run/强确认命令，先生成并验证 v4，再精确删除旧 v1-v3 对象、ESA purge 和数据库行；部署必须停写、显式备份、migrate、退役命令、再次 migrate 与 ready。页面 CSS 装饰 Logo 仅称背景标记，不属于媒体处理。Handoff：`implementation/notes/2026-08-29-T47-F4-MOBILE-PDF-MEDIA-RETIREMENT.md`。
 
 ### GATE-E · 既简洁又有生命感
 
@@ -299,7 +300,7 @@ Mobile 的核心原则是：**Same visual language, different composition.** Mob
 - [ ] Hero、Featured、Homepage Commission、Homepage Adoption 与后续公共 scene 的主次明确，共享 typography/directional/wayfinding/media grammar 但不套用统一模板；
 - [ ] Hero 默认静默且控制器对键盘/触控可获得，暂停后恢复入口清楚；已确认的一次性品牌标题入场保留，换图不重复整套品牌入场，Reduced Motion 直接进入终态，font flash 不回退。Desktop 品牌终态继续冻结；Mobile 默认继续遵守品牌文字 Brand Lock，优先重构周边 Hero composition。任何 Mobile 品牌字号、核心位置或对齐变更都必须有 390/430 冲突证据、before/after 和用户本人显式 exception approval，不得由 `GATE-MOBILE` 自动解除；
 - [ ] Featured 以重新设计后的正式 Selected Baseline 为准：Type × Media scene 成立，Photography 是第一视觉 anchor，代表作品最多五件的业务规则和清晰 `/works` 入口保持，切换方式在 Desktop/Mobile 均成立；不得恢复“左上标题 + 下方双竖图 + 右侧说明”的普通双栏 section 作为最终硬条件；
-- [ ] Hero 与 Featured 自动轮播以 4s 为默认基准且可暂停；Homepage Adoption 按用户明确决定移除独立播放控制条，但保留 4s autoplay、下方角色选择、swipe、键盘方向切换与页面隐藏暂停。Motion 可 reverse/interrupt、终态可靠，Reduced Motion 停止自动播放并正确退化；普通公开页统一使用一次克制的 opacity 渐入，正式站点不启用跨页 shared-media morph 或命名 View Transition；
+- [ ] Hero 自动轮播固定为 3s且可暂停；Featured 与 Homepage Adoption 保持 4s。Homepage Adoption 按用户明确决定移除独立播放控制条，但保留下方角色选择、swipe、键盘方向切换与页面隐藏暂停。Motion 可 reverse/interrupt、终态可靠，Reduced Motion 停止自动播放并正确退化；普通公开页统一使用一次克制的 opacity 渐入，正式站点不启用跨页 shared-media morph 或命名 View Transition；
 - [ ] Header、Mobile Nav、Hero/Featured/gallery/search/pagination/actions/icons 的 hover/focus/active/disabled/loading、44px target、键盘与触控语义完整；
 - [ ] 11 个独立公开视觉状态均已按 V00-F2 矩阵完成，`/contact`、`/terms`、`/adoptions/[slug]` 继续复用既有终点而没有重复页面；
 - [ ] 作品/领养统一详情、委托内容/申请、About/Contact、法务/许可证、404/500、目录/表单/媒体失败状态均有 Desktop/Mobile 截图与可访问性证据；

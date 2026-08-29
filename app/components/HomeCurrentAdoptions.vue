@@ -662,11 +662,14 @@ onBeforeUnmount(() => {
   }
 
   .home-adoption-poster__identity h3 {
-    font-size: clamp(2.25rem, 11vw, 3.25rem);
+    max-width: 100%;
+    font-size: clamp(2rem, 9vw, 2.75rem);
+    overflow-wrap: normal;
+    white-space: nowrap;
   }
 
   .home-adoption-poster__identity--long-name h3 {
-    font-size: clamp(2rem, 9vw, 2.75rem);
+    font-size: clamp(1.75rem, 7vw, 2.25rem);
   }
 
   .home-adoption-poster__facts div {
@@ -675,11 +678,13 @@ onBeforeUnmount(() => {
 
   .home-adoption-poster__actions {
     gap: var(--space-2);
+    flex-wrap: nowrap;
   }
 
   .home-adoption-poster__actions :deep(.public-action) {
     min-height: 2.75rem;
-    padding-inline: var(--space-4);
+    padding-inline: var(--space-3);
+    font-size: 0.8125rem;
   }
 }
 

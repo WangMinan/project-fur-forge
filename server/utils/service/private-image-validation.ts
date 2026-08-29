@@ -18,7 +18,6 @@ export interface ConditionalImageExpectation {
     | 'home_hero_landscape'
     | 'home_hero_portrait'
     | 'studio_photo'
-    | 'watermark_logo'
   objectKey: string
   sha256: string
   width: number
@@ -66,31 +65,6 @@ function mimeFromImageInfo(format: string) {
     return `image/${normalized}`
   }
   return null
-}
-
-export function pngHasTransparency(content: Buffer) {
-  if (
-    content.length < 33
-    || !content.subarray(0, 8).equals(Buffer.from('89504e470d0a1a0a', 'hex'))
-  ) {
-    return false
-  }
-  const colorType = content[25]
-  if (colorType === 4 || colorType === 6) {
-    return true
-  }
-  for (let offset = 8; offset + 12 <= content.length;) {
-    const length = content.readUInt32BE(offset)
-    const end = offset + 12 + length
-    if (end > content.length) {
-      return false
-    }
-    if (content.toString('ascii', offset + 4, offset + 8) === 'tRNS') {
-      return true
-    }
-    offset = end
-  }
-  return false
 }
 
 function correctedDimensions(info: PrivateImageInfo) {
@@ -175,14 +149,6 @@ export async function verifyConditionalImageUpload(
     )
     || (landscapeRole && dimensions.width <= dimensions.height)
     || (portraitRole && dimensions.height <= dimensions.width)
-    || (
-      expected.mediaRole === 'watermark_logo'
-      && (
-        expected.contentType !== 'image/png'
-        || expected.byteSize > 20_000_000
-        || !pngHasTransparency(content)
-      )
-    )
   ) {
     fail('UPLOAD_DIMENSIONS_INVALID', 'IMAGE_INFO')
   }

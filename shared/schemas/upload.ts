@@ -61,7 +61,6 @@ const siteUploadOwnerSchema = z.object({
     'hero-home-portrait',
     'hero-commission-landscape',
     'hero-commission-portrait',
-    'branding',
     'contact',
   ]),
   expectedVersion: resourceVersionSchema,
@@ -98,7 +97,6 @@ export const createUploadSessionRequestSchema = z.object({
     && (
       (input.owner.id.endsWith('-landscape') && input.mediaRole === 'home_hero_landscape')
       || (input.owner.id.endsWith('-portrait') && input.mediaRole === 'home_hero_portrait')
-      || (input.owner.id === 'branding' && input.mediaRole === 'watermark_logo')
       || (input.owner.id === 'contact' && input.mediaRole === 'contact_qr')
     )
   if ((input.owner.type === 'work') !== workRole || (
@@ -118,16 +116,6 @@ export const createUploadSessionRequestSchema = z.object({
       code: 'custom',
       message: '领养封面必须为横版图片',
       path: ['expected'],
-    })
-  }
-  if (
-    input.mediaRole === 'watermark_logo'
-    && input.expected.contentType !== 'image/png'
-  ) {
-    context.addIssue({
-      code: 'custom',
-      message: '水印候选只接受透明 PNG',
-      path: ['expected', 'contentType'],
     })
   }
   if (
@@ -162,14 +150,6 @@ export const uploadSessionDtoSchema = z.object({
   expiresAt: z.string().datetime({ offset: true }),
 }).strict()
 
-export const WATERMARK_ANCHOR_VALUES = [
-  'top-left',
-  'top-right',
-  'bottom-left',
-  'bottom-right',
-] as const
-
-export const watermarkAnchorSchema = z.enum(WATERMARK_ANCHOR_VALUES)
 export const fitModeSchema = z.enum(['cover', 'contain'])
 export const previewAspectSchema = z.enum([
   '3:4',
@@ -182,7 +162,6 @@ export const completeUploadSessionRequestSchema = versionedRequestSchema(
   z.object({
     focalX: z.number().min(0).max(1),
     focalY: z.number().min(0).max(1),
-    watermarkAnchor: watermarkAnchorSchema.optional(),
   }).strict(),
 )
 
@@ -199,7 +178,6 @@ export const verifiedAssetDtoSchema = z.object({
   focalX: z.number().min(0).max(1),
   focalY: z.number().min(0).max(1),
   fitMode: fitModeSchema,
-  watermarkAnchor: watermarkAnchorSchema,
   processingFailureCode: uploadFailureCodeSchema.nullable(),
   processingFailureStage: z.enum(['PREPROCESS', 'DERIVATIVE']).nullable(),
   previews: z.array(z.object({

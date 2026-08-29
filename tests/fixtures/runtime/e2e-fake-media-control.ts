@@ -8,8 +8,6 @@ import {
   randomBytes,
   randomUUID,
 } from 'node:crypto'
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 import { getDatabase } from '../../../server/utils/database'
 import { generatePublicVariants } from '../../../server/utils/recipe/media-recipe'
 import {
@@ -20,7 +18,7 @@ import {
 } from '../../../server/utils/recipe/site-display-recipe'
 import { resetRequestRateLimits } from '../../../server/utils/route/request-rate-limit'
 import {
-  createSyntheticWatermarkPng,
+  createSyntheticTransparentPng,
 } from '../../../scripts/oss-preflight-core.mjs'
 import type { HeroPlacement } from '../../../shared/types/contracts'
 import { getE2eFakeMediaStorage } from './e2e-fake-media'
@@ -75,7 +73,6 @@ interface ControlBody {
     contactEmail?: string
     contactQq?: string
   }
-  active?: boolean
   slideAlt?: string
 }
 
@@ -90,8 +87,6 @@ interface HeroSeedItem {
     portraitHeight?: number
 }
 
-let suspendedProfileId: string | null = null
-
 const FLAG_KEYS = [
   'failDelete',
   'failGet',
@@ -102,49 +97,6 @@ const FLAG_KEYS = [
   'omitSha256OnNextPut',
   'rejectNextPut403',
 ] as const
-
-function restoreBundledWatermarkCandidate(
-  fake: ReturnType<typeof getE2eFakeMediaStorage>,
-) {
-  const sqlite = getDatabase().sqlite
-  const content = readFileSync(resolve('public/brand/logo-full-light.png'))
-  const sha256 = createHash('sha256').update(content).digest('hex')
-  const keys = sqlite.prepare(`
-    SELECT private_object_key FROM assets
-    WHERE role = 'watermark_logo' AND status = 'READY' AND sha256 = ?
-  `).pluck().all(sha256) as string[]
-  keys.forEach(key => fake.seedPrivate(key, content, 'image/png', sha256))
-
-  // 品牌管理 E2E 会把活动 profile 切到上传候选；测试 fake reset 只清内存对象，
-  // 不回滚数据库。后续 Hero 预览仍应能消费当前活动 logo，因此按数据库身份
-  // 恢复其私有源对象。这里不进入生产构建，也不伪造 profile 状态。
-  const active = sqlite.prepare(`
-    SELECT asset.private_object_key AS objectKey,
-           asset.sha256, asset.mime_type AS mimeType,
-           asset.width, asset.height
-    FROM site_branding AS branding
-    JOIN watermark_profiles AS profile
-      ON profile.id = branding.active_watermark_profile_id
-    JOIN assets AS asset ON asset.id = profile.source_asset_id
-    WHERE branding.id = 'site' AND asset.status = 'READY'
-  `).get() as {
-    height: number
-    mimeType: string
-    objectKey: string
-    sha256: string
-    width: number
-  } | undefined
-  if (active && !fake.objects.has(active.objectKey)) {
-    const fallback = createSyntheticWatermarkPng() as Buffer
-    fake.seedPrivate(active.objectKey, fallback, active.mimeType, active.sha256, {
-      fileSize: fallback.length,
-      format: active.mimeType === 'image/png' ? 'png' : 'jpeg',
-      height: active.height,
-      orientation: 1,
-      width: active.width,
-    })
-  }
-}
 
 // E2E 控制面：查询内存 fake 状态、注入故障。只在 test 构建注册。
 export default defineEventHandler(async (event) => {
@@ -194,7 +146,6 @@ export default defineEventHandler(async (event) => {
 
   if (body?.action === 'reset') {
     fake.resetKnobs()
-    restoreBundledWatermarkCandidate(fake)
     return { data: { ok: true } }
   }
 
@@ -255,7 +206,7 @@ export default defineEventHandler(async (event) => {
 
     const insertSource = (id: string, role: string, width: number, height: number) => {
       const content = Buffer.concat([
-        createSyntheticWatermarkPng() as Buffer,
+        createSyntheticTransparentPng() as Buffer,
         randomBytes(16),
       ])
       const sha256 = createHash('sha256').update(content).digest('hex')
@@ -292,9 +243,9 @@ export default defineEventHandler(async (event) => {
     sqlite.prepare(`
       INSERT INTO work_assets (
         work_id, asset_id, role, alt_text, position, is_primary,
-        crop_x, crop_y, crop_width, crop_height, watermark_anchor
+        crop_x, crop_y, crop_width, crop_height
       ) VALUES (?, ?, 'studio_photo', '品牌舞台出厂照', 0, 1,
-                0, 0, 1, 1, 'top-left')
+                0, 0, 1, 1)
     `).run(workId, photoId)
     sqlite.prepare(`
       INSERT INTO site_hero_items (
@@ -409,7 +360,7 @@ export default defineEventHandler(async (event) => {
         const width = media.width ?? (role === 'studio_photo' ? 2400 : 3200)
         const height = media.height ?? (role === 'studio_photo' ? 3200 : 2400)
         const content = Buffer.concat([
-          createSyntheticWatermarkPng() as Buffer,
+          createSyntheticTransparentPng() as Buffer,
           randomBytes(16),
         ])
         const sha256 = createHash('sha256').update(content).digest('hex')
@@ -430,8 +381,8 @@ export default defineEventHandler(async (event) => {
         sqlite.prepare(`
           INSERT INTO work_assets (
             work_id, asset_id, role, alt_text, position, is_primary,
-            crop_x, crop_y, crop_width, crop_height, watermark_anchor
-          ) VALUES (?, ?, ?, ?, ?, ?, 0, 0, 1, 1, 'top-left')
+            crop_x, crop_y, crop_width, crop_height
+          ) VALUES (?, ?, ?, ?, ?, ?, 0, 0, 1, 1)
         `).run(workId, assetId, role, media.alt, position, primary ? 1 : 0)
         await generatePublicVariants(
           sqlite,
@@ -501,7 +452,7 @@ export default defineEventHandler(async (event) => {
     ) => {
       const assetId = randomUUID()
       const content = Buffer.concat([
-        createSyntheticWatermarkPng() as Buffer,
+        createSyntheticTransparentPng() as Buffer,
         randomBytes(16),
       ])
       const sha256 = createHash('sha256').update(content).digest('hex')
@@ -619,37 +570,6 @@ export default defineEventHandler(async (event) => {
         now,
         current.version,
       )
-    }
-    return { data: { ok: true } }
-  }
-
-  // T20 大图管理 E2E：临时悬空/恢复活动水印 profile 指向，验证预览与启用的
-  // 服务端阻断。RETIRED→ACTIVE 被状态机触发器禁止，因此改为置空
-  // site_branding.active_watermark_profile_id；模块级记录原指向用于恢复。
-  if (body?.action === 'setWatermarkProfileActive') {
-    const sqlite = getDatabase().sqlite
-    const now = Date.now()
-    if (body.active === false) {
-      const current = sqlite.prepare(`
-        SELECT active_watermark_profile_id FROM site_branding WHERE id = 'site'
-      `).pluck().get() as string | null | undefined
-      suspendedProfileId = current ?? null
-      sqlite.prepare(`
-        UPDATE site_branding
-        SET active_watermark_profile_id = NULL, version = version + 1,
-            updated_at = ?
-        WHERE id = 'site'
-      `).run(now)
-      return { data: { ok: true, suspended: suspendedProfileId } }
-    }
-    if (suspendedProfileId) {
-      sqlite.prepare(`
-        UPDATE site_branding
-        SET active_watermark_profile_id = ?, version = version + 1,
-            updated_at = ?
-        WHERE id = 'site'
-      `).run(suspendedProfileId, now)
-      suspendedProfileId = null
     }
     return { data: { ok: true } }
   }

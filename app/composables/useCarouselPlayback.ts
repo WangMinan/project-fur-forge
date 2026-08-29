@@ -12,6 +12,7 @@ const AUTOPLAY_INTERVAL_MS = 4_000
 export function useCarouselPlayback(options: {
   advance: () => void
   enabled: () => boolean
+  intervalMs?: number
 }) {
   const reduceMotion = shallowRef(false)
   const pageHidden = shallowRef(false)
@@ -31,7 +32,10 @@ export function useCarouselPlayback(options: {
   function restart() {
     stop()
     if (running.value) {
-      timer = setInterval(options.advance, AUTOPLAY_INTERVAL_MS)
+      timer = setInterval(
+        options.advance,
+        options.intervalMs ?? AUTOPLAY_INTERVAL_MS,
+      )
     }
   }
 

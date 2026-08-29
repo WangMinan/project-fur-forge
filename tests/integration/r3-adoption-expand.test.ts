@@ -25,7 +25,6 @@ import {
   listAmbiguousAdoptionStatusReviews,
   replaceManagedAdoptionCover,
 } from '../../server/utils/service/work-management'
-import { insertActiveWatermarkProfile } from '../helpers/watermark-fixture'
 
 const directories: string[] = []
 
@@ -245,48 +244,19 @@ describe('R3-B adoption expand', () => {
         now,
       )).toThrow()
 
-      insertActiveWatermarkProfile(sqlite, now)
-      const profile = sqlite.prepare(`
-        SELECT
-          profile.id, profile.profile_name AS name,
-          profile.config_digest AS configDigest,
-          profile.logo_digest AS logoDigest,
-          profile.opacity_percent AS opacity,
-          profile.scale_percent AS scale
-        FROM site_branding AS branding
-        JOIN watermark_profiles AS profile
-          ON profile.id = branding.active_watermark_profile_id
-        WHERE branding.id = 'site'
-      `).get() as {
-        configDigest: string
-        id: string
-        logoDigest: string
-        name: string
-        opacity: number
-        scale: number
-      }
       expect(() => sqlite.prepare(`
         INSERT INTO asset_variants (
           id, asset_id, storage_scope, status, object_key, input_sha256,
           media_role, usage, width, height, format, quality, crop_identity,
-          recipe_version, protection_mode, watermark_profile,
-          watermark_profile_id, watermark_config_digest, logo_digest,
-          watermark_anchor, watermark_opacity_percent,
-          watermark_scale_percent, sha256, byte_size, created_at, updated_at
+          recipe_version, sha256, byte_size, created_at, updated_at
         ) VALUES (?, ?, 'PUBLIC', 'READY', ?, ?, 'adoption_cover',
           'adoption-card', 768, 432, 'webp', 82, 'cover-v1', 'recipe-v3',
-          'watermark', ?, ?, ?, ?, 'center', ?, ?, ?, 512, ?, ?)
+          ?, 512, ?, ?)
       `).run(
         '66666666-6666-4666-8666-666666666666',
         assetId,
         'test/web/adoption-card.webp',
         'a'.repeat(64),
-        profile.name,
-        profile.id,
-        profile.configDigest,
-        profile.logoDigest,
-        profile.opacity,
-        profile.scale,
         'c'.repeat(64),
         now,
         now,

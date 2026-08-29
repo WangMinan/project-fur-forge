@@ -96,6 +96,24 @@ describe('shared carousel behavior', () => {
     await vi.advanceTimersByTimeAsync(4_000)
     expect(advance).toHaveBeenCalledTimes(1)
     app.unmount()
+
+    const heroAdvance = vi.fn()
+    const hero = renderer.createApp(defineComponent({
+      setup() {
+        useCarouselPlayback({
+          advance: heroAdvance,
+          enabled: () => true,
+          intervalMs: 3_000,
+        })
+        return () => null
+      },
+    }))
+    hero.mount({})
+    await vi.advanceTimersByTimeAsync(2_999)
+    expect(heroAdvance).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(1)
+    expect(heroAdvance).toHaveBeenCalledOnce()
+    hero.unmount()
   })
 
   it('animates only present layers in the requested direction', async () => {
