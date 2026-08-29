@@ -300,6 +300,21 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   }
 }
 
+@media (orientation: portrait) and (max-width: 767px) {
+  .home-commission {
+    min-height: auto;
+    padding-bottom: 2rem;
+  }
+
+  .home-commission__stage {
+    align-self: start;
+  }
+
+  .home-commission__media {
+    margin-top: 3.75rem;
+  }
+}
+
 @media (min-width: 768px) {
   .home-commission {
     height: calc(100svh - var(--public-anchor-offset));

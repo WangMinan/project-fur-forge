@@ -85,7 +85,7 @@ This contract prohibits a universal `eyebrow + Chinese title + left image + righ
 - The standard Homepage scene title scale remains shared with Featured; service identity is established by the large media field, background Typography and the service register rather than by inflating the Chinese title.
 - It does not use `从角色设定出发` or a replacement slogan; status, process copy and actions form the service narrative directly.
 - Desktop uses a horizontal photograph followed by an edge-aligned three-part information ledger: status/metadata, process copy and actions. These occupy a separate grid row with a hard gap from the media; no complete white UI card overlays the photograph.
-- Mobile independently composes title, background type, rounded photograph, service information, actions and destination rail within the reference viewport.
+- Mobile independently composes title, background type, rounded photograph, service information, actions and destination rail. Portrait phone layouts use content height instead of vertically centering the stage inside a forced full-height scene; top and bottom whitespace remain short and unequal only where the content requires it.
 
 ### `/commission` · Photographic Service Ledger
 
