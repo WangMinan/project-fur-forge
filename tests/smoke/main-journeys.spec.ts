@@ -149,6 +149,51 @@ test('首页加载、主要入口与单项开放领养在四种视口可达', as
     await expect(current.getByRole('article')).toHaveCount(1)
     await expect(current).toContainText('云雀')
     await expect(current).not.toContainText('月桂')
+    const typography = await page.evaluate(() => {
+      const read = (selector: string) => {
+        const style = getComputedStyle(document.querySelector(selector)!)
+        return {
+          color: style.color,
+          fontFamily: style.fontFamily,
+          fontSize: style.fontSize,
+          fontWeight: style.fontWeight,
+        }
+      }
+      return {
+        featuredName: read('.featured-works__title'),
+        adoptionName: read('.home-adoption-poster__identity h3'),
+        featuredSpecies: read('.featured-works__species'),
+        adoptionSpecies: read('.home-adoption-poster__species'),
+      }
+    })
+    expect(typography.featuredName).toEqual(typography.adoptionName)
+    expect(typography.featuredSpecies).toEqual(typography.adoptionSpecies)
+    const identityAlignment = await page.evaluate(() => {
+      const left = (selector: string) => (
+        document.querySelector(selector)!.getBoundingClientRect().left
+      )
+      return {
+        adoption: Math.abs(
+          left('.home-adoption-poster__identity')
+          - left('.home-adoption-poster__species'),
+        ),
+        featured: Math.abs(
+          left('.featured-works__title') - left('.featured-works__species'),
+        ),
+        factsBorderTopWidth: getComputedStyle(
+          document.querySelector('.home-adoption-poster__facts')!,
+        ).borderTopWidth,
+        speciesLabelDisplay: getComputedStyle(
+          document.querySelector('.home-adoption-poster__species-label')!,
+        ).display,
+      }
+    })
+    expect(identityAlignment.adoption).toBeLessThanOrEqual(1)
+    expect(identityAlignment.featured).toBeLessThanOrEqual(1)
+    expect(identityAlignment.factsBorderTopWidth === '0px')
+      .toBe(viewport.width < 1024)
+    expect(identityAlignment.speciesLabelDisplay === 'none')
+      .toBe(viewport.width < 1024)
     if (viewport.width <= 480) {
       const layout = await current.evaluate((element) => {
         const facts = element.querySelector<HTMLElement>('.home-adoption-poster__facts')!
