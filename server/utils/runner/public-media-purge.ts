@@ -114,6 +114,7 @@ export async function runOperationEdgePurge(
 
   const pollAttempts = options.pollAttempts ?? DEFAULT_POLL_ATTEMPTS
   const pollIntervalMs = options.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS
+  let consecutiveMissing = 0
   for (let attempt = 0; attempt < pollAttempts; attempt += 1) {
     let status
     try {
@@ -135,16 +136,14 @@ export async function runOperationEdgePurge(
       }, now)
       return null
     }
-    if (status === 'Failed' || status === 'Missing') {
-      const code = status === 'Failed'
-        ? 'EDGE_PURGE_FAILED'
-        : 'EDGE_PURGE_TASK_NOT_FOUND'
+    if (status === 'Failed') {
       markOperationEdgePurgeChecked(sqlite, operationId, {
-        reason: code,
+        reason: 'EDGE_PURGE_FAILED',
         status: 'FAILED',
       }, now)
-      return code
+      return 'EDGE_PURGE_FAILED'
     }
+    consecutiveMissing = status === 'Missing' ? consecutiveMissing + 1 : 0
     markOperationEdgePurgeChecked(sqlite, operationId, {
       status: 'PURGING',
     }, now)
@@ -153,9 +152,12 @@ export async function runOperationEdgePurge(
     }
   }
 
+  const timeoutCode = pollAttempts > 0 && consecutiveMissing === pollAttempts
+    ? 'EDGE_PURGE_TASK_NOT_FOUND'
+    : 'EDGE_PURGE_TIMEOUT'
   markOperationEdgePurgeChecked(sqlite, operationId, {
-    reason: 'EDGE_PURGE_TIMEOUT',
+    reason: timeoutCode,
     status: 'FAILED',
   }, now)
-  return 'EDGE_PURGE_TIMEOUT'
+  return timeoutCode
 }
