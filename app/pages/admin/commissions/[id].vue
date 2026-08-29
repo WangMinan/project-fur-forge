@@ -112,6 +112,60 @@ function formatTime(value: string | null) {
 const exportable = computed(() => detail.value?.status === 'accepted')
 const exporting = ref(false)
 const exportError = ref<string | null>(null)
+const exportLoadedBytes = shallowRef(0)
+const exportTotalBytes = shallowRef<number | null>(null)
+
+function formatDownloadBytes(bytes: number) {
+  if (bytes < 1024 * 1024) {
+    return `${Math.ceil(bytes / 1024)} KB`
+  }
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+const exportProgressLabel = computed(() => {
+  if (!exporting.value) return null
+  if (exportLoadedBytes.value === 0 && exportTotalBytes.value === null) {
+    return '正在生成制作单…'
+  }
+  const loaded = formatDownloadBytes(exportLoadedBytes.value)
+  if (exportTotalBytes.value === null) {
+    return `正在下载 ${loaded}`
+  }
+  const total = formatDownloadBytes(exportTotalBytes.value)
+  const percent = Math.min(100, Math.round(
+    exportLoadedBytes.value / exportTotalBytes.value * 100,
+  ))
+  return `正在下载 ${loaded} / ${total}（${percent}%）`
+})
+
+async function readPdfBlob(response: Response) {
+  const contentLength = Number(response.headers.get('content-length'))
+  exportTotalBytes.value = Number.isSafeInteger(contentLength) && contentLength > 0
+    ? contentLength
+    : null
+  if (!response.body) {
+    const blob = await response.blob()
+    exportLoadedBytes.value = blob.size
+    return blob
+  }
+  const chunks: BlobPart[] = []
+  const reader = response.body.getReader()
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      exportLoadedBytes.value += value.byteLength
+      chunks.push(value.buffer.slice(
+        value.byteOffset,
+        value.byteOffset + value.byteLength,
+      ) as ArrayBuffer)
+    }
+  }
+  finally {
+    reader.releaseLock()
+  }
+  return new Blob(chunks, { type: 'application/pdf' })
+}
 
 async function exportWorkOrder() {
   if (!detail.value || !exportable.value || exporting.value) {
@@ -119,6 +173,8 @@ async function exportWorkOrder() {
   }
   exporting.value = true
   exportError.value = null
+  exportLoadedBytes.value = 0
+  exportTotalBytes.value = null
   try {
     // 走 fetch 而不是直接开链接：失败时能给出提示，而不是把错误 JSON 下载下来。
     const response = await fetch(
@@ -128,7 +184,7 @@ async function exportWorkOrder() {
     if (!response.ok) {
       throw new Error('export failed')
     }
-    const blob = await response.blob()
+    const blob = await readPdfBlob(response)
     const href = URL.createObjectURL(blob)
     const anchor = document.createElement('a')
     anchor.href = href
@@ -161,6 +217,15 @@ onMounted(() => void load())
           </button>
           <p v-if="exportError" role="alert" class="commission-detail__error">
             {{ exportError }}
+          </p>
+          <p
+            v-if="exportProgressLabel"
+            class="commission-detail__export-progress"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {{ exportProgressLabel }}
           </p>
         </div>
       </header>
@@ -357,6 +422,13 @@ onMounted(() => void load())
 .commission-detail__zoom {
   justify-self: start;
   font-size: var(--admin-font-sm);
+}
+
+.commission-detail__export-progress {
+  margin: 0;
+  color: var(--admin-text-secondary);
+  font-size: var(--admin-font-sm);
+  font-variant-numeric: tabular-nums;
 }
 
 .commission-detail button:disabled {

@@ -53,6 +53,39 @@ async function seedSmokeCatalog(page: import('@playwright/test').Page) {
   ])
 }
 
+async function swipeTouch(
+  page: import('@playwright/test').Page,
+  target: import('@playwright/test').Locator,
+  deltaX: number,
+  deltaY: number,
+) {
+  const box = await target.boundingBox()
+  if (!box) throw new Error('Swipe target is not visible.')
+  const x = box.x + box.width / 2
+  const y = box.y + box.height / 2
+  const session = await page.context().newCDPSession(page)
+  await session.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [{ x, y }],
+  })
+  for (let step = 1; step <= 6; step += 1) {
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchMove',
+      touchPoints: [{
+        x: x + deltaX * step / 6,
+        y: y + deltaY * step / 6,
+      }],
+    })
+    await page.waitForTimeout(25)
+  }
+  await session.send('Input.dispatchTouchEvent', {
+    type: 'touchEnd',
+    touchPoints: [],
+  })
+  await session.detach()
+  await page.waitForTimeout(500)
+}
+
 async function fillCommission(
   page: import('@playwright/test').Page,
   input: { nickname: string, phone: string },
@@ -247,6 +280,70 @@ test('1024px 触控 Header 首次点击展开关于我们二级菜单', async ({
   await page.close()
 })
 
+test('手机可在首页整幕和代表作品图片上斜向滑动切换', async ({ browser }) => {
+  const page = await browser.newPage({
+    hasTouch: true,
+    reducedMotion: 'reduce',
+    viewport: { width: 390, height: 844 },
+  })
+  await seedPublicCatalog(page, [
+    {
+      slug: 'e2e-public-touch-one',
+      characterName: '触控一号',
+      species: '犬科',
+      purpose: 'showcase',
+      featured: true,
+      sortOrder: 0,
+      photos: [{ alt: '触控一号出厂照', width: 2400, height: 3200 }],
+    },
+    {
+      slug: 'e2e-public-touch-two',
+      characterName: '触控二号',
+      species: '狐',
+      purpose: 'showcase',
+      featured: true,
+      sortOrder: 1,
+      photos: [{ alt: '触控二号出厂照', width: 2400, height: 3200 }],
+    },
+  ])
+  await seedHeroCollections(page, {
+    landscape: [
+      { alt: '触控首页横版一', sortOrder: 0, enabled: true },
+      { alt: '触控首页横版二', sortOrder: 1, enabled: true },
+    ],
+    portrait: [
+      { alt: '触控首页竖版一', sortOrder: 0, enabled: true },
+      { alt: '触控首页竖版二', sortOrder: 1, enabled: true },
+    ],
+  })
+  await page.goto(`${publicBaseURL}/`)
+  await page.waitForFunction(() => Boolean(
+    (document.querySelector('#__nuxt') as Element & { __vue_app__?: unknown })
+      ?.__vue_app__,
+  ))
+  await page.waitForTimeout(500)
+
+  const hero = page.getByTestId('public-hero')
+  await swipeTouch(page, hero, -140, 18)
+  await expect(hero.locator('.home-hero__dot').nth(1)).toHaveAttribute('aria-current', 'true')
+  await swipeTouch(page, hero, 30, 140)
+  await expect(hero.locator('.home-hero__dot').nth(1)).toHaveAttribute('aria-current', 'true')
+  await expect(hero.getByRole('button', { name: '上一张' })).toHaveCSS('opacity', '1')
+
+  const featured = page.getByTestId('featured-works')
+  await featured.scrollIntoViewIfNeeded()
+  const media = featured.locator('.featured-works__media')
+  await expect(media).toHaveAttribute('data-work-slug', 'e2e-public-touch-one')
+  await swipeTouch(page, media, -120, 14)
+  await expect(media).toHaveAttribute('data-work-slug', 'e2e-public-touch-two')
+  await expect(page).toHaveURL(`${publicBaseURL}/`)
+  await expect(featured.getByRole('button', { name: '上一项代表作品' })).toHaveCSS('opacity', '1')
+
+  await media.tap()
+  await expect(page).toHaveURL(`${publicBaseURL}/works/e2e-public-touch-two`)
+  await page.close()
+})
+
 test('作品目录与作品详情可达', async ({ page }) => {
   await seedSmokeCatalog(page)
   await page.goto('/works')
@@ -267,6 +364,14 @@ test('领养目录只公开 available 并可进入统一详情', async ({ page }
   await expect(page).toHaveURL(/\/works\/e2e-public-smoke-available\?from=adoptions$/u)
   await expect(page.getByRole('link', { name: '返回设定领养' }))
     .toHaveAttribute('href', '/adoptions')
+  await expect(page.getByTestId('adoption-detail-status')).toHaveText('可领养')
+  await expect(page.getByTestId('adoption-contact-action'))
+    .toHaveAttribute('href', '/about#contact')
+
+  await page.goto('/works/e2e-public-smoke-adopted')
+  await expect(page.getByTestId('adoption-detail-status')).toHaveText('已领养')
+  await expect(page.getByRole('button', { name: '已被领养' })).toBeDisabled()
+  await expect(page.getByRole('link', { name: '联系咨询领养' })).toHaveCount(0)
 })
 
 test('委托申请成功并且私有设定图不生成公开对象', async ({ page }) => {

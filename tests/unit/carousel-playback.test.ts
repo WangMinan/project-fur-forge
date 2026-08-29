@@ -12,7 +12,10 @@ import {
   vi,
 } from 'vitest'
 import { useCarouselPlayback } from '../../app/composables/useCarouselPlayback'
-import { animateDirectionalLayers } from '../../app/utils/hero-carousel'
+import {
+  animateDirectionalLayers,
+  resolveSwipeDirection,
+} from '../../app/utils/hero-carousel'
 
 afterEach(() => {
   vi.useRealTimers()
@@ -20,6 +23,13 @@ afterEach(() => {
 })
 
 describe('shared carousel behavior', () => {
+  it('accepts slightly diagonal swipes but rejects vertical intent', () => {
+    expect(resolveSwipeDirection(-120, 18)).toBe('next')
+    expect(resolveSwipeDirection(120, -18)).toBe('prev')
+    expect(resolveSwipeDirection(39, 0)).toBeNull()
+    expect(resolveSwipeDirection(80, 70)).toBeNull()
+  })
+
   it('runs every four seconds and stops when disabled, hidden or reduced', async () => {
     vi.useFakeTimers()
     let hidden = false

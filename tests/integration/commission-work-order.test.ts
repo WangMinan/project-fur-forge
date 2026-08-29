@@ -65,11 +65,26 @@ describe('commission work order PDF', () => {
   it('loads the runtime font path and emits a two-page PDF', async () => {
     expect(commissionWorkOrderFontFile('production', '/app'))
       .toBe(resolve('/app/.output/public/fonts/noto-serif-sc-regular.otf'))
+    expect(commissionWorkOrderFontFile('production', '/app', 'common'))
+      .toBe(resolve('/app/.output/public/fonts/noto-serif-sc-work-order-common.otf'))
 
     const result = await buildCommissionWorkOrderPdf(sqlite, storage, SUBMISSION_ID)
     const pdf = await PDFDocument.load(result.content)
     expect(pdf.getPageCount()).toBe(2)
-    expect(result.content.length).toBeGreaterThan(9_000_000)
+    expect(result.fontVariant).toBe('common')
+    expect(result.content.length).toBeLessThan(3_000_000)
     expect(result.fileName).toBe('commission-work-order-DD-PDFTEST01.pdf')
+  })
+
+  it('falls back to the complete font for uncommon characters', async () => {
+    sqlite.prepare(`
+      UPDATE commission_submissions SET internal_note = ? WHERE id = ?
+    `).run('生僻字兜底：\u9F98', SUBMISSION_ID)
+
+    const result = await buildCommissionWorkOrderPdf(sqlite, storage, SUBMISSION_ID)
+    const pdf = await PDFDocument.load(result.content)
+    expect(pdf.getPageCount()).toBe(2)
+    expect(result.fontVariant).toBe('full')
+    expect(result.content.length).toBeGreaterThan(9_000_000)
   })
 })

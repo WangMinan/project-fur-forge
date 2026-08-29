@@ -65,7 +65,6 @@ onBeforeUnmount(() => {
     <div class="commission-lead__content">
       <div class="commission-lead__identity">
         <h1 id="commission-lead-title" class="commission-lead__title">自设委托</h1>
-        <p class="commission-lead__promise">从角色设定出发</p>
       </div>
 
       <div class="commission-lead__narrative">
@@ -179,13 +178,6 @@ onBeforeUnmount(() => {
   line-height: 0.94;
 }
 
-.commission-lead__promise {
-  color: var(--public-text-secondary);
-  font-family: var(--font-role-display);
-  font-size: 1.35rem;
-  line-height: 1.2;
-}
-
 .commission-lead__narrative {
   gap: 0.75rem;
 }
@@ -280,10 +272,6 @@ onBeforeUnmount(() => {
     font-size: clamp(3.75rem, 6vw, 5.75rem);
   }
 
-  .commission-lead__promise {
-    font-size: 1.5rem;
-  }
-
   .commission-lead--without-media .commission-lead__content {
     margin-top: 8rem;
   }
@@ -338,11 +326,6 @@ onBeforeUnmount(() => {
     font-size: clamp(3.75rem, 5.2vw, 4.8rem);
   }
 
-  .commission-lead__promise {
-    max-width: 8em;
-    font-size: clamp(1.5rem, 2vw, 1.9rem);
-  }
-
   .commission-lead__description {
     max-width: 24rem;
   }
@@ -366,9 +349,9 @@ onBeforeUnmount(() => {
 @media (orientation: portrait) and (max-width: 1023px) {
   .commission-lead__media {
     justify-self: center;
-    width: min(100%, 27rem);
+    width: min(100%, 27rem, 38svh);
     height: auto;
-    aspect-ratio: 9 / 16;
+    aspect-ratio: 4 / 5;
   }
 }
 
