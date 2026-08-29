@@ -520,8 +520,8 @@ onBeforeUnmount(() => {
 .featured-works__title {
   margin-top: 0.4rem;
   font-family: var(--font-role-display);
-  font-size: 3rem;
-  font-weight: 600;
+  font-size: var(--type-display-page-size);
+  font-weight: var(--type-display-weight);
   line-height: 0.94;
   letter-spacing: 0;
   animation: none;
@@ -529,9 +529,11 @@ onBeforeUnmount(() => {
 }
 
 .featured-works__species {
-  margin: 0.65rem 0 0 0.8rem;
+  margin: 0.65rem 0 0;
   color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
+  font-family: var(--font-role-body);
+  font-size: var(--type-body-small-size);
+  font-weight: var(--type-body-weight);
   animation: none;
   transition: none;
 }
@@ -722,12 +724,11 @@ onBeforeUnmount(() => {
 
   .featured-works__title {
     margin-top: 0.3rem;
-    font-size: 2.35rem;
     line-height: 0.95;
   }
 
   .featured-works__species {
-    margin: 0.35rem 0 0 0.5rem;
+    margin: 0.35rem 0 0;
   }
 
   .featured-works__action {
@@ -803,7 +804,6 @@ onBeforeUnmount(() => {
     display: block;
     min-width: 0;
     max-width: 100%;
-    font-size: 3.25rem;
     white-space: nowrap;
     overflow-wrap: normal;
   }
@@ -817,7 +817,6 @@ onBeforeUnmount(() => {
     text-overflow: ellipsis;
   }
 
-  .featured-works__species,
   .featured-works__action {
     margin-left: 1.15rem;
   }
@@ -851,7 +850,6 @@ onBeforeUnmount(() => {
   }
 
   .featured-works__title {
-    font-size: 3.75rem;
     white-space: nowrap;
   }
 }

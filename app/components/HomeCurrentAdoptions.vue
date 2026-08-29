@@ -24,9 +24,6 @@ const visibleAdoptions = computed(() => props.adoptions
 const activeIndex = shallowRef(0)
 const hasMultipleAdoptions = computed(() => visibleAdoptions.value.length > 1)
 const currentAdoption = computed(() => visibleAdoptions.value[activeIndex.value] ?? null)
-const hasLongCharacterName = computed(() => (
-  (currentAdoption.value?.work.characterName.length ?? 0) >= 7
-))
 const price = computed(() => currentAdoption.value?.work.price
   ? formatCnyMinorUnits(currentAdoption.value.work.price.minorUnits)
   : null,
@@ -287,15 +284,14 @@ onBeforeUnmount(() => {
         <div
           ref="title"
           class="home-adoption-poster__identity"
-          :class="{ 'home-adoption-poster__identity--long-name': hasLongCharacterName }"
         >
           <h3>{{ currentAdoption.work.characterName }}</h3>
         </div>
 
         <dl ref="facts" class="home-adoption-poster__facts">
           <div>
-            <dt>物种</dt>
-            <dd>{{ currentAdoption.work.species }}</dd>
+            <dt class="home-adoption-poster__species-label">物种</dt>
+            <dd class="home-adoption-poster__species">{{ currentAdoption.work.species }}</dd>
           </div>
           <div v-if="price">
             <dt>领养价格</dt>
@@ -553,15 +549,11 @@ onBeforeUnmount(() => {
 .home-adoption-poster__identity h3 {
   margin: 0;
   font-family: var(--font-role-display);
-  font-size: clamp(2.5rem, 4.6vw, 4.75rem);
-  font-weight: 600;
+  font-size: var(--type-display-page-size);
+  font-weight: var(--type-display-weight);
   line-height: 0.9;
   letter-spacing: var(--type-display-letter-spacing);
   overflow-wrap: anywhere;
-}
-
-.home-adoption-poster__identity--long-name h3 {
-  font-size: clamp(2.25rem, 3.8vw, 4rem);
 }
 
 .home-adoption-poster__facts {
@@ -587,6 +579,13 @@ onBeforeUnmount(() => {
   margin: 0;
   font-family: var(--font-role-display);
   font-size: var(--font-size-md);
+}
+
+.home-adoption-poster__facts .home-adoption-poster__species {
+  color: var(--public-text-secondary);
+  font-family: var(--font-role-body);
+  font-size: var(--type-body-small-size);
+  font-weight: var(--type-body-weight);
 }
 
 .home-adoption-poster__actions {
@@ -663,13 +662,8 @@ onBeforeUnmount(() => {
 
   .home-adoption-poster__identity h3 {
     max-width: 100%;
-    font-size: clamp(2rem, 9vw, 2.75rem);
     overflow-wrap: normal;
     white-space: nowrap;
-  }
-
-  .home-adoption-poster__identity--long-name h3 {
-    font-size: clamp(1.75rem, 7vw, 2.25rem);
   }
 
   .home-adoption-poster__facts div {
@@ -692,6 +686,16 @@ onBeforeUnmount(() => {
   .home-adoption-poster__facts,
   .home-adoption-poster__actions {
     grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 1023px) {
+  .home-adoption-poster__facts {
+    border-top: 0;
+  }
+
+  .home-adoption-poster__species-label {
+    display: none;
   }
 }
 
