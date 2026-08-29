@@ -143,26 +143,34 @@ function onKeydown(event: KeyboardEvent) {
   }
 }
 
-let pointerStartX: number | null = null
+let pointerStart: { pointerId: number, x: number, y: number } | null = null
 
 function onPointerDown(event: PointerEvent) {
   if (event.pointerType === 'touch') {
     revealControls(4_000)
   }
-  // 手势起点在按钮/链接上时不介入，避免误吞控件交互
-  if ((event.target as HTMLElement | null)?.closest('button, a')) {
-    pointerStartX = null
+  // 按钮保留原生点击；其余整幕区域都可开始滑动。
+  if (!event.isPrimary || (event.target as HTMLElement | null)?.closest('button')) {
+    pointerStart = null
     return
   }
-  pointerStartX = event.clientX
+  pointerStart = {
+    pointerId: event.pointerId,
+    x: event.clientX,
+    y: event.clientY,
+  }
 }
 
 function onPointerUp(event: PointerEvent) {
-  if (pointerStartX === null) {
+  const start = pointerStart
+  pointerStart = null
+  if (!start || start.pointerId !== event.pointerId) {
     return
   }
-  const direction = resolveSwipeDirection(event.clientX - pointerStartX)
-  pointerStartX = null
+  const direction = resolveSwipeDirection(
+    event.clientX - start.x,
+    event.clientY - start.y,
+  )
   if (direction === 'next') {
     goNext('pointer')
   }
@@ -172,7 +180,7 @@ function onPointerUp(event: PointerEvent) {
 }
 
 function onPointerCancel() {
-  pointerStartX = null
+  pointerStart = null
 }
 
 function onPointerMove(event: PointerEvent) {
@@ -391,6 +399,7 @@ onBeforeUnmount(() => {
   height: 100svh;
   color: var(--public-text-inverse);
   overflow: hidden;
+  touch-action: pan-y;
 }
 
 .home-hero--empty {
@@ -726,6 +735,15 @@ onBeforeUnmount(() => {
   .home-hero__pause:hover {
     background: rgb(17 20 25 / 0.28);
     border-color: rgb(255 255 255 / 0.3);
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .home-hero__arrow,
+  .home-hero__pause {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
   }
 }
 

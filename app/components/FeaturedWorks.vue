@@ -110,35 +110,71 @@ function revealForFinePointer(event: MouseEvent) {
   }
 }
 
-let pointerStartX: number | null = null
+let pointerStart: { pointerId: number, x: number, y: number } | null = null
+let suppressNextClick = false
+let suppressClickFrame: number | null = null
+
+function resetSwipeClickSuppression() {
+  suppressNextClick = false
+  if (suppressClickFrame !== null) {
+    cancelAnimationFrame(suppressClickFrame)
+    suppressClickFrame = null
+  }
+}
+
+function armSwipeClickSuppression() {
+  suppressNextClick = true
+  suppressClickFrame = requestAnimationFrame(() => {
+    suppressNextClick = false
+    suppressClickFrame = null
+  })
+}
+
+function onClickCapture(event: MouseEvent) {
+  if (!suppressNextClick) return
+  resetSwipeClickSuppression()
+  event.preventDefault()
+  event.stopPropagation()
+}
 
 function onPointerDown(event: PointerEvent) {
   if (event.pointerType === 'touch') {
     revealControls(4_000)
   }
-  if ((event.target as HTMLElement | null)?.closest('button, a')) {
-    pointerStartX = null
+  resetSwipeClickSuppression()
+  if (!event.isPrimary || (event.target as HTMLElement | null)?.closest('button')) {
+    pointerStart = null
     return
   }
-  pointerStartX = event.clientX
+  pointerStart = {
+    pointerId: event.pointerId,
+    x: event.clientX,
+    y: event.clientY,
+  }
 }
 
 function onPointerUp(event: PointerEvent) {
-  if (pointerStartX === null) {
+  const start = pointerStart
+  pointerStart = null
+  if (!start || start.pointerId !== event.pointerId) {
     return
   }
-  const direction = resolveSwipeDirection(event.clientX - pointerStartX)
-  pointerStartX = null
+  const direction = resolveSwipeDirection(
+    event.clientX - start.x,
+    event.clientY - start.y,
+  )
   if (direction === 'next') {
+    armSwipeClickSuppression()
     selectWork(1)
   }
   else if (direction === 'prev') {
+    armSwipeClickSuppression()
     selectWork(-1)
   }
 }
 
 function onPointerCancel() {
-  pointerStartX = null
+  pointerStart = null
 }
 
 function onPointerMove(event: PointerEvent) {
@@ -169,6 +205,7 @@ watch(() => works.value.length, (count) => {
 
 onBeforeUnmount(() => {
   stopControlsTimer()
+  resetSwipeClickSuppression()
   for (const animation of textAnimations) animation.cancel()
 })
 </script>
@@ -186,6 +223,7 @@ onBeforeUnmount(() => {
     role="region"
     aria-roledescription="carousel"
     @keydown="onKeydown"
+    @click.capture="onClickCapture"
     @click="onHeroClick"
     @pointerdown="onPointerDown"
     @pointermove="onPointerMove"
@@ -328,6 +366,7 @@ onBeforeUnmount(() => {
   color: var(--public-text-primary);
   background: var(--public-bg-primary);
   isolation: isolate;
+  touch-action: pan-y;
 }
 
 .featured-works__heading {
@@ -589,6 +628,15 @@ onBeforeUnmount(() => {
 
 .featured-works[data-reduced-motion='true'] .featured-works__pause {
   display: none;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .featured-works__control-arrow,
+  .featured-works__pause {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+  }
 }
 
 .featured-works__controls button:focus-visible {

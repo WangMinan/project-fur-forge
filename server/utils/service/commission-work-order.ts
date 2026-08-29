@@ -32,10 +32,45 @@ const MARGIN = 40
 export function commissionWorkOrderFontFile(
   nodeEnv = process.env.NODE_ENV,
   cwd = process.cwd(),
+  variant: 'common' | 'full' = 'full',
 ) {
+  const fileName = variant === 'common'
+    ? 'noto-serif-sc-work-order-common.otf'
+    : 'noto-serif-sc-regular.otf'
   return resolve(cwd, nodeEnv === 'production'
-    ? '.output/public/fonts/noto-serif-sc-regular.otf'
-    : 'public/fonts/noto-serif-sc-regular.otf')
+    ? `.output/public/fonts/${fileName}`
+    : `public/fonts/${fileName}`)
+}
+
+function fontSupportsText(fontBytes: Uint8Array, text: string) {
+  const font = fontkit.create(fontBytes)
+  return [...text].every((character) => {
+    const codePoint = character.codePointAt(0)!
+    return codePoint === 0x09
+      || codePoint === 0x0A
+      || codePoint === 0x0D
+      || font.hasGlyphForCodePoint(codePoint)
+  })
+}
+
+async function commissionWorkOrderFont(text: string) {
+  try {
+    const common = await readFile(commissionWorkOrderFontFile(
+      process.env.NODE_ENV,
+      process.cwd(),
+      'common',
+    ))
+    if (fontSupportsText(common, text)) {
+      return { bytes: common, variant: 'common' as const }
+    }
+  }
+  catch {
+    // 精简字体缺失或损坏时保持导出可用，回退到完整字体。
+  }
+  return {
+    bytes: await readFile(commissionWorkOrderFontFile()),
+    variant: 'full' as const,
+  }
 }
 
 /** pdf-lib 只能嵌入 JPEG 与 PNG；WebP 原图先用内置 FFmpeg 转成 PNG。 */
@@ -75,6 +110,24 @@ export async function buildCommissionWorkOrderPdf(
   const reference = await getCommissionDesignReference(sqlite, storage, submissionId)
   const image = await embeddableImage(reference.content, reference.mimeType)
 
+  const rows: [string, string][] = [
+    ['称呼', detail.nickname],
+    ['物种', detail.species ?? '待人工补录'],
+    ['手机号', `${detail.phone.countryCode} ${detail.phone.number}`],
+    ['QQ', detail.qq],
+    ['身高', `${detail.heightCm} cm`],
+    ['体重', `${detail.weightKg} kg`],
+    ['状态', '已接受'],
+    ['提交时间', formatTimestamp(detail.createdAt)],
+    ['处理时间', formatTimestamp(detail.handledAt)],
+  ]
+  const pdfText = [
+    '自设委托制作单',
+    `回执 ${detail.receiptCode}`,
+    ...rows.flat(),
+    detail.internalNote ?? '',
+  ].join('\n')
+
   const pdf = await PDFDocument.create()
   pdf.registerFontkit(fontkit)
   // 制作单是内部文件：不写入任何可用于追踪单主的元数据。
@@ -82,8 +135,8 @@ export async function buildCommissionWorkOrderPdf(
   pdf.setProducer('DITE DOG Studio')
   pdf.setCreator('DITE DOG Studio')
 
-  const fontBytes = await readFile(commissionWorkOrderFontFile())
-  const font = await pdf.embedFont(fontBytes, { subset: false })
+  const selectedFont = await commissionWorkOrderFont(pdfText)
+  const font = await pdf.embedFont(selectedFont.bytes, { subset: false })
 
   const infoPage = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT])
   const ink = rgb(0, 0, 0)
@@ -107,18 +160,6 @@ export async function buildCommissionWorkOrderPdf(
     color: ink,
   })
   cursor -= 30
-
-  const rows: [string, string][] = [
-    ['称呼', detail.nickname],
-    ['物种', detail.species ?? '待人工补录'],
-    ['手机号', `${detail.phone.countryCode} ${detail.phone.number}`],
-    ['QQ', detail.qq],
-    ['身高', `${detail.heightCm} cm`],
-    ['体重', `${detail.weightKg} kg`],
-    ['状态', '已接受'],
-    ['提交时间', formatTimestamp(detail.createdAt)],
-    ['处理时间', formatTimestamp(detail.handledAt)],
-  ]
 
   // 两列排布：A4 横版一列会剩下大半页空白。
   const columnWidth = (PAGE_WIDTH - MARGIN * 2) / 2
@@ -162,5 +203,6 @@ export async function buildCommissionWorkOrderPdf(
   return {
     content: Buffer.from(await pdf.save()),
     fileName: `commission-work-order-${detail.receiptCode}.pdf`,
+    fontVariant: selectedFont.variant,
   }
 }

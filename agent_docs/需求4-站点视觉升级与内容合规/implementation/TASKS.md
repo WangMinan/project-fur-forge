@@ -293,6 +293,7 @@ Mobile 的核心原则是：**Same visual language, different composition.** Mob
 - [x] **T47-F2 · 委托与联系视觉减法**：将估价说明改为用户确认的短文案，字号缩小并与联系目录等宽；About 只保留 story 与 Contact 之间的分割线；联系目录只保留外轮廓；委托营业状态卡改为全宽。0049 仅替换空值/精确旧默认。Handoff：`implementation/notes/2026-08-26-T47-F2-COMMISSION-CONTACT-POLISH.md`。
 - [x] **T47-F3 · 默认文案与目录页名对齐**：0050 只替换空值/精确仓库默认的委托简介、工作室介绍和制作范围，并清空历史防诈骗提醒；`antiScam` 从管理、更新和公开 DTO 退役。`/works`、`/adoptions`、`/about` 页名区按 `/adoptions` 对齐高度、标题尺度与分割线，三者保留英文背景字和右上工作室 Logo 水印；`/commission` 保持特殊。Handoff：`implementation/notes/2026-08-27-T47-F3-COPY-HEADER-ALIGNMENT.md`。
 - [x] **T47-F4 · 移动/PDF 修复与自动媒体叠加退役**：生产 PDF 字体改从 `.output/public/fonts/` 读取；窄屏领养名称单行、按钮紧凑，1023px 以下删除全部“下一幕”导线/文案，Hero 固定 3s，Featured/Adoption 保持 4s。0051 前向迁移删除自动叠加相关表列与上传角色；管理页/API、runner/repository/schema、脚本和专项 fixture 同步删除；作品使用无叠加 `recipe-v4`。新增同镜像 `retire-legacy-public-media` 默认 dry-run/强确认命令，先生成并验证 v4，再精确删除旧 v1-v3 对象、ESA purge 和数据库行；部署必须停写、显式备份、migrate、退役命令、再次 migrate 与 ready。页面 CSS 装饰 Logo 仅称背景标记，不属于媒体处理。Handoff：`implementation/notes/2026-08-29-T47-F4-MOBILE-PDF-MEDIA-RETIREMENT.md`。
+- [x] **T47-F5 · 触控轮播、领养详情与 PDF 字体/进度修复**：Hero/Featured 在粗指针设备上支持整幕横向 swipe，容忍轻微纵向漂移且保留原生纵向滚动；Featured 图片 swipe 不误进详情，触摸控件持续可见。领养统一详情显示真实状态，adopted 咨询行动为禁用按钮。制作单默认完整嵌入 2.77MB 常用简体字体，缺字完整回退原字体；私有设定图不缩放、不降质，前端显示真实生成阶段与下载字节进度。Handoff：`implementation/notes/2026-08-29-T47-F5-TOUCH-ADOPTION-PDF-FONT.md`。
 
 ### GATE-E · 既简洁又有生命感
 
