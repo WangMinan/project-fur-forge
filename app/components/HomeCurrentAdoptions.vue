@@ -689,7 +689,17 @@ onBeforeUnmount(() => {
   }
 }
 
+@media (min-width: 768px) and (max-width: 1023px) {
+  .home-adoption-poster__caption {
+    margin-top: var(--space-5);
+  }
+}
+
 @media (max-width: 1023px) {
+  .home-adoption-poster__folio {
+    display: none;
+  }
+
   .home-adoption-poster__facts {
     border-top: 0;
   }
