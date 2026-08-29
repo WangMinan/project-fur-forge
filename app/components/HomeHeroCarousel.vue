@@ -382,7 +382,7 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* 首屏始终占满动态视口，避免移动地址栏变化时露出白底。 */
+/* 首屏使用稳定小视口，避免 iOS 地址栏伸缩时重排整幕。 */
 .home-hero {
   position: relative;
   display: grid;
@@ -390,13 +390,6 @@ onBeforeUnmount(() => {
   height: 100svh;
   color: var(--public-text-inverse);
   overflow: hidden;
-}
-
-@supports (height: 100dvh) {
-  .home-hero {
-    min-height: 100dvh;
-    height: 100dvh;
-  }
 }
 
 .home-hero--empty {

@@ -330,12 +330,6 @@ onBeforeUnmount(() => {
   isolation: isolate;
 }
 
-@supports (height: 100dvh) {
-  .home-adoptions {
-    min-height: calc(100dvh - var(--public-header-height));
-  }
-}
-
 .home-adoptions__heading {
   position: relative;
   z-index: 4;
@@ -613,11 +607,11 @@ onBeforeUnmount(() => {
     align-self: start;
     align-content: start;
     gap: 0.625rem;
-    padding-top: clamp(0.75rem, 2dvh, 1.25rem);
+    padding-top: clamp(0.75rem, 2svh, 1.25rem);
   }
 
   .home-adoption-poster__display {
-    top: clamp(0.75rem, 2dvh, 1.25rem);
+    top: clamp(0.75rem, 2svh, 1.25rem);
   }
 
   .home-adoption-poster__media {
@@ -627,7 +621,7 @@ onBeforeUnmount(() => {
   }
 
   .home-adoption-poster--multiple .home-adoption-poster__media {
-    height: min(31dvh, 16.5rem);
+    height: min(31svh, 16.5rem);
   }
 
   .home-adoption-poster__selector-item {
