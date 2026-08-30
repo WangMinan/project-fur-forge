@@ -25,7 +25,10 @@ useSeoMeta({
   ogSiteName: PROJECT_NAME,
   ogUrl: canonical,
   ogImage: sharingImage,
-  twitterCard: 'summary_large_image',
+  ogImageWidth: 1200,
+  ogImageHeight: 1200,
+  ogImageType: 'image/png',
+  twitterCard: 'summary',
   twitterImage: sharingImage,
 })
 
