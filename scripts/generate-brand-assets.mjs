@@ -63,12 +63,12 @@ function generate(source, target, width, height, markSize, background) {
 }
 
 const outputs = [
-  generate('logo-full-dark.png', 'favicon-dark-32.png', 32, 32, 28, '0x00000000'),
+  generate('logo-mark.png', 'favicon-dark-32.png', 32, 32, 28, '0x00000000'),
   generate('favicon-dark-32.png', 'favicon-dark-16.png', 16, 16, 16, '0x00000000'),
-  generate('logo-full-light.png', 'favicon-light-32.png', 32, 32, 28, '0x00000000'),
+  generate('logo-mark.png', 'favicon-light-32.png', 32, 32, 28, '0xF7F6F2'),
   generate('favicon-light-32.png', 'favicon-light-16.png', 16, 16, 16, '0x00000000'),
-  generate('logo-full-dark.png', 'apple-touch-icon.png', 180, 180, 138, '0xF7F6F2'),
-  generate('logo-full-dark.png', 'og-default.png', 1200, 630, 330, '0xF7F6F2'),
+  generate('logo-mark.png', 'apple-touch-icon.png', 180, 180, 138, 'white'),
+  generate('logo-mark.png', 'og-default.png', 1200, 1200, 920, 'white'),
 ]
 
 process.stdout.write(`${JSON.stringify({ generated: outputs })}\n`)
