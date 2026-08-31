@@ -1,6 +1,12 @@
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { mkdirSync, readFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+} from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import ffmpegPath from 'ffmpeg-static'
@@ -62,13 +68,27 @@ function generate(source, target, width, height, markSize, background) {
   }
 }
 
+function generateHashed(source, stem, width, height, markSize, background) {
+  const temporary = `${stem}.tmp.png`
+  const generated = generate(source, temporary, width, height, markSize, background)
+  const file = `${stem}.${generated.sha256.slice(0, 8)}.png`
+  const target = resolve(brand, file)
+
+  if (existsSync(target)) {
+    rmSync(resolve(brand, temporary))
+  } else {
+    renameSync(resolve(brand, temporary), target)
+  }
+  return { file, sha256: generated.sha256 }
+}
+
 const outputs = [
   generate('logo-mark.png', 'favicon-dark-32.png', 32, 32, 28, '0x00000000'),
   generate('favicon-dark-32.png', 'favicon-dark-16.png', 16, 16, 16, '0x00000000'),
   generate('logo-mark.png', 'favicon-light-32.png', 32, 32, 28, '0xF7F6F2'),
   generate('favicon-light-32.png', 'favicon-light-16.png', 16, 16, 16, '0x00000000'),
   generate('logo-mark.png', 'apple-touch-icon.png', 180, 180, 138, 'white'),
-  generate('logo-mark.png', 'og-default.png', 1200, 1200, 920, 'white'),
+  generateHashed('logo-mark.png', 'og-default', 1200, 1200, 920, 'white'),
 ]
 
 process.stdout.write(`${JSON.stringify({ generated: outputs })}\n`)

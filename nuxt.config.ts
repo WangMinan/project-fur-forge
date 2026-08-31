@@ -69,6 +69,15 @@ export default defineNuxtConfig({
     },
     viewTransition: false,
     head: {
+      htmlAttrs: {
+        lang: 'zh-CN',
+      },
+      meta: [
+        {
+          name: 'baidu-site-verification',
+          content: 'codeva-zXVT7kIEMT',
+        },
+      ],
       link: [
         {
           rel: 'preload',

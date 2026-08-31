@@ -4,7 +4,8 @@ import { PROJECT_NAME } from '~~/shared/constants/project'
 const route = useRoute()
 const requestUrl = useRequestURL()
 const canonical = computed(() => new URL(route.path, requestUrl.origin).href)
-const sharingImage = computed(() => new URL('/brand/og-default.png', requestUrl.origin).href)
+const sharingImage = computed(() => new URL('/brand/og-default.c34fe375.png', requestUrl.origin).href)
+const sharingImageAlt = `${PROJECT_NAME}品牌标志`
 const mainRef = useTemplateRef<HTMLElement>('mainRef')
 
 /**
@@ -22,12 +23,15 @@ router.afterEach((to, from) => {
 })
 
 useSeoMeta({
+  ogType: 'website',
+  ogLocale: 'zh_CN',
   ogSiteName: PROJECT_NAME,
   ogUrl: canonical,
   ogImage: sharingImage,
   ogImageWidth: 1200,
   ogImageHeight: 1200,
   ogImageType: 'image/png',
+  ogImageAlt: sharingImageAlt,
   twitterCard: 'summary',
   twitterImage: sharingImage,
 })
@@ -49,6 +53,9 @@ useHead(() => ({
 
 <template>
   <div class="public-layout">
+    <Head>
+      <Meta itemprop="image" :content="sharingImage" />
+    </Head>
     <a href="#main-content" class="skip-link">跳到主要内容</a>
     <PublicHeader />
     <main

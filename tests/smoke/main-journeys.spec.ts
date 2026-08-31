@@ -113,6 +113,31 @@ async function confirmCommission(page: import('@playwright/test').Page) {
   await page.getByLabel(/已阅读《隐私政策》/u).check()
 }
 
+test('首页 SSR head 输出分享与站点验证元数据', async ({ request }) => {
+  const response = await request.get('/')
+  expect(response.ok()).toBe(true)
+
+  const html = await response.text()
+  const title = '有点小狗工作室 · 兽装作品主页'
+  const description = '有点小狗工作室（DITE DOG）的兽装作品主页：我们不只做小狗毛，但是只做手削海绵头！欢迎在本站浏览代表作品、提交自设委托或者领养申请。'
+
+  expect(html).toMatch(/<html\b(?=[^>]*\blang="zh-CN")[^>]*>/u)
+  expect(html).toContain(`<meta name="baidu-site-verification" content="codeva-zXVT7kIEMT">`)
+  expect(html).toContain(`<meta property="og:title" content="${title}">`)
+  expect(html).toContain(`<meta property="og:description" content="${description}">`)
+  expect(html).toContain('<meta property="og:type" content="website">')
+  expect(html).toContain('<meta property="og:locale" content="zh_CN">')
+  expect(html).toContain('<meta property="og:image:alt" content="有点小狗工作室品牌标志">')
+  expect(html).toContain(`<meta itemprop="name" content="${title}">`)
+  expect(html).toContain(`<meta itemprop="description" content="${description}">`)
+  expect(html).toMatch(/<meta itemprop="image" content="http:\/\/127\.0\.0\.1:\d+\/brand\/og-default\.c34fe375\.png">/u)
+
+  const sharingImage = await request.get('/brand/og-default.c34fe375.png')
+  expect(sharingImage.ok()).toBe(true)
+  expect(sharingImage.headers()['content-type']).toBe('image/png')
+  expect((await request.get('/brand/og-default.png')).status()).toBe(404)
+})
+
 test('首页加载、主要入口与单项开放领养在六种视口可达', async ({ page }) => {
   await seedSmokeCatalog(page)
   await seedHeroCollections(page, {
