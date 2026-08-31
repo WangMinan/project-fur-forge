@@ -6,10 +6,14 @@ import {
 import { publicHomeAggregateResponseSchema } from '~~/shared/schemas/public-content'
 import { useHomeSectionNavigation } from '~/composables/useHomeSectionNavigation'
 
+const pageTitle = `${PROJECT_NAME} · 兽装作品主页`
+const pageDescription = `${PROJECT_NAME}（${PROJECT_ENGLISH_NAME}）的兽装作品主页：我们不只做小狗毛，但是只做手削海绵头！欢迎在本站浏览代表作品、提交自设委托或者领养申请。`
+
 useSeoMeta({
-  title: `${PROJECT_NAME} · 兽装作品主页`,
-  description:
-    `${PROJECT_NAME}（${PROJECT_ENGLISH_NAME}）的兽装作品主页：浏览全装与半装作品，了解自设委托人工估价与角色领养的真实营业状态。`,
+  title: pageTitle,
+  description: pageDescription,
+  ogTitle: pageTitle,
+  ogDescription: pageDescription,
 })
 
 /**
@@ -47,6 +51,10 @@ useHead({
     class="public-home home-page"
     data-testid="public-home"
   >
+    <Head>
+      <Meta itemprop="name" :content="pageTitle" />
+      <Meta itemprop="description" :content="pageDescription" />
+    </Head>
     <HomeHeroCarousel :home="home.hero" />
 
     <FeaturedWorks
