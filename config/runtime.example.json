@@ -22,7 +22,14 @@
     "policeFilingStatus": "filing-status",
     "policeFilingNumber": "string",
     "policeFilingUrl": "url",
-    "trustedProxyCidrs": "string"
+    "trustedProxyCidrs": "string",
+    "smtpEnabled": "string",
+    "smtpHost": "string",
+    "smtpPort": "string",
+    "smtpSecure": "string",
+    "smtpUser": "string",
+    "smtpPassword": "string",
+    "smtpFrom": "string"
   },
   "env": {
     "appEnv": "APP_ENV",
@@ -45,7 +52,14 @@
     "policeFilingStatus": "POLICE_FILING_STATUS",
     "policeFilingNumber": "POLICE_FILING_NUMBER",
     "policeFilingUrl": "POLICE_FILING_URL",
-    "trustedProxyCidrs": "TRUSTED_PROXY_CIDRS"
+    "trustedProxyCidrs": "TRUSTED_PROXY_CIDRS",
+    "smtpEnabled": "SMTP_ENABLED",
+    "smtpHost": "SMTP_HOST",
+    "smtpPort": "SMTP_PORT",
+    "smtpSecure": "SMTP_SECURE",
+    "smtpUser": "SMTP_USER",
+    "smtpPassword": "SMTP_PASSWORD",
+    "smtpFrom": "SMTP_FROM"
   },
   "values": {
     "appEnv": "development",
@@ -68,6 +82,13 @@
     "policeFilingStatus": "unconfigured",
     "policeFilingNumber": "",
     "policeFilingUrl": "",
-    "trustedProxyCidrs": ""
+    "trustedProxyCidrs": "",
+    "smtpEnabled": "false",
+    "smtpHost": "",
+    "smtpPort": "",
+    "smtpSecure": "",
+    "smtpUser": "",
+    "smtpPassword": "",
+    "smtpFrom": ""
   }
 }

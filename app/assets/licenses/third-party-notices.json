@@ -8352,6 +8352,22 @@
     "patches": []
   },
   {
+    "name": "nodemailer",
+    "version": "10.0.0",
+    "license": "MIT-0",
+    "repository": null,
+    "homepage": "https://nodemailer.com/",
+    "copyright": [],
+    "noticeText": null,
+    "source": "pnpm-prod",
+    "usage": "Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.",
+    "artifactSha256": null,
+    "correspondingSourceUrl": null,
+    "sourceRevision": null,
+    "buildConfiguration": null,
+    "patches": []
+  },
+  {
     "name": "nopt",
     "version": "8.1.0",
     "license": "ISC",

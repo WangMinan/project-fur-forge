@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { commissionRecipientsSchema } from '~~/shared/schemas/commission-email'
 import { CONTACT_PLATFORM_LABELS } from '~~/shared/constants/contact'
 import type {
   AdminOfficialChannel,
@@ -35,6 +36,7 @@ const card = useSiteContentSectionCard({
   savingSection: () => props.savingSection,
   extract: dto => ({
     email: dto.contact.email,
+    commissionNotificationRecipients: [...dto.contact.commissionNotificationRecipients],
     // qrLinkUrl 是服务端从二维码派生的只读值，不进入草稿或提交体。
     officialChannels: dto.contact.officialChannels.map(channel => ({
       platform: channel.platform,
@@ -83,6 +85,9 @@ const issues = computed(() => {
     if (issue) {
       found[`account-${channel.platform}`] = issue
     }
+  }
+  if (!commissionRecipientsSchema.safeParse(card.draft.value.commissionNotificationRecipients).success) {
+    found.recipients = '请填写有效且不重复的完整邮箱地址，或删除空白行。'
   }
   return found
 })
@@ -161,6 +166,19 @@ function adoptLatest() {
   card.adoptLatest()
 }
 
+async function addRecipient() {
+  card.draft.value.commissionNotificationRecipients.push('')
+  await nextTick()
+  document.getElementById(`notification-recipient-${card.draft.value.commissionNotificationRecipients.length - 1}`)?.focus()
+}
+
+async function removeRecipient(index: number) {
+  card.draft.value.commissionNotificationRecipients.splice(index, 1)
+  await nextTick()
+  const remaining = card.draft.value.commissionNotificationRecipients.length
+  document.getElementById(remaining ? `notification-recipient-${Math.min(index, remaining - 1)}` : 'notification-recipient-add')?.focus()
+}
+
 function save() {
   upload.reset()
   const email = card.draft.value.email.trim()
@@ -173,15 +191,17 @@ function save() {
   // 仍会被判为 dirty，成功提示消失、保存按钮也不会回到稳定状态。
   card.draft.value.email = email
   card.draft.value.officialChannels = officialChannels
-  emit('save', { email, officialChannels })
+  const commissionNotificationRecipients = commissionRecipientsSchema.parse(card.draft.value.commissionNotificationRecipients)
+  card.draft.value.commissionNotificationRecipients = commissionNotificationRecipients
+  emit('save', { email, officialChannels, commissionNotificationRecipients })
 }
 </script>
 
 <template>
   <AdminSiteSectionCardShell
     section="contact"
-    title="官方联系方式"
-    hint="这些内容会公开显示，请只填写你愿意公开的官方渠道。"
+    title="联系方式"
+    hint="官方邮箱和 QQ 渠道公开展示；委托通知邮箱仅供工作室内部使用。"
     :conflict="card.conflict.value"
     :dirty="card.isDirty.value"
     :has-issues="Object.keys(issues).length > 0 || upload.busy.value"
@@ -207,8 +227,31 @@ function save() {
       <p v-if="issues.email" id="site-field-email-issue" class="channels-issue" role="alert">
         {{ issues.email }}
       </p>
-      <p v-else class="channels-hint">访客用它联系你，也是委托估价的收件地址。</p>
+      <p v-else class="channels-hint">访客用它联系你；站内委托投递的通知地址在下方单独配置。</p>
     </div>
+
+    <section class="channels-field" aria-labelledby="commission-recipients-title">
+      <h4 id="commission-recipients-title" class="channels-label">委托通知邮箱</h4>
+      <p class="channels-hint">每个邮箱都会收到完整投递文字及设定图附件。新增地址只接收未来投递；移除地址会取消尚未发送的通知，已经发送的邮件无法撤回。</p>
+      <p v-if="content.contact.smtpStatus !== 'ready'" class="channels-issue" role="status">
+        {{ content.contact.smtpStatus === 'invalid' ? '邮件配置不完整或无效，请联系维护人员。' : '邮件发送尚未启用，保存邮箱不会自动启用发送。' }}
+      </p>
+      <div v-for="(_email, index) in card.draft.value.commissionNotificationRecipients" :key="index" class="notification-recipient">
+        <label :for="`notification-recipient-${index}`" class="channels-label">收件邮箱 {{ index + 1 }}</label>
+        <div class="notification-recipient__controls">
+          <input
+            :id="`notification-recipient-${index}`" v-model="card.draft.value.commissionNotificationRecipients[index]"
+            type="email" class="channels-input" maxlength="254" autocomplete="off"
+            :aria-invalid="Boolean(issues.recipients)" :aria-describedby="issues.recipients ? 'notification-recipients-issue' : undefined">
+          <AdminAction
+            :aria-label="`删除收件邮箱 ${index + 1}`" :disabled="card.saving.value"
+            @click="removeRecipient(index)">删除</AdminAction>
+        </div>
+      </div>
+      <p v-if="issues.recipients" id="notification-recipients-issue" class="channels-issue" role="alert">{{ issues.recipients }}</p>
+      <p v-if="!card.draft.value.commissionNotificationRecipients.length" class="channels-hint" role="status">未配置委托通知邮箱，新投递仅在后台列表中保存。</p>
+      <AdminAction id="notification-recipient-add" :disabled="card.saving.value" @click="addRecipient">新增收件邮箱</AdminAction>
+    </section>
 
     <div class="channels-list" data-testid="official-channel-list">
       <section
@@ -310,6 +353,8 @@ function save() {
       <dl class="channels-fixed">
         <dt>官方邮箱</dt>
         <dd>{{ card.latest.value.email }}</dd>
+        <dt>委托通知邮箱</dt>
+        <dd>{{ card.latest.value.commissionNotificationRecipients.join('、') || '未配置' }}</dd>
         <template v-for="channel in card.latest.value.officialChannels" :key="channel.platform">
           <dt>{{ CONTACT_PLATFORM_LABELS[channel.platform] }}</dt>
           <dd>
@@ -323,6 +368,10 @@ function save() {
 </template>
 
 <style scoped>
+.notification-recipient { display: grid; gap: var(--admin-space-2); min-width: 0; }
+.notification-recipient__controls { display: flex; gap: var(--admin-space-2); }
+.notification-recipient__controls input { flex: 1; min-width: 0; }
+
 .channels-fixed {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
