@@ -10,6 +10,8 @@
 
 ## 最近验证
 
+- 2026-09-06：修复所有 SQL 迁移的 LF/CRLF 校验差异；53 个迁移通过 Ubuntu 双向新建、重复迁移和恢复实证，SQL 内容差异仍被拒绝，本地 `pnpm db:migrate` 返回 applied=0。详见 [迁移哈希修复](implementation/notes/2026-09-06-MIGRATION-HASH-FIX.md)。
+
 - 2026-09-06：用户调整邮件文案后，既有 10 项邮件测试通过，无需更改测试；已授权必要的公开依赖声明同步，Linux/x64 notices 生成/检查通过。
 
 - 2026-09-06：最终浏览器两条流程通过；12 份六档度量无非预期 console/page/network 错误、无水平溢出，可见图片全部 decode 成功；实验室最大观测 CLS 0.00515、LCP 3976 ms，不代签生产性能。
