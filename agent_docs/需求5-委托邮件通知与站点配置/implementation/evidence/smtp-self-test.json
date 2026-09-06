@@ -1,0 +1,20 @@
+[
+  {
+    "label": "small",
+    "attachmentBytes": 922283,
+    "sha256": "ca521e0c282908263e0d0d02574be247a2f115a913d5578335a0120954b0598e",
+    "status": "sent",
+    "errorCode": null,
+    "accepted": 1,
+    "at": "2026-09-06T13:32:01.160Z"
+  },
+  {
+    "label": "large",
+    "attachmentBytes": 19996756,
+    "sha256": "3b7e47b52ca47bec59e5e7dde78973247c74bae32457ebfa016b2732f78cd355",
+    "status": "sent",
+    "errorCode": null,
+    "accepted": 1,
+    "at": "2026-09-06T13:35:21.198Z"
+  }
+]
