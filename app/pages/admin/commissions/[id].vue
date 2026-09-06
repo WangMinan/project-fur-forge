@@ -273,6 +273,8 @@ onMounted(() => void load())
           >放大预览原图 ↗</a>
         </section>
 
+        <AdminCommissionEmailStatus :key="detail.id" :submission-id="detail.id" />
+
         <section class="commission-detail__card" aria-labelledby="commission-handling-title">
           <h2 id="commission-handling-title">处理</h2>
           <label for="commission-status">状态</label>
@@ -303,7 +305,6 @@ onMounted(() => void load())
           aria-labelledby="commission-deletion-title"
         >
           <h2 id="commission-deletion-title">删除申请数据</h2>
-          <p>先执行单条 dry-run，核对脱敏数据库/私有对象计数与阻断原因；再明确确认永久删除。</p>
           <AdminCommissionDeletionAction
             :submission-id="detail.id"
             :status="detail.status"

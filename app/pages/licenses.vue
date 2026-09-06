@@ -67,7 +67,7 @@ const documentMeta = `${assets.length} 项授权资产 · ${summary.packageCount
 
       <div class="licenses">
         <p class="licenses__lead">
-          本站使用开源软件和经授权的第三方字体、工具。开源项目的版权与许可证归各自作者所有；“免费商用”资产不等同于开源软件。
+          本站使用开源软件和经授权的第三方字体、工具。开源项目的版权与许可证归各自作者所有。
         </p>
 
         <section class="license-entry" aria-labelledby="license-ffmpeg">

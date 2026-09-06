@@ -9,7 +9,8 @@ export default defineEventHandler(defineSiteContentSectionHandler({
   section: 'contact',
   toValues: async (payload) => {
     const sqlite = getDatabase().sqlite
-    const existing = getAdminSiteContent(sqlite).contact.officialChannels
+    const contact = getAdminSiteContent(sqlite).contact
+    const existing = contact.officialChannels
     const channels = await Promise.all(payload.officialChannels.map(async channel => ({
       ...channel,
       qrLinkUrl: await resolveContactQrLink(
@@ -20,6 +21,7 @@ export default defineEventHandler(defineSiteContentSectionHandler({
     })))
     return {
       email: payload.email,
+      commissionNotificationRecipientsJson: JSON.stringify(payload.commissionNotificationRecipients ?? contact.commissionNotificationRecipients),
       officialChannelsJson: JSON.stringify(channels),
     }
   },
