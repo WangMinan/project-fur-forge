@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { commissionEmailStatusSchema } from './commission-email'
 import {
   apiSuccessSchema,
   resourceIdSchema,
@@ -107,6 +108,7 @@ export const commissionSubmissionStatusSchema = z.enum([
 ])
 
 export const commissionSubmissionListItemDtoSchema = z.object({
+  emailNotificationStatus: commissionEmailStatusSchema.default('legacy'),
   id: resourceIdSchema,
   receiptCode: z.string().min(8).max(24),
   nickname: z.string().min(1).max(50),

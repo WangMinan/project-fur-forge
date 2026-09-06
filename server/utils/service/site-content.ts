@@ -14,6 +14,9 @@ import type {
 import { ServiceError } from '../service-error'
 import type { RuntimeConfig } from '../runtime-config'
 import { safeLog } from '../safe-log'
+import { getRuntimeConfig } from '../runtime-config'
+import { smtpConfiguration } from '../smtp-config'
+import { commissionRecipients, cancelRemovedCommissionEmails } from '../repository/commission-email'
 import {
   completeContactQrVariants,
   contactQrWidths,
@@ -140,6 +143,8 @@ function content(sqlite: Database.Database): AdminSiteContentDto {
     },
     contact: {
       email: row.contactEmail,
+      commissionNotificationRecipients: commissionRecipients(sqlite),
+      smtpStatus: smtpConfiguration(getRuntimeConfig()).status,
       officialChannels: officialChannels(row.officialChannelsJson),
     },
   })
@@ -296,7 +301,7 @@ const SECTION_UPDATES = {
   'contact': {
     versionColumn: 'contact_content_version',
     action: 'SITE_CONTACT_CONTENT_UPDATE',
-    assignments: 'contact_email = @email, official_channels_json = @officialChannelsJson',
+    assignments: 'contact_email = @email, official_channels_json = @officialChannelsJson, commission_notification_recipients_json = @commissionNotificationRecipientsJson',
   },
 } as const satisfies Record<SiteContentSection, {
   action: string
@@ -324,6 +329,7 @@ export function updateSiteContentSection(
     if (result.changes !== 1) {
       throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
     }
+    if (section === 'contact') cancelRemovedCommissionEmails(sqlite, now)
     sqlite.prepare(`
       INSERT INTO audit_logs (
         id, actor_user_id, action, entity_type, entity_id, result, created_at

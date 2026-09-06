@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { COMMISSION_EMAIL_LABELS } from '~/utils/commission-email'
 import { commissionSubmissionListResponseSchema } from '~~/shared/schemas/commission'
 import type {
   CommissionSubmissionListItemDto,
@@ -99,7 +100,7 @@ onMounted(() => void load())
       <header class="commission-inbox__header">
         <div>
           <h1>委托申请</h1>
-          <p>列表只显示昵称、物种、提交时间、状态与回执；联系方式在详情中按需查看。</p>
+          <p>列表只显示昵称、物种、提交时间、状态、回执与邮件通知状态；联系方式在详情中按需查看。</p>
         </div>
         <button type="button" :disabled="pageStatus === 'loading'" @click="load">
           {{ pageStatus === 'loading' ? '刷新中…' : '刷新' }}
@@ -158,7 +159,7 @@ onMounted(() => void load())
                 {{ item.nickname }} · {{ item.species ?? '物种待补录' }}
               </span>
               <span>{{ formatTime(item.createdAt) }}</span>
-              <span>{{ item.receiptCode }}</span>
+              <span>{{ item.receiptCode }} · {{ COMMISSION_EMAIL_LABELS[item.emailNotificationStatus] }}</span>
             </NuxtLink>
             <AdminCommissionDeletionAction
               :submission-id="item.id"

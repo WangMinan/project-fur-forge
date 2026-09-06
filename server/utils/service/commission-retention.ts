@@ -19,6 +19,8 @@ import {
 import type { CommissionDeletionTarget } from '../repository/commission-repository'
 import { ServiceError } from '../service-error'
 
+import { fenceCommissionEmailsForDeletion } from '../repository/commission-email'
+
 const HALF_YEAR_MS = 183 * 24 * 60 * 60 * 1_000
 const deletionLocks = new Set<string>()
 
@@ -208,6 +210,7 @@ export async function executeCommissionDeletion(options: {
         'COMMISSION_DELETE_BLOCKED',
       )
     }
+    fenceCommissionEmailsForDeletion(options.sqlite, plan.target.submission.id)
     const submissionIdDigest = digestId(plan.target.submission.id)
     try {
       for (const key of plan.objectKeys) {

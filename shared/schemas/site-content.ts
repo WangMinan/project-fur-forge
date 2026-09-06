@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { commissionRecipientsSchema, smtpStatusSchema } from './commission-email'
 import { CONTACT_PLATFORMS } from '../constants/contact'
 import { apiSuccessSchema, resourceVersionSchema, versionedRequestSchema } from './api'
 import { contactEmailSchema, contactQqSchema } from './home'
@@ -163,11 +164,14 @@ export const publicOfficialChannelsSchema = z.array(publicOfficialChannelSchema)
 
 /** 邮箱、QQ 和 QQ群共用 contact 分区版本。 */
 const adminContactContentSchema = z.object({
+  commissionNotificationRecipients: commissionRecipientsSchema,
+  smtpStatus: smtpStatusSchema,
   email: contactEmailSchema,
   officialChannels: adminOfficialChannelsSchema,
 }).strict()
 
 const mutableContactContentSchema = z.object({
+  commissionNotificationRecipients: commissionRecipientsSchema.optional(),
   email: contactEmailSchema,
   officialChannels: mutableOfficialChannelsSchema,
 }).strict()

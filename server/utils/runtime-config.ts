@@ -15,6 +15,7 @@ export const PRODUCTION_MEDIA_BASE_URL = 'https://public-media.ditedog.com'
 
 export const RUNTIME_CONFIG_ENV = {
   appEnv: 'APP_ENV',
+
   publicBaseUrl: 'PUBLIC_BASE_URL',
   adminBaseUrl: 'ADMIN_BASE_URL',
   mediaBaseUrl: 'MEDIA_BASE_URL',
@@ -35,10 +36,18 @@ export const RUNTIME_CONFIG_ENV = {
   policeFilingNumber: 'POLICE_FILING_NUMBER',
   policeFilingUrl: 'POLICE_FILING_URL',
   trustedProxyCidrs: 'TRUSTED_PROXY_CIDRS',
+  smtpEnabled: 'SMTP_ENABLED',
+  smtpHost: 'SMTP_HOST',
+  smtpPort: 'SMTP_PORT',
+  smtpSecure: 'SMTP_SECURE',
+  smtpUser: 'SMTP_USER',
+  smtpPassword: 'SMTP_PASSWORD',
+  smtpFrom: 'SMTP_FROM',
 } as const
 
 export const RUNTIME_CONFIG_TYPES = {
   appEnv: 'environment',
+
   publicBaseUrl: 'origin',
   adminBaseUrl: 'origin',
   mediaBaseUrl: 'origin',
@@ -59,6 +68,13 @@ export const RUNTIME_CONFIG_TYPES = {
   policeFilingNumber: 'string',
   policeFilingUrl: 'url',
   trustedProxyCidrs: 'string',
+  smtpEnabled: 'string',
+  smtpHost: 'string',
+  smtpPort: 'string',
+  smtpSecure: 'string',
+  smtpUser: 'string',
+  smtpPassword: 'string',
+  smtpFrom: 'string',
 } as const
 
 type RuntimeConfigKey = keyof typeof RUNTIME_CONFIG_ENV
@@ -156,6 +172,15 @@ const originSchema = z.string()
   .transform(value => new URL(value).origin)
 
 export const runtimeConfigSchema = z.object({
+  // SMTP validation is isolated: invalid mail settings must not take the site down.
+  smtpEnabled: z.unknown().optional(),
+  smtpHost: z.unknown().optional(),
+  smtpPort: z.unknown().optional(),
+  smtpSecure: z.unknown().optional(),
+  smtpUser: z.unknown().optional(),
+  smtpPassword: z.unknown().optional(),
+  smtpFrom: z.unknown().optional(),
+
   appEnv: z.enum([
     'development',
     'test',
@@ -480,18 +505,18 @@ function readConfigFile(filePath: string) {
   const expectedTypes = Object.entries(RUNTIME_CONFIG_TYPES)
 
   if (
-    Object.keys(parsed.data.env).length !== expectedEntries.length
+    Object.keys(parsed.data.env).some(key => !Object.hasOwn(RUNTIME_CONFIG_ENV, key))
     || expectedEntries.some(
-      ([key, envName]) => parsed.data.env[key] !== envName,
+      ([key, envName]) => !(key.startsWith('smtp') && parsed.data.env[key] === undefined) && parsed.data.env[key] !== envName,
     )
   ) {
     throw new RuntimeConfigError('Runtime config environment mapping drifted.')
   }
 
   if (
-    Object.keys(parsed.data.types).length !== expectedTypes.length
+    Object.keys(parsed.data.types).some(key => !Object.hasOwn(RUNTIME_CONFIG_TYPES, key))
     || expectedTypes.some(
-      ([key, type]) => parsed.data.types[key] !== type,
+      ([key, type]) => !(key.startsWith('smtp') && parsed.data.types[key] === undefined) && parsed.data.types[key] !== type,
     )
   ) {
     throw new RuntimeConfigError('Runtime config type mapping drifted.')

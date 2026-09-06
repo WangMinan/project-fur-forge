@@ -21,6 +21,9 @@ import type {
 } from '../../../shared/types/contracts'
 import type { MediaStorage } from '../media-storage'
 import type { RuntimeConfig } from '../runtime-config'
+import { getRuntimeConfig } from '../runtime-config'
+import { smtpConfiguration } from '../smtp-config'
+import { enqueueCommissionEmails, commissionEmailSummary } from '../repository/commission-email'
 import { ServiceError } from '../service-error'
 import {
   acquireCommissionUploadValidation,
@@ -504,6 +507,7 @@ export function createCommissionSubmission(
     id?: string
     now?: number
     receiptCode?: (attempt: number) => string
+    notificationsEnabled?: boolean
   } = {},
 ) {
   if (input.adultConfirmed !== true || input.privacyNoticeAcknowledged !== true) {
@@ -567,6 +571,7 @@ export function createCommissionSubmission(
             'COMMISSION_PHONE_PENDING',
           )
         }
+        const submissionId = options.id ?? randomUUID()
         sqlite.prepare(`
           INSERT INTO commission_submissions (
             id, receipt_code, nickname, species, phone_country_code, phone_number, qq,
@@ -574,7 +579,7 @@ export function createCommissionSubmission(
             created_at, updated_at
           ) VALUES (?, ?, ?, ?, '+86', ?, ?, ?, ?, ?, 'pending', ?, ?)
         `).run(
-          options.id ?? randomUUID(),
+          submissionId,
           receiptCode,
           input.nickname,
           input.species,
@@ -595,6 +600,9 @@ export function createCommissionSubmission(
         if (consumed.changes !== 1) {
           throw new ServiceError(409, 'CONFLICT', 'Commission upload cannot be submitted.')
         }
+        const config = getRuntimeConfig()
+        enqueueCommissionEmails(sqlite, submissionId, options.notificationsEnabled
+          ?? (config.appEnv !== 'test' && smtpConfiguration(config).status === 'ready'), now)
         return createCommissionSubmissionResponseSchema.shape.data.parse({ receiptCode })
       })()
     }
@@ -623,10 +631,11 @@ export function createCommissionSubmission(
   throw new ServiceError(500, 'INTERNAL_ERROR', 'Commission submission could not be created.')
 }
 
-function listItem(row: CommissionSubmissionRow): CommissionSubmissionListItemDto {
+function listItem(sqlite: Database.Database, row: CommissionSubmissionRow): CommissionSubmissionListItemDto {
   return commissionSubmissionListItemDtoSchema.parse({
     id: row.id,
     receiptCode: row.receiptCode,
+    emailNotificationStatus: commissionEmailSummary(sqlite, row.id),
     nickname: row.nickname,
     species: row.species,
     status: row.status,
@@ -639,7 +648,7 @@ export function listCommissionSubmissions(
   sqlite: Database.Database,
   status?: CommissionSubmissionStatus,
 ) {
-  return listCommissionSubmissionRows(sqlite, status).map(listItem)
+  return listCommissionSubmissionRows(sqlite, status).map(row => listItem(sqlite, row))
 }
 
 export function getCommissionSubmissionDetail(
@@ -651,7 +660,7 @@ export function getCommissionSubmissionDetail(
     throw new ServiceError(404, 'NOT_FOUND', 'Commission submission was not found.')
   }
   return commissionSubmissionDetailDtoSchema.parse({
-    ...listItem(row),
+    ...listItem(sqlite, row),
     phone: {
       countryCode: row.phoneCountryCode,
       number: row.phoneNumber,

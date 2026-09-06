@@ -3134,6 +3134,12 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/chicoxyzzy/node-releases#readme
 
+nodemailer@10.0.0
+License: MIT-0
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://nodemailer.com/
+
 nopt@8.1.0
 License: ISC
 Source class: pnpm-prod

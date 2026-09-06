@@ -360,6 +360,8 @@ export const commissionUploadSessions = sqliteTable('commission_upload_sessions'
 export const commissionSubmissions = sqliteTable('commission_submissions', {
   id: text('id').primaryKey(),
   receiptCode: text('receipt_code').notNull(),
+  emailNotificationPolicy: text('email_notification_policy').notNull().default('legacy'),
+  emailDeletionPending: integer('email_deletion_pending').notNull().default(0),
   nickname: text('nickname').notNull(),
   // 0042 以前的真实申请无法由 Agent 猜测物种，因此旧行允许 NULL；
   // 所有新投递由请求 Schema 强制填写。
@@ -378,6 +380,8 @@ export const commissionSubmissions = sqliteTable('commission_submissions', {
   version: integer('version').notNull().default(1),
   ...timestampColumns(),
 }, table => [
+  check('commission_email_policy', sql`${table.emailNotificationPolicy} IN ('legacy', 'enabled', 'disabled', 'unconfigured')`),
+  check('commission_email_deletion_pending', sql`${table.emailDeletionPending} IN (0, 1)`),
   uniqueIndex('commission_submissions_receipt_unique').on(table.receiptCode),
   uniqueIndex('commission_submissions_design_asset_unique').on(table.designAssetId),
   uniqueIndex('commission_submissions_pending_phone_unique')
@@ -420,6 +424,27 @@ export const commissionSubmissions = sqliteTable('commission_submissions', {
     sql`(${table.status} = 'pending' AND ${table.handledAt} IS NULL AND ${table.handledBy} IS NULL) OR (${table.status} IN ('accepted', 'rejected') AND ${table.handledAt} IS NOT NULL AND ${table.handledBy} IS NOT NULL)`,
   ),
   check('commission_submissions_version_positive', sql`${table.version} > 0`),
+])
+
+export const commissionEmailNotifications = sqliteTable('commission_email_notifications', {
+  id: text('id').primaryKey(),
+  submissionId: text('submission_id').notNull().references(() => commissionSubmissions.id, { onDelete: 'cascade' }),
+  recipient: text('recipient').notNull(),
+  status: text('status').notNull().default('pending'),
+  attemptCount: integer('attempt_count').notNull().default(0),
+  nextAttemptAt: integer('next_attempt_at').notNull(),
+  leaseToken: text('lease_token'),
+  leaseExpiresAt: integer('lease_expires_at'),
+  transmittingAt: integer('transmitting_at'),
+  lastErrorCode: text('last_error_code'),
+  sentAt: integer('sent_at'),
+  ...timestampColumns(),
+}, table => [
+  uniqueIndex('commission_email_recipient_unique').on(table.submissionId, table.recipient),
+  index('commission_email_due_idx').on(table.status, table.nextAttemptAt),
+  check('commission_email_status', sql`${table.status} IN ('pending', 'sending', 'sent', 'failed', 'cancelled')`),
+  check('commission_email_attempts', sql`${table.attemptCount} >= 0`),
+  check('commission_email_error', sql`${table.lastErrorCode} IN ('AUTH', 'REJECTED', 'TOO_LARGE', 'CONNECTION', 'ATTACHMENT', 'UNKNOWN')`),
 ])
 
 export const assetVariants = sqliteTable('asset_variants', {
@@ -810,6 +835,7 @@ export const siteContent = sqliteTable('site_content', {
   id: text('id').primaryKey().default('site'),
   heroTagline: text('hero_tagline'),
   contactEmail: text('contact_email'),
+  commissionNotificationRecipientsJson: text('commission_notification_recipients_json').notNull().default('["765678159@qq.com","3114559925@qq.com"]'),
   contactQq: text('contact_qq'),
   officialChannelsJson: text('official_channels_json').notNull().default('[{"platform":"qq","account":null,"qrCodeAssetId":null},{"platform":"qq_group","account":null,"qrCodeAssetId":null}]'),
   commissionIntro: text('commission_intro'),
@@ -838,6 +864,7 @@ export const siteContent = sqliteTable('site_content', {
     .notNull().default(1),
   ...timestampColumns(),
 }, table => [
+  check('site_content_notification_recipients', sql`json_valid(${table.commissionNotificationRecipientsJson}) AND json_type(${table.commissionNotificationRecipientsJson}) = 'array'`),
   check('site_content_singleton', sql`${table.id} = 'site'`),
   check(
     'site_content_section_versions_positive',

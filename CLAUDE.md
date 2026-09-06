@@ -12,11 +12,13 @@
 | 需求2 | 已关闭、历史增量 | 仅供追溯，后续需求已覆盖部分功能 |
 | 需求3 | 已关闭、当前业务基线 | 退役边界、简化作品/领养、Hero、委托投递 |
 | 需求4 | **仅阶段 E 开放** | UI 美化、布局、响应式、Hero 焦点与动效优化 |
+| 需求5 | 本地实现完成；镜像/部署状态见需求5记录 | 内部委托邮件通知、后台收件列表与站点配置 |
 
 “关闭”不等于补签未发生的生产执行、独立 Review、真实手机或用户验收；未完成项在任务文档中标为“按产品决策关闭”。需求1～3不再接受新功能，后续代码不得恢复它们已退役的行为。
 
 开始工作前按任务读取：
 
+- 需求5任务：[`STATE`](agent_docs/需求5-委托邮件通知与站点配置/STATE.md)、[`SPEC`](agent_docs/需求5-委托邮件通知与站点配置/requirements/SPEC.md)、[`TASKS`](agent_docs/需求5-委托邮件通知与站点配置/implementation/TASKS.md)；其明确授权的内部 SMTP 通知覆盖下文历史禁用范围，用户侧页面与全部文字保持不变；
 - 当前状态与唯一勾选权威：[`需求4 STATE`](agent_docs/需求4-站点视觉升级与内容合规/STATE.md)、[`需求4 TASKS`](agent_docs/需求4-站点视觉升级与内容合规/implementation/TASKS.md)；
 - 产品、文案、模型和视觉契约：[`SPEC`](agent_docs/需求4-站点视觉升级与内容合规/requirements/SPEC.md)、[`COPY`](agent_docs/需求4-站点视觉升级与内容合规/requirements/COPY.md)、[`models`](agent_docs/需求4-站点视觉升级与内容合规/models/README.md)、[`design`](agent_docs/需求4-站点视觉升级与内容合规/.design/README.md)；
 - 已实现业务边界：[`需求3 foundation`](agent_docs/需求3-站点业务简化与委托投递/foundation/README.md)；
@@ -31,7 +33,7 @@
 - 公开投影、排序、数量、营业状态、联系和文案以需求4 `SPEC` / `COPY` / `models` 为准；不在本文复制字段级细节。
 - 公开源图与私有媒体严格分离；委托设定图不生成 PUBLIC variant、ESA URL 或水印。
 - PII 不进入公开 DTO、HTML、URL、analytics、普通日志、错误、localStorage 或真实 fixture。
-- 不新增交易、订单、支付、SMTP、短信、公开申请查询、自动建作品或通用 CMS。
+- 不新增交易、订单、支付、短信、公开申请查询、自动建作品或通用 CMS；SMTP 仅限需求5明确授权的内部委托通知。
 
 需求4阶段 E 的设计目标是“简洁底盘 + 灵动角色感 + 摄影主导的编辑式工作室网站”。后续 PR 只做 UI、布局、响应式、可访问性和动效质量；若工作会改变数据库、业务契约、媒体/安全边界或部署拓扑，必须先取得用户明确授权并重新开放对应范围。
 

@@ -11,7 +11,7 @@ definePageMeta({
 })
 
 useSeoMeta({
-  title: '文案配置',
+  title: '站点配置',
   robots: 'noindex, nofollow',
 })
 
@@ -60,26 +60,34 @@ async function onSectionConflict(section: SiteContentSection) {
   actionError.value = await refreshConflict(section)
 }
 
-onMounted(() => void load())
+onMounted(async () => {
+  await load()
+  await nextTick()
+  const hash = window.location.hash
+  if (CONTENT_ANCHORS.some(anchor => anchor.href === hash)) {
+    document.getElementById(hash.slice(1))?.scrollIntoView()
+  }
+})
 </script>
 
 <template>
   <AdminShell current="content">
+    <span v-if="pageStatus !== 'ready'" id="content-contact" aria-hidden="true" />
     <div class="content-admin" data-testid="content-admin">
       <header class="content-admin__header">
-        <h1 class="content-admin__title">文案配置</h1>
+        <h1 class="content-admin__title">站点配置</h1>
       </header>
 
       <div v-if="pageStatus === 'loading'" class="content-admin__state" role="status">
-        正在加载文案配置…
+        正在加载站点配置…
       </div>
       <div v-else-if="pageStatus === 'error'" class="content-admin__state" role="alert">
-        <p>文案配置加载失败。</p>
+        <p>站点配置加载失败。</p>
         <AdminAction size="small" @click="load">重试</AdminAction>
       </div>
 
       <template v-else-if="content">
-        <nav class="content-admin__anchors" aria-label="文案配置分区">
+        <nav class="content-admin__anchors" aria-label="站点配置分区">
           <AdminAction
             v-for="anchor in CONTENT_ANCHORS"
             :key="anchor.href"

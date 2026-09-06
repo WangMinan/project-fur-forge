@@ -572,7 +572,7 @@ test('管理端对已拒绝申请先脱敏 dry-run，再单条删除', async ({ 
   await expect(page).toHaveURL(/\/admin\/commissions\/[0-9a-f-]+$/u)
   await page.locator('#commission-status').selectOption('rejected')
   await page.getByRole('button', { name: '保存处理结果' }).click()
-  await expect(page.getByRole('status')).toContainText('处理结果已保存')
+  await expect(page.getByRole('region', { name: '处理', exact: true }).getByRole('status')).toContainText('处理结果已保存')
   const submissionId = new URL(page.url()).pathname.split('/').at(-1)!
 
   await page.goto(`${adminBaseURL}/admin/commissions?status=rejected`)
@@ -661,7 +661,7 @@ test('管理员可通过登录表单进入后台', async ({ page }) => {
 
   await page.goto(`${adminBaseURL}/admin/site/content`)
   await expect(page.getByTestId('content-admin')).toBeVisible()
-  await expect(page.getByRole('heading', { name: '官方联系方式' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '联系方式', exact: true })).toBeVisible()
   await expect(page.getByText('防诈骗')).toHaveCount(0)
 })
 
