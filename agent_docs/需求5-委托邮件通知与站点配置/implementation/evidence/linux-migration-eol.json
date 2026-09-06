@@ -1,0 +1,34 @@
+{
+  "platform": "linux",
+  "arch": "x64",
+  "node": "v24.18.0",
+  "migrations": 53,
+  "results": [
+    {
+      "mode": "lf",
+      "checkedAs": "crlf",
+      "applied": 53,
+      "complete": true,
+      "reapplied": 0,
+      "historyUnchanged": true,
+      "integrity": "ok",
+      "foreignKeys": 0,
+      "restore": "passed"
+    },
+    {
+      "mode": "crlf",
+      "checkedAs": "lf",
+      "applied": 53,
+      "complete": true,
+      "reapplied": 0,
+      "historyUnchanged": true,
+      "integrity": "ok",
+      "foreignKeys": 0,
+      "restore": "passed"
+    }
+  ],
+  "contentDrift": {
+    "migrationRejected": true,
+    "restoreRejected": true
+  }
+}

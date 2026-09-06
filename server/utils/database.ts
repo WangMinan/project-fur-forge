@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import {
   existsSync,
   mkdirSync,
@@ -40,13 +41,23 @@ const MIGRATION_HASH_COMPATIBILITY: Readonly<Record<string, readonly string[]>> 
 
 function migrationHashMatches(
   appliedHash: string,
-  expected: { folderMillis: number, hash: string },
+  expected: { folderMillis: number, hash: string, sql: string[] },
 ) {
   if (appliedHash === expected.hash) {
     return true
   }
 
-  const compatibilityKey = `${expected.folderMillis}:${expected.hash}`
+  // Drizzle hashes raw file bytes. Rejoin its lossless split, then compare only
+  // uniform LF/CRLF variants so Windows-applied history also validates on Ubuntu.
+  // No SQL tokens, whitespace, comments, or recorded hashes are rewritten.
+  const lf = expected.sql.join('--> statement-breakpoint').replaceAll('\r\n', '\n')
+  const lfHash = createHash('sha256').update(lf).digest('hex')
+  const crlfHash = createHash('sha256').update(lf.replaceAll('\n', '\r\n')).digest('hex')
+  if (appliedHash === lfHash || appliedHash === crlfHash) {
+    return true
+  }
+
+  const compatibilityKey = `${expected.folderMillis}:${lfHash}`
   return MIGRATION_HASH_COMPATIBILITY[compatibilityKey]?.includes(appliedHash)
     === true
 }
