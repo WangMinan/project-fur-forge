@@ -15,6 +15,7 @@ import {
   describe,
   expect,
   it,
+  vi,
 } from 'vitest'
 import {
   createSyntheticSourcePng,
@@ -41,7 +42,7 @@ import {
   unpublishWork,
 } from '../../server/utils/runner/work-publication'
 import { recoverPendingOperations } from '../../server/utils/runner/operation-recovery'
-import { runOperationEdgePurge } from '../../server/utils/runner/public-media-purge'
+import { dispatchOperationEdgePurge } from '../../server/utils/runner/public-media-purge'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 import { FakePublicMediaCache } from '../helpers/fake-public-media-cache'
 
@@ -639,175 +640,100 @@ describe('dual-bucket work publication operations', () => {
     `).pluck().get()).toBe(0)
   })
 
-  it('persists exact ESA URLs before deletion and exposes purge progress separately', async () => {
+  it.each(['resolve', 'reject'] as const)('finishes unpublishing before a slow ESA submission can %s', async (outcome) => {
     const work = createWorkWithPhoto(3200, 2400, 'prod')
-    const published = await publishWork(
-      sqlite,
-      storage,
-      work.id,
-      work.version,
-      USER_ID,
-      NOW + 3_000,
-    )
-    let finishDescribe!: (status: 'Complete') => void
+    const published = await publishWork(sqlite, storage, work.id, work.version, USER_ID, NOW + 3_000)
+    const submission = Promise.withResolvers<string>()
     const cache = new FakePublicMediaCache()
-    cache.describeExactFilePurge = async () => await new Promise((resolve) => {
-      finishDescribe = resolve
+    cache.purgeExactFiles = vi.fn(async (urls) => {
+      const manifest = sqlite.prepare(`
+        SELECT edge_purge_urls_json FROM publication_operations
+        WHERE operation_type = 'UNPUBLISH'
+      `).pluck().get() as string
+      expect(JSON.parse(manifest)).toEqual(urls)
+      cache.submittedUrls.push([...urls])
+      return submission.promise
     })
-    setPublicMediaCacheForTests(cache)
-
-    const unpublishing = unpublishWork(
-      sqlite,
-      storage,
-      work.id,
-      published.work.version,
-      USER_ID,
-      NOW + 4_000,
-    )
-    await expect.poll(() => sqlite.prepare(`
-      SELECT edge_purge_status FROM publication_operations
-      WHERE operation_type = 'UNPUBLISH'
-      ORDER BY started_at DESC LIMIT 1
-    `).pluck().get()).toBe('PURGING')
-    expect(sqlite.prepare(`
-      SELECT publication_status FROM works WHERE id = ?
-    `).pluck().get(work.id)).toBe('unpublished')
-
-    finishDescribe('Complete')
-    const unpublished = await unpublishing
-    expect(unpublished.operation).toMatchObject({
-      status: 'DONE',
-      edgePurgeStatus: 'COMPLETE',
-      edgePurgeFailureReason: null,
-      edgePurgeFileCount: 12,
-    })
-    expect(cache.submittedUrls).toHaveLength(1)
-    expect(cache.submittedUrls[0]).toHaveLength(12)
-    expect(cache.submittedUrls[0]?.every(url => (
-      url.startsWith('https://public-media.ditedog.com/prod/web/')
-      && !url.includes('?')
-    ))).toBe(true)
-    expect(sqlite.prepare(`
-      SELECT edge_purge_task_id FROM publication_operations
-      WHERE id = ?
-    `).pluck().get(unpublished.operation.operationId)).toBe('purge-task-1')
-  })
-
-  it('keeps the page hidden when ESA purge fails and retries without another business write', async () => {
-    const work = createWorkWithPhoto(3200, 2400, 'prod')
-    const published = await publishWork(
-      sqlite,
-      storage,
-      work.id,
-      work.version,
-      USER_ID,
-      NOW + 3_000,
-    )
-    const cache = new FakePublicMediaCache()
-    cache.statuses = ['Failed']
+    const describe = vi.spyOn(cache, 'describeExactFilePurge')
     setPublicMediaCacheForTests(cache)
 
     const unpublished = await unpublishWork(
-      sqlite,
-      storage,
-      work.id,
-      published.work.version,
-      USER_ID,
-      NOW + 4_000,
+      sqlite, storage, work.id, published.work.version, USER_ID, NOW + 4_000,
     )
     expect(unpublished.work.publicationStatus).toBe('unpublished')
     expect(unpublished.operation).toMatchObject({
-      status: 'FAILED',
-      failureCode: 'EDGE_PURGE_FAILED',
+      status: 'DONE',
+      failureCode: null,
       cleanupPendingCount: 0,
-      edgePurgeStatus: 'FAILED',
-      edgePurgeFailureReason: 'EDGE_PURGE_FAILED',
+      edgePurgeStatus: 'PENDING',
       edgePurgeFileCount: 12,
     })
-    const hiddenVersion = unpublished.work.version
+    expect(storage.deletedPublicKeys).toHaveLength(12)
+    expect(cache.submittedUrls).toHaveLength(1)
+    expect(cache.submittedUrls[0]).toHaveLength(12)
+    expect(cache.submittedUrls[0]?.every(url => (
+      url.startsWith('https://public-media.ditedog.com/prod/web/') && !url.includes('?')
+    ))).toBe(true)
+    expect((await unpublishWork(
+      sqlite, storage, work.id, published.work.version, USER_ID, NOW + 4_500,
+    )).operation.operationId).toBe(unpublished.operation.operationId)
 
-    await expect(deleteManagedWork(
-      sqlite,
-      storage,
-      work.id,
-      hiddenVersion,
-      USER_ID,
-      NOW + 4_500,
-    )).rejects.toMatchObject({
-      reason: 'PUBLICATION_CLEANUP_PENDING',
-      statusCode: 409,
-    })
-
-    cache.statuses = ['Complete']
-    const retried = await retryPublicationCleanup(
-      sqlite,
-      storage,
-      unpublished.operation.operationId,
-      unpublished.operation.version,
-      USER_ID,
-      NOW + 5_000,
-    )
-    expect(retried).toMatchObject({
+    if (outcome === 'resolve') {
+      submission.resolve('purge-task-1')
+    }
+    else {
+      submission.reject(new Error('Synthetic ESA submission failure.'))
+    }
+    await expect.poll(() => sqlite.prepare(`
+      SELECT status, edge_purge_status AS edgeStatus, edge_purge_task_id AS taskId,
+        edge_purge_reason AS reason, completed_at AS completedAt
+      FROM publication_operations WHERE id = ?
+    `).get(unpublished.operation.operationId)).toEqual({
       status: 'DONE',
-      edgePurgeStatus: 'COMPLETE',
-      edgePurgeFailureReason: null,
+      edgeStatus: outcome === 'resolve' ? 'PURGING' : 'FAILED',
+      taskId: outcome === 'resolve' ? 'purge-task-1' : null,
+      reason: outcome === 'resolve' ? null : 'EDGE_PURGE_SUBMIT_FAILED',
+      completedAt: NOW + 4_000,
     })
-    expect(cache.submittedUrls).toHaveLength(2)
-    expect(sqlite.prepare(`
-      SELECT version FROM works WHERE id = ?
-    `).pluck().get(work.id)).toBe(hiddenVersion)
-
+    expect(describe).not.toHaveBeenCalled()
+    expect(cache.purgeExactFiles).toHaveBeenCalledTimes(1)
     await expect(deleteManagedWork(
-      sqlite,
-      storage,
-      work.id,
-      hiddenVersion,
-      USER_ID,
-      NOW + 6_000,
+      sqlite, storage, work.id, unpublished.work.version, USER_ID, NOW + 6_000,
     )).resolves.toEqual({ id: work.id })
   })
 
-  it('waits through ESA task visibility lag before accepting completion', async () => {
+  it('retries a historical ESA timeout without clearing or resubmitting its task ID', async () => {
     const work = createWorkWithPhoto(3200, 2400, 'prod')
-    const published = await publishWork(
-      sqlite,
-      storage,
-      work.id,
-      work.version,
-      USER_ID,
-      NOW + 3_000,
-    )
+    const published = await publishWork(sqlite, storage, work.id, work.version, USER_ID, NOW + 3_000)
     const cache = new FakePublicMediaCache()
-    cache.statuses = ['Failed']
+    const describe = vi.spyOn(cache, 'describeExactFilePurge')
     setPublicMediaCacheForTests(cache)
     const unpublished = await unpublishWork(
-      sqlite,
-      storage,
-      work.id,
-      published.work.version,
-      USER_ID,
-      NOW + 4_000,
+      sqlite, storage, work.id, published.work.version, USER_ID, NOW + 4_000,
     )
-
-    cache.statuses = ['Missing', 'Refreshing', 'Complete']
-    await expect(runOperationEdgePurge(
-      sqlite,
-      cache,
-      unpublished.operation.operationId,
-      NOW + 5_000,
-      { pollAttempts: 3, pollIntervalMs: 0 },
-    )).resolves.toBeNull()
-    expect(cache.submittedUrls).toHaveLength(2)
-    expect(sqlite.prepare(`
-      SELECT edge_purge_status AS status, edge_purge_reason AS reason
-      FROM publication_operations WHERE id = ?
-    `).get(unpublished.operation.operationId)).toEqual({
-      reason: null,
-      status: 'COMPLETE',
-    })
+    await expect.poll(() => sqlite.prepare(`
+      SELECT edge_purge_task_id FROM publication_operations WHERE id = ?
+    `).pluck().get(unpublished.operation.operationId)).toBe('purge-task-1')
+    sqlite.prepare(`
+      UPDATE publication_operations
+      SET status = 'FAILED', failure_stage = 'CLEANING_PUBLIC',
+        internal_error_code = 'EDGE_PURGE_TIMEOUT', edge_purge_status = 'FAILED'
+      WHERE id = ?
+    `).run(unpublished.operation.operationId)
+    const version = sqlite.prepare('SELECT version FROM publication_operations WHERE id = ?')
+      .pluck().get(unpublished.operation.operationId) as number
+    const retried = await retryPublicationCleanup(
+      sqlite, storage, unpublished.operation.operationId, version, USER_ID, NOW + 5_000,
+    )
+    expect(retried).toMatchObject({ status: 'DONE', failureCode: null, cleanupPendingCount: 0 })
+    dispatchOperationEdgePurge(sqlite, cache, unpublished.operation.operationId, NOW + 6_000)
+    expect(cache.submittedUrls).toHaveLength(1)
+    expect(describe).not.toHaveBeenCalled()
+    expect(sqlite.prepare('SELECT version FROM works WHERE id = ?').pluck().get(work.id))
+      .toBe(unpublished.work.version)
   })
 
-  it('fails only after ESA omits the purge task for the full poll window', async () => {
+  it('finishes a historical in-flight ESA purge after restart without resubmitting or republishing', async () => {
     const work = createWorkWithPhoto(3200, 2400, 'prod')
     const published = await publishWork(
       sqlite,
@@ -818,46 +744,6 @@ describe('dual-bucket work publication operations', () => {
       NOW + 3_000,
     )
     const cache = new FakePublicMediaCache()
-    cache.statuses = ['Failed']
-    setPublicMediaCacheForTests(cache)
-    const unpublished = await unpublishWork(
-      sqlite,
-      storage,
-      work.id,
-      published.work.version,
-      USER_ID,
-      NOW + 4_000,
-    )
-
-    cache.statuses = ['Missing', 'Missing', 'Missing']
-    await expect(runOperationEdgePurge(
-      sqlite,
-      cache,
-      unpublished.operation.operationId,
-      NOW + 5_000,
-      { pollAttempts: 3, pollIntervalMs: 0 },
-    )).resolves.toBe('EDGE_PURGE_TASK_NOT_FOUND')
-    expect(sqlite.prepare(`
-      SELECT edge_purge_status AS status, edge_purge_reason AS reason
-      FROM publication_operations WHERE id = ?
-    `).get(unpublished.operation.operationId)).toEqual({
-      reason: 'EDGE_PURGE_TASK_NOT_FOUND',
-      status: 'FAILED',
-    })
-  })
-
-  it('resumes an in-flight ESA purge after restart without resubmitting or republishing', async () => {
-    const work = createWorkWithPhoto(3200, 2400, 'prod')
-    const published = await publishWork(
-      sqlite,
-      storage,
-      work.id,
-      work.version,
-      USER_ID,
-      NOW + 3_000,
-    )
-    const cache = new FakePublicMediaCache()
-    cache.statuses = ['Failed']
     setPublicMediaCacheForTests(cache)
     const unpublished = await unpublishWork(
       sqlite,
@@ -868,6 +754,9 @@ describe('dual-bucket work publication operations', () => {
       NOW + 4_000,
     )
     const hiddenVersion = unpublished.work.version
+    await expect.poll(() => sqlite.prepare(`
+      SELECT edge_purge_task_id FROM publication_operations WHERE id = ?
+    `).pluck().get(unpublished.operation.operationId)).toBe('purge-task-1')
 
     sqlite.prepare(`
       UPDATE publication_operations
@@ -877,7 +766,6 @@ describe('dual-bucket work publication operations', () => {
           completed_at = NULL, lease_owner = NULL, lease_expires_at = NULL
       WHERE id = ?
     `).run(unpublished.operation.operationId)
-    cache.statuses = ['Complete']
 
     const summary = await recoverPendingOperations({
       now: NOW + 5_000,
@@ -889,7 +777,7 @@ describe('dual-bucket work publication operations', () => {
       SELECT status, edge_purge_status AS edgePurgeStatus
       FROM publication_operations WHERE id = ?
     `).get(unpublished.operation.operationId)).toEqual({
-      edgePurgeStatus: 'COMPLETE',
+      edgePurgeStatus: 'PURGING',
       status: 'DONE',
     })
     expect(cache.submittedUrls).toHaveLength(1)

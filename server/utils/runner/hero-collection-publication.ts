@@ -60,7 +60,7 @@ import { heroItemUpscaleReady } from '../service/hero-collection-management'
 import { registerOperationResumer } from './operation-recovery'
 import {
   edgePurgeUrlsForObjectKeys,
-  runOperationEdgePurge,
+  dispatchOperationEdgePurge,
 } from './public-media-purge'
 import { getPublicationOperation } from './work-publication'
 
@@ -618,17 +618,12 @@ async function cleanUnpublication(
       return
     }
   }
-  const edgeFailure = await runOperationEdgePurge(
+  dispatchOperationEdgePurge(
     sqlite,
     getPublicMediaCache(),
     operationId,
     now,
-    heartbeat ? { heartbeat } : {},
   )
-  if (edgeFailure) {
-    failOperation(sqlite, operationId, 'CLEANING_PUBLIC', edgeFailure, [], now)
-    return
-  }
   completeOperation(sqlite, operationId, now)
 }
 

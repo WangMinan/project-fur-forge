@@ -45,6 +45,7 @@ const check = ref<WorkPublicationCheckDto | null>(null)
 const checkError = ref<string | null>(null)
 const checkLoading = ref(false)
 const pending = ref<'cleanup' | 'publish' | 'unpublish' | null>(null)
+const pendingStartedAt = shallowRef<number | null>(null)
 const feedback = ref<Feedback | null>(null)
 const lastOperation = ref<PublicationOperationDto | null>(null)
 const confirmUnpublish = ref(false)
@@ -233,7 +234,7 @@ function handleOperationOutcome(
       cleanupRetry: false,
       text: operation.operationType === 'PUBLISH'
         ? '发布成功：公开图片已生成并通过校验。'
-        : '已下架：公开页面不再可访问，公开文件与 ESA 缓存已撤销。',
+        : '已下架：公开页面不再可访问，公开文件已清理，缓存撤销在后台处理。',
       tone: 'success',
     }
     return
@@ -261,6 +262,7 @@ async function publish() {
     return
   }
   feedback.value = null
+  pendingStartedAt.value = Date.now()
   pending.value = 'publish'
   try {
     if (!(await props.saveBeforePublish())) {
@@ -329,6 +331,7 @@ async function publish() {
 async function unpublish() {
   confirmUnpublish.value = false
   feedback.value = null
+  pendingStartedAt.value = Date.now()
   pending.value = 'unpublish'
   try {
     const result = await adminApi(
@@ -375,6 +378,8 @@ async function retryCleanup() {
   if (!operation) {
     return
   }
+  feedback.value = null
+  pendingStartedAt.value = Date.now()
   pending.value = 'cleanup'
   try {
     const result = await adminApi(
@@ -389,7 +394,7 @@ async function retryCleanup() {
     if (result.data.status === 'DONE') {
       feedback.value = {
         cleanupRetry: false,
-        text: '公开文件与 ESA 缓存撤销完成。',
+        text: '公开文件已清理，缓存撤销在后台处理。',
         tone: 'success',
       }
     }
@@ -544,8 +549,8 @@ onUnmounted(() => {
         : null"
       :detail="taskDetail"
       :show-elapsed="taskStatus === 'active'"
-      :started-at="taskOperation?.startedAt ?? null"
-      :can-retry="pending === 'cleanup' || feedback?.cleanupRetry === true"
+      :started-at="pending !== null ? pendingStartedAt : taskOperation?.startedAt ?? null"
+      :can-retry="pending === 'cleanup' || (pending === null && feedback?.cleanupRetry === true)"
       retry-label="重试清理公开文件"
       retry-loading-label="正在重试清理…"
       :retry-busy="pending === 'cleanup'"
