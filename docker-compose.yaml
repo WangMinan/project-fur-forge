@@ -10,6 +10,7 @@ name: project-fur-forge
 
 x-app-env: &app-env
   NODE_ENV: production
+  NITRO_SHUTDOWN_TIMEOUT: "4000"
   APP_ENV: production
   HOST: 0.0.0.0
   PORT: "3000"
@@ -67,7 +68,7 @@ services:
       retries: 5
       start_period: 30s
     restart: unless-stopped
-    stop_grace_period: 30s
+    stop_grace_period: 5s
     read_only: true
     tmpfs:
       - /tmp:size=64m,mode=1777

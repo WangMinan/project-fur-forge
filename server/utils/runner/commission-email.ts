@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer'
 import type { SendMailOptions } from 'nodemailer'
 import type Database from 'better-sqlite3'
+import { createConnection } from 'node:net'
 import type { MediaStorage } from '../media-storage'
 import type { RuntimeConfig } from '../runtime-config'
 import { smtpConfiguration } from '../smtp-config'
@@ -13,6 +14,23 @@ import {
 } from '../repository/commission-email'
 import type { CommissionEmailRow } from '../repository/commission-email'
 import { getCommissionDesignReference } from '../service/commission-management'
+import { safeLog } from '../safe-log'
+
+const SMTP_TIMEOUT_MS = 600_000
+
+// Abort the wait as well as the socket: attachment reads and test senders can still be pending.
+async function abortable<T>(work: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return work
+  let onAbort: () => void = () => {}
+  try {
+    return await Promise.race([work, new Promise<never>((_resolve, reject) => {
+      onAbort = () => reject(signal.reason)
+      signal.addEventListener('abort', onAbort, { once: true })
+      if (signal.aborted) onAbort()
+    })])
+  }
+  finally { signal.removeEventListener('abort', onAbort) }
+}
 
 export function smtpFailure(error: unknown) {
   const value = error as { code?: string, responseCode?: number }
@@ -54,19 +72,34 @@ export function commissionMail(sqlite: Database.Database, row: CommissionEmailRo
   }
 }
 
-export async function sendCommissionMail(config: RuntimeConfig, mail: SendMailOptions) {
+export async function sendCommissionMail(config: RuntimeConfig, mail: SendMailOptions, signal?: AbortSignal) {
+  signal?.throwIfAborted()
   const smtp = smtpConfiguration(config).transport
   if (!smtp || config.appEnv === 'test') throw new Error('Real SMTP delivery is disabled.')
   const transport = nodemailer.createTransport({
     host: smtp.host, port: smtp.port, secure: smtp.secure, requireTLS: true,
     auth: { user: smtp.user, pass: smtp.password },
     tls: { minVersion: 'TLSv1.2', rejectUnauthorized: true },
-    connectionTimeout: 15_000, greetingTimeout: 15_000, socketTimeout: 30_000,
+    connectionTimeout: SMTP_TIMEOUT_MS, greetingTimeout: SMTP_TIMEOUT_MS, socketTimeout: SMTP_TIMEOUT_MS,
+    // SMTPTransport.close() only releases auth resources. Own an abortable TCP socket;
+    // Nodemailer still performs and verifies TLS (implicit TLS on 465, STARTTLS on 587).
+    getSocket: (_options, callback) => {
+      const socket = createConnection({ host: smtp.host, port: smtp.port, signal })
+      const timer = setTimeout(() => socket.destroy(Object.assign(new Error('SMTP connection timed out.'), { code: 'ETIMEDOUT' })), SMTP_TIMEOUT_MS)
+      const fail = (error: Error) => { clearTimeout(timer); callback(error) }
+      socket.once('error', fail)
+      socket.once('connect', () => {
+        clearTimeout(timer)
+        socket.removeListener('error', fail)
+        callback(null, { connection: socket })
+      })
+      socket.once('close', () => clearTimeout(timer))
+    },
     logger: false, debug: false,
     disableFileAccess: true, disableUrlAccess: true,
   })
   try {
-    return await transport.sendMail(mail)
+    return await abortable(transport.sendMail(mail), signal)
   }
   finally { transport.close() }
 }
@@ -77,11 +110,14 @@ export async function deliverNextCommissionEmail(options: {
   config: RuntimeConfig
   send?: (mail: SendMailOptions) => Promise<unknown>
   now?: () => number
+  signal?: AbortSignal
 }) {
-  if (smtpConfiguration(options.config).status !== 'ready') return false
+  if (options.signal?.aborted || smtpConfiguration(options.config).status !== 'ready') return false
   const now = options.now ?? Date.now
   const row = claimCommissionEmail(options.sqlite, now())
   if (!row) return false
+  const startedAt = now()
+  let phase: 'attachment' | 'smtp' = 'attachment'
   // A slow but live SMTP transfer must retain ownership until its socket finishes.
   const heartbeat = setInterval(() => {
     try {
@@ -90,23 +126,28 @@ export async function deliverNextCommissionEmail(options: {
     catch { /* A transient busy database is retried at the next heartbeat. */ }
   }, 30_000)
   try {
-    let mail: SendMailOptions
-    try {
-      mail = commissionMail(options.sqlite, row, options.config,
-        await getCommissionDesignReference(options.sqlite, options.storage, row.submission_id))
-    }
-    catch {
-      finishCommissionEmail(options.sqlite, row, { code: 'ATTACHMENT', temporary: true }, now())
-      return true
-    }
+    const attachment = await abortable(
+      getCommissionDesignReference(options.sqlite, options.storage, row.submission_id), options.signal,
+    )
+    options.signal?.throwIfAborted()
+    const mail = commissionMail(options.sqlite, row, options.config, attachment)
     if (!beginCommissionEmailTransmission(options.sqlite, row, now())) return true
-    try {
-      await (options.send ?? (mail => sendCommissionMail(options.config, mail)))(mail)
-      finishCommissionEmail(options.sqlite, row, null, now())
-    }
-    catch (error) {
-      finishCommissionEmail(options.sqlite, row, smtpFailure(error), now())
-    }
+    phase = 'smtp'
+    await abortable((options.send ?? (mail => sendCommissionMail(options.config, mail, options.signal)))(mail), options.signal)
+    finishCommissionEmail(options.sqlite, row, null, now())
+    safeLog('info', 'Commission notification completed.', { attempts: row.attempt_count, elapsedMs: now() - startedAt })
+    return true
+  }
+  catch (error) {
+    const stopped = options.signal?.aborted === true
+    const failure = phase === 'attachment'
+      ? { code: 'ATTACHMENT' as const, temporary: true }
+      : stopped ? { code: 'UNKNOWN' as const, temporary: false } : smtpFailure(error)
+    finishCommissionEmail(options.sqlite, row, failure, now())
+    safeLog('warn', 'Commission notification incomplete.', {
+      attempts: row.attempt_count, elapsedMs: now() - startedAt, phase,
+      reason: stopped ? 'shutdown' : failure.code,
+    })
     return true
   }
   finally { clearInterval(heartbeat) }
