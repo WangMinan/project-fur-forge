@@ -50,7 +50,7 @@ export class FakeMediaStorage implements MediaStorage {
   readonly privateProcessCalls: Array<{ objectKey: string, process: string }> = []
   readonly processCalls: PublicProcessInput[] = []
   readonly signedPuts: ConditionalPutInput[] = []
-  readonly signedBrowserGets: Array<{ objectKey: string, expiresAt: number, process?: string }> = []
+  readonly signedBrowserGets: Array<{ objectKey: string, expiresAt: number, process: string | undefined }> = []
   failDelete = false
   failGet = false
   failImageInfo = false
