@@ -50,6 +50,7 @@ export class FakeMediaStorage implements MediaStorage {
   readonly privateProcessCalls: Array<{ objectKey: string, process: string }> = []
   readonly processCalls: PublicProcessInput[] = []
   readonly signedPuts: ConditionalPutInput[] = []
+  readonly signedBrowserGets: Array<{ objectKey: string, expiresAt: number, process?: string }> = []
   failDelete = false
   failGet = false
   failImageInfo = false
@@ -98,6 +99,15 @@ export class FakeMediaStorage implements MediaStorage {
       url: `https://private-download.test/${encodeURIComponent(objectKey)}`,
       expiresAt: new Date(expiresAt).toISOString(),
     }
+  }
+
+  async signBrowserPrivateGet(objectKey: string, expiresAt: number, process?: string) {
+    if (this.failSign) throw new Error('fake sign failure')
+    this.signedBrowserGets.push({ objectKey, expiresAt, process })
+    const url = new URL(`https://private-download.test/${encodeURIComponent(objectKey)}`)
+    url.searchParams.set('expires', String(expiresAt))
+    if (process) url.searchParams.set('x-oss-process', process)
+    return { url: url.href, expiresAt: new Date(expiresAt).toISOString() }
   }
 
   async deletePrivate(objectKey: string) {

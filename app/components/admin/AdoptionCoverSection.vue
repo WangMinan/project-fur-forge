@@ -229,12 +229,12 @@ defineExpose({ save: saveCover })
 
     <article v-if="entry" class="cover__entry" :data-status="entry.status">
       <div class="cover__preview">
-        <img
+        <AdminPrivateImage
           :src="entry.previewUrl"
           :alt="entry.alt || '领养横版封面编辑预览'"
           :style="{ objectPosition: `${focalPercent.x}% ${focalPercent.y}%` }"
           referrerpolicy="same-origin"
-        >
+        />
       </div>
       <p class="cover__note">
         {{ entry.width }}×{{ entry.height }} · 私有编辑预览 ·

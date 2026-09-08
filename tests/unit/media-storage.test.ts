@@ -51,5 +51,25 @@ describe('AliOssMediaStorage endpoint separation', () => {
       'Content-MD5': 'AAAAAAAAAAAAAAAAAAAAAA==',
       'x-oss-forbid-overwrite': 'true',
     })
+
+    const read = vi.spyOn(storage, 'getPrivate')
+    const processRead = vi.spyOn(storage, 'getPrivateProcessed')
+    const expiresAt = Date.now() + 600_000
+    const process = 'image/auto-orient,1/resize,m_lfit,w_640'
+    const preview = await storage.signBrowserPrivateGet('test/original/example.png', expiresAt, process)
+    const previewUrl = new URL(preview.url)
+    expect(previewUrl.origin).toBe(config.ossUploadBaseUrl)
+    expect(previewUrl.hostname).not.toContain('-internal')
+    expect(previewUrl.searchParams.get('x-oss-process')).toBe(process)
+    expect(previewUrl.searchParams.get('response-cache-control')).toBe('no-store')
+    expect(Number(previewUrl.searchParams.get('x-oss-expires'))).toBeGreaterThanOrEqual(599)
+    expect(Number(previewUrl.searchParams.get('x-oss-expires'))).toBeLessThanOrEqual(600)
+    expect(preview.expiresAt).toBe(new Date(expiresAt).toISOString())
+    const original = await storage.signBrowserPrivateGet('test/original/example.png', expiresAt)
+    expect(new URL(original.url).searchParams.has('x-oss-process')).toBe(false)
+    const serverOnly = await storage.signPrivateGet('test/original/example.png', expiresAt)
+    expect(new URL(serverOnly.url).hostname).toContain('-internal')
+    expect(read).not.toHaveBeenCalled()
+    expect(processRead).not.toHaveBeenCalled()
   })
 })

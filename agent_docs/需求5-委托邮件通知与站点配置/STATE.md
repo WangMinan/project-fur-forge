@@ -10,6 +10,8 @@
 
 ## 最近验证
 
+- 2026-09-09：追加邮件超时/快速停止及管理端私有 OSS 直读修复，本地实现与验证完成。变更边界、测试与本地配置排障见 [修复交接](implementation/notes/2026-09-09-MAIL-OSS-DIRECT.md)。本轮授权新分支经 PR 合入 main，不发布镜像、不执行生产部署或真实发信测试；PR/CI 状态以 GitHub 记录为准。
+
 - 2026-09-06：修复所有 SQL 迁移的 LF/CRLF 校验差异；53 个迁移通过 Ubuntu 双向新建、重复迁移和恢复实证，SQL 内容差异仍被拒绝，本地 `pnpm db:migrate` 返回 applied=0。详见 [迁移哈希修复](implementation/notes/2026-09-06-MIGRATION-HASH-FIX.md)。
 
 - 2026-09-06：用户调整邮件文案后，既有 10 项邮件测试通过，无需更改测试；已授权必要的公开依赖声明同步，Linux/x64 notices 生成/检查通过。
