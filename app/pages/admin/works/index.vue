@@ -343,13 +343,13 @@ watch(activeTab, (tab) => {
                 <div class="works-table__work">
                   <span class="works-table__thumb">
                     <!-- 低分辨率缩略图：表格格子只有 3rem，不需要原图。 -->
-                    <img
+                    <AdminPrivateImage
                       v-if="thumbAssetId(work)"
                       :src="adminMediaPreviewUrl(thumbAssetId(work)!, ADMIN_MEDIA_CARD_PREVIEW_WIDTH)"
                       alt=""
                       loading="lazy"
                       referrerpolicy="same-origin"
-                    >
+                    />
                     <span v-else aria-hidden="true">无图</span>
                   </span>
                   <span class="works-table__name">
@@ -422,13 +422,13 @@ watch(activeTab, (tab) => {
         <ul class="works-cards" role="list">
           <li v-for="work in visibleWorks" :key="work.id" class="works-card">
             <span class="works-card__thumb">
-              <img
+              <AdminPrivateImage
                 v-if="thumbAssetId(work)"
                 :src="adminMediaPreviewUrl(thumbAssetId(work)!, ADMIN_MEDIA_CARD_PREVIEW_WIDTH)"
                 alt=""
                 loading="lazy"
                 referrerpolicy="same-origin"
-              >
+              />
               <span v-else aria-hidden="true">无图</span>
             </span>
             <div class="works-card__body">

@@ -11,7 +11,7 @@ import {
   adminMediaOriginalUrl,
   adminMediaPreviewUrl,
 } from '../../app/utils/admin-media-preview'
-import { parseAdminMediaPreviewQuery } from '../../server/utils/route/admin-media-preview'
+import { parseAdminMediaDelivery, parseAdminMediaPreviewQuery } from '../../server/utils/route/admin-media-preview'
 
 describe('admin private media preview contract', () => {
   it('builds the fixed card/editor URLs and a separate explicit original URL', () => {
@@ -41,5 +41,17 @@ describe('admin private media preview contract', () => {
   ])('rejects ambiguous or unsupported input %#', (query) => {
     expect(() => parseAdminMediaPreviewQuery(query))
       .toThrow(/supported preview width|not supported/)
+  })
+
+  it('accepts signed URL delivery but refuses caller-controlled object keys, processes and repeated query values', () => {
+    expect(parseAdminMediaDelivery({ w: '640', delivery: 'url' })).toBe('url')
+    expect(parseAdminMediaDelivery({ original: '1' })).toBe('redirect')
+    for (const query of [
+      { w: ['640'] }, { w: '640', original: ['1'] }, { original: ['1'] },
+      { w: '640', delivery: ['url'] }, { w: '640', delivery: 'buffer' },
+      { w: '640', objectKey: 'test/original/other.png' },
+      { w: '640', 'x-oss-process': 'image/resize,w_9999' },
+      { w: '640', url: 'https://other.test/image.png' },
+    ]) expect(() => parseAdminMediaPreviewQuery(query)).toThrow()
   })
 })

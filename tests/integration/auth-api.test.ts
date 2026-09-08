@@ -122,6 +122,46 @@ beforeEach(() => {
 })
 
 describe('authentication API', () => {
+  it('does not renew cookies for passive session checks or private media signatures', async () => {
+    const { cookie } = await login()
+    const headers = { cookie }
+    const passive = await fetch(`${adminBaseUrl}/api/auth/session?touch=0`, { headers })
+    expect(passive.status).toBe(200)
+    expect(passive.headers.get('set-cookie')).toBeNull()
+    const active = await fetch(`${adminBaseUrl}/api/auth/session`, { headers })
+    expect(active.status).toBe(200)
+    expect(active.headers.get('set-cookie')).not.toBeNull()
+
+    const id = 'bcaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+    const database = openDatabase(databaseFile)
+    try {
+      // No object is seeded in OSS: signing must not read or process its bytes.
+      database.sqlite.prepare(`INSERT OR REPLACE INTO assets
+        (id, role, status, private_object_key, sha256, byte_size, mime_type, width, height, created_at, updated_at)
+        VALUES (?, 'studio_photo', 'READY', 'test/original/passive.png', ?, 100, 'image/png', 640, 480, ?, ?)`)
+        .run(id, 'a'.repeat(64), Date.now(), Date.now())
+      const path = `${adminBaseUrl}/api/admin/v1/media/assets/${id}/preview`
+      const signature = await fetch(`${path}?w=640&delivery=url`, { headers })
+      expect(signature.status).toBe(200)
+      expectPrivateResponseHeaders(signature)
+      expect(signature.headers.get('set-cookie')).toBeNull()
+      const signed = (await signature.json()).data
+      expect(new URL(signed.url).searchParams.get('x-oss-process')).toBe('image/auto-orient,1/resize,m_lfit,w_640')
+      expect(Date.parse(signed.expiresAt) - Date.now()).toBeGreaterThan(590_000)
+      const original = await fetch(`${path}?original=1`, { headers, redirect: 'manual' })
+      expect(original.status).toBe(302)
+      expect(original.headers.get('set-cookie')).toBeNull()
+      expect(new URL(original.headers.get('location')!).searchParams.has('x-oss-process')).toBe(false)
+      expect((await fetch(`${path}?w=640&delivery=url`)).status).toBe(401)
+      database.sqlite.prepare("UPDATE assets SET status = 'FAILED' WHERE id = ?").run(id)
+      expect((await fetch(`${path}?w=640&delivery=url`, { headers })).status).toBe(404)
+    }
+    finally {
+      database.sqlite.prepare('DELETE FROM assets WHERE id = ?').run(id)
+      database.sqlite.close()
+    }
+  })
+
   it('logs in and sets a Host-only strict eight-hour cookie', async () => {
     const { body, cookie, response } = await login()
     const setCookie = response.headers.get('set-cookie') ?? ''
