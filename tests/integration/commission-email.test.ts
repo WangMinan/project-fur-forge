@@ -65,7 +65,7 @@ beforeEach(async () => {
   now = NOW + 10
   setRecipients(['one@example.com', 'two@example.com'])
 })
-afterEach(() => { sqlite.close(); rmSync(directory, { recursive: true, force: true }) })
+afterEach(() => { vi.restoreAllMocks(); sqlite.close(); rmSync(directory, { recursive: true, force: true }) })
 
 describe('commission email contract', () => {
   it('validates SMTP without taking the application down, including TLS modes and disabled values', () => {
@@ -161,8 +161,8 @@ describe('commission email contract', () => {
     const id = commissionEmailRows(sqlite, ID)[0]!.id
     retryCommissionEmail(sqlite, ID, id, now)
     storage.failGet = true
-    for (let i = 0; i < 3; i++) { await deliver(send); now += 300_000 }
-    expect(commissionEmailRows(sqlite, ID)[0]).toMatchObject({ status: 'failed', attempt_count: 3, last_error_code: 'ATTACHMENT' })
+    for (let i = 0; i < 2; i++) { await deliver(send); now += 60_000 }
+    expect(commissionEmailRows(sqlite, ID)[0]).toMatchObject({ status: 'failed', attempt_count: 2, last_error_code: 'ATTACHMENT' })
     expect(send).toHaveBeenCalledTimes(1)
   })
 
@@ -170,8 +170,7 @@ describe('commission email contract', () => {
     setRecipients(['one@example.com'])
     await seed()
     const row = claimCommissionEmail(sqlite, now)!
-    // Model SMTP acceptance followed by a crash before sent is committed.
-    expect(beginCommissionEmailTransmission(sqlite, row, now)).toBe(true)
+    // A claimed task that has not started SMTP can safely be recovered.
     const other = openDatabase(resolve(directory, 'studio.db')).sqlite
     try {
       expect(claimCommissionEmail(other, now)).toBeNull()
@@ -185,6 +184,67 @@ describe('commission email contract', () => {
       expect(beginCommissionEmailTransmission(other, recovered, now)).toBe(true)
     }
     finally { other.close() }
+  })
+
+  it('stops after two attempts and does not claim old pending rows above the new cap', async () => {
+    setRecipients(['one@example.com'])
+    await seed()
+    const send = vi.fn().mockRejectedValue({ code: 'ETIMEDOUT' })
+    await deliver(send)
+    now += 59_999
+    expect(await deliver(send)).toBe(false)
+    now++
+    await deliver(send)
+    expect(commissionEmailRows(sqlite, ID)[0]).toMatchObject({ status: 'failed', attempt_count: 2 })
+    sqlite.prepare("UPDATE commission_email_notifications SET status = 'pending', next_attempt_at = ?").run(now)
+    expect(await deliver(send)).toBe(false)
+    expect(send).toHaveBeenCalledTimes(2)
+  })
+
+  it('requires manual verification after an expired transmitting lease, even before the attempt cap', async () => {
+    setRecipients(['one@example.com'])
+    await seed()
+    const row = claimCommissionEmail(sqlite, now)!
+    expect(beginCommissionEmailTransmission(sqlite, row, now)).toBe(true)
+    now += 180_001
+    expect(claimCommissionEmail(sqlite, now)).toBeNull()
+    expect(commissionEmailRows(sqlite, ID)[0]).toMatchObject({ status: 'failed', attempt_count: 1, last_error_code: 'UNKNOWN' })
+    retryCommissionEmail(sqlite, ID, row.id, now)
+    expect(await deliver()).toBe(true)
+    expect(commissionEmailSummary(sqlite, ID)).toBe('sent')
+  })
+
+  it('cancels a hanging transmission immediately and never resumes it automatically', async () => {
+    setRecipients(['one@example.com'])
+    await seed()
+    const stop = new AbortController()
+    const started = Promise.withResolvers<undefined>()
+    const send = vi.fn(() => { started.resolve(undefined); return new Promise(() => {}) })
+    const running = deliverNextCommissionEmail({ sqlite, storage, config, send, signal: stop.signal, now: () => now })
+    await started.promise
+    stop.abort()
+    await running
+    expect(commissionEmailRows(sqlite, ID)[0]).toMatchObject({ status: 'failed', last_error_code: 'UNKNOWN' })
+    expect(await deliverNextCommissionEmail({ sqlite, storage, config, send, signal: stop.signal })).toBe(false)
+    now += 600_000
+    expect(await deliver(send)).toBe(false)
+    expect(send).toHaveBeenCalledTimes(1)
+  })
+
+  it('cancels an attachment wait without sending later when the read completes', async () => {
+    setRecipients(['one@example.com'])
+    await seed()
+    const pending = Promise.withResolvers<Buffer>()
+    vi.spyOn(storage, 'getPrivate').mockReturnValue(pending.promise)
+    const send = vi.fn()
+    const stop = new AbortController()
+    const running = deliverNextCommissionEmail({ sqlite, storage, config, send, signal: stop.signal, now: () => now })
+    stop.abort()
+    await running
+    pending.resolve(content)
+    await Promise.resolve()
+    expect(send).not.toHaveBeenCalled()
+    expect(commissionEmailRows(sqlite, ID)[0]).toMatchObject({ status: 'pending', transmitting_at: null })
   })
 
   it('cancels removed recipients including a claimed task, and never revives it on re-add', async () => {
