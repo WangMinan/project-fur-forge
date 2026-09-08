@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { ADMIN_MEDIA_SIGNED_URL_TTL_MS } from '../../../shared/constants/admin-media-preview'
 import type Database from 'better-sqlite3'
 import { adminHeroItemPreviewDtoSchema } from '../../../shared/schemas/home'
 import type {
@@ -267,7 +268,7 @@ export async function createHeroCollectionItemPreview(
   })
 }
 
-export async function getHeroCollectionItemPreviewContent(
+export async function getHeroCollectionItemPreviewLink(
   sqlite: Database.Database,
   storage: MediaStorage,
   id: string,
@@ -279,7 +280,8 @@ export async function getHeroCollectionItemPreviewContent(
   if (!item?.previewObjectKey || !item.previewExpiresAt || item.previewExpiresAt <= now) {
     throw new ServiceError(404, 'NOT_FOUND', 'Hero preview was not found.')
   }
-  return await storage.getPrivate(item.previewObjectKey)
+  if (item.status !== 'READY') throw new ServiceError(404, 'NOT_FOUND', 'Hero preview asset was not found.')
+  return await storage.signBrowserPrivateGet(item.previewObjectKey, Math.min(item.previewExpiresAt, now + ADMIN_MEDIA_SIGNED_URL_TTL_MS))
 }
 
 export function startHeroCollectionItemUpscale(

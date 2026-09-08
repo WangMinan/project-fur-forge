@@ -92,6 +92,7 @@ export async function startAdminSession(
 export async function requireAdminSession(
   event: H3Event,
   now = Date.now(),
+  options: { touch?: boolean } = {},
 ): Promise<AdminSession> {
   const session = await getUserSession(event)
   const user = session.user
@@ -125,10 +126,10 @@ export async function requireAdminSession(
     csrfToken: session.csrfToken,
     secure: {
       sessionVersion: current.sessionVersion,
-      lastSeenAt: now,
+      lastSeenAt: options.touch === false ? secure.lastSeenAt : now,
     },
   }
-  await replaceUserSession(event, refreshed)
+  if (options.touch !== false) await replaceUserSession(event, refreshed)
   return refreshed
 }
 

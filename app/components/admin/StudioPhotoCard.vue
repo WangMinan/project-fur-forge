@@ -78,7 +78,7 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
           : undefined"
         data-testid="photo-preview"
       >
-        <img
+        <AdminPrivateImage
           :src="entry.previewUrl"
           :alt="entry.alt || '出厂照本地预览'"
           class="photo-card__image"
@@ -86,7 +86,7 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
           :style="previewAspect === 'card'
             ? { objectPosition: `${focalPercent.x}% ${focalPercent.y}%` }
             : undefined"
-        >
+        />
         <span
           class="photo-card__focal"
           :style="{ insetInlineStart: `${focalPercent.x}%`, insetBlockStart: `${focalPercent.y}%` }"

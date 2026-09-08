@@ -30,6 +30,7 @@ interface AdminApiOptions<S extends z.ZodType> {
   body?: unknown
   method?: 'DELETE' | 'GET' | 'POST' | 'PUT'
   schema: S
+  retry?: 0
 }
 
 function errorStatusOf(error: unknown) {
@@ -81,6 +82,7 @@ export function useAdminApi() {
         body: options.body as Record<string, unknown> | undefined,
         credentials: 'same-origin',
         headers,
+        ...(options.retry === 0 ? { retry: 0 } : {}),
       })
       raw = response._data
     }
@@ -88,7 +90,7 @@ export function useAdminApi() {
       const status = errorStatusOf(error)
       if (status === 401) {
         // 复用认证失效流程：重检会话，确认 401 后清空内存态并置 guest。
-        void ensureSession({ revalidate: true })
+        void ensureSession({ revalidate: true, touch: false })
       }
       throw new AdminApiError(
         status,

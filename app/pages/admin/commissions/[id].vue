@@ -8,6 +8,7 @@ import type {
   CommissionSubmissionStatus,
 } from '~~/shared/types/contracts'
 import { AdminApiError } from '~/composables/useAdminApi'
+import { ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
 
 definePageMeta({ layout: 'admin', ssr: false })
 useSeoMeta({ title: '委托申请详情', robots: 'noindex, nofollow' })
@@ -258,16 +259,16 @@ onMounted(() => void load())
           aria-labelledby="commission-image-title"
         >
           <h2 id="commission-image-title">设定图</h2>
-          <img
+          <AdminPrivateImage
             class="commission-detail__image"
-            :src="detail.designReferencePreviewHref"
+            :src="`${detail.designReferencePreviewHref}?w=${ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH}`"
             alt="委托申请私有设定图"
             referrerpolicy="no-referrer"
-          >
+          />
           <!-- 放大预览直接新开原图：浏览器自带缩放与拖动，比自制灯箱好用。 -->
           <a
             class="commission-detail__zoom"
-            :href="detail.designReferencePreviewHref"
+            :href="`${detail.designReferencePreviewHref}?original=1`"
             target="_blank"
             rel="noopener noreferrer"
           >放大预览原图 ↗</a>

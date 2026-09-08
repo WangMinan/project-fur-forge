@@ -4,6 +4,7 @@ import { commissionRecipientsSchema } from '../../../shared/schemas/commission-e
 import { ServiceError } from '../service-error'
 
 export const EMAIL_LEASE_MS = 180_000
+export const EMAIL_MAX_ATTEMPTS = 2
 export interface CommissionEmailRow {
   id: string
   submission_id: string
@@ -65,10 +66,15 @@ export function cancelRemovedCommissionEmails(sqlite: Database.Database, now = D
 
 export function claimCommissionEmail(sqlite: Database.Database, now = Date.now()) {
   return sqlite.transaction(() => {
-    // Expired transmitting attempts may already have been accepted by SMTP.
-    sqlite.prepare(`UPDATE commission_email_notifications SET status = CASE WHEN attempt_count >= 3 THEN 'failed' ELSE 'pending' END,
-      lease_token = NULL, lease_expires_at = NULL, transmitting_at = NULL, updated_at = ?, last_error_code = 'CONNECTION'
-      WHERE status = 'sending' AND lease_expires_at <= ?`).run(now, now)
+    // An interrupted transmission may already have arrived. Only an operator can decide to resend it.
+    sqlite.prepare(`UPDATE commission_email_notifications
+      SET status = CASE WHEN transmitting_at IS NOT NULL OR attempt_count >= ? THEN 'failed' ELSE 'pending' END,
+      last_error_code = CASE WHEN transmitting_at IS NOT NULL THEN 'UNKNOWN' ELSE 'CONNECTION' END,
+      lease_token = NULL, lease_expires_at = NULL, transmitting_at = NULL, updated_at = ?
+      WHERE status = 'sending' AND lease_expires_at <= ?`).run(EMAIL_MAX_ATTEMPTS, now, now)
+    // Old pending rows can have exhausted the new limit before this version was deployed.
+    sqlite.prepare(`UPDATE commission_email_notifications SET status = 'failed', updated_at = ?
+      WHERE status = 'pending' AND attempt_count >= ?`).run(now, EMAIL_MAX_ATTEMPTS)
     cancelRemovedCommissionEmails(sqlite, now)
     const row = sqlite.prepare(`SELECT n.* FROM commission_email_notifications n
       JOIN commission_submissions s ON s.id = n.submission_id
@@ -99,12 +105,12 @@ export function renewCommissionEmailLease(sqlite: Database.Database, row: Commis
 
 export function finishCommissionEmail(sqlite: Database.Database, row: CommissionEmailRow,
   error: { code: NonNullable<CommissionEmailRow['last_error_code']>, temporary: boolean } | null, now = Date.now()) {
-  const retry = error?.temporary && row.attempt_count < 3
+  const retry = error?.temporary && row.attempt_count < EMAIL_MAX_ATTEMPTS
   sqlite.prepare(`UPDATE commission_email_notifications SET status = ?, last_error_code = ?,
     next_attempt_at = ?, sent_at = ?, lease_token = NULL, lease_expires_at = NULL, transmitting_at = NULL, updated_at = ?
     WHERE id = ? AND status = 'sending' AND lease_token = ?`)
     .run(error ? retry ? 'pending' : 'failed' : 'sent', error?.code ?? null,
-      now + (row.attempt_count === 1 ? 60_000 : 300_000), error ? null : now, now, row.id, row.lease_token)
+      now + 60_000, error ? null : now, now, row.id, row.lease_token)
   cancelRemovedCommissionEmails(sqlite, now)
 }
 

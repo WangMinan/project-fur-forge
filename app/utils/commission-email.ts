@@ -10,5 +10,5 @@ export const COMMISSION_EMAIL_ERRORS = {
   TOO_LARGE: '邮件大小被拒绝，设定图未能交付，请联系维护人员。',
   CONNECTION: '邮件服务器连接异常，系统将按重试上限处理。',
   ATTACHMENT: '私有设定图读取失败，请检查附件后重试。',
-  UNKNOWN: '邮件发送异常，请联系维护人员。',
+  UNKNOWN: '发送结果未确认，请先核实收件箱，再决定是否重试。',
 } as const

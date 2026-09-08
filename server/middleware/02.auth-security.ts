@@ -4,6 +4,7 @@ import {
   requireAdminSession,
 } from '../utils/route/auth-session'
 import { assertRequestRateLimit } from '../utils/route/request-rate-limit'
+import { isAdminMediaReadPath } from '../../shared/constants/admin-media-preview'
 
 function isAtOrBelow(pathname: string, prefix: string) {
   return pathname === prefix || pathname.startsWith(`${prefix}/`)
@@ -41,7 +42,9 @@ export default defineEventHandler(async (event) => {
     // 反过来匿名扫描也无法消耗管理员自己的写窗口。
     let session: Awaited<ReturnType<typeof requireAdminSession>>
     try {
-      session = await requireAdminSession(event)
+      session = await requireAdminSession(event, Date.now(), {
+        touch: !(['GET', 'HEAD'].includes(event.method) && isAdminMediaReadPath(pathname)),
+      })
     }
     catch (error) {
       assertRequestRateLimit(event, 'adminProbe')

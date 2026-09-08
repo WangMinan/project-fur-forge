@@ -6,14 +6,14 @@ import {
   processingSource,
   readyAssetSource,
 } from '../../../../../../utils/recipe/media-source'
-import { safeLog } from '../../../../../../utils/safe-log'
 import { asSafeApiError, ServiceError } from '../../../../../../utils/service-error'
-import { parseAdminMediaPreviewQuery } from '../../../../../../utils/route/admin-media-preview'
+import { parseAdminMediaDelivery, parseAdminMediaPreviewQuery, sendAdminMediaLink } from '../../../../../../utils/route/admin-media-preview'
+import { ADMIN_MEDIA_SIGNED_URL_TTL_MS } from '../../../../../../../shared/constants/admin-media-preview'
 
 /**
  * 管理端私有原图预览。
  *
- * `?w=320|640` 请求服务端缩放后的预览；`?original=1` 才读取永久原图。
+ * `?w=320|640` 签发 OSS 缩略图；`?original=1` 才签发永久原图。
  * 两种模式显式互斥，避免宽度拼错或缩略失败时意外回传多 MB 原图。
  */
 export default defineEventHandler(async (event) => {
@@ -23,7 +23,9 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const request = parseAdminMediaPreviewQuery(getQuery(event))
+    const query = getQuery(event)
+    const delivery = parseAdminMediaDelivery(query)
+    const request = parseAdminMediaPreviewQuery(query)
     const asset = getDatabase().sqlite.prepare(`
       SELECT private_object_key AS privateObjectKey, mime_type AS mimeType
       FROM assets
@@ -34,40 +36,18 @@ export default defineEventHandler(async (event) => {
     }
 
     const storage = getMediaStorage()
+    const expiresAt = Date.now() + ADMIN_MEDIA_SIGNED_URL_TTL_MS
     if (request.mode === 'original') {
-      setResponseHeader(event, 'content-type', asset.mimeType)
-      return await storage.getPrivate(asset.privateObjectKey)
+      return sendAdminMediaLink(event, await storage.signBrowserPrivateGet(asset.privateObjectKey, expiresAt), delivery)
     }
 
     // 超过 OSS 处理输入上限的原图必须走已有的私有预处理源，
     // 与公开派生使用同一套输入解析，不在这里另开一条规则。
     const sqlite = getDatabase().sqlite
     const source = processingSource(sqlite, readyAssetSource(sqlite, id.data))
-    try {
-      // auto-orient 保证竖图不会横躺；m_lfit 保持原比例，不裁掉主体。
-      const processed = await storage.getPrivateProcessed(
-        source.objectKey,
-        `image/auto-orient,1/resize,m_lfit,w_${request.width}`,
-      )
-      setResponseHeader(
-        event,
-        'content-type',
-        processed.contentType || asset.mimeType,
-      )
-      return processed.content
-    }
-    catch (error) {
-      safeLog('warn', 'Admin preview downscale failed.', {
-        assetId: id.data,
-        errorName: (error as { name?: unknown }).name,
-        width: request.width,
-      })
-      throw new ServiceError(
-        500,
-        'INTERNAL_ERROR',
-        'Private preview generation failed.',
-      )
-    }
+    const signed = await storage.signBrowserPrivateGet(source.objectKey, expiresAt,
+      `image/auto-orient,1/resize,m_lfit,w_${request.width}`)
+    return sendAdminMediaLink(event, signed, delivery)
   }
   catch (error) {
     asSafeApiError(error)

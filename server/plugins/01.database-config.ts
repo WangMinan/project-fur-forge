@@ -1,10 +1,6 @@
-import {
-  closeDatabase,
-  resolveDatabaseFile,
-} from '../utils/database'
+import { resolveDatabaseFile } from '../utils/database'
 import { getRuntimeConfig } from '../utils/runtime-config'
 
-export default defineNitroPlugin((nitroApp) => {
+export default defineNitroPlugin(() => {
   resolveDatabaseFile(getRuntimeConfig())
-  nitroApp.hooks.hook('close', closeDatabase)
 })

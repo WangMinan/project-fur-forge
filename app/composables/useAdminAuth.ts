@@ -53,11 +53,11 @@ export function useAdminAuth() {
     csrfToken.value = null
   }
 
-  async function runSessionCheck(): Promise<AdminSessionStatus> {
+  async function runSessionCheck(touch = true): Promise<AdminSessionStatus> {
     const wasReady = status.value === 'ready'
 
     try {
-      const response = await $fetch.raw('/api/auth/session', {
+      const response = await $fetch.raw(touch ? '/api/auth/session' : '/api/auth/session?touch=0', {
         method: 'GET',
         credentials: 'same-origin',
       })
@@ -90,7 +90,7 @@ export function useAdminAuth() {
   }
 
   async function ensureSession(
-    options: { revalidate?: boolean } = {},
+    options: { revalidate?: boolean, touch?: boolean } = {},
   ): Promise<AdminSessionStatus> {
     if (sessionInFlight) {
       return sessionInFlight
@@ -112,7 +112,7 @@ export function useAdminAuth() {
       status.value = 'loading'
     }
 
-    sessionInFlight = runSessionCheck()
+    sessionInFlight = runSessionCheck(options.touch !== false)
       .finally(() => {
         sessionInFlight = null
       })

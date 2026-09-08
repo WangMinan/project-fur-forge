@@ -303,7 +303,7 @@ function save() {
 
           <div class="channel-row__qr">
             <div class="channel-row__preview">
-              <img
+              <AdminPrivateImage
                 v-if="upload.items[channel.platform].previewUrl || channel.qrCodeAssetId"
                 :src="upload.items[channel.platform].previewUrl
                   ?? `/api/admin/v1/media/assets/${channel.qrCodeAssetId}/preview?w=320`"
@@ -311,7 +311,7 @@ function save() {
                 class="channel-row__image"
                 decoding="async"
                 referrerpolicy="no-referrer"
-              >
+              />
               <span v-else>未上传</span>
             </div>
             <AdminAction
