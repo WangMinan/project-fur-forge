@@ -220,12 +220,12 @@ ESA 同账号私有 OSS 回源可读取该 Bucket 全部对象，ESA 侧不能�
 1. SQLite 事务先撤销页面公开投影；
 2. 固化精确 OSS Object Key 与 ESA File URL manifest；
 3. 删除不再引用的衍生对象；
-4. 调用 `PurgeCaches(Type=file)`；
-5. 保存 ESA `TaskId`，使用 `DescribePurgeTasks` 查询；
-6. 完成后收敛 operation；失败保留精确 manifest 和稳定 reason，可重试；
-7. 重启恢复继续未完成的 OSS 清理/ESA purge，不重复改变已提交业务状态。
+4. 在当前 app 进程内后台提交 `PurgeCaches(Type=file)`，不等待提交响应或轮询完成；
+5. OSS 清理完成即收敛 operation，返回下架成功；ESA 提交响应仅更新缓存任务字段，不改变业务终态；
+6. OSS 清理失败保留精确 manifest 与重试入口；ESA 提交失败仅记录稳定 reason，不阻塞业务；已有 ESA `TaskId` 保留且不重复提交；
+7. 重启恢复继续未完成的 OSS 清理，不重复改变已提交业务状态。后台 ESA 提交为 best-effort，进程退出可能中断；已完成业务不因缓存任务重启恢复。
 
-第 1 步完成后页面立即下架。已缓存 URL 的服务器侧撤销以 ESA purge task 完成为准，目标时间在 T53 warm-cache 实测后记录。UI 和审计必须区分“页面已下架”“ESA purge 中”“ESA 已撤销”“ESA 撤销失败”。
+2026-09-09 用户明确授权作品下架与共享 Hero 停用不等待 ESA。第 1 步完成后页面立即下架，响应仅等待必要的 OSS 清理；UI 显示“已下架，缓存撤销在后台处理”，不将 ESA 迟缓或失败显示为下架失败，也不将任务已提交宣称为缓存已撤销。ESA TaskId、URL manifest 和提交失败原因仍单独保留用于诊断。
 
 ### 9.3 删除
 

@@ -62,7 +62,7 @@ import { ServiceError } from '../service-error'
 import {
   edgePurgeUrlsForObjectKeys,
   parseEdgePurgeUrls,
-  runOperationEdgePurge,
+  dispatchOperationEdgePurge,
 } from './public-media-purge'
 
 interface PublicationTarget {
@@ -417,7 +417,9 @@ async function cleanOperationKeys(
   updateOperation(sqlite, operationId, 'CLEANING_PUBLIC', remaining, now)
   for (const key of [...remaining]) {
     try {
+      heartbeat?.()
       await storage.deletePublic(key)
+      heartbeat?.()
       sqlite.transaction(() => {
         deletePublicVariant(sqlite, key)
         remaining = remaining.filter(candidate => candidate !== key)
@@ -452,25 +454,12 @@ async function cleanOperationKeys(
   else {
     const current = requireOperation(sqlite, operationId)
     if (current.operationType === 'UNPUBLISH') {
-      const edgeFailure = await runOperationEdgePurge(
+      dispatchOperationEdgePurge(
         sqlite,
         getPublicMediaCache(),
         operationId,
         now,
-        heartbeat ? { heartbeat } : {},
       )
-      if (edgeFailure) {
-        failOperation(
-          sqlite,
-          operationId,
-          'CLEANING_PUBLIC',
-          edgeFailure,
-          [],
-          actorUserId,
-          now,
-        )
-        return requireOperation(sqlite, operationId)
-      }
     }
     completeOperation(sqlite, operationId, now)
   }

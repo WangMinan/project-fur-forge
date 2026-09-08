@@ -118,7 +118,7 @@ function syncTimer() {
   }
 }
 
-watch(() => [props.showElapsed, props.status], syncTimer)
+watch(() => [props.showElapsed, props.status, props.startedAt], syncTimer)
 
 onMounted(() => {
   mounted = true

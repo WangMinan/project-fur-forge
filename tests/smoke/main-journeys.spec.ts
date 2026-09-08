@@ -670,6 +670,7 @@ test('作品上传显示真实 XHR determinate 进度，并可发布和下架', 
   await loginAsAdmin(page)
   await resetFakeMedia(page)
   const work = await createWorkViaApi(page, { characterName: 'Smoke 发布作品' })
+  await page.clock.install()
   await page.goto(`${adminBaseURL}/admin/works/${work.id}`)
 
   let releasePut!: () => void
@@ -725,9 +726,39 @@ test('作品上传显示真实 XHR determinate 进度，并可发布和下架', 
   await expect(panel.getByTestId('admin-task-progress')).toContainText('作品发布')
   await expect(panel).toContainText('发布成功', { timeout: 60_000 })
 
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1_000))
+  await page.clock.fastForward(150_000)
+  let releaseUnpublish!: () => void
+  const unpublishGate = new Promise<void>((resolve) => { releaseUnpublish = resolve })
+  await page.route('**/unpublish', async (route) => {
+    await unpublishGate
+    await route.continue()
+  })
   await panel.getByRole('button', { name: '下架', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: '确认下架' }).click()
-  await expect(panel).toContainText('已下架', { timeout: 60_000 })
+  const elapsed = panel.locator('.admin-task-progress__elapsed')
+  await expect(elapsed).toHaveText('已等待 0 秒')
+  await page.clock.runFor(3_000)
+  await expect(elapsed).toHaveText('已等待 3 秒')
+  releaseUnpublish()
+  await expect(panel.getByTestId('admin-task-progress')).toHaveAttribute('data-status', 'success')
+  await expect(panel.getByRole('button', { name: '发布', exact: true })).toBeEnabled()
+  await page.unroute('**/unpublish')
+
+  await page.clock.fastForward(150_000)
+  let releasePublish!: () => void
+  const publishGate = new Promise<void>((resolve) => { releasePublish = resolve })
+  await page.route('**/publish', async (route) => {
+    await publishGate
+    await route.continue()
+  })
+  await panel.getByRole('button', { name: '发布', exact: true }).click()
+  await expect(elapsed).toHaveText('已等待 0 秒')
+  await page.clock.runFor(2_000)
+  await expect(elapsed).toHaveText('已等待 2 秒')
+  releasePublish()
+  await expect(panel).toContainText('发布成功', { timeout: 60_000 })
+  await page.unroute('**/publish')
 
   await page.goto(`${adminBaseURL}/admin/works`)
   const workRow = page.locator('tbody tr').filter({ hasText: 'Smoke 发布作品' })

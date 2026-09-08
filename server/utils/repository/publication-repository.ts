@@ -370,11 +370,9 @@ export function markOperationEdgePurgeSubmitted(
 ) {
   sqlite.prepare(`
     UPDATE publication_operations
-    SET status = 'CLEANING_PUBLIC', edge_purge_task_id = ?,
+    SET edge_purge_task_id = ?,
         edge_purge_status = 'PURGING', edge_purge_reason = NULL,
-        edge_purge_checked_at = ?, internal_error_code = NULL,
-        internal_error_message = NULL, failure_stage = NULL,
-        completed_at = NULL, version = version + 1, updated_at = ?
+        edge_purge_checked_at = ?, version = version + 1, updated_at = ?
     WHERE id = ?
   `).run(taskId, now, now, id)
 }
@@ -395,22 +393,6 @@ export function markOperationEdgePurgeChecked(
         updated_at = ?
     WHERE id = ?
   `).run(input.status, input.reason ?? null, now, now, id)
-}
-
-export function resetOperationEdgePurge(
-  sqlite: Database.Database,
-  id: string,
-  now: number,
-) {
-  sqlite.prepare(`
-    UPDATE publication_operations
-    SET status = 'CLEANING_PUBLIC', edge_purge_task_id = NULL,
-        edge_purge_status = 'PENDING', edge_purge_reason = NULL,
-        edge_purge_checked_at = NULL, internal_error_code = NULL,
-        internal_error_message = NULL, failure_stage = NULL,
-        completed_at = NULL, version = version + 1, updated_at = ?
-    WHERE id = ? AND edge_purge_urls_json != '[]'
-  `).run(now, id)
 }
 
 export function deletePublicVariant(
