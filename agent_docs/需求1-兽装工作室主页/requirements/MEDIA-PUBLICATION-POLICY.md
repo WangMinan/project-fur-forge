@@ -1,7 +1,7 @@
 # 媒体公开与保护策略
 
 > **角色**：当前媒体公开行为的唯一事实源。
-> **最后校准**：2026-08-10。
+> **最后校准**：2026-09-09（追加授权：管理端私有图片短效 OSS 直读）。
 > **状态分层**：媒体配方、阶段 D 页面、第 7 节 Endpoint 分离、T52-E2 私有/BPA preflight、T52-E3 ESA 公开投影和 T52-E4 精确缓存撤销均已完成工程实现。阶段 F 不再改变媒体产品契约，主要填写真实值、执行云配置和运行冻结 preflight；所需独立运维辅助脚本按 TASKS 的 F 边界处理。未在目标环境执行的 live 检查不得描述为生产通过。
 
 ## 1. 核心原则
@@ -13,7 +13,7 @@
 - `/returns` 与设定返图页使用无水印返图派生；
 - 永久原图、处理源、Logo 候选、管理预览和返图授权记录始终私有；
 - 所有公开图片预生成、验证、去除不需要的 EXIF，并使用不可变身份；
-- 浏览器不得用 `x-oss-process` 临时加工，也不得用 CSS 叠 Logo 冒充发布结果；
+- 公开页面不得用 `x-oss-process` 临时加工，也不得用 CSS 叠 Logo 冒充发布结果；管理端允许服务端固定尺寸并签名的 OSS 私有缩略图，处理参数不得由客户端自由指定；
 - 正式环境中“可被网页访问”不等于 OSS 匿名可读：两只 Bucket 都私有，访客通过 ESA HTTPS URL 访问网页衍生物；
 - 下架分成两个诚实状态：页面投影立即撤销；ESA 服务器侧缓存通过精确 purge 撤销，完成时限必须在目标环境实测后记录。
 
@@ -27,7 +27,7 @@
 | 首页精选、作品列表/详情 | 作品主图/出厂照 | 活动水印 | `recipe-v3` + 活动 profile |
 | 常规领养与展会掉落 | 设定图/出厂照 | 活动水印 | 与作品相同 |
 | `/returns` 与 `/returns/{slug}` | `return_photo` | 无水印 | `return-wall` / `return-display-v1` |
-| 管理端原图/Logo/处理源 | 私有对象 | 不公开 | 认证 Host、卡片 `w=320`、编辑预览 `w=640`、显式原图、`no-store` |
+| 管理端原图/Logo/处理源 | 私有对象 | 登录后短效 OSS GET | 认证 Host 签发十分钟地址、卡片 `w=320`、编辑预览 `w=640`、显式原图、`no-store` |
 
 返图不使用“轻量水印”，也不随活动作品 profile 切换。
 
@@ -97,6 +97,15 @@ watermark_profile_id = NULL
 
 管理端私有预览不属于公开投影：列表/卡片只请求 `w=320`，较大的编辑预览只请求 `w=640`；读取永久原图必须由管理员明确点击并发送 `original=1`。所有响应继续 `no-store`，缩略处理失败不得回退并传输完整原图。
 
+2026-09-09 用户明确授权管理端浏览器直读私有 OSS：既有图片接口在 `delivery=url` 时
+返回 `{ data: { url, expiresAt } }`，否则临时重定向至当次签发的地址；不经 ECS 中转图片字节。
+签名有效期十分钟，Hero 临时预览还受自身到期时间限制。委托详情默认请求 640 宽缩略图，
+历史无参数的委托原图入口保留为重定向；邮件附件与工作单继续读取原始字节。
+签名中的私有对象路径仅限认证响应和页面内存，不进入公开 DTO、公开 HTML、日志或浏览器持久化存储。
+页面恢复/重联网及单次失败重试只被动校验会话，不更新活跃时间或续 Cookie；无周期性保活。
+已显示图片不随签名到期重下载。八小时闲置会话失效后必须重新登录；退出不撤回未到期签名。
+本次不新增 ESA 私有缓存或边缘函数，不改变两桶私有属性及公开派生分发。
+
 ## 5. 首页入口与配方隔离
 
 首页两个入口使用独立用途：
@@ -149,7 +158,7 @@ ESA 同账号私有 OSS 回源可读取该 Bucket 全部对象，ESA 侧不能�
 | --- | --- |
 | 杭州 ECS 服务端 OSS SDK | `https://oss-cn-hangzhou-internal.aliyuncs.com` |
 | 本地服务端 OSS SDK | `https://oss-cn-hangzhou.aliyuncs.com` |
-| 管理浏览器条件 PUT | 私有 Bucket 杭州公网域名 |
+| 管理浏览器条件 PUT / 短效私有 GET | 私有 Bucket 杭州公网域名 |
 | 公开网页媒体 | `https://public-media.ditedog.com`（ESA） |
 
 - `OSS_ENDPOINT` 只供服务端 SDK；
@@ -159,7 +168,7 @@ ESA 同账号私有 OSS 回源可读取该 Bucket 全部对象，ESA 侧不能�
 - `.env` 生产实例、两个示例、runtime 示例/校验、部署说明和 preflight 同步；
 - 当前应用 AK/SK 保持，仍只进入服务端 Secret。
 
-当前实现使用两个彼此独立的 OSS SDK client：服务端读写使用 `OSS_ENDPOINT`，条件 PUT 签名使用 `OSS_UPLOAD_BASE_URL`。ESA purge 使用 `ESA_SITE_ID`、`ESA_API_ENDPOINT`，并与 OSS SDK 共用 `.env` 中现有的 `OSS_ACCESS_KEY_ID` / `OSS_ACCESS_KEY_SECRET`；不再维护重复的 ESA AccessKey 变量。公开路径是否必须是 `prod/web/**` 由 `APP_ENV=production` 判定，不再通过媒体域名猜测运行环境。
+当前实现分离服务端与浏览器 OSS SDK client：服务端读写使用 `OSS_ENDPOINT`，条件 PUT 和短效 GET 签名使用 `OSS_UPLOAD_BASE_URL`。ESA purge 使用 `ESA_SITE_ID`、`ESA_API_ENDPOINT`，并与 OSS SDK 共用 `.env` 中现有的 `OSS_ACCESS_KEY_ID` / `OSS_ACCESS_KEY_SECRET`；不再维护重复的 ESA AccessKey 变量。公开路径是否必须是 `prod/web/**` 由 `APP_ENV=production` 判定，不再通过媒体域名猜测运行环境。
 
 ## 8. ESA 访问与缓存（T52-E3/E4）
 

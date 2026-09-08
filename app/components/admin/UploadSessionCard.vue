@@ -95,11 +95,11 @@ function retry() {
 <template>
   <article class="upload-card" :data-state="item.state">
     <div class="upload-card__thumb">
-      <img
+      <AdminPrivateImage
         v-if="item.previewUrl"
         :src="item.previewUrl"
         :alt="`${item.fileName} 预览`"
-      >
+      />
       <span v-else aria-hidden="true">图</span>
     </div>
     <div class="upload-card__body">

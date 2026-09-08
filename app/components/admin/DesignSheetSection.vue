@@ -250,11 +250,11 @@ defineExpose({ save: saveDesignSheet })
           :style="{ aspectRatio: `${entry.width} / ${entry.height}` }"
           data-testid="design-sheet-original-preview"
         >
-          <img
+          <AdminPrivateImage
             :src="entry.previewUrl"
             :alt="entry.alt || '领养设定图编辑预览'"
             referrerpolicy="same-origin"
-          >
+          />
         </div>
         <p class="design-sheet__note">
           {{ entry.width }}×{{ entry.height }} · 640 px 编辑预览 · 仅管理员可查看

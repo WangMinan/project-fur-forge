@@ -13,25 +13,33 @@ export default defineNitroPlugin((app) => {
     if (smtp.status === 'invalid') safeLog('error', 'Commission SMTP configuration is invalid.')
     return
   }
-  let stopped = false
+  const stop = new AbortController()
   let timer: ReturnType<typeof setTimeout>
   let running: Promise<void>
   // ponytail: one delivery at a time; increase concurrency only if measured volume requires it.
   async function tick() {
     let delivered = false
     try {
-      delivered = await deliverNextCommissionEmail({ sqlite: getDatabase().sqlite, storage: getMediaStorage(), config })
+      delivered = await deliverNextCommissionEmail({ sqlite: getDatabase().sqlite, storage: getMediaStorage(), config, signal: stop.signal })
     }
     catch {
       safeLog('error', 'Commission notification processing failed.')
     }
-    if (!stopped) timer = setTimeout(start, delivered ? 100 : 5_000)
+    if (!stop.signal.aborted) timer = setTimeout(start, delivered ? 100 : 5_000)
   }
   function start() { running = tick() }
+  function cancel() {
+    stop.abort()
+    clearTimeout(timer)
+  }
+  // Cancel before Nitro drains HTTP connections, not only when its close hooks finally run.
+  process.once('SIGTERM', cancel)
+  process.once('SIGINT', cancel)
   start()
   app.hooks.hook('close', async () => {
-    stopped = true
-    clearTimeout(timer)
+    cancel()
     await running
+    process.removeListener('SIGTERM', cancel)
+    process.removeListener('SIGINT', cancel)
   })
 })
