@@ -9,7 +9,7 @@ import type {
   HeroCollectionFeedback,
   HeroCollectionItemInput,
 } from '~/composables/useAdminHeroCollection'
-import { ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
+import { ADMIN_MEDIA_LARGE_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
 import { adminMediaPreviewUrl } from '~/utils/admin-media-preview'
 import { PUBLICATION_OPERATION_STATUS_LABELS } from '~/utils/media-labels'
 import { adminUploadProgressModel } from '~/utils/admin-upload-progress'
@@ -141,7 +141,7 @@ const operationLabel = computed(() => {
   return operation.status === 'DONE' ? '已完成适配' : '适配大图尺寸'
 })
 const previewUrl = computed(() => assetId.value
-  ? adminMediaPreviewUrl(assetId.value, ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH)
+  ? adminMediaPreviewUrl(assetId.value, ADMIN_MEDIA_LARGE_PREVIEW_WIDTH)
   : null,
 )
 

@@ -3,9 +3,8 @@ import { createApiError } from '../../../../../utils/api-error'
 import { getDatabase } from '../../../../../utils/database'
 import { getMediaStorage } from '../../../../../utils/media-storage'
 import { asSafeApiError, ServiceError } from '../../../../../utils/service-error'
-import { parseAdminMediaDelivery, parseAdminMediaPreviewQuery, sendAdminMediaLink } from '../../../../../utils/route/admin-media-preview'
+import { parseAdminMediaPreviewQuery } from '../../../../../utils/route/admin-media-preview'
 import { processingSource, readyAssetSource } from '../../../../../utils/recipe/media-source'
-import { ADMIN_MEDIA_SIGNED_URL_TTL_MS } from '../../../../../../shared/constants/admin-media-preview'
 
 /** Authenticated, private-only commission design reference preview. */
 export default defineEventHandler(async (event) => {
@@ -16,8 +15,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     const query = getQuery(event)
-    const delivery = parseAdminMediaDelivery(query)
-    // The historical unqualified link opens the original; the page now explicitly requests w=640.
+    // Preserve historical original links; the detail page explicitly requests w=1280.
     const request = parseAdminMediaPreviewQuery(query.w === undefined && query.original === undefined
       ? { ...query, original: '1' } : query)
     const sqlite = getDatabase().sqlite
@@ -28,9 +26,17 @@ export default defineEventHandler(async (event) => {
     if (!asset) throw new ServiceError(404, 'NOT_FOUND', 'Commission design reference was not found.')
     const source = readyAssetSource(sqlite, asset.id)
     const objectKey = request.mode === 'original' ? source.privateObjectKey : processingSource(sqlite, source).objectKey
-    const signed = await getMediaStorage().signBrowserPrivateGet(objectKey, Date.now() + ADMIN_MEDIA_SIGNED_URL_TTL_MS,
-      request.mode === 'preview' ? `image/auto-orient,1/resize,m_lfit,w_${request.width}` : undefined)
-    return sendAdminMediaLink(event, signed, delivery)
+    const storage = getMediaStorage()
+    setResponseHeader(event, 'x-content-type-options', 'nosniff')
+    if (request.mode === 'original') {
+      setResponseHeader(event, 'content-type', source.mimeType)
+      setResponseHeader(event, 'content-disposition', 'inline')
+      return await storage.getPrivate(objectKey)
+    }
+    const processed = await storage.getPrivateProcessed(objectKey,
+      `image/auto-orient,1/resize,m_lfit,w_${request.width}`)
+    setResponseHeader(event, 'content-type', processed.contentType || source.mimeType)
+    return processed.content
   }
   catch (error) {
     asSafeApiError(error)

@@ -42,28 +42,10 @@ export default defineEventHandler(async (event) => {
 
   const fake = getE2eFakeMediaStorage()
   if (event.method === 'GET') {
-    const query = getRequestURL(event).searchParams
-    if (query.has('expires') && Number(query.get('expires')) <= Date.now()) {
-      setResponseStatus(event, 403)
-      return { error: 'AccessDenied' }
-    }
     const object = fake.objects.get(objectKey) ?? fake.publicObjects.get(objectKey)
     if (!object) {
       setResponseStatus(event, 404)
       return { error: 'NoSuchKey' }
-    }
-    setResponseHeader(event, 'cache-control', 'no-store')
-    const process = query.get('x-oss-process')
-    if (process) {
-      try {
-        const result = await fake.getPrivateProcessed(objectKey, process)
-        setResponseHeader(event, 'content-type', result.contentType)
-        return result.content
-      }
-      catch {
-        setResponseStatus(event, 500)
-        return { error: 'ImageProcessFailed' }
-      }
     }
     setResponseHeader(event, 'content-type', object.contentType)
     return object.content

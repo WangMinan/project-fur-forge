@@ -15,7 +15,7 @@ import { migrateDatabase, openDatabase } from '../../server/utils/database'
 import { getPublicHome } from '../../server/utils/runner/home-management'
 import {
   createHeroCollectionItemPreview,
-  getHeroCollectionItemPreviewLink,
+  getHeroCollectionItemPreviewContent,
   runHeroCollectionItemPublication,
   runHeroCollectionItemUnpublication,
   startHeroCollectionItemPublication,
@@ -204,10 +204,10 @@ describe('R3-C independent Hero collection publication', () => {
     expect(preview.url).toContain(`/items/${item.id}/preview`)
     expect(storage.publicObjects.size).toBe(0)
     const nearExpiry = Date.parse(preview.expiresAt) - 1_000
-    const signed = await getHeroCollectionItemPreviewLink(sqlite, storage, item.id, 'home', 'landscape', nearExpiry)
-    expect(signed.expiresAt).toBe(preview.expiresAt)
-    expect(storage.signedBrowserGets.at(-1)?.process).toBeUndefined()
-    await expect(getHeroCollectionItemPreviewLink(sqlite, storage, item.id, 'home', 'landscape', nearExpiry + 1_001))
+    const content = await getHeroCollectionItemPreviewContent(sqlite, storage, item.id, 'home', 'landscape', nearExpiry)
+    expect(Buffer.isBuffer(content)).toBe(true)
+    expect(content.length).toBeGreaterThan(0)
+    await expect(getHeroCollectionItemPreviewContent(sqlite, storage, item.id, 'home', 'landscape', nearExpiry + 1_001))
       .rejects.toThrow('Hero preview was not found.')
   })
 

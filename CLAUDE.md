@@ -61,7 +61,7 @@
   公开媒体 ------------> ESA 托管 STS 私有回源 --> 网页衍生 Bucket
 
 管理员浏览器 --条件签名 PUT--> 私有原图 Bucket 的公网 OSS 地址
-管理员浏览器 --登录后短效 GET--> 私有原图 Bucket 的公网 OSS 地址（原图/OSS 缩略图）
+管理员浏览器 --登录后同源图片 GET--> ESA/Nginx --> app --> 私有原图 Bucket（原图/OSS 缩略图）
 app / one-shot ops --OSS SDK Endpoint--> 私有原图 Bucket + 网页衍生 Bucket
 ```
 
@@ -71,8 +71,8 @@ app / one-shot ops --OSS SDK Endpoint--> 私有原图 Bucket + 网页衍生 Buck
 - app 只绑定 `127.0.0.1:3000`；Nginx 运行在宿主机，只监听 HTTP/80；TLS 在 ESA 边缘终止。
 - 公开、管理、媒体 Host 精确隔离；未知 Host 和到达 Nuxt 的媒体 Host 返回 `421`。
 - 两只 OSS Bucket 都是 private；公开页面只消费 `public-media.ditedog.com` 上 READY 的网页派生物。
-- `OSS_ENDPOINT` 供服务端 SDK，`OSS_UPLOAD_BASE_URL` 供浏览器条件 PUT 与短效私有 GET，`MEDIA_BASE_URL` 供公开 ESA URL，三者不得混用。
-- 管理图片签名有效期十分钟，图片字节由浏览器直读 OSS；被动恢复只校验会话，不延长八小时闲置有效期。签名只进入认证后的私有响应和页面内存，不进入公开投影。
+- `OSS_ENDPOINT` 供服务端 SDK，`OSS_UPLOAD_BASE_URL` 供浏览器条件 PUT，`MEDIA_BASE_URL` 供公开 ESA URL，三者不得混用。
+- 管理图片由认证后的同源接口返回字节，不向浏览器签发私有 OSS GET 地址；列表/卡片 320、出厂照 640、Hero 编辑/作品设定图/领养封面/委托详情 1280，原图显式点击后新窗口内联预览。图片请求和被动会话检查不延长八小时闲置有效期。
 - API、管理、会话和写操作绕过共享缓存；不可变 `/_nuxt/**` 和公开派生媒体可长缓存；下架先撤销公开投影，再精确 purge。
 - 服务器按 `repository@sha256:digest` 部署，不在服务器 build，不用 `latest` 作为部署身份。
 - `.env`、Secret、签名 URL、私有 Object Key 和生产 PII 不进入 Git、日志、截图或聊天。

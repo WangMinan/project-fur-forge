@@ -56,13 +56,6 @@ export class E2eFakeMediaStorage extends FakeMediaStorage {
     }
   }
 
-  override async signBrowserPrivateGet(objectKey: string, expiresAt: number, process?: string) {
-    const signed = await super.signBrowserPrivateGet(objectKey, expiresAt, process)
-    const url = new URL(`${getRuntimeConfig().adminBaseUrl}/api/e2e-fake-oss/${objectKey}`)
-    url.search = new URL(signed.url).search
-    return { ...signed, url: url.href }
-  }
-
   override async imageInfoPrivate(objectKey: string) {
     const override = this.imageInfoOverrides.get(objectKey)
     if (override) {
@@ -90,7 +83,6 @@ export class E2eFakeMediaStorage extends FakeMediaStorage {
     this.privateProcessCalls.length = 0
     this.processCalls.length = 0
     this.signedPuts.length = 0
-    this.signedBrowserGets.length = 0
     this.putRecords.length = 0
   }
 }

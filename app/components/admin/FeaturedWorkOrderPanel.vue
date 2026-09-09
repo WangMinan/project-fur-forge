@@ -84,13 +84,13 @@ function publicRank(index: number) {
             {{ index + 1 }}
           </span>
           <span class="featured-order__thumb">
-            <AdminPrivateImage
+            <img
               v-if="thumbAssetId(work)"
               :src="adminMediaPreviewUrl(thumbAssetId(work)!, ADMIN_MEDIA_CARD_PREVIEW_WIDTH)"
               alt=""
               loading="lazy"
               referrerpolicy="same-origin"
-            />
+            >
             <span v-else aria-hidden="true">无图</span>
           </span>
           <div class="featured-order__identity">
