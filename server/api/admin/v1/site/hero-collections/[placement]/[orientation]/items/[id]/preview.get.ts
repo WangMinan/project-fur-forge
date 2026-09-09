@@ -4,27 +4,23 @@ import {
   readHeroCollectionItemId,
   readHeroCollectionRoute,
 } from '~~/server/utils/route/hero-collection'
-import { getHeroCollectionItemPreviewLink } from '~~/server/utils/runner/hero-collection-publication'
-import { asSafeApiError, ServiceError } from '~~/server/utils/service-error'
-import { parseAdminMediaDelivery, sendAdminMediaLink } from '~~/server/utils/route/admin-media-preview'
+import { getHeroCollectionItemPreviewContent } from '~~/server/utils/runner/hero-collection-publication'
+import { asSafeApiError } from '~~/server/utils/service-error'
 
 export default defineEventHandler(async (event) => {
   const scope = readHeroCollectionRoute(event)
   const id = readHeroCollectionItemId(event)
   try {
-    const query = getQuery(event)
-    const delivery = parseAdminMediaDelivery(query)
-    if (query.w !== undefined || query.original !== undefined) {
-      throw new ServiceError(400, 'VALIDATION_ERROR', 'Hero preview parameters are invalid.')
-    }
-    const signed = await getHeroCollectionItemPreviewLink(
+    const content = await getHeroCollectionItemPreviewContent(
       getDatabase().sqlite,
       getMediaStorage(),
       id,
       scope.placement,
       scope.orientation,
     )
-    return sendAdminMediaLink(event, signed, delivery)
+    setResponseHeader(event, 'content-type', 'image/webp')
+    setResponseHeader(event, 'cache-control', 'no-store, max-age=0')
+    return content
   }
   catch (error) {
     asSafeApiError(error)

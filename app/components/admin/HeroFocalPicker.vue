@@ -69,12 +69,12 @@ function onRangeInput(axis: 'x' | 'y', event: Event) {
 <template>
   <section class="hero-focal-picker" data-testid="hero-focal-picker">
     <div class="hero-focal-picker__preview" :data-orientation="orientation">
-      <AdminPrivateImage
+      <img
         v-if="previewUrl"
         :src="previewUrl"
         :alt="`${alt || '大图'}目标裁切预览`"
         :style="{ objectPosition: `${focalPercent.x}% ${focalPercent.y}%` }"
-      />
+      >
       <p v-else>上传图片后将在这里预览目标裁切。</p>
       <span
         v-if="previewUrl"

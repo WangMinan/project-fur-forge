@@ -17,7 +17,7 @@ import {
 import type { AdminUploadResult } from '~/utils/admin-upload-session'
 import { uploadSessionFailureLabel } from '~/utils/media-labels'
 import { DECLARATION_FAILURE_LABELS } from '~/utils/upload-declaration'
-import { ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
+import { ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH, ADMIN_MEDIA_LARGE_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
 import { adminMediaPreviewUrl } from '~/utils/admin-media-preview'
 import { AdminApiError } from './useAdminApi'
 
@@ -441,7 +441,8 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
         schema: verifiedAssetResponseSchema,
       })
       item.asset = result.data
-      item.previewUrl = adminMediaPreviewUrl(assetId, ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH)
+      item.previewUrl = adminMediaPreviewUrl(assetId, options.mediaRole === 'studio_photo'
+        ? ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH : ADMIN_MEDIA_LARGE_PREVIEW_WIDTH)
       item.state = 'completed'
       if (result.data.status === 'READY') {
         options.onAssetReady(item, result.data)

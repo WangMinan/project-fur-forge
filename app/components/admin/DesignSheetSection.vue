@@ -7,7 +7,7 @@ import type {
 } from '~~/shared/types/contracts'
 import { AdminApiError } from '~/composables/useAdminApi'
 import { ASSET_STATUS_LABELS } from '~/utils/media-labels'
-import { ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
+import { ADMIN_MEDIA_LARGE_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
 import {
   adminMediaOriginalUrl,
   adminMediaPreviewUrl,
@@ -49,7 +49,7 @@ function toEntry(sheet: ManagedDesignSheetDto): DesignSheetEntry {
     alt: sheet.alt ?? '',
     assetId: sheet.assetId,
     height: sheet.height,
-    previewUrl: adminMediaPreviewUrl(sheet.assetId, ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH),
+    previewUrl: adminMediaPreviewUrl(sheet.assetId, ADMIN_MEDIA_LARGE_PREVIEW_WIDTH),
     publicVariantCount: sheet.publicVariantCount,
     status: sheet.status,
     version: sheet.version,
@@ -86,7 +86,7 @@ const uploads = useStudioPhotoUpload({
       alt: '',
       assetId: asset.assetId,
       height: asset.height,
-      previewUrl: adminMediaPreviewUrl(asset.assetId, ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH),
+      previewUrl: adminMediaPreviewUrl(asset.assetId, ADMIN_MEDIA_LARGE_PREVIEW_WIDTH),
       publicVariantCount: 0,
       status: asset.status,
       version: asset.version,
@@ -250,14 +250,14 @@ defineExpose({ save: saveDesignSheet })
           :style="{ aspectRatio: `${entry.width} / ${entry.height}` }"
           data-testid="design-sheet-original-preview"
         >
-          <AdminPrivateImage
+          <img
             :src="entry.previewUrl"
             :alt="entry.alt || '领养设定图编辑预览'"
             referrerpolicy="same-origin"
-          />
+          >
         </div>
         <p class="design-sheet__note">
-          {{ entry.width }}×{{ entry.height }} · 640 px 编辑预览 · 仅管理员可查看
+          {{ entry.width }}×{{ entry.height }} · {{ ADMIN_MEDIA_LARGE_PREVIEW_WIDTH }} px 编辑预览 · 仅管理员可查看
           · <a
             :href="adminMediaOriginalUrl(entry.assetId)"
             target="_blank"

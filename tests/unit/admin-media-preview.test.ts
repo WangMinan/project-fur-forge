@@ -6,12 +6,13 @@ import {
 import {
   ADMIN_MEDIA_CARD_PREVIEW_WIDTH,
   ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH,
+  ADMIN_MEDIA_LARGE_PREVIEW_WIDTH,
 } from '../../shared/constants/admin-media-preview'
 import {
   adminMediaOriginalUrl,
   adminMediaPreviewUrl,
 } from '../../app/utils/admin-media-preview'
-import { parseAdminMediaDelivery, parseAdminMediaPreviewQuery } from '../../server/utils/route/admin-media-preview'
+import { parseAdminMediaPreviewQuery } from '../../server/utils/route/admin-media-preview'
 
 describe('admin private media preview contract', () => {
   it('builds the fixed card/editor URLs and a separate explicit original URL', () => {
@@ -19,15 +20,19 @@ describe('admin private media preview contract', () => {
       .toBe('/api/admin/v1/media/assets/asset%2Fid/preview?w=320')
     expect(adminMediaPreviewUrl('asset', ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH))
       .toBe('/api/admin/v1/media/assets/asset/preview?w=640')
+    expect(adminMediaPreviewUrl('asset', ADMIN_MEDIA_LARGE_PREVIEW_WIDTH))
+      .toBe('/api/admin/v1/media/assets/asset/preview?w=1280')
     expect(adminMediaOriginalUrl('asset'))
       .toBe('/api/admin/v1/media/assets/asset/preview?original=1')
   })
 
-  it('accepts only the two preview widths or explicit original mode', () => {
+  it('accepts only the three preview widths or explicit original mode', () => {
     expect(parseAdminMediaPreviewQuery({ w: '320' }))
       .toEqual({ mode: 'preview', width: 320 })
     expect(parseAdminMediaPreviewQuery({ w: '640' }))
       .toEqual({ mode: 'preview', width: 640 })
+    expect(parseAdminMediaPreviewQuery({ w: '1280' }))
+      .toEqual({ mode: 'preview', width: 1280 })
     expect(parseAdminMediaPreviewQuery({ original: '1' }))
       .toEqual({ mode: 'original' })
   })
@@ -43,12 +48,11 @@ describe('admin private media preview contract', () => {
       .toThrow(/supported preview width|not supported/)
   })
 
-  it('accepts signed URL delivery but refuses caller-controlled object keys, processes and repeated query values', () => {
-    expect(parseAdminMediaDelivery({ w: '640', delivery: 'url' })).toBe('url')
-    expect(parseAdminMediaDelivery({ original: '1' })).toBe('redirect')
+  it('refuses URL delivery, caller-controlled object keys, processes and repeated query values', () => {
     for (const query of [
       { w: ['640'] }, { w: '640', original: ['1'] }, { original: ['1'] },
       { w: '640', delivery: ['url'] }, { w: '640', delivery: 'buffer' },
+      { w: '1280', delivery: 'url' },
       { w: '640', objectKey: 'test/original/other.png' },
       { w: '640', 'x-oss-process': 'image/resize,w_9999' },
       { w: '640', url: 'https://other.test/image.png' },

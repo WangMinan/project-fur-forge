@@ -30,7 +30,6 @@ interface AdminApiOptions<S extends z.ZodType> {
   body?: unknown
   method?: 'DELETE' | 'GET' | 'POST' | 'PUT'
   schema: S
-  retry?: 0
 }
 
 function errorStatusOf(error: unknown) {
@@ -82,7 +81,6 @@ export function useAdminApi() {
         body: options.body as Record<string, unknown> | undefined,
         credentials: 'same-origin',
         headers,
-        ...(options.retry === 0 ? { retry: 0 } : {}),
       })
       raw = response._data
     }

@@ -2,7 +2,7 @@
 import { managedWorkResponseSchema } from '~~/shared/schemas/work'
 import { retryAssetProcessingResponseSchema } from '~~/shared/schemas/upload'
 import type { ManagedAdoptionCoverDto, ManagedWorkDto } from '~~/shared/types/contracts'
-import { ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
+import { ADMIN_MEDIA_LARGE_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
 import { AdminApiError } from '~/composables/useAdminApi'
 import { adminMediaOriginalUrl, adminMediaPreviewUrl } from '~/utils/admin-media-preview'
 import { ASSET_STATUS_LABELS } from '~/utils/media-labels'
@@ -45,7 +45,7 @@ function toEntry(cover: ManagedAdoptionCoverDto): CoverEntry {
     focalX: cover.focalX,
     focalY: cover.focalY,
     height: cover.height,
-    previewUrl: adminMediaPreviewUrl(cover.assetId, ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH),
+    previewUrl: adminMediaPreviewUrl(cover.assetId, ADMIN_MEDIA_LARGE_PREVIEW_WIDTH),
     publicVariantCount: cover.publicVariantCount,
     status: cover.status,
     version: cover.version,
@@ -89,7 +89,7 @@ const uploads = useStudioPhotoUpload({
       focalX: asset.focalX,
       focalY: asset.focalY,
       height: asset.height,
-      previewUrl: adminMediaPreviewUrl(asset.assetId, ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH),
+      previewUrl: adminMediaPreviewUrl(asset.assetId, ADMIN_MEDIA_LARGE_PREVIEW_WIDTH),
       publicVariantCount: 0,
       status: asset.status,
       version: asset.version,
@@ -229,12 +229,12 @@ defineExpose({ save: saveCover })
 
     <article v-if="entry" class="cover__entry" :data-status="entry.status">
       <div class="cover__preview">
-        <AdminPrivateImage
+        <img
           :src="entry.previewUrl"
           :alt="entry.alt || '领养横版封面编辑预览'"
           :style="{ objectPosition: `${focalPercent.x}% ${focalPercent.y}%` }"
           referrerpolicy="same-origin"
-        />
+        >
       </div>
       <p class="cover__note">
         {{ entry.width }}×{{ entry.height }} · 私有编辑预览 ·

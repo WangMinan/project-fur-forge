@@ -81,7 +81,6 @@ export interface MediaStorage {
   putPrivateConditional(input: PrivateObjectPutInput): Promise<void>
   signConditionalPut(input: ConditionalPutInput): Promise<ConditionalPutDto>
   signPrivateGet(objectKey: string, expiresAt: number): Promise<PrivateSignedUrl>
-  signBrowserPrivateGet(objectKey: string, expiresAt: number, process?: string): Promise<PrivateSignedUrl>
 }
 
 export const PUBLIC_MEDIA_CACHE_CONTROL = 'public, max-age=31536000, immutable'
@@ -109,7 +108,7 @@ interface OssClient {
   signatureUrlV4(
     method: string,
     expires: number,
-    options: { headers?: Record<string, string>, queries?: Record<string, string> },
+    options: { headers?: Record<string, string> },
     objectKey: string,
   ): Promise<string>
 }
@@ -249,17 +248,6 @@ export class AliOssMediaStorage implements MediaStorage {
         expiresSeconds,
         {},
         objectKey,
-      ),
-      expiresAt: new Date(expiresAt).toISOString(),
-    }
-  }
-
-  async signBrowserPrivateGet(objectKey: string, expiresAt: number, process?: string) {
-    const queries: Record<string, string> = { 'response-cache-control': 'no-store' }
-    if (process) queries['x-oss-process'] = process
-    return {
-      url: await (await this.uploadClient).signatureUrlV4(
-        'GET', Math.max(1, Math.floor((expiresAt - Date.now()) / 1_000)), { queries }, objectKey,
       ),
       expiresAt: new Date(expiresAt).toISOString(),
     }
