@@ -19,7 +19,7 @@ test('R6 saves independent crops and display choices, then renders square thumbn
   await seedPublicCatalog(page, [{
     slug: 'e2e-public-r6-composition', characterName: '构图验收', species: '犬科', purpose: 'adoption', adoptionStatus: 'available',
     publicationStatus: 'draft', featured: false,
-    photos: [{ alt: '正面全身', width: 2400, height: 3200 }, { alt: '侧面全身', width: 2400, height: 3200 }],
+    photos: [{ alt: '正面全身', width: 4209, height: 3003 }, { alt: '侧面全身', width: 2400, height: 3200 }],
     adoptionCover: { alt: '横版封面', width: 3200, height: 1800 }, designSheet: { alt: '完整设定', width: 3200, height: 2400 },
   }])
   const sqlite = openFixtureDatabase(E2E_DATABASE_FILE)
@@ -39,24 +39,35 @@ test('R6 saves independent crops and display choices, then renders square thumbn
   finally { sqlite.close() }
   const headers = { Origin: adminBaseURL, 'x-csrf-token': session.csrfToken }
   const read = async () => (await (await page.request.get(`${adminBaseURL}/api/admin/v1/works/${id}`)).json()).data as ManagedWorkDto
-  // Real pixels with the source aspect, rather than the storage fake's one-pixel codec fixture.
-  await page.route('**/preview?w=640', route => route.fulfill({ contentType: 'image/png', body: createSyntheticSourcePng(600, 800) as Buffer }))
+  // Thumbnail rounding and fractional layout must not corrupt the source crop ratio.
+  await page.route('**/preview?w=640', route => route.fulfill({ contentType: 'image/png', body: createSyntheticSourcePng(640, 457) as Buffer }))
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()) })
-  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.setViewportSize({ width: 1280, height: 720 })
   await page.goto(`${adminBaseURL}/admin/works/${id}`)
   const photo = page.locator('#studio-photos .photo-card').first()
   await photo.getByRole('button', { name: '详情缩略图', exact: true }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
   await expect(dialog.getByRole('button', { name: '应用构图' })).toBeEnabled()
+  const selection = dialog.locator('cropper-selection')
+  const initial = await selection.boundingBox()
+  if (!initial) throw new Error('Missing crop selection')
+  await page.mouse.move(initial.x + initial.width / 2, initial.y + initial.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(initial.x + initial.width / 2 + 20, initial.y + initial.height / 2, { steps: 10 })
+  await page.mouse.up()
+  await expect(dialog.getByRole('button', { name: '应用构图' })).toBeEnabled()
+  expect((await selection.boundingBox())!.x).toBeGreaterThan(initial.x + 10)
   await dialog.getByRole('button', { name: '缩小选区' }).click()
   await dialog.getByRole('button', { name: '选区向上' }).click()
   await dialog.getByRole('button', { name: '应用构图' }).click()
   await page.locator('#studio-photos').getByRole('button', { name: '保存出厂照', exact: true }).click()
   await expect.poll(async () => (await read()).studioPhotos[0]?.compositions?.['detail-thumbnail']?.mode).toBe('crop')
   const first = (await read()).studioPhotos[0]!.compositions!['detail-thumbnail']
+  if (first?.mode !== 'crop') throw new Error('Missing saved crop')
+  expect(first.rect.width * 4209 / (first.rect.height * 3003)).toBeCloseTo(1, 10)
   await photo.getByRole('button', { name: /详情缩略图/ }).click()
   await expect(dialog.getByRole('button', { name: '应用构图' })).toBeEnabled()
   await dialog.getByRole('button', { name: '扩大选区' }).click()

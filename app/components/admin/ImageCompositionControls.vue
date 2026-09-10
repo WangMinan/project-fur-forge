@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type Cropper from 'cropperjs'
 import type { CompositionUsage, CropRect, ImageComposition, ImageCompositions } from '~~/shared/schemas/image-composition'
-import { COMPOSITION_LABELS, COMPOSITION_RATIOS, allowedCompositionUsages, compositionError, defaultComposition, pixelCrop, resolveComposition } from '~~/shared/utils/image-composition'
+import { COMPOSITION_LABELS, COMPOSITION_RATIOS, allowedCompositionUsages, compositionError, defaultComposition, fitCrop, pixelCrop, resolveComposition } from '~~/shared/utils/image-composition'
 
 const props = defineProps<{
   assetId: string
@@ -76,7 +76,9 @@ function onSelection(event: Event) {
   next.y = Math.max(0, next.y)
   next.width = Math.min(1 - next.x, next.width)
   next.height = Math.min(1 - next.y, next.height)
-  rect.value = next
+  // Display bounds can drift by subpixels; preserve the fixed ratio in source coordinates.
+  const ratio = COMPOSITION_RATIOS[selected.value]
+  rect.value = ratio ? fitCrop(props.width, props.height, ratio, next) : next
 }
 
 async function open(usage: CompositionUsage) {
