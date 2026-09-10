@@ -16,12 +16,16 @@ import {
 } from './work'
 
 export const publicWorkCardDtoSchema = z.object({
+  thumbnailSources: publicSourceSetDtoSchema.optional(),
+  fit: z.enum(['cover', 'contain']).optional(),
   assetId: resourceIdSchema,
   alt: publicAltSchema,
   sources: publicSourceSetDtoSchema,
 }).strict()
 
 export const publicWorkGalleryItemDtoSchema = z.object({
+  thumbnailSources: publicSourceSetDtoSchema.optional(),
+  fit: z.enum(['cover', 'contain']).optional(),
   assetId: resourceIdSchema,
   alt: publicAltSchema,
   position: z.number().int().min(0).max(4),
@@ -29,6 +33,8 @@ export const publicWorkGalleryItemDtoSchema = z.object({
 }).strict()
 
 export const publicDesignSheetDtoSchema = z.object({
+  thumbnailSources: publicSourceSetDtoSchema.optional(),
+  fit: z.enum(['cover', 'contain']).optional(),
   assetId: resourceIdSchema,
   alt: publicAltSchema,
   sources: publicSourceSetDtoSchema,
@@ -57,6 +63,7 @@ export const publicWorkDetailDtoSchema = z.object({
     price: true,
   }).optional(),
   media: z.object({
+    adoptionSourceAssetId: resourceIdSchema.optional(),
     primaryAssetId: resourceIdSchema.nullable(),
     card: publicWorkCardDtoSchema,
     cardOrientation: publicWorkCardOrientationSchema,

@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import type { ImageCompositions } from '~~/shared/schemas/image-composition'
 import {
   ASSET_STATUS_LABELS,
 } from '~/utils/media-labels'
 import { adminMediaOriginalUrl } from '~/utils/admin-media-preview'
 
 export interface StudioPhotoEntry {
+  compositions?: ImageCompositions | undefined
+  compositionsEdited?: boolean
   alt: string
   assetId: string
   focalX: number
@@ -21,6 +24,8 @@ export interface StudioPhotoEntry {
 
 const props = defineProps<{
   entry: StudioPhotoEntry
+  legacy: boolean
+  workLabel?: string
   index: number
   locked: boolean
   processing: boolean
@@ -33,10 +38,11 @@ const emit = defineEmits<{
   retryProcessing: []
   setPrimary: []
   update: [fields: Partial<Pick<StudioPhotoEntry,
-    'alt' | 'focalX' | 'focalY'>>]
+    'alt' | 'focalX' | 'focalY' | 'compositions' | 'compositionsEdited'>>]
 }>()
 
 const previewAspect = ref<'original' | 'card'>('original')
+watch(() => props.legacy, () => { previewAspect.value = 'original' })
 
 const STATE_TONES = {
   READY: 'success',
@@ -88,12 +94,13 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
             : undefined"
         >
         <span
+          v-if="legacy"
           class="photo-card__focal"
           :style="{ insetInlineStart: `${focalPercent.x}%`, insetBlockStart: `${focalPercent.y}%` }"
           aria-hidden="true"
         />
         <button
-          v-if="previewAspect === 'original' && !locked"
+          v-if="legacy && previewAspect === 'original' && !locked"
           type="button"
           class="photo-card__focal-hit"
           :aria-label="`点击设置第 ${index + 1} 张焦点`"
@@ -116,6 +123,7 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
           @click="previewAspect = 'original'"
         >原比例</button>
         <button
+          v-if="legacy"
           type="button"
           class="photo-card__aspect-button"
           :aria-pressed="previewAspect === 'card'"
@@ -133,6 +141,10 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
     </div>
 
     <div class="photo-card__body">
+      <AdminImageCompositionControls
+v-if="entry.previewUrl" :asset-id="entry.assetId" :src="entry.previewUrl" role="studio_photo"
+        :width="entry.width" :height="entry.height" :title="entry.alt" :caption="workLabel ?? ''" :primary="entry.primary" :compositions="entry.compositions"
+        :disabled="locked || processing || entry.status !== 'READY'" @update="emit('update', { compositions: $event, compositionsEdited: true })" />
       <p class="photo-card__order">
         第 {{ index + 1 }} 张
         <AdminStatusBadge
@@ -145,7 +157,7 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
         <span v-else class="photo-card__not-public">公开衍生图未生成</span>
       </p>
       <p class="photo-card__recipe-note">
-        作品详情展示原比例图片；只有主图会生成 3:4 作品卡图片，焦点仅影响作品卡图片。
+        作品详情展示原比例图片；新构图按各展示用途独立保存；旧焦点仅供历史卡片兼容。
       </p>
 
       <p v-if="entry.status === 'FAILED'" class="photo-card__failure" role="alert">
@@ -175,7 +187,7 @@ function onFocalInput(axis: 'x' | 'y', event: Event) {
         >
       </div>
 
-      <div class="photo-card__focal-sliders">
+      <div v-if="legacy" class="photo-card__focal-sliders">
         <label class="photo-card__label" :for="`focal-x-${entry.assetId}`">
           焦点水平 {{ focalPercent.x }}%
         </label>

@@ -436,7 +436,7 @@ onBeforeUnmount(() => {
 
 @media (hover: hover) and (pointer: fine) {
   .home-adoption-poster__media:hover :deep(.responsive-picture__image) {
-    transform: scale(1.025) rotate(0.35deg);
+    filter: brightness(1.025);
   }
 }
 

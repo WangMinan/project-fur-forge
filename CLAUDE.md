@@ -1,59 +1,47 @@
 # CLAUDE.md
 
-本文件是 `project-fur-forge` Coding Agent 的稳定入口；`AGENTS.md` 指向本文件。临时 SHA、Actions run、截图、一次性 finding 和阶段过程只写入对应 `agent_docs/` 记录，不在这里固化。
+本文件是 `project-fur-forge` 开发与远端部署共用的稳定入口；`AGENTS.md` 指向本文件。项目为“有点小狗工作室”提供图片优先的公开站与轻量管理后台，中文短品牌为“有点小狗”，英文为 `DITE DOG`。本文件保留通用规则、部署结构与关键不变量，具体需求和逐步操作放在链接文档中。
 
-## 1. 当前范围与权威文档
+## 1. 先读什么
 
-项目为“有点小狗工作室”提供图片优先的公开站和轻量管理后台。中文短品牌为“有点小狗”，英文品牌固定为 `DITE DOG`。
+- 从 [需求导航](agent_docs/README.md) 找到本次任务对应的需求；先读其 `STATE.md`、`requirements/SPEC.md` 与 `implementation/TASKS.md`，再按任务读取 foundation、planning、models、COPY、design 和最新交接。
+- 产品、文案、模型与视觉行为分别以对应 SPEC、COPY、models、design 为准；TASKS 是任务勾选权威，STATE 记录当前事实。后续需求只覆盖明确列出的旧条款；未覆盖的基线继续有效。
+- 媒体处理与访问读取 [媒体策略](agent_docs/需求1-兽装工作室主页/requirements/MEDIA-PUBLICATION-POLICY.md)，并按需求导航核对后续覆盖条款，勿恢复历史退役行为。
+- 部署与恢复先读本文第4节，再读取 [DEPLOYMENT](docs/DEPLOYMENT.md) 和 [生产发布手册](agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md)；具体环境值与逐步命令以目标版本文档和现场核验为准。
+- 新需求从 [模板](agent_docs/_template/) 建立。阶段状态、验收矩阵、临时 SHA、Actions run、截图和 finding 只写入对应需求记录，不在本入口固化。
 
-| 需求 | 状态 | 作用 |
-| --- | --- | --- |
-| 需求1 | 已关闭、历史基线 | Host、媒体、安全、OSS/ESA、发布、恢复与部署约束 |
-| 需求2 | 已关闭、历史增量 | 仅供追溯，后续需求已覆盖部分功能 |
-| 需求3 | 已关闭、当前业务基线 | 退役边界、简化作品/领养、Hero、委托投递 |
-| 需求4 | **仅阶段 E 开放** | UI 美化、布局、响应式、Hero 焦点与动效优化 |
-| 需求5 | 本地实现完成；镜像/部署状态见需求5记录 | 内部委托邮件通知、后台收件列表与站点配置 |
+用户本轮及此前明确授权共同决定工作范围；不把某个历史阶段的限制扩大为全仓库永久限制，也不把需求确认等同于生产执行授权。
 
-“关闭”不等于补签未发生的生产执行、独立 Review、真实手机或用户验收；未完成项在任务文档中标为“按产品决策关闭”。需求1～3不再接受新功能，后续代码不得恢复它们已退役的行为。
+## 2. Git 与环境
 
-开始工作前按任务读取：
+Windows 使用已安装的 PowerShell 7（`pwsh`），不要使用 Windows PowerShell 5。
 
-- 需求5任务：[`STATE`](agent_docs/需求5-委托邮件通知与站点配置/STATE.md)、[`SPEC`](agent_docs/需求5-委托邮件通知与站点配置/requirements/SPEC.md)、[`TASKS`](agent_docs/需求5-委托邮件通知与站点配置/implementation/TASKS.md)；其明确授权的内部 SMTP 通知覆盖下文历史禁用范围，用户侧页面与全部文字保持不变；
-- 当前状态与唯一勾选权威：[`需求4 STATE`](agent_docs/需求4-站点视觉升级与内容合规/STATE.md)、[`需求4 TASKS`](agent_docs/需求4-站点视觉升级与内容合规/implementation/TASKS.md)；
-- 产品、文案、模型和视觉契约：[`SPEC`](agent_docs/需求4-站点视觉升级与内容合规/requirements/SPEC.md)、[`COPY`](agent_docs/需求4-站点视觉升级与内容合规/requirements/COPY.md)、[`models`](agent_docs/需求4-站点视觉升级与内容合规/models/README.md)、[`design`](agent_docs/需求4-站点视觉升级与内容合规/.design/README.md)；
-- 已实现业务边界：[`需求3 foundation`](agent_docs/需求3-站点业务简化与委托投递/foundation/README.md)；
-- 媒体事实源：[`MEDIA-PUBLICATION-POLICY`](agent_docs/需求1-兽装工作室主页/requirements/MEDIA-PUBLICATION-POLICY.md)；
-- 部署和恢复：[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) 与 [`PRODUCTION-LAUNCH-HANDBOOK`](agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md)。
+先 `git fetch`，核对 `origin/main`、当前分支与工作树；不 force push、不 hard reset、不覆盖用户改动。只暂存本任务文件，提交保持小而可审查。
 
-权威顺序：SPEC 定产品契约；COPY 定成文；models 定字段/UI 模型；design 定视觉行为；TASKS 定任务状态；STATE 定当前事实。代码和测试证明实现，不覆盖产品契约；历史 notes、截图、旧 Review 和聊天摘要只说明当时状态。
+默认使用 `codex/*` 任务分支，经 PR 合入 `main`。直接在 main 修复的小修例外必须同时满足：
 
-## 2. 稳定产品边界
+1. 请求者明确是王旻安；无法从上下文确认时，用 `git config user.email` 是否精确等于 `wangminan0811@hotmail.com`（大小写不敏感）确认；
+2. 请求明确针对 main 上的小型 bug；
+3. 改动局部、可回滚，不涉及 Schema/迁移、数据或媒体删除、安全/隐私、依赖大升级、部署/发布契约或产品范围。
 
-- 需求1～3 的退役能力和当前业务边界以《需求3 foundation》为准；不得从历史代码恢复已退役行为。
-- 公开投影、排序、数量、营业状态、联系和文案以需求4 `SPEC` / `COPY` / `models` 为准；不在本文复制字段级细节。
-- 公开源图与私有媒体严格分离；委托设定图不生成 PUBLIC variant、ESA URL 或水印。
-- PII 不进入公开 DTO、HTML、URL、analytics、普通日志、错误、localStorage 或真实 fixture。
-- 不新增交易、订单、支付、短信、公开申请查询、自动建作品或通用 CMS；SMTP 仅限需求5明确授权的内部委托通知。
+满足时直接在 main 修复和验证；否则走任务分支与 PR。身份例外不授权生产发布、云配置、破坏性操作或跳过测试。不擅自改变仓库 required checks。
 
-需求4阶段 E 的设计目标是“简洁底盘 + 灵动角色感 + 摄影主导的编辑式工作室网站”。后续 PR 只做 UI、布局、响应式、可访问性和动效质量；若工作会改变数据库、业务契约、媒体/安全边界或部署拓扑，必须先取得用户明确授权并重新开放对应范围。
+## 3. 实现与安全
 
-## 3. Git 与写入
+- 遵守对应需求的业务与退役边界，不新增未经授权的产品能力。
+- 复用现有组件、服务与 publication/lease/recovery/purge 链路；`server/utils/` 中 repository 管 SQL/CAS/lease，service 管校验/DTO/事务入口，runner 管持久操作与副作用，recipe 管媒体身份，route 管请求安全边界。
+- 公开页面只消费 READY 的公开派生物；原图、私有附件与管理预览保持私有。管理图片沿用认证同源字节接口，不向浏览器签发私有 OSS GET 地址。具体尺寸、会话和缓存规则见媒体策略与部署文档。
+- PII 不进入公开 DTO、HTML、URL、analytics、普通日志、错误、localStorage 或真实 fixture；凭据、签名 URL、私有 Object Key 与生产 PII 不进入 Git、截图或聊天。
+- 公开内容 SSR 默认可见；动效不以 JavaScript 到达为内容可见前提。反馈使用真实字节进度或阶段、elapsed 与 indeterminate，不伪造百分比。
+- 不重写历史 migration，只新增前向迁移。公开像素变化生成新不可变对象，不覆盖已发布 Key。
+- 生产媒体、数据库与备份删除必须另获明确授权；执行遵守 dry-run、脱敏、强确认、精确对象验证、完整性检查与幂等重入。
+- 目标环境事实必须现场验证；外部 ECS/云盘快照由操作员确认，不由 Agent 代签。
 
-先 `git fetch`，核对 `origin/main`、当前分支和工作树；不 force push、不 hard reset、不覆盖用户改动。只暂存本任务文件，提交保持小而可审查。
+## 4. 远端部署与恢复
 
-默认通过 `codex/*` 任务分支与 PR 合入 `main`。唯一小修例外：
+开发和部署使用同一仓库，但服务器运行冻结镜像，不从工作树构建应用。部署前同时读取 [DEPLOYMENT](docs/DEPLOYMENT.md)、[生产发布手册](agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md) 与本次版本的迁移/交接记录；历史阶段编号、服务器快照与“尚未上线”等状态须结合对应 STATE 和当前授权核对，不能当成永久结论。
 
-1. 请求者明确是王旻安；如果上下文无法确认，使用 `git config user.email` 是否精确等于 `wangminan0811@hotmail.com`（大小写不敏感）确认；
-2. 请求明确针对 `main` 上的**小型 bug**；
-3. 改动局部、可回滚，不涉及 Schema/迁移、数据或媒体删除、安全/隐私边界、依赖大升级、部署/发布契约或产品范围。
-
-同时满足时，直接在 `main` 修复和验证，不创建或切换任务分支。若任一条件不满足，仍走任务分支与 PR。身份例外不授权生产发布、云配置、破坏性操作或跳过测试。
-
-当前 `main` 不配置 required checks，不擅自改变。实现、自动测试、独立 Review、用户视觉验收、远程 CI、部署和生产状态互不代签。
-
-## 4. 云上部署结构与数据流
-
-权威命令以 [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) 为准；部署前同时阅读 [`PRODUCTION-LAUNCH-HANDBOOK`](agent_docs/需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md)。配置落点见 [`docker-compose.yaml`](docker-compose.yaml)、[`deploy/nginx/app.conf.template`](deploy/nginx/app.conf.template)、[`deploy/esa/cache-policy.json`](deploy/esa/cache-policy.json) 与 [`deploy/esa/security-observability-policy.json`](deploy/esa/security-observability-policy.json)。
+### 拓扑与配置落点
 
 ```text
 访客/管理员 --HTTPS--> ESA
@@ -61,49 +49,42 @@
   公开媒体 ------------> ESA 托管 STS 私有回源 --> 网页衍生 Bucket
 
 管理员浏览器 --条件签名 PUT--> 私有原图 Bucket 的公网 OSS 地址
-管理员浏览器 --登录后同源图片 GET--> ESA/Nginx --> app --> 私有原图 Bucket（原图/OSS 缩略图）
+管理员浏览器 --认证同源图片 GET--> ESA/Nginx --> app --> 私有原图 Bucket（原图/OSS 缩略图）
 app / one-shot ops --OSS SDK Endpoint--> 私有原图 Bucket + 网页衍生 Bucket
 ```
 
-部署不变量：
+| 配置 | 权威文件 |
+| --- | --- |
+| app、环境注入、持久卷与一次性运维容器 | [docker-compose.yaml](docker-compose.yaml) |
+| 宿主机 Nginx、Host 与反向代理 | [app.conf.template](deploy/nginx/app.conf.template) |
+| ESA 缓存、绕过与撤销规则 | [cache-policy.json](deploy/esa/cache-policy.json) |
+| ESA 源站保护、防护与可观测性 | [security-observability-policy.json](deploy/esa/security-observability-policy.json) |
 
-- Compose 只有一个常驻 `app`；migrate、preflight、backup、restore、recover 使用同一冻结镜像的一次性容器。
-- app 只绑定 `127.0.0.1:3000`；Nginx 运行在宿主机，只监听 HTTP/80；TLS 在 ESA 边缘终止。
-- 公开、管理、媒体 Host 精确隔离；未知 Host 和到达 Nuxt 的媒体 Host 返回 `421`。
-- 两只 OSS Bucket 都是 private；公开页面只消费 `public-media.ditedog.com` 上 READY 的网页派生物。
+### 部署不变量
+
+- Compose 只有一个常驻 `app`；migrate、preflight、init、backup、restore、recover 复用同一冻结镜像，以一次性容器执行。SQLite 数据与备份保存在持久卷，不随 app 容器重建丢失。
+- 宿主机只将 app 端口映射到 `127.0.0.1:3000`；Nginx 在宿主机运行，只监听 HTTP/80；TLS 在 ESA 边缘终止。不要通过开放公网3000、增加宿主机TLS或把Nginx搬进Compose绕过故障。
+- 公开、管理、媒体 Host 精确隔离；未知 Host 和到达 Nuxt 的媒体 Host 返回 `421`。生产源站80只允许当前 ESA 回源地址；受信代理范围按现场网络核验，不照搬历史 CIDR。
+- 两只 OSS Bucket 都是 private；公开页面只消费 `public-media.ditedog.com` 上 READY 的网页派生物。ESA 私有回源的 STS 由阿里云托管，应用不保存或刷新 STS，不以开放 Bucket 公读解决访问失败。
 - `OSS_ENDPOINT` 供服务端 SDK，`OSS_UPLOAD_BASE_URL` 供浏览器条件 PUT，`MEDIA_BASE_URL` 供公开 ESA URL，三者不得混用。
-- 管理图片由认证后的同源接口返回字节，不向浏览器签发私有 OSS GET 地址；列表/卡片 320、出厂照 640、Hero 编辑/作品设定图/领养封面/委托详情 1280，原图显式点击后新窗口内联预览。图片请求和被动会话检查不延长八小时闲置有效期。
-- API、管理、会话和写操作绕过共享缓存；不可变 `/_nuxt/**` 和公开派生媒体可长缓存；下架先撤销公开投影，再精确 purge。
-- 服务器按 `repository@sha256:digest` 部署，不在服务器 build，不用 `latest` 作为部署身份。
-- `.env`、Secret、签名 URL、私有 Object Key 和生产 PII 不进入 Git、日志、截图或聊天。
+- 管理图片由认证同源接口返回字节，不向浏览器签发私有 OSS GET 地址或302跳转。列表/卡片320、出厂照640、Hero编辑/作品设定图/领养封面/委托详情1280；原图由管理员显式点击后在新窗口内联预览。图片与被动会话检查不延长八小时闲置有效期。
+- API、管理、会话和写操作绕过共享缓存；不可变 `/_nuxt/**` 和公开派生媒体可长缓存，具体规则按ESA配置文件。下架先撤销公开投影，再精确purge；两者分别验证。
+- 服务器按 `repository@sha256:digest` 部署，不在服务器build，不用 `latest` 或可变tag作为部署身份。仓库中的Compose、运维脚本与文档须与目标冻结SHA匹配，不能用最新main替代已选定版本。
+- 目标环境 `.env`、Secret 和 SMTP 等配置按部署文档维护，不覆盖已有值、不打印完整配置或执行 `source .env`。环境修改后按文档重建容器，并验证实际生效，不能只检查文件文本。
 
-任何目标环境事实都必须现场验证；本地测试和配置文件不能代签云配置、备份恢复、生产迁移或正式发布。
+### 每次部署的核验顺序
 
-## 5. 测试与 Actions
+1. 确认本次授权范围、目标主机/目录、冻结SHA、已发布镜像digest与回滚依据；本地提交、工作流已启动和镜像已发布是不同状态。
+2. 只读核对服务器工作树、当前镜像、持久卷、端口、Nginx、ESA/OSS及配置；保护已有修改和Secret，不用通用安装器覆盖现有环境。
+3. 按目标版本Runbook执行停写要求、备份与迁移前检查，再用同一冻结镜像运行迁移、preflight和必要的一次性操作；生产删除、恢复覆盖及外部快照遵守各自授权和确认要求。
+4. 核验拉取镜像摘要，启动/重建app；检查ready、精确Host、公开页面、管理同源预览、公开媒体与缓存，并记录目标环境证据。
+5. 异常时按恢复手册处理；先核对数据库兼容性与备份，不能把换回旧镜像当成数据库已恢复。分别记录迁移、服务恢复、缓存撤销及最终生产状态。
 
-```powershell
-pnpm check:fast
-pnpm test:core
-pnpm test:smoke
-pnpm test:release   # 仅显式 release/manual 验证
-```
+## 5. 验证与交接
 
-- 文档-only 只做链接、状态和口径检查。
-- 普通代码跑 lint、typecheck 和受影响 core；Nuxt/runtime/config 再跑 build。
-- UI 用真实浏览器检查；自动化只保护可达性、稳定业务不变量和明显回归，不评判审美。
-- release 路径负责 smoke、production build/verify、notices/Secret/ESA policy；镜像、Compose、恢复和 Nginx 只在显式 release/manual 路径执行。
-- 测试失败先区分稳定不变量与过时的文案/DOM/class/毫秒断言；不为全绿回退产品行为。
-- GitHub 无步骤且标注 billing/spending limit 的失败是基础设施状态，不是代码测试结论。
-
-视觉人工检查至少覆盖 390×844、430×932、768×1024、1023×900、1024×900、1440×900，并检查键盘、焦点、reduced-motion/transparency/contrast、console/network、图片 decode、LCP/CLS、safe area 和水平溢出。真实手机与王旻安/景宸人工验收仍是最终视觉门禁。
-
-## 6. 代码、安全与破坏性操作
-
-`server/utils/` 分层：`repository/` 负责 SQL/CAS/lease，`service/` 负责校验/DTO/事务入口，`runner/` 负责持久 operation 与 OSS 副作用，`recipe/` 负责纯媒体身份，`route/` 负责 Host/Session/Origin/CSRF/body/error。
-
-- 首页继续消费单个聚合 DTO；Hero/works/adoption 复用现有 publication/lease/recovery/purge。
-- 公开内容 SSR 默认可见；动效不能先隐藏再等 JavaScript。
-- 新行动、上传与长任务反馈复用现有公共组件；OSS 显示真实字节进度，FFmpeg 显示阶段 + elapsed + indeterminate，禁止伪百分比。
-- 不重写历史 migration，只新增前向 migration。
-- 删除默认 dry-run、脱敏、强确认、精确 Key、对象验证、数据库完整性和幂等重入；生产媒体、数据库和备份删除必须另获明确授权。
-- 外部 ECS/云盘快照由操作员确认，Agent 不代签。
+- 文档-only：检查链接、状态、术语和跨文档一致性。
+- 普通代码：lint、typecheck、受影响 core；Nuxt/runtime/config 变更追加 build。常用命令为 `pnpm check:fast`、`pnpm test:core`、`pnpm test:smoke`。
+- UI 使用真实浏览器，覆盖对应需求的响应式、键盘/焦点、触控、prefers-*、图片 decode、console/network、性能和溢出验收；自动化不代签审美与真实手机验收。
+- `pnpm test:release`、镜像、Compose、恢复和 Nginx 检查仅在明确的 release/manual 范围执行。
+- 测试失败先区分稳定不变量与过时文案/DOM/class/时序断言；不为全绿回退产品行为。Actions 无步骤且标注 billing/spending limit 的失败属于基础设施状态。
+- 实现、自动测试、独立 Review、人工验收、远程 CI、镜像发布与生产部署分别记录；历史任务关闭不补签未执行事项。

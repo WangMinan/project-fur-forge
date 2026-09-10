@@ -23,6 +23,7 @@ withDefaults(defineProps<{
     <span
       class="work-card__frame"
       :data-orientation="work.cardOrientation"
+      :style="work.card.fit ? { '--work-card-fit': work.card.fit } : undefined"
     >
       <ResponsivePicture
         class="work-card__image"
@@ -68,11 +69,11 @@ withDefaults(defineProps<{
 .work-card__frame :deep(.responsive-picture__image) {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: var(--work-card-fit, cover);
 }
 
 .work-card__frame[data-orientation='landscape'] :deep(.responsive-picture__image) {
-  object-fit: contain;
+  object-fit: var(--work-card-fit, contain);
 }
 
 .work-card__caption {

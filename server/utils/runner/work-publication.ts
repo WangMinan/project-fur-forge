@@ -1,3 +1,14 @@
+import { compositionError, resolveComposition } from '../../../shared/utils/image-composition'
+import { isCompositionUsage,
+  assetSupportsPublicUsages,
+  ensureWorkMediaUpscaleSource,
+  generatePublicVariants,
+  publicRecipeWidths,
+  publicVariantCountForUsages,
+  workAssetPublicUsages } from '../recipe/media-recipe'
+import { displayMediaState } from '../service/work-display'
+import { publicWorkAssetSources } from '../recipe/work-public-sources'
+import { readyAssetSource } from '../recipe/media-source'
 import { randomUUID } from 'node:crypto'
 import { setTimeout as delay } from 'node:timers/promises'
 import type Database from 'better-sqlite3'
@@ -11,15 +22,6 @@ import type {
 } from '../../../shared/types/contracts'
 import type { MediaStorage } from '../media-storage'
 import { getPublicMediaCache } from '../public-media-cache'
-import {
-  assetSupportsPublicUsages,
-  ensureWorkMediaUpscaleSource,
-  generatePublicVariants,
-  PUBLIC_RECIPE_VERSION,
-  publicRecipeWidths,
-  publicVariantCountForUsages,
-  workAssetPublicUsages,
-} from '../recipe/media-recipe'
 import type { PublicMediaUsage } from '../recipe/media-recipe'
 import {
   completeOperation,
@@ -27,7 +29,6 @@ import {
   findDoneOperation,
   findLatestOperations,
   findPublicationOperation,
-  findReadyVariantFormats,
   findRecoveryActorId,
   findWorkMediaAssets,
   findWorkOperationType,
@@ -151,6 +152,7 @@ function publicationTargets(
       asset.role,
       asset.primary === 1,
       hasPrimaryStudioPhoto,
+      asset.status === 'READY' ? readyAssetSource(sqlite, asset.assetId) : undefined,
     ),
   }))
 }
@@ -169,21 +171,7 @@ function missingVariantCount(
   let missing = 0
   for (const target of targets) {
     for (const usage of target.usages) {
-      for (const width of publicRecipeWidths(usage)) {
-        const values = new Set(findReadyVariantFormats(sqlite, {
-          assetId: target.asset.assetId,
-          recipeVersion: PUBLIC_RECIPE_VERSION,
-          role: target.asset.role,
-          usage,
-          width,
-        }))
-        if (!values.has('webp')) {
-          missing += 1
-        }
-        if (!values.has('jpeg') && !values.has('png')) {
-          missing += 1
-        }
-      }
+      if (!publicWorkAssetSources(sqlite, target.asset.assetId, usage)) missing += publicRecipeWidths(usage).length * 2
     }
   }
   return missing
@@ -291,6 +279,16 @@ export function checkWorkPublication(
   if (publicationPhotos.some(photo => !photo.alt || photo.alt.trim() === '')) {
     blockers.push('STUDIO_PHOTO_ALT_REQUIRED')
   }
+  const invalidComposition = targets.some(target => {
+    if (target.asset.status !== 'READY') return false
+    const source = readyAssetSource(sqlite, target.asset.assetId)
+    return source.imageCompositionVersion && target.usages.some(usage => isCompositionUsage(usage)
+      && compositionError(source.role, usage, resolveComposition(source.role, usage, source.width, source.height, source.compositions), source.width, source.height))
+  })
+  if (invalidComposition) blockers.push('IMAGE_COMPOSITION_INVALID')
+  const display = displayMediaState(sqlite, workId)
+  if (!display.visibleCount) blockers.push('DETAIL_GALLERY_EMPTY')
+  if (!display.sourceAvailable) blockers.push('ADOPTION_SOURCE_UNAVAILABLE')
   const latestOperation = findLatestOperations(sqlite, 'WORK', [workId])
     .map(operationDto)
     .toSorted((left, right) => (

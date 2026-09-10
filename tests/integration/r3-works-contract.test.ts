@@ -340,6 +340,7 @@ describe('R3-D works Contract migration', () => {
     const after = openDatabase(file)
     try {
       const columns = preContractColumns(after.sqlite)
+      expect(after.sqlite.prepare('SELECT show_adoption_cover_in_detail AS cover, show_design_sheet_in_detail AS design, adoption_cover_source AS source, image_composition_version AS version FROM works').all()).toEqual(expect.arrayContaining([{ cover: 1, design: 1, source: 'auto', version: 0 }]))
       expect(columns).toEqual([
         'id',
         'slug',
@@ -356,6 +357,10 @@ describe('R3-D works Contract migration', () => {
         'published_at',
         'created_at',
         'updated_at',
+        'show_adoption_cover_in_detail',
+        'show_design_sheet_in_detail',
+        'adoption_cover_source',
+        'image_composition_version',
       ])
       expect(after.sqlite.prepare(`
         SELECT id, purpose, adoption_status AS adoptionStatus,
@@ -428,4 +433,40 @@ describe('R3-D works Contract migration', () => {
       after.sqlite.close()
     }
   })
+})
+
+
+it('R6 migration preserves old source chains and work versions without opting existing media in', async () => {
+  const file = databaseFile()
+  await migrateDatabase(file, { migrationsFolder: migrationsThrough(file, '0052_r5_commission_email') })
+  const before = openDatabase(file)
+  let variants: unknown[]
+  try {
+    const db = before.sqlite
+    db.prepare(`INSERT INTO works (id,slug,character_name,species,purpose,publication_status,version,created_at,updated_at)
+      VALUES ('r6-upgrade','r6-upgrade','合成迁移角色','犬科','showcase','draft',7,1,2)`).run()
+    db.prepare(`INSERT INTO assets (id,role,status,private_object_key,sha256,byte_size,mime_type,width,height,created_at,updated_at)
+      VALUES ('r6-asset','studio_photo','READY','test/r6/original/r6-asset/source.png',?,1000,'image/png',1200,1600,1,2)`).run('a'.repeat(64))
+    db.prepare(`INSERT INTO work_assets (work_id,asset_id,role,position,is_primary,alt_text)
+      VALUES ('r6-upgrade','r6-asset','studio_photo',0,1,'合成出厂照')`).run()
+    db.prepare(`INSERT INTO asset_variants (id,asset_id,storage_scope,status,object_key,input_sha256,media_role,usage,width,height,format,quality,crop_identity,recipe_version,sha256,byte_size,created_at,updated_at)
+      VALUES ('r6-source','r6-asset','PRIVATE','READY','test/r6/processing/r6-asset.png',?,'studio_photo','preprocess',2400,3200,'png',100,'source','studio-photo-upscale-lanczos-v1',?,1000,1,2)`).run('a'.repeat(64),'b'.repeat(64))
+    db.prepare(`INSERT INTO asset_variants (id,asset_id,source_variant_id,storage_scope,status,object_key,input_sha256,media_role,usage,width,height,format,quality,crop_identity,recipe_version,sha256,byte_size,created_at,updated_at)
+      VALUES ('r6-public','r6-asset','r6-source','PUBLIC','READY','test/r6/web/r6-asset/card.png',?,'studio_photo','work-card',480,640,'png',100,'old-card','recipe-v4',?,1000,1,2)`).run('b'.repeat(64),'c'.repeat(64))
+    variants = db.prepare('SELECT * FROM asset_variants ORDER BY id').all()
+  } finally { before.sqlite.close() }
+  const result = await migrateDatabase(file)
+  expect(result.applied).toBe(1)
+  expect(result.backupFile).toBeTruthy()
+  expect((await migrateDatabase(file)).applied).toBe(0)
+  const after = openDatabase(file)
+  try {
+    expect(after.sqlite.prepare('SELECT * FROM asset_variants ORDER BY id').all()).toEqual(variants)
+    expect(after.sqlite.prepare(`SELECT version,updated_at,image_composition_version,adoption_cover_source,show_adoption_cover_in_detail,show_design_sheet_in_detail FROM works WHERE id='r6-upgrade'`).get()).toEqual({
+      version: 7, updated_at: 2, image_composition_version: 0, adoption_cover_source: 'auto', show_adoption_cover_in_detail: 1, show_design_sheet_in_detail: 1,
+    })
+    expect(after.sqlite.prepare('SELECT count(*) FROM work_asset_compositions').pluck().get()).toBe(0)
+    expect(after.sqlite.pragma('foreign_key_check')).toEqual([])
+    expect(after.sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
+  } finally { after.sqlite.close() }
 })
