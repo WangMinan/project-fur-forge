@@ -1,3 +1,6 @@
+import { COMPOSITION_USAGES } from '../../../shared/schemas/image-composition'
+import type { CompositionUsage, ImageCompositions } from '../../../shared/schemas/image-composition'
+import { compositionMinimumDimensions, compositionOutputHeight, pixelCrop, resolveComposition } from '../../../shared/utils/image-composition'
 import {
   createHash,
   randomUUID,
@@ -40,6 +43,7 @@ import {
 } from '../repository/variant-repository'
 import { ServiceError } from '../service-error'
 
+export const COMPOSITION_RECIPE_VERSION = 'work-composition-v1'
 export const PUBLIC_RECIPE_VERSION = 'recipe-v4'
 export const PUBLIC_RECIPE_VERSIONS = [
   PUBLIC_RECIPE_VERSION,
@@ -49,6 +53,7 @@ export const PUBLIC_RECIPE_VERSIONS = [
 ] as const
 
 export type PublicMediaUsage =
+  | CompositionUsage
   | 'work-card'
   | 'adoption-card'
   | 'home-hero-landscape'
@@ -57,6 +62,8 @@ export type PublicMediaUsage =
   | 'detail'
 
 export interface PublicRecipeSourceGeometry {
+  imageCompositionVersion?: number
+  compositions?: ImageCompositions
   cropHeight?: number
   cropWidth?: number
   height: number
@@ -73,7 +80,7 @@ export interface ReadyPublicVariant {
   inputSha256: string
   mediaRole: MediaRole
   objectKey: string
-  recipeVersion: typeof PUBLIC_RECIPE_VERSION
+  recipeVersion: typeof PUBLIC_RECIPE_VERSION | typeof COMPOSITION_RECIPE_VERSION
   sha256: string
   sourceVariantId: string | null
   usage: PublicMediaUsage
@@ -81,6 +88,11 @@ export interface ReadyPublicVariant {
 }
 
 const recipes = {
+  'detail-thumbnail': { roles: ['studio_photo', 'adoption_cover', 'design_sheet'], widths: [96, 192, 288], aspect: [1, 1] },
+  'work-catalog': { roles: ['studio_photo', 'adoption_cover', 'design_sheet'], widths: [480, 768, 1200], aspect: [4, 5] },
+  'home-featured': { roles: ['studio_photo'], widths: [480, 768, 1200], aspect: [3, 4] },
+  'adoption-catalog': { roles: ['adoption_cover', 'design_sheet'], widths: [768, 1200, 1600], aspect: null },
+  'home-adoption': { roles: ['adoption_cover', 'design_sheet'], widths: [768, 1200, 1600], aspect: null },
   'work-card': {
     roles: ['design_sheet', 'studio_photo'],
     widths: [480, 768, 1200],
@@ -107,7 +119,7 @@ const recipes = {
     aspect: null,
   },
   'detail': {
-    roles: ['design_sheet', 'studio_photo'],
+    roles: ['design_sheet', 'studio_photo', 'adoption_cover'],
     widths: [960, 1600, 2400],
     aspect: null,
   },
@@ -116,6 +128,23 @@ const recipes = {
   widths: readonly number[]
   aspect: readonly [number, number] | null
 }>
+
+export function isCompositionUsage(usage: string): usage is CompositionUsage {
+  return COMPOSITION_USAGES.includes(usage as CompositionUsage)
+}
+
+export function mediaRecipeVersion(usage: PublicMediaUsage) {
+  return isCompositionUsage(usage) ? COMPOSITION_RECIPE_VERSION : PUBLIC_RECIPE_VERSION
+}
+
+/** Complete images share the existing full derivative, equal adoption crops share one output. */
+export function effectiveWorkUsage(source: PublicRecipeSourceGeometry, usage: PublicMediaUsage): PublicMediaUsage {
+  if (!isCompositionUsage(usage)) return usage
+  const config = resolveComposition(source.role!, usage, source.width, source.height, source.compositions)
+  if (config.mode === 'contain') return source.role === 'design_sheet' ? 'design-sheet' : 'detail'
+  if (usage === 'home-adoption' && JSON.stringify(config) === JSON.stringify(resolveComposition(source.role!, 'adoption-catalog', source.width, source.height, source.compositions))) return 'adoption-catalog'
+  return usage
+}
 
 export function publicRecipeWidths(usage: PublicMediaUsage) {
   return recipes[usage].widths
@@ -219,6 +248,23 @@ function minimumDimensionsForUsages(
   sourceAsset: AssetSource,
   usages: readonly PublicMediaUsage[],
 ) {
+  if (usages.some(isCompositionUsage)) {
+    let width = 0
+    let height = 0
+    for (const usage of usages) {
+      const rect = isCompositionUsage(usage) ? resolveComposition(sourceAsset.role, usage, sourceAsset.width, sourceAsset.height, sourceAsset.compositions) : null
+      const outputWidth = recipes[usage].widths.at(-1)!
+      const minimum = rect && isCompositionUsage(usage)
+        ? compositionMinimumDimensions(usage, outputWidth, sourceAsset.width, sourceAsset.height, rect)
+        : { width: outputWidth, height: Math.ceil(outputWidth * sourceAsset.height / sourceAsset.width) }
+      width = Math.max(width, minimum.width)
+      height = Math.max(height, minimum.height)
+    }
+    if (width > 12000 || height > 12000 || Math.max(width / sourceAsset.width, height / sourceAsset.height) * Math.max(sourceAsset.width, sourceAsset.height) > 12000) {
+      throw new ServiceError(409, 'CONFLICT', '选区过小，处理尺寸将超过上限，请扩大选区。', 'MEDIA_SOURCE_TOO_SMALL')
+    }
+    return { width, height }
+  }
   const width = Math.max(...usages.map(usage => recipes[usage].widths.at(-1)!))
   if (sourceAsset.role === 'design_sheet') {
     return { height: 0, width }
@@ -383,7 +429,14 @@ export function workAssetPublicUsages(
   role: 'adoption_cover' | 'design_sheet' | 'studio_photo',
   primary: boolean,
   _hasPrimaryStudioPhoto: boolean,
+  source?: PublicRecipeSourceGeometry,
 ): PublicMediaUsage[] {
+  if (source?.imageCompositionVersion) {
+    const usages: PublicMediaUsage[] = role === 'studio_photo'
+      ? ['detail', 'detail-thumbnail', ...(primary ? ['work-catalog', 'home-featured'] as const : [])]
+      : [role === 'design_sheet' ? 'design-sheet' : 'detail', 'detail-thumbnail', 'work-catalog', 'adoption-catalog', 'home-adoption']
+    return [...new Set(usages.map(usage => effectiveWorkUsage(source, usage)))]
+  }
   if (role === 'studio_photo') {
     return primary ? ['work-card', 'detail'] : ['detail']
   }
@@ -393,7 +446,11 @@ export function workAssetPublicUsages(
   return ['design-sheet']
 }
 
-function outputHeight(usage: PublicMediaUsage, width: number) {
+function outputHeight(usage: PublicMediaUsage, width: number, source?: PublicRecipeSourceGeometry) {
+  if (isCompositionUsage(usage) && source) {
+    const config = resolveComposition(source.role!, usage, source.width, source.height, source.compositions)
+    return compositionOutputHeight(usage, width, source.width, source.height, config)
+  }
   const aspect = recipes[usage].aspect
   return aspect ? Math.round(width * aspect[1] / aspect[0]) : null
 }
@@ -403,6 +460,12 @@ export function sourceSupportsPublicUsages(
   usages: readonly PublicMediaUsage[],
 ) {
   return usages.every((usage) => {
+    if (isCompositionUsage(usage)) {
+      const config = resolveComposition(source.role!, usage, source.width, source.height, source.compositions)
+      const rect = config.mode === 'crop' ? pixelCrop(config.rect, source.width, source.height) : source
+      const width = recipes[usage].widths.at(-1)!
+      return rect.width >= width && rect.height >= outputHeight(usage, width, source)!
+    }
     const width = recipes[usage].widths.at(-1)!
     const height = outputHeight(usage, width)
     const cardUsage = usage === 'work-card' || usage === 'adoption-card'
@@ -437,6 +500,11 @@ function resizeOperation(
   width: number,
   processingGeometry: Pick<ProcessingSource, 'height' | 'width'> = sourceAsset,
 ) {
+  if (isCompositionUsage(usage)) {
+    const config = resolveComposition(sourceAsset.role, usage, sourceAsset.width, sourceAsset.height, sourceAsset.compositions)
+    const rect = config.mode === 'crop' ? pixelCrop(config.rect, processingGeometry.width, processingGeometry.height) : { x: 0, y: 0, ...processingGeometry }
+    return `crop,w_${rect.width},h_${rect.height},x_${rect.x},y_${rect.y}/resize,m_fill,w_${width},h_${outputHeight(usage, width, sourceAsset)}`
+  }
   const height = outputHeight(usage, width)
   if (height === null) {
     return `resize,m_lfit,w_${width}`
@@ -460,7 +528,7 @@ function resizeOperation(
   )}`
 }
 
-function recipeIdentity(
+export function recipeIdentity(
   sourceAsset: AssetSource,
   source: ProcessingSource,
   usage: PublicMediaUsage,
@@ -469,7 +537,8 @@ function recipeIdentity(
 ) {
   const height = outputHeight(usage, width)
   const identity = JSON.stringify({
-    recipeVersion: PUBLIC_RECIPE_VERSION,
+    recipeVersion: mediaRecipeVersion(usage),
+    ...(isCompositionUsage(usage) ? { composition: resolveComposition(sourceAsset.role, usage, sourceAsset.width, sourceAsset.height, sourceAsset.compositions) } : {}),
     sourceSha256: source.inputSha256,
     sourceVariantId: source.sourceVariantId,
     mediaRole: sourceAsset.role,
@@ -498,7 +567,7 @@ function recipeIdentity(
   return digest('sha256', Buffer.from(identity))
 }
 
-function publicObjectKey(
+export function publicObjectKey(
   sourceAsset: AssetSource,
   usage: PublicMediaUsage,
   width: number,
@@ -506,7 +575,7 @@ function publicObjectKey(
   format: PublicFormat,
 ) {
   const extension = format === 'jpeg' ? 'jpg' : format
-  return `${environmentPrefix(sourceAsset.privateObjectKey)}/web/${sourceAsset.id}/${PUBLIC_RECIPE_VERSION}/${usage}/${width}/${identityHash}.${extension}`
+  return `${environmentPrefix(sourceAsset.privateObjectKey)}/web/${sourceAsset.id}/${mediaRecipeVersion(usage)}/${usage}/${width}/${identityHash}.${extension}`
 }
 
 export function buildPublicMediaProcess(
@@ -517,7 +586,7 @@ export function buildPublicMediaProcess(
   processingGeometry: Pick<ProcessingSource, 'height' | 'width'> = sourceAsset,
 ) {
   return [
-    `image/${resizeOperation(sourceAsset, usage, width, processingGeometry)}`,
+    `image/${isCompositionUsage(usage) ? 'auto-orient,1/' : ''}${resizeOperation(sourceAsset, usage, width, processingGeometry)}`,
     formatOperation(format),
   ].join('/')
 }
@@ -527,11 +596,12 @@ const contentType = contentTypeForFormat
 function existingVariant(
   sqlite: Database.Database,
   objectKey: string,
+  usage: PublicMediaUsage,
 ) {
   return findReadySiteDisplayVariant<ReadyPublicVariant>(
     sqlite,
     objectKey,
-    PUBLIC_RECIPE_VERSION,
+    mediaRecipeVersion(usage),
   )
 }
 
@@ -580,7 +650,7 @@ async function generateOne(
     identity,
     format,
   )
-  const existing = existingVariant(sqlite, objectKey)
+  const existing = existingVariant(sqlite, objectKey, usage)
   if (existing && await verifyPublicVariant(storage, existing)) {
     return existing
   }
@@ -602,7 +672,7 @@ async function generateOne(
       storage.imageInfoPublic(objectKey),
       storage.getPublicAnonymous(objectKey),
     ])
-    const expectedHeight = outputHeight(usage, width)
+    const expectedHeight = outputHeight(usage, width, sourceAsset)
     const sha256 = digest('sha256', anonymous.content)
     if (
       head.byteSize < 1
@@ -638,7 +708,7 @@ async function generateOne(
           mediaRole: sourceAsset.role,
           objectKey,
           quality: format === 'webp' ? 82 : format === 'jpeg' ? 86 : 100,
-          recipeVersion: PUBLIC_RECIPE_VERSION,
+          recipeVersion: mediaRecipeVersion(usage),
           sha256,
           sourceAssetId: sourceAsset.id,
           sourceVariantId: source.sourceVariantId,
@@ -648,13 +718,13 @@ async function generateOne(
       }
     }
     catch (error) {
-      const raced = existingVariant(sqlite, objectKey)
+      const raced = existingVariant(sqlite, objectKey, usage)
       if (raced) {
         return raced
       }
       throw error
     }
-    return existingVariant(sqlite, objectKey)!
+    return existingVariant(sqlite, objectKey, usage)!
   }
   catch (error) {
     const candidate = error as {

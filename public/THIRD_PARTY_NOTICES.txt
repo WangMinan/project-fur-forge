@@ -318,6 +318,72 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://colordx.dev
 
+@cropper/element@2.2.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/fengyuanchen/cropperjs/tree/main/packages/element/#readme
+
+@cropper/element-canvas@2.2.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/fengyuanchen/cropperjs/tree/main/packages/element-canvas/#readme
+
+@cropper/element-crosshair@2.2.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/fengyuanchen/cropperjs/tree/main/packages/element-crosshair/#readme
+
+@cropper/element-grid@2.2.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/fengyuanchen/cropperjs/tree/main/packages/element-grid/#readme
+
+@cropper/element-handle@2.2.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/fengyuanchen/cropperjs/tree/main/packages/element-handle/#readme
+
+@cropper/element-image@2.2.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/fengyuanchen/cropperjs/tree/main/packages/element-image/#readme
+
+@cropper/element-selection@2.2.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/fengyuanchen/cropperjs/tree/main/packages/element-selection/#readme
+
+@cropper/element-shade@2.2.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/fengyuanchen/cropperjs/tree/main/packages/element-shade/#readme
+
+@cropper/element-viewer@2.2.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/fengyuanchen/cropperjs/tree/main/packages/element-viewer/#readme
+
+@cropper/elements@2.2.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/fengyuanchen/cropperjs/tree/main/packages/elements/#readme
+
+@cropper/utils@2.2.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/fengyuanchen/cropperjs/tree/main/packages/utils/#readme
+
 @darabonba/typescript@1.0.5
 License: Apache License 2.0
 Source class: pnpm-prod
@@ -1597,6 +1663,12 @@ License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://croner.56k.guru
+
+cropperjs@2.2.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/fengyuanchen/cropperjs/tree/main/packages/cropperjs/#readme
 
 cross-spawn@7.0.6
 License: MIT

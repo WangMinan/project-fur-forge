@@ -597,7 +597,7 @@ describe('T22 work management', () => {
     `).pluck().get(firstId)).toBe(0)
   })
 
-  it('saves, replaces and deletes one design sheet with optimistic versions', () => {
+  it('saves and replaces one design sheet but rejects removing the last visible image', () => {
     const work = createManagedWork(sqlite, {
       ...workInput,
       slug: 'design-sheet-work',
@@ -641,13 +641,14 @@ describe('T22 work management', () => {
       NOW + 2,
     )
     expect(replaced.designSheet).toMatchObject({ assetId: secondId })
-    expect(replaceManagedDesignSheet(
+    expect(() => replaceManagedDesignSheet(
       sqlite,
       work.id,
       replaced.version,
       null,
       NOW + 3,
-    )).toMatchObject({ version: 4, designSheet: null })
+    )).toThrow(/至少保留/)
+    expect(getManagedWork(sqlite, work.id)).toMatchObject({ version: replaced.version, designSheet: { assetId: secondId } })
     expect(sqlite.prepare(`
       SELECT count(*) FROM assets WHERE role = 'design_sheet'
     `).pluck().get()).toBe(2)

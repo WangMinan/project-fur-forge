@@ -106,7 +106,7 @@ const activeImageStyle = computed(() => {
         @click="activeIndex = index"
       >
         <ResponsivePicture
-          :sources="media.sources"
+          :sources="media.thumbnailSources ?? media.sources"
           :alt="index === activeIndex ? media.alt : ''"
           sizes="96px"
         />
@@ -229,7 +229,8 @@ const activeImageStyle = computed(() => {
 
 .work-gallery__thumb {
   width: 4.5rem;
-  min-height: 4.5rem;
+  min-height: 2.75rem;
+  height: auto;
   aspect-ratio: 1;
   padding: 0;
   background: var(--image-placeholder);
@@ -276,7 +277,7 @@ const activeImageStyle = computed(() => {
 @media (min-width: 768px) {
   .work-gallery__thumb {
     width: 5.5rem;
-    min-height: 5.5rem;
+    height: 5.5rem;
   }
 }
 </style>

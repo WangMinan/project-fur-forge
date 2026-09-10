@@ -1,3 +1,13 @@
+import { publicWorkAssetSources } from '../../server/utils/recipe/work-public-sources'
+import type { ImageCompositions } from '../../shared/schemas/image-composition'
+import { getManagedWork,
+  createManagedWork,
+  replaceManagedAdoptionCover,
+  replaceManagedDesignSheet,
+  replaceManagedStudioPhotos,
+  updateManagedWorkPresentation } from '../../server/utils/service/work-management'
+import { unpublishWork, checkWorkPublication, publishWork  } from '../../server/utils/runner/work-publication'
+import { assetCompositions } from '../../server/utils/repository/work-composition-repository'
 import {
   createHash,
   randomUUID,
@@ -24,14 +34,6 @@ import {
 import {
   createSqlitePublicSiteRepository,
 } from '../../server/utils/repository/public-site-repository'
-import {
-  createManagedWork,
-  replaceManagedAdoptionCover,
-  replaceManagedDesignSheet,
-  replaceManagedStudioPhotos,
-  updateManagedWorkPresentation,
-} from '../../server/utils/service/work-management'
-import { publishWork } from '../../server/utils/runner/work-publication'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 import { setPublicMediaCacheForTests } from '../../server/utils/public-media-cache'
 
@@ -97,6 +99,8 @@ function insertCompletedUpload(
 
 async function createPublishedWork(input: {
   featured: boolean
+  legacy?: boolean
+  compositions?: ImageCompositions
   purpose?: 'adoption' | 'commission' | 'showcase'
   slug: string
   sortOrder: number
@@ -200,6 +204,7 @@ async function createPublishedWork(input: {
     focalX: 0.5,
     focalY: 0.5,
     crop: { x: 0, y: 0, width: 1, height: 1 },
+    ...(input.compositions ? { compositions: input.compositions } : {}),
   }], NOW + sequence++)
   if (adoptionCoverAssetId) {
     current = replaceManagedAdoptionCover(
@@ -231,6 +236,7 @@ async function createPublishedWork(input: {
       NOW + sequence++,
     )
   }
+  if (input.legacy) sqlite.prepare('UPDATE works SET image_composition_version=0 WHERE id=?').run(work.id)
   const published = await publishWork(
     sqlite,
     storage,
@@ -372,6 +378,7 @@ describe('T19/T20 public repository contracts', () => {
   it('uses one complete recipe-v3 source set while recipe-v4 is incomplete', async () => {
     const legacy = await createPublishedWork({
       slug: 'legacy-recipe-work',
+      legacy: true,
       sortOrder: 0,
       featured: false,
     })
@@ -522,4 +529,109 @@ describe('T19/T20 public repository contracts', () => {
     expect(repository.listWorks().items).toHaveLength(1)
   })
 
+})
+
+
+describe('R6 independent composition and display settings', () => {
+  it('publishes distinct 1:1, 4:5 and 3:4 outputs without changing full detail', async () => {
+    const item = await createPublishedWork({ slug: 'composed-work', sortOrder: 0, featured: true, compositions: {
+      'detail-thumbnail': { mode: 'crop', rect: { x: 0.2, y: 0, width: 0.4, height: 0.3 } },
+      'work-catalog': { mode: 'crop', rect: { x: 0.1, y: 0, width: 0.8, height: 0.75 } },
+    } })
+    const repo = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
+    const detail = repo.getWorkBySlug('composed-work')!
+    expect(detail.media.gallery[0]!.thumbnailSources!.webp.map(v => [v.width, v.height])).toEqual([[96,96],[192,192],[288,288]])
+    expect(detail.media.card.sources.webp.map(v => v.width / v.height)).toEqual([0.8,0.8,0.8])
+    expect(repo.listFeaturedWorks().items[0]!.card.sources.webp.map(v => v.width / v.height)).toEqual([0.75,0.75,0.75])
+    expect(detail.media.gallery[0]!.sources.webp.at(-1)).toMatchObject({ width: 2400, height: 3200 })
+    const thumb = storage.processCalls.find(call => call.objectKey.includes('/detail-thumbnail/'))!
+    expect(thumb.process).toContain('crop,w_960,h_960,x_480,y_0')
+    expect(storage.processCalls.filter(call => call.objectKey.includes('/detail/')).every(call => !call.process.includes('crop,'))).toBe(true)
+    expect(checkWorkPublication(sqlite, item.workId).missingVariantCount).toBe(0)
+  })
+
+  it('keeps the cover source and four visibility combinations independent without changing sorting time', async () => {
+    const item = await createPublishedWork({ slug: 'display-work', sortOrder: 0, featured: false, purpose: 'adoption' })
+    const repo = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
+    const timestamp = sqlite.prepare('SELECT updated_at FROM works WHERE id=?').pluck().get(item.workId)
+    const catalog = repo.listWorks().items[0]!.card.assetId
+    for (const cover of [true, false]) for (const design of [true, false]) {
+      const current = getManagedWork(sqlite, item.workId)
+      updateManagedWorkPresentation(sqlite, item.workId, current.version, {
+        showAdoptionCoverInDetail: cover, showDesignSheetInDetail: design, adoptionCoverSource: 'adoption_cover',
+      }, NOW + sequence++)
+      const detail = repo.getWorkBySlug('display-work')!
+      expect(Boolean(detail.media.adoptionCover)).toBe(cover)
+      expect(Boolean(detail.media.designSheet)).toBe(design)
+      expect(detail.media.gallery).toHaveLength(1)
+      expect(repo.listAdoptions().items[0]!.cover.assetId).toBe(item.adoptionCoverAssetId)
+      expect(repo.listWorks().items[0]!.card.assetId).toBe(catalog)
+      expect(sqlite.prepare('SELECT updated_at FROM works WHERE id=?').pluck().get(item.workId)).toBe(timestamp)
+    }
+  })
+
+  it('rejects empty detail and preserves crops across metadata saves and source changes', async () => {
+    const item = await createPublishedWork({ slug: 'retained-work', sortOrder: 0, featured: false, purpose: 'adoption' })
+    let current = getManagedWork(sqlite, item.workId)
+    await unpublishWork(sqlite, storage, item.workId, current.version, USER_ID, NOW + sequence++)
+    current = getManagedWork(sqlite, item.workId)
+    const photo = current.studioPhotos[0]!
+    current = replaceManagedStudioPhotos(sqlite, item.workId, current.version, [{ ...photo, compositions: { 'detail-thumbnail': { mode: 'crop', rect: { x: 0, y: 0, width: 0.4, height: 0.3 } } } }])
+    const saved = assetCompositions(sqlite, photo.assetId)
+    current = replaceManagedStudioPhotos(sqlite, item.workId, current.version, [{ ...photo, alt: '新的图片说明' }])
+    expect(assetCompositions(sqlite, photo.assetId)).toEqual(saved)
+    current = updateManagedWorkPresentation(sqlite, item.workId, current.version, { showAdoptionCoverInDetail: false, showDesignSheetInDetail: false })
+    expect(() => replaceManagedStudioPhotos(sqlite, item.workId, current.version, [])).toThrow(/至少保留/)
+    expect(getManagedWork(sqlite, item.workId).version).toBe(current.version)
+    current = updateManagedWorkPresentation(sqlite, item.workId, current.version, { showDesignSheetInDetail: true })
+    current = replaceManagedStudioPhotos(sqlite, item.workId, current.version, [])
+    expect(() => updateManagedWorkPresentation(sqlite, item.workId, current.version, { showDesignSheetInDetail: false })).toThrow(/至少保留/)
+    expect(() => replaceManagedDesignSheet(sqlite, item.workId, current.version, { assetId: item.designAssetId!, alt: '设定', compositions: { 'home-featured': { mode: 'contain' } } })).toThrow(/不支持/)
+  })
+
+  it('opts an old work in only on composition edit and rejects incomplete or obsolete composition outputs', async () => {
+    const item = await createPublishedWork({ slug: 'legacy-opt-in', sortOrder: 0, featured: true, legacy: true })
+    const repo = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
+    expect(repo.getWorkBySlug('legacy-opt-in')!.media.gallery[0]!.thumbnailSources).toBeUndefined()
+    let current = getManagedWork(sqlite, item.workId)
+    await unpublishWork(sqlite, storage, item.workId, current.version, USER_ID, NOW + sequence++)
+    current = getManagedWork(sqlite, item.workId)
+    const photo = current.studioPhotos[0]!
+    current = replaceManagedStudioPhotos(sqlite, item.workId, current.version, [{ ...photo, alt: '旧模式说明' }])
+    expect(current.imageCompositionVersion).toBe(0)
+    current = replaceManagedStudioPhotos(sqlite, item.workId, current.version, [{ ...photo, compositions: { 'detail-thumbnail': null } }])
+    expect(current.imageCompositionVersion).toBe(1)
+    expect(assetCompositions(sqlite, photo.assetId)['home-featured']?.mode).toBe('crop')
+    const result = await publishWork(sqlite, storage, item.workId, current.version, USER_ID, NOW + sequence++)
+    expect(result.work.publicationStatus).toBe('published')
+    expect(repo.getWorkBySlug('legacy-opt-in')!.media.gallery[0]!.thumbnailSources).toBeDefined()
+    sqlite.prepare(`UPDATE asset_variants SET status='FAILED' WHERE asset_id=? AND usage='work-catalog' AND width=480`).run(item.assetId)
+    expect(checkWorkPublication(sqlite, item.workId).missingVariantCount).toBeGreaterThan(0)
+    expect(repo.getWorkBySlug('legacy-opt-in')).toBeNull()
+  })
+})
+
+
+it('R6 validates auto sources and keeps adoption compositions independent', async () => {
+  const item = await createPublishedWork({ slug: 'adoption-crops', sortOrder: 0, featured: false, purpose: 'adoption' })
+  let current = getManagedWork(sqlite, item.workId)
+  await unpublishWork(sqlite, storage, item.workId, current.version, USER_ID, NOW + sequence++)
+  current = getManagedWork(sqlite, item.workId)
+  if (current.purpose !== 'adoption') throw new Error('Expected adoption fixture')
+  current = replaceManagedDesignSheet(sqlite, item.workId, current.version, { assetId: item.designAssetId!, alt: '完整设定', compositions: {
+    'adoption-catalog': { mode: 'crop', rect: { x: 0.1, y: 0.2, width: 0.6, height: 0.5 } },
+    'home-adoption': { mode: 'crop', rect: { x: 0.3, y: 0.2, width: 0.6, height: 0.6 } },
+  } })
+  current = updateManagedWorkPresentation(sqlite, item.workId, current.version, { adoptionCoverSource: 'adoption_cover' })
+  expect((await publishWork(sqlite, storage, item.workId, current.version, USER_ID, NOW + sequence++)).work.publicationStatus).toBe('published')
+  const catalog = publicWorkAssetSources(sqlite, item.designAssetId!, 'adoption-catalog')!
+  const home = publicWorkAssetSources(sqlite, item.designAssetId!, 'home-adoption')!
+  expect(home.webp[0]!.src).not.toBe(catalog.webp[0]!.src)
+  expect(home.webp[0]!.height).not.toBe(catalog.webp[0]!.height)
+  const repo = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
+  expect(repo.getWorkBySlug('adoption-crops')!.media.designSheet!.sources.webp.at(-1)).toMatchObject({ width: 2400, height: 1350 })
+  sqlite.prepare(`UPDATE asset_variants SET status='FAILED' WHERE asset_id=? AND usage='adoption-catalog' AND width=768`).run(item.designAssetId)
+  current = getManagedWork(sqlite, item.workId)
+  expect(() => updateManagedWorkPresentation(sqlite, item.workId, current.version, { adoptionCoverSource: 'auto' })).toThrow(/来源不可用/)
+  expect(getManagedWork(sqlite, item.workId).adoptionCoverSource).toBe('adoption_cover')
 })

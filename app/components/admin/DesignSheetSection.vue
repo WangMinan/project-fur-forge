@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { ImageCompositions } from '~~/shared/schemas/image-composition'
+import { workApiErrorText } from '~/utils/work-errors'
 import { managedWorkResponseSchema } from '~~/shared/schemas/work'
 import { retryAssetProcessingResponseSchema } from '~~/shared/schemas/upload'
 import type {
@@ -14,6 +16,8 @@ import {
 } from '~/utils/admin-media-preview'
 
 interface DesignSheetEntry {
+  compositions?: ImageCompositions | undefined
+  compositionsEdited?: boolean
   alt: string
   assetId: string
   height: number
@@ -48,6 +52,8 @@ function toEntry(sheet: ManagedDesignSheetDto): DesignSheetEntry {
   return {
     alt: sheet.alt ?? '',
     assetId: sheet.assetId,
+    compositions: JSON.parse(JSON.stringify(sheet.compositions ?? {})),
+    compositionsEdited: false,
     height: sheet.height,
     previewUrl: adminMediaPreviewUrl(sheet.assetId, ADMIN_MEDIA_LARGE_PREVIEW_WIDTH),
     publicVariantCount: sheet.publicVariantCount,
@@ -59,7 +65,7 @@ function toEntry(sheet: ManagedDesignSheetDto): DesignSheetEntry {
 
 function payloadOf(value: DesignSheetEntry | null) {
   return value
-    ? { assetId: value.assetId, alt: value.alt.trim() }
+    ? { assetId: value.assetId, alt: value.alt.trim(), ...(value.compositionsEdited ? { compositions: value.compositions } : {}) }
     : null
 }
 
@@ -213,6 +219,10 @@ async function saveDesignSheet(): Promise<boolean> {
     if (error instanceof AdminApiError && error.status === 401) {
       return false
     }
+    if (error instanceof AdminApiError && ['DETAIL_GALLERY_EMPTY', 'ADOPTION_SOURCE_UNAVAILABLE'].includes(error.reason ?? '')) {
+      saveError.value = workApiErrorText(error, '图片展示设置无效。')
+      return false
+    }
     if (error instanceof AdminApiError && error.status === 409) {
       emit('conflict')
       saveError.value = '作品数据已在其他地方变化，本次设定图未保存。'
@@ -274,6 +284,10 @@ defineExpose({ save: saveDesignSheet })
       </div>
 
       <div class="design-sheet__body">
+        <AdminImageCompositionControls
+:asset-id="entry.assetId" :src="entry.previewUrl" role="design_sheet"
+        :width="entry.width" :height="entry.height" :title="entry.alt" :caption="`${work.characterName} · ${work.species}`" :compositions="entry.compositions"
+        :disabled="locked || processing || entry.status !== 'READY'" @update="entry.compositions = $event; entry.compositionsEdited = true" />
         <p class="design-sheet__status">
           <AdminStatusBadge
             :tone="entry.status === 'READY' ? 'success' : entry.status === 'FAILED' ? 'error' : 'info'"
