@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { ImageCompositions } from '~~/shared/schemas/image-composition'
+import { workApiErrorText } from '~/utils/work-errors'
 import { managedWorkResponseSchema } from '~~/shared/schemas/work'
 import { retryAssetProcessingResponseSchema } from '~~/shared/schemas/upload'
 import type { ManagedAdoptionCoverDto, ManagedWorkDto } from '~~/shared/types/contracts'
@@ -8,6 +10,8 @@ import { adminMediaOriginalUrl, adminMediaPreviewUrl } from '~/utils/admin-media
 import { ASSET_STATUS_LABELS } from '~/utils/media-labels'
 
 interface CoverEntry {
+  compositions?: ImageCompositions | undefined
+  compositionsEdited?: boolean
   alt: string
   assetId: string
   crop: ManagedAdoptionCoverDto['crop']
@@ -41,6 +45,8 @@ function toEntry(cover: ManagedAdoptionCoverDto): CoverEntry {
   return {
     alt: cover.alt,
     assetId: cover.assetId,
+    compositions: JSON.parse(JSON.stringify(cover.compositions ?? {})),
+    compositionsEdited: false,
     crop: cover.crop,
     focalX: cover.focalX,
     focalY: cover.focalY,
@@ -61,6 +67,7 @@ function payloadOf(value: CoverEntry | null) {
         focalX: value.focalX,
         focalY: value.focalY,
         crop: value.crop,
+        ...(value.compositionsEdited ? { compositions: value.compositions } : {}),
       }
     : null
 }
@@ -202,12 +209,16 @@ async function saveCover(): Promise<boolean> {
     if (error instanceof AdminApiError && error.status === 401) {
       return false
     }
+    if (error instanceof AdminApiError && ['DETAIL_GALLERY_EMPTY', 'ADOPTION_SOURCE_UNAVAILABLE'].includes(error.reason ?? '')) {
+      saveError.value = workApiErrorText(error, '图片展示设置无效。')
+      return false
+    }
     if (error instanceof AdminApiError && error.status === 409) {
       emit('conflict')
       saveError.value = '作品数据已在其他地方变化，本次横版封面未保存。'
       return false
     }
-    saveError.value = '保存横版封面失败，请检查图片说明后重试。'
+    saveError.value = workApiErrorText(error, '保存横版封面失败，请检查图片说明后重试。')
     return false
   }
   finally {
@@ -228,7 +239,7 @@ defineExpose({ save: saveCover })
     <p v-if="locked" class="cover__locked" role="status">作品已发布，横版封面为只读；如需替换请先下架。</p>
 
     <article v-if="entry" class="cover__entry" :data-status="entry.status">
-      <div class="cover__preview">
+      <div class="cover__preview" :style="work.imageCompositionVersion ? { aspectRatio: `${entry.width} / ${entry.height}` } : undefined">
         <img
           :src="entry.previewUrl"
           :alt="entry.alt || '领养横版封面编辑预览'"
@@ -240,6 +251,10 @@ defineExpose({ save: saveCover })
         {{ entry.width }}×{{ entry.height }} · 私有编辑预览 ·
         <a :href="adminMediaOriginalUrl(entry.assetId)" target="_blank" rel="noopener">查看原图</a>
       </p>
+<AdminImageCompositionControls
+:asset-id="entry.assetId" :src="entry.previewUrl" role="adoption_cover"
+        :width="entry.width" :height="entry.height" :title="entry.alt" :caption="`${work.characterName} · ${work.species}`" :compositions="entry.compositions"
+        :disabled="locked || processing || entry.status !== 'READY'" @update="entry.compositions = $event; entry.compositionsEdited = true" />
       <p class="cover__status">
         <AdminStatusBadge
           :tone="entry.status === 'READY' ? 'success' : entry.status === 'FAILED' ? 'error' : 'info'"
@@ -256,10 +271,12 @@ defineExpose({ save: saveCover })
         :disabled="locked || processing"
         placeholder="例如：角色正面横版领养封面"
       >
+      <template v-if="work.imageCompositionVersion === 0">
       <label class="cover__label" :for="`cover-x-${entry.assetId}`">水平焦点 {{ focalPercent.x }}%</label>
       <input :id="`cover-x-${entry.assetId}`" type="range" min="0" max="100" :value="focalPercent.x" :disabled="locked || processing" @input="onFocalInput('x', $event)">
       <label class="cover__label" :for="`cover-y-${entry.assetId}`">垂直焦点 {{ focalPercent.y }}%</label>
       <input :id="`cover-y-${entry.assetId}`" type="range" min="0" max="100" :value="focalPercent.y" :disabled="locked || processing" @input="onFocalInput('y', $event)">
+      </template>
       <div class="cover__actions">
         <AdminAction v-if="entry.status === 'FAILED'" :disabled="locked || processing" :loading="processing" loading-label="处理中…" @click="retryProcessing">重试处理</AdminAction>
         <AdminAction :disabled="locked || processing" @click="entry = null">移除横版封面</AdminAction>

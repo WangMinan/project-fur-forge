@@ -1,3 +1,7 @@
+import type { ImageCompositions, WorkDisplaySettings } from '../../../shared/schemas/image-composition'
+import { assetCompositions, restoreWorkCompositions } from '../repository/work-composition-repository'
+import { beginCompositionEdit, saveAssetCompositions } from './work-composition'
+import { assertNoWorkOperation, assertWorkDisplay, displayMediaState, workDisplayState } from './work-display'
 import { randomUUID } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import {
@@ -22,6 +26,7 @@ import { hasBlockingPublicationCleanup } from '../repository/publication-reposit
 import { PUBLIC_FEATURED_LIMIT } from '../../../shared/constants/featured'
 
 interface StudioPhotoInput {
+  compositions?: ImageCompositions | undefined
   alt: string
   assetId: string
   crop: {
@@ -36,11 +41,13 @@ interface StudioPhotoInput {
 }
 
 interface DesignSheetInput {
+  compositions?: ImageCompositions | undefined
   alt: string
   assetId: string
 }
 
 interface AdoptionCoverInput {
+  compositions?: ImageCompositions | undefined
   alt: string
   assetId: string
   crop: StudioPhotoInput['crop']
@@ -122,6 +129,7 @@ function studioPhotos(sqlite: Database.Database, workId: string) {
     const photo = row as Record<string, unknown>
     return {
       assetId: photo.assetId,
+      compositions: assetCompositions(sqlite, photo.assetId as string),
       alt: photo.alt,
       primary: Boolean(photo.primary),
       focalX: photo.focalX,
@@ -162,7 +170,7 @@ function designSheet(
     JOIN assets AS asset ON asset.id = relation.asset_id
     WHERE relation.work_id = ? AND relation.role = 'design_sheet'
   `).get(workId)
-  return row ? managedDesignSheetDtoSchema.parse(row) : null
+  return row ? managedDesignSheetDtoSchema.parse({ ...row, compositions: assetCompositions(sqlite, (row as { assetId: string }).assetId) }) : null
 }
 
 function adoptionCover(
@@ -194,6 +202,7 @@ function adoptionCover(
   `).get(workId) as Record<string, unknown> | undefined
   return row ? managedAdoptionCoverDtoSchema.parse({
     assetId: row.assetId,
+    compositions: assetCompositions(sqlite, row.assetId as string),
     alt: row.alt,
     focalX: row.focalX,
     focalY: row.focalY,
@@ -216,7 +225,12 @@ function managedWork(
   sqlite: Database.Database,
   row: WorkRow,
 ): ManagedWorkDto {
+  const display = workDisplayState(sqlite, row.id)
   const base = {
+    imageCompositionVersion: display.imageCompositionVersion,
+    showAdoptionCoverInDetail: display.showAdoptionCoverInDetail,
+    showDesignSheetInDetail: display.showDesignSheetInDetail,
+    adoptionCoverSource: display.adoptionCoverSource,
     id: row.id,
     version: row.version,
     slug: row.slug,
@@ -394,7 +408,12 @@ export function listManagedWorks(
       designSheetAssetId: string | null
       studioPhotoCount: number
     }
+    const display = workDisplayState(sqlite, row.id)
     const base = {
+      imageCompositionVersion: display.imageCompositionVersion,
+      showAdoptionCoverInDetail: display.showAdoptionCoverInDetail,
+      showDesignSheetInDetail: display.showDesignSheetInDetail,
+      adoptionCoverSource: display.adoptionCoverSource,
       id: row.id,
       version: row.version,
       slug: row.slug,
@@ -506,8 +525,8 @@ export function createManagedWork(
         INSERT INTO works (
           id, slug, character_name, species, purpose, adoption_status,
           price_amount_minor, price_currency,
-          publication_status, sort_order, featured, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'draft', 0, 0, ?, ?)
+          publication_status, sort_order, featured, image_composition_version, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'draft', 0, 0, 1, ?, ?)
       `).run(
         id,
         input.slug,
@@ -610,36 +629,30 @@ export function updateManagedWorkPresentation(
   sqlite: Database.Database,
   id: string,
   expectedVersion: number,
-  input: { featured: boolean, sortOrder?: number | undefined },
+  input: { [K in keyof WorkDisplaySettings]?: WorkDisplaySettings[K] | undefined } & { featured?: boolean | undefined, sortOrder?: number | undefined },
   now = Date.now(),
 ) {
-  const current = requireWork(sqlite, id)
-  if (current.version !== expectedVersion) {
-    throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
-  }
-  if (input.featured && !current.featured) {
-    assertFeaturedPortraitPhoto(sqlite, id)
-  }
   sqlite.transaction(() => {
-    const featuredIds = featuredIdsForMembership(sqlite, id, input.featured)
-    const sortOrder = input.featured ? featuredIds.indexOf(id) : 0
+    const current = requireWork(sqlite, id)
+    if (current.version !== expectedVersion) throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+    assertNoWorkOperation(sqlite, id)
+    const previous = workDisplayState(sqlite, id)
+    const changesDisplay = input.showAdoptionCoverInDetail !== undefined || input.showDesignSheetInDetail !== undefined || input.adoptionCoverSource !== undefined
+    if (changesDisplay && current.purpose !== 'adoption') throw new ServiceError(400, 'VALIDATION_ERROR', '仅领养作品支持此展示设置')
+    const before = displayMediaState(sqlite, id).visibleCount
+    const featured = input.featured ?? Boolean(current.featured)
+    if (featured && !current.featured) assertFeaturedPortraitPhoto(sqlite, id)
+    const featuredIds = featuredIdsForMembership(sqlite, id, featured)
     const result = sqlite.prepare(`
-      UPDATE works
-      SET sort_order = ?, featured = ?, version = version + 1, updated_at = ?
-      WHERE id = ? AND version = ?
-    `).run(
-      sortOrder,
-      input.featured ? 1 : 0,
-      now,
-      id,
-      expectedVersion,
-    )
-    if (result.changes !== 1) {
-      throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
-    }
-    if (current.featured || input.featured) {
-      normalizeFeaturedRows(sqlite, featuredIds, now, id)
-    }
+      UPDATE works SET sort_order=?,featured=?,show_adoption_cover_in_detail=?,show_design_sheet_in_detail=?,adoption_cover_source=?,
+        version=version+1,updated_at=CASE WHEN ? THEN ? ELSE updated_at END WHERE id=? AND version=?
+    `).run(featured ? featuredIds.indexOf(id) : 0, featured ? 1 : 0,
+      (input.showAdoptionCoverInDetail ?? previous.showAdoptionCoverInDetail) ? 1 : 0,
+      (input.showDesignSheetInDetail ?? previous.showDesignSheetInDetail) ? 1 : 0,
+      input.adoptionCoverSource ?? previous.adoptionCoverSource, input.featured !== undefined ? 1 : 0, now, id, expectedVersion)
+    if (result.changes !== 1) throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
+    if (changesDisplay) assertWorkDisplay(sqlite, id, before > 0 || current.publicationStatus === 'published')
+    if (input.featured !== undefined && (current.featured || featured)) normalizeFeaturedRows(sqlite, featuredIds, now, id)
   })()
   return getManagedWork(sqlite, id)
 }
@@ -808,6 +821,9 @@ export function replaceManagedDesignSheet(
   }
   try {
     sqlite.transaction(() => {
+      assertNoWorkOperation(sqlite, workId)
+      const beforeCount = displayMediaState(sqlite, workId).visibleCount
+      const preserved = beginCompositionEdit(sqlite, workId, input ? [input] : [])
       sqlite.prepare(`
         DELETE FROM work_assets
         WHERE work_id = ? AND role = 'design_sheet'
@@ -819,6 +835,9 @@ export function replaceManagedDesignSheet(
           ) VALUES (?, ?, 'design_sheet', ?, 0, 0)
         `).run(workId, input.assetId, input.alt)
       }
+      restoreWorkCompositions(sqlite, preserved)
+      if (input) saveAssetCompositions(sqlite, workId, input.assetId, input.compositions)
+      assertWorkDisplay(sqlite, workId, beforeCount > 0)
       const result = sqlite.prepare(`
         UPDATE works SET version = version + 1, updated_at = ?
         WHERE id = ? AND version = ? AND publication_status != 'published'
@@ -859,6 +878,9 @@ export function replaceManagedAdoptionCover(
   }
   try {
     sqlite.transaction(() => {
+      assertNoWorkOperation(sqlite, workId)
+      const beforeCount = displayMediaState(sqlite, workId).visibleCount
+      const preserved = beginCompositionEdit(sqlite, workId, input ? [input] : [])
       sqlite.prepare(`
         DELETE FROM work_assets
         WHERE work_id = ? AND role = 'adoption_cover'
@@ -886,6 +908,9 @@ export function replaceManagedAdoptionCover(
           WHERE id = ? AND status = 'READY' AND role = 'adoption_cover'
         `).run(input.focalX, input.focalY, now, input.assetId)
       }
+      restoreWorkCompositions(sqlite, preserved)
+      if (input) saveAssetCompositions(sqlite, workId, input.assetId, input.compositions)
+      assertWorkDisplay(sqlite, workId, beforeCount > 0)
       const result = sqlite.prepare(`
         UPDATE works SET version = version + 1, updated_at = ?
         WHERE id = ? AND version = ? AND publication_status != 'published'
@@ -945,6 +970,9 @@ export function replaceManagedStudioPhotos(
   }
   try {
     sqlite.transaction(() => {
+      assertNoWorkOperation(sqlite, workId)
+      const beforeCount = displayMediaState(sqlite, workId).visibleCount
+      const preserved = beginCompositionEdit(sqlite, workId, photos)
       sqlite.prepare(`
         DELETE FROM work_assets
         WHERE work_id = ? AND role = 'studio_photo'
@@ -982,6 +1010,9 @@ export function replaceManagedStudioPhotos(
           photo.assetId,
         )
       })
+      restoreWorkCompositions(sqlite, preserved)
+      for (const photo of photos) saveAssetCompositions(sqlite, workId, photo.assetId, photo.compositions)
+      assertWorkDisplay(sqlite, workId, beforeCount > 0)
       const result = sqlite.prepare(`
         UPDATE works SET version = version + 1, updated_at = ?
         WHERE id = ? AND version = ? AND publication_status != 'published'

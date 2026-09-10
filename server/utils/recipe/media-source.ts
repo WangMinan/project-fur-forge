@@ -1,3 +1,5 @@
+import type { ImageCompositions } from '../../../shared/schemas/image-composition'
+import { assetCompositions } from '../repository/work-composition-repository'
 import { createHash } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import type { MediaRole } from '../../../shared/types/contracts'
@@ -21,6 +23,8 @@ export const OSS_PROCESS_INPUT_BYTE_LIMIT = 20_000_000
 export type PublicFormat = 'webp' | 'jpeg' | 'png'
 
 export interface AssetSource {
+  imageCompositionVersion?: number
+  compositions?: ImageCompositions
   byteSize: number
   cropHeight: number
   cropWidth: number
@@ -255,7 +259,7 @@ export function readyAssetSource(
       asset.id, asset.role, asset.status,
       asset.private_object_key AS privateObjectKey,
       asset.sha256, asset.byte_size AS byteSize, asset.mime_type AS mimeType,
-      asset.width, asset.height,
+      asset.width, asset.height, COALESCE(work.image_composition_version, 0) AS imageCompositionVersion,
       COALESCE(relation.focal_x, asset.focal_x) AS focalX,
       COALESCE(relation.focal_y, asset.focal_y) AS focalY,
       COALESCE(relation.crop_x, 0) AS cropX,
@@ -264,6 +268,7 @@ export function readyAssetSource(
       COALESCE(relation.crop_height, 1) AS cropHeight
     FROM assets AS asset
     LEFT JOIN work_assets AS relation ON relation.asset_id = asset.id
+    LEFT JOIN works AS work ON work.id = relation.work_id
     WHERE asset.id = ?
   `).get(assetId) as AssetSource | undefined
   if (!row) {
@@ -272,5 +277,5 @@ export function readyAssetSource(
   if (row.status !== 'READY') {
     throw new ServiceError(409, 'CONFLICT', 'Asset is not ready for public media.')
   }
-  return row
+  return { ...row, compositions: assetCompositions(sqlite, assetId) }
 }

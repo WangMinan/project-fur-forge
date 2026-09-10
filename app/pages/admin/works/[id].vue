@@ -58,8 +58,10 @@ const previewError = ref<string | null>(null)
 const adoptionCoverState = ref({ busy: false, dirty: false })
 const designSheetState = ref({ busy: false, dirty: false })
 const photoState = ref({ busy: false, dirty: false })
+const displayState = ref({ busy: false, dirty: false })
 const adoptionCoverSection = useTemplateRef<{ save: () => Promise<boolean> }>('adoptionCoverSection')
 const designSheetSection = useTemplateRef<{ save: () => Promise<boolean> }>('designSheetSection')
+const displaySection = useTemplateRef<{ save: () => Promise<boolean> }>('displaySection')
 const studioPhotoSection = useTemplateRef<{ save: () => Promise<boolean> }>('studioPhotoSection')
 
 function applyWork(next: ManagedWorkDto) {
@@ -94,6 +96,8 @@ const isDirty = computed(() =>
 
 const leaveGuardActive = computed(() =>
   isDirty.value
+  || displayState.value.dirty
+  || displayState.value.busy
   || adoptionCoverState.value.dirty
   || adoptionCoverState.value.busy
   || designSheetState.value.dirty
@@ -103,13 +107,15 @@ const leaveGuardActive = computed(() =>
 )
 
 const mediaBusy = computed(() =>
-  adoptionCoverState.value.busy
+  displayState.value.busy
+  || adoptionCoverState.value.busy
   || designSheetState.value.busy
   || photoState.value.busy,
 )
 
 const mediaDirty = computed(() =>
-  adoptionCoverState.value.dirty
+  displayState.value.dirty
+  || adoptionCoverState.value.dirty
   || designSheetState.value.dirty
   || photoState.value.dirty,
 )
@@ -231,6 +237,8 @@ async function saveBeforePublish(): Promise<boolean> {
   if (photoState.value.dirty && !(await studioPhotoSection.value?.save())) {
     return false
   }
+  await nextTick()
+  if (displayState.value.dirty && !(await displaySection.value?.save())) return false
   return true
 }
 
@@ -331,7 +339,7 @@ useSeoMeta({
       </header>
 
       <p v-if="locked" class="editor__locked" role="status">
-        作品已发布：基础信息与图片为只读，需要先下架。代表作品设置仍可直接修改，具体顺序在作品管理的“代表作品”Tab 调整。
+        作品已发布：基础信息与图片为只读，需要先下架。代表作品与领养展示设置仍可直接修改，具体顺序在作品管理的“代表作品”Tab 调整。
       </p>
       <p v-if="savedNotice" class="editor__notice" role="status">{{ savedNotice }}</p>
 
@@ -345,6 +353,10 @@ useSeoMeta({
             :errors="errors"
             :show-errors="submitted"
           />
+          <AdminWorkDisplaySettings
+            v-if="work.purpose === 'adoption'"
+            ref="displaySection" :work="work" :disabled="saving || mediaBusy"
+            @saved="applyMediaWork" @state-change="displayState = $event" />
           <AdminAdoptionCoverSection
             v-if="work.purpose === 'adoption'"
             ref="adoptionCoverSection"

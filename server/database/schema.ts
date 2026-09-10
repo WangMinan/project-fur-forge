@@ -41,6 +41,10 @@ export const users = sqliteTable('users', {
 ])
 
 export const works = sqliteTable('works', {
+  showAdoptionCoverInDetail: integer('show_adoption_cover_in_detail', { mode: 'boolean' }).notNull().default(true),
+  showDesignSheetInDetail: integer('show_design_sheet_in_detail', { mode: 'boolean' }).notNull().default(true),
+  adoptionCoverSource: text('adoption_cover_source').notNull().default('auto'),
+  imageCompositionVersion: integer('image_composition_version').notNull().default(0),
   id: text('id').primaryKey(),
   slug: text('slug').notNull(),
   characterName: text('character_name').notNull(),
@@ -56,6 +60,10 @@ export const works = sqliteTable('works', {
   publishedAt: integer('published_at'),
   ...timestampColumns(),
 }, table => [
+  check('works_show_cover', sql`${table.showAdoptionCoverInDetail} IN (0,1)`),
+  check('works_show_design', sql`${table.showDesignSheetInDetail} IN (0,1)`),
+  check('works_cover_source', sql`${table.adoptionCoverSource} IN ('auto','adoption_cover','design_sheet')`),
+  check('works_composition_version', sql`${table.imageCompositionVersion} IN (0,1)`),
   uniqueIndex('works_slug_unique').on(table.slug),
   index('works_publication_sort_idx')
     .on(table.publicationStatus, table.sortOrder),
@@ -508,7 +516,7 @@ export const assetVariants = sqliteTable('asset_variants', {
   ),
   check(
     'asset_variants_usage',
-    sql`${table.usage} IN ('preprocess', 'work-card', 'adoption-card', 'detail', 'design-sheet', 'home-hero-landscape', 'home-hero-portrait', 'commission-hero-landscape', 'commission-hero-portrait', 'home-entry-commission', 'home-entry-adoption', 'contact-qr')`,
+    sql`${table.usage} IN ('detail-thumbnail', 'work-catalog', 'home-featured', 'adoption-catalog', 'home-adoption', 'preprocess', 'work-card', 'adoption-card', 'detail', 'design-sheet', 'home-hero-landscape', 'home-hero-portrait', 'commission-hero-landscape', 'commission-hero-portrait', 'home-entry-commission', 'home-entry-adoption', 'contact-qr')`,
   ),
   check(
     'asset_variants_dimensions',
@@ -1002,4 +1010,18 @@ export const auditLogs = sqliteTable('audit_logs', {
     'audit_logs_result',
     sql`${table.result} IN ('SUCCESS', 'FAILURE')`,
   ),
+])
+
+export const workAssetCompositions = sqliteTable('work_asset_compositions', {
+  workId: text('work_id').notNull(),
+  assetId: text('asset_id').notNull(),
+  usage: text('usage').notNull(),
+  mode: text('mode').notNull(),
+  x: real('x'), y: real('y'), width: real('width'), height: real('height'),
+}, table => [
+  primaryKey({ columns: [table.workId, table.assetId, table.usage] }),
+  foreignKey({ columns: [table.workId, table.assetId], foreignColumns: [workAssets.workId, workAssets.assetId] }).onDelete('cascade'),
+  check('work_asset_compositions_usage', sql`${table.usage} IN ('detail-thumbnail','work-catalog','home-featured','adoption-catalog','home-adoption')`),
+  check('work_asset_compositions_mode', sql`${table.mode} IN ('crop','contain')`),
+  check('work_asset_compositions_rect', sql`(${table.mode}='contain' AND ${table.usage}!='detail-thumbnail' AND ${table.x} IS NULL AND ${table.y} IS NULL AND ${table.width} IS NULL AND ${table.height} IS NULL) OR (${table.mode}='crop' AND ${table.x} IS NOT NULL AND ${table.y} IS NOT NULL AND ${table.width} IS NOT NULL AND ${table.height} IS NOT NULL AND ${table.x}>=0 AND ${table.y}>=0 AND ${table.width}>0 AND ${table.height}>0 AND ${table.x}+${table.width}<=1 AND ${table.y}+${table.height}<=1)`),
 ])

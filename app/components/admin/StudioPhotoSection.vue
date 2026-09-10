@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { workApiErrorText } from '~/utils/work-errors'
 import { managedWorkResponseSchema } from '~~/shared/schemas/work'
 import type {
   ManagedStudioPhotoDto,
@@ -40,6 +41,8 @@ function toEntry(
     alt: photo.alt,
     assetId: photo.assetId,
     crop: photo.crop,
+    compositions: JSON.parse(JSON.stringify(photo.compositions ?? {})),
+    compositionsEdited: false,
     focalX: photo.focalX,
     focalY: photo.focalY,
     height: photo.height,
@@ -73,6 +76,7 @@ function payloadOf(source: SectionEntry[]) {
     focalX: entry.focalX,
     focalY: entry.focalY,
     crop: entry.crop,
+    ...(entry.compositionsEdited ? { compositions: entry.compositions } : {}),
   }))
 }
 
@@ -268,6 +272,10 @@ async function savePhotos(): Promise<boolean> {
     if (error instanceof AdminApiError && error.status === 401) {
       return false
     }
+    if (error instanceof AdminApiError && ['DETAIL_GALLERY_EMPTY', 'ADOPTION_SOURCE_UNAVAILABLE'].includes(error.reason ?? '')) {
+      saveError.value = workApiErrorText(error, '图片展示设置无效。')
+      return false
+    }
     if (error instanceof AdminApiError && error.status === 409) {
       emit('conflict')
       saveError.value = '作品数据已在其他地方变化，本次出厂照未保存。'
@@ -306,6 +314,8 @@ defineExpose({ save: savePhotos })
       <li v-for="(entry, index) in entries" :key="entry.assetId">
         <AdminStudioPhotoCard
           :entry="entry"
+          :legacy="work.imageCompositionVersion === 0"
+          :work-label="`${work.characterName} · ${work.species}`"
           :index="index"
           :locked="locked"
           :processing="processingAssetId === entry.assetId"
