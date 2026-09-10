@@ -278,7 +278,8 @@
   .admin-surface *,
   .admin-surface *::before,
   .admin-surface *::after {
-    transition-duration: 0.01ms !important;
+    /* Geometry-driven controls must update synchronously, without introducing transitions. */
+    transition-duration: 0s !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
