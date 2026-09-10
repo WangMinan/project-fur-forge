@@ -297,6 +297,10 @@ export default defineEventHandler(async (event) => {
       sqlite.prepare(`
         DELETE FROM asset_variants WHERE asset_id IN (${placeholders})
       `).run(...staleAssetIds)
+      // Editable catalog fixtures also own completed upload sessions referencing these assets.
+      sqlite.prepare(`
+        DELETE FROM upload_sessions WHERE asset_id IN (${placeholders})
+      `).run(...staleAssetIds)
       sqlite.prepare(`
         DELETE FROM assets WHERE id IN (${placeholders})
       `).run(...staleAssetIds)
