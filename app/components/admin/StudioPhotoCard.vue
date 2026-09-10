@@ -269,6 +269,7 @@ v-if="entry.previewUrl" :asset-id="entry.assetId" :src="entry.previewUrl" role="
 
 .photo-card__preview-column {
   display: grid;
+  min-width: 0;
   gap: var(--admin-space-2);
   align-content: start;
 }
@@ -457,7 +458,11 @@ v-if="entry.previewUrl" :asset-id="entry.assetId" :src="entry.previewUrl" role="
 
 @media (min-width: 768px) {
   .photo-card {
-    grid-template-columns: 16rem 1fr auto;
+    grid-template-columns: min(16rem, 40%) minmax(0, 1fr);
+  }
+
+  .photo-card__actions {
+    grid-column: 1 / -1;
   }
 }
 </style>

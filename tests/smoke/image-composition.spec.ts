@@ -63,8 +63,19 @@ test('R6 saves independent crops and display choices, then renders square thumbn
   await page.keyboard.press('Escape')
   expect((await read()).studioPhotos[0]!.compositions!['detail-thumbnail']).toEqual(first)
 
-  for (const [width, height] of [[390,844],[430,932],[768,1024],[1023,900],[1024,900],[1440,900]]) {
+  for (const [width, height] of [[390,844],[430,932],[768,1024],[1023,900],[1024,900],[1280,900],[1366,900],[1440,900]]) {
     await page.setViewportSize({ width: width!, height: height! })
+    for (const card of await page.locator('.photo-card').all()) {
+      const layout = await card.evaluate(el => {
+        const frame = el.getBoundingClientRect()
+        const buttons = [...el.querySelectorAll('.composition-controls > button, .photo-card__actions > button')].map(button => button.getBoundingClientRect())
+        return {
+          contained: buttons.every(b => b.left >= frame.left && b.right <= frame.right),
+          overlapping: buttons.some((a, i) => buttons.slice(i + 1).some(b => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top)),
+        }
+      })
+      expect(layout, `Photo controls at ${width}px`).toEqual({ contained: true, overlapping: false })
+    }
     await photo.getByRole('button', { name: /详情缩略图/ }).click()
     await expect(dialog.getByRole('button', { name: '应用构图' })).toBeEnabled()
     const restored = await dialog.locator('cropper-selection').evaluate(el => {
