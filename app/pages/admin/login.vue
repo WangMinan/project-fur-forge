@@ -62,11 +62,11 @@ async function onSubmit() {
 </script>
 
 <template>
-  <!--
-    登录页保留公开站页头与页脚：这个页面可能被 ICP 备案审核抓到，
-    备案信息统一放在公开页脚里。其他管理端页面仍用 admin 布局。
-  -->
   <div class="admin-surface login" data-testid="admin-login">
+    <!--
+      登录页保留公开站页头与页脚：这个页面可能被 ICP 备案审核抓到，
+      备案信息统一放在公开页脚里。其他管理端页面仍用 admin 布局。
+    -->
     <PublicHeader brand-only />
     <main class="login__main">
       <div class="login__card">
