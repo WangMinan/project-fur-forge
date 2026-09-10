@@ -95,15 +95,19 @@ const gallery = computed(() => {
       alt: item!.alt,
       position: media.gallery.length + index,
       sources: item!.sources,
+      ...(item!.thumbnailSources ? { thumbnailSources: item!.thumbnailSources } : {}),
     })),
   ]
 })
 const initialGalleryAssetId = computed(() => {
   const media = detail.value?.media
   if (!media) return undefined
-  return route.query.from === 'adoptions'
-    ? media.designSheet?.assetId ?? media.adoptionCover?.assetId
-    : media.card.assetId
+  const preferred = route.query.from === 'adoptions'
+    ? media.adoptionSourceAssetId ?? media.designSheet?.assetId ?? media.adoptionCover?.assetId
+    : media.primaryAssetId ?? media.card.assetId
+  return gallery.value.find(item => item.assetId === preferred)?.assetId
+    ?? gallery.value.find(item => item.assetId === media.primaryAssetId)?.assetId
+    ?? gallery.value[0]?.assetId
 })
 
 useSeoMeta({

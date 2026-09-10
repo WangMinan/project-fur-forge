@@ -81,6 +81,8 @@ function createWorkWithPhoto(
     sortOrder: 0,
     featured: false,
   }, NOW)
+  // Existing publication cases exercise the historical recipe; R6 has separate composition coverage.
+  sqlite.prepare('UPDATE works SET image_composition_version=0 WHERE id=?').run(work.id)
   const content = width < 2400 || height < 1600
     ? createSyntheticSourcePng(width, height)
     : createSyntheticTransparentPng()
@@ -140,7 +142,7 @@ function createWorkWithPhoto(
 }
 
 function createRegularAdoption() {
-  return createManagedWork(sqlite, {
+  const work = createManagedWork(sqlite, {
     slug: 'regular-adoption',
     characterName: '待领养小狗',
     species: '犬科',
@@ -150,6 +152,8 @@ function createRegularAdoption() {
     sortOrder: 0,
     featured: false,
   }, NOW)
+  sqlite.prepare('UPDATE works SET image_composition_version=0 WHERE id=?').run(work.id)
+  return work
 }
 
 /**
@@ -873,7 +877,7 @@ describe('dual-bucket work publication operations', () => {
     expect(checkWorkPublication(sqlite, work.id)).toMatchObject({
       canPublish: false,
       // 领养作品既没有封面也没有设定图：没有任何可公开的成果图。
-      blockers: ['ADOPTION_MEDIA_REQUIRED'],
+      blockers: ['ADOPTION_MEDIA_REQUIRED', 'DETAIL_GALLERY_EMPTY'],
       adoptionCoverCount: 0,
       designSheetCount: 0,
       studioPhotoCount: 0,
@@ -1016,7 +1020,7 @@ describe('dual-bucket work publication operations', () => {
     }, NOW)
     expect(checkWorkPublication(sqlite, work.id)).toMatchObject({
       canPublish: false,
-      blockers: ['STUDIO_PHOTO_REQUIRED'],
+      blockers: ['STUDIO_PHOTO_REQUIRED', 'DETAIL_GALLERY_EMPTY'],
       studioPhotoCount: 0,
     })
   })

@@ -1,3 +1,4 @@
+import { imageCompositionsSchema, workDisplaySettingsSchema } from './image-composition'
 import { z } from 'zod'
 import {
   apiSuccessSchema,
@@ -65,10 +66,11 @@ export const createWorkRequestSchema = workFieldsSchema
 export const updateWorkRequestSchema = versionedRequestSchema(workFieldsSchema)
 export const updateWorkPresentationRequestSchema = versionedRequestSchema(
   z.object({
-    featured: z.boolean(),
+    featured: z.boolean().optional(),
+    ...workDisplaySettingsSchema.partial().shape,
     /** @deprecated 顺序只允许通过完整精选集合接口维护。 */
     sortOrder: z.number().int().nonnegative().optional(),
-  }).strict(),
+  }).strict().refine(input => input.featured !== undefined || input.showAdoptionCoverInDetail !== undefined || input.showDesignSheetInDetail !== undefined || input.adoptionCoverSource !== undefined, '请选择需要更新的展示设置'),
 )
 export const deleteWorkRequestSchema = versionedRequestSchema(z.object({}).strict())
 export const deleteWorkResponseSchema = apiSuccessSchema(
@@ -76,6 +78,7 @@ export const deleteWorkResponseSchema = apiSuccessSchema(
 )
 
 const studioPhotoBaseSchema = z.object({
+  compositions: imageCompositionsSchema.optional(),
   assetId: resourceIdSchema,
   alt: z.string().trim().min(1).max(500),
   primary: z.boolean(),
@@ -111,6 +114,7 @@ export const replaceStudioPhotosRequestSchema = versionedRequestSchema(
 )
 
 export const designSheetInputSchema = z.object({
+  compositions: imageCompositionsSchema.optional(),
   assetId: resourceIdSchema,
   alt: z.string().trim().min(1).max(500),
 }).strict()
@@ -158,6 +162,10 @@ export const managedStudioPhotoDtoSchema = studioPhotoBaseSchema.extend({
 }).strict()
 
 const managedWorkBaseSchema = mutableWorkBaseSchema.extend({
+  imageCompositionVersion: z.number().int().min(0).max(1).default(0),
+  showAdoptionCoverInDetail: z.boolean().default(true),
+  showDesignSheetInDetail: z.boolean().default(true),
+  adoptionCoverSource: workDisplaySettingsSchema.shape.adoptionCoverSource.default('auto'),
   id: resourceIdSchema,
   version: resourceVersionSchema,
   publicationStatus: publicationStatusSchema,

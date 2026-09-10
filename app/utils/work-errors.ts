@@ -14,6 +14,8 @@ const REASON_MESSAGES: Partial<Record<ErrorReason, string>> = {
     '该链接别名已被其他作品使用，请更换后重试。',
   VERSION_CONFLICT:
     '内容已在其他地方被修改（版本冲突），本次修改未保存。',
+  DETAIL_GALLERY_EMPTY: '详情图集至少保留一张图片，请先开启附加图或添加图片。',
+  ADOPTION_SOURCE_UNAVAILABLE: '指定的领养封面不可用，请先调整封面来源。',
   WORK_PUBLISHED_READONLY:
     '作品已发布：请先下架，再修改或删除。',
   WORK_DESIGN_SHEET_PRESENT:
@@ -37,7 +39,7 @@ const REASON_MESSAGES: Partial<Record<ErrorReason, string>> = {
   PUBLIC_VARIANT_INCOMPLETE:
     '公开图还没有全部生成完成，请稍后重试。',
   MEDIA_SOURCE_TOO_SMALL:
-    '原图尺寸不足，无法生成这个展示位需要的公开图。',
+    '图片或选区尺寸不足，请扩大选区后再保存或发布。',
   MEDIA_SOURCE_UNAVAILABLE:
     '找不到可用的图片处理源，请重新上传原图。',
   UPLOAD_SESSION_EXPIRED:

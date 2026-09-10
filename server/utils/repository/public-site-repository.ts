@@ -1,3 +1,8 @@
+import { publicWorkAssetSources } from '../recipe/work-public-sources'
+import { assetCompositions } from './work-composition-repository'
+import { resolveComposition } from '../../../shared/utils/image-composition'
+import type { CompositionUsage } from '../../../shared/schemas/image-composition'
+import type { PublicMediaUsage } from '../recipe/media-recipe'
 import type Database from 'better-sqlite3'
 import {
   PUBLIC_ADOPTIONS_PAGE_SIZE,
@@ -30,18 +35,12 @@ import type {
 import { PUBLIC_FEATURED_LIMIT } from '../../../shared/constants/featured'
 import { getDatabase } from '../database'
 import {
-  toPublicSourceSetDto,
   toSafePublicAlt,
 } from '../recipe/media-mapper'
-import type { VariantRecord } from '../recipe/media-mapper'
 import {
   getPublicCommissionHero,
   getPublicHome,
 } from '../runner/home-management'
-import {
-  PUBLIC_RECIPE_VERSIONS,
-  publicRecipeWidths,
-} from '../recipe/media-recipe'
 import { getRuntimeConfig } from '../runtime-config'
 import type { RuntimeConfig } from '../runtime-config'
 import { safeLog } from '../safe-log'
@@ -69,6 +68,10 @@ export interface PublicSiteRepository {
 }
 
 interface PublishedWorkRow {
+  imageCompositionVersion: number
+  showAdoptionCoverInDetail: number
+  showDesignSheetInDetail: number
+  adoptionCoverSource: 'auto' | 'adoption_cover' | 'design_sheet'
   adoptionStatus: 'available' | 'adopted' | null
   characterName: string
   featured: number
@@ -95,11 +98,13 @@ interface WorkMediaRow {
   workId: string
 }
 
-interface PublicVariantRow extends VariantRecord {
-  assetId: string
-}
-
 interface SnapshotEntry {
+  showAdoptionCoverInDetail: boolean
+  showDesignSheetInDetail: boolean
+  adoptionSourceAssetId?: string
+  adoptionCatalog: PublicWorkSummaryDto['card'] | null
+  homeAdoption: PublicWorkSummaryDto['card'] | null
+  featuredSummary: PublicWorkSummaryDto | null
   adoption: {
     cover: PublicWorkSummaryDto['card']
     priceCnyMinor: number | null
@@ -107,11 +112,7 @@ interface SnapshotEntry {
   } | null
   /** 卡片方向：竖版出厂照，或仅横版领养封面。 */
   cardOrientation: 'landscape' | 'portrait'
-  designSheet: {
-    alt: string
-    assetId: string
-    sources: PublicSourceSetDto
-  } | null
+  designSheet: PublicWorkSummaryDto['card'] | null
   featured: boolean
   hasPortraitStudioPhoto: boolean
   /** 只用于首页精选排序；公开列表按发布时间倒序，不看这个值。 */
@@ -125,6 +126,7 @@ interface SnapshotEntry {
     primary: number
     height: number
     sources: PublicSourceSetDto
+    thumbnailSources?: PublicSourceSetDto
     width: number
   }>
   summary: PublicWorkSummaryDto
@@ -141,40 +143,6 @@ function groupBy<T, K>(values: readonly T[], keyFor: (value: T) => K) {
   return grouped
 }
 
-function sourceSet(
-  variants: readonly PublicVariantRow[],
-  mediaBaseUrl: string,
-  usage: 'adoption-card' | 'design-sheet' | 'detail' | 'work-card',
-  appEnv: RuntimeConfig['appEnv'],
-) {
-  for (const recipeVersion of PUBLIC_RECIPE_VERSIONS) {
-    try {
-      const sources = toPublicSourceSetDto(
-        variants.filter(variant => (
-          variant.usage === usage
-          && variant.recipeVersion === recipeVersion
-        )),
-        mediaBaseUrl,
-        publicRecipeWidths(usage),
-        appEnv,
-      )
-      if (
-        usage === 'work-card'
-        && [...sources.webp, ...sources.fallback].some(variant => (
-          variant.height !== Math.round(variant.width * 4 / 3)
-        ))
-      ) {
-        continue
-      }
-      return sources
-    }
-    catch {
-      // A complete previous recipe remains visible until the current recipe is complete.
-    }
-  }
-  return null
-}
-
 /**
  * T35-F5：公开列表排序为「越新的越靠前」。
  *
@@ -186,6 +154,8 @@ function loadPublishedWorks(sqlite: Database.Database) {
   return sqlite.prepare(`
     SELECT
       id, version, slug, character_name AS characterName,
+      image_composition_version AS imageCompositionVersion, show_adoption_cover_in_detail AS showAdoptionCoverInDetail,
+      show_design_sheet_in_detail AS showDesignSheetInDetail, adoption_cover_source AS adoptionCoverSource,
       species, purpose, adoption_status AS adoptionStatus,
       price_amount_minor AS priceAmountMinor,
       price_currency AS priceCurrency,
@@ -219,42 +189,12 @@ function loadWorkMedia(sqlite: Database.Database) {
   `).all() as WorkMediaRow[]
 }
 
-function loadCurrentPublicVariants(sqlite: Database.Database) {
-  return sqlite.prepare(`
-    SELECT
-      variant.id, variant.asset_id AS assetId,
-      variant.byte_size AS byteSize,
-      variant.storage_scope AS storageScope,
-      variant.status, variant.object_key AS objectKey,
-      variant.width, variant.height, variant.format,
-      variant.input_sha256 AS inputSha256,
-      variant.internal_error_code AS internalErrorCode,
-      variant.media_role AS mediaRole,
-      variant.recipe_version AS recipeVersion,
-      variant.sha256, variant.usage
-    FROM asset_variants AS variant
-    WHERE variant.storage_scope = 'PUBLIC'
-      AND variant.status = 'READY'
-      AND variant.media_role IN ('adoption_cover', 'design_sheet', 'studio_photo')
-      AND variant.usage IN ('adoption-card', 'work-card', 'detail', 'design-sheet')
-      AND variant.recipe_version IN ('recipe-v4', 'recipe-v3', 'recipe-v2', 'recipe-v1')
-      AND length(variant.sha256) = 64
-      AND variant.sha256 NOT GLOB '*[^0-9a-f]*'
-      AND variant.byte_size > 0
-    ORDER BY variant.asset_id, variant.usage, variant.width, variant.format
-  `).all() as PublicVariantRow[]
-}
-
 function snapshot(
   sqlite: Database.Database,
   mediaBaseUrl: string,
   appEnv: RuntimeConfig['appEnv'],
 ): SnapshotEntry[] {
   const mediaByWork = groupBy(loadWorkMedia(sqlite), media => media.workId)
-  const variantsByAsset = groupBy(
-    loadCurrentPublicVariants(sqlite),
-    variant => variant.assetId,
-  )
   const entries: SnapshotEntry[] = []
 
   for (const row of loadPublishedWorks(sqlite)) {
@@ -272,112 +212,53 @@ function snapshot(
       continue
     }
     const media = mediaByWork.get(row.id) ?? []
-    const designSheet = media
-      .filter(item => item.role === 'design_sheet')
-      .flatMap((item) => {
-        const sources = sourceSet(
-          variantsByAsset.get(item.assetId) ?? [],
-          mediaBaseUrl,
-          'design-sheet',
-          appEnv,
-        )
-        return sources ? [{
-          assetId: item.assetId,
-          alt: toSafePublicAlt(
-            item.alt,
-            `${row.characterName}的完整设定图`,
-          ),
-          sources,
-        }] : []
-      })[0] ?? null
-    const photos = media
-      .filter(item => item.role === 'studio_photo')
-      .flatMap((photo) => {
-        const variants = variantsByAsset.get(photo.assetId) ?? []
-        const detail = sourceSet(variants, mediaBaseUrl, 'detail', appEnv)
-        if (!detail) {
-          return []
-        }
-        return [{
-          ...photo,
-          alt: toSafePublicAlt(
-            photo.alt,
-            `${row.characterName}的出厂照`,
-          ),
-          sources: detail,
-          card: sourceSet(variants, mediaBaseUrl, 'work-card', appEnv),
-        }]
-      })
-    const primary = photos.find(photo => photo.primary === 1 && photo.card)
-    const portrait = photos.find(photo => (
-      photo.primary === 1 && photo.height > photo.width && photo.card
-    )) ?? photos.find(photo => photo.height > photo.width && photo.card)
-    const coverMedia = media.find(item => item.role === 'adoption_cover')
-    const coverSources = coverMedia
-      ? sourceSet(
-          variantsByAsset.get(coverMedia.assetId) ?? [],
-          mediaBaseUrl,
-          'adoption-card',
-          appEnv,
-        )
-      : null
-    /*
-     * 封面缺失时以完整设定图代替：发布门禁允许二者存其一，
-     * /adoptions 卡片、首页当前领养与详情都沿这一回落。
-     */
-    const adoptionCover = coverMedia && coverSources
-      ? {
-          assetId: coverMedia.assetId,
-          alt: toSafePublicAlt(coverMedia.alt, `${row.characterName}的领养封面`),
-          sources: coverSources,
-        }
-      : designSheet
-    const adoption = row.purpose === 'adoption'
-      && row.adoptionStatus !== null
-      && adoptionCover
-      ? {
-          cover: adoptionCover,
-          priceCnyMinor: row.priceCurrency === 'CNY' ? row.priceAmountMinor : null,
-          status: row.adoptionStatus,
-        }
-      : null
-    /*
-     * 作品卡优先使用竖版出厂照（主图优先、其次按位置）；没有竖版时仍可用
-     * primary 出厂照生成的 3:4 卡片。只做了单头的领养作品最后回落到横版
-     * 领养封面或设定图；commission/showcase 缺少卡片时整条丢弃。
-     */
-    const cardPhoto = portrait ?? primary
-    const card = cardPhoto?.card
-      ? {
-          card: {
-            assetId: cardPhoto.assetId,
-            alt: cardPhoto.alt,
-            sources: cardPhoto.card,
-          },
-          orientation: 'portrait' as const,
-        }
-      : adoption
-        ? { card: adoption.cover, orientation: 'landscape' as const }
-        : null
-    if (!card || (row.purpose === 'adoption' && !adoption)) {
-      continue
+    const composed = Boolean(row.imageCompositionVersion)
+    const sources = (assetId: string, usage: PublicMediaUsage) => publicWorkAssetSources(sqlite, assetId, usage, mediaBaseUrl, appEnv)
+    const fit = (item: WorkMediaRow, usage: CompositionUsage) => resolveComposition(item.role, usage, item.width, item.height, assetCompositions(sqlite, item.assetId)).mode === 'contain' ? 'contain' as const : 'cover' as const
+    const cardFor = (item: WorkMediaRow | undefined, usage: PublicMediaUsage): PublicWorkSummaryDto['card'] | null => {
+      if (!item) return null
+      const output = sources(item.assetId, usage)
+      if (!output) return null
+      const thumbnail = composed ? sources(item.assetId, 'detail-thumbnail') : null
+      return { assetId: item.assetId, alt: toSafePublicAlt(item.alt, row.characterName + '的作品图片'), sources: output,
+        ...(thumbnail ? { thumbnailSources: thumbnail } : {}),
+        ...(composed && ['work-catalog', 'home-featured', 'adoption-catalog', 'home-adoption'].includes(usage) ? { fit: usage === 'adoption-catalog' || usage === 'home-adoption' ? 'contain' as const : fit(item, usage as CompositionUsage) } : {}) }
     }
+    const designMedia = media.find(item => item.role === 'design_sheet')
+    const coverMedia = media.find(item => item.role === 'adoption_cover')
+    const designSheet = cardFor(designMedia, 'design-sheet')
+    const coverDetail = cardFor(coverMedia, composed ? 'detail' : 'adoption-card')
+    const photos = media.filter(item => item.role === 'studio_photo').flatMap(photo => {
+      const detail = cardFor(photo, 'detail')
+      if (!detail) return []
+      return [{ ...photo, alt: detail.alt, sources: detail.sources,
+        ...(detail.thumbnailSources ? { thumbnailSources: detail.thumbnailSources } : {}),
+        card: sources(photo.assetId, composed ? 'work-catalog' : 'work-card') }]
+    })
+    const primary = photos.find(photo => photo.primary === 1 && photo.card)
+    const portrait = photos.find(photo => photo.primary === 1 && photo.height > photo.width && photo.card)
+      ?? photos.find(photo => photo.height > photo.width && photo.card)
+    const cardPhoto = portrait ?? primary
+    const fallback = coverDetail ?? designSheet
+    const adoption = row.purpose === 'adoption' && row.adoptionStatus !== null && fallback
+      ? { cover: fallback, priceCnyMinor: row.priceCurrency === 'CNY' ? row.priceAmountMinor : null, status: row.adoptionStatus } : null
+    const card = cardPhoto ? cardFor(cardPhoto, composed ? 'work-catalog' : 'work-card')
+      : adoption ? (composed ? cardFor(coverDetail ? coverMedia : designMedia, 'work-catalog') : fallback) : null
+    if (!card || (row.purpose === 'adoption' && !adoption)) continue
+    const orientation = cardPhoto ? 'portrait' as const : 'landscape' as const
+    const summary = publicWorkSummaryDtoSchema.parse({ work: facts, href: `/works/${row.slug}`, card, cardOrientation: orientation })
+    const selected = row.adoptionCoverSource === 'adoption_cover' ? coverMedia
+      : row.adoptionCoverSource === 'design_sheet' ? designMedia : designSheet ? designMedia : coverMedia
+    const selectedLegacy = selected?.role === 'design_sheet' ? designSheet : coverDetail
+    const featuredCard = cardPhoto ? cardFor(cardPhoto, composed ? 'home-featured' : 'work-card') : null
     entries.push({
-      adoption,
-      cardOrientation: card.orientation,
-      featured: row.featured === 1,
-      hasPortraitStudioPhoto: portrait !== undefined,
-      designSheet,
-      id: row.id,
-      sortOrder: row.sortOrder,
-      summary: publicWorkSummaryDtoSchema.parse({
-        work: facts,
-        href: `/works/${row.slug}`,
-        card: card.card,
-        cardOrientation: card.orientation,
-      }),
-      studioPhotos: photos,
-      updatedAt: row.updatedAt,
+      adoption, cardOrientation: orientation, featured: row.featured === 1, hasPortraitStudioPhoto: portrait !== undefined,
+      designSheet, id: row.id, sortOrder: row.sortOrder, summary, studioPhotos: photos, updatedAt: row.updatedAt,
+      showAdoptionCoverInDetail: Boolean(row.showAdoptionCoverInDetail), showDesignSheetInDetail: Boolean(row.showDesignSheetInDetail),
+      ...(selected ? { adoptionSourceAssetId: selected.assetId } : {}),
+      adoptionCatalog: composed ? cardFor(selected, 'adoption-catalog') : selectedLegacy,
+      homeAdoption: composed ? cardFor(selected, 'home-adoption') : selectedLegacy,
+      featuredSummary: featuredCard ? { ...summary, card: featuredCard } : null,
     })
   }
 
@@ -440,9 +321,9 @@ function homeAggregate(
   let adoptionsAvailable = true
   try {
     const entriesSnapshot = snapshot(sqlite, mediaBaseUrl, appEnv)
-    featured = featuredEntries(entriesSnapshot).map(entry => entry.summary)
+    featured = featuredEntries(entriesSnapshot).map(entry => entry.featuredSummary!)
     // 首页与目录共用同一个领养 comparator；最多投影最新三件开放领养。
-    currentAdoptions = adoptionItems(entriesSnapshot)
+    currentAdoptions = adoptionItems(entriesSnapshot, 'home')
       .filter(item => item.work.adoptionStatus === 'available')
       .slice(0, 3)
   }
@@ -471,17 +352,17 @@ function homeAggregate(
  */
 function featuredEntries(entries: readonly SnapshotEntry[]) {
   return entries
-    .filter(entry => entry.featured && entry.hasPortraitStudioPhoto)
+    .filter(entry => entry.featured && entry.hasPortraitStudioPhoto && entry.featuredSummary)
     .toSorted((left, right) => (
       left.sortOrder - right.sortOrder || (left.id < right.id ? -1 : 1)
     ))
     .slice(0, PUBLIC_FEATURED_LIMIT)
 }
 
-function adoptionItems(entries: readonly SnapshotEntry[]) {
+function adoptionItems(entries: readonly SnapshotEntry[], placement: 'catalog' | 'home' = 'catalog') {
   return entries
     .filter((entry): entry is SnapshotEntry & { adoption: NonNullable<SnapshotEntry['adoption']> } => (
-      entry.adoption?.status === 'available'
+      entry.adoption?.status === 'available' && Boolean(placement === 'home' ? entry.homeAdoption : entry.adoptionCatalog)
     ))
     .toSorted(comparePublicAdoptions)
     .map((entry): PublicAdoptionListItemDto => publicAdoptionListItemDtoSchema.parse({
@@ -502,7 +383,7 @@ function adoptionItems(entries: readonly SnapshotEntry[]) {
        * 公开领养列表与首页优先展示完整设定图，避免横版封面裁掉角色设定内容。
        * 尚未配置设定图的旧内容继续回退到独立领养封面。
        */
-      cover: entry.designSheet ?? entry.adoption.cover,
+      cover: (placement === 'home' ? entry.homeAdoption : entry.adoptionCatalog)!,
     }))
 }
 
@@ -581,6 +462,7 @@ export function createSqlitePublicSiteRepository(
         alt: photo.alt,
         position: photo.position,
         sources: photo.sources,
+        ...(photo.thumbnailSources ? { thumbnailSources: photo.thumbnailSources } : {}),
       }))
       return publicWorkDetailDtoSchema.parse({
         work: match.summary.work,
@@ -602,15 +484,16 @@ export function createSqlitePublicSiteRepository(
           : {}),
         media: {
           primaryAssetId,
+          ...(match.adoptionSourceAssetId ? { adoptionSourceAssetId: match.adoptionSourceAssetId } : {}),
           card: match.summary.card,
           cardOrientation: match.cardOrientation,
           // 领养作品详情必须能看到横版封面，只做了单头时它是唯一的成果图；
           // 封面回落为设定图时不再重复进图集，设定图分区已展示同一张。
-          ...(match.adoption && match.adoption.cover.assetId !== match.designSheet?.assetId
+          ...(match.showAdoptionCoverInDetail && match.adoption && match.adoption.cover.assetId !== match.designSheet?.assetId
             ? { adoptionCover: match.adoption.cover }
             : {}),
           gallery,
-          ...(match.designSheet
+          ...(match.showDesignSheetInDetail && match.designSheet
             ? { designSheet: match.designSheet }
             : {}),
         },
@@ -653,7 +536,7 @@ export function createSqlitePublicSiteRepository(
 
     listFeaturedWorks() {
       const items = featuredEntries(snapshot(sqlite, mediaBaseUrl, appEnv))
-        .map(entry => entry.summary)
+        .map(entry => entry.featuredSummary!)
       return publicFeaturedWorksDtoSchema.parse({
         items,
         resultCount: items.length,

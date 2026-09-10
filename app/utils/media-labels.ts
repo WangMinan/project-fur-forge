@@ -48,6 +48,9 @@ export const ASSET_STATUS_LABELS: Record<AssetStatus, string> = {
 }
 
 export const PUBLICATION_BLOCKER_LABELS: Record<PublicationBlocker, string> = {
+  IMAGE_COMPOSITION_INVALID: '图片构图无效或选区过小，请调整构图后再发布',
+  DETAIL_GALLERY_EMPTY: '详情图集至少保留一张可展示图片',
+  ADOPTION_SOURCE_UNAVAILABLE: '指定的领养封面来源不可用',
   WORK_FIELDS_INVALID: '基础信息不完整，请检查必填字段',
   ADOPTION_STATUS_REQUIRED: '领养状态需要由负责人人工确认',
   ADOPTION_COVER_NOT_READY: '领养横版封面尚未完成服务端校验',

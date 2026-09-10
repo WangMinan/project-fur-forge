@@ -252,6 +252,7 @@ onBeforeUnmount(() => {
           <span :key="activeWork.work.slug" class="featured-works__media-surface">
             <ResponsivePicture
               :sources="activeWork.card.sources"
+              :style="{ '--featured-fit': activeWork.card.fit ?? 'cover' }"
               :alt="activeWork.card.alt"
               loading="eager"
               fetchpriority="high"
@@ -456,7 +457,7 @@ onBeforeUnmount(() => {
 
 .featured-works__media-surface :deep(.responsive-picture__image) {
   border-radius: var(--radius-image);
-  object-fit: cover;
+  object-fit: var(--featured-fit, cover);
 }
 
 .featured-media-next-enter-active,
