@@ -16,6 +16,12 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/aliyun/nodejs-credentials#readme
 
+@alicloud/credentials@2.4.7
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/aliyun/nodejs-credentials#readme
+
 @alicloud/darabonba-array@0.1.2
 License: ISC
 Source class: pnpm-prod
@@ -52,7 +58,7 @@ License: Apache-2.0
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 
-@alicloud/esa20240910@3.13.0
+@alicloud/esa20240910@3.14.1
 License: Apache-2.0
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -108,13 +114,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://babel.dev/docs/en/next/babel-core
 
-@babel/generator@7.29.7
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://babel.dev/docs/en/next/babel-generator
-
-@babel/generator@8.0.0
+@babel/generator@7.29.8
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -192,19 +192,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://babel.dev/docs/en/next/babel-helper-string-parser
 
-@babel/helper-string-parser@8.0.0
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://babel.dev/docs/en/next/babel-helper-string-parser
-
 @babel/helper-validator-identifier@7.29.7
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://github.com/babel/babel#readme
-
-@babel/helper-validator-identifier@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -222,19 +210,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://babel.dev/docs/en/next/babel-helpers
 
-@babel/parser@7.29.7
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://babel.dev/docs/en/next/babel-parser
-
 @babel/parser@7.29.8
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://babel.dev/docs/en/next/babel-parser
-
-@babel/parser@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -264,25 +240,13 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://babel.dev/docs/en/next/babel-template
 
-@babel/traverse@7.29.7
+@babel/traverse@7.29.8
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://babel.dev/docs/en/next/babel-traverse
 
-@babel/types@7.29.7
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://babel.dev/docs/en/next/babel-types
-
 @babel/types@7.29.8
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://babel.dev/docs/en/next/babel-types
-
-@babel/types@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -294,13 +258,25 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/bombshell-dev/tab#readme
 
-@clack/core@1.4.3
+@cacheable/memory@2.2.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/jaredwray/cacheable#readme
+
+@cacheable/utils@2.5.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/jaredwray/cacheable#readme
+
+@clack/core@1.5.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/bombshell-dev/clack/tree/main/packages/core#readme
 
-@clack/prompts@1.7.0
+@clack/prompts@1.8.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -312,7 +288,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cloudflare/workers-sdk#readme
 
-@colordx/core@5.5.0
+@colordx/core@5.8.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -408,7 +384,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/devframes/devframe#readme
 
-@dxup/nuxt@0.5.5
+@dxup/nuxt@0.5.10
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -420,7 +396,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/KazariEX/dxup#readme
 
-@esbuild/linux-x64@0.28.1
+@esbuild/linux-x64@0.28.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -462,7 +438,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/eslint/rewrite/tree/main/packages/object-schema#readme
 
-@eslint/plugin-kit@0.7.2
+@eslint/plugin-kit@0.7.3
 License: Apache-2.0
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -516,7 +492,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/npm/fs-minipass#readme
 
-@jridgewell/gen-mapping@0.3.13
+@jridgewell/gen-mapping@0.3.12
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -540,7 +516,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/jridgewell/sourcemaps/tree/main/packages/source-map
 
-@jridgewell/sourcemap-codec@1.5.5
+@jridgewell/sourcemap-codec@1.6.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -558,6 +534,18 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://json-render.dev
 
+@keyv/bigmap@1.3.1
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/jaredwray/keyv
+
+@keyv/serialize@1.1.1
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/jaredwray/keyv
+
 @kwsites/file-exists@1.1.1
 License: MIT
 Source class: pnpm-prod
@@ -570,11 +558,17 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/kwsites/promise-deferred#readme
 
-@mapbox/node-pre-gyp@2.0.3
+@mapbox/node-pre-gyp@2.0.0
 License: BSD-3-Clause
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/mapbox/node-pre-gyp#readme
+
+@napi-rs/lzma-linux-x64-gnu@1.5.1
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/Brooooooklyn/lzma#readme
 
 @nodelib/fs.scandir@2.1.5
 License: MIT
@@ -606,49 +600,49 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/nuxt/devalue#readme
 
-@nuxt/devtools@3.3.1
+@nuxt/devtools@3.4.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://devtools.nuxt.com
 
-@nuxt/devtools-kit@3.3.1
+@nuxt/devtools-kit@3.4.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://devtools.nuxt.com/module/utils-kit
 
-@nuxt/devtools-wizard@3.3.1
+@nuxt/devtools-wizard@3.4.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://devtools.nuxt.com
 
-@nuxt/kit@4.5.1
+@nuxt/kit@4.5.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://nuxt.com/docs/4.x/api/kit
 
-@nuxt/nitro-server@4.5.1
+@nuxt/nitro-server@4.5.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://nuxt.com
 
-@nuxt/schema@4.5.1
+@nuxt/schema@4.5.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://nuxt.com
 
-@nuxt/telemetry@2.8.0
+@nuxt/telemetry@2.9.1
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/nuxt/telemetry#readme
 
-@nuxt/vite-builder@4.5.1
+@nuxt/vite-builder@4.5.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -660,13 +654,13 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://oxc.rs/docs/guide/usage/parser
 
-@oxc-project/types@0.139.0
+@oxc-project/types@0.140.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://oxc.rs
 
-@oxc-project/types@0.140.0
+@oxc-project/types@0.148.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -744,19 +738,13 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/poppinss/string#readme
 
-@poppinss/utils@6.10.1
+@poppinss/utils@6.9.3
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/poppinss/utils#readme
 
-@rolldown/binding-linux-x64-gnu@1.1.5
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://rolldown.rs/
-
-@rolldown/binding-linux-x64-gnu@1.2.0
+@rolldown/binding-linux-x64-gnu@1.2.7
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -816,7 +804,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/rollup/plugins/tree/master/packages/pluginutils#readme
 
-@rollup/rollup-linux-x64-gnu@4.62.3
+@rollup/rollup-linux-x64-gnu@4.63.1
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -846,7 +834,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/sindresorhus/merge-streams#readme
 
-@speed-highlight/core@1.2.17
+@speed-highlight/core@1.2.24
 License: CC0-1.0
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -875,12 +863,6 @@ License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/estree
-
-@types/jsesc@2.5.1
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://github.com/DefinitelyTyped/DefinitelyTyped#readme
 
 @types/json-schema@7.0.15
 License: MIT
@@ -930,13 +912,13 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/resolve
 
-@unhead/bundler@3.2.3
+@unhead/bundler@3.4.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://unhead.unjs.io
 
-@unhead/vue@3.2.3
+@unhead/vue@3.4.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -948,7 +930,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://valibot.dev
 
-@vercel/nft@1.10.2
+@vercel/nft@1.11.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1014,37 +996,25 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/vuejs/babel-plugin-jsx/tree/dev/packages/babel-plugin-resolve-type#readme
 
-@vue/compiler-core@3.5.40
+@vue/compiler-core@3.5.42
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/vuejs/core/tree/main/packages/compiler-core#readme
 
-@vue/compiler-core@3.5.41
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://github.com/vuejs/core/tree/main/packages/compiler-core#readme
-
-@vue/compiler-dom@3.5.40
+@vue/compiler-dom@3.5.42
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/vuejs/core/tree/main/packages/compiler-dom#readme
 
-@vue/compiler-dom@3.5.41
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://github.com/vuejs/core/tree/main/packages/compiler-dom#readme
-
-@vue/compiler-sfc@3.5.40
+@vue/compiler-sfc@3.5.42
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/vuejs/core/tree/main/packages/compiler-sfc#readme
 
-@vue/compiler-ssr@3.5.40
+@vue/compiler-ssr@3.5.42
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1074,43 +1044,37 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/vuejs/devtools#readme
 
-@vue/language-core@3.3.9
+@vue/language-core@3.3.11
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/vuejs/language-tools#readme
 
-@vue/reactivity@3.5.40
+@vue/reactivity@3.5.42
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/vuejs/core/tree/main/packages/reactivity#readme
 
-@vue/runtime-core@3.5.40
+@vue/runtime-core@3.5.42
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/vuejs/core/tree/main/packages/runtime-core#readme
 
-@vue/runtime-dom@3.5.40
+@vue/runtime-dom@3.5.42
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/vuejs/core/tree/main/packages/runtime-dom#readme
 
-@vue/server-renderer@3.5.40
+@vue/server-renderer@3.5.42
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/vuejs/core/tree/main/packages/server-renderer#readme
 
-@vue/shared@3.5.40
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://github.com/vuejs/core/tree/main/packages/shared#readme
-
-@vue/shared@3.5.41
+@vue/shared@3.5.42
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1148,7 +1112,7 @@ Homepage: https://font.leminet.cn/#/
 Artifact SHA-256: 446165deb991a90bffd5e031e559ced892c5923e7d567490eaad5cdd99eb0be3
 Notice: 由仓库内 ZhuoHei Collage 字体派生；来源页面声明可免费商用。
 
-abbrev@3.0.1
+abbrev@2.0.0
 License: ISC
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1184,13 +1148,19 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/node-modules/address#readme
 
+agent-base@6.0.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/TooTallNate/proxy-agents#readme
+
 agent-base@6.0.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/TooTallNate/proxy-agents#readme
 
-agent-base@7.1.4
+agent-base@7.0.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1220,19 +1190,31 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/stackblitz/alien-signals#readme
 
+ansi-regex@5.0.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/chalk/ansi-regex#readme
+
 ansi-regex@5.0.1
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/chalk/ansi-regex#readme
 
-ansi-regex@6.2.2
+ansi-regex@6.3.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/chalk/ansi-regex#readme
 
-ansi-styles@4.3.0
+ansi-styles@4.0.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/chalk/ansi-styles#readme
+
+ansi-styles@6.1.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1274,6 +1256,12 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/archiverjs/archiver-utils#readme
 
+ast-kit@2.1.2
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/sxzz/ast-kit#readme
+
 ast-kit@2.2.0
 License: MIT
 Source class: pnpm-prod
@@ -1298,7 +1286,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/vercel/async-sema
 
-autoprefixer@10.5.4
+autoprefixer@10.5.5
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1310,7 +1298,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/holepunchto/b4a#readme
 
-balanced-match@1.0.2
+balanced-match@1.0.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1322,31 +1310,31 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/juliangruber/balanced-match#readme
 
-bare-events@2.9.1
+bare-events@2.9.2
 License: Apache-2.0
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/holepunchto/bare-events#readme
 
-bare-fs@4.7.4
+bare-fs@4.8.1
 License: Apache-2.0
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/holepunchto/bare-fs#readme
 
-bare-path@3.1.1
+bare-path@3.1.2
 License: Apache-2.0
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/holepunchto/bare-path#readme
 
-bare-stream@2.13.3
+bare-stream@2.13.4
 License: Apache-2.0
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/holepunchto/bare-stream#readme
 
-bare-url@2.4.6
+bare-url@2.5.4
 License: Apache-2.0
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1358,13 +1346,13 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/beatgammit/base64-js
 
-baseline-browser-mapping@2.11.5
+baseline-browser-mapping@2.11.21
 License: Apache-2.0
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/web-platform-dx/baseline-browser-mapping#readme
 
-better-sqlite3@13.0.2
+better-sqlite3@13.0.3
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1376,13 +1364,13 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/TooTallNate/node-bindings
 
-birpc@2.9.0
+birpc@2.6.1
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/antfu-collective/birpc#readme
 
-birpc@4.0.0
+birpc@4.2.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1400,13 +1388,13 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/lancedikson/bowser
 
-brace-expansion@2.1.3
+brace-expansion@2.1.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/juliangruber/brace-expansion#readme
 
-brace-expansion@5.0.8
+brace-expansion@5.0.9
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1418,7 +1406,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/micromatch/braces
 
-browserslist@4.28.7
+browserslist@4.28.9
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1466,6 +1454,12 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cacjs/cac#readme
 
+cacheable@2.5.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/jaredwray/cacheable#readme
+
 call-bind-apply-helpers@1.0.2
 License: MIT
 Source class: pnpm-prod
@@ -1484,7 +1478,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/MoOx/caniuse-api#readme
 
-caniuse-lite@1.0.30001806
+caniuse-lite@1.0.30001810
 License: CC-BY-4.0
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1598,6 +1592,12 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/unjs/confbox#readme
 
+confbox@0.3.1
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/unjs/confbox#readme
+
 consola@3.4.2
 License: MIT
 Source class: pnpm-prod
@@ -1682,19 +1682,19 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://crossws.h3.dev
 
-crossws@0.4.10
+crossws@0.4.12
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://crossws.h3.dev
 
-css-select@5.2.2
+css-select@6.0.0
 License: BSD-2-Clause
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/fb55/css-select#readme
 
-css-tree@2.2.1
+css-tree@2.2.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1706,7 +1706,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/csstree/csstree#readme
 
-css-what@6.2.2
+css-what@7.0.0
 License: BSD-2-Clause
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1718,19 +1718,19 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://mths.be/cssesc
 
-cssnano@8.0.2
+cssnano@8.0.10
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-cssnano-preset-default@8.0.2
+cssnano-preset-default@8.0.10
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-cssnano-utils@6.0.1
+cssnano-utils@6.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1778,7 +1778,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/TehShrike/deepmerge
 
-default-browser@5.5.0
+default-browser@5.5.1
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1838,7 +1838,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/lovell/detect-libc#readme
 
-devalue@5.8.2
+devalue@5.9.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1873,6 +1873,12 @@ License: BSD-2-Clause
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/fb55/domelementtype#readme
+
+domhandler@5.0.2
+License: BSD-2-Clause
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/fb55/domhandler#readme
 
 domhandler@5.0.3
 License: BSD-2-Clause
@@ -1928,7 +1934,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/jonathanong/ee-first#readme
 
-electron-to-chromium@1.5.397
+electron-to-chromium@1.5.425
 License: ISC
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1970,7 +1976,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/stream-utils/end-or-error
 
-entities@4.5.0
+entities@4.2.0
 License: BSD-2-Clause
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -1992,7 +1998,13 @@ error-stack-parser-es@1.0.5
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://github.com/antfu/error-stack-parser-es#readme
+Homepage: https://github.com/antfu-collective/error-stack-parser-es#readme
+
+error-stack-parser-es@2.0.1
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/antfu-collective/error-stack-parser-es#readme
 
 errx@0.1.2
 License: MIT
@@ -2012,7 +2024,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/ljharb/es-errors#readme
 
-es-module-lexer@2.3.1
+es-module-lexer@2.3.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2024,7 +2036,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/ljharb/es-object-atoms#readme
 
-esbuild@0.28.1
+esbuild@0.28.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2054,7 +2066,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/sindresorhus/escape-string-regexp#readme
 
-eslint@10.8.0
+eslint@10.10.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2192,7 +2204,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/hiddentao/fast-levenshtein#readme
 
-fast-npm-meta@1.5.1
+fast-npm-meta@2.2.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2216,7 +2228,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/43081j/fast-wrap-ansi#readme
 
-fastq@1.20.1
+fastq@1.20.3
 License: ISC
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2234,11 +2246,11 @@ Source class: pnpm-prod
 Usage: Platform-specific FFmpeg executable provider npm package; separate from the Linux release-image binary registry.
 Homepage: https://github.com/eugeneware/ffmpeg-static#readme
 
-file-entry-cache@8.0.0
+file-entry-cache@11.1.5
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://github.com/jaredwray/file-entry-cache#readme
+Homepage: https://github.com/jaredwray/cacheable#readme
 
 file-uri-to-path@1.0.0
 License: MIT
@@ -2258,13 +2270,13 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/sindresorhus/find-up#readme
 
-flat-cache@4.0.1
+flat-cache@6.1.23
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://github.com/jaredwray/flat-cache#readme
+Homepage: https://github.com/jaredwray/cacheable#readme
 
-flatted@3.4.3
+flatted@3.4.4
 License: ISC
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2282,7 +2294,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/danielroe/fnv1a-64#readme
 
-foreground-child@3.3.1
+foreground-child@3.1.0
 License: ISC
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2384,7 +2396,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/unjs/giget#readme
 
-glob@10.4.5
+glob@10.5.0
 License: ISC
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2414,7 +2426,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/sindresorhus/global-directory#readme
 
-globby@16.2.2
+globby@16.2.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2444,7 +2456,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://h3.dev
 
-h3@2.0.1-rc.26
+h3@2.0.1-rc.31
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2455,6 +2467,12 @@ License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/ljharb/has-symbols#readme
+
+hashery@1.5.1
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/jaredwray/hashery#readme
 
 hasown@2.0.4
 License: MIT
@@ -2473,6 +2491,18 @@ License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/unjs/hookable#readme
+
+hookified@1.15.1
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/jaredwray/hookified#readme
+
+hookified@2.2.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/jaredwray/hookified#readme
 
 http-errors@2.0.1
 License: MIT
@@ -2504,7 +2534,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/TooTallNate/proxy-agents#readme
 
-https-proxy-agent@7.0.6
+https-proxy-agent@7.0.5
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2546,13 +2576,13 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/feross/ieee754#readme
 
-ignore@5.3.2
+ignore@5.2.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/kaelzhang/node-ignore#readme
 
-ignore@7.0.6
+ignore@7.0.9
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2564,7 +2594,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/unjs/image-meta#readme
 
-impound@1.1.6
+impound@1.2.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2600,7 +2630,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/luin/ioredis#readme
 
-ip-address@10.4.0
+ip-address@10.7.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2643,6 +2673,12 @@ Usage: Installed production dependency in the generator environment snapshot; pl
 Homepage: https://github.com/jonschlinkert/is-extglob
 
 is-fullwidth-code-point@3.0.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/sindresorhus/is-fullwidth-code-point#readme
+
+is-fullwidth-code-point@4.0.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2744,7 +2780,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/rvagg/isstream
 
-jackspeak@3.4.3
+jackspeak@3.1.2
 License: BlueOak-1.0.0
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2756,7 +2792,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/unjs/jiti#readme
 
-jose@6.2.5
+jose@6.2.12
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2780,23 +2816,11 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/lydell/js-tokens#readme
 
-js-tokens@9.0.1
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://github.com/lydell/js-tokens#readme
-
 jsesc@3.1.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://mths.be/jsesc
-
-json-buffer@3.0.1
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://github.com/dominictarr/json-buffer
 
 json-schema-traverse@0.4.1
 License: MIT
@@ -2828,7 +2852,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: http://github.com/davidcalhoun/jstoxml
 
-keyv@4.5.4
+keyv@5.6.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2924,7 +2948,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://lodash.com/
 
-lru-cache@10.4.3
+lru-cache@10.2.0
 License: ISC
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -2942,11 +2966,11 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/isaacs/node-lru-cache#readme
 
-magic-regexp@0.11.0
+magic-string@0.30.17
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://regexp.dev
+Homepage: https://github.com/Rich-Harris/magic-string#readme
 
 magic-string@0.30.21
 License: MIT
@@ -2954,19 +2978,25 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/Rich-Harris/magic-string#readme
 
-magic-string@1.1.0
+magic-string@0.30.3
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/Rich-Harris/magic-string#readme
 
-magic-string-ast@1.0.3
+magic-string@1.2.3
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/Rich-Harris/magic-string#readme
+
+magic-string-ast@1.0.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/sxzz/magic-string-ast#readme
 
-magicast@0.5.3
+magicast@0.5.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -3134,7 +3164,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/normalize/mz#readme
 
-nanoid@3.3.16
+nanoid@3.3.18
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -3158,7 +3188,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/nitrojs/nitro#readme
 
-node-addon-api@8.9.0
+node-addon-api@8.9.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -3200,19 +3230,19 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/unjs/node-mock-http#readme
 
-node-releases@2.0.51
+node-releases@2.0.54
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/chicoxyzzy/node-releases#readme
 
-nodemailer@10.0.0
+nodemailer@10.0.1
 License: MIT-0
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://nodemailer.com/
 
-nopt@8.1.0
+nopt@8.0.0
 License: ISC
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -3248,25 +3278,25 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/fb55/nth-check
 
-nuxt@4.5.1
+nuxt@4.5.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://nuxt.com
 
-nuxt-auth-utils@0.5.29
+nuxt-auth-utils@0.5.30
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/atinux/nuxt-auth-utils#readme
 
-nypm@0.6.9
+nypm@0.6.10
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/unjs/nypm#readme
 
-oauth4webapi@3.8.6
+oauth4webapi@3.8.8
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -3290,7 +3320,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/inspect-js/object-inspect
 
-obug@2.1.4
+obug@2.2.1
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -3302,13 +3332,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/unjs/ofetch#readme
 
-ofetch@2.0.0-alpha.3
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://github.com/unjs/ofetch#readme
-
-ohash@2.0.11
+ohash@2.0.12
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -3338,13 +3362,13 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/sindresorhus/onetime#readme
 
-open@11.0.0
+open@11.0.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/sindresorhus/open#readme
 
-openid-client@6.8.4
+openid-client@6.8.8
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -3374,13 +3398,13 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://oxc.rs/docs/guide/usage/parser
 
-oxc-walker@1.0.0
+oxc-walker@1.1.1
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/oxc-project/oxc-walker#readme
 
-p-limit@3.1.0
+p-limit@3.0.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -3391,6 +3415,12 @@ License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/sindresorhus/p-locate#readme
+
+p-try@2.2.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/sindresorhus/p-try#readme
 
 package-json-from-dist@1.0.1
 License: BlueOak-1.0.0
@@ -3500,7 +3530,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/micromatch/picomatch
 
-picomatch@4.0.5
+picomatch@4.0.7
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -3512,7 +3542,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/unjs/pkg-types#readme
 
-pkg-types@2.3.1
+pkg-types@2.3.3
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -3530,7 +3560,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/blakeembrey/pluralize#readme
 
-postcss@8.5.24
+postcss@8.5.28
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -3542,163 +3572,163 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/postcss/postcss-calc
 
-postcss-colormin@8.0.1
+postcss-colormin@8.0.5
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-convert-values@8.0.1
+postcss-convert-values@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-discard-comments@8.0.1
+postcss-discard-comments@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-discard-duplicates@8.0.1
+postcss-discard-duplicates@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-discard-empty@8.0.1
+postcss-discard-empty@8.0.5
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-discard-overridden@8.0.1
+postcss-discard-overridden@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-merge-longhand@8.0.1
+postcss-merge-longhand@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-merge-rules@8.0.1
+postcss-merge-rules@8.0.5
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-minify-font-values@8.0.1
+postcss-minify-font-values@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-minify-gradients@8.0.1
+postcss-minify-gradients@8.0.6
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-minify-params@8.0.1
+postcss-minify-params@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-minify-selectors@8.0.2
+postcss-minify-selectors@8.0.5
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-normalize-charset@8.0.1
+postcss-normalize-charset@8.0.5
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-normalize-display-values@8.0.1
+postcss-normalize-display-values@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-normalize-positions@8.0.1
+postcss-normalize-positions@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-normalize-repeat-style@8.0.1
+postcss-normalize-repeat-style@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-normalize-string@8.0.1
+postcss-normalize-string@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-normalize-timing-functions@8.0.1
+postcss-normalize-timing-functions@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-normalize-unicode@8.0.1
+postcss-normalize-unicode@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-normalize-url@8.0.1
+postcss-normalize-url@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-normalize-whitespace@8.0.1
+postcss-normalize-whitespace@8.0.5
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-ordered-values@8.0.1
+postcss-ordered-values@8.0.5
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-reduce-initial@8.0.1
+postcss-reduce-initial@8.0.5
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-reduce-transforms@8.0.1
+postcss-reduce-transforms@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-selector-parser@7.1.4
+postcss-selector-parser@7.1.6
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/postcss/postcss-selector-parser
 
-postcss-svgo@8.0.1
+postcss-svgo@8.0.6
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
 
-postcss-unique-selectors@8.0.1
+postcss-unique-selectors@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -3716,13 +3746,19 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/sindresorhus/powershell-utils#readme
 
+powershell-utils@0.2.1
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/sindresorhus/powershell-utils#readme
+
 prelude-ls@1.2.1
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: http://preludels.com
 
-pretty-bytes@7.1.1
+pretty-bytes@7.1.3
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -3764,6 +3800,12 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://mths.be/punycode
 
+qified@0.10.1
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/jaredwray/qified#readme
+
 qs@6.15.3
 License: BSD-3-Clause
 Source class: pnpm-prod
@@ -3794,7 +3836,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/jshttp/range-parser#readme
 
-rc9@3.0.1
+rc9@3.1.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -3818,13 +3860,13 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/nodejs/readable-stream
 
-readdir-glob@1.1.3
+readdir-glob@1.1.2
 License: Apache-2.0
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/Yqnn/node-readdir-glob
 
-readdirp@5.0.0
+readdirp@5.1.1
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -3841,12 +3883,6 @@ License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/NodeRedis/node-redis-parser#readme
-
-regexp-tree@0.1.27
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://github.com/DmitrySoshnikov/regexp-tree
 
 resolve@1.22.12
 License: MIT
@@ -3872,13 +3908,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/mcollina/reusify#readme
 
-rolldown@1.1.5
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://rolldown.rs/
-
-rolldown@1.2.0
+rolldown@1.2.7
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -3890,19 +3920,19 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/sxzz/rolldown-string#readme
 
-rollup@4.62.3
+rollup@4.63.1
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://rollupjs.org/
 
-rollup-plugin-visualizer@7.0.1
+rollup-plugin-visualizer@7.1.1
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/btd/rollup-plugin-visualizer
 
-rou3@0.9.1
+rou3@0.9.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -3992,13 +4022,13 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/pillarjs/send#readme
 
-serialize-javascript@7.0.7
+serialize-javascript@7.1.1
 License: BSD-3-Clause
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/yahoo/serialize-javascript
 
-seroval@1.5.6
+seroval@1.6.7
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -4124,7 +4154,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/Tada5hi/smob#readme
 
-socks@2.8.9
+socks@2.8.10
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -4148,6 +4178,12 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/mozilla/source-map
 
+source-map@0.8.0
+License: BSD-3-Clause
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/mozilla/source-map
+
 source-map-js@1.2.1
 License: BSD-3-Clause
 Source class: pnpm-prod
@@ -4166,7 +4202,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://srvx.h3.dev
 
-srvx@0.12.4
+srvx@1.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -4208,13 +4244,19 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/node-modules/stream-wormhole
 
-streamx@2.28.0
+streamx@2.28.1
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/mafintosh/streamx
 
-string-width@4.2.3
+string-width@4.2.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/sindresorhus/string-width#readme
+
+string-width@5.0.1
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -4250,6 +4292,12 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/nodejs/string_decoder
 
+strip-ansi@6.0.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/chalk/strip-ansi#readme
+
 strip-ansi@6.0.1
 License: MIT
 Source class: pnpm-prod
@@ -4268,23 +4316,29 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/sindresorhus/strip-final-newline#readme
 
-strip-literal@3.1.0
+strip-literal@4.0.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/antfu/strip-literal#readme
 
-structured-clone-es@2.0.0
+structured-clone-es@2.0.1
 License: ISC
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/antfu-collective/structured-clone-es#readme
 
-stylehacks@8.0.1
+stylehacks@8.0.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/cssnano/cssnano
+
+supports-color@10.0.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/chalk/supports-color#readme
 
 supports-color@10.2.2
 License: MIT
@@ -4298,7 +4352,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/inspect-js/node-supports-preserve-symlinks-flag#readme
 
-svgo@4.0.2
+svgo@4.1.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -4316,7 +4370,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/isaacs/node-tar#readme
 
-tar-stream@3.2.0
+tar-stream@3.2.1
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -4328,7 +4382,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/mafintosh/teex
 
-terser@5.49.0
+terser@5.51.2
 License: BSD-2-Clause
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -4370,7 +4424,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/tinylibs/tinyclip#readme
 
-tinyexec@1.2.4
+tinyexec@1.3.1
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -4418,7 +4472,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://www.typescriptlang.org/
 
-tsx@4.23.5
+tsx@4.23.13
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -4430,17 +4484,11 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/gkz/type-check
 
-type-fest@5.8.0
+type-fest@5.9.0
 License: (MIT OR CC0-1.0)
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/sindresorhus/type-fest#readme
-
-type-level-regexp@0.1.17
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://github.com/didavid61202/type-level-regexp#readme
 
 typedarray@0.0.6
 License: MIT
@@ -4478,13 +4526,13 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/unjs/unctx#readme
 
-unctx@3.0.0
+unctx@3.0.1
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/unjs/unctx#readme
 
-undici@8.9.0
+undici@8.10.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -4514,7 +4562,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/jonschlinkert/unescape
 
-unhead@3.2.3
+unhead@3.4.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -4532,7 +4580,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/sindresorhus/unicorn-magic#readme
 
-unimport@6.3.1
+unimport@6.5.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -4556,7 +4604,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/sxzz/unplugin-utils#readme
 
-unrouting@0.2.2
+unrouting@0.2.3
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -4586,7 +4634,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/unjs/unwasm#readme
 
-update-browserslist-db@1.2.3
+update-browserslist-db@1.3.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -4628,13 +4676,13 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://valibot.dev
 
-verkit@0.2.0
+verkit@0.3.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/sxzz/verkit#readme
 
-vite@8.1.5
+vite@8.2.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -4670,29 +4718,35 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/antfu-collective/vite-plugin-inspect#readme
 
-vite-plugin-vue-tracer@1.4.0
+vite-plugin-vue-tracer@1.5.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/antfu/vite-plugin-vue-tracer#readme
 
-vscode-uri@3.1.0
+vscode-uri@3.2.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/microsoft/vscode-uri#readme
 
-vue@3.5.40
+vue@3.5.42
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://vuejs.org/
 
-vue-bundle-renderer@2.3.1
+vue-bundle-renderer@2.3.2
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/nuxt-contrib/vue-bundle-renderer#readme
+
+vue-component-type-helpers@3.3.11
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/vuejs/language-tools#readme
 
 vue-devtools-stub@0.1.0
 License: MIT
@@ -4700,19 +4754,19 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/nuxt-contrib/vue-devtools-stub#readme
 
-vue-router@5.2.0
+vue-router@5.3.1
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://router.vuejs.org
 
-vue-tsc@3.3.9
+vue-tsc@3.3.11
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/vuejs/language-tools#readme
 
-webidl-conversions@3.0.1
+webidl-conversions@3.0.0
 License: BSD-2-Clause
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -4730,7 +4784,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/jsdom/whatwg-url#readme
 
-which@2.0.2
+which@2.0.1
 License: ISC
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -4778,13 +4832,13 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/npm/wrappy
 
-ws@8.21.1
+ws@8.21.3
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/websockets/ws
 
-wsl-utils@0.3.1
+wsl-utils@1.0.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -4844,12 +4898,6 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/yargs/yargs-parser#readme
 
-yocto-queue@0.1.0
-License: MIT
-Source class: pnpm-prod
-Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
-Homepage: https://github.com/sindresorhus/yocto-queue#readme
-
 youch@4.1.1
 License: MIT
 Source class: pnpm-prod
@@ -4874,7 +4922,7 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/archiverjs/node-zip-stream
 
-zod@4.4.3
+zod@4.5.4
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
