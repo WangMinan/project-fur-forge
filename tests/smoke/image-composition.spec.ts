@@ -141,4 +141,12 @@ test('R6 saves independent crops and display choices, then renders square thumbn
   writeFileSync(evidence, JSON.stringify(measurements, null, 2) + '\n')
   await test.info().attach('r6-viewports.json', { path: evidence, contentType: 'application/json' })
   await page.screenshot({ path: test.info().outputPath('r6-detail.png'), fullPage: true })
+  // The next catalog test must be able to remove assets with completed upload ownership.
+  await seedPublicCatalog(page, [])
+  const cleaned = openFixtureDatabase(E2E_DATABASE_FILE)
+  try {
+    expect(cleaned.prepare('SELECT count(*) AS count FROM upload_sessions WHERE owner_id = ?').get(id)).toEqual({ count: 0 })
+    expect(cleaned.pragma('foreign_key_check')).toEqual([])
+  }
+  finally { cleaned.close() }
 })
