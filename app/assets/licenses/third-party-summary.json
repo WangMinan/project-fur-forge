@@ -1,6 +1,6 @@
 {
   "generatorScope": "installed-production-snapshot",
-  "packageCount": 809,
+  "packageCount": 817,
   "licenseCounts": [
     {
       "license": "(BSD-3-Clause OR GPL-2.0)",
@@ -40,11 +40,11 @@
     },
     {
       "license": "BSD-2-Clause",
-      "count": 17
+      "count": 18
     },
     {
       "license": "BSD-3-Clause",
-      "count": 12
+      "count": 13
     },
     {
       "license": "CC-BY-4.0",
@@ -64,7 +64,7 @@
     },
     {
       "license": "MIT",
-      "count": 662
+      "count": 668
     },
     {
       "license": "MIT OR Apache-2.0",

@@ -34,7 +34,7 @@ permissions:
 
 env:
   APP_ENV: test
-  NODE_VERSION: 24.18.0
+  NODE_VERSION: 24.21.0
   PNPM_VERSION: 11.18.0
   DOCKER_BUILD_RECORD_UPLOAD: false
 
