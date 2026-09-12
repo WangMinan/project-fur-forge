@@ -64,3 +64,11 @@
 用户复核发现语言项继承正文 1rem、关于子菜单使用 0.875rem；语言项现显式复用 --font-size-sm，浏览器断言比较两者计算字号。
 
 最终验证：62 份 core 文件，309 项首轮通过，work-publication 的一个 FFmpeg 用例在并行运行时触及 30s；独立复验该套件 21 项全部通过，累计 310 项具备通过证据，未修改超时。本轮 auth-api/health 两个未改动的 Nuxt 构建套件未重复执行。lint/typecheck/build/生产 guard 通过；最后字号微调另通过定向 lint 和两项公开 Chrome 用例（15.8s、4.3s），其中直接比较关于子菜单与语言选项的计算字号。全部四项相关 Chrome 用例均有通过证据。
+
+## main 发布门禁修复
+
+release-image 34686045809 在 Run release verification 失败：19 项 smoke 中 18 项通过，旧的“管理员可通过登录表单进入后台”用例直接在配置默认页查找联系方式，没有进入新版“营业与联系”分组。应用界面符合已验收规格。
+
+按用户授权直接在 main 修复该用例，仅增加按可访问名称点击“营业与联系”的步骤，保留原有可见性、安全提示退役和移动导航焦点断言。排查其他联系方式消费者，已使用分组切换或 #content-contact 深链，无需改动应用或放宽测试。
+
+复验：完整 19 项 smoke 全部通过（2.8m），定向 ESLint 与 Nuxt typecheck 通过。以 [skip ci] 修复提交避免重复普通 push CI，重新触发的 release-image 仍执行完整 check:fast/test:release 与镜像验证门禁；不跳过发布检查。
