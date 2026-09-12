@@ -1,18 +1,14 @@
 <script setup lang="ts">
-import { PROJECT_NAME } from '~~/shared/constants/project'
+import { localizedSiteCopy } from '~~/shared/utils/site-copy'
 import { publicSiteContentResponseSchema } from '~~/shared/schemas/site-content'
+const { t, contactOnly, language } = usePublicI18n()
 
 /**
  * T27 关于页：SSR 消费 /api/public/v1/site-content。
  * 工作室事实、制作范围与联系区均来自公开安全投影；
  * 联系区合并原 /contact 页面，不虚构品牌故事或联系方式。
  */
-useSeoMeta({
-  title: `关于我们 · ${PROJECT_NAME}`,
-  description: `${PROJECT_NAME}的工作室事实、制作范围与官方联系方式。`,
-  ogTitle: `关于我们 · ${PROJECT_NAME}`,
-  ogDescription: `${PROJECT_NAME}的工作室事实、制作范围与官方联系方式。`,
-})
+usePublicSeo('about')
 
 const { data: site, error } = await useFetch('/api/public/v1/site-content', {
   key: 'public-site-content',
@@ -24,15 +20,15 @@ if (error.value) {
   throw createError({ statusCode: 500, statusMessage: '关于我们暂时无法显示' })
 }
 
-const about = computed(() => site.value?.about ?? null)
+const about = computed(() => localizedSiteCopy(site.value?.copy, language.value, 'about'))
 const contact = computed(() => site.value?.contact ?? null)
 
 function paragraphs(value: string | null | undefined) {
   return value ? splitPlainTextParagraphs(value) : []
 }
 
-const factParagraphs = computed(() => paragraphs(about.value?.studioFacts))
-const scopeParagraphs = computed(() => paragraphs(about.value?.makingScope))
+const factParagraphs = computed(() => paragraphs(about.value.studioFacts))
+const scopeParagraphs = computed(() => paragraphs(about.value.makingScope))
 </script>
 
 <template>
@@ -48,7 +44,7 @@ const scopeParagraphs = computed(() => paragraphs(about.value?.makingScope))
         height="1600"
       >
       <div class="about-masthead__title-group">
-        <h1 class="about-masthead__title">关于我们</h1>
+        <h1 class="about-masthead__title">{{ t('ui.about') }}</h1>
       </div>
     </header>
 
@@ -59,7 +55,7 @@ const scopeParagraphs = computed(() => paragraphs(about.value?.makingScope))
         aria-labelledby="about-facts-title"
         data-testid="about-facts"
       >
-        <h2 id="about-facts-title" class="about-story__title">工作室</h2>
+        <h2 id="about-facts-title" class="about-story__title">{{ t('ui.studio') }}</h2>
         <div class="about-story__facts-copy">
           <p v-for="(paragraph, index) in factParagraphs" :key="index" class="about-story__text">
             {{ paragraph }}
@@ -73,7 +69,7 @@ const scopeParagraphs = computed(() => paragraphs(about.value?.makingScope))
         aria-labelledby="about-scope-title"
         data-testid="about-scope"
       >
-        <h2 id="about-scope-title" class="about-story__title">制作范围</h2>
+        <h2 id="about-scope-title" class="about-story__title">{{ t('ui.scope') }}</h2>
         <div class="about-story__scope-copy">
           <p v-for="(paragraph, index) in scopeParagraphs" :key="index" class="about-story__text">
             {{ paragraph }}
@@ -91,18 +87,20 @@ const scopeParagraphs = computed(() => paragraphs(about.value?.makingScope))
     >
       <div class="about-contact__inner">
         <div class="about-contact__intro">
-          <p class="about-contact__label">联系方式</p>
-          <h2 id="about-contact-title" class="about-contact__title">联系我们</h2>
+          <p class="about-contact__label">{{ t('ui.contactDetails') }}</p>
+          <h2 id="about-contact-title" class="about-contact__title">{{ t('ui.contact') }}</h2>
           <p class="about-contact__description">
-            委托请先提交站内申请；确认可以制作后，我们会通过官方 QQ 继续沟通。
+            {{ t('contact.about') }}
           </p>
-          <PublicAction class="about-contact__primary" to="/commission/apply">
-            提交委托申请
+          <p v-if="!contactOnly"><a :href="site?.contact.xContactUrl">{{ t('contact.international') }}</a></p>
+          <PublicAction class="about-contact__primary" :to="contactOnly ? undefined : '/commission/apply'" :href="contactOnly ? site?.contact.xContactUrl : undefined">
+            {{ t('ui.apply') }}
           </PublicAction>
         </div>
 
         <div class="about-contact__directory">
           <ContactChannelList
+            :x-contact-url="site?.contact.xContactUrl"
             :channels="contact.officialChannels"
             :email="contact.email"
           />

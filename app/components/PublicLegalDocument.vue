@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t, isEnglish } = usePublicI18n()
 const props = defineProps<{
   content: string | null
   title: string
@@ -7,7 +8,7 @@ const props = defineProps<{
 const structuredContent = computed(() => structureNumberedPlainText(props.content ?? ''))
 const hasContent = computed(() => structuredContent.value.preface.length > 0
   || structuredContent.value.sections.length > 0)
-const documentMeta = computed(() => `${structuredContent.value.sections.length} 个章节`)
+const documentMeta = computed(() => t('legal.sections', { count: structuredContent.value.sections.length }))
 </script>
 
 <template>
@@ -18,23 +19,24 @@ const documentMeta = computed(() => `${structuredContent.value.sections.length} 
       <nav
         v-if="structuredContent.sections.length > 1"
         class="legal-document__contents"
-        :aria-label="`${title}目录`"
+        :aria-label="t('legal.contents', { title })"
       >
         <div class="legal-document__contents-heading">
-          <p class="legal-document__contents-label">章节导航</p>
-          <p class="legal-document__contents-count">{{ structuredContent.sections.length }} 节</p>
+          <p class="legal-document__contents-label">{{ t('ui.chapters') }}</p>
+          <p class="legal-document__contents-count">{{ t('legal.sectionCount', { count: structuredContent.sections.length }) }}</p>
         </div>
         <ol class="legal-document__contents-list">
           <li v-for="section in structuredContent.sections" :key="section.id">
             <a class="legal-document__contents-link" :href="`#${section.id}`">
               <span class="legal-document__contents-number">{{ section.number.padStart(2, '0') }}</span>
-              <span>{{ section.title }}</span>
+              <span lang="zh-CN">{{ section.title }}</span>
             </a>
           </li>
         </ol>
       </nav>
 
-      <article class="legal-document__body">
+      <article class="legal-document__body" lang="zh-CN">
+        <p v-if="isEnglish" lang="en">{{ t('legal.original') }}</p>
         <div v-if="structuredContent.preface.length" class="legal-document__preface">
           <p
             v-for="(paragraph, index) in structuredContent.preface"
@@ -69,7 +71,7 @@ const documentMeta = computed(() => `${structuredContent.value.sections.length} 
         </section>
 
         <a class="legal-document__back-to-top" href="#document-top">
-          返回页首 <span aria-hidden="true">↑</span>
+          {{ t('ui.backTop') }} <span aria-hidden="true">↑</span>
         </a>
       </article>
     </div>

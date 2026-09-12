@@ -1,13 +1,8 @@
 <script setup lang="ts">
-import { PROJECT_NAME } from '~~/shared/constants/project'
 import { publicSiteContentResponseSchema } from '~~/shared/schemas/site-content'
+const { t } = usePublicI18n()
 
-useSeoMeta({
-  title: `服务条款 · ${PROJECT_NAME}`,
-  description: `${PROJECT_NAME}的委托、领养、作品权利与售后服务条款。`,
-  ogTitle: `服务条款 · ${PROJECT_NAME}`,
-  ogDescription: `${PROJECT_NAME}的委托、领养、作品权利与售后服务条款。`,
-})
+usePublicSeo('terms')
 
 const { data: site, error } = await useFetch('/api/public/v1/site-content', {
   key: 'public-service-site-content',
@@ -23,5 +18,7 @@ const content = computed(() => site.value?.about.basicTerms ?? null)
 </script>
 
 <template>
-  <PublicLegalDocument title="服务条款" :content="content" />
+  <div><p class="public-channel-note">{{ t('contact.channelNote') }}</p>
+  <PublicLegalDocument :title="t('ui.terms')" :content="content" />
+  </div>
 </template>

@@ -4,6 +4,7 @@ import {
   PROJECT_NAME,
 } from "~~/shared/constants/project";
 import { publicSiteMetaResponseSchema } from "~~/shared/schemas/site-meta";
+const { t } = usePublicI18n()
 
 /**
  * `brandOnly` 隐藏页脚导航，只留品牌与法务/备案信息。
@@ -50,21 +51,21 @@ const { data: filings } = await useFetch("/api/site-meta", {
         </div>
       </div>
 
-      <nav v-if="!brandOnly" class="public-footer__nav" aria-label="页脚导航">
+      <nav v-if="!brandOnly" class="public-footer__nav" :aria-label="t('ui.footerNavigation')">
         <NuxtLink
           v-for="item in PUBLIC_NAV_ITEMS"
           :key="item.href"
           :to="item.href"
           class="public-footer__link"
         >
-          {{ item.label }}
+          {{ t(item.label) }}
         </NuxtLink>
       </nav>
 
       <p
         v-if="filings.icp || filings.police"
         class="public-footer__filings"
-        aria-label="网站备案信息"
+        :aria-label="t('ui.filings')"
       >
           <template v-if="filings.icp">
             <a
@@ -99,11 +100,11 @@ const { data: filings } = await useFetch("/api/site-meta", {
       </p>
 
       <p class="public-footer__legal-links">
-        <NuxtLink to="/service">服务条款</NuxtLink>
+        <NuxtLink to="/service">{{ t('ui.terms') }}</NuxtLink>
         <span aria-hidden="true">｜</span>
-        <NuxtLink to="/privacy">隐私政策</NuxtLink>
+        <NuxtLink to="/privacy">{{ t('ui.privacy') }}</NuxtLink>
         <span aria-hidden="true">｜</span>
-        <NuxtLink to="/licenses">开源软件声明</NuxtLink>
+        <NuxtLink to="/licenses">{{ t('ui.licenses') }}</NuxtLink>
         <span aria-hidden="true">｜</span>
         <span>
           Design by

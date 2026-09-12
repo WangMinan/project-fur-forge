@@ -396,6 +396,12 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/KazariEX/dxup#readme
 
+@esbuild/linux-x64@0.25.12
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/evanw/esbuild#readme
+
 @esbuild/linux-x64@0.28.2
 License: MIT
 Source class: pnpm-prod
@@ -473,6 +479,72 @@ License: Apache-2.0
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/humanwhocodes/retry#readme
+
+@intlify/bundle-utils@11.2.5
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/intlify/bundle-tools/blob/main/packages/bundle-utils/README.md
+
+@intlify/core@11.4.10
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/intlify/vue-i18n/tree/master/packages/core#readme
+
+@intlify/core-base@11.4.10
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/intlify/vue-i18n/tree/master/packages/core-base#readme
+
+@intlify/devtools-types@11.4.10
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/intlify/vue-i18n/tree/master/packages/devtools-types#readme
+
+@intlify/h3@0.7.4
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/intlify/h3#readme
+
+@intlify/message-compiler@11.4.10
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/intlify/vue-i18n/tree/master/packages/message-compiler#readme
+
+@intlify/shared@11.4.10
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/intlify/vue-i18n/tree/master/packages/shared#readme
+
+@intlify/unplugin-vue-i18n@11.2.5
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/intlify/bundle-tools/blob/main/packages/unplugin-vue-i18n/README.md
+
+@intlify/utils@0.13.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/intlify/utils#readme
+
+@intlify/utils@0.14.1
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/intlify/utils#readme
+
+@intlify/vue-i18n-extensions@8.0.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/intlify/vue-i18n-extensions#readme
 
 @ioredis/commands@1.10.0
 License: MIT
@@ -564,6 +636,12 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/mapbox/node-pre-gyp#readme
 
+@miyaneee/rollup-plugin-json5@1.2.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/Miyaneee/rollup-plugin-json5#readme
+
 @napi-rs/lzma-linux-x64-gnu@1.5.1
 License: MIT
 Source class: pnpm-prod
@@ -648,13 +726,19 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://nuxt.com
 
-@oxc-parser/binding-linux-x64-gnu@0.140.0
+@nuxtjs/i18n@10.6.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://i18n.nuxtjs.org
+
+@oxc-parser/binding-linux-x64-gnu@0.141.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://oxc.rs/docs/guide/usage/parser
 
-@oxc-project/types@0.140.0
+@oxc-project/types@0.141.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
@@ -665,6 +749,12 @@ License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://oxc.rs
+
+@oxc-transform/binding-linux-x64-gnu@0.141.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://oxc.rs/docs/guide/usage/transformer
 
 @parcel/watcher-wasm@2.6.0
 License: MIT
@@ -798,6 +888,12 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/rollup/plugins/tree/master/packages/terser#readme
 
+@rollup/plugin-yaml@4.1.2
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/rollup/plugins/tree/master/packages/yaml/#readme
+
 @rollup/pluginutils@5.4.0
 License: MIT
 Source class: pnpm-prod
@@ -912,6 +1008,42 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/resolve
 
+@typescript-eslint/project-service@8.70.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://typescript-eslint.io
+
+@typescript-eslint/scope-manager@8.70.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://typescript-eslint.io/packages/scope-manager
+
+@typescript-eslint/tsconfig-utils@8.70.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://typescript-eslint.io
+
+@typescript-eslint/types@8.70.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://typescript-eslint.io
+
+@typescript-eslint/typescript-estree@8.70.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://typescript-eslint.io/packages/typescript-estree
+
+@typescript-eslint/visitor-keys@8.70.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://typescript-eslint.io
+
 @unhead/bundler@3.4.0
 License: MIT
 Source class: pnpm-prod
@@ -1019,6 +1151,12 @@ License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/vuejs/core/tree/main/packages/compiler-ssr#readme
+
+@vue/devtools-api@6.5.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/vuejs/devtools#readme
 
 @vue/devtools-api@8.2.1
 License: MIT
@@ -1255,6 +1393,12 @@ License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/archiverjs/archiver-utils#readme
+
+argparse@2.0.1
+License: Python-2.0
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/nodeca/argparse#readme
 
 ast-kit@2.1.2
 License: MIT
@@ -2036,6 +2180,12 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/ljharb/es-object-atoms#readme
 
+esbuild@0.25.12
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/evanw/esbuild#readme
+
 esbuild@0.28.2
 License: MIT
 Source class: pnpm-prod
@@ -2066,6 +2216,12 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/sindresorhus/escape-string-regexp#readme
 
+escodegen@2.1.0
+License: BSD-2-Clause
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: http://github.com/estools/escodegen
+
 eslint@10.10.0
 License: MIT
 Source class: pnpm-prod
@@ -2095,6 +2251,18 @@ License: BSD-2-Clause
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/eslint/js/blob/main/packages/espree/README.md
+
+espree@9.0.0
+License: BSD-2-Clause
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/eslint/js/blob/main/packages/espree/README.md
+
+esprima@4.0.1
+License: BSD-2-Clause
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: http://esprima.org
 
 esquery@1.7.0
 License: BSD-3-Clause
@@ -2816,6 +2984,12 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/lydell/js-tokens#readme
 
+js-yaml@4.3.2
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/nodeca/js-yaml#readme
+
 jsesc@3.1.0
 License: MIT
 Source class: pnpm-prod
@@ -2839,6 +3013,12 @@ License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: http://json5.org/
+
+jsonc-eslint-parser@2.3.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/ota-meshi/jsonc-eslint-parser#readme
 
 jsqr@1.4.0
 License: Apache-2.0
@@ -2965,6 +3145,12 @@ License: ISC
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/isaacs/node-lru-cache#readme
+
+magic-regexp@0.10.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/unjs/magic-regexp#readme
 
 magic-string@0.30.17
 License: MIT
@@ -3290,6 +3476,11 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/atinux/nuxt-auth-utils#readme
 
+nuxt-define@1.0.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+
 nypm@0.6.10
 License: MIT
 Source class: pnpm-prod
@@ -3392,11 +3583,23 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/sindresorhus/osx-release#readme
 
-oxc-parser@0.140.0
+oxc-parser@0.141.0
 License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://oxc.rs/docs/guide/usage/parser
+
+oxc-transform@0.141.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://oxc.rs/docs/guide/usage/transformer
+
+oxc-walker@0.7.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/oxc-project/oxc-walker#readme
 
 oxc-walker@1.1.1
 License: MIT
@@ -3883,6 +4086,12 @@ License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/NodeRedis/node-redis-parser#readme
+
+regexp-tree@0.1.27
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/DmitrySoshnikov/regexp-tree
 
 resolve@1.22.12
 License: MIT
@@ -4454,6 +4663,32 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/component/toidentifier#readme
 
+tosource@2.0.0-alpha.3
+License: Zlib
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/marcello3d/node-tosource
+Notice: Copyright (c) 2011 Marcello Bastéa-Forte (marcello@cellosoft.com)
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+    1. The origin of this software must not be misrepresented; you must not
+    claim that you wrote the original software. If you use this software
+    in a product, an acknowledgment in the product documentation would be
+    appreciated but is not required.
+
+    2. Altered source versions must be plainly marked as such, and must not be
+    misrepresented as being the original software.
+
+    3. This notice may not be removed or altered from any source
+    distribution.
+
 totalist@3.0.1
 License: MIT
 Source class: pnpm-prod
@@ -4465,6 +4700,12 @@ License: MIT
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/Sebmaster/tr46.js#readme
+
+ts-api-utils@2.5.0
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/JoshuaKGoldberg/ts-api-utils#readme
 
 tslib@1.14.1
 License: 0BSD
@@ -4489,6 +4730,12 @@ License: (MIT OR CC0-1.0)
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/sindresorhus/type-fest#readme
+
+type-level-regexp@0.1.17
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/didavid61202/type-level-regexp#readme
 
 typedarray@0.0.6
 License: MIT
@@ -4754,6 +5001,12 @@ Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://github.com/nuxt-contrib/vue-devtools-stub#readme
 
+vue-i18n@11.4.10
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/intlify/vue-i18n/tree/master/packages/vue-i18n#readme
+
 vue-router@5.3.1
 License: MIT
 Source class: pnpm-prod
@@ -4885,6 +5138,12 @@ License: ISC
 Source class: pnpm-prod
 Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
 Homepage: https://eemeli.org/yaml/
+
+yaml-eslint-parser@1.2.2
+License: MIT
+Source class: pnpm-prod
+Usage: Installed production dependency in the generator environment snapshot; platform-selected optional packages are not a target Linux runtime claim.
+Homepage: https://github.com/ota-meshi/yaml-eslint-parser#readme
 
 yargs@18.1.0
 License: MIT

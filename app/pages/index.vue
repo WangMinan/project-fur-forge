@@ -1,20 +1,9 @@
 <script setup lang="ts">
-import {
-  PROJECT_ENGLISH_NAME,
-  PROJECT_NAME,
-} from '~~/shared/constants/project'
 import { publicHomeAggregateResponseSchema } from '~~/shared/schemas/public-content'
 import { useHomeSectionNavigation } from '~/composables/useHomeSectionNavigation'
 
-const pageTitle = `${PROJECT_NAME} · 兽装作品主页`
-const pageDescription = `${PROJECT_NAME}（${PROJECT_ENGLISH_NAME}）的兽装作品主页：我们不只做小狗毛，但是只做手削海绵头！欢迎在本站浏览代表作品、提交自设委托或者领养申请。`
 
-useSeoMeta({
-  title: pageTitle,
-  description: pageDescription,
-  ogTitle: pageTitle,
-  ogDescription: pageDescription,
-})
+const { pageTitle, pageDescription } = usePublicSeo('home')
 
 /**
  * T34-F2：首页只消费一个聚合投影，避免多接口重复查询和故障放大。
@@ -55,14 +44,14 @@ useHead({
       <Meta itemprop="name" :content="pageTitle" />
       <Meta itemprop="description" :content="pageDescription" />
     </Head>
-    <HomeHeroCarousel :home="home.hero" />
+    <HomeHeroCarousel :home="home.hero" :copy="home.copy" />
 
     <FeaturedWorks
       :works="home.featured.items"
       :available="home.featured.available"
     />
 
-    <HomeBusinessEntries :entries="home.entries" />
+    <HomeBusinessEntries :x-contact-url="home.hero.xContactUrl" :entries="home.entries" :copy="home.copy" />
 
     <HomeCurrentAdoptions
       :adoptions="home.currentAdoptions.items"

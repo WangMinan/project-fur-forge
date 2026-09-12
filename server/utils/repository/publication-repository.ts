@@ -455,33 +455,6 @@ export function findWorkPublicKeys(
   `).pluck().all(workId) as string[]
 }
 
-/** 已就绪公开变体的格式集合，用于判定配方完整性。 */
-export function findReadyVariantFormats(
-  sqlite: Database.Database,
-  input: {
-    assetId: string
-    recipeVersion: string
-    role: string
-    usage: string
-    width: number
-  },
-) {
-  return sqlite.prepare(`
-    SELECT format FROM asset_variants
-    WHERE asset_id = ? AND storage_scope = 'PUBLIC' AND status = 'READY'
-      AND media_role = ? AND usage = ? AND width = ?
-      AND recipe_version = ?
-      AND sha256 NOT GLOB '*[^0-9a-f]*' AND length(sha256) = 64
-      AND byte_size > 0
-  `).pluck().all(
-    input.assetId,
-    input.role,
-    input.usage,
-    input.width,
-    input.recipeVersion,
-  ) as string[]
-}
-
 /** 公开状态 CAS：只有版本与当前发布状态都匹配才切换。 */
 export function publishWorkRow(
   sqlite: Database.Database,

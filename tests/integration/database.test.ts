@@ -1,15 +1,13 @@
+import { migrationsThrough } from '../helpers/migrations'
 import {
-  copyFileSync,
   existsSync,
   mkdtempSync,
-  mkdirSync,
   readFileSync,
   rmSync,
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import {
-  dirname,
   resolve,
 } from 'node:path'
 import {
@@ -64,264 +62,6 @@ function temporaryDatabase(name = 'studio.db') {
   return resolve(directory, name)
 }
 
-function migrationsBeforeGate07(databaseFile: string) {
-  const folder = resolve(dirname(databaseFile), 'pre-gate07-migrations')
-  const meta = resolve(folder, 'meta')
-  mkdirSync(meta, { recursive: true })
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: { tag: string }[] }
-  for (const { tag } of journal.entries.slice(0, 7)) {
-    copyFileSync(
-      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
-      resolve(folder, `${tag}.sql`),
-    )
-  }
-  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
-    ...journal,
-    entries: journal.entries.slice(0, 7),
-  }))
-  return folder
-}
-
-function migrationsBeforeT23(databaseFile: string) {
-  const folder = resolve(dirname(databaseFile), 'pre-t23-migrations')
-  const meta = resolve(folder, 'meta')
-  mkdirSync(meta, { recursive: true })
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: { tag: string }[] }
-  for (const { tag } of journal.entries.slice(0, 11)) {
-    copyFileSync(
-      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
-      resolve(folder, `${tag}.sql`),
-    )
-  }
-  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
-    ...journal,
-    entries: journal.entries.slice(0, 11),
-  }))
-  return folder
-}
-
-function migrationsBeforeContactChannels(databaseFile: string) {
-  const folder = resolve(dirname(databaseFile), 'pre-contact-channels-migrations')
-  const meta = resolve(folder, 'meta')
-  mkdirSync(meta, { recursive: true })
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: { tag: string }[] }
-  const entries = journal.entries.slice(0, journal.entries.findIndex(
-    entry => entry.tag === '0027_requirement_2_contact_channels',
-  ))
-  for (const { tag } of entries) {
-    copyFileSync(
-      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
-      resolve(folder, `${tag}.sql`),
-    )
-  }
-  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
-    ...journal,
-    entries,
-  }))
-  return folder
-}
-
-function migrationsBeforeCommissionEmailFaq(databaseFile: string) {
-  const folder = resolve(dirname(databaseFile), 'pre-commission-email-faq-migrations')
-  const meta = resolve(folder, 'meta')
-  mkdirSync(meta, { recursive: true })
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: { tag: string }[] }
-  const entries = journal.entries.slice(0, journal.entries.findIndex(
-    entry => entry.tag === '0029_requirement_2_commission_email_faq',
-  ))
-  for (const { tag } of entries) {
-    copyFileSync(
-      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
-      resolve(folder, `${tag}.sql`),
-    )
-  }
-  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
-    ...journal,
-    entries,
-  }))
-  return folder
-}
-
-function migrationsBeforeUpdates(databaseFile: string) {
-  const folder = resolve(dirname(databaseFile), 'pre-requirement-2-updates-migrations')
-  const meta = resolve(folder, 'meta')
-  mkdirSync(meta, { recursive: true })
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: { tag: string }[] }
-  const entries = journal.entries.slice(0, journal.entries.findIndex(
-    entry => entry.tag === '0030_requirement_2_updates',
-  ))
-  for (const { tag } of entries) {
-    copyFileSync(
-      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
-      resolve(folder, `${tag}.sql`),
-    )
-  }
-  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
-    ...journal,
-    entries,
-  }))
-  return folder
-}
-
-function migrationsBeforeUpdatesAnalytics(databaseFile: string) {
-  const folder = resolve(dirname(databaseFile), 'pre-updates-analytics-migrations')
-  const meta = resolve(folder, 'meta')
-  mkdirSync(meta, { recursive: true })
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: { tag: string }[] }
-  const entries = journal.entries.slice(0, journal.entries.findIndex(
-    entry => entry.tag === '0031_requirement_2_updates_analytics',
-  ))
-  for (const { tag } of entries) {
-    copyFileSync(
-      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
-      resolve(folder, `${tag}.sql`),
-    )
-  }
-  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
-    ...journal,
-    entries,
-  }))
-  return folder
-}
-
-function migrationsBeforeContactQrAdaptation(databaseFile: string) {
-  const folder = resolve(dirname(databaseFile), 'pre-contact-qr-adaptation-migrations')
-  const meta = resolve(folder, 'meta')
-  mkdirSync(meta, { recursive: true })
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: { tag: string }[] }
-  const entries = journal.entries.slice(0, journal.entries.findIndex(
-    entry => entry.tag === '0032_requirement_2_contact_qr_upscale',
-  ))
-  for (const { tag } of entries) {
-    copyFileSync(
-      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
-      resolve(folder, `${tag}.sql`),
-    )
-  }
-  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
-    ...journal,
-    entries,
-  }))
-  return folder
-}
-
-function migrationsBeforeVisitorCopy(databaseFile: string) {
-  const folder = resolve(dirname(databaseFile), 'pre-visitor-copy-migrations')
-  const meta = resolve(folder, 'meta')
-  mkdirSync(meta, { recursive: true })
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: { tag: string }[] }
-  const entries = journal.entries.slice(0, journal.entries.findIndex(
-    entry => entry.tag === '0033_requirement_2_visitor_copy',
-  ))
-  for (const { tag } of entries) {
-    copyFileSync(
-      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
-      resolve(folder, `${tag}.sql`),
-    )
-  }
-  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
-    ...journal,
-    entries,
-  }))
-  return folder
-}
-
-function migrationsBeforeR4DefaultCopy(databaseFile: string) {
-  const folder = resolve(dirname(databaseFile), 'pre-r4-default-copy-migrations')
-  const meta = resolve(folder, 'meta')
-  mkdirSync(meta, { recursive: true })
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: { tag: string }[] }
-  const entries = journal.entries.slice(0, journal.entries.findIndex(
-    entry => entry.tag === '0045_r4_default_copy',
-  ))
-  for (const { tag } of entries) {
-    copyFileSync(
-      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
-      resolve(folder, `${tag}.sql`),
-    )
-  }
-  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
-    ...journal,
-    entries,
-  }))
-  return folder
-}
-
-function migrationsBeforeR4PrivacyController(databaseFile: string) {
-  const folder = resolve(dirname(databaseFile), 'pre-r4-privacy-controller-migrations')
-  const meta = resolve(folder, 'meta')
-  mkdirSync(meta, { recursive: true })
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: { tag: string }[] }
-  const entries = journal.entries.slice(0, journal.entries.findIndex(
-    entry => entry.tag === '0046_r4_privacy_controller',
-  ))
-  for (const { tag } of entries) {
-    copyFileSync(
-      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
-      resolve(folder, `${tag}.sql`),
-    )
-  }
-  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
-    ...journal,
-    entries,
-  }))
-  return folder
-}
-
-function migrationsBeforeCommissionContactRefresh(databaseFile: string) {
-  const folder = resolve(dirname(databaseFile), 'pre-commission-contact-refresh-migrations')
-  const meta = resolve(folder, 'meta')
-  mkdirSync(meta, { recursive: true })
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: { tag: string }[] }
-  const entries = journal.entries.slice(0, journal.entries.findIndex(
-    entry => entry.tag === '0048_r4_commission_contact_refresh',
-  ))
-  for (const { tag } of entries) {
-    copyFileSync(
-      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
-      resolve(folder, `${tag}.sql`),
-    )
-  }
-  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
-    ...journal,
-    entries,
-  }))
-  return folder
-}
-
 afterEach(() => {
   temporaryDirectories.splice(0).forEach(directory => rmSync(
     directory,
@@ -351,6 +91,8 @@ describe('SQLite foundation', () => {
     const database = openDatabase(databaseFile)
 
     try {
+      expect(database.sqlite.prepare("SELECT x_contact_url FROM site_content WHERE id = 'site'").pluck().get())
+        .toBe('https://x.com/jece9925')
       expect(database.sqlite.prepare(`
         SELECT COUNT(*)
         FROM sqlite_master
@@ -434,7 +176,7 @@ describe('SQLite foundation', () => {
   it('updates only blank or exact historical defaults for requirement 4 copy', async () => {
     const databaseFile = temporaryDatabase()
     await migrateDatabase(databaseFile, {
-      migrationsFolder: migrationsBeforeR4DefaultCopy(databaseFile),
+      migrationsFolder: migrationsThrough(databaseFile, '0044_work_upscale_long_portrait'),
     })
     const legacy = openDatabase(databaseFile)
     let before!: Record<string, number | string>
@@ -522,7 +264,7 @@ describe('SQLite foundation', () => {
   it('writes the confirmed privacy controller only over the exact historical default', async () => {
     const databaseFile = temporaryDatabase()
     await migrateDatabase(databaseFile, {
-      migrationsFolder: migrationsBeforeR4PrivacyController(databaseFile),
+      migrationsFolder: migrationsThrough(databaseFile, '0045_r4_default_copy'),
     })
     const legacy = openDatabase(databaseFile)
     let before!: { privacyVersion: number, version: number }
@@ -577,7 +319,7 @@ describe('SQLite foundation', () => {
   it('retires adoption status, contracts commission status and refreshes only default copy', async () => {
     const databaseFile = temporaryDatabase()
     await migrateDatabase(databaseFile, {
-      migrationsFolder: migrationsBeforeCommissionContactRefresh(databaseFile),
+      migrationsFolder: migrationsThrough(databaseFile, '0047_r4_retire_paired_hero'),
     })
     const legacy = openDatabase(databaseFile)
     try {
@@ -633,7 +375,7 @@ describe('SQLite foundation', () => {
   it('contracts legacy QQ and Douyin into the retained QQ channel', async () => {
     const databaseFile = temporaryDatabase()
     await migrateDatabase(databaseFile, {
-      migrationsFolder: migrationsBeforeContactChannels(databaseFile),
+      migrationsFolder: migrationsThrough(databaseFile, '0026_t52_e4_edge_purge'),
     })
     const legacy = openDatabase(databaseFile)
     try {
@@ -676,7 +418,7 @@ describe('SQLite foundation', () => {
   it('contracts historical commission FAQ without deleting the backup email action', async () => {
     const databaseFile = temporaryDatabase()
     await migrateDatabase(databaseFile, {
-      migrationsFolder: migrationsBeforeCommissionEmailFaq(databaseFile),
+      migrationsFolder: migrationsThrough(databaseFile, '0028_requirement_2_contact_qr'),
     })
     const legacy = openDatabase(databaseFile)
     const existingFaqs = Array.from({ length: 8 }, (_, index) => ({
@@ -721,7 +463,7 @@ describe('SQLite foundation', () => {
   it('preserves unrelated content while historical updates is later contracted', async () => {
     const databaseFile = temporaryDatabase()
     await migrateDatabase(databaseFile, {
-      migrationsFolder: migrationsBeforeUpdates(databaseFile),
+      migrationsFolder: migrationsThrough(databaseFile, '0029_requirement_2_commission_email_faq'),
     })
     const legacy = openDatabase(databaseFile)
     try {
@@ -762,7 +504,7 @@ describe('SQLite foundation', () => {
   it('preserves existing analytics while the updates route is later contracted', async () => {
     const databaseFile = temporaryDatabase()
     await migrateDatabase(databaseFile, {
-      migrationsFolder: migrationsBeforeUpdatesAnalytics(databaseFile),
+      migrationsFolder: migrationsThrough(databaseFile, '0030_requirement_2_updates'),
     })
     const legacy = openDatabase(databaseFile)
     try {
@@ -817,7 +559,7 @@ describe('SQLite foundation', () => {
   it('updates only untouched visitor copy and advances affected section versions once', async () => {
     const databaseFile = temporaryDatabase()
     await migrateDatabase(databaseFile, {
-      migrationsFolder: migrationsBeforeVisitorCopy(databaseFile),
+      migrationsFolder: migrationsThrough(databaseFile, '0032_requirement_2_contact_qr_upscale'),
     })
     const legacy = openDatabase(databaseFile)
     let before!: Record<string, number>
@@ -901,7 +643,7 @@ describe('SQLite foundation', () => {
   it('widens contact QR inputs while preserving data and cross-table triggers', async () => {
     const databaseFile = temporaryDatabase()
     await migrateDatabase(databaseFile, {
-      migrationsFolder: migrationsBeforeContactQrAdaptation(databaseFile),
+      migrationsFolder: migrationsThrough(databaseFile, '0031_requirement_2_updates_analytics'),
     })
     const legacy = openDatabase(databaseFile)
     let triggerNames: string[]
@@ -979,7 +721,7 @@ describe('SQLite foundation', () => {
   it('upgrades existing self-referencing variants without losing integrity', async () => {
     const databaseFile = temporaryDatabase()
     await migrateDatabase(databaseFile, {
-      migrationsFolder: migrationsBeforeGate07(databaseFile),
+      migrationsFolder: migrationsThrough(databaseFile, '0006_faulty_satana'),
     })
     const legacy = openDatabase(databaseFile)
 
@@ -1046,7 +788,7 @@ describe('SQLite foundation', () => {
   it('migrates an existing published studio-photo relation without touching its private original', async () => {
     const databaseFile = temporaryDatabase()
     await migrateDatabase(databaseFile, {
-      migrationsFolder: migrationsBeforeT23(databaseFile),
+      migrationsFolder: migrationsThrough(databaseFile, '0010_wonderful_spacker_dave'),
     })
     const legacy = openDatabase(databaseFile)
     const privateKey = 'prod/original/t21/source.png'
@@ -1234,7 +976,7 @@ describe('SQLite foundation', () => {
     const staleBackup = temporaryDatabase('stale-backup.db')
     const staleOutput = temporaryDatabase('stale-output.db')
     await migrateDatabase(staleDatabase, {
-      migrationsFolder: migrationsBeforeT23(staleDatabase),
+      migrationsFolder: migrationsThrough(staleDatabase, '0010_wonderful_spacker_dave'),
     })
     await backupDatabase(staleDatabase, staleBackup)
 

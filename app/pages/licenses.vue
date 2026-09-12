@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import { PROJECT_NAME } from '~~/shared/constants/project'
 import gplText from '~/assets/licenses/gpl-3.0.txt?raw'
 import generatedSummary from '~/assets/licenses/third-party-summary.json'
+const { t } = usePublicI18n()
 
-useSeoMeta({
-  title: `开源软件声明 · ${PROJECT_NAME}`,
-  description: `${PROJECT_NAME}网站使用的开源软件及其许可证。`,
-  robots: 'index, nofollow',
-})
+usePublicSeo('licenses')
+useSeoMeta({ robots: 'index, nofollow' })
 
 interface AssetNotice {
   homepage: string | null
@@ -33,18 +30,18 @@ interface NoticeSummary {
 const summary = generatedSummary as NoticeSummary
 const assets = summary.assets
 const ffmpegPackage = summary.ffmpegPackage
-const documentMeta = `${assets.length} 项授权资产 · ${summary.packageCount} 条依赖记录`
+const documentMeta = computed(() => t('licenses.meta', { assets: assets.length, packages: summary.packageCount }))
 </script>
 
 <template>
   <div id="document-top" class="public-page">
-    <PublicPageIntro title="开源软件声明" :meta="documentMeta" variant="document" />
+    <PublicPageIntro :title="t('ui.licenses')" :meta="documentMeta" variant="document" />
 
     <div class="licenses-layout">
-      <nav class="licenses-nav" aria-label="开源软件声明目录">
+      <nav class="licenses-nav" :aria-label="t('legal.contents', { title: t('ui.licenses') })">
         <div class="licenses-nav__heading">
-          <p class="licenses-nav__label">章节导航</p>
-          <p class="licenses-nav__count">03 节</p>
+          <p class="licenses-nav__label">{{ t('ui.chapters') }}</p>
+          <p class="licenses-nav__count">{{ t('legal.sectionCount', { count: '03' }) }}</p>
         </div>
         <ol class="licenses-nav__list">
           <li>
@@ -54,12 +51,12 @@ const documentMeta = `${assets.length} 项授权资产 · ${summary.packageCount
           </li>
           <li>
             <a class="licenses-nav__link" href="#license-assets">
-              <span>02</span><span>第三方字体与授权资产</span>
+              <span>02</span><span>{{ t('ui.thirdPartyAssets') }}</span>
             </a>
           </li>
           <li>
             <a class="licenses-nav__link" href="#license-npm">
-              <span>03</span><span>npm 生产依赖声明</span>
+              <span>03</span><span>{{ t('ui.npmNotices') }}</span>
             </a>
           </li>
         </ol>
@@ -67,33 +64,33 @@ const documentMeta = `${assets.length} 项授权资产 · ${summary.packageCount
 
       <div class="licenses">
         <p class="licenses__lead">
-          本站使用开源软件和经授权的第三方字体、工具。开源项目的版权与许可证归各自作者所有。
+          {{ t('ui.licenseIntro') }}
         </p>
 
         <section class="license-entry" aria-labelledby="license-ffmpeg">
           <div class="license-entry__head">
             <h2 id="license-ffmpeg" class="license-entry__name">FFmpeg</h2>
-            <p class="license-entry__license">{{ ffmpegPackage?.license ?? '待登记' }}</p>
+            <p class="license-entry__license">{{ ffmpegPackage?.license ?? t('ui.pendingNotice') }}</p>
           </div>
 
           <p class="license-entry__text">
-            本站使用 FFmpeg 7.0.2-static 处理图片。该软件以 GNU GPL v3 或更高版本授权，并随本站公开发布的 Linux 容器镜像分发；网页不提供单独的 FFmpeg 下载。
+            {{ t('ui.ffmpegNotice') }}
           </p>
           <p class="license-entry__note">
-            当前二进制由 {{ ffmpegPackage?.name }}@{{ ffmpegPackage?.version }} 提供，本站未对其进行修改。FFmpeg 项目与 7.0.2 源码可在<a href="https://github.com/FFmpeg/FFmpeg/tree/n7.0.2" target="_blank" rel="noopener noreferrer">官方仓库</a>查看，许可证全文见下方；使用版本或分发方式变化后，本页会同步更新。
+            {{ t('licenses.ffmpegSource', { name: ffmpegPackage?.name ?? '', version: ffmpegPackage?.version ?? '' }) }} <a href="https://github.com/FFmpeg/FFmpeg/tree/n7.0.2" target="_blank" rel="noopener noreferrer">{{ t('licenses.repository') }}</a>{{ t('licenses.ffmpegUpdate') }}
           </p>
 
           <!-- 原生 details：无 JavaScript 可用、键盘可达，不需要自制折叠组件。 -->
           <details class="license-full">
             <summary class="license-full__summary">
-              GNU General Public License v3 标准全文
+              {{ t('ui.gplFull') }}
             </summary>
             <pre class="license-full__text">{{ gplText }}</pre>
           </details>
         </section>
 
         <section class="licenses__section" aria-labelledby="license-assets">
-          <h2 id="license-assets" class="licenses__title">第三方字体与授权资产</h2>
+          <h2 id="license-assets" class="licenses__title">{{ t('ui.thirdPartyAssets') }}</h2>
           <dl class="licenses__list">
             <div v-for="item in assets" :key="`${item.name}@${item.version}`" class="licenses__row">
               <dt class="licenses__name">
@@ -102,7 +99,7 @@ const documentMeta = `${assets.length} 项授权资产 · ${summary.packageCount
                 </a>
                 <template v-else>{{ item.name }}</template>
               </dt>
-              <dd class="licenses__purpose">
+              <dd class="licenses__purpose" lang="zh-CN">
                 {{ item.usage }}<template v-if="item.noticeText"> {{ item.noticeText }}</template>
               </dd>
               <dd class="licenses__license">{{ item.license }}</dd>
@@ -111,23 +108,23 @@ const documentMeta = `${assets.length} 项授权资产 · ${summary.packageCount
         </section>
 
         <section class="licenses__section" aria-labelledby="license-npm">
-          <h2 id="license-npm" class="licenses__title">npm 生产依赖声明</h2>
+          <h2 id="license-npm" class="licenses__title">{{ t('ui.npmNotices') }}</h2>
           <p class="licenses__subtitle">
-            当前生成环境的 production 安装快照包含 {{ summary.packageCount }} 条包/版本记录，共 {{ summary.licenseCounts.length }} 种许可证表达。平台可选包反映生成环境，不代表目标 Linux runtime closure。<a href="/THIRD_PARTY_NOTICES.txt" download>下载完整 TXT 声明</a>。
+            {{ t('licenses.snapshot', { packages: summary.packageCount, licenses: summary.licenseCounts.length }) }} <a href="/THIRD_PARTY_NOTICES.txt" download>{{ t('ui.downloadNotices') }}</a>。
           </p>
           <details class="license-full">
-            <summary class="license-full__summary">查看许可证表达统计</summary>
+            <summary class="license-full__summary">{{ t('ui.licenseStatistics') }}</summary>
             <dl class="licenses__list">
               <div v-for="item in summary.licenseCounts" :key="item.license" class="licenses__row licenses__row--summary">
                 <dt class="licenses__name">{{ item.license }}</dt>
-                <dd class="licenses__license-count">{{ item.count }} 条</dd>
+                <dd class="licenses__license-count">{{ t('licenses.records', { count: item.count }) }}</dd>
               </div>
             </dl>
           </details>
         </section>
 
         <a class="licenses__back-to-top" href="#document-top">
-          返回页首 <span aria-hidden="true">↑</span>
+          {{ t('ui.backTop') }} <span aria-hidden="true">↑</span>
         </a>
       </div>
     </div>

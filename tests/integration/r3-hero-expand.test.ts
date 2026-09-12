@@ -1,13 +1,11 @@
+import { migrationsThrough, migrationsAfter as migrationCountAfter } from '../helpers/migrations'
 import {
-  copyFileSync,
   mkdtempSync,
-  mkdirSync,
   readFileSync,
   rmSync,
-  writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, resolve } from 'node:path'
+import { resolve } from 'node:path'
 import {
   afterEach,
   describe,
@@ -32,41 +30,10 @@ function migrationCount() {
   return journal.entries.length
 }
 
-function migrationCountAfter(tag: string) {
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: { tag: string }[] }
-  return journal.entries.length - journal.entries.findIndex(entry => entry.tag === tag) - 1
-}
-
 function databaseFile() {
   const directory = mkdtempSync(resolve(tmpdir(), 'fur-forge-r3-hero-'))
   directories.push(directory)
   return resolve(directory, 'studio.db')
-}
-
-function migrationsThrough(databaseFile: string, lastTag: string) {
-  const folder = resolve(dirname(databaseFile), `migrations-through-${lastTag}`)
-  const meta = resolve(folder, 'meta')
-  mkdirSync(meta, { recursive: true })
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: { tag: string }[] }
-  const end = journal.entries.findIndex(entry => entry.tag === lastTag) + 1
-  const entries = journal.entries.slice(0, end)
-  for (const { tag } of entries) {
-    copyFileSync(
-      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
-      resolve(folder, `${tag}.sql`),
-    )
-  }
-  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
-    ...journal,
-    entries,
-  }))
-  return folder
 }
 
 function seedAsset(

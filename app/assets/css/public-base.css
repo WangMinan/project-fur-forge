@@ -138,6 +138,7 @@
   --public-content-reading: 44rem;
   --public-content-article: 52rem;
   --public-content-wide: 90rem;
+  --public-dropdown-width: 10rem;
   --public-page-padding-mobile: 1rem;
   --public-page-padding-tablet: 1.5rem;
   --public-page-padding-desktop: clamp(2rem, 4vw, 4.5rem);
@@ -404,3 +405,5 @@ textarea {
     --public-focus-ring: rgb(29 45 90 / 0.72);
   }
 }
+
+.public-channel-note { max-width: var(--public-content-wide); margin: 1rem auto; padding: 0 var(--public-page-padding); }
