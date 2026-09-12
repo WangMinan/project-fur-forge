@@ -661,6 +661,7 @@ test('管理员可通过登录表单进入后台', async ({ page }) => {
 
   await page.goto(`${adminBaseURL}/admin/site/content`)
   await expect(page.getByTestId('content-admin')).toBeVisible()
+  await page.getByRole('button', { name: '营业与联系', exact: true }).click()
   await expect(page.getByRole('heading', { name: '联系方式', exact: true })).toBeVisible()
   await expect(page.getByText('防诈骗')).toHaveCount(0)
 
