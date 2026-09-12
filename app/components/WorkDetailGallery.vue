@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { PublicWorkGalleryItemDto } from '~~/shared/types/contracts'
+const { t } = usePublicI18n()
 
 /**
  * 作品详情图集：主图 + 有序缩略图，只消费公开 detail 衍生图。
@@ -94,7 +95,7 @@ const activeImageStyle = computed(() => {
       v-if="gallery.length > 1"
       class="work-gallery__thumbs"
       role="group"
-      :aria-label="`${workName}图集，共 ${gallery.length} 张`"
+      :aria-label="t('count.gallery', { name: workName, count: gallery.length })"
     >
       <button
         v-for="(media, index) in gallery"
@@ -102,7 +103,7 @@ const activeImageStyle = computed(() => {
         type="button"
         class="work-gallery__thumb"
         :aria-pressed="index === activeIndex"
-        :aria-label="`查看第 ${index + 1} 张，共 ${gallery.length} 张`"
+        :aria-label="t('count.viewImage', { index: index + 1, count: gallery.length })"
         @click="activeIndex = index"
       >
         <ResponsivePicture

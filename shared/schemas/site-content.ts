@@ -1,18 +1,11 @@
+import { xContactUrlSchema } from './contact-url'
+import { plainTextSchema, publicSiteCopySchema, siteCopySchemas } from './site-copy'
 import { z } from 'zod'
 import { commissionRecipientsSchema, smtpStatusSchema } from './commission-email'
 import { CONTACT_PLATFORMS } from '../constants/contact'
 import { apiSuccessSchema, resourceVersionSchema, versionedRequestSchema } from './api'
 import { contactEmailSchema, contactQqSchema } from './home'
 import { publicPngSourceSetDtoSchema } from './media'
-
-const unsafePlainTextPattern = /[<>]|\b(?:javascript|vbscript)\s*:|data\s*:\s*text\/html/iu
-
-function plainTextSchema(max: number) {
-  return z.string().trim().min(1).max(max).refine(
-    value => !unsafePlainTextPattern.test(value),
-    '只允许安全纯文本',
-  )
-}
 
 export const siteBusinessStatusKindSchema = z.enum([
   'commission',
@@ -38,17 +31,10 @@ export const publicSiteBusinessStatusDtoSchema = z.object(
 ).strict()
 
 /** 委托基础文案。需求3阶段 E 已永久退役 FAQ 契约。 */
-export const commissionBasicContentSchema = z.object({
-  intro: plainTextSchema(240).nullable(),
-  estimateNote: plainTextSchema(600).nullable(),
-  emailAction: plainTextSchema(240).nullable(),
-}).strict()
+export const commissionBasicContentSchema = siteCopySchemas.commission
 
 /** 关于工作室与制作范围。 */
-export const aboutBasicContentSchema = z.object({
-  studioFacts: plainTextSchema(1_200).nullable(),
-  makingScope: plainTextSchema(1_200).nullable(),
-}).strict()
+export const aboutBasicContentSchema = siteCopySchemas.about
 
 export const termsContentSchema = z.object({
   basicTerms: plainTextSchema(8_000).nullable(),
@@ -84,26 +70,31 @@ function isValidOfficialChannelAccount(
   return contactQqSchema.safeParse(account).success
 }
 
+function validateOfficialChannels(
+  channels: { platform: typeof CONTACT_PLATFORMS[number], account: string | null }[],
+  context: z.RefinementCtx,
+) {
+  channels.forEach((channel, index) => {
+    if (channel.platform !== CONTACT_PLATFORMS[index]) {
+      context.addIssue({
+        code: 'custom',
+        message: '官方渠道必须按固定平台顺序提交',
+        path: [index, 'platform'],
+      })
+    }
+    if (!isValidOfficialChannelAccount(channel.account)) {
+      context.addIssue({
+        code: 'custom',
+        message: '平台账号格式不正确',
+        path: [index, 'account'],
+      })
+    }
+  })
+}
+
 export const adminOfficialChannelsSchema = z.array(adminOfficialChannelSchema)
   .length(CONTACT_PLATFORMS.length)
-  .superRefine((channels, context) => {
-    channels.forEach((channel, index) => {
-      if (channel.platform !== CONTACT_PLATFORMS[index]) {
-        context.addIssue({
-          code: 'custom',
-          message: '官方渠道必须按固定平台顺序提交',
-          path: [index, 'platform'],
-        })
-      }
-      if (!isValidOfficialChannelAccount(channel.account)) {
-        context.addIssue({
-          code: 'custom',
-          message: '平台账号格式不正确',
-          path: [index, 'account'],
-        })
-      }
-    })
-  })
+  .superRefine(validateOfficialChannels)
 
 const mutableOfficialChannelSchema = adminOfficialChannelSchema
   .omit({ qrLinkUrl: true })
@@ -111,24 +102,7 @@ const mutableOfficialChannelSchema = adminOfficialChannelSchema
 
 const mutableOfficialChannelsSchema = z.array(mutableOfficialChannelSchema)
   .length(CONTACT_PLATFORMS.length)
-  .superRefine((channels, context) => {
-    channels.forEach((channel, index) => {
-      if (channel.platform !== CONTACT_PLATFORMS[index]) {
-        context.addIssue({
-          code: 'custom',
-          message: '官方渠道必须按固定平台顺序提交',
-          path: [index, 'platform'],
-        })
-      }
-      if (!isValidOfficialChannelAccount(channel.account)) {
-        context.addIssue({
-          code: 'custom',
-          message: '平台账号格式不正确',
-          path: [index, 'account'],
-        })
-      }
-    })
-  })
+  .superRefine(validateOfficialChannels)
 
 export const publicOfficialChannelSchema = adminOfficialChannelSchema
   .omit({ qrCodeAssetId: true })
@@ -164,6 +138,7 @@ export const publicOfficialChannelsSchema = z.array(publicOfficialChannelSchema)
 
 /** 邮箱、QQ 和 QQ群共用 contact 分区版本。 */
 const adminContactContentSchema = z.object({
+  xContactUrl: xContactUrlSchema,
   commissionNotificationRecipients: commissionRecipientsSchema,
   smtpStatus: smtpStatusSchema,
   email: contactEmailSchema,
@@ -171,12 +146,14 @@ const adminContactContentSchema = z.object({
 }).strict()
 
 const mutableContactContentSchema = z.object({
+  xContactUrl: xContactUrlSchema.optional(),
   commissionNotificationRecipients: commissionRecipientsSchema.optional(),
   email: contactEmailSchema,
   officialChannels: mutableOfficialChannelsSchema,
 }).strict()
 
 const publicContactContentSchema = z.object({
+  xContactUrl: xContactUrlSchema,
   email: contactEmailSchema,
   officialChannels: publicOfficialChannelsSchema,
 }).strict()
@@ -227,6 +204,7 @@ export const updateContactContentRequestSchema = versionedRequestSchema(
 )
 
 export const publicSiteContentDtoSchema = z.object({
+  copy: publicSiteCopySchema.default({}),
   statuses: statusPairSchema(publicSiteBusinessStatusDtoSchema),
   commission: commissionBasicContentSchema.extend({
     email: contactEmailSchema,

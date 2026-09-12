@@ -107,10 +107,11 @@ onMounted(() => void load())
         </button>
       </header>
 
-      <nav class="commission-inbox__tabs" aria-label="委托申请状态">
+      <nav class="admin-segmented" aria-label="委托申请状态">
         <NuxtLink
           v-for="tab in tabs"
           :key="tab.status"
+          class="admin-segmented__item"
           :to="tabHref(tab.status)"
           :aria-current="activeStatus === tab.status ? 'page' : undefined"
         >{{ tab.label }}</NuxtLink>
@@ -209,31 +210,13 @@ onMounted(() => void load())
   font-size: var(--admin-font-sm);
 }
 
-.commission-inbox button,
-.commission-inbox__tabs a {
+.commission-inbox button {
   min-height: var(--admin-control-height);
   padding: 0 var(--admin-space-4);
   border: 1px solid var(--admin-border-primary);
   border-radius: var(--admin-radius-md);
   background: var(--admin-bg-primary);
   font: inherit;
-}
-
-.commission-inbox__tabs {
-  display: flex;
-  gap: var(--admin-space-2);
-  flex-wrap: wrap;
-}
-
-.commission-inbox__tabs a {
-  display: inline-flex;
-  align-items: center;
-}
-
-.commission-inbox__tabs a[aria-current='page'] {
-  color: var(--admin-text-inverse);
-  background: var(--admin-accent-primary);
-  border-color: var(--admin-accent-primary);
 }
 
 .commission-inbox__state {

@@ -26,20 +26,21 @@ interface HomeRow {
   autoRotateIntervalMs: number
   contactEmail: string
   contactQq: string
-  tagline: string
+  tagline: string | null
+  xContactUrl: string
 }
 
 function requireHome(sqlite: Database.Database) {
   const row = sqlite.prepare(`
     SELECT
-      hero_tagline AS tagline,
+      hero_tagline AS tagline, x_contact_url AS xContactUrl,
       contact_email AS contactEmail,
       contact_qq AS contactQq,
       hero_auto_rotate AS autoRotate,
       hero_auto_rotate_interval_ms AS autoRotateIntervalMs
     FROM site_content WHERE id = 'site'
   `).get() as HomeRow | undefined
-  if (!row || !row.tagline || !row.contactEmail || !row.contactQq) {
+  if (!row || !row.contactEmail || !row.contactQq) {
     throw new ServiceError(500, 'INTERNAL_ERROR', 'Home settings are unavailable.')
   }
   return row
@@ -98,6 +99,7 @@ export function getPublicHome(
   const home = requireHome(sqlite)
   return publicHomeDtoSchema.parse({
     tagline: home.tagline,
+    xContactUrl: home.xContactUrl,
     contactEmail: home.contactEmail,
     contactQq: home.contactQq,
     autoRotate: home.autoRotate === 1,

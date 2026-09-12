@@ -16,6 +16,7 @@ import {
 // 委托营业状态卡片：状态不存在时首次保存即创建（expectedVersion 0）；
 // 公开链接由服务端固定指向 /commission，不接受表单提交。
 const props = defineProps<{
+  toneOnly?: boolean
   kind: SiteBusinessStatusKind
   mutating: boolean
   saved: boolean
@@ -61,7 +62,7 @@ const issues = computed(() => siteStatusFieldIssues({
 }))
 
 const canSubmit = computed(() =>
-  !props.mutating && isDirty.value && Object.keys(issues.value).length === 0,
+  !props.mutating && isDirty.value && (props.toneOnly || Object.keys(issues.value).length === 0),
 )
 
 const showSaved = computed(() => props.saved && !isDirty.value)
@@ -72,13 +73,13 @@ function onSave() {
   }
   emit('save', {
     tone: tone.value,
-    label: label.value.trim(),
+    label: props.toneOnly ? (props.status?.label ?? SITE_STATUS_TONE_LABELS[tone.value]) : label.value.trim(),
   })
 }
 </script>
 
 <template>
-  <section class="status-card" :aria-labelledby="`status-title-${kind}`">
+  <section :data-dirty="isDirty" :data-saving="mutating" class="status-card" :aria-labelledby="`status-title-${kind}`">
     <header class="status-card__head">
       <h3 :id="`status-title-${kind}`" class="status-card__title">
         {{ SITE_STATUS_KIND_LABELS[kind] }}
@@ -102,10 +103,10 @@ function onSave() {
             {{ SITE_STATUS_TONE_LABELS[value] }}
           </option>
         </select>
-        <p class="status-card__hint">开放显示绿色状态点，暂停显示暖色状态点。</p>
+        <p class="status-card__hint">开放显示绿色状态点，暂停显示暖色状态点。请在“公开文案”中核对各语言的营业状态文案。</p>
       </div>
 
-      <div class="status-card__field">
+      <div v-if="!toneOnly" class="status-card__field">
         <label class="status-card__label" :for="`status-label-${kind}`">
           公开标签（{{ label.trim().length }}/{{ SITE_CONTENT_LIMITS.statusLabel }}）
         </label>

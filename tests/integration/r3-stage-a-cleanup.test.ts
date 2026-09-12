@@ -1,19 +1,15 @@
+import { migrationsThrough, migrationsAfter } from '../helpers/migrations'
 import {
-  copyFileSync,
   existsSync,
   mkdtempSync,
-  mkdirSync,
-  readFileSync,
   rmSync,
-  writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, resolve } from 'node:path'
+import { resolve } from 'node:path'
 import type Database from 'better-sqlite3'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   backupDatabase,
-  DATABASE_MIGRATIONS_FOLDER,
   migrateDatabase,
   openDatabase,
   restoreDatabase,
@@ -94,48 +90,6 @@ let databaseFile: string
 let sqlite: Database.Database
 let store: FakeRetirementStore
 let cache: FakeCache
-
-function migrationsBeforeContract() {
-  const folder = resolve(dirname(databaseFile), 'pre-r3-a-contract-migrations')
-  const meta = resolve(folder, 'meta')
-  mkdirSync(meta, { recursive: true })
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: { tag: string }[] }
-  const contractIndex = journal.entries.findIndex(
-    entry => entry.tag === '0036_r3_a_contract',
-  )
-  if (contractIndex < 0) {
-    throw new Error('R3-A contract migration is missing from the journal.')
-  }
-  const entries = journal.entries.slice(0, contractIndex)
-  for (const { tag } of entries) {
-    copyFileSync(
-      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
-      resolve(folder, `${tag}.sql`),
-    )
-  }
-  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
-    ...journal,
-    entries,
-  }))
-  return folder
-}
-
-function migrationsFromContractCount() {
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: { tag: string }[] }
-  const contractIndex = journal.entries.findIndex(
-    entry => entry.tag === '0036_r3_a_contract',
-  )
-  if (contractIndex < 0) {
-    throw new Error('R3-A contract migration is missing from the journal.')
-  }
-  return journal.entries.length - contractIndex
-}
 
 function insertAsset(id: string, role: 'return_photo' | 'contact_qr') {
   const suffix = role === 'return_photo' ? 'return' : 'qr'
@@ -327,7 +281,7 @@ beforeEach(async () => {
   directory = mkdtempSync(resolve(tmpdir(), 'fur-forge-r3-a-cleanup-'))
   databaseFile = resolve(directory, 'legacy.db')
   await migrateDatabase(databaseFile, {
-    migrationsFolder: migrationsBeforeContract(),
+    migrationsFolder: migrationsThrough(databaseFile, '0035_r3_a_brand'),
   })
   sqlite = openDatabase(databaseFile).sqlite
   store = new FakeRetirementStore()
@@ -483,7 +437,7 @@ describe('R3-A retirement cleanup', () => {
     }))
     sqlite.close()
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
-      applied: migrationsFromContractCount(),
+      applied: migrationsAfter('0035_r3_a_brand'),
     })
     await expect(migrateDatabase(databaseFile)).resolves.toMatchObject({
       applied: 0,

@@ -28,6 +28,7 @@ const canSave = computed(() =>
   <section
     class="site-section"
     :data-section="section"
+    :data-saving="saving"
     :data-dirty="dirty ? 'true' : 'false'"
     :data-conflict="conflict ? 'true' : 'false'"
     :aria-labelledby="`site-section-${section}-title`"

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { formatCnyMinorUnits } from '~/utils/format'
 import type { PublicAdoptionListItemDto } from '~~/shared/types/contracts'
+const { t } = usePublicI18n()
 
 const props = defineProps<{
   adoption: PublicAdoptionListItemDto
@@ -11,15 +11,11 @@ const hasLongCharacterName = computed(() => (
   props.adoption.work.characterName.length >= 10
 ))
 const folioLabel = computed(() => String(props.folio).padStart(2, '0'))
-const priceLabel = computed(() => (
-  props.adoption.work.price
-    ? formatCnyMinorUnits(props.adoption.work.price.minorUnits)
-    : null
-))
 const mediaOrientation = computed(() => {
   const image = props.adoption.cover.sources.fallback.at(-1)
   return image && image.height > image.width ? 'portrait' : 'landscape'
 })
+
 const adoptionTo = computed(() => ({
   path: props.adoption.href,
   query: { from: 'adoptions' },
@@ -31,7 +27,7 @@ const adoptionTo = computed(() => ({
     :to="adoptionTo"
     class="adoption-card"
     :data-work-slug="adoption.work.slug"
-    :aria-label="`查看领养角色：${adoption.work.characterName}`"
+    :aria-label="t('count.viewCharacter', { name: adoption.work.characterName })"
   >
     <span class="adoption-card__record">
       <span
@@ -55,13 +51,12 @@ const adoptionTo = computed(() => ({
           >{{ adoption.work.characterName }}</span>
         </span>
 
-        <span class="adoption-card__facts" aria-label="角色简要信息">
+        <span class="adoption-card__facts" :aria-label="t('ui.characterInfo')">
           <span>{{ adoption.work.species }}</span>
-          <span v-if="priceLabel">{{ priceLabel }}</span>
         </span>
 
         <span class="adoption-card__action">
-          <span>查看当前角色</span>
+          <span>{{ t('ui.viewCurrent') }}</span>
           <span aria-hidden="true">→</span>
         </span>
       </span>

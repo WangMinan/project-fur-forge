@@ -1,3 +1,4 @@
+import { SITE_LOCALES } from './shared/constants/site-locales'
 import { fileURLToPath } from 'node:url'
 
 const includeRuntimeErrorFixtures = (
@@ -56,9 +57,22 @@ export default defineNuxtConfig({
     enabled: false,
   },
   modules: [
+    '@nuxtjs/i18n',
     '@nuxt/eslint',
     'nuxt-auth-utils',
   ],
+  i18n: {
+    strategy: 'no_prefix',
+    defaultLocale: 'zh-CN',
+    locales: SITE_LOCALES.map(({ code, language, name }) => ({ code, language, name })),
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'site-language',
+      cookieSecure: process.env.APP_ENV === 'production',
+      redirectOn: 'all',
+      fallbackLocale: 'zh-CN',
+    },
+  },
   auth: {
     loadStrategy: 'none',
   },

@@ -2,17 +2,19 @@
 import {
   CONTACT_PLATFORM_ACTION_LABELS,
   CONTACT_PLATFORM_LABELS,
-  CONTACT_PLATFORM_LOGO_PATHS,
-} from '~~/shared/constants/contact'
+  CONTACT_PLATFORM_LOGO_PATHS } from '~~/shared/constants/contact'
+
 import type { PublicOfficialChannel } from '~~/shared/types/contracts'
+const { t, contactOnly } = usePublicI18n()
 
 const props = defineProps<{
+  xContactUrl?: string | undefined
   channels: PublicOfficialChannel[]
   email: string
   emailSubject?: string | undefined
 }>()
 
-const displayChannels = computed(() => props.channels.map(channel => ({
+const displayChannels = computed(() => (contactOnly.value ? [] : props.channels).map(channel => ({
   ...channel,
   actionLabel: CONTACT_PLATFORM_ACTION_LABELS[channel.platform],
   label: CONTACT_PLATFORM_LABELS[channel.platform],
@@ -24,8 +26,12 @@ const displayChannels = computed(() => props.channels.map(channel => ({
 
 <template>
   <dl class="contact-list" data-testid="contact-channel-list">
+    <div v-if="contactOnly" class="contact-list__row">
+      <dt class="contact-list__label">X</dt>
+      <dd class="contact-list__value"><a :href="xContactUrl">{{ xContactUrl ? '@' + xContactUrl.split('/').at(-1) : 'X' }}</a></dd>
+    </div>
     <div class="contact-list__row">
-      <dt class="contact-list__label">邮箱</dt>
+      <dt class="contact-list__label">{{ t('ui.email') }}</dt>
       <dd class="contact-list__value">
         <span class="contact-list__account">{{ email }}</span>
         <ContactEmailActions
@@ -64,7 +70,7 @@ const displayChannels = computed(() => props.channels.map(channel => ({
             <span class="contact-list__qq-mark" aria-hidden="true">
               <img :src="channel.logoSrc" alt="" width="14" height="14">
             </span>
-            暂无直达链接
+            {{ t('ui.noDirectLink') }}
           </span>
 
           <span class="contact-list__qr" :aria-label="`${channel.label}二维码`" role="group">

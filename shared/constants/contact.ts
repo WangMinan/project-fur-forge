@@ -1,3 +1,4 @@
+
 export const CONTACT_PLATFORMS = [
   'qq',
   'qq_group',

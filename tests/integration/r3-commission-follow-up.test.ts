@@ -1,16 +1,12 @@
+import { migrationsThrough, migrationsAfter } from '../helpers/migrations'
 import {
-  copyFileSync,
   mkdtempSync,
-  mkdirSync,
-  readFileSync,
   rmSync,
-  writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, resolve } from 'node:path'
+import { resolve } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
-  DATABASE_MIGRATIONS_FOLDER,
   migrateDatabase,
   openDatabase,
 } from '../../server/utils/database'
@@ -23,38 +19,6 @@ function databaseFile() {
   const directory = mkdtempSync(resolve(tmpdir(), 'fur-forge-r3-commission-follow-up-'))
   directories.push(directory)
   return resolve(directory, 'studio.db')
-}
-
-function migrationsThrough(databaseFile: string, lastTag: string) {
-  const folder = resolve(dirname(databaseFile), `migrations-through-${lastTag}`)
-  const meta = resolve(folder, 'meta')
-  mkdirSync(meta, { recursive: true })
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: { tag: string }[] }
-  const entries = journal.entries.slice(
-    0,
-    journal.entries.findIndex(entry => entry.tag === lastTag) + 1,
-  )
-  for (const { tag } of entries) {
-    copyFileSync(
-      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
-      resolve(folder, `${tag}.sql`),
-    )
-  }
-  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({ ...journal, entries }))
-  return folder
-}
-
-/** `lastTag` 之后剩余的迁移数量：再加前向迁移时不用回来改这个数字。 */
-function migrationsAfter(lastTag: string) {
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: { tag: string }[] }
-  return journal.entries.length
-    - (journal.entries.findIndex(entry => entry.tag === lastTag) + 1)
 }
 
 function seedSubmission(

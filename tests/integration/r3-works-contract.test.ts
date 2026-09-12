@@ -1,16 +1,12 @@
+import { migrationsThrough, migrationsAfter } from '../helpers/migrations'
 import {
-  copyFileSync,
   mkdtempSync,
-  mkdirSync,
-  readFileSync,
   rmSync,
-  writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, resolve } from 'node:path'
+import { resolve } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
-  DATABASE_MIGRATIONS_FOLDER,
   migrateDatabase,
   openDatabase,
 } from '../../server/utils/database'
@@ -18,44 +14,10 @@ import {
 const directories: string[] = []
 const PRE_CONTRACT_TAG = '0038_r3_b_adoption_commission_expand'
 
-function migrationsAfter(tag: string) {
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: { tag: string }[] }
-  const index = journal.entries.findIndex(entry => entry.tag === tag)
-  return journal.entries.length - index - 1
-}
-
 function databaseFile() {
   const directory = mkdtempSync(resolve(tmpdir(), 'fur-forge-r3-contract-'))
   directories.push(directory)
   return resolve(directory, 'studio.db')
-}
-
-function migrationsThrough(databaseFile: string, lastTag: string) {
-  const folder = resolve(dirname(databaseFile), `migrations-through-${lastTag}`)
-  const meta = resolve(folder, 'meta')
-  mkdirSync(meta, { recursive: true })
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: { tag: string }[] }
-  const entries = journal.entries.slice(
-    0,
-    journal.entries.findIndex(entry => entry.tag === lastTag) + 1,
-  )
-  for (const { tag } of entries) {
-    copyFileSync(
-      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
-      resolve(folder, `${tag}.sql`),
-    )
-  }
-  writeFileSync(resolve(meta, '_journal.json'), JSON.stringify({
-    ...journal,
-    entries,
-  }))
-  return folder
 }
 
 function insertLegacyWork(
@@ -456,7 +418,7 @@ it('R6 migration preserves old source chains and work versions without opting ex
     variants = db.prepare('SELECT * FROM asset_variants ORDER BY id').all()
   } finally { before.sqlite.close() }
   const result = await migrateDatabase(file)
-  expect(result.applied).toBe(1)
+  expect(result.applied).toBe(migrationsAfter('0052_r5_commission_email'))
   expect(result.backupFile).toBeTruthy()
   expect((await migrateDatabase(file)).applied).toBe(0)
   const after = openDatabase(file)

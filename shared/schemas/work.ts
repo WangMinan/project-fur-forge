@@ -20,11 +20,6 @@ export const adoptionStatusReviewItemSchema = z.object({
   publicationStatus: publicationStatusSchema,
 }).strict()
 
-export const cnyPriceSchema = z.object({
-  currency: z.literal('CNY'),
-  minorUnits: z.number().int().positive(),
-}).strict()
-
 export const slugSchema = z.string()
   .min(1)
   .max(120)
@@ -39,7 +34,6 @@ const publicWorkBaseSchema = z.object({
 
 export const publicAdoptionWorkDtoSchema = publicWorkBaseSchema.extend({
   adoptionStatus: adoptionStatusSchema,
-  price: cnyPriceSchema.optional(),
 }).strict()
 
 export const publicWorkDtoSchema = publicWorkBaseSchema

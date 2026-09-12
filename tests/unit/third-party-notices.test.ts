@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
 import {
   assertNoticePlatform,
   buildThirdPartyNotices,
@@ -8,6 +9,18 @@ import {
 import { pnpmInvocation } from '../../scripts/pnpm-invocation.mjs'
 
 describe('third-party notice generation', () => {
+  it('verifies the shipped Zlib license for the exact tosource release with missing metadata', () => {
+    const license = readFileSync(new URL('../../node_modules/.pnpm/tosource@2.0.0-alpha.3/node_modules/tosource/LICENSE', import.meta.url))
+    const input = {
+      licenseReport: { UNKNOWN: [{ name: 'tosource', versions: ['2.0.0-alpha.3'], paths: ['/installed/tosource'] }] },
+      manualAssets: [],
+      readAsset: () => license,
+    }
+    expect(buildThirdPartyNotices(input)[0]).toMatchObject({ license: 'Zlib', noticeText: license.toString('utf8') })
+    expect(() => buildThirdPartyNotices({ ...input, readAsset: () => Buffer.from('changed') })).toThrow(/Unverified/u)
+    input.licenseReport.UNKNOWN[0]!.versions = ['2.0.0-alpha.4']
+    expect(() => buildThirdPartyNotices(input)).toThrow(/Unknown license/u)
+  })
   it('pins generated snapshots to the release image platform', () => {
     expect(() => assertNoticePlatform('linux', 'x64')).not.toThrow()
     expect(() => assertNoticePlatform('win32', 'x64')).toThrow(/linux\/x64/u)

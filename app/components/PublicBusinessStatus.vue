@@ -1,16 +1,21 @@
 <script setup lang="ts">
+import type { PublicSiteCopy } from '~~/shared/schemas/site-copy'
+import { localizedSiteCopy } from '~~/shared/utils/site-copy'
 import type { PublicSiteBusinessStatusDto } from '~~/shared/types/contracts'
+const { language } = usePublicI18n()
 
 // 委托营业状态徽章：状态点颜色由 tone 决定，只展示管理员维护的公开标签。
-defineProps<{
+const props = defineProps<{
+  copy?: PublicSiteCopy | undefined
   status: PublicSiteBusinessStatusDto
 }>()
+const label = computed(() => localizedSiteCopy(props.copy, language.value, 'status').label ?? props.status.label)
 </script>
 
 <template>
   <p class="business-status" :data-tone="status.tone">
     <span class="business-status__dot" aria-hidden="true" />
-    <span class="business-status__label">{{ status.label }}</span>
+    <span class="business-status__label">{{ label }}</span>
   </p>
 </template>
 

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = usePublicI18n()
 defineProps<{
   action: string
   clearTo: string
@@ -16,20 +17,20 @@ defineProps<{
         class="catalog-search__input"
         type="search"
         name="q"
-        aria-label="按设定名称搜索"
+        :aria-label="t('ui.searchByName')"
         :value="query"
         maxlength="100"
         autocomplete="off"
-        placeholder="输入设定名称"
+        :placeholder="t('ui.enterName')"
       >
       <template v-for="(value, name) in hiddenFields" :key="name">
         <input v-if="value" type="hidden" :name="name" :value="value">
       </template>
       <button class="catalog-search__submit" type="submit">
-        搜索
+        {{ t('ui.search') }}
       </button>
       <NuxtLink v-if="showClear" class="catalog-search__clear" :to="clearTo">
-        清除
+        {{ t('ui.clear') }}
       </NuxtLink>
     </div>
   </form>

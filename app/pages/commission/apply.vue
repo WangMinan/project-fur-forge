@@ -10,10 +10,12 @@ import type { ConditionalPutDto } from '~~/shared/types/contracts'
 import { privacyPolicyReadiness } from '~~/shared/utils/privacy-policy-readiness.mjs'
 import { buildUploadDeclaration } from '~/utils/upload-declaration'
 import { putFileToSignedUrl } from '~/utils/signed-put'
+const { t, isEnglish, contactOnly } = usePublicI18n()
+const languageBlocked = useState('commission-language-blocked', () => false)
 
 useSeoMeta({
-  title: `提交委托申请 · ${PROJECT_NAME}`,
-  description: '向有点小狗工作室私密提交一张设定图与委托联系信息。',
+  title: computed(() => `${t('contact.applyTitle')} · ${isEnglish.value ? 'DITE DOG' : PROJECT_NAME}`),
+  description: computed(() => isEnglish.value ? t('contact.international') : '向有点小狗工作室私密提交一张设定图与委托联系信息。'),
   robots: 'noindex, nofollow',
 })
 
@@ -77,6 +79,8 @@ const activeSession = shallowRef<{
 let activeXhr: XMLHttpRequest | null = null
 
 const busy = computed(() => !['idle', 'success'].includes(stage.value))
+watch(busy, value => { languageBlocked.value = value }, { immediate: true, flush: 'sync' })
+onBeforeUnmount(() => { languageBlocked.value = false })
 const stageText = computed(() => ({
   idle: '',
   digesting: '正在检查图片…',
@@ -271,7 +275,7 @@ function responseReason(error: unknown) {
 }
 
 async function submit() {
-  if (busy.value) {
+  if (busy.value || contactOnly.value) {
     return
   }
   if (!validateFields() || !file.value) {
@@ -339,7 +343,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="commission-apply" data-testid="commission-apply-page">
     <div class="commission-apply__intro">
-      <PublicPageIntro title="提交委托申请" />
+      <PublicPageIntro :title="t('contact.applyTitle')" />
       <img
         class="commission-apply__background-mark"
         src="/brand/logo-mark.png"
@@ -351,6 +355,12 @@ onBeforeUnmount(() => {
     </div>
 
     <div class="commission-apply__body">
+      <section v-if="contactOnly" class="commission-apply__unavailable">
+        <p>{{ t('contact.international') }}</p>
+        <PublicAction :href="site?.contact.xContactUrl">{{ t('contact.x') }}</PublicAction>
+      </section>
+      <template v-else>
+      <p><a :href="site?.contact.xContactUrl">{{ t('contact.international') }}</a></p>
       <section v-if="receiptCode" class="commission-apply__success" role="status">
         <p class="commission-apply__eyebrow">申请已收到</p>
         <h2>请保存回执编号</h2>
@@ -586,6 +596,7 @@ onBeforeUnmount(() => {
           >确认提交</PublicAction>
         </div>
       </form>
+      </template>
     </div>
   </div>
 </template>
