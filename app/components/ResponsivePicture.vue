@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { PublicSourceSetDto } from '~~/shared/types/contracts'
+const { t } = usePublicI18n()
 
 /**
  * 公开图片唯一原语：只消费服务端预生成的 PublicSourceSetDto。
@@ -115,7 +116,7 @@ function handleImageError() {
         height="1600"
       >
       <span class="responsive-picture__fallback-message">
-        无法显示
+        {{ t('ui.imageError') }}
       </span>
     </span>
   </picture>

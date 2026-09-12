@@ -2,7 +2,7 @@
 import type { RouteLocationRaw } from 'vue-router'
 import { publicWorkDetailResponseSchema } from '~~/shared/schemas/public-content'
 import { PROJECT_NAME } from '~~/shared/constants/project'
-import { formatCnyMinorUnits } from '~/utils/format'
+const { t, isEnglish } = usePublicI18n()
 
 /**
  * T19 真实作品详情：SSR 消费 GET /api/public/v1/works/{slug}。
@@ -66,15 +66,12 @@ const isAdoptionArchive = computed(() => Boolean(
   || detail.value?.media.adoptionCover
   || detail.value?.media.designSheet,
 ))
-const adoptionPrice = computed(() => {
-  const price = detail.value?.adoption?.price
-  return price ? formatCnyMinorUnits(price.minorUnits) : null
-})
+
 const isAdopted = computed(() => (
   detail.value?.adoption?.adoptionStatus === 'adopted'
 ))
 const adoptionStatusLabel = computed(() => (
-  isAdopted.value ? '已领养' : '可领养'
+  isAdopted.value ? t('ui.adopted') : t('ui.available')
 ))
 /**
  * 单一媒体区：出厂照 → 领养封面 → 设定图 合成同一个查看序列。
@@ -110,19 +107,18 @@ const initialGalleryAssetId = computed(() => {
     ?? gallery.value[0]?.assetId
 })
 
+const detailBrand = computed(() => isEnglish.value ? 'DITE DOG' : PROJECT_NAME)
+const detailTitle = computed(() => dto.value
+  ? `${dto.value.characterName} · ${t(isAdoptionArchive.value ? 'ui.adoptions' : 'ui.works')} · ${detailBrand.value}`
+  : `${t('ui.works')} · ${detailBrand.value}`)
+const detailDescription = computed(() => dto.value
+  ? t(isAdoptionArchive.value ? 'seo.adoptionDetail' : 'seo.workDetail', { name: dto.value.characterName, species: dto.value.species })
+  : t('seo.works'))
 useSeoMeta({
-  title: computed(() => (dto.value
-    ? `${dto.value.characterName} · ${isAdoptionArchive.value ? '设定领养' : '作品展示'} · ${PROJECT_NAME}`
-    : `作品展示 · ${PROJECT_NAME}`)),
-  description: computed(() => (dto.value
-    ? `${dto.value.characterName}：${dto.value.species}。有点小狗工作室${isAdoptionArchive.value ? '设定领养角色详情' : '兽装作品档案'}。`
-    : '有点小狗工作室兽装作品档案。')),
-  ogTitle: computed(() => (dto.value
-    ? `${dto.value.characterName} · ${PROJECT_NAME}`
-    : `作品展示 · ${PROJECT_NAME}`)),
-  ogDescription: computed(() => (dto.value
-    ? `${dto.value.species} · ${isAdoptionArchive.value ? '设定领养角色详情' : '兽装作品档案'}`
-    : '有点小狗工作室兽装作品档案。')),
+  title: detailTitle,
+  description: detailDescription,
+  ogTitle: computed(() => `${dto.value?.characterName ?? t('ui.works')} · ${detailBrand.value}`),
+  ogDescription: detailDescription,
   ogType: 'article',
 })
 
@@ -162,14 +158,14 @@ interface BackLink {
 function workBack(href: RouteLocationRaw = '/works'): BackLink {
   return {
     href,
-    label: '返回作品展示',
+    label: 'ui.backWorks',
   }
 }
 
 function adoptionBack(href: RouteLocationRaw = '/adoptions'): BackLink {
   return {
     href,
-    label: '返回设定领养',
+    label: 'ui.backAdoptions',
   }
 }
 
@@ -207,9 +203,9 @@ onMounted(() => {
     :data-analytics-entity-id="dto.id"
     :data-work-slug="dto.slug"
   >
-    <nav class="work-detail__back" aria-label="返回">
+    <nav class="work-detail__back" :aria-label="t('ui.return')">
       <NuxtLink :to="back.href" class="work-detail__back-link">
-        <span aria-hidden="true">←</span> {{ back.label }}
+        <span aria-hidden="true">←</span> {{ t(back.label) }}
       </NuxtLink>
     </nav>
 
@@ -220,20 +216,16 @@ onMounted(() => {
         </h1>
         <dl class="work-detail__identity-ledger">
           <div>
-            <dt>物种</dt>
+            <dt>{{ t('ui.species') }}</dt>
             <dd>{{ dto.species }}</dd>
           </div>
           <div v-if="isAdoptionArchive">
-            <dt>内容类型</dt>
-            <dd>设定领养</dd>
+            <dt>{{ t('ui.contentType') }}</dt>
+            <dd>{{ t('ui.adoptions') }}</dd>
           </div>
           <div v-if="detail?.adoption">
-            <dt>领养状态</dt>
+            <dt>{{ t('ui.adoptionStatus') }}</dt>
             <dd data-testid="adoption-detail-status">{{ adoptionStatusLabel }}</dd>
-          </div>
-          <div v-if="detail?.adoption">
-            <dt>领养价格</dt>
-            <dd data-testid="adoption-detail-price">{{ adoptionPrice ?? '以详情为准' }}</dd>
           </div>
         </dl>
         <div v-if="isAdoptionArchive" class="work-detail__adoption-actions">
@@ -242,13 +234,13 @@ onMounted(() => {
             :disabled="isAdopted"
             data-testid="adoption-contact-action"
           >
-            {{ isAdopted ? '已被领养' : '联系咨询领养' }}
+            {{ t(isAdopted ? 'ui.alreadyAdopted' : 'ui.adoptionEnquiry') }}
           </PublicAction>
           <NuxtLink
             to="/adoptions"
             class="work-detail__archive-link"
           >
-            浏览全部领养角色 <span aria-hidden="true">→</span>
+            {{ t('ui.viewAdoptions') }} <span aria-hidden="true">→</span>
           </NuxtLink>
         </div>
       </header>
@@ -258,7 +250,7 @@ onMounted(() => {
           所有图片已并入同一查看序列，不再需要「出厂照 / 作品图集」这类分区标题。
           aria-label 保留，屏幕阅读器仍能识别这个区域。
         -->
-        <section v-if="gallery.length > 0" class="work-detail__media-section" aria-label="作品图集">
+        <section v-if="gallery.length > 0" class="work-detail__media-section" :aria-label="t('ui.gallery')">
           <WorkDetailGallery
             :gallery="gallery"
             :initial-asset-id="initialGalleryAssetId"
@@ -267,8 +259,8 @@ onMounted(() => {
         </section>
         <PublicEmptyState
           v-else
-          title="作品图片正在整理中。"
-          description="当前作品暂时没有可公开查看的图片。"
+          :title="t('ui.imagesEmpty')"
+          :description="t('ui.noImages')"
         />
       </div>
     </div>

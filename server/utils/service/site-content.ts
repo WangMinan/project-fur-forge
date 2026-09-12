@@ -1,3 +1,4 @@
+import { getPublicSiteCopy } from '../repository/site-copy-repository'
 import { randomUUID } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import { CONTACT_PLATFORMS } from '../../../shared/constants/contact'
@@ -24,6 +25,7 @@ import {
 import { toPublicPngSourceSetDto } from '../recipe/media-mapper'
 
 interface SiteContentRow {
+  xContactUrl: string
   aboutContentVersion: number
   aboutMakingScope: string | null
   aboutStudioFacts: string | null
@@ -52,7 +54,7 @@ interface BusinessStatusRow {
 function siteContentRow(sqlite: Database.Database) {
   const row = sqlite.prepare(`
     SELECT
-      version, contact_email AS contactEmail,
+      version, contact_email AS contactEmail, x_contact_url AS xContactUrl,
       official_channels_json AS officialChannelsJson,
       commission_intro AS commissionIntro,
       commission_estimate_note AS commissionEstimateNote,
@@ -143,6 +145,7 @@ function content(sqlite: Database.Database): AdminSiteContentDto {
     },
     contact: {
       email: row.contactEmail,
+      xContactUrl: row.xContactUrl,
       commissionNotificationRecipients: commissionRecipients(sqlite),
       smtpStatus: smtpConfiguration(getRuntimeConfig()).status,
       officialChannels: officialChannels(row.officialChannelsJson),
@@ -249,6 +252,7 @@ export function getPublicSiteContent(
       }] : []
     })
   return publicSiteContentDtoSchema.parse({
+    copy: getPublicSiteCopy(sqlite),
     statuses: getPublicBusinessStatuses(sqlite),
     commission: {
       ...current.commission,
@@ -261,6 +265,7 @@ export function getPublicSiteContent(
     },
     contact: {
       email: current.contact.email,
+      xContactUrl: current.contact.xContactUrl,
       officialChannels: publicChannels,
     },
   })
@@ -301,7 +306,7 @@ const SECTION_UPDATES = {
   'contact': {
     versionColumn: 'contact_content_version',
     action: 'SITE_CONTACT_CONTENT_UPDATE',
-    assignments: 'contact_email = @email, official_channels_json = @officialChannelsJson, commission_notification_recipients_json = @commissionNotificationRecipientsJson',
+    assignments: 'x_contact_url = @xContactUrl, contact_email = @email, official_channels_json = @officialChannelsJson, commission_notification_recipients_json = @commissionNotificationRecipientsJson',
   },
 } as const satisfies Record<SiteContentSection, {
   action: string
@@ -325,7 +330,7 @@ export function updateSiteContentSection(
           ${definition.versionColumn} = ${definition.versionColumn} + 1,
           updated_at = @now
       WHERE id = 'site' AND ${definition.versionColumn} = @expectedVersion
-    `).run({ ...values, now, expectedVersion })
+    `).run({ ...(section === 'contact' ? { xContactUrl: siteContentRow(sqlite).xContactUrl } : {}), ...values, now, expectedVersion })
     if (result.changes !== 1) {
       throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
     }

@@ -14,10 +14,7 @@ const STATIC_PATHS = [
 
 export default defineEventHandler((event) => {
   const repository = getPublicSiteRepository()
-  const workPaths = [
-    ...repository.listWorks().items,
-    ...repository.listAdoptions().items,
-  ].map(item => item.href)
+  const workPaths = repository.listPublicWorkPaths()
   const paths = [...new Set([...STATIC_PATHS, ...workPaths])]
   const { publicBaseUrl } = getRuntimeConfig()
 

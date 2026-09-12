@@ -379,6 +379,20 @@
       "when": 1788998400000,
       "tag": "0053_r6_image_compositions",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "6",
+      "when": 1789171200000,
+      "tag": "0054_r7_site_content_translations",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "6",
+      "when": 1789171201000,
+      "tag": "0055_r7_x_contact",
+      "breakpoints": true
     }
   ]
 }

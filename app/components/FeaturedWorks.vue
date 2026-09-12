@@ -2,6 +2,7 @@
 import type { PublicWorkSummaryDto } from '~~/shared/types/contracts'
 import { PUBLIC_FEATURED_LIMIT } from '~~/shared/constants/featured'
 import { animateDirectionalLayers } from '~/utils/hero-carousel'
+const { t } = usePublicI18n()
 
 const props = defineProps<{
   available: boolean
@@ -233,7 +234,7 @@ onBeforeUnmount(() => {
     @pointercancel="onPointerCancel"
   >
     <header class="featured-works__heading">
-      <h2 id="featured-works-title" class="featured-works__section-title">代表作品</h2>
+      <h2 id="featured-works-title" class="featured-works__section-title">{{ t('ui.featured') }}</h2>
     </header>
 
     <div class="featured-works__stage">
@@ -246,7 +247,7 @@ onBeforeUnmount(() => {
         :to="activeWork.href"
         class="featured-works__media"
         :data-work-slug="activeWork.work.slug"
-        :aria-label="`查看代表作品：${activeWork.work.characterName}`"
+        :aria-label="t('count.viewWork', { name: activeWork.work.characterName })"
       >
         <Transition :name="mediaTransitionName">
           <span :key="activeWork.work.slug" class="featured-works__media-surface">
@@ -266,7 +267,7 @@ onBeforeUnmount(() => {
         <div
           v-if="canNavigate"
           class="featured-works__controls"
-          aria-label="代表作品切换"
+          :aria-label="t('ui.featuredToggle')"
           data-featured-layout="controls"
           role="group"
         >
@@ -277,21 +278,21 @@ onBeforeUnmount(() => {
             type="button"
             class="featured-works__control-arrow"
             data-featured-action="previous"
-            aria-label="上一项代表作品"
+            :aria-label="t('ui.previousWork')"
             @click="selectWork(-1)"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
               <path d="M11.5 3.5 6 9l5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </button>
-          <div class="featured-works__dots" role="group" aria-label="代表作品分页">
+          <div class="featured-works__dots" role="group" :aria-label="t('ui.featuredPagination')">
             <button
               v-for="(work, index) in works"
               :key="work.work.id"
               type="button"
               class="featured-works__dot"
               :class="{ 'featured-works__dot--active': index === activeIndex }"
-              :aria-label="`第 ${index + 1} 件代表作品，共 ${works.length} 件`"
+              :aria-label="t('count.work', { index: index + 1, count: works.length })"
               :aria-current="index === activeIndex ? 'true' : undefined"
               @click="selectWorkAt(index)"
             />
@@ -300,7 +301,7 @@ onBeforeUnmount(() => {
             type="button"
             class="featured-works__control-arrow"
             data-featured-action="next"
-            aria-label="下一项代表作品"
+            :aria-label="t('ui.nextWork')"
             @click="selectWork(1)"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
@@ -313,7 +314,7 @@ onBeforeUnmount(() => {
             class="featured-works__pause"
             data-featured-action="pause"
             :aria-pressed="userPaused"
-            :aria-label="userPaused ? '继续自动轮播' : '暂停自动轮播'"
+            :aria-label="t(userPaused ? 'ui.resume' : 'ui.pause')"
             @click="togglePause"
           >
             <svg v-if="userPaused" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -339,7 +340,7 @@ onBeforeUnmount(() => {
           </div>
           <div class="featured-works__action-layer" data-featured-layout="action">
             <PublicAction to="/works" class="featured-works__action">
-              浏览作品展示
+              {{ t('ui.viewWorks') }}
             </PublicAction>
           </div>
         </div>
@@ -347,9 +348,9 @@ onBeforeUnmount(() => {
     </div>
 
     <div class="featured-works__wayfinding" aria-hidden="true">
-      <span>下一幕</span>
+      <span>{{ t('ui.nextScene') }}</span>
       <span class="featured-works__wayfinding-rule" />
-      <span>自设委托</span>
+      <span>{{ t('ui.commissions') }}</span>
     </div>
   </section>
 </template>

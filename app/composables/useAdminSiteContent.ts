@@ -23,17 +23,6 @@ export interface SiteStatusPayload {
   label: string
 }
 
-const SECTION_VERSION_KEYS = {
-  'commission': 'commission',
-  'about': 'about',
-  'terms': 'terms',
-  'privacy': 'privacy',
-  'contact': 'contact',
-} as const satisfies Record<
-  SiteContentSection,
-  keyof AdminSiteContentDto['sectionVersions']
->
-
 export function useAdminSiteContent() {
   const adminApi = useAdminApi()
 
@@ -126,7 +115,7 @@ export function useAdminSiteContent() {
     payload: Record<string, unknown>,
   ): Promise<string | null> {
     const expectedVersion = content.value
-      ?.sectionVersions[SECTION_VERSION_KEYS[section]] ?? 0
+      ?.sectionVersions[section] ?? 0
     return runMutation(async () => {
       const result = await adminApi(
         `/api/admin/v1/site/home/content/${section}`,
@@ -161,6 +150,7 @@ export function useAdminSiteContent() {
     load,
     pageStatus,
     refreshConflict,
+    refresh,
     savedSection,
     saveSection,
     saveStatus,

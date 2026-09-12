@@ -1,3 +1,4 @@
+import { xContactUrlSchema } from './contact-url'
 import { z } from 'zod'
 import {
   apiSuccessSchema,
@@ -89,7 +90,8 @@ export const publicHeroPlacementDtoSchema = z.object({
 }).strict()
 
 export const publicHomeDtoSchema = publicHeroPlacementDtoSchema.extend({
-  tagline: homeTaglineSchema,
+  tagline: homeTaglineSchema.nullable(),
+  xContactUrl: xContactUrlSchema,
   contactEmail: contactEmailSchema,
   contactQq: contactQqSchema,
   autoRotate: z.boolean(),

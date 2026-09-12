@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = usePublicI18n()
 /**
  * 公开端底部编号分页。
  *
@@ -55,7 +56,7 @@ const pages = computed(() => {
   <nav
     v-if="pageCount > 0"
     class="pagination"
-    :aria-label="label ?? '分页'"
+    :aria-label="label ?? t('ui.pagination')"
   >
     <a
       v-if="page > 1"
@@ -64,7 +65,7 @@ const pages = computed(() => {
       rel="prev"
     >
       <span class="pagination__arrow" aria-hidden="true">‹</span>
-      <span class="pagination__step-label">上一页</span>
+      <span class="pagination__step-label">{{ t('ui.previousPage') }}</span>
     </a>
     <span
       v-else
@@ -72,7 +73,7 @@ const pages = computed(() => {
       aria-disabled="true"
     >
       <span class="pagination__arrow" aria-hidden="true">‹</span>
-      <span class="pagination__step-label">上一页</span>
+      <span class="pagination__step-label">{{ t('ui.previousPage') }}</span>
     </span>
 
     <ol class="pagination__list">
@@ -87,13 +88,13 @@ const pages = computed(() => {
           v-else-if="entry.page !== page"
           class="pagination__page"
           :href="hrefFor(entry.page)"
-          :aria-label="`第 ${entry.page} 页`"
+          :aria-label="t('count.page', { page: entry.page })"
         >{{ entry.page }}</a>
         <span
           v-else
           class="pagination__page pagination__page--current"
           aria-current="page"
-          :aria-label="`第 ${entry.page} 页，当前页`"
+          :aria-label="t('count.currentPage', { page: entry.page })"
         >{{ entry.page }}</span>
       </li>
     </ol>
@@ -104,7 +105,7 @@ const pages = computed(() => {
       :href="hrefFor(page + 1)"
       rel="next"
     >
-      <span class="pagination__step-label">下一页</span>
+      <span class="pagination__step-label">{{ t('ui.nextPage') }}</span>
       <span class="pagination__arrow" aria-hidden="true">›</span>
     </a>
     <span
@@ -112,7 +113,7 @@ const pages = computed(() => {
       class="pagination__step pagination__step--disabled"
       aria-disabled="true"
     >
-      <span class="pagination__step-label">下一页</span>
+      <span class="pagination__step-label">{{ t('ui.nextPage') }}</span>
       <span class="pagination__arrow" aria-hidden="true">›</span>
     </span>
   </nav>

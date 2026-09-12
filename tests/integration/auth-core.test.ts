@@ -1,12 +1,10 @@
+import { migrationsThrough } from '../helpers/migrations'
 import {
-  copyFileSync,
   existsSync,
   mkdtempSync,
-  mkdirSync,
   readFileSync,
   readdirSync,
   rmSync,
-  writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
@@ -39,37 +37,6 @@ import { loadRuntimeConfig } from '../../server/utils/runtime-config'
 const originalPassword = 'initial@Admin!2026'
 let directory: string
 let databaseFile: string
-
-function legacyMigrationsFolder() {
-  const folder = resolve(directory, 'legacy-migrations')
-  const meta = resolve(folder, 'meta')
-  mkdirSync(meta, { recursive: true })
-
-  for (const migration of [
-    '0000_sparkling_absorbing_man.sql',
-    '0001_preserve_design_sheet_purpose.sql',
-  ]) {
-    copyFileSync(
-      resolve(DATABASE_MIGRATIONS_FOLDER, migration),
-      resolve(folder, migration),
-    )
-  }
-
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as {
-    entries: unknown[]
-  }
-  writeFileSync(
-    resolve(meta, '_journal.json'),
-    JSON.stringify({
-      ...journal,
-      entries: journal.entries.slice(0, 2),
-    }),
-  )
-  return folder
-}
 
 function config(file = databaseFile) {
   return loadRuntimeConfig({
@@ -233,7 +200,7 @@ describe('single administrator commands and lockout', () => {
   it('never migrates or backs up while resetting a password', async () => {
     const pendingDatabaseFile = resolve(directory, 'pending.db')
     await migrateDatabase(pendingDatabaseFile, {
-      migrationsFolder: legacyMigrationsFolder(),
+      migrationsFolder: migrationsThrough(databaseFile, '0001_preserve_design_sheet_purpose'),
     })
     const before = openDatabase(pendingDatabaseFile)
     await initializeAdmin(before.sqlite, {

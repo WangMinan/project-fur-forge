@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { PublicSiteCopy } from '~~/shared/schemas/site-copy'
+import { localizedSiteCopy } from '~~/shared/utils/site-copy'
 import type {
   HeroOrientation,
   PublicHomeDto,
@@ -7,6 +9,7 @@ import {
   PROJECT_ENGLISH_NAME,
   PROJECT_NAME,
 } from '~~/shared/constants/project'
+const { t, isEnglish, language } = usePublicI18n()
 
 /**
  * R3-C 独立方向轮播：
@@ -16,9 +19,11 @@ import {
  * - Hero 占据大面积首屏，鼠标停留或操作控件不能成为隐式永久暂停条件。
  */
 const props = defineProps<{
+  copy?: PublicSiteCopy | undefined
   home: PublicHomeDto
 }>()
 
+const tagline = computed(() => localizedSiteCopy(props.copy, language.value, 'home').tagline ?? props.home.tagline)
 const activeOrientation = shallowRef<HeroOrientation>('landscape')
 const landscapeIndex = shallowRef(0)
 const portraitIndex = shallowRef(0)
@@ -274,7 +279,7 @@ onBeforeUnmount(() => {
     :data-reduced-motion="reduceMotion"
     role="region"
     aria-roledescription="carousel"
-    aria-label="首页影像轮播"
+    :aria-label="t('ui.heroCarousel')"
     data-home-scroll-scene
     data-testid="public-hero"
     @keydown="onKeydown"
@@ -295,7 +300,7 @@ onBeforeUnmount(() => {
             class="home-hero__slide"
             role="group"
             aria-roledescription="slide"
-            :aria-label="`第 ${activeIndex + 1} 张，共 ${items.length} 张`"
+            :aria-label="t('count.image', { index: activeIndex + 1, count: items.length })"
           >
             <ResponsivePicture
               class="home-hero__media"
@@ -312,15 +317,15 @@ onBeforeUnmount(() => {
       <div class="home-hero__scrim" aria-hidden="true" />
     </template>
 
-    <div class="home-hero__content">
-      <p class="home-hero__eyebrow">
+    <div class="home-hero__content" :class="{ 'home-hero__content--english': isEnglish }">
+      <p v-if="!isEnglish" class="home-hero__eyebrow">
         {{ PROJECT_ENGLISH_NAME }}
       </p>
       <h1 class="home-hero__title">
-        {{ PROJECT_NAME }}
+        {{ isEnglish ? PROJECT_ENGLISH_NAME : PROJECT_NAME }}
       </h1>
-      <p class="home-hero__tagline">
-        {{ home.tagline }}
+      <p v-if="tagline" class="home-hero__tagline">
+        {{ tagline }}
       </p>
     </div>
 
@@ -331,21 +336,21 @@ onBeforeUnmount(() => {
       <button
         type="button"
         class="home-hero__arrow"
-        aria-label="上一张"
+        :aria-label="t('ui.previousImage')"
         @click="goPrev('pointer')"
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
           <path d="M11.5 3.5L6 9l5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
       </button>
-      <div class="home-hero__dots" role="group" aria-label="轮播分页">
+      <div class="home-hero__dots" role="group" :aria-label="t('ui.carouselPages')">
         <button
           v-for="(item, index) in items"
           :key="index"
           type="button"
           class="home-hero__dot"
           :class="{ 'home-hero__dot--active': index === activeIndex }"
-          :aria-label="`第 ${index + 1} 张，共 ${items.length} 张`"
+          :aria-label="t('count.image', { index: index + 1, count: items.length })"
           :aria-current="index === activeIndex ? 'true' : undefined"
           @click="goTo(index, 'pointer')"
         />
@@ -353,7 +358,7 @@ onBeforeUnmount(() => {
       <button
         type="button"
         class="home-hero__arrow"
-        aria-label="下一张"
+        :aria-label="t('ui.nextImage')"
         @click="goNext('pointer')"
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
@@ -366,7 +371,7 @@ onBeforeUnmount(() => {
         type="button"
         class="home-hero__pause"
         :aria-pressed="userPaused"
-        :aria-label="userPaused ? '继续自动轮播' : '暂停自动轮播'"
+        :aria-label="t(userPaused ? 'ui.resume' : 'ui.pause')"
         @click="togglePause"
       >
         <svg v-if="userPaused" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -379,13 +384,13 @@ onBeforeUnmount(() => {
     </div>
 
     <div class="home-hero__continuation" aria-hidden="true">
-      <span class="home-hero__continuation-index">下一幕</span>
+      <span class="home-hero__continuation-index">{{ t('ui.nextScene') }}</span>
       <span class="home-hero__continuation-line" />
-      <span>代表作品</span>
+      <span>{{ t('ui.featured') }}</span>
     </div>
 
     <p v-if="items.length > 0" class="home-hero__live" role="status" aria-live="polite">
-      第 {{ activeIndex + 1 }} 张，共 {{ items.length }} 张
+      {{ t('count.image', { index: activeIndex + 1, count: items.length }) }}
     </p>
   </section>
 </template>
@@ -915,4 +920,13 @@ onBeforeUnmount(() => {
     background: #ffffff;
   }
 }
+.home-hero__content--english {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+}
+.home-hero__content--english .home-hero__title { font-size: clamp(3rem, 8vw, 7rem); }
+.home-hero__content--english .home-hero__tagline { max-width: 100%; font-size: clamp(0.875rem, 2.5vw, 1.5rem); text-align: center; }
 </style>

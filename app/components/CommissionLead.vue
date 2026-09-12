@@ -1,10 +1,14 @@
 <script setup lang="ts">
+import type { PublicSiteCopy } from '~~/shared/schemas/site-copy'
 import type {
   PublicHeroPlacementDto,
   PublicSiteBusinessStatusDto,
 } from '~~/shared/types/contracts'
+const { t, contactOnly, isEnglish } = usePublicI18n()
 
 const props = defineProps<{
+  xContactUrl?: string | undefined
+  copy?: PublicSiteCopy | undefined
   description?: string | undefined
   hero: PublicHeroPlacementDto
   status?: PublicSiteBusinessStatusDto | null | undefined
@@ -40,7 +44,7 @@ onBeforeUnmount(() => {
 <template>
   <section
     class="commission-lead"
-    :class="{ 'commission-lead--without-media': !sources }"
+    :class="{ 'commission-lead--without-media': !sources, 'commission-lead--english': isEnglish }"
     aria-labelledby="commission-lead-title"
   >
     <div class="commission-lead__display" aria-hidden="true">
@@ -64,32 +68,32 @@ onBeforeUnmount(() => {
 
     <div class="commission-lead__content">
       <div class="commission-lead__identity">
-        <h1 id="commission-lead-title" class="commission-lead__title">自设委托</h1>
+        <h1 id="commission-lead-title" class="commission-lead__title">{{ t('ui.commissions') }}</h1>
       </div>
 
       <div class="commission-lead__narrative">
-        <div v-if="status" class="commission-lead__status" aria-label="当前委托营业状态">
-          <PublicBusinessStatus :status="status" />
+        <div v-if="status" class="commission-lead__status" :aria-label="t('ui.businessStatus')">
+          <PublicBusinessStatus :status="status" :copy="copy" />
         </div>
-        <p class="commission-lead__description">
-          {{ description || '先看设定，再一起确认做法、价格和排期。' }}
+        <p v-if="description" class="commission-lead__description">
+          {{ description }}
         </p>
       </div>
 
       <div class="commission-lead__actions">
-        <PublicAction to="/commission/apply">提交委托申请</PublicAction>
-        <PublicAction variant="text" to="/about#contact">查看其他联系方式 →</PublicAction>
+        <PublicAction :to="contactOnly ? undefined : '/commission/apply'" :href="contactOnly ? xContactUrl : undefined">{{ t('ui.apply') }}</PublicAction>
+        <PublicAction variant="text" to="/about#contact">{{ t('ui.otherContact') }}</PublicAction>
       </div>
     </div>
 
     <NuxtLink
       class="commission-lead__continuation"
       to="#commission-details"
-      aria-label="继续查看制作范围和估价联系"
+      :aria-label="t('ui.readScope')"
     >
-      <span>继续查看</span>
+      <span>{{ t('ui.continue') }}</span>
       <span class="commission-lead__continuation-rule" aria-hidden="true" />
-      <span class="commission-lead__continuation-destination">制作范围与估价 ↓</span>
+      <span class="commission-lead__continuation-destination">{{ t('ui.scopeDown') }}</span>
     </NuxtLink>
   </section>
 </template>
@@ -360,4 +364,7 @@ onBeforeUnmount(() => {
     color: var(--public-border-secondary);
   }
 }
+/* English titles scale with their text column, never with the full viewport. */
+.commission-lead--english .commission-lead__identity { container-type: inline-size; min-width: 0; }
+.commission-lead--english .commission-lead__title { font-size: clamp(1.75rem, 14cqi, 4.8rem); overflow-wrap: anywhere; }
 </style>

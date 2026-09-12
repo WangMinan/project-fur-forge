@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import type { PublicAdoptionListItemDto } from '~~/shared/types/contracts'
-import { formatCnyMinorUnits } from '~/utils/format'
 import { useMotionEntrance } from '~/composables/useMotionEntrance'
 import {
   animateDirectionalLayers,
   nextSlideIndex,
   prevSlideIndex,
 } from '~/utils/hero-carousel'
+const { t } = usePublicI18n()
 
 /**
  * T34-F2 当前领养：入口与状态已合并到 HomeBusinessEntries，本区只保留真实领养。
@@ -24,10 +24,7 @@ const visibleAdoptions = computed(() => props.adoptions
 const activeIndex = shallowRef(0)
 const hasMultipleAdoptions = computed(() => visibleAdoptions.value.length > 1)
 const currentAdoption = computed(() => visibleAdoptions.value[activeIndex.value] ?? null)
-const price = computed(() => currentAdoption.value?.work.price
-  ? formatCnyMinorUnits(currentAdoption.value.work.price.minorUnits)
-  : null,
-)
+
 const rootRef = useTemplateRef<HTMLElement>('root')
 const mediaRef = useTemplateRef<HTMLElement>('media')
 const captionRef = useTemplateRef<HTMLElement>('caption')
@@ -217,7 +214,7 @@ onBeforeUnmount(() => {
     @pointercancel="onPointerCancel"
   >
     <header class="home-adoptions__heading">
-      <h2 id="home-adoptions-title" class="home-adoptions__title">设定领养</h2>
+      <h2 id="home-adoptions-title" class="home-adoptions__title">{{ t('ui.adoptions') }}</h2>
     </header>
 
     <article
@@ -232,7 +229,7 @@ onBeforeUnmount(() => {
       <NuxtLink
         class="home-adoption-poster__media"
         :to="detailTo"
-        :aria-label="`查看${currentAdoption.work.characterName}领养详情`"
+        :aria-label="t('count.viewAdoption', { name: currentAdoption.work.characterName })"
         data-testid="home-adoption-media-link"
       >
         <Transition :name="mediaTransitionName">
@@ -254,7 +251,7 @@ onBeforeUnmount(() => {
       <nav
         v-if="hasMultipleAdoptions"
         class="home-adoption-poster__selector"
-        aria-label="首页领养角色选择"
+        :aria-label="t('ui.currentAdoptions')"
         data-testid="home-adoption-selector"
         :style="{ gridTemplateColumns: `repeat(${visibleAdoptions.length}, minmax(0, 1fr))` }"
       >
@@ -275,7 +272,7 @@ onBeforeUnmount(() => {
 
       <div ref="caption" class="home-adoption-poster__caption" aria-live="polite">
         <p class="home-adoption-poster__folio">
-          <span>角色选择</span>
+          <span>{{ t('ui.chooseCharacter') }}</span>
           <strong v-if="hasMultipleAdoptions">
             {{ formatFolio(activeIndex) }} / {{ formatFolio(visibleAdoptions.length - 1) }}
           </strong>
@@ -290,21 +287,17 @@ onBeforeUnmount(() => {
 
         <dl ref="facts" class="home-adoption-poster__facts">
           <div>
-            <dt class="home-adoption-poster__species-label">物种</dt>
+            <dt class="home-adoption-poster__species-label">{{ t('ui.species') }}</dt>
             <dd class="home-adoption-poster__species">{{ currentAdoption.work.species }}</dd>
-          </div>
-          <div v-if="price">
-            <dt>领养价格</dt>
-            <dd>{{ price }}</dd>
           </div>
         </dl>
 
         <div ref="actions" class="home-adoption-poster__actions">
           <PublicAction :to="detailTo">
-            查看领养详情
+            {{ t('ui.viewDetails') }}
           </PublicAction>
           <PublicAction to="/adoptions" variant="text">
-            浏览全部角色 →
+            {{ t('ui.viewAll') }}
           </PublicAction>
         </div>
       </div>

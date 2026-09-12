@@ -1,3 +1,4 @@
+import { getPublicSiteCopy } from './site-copy-repository'
 import { publicWorkAssetSources } from '../recipe/work-public-sources'
 import { assetCompositions } from './work-composition-repository'
 import { resolveComposition } from '../../../shared/utils/image-composition'
@@ -61,6 +62,7 @@ export interface PublicSiteRepository {
   getWorkBySlug(slug: string): PublicWorkDetailDto | null
   listAdoptions(query?: PublicAdoptionsQuery): PublicAdoptionListDto
   listWorks(query?: PublicWorksQuery): PublicWorkListDto
+  listPublicWorkPaths(): string[]
   listFeaturedWorks(): PublicFeaturedWorksDto
   getCommissionHero(): PublicCommissionHeroDto
   getHome(): PublicHomeDto
@@ -336,6 +338,7 @@ function homeAggregate(
   }
 
   return publicHomeAggregateDtoSchema.parse({
+    copy: getPublicSiteCopy(sqlite),
     hero,
     entries,
     featured: { available: featuredAvailable, items: featured },
@@ -369,14 +372,6 @@ function adoptionItems(entries: readonly SnapshotEntry[], placement: 'catalog' |
       work: {
         ...entry.summary.work,
         adoptionStatus: entry.adoption.status,
-        ...(entry.adoption.priceCnyMinor === null
-          ? {}
-          : {
-              price: {
-                currency: 'CNY',
-                minorUnits: entry.adoption.priceCnyMinor,
-              },
-            }),
       },
       href: entry.summary.href,
       /*
@@ -448,6 +443,10 @@ export function createSqlitePublicSiteRepository(
   appEnv: RuntimeConfig['appEnv'] = 'development',
 ): PublicSiteRepository {
   return {
+    listPublicWorkPaths() {
+      return snapshot(sqlite, mediaBaseUrl, appEnv).map(entry => entry.summary.href)
+    },
+
     getWorkBySlug(slug) {
       const entries = snapshot(sqlite, mediaBaseUrl, appEnv)
       const match = detailFor(entries, slug)
@@ -471,14 +470,6 @@ export function createSqlitePublicSiteRepository(
           ? {
               adoption: {
                 adoptionStatus: match.adoption.status,
-                ...(match.adoption.priceCnyMinor === null
-                  ? {}
-                  : {
-                      price: {
-                        currency: 'CNY',
-                        minorUnits: match.adoption.priceCnyMinor,
-                      },
-                    }),
               },
             }
           : {}),

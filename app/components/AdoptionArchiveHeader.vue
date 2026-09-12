@@ -1,3 +1,7 @@
+<script setup lang="ts">
+const { t } = usePublicI18n()
+</script>
+
 <template>
   <header
     class="adoption-archive-header"
@@ -17,7 +21,7 @@
     >
 
     <div class="adoption-archive-header__title-group">
-      <h1 id="adoptions-page-title" class="adoption-archive-header__title">设定领养</h1>
+      <h1 id="adoptions-page-title" class="adoption-archive-header__title">{{ t('ui.adoptions') }}</h1>
     </div>
   </header>
 </template>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { PUBLIC_NAV_BRAND } from '~~/shared/constants/project'
 import { useFullscreenNavigation } from '~/composables/useFullscreenNavigation'
+const { t } = usePublicI18n()
 
 const props = defineProps<{
   open: boolean
@@ -44,7 +45,7 @@ watch(() => route.fullPath, () => {
       class="mobile-nav"
       role="dialog"
       aria-modal="true"
-      aria-label="站点导航"
+      :aria-label="t('ui.siteNavigation')"
       data-testid="public-mobile-nav"
     >
       <div class="mobile-nav__bar">
@@ -55,7 +56,7 @@ watch(() => route.fullPath, () => {
         <button
           type="button"
           class="mobile-nav__close"
-          aria-label="关闭导航"
+          :aria-label="t('ui.closeNavigation')"
           @click="close"
         >
           <svg
@@ -75,7 +76,7 @@ watch(() => route.fullPath, () => {
         </button>
       </div>
 
-      <nav class="mobile-nav__links" aria-label="主导航">
+      <nav class="mobile-nav__links" :aria-label="t('ui.mainNavigation')">
         <div
           v-for="(item, index) in PUBLIC_NAV_ITEMS"
           :key="item.href"
@@ -89,7 +90,7 @@ watch(() => route.fullPath, () => {
             :aria-current="route.path === item.href ? 'page' : undefined"
             @click="close"
           >
-            {{ item.label }}
+            {{ t(item.label) }}
           </NuxtLink>
           <div v-else class="mobile-nav__sublinks mobile-nav__sublinks--top-level">
             <NuxtLink
@@ -100,7 +101,7 @@ watch(() => route.fullPath, () => {
               :aria-current="route.path === child.href ? 'page' : undefined"
               @click="close"
             >
-              {{ child.label }}
+              {{ t(child.label) }}
             </NuxtLink>
           </div>
         </div>

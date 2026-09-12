@@ -33,15 +33,29 @@ function assertKnownLicense(license, name) {
   }
 }
 
-function npmNotices(licenseReport) {
+function npmNotices(licenseReport, readAsset) {
   const notices = []
   for (const [groupLicense, packages] of Object.entries(licenseReport)) {
     if (!Array.isArray(packages)) {
       throw new Error(`Invalid pnpm license group ${groupLicense}.`)
     }
     for (const pkg of packages) {
-      const license = String(pkg.license ?? groupLicense).trim()
+      let license = String(pkg.license ?? groupLicense).trim()
       const name = String(pkg.name ?? '').trim()
+      let noticeText = null
+      // This exact npm release omits package.json's license, but ships the Zlib
+      // license. Verify every installed copy; other versions/bytes still fail closed.
+      if (name === 'tosource' && pkg.versions?.length === 1 && pkg.versions[0] === '2.0.0-alpha.3'
+        && pkg.paths?.length > 0) {
+        for (const path of pkg.paths) {
+          const content = readAsset(resolve(path, 'LICENSE'))
+          if (createHash('sha256').update(content).digest('hex') !== '22cfaab2256435450e4375ef5593354cc3d53501f0ead3564336415b3909bae4') {
+            throw new Error('Unverified tosource license bytes.')
+          }
+          noticeText = content.toString('utf8')
+        }
+        license = 'Zlib'
+      }
       assertKnownLicense(license, name || 'unnamed package')
       if (!name || !Array.isArray(pkg.versions) || pkg.versions.length === 0) {
         throw new Error(`Incomplete pnpm license entry in ${groupLicense}.`)
@@ -54,7 +68,7 @@ function npmNotices(licenseReport) {
           repository: null,
           homepage: typeof pkg.homepage === 'string' ? pkg.homepage : null,
           copyright: [],
-          noticeText: null,
+          noticeText,
           source: 'pnpm-prod',
           usage: name === 'ffmpeg-static'
             ? 'Platform-specific FFmpeg executable provider npm package; separate from the Linux release-image binary registry.'
@@ -100,7 +114,7 @@ export function buildThirdPartyNotices({
   readAsset,
 }) {
   const notices = [
-    ...npmNotices(licenseReport),
+    ...npmNotices(licenseReport, readAsset),
     ...manualNotices(manualAssets, readAsset),
   ].sort(stableCompare)
   const identities = new Set()

@@ -842,6 +842,8 @@ export const businessStatuses = sqliteTable('business_statuses', {
 export const siteContent = sqliteTable('site_content', {
   id: text('id').primaryKey().default('site'),
   heroTagline: text('hero_tagline'),
+  xContactUrl: text('x_contact_url').notNull().default('https://x.com/jece9925'),
+  homeContentVersion: integer('home_content_version').notNull().default(1),
   contactEmail: text('contact_email'),
   commissionNotificationRecipientsJson: text('commission_notification_recipients_json').notNull().default('["765678159@qq.com","3114559925@qq.com"]'),
   contactQq: text('contact_qq'),
@@ -1024,4 +1026,18 @@ export const workAssetCompositions = sqliteTable('work_asset_compositions', {
   check('work_asset_compositions_usage', sql`${table.usage} IN ('detail-thumbnail','work-catalog','home-featured','adoption-catalog','home-adoption')`),
   check('work_asset_compositions_mode', sql`${table.mode} IN ('crop','contain')`),
   check('work_asset_compositions_rect', sql`(${table.mode}='contain' AND ${table.usage}!='detail-thumbnail' AND ${table.x} IS NULL AND ${table.y} IS NULL AND ${table.width} IS NULL AND ${table.height} IS NULL) OR (${table.mode}='crop' AND ${table.x} IS NOT NULL AND ${table.y} IS NOT NULL AND ${table.width} IS NOT NULL AND ${table.height} IS NOT NULL AND ${table.x}>=0 AND ${table.y}>=0 AND ${table.width}>0 AND ${table.height}>0 AND ${table.x}+${table.width}<=1 AND ${table.y}+${table.height}<=1)`),
+])
+
+export const siteContentTranslations = sqliteTable('site_content_translations', {
+  locale: text('locale').notNull(),
+  section: text('section').notNull(),
+  fieldsJson: text('fields_json').notNull(),
+  version: integer('version').notNull().default(1),
+  updatedAt: integer('updated_at').notNull(),
+}, table => [
+  primaryKey({ columns: [table.locale, table.section] }),
+  check('site_content_translations_locale_check', sql`length(${table.locale}) BETWEEN 2 AND 35 AND ${table.locale} <> 'zh-CN'`),
+  check('site_content_translations_section_check', sql`${table.section} IN ('home', 'commission', 'about', 'status')`),
+  check('site_content_translations_fields_check', sql`json_valid(${table.fieldsJson}) AND json_type(${table.fieldsJson}) = 'object'`),
+  check('site_content_translations_version_check', sql`${table.version} > 0`),
 ])

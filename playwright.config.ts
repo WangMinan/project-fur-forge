@@ -55,6 +55,7 @@ export default defineConfig({
   },
   use: {
     baseURL,
+    locale: 'zh-CN',
     channel: 'chrome',
     trace: 'retain-on-failure',
   },

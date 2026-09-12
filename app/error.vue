@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { NuxtError } from '#app'
+const { t, isEnglish } = usePublicI18n()
 
 const props = defineProps<{
   error: NuxtError
@@ -8,16 +9,16 @@ const props = defineProps<{
 const statusCode = computed(() => props.error.statusCode || 500)
 const isNotFound = computed(() => statusCode.value === 404)
 const title = computed(() =>
-  isNotFound.value ? '页面未找到' : '页面暂时无法显示',
+  isNotFound.value ? t('ui.notFound') : t('ui.pageError'),
 )
 const description = computed(() =>
   isNotFound.value
-    ? '访问的页面不存在、尚未发布或已经下架。'
-    : '服务器暂时无法完成请求，请稍后重试。',
+    ? t('ui.notFoundDescription')
+    : t('ui.pageErrorDescription'),
 )
 
 useHead(() => ({
-  title: `${statusCode.value} · ${title.value} · 有点小狗工作室`,
+  title: `${statusCode.value} · ${title.value} · ${isEnglish.value ? 'DITE DOG' : '有点小狗工作室'}`,
 }))
 </script>
 
@@ -34,7 +35,7 @@ useHead(() => ({
         <PublicAction
           href="/"
           @click.prevent="clearError({ redirect: '/' })"
-        >返回首页</PublicAction>
+        >{{ t('ui.backHome') }}</PublicAction>
       </PublicEmptyState>
     </main>
   </div>

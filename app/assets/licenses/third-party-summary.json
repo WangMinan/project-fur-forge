@@ -1,6 +1,6 @@
 {
   "generatorScope": "installed-production-snapshot",
-  "packageCount": 817,
+  "packageCount": 857,
   "licenseCounts": [
     {
       "license": "(BSD-3-Clause OR GPL-2.0)",
@@ -40,7 +40,7 @@
     },
     {
       "license": "BSD-2-Clause",
-      "count": 18
+      "count": 21
     },
     {
       "license": "BSD-3-Clause",
@@ -64,7 +64,7 @@
     },
     {
       "license": "MIT",
-      "count": 668
+      "count": 703
     },
     {
       "license": "MIT OR Apache-2.0",
@@ -77,6 +77,14 @@
     {
       "license": "MPL-2.0",
       "count": 2
+    },
+    {
+      "license": "Python-2.0",
+      "count": 1
+    },
+    {
+      "license": "Zlib",
+      "count": 1
     }
   ],
   "ffmpegPackage": {

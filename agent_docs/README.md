@@ -14,6 +14,7 @@
 | 需求4 · 站点视觉升级与内容合规 | 仅阶段 E 开放；其范围不限制另行授权的新需求 | [STATE](需求4-站点视觉升级与内容合规/STATE.md) · [SPEC](需求4-站点视觉升级与内容合规/requirements/SPEC.md) · [TASKS](需求4-站点视觉升级与内容合规/implementation/TASKS.md) |
 | 需求5 · 委托邮件通知与站点配置 | 本地实现记录已形成；发布、部署见该需求记录 | [STATE](需求5-委托邮件通知与站点配置/STATE.md) · [SPEC](需求5-委托邮件通知与站点配置/requirements/SPEC.md) · [TASKS](需求5-委托邮件通知与站点配置/implementation/TASKS.md) |
 | 需求6 · 作品图片构图与详情展示 | 本地实现与验证完成；待用户人工验收 | [STATE](需求6-作品图片构图与详情展示/STATE.md) · [SPEC](需求6-作品图片构图与详情展示/requirements/SPEC.md) · [TASKS](需求6-作品图片构图与详情展示/implementation/TASKS.md) |
+| 需求7 · 公开站中英切换 | 本地实现与自动验证完成；待独立 Review/人工验收 | [STATE](需求7-公开站中英切换/STATE.md) · [SPEC](需求7-公开站中英切换/requirements/SPEC.md) · [TASKS](需求7-公开站中英切换/implementation/TASKS.md) |
 
 ## 按主题补读
 
@@ -24,6 +25,7 @@
 | 媒体与预览 | [媒体策略](需求1-兽装工作室主页/requirements/MEDIA-PUBLICATION-POLICY.md) 包含历史水印、返图与旧配方描述；当前退役结果以需求3 foundation、需求4 SPEC 的退役条款及 [T47-F4](需求4-站点视觉升级与内容合规/implementation/notes/2026-08-29-T47-F4-MOBILE-PDF-MEDIA-RETIREMENT.md) 为准。当前管理同源预览见 [需求5交接](需求5-委托邮件通知与站点配置/implementation/notes/2026-09-09-ADMIN-IMAGE-PROXY.md) 与部署文档 |
 | 内部邮件与站点配置 | 需求5 SPEC 的内部 SMTP 授权覆盖早期“禁用 SMTP”条款，不扩展为对外自动邮件 |
 | 图片构图与详情显隐 | 需求6 SPEC 明确列出拟覆盖条款；本地已实现；生产生效状态以实际部署记录为准 |
+| 公开站语言、X 联系与价格/SEO | 需求7 [SPEC](需求7-公开站中英切换/requirements/SPEC.md) 定义无前缀中英切换、中文 fallback、右上角语言按钮、X 分流及价格/SEO 修正；继承需求6构图与详情显隐，明确覆盖旧公开价格和相关联系条款。当前本地已实现，验证/发布状态以需求7 STATE 为准 |
 | 部署、恢复与云验证 | [DEPLOYMENT](../docs/DEPLOYMENT.md)、[生产发布手册](需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md)；发布事实只认对应执行证据 |
 
 ## 文档职责与工作范围

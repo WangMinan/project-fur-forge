@@ -192,14 +192,13 @@ describe('work DTO mapping', () => {
     }).success).toBe(false)
   })
 
-  it('keeps adoption status and optional CNY price in the adoption-specific DTO', () => {
+  it('keeps adoption status while rejecting any public price', () => {
     expect(publicAdoptionWorkDtoSchema.parse({
       id: baseRecord.id,
       slug: baseRecord.slug,
       characterName: baseRecord.characterName,
       species: baseRecord.species,
       adoptionStatus: 'available',
-      price: { currency: 'CNY', minorUnits: 1_560_000 },
     })).toMatchObject({ adoptionStatus: 'available' })
     expect(publicAdoptionWorkDtoSchema.safeParse({
       id: baseRecord.id,
@@ -207,7 +206,7 @@ describe('work DTO mapping', () => {
       characterName: baseRecord.characterName,
       species: baseRecord.species,
       adoptionStatus: 'available',
-      price: { currency: 'USD', minorUnits: 1_560_000 },
+      price: { currency: 'CNY', minorUnits: 1_560_000 },
     }).success).toBe(false)
   })
 

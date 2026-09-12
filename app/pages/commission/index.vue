@@ -1,18 +1,14 @@
 <script setup lang="ts">
-import { PROJECT_NAME } from '~~/shared/constants/project'
+import { localizedSiteCopy } from '~~/shared/utils/site-copy'
 import { publicCommissionHeroResponseSchema } from '~~/shared/schemas/home'
 import { publicSiteContentResponseSchema } from '~~/shared/schemas/site-content'
+const { t, contactOnly, language } = usePublicI18n()
 
 /**
  * 自设委托页：SSR 消费固定内容、委托营业状态和独立横/竖 Hero。
  * 视觉组合只重排既有投影；制作范围、人工逐单估价与站内提交保持既有契约。
  */
-useSeoMeta({
-  title: `自设委托 · ${PROJECT_NAME}`,
-  description: `${PROJECT_NAME}的自设委托：全装与半装制作范围、当前营业状态与站内申请。`,
-  ogTitle: `自设委托 · ${PROJECT_NAME}`,
-  ogDescription: `${PROJECT_NAME}的自设委托：制作范围、营业状态与站内申请。`,
-})
+usePublicSeo('commissions')
 
 const { data: site, error: siteError } = await useFetch('/api/public/v1/site-content', {
   key: 'public-site-content',
@@ -34,20 +30,18 @@ if (heroError.value) {
   throw createError({ statusCode: 500, statusMessage: '自设委托暂时无法显示' })
 }
 
-const commission = computed(() => site.value?.commission ?? null)
+const commission = computed(() => localizedSiteCopy(site.value?.copy, language.value, 'commission'))
 const contact = computed(() => site.value?.contact ?? null)
 const status = computed(() => site.value?.statuses.commission ?? null)
 function paragraphs(value: string | null | undefined) {
   return value ? splitPlainTextParagraphs(value) : []
 }
 
-const introText = computed(() => commission.value?.intro ?? undefined)
-const estimateParagraphs = computed(() => paragraphs(commission.value?.estimateNote))
-const estimateLead = computed(() => estimateParagraphs.value[0]
-  ?? '请使用提交委托申请按钮提供清晰的设定图和个人基本信息，如果工作室确认接单，我们将使用官方 QQ 与你进一步沟通。',
-)
+const introText = computed(() => commission.value.intro ?? undefined)
+const estimateParagraphs = computed(() => paragraphs(commission.value.estimateNote))
+const estimateLead = computed(() => estimateParagraphs.value[0])
 const estimateDetails = computed(() => estimateParagraphs.value.slice(1))
-const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailAction))
+const emailActionParagraphs = computed(() => paragraphs(commission.value.emailAction))
 </script>
 
 <template>
@@ -55,8 +49,10 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
     <div class="commission-page__body">
       <CommissionLead
         v-if="hero"
+        :x-contact-url="site?.contact.xContactUrl"
         :hero="hero"
         :status="status"
+        :copy="site?.copy"
         :description="introText"
         data-testid="commission-hero"
       />
@@ -66,32 +62,32 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
           class="commission-page__section commission-page__section--scope"
           aria-labelledby="commission-scope-title"
         >
-          <h2 id="commission-scope-title" class="commission-page__section-title">制作范围</h2>
+          <h2 id="commission-scope-title" class="commission-page__section-title">{{ t('ui.scope') }}</h2>
           <dl class="commission-page__scope">
             <div class="commission-page__scope-row">
               <span class="commission-page__scope-index" aria-hidden="true">01</span>
               <div>
                 <dt class="commission-page__scope-name">
-                  全装
+                  {{ t('ui.fullsuit') }}
                 </dt>
-                <dd class="commission-page__scope-detail">完整兽装制作</dd>
+                <dd class="commission-page__scope-detail">{{ t('ui.fullsuitDetail') }}</dd>
               </div>
             </div>
             <div class="commission-page__scope-row">
               <span class="commission-page__scope-index" aria-hidden="true">02</span>
               <div>
                 <dt class="commission-page__scope-name">
-                  半装
+                  {{ t('ui.partial') }}
                 </dt>
-                <dd class="commission-page__scope-detail">头、爪</dd>
+                <dd class="commission-page__scope-detail">{{ t('ui.partialDetail') }}</dd>
               </div>
             </div>
           </dl>
         </section>
 
         <section class="commission-page__section" aria-labelledby="commission-estimate-title">
-          <h2 id="commission-estimate-title" class="commission-page__section-title">估价与联系</h2>
-          <p class="commission-page__mechanism">
+          <h2 id="commission-estimate-title" class="commission-page__section-title">{{ t('ui.estimateContact') }}</h2>
+          <p v-if="estimateLead" class="commission-page__mechanism">
             {{ estimateLead }}
           </p>
           <p
@@ -112,31 +108,34 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value?.emailA
 
           <ContactChannelList
             v-if="contact && commission"
+            :x-contact-url="site?.contact.xContactUrl"
             :channels="contact.officialChannels"
-            :email="commission.email"
-            email-subject="自设委托估价咨询"
+            :email="site!.commission.email"
+            :email-subject="contactOnly ? undefined : '自设委托估价咨询'"
           />
 
           <div class="commission-page__links">
-            <PublicAction v-if="commission" variant="text" :to="commission.termsHref">
-              服务条款
+            <PublicAction v-if="commission" variant="text" :to="site!.commission.termsHref">
+              {{ t('ui.terms') }}
             </PublicAction>
             <PublicAction variant="text" to="/about#contact">
-              完整联系说明
+              {{ t('ui.fullContact') }}
             </PublicAction>
           </div>
         </section>
       </div>
 
-      <NuxtLink
+      <p v-if="!contactOnly"><a :href="site?.contact.xContactUrl">{{ t('contact.international') }}</a></p>
+      <PublicAction
+        variant="text"
         class="commission-page__wayfinding"
-        to="/commission/apply"
-        aria-label="进入委托申请"
+        :to="contactOnly ? undefined : '/commission/apply'" :href="contactOnly ? site?.contact.xContactUrl : undefined"
+        :aria-label="t('ui.enterApplication')"
       >
-        <span>开始申请</span>
+        <span>{{ t('ui.startApplication') }}</span>
         <span class="commission-page__wayfinding-rule" />
-        <span>填写委托表单 →</span>
-      </NuxtLink>
+        <span>{{ t('ui.fillForm') }}</span>
+      </PublicAction>
     </div>
   </div>
 </template>

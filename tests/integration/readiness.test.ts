@@ -1,10 +1,8 @@
+import { migrationsThrough } from '../helpers/migrations'
 import {
-  copyFileSync,
-  mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
-  writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
@@ -38,27 +36,6 @@ function journalEntries() {
     resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
     'utf8',
   )) as { entries: Array<{ tag: string, when: number }> }).entries
-}
-
-/** 复制前 N 个迁移到独立目录，模拟历史不同的数据库。 */
-function partialMigrationsFolder(name: string, count: number) {
-  const folder = resolve(directory, name)
-  mkdirSync(resolve(folder, 'meta'), { recursive: true })
-  const journal = JSON.parse(readFileSync(
-    resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-    'utf8',
-  )) as { entries: unknown[] }
-  for (const { tag } of journalEntries().slice(0, count)) {
-    copyFileSync(
-      resolve(DATABASE_MIGRATIONS_FOLDER, `${tag}.sql`),
-      resolve(folder, `${tag}.sql`),
-    )
-  }
-  writeFileSync(
-    resolve(folder, 'meta/_journal.json'),
-    JSON.stringify({ ...journal, entries: journal.entries.slice(0, count) }),
-  )
-  return folder
 }
 
 beforeEach(() => {
@@ -145,7 +122,7 @@ describe('T34-F6 strict migration readiness', () => {
   it('is unready when migrations are pending', async () => {
     // 只应用前 12 个迁移的历史库。
     await migrateDatabase(databaseFile, {
-      migrationsFolder: partialMigrationsFolder('pre-t34-migrations', 12),
+      migrationsFolder: migrationsThrough(databaseFile, '0011_t23_media_role_constraints'),
     })
 
     const result = evaluateReadiness({ databaseFile })

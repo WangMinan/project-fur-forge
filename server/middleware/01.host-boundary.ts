@@ -8,6 +8,8 @@ import { getRuntimeConfig } from '../utils/runtime-config'
 
 export default defineEventHandler((event) => {
   const pathname = getRequestURL(event).pathname
+  event.context.isAdminSite = getRequestHost(event).toLowerCase()
+    === new URL(getRuntimeConfig().adminBaseUrl).host.toLowerCase()
 
   if (isPrivateResponsePath(pathname)) {
     setResponseHeaders(event, PRIVATE_RESPONSE_HEADERS)

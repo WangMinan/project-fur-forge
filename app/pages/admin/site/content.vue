@@ -25,6 +25,7 @@ const {
   load,
   pageStatus,
   refreshConflict,
+  refresh,
   savedSection,
   saveSection,
   saveStatus,
@@ -32,14 +33,16 @@ const {
 } = useAdminSiteContent()
 
 const actionError = ref<string | null>(null)
-const CONTENT_ANCHORS = [
-  { href: '#content-status', label: '营业状态' },
-  { href: '#content-commission', label: '委托' },
-  { href: '#content-about', label: '关于' },
-  { href: '#content-terms', label: '服务' },
-  { href: '#content-privacy', label: '隐私' },
-  { href: '#content-contact', label: '联系方式' },
-] as const
+const group = ref('copy')
+const localized = useTemplateRef<{ reload: () => Promise<void> }>('localized')
+const root = useTemplateRef<HTMLElement>('contentRoot')
+const GROUPS = [{ key: 'copy', label: '公开文案' }, { key: 'shared', label: '营业与联系' }, { key: 'legal', label: '条款与隐私' }]
+function hasDraft() { return Boolean(root.value?.querySelector('[data-dirty="true"], [data-saving="true"]')) }
+function beforeUnload(event: BeforeUnloadEvent) {
+  if (hasDraft()) { event.preventDefault(); event.returnValue = '' }
+}
+onBeforeRouteLeave(() => !hasDraft() || window.confirm('有未保存的站点配置。确定离开？'))
+onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
 
 function closeErrorDialog() {
   actionError.value = null
@@ -47,6 +50,7 @@ function closeErrorDialog() {
 
 async function onSaveStatus(kind: SiteBusinessStatusKind, payload: SiteStatusPayload) {
   actionError.value = await saveStatus(kind, payload)
+  await localized.value?.reload()
 }
 
 async function onSaveSection(
@@ -63,17 +67,19 @@ async function onSectionConflict(section: SiteContentSection) {
 onMounted(async () => {
   await load()
   await nextTick()
+  window.addEventListener('beforeunload', beforeUnload)
   const hash = window.location.hash
-  if (CONTENT_ANCHORS.some(anchor => anchor.href === hash)) {
-    document.getElementById(hash.slice(1))?.scrollIntoView()
-  }
+  if (['#content-contact', '#content-status'].includes(hash)) group.value = 'shared'
+  if (['#content-terms', '#content-privacy'].includes(hash)) group.value = 'legal'
+  await nextTick()
+  if (hash) document.getElementById(hash.slice(1))?.scrollIntoView()
 })
 </script>
 
 <template>
   <AdminShell current="content">
     <span v-if="pageStatus !== 'ready'" id="content-contact" aria-hidden="true" />
-    <div class="content-admin" data-testid="content-admin">
+    <div ref="contentRoot" class="content-admin" data-testid="content-admin">
       <header class="content-admin__header">
         <h1 class="content-admin__title">站点配置</h1>
       </header>
@@ -87,17 +93,14 @@ onMounted(async () => {
       </div>
 
       <template v-else-if="content">
-        <nav class="content-admin__anchors" aria-label="站点配置分区">
-          <AdminAction
-            v-for="anchor in CONTENT_ANCHORS"
-            :key="anchor.href"
-            :href="anchor.href"
-            variant="text"
-            size="small"
-          >{{ anchor.label }}</AdminAction>
+        <nav class="admin-segmented" aria-label="站点配置分区">
+          <button v-for="item in GROUPS" :key="item.key" type="button" class="admin-segmented__item" :aria-pressed="group === item.key" @click="group = item.key">{{ item.label }}</button>
         </nav>
-
+        <div v-show="group === 'copy'">
+          <AdminSiteLocalizedContent ref="localized" @saved="refresh" />
+        </div>
         <section
+          v-show="group === 'shared'"
           id="content-status"
           class="content-admin__group content-admin__anchor"
           aria-labelledby="business-statuses-title"
@@ -106,6 +109,7 @@ onMounted(async () => {
           <div class="content-admin__statuses">
             <AdminSiteBusinessStatusCard
               kind="commission"
+              tone-only
               :status="content.statuses.commission"
               :mutating="savingSection === 'commission'"
               :saved="savedSection === 'commission'"
@@ -114,28 +118,10 @@ onMounted(async () => {
           </div>
         </section>
 
-        <section class="content-admin__group" aria-labelledby="content-sections-title">
-          <h2 id="content-sections-title" class="content-admin__group-title">页面内容</h2>
+        <section class="content-admin__group" aria-label="其他配置">
           <div class="content-admin__sections">
-            <AdminSiteCommissionContentCard
-              id="content-commission"
-              class="content-admin__anchor"
-              :content="content"
-              :conflict-section="conflictSection"
-              :saved-section="savedSection"
-              :saving-section="savingSection"
-              @save="payload => onSaveSection('commission', payload)"
-            />
-            <AdminSiteAboutContentCard
-              id="content-about"
-              class="content-admin__anchor"
-              :content="content"
-              :conflict-section="conflictSection"
-              :saved-section="savedSection"
-              :saving-section="savingSection"
-              @save="payload => onSaveSection('about', payload)"
-            />
             <AdminSiteLegalContentCard
+              v-show="group === 'legal'"
               id="content-terms"
               class="content-admin__anchor"
               section="terms"
@@ -146,6 +132,7 @@ onMounted(async () => {
               @save="payload => onSaveSection('terms', payload)"
             />
             <AdminSiteLegalContentCard
+              v-show="group === 'legal'"
               id="content-privacy"
               class="content-admin__anchor"
               section="privacy"
@@ -156,6 +143,7 @@ onMounted(async () => {
               @save="payload => onSaveSection('privacy', payload)"
             />
             <AdminSiteOfficialChannelsCard
+              v-show="group === 'shared'"
               id="content-contact"
               class="content-admin__anchor"
               :content="content"
@@ -235,14 +223,6 @@ onMounted(async () => {
 .content-admin__sections {
   display: grid;
   gap: var(--admin-space-3);
-}
-
-.content-admin__anchors {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--admin-space-2) var(--admin-space-4);
-  padding-bottom: var(--admin-space-3);
-  border-bottom: 1px solid var(--admin-border-secondary);
 }
 
 .content-admin__anchor {

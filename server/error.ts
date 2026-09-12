@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { apiErrorSchema } from '../shared/schemas/api'
+import { acceptedLanguageHeader } from '../shared/utils/accepted-language'
 import {
   isPrivateResponsePath,
   PRIVATE_RESPONSE_HEADERS,
@@ -56,6 +57,11 @@ async function renderNuxtErrorPage(
       headers: {
         accept: 'text/html',
         host: getRequestHost(event),
+        // Only the public language preference is needed by the internal renderer.
+        'accept-language': acceptedLanguageHeader(getHeader(event, 'accept-language')),
+        ...(['zh-CN', 'en'].includes(getCookie(event, 'site-language') ?? '')
+          ? { cookie: `site-language=${getCookie(event, 'site-language')}` }
+          : {}),
       },
     },
   )

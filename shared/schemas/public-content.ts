@@ -1,3 +1,4 @@
+import { publicSiteCopySchema } from './site-copy'
 import { z } from 'zod'
 import { PUBLIC_FEATURED_LIMIT } from '../constants/featured'
 import { apiSuccessSchema, resourceIdSchema } from './api'
@@ -60,7 +61,6 @@ export const publicWorkDetailDtoSchema = z.object({
   href: z.string().regex(/^\/works\/[a-z0-9]+(?:-[a-z0-9]+)*$/),
   adoption: publicAdoptionWorkDtoSchema.pick({
     adoptionStatus: true,
-    price: true,
   }).optional(),
   media: z.object({
     adoptionSourceAssetId: resourceIdSchema.optional(),
@@ -149,6 +149,7 @@ export const publicHomeEntryCardDtoSchema = publicHomeEntryDtoSchema.extend({
 }).strict()
 
 export const publicHomeAggregateDtoSchema = z.object({
+  copy: publicSiteCopySchema.default({}),
   hero: publicHomeDtoSchema,
   entries: z.object({
     commission: publicHomeEntryCardDtoSchema.nullable(),

@@ -465,6 +465,10 @@ describe('T19/T20 public repository contracts', () => {
       species: '犬科',
     })
     const adoptionList = repository.listAdoptions()
+    expect(JSON.stringify(adoptionList)).not.toMatch(/"(?:price|minorUnits|priceCnyMinor)"/u)
+    expect(JSON.stringify(repository.getWorkBySlug('adoption-purpose'))).not.toMatch(/"(?:price|minorUnits|priceCnyMinor)"/u)
+    expect(sqlite.prepare('SELECT price_amount_minor FROM works WHERE slug = ?').get('adoption-purpose'))
+      .toMatchObject({ price_amount_minor: 100 })
     expect(adoptionList).toMatchObject({
       availableCount: 1,
       resultCount: 1,
@@ -472,7 +476,6 @@ describe('T19/T20 public repository contracts', () => {
         work: {
           slug: 'adoption-purpose',
           adoptionStatus: 'available',
-          price: { currency: 'CNY', minorUnits: 100 },
         },
         href: '/works/adoption-purpose',
       }],

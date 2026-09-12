@@ -113,11 +113,11 @@ watch(placement, () => {
         <p>首页每个方向独立维护 1–5 张轮播；委托页横版与竖版各自维护一个可下架替换的单槽。</p>
       </header>
 
-      <nav class="hero-admin__placement-tabs" aria-label="大图页面">
+      <nav class="admin-segmented" aria-label="大图页面">
         <NuxtLink
           v-for="item in PLACEMENTS"
           :key="item.key"
-          class="hero-admin__placement-tab"
+          class="admin-segmented__item"
           :to="placementTo(item.key)"
           :aria-current="placement === item.key ? 'page' : undefined"
         >{{ item.label }}</NuxtLink>
@@ -225,7 +225,6 @@ watch(placement, () => {
   font-size: var(--admin-font-sm);
 }
 
-.hero-admin__placement-tabs,
 .hero-admin__orientation-tabs {
   display: flex;
   gap: var(--admin-space-1);
@@ -240,7 +239,6 @@ watch(placement, () => {
   background: var(--admin-bg-workspace);
 }
 
-.hero-admin__placement-tab,
 .hero-admin__orientation-tab {
   display: inline-flex;
   align-items: center;
@@ -272,7 +270,6 @@ watch(placement, () => {
   grid-column: 1 / -1;
 }
 
-.hero-admin__placement-tab[aria-current='page'],
 .hero-admin__orientation-tab[aria-current='page'] {
   color: var(--admin-accent-primary);
   background: var(--admin-bg-primary);
@@ -293,12 +290,10 @@ watch(placement, () => {
 }
 
 @media (max-width: 767px) {
-  .hero-admin__placement-tabs,
   .hero-admin__orientation-tabs {
     width: 100%;
   }
 
-  .hero-admin__placement-tab,
   .hero-admin__orientation-tab {
     flex: 1;
   }

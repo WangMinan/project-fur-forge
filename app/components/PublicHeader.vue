@@ -4,6 +4,7 @@ import {
   PROJECT_ENGLISH_NAME,
   PUBLIC_NAV_BRAND,
 } from '~~/shared/constants/project'
+const { t } = usePublicI18n()
 
 /**
  * `brandOnly` 只保留 Logo 与工作室名称，隐藏主导航与移动端菜单。
@@ -19,9 +20,15 @@ const props = withDefaults(defineProps<{
 const route = useRoute()
 const nuxtApp = useNuxtApp()
 const navOpen = ref(false)
+const languageOpen = shallowRef(false)
+watch(navOpen, value => { if (value) languageOpen.value = false })
 const scrolled = shallowRef(false)
 const displayedPath = shallowRef(route.path)
 const expandedSubnav = shallowRef<string | null>(null)
+watch(languageOpen, (value) => {
+  if (value) { navOpen.value = false; expandedSubnav.value = null }
+})
+watch(expandedSubnav, value => { if (value) languageOpen.value = false })
 
 /**
  * 页头定位跟随当前真正显示的页面，而不是抢先跟随已更新的 route。
@@ -101,7 +108,7 @@ onBeforeUnmount(() => {
     <NuxtLink
       to="/"
       class="public-header__brand"
-      :aria-label="`${PUBLIC_NAV_BRAND} · 回首页`"
+      :aria-label="t('count.homeBrand', { brand: PUBLIC_NAV_BRAND })"
     >
       <img
         class="public-header__logo"
@@ -114,7 +121,7 @@ onBeforeUnmount(() => {
       <span class="public-header__brand-sub">{{ PROJECT_ENGLISH_NAME }}</span>
     </NuxtLink>
 
-    <nav v-if="!brandOnly" class="public-header__nav" aria-label="主导航">
+    <nav v-if="!brandOnly" class="public-header__nav" :aria-label="t('ui.mainNavigation')">
       <div
         v-for="item in PUBLIC_NAV_ITEMS"
         :key="item.href"
@@ -134,7 +141,7 @@ onBeforeUnmount(() => {
           :aria-controls="`public-subnav-${item.href.slice(1)}`"
           @click="toggleSubnav(item.href)"
         >
-          {{ item.label }}
+          {{ t(item.label) }}
           <svg
             class="public-header__chevron"
             width="12"
@@ -152,7 +159,7 @@ onBeforeUnmount(() => {
           class="public-header__link"
           :aria-current="route.path === item.href ? 'page' : undefined"
         >
-          {{ item.label }}
+          {{ t(item.label) }}
         </NuxtLink>
 
         <div
@@ -160,7 +167,7 @@ onBeforeUnmount(() => {
           :id="`public-subnav-${item.href.slice(1)}`"
           class="public-header__subnav"
         >
-          <nav class="public-header__subnav-panel" :aria-label="`${item.label}二级导航`">
+          <nav class="public-header__subnav-panel" :aria-label="t('count.subnav', { label: t(item.label) })">
             <NuxtLink
               v-for="child in item.children"
               :key="child.href"
@@ -168,19 +175,21 @@ onBeforeUnmount(() => {
               class="public-header__subnav-link"
               :aria-current="route.path === child.href ? 'page' : undefined"
             >
-              {{ child.label }}
+              {{ t(child.label) }}
             </NuxtLink>
           </nav>
         </div>
       </div>
     </nav>
 
+    <PublicLanguageSwitcher v-if="!brandOnly" v-model="languageOpen" class="public-header__language" />
+
     <button
       v-if="!brandOnly"
       :id="triggerId"
       type="button"
       class="public-header__menu"
-      aria-label="打开导航"
+      :aria-label="t('ui.openNavigation')"
       :aria-expanded="navOpen"
       aria-controls="public-mobile-nav-panel"
       @click="navOpen = true"
@@ -311,7 +320,10 @@ onBeforeUnmount(() => {
   text-transform: uppercase;
 }
 
+.public-header__language { margin-left: auto; }
+
 .public-header__nav {
+  margin-left: auto;
   display: none;
   align-items: center;
   gap: var(--space-2);
@@ -407,8 +419,8 @@ onBeforeUnmount(() => {
   position: absolute;
   top: 100%;
   right: 0;
-  width: max-content;
-  min-width: 10rem;
+  width: var(--public-dropdown-width);
+  max-width: calc(100vw - 2rem);
   padding-top: var(--space-2);
   visibility: hidden;
   opacity: 0;
@@ -485,6 +497,8 @@ onBeforeUnmount(() => {
 }
 
 @media (min-width: 1024px) {
+  .public-header__language { margin-left: 0; }
+
   .public-header__nav {
     display: flex;
   }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { xContactUrlSchema } from '~~/shared/schemas/contact-url'
 import { commissionRecipientsSchema } from '~~/shared/schemas/commission-email'
 import { CONTACT_PLATFORM_LABELS } from '~~/shared/constants/contact'
 import type {
@@ -36,6 +37,7 @@ const card = useSiteContentSectionCard({
   savingSection: () => props.savingSection,
   extract: dto => ({
     email: dto.contact.email,
+    xContactUrl: dto.contact.xContactUrl,
     commissionNotificationRecipients: [...dto.contact.commissionNotificationRecipients],
     // qrLinkUrl 是服务端从二维码派生的只读值，不进入草稿或提交体。
     officialChannels: dto.contact.officialChannels.map(channel => ({
@@ -80,6 +82,7 @@ const issues = computed(() => {
   if (!isValidContactEmail(email)) {
     found.email = '请填写有效的官方邮箱（最多 254 字符）'
   }
+  if (!xContactUrlSchema.safeParse(card.draft.value.xContactUrl).success) found.xContactUrl = '请填写 https://x.com/账号 格式的 X 主页链接，不含查询参数。'
   for (const channel of card.draft.value.officialChannels) {
     const issue = channelAccountIssue(channel)
     if (issue) {
@@ -190,10 +193,11 @@ function save() {
   // 与服务端相同地归一化空字符串；否则保存成功后 draft 的 '' 与响应的 null
   // 仍会被判为 dirty，成功提示消失、保存按钮也不会回到稳定状态。
   card.draft.value.email = email
+  card.draft.value.xContactUrl = xContactUrlSchema.parse(card.draft.value.xContactUrl)
   card.draft.value.officialChannels = officialChannels
   const commissionNotificationRecipients = commissionRecipientsSchema.parse(card.draft.value.commissionNotificationRecipients)
   card.draft.value.commissionNotificationRecipients = commissionNotificationRecipients
-  emit('save', { email, officialChannels, commissionNotificationRecipients })
+  emit('save', { email, officialChannels, commissionNotificationRecipients, xContactUrl: card.draft.value.xContactUrl.trim() })
 }
 </script>
 
@@ -201,7 +205,7 @@ function save() {
   <AdminSiteSectionCardShell
     section="contact"
     title="联系方式"
-    hint="官方邮箱和 QQ 渠道公开展示；委托通知邮箱仅供工作室内部使用。"
+    hint="官方邮箱、X 和 QQ 渠道公开展示；委托通知邮箱仅供工作室内部使用。"
     :conflict="card.conflict.value"
     :dirty="card.isDirty.value"
     :has-issues="Object.keys(issues).length > 0 || upload.busy.value"
@@ -211,6 +215,14 @@ function save() {
     @reset="reset"
     @save="save"
   >
+    <div class="channels-field">
+      <label class="channels-label" for="site-field-x-contact">X 主页链接（非大陆委托）</label>
+      <input
+id="site-field-x-contact" v-model="card.draft.value.xContactUrl" type="url" class="channels-input" maxlength="200"
+        :aria-invalid="Boolean(issues.xContactUrl)" aria-describedby="site-field-x-contact-hint">
+      <p id="site-field-x-contact-hint" class="channels-hint">首页、委托页、申请页和关于页共用此链接。填写 https://x.com/账号。</p>
+      <p v-if="issues.xContactUrl" class="channels-issue" role="alert">{{ issues.xContactUrl }}</p>
+    </div>
     <div class="channels-field">
       <label class="channels-label" for="site-field-email">官方邮箱</label>
       <input
@@ -353,6 +365,8 @@ function save() {
       <dl class="channels-fixed">
         <dt>官方邮箱</dt>
         <dd>{{ card.latest.value.email }}</dd>
+        <dt>X 主页链接</dt>
+        <dd>{{ card.latest.value.xContactUrl }}</dd>
         <dt>委托通知邮箱</dt>
         <dd>{{ card.latest.value.commissionNotificationRecipients.join('、') || '未配置' }}</dd>
         <template v-for="channel in card.latest.value.officialChannels" :key="channel.platform">

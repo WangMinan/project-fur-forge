@@ -1,16 +1,11 @@
 <script setup lang="ts">
-import { PROJECT_NAME } from '~~/shared/constants/project'
 import {
   PUBLIC_ADOPTIONS_PAGE_SIZE,
   publicAdoptionListResponseSchema,
 } from '~~/shared/schemas/public-content'
+const { t } = usePublicI18n()
 
-useSeoMeta({
-  title: `设定领养 · ${PROJECT_NAME}`,
-  description: `${PROJECT_NAME}当前公开的领养角色，查看完整设定图、状态与人民币价格。`,
-  ogTitle: `设定领养 · ${PROJECT_NAME}`,
-  ogDescription: `${PROJECT_NAME}当前公开的领养角色。`,
-})
+usePublicSeo('adoptions')
 
 const route = useRoute()
 const requestedPage = computed(() => publicPageFromQuery(route.query.page))
@@ -46,15 +41,15 @@ const clearSearchHref = '/adoptions'
 /** 空态只表达真实数据，不编造“即将更新”。 */
 const emptyText = computed(() => {
   if (!search.value.valid) {
-    return { description: '', title: '搜索条件无效' }
+    return { description: '', title: t('ui.invalidSearch') }
   }
   if (search.value.active) {
-    return { description: '', title: '没有找到这个设定' }
+    return { description: '', title: t('ui.noMatch') }
   }
   if (!filter.value.valid) {
-    return { description: '', title: '搜索条件无效' }
+    return { description: '', title: t('ui.invalidSearch') }
   }
-  return { description: '', title: '当前没有可领养的角色' }
+  return { description: '', title: t('ui.noAdoptions') }
 })
 
 const isOutOfRange = computed(() => (
@@ -69,17 +64,18 @@ function hrefFor(target: number) {
   }, target)
 }
 
+usePublicCatalogSeo(list)
 </script>
 
 <template>
   <main class="adoptions-page" aria-labelledby="adoptions-page-title">
     <AdoptionArchiveHeader />
 
-    <section class="adoptions-page__tools" aria-label="搜索领养角色">
+    <section class="adoptions-page__tools" :aria-label="t('ui.searchAdoptions')">
       <div class="adoptions-page__tools-panel">
         <div class="adoptions-page__tools-meta">
-          <span>搜索角色</span>
-          <span v-if="search.active">{{ String(resultCount).padStart(2, '0') }} 项结果</span>
+          <span>{{ t('ui.searchCharacters') }}</span>
+          <span v-if="search.active">{{ t('count.results', { count: String(resultCount).padStart(2, '0') }) }}</span>
         </div>
         <div class="adoptions-page__filters-wrap">
           <PublicCatalogSearch
@@ -93,7 +89,7 @@ function hrefFor(target: number) {
             class="adoptions-page__contact-action"
             to="/about#contact"
             data-testid="adoption-contact-action"
-          >联系我们申请领养</PublicAction>
+          >{{ t('ui.adoptionContact') }}</PublicAction>
         </div>
       </div>
     </section>
@@ -111,16 +107,16 @@ function hrefFor(target: number) {
         :page="page"
         :page-count="pageCount"
         :href-for="hrefFor"
-        label="设定领养分页"
+        :label="t('ui.adoptionsPagination')"
       />
     </div>
 
     <PublicEmptyState
       v-else-if="isOutOfRange"
-      title="这一页没有可领养角色"
-      description="可以回到当前筛选的第一页继续浏览。"
+      :title="t('ui.emptyAdoptionsPage')"
+      :description="t('ui.firstPageHint')"
     >
-      <PublicAction :to="hrefFor(1)" variant="secondary">回到第一页</PublicAction>
+      <PublicAction :to="hrefFor(1)" variant="secondary">{{ t('ui.firstPage') }}</PublicAction>
     </PublicEmptyState>
 
     <PublicEmptyState
@@ -128,8 +124,8 @@ function hrefFor(target: number) {
       :title="emptyText.title"
       :description="emptyText.description"
     >
-      <PublicAction v-if="search.active" :to="clearSearchHref" variant="secondary">清除搜索</PublicAction>
-      <PublicAction v-else to="/works" variant="secondary">浏览作品展示</PublicAction>
+      <PublicAction v-if="search.active" :to="clearSearchHref" variant="secondary">{{ t('ui.clearSearch') }}</PublicAction>
+      <PublicAction v-else to="/works" variant="secondary">{{ t('ui.viewWorks') }}</PublicAction>
     </PublicEmptyState>
   </main>
 </template>

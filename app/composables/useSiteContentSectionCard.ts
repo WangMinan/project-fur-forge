@@ -1,5 +1,4 @@
 import type { AdminSiteContentDto } from '~~/shared/types/contracts'
-import type { SiteContentSection } from './useAdminSiteContent'
 
 /**
  * T34-F3 单个文案分区 Card 的本地状态机。
@@ -8,13 +7,13 @@ import type { SiteContentSection } from './useAdminSiteContent'
  * 409 行为：保留本地草稿，同时暴露服务端最新分区值（`latest`），
  * 由管理员选择「采用最新值」或保留草稿后人工重试。绝不自动把旧草稿套上新版本重发。
  */
-export function useSiteContentSectionCard<T extends Record<string, unknown>>(options: {
-  content: () => AdminSiteContentDto
+export function useSiteContentSectionCard<T extends Record<string, unknown>, C = AdminSiteContentDto>(options: {
+  content: () => C
   conflictSection: () => string | null
-  extract: (dto: AdminSiteContentDto) => T
+  extract: (dto: C) => T
   savedSection: () => string | null
   savingSection: () => string | null
-  section: SiteContentSection
+  section: string
 }) {
   /**
    * 草稿必须与 `serverValue` 计算属性的缓存对象完全隔离。
@@ -36,24 +35,20 @@ export function useSiteContentSectionCard<T extends Record<string, unknown>>(opt
   const saved = computed(() =>
     options.savedSection() === options.section && !isDirty.value)
 
-  watch(serverValue, (next) => {
+  watch(serverValue, (next, previous) => {
     // 无本地修改时直接跟随服务端；有修改时保留草稿，冲突提示由 `conflict` 驱动。
-    if (!isDirty.value) {
+    if (JSON.stringify(draft.value) === JSON.stringify(previous)) {
       draft.value = cloneOf(next)
     }
   }, { deep: true })
 
-  /** 冲突后管理员选择采用服务端最新值，丢弃本地草稿。 */
-  function adoptLatest() {
-    draft.value = cloneOf(serverValue.value)
-  }
-
+  /** 重置或采用最新值时，丢弃本地草稿。 */
   function reset() {
     draft.value = cloneOf(serverValue.value)
   }
 
   return {
-    adoptLatest,
+    adoptLatest: reset,
     conflict,
     draft,
     isDirty,

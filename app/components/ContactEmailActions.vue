@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = usePublicI18n()
 // T26–T27 邮件行动组：打开邮件客户端（mailto）+ 复制邮箱。
 // 邮箱只来自公开投影；复制反馈用 aria-live 宣告，键盘按原生按钮操作。
 const props = withDefaults(defineProps<{
@@ -77,17 +78,17 @@ onScopeDispose(() => {
 <template>
   <div class="email-actions">
     <div v-if="showAddress" class="email-actions__identity">
-      <h3 class="email-actions__label">邮箱</h3>
+      <h3 class="email-actions__label">{{ t('ui.email') }}</h3>
       <p class="email-actions__address">{{ email }}</p>
     </div>
     <div class="email-actions__buttons">
       <PublicAction :href="mailtoHref" variant="secondary" @click="onEmailOpen">
-        打开邮件客户端
+        {{ t('ui.openEmail') }}
         <span aria-hidden="true">↗</span>
       </PublicAction>
       <span class="email-actions__copy-anchor">
         <PublicAction class="email-actions__copy" variant="secondary" @click="onCopy">
-          复制邮箱
+          {{ t('ui.copyEmail') }}
         </PublicAction>
         <span
           v-if="copyState !== 'idle'"
@@ -95,7 +96,7 @@ onScopeDispose(() => {
           :class="`email-actions__feedback--${copyState}`"
           :role="copyState === 'failed' ? 'alert' : 'status'"
         >
-          {{ copyState === 'copied' ? '已复制到剪贴板' : '复制失败，请手动选择' }}
+          {{ t(copyState === 'copied' ? 'ui.copiedFeedback' : 'ui.copyFailed') }}
         </span>
       </span>
     </div>

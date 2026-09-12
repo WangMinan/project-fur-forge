@@ -1,17 +1,12 @@
 <script setup lang="ts">
 import { publicWorkListResponseSchema } from '~~/shared/schemas/public-content'
-import { PROJECT_NAME } from '~~/shared/constants/project'
+const { t } = usePublicI18n()
 
 /**
  * T20 作品列表：SSR 消费 /api/public/v1/works。
  * 公开端只按名称搜索并分页，作品用途等内部字段不进入查询或 DTO。
  */
-useSeoMeta({
-  title: `作品展示 · ${PROJECT_NAME}`,
-  description: `${PROJECT_NAME}的兽装作品展示。`,
-  ogTitle: `作品展示 · ${PROJECT_NAME}`,
-  ogDescription: `${PROJECT_NAME}的兽装作品展示。`,
-})
+usePublicSeo('works')
 
 const route = useRoute()
 
@@ -68,6 +63,7 @@ function hrefFor(target: number) {
     q: search.value.query || null,
   }, target)
 }
+usePublicCatalogSeo(list)
 </script>
 
 <template>
@@ -83,14 +79,14 @@ function hrefFor(target: number) {
         height="1600"
       >
       <div class="works-page__title-group">
-        <h1 id="works-page-title" class="works-page__title">作品展示</h1>
+        <h1 id="works-page-title" class="works-page__title">{{ t('ui.works') }}</h1>
       </div>
     </header>
 
-    <section class="works-page__tools" aria-label="搜索作品">
+    <section class="works-page__tools" :aria-label="t('ui.searchWorks')">
       <div class="works-page__toolbar">
         <span v-if="search.active" class="works-page__result-count">
-          {{ String(resultCount).padStart(2, '0') }} 项结果
+          {{ t('count.results', { count: String(resultCount).padStart(2, '0') }) }}
         </span>
         <PublicCatalogSearch
           action="/works"
@@ -119,34 +115,34 @@ function hrefFor(target: number) {
           :page="page"
           :page-count="pageCount"
           :href-for="hrefFor"
-          label="作品展示分页"
+          :label="t('ui.worksPagination')"
         />
       </template>
 
-      <PublicEmptyState v-else-if="emptyKind === 'out-of-range'" title="这一页没有作品">
+      <PublicEmptyState v-else-if="emptyKind === 'out-of-range'" :title="t('ui.emptyWorksPage')">
         <PublicAction :to="hrefFor(1)" variant="secondary">
-          回到第一页
+          {{ t('ui.firstPage') }}
         </PublicAction>
       </PublicEmptyState>
 
-      <PublicEmptyState v-else-if="emptyKind === 'no-works'" title="作品正在整理中。" />
+      <PublicEmptyState v-else-if="emptyKind === 'no-works'" :title="t('ui.worksEmpty')" />
 
-      <PublicEmptyState v-else-if="emptyKind === 'invalid-search'" title="搜索条件无效">
+      <PublicEmptyState v-else-if="emptyKind === 'invalid-search'" :title="t('ui.invalidSearch')">
         <PublicAction :to="clearSearchHref" variant="secondary">
-          清除搜索
+          {{ t('ui.clearSearch') }}
         </PublicAction>
       </PublicEmptyState>
 
-      <PublicEmptyState v-else-if="emptyKind === 'search-no-match'" title="没有找到这个设定">
+      <PublicEmptyState v-else-if="emptyKind === 'search-no-match'" :title="t('ui.noMatch')">
         <PublicAction :to="clearSearchHref" variant="secondary">
-          清除搜索
+          {{ t('ui.clearSearch') }}
         </PublicAction>
       </PublicEmptyState>
 
       <!-- 无匹配与参数非法对访客是同一件事：这套条件下没有作品。 -->
-      <PublicEmptyState v-else title="没有符合条件的作品">
+      <PublicEmptyState v-else :title="t('ui.noFilteredWorks')">
         <PublicAction to="/works" variant="secondary">
-          清除筛选
+          {{ t('ui.clearFilters') }}
         </PublicAction>
       </PublicEmptyState>
     </div>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { PROJECT_NAME } from '~~/shared/constants/project'
+const { t, isEnglish } = usePublicI18n()
 
 const route = useRoute()
 const requestUrl = useRequestURL()
@@ -24,8 +25,8 @@ router.afterEach((to, from) => {
 
 useSeoMeta({
   ogType: 'website',
-  ogLocale: 'zh_CN',
-  ogSiteName: PROJECT_NAME,
+  ogLocale: computed(() => isEnglish.value ? 'en_US' : 'zh_CN'),
+  ogSiteName: computed(() => isEnglish.value ? 'DITE DOG' : PROJECT_NAME),
   ogUrl: canonical,
   ogImage: sharingImage,
   ogImageWidth: 1200,
@@ -56,7 +57,7 @@ useHead(() => ({
     <Head>
       <Meta itemprop="image" :content="sharingImage" />
     </Head>
-    <a href="#main-content" class="skip-link">跳到主要内容</a>
+    <a href="#main-content" class="skip-link">{{ t('ui.skipContent') }}</a>
     <PublicHeader />
     <main
       id="main-content"

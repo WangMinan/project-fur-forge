@@ -21,6 +21,7 @@ export default defineEventHandler(defineSiteContentSectionHandler({
     })))
     return {
       email: payload.email,
+      xContactUrl: payload.xContactUrl ?? contact.xContactUrl,
       commissionNotificationRecipientsJson: JSON.stringify(payload.commissionNotificationRecipients ?? contact.commissionNotificationRecipients),
       officialChannelsJson: JSON.stringify(channels),
     }

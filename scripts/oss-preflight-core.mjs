@@ -1,7 +1,4 @@
-import {
-  createHash,
-  randomBytes,
-} from 'node:crypto'
+import { createHash } from 'node:crypto'
 import {
   crc32,
   deflateSync,
@@ -159,15 +156,6 @@ export function urlSafeBase64(value) {
   return Buffer.from(value, 'utf8').toString('base64url')
 }
 
-export function createRunId(now = new Date(), entropy = randomBytes(4)) {
-  const timestamp = now.toISOString()
-    .replaceAll('-', '')
-    .replaceAll(':', '')
-    .replace(/\.\d{3}Z$/u, 'Z')
-
-  return `t10-${timestamp}-${Buffer.from(entropy).toString('hex')}`
-}
-
 function stringValues(value) {
   if (Array.isArray(value)) {
     return value.map(item => String(item))
@@ -215,49 +203,6 @@ export function evaluateCorsRules(rules, {
     broadOrigin: matchingRule?.broadOrigin ?? false,
     broadHeaders: matchingRule?.broadHeaders ?? false,
     checkedRuleCount: rules.length,
-  }
-}
-
-export function parseImageInfo(content) {
-  const parsed = JSON.parse(Buffer.isBuffer(content)
-    ? content.toString('utf8')
-    : String(content))
-  const valueOf = key => parsed[key]?.value ?? parsed[key]?.Value
-
-  return {
-    format: valueOf('Format'),
-    width: Number(valueOf('ImageWidth')),
-    height: Number(valueOf('ImageHeight')),
-    fileSize: Number(valueOf('FileSize')),
-  }
-}
-
-export function ossErrorSummary(error) {
-  const candidate = error && typeof error === 'object'
-    ? error
-    : {}
-  const serviceError = candidate.data && typeof candidate.data === 'object'
-    ? candidate.data
-    : {}
-
-  return {
-    code: typeof candidate.code === 'string'
-      ? candidate.code
-      : typeof candidate.name === 'string'
-        ? candidate.name
-        : 'UnknownError',
-    serviceCode: typeof serviceError.Code === 'string'
-      ? serviceError.Code
-      : null,
-    serviceMessage: typeof serviceError.Message === 'string'
-      ? serviceError.Message
-      : null,
-    status: typeof candidate.status === 'number'
-      ? candidate.status
-      : null,
-    requestId: typeof candidate.requestId === 'string'
-      ? candidate.requestId
-      : null,
   }
 }
 

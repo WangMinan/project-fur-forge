@@ -1,14 +1,20 @@
 <script setup lang="ts">
+import type { PublicSiteCopy } from '~~/shared/schemas/site-copy'
+import { localizedSiteCopy } from '~~/shared/utils/site-copy'
 import type { PublicHomeEntryCardDto } from '~~/shared/types/contracts'
 import { useMotionEntrance } from '~/composables/useMotionEntrance'
+const { t, contactOnly, language } = usePublicI18n()
 
 const props = defineProps<{
+  xContactUrl?: string | undefined
+  copy?: PublicSiteCopy | undefined
   entries: {
     adoption: PublicHomeEntryCardDto | null
     commission: PublicHomeEntryCardDto | null
   }
 }>()
 
+const process = computed(() => localizedSiteCopy(props.copy, language.value, 'commission').estimateNote)
 const commission = computed(() => props.entries.commission)
 const rootRef = useTemplateRef<HTMLElement>('root')
 const mediaRef = useTemplateRef<HTMLElement>('media')
@@ -51,7 +57,7 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
     data-testid="home-business-entries"
   >
     <header class="home-commission__heading">
-      <h2 id="home-entries-title" class="home-commission__title">自设委托</h2>
+      <h2 id="home-entries-title" class="home-commission__title">{{ t('ui.commissions') }}</h2>
     </header>
 
     <article
@@ -77,29 +83,31 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
           <PublicBusinessStatus
             v-if="commission.status"
             :status="commission.status"
+            :copy="copy"
           />
-          <p class="home-commission__process">
-            先通过站内表单提交。工作室评估后优先使用官方 QQ 私聊沟通。
+          <p v-if="process" class="home-commission__process">
+            {{ process }}
           </p>
+          <p v-if="!contactOnly" class="home-commission__process"><a :href="xContactUrl">{{ t('contact.international') }}</a></p>
         </div>
         <div class="home-commission__actions">
-          <PublicAction to="/commission/apply">
-            提交委托申请
+          <PublicAction :to="contactOnly ? undefined : '/commission/apply'" :href="contactOnly ? xContactUrl : undefined">
+            {{ t('ui.apply') }}
           </PublicAction>
           <PublicAction
             :to="commissionTo"
             variant="secondary"
           >
-            了解自设委托
+            {{ t('ui.learnCommission') }}
           </PublicAction>
         </div>
       </div>
     </article>
 
     <div class="home-commission__wayfinding" aria-hidden="true">
-      <span>下一幕</span>
+      <span>{{ t('ui.nextScene') }}</span>
       <span class="home-commission__wayfinding-rule" />
-      <span>设定领养</span>
+      <span>{{ t('ui.adoptions') }}</span>
     </div>
   </section>
 </template>

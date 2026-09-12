@@ -125,15 +125,6 @@ export function siteDisplayHeight(usage: SiteDisplayUsage, width: number) {
   return Math.round(width * vertical / horizontal)
 }
 
-export function siteDisplayVariantCount(
-  usages: readonly SiteDisplayUsage[],
-) {
-  return usages.reduce(
-    (count, usage) => count + recipes[usage].widths.length * 2,
-    0,
-  )
-}
-
 /** 站点展示位不裁掉主体：只要求最大宽高在输入范围内。 */
 export function sourceSupportsSiteDisplay(
   source: { height: number, width: number },

@@ -13,7 +13,6 @@ export function contentDigests(content: Buffer): {
 }
 export function sha256(content: Buffer): string
 export function urlSafeBase64(value: string): string
-export function createRunId(now?: Date, entropy?: Buffer): string
 export function evaluateCorsRules(
   rules: ReadonlyArray<{
     allowedOrigin?: string | readonly string[]
@@ -30,19 +29,6 @@ export function evaluateCorsRules(
   broadOrigin: boolean
   broadHeaders: boolean
   checkedRuleCount: number
-}
-export function parseImageInfo(content: Buffer | string): {
-  format: string | undefined
-  width: number
-  height: number
-  fileSize: number
-}
-export function ossErrorSummary(error: unknown): {
-  code: string
-  serviceCode: string | null
-  serviceMessage: string | null
-  status: number | null
-  requestId: string | null
 }
 export function requestIdOf(result: unknown): string | null
 export function responseHeader(
