@@ -78,20 +78,22 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', outside))
         <path d="M3 5h12M9 2v3M5 5c0 6 6 9 8 10M13 5c0 6-6 9-10 10M14 21l4-11 4 11M15.5 17h5" />
       </svg>
     </button>
-    <div v-if="open" id="language-options" class="language-switcher__panel" :aria-busy="changing">
-      <button
-        v-for="option in SITE_LOCALES"
-        :key="option.code"
-        type="button"
-        :lang="option.code"
-        :aria-pressed="language === option.code"
-        :disabled="blocked || changing"
-        @click="choose(option.code)"
-      >
-        <span>{{ option.name }}</span>
-      </button>
-      <p v-if="blocked" role="status">{{ t('language.busy') }}</p>
-      <p v-if="failed" role="alert">{{ t('language.failed') }}</p>
+    <div v-if="open" class="language-switcher__dropdown">
+      <div id="language-options" class="language-switcher__panel" :aria-busy="changing">
+        <button
+          v-for="option in SITE_LOCALES"
+          :key="option.code"
+          type="button"
+          :lang="option.code"
+          :aria-pressed="language === option.code"
+          :disabled="blocked || changing"
+          @click="choose(option.code)"
+        >
+          <span>{{ option.name }}</span>
+        </button>
+        <p v-if="blocked" role="status">{{ t('language.busy') }}</p>
+        <p v-if="failed" role="alert">{{ t('language.failed') }}</p>
+      </div>
     </div>
   </div>
 </template>
@@ -99,7 +101,8 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', outside))
 <style scoped>
 .language-switcher { position: relative; flex: none; }
 .language-switcher__trigger { display: grid; place-items: center; width: 44px; height: 44px; border: 0; background: transparent; color: inherit; cursor: pointer; }
-.language-switcher__panel { position: absolute; right: 0; top: 100%; width: var(--public-dropdown-width); max-width: calc(100vw - 2rem); padding: 0.5rem; border: 1px solid var(--public-border-secondary); border-radius: var(--radius-md); background: var(--public-bg-primary); color: var(--public-text-primary); box-shadow: 0 8px 24px rgb(0 0 0 / 12%); }
+.language-switcher__dropdown { position: absolute; right: 0; top: 100%; width: var(--public-dropdown-width); max-width: calc(100vw - 2rem); padding-top: var(--space-2); }
+.language-switcher__panel { padding: 0.5rem; border: 1px solid var(--public-border-secondary); border-radius: var(--radius-md); background: var(--public-bg-primary); color: var(--public-text-primary); box-shadow: 0 8px 24px rgb(0 0 0 / 12%); }
 .language-switcher__panel button { display: flex; justify-content: flex-start; align-items: center; width: 100%; min-height: 44px; padding: var(--space-3) var(--space-4); border: 0; background: transparent; color: inherit; font: inherit; font-size: var(--font-size-sm); text-align: left; cursor: pointer; }
 .language-switcher__panel button[aria-pressed='true'] { color: var(--public-accent-primary); }
 .language-switcher__panel button:hover { background: var(--public-bg-secondary); }

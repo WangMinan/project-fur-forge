@@ -330,6 +330,7 @@ onBeforeUnmount(() => {
 }
 
 .public-header__nav-item {
+  display: flex;
   position: relative;
 }
 

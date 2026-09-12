@@ -153,8 +153,19 @@ test('language hover and touch toggles, English commission title stays inside it
     await pc.goto(`${publicBaseURL}/commission`)
     const trigger = pc.getByRole('button', { name: 'Choose language', exact: true })
     await expect(trigger).toBeEnabled()
+    const about = pc.getByRole('button', { name: 'About Us', exact: true })
+    await about.hover()
+    const aboutPanel = pc.locator('.public-header__subnav-panel')
+    const aboutTriggerBox = (await about.boundingBox())!
+    await expect.poll(async () => Math.round((await aboutPanel.boundingBox())!.y - aboutTriggerBox.y - aboutTriggerBox.height)).toBe(8)
+    const aboutTop = (await aboutPanel.boundingBox())!.y
     await trigger.hover()
     const menu = pc.locator('#language-options')
+    await expect(menu).toBeVisible()
+    const menuBox = (await menu.boundingBox())!
+    expect(menuBox.y).toBeCloseTo(aboutTop, 0)
+    const triggerBox = (await trigger.boundingBox())!
+    await pc.mouse.move(triggerBox.x + triggerBox.width / 2, triggerBox.y + triggerBox.height + 4)
     await expect(menu).toBeVisible()
     await menu.getByRole('button', { name: '中文', exact: true }).hover()
     await expect(menu).toBeVisible()
