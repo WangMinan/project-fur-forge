@@ -2,6 +2,12 @@
 
 > 状态事实以本文件为准；执行勾选以 [TASKS](implementation/TASKS.md) 为准。
 
+## Git 与 PR 交接
+
+- 已提交并推送实现提交 `1dfaca047c5a9452ba7de3130637cf7255abd66c`，包含用户确认的额外清理。
+- 已创建 [PR #34](https://github.com/WangMinan/project-fur-forge/pull/34)，目标 main，分支 codex/r7-public-i18n。
+- 本地验证通过；远程 CI/独立 Review 以 PR 现场为准。未合并、发布镜像或部署生产。
+
 ## 当前阶段
 
 阶段 5 · 基础 i18n 与后台多语言配置已完成本地实现和自动验证；用户已人工验收前序功能；本轮导航统一与 X 配置已完成实现、迁移及本地自动验证。
