@@ -4,6 +4,7 @@ import {
   type SiteCopyLocale, type SiteCopySection, type SiteCopySections, type PublicSiteCopy,
 } from '../../../shared/schemas/site-copy'
 import { SITE_LOCALE_CODES } from '../../../shared/constants/site-locales'
+import { publicStudioText } from '../../../shared/utils/site-copy'
 
 interface TranslationRow { locale: string, section: SiteCopySection, fields: string, version: number }
 
@@ -44,6 +45,13 @@ export function getPublicSiteCopy(sqlite: Database.Database): PublicSiteCopy {
     copy[row.locale] ??= emptySections()
     Object.assign(copy[row.locale]!, { [section]: fields })
   }
+  for (const sections of Object.values(copy)) {
+    for (const fields of Object.values(sections)) {
+      for (const [key, value] of Object.entries(fields)) {
+        Object.assign(fields, { [key]: publicStudioText(value) })
+      }
+    }
+  }
   return copy
 }
 
@@ -58,4 +66,3 @@ export function getAdminSiteCopy(sqlite: Database.Database, locale: SiteCopyLoca
   }
   return adminSiteCopyResponseSchema.parse({ data: { locale, source, sections } }).data
 }
-

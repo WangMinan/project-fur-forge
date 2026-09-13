@@ -14,6 +14,15 @@ test('public language SSR, preference, contact branches and responsive switcher'
     adoptionCover: { alt: '小狗设定图', width: 1920, height: 1080 },
   })))
   await seedHeroCollections(page, { landscape: [{ alt: '测试横图', sortOrder: 0, enabled: true }], portrait: [{ alt: '测试竖图', sortOrder: 0, enabled: true }] })
+  await seedHeroCollections(page, { placement: 'commission', landscape: [{ alt: '委托横图', sortOrder: 0, enabled: true }], portrait: [{ alt: '委托竖图', sortOrder: 0, enabled: true }] })
+  for (const path of ['/', '/commission', '/commission/apply', '/about', '/service']) {
+    await page.goto(`${publicBaseURL}${path}`)
+    await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN')
+    await expect(page.locator('body')).not.toContainText(/景宸|弗朗/)
+    await expect(page.locator('a[href^="https://x.com/"]')).toHaveCount(0)
+    const html = await (await request.get(`${publicBaseURL}${path}`, { headers: { 'accept-language': 'zh-CN' } })).text()
+    expect(html).not.toMatch(/景宸|弗朗/)
+  }
   for (const [header, language] of [
     ['en-US,zh-CN;q=0.8', 'en'], ['zh-TW,en;q=0.8', 'zh-CN'],
     ['ja-JP', 'zh-CN'], ['', 'zh-CN'], ['en;q=0', 'zh-CN'],
@@ -120,6 +129,7 @@ test('public language SSR, preference, contact branches and responsive switcher'
     }
     await english.goto(`${publicBaseURL}/`)
     await expect(english.locator('h1')).toHaveText('DITE DOG')
+    await expect(english.getByRole('link', { name: 'Contact on X', exact: true })).toHaveAttribute('href', 'https://x.com/jece9925')
     for (const width of [390, 1440]) {
       await english.setViewportSize({ width, height: 900 })
       await expect(english.locator('.home-hero__tagline')).toBeVisible()
@@ -129,6 +139,7 @@ test('public language SSR, preference, contact branches and responsive switcher'
     for (const [url, heading] of [['/commission', 'Commissions'], ['/privacy', 'Privacy Policy'], ['/licenses', 'Open Source Notices']]) {
       await english.goto(`${publicBaseURL}${url}`)
       await expect(english.getByRole('heading', { name: heading!, exact: true, level: 1 })).toBeVisible()
+      if (url === '/commission') expect(await english.locator('a[href="https://x.com/jece9925"]').count()).toBeGreaterThan(0)
       if (url === '/privacy') await expect(english.getByText('Original document in Chinese')).toBeVisible()
     }
     await english.goto(`${publicBaseURL}/missing-r7-page`)

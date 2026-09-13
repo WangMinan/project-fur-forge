@@ -1,4 +1,5 @@
 import { getPublicSiteCopy } from '../repository/site-copy-repository'
+import { publicStudioText } from '../../../shared/utils/site-copy'
 import { randomUUID } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import { CONTACT_PLATFORMS } from '../../../shared/constants/contact'
@@ -255,12 +256,12 @@ export function getPublicSiteContent(
     copy: getPublicSiteCopy(sqlite),
     statuses: getPublicBusinessStatuses(sqlite),
     commission: {
-      ...current.commission,
+      ...Object.fromEntries(Object.entries(current.commission).map(([key, value]) => [key, publicStudioText(value)])),
       email: current.contact.email,
       termsHref: '/service',
     },
     about: {
-      ...current.about,
+      ...Object.fromEntries(Object.entries(current.about).map(([key, value]) => [key, publicStudioText(value)])),
       officialChannels: publicChannels,
     },
     contact: {

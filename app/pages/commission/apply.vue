@@ -360,7 +360,6 @@ onBeforeUnmount(() => {
         <PublicAction :href="site?.contact.xContactUrl">{{ t('contact.x') }}</PublicAction>
       </section>
       <template v-else>
-      <p><a :href="site?.contact.xContactUrl">{{ t('contact.international') }}</a></p>
       <section v-if="receiptCode" class="commission-apply__success" role="status">
         <p class="commission-apply__eyebrow">申请已收到</p>
         <h2>请保存回执编号</h2>
