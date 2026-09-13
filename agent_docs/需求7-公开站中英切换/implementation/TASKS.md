@@ -66,3 +66,4 @@ T00～T10、T13 已完成本地实现、自动验证与文档交接。用户确�
 - [x] T26 · 修复发布门禁旧登录 smoke 操作路径，完整 19 项 smoke、定向 lint/typecheck 通过；用户授权 main 推送并重启出包工作流，镜像发布结果单独确认。
 
 - [x] T27 · 中文五页移除个人信息和 X 联系提示，英文保留 X；公开存量文案与旧 DTO 匿名化。lint/typecheck、11 项 core、build/生产 guard 与 2 项 Chrome smoke 具备通过证据；用户授权直接 main 提交、推送并出包，发布结果另记。
+- [x] T28 · 修正发布 smoke 的旧匿名化前 fallback 断言，保留中文回退验证并增加 SSR 无姓名断言；完整 19 项 smoke、定向 lint/typecheck、ESA 策略与凭据扫描通过。原失败镜像未发布，按用户授权 main 推送并重新出包。

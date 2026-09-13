@@ -44,9 +44,11 @@ test('admin multilingual copy saves, protects drafts, detects conflict and rende
   await page.reload()
   await language.getByRole('button', { name: 'English', exact: true }).click()
   await expect(facts).toHaveValue('')
-  const zh = (await (await page.request.get(`${base}/zh-CN`)).json()).data
+  const published = (await (await request.get(`${publicBaseURL}/api/public/v1/site-content`)).json()).data
   html = await (await request.get(`${publicBaseURL}/about`, { headers: { 'accept-language': 'en' } })).text()
-  expect(html).toContain(zh.source.about.studioFacts.split('\n')[0])
+  // Fallback inherits the public Chinese copy, after personal names are removed.
+  expect(html).toContain(published.copy['zh-CN'].about.studioFacts.split('\n')[0])
+  expect(html).not.toMatch(/景宸|弗朗/)
   for (const width of [390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 })
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy()
