@@ -92,7 +92,6 @@ const scopeParagraphs = computed(() => paragraphs(about.value.makingScope))
           <p class="about-contact__description">
             {{ t('contact.about') }}
           </p>
-          <p v-if="!contactOnly"><a :href="site?.contact.xContactUrl">{{ t('contact.international') }}</a></p>
           <PublicAction class="about-contact__primary" :to="contactOnly ? undefined : '/commission/apply'" :href="contactOnly ? site?.contact.xContactUrl : undefined">
             {{ t('ui.apply') }}
           </PublicAction>

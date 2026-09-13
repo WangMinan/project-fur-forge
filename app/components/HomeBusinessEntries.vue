@@ -88,7 +88,6 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
           <p v-if="process" class="home-commission__process">
             {{ process }}
           </p>
-          <p v-if="!contactOnly" class="home-commission__process"><a :href="xContactUrl">{{ t('contact.international') }}</a></p>
         </div>
         <div class="home-commission__actions">
           <PublicAction :to="contactOnly ? undefined : '/commission/apply'" :href="contactOnly ? xContactUrl : undefined">

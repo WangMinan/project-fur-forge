@@ -125,7 +125,6 @@ const emailActionParagraphs = computed(() => paragraphs(commission.value.emailAc
         </section>
       </div>
 
-      <p v-if="!contactOnly"><a :href="site?.contact.xContactUrl">{{ t('contact.international') }}</a></p>
       <PublicAction
         variant="text"
         class="commission-page__wayfinding"

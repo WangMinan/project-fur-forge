@@ -64,3 +64,5 @@ T00～T10、T13 已完成本地实现、自动验证与文档交接。用户确�
 - [x] T25 · 对齐语言/关于下拉向下偏移，保留 hover 间隙连通；两项 Chrome 及 lint/typecheck 通过，提交推送至当前 PR。
 
 - [x] T26 · 修复发布门禁旧登录 smoke 操作路径，完整 19 项 smoke、定向 lint/typecheck 通过；用户授权 main 推送并重启出包工作流，镜像发布结果单独确认。
+
+- [x] T27 · 中文五页移除个人信息和 X 联系提示，英文保留 X；公开存量文案与旧 DTO 匿名化。lint/typecheck、11 项 core、build/生产 guard 与 2 项 Chrome smoke 具备通过证据；用户授权直接 main 提交、推送并出包，发布结果另记。

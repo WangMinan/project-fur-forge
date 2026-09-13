@@ -62,6 +62,12 @@ it('upgrades Chinese content without loss, preserves translations on rerun, and 
       // New languages are rows, with no database migration. They remain private until enabled.
       sqlite.prepare("INSERT INTO site_content_translations VALUES ('ja', 'home', '{\"tagline\":\"draft\"}', 1, 1)").run()
       expect(getPublicSiteCopy(sqlite)).not.toHaveProperty('ja')
+      sqlite.prepare("UPDATE site_content SET about_studio_facts = '由景宸制作，弗朗协助。' WHERE id = 'site'").run()
+      const publicContent = getPublicSiteContent(sqlite, 'https://media.example.test')
+      expect(JSON.stringify(publicContent)).not.toMatch(/景宸|弗朗/)
+      expect(publicContent.about.studioFacts).toBe('由工作室制作，工作室协助。')
+      expect(getPublicSiteCopy(sqlite)['zh-CN']!.about.studioFacts).toBe(publicContent.about.studioFacts)
+      expect(getAdminSiteCopy(sqlite, 'zh-CN').sections.about.fields.studioFacts).toBe('由景宸制作，弗朗协助。')
       expect(sqlite.pragma('foreign_key_check')).toEqual([])
       expect(sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
     }
