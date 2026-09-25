@@ -16,13 +16,13 @@ export default {
     let timer
     let failure = 'connection-failed'
     try {
-      // Read-only wait limit; HTTP responses, including every 5xx, are passed through.
+      // ESA reports refused/timed-out origin connections as HTTP 521/522, not only rejections.
       const response = await Promise.race([
         fetch(request, options),
         new Promise(resolve => { timer = setTimeout(() => resolve(null), 10000) }),
       ])
-      if (response) return response
-      failure = 'origin-timeout'
+      if (response && ![521, 522].includes(response.status)) return response
+      failure = response ? `origin-${response.status}` : 'origin-timeout'
     }
     catch {
       // Network failure: the fallback is embedded and needs no origin request.

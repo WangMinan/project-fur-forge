@@ -1,6 +1,6 @@
 # ESA 源站故障维护页
 
-当前使用边缘函数与普通函数路由：先访问源站，仅在 fetch 抛出网络异常或 10 秒内未获得响应时返回维护页。所有已经收到的 HTTP 响应（包括 500/502/503/504 等 5xx）原样保留，不以状态码猜测业务错误还是宕机。历史“自定义响应码”规则是无条件手动开关，已退役。
+当前使用边缘函数与普通函数路由：先访问源站，在 ESA 返回 521（拒绝连接）、522（连接超时）、fetch 抛出网络异常或 10 秒内未获得响应时返回维护页。其他 HTTP 响应（包括 500/502/503/504）原样保留。历史“自定义响应码”规则是无条件手动开关，已退役。
 
 ## 源文件与检查
 
@@ -17,7 +17,9 @@ pnpm exec esbuild deploy/esa/origin-fallback.mjs --bundle --format=esm --loader:
 
 ## 路由与运行边界
 
-站点下使用普通函数路由，旁路关闭、函数异常回源开启，路由等待 30 秒，为脚本自身的 10 秒等待留出余量。兜底返回 503、`Cache-Control: no-store`、`Retry-After: 60`；`X-Ditedog-Fallback` 区分 `connection-failed` 和 `origin-timeout`，HEAD 无正文。60 秒只是建议重试间隔。
+站点下使用普通函数路由，路由等待 30 秒，为脚本自身的 10 秒等待留出余量。兜底返回 503、`Cache-Control: no-store`、`Retry-After: 60`；`X-Ditedog-Fallback` 区分 `origin-521`、`origin-522`、`connection-failed` 和 `origin-timeout`，HEAD 无正文。60 秒只是建议重试间隔。
+
+旁路 `Bypass=off`，**函数异常回源 `Fallback=off`**。2026-09-25 在独立路径将回源端口改为未监听端口，真实收到 521；函数内部已生成 503 维护页，但 `Fallback=on` 时客户端仍收到再次回源后的空白 521。关闭后客户端收到内嵌维护页，重新开启又复现 521。不要依据开关名称假定它只处理 JavaScript 异常。
 
 实际经 ESA 编译通过的表达式：
 
@@ -32,8 +34,8 @@ ESA 此次拒绝 `not (A or B)` 的写法；这里用两个否定条件连接，
 - 正常请求使用原 Request、`redirect: manual`、`decompress: manual`，不主动改 Cookie、Location 或已压缩正文。
 - 已打开页面的 API 请求失败不会自动替换整个页面；认证后的写操作和真实生产停机演练仍需单独验收。
 - 10 秒限制是停止等待上游响应，未取消底层 I/O；因此只作用于读取页面。响应头/正文已经开始发送后的中途断流不保证能改成维护页。
-- 重启可能造成连接拒绝、超时，也可能由 ESA/Nginx 转成 HTTP 5xx；后一种情况按用户要求透传，不显示本维护页。原生 fetch 因网络超时而拒绝时仍属于异常分支。
-- 函数自身异常时由 ESA 回源，避免脚本故障阻断健康源站；若源站同时故障，则不能保证此异常路径仍返回自定义页。
+- 重启造成的 ESA 521/522 由本函数处理；Nginx 返回的 503 等其他状态仍透传。ESA 文档将 520–599 用作平台细分错误，业务不应使用该范围；当前仓库没有业务 521/522。这里仅处理连接拒绝与连接超时，不扩大为所有 52x。若业务将来自行返回 521/522，函数无法仅凭状态码区分来源。
+- 关闭函数异常回源后，函数自身未捕获异常/平台故障会显示平台错误，不再自动回源。这是保留函数主动返回的 503 维护页所需的取舍；紧急撤回时关闭整条函数路由。
 
 ## CLI 发布流程
 
@@ -53,6 +55,8 @@ HTTP multipart 上传使用 curl 时，可通过 `--config -` 从标准输入传
 
 ## 官方依据
 
+- [HTTP 状态码：ESA 520–599 与 521/522 定义](https://help.aliyun.com/zh/edge-security-acceleration/esa/support/http-status-code-description)
+- [522：源站连接超时](https://help.aliyun.com/zh/edge-security-acceleration/esa/support/522-error-origin-connection-timeout)
 - [函数路由与旁路模式](https://help.aliyun.com/zh/edge-security-acceleration/esa/user-guide/trigger)
 - [Fetch API](https://help.aliyun.com/zh/edge-security-acceleration/esa/user-guide/fetch-1)
 - [CLI 上传信息接口](https://help.aliyun.com/zh/edge-security-acceleration/esa/api-esa-2024-09-10-getroutinestagingcodeuploadinfo)
