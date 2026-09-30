@@ -80,8 +80,8 @@ async function onLogout() {
         aria-controls="admin-mobile-nav-panel"
         @click="navOpen = true"
       >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" />
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+          <path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
         </svg>
       </button>
     </header>
@@ -186,6 +186,7 @@ async function onLogout() {
 }
 
 .admin-shell__menu {
+  order: 2;
   display: none;
   width: var(--admin-touch-target);
   height: var(--admin-touch-target);
@@ -194,18 +195,22 @@ async function onLogout() {
   color: var(--admin-text-primary);
   background: none;
   border: none;
-  border-radius: var(--admin-radius-md);
+  border-radius: var(--radius-full);
   cursor: pointer;
   place-items: center;
 }
 
 .admin-shell__menu:hover {
-  background: var(--admin-bg-subtle);
+  background: rgb(127 137 150 / 0.16);
 }
 
 .admin-shell__menu:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--admin-focus-ring);
+  outline: 3px solid var(--public-focus-ring);
+  outline-offset: 2px;
+}
+
+.admin-shell__menu:active {
+  background: rgb(127 137 150 / 0.24);
 }
 
 .admin-shell__user {
@@ -262,6 +267,7 @@ async function onLogout() {
   .admin-shell__bar {
     flex-wrap: nowrap;
     gap: var(--admin-space-3);
+    padding: var(--space-4) var(--public-page-padding);
   }
 
   .admin-shell__brand {

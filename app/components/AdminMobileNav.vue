@@ -61,8 +61,8 @@ watch(() => route.fullPath, () => {
           aria-label="关闭管理导航"
           @click="close"
         >
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-            <path d="M5 5l12 12M17 5 5 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
           </svg>
         </button>
       </div>
@@ -73,11 +73,11 @@ watch(() => route.fullPath, () => {
           :key="item.key"
           :to="item.href"
           class="admin-mobile-nav__link"
-          :style="{ animationDelay: `${70 + index * 38}ms` }"
+          :style="{ animationDelay: `${index * 40}ms` }"
           :aria-current="current === item.key ? 'page' : undefined"
+          @click="close"
         >
-          <span>{{ item.label }}</span>
-          <span aria-hidden="true">→</span>
+          {{ item.label }}
         </NuxtLink>
       </nav>
 
@@ -108,7 +108,8 @@ watch(() => route.fullPath, () => {
   inset: 0;
   display: flex;
   flex-direction: column;
-  padding: var(--admin-space-4);
+  overflow-y: auto;
+  padding: var(--space-4) var(--public-page-padding) var(--space-6);
   color: var(--admin-text-primary);
   background: var(--admin-bg-primary);
 }
@@ -127,10 +128,14 @@ watch(() => route.fullPath, () => {
 
 .admin-mobile-nav__brand {
   gap: var(--admin-space-2);
+  min-width: 0;
   margin: 0;
+  white-space: nowrap;
 }
 
 .admin-mobile-nav__brand-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: var(--admin-font-md);
   font-weight: 600;
 }
@@ -145,6 +150,7 @@ watch(() => route.fullPath, () => {
 
 .admin-mobile-nav__close {
   display: grid;
+  flex: none;
   width: var(--admin-touch-target);
   height: var(--admin-touch-target);
   padding: 0;
@@ -157,7 +163,11 @@ watch(() => route.fullPath, () => {
 }
 
 .admin-mobile-nav__close:hover {
-  background: var(--admin-bg-subtle);
+  background: var(--public-bg-tertiary);
+}
+
+.admin-mobile-nav__close:active {
+  background: var(--public-bg-secondary);
 }
 
 .admin-mobile-nav__links {
@@ -169,23 +179,27 @@ watch(() => route.fullPath, () => {
 .admin-mobile-nav__link {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   min-height: var(--admin-touch-target);
-  padding: 0 var(--admin-space-3);
+  padding: var(--space-3) var(--space-2);
   color: var(--admin-text-primary);
-  font-size: var(--admin-font-md);
-  border-radius: var(--admin-radius-md);
-  animation: admin-mobile-nav-link-in var(--admin-duration-normal) var(--admin-easing) both;
+  font-family: var(--font-role-ui);
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-heading);
+  border-radius: var(--radius-sm);
+  animation: admin-mobile-nav-link-in var(--motion-duration-state) var(--motion-ease-standard) both;
 }
 
-.admin-mobile-nav__link:hover,
+.admin-mobile-nav__link:hover {
+  color: var(--admin-accent-primary);
+  background: var(--public-bg-secondary);
+}
+
 .admin-mobile-nav__link[aria-current='page'] {
   color: var(--admin-accent-primary);
-  background: var(--admin-bg-subtle);
 }
 
-.admin-mobile-nav__link[aria-current='page'] {
-  font-weight: 600;
+.admin-mobile-nav__link:active {
+  color: var(--public-accent-active);
 }
 
 .admin-mobile-nav__session {
@@ -225,8 +239,16 @@ watch(() => route.fullPath, () => {
   cursor: pointer;
 }
 
-.admin-mobile-nav__close:focus-visible,
-.admin-mobile-nav__link:focus-visible,
+.admin-mobile-nav__close:focus-visible {
+  outline: 3px solid var(--public-focus-ring);
+  outline-offset: 2px;
+}
+
+.admin-mobile-nav__link:focus-visible {
+  outline: 3px solid var(--public-focus-ring);
+  outline-offset: -2px;
+}
+
 .admin-mobile-nav__exit:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--admin-focus-ring);
@@ -240,32 +262,35 @@ watch(() => route.fullPath, () => {
 .admin-mobile-nav-enter-active,
 .admin-mobile-nav-leave-active {
   transition:
-    opacity var(--admin-duration-normal) var(--admin-easing),
-    transform var(--admin-duration-normal) var(--admin-easing);
+    opacity var(--motion-duration-state) var(--motion-ease-standard),
+    transform var(--motion-duration-state) var(--motion-ease-standard);
 }
 
 .admin-mobile-nav-enter-from,
 .admin-mobile-nav-leave-to {
   opacity: 0;
-  transform: translateY(-0.75rem);
+  transform: translateY(-4px);
 }
 
 @keyframes admin-mobile-nav-link-in {
   from {
     opacity: 0;
-    transform: translateY(0.65rem);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .admin-mobile-nav-enter-active,
   .admin-mobile-nav-leave-active {
-    transition: none;
+    transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
+  }
+
+  .admin-mobile-nav-enter-from,
+  .admin-mobile-nav-leave-to {
+    transform: none;
   }
 
   .admin-mobile-nav__link {
