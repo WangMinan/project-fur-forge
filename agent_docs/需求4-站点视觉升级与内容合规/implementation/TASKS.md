@@ -8,6 +8,11 @@
 
 只继续阶段 E 的全站静态视觉重构、Signature Motion、UI/Controls、响应式/输入/可访问性与最终一致性验收。V08-F1、只读的 V08-F2、方向重置的 V08-F3、`GATE-V08-R`、V09～V16、T47 与 T47-F1/F2 implementation/docs 已完成，`GATE-DESKTOP` 与 `GATE-MOBILE` 均已由凌巽本人放行；V13～V16 已获凌巽确认。真实 iOS/Android 与最终人工观感继续留给 GATE-E，不由 Agent 代签。不得从本清单启动其他数据库、隐私、安全、分发或生产发布工作；T47-F1/F2 是用户 2026-08-26 对委托与联系范围的精确重新授权。
 
+## 2026-09-30 补充修正
+
+- [x] **管理端窄屏 Header / 导航对齐**：按用户本轮授权直接在 main 修复站名/菜单按钮左右顺序，移除导航箭头与常驻选中底色，对齐公开站交互和排版。`check:fast`（329 项 core）与定向 smoke 2/2 通过；范围与验收边界见 [STATE](../STATE.md#2026-09-30-管理端窄屏导航修正)。
+- [ ] 本次真实手机与用户视觉验收；不代签生产发布。
+
 ## 0. 文档与基线
 
 - [x] **T00 · 需求4文档地基**：按 `_template` 建立 foundation、SPEC、COPY、design、models、PLAN、DATA-MIGRATION、TASKS、notes、review、artifacts 和 STATE。

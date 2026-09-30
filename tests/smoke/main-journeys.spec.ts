@@ -666,10 +666,24 @@ test('管理员可通过登录表单进入后台', async ({ page }) => {
   await expect(page.getByText('防诈骗')).toHaveCount(0)
 
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.setViewportSize({ width: 390, height: 844 })
   const navTrigger = page.getByRole('button', { name: '打开管理导航' })
+  for (const width of [320, 390, 430, 768, 1023]) {
+    await page.setViewportSize({ width, height: 844 })
+    const brand = await page.getByText('有点小狗工作室', { exact: true }).boundingBox()
+    const trigger = await navTrigger.boundingBox()
+    expect(brand).not.toBeNull()
+    expect(trigger).not.toBeNull()
+    expect(brand!.x + brand!.width).toBeLessThan(trigger!.x)
+    expect(Math.abs(brand!.y + brand!.height / 2 - trigger!.y - trigger!.height / 2)).toBeLessThan(8)
+    expect(trigger!.width).toBeGreaterThanOrEqual(44)
+    expect(await page.locator('body').evaluate(el => el.scrollWidth <= window.innerWidth)).toBe(true)
+  }
+  await page.setViewportSize({ width: 390, height: 844 })
   await navTrigger.click()
   const nav = page.getByRole('dialog', { name: '管理导航' })
+  await expect(nav.getByRole('link')).toHaveCount(6)
+  await expect(nav).not.toContainText('→')
+  await expect(nav.getByRole('link', { name: '站点配置', exact: true })).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
   await expect(nav.getByRole('button', { name: '关闭管理导航' })).toBeFocused()
   await page.keyboard.press('Shift+Tab')
   await expect(nav.getByRole('button', { name: '退出登录' })).toBeFocused()
@@ -677,6 +691,16 @@ test('管理员可通过登录表单进入后台', async ({ page }) => {
   await expect(nav).toBeHidden()
   await expect(navTrigger).toBeFocused()
   expect(await page.locator('main').evaluate(el => (el as HTMLElement).inert)).toBe(false)
+
+  await navTrigger.click()
+  await nav.getByRole('link', { name: '站点配置', exact: true }).click()
+  await expect(nav).toBeHidden()
+  await expect(navTrigger).toBeFocused()
+  for (const width of [1024, 1280]) {
+    await page.setViewportSize({ width, height: 900 })
+    await expect(navTrigger).toBeHidden()
+    await expect(page.getByRole('navigation', { name: '管理导航', exact: true })).toBeVisible()
+  }
 })
 
 test('作品上传显示真实 XHR determinate 进度，并可发布和下架', async ({ page }) => {
