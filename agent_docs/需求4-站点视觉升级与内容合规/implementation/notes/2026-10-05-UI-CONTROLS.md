@@ -86,3 +86,13 @@
 本轮实现提交：`ef26cf7` 字段与对齐；`3037a1b` hover/选中色；`4c1007d` 共享按钮与上传反馈。截图使用隔离测试库和合成数据，存于 `.cache/ui-controls-alignment/`，不保存用户截图中的输入信息。
 
 尚未执行真实手机、读屏软件及独立 Review；不声称全部原生标签都已替换，也不新增万能表单框架。未推送、合并、发布镜像或部署。
+
+
+## 出包失败修复：第三方声明漂移
+
+- UI 分支已通过 PR #38 合入 main（678dd07）。出包运行 [37304515151](https://github.com/WangMinan/project-fur-forge/actions/runs/37304515151) 在 `quality / checks → Run release verification` 的首步 `notices:check` 失败；authorize、lint/typecheck/core 已通过，smoke 尚未运行，image-build/publish 均跳过，未产出镜像。
+- 根因：依赖更新提交 `4427e99` 更新了 package.json/pnpm-lock.yaml，未同步三份生成声明；生成器报告 JSON、摘要和 TXT 全部漂移。
+- 修复只重新生成 `app/assets/licenses/third-party-notices.json`、`app/assets/licenses/third-party-summary.json` 与 `public/THIRD_PARTY_NOTICES.txt`。生产依赖条目 857→860；四项手工字体资产及其摘要保持不变。未修改版本约束、锁文件、生成器或检查门槛。
+- 验证使用隔离 WSL Linux/x64、Node 24.21.0、pnpm 11.18.0。Node 压缩包通过官方 SHA-256 清单检查；冻结锁文件安装使用 `--ignore-scripts`（仅生成元数据，不构建或运行应用）。`notices:generate` 后 `notices:check` 通过，包清单/锁文件哈希保持一致，三份回写产物与 Linux 生成结果逐字节比较通过。生成器现有 5 项单元测试通过，diff 空白检查通过。
+- 后续依赖更新应在 Linux/x64 重生成声明，与锁文件一并提交；不通过删除或放松 release 检查消除 drift。
+- 用户已授权修复并继续本次出包。修复走任务分支与 PR；合入后使用新 SHA 标签重新触发 release-image，沿用“启动后交由用户监控”的边界，未授权生产部署。
