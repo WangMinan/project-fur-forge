@@ -357,3 +357,15 @@ Mobile 的核心原则是：**Same visual language, different composition.** Mob
 - T04～T34 的当前开发范围与本地证据已完成；用户已确认个人信息处理者名称为“有点小狗工作室”。
 - T35/T36 与阶段 F 按产品决策关闭；实际镜像发布/部署时仍须履行 notices、Runbook 和安全检查，不能把关闭写成已完成。
 - 阶段 E T37～T47、V00、GATE-V00、V00-F1、V00-F2、V01～V08-F3、`GATE-V08-R` 与 V09～V16 implementation/evidence/docs 已完成；`GATE-DESKTOP` 与 `GATE-MOBILE` 均已由凌巽本人放行，V13～V16 交接已确认。当前停止实现工作，GATE-E 仍等待真实设备和最终人工视觉验收。
+
+
+## 2026-10-05 控件一致性增量
+
+- [x] UIC-01：邮箱客户端入口采用与 QQ 一致的前置圆底图标。
+- [x] UIC-02：按用户确认统一 12px，搜索复用 PublicAction，补齐表格外框与上传操作。
+- [x] UIC-03：后台表格 hover/focus-within 与工作区底色区分。
+- [x] UIC-04：共享 AdminSelect 替换八处下拉，保留值类型、表单与禁用边界。
+- [x] UIC-05：lint/typecheck/build/内容守卫通过；329 项 core 经超时组串行复验全部通过，26 个不同 smoke 用例通过；桌面/窄屏截图已检查，具体范围和限制见交接。
+- [ ] UIC-06：真实手机、读屏软件与用户视觉验收；本地自动化不代签。
+
+本轮提交与验证以 [控件一致性交接](notes/2026-10-05-UI-CONTROLS.md) 为准；无生产操作。

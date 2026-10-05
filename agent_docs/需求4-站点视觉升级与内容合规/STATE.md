@@ -4,6 +4,12 @@
 > **状态**：仅阶段 E 开放。
 > **任务权威**：[`implementation/TASKS.md`](./implementation/TASKS.md)。
 
+## 2026-10-05 控件一致性优化
+
+- 从干净且与 origin/main 同步的 `4427e99` 创建 `codex/ui-controls-consistency`；用户确认 12px 圆角，并授权按项提交。
+- 邮箱图标、统一圆角、表格 hover 与共享 Select 已实现并按项提交；lint/typecheck/build 与内容守卫通过，329 项 core 经超时组串行复跑全部有通过证据，完整 25 项 smoke 加补充触控/回退用例通过。最终证据见 [交接](implementation/notes/2026-10-05-UI-CONTROLS.md)。
+- 本地提交、浏览器验证与人工验收分别记录；未推送、未合入 main、未发布镜像或部署生产。
+
 ## 2026-10-05 UI Review 修复
 
 - 用户已确认五项缺陷与三项设计改进并授权实施；新增范围以 SPEC 的本日追加条款为准。
