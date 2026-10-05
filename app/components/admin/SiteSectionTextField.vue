@@ -50,6 +50,8 @@ const length = computed(() => props.modelValue.trim().length)
 <style scoped>
 .site-field {
   display: grid;
+  align-content: start;
+  align-self: start;
   gap: var(--admin-space-1);
 }
 
@@ -84,11 +86,11 @@ const length = computed(() => props.modelValue.trim().length)
 }
 
 .site-field__input--invalid {
-  border-color: var(--admin-border-danger, #b3261e);
+  border-color: var(--admin-status-error);
 }
 
 .site-field__count--over,
 .site-field__issue {
-  color: var(--admin-text-danger, #b3261e);
+  color: var(--admin-status-error);
 }
 </style>
