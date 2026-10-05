@@ -95,7 +95,15 @@ onScopeDispose(() => {
       </PublicAction>
       <span class="email-actions__copy-anchor">
         <PublicAction class="email-actions__copy" variant="secondary" @click="onCopy">
-          {{ t('ui.copyEmail') }}
+          <span class="email-actions__open-label">
+            <span class="email-actions__mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="8" y="8" width="12" height="12" rx="2" />
+                <path d="M16 8V4H4v12h4" />
+              </svg>
+            </span>
+            {{ t('ui.copyEmail') }}
+          </span>
         </PublicAction>
         <span
           v-if="copyState !== 'idle'"
