@@ -47,26 +47,12 @@ const publicationStatus = defineModel<PublicationStatus | 'all'>('publicationSta
 
     <div class="admin-list-toolbar__field">
       <label class="admin-list-toolbar__label" for="admin-work-purpose">用途</label>
-      <select id="admin-work-purpose" v-model="purpose" class="admin-list-toolbar__control">
-        <option value="all">全部用途</option>
-        <option v-for="value in WORK_PURPOSE_VALUES" :key="value" :value="value">
-          {{ WORK_PURPOSE_LABELS[value] }}
-        </option>
-      </select>
+      <AdminSelect id="admin-work-purpose" v-model="purpose" :options="[{ value: 'all', label: '全部用途' }, ...WORK_PURPOSE_VALUES.map(value => ({ value, label: WORK_PURPOSE_LABELS[value] }))]" />
     </div>
 
     <div class="admin-list-toolbar__field">
       <label class="admin-list-toolbar__label" for="admin-work-publication">发布状态</label>
-      <select
-        id="admin-work-publication"
-        v-model="publicationStatus"
-        class="admin-list-toolbar__control"
-      >
-        <option value="all">全部状态</option>
-        <option v-for="value in PUBLICATION_STATUS_VALUES" :key="value" :value="value">
-          {{ PUBLICATION_STATUS_LABELS[value] }}
-        </option>
-      </select>
+      <AdminSelect id="admin-work-publication" v-model="publicationStatus" :options="[{ value: 'all', label: '全部状态' }, ...PUBLICATION_STATUS_VALUES.map(value => ({ value, label: PUBLICATION_STATUS_LABELS[value] }))]" />
     </div>
 
     <div class="work-list-toolbar__summary">

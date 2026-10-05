@@ -654,7 +654,8 @@ test('管理端对已拒绝申请先脱敏 dry-run，再单条删除', async ({ 
   await page.goto(`${adminBaseURL}/admin/commissions`)
   await page.locator('.commission-inbox__item').filter({ hasText: nickname }).click()
   await expect(page).toHaveURL(/\/admin\/commissions\/[0-9a-f-]+$/u)
-  await page.locator('#commission-status').selectOption('rejected')
+  await page.getByRole('combobox', { name: '状态', exact: true }).click()
+  await page.getByRole('option', { name: '已拒绝', exact: true }).click()
   await page.getByRole('button', { name: '保存处理结果' }).click()
   await expect(page.getByRole('region', { name: '处理', exact: true }).getByRole('status')).toContainText('处理结果已保存')
   const submissionId = new URL(page.url()).pathname.split('/').at(-1)!

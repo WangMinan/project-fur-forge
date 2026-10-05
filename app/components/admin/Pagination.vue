@@ -25,14 +25,10 @@ const pageSize = defineModel<number>('pageSize', { required: true })
       <template v-else>共 0 {{ unit }}</template>
     </p>
 
-    <label class="admin-pagination__size">
+    <div class="admin-pagination__size">
       <span>每页</span>
-      <select v-model.number="pageSize" class="admin-pagination__select">
-        <option v-for="size in ADMIN_WORK_PAGE_SIZES" :key="size" :value="size">
-          {{ size }} {{ unit }}
-        </option>
-      </select>
-    </label>
+      <AdminSelect v-model="pageSize" aria-label="每页" :options="ADMIN_WORK_PAGE_SIZES.map(value => ({ value, label: `${value} ${unit}` }))" />
+    </div>
 
     <div class="admin-pagination__controls">
       <button type="button" :disabled="page <= 1" @click="page = 1">首页</button>
@@ -70,7 +66,6 @@ const pageSize = defineModel<number>('pageSize', { required: true })
   font-size: var(--admin-font-sm);
 }
 
-.admin-pagination__select,
 .admin-pagination__controls button {
   min-height: var(--admin-control-height);
   border: 1px solid var(--admin-border-primary);
@@ -81,9 +76,6 @@ const pageSize = defineModel<number>('pageSize', { required: true })
   font-size: var(--admin-font-sm);
 }
 
-.admin-pagination__select {
-  padding: 0 var(--admin-space-3);
-}
 
 .admin-pagination__controls {
   display: flex;

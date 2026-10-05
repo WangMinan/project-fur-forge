@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { WorkBasicsForm, WorkFormErrors } from '~/utils/work-form'
 import { PUBLIC_FEATURED_LIMIT } from '~/utils/work-form'
+import { WORK_PURPOSE_VALUES } from '~~/shared/schemas/work'
 import { WORK_PURPOSE_LABELS } from '~/utils/work-labels'
 
 const props = withDefaults(defineProps<{
@@ -78,29 +79,21 @@ function errorFor(key: keyof WorkFormErrors) {
 
       <div class="field field--wide">
         <label class="field__label" for="f-purpose">内部用途 <span aria-hidden="true">*</span></label>
-        <select id="f-purpose" v-model="form.purpose" class="field__input" :disabled="disabled">
-          <option v-for="(label, value) in WORK_PURPOSE_LABELS" :key="value" :value="value">
-            {{ label }}
-          </option>
-        </select>
+        <AdminSelect id="f-purpose" v-model="form.purpose" :disabled="disabled" :options="WORK_PURPOSE_VALUES.map(value => ({ value, label: WORK_PURPOSE_LABELS[value] }))" />
         <p class="field__hint">仅管理端可见；领养作品会额外启用领养状态、价格和横版封面。</p>
       </div>
 
       <template v-if="form.purpose === 'adoption'">
         <div class="field">
           <label class="field__label" for="f-adoption-status">领养状态 <span aria-hidden="true">*</span></label>
-          <select
+          <AdminSelect
             id="f-adoption-status"
             v-model="form.adoptionStatus"
-            class="field__input"
             required
             :disabled="disabled"
             :aria-invalid="errorFor('adoptionStatus') ? 'true' : undefined"
-          >
-            <option value="" disabled>请人工确认</option>
-            <option value="available">可领养</option>
-            <option value="adopted">已领养</option>
-          </select>
+            :options="[{ value: '', label: '请人工确认', disabled: true }, { value: 'available', label: '可领养' }, { value: 'adopted', label: '已领养' }]"
+          />
           <p class="field__hint">不得根据历史状态自动猜测；不明确时保持未选择并交由负责人确认。</p>
           <p v-if="errorFor('adoptionStatus')" class="field__error">{{ errorFor('adoptionStatus') }}</p>
         </div>
