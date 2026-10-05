@@ -1,8 +1,15 @@
 # 当前状态：需求4 · 站点视觉升级与内容合规
 
-> **最后校准**：2026-09-30
+> **最后校准**：2026-10-05
 > **状态**：仅阶段 E 开放。
 > **任务权威**：[`implementation/TASKS.md`](./implementation/TASKS.md)。
+
+## 2026-10-05 UI Review 修复
+
+- 用户已确认五项缺陷与三项设计改进并授权实施；新增范围以 SPEC 的本日追加条款为准。
+- 原进展已提交为 `8fa0d99` 并推送至 `codex/ui-design-principles`；应用修复在同一任务分支进行。
+- 八项修复已完成。lint/typecheck、329 项 core、23 项 smoke 用例和 production build 均通过；桌面/窄屏、低高度、模态焦点和失败恢复已用 Chromium 验证。未合入 main、未发布镜像或部署生产。
+- 复现、前后端边界和最终证据见 [本轮交接](implementation/notes/2026-10-05-UI-REVIEW-FIXES.md)。真实手机与用户视觉验收仍单独记录。
 
 ## 2026-09-30 管理端窄屏导航修正
 

@@ -16,7 +16,7 @@ const listQuery = computed(() => ({
   q: route.query.q,
 }))
 
-const { data: list, error: listError } = await useFetch('/api/public/v1/adoptions', {
+const { data: list, error: listError, status, refresh } = await useFetch('/api/public/v1/adoptions', {
   key: 'public-adoptions-list',
   headers: useRequestHeaders(['host']),
   query: listQuery,
@@ -37,6 +37,8 @@ const filter = computed(
 )
 
 const clearSearchHref = '/adoptions'
+const catalogEmpty = computed(() => status.value === 'success'
+  && !search.value.active && search.value.valid && filter.value.valid && resultCount.value === 0)
 
 /** 空态只表达真实数据，不编造“即将更新”。 */
 const emptyText = computed(() => {
@@ -71,11 +73,11 @@ usePublicCatalogSeo(list)
   <main class="adoptions-page" aria-labelledby="adoptions-page-title">
     <AdoptionArchiveHeader />
 
-    <section class="adoptions-page__tools" :aria-label="t('ui.searchAdoptions')">
+    <section v-if="!catalogEmpty" class="adoptions-page__tools" :aria-label="t('ui.searchAdoptions')">
       <div class="adoptions-page__tools-panel">
         <div class="adoptions-page__tools-meta">
           <span>{{ t('ui.searchCharacters') }}</span>
-          <span v-if="search.active">{{ t('count.results', { count: String(resultCount).padStart(2, '0') }) }}</span>
+          <span v-if="search.active && status === 'success'">{{ t('count.results', { count: String(resultCount).padStart(2, '0') }) }}</span>
         </div>
         <div class="adoptions-page__filters-wrap">
           <PublicCatalogSearch
@@ -94,7 +96,11 @@ usePublicCatalogSeo(list)
       </div>
     </section>
 
-    <div v-if="items.length > 0" class="adoptions-page__content">
+    <PublicEmptyState v-if="status === 'pending'" :title="t('ui.catalogLoading')" role="status" aria-busy="true" />
+    <PublicEmptyState v-else-if="listError" :title="t('ui.catalogFailed')" role="alert">
+      <PublicAction @click="refresh()">{{ t('ui.retry') }}</PublicAction>
+    </PublicEmptyState>
+    <div v-else-if="items.length > 0" class="adoptions-page__content">
       <ol class="adoptions-page__grid">
         <li v-for="(adoption, index) in items" :key="adoption.work.id">
           <AdoptionCard
@@ -125,7 +131,8 @@ usePublicCatalogSeo(list)
       :description="emptyText.description"
     >
       <PublicAction v-if="search.active" :to="clearSearchHref" variant="secondary">{{ t('ui.clearSearch') }}</PublicAction>
-      <PublicAction v-else to="/works" variant="secondary">{{ t('ui.viewWorks') }}</PublicAction>
+      <PublicAction v-else to="/works" :variant="catalogEmpty ? 'primary' : 'secondary'">{{ t('ui.viewWorks') }}</PublicAction>
+      <PublicAction v-if="catalogEmpty" to="/about#contact" variant="text">{{ t('ui.contact') }}</PublicAction>
     </PublicEmptyState>
   </main>
 </template>

@@ -24,6 +24,7 @@ const dialogOpen = shallowRef(false)
 const previewing = shallowRef(false)
 const executing = shallowRef(false)
 const error = shallowRef<string | null>(null)
+const trigger = shallowRef<HTMLElement | null>(null)
 
 const BLOCKER_LABELS: Record<CommissionDeletionBlocker, string> = {
   ASSET_RELATION_INVALID: '设定图资产关系异常',
@@ -45,6 +46,7 @@ async function requestPreview() {
     return
   }
   previewing.value = true
+  trigger.value = document.activeElement as HTMLElement | null
   error.value = null
   try {
     const response = await adminApi(
@@ -116,6 +118,7 @@ async function executeDeletion() {
 
     <AdminConfirmDialog
       :open="dialogOpen"
+      :return-focus-to="trigger"
       title="确认删除这一条申请？"
       confirm-label="确认永久删除"
       confirm-loading-label="正在删除…"

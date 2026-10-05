@@ -214,6 +214,28 @@ onMounted(() => {
         <h1 class="work-detail__name">
           {{ dto.characterName }}
         </h1>
+      </header>
+
+      <div class="work-detail__media">
+        <!--
+          所有图片已并入同一查看序列，不再需要「出厂照 / 作品图集」这类分区标题。
+          aria-label 保留，屏幕阅读器仍能识别这个区域。
+        -->
+        <section v-if="gallery.length > 0" class="work-detail__media-section" :aria-label="t('ui.gallery')">
+          <WorkDetailGallery
+            :gallery="gallery"
+            :initial-asset-id="initialGalleryAssetId"
+            :work-name="dto.characterName"
+          />
+        </section>
+        <PublicEmptyState
+          v-else
+          :title="t('ui.imagesEmpty')"
+          :description="t('ui.noImages')"
+        />
+      </div>
+
+      <div class="work-detail__info">
         <dl class="work-detail__identity-ledger">
           <div>
             <dt>{{ t('ui.species') }}</dt>
@@ -243,25 +265,6 @@ onMounted(() => {
             {{ t('ui.viewAdoptions') }} <span aria-hidden="true">→</span>
           </NuxtLink>
         </div>
-      </header>
-
-      <div class="work-detail__media">
-        <!--
-          所有图片已并入同一查看序列，不再需要「出厂照 / 作品图集」这类分区标题。
-          aria-label 保留，屏幕阅读器仍能识别这个区域。
-        -->
-        <section v-if="gallery.length > 0" class="work-detail__media-section" :aria-label="t('ui.gallery')">
-          <WorkDetailGallery
-            :gallery="gallery"
-            :initial-asset-id="initialGalleryAssetId"
-            :work-name="dto.characterName"
-          />
-        </section>
-        <PublicEmptyState
-          v-else
-          :title="t('ui.imagesEmpty')"
-          :description="t('ui.noImages')"
-        />
       </div>
     </div>
 
@@ -293,6 +296,11 @@ onMounted(() => {
 }
 
 .work-detail__header {
+  grid-area: heading;
+  min-width: 0;
+}
+
+.work-detail__info {
   display: grid;
   grid-area: copy;
   align-content: start;
@@ -373,9 +381,10 @@ onMounted(() => {
 .work-detail__layout {
   display: grid;
   grid-template-areas:
-    'copy'
-    'media';
-  gap: clamp(2rem, 6vw, 6rem);
+    'heading'
+    'media'
+    'copy';
+  gap: var(--space-5);
   max-width: var(--public-content-wide);
   margin: 0 auto;
   padding: var(--space-2) var(--public-page-padding) 0;
@@ -396,14 +405,15 @@ onMounted(() => {
 
 @media (min-width: 1024px) {
   .work-detail__layout {
-    grid-template-areas: 'media copy';
+    grid-template-areas: 'media heading' 'media copy';
+    grid-template-rows: auto 1fr;
+    column-gap: clamp(2rem, 6vw, 6rem);
+    row-gap: var(--space-3);
     grid-template-columns: minmax(0, 1fr) minmax(17rem, 23rem);
     align-items: start;
   }
 
   .work-detail__header {
-    position: sticky;
-    top: calc(var(--public-header-height) + var(--space-6));
     padding-top: var(--space-3);
   }
 }
