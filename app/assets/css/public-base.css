@@ -49,6 +49,9 @@
   --public-accent-decorative: #6274bb;
   --public-accent-tint: #ced3e5;
 
+  --ui-bg-selected: #e8edf9;
+  --ui-bg-hover: #f0f3fa;
+
   --public-status-open: #2f7b5c;
   --public-status-paused: #8a5a2b;
   --public-status-neutral: #626a75;

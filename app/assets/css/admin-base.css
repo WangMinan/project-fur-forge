@@ -21,7 +21,7 @@
   --admin-accent-hover: #293c84;
   --admin-accent-decorative: #6274bb;
   --admin-accent-tint: #ced3e5;
-  --admin-row-highlight: #e8edf9;
+  --admin-row-highlight: var(--ui-bg-hover);
 
   /* 2026-07-29 实测微调：success/warning 原值（#2f7b5c/#946124）在其 soft 底上仅
      4.44/4.49:1，未达 AA 4.5:1；加深后实测均 ≥ 5:1（t08-selfcheck 对比度抽查）。 */

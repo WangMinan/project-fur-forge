@@ -105,7 +105,10 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', outside))
 .language-switcher__panel { padding: 0.5rem; border: 1px solid var(--public-border-secondary); border-radius: var(--radius-md); background: var(--public-bg-primary); color: var(--public-text-primary); box-shadow: 0 8px 24px rgb(0 0 0 / 12%); }
 .language-switcher__panel button { display: flex; justify-content: flex-start; align-items: center; width: 100%; min-height: 44px; padding: var(--space-3) var(--space-4); border: 0; background: transparent; color: inherit; font: inherit; font-size: var(--font-size-sm); text-align: left; cursor: pointer; }
 .language-switcher__panel button[aria-pressed='true'] { color: var(--public-accent-primary); }
-.language-switcher__panel button:hover { background: var(--public-bg-secondary); }
+@media (hover: hover) {
+.language-switcher__panel button:hover:not(:disabled) { background: var(--ui-bg-hover); }
+}
+
 .language-switcher__panel button:disabled { opacity: 0.6; cursor: wait; }
 .language-switcher__panel p { padding: 0.5rem; font-size: var(--font-size-xs); }
 </style>

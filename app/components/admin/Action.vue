@@ -126,7 +126,7 @@ function preventBlockedNavigation(event: Event) {
 
 @media (hover: hover) {
   .admin-action--secondary:hover:not(:disabled):not([aria-disabled='true']) {
-    background: var(--admin-bg-subtle);
+    background: var(--ui-bg-hover);
   }
 }
 

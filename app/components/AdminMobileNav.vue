@@ -161,10 +161,12 @@ watch(() => route.fullPath, () => {
   cursor: pointer;
   place-items: center;
 }
-
-.admin-mobile-nav__close:hover {
-  background: var(--public-bg-tertiary);
+@media (hover: hover) {
+  .admin-mobile-nav__close:hover:not(:disabled) {
+    background: var(--ui-bg-hover);
+  }
 }
+
 
 .admin-mobile-nav__close:active {
   background: var(--public-bg-secondary);
@@ -188,11 +190,13 @@ watch(() => route.fullPath, () => {
   border-radius: var(--radius-sm);
   animation: admin-mobile-nav-link-in var(--motion-duration-state) var(--motion-ease-standard) both;
 }
-
-.admin-mobile-nav__link:hover {
-  color: var(--admin-accent-primary);
-  background: var(--public-bg-secondary);
+@media (hover: hover) {
+  .admin-mobile-nav__link:hover:not(:disabled) {
+    color: var(--admin-accent-primary);
+    background: var(--ui-bg-hover);
+  }
 }
+
 
 .admin-mobile-nav__link[aria-current='page'] {
   color: var(--admin-accent-primary);

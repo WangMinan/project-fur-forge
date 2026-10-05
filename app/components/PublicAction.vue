@@ -122,7 +122,7 @@ function preventBlockedNavigation(event: Event) {
 @media (hover: hover) {
   .public-action--secondary:hover:not(:disabled):not([aria-disabled='true']) {
     color: var(--public-action-secondary-hover-text, var(--public-accent-hover));
-    background: var(--public-action-secondary-hover-bg, var(--public-bg-secondary));
+    background: var(--public-action-secondary-hover-bg, var(--ui-bg-hover));
     border-color: var(--public-action-secondary-hover-border, var(--public-accent-decorative));
   }
 }

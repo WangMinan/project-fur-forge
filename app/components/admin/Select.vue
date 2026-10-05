@@ -204,12 +204,12 @@ onBeforeUnmount(() => {
 .admin-select__panel:not(:popover-open) { display: none; }
 .admin-select__option { display: flex; align-items: center; justify-content: space-between; gap: var(--admin-space-3); min-height: var(--admin-touch-target); padding: var(--admin-space-2) var(--admin-space-3); border-radius: var(--radius-ui); cursor: pointer; overflow-wrap: anywhere; }
 .admin-select__option + .admin-select__option { margin-top: var(--admin-space-1); }
-.admin-select__option[aria-selected='true'] { background: var(--admin-accent-tint); color: var(--admin-accent-primary); font-weight: 600; }
+.admin-select__option[aria-selected='true'] { background: var(--ui-bg-selected); color: var(--admin-accent-primary); font-weight: 600; }
 .admin-select__option--active { outline: 1px solid var(--admin-border-focus); outline-offset: -1px; }
 .admin-select__option[aria-disabled='true'] { color: var(--admin-text-secondary); cursor: default; }
 @media (hover: hover) {
   .admin-select__trigger:hover:not(:disabled) { border-color: var(--admin-accent-primary); }
-  .admin-select__option:hover:not([aria-disabled='true']):not([aria-selected='true']) { background: var(--admin-row-highlight); }
+  .admin-select__option:hover:not([aria-disabled='true']):not([aria-selected='true']) { background: var(--ui-bg-hover); }
 }
 @media (forced-colors: active) {
   .admin-select__option--active { outline-color: Highlight; }
