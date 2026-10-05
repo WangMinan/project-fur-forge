@@ -51,6 +51,7 @@ const saving = ref(false)
 const saveError = ref<string | null>(null)
 const savedNotice = ref<string | null>(null)
 const conflictOpen = ref(false)
+const saveTrigger = shallowRef<HTMLElement | null>(null)
 
 const preview = ref<PublicSafeWorkPreviewDto | null>(null)
 const previewError = ref<string | null>(null)
@@ -172,6 +173,7 @@ async function saveWork(): Promise<boolean> {
     return false
   }
   saveError.value = null
+  saveTrigger.value = document.activeElement as HTMLElement | null
   saving.value = true
   try {
     const payload = toWorkFieldsPayload(form.value)
@@ -341,6 +343,7 @@ useSeoMeta({
       <p v-if="locked" class="editor__locked" role="status">
         作品已发布：基础信息与图片为只读，需要先下架。代表作品与领养展示设置仍可直接修改，具体顺序在作品管理的“代表作品”Tab 调整。
       </p>
+      <p v-if="saveError && !conflictOpen" class="admin-feedback" role="alert">{{ saveError }}</p>
       <p v-if="savedNotice" class="editor__notice" role="status">{{ savedNotice }}</p>
 
       <div class="editor__layout">
@@ -472,6 +475,7 @@ useSeoMeta({
 
       <AdminConfirmDialog
         :open="conflictOpen"
+        :return-focus-to="saveTrigger"
         title="作品版本已变化"
         confirm-label="重新加载（放弃本地更改）"
         cancel-label="继续编辑"
@@ -484,16 +488,6 @@ useSeoMeta({
         </p>
       </AdminConfirmDialog>
 
-      <AdminConfirmDialog
-        :open="saveError !== null && !conflictOpen"
-        title="保存未完成"
-        confirm-label="知道了"
-        :show-cancel="false"
-        @confirm="saveError = null"
-        @cancel="saveError = null"
-      >
-        <p role="alert">{{ saveError }}</p>
-      </AdminConfirmDialog>
     </div>
   </AdminShell>
 </template>

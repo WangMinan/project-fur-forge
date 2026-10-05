@@ -6,6 +6,7 @@ const props = withDefaults(defineProps<{
   confirmDisabled?: boolean
   confirmLoadingLabel?: string
   open: boolean
+  returnFocusTo?: HTMLElement | null
   showCancel?: boolean
   title: string
   tone?: 'danger' | 'primary'
@@ -14,6 +15,7 @@ const props = withDefaults(defineProps<{
   busy: false,
   confirmDisabled: false,
   confirmLoadingLabel: '处理中…',
+  returnFocusTo: null,
   showCancel: true,
   tone: 'primary',
 })
@@ -23,27 +25,59 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
-const dialog = ref<HTMLElement | null>(null)
+const dialog = ref<HTMLDialogElement | null>(null)
+const titleId = useId()
 let returnFocus: HTMLElement | null = null
+let previousOverflow: string | null = null
+
+function closeDialog() {
+  dialog.value?.close()
+  if (previousOverflow !== null) {
+    document.documentElement.style.overflow = previousOverflow
+    previousOverflow = null
+  }
+  if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true })
+  returnFocus = null
+}
 
 watch(() => props.open, async (open) => {
+  if (!import.meta.client) return
   if (open) {
-    returnFocus = document.activeElement as HTMLElement | null
+    returnFocus = props.returnFocusTo ?? document.activeElement as HTMLElement | null
     await nextTick()
+    if (!props.open || !dialog.value || dialog.value.open) return
+    previousOverflow = document.documentElement.style.overflow
+    document.documentElement.style.overflow = 'hidden'
+    dialog.value.showModal()
     dialog.value?.querySelector<HTMLElement>(
-      props.confirmDisabled ? '[data-cancel]' : '[data-confirm]',
+      props.showCancel ? '[data-cancel]' : '[data-confirm]',
     )?.focus()
   }
   else {
-    returnFocus?.focus()
-    returnFocus = null
+    closeDialog()
   }
-})
+}, { immediate: true })
+
+onBeforeUnmount(closeDialog)
 
 function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape' && !props.busy) {
+  if (event.key !== 'Tab') return
+  const controls = Array.from(dialog.value?.querySelectorAll<HTMLElement>(
+    'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+  ) ?? []).filter(element => element.getClientRects().length > 0)
+  const first = controls[0]
+  const last = controls.at(-1)
+  if (!first || !last) {
     event.preventDefault()
-    emit('cancel')
+    dialog.value?.focus()
+  }
+  else if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault()
+    last.focus()
+  }
+  else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault()
+    first.focus()
   }
 }
 
@@ -56,21 +90,19 @@ function dismiss() {
 
 <template>
   <Teleport to="body">
-    <div
-      v-if="open"
-      class="confirm-dialog__overlay"
+    <dialog
+      ref="dialog"
+      class="confirm-dialog__overlay admin-surface"
+      :aria-labelledby="titleId"
+      :aria-busy="busy || undefined"
       @keydown="onKeydown"
+      @cancel.prevent="dismiss"
       @click.self="dismiss"
     >
       <div
-        ref="dialog"
         class="confirm-dialog admin-surface"
-        :role="showCancel ? 'dialog' : 'alertdialog'"
-        aria-modal="true"
-        :aria-busy="busy || undefined"
-        :aria-labelledby="'confirm-dialog-title'"
       >
-        <h2 id="confirm-dialog-title" class="confirm-dialog__title">{{ title }}</h2>
+        <h2 :id="titleId" class="confirm-dialog__title">{{ title }}</h2>
         <div class="confirm-dialog__body">
           <slot />
         </div>
@@ -96,7 +128,7 @@ function dismiss() {
           >{{ busy ? confirmLoadingLabel : confirmLabel }}</button>
         </div>
       </div>
-    </div>
+    </dialog>
   </Teleport>
 </template>
 
@@ -104,12 +136,26 @@ function dismiss() {
 .confirm-dialog__overlay {
   position: fixed;
   inset: 0;
-  background: var(--admin-overlay);
-  display: flex;
-  align-items: center;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  overflow-y: auto;
+  align-items: safe center;
   justify-content: center;
   padding: var(--admin-space-4);
   z-index: 60;
+}
+
+.confirm-dialog__overlay[open] {
+  display: flex;
+}
+
+.confirm-dialog__overlay::backdrop {
+  background: var(--admin-overlay);
 }
 
 .confirm-dialog {
@@ -118,6 +164,7 @@ function dismiss() {
   box-shadow: var(--admin-shadow-modal);
   max-width: 26rem;
   width: 100%;
+  flex-shrink: 0;
   padding: var(--admin-space-5);
 }
 

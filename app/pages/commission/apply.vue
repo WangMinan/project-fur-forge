@@ -69,6 +69,7 @@ const previewUrl = ref<string | null>(null)
 const stage = ref<Stage>('idle')
 const progress = ref<number | null>(null)
 const submitError = ref<string | null>(null)
+const submissionUncertain = shallowRef(false)
 const receiptCode = ref<string | null>(null)
 const activeSession = shallowRef<{
   completed: boolean
@@ -159,6 +160,7 @@ async function cancelActiveSession() {
 }
 
 async function chooseFile(selected: File) {
+  if (submissionUncertain.value) return
   await cancelActiveSession()
   releasePreview()
   file.value = selected
@@ -170,6 +172,7 @@ async function chooseFile(selected: File) {
 }
 
 async function removeFile() {
+  if (submissionUncertain.value) return
   await cancelActiveSession()
   releasePreview()
   file.value = null
@@ -275,7 +278,7 @@ function responseReason(error: unknown) {
 }
 
 async function submit() {
-  if (busy.value || contactOnly.value) {
+  if (busy.value || contactOnly.value || submissionUncertain.value) {
     return
   }
   if (!validateFields() || !file.value) {
@@ -295,6 +298,8 @@ async function submit() {
       '/api/public/v1/commission-submissions',
       {
         method: 'POST',
+        retry: 0,
+        timeout: 30_000,
         headers: { authorization: `Bearer ${session.token}` },
         body: {
           adultConfirmed: form.adultConfirmed,
@@ -318,6 +323,13 @@ async function submit() {
     stage.value = 'success'
   }
   catch (error) {
+    const status = responseStatus(error)
+    if (stage.value === 'submitting' && (status === 0 || status === 408 || status >= 500)) {
+      submissionUncertain.value = true
+      stage.value = 'idle'
+      submitError.value = '尚未确认本次申请是否提交成功，请勿重复提交。表单和图片仍保留在本页，请联系工作室核对。'
+      return
+    }
     if (responseStatus(error) === 409 && responseReason(error) === 'COMMISSION_PHONE_PENDING') {
       stage.value = 'idle'
       errors.phone = '该手机号已有待处理的委托申请，请等待处理后再提交'
@@ -513,7 +525,7 @@ onBeforeUnmount(() => {
               input-id="commission-design-reference"
               label="设定图"
               hint="仅一张 JPEG、PNG 或 WebP，最大 20 MB；只用于内部评估，不生成公开图片。"
-              :disabled="busy"
+              :disabled="busy || submissionUncertain"
               :error="errors.file"
               :file-name="file?.name ?? null"
               :preview-url="previewUrl"
@@ -579,6 +591,9 @@ onBeforeUnmount(() => {
             {{ submitError }}
           </p>
           <p v-if="stageText" class="commission-apply__stage" role="status">{{ stageText }}</p>
+          <PublicAction v-if="submissionUncertain" to="/about#contact" target="_blank" rel="noopener" variant="secondary">
+            在新窗口联系工作室核对
+          </PublicAction>
           <progress
             v-if="stage === 'uploading'"
             class="commission-apply__progress"
@@ -591,6 +606,7 @@ onBeforeUnmount(() => {
           <PublicAction
             type="submit"
             :loading="busy"
+            :disabled="submissionUncertain"
             loading-label="正在处理…"
           >确认提交</PublicAction>
         </div>

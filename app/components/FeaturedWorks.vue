@@ -704,7 +704,7 @@ onBeforeUnmount(() => {
   }
 
   .featured-works__media {
-    width: min(64%, 16rem, calc((100svh - 25rem) * 0.8));
+    width: min(64%, 16rem, max(10rem, calc((100svh - 25rem) * 0.8)));
     margin-top: 5.75rem;
   }
 
