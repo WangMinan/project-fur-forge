@@ -155,10 +155,12 @@ watch(() => route.fullPath, () => {
   cursor: pointer;
   place-items: center;
 }
-
-.mobile-nav__close:hover {
-  background: var(--public-bg-tertiary);
+@media (hover: hover) {
+  .mobile-nav__close:hover:not(:disabled) {
+    background: var(--ui-bg-hover);
+  }
 }
+
 
 .mobile-nav__close:focus-visible {
   outline: 3px solid var(--public-focus-ring);
@@ -192,11 +194,13 @@ watch(() => route.fullPath, () => {
   line-height: var(--line-height-heading);
   border-radius: var(--radius-sm);
 }
-
-.mobile-nav__link:hover {
-  color: var(--public-accent-primary);
-  background: var(--public-bg-secondary);
+@media (hover: hover) {
+  .mobile-nav__link:hover:not(:disabled) {
+    color: var(--public-accent-primary);
+    background: var(--ui-bg-hover);
+  }
 }
+
 
 .mobile-nav__link:focus-visible,
 .mobile-nav__sublink:focus-visible {
@@ -246,12 +250,17 @@ watch(() => route.fullPath, () => {
   font-size: var(--font-size-sm);
   border-radius: var(--radius-sm);
 }
-
-.mobile-nav__sublink:hover,
+@media (hover: hover) {
+  .mobile-nav__sublink:hover:not(:disabled) {
+    color: var(--public-accent-primary);
+    background: var(--ui-bg-hover);
+  }
+}
 .mobile-nav__sublink[aria-current='page'] {
   color: var(--public-accent-primary);
-  background: var(--public-bg-secondary);
+  background: var(--ui-bg-hover);
 }
+
 
 .mobile-nav-enter-active,
 .mobile-nav-leave-active {

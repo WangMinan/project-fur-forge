@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { WorkBasicsForm, WorkFormErrors } from '~/utils/work-form'
 import { PUBLIC_FEATURED_LIMIT } from '~/utils/work-form'
+import { WORK_PURPOSE_VALUES } from '~~/shared/schemas/work'
 import { WORK_PURPOSE_LABELS } from '~/utils/work-labels'
 
 const props = withDefaults(defineProps<{
@@ -38,8 +39,9 @@ function errorFor(key: keyof WorkFormErrors) {
           required
           :disabled="disabled"
           :aria-invalid="errorFor('characterName') ? 'true' : undefined"
+          :aria-describedby="errorFor('characterName') ? 'f-name-error' : undefined"
         >
-        <p v-if="errorFor('characterName')" class="field__error">{{ errorFor('characterName') }}</p>
+        <p v-if="errorFor('characterName')" id="f-name-error" class="field__error">{{ errorFor('characterName') }}</p>
       </div>
 
       <div class="field">
@@ -53,8 +55,9 @@ function errorFor(key: keyof WorkFormErrors) {
           required
           :disabled="disabled"
           :aria-invalid="errorFor('species') ? 'true' : undefined"
+          :aria-describedby="errorFor('species') ? 'f-species-error' : undefined"
         >
-        <p v-if="errorFor('species')" class="field__error">{{ errorFor('species') }}</p>
+        <p v-if="errorFor('species')" id="f-species-error" class="field__error">{{ errorFor('species') }}</p>
       </div>
 
       <div class="field field--wide">
@@ -70,39 +73,33 @@ function errorFor(key: keyof WorkFormErrors) {
             required
             :disabled="disabled"
             :aria-invalid="errorFor('slug') ? 'true' : undefined"
+            :aria-describedby="errorFor('slug') ? 'f-slug-error' : undefined"
           >
         </div>
         <p class="field__hint">小写字母、数字和连字符；发布后更改会影响原链接。</p>
-        <p v-if="errorFor('slug')" class="field__error">{{ errorFor('slug') }}</p>
+        <p v-if="errorFor('slug')" id="f-slug-error" class="field__error">{{ errorFor('slug') }}</p>
       </div>
 
       <div class="field field--wide">
         <label class="field__label" for="f-purpose">内部用途 <span aria-hidden="true">*</span></label>
-        <select id="f-purpose" v-model="form.purpose" class="field__input" :disabled="disabled">
-          <option v-for="(label, value) in WORK_PURPOSE_LABELS" :key="value" :value="value">
-            {{ label }}
-          </option>
-        </select>
+        <AdminSelect id="f-purpose" v-model="form.purpose" :disabled="disabled" :options="WORK_PURPOSE_VALUES.map(value => ({ value, label: WORK_PURPOSE_LABELS[value] }))" />
         <p class="field__hint">仅管理端可见；领养作品会额外启用领养状态、价格和横版封面。</p>
       </div>
 
       <template v-if="form.purpose === 'adoption'">
         <div class="field">
           <label class="field__label" for="f-adoption-status">领养状态 <span aria-hidden="true">*</span></label>
-          <select
+          <AdminSelect
             id="f-adoption-status"
             v-model="form.adoptionStatus"
-            class="field__input"
             required
             :disabled="disabled"
             :aria-invalid="errorFor('adoptionStatus') ? 'true' : undefined"
-          >
-            <option value="" disabled>请人工确认</option>
-            <option value="available">可领养</option>
-            <option value="adopted">已领养</option>
-          </select>
+            :aria-describedby="errorFor('adoptionStatus') ? 'f-adoption-status-error' : undefined"
+            :options="[{ value: '', label: '请人工确认', disabled: true }, { value: 'available', label: '可领养' }, { value: 'adopted', label: '已领养' }]"
+          />
           <p class="field__hint">不得根据历史状态自动猜测；不明确时保持未选择并交由负责人确认。</p>
-          <p v-if="errorFor('adoptionStatus')" class="field__error">{{ errorFor('adoptionStatus') }}</p>
+          <p v-if="errorFor('adoptionStatus')" id="f-adoption-status-error" class="field__error">{{ errorFor('adoptionStatus') }}</p>
         </div>
 
         <div class="field">
@@ -115,8 +112,9 @@ function errorFor(key: keyof WorkFormErrors) {
             placeholder="留空表示不公开价格"
             :disabled="disabled"
             :aria-invalid="errorFor('price') ? 'true' : undefined"
+            :aria-describedby="errorFor('price') ? 'f-price-error' : undefined"
           >
-          <p v-if="errorFor('price')" class="field__error">{{ errorFor('price') }}</p>
+          <p v-if="errorFor('price')" id="f-price-error" class="field__error">{{ errorFor('price') }}</p>
         </div>
       </template>
 
@@ -146,9 +144,10 @@ function errorFor(key: keyof WorkFormErrors) {
           step="1"
           :disabled="disabled || orderingDisabled"
           :aria-invalid="errorFor('sortOrder') ? 'true' : undefined"
+          :aria-describedby="errorFor('sortOrder') ? 'f-sort-error' : undefined"
         >
         <p class="field__hint">代表作品顺序请在作品列表的“代表作品”视图维护。</p>
-        <p v-if="errorFor('sortOrder')" class="field__error">{{ errorFor('sortOrder') }}</p>
+        <p v-if="errorFor('sortOrder')" id="f-sort-error" class="field__error">{{ errorFor('sortOrder') }}</p>
       </div>
     </div>
   </section>

@@ -62,6 +62,11 @@ const errors = reactive<Record<FieldKey, string>>({
   species: '',
   weightKg: '',
 })
+const submitAttempted = shallowRef(false)
+const rejectedPhone = shallowRef<string | null>(null)
+watch(() => form.phone, () => {
+  if (rejectedPhone.value !== null) { errors.phone = ''; rejectedPhone.value = null }
+})
 const validationErrorCount = computed(() => Object.values(errors).filter(Boolean).length)
 const validationSummary = useTemplateRef<HTMLElement>('validationSummary')
 const file = shallowRef<File | null>(null)
@@ -100,42 +105,48 @@ function clearErrors() {
   submitError.value = null
 }
 
-function validateFields() {
-  clearErrors()
-  if (!form.nickname.trim() || form.nickname.trim().length > 50) {
+function validateField(key: FieldKey) {
+  if (key === 'phone' && rejectedPhone.value === form.phone && errors.phone) return
+  errors[key] = ''
+  if (key === 'nickname' && (!form.nickname.trim() || form.nickname.trim().length > 50)) {
     errors.nickname = '请填写 1–50 字称呼'
   }
-  if (!form.species.trim() || form.species.trim().length > 50) {
+  if (key === 'species' && (!form.species.trim() || form.species.trim().length > 50)) {
     errors.species = '请填写 1–50 字物种'
   }
-  if (!/^1[3-9]\d{9}$/u.test(form.phone)) {
+  if (key === 'phone' && !/^1[3-9]\d{9}$/u.test(form.phone)) {
     errors.phone = '请填写 11 位中国大陆手机号'
   }
-  if (!/^[1-9]\d{4,11}$/u.test(form.qq)) {
+  if (key === 'qq' && !/^[1-9]\d{4,11}$/u.test(form.qq)) {
     errors.qq = '请填写 5–12 位 QQ 号'
   }
   const heightCm = Number(form.heightCm)
-  if (!Number.isInteger(heightCm) || heightCm < 80 || heightCm > 250) {
+  if (key === 'heightCm' && (!Number.isInteger(heightCm) || heightCm < 80 || heightCm > 250)) {
     errors.heightCm = '请填写 80–250 cm 的整数'
   }
   const weightKg = Number(form.weightKg)
-  if (
+  if (key === 'weightKg' && (
     !Number.isFinite(weightKg)
     || weightKg < 20
     || weightKg > 300
     || Math.round(weightKg * 10) !== weightKg * 10
-  ) {
+  )) {
     errors.weightKg = '请填写 20–300 kg，最多一位小数'
   }
-  if (!file.value) {
+  if (key === 'file' && !file.value) {
     errors.file = '请选择一张设定图'
   }
-  if (!form.adultConfirmed) {
+  if (key === 'adultConfirmed' && !form.adultConfirmed) {
     errors.adultConfirmed = '请确认已年满 18 周岁并有权提交设定图'
   }
-  if (!form.privacyNoticeAcknowledged) {
+  if (key === 'privacyNoticeAcknowledged' && !form.privacyNoticeAcknowledged) {
     errors.privacyNoticeAcknowledged = '请阅读隐私政策并确认理解信息用途'
   }
+}
+
+function validateFields() {
+  clearErrors()
+  for (const key of Object.keys(errors) as FieldKey[]) validateField(key)
   return !Object.values(errors).some(Boolean)
 }
 
@@ -281,6 +292,7 @@ async function submit() {
   if (busy.value || contactOnly.value || submissionUncertain.value) {
     return
   }
+  submitAttempted.value = true
   if (!validateFields() || !file.value) {
     await nextTick()
     validationSummary.value?.focus()
@@ -332,6 +344,7 @@ async function submit() {
     }
     if (responseStatus(error) === 409 && responseReason(error) === 'COMMISSION_PHONE_PENDING') {
       stage.value = 'idle'
+      rejectedPhone.value = form.phone
       errors.phone = '该手机号已有待处理的委托申请，请等待处理后再提交'
       submitError.value = '未重复提交：请等待当前申请处理完成。'
       return
@@ -401,7 +414,7 @@ onBeforeUnmount(() => {
         </div>
 
         <p
-          v-if="validationErrorCount > 0"
+          v-if="submitAttempted && validationErrorCount > 0"
           ref="validationSummary"
           class="commission-apply__validation-summary"
           data-testid="commission-apply-validation-summary"
@@ -411,113 +424,68 @@ onBeforeUnmount(() => {
 
         <section class="commission-apply__fields" aria-labelledby="commission-details-title">
             <h2 id="commission-details-title">申请信息</h2>
-            <div class="commission-apply__field">
-            <label for="commission-nickname">称呼 <span aria-hidden="true">*</span></label>
-            <input
-              id="commission-nickname"
-              v-model="form.nickname"
-              maxlength="50"
-              autocomplete="nickname"
-              :aria-invalid="Boolean(errors.nickname)"
-              :aria-describedby="errors.nickname ? 'commission-nickname-error' : undefined"
-            >
-            <p v-if="errors.nickname" id="commission-nickname-error" class="commission-apply__error">
-              {{ errors.nickname }}
-            </p>
-            </div>
-
-            <div class="commission-apply__field">
-            <label for="commission-species">物种 <span aria-hidden="true">*</span></label>
-            <input
-              id="commission-species"
-              v-model="form.species"
-              maxlength="50"
-              autocomplete="off"
-              :aria-invalid="Boolean(errors.species)"
-              :aria-describedby="errors.species ? 'commission-species-error' : undefined"
-            >
-            <p v-if="errors.species" id="commission-species-error" class="commission-apply__error">
-              {{ errors.species }}
-            </p>
-            </div>
-
-            <div class="commission-apply__field">
-            <label for="commission-phone">中国大陆手机号 <span aria-hidden="true">*</span></label>
-            <div class="commission-apply__phone">
-              <span aria-hidden="true">+86</span>
-              <input
-                id="commission-phone"
-                v-model="form.phone"
-                inputmode="numeric"
-                autocomplete="tel-national"
-                maxlength="11"
-                :aria-invalid="Boolean(errors.phone)"
-                :aria-describedby="errors.phone ? 'commission-phone-error' : undefined"
-              >
-            </div>
-            <p v-if="errors.phone" id="commission-phone-error" class="commission-apply__error">
-              {{ errors.phone }}
-            </p>
-            </div>
-
-            <div class="commission-apply__field">
-            <label for="commission-qq">QQ <span aria-hidden="true">*</span></label>
-            <input
-              id="commission-qq"
-              v-model="form.qq"
-              inputmode="numeric"
-              autocomplete="off"
-              maxlength="12"
-              :aria-invalid="Boolean(errors.qq)"
-              :aria-describedby="errors.qq ? 'commission-qq-error' : undefined"
-            >
-            <p v-if="errors.qq" id="commission-qq-error" class="commission-apply__error">
-              {{ errors.qq }}
-            </p>
-            </div>
-
-            <div class="commission-apply__measurements">
-              <div class="commission-apply__field">
-              <label for="commission-height">身高 <span aria-hidden="true">*</span></label>
-              <div class="commission-apply__unit-input">
-                <input
-                  id="commission-height"
-                  v-model="form.heightCm"
-                  type="number"
-                  min="80"
-                  max="250"
-                  step="1"
-                  inputmode="numeric"
-                  :aria-invalid="Boolean(errors.heightCm)"
-                  :aria-describedby="errors.heightCm ? 'commission-height-error' : undefined"
-                >
-                <span aria-hidden="true">cm</span>
-              </div>
-              <p v-if="errors.heightCm" id="commission-height-error" class="commission-apply__error">
-                {{ errors.heightCm }}
-              </p>
-              </div>
-              <div class="commission-apply__field">
-              <label for="commission-weight">体重 <span aria-hidden="true">*</span></label>
-              <div class="commission-apply__unit-input">
-                <input
-                  id="commission-weight"
-                  v-model="form.weightKg"
-                  type="number"
-                  min="20"
-                  max="300"
-                  step="0.1"
-                  inputmode="decimal"
-                  :aria-invalid="Boolean(errors.weightKg)"
-                  :aria-describedby="errors.weightKg ? 'commission-weight-error' : undefined"
-                >
-                <span aria-hidden="true">kg</span>
-              </div>
-              <p v-if="errors.weightKg" id="commission-weight-error" class="commission-apply__error">
-                {{ errors.weightKg }}
-              </p>
-              </div>
-            </div>
+          <PublicFormField
+            id="commission-nickname"
+            v-model="form.nickname"
+            label="称呼"
+            required
+            :disabled="busy || submissionUncertain"
+            :error="errors.nickname"
+            maxlength="50" autocomplete="nickname"
+            @blur="validateField('nickname')"
+          />
+          <PublicFormField
+            id="commission-species"
+            v-model="form.species"
+            label="物种"
+            required
+            :disabled="busy || submissionUncertain"
+            :error="errors.species"
+            maxlength="50" autocomplete="off"
+            @blur="validateField('species')"
+          />
+          <PublicFormField
+            id="commission-phone"
+            v-model="form.phone"
+            label="中国大陆手机号"
+            required
+            :disabled="busy || submissionUncertain"
+            :error="errors.phone"
+            prefix="+86" inputmode="numeric" autocomplete="tel-national" maxlength="11"
+            @blur="validateField('phone')"
+          />
+          <PublicFormField
+            id="commission-qq"
+            v-model="form.qq"
+            label="QQ"
+            required
+            :disabled="busy || submissionUncertain"
+            :error="errors.qq"
+            inputmode="numeric" autocomplete="off" maxlength="12"
+            @blur="validateField('qq')"
+          />
+          <div class="commission-apply__measurements">
+            <PublicFormField
+              id="commission-height"
+              v-model="form.heightCm"
+              label="身高"
+              required
+              :disabled="busy || submissionUncertain"
+              :error="errors.heightCm"
+              suffix="cm" type="number" min="80" max="250" step="1" inputmode="numeric"
+              @blur="validateField('heightCm')"
+            />
+            <PublicFormField
+              id="commission-weight"
+              v-model="form.weightKg"
+              label="体重"
+              required
+              :disabled="busy || submissionUncertain"
+              :error="errors.weightKg"
+              suffix="kg" type="number" min="20" max="300" step="0.1" inputmode="decimal"
+              @blur="validateField('weightKg')"
+            />
+          </div>
         </section>
 
         <section class="commission-apply__upload" aria-label="设定图">
@@ -542,9 +510,12 @@ onBeforeUnmount(() => {
               <input
                 id="commission-adult-confirmed"
                 v-model="form.adultConfirmed"
+                :disabled="busy || submissionUncertain"
                 type="checkbox"
-                :aria-invalid="Boolean(errors.adultConfirmed)"
+              :aria-invalid="Boolean(errors.adultConfirmed)"
                 aria-describedby="commission-adult-confirmed-error"
+                @blur="validateField('adultConfirmed')"
+                @change="validateField('adultConfirmed')"
               >
               <label for="commission-adult-confirmed">
                 我确认已年满 18 周岁，并有权提交这张设定图。
@@ -559,9 +530,12 @@ onBeforeUnmount(() => {
               <input
                 id="commission-privacy-acknowledged"
                 v-model="form.privacyNoticeAcknowledged"
+                :disabled="busy || submissionUncertain"
                 type="checkbox"
-                :aria-invalid="Boolean(errors.privacyNoticeAcknowledged)"
+              :aria-invalid="Boolean(errors.privacyNoticeAcknowledged)"
                 aria-describedby="commission-privacy-acknowledged-error commission-privacy-link"
+                @blur="validateField('privacyNoticeAcknowledged')"
+                @change="validateField('privacyNoticeAcknowledged')"
               >
               <label for="commission-privacy-acknowledged">
                 我已阅读《隐私政策》，并理解这些信息将用于申请评估、后续沟通以及接单后的委托履行和售后；提交申请不代表工作室已经接单，也不构成最终报价、排期或合同确认。
@@ -710,86 +684,11 @@ onBeforeUnmount(() => {
 }
 
 
-.commission-apply__field {
-  display: grid;
-  gap: var(--space-2);
-}
-
-.commission-apply__field label {
-  color: var(--public-text-secondary);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-}
-
-.commission-apply__field > input,
-.commission-apply__phone,
-.commission-apply__unit-input {
-  min-width: 0;
-  min-height: 2.75rem;
-  border: 1px solid var(--public-border-primary);
-  border-radius: var(--radius-sm);
-  background: var(--public-bg-primary);
-}
-
-.commission-apply__field > input {
-  padding: 0 var(--space-3);
-  font: inherit;
-}
-
-.commission-apply__field > input:focus,
-.commission-apply__phone:focus-within,
-.commission-apply__unit-input:focus-within {
-  border-color: var(--public-accent-primary);
-  outline: 2px solid color-mix(in srgb, var(--public-accent-primary) 24%, transparent);
-  outline-offset: 1px;
-}
-
-.commission-apply__field > input[aria-invalid='true'],
-.commission-apply__phone:has(input[aria-invalid='true']),
-.commission-apply__unit-input:has(input[aria-invalid='true']) {
-  border-color: var(--public-status-error);
-}
-
-.commission-apply__phone {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-}
-
-.commission-apply__phone span {
-  padding-left: var(--space-3);
-  color: var(--public-text-secondary);
-}
-
-.commission-apply__phone input,
-.commission-apply__unit-input input {
-  width: 100%;
-  min-width: 0;
-  min-height: 2.75rem;
-  padding: 0 var(--space-3);
-  background: transparent;
-  border: 0;
-  outline: 0;
-  font: inherit;
-}
-
-.commission-apply__unit-input {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-}
-
-.commission-apply__unit-input span {
-  padding-right: var(--space-3);
-  color: var(--public-text-tertiary);
-  font-family: var(--font-role-ui);
-  font-size: var(--font-size-xs);
-}
-
 .commission-apply__measurements {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
+  column-gap: inherit;
 }
 
 .commission-apply__upload {

@@ -83,7 +83,7 @@ function preventBlockedNavigation(event: Event) {
   min-height: 2.75rem;
   padding: 0 var(--space-5);
   border: 1px solid transparent;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-ui);
   font: inherit;
   font-family: var(--font-role-ui);
   font-size: var(--type-ui-size);
@@ -105,10 +105,12 @@ function preventBlockedNavigation(event: Event) {
   border-color: var(--public-action-primary-border, var(--public-accent-primary));
 }
 
-.public-action--primary:hover:not([aria-disabled='true']) {
-  color: var(--public-action-primary-hover-text, var(--public-text-inverse));
-  background: var(--public-action-primary-hover-bg, var(--public-accent-hover));
-  border-color: var(--public-action-primary-hover-border, var(--public-accent-hover));
+@media (hover: hover) {
+  .public-action--primary:hover:not(:disabled):not([aria-disabled='true']) {
+    color: var(--public-action-primary-hover-text, var(--public-text-inverse));
+    background: var(--public-action-primary-hover-bg, var(--public-accent-hover));
+    border-color: var(--public-action-primary-hover-border, var(--public-accent-hover));
+  }
 }
 
 .public-action--secondary {
@@ -117,10 +119,12 @@ function preventBlockedNavigation(event: Event) {
   border-color: var(--public-action-secondary-border, var(--public-border-primary));
 }
 
-.public-action--secondary:hover:not([aria-disabled='true']) {
-  color: var(--public-action-secondary-hover-text, var(--public-accent-hover));
-  background: var(--public-action-secondary-hover-bg, var(--public-bg-secondary));
-  border-color: var(--public-action-secondary-hover-border, var(--public-accent-decorative));
+@media (hover: hover) {
+  .public-action--secondary:hover:not(:disabled):not([aria-disabled='true']) {
+    color: var(--public-action-secondary-hover-text, var(--public-accent-hover));
+    background: var(--public-action-secondary-hover-bg, var(--ui-bg-hover));
+    border-color: var(--public-action-secondary-hover-border, var(--public-accent-decorative));
+  }
 }
 
 .public-action--text {
@@ -131,13 +135,15 @@ function preventBlockedNavigation(event: Event) {
   border-radius: var(--radius-xs);
 }
 
-.public-action--text:hover:not([aria-disabled='true']) {
-  color: var(--public-action-text-hover, var(--public-accent-hover));
-  text-decoration: underline;
-  text-underline-offset: 0.3em;
+@media (hover: hover) {
+  .public-action--text:hover:not(:disabled):not([aria-disabled='true']) {
+    color: var(--public-action-text-hover, var(--public-accent-hover));
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+  }
 }
 
-.public-action:active:not([aria-disabled='true']) {
+.public-action:active:not(:disabled):not([aria-disabled='true']) {
   transform: translateY(1px) scale(0.99);
 }
 
@@ -178,7 +184,7 @@ function preventBlockedNavigation(event: Event) {
     animation: none;
   }
 
-  .public-action:active:not([aria-disabled='true']) {
+  .public-action:active:not(:disabled):not([aria-disabled='true']) {
     transform: none;
   }
 }

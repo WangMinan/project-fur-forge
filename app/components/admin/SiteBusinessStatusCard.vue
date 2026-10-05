@@ -93,16 +93,12 @@ function onSave() {
     <div class="status-card__grid">
       <div class="status-card__field">
         <label class="status-card__label" :for="`status-tone-${kind}`">开放程度</label>
-        <select
+        <AdminSelect
           :id="`status-tone-${kind}`"
           v-model="tone"
-          class="status-card__input"
           :disabled="mutating"
-        >
-          <option v-for="value in SITE_STATUS_TONE_VALUES" :key="value" :value="value">
-            {{ SITE_STATUS_TONE_LABELS[value] }}
-          </option>
-        </select>
+          :options="SITE_STATUS_TONE_VALUES.map(value => ({ value, label: SITE_STATUS_TONE_LABELS[value] }))"
+        />
         <p class="status-card__hint">开放显示绿色状态点，暂停显示暖色状态点。请在“公开文案”中核对各语言的营业状态文案。</p>
       </div>
 

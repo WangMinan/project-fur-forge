@@ -29,6 +29,7 @@ The public wayfinding sequence is Chinese so visitors can understand the next ac
 ## 3. Type × Media Rules
 
 - Primary photography is larger and higher contrast than supporting copy.
+- 2026-10-05 user-approved override: buttons, inputs, cards, table outer corners, images and thumbnails share `--radius-ui: 12px`; public/admin radius aliases and `--radius-image` resolve to it. Circular icon controls, badges and spinners remain circular; adjoining edges stay square.
 - Primary content photography uses the shared `--radius-image` radius. New photographic scenes must reuse this token so image treatment remains consistent across Featured, Service and later public scenes.
 - Background type must either clearly overlap the foreground media or clearly clear it. Near misses are not allowed.
 - Background type and folios stay behind content and never carry required information.
@@ -166,14 +167,14 @@ This contract prohibits a universal `eyebrow + Chinese title + left image + righ
 - Homepage Featured 与 Commission 的同语义 primary action 统一使用共享蓝色 token；局部 scene 不再覆盖主按钮颜色。
 - Featured Desktop 的名称、物种、CTA 和切换器组成单一信息组；内容先读、切换器随后，整体位于左侧中部，不再坠到场景底部。
 - Desktop 主摄影向 12-column field 中部延伸并使用视口高度上限；更大的媒体与背景 `SELECTED WORKS` 建立明确 overlap，同时给底部 wayfinding 保留稳定空间。
-- Featured 复用 Homepage Adoption 的 `--public-media-canvas` 作为浅灰媒体承托：外框保持场景尺度，照片通过响应式 padding 在内部缩小；画布使用共享 `12px` 图片圆角，内层照片使用 `8px` 圆角并真实裁切。该处理不把摄影改成 `contain`，也不新增颜色 token。
+- Featured 复用 Homepage Adoption 的 `--public-media-canvas` 作为浅灰媒体承托：外框保持场景尺度，照片通过响应式 padding 在内部缩小；画布使用共享 `12px` 图片圆角，内层照片使用 `12px` 圆角（2026-10-05统一）并真实裁切。该处理不把摄影改成 `contain`，也不新增颜色 token。
 - Tablet/Mobile 不继承 Desktop 的视觉顺序，继续保持图片 → 切换器 → 信息；本轮截图只证明 Structural Safety，不代签 Mobile Final Art Direction。
 
 ## 14. V12-F Mobile Homepage Art Direction
 
 - Mobile Homepage 继续使用 Hero → Featured → Commission → Adoption 的内容顺序，但每幕在 390×844 / 430×932 下独立组织媒体、信息和 controls，不复制 Desktop 12-column grid。
 - Hero 品牌文字继续遵守 Brand Lock。V12-F 只调整移动端 scrim、supporting copy 与周边留白；未修改“有点小狗工作室”的内容、字体、字号、字重、行高、字距、核心位置、对齐或一次性首次入场。
-- Featured 的浅灰媒体画布与 `12px / 8px` 外内圆角继续作为摄影承托；Mobile 保留显式上一项/下一项、真实双项编号、角色名、物种与 `/works` 行动，且 controls 与信息之间有明确间距。
+- Featured 的浅灰媒体画布与 `12px / 12px` 外内圆角（2026-10-05统一）继续作为摄影承托；Mobile 保留显式上一项/下一项、真实双项编号、角色名、物种与 `/works` 行动，且 controls 与信息之间有明确间距。
 - Commission 在 Mobile 使用满宽媒体和轻微错轴的信息组，收紧纵向节奏但不删除状态、说明、申请与详情行动。
 - Adoption 在 Mobile 保留最多三个真实 `available` 角色、显式三项选择、循环上一项/下一项、当前 `01 / 03`、完整 `contain` 设定图、物种/价格与两个行动；页码与切换器合并为同一稳定控制行。
 - Hero 4s autoplay、换图不重启品牌标题入场、Reduced Motion 直接终态、font flash 修复和 Desktop 冻结构图继续有效。V12-F 不新增 Motion choreography、依赖、数据字段、路由或业务投影。

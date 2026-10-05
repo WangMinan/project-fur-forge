@@ -166,10 +166,12 @@ async function onLogout() {
   color: var(--admin-text-primary);
   font-size: var(--admin-font-sm);
 }
-
-.admin-shell__nav-link:hover {
-  background: var(--admin-bg-subtle);
+@media (hover: hover) {
+  .admin-shell__nav-link:hover:not(:disabled) {
+    background: var(--ui-bg-hover);
+  }
 }
+
 
 .admin-shell__nav-link[aria-current='page'] {
   background: var(--admin-bg-subtle);
@@ -199,10 +201,12 @@ async function onLogout() {
   cursor: pointer;
   place-items: center;
 }
-
-.admin-shell__menu:hover {
-  background: rgb(127 137 150 / 0.16);
+@media (hover: hover) {
+  .admin-shell__menu:hover:not(:disabled) {
+    background: var(--ui-bg-hover);
+  }
 }
+
 
 .admin-shell__menu:focus-visible {
   outline: 3px solid var(--public-focus-ring);
@@ -233,11 +237,13 @@ async function onLogout() {
   cursor: pointer;
   border-radius: var(--admin-radius-md);
 }
-
-.admin-shell__exit:hover:not(:disabled) {
-  color: var(--admin-text-primary);
-  background: var(--admin-bg-subtle);
+@media (hover: hover) {
+  .admin-shell__exit:hover:not(:disabled) {
+    color: var(--admin-text-primary);
+    background: var(--ui-bg-hover);
+  }
 }
+
 
 .admin-shell__exit:focus-visible {
   outline: none;

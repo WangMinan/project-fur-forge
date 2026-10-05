@@ -226,8 +226,10 @@ function dismiss() {
   background: var(--admin-bg-primary);
   color: var(--admin-text-primary);
 }
-
-.confirm-dialog__button--secondary:hover {
-  background: var(--admin-bg-subtle);
+@media (hover: hover) {
+  .confirm-dialog__button--secondary:hover:not(:disabled) {
+    background: var(--ui-bg-hover);
+  }
 }
+
 </style>

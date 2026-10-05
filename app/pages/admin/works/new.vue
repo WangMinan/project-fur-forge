@@ -71,12 +71,7 @@ async function createWork() {
           <NuxtLink to="/admin/works" class="new-work__back">← 作品</NuxtLink>
           <h1 class="new-work__title">创建作品</h1>
         </div>
-        <button
-          type="button"
-          class="new-work__submit"
-          :disabled="saving"
-          @click="createWork"
-        >{{ saving ? '创建中…' : '创建草稿' }}</button>
+        <AdminAction variant="primary" :loading="saving" loading-label="创建中…" @click="createWork">创建草稿</AdminAction>
       </header>
 
       <p v-if="saveError" class="new-work__error" role="alert">{{ saveError }}</p>
@@ -135,27 +130,6 @@ async function createWork() {
   font-size: var(--admin-font-xl);
   font-weight: 600;
   line-height: var(--admin-line-tight);
-}
-
-.new-work__submit {
-  min-height: var(--admin-control-height);
-  padding: 0 var(--admin-space-5);
-  border: none;
-  border-radius: var(--admin-radius-md);
-  background: var(--admin-accent-primary);
-  color: var(--admin-text-inverse);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.new-work__submit:hover:not(:disabled) {
-  background: var(--admin-accent-hover);
-}
-
-.new-work__submit:disabled {
-  opacity: 0.55;
-  cursor: default;
 }
 
 .new-work__error {

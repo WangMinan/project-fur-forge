@@ -77,10 +77,12 @@ async function retrySessionCheck() {
   font-weight: 600;
   cursor: pointer;
 }
-
-.admin-layout__retry:hover {
-  background: var(--admin-bg-subtle);
+@media (hover: hover) {
+  .admin-layout__retry:hover:not(:disabled) {
+    background: var(--ui-bg-hover);
+  }
 }
+
 
 .admin-layout__retry:focus-visible {
   outline: none;
