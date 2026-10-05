@@ -378,3 +378,11 @@ Mobile 的核心原则是：**Same visual language, different composition.** Mob
 - [x] UIC-09：复制邮箱补前置图标。
 - [x] UIC-10：申请表逐字段失焦校验、保留服务端拒绝提示，补输入与共享按钮禁用状态。
 - [x] UIC-11：lint/typecheck/build/内容守卫、19 项受影响 core、22 个不同浏览器用例通过；桌面/窄屏截图已核验，记录自查状态；不代签实机与用户最终审美验收。
+
+
+## 2026-10-05 横屏与组件状态复查
+
+- [x] UIC-12：共享 PublicFormField 接管六个字段，修复双层 Grid 拉伸与测量行列间距。
+- [x] UIC-13：选中改为原 hover 色，浅底 hover 全部引用共享 token，保留品牌/危险/图片叠加语义。
+- [x] UIC-14：分页/登录/改密/创建作品/上传操作复用 Action；补后台错误关联和上传区域反馈。
+- [x] UIC-15：默认、已填、聚焦、错误、禁用、忙碌以及三档横屏对齐复查完成；lint/typecheck/build/内容守卫、25 项 core、26 个不同 smoke 通过，截图与组件边界见交接。

@@ -26,7 +26,9 @@ test('shared select supports keyboard, dismissal, numeric pagination and require
   const hovered = page.getByRole('option', { name: '委托作品', exact: true })
   await hovered.hover()
   await expect(selected).not.toContainText('✓')
-  expect(await selected.evaluate(el => getComputedStyle(el).backgroundColor)).not.toBe(await hovered.evaluate(el => getComputedStyle(el).backgroundColor))
+  const hoverBackground = await hovered.evaluate(el => getComputedStyle(el).backgroundColor)
+  await expect(selected).toHaveCSS('background-color', 'rgb(232, 237, 249)')
+  expect(await selected.evaluate(el => getComputedStyle(el).backgroundColor)).not.toBe(hoverBackground)
   expect((await hovered.boundingBox())!.y - ((await selected.boundingBox())!.y + (await selected.boundingBox())!.height)).toBeGreaterThan(0)
   await page.screenshot({ path: testInfo.outputPath('select-states.png') })
   await purpose.press('End')
@@ -51,6 +53,10 @@ test('shared select supports keyboard, dismissal, numeric pagination and require
   await expect(pageSize).toContainText('20 件')
   const row = page.locator('tbody tr').first()
   await row.hover()
+  expect(await row.locator('td').first().evaluate(el => getComputedStyle(el).backgroundColor)).toBe(hoverBackground)
+  const secondary = page.getByRole('button', { name: '清除', exact: true })
+  await secondary.hover()
+  await expect(secondary).toHaveCSS('background-color', hoverBackground)
   expect(await row.locator('td').first().evaluate(el => getComputedStyle(el).backgroundColor)).not.toBe(await page.locator('.admin-surface').first().evaluate(el => getComputedStyle(el).backgroundColor))
   await expect(page.locator('table')).toHaveCSS('border-radius', '12px')
   await purpose.click()
@@ -234,5 +240,60 @@ test('commission inbox searches only on submit and clears without exposing terms
     await page.setViewportSize({ width, height: 900 })
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await page.screenshot({ path: testInfo.outputPath(`inbox-search-${width}.png`) })
+  }
+})
+
+test('landscape commission fields keep equal control height and top alignment after either side errors', async ({ page }, testInfo) => {
+  test.setTimeout(90_000)
+  for (const [width, height] of [[1440, 900], [844, 390], [768, 1024]]) {
+    await page.setViewportSize({ width: width!, height: height! })
+    await page.goto(`${publicBaseURL}/commission/apply`)
+    await hydrated(page)
+    await page.waitForLoadState('networkidle')
+    for (const [leftId, rightId, leftValid, rightValid] of [
+      ['commission-nickname', 'commission-species', '测试', '犬科'],
+      ['commission-phone', 'commission-qq', '19900000009', '999999'],
+      ['commission-height', 'commission-weight', '170', '60.5'],
+    ]) {
+      const left = page.locator(`#${leftId}`)
+      const right = page.locator(`#${rightId}`)
+      for (const invalid of [left, right]) {
+        await invalid.fill('')
+        await invalid.focus()
+        await page.getByRole('heading', { name: '申请信息', exact: true }).click()
+        await expect(invalid).toHaveAttribute('aria-invalid', 'true')
+        const a = (await left.boundingBox())!
+        const b = (await right.boundingBox())!
+        expect(Math.abs(a.y - b.y)).toBeLessThan(1)
+        expect(Math.abs(a.height - b.height)).toBeLessThan(1)
+        if (leftId === 'commission-nickname') await page.screenshot({ path: testInfo.outputPath(`field-error-${invalid === left ? 'left' : 'right'}-${width}.png`), fullPage: true })
+        await invalid.fill(invalid === left ? leftValid! : rightValid!)
+        await page.getByRole('heading', { name: '申请信息', exact: true }).click()
+      }
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    for (const [first, last] of [['commission-nickname', 'commission-height'], ['commission-species', 'commission-weight']]) {
+      const a = (await page.locator(`#${first}`).locator('..').boundingBox())!
+      const b = (await page.locator(`#${last}`).locator('..').boundingBox())!
+      expect(Math.abs(a.x - b.x)).toBeLessThan(1)
+      expect(Math.abs(a.width - b.width)).toBeLessThan(1)
+    }
+    await page.screenshot({ path: testInfo.outputPath(`field-alignment-${width}.png`), fullPage: true })
+  }
+})
+
+
+test('admin submit actions share busy and disabled feedback without submitting invalid forms', async ({ page }) => {
+  await loginAsAdmin(page)
+  for (const [path, label] of [['/admin/account', '修改密码'], ['/admin/works/new', '创建草稿']]) {
+    await page.goto(`${adminBaseURL}${path}`)
+    await hydrated(page)
+    const submit = page.getByRole('button', { name: label, exact: true })
+    await expect(submit).toBeVisible()
+    await submit.focus()
+    expect(await submit.evaluate(el => getComputedStyle(el).outlineStyle)).not.toBe('none')
+    await submit.click()
+    await expect(page.locator('[aria-invalid="true"], input:invalid').first()).toBeVisible()
+    await expect(page).toHaveURL(`${adminBaseURL}${path}`)
   }
 })
