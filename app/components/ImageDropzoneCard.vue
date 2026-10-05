@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { AdminAction, PublicAction } from '#components'
 const props = withDefaults(defineProps<{
   accept?: string
   disabled?: boolean
@@ -79,8 +80,8 @@ function onDrop(event: DragEvent) {
         'image-dropzone__card--dragging': dragging,
         'image-dropzone__card--preview': previewUrl,
       }"
-      @dragenter.prevent="dragging = true"
-      @dragover.prevent="dragging = true"
+      @dragenter.prevent="dragging = !disabled"
+      @dragover.prevent="dragging = !disabled"
       @dragleave.self="dragging = false"
       @drop.prevent="onDrop"
     >
@@ -93,8 +94,8 @@ function onDrop(event: DragEvent) {
         <div class="image-dropzone__preview-meta">
           <span class="image-dropzone__filename">{{ fileName || '已选择图片' }}</span>
           <div class="image-dropzone__actions">
-            <button type="button" :disabled="disabled" @click="choose">更换图片</button>
-            <button v-if="removable" type="button" :disabled="disabled" @click="emit('remove')">移除</button>
+            <component :is="theme === 'admin' ? AdminAction : PublicAction" variant="secondary" :disabled="disabled" @click="choose">更换图片</component>
+            <component :is="theme === 'admin' ? AdminAction : PublicAction" v-if="removable" variant="secondary" :disabled="disabled" @click="emit('remove')">移除</component>
           </div>
         </div>
       </template>
@@ -102,6 +103,8 @@ function onDrop(event: DragEvent) {
         v-else
         type="button"
         class="image-dropzone__picker"
+        :aria-describedby="describedBy"
+        :aria-invalid="Boolean(error)"
         :disabled="disabled"
         @click="choose"
       >
@@ -194,6 +197,12 @@ function onDrop(event: DragEvent) {
   font-weight: 600;
 }
 
+.image-dropzone__picker { border-radius: var(--radius-ui); }
+@media (hover: hover) {
+  .image-dropzone__picker:hover:not(:disabled) { background: var(--ui-bg-hover); }
+}
+.image-dropzone__picker:active:not(:disabled) { background: var(--ui-bg-selected); }
+
 .image-dropzone__picker svg {
   color: color-mix(in srgb, var(--dropzone-accent) 48%, var(--dropzone-muted));
 }
@@ -239,19 +248,7 @@ function onDrop(event: DragEvent) {
   gap: 0.5rem;
 }
 
-.image-dropzone__actions button {
-  min-height: 2.75rem;
-  padding: 0 0.9rem;
-  color: var(--dropzone-text);
-  background: transparent;
-  border: 1px solid var(--dropzone-border);
-  border-radius: var(--radius-ui);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.8rem;
-}
-
-.image-dropzone button:disabled {
+.image-dropzone__picker:disabled {
   cursor: default;
   opacity: 0.55;
 }
@@ -289,13 +286,6 @@ function onDrop(event: DragEvent) {
 
 .image-dropzone[data-theme='public'] .image-dropzone__preview-meta {
   padding: var(--space-3) var(--space-4);
-}
-
-.image-dropzone[data-theme='public'] .image-dropzone__actions button {
-  border: 0;
-  border-bottom: 1px solid currentColor;
-  border-radius: 0;
-  padding-inline: 0.15rem;
 }
 
 @media (max-width: 480px) {
