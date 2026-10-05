@@ -83,7 +83,7 @@ function preventBlockedNavigation(event: Event) {
   min-height: 2.75rem;
   padding: 0 var(--space-5);
   border: 1px solid transparent;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-ui);
   font: inherit;
   font-family: var(--font-role-ui);
   font-size: var(--type-ui-size);

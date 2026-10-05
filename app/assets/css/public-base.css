@@ -143,10 +143,11 @@
   --public-page-padding-tablet: 1.5rem;
   --public-page-padding-desktop: clamp(2rem, 4vw, 4.5rem);
 
-  --radius-xs: 0.25rem;
-  --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
+  --radius-ui: 12px;
+  --radius-xs: var(--radius-ui);
+  --radius-sm: var(--radius-ui);
+  --radius-md: var(--radius-ui);
+  --radius-lg: var(--radius-ui);
   --radius-full: 999px;
 
   --shadow-raised: 0 0.75rem 2.5rem rgb(25 31 42 / 0.1);
@@ -177,7 +178,7 @@
   /**
    * 公开端图片统一圆角。/works 与 /adoptions 共用同一个值。
    */
-  --radius-image: 12px;
+  --radius-image: var(--radius-ui);
 
   --motion-duration-feedback: 120ms;
   --motion-duration-state: 180ms;
