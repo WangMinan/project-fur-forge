@@ -107,14 +107,14 @@ const adoptionTo = computed(() => ({
 }
 
 .adoption-card__canvas :deep(.responsive-picture__image) {
-  border-radius: calc(var(--radius-image) - 4px);
+  border-radius: var(--radius-image);
   object-fit: contain;
   transition: none;
 }
 
 .adoption-card__canvas :deep(.responsive-picture) {
   overflow: hidden;
-  border-radius: calc(var(--radius-image) - 4px);
+  border-radius: var(--radius-image);
 }
 
 .adoption-card__profile,

@@ -51,11 +51,7 @@ defineExpose({ save })
   <section class="editor-card display-settings" aria-labelledby="display-settings-title">
     <h2 id="display-settings-title" class="editor-card__title">领养图片展示</h2>
     <label for="adoption-cover-source">领养封面来源</label>
-    <select id="adoption-cover-source" v-model="values.adoptionCoverSource" :disabled="disabled || saving">
-      <option value="auto">自动选择（优先设定图）</option>
-      <option value="adoption_cover">使用横版封面</option>
-      <option value="design_sheet">使用设定图</option>
-    </select>
+    <AdminSelect id="adoption-cover-source" v-model="values.adoptionCoverSource" :disabled="disabled || saving" :options="[{ value: 'auto', label: '自动选择（优先设定图）' }, { value: 'adoption_cover', label: '使用横版封面' }, { value: 'design_sheet', label: '使用设定图' }]" />
     <p>共同控制领养目录与首页当前领养；各位置构图可在对应图片区域独立调整。</p>
     <figure v-if="preview">
       <img :src="adminMediaPreviewUrl(preview.assetId, 320)" :alt="preview.alt || '所选封面来源预览'" width="160" height="120">
@@ -79,7 +75,6 @@ defineExpose({ save })
 .display-settings p, .display-settings figure { margin: 0; }
 .display-settings p, .display-settings figcaption { color: var(--admin-text-secondary); font-size: var(--admin-font-sm); }
 .display-settings img { object-fit: contain; background: var(--admin-bg-subtle); }
-.display-settings select { width: 100%; min-height: 44px; font: inherit; color: var(--admin-text-primary); background: var(--admin-bg-primary); border: 1px solid var(--admin-border-primary); padding: var(--admin-space-2); }
 .display-settings__check { display: flex; align-items: center; gap: var(--admin-space-2); min-height: 44px; }
 .display-settings__actions { display: flex; flex-wrap: wrap; gap: var(--admin-space-2); }
 </style>

@@ -125,7 +125,8 @@ test('R6 saves independent crops and display choices, then renders square thumbn
   await page.locator('#studio-photos').getByRole('button', { name: '保存出厂照', exact: true }).click()
   await expect.poll(async () => (await read()).studioPhotos[0]?.compositions?.['work-catalog']?.mode).toBe('contain')
 
-  await page.getByLabel('领养封面来源', { exact: true }).selectOption('adoption_cover')
+  await page.getByRole('combobox', { name: '领养封面来源', exact: true }).click()
+  await page.getByRole('option', { name: '使用横版封面', exact: true }).click()
   await page.getByLabel('在详情图集中显示领养横版封面', { exact: true }).uncheck()
   await page.getByLabel('在详情图集中显示设定图', { exact: true }).uncheck()
   await page.getByRole('button', { name: '保存展示设置' }).click()

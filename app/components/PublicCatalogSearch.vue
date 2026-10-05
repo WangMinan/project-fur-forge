@@ -26,12 +26,12 @@ defineProps<{
       <template v-for="(value, name) in hiddenFields" :key="name">
         <input v-if="value" type="hidden" :name="name" :value="value">
       </template>
-      <button class="catalog-search__submit" type="submit">
+      <PublicAction type="submit">
         {{ t('ui.search') }}
-      </button>
-      <NuxtLink v-if="showClear" class="catalog-search__clear" :to="clearTo">
+      </PublicAction>
+      <PublicAction v-if="showClear" class="catalog-search__clear" variant="text" :to="clearTo">
         {{ t('ui.clear') }}
-      </NuxtLink>
+      </PublicAction>
     </div>
   </form>
 </template>
@@ -47,9 +47,7 @@ defineProps<{
   gap: var(--space-2);
 }
 
-.catalog-search__input,
-.catalog-search__submit,
-.catalog-search__clear {
+.catalog-search__input {
   min-height: 2.75rem;
   border-radius: var(--radius-sm);
   font: inherit;
@@ -74,31 +72,6 @@ defineProps<{
   border-color: var(--public-border-focus);
 }
 
-.catalog-search__submit,
-.catalog-search__clear {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-2) var(--space-4);
-  font-weight: var(--type-ui-weight);
-}
-
-.catalog-search__submit {
-  color: var(--public-text-inverse);
-  background: var(--public-accent-primary);
-  border: 1px solid var(--public-accent-primary);
-  cursor: pointer;
-  transition:
-    color var(--motion-duration-feedback) var(--motion-ease-standard),
-    background-color var(--motion-duration-feedback) var(--motion-ease-standard),
-    border-color var(--motion-duration-feedback) var(--motion-ease-standard);
-}
-
-.catalog-search__submit:hover {
-  background: var(--public-accent-hover);
-  border-color: var(--public-accent-hover);
-}
-
 .catalog-search__clear {
   grid-column: 1 / -1;
   justify-self: start;
@@ -108,17 +81,6 @@ defineProps<{
   padding-left: 0;
   color: var(--public-text-link);
   transition: color var(--motion-duration-feedback) var(--motion-ease-standard);
-}
-
-.catalog-search__submit:focus-visible,
-.catalog-search__clear:focus-visible {
-  outline: 3px solid var(--public-focus-ring);
-  outline-offset: 2px;
-}
-
-.catalog-search__submit:active,
-.catalog-search__clear:active {
-  transform: translateY(1px);
 }
 
 @media (min-width: 480px) {

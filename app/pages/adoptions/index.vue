@@ -75,9 +75,8 @@ usePublicCatalogSeo(list)
 
     <section v-if="!catalogEmpty" class="adoptions-page__tools" :aria-label="t('ui.searchAdoptions')">
       <div class="adoptions-page__tools-panel">
-        <div class="adoptions-page__tools-meta">
-          <span>{{ t('ui.searchCharacters') }}</span>
-          <span v-if="search.active && status === 'success'">{{ t('count.results', { count: String(resultCount).padStart(2, '0') }) }}</span>
+        <div v-if="search.active && status === 'success'" class="adoptions-page__tools-meta">
+          <span>{{ t('count.results', { count: String(resultCount).padStart(2, '0') }) }}</span>
         </div>
         <div class="adoptions-page__filters-wrap">
           <PublicCatalogSearch

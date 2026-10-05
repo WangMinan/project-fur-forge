@@ -21,6 +21,7 @@
   --admin-accent-hover: #293c84;
   --admin-accent-decorative: #6274bb;
   --admin-accent-tint: #ced3e5;
+  --admin-row-highlight: var(--ui-bg-hover);
 
   /* 2026-07-29 实测微调：success/warning 原值（#2f7b5c/#946124）在其 soft 底上仅
      4.44/4.49:1，未达 AA 4.5:1；加深后实测均 ≥ 5:1（t08-selfcheck 对比度抽查）。 */
@@ -90,9 +91,9 @@
   --admin-reading-max: 48rem;
   --admin-editor-preview-width: 24rem;
 
-  --admin-radius-sm: 0.375rem;
-  --admin-radius-md: 0.625rem;
-  --admin-radius-lg: 0.875rem;
+  --admin-radius-sm: var(--radius-ui);
+  --admin-radius-md: var(--radius-ui);
+  --admin-radius-lg: var(--radius-ui);
 
   --admin-shadow-popover: 0 0.75rem 2.5rem rgb(25 31 42 / 0.12);
   --admin-shadow-modal: 0 1.5rem 4rem rgb(25 31 42 / 0.22);
@@ -237,9 +238,17 @@
 
 .admin-surface .admin-list-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--admin-border-secondary);
+  border-radius: var(--radius-ui);
   background: var(--admin-bg-primary);
 }
+
+.admin-surface .admin-list-table thead tr:first-child th:first-child { border-start-start-radius: var(--radius-ui); }
+.admin-surface .admin-list-table thead tr:first-child th:last-child { border-start-end-radius: var(--radius-ui); }
+.admin-surface .admin-list-table tbody tr:last-child td:first-child { border-end-start-radius: var(--radius-ui); }
+.admin-surface .admin-list-table tbody tr:last-child td:last-child { border-end-end-radius: var(--radius-ui); }
 
 .admin-surface .admin-list-table th {
   padding: var(--admin-space-3) var(--admin-space-4);
@@ -264,8 +273,14 @@
   border-bottom: none;
 }
 
-.admin-surface .admin-list-table tbody tr:hover {
-  background: var(--admin-bg-workspace);
+.admin-surface .admin-list-table tbody tr:focus-within td {
+  background: var(--admin-row-highlight);
+}
+
+@media (hover: hover) {
+  .admin-surface .admin-list-table tbody tr:hover td {
+    background: var(--admin-row-highlight);
+  }
 }
 
 @media (min-width: 768px) {

@@ -83,12 +83,27 @@ onScopeDispose(() => {
     </div>
     <div class="email-actions__buttons">
       <PublicAction :href="mailtoHref" variant="secondary" @click="onEmailOpen">
-        {{ t('ui.openEmail') }}
-        <span aria-hidden="true">↗</span>
+        <span class="email-actions__open-label">
+          <span class="email-actions__mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <path d="m3 6 9 7 9-7" />
+            </svg>
+          </span>
+          {{ t('ui.openEmail') }}
+        </span>
       </PublicAction>
       <span class="email-actions__copy-anchor">
         <PublicAction class="email-actions__copy" variant="secondary" @click="onCopy">
-          {{ t('ui.copyEmail') }}
+          <span class="email-actions__open-label">
+            <span class="email-actions__mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="8" y="8" width="12" height="12" rx="2" />
+                <path d="M16 8V4H4v12h4" />
+              </svg>
+            </span>
+            {{ t('ui.copyEmail') }}
+          </span>
         </PublicAction>
         <span
           v-if="copyState !== 'idle'"
@@ -140,6 +155,23 @@ onScopeDispose(() => {
 
 .email-actions__copy {
   min-width: 7.5rem;
+}
+
+.email-actions__open-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.email-actions__mark {
+  display: grid;
+  flex: 0 0 1.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--public-text-inverse);
+  background: var(--public-accent-primary);
 }
 
 .email-actions__copy-anchor {
