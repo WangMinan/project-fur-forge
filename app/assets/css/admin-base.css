@@ -90,9 +90,9 @@
   --admin-reading-max: 48rem;
   --admin-editor-preview-width: 24rem;
 
-  --admin-radius-sm: 0.375rem;
-  --admin-radius-md: 0.625rem;
-  --admin-radius-lg: 0.875rem;
+  --admin-radius-sm: var(--radius-ui);
+  --admin-radius-md: var(--radius-ui);
+  --admin-radius-lg: var(--radius-ui);
 
   --admin-shadow-popover: 0 0.75rem 2.5rem rgb(25 31 42 / 0.12);
   --admin-shadow-modal: 0 1.5rem 4rem rgb(25 31 42 / 0.22);
@@ -237,9 +237,17 @@
 
 .admin-surface .admin-list-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--admin-border-secondary);
+  border-radius: var(--radius-ui);
   background: var(--admin-bg-primary);
 }
+
+.admin-surface .admin-list-table thead tr:first-child th:first-child { border-start-start-radius: var(--radius-ui); }
+.admin-surface .admin-list-table thead tr:first-child th:last-child { border-start-end-radius: var(--radius-ui); }
+.admin-surface .admin-list-table tbody tr:last-child td:first-child { border-end-start-radius: var(--radius-ui); }
+.admin-surface .admin-list-table tbody tr:last-child td:last-child { border-end-end-radius: var(--radius-ui); }
 
 .admin-surface .admin-list-table th {
   padding: var(--admin-space-3) var(--admin-space-4);

@@ -153,7 +153,7 @@ const displayChannels = computed(() => (contactOnly.value ? [] : props.channels)
   gap: var(--space-2);
   padding: 0 var(--space-4);
   border: 1px solid var(--public-border-primary);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-ui);
   color: var(--public-text-primary);
   background: var(--public-bg-primary);
   font-size: var(--font-size-sm);
