@@ -60,3 +60,29 @@
 - `pnpm build` 与生产内容守卫通过（日志 `.cache/ui-controls-followup/build.log`）。未执行新的独立 Review 或实机验收。
 
 本次提交：`f83cb44` 下拉状态；`c48ad96` 搜索条；`b3d1c5b` 复制图标；`ca04380` 失焦校验、输入/按钮状态和回归检查。未推送、合并或上线。
+
+
+## 横屏与组件状态复查
+
+根因是字段外层 Grid 按同排最高内容拉伸，字段内部 Grid 默认 stretch 又分摊多出的高度，导致没有错误的一侧输入被增高、错位；此外测量行的间距与上两行不同。PublicFormField 使用 align-self/align-content start、统一44px控件外框，所有申请字段共享同一实现。测量行继承列间距。
+
+| 对象 | 复查结果与实施 |
+| --- | --- |
+| 圆角 | 非 prototype 样式扫描未发现脱离 token 的普通数字圆角；保留明确的圆形图标/徽标/加载环及拼接直边。继续 12px；参考图的分档建议不覆盖用户已确认值。 |
+| 申请单行输入 | 此前有重复的标签、前后缀、错误、焦点样式，本轮抽为 PublicFormField 并全部替换六个字段；保留输入文本、blur 事件和表单校验，不增加实时网络请求。单位同时进入读屏标签。 |
+| 后台字段 | WorkBasicsFields 与 SiteSectionTextField 已有业务组件；补前者 aria-describedby/错误 id，后者对齐与错误色。登录/密码输入保留原生 autocomplete/required 和原有验证语义。 |
+| 按钮 | PublicAction/AdminAction 已承载默认、hover、pressed、focus、disabled、loading；本轮移除分页、登录、改密、新建及上传更换/移除的重复普通按钮样式。模态按钮因现有原生焦点引用保留专用实现。 |
+| 上传区域 | 保留专用文件选择/拖放组件；增加共享 hover、pressed 与可见控件错误关联，禁用不激活拖放高亮。 |
+| Hover | 下拉选中 #e8edf9，浅底 hover #f0f3fa；菜单、表格、次级按钮及上传区共用。触控不依赖 hover，禁用控件排除。Hero/主行动/危险行动保留语义色以保证对比。 |
+
+验证：
+
+- lint/typecheck 通过，`work-form/contracts/search/public-search` 4 文件 / 25 项 core 通过。
+- 第一批 23 项 smoke 全部通过；增量后台文案 2 项与共享提交 1 项通过，合计 26 个不同受影响用例有通过证据。覆盖创建/登录、提交成功/重复拒绝/响应丢失、上传、窄屏导航、键盘/触控及下拉/表格/次级按钮 hover 色一致。
+- 新增后台提交用例起初误把原生 required 验证当成 aria-invalid，调整为同时识别原生 invalid 后通过，未改应用验证机制。横屏几何比较以可见控件外框为准（不把单位占位从输入文本区扣除的宽度当成控件宽度）。
+- 最终横屏单独复验 1/1 通过（42.4s），覆盖1440×900、844×390、768×1024 左右逐字段错误/恢复的顶边与高度，以及跨行左右列位置和外框宽度；左右报错截图均已目视检查。
+- `pnpm build` 与生产内容守卫通过，日志 `.cache/ui-controls-alignment/build.log`；`git diff --check` 通过。
+
+本轮实现提交：`ef26cf7` 字段与对齐；`3037a1b` hover/选中色；`4c1007d` 共享按钮与上传反馈。截图使用隔离测试库和合成数据，存于 `.cache/ui-controls-alignment/`，不保存用户截图中的输入信息。
+
+尚未执行真实手机、读屏软件及独立 Review；不声称全部原生标签都已替换，也不新增万能表单框架。未推送、合并、发布镜像或部署。
