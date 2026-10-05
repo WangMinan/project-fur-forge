@@ -32,7 +32,7 @@ const {
   savingSection,
 } = useAdminSiteContent()
 
-const actionError = ref<string | null>(null)
+const actionErrors = reactive<Record<string, string | null>>({})
 const group = ref('copy')
 const localized = useTemplateRef<{ reload: () => Promise<void> }>('localized')
 const root = useTemplateRef<HTMLElement>('contentRoot')
@@ -44,24 +44,23 @@ function beforeUnload(event: BeforeUnloadEvent) {
 onBeforeRouteLeave(() => !hasDraft() || window.confirm('有未保存的站点配置。确定离开？'))
 onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
 
-function closeErrorDialog() {
-  actionError.value = null
-}
-
 async function onSaveStatus(kind: SiteBusinessStatusKind, payload: SiteStatusPayload) {
-  actionError.value = await saveStatus(kind, payload)
-  await localized.value?.reload()
+  actionErrors[kind] = null
+  actionErrors[kind] = await saveStatus(kind, payload)
+  if (!actionErrors[kind]) await localized.value?.reload()
 }
 
 async function onSaveSection(
   section: SiteContentSection,
   payload: Record<string, unknown>,
 ) {
-  actionError.value = await saveSection(section, payload)
+  actionErrors[section] = null
+  actionErrors[section] = await saveSection(section, payload)
 }
 
 async function onSectionConflict(section: SiteContentSection) {
-  actionError.value = await refreshConflict(section)
+  actionErrors[section] = null
+  actionErrors[section] = await refreshConflict(section)
 }
 
 onMounted(async () => {
@@ -115,6 +114,7 @@ onMounted(async () => {
               :saved="savedSection === 'commission'"
               @save="payload => onSaveStatus('commission', payload)"
             />
+            <p v-if="actionErrors.commission" v-show="group === 'shared'" class="admin-feedback" role="alert">{{ actionErrors.commission }}</p>
           </div>
         </section>
 
@@ -131,6 +131,7 @@ onMounted(async () => {
               :saving-section="savingSection"
               @save="payload => onSaveSection('terms', payload)"
             />
+            <p v-if="actionErrors.terms" v-show="group === 'legal'" class="admin-feedback" role="alert">{{ actionErrors.terms }}</p>
             <AdminSiteLegalContentCard
               v-show="group === 'legal'"
               id="content-privacy"
@@ -142,6 +143,7 @@ onMounted(async () => {
               :saving-section="savingSection"
               @save="payload => onSaveSection('privacy', payload)"
             />
+            <p v-if="actionErrors.privacy" v-show="group === 'legal'" class="admin-feedback" role="alert">{{ actionErrors.privacy }}</p>
             <AdminSiteOfficialChannelsCard
               v-show="group === 'shared'"
               id="content-contact"
@@ -153,20 +155,11 @@ onMounted(async () => {
               @conflict="onSectionConflict('contact')"
               @save="payload => onSaveSection('contact', payload)"
             />
+            <p v-if="actionErrors.contact" v-show="group === 'shared'" class="admin-feedback" role="alert">{{ actionErrors.contact }}</p>
           </div>
         </section>
       </template>
 
-      <AdminConfirmDialog
-        :open="Boolean(actionError)"
-        title="操作未完成"
-        confirm-label="知道了"
-        :show-cancel="false"
-        @confirm="closeErrorDialog"
-        @cancel="closeErrorDialog"
-      >
-        <p v-if="actionError" role="alert">{{ actionError }}</p>
-      </AdminConfirmDialog>
     </div>
   </AdminShell>
 </template>

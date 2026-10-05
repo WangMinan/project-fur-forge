@@ -18,7 +18,7 @@ const listQuery = computed(() => ({
   q: route.query.q,
 }))
 
-const { data: list, error: listError } = await useFetch('/api/public/v1/works', {
+const { data: list, error: listError, status, refresh } = await useFetch('/api/public/v1/works', {
   key: 'public-works-list',
   headers: useRequestHeaders(['host']),
   query: listQuery,
@@ -85,7 +85,7 @@ usePublicCatalogSeo(list)
 
     <section class="works-page__tools" :aria-label="t('ui.searchWorks')">
       <div class="works-page__toolbar">
-        <span v-if="search.active" class="works-page__result-count">
+        <span v-if="search.active && status === 'success'" class="works-page__result-count">
           {{ t('count.results', { count: String(resultCount).padStart(2, '0') }) }}
         </span>
         <PublicCatalogSearch
@@ -98,7 +98,11 @@ usePublicCatalogSeo(list)
     </section>
 
     <div class="works-page__content">
-      <template v-if="items.length > 0">
+      <PublicEmptyState v-if="status === 'pending'" :title="t('ui.catalogLoading')" role="status" aria-busy="true" />
+      <PublicEmptyState v-else-if="listError" :title="t('ui.catalogFailed')" role="alert">
+        <PublicAction @click="refresh()">{{ t('ui.retry') }}</PublicAction>
+      </PublicEmptyState>
+      <template v-else-if="items.length > 0">
         <ul class="works-grid">
           <li
             v-for="work in items"

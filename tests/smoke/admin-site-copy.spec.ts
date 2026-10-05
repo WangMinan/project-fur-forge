@@ -2,6 +2,32 @@ import { mkdirSync } from 'node:fs'
 import { expect, test } from '@playwright/test'
 import { adminBaseURL, publicBaseURL, loginAsAdmin } from '../e2e/helpers/auth'
 
+test('普通配置保存失败在当前区域提示并保留草稿，可再次保存', async ({ page }, testInfo) => {
+  await loginAsAdmin(page)
+  await page.goto(`${adminBaseURL}/admin/site/content`)
+  await page.getByRole('button', { name: '营业与联系', exact: true }).click()
+  const card = page.locator('[data-section="contact"]')
+  const input = card.getByLabel('X 主页链接（非大陆委托）', { exact: true })
+  await expect(input).toBeVisible()
+  const original = await input.inputValue()
+  const changed = 'https://x.com/ui_review_26'
+  await input.fill(changed)
+  const endpoint = '**/api/admin/v1/site/home/content/contact'
+  await page.route(endpoint, route => route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }))
+  await card.getByTestId('site-section-save').click()
+  await expect(page.locator('.admin-feedback')).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(input).toHaveValue(changed)
+  await page.locator('.admin-feedback').screenshot({ path: testInfo.outputPath('inline-error.png') })
+  await page.unroute(endpoint)
+  await card.getByTestId('site-section-save').click()
+  await expect(card.getByTestId('site-section-saved')).toBeVisible()
+  await expect(page.locator('.admin-feedback')).toHaveCount(0)
+  await input.fill(original)
+  await card.getByTestId('site-section-save').click()
+  await expect(card.getByTestId('site-section-saved')).toBeVisible()
+})
+
 test('admin multilingual copy saves, protects drafts, detects conflict and renders fallback', async ({ page, request }) => {
   test.setTimeout(120_000)
   const session = await loginAsAdmin(page)

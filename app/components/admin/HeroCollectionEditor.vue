@@ -51,7 +51,6 @@ const nextSortOrder = computed(() => {
   const used = new Set(enabledItems.value.map(item => item.sortOrder))
   return [0, 1, 2, 3, 4].find(value => !used.has(value)) ?? 4
 })
-const dialogOpen = computed(() => Boolean(actionError.value || conflictNotice.value))
 const orientationLabel = computed(() => props.orientation === 'landscape' ? '横版' : '竖版')
 
 watchEffect(() => {
@@ -98,11 +97,6 @@ async function run(action: () => Promise<string | null>) {
   actionError.value = await action()
 }
 
-function closeDialog() {
-  actionError.value = null
-  conflictNotice.value = null
-}
-
 onMounted(() => void load())
 </script>
 
@@ -130,6 +124,10 @@ onMounted(() => void load())
           @click="showDraft = true"
         >新增大图项</AdminAction>
       </header>
+      <div v-if="actionError || conflictNotice" class="admin-feedback" role="alert">
+        <p v-if="actionError">{{ actionError }}</p>
+        <p v-if="conflictNotice">{{ conflictNotice }}</p>
+      </div>
 
       <p v-if="collection.items.length === 0 && !showDraft" class="hero-collection-editor__empty">
         当前方向为空。上传与方向匹配的图片后可发布。
@@ -172,17 +170,6 @@ onMounted(() => void load())
       </TransitionGroup>
     </template>
 
-    <AdminConfirmDialog
-      :open="dialogOpen"
-      title="操作未完成"
-      confirm-label="知道了"
-      :show-cancel="false"
-      @confirm="closeDialog"
-      @cancel="closeDialog"
-    >
-      <p v-if="actionError" role="alert">{{ actionError }}</p>
-      <p v-if="conflictNotice" role="alert">{{ conflictNotice }}</p>
-    </AdminConfirmDialog>
   </section>
 </template>
 

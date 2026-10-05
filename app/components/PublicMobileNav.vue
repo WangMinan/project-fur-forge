@@ -117,6 +117,7 @@ watch(() => route.fullPath, () => {
   inset: 0;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
   padding: var(--space-4) var(--public-page-padding) var(--space-6);
   background: var(--public-bg-primary);
 }

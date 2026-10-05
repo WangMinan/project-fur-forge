@@ -3,9 +3,11 @@ import { createWorkViaApi } from '../e2e/helpers/admin-work'
 import {
   adminBaseURL,
   E2E_ADMIN,
+  E2E_DATABASE_FILE,
   loginAsAdmin,
   publicBaseURL,
 } from '../e2e/helpers/auth'
+import { openFixtureDatabase } from '../e2e/helpers/fixture-db'
 import {
   fakeMediaState,
   publishableStudioPng,
@@ -468,13 +470,66 @@ test('手机可在首页整幕和代表作品图片上斜向滑动切换', async
   await page.close()
 })
 
-test('作品目录与作品详情可达', async ({ page }) => {
+test('作品目录与作品详情可达', async ({ page }, testInfo) => {
   await seedSmokeCatalog(page)
   await page.goto('/works')
   await expect(page.getByRole('heading', { level: 1, name: '作品展示' })).toBeVisible()
   await page.locator('[data-work-slug="e2e-public-smoke-work"]').click()
   await expect(page).toHaveURL(/\/works\/e2e-public-smoke-work$/u)
   await expect(page.getByRole('heading', { level: 1, name: '烟火' })).toBeVisible()
+  await page.setViewportSize({ width: 390, height: 844 })
+  const heading = await page.getByRole('heading', { level: 1, name: '烟火' }).boundingBox()
+  const media = await page.locator('.work-detail__media').boundingBox()
+  const facts = await page.locator('.work-detail__identity-ledger').boundingBox()
+  expect(heading && media && facts && heading.y < media.y && media.y < facts.y).toBeTruthy()
+  await page.screenshot({ path: testInfo.outputPath('detail-mobile.png'), fullPage: true })
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.screenshot({ path: testInfo.outputPath('detail-desktop.png'), fullPage: true })
+})
+
+test('低高度屏幕仍显示代表作品，横屏菜单可滚动到最后入口', async ({ page }, testInfo) => {
+  await seedSmokeCatalog(page)
+  await page.setViewportSize({ width: 667, height: 375 })
+  await page.goto('/')
+  await page.waitForFunction(() => Boolean((document.querySelector('#__nuxt') as Element & { __vue_app__?: unknown })?.__vue_app__))
+  const media = page.getByTestId('featured-works').locator('.featured-works__media')
+  await media.scrollIntoViewIfNeeded()
+  const box = await media.boundingBox()
+  expect(box && box.width > 0 && box.height > 0).toBeTruthy()
+  await page.screenshot({ path: testInfo.outputPath('featured-low-height.png') })
+  await page.setViewportSize({ width: 844, height: 390 })
+  await page.getByRole('button', { name: '打开导航' }).click()
+  const menu = page.getByRole('dialog', { name: '站点导航' })
+  await menu.getByRole('link', { name: '隐私政策', exact: true }).scrollIntoViewIfNeeded()
+  await expect(menu.getByRole('link', { name: '隐私政策', exact: true })).toBeInViewport()
+  await page.screenshot({ path: testInfo.outputPath('nav-landscape.png') })
+  await menu.getByRole('link', { name: '隐私政策', exact: true }).click()
+  await expect(page).toHaveURL(/\/privacy$/u)
+})
+
+test('目录刷新失败显示可恢复错误，无领养内容时突出浏览作品', async ({ page }, testInfo) => {
+  await seedSmokeCatalog(page)
+  for (const path of ['/works', '/adoptions']) {
+    await page.goto(`${path}?q=no-matching-review-name`)
+    await page.waitForFunction(() => Boolean((document.querySelector('#__nuxt') as Element & { __vue_app__?: unknown })?.__vue_app__))
+    const endpoint = `**/api/public/v1${path}*`
+    await page.route(endpoint, route => route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }))
+    await page.getByRole('link', { name: '清除', exact: true }).click()
+    await expect(page.getByRole('alert')).toContainText('角色列表加载失败')
+    await expect(page.getByText('作品正在整理中。')).toHaveCount(0)
+    await expect(page.getByText('当前没有可领养的角色')).toHaveCount(0)
+    await page.unroute(endpoint)
+    await page.getByRole('button', { name: '重试', exact: true }).click()
+    await expect(page.locator('[data-work-slug]').first()).toBeVisible()
+  }
+  await seedPublicCatalog(page, [])
+  await page.goto('/adoptions')
+  await expect(page.getByRole('search')).toHaveCount(0)
+  await expect(page.getByTestId('adoption-contact-action')).toHaveCount(0)
+  await expect(page.getByRole('link', { name: '浏览作品展示', exact: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: '联系我们', exact: true })).toBeVisible()
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.screenshot({ path: testInfo.outputPath('adoptions-empty-mobile.png'), fullPage: true })
 })
 
 test('领养目录只公开 available 并可进入统一详情', async ({ page }) => {
@@ -556,6 +611,35 @@ test('同手机号待处理申请拒绝重复提交并保留所选图片', async
   await expect(page.getByAltText('所选设定图预览')).toBeVisible()
 })
 
+test('申请已写入但响应丢失时保留输入且不重复提交', async ({ page }) => {
+  await resetFakeMedia(page)
+  const nickname = 'Smoke 回执响应丢失'
+  await fillCommission(page, { nickname, phone: '19900000004' })
+  await confirmCommission(page)
+  let submissions = 0
+  await page.route('**/api/public/v1/commission-submissions', async (route) => {
+    submissions += 1
+    const response = await route.fetch()
+    expect(response.status()).toBe(201)
+    await route.abort('failed')
+  })
+  await page.getByRole('button', { name: '确认提交' }).click()
+  await expect(page.getByRole('alert')).toContainText('尚未确认本次申请是否提交成功')
+  await expect(page.getByRole('button', { name: '确认提交' })).toBeDisabled()
+  await expect(page.getByLabel(/称呼/u)).toHaveValue(nickname)
+  await expect(page.getByAltText('所选设定图预览')).toBeVisible()
+  await expect(page.getByRole('link', { name: '在新窗口联系工作室核对' })).toHaveAttribute('target', '_blank')
+  await page.locator('.commission-apply__form').evaluate(form => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
+  expect(submissions).toBe(1)
+  const sqlite = openFixtureDatabase(E2E_DATABASE_FILE)
+  try {
+    expect(sqlite.prepare('SELECT count(*) FROM commission_submissions WHERE nickname = ?').pluck().get(nickname)).toBe(1)
+  }
+  finally {
+    sqlite.close()
+  }
+})
+
 test('管理端对已拒绝申请先脱敏 dry-run，再单条删除', async ({ page, request }) => {
   await resetFakeMedia(page)
   const nickname = `Smoke 删除-${Date.now().toString(36)}`
@@ -604,6 +688,15 @@ test('管理端对已拒绝申请先脱敏 dry-run，再单条删除', async ({ 
 
   await page.getByRole('button', { name: '删除申请数据' }).click()
   const dialog = page.getByRole('dialog', { name: '确认删除这一条申请？' })
+  await expect(dialog.getByRole('button', { name: '取消', exact: true })).toBeFocused()
+  await page.keyboard.press('Shift+Tab')
+  await expect(dialog.getByRole('button', { name: '确认永久删除' })).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(dialog.getByRole('button', { name: '取消', exact: true })).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(dialog).not.toBeVisible()
+  await expect(page.getByRole('button', { name: '删除申请数据' })).toBeFocused()
+  await page.getByRole('button', { name: '删除申请数据' }).click()
   await expect(dialog).toContainText('dry-run')
   await expect(dialog).toContainText('数据库直接关联行')
   await expect(dialog).toContainText('私有对象 Key：1')
@@ -637,7 +730,7 @@ test('管理端对已拒绝申请先脱敏 dry-run，再单条删除', async ({ 
   await page.keyboard.press('Escape')
   await expect(dialog).toBeVisible()
   await dialog.evaluate((element) => {
-    element.parentElement?.click()
+    element.click()
   })
   await expect(dialog).toBeVisible()
   releaseExecute()
