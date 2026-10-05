@@ -161,7 +161,7 @@ function onRangeInput(axis: 'x' | 'y', event: Event) {
   width: min(100%, 20rem);
   aspect-ratio: 9 / 16;
   border-width: 0.65rem;
-  border-radius: 1.5rem;
+  border-radius: var(--radius-ui);
 }
 
 .hero-focal-picker__preview img {

@@ -245,7 +245,7 @@ function onDrop(event: DragEvent) {
   color: var(--dropzone-text);
   background: transparent;
   border: 1px solid var(--dropzone-border);
-  border-radius: 999px;
+  border-radius: var(--radius-ui);
   cursor: pointer;
   font: inherit;
   font-size: 0.8rem;
