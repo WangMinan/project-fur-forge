@@ -38,3 +38,25 @@
 - 截图保存在本地 `.cache/ui-controls-review/`，包含合成数据；不提交生产页面截图或私有内容。
 - 未执行独立 Review、真实 iOS/Android、读屏软件或生产性能测试；用户视觉验收未代签。
 - 未推送、未合并、未发布镜像、未部署生产。
+
+
+## 同日人工反馈修订
+
+按用户五项意见继续在同一分支按项提交。输入提示理解为 placeholder；仅搜索条按明确要求移除可见标签，申请表标签保留。继续复用 PublicAction、AdminAction、AdminSelect、PublicCatalogSearch；输入差异主要在手机号前缀和身高/体重单位，不增加通用输入包装层。逐字段和提交复用同一校验函数。
+
+| 自查状态 | 修订与保留 |
+| --- | --- |
+| 默认/已填 | 12px、常驻表单标签；搜索保留 aria-label，按钮/Enter 提交；清除后焦点回输入框 |
+| 聚焦/错误 | 沿用 focus 环及 aria-invalid/describedby；只在失焦检查本字段，提交前不播报全局汇总；修正后失焦移除错误 |
+| 选中/悬停 | 去勾号，选中背景 `--admin-accent-tint`，hover `--admin-row-highlight`，4px 间隔；键盘活动项单独描边，Escape 不提交临时选择 |
+| 禁用/忙碌 | 申请字段/确认项在上传提交和结果未知时锁定，保留输入；共享按钮 disabled/aria-disabled 同时排除 hover/pressed，hover 受媒体查询约束 |
+| 成功/失败 | 保留复制反馈、提交回执、输入/图片恢复；同手机号服务端拒绝不被未编辑的失焦清除；不增加每次键入请求或私有持久缓存 |
+
+本次验证：
+
+- lint、typecheck 通过；`contracts/search/public-search/commission-confirmation/r3-commission-contract` 5 文件 / 19 项 core 通过。
+- `main-journeys` 与 `ui-controls` 共 22 个不同浏览器用例具备通过证据。首次 21 通过、1 失败：测试用 Tab 移入下一个空字段后又返回，真实失焦已经正确触发该字段错误；修正测试使逐项断言期间聚焦静态标题，避免把“已访问”当成“未访问”。补充不改手机号失焦保留服务端提示、结果未知输入禁用/按钮 hover 不变及搜索清除焦点后，定向 4/4 通过。
+- 桌面下拉双高亮、390/1440 委托搜索、390 失焦错误截图已检查，合成数据证据在 `.cache/ui-controls-followup/`。
+- `pnpm build` 与生产内容守卫通过（日志 `.cache/ui-controls-followup/build.log`）。未执行新的独立 Review 或实机验收。
+
+本次提交：`f83cb44` 下拉状态；`c48ad96` 搜索条；`b3d1c5b` 复制图标；`ca04380` 失焦校验、输入/按钮状态和回归检查。未推送、合并或上线。
