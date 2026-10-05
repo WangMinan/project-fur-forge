@@ -281,11 +281,7 @@ onMounted(() => void load())
         <section class="commission-detail__card" aria-labelledby="commission-handling-title">
           <h2 id="commission-handling-title">处理</h2>
           <label for="commission-status">状态</label>
-          <select id="commission-status" v-model="status" @change="saveSuccess = null">
-            <option value="pending">待处理</option>
-            <option value="accepted">已接受</option>
-            <option value="rejected">已拒绝</option>
-          </select>
+          <AdminSelect id="commission-status" v-model="status" :disabled="saving" :options="[{ value: 'pending', label: '待处理' }, { value: 'accepted', label: '已接受' }, { value: 'rejected', label: '已拒绝' }]" @change="saveSuccess = null" />
           <label for="commission-note">内部备注</label>
           <textarea
             id="commission-note"
@@ -440,7 +436,6 @@ onMounted(() => void load())
   opacity: 0.6;
 }
 
-.commission-detail select,
 .commission-detail textarea {
   width: 100%;
   padding: var(--admin-space-3);
