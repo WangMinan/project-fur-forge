@@ -283,13 +283,7 @@ async function refreshSession() {
           </div>
 
           <div class="account-form__actions">
-            <button
-              class="account-form__submit"
-              type="submit"
-              :disabled="submitting"
-            >
-              {{ submitting ? '提交中…' : '修改密码' }}
-            </button>
+            <AdminAction variant="primary" :loading="submitting" loading-label="提交中…" type="submit">修改密码</AdminAction>
           </div>
         </form>
       </section>
@@ -396,10 +390,12 @@ async function refreshSession() {
   font-weight: 600;
   cursor: pointer;
 }
-
-.account-card__conflict-action:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.5);
+@media (hover: hover) {
+  .account-card__conflict-action:hover:not(:disabled) {
+    background: var(--ui-bg-hover);
+  }
 }
+
 
 .account-card__conflict-action:disabled {
   opacity: 0.65;
@@ -450,30 +446,4 @@ async function refreshSession() {
   margin-top: var(--admin-space-2);
 }
 
-.account-form__submit {
-  min-height: var(--admin-control-height);
-  padding: 0 var(--admin-space-5);
-  border: none;
-  border-radius: var(--admin-radius-md);
-  background: var(--admin-accent-primary);
-  color: var(--admin-text-inverse);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background var(--admin-duration-fast) var(--admin-easing);
-}
-
-.account-form__submit:hover:not(:disabled) {
-  background: var(--admin-accent-hover);
-}
-
-.account-form__submit:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--admin-focus-ring);
-}
-
-.account-form__submit:disabled {
-  opacity: 0.65;
-  cursor: default;
-}
 </style>

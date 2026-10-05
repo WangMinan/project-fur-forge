@@ -117,9 +117,7 @@ async function onSubmit() {
               :aria-describedby="loginError ? 'login-error' : undefined"
             >
           </div>
-          <button class="login__submit" type="submit" :disabled="submitting">
-            {{ submitting ? '登录中…' : '登录' }}
-          </button>
+          <AdminAction variant="primary" :loading="submitting" loading-label="登录中…" type="submit">登录</AdminAction>
         </form>
       </div>
     </main>
@@ -224,24 +222,4 @@ async function onSubmit() {
   border-color: var(--admin-status-error);
 }
 
-.login__submit {
-  min-height: var(--admin-control-height);
-  border: none;
-  border-radius: var(--admin-radius-md);
-  background: var(--admin-accent-primary);
-  color: var(--admin-text-inverse);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background var(--admin-duration-fast) var(--admin-easing);
-}
-
-.login__submit:hover:not(:disabled) {
-  background: var(--admin-accent-hover);
-}
-
-.login__submit:disabled {
-  opacity: 0.65;
-  cursor: default;
-}
 </style>
