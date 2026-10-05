@@ -185,7 +185,6 @@ onBeforeUnmount(() => {
         @click="choose(index)"
       >
         <span>{{ option.label }}</span>
-        <span v-if="option.value === model" aria-hidden="true">✓</span>
       </div>
     </div>
   </div>
@@ -204,12 +203,13 @@ onBeforeUnmount(() => {
 .admin-select__panel { position: fixed; inset: auto; margin: 0; padding: var(--admin-space-1); overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--admin-border-primary); border-radius: var(--radius-ui); background: var(--admin-bg-primary); color: var(--admin-text-primary); box-shadow: var(--admin-shadow-popover); font-family: var(--font-admin-ui); font-size: var(--admin-font-sm); }
 .admin-select__panel:not(:popover-open) { display: none; }
 .admin-select__option { display: flex; align-items: center; justify-content: space-between; gap: var(--admin-space-3); min-height: var(--admin-touch-target); padding: var(--admin-space-2) var(--admin-space-3); border-radius: var(--radius-ui); cursor: pointer; overflow-wrap: anywhere; }
-.admin-select__option[aria-selected='true'] { color: var(--admin-accent-primary); font-weight: 600; }
-.admin-select__option--active { background: var(--admin-row-highlight); outline: 1px solid var(--admin-border-focus); outline-offset: -1px; }
+.admin-select__option + .admin-select__option { margin-top: var(--admin-space-1); }
+.admin-select__option[aria-selected='true'] { background: var(--admin-accent-tint); color: var(--admin-accent-primary); font-weight: 600; }
+.admin-select__option--active { outline: 1px solid var(--admin-border-focus); outline-offset: -1px; }
 .admin-select__option[aria-disabled='true'] { color: var(--admin-text-secondary); cursor: default; }
 @media (hover: hover) {
   .admin-select__trigger:hover:not(:disabled) { border-color: var(--admin-accent-primary); }
-  .admin-select__option:hover:not([aria-disabled='true']) { background: var(--admin-row-highlight); }
+  .admin-select__option:hover:not([aria-disabled='true']):not([aria-selected='true']) { background: var(--admin-row-highlight); }
 }
 @media (forced-colors: active) {
   .admin-select__option--active { outline-color: Highlight; }
