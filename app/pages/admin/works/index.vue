@@ -147,6 +147,7 @@ async function updateOrdering(
   if (orderingPendingId.value !== null) {
     return
   }
+  actionError.value = null
   orderingPendingId.value = work.id
   try {
     await adminApi(`/api/admin/v1/works/${work.id}/presentation`, {
@@ -180,6 +181,7 @@ async function removeFeatured(work: WorkListItemDto) {
   if (featuredRemovingId.value !== null || featuredOrder.pendingId.value !== null) {
     return
   }
+  actionError.value = null
   featuredRemovingId.value = work.id
   try {
     await adminApi(`/api/admin/v1/works/${work.id}/presentation`, {
@@ -212,6 +214,7 @@ async function deleteWork() {
   if (!target || deleting.value) {
     return
   }
+  actionError.value = null
   deleting.value = true
   try {
     await adminApi(`/api/admin/v1/works/${target.id}`, {
@@ -277,6 +280,10 @@ watch(activeTab, (tab) => {
           :aria-current="activeTab === 'featured' ? 'page' : undefined"
         >代表作品</NuxtLink>
       </nav>
+      <div v-if="actionError" class="admin-feedback" role="alert">
+        <strong>{{ actionError.title }}</strong>
+        <p>{{ actionError.message }}</p>
+      </div>
 
       <div v-if="activeTab === 'all' && status === 'loading'" class="works-page__notice" role="status">
         正在加载作品列表…
@@ -508,7 +515,9 @@ watch(activeTab, (tab) => {
       <AdminConfirmDialog
         :open="deleteTarget !== null"
         :title="deleteTarget ? `删除「${deleteTarget.characterName}」？` : '删除作品？'"
-        :confirm-label="deleting ? '删除中…' : '确认删除'"
+        confirm-label="确认删除"
+        confirm-loading-label="删除中…"
+        :busy="deleting"
         tone="danger"
         @confirm="deleteWork"
         @cancel="deleteTarget = null"
@@ -516,16 +525,6 @@ watch(activeTab, (tab) => {
         <p>作品资料与公开图片会被删除，私有原图保留。此操作无法撤销。</p>
       </AdminConfirmDialog>
 
-      <AdminConfirmDialog
-        :open="actionError !== null"
-        :title="actionError?.title ?? '操作未完成'"
-        confirm-label="知道了"
-        :show-cancel="false"
-        @confirm="actionError = null"
-        @cancel="actionError = null"
-      >
-        <p role="alert">{{ actionError?.message }}</p>
-      </AdminConfirmDialog>
     </div>
   </AdminShell>
 </template>

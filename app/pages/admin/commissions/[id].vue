@@ -23,6 +23,7 @@ const saving = ref(false)
 const saveError = ref<string | null>(null)
 const saveSuccess = ref<string | null>(null)
 const conflictOpen = ref(false)
+const saveTrigger = shallowRef<HTMLElement | null>(null)
 
 function syncForm(value: CommissionSubmissionDetailDto) {
   status.value = value.status
@@ -52,6 +53,7 @@ async function save() {
   }
   saveError.value = null
   saveSuccess.value = null
+  saveTrigger.value = document.activeElement as HTMLElement | null
   saving.value = true
   try {
     const response = await adminApi(
@@ -316,13 +318,14 @@ onMounted(() => void load())
 
       <AdminConfirmDialog
         :open="conflictOpen"
+        :return-focus-to="saveTrigger"
         title="申请已在其他位置更新"
-        confirm-label="知道了，重新载入"
-        :show-cancel="false"
+        confirm-label="重新载入（放弃当前修改）"
+        cancel-label="保留当前输入"
         @confirm="acknowledgeConflict"
-        @cancel="acknowledgeConflict"
+        @cancel="conflictOpen = false"
       >
-        <p role="alert">为避免覆盖他人的处理结果，当前保存已停止。确认后载入最新内容。</p>
+        <p role="alert">为避免覆盖他人的处理结果，当前保存已停止。重新载入将放弃当前输入；取消可保留输入供核对。</p>
       </AdminConfirmDialog>
     </div>
 

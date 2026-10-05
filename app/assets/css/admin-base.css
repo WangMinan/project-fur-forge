@@ -285,6 +285,19 @@
   }
 }
 
+/* Persistent feedback for admin operations that do not require a decision. */
+.admin-feedback {
+  margin: 0;
+  padding: var(--admin-space-3) var(--admin-space-4);
+  color: var(--admin-status-error);
+  background: var(--admin-status-error-soft);
+  border-radius: var(--admin-radius-md);
+  font-size: var(--admin-font-sm);
+  line-height: var(--admin-line-normal);
+}
+
+.admin-feedback p { margin: 0; }
+
 /* Shared segmented navigation: page links and local view/language buttons. */
 .admin-segmented {
   display: flex;
