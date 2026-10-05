@@ -110,10 +110,12 @@ function preventBlockedNavigation(event: Event) {
   border-color: var(--admin-accent-primary);
 }
 
-.admin-action--primary:hover:not([aria-disabled='true']) {
-  color: var(--admin-text-inverse);
-  background: var(--admin-accent-hover);
-  border-color: var(--admin-accent-hover);
+@media (hover: hover) {
+  .admin-action--primary:hover:not(:disabled):not([aria-disabled='true']) {
+    color: var(--admin-text-inverse);
+    background: var(--admin-accent-hover);
+    border-color: var(--admin-accent-hover);
+  }
 }
 
 .admin-action--secondary {
@@ -122,8 +124,10 @@ function preventBlockedNavigation(event: Event) {
   border-color: var(--admin-border-primary);
 }
 
-.admin-action--secondary:hover:not([aria-disabled='true']) {
-  background: var(--admin-bg-subtle);
+@media (hover: hover) {
+  .admin-action--secondary:hover:not(:disabled):not([aria-disabled='true']) {
+    background: var(--admin-bg-subtle);
+  }
 }
 
 .admin-action--danger {
@@ -132,10 +136,12 @@ function preventBlockedNavigation(event: Event) {
   border-color: var(--admin-danger);
 }
 
-.admin-action--danger:hover:not([aria-disabled='true']) {
-  color: var(--admin-text-inverse);
-  background: var(--admin-danger-hover);
-  border-color: var(--admin-danger-hover);
+@media (hover: hover) {
+  .admin-action--danger:hover:not(:disabled):not([aria-disabled='true']) {
+    color: var(--admin-text-inverse);
+    background: var(--admin-danger-hover);
+    border-color: var(--admin-danger-hover);
+  }
 }
 
 .admin-action--text {
@@ -146,13 +152,15 @@ function preventBlockedNavigation(event: Event) {
   border-radius: var(--admin-radius-sm);
 }
 
-.admin-action--text:hover:not([aria-disabled='true']) {
-  color: var(--admin-accent-hover);
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
+@media (hover: hover) {
+  .admin-action--text:hover:not(:disabled):not([aria-disabled='true']) {
+    color: var(--admin-accent-hover);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
 }
 
-.admin-action:active:not([aria-disabled='true']) {
+.admin-action:active:not(:disabled):not([aria-disabled='true']) {
   transform: translateY(1px);
 }
 
@@ -182,7 +190,7 @@ function preventBlockedNavigation(event: Event) {
     animation: none;
   }
 
-  .admin-action:active:not([aria-disabled='true']) {
+  .admin-action:active:not(:disabled):not([aria-disabled='true']) {
     transform: none;
   }
 }
