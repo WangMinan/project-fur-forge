@@ -19,6 +19,10 @@ const adminApi = useAdminApi()
 const items = ref<CommissionSubmissionListItemDto[]>([])
 const pageStatus = ref<'error' | 'loading' | 'ready'>('loading')
 const query = shallowRef('')
+const searchInput = shallowRef('')
+const searchField = useTemplateRef<HTMLInputElement>('searchField')
+function search() { query.value = searchInput.value.trim(); page.value = 1 }
+function clearSearch() { searchInput.value = ''; search(); searchField.value?.focus() }
 const page = shallowRef(1)
 const pageSize = shallowRef(10)
 const activeStatus = computed<CommissionSubmissionStatus>(() => (
@@ -117,26 +121,26 @@ onMounted(() => void load())
         >{{ tab.label }}</NuxtLink>
       </nav>
 
-      <section
+      <form
         v-if="pageStatus === 'ready' && items.length > 0"
-        class="admin-list-toolbar commission-inbox__toolbar"
+        class="commission-inbox__search"
+        role="search"
         aria-label="查找委托申请"
+        @submit.prevent="search"
       >
-        <div class="admin-list-toolbar__field">
-          <label class="admin-list-toolbar__label" for="admin-commission-search">查找申请</label>
-          <input
-            id="admin-commission-search"
-            v-model="query"
-            class="admin-list-toolbar__control"
-            type="search"
-            placeholder="昵称、物种或回执编号"
-            autocomplete="off"
-          >
-        </div>
-        <p class="commission-inbox__count" role="status">
-          {{ query.trim() ? `找到 ${filteredItems.length} / ${items.length} 条` : `共 ${items.length} 条` }}
-        </p>
-      </section>
+        <input
+          id="admin-commission-search"
+          ref="searchField"
+          v-model="searchInput"
+          class="admin-list-toolbar__control"
+          type="search"
+          aria-label="按昵称、物种或回执编号搜索申请"
+          placeholder="输入昵称、物种或回执编号"
+          autocomplete="off"
+        >
+        <AdminAction type="submit" variant="primary">搜索</AdminAction>
+        <AdminAction v-if="query" variant="text" @click="clearSearch">清除</AdminAction>
+      </form>
 
       <div v-if="pageStatus === 'loading'" class="commission-inbox__state" role="status">
         正在加载申请…
@@ -150,7 +154,7 @@ onMounted(() => void load())
       </div>
       <div v-else-if="filteredItems.length === 0" class="commission-inbox__state">
         <p>没有符合条件的申请。</p>
-        <button type="button" @click="query = ''">清除查找</button>
+        <button type="button" @click="clearSearch">清除查找</button>
       </div>
       <template v-else>
         <ul class="commission-inbox__list" role="list">
@@ -210,7 +214,7 @@ onMounted(() => void load())
   font-size: var(--admin-font-sm);
 }
 
-.commission-inbox button {
+.commission-inbox button:not(.admin-action) {
   min-height: var(--admin-control-height);
   padding: 0 var(--admin-space-4);
   border: 1px solid var(--admin-border-primary);
@@ -225,20 +229,15 @@ onMounted(() => void load())
   background: var(--admin-bg-subtle);
 }
 
-.commission-inbox__count {
-  margin: 0;
-  align-self: end;
-  color: var(--admin-text-secondary);
-  font-size: var(--admin-font-sm);
+.commission-inbox__search {
+  display: flex;
+  align-items: center;
+  gap: var(--admin-space-2);
+  width: min(100%, 34rem);
+  justify-self: end;
 }
-
-@media (min-width: 768px) {
-  /* 与作品列表同一工具条模式：查找框为主，计数行贴底对齐。 */
-  .admin-list-toolbar.commission-inbox__toolbar {
-    grid-template-columns: minmax(14rem, 2fr) auto;
-    align-items: end;
-  }
-}
+.commission-inbox__search input { flex: 1; min-width: 0; }
+.commission-inbox__search :deep(.admin-action) { flex-shrink: 0; }
 
 .commission-inbox__list {
   display: grid;
