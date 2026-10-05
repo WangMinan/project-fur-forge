@@ -453,12 +453,17 @@ onBeforeUnmount(() => {
   white-space: nowrap;
   border-radius: var(--radius-sm);
 }
-
-.public-header__subnav-link:hover,
+@media (hover: hover) {
+  .public-header__subnav-link:hover:not(:disabled) {
+    color: var(--public-accent-primary);
+    background: var(--ui-bg-hover);
+  }
+}
 .public-header__subnav-link[aria-current='page'] {
   color: var(--public-accent-primary);
-  background: var(--public-bg-secondary);
+  background: var(--ui-bg-hover);
 }
+
 
 .public-header__nav-item--expanded .public-header__subnav {
   visibility: visible;
@@ -483,10 +488,13 @@ onBeforeUnmount(() => {
   cursor: pointer;
   place-items: center;
 }
-
-.public-header__menu:hover {
-  background: rgb(127 137 150 / 0.16);
+@media (hover: hover) {
+  .public-header__menu:hover:not(:disabled) {
+    color: var(--public-text-primary);
+    background: var(--ui-bg-hover);
+  }
 }
+
 
 .public-header__menu:focus-visible {
   outline: 3px solid var(--public-focus-ring);
