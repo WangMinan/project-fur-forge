@@ -22,6 +22,13 @@ test('shared select supports keyboard, dismissal, numeric pagination and require
   await purpose.focus()
   await purpose.press('ArrowDown')
   await expect(page.getByRole('listbox')).toBeVisible()
+  const selected = page.getByRole('option', { name: '全部用途', exact: true })
+  const hovered = page.getByRole('option', { name: '委托作品', exact: true })
+  await hovered.hover()
+  await expect(selected).not.toContainText('✓')
+  expect(await selected.evaluate(el => getComputedStyle(el).backgroundColor)).not.toBe(await hovered.evaluate(el => getComputedStyle(el).backgroundColor))
+  expect((await hovered.boundingBox())!.y - ((await selected.boundingBox())!.y + (await selected.boundingBox())!.height)).toBeGreaterThan(0)
+  await page.screenshot({ path: testInfo.outputPath('select-states.png') })
   await purpose.press('End')
   await purpose.press('Enter')
   await expect(purpose).toContainText('纯展示')
@@ -89,6 +96,7 @@ test('public actions and media share radius across locales and viewports', async
     await hydrated(page)
     const email = page.getByRole('link', { name: '打开邮件客户端' })
     await expect(email.locator('svg')).toHaveCount(1)
+    await expect(page.getByRole('button', { name: '复制邮箱', exact: true }).locator('svg')).toHaveCount(1)
     await expect(email).not.toContainText('↗')
     await expect(email).toHaveAttribute('href', /^mailto:/u)
     await expect(email).toHaveCSS('border-radius', '12px')
@@ -96,6 +104,7 @@ test('public actions and media share radius across locales and viewports', async
     await page.screenshot({ path: testInfo.outputPath(`about-${width}.png`) })
     await page.goto(`${publicBaseURL}/adoptions`)
     await hydrated(page)
+    await expect(page.getByText('搜索角色', { exact: true })).toHaveCount(0)
     await expect(page.getByRole('button', { name: '搜索', exact: true })).toHaveCSS('border-radius', '12px')
     await expect(page.getByRole('searchbox')).toHaveCSS('border-radius', '12px')
     await page.goto(`${publicBaseURL}/works/e2e-public-controls-gallery`)
@@ -155,5 +164,75 @@ test('select supports touch and preserves native fallback without Popover', asyn
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     expect(errors).toEqual([])
     await context.close()
+  }
+})
+
+
+test('commission inputs validate individually on blur and recover without submitting', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto(`${publicBaseURL}/commission/apply`)
+  await hydrated(page)
+  const fields = [
+    ['commission-nickname', ' ', '测试称呼'],
+    ['commission-species', ' ', '犬科'],
+    ['commission-phone', '12', '19900000009'],
+    ['commission-qq', '0', '999999'],
+    ['commission-height', '79', '170'],
+    ['commission-weight', '20.55', '60.5'],
+  ] as const
+  await expect(page.locator('[aria-invalid="true"]')).toHaveCount(0)
+  let writes = 0
+  page.on('request', request => { if (request.method() === 'POST' && request.url().includes('/api/public/v1/commission')) writes++ })
+  for (const [id, invalid, valid] of fields) {
+    const input = page.locator(`#${id}`)
+    await input.fill(invalid)
+    await expect(input).toHaveAttribute('aria-invalid', 'false')
+    await page.getByRole('heading', { name: '申请信息', exact: true }).click()
+    await expect(input).toHaveAttribute('aria-invalid', 'true')
+    const errorId = await input.getAttribute('aria-describedby')
+    await expect(page.locator(`#${errorId}`)).toBeVisible()
+    await expect(page.getByTestId('commission-apply-validation-summary')).toHaveCount(0)
+    await input.fill(valid)
+    await page.getByRole('heading', { name: '申请信息', exact: true }).click()
+    await expect(input).toHaveAttribute('aria-invalid', 'false')
+  }
+  expect(writes).toBe(0)
+  await page.locator('#commission-phone').fill('12')
+  await page.locator('#commission-phone').press('Tab')
+  await page.locator('#commission-phone').scrollIntoViewIfNeeded()
+  await page.screenshot({ path: testInfo.outputPath('blur-errors-mobile.png') })
+  await page.getByRole('button', { name: '确认提交', exact: true }).click()
+  await expect(page.getByTestId('commission-apply-validation-summary')).toBeFocused()
+  expect(writes).toBe(0)
+})
+
+test('commission inbox searches only on submit and clears without exposing terms in URL', async ({ page }, testInfo) => {
+  await loginAsAdmin(page)
+  await page.route('**/api/admin/v1/commissions?status=*', route => route.fulfill({ json: { data: [
+    { id: '11111111-1111-4111-8111-111111111111', receiptCode: 'DD-TEST-01', nickname: '测试甲', species: '犬科', status: 'pending', createdAt: '2026-10-05T00:00:00Z', version: 1 },
+    { id: '22222222-2222-4222-8222-222222222222', receiptCode: 'DD-TEST-02', nickname: '测试乙', species: '猫科', status: 'pending', createdAt: '2026-10-05T00:00:00Z', version: 1 },
+  ] } }))
+  await page.goto(`${adminBaseURL}/admin/commissions`)
+  await hydrated(page)
+  const search = page.getByRole('search')
+  const input = search.getByRole('searchbox')
+  await expect(search).not.toContainText('查找申请')
+  await expect(search).not.toContainText('共')
+  await input.fill('测试甲')
+  await expect(page.locator('.commission-inbox__item')).toHaveCount(2)
+  await search.getByRole('button', { name: '搜索', exact: true }).click()
+  await expect(page.locator('.commission-inbox__item')).toHaveCount(1)
+  await expect(page).not.toHaveURL(/测试甲/u)
+  await input.fill('不存在')
+  await input.press('Enter')
+  await expect(page.getByText('没有符合条件的申请。')).toBeVisible()
+  await search.getByRole('button', { name: '清除', exact: true }).click()
+  await expect(input).toHaveValue('')
+  await expect(input).toBeFocused()
+  await expect(page.locator('.commission-inbox__item')).toHaveCount(2)
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 900 })
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await page.screenshot({ path: testInfo.outputPath(`inbox-search-${width}.png`) })
   }
 })
