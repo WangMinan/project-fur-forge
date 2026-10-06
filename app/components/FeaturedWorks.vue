@@ -357,6 +357,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .featured-works {
+  --featured-content-inset: 0.8rem;
   position: relative;
   display: grid;
   grid-template-rows: auto 1fr auto;
@@ -501,6 +502,7 @@ onBeforeUnmount(() => {
 .featured-works__content-stack {
   display: block;
   min-width: 0;
+  padding-left: var(--featured-content-inset);
   animation: none;
   transition: none;
 }
@@ -541,7 +543,7 @@ onBeforeUnmount(() => {
 }
 
 .featured-works__action {
-  margin: 1rem 0 0 0.8rem;
+  margin: 1rem 0 0;
 }
 
 .featured-works__action-layer {
@@ -672,6 +674,7 @@ onBeforeUnmount(() => {
 
 @media (max-width: 767px) {
   .featured-works {
+    --featured-content-inset: 0.5rem;
     gap: 0.75rem;
     padding-top: 0.75rem;
     padding-bottom: 0.75rem;
@@ -734,7 +737,7 @@ onBeforeUnmount(() => {
   }
 
   .featured-works__action {
-    margin: 0.65rem 0 0 0.5rem;
+    margin-top: 0.65rem;
   }
 
   .featured-works__wayfinding {
@@ -751,6 +754,7 @@ onBeforeUnmount(() => {
 
 @media (min-width: 768px) {
   .featured-works {
+    --featured-content-inset: 1.15rem;
     gap: 1rem;
     height: calc(100svh - var(--public-anchor-offset));
     min-height: 0;
@@ -817,10 +821,6 @@ onBeforeUnmount(() => {
     margin-block: -0.15em;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-
-  .featured-works__action {
-    margin-left: 1.15rem;
   }
 }
 

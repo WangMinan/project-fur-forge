@@ -128,22 +128,45 @@ function onKeydown(event: KeyboardEvent) {
   }
 }
 
-let pointerStartX: number | null = null
+let pointerStart: { pointerId: number, x: number, y: number } | null = null
+let suppressNextClick = false
+let suppressClickFrame: number | null = null
+
+function resetSwipeClickSuppression() {
+  suppressNextClick = false
+  if (suppressClickFrame !== null) {
+    cancelAnimationFrame(suppressClickFrame)
+    suppressClickFrame = null
+  }
+}
+
+function onClickCapture(event: MouseEvent) {
+  if (!suppressNextClick) return
+  resetSwipeClickSuppression()
+  event.preventDefault()
+  event.stopPropagation()
+}
 
 function onPointerDown(event: PointerEvent) {
-  if ((event.target as HTMLElement | null)?.closest('button, a')) {
-    pointerStartX = null
+  resetSwipeClickSuppression()
+  if (!event.isPrimary || !hasMultipleAdoptions.value || (event.target as HTMLElement | null)?.closest('button')) {
+    pointerStart = null
     return
   }
-  pointerStartX = event.clientX
+  pointerStart = { pointerId: event.pointerId, x: event.clientX, y: event.clientY }
 }
 
 function onPointerUp(event: PointerEvent) {
-  if (pointerStartX === null) {
-    return
-  }
-  const direction = resolveSwipeDirection(event.clientX - pointerStartX)
-  pointerStartX = null
+  const start = pointerStart
+  pointerStart = null
+  if (!start || start.pointerId !== event.pointerId) return
+  const direction = resolveSwipeDirection(event.clientX - start.x, event.clientY - start.y)
+  if (!direction) return
+  suppressNextClick = true
+  suppressClickFrame = requestAnimationFrame(() => {
+    suppressNextClick = false
+    suppressClickFrame = null
+  })
   if (direction === 'next') {
     selectNextAdoption()
   }
@@ -153,7 +176,7 @@ function onPointerUp(event: PointerEvent) {
 }
 
 function onPointerCancel() {
-  pointerStartX = null
+  pointerStart = null
 }
 
 useMotionEntrance(rootRef, ({ reduced, tokens }) => {
@@ -190,6 +213,7 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
 })
 
 onBeforeUnmount(() => {
+  resetSwipeClickSuppression()
   for (const animation of recordAnimations) animation.cancel()
 })
 </script>
@@ -209,6 +233,7 @@ onBeforeUnmount(() => {
     role="region"
     aria-roledescription="carousel"
     @keydown="onKeydown"
+    @click.capture="onClickCapture"
     @pointerdown="onPointerDown"
     @pointerup="onPointerUp"
     @pointercancel="onPointerCancel"
@@ -307,6 +332,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .home-adoptions {
+  touch-action: pan-y pinch-zoom;
   position: relative;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);

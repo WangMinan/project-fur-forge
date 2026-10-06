@@ -88,6 +88,78 @@ async function swipeTouch(
   await page.waitForTimeout(500)
 }
 
+test('代表作品左对齐与七张详情图的横竖屏触控和溢出', async ({ browser }) => {
+  const page = await browser.newPage({ hasTouch: true, reducedMotion: 'reduce' })
+  const errors: string[] = []
+  page.on('pageerror', error => errors.push(error.message))
+  await seedPublicCatalog(page, [{
+    slug: 'e2e-public-seven-images', characterName: '七张图预览', species: '犬科',
+    purpose: 'adoption', adoptionStatus: 'available', featured: true,
+    photos: Array.from({ length: 5 }, (_, index) => ({ alt: `出厂照 ${index + 1}` })),
+    adoptionCover: { alt: '横版封面', width: 3200, height: 1800 },
+    designSheet: { alt: '设定图' },
+  }])
+  for (const [width, height] of [[320, 740], [390, 844], [667, 375], [844, 390], [768, 1024], [1440, 900]]) {
+    await page.setViewportSize({ width: width!, height: height! })
+    await page.goto(`${publicBaseURL}/`)
+    await page.waitForFunction(() => Boolean((document.querySelector('#__nuxt') as Element & { __vue_app__?: unknown })?.__vue_app__))
+    const aligned = await page.locator('.featured-works').evaluate(element => {
+      const selectors = ['.featured-works__title', '.featured-works__species', '.featured-works__action']
+      const lefts = selectors.map(selector => element.querySelector(selector)!.getBoundingClientRect().left)
+      return Math.max(...lefts) - Math.min(...lefts)
+    })
+    expect(aligned).toBeLessThan(1)
+
+    await page.goto(`${publicBaseURL}/works/e2e-public-seven-images`)
+    await page.waitForFunction(() => Boolean((document.querySelector('#__nuxt') as Element & { __vue_app__?: unknown })?.__vue_app__))
+    const thumbs = page.locator('.work-gallery__thumb')
+    await expect(thumbs).toHaveCount(7)
+    const strip = page.locator('.work-gallery__thumbs')
+    const stage = page.locator('.work-gallery__stage')
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1)
+    const dimensions = await strip.evaluate(el => ({ width: el.clientWidth, scrollWidth: el.scrollWidth, height: el.clientHeight, scrollHeight: el.scrollHeight }))
+    if (width! < 480) expect(dimensions.scrollWidth).toBeGreaterThan(dimensions.width)
+    if (width! >= 768) expect(dimensions.height).toBeLessThanOrEqual((await stage.boundingBox())!.height + 1)
+    const box = (await thumbs.first().boundingBox())!
+    expect(Math.abs(box.width - box.height)).toBeLessThan(1)
+    expect(box.width).toBeGreaterThanOrEqual(44)
+    await stage.scrollIntoViewIfNeeded()
+    await swipeTouch(page, stage, -110, 40)
+    await expect(thumbs.nth(1)).toHaveAttribute('aria-pressed', 'true')
+    await swipeTouch(page, stage, 110, -40)
+    await expect(thumbs.first()).toHaveAttribute('aria-pressed', 'true')
+    await swipeTouch(page, stage, 110, 30)
+    await expect(thumbs.last()).toHaveAttribute('aria-pressed', 'true')
+    expect(await thumbs.last().evaluate(el => {
+      const item = el.getBoundingClientRect()
+      const parent = el.parentElement!.getBoundingClientRect()
+      return item.left >= parent.left - 1 && item.right <= parent.right + 1 && item.top >= parent.top - 1 && item.bottom <= parent.bottom + 1
+    })).toBe(true)
+    await swipeTouch(page, stage, 15, -100)
+    await expect(thumbs.last()).toHaveAttribute('aria-pressed', 'true')
+    await thumbs.first().focus()
+    await page.keyboard.press('Enter')
+    await expect(thumbs.first()).toHaveAttribute('aria-pressed', 'true')
+    expect(await page.locator('.work-gallery img').evaluateAll(async images => Promise.all(images.map(async image => {
+      try { await (image as HTMLImageElement).decode(); return true }
+      catch { return false }
+    })))).not.toContain(false)
+  }
+  await page.goto(`${publicBaseURL}/works/e2e-public-seven-images?from=adoptions`)
+  await page.waitForFunction(() => Boolean((document.querySelector('#__nuxt') as Element & { __vue_app__?: unknown })?.__vue_app__))
+  await expect(page.locator('.work-gallery__thumb[aria-pressed="true"]')).toBeInViewport()
+  for (const viewport of [{ width: 390, height: 844 }, { width: 844, height: 390 }]) {
+    await page.setViewportSize(viewport)
+    await expect.poll(() => page.locator('.work-gallery__thumb[aria-pressed="true"]').evaluate(el => {
+      const item = el.getBoundingClientRect()
+      const strip = el.parentElement!.getBoundingClientRect()
+      return item.left >= strip.left - 1 && item.right <= strip.right + 1 && item.top >= strip.top - 1 && item.bottom <= strip.bottom + 1
+    })).toBe(true)
+  }
+  expect(errors).toEqual([])
+  await page.close()
+})
+
 async function fillCommission(
   page: import('@playwright/test').Page,
   input: { nickname: string, phone: string },
@@ -467,6 +539,56 @@ test('手机可在首页整幕和代表作品图片上斜向滑动切换', async
 
   await media.tap()
   await expect(page).toHaveURL(`${publicBaseURL}/works/e2e-public-touch-two`)
+  await page.close()
+})
+
+test('首页领养图片支持斜向触屏切换且轻点仍进入详情', async ({ browser }) => {
+  const page = await browser.newPage({ hasTouch: true, reducedMotion: 'reduce' })
+  const works = [1, 2, 3].map(index => ({
+    slug: `e2e-public-adoption-touch-${index}` as const,
+    characterName: `领养${index}`,
+    purpose: 'adoption' as const,
+    adoptionStatus: 'available' as const,
+    adoptionCover: { alt: `领养封面${index}`, width: 3200, height: 1800 },
+    photos: [],
+  }))
+  await seedPublicCatalog(page, works)
+  const errors: string[] = []
+  page.on('pageerror', error => errors.push(error.message))
+  for (const viewport of [{ width: 390, height: 844 }, { width: 844, height: 390 }, { width: 768, height: 1024 }]) {
+    await page.setViewportSize(viewport)
+    await page.goto(`${publicBaseURL}/`)
+    await page.waitForFunction(() => Boolean((document.querySelector('#__nuxt') as Element & { __vue_app__?: unknown })?.__vue_app__))
+    const scene = page.getByTestId('home-current-adoptions')
+    const poster = scene.locator('.home-adoption-poster')
+    const media = page.getByTestId('home-adoption-media-link')
+    const slugs = await scene.locator('.home-adoption-poster__selector-item').evaluateAll(items => items.map(item => item.getAttribute('data-work-slug')!))
+    await media.scrollIntoViewIfNeeded()
+    await expect(poster).toHaveAttribute('data-work-slug', slugs[0]!)
+    await swipeTouch(page, media, -110, 35)
+    await expect(poster).toHaveAttribute('data-work-slug', slugs[1]!)
+    await expect(page).toHaveURL(`${publicBaseURL}/`)
+    await swipeTouch(page, media, 110, -35)
+    await expect(poster).toHaveAttribute('data-work-slug', slugs[0]!)
+    await swipeTouch(page, media, 110, 25)
+    await expect(poster).toHaveAttribute('data-work-slug', slugs[2]!)
+    await swipeTouch(page, media, 20, -90)
+    await expect(poster).toHaveAttribute('data-work-slug', slugs[2]!)
+    await expect(page).toHaveURL(`${publicBaseURL}/`)
+    await media.scrollIntoViewIfNeeded()
+    await media.tap()
+    await expect(page).toHaveURL(`${publicBaseURL}/works/${slugs[2]}?from=adoptions`)
+  }
+  await seedPublicCatalog(page, [works[0]!])
+  await page.goto(`${publicBaseURL}/`)
+  await page.waitForFunction(() => Boolean((document.querySelector('#__nuxt') as Element & { __vue_app__?: unknown })?.__vue_app__))
+  const media = page.getByTestId('home-adoption-media-link')
+  await media.scrollIntoViewIfNeeded()
+  await swipeTouch(page, media, -110, 35)
+  await expect(page.locator('.home-adoption-poster')).toHaveAttribute('data-work-slug', works[0]!.slug)
+  await media.tap()
+  await expect(page).toHaveURL(`${publicBaseURL}/works/${works[0]!.slug}?from=adoptions`)
+  expect(errors).toEqual([])
   await page.close()
 })
 
