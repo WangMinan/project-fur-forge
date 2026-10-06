@@ -42,6 +42,7 @@ import {
   refreshVariantContent,
 } from '../repository/variant-repository'
 import { ServiceError } from '../service-error'
+import { buildSiteDisplayProcess } from './site-display-recipe'
 
 export const COMPOSITION_RECIPE_VERSION = 'work-composition-v1'
 export const PUBLIC_RECIPE_VERSION = 'recipe-v4'
@@ -168,8 +169,8 @@ export async function ensureHeroUpscaleSource(
   }
   const existing = processingSource(sqlite, sourceAsset)
   if (existing.sourceVariantId !== null
-    && existing.width === target.width
-    && existing.height === target.height) {
+    && existing.width >= target.width
+    && existing.height >= target.height) {
     return existing
   }
 
@@ -211,8 +212,8 @@ export async function ensureHeroUpscaleSource(
       || head.sha256Metadata !== outputSha256
       || info.fileSize !== head.byteSize
       || normalizedFormat(info.format) !== 'png'
-      || info.width !== target.width
-      || info.height !== target.height
+      || info.width !== output.dimensions.width
+      || info.height !== output.dimensions.height
       || digest('sha256', saved) !== outputSha256
     ) {
       throw new Error('Hero upscale verification failed.')
@@ -220,7 +221,7 @@ export async function ensureHeroUpscaleSource(
     insertUpscaleVariant(sqlite, {
       byteSize: output.content.length,
       cropIdentity: identityHash,
-      height: target.height,
+      height: output.dimensions.height,
       id: randomUUID(),
       inputSha256: sourceAsset.sha256,
       mediaRole: sourceAsset.role,
@@ -228,7 +229,7 @@ export async function ensureHeroUpscaleSource(
       recipeVersion: HERO_UPSCALE_RECIPE_VERSION,
       sha256: outputSha256,
       sourceAssetId: sourceAsset.id,
-      width: target.width,
+      width: output.dimensions.width,
     }, now)
     return processingSource(sqlite, sourceAsset)
   }
@@ -831,13 +832,9 @@ export async function generatePrivatePublicPreview(
     throw new ServiceError(400, 'VALIDATION_ERROR', 'Preview width is invalid.')
   }
   const source = processingSource(sqlite, sourceAsset)
-  const process = buildPublicMediaProcess(
-    sourceAsset,
-    input.usage,
-    input.width,
-    'webp',
-    source,
-  )
+  const process = input.usage === 'home-hero-landscape' || input.usage === 'home-hero-portrait'
+    ? buildSiteDisplayProcess(sourceAsset, input.usage, input.width, 'webp', source)
+    : buildPublicMediaProcess(sourceAsset, input.usage, input.width, 'webp', source)
   await storage.processPrivateToPrivate({
     sourceObjectKey: source.objectKey,
     objectKey: input.objectKey,

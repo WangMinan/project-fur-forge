@@ -10,7 +10,10 @@ import {
   expect,
   it,
 } from 'vitest'
-import { createSyntheticTransparentPng } from '../../scripts/oss-preflight-core.mjs'
+import { createSyntheticSourcePng, createSyntheticTransparentPng } from '../../scripts/oss-preflight-core.mjs'
+import { ensureHeroUpscaleSource } from '../../server/utils/recipe/media-recipe'
+import { processingSource, readyAssetSource } from '../../server/utils/recipe/media-source'
+import { insertUpscaleVariant } from '../../server/utils/repository/variant-repository'
 import { migrateDatabase, openDatabase } from '../../server/utils/database'
 import { getPublicHome } from '../../server/utils/runner/home-management'
 import {
@@ -46,12 +49,15 @@ function seedHeroAsset(input: {
   orientation: 'landscape' | 'portrait'
   ownerVersion: number
   placement: 'commission' | 'home'
+  dimensions?: { width: number, height: number }
 }) {
   const id = randomUUID()
-  const content = createSyntheticTransparentPng()
+  const content = input.dimensions
+    ? createSyntheticSourcePng(input.dimensions.width, input.dimensions.height)
+    : createSyntheticTransparentPng()
   const landscape = input.orientation === 'landscape'
-  const width = landscape ? 3840 : 1080
-  const height = landscape ? 2160 : 1920
+  const width = input.dimensions?.width ?? (landscape ? 3840 : 1080)
+  const height = input.dimensions?.height ?? (landscape ? 2160 : 1920)
   const role = landscape ? 'home_hero_landscape' : 'home_hero_portrait'
   const key = `test/original/${id}.png`
   sqlite.prepare(`
@@ -201,6 +207,7 @@ describe('R3-C independent Hero collection publication', () => {
     )
 
     expect(preview).toMatchObject({ width: 768 })
+    expect(storage.processCalls.at(-1)?.process).toContain('crop,x_0,y_0,w_3840,h_2160/resize,m_fill,w_768,h_432')
     expect(preview.url).toContain(`/items/${item.id}/preview`)
     expect(storage.publicObjects.size).toBe(0)
     const nearExpiry = Date.parse(preview.expiresAt) - 1_000
@@ -418,6 +425,28 @@ describe('R3-C independent Hero collection publication', () => {
     expect(replaced.status).toBe('DONE')
     expect(getAdminHeroCollection(sqlite, 'commission', 'landscape').items
       .filter(item => item.enabled).map(item => item.alt)).toEqual(['委托横版 B'])
+  })
+
+  it('preserves the complete image when adapting a Hero and rejects old pre-cropped sources', async () => {
+    const collection = getAdminHeroCollection(sqlite, 'commission', 'portrait')
+    const assetId = seedHeroAsset({ placement: 'commission', orientation: 'portrait', ownerVersion: collection.version, dimensions: { width: 1200, height: 1600 } })
+    const asset = readyAssetSource(sqlite, assetId)
+    insertUpscaleVariant(sqlite, {
+      id: randomUUID(), sourceAssetId: assetId, objectKey: `test/processing/${assetId}/legacy.png`,
+      inputSha256: asset.sha256, mediaRole: asset.role, width: 1080, height: 1920,
+      cropIdentity: 'legacy', recipeVersion: 'hero-upscale-lanczos-v2', sha256: 'a'.repeat(64), byteSize: 1024,
+    }, NOW)
+    expect(processingSource(sqlite, asset)).toMatchObject({ width: 1200, height: 1600, sourceVariantId: null })
+    const first = await ensureHeroUpscaleSource(sqlite, storage, assetId)
+    expect(first).toMatchObject({ width: 1440, height: 1920 })
+    expect(await ensureHeroUpscaleSource(sqlite, storage, assetId)).toEqual(first)
+    const created = createHeroCollectionItem(sqlite, 'commission', 'portrait', collection.version, heroItemInput(assetId, '完整适配源', 0, { x: 0.4, y: 0.6 }), NOW)
+    const item = created.items.find(candidate => candidate.asset.assetId === assetId)!
+    await createHeroCollectionItemPreview(sqlite, storage, item.id, 'commission', 'portrait', created.version, NOW)
+    expect(storage.processCalls.at(-1)?.process).toContain('crop,x_144,y_0,w_1080,h_1920/')
+    const operation = startHeroCollectionItemPublication(sqlite, item.id, 'commission', 'portrait', created.version, NOW)
+    expect((await runHeroCollectionItemPublication(sqlite, storage, operation.operationId, USER_ID, NOW)).status).toBe('DONE')
+    expect(storage.processCalls.every(call => call.process.includes('crop,x_144,y_0,w_1080,h_1920/'))).toBe(true)
   })
 
   it('updates disabled focal coordinates through CAS and publishes new immutable variants', async () => {

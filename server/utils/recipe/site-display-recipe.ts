@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3'
 import type { MediaRole } from '../../../shared/types/contracts'
+import { fitCrop, pixelCrop } from '../../../shared/utils/image-composition'
 import {
   contentTypeForFormat,
   deterministicUuid,
@@ -175,8 +176,14 @@ function existingVariant(sqlite: Database.Database, objectKey: string) {
   )
 }
 
-function resizeOperation(usage: SiteDisplayUsage, source: AssetSource, width: number) {
+function resizeOperation(usage: SiteDisplayUsage, source: AssetSource, width: number, dimensions: Pick<ProcessingSource, 'width' | 'height'>) {
   const height = siteDisplayHeight(usage, width)
+  if (usage.includes('-hero-')) {
+    const [horizontal, vertical] = recipes[usage].aspect
+    const rect = fitCrop(dimensions.width, dimensions.height, horizontal / vertical, undefined, source.focalX, source.focalY)
+    const crop = pixelCrop(rect, dimensions.width, dimensions.height)
+    return `crop,x_${crop.x},y_${crop.y},w_${crop.width},h_${crop.height}/resize,m_fill,w_${width},h_${height}`
+  }
   return `resize,m_fill,w_${width},h_${height},g_${gravity(
     source.focalX,
     source.focalY,
@@ -192,15 +199,16 @@ function formatOperation(usage: SiteDisplayUsage, format: PublicFormat) {
   }`
 }
 
-/** 公开展示处理串：只有缩放、格式与质量。 */
+/** Hero 连续焦点与后台 object-position 一致；按实际处理源像素裁切。 */
 export function buildSiteDisplayProcess(
   source: AssetSource,
   usage: SiteDisplayUsage,
   width: number,
   format: PublicFormat,
+  dimensions: Pick<ProcessingSource, 'width' | 'height'> = source,
 ) {
   return [
-    `image/${resizeOperation(usage, source, width)}`,
+    `image/${resizeOperation(usage, source, width, dimensions)}`,
     formatOperation(usage, format),
   ].join('/')
 }
@@ -239,6 +247,8 @@ function recipeIdentity(
     focalY: sourceAsset.focalY,
     format,
     quality: qualityFor(usage, format),
+    // 新裁切不能复用或覆盖旧九宫格输出；入口图维持原身份。
+    ...(usage.includes('-hero-') ? { process: buildSiteDisplayProcess(sourceAsset, usage, width, format, source) } : {}),
   })
   return digest('sha256', Buffer.from(identity))
 }
@@ -319,7 +329,7 @@ async function generateOne(
     await storage.processPrivateToPublic({
       sourceObjectKey: source.objectKey,
       objectKey,
-      process: buildSiteDisplayProcess(sourceAsset, usage, width, format),
+      process: buildSiteDisplayProcess(sourceAsset, usage, width, format, source),
     })
     const [head, info, anonymous] = await Promise.all([
       storage.headPublic(objectKey),

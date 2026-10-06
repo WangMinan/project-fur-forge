@@ -69,36 +69,38 @@ function onRangeInput(axis: 'x' | 'y', event: Event) {
 <template>
   <section class="hero-focal-picker" data-testid="hero-focal-picker">
     <div class="hero-focal-picker__preview" :data-orientation="orientation">
-      <img
-        v-if="previewUrl"
-        :src="previewUrl"
-        :alt="`${alt || '大图'}目标裁切预览`"
-        :style="{ objectPosition: `${focalPercent.x}% ${focalPercent.y}%` }"
-      >
-      <p v-else>上传图片后将在这里预览目标裁切。</p>
-      <span
-        v-if="previewUrl"
-        class="hero-focal-picker__marker"
-        :style="{
-          insetInlineStart: `${focalPercent.x}%`,
-          insetBlockStart: `${focalPercent.y}%`,
-        }"
-        aria-hidden="true"
-      />
-      <button
-        v-if="previewUrl"
-        type="button"
-        class="hero-focal-picker__drag-surface"
-        :disabled="disabled"
-        aria-label="拖动设置大图焦点"
-        @pointerdown="onPointerDown"
-        @pointermove="onPointerMove"
-        @pointerup="onPointerEnd"
-        @pointercancel="onPointerEnd"
-      />
-      <span class="hero-focal-picker__frame-label">
-        {{ orientation === 'landscape' ? '桌面 16:9 目标裁切' : '手机 9:16 目标裁切' }}
-      </span>
+      <div class="hero-focal-picker__frame">
+        <img
+          v-if="previewUrl"
+          :src="previewUrl"
+          :alt="`${alt || '大图'}目标裁切预览`"
+          :style="{ objectPosition: `${focalX * 100}% ${focalY * 100}%` }"
+        >
+        <p v-else>上传图片后将在这里预览目标裁切。</p>
+        <span
+          v-if="previewUrl"
+          class="hero-focal-picker__marker"
+          :style="{
+            insetInlineStart: `${focalX * 100}%`,
+            insetBlockStart: `${focalY * 100}%`,
+          }"
+          aria-hidden="true"
+        />
+        <button
+          v-if="previewUrl"
+          type="button"
+          class="hero-focal-picker__drag-surface"
+          :disabled="disabled"
+          aria-label="拖动设置大图焦点"
+          @pointerdown="onPointerDown"
+          @pointermove="onPointerMove"
+          @pointerup="onPointerEnd"
+          @pointercancel="onPointerEnd"
+        />
+        <span class="hero-focal-picker__frame-label">
+          {{ orientation === 'landscape' ? '桌面 16:9 目标裁切' : '手机 9:16 目标裁切' }}
+        </span>
+      </div>
     </div>
 
     <div class="hero-focal-picker__controls">
@@ -146,25 +148,34 @@ function onRangeInput(axis: 'x' | 'y', event: Event) {
 }
 
 .hero-focal-picker__preview {
+  width: min(100%, 52rem);
+  overflow: hidden;
+  border: 0.5rem solid var(--admin-text-primary);
+  border-radius: var(--admin-radius-sm);
+}
+
+.hero-focal-picker__frame {
   position: relative;
   display: grid;
-  width: min(100%, 52rem);
   aspect-ratio: 16 / 9;
   overflow: hidden;
   background: var(--admin-bg-subtle);
-  border: 0.5rem solid var(--admin-text-primary);
-  border-radius: var(--admin-radius-sm);
   place-items: center;
 }
 
 .hero-focal-picker__preview[data-orientation='portrait'] {
   width: min(100%, 20rem);
-  aspect-ratio: 9 / 16;
   border-width: 0.65rem;
   border-radius: var(--radius-ui);
 }
 
+.hero-focal-picker__preview[data-orientation='portrait'] .hero-focal-picker__frame {
+  aspect-ratio: 9 / 16;
+}
+
 .hero-focal-picker__preview img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
