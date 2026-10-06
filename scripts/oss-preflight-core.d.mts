@@ -6,6 +6,7 @@ export const REQUIRED_PUT_HEADERS: readonly string[]
 
 export function createLargeSyntheticPng(): Buffer
 export function createSyntheticTransparentPng(): Buffer
+export function createSyntheticSourcePng(width: number, height: number): Buffer
 export function contentDigests(content: Buffer): {
   md5Base64: string
   md5Hex: string
