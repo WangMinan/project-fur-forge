@@ -19,6 +19,43 @@ function initialIndex() {
 
 const activeIndex = shallowRef(initialIndex())
 const isSingle = computed(() => props.gallery.length === 1)
+const thumbsRef = useTemplateRef<HTMLElement>('thumbs')
+let pointerStart: { pointerId: number, x: number, y: number } | null = null
+
+function onPointerDown(event: PointerEvent) {
+  pointerStart = event.isPrimary && event.pointerType === 'touch' && props.gallery.length > 1
+    ? { pointerId: event.pointerId, x: event.clientX, y: event.clientY }
+    : null
+}
+
+function onPointerUp(event: PointerEvent) {
+  const start = pointerStart
+  pointerStart = null
+  if (!start || start.pointerId !== event.pointerId) return
+  const direction = resolveSwipeDirection(event.clientX - start.x, event.clientY - start.y)
+  if (direction === 'next') activeIndex.value = nextSlideIndex(activeIndex.value, props.gallery.length)
+  else if (direction === 'prev') activeIndex.value = prevSlideIndex(activeIndex.value, props.gallery.length)
+}
+
+function revealActiveThumbnail() {
+  const strip = thumbsRef.value
+  const selected = strip?.querySelector<HTMLElement>('[aria-pressed="true"]')
+  if (!strip || !selected) return
+  const bounds = strip.getBoundingClientRect()
+  const item = selected.getBoundingClientRect()
+  strip.scrollBy({
+    left: Math.min(0, item.left - bounds.left) + Math.max(0, item.right - bounds.right),
+    top: Math.min(0, item.top - bounds.top) + Math.max(0, item.bottom - bounds.bottom),
+    behavior: 'instant',
+  })
+}
+
+watch(activeIndex, revealActiveThumbnail, { flush: 'post' })
+onMounted(() => {
+  revealActiveThumbnail()
+  window.addEventListener('resize', revealActiveThumbnail)
+})
+onBeforeUnmount(() => window.removeEventListener('resize', revealActiveThumbnail))
 
 /**
  * T34-F2：同一组件复用到上一件/下一件作品时，必须把选中项校正回有效范围，
@@ -71,6 +108,9 @@ const activeImageStyle = computed(() => {
       class="work-gallery__stage"
       :class="`work-gallery__stage--${activeOrientation}`"
       :data-orientation="activeOrientation"
+      @pointerdown="onPointerDown"
+      @pointerup="onPointerUp"
+      @pointercancel="pointerStart = null"
     >
       <!--
         切换主图时做淡入淡出。out-in 会先等旧图移出再放新图，中间露出占位底色；
@@ -93,6 +133,7 @@ const activeImageStyle = computed(() => {
 
     <div
       v-if="gallery.length > 1"
+      ref="thumbs"
       class="work-gallery__thumbs"
       role="group"
       :aria-label="t('count.gallery', { name: workName, count: gallery.length })"
@@ -118,7 +159,10 @@ const activeImageStyle = computed(() => {
 
 <style scoped>
 .work-gallery {
+  --gallery-stage-height: clamp(18rem, 58svh, 34rem);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
   align-items: flex-start;
   gap: var(--space-3);
 }
@@ -126,11 +170,12 @@ const activeImageStyle = computed(() => {
 .work-gallery__stage {
   position: relative;
   width: 100%;
-  height: clamp(18rem, 58svh, 34rem);
+  height: var(--gallery-stage-height);
   min-width: 0;
   overflow: hidden;
   background: var(--public-media-canvas);
   border-radius: var(--radius-image);
+  touch-action: pan-y pinch-zoom;
 }
 
 .work-gallery__stage :deep(.work-gallery__image) {
@@ -191,13 +236,14 @@ const activeImageStyle = computed(() => {
 
 .work-gallery__thumbs {
   display: flex;
+  min-width: 0;
   flex-wrap: wrap;
   gap: var(--space-2);
 }
 
 @media (max-width: 767px) {
-  .work-gallery__stage {
-    height: clamp(17rem, 92vw, 24rem);
+  .work-gallery {
+    --gallery-stage-height: clamp(17rem, 92vw, 24rem);
   }
 
   .work-gallery__thumbs {
@@ -210,12 +256,9 @@ const activeImageStyle = computed(() => {
 
 @media (min-width: 768px) {
   .work-gallery {
+    --gallery-stage-height: clamp(24rem, calc(100svh - 20rem), 38rem);
     grid-template-columns: minmax(0, 1fr) auto;
     gap: var(--space-4);
-  }
-
-  .work-gallery__stage {
-    height: clamp(24rem, calc(100svh - 20rem), 38rem);
   }
 
   .work-gallery--single {
@@ -225,10 +268,14 @@ const activeImageStyle = computed(() => {
   .work-gallery__thumbs {
     flex-direction: column;
     flex-wrap: nowrap;
+    max-height: var(--gallery-stage-height);
+    overflow-y: auto;
+    scrollbar-width: thin;
   }
 }
 
 .work-gallery__thumb {
+  flex-shrink: 0;
   width: 4.5rem;
   min-height: 2.75rem;
   height: auto;
@@ -257,7 +304,7 @@ const activeImageStyle = computed(() => {
 
 .work-gallery__thumb:focus-visible {
   outline: 3px solid var(--public-focus-ring);
-  outline-offset: 3px;
+  outline-offset: -3px;
 }
 
 .work-gallery__thumb:active {
