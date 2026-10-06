@@ -239,13 +239,26 @@ export function useAdminHeroCollection(
   async function startOperation(
     id: string,
     action: 'disable' | 'enable' | 'upscale',
+    input?: HeroCollectionItemInput,
   ): Promise<string | null> {
     if (!collection.value || mutating.value) {
       return null
     }
     mutating.value = true
     setFeedback(id, null)
+    let saving = Boolean(input && action !== 'disable')
     try {
+      // 持续锁定编辑，先保存当前草稿，再用返回的新集合版本启动任务。
+      if (saving) {
+        const saved = await adminApi(`${baseUrl()}/items/${id}`, {
+          method: 'PUT',
+          body: body(input),
+          schema: adminHeroCollectionResponseSchema,
+        })
+        collection.value = saved.data
+        conflictNotice.value = null
+        saving = false
+      }
       const result = await adminApi(`${baseUrl()}/items/${id}/${action}`, {
         method: 'POST',
         body: body({}),
@@ -265,7 +278,7 @@ export function useAdminHeroCollection(
           ? conflictText(error.reason)
           : '操作未提交：版本、顺位或大图状态已变化。'
       }
-      return '无法启动长任务，请稍后重试。'
+      return saving ? '保存大图项失败，未启动发布或适配，请重试。' : '无法启动长任务，请稍后重试。'
     }
     finally {
       mutating.value = false

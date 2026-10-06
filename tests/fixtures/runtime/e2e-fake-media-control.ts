@@ -18,6 +18,7 @@ import {
 } from '../../../server/utils/recipe/site-display-recipe'
 import { resetRequestRateLimits } from '../../../server/utils/route/request-rate-limit'
 import {
+  createSyntheticSourcePng,
   createSyntheticTransparentPng,
 } from '../../../scripts/oss-preflight-core.mjs'
 import type { HeroPlacement } from '../../../shared/types/contracts'
@@ -455,8 +456,10 @@ export default defineEventHandler(async (event) => {
       height: number,
     ) => {
       const assetId = randomUUID()
+      // 保持源图方向与比例，避免真实 FFmpeg 将竖图夹具误当横图放大。
+      const scale = 64 / Math.max(width, height)
       const content = Buffer.concat([
-        createSyntheticTransparentPng() as Buffer,
+        createSyntheticSourcePng(Math.max(1, Math.round(width * scale)), Math.max(1, Math.round(height * scale))) as Buffer,
         randomBytes(16),
       ])
       const sha256 = createHash('sha256').update(content).digest('hex')

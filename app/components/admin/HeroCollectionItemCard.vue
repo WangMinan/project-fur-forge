@@ -39,10 +39,10 @@ const emit = defineEmits<{
   create: [payload: HeroCollectionItemInput]
   delete: []
   disable: []
-  enable: []
+  enable: [payload: HeroCollectionItemInput]
   move: [direction: -1 | 1]
   retryOperation: []
-  upscale: []
+  upscale: [payload: HeroCollectionItemInput]
   update: [payload: HeroCollectionItemInput]
 }>()
 
@@ -112,6 +112,8 @@ const uploadProcessing = computed(() => [
   'uploading',
   'validating',
 ].includes(upload.item.state))
+const canSubmit = computed(() => valid.value && !busy.value && !props.item?.enabled
+  && !selectedFile.value && !uploadProcessing.value)
 const uploadProgress = computed(() => adminUploadProgressModel({
   failureText: upload.item.failureText,
   ffmpeg: upload.item.state === 'validating' && upload.item.ffmpegPreprocessExpected,
@@ -145,11 +147,8 @@ const previewUrl = computed(() => assetId.value
   : null,
 )
 
-function submit() {
-  if (!valid.value || busy.value) {
-    return
-  }
-  const payload = {
+function itemInput(): HeroCollectionItemInput {
+  return {
     alt: alt.value.trim(),
     assetId: assetId.value,
     assetVersion: assetVersion.value,
@@ -157,6 +156,13 @@ function submit() {
     focalY: focalY.value,
     sortOrder: sortOrder.value,
   }
+}
+
+function submit() {
+  if (!canSubmit.value) {
+    return
+  }
+  const payload = itemInput()
   if (props.item) {
     emit('update', payload)
   }
@@ -184,11 +190,11 @@ function uploadSelectedFile() {
 }
 
 function requestUpscale() {
-  emit('upscale')
+  if (canSubmit.value && upscaleConfirmed.value) emit('upscale', itemInput())
 }
 
 function requestEnable() {
-  emit('enable')
+  if (canSubmit.value) emit('enable', itemInput())
 }
 
 function requestDisable() {
@@ -305,20 +311,20 @@ function updateFocal(value: { focalX: number, focalY: number }) {
 
     <div class="hero-item__actions">
       <AdminAction
-        :disabled="busy || !valid || item?.enabled || Boolean(selectedFile) || uploadProcessing"
+        :disabled="!canSubmit"
         @click="submit"
       >
         {{ item ? '保存' : '新增' }}
       </AdminAction>
       <AdminAction
         v-if="item && !item.enabled && !item.upscaleReady"
-        :disabled="busy || !upscaleConfirmed"
+        :disabled="!canSubmit || !upscaleConfirmed"
         @click="requestUpscale"
       >适配大尺寸</AdminAction>
       <AdminAction
         v-if="item && !item.enabled && item.upscaleReady"
         variant="primary"
-        :disabled="busy"
+        :disabled="!canSubmit"
         @click="requestEnable"
       >发布并启用</AdminAction>
       <AdminAction

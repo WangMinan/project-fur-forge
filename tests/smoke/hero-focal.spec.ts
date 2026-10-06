@@ -2,6 +2,69 @@ import { expect, test } from '@playwright/test'
 import { adminBaseURL, loginAsAdmin } from '../e2e/helpers/auth'
 import { seedHeroCollections } from '../e2e/helpers/public-catalog'
 
+test('a failed save keeps the Hero draft and does not publish', async ({ page }) => {
+  await loginAsAdmin(page)
+  await seedHeroCollections(page, { landscape: [], portrait: [{ alt: '保存失败竖图', sortOrder: 0, enabled: false }] })
+  await page.goto(`${adminBaseURL}/admin/site/home?placement=home&orientation=portrait`)
+  const card = page.locator('[data-testid="hero-collection-item"]:visible').first()
+  const ranges = card.locator('input[type="range"]')
+  await ranges.nth(0).fill('60.9')
+  await ranges.nth(1).fill('22.7')
+  let publications = 0
+  page.on('request', request => { if (request.method() === 'POST' && request.url().endsWith('/enable')) publications++ })
+  await page.route('**/hero-collections/home/portrait/items/*', async route => {
+    if (route.request().method() === 'PUT') await route.fulfill({ status: 500, json: { error: { code: 'INTERNAL_ERROR' } } })
+    else await route.continue()
+  })
+  await card.getByRole('button', { name: '发布并启用', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('保存大图项失败')
+  await expect(ranges.nth(0)).toHaveValue('60.9')
+  await expect(ranges.nth(1)).toHaveValue('22.7')
+  await expect(card).toHaveAttribute('data-enabled', 'false')
+  expect(publications).toBe(0)
+})
+
+test('adapting a Hero saves its draft before automatic publication', async ({ page }) => {
+  await loginAsAdmin(page)
+  await seedHeroCollections(page, { placement: 'commission', landscape: [], portrait: [{ alt: '小尺寸竖图', sortOrder: 0, enabled: false, portraitWidth: 900, portraitHeight: 1600 }] })
+  await page.goto(`${adminBaseURL}/admin/site/home?placement=commission&orientation=portrait`)
+  const card = page.locator('[data-testid="hero-collection-item"]:visible').first()
+  const ranges = card.locator('input[type="range"]')
+  await ranges.nth(0).fill('60.9')
+  await ranges.nth(1).fill('22.7')
+  await card.getByRole('checkbox').check()
+  await card.getByRole('button', { name: '适配大尺寸', exact: true }).click()
+  await expect(card).toHaveAttribute('data-enabled', 'true', { timeout: 30_000 })
+  await page.reload()
+  await expect(ranges.nth(0)).toHaveValue('60.9')
+  await expect(ranges.nth(1)).toHaveValue('22.7')
+})
+
+test('publishing a Hero saves the current focus before starting publication', async ({ page }) => {
+  await loginAsAdmin(page)
+  for (const placement of ['home', 'commission'] as const) {
+    await seedHeroCollections(page, {
+      placement,
+      landscape: [{ alt: '直接发布横图', sortOrder: 0, enabled: false }],
+      portrait: [{ alt: '直接发布竖图', sortOrder: 0, enabled: false }],
+    })
+    for (const orientation of ['landscape', 'portrait']) {
+      await page.goto(`${adminBaseURL}/admin/site/home?placement=${placement}&orientation=${orientation}`)
+      const card = page.locator('[data-testid="hero-collection-item"]:visible').first()
+      const ranges = card.locator('input[type="range"]')
+      await ranges.nth(0).fill('60.9')
+      await ranges.nth(1).fill('22.7')
+      await card.getByRole('button', { name: '发布并启用', exact: true }).click()
+      await expect(card).toHaveAttribute('data-enabled', 'true')
+      await expect(ranges.nth(0)).toHaveValue('60.9')
+      await expect(ranges.nth(1)).toHaveValue('22.7')
+      await page.reload()
+      await expect(ranges.nth(0)).toHaveValue('60.9')
+      await expect(ranges.nth(1)).toHaveValue('22.7')
+    }
+  }
+})
+
 test('Hero focus survives save and reload in all four collections', async ({ page }, testInfo) => {
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
