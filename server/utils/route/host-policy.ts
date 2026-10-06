@@ -1,4 +1,32 @@
 import type { RuntimeConfig } from '../runtime-config'
+import { BlockList } from 'node:net'
+
+const developmentNetworks = new BlockList()
+developmentNetworks.addSubnet('10.0.0.0', 8)
+developmentNetworks.addSubnet('172.16.0.0', 12)
+developmentNetworks.addSubnet('192.168.0.0', 16)
+
+function isDevelopmentPublicHost(host: string, config: RuntimeConfig) {
+  if (config.appEnv !== 'development') return false
+  try {
+    const url = new URL(`http://${host}`)
+    return url.port === new URL(config.publicBaseUrl).port
+      && url.host !== new URL(config.adminBaseUrl).host
+      && url.host !== new URL(config.mediaBaseUrl).host
+      && developmentNetworks.check(url.hostname, 'ipv4')
+  }
+  catch {
+    return false
+  }
+}
+
+export function isPublicRequestOrigin(origin: string | undefined, requestUrl: URL, config: RuntimeConfig) {
+  const publicUrl = new URL(config.publicBaseUrl)
+  return origin === publicUrl.origin
+    || (origin === requestUrl.origin
+      && requestUrl.protocol === publicUrl.protocol
+      && isDevelopmentPublicHost(requestUrl.host, config))
+}
 
 export type HostDecision
   = | { action: 'allow' }
@@ -53,7 +81,7 @@ export function decideHostAccess(
   const adminHost = new URL(config.adminBaseUrl).host.toLowerCase()
   const mediaHost = new URL(config.mediaBaseUrl).host.toLowerCase()
 
-  if (normalizedHost === publicHost) {
+  if (normalizedHost === publicHost || isDevelopmentPublicHost(normalizedHost, config)) {
     return publicBlockedPrefixes.some(prefix => isAtOrBelow(pathname, prefix))
       ? {
           action: 'reject',

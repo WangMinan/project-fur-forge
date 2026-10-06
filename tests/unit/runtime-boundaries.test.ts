@@ -19,7 +19,7 @@ import {
   vi,
 } from 'vitest'
 import { ORIGINAL_IMAGE_MAX_BYTES } from '../../shared/constants/project'
-import { decideHostAccess } from '../../server/utils/route/host-policy'
+import { decideHostAccess, isPublicRequestOrigin } from '../../server/utils/route/host-policy'
 import { getPublicSiteMeta } from '../../server/utils/service/site-meta'
 import {
   loadRuntimeConfig,
@@ -585,6 +585,30 @@ describe('host boundary', () => {
       MEDIA_BASE_URL: 'https://media.test',
       OSS_UPLOAD_BASE_URL: 'https://upload.test',
     },
+  })
+
+  it('allows private IPv4 public previews only in development and keeps origins same-site', () => {
+    const development = { ...config, appEnv: 'development' as const, publicBaseUrl: 'http://127.0.0.1:3000', adminBaseUrl: 'http://localhost:3000' }
+    for (const ip of ['10.31.0.253', '172.16.0.1', '172.31.255.254', '192.168.1.2']) {
+      const host = `${ip}:3000`
+      const requestUrl = new URL(`http://${host}/api/public/v1/analytics/events`)
+      expect(decideHostAccess(host, '/works', development)).toEqual({ action: 'allow' })
+      for (const path of ['/admin', '/api/admin/v1/works', '/api/auth/login', '/api/_auth/session', '/preview']) {
+        expect(decideHostAccess(host, path, development)).toMatchObject({ action: 'reject', statusCode: 404 })
+      }
+      expect(isPublicRequestOrigin(requestUrl.origin, requestUrl, development)).toBe(true)
+      expect(isPublicRequestOrigin('http://192.168.2.3:3000', requestUrl, development)).toBe(false)
+      expect(isPublicRequestOrigin(undefined, requestUrl, development)).toBe(false)
+      for (const appEnv of ['test', 'production'] as const) {
+        expect(decideHostAccess(host, '/', { ...development, appEnv })).toMatchObject({ action: 'reject', statusCode: 421 })
+        expect(isPublicRequestOrigin(requestUrl.origin, requestUrl, { ...development, appEnv })).toBe(false)
+      }
+    }
+    for (const host of ['172.15.255.255:3000', '172.32.0.1:3000', '192.169.0.1:3000', '8.8.8.8:3000', '10.0.0.1:3001', '10.0.0.1.example:3000']) {
+      expect(decideHostAccess(host, '/', development)).toMatchObject({ action: 'reject', statusCode: 421 })
+    }
+    expect(decideHostAccess('192.168.1.2:3000', '/', { ...development, adminBaseUrl: 'http://192.168.1.2:3000' })).toMatchObject({ action: 'redirect' })
+    expect(decideHostAccess('192.168.1.2:3000', '/', { ...development, mediaBaseUrl: 'http://192.168.1.2:3000' })).toMatchObject({ action: 'reject', statusCode: 404 })
   })
 
   it('isolates public and admin routes', () => {

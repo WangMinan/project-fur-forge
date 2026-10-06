@@ -1,12 +1,10 @@
 import type { H3Event } from 'h3'
 import { createApiError } from '../api-error'
 import { getRuntimeConfig } from '../runtime-config'
+import { isPublicRequestOrigin } from './host-policy'
 
 export function assertPublicAnalyticsOrigin(event: H3Event) {
-  const expected = new URL(getRuntimeConfig().publicBaseUrl).origin
-  const origin = getHeader(event, 'origin')
-
-  if (origin !== expected) {
+  if (!isPublicRequestOrigin(getHeader(event, 'origin'), getRequestURL(event), getRuntimeConfig())) {
     throw createApiError(403, 'FORBIDDEN', 'Request was rejected.')
   }
 }
