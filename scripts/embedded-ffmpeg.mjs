@@ -234,55 +234,9 @@ export async function upscaleHeroImage(content, orientation) {
   if (orientation !== 'landscape' && orientation !== 'portrait') {
     throw new Error('Hero upscale orientation is invalid.')
   }
-  const width = orientation === 'landscape' ? 3840 : 1080
-  const height = orientation === 'landscape' ? 2160 : 1920
-  const filter = `scale=w=${width}:h=${height}:force_original_aspect_ratio=increase:flags=lanczos,crop=${width}:${height}`
-  const result = await runEmbeddedFfmpeg([
-    '-hide_banner',
-    '-loglevel',
-    'error',
-    '-f',
-    'image2pipe',
-    '-c:v',
-    inputCodec(content),
-    '-i',
-    'pipe:0',
-    '-frames:v',
-    '1',
-    '-map_metadata',
-    '-1',
-    '-vf',
-    filter,
-    '-threads',
-    '1',
-    '-c:v',
-    'png',
-    '-compression_level',
-    '9',
-    '-pred',
-    'mixed',
-    '-f',
-    'image2pipe',
-    'pipe:1',
-  ], { input: content })
-  const output = result.stdout
-  if (
-    output.length === 0
-    || output.length < 24
-    || output.length > OSS_IMAGE_PROCESSING_MAX_BYTES
-    || !output.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)
-    || output.readUInt32BE(16) !== width
-    || output.readUInt32BE(20) !== height
-  ) {
-    throw new Error('Embedded FFmpeg hero upscale output is invalid.')
-  }
-  return {
-    content: output,
-    contentType: 'image/png',
-    dimensions: { width, height },
-    filter,
-    binary: await embeddedBinaryIdentity(),
-  }
+  return upscaleImageToMinimum(content, orientation === 'landscape'
+    ? { width: 3840, height: 2160 }
+    : { width: 1080, height: 1920 })
 }
 
 export async function upscaleImageToMinimum(content, minimumDimensions) {

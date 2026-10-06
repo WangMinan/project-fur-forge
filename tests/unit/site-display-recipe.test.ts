@@ -29,6 +29,25 @@ const source: AssetSource = {
 }
 
 describe('site-display-v2 recipe', () => {
+  it('crops both Hero placements continuously and uses the actual processing source dimensions', () => {
+    for (const placement of ['home', 'commission'] as const) {
+      const landscape = { ...source, height: 3000, focalX: 0.37, focalY: 0.64 }
+      expect(buildSiteDisplayProcess(landscape, `${placement}-hero-landscape`, 1920, 'webp'))
+        .toContain('crop,x_0,y_480,w_4000,h_2250/resize,m_fill,w_1920,h_1080')
+      expect(buildSiteDisplayProcess({ ...landscape, focalY: 0.65 }, `${placement}-hero-landscape`, 1920, 'webp'))
+        .toContain('crop,x_0,y_488,')
+      const portrait = { ...source, width: 1600, height: 2400, focalX: 0.4, focalY: 0.64 }
+      expect(buildSiteDisplayProcess(portrait, `${placement}-hero-portrait`, 1080, 'webp'))
+        .toContain('crop,x_100,y_0,w_1350,h_2400/')
+      expect(buildSiteDisplayProcess(portrait, `${placement}-hero-portrait`, 1080, 'webp', { width: 800, height: 1200 }))
+        .toContain('crop,x_50,y_0,w_675,h_1200/')
+      for (const focalX of [0, 1]) {
+        expect(buildSiteDisplayProcess({ ...portrait, focalX }, `${placement}-hero-portrait`, 1080, 'webp'))
+          .toContain(`crop,x_${focalX * 250},y_0,w_1350,h_2400/`)
+      }
+    }
+  })
+
   it('adds 2K and 4K landscape hero sources without changing smaller widths', () => {
     expect(siteDisplayWidths('home-hero-landscape'))
       .toEqual([768, 1280, 1920, 2880, 3840])

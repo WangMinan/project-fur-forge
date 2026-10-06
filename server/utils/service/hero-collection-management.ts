@@ -106,8 +106,8 @@ function hasUpscaleVariant(
     && variant.inputSha256 === inputSha256
     && variant.byteSize !== null
     && variant.byteSize <= 20_000_000
-    && variant.width === width
-    && variant.height === height
+    && variant.width >= width
+    && variant.height >= height
   ))
 }
 

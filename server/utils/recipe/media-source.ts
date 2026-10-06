@@ -6,7 +6,7 @@ import type { MediaRole } from '../../../shared/types/contracts'
 import { ServiceError } from '../service-error'
 
 /** Lanczos 私有适配源身份，横竖 Hero 低分辨率原图共用。 */
-export const HERO_UPSCALE_RECIPE_VERSION = 'hero-upscale-lanczos-v2'
+export const HERO_UPSCALE_RECIPE_VERSION = 'hero-upscale-lanczos-v3'
 
 /** 领养设定图保持比例的 Lanczos 私有适配源身份。 */
 export const DESIGN_SHEET_UPSCALE_RECIPE_VERSION = 'design-sheet-upscale-lanczos-v1'
@@ -145,7 +145,7 @@ export function processingSource(
       WHERE asset_id = ? AND storage_scope = 'PRIVATE'
         AND status = 'READY' AND usage = 'preprocess'
         AND recipe_version = ? AND input_sha256 = ?
-        AND byte_size <= ? AND width = ? AND height = ?
+        AND byte_size <= ? AND width >= ? AND height >= ?
       ORDER BY created_at DESC LIMIT 1
     `).get(
       sourceAsset.id,
@@ -232,6 +232,7 @@ export function processingSource(
       AND status = 'READY' AND usage = 'preprocess'
       AND input_sha256 = ? AND byte_size <= ?
       AND width <= 4096 AND height <= 4096
+      AND recipe_version NOT LIKE 'hero-upscale-%'
     ORDER BY created_at DESC LIMIT 1
   `).get(
     sourceAsset.id,
