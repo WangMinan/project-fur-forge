@@ -2,7 +2,7 @@
 
 ## 新增模型
 
-本轮没有新增表、持久字段或迁移。下表保留整改前模型和处理边界，已实施选择记录在文末。
+F01–F12首轮没有新增表、持久字段或迁移；PR #41补修新增0056，见末节。下表保留整改前模型和处理边界，已实施选择记录在文末。
 
 ## 待校准模型
 
@@ -31,3 +31,7 @@
 - F06：移除 `WorkBasicsForm.sortOrder`。旧写入请求仍可携带经过校验的可选 sortOrder（兼容接收、继续忽略），当前表单不再发送；读取 DTO 的 sortOrder 仍必填，代表作品集合重排保留。
 - F08：删除旧 AdminWorkDto/AdminAssetDto 及仅由测试使用的 mapper/Schema/AssetRecord；真实 ManagedWorkDto/VerifiedAssetDto 的隔离断言保留并补强。
 - F09/F11：新增的共享状态仅存在于组件生命周期内；不新增浏览器持久存储或外部接口。
+
+## PR #41补修模型
+
+`commission_submissions.deletion_lease_expires_at` 为可空整数毫秒时间，非空时要求 `email_deletion_pending=1` 且时间为正数。认领增加现有version并写入到期时间，version作为执行凭证；续租/释放/最终提交均匹配该version。迁移本身不修改历史行version及删除标记，历史租约初值NULL。

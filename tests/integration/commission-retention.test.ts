@@ -9,10 +9,16 @@ import {
   describe,
   expect,
   it,
+  vi,
 } from 'vitest'
 import { migrateDatabase, openDatabase } from '../../server/utils/database'
 import { updateCommissionSubmission } from '../../server/utils/service/commission-management'
-import { updateCommissionSubmissionRow } from '../../server/utils/repository/commission-repository'
+import {
+  claimCommissionDeletionTarget, COMMISSION_DELETION_LEASE_MS, deleteCommissionTargetRows,
+  findCommissionDeletionTarget, holdsCommissionDeletionLease, releaseCommissionDeletionLease,
+  renewCommissionDeletionLease, updateCommissionSubmissionRow,
+} from '../../server/utils/repository/commission-repository'
+import { migrationsAfter, migrationsThrough } from '../helpers/migrations'
 import type {
   R3StageAObjectInspection,
   R3StageAObjectScope,
@@ -171,24 +177,166 @@ beforeEach(async () => {
 })
 
 afterEach(() => {
+  vi.useRealTimers()
   database.sqlite.close()
   rmSync(directory, { force: true, recursive: true })
 })
 
 describe('commission retention and exact single deletion', () => {
+  it('upgrades an existing deletion fence without resetting data or leaving it locked forever', async () => {
+    const file = resolve(directory, 'legacy.db')
+    await migrateDatabase(file, { migrationsFolder: migrationsThrough(file, '0055_r7_x_contact') })
+    const legacy = openDatabase(file).sqlite
+    const current = sqlite
+    try {
+      sqlite = legacy
+      seedSubmission()
+      legacy.prepare('UPDATE commission_submissions SET email_deletion_pending=1 WHERE id=?').run(SUBMISSION_ID)
+    }
+    finally { sqlite = current; legacy.close() }
+    await expect(migrateDatabase(file)).resolves.toMatchObject({ applied: migrationsAfter('0055_r7_x_contact') })
+    const upgraded = openDatabase(file).sqlite
+    try {
+      expect(upgraded.prepare('SELECT version, email_deletion_pending, deletion_lease_expires_at FROM commission_submissions').get())
+        .toEqual({ version: 2, email_deletion_pending: 1, deletion_lease_expires_at: null })
+      expect(claimCommissionDeletionTarget(upgraded, findCommissionDeletionTarget(upgraded, SUBMISSION_ID)!, NOW)).toBeTruthy()
+      expect(upgraded.pragma('foreign_key_check')).toEqual([])
+    }
+    finally { upgraded.close() }
+  })
+
+  it('does not grant a second deletion claim on a different database connection', () => {
+    seedSubmission()
+    const other = openDatabase(resolve(directory, 'studio.db')).sqlite
+    try {
+      expect(claimCommissionDeletionTarget(sqlite, findCommissionDeletionTarget(sqlite, SUBMISSION_ID)!)).toBeTruthy()
+      expect(claimCommissionDeletionTarget(other, findCommissionDeletionTarget(other, 'DD-RETENTION01')!)).toBeFalsy()
+    }
+    finally { other.close() }
+  })
+
+  it('rolls back the claim when an email transmission still blocks deletion', async () => {
+    seedSubmission()
+    sqlite.prepare(`INSERT INTO commission_email_notifications
+      (id, submission_id, recipient, status, attempt_count, next_attempt_at,
+       lease_token, lease_expires_at, transmitting_at, created_at, updated_at)
+      VALUES (?, ?, 'synthetic@example.invalid', 'sending', 1, ?, 'synthetic-lease', ?, ?, ?, ?)`)
+      .run(crypto.randomUUID(), SUBMISSION_ID, NOW, NOW + 60_000, NOW, NOW, NOW)
+    const remove = vi.spyOn(store, 'deleteAll')
+    await expect(executeCommissionDeletion({ actorUserId: USER_ID, identifier: SUBMISSION_ID, objectStore: store, sqlite, now: NOW }))
+      .rejects.toMatchObject({ statusCode: 409, reason: 'COMMISSION_DELETE_BLOCKED' })
+    expect(remove).not.toHaveBeenCalled()
+    expect(sqlite.prepare('SELECT version, email_deletion_pending, deletion_lease_expires_at FROM commission_submissions').get())
+      .toEqual({ version: 2, email_deletion_pending: 0, deletion_lease_expires_at: null })
+  })
+
+  it('rejects an alias deletion in a separate process before it can delete any object', async () => {
+    seedSubmission()
+    const remove = store.deleteAll.bind(store)
+    store.deleteAll = async (scope, key) => {
+      const child = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '-e', `
+        import Database from 'better-sqlite3';
+        import { executeCommissionDeletion } from ${JSON.stringify(new URL('../../server/utils/service/commission-retention.ts', import.meta.url).href)};
+        const db = new Database(process.argv[1]); let deletes = 0;
+        const objectStore = { inspect: async () => ({ current: true, versions: 0, deleteMarkers: 0, versionBytes: 0 }), deleteAll: async () => { deletes++; } };
+        try { await executeCommissionDeletion({ sqlite: db, objectStore, actorUserId: null, identifier: 'DD-RETENTION01' }); process.stdout.write(JSON.stringify({ status: 200, deletes })); }
+        catch (error) { process.stdout.write(JSON.stringify({ status: error.statusCode, deletes })); }
+        finally { db.close(); }
+      `, resolve(directory, 'studio.db')], { encoding: 'utf8', timeout: 10_000 })
+      expect(child.status, child.stderr).toBe(0)
+      expect(JSON.parse(child.stdout)).toEqual({ status: 409, deletes: 0 })
+      await remove(scope, key)
+    }
+    await expect(executeCommissionDeletion({ actorUserId: USER_ID, identifier: SUBMISSION_ID, objectStore: store, sqlite }))
+      .resolves.toMatchObject({ status: 'deleted' })
+    expect(sqlite.prepare("SELECT result FROM audit_logs WHERE action='COMMISSION_DATA_DELETE'").all()).toEqual([{ result: 'SUCCESS' }])
+  })
+
+  it('allows expired claims to be recovered and fences their previous version', () => {
+    seedSubmission()
+    const first = claimCommissionDeletionTarget(sqlite, findCommissionDeletionTarget(sqlite, SUBMISSION_ID)!, NOW)!
+    const other = openDatabase(resolve(directory, 'studio.db')).sqlite
+    try {
+      const claim = (now: number) => claimCommissionDeletionTarget(other, findCommissionDeletionTarget(other, 'DD-RETENTION01')!, now)
+      expect(claim(NOW + COMMISSION_DELETION_LEASE_MS - 1)).toBeNull()
+      const next = claim(NOW + COMMISSION_DELETION_LEASE_MS)!
+      expect(next.version).toBe(first.version + 1)
+      expect(renewCommissionDeletionLease(sqlite, first, NOW + COMMISSION_DELETION_LEASE_MS)).toBe(false)
+      releaseCommissionDeletionLease(sqlite, first)
+      expect(holdsCommissionDeletionLease(other, next, NOW + COMMISSION_DELETION_LEASE_MS)).toBe(true)
+      const staleTarget = findCommissionDeletionTarget(sqlite, SUBMISSION_ID)!
+      staleTarget.submission.version = first.version
+      expect(() => deleteCommissionTargetRows(sqlite, staleTarget, {
+        actorUserId: USER_ID, auditId: crypto.randomUUID(), deletedAt: NOW + COMMISSION_DELETION_LEASE_MS, submissionIdDigest: 'synthetic',
+      })).toThrow('lease is no longer held')
+      expect(sqlite.prepare('SELECT count(*) FROM commission_submissions').pluck().get()).toBe(1)
+    }
+    finally { other.close() }
+  })
+
+  it('renews a slow deletion and clears the heartbeat after completion', async () => {
+    seedSubmission()
+    vi.useFakeTimers()
+    vi.setSystemTime(NOW)
+    let entered!: () => void
+    let finish!: () => void
+    const started = new Promise<void>(resolve => { entered = resolve })
+    const barrier = new Promise<void>(resolve => { finish = resolve })
+    const remove = store.deleteAll.bind(store)
+    store.deleteAll = async (scope, key) => { entered(); await barrier; await remove(scope, key) }
+    const deletion = executeCommissionDeletion({ actorUserId: USER_ID, identifier: SUBMISSION_ID, objectStore: store, sqlite })
+    await started
+    await vi.advanceTimersByTimeAsync(COMMISSION_DELETION_LEASE_MS + 1)
+    const other = openDatabase(resolve(directory, 'studio.db')).sqlite
+    try { expect(claimCommissionDeletionTarget(other, findCommissionDeletionTarget(other, 'DD-RETENTION01')!, Date.now())).toBeNull() }
+    finally { other.close() }
+    finish()
+    await expect(deletion).resolves.toMatchObject({ status: 'deleted' })
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('does not write a failure audit when a stale process resumes after another owner completed', async () => {
+    seedSubmission()
+    let entered!: () => void
+    let finish!: () => void
+    const started = new Promise<void>(resolve => { entered = resolve })
+    const barrier = new Promise<void>(resolve => { finish = resolve })
+    const remove = store.deleteAll.bind(store)
+    store.deleteAll = async (scope, key) => { entered(); await barrier; await remove(scope, key) }
+    const deletion = executeCommissionDeletion({ actorUserId: USER_ID, identifier: SUBMISSION_ID, objectStore: store, sqlite })
+    await started
+    const other = openDatabase(resolve(directory, 'studio.db')).sqlite
+    try {
+      other.prepare('UPDATE commission_submissions SET deletion_lease_expires_at=? WHERE id=?').run(Date.now() - 1, SUBMISSION_ID)
+      const target = findCommissionDeletionTarget(other, SUBMISSION_ID)!
+      const next = claimCommissionDeletionTarget(other, target)!
+      target.submission.version = next.version
+      await remove('private', ORIGINAL_KEY)
+      deleteCommissionTargetRows(other, target, {
+        actorUserId: USER_ID, auditId: crypto.randomUUID(), deletedAt: Date.now(), submissionIdDigest: 'synthetic',
+      })
+      const rejected = expect(deletion).rejects.toMatchObject({ statusCode: 409, reason: 'COMMISSION_DELETE_IN_PROGRESS' })
+      finish()
+      await rejected
+      expect(other.prepare("SELECT result FROM audit_logs WHERE action='COMMISSION_DATA_DELETE'").all()).toEqual([{ result: 'SUCCESS' }])
+    }
+    finally { finish(); other.close() }
+  })
+
   it('fences edits by ID and another connection when deleting by receipt', async () => {
     seedSubmission()
     const other = openDatabase(resolve(directory, 'studio.db')).sqlite
     const remove = store.deleteAll.bind(store)
     store.deleteAll = async (scope, key) => {
       const change = { actorUserId: USER_ID, internalNote: null, status: 'accepted' as const }
-      expect(() => updateCommissionSubmission(sqlite, SUBMISSION_ID, 2, change)).toThrow()
-      expect(updateCommissionSubmissionRow(other, SUBMISSION_ID, 2, change, NOW)).toBe(0)
+      const version = findCommissionDeletionTarget(sqlite, SUBMISSION_ID)!.submission.version
+      expect(() => updateCommissionSubmission(sqlite, SUBMISSION_ID, version, change)).toThrow()
+      expect(updateCommissionSubmissionRow(other, SUBMISSION_ID, version, change, NOW)).toBe(0)
       const child = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '-e', `
         import Database from 'better-sqlite3';
         import { updateCommissionSubmissionRow } from ${JSON.stringify(new URL('../../server/utils/repository/commission-repository.ts', import.meta.url).href)};
         const db = new Database(process.argv[1]);
-        const changes = updateCommissionSubmissionRow(db, ${JSON.stringify(SUBMISSION_ID)}, 2, ${JSON.stringify(change)}, ${NOW});
+        const changes = updateCommissionSubmissionRow(db, ${JSON.stringify(SUBMISSION_ID)}, ${version}, ${JSON.stringify(change)}, ${NOW});
         db.close(); process.stdout.write(String(changes));
       `, resolve(directory, 'studio.db')], { encoding: 'utf8', timeout: 10_000 })
       expect(child.status, child.stderr).toBe(0)

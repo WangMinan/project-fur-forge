@@ -29,7 +29,7 @@
 - 关注 `commission_submissions` 的版本、状态和现有 `email_deletion_pending`；优先评估复用持久字段，不直接增加新锁表。
 - 发布任务使用现有 lease/attempt 与条件更新；不能因需要恢复就抢占有效租约。
 - 管理上传 `upload_sessions` 与匿名委托上传 `commission_upload_sessions` 是不同链路；F05 的“过期清理排除 VALIDATING”证据针对前者，不直接套用到后者。
-- 本轮没有 Schema 变更。若后续确需迁移，只新增前向迁移，并记录原因及恢复影响。
+- 首轮没有 Schema 变更；PR #41补修新增0056租约到期字段。历史迁移保持不变，恢复与版本切换约束见对应补修记录，尚未应用到实际业务库。
 
 ## 安全约定
 

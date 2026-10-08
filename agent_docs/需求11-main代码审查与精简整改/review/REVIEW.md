@@ -219,3 +219,7 @@
 ## workflow测试清理追加证据
 
 用户追加授权后的实际清理与覆盖映射见 [CI测试清理交接](../implementation/notes/2026-10-08-CI-TEST-CLEANUP.md)。默认生产构建模式的合并运行时套件18/18通过，补齐上节该项未验证限制；其余独立Review/实机/远程CI和生产边界保持。
+
+## PR #41异步Codex review补修
+
+[评论](https://github.com/WangMinan/project-fur-forge/pull/41#discussion_r4217326517) 指出F01的删除标记不能提供两个删除者之间的独占，已用双连接回归复现并按用户授权在main补修。新增0056到期字段，使用递增版本认领、续租和提交隔离，独立进程/过期执行者/失败重入回归见 [修复记录](../implementation/notes/2026-10-08-PR41-DELETION-LEASE.md)。这不改变前述删除与编辑保护，也不代表已执行业务库迁移。

@@ -370,6 +370,7 @@ export const commissionSubmissions = sqliteTable('commission_submissions', {
   receiptCode: text('receipt_code').notNull(),
   emailNotificationPolicy: text('email_notification_policy').notNull().default('legacy'),
   emailDeletionPending: integer('email_deletion_pending').notNull().default(0),
+  deletionLeaseExpiresAt: integer('deletion_lease_expires_at'),
   nickname: text('nickname').notNull(),
   // 0042 以前的真实申请无法由 Agent 猜测物种，因此旧行允许 NULL；
   // 所有新投递由请求 Schema 强制填写。
@@ -390,6 +391,7 @@ export const commissionSubmissions = sqliteTable('commission_submissions', {
 }, table => [
   check('commission_email_policy', sql`${table.emailNotificationPolicy} IN ('legacy', 'enabled', 'disabled', 'unconfigured')`),
   check('commission_email_deletion_pending', sql`${table.emailDeletionPending} IN (0, 1)`),
+  check('commission_deletion_lease', sql`${table.deletionLeaseExpiresAt} IS NULL OR (${table.emailDeletionPending} = 1 AND ${table.deletionLeaseExpiresAt} > 0)`),
   uniqueIndex('commission_submissions_receipt_unique').on(table.receiptCode),
   uniqueIndex('commission_submissions_design_asset_unique').on(table.designAssetId),
   uniqueIndex('commission_submissions_pending_phone_unique')
