@@ -411,3 +411,39 @@ textarea {
 }
 
 .public-channel-note { max-width: var(--public-content-wide); margin: 1rem auto; padding: 0 var(--public-page-padding); }
+
+/* Public navigation and admin listboxes share the same menu surface and items. */
+.ui-menu-panel {
+  display: grid;
+  padding: var(--space-2);
+  color: var(--public-text-primary);
+  background: var(--public-bg-primary);
+  border: 1px solid var(--public-border-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1rem 2rem rgb(17 20 25 / 0.12);
+}
+
+.ui-menu-option {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: var(--space-3) var(--space-4);
+  color: inherit;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  font-weight: 400;
+  overflow-wrap: anywhere;
+  border-radius: var(--radius-sm);
+}
+@media (hover: hover) {
+  .ui-menu-option:hover:not(:disabled):not([aria-disabled='true']) {
+    color: var(--public-accent-primary);
+    background: var(--ui-bg-hover);
+  }
+}
+.ui-menu-option[aria-current='page'],
+.ui-menu-option[aria-selected='true'],
+.ui-menu-option[data-active='true'] {
+  color: var(--public-accent-primary);
+  background: var(--ui-bg-hover);
+}
