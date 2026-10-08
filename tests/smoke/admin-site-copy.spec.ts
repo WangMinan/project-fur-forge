@@ -1,6 +1,7 @@
 import { mkdirSync } from 'node:fs'
 import { expect, test } from '@playwright/test'
-import { adminBaseURL, publicBaseURL, loginAsAdmin } from '../e2e/helpers/auth'
+import { adminBaseURL, publicBaseURL, loginAsAdmin, E2E_DATABASE_FILE } from '../e2e/helpers/auth'
+import { openFixtureDatabase } from '../e2e/helpers/fixture-db'
 
 test('普通配置保存失败在当前区域提示并保留草稿，可再次保存', async ({ page }, testInfo) => {
   await loginAsAdmin(page)
@@ -89,12 +90,11 @@ test('admin multilingual copy saves, protects drafts, detects conflict and rende
 })
 
 
-test('shared X configuration updates every public contact entry and segmented navigation', async ({ page, request }) => {
+test('shared X configuration updates every public contact entry and status filtering', async ({ page, request }) => {
   test.setTimeout(120_000)
-  const session = await loginAsAdmin(page)
+  await loginAsAdmin(page)
   const endpoint = `${adminBaseURL}/api/admin/v1/site/home/content`
   const initial = (await (await page.request.get(endpoint)).json()).data
-  const headers = { Origin: adminBaseURL, 'x-csrf-token': session.csrfToken }
   const changed = 'https://x.com/updated_account'
   try {
     await page.goto(`${adminBaseURL}/admin/site/content`)
@@ -121,9 +121,11 @@ test('shared X configuration updates every public contact entry and segmented na
     const home = (await (await request.get(`${publicBaseURL}/api/public/v1/home-aggregate`)).json()).data
     expect(home.hero.xContactUrl).toBe(changed)
     await page.goto(`${adminBaseURL}/admin/commissions`)
-    const nav = page.getByRole('navigation', { name: '委托申请状态' })
-    await nav.getByRole('link', { name: '已接受', exact: true }).click()
-    await expect(nav.getByRole('link', { name: '已接受', exact: true })).toHaveAttribute('aria-current', 'page')
+    const status = page.getByRole('combobox', { name: '处理状态', exact: true })
+    await status.click()
+    await page.getByRole('option', { name: '已接受', exact: true }).click()
+    await expect(status).toContainText('已接受')
+    await expect(page).toHaveURL(/status=accepted/u)
     for (const width of [390, 1440]) {
       await page.setViewportSize({ width, height: 900 })
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy()
@@ -131,9 +133,11 @@ test('shared X configuration updates every public contact entry and segmented na
     }
   }
   finally {
-    const latest = (await (await page.request.get(endpoint)).json()).data
-    const payload = { ...initial.contact, officialChannels: initial.contact.officialChannels.map(({ platform, account, qrCodeAssetId }: { platform: string, account: string | null, qrCodeAssetId: string | null }) => ({ platform, account, qrCodeAssetId })) }
-    delete payload.smtpStatus
-    expect((await page.request.put(`${endpoint}/contact`, { headers, data: { expectedVersion: latest.sectionVersions.contact, payload } })).status()).toBe(200)
+    // Restore the fixture even when the test deadline has cancelled HTTP requests.
+    const sqlite = openFixtureDatabase(E2E_DATABASE_FILE)
+    try {
+      sqlite.prepare("UPDATE site_content SET x_contact_url = ? WHERE id = 'site'").run(initial.contact.xContactUrl)
+    }
+    finally { sqlite.close() }
   }
 })

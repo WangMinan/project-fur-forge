@@ -60,3 +60,4 @@
 ## quality失败修复（2026-10-08）
 
 - [x] Q01：复现0056新增后的site-copy迁移数量断言失败，复用既有migrationsAfter精确计数；保留数据、备份、幂等及版本冲突断言。`2fdded2`已推送main，远程quality的67文件346项core及lint/typecheck通过；本地全量超时及复验中止边界见STATE。
+- [x] Q02：根据release-image失败trace修复admin-site-copy旧委托导航选择器，改用当前状态下拉框；清理通过本地夹具同步恢复X链接，避免超时后的HTTP清理取消污染public-i18n。lint/typecheck及两个smoke文件5项Chrome测试通过；已获main修复和重启出包授权，发布结果不代签。
