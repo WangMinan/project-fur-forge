@@ -1,4 +1,4 @@
-import { migrationsThrough } from '../helpers/migrations'
+import { migrationsThrough, migrationsAfter } from '../helpers/migrations'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
@@ -22,7 +22,7 @@ it('upgrades Chinese content without loss, preserves translations on rerun, and 
     old.prepare("UPDATE site_content SET about_studio_facts = '原有介绍', about_making_scope = NULL WHERE id = 'site'").run()
     const before = old.prepare("SELECT * FROM site_content WHERE id = 'site'").get() as Record<string, unknown>
     old.close()
-    expect(await migrateDatabase(file)).toMatchObject({ applied: 2, backupFile: expect.any(String) })
+    expect(await migrateDatabase(file)).toMatchObject({ applied: migrationsAfter('0053_r6_image_compositions'), backupFile: expect.any(String) })
     const sqlite = openDatabase(file).sqlite
     try {
       expect(sqlite.prepare("SELECT * FROM site_content WHERE id = 'site'").get()).toMatchObject(before)
