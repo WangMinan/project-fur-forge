@@ -16,7 +16,7 @@ const emit = defineEmits<{
     hasOperation: boolean
     limit: number
     orientation: HeroOrientation
-    ready: boolean
+    status: 'error' | 'loading' | 'ready'
   }]
 }>()
 
@@ -38,6 +38,7 @@ const {
 
 const actionError = shallowRef<string | null>(null)
 const showDraft = shallowRef(false)
+const addButton = useTemplateRef<{ $el: HTMLButtonElement }>('addButton')
 const slotLimit = computed(() => props.placement === 'commission' ? 1 : 5)
 const enabledItems = computed(() => (
   collection.value?.items
@@ -59,8 +60,7 @@ watchEffect(() => {
     hasOperation: Object.values(operations.value).some(isPublicationInProgress),
     limit: slotLimit.value,
     orientation: props.orientation,
-    ready: pageStatus.value === 'ready'
-      && (props.placement === 'commission' || enabledItems.value.length > 0),
+    status: pageStatus.value,
   })
 })
 
@@ -80,6 +80,12 @@ async function onCreate(payload: HeroCollectionItemInput) {
   if (!actionError.value) {
     showDraft.value = false
   }
+}
+
+async function cancelDraft() {
+  showDraft.value = false
+  await nextTick()
+  addButton.value?.$el.focus()
 }
 
 async function onMove(id: string, direction: -1 | 1) {
@@ -107,22 +113,20 @@ onMounted(() => void load())
     :aria-label="`${placement === 'home' ? '首页' : '委托页'}${orientationLabel}大图`"
   >
     <p v-if="pageStatus === 'loading'" role="status">正在加载{{ orientationLabel }}大图…</p>
-    <p v-else-if="pageStatus === 'error'" role="alert">{{ orientationLabel }}大图加载失败，请刷新重试。</p>
+    <div v-else-if="pageStatus === 'error'" class="hero-collection-editor__empty" role="alert">
+      <p>{{ orientationLabel }}大图加载失败。</p>
+      <AdminAction @click="load">重试</AdminAction>
+    </div>
     <template v-else-if="collection">
       <header class="hero-collection-editor__head">
-        <div>
-          <h2>{{ orientationLabel }}大图</h2>
-          <p role="status">
-            {{ orientation === 'landscape' ? '桌面 16:9' : '手机 9:16' }} ·
-            已启用 {{ enabledItems.length }} / {{ slotLimit }}
-          </p>
-        </div>
+        <p>{{ placement === 'home' ? '按顺序轮播，最多启用 5 张图片。' : '当前画幅最多启用 1 张图片。' }}</p>
         <AdminAction
           v-if="!showDraft"
+          ref="addButton"
           variant="primary"
           :disabled="mutating"
           @click="showDraft = true"
-        >新增大图项</AdminAction>
+        >新增图片</AdminAction>
       </header>
       <div v-if="actionError || conflictNotice" class="admin-feedback" role="alert">
         <p v-if="actionError">{{ actionError }}</p>
@@ -165,6 +169,7 @@ onMounted(() => void load())
           :default-sort-order="nextSortOrder"
           :mutating="mutating"
           @create="onCreate"
+          @cancel="cancelDraft"
           @conflict="load()"
         />
       </TransitionGroup>
@@ -189,14 +194,9 @@ onMounted(() => void load())
   align-items: center;
   justify-content: space-between;
   gap: var(--admin-space-3);
+  flex-wrap: wrap;
 }
 
-.hero-collection-editor__head div {
-  display: grid;
-  gap: var(--admin-space-1);
-}
-
-.hero-collection-editor h2,
 .hero-collection-editor p {
   margin: 0;
 }
@@ -208,7 +208,10 @@ onMounted(() => void load())
 }
 
 .hero-collection-editor__empty {
-  padding: var(--admin-space-5);
+  display: grid;
+  justify-items: center;
+  gap: var(--admin-space-3);
+  padding: var(--admin-space-7);
   background: var(--admin-bg-primary);
   border: 1px dashed var(--admin-border-primary);
   border-radius: var(--admin-radius-md);
