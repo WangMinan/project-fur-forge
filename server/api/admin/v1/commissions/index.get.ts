@@ -8,8 +8,9 @@ import { listCommissionSubmissions } from '../../../../utils/service/commission-
 
 export default defineEventHandler((event) => {
   setResponseHeader(event, 'cache-control', 'no-store')
-  const status = commissionSubmissionStatusSchema.safeParse(
-    getQuery(event).status ?? 'pending',
+  const requestedStatus = getQuery(event).status ?? 'pending'
+  const status = commissionSubmissionStatusSchema.optional().safeParse(
+    requestedStatus === 'all' ? undefined : requestedStatus,
   )
   if (!status.success) {
     throw createApiError(400, 'VALIDATION_ERROR', 'Request is invalid.')

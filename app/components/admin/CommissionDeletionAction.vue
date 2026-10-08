@@ -12,6 +12,7 @@ import type {
 const props = defineProps<{
   submissionId: string
   status: CommissionSubmissionStatus
+  compact?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -105,13 +106,15 @@ async function executeDeletion() {
 <template>
   <div v-if="status === 'rejected'" class="commission-deletion">
     <AdminAction
-      variant="danger"
-      size="small"
+      :variant="compact ? 'text' : 'danger'"
+      :size="compact ? 'normal' : 'small'"
+      :class="{ 'commission-deletion__trigger--compact': compact }"
+      aria-label="删除申请数据"
       :disabled="executing"
       :loading="previewing"
       loading-label="正在盘点…"
       @click="requestPreview"
-    >删除申请数据</AdminAction>
+    >{{ compact ? '删除' : '删除申请数据' }}</AdminAction>
     <p v-if="error && !dialogOpen" class="commission-deletion__error" role="alert">
       {{ error }}
     </p>
@@ -153,6 +156,10 @@ async function executeDeletion() {
   display: grid;
   justify-items: start;
   gap: var(--admin-space-2);
+}
+
+.commission-deletion__trigger--compact {
+  color: var(--admin-danger);
 }
 
 .commission-deletion__counts,

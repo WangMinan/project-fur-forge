@@ -16,6 +16,7 @@ const panel = useTemplateRef<HTMLDivElement>('panel')
 const enhanced = shallowRef(false)
 const open = shallowRef(false)
 const active = shallowRef(-1)
+const keyboardNavigation = shallowRef(false)
 const selected = computed(() => props.options.find(option => option.value === model.value))
 const position = shallowRef<Record<string, string>>({})
 let search = ''
@@ -24,7 +25,7 @@ let searchAt = 0
 function place() {
   if (!trigger.value || !panel.value) return
   const rect = trigger.value.getBoundingClientRect()
-  const gap = 6
+  const gap = Number.parseFloat(getComputedStyle(panel.value).paddingTop)
   const below = window.innerHeight - rect.bottom - gap - 8
   const above = rect.top - gap - 8
   const upwards = below < Math.min(panel.value.scrollHeight, 280) && above > below
@@ -45,6 +46,7 @@ function close() {
 
 function show() {
   if (props.disabled || !panel.value) return
+  keyboardNavigation.value = false
   active.value = props.options.findIndex(option => option.value === model.value && !option.disabled)
   if (active.value < 0) active.value = props.options.findIndex(option => !option.disabled)
   panel.value.showPopover()
@@ -85,7 +87,8 @@ function onKeydown(event: KeyboardEvent) {
   }
   if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
     event.preventDefault()
-    if (!open.value) { show(); return }
+    if (!open.value) { show(); keyboardNavigation.value = true; return }
+    keyboardNavigation.value = true
     const enabled = props.options.flatMap((option, index) => option.disabled ? [] : [index])
     const index = enabled.indexOf(active.value)
     active.value = (event.key === 'Home' ? enabled[0]
@@ -97,6 +100,7 @@ function onKeydown(event: KeyboardEvent) {
   if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
     event.preventDefault()
     if (!open.value) show()
+    keyboardNavigation.value = true
     search = (Date.now() - searchAt > 700 ? '' : search) + event.key.toLocaleLowerCase()
     searchAt = Date.now()
     const index = props.options.findIndex(option => !option.disabled && option.label.toLocaleLowerCase().startsWith(search))
@@ -167,7 +171,7 @@ onBeforeUnmount(() => {
       popover="auto"
       role="listbox"
       :aria-labelledby="controlId"
-      class="admin-select__panel"
+      class="admin-select__panel ui-menu-panel"
       :style="position"
       @toggle="open = ($event as ToggleEvent).newState === 'open'"
       @pointerdown.prevent
@@ -177,11 +181,12 @@ onBeforeUnmount(() => {
         :id="`${controlId}-option-${index}`"
         :key="option.value"
         role="option"
-        class="admin-select__option"
-        :class="{ 'admin-select__option--active': active === index }"
+        class="admin-select__option ui-menu-option"
+        :data-active="keyboardNavigation && active === index || undefined"
         :aria-selected="option.value === model"
         :aria-disabled="option.disabled || undefined"
         :data-index="index"
+        @pointermove="keyboardNavigation = false"
         @click="choose(index)"
       >
         <span>{{ option.label }}</span>
@@ -200,18 +205,16 @@ onBeforeUnmount(() => {
 .admin-select__trigger[aria-expanded='true'] { border-color: var(--admin-border-focus); }
 .admin-select__trigger:disabled { color: var(--admin-text-secondary); background: var(--admin-bg-subtle); cursor: default; }
 .admin-select__trigger[aria-invalid='true'] { border-color: var(--admin-status-error); }
-.admin-select__panel { position: fixed; inset: auto; margin: 0; padding: var(--admin-space-1); overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--admin-border-primary); border-radius: var(--radius-ui); background: var(--admin-bg-primary); color: var(--admin-text-primary); box-shadow: var(--admin-shadow-popover); font-family: var(--font-admin-ui); font-size: var(--admin-font-sm); }
+.admin-select__panel { position: fixed; inset: auto; margin: 0; overflow-y: auto; overscroll-behavior: contain; font-family: var(--font-admin-ui); }
 .admin-select__panel:not(:popover-open) { display: none; }
-.admin-select__option { display: flex; align-items: center; justify-content: space-between; gap: var(--admin-space-3); min-height: var(--admin-touch-target); padding: var(--admin-space-2) var(--admin-space-3); border-radius: var(--radius-ui); cursor: pointer; overflow-wrap: anywhere; }
-.admin-select__option + .admin-select__option { margin-top: var(--admin-space-1); }
-.admin-select__option[aria-selected='true'] { background: var(--ui-bg-selected); color: var(--admin-accent-primary); font-weight: 600; }
-.admin-select__option--active { outline: 1px solid var(--admin-border-focus); outline-offset: -1px; }
+.admin-select__option { cursor: pointer; }
+.admin-select__option[data-active='true'] { outline: 1px solid var(--public-border-focus); outline-offset: -1px; }
 .admin-select__option[aria-disabled='true'] { color: var(--admin-text-secondary); cursor: default; }
 @media (hover: hover) {
   .admin-select__trigger:hover:not(:disabled) { border-color: var(--admin-accent-primary); }
-  .admin-select__option:hover:not([aria-disabled='true']):not([aria-selected='true']) { background: var(--ui-bg-hover); }
 }
 @media (forced-colors: active) {
-  .admin-select__option--active { outline-color: Highlight; }
+  .admin-select__option[data-active='true'] { outline-color: Highlight; }
+  .admin-select__option[aria-selected='true'] { color: HighlightText; background: Highlight; }
 }
 </style>

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { COMMISSION_EMAIL_LABELS } from '~/utils/commission-email'
 import { commissionSubmissionListResponseSchema } from '~~/shared/schemas/commission'
 import type {
   CommissionSubmissionListItemDto,
@@ -19,21 +18,21 @@ const adminApi = useAdminApi()
 const items = ref<CommissionSubmissionListItemDto[]>([])
 const pageStatus = ref<'error' | 'loading' | 'ready'>('loading')
 const query = shallowRef('')
-const searchInput = shallowRef('')
-const searchField = useTemplateRef<HTMLInputElement>('searchField')
-function search() { query.value = searchInput.value.trim(); page.value = 1 }
-function clearSearch() { searchInput.value = ''; search(); searchField.value?.focus() }
+const searchField = useTemplateRef<{ focus: () => void }>('searchField')
+function clearSearch() { query.value = ''; searchField.value?.focus() }
+function resetFilters() { clearSearch(); void navigateTo('/admin/commissions') }
 const page = shallowRef(1)
 const pageSize = shallowRef(10)
-const activeStatus = computed<CommissionSubmissionStatus>(() => (
-  ['accepted', 'rejected'].includes(String(route.query.status))
+const activeStatus = computed<CommissionSubmissionStatus | 'all'>(() => (
+  ['pending', 'accepted', 'rejected'].includes(String(route.query.status))
     ? route.query.status as CommissionSubmissionStatus
-    : 'pending'
+    : 'all'
 ))
-const tabs: Array<{ label: string, status: CommissionSubmissionStatus }> = [
-  { label: '待处理', status: 'pending' },
-  { label: '已接受', status: 'accepted' },
-  { label: '已拒绝', status: 'rejected' },
+const statusOptions: Array<{ label: string, value: CommissionSubmissionStatus | 'all' }> = [
+  { label: '全部状态', value: 'all' },
+  { label: '待处理', value: 'pending' },
+  { label: '已接受', value: 'accepted' },
+  { label: '已拒绝', value: 'rejected' },
 ]
 
 const filteredItems = computed(() => items.value.filter(item => (
@@ -56,15 +55,8 @@ const visibleTo = computed(() => Math.min(
   filteredItems.value.length,
 ))
 
-function tabHref(status: CommissionSubmissionStatus) {
-  return status === 'pending' ? '/admin/commissions' : `/admin/commissions?status=${status}`
-}
-
-function formatTime(value: string) {
-  return new Intl.DateTimeFormat('zh-CN', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value))
+function statusHref(status: CommissionSubmissionStatus | 'all') {
+  return status === 'all' ? '/admin/commissions' : `/admin/commissions?status=${status}`
 }
 
 async function load() {
@@ -100,79 +92,46 @@ onMounted(() => void load())
 
 <template>
   <AdminShell current="commissions">
-    <div class="commission-inbox">
-      <header class="commission-inbox__header">
-        <div>
-          <h1>委托申请</h1>
-          <p>列表只显示昵称、物种、提交时间、状态、回执与邮件通知状态；联系方式在详情中按需查看。</p>
-        </div>
-        <button type="button" :disabled="pageStatus === 'loading'" @click="load">
-          {{ pageStatus === 'loading' ? '刷新中…' : '刷新' }}
-        </button>
+    <div class="admin-list-page commission-inbox">
+      <header class="admin-list-page__header">
+        <h1 class="admin-list-page__title">委托申请</h1>
+        <p v-if="pageStatus === 'ready'" class="admin-list-page__meta">共 {{ items.length }} 条申请</p>
+        <AdminAction class="commission-inbox__refresh" :loading="pageStatus === 'loading'" loading-label="刷新中…" @click="load">刷新</AdminAction>
       </header>
 
-      <nav class="admin-segmented" aria-label="委托申请状态">
-        <NuxtLink
-          v-for="tab in tabs"
-          :key="tab.status"
-          class="admin-segmented__item"
-          :to="tabHref(tab.status)"
-          :aria-current="activeStatus === tab.status ? 'page' : undefined"
-        >{{ tab.label }}</NuxtLink>
-      </nav>
-
-      <form
-        v-if="pageStatus === 'ready' && items.length > 0"
-        class="commission-inbox__search"
-        role="search"
-        aria-label="查找委托申请"
-        @submit.prevent="search"
+      <AdminListToolbar
+        label="查找和筛选委托申请"
+        :filters-active="Boolean(query || activeStatus !== 'all')"
+        :result-count="filteredItems.length"
+        :total-count="items.length"
+        unit="条"
+        @reset="resetFilters"
       >
-        <input
-          id="admin-commission-search"
-          ref="searchField"
-          v-model="searchInput"
-          class="admin-list-toolbar__control"
-          type="search"
-          aria-label="按昵称、物种或回执编号搜索申请"
-          placeholder="输入昵称、物种或回执编号"
-          autocomplete="off"
-        >
-        <AdminAction type="submit" variant="primary">搜索</AdminAction>
-        <AdminAction v-if="query" variant="text" @click="clearSearch">清除</AdminAction>
-      </form>
+        <AdminListSearch id="admin-commission-search" ref="searchField" v-model="query" label="查找申请" placeholder="昵称、物种或回执编号" />
+        <div class="admin-list-toolbar__field">
+          <label class="admin-list-toolbar__label" for="admin-commission-status">处理状态</label>
+          <AdminSelect
+            id="admin-commission-status"
+            :model-value="activeStatus"
+            :options="statusOptions"
+            :disabled="pageStatus === 'loading'"
+            @update:model-value="navigateTo(statusHref($event))"
+          />
+        </div>
+      </AdminListToolbar>
 
-      <div v-if="pageStatus === 'loading'" class="commission-inbox__state" role="status">
-        正在加载申请…
-      </div>
+      <div v-if="pageStatus === 'loading'" class="commission-inbox__state" role="status">正在加载申请…</div>
       <div v-else-if="pageStatus === 'error'" class="commission-inbox__state" role="alert">
         <p>申请列表加载失败。</p>
-        <button type="button" @click="load">重试</button>
-      </div>
-      <div v-else-if="items.length === 0" class="commission-inbox__state">
-        当前状态下没有申请。
-      </div>
-      <div v-else-if="filteredItems.length === 0" class="commission-inbox__state">
-        <p>没有符合条件的申请。</p>
-        <button type="button" @click="clearSearch">清除查找</button>
+        <AdminAction @click="load">重试</AdminAction>
       </div>
       <template v-else>
-        <ul class="commission-inbox__list" role="list">
-          <li v-for="item in visibleItems" :key="item.id" class="commission-inbox__row">
-            <NuxtLink :to="`/admin/commissions/${item.id}`" class="commission-inbox__item">
-              <span class="commission-inbox__name">
-                {{ item.nickname }} · {{ item.species ?? '物种待补录' }}
-              </span>
-              <span>{{ formatTime(item.createdAt) }}</span>
-              <span>{{ item.receiptCode }} · {{ COMMISSION_EMAIL_LABELS[item.emailNotificationStatus] }}</span>
-            </NuxtLink>
-            <AdminCommissionDeletionAction
-              :submission-id="item.id"
-              :status="item.status"
-              @deleted="removeDeleted(item.id)"
-            />
-          </li>
-        </ul>
+        <div v-if="items.length === 0" class="commission-inbox__state">当前状态下没有申请。</div>
+        <div v-else-if="filteredItems.length === 0" class="commission-inbox__state">
+          <p>没有符合条件的申请。</p>
+          <AdminAction @click="clearSearch">清除查找</AdminAction>
+        </div>
+        <AdminCommissionListTable v-else :items="visibleItems" @deleted="removeDeleted" />
         <AdminPagination
           v-model:page="page"
           v-model:page-size="pageSize"
@@ -189,96 +148,6 @@ onMounted(() => void load())
 </template>
 
 <style scoped>
-.commission-inbox {
-  display: grid;
-  gap: var(--admin-space-5);
-  max-width: var(--admin-content-max);
-}
-
-.commission-inbox__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--admin-space-4);
-  flex-wrap: wrap;
-}
-
-.commission-inbox__header h1,
-.commission-inbox__header p {
-  margin: 0;
-}
-
-.commission-inbox__header p {
-  margin-top: var(--admin-space-2);
-  color: var(--admin-text-secondary);
-  font-size: var(--admin-font-sm);
-}
-
-.commission-inbox button:not(.admin-action) {
-  min-height: var(--admin-control-height);
-  padding: 0 var(--admin-space-4);
-  border: 1px solid var(--admin-border-primary);
-  border-radius: var(--admin-radius-md);
-  background: var(--admin-bg-primary);
-  font: inherit;
-}
-
-.commission-inbox__state {
-  padding: var(--admin-space-6);
-  border-radius: var(--admin-radius-md);
-  background: var(--admin-bg-subtle);
-}
-
-.commission-inbox__search {
-  display: flex;
-  align-items: center;
-  gap: var(--admin-space-2);
-  width: min(100%, 34rem);
-  justify-self: end;
-}
-.commission-inbox__search input { flex: 1; min-width: 0; }
-.commission-inbox__search :deep(.admin-action) { flex-shrink: 0; }
-
-.commission-inbox__list {
-  display: grid;
-  gap: var(--admin-space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.commission-inbox__item {
-  display: grid;
-  grid-template-columns: minmax(8rem, 1fr) auto auto;
-  gap: var(--admin-space-4);
-  padding: var(--admin-space-4);
-  border: 1px solid var(--admin-border-secondary);
-  border-radius: var(--admin-radius-md);
-  background: var(--admin-bg-primary);
-  color: var(--admin-text-secondary);
-  font-size: var(--admin-font-sm);
-}
-
-.commission-inbox__row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--admin-space-3);
-}
-
-.commission-inbox__name {
-  color: var(--admin-text-primary);
-  font-weight: 600;
-}
-
-@media (max-width: 767px) {
-  .commission-inbox__row {
-    grid-template-columns: 1fr;
-  }
-
-  .commission-inbox__item {
-    grid-template-columns: 1fr;
-    gap: var(--admin-space-1);
-  }
-}
+.commission-inbox__refresh { margin-left: auto; }
+.commission-inbox__state { padding: var(--admin-space-6); border: 1px solid var(--admin-border-secondary); border-radius: var(--admin-radius-md); background: var(--admin-bg-primary); text-align: center; }
 </style>

@@ -167,12 +167,12 @@ onBeforeUnmount(() => {
           :id="`public-subnav-${item.href.slice(1)}`"
           class="public-header__subnav"
         >
-          <nav class="public-header__subnav-panel" :aria-label="t('count.subnav', { label: t(item.label) })">
+          <nav class="public-header__subnav-panel ui-menu-panel" :aria-label="t('count.subnav', { label: t(item.label) })">
             <NuxtLink
               v-for="child in item.children"
               :key="child.href"
               :to="child.href"
-              class="public-header__subnav-link"
+              class="public-header__subnav-link ui-menu-option"
               :aria-current="route.path === child.href ? 'page' : undefined"
             >
               {{ t(child.label) }}
@@ -433,37 +433,7 @@ onBeforeUnmount(() => {
     visibility var(--motion-duration-state) var(--motion-ease-standard);
 }
 
-.public-header__subnav-panel {
-  display: grid;
-  padding: var(--space-2);
-  color: var(--public-text-primary);
-  background: var(--public-bg-primary);
-  border: 1px solid var(--public-border-secondary);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 1rem 2rem rgb(17 20 25 / 0.12);
-}
-
-.public-header__subnav-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.75rem;
-  padding: var(--space-3) var(--space-4);
-  color: inherit;
-  font-size: var(--font-size-sm);
-  white-space: nowrap;
-  border-radius: var(--radius-sm);
-}
-@media (hover: hover) {
-  .public-header__subnav-link:hover:not(:disabled) {
-    color: var(--public-accent-primary);
-    background: var(--ui-bg-hover);
-  }
-}
-.public-header__subnav-link[aria-current='page'] {
-  color: var(--public-accent-primary);
-  background: var(--ui-bg-hover);
-}
-
+.public-header__subnav-link { white-space: nowrap; }
 
 .public-header__nav-item--expanded .public-header__subnav {
   visibility: visible;
