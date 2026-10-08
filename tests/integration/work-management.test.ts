@@ -14,6 +14,7 @@ import {
 } from 'vitest'
 import {
   createWorkRequestSchema,
+  managedWorkDtoSchema,
   replaceDesignSheetRequestSchema,
   replaceStudioPhotosRequestSchema,
 } from '../../shared/schemas/work'
@@ -169,6 +170,16 @@ afterEach(() => {
 })
 
 describe('T22 work management', () => {
+  it('uses the live management DTO without leaking private identities or adoption fields', () => {
+    const created = createManagedWork(sqlite, { ...workInput, sortOrder: undefined }, NOW)
+    const dto = getManagedWork(sqlite, created.id)
+    expect(dto.sortOrder).toBe(0)
+    expect(dto).not.toHaveProperty('adoptionStatus')
+    expect(dto).not.toHaveProperty('priceCnyMinor')
+    expect(dto).not.toHaveProperty('originalObjectKeys')
+    expect(managedWorkDtoSchema.safeParse({ ...dto, originalObjectKeys: ['test/private'] }).success).toBe(false)
+  })
+
   it('creates, lists, reads and updates a private draft with optimistic versions', () => {
     const created = createManagedWork(sqlite, workInput, NOW)
     expect(created).toMatchObject({

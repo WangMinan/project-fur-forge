@@ -1,5 +1,4 @@
 import {
-  adminAssetDtoSchema,
   publicAltSchema,
   publicPngSourceSetDtoSchema,
   publicSourceSetDtoSchema,
@@ -7,7 +6,6 @@ import {
 } from '../../../shared/schemas/media'
 import { publicHeroItemDtoSchema } from '../../../shared/schemas/home'
 import type {
-  AdminAssetDto,
   AssetStatus,
   HeroPlacement,
   HeroOrientation,
@@ -25,20 +23,6 @@ import {
   SITE_HERO_USAGES,
   siteDisplayWidthsForVersion,
 } from './site-display-recipe'
-
-export interface AssetRecord {
-  id: string
-  version: number
-  role: MediaRole
-  status: AssetStatus
-  mimeType: 'image/jpeg' | 'image/png' | 'image/webp'
-  width: number
-  height: number
-  /** Service-only fields. */
-  privateObjectKey: string
-  sha256: string
-  internalErrorCode: string | null
-}
 
 export interface VariantRecord {
   byteSize: number | null
@@ -104,18 +88,6 @@ export function publicMediaUrlForObjectKey(
     .map(encodeURIComponent)
     .join('/')}`
   return base.toString()
-}
-
-export function toAdminAssetDto(record: AssetRecord): AdminAssetDto {
-  return adminAssetDtoSchema.parse({
-    assetId: record.id,
-    version: record.version,
-    role: record.role,
-    status: record.status,
-    mimeType: record.mimeType,
-    width: record.width,
-    height: record.height,
-  })
 }
 
 type PublicVariantRecord = Pick<

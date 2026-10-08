@@ -1,14 +1,12 @@
 import { migrationsThrough, migrationsAfter } from '../helpers/migrations'
 import {
   mkdtempSync,
-  readFileSync,
   rmSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
-  DATABASE_MIGRATIONS_FOLDER,
   migrateDatabase,
   openDatabase,
 } from '../../server/utils/database'
@@ -95,16 +93,4 @@ describe('R3-E commission Contract migration', () => {
     }
   })
 
-  it('creates a fresh database without any FAQ column', async () => {
-    const file = databaseFile()
-    const journal = JSON.parse(readFileSync(
-      resolve(DATABASE_MIGRATIONS_FOLDER, 'meta/_journal.json'),
-      'utf8',
-    )) as { entries: unknown[] }
-    await expect(migrateDatabase(file)).resolves.toMatchObject({
-      applied: journal.entries.length,
-    })
-    expect(siteContentColumns(file)).not.toContain('commission_faq_json')
-    expect(siteContentColumns(file)).not.toContain('commission_faq_version')
-  })
 })

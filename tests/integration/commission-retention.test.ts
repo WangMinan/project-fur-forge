@@ -1,6 +1,7 @@
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
+import { spawnSync } from 'node:child_process'
 import type Database from 'better-sqlite3'
 import {
   afterEach,
@@ -10,6 +11,8 @@ import {
   it,
 } from 'vitest'
 import { migrateDatabase, openDatabase } from '../../server/utils/database'
+import { updateCommissionSubmission } from '../../server/utils/service/commission-management'
+import { updateCommissionSubmissionRow } from '../../server/utils/repository/commission-repository'
 import type {
   R3StageAObjectInspection,
   R3StageAObjectScope,
@@ -173,6 +176,46 @@ afterEach(() => {
 })
 
 describe('commission retention and exact single deletion', () => {
+  it('fences edits by ID and another connection when deleting by receipt', async () => {
+    seedSubmission()
+    const other = openDatabase(resolve(directory, 'studio.db')).sqlite
+    const remove = store.deleteAll.bind(store)
+    store.deleteAll = async (scope, key) => {
+      const change = { actorUserId: USER_ID, internalNote: null, status: 'accepted' as const }
+      expect(() => updateCommissionSubmission(sqlite, SUBMISSION_ID, 2, change)).toThrow()
+      expect(updateCommissionSubmissionRow(other, SUBMISSION_ID, 2, change, NOW)).toBe(0)
+      const child = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '-e', `
+        import Database from 'better-sqlite3';
+        import { updateCommissionSubmissionRow } from ${JSON.stringify(new URL('../../server/utils/repository/commission-repository.ts', import.meta.url).href)};
+        const db = new Database(process.argv[1]);
+        const changes = updateCommissionSubmissionRow(db, ${JSON.stringify(SUBMISSION_ID)}, 2, ${JSON.stringify(change)}, ${NOW});
+        db.close(); process.stdout.write(String(changes));
+      `, resolve(directory, 'studio.db')], { encoding: 'utf8', timeout: 10_000 })
+      expect(child.status, child.stderr).toBe(0)
+      expect(child.stdout).toBe('0')
+      await remove(scope, key)
+    }
+    try {
+      await expect(executeCommissionDeletion({ actorUserId: USER_ID, identifier: 'DD-RETENTION01', objectStore: store, sqlite }))
+        .resolves.toMatchObject({ status: 'deleted' })
+    }
+    finally { other.close() }
+  })
+
+  it('rejects a changed inspection snapshot before deleting any object', async () => {
+    seedSubmission()
+    const inspect = store.inspect.bind(store)
+    store.inspect = async (scope, key) => {
+      updateCommissionSubmissionRow(sqlite, SUBMISSION_ID, 2,
+        { actorUserId: USER_ID, internalNote: null, status: 'accepted' }, NOW)
+      return inspect(scope, key)
+    }
+    await expect(executeCommissionDeletion({ actorUserId: USER_ID, identifier: SUBMISSION_ID, objectStore: store, sqlite }))
+      .rejects.toMatchObject({ statusCode: 409 })
+    expect((await inspect('private', ORIGINAL_KEY)).current).toBe(true)
+    expect(sqlite.prepare('SELECT status FROM commission_submissions WHERE id=?').pluck().get(SUBMISSION_ID)).toBe('accepted')
+  })
+
   it('lists rejected immediately, only flags stale pending, and masks identifiers', () => {
     seedSubmission()
     sqlite.prepare(`

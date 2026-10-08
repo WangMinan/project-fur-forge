@@ -27,6 +27,7 @@ import {
 } from '../../server/utils/database'
 import { createUploadSession } from '../../server/utils/service/upload-session'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
+import { recoverStaleUploadValidations, UPLOAD_VALIDATION_IDLE_MS } from '../../server/utils/repository/upload-validation'
 
 const USER_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const WORK_ID = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
@@ -108,6 +109,21 @@ afterEach(() => {
 })
 
 describe('verified upload completion', () => {
+  it('rolls back a late validator after recovery has revoked its version', async () => {
+    const id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+    await createSession(id, createSyntheticTransparentPng(), 160, 64)
+    const head = storage.headPrivate.bind(storage)
+    let release!: () => void
+    const barrier = new Promise<void>(resolve => { release = resolve })
+    storage.headPrivate = async (key) => { await barrier; return head(key) }
+    const completion = completeUploadSession(sqlite, storage, id, { expectedVersion: 1, focalX: 0.5, focalY: 0.5 }, NOW)
+    expect(recoverStaleUploadValidations(sqlite, NOW + UPLOAD_VALIDATION_IDLE_MS + 1)).toBe(1)
+    release()
+    await expect(completion).rejects.toBeDefined()
+    expect(sqlite.prepare('SELECT count(*) FROM assets WHERE id=?').pluck().get(id)).toBe(0)
+    expect(sqlite.prepare('SELECT status FROM upload_sessions WHERE id=?').pluck().get(id)).toBe('FAILED')
+  })
+
   it('verifies the actual object and completes idempotently without leaking its key', async () => {
     const content = createSyntheticTransparentPng()
     const id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
@@ -136,6 +152,7 @@ describe('verified upload completion', () => {
     })
     expect(result.asset).not.toHaveProperty('privateObjectKey')
     expect(result.asset).not.toHaveProperty('sha256')
+    expect(result.asset).not.toHaveProperty('internalErrorCode')
     expect(result.session).not.toHaveProperty('privateObjectKey')
     expect(sqlite.prepare(`
       SELECT sha256 FROM assets WHERE id = ?

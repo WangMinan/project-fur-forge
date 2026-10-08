@@ -7,9 +7,9 @@ import '../utils/runner/home-management'
 import '../utils/runner/hero-collection-publication'
 import '../utils/runner/site-display-reconcile'
 import '../utils/runner/work-publication'
-import { recoverPendingOperations } from '../utils/runner/operation-recovery'
+import { recoverPendingOperations, startOperationRecovery } from '../utils/runner/operation-recovery'
 import { getRuntimeConfig } from '../utils/runtime-config'
-import { safeLog } from '../utils/safe-log'
+import { recoverStaleUploadValidations } from '../utils/repository/upload-validation'
 
 /**
  * T34-F5 启动恢复。
@@ -17,23 +17,16 @@ import { safeLog } from '../utils/safe-log'
  * 序号 02 保证它在 00.runtime-config 与 01.database-config 之后运行。
  * 恢复是后台任务：不阻塞第一个请求，失败只记录脱敏日志，不让进程起不来。
  */
-export default defineNitroPlugin(() => {
+export default defineNitroPlugin((app) => {
   if (getRuntimeConfig().appEnv === 'test' && !process.env.E2E_RECOVER_ON_BOOT) {
     // 测试构建默认不自动恢复：E2E 需要确定的 operation 状态。
     // 进程中断测试通过 E2E_RECOVER_ON_BOOT=1 显式打开。
     return
   }
-  void (async () => {
-    try {
-      await recoverPendingOperations({
-        sqlite: getDatabase().sqlite,
-        storage: getMediaStorage(),
-      })
-    }
-    catch (error) {
-      safeLog('error', 'Operation recovery failed at startup.', {
-        errorName: (error as { name?: unknown }).name,
-      })
-    }
-  })()
+  const stop = startOperationRecovery(async () => {
+    const sqlite = getDatabase().sqlite
+    recoverStaleUploadValidations(sqlite)
+    await recoverPendingOperations({ sqlite, storage: getMediaStorage() })
+  })
+  app.hooks.hook('close', stop)
 })

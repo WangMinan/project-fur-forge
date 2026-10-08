@@ -1,5 +1,5 @@
 /**
- * 管理端人民币价格输入的严格解析，与服务端契约 `adminWorkDtoSchema.priceCnyMinor`
+ * 管理端人民币价格输入的严格解析，与服务端契约 `managedWorkDtoSchema 的领养 priceCnyMinor`
  * （可选；存在时为正整数最小货币单位）保持同一接受集合：
  * - 空值 = 不公开价格（`undefined`）；
  * - 非空必须是完整十进制、最多两位小数、换算后大于 0 且为安全整数；

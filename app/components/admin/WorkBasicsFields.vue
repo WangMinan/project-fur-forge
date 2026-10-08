@@ -8,12 +8,10 @@ const props = withDefaults(defineProps<{
   disabled?: boolean
   errors: WorkFormErrors
   featuredEligible?: boolean
-  orderingDisabled?: boolean
   showErrors?: boolean
 }>(), {
   disabled: false,
   featuredEligible: false,
-  orderingDisabled: false,
   showErrors: false,
 })
 
@@ -133,22 +131,6 @@ function errorFor(key: keyof WorkFormErrors) {
         </p>
       </div>
 
-      <div class="field">
-        <label class="field__label" for="f-sort">排序</label>
-        <input
-          id="f-sort"
-          v-model="form.sortOrder"
-          class="field__input field__input--compact"
-          type="number"
-          min="0"
-          step="1"
-          :disabled="disabled || orderingDisabled"
-          :aria-invalid="errorFor('sortOrder') ? 'true' : undefined"
-          :aria-describedby="errorFor('sortOrder') ? 'f-sort-error' : undefined"
-        >
-        <p class="field__hint">代表作品顺序请在作品列表的“代表作品”视图维护。</p>
-        <p v-if="errorFor('sortOrder')" id="f-sort-error" class="field__error">{{ errorFor('sortOrder') }}</p>
-      </div>
     </div>
   </section>
 </template>
@@ -157,7 +139,6 @@ function errorFor(key: keyof WorkFormErrors) {
 .editor-card__grid { display: grid; gap: var(--admin-space-4); }
 .field__label { display: block; margin-bottom: var(--admin-space-2); font-size: var(--admin-font-sm); font-weight: 600; }
 .field__input { width: 100%; min-height: var(--admin-control-height); padding: 0 var(--admin-space-3); border: 1px solid var(--admin-border-primary); border-radius: var(--admin-radius-md); color: var(--admin-text-primary); background: var(--admin-bg-primary); font: inherit; }
-.field__input--compact { max-width: 14rem; }
 .field__input:focus { border-color: var(--admin-border-focus); outline: none; box-shadow: 0 0 0 3px var(--admin-focus-ring); }
 .field__input:disabled { color: var(--admin-text-tertiary); background: var(--admin-bg-subtle); }
 .field__input[aria-invalid='true'] { border-color: var(--admin-status-error); }

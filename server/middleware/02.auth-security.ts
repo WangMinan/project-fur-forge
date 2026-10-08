@@ -11,7 +11,8 @@ function isAtOrBelow(pathname: string, prefix: string) {
 }
 
 export default defineEventHandler(async (event) => {
-  const pathname = getRequestURL(event).pathname
+  // H3 accepts trailing slashes; security checks must cover the same routes.
+  const pathname = getRequestURL(event).pathname.replace(/\/+$/u, '') || '/'
 
   if (
     event.method === 'POST'

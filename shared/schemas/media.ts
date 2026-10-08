@@ -1,8 +1,4 @@
 import { z } from 'zod'
-import {
-  resourceIdSchema,
-  resourceVersionSchema,
-} from './api'
 
 export const MEDIA_ROLE_VALUES = [
   'design_sheet',
@@ -34,16 +30,6 @@ export const publicAltSchema = z.string()
     return code > 31 && code !== 127
   }))
   .refine(value => !publicAltContactPattern.test(value))
-
-export const adminAssetDtoSchema = z.object({
-  assetId: resourceIdSchema,
-  version: resourceVersionSchema,
-  role: mediaRoleSchema,
-  status: assetStatusSchema,
-  mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
-  width: z.number().int().positive().max(12_000),
-  height: z.number().int().positive().max(12_000),
-}).strict()
 
 export const publicVariantDtoSchema = z.object({
   src: z.string().url(),

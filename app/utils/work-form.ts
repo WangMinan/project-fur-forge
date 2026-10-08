@@ -16,7 +16,6 @@ export interface WorkBasicsForm {
   priceYuan: string
   purpose: WorkPurpose
   slug: string
-  sortOrder: string | number
   species: string
 }
 
@@ -25,7 +24,6 @@ export interface WorkFormErrors {
   characterName?: string
   price?: string
   slug?: string
-  sortOrder?: string
   species?: string
 }
 
@@ -39,7 +37,6 @@ export function emptyWorkForm(): WorkBasicsForm {
     priceYuan: '',
     purpose: 'commission',
     slug: '',
-    sortOrder: '0',
     species: '',
   }
 }
@@ -55,24 +52,8 @@ export function workFormFromDto(dto: ManagedWorkDto): WorkBasicsForm {
       : '',
     purpose: dto.purpose,
     slug: dto.slug,
-    sortOrder: String(dto.sortOrder),
     species: dto.species,
   }
-}
-
-function parseSortOrderInput(raw: string | number) {
-  const input = String(raw).trim()
-  if (input === '') {
-    return { error: '排序值不能为空，最小为 0', value: undefined }
-  }
-  if (!/^\d+$/.test(input)) {
-    return { error: '排序值必须是 0 或正整数', value: undefined }
-  }
-  const value = Number(input)
-  if (!Number.isSafeInteger(value)) {
-    return { error: '排序值超出可安全表示的范围', value: undefined }
-  }
-  return { error: null, value }
 }
 
 export function validateWorkForm(form: WorkBasicsForm): WorkFormErrors {
@@ -85,10 +66,6 @@ export function validateWorkForm(form: WorkBasicsForm): WorkFormErrors {
   }
   if (!SLUG_PATTERN.test(form.slug.trim())) {
     errors.slug = '只能使用小写字母、数字与连字符，且不能以连字符开头或结尾'
-  }
-  const sortOrder = parseSortOrderInput(form.sortOrder)
-  if (sortOrder.error) {
-    errors.sortOrder = sortOrder.error
   }
   if (form.purpose === 'adoption') {
     if (form.adoptionStatus === '') {
@@ -111,7 +88,6 @@ export function toWorkFieldsPayload(form: WorkBasicsForm): WorkFields {
     slug: form.slug.trim(),
     characterName: form.characterName.trim(),
     species: form.species.trim(),
-    sortOrder: parseSortOrderInput(form.sortOrder).value ?? 0,
     featured: form.featured,
   }
   if (form.purpose === 'adoption') {
@@ -129,13 +105,11 @@ export function toWorkFieldsPayload(form: WorkBasicsForm): WorkFields {
 }
 
 export function workFormSnapshot(form: WorkBasicsForm) {
-  const sortOrder = parseSortOrderInput(form.sortOrder)
   const base = {
     characterName: form.characterName.trim(),
     featured: form.featured,
     purpose: form.purpose,
     slug: form.slug.trim(),
-    sortOrder: sortOrder.value ?? String(form.sortOrder).trim(),
     species: form.species.trim(),
   }
   if (form.purpose !== 'adoption') {

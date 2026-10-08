@@ -98,6 +98,8 @@ describe('commission email contract', () => {
   it('saves one submission and one notification per recipient atomically, keeping the public receipt unchanged', async () => {
     const receipt = await seed()
     expect(Object.keys(receipt)).toEqual(['receiptCode'])
+    expect(sqlite.prepare('SELECT status FROM commission_upload_sessions WHERE id = ?').pluck().get(ID)).toBe('CONSUMED')
+    expect(sqlite.prepare('SELECT count(*) FROM commission_submissions').pluck().get()).toBe(1)
     expect(commissionEmailRows(sqlite, ID)).toHaveLength(2)
     expect(() => createCommissionSubmission(sqlite, input, TOKEN, { now, notificationsEnabled: true })).toThrow()
     expect(commissionEmailRows(sqlite, ID)).toHaveLength(2)

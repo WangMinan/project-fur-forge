@@ -1,3 +1,4 @@
+import { verifyPublicImage } from '../service/public-image-validation'
 import { createHash, randomUUID } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import { fitImageToSquare } from '../../../scripts/embedded-ffmpeg.mjs'
@@ -10,7 +11,6 @@ import {
 import { safeLog } from '../safe-log'
 import { ServiceError } from '../service-error'
 import {
-  contentTypeForFormat,
   CONTACT_QR_UPSCALE_RECIPE_VERSION,
   deterministicUuid,
   digest,
@@ -217,33 +217,12 @@ async function ensureContactQrProcessingSource(
   }
 }
 
-async function verifyVariant(
-  storage: MediaStorage,
-  variant: ReadyContactQrVariant,
-) {
-  const [head, info, anonymous] = await Promise.all([
-    storage.headPublic(variant.objectKey),
-    storage.imageInfoPublic(variant.objectKey),
-    storage.getPublicAnonymous(variant.objectKey),
-  ])
-  return head.byteSize === variant.byteSize
-    && head.byteSize === anonymous.content.length
-    && head.etagMd5Hex === digest('md5', anonymous.content)
-    && head.contentType === contentTypeForFormat('png')
-    && anonymous.contentType === contentTypeForFormat('png')
-    && info.fileSize === head.byteSize
-    && normalizedFormat(info.format) === 'png'
-    && info.width === variant.width
-    && info.height === variant.width
-    && digest('sha256', anonymous.content) === variant.sha256
-}
-
 async function variantStillUsable(
   storage: MediaStorage,
   variant: ReadyContactQrVariant,
 ) {
   try {
-    return await verifyVariant(storage, variant)
+    return await verifyPublicImage(storage, { ...variant, height: variant.width, format: 'png' })
   }
   catch {
     return false

@@ -33,6 +33,8 @@ import {
 import {
   recoverPendingOperations,
   registerOperationResumer,
+  startOperationRecovery,
+  RECOVERY_INTERVAL_MS,
 } from '../../server/utils/runner/operation-recovery'
 import { withOperationLeaseHeartbeat } from '../../server/utils/runner/operation-lease-heartbeat'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
@@ -87,6 +89,32 @@ afterEach(() => {
 })
 
 describe('operation lease, heartbeat and recovery', () => {
+  it('rescans after quick restart, drains bounded batches and preserves live leases', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(NOW)
+    const pending = Array.from({ length: 51 }, () => insertOperation())
+    for (const id of pending) claimOperationLease(sqlite, 'publication_operations', id, NOW)
+    const live = insertOperation()
+    claimOperationLease(sqlite, 'publication_operations', live, NOW, 600_000)
+    resetOperationLeaseOwner('restarted-process')
+    registerOperationResumer({
+      table: 'publication_operations', matches: (_db, id) => pending.includes(id),
+      failure: () => ({ stage: 'GENERATING_PUBLIC', code: 'TEST' }),
+      resume: async (_db, _storage, id) => { sqlite.prepare("UPDATE publication_operations SET status='DONE' WHERE id=?").run(id) },
+    })
+    const scan = vi.fn(() => recoverPendingOperations({ sqlite, storage: new FakeMediaStorage() }))
+    const stop = startOperationRecovery(scan)
+    await vi.advanceTimersByTimeAsync(OPERATION_LEASE_TTL_MS - 1)
+    expect(pending.every(id => row(id).status === 'GENERATING_PUBLIC')).toBe(true)
+    await vi.advanceTimersByTimeAsync(RECOVERY_INTERVAL_MS * 3)
+    expect(pending.every(id => row(id).status === 'DONE')).toBe(true)
+    expect(row(live).status).toBe('GENERATING_PUBLIC')
+    stop()
+    const count = scan.mock.calls.length
+    await vi.advanceTimersByTimeAsync(RECOVERY_INTERVAL_MS * 2)
+    expect(scan).toHaveBeenCalledTimes(count)
+  })
+
   it('claims a free lease, increments attempt and records the process owner', () => {
     const id = insertOperation()
     expect(row(id).attempt).toBe(0)
@@ -258,7 +286,9 @@ describe('operation lease, heartbeat and recovery', () => {
       'publication_operations',
       NOW + OPERATION_LEASE_TTL_MS + 1,
     )
-    expect(afterExpiry.map(entry => entry.id).sort())
+    expect(afterExpiry.map(entry => entry.id)).toEqual([free])
+    resetOperationLeaseOwner('new-process')
+    expect(findRecoverableOperations(sqlite, 'publication_operations', NOW + OPERATION_LEASE_TTL_MS + 1).map(entry => entry.id).sort())
       .toEqual([free, held].sort())
   })
 

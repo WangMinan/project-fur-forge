@@ -222,8 +222,8 @@ export function setOperationRecoveryReason(
 }
 
 /**
- * 启动恢复候选：非终止任务，且 lease 为空或已过期。
- * 仍被活跃 runner 持有心跳的任务不在候选内，避免抢走正在推进的工作。
+ * 恢复候选：非终止任务，且 lease 为空或其它进程的 lease 已过期。
+ * 本进程的 runner 可能仍在等待 OSS，定期扫描不能再次启动它。
  */
 export function findRecoverableOperations(
   sqlite: Database.Database,
@@ -235,9 +235,10 @@ export function findRecoverableOperations(
     SELECT ${leaseColumns} FROM ${table}
     WHERE status NOT IN (${terminalList})
       AND (lease_expires_at IS NULL OR lease_expires_at <= ?)
+      AND (lease_owner IS NULL OR lease_owner != ?)
     ORDER BY started_at
     LIMIT ?
-  `).all(now, limit) as LeasableOperationRow[]
+  `).all(now, operationLeaseOwner(), limit) as LeasableOperationRow[]
 }
 
 /**
@@ -259,6 +260,7 @@ export function failUnrecoverableOperation(
         recovery_reason = ?, lease_owner = NULL, lease_expires_at = NULL,
         version = version + 1, updated_at = ?, completed_at = ?
     WHERE id = ? AND status NOT IN (${terminalList})
-  `).run(stage, code, reason, now, now, operationId)
+      AND (lease_owner IS NULL OR lease_owner = ? OR lease_expires_at <= ?)
+  `).run(stage, code, reason, now, now, operationId, operationLeaseOwner(), now)
   return failed.changes === 1
 }

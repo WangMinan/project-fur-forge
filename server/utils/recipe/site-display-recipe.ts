@@ -1,3 +1,4 @@
+import { verifyPublicImage } from '../service/public-image-validation'
 import type Database from 'better-sqlite3'
 import type { MediaRole } from '../../../shared/types/contracts'
 import { fitCrop, pixelCrop } from '../../../shared/utils/image-composition'
@@ -274,32 +275,11 @@ async function variantStillUsable(
   variant: ReadySiteDisplayVariant,
 ) {
   try {
-    return await verifyVariant(storage, variant)
+    return await verifyPublicImage(storage, variant)
   }
   catch {
     return false
   }
-}
-
-async function verifyVariant(
-  storage: MediaStorage,
-  variant: ReadySiteDisplayVariant,
-) {
-  const [head, info, anonymous] = await Promise.all([
-    storage.headPublic(variant.objectKey),
-    storage.imageInfoPublic(variant.objectKey),
-    storage.getPublicAnonymous(variant.objectKey),
-  ])
-  return head.byteSize === variant.byteSize
-    && head.byteSize === anonymous.content.length
-    && head.etagMd5Hex === digest('md5', anonymous.content)
-    && head.contentType === contentTypeForFormat(variant.format)
-    && anonymous.contentType === contentTypeForFormat(variant.format)
-    && info.fileSize === head.byteSize
-    && normalizedFormat(info.format) === variant.format
-    && info.width === variant.width
-    && info.height === variant.height
-    && digest('sha256', anonymous.content) === variant.sha256
 }
 
 async function generateOne(

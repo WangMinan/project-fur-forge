@@ -17,6 +17,7 @@ import {
   uploadSessionDto,
 } from './upload-session'
 import { generateContactQrVariants } from '../recipe/contact-qr-recipe'
+import { renewUploadValidation, UPLOAD_VALIDATION_HEARTBEAT_MS } from '../repository/upload-validation'
 import {
   PrivateImageValidationError,
   verifyConditionalImageUpload,
@@ -298,13 +299,15 @@ function completeSession(
   sqlite: Database.Database,
   sessionId: string,
   now: number,
+  version: number,
 ) {
-  sqlite.prepare(`
+  const changed = sqlite.prepare(`
     UPDATE upload_sessions
     SET status = 'COMPLETED', asset_id = id, failure_code = NULL,
         failure_stage = NULL, version = version + 1, updated_at = ?
-    WHERE id = ? AND status = 'VALIDATING' AND asset_id IS NULL
-  `).run(now, sessionId)
+    WHERE id = ? AND status = 'VALIDATING' AND asset_id IS NULL AND version = ?
+  `).run(now, sessionId, version)
+  if (changed.changes !== 1) throw new Error('Upload validation lost ownership before commit.')
 }
 
 async function processContactQr(
@@ -384,104 +387,114 @@ export async function completeUploadSession(
   if (acquired.changes !== 1) {
     throw new ServiceError(409, 'CONFLICT', 'Upload session is already being validated.')
   }
-  const verified = await verifyOriginal(sqlite, storage, sessionId, now)
-  row = requireUploadSession(sqlite, sessionId)
+  const validationVersion = row.version + 1
+  const started = Date.now()
+  const heartbeat = setInterval(() => {
+    try { renewUploadValidation(sqlite, sessionId, validationVersion, now + Date.now() - started) }
+    catch { /* A transient busy database is retried on the next heartbeat. */ }
+  }, UPLOAD_VALIDATION_HEARTBEAT_MS)
+  heartbeat.unref()
+  try {
+    const verified = await verifyOriginal(sqlite, storage, sessionId, now)
+    row = requireUploadSession(sqlite, sessionId)
 
-  if (verified.content.length <= PREPROCESS_THRESHOLD_BYTES) {
-    try {
-      sqlite.transaction(() => {
-        insertAsset(
-          sqlite,
-          row,
-          verified,
-          input,
-          row.mediaRole === 'contact_qr' ? 'PENDING' : 'READY',
-          now,
-        )
-        completeSession(sqlite, sessionId, now)
-      })()
-    }
-    catch {
-      return failValidation(
-        sqlite,
-        storage,
-        sessionId,
-        'UPLOAD_STORAGE_FAILURE',
-        'DATABASE',
-        now,
-      )
-    }
-    if (row.mediaRole === 'contact_qr') {
-      await processContactQr(sqlite, storage, row.id, now)
-    }
-  }
-  else {
-    let preprocess
-    try {
-      preprocess = await createPreprocess(
-        storage,
-        row.privateObjectKey,
-        row.id,
-        verified.content,
-      )
-    }
-    catch {
-      sqlite.transaction(() => {
-        insertAsset(sqlite, row, verified, input, 'FAILED', now)
-        completeSession(sqlite, sessionId, now)
-      })()
-      const completed = requireUploadSession(sqlite, sessionId)
-      return {
-        session: uploadSessionDto(completed),
-        asset: assetDto(requireAsset(sqlite, row.id)),
-      }
-    }
-
-    try {
-      sqlite.transaction(() => {
-        insertAsset(sqlite, row, verified, input, 'READY', now)
-        sqlite.prepare(`
-          INSERT INTO asset_variants (
-            id, asset_id, storage_scope, status, object_key, input_sha256,
-            media_role, usage, width, height, format, quality, crop_identity,
-            recipe_version, sha256, byte_size, created_at, updated_at
-          ) VALUES (?, ?, 'PRIVATE', 'READY', ?, ?, ?, 'preprocess', ?, ?,
-                    'png', 100, ?, ?, ?, ?, ?, ?)
-        `).run(
-          `${row.id}:preprocess-v1`,
-          row.id,
-          preprocess.objectKey,
-          row.expectedSha256,
-          row.mediaRole,
-          preprocess.dimensions.width,
-          preprocess.dimensions.height,
-          preprocess.sha256,
-          PREPROCESS_RECIPE,
-          preprocess.sha256,
-          preprocess.content.length,
-          now,
-          now,
-        )
-        completeSession(sqlite, sessionId, now)
-      })()
-    }
-    catch {
+    if (verified.content.length <= PREPROCESS_THRESHOLD_BYTES) {
       try {
-        await cleanupKeys(storage, [preprocess.objectKey, row.privateObjectKey])
+        sqlite.transaction(() => {
+          insertAsset(
+            sqlite,
+            row,
+            verified,
+            input,
+            row.mediaRole === 'contact_qr' ? 'PENDING' : 'READY',
+            now,
+          )
+          completeSession(sqlite, sessionId, now, validationVersion)
+        })()
       }
       catch {
-        throw new ServiceError(500, 'INTERNAL_ERROR', 'Upload cleanup failed.')
+        return failValidation(
+          sqlite,
+          storage,
+          sessionId,
+          'UPLOAD_STORAGE_FAILURE',
+          'DATABASE',
+          now,
+        )
       }
-      throw new ServiceError(500, 'INTERNAL_ERROR', 'Media persistence failed.')
+      if (row.mediaRole === 'contact_qr') {
+        await processContactQr(sqlite, storage, row.id, now)
+      }
+    }
+    else {
+      let preprocess
+      try {
+        preprocess = await createPreprocess(
+          storage,
+          row.privateObjectKey,
+          row.id,
+          verified.content,
+        )
+      }
+      catch {
+        sqlite.transaction(() => {
+          insertAsset(sqlite, row, verified, input, 'FAILED', now)
+          completeSession(sqlite, sessionId, now, validationVersion)
+        })()
+        const completed = requireUploadSession(sqlite, sessionId)
+        return {
+          session: uploadSessionDto(completed),
+          asset: assetDto(requireAsset(sqlite, row.id)),
+        }
+      }
+
+      try {
+        sqlite.transaction(() => {
+          insertAsset(sqlite, row, verified, input, 'READY', now)
+          sqlite.prepare(`
+            INSERT INTO asset_variants (
+              id, asset_id, storage_scope, status, object_key, input_sha256,
+              media_role, usage, width, height, format, quality, crop_identity,
+              recipe_version, sha256, byte_size, created_at, updated_at
+            ) VALUES (?, ?, 'PRIVATE', 'READY', ?, ?, ?, 'preprocess', ?, ?,
+                      'png', 100, ?, ?, ?, ?, ?, ?)
+          `).run(
+            `${row.id}:preprocess-v1`,
+            row.id,
+            preprocess.objectKey,
+            row.expectedSha256,
+            row.mediaRole,
+            preprocess.dimensions.width,
+            preprocess.dimensions.height,
+            preprocess.sha256,
+            PREPROCESS_RECIPE,
+            preprocess.sha256,
+            preprocess.content.length,
+            now,
+            now,
+          )
+          completeSession(sqlite, sessionId, now, validationVersion)
+        })()
+      }
+      catch {
+        try {
+          await cleanupKeys(storage, [preprocess.objectKey, row.privateObjectKey])
+        }
+        catch {
+          throw new ServiceError(500, 'INTERNAL_ERROR', 'Upload cleanup failed.')
+        }
+        throw new ServiceError(500, 'INTERNAL_ERROR', 'Media persistence failed.')
+      }
+    }
+
+    const completed = requireUploadSession(sqlite, sessionId)
+    const asset = requireAsset(sqlite, row.id)
+    return {
+      session: uploadSessionDto(completed),
+      asset: assetDto(asset),
     }
   }
-
-  const completed = requireUploadSession(sqlite, sessionId)
-  const asset = requireAsset(sqlite, row.id)
-  return {
-    session: uploadSessionDto(completed),
-    asset: assetDto(asset),
-  }
+  finally { clearInterval(heartbeat) }
 }
 
 export async function retryAssetProcessing(

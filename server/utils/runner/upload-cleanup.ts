@@ -3,6 +3,7 @@ import { getDatabase } from '../database'
 import { getMediaStorage } from '../media-storage'
 import type { MediaStorage } from '../media-storage'
 import { safeLog } from '../safe-log'
+import { recoverStaleUploadValidations } from '../repository/upload-validation'
 
 /**
  * T34-F5 过期上传会话主动清扫。
@@ -59,6 +60,7 @@ export async function cleanupExpiredUploads(options: {
   const limit = Math.max(1, Math.min(options.limit ?? 200, 1_000))
   // 默认 dry-run：必须显式传 false 才真正删除。
   const dryRun = options.dryRun !== false
+  if (!dryRun) recoverStaleUploadValidations(sqlite, now)
 
   const sessions = findExpiredUploadSessions(sqlite, now, limit)
   const result: UploadCleanupResult = {

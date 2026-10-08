@@ -4,26 +4,11 @@ import {
   it,
 } from 'vitest'
 import {
-  toAdminAssetDto,
   toPublicVariantDto,
 } from '../../server/utils/recipe/media-mapper'
 import type {
-  AssetRecord,
   VariantRecord,
 } from '../../server/utils/recipe/media-mapper'
-
-const asset: AssetRecord = {
-  id: '550e8400-e29b-41d4-a716-446655440000',
-  version: 1,
-  role: 'studio_photo',
-  status: 'READY',
-  mimeType: 'image/png',
-  width: 1200,
-  height: 1600,
-  privateObjectKey: 'prod/original/private-key.png',
-  sha256: 'a'.repeat(64),
-  internalErrorCode: 'PRIVATE_PROCESSING_DETAIL',
-}
 
 const publicVariant: VariantRecord = {
   byteSize: 2_048,
@@ -44,24 +29,6 @@ const publicVariant: VariantRecord = {
 }
 
 describe('media DTO mapping', () => {
-  it('keeps private keys and internal fields out of admin projection', () => {
-    const dto = toAdminAssetDto(asset)
-    const serialized = JSON.stringify(dto)
-
-    expect(dto).toEqual({
-      assetId: asset.id,
-      version: 1,
-      role: 'studio_photo',
-      status: 'READY',
-      mimeType: 'image/png',
-      width: 1200,
-      height: 1600,
-    })
-    expect(serialized).not.toContain('private-key')
-    expect(serialized).not.toContain('sha256')
-    expect(serialized).not.toContain('PRIVATE_PROCESSING_DETAIL')
-  })
-
   it('only projects READY public variants and derives URL outside SQLite', () => {
     expect(toPublicVariantDto(
       publicVariant,

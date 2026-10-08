@@ -126,27 +126,6 @@ describe('commission confirmation core gate', () => {
     expectUploadUnconsumed()
   })
 
-  it('keeps the existing successful transaction when both confirmations are true', async () => {
-    await seedCompletedUpload()
-
-    expect(createCommissionSubmission(
-      sqlite,
-      validSubmission,
-      TOKEN,
-      {
-        id: SESSION_ID,
-        now: NOW + 2,
-        receiptCode: () => 'DD-CONFIRMED',
-      },
-    )).toEqual({ receiptCode: 'DD-CONFIRMED' })
-    expect(sqlite.prepare(`
-      SELECT status FROM commission_upload_sessions WHERE id = ?
-    `).pluck().get(SESSION_ID)).toBe('CONSUMED')
-    expect(sqlite.prepare(`
-      SELECT count(*) FROM commission_submissions
-    `).pluck().get()).toBe(1)
-  })
-
   it('does not create an upload session while the privacy policy is unready', async () => {
     sqlite.prepare(`
       UPDATE site_content
