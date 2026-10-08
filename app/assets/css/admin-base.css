@@ -164,7 +164,7 @@
 }
 
 /**
- * 管理端列表页的共用外壳：页头、主操作按钮、查找条与表格。
+ * 管理端列表页的共用外壳、查找条与表格；页头由 AdminPageHeader 统一。
  *
  * 多个管理列表原先各自维护一份同样的样式，结果每加一次需求就
  * 漂移一次（表头字号、按钮大小、标题是否换行都对不上）。这里定义一次，
@@ -174,39 +174,11 @@
   max-width: var(--admin-content-max);
 }
 
-/* 标题与计数同一行：计数是标题的附注，不该被挤到下一行。 */
-.admin-surface .admin-list-page__header {
-  display: flex;
-  align-items: baseline;
-  gap: var(--admin-space-4);
-  flex-wrap: wrap;
-  margin-bottom: var(--admin-space-5);
-}
-
-.admin-surface .admin-list-page__title {
-  margin: 0;
-  font-size: var(--admin-font-xl);
-  font-family: var(--font-admin-display);
-  font-weight: var(--admin-type-display-weight);
-  line-height: var(--admin-type-display-line-height);
-}
-
-.admin-surface .admin-list-page__meta {
-  margin: 0;
-  color: var(--admin-text-secondary);
-  font-size: var(--admin-font-sm);
-  font-family: var(--font-admin-metadata);
-  line-height: var(--admin-type-metadata-line-height);
-}
-
 .admin-surface .admin-list-toolbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--admin-space-3);
   margin-bottom: var(--admin-space-4);
-  padding: var(--admin-space-4) 0;
-  border-top: 1px solid var(--admin-border-secondary);
-  border-bottom: 1px solid var(--admin-border-secondary);
 }
 
 .admin-surface .admin-list-toolbar__field {

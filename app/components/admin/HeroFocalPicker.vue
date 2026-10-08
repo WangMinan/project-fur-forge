@@ -8,6 +8,7 @@ const props = defineProps<{
   focalY: number
   orientation: HeroOrientation
   previewUrl: string | null
+  readonly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -78,7 +79,7 @@ function onRangeInput(axis: 'x' | 'y', event: Event) {
         >
         <p v-else>上传图片后将在这里预览目标裁切。</p>
         <span
-          v-if="previewUrl"
+          v-if="previewUrl && !readonly"
           class="hero-focal-picker__marker"
           :style="{
             insetInlineStart: `${focalX * 100}%`,
@@ -103,40 +104,40 @@ function onRangeInput(axis: 'x' | 'y', event: Event) {
       </div>
     </div>
 
-    <div class="hero-focal-picker__controls">
-      <div>
-        <h4>图片焦点</h4>
-        <p>拖动画面中的焦点，或使用水平、垂直控制条微调主体位置。</p>
+    <div class="hero-focal-picker__sidebar">
+      <div v-show="!readonly && previewUrl" class="hero-focal-picker__controls">
+        <div>
+          <h3>图片焦点</h3>
+          <p>拖动预览中的标记，或用滑杆微调主体位置。</p>
+        </div>
+
+        <label>
+          <span>水平焦点 {{ focalPercent.x }}%</span>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="0.1"
+            :value="focalPercent.x"
+            :disabled="disabled"
+            @input="onRangeInput('x', $event)"
+          >
+        </label>
+        <label>
+          <span>垂直焦点 {{ focalPercent.y }}%</span>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="0.1"
+            :value="focalPercent.y"
+            :disabled="disabled"
+            @input="onRangeInput('y', $event)"
+          >
+        </label>
+
       </div>
-
-      <label>
-        <span>水平焦点 {{ focalPercent.x }}%</span>
-        <input
-          type="range"
-          min="0"
-          max="100"
-          step="0.1"
-          :value="focalPercent.x"
-          :disabled="disabled"
-          @input="onRangeInput('x', $event)"
-        >
-      </label>
-      <label>
-        <span>垂直焦点 {{ focalPercent.y }}%</span>
-        <input
-          type="range"
-          min="0"
-          max="100"
-          step="0.1"
-          :value="focalPercent.y"
-          :disabled="disabled"
-          @input="onRangeInput('y', $event)"
-        >
-      </label>
-
-      <p class="hero-focal-picker__hint">
-        只影响启用后生成的目标画框；横版与竖版素材仍分别维护。
-      </p>
+      <slot />
     </div>
   </section>
 </template>
@@ -144,13 +145,14 @@ function onRangeInput(axis: 'x' | 'y', event: Event) {
 <style scoped>
 .hero-focal-picker {
   display: grid;
-  gap: var(--admin-space-3);
+  gap: var(--admin-space-5);
+  align-items: start;
 }
 
 .hero-focal-picker__preview {
-  width: min(100%, 52rem);
+  width: 100%;
   overflow: hidden;
-  border: 0.5rem solid var(--admin-text-primary);
+  border: 1px solid var(--admin-border-secondary);
   border-radius: var(--admin-radius-sm);
 }
 
@@ -165,7 +167,7 @@ function onRangeInput(axis: 'x' | 'y', event: Event) {
 
 .hero-focal-picker__preview[data-orientation='portrait'] {
   width: min(100%, 20rem);
-  border-width: 0.65rem;
+  margin-inline: auto;
   border-radius: var(--radius-ui);
 }
 
@@ -183,7 +185,7 @@ function onRangeInput(axis: 'x' | 'y', event: Event) {
 
 .hero-focal-picker__preview p,
 .hero-focal-picker__controls p,
-.hero-focal-picker__controls h4 {
+.hero-focal-picker__controls h3 {
   margin: 0;
 }
 
@@ -233,11 +235,16 @@ function onRangeInput(axis: 'x' | 'y', event: Event) {
   pointer-events: none;
 }
 
+.hero-focal-picker__sidebar {
+  display: grid;
+  gap: var(--admin-space-5);
+  min-width: 0;
+}
+
 .hero-focal-picker__controls {
   display: grid;
   align-content: start;
   gap: var(--admin-space-4);
-  max-width: 24rem;
 }
 
 .hero-focal-picker__controls > div:first-child {
@@ -245,7 +252,7 @@ function onRangeInput(axis: 'x' | 'y', event: Event) {
   gap: var(--admin-space-1);
 }
 
-.hero-focal-picker__controls h4,
+.hero-focal-picker__controls h3,
 .hero-focal-picker__controls label span {
   font-size: var(--admin-font-sm);
   font-weight: 700;
@@ -269,7 +276,7 @@ function onRangeInput(axis: 'x' | 'y', event: Event) {
 
 @media (min-width: 960px) {
   .hero-focal-picker {
-    grid-template-columns: minmax(0, 52rem) minmax(18rem, 24rem);
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
     align-items: start;
   }
 }

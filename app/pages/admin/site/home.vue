@@ -19,7 +19,7 @@ interface OrientationSummary {
   hasOperation: boolean
   limit: number
   orientation: HeroOrientation
-  ready: boolean
+  status: 'error' | 'loading' | 'ready'
 }
 
 const PLACEMENTS = [
@@ -60,24 +60,22 @@ const summaries = reactive<Record<HeroOrientation, OrientationSummary>>({
     hasOperation: false,
     limit: 5,
     orientation: 'landscape',
-    ready: false,
+    status: 'loading',
   },
   portrait: {
     enabledCount: 0,
     hasOperation: false,
     limit: 5,
     orientation: 'portrait',
-    ready: false,
+    status: 'loading',
   },
 })
 
 function placementTo(next: HeroPlacement) {
-  return next === 'home'
-    ? '/admin/site/home'
-    : {
-        path: '/admin/site/home',
-        query: { placement: next, orientation: orientation.value },
-      }
+  return {
+    path: '/admin/site/home',
+    query: { placement: next, orientation: orientation.value },
+  }
 }
 
 function orientationTo(next: HeroOrientation) {
@@ -99,207 +97,110 @@ watch(placement, () => {
     current.enabledCount = 0
     current.hasOperation = false
     current.limit = placement.value === 'commission' ? 1 : 5
-    current.ready = false
+    current.status = 'loading'
   }
 })
 </script>
 
 <template>
   <AdminShell current="home">
-    <div class="hero-admin" data-testid="home-admin">
-      <header class="hero-admin__header">
-        <p class="hero-admin__kicker">站点媒体</p>
-        <h1>大图管理</h1>
-        <p>首页每个方向独立维护 1–5 张轮播；委托页横版与竖版各自维护一个可下架替换的单槽。</p>
-      </header>
+    <div class="hero-admin admin-list-page" data-testid="home-admin">
+      <AdminPageHeader title="大图管理" />
 
-      <nav class="admin-segmented" aria-label="大图页面">
-        <NuxtLink
-          v-for="item in PLACEMENTS"
-          :key="item.key"
-          class="admin-segmented__item"
-          :to="placementTo(item.key)"
-          :aria-current="placement === item.key ? 'page' : undefined"
-        >{{ item.label }}</NuxtLink>
-      </nav>
-
-      <section class="hero-admin__workspace" :aria-label="placement === 'home' ? '首页大图' : '委托页大图'">
-        <header class="hero-admin__workspace-head">
-          <div>
-            <h2>{{ placement === 'home' ? '首页大图' : '委托页大图' }}</h2>
-            <p class="hero-admin__summary" role="status">
-              横版 {{ summaries.landscape.enabledCount }}/{{ summaries.landscape.limit }}
-              <span aria-hidden="true">·</span>
-              竖版 {{ summaries.portrait.enabledCount }}/{{ summaries.portrait.limit }}
-              <template v-if="summaries.landscape.hasOperation || summaries.portrait.hasOperation">
-                <span aria-hidden="true">·</span> 有长任务进行中
-              </template>
-            </p>
-          </div>
-        </header>
-
-        <nav class="hero-admin__orientation-tabs" aria-label="设备画框与图片方向">
-          <NuxtLink
-            v-for="item in ORIENTATIONS"
-            :key="item.key"
-            class="hero-admin__orientation-tab"
-            :to="orientationTo(item.key)"
-            :aria-current="orientation === item.key ? 'page' : undefined"
-          >
-            <span>{{ item.label }}</span>
-            <small>{{ item.frame }}</small>
-            <span v-if="!summaries[item.key].ready" class="hero-admin__orientation-state">
-              待检查
-            </span>
-          </NuxtLink>
-        </nav>
-
-        <div
-          class="hero-admin__editors"
-          :data-placement="placement"
-          :data-active-orientation="orientation"
-        >
-          <div
-            v-for="item in ORIENTATIONS"
-            v-show="orientation === item.key"
-            :key="`${placement}-${item.key}`"
-            class="hero-admin__editor"
-            :data-selected="orientation === item.key"
-          >
-            <AdminHeroCollectionEditor
-              :placement="placement"
-              :orientation="item.key"
-              @summary="updateSummary"
-            />
-          </div>
+      <div class="hero-admin__toolbar">
+        <div class="hero-admin__placement">
+          <label class="admin-list-toolbar__label" for="hero-placement">使用页面</label>
+          <AdminSelect
+            id="hero-placement"
+            :model-value="placement"
+            :options="PLACEMENTS.map(item => ({ value: item.key, label: item.label }))"
+            @update:model-value="navigateTo(placementTo($event))"
+          />
         </div>
-      </section>
+        <div class="hero-admin__formats">
+          <span class="admin-list-toolbar__label">画幅 · 已启用数量</span>
+          <nav class="hero-admin__orientation-tabs" aria-label="设备画框与图片方向">
+            <NuxtLink
+              v-for="item in ORIENTATIONS"
+              :key="item.key"
+              class="hero-admin__orientation-tab"
+              :to="orientationTo(item.key)"
+              :aria-current="orientation === item.key ? 'page' : undefined"
+            >
+              <span class="hero-admin__frame-icon" :data-orientation="item.key" aria-hidden="true" />
+              <span>{{ item.label }}</span>
+              <span>{{ item.frame }}</span>
+              <span class="hero-admin__count">
+                {{ summaries[item.key].status === 'loading' ? '加载中…'
+                  : summaries[item.key].status === 'error' ? '读取失败'
+                    : `${summaries[item.key].enabledCount}/${summaries[item.key].limit}` }}
+              </span>
+              <span v-if="summaries[item.key].hasOperation" class="hero-admin__operation">处理中</span>
+            </NuxtLink>
+          </nav>
+        </div>
+      </div>
+
+      <div
+        class="hero-admin__editors"
+        :data-placement="placement"
+        :data-active-orientation="orientation"
+      >
+        <div
+          v-for="item in ORIENTATIONS"
+          v-show="orientation === item.key"
+          :key="`${placement}-${item.key}`"
+          class="hero-admin__editor"
+          :data-selected="orientation === item.key"
+        >
+          <AdminHeroCollectionEditor
+            :placement="placement"
+            :orientation="item.key"
+            @summary="updateSummary"
+          />
+        </div>
+      </div>
     </div>
   </AdminShell>
 </template>
 
 <style scoped>
-.hero-admin,
-.hero-admin__workspace {
-  display: grid;
-  gap: var(--admin-space-5);
-}
-
-.hero-admin {
-  max-width: 88rem;
-}
-
-.hero-admin__header,
-.hero-admin__workspace-head > div {
-  display: grid;
-  gap: var(--admin-space-1);
-}
-
-.hero-admin__header {
-  max-width: 52rem;
-}
-
-.hero-admin h1,
-.hero-admin h2,
-.hero-admin p {
-  margin: 0;
-}
-
-.hero-admin h1 {
-  font-size: var(--admin-font-xl);
-  line-height: var(--admin-line-tight);
-}
-
-.hero-admin__kicker {
-  color: var(--admin-accent-primary);
-  font-family: var(--font-admin-metadata);
-  font-size: var(--admin-font-xs);
-  font-weight: var(--admin-type-metadata-weight);
-  line-height: var(--admin-type-metadata-line-height);
-  letter-spacing: 0;
-}
-
-.hero-admin__header p:not(.hero-admin__kicker),
-.hero-admin__summary {
-  color: var(--admin-text-secondary);
-  font-size: var(--admin-font-sm);
-}
-
-.hero-admin__orientation-tabs {
+.hero-admin__toolbar {
   display: flex;
-  gap: var(--admin-space-1);
-  width: fit-content;
-  max-width: 100%;
-  padding: var(--admin-space-1);
-  background: var(--admin-bg-subtle);
-  border-radius: var(--admin-radius-md);
+  align-items: end;
+  flex-wrap: wrap;
+  gap: var(--admin-space-5) var(--admin-space-7);
+  margin-bottom: var(--admin-space-5);
 }
-
-.hero-admin__orientation-tabs {
-  background: var(--admin-bg-workspace);
-}
-
+.hero-admin__placement { flex: 0 1 15rem; min-width: 12rem; }
+.hero-admin__formats { min-width: 0; }
+.hero-admin__orientation-tabs { display: flex; gap: var(--admin-space-3); }
 .hero-admin__orientation-tab {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
+  gap: var(--admin-space-2);
   min-height: var(--admin-touch-target);
   padding: var(--admin-space-2) var(--admin-space-3);
+  border-bottom: 2px solid transparent;
   color: var(--admin-text-secondary);
-  border: 1px solid transparent;
-  border-radius: var(--admin-radius-sm);
   font-size: var(--admin-font-sm);
-  font-weight: 600;
-  text-align: center;
+  line-height: var(--admin-line-normal);
 }
-
-.hero-admin__orientation-tab {
-  display: grid;
-  grid-template-columns: auto auto;
-  gap: 0 var(--admin-space-2);
+.hero-admin__orientation-tab[aria-current='page'] { color: var(--admin-accent-primary); border-bottom-color: currentcolor; }
+.hero-admin__count { font-variant-numeric: tabular-nums; }
+.hero-admin__operation { color: var(--admin-status-info); }
+.hero-admin__frame-icon { flex: none; width: 1.25rem; height: 0.8rem; border: 1px solid currentcolor; border-radius: 2px; }
+.hero-admin__frame-icon[data-orientation='portrait'] { width: 0.8rem; height: 1.25rem; }
+.hero-admin__editors, .hero-admin__editor { min-width: 0; }
+@media (hover: hover) {
+  .hero-admin__orientation-tab:hover { color: var(--admin-accent-primary); background: var(--ui-bg-hover); }
 }
-
-.hero-admin__orientation-tab small,
-.hero-admin__orientation-state {
-  color: var(--admin-text-tertiary);
-  font-size: var(--admin-font-xs);
-  font-weight: 400;
-}
-
-.hero-admin__orientation-state {
-  grid-column: 1 / -1;
-}
-
-.hero-admin__orientation-tab[aria-current='page'] {
-  color: var(--admin-accent-primary);
-  background: var(--admin-bg-primary);
-  border-color: var(--admin-border-secondary);
-}
-
-.hero-admin__workspace,
-.hero-admin__editors,
-.hero-admin__editor {
-  min-width: 0;
-}
-
-.hero-admin__workspace {
-  padding: var(--admin-space-5);
-  background: var(--admin-bg-subtle);
-  border: 1px solid var(--admin-border-secondary);
-  border-radius: var(--admin-radius-lg);
-}
-
 @media (max-width: 767px) {
-  .hero-admin__orientation-tabs {
-    width: 100%;
-  }
-
-  .hero-admin__orientation-tab {
-    flex: 1;
-  }
-
-  .hero-admin__workspace {
-    padding: var(--admin-space-3);
-  }
+  .hero-admin__toolbar { gap: var(--admin-space-4); }
+  .hero-admin__placement, .hero-admin__formats { flex: 1 1 100%; }
+  .hero-admin__orientation-tabs { gap: var(--admin-space-2); }
+  .hero-admin__orientation-tab { flex: 1; padding-inline: var(--admin-space-2); flex-wrap: wrap; }
 }
 </style>
