@@ -46,85 +46,63 @@ onMounted(() => void load())
 
 <template>
   <AdminShell current="analytics">
-    <div class="analytics-page" data-testid="analytics-page">
-      <header class="analytics-page__header">
-        <div>
-          <h1 class="analytics-page__title">访问概览</h1>
-          <p class="analytics-page__meta">
-            统计时区：中国标准时间（Asia/Shanghai）；原始事件保留 90 天。
-          </p>
+    <div class="analytics-page admin-list-page" data-testid="analytics-page">
+      <AdminPageHeader title="访问概览">
+        <AdminAction :loading="pageStatus === 'loading'" loading-label="刷新中…" @click="load">刷新</AdminAction>
+      </AdminPageHeader>
+      <div class="analytics-page__body">
+        <p class="analytics-page__meta">统计时区：中国标准时间（Asia/Shanghai）；原始事件保留 90 天。</p>
+
+        <div v-if="pageStatus === 'loading' && !analytics" class="analytics-page__state" role="status">
+          正在加载访问统计…
         </div>
-        <button
-          type="button"
-          class="analytics-page__refresh"
-          :disabled="pageStatus === 'loading'"
-          @click="load"
-        >{{ pageStatus === 'loading' ? '刷新中…' : '刷新' }}</button>
-      </header>
+        <div v-else-if="pageStatus === 'error' && !analytics" class="analytics-page__state" role="alert">
+          <p>访问统计加载失败。</p>
+          <button type="button" class="analytics-page__refresh" @click="load">重试</button>
+        </div>
 
-      <div v-if="pageStatus === 'loading' && !analytics" class="analytics-page__state" role="status">
-        正在加载访问统计…
+        <template v-else-if="analytics">
+          <p v-if="pageStatus === 'error'" class="analytics-page__warning" role="alert">
+            刷新失败，当前显示上一次加载的结果。
+          </p>
+          <AdminAnalyticsSummaryCards :ranges="analytics.ranges" />
+
+          <section class="analytics-page__rankings" aria-label="近 30 日排名">
+            <AdminAnalyticsRankingList
+              title="页面访问·近 30 日"
+              empty-text="近 30 日还没有页面访问。"
+              :items="pageRankingItems(analytics)"
+            />
+            <AdminAnalyticsRankingList
+              title="作品详情·近 30 日"
+              empty-text="近 30 日还没有作品详情访问。"
+              :items="contentRankingItems(analytics.topWorks)"
+            />
+            <AdminAnalyticsRankingList
+              title="联系行动·近 30 日"
+              empty-text="近 30 日还没有联系行动。"
+              :items="contactRankingItems(analytics)"
+            />
+          </section>
+        </template>
       </div>
-      <div v-else-if="pageStatus === 'error' && !analytics" class="analytics-page__state" role="alert">
-        <p>访问统计加载失败。</p>
-        <button type="button" class="analytics-page__refresh" @click="load">重试</button>
-      </div>
-
-      <template v-else-if="analytics">
-        <p v-if="pageStatus === 'error'" class="analytics-page__warning" role="alert">
-          刷新失败，当前显示上一次加载的结果。
-        </p>
-        <AdminAnalyticsSummaryCards :ranges="analytics.ranges" />
-
-        <section class="analytics-page__rankings" aria-label="近 30 日排名">
-          <AdminAnalyticsRankingList
-            title="页面访问·近 30 日"
-            empty-text="近 30 日还没有页面访问。"
-            :items="pageRankingItems(analytics)"
-          />
-          <AdminAnalyticsRankingList
-            title="作品详情·近 30 日"
-            empty-text="近 30 日还没有作品详情访问。"
-            :items="contentRankingItems(analytics.topWorks)"
-          />
-          <AdminAnalyticsRankingList
-            title="联系行动·近 30 日"
-            empty-text="近 30 日还没有联系行动。"
-            :items="contactRankingItems(analytics)"
-          />
-        </section>
-      </template>
     </div>
   </AdminShell>
 </template>
 
 <style scoped>
-.analytics-page {
+.analytics-page__body {
   display: grid;
   gap: var(--admin-space-5);
   max-width: var(--admin-content-max);
 }
 
-.analytics-page__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--admin-space-4);
-  flex-wrap: wrap;
-}
-
-.analytics-page__title,
 .analytics-page__meta,
 .analytics-page__state p,
 .analytics-page__privacy h2,
 .analytics-page__privacy p,
 .analytics-page__warning {
   margin: 0;
-}
-
-.analytics-page__title {
-  font-size: var(--admin-font-xl);
-  line-height: var(--admin-line-tight);
 }
 
 .analytics-page__meta {

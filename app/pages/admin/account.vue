@@ -165,147 +165,134 @@ async function refreshSession() {
 
 <template>
   <AdminShell current="account">
-    <div class="account-page">
-      <header class="account-page__header">
-        <h1 class="account-page__title">修改密码</h1>
-      </header>
+    <div class="account-page admin-list-page">
+      <AdminPageHeader title="修改密码" />
+      <div class="account-page__body">
 
-      <section class="account-card" aria-labelledby="account-profile-title">
-        <h2 id="account-profile-title" class="account-card__title">当前账号</h2>
-        <dl class="account-profile">
-          <dt class="account-profile__term">用户名</dt>
-          <dd class="account-profile__value" data-testid="account-username">
-            {{ user?.username }}
-          </dd>
-        </dl>
-      </section>
+        <section class="account-card" aria-labelledby="account-profile-title">
+          <h2 id="account-profile-title" class="account-card__title">当前账号</h2>
+          <dl class="account-profile">
+            <dt class="account-profile__term">用户名</dt>
+            <dd class="account-profile__value" data-testid="account-username">
+              {{ user?.username }}
+            </dd>
+          </dl>
+        </section>
 
-      <section class="account-card" aria-labelledby="account-password-title">
-        <h2 id="account-password-title" class="account-card__title">修改密码</h2>
-        <p id="password-change-hint" class="account-card__hint">
-          新密码至少 12 个字符；修改成功后所有登录状态失效，需要重新登录。
-        </p>
-
-        <p
-          v-if="formError"
-          id="password-form-error"
-          class="account-card__alert"
-          role="alert"
-        >{{ formError }}</p>
-
-        <div
-          v-if="conflictPending"
-          class="account-card__conflict"
-          role="alert"
-        >
-          <p class="account-card__conflict-text">
-            账号信息已在其他地方发生变化，本次修改未保存。请先刷新登录状态，再重新提交。
+        <section class="account-card" aria-labelledby="account-password-title">
+          <h2 id="account-password-title" class="account-card__title">修改密码</h2>
+          <p id="password-change-hint" class="account-card__hint">
+            新密码至少 12 个字符；修改成功后所有登录状态失效，需要重新登录。
           </p>
-          <button
-            type="button"
-            class="account-card__conflict-action"
-            :disabled="sessionRefreshing"
-            @click="refreshSession"
+
+          <p
+            v-if="formError"
+            id="password-form-error"
+            class="account-card__alert"
+            role="alert"
+          >{{ formError }}</p>
+
+          <div
+            v-if="conflictPending"
+            class="account-card__conflict"
+            role="alert"
           >
-            {{ sessionRefreshing ? '刷新中…' : '刷新登录状态' }}
-          </button>
-        </div>
-
-        <form
-          class="account-form"
-          :aria-busy="submitting"
-          @submit.prevent="onSubmit"
-        >
-          <div class="account-form__field">
-            <label class="account-form__label" for="password-current">当前密码</label>
-            <input
-              id="password-current"
-              ref="currentInput"
-              v-model="currentPassword"
-              class="account-form__input"
-              type="password"
-              autocomplete="current-password"
-              required
-              :disabled="submitting"
-              :aria-invalid="fieldErrors.current ? 'true' : undefined"
-              :aria-describedby="fieldErrors.current ? 'password-current-error' : undefined"
+            <p class="account-card__conflict-text">
+              账号信息已在其他地方发生变化，本次修改未保存。请先刷新登录状态，再重新提交。
+            </p>
+            <button
+              type="button"
+              class="account-card__conflict-action"
+              :disabled="sessionRefreshing"
+              @click="refreshSession"
             >
-            <p
-              v-if="fieldErrors.current"
-              id="password-current-error"
-              class="account-form__error"
-              role="alert"
-            >{{ fieldErrors.current }}</p>
+              {{ sessionRefreshing ? '刷新中…' : '刷新登录状态' }}
+            </button>
           </div>
 
-          <div class="account-form__field">
-            <label class="account-form__label" for="password-new">新密码</label>
-            <input
-              id="password-new"
-              ref="newInput"
-              v-model="newPassword"
-              class="account-form__input"
-              type="password"
-              autocomplete="new-password"
-              required
-              :disabled="submitting"
-              :aria-invalid="fieldErrors.next ? 'true' : undefined"
-              :aria-describedby="fieldErrors.next ? 'password-new-hint password-new-error' : 'password-new-hint'"
-            >
-            <p
-              v-if="fieldErrors.next"
-              id="password-new-error"
-              class="account-form__error"
-              role="alert"
-            >{{ fieldErrors.next }}</p>
-          </div>
+          <form
+            class="account-form"
+            :aria-busy="submitting"
+            @submit.prevent="onSubmit"
+          >
+            <div class="account-form__field">
+              <label class="account-form__label" for="password-current">当前密码</label>
+              <input
+                id="password-current"
+                ref="currentInput"
+                v-model="currentPassword"
+                class="account-form__input"
+                type="password"
+                autocomplete="current-password"
+                required
+                :disabled="submitting"
+                :aria-invalid="fieldErrors.current ? 'true' : undefined"
+                :aria-describedby="fieldErrors.current ? 'password-current-error' : undefined"
+              >
+              <p
+                v-if="fieldErrors.current"
+                id="password-current-error"
+                class="account-form__error"
+                role="alert"
+              >{{ fieldErrors.current }}</p>
+            </div>
 
-          <div class="account-form__field">
-            <label class="account-form__label" for="password-confirm">确认新密码</label>
-            <input
-              id="password-confirm"
-              ref="confirmInput"
-              v-model="confirmPassword"
-              class="account-form__input"
-              type="password"
-              autocomplete="new-password"
-              required
-              :disabled="submitting"
-              :aria-invalid="fieldErrors.confirm ? 'true' : undefined"
-              :aria-describedby="fieldErrors.confirm ? 'password-confirm-error' : undefined"
-            >
-            <p
-              v-if="fieldErrors.confirm"
-              id="password-confirm-error"
-              class="account-form__error"
-              role="alert"
-            >{{ fieldErrors.confirm }}</p>
-          </div>
+            <div class="account-form__field">
+              <label class="account-form__label" for="password-new">新密码</label>
+              <input
+                id="password-new"
+                ref="newInput"
+                v-model="newPassword"
+                class="account-form__input"
+                type="password"
+                autocomplete="new-password"
+                required
+                :disabled="submitting"
+                :aria-invalid="fieldErrors.next ? 'true' : undefined"
+                :aria-describedby="fieldErrors.next ? 'password-new-hint password-new-error' : 'password-new-hint'"
+              >
+              <p
+                v-if="fieldErrors.next"
+                id="password-new-error"
+                class="account-form__error"
+                role="alert"
+              >{{ fieldErrors.next }}</p>
+            </div>
 
-          <div class="account-form__actions">
-            <AdminAction variant="primary" :loading="submitting" loading-label="提交中…" type="submit">修改密码</AdminAction>
-          </div>
-        </form>
-      </section>
+            <div class="account-form__field">
+              <label class="account-form__label" for="password-confirm">确认新密码</label>
+              <input
+                id="password-confirm"
+                ref="confirmInput"
+                v-model="confirmPassword"
+                class="account-form__input"
+                type="password"
+                autocomplete="new-password"
+                required
+                :disabled="submitting"
+                :aria-invalid="fieldErrors.confirm ? 'true' : undefined"
+                :aria-describedby="fieldErrors.confirm ? 'password-confirm-error' : undefined"
+              >
+              <p
+                v-if="fieldErrors.confirm"
+                id="password-confirm-error"
+                class="account-form__error"
+                role="alert"
+              >{{ fieldErrors.confirm }}</p>
+            </div>
+
+            <div class="account-form__actions">
+              <AdminAction variant="primary" :loading="submitting" loading-label="提交中…" type="submit">修改密码</AdminAction>
+            </div>
+          </form>
+        </section>
+      </div>
     </div>
   </AdminShell>
 </template>
 
 <style scoped>
-.account-page {
-  max-width: var(--admin-reading-max);
-}
-
-.account-page__header {
-  margin-bottom: var(--admin-space-5);
-}
-
-.account-page__title {
-  margin: 0;
-  font-size: var(--admin-font-xl);
-  font-weight: 600;
-  line-height: var(--admin-line-tight);
-}
+.account-page__body { max-width: var(--admin-reading-max); }
 
 .account-card {
   background: var(--admin-bg-primary);

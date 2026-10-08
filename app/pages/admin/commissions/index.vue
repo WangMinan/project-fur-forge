@@ -93,11 +93,9 @@ onMounted(() => void load())
 <template>
   <AdminShell current="commissions">
     <div class="admin-list-page commission-inbox">
-      <header class="admin-list-page__header">
-        <h1 class="admin-list-page__title">委托申请</h1>
-        <p v-if="pageStatus === 'ready'" class="admin-list-page__meta">共 {{ items.length }} 条申请</p>
-        <AdminAction class="commission-inbox__refresh" :loading="pageStatus === 'loading'" loading-label="刷新中…" @click="load">刷新</AdminAction>
-      </header>
+      <AdminPageHeader title="委托申请" :meta="pageStatus === 'ready' ? `共 ${items.length} 条申请` : undefined">
+        <AdminAction :loading="pageStatus === 'loading'" loading-label="刷新中…" @click="load">刷新</AdminAction>
+      </AdminPageHeader>
 
       <AdminListToolbar
         label="查找和筛选委托申请"
@@ -148,6 +146,5 @@ onMounted(() => void load())
 </template>
 
 <style scoped>
-.commission-inbox__refresh { margin-left: auto; }
 .commission-inbox__state { padding: var(--admin-space-6); border: 1px solid var(--admin-border-secondary); border-radius: var(--admin-radius-md); background: var(--admin-bg-primary); text-align: center; }
 </style>

@@ -255,18 +255,13 @@ watch(activeTab, (tab) => {
 <template>
   <AdminShell current="works">
     <div class="admin-list-page works-page">
-      <header class="admin-list-page__header">
-        <h1 class="admin-list-page__title">作品管理</h1>
-        <p v-if="activeTab === 'all' && status === 'ready'" class="admin-list-page__meta">
-          共 {{ works.length }} 件作品
-        </p>
-        <p v-else-if="activeTab === 'featured' && featuredOrder.status.value === 'ready'" class="admin-list-page__meta">
-          共 {{ featuredOrder.items.value.length }} 件代表作品
-        </p>
-        <AdminAction class="works-page__create" to="/admin/works/new" variant="primary">
-          创建作品
-        </AdminAction>
-      </header>
+      <AdminPageHeader
+        title="作品管理"
+        :meta="activeTab === 'all' && status === 'ready' ? `共 ${works.length} 件作品`
+          : activeTab === 'featured' && featuredOrder.status.value === 'ready' ? `共 ${featuredOrder.items.value.length} 件代表作品` : undefined"
+      >
+        <AdminAction to="/admin/works/new" variant="primary">创建作品</AdminAction>
+      </AdminPageHeader>
 
       <nav class="works-tabs" aria-label="作品管理视图">
         <NuxtLink
@@ -620,10 +615,6 @@ watch(activeTab, (tab) => {
   margin: 0 0 var(--admin-space-3);
   font-size: var(--admin-font-sm);
   color: var(--admin-text-secondary);
-}
-
-.works-page__create {
-  margin-left: auto;
 }
 
 .works-table__work {

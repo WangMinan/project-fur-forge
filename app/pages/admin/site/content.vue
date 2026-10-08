@@ -78,115 +78,107 @@ onMounted(async () => {
 <template>
   <AdminShell current="content">
     <span v-if="pageStatus !== 'ready'" id="content-contact" aria-hidden="true" />
-    <div ref="contentRoot" class="content-admin" data-testid="content-admin">
-      <header class="content-admin__header">
-        <h1 class="content-admin__title">站点配置</h1>
-      </header>
+    <div ref="contentRoot" class="content-admin admin-list-page" data-testid="content-admin">
+      <AdminPageHeader title="站点配置" />
+      <div class="content-admin__body">
 
-      <div v-if="pageStatus === 'loading'" class="content-admin__state" role="status">
-        正在加载站点配置…
-      </div>
-      <div v-else-if="pageStatus === 'error'" class="content-admin__state" role="alert">
-        <p>站点配置加载失败。</p>
-        <AdminAction size="small" @click="load">重试</AdminAction>
-      </div>
-
-      <template v-else-if="content">
-        <nav class="admin-segmented" aria-label="站点配置分区">
-          <button v-for="item in GROUPS" :key="item.key" type="button" class="admin-segmented__item" :aria-pressed="group === item.key" @click="group = item.key">{{ item.label }}</button>
-        </nav>
-        <div v-show="group === 'copy'">
-          <AdminSiteLocalizedContent ref="localized" @saved="refresh" />
+        <div v-if="pageStatus === 'loading'" class="content-admin__state" role="status">
+          正在加载站点配置…
         </div>
-        <section
-          v-show="group === 'shared'"
-          id="content-status"
-          class="content-admin__group content-admin__anchor"
-          aria-labelledby="business-statuses-title"
-        >
-          <h2 id="business-statuses-title" class="content-admin__group-title">营业状态</h2>
-          <div class="content-admin__statuses">
-            <AdminSiteBusinessStatusCard
-              kind="commission"
-              tone-only
-              :status="content.statuses.commission"
-              :mutating="savingSection === 'commission'"
-              :saved="savedSection === 'commission'"
-              @save="payload => onSaveStatus('commission', payload)"
-            />
-            <p v-if="actionErrors.commission" v-show="group === 'shared'" class="admin-feedback" role="alert">{{ actionErrors.commission }}</p>
-          </div>
-        </section>
+        <div v-else-if="pageStatus === 'error'" class="content-admin__state" role="alert">
+          <p>站点配置加载失败。</p>
+          <AdminAction size="small" @click="load">重试</AdminAction>
+        </div>
 
-        <section class="content-admin__group" aria-label="其他配置">
-          <div class="content-admin__sections">
-            <AdminSiteLegalContentCard
-              v-show="group === 'legal'"
-              id="content-terms"
-              class="content-admin__anchor"
-              section="terms"
-              :content="content"
-              :conflict-section="conflictSection"
-              :saved-section="savedSection"
-              :saving-section="savingSection"
-              @save="payload => onSaveSection('terms', payload)"
-            />
-            <p v-if="actionErrors.terms" v-show="group === 'legal'" class="admin-feedback" role="alert">{{ actionErrors.terms }}</p>
-            <AdminSiteLegalContentCard
-              v-show="group === 'legal'"
-              id="content-privacy"
-              class="content-admin__anchor"
-              section="privacy"
-              :content="content"
-              :conflict-section="conflictSection"
-              :saved-section="savedSection"
-              :saving-section="savingSection"
-              @save="payload => onSaveSection('privacy', payload)"
-            />
-            <p v-if="actionErrors.privacy" v-show="group === 'legal'" class="admin-feedback" role="alert">{{ actionErrors.privacy }}</p>
-            <AdminSiteOfficialChannelsCard
-              v-show="group === 'shared'"
-              id="content-contact"
-              class="content-admin__anchor"
-              :content="content"
-              :conflict-section="conflictSection"
-              :saved-section="savedSection"
-              :saving-section="savingSection"
-              @conflict="onSectionConflict('contact')"
-              @save="payload => onSaveSection('contact', payload)"
-            />
-            <p v-if="actionErrors.contact" v-show="group === 'shared'" class="admin-feedback" role="alert">{{ actionErrors.contact }}</p>
+        <template v-else-if="content">
+          <nav class="admin-segmented" aria-label="站点配置分区">
+            <button v-for="item in GROUPS" :key="item.key" type="button" class="admin-segmented__item" :aria-pressed="group === item.key" @click="group = item.key">{{ item.label }}</button>
+          </nav>
+          <div v-show="group === 'copy'">
+            <AdminSiteLocalizedContent ref="localized" @saved="refresh" />
           </div>
-        </section>
-      </template>
+          <section
+            v-show="group === 'shared'"
+            id="content-status"
+            class="content-admin__group content-admin__anchor"
+            aria-labelledby="business-statuses-title"
+          >
+            <h2 id="business-statuses-title" class="content-admin__group-title">营业状态</h2>
+            <div class="content-admin__statuses">
+              <AdminSiteBusinessStatusCard
+                kind="commission"
+                tone-only
+                :status="content.statuses.commission"
+                :mutating="savingSection === 'commission'"
+                :saved="savedSection === 'commission'"
+                @save="payload => onSaveStatus('commission', payload)"
+              />
+              <p v-if="actionErrors.commission" v-show="group === 'shared'" class="admin-feedback" role="alert">{{ actionErrors.commission }}</p>
+            </div>
+          </section>
 
+          <section class="content-admin__group" aria-label="其他配置">
+            <div class="content-admin__sections">
+              <AdminSiteLegalContentCard
+                v-show="group === 'legal'"
+                id="content-terms"
+                class="content-admin__anchor"
+                section="terms"
+                :content="content"
+                :conflict-section="conflictSection"
+                :saved-section="savedSection"
+                :saving-section="savingSection"
+                @save="payload => onSaveSection('terms', payload)"
+              />
+              <p v-if="actionErrors.terms" v-show="group === 'legal'" class="admin-feedback" role="alert">{{ actionErrors.terms }}</p>
+              <AdminSiteLegalContentCard
+                v-show="group === 'legal'"
+                id="content-privacy"
+                class="content-admin__anchor"
+                section="privacy"
+                :content="content"
+                :conflict-section="conflictSection"
+                :saved-section="savedSection"
+                :saving-section="savingSection"
+                @save="payload => onSaveSection('privacy', payload)"
+              />
+              <p v-if="actionErrors.privacy" v-show="group === 'legal'" class="admin-feedback" role="alert">{{ actionErrors.privacy }}</p>
+              <AdminSiteOfficialChannelsCard
+                v-show="group === 'shared'"
+                id="content-contact"
+                class="content-admin__anchor"
+                :content="content"
+                :conflict-section="conflictSection"
+                :saved-section="savedSection"
+                :saving-section="savingSection"
+                @conflict="onSectionConflict('contact')"
+                @save="payload => onSaveSection('contact', payload)"
+              />
+              <p v-if="actionErrors.contact" v-show="group === 'shared'" class="admin-feedback" role="alert">{{ actionErrors.contact }}</p>
+            </div>
+          </section>
+        </template>
+      </div>
     </div>
   </AdminShell>
 </template>
 
 <style scoped>
-.content-admin {
+.content-admin__body {
   display: grid;
   gap: var(--admin-space-4);
   max-width: 72rem;
 }
 
-.content-admin__header,
 .content-admin__group {
   display: grid;
   gap: var(--admin-space-2);
 }
 
-.content-admin__title,
 .content-admin__group-title,
 .content-admin__meta,
 .content-admin__state p {
   margin: 0;
-}
-
-.content-admin__title {
-  font-size: var(--admin-font-lg);
-  font-weight: 700;
 }
 
 .content-admin__group-title {
