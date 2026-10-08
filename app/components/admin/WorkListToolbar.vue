@@ -23,6 +23,7 @@ const emit = defineEmits<{
 }>()
 
 const query = defineModel<string>('query', { required: true })
+const searchField = useTemplateRef<{ focus: () => void }>('searchField')
 const purpose = defineModel<WorkPurpose | 'all'>('purpose', { required: true })
 const publicationStatus = defineModel<PublicationStatus | 'all'>('publicationStatus', {
   required: true,
@@ -30,20 +31,14 @@ const publicationStatus = defineModel<PublicationStatus | 'all'>('publicationSta
 </script>
 
 <template>
-  <!-- 标签与控件样式来自 admin-base.css 的 .admin-list-toolbar-*：
-       列表页查找与筛选保持同一字号。 -->
-  <section class="admin-list-toolbar work-list-toolbar" aria-label="查找和筛选作品">
-    <div class="admin-list-toolbar__field">
-      <label class="admin-list-toolbar__label" for="admin-work-search">查找作品</label>
-      <input
-        id="admin-work-search"
-        v-model="query"
-        class="admin-list-toolbar__control"
-        type="search"
-        placeholder="角色名或物种"
-        autocomplete="off"
-      >
-    </div>
+  <AdminListToolbar
+    label="查找和筛选作品"
+    :filters-active="filtersActive"
+    :result-count="resultCount"
+    :total-count="totalCount"
+    @reset="emit('reset'); searchField?.focus()"
+  >
+    <AdminListSearch id="admin-work-search" ref="searchField" v-model="query" label="查找作品" placeholder="角色名或物种" />
 
     <div class="admin-list-toolbar__field">
       <label class="admin-list-toolbar__label" for="admin-work-purpose">用途</label>
@@ -55,44 +50,5 @@ const publicationStatus = defineModel<PublicationStatus | 'all'>('publicationSta
       <AdminSelect id="admin-work-publication" v-model="publicationStatus" :options="[{ value: 'all', label: '全部状态' }, ...PUBLICATION_STATUS_VALUES.map(value => ({ value, label: PUBLICATION_STATUS_LABELS[value] }))]" />
     </div>
 
-    <div class="work-list-toolbar__summary">
-      <p class="work-list-toolbar__count" role="status">
-        {{ filtersActive ? `找到 ${resultCount} / ${totalCount} 件` : `共 ${totalCount} 件` }}
-      </p>
-      <AdminAction
-        :disabled="!filtersActive"
-        @click="emit('reset')"
-      >清除</AdminAction>
-    </div>
-  </section>
+  </AdminListToolbar>
 </template>
-
-<style scoped>
-/* 容器、标签与控件来自 .admin-list-toolbar*；这里只加四列布局与统计行。 */
-
-.work-list-toolbar__summary {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: var(--admin-space-3);
-}
-
-.work-list-toolbar__count {
-  margin: 0;
-  color: var(--admin-text-secondary);
-  font-size: var(--admin-font-sm);
-}
-
-@media (min-width: 768px) {
-  /* 同时带上共用类，specificity 高于 admin-base.css 的容器规则，
-     因此不依赖样式表加载顺序。 */
-  .admin-list-toolbar.work-list-toolbar {
-    grid-template-columns: minmax(14rem, 2fr) repeat(2, minmax(8rem, 1fr));
-    align-items: end;
-  }
-
-  .work-list-toolbar__summary {
-    grid-column: 1 / -1;
-  }
-}
-</style>

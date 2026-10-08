@@ -16,6 +16,7 @@
 | 需求6 · 作品图片构图与详情展示 | 本地实现与验证完成；待用户人工验收 | [STATE](需求6-作品图片构图与详情展示/STATE.md) · [SPEC](需求6-作品图片构图与详情展示/requirements/SPEC.md) · [TASKS](需求6-作品图片构图与详情展示/implementation/TASKS.md) |
 | 需求7 · 公开站中英切换 | 本地实现与自动验证完成；待独立 Review/人工验收 | [STATE](需求7-公开站中英切换/STATE.md) · [SPEC](需求7-公开站中英切换/requirements/SPEC.md) · [TASKS](需求7-公开站中英切换/implementation/TASKS.md) |
 | 需求8 · ESA故障维护页 | 自动兜底已部署；验收边界见 STATE | [STATE](需求8-ESA故障维护页/STATE.md) · [SPEC](需求8-ESA故障维护页/requirements/SPEC.md) · [TASKS](需求8-ESA故障维护页/implementation/TASKS.md) |
+| 需求9 · 管理列表风格统一 | 列表、搜索与下拉统一；用户已确认完成 | [STATE](需求9-管理列表风格统一/STATE.md) · [SPEC](需求9-管理列表风格统一/requirements/SPEC.md) · [TASKS](需求9-管理列表风格统一/implementation/TASKS.md) |
 
 ## 按主题补读
 

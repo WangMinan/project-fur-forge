@@ -332,163 +332,152 @@ watch(activeTab, (tab) => {
       </div>
 
       <template v-else-if="activeTab === 'all' && status === 'ready'">
-        <table class="admin-list-table works-table" aria-label="作品管理表格">
-          <thead>
-            <tr>
-              <th scope="col">作品</th>
-              <th scope="col">用途</th>
-              <th scope="col">代表作品</th>
-              <th scope="col">发布状态</th>
-              <th scope="col">媒体</th>
-              <th scope="col">发布阻断</th>
-              <th scope="col">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="work in visibleWorks" :key="work.id">
-              <td>
-                <div class="works-table__work">
-                  <span class="works-table__thumb">
-                    <!-- 低分辨率缩略图：表格格子只有 3rem，不需要原图。 -->
-                    <img
-                      v-if="thumbAssetId(work)"
-                      :src="adminMediaPreviewUrl(thumbAssetId(work)!, ADMIN_MEDIA_CARD_PREVIEW_WIDTH)"
-                      alt=""
-                      loading="lazy"
-                      referrerpolicy="same-origin"
-                    >
-                    <span v-else aria-hidden="true">无图</span>
-                  </span>
-                  <span class="works-table__name">
-                    <NuxtLink :to="`/admin/works/${work.id}`" class="works-table__link">
-                      {{ work.characterName }}
-                    </NuxtLink>
-                    <span class="works-table__species">
-                      {{ work.species }}
-                    </span>
-                  </span>
-                </div>
-              </td>
-              <td>
-                <span class="works-table__purpose">{{ WORK_PURPOSE_LABELS[work.purpose] }}</span>
-                <span v-if="adoptionSummary(work)" class="works-table__adoption">
-                  {{ adoptionSummary(work) }}
+        <AdminListTable
+          label="作品管理表格"
+          :columns="['作品', '物种', '用途', '代表作品', '发布状态', '媒体', '发布阻断', '操作']"
+        >
+          <tr v-for="work in visibleWorks" :key="work.id">
+            <td>
+              <div class="works-table__work">
+                <span class="works-table__thumb">
+                  <!-- 低分辨率缩略图：表格格子只有 3rem，不需要原图。 -->
+                  <img
+                    v-if="thumbAssetId(work)"
+                    :src="adminMediaPreviewUrl(thumbAssetId(work)!, ADMIN_MEDIA_CARD_PREVIEW_WIDTH)"
+                    alt=""
+                    loading="lazy"
+                    referrerpolicy="same-origin"
+                  >
+                  <span v-else aria-hidden="true">无图</span>
                 </span>
-              </td>
-              <td>
-                <AdminWorkOrderingControls
-                  scope="table"
-                  :work="work"
-                  :limit-reached="featuredCount >= PUBLIC_FEATURED_LIMIT"
-                  :pending="orderingPendingId === work.id"
-                  @update="updateOrdering(work, $event)"
-                />
-              </td>
-              <td>
-                <AdminStatusBadge
-                  :tone="PUBLICATION_TONES[work.publicationStatus]"
-                  :label="PUBLICATION_STATUS_LABELS[work.publicationStatus]"
-                />
-              </td>
-              <td>
-                <span class="works-table__media">
-                  横版封面 {{ work.purpose === 'adoption' && work.adoptionCoverAssetId ? '有' : work.purpose === 'adoption' ? '无' : '—' }}
-                  · 设定图 {{ work.purpose === 'adoption' && work.designSheetAssetId ? '有' : work.purpose === 'adoption' ? '无' : '—' }}
-                  · 出厂照 {{ work.studioPhotoCount }}/5
+                <span class="works-table__name">
+                  <NuxtLink :to="`/admin/works/${work.id}`" class="works-table__link">
+                    {{ work.characterName }}
+                  </NuxtLink>
                 </span>
-                <span class="works-table__media-links">
-                  <NuxtLink
-                    v-if="work.purpose === 'adoption'"
-                    :to="`/admin/works/${work.id}#adoption-cover`"
-                  >横版封面</NuxtLink>
-                  <NuxtLink
-                    v-if="work.purpose === 'adoption'"
-                    :to="`/admin/works/${work.id}#design-sheet`"
-                  >设定图</NuxtLink>
-                  <NuxtLink :to="`/admin/works/${work.id}#studio-photos`">出厂照</NuxtLink>
-                </span>
-              </td>
-              <td>
-                <span class="works-table__blockers">{{ blockerSummary(work) }}</span>
-              </td>
-              <td>
-                <div class="works-table__actions">
-                  <AdminAction :to="`/admin/works/${work.id}`" class="works-table__edit" variant="text">编辑</AdminAction>
-                  <AdminAction
-                    class="works-table__delete"
-                    variant="text"
-                    :aria-label="`删除 ${work.characterName}`"
-                    @click="deleteTarget = work"
-                  >删除</AdminAction>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <ul class="works-cards" role="list">
-          <li v-for="work in visibleWorks" :key="work.id" class="works-card">
-            <span class="works-card__thumb">
-              <img
-                v-if="thumbAssetId(work)"
-                :src="adminMediaPreviewUrl(thumbAssetId(work)!, ADMIN_MEDIA_CARD_PREVIEW_WIDTH)"
-                alt=""
-                loading="lazy"
-                referrerpolicy="same-origin"
-              >
-              <span v-else aria-hidden="true">无图</span>
-            </span>
-            <div class="works-card__body">
-              <p class="works-card__name">
-                {{ work.characterName }}
-                <span class="works-card__meta">{{ work.species }}</span>
-              </p>
-              <p class="works-card__row">
-                {{ WORK_PURPOSE_LABELS[work.purpose] }}
-                <AdminStatusBadge
-                  :tone="PUBLICATION_TONES[work.publicationStatus]"
-                  :label="PUBLICATION_STATUS_LABELS[work.publicationStatus]"
-                />
-              </p>
-              <p v-if="adoptionSummary(work)" class="works-card__row works-card__row--muted">
+              </div>
+            </td>
+            <td class="works-table__species">{{ work.species }}</td>
+            <td>
+              <span class="works-table__purpose">{{ WORK_PURPOSE_LABELS[work.purpose] }}</span>
+              <span v-if="adoptionSummary(work)" class="works-table__adoption">
                 {{ adoptionSummary(work) }}
-              </p>
+              </span>
+            </td>
+            <td>
               <AdminWorkOrderingControls
-                scope="card"
+                scope="table"
                 :work="work"
                 :limit-reached="featuredCount >= PUBLIC_FEATURED_LIMIT"
                 :pending="orderingPendingId === work.id"
                 @update="updateOrdering(work, $event)"
               />
-              <p class="works-card__row works-card__row--muted">
+            </td>
+            <td>
+              <AdminStatusBadge
+                :tone="PUBLICATION_TONES[work.publicationStatus]"
+                :label="PUBLICATION_STATUS_LABELS[work.publicationStatus]"
+              />
+            </td>
+            <td>
+              <span class="works-table__media">
                 横版封面 {{ work.purpose === 'adoption' && work.adoptionCoverAssetId ? '有' : work.purpose === 'adoption' ? '无' : '—' }}
                 · 设定图 {{ work.purpose === 'adoption' && work.designSheetAssetId ? '有' : work.purpose === 'adoption' ? '无' : '—' }}
                 · 出厂照 {{ work.studioPhotoCount }}/5
-              </p>
-              <p class="works-card__row works-card__row--muted">{{ blockerSummary(work) }}</p>
-              <p class="works-card__row works-card__quick-links">
+              </span>
+              <span class="works-table__media-links">
                 <NuxtLink
                   v-if="work.purpose === 'adoption'"
                   :to="`/admin/works/${work.id}#adoption-cover`"
-                >编辑横版封面</NuxtLink>
+                >横版封面</NuxtLink>
                 <NuxtLink
                   v-if="work.purpose === 'adoption'"
                   :to="`/admin/works/${work.id}#design-sheet`"
-                >编辑设定图</NuxtLink>
-                <NuxtLink :to="`/admin/works/${work.id}#studio-photos`">编辑出厂照</NuxtLink>
-              </p>
-            </div>
-            <div class="works-card__actions">
-              <AdminAction :to="`/admin/works/${work.id}`" class="works-card__edit" variant="text">编辑</AdminAction>
-              <AdminAction
-                class="works-card__delete"
-                variant="text"
-                :aria-label="`删除 ${work.characterName}`"
-                @click="deleteTarget = work"
-              >删除</AdminAction>
-            </div>
-          </li>
-        </ul>
+                >设定图</NuxtLink>
+                <NuxtLink :to="`/admin/works/${work.id}#studio-photos`">出厂照</NuxtLink>
+              </span>
+            </td>
+            <td>
+              <span class="works-table__blockers">{{ blockerSummary(work) }}</span>
+            </td>
+            <td>
+              <div class="works-table__actions">
+                <AdminAction :to="`/admin/works/${work.id}`" class="works-table__edit" variant="text">编辑</AdminAction>
+                <AdminAction
+                  class="works-table__delete"
+                  variant="text"
+                  :aria-label="`删除 ${work.characterName}`"
+                  @click="deleteTarget = work"
+                >删除</AdminAction>
+              </div>
+            </td>
+          </tr>
+          <template #mobile>
+            <ul class="works-cards" role="list">
+              <li v-for="work in visibleWorks" :key="work.id" class="works-card">
+                <span class="works-card__thumb">
+                  <img
+                    v-if="thumbAssetId(work)"
+                    :src="adminMediaPreviewUrl(thumbAssetId(work)!, ADMIN_MEDIA_CARD_PREVIEW_WIDTH)"
+                    alt=""
+                    loading="lazy"
+                    referrerpolicy="same-origin"
+                  >
+                  <span v-else aria-hidden="true">无图</span>
+                </span>
+                <div class="works-card__body">
+                  <p class="works-card__name">
+                    {{ work.characterName }}
+                  </p>
+                  <p class="works-card__row works-card__row--muted">物种：{{ work.species }}</p>
+                  <p class="works-card__row">
+                    {{ WORK_PURPOSE_LABELS[work.purpose] }}
+                    <AdminStatusBadge
+                      :tone="PUBLICATION_TONES[work.publicationStatus]"
+                      :label="PUBLICATION_STATUS_LABELS[work.publicationStatus]"
+                    />
+                  </p>
+                  <p v-if="adoptionSummary(work)" class="works-card__row works-card__row--muted">
+                    {{ adoptionSummary(work) }}
+                  </p>
+                  <AdminWorkOrderingControls
+                    scope="card"
+                    :work="work"
+                    :limit-reached="featuredCount >= PUBLIC_FEATURED_LIMIT"
+                    :pending="orderingPendingId === work.id"
+                    @update="updateOrdering(work, $event)"
+                  />
+                  <p class="works-card__row works-card__row--muted">
+                    横版封面 {{ work.purpose === 'adoption' && work.adoptionCoverAssetId ? '有' : work.purpose === 'adoption' ? '无' : '—' }}
+                    · 设定图 {{ work.purpose === 'adoption' && work.designSheetAssetId ? '有' : work.purpose === 'adoption' ? '无' : '—' }}
+                    · 出厂照 {{ work.studioPhotoCount }}/5
+                  </p>
+                  <p class="works-card__row works-card__row--muted">{{ blockerSummary(work) }}</p>
+                  <p class="works-card__row works-card__quick-links">
+                    <NuxtLink
+                      v-if="work.purpose === 'adoption'"
+                      :to="`/admin/works/${work.id}#adoption-cover`"
+                    >编辑横版封面</NuxtLink>
+                    <NuxtLink
+                      v-if="work.purpose === 'adoption'"
+                      :to="`/admin/works/${work.id}#design-sheet`"
+                    >编辑设定图</NuxtLink>
+                    <NuxtLink :to="`/admin/works/${work.id}#studio-photos`">编辑出厂照</NuxtLink>
+                  </p>
+                </div>
+                <div class="works-card__actions">
+                  <AdminAction :to="`/admin/works/${work.id}`" class="works-card__edit" variant="text">编辑</AdminAction>
+                  <AdminAction
+                    class="works-card__delete"
+                    variant="text"
+                    :aria-label="`删除 ${work.characterName}`"
+                    @click="deleteTarget = work"
+                  >删除</AdminAction>
+                </div>
+              </li>
+            </ul>
+          </template>
+        </AdminListTable>
 
         <AdminPagination
           v-model:page="page"
@@ -637,11 +626,6 @@ watch(activeTab, (tab) => {
   margin-left: auto;
 }
 
-/* 表格本体样式来自 .admin-list-table；这里只控制窄屏改用卡片列表。 */
-.works-table {
-  display: none;
-}
-
 .works-table__work {
   display: flex;
   align-items: center;
@@ -683,8 +667,9 @@ watch(activeTab, (tab) => {
 }
 
 .works-table__species {
-  font-size: var(--admin-font-xs);
-  color: var(--admin-text-tertiary);
+  max-width: 10rem;
+  overflow-wrap: anywhere;
+  color: var(--admin-text-secondary);
 }
 
 .works-table__media {
@@ -777,13 +762,6 @@ watch(activeTab, (tab) => {
   font-weight: 600;
 }
 
-.works-card__meta {
-  display: block;
-  font-weight: 400;
-  font-size: var(--admin-font-xs);
-  color: var(--admin-text-tertiary);
-}
-
 .works-card__row {
   margin: 0;
   display: flex;
@@ -809,13 +787,4 @@ watch(activeTab, (tab) => {
   gap: 0;
 }
 
-@media (min-width: 1024px) {
-  .works-table {
-    display: table;
-  }
-
-  .works-cards {
-    display: none;
-  }
-}
 </style>

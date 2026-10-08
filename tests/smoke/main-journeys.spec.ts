@@ -782,7 +782,7 @@ test('管理端对已拒绝申请先脱敏 dry-run，再单条删除', async ({ 
 
   await loginAsAdmin(page)
   await page.goto(`${adminBaseURL}/admin/commissions`)
-  await page.locator('.commission-inbox__item').filter({ hasText: nickname }).click()
+  await page.locator('.commission-inbox__item:visible').filter({ hasText: nickname }).click()
   await expect(page).toHaveURL(/\/admin\/commissions\/[0-9a-f-]+$/u)
   await page.getByRole('combobox', { name: '状态', exact: true }).click()
   await page.getByRole('option', { name: '已拒绝', exact: true }).click()
@@ -798,14 +798,14 @@ test('管理端对已拒绝申请先脱敏 dry-run，再单条删除', async ({ 
   ] as const) {
     await page.setViewportSize({ width, height })
     await page.goto(`${adminBaseURL}/admin/commissions?status=rejected`)
-    const row = page.locator('.commission-inbox__row').filter({ hasText: nickname })
+    const row = page.locator('.commission-inbox__row:visible').filter({ hasText: nickname })
     await expect(row.getByRole('button', { name: '删除申请数据' })).toBeVisible()
     expect(await page.evaluate(() => (
       document.documentElement.scrollWidth - document.documentElement.clientWidth
     ))).toBeLessThanOrEqual(1)
   }
-  const rejectedRow = page.locator('.commission-inbox__row').filter({ hasText: nickname })
-  await rejectedRow.locator('.commission-inbox__item').click()
+  const rejectedRow = page.locator('.commission-inbox__row:visible').filter({ hasText: nickname })
+  await rejectedRow.locator('.commission-inbox__item:visible').click()
   await expect(page.getByRole('heading', { name: '删除申请数据' })).toBeVisible()
 
   const unauthenticated = await request.post(
@@ -871,7 +871,7 @@ test('管理端对已拒绝申请先脱敏 dry-run，再单条删除', async ({ 
   await confirm.click()
 
   await expect(page).toHaveURL(/\/admin\/commissions\?status=rejected$/u)
-  await expect(page.locator('.commission-inbox__row').filter({ hasText: nickname })).toHaveCount(0)
+  await expect(page.locator('.commission-inbox__row:visible').filter({ hasText: nickname })).toHaveCount(0)
   expect((await fakeMediaState(page)).objects.some(key => key.includes('/commission/'))).toBe(false)
 })
 
