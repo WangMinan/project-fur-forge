@@ -202,7 +202,7 @@ export function updateCommissionSubmissionRow(
         handled_at = CASE WHEN ? = 'pending' THEN NULL ELSE ? END,
         handled_by = CASE WHEN ? = 'pending' THEN NULL ELSE ? END,
         version = version + 1, updated_at = ?
-    WHERE id = ? AND version = ?
+    WHERE id = ? AND version = ? AND email_deletion_pending = 0
   `).run(
     input.status,
     input.internalNote,
@@ -334,6 +334,14 @@ export function findCommissionDeletionTarget(
     submission,
     variants,
   }
+}
+
+export function claimCommissionDeletionTarget(sqlite: Database.Database, target: CommissionDeletionTarget) {
+  return sqlite.prepare(`
+    UPDATE commission_submissions SET email_deletion_pending = 1
+    WHERE id = ? AND version = ? AND status = ? AND design_asset_id = ?
+  `).run(target.submission.id, target.submission.version,
+    target.submission.status, target.submission.designAssetId).changes === 1
 }
 
 export function deleteCommissionTargetRows(

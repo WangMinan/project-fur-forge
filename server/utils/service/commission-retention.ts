@@ -11,6 +11,7 @@ import type {
 } from '../../../shared/types/contracts'
 import type { R3StageAObjectStore } from '../runner/r3-stage-a-retirement'
 import {
+  claimCommissionDeletionTarget,
   deleteCommissionTargetRows,
   findCommissionDeletionTarget,
   insertCommissionDeletionFailureAudit,
@@ -189,14 +190,17 @@ export async function executeCommissionDeletion(options: {
   objectStore: R3StageAObjectStore
   sqlite: Database.Database
 }) {
-  assertCommissionDeletionUnlocked(options.identifier)
-  deletionLocks.add(options.identifier)
+  const initial = findCommissionDeletionTarget(options.sqlite, options.identifier)
+  if (!initial) return emptyResult('already_deleted')
+  const id = initial.submission.id
+  assertCommissionDeletionUnlocked(id)
+  deletionLocks.add(id)
   const now = options.now ?? Date.now()
   try {
     const plan = await buildDeletionPlan(
       options.sqlite,
       options.objectStore,
-      options.identifier,
+      id,
       options.allowNonRejected,
     )
     if (!plan.target) {
@@ -210,7 +214,13 @@ export async function executeCommissionDeletion(options: {
         'COMMISSION_DELETE_BLOCKED',
       )
     }
-    fenceCommissionEmailsForDeletion(options.sqlite, plan.target.submission.id)
+    const target = plan.target
+    options.sqlite.transaction(() => {
+      if (!claimCommissionDeletionTarget(options.sqlite, target)) {
+        throw new ServiceError(409, 'CONFLICT', 'Commission changed during deletion inspection.', 'COMMISSION_DELETE_BLOCKED')
+      }
+      fenceCommissionEmailsForDeletion(options.sqlite, id, now)
+    }).immediate()
     const submissionIdDigest = digestId(plan.target.submission.id)
     try {
       for (const key of plan.objectKeys) {
@@ -251,6 +261,6 @@ export async function executeCommissionDeletion(options: {
     })
   }
   finally {
-    deletionLocks.delete(options.identifier)
+    deletionLocks.delete(id)
   }
 }

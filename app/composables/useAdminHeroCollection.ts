@@ -79,10 +79,11 @@ export function useAdminHeroCollection(
       onTick: (operation) => {
         operations.value = { ...operations.value, [id]: operation }
       },
-      onSettled: async (operation) => {
+      onSettled: async (operation, isActive) => {
         operations.value = { ...operations.value, [id]: operation }
         if (operation.operationType === 'UPSCALE' && operation.status === 'DONE') {
           await refresh()
+          if (!isActive()) return
           const error = await startOperation(id, 'enable')
           if (error) {
             setFeedback(id, {

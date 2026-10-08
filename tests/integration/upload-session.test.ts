@@ -24,6 +24,8 @@ import {
   UPLOAD_SESSION_TTL_MS,
 } from '../../server/utils/service/upload-session'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
+import { recoverStaleUploadValidations, renewUploadValidation, UPLOAD_VALIDATION_IDLE_MS } from '../../server/utils/repository/upload-validation'
+import { findExpiredUploadSessions } from '../../server/utils/runner/upload-cleanup'
 
 const USER_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const WORK_ID = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
@@ -89,6 +91,22 @@ afterEach(() => {
 })
 
 describe('persistent conditional upload sessions', () => {
+  it('recovers abandoned validation, retains live validation and rejects a late owner', async () => {
+    insertFixtures()
+    await createUploadSession(sqlite, storage, { appEnv: 'test' }, USER_ID, input(), { id: SESSION_ID, now: NOW })
+    sqlite.prepare("UPDATE upload_sessions SET status='VALIDATING', version=2 WHERE id=?").run(SESSION_ID)
+    expect(renewUploadValidation(sqlite, SESSION_ID, 2, NOW + UPLOAD_VALIDATION_IDLE_MS)).toBe(true)
+    expect(recoverStaleUploadValidations(sqlite, NOW + UPLOAD_VALIDATION_IDLE_MS + 1)).toBe(0)
+    const expired = NOW + UPLOAD_VALIDATION_IDLE_MS * 2 + 1
+    expect(recoverStaleUploadValidations(sqlite, expired)).toBe(1)
+    expect(renewUploadValidation(sqlite, SESSION_ID, 2, expired)).toBe(false)
+    const row = await getUploadSession(sqlite, storage, SESSION_ID, expired)
+    expect(row).toMatchObject({ status: 'FAILED', assetId: null })
+    expect(findExpiredUploadSessions(sqlite, expired, 100)).toHaveLength(1)
+    await expect(retryUploadSession(sqlite, storage, { appEnv: 'test' }, USER_ID, SESSION_ID, row.version, expired))
+      .resolves.toMatchObject({ session: { status: 'AWAITING_UPLOAD' } })
+  })
+
   it('persists the claims separately from assets and signs fixed PUT headers', async () => {
     insertFixtures()
     const result = await createUploadSession(
