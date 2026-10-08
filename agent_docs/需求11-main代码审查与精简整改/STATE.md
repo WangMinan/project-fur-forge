@@ -31,6 +31,8 @@
 
 ## 最近验证
 
+- 2026-10-08（quality修复）：用户要求修复 [失败工作流37762889374](https://github.com/WangMinan/project-fur-forge/actions/runs/37762889374)。0056新增后，`site-copy.test.ts` 仍写死升级执行2个迁移，实际为3；本地复现后复用 `migrationsAfter('0053_r6_image_compositions')` 精确计算，仅修改测试两行。修复提交 `2fdded2` 已推送main，[quality 37764936649](https://github.com/WangMinan/project-fur-forge/actions/runs/37764936649) 的lint/typecheck及67文件346项core全部通过。Windows本地定向用例、lint/typecheck通过；本地全量为324通过、4项超时、18项因Nuxt启动超时跳过，随后串行复验在远程全绿后中止，不声明本地全量通过。没有修改迁移、业务实现、workflow或测试时限；未运行release、发布镜像或部署。
+
 - 2026-10-08（PR review补修）：确认并复现重复删除认领，新增0056租约到期字段及版本认领/续租/提交保护，定向回归、lint/typecheck、生产构建与删除流程smoke通过；详见 [PR41删除租约记录](implementation/notes/2026-10-08-PR41-DELETION-LEASE.md)。用户已明确授权直接main修复；尚未迁移业务库或生产环境。
 - 2026-10-08（合并）：[PR #41](https://github.com/WangMinan/project-fur-forge/pull/41) 已合入，main为 `c6d9d91`；PR质量与安全检查通过。
 
