@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { parseCnyYuanInput } from '../../app/utils/price'
 
 /**
- * 管理端人民币输入必须与服务端契约 adminWorkDtoSchema.priceCnyMinor
+ * 管理端人民币输入必须与服务端契约 managedWorkDtoSchema 的领养 priceCnyMinor
  * （可选；正整数最小货币单位）保持同一接受集合，不得再用宽松
  * parseFloat + Math.round 造成两端接受集合不同。
  */

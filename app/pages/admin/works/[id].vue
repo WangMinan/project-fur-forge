@@ -351,7 +351,6 @@ useSeoMeta({
           <AdminWorkBasicsFields
             v-model="form"
             :disabled="locked || saving"
-            :ordering-disabled="saving"
             :featured-eligible="featuredEligible"
             :errors="errors"
             :show-errors="submitted"

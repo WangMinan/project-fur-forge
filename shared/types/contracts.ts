@@ -11,7 +11,6 @@ import type {
   analyticsRouteKeySchema,
 } from '../schemas/analytics'
 import type {
-  adminAssetDtoSchema,
   assetStatusSchema,
   mediaRoleSchema,
   publicPngSourceSetDtoSchema,
@@ -65,7 +64,6 @@ import type {
   errorReasonSchema,
 } from '../schemas/api'
 import type {
-  adminWorkDtoSchema,
   adoptionStatusSchema,
   managedAdoptionCoverDtoSchema,
   managedDesignSheetDtoSchema,
@@ -141,7 +139,6 @@ export type PublicationStatus = z.infer<typeof publicationStatusSchema>
 export type AdoptionStatus = z.infer<typeof adoptionStatusSchema>
 export type MediaRole = z.infer<typeof mediaRoleSchema>
 export type AssetStatus = z.infer<typeof assetStatusSchema>
-export type AdminAssetDto = z.infer<typeof adminAssetDtoSchema>
 export type PublicVariantDto = z.infer<typeof publicVariantDtoSchema>
 export type PublicSourceSetDto = z.infer<typeof publicSourceSetDtoSchema>
 export type PublicPngSourceSetDto = z.infer<typeof publicPngSourceSetDtoSchema>
@@ -214,7 +211,6 @@ export type WorkPublicationCheckDto = z.infer<
   typeof workPublicationCheckDtoSchema
 >
 export type PublicWorkDto = z.infer<typeof publicWorkDtoSchema>
-export type AdminWorkDto = z.infer<typeof adminWorkDtoSchema>
 export type WorkFields = z.infer<typeof workFieldsSchema>
 export type ManagedDesignSheetDto = z.infer<typeof managedDesignSheetDtoSchema>
 export type ManagedAdoptionCoverDto = z.infer<

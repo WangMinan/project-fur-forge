@@ -65,33 +65,14 @@ watch(() => props.home.portrait.length, (count) => {
 const userPaused = shallowRef(false)
 const motionReady = shallowRef(false)
 const initialMediaEntrance = shallowRef(true)
-const controlsRevealed = shallowRef(false)
+const { controlsRevealed, revealControls, revealForFinePointer, onPointerLeave, onHeroClick }
+  = useCarouselControls(() => userPaused.value)
 
 const { reduceMotion, restart: restartAutoplay } = useCarouselPlayback({
   advance: () => goNext('autoplay'),
   enabled: () => items.value.length > 1 && !userPaused.value,
   intervalMs: 3_000,
 })
-
-let controlsTimer: ReturnType<typeof setTimeout> | null = null
-
-function stopControlsTimer() {
-  if (controlsTimer !== null) {
-    clearTimeout(controlsTimer)
-    controlsTimer = null
-  }
-}
-
-function revealControls(timeout = 2_400) {
-  controlsRevealed.value = true
-  stopControlsTimer()
-  if (!userPaused.value) {
-    controlsTimer = setTimeout(() => {
-      controlsRevealed.value = false
-      controlsTimer = null
-    }, timeout)
-  }
-}
 
 function goTo(index: number, intent: 'autoplay' | 'keyboard' | 'pointer' = 'pointer') {
   const target = clampSlideIndex(index, items.value.length)
@@ -195,34 +176,6 @@ function onPointerMove(event: PointerEvent) {
   revealForFinePointer(event)
 }
 
-function revealForFinePointer(event: MouseEvent) {
-  const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect()
-  const x = (event.clientX - bounds.left) / bounds.width
-  const y = (event.clientY - bounds.top) / bounds.height
-  if (
-    !controlsRevealed.value
-    && (x <= 0.16 || x >= 0.84 || y >= 0.72)
-  ) {
-    revealControls()
-  }
-}
-
-function onPointerLeave() {
-  if (!userPaused.value) {
-    stopControlsTimer()
-    controlsRevealed.value = false
-  }
-}
-
-function onHeroClick(event: MouseEvent) {
-  if ((event.target as HTMLElement | null)?.closest('button, a')) {
-    return
-  }
-  if (!matchMedia('(hover: hover) and (pointer: fine)').matches) {
-    revealControls(4_000)
-  }
-}
-
 let orientationQuery: MediaQueryList | null = null
 let motionFrame: number | null = null
 
@@ -258,7 +211,6 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  stopControlsTimer()
   if (motionFrame !== null) {
     window.cancelAnimationFrame(motionFrame)
   }

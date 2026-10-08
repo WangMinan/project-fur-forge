@@ -1,9 +1,7 @@
 import {
-  adminWorkDtoSchema,
   publicWorkDtoSchema,
 } from '../../../shared/schemas/work'
 import type {
-  AdminWorkDto,
   AdoptionStatus,
   PublicationStatus,
   PublicWorkDto,
@@ -36,22 +34,5 @@ export function toPublicWorkDto(record: WorkRecord): PublicWorkDto | null {
     slug: record.slug,
     characterName: record.characterName,
     species: record.species,
-  })
-}
-
-export function toAdminWorkDto(record: WorkRecord): AdminWorkDto {
-  return adminWorkDtoSchema.parse({
-    id: record.id,
-    version: record.version,
-    slug: record.slug,
-    characterName: record.characterName,
-    species: record.species,
-    purpose: record.purpose,
-    publicationStatus: record.publicationStatus,
-    assetIds: [...record.assetIds],
-    adoptionStatus: record.purpose === 'adoption' ? record.adoptionStatus : null,
-    priceCnyMinor: record.purpose === 'adoption' ? record.priceCnyMinor : null,
-    sortOrder: record.sortOrder,
-    featured: record.featured,
   })
 }

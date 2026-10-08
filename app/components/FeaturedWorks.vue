@@ -22,7 +22,8 @@ const speciesRef = useTemplateRef<HTMLElement>('species')
 const transitionDirection = shallowRef<'next' | 'prev'>('next')
 const motionSequence = shallowRef(0)
 const userPaused = shallowRef(false)
-const controlsRevealed = shallowRef(false)
+const { controlsRevealed, revealControls, revealForFinePointer, onPointerLeave, onHeroClick }
+  = useCarouselControls(() => userPaused.value)
 const mediaTransitionName = computed(() => `featured-media-${transitionDirection.value}`)
 
 const { reduceMotion, restart: restartAutoplayTimer } = useCarouselPlayback({
@@ -30,26 +31,7 @@ const { reduceMotion, restart: restartAutoplayTimer } = useCarouselPlayback({
   enabled: () => canNavigate.value && !userPaused.value,
 })
 
-let controlsTimer: ReturnType<typeof setTimeout> | null = null
 let textAnimations: Animation[] = []
-
-function stopControlsTimer() {
-  if (controlsTimer !== null) {
-    clearTimeout(controlsTimer)
-    controlsTimer = null
-  }
-}
-
-function revealControls(timeout = 2_400) {
-  controlsRevealed.value = true
-  stopControlsTimer()
-  if (!userPaused.value) {
-    controlsTimer = setTimeout(() => {
-      controlsRevealed.value = false
-      controlsTimer = null
-    }, timeout)
-  }
-}
 
 function animateText(direction: -1 | 1, sequence: number) {
   for (const animation of textAnimations) animation.cancel()
@@ -99,15 +81,6 @@ function onKeydown(event: KeyboardEvent) {
   else if (event.key === 'ArrowRight') {
     event.preventDefault()
     selectWork(1)
-  }
-}
-
-function revealForFinePointer(event: MouseEvent) {
-  const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect()
-  const x = (event.clientX - bounds.left) / bounds.width
-  const y = (event.clientY - bounds.top) / bounds.height
-  if (!controlsRevealed.value && (x <= 0.16 || x >= 0.84 || y >= 0.72)) {
-    revealControls()
   }
 }
 
@@ -184,28 +157,11 @@ function onPointerMove(event: PointerEvent) {
   }
 }
 
-function onPointerLeave() {
-  if (!userPaused.value) {
-    stopControlsTimer()
-    controlsRevealed.value = false
-  }
-}
-
-function onHeroClick(event: MouseEvent) {
-  if ((event.target as HTMLElement | null)?.closest('button, a')) {
-    return
-  }
-  if (!matchMedia('(hover: hover) and (pointer: fine)').matches) {
-    revealControls(4_000)
-  }
-}
-
 watch(() => works.value.length, (count) => {
   activeIndex.value = clampSlideIndex(activeIndex.value, count)
 })
 
 onBeforeUnmount(() => {
-  stopControlsTimer()
   resetSwipeClickSuppression()
   for (const animation of textAnimations) animation.cancel()
 })

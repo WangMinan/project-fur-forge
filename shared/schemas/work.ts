@@ -42,7 +42,8 @@ const mutableWorkBaseSchema = z.object({
   slug: slugSchema,
   characterName: z.string().trim().min(1).max(100),
   species: z.string().trim().min(1).max(100),
-  sortOrder: z.number().int().nonnegative(),
+  /** Accepted for older callers; ordering is managed by the featured collection. */
+  sortOrder: z.number().int().nonnegative().optional(),
   featured: z.boolean(),
 }).strict()
 
@@ -156,6 +157,7 @@ export const managedStudioPhotoDtoSchema = studioPhotoBaseSchema.extend({
 }).strict()
 
 const managedWorkBaseSchema = mutableWorkBaseSchema.extend({
+  sortOrder: z.number().int().nonnegative(),
   imageCompositionVersion: z.number().int().min(0).max(1).default(0),
   showAdoptionCoverInDetail: z.boolean().default(true),
   showDesignSheetInDetail: z.boolean().default(true),
@@ -177,22 +179,6 @@ export const managedWorkDtoSchema = z.discriminatedUnion('purpose', [
   managedWorkBaseSchema.extend({ purpose: z.literal('commission') }).strict(),
   managedWorkBaseSchema.extend({ purpose: z.literal('showcase') }).strict(),
 ])
-
-/** Legacy mapper response retained as a target-shaped internal DTO. */
-export const adminWorkDtoSchema = z.object({
-  id: resourceIdSchema,
-  version: resourceVersionSchema,
-  slug: slugSchema,
-  characterName: z.string().trim().min(1).max(100),
-  species: z.string().trim().min(1).max(100),
-  purpose: workPurposeSchema,
-  publicationStatus: publicationStatusSchema,
-  assetIds: z.array(resourceIdSchema).max(12),
-  adoptionStatus: adoptionStatusSchema.nullable(),
-  priceCnyMinor: z.number().int().positive().nullable(),
-  sortOrder: z.number().int().nonnegative(),
-  featured: z.boolean(),
-}).strict()
 
 const workListItemBaseSchema = managedWorkBaseSchema.omit({
   studioPhotos: true,
