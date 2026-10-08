@@ -23,6 +23,25 @@ import { safeLog } from '../safe-log'
 
 export const RECOVERY_CONCURRENCY = 2
 export const RECOVERY_SCAN_LIMIT = 50
+export const RECOVERY_INTERVAL_MS = 20_000
+
+/** Repeat bounded scans after old leases expire; never overlap scans or restart after close. */
+export function startOperationRecovery(scan: () => Promise<unknown>) {
+  let stopped = false
+  let timer: ReturnType<typeof setTimeout> | undefined
+  async function tick() {
+    try { await scan() }
+    catch (error) {
+      safeLog('error', 'Operation recovery scan failed.', { errorName: (error as Error)?.name })
+    }
+    if (!stopped) {
+      timer = setTimeout(() => void tick(), RECOVERY_INTERVAL_MS)
+      timer.unref()
+    }
+  }
+  void tick()
+  return () => { stopped = true; clearTimeout(timer) }
+}
 
 export interface RecoverySummary {
   failed: number
@@ -146,6 +165,6 @@ export async function recoverPendingOperations(options: {
     })
   }
 
-  safeLog('info', 'Operation recovery scan finished.', { ...summary })
+  if (summary.scanned > 0) safeLog('info', 'Operation recovery scan finished.', { ...summary })
   return summary
 }

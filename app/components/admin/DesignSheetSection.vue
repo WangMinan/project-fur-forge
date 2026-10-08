@@ -1,13 +1,9 @@
 <script setup lang="ts">
 import type { ImageCompositions } from '~~/shared/schemas/image-composition'
-import { workApiErrorText } from '~/utils/work-errors'
-import { managedWorkResponseSchema } from '~~/shared/schemas/work'
-import { retryAssetProcessingResponseSchema } from '~~/shared/schemas/upload'
 import type {
   ManagedDesignSheetDto,
   ManagedWorkDto,
 } from '~~/shared/types/contracts'
-import { AdminApiError } from '~/composables/useAdminApi'
 import { ASSET_STATUS_LABELS } from '~/utils/media-labels'
 import { ADMIN_MEDIA_LARGE_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
 import {
@@ -39,15 +35,6 @@ const emit = defineEmits<{
   stateChange: [state: { busy: boolean, dirty: boolean }]
 }>()
 
-const adminApi = useAdminApi()
-const entry = ref<DesignSheetEntry | null>(null)
-const baseline = shallowRef('null')
-const saving = shallowRef(false)
-const processing = shallowRef(false)
-const saveError = shallowRef<string | null>(null)
-const selectedFile = shallowRef<File | null>(null)
-const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
-
 function toEntry(sheet: ManagedDesignSheetDto): DesignSheetEntry {
   return {
     alt: sheet.alt ?? '',
@@ -69,174 +56,21 @@ function payloadOf(value: DesignSheetEntry | null) {
     : null
 }
 
-function resetFromWork(work: ManagedWorkDto) {
-  const sheet = work.purpose === 'adoption' ? work.designSheet : null
-  entry.value = sheet ? toEntry(sheet) : null
-  baseline.value = JSON.stringify(payloadOf(entry.value))
-}
-
-resetFromWork(props.work)
-
-const isDirty = computed(() =>
-  JSON.stringify(payloadOf(entry.value)) !== baseline.value,
-)
-
-const uploads = useStudioPhotoUpload({
-  mediaRole: 'design_sheet',
-  onAssetReady(item, asset) {
-    if (entry.value?.assetId === asset.assetId) {
-      uploads.dismiss(item)
-      return
-    }
-    entry.value = {
-      alt: '',
-      assetId: asset.assetId,
-      height: asset.height,
-      previewUrl: adminMediaPreviewUrl(asset.assetId, ADMIN_MEDIA_LARGE_PREVIEW_WIDTH),
-      publicVariantCount: 0,
-      status: asset.status,
-      version: asset.version,
-      width: asset.width,
-    }
-    uploads.dismiss(item)
-  },
-  onWorkConflict() {
-    emit('conflict')
-  },
+const { entry, isDirty, saving, processing, saveError, uploads, resetFromWork,
+  retryProcessing, save: saveDesignSheet } = useSingleWorkImage<DesignSheetEntry>({
+  work: () => props.work, locked: () => props.locked, role: 'design_sheet', label: '设定图',
+  fromWork: work => work.purpose === 'adoption' && work.designSheet ? toEntry(work.designSheet) : null,
+  fromAsset: asset => ({
+    alt: '', assetId: asset.assetId, height: asset.height,
+    previewUrl: adminMediaPreviewUrl(asset.assetId, ADMIN_MEDIA_LARGE_PREVIEW_WIDTH),
+    publicVariantCount: 0, status: asset.status, version: asset.version, width: asset.width,
+  }),
+  payload: payloadOf,
+  saved: work => emit('saved', work), conflict: () => emit('conflict'),
+  stateChange: state => emit('stateChange', state),
 })
 
-const busyUploads = computed(() => uploads.items.value.filter(item =>
-  ['digesting', 'uploading', 'validating'].includes(item.state),
-).length)
-
-const needsResolutionAdaptation = computed(() => {
-  if (!entry.value) {
-    return false
-  }
-  return entry.value.width < 2_400
-})
-
-watch(() => props.work, (work) => {
-  if (!isDirty.value) {
-    resetFromWork(work)
-  }
-})
-
-watchEffect(() => {
-  emit('stateChange', {
-    busy: saving.value || processing.value || busyUploads.value > 0,
-    dirty: isDirty.value,
-  })
-})
-
-onMounted(() => {
-  void uploads.restore({
-    workId: props.work.id,
-    workVersion: props.work.version,
-  })
-})
-
-function pickFile() {
-  fileInput.value?.click()
-}
-
-function onFileChange(event: Event) {
-  const input = event.target as HTMLInputElement
-  selectedFile.value = input.files?.[0] ?? null
-}
-
-async function uploadSelectedFile() {
-  const file = selectedFile.value
-  if (!file || props.locked || entry.value || busyUploads.value > 0) {
-    return
-  }
-  selectedFile.value = null
-  if (fileInput.value) {
-    fileInput.value.value = ''
-  }
-  await uploads.startUpload(file, {
-    workId: props.work.id,
-    workVersion: props.work.version,
-  })
-}
-
-async function retryEntryProcessing() {
-  if (!entry.value || processing.value) {
-    return
-  }
-  processing.value = true
-  saveError.value = null
-  try {
-    const result = await adminApi(
-      `/api/admin/v1/media/assets/${entry.value.assetId}/retry-processing`,
-      {
-        method: 'POST',
-        body: { expectedVersion: entry.value.version, payload: {} },
-        schema: retryAssetProcessingResponseSchema,
-      },
-    )
-    entry.value.status = result.data.status
-    entry.value.version = result.data.version
-  }
-  catch (error) {
-    if (error instanceof AdminApiError && error.status === 401) {
-      return
-    }
-    saveError.value = '重试处理失败，请稍后重试。'
-  }
-  finally {
-    processing.value = false
-  }
-}
-
-async function saveDesignSheet(): Promise<boolean> {
-  if (saving.value || props.locked) {
-    return false
-  }
-  saveError.value = null
-  if (entry.value && entry.value.alt.trim() === '') {
-    saveError.value = '设定图需要填写图片说明后才能保存。'
-    return false
-  }
-  saving.value = true
-  try {
-    const result = await adminApi(
-      `/api/admin/v1/works/${props.work.id}/design-sheet`,
-      {
-        method: 'PUT',
-        body: {
-          expectedVersion: props.work.version,
-          payload: { designSheet: payloadOf(entry.value) },
-        },
-        schema: managedWorkResponseSchema,
-      },
-    )
-    resetFromWork(result.data)
-    emit('saved', result.data)
-    return true
-  }
-  catch (error) {
-    if (error instanceof AdminApiError && error.status === 401) {
-      return false
-    }
-    if (error instanceof AdminApiError && ['DETAIL_GALLERY_EMPTY', 'ADOPTION_SOURCE_UNAVAILABLE'].includes(error.reason ?? '')) {
-      saveError.value = workApiErrorText(error, '图片展示设置无效。')
-      return false
-    }
-    if (error instanceof AdminApiError && error.status === 409) {
-      emit('conflict')
-      saveError.value = '作品数据已在其他地方变化，本次设定图未保存。'
-      return false
-    }
-    saveError.value = error instanceof AdminApiError && error.status === 400
-      ? '设定图内容未通过校验，请检查图片说明。'
-      : '保存设定图失败，请稍后重试。'
-    return false
-  }
-  finally {
-    saving.value = false
-  }
-}
+const needsResolutionAdaptation = computed(() => Boolean(entry.value && entry.value.width < 2_400))
 
 defineExpose({ save: saveDesignSheet })
 </script>
@@ -327,7 +161,7 @@ defineExpose({ save: saveDesignSheet })
             :disabled="locked || processing"
             :loading="processing"
             loading-label="处理中…"
-            @click="retryEntryProcessing"
+            @click="retryProcessing"
           >重试处理</AdminAction>
           <AdminAction
             :disabled="locked || processing"
@@ -341,43 +175,7 @@ defineExpose({ save: saveDesignSheet })
       还没有设定图。此项可选，可按需上传并保存一张完整设定图。
     </p>
 
-    <input
-      ref="fileInput"
-      type="file"
-      accept="image/jpeg,image/png,image/webp"
-      hidden
-      aria-label="选择领养设定图文件"
-      @change="onFileChange"
-    >
-    <div v-if="!entry" class="design-sheet__uploader">
-      <AdminAction
-        :disabled="locked || busyUploads > 0"
-        @click="pickFile"
-      >选择设定图</AdminAction>
-      <span class="design-sheet__filename">{{ selectedFile?.name ?? '未选择图片' }}</span>
-      <AdminAction
-        variant="primary"
-        :disabled="!selectedFile || locked || busyUploads > 0"
-        :loading="busyUploads > 0"
-        loading-label="处理中…"
-        @click="uploadSelectedFile"
-      >上传设定图</AdminAction>
-    </div>
-
-    <ul v-if="uploads.items.value.length > 0" class="design-sheet__uploads" role="list">
-      <li v-for="item in uploads.items.value" :key="item.id">
-        <AdminUploadSessionCard
-          :item="item"
-          @cancel="uploads.cancelUpload(item)"
-          @dismiss="uploads.dismiss(item)"
-          @retry-processing="uploads.retryProcessing(item)"
-          @retry-upload="uploads.retryUpload(item, {
-            workId: work.id,
-            workVersion: work.version,
-          })"
-        />
-      </li>
-    </ul>
+    <AdminWorkImageUploader :disabled="locked" :empty="!entry" label="设定图" :uploads="uploads" :work-id="work.id" :work-version="work.version" />
 
     <div v-if="isDirty" class="design-sheet__actions">
       <AdminAction
@@ -499,7 +297,6 @@ defineExpose({ save: saveDesignSheet })
 }
 
 .design-sheet__entry-actions,
-.design-sheet__uploader,
 .design-sheet__actions {
   display: flex;
   align-items: center;
@@ -515,24 +312,6 @@ defineExpose({ save: saveDesignSheet })
   color: var(--admin-text-secondary);
   font-size: var(--admin-font-sm);
   text-align: center;
-}
-
-.design-sheet__filename {
-  min-width: 8rem;
-  max-width: 24rem;
-  overflow: hidden;
-  color: var(--admin-text-secondary);
-  font-size: var(--admin-font-sm);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.design-sheet__uploads {
-  display: grid;
-  gap: var(--admin-space-3);
-  margin: var(--admin-space-3) 0 0;
-  padding: 0;
-  list-style: none;
 }
 
 .design-sheet__actions {

@@ -1,3 +1,4 @@
+import { verifyPublicImage } from '../service/public-image-validation'
 import { COMPOSITION_USAGES } from '../../../shared/schemas/image-composition'
 import type { CompositionUsage, ImageCompositions } from '../../../shared/schemas/image-composition'
 import { compositionMinimumDimensions, compositionOutputHeight, pixelCrop, resolveComposition } from '../../../shared/utils/image-composition'
@@ -606,27 +607,6 @@ function existingVariant(
   )
 }
 
-async function verifyPublicVariant(
-  storage: MediaStorage,
-  variant: ReadyPublicVariant,
-) {
-  const [head, info, anonymous] = await Promise.all([
-    storage.headPublic(variant.objectKey),
-    storage.imageInfoPublic(variant.objectKey),
-    storage.getPublicAnonymous(variant.objectKey),
-  ])
-  return head.byteSize === variant.byteSize
-    && head.byteSize === anonymous.content.length
-    && head.etagMd5Hex === digest('md5', anonymous.content)
-    && head.contentType === contentType(variant.format)
-    && anonymous.contentType === contentType(variant.format)
-    && info.fileSize === head.byteSize
-    && normalizedFormat(info.format) === variant.format
-    && info.width === variant.width
-    && info.height === variant.height
-    && digest('sha256', anonymous.content) === variant.sha256
-}
-
 async function generateOne(
   sqlite: Database.Database,
   storage: MediaStorage,
@@ -652,7 +632,7 @@ async function generateOne(
     format,
   )
   const existing = existingVariant(sqlite, objectKey, usage)
-  if (existing && await verifyPublicVariant(storage, existing)) {
+  if (existing && await verifyPublicImage(storage, existing)) {
     return existing
   }
 

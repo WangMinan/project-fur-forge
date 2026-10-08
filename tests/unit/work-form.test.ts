@@ -51,6 +51,7 @@ describe('toWorkFieldsPayload', () => {
       const payload = toWorkFieldsPayload({ ...form, purpose })
       expect(payload.purpose).toBe(purpose)
       expect(payload).not.toHaveProperty('adoptionStatus')
+      expect(payload).not.toHaveProperty('sortOrder')
       expect(payload).not.toHaveProperty('priceCnyMinor')
     }
   })
@@ -63,7 +64,6 @@ describe('toWorkFieldsPayload', () => {
       priceYuan: '8800.50',
       purpose: 'adoption',
       slug: 'kori',
-      sortOrder: '4',
       species: '犬',
     })
 
@@ -74,7 +74,6 @@ describe('toWorkFieldsPayload', () => {
       priceCnyMinor: 880_050,
       purpose: 'adoption',
       slug: 'kori',
-      sortOrder: 4,
       species: '犬',
     })
   })
@@ -130,17 +129,15 @@ describe('validateWorkForm', () => {
     expect(hasWorkFormError(errors)).toBe(false)
   })
 
-  it('reports required fields, slug shape and sort order', () => {
+  it('reports required fields and slug shape', () => {
     const errors = validateWorkForm({
       ...emptyWorkForm(),
       slug: 'Not A Slug',
-      sortOrder: '-1',
     })
 
     expect(errors.characterName).toBeTruthy()
     expect(errors.species).toBeTruthy()
     expect(errors.slug).toBeTruthy()
-    expect(errors.sortOrder).toBeTruthy()
   })
 
   it('requires a human-confirmed adoption status', () => {

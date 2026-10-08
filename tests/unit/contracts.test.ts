@@ -6,7 +6,6 @@ import {
   versionedRequestSchema,
 } from '../../shared/schemas/api'
 import {
-  adminWorkDtoSchema,
   createWorkRequestSchema,
   featuredWorkOrderRequestSchema,
   publicAdoptionWorkDtoSchema,
@@ -14,7 +13,6 @@ import {
   updateWorkRequestSchema,
 } from '../../shared/schemas/work'
 import {
-  toAdminWorkDto,
   toPublicWorkDto,
 } from '../../server/utils/recipe/work-mapper'
 import type { WorkRecord } from '../../server/utils/recipe/work-mapper'
@@ -210,32 +208,12 @@ describe('work DTO mapping', () => {
     }).success).toBe(false)
   })
 
-  it('keeps drafts private and never projects storage identities', () => {
+  it('keeps drafts private', () => {
     expect(toPublicWorkDto({
       ...baseRecord,
       publicationStatus: 'draft',
     })).toBeNull()
 
-    const adminDto = toAdminWorkDto(baseRecord)
-    expect(adminDto).toMatchObject({
-      adoptionStatus: 'available',
-      assetIds: baseRecord.assetIds,
-      priceCnyMinor: 1_560_000,
-    })
-    expect(JSON.stringify(adminDto)).not.toContain('secret.jpg')
-    expect(adminWorkDtoSchema.safeParse({
-      ...adminDto,
-      originalObjectKeys: ['private/original/secret.jpg'],
-    }).success).toBe(false)
   })
 
-  it('clears adoption-only fields from non-adoption admin DTOs', () => {
-    expect(toAdminWorkDto({
-      ...baseRecord,
-      purpose: 'commission',
-    })).toMatchObject({
-      adoptionStatus: null,
-      priceCnyMinor: null,
-    })
-  })
 })

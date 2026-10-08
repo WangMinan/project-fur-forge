@@ -186,11 +186,11 @@ async function pollOperation(operation: PublicationOperationDto) {
       lastOperation.value = current
       await refreshPublishProgress()
     },
-    onSettled: async (current) => {
+    onSettled: async (current, isActive) => {
       lastOperation.value = current
       handleOperationOutcome(current)
       await refreshPublishProgress()
-      emit('mutated')
+      if (isActive()) emit('mutated')
     },
   })
 }

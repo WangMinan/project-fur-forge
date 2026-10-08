@@ -1,6 +1,7 @@
 import { publicationOperationResponseSchema } from '~~/shared/schemas/publication'
 import type { PublicationOperationDto } from '~~/shared/types/contracts'
 import { AdminApiError } from './useAdminApi'
+import { onScopeDispose } from 'vue'
 
 /**
  * 发布长任务的共享轮询状态。
@@ -22,23 +23,19 @@ export function isPublicationInProgress(operation: PublicationOperationDto) {
 
 export function usePublicationPolling() {
   const adminApi = useAdminApi()
-  const timers = new Map<string, ReturnType<typeof setTimeout>>()
+  const active = new Map<string, { timer?: ReturnType<typeof setTimeout> }>()
+  let disposed = false
 
   function stop(key?: string) {
-    if (key) {
-      const timer = timers.get(key)
-      if (timer) {
-        clearTimeout(timer)
-        timers.delete(key)
-      }
-      return
+    for (const [id, run] of active) {
+      if (key !== undefined && key !== id) continue
+      clearTimeout(run.timer)
+      active.delete(id)
     }
-    timers.forEach(clearTimeout)
-    timers.clear()
   }
 
   function isPolling(key: string) {
-    return timers.has(key)
+    return active.has(key)
   }
 
   /**
@@ -50,39 +47,45 @@ export function usePublicationPolling() {
     key: string,
     operationId: string,
     handlers: {
-      onSettled: (operation: PublicationOperationDto) => Promise<void> | void
-      onTick?: (operation: PublicationOperationDto) => Promise<void> | void
+      onSettled: (operation: PublicationOperationDto, isActive: () => boolean) => Promise<void> | void
+      onTick?: (operation: PublicationOperationDto, isActive: () => boolean) => Promise<void> | void
     },
   ) {
     stop(key)
+    if (disposed) return
+    const run: { timer?: ReturnType<typeof setTimeout> } = {}
+    active.set(key, run)
+    const isActive = () => active.get(key) === run
     const tick = async () => {
+      if (!isActive()) return
       let current: PublicationOperationDto | null = null
       try {
         const result = await adminApi(
           `/api/admin/v1/publication-operations/${operationId}`,
           { schema: publicationOperationResponseSchema },
         )
+        if (!isActive()) return
         current = result.data
-        await handlers.onTick?.(current)
+        await handlers.onTick?.(current, isActive)
       }
       catch (error) {
         if (error instanceof AdminApiError && error.status === 401) {
+          if (isActive()) stop(key)
           return
         }
       }
+      if (!isActive()) return
       if (current && !isPublicationInProgress(current)) {
-        await handlers.onSettled(current)
+        try { await handlers.onSettled(current, isActive) }
+        finally { if (isActive()) stop(key) }
         return
       }
-      timers.set(key, setTimeout(() => {
-        timers.delete(key)
-        void tick()
-      }, POLL_INTERVAL_MS))
+      run.timer = setTimeout(() => void tick(), POLL_INTERVAL_MS)
     }
     await tick()
   }
 
-  onScopeDispose(() => stop())
+  onScopeDispose(() => { disposed = true; stop() })
 
   return { isPolling, poll, stop }
 }

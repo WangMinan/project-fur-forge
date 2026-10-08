@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { AdminAction, PublicAction } from '#components'
 const props = withDefaults(defineProps<{
   accept?: string
   disabled?: boolean
@@ -11,7 +10,6 @@ const props = withDefaults(defineProps<{
   previewAlt?: string
   previewUrl?: string | null
   removable?: boolean
-  theme?: 'admin' | 'public'
 }>(), {
   accept: 'image/jpeg,image/png,image/webp',
   disabled: false,
@@ -20,7 +18,6 @@ const props = withDefaults(defineProps<{
   previewAlt: '所选图片预览',
   previewUrl: null,
   removable: true,
-  theme: 'public',
 })
 
 const emit = defineEmits<{
@@ -57,7 +54,7 @@ function onDrop(event: DragEvent) {
 </script>
 
 <template>
-  <div class="image-dropzone" :data-theme="theme">
+  <div class="image-dropzone">
     <p class="image-dropzone__label">
       {{ label }} <span aria-hidden="true">*</span>
     </p>
@@ -94,8 +91,8 @@ function onDrop(event: DragEvent) {
         <div class="image-dropzone__preview-meta">
           <span class="image-dropzone__filename">{{ fileName || '已选择图片' }}</span>
           <div class="image-dropzone__actions">
-            <component :is="theme === 'admin' ? AdminAction : PublicAction" variant="secondary" :disabled="disabled" @click="choose">更换图片</component>
-            <component :is="theme === 'admin' ? AdminAction : PublicAction" v-if="removable" variant="secondary" :disabled="disabled" @click="emit('remove')">移除</component>
+            <PublicAction variant="secondary" :disabled="disabled" @click="choose">更换图片</PublicAction>
+            <PublicAction v-if="removable" variant="secondary" :disabled="disabled" @click="emit('remove')">移除</PublicAction>
           </div>
         </div>
       </template>
@@ -131,15 +128,6 @@ function onDrop(event: DragEvent) {
   --dropzone-muted: var(--public-text-secondary);
   display: grid;
   gap: 0.75rem;
-}
-
-.image-dropzone[data-theme='admin'] {
-  --dropzone-accent: var(--admin-accent-primary);
-  --dropzone-bg: var(--admin-bg-subtle);
-  --dropzone-border: color-mix(in srgb, var(--admin-accent-primary) 34%, var(--admin-border-primary));
-  --dropzone-error: var(--admin-danger);
-  --dropzone-text: var(--admin-text-primary);
-  --dropzone-muted: var(--admin-text-secondary);
 }
 
 .image-dropzone__label {
@@ -265,26 +253,26 @@ function onDrop(event: DragEvent) {
   color: var(--dropzone-error);
 }
 
-.image-dropzone[data-theme='public'] .image-dropzone__card {
+.image-dropzone .image-dropzone__card {
   border: 1px solid var(--public-border-primary);
   border-radius: var(--radius-image);
 }
 
-.image-dropzone[data-theme='public'] .image-dropzone__card--dragging {
+.image-dropzone .image-dropzone__card--dragging {
   border-color: var(--dropzone-accent);
 }
 
-.image-dropzone[data-theme='public'] .image-dropzone__card--preview {
+.image-dropzone .image-dropzone__card--preview {
   border-color: var(--public-border-secondary);
   border-radius: var(--radius-image);
 }
 
-.image-dropzone[data-theme='public'] .image-dropzone__picker {
+.image-dropzone .image-dropzone__picker {
   padding: var(--space-6);
   gap: var(--space-3);
 }
 
-.image-dropzone[data-theme='public'] .image-dropzone__preview-meta {
+.image-dropzone .image-dropzone__preview-meta {
   padding: var(--space-3) var(--space-4);
 }
 
