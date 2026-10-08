@@ -12,13 +12,18 @@ import type {
 import type { R3StageAObjectStore } from '../runner/r3-stage-a-retirement'
 import {
   claimCommissionDeletionTarget,
+  COMMISSION_DELETION_HEARTBEAT_MS,
   deleteCommissionTargetRows,
   findCommissionDeletionTarget,
+  holdsCommissionDeletionLease,
   insertCommissionDeletionFailureAudit,
   listCommissionRetentionRows,
+  releaseCommissionDeletionLease,
+  renewCommissionDeletionLease,
 } from '../repository/commission-repository'
-import type { CommissionDeletionTarget } from '../repository/commission-repository'
+import type { CommissionDeletionLease, CommissionDeletionTarget } from '../repository/commission-repository'
 import { ServiceError } from '../service-error'
+import { safeLog } from '../safe-log'
 
 import { fenceCommissionEmailsForDeletion } from '../repository/commission-email'
 
@@ -195,7 +200,11 @@ export async function executeCommissionDeletion(options: {
   const id = initial.submission.id
   assertCommissionDeletionUnlocked(id)
   deletionLocks.add(id)
-  const now = options.now ?? Date.now()
+  const startedAt = Date.now()
+  const now = () => (options.now ?? startedAt) + Date.now() - startedAt
+  let lease: CommissionDeletionLease | null = null
+  let timer: ReturnType<typeof setInterval> | undefined
+  let completed = false
   try {
     const plan = await buildDeletionPlan(
       options.sqlite,
@@ -215,44 +224,71 @@ export async function executeCommissionDeletion(options: {
       )
     }
     const target = plan.target
-    options.sqlite.transaction(() => {
-      if (!claimCommissionDeletionTarget(options.sqlite, target)) {
-        throw new ServiceError(409, 'CONFLICT', 'Commission changed during deletion inspection.', 'COMMISSION_DELETE_BLOCKED')
+    const claimed = options.sqlite.transaction(() => {
+      const acquired = claimCommissionDeletionTarget(options.sqlite, target, now())
+      if (!acquired) {
+        throw new ServiceError(409, 'CONFLICT', 'Commission changed or deletion is already in progress.', 'COMMISSION_DELETE_BLOCKED')
       }
-      fenceCommissionEmailsForDeletion(options.sqlite, id, now)
+      fenceCommissionEmailsForDeletion(options.sqlite, id, now())
+      return acquired
     }).immediate()
+    lease = claimed
+    const claimedTarget = { ...target, submission: { ...target.submission, version: claimed.version } }
+    let lost = false
+    const ownershipError = () => new ServiceError(409, 'CONFLICT', 'Commission deletion ownership has changed.', 'COMMISSION_DELETE_IN_PROGRESS')
+    const assertOwner = () => {
+      if (lost || !renewCommissionDeletionLease(options.sqlite, claimed, now())) {
+        lost = true
+        throw ownershipError()
+      }
+    }
+    timer = setInterval(() => {
+      try { assertOwner() }
+      catch { lost = true }
+    }, COMMISSION_DELETION_HEARTBEAT_MS)
+    timer.unref()
     const submissionIdDigest = digestId(plan.target.submission.id)
     try {
       for (const key of plan.objectKeys) {
+        assertOwner()
         await options.objectStore.deleteAll('private', key)
+        assertOwner()
       }
       for (const key of plan.objectKeys) {
+        assertOwner()
         const remaining = await options.objectStore.inspect('private', key)
+        assertOwner()
         if (remaining.current
           || remaining.versions > 0
           || remaining.deleteMarkers > 0) {
           throw new Error('Commission object deletion did not converge.')
         }
       }
-      deleteCommissionTargetRows(options.sqlite, plan.target, {
+      deleteCommissionTargetRows(options.sqlite, claimedTarget, {
         actorUserId: options.actorUserId,
         auditId: randomUUID(),
-        deletedAt: now,
+        deletedAt: now(),
         submissionIdDigest,
       })
+      completed = true
     }
     catch {
+      let owned: boolean | undefined
       try {
-        insertCommissionDeletionFailureAudit(options.sqlite, {
-          actorUserId: options.actorUserId,
-          auditId: randomUUID(),
-          createdAt: now,
-          submissionIdDigest,
-        })
+        options.sqlite.transaction(() => {
+          owned = holdsCommissionDeletionLease(options.sqlite, claimed, now())
+          if (owned && !lost) insertCommissionDeletionFailureAudit(options.sqlite, {
+            actorUserId: options.actorUserId,
+            auditId: randomUUID(),
+            createdAt: now(),
+            submissionIdDigest,
+          })
+        }).immediate()
       }
       catch {
         // The original failure remains authoritative; never expose DB details.
       }
+      if (lost || owned === false) throw ownershipError()
       throw new ServiceError(500, 'INTERNAL_ERROR', 'Commission deletion failed safely.')
     }
     return commissionDeletionResultDtoSchema.parse({
@@ -261,6 +297,14 @@ export async function executeCommissionDeletion(options: {
     })
   }
   finally {
+    clearInterval(timer)
+    if (lease && !completed) {
+      try { releaseCommissionDeletionLease(options.sqlite, lease) }
+      catch (error) {
+        // An unavailable DB leaves an expiring lease, not a replacement for the original error.
+        safeLog('warn', 'Commission deletion lease release failed.', { errorName: (error as Error)?.name })
+      }
+    }
     deletionLocks.delete(id)
   }
 }

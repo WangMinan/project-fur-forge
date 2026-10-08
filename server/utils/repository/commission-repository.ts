@@ -336,12 +336,43 @@ export function findCommissionDeletionTarget(
   }
 }
 
-export function claimCommissionDeletionTarget(sqlite: Database.Database, target: CommissionDeletionTarget) {
-  return sqlite.prepare(`
-    UPDATE commission_submissions SET email_deletion_pending = 1
+export const COMMISSION_DELETION_LEASE_MS = 60_000
+export const COMMISSION_DELETION_HEARTBEAT_MS = 20_000
+
+export interface CommissionDeletionLease {
+  id: string
+  version: number
+}
+
+export function claimCommissionDeletionTarget(sqlite: Database.Database, target: CommissionDeletionTarget, now = Date.now()): CommissionDeletionLease | null {
+  const claimed = sqlite.prepare(`
+    UPDATE commission_submissions SET email_deletion_pending = 1,
+      deletion_lease_expires_at = ?, version = version + 1
     WHERE id = ? AND version = ? AND status = ? AND design_asset_id = ?
-  `).run(target.submission.id, target.submission.version,
-    target.submission.status, target.submission.designAssetId).changes === 1
+      AND (deletion_lease_expires_at IS NULL OR deletion_lease_expires_at <= ?)
+  `).run(now + COMMISSION_DELETION_LEASE_MS, target.submission.id, target.submission.version,
+    target.submission.status, target.submission.designAssetId, now).changes === 1
+  // The incremented version fences a resumed process from an expired owner.
+  return claimed ? { id: target.submission.id, version: target.submission.version + 1 } : null
+}
+
+export function renewCommissionDeletionLease(sqlite: Database.Database, lease: CommissionDeletionLease, now = Date.now()) {
+  return sqlite.prepare(`
+    UPDATE commission_submissions SET deletion_lease_expires_at = ?
+    WHERE id = ? AND version = ? AND email_deletion_pending = 1 AND deletion_lease_expires_at > ?
+  `).run(now + COMMISSION_DELETION_LEASE_MS, lease.id, lease.version, now).changes === 1
+}
+
+export function releaseCommissionDeletionLease(sqlite: Database.Database, lease: CommissionDeletionLease) {
+  // Keep the deletion fence after partial failure; only release this attempt's lease.
+  sqlite.prepare(`UPDATE commission_submissions SET deletion_lease_expires_at = NULL
+    WHERE id = ? AND version = ?`).run(lease.id, lease.version)
+}
+
+export function holdsCommissionDeletionLease(sqlite: Database.Database, lease: CommissionDeletionLease, now = Date.now()) {
+  return Boolean(sqlite.prepare(`SELECT 1 FROM commission_submissions
+    WHERE id = ? AND version = ? AND email_deletion_pending = 1 AND deletion_lease_expires_at > ?`)
+    .get(lease.id, lease.version, now))
 }
 
 export function deleteCommissionTargetRows(
@@ -355,6 +386,9 @@ export function deleteCommissionTargetRows(
   },
 ) {
   return sqlite.transaction(() => {
+    if (!holdsCommissionDeletionLease(sqlite, target.submission, input.deletedAt)) {
+      throw new Error('Commission deletion lease is no longer held.')
+    }
     const current = sqlite.prepare(`
       SELECT design_asset_id AS designAssetId, status, version
       FROM commission_submissions WHERE id = ?

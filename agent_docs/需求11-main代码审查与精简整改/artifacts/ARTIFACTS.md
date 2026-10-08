@@ -32,3 +32,7 @@
 ## 追加测试清理交接
 
 [workflow测试调用链、删除项与覆盖映射](../implementation/notes/2026-10-08-CI-TEST-CLEANUP.md)：默认运行时18项通过，替代前轮该范围待验证状态。
+
+## PR review补修
+
+[PR41删除独占租约与0056迁移说明](../implementation/notes/2026-10-08-PR41-DELETION-LEASE.md)。
