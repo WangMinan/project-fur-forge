@@ -413,6 +413,8 @@ onBeforeUnmount(() => {
 .home-adoption-poster__media-surface {
   grid-area: 1 / 1;
   display: grid;
+  /* Let the picture shrink with the frame instead of its intrinsic image height. */
+  grid-template-rows: minmax(0, 1fr);
   min-width: 0;
   min-height: 0;
   width: 100%;
