@@ -27,6 +27,7 @@ interface SeedWorkCommon {
 
 export type SeedWork = SeedWorkCommon & (
   | {
+    artist?: string
     purpose: 'adoption'
     adoptionStatus: 'available' | 'adopted'
     publicationStatus?: 'draft' | 'published'

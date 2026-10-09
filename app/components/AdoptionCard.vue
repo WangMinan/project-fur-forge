@@ -55,6 +55,10 @@ const adoptionTo = computed(() => ({
           <span>{{ adoption.work.species }}</span>
         </span>
 
+        <span v-if="adoption.work.artist" class="adoption-card__artist">
+          {{ t('ui.artistCredit', { name: adoption.work.artist }) }}
+        </span>
+
         <span class="adoption-card__action">
           <span>{{ t('ui.viewCurrent') }}</span>
           <span aria-hidden="true">→</span>
@@ -133,6 +137,7 @@ const adoptionTo = computed(() => ({
 
 .adoption-card__identity,
 .adoption-card__facts,
+.adoption-card__artist,
 .adoption-card__action {
   position: relative;
   z-index: 1;
@@ -183,6 +188,16 @@ const adoptionTo = computed(() => ({
   overflow-wrap: anywhere;
 }
 
+.adoption-card__artist {
+  min-width: 0;
+  margin-top: auto;
+  padding-top: var(--space-5);
+  color: var(--public-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
 .adoption-card__facts > span::before {
   content: "·";
   margin-inline-end: var(--space-2);
@@ -214,16 +229,21 @@ const adoptionTo = computed(() => ({
   }
 
   .adoption-card__profile {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+    column-gap: var(--space-4);
     padding: var(--space-4);
+  }
+
+  .adoption-card__identity {
+    grid-column: 1;
+    grid-row: 1;
   }
 
   .adoption-card__title {
     width: 100%;
     max-width: 100%;
-    overflow: hidden;
     font-size: clamp(1.625rem, 7vw, 2rem);
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .adoption-card__title--long {
@@ -231,18 +251,21 @@ const adoptionTo = computed(() => ({
   }
 
   .adoption-card__facts {
-    display: flex;
-    flex-wrap: wrap;
-    width: 100%;
-    gap: var(--space-2) var(--space-5);
-    margin-top: var(--space-2);
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+    max-width: 9ch;
+    margin-top: 0.35rem;
+    text-align: right;
   }
 
-  .adoption-card__facts > span {
-    white-space: nowrap;
+  .adoption-card__artist {
+    grid-column: 1 / -1;
+    padding-top: var(--space-2);
   }
 
   .adoption-card__action {
+    grid-column: 1 / -1;
     margin-top: var(--space-4);
     margin-bottom: 0;
   }
@@ -280,6 +303,10 @@ const adoptionTo = computed(() => ({
   .adoption-card__action {
     margin-top: auto;
     margin-bottom: var(--space-5);
+  }
+
+  .adoption-card__artist + .adoption-card__action {
+    margin-top: var(--space-4);
   }
 }
 </style>

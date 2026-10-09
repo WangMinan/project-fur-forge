@@ -466,7 +466,7 @@ describe('T19/T20 public repository contracts', () => {
     })
     const adoptionList = repository.listAdoptions()
     expect(JSON.stringify(adoptionList)).not.toMatch(/"(?:price|minorUnits|priceCnyMinor)"/u)
-    expect(JSON.stringify(repository.getWorkBySlug('adoption-purpose'))).not.toMatch(/"(?:price|minorUnits|priceCnyMinor)"/u)
+    expect(repository.getWorkBySlug('adoption-purpose')?.adoption).toMatchObject({ priceCnyMinor: 100 })
     expect(sqlite.prepare('SELECT price_amount_minor FROM works WHERE slug = ?').get('adoption-purpose'))
       .toMatchObject({ price_amount_minor: 100 })
     expect(adoptionList).toMatchObject({
@@ -512,6 +512,28 @@ describe('T19/T20 public repository contracts', () => {
     expect(serialized).not.toContain('/original/')
     expect(serialized).not.toContain('ownerContact')
     expect(serialized).not.toContain('privateObjectKey')
+  })
+
+  it('projects artist and price independently by placement for both adoption states', async () => {
+    await createPublishedWork({ slug: 'r13-projection', purpose: 'adoption', featured: false, sortOrder: 0 })
+    const repository = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
+    for (const status of ['available', 'adopted']) {
+      for (const artist of [null, '测试画师']) {
+        for (const price of [null, 880050]) {
+          sqlite.prepare("UPDATE works SET artist = ?, price_amount_minor = ?, price_currency = ?, adoption_status = ? WHERE slug = 'r13-projection'")
+            .run(artist, price, price === null ? null : 'CNY', status)
+          const detail = repository.getWorkBySlug('r13-projection')!
+          expect(detail.adoption).toEqual({ adoptionStatus: status, priceCnyMinor: price, ...(artist ? { artist } : {}) })
+          const adoptions = repository.listAdoptions()
+          expect(JSON.stringify(adoptions)).not.toMatch(/"(?:price|minorUnits|priceCnyMinor)"/u)
+          if (status === 'available') expect(adoptions.items[0]?.work.artist).toBe(artist ?? undefined)
+          else expect(adoptions.items).toHaveLength(0)
+          for (const data of [repository.listWorks(), repository.listFeaturedWorks(), repository.getHomeAggregate()]) {
+            expect(JSON.stringify(data)).not.toMatch(/"(?:artist|price|minorUnits|priceCnyMinor)"/u)
+          }
+        }
+      }
+    }
   })
 
   it('uses the complete design sheet for adoption listings while keeping detail media separate', async () => {

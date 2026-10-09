@@ -20,6 +20,7 @@
 | 需求10 · 大图管理工作区 | 大图工作区与后台页头统一；用户已确认 | [STATE](需求10-大图管理工作区/STATE.md) · [SPEC](需求10-大图管理工作区/requirements/SPEC.md) · [TASKS](需求10-大图管理工作区/implementation/TASKS.md) |
 | 需求11 · main代码审查与精简整改 | 12项本地整改完成；验证边界及待人工验收见 STATE | [STATE](需求11-main代码审查与精简整改/STATE.md) · [SPEC](需求11-main代码审查与精简整改/requirements/SPEC.md) · [TASKS](需求11-main代码审查与精简整改/implementation/TASKS.md) |
 | 需求12 · 作品目录排除纯设定图领养 | 局部覆盖需求4/6目录兜底；领养与详情不变 | [STATE](需求12-作品目录排除纯设定图领养/STATE.md) · [SPEC](需求12-作品目录排除纯设定图领养/requirements/SPEC.md) · [TASKS](需求12-作品目录排除纯设定图领养/implementation/TASKS.md) |
+| 需求13 · 领养价格与画师展示 | 本地实现与验证完成；待用户验收 | [STATE](需求13-领养价格与画师展示/STATE.md) · [SPEC](需求13-领养价格与画师展示/requirements/SPEC.md) · [TASKS](需求13-领养价格与画师展示/implementation/TASKS.md) |
 
 ## 按主题补读
 
@@ -30,6 +31,7 @@
 | 媒体与预览 | [媒体策略](需求1-兽装工作室主页/requirements/MEDIA-PUBLICATION-POLICY.md) 包含历史水印、返图与旧配方描述；当前退役结果以需求3 foundation、需求4 SPEC 的退役条款及 [T47-F4](需求4-站点视觉升级与内容合规/implementation/notes/2026-08-29-T47-F4-MOBILE-PDF-MEDIA-RETIREMENT.md) 为准。当前管理同源预览见 [需求5交接](需求5-委托邮件通知与站点配置/implementation/notes/2026-09-09-ADMIN-IMAGE-PROXY.md) 与部署文档 |
 | 内部邮件与站点配置 | 需求5 SPEC 的内部 SMTP 授权覆盖早期“禁用 SMTP”条款，不扩展为对外自动邮件 |
 | 图片构图与详情显隐 | 需求6 SPEC 明确列出拟覆盖条款；本地已实现；生产生效状态以实际部署记录为准 |
+| 领养价格与署名 | 需求13 [SPEC](需求13-领养价格与画师展示/requirements/SPEC.md) 局部覆盖需求7的详情价格禁用；首页与列表价格继续隐藏；画师仅领养目录和详情显示。 |
 | 公开站语言、X 联系与价格/SEO | 需求7 [SPEC](需求7-公开站中英切换/requirements/SPEC.md) 定义无前缀中英切换、中文 fallback、右上角语言按钮、X 分流及价格/SEO 修正；继承需求6构图与详情显隐，明确覆盖旧公开价格和相关联系条款。当前本地已实现，验证/发布状态以需求7 STATE 为准 |
 | 部署、恢复与云验证 | [DEPLOYMENT](../docs/DEPLOYMENT.md)、[生产发布手册](需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md)；发布事实只认对应执行证据 |
 | 停机维护页与代理错误 | [需求8 SPEC](需求8-ESA故障维护页/requirements/SPEC.md)、[ESA/Nginx 维护说明](../deploy/esa/MAINTENANCE.md)；HTML 导航兜底，业务 5xx 透传；函数与宿主机配置独立于应用镜像发布 |

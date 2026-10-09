@@ -47,6 +47,7 @@ interface ControlBody {
     sortOrder?: number
     publicationStatus?: 'draft' | 'published'
     adoptionStatus?: 'available' | 'adopted'
+    artist?: string
     priceCnyMinor?: number
     adoptionCover?: {
       alt: string
@@ -333,11 +334,11 @@ export default defineEventHandler(async (event) => {
       const publishedAt = now - index
       sqlite.prepare(`
         INSERT INTO works (
-          id, slug, character_name, species, purpose, adoption_status,
+          id, slug, character_name, species, purpose, adoption_status, artist,
           price_amount_minor, price_currency,
           publication_status, sort_order, featured,
           published_at, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         workId,
         work.slug,
@@ -345,6 +346,7 @@ export default defineEventHandler(async (event) => {
         work.species ?? '犬科',
         purpose,
         adoption ? work.adoptionStatus : null,
+        adoption ? work.artist ?? null : null,
         adoption && work.priceCnyMinor ? work.priceCnyMinor : null,
         adoption && work.priceCnyMinor ? 'CNY' : null,
         publicationStatus,

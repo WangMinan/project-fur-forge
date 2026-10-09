@@ -13,6 +13,7 @@ export const PUBLICATION_STATUS_VALUES = ['draft', 'published', 'unpublished'] a
 export const workPurposeSchema = z.enum(WORK_PURPOSE_VALUES)
 export const publicationStatusSchema = z.enum(PUBLICATION_STATUS_VALUES)
 export const adoptionStatusSchema = z.enum(['available', 'adopted'])
+export const artistSchema = z.string().trim().max(100).transform(value => value || null).nullable()
 
 export const adoptionStatusReviewItemSchema = z.object({
   id: resourceIdSchema,
@@ -34,6 +35,7 @@ const publicWorkBaseSchema = z.object({
 
 export const publicAdoptionWorkDtoSchema = publicWorkBaseSchema.extend({
   adoptionStatus: adoptionStatusSchema,
+  artist: z.string().trim().min(1).max(100).optional(),
 }).strict()
 
 export const publicWorkDtoSchema = publicWorkBaseSchema
@@ -51,6 +53,7 @@ export const workFieldsSchema = z.discriminatedUnion('purpose', [
   mutableWorkBaseSchema.extend({
     purpose: z.literal('adoption'),
     adoptionStatus: adoptionStatusSchema,
+    artist: artistSchema.optional(),
     priceCnyMinor: z.number().int().positive().nullable(),
   }).strict(),
   mutableWorkBaseSchema.extend({ purpose: z.literal('commission') }).strict(),
@@ -174,6 +177,7 @@ export const managedWorkDtoSchema = z.discriminatedUnion('purpose', [
     adoptionStatus: adoptionStatusSchema.nullable(),
     adoptionCover: managedAdoptionCoverDtoSchema.nullable(),
     designSheet: managedDesignSheetDtoSchema.nullable(),
+    artist: artistSchema.default(null),
     priceCnyMinor: z.number().int().positive().nullable(),
   }).strict(),
   managedWorkBaseSchema.extend({ purpose: z.literal('commission') }).strict(),
@@ -194,6 +198,7 @@ export const workListItemDtoSchema = z.discriminatedUnion('purpose', [
     adoptionStatus: adoptionStatusSchema.nullable(),
     adoptionCoverAssetId: resourceIdSchema.nullable(),
     designSheetAssetId: resourceIdSchema.nullable(),
+    artist: artistSchema.default(null),
     priceCnyMinor: z.number().int().positive().nullable(),
   }).strict(),
   workListItemBaseSchema.extend({ purpose: z.literal('commission') }).strict(),
@@ -210,6 +215,7 @@ export const publicSafeWorkPreviewDtoSchema = z.discriminatedUnion('purpose', [
     adoptionStatus: adoptionStatusSchema.nullable(),
     adoptionCover: managedAdoptionCoverDtoSchema.nullable(),
     designSheet: managedDesignSheetDtoSchema.nullable(),
+    artist: artistSchema.default(null),
     priceCnyMinor: z.number().int().positive().nullable(),
   }).strict(),
   publicSafeWorkPreviewBaseSchema.extend({ purpose: z.literal('commission') }).strict(),
