@@ -6,7 +6,8 @@ import type Database from 'better-sqlite3'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createSyntheticTransparentPng } from '../../scripts/oss-preflight-core.mjs'
 import { migrateDatabase, openDatabase } from '../../server/utils/database'
-import { generatePublicVariants } from '../../server/utils/recipe/media-recipe'
+import { generatePublicVariants, workAssetPublicUsages } from '../../server/utils/recipe/media-recipe'
+import { readyAssetSource } from '../../server/utils/recipe/media-source'
 import { createSqlitePublicSiteRepository } from '../../server/utils/repository/public-site-repository'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
 
@@ -42,10 +43,10 @@ async function attachPublicAsset(input: {
 }) {
   const width = input.role === 'studio_photo'
     ? 2400
-    : input.role === 'adoption_cover' ? 1920 : 2400
+    : input.role === 'adoption_cover' ? 3200 : 2400
   const height = input.role === 'studio_photo'
     ? 3200
-    : input.role === 'adoption_cover' ? 1080 : 1600
+    : input.role === 'adoption_cover' ? 1800 : 1600
   const content = createSyntheticTransparentPng()
   const sha = createHash('sha256').update(content).digest('hex')
   const key = `${PREFIX}/original/${input.id}.png`
@@ -69,7 +70,9 @@ async function attachPublicAsset(input: {
       : input.role === 'design_sheet' ? '合成完整设定图' : '合成主出厂照',
     input.role === 'studio_photo' ? 1 : 0,
   )
-  await generatePublicVariants(sqlite, storage, input.id, undefined, NOW)
+  const source = readyAssetSource(sqlite, input.id)
+  await generatePublicVariants(sqlite, storage, input.id,
+    workAssetPublicUsages(input.role, input.role === 'studio_photo', false, source), NOW)
 }
 
 async function seedCompleteAdoption(input: {
@@ -226,20 +229,25 @@ describe('R3-D adoption public projection', () => {
     expect(repository.getWorkBySlug('photoless')).toBeNull()
   })
 
-  it('shows a sheet-only adoption in adoptions, works and detail without a cover', async () => {
+  it.each([0, 1])('keeps a sheet-only adoption outside works but reachable from adoptions (composition %i)', async (compositionVersion) => {
     const id = '88888888-8888-4888-8888-888888888880'
     const sheetId = '88888888-8888-4888-8888-888888888881'
     insertAdoption({ id, name: '图纸小狗', slug: 'sheet-doggy', status: 'available' })
+    sqlite.prepare('UPDATE works SET image_composition_version=? WHERE id=?').run(compositionVersion, id)
     await attachPublicAsset({ id: sheetId, role: 'design_sheet', workId: id })
 
     const repository = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
     const detail = repository.getWorkBySlug('sheet-doggy')
 
-    // 没有横版封面：/adoptions、作品展示与详情都回落到完整设定图。
+    // 仅设定图仍可领养和查看详情，但作品目录、搜索和计数必须排除。
     expect(repository.listAdoptions().items.map(item => item.cover.assetId))
       .toEqual([sheetId])
-    expect(repository.listWorks().items.map(item => item.work.slug))
-      .toEqual(['sheet-doggy'])
+    for (const query of [{}, { q: '图纸' }, { page: 2 }]) {
+      expect(repository.listWorks(query)).toMatchObject({ items: [], resultCount: 0, pageCount: 0 })
+    }
+    expect(repository.getHomeAggregate().currentAdoptions.items.map(item => item.cover.assetId)).toEqual([sheetId])
+    expect(repository.listPublicWorkPaths()).toContain('/works/sheet-doggy')
+    expect(repository.listFeaturedWorks().items).toEqual([])
     expect(detail?.media.cardOrientation).toBe('landscape')
     expect(detail?.media.card.assetId).toBe(sheetId)
     // 封面回落为设定图时详情不重复展示同一张图。
@@ -247,6 +255,18 @@ describe('R3-D adoption public projection', () => {
     expect(detail?.media.designSheet?.assetId).toBe(sheetId)
     expect(detail?.media.gallery).toEqual([])
     expect(JSON.stringify(detail)).not.toContain('/original/')
+
+    // 补齐可公开的横版封面后自动进入作品目录，领养仍按原来源使用设定图。
+    const coverId = '88888888-8888-4888-8888-888888888882'
+    await attachPublicAsset({ id: coverId, role: 'adoption_cover', workId: id })
+    expect(repository.listWorks()).toMatchObject({ resultCount: 1, pageCount: 1, items: [{ card: { assetId: coverId } }] })
+    expect(repository.listAdoptions().items[0]?.cover.assetId).toBe(sheetId)
+    sqlite.prepare("UPDATE assets SET status='FAILED' WHERE id=?").run(coverId)
+    expect(repository.listWorks().resultCount).toBe(0)
+
+    const photoId = '88888888-8888-4888-8888-888888888883'
+    await attachPublicAsset({ id: photoId, role: 'studio_photo', workId: id })
+    expect(repository.listWorks().items[0]?.card.assetId).toBe(photoId)
   })
 
   it('projects at most the latest three available adoptions while keeping adopted works in featured', async () => {

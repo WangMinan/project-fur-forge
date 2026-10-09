@@ -19,6 +19,7 @@
 | 需求9 · 管理列表风格统一 | 列表、搜索与下拉统一；用户已确认完成 | [STATE](需求9-管理列表风格统一/STATE.md) · [SPEC](需求9-管理列表风格统一/requirements/SPEC.md) · [TASKS](需求9-管理列表风格统一/implementation/TASKS.md) |
 | 需求10 · 大图管理工作区 | 大图工作区与后台页头统一；用户已确认 | [STATE](需求10-大图管理工作区/STATE.md) · [SPEC](需求10-大图管理工作区/requirements/SPEC.md) · [TASKS](需求10-大图管理工作区/implementation/TASKS.md) |
 | 需求11 · main代码审查与精简整改 | 12项本地整改完成；验证边界及待人工验收见 STATE | [STATE](需求11-main代码审查与精简整改/STATE.md) · [SPEC](需求11-main代码审查与精简整改/requirements/SPEC.md) · [TASKS](需求11-main代码审查与精简整改/implementation/TASKS.md) |
+| 需求12 · 作品目录排除纯设定图领养 | 局部覆盖需求4/6目录兜底；领养与详情不变 | [STATE](需求12-作品目录排除纯设定图领养/STATE.md) · [SPEC](需求12-作品目录排除纯设定图领养/requirements/SPEC.md) · [TASKS](需求12-作品目录排除纯设定图领养/implementation/TASKS.md) |
 
 ## 按主题补读
 
