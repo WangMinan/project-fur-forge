@@ -18,9 +18,17 @@ function initialIndex() {
 }
 
 const activeIndex = shallowRef(initialIndex())
+const transitionDirection = shallowRef<'next' | 'prev'>('next')
+const mediaTransitionName = computed(() => `public-media-${transitionDirection.value}`)
 const isSingle = computed(() => props.gallery.length === 1)
 const thumbsRef = useTemplateRef<HTMLElement>('thumbs')
 let pointerStart: { pointerId: number, x: number, y: number } | null = null
+
+function selectImage(index: number, direction: 'next' | 'prev' = index > activeIndex.value ? 'next' : 'prev') {
+  if (index === activeIndex.value) return
+  transitionDirection.value = direction
+  activeIndex.value = index
+}
 
 function onPointerDown(event: PointerEvent) {
   pointerStart = event.isPrimary && event.pointerType === 'touch' && props.gallery.length > 1
@@ -33,8 +41,8 @@ function onPointerUp(event: PointerEvent) {
   pointerStart = null
   if (!start || start.pointerId !== event.pointerId) return
   const direction = resolveSwipeDirection(event.clientX - start.x, event.clientY - start.y)
-  if (direction === 'next') activeIndex.value = nextSlideIndex(activeIndex.value, props.gallery.length)
-  else if (direction === 'prev') activeIndex.value = prevSlideIndex(activeIndex.value, props.gallery.length)
+  if (direction === 'next') selectImage(nextSlideIndex(activeIndex.value, props.gallery.length), direction)
+  else if (direction === 'prev') selectImage(prevSlideIndex(activeIndex.value, props.gallery.length), direction)
 }
 
 function revealActiveThumbnail() {
@@ -116,7 +124,7 @@ const activeImageStyle = computed(() => {
         切换主图时做淡入淡出。out-in 会先等旧图移出再放新图，中间露出占位底色；
         默认的同时模式让两张图重叠交叉淡化，视觉上是一次连续过渡。
       -->
-      <Transition name="work-gallery-fade">
+      <Transition :name="mediaTransitionName">
         <ResponsivePicture
           v-if="activeItem"
           :key="activeItem.assetId"
@@ -145,7 +153,7 @@ const activeImageStyle = computed(() => {
         class="work-gallery__thumb"
         :aria-pressed="index === activeIndex"
         :aria-label="t('count.viewImage', { index: index + 1, count: gallery.length })"
-        @click="activeIndex = index"
+        @click="selectImage(index)"
       >
         <ResponsivePicture
           :sources="media.thumbnailSources ?? media.sources"
@@ -181,23 +189,6 @@ const activeImageStyle = computed(() => {
 .work-gallery__stage :deep(.work-gallery__image) {
   position: absolute;
   inset: 0;
-}
-
-.work-gallery-fade-enter-active,
-.work-gallery-fade-leave-active {
-  transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
-}
-
-.work-gallery-fade-enter-from,
-.work-gallery-fade-leave-to {
-  opacity: 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .work-gallery-fade-enter-active,
-  .work-gallery-fade-leave-active {
-    transition: none;
-  }
 }
 
 .work-gallery__stage :deep(.work-gallery__image) {
