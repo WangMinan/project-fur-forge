@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import {
+  copyFileSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -90,5 +91,8 @@ const outputs = [
   generate('logo-mark.png', 'apple-touch-icon.png', 180, 180, 138, 'white'),
   generateHashed('logo-mark.png', 'og-default', 1200, 1200, 920, 'white'),
 ]
+
+copyFileSync(resolve(brand, 'apple-touch-icon.png'), resolve(root, 'public/apple-touch-icon.png'))
+copyFileSync(resolve(brand, 'apple-touch-icon.png'), resolve(root, 'public/apple-touch-icon-precomposed.png'))
 
 process.stdout.write(`${JSON.stringify({ generated: outputs })}\n`)

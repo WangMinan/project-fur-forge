@@ -2,6 +2,7 @@
 
 ## 用户验收补修
 
+- 2026-10-09：用户确认Safari图标探测404的诊断后授权补齐资源。新增public/apple-touch-icon.png与public/apple-touch-icon-precomposed.png，均直接复制public/brand/apple-touch-icon.png；generate-brand-assets.mjs在原图生成后同步复制。node语法检查、定向eslint及本地HTTP/180×180/响应字节一致性检查通过；不新增页面路由、不屏蔽警告，未执行完整品牌重生成、全套测试或生产发布。
 - 2026-10-09：用户指出管理预览价格行错位及物种圆点多余。确认上轮插入画师行时价格div遗漏preview-card__fact，导致价格dt/dd回到默认样式；补回共用类。AdoptionCard删除物种::before规则，同时作用于横卡和竖卡。仅样式修复，数据库及展示条件不变。lint/typecheck、15项相关unit及2项Chrome通过，新增390/1440px管理预览截图，并更新公开卡片截图。实现者查看确认价格字体/列对齐、横竖卡无物种前导圆点；未重复build或发布检查。
 
 - 2026-10-09：从本地main 3bd6062创建codex/r13-adoption-price-artist，origin/main为c8c0bd6；两条已有本地提交保留。
