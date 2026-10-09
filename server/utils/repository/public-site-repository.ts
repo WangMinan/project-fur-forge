@@ -117,6 +117,7 @@ interface SnapshotEntry {
   designSheet: PublicWorkSummaryDto['card'] | null
   featured: boolean
   hasPortraitStudioPhoto: boolean
+  hasWorkCatalogMedia: boolean
   /** 只用于首页精选排序；公开列表按发布时间倒序，不看这个值。 */
   id: string
   sortOrder: number
@@ -255,6 +256,7 @@ function snapshot(
     const featuredCard = cardPhoto ? cardFor(cardPhoto, composed ? 'home-featured' : 'work-card') : null
     entries.push({
       adoption, cardOrientation: orientation, featured: row.featured === 1, hasPortraitStudioPhoto: portrait !== undefined,
+      hasWorkCatalogMedia: Boolean(cardPhoto || coverDetail),
       designSheet, id: row.id, sortOrder: row.sortOrder, summary, studioPhotos: photos, updatedAt: row.updatedAt,
       showAdoptionCoverInDetail: Boolean(row.showAdoptionCoverInDetail), showDesignSheetInDetail: Boolean(row.showDesignSheetInDetail),
       ...(selected ? { adoptionSourceAssetId: selected.assetId } : {}),
@@ -509,10 +511,10 @@ export function createSqlitePublicSiteRepository(
           filter: { valid: false },
         })
       }
-      // 快照只保留有卡片的作品；仅横版封面的领养作品同样要出现在作品展示中。
+      // 仅设定图的领养保留在共享快照供领养和详情使用，不进入作品目录及其搜索/分页。
       const items = search.success ? snapshot(sqlite, mediaBaseUrl, appEnv)
         .filter(entry => (
-          includesSearchText(
+          entry.hasWorkCatalogMedia && includesSearchText(
             entry.summary.work.characterName,
             search.data ?? '',
           )
