@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { RouteLocationRaw } from 'vue-router'
 import { publicWorkDetailResponseSchema } from '~~/shared/schemas/public-content'
+import { formatCnyMinorUnits } from '~/utils/format'
 import { PROJECT_NAME } from '~~/shared/constants/project'
 const { t, isEnglish } = usePublicI18n()
 
@@ -237,6 +238,10 @@ onMounted(() => {
 
       <div class="work-detail__info">
         <dl class="work-detail__identity-ledger">
+          <div v-if="detail?.adoption?.artist">
+            <dt>{{ t('ui.artist') }}</dt>
+            <dd data-testid="adoption-detail-artist">{{ detail.adoption.artist }}</dd>
+          </div>
           <div>
             <dt>{{ t('ui.species') }}</dt>
             <dd>{{ dto.species }}</dd>
@@ -248,6 +253,10 @@ onMounted(() => {
           <div v-if="detail?.adoption">
             <dt>{{ t('ui.adoptionStatus') }}</dt>
             <dd data-testid="adoption-detail-status">{{ adoptionStatusLabel }}</dd>
+          </div>
+          <div v-if="detail?.adoption?.priceCnyMinor != null">
+            <dt>{{ t('ui.price') }}</dt>
+            <dd data-testid="adoption-detail-price">{{ formatCnyMinorUnits(detail.adoption.priceCnyMinor, isEnglish ? 'en' : 'zh-CN') }}</dd>
           </div>
         </dl>
         <div v-if="isAdoptionArchive" class="work-detail__adoption-actions">

@@ -190,7 +190,7 @@ describe('work DTO mapping', () => {
     }).success).toBe(false)
   })
 
-  it('keeps adoption status while rejecting any public price', () => {
+  it('keeps adoption status while rejecting prices on catalog work DTOs', () => {
     expect(publicAdoptionWorkDtoSchema.parse({
       id: baseRecord.id,
       slug: baseRecord.slug,

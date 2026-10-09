@@ -1,5 +1,8 @@
 {
   "ui": {
+    "artist": "Artist",
+    "artistCredit": "Artist: {name}",
+    "price": "Price",
     "home": "Home",
     "works": "Gallery",
     "commissions": "Commissions",

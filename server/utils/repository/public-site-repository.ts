@@ -75,6 +75,7 @@ interface PublishedWorkRow {
   showDesignSheetInDetail: number
   adoptionCoverSource: 'auto' | 'adoption_cover' | 'design_sheet'
   adoptionStatus: 'available' | 'adopted' | null
+  artist: string | null
   characterName: string
   featured: number
   id: string
@@ -109,6 +110,7 @@ interface SnapshotEntry {
   featuredSummary: PublicWorkSummaryDto | null
   adoption: {
     cover: PublicWorkSummaryDto['card']
+    artist: string | null
     priceCnyMinor: number | null
     status: 'available' | 'adopted'
   } | null
@@ -159,7 +161,7 @@ function loadPublishedWorks(sqlite: Database.Database) {
       id, version, slug, character_name AS characterName,
       image_composition_version AS imageCompositionVersion, show_adoption_cover_in_detail AS showAdoptionCoverInDetail,
       show_design_sheet_in_detail AS showDesignSheetInDetail, adoption_cover_source AS adoptionCoverSource,
-      species, purpose, adoption_status AS adoptionStatus,
+      species, purpose, adoption_status AS adoptionStatus, artist,
       price_amount_minor AS priceAmountMinor,
       price_currency AS priceCurrency,
       publication_status AS publicationStatus,
@@ -244,7 +246,7 @@ function snapshot(
     const cardPhoto = portrait ?? primary
     const fallback = coverDetail ?? designSheet
     const adoption = row.purpose === 'adoption' && row.adoptionStatus !== null && fallback
-      ? { cover: fallback, priceCnyMinor: row.priceCurrency === 'CNY' ? row.priceAmountMinor : null, status: row.adoptionStatus } : null
+      ? { cover: fallback, artist: row.artist, priceCnyMinor: row.priceCurrency === 'CNY' ? row.priceAmountMinor : null, status: row.adoptionStatus } : null
     const card = cardPhoto ? cardFor(cardPhoto, composed ? 'work-catalog' : 'work-card')
       : adoption ? (composed ? cardFor(coverDetail ? coverMedia : designMedia, 'work-catalog') : fallback) : null
     if (!card || (row.purpose === 'adoption' && !adoption)) continue
@@ -374,6 +376,7 @@ function adoptionItems(entries: readonly SnapshotEntry[], placement: 'catalog' |
       work: {
         ...entry.summary.work,
         adoptionStatus: entry.adoption.status,
+        ...(placement === 'catalog' && entry.adoption.artist ? { artist: entry.adoption.artist } : {}),
       },
       href: entry.summary.href,
       /*
@@ -472,6 +475,8 @@ export function createSqlitePublicSiteRepository(
           ? {
               adoption: {
                 adoptionStatus: match.adoption.status,
+                priceCnyMinor: match.adoption.priceCnyMinor,
+                ...(match.adoption.artist ? { artist: match.adoption.artist } : {}),
               },
             }
           : {}),

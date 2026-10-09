@@ -323,6 +323,7 @@ describe('R3-D works Contract migration', () => {
         'show_design_sheet_in_detail',
         'adoption_cover_source',
         'image_composition_version',
+        'artist',
       ])
       expect(after.sqlite.prepare(`
         SELECT id, purpose, adoption_status AS adoptionStatus,

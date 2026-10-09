@@ -37,6 +37,15 @@ function managedWork(overrides: Record<string, unknown> = {}): ManagedWorkDto {
 }
 
 describe('toWorkFieldsPayload', () => {
+  it('round-trips artist, tracks edits and clears blank credit only for adoption', () => {
+    const form = workFormFromDto(managedWork({ purpose: 'adoption', artist: '测试画师', adoptionStatus: 'available' }))
+    expect(form.artist).toBe('测试画师')
+    expect(toWorkFieldsPayload({ ...form, artist: '  测试署名  ' })).toMatchObject({ artist: '测试署名' })
+    expect(toWorkFieldsPayload({ ...form, artist: '  ' })).toMatchObject({ artist: null })
+    expect(toWorkFieldsPayload({ ...form, purpose: 'commission' })).not.toHaveProperty('artist')
+    expect(workFormSnapshot({ ...form, artist: '新署名' })).not.toBe(workFormSnapshot(form))
+    expect(validateWorkForm({ ...form, artist: 'a'.repeat(101) }).artist).toBeTruthy()
+  })
   it('omits adoption-only fields for commission and showcase', () => {
     const form = {
       ...emptyWorkForm(),
@@ -69,6 +78,7 @@ describe('toWorkFieldsPayload', () => {
 
     expect(payload).toEqual({
       adoptionStatus: 'available',
+      artist: null,
       characterName: '小鲤',
       featured: false,
       priceCnyMinor: 880_050,

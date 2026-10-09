@@ -170,6 +170,22 @@ afterEach(() => {
 })
 
 describe('T22 work management', () => {
+  it('saves public artist credit, preserves omitted updates and clears explicit blanks or non-adoption purpose', () => {
+    const input = { ...workInput, purpose: 'adoption' as const, adoptionStatus: 'available' as const, priceCnyMinor: 880050 }
+    let work = createManagedWork(sqlite, createWorkRequestSchema.parse({ ...input, artist: '  测试画师  ' }))
+    expect(work).toMatchObject({ artist: '测试画师', priceCnyMinor: 880050 })
+    expect(listManagedWorks(sqlite)).toEqual(expect.arrayContaining([expect.objectContaining({ id: work.id, artist: '测试画师' })]))
+    work = updateManagedWork(sqlite, work.id, work.version, { ...input, adoptionStatus: 'adopted' })
+    expect(work).toMatchObject({ artist: '测试画师', adoptionStatus: 'adopted', priceCnyMinor: 880050 })
+    work = updateManagedWork(sqlite, work.id, work.version, createWorkRequestSchema.parse({ ...input, artist: '  ' }))
+    expect(work).toMatchObject({ artist: null })
+    work = updateManagedWork(sqlite, work.id, work.version, { ...input, artist: '测试画师' })
+    work = updateManagedWork(sqlite, work.id, work.version, workInput)
+    expect(work).not.toHaveProperty('artist')
+    expect(sqlite.prepare('SELECT artist FROM works WHERE id = ?').get(work.id)).toEqual({ artist: null })
+    expect(createWorkRequestSchema.safeParse({ ...workInput, artist: '不适用' }).success).toBe(false)
+    expect(createWorkRequestSchema.safeParse({ ...input, artist: 'a'.repeat(101) }).success).toBe(false)
+  })
   it('uses the live management DTO without leaking private identities or adoption fields', () => {
     const created = createManagedWork(sqlite, { ...workInput, sortOrder: undefined }, NOW)
     const dto = getManagedWork(sqlite, created.id)

@@ -122,8 +122,8 @@ test('public language SSR, preference, contact branches and responsive switcher'
     await english.goto(`${publicBaseURL}/works/e2e-public-r7-language-character`)
     await expect(english.getByRole('heading', { name: '小狗', exact: true })).toBeVisible()
     await expect(english.getByText('犬科', { exact: true })).toBeVisible()
-    await expect(english.locator('[data-testid="adoption-detail-price"]')).toHaveCount(0)
-    for (const endpoint of ['adoptions', 'works/e2e-public-r7-language-character', 'home-aggregate']) {
+    await expect(english.getByTestId('adoption-detail-price')).toHaveText('CNY 1,200')
+    for (const endpoint of ['adoptions', 'works', 'home-aggregate']) {
       const data = await (await english.request.get(`${publicBaseURL}/api/public/v1/${endpoint}`)).json()
       expect(JSON.stringify(data)).not.toMatch(/"(?:price|minorUnits|priceCnyMinor)"/)
     }

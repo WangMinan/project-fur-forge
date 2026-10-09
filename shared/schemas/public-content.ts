@@ -61,7 +61,8 @@ export const publicWorkDetailDtoSchema = z.object({
   href: z.string().regex(/^\/works\/[a-z0-9]+(?:-[a-z0-9]+)*$/),
   adoption: publicAdoptionWorkDtoSchema.pick({
     adoptionStatus: true,
-  }).optional(),
+    artist: true,
+  }).extend({ priceCnyMinor: z.number().int().positive().nullable() }).optional(),
   media: z.object({
     adoptionSourceAssetId: resourceIdSchema.optional(),
     primaryAssetId: resourceIdSchema.nullable(),
@@ -156,7 +157,9 @@ export const publicHomeAggregateDtoSchema = z.object({
     adoption: publicHomeEntryCardDtoSchema.nullable(),
   }).strict(),
   featured: homeSectionSchema(publicWorkSummaryDtoSchema),
-  currentAdoptions: homeSectionSchema(publicAdoptionListItemDtoSchema).strict(),
+  currentAdoptions: homeSectionSchema(publicAdoptionListItemDtoSchema.extend({
+    work: publicAdoptionWorkDtoSchema.omit({ artist: true }),
+  })).strict(),
 }).strict()
 
 export const publicHomeAggregateResponseSchema = apiSuccessSchema(

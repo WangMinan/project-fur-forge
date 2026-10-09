@@ -1,5 +1,8 @@
 {
   "ui": {
+    "artist": "画师",
+    "artistCredit": "画师：{name}",
+    "price": "价格",
     "home": "首页",
     "works": "作品展示",
     "commissions": "自设委托",

@@ -51,6 +51,7 @@ export const works = sqliteTable('works', {
   species: text('species').notNull(),
   purpose: text('purpose').notNull(),
   adoptionStatus: text('adoption_status'),
+  artist: text('artist'),
   priceAmountMinor: integer('price_amount_minor'),
   priceCurrency: text('price_currency'),
   publicationStatus: text('publication_status').notNull().default('draft'),
@@ -90,6 +91,10 @@ export const works = sqliteTable('works', {
   check(
     'works_adoption_status',
     sql`${table.adoptionStatus} IS NULL OR ${table.adoptionStatus} IN ('available', 'adopted')`,
+  ),
+  check(
+    'works_artist',
+    sql`${table.artist} IS NULL OR (${table.purpose} = 'adoption' AND ${table.artist} = trim(${table.artist}) AND length(${table.artist}) BETWEEN 1 AND 100)`,
   ),
   check(
     'works_price_cny',

@@ -10,6 +10,7 @@ import { parseCnyYuanInput, toCnyYuanInput } from './price'
 export { PUBLIC_FEATURED_LIMIT }
 
 export interface WorkBasicsForm {
+  artist: string
   adoptionStatus: AdoptionStatus | ''
   characterName: string
   featured: boolean
@@ -20,6 +21,7 @@ export interface WorkBasicsForm {
 }
 
 export interface WorkFormErrors {
+  artist?: string
   adoptionStatus?: string
   characterName?: string
   price?: string
@@ -31,6 +33,7 @@ export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 export function emptyWorkForm(): WorkBasicsForm {
   return {
+    artist: '',
     adoptionStatus: '',
     characterName: '',
     featured: false,
@@ -44,6 +47,7 @@ export function emptyWorkForm(): WorkBasicsForm {
 export function workFormFromDto(dto: ManagedWorkDto): WorkBasicsForm {
   const adoption = dto.purpose === 'adoption' ? dto : null
   return {
+    artist: adoption?.artist ?? '',
     adoptionStatus: adoption?.adoptionStatus ?? '',
     characterName: dto.characterName,
     featured: dto.featured,
@@ -68,6 +72,9 @@ export function validateWorkForm(form: WorkBasicsForm): WorkFormErrors {
     errors.slug = '只能使用小写字母、数字与连字符，且不能以连字符开头或结尾'
   }
   if (form.purpose === 'adoption') {
+    if (form.artist.trim().length > 100) {
+      errors.artist = '画师署名最多100个字符'
+    }
     if (form.adoptionStatus === '') {
       errors.adoptionStatus = '请由负责人确认真实领养状态'
     }
@@ -98,6 +105,7 @@ export function toWorkFieldsPayload(form: WorkBasicsForm): WorkFields {
       ...base,
       purpose: 'adoption',
       adoptionStatus: form.adoptionStatus,
+      artist: form.artist.trim() || null,
       priceCnyMinor: parseCnyYuanInput(form.priceYuan).minorUnits ?? null,
     }
   }
@@ -119,6 +127,7 @@ export function workFormSnapshot(form: WorkBasicsForm) {
   return JSON.stringify({
     ...base,
     adoptionStatus: form.adoptionStatus,
+    artist: form.artist.trim() || null,
     priceCnyMinor: price.error ? form.priceYuan.trim() : price.minorUnits ?? null,
   })
 }
