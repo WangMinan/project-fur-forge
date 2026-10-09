@@ -1,6 +1,6 @@
 # 有点小狗 · 上线手册
 
-> 当前不能上线：T52-E1～E6 工程已完成，T49、T50 和 GATE-E 尚未完成。本手册只保留目标环境真正要执行的内容。
+> 本手册保留首次上线阶段的门禁与环境快照；下文 T49/T50/GATE-E 等历史状态不能代表当前生产状态。后续部署以目标冻结版本、当前授权、[部署清单](../../../docs/DEPLOYMENT.md)及对应需求交接为准。ESA/Nginx 故障兜底的当前部署与验收见[需求8状态](../../需求8-ESA故障维护页/STATE.md)。
 
 ## 1. 已知生产参数
 
@@ -202,7 +202,7 @@ ss -lntp | grep '127.0.0.1:3000'
 `init-admin` 只在唯一管理员不存在时创建账号，不会覆盖已有密码。需要离线重置时，先停止 app，再使用同一冻结镜像交互输入用户名和新密码；新密码同样可包含特殊字符：
 
 包含 `0051_r4_retire_watermark.sql` 的升级不得直接在常驻 app 写入期间执行；按
-[`docs/DEPLOYMENT.md` 5.1](../../../../docs/DEPLOYMENT.md#51-0051-水印能力退役升级)
+[`docs/DEPLOYMENT.md` 5.1](../../../docs/DEPLOYMENT.md#51-0051-水印能力退役升级)
 使用同一冻结镜像完成停写、显式备份、migrate、旧公开媒体 dry-run/强确认退役、
 第二次 migrate 校验和 ready 验证。回滚必须成对恢复旧镜像、升级前数据库和对象
 存储版本，不能只换镜像。
@@ -222,13 +222,15 @@ docker compose up --detach --no-build --no-deps app
 目标机已经安装正确包，不重复安装。先核对：
 
 ```bash
-nginx -v 2>&1 | grep -Fx 'nginx version: nginx/1.30.4'
+nginx -v 2>&1 | grep -Fx 'nginx version: nginx/1.30.5'
 apt-cache policy nginx | sed -n '1,20p'
 systemctl is-enabled nginx
 systemctl is-active nginx
 ```
 
-T53-F1 确认精确 Host 后，使用仓库模板替换当前临时 wildcard 配置。下面只备份/写入目标机实际存在的两个文件；不触碰 `/etc/nginx/nginx.conf`、包仓库、证书或其他服务：
+`1.30.5` 是 2026-10-09 实查版本，第1节的 `1.30.4` 表格保留为首次上线前的历史快照，不作为降级依据。后续若版本不同，先记录并评估。
+
+首次配置时先确认精确 Host；已部署环境先比较当前配置与目标模板，保留[ESA/Nginx 维护契约](../../../deploy/esa/MAINTENANCE.md)。宿主机配置可独立于应用镜像发布，禁止用旧模板覆盖已验证的故障标记与业务错误透传。下面只备份/写入目标机实际存在的两个文件；不触碰 `/etc/nginx/nginx.conf`、包仓库、证书或其他服务：
 
 ```bash
 PUBLIC_HOST='T53-F1-CONFIRMED-PUBLIC-HOST'
@@ -279,7 +281,9 @@ test "$(curl -sS -o /dev/null -w '%{http_code}' \
 
 ### 6.5 备份、恢复、升级与回滚
 
-需求3 R3-A 首发镜像是一次性例外：它含有会永久删除返图/动态表的 `0036_r3_a_contract.sql`，不得直接按本节普通升级流程备份后 migrate。生产 T07 必须改用 [`docs/DEPLOYMENT.md` 的 R3-A 一次性永久退役步骤](../../../../docs/DEPLOYMENT.md#41-需求3-r3-a-一次性永久退役)：停写、dry-run、用户强确认、对象/version/delete-marker/ESA 清理和不可达验证、Contract、服务验证、clean backup 真实恢复，最后才用受控 `r3-stage-a-prune-backups` 删除两个应用备份位置中的旧备份。外部 ECS/云盘快照仍由操作员在控制台确认。
+普通镜像更新先执行[部署清单4.2节](../../../docs/DEPLOYMENT.md#42-普通镜像更新)的 ESA/Nginx 兜底核对。应用镜像回滚不自动回滚宿主机 Nginx 或 ESA 函数；两端如需回滚，使用对应发布记录中的配置备份和函数版本。
+
+需求3 R3-A 首发镜像是一次性例外：它含有会永久删除返图/动态表的 `0036_r3_a_contract.sql`，不得直接按本节普通升级流程备份后 migrate。生产 T07 必须改用 [`docs/DEPLOYMENT.md` 的 R3-A 一次性永久退役步骤](../../../docs/DEPLOYMENT.md#41-需求3-r3-a-一次性永久退役)：停写、dry-run、用户强确认、对象/version/delete-marker/ESA 清理和不可达验证、Contract、服务验证、clean backup 真实恢复，最后才用受控 `r3-stage-a-prune-backups` 删除两个应用备份位置中的旧备份。外部 ECS/云盘快照仍由操作员在控制台确认。
 
 ```bash
 docker compose run --rm --no-deps app node ops/ops.mjs backup --output /app/backups/manual.db

@@ -10,6 +10,7 @@
 - 函数：`ditedog-fallback`，正式代码版本 `1791515574146244862`；上一版 `1790312541006856651` 保留可回滚。
 - 发布包 SHA-256：`ee51749e93b4439018fd17ad40c788896bd3708a3c1fe04c04b3ab81c2948360`，已下载云端代码比对。
 - 部署源码：`e5894eb602e2fed22922c30bdc3f0844000ed4a2`；Nginx 渲染配置 SHA-256：`be800d1003938338ae76695d70ac80fa01f1d6cdba07509adb24bf92769d6d09`。应用镜像及服务器应用仓库未变更，宿主机配置版本单独记录。
+- [PR #42](https://github.com/WangMinan/project-fur-forge/pull/42) 已合入 main，合并提交 `40d1d46c4d0098deffb1a4998082f376994f31c9`；PR 与该 main 提交的远程 quality 均通过，未发布新应用镜像。
 - 路由：`ditedog_html_fallback`，ConfigId `520942283501568`，on，Bypass off，Fallback off，Timeout 30（脚本自身等待 10 秒）。
 - 精确范围与表达式见 [维护说明](../../deploy/esa/MAINTENANCE.md)。
 
@@ -22,7 +23,8 @@
 - Nginx 配置校验与平滑 reload 成功，宿主机验证全 PASS；首页/作品/管理登录/JS/公开 WebP 为 200，管理根路径 302、健康路径 404。
 - 临时函数 `ditedog-probe-20261009`、路由 `523469125181440`、临时 Nginx 路径及独立进程已清理；两个域名测试路径恢复 404，正式路由仍为 Sequence 1/on/Bypass off/Fallback off/Timeout 30。
 - 生产应用未停止、未重建；启动时间仍为 `2026-10-09T02:58:20.653969653Z`，镜像 digest `62f2e4203e563300e37b42e6d0bab3d4c94c7105bdd6924b375ffe8acf5092cf`，healthy。
-- [本次交接与回滚](implementation/notes/2026-10-09-NGINX-FALLBACK.md)；脱敏结果及截图在本地忽略目录 `.cache/esa-origin-fallback/20261009/`。独立 Review、整机重启或生产容器停机演练未执行。
+- GitHub 自动代码 Review 已完成；唯一 [P2 意见](https://github.com/WangMinan/project-fur-forge/pull/42#discussion_r4226303963)指出部署手册仍精确检查 Nginx 1.30.4。本轮文档已对齐现场 1.30.5，保留首次上线前的历史版本快照。
+- [本次交接与回滚](implementation/notes/2026-10-09-NGINX-FALLBACK.md)；脱敏结果及截图在本地忽略目录 `.cache/esa-origin-fallback/20261009/`。整机重启或生产容器停机演练未执行。
 
 ## 历史验证证据（2026-09-25）
 
@@ -49,4 +51,4 @@
 
 ## 下一步
 
-保持正式函数路由启用、Fallback=off；关闭异常回源后，函数自身故障不再自动绕过函数。独立 Review、认证后的管理操作、修正后真实生产停机/重启演练未执行。紧急撤回可运行 `aliyun esa update-routine-route --site-id 171890925863148 --config-id 520942283501568 --route-enable off --region cn-hangzhou`。
+保持正式函数路由启用、Fallback=off；关闭异常回源后，函数自身故障不再自动绕过函数。认证后的管理操作、修正后真实生产停机/重启演练未执行。紧急绕过函数可运行 `aliyun esa update-routine-route --site-id 171890925863148 --config-id 520942283501568 --route-enable off --region cn-hangzhou`；该操作不回滚 Nginx 配置，也不再提供边缘维护页。

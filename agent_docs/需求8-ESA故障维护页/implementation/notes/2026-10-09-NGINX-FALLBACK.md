@@ -30,12 +30,15 @@
 
 先在临时函数验证，再发布正式函数，随后安装已验证的 Nginx 候选配置并平滑 reload。云端下载代码与本地构建哈希一致；清理测试路径后的 Nginx 配置与渲染候选哈希一致。
 
+[PR #42](https://github.com/WangMinan/project-fur-forge/pull/42) 于 2026-10-09 11:19:14（Asia/Shanghai）合入 main，合并提交 `40d1d46c4d0098deffb1a4998082f376994f31c9`。源码提交、main 合并提交与云端函数版本分别记录，不把合并提交当作应用镜像已经发布。
+
 应用镜像仍为 `wangminan/project-fur-forge@sha256:62f2e4203e563300e37b42e6d0bab3d4c94c7105bdd6924b375ffe8acf5092cf`，容器启动时间仍为 `2026-10-09T02:58:20.653969653Z`，healthy。未重建镜像、重启容器、改数据库/媒体/凭据，服务器应用工作树维持原冻结版本。宿主机配置独立发布；后续应用部署须使用包含本修复的配置，避免旧模板覆盖。
 
 ## 验证与清理
 
 - Node 可执行检查覆盖 500–599 普通错误透传、标记状态组合、请求头伪造、两个 Host、HEAD、作用域、超时和恢复。
 - lint、typecheck、部署契约 9 项测试通过；本次不涉及 Nuxt/runtime 配置，未运行应用 build 或镜像发布。
+- [PR quality](https://github.com/WangMinan/project-fur-forge/actions/runs/37878544230) 与 [main quality](https://github.com/WangMinan/project-fur-forge/actions/runs/37878728836) 的 checks 均通过（lint、typecheck、完整 core）；image-build 均为 skipped，不能作为镜像构建或发布证据。PR 的 GitGuardian 安全扫描通过。
 - 真实 Nginx 独立实例在 loopback 18080、合成后端在 18081：54 组断言通过，覆盖两个域名 × GET/HEAD/POST × 200/302/500/502/503/504/拒绝连接/提前断流/超时。18082 无监听用于连接拒绝，超时测试 location 使用 1 秒读取上限；正式 Nginx 超时未改。
 - 临时函数和正式函数各 42 组 ESA 实测通过。覆盖两个 Host 的 GET/HEAD、业务原文/Cookie/Location、三类代理失败、API/POST/非 HTML 排除。测试使用隔离前缀 `/__esa-fallback-20261009-a8f3/` 与 `/api/__esa-fallback-20261009-a8f3/`，正常业务路径未改指向。
 - Chrome 桌面 1280×720 与移动视口 390×844 显示维护页，无横向溢出；Tab 聚焦首页链接、Enter 后进入正常首页。只有预期的主文档 503 控制台提示。
@@ -43,7 +46,13 @@
 - 已删除测试路由 `523469125181440` 与函数 `ditedog-probe-20261009`（测试版本 `1791515374686725035`），移除生产 Nginx 两个隔离 location，停止本次独立 Nginx/合成后端；测试端口无监听，两端隔离页面恢复 404。
 - 本地忽略证据目录 `.cache/esa-origin-fallback/20261009/`：`nginx-results.json`、`isolated-results.json`、`production-results.json`、`normal-results.json`、桌面/移动截图、旧函数包和路由备份。服务器保留仅本次测试脚本/结果 `/root/esa-nginx-probe-20261009/`，无常驻测试进程。
 
-这些是实际代理失败的隔离验证，不代签整机重启、生产容器停机、认证后的写操作或独立 Review。
+这些是实际代理失败的隔离验证，不代签整机重启、生产容器停机、认证后的写操作或人工验收。
+
+## Review 与文档同步
+
+GitHub 自动代码 Review 于 PR 合并后完成，审查提交为 `21abcf12d9aa96b8afb5c0333114a90caffee297`，状态为 COMMENTED。[唯一 P2 意见](https://github.com/WangMinan/project-fur-forge/pull/42#discussion_r4226303963)指出两个部署手册仍要求 `nginx/1.30.4`，会在已核实为 1.30.5 的生产机上误报版本漂移。
+
+用户授权本轮文档直接 main 更新。再次只读核验现网 `nginx -v` 为 1.30.5、配置哈希与上表一致后，将两个可执行版本检查对齐 1.30.5；首次上线前的 1.30.4 快照保留并明确日期。同时补齐通用部署入口对独立 Nginx/ESA 发布的说明、路由临时绕过与完整回滚的区别，以及测试路由实际执行顺序核对。这是文档修正，没有再改生产配置或安装/降级 Nginx。
 
 ## 精确回滚
 

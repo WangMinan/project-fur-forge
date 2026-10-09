@@ -203,15 +203,19 @@ ss -lntp | grep '127.0.0.1:3000'
 
 ### 3.5 安装与目标机匹配的 Nginx 配置
 
+替换前比较当前配置与目标模板，并读取[ESA 维护说明](../deploy/esa/MAINTENANCE.md)和[需求8当前状态](../agent_docs/需求8-ESA故障维护页/STATE.md)。宿主机 Nginx 与 ESA 函数可独立于应用镜像发布；必须保留已部署的代理故障标记、业务错误透传和安全响应头，不能用旧镜像对应的模板覆盖较新的宿主机修复。配置若需独立升级，记录其冻结源码与回滚依据，不改变应用镜像身份。
+
 先确认现有环境：
 
 ```bash
 cd /root/project-fur-forge
 
-nginx -v 2>&1 | grep -Fx 'nginx version: nginx/1.30.4'
+nginx -v 2>&1 | grep -Fx 'nginx version: nginx/1.30.5'
 systemctl is-enabled nginx
 systemctl is-active nginx
 ```
+
+`1.30.5` 为 2026-10-09 现场核验版本；后续不一致时先记录并评估，不自动安装或降级。CI 的 Nginx 测试镜像版本不代表生产包版本。
 
 然后只备份并替换目标机实际使用的两个文件：
 
@@ -360,7 +364,9 @@ docker compose run --rm --no-deps app \
 
 ### 4.2 普通镜像更新
 
-先通过 `release-image` 得到新冻结 SHA 和新镜像摘要。然后在服务器执行：
+先通过 `release-image` 得到新冻结 SHA 和新镜像摘要。重建/停止 app 前，按[ESA 维护说明](../deploy/esa/MAINTENANCE.md)核对正式函数版本、路由启用且 `Fallback=off`，以及 Nginx 的 `proxy_intercept_errors off`、应用同名标记剥离和代理故障专用 503 标记。仅更新镜像或拉取 Git 不会更新这两端配置；无需变更时保留已验证的现网配置。
+
+维护页只覆盖公开/管理 Host 的 HTML GET/HEAD 页面导航；API、写请求和非 HTML 资源不被替换，已打开页面也不会自动跳转维护页。维护页不能代替停写、备份或迁移检查。恢复后核验正常页面无维护标记；若要验证停机兜底，使用隔离路径，生产停机演练需明确授权。然后在服务器执行：
 
 ```bash
 ssh root@120.26.51.205

@@ -15,7 +15,7 @@
 | 需求5 · 委托邮件通知与站点配置 | 本地实现记录已形成；发布、部署见该需求记录 | [STATE](需求5-委托邮件通知与站点配置/STATE.md) · [SPEC](需求5-委托邮件通知与站点配置/requirements/SPEC.md) · [TASKS](需求5-委托邮件通知与站点配置/implementation/TASKS.md) |
 | 需求6 · 作品图片构图与详情展示 | 本地实现与验证完成；待用户人工验收 | [STATE](需求6-作品图片构图与详情展示/STATE.md) · [SPEC](需求6-作品图片构图与详情展示/requirements/SPEC.md) · [TASKS](需求6-作品图片构图与详情展示/implementation/TASKS.md) |
 | 需求7 · 公开站中英切换 | 本地实现与自动验证完成；待独立 Review/人工验收 | [STATE](需求7-公开站中英切换/STATE.md) · [SPEC](需求7-公开站中英切换/requirements/SPEC.md) · [TASKS](需求7-公开站中英切换/implementation/TASKS.md) |
-| 需求8 · ESA故障维护页 | 自动兜底已部署；验收边界见 STATE | [STATE](需求8-ESA故障维护页/STATE.md) · [SPEC](需求8-ESA故障维护页/requirements/SPEC.md) · [TASKS](需求8-ESA故障维护页/implementation/TASKS.md) |
+| 需求8 · ESA故障维护页 | 已覆盖 ESA 连接故障与 Nginx 后端不可用；业务错误透传 | [STATE](需求8-ESA故障维护页/STATE.md) · [SPEC](需求8-ESA故障维护页/requirements/SPEC.md) · [TASKS](需求8-ESA故障维护页/implementation/TASKS.md) |
 | 需求9 · 管理列表风格统一 | 列表、搜索与下拉统一；用户已确认完成 | [STATE](需求9-管理列表风格统一/STATE.md) · [SPEC](需求9-管理列表风格统一/requirements/SPEC.md) · [TASKS](需求9-管理列表风格统一/implementation/TASKS.md) |
 | 需求10 · 大图管理工作区 | 大图工作区与后台页头统一；用户已确认 | [STATE](需求10-大图管理工作区/STATE.md) · [SPEC](需求10-大图管理工作区/requirements/SPEC.md) · [TASKS](需求10-大图管理工作区/implementation/TASKS.md) |
 | 需求11 · main代码审查与精简整改 | 12项本地整改完成；验证边界及待人工验收见 STATE | [STATE](需求11-main代码审查与精简整改/STATE.md) · [SPEC](需求11-main代码审查与精简整改/requirements/SPEC.md) · [TASKS](需求11-main代码审查与精简整改/implementation/TASKS.md) |
@@ -32,6 +32,7 @@
 | 图片构图与详情显隐 | 需求6 SPEC 明确列出拟覆盖条款；本地已实现；生产生效状态以实际部署记录为准 |
 | 公开站语言、X 联系与价格/SEO | 需求7 [SPEC](需求7-公开站中英切换/requirements/SPEC.md) 定义无前缀中英切换、中文 fallback、右上角语言按钮、X 分流及价格/SEO 修正；继承需求6构图与详情显隐，明确覆盖旧公开价格和相关联系条款。当前本地已实现，验证/发布状态以需求7 STATE 为准 |
 | 部署、恢复与云验证 | [DEPLOYMENT](../docs/DEPLOYMENT.md)、[生产发布手册](需求1-兽装工作室主页/implementation/PRODUCTION-LAUNCH-HANDBOOK.md)；发布事实只认对应执行证据 |
+| 停机维护页与代理错误 | [需求8 SPEC](需求8-ESA故障维护页/requirements/SPEC.md)、[ESA/Nginx 维护说明](../deploy/esa/MAINTENANCE.md)；HTML 导航兜底，业务 5xx 透传；函数与宿主机配置独立于应用镜像发布 |
 
 ## 文档职责与工作范围
 
