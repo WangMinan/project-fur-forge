@@ -4,6 +4,10 @@
 
 阶段5 · 本地实现与自动验证完成，分支 `codex/r13-adoption-price-artist`；待用户人工验收。
 
+## 2026-10-09追加合并与出包授权
+
+用户明确授权整理全部本地变更、更新远端main并触发release-image.yml。此次一并包含需求6的图片完整显示与图库动效两条已有提交，以及需求13和Apple图标补齐；先经过PR及远程必需检查，再从main出包。不包含生产部署。实际PR、Actions和镜像摘要以对应执行结果为准，不以触发成功代替镜像发布完成。
+
 ## 最近验证
 
 - 2026-10-09追加授权：补齐根目录apple-touch-icon.png及apple-touch-icon-precomposed.png，两者复用现有180×180品牌图标；本地HTTP均200 image/png，响应字节与原图一致。生成脚本同步维护两份入口，语法及定向lint通过；未发布部署。
@@ -19,7 +23,7 @@
 - 价格仅公开在领养作品详情，填写即展示，已领养不隐藏。
 - 画师只在领养目录卡片与领养作品详情展示；首页和作品目录不展示。
 - 中英文署名分别为“画师：姓名”和“Artist: 姓名”；姓名保持原文，金额始终为 CNY。
-- 本轮授权需求文档、编码与验证；不包含合并、镜像发布或生产部署。
+- 当前授权含文档、编码、验证、推送、PR合并main和镜像发布；生产部署不在范围。
 
 ## 待确认问题
 
@@ -27,4 +31,4 @@
 
 ## 下一步交接
 
-供用户验收；查看 [任务清单](implementation/TASKS.md)、[截图索引](artifacts/ARTIFACTS.md) 与 [迁移交接](implementation/MIGRATION.md)。独立Review、远程CI、推送/PR、合并、镜像和生产未执行。
+按追加授权完成远程合并与出包；查看 [任务清单](implementation/TASKS.md)、[截图索引](artifacts/ARTIFACTS.md) 与 [迁移交接](implementation/MIGRATION.md)。独立Review、真实手机及生产验收仍不代签。
