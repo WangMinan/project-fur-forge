@@ -10,6 +10,7 @@
 
 ## 最近验证
 
+- 2026-10-09：PR #43通过quality并rebase合入main ec078b3；release-image运行37891816414在浏览器发布验证失败（47通过、2条图库动效采样失败），未发布镜像。动效断言由过渡类出现后的采样改为触发前监听真实transitionrun，保留中间帧/方向/打断/减少动态检查；补修的定向lint、typecheck及Chrome/WebKit共4项验证通过，待合并重发。
 - 2026-10-09追加授权：补齐根目录apple-touch-icon.png及apple-touch-icon-precomposed.png，两者复用现有180×180品牌图标；本地HTTP均200 image/png，响应字节与原图一致。生成脚本同步维护两份入口，语法及定向lint通过；未发布部署。
 - 2026-10-09用户验收补修：补回后台预览价格行共用类、删除领养卡片物种圆点；lint/typecheck、15项相关unit及2项Chrome通过，390/1440px预览截图和横竖卡截图已查看。
 

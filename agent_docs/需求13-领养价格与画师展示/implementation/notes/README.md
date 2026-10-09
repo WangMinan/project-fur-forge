@@ -1,5 +1,11 @@
 # 实施备注
 
+## 合并与出包
+
+- PR #43：需求6两条媒体提交、需求13与Apple图标一并合入远端main ec078b3，本地main已同步。
+- release-image 37891816414：基础quality通过；49项浏览器smoke中47通过，402/1440px图库动效采样得到opacity=1，失败阻断镜像发布。原测试等待Vue enter-active类并不能保证opacity/transform过渡已经开始或仍在执行。
+- 补修仅调整work-gallery-motion的测试采样：触发动作前监听transitionrun，立即暂停并定位至各自时长的四分之一；确认两层共四个动画已暂停后检查透明度和方向，finally移除监听并恢复。保留原有交叉淡化、首尾循环、键盘、打断、减少动态与无溢出断言；不改变产品动效或required checks。
+
 ## 用户验收补修
 
 - 2026-10-09：用户确认Safari图标探测404的诊断后授权补齐资源。新增public/apple-touch-icon.png与public/apple-touch-icon-precomposed.png，均直接复制public/brand/apple-touch-icon.png；generate-brand-assets.mjs在原图生成后同步复制。node语法检查、定向eslint及本地HTTP/180×180/响应字节一致性检查通过；不新增页面路由、不屏蔽警告，未执行完整品牌重生成、全套测试或生产发布。
@@ -15,3 +21,5 @@
 
 - 最终Chrome复验：新增公开与管理两项一起通过；公开含四种填写组合、已领养金额、中文/英文SSR、320–1440px、200%文字缩放、长姓名/署名、decode、键盘、触屏、reduced-motion、来源及图片保留。此前截图补验发现测试直接改Cookie可能抢在上一页水合前执行，已明确等待Vue挂载；最终无水合/控制台错误。截图关闭有限时长动画，12张产物已抽查。
 - 需求7两项回归通过；其测试生成的四张历史截图已恢复，避免混入本次改动。需求13共20处相对文档/截图链接及git diff空白检查通过。
+
+- 动效采样补修验证：定向eslint、typecheck与Chrome/WebKit各402/1440px四项测试全部通过（2.1m）。
