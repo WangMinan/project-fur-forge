@@ -6,6 +6,7 @@
 
 ## 最近验证
 
+- 2026-10-09追加授权：补齐根目录apple-touch-icon.png及apple-touch-icon-precomposed.png，两者复用现有180×180品牌图标；本地HTTP均200 image/png，响应字节与原图一致。生成脚本同步维护两份入口，语法及定向lint通过；未发布部署。
 - 2026-10-09用户验收补修：补回后台预览价格行共用类、删除领养卡片物种圆点；lint/typecheck、15项相关unit及2项Chrome通过，390/1440px预览截图和横竖卡截图已查看。
 
 - 2026-10-09：lint、typecheck、build/生产内容guard通过；10份受影响core共101项具备通过证据，旧详情价格和迁移列断言更新后定向复验通过。
