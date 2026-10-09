@@ -6,28 +6,43 @@ async function swipe(stage: Locator, direction: 'next' | 'prev') {
   await stage.dispatchEvent('pointerup', { pointerId: 1, pointerType: 'touch', isPrimary: true, clientX: direction === 'next' ? 80 : 320, clientY: 220 })
 }
 
-async function inspectCrossfade(stage: Locator, direction: 'next' | 'prev') {
-  await expect(stage.locator(`.public-media-${direction}-enter-active`)).toHaveCount(1)
-  const layers = await stage.evaluate(root => {
-    const animations = root.getAnimations({ subtree: true })
-    for (const animation of animations) {
-      animation.pause()
-      animation.currentTime = Number(animation.effect!.getTiming().duration) / 4
+async function inspectCrossfade(stage: Locator, direction: 'next' | 'prev', trigger: () => Promise<void>) {
+  // Vue's enter-active class precedes transitionrun; capture before triggering, even on a busy runner.
+  const capture = await stage.evaluateHandle(root => {
+    const freeze = (event: Event) => {
+      if (!(event.target instanceof Element) || !event.target.matches('.work-gallery__image')) return
+      for (const animation of event.target.getAnimations()) {
+        animation.pause()
+        animation.currentTime = Number(animation.effect!.getTiming().duration) / 4
+      }
     }
-    return [...root.querySelectorAll('.work-gallery__image')].map(image => {
+    root.addEventListener('transitionrun', freeze)
+    return () => root.removeEventListener('transitionrun', freeze)
+  })
+  try {
+    await trigger()
+    await expect(stage.locator(`.public-media-${direction}-enter-active`)).toHaveCount(1)
+    await expect.poll(() => stage.locator('.work-gallery__image').evaluateAll(images => (
+      images.flatMap(image => image.getAnimations()).filter(animation => animation.playState === 'paused').length
+    ))).toBe(4)
+    const layers = await stage.evaluate(root => [...root.querySelectorAll('.work-gallery__image')].map(image => {
       const style = getComputedStyle(image)
       return { entering: image.className.includes('enter-active'), opacity: Number(style.opacity), x: new DOMMatrix(style.transform).m41 }
-    })
-  })
-  expect(layers).toHaveLength(2)
-  for (const layer of layers) {
-    expect(layer.opacity).toBeGreaterThan(0)
-    expect(layer.opacity).toBeLessThan(1)
-    const sign = direction === 'next' ? 1 : -1
-    expect(layer.x * (layer.entering ? sign : -sign)).toBeGreaterThan(0)
+    }))
+    expect(layers).toHaveLength(2)
+    for (const layer of layers) {
+      expect(layer.opacity).toBeGreaterThan(0)
+      expect(layer.opacity).toBeLessThan(1)
+      const sign = direction === 'next' ? 1 : -1
+      expect(layer.x * (layer.entering ? sign : -sign)).toBeGreaterThan(0)
+    }
+    await stage.screenshot({ path: test.info().outputPath(`crossfade-${direction}.png`), animations: 'allow' })
   }
-  await stage.screenshot({ path: test.info().outputPath(`crossfade-${direction}.png`), animations: 'allow' })
-  await stage.evaluate(root => root.getAnimations({ subtree: true }).forEach(animation => animation.play()))
+  finally {
+    await capture.evaluate(remove => remove())
+    await capture.dispose()
+    await stage.evaluate(root => root.getAnimations({ subtree: true }).forEach(animation => animation.play()))
+  }
   await expect(stage.locator('.work-gallery__image')).toHaveCount(1)
 }
 
@@ -52,22 +67,17 @@ for (const width of [402, 1440]) {
     await stage.scrollIntoViewIfNeeded()
     await stage.locator('img').evaluate((image: HTMLImageElement) => image.decode())
 
-    await swipe(stage, 'next')
-    await inspectCrossfade(stage, 'next')
+    await inspectCrossfade(stage, 'next', () => swipe(stage, 'next'))
     await expect(thumbs.nth(1)).toHaveAttribute('aria-pressed', 'true')
-    await swipe(stage, 'prev')
-    await inspectCrossfade(stage, 'prev')
+    await inspectCrossfade(stage, 'prev', () => swipe(stage, 'prev'))
     await expect(thumbs.first()).toHaveAttribute('aria-pressed', 'true')
     // Wrapping must follow the gesture, not the numerical difference between indices.
-    await swipe(stage, 'prev')
-    await inspectCrossfade(stage, 'prev')
+    await inspectCrossfade(stage, 'prev', () => swipe(stage, 'prev'))
     await expect(thumbs.last()).toHaveAttribute('aria-pressed', 'true')
-    await swipe(stage, 'next')
-    await inspectCrossfade(stage, 'next')
+    await inspectCrossfade(stage, 'next', () => swipe(stage, 'next'))
     await expect(thumbs.first()).toHaveAttribute('aria-pressed', 'true')
 
-    await thumbs.last().press('Enter')
-    await inspectCrossfade(stage, 'next')
+    await inspectCrossfade(stage, 'next', () => thumbs.last().press('Enter'))
     await thumbs.first().click()
     await thumbs.nth(1).click()
     await expect(stage.locator('.work-gallery__image')).toHaveCount(1)
