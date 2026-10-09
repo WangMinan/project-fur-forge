@@ -57,6 +57,7 @@ interface AdoptionCoverInput {
 
 interface WorkRow {
   adoptionStatus: 'available' | 'adopted' | null
+  artist: string | null
   characterName: string
   featured: number
   id: string
@@ -80,7 +81,7 @@ const selectWork = `
   SELECT
     id, version, slug, character_name AS characterName,
     species, purpose,
-    adoption_status AS adoptionStatus,
+    adoption_status AS adoptionStatus, artist,
     price_amount_minor AS priceAmountMinor,
     price_currency AS priceCurrency,
     publication_status AS publicationStatus,
@@ -246,6 +247,7 @@ function managedWork(
     ? {
         ...base,
         adoptionStatus: row.adoptionStatus,
+        artist: row.artist,
         adoptionCover: adoptionCover(sqlite, row.id),
         designSheet: designSheet(sqlite, row.id),
         priceCnyMinor: row.priceCurrency === 'CNY'
@@ -366,7 +368,7 @@ export function listManagedWorks(
       work.id, work.version, work.slug,
       work.character_name AS characterName,
       work.species, work.purpose,
-      work.adoption_status AS adoptionStatus,
+      work.adoption_status AS adoptionStatus, work.artist,
       work.price_amount_minor AS priceAmountMinor,
       work.price_currency AS priceCurrency,
       work.publication_status AS publicationStatus,
@@ -431,6 +433,7 @@ export function listManagedWorks(
       ? {
           ...base,
           adoptionStatus: row.adoptionStatus,
+          artist: row.artist,
           adoptionCoverAssetId: row.adoptionCoverAssetId,
           designSheetAssetId: row.designSheetAssetId,
           priceCnyMinor: row.priceCurrency === 'CNY'
@@ -523,10 +526,10 @@ export function createManagedWork(
     sqlite.transaction(() => {
       sqlite.prepare(`
         INSERT INTO works (
-          id, slug, character_name, species, purpose, adoption_status,
+          id, slug, character_name, species, purpose, adoption_status, artist,
           price_amount_minor, price_currency,
           publication_status, sort_order, featured, image_composition_version, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'draft', 0, 0, 1, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', 0, 0, 1, ?, ?)
       `).run(
         id,
         input.slug,
@@ -534,6 +537,7 @@ export function createManagedWork(
         input.species,
         input.purpose,
         input.purpose === 'adoption' ? input.adoptionStatus : null,
+        input.purpose === 'adoption' ? input.artist ?? null : null,
         input.purpose === 'adoption' ? input.priceCnyMinor : null,
         input.purpose === 'adoption' && input.priceCnyMinor !== null
           ? 'CNY'
@@ -586,7 +590,7 @@ export function updateManagedWork(
       const result = sqlite.prepare(`
         UPDATE works
         SET slug = ?, character_name = ?, species = ?, purpose = ?,
-            adoption_status = ?,
+            adoption_status = ?, artist = ?,
             price_amount_minor = ?, price_currency = ?,
             sort_order = ?, featured = ?,
             version = version + 1, updated_at = ?
@@ -597,6 +601,7 @@ export function updateManagedWork(
         input.species,
         input.purpose,
         input.purpose === 'adoption' ? input.adoptionStatus : null,
+        input.purpose === 'adoption' ? (input.artist === undefined ? current.artist : input.artist) : null,
         input.purpose === 'adoption' ? input.priceCnyMinor : null,
         input.purpose === 'adoption' && input.priceCnyMinor !== null
           ? 'CNY'

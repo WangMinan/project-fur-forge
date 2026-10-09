@@ -81,10 +81,24 @@ function errorFor(key: keyof WorkFormErrors) {
       <div class="field field--wide">
         <label class="field__label" for="f-purpose">内部用途 <span aria-hidden="true">*</span></label>
         <AdminSelect id="f-purpose" v-model="form.purpose" :disabled="disabled" :options="WORK_PURPOSE_VALUES.map(value => ({ value, label: WORK_PURPOSE_LABELS[value] }))" />
-        <p class="field__hint">仅管理端可见；领养作品会额外启用领养状态、价格和横版封面。</p>
+        <p class="field__hint">仅管理端可见；领养作品会额外启用领养状态、画师、价格和横版封面。</p>
       </div>
 
       <template v-if="form.purpose === 'adoption'">
+        <div class="field">
+          <label class="field__label" for="f-artist">画师</label>
+          <input
+            id="f-artist"
+            v-model="form.artist"
+            class="field__input"
+            maxlength="100"
+            :disabled="disabled"
+            :aria-invalid="errorFor('artist') ? 'true' : undefined"
+            :aria-describedby="errorFor('artist') ? 'f-artist-hint f-artist-error' : 'f-artist-hint'"
+          >
+          <p id="f-artist-hint" class="field__hint">绘制设定图的画师公开署名；填写后显示在领养列表和详情，留空不显示。</p>
+          <p v-if="errorFor('artist')" id="f-artist-error" class="field__error">{{ errorFor('artist') }}</p>
+        </div>
         <div class="field">
           <label class="field__label" for="f-adoption-status">领养状态 <span aria-hidden="true">*</span></label>
           <AdminSelect
@@ -110,8 +124,9 @@ function errorFor(key: keyof WorkFormErrors) {
             placeholder="留空表示不公开价格"
             :disabled="disabled"
             :aria-invalid="errorFor('price') ? 'true' : undefined"
-            :aria-describedby="errorFor('price') ? 'f-price-error' : undefined"
+            :aria-describedby="errorFor('price') ? 'f-price-hint f-price-error' : 'f-price-hint'"
           >
+          <p id="f-price-hint" class="field__hint">填写后仅在作品详情公开，已领养后仍显示；留空不显示。</p>
           <p v-if="errorFor('price')" id="f-price-error" class="field__error">{{ errorFor('price') }}</p>
         </div>
       </template>

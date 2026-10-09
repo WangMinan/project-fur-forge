@@ -181,6 +181,7 @@ describe('R3-D adoption public projection', () => {
       .toBe('33333333-3333-4333-8333-333333333331')
     expect(detail?.adoption).toEqual({
       adoptionStatus: 'available',
+      priceCnyMinor: 128000,
     })
     expect(JSON.stringify({ adoption, detail })).not.toContain('/original/')
   })
