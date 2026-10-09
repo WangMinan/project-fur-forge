@@ -10,6 +10,7 @@
 
 ## 最近验证
 
+- 2026-10-09：按用户授权直接在 main 修复首页领养图片短屏底部截断，约束内层 Grid 行使图片随画框缩小；新增九档视口及横/竖/方图回归，Chrome/WebKit 共6项、既有触屏1项、相关core18项、lint/typecheck/build通过，见[修复与复跑记录](implementation/notes/2026-10-09-ADOPTION-IMAGE-CONTAINMENT.md)。仅本地提交，未推送或发布；真实iPhone仍待人工验收。
 - 2026-09-10：按用户授权在main修复后台减少动态模式的全局非零过渡；transition-duration改为0s，避免Cropper读到旧几何。扩查Hero/旧图焦点、排序、移动导航、进度与公开页边界；3项smoke、Hero焦点4组浏览器检查、26项core、lint、typecheck和production build通过，见[扩查与修复记录](implementation/notes/2026-09-10-ADMIN-REDUCED-MOTION.md)。本次仅提交与推送，不触发镜像发布或生产部署。
 - 2026-09-10：按用户授权在main修复固定比例裁剪的亚像素误差；拖动回写时复用fitCrop保持原图坐标比例。25组用途/视口隔离对照、整页构图smoke、26项核心测试、lint、typecheck及production build/内容守卫通过，详情见[修复记录](implementation/notes/2026-09-10-CROP-RATIO-PRECISION.md)。本次不触发镜像发布或生产部署。
 - 2026-09-10：按用户平板反馈修复出厂照卡片布局：图片列随卡片收缩，排序/主图/移除操作独占底部一行；八档390～1440px（含1280/1366三栏）浏览器检查主图及非主图按钮无重叠、无越界，构图smoke、受影响lint和typecheck通过。本次仅main修复，不触发镜像发布。
