@@ -34,7 +34,7 @@ const actionsRef = useTemplateRef<HTMLElement>('actions')
 const transitionDirection = shallowRef<'next' | 'prev'>('next')
 const transitionIntent = shallowRef<'autoplay' | 'pointer'>('autoplay')
 const motionSequence = shallowRef(0)
-const mediaTransitionName = computed(() => `home-adoption-media-${transitionDirection.value}`)
+const mediaTransitionName = computed(() => `public-media-${transitionDirection.value}`)
 const detailTo = computed(() => currentAdoption.value
   ? {
       path: currentAdoption.value.href,
@@ -423,27 +423,6 @@ onBeforeUnmount(() => {
   place-items: center;
 }
 
-.home-adoption-media-next-enter-active,
-.home-adoption-media-next-leave-active,
-.home-adoption-media-prev-enter-active,
-.home-adoption-media-prev-leave-active {
-  transition:
-    opacity 420ms var(--motion-ease-standard),
-    transform var(--motion-duration-media) var(--motion-ease-standard);
-}
-
-.home-adoption-media-next-enter-from,
-.home-adoption-media-prev-leave-to {
-  opacity: 0;
-  transform: translate3d(42px, 0, 0) scale(0.99);
-}
-
-.home-adoption-media-next-leave-to,
-.home-adoption-media-prev-enter-from {
-  opacity: 0;
-  transform: translate3d(-42px, 0, 0) scale(0.99);
-}
-
 .home-adoption-poster__media :deep(.responsive-picture),
 .home-adoption-poster__media :deep(.responsive-picture__image) {
   width: 100%;
@@ -738,10 +717,6 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .home-adoption-media-next-enter-active,
-  .home-adoption-media-next-leave-active,
-  .home-adoption-media-prev-enter-active,
-  .home-adoption-media-prev-leave-active,
   .home-adoption-poster__selector-item {
     transition: none;
   }

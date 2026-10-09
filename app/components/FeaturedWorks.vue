@@ -24,7 +24,7 @@ const motionSequence = shallowRef(0)
 const userPaused = shallowRef(false)
 const { controlsRevealed, revealControls, revealForFinePointer, onPointerLeave, onHeroClick }
   = useCarouselControls(() => userPaused.value)
-const mediaTransitionName = computed(() => `featured-media-${transitionDirection.value}`)
+const mediaTransitionName = computed(() => `public-media-${transitionDirection.value}`)
 
 const { reduceMotion, restart: restartAutoplayTimer } = useCarouselPlayback({
   advance: () => selectWork(1, false),
@@ -416,36 +416,6 @@ onBeforeUnmount(() => {
 .featured-works__media-surface :deep(.responsive-picture__image) {
   border-radius: var(--radius-image);
   object-fit: var(--featured-fit, cover);
-}
-
-.featured-media-next-enter-active,
-.featured-media-next-leave-active,
-.featured-media-prev-enter-active,
-.featured-media-prev-leave-active {
-  transition:
-    opacity 420ms var(--motion-ease-standard),
-    transform var(--motion-duration-media) var(--motion-ease-standard);
-}
-
-.featured-media-next-enter-from,
-.featured-media-prev-leave-to {
-  opacity: 0;
-  transform: translate3d(42px, 0, 0) scale(0.99);
-}
-
-.featured-media-next-leave-to,
-.featured-media-prev-enter-from {
-  opacity: 0;
-  transform: translate3d(-42px, 0, 0) scale(0.99);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .featured-media-next-enter-active,
-  .featured-media-next-leave-active,
-  .featured-media-prev-enter-active,
-  .featured-media-prev-leave-active {
-    transition: none;
-  }
 }
 
 .featured-works__info {
