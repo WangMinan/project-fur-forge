@@ -36,6 +36,8 @@
 
 ## 闭环结论
 
+- [x] 2026-10-09 · 按用户授权将首页媒体动效共享给详情图库，保留手势方向、可中断切换和减少动态；Chrome/WebKit动效4项、共享回归8项及代码检查通过，见[记录](notes/2026-10-09-GALLERY-MEDIA-TRANSITION.md)。
+
 - [x] 2026-10-09 · 按用户授权在 main 修复首页领养短屏图片截断，增加 Chrome/WebKit 图片完整性回归与独立 `pnpm test:media` 命令；验证和未执行项见[记录](notes/2026-10-09-ADOPTION-IMAGE-CONTAINMENT.md)。
 
 2026-09-10减少动态增量：已按用户授权扩查后台其他场景，并在main统一消除全局规则引入的非零过渡；构图、移动导航和真实进度smoke共3项通过，Hero焦点4组浏览器检查、26项core、lint、typecheck及build通过。详见[扩查与修复记录](notes/2026-09-10-ADMIN-REDUCED-MOTION.md)；本次范围为commit/push，不包含镜像发布或生产部署。
