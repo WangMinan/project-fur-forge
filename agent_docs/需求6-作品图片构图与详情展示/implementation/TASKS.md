@@ -36,6 +36,8 @@
 
 ## 闭环结论
 
+- [x] 2026-10-09 · 按用户授权在 main 修复首页领养短屏图片截断，增加 Chrome/WebKit 图片完整性回归与独立 `pnpm test:media` 命令；验证和未执行项见[记录](notes/2026-10-09-ADOPTION-IMAGE-CONTAINMENT.md)。
+
 2026-09-10减少动态增量：已按用户授权扩查后台其他场景，并在main统一消除全局规则引入的非零过渡；构图、移动导航和真实进度smoke共3项通过，Hero焦点4组浏览器检查、26项core、lint、typecheck及build通过。详见[扩查与修复记录](notes/2026-09-10-ADMIN-REDUCED-MOTION.md)；本次范围为commit/push，不包含镜像发布或生产部署。
 
 2026-09-10增量：按用户授权直接在main修复固定比例构图拖动误报，并扩展原有smoke覆盖首次直接拖动与保存比例；验证及发布边界见[修复记录](notes/2026-09-10-CROP-RATIO-PRECISION.md)。
