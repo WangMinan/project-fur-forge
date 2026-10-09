@@ -125,6 +125,11 @@ test('admin artist and price save, preview, reload and clear', async ({ page }) 
   await expect(page.locator('#f-artist')).toHaveValue('测试画师')
   await expect(page.getByTestId('public-preview')).toContainText('测试画师')
   await expect(page.locator('#f-price')).toHaveValue('8800.50')
+  mkdirSync(evidence, { recursive: true })
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 1000 })
+    await page.getByTestId('public-preview').screenshot({ animations: 'disabled', path: `${evidence}/admin-preview-${width}.png` })
+  }
   await page.locator('#f-artist').fill('')
   await page.locator('#f-price').fill('')
   await page.getByRole('button', { name: '保存', exact: true }).click()
