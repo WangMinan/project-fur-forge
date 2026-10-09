@@ -198,13 +198,6 @@ const adoptionTo = computed(() => ({
   overflow-wrap: anywhere;
 }
 
-.adoption-card__facts > span::before {
-  content: "·";
-  margin-inline-end: var(--space-2);
-  color: var(--public-text-primary);
-  font-weight: 700;
-}
-
 .adoption-card__action {
   flex-direction: row;
   align-items: center;
