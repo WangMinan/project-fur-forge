@@ -430,7 +430,7 @@ useSeoMeta({
                     <dt>画师</dt>
                     <dd>{{ preview.artist || '未填写' }}</dd>
                   </div>
-                  <div>
+                  <div class="preview-card__fact">
                     <dt>价格</dt>
                     <dd>
                       {{ preview.priceCnyMinor === null

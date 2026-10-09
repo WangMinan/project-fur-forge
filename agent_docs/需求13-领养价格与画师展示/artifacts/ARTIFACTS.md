@@ -21,4 +21,6 @@
 - [中文竖卡](screenshots/card-zh-CN-390.png)、[英文横卡](screenshots/card-en-1440.png)。
 - [长署名竖卡](screenshots/long-card-en-390.png)、[长署名横卡](screenshots/long-card-en-1440.png)。
 - [中文桌面详情](screenshots/detail-zh-CN-1440.png)、[英文手机尺寸详情](screenshots/detail-en-390.png)。
-- 同目录含两种语言各390/1440px的普通卡、长字段卡与详情，共12张。
+- 同目录含两种语言各390/1440px的普通卡、长字段卡与详情，共12张；另新增两张管理预览补修截图，总计14张。
+
+- [桌面管理预览](screenshots/admin-preview-1440.png)、[手机尺寸管理预览](screenshots/admin-preview-390.png)：价格行与其他信息行字体及两列对齐一致。
