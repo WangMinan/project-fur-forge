@@ -2,7 +2,7 @@
 
 ## 当前阶段
 
-2026-10-09：本地实现与验证完成。用户明确授权直接在 main 修改、推送并启动出包；基线 `757d66e`，开始时工作树干净且与 origin/main 一致。
+2026-10-09：本地实现与验证完成，已直接提交推送 main，并启动出包。实现提交/冻结 SHA：`d8199261f7adb0548646e4ed85d4ddcb929e2551`。用户明确授权直接在 main 修改、推送并启动出包；基线 `757d66e`，开始时工作树干净且与 origin/main 一致。
 
 ## 当前约束
 
@@ -23,4 +23,6 @@
 
 ## 下一步交接
 
-提交推送 main，启动 release-image。具体执行状态见 [TASKS](implementation/TASKS.md)，契约见 [SPEC](requirements/SPEC.md)。
+已启动 [release-image 37875044353](https://github.com/WangMinan/project-fur-forge/actions/runs/37875044353)，标签 `works-catalog-20261009-d819926`，启动核验为 queued，headSha 与实现提交一致。本记录是启动后的文档补记，不改变该次冻结代码。
+
+镜像是否发布成功、digest 及远端质量结果尚未核验，不将启动记为出包成功。未执行生产部署、数据库迁移或媒体操作；实际线上生效须后续部署。具体执行状态见 [TASKS](implementation/TASKS.md)，契约见 [SPEC](requirements/SPEC.md)。
