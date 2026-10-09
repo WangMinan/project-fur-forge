@@ -65,12 +65,22 @@ server {
         proxy_set_header Upgrade    $http_upgrade;
         proxy_set_header Connection $connection_upgrade;
 
-        proxy_intercept_errors on;
+        # Only Nginx-generated failures enter the fallback; application errors pass through.
+        proxy_intercept_errors off;
+        proxy_hide_header X-Ditedog-Origin-Failure;
         error_page 502 503 504 = @backend_unavailable;
     }
 
     location @backend_unavailable {
         default_type text/plain;
-        return 503 "ditedog backend is not running on 127.0.0.1:3000\n";
+        # Defining add_header here disables inheritance of the server-level headers.
+        add_header X-Content-Type-Options nosniff always;
+        add_header X-Frame-Options DENY always;
+        add_header Referrer-Policy strict-origin-when-cross-origin always;
+        add_header Cross-Origin-Opener-Policy same-origin always;
+        add_header Cache-Control no-store always;
+        add_header Retry-After 60 always;
+        add_header X-Ditedog-Origin-Failure backend-unavailable always;
+        return 503 "Service temporarily unavailable\n";
     }
 }

@@ -23,19 +23,32 @@ try {
     }
     assert.equal(await handler.fetch(request('/', {}, 'admin.ditedog.com')), response)
   }
-  for (const status of [521, 522]) {
+  for (const status of [503, 521, 522]) {
     for (const host of ['ditedog.com', 'admin.ditedog.com']) {
       for (const method of ['GET', 'HEAD']) {
-        globalThis.fetch = async () => new Response(null, { status })
+        globalThis.fetch = async () => new Response(null, {
+          status, headers: status === 503 ? { 'x-ditedog-origin-failure': 'backend-unavailable' } : {},
+        })
         const response = await handler.fetch(request('/', { method }, host))
         assert.equal(response.status, 503)
-        assert.equal(response.headers.get('x-ditedog-fallback'), `origin-${status}`)
+        assert.equal(response.headers.get('x-ditedog-fallback'), status === 503 ? 'backend-unavailable' : `origin-${status}`)
         assert.equal(response.headers.get('cache-control'), 'no-store')
+        assert.equal(response.headers.get('retry-after'), '60')
         const body = await response.text()
         assert(method === 'HEAD' ? body === '' : body.includes('小狗休息一下'))
       }
     }
   }
+  for (const [status, marker] of [[200, 'backend-unavailable'], [502, 'backend-unavailable'], [503, 'other']]) {
+    const response = new Response('business response', { status, headers: { 'x-ditedog-origin-failure': marker } })
+    globalThis.fetch = async () => response
+    assert.equal(await handler.fetch(request()), response)
+  }
+  const businessError = new Response('business unavailable', { status: 503 })
+  globalThis.fetch = async () => businessError
+  assert.equal(await handler.fetch(request('/', {
+    headers: { accept: 'text/html', 'x-ditedog-origin-failure': 'backend-unavailable' },
+  })), businessError)
   globalThis.fetch = async () => { throw new Error('private upstream detail') }
   const fallback = await handler.fetch(request())
   assert.equal(fallback.status, 503)
@@ -63,16 +76,18 @@ try {
   assert(timeoutCleared)
   Object.assign(globalThis, saved)
 
-  const untouched = new Response('api/static error', { status: 522 })
-  globalThis.fetch = async () => untouched
-  for (const req of [request('/api'), request('/api/admin/session'), request('/', { method: 'POST', body: 'synthetic' }), request('/_nuxt/test.js', { headers: { accept: '*/*' } })]) {
-    assert.equal(await handler.fetch(req), untouched)
+  for (const status of [503, 522]) {
+    const untouched = new Response('api/static error', { status, headers: { 'x-ditedog-origin-failure': 'backend-unavailable' } })
+    globalThis.fetch = async () => untouched
+    for (const req of [request('/api'), request('/api/admin/session'), request('/', { method: 'POST', body: 'synthetic' }), request('/_nuxt/test.js', { headers: { accept: '*/*' } })]) {
+      assert.equal(await handler.fetch(req), untouched)
+    }
   }
   globalThis.fetch = async () => { throw new Error('must not fetch unexpected host') }
   assert.equal((await handler.fetch(request('/', {}, 'public-media.ditedog.com'))).status, 421)
   globalThis.fetch = async () => new Response('recovered', { status: 200 })
   assert.equal(await (await handler.fetch(request())).text(), 'recovered')
-  console.log('PASS: ESA 521/522 fallback, all other 5xx preserved, redirects/cookies, connection failure, slow success, 10s timeout, HEAD, scope, recovery')
+  console.log('PASS: ESA 521/522 and marked Nginx 503 fallback, business errors preserved, marker validation, redirects/cookies, connection failure, slow success, 10s timeout, HEAD, scope, recovery')
 }
 finally {
   Object.assign(globalThis, saved)

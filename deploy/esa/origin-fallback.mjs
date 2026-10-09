@@ -21,8 +21,10 @@ export default {
         fetch(request, options),
         new Promise(resolve => { timer = setTimeout(() => resolve(null), 10000) }),
       ])
-      if (response && ![521, 522].includes(response.status)) return response
-      failure = response ? `origin-${response.status}` : 'origin-timeout'
+      const backendUnavailable = response?.status === 503
+        && response.headers.get('x-ditedog-origin-failure') === 'backend-unavailable'
+      if (response && ![521, 522].includes(response.status) && !backendUnavailable) return response
+      failure = backendUnavailable ? 'backend-unavailable' : response ? `origin-${response.status}` : 'origin-timeout'
     }
     catch {
       // Network failure: the fallback is embedded and needs no origin request.
