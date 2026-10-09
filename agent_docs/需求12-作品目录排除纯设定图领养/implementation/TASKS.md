@@ -10,8 +10,8 @@
 
 - [x] lint、typecheck、受影响 core（37项）。
 - [x] 手机/桌面宽度Chrome回归（1项、390/1440）及 production build/内容守卫。
-- [ ] 检查文档链接和差异，提交推送 main。
-- [ ] 启动 release-image，记录冻结 SHA 与运行链接。
+- [x] 检查文档链接和差异，提交推送 main（`<ARCHIVED_COMMIT>`）。
+- [x] 启动 release-image，记录冻结 SHA 与运行链接（37875044353（原始运行记录已私有归档），启动核验 queued）。
 
 ## 验收边界
 
