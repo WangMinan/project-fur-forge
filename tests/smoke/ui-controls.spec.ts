@@ -100,7 +100,12 @@ test('shared select supports keyboard, dismissal, numeric pagination and require
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   }
   await page.getByRole('link', { name: '编辑', exact: true }).first().click()
-  await expect(page.getByRole('combobox', { name: /内部用途/u })).toBeDisabled()
+  const publishedPurpose = page.getByRole('combobox', { name: /内部用途/u })
+  await expect(publishedPurpose).toBeEnabled()
+  await publishedPurpose.click()
+  await expect(page.getByRole('listbox')).toBeVisible()
+  await publishedPurpose.press('Escape')
+  await expect(page.getByRole('button', { name: '选择照片', exact: true })).toBeDisabled()
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto(`${adminBaseURL}/admin/works/new`)
   await hydrated(page)

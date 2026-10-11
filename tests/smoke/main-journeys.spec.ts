@@ -828,7 +828,7 @@ test('管理端对已拒绝申请先脱敏 dry-run，再单条删除', async ({ 
   await expect(dialog).not.toBeVisible()
   await expect(page.getByRole('button', { name: '删除申请数据' })).toBeFocused()
   await page.getByRole('button', { name: '删除申请数据' }).click()
-  await expect(dialog).toContainText('dry-run')
+  await expect(dialog).toContainText('执行后无法从站内撤销')
   await expect(dialog).toContainText('数据库直接关联行')
   await expect(dialog).toContainText('私有对象 Key：1')
   await expect(dialog).not.toContainText(phone)
