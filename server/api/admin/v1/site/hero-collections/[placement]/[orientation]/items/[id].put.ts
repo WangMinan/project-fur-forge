@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
   }
   try {
     const sqlite = getDatabase().sqlite
-    await clearHeroCollectionItemPreview(
+    if ('assetId' in body.data.payload) await clearHeroCollectionItemPreview(
       sqlite,
       getMediaStorage(),
       id,

@@ -183,7 +183,7 @@ export function useAdminHeroCollection(
         return null
       }
       if (error instanceof AdminApiError && error.status === 409) {
-        await onConflict()
+        conflictNotice.value = `${label()}版本或状态已变化，本次修改未保存，输入已保留。`
         return conflictText(error.reason)
       }
       return errorText
@@ -208,8 +208,12 @@ export function useAdminHeroCollection(
     return await mutation(async () => {
       const result = await adminApi(`${baseUrl()}/items/${id}`, {
         method: 'PUT',
-        body: body(input),
+        body: body(collection.value?.items.find(item => item.id === id)?.enabled ? { alt: input.alt } : input),
         schema: adminHeroCollectionResponseSchema,
+      })
+      setFeedback(id, {
+        retryOperationId: null, tone: 'success',
+        text: result.data.items.find(item => item.id === id)?.enabled ? '说明已保存，公开端已更新。' : '修改已保存。',
       })
       return result.data
     }, '保存大图项失败，请稍后重试。')

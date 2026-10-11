@@ -1,4 +1,3 @@
-import { mkdirSync } from 'node:fs'
 import { expect, test } from '@playwright/test'
 import { adminBaseURL, publicBaseURL, loginAsAdmin, E2E_DATABASE_FILE } from '../e2e/helpers/auth'
 import { openFixtureDatabase } from '../e2e/helpers/fixture-db'
@@ -29,7 +28,7 @@ test('普通配置保存失败在当前区域提示并保留草稿，可再次�
   await expect(card.getByTestId('site-section-saved')).toBeVisible()
 })
 
-test('admin multilingual copy saves, protects drafts, detects conflict and renders fallback', async ({ page, request }) => {
+test('admin multilingual copy saves, protects drafts, detects conflict and renders fallback', async ({ page, request }, testInfo) => {
   test.setTimeout(120_000)
   const session = await loginAsAdmin(page)
   const errors: string[] = []
@@ -46,8 +45,8 @@ test('admin multilingual copy saves, protects drafts, detects conflict and rende
   const facts = about.getByLabel('工作室介绍', { exact: true })
   await expect(facts).toHaveValue(initial.sections.about.fields.studioFacts ?? '')
   await facts.fill('Editable English copy')
-  page.once('dialog', dialog => dialog.dismiss())
   await language.getByRole('button', { name: '中文', exact: true }).click()
+  await page.getByRole('dialog', { name: '放弃修改并切换语言？' }).getByRole('button', { name: '继续编辑' }).click()
   await expect(language.getByRole('button', { name: 'English', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await expect(facts).toHaveValue('Editable English copy')
   await page.getByRole('button', { name: '营业与联系', exact: true }).click()
@@ -81,8 +80,7 @@ test('admin multilingual copy saves, protects drafts, detects conflict and rende
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy()
     await language.getByRole('button', { name: 'English', exact: true }).focus()
     await expect(language.getByRole('button', { name: 'English', exact: true })).toBeFocused()
-    mkdirSync('agent_docs/需求7-公开站中英切换/artifacts/screenshots', { recursive: true })
-    await page.screenshot({ path: `agent_docs/需求7-公开站中英切换/artifacts/screenshots/admin-copy-${width}.png` })
+    await page.screenshot({ path: testInfo.outputPath(`admin-copy-${width}.png`) })
   }
   expect(errors).toEqual([])
   const latest = (await (await page.request.get(`${base}/en`)).json()).data

@@ -564,8 +564,8 @@ export function updateManagedWork(
   if (current.version !== expectedVersion) {
     throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
-  if (current.publicationStatus === 'published') {
-    throw new ServiceError(409, 'CONFLICT', 'Unpublish the work before editing it.', 'WORK_PUBLISHED_READONLY')
+  if (current.publicationStatus === 'published' && current.purpose !== 'adoption' && input.purpose === 'adoption') {
+    throw new ServiceError(409, 'CONFLICT', '请先下架并配置领养图片，再切换为领养作品。', 'WORK_PURPOSE_MEDIA_REQUIRED')
   }
   if (input.featured && !current.featured) {
     assertFeaturedPortraitPhoto(sqlite, id)
@@ -585,6 +585,7 @@ export function updateManagedWork(
   }
   try {
     sqlite.transaction(() => {
+      assertNoWorkOperation(sqlite, id)
       const featuredIds = featuredIdsForMembership(sqlite, id, input.featured)
       const sortOrder = input.featured ? featuredIds.indexOf(id) : 0
       const result = sqlite.prepare(`
@@ -594,7 +595,7 @@ export function updateManagedWork(
             price_amount_minor = ?, price_currency = ?,
             sort_order = ?, featured = ?,
             version = version + 1, updated_at = ?
-        WHERE id = ? AND version = ? AND publication_status != 'published'
+        WHERE id = ? AND version = ?
       `).run(
         input.slug,
         input.characterName,
@@ -629,18 +630,23 @@ export function updateManagedWork(
   return getManagedWork(sqlite, id)
 }
 
-/** 展示设置不改作品事实或媒体，因此已发布作品也可安全调整。 */
+/** 展示设置和图片说明不修改媒体资产，可在发布后更新。 */
 export function updateManagedWorkPresentation(
   sqlite: Database.Database,
   id: string,
   expectedVersion: number,
-  input: { [K in keyof WorkDisplaySettings]?: WorkDisplaySettings[K] | undefined } & { featured?: boolean | undefined, sortOrder?: number | undefined },
+  input: { [K in keyof WorkDisplaySettings]?: WorkDisplaySettings[K] | undefined } & { featured?: boolean | undefined, sortOrder?: number | undefined, mediaDescriptions?: Array<{ assetId: string, alt: string }> | undefined },
   now = Date.now(),
 ) {
   sqlite.transaction(() => {
     const current = requireWork(sqlite, id)
     if (current.version !== expectedVersion) throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
     assertNoWorkOperation(sqlite, id)
+    for (const description of input.mediaDescriptions ?? []) {
+      const updated = sqlite.prepare('UPDATE work_assets SET alt_text = ? WHERE work_id = ? AND asset_id = ?')
+        .run(description.alt, id, description.assetId)
+      if (updated.changes !== 1) throw new ServiceError(409, 'CONFLICT', '图片已不属于此作品，请刷新后重试。', 'VERSION_CONFLICT')
+    }
     const previous = workDisplayState(sqlite, id)
     const changesDisplay = input.showAdoptionCoverInDetail !== undefined || input.showDesignSheetInDetail !== undefined || input.adoptionCoverSource !== undefined
     if (changesDisplay && current.purpose !== 'adoption') throw new ServiceError(400, 'VALIDATION_ERROR', '仅领养作品支持此展示设置')
@@ -654,7 +660,7 @@ export function updateManagedWorkPresentation(
     `).run(featured ? featuredIds.indexOf(id) : 0, featured ? 1 : 0,
       (input.showAdoptionCoverInDetail ?? previous.showAdoptionCoverInDetail) ? 1 : 0,
       (input.showDesignSheetInDetail ?? previous.showDesignSheetInDetail) ? 1 : 0,
-      input.adoptionCoverSource ?? previous.adoptionCoverSource, input.featured !== undefined ? 1 : 0, now, id, expectedVersion)
+      input.adoptionCoverSource ?? previous.adoptionCoverSource, input.featured !== undefined || input.mediaDescriptions !== undefined ? 1 : 0, now, id, expectedVersion)
     if (result.changes !== 1) throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
     if (changesDisplay) assertWorkDisplay(sqlite, id, before > 0 || current.publicationStatus === 'published')
     if (input.featured !== undefined && (current.featured || featured)) normalizeFeaturedRows(sqlite, featuredIds, now, id)

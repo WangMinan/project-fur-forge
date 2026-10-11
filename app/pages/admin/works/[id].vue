@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AdminDiscardChangesDialog from '~/components/admin/DiscardChangesDialog.vue'
 import {
   managedWorkResponseSchema,
   publicSafeWorkPreviewResponseSchema,
@@ -64,6 +65,7 @@ const adoptionCoverSection = useTemplateRef<{ save: () => Promise<boolean> }>('a
 const designSheetSection = useTemplateRef<{ save: () => Promise<boolean> }>('designSheetSection')
 const displaySection = useTemplateRef<{ save: () => Promise<boolean> }>('displaySection')
 const studioPhotoSection = useTemplateRef<{ save: () => Promise<boolean> }>('studioPhotoSection')
+const leaveConfirmation = useTemplateRef<{ request: () => Promise<boolean> }>('leaveConfirmation')
 
 function applyWork(next: ManagedWorkDto) {
   work.value = next
@@ -177,25 +179,20 @@ async function saveWork(): Promise<boolean> {
   saving.value = true
   try {
     const payload = toWorkFieldsPayload(form.value)
-    const presentationOnly = locked.value
     const result = await adminApi(
-      presentationOnly
-        ? `/api/admin/v1/works/${workId}/presentation`
-        : `/api/admin/v1/works/${workId}`,
+      `/api/admin/v1/works/${workId}`,
       {
         method: 'PUT',
         body: {
           expectedVersion: work.value.version,
-          payload: presentationOnly
-            ? { featured: payload.featured }
-            : payload,
+          payload,
         },
         schema: managedWorkResponseSchema,
       },
     )
     applyWork(result.data)
-    savedNotice.value = presentationOnly
-      ? '代表作品设置已保存，公开端已更新。'
+    savedNotice.value = locked.value
+      ? '修改已保存，公开端已更新。'
       : '已保存。'
     void loadPreview()
     return true
@@ -292,7 +289,7 @@ onBeforeRouteLeave(() => {
   if (!leaveGuardActive.value || authStatus.value === 'guest') {
     return true
   }
-  return window.confirm('有未保存的更改或正在进行的上传，确定离开此页面吗？')
+  return leaveConfirmation.value?.request() ?? false
 })
 
 useSeoMeta({
@@ -304,6 +301,7 @@ useSeoMeta({
 
 <template>
   <AdminShell current="works">
+    <AdminDiscardChangesDialog ref="leaveConfirmation" />
     <div v-if="pageStatus === 'loading'" class="editor-state" role="status">
       正在加载作品…
     </div>
@@ -336,12 +334,12 @@ useSeoMeta({
             :loading="saving"
             loading-label="保存中…"
             @click="saveWork"
-          >{{ locked ? '保存代表作品' : '保存' }}</AdminAction>
+          >保存修改</AdminAction>
         </div>
       </header>
 
       <p v-if="locked" class="editor__locked" role="status">
-        作品已发布：基础信息与图片为只读，需要先下架。代表作品与领养展示设置仍可直接修改，具体顺序在作品管理的“代表作品”Tab 调整。
+        作品已发布：基础信息、图片说明与展示设置保存后公开生效；换图、移除图片、焦点和裁剪等媒体修改仍需先下架。
       </p>
       <p v-if="saveError && !conflictOpen" class="admin-feedback" role="alert">{{ saveError }}</p>
       <p v-if="savedNotice" class="editor__notice" role="status">{{ savedNotice }}</p>
@@ -350,7 +348,7 @@ useSeoMeta({
         <div class="editor__main">
           <AdminWorkBasicsFields
             v-model="form"
-            :disabled="locked || saving"
+            :disabled="saving || mediaBusy"
             :featured-eligible="featuredEligible"
             :errors="errors"
             :show-errors="submitted"

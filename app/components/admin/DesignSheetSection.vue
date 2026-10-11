@@ -83,7 +83,7 @@ defineExpose({ save: saveDesignSheet })
     </div>
 
     <p v-if="locked" class="design-sheet__locked" role="status">
-      作品已发布，设定图为只读；如需替换请先下架。
+      图片说明可直接保存；更换、移除设定图或调整构图仍需先下架。
     </p>
 
     <article v-if="entry" class="design-sheet__entry" :data-status="entry.status">
@@ -141,7 +141,7 @@ defineExpose({ save: saveDesignSheet })
           type="text"
           maxlength="500"
           :value="entry.alt"
-          :disabled="locked || processing"
+          :disabled="saving || processing"
           placeholder="例如：角色正侧背三视图与色板"
           @input="entry.alt = ($event.target as HTMLInputElement).value"
         >
@@ -180,7 +180,7 @@ defineExpose({ save: saveDesignSheet })
     <div v-if="isDirty" class="design-sheet__actions">
       <AdminAction
         variant="primary"
-        :disabled="saving || locked"
+        :disabled="saving"
         :loading="saving"
         loading-label="保存中…"
         @click="saveDesignSheet"

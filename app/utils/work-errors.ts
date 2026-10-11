@@ -18,7 +18,9 @@ const REASON_MESSAGES: Partial<Record<ErrorReason, string>> = {
   DETAIL_GALLERY_EMPTY: '详情图集至少保留一张图片，请先开启附加图或添加图片。',
   ADOPTION_SOURCE_UNAVAILABLE: '指定的领养封面不可用，请先调整封面来源。',
   WORK_PUBLISHED_READONLY:
-    '作品已发布：请先下架，再修改或删除。',
+    '作品已发布：修改图片资产或删除作品前，请先下架。',
+  WORK_PURPOSE_MEDIA_REQUIRED:
+    '请先下架并配置领养图片，再切换为领养作品。',
   WORK_DESIGN_SHEET_PRESENT:
     '该领养作品已有领养设定图：请先移除设定图，才能改为非领养用途。',
   WORK_PUBLICATION_BLOCKED:
@@ -46,7 +48,7 @@ const REASON_MESSAGES: Partial<Record<ErrorReason, string>> = {
   UPLOAD_SESSION_EXPIRED:
     '上传会话已过期，请重新开始上传。',
   HERO_ITEM_ENABLED:
-    '这张大图正在启用中：请先停用，再修改、预览或删除。',
+    '这张大图正在启用中：更换图片、调整焦点或删除前，请先停用；说明可直接保存。',
   HERO_ASSET_NOT_READY:
     '这张大图还没准备好，请确认图片已上传成功。',
   HERO_ASSET_ALREADY_ASSIGNED:

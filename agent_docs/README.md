@@ -21,6 +21,8 @@
 | 需求11 · main代码审查与精简整改 | 12项本地整改完成；验证边界及待人工验收见 STATE | [STATE](需求11-main代码审查与精简整改/STATE.md) · [SPEC](需求11-main代码审查与精简整改/requirements/SPEC.md) · [TASKS](需求11-main代码审查与精简整改/implementation/TASKS.md) |
 | 需求12 · 作品目录排除纯设定图领养 | 局部覆盖需求4/6目录兜底；领养与详情不变 | [STATE](需求12-作品目录排除纯设定图领养/STATE.md) · [SPEC](需求12-作品目录排除纯设定图领养/requirements/SPEC.md) · [TASKS](需求12-作品目录排除纯设定图领养/implementation/TASKS.md) |
 | 需求13 · 领养价格与画师展示 | 本地实现与验证完成；待用户验收 | [STATE](需求13-领养价格与画师展示/STATE.md) · [SPEC](需求13-领养价格与画师展示/requirements/SPEC.md) · [TASKS](需求13-领养价格与画师展示/implementation/TASKS.md) |
+| 需求14 · 在线文本维护 | 用户已验收；授权PR合并与出包 | [STATE](需求14-在线文本维护/STATE.md) · [SPEC](需求14-在线文本维护/requirements/SPEC.md) · [TASKS](需求14-在线文本维护/implementation/TASKS.md) |
+| 需求15 · 确认弹窗与快速检查 | 用户已验收；授权PR合并与出包 | [STATE](需求15-确认弹窗与快速检查/STATE.md) · [SPEC](需求15-确认弹窗与快速检查/requirements/SPEC.md) · [TASKS](需求15-确认弹窗与快速检查/implementation/TASKS.md) |
 
 ## 按主题补读
 
