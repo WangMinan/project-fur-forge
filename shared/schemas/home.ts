@@ -117,7 +117,7 @@ export const createHeroItemRequestSchema = versionedRequestSchema(
   heroItemInputSchema,
 )
 export const updateHeroItemRequestSchema = versionedRequestSchema(
-  heroItemInputSchema,
+  z.union([heroItemInputSchema, heroItemInputSchema.pick({ alt: true })]),
 )
 export const mutateHeroCollectionRequestSchema = versionedRequestSchema(
   z.object({}).strict(),

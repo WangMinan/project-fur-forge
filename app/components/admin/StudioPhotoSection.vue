@@ -243,7 +243,7 @@ async function retryEntryProcessing(entry: SectionEntry) {
 }
 
 async function savePhotos(): Promise<boolean> {
-  if (saving.value || props.locked) {
+  if (saving.value || busyUploads.value > 0 || processingAssetId.value) {
     return false
   }
   saveError.value = null
@@ -254,12 +254,14 @@ async function savePhotos(): Promise<boolean> {
   saving.value = true
   try {
     const result = await adminApi(
-      `/api/admin/v1/works/${props.work.id}/studio-photos`,
+      `/api/admin/v1/works/${props.work.id}/${props.locked ? 'presentation' : 'studio-photos'}`,
       {
         method: 'PUT',
         body: {
           expectedVersion: props.work.version,
-          payload: { photos: payloadOf(entries.value) },
+          payload: props.locked
+            ? { mediaDescriptions: entries.value.map(entry => ({ assetId: entry.assetId, alt: entry.alt.trim() })) }
+            : { photos: payloadOf(entries.value) },
         },
         schema: managedWorkResponseSchema,
       },
@@ -304,7 +306,7 @@ defineExpose({ save: savePhotos })
     </div>
 
     <p v-if="locked" class="photo-section__locked" role="status">
-      作品已发布，出厂照为只读；如需调整请先下架。
+      图片说明可直接保存；更换、移除图片或调整构图等媒体内容仍需先下架。
     </p>
     <p class="photo-section__resolution-note">
       低分辨率照片也可以上传和保存；发布时会用 FFmpeg Lanczos 生成私有适配源。放大不会恢复细节，完整原图会保留。
@@ -318,7 +320,7 @@ defineExpose({ save: savePhotos })
           :work-label="`${work.characterName} · ${work.species}`"
           :index="index"
           :locked="locked"
-          :processing="processingAssetId === entry.assetId"
+          :processing="saving || processingAssetId === entry.assetId"
           :total="entries.length"
           @move="moveEntry(index, $event)"
           @remove="removeEntry(index)"
@@ -377,7 +379,7 @@ defineExpose({ save: savePhotos })
     <div v-if="isDirty" class="photo-section__actions">
       <AdminAction
         variant="primary"
-        :disabled="saving || locked"
+        :disabled="saving"
         :loading="saving"
         loading-label="保存中…"
         @click="savePhotos"

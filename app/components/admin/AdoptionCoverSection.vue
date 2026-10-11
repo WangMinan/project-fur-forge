@@ -94,7 +94,7 @@ defineExpose({ save: saveCover })
       <p class="editor-card__hint">{{ entry ? '1/1' : '0/1' }} · 与设定图至少上传其一</p>
     </div>
     <p class="cover__note">请上传真实横版单头成果图；系统不会从设定图或出厂照自动裁切替代。</p>
-    <p v-if="locked" class="cover__locked" role="status">作品已发布，横版封面为只读；如需替换请先下架。</p>
+    <p v-if="locked" class="cover__locked" role="status">图片说明可直接保存；更换、移除封面或调整焦点与裁剪仍需先下架。</p>
 
     <article v-if="entry" class="cover__entry" :data-status="entry.status">
       <div class="cover__preview" :style="work.imageCompositionVersion ? { aspectRatio: `${entry.width} / ${entry.height}` } : undefined">
@@ -126,7 +126,7 @@ defineExpose({ save: saveCover })
         v-model="entry.alt"
         class="cover__input"
         maxlength="500"
-        :disabled="locked || processing"
+        :disabled="saving || processing"
         placeholder="例如：角色正面横版领养封面"
       >
       <template v-if="work.imageCompositionVersion === 0">
@@ -145,7 +145,7 @@ defineExpose({ save: saveCover })
     <AdminWorkImageUploader :disabled="locked" :empty="!entry" label="横版封面" :uploads="uploads" :work-id="work.id" :work-version="work.version" />
 
     <div v-if="isDirty" class="cover__actions">
-      <AdminAction variant="primary" :disabled="saving || locked" :loading="saving" loading-label="保存中…" @click="saveCover">保存横版封面</AdminAction>
+      <AdminAction variant="primary" :disabled="saving" :loading="saving" loading-label="保存中…" @click="saveCover">保存横版封面</AdminAction>
       <AdminAction :disabled="saving" @click="resetFromWork(work)">放弃更改</AdminAction>
       <span class="cover__dirty">横版封面有未保存更改</span>
     </div>

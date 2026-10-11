@@ -34,7 +34,11 @@ import {
   replaceManagedAdoptionCover,
   replaceManagedDesignSheet,
   replaceManagedStudioPhotos,
+  updateManagedWork,
+  updateManagedWorkPresentation,
 } from '../../server/utils/service/work-management'
+import { createSqlitePublicSiteRepository } from '../../server/utils/repository/public-site-repository'
+import { updateWorkPresentationRequestSchema } from '../../shared/schemas/work'
 import {
   checkWorkPublication,
   publishWork,
@@ -84,7 +88,7 @@ function createWorkWithPhoto(
   // Existing publication cases exercise the historical recipe; R6 has separate composition coverage.
   sqlite.prepare('UPDATE works SET image_composition_version=0 WHERE id=?').run(work.id)
   const content = width < 2400 || height < 1600
-    ? createSyntheticSourcePng(width, height)
+    ? createSyntheticTransparentPng(width, height)
     : createSyntheticTransparentPng()
   const key = `${environmentPrefix}/original/${ASSET_ID}/source.png`
   sqlite.prepare(`
@@ -279,7 +283,8 @@ function attachDesignSheet(
   width = 3200,
   height = 1800,
 ) {
-  const content = createSyntheticSourcePng(width, height)
+  // Keep real Lanczos/PNG processing and edges/alpha without benchmarking noise compression.
+  const content = width < 2400 ? createSyntheticTransparentPng(width, height) : createSyntheticSourcePng(width, height)
   const key = `test/t18-fixture/original/${DESIGN_ASSET_ID}/source.png`
   sqlite.prepare(`
     INSERT INTO assets (
@@ -351,6 +356,65 @@ afterEach(() => {
 })
 
 describe('dual-bucket work publication operations', () => {
+  it('edits published text without changing media, publication time or storage, and rejects media mutations', async () => {
+    const work = attachDesignSheet(attachRequiredAdoptionMedia(createRegularAdoption()))
+    const published = await publishWork(sqlite, storage, work.id, work.version, USER_ID, NOW + 3_000)
+    expect(published.operation.status).toBe('DONE')
+    const mediaBefore = sqlite.prepare('SELECT * FROM asset_variants ORDER BY id').all()
+    const assetsBefore = sqlite.prepare('SELECT * FROM assets ORDER BY id').all()
+    const operationsBefore = sqlite.prepare('SELECT * FROM publication_operations ORDER BY id').all()
+    const processCount = storage.processCalls.length
+    const publicationTime = sqlite.prepare('SELECT published_at FROM works WHERE id=?').get(work.id)
+    const repository = createSqlitePublicSiteRepository(sqlite)
+    const before = repository.getWorkBySlug(work.slug)!
+    const fields = { slug: 'updated-adoption', characterName: '新角色名', species: '鸟龙', purpose: 'adoption' as const,
+      artist: '公开画师', adoptionStatus: 'adopted' as const, priceCnyMinor: 880050, featured: false }
+    let updated = updateManagedWork(sqlite, work.id, published.work.version, fields, NOW + 4_000)
+    expect(repository.getWorkBySlug(work.slug)).toBeNull()
+    expect(repository.getWorkBySlug(fields.slug)).toMatchObject({
+      work: { characterName: '新角色名', species: '鸟龙' },
+      adoption: { artist: '公开画师', priceCnyMinor: 880050, adoptionStatus: 'adopted' },
+    })
+    expect(() => updateManagedWork(sqlite, work.id, published.work.version, fields))
+      .toThrow(expect.objectContaining({ reason: 'VERSION_CONFLICT' }))
+    const descriptions = [ASSET_ID, COVER_ASSET_ID, DESIGN_ASSET_ID].map(assetId => ({ assetId, alt: '在线图片说明' }))
+    updated = updateManagedWorkPresentation(sqlite, work.id, updated.version, { mediaDescriptions: descriptions })
+    expect(sqlite.prepare('SELECT alt_text FROM work_assets WHERE work_id=?').all(work.id))
+      .toEqual(descriptions.map(() => ({ alt_text: '在线图片说明' })))
+    expect(repository.getWorkBySlug(fields.slug)?.media.gallery[0]).toMatchObject({ alt: '在线图片说明', sources: before.media.gallery[0]!.sources })
+    expect(() => updateManagedWorkPresentation(sqlite, work.id, updated.version, {
+      mediaDescriptions: [{ assetId: ASSET_ID, alt: '必须回滚' }, { assetId: randomUUID(), alt: '不能跨作品写入' }],
+    })).toThrow(expect.objectContaining({ reason: 'VERSION_CONFLICT' }))
+    expect(sqlite.prepare('SELECT alt_text FROM work_assets WHERE work_id=? AND asset_id=?').get(work.id, ASSET_ID))
+      .toEqual({ alt_text: '在线图片说明' })
+    for (const payload of [
+      { mediaDescriptions: [{ assetId: ASSET_ID, alt: ' ' }] },
+      { mediaDescriptions: [{ assetId: ASSET_ID, alt: '说明', focalX: 0 }] },
+      { mediaDescriptions: [descriptions[0], descriptions[0]] },
+    ]) expect(updateWorkPresentationRequestSchema.safeParse({ expectedVersion: updated.version, payload }).success).toBe(false)
+    expect(() => replaceManagedStudioPhotos(sqlite, work.id, updated.version, []))
+      .toThrow(expect.objectContaining({ reason: 'WORK_PUBLISHED_READONLY' }))
+    expect(() => replaceManagedDesignSheet(sqlite, work.id, updated.version, null))
+      .toThrow(expect.objectContaining({ reason: 'WORK_PUBLISHED_READONLY' }))
+    expect(() => replaceManagedAdoptionCover(sqlite, work.id, updated.version, null))
+      .toThrow(expect.objectContaining({ reason: 'WORK_PUBLISHED_READONLY' }))
+    updated = updateManagedWork(sqlite, work.id, updated.version, { ...fields, artist: null, priceCnyMinor: null, adoptionStatus: 'available' })
+    expect(repository.getWorkBySlug(fields.slug)?.adoption).toEqual({ priceCnyMinor: null, adoptionStatus: 'available' })
+    expect(updated.publicationStatus).toBe('published')
+    expect(sqlite.prepare('SELECT published_at FROM works WHERE id=?').get(work.id)).toEqual(publicationTime)
+    expect(sqlite.prepare('SELECT * FROM assets ORDER BY id').all()).toEqual(assetsBefore)
+    expect(sqlite.prepare('SELECT * FROM asset_variants ORDER BY id').all()).toEqual(mediaBefore)
+    expect(sqlite.prepare('SELECT * FROM publication_operations ORDER BY id').all()).toEqual(operationsBefore)
+    expect(storage.processCalls).toHaveLength(processCount)
+    expect(storage.deletedPublicKeys).toEqual([])
+    expect(storage.deletedPrivateKeys).toEqual([])
+    sqlite.prepare("UPDATE publication_operations SET status='GENERATING_PUBLIC' WHERE id=?").run(published.operation.operationId)
+    expect(() => updateManagedWork(sqlite, work.id, updated.version, fields))
+      .toThrow(expect.objectContaining({ reason: 'ACTIVE_OPERATION_EXISTS' }))
+    expect(() => updateManagedWorkPresentation(sqlite, work.id, updated.version, { mediaDescriptions: descriptions }))
+      .toThrow(expect.objectContaining({ reason: 'ACTIVE_OPERATION_EXISTS' }))
+  })
+
   it('prepares a private Lanczos source and publishes a low-resolution studio photo', async () => {
     const work = createWorkWithPhoto(480, 640)
 

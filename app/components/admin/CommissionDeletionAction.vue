@@ -132,7 +132,6 @@ async function executeDeletion() {
       @cancel="dialogOpen = false"
     >
       <template v-if="preview">
-        <p>dry-run 只返回脱敏计数，不显示手机号、QQ、Object Key 或完整标识。</p>
         <ul class="commission-deletion__counts">
           <li>数据库直接关联行：{{ databaseRowCount }}</li>
           <li>私有对象 Key：{{ preview.privateObjects.keys }}</li>

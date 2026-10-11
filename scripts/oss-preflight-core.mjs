@@ -109,14 +109,14 @@ export function createLargeSyntheticPng() {
   return image
 }
 
-export function createSyntheticTransparentPng() {
+export function createSyntheticTransparentPng(width = 160, height = 64) {
   return createPng({
-    width: 160,
-    height: 64,
+    width,
+    height,
     channels: 4,
     colorType: 6,
     pixel(output, offset, x, y) {
-      const border = x < 4 || x >= 156 || y < 4 || y >= 60
+      const border = x < 4 || x >= width - 4 || y < 4 || y >= height - 4
       const stripe = ((x >>> 3) + (y >>> 3)) % 2 === 0
       output[offset] = border ? 255 : stripe ? 50 : 255
       output[offset + 1] = border ? 255 : stripe ? 77 : 255

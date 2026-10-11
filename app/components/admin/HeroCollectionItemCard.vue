@@ -117,7 +117,7 @@ const uploadProcessing = computed(() => [
   'uploading',
   'validating',
 ].includes(upload.item.state))
-const canSubmit = computed(() => valid.value && !busy.value && !props.item?.enabled
+const canSubmit = computed(() => valid.value && !busy.value
   && !selectedFile.value && !uploadProcessing.value)
 const uploadProgress = computed(() => adminUploadProgressModel({
   failureText: upload.item.failureText,
@@ -245,22 +245,17 @@ function updateFocal(value: { focalX: number, focalY: number }) {
       :readonly="Boolean(item?.enabled)"
       @update="updateFocal"
     >
-      <div v-if="item?.enabled" class="hero-item__published">
-        <h3>图片说明</h3>
-        <p>{{ item.alt }}</p>
-        <p class="hero-item__hint">停用后可更换图片、修改说明与焦点。</p>
-      </div>
-
-      <div v-if="!item?.enabled" class="hero-item__fields">
+      <div class="hero-item__fields">
         <label>
           <span>替代文字</span>
-          <input v-model="alt" type="text" maxlength="500" :disabled="busy || item?.enabled">
+          <input v-model="alt" type="text" maxlength="500" :disabled="busy">
         </label>
-        <label v-if="!singleSlot">
+        <p v-if="item?.enabled" class="hero-item__hint">说明保存后公开生效；更换图片或调整焦点仍需先停用。</p>
+        <label v-if="!singleSlot && !item?.enabled">
           <span>播放顺序（1–5）</span>
           <input v-model.number="displaySortOrder" type="number" min="1" max="5" :disabled="busy || item?.enabled">
         </label>
-        <div class="hero-item__upload">
+        <div v-if="!item?.enabled" class="hero-item__upload">
           <span>{{ orientation === 'landscape' ? '横版' : '竖版' }}原图</span>
           <input
             ref="fileInput"
@@ -307,6 +302,8 @@ function updateFocal(value: { focalX: number, focalY: number }) {
         <span>我已确认允许生成私有放大处理源，原图保留。</span>
       </label>
 
+      <p v-if="feedback && !operation" role="status" class="hero-item__hint">{{ feedback.text }}</p>
+
       <AdminTaskProgress
         v-if="operation"
         :mode="operationMode"
@@ -324,8 +321,9 @@ function updateFocal(value: { focalX: number, focalY: number }) {
       <div class="hero-item__actions">
         <AdminAction v-if="!item" :disabled="busy || uploadProcessing" @click="emit('cancel')">取消新增</AdminAction>
         <AdminAction
-          v-if="!item?.enabled"
-          :disabled="!canSubmit"
+          :disabled="!canSubmit || Boolean(item?.enabled && alt.trim() === item.alt)"
+          :loading="mutating"
+          loading-label="保存中…"
           @click="submit"
         >
           {{ item ? '保存' : '新增' }}
@@ -454,8 +452,6 @@ function updateFocal(value: { focalX: number, focalY: number }) {
 
 .hero-item__actions { justify-content: flex-start; padding-top: var(--admin-space-3); border-top: 1px solid var(--admin-border-secondary); }
 .hero-item__move :deep(.admin-action), .hero-item__upload-actions :deep(.admin-action) { min-height: var(--admin-touch-target); }
-.hero-item__published { display: grid; gap: var(--admin-space-3); font-size: var(--admin-font-sm); overflow-wrap: anywhere; }
-.hero-item__published h3, .hero-item__published p { margin: 0; }
 .hero-item__hint { color: var(--admin-text-secondary); }
 
 @media (max-width: 640px) {

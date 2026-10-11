@@ -31,6 +31,7 @@ import {
   updateHeroCollectionItem,
 } from '../../server/utils/service/hero-collection-management'
 import { FakeMediaStorage } from '../helpers/fake-media-storage'
+import { updateHeroItemRequestSchema } from '../../shared/schemas/home'
 
 const USER_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const NOW = Date.UTC(2026, 7, 16)
@@ -179,6 +180,35 @@ afterEach(() => {
 })
 
 describe('R3-C independent Hero collection publication', () => {
+  it('saves the last enabled Hero description without touching assets or starting publication', async () => {
+    const id = await createAndPublish({ alt: '原说明', orientation: 'landscape', sortOrder: 0 })
+    const before = getAdminHeroCollection(sqlite, 'home', 'landscape')
+    const item = before.items.find(item => item.id === id)!
+    const publicBefore = getPublicHome(sqlite, MEDIA_BASE_URL)
+    const variants = sqlite.prepare('SELECT * FROM asset_variants ORDER BY id').all()
+    const operations = sqlite.prepare('SELECT * FROM publication_operations ORDER BY id').all()
+    const processCount = storage.processCalls.length
+    const request = updateHeroItemRequestSchema.parse({ expectedVersion: before.version, payload: { alt: '  新说明  ' } })
+    const after = updateHeroCollectionItem(sqlite, id, 'home', 'landscape', request.expectedVersion, request.payload)
+    expect(after.items.find(item => item.id === id)).toEqual({ ...item, alt: '新说明', version: item.version + 1 })
+    const publicAfter = getPublicHome(sqlite, MEDIA_BASE_URL)
+    expect(publicAfter.landscape[0]).toEqual({ ...publicBefore.landscape[0], alt: '新说明' })
+    expect(sqlite.prepare('SELECT * FROM asset_variants ORDER BY id').all()).toEqual(variants)
+    expect(sqlite.prepare('SELECT * FROM publication_operations ORDER BY id').all()).toEqual(operations)
+    expect(storage.processCalls).toHaveLength(processCount)
+    expect(storage.deletedPublicKeys).toEqual([])
+    expect(() => updateHeroCollectionItem(sqlite, id, 'home', 'landscape', before.version, { alt: '过期' }))
+      .toThrow(expect.objectContaining({ reason: 'VERSION_CONFLICT' }))
+    expect(() => updateHeroCollectionItem(sqlite, id, 'home', 'landscape', after.version, heroItemInput(item.asset.assetId, '修改图片', 0)))
+      .toThrow(expect.objectContaining({ reason: 'HERO_ITEM_ENABLED' }))
+    for (const payload of [{ alt: '' }, { alt: '说明', focalX: 0 }, { alt: '说明', assetId: item.asset.assetId }]) {
+      expect(updateHeroItemRequestSchema.safeParse({ expectedVersion: after.version, payload }).success).toBe(false)
+    }
+    sqlite.prepare("UPDATE publication_operations SET status='GENERATING_PUBLIC' WHERE entity_id=?").run(id)
+    expect(() => updateHeroCollectionItem(sqlite, id, 'home', 'landscape', after.version, { alt: '正在发布' }))
+      .toThrow(expect.objectContaining({ reason: 'ACTIVE_OPERATION_EXISTS' }))
+  })
+
   it('creates a private single-item preview for a disabled collection item', async () => {
     const before = getAdminHeroCollection(sqlite, 'home', 'landscape')
     const assetId = seedHeroAsset({

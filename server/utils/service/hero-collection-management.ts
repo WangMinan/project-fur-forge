@@ -31,12 +31,13 @@ import {
   replaceEnabledHeroItemOrder,
   updateHeroAssetFocal,
   updateDisabledHeroItem,
+  updateHeroItemDescription,
 } from '../repository/hero-collection-repository'
 import type {
   HeroItemRow,
   HeroVariantRow,
 } from '../repository/hero-collection-repository'
-import { hasBlockingPublicationCleanup } from '../repository/publication-repository'
+import { hasActivePublicationOperation, hasBlockingPublicationCleanup } from '../repository/publication-repository'
 import { ServiceError } from '../service-error'
 import { getLatestPublicationOperations } from '../runner/work-publication'
 
@@ -343,11 +344,21 @@ export function updateHeroCollectionItem(
   placement: HeroPlacement,
   orientation: HeroOrientation,
   expectedVersion: number,
-  input: HeroItemInput,
+  input: HeroItemInput | { alt: string },
   now = Date.now(),
 ) {
   requireCollectionVersion(sqlite, placement, orientation, expectedVersion)
   const item = requireHeroCollectionItem(sqlite, id, placement, orientation)
+  if (!('assetId' in input)) {
+    sqlite.transaction(() => {
+      if (hasActivePublicationOperation(sqlite, 'HOME', id)) {
+        throw new ServiceError(409, 'CONFLICT', '发布操作进行中，请完成后再编辑。', 'ACTIVE_OPERATION_EXISTS')
+      }
+      claimHeroCollectionVersion(sqlite, placement, orientation, expectedVersion, now)
+      updateHeroItemDescription(sqlite, id, input.alt, now)
+    })()
+    return getAdminHeroCollection(sqlite, placement, orientation)
+  }
   if (item.enabled === 1) {
     throw new ServiceError(
       409,

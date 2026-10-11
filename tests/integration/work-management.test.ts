@@ -243,7 +243,7 @@ describe('T22 work management', () => {
     )).toThrow(/stale/u)
   })
 
-  it('updates presentation fields on a published work without opening full editing', () => {
+  it('updates presentation and basic fields on a published work while keeping media locked', () => {
     createFeaturedWork({
       ...workInput,
       slug: 'occupied-featured-order',
@@ -268,12 +268,18 @@ describe('T22 work management', () => {
       sortOrder: 4,
       featured: false,
     })).toThrow(/stale/u)
-    expect(() => updateManagedWork(
+    const renamed = updateManagedWork(
       sqlite,
       work.id,
       updated.version,
-      { ...workInput, characterName: '不应写入' },
-    )).toThrow(/Unpublish the work before editing/u)
+      { ...workInput, characterName: '在线改名' },
+    )
+    expect(renamed).toMatchObject({ characterName: '在线改名', publicationStatus: 'published' })
+    expect(() => replaceManagedStudioPhotos(sqlite, work.id, renamed.version, []))
+      .toThrow(expect.objectContaining({ reason: 'WORK_PUBLISHED_READONLY' }))
+    expect(() => updateManagedWork(sqlite, work.id, renamed.version, {
+      ...workInput, purpose: 'adoption', adoptionStatus: 'available', priceCnyMinor: null,
+    })).toThrow(expect.objectContaining({ reason: 'WORK_PURPOSE_MEDIA_REQUIRED' }))
   })
 
   it('requires a portrait studio photo before and while a work is featured', () => {

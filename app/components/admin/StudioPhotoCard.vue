@@ -181,7 +181,7 @@ v-if="entry.previewUrl" :asset-id="entry.assetId" :src="entry.previewUrl" role="
           type="text"
           maxlength="500"
           :value="entry.alt"
-          :disabled="locked || processing"
+          :disabled="processing"
           placeholder="例如：正面全身，自然光"
           @input="emit('update', { alt: ($event.target as HTMLInputElement).value })"
         >
