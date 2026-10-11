@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AdminDiscardChangesDialog from '~/components/admin/DiscardChangesDialog.vue'
 import { SITE_LOCALES } from '~~/shared/constants/site-locales'
 import { adminSiteCopyResponseSchema, siteCopyLocaleSchema, siteCopySectionSchema, type AdminSiteCopy, type SiteCopySection } from '~~/shared/schemas/site-copy'
 
@@ -11,6 +12,7 @@ const busySections = reactive(new Set<SiteCopySection>())
 function busy(section: SiteCopySection, value: boolean) { if (value) busySections.add(section); else busySections.delete(section) }
 const error = ref('')
 const root = useTemplateRef<HTMLElement>('root')
+const languageConfirmation = useTemplateRef<{ request: () => Promise<boolean> }>('languageConfirmation')
 async function load() {
   loading.value = true
   error.value = ''
@@ -21,7 +23,7 @@ async function load() {
 async function choose(value: string) {
   if (loading.value || busySections.size || locale.value === value) return
   const next = siteCopyLocaleSchema.parse(value)
-  if (root.value?.querySelector('[data-dirty="true"]') && !window.confirm('当前语言有未保存的文案。放弃修改并切换语言？')) {
+  if (root.value?.querySelector('[data-dirty="true"]') && !(await languageConfirmation.value?.request())) {
     return
   }
   locale.value = next
@@ -40,6 +42,7 @@ defineExpose({ reload: load })
 
 <template>
   <section ref="root" class="localized-content" aria-label="公开文案">
+    <AdminDiscardChangesDialog ref="languageConfirmation" title="放弃修改并切换语言？" description="当前语言有未保存的文案，切换后这些修改将丢失。" confirm-label="放弃修改并切换" />
     <div class="localized-content__language">
       <span id="content-language-label">编辑语言</span>
       <div class="admin-segmented" role="group" aria-labelledby="content-language-label">

@@ -131,6 +131,7 @@ onMounted(() => void load())
       <div v-if="actionError || conflictNotice" class="admin-feedback" role="alert">
         <p v-if="actionError">{{ actionError }}</p>
         <p v-if="conflictNotice">{{ conflictNotice }}</p>
+        <AdminAction v-if="conflictNotice" :disabled="mutating" @click="actionError = null; load()">放弃未保存修改并刷新</AdminAction>
       </div>
 
       <p v-if="collection.items.length === 0 && !showDraft" class="hero-collection-editor__empty">

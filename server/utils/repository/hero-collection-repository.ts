@@ -293,6 +293,12 @@ export function insertHeroItem(
   )
 }
 
+export function updateHeroItemDescription(sqlite: Database.Database, id: string, alt: string, now: number) {
+  return sqlite.prepare(`
+    UPDATE site_hero_items SET alt_text = ?, version = version + 1, updated_at = ? WHERE id = ?
+  `).run(alt, now, id).changes
+}
+
 export function updateDisabledHeroItem(
   sqlite: Database.Database,
   id: string,

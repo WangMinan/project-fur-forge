@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AdminDiscardChangesDialog from '~/components/admin/DiscardChangesDialog.vue'
 import type { SiteBusinessStatusKind } from '~~/shared/types/contracts'
 import type {
   SiteContentSection,
@@ -36,12 +37,14 @@ const actionErrors = reactive<Record<string, string | null>>({})
 const group = ref('copy')
 const localized = useTemplateRef<{ reload: () => Promise<void> }>('localized')
 const root = useTemplateRef<HTMLElement>('contentRoot')
+const leaveConfirmation = useTemplateRef<{ request: () => Promise<boolean> }>('leaveConfirmation')
+const { status: authStatus } = useAdminAuth()
 const GROUPS = [{ key: 'copy', label: '公开文案' }, { key: 'shared', label: '营业与联系' }, { key: 'legal', label: '条款与隐私' }]
 function hasDraft() { return Boolean(root.value?.querySelector('[data-dirty="true"], [data-saving="true"]')) }
 function beforeUnload(event: BeforeUnloadEvent) {
   if (hasDraft()) { event.preventDefault(); event.returnValue = '' }
 }
-onBeforeRouteLeave(() => !hasDraft() || window.confirm('有未保存的站点配置。确定离开？'))
+onBeforeRouteLeave(() => !hasDraft() || authStatus.value === 'guest' || (leaveConfirmation.value?.request() ?? false))
 onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
 
 async function onSaveStatus(kind: SiteBusinessStatusKind, payload: SiteStatusPayload) {
@@ -77,6 +80,7 @@ onMounted(async () => {
 
 <template>
   <AdminShell current="content">
+    <AdminDiscardChangesDialog ref="leaveConfirmation" description="有未保存的站点配置。离开后，这些修改将丢失。" />
     <span v-if="pageStatus !== 'ready'" id="content-contact" aria-hidden="true" />
     <div ref="contentRoot" class="content-admin admin-list-page" data-testid="content-admin">
       <AdminPageHeader title="站点配置" />

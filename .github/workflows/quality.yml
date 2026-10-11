@@ -65,8 +65,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Fast checks
-        run: pnpm check:fast
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Core regression
+        run: pnpm test:core
 
       - name: Verify system Chrome
         if: ${{ inputs.release == true }}

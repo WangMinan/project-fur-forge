@@ -48,6 +48,8 @@ await setup({
   rootDir: fileURLToPath(new URL('../..', import.meta.url)),
   browser: false,
   server: true,
+  // CI checks types once before core; this fixture still builds and serves the full app.
+  nuxtConfig: { typescript: { typeCheck: false } },
   port,
   env: {
     APP_ENV: 'test',

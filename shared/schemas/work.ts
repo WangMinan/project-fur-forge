@@ -65,10 +65,14 @@ export const updateWorkRequestSchema = versionedRequestSchema(workFieldsSchema)
 export const updateWorkPresentationRequestSchema = versionedRequestSchema(
   z.object({
     featured: z.boolean().optional(),
+    mediaDescriptions: z.array(z.object({
+      assetId: resourceIdSchema,
+      alt: z.string().trim().min(1).max(500),
+    }).strict()).min(1).max(7).refine(items => new Set(items.map(item => item.assetId)).size === items.length, '同一图片不能重复').optional(),
     ...workDisplaySettingsSchema.partial().shape,
     /** @deprecated 顺序只允许通过完整精选集合接口维护。 */
     sortOrder: z.number().int().nonnegative().optional(),
-  }).strict().refine(input => input.featured !== undefined || input.showAdoptionCoverInDetail !== undefined || input.showDesignSheetInDetail !== undefined || input.adoptionCoverSource !== undefined, '请选择需要更新的展示设置'),
+  }).strict().refine(input => input.featured !== undefined || input.mediaDescriptions !== undefined || input.showAdoptionCoverInDetail !== undefined || input.showDesignSheetInDetail !== undefined || input.adoptionCoverSource !== undefined, '请选择需要更新的展示设置或图片说明'),
 )
 export const deleteWorkRequestSchema = versionedRequestSchema(z.object({}).strict())
 export const deleteWorkResponseSchema = apiSuccessSchema(

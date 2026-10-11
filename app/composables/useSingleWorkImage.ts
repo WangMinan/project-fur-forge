@@ -64,7 +64,7 @@ export function useSingleWorkImage<T extends { assetId: string, alt: string, sta
   }
 
   async function save(): Promise<boolean> {
-    if (saving.value || processing.value || busyUploads.value || options.locked()) return false
+    if (saving.value || processing.value || busyUploads.value) return false
     saveError.value = null
     if (entry.value && !entry.value.alt.trim()) {
       saveError.value = `${options.label}需要填写图片说明后才能保存。`
@@ -74,8 +74,12 @@ export function useSingleWorkImage<T extends { assetId: string, alt: string, sta
     try {
       const work = options.work()
       const field = options.role === 'design_sheet' ? 'designSheet' : 'adoptionCover'
-      const response = await adminApi(`/api/admin/v1/works/${work.id}/${options.role.replace('_', '-')}`, {
-        method: 'PUT', body: { expectedVersion: work.version, payload: { [field]: options.payload(entry.value) } },
+      const descriptionOnly = options.locked()
+      if (descriptionOnly && !entry.value) return false
+      const response = await adminApi(`/api/admin/v1/works/${work.id}/${descriptionOnly ? 'presentation' : options.role.replace('_', '-')}`, {
+        method: 'PUT', body: { expectedVersion: work.version, payload: descriptionOnly
+          ? { mediaDescriptions: [{ assetId: entry.value!.assetId, alt: entry.value!.alt.trim() }] }
+          : { [field]: options.payload(entry.value) } },
         schema: managedWorkResponseSchema,
       })
       resetFromWork(response.data)
