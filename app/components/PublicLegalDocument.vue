@@ -3,6 +3,7 @@ const { t, isEnglish } = usePublicI18n()
 const props = defineProps<{
   content: string | null
   title: string
+  description?: string
 }>()
 
 const structuredContent = computed(() => structureNumberedPlainText(props.content ?? ''))
@@ -13,7 +14,7 @@ const documentMeta = computed(() => t('legal.sections', { count: structuredConte
 
 <template>
   <div id="document-top" class="legal-document">
-    <PublicPageIntro :title="title" :meta="documentMeta" variant="document" />
+    <PublicPageIntro :title="title" :description="description" :meta="documentMeta" variant="document" />
 
     <div v-if="hasContent" class="legal-document__layout">
       <nav

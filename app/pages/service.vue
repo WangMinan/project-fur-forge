@@ -18,7 +18,9 @@ const content = computed(() => site.value?.about.basicTerms ?? null)
 </script>
 
 <template>
-  <div><p class="public-channel-note">{{ t('contact.channelNote') }}</p>
-  <PublicLegalDocument :title="t('ui.terms')" :content="content" />
-  </div>
+  <PublicLegalDocument
+    :title="t('ui.terms')"
+    :description="t('contact.channelNote')"
+    :content="content"
+  />
 </template>

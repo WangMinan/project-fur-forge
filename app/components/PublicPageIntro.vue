@@ -77,6 +77,13 @@ const props = withDefaults(defineProps<{
   letter-spacing: 0;
 }
 
+.page-intro--document .page-intro__description {
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--public-accent-tint);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+}
+
 @media (min-width: 1024px) {
   .page-intro--wide {
     display: grid;
@@ -110,6 +117,7 @@ const props = withDefaults(defineProps<{
 
   .page-intro--document .page-intro__description {
     grid-column: 1 / -1;
+    margin-top: 0;
   }
 }
 </style>
