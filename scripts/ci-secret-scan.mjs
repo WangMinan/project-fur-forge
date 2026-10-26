@@ -35,9 +35,8 @@ const RULES = [
   },
 ]
 
-const files = execFileSync('git', ['ls-files'], { encoding: 'utf8' })
-  .split('\n')
-  .map(line => line.trim())
+const files = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' })
+  .split('\0')
   .filter(Boolean)
   .filter(file => TEXT_EXTENSIONS.test(file))
 

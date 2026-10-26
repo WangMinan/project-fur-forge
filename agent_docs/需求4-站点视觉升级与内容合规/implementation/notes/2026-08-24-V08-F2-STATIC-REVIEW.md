@@ -1,14 +1,14 @@
 # V08-F2 · Full Public Static Surface Review
 
-> 日期：2026-08-24  
-> 范围：V08-F1 之后的只读全站公开静态审查  
-> 状态：审查完成，下一节点为 `GATE-V08 · 项目维护者人工验收`  
+> 日期：2026-08-24
+> 范围：V08-F1 之后的只读全站公开静态审查
+> 状态：审查完成，下一节点为 `GATE-V08 · 项目维护者人工验收`
 > 约束：本任务未修改应用代码、正式样式、数据库或业务逻辑。
 
 ## 1. 覆盖范围
 
-证据目录：[`implementation/evidence/V08-F2/after/`](../evidence/V08-F2/after/)  
-审计脚本：[`scripts/capture-v08-f2-review.mjs`](../../../../scripts/capture-v08-f2-review.mjs)  
+证据目录：`implementation/evidence/V08-F2/after/`（历史路径已归档）
+审计脚本：`scripts/capture-v08-f2-review.mjs`（历史路径已归档）
 审计数据：`audit.json`（原始素材/证据已私有归档）
 
 本轮覆盖 11 个独立公开页面状态：

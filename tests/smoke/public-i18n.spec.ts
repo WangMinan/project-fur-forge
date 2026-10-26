@@ -67,8 +67,8 @@ test('public language SSR, preference, contact branches and responsive switcher'
         expect(await options.getByRole('button').first().evaluate(el => getComputedStyle(el).fontSize)).toBe(fontSize)
       }
       if (width === 390 || width === 1440) {
-        mkdirSync('agent_docs/需求7-公开站中英切换/artifacts/screenshots', { recursive: true })
-        await english.screenshot({ path: `agent_docs/需求7-公开站中英切换/artifacts/screenshots/language-menu-${width}.png` })
+        mkdirSync('test-results/public-i18n', { recursive: true })
+        await english.screenshot({ path: `test-results/public-i18n/language-menu-${width}.png` })
       }
       await english.keyboard.press('Escape')
       await expect(options).toHaveCount(0)
@@ -133,7 +133,7 @@ test('public language SSR, preference, contact branches and responsive switcher'
     for (const width of [390, 1440]) {
       await english.setViewportSize({ width, height: 900 })
       await expect(english.locator('.home-hero__tagline')).toBeVisible()
-      await english.screenshot({ path: `agent_docs/需求7-公开站中英切换/artifacts/screenshots/english-hero-${width}.png` })
+      await english.screenshot({ path: `test-results/public-i18n/english-hero-${width}.png` })
       expect(await english.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy()
     }
     for (const [url, heading] of [['/commission', 'Commissions'], ['/privacy', 'Privacy Policy'], ['/licenses', 'Open Source Notices']]) {
@@ -200,7 +200,7 @@ test('language hover and touch toggles, English commission title stays inside it
         expect(title!.x + title!.width).toBeLessThan(media!.x)
       }
       expect(await pc.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy()
-      if (width === 1440 || width === 390) await pc.screenshot({ path: `agent_docs/需求7-公开站中英切换/artifacts/screenshots/commission-english-${width}.png` })
+      if (width === 1440 || width === 390) await pc.screenshot({ path: `test-results/public-i18n/commission-english-${width}.png` })
     }
     const mobile = await touch.newPage()
     await mobile.goto(`${publicBaseURL}/commission`)

@@ -127,7 +127,7 @@ test('shared X configuration updates every public contact entry and status filte
     for (const width of [390, 1440]) {
       await page.setViewportSize({ width, height: 900 })
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy()
-      await page.screenshot({ path: `agent_docs/需求7-公开站中英切换/artifacts/screenshots/admin-commissions-${width}.png` })
+      await page.screenshot({ path: `test-results/admin-site-copy/admin-commissions-${width}.png` })
     }
   }
   finally {

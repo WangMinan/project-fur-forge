@@ -7,7 +7,7 @@ import { createSyntheticSourcePng } from '../../scripts/oss-preflight-core.mjs'
 import { adminBaseURL, publicBaseURL, E2E_DATABASE_FILE, loginAsAdmin } from './helpers/auth'
 import { openFixtureDatabase } from './helpers/fixture-db'
 
-const evidence = resolve('agent_docs/需求5-委托邮件通知与站点配置/implementation/evidence')
+const evidence = resolve('test-results/commission-email')
 const viewports = [[390, 844], [430, 932], [768, 1024], [1023, 900], [1024, 900], [1440, 900]]
 
 async function observe(page: Page) {

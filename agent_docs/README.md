@@ -23,6 +23,7 @@
 | 需求13 · 领养价格与画师展示 | 本地实现与验证完成；待用户验收 | [STATE](需求13-领养价格与画师展示/STATE.md) · [SPEC](需求13-领养价格与画师展示/requirements/SPEC.md) · [TASKS](需求13-领养价格与画师展示/implementation/TASKS.md) |
 | 需求14 · 在线文本维护 | 用户已验收；授权PR合并与出包 | [STATE](需求14-在线文本维护/STATE.md) · [SPEC](需求14-在线文本维护/requirements/SPEC.md) · [TASKS](需求14-在线文本维护/implementation/TASKS.md) |
 | 需求15 · 确认弹窗与快速检查 | 用户已验收；授权PR合并与出包 | [STATE](需求15-确认弹窗与快速检查/STATE.md) · [SPEC](需求15-确认弹窗与快速检查/requirements/SPEC.md) · [TASKS](需求15-确认弹窗与快速检查/implementation/TASKS.md) |
+| 需求16 · 公开仓库清理与源码许可 | 用户确认；隔离清理与验证中 | [STATE](需求16-公开仓库清理与源码许可/STATE.md) · [SPEC](需求16-公开仓库清理与源码许可/requirements/SPEC.md) · [TASKS](需求16-公开仓库清理与源码许可/implementation/TASKS.md) |
 
 ## 按主题补读
 

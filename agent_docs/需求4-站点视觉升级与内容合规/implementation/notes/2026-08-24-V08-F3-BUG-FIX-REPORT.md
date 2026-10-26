@@ -1,7 +1,7 @@
 # V08-F3 · Bug Fix Report
 
-> 日期：2026-08-24  
-> 证据：[`implementation/evidence/V08-F3/after/`](../evidence/V08-F3/after/)  
+> 日期：2026-08-24
+> 证据：`implementation/evidence/V08-F3/after/`（历史路径已归档）
 > 状态：三项问题均已修复并重新取证；等待 `GATE-V08-R` 人工验收。
 
 ## 1. 首页品牌字刷新闪动

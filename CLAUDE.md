@@ -18,13 +18,9 @@ Windows 使用已安装的 PowerShell 7（`pwsh`），不要使用 Windows Power
 
 先 `git fetch`，核对 `origin/main`、当前分支与工作树；不 force push、不 hard reset、不覆盖用户改动。只暂存本任务文件，提交保持小而可审查。
 
-默认使用 `codex/*` 任务分支，经 PR 合入 `main`。直接在 main 修复的小修例外必须同时满足：
+默认使用 `codex/*` 任务分支，经 PR 合入 `main`。只有用户在当轮明确要求直接修复 main，且改动局部、可回滚、不涉及 Schema/迁移、数据或媒体删除、安全/隐私、依赖大升级、部署/发布契约或产品范围时，才按该次授权执行 main 小修。
 
-1. 请求者明确是项目维护者；无法从上下文确认时，用 `git config user.email` 是否精确等于 `<MAINTAINER_EMAIL>`（大小写不敏感）确认；
-2. 请求明确针对 main 上的小型 bug；
-3. 改动局部、可回滚，不涉及 Schema/迁移、数据或媒体删除、安全/隐私、依赖大升级、部署/发布契约或产品范围。
-
-满足时直接在 main 修复和验证；否则走任务分支与 PR。身份例外不授权生产发布、云配置、破坏性操作或跳过测试。不擅自改变仓库 required checks。
+身份、个人邮箱或历史授权不构成后续 main 写入、生产发布或强推的永久例外。历史重写必须有针对本次清单的显式授权，先保留私有备份并验证，再以冻结的远端 SHA 保护并发工作；禁止把含 notes、stash 和内部工具 refs 的工作仓库 mirror push 到公开仓库。不擅自改变 required checks。
 
 ## 3. 实现与安全
 

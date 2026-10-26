@@ -1,0 +1,551 @@
+<!-- PUBLIC-RUNBOOK -->
+
+> 公开通用版：现场主机、账号、目录、资源 ID、部署与恢复证据保存在仓库外私有运维记录。`DEPLOY_USER`、`ORIGIN_HOST`、`DEPLOY_DIR` 必须按本次授权目标设置；占位符不可原样执行。以下历史升级章节仅在目标版本确实需要且另获相应授权时使用，不代表当前环境状态。
+
+# 生产部署操作清单
+
+> 这份通用手册供站点所有者与部署人使用。实际目标参数由操作员在私有记录中维护；示例命令在
+> `${DEPLOY_USER}@${ORIGIN_HOST}` 上执行，并以
+> `${DEPLOY_DIR}` 为工作目录。
+>
+> 只有 T49、T50、GATE-E 完成并得到冻结 SHA 与
+> `repository@sha256:digest` 后，才能执行首次正式部署。当前不要创建
+> `v*` Git tag，也不要在服务器构建镜像。
+
+## 1. 第一次部署前，先在阿里云控制台确认
+
+按以下顺序检查；任一项不满足就先停止，不要靠放开 OSS 公读或开放 3000
+端口绕过。
+
+1. **正式 Host**
+   - 公开 Host，例如 `ditedog.com`；
+   - 管理 Host，必须与公开 Host 不同；
+   - `public-media.ditedog.com` 只用于媒体，不进入 Nuxt。
+2. **ESA DNS 与 TLS**
+   - wildcard 临时记录已经收敛为公开/管理精确记录；
+   - ESA 边缘证书覆盖正式公开、管理和媒体 Host；
+   - 浏览器侧强制 HTTPS；
+   - 页面/API 回源固定为 `${ORIGIN_HOST}:80`、协议 HTTP；
+   - 回源 Host 保留访客请求的精确 Host。
+3. **ESA 媒体回源**
+   - `public-media.ditedog.com` 使用同账号私有 OSS 回源；
+   - origin 只指向 `project-furry-forge-public`；
+   - 阿里云托管 STS 已开启，应用不保存 STS。
+4. **两只 OSS Bucket**
+   - `project-furry-forge-private` 与
+     `project-furry-forge-public` 都是 private；
+   - 两只都开启 Bucket Block Public Access；
+   - 历史 Object ACL、Bucket Policy 没有遗留公开权限；
+   - 私有 Bucket 的 CORS 能让正式管理 Origin 完成条件 PUT；排障期允许通配 Origin/Header，预检不要求衍生 Bucket 删除 CORS；
+   - 既有 `dev/web/**` 等本地测试衍生对象可以保留，预检不会因它们未登记在生产数据库而停止，也不会清理它们；
+   - 私有永久原图没有会误删它的生命周期规则。
+5. **ESA 缓存与防护**
+   - 按 `deploy/esa/cache-policy.json` 配置；
+   - `/api/**`、管理 Host、登录/会话、写操作和首版 SSR HTML 绕过共享缓存；
+   - `/_nuxt/**` 与 `prod/web/**` 使用不可变资源缓存；
+   - 404 短缓存，源站错误/404 不提供 stale；
+   - 启用源站保护/WAF；ECS 安全组的 80 只允许 ESA 回源地址；
+   - ECS 不开放 443 和 3000；
+   - 配置流量、4xx/5xx、purge、证书、ECS 磁盘、Nginx、容器和 ready 告警。
+6. **Secret**
+   - 本版本 OSS 与 ESA API 共用现有一套全权限阿里云 AK/SK；
+   - 不再创建或填写第二套 `ESA_ACCESS_KEY_*`；
+   - AK/SK 只写远程 `.env`，不贴进聊天、日志、截图、Git 或镜像；
+   - 记录 ESA Site ID 和 API Endpoint
+     `https://esa.cn-hangzhou.aliyuncs.com`。
+
+控制台检查完成后，本地仓库还应先通过：
+
+```bash
+pnpm run verify:esa-cache
+pnpm run verify:observability
+```
+
+## 2. 发布冻结镜像：不在服务器执行
+
+GATE-E 后，在 GitHub Actions 手动运行 `release-image`：
+
+1. ref 选择 `main`；
+2. `image_tag` 填本次可识别的镜像标签，不用 `latest`；工作流会额外自动更新
+   `latest` 便于人工查看和临时拉取；
+3. `confirmation` 精确填写 `PUBLISH_GATE_E_IMAGE`。
+
+工作流直接发布 ref 选择器对应的 `GITHUB_SHA`，无需再手工输入 40 位 Git
+SHA。完成后，Actions Summary 会直接显示可复制的 `FROZEN_SHA=...` 与
+`APP_IMAGE_REF=repository@sha256:...`；`image-release-evidence.json` 也保存
+完整 `imageRef`。服务器仍使用该 digest 部署，不使用会随下次发布变化的
+`latest`。无需创建 `v*` Git tag。
+
+## 3. 第一次服务器部署
+
+### 3.1 登录、确认变量和更新冻结代码
+
+```bash
+ssh ${DEPLOY_USER}@${ORIGIN_HOST}
+cd "$DEPLOY_DIR"
+
+export FROZEN_SHA='替换为GATE-E的40位SHA'
+export PUBLIC_HOST='替换为正式公开Host'
+export ADMIN_HOST='替换为正式管理Host'
+
+git fetch origin main
+git merge --ff-only origin/main
+test "$(git rev-parse HEAD)" = "$FROZEN_SHA"
+test -z "$(git status --porcelain)"
+```
+
+如果最后两个 `test` 任一失败，停止部署。
+
+### 3.2 创建目录与生产配置
+
+目标机已经有仓库、Nginx、Docker 和 Compose，不需要安装器。只创建证据/Nginx
+备份目录和仓库根目录下的 `.env`：
+
+```bash
+cd "$DEPLOY_DIR"
+install -d -m 700 .data/evidence
+install -d -m 700 /var/backups/project-fur-forge
+
+test ! -e .env
+install -m 600 .env.compose.example .env
+vi .env
+chmod 600 .env
+```
+
+在 `.env` 中逐项替换：
+
+- `APP_IMAGE_REF`：冻结的 `repository@sha256:digest`；
+- `PUBLIC_HOST`、`ADMIN_HOST`、`PUBLIC_BASE_URL`、`ADMIN_BASE_URL`；
+- `MEDIA_BASE_URL=https://public-media.ditedog.com`；
+- `DATABASE_FILE=/app/data/studio.db`；
+- `OSS_REGION=oss-cn-hangzhou`；
+- `OSS_ENDPOINT=https://oss-cn-hangzhou-internal.aliyuncs.com`；
+- 私有/衍生 Bucket 名和私有 Bucket 公网上传 Origin；
+- 现有 `OSS_ACCESS_KEY_ID` / `OSS_ACCESS_KEY_SECRET`；
+- `ESA_SITE_ID` 与
+  `ESA_API_ENDPOINT=https://esa.cn-hangzhou.aliyuncs.com`；
+- `SESSION_SECRET`、备案字段；
+- `TRUSTED_PROXY_CIDRS`：至少包含
+  `172.30.250.1/32` 和控制台当日确认的全部 ESA 代理 CIDR。
+
+需求5内部委托通知使用 `SMTP_ENABLED`、`SMTP_HOST`、`SMTP_PORT`、`SMTP_SECURE`、
+`SMTP_USER`、`SMTP_PASSWORD`、`SMTP_FROM`。465 使用 `SMTP_SECURE=true`，587 使用
+`false` 且应用强制 STARTTLS；账号和发件邮箱相同。授权码仅写目标环境 `.env`，
+收件列表在后台“站点配置 → 联系方式 → 委托通知邮箱”维护，不随环境变量写死。
+修改 SMTP 环境变量后重建 app 容器使配置生效。未启用或配置错误不阻断委托投递，
+需在后台确认通知状态；停用期间的新投递不自动补发。不要 `source .env`，也不要 `cat .env`。
+
+0052 为新增通知配置/记录的前向迁移，按既有同镜像备份与迁移流程执行；不补发历史委托。
+首次初始化两个指定内部邮箱，管理员后续编辑或清空列表不会在重启时恢复默认值。
+通知在 app 内处理，不增加常驻容器或对外端口；网络出口需能访问配置的 SMTP TLS 端口。
+邮件副本由工作室内部维护，删除网站申请不能撤回已发送邮件。
+
+SMTP 建连、问候和连接空闲超时均为 600 秒；每个收件人最多尝试两次，首次临时失败后
+等待 60 秒再尝试。三个超时不是整次发送的总时长。应用停止时立即取消发送，Nitro
+停止超时为 4 秒，Compose 停止宽限期为 5 秒，不等待长邮件传输。已经开始传输但未确认
+结果的中断任务（包括强制退出后恢复的过期任务）停止自动补发，管理员先核实收件箱，
+确认需要补发后手动重试；未开始传输的任务仍按次数上限恢复。已成功项不会自动重发。
+
+后台图片恢复为认证后的同源 GET：app 经 `OSS_ENDPOINT` 读取原图或 OSS 缩略结果并返回图片字节，
+浏览器不接收私有 OSS GET 签名或 302 跳转；`OSS_UPLOAD_BASE_URL` 仍仅用于浏览器条件 PUT。
+列表/卡片使用 320，出厂照使用 640，Hero 编辑、作品设定图、领养封面与委托详情使用 1280。
+显式原图入口返回正确图片 MIME 与 `Content-Disposition: inline`，在新窗口使用浏览器原生图片预览。
+所有图片响应继续 `no-store`；图片请求和被动会话检查不延长八小时闲置登录。公开 ESA 缓存不变。
+上线验收应确认同源图片返回 200、尺寸选择生效、原图打开新窗口而非下载；图片字节重新经过 ECS，
+本地验证不代签生产负载与性能。不需要改动 Bucket、域名或 ESA 配置。
+
+### 3.3 校验 Compose 与镜像摘要
+
+```bash
+cd "$DEPLOY_DIR"
+
+docker compose config --quiet
+test "$(docker compose config --services)" = "app"
+
+IMAGE_REF="$(docker compose config --images)"
+test "$(printf '%s\n' "$IMAGE_REF" | wc -l)" = "1"
+printf '%s\n' "$IMAGE_REF" | grep -Eq '@sha256:[0-9a-f]{64}$'
+
+docker pull "$IMAGE_REF"
+docker image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' \
+  "$IMAGE_REF" | grep -Fx "$IMAGE_REF"
+```
+
+摘要不一致就停止；不要改用 tag，也不要在服务器 `docker build`。
+
+### 3.4 迁移、生产预检、初始化管理员并启动
+
+```bash
+cd "$DEPLOY_DIR"
+
+docker compose run --rm --no-deps app node ops/ops.mjs migrate
+
+# 先做无网络 dry-run。
+docker compose run --rm --no-deps app node ops/ops.mjs preflight
+
+# 第 1 节全部确认后才执行 live；它会创建并精确清理本次测试对象。
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs preflight --no-dry-run
+
+# 交互输入管理员用户名和密码；密码可包含 @、!、$ 等特殊字符。
+docker compose run --rm --no-deps app node ops/ops.mjs init-admin
+
+docker compose up --detach --no-build --no-deps app
+docker compose ps
+
+curl --fail --silent --show-error \
+  --header "Host: $PUBLIC_HOST" \
+  http://127.0.0.1:3000/api/health/ready
+
+ss -lntp | grep '127.0.0.1:3000'
+! ss -lntp | grep -E '(0.0.0.0|\[::\]):3000'
+```
+
+`preflight` 任一 FAIL、blocked、非零退出或测试对象清理失败，都停止部署。
+`docker compose ps` 只能有一个常驻 `app`。
+`init-admin` 只在管理员不存在时创建账号；已有管理员时不会替换密码。
+
+### 3.5 安装与目标机匹配的 Nginx 配置
+
+替换前比较当前配置与目标模板，并读取[ESA 维护说明](../deploy/esa/MAINTENANCE.md)和[需求8当前状态](../agent_docs/需求8-ESA故障维护页/STATE.md)。宿主机 Nginx 与 ESA 函数可独立于应用镜像发布；必须保留已部署的代理故障标记、业务错误透传和安全响应头，不能用旧镜像对应的模板覆盖较新的宿主机修复。配置若需独立升级，记录其冻结源码与回滚依据，不改变应用镜像身份。
+
+先确认现有环境：
+
+```bash
+cd "$DEPLOY_DIR"
+
+nginx -v 2>&1 | grep -Fx 'nginx version: nginx/1.30.5'
+systemctl is-enabled nginx
+systemctl is-active nginx
+```
+
+`1.30.5` 为 2026-10-09 现场核验版本；后续不一致时先记录并评估，不自动安装或降级。CI 的 Nginx 测试镜像版本不代表生产包版本。
+
+然后只备份并替换目标机实际使用的两个文件：
+
+```bash
+cd "$DEPLOY_DIR"
+
+for EXACT_HOST in "$PUBLIC_HOST" "$ADMIN_HOST"; do
+  printf '%s\n' "$EXACT_HOST" | grep -Eq '^[a-z0-9][a-z0-9.-]*[a-z0-9]$'
+  [[ "$EXACT_HOST" != *..* ]]
+done
+test "$PUBLIC_HOST" != "$ADMIN_HOST"
+
+# MEDIA_BASE_URL 已经写在 .env；只读取这一条非 Secret 配置并取出 Host。
+MEDIA_ORIGIN="$(sed -n 's/^MEDIA_BASE_URL=//p' .env)"
+test "$(printf '%s\n' "$MEDIA_ORIGIN" | wc -l)" = "1"
+MEDIA_HOST="${MEDIA_ORIGIN#https://}"
+test "$MEDIA_ORIGIN" = "https://$MEDIA_HOST"
+printf '%s\n' "$MEDIA_HOST" | grep -Eq '^[a-z0-9][a-z0-9.-]*[a-z0-9]$'
+[[ "$MEDIA_HOST" != *..* ]]
+test "$MEDIA_HOST" != "$PUBLIC_HOST"
+test "$MEDIA_HOST" != "$ADMIN_HOST"
+
+NGINX_BACKUP="/var/backups/project-fur-forge/nginx-$(date -u +%Y%m%dT%H%M%SZ)"
+test ! -e "$NGINX_BACKUP"
+install -d -m 700 "$NGINX_BACKUP"
+cp -a /etc/nginx/conf.d/ditedog.conf "$NGINX_BACKUP/"
+cp -a /etc/nginx/conf.d/00-connection-map.conf "$NGINX_BACKUP/"
+
+NGINX_CANDIDATE="$(mktemp)"
+trap 'rm -f "$NGINX_CANDIDATE"' EXIT
+sed \
+  -e "s/@@PUBLIC_HOST@@/$PUBLIC_HOST/g" \
+  -e "s/@@ADMIN_HOST@@/$ADMIN_HOST/g" \
+  -e "s/@@MEDIA_HOST@@/$MEDIA_HOST/g" \
+  deploy/nginx/app.conf.template >"$NGINX_CANDIDATE"
+! grep -q '@@' "$NGINX_CANDIDATE"
+
+install -m 0644 "$NGINX_CANDIDATE" /etc/nginx/conf.d/ditedog.conf
+install -m 0644 deploy/nginx/00-connection-map.conf \
+  /etc/nginx/conf.d/00-connection-map.conf
+
+if ! nginx -t; then
+  cp -a "$NGINX_BACKUP/ditedog.conf" /etc/nginx/conf.d/ditedog.conf
+  cp -a "$NGINX_BACKUP/00-connection-map.conf" \
+    /etc/nginx/conf.d/00-connection-map.conf
+  nginx -t
+  exit 1
+fi
+
+systemctl reload nginx
+
+set -o pipefail
+bash deploy/host/verify-http-origin.sh \
+  --public-host "$PUBLIC_HOST" \
+  --admin-host "$ADMIN_HOST" \
+  --reload | tee .data/evidence/host-http-origin.txt
+```
+
+验证媒体 Host 与未知 Host 被拒绝：
+
+```bash
+test "$(curl -sS -o /dev/null -w '%{http_code}' \
+  -H "Host: $MEDIA_HOST" http://127.0.0.1/)" = "421"
+
+test "$(curl -sS -o /dev/null -w '%{http_code}' \
+  -H 'Host: unknown.ditedog.invalid' http://127.0.0.1/)" = "421"
+```
+
+### 3.6 创建首次备份并记录状态
+
+```bash
+cd "$DEPLOY_DIR"
+
+BACKUP_FILE="/app/backups/first-production-$(date -u +%Y%m%dT%H%M%SZ).db"
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs backup --output "$BACKUP_FILE"
+
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs recover-operations
+
+docker compose ps
+nginx -t
+systemctl is-active nginx
+ss -lntp | grep -E '(:80|127.0.0.1:3000)'
+! ss -lntp | grep ':443'
+```
+
+之后再从正式域名做三视口、登录、上传、发布、下架/purge、告警和恢复验收。
+
+## 4. 后续更新服务器镜像
+
+### 4.1 需求3 R3-A 一次性永久退役
+
+含 `0036_r3_a_contract.sql` 的首个镜像不得直接走下面的普通升级命令。必须先按需求3 T07 停写、清理对象/历史版本/ESA，只有清理输出 `contractReady=true` 才能 migrate。本段是交接步骤，不表示 T07 已执行。
+
+操作员先在云控制台记录 ECS/云盘等外部快照的实际处理状态，并逐项核对 `.env` 中 `APP_ENV=production`、绝对 `DATABASE_FILE`、两个 OSS Bucket、Endpoint 和对象前缀 `prod/`。不得把 Secret 打印到证据中；任一项无法证明就停止。
+
+```bash
+cd "$DEPLOY_DIR"
+
+# 已在前文核对冻结 SHA/摘要、更新 APP_IMAGE_REF 并 pull 后，先停写。
+docker compose stop app
+docker compose config --quiet
+
+# 默认 dry-run；只输出环境布尔证明和脱敏计数。
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs r3-stage-a-cleanup --environment-prefix prod/
+
+# 用户核对 dry-run 计数并明确同意后才执行。
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs r3-stage-a-cleanup --environment-prefix prod/ \
+  --execute --confirm "DELETE R3-A RETIRED MEDIA"
+
+# 上一条任一对象/version/delete-marker/ESA purge/HEAD-GET 不可达验证失败，
+# 或输出 contractReady!=true，立即停止，不得执行此 migration。
+docker compose run --rm --no-deps app node ops/ops.mjs migrate
+docker compose up --detach --no-build --no-deps --force-recreate app
+```
+
+确认 readiness、退役路由 404、公开/管理联系只有邮箱、QQ、QQ群且 foreign-key/integrity/production verify 通过后，创建净化备份并真实恢复到新路径。只有恢复库再次通过 Contract/FK/integrity 校验，才能用第二个强确认命令删除 `/app/backups` 和数据卷自动 `backups/` 中的旧 `.db`/边车文件。净化备份和恢复库保留。
+
+```bash
+CLEAN_BACKUP="/app/backups/r3-a-clean-$(date -u +%Y%m%dT%H%M%SZ).db"
+RESTORED_DATABASE="/app/data/r3-a-restore-verify-$(date -u +%Y%m%dT%H%M%SZ).db"
+
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs backup --output "$CLEAN_BACKUP"
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs restore-verify \
+  --backup "$CLEAN_BACKUP" --output "$RESTORED_DATABASE"
+
+# 默认 dry-run；只报应用备份总数/旧备份数和验证布尔值。
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs r3-stage-a-prune-backups \
+  --clean-backup "$CLEAN_BACKUP" --restored-database "$RESTORED_DATABASE"
+
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs r3-stage-a-prune-backups \
+  --clean-backup "$CLEAN_BACKUP" --restored-database "$RESTORED_DATABASE" \
+  --execute --confirm "DELETE R3-A OLD APP BACKUPS"
+
+# Contract 后重入盘点必须为零或与明确保留项一致。
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs r3-stage-a-cleanup --environment-prefix prod/
+```
+
+### 4.2 普通镜像更新
+
+先通过 `release-image` 得到新冻结 SHA 和新镜像摘要。重建/停止 app 前，按[ESA 维护说明](../deploy/esa/MAINTENANCE.md)核对正式函数版本、路由启用且 `Fallback=off`，以及 Nginx 的 `proxy_intercept_errors off`、应用同名标记剥离和代理故障专用 503 标记。仅更新镜像或拉取 Git 不会更新这两端配置；无需变更时保留已验证的现网配置。
+
+维护页只覆盖公开/管理 Host 的 HTML GET/HEAD 页面导航；API、写请求和非 HTML 资源不被替换，已打开页面也不会自动跳转维护页。维护页不能代替停写、备份或迁移检查。恢复后核验正常页面无维护标记；若要验证停机兜底，使用隔离路径，生产停机演练需明确授权。然后在服务器执行：
+
+```bash
+ssh ${DEPLOY_USER}@${ORIGIN_HOST}
+cd "$DEPLOY_DIR"
+
+export NEW_FROZEN_SHA='替换为新的40位SHA'
+export PUBLIC_HOST='正式公开Host'
+export ADMIN_HOST='正式管理Host'
+
+git fetch origin main
+git merge --ff-only origin/main
+test "$(git rev-parse HEAD)" = "$NEW_FROZEN_SHA"
+test -z "$(git status --porcelain)"
+
+# 用编辑器只更新 APP_IMAGE_REF；如契约未变，不改其他生产值。
+vi .env
+chmod 600 .env
+
+docker compose config --quiet
+NEW_IMAGE_REF="$(docker compose config --images)"
+printf '%s\n' "$NEW_IMAGE_REF" | grep -Eq '@sha256:[0-9a-f]{64}$'
+docker pull "$NEW_IMAGE_REF"
+docker image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' \
+  "$NEW_IMAGE_REF" | grep -Fx "$NEW_IMAGE_REF"
+
+UPGRADE_BACKUP="/app/backups/pre-upgrade-$(date -u +%Y%m%dT%H%M%SZ).db"
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs backup --output "$UPGRADE_BACKUP"
+
+docker compose run --rm --no-deps app node ops/ops.mjs migrate
+docker compose up --detach --no-build --no-deps --force-recreate app
+
+for attempt in $(seq 1 60); do
+  curl --fail --silent --show-error \
+    --header "Host: $PUBLIC_HOST" \
+    http://127.0.0.1:3000/api/health/ready && break
+  sleep 2
+done
+
+curl --fail --silent --show-error \
+  --header "Host: $PUBLIC_HOST" \
+  http://127.0.0.1:3000/api/health/ready
+
+docker compose ps
+bash deploy/host/verify-http-origin.sh \
+  --public-host "$PUBLIC_HOST" \
+  --admin-host "$ADMIN_HOST"
+```
+
+如果本次镜像包含 `site-display-v2`，先用同一个冻结镜像查看待升级数量，再显式执行。命令可重入；每个资产完整生成并验证 v2 后才切换，旧 v1 不覆盖、不删除：
+
+```bash
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs upgrade-site-display-v2 --scope all
+
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs upgrade-site-display-v2 --scope all --no-dry-run
+```
+
+需要分批时，`--scope` 也接受 `home-hero`、`commission-hero`、`home-entry`。本地同一操作使用 `pnpm media:upgrade-site-display-v2 -- --scope all`，真正写入同样追加 `--no-dry-run`。
+
+验收完成前不要删除旧镜像和升级前备份。
+
+## 5. 单独执行 db:migrate
+
+任何时候需要单独迁移，都必须在仓库根目录、使用当前 `.env` 指向的冻结镜像：
+
+```bash
+ssh ${DEPLOY_USER}@${ORIGIN_HOST}
+cd "$DEPLOY_DIR"
+
+docker compose config --quiet
+docker compose run --rm --no-deps app node ops/ops.mjs migrate
+```
+
+迁移命令会先校验历史迁移，并在需要时创建验证备份。不要进入容器手改 SQLite，
+不要在线覆盖当前数据库。
+
+## 5.1 0051 水印能力退役升级
+
+包含 `0051_r4_retire_watermark.sql` 的镜像必须停写升级。使用同一待部署摘要的
+一次性容器先备份、迁移，再把已发布作品完整生成到 `recipe-v4`。退役命令默认
+只输出计数；确认计数后才精确删除旧 `recipe-v1/v2/v3` 公开对象、提交 ESA
+file purge 并删除旧变体行。命令幂等，中途失败保持 app 停止并原命令重试。
+
+```bash
+cd "$DEPLOY_DIR"
+
+docker compose config --quiet
+IMAGE_REF="$(docker compose config --images)"
+printf '%s\n' "$IMAGE_REF" | grep -Eq '@sha256:[0-9a-f]{64}$'
+
+docker compose stop app
+BACKUP_FILE="/app/backups/pre-0051-$(date -u +%Y%m%dT%H%M%SZ).db"
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs backup --output "$BACKUP_FILE"
+docker compose run --rm --no-deps app node ops/ops.mjs migrate
+
+# 先核对 publishedWorkCount、publishedAssetCount、legacyVariantCount。
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs retire-legacy-public-media
+
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs retire-legacy-public-media \
+  --execute --confirm "RETIRE LEGACY PUBLIC MEDIA"
+
+# 第二次 migrate 必须输出 applied=0，并再次完成 integrity/FK 校验。
+docker compose run --rm --no-deps app node ops/ops.mjs migrate
+docker compose up --detach --no-build --no-deps app
+
+curl --fail --silent --show-error \
+  --header "Host: $PUBLIC_HOST" \
+  http://127.0.0.1:3000/api/health/ready
+```
+
+验收数据库中不存在 `site_branding`、`watermark_profiles`、
+`watermark_operations`，公开作品只消费 `recipe-v4`。回滚不能只换旧镜像：必须
+同时恢复 `BACKUP_FILE`，并按对象存储版本/删除标记恢复旧公开对象；验收前保留
+旧镜像、数据库备份和对象版本。
+
+## 5.2 离线重置唯一管理员密码
+
+停止 app 后，在仓库根目录执行下面的交互命令。新密码可包含 `@`、`!`、`$`
+等特殊字符，输入不会回显。重置会清除登录失败锁定并使既有 Session 失效：
+
+```bash
+cd "$DEPLOY_DIR"
+
+docker compose stop app
+docker compose run --rm --no-deps app \
+  node ops/ops.mjs reset-admin-password \
+  --confirm RESET_SINGLE_ADMIN_PASSWORD
+docker compose up --detach --no-build --no-deps app
+```
+
+不要用 `init-admin` 修改已有账号；它是幂等初始化命令，不会覆盖现有密码。
+
+## 6. 回滚镜像与数据库
+
+先把当前镜像摘要、回滚镜像摘要和升级前备份路径记下来。
+
+只回滚镜像：
+
+```bash
+cd "$DEPLOY_DIR"
+
+export ROLLBACK_IMAGE_REF='repository@sha256:替换为旧摘要'
+export PUBLIC_HOST='正式公开Host'
+
+APP_IMAGE_REF="$ROLLBACK_IMAGE_REF" docker compose up \
+  --detach --no-build --no-deps --force-recreate app
+
+curl --fail --silent --show-error \
+  --header "Host: $PUBLIC_HOST" \
+  http://127.0.0.1:3000/api/health/ready
+```
+
+确认通过后，才把 `.env` 的 `APP_IMAGE_REF` 持久改为旧摘要。
+
+如果旧镜像不能读取迁移后的数据库，停止 app，把备份恢复到**新文件**：
+
+```bash
+cd "$DEPLOY_DIR"
+
+docker compose stop app
+docker compose run --rm --no-deps app node ops/ops.mjs restore \
+  --backup /app/backups/替换为升级前备份.db \
+  --output /app/data/restored-$(date -u +%Y%m%dT%H%M%SZ).db
+```
+
+然后用 `vi .env` 同时切换 `DATABASE_FILE` 和 `APP_IMAGE_REF`，再执行：
+
+```bash
+docker compose config --quiet
+docker compose up --detach --no-build --no-deps app
+```
+
+永远不要把 Bucket 改回 public-read，也不要覆盖活动数据库文件。

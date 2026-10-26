@@ -49,3 +49,28 @@ __pycache__/
 
 # Session goal file (local working notes)
 GOAL.md
+
+# Private source materials and generated review artifacts
+/agent_docs/**/materials/
+/materials/
+/agent_docs/**/prototype-v1/
+/agent_docs/**/screenshots/*
+!/agent_docs/**/screenshots/*/
+!/agent_docs/**/screenshots/*.md
+/agent_docs/**/evidence/*
+!/agent_docs/**/evidence/*/
+!/agent_docs/**/evidence/*.md
+/agent_docs/**/*.png
+/agent_docs/**/*.jpg
+/agent_docs/**/*.jpeg
+/agent_docs/**/*.webp
+/agent_docs/**/*.gif
+/agent_docs/**/*.svg
+/agent_docs/**/*.avif
+/agent_docs/**/*.webm
+/agent_docs/**/*.mp4
+/agent_docs/**/*.trace
+/agent_docs/**/*.har
+/agent_docs/**/*.zip
+/agent_docs/**/evidence/**/*.json
+/agent_docs/**/evidence/**/*.html

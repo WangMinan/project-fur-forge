@@ -4,7 +4,7 @@ import { adminBaseURL, publicBaseURL } from '../e2e/helpers/auth'
 import { createWorkViaApi } from '../e2e/helpers/admin-work'
 import { seedPublicCatalog } from '../e2e/helpers/public-catalog'
 
-const evidence = 'agent_docs/需求13-领养价格与画师展示/artifacts/screenshots'
+const evidence = 'test-results/adoption-credits'
 
 test('adoption credits: placement, SSR, language, responsive layout and touch navigation', async ({ page, browser }) => {
   test.setTimeout(180_000)
