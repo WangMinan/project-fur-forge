@@ -36,7 +36,7 @@ test('commission all-status API preserves filters, validation and private list f
       if (status === 'all') expect(rows.map((item: { id: string }) => item.id)).toEqual([...ids].reverse())
       else expect(rows[0].status).toBe(status)
       for (const row of rows) {
-        expect(Object.keys(row).sort()).toEqual(['createdAt', 'emailNotificationStatus', 'id', 'nickname', 'receiptCode', 'species', 'status', 'version'])
+        expect(Object.keys(row).sort()).toEqual(['channel', 'channelLabel', 'createdAt', 'emailNotificationStatus', 'id', 'nickname', 'origin', 'originalAppliedOn', 'receiptCode', 'species', 'status', 'version'])
       }
     }
     const legacyDefault = await (await page.request.get(`${adminBaseURL}/api/admin/v1/commissions`)).json()
@@ -97,7 +97,7 @@ test('commission table filters, paginates and recovers across responsive layouts
   const rows = page.locator('.commission-inbox__row:visible')
   const pagination = page.getByRole('navigation', { name: '委托申请分页' })
   await expect(table).toBeVisible()
-  await expect(table.getByRole('columnheader')).toHaveText(['申请人', '物种', '提交时间', '处理状态', '回执编号', '邮件通知', '操作'])
+  await expect(table.getByRole('columnheader')).toHaveText(['申请人', '物种', '来源', '申请时间', '处理状态', '申请编号', '邮件通知', '操作'])
   await expect(rows).toHaveCount(10)
   await expect(page.getByText('联系方式在详情中按需查看。')).toHaveCount(0)
   const status = page.getByRole('combobox', { name: '处理状态', exact: true })

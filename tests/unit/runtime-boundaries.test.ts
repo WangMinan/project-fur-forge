@@ -669,6 +669,18 @@ describe('host boundary', () => {
     })
   })
 
+  it('allows only the public locale bundle shape on the admin host, preserving host isolation', () => {
+    for (const locale of ['zh-CN', 'en']) {
+      const path = `/_i18n/b72d7967/${locale}/messages.json`
+      expect(decideHostAccess('admin.test', path, config)).toEqual({ action: 'allow' })
+      expect(decideHostAccess('unknown.test', path, config)).toMatchObject({ action: 'reject', statusCode: 421 })
+      expect(decideHostAccess('media.test', path, config)).toMatchObject({ action: 'reject', statusCode: 404 })
+    }
+    for (const path of ['/_i18n', '/_i18n/b72d7967/private/messages.json', '/_i18n/b72d7967/en/admin.json', '/_i18n/b72d7967/en/messages.json/extra']) {
+      expect(decideHostAccess('admin.test', path, config)).toMatchObject({ action: 'reject', statusCode: 404 })
+    }
+  })
+
   it('allows E2E fake OSS endpoints only in test environment', () => {
     expect(decideHostAccess(
       'admin.test',

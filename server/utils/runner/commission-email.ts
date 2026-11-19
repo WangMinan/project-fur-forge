@@ -48,7 +48,7 @@ export function commissionMail(sqlite: Database.Database, row: CommissionEmailRo
   attachment: { content: Buffer, mimeType: string }): SendMailOptions {
   const submission = findCommissionSubmission(sqlite, row.submission_id)
   const smtp = smtpConfiguration(config).transport
-  if (!submission || !smtp) throw new Error('Notification is unavailable.')
+  if (!submission || submission.origin === 'manual' || submission.weightKgTenths === null || !smtp) throw new Error('Notification is unavailable.')
   const extension = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' }[attachment.mimeType]
   if (!extension) throw new Error('Attachment type is invalid.')
   return {

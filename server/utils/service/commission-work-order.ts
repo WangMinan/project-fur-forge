@@ -12,7 +12,7 @@ import {
 import { ServiceError } from '../service-error'
 
 /**
- * 已接受申请的制作单 PDF：两页 A4 横版，第一页单主信息，第二页满页设定图。
+ * 已接受申请的制作单 PDF：A4 横版，资料页按需续页，最后一页为满页设定图。
  *
  * 服务端自己生成而不是走浏览器打印——操作员的默认打印机（纸张、方向、灰度）
  * 会决定打印结果，导出的文件必须与打印机无关。
@@ -99,7 +99,7 @@ export async function buildCommissionWorkOrderPdf(
   submissionId: string,
 ) {
   const detail = getCommissionSubmissionDetail(sqlite, submissionId)
-  if (detail.status !== 'accepted') {
+  if (detail.status !== 'accepted' || !detail.designReferencePreviewHref) {
     throw new ServiceError(
       409,
       'CONFLICT',
@@ -113,17 +113,22 @@ export async function buildCommissionWorkOrderPdf(
   const rows: [string, string][] = [
     ['称呼', detail.nickname],
     ['物种', detail.species ?? '待人工补录'],
-    ['手机号', `${detail.phone.countryCode} ${detail.phone.number}`],
-    ['QQ', detail.qq],
-    ['身高', `${detail.heightCm} cm`],
-    ['体重', `${detail.weightKg} kg`],
+    ['手机号', detail.phone ? `${detail.phone.countryCode} ${detail.phone.number}` : '未填写'],
+    ['QQ', detail.qq ?? '未填写'],
+    ['身高', detail.heightCm === null ? '未填写' : `${detail.heightCm} cm`],
+    ['体重', detail.weightKg === null ? '未填写' : `${detail.weightKg} kg`],
     ['状态', '已接受'],
-    ['提交时间', formatTimestamp(detail.createdAt)],
+    [detail.origin === 'manual' ? '录入时间' : '提交时间', formatTimestamp(detail.createdAt)],
     ['处理时间', formatTimestamp(detail.handledAt)],
   ]
+  if (detail.origin === 'manual') rows.push(
+    ['来源', `后台录入 · ${detail.channel === 'qq' ? 'QQ' : detail.channel === 'wechat' ? '微信' : detail.channelLabel}`],
+    ['其他联系', detail.otherContact ?? '未填写'], ['原申请日期', detail.originalAppliedOn ?? '未填写'],
+    ['历史处理日期', detail.historicalHandledOn ?? '未填写'],
+  )
   const pdfText = [
     '自设委托制作单',
-    `回执 ${detail.receiptCode}`,
+    `申请编号 ${detail.receiptCode}`,
     ...rows.flat(),
     detail.internalNote ?? '',
   ].join('\n')
@@ -138,53 +143,64 @@ export async function buildCommissionWorkOrderPdf(
   const selectedFont = await commissionWorkOrderFont(pdfText)
   const font = await pdf.embedFont(selectedFont.bytes, { subset: false })
 
-  const infoPage = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT])
   const ink = rgb(0, 0, 0)
   const muted = rgb(0.35, 0.37, 0.4)
-
-  let cursor = PAGE_HEIGHT - MARGIN - 24
-  infoPage.drawText('自设委托制作单', { x: MARGIN, y: cursor, size: 24, font, color: ink })
-  cursor -= 22
-  infoPage.drawText(`回执 ${detail.receiptCode}`, {
-    x: MARGIN,
-    y: cursor,
-    size: 11,
-    font,
-    color: muted,
-  })
-  cursor -= 18
-  infoPage.drawLine({
-    start: { x: MARGIN, y: cursor },
-    end: { x: PAGE_WIDTH - MARGIN, y: cursor },
-    thickness: 1,
-    color: ink,
-  })
-  cursor -= 30
-
-  // 两列排布：A4 横版一列会剩下大半页空白。
+  let infoPage = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT])
+  let cursor = 0
+  function infoHeader() {
+    cursor = PAGE_HEIGHT - MARGIN - 24
+    infoPage.drawText('自设委托制作单', { x: MARGIN, y: cursor, size: 24, font, color: ink })
+    cursor -= 22
+    infoPage.drawText(`申请编号 ${detail.receiptCode}`, { x: MARGIN, y: cursor, size: 11, font, color: muted })
+    cursor -= 18
+    infoPage.drawLine({ start: { x: MARGIN, y: cursor }, end: { x: PAGE_WIDTH - MARGIN, y: cursor }, thickness: 1, color: ink })
+    cursor -= 30
+  }
+  function ensureSpace(height: number) {
+    if (cursor - height >= MARGIN) return
+    infoPage = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT])
+    infoHeader()
+  }
+  function lines(text: string, size: number, width: number) {
+    const result: string[] = []
+    for (const paragraph of text.split(/\r?\n/u)) {
+      let line = ''
+      for (const character of paragraph) {
+        if (line && font.widthOfTextAtSize(line + character, size) > width) {
+          result.push(line)
+          line = ''
+        }
+        line += character
+      }
+      result.push(line)
+    }
+    return result
+  }
+  infoHeader()
   const columnWidth = (PAGE_WIDTH - MARGIN * 2) / 2
-  const rowHeight = 34
   const perColumn = Math.ceil(rows.length / 2)
-  rows.forEach(([label, value], index) => {
-    const column = Math.floor(index / perColumn)
-    const x = MARGIN + column * columnWidth
-    const y = cursor - (index % perColumn) * rowHeight
-    infoPage.drawText(label, { x, y, size: 10, font, color: muted })
-    infoPage.drawText(value, { x, y: y - 15, size: 14, font, color: ink })
-  })
-
-  if (detail.internalNote) {
-    const noteTop = cursor - perColumn * rowHeight - 16
-    infoPage.drawText('内部备注', { x: MARGIN, y: noteTop, size: 10, font, color: muted })
-    infoPage.drawText(detail.internalNote, {
-      x: MARGIN,
-      y: noteTop - 16,
-      size: 11,
-      font,
-      color: ink,
-      lineHeight: 15,
-      maxWidth: PAGE_WIDTH - MARGIN * 2,
+  for (let index = 0; index < perColumn; index++) {
+    const pair = [rows[index], rows[index + perColumn]].map(row => row ? { label: row[0], lines: lines(row[1], 14, columnWidth - 20) } : null)
+    const height = 20 + Math.max(...pair.map(row => row?.lines.length ?? 0)) * 18
+    ensureSpace(height)
+    pair.forEach((row, column) => {
+      if (!row) return
+      const x = MARGIN + column * columnWidth
+      infoPage.drawText(row.label, { x, y: cursor, size: 10, font, color: muted })
+      infoPage.drawText(row.lines.join('\n'), { x, y: cursor - 17, size: 14, font, color: ink, lineHeight: 18 })
     })
+    cursor -= height
+  }
+  if (detail.internalNote) {
+    ensureSpace(50)
+    cursor -= 16
+    infoPage.drawText('内部备注', { x: MARGIN, y: cursor, size: 10, font, color: muted })
+    cursor -= 18
+    for (const line of lines(detail.internalNote, 11, PAGE_WIDTH - MARGIN * 2)) {
+      ensureSpace(15)
+      infoPage.drawText(line, { x: MARGIN, y: cursor, size: 11, font, color: ink })
+      cursor -= 15
+    }
   }
 
   const sheetPage = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT])

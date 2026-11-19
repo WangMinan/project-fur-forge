@@ -28,6 +28,11 @@ const activeStatus = computed<CommissionSubmissionStatus | 'all'>(() => (
     ? route.query.status as CommissionSubmissionStatus
     : 'all'
 ))
+const source = computed(() => ['website', 'qq', 'wechat', 'other'].includes(String(route.query.source)) ? String(route.query.source) : 'all')
+const sourceOptions = [{ value: 'all', label: '全部来源' }, { value: 'website', label: '官网提交' }, { value: 'qq', label: '后台录入 · QQ' }, { value: 'wechat', label: '后台录入 · 微信' }, { value: 'other', label: '后台录入 · 其他' }]
+function sourceHref(value: string | number) {
+  return { path: '/admin/commissions', query: { ...(activeStatus.value === 'all' ? {} : { status: activeStatus.value }), ...(value === 'all' ? {} : { source: value }) } }
+}
 const statusOptions: Array<{ label: string, value: CommissionSubmissionStatus | 'all' }> = [
   { label: '全部状态', value: 'all' },
   { label: '待处理', value: 'pending' },
@@ -56,14 +61,14 @@ const visibleTo = computed(() => Math.min(
 ))
 
 function statusHref(status: CommissionSubmissionStatus | 'all') {
-  return status === 'all' ? '/admin/commissions' : `/admin/commissions?status=${status}`
+  return { path: '/admin/commissions', query: { ...(status === 'all' ? {} : { status }), ...(source.value === 'all' ? {} : { source: source.value }) } }
 }
 
 async function load() {
   pageStatus.value = 'loading'
   try {
     const response = await adminApi(
-      `/api/admin/v1/commissions?status=${activeStatus.value}`,
+      `/api/admin/v1/commissions?status=${activeStatus.value}&source=${source.value}`,
       { schema: commissionSubmissionListResponseSchema },
     )
     items.value = response.data
@@ -78,7 +83,7 @@ function removeDeleted(id: string) {
   items.value = items.value.filter(item => item.id !== id)
 }
 
-watch([query, pageSize, activeStatus], () => {
+watch([query, pageSize, activeStatus, source], () => {
   page.value = 1
 })
 watch(pageCount, (count) => {
@@ -86,7 +91,7 @@ watch(pageCount, (count) => {
     page.value = count
   }
 })
-watch(activeStatus, () => void load())
+watch([activeStatus, source], () => void load())
 onMounted(() => void load())
 </script>
 
@@ -94,18 +99,22 @@ onMounted(() => void load())
   <AdminShell current="commissions">
     <div class="admin-list-page commission-inbox">
       <AdminPageHeader title="委托申请" :meta="pageStatus === 'ready' ? `共 ${items.length} 条申请` : undefined">
-        <AdminAction :loading="pageStatus === 'loading'" loading-label="刷新中…" @click="load">刷新</AdminAction>
+        <AdminAction to="/admin/commissions/new" variant="primary">录入申请</AdminAction>
+        <AdminAction class="commission-inbox__refresh-desktop" :loading="pageStatus === 'loading'" loading-label="刷新中…" @click="load">刷新</AdminAction>
       </AdminPageHeader>
 
       <AdminListToolbar
         label="查找和筛选委托申请"
-        :filters-active="Boolean(query || activeStatus !== 'all')"
+        :filters-active="Boolean(query || activeStatus !== 'all' || source !== 'all')"
         :result-count="filteredItems.length"
         :total-count="items.length"
         unit="条"
         @reset="resetFilters"
       >
-        <AdminListSearch id="admin-commission-search" ref="searchField" v-model="query" label="查找申请" placeholder="昵称、物种或回执编号" />
+        <template #actions>
+          <AdminAction class="commission-inbox__refresh-mobile" :loading="pageStatus === 'loading'" loading-label="刷新中…" @click="load">刷新</AdminAction>
+        </template>
+        <AdminListSearch id="admin-commission-search" ref="searchField" v-model="query" label="查找申请" placeholder="昵称、物种或申请编号" />
         <div class="admin-list-toolbar__field">
           <label class="admin-list-toolbar__label" for="admin-commission-status">处理状态</label>
           <AdminSelect
@@ -115,6 +124,10 @@ onMounted(() => void load())
             :disabled="pageStatus === 'loading'"
             @update:model-value="navigateTo(statusHref($event))"
           />
+        </div>
+        <div class="admin-list-toolbar__field">
+          <label class="admin-list-toolbar__label" for="commission-source">来源</label>
+          <AdminSelect id="commission-source" :model-value="source" :options="sourceOptions" @update:model-value="navigateTo(sourceHref($event))" />
         </div>
       </AdminListToolbar>
 
@@ -146,5 +159,10 @@ onMounted(() => void load())
 </template>
 
 <style scoped>
+.commission-inbox__refresh-mobile { display: none; }
+@media (max-width: 767px) {
+  .commission-inbox__refresh-desktop { display: none; }
+  .commission-inbox__refresh-mobile { display: inline-flex; }
+}
 .commission-inbox__state { padding: var(--admin-space-6); border: 1px solid var(--admin-border-secondary); border-radius: var(--admin-radius-md); background: var(--admin-bg-primary); text-align: center; }
 </style>

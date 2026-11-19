@@ -22,6 +22,7 @@ import type {
 import type { MediaStorage } from '../media-storage'
 import type { RuntimeConfig } from '../runtime-config'
 import { getRuntimeConfig } from '../runtime-config'
+import { getExactObjectStore } from '../exact-object-storage'
 import { smtpConfiguration } from '../smtp-config'
 import { enqueueCommissionEmails, commissionEmailSummary } from '../repository/commission-email'
 import { ServiceError } from '../service-error'
@@ -60,6 +61,7 @@ export interface CommissionUploadExpected {
 }
 
 interface CreateOptions {
+  actorUserId?: string | undefined
   id?: string
   keyPrefix?: string
   now?: number
@@ -87,7 +89,10 @@ function tokenDigest(token: string) {
   return createHash('sha256').update(token).digest('hex')
 }
 
-function assertToken(row: CommissionUploadRow, token: string) {
+export function assertCommissionUploadToken(row: CommissionUploadRow, token: string, actorUserId?: string) {
+  if ((row.created_by ?? null) !== (actorUserId ?? null) || row.retired_at != null) {
+    throw new ServiceError(404, 'NOT_FOUND', 'Commission upload was not found.')
+  }
   const actual = Buffer.from(tokenDigest(token), 'hex')
   const expected = Buffer.from(row.tokenDigest, 'hex')
   if (
@@ -130,7 +135,7 @@ export async function createCommissionUpload(
   token: string
   upload: ConditionalPutDto
 }> {
-  assertCommissionPrivacyPolicyReady(sqlite)
+  if (!options.actorUserId) assertCommissionPrivacyPolicyReady(sqlite)
   const id = options.id ?? randomUUID()
   const token = options.token ?? randomBytes(32).toString('base64url')
   const objectToken = options.objectToken ?? randomBytes(24).toString('hex')
@@ -172,6 +177,7 @@ export async function createCommissionUpload(
     await storage.deletePrivate(privateObjectKey).catch(() => {})
     throw new ServiceError(500, 'INTERNAL_ERROR', 'Upload session could not be created.')
   }
+  if (options.actorUserId) sqlite.prepare('UPDATE commission_upload_sessions SET created_by = ? WHERE id = ?').run(options.actorUserId, id)
   return {
     session: sessionDto(requireUpload(sqlite, id)),
     token,
@@ -214,9 +220,10 @@ export async function completeCommissionUpload(
   token: string,
   expectedVersion: number,
   now = Date.now(),
+  actorUserId?: string,
 ) {
   let row = requireUpload(sqlite, id)
-  assertToken(row, token)
+  assertCommissionUploadToken(row, token, actorUserId)
   if (row.status === 'COMPLETED') {
     return sessionDto(row)
   }
@@ -309,9 +316,10 @@ export async function cancelCommissionUpload(
   token: string,
   expectedVersion: number,
   now = Date.now(),
+  actorUserId?: string,
 ) {
   const row = requireUpload(sqlite, id)
-  assertToken(row, token)
+  assertCommissionUploadToken(row, token, actorUserId)
   if (row.status === 'CANCELLED') {
     return sessionDto(row)
   }
@@ -362,9 +370,10 @@ export async function retryCommissionUpload(
   token: string,
   expectedVersion: number,
   now = Date.now(),
+  actorUserId?: string,
 ) {
   let row = requireUpload(sqlite, id)
-  assertToken(row, token)
+  assertCommissionUploadToken(row, token, actorUserId)
   if (row.version !== expectedVersion) {
     throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
@@ -390,7 +399,7 @@ export async function retryCommissionUpload(
       sha256: row.expectedSha256,
       width: row.expectedWidth,
     },
-    { now },
+    { now, actorUserId },
   )
   await storage.deletePrivate(row.privateObjectKey).catch(() => {})
   return replacement
@@ -406,6 +415,7 @@ export interface CommissionUploadCleanupResult {
 }
 
 interface CleanableCommissionUpload {
+  retiredAt: number | null
   assetId: string | null
   id: string
   privateObjectKey: string
@@ -424,10 +434,10 @@ export async function cleanupExpiredCommissionUploads(options: {
   const dryRun = options.dryRun !== false
   const rows = options.sqlite.prepare(`
     SELECT session.id, session.private_object_key AS privateObjectKey,
-           session.status, session.asset_id AS assetId
+           session.status, session.asset_id AS assetId, session.retired_at AS retiredAt
     FROM commission_upload_sessions AS session
-    WHERE session.status != 'CONSUMED'
-      AND session.expires_at <= ?
+    WHERE (session.status != 'CONSUMED' OR session.retired_at IS NOT NULL)
+      AND (session.expires_at <= ? OR session.retired_at IS NOT NULL)
       AND NOT EXISTS (
         SELECT 1 FROM commission_submissions AS submission
         WHERE submission.design_asset_id = session.asset_id
@@ -449,11 +459,17 @@ export async function cleanupExpiredCommissionUploads(options: {
 
   for (const row of rows) {
     try {
-      await options.storage.deletePrivate(row.privateObjectKey)
+      if (row.retiredAt !== null) {
+        const store = getExactObjectStore()
+        await store.deleteAll('private', row.privateObjectKey)
+        const remaining = await store.inspect('private', row.privateObjectKey)
+        if (remaining.current || remaining.versions || remaining.deleteMarkers) throw new Error('Retired image cleanup is incomplete.')
+      }
+      else await options.storage.deletePrivate(row.privateObjectKey)
       const removed = options.sqlite.transaction(() => {
         const session = options.sqlite.prepare(`
           DELETE FROM commission_upload_sessions
-          WHERE id = ? AND status != 'CONSUMED' AND expires_at <= ?
+          WHERE id = ? AND (status != 'CONSUMED' OR retired_at IS NOT NULL) AND (expires_at <= ? OR retired_at IS NOT NULL)
             AND NOT EXISTS (
               SELECT 1 FROM commission_submissions
               WHERE design_asset_id = commission_upload_sessions.asset_id
@@ -516,7 +532,7 @@ export function createCommissionSubmission(
   assertCommissionPrivacyPolicyReady(sqlite)
   const now = options.now ?? Date.now()
   const initial = requireUpload(sqlite, input.uploadSessionId)
-  assertToken(initial, token)
+  assertCommissionUploadToken(initial, token)
   if (initial.version !== input.expectedUploadVersion) {
     throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
@@ -547,7 +563,7 @@ export function createCommissionSubmission(
     try {
       return sqlite.transaction(() => {
         const current = requireUpload(sqlite, input.uploadSessionId)
-        assertToken(current, token)
+        assertCommissionUploadToken(current, token)
         if (
           current.status !== 'COMPLETED'
           || current.assetId === null
@@ -604,7 +620,7 @@ export function createCommissionSubmission(
         enqueueCommissionEmails(sqlite, submissionId, options.notificationsEnabled
           ?? (config.appEnv !== 'test' && smtpConfiguration(config).status === 'ready'), now)
         return createCommissionSubmissionResponseSchema.shape.data.parse({ receiptCode })
-      })()
+      }).immediate()
     }
     catch (error) {
       if (error instanceof ServiceError) {
@@ -631,11 +647,12 @@ export function createCommissionSubmission(
   throw new ServiceError(500, 'INTERNAL_ERROR', 'Commission submission could not be created.')
 }
 
-function listItem(sqlite: Database.Database, row: CommissionSubmissionRow): CommissionSubmissionListItemDto {
+export function commissionListItem(sqlite: Database.Database, row: CommissionSubmissionRow): CommissionSubmissionListItemDto {
   return commissionSubmissionListItemDtoSchema.parse({
     id: row.id,
     receiptCode: row.receiptCode,
-    emailNotificationStatus: commissionEmailSummary(sqlite, row.id),
+    origin: row.origin, channel: row.channel, channelLabel: row.channelLabel, originalAppliedOn: row.originalAppliedOn,
+    emailNotificationStatus: row.origin === 'manual' ? 'not_applicable' : commissionEmailSummary(sqlite, row.id),
     nickname: row.nickname,
     species: row.species,
     status: row.status,
@@ -648,7 +665,7 @@ export function listCommissionSubmissions(
   sqlite: Database.Database,
   status?: CommissionSubmissionStatus,
 ) {
-  return listCommissionSubmissionRows(sqlite, status).map(row => listItem(sqlite, row))
+  return listCommissionSubmissionRows(sqlite, status).map(row => commissionListItem(sqlite, row))
 }
 
 export function getCommissionSubmissionDetail(
@@ -660,20 +677,19 @@ export function getCommissionSubmissionDetail(
     throw new ServiceError(404, 'NOT_FOUND', 'Commission submission was not found.')
   }
   return commissionSubmissionDetailDtoSchema.parse({
-    ...listItem(sqlite, row),
-    phone: {
-      countryCode: row.phoneCountryCode,
-      number: row.phoneNumber,
-    },
+    ...commissionListItem(sqlite, row),
+    phone: row.phoneNumber === null ? null : { countryCode: row.phoneCountryCode, number: row.phoneNumber },
     qq: row.qq,
     heightCm: row.heightCm,
-    weightKg: row.weightKgTenths / 10,
+    weightKg: row.weightKgTenths === null ? null : row.weightKgTenths / 10,
+    otherContact: row.otherContact, historicalHandledOn: row.historicalHandledOn,
+    offlineAdultConfirmed: Boolean(row.offlineAdultConfirmed), offlinePrivacyConfirmed: Boolean(row.offlinePrivacyConfirmed),
     internalNote: row.internalNote,
     updatedAt: new Date(row.updatedAt).toISOString(),
     handledAt: row.handledAt === null
       ? null
       : new Date(row.handledAt).toISOString(),
-    designReferencePreviewHref: `/api/admin/v1/commissions/${row.id}/design-reference`,
+    designReferencePreviewHref: row.designAssetId === null ? null : `/api/admin/v1/commissions/${row.id}/design-reference`,
   })
 }
 
@@ -689,6 +705,7 @@ export function updateCommissionSubmission(
   now = Date.now(),
 ) {
   assertCommissionDeletionUnlocked(id)
+  if (findCommissionSubmission(sqlite, id)?.origin === 'manual') throw new ServiceError(400, 'VALIDATION_ERROR', 'Use the manual commission editor.')
   return sqlite.transaction(() => {
     if (updateCommissionSubmissionRow(
       sqlite,

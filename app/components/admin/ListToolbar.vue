@@ -17,7 +17,10 @@ const emit = defineEmits<{ reset: [] }>()
       <p class="admin-list-toolbar__count" role="status">
         {{ filtersActive ? `找到 ${resultCount} / ${totalCount} ${unit}` : `共 ${totalCount} ${unit}` }}
       </p>
-      <AdminAction :disabled="!filtersActive" @click="emit('reset')">清除</AdminAction>
+      <div class="admin-list-toolbar__actions">
+        <slot name="actions" />
+        <AdminAction :disabled="!filtersActive" @click="emit('reset')">清除</AdminAction>
+      </div>
     </div>
   </section>
 </template>
@@ -42,4 +45,5 @@ const emit = defineEmits<{ reset: [] }>()
   color: var(--admin-text-secondary);
   font-size: var(--admin-font-sm);
 }
+.admin-list-toolbar__actions { display: flex; flex-wrap: wrap; gap: var(--admin-space-3); }
 </style>

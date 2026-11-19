@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { CommissionSubmissionListItemDto } from '~~/shared/types/contracts'
+import { commissionSourceLabel } from '~/utils/commission-source'
 import { COMMISSION_EMAIL_LABELS } from '~/utils/commission-email'
 
 defineProps<{ items: CommissionSubmissionListItemDto[] }>()
@@ -22,7 +23,7 @@ function formatTime(value: string) {
 <template>
   <AdminListTable
     label="委托申请表格"
-    :columns="['申请人', '物种', '提交时间', '处理状态', '回执编号', '邮件通知', '操作']"
+    :columns="['申请人', '物种', '来源', '申请时间', '处理状态', '申请编号', '邮件通知', '操作']"
   >
     <tr v-for="item in items" :key="item.id" class="commission-inbox__row">
       <td>
@@ -31,7 +32,11 @@ function formatTime(value: string) {
         </NuxtLink>
       </td>
       <td class="commission-list__species">{{ item.species ?? '物种待补录' }}</td>
-      <td class="commission-list__muted"><time :datetime="item.createdAt">{{ formatTime(item.createdAt) }}</time></td>
+      <td class="commission-list__source">{{ commissionSourceLabel(item) }}</td>
+      <td class="commission-list__muted">
+        {{ item.origin === 'manual' ? '录入' : '提交' }} <time :datetime="item.createdAt">{{ formatTime(item.createdAt) }}</time>
+        <small v-if="item.origin === 'manual'" class="commission-list__original">原申请：{{ item.originalAppliedOn ?? '未填写' }}</small>
+      </td>
       <td><AdminStatusBadge v-bind="statuses[item.status]" /></td>
       <td class="commission-list__muted">{{ item.receiptCode }}</td>
       <td class="commission-list__muted">{{ COMMISSION_EMAIL_LABELS[item.emailNotificationStatus] }}</td>
@@ -53,8 +58,10 @@ function formatTime(value: string) {
           </div>
           <dl class="commission-list__details">
             <div><dt>物种</dt><dd>{{ item.species ?? '物种待补录' }}</dd></div>
-            <div><dt>提交时间</dt><dd><time :datetime="item.createdAt">{{ formatTime(item.createdAt) }}</time></dd></div>
-            <div><dt>回执编号</dt><dd>{{ item.receiptCode }}</dd></div>
+            <div><dt>{{ item.origin === 'manual' ? '录入时间' : '提交时间' }}</dt><dd><time :datetime="item.createdAt">{{ formatTime(item.createdAt) }}</time></dd></div>
+            <div><dt>来源</dt><dd>{{ commissionSourceLabel(item) }}</dd></div>
+            <div v-if="item.origin === 'manual'"><dt>原申请日期</dt><dd>{{ item.originalAppliedOn ?? '未填写' }}</dd></div>
+            <div><dt>申请编号</dt><dd>{{ item.receiptCode }}</dd></div>
             <div><dt>邮件通知</dt><dd>{{ COMMISSION_EMAIL_LABELS[item.emailNotificationStatus] }}</dd></div>
           </dl>
           <div class="commission-list__actions">
@@ -71,6 +78,8 @@ function formatTime(value: string) {
 .commission-inbox__item { display: block; max-width: 12rem; color: var(--admin-text-primary); font-weight: 600; overflow-wrap: anywhere; }
 .commission-inbox__item:hover { color: var(--admin-accent-primary); }
 .commission-list__species { max-width: 10rem; color: var(--admin-text-secondary); overflow-wrap: anywhere; }
+.commission-list__original { display: block; margin-top: .25rem; }
+.commission-list__source { max-width: 10rem; overflow-wrap: anywhere; }
 .commission-list__muted { color: var(--admin-text-secondary); white-space: nowrap; }
 .commission-list__actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--admin-space-3); }
 .commission-list__actions :deep(.admin-action) { min-height: var(--admin-touch-target); min-width: var(--admin-touch-target); white-space: nowrap; }
