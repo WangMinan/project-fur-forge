@@ -123,7 +123,7 @@ test('代表作品左对齐与七张详情图的横竖屏触控和溢出', async
     if (width! >= 768) {
       expect(dimensions.height).toBeLessThanOrEqual((await stage.boundingBox())!.height + 1)
       expect(dimensions.scrollWidth).toBe(dimensions.width)
-      expect(dimensions.width).toBeGreaterThan(box.width)
+      await expect(strip).toHaveCSS('scrollbar-width', 'none')
       await strip.hover()
       await page.mouse.wheel(0, dimensions.scrollHeight)
       await expect.poll(() => strip.evaluate(el => el.scrollTop + el.clientHeight)).toBeGreaterThanOrEqual(dimensions.scrollHeight - 1)
