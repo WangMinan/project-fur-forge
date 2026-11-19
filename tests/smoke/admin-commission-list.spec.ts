@@ -5,6 +5,39 @@ import { openFixtureDatabase } from '../e2e/helpers/fixture-db'
 
 test.use({ hasTouch: true })
 
+for (const staleStatus of [200, 503]) {
+  test(`late source response (${staleStatus}) preserves the selected channel`, async ({ page }) => {
+    await loginAsAdmin(page)
+    let releaseQQ!: () => void
+    const held = new Promise<void>(resolve => { releaseQQ = resolve })
+    await page.route('**/api/admin/v1/commissions?*', async (route) => {
+      const source = new URL(route.request().url()).searchParams.get('source')
+      if (source === 'qq') await held
+      const data = source === 'all' ? [] : [{
+        id: randomUUID(), receiptCode: 'DD-123456789012', nickname: `fixture-${source}`,
+        origin: 'manual', channel: source, species: null, createdAt: new Date().toISOString(), status: 'pending', version: 1,
+      }]
+      await route.fulfill({ status: source === 'qq' ? staleStatus : 200, json: { data } })
+    })
+    await page.goto(`${adminBaseURL}/admin/commissions`)
+    await expect(page.getByText('当前状态下没有申请。')).toBeVisible()
+    const choose = async (name: string) => {
+      await page.getByRole('combobox', { name: '来源', exact: true }).click()
+      await page.getByRole('option', { name, exact: true }).click()
+    }
+    await Promise.all([page.waitForRequest(r => r.url().includes('&source=qq')), choose('后台录入 · QQ')])
+    await choose('后台录入 · 微信')
+    const current = page.getByRole('link', { name: 'fixture-wechat' })
+    await expect(current).toBeVisible()
+    const stale = page.waitForResponse(r => r.url().includes('&source=qq'))
+    releaseQQ()
+    await (await stale).finished()
+    await page.waitForLoadState('networkidle')
+    await expect(current).toBeVisible()
+    await expect(page.getByText('申请列表加载失败。')).toHaveCount(0)
+  })
+}
+
 test('commission all-status API preserves filters, validation and private list fields', async ({ page, request }) => {
   const session = await loginAsAdmin(page)
   const sqlite = openFixtureDatabase(E2E_DATABASE_FILE)

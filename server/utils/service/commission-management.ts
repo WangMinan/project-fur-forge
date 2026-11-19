@@ -236,7 +236,7 @@ export async function completeCommissionUpload(
   if (row.expiresAt <= now) {
     expireCommissionUpload(sqlite, id, expectedVersion, now)
     await storage.deletePrivate(row.privateObjectKey).catch(() => {})
-    throw new ServiceError(409, 'CONFLICT', 'Commission upload has expired.')
+    throw new ServiceError(409, 'CONFLICT', 'Commission upload has expired.', 'UPLOAD_SESSION_EXPIRED')
   }
   if (acquireCommissionUploadValidation(
     sqlite,

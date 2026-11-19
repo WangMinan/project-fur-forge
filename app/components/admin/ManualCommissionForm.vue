@@ -5,10 +5,11 @@ import { useManualCommission } from '~/composables/useManualCommission'
 const props = withDefaults(defineProps<{ initial?: CommissionSubmissionDetailDto | null }>(), { initial: null })
 const emit = defineEmits<{ saved: [detail: CommissionSubmissionDetailDto, next: boolean] }>()
 const { detail, draft, upload, uploadBusy, imageKey, saving, unknownResult, error, success, errors, conflicts, versionConflict,
-  dirty, locked, validate, submit, confirmConflict, reload, retry } = useManualCommission(props.initial, (value, next) => emit('saved', value, next))
+  dirty, locked, validate, submit, confirmConflict, reload, reloading, reloadError, retry } = useManualCommission(props.initial, (value, next) => emit('saved', value, next))
 const { status: authStatus } = useAdminAuth()
 const leaveConfirmation = useTemplateRef<{ request: () => Promise<boolean> }>('leaveConfirmation')
 const form = useTemplateRef<HTMLFormElement>('form')
+const imageInput = useTemplateRef('imageInput')
 const channels = [{ value: 'qq', label: 'QQ' }, { value: 'wechat', label: '微信' }, { value: 'other', label: '其他' }]
 const statuses = [{ value: 'pending', label: '待处理' }, { value: 'accepted', label: '已接受' }, { value: 'rejected', label: '已拒绝' }]
 const inputs = [
@@ -30,24 +31,29 @@ async function save(next = false) {
 function beforeUnload(event: BeforeUnloadEvent) {
   if (dirty.value || saving.value) { event.preventDefault(); event.returnValue = '' }
 }
-onBeforeRouteLeave(() => !dirty.value || authStatus.value === 'guest' ? true : leaveConfirmation.value?.request() ?? false)
+onBeforeRouteLeave(async () => {
+  if (!dirty.value || authStatus.value === 'guest') return true
+  if (!await leaveConfirmation.value?.request()) return false
+  imageInput.value?.discard()
+  return true
+})
 onMounted(() => window.addEventListener('beforeunload', beforeUnload))
 onUnmounted(() => window.removeEventListener('beforeunload', beforeUnload))
 </script>
 
 <template>
   <form ref="form" class="manual-commission" novalidate autocomplete="off" @submit.prevent="save()">
-    <header class="manual-commission__header">
-      <div class="manual-commission__heading">
-        <NuxtLink to="/admin/commissions" class="manual-commission__back" aria-label="返回申请列表">← 委托申请</NuxtLink>
-        <h1 class="manual-commission__title">{{ initial ? '编辑委托申请' : '录入委托申请' }}</h1>
+    <header class="editor-header">
+      <div class="editor-header__heading">
+        <NuxtLink to="/admin/commissions" class="editor-header__back" aria-label="返回申请列表">← 委托申请</NuxtLink>
+        <h1 class="editor-header__title">{{ initial ? '编辑委托申请' : '录入委托申请' }}</h1>
         <AdminStatusBadge :tone="dirty ? 'warning' : 'neutral'" :label="dirty ? '有未保存更改' : '未更改'" />
       </div>
-    <div class="manual-commission__actions">
-      <AdminAction type="submit" variant="primary" :loading="saving" loading-label="正在保存…" :disabled="uploadBusy || unknownResult || (Boolean(initial) && !dirty)">{{ initial ? '保存修改' : '保存并查看' }}</AdminAction>
-      <AdminAction v-if="!initial" :disabled="saving || uploadBusy || unknownResult" @click="save(true)">保存并继续录入</AdminAction>
-      <AdminAction v-if="unknownResult" :loading="saving" @click="retry">核对本次保存结果</AdminAction>
-    </div>
+      <div class="editor-header__actions">
+        <AdminAction type="submit" variant="primary" :loading="saving" loading-label="正在保存…" :disabled="uploadBusy || unknownResult || (Boolean(initial) && !dirty)">{{ initial ? '保存修改' : '保存并查看' }}</AdminAction>
+        <AdminAction v-if="!initial" :disabled="saving || uploadBusy || unknownResult" @click="save(true)">保存并继续录入</AdminAction>
+        <AdminAction v-if="unknownResult" :loading="saving" @click="retry">核对本次保存结果</AdminAction>
+      </div>
     </header>
     <p class="manual-commission__notice">后台录入不会发送邮件。至少填写称呼、来源渠道和一种联系方式，其余资料可以后补。</p>
     <p v-if="error" role="alert" class="manual-commission__error">{{ error }}</p>
@@ -116,7 +122,7 @@ onUnmounted(() => window.removeEventListener('beforeunload', beforeUnload))
     </section>
       </div>
       <aside class="manual-commission__aside">
-        <AdminCommissionImageInput :key="imageKey" v-model="upload" :existing-href="detail?.designReferencePreviewHref ?? null" :disabled="locked" @busy="uploadBusy = $event" />
+        <AdminCommissionImageInput ref="imageInput" :key="imageKey" v-model="upload" :existing-href="detail?.designReferencePreviewHref ?? null" :disabled="locked" @busy="uploadBusy = $event" />
       </aside>
     </div>
     <AdminConfirmDialog :open="Boolean(conflicts)" title="发现相同联系方式的申请" confirm-label="确认继续录入" cancel-label="返回修改" :busy="saving" @confirm="confirmConflict" @cancel="conflicts = null">
@@ -130,8 +136,9 @@ onUnmounted(() => window.removeEventListener('beforeunload', beforeUnload))
         </li>
       </ul>
     </AdminConfirmDialog>
-    <AdminConfirmDialog :open="versionConflict" title="申请已在其他位置更新" confirm-label="重新载入（放弃当前修改）" cancel-label="保留当前输入" @confirm="reload" @cancel="versionConflict = false">
+    <AdminConfirmDialog :open="versionConflict" :busy="reloading" title="申请已在其他位置更新" confirm-label="重新载入（放弃当前修改）" confirm-loading-label="正在重新载入…" cancel-label="保留当前输入" @confirm="reload" @cancel="versionConflict = false">
       <p>保存已停止。请核对最新资料，重新载入将放弃当前输入。</p>
+      <p v-if="reloadError" class="manual-commission__error" role="alert">{{ reloadError }}</p>
     </AdminConfirmDialog>
     <AdminDiscardChangesDialog ref="leaveConfirmation" />
   </form>
@@ -141,13 +148,6 @@ onUnmounted(() => window.removeEventListener('beforeunload', beforeUnload))
 
 <style scoped>
 .manual-commission { display: grid; gap: var(--admin-space-5); min-width: 0; max-width: var(--admin-content-max); }
-.manual-commission__header { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--admin-space-4); flex-wrap: wrap; }
-.manual-commission__heading { display: flex; align-items: center; gap: var(--admin-space-3); flex-wrap: wrap; }
-.manual-commission__back { display: inline-flex; align-items: center; min-height: var(--admin-touch-target); font-size: var(--admin-font-base); color: var(--admin-text-secondary); }
-.manual-commission__back:hover { color: var(--admin-text-primary); }
-.manual-commission__title { margin: 0; font-size: var(--admin-font-base); font-weight: 600; line-height: var(--admin-line-tight); }
-.manual-commission__heading :deep(.admin-badge) { min-height: var(--admin-control-height-sm); font-size: var(--admin-font-base); }
-.manual-commission__actions { display: flex; flex-wrap: wrap; gap: var(--admin-space-2); }
 .manual-commission__notice, .manual-commission__success { margin: 0; padding: var(--admin-space-3) var(--admin-space-4); border-radius: var(--admin-radius-md); background: var(--admin-status-info-soft); color: var(--admin-status-info); font-size: var(--admin-font-sm); }
 .manual-commission__columns, .manual-commission__main, .manual-commission__aside { display: grid; align-content: start; gap: var(--admin-space-5); min-width: 0; }
 .manual-commission__processing { display: grid; gap: var(--admin-space-4); }

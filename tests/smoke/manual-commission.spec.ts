@@ -164,6 +164,23 @@ test('concurrent editing preserves the draft until explicitly reloaded', async (
   await conflict.getByRole('button', { name: '保留当前输入' }).click()
   await expect(page.getByLabel('称呼', { exact: false })).toHaveValue('虚构尚未保存的修改')
   await page.getByRole('button', { name: '保存修改' }).click()
+  await expect(conflict).toBeVisible()
+  let finishReload!: () => void
+  const held = new Promise<void>(resolve => { finishReload = resolve })
+  await page.route(url, async (route) => {
+    await held
+    await route.fulfill({ status: 503, body: '' })
+  })
+  await conflict.getByRole('button', { name: '重新载入（放弃当前修改）', exact: true }).click()
+  await expect(conflict.getByRole('button', { name: '保留当前输入' })).toBeDisabled()
+  await expect(conflict.getByRole('button', { name: '正在重新载入…' })).toBeDisabled()
+  await page.keyboard.press('Escape')
+  await expect(conflict).toBeVisible()
+  finishReload()
+  await expect(conflict.getByRole('alert')).toContainText('重新载入失败')
+  await expect(conflict.getByRole('button', { name: '保留当前输入' })).toBeEnabled()
+  await expect(page.getByLabel('称呼', { exact: false })).toHaveValue('虚构尚未保存的修改')
+  await page.unroute(url)
   await conflict.getByRole('button', { name: '重新载入（放弃当前修改）', exact: true }).click()
   await expect(page.getByText('虚构另一处已保存', { exact: true })).toBeVisible()
 })
@@ -189,7 +206,12 @@ test('manual editor uses the work editor card, field and column geometry', async
       return { x: rect.x, width: rect.width, padding: style.padding, radius: style.borderRadius,
         titleFont: getComputedStyle(heading).fontSize, titleInset: heading.getBoundingClientRect().x - rect.x }
     })
-    return { input, card }
+    const header = await page.getByRole('heading', { level: 1 }).evaluate(title => {
+      const style = getComputedStyle(title)
+      const bar = getComputedStyle(title.closest('header')!)
+      return { fontSize: style.fontSize, weight: style.fontWeight, gap: bar.gap, wrap: bar.flexWrap, alignment: bar.alignItems }
+    })
+    return { input, card, header }
   }
   const reference = await measure('角色名', '基础信息')
   await page.goto(`${adminBaseURL}/admin/commissions/new`)
@@ -232,12 +254,13 @@ test('local preview verifies JPEG, WebP and EXIF rotation and clears failed vali
     await expect(page.getByRole('status').filter({ hasText: '图片已核验' })).toBeVisible()
     const image = page.getByRole('img', { name: '委托申请私有设定图' })
     await expect.poll(() => image.evaluate((element: HTMLImageElement) => [element.naturalWidth, element.naturalHeight])).toEqual(rotated ? [height, width] : [width, height])
-    await expect(page.getByText('图片上传未完成', { exact: false })).toHaveCount(0)
+    await expect(page.getByRole('alert')).toHaveCount(0)
   }
   await setFakeMediaFlags(page, { failImageInfo: true })
   try {
     await file.setInputFiles({ name: 'synthetic-failure.png', mimeType: 'image/png', buffer: smallStudioPng() })
-    await expect(page.getByText('图片上传未完成', { exact: false })).toBeVisible()
+    await expect(page.getByRole('alert')).toContainText('服务端未能核验图片')
+    await expect(page.getByRole('alert')).toContainText('当前设定图仍保留')
     await expect(page.getByRole('status').filter({ hasText: '正在' })).toHaveCount(0)
     await expect(page.getByRole('progressbar')).toHaveCount(0)
     await expect(page.getByRole('button', { name: '更换设定图', exact: true })).toBeEnabled()
@@ -245,9 +268,67 @@ test('local preview verifies JPEG, WebP and EXIF rotation and clears failed vali
   finally { await setFakeMediaFlags(page, { failImageInfo: false }) }
   await file.setInputFiles({ name: 'synthetic-retry.png', mimeType: 'image/png', buffer: smallStudioPng() })
   await expect(page.getByRole('status').filter({ hasText: '图片已核验' })).toBeVisible()
-  await expect(page.getByText('图片上传未完成', { exact: false })).toHaveCount(0)
+  await expect(page.getByRole('alert')).toHaveCount(0)
   await expect.poll(() => cancellationStatuses).toEqual([200, 200, 200])
 })
+
+test('manual upload distinguishes local decode, expired session and network failures', async ({ page }) => {
+  await loginAsAdmin(page)
+  await page.goto(`${adminBaseURL}/admin/commissions/new`)
+  await hydrated(page)
+  const file = page.getByLabel('选择设定图', { exact: false })
+  const alert = page.getByRole('alert')
+  await file.setInputFiles({ name: 'broken.png', mimeType: 'image/png', buffer: Buffer.from('invalid') })
+  await expect(alert).toContainText('浏览器无法解码')
+
+  const png = { name: 'fixture.png', mimeType: 'image/png', buffer: smallStudioPng() }
+  await page.route('**/commission-upload-sessions/*/complete', route => route.fulfill({
+    status: 409, json: { error: { code: 'CONFLICT', reason: 'UPLOAD_SESSION_EXPIRED' } },
+  }), { times: 1 })
+  await file.setInputFiles(png)
+  await expect(alert).toContainText('图片上传会话已过期')
+  await page.route('**/api/e2e-fake-oss/**', route => route.abort('failed'), { times: 1 })
+  await file.setInputFiles(png)
+  await expect(alert).toContainText('图片传输中断')
+})
+
+for (const [phase, target, stage] of [
+  ['create', '**/api/admin/v1/commission-upload-sessions', '正在创建上传会话'],
+  ['put', '**/api/e2e-fake-oss/**', '正在上传图片'],
+  ['complete', '**/api/admin/v1/commission-upload-sessions/*/complete', '正在核验图片'],
+] as const) {
+  test(`discard during upload ${phase} cancels the session without starting another stage`, async ({ page }) => {
+    await loginAsAdmin(page)
+    await page.goto(`${adminBaseURL}/admin/commissions/new`)
+    await hydrated(page)
+    let release!: () => void
+    const held = new Promise<void>(resolve => { release = resolve })
+    await page.route(target, async route => {
+      const response = await route.fetch()
+      await held
+      await route.fulfill({ response })
+    })
+    let puts = 0
+    let completions = 0
+    page.on('request', r => {
+      if (r.method() === 'PUT') puts++
+      if (r.url().endsWith('/complete')) completions++
+    })
+    await Promise.all([
+      page.waitForRequest(target),
+      page.getByLabel('选择设定图', { exact: false }).setInputFiles({ name: 'fixture.png', mimeType: 'image/png', buffer: smallStudioPng() }),
+    ])
+    await expect(page.getByTestId('admin-task-progress')).toContainText(stage)
+    const cancelled = page.waitForResponse('**/commission-upload-sessions/*/cancel')
+    await page.getByRole('link', { name: '返回申请列表' }).click()
+    await page.getByRole('button', { name: '放弃修改并离开' }).click()
+    await expect(page).toHaveURL(/\/admin\/commissions$/u)
+    release()
+    expect((await cancelled).status()).toBe(200)
+    expect(puts).toBe(phase === 'create' ? 0 : 1)
+    expect(completions).toBe(phase === 'complete' ? 1 : 0)
+  })
+}
 
 test('detail actions remain grouped through all status/image combinations, long content and responsive layouts', async ({ page }, info) => {
   test.setTimeout(180_000)

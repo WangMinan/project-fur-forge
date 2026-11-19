@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { completeCommissionUploadResponseSchema, createCommissionUploadResponseSchema } from '~~/shared/schemas/commission'
 import type { ManualCommissionSave } from '~~/shared/schemas/manual-commission'
-import { buildUploadDeclaration } from '~/utils/upload-declaration'
+import { AdminApiError } from '~/composables/useAdminApi'
+import { buildUploadDeclaration, DECLARATION_FAILURE_LABELS } from '~/utils/upload-declaration'
 import { putFileToSignedUrl } from '~/utils/signed-put'
 
 const props = defineProps<{ existingHref: string | null, disabled: boolean }>()
@@ -10,6 +11,7 @@ const emit = defineEmits<{ busy: [value: boolean] }>()
 const api = useAdminApi()
 const busy = shallowRef(false)
 const stage = shallowRef('')
+const startedAt = shallowRef(0)
 const progress = shallowRef<number | null>(null)
 const error = shallowRef<string | null>(null)
 const previewError = shallowRef(false)
@@ -17,37 +19,84 @@ const removeOpen = shallowRef(false)
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 const href = computed(() => model.value ? `/api/admin/v1/commission-upload-sessions/${model.value.id}/preview` : model.value === null ? null : props.existingHref ? `${props.existingHref}?w=1280` : null)
 let xhr: XMLHttpRequest | null = null
-let active = true
+let abandoned = false
 
 async function select(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0]
   if (!file || props.disabled || busy.value) return
-  busy.value = true; emit('busy', true); error.value = null; progress.value = null
+  abandoned = false
+  busy.value = true
+  emit('busy', true)
+  error.value = null
+  progress.value = null
+  startedAt.value = Date.now()
   stage.value = '正在检查图片…'
+  let session: NonNullable<ManualCommissionSave['upload']> | undefined
+  let failureHint = '读取图片失败，请重新选择文件。'
   try {
-    const declaration = await buildUploadDeclaration(file)
-    if (!declaration.ok || file.size > 20_000_000 || declaration.declaration.width < 64 || declaration.declaration.height < 64) {
-      error.value = '请选择64–12000像素、20 MB以内的JPEG、PNG或WebP图片。'
+    if (!file.size || file.size > 20_000_000) {
+      error.value = '请选择 1 字节到 20 MB 之间的图片。'
       return
     }
+    const declaration = await buildUploadDeclaration(file)
+    if (abandoned) return
+    if (!declaration.ok) {
+      error.value = DECLARATION_FAILURE_LABELS[declaration.reason]
+      return
+    }
+    if (declaration.declaration.width < 64 || declaration.declaration.height < 64) {
+      error.value = '图片边长至少需要 64 像素。'
+      return
+    }
+    stage.value = '正在创建上传会话…'
+    failureHint = '无法创建上传会话，请稍后重试。'
     const created = await api('/api/admin/v1/commission-upload-sessions', { method: 'POST', body: { expected: declaration.declaration }, schema: createCommissionUploadResponseSchema })
+    session = { id: created.data.session.uploadSessionId, version: created.data.session.version, token: created.data.token }
+    if (abandoned) return
     stage.value = '正在上传图片…'
+    failureHint = '图片传输中断，请检查网络后重新选择图片。'
     const status = await putFileToSignedUrl(created.data.upload, file, ratio => { progress.value = ratio }, value => { xhr = value })
-    if (status < 200 || status >= 300) throw new Error('upload failed')
-    progress.value = null; stage.value = '正在核验图片…'
-    const completed = await api(`/api/admin/v1/commission-upload-sessions/${created.data.session.uploadSessionId}/complete`, {
-      method: 'POST', body: { token: created.data.token, expectedVersion: created.data.session.version }, schema: completeCommissionUploadResponseSchema,
+    if (abandoned) return
+    if (status < 200 || status >= 300) {
+      error.value = Date.now() >= Date.parse(created.data.upload.expiresAt)
+        ? '上传签名已过期，请重新选择图片。'
+        : '存储服务未接受图片，请重新选择后重试。'
+      return
+    }
+    progress.value = null
+    stage.value = '正在核验图片…'
+    failureHint = '服务端未能核验图片，请重新选择后重试。'
+    const completed = await api(`/api/admin/v1/commission-upload-sessions/${session.id}/complete`, {
+      method: 'POST', body: { token: session.token, expectedVersion: session.version }, schema: completeCommissionUploadResponseSchema,
     })
-    if (!active) return
+    session.version = completed.data.session.version
+    if (abandoned) return
     const old = model.value
-    model.value = { id: completed.data.session.uploadSessionId, version: completed.data.session.version, token: created.data.token }
+    model.value = session
+    session = undefined
     previewError.value = false
     if (old) await cancel(old)
     stage.value = '图片已核验，保存申请后生效。'
   }
-  catch { error.value = `图片上传未完成，请重新选择后重试。${href.value ? '当前设定图仍保留。' : ''}` }
+  catch (failure) {
+    if (failure instanceof AdminApiError && failure.reason === 'UPLOAD_SESSION_EXPIRED') {
+      error.value = '图片上传会话已过期，请重新选择图片。'
+    }
+    else if (failure instanceof AdminApiError && failure.status === 401) {
+      error.value = '登录已过期，请重新登录后再上传。'
+    }
+    else if (failure instanceof AdminApiError && failure.status === null) {
+      error.value = '未收到服务端确认，请检查网络后重新选择图片。'
+    }
+    else error.value = failureHint
+  }
   finally {
-    if (error.value) { stage.value = ''; progress.value = null }
+    xhr = null
+    if (session && abandoned) await cancel(session)
+    if (error.value) {
+      stage.value = ''
+      progress.value = null
+    }
     busy.value = false
     emit('busy', false)
     if (fileInput.value) fileInput.value.value = ''
@@ -67,7 +116,19 @@ async function remove() {
   stage.value = '保存申请后移除设定图。'
 }
 watch(href, () => { previewError.value = false })
-onBeforeUnmount(() => { active = false; xhr?.abort() })
+function stopUpload() {
+  abandoned = true
+  xhr?.abort()
+}
+function discard() {
+  stopUpload()
+  if (model.value && !props.disabled) {
+    void cancel(model.value)
+    model.value = undefined
+  }
+}
+defineExpose({ discard })
+onBeforeUnmount(stopUpload)
 </script>
 
 <template>
@@ -82,9 +143,12 @@ onBeforeUnmount(() => { active = false; xhr?.abort() })
     <label for="manual-image-file">选择设定图（JPEG、PNG、WebP，最多20 MB）</label>
     <AdminAction :disabled="disabled || busy" @click="fileInput?.click()">{{ href ? '更换设定图' : '选择设定图' }}</AdminAction>
     <input id="manual-image-file" ref="fileInput" hidden type="file" accept="image/jpeg,image/png,image/webp" :disabled="disabled || busy" @change="select">
-    <progress v-if="busy" class="commission-image__progress" :value="progress ?? undefined" max="1" aria-label="设定图上传进度" />
-    <p v-if="stage" role="status">{{ stage }} {{ busy && progress !== null ? `${Math.round(progress * 100)}%` : '' }}</p>
-    <p v-if="error" role="alert" class="commission-image__error">{{ error }}</p>
+    <AdminTaskProgress
+      v-if="busy || error" label="设定图上传" :stage="stage" :status="error ? 'error' : 'active'"
+      :mode="progress === null ? 'indeterminate' : 'determinate'" :value="progress" :max="1"
+      :detail="error && href ? error + ' 当前设定图仍保留。' : error" :started-at="startedAt" show-elapsed
+    />
+    <p v-else-if="stage" role="status">{{ stage }}</p>
     <AdminAction v-if="href" :disabled="disabled || busy" @click="removeOpen = true">移除设定图</AdminAction>
     <AdminConfirmDialog :open="removeOpen" title="移除设定图？" confirm-label="移除，保存后生效" cancel-label="保留图片" tone="danger" @confirm="remove" @cancel="removeOpen = false">
       <p>保存申请后将移除设定图。没有设定图时不能导出制作单。</p>
@@ -98,7 +162,5 @@ onBeforeUnmount(() => { active = false; xhr?.abort() })
 .commission-image .editor-card__head { margin-bottom: 0; }
 .commission-image__preview { width: 100%; max-height: 28rem; object-fit: contain; border-radius: var(--admin-radius-md); background: var(--admin-bg-subtle); }
 .commission-image__empty { padding: var(--admin-space-5); background: var(--admin-bg-subtle); border-radius: var(--admin-radius-md); color: var(--admin-text-secondary); }
-.commission-image__progress { width: 100%; }
-.commission-image__error { color: var(--admin-status-error); }
 .commission-image :deep(.admin-action) { justify-self: start; }
 </style>

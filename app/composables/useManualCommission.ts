@@ -34,6 +34,8 @@ export function useManualCommission(initial: CommissionSubmissionDetailDto | nul
   const errors = ref<Record<string, string>>({})
   const conflicts = shallowRef<z.infer<typeof commissionConflictsResponseSchema>['data'] | null>(null)
   const versionConflict = shallowRef(false)
+  const reloading = shallowRef(false)
+  const reloadError = shallowRef<string | null>(null)
   const dirty = computed(() => baseline.value !== JSON.stringify(draft) || upload.value !== undefined || uploadBusy.value || unknownResult.value)
   const locked = computed(() => saving.value || unknownResult.value)
   let pending: ManualCommissionSave & { requestId?: string, expectedVersion?: number } | null = null
@@ -110,6 +112,7 @@ export function useManualCommission(initial: CommissionSubmissionDetailDto | nul
         catch { error.value = '无法核对匹配申请，请稍后重新保存。' }
       }
       else if (failure instanceof AdminApiError && failure.reason === 'VERSION_CONFLICT') {
+        reloadError.value = null
         versionConflict.value = true
       }
       else if (failure instanceof AdminApiError && failure.reason === 'UPLOAD_SESSION_EXPIRED') {
@@ -150,7 +153,9 @@ export function useManualCommission(initial: CommissionSubmissionDetailDto | nul
   }
 
   async function reload() {
-    if (!detail.value) return
+    if (!detail.value || reloading.value) return
+    reloading.value = true
+    reloadError.value = null
     try {
       const response = await api(`/api/admin/v1/commissions/${detail.value.id}`, { schema: commissionSubmissionDetailResponseSchema })
       reset(response.data)
@@ -158,9 +163,10 @@ export function useManualCommission(initial: CommissionSubmissionDetailDto | nul
       error.value = null
       onSaved(response.data, false)
     }
-    catch { error.value = '重新载入失败，当前输入仍保留。' }
+    catch { reloadError.value = '重新载入失败，当前输入仍保留。请重试或返回编辑。' }
+    finally { reloading.value = false }
   }
 
   return { detail, draft, upload, uploadBusy, imageKey, saving, unknownResult, error, success, errors, conflicts, versionConflict,
-    dirty, locked, validate, submit, confirmConflict, reload, retry: persist }
+    dirty, locked, validate, submit, confirmConflict, reload, reloading, reloadError, retry: persist }
 }

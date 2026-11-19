@@ -128,6 +128,51 @@
   border-radius: var(--admin-radius-sm);
 }
 
+.admin-surface .editor-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--admin-space-4);
+  flex-wrap: wrap;
+}
+
+.admin-surface .editor-header__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--admin-space-3);
+  flex-wrap: wrap;
+}
+
+.admin-surface .editor-header__back {
+  font-size: var(--admin-font-base);
+  color: var(--admin-text-secondary);
+  min-height: var(--admin-touch-target);
+  display: inline-flex;
+  align-items: center;
+}
+
+.admin-surface .editor-header__back:hover {
+  color: var(--admin-text-primary);
+}
+
+.admin-surface .editor-header__title {
+  margin: 0;
+  font-size: var(--admin-font-base);
+  font-weight: 600;
+  line-height: var(--admin-line-tight);
+}
+
+.admin-surface .editor-header__heading .admin-badge {
+  min-height: var(--admin-control-height-sm);
+  font-size: var(--admin-font-base);
+}
+
+.admin-surface .editor-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--admin-space-2);
+}
+
 .admin-surface .editor-card {
   padding: var(--admin-space-5);
   background: var(--admin-bg-primary);

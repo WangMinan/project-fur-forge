@@ -64,18 +64,21 @@ function statusHref(status: CommissionSubmissionStatus | 'all') {
   return { path: '/admin/commissions', query: { ...(status === 'all' ? {} : { status }), ...(source.value === 'all' ? {} : { source: source.value }) } }
 }
 
+let latestLoad = 0
 async function load() {
+  const request = ++latestLoad
   pageStatus.value = 'loading'
   try {
     const response = await adminApi(
       `/api/admin/v1/commissions?status=${activeStatus.value}&source=${source.value}`,
       { schema: commissionSubmissionListResponseSchema },
     )
+    if (request !== latestLoad) return
     items.value = response.data
     pageStatus.value = 'ready'
   }
   catch {
-    pageStatus.value = 'error'
+    if (request === latestLoad) pageStatus.value = 'error'
   }
 }
 
