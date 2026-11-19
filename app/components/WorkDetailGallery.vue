@@ -261,7 +261,11 @@ const activeImageStyle = computed(() => {
     flex-wrap: nowrap;
     max-height: var(--gallery-stage-height);
     overflow-y: auto;
-    scrollbar-width: thin;
+    scrollbar-width: none;
+  }
+
+  .work-gallery__thumbs::-webkit-scrollbar {
+    display: none;
   }
 }
 

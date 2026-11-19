@@ -119,8 +119,18 @@ test('代表作品左对齐与七张详情图的横竖屏触控和溢出', async
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1)
     const dimensions = await strip.evaluate(el => ({ width: el.clientWidth, scrollWidth: el.scrollWidth, height: el.clientHeight, scrollHeight: el.scrollHeight }))
     if (width! < 480) expect(dimensions.scrollWidth).toBeGreaterThan(dimensions.width)
-    if (width! >= 768) expect(dimensions.height).toBeLessThanOrEqual((await stage.boundingBox())!.height + 1)
     const box = (await thumbs.first().boundingBox())!
+    if (width! >= 768) {
+      expect(dimensions.height).toBeLessThanOrEqual((await stage.boundingBox())!.height + 1)
+      expect(dimensions.scrollWidth).toBe(dimensions.width)
+      await expect(strip).toHaveCSS('scrollbar-width', 'none')
+      await strip.hover()
+      await page.mouse.wheel(0, dimensions.scrollHeight)
+      await expect.poll(() => strip.evaluate(el => el.scrollTop + el.clientHeight)).toBeGreaterThanOrEqual(dimensions.scrollHeight - 1)
+      await thumbs.last().click()
+      await expect(thumbs.last()).toHaveAttribute('aria-pressed', 'true')
+      await thumbs.first().click()
+    }
     expect(Math.abs(box.width - box.height)).toBeLessThan(1)
     expect(box.width).toBeGreaterThanOrEqual(44)
     await stage.scrollIntoViewIfNeeded()
