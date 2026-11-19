@@ -319,16 +319,16 @@ useSeoMeta({
     </div>
 
     <div v-else-if="work" class="editor">
-      <header class="editor__header">
-        <div class="editor__heading">
-          <NuxtLink to="/admin/works" class="editor__back">← 作品</NuxtLink>
-          <h1 class="editor__title">{{ work.characterName }}</h1>
+      <header class="editor-header">
+        <div class="editor-header__heading">
+          <NuxtLink to="/admin/works" class="editor-header__back">← 作品</NuxtLink>
+          <h1 class="editor-header__title">{{ work.characterName }}</h1>
           <AdminStatusBadge
             :tone="isDirty || mediaDirty ? 'warning' : 'neutral'"
             :label="isDirty || mediaDirty ? '有未保存更改' : '未更改'"
           />
         </div>
-        <div class="editor__actions">
+        <div class="editor-header__actions">
           <AdminAction
             :disabled="!isDirty || saving"
             :loading="saving"
@@ -530,49 +530,8 @@ useSeoMeta({
   font-weight: 600;
 }
 
-.editor__header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--admin-space-4);
-  flex-wrap: wrap;
+.editor > .editor-header {
   margin-bottom: var(--admin-space-5);
-}
-
-.editor__heading {
-  display: flex;
-  align-items: center;
-  gap: var(--admin-space-3);
-  flex-wrap: wrap;
-}
-
-.editor__back {
-  font-size: var(--admin-font-base);
-  color: var(--admin-text-secondary);
-  min-height: var(--admin-touch-target);
-  display: inline-flex;
-  align-items: center;
-}
-
-.editor__back:hover {
-  color: var(--admin-text-primary);
-}
-
-.editor__title {
-  margin: 0;
-  font-size: var(--admin-font-base);
-  font-weight: 600;
-  line-height: var(--admin-line-tight);
-}
-
-.editor__heading :deep(.admin-badge) {
-  min-height: var(--admin-control-height-sm);
-  font-size: var(--admin-font-base);
-}
-
-.editor__actions {
-  display: flex;
-  gap: var(--admin-space-2);
 }
 
 .editor__locked {

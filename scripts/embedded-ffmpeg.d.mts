@@ -67,3 +67,10 @@ export function decodeImageToPng(content: Buffer): Promise<{
   content: Buffer
   contentType: 'image/png'
 }>
+
+export function inspectImageDimensions(content: Buffer): Promise<{
+  width: number
+  height: number
+  format: 'png' | 'jpeg' | 'webp'
+  orientation: number
+}>

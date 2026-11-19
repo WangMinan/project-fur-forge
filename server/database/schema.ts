@@ -294,6 +294,8 @@ export const uploadSessions = sqliteTable('upload_sessions', {
 /** R3-B: anonymous commission uploads stay isolated from administrator sessions. */
 export const commissionUploadSessions = sqliteTable('commission_upload_sessions', {
   id: text('id').primaryKey(),
+  createdBy: text('created_by').references(() => users.id, { onDelete: 'restrict' }),
+  retiredAt: integer('retired_at'),
   tokenDigest: text('token_digest').notNull(),
   privateObjectKey: text('private_object_key').notNull(),
   expectedContentType: text('expected_content_type').notNull(),
@@ -376,16 +378,25 @@ export const commissionSubmissions = sqliteTable('commission_submissions', {
   emailNotificationPolicy: text('email_notification_policy').notNull().default('legacy'),
   emailDeletionPending: integer('email_deletion_pending').notNull().default(0),
   deletionLeaseExpiresAt: integer('deletion_lease_expires_at'),
+  origin: text('origin').notNull().default('website'),
+  channel: text('channel'),
+  channelLabel: text('channel_label'),
+  otherContact: text('other_contact'),
+  originalAppliedOn: text('original_applied_on'),
+  historicalHandledOn: text('historical_handled_on'),
+  offlineAdultConfirmed: integer('offline_adult_confirmed').notNull().default(0),
+  offlinePrivacyConfirmed: integer('offline_privacy_confirmed').notNull().default(0),
+  createdBy: text('created_by').references(() => users.id, { onDelete: 'restrict' }),
   nickname: text('nickname').notNull(),
   // 0042 以前的真实申请无法由 Agent 猜测物种，因此旧行允许 NULL；
   // 所有新投递由请求 Schema 强制填写。
   species: text('species'),
   phoneCountryCode: text('phone_country_code').notNull().default('+86'),
-  phoneNumber: text('phone_number').notNull(),
-  qq: text('qq').notNull(),
-  heightCm: integer('height_cm').notNull(),
-  weightKgTenths: integer('weight_kg_tenths').notNull(),
-  designAssetId: text('design_asset_id').notNull()
+  phoneNumber: text('phone_number'),
+  qq: text('qq'),
+  heightCm: integer('height_cm'),
+  weightKgTenths: integer('weight_kg_tenths'),
+  designAssetId: text('design_asset_id')
     .references(() => assets.id, { onDelete: 'restrict' }),
   status: text('status').notNull().default('pending'),
   internalNote: text('internal_note'),
@@ -394,6 +405,15 @@ export const commissionSubmissions = sqliteTable('commission_submissions', {
   version: integer('version').notNull().default(1),
   ...timestampColumns(),
 }, table => [
+  index('commission_submissions_phone_idx').on(table.phoneNumber),
+  index('commission_submissions_qq_idx').on(table.qq),
+  check('commission_origin', sql`${table.origin} IN ('website', 'manual')`),
+  check('commission_channel', sql`${table.channel} IN ('qq', 'wechat', 'other')`),
+  check('commission_channel_label', sql`${table.channelLabel} IS NULL OR length(trim(${table.channelLabel})) BETWEEN 1 AND 50`),
+  check('commission_other_contact', sql`${table.otherContact} IS NULL OR length(trim(${table.otherContact})) BETWEEN 1 AND 200`),
+  check('commission_offline_adult', sql`${table.offlineAdultConfirmed} IN (0, 1)`),
+  check('commission_offline_privacy', sql`${table.offlinePrivacyConfirmed} IN (0, 1)`),
+  check('commission_origin_fields', sql`(${table.origin} = 'website' AND ${table.phoneNumber} IS NOT NULL AND ${table.qq} IS NOT NULL AND ${table.heightCm} IS NOT NULL AND ${table.weightKgTenths} IS NOT NULL AND ${table.designAssetId} IS NOT NULL AND ${table.channel} IS NULL) OR (${table.origin} = 'manual' AND ${table.channel} IS NOT NULL AND ${table.createdBy} IS NOT NULL AND (${table.phoneNumber} IS NOT NULL OR ${table.qq} IS NOT NULL OR ${table.otherContact} IS NOT NULL) AND (${table.channel} != 'other' OR ${table.channelLabel} IS NOT NULL) AND (${table.status} != 'accepted' OR (${table.offlineAdultConfirmed} = 1 AND ${table.offlinePrivacyConfirmed} = 1)))`),
   check('commission_email_policy', sql`${table.emailNotificationPolicy} IN ('legacy', 'enabled', 'disabled', 'unconfigured')`),
   check('commission_email_deletion_pending', sql`${table.emailDeletionPending} IN (0, 1)`),
   check('commission_deletion_lease', sql`${table.deletionLeaseExpiresAt} IS NULL OR (${table.emailDeletionPending} = 1 AND ${table.deletionLeaseExpiresAt} > 0)`),
@@ -401,7 +421,7 @@ export const commissionSubmissions = sqliteTable('commission_submissions', {
   uniqueIndex('commission_submissions_design_asset_unique').on(table.designAssetId),
   uniqueIndex('commission_submissions_pending_phone_unique')
     .on(table.phoneCountryCode, table.phoneNumber)
-    .where(sql`${table.status} = 'pending'`),
+    .where(sql`${table.status} = 'pending' AND ${table.origin} = 'website'`),
   index('commission_submissions_status_created_idx').on(table.status, table.createdAt),
   check(
     'commission_submissions_receipt',
@@ -1048,3 +1068,10 @@ export const siteContentTranslations = sqliteTable('site_content_translations', 
   check('site_content_translations_fields_check', sql`json_valid(${table.fieldsJson}) AND json_type(${table.fieldsJson}) = 'object'`),
   check('site_content_translations_version_check', sql`${table.version} > 0`),
 ])
+
+export const commissionCreateRequests = sqliteTable('commission_create_requests', {
+  id: text('id').primaryKey(),
+  actorId: text('actor_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
+  payloadHash: text('payload_hash'),
+  submissionId: text('submission_id').references(() => commissionSubmissions.id, { onDelete: 'set null' }),
+})

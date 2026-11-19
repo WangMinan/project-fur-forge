@@ -26,6 +26,7 @@ export function commissionRecipients(sqlite: Database.Database) {
 
 // Called inside the submission transaction. No network work belongs here.
 export function enqueueCommissionEmails(sqlite: Database.Database, id: string, enabled: boolean, now: number) {
+  if (sqlite.prepare("SELECT 1 FROM commission_submissions WHERE id = ? AND origin = 'manual'").get(id)) return
   const recipients = commissionRecipients(sqlite)
   const policy = !enabled ? 'disabled' : recipients.length ? 'enabled' : 'unconfigured'
   sqlite.prepare('UPDATE commission_submissions SET email_notification_policy = ? WHERE id = ?').run(policy, id)
@@ -78,7 +79,7 @@ export function claimCommissionEmail(sqlite: Database.Database, now = Date.now()
     cancelRemovedCommissionEmails(sqlite, now)
     const row = sqlite.prepare(`SELECT n.* FROM commission_email_notifications n
       JOIN commission_submissions s ON s.id = n.submission_id
-      WHERE n.status = 'pending' AND n.next_attempt_at <= ? AND s.email_deletion_pending = 0
+      WHERE n.status = 'pending' AND n.next_attempt_at <= ? AND s.email_deletion_pending = 0 AND s.origin = 'website'
       ORDER BY n.next_attempt_at, n.rowid LIMIT 1`).get(now) as CommissionEmailRow | undefined
     if (!row) return null
     const token = randomUUID()
@@ -93,7 +94,7 @@ export function beginCommissionEmailTransmission(sqlite: Database.Database, row:
   return sqlite.prepare(`UPDATE commission_email_notifications SET transmitting_at = ?, updated_at = ?
     WHERE id = ? AND status = 'sending' AND lease_token = ? AND lease_expires_at > ?
       AND recipient IN (SELECT value FROM json_each((SELECT commission_notification_recipients_json FROM site_content WHERE id = 'site')))
-      AND EXISTS (SELECT 1 FROM commission_submissions WHERE id = submission_id AND email_deletion_pending = 0)`)
+      AND EXISTS (SELECT 1 FROM commission_submissions WHERE id = submission_id AND email_deletion_pending = 0 AND origin = 'website')`)
     .run(now, now, row.id, row.lease_token, now).changes === 1
 }
 
@@ -119,7 +120,7 @@ export function retryCommissionEmail(sqlite: Database.Database, submissionId: st
     last_error_code = NULL, next_attempt_at = ?, updated_at = ?
     WHERE id = ? AND submission_id = ? AND status = 'failed'
       AND recipient IN (SELECT value FROM json_each((SELECT commission_notification_recipients_json FROM site_content WHERE id = 'site')))
-      AND EXISTS (SELECT 1 FROM commission_submissions WHERE id = submission_id AND email_deletion_pending = 0)`)
+      AND EXISTS (SELECT 1 FROM commission_submissions WHERE id = submission_id AND email_deletion_pending = 0 AND origin = 'website')`)
     .run(now, now, id, submissionId)
   if (!updated.changes) throw new ServiceError(409, 'CONFLICT', 'Notification cannot be retried.')
 }

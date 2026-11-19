@@ -13,7 +13,7 @@ export const commissionRecipientsSchema = z.array(notificationEmailSchema)
 
 export const smtpStatusSchema = z.enum(['ready', 'disabled', 'invalid'])
 export const commissionEmailStatusSchema = z.enum([
-  'legacy', 'disabled', 'unconfigured', 'pending', 'sending', 'sent', 'partial', 'failed', 'cancelled',
+  'not_applicable', 'legacy', 'disabled', 'unconfigured', 'pending', 'sending', 'sent', 'partial', 'failed', 'cancelled',
 ])
 export const commissionEmailErrorSchema = z.enum([
   'AUTH', 'REJECTED', 'TOO_LARGE', 'CONNECTION', 'ATTACHMENT', 'UNKNOWN',

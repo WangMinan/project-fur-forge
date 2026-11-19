@@ -1,4 +1,5 @@
 export const COMMISSION_EMAIL_LABELS = {
+  not_applicable: '无需邮件',
   legacy: '未安排邮件', disabled: '投递时邮件未启用', unconfigured: '投递时未配置收件人',
   pending: '待发送', sending: '发送中', sent: '已交付邮件服务器', partial: '部分交付',
   failed: '发送失败', cancelled: '已取消',

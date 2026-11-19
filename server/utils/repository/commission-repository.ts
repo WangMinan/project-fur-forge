@@ -7,6 +7,8 @@ import type {
 } from '../../../shared/types/contracts'
 
 export interface CommissionUploadRow {
+  created_by?: string | null
+  retired_at?: number | null
   assetId: string | null
   completedAt: number | null
   consumedAt: number | null
@@ -29,23 +31,31 @@ export interface CommissionUploadRow {
 }
 
 export interface CommissionSubmissionRow {
+  origin: 'website' | 'manual'
+  channel: 'qq' | 'wechat' | 'other' | null
+  channelLabel: string | null
+  otherContact: string | null
+  originalAppliedOn: string | null
+  historicalHandledOn: string | null
+  offlineAdultConfirmed: number
+  offlinePrivacyConfirmed: number
   createdAt: number
-  designAssetId: string
+  designAssetId: string | null
   handledAt: number | null
   handledBy: string | null
-  heightCm: number
+  heightCm: number | null
   id: string
   internalNote: string | null
   nickname: string
   species: string | null
   phoneCountryCode: '+86'
-  phoneNumber: string
-  qq: string
+  phoneNumber: string | null
+  qq: string | null
   receiptCode: string
   status: CommissionSubmissionStatus
   updatedAt: number
   version: number
-  weightKgTenths: number
+  weightKgTenths: number | null
 }
 
 const uploadColumns = `
@@ -69,7 +79,7 @@ export function findCommissionUpload(
   id: string,
 ) {
   return sqlite.prepare(`
-    SELECT ${uploadColumns}
+    SELECT *, ${uploadColumns}
     FROM commission_upload_sessions WHERE id = ?
   `).get(id) as CommissionUploadRow | undefined
 }
@@ -77,7 +87,7 @@ export function findCommissionUpload(
 export function insertCommissionUpload(
   sqlite: Database.Database,
   input: Omit<CommissionUploadRow,
-    | 'assetId' | 'completedAt' | 'consumedAt'
+    | 'created_by' | 'retired_at' | 'assetId' | 'completedAt' | 'consumedAt'
     | 'failureCode' | 'failureStage' | 'status' | 'version'>,
 ) {
   sqlite.prepare(`
@@ -150,7 +160,9 @@ function submissionColumns(sqlite: Database.Database) {
   const hasSpecies = (sqlite.pragma(
     'table_info(commission_submissions)',
   ) as { name: string }[]).some(column => column.name === 'species')
+  const manual = (sqlite.pragma('table_info(commission_submissions)') as { name: string }[]).some(column => column.name === 'origin')
   return `
+    ${manual ? `origin, channel, channel_label AS channelLabel, other_contact AS otherContact, original_applied_on AS originalAppliedOn, historical_handled_on AS historicalHandledOn, offline_adult_confirmed AS offlineAdultConfirmed, offline_privacy_confirmed AS offlinePrivacyConfirmed` : `'website' AS origin, NULL AS channel, NULL AS channelLabel, NULL AS otherContact, NULL AS originalAppliedOn, NULL AS historicalHandledOn, 0 AS offlineAdultConfirmed, 0 AS offlinePrivacyConfirmed`},
     id, receipt_code AS receiptCode, nickname,
     ${hasSpecies ? 'species' : 'NULL AS species'},
     phone_country_code AS phoneCountryCode,
@@ -259,7 +271,7 @@ export interface CommissionDeletionTarget {
     objectKey: string
   }[]
   submission: {
-    designAssetId: string
+    designAssetId: string | null
     id: string
     receiptCode: string
     status: CommissionSubmissionStatus
@@ -348,7 +360,7 @@ export function claimCommissionDeletionTarget(sqlite: Database.Database, target:
   const claimed = sqlite.prepare(`
     UPDATE commission_submissions SET email_deletion_pending = 1,
       deletion_lease_expires_at = ?, version = version + 1
-    WHERE id = ? AND version = ? AND status = ? AND design_asset_id = ?
+    WHERE id = ? AND version = ? AND status = ? AND design_asset_id IS ?
       AND (deletion_lease_expires_at IS NULL OR deletion_lease_expires_at <= ?)
   `).run(now + COMMISSION_DELETION_LEASE_MS, target.submission.id, target.submission.version,
     target.submission.status, target.submission.designAssetId, now).changes === 1
@@ -393,7 +405,7 @@ export function deleteCommissionTargetRows(
       SELECT design_asset_id AS designAssetId, status, version
       FROM commission_submissions WHERE id = ?
     `).get(target.submission.id) as {
-      designAssetId: string
+      designAssetId: string | null
       status: CommissionSubmissionStatus
       version: number
     } | undefined
@@ -412,7 +424,7 @@ export function deleteCommissionTargetRows(
       throw new Error('Commission submission deletion failed.')
     }
     if (sqlite.prepare('DELETE FROM commission_upload_sessions WHERE asset_id = ?')
-      .run(target.submission.designAssetId).changes !== 1) {
+      .run(target.submission.designAssetId).changes !== (target.submission.designAssetId === null ? 0 : 1)) {
       throw new Error('Commission upload deletion failed.')
     }
     sqlite.prepare('DELETE FROM asset_variants WHERE asset_id = ?')
@@ -420,7 +432,7 @@ export function deleteCommissionTargetRows(
     if (sqlite.prepare(`
       DELETE FROM assets
       WHERE id = ? AND role = 'commission_design_reference'
-    `).run(target.submission.designAssetId).changes !== 1) {
+    `).run(target.submission.designAssetId).changes !== (target.submission.designAssetId === null ? 0 : 1)) {
       throw new Error('Commission asset deletion failed.')
     }
     sqlite.prepare(`

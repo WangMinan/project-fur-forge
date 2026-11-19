@@ -62,6 +62,14 @@ afterEach(() => {
 })
 
 describe('commission work order PDF', () => {
+  it('paginates a long note instead of clipping private application information', async () => {
+    sqlite.prepare('UPDATE commission_submissions SET internal_note = ? WHERE id = ?')
+      .run('长备注应完整保留，不覆盖其他字段。'.repeat(100), SUBMISSION_ID)
+    const result = await buildCommissionWorkOrderPdf(sqlite, storage, SUBMISSION_ID)
+    const pdf = await PDFDocument.load(result.content)
+    expect(pdf.getPageCount()).toBeGreaterThan(2)
+    expect(pdf.getPages().every(page => page.getWidth() > page.getHeight())).toBe(true)
+  })
   it('loads the runtime font path and emits a two-page PDF', async () => {
     expect(commissionWorkOrderFontFile('production', '/app'))
       .toBe(resolve('/app/.output/public/fonts/noto-serif-sc-regular.otf'))
