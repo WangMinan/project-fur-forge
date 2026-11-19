@@ -260,7 +260,9 @@ const activeImageStyle = computed(() => {
     flex-direction: column;
     flex-wrap: nowrap;
     max-height: var(--gallery-stage-height);
+    padding-inline-end: var(--space-3);
     overflow-y: auto;
+    scrollbar-gutter: stable;
     scrollbar-width: thin;
   }
 }
