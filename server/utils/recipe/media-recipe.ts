@@ -1,6 +1,6 @@
 import { verifyPublicImage } from '../service/public-image-validation'
 import { COMPOSITION_USAGES } from '../../../shared/schemas/image-composition'
-import type { CompositionUsage, ImageCompositions } from '../../../shared/schemas/image-composition'
+import type { CropRect, CompositionUsage, ImageCompositions } from '../../../shared/schemas/image-composition'
 import { compositionMinimumDimensions, compositionOutputHeight, pixelCrop, resolveComposition } from '../../../shared/utils/image-composition'
 import {
   createHash,
@@ -43,7 +43,7 @@ import {
   refreshVariantContent,
 } from '../repository/variant-repository'
 import { ServiceError } from '../service-error'
-import { buildSiteDisplayProcess } from './site-display-recipe'
+import { buildSiteDisplayProcess, siteDisplayHeight, siteDisplayWidths, type HeroDisplayUsage } from './site-display-recipe'
 
 export const COMPOSITION_RECIPE_VERSION = 'work-composition-v1'
 export const PUBLIC_RECIPE_VERSION = 'recipe-v4'
@@ -159,28 +159,28 @@ export async function ensureHeroUpscaleSource(
   storage: MediaStorage,
   assetId: string,
   now = Date.now(),
+  minimum?: { width: number, height: number },
 ) {
   const sourceAsset = asset(sqlite, assetId)
   const target = heroUpscaleTarget(sourceAsset.role)
   if (!target) {
     throw new ServiceError(400, 'VALIDATION_ERROR', 'Asset is not a hero image.')
   }
-  if (sourceAsset.width >= target.width && sourceAsset.height >= target.height) {
-    return processingSource(sqlite, sourceAsset)
+  const required = minimum ?? target
+  try {
+    const existing = processingSource(sqlite, sourceAsset)
+    if (existing.width >= required.width && existing.height >= required.height) return existing
   }
-  const existing = processingSource(sqlite, sourceAsset)
-  if (existing.sourceVariantId !== null
-    && existing.width >= target.width
-    && existing.height >= target.height) {
-    return existing
+  catch (error) {
+    if (!(error instanceof ServiceError && error.reason === 'MEDIA_SOURCE_UNAVAILABLE')) throw error
   }
 
   let objectKey: string | null = null
   try {
-    const output = await upscaleHeroImage(
-      await storage.getPrivate(sourceAsset.privateObjectKey),
-      target.orientation,
-    )
+    const original = await storage.getPrivate(sourceAsset.privateObjectKey)
+    const output = minimum
+      ? await upscaleImageToMinimum(original, minimum)
+      : await upscaleHeroImage(original, target.orientation)
     const identity = JSON.stringify({
       recipeVersion: HERO_UPSCALE_RECIPE_VERSION,
       sourceSha256: sourceAsset.sha256,
@@ -803,18 +803,23 @@ export async function generatePrivatePublicPreview(
   input: {
     assetId: string
     objectKey: string
-    usage: PublicMediaUsage
+    cropRect?: CropRect | undefined
+    usage: PublicMediaUsage | HeroDisplayUsage
     width: number
   },
 ) {
-  const sourceAsset = asset(sqlite, input.assetId)
-  if (!recipes[input.usage].widths.includes(input.width as never)) {
+  const sourceAsset = { ...asset(sqlite, input.assetId), heroCrop: input.cropRect }
+  const usage = input.usage
+  const isHero = usage === 'home-hero-landscape' || usage === 'home-hero-portrait'
+    || usage === 'commission-hero-landscape' || usage === 'commission-hero-portrait'
+  const widths: readonly number[] = isHero ? siteDisplayWidths(usage) : recipes[usage].widths
+  if (!widths.includes(input.width)) {
     throw new ServiceError(400, 'VALIDATION_ERROR', 'Preview width is invalid.')
   }
   const source = processingSource(sqlite, sourceAsset)
-  const process = input.usage === 'home-hero-landscape' || input.usage === 'home-hero-portrait'
-    ? buildSiteDisplayProcess(sourceAsset, input.usage, input.width, 'webp', source)
-    : buildPublicMediaProcess(sourceAsset, input.usage, input.width, 'webp', source)
+  const process = isHero
+    ? buildSiteDisplayProcess(sourceAsset, usage, input.width, 'webp', source)
+    : buildPublicMediaProcess(sourceAsset, usage, input.width, 'webp', source)
   await storage.processPrivateToPrivate({
     sourceObjectKey: source.objectKey,
     objectKey: input.objectKey,
@@ -825,7 +830,7 @@ export async function generatePrivatePublicPreview(
     storage.imageInfoPrivate(input.objectKey),
     storage.getPrivateSigned(input.objectKey, Date.now() + 60_000),
   ])
-  const height = outputHeight(input.usage, input.width)
+  const height = isHero ? siteDisplayHeight(usage, input.width, input.cropRect) : outputHeight(usage, input.width)
   if (
     head.byteSize < 1
     || head.byteSize !== signed.content.length

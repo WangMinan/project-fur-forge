@@ -75,7 +75,7 @@ export const retryCommissionUploadRequestSchema
 export const retryCommissionUploadResponseSchema
   = createCommissionUploadResponseSchema
 
-const commissionPhoneSchema = z.object({
+export const commissionPhoneSchema = z.object({
   countryCode: z.literal('+86'),
   number: z.string().regex(/^1[3-9]\d{9}$/u),
 }).strict()
@@ -108,6 +108,10 @@ export const commissionSubmissionStatusSchema = z.enum([
 ])
 
 export const commissionSubmissionListItemDtoSchema = z.object({
+  origin: z.enum(['website', 'manual']).default('website'),
+  channel: z.enum(['qq', 'wechat', 'other']).nullable().default(null),
+  channelLabel: z.string().nullable().default(null),
+  originalAppliedOn: z.string().nullable().default(null),
   emailNotificationStatus: commissionEmailStatusSchema.default('legacy'),
   id: resourceIdSchema,
   receiptCode: z.string().min(8).max(24),
@@ -120,16 +124,20 @@ export const commissionSubmissionListItemDtoSchema = z.object({
 
 export const commissionSubmissionDetailDtoSchema
   = commissionSubmissionListItemDtoSchema.extend({
-    phone: commissionPhoneSchema,
-    qq: z.string().regex(/^[1-9]\d{4,11}$/u),
-    heightCm: z.number().int().min(80).max(250),
-    weightKg: z.number().min(20).max(300),
+    phone: commissionPhoneSchema.nullable(),
+    qq: z.string().regex(/^[1-9]\d{4,11}$/u).nullable(),
+    heightCm: z.number().int().min(80).max(250).nullable(),
+    weightKg: z.number().min(20).max(300).nullable(),
+    otherContact: z.string().nullable().default(null),
+    historicalHandledOn: z.string().nullable().default(null),
+    offlineAdultConfirmed: z.boolean().default(false),
+    offlinePrivacyConfirmed: z.boolean().default(false),
     internalNote: z.string().max(2_000).nullable(),
     updatedAt: z.string().datetime({ offset: true }),
     handledAt: z.string().datetime({ offset: true }).nullable(),
     designReferencePreviewHref: z.string().regex(
       /^\/api\/admin\/v1\/commissions\/[0-9a-f-]+\/design-reference$/u,
-    ),
+    ).nullable(),
   }).strict()
 
 export const commissionSubmissionListResponseSchema = apiSuccessSchema(

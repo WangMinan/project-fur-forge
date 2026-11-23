@@ -8,6 +8,7 @@ import {
   setResponseStatus,
 } from 'h3'
 import { getE2eFakeMediaStorage } from './e2e-fake-media'
+import { inspectImageDimensions } from '../../../scripts/embedded-ffmpeg.mjs'
 
 const ROUTE_PREFIX = '/api/e2e-fake-oss/'
 
@@ -84,7 +85,14 @@ export default defineEventHandler(async (event) => {
     : getHeader(event, 'x-oss-meta-sha256') ?? null
   fake.omitSha256OnNextPut = false
 
-  fake.seedPrivate(objectKey, bytes, contentType, sha256Metadata)
+  try {
+    const imageInfo = await inspectImageDimensions(bytes)
+    fake.seedPrivate(objectKey, bytes, contentType, sha256Metadata, { ...imageInfo, fileSize: bytes.length })
+  }
+  catch {
+    setResponseStatus(event, 400)
+    return { error: 'InvalidImage' }
+  }
   fake.putRecords.push({
     byteSize: bytes.length,
     contentMd5,

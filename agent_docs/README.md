@@ -24,6 +24,8 @@
 | 需求14 · 在线文本维护 | 用户已验收；授权PR合并与出包 | [STATE](需求14-在线文本维护/STATE.md) · [SPEC](需求14-在线文本维护/requirements/SPEC.md) · [TASKS](需求14-在线文本维护/implementation/TASKS.md) |
 | 需求15 · 确认弹窗与快速检查 | 用户已验收；授权PR合并与出包 | [STATE](需求15-确认弹窗与快速检查/STATE.md) · [SPEC](需求15-确认弹窗与快速检查/requirements/SPEC.md) · [TASKS](需求15-确认弹窗与快速检查/implementation/TASKS.md) |
 | 需求16 · 公开仓库清理与源码许可 | 用户确认；隔离清理与验证中 | [STATE](需求16-公开仓库清理与源码许可/STATE.md) · [SPEC](需求16-公开仓库清理与源码许可/requirements/SPEC.md) · [TASKS](需求16-公开仓库清理与源码许可/implementation/TASKS.md) |
+| 需求17 · 后台录入已有委托 | 本地实现与自动验证完成；已提供本地预览 | [STATE](需求17-后台录入已有委托/STATE.md) · [SPEC](需求17-后台录入已有委托/requirements/SPEC.md) · [TASKS](需求17-后台录入已有委托/implementation/TASKS.md) |
+| 需求18 · 大图手动构图 | 用户已验收 | [STATE](需求18-大图手动构图/STATE.md) · [SPEC](需求18-大图手动构图/requirements/SPEC.md) · [TASKS](需求18-大图手动构图/implementation/TASKS.md) |
 
 ## 按主题补读
 
@@ -33,6 +35,7 @@
 | 公开文案、模型与视觉 | 需求4 [COPY](需求4-站点视觉升级与内容合规/requirements/COPY.md)、[models](需求4-站点视觉升级与内容合规/models/README.md)、[design](需求4-站点视觉升级与内容合规/.design/README.md)；后续需求按明确条款覆盖 |
 | 媒体与预览 | [媒体策略](需求1-兽装工作室主页/requirements/MEDIA-PUBLICATION-POLICY.md) 包含历史水印、返图与旧配方描述；当前退役结果以需求3 foundation、需求4 SPEC 的退役条款及 [T47-F4](需求4-站点视觉升级与内容合规/implementation/notes/2026-08-29-T47-F4-MOBILE-PDF-MEDIA-RETIREMENT.md) 为准。当前管理同源预览见 [需求5交接](需求5-委托邮件通知与站点配置/implementation/notes/2026-09-09-ADMIN-IMAGE-PROXY.md) 与部署文档 |
 | 内部邮件与站点配置 | 需求5 SPEC 的内部 SMTP 授权覆盖早期“禁用 SMTP”条款，不扩展为对外自动邮件 |
+| 后台补录委托 | 需求17 [SPEC](需求17-后台录入已有委托/requirements/SPEC.md) 定义少量手工录入、手机号或QQ冲突确认、资料补改及无需邮件；局部覆盖完整资料和pending唯一性等旧契约。本地已实现，验收与发布边界以需求17 STATE为准 |
 | 图片构图与详情显隐 | 需求6 SPEC 明确列出拟覆盖条款；本地已实现；生产生效状态以实际部署记录为准 |
 | 领养价格与署名 | 需求13 [SPEC](需求13-领养价格与画师展示/requirements/SPEC.md) 局部覆盖需求7的详情价格禁用；首页与列表价格继续隐藏；画师仅领养目录和详情显示。 |
 | 公开站语言、X 联系与价格/SEO | 需求7 [SPEC](需求7-公开站中英切换/requirements/SPEC.md) 定义无前缀中英切换、中文 fallback、右上角语言按钮、X 分流及价格/SEO 修正；继承需求6构图与详情显隐，明确覆盖旧公开价格和相关联系条款。当前本地已实现，验证/发布状态以需求7 STATE 为准 |

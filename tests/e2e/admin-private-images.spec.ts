@@ -121,8 +121,8 @@ test('work editor uses 1280 for cover and design sheet, 640 for photos, and 320 
   }])
   await page.goto(adminBaseURL + '/admin/works')
   await page.getByRole('link', { name: '虚构图片尺寸测试', exact: true }).click()
-  for (const [alt, width] of [['虚构横版封面', 1280], ['虚构完整设定图', 1280], ['虚构出厂照', 640]] as const) {
-    const image = page.getByRole('img', { name: alt, exact: true })
+  for (const [region, alt, width] of [['领养横版封面', '虚构横版封面', 1280], ['领养设定图', '虚构完整设定图', 1280], ['出厂照', '虚构出厂照', 640]] as const) {
+    const image = page.getByRole('region', { name: region, exact: true }).getByRole('img', { name: alt, exact: true })
     await expect(image).toHaveAttribute('src', new RegExp('/preview\\?w=' + width + '$'))
     await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth)).toBeGreaterThan(0)
   }

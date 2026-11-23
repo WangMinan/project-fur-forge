@@ -113,12 +113,12 @@ async function buildDeletionPlan(
   if (target.submission.status !== 'rejected' && !allowNonRejected) {
     blockers.push('STATUS_NOT_REJECTED')
   }
-  if (!target.asset
+  if (target.submission.designAssetId !== null && (!target.asset
     || target.asset.id !== target.submission.designAssetId
-    || target.asset.role !== 'commission_design_reference') {
+    || target.asset.role !== 'commission_design_reference')) {
     blockers.push('ASSET_RELATION_INVALID')
   }
-  if (target.sessions.length !== 1) {
+  if (target.sessions.length !== (target.submission.designAssetId === null ? 0 : 1)) {
     blockers.push('UPLOAD_SESSION_RELATION_INVALID')
   }
   if (target.variants.some(variant => (

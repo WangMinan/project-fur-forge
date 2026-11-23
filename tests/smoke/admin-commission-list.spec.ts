@@ -5,6 +5,39 @@ import { openFixtureDatabase } from '../e2e/helpers/fixture-db'
 
 test.use({ hasTouch: true })
 
+for (const staleStatus of [200, 503]) {
+  test(`late source response (${staleStatus}) preserves the selected channel`, async ({ page }) => {
+    await loginAsAdmin(page)
+    let releaseQQ!: () => void
+    const held = new Promise<void>(resolve => { releaseQQ = resolve })
+    await page.route('**/api/admin/v1/commissions?*', async (route) => {
+      const source = new URL(route.request().url()).searchParams.get('source')
+      if (source === 'qq') await held
+      const data = source === 'all' ? [] : [{
+        id: randomUUID(), receiptCode: 'DD-123456789012', nickname: `fixture-${source}`,
+        origin: 'manual', channel: source, species: null, createdAt: new Date().toISOString(), status: 'pending', version: 1,
+      }]
+      await route.fulfill({ status: source === 'qq' ? staleStatus : 200, json: { data } })
+    })
+    await page.goto(`${adminBaseURL}/admin/commissions`)
+    await expect(page.getByText('当前状态下没有申请。')).toBeVisible()
+    const choose = async (name: string) => {
+      await page.getByRole('combobox', { name: '来源', exact: true }).click()
+      await page.getByRole('option', { name, exact: true }).click()
+    }
+    await Promise.all([page.waitForRequest(r => r.url().includes('&source=qq')), choose('后台录入 · QQ')])
+    await choose('后台录入 · 微信')
+    const current = page.getByRole('link', { name: 'fixture-wechat' })
+    await expect(current).toBeVisible()
+    const stale = page.waitForResponse(r => r.url().includes('&source=qq'))
+    releaseQQ()
+    await (await stale).finished()
+    await page.waitForLoadState('networkidle')
+    await expect(current).toBeVisible()
+    await expect(page.getByText('申请列表加载失败。')).toHaveCount(0)
+  })
+}
+
 test('commission all-status API preserves filters, validation and private list fields', async ({ page, request }) => {
   const session = await loginAsAdmin(page)
   const sqlite = openFixtureDatabase(E2E_DATABASE_FILE)
@@ -36,7 +69,7 @@ test('commission all-status API preserves filters, validation and private list f
       if (status === 'all') expect(rows.map((item: { id: string }) => item.id)).toEqual([...ids].reverse())
       else expect(rows[0].status).toBe(status)
       for (const row of rows) {
-        expect(Object.keys(row).sort()).toEqual(['createdAt', 'emailNotificationStatus', 'id', 'nickname', 'receiptCode', 'species', 'status', 'version'])
+        expect(Object.keys(row).sort()).toEqual(['channel', 'channelLabel', 'createdAt', 'emailNotificationStatus', 'id', 'nickname', 'origin', 'originalAppliedOn', 'receiptCode', 'species', 'status', 'version'])
       }
     }
     const legacyDefault = await (await page.request.get(`${adminBaseURL}/api/admin/v1/commissions`)).json()
@@ -97,7 +130,7 @@ test('commission table filters, paginates and recovers across responsive layouts
   const rows = page.locator('.commission-inbox__row:visible')
   const pagination = page.getByRole('navigation', { name: '委托申请分页' })
   await expect(table).toBeVisible()
-  await expect(table.getByRole('columnheader')).toHaveText(['申请人', '物种', '提交时间', '处理状态', '回执编号', '邮件通知', '操作'])
+  await expect(table.getByRole('columnheader')).toHaveText(['申请人', '物种', '来源', '申请时间', '处理状态', '申请编号', '邮件通知', '操作'])
   await expect(rows).toHaveCount(10)
   await expect(page.getByText('联系方式在详情中按需查看。')).toHaveCount(0)
   const status = page.getByRole('combobox', { name: '处理状态', exact: true })

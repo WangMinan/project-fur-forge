@@ -407,6 +407,34 @@
       "when": 1791504000000,
       "tag": "0057_r13_adoption_artist",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "6",
+      "when": 1794787200000,
+      "tag": "0058_r17_manual_commissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "6",
+      "when": 1794787200001,
+      "tag": "0059_r17_cancel_completed_commission_upload",
+      "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "6",
+      "when": 1795392000000,
+      "tag": "0060_hero_crop_rect",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "6",
+      "when": 1795392000001,
+      "tag": "0061_commission_entry_crop",
+      "breakpoints": true
     }
   ]
 }

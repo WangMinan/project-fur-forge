@@ -16,6 +16,7 @@ import {
   countEnabledHeroItems,
   findHeroCollection,
   findHeroItem,
+  readHeroCrop,
   findHeroItemVariants,
   findPublicKeysForHeroItem,
   hasEnabledHeroItemAtOrder,
@@ -55,7 +56,8 @@ import {
   SITE_HERO_USAGES,
 } from '../recipe/site-display-recipe'
 import { ServiceError } from '../service-error'
-import { heroItemUpscaleReady } from '../service/hero-collection-management'
+import { heroItemMinimum, heroItemUpscaleReady, heroSourceSize } from '../service/hero-collection-management'
+import { withOperationLeaseHeartbeat } from './operation-lease-heartbeat'
 import { registerOperationResumer } from './operation-recovery'
 import {
   edgePurgeUrlsForObjectKeys,
@@ -116,7 +118,9 @@ function assertItemCanEnable(sqlite: Database.Database, item: HeroItemRow) {
   ) {
     throw new ServiceError(409, 'CONFLICT', 'Hero item position is occupied.', 'HERO_SLOT_LIMIT')
   }
-  if (!assetSupportsSiteDisplay(sqlite, item.assetId, [itemUsage(item)])) {
+  const entryCrop = readHeroCrop(item.entryCropRectJson)
+  if (!assetSupportsSiteDisplay(sqlite, item.assetId, [itemUsage(item)], readHeroCrop(item.cropRectJson))
+    || (entryCrop && !assetSupportsSiteDisplay(sqlite, item.assetId, [HOME_ENTRY_USAGES.commission], entryCrop))) {
     throw new ServiceError(409, 'CONFLICT', 'Hero asset requires confirmed upscale.', 'HERO_ASSET_REQUIRES_UPSCALE')
   }
 }
@@ -255,7 +259,8 @@ export async function createHeroCollectionItemPreview(
   const dimensions = await generatePrivatePublicPreview(sqlite, storage, {
     assetId: item.assetId,
     objectKey,
-    usage: orientation === 'landscape' ? 'home-hero-landscape' : 'home-hero-portrait',
+    usage: itemUsage(item),
+    cropRect: readHeroCrop(item.cropRectJson),
     width: orientation === 'landscape' ? 768 : 480,
   })
   requireCollectionVersion(sqlite, placement, orientation, expectedVersion)
@@ -299,8 +304,7 @@ export function startHeroCollectionItemUpscale(
   if (item.enabled === 1) {
     throw new ServiceError(409, 'CONFLICT', 'Enabled hero items cannot be upscaled.', 'HERO_ITEM_ENABLED')
   }
-  const variants = findHeroItemVariants(sqlite, [item.assetId]).get(item.assetId) ?? []
-  if (heroItemUpscaleReady(item, variants)) {
+  if (heroItemUpscaleReady(item, heroSourceSize(sqlite, item))) {
     throw new ServiceError(409, 'CONFLICT', 'Hero asset is already ready.')
   }
   if (hasActivePublicationOperation(sqlite, 'HOME', id)) {
@@ -348,7 +352,10 @@ export async function runHeroCollectionItemUpscale(
       throw new Error('Enabled hero items cannot be upscaled.')
     }
     requireLease(sqlite, lease)
-    await ensureHeroUpscaleSource(sqlite, storage, item.assetId, now)
+    const minimum = heroItemMinimum(item)
+    await withOperationLeaseHeartbeat(sqlite, lease, async () => {
+      await ensureHeroUpscaleSource(sqlite, storage, item.assetId, now, minimum)
+    })
     requireLease(sqlite, lease)
     requireCollectionVersion(
       sqlite,
@@ -451,7 +458,7 @@ export async function runHeroCollectionItemPublication(
     code = 'PUBLIC_MEDIA_GENERATION_FAILED'
     setStatus(sqlite, operationId, 'GENERATING_PUBLIC', now)
     requireLease(sqlite, lease)
-    await generateSiteDisplayVariants(sqlite, storage, item.assetId, [itemUsage(item)], now)
+    await generateSiteDisplayVariants(sqlite, storage, item.assetId, [itemUsage(item)], now, readHeroCrop(item.cropRectJson))
     if (item.placement === 'commission' && item.orientation === 'landscape') {
       requireLease(sqlite, lease)
       await generateSiteDisplayVariants(
@@ -460,6 +467,7 @@ export async function runHeroCollectionItemPublication(
         item.assetId,
         [HOME_ENTRY_USAGES.commission],
         now,
+        readHeroCrop(item.entryCropRectJson),
       )
     }
     requireLease(sqlite, lease)
@@ -467,7 +475,9 @@ export async function runHeroCollectionItemPublication(
     code = 'PUBLIC_MEDIA_VERIFICATION_FAILED'
     setStatus(sqlite, operationId, 'VERIFYING_PUBLIC', now)
     const variants = findHeroItemVariants(sqlite, [item.assetId]).get(item.assetId) ?? []
-    if (missingSiteDisplayVariantCount(itemUsage(item), variants) !== 0) {
+    const missingEntry = item.placement === 'commission' && item.orientation === 'landscape'
+      && missingSiteDisplayVariantCount(HOME_ENTRY_USAGES.commission, variants, readHeroCrop(item.entryCropRectJson)) !== 0
+    if (missingEntry || missingSiteDisplayVariantCount(itemUsage(item), variants, readHeroCrop(item.cropRectJson)) !== 0) {
       throw new Error('Hero item requires complete site display variants.')
     }
     await clearPreview(sqlite, storage, item)

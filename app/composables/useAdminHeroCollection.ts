@@ -1,3 +1,4 @@
+import type { CropRect } from '~~/shared/schemas/image-composition'
 import {
   adminHeroCollectionResponseSchema,
 } from '~~/shared/schemas/home'
@@ -15,6 +16,9 @@ export interface HeroCollectionItemInput {
   alt: string
   assetId: string
   assetVersion: number
+  cropRect?: CropRect | undefined
+  cropAdjusted?: boolean | undefined
+  entryCropRect?: CropRect | null | undefined
   focalX: number
   focalY: number
   sortOrder: number

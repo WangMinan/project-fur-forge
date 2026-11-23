@@ -7,6 +7,7 @@ import type {
   CommissionSubmissionDetailDto,
   CommissionSubmissionStatus,
 } from '~~/shared/types/contracts'
+import { commissionSourceLabel } from '~/utils/commission-source'
 import { AdminApiError } from '~/composables/useAdminApi'
 import { ADMIN_MEDIA_LARGE_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
 
@@ -17,6 +18,17 @@ const route = useRoute()
 const adminApi = useAdminApi()
 const detail = ref<CommissionSubmissionDetailDto | null>(null)
 const pageStatus = ref<'error' | 'loading' | 'ready'>('loading')
+const editing = shallowRef(false)
+const imageError = shallowRef(false)
+const detailHeader = useTemplateRef<HTMLElement>('detailHeader')
+function manualSaved(value: CommissionSubmissionDetailDto) {
+  detail.value = value
+  syncForm(value)
+  editing.value = false
+  imageError.value = false
+  exportError.value = null
+  void nextTick(() => detailHeader.value?.querySelector<HTMLElement>('[data-commission-edit]')?.focus({ preventScroll: true }))
+}
 const status = ref<CommissionSubmissionStatus>('pending')
 const internalNote = ref('')
 const saving = ref(false)
@@ -32,6 +44,7 @@ function syncForm(value: CommissionSubmissionDetailDto) {
 
 async function load() {
   pageStatus.value = 'loading'
+  imageError.value = false
   saveSuccess.value = null
   try {
     const response = await adminApi(
@@ -109,10 +122,10 @@ function formatTime(value: string | null) {
 /**
  * 导出制作单：已接受的申请才给按钮。
  *
- * PDF 由服务端生成（两页 A4 横版：单主信息 + 满页设定图），不走浏览器打印——
+ * PDF 由服务端生成（A4 横版：资料按需续页 + 满页设定图），不走浏览器打印——
  * 打印结果会被操作员的默认打印机纸张、方向和灰度设置改变，导出的文件必须与打印机无关。
  */
-const exportable = computed(() => detail.value?.status === 'accepted')
+const exportable = computed(() => detail.value?.status === 'accepted' && Boolean(detail.value.designReferencePreviewHref))
 const exporting = ref(false)
 const exportError = ref<string | null>(null)
 const exportLoadedBytes = shallowRef(0)
@@ -209,15 +222,16 @@ onMounted(() => void load())
 <template>
   <AdminShell current="commissions">
     <div class="commission-detail">
-      <header class="commission-detail__header">
+      <header v-if="!editing" ref="detailHeader" class="commission-detail__header">
         <div>
           <NuxtLink to="/admin/commissions">← 委托申请</NuxtLink>
           <h1>委托申请详情</h1>
         </div>
-        <div v-if="exportable" class="commission-detail__export">
-          <button type="button" :disabled="exporting" @click="exportWorkOrder">
-            {{ exporting ? '导出中…' : '导出制作单' }}
-          </button>
+        <div class="commission-detail__tools">
+          <div class="commission-detail__actions">
+            <AdminAction v-if="detail?.origin === 'manual'" data-commission-edit variant="primary" :disabled="exporting" @click="editing = true">编辑申请</AdminAction>
+            <AdminAction v-if="exportable" class="commission-detail__export-action" :loading="exporting" loading-label="导出中…" variant="primary" @click="exportWorkOrder">导出制作单</AdminAction>
+          </div>
           <p v-if="exportError" role="alert" class="commission-detail__error">
             {{ exportError }}
           </p>
@@ -238,20 +252,25 @@ onMounted(() => void load())
       </div>
       <div v-else-if="pageStatus === 'error'" class="commission-detail__state" role="alert">
         <p>申请详情加载失败。</p>
-        <button type="button" @click="load">重试</button>
+        <AdminAction @click="load">重试</AdminAction>
       </div>
+      <AdminManualCommissionForm v-else-if="detail && editing" :initial="detail" class="commission-detail__manual" @saved="manualSaved" />
       <template v-else-if="detail">
         <section class="commission-detail__card" aria-labelledby="commission-contact-title">
           <h2 id="commission-contact-title">申请与联系</h2>
           <dl class="commission-detail__facts">
             <div><dt>称呼</dt><dd>{{ detail.nickname }}</dd></div>
-            <div><dt>物种</dt><dd>{{ detail.species ?? '待人工补录' }}</dd></div>
-            <div><dt>回执</dt><dd>{{ detail.receiptCode }}</dd></div>
-            <div><dt>手机号</dt><dd>{{ detail.phone.countryCode }} {{ detail.phone.number }}</dd></div>
-            <div><dt>QQ</dt><dd>{{ detail.qq }}</dd></div>
-            <div><dt>身高</dt><dd>{{ detail.heightCm }} cm</dd></div>
-            <div><dt>体重</dt><dd>{{ detail.weightKg }} kg</dd></div>
-            <div><dt>提交时间</dt><dd>{{ formatTime(detail.createdAt) }}</dd></div>
+            <div><dt>物种</dt><dd>{{ detail.species ?? (detail.origin === 'manual' ? '未填写' : '待人工补录') }}</dd></div>
+            <div><dt>申请编号</dt><dd>{{ detail.receiptCode }}</dd></div>
+            <div><dt>手机号</dt><dd>{{ detail.phone ? `${detail.phone.countryCode} ${detail.phone.number}` : '未填写' }}</dd></div>
+            <div><dt>QQ</dt><dd>{{ detail.qq ?? '未填写' }}</dd></div>
+            <div><dt>身高</dt><dd>{{ detail.heightCm === null ? '未填写' : `${detail.heightCm} cm` }}</dd></div>
+            <div><dt>体重</dt><dd>{{ detail.weightKg === null ? '未填写' : `${detail.weightKg} kg` }}</dd></div>
+            <div><dt>来源</dt><dd>{{ commissionSourceLabel(detail) }}</dd></div>
+            <div v-if="detail.origin === 'manual'"><dt>其他联系方式</dt><dd>{{ detail.otherContact ?? '未填写' }}</dd></div>
+            <div v-if="detail.origin === 'manual'"><dt>原申请日期</dt><dd>{{ detail.originalAppliedOn ?? '未填写' }}</dd></div>
+            <div v-if="detail.origin === 'manual'"><dt>历史处理日期</dt><dd>{{ detail.historicalHandledOn ?? '未填写' }}</dd></div>
+            <div><dt>{{ detail.origin === 'manual' ? '录入时间' : '提交时间' }}</dt><dd>{{ formatTime(detail.createdAt) }}</dd></div>
             <div><dt>处理时间</dt><dd>{{ formatTime(detail.handledAt) }}</dd></div>
           </dl>
         </section>
@@ -261,14 +280,22 @@ onMounted(() => void load())
           aria-labelledby="commission-image-title"
         >
           <h2 id="commission-image-title">设定图</h2>
+          <p v-if="!detail.designReferencePreviewHref">暂未上传设定图。补齐图片后，已接受的申请可导出制作单。</p>
+          <div v-else-if="imageError" class="commission-detail__image-error" role="alert">
+            <p>设定图预览加载失败，请重试。已保存的图片未被修改。</p>
+            <AdminAction @click="imageError = false">重试图片</AdminAction>
+          </div>
           <img
+            v-else
             class="commission-detail__image"
             :src="`${detail.designReferencePreviewHref}?w=${ADMIN_MEDIA_LARGE_PREVIEW_WIDTH}`"
             alt="委托申请私有设定图"
             referrerpolicy="no-referrer"
+            @error="imageError = true"
           >
           <!-- 放大预览直接新开原图：浏览器自带缩放与拖动，比自制灯箱好用。 -->
           <a
+            v-if="detail.designReferencePreviewHref"
             class="commission-detail__zoom"
             :href="`${detail.designReferencePreviewHref}?original=1`"
             target="_blank"
@@ -276,9 +303,18 @@ onMounted(() => void load())
           >放大预览原图 ↗</a>
         </section>
 
-        <AdminCommissionEmailStatus :key="detail.id" :submission-id="detail.id" />
+        <p v-if="detail.origin === 'manual'" class="commission-detail__card">后台录入 · 无需邮件。资料和处理状态修改也不会发送邮件。</p>
+        <AdminCommissionEmailStatus v-else :key="detail.id" :submission-id="detail.id" />
 
-        <section class="commission-detail__card" aria-labelledby="commission-handling-title">
+        <section v-if="detail.origin === 'manual'" class="commission-detail__card">
+          <h2>处理</h2>
+          <p>状态：{{ detail.status === 'pending' ? '待处理' : detail.status === 'accepted' ? '已接受' : '已拒绝' }}</p>
+          <p>成年确认：{{ detail.offlineAdultConfirmed ? '已在线下确认' : '未确认' }}</p>
+          <p>资料使用确认：{{ detail.offlinePrivacyConfirmed ? '已在线下确认' : '未确认' }}</p>
+          <p class="commission-detail__note">{{ detail.internalNote ?? '未填写内部备注' }}</p>
+          <AdminAction :disabled="exporting" @click="editing = true">编辑资料与处理结果</AdminAction>
+        </section>
+        <section v-else class="commission-detail__card" aria-labelledby="commission-handling-title">
           <h2 id="commission-handling-title">处理</h2>
           <label for="commission-status">状态</label>
           <AdminSelect id="commission-status" v-model="status" :disabled="saving" :options="[{ value: 'pending', label: '待处理' }, { value: 'accepted', label: '已接受' }, { value: 'rejected', label: '已拒绝' }]" @change="saveSuccess = null" />
@@ -294,9 +330,7 @@ onMounted(() => void load())
           <p v-if="saveSuccess" role="status" class="commission-detail__success">
             {{ saveSuccess }}
           </p>
-          <button type="button" :disabled="saving" @click="save">
-            {{ saving ? '保存中…' : '保存处理结果' }}
-          </button>
+          <AdminAction :loading="saving" loading-label="保存中…" variant="primary" @click="save">保存处理结果</AdminAction>
         </section>
         <section
           v-if="detail.status === 'rejected'"
@@ -331,15 +365,19 @@ onMounted(() => void load())
 <style scoped>
 /* 用满页宽：申请信息与处理表单一栏，设定图另起一栏，右侧不再空一大片。 */
 .commission-detail {
+  max-width: var(--admin-content-max);
+  min-width: 0;
   display: grid;
   gap: var(--admin-space-5);
   align-content: start;
 }
 
+.commission-detail__manual { grid-column: 1 / -1; }
+.commission-detail__note { white-space: pre-wrap; overflow-wrap: anywhere; }
 .commission-detail__header {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--admin-space-3);
 }
@@ -375,6 +413,9 @@ onMounted(() => void load())
 }
 
 .commission-detail__card {
+  min-width: 0;
+  margin: 0;
+  align-content: start;
   display: grid;
   gap: var(--admin-space-3);
 }
@@ -414,10 +455,29 @@ onMounted(() => void load())
   background: var(--admin-bg-subtle);
 }
 
-.commission-detail__export {
+.commission-detail__tools {
   display: grid;
   justify-items: end;
   gap: var(--admin-space-2);
+  min-width: 0;
+  max-width: 100%;
+  margin-left: auto;
+}
+
+.commission-detail__actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--admin-space-2);
+}
+
+.commission-detail__export-action { min-width: 9rem; }
+
+.commission-detail__image-error {
+  display: grid;
+  justify-items: start;
+  gap: var(--admin-space-3);
+  color: var(--admin-status-error);
 }
 
 .commission-detail__zoom {
@@ -432,10 +492,6 @@ onMounted(() => void load())
   font-variant-numeric: tabular-nums;
 }
 
-.commission-detail button:disabled {
-  opacity: 0.6;
-}
-
 .commission-detail textarea {
   width: 100%;
   padding: var(--admin-space-3);
@@ -443,18 +499,6 @@ onMounted(() => void load())
   border-radius: var(--admin-radius-md);
   background: var(--admin-bg-primary);
   font: inherit;
-}
-
-.commission-detail button {
-  justify-self: start;
-  min-height: var(--admin-control-height);
-  padding: 0 var(--admin-space-5);
-  border: 0;
-  border-radius: var(--admin-radius-md);
-  color: var(--admin-text-inverse);
-  background: var(--admin-accent-primary);
-  font: inherit;
-  font-weight: 600;
 }
 
 .commission-detail__error {

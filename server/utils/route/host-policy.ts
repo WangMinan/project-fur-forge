@@ -110,6 +110,8 @@ export function decideHostAccess(
     return (
       pathname === '/favicon.ico'
       || pathname === '/api/site-meta'
+      // Nuxt i18n also loads these public message bundles on admin navigation.
+      || /^\/_i18n\/[0-9a-f]{8}\/(?:zh-CN|en)\/messages\.json$/u.test(pathname)
       || e2eFakeAllowed
       || adminAllowedPrefixes.some(prefix => isAtOrBelow(pathname, prefix))
     )

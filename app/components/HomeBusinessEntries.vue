@@ -181,7 +181,8 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   justify-self: end;
   display: block;
   width: calc(100% - 1rem);
-  height: min(28svh, 16.25rem);
+  aspect-ratio: 3 / 2;
+  height: auto;
   margin-top: 4.75rem;
   overflow: hidden;
   border-radius: var(--radius-image);
@@ -293,9 +294,8 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   }
 
   .home-commission__media {
-    justify-self: stretch;
-    width: 100%;
-    height: min(30svh, 17rem);
+    justify-self: center;
+    width: min(100%, 45svh);
     margin-top: 4.35rem;
   }
 
@@ -349,7 +349,7 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
     align-self: center;
     justify-self: start;
     width: calc(100% - clamp(0.75rem, 1.5vw, 1.25rem));
-    height: min(58svh, 34rem);
+    max-width: min(87svh, 51rem);
     min-height: 0;
     margin-top: 3.5rem;
   }
@@ -384,7 +384,7 @@ useMotionEntrance(rootRef, ({ reduced, tokens }) => {
   }
 
   .home-commission__media {
-    height: min(59svh, 35rem);
+    max-width: min(88.5svh, 52.5rem);
   }
 
   .home-commission__narrative {

@@ -11,5 +11,5 @@ export const ADMIN_MEDIA_PREVIEW_WIDTHS = [
 export type AdminMediaPreviewWidth = typeof ADMIN_MEDIA_PREVIEW_WIDTHS[number]
 
 export function isAdminMediaReadPath(path: string) {
-  return /^\/api\/admin\/v1\/(?:media\/assets\/[0-9a-f-]+\/preview|commissions\/[0-9a-f-]+\/design-reference|site\/hero-collections\/[^/]+\/[^/]+\/items\/[0-9a-f-]+\/preview)$/u.test(path)
+  return /^\/api\/admin\/v1\/(?:commission-upload-sessions\/[0-9a-f-]+\/preview|media\/assets\/[0-9a-f-]+\/preview|commissions\/[0-9a-f-]+\/design-reference|site\/hero-collections\/[^/]+\/[^/]+\/items\/[0-9a-f-]+\/preview)$/u.test(path)
 }

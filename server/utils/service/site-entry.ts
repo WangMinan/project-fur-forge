@@ -1,3 +1,4 @@
+import { readHeroCrop } from '../repository/hero-collection-repository'
 import type Database from 'better-sqlite3'
 import { publicHomeEntryDtoSchema } from '../../../shared/schemas/home'
 import type {
@@ -16,6 +17,7 @@ import {
 } from '../recipe/site-display-recipe'
 
 interface HomeEntrySourceRow {
+  entryCropRectJson?: string | null
   altText: string | null
   assetId: string
 }
@@ -28,7 +30,7 @@ export function commissionEntrySource(
   sqlite: Database.Database,
 ): HomeEntrySourceRow | null {
   return sqlite.prepare(`
-    SELECT item.asset_id AS assetId, item.alt_text AS altText
+    SELECT item.asset_id AS assetId, item.alt_text AS altText, item.entry_crop_rect_json AS entryCropRectJson
     FROM site_hero_items AS item
     JOIN assets AS asset ON asset.id = item.asset_id
     WHERE item.placement = 'commission'
@@ -85,7 +87,7 @@ export function projectHomeEntry(
     return null
   }
   const usage = HOME_ENTRY_USAGES[kind]
-  const complete = resolveCompleteSiteDisplayVariants(usage, variants)
+  const complete = resolveCompleteSiteDisplayVariants(usage, variants, readHeroCrop(source.entryCropRectJson ?? null))
   if (!complete) {
     return null
   }

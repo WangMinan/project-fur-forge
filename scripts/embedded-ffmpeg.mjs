@@ -414,3 +414,21 @@ export async function decodeImageToPng(content) {
   }
   return { content: output, contentType: 'image/png' }
 }
+
+/** Decode a frame for the local storage simulator without materializing a full PNG. */
+export async function inspectImageDimensions(content) {
+  if (!Buffer.isBuffer(content)) throw new Error('Image input must be a Buffer.')
+  const codec = inputCodec(content)
+  const result = await runEmbeddedFfmpeg([
+    '-hide_banner', '-loglevel', 'info', '-f', 'image2pipe', '-c:v', codec,
+    '-i', 'pipe:0', '-frames:v', '1', '-vf', 'showinfo', '-threads', '1', '-f', 'null', '-',
+  ], { input: content })
+  const dimensions = /\[Parsed_showinfo_[^\]]+\].*\bs:(\d+)x(\d+)\b/u.exec(result.stderr.toString('utf8'))
+  if (!dimensions) throw new Error('Image dimensions could not be inspected.')
+  return {
+    width: Number(dimensions[1]), height: Number(dimensions[2]),
+    format: codec === 'mjpeg' ? 'jpeg' : codec,
+    // showinfo runs after FFmpeg's autorotation, matching the browser declaration.
+    orientation: 1,
+  }
+}

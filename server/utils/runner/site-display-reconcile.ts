@@ -1,3 +1,5 @@
+import type { CropRect } from '../../../shared/schemas/image-composition'
+import { readHeroCrop } from '../repository/hero-collection-repository'
 import { randomUUID } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import { getDatabase } from '../database'
@@ -20,6 +22,7 @@ import {
   missingSiteDisplayVariantCount,
   SITE_DISPLAY_RECIPE_VERSION,
   SITE_HERO_USAGES,
+  siteCropMinimum,
 } from '../recipe/site-display-recipe'
 import type { SiteDisplayUsage } from '../recipe/site-display-recipe'
 import { ensureHeroUpscaleSource } from '../recipe/media-recipe'
@@ -47,6 +50,7 @@ import { adoptionEntrySource } from '../service/site-entry'
 export type ReconcileScope = 'all' | 'home-hero' | 'commission-hero' | 'home-entry'
 
 export interface ReconcileTarget {
+  cropRect?: CropRect | undefined
   assetId: string
   kind: 'home-hero' | 'commission-hero' | 'home-entry'
   label: string
@@ -108,12 +112,14 @@ export function findReconcileTargets(
   const targets: ReconcileTarget[] = []
   const items = sqlite.prepare(`
     SELECT
-      item.id, item.placement, item.orientation, item.asset_id AS assetId
+      item.id, item.placement, item.orientation, item.crop_rect_json AS cropRectJson, item.entry_crop_rect_json AS entryCropRectJson, item.asset_id AS assetId
     FROM site_hero_items AS item
     JOIN assets AS asset ON asset.id = item.asset_id
     WHERE item.enabled = 1 AND asset.status = 'READY'
     ORDER BY item.placement, item.orientation, item.sort_order, item.id
   `).all() as Array<{
+    cropRectJson: string | null
+    entryCropRectJson: string | null
     assetId: string
     id: string
     orientation: 'landscape' | 'portrait'
@@ -122,16 +128,16 @@ export function findReconcileTargets(
 
   for (const item of items) {
     const kind = item.placement === 'home' ? 'home-hero' : 'commission-hero'
-    if (!inScope(scope, kind)) {
-      continue
+    if (inScope(scope, kind)) {
+      const usage = SITE_HERO_USAGES[item.placement][item.orientation]
+      targets.push({
+        assetId: item.assetId,
+        kind,
+        label: `${item.placement}-hero-${item.orientation}`,
+        usages: [usage],
+        cropRect: readHeroCrop(item.cropRectJson),
+      })
     }
-    const usage = SITE_HERO_USAGES[item.placement][item.orientation]
-    targets.push({
-      assetId: item.assetId,
-      kind,
-      label: `${item.placement}-hero-${item.orientation}`,
-      usages: [usage],
-    })
     if (
       item.placement === 'commission'
       && item.orientation === 'landscape'
@@ -143,6 +149,7 @@ export function findReconcileTargets(
         kind: 'home-entry',
         label: 'home-entry-commission',
         usages: [HOME_ENTRY_USAGES.commission],
+        cropRect: readHeroCrop(item.entryCropRectJson),
       })
     }
   }
@@ -181,7 +188,7 @@ export function findReconcileTargets(
 function variantsForAsset(sqlite: Database.Database, assetId: string) {
   return sqlite.prepare(`
     SELECT
-      storage_scope AS storageScope, status, usage, width, height, format,
+      object_key AS objectKey, storage_scope AS storageScope, status, usage, width, height, format,
       recipe_version AS recipeVersion,
       sha256, byte_size AS byteSize
     FROM asset_variants WHERE asset_id = ?
@@ -205,7 +212,7 @@ export function reconcileTargetComplete(
 ) {
   const variants = variantsForAsset(sqlite, target.assetId)
   return target.usages.every(
-    usage => missingSiteDisplayVariantCount(usage, variants) === 0,
+    usage => missingSiteDisplayVariantCount(usage, variants, target.cropRect) === 0,
   )
 }
 
@@ -295,7 +302,7 @@ async function runReconcile(
           skipped += 1
           continue
         }
-        let supported = assetSupportsSiteDisplay(sqlite, target.assetId, target.usages)
+        let supported = assetSupportsSiteDisplay(sqlite, target.assetId, target.usages, target.cropRect)
         if (!supported && (
           target.kind === 'home-hero'
           || target.kind === 'commission-hero'
@@ -304,9 +311,9 @@ async function runReconcile(
           // 显式执行升级命令即为这次旧 Hero 私有 Lanczos 适配的操作确认。
           // 私有原图仍不公开，适配源继续留在 private Bucket。
           try {
-            await ensureHeroUpscaleSource(sqlite, storage, target.assetId, now)
+            await ensureHeroUpscaleSource(sqlite, storage, target.assetId, now, siteCropMinimum(target.usages[0]!, target.cropRect))
             leaseHeartbeat.assertActive()
-            supported = assetSupportsSiteDisplay(sqlite, target.assetId, target.usages)
+            supported = assetSupportsSiteDisplay(sqlite, target.assetId, target.usages, target.cropRect)
           }
           catch (error) {
             leaseHeartbeat.assertActive()
@@ -333,6 +340,7 @@ async function runReconcile(
             target.assetId,
             target.usages,
             now,
+            target.cropRect,
           )
           leaseHeartbeat.assertActive()
           // 只有完整生成并通过校验才计入成功；投影按完整性判定。

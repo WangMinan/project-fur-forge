@@ -101,6 +101,12 @@ afterEach(() => {
 })
 
 describe('commission confirmation core gate', () => {
+  it('returns the expiry reason when an upload expires before verification', async () => {
+    const { session, token } = await createCommissionUpload(sqlite, storage, { appEnv: 'test' }, expected, { now: NOW })
+    await expect(completeCommissionUpload(sqlite, storage, session.uploadSessionId, token, session.version, Date.parse(session.expiresAt)))
+      .rejects.toMatchObject({ statusCode: 409, reason: 'UPLOAD_SESSION_EXPIRED' })
+  })
+
   it('does not consume a completed upload when a confirmation is missing', async () => {
     await seedCompletedUpload()
     const { privacyNoticeAcknowledged: _missing, ...input } = validSubmission

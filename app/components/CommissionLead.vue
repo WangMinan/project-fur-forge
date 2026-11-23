@@ -55,6 +55,7 @@ onBeforeUnmount(() => {
     <div
       v-if="sources"
       class="commission-lead__media"
+      :class="{ 'commission-lead__media--landscape-only': !portrait, 'commission-lead__media--portrait-only': !landscape }"
     >
       <ResponsivePicture
         :sources="sources"
@@ -294,7 +295,8 @@ onBeforeUnmount(() => {
     align-self: center;
     justify-self: stretch;
     width: auto;
-    height: min(62svh, 38rem);
+    height: auto;
+    aspect-ratio: 7 / 5;
     margin-top: 4rem;
   }
 
@@ -358,6 +360,12 @@ onBeforeUnmount(() => {
     aspect-ratio: 4 / 5;
   }
 }
+
+@media (orientation: portrait) and (max-width: 1023px) {
+  .commission-lead__media--landscape-only { width: 100%; aspect-ratio: 7 / 5; }
+  .commission-lead__media--landscape-only :deep(.responsive-picture__image) { object-fit: contain; }
+}
+.commission-lead__media--portrait-only :deep(.responsive-picture__image) { object-fit: contain; }
 
 @media (prefers-contrast: more) {
   .commission-lead__display {

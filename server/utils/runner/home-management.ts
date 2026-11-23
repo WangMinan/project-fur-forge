@@ -11,6 +11,7 @@ import type {
 } from '../../../shared/types/contracts'
 import {
   findHeroItems,
+  readHeroCrop,
   findHeroItemVariants,
 } from '../repository/hero-collection-repository'
 import { toPublicHeroItemDto } from '../recipe/media-mapper'
@@ -79,6 +80,7 @@ function publicHeroPlacement(
     )
     return items.map(item => toPublicHeroItemDto({
       altText: item.alt,
+      cropRect: readHeroCrop(item.cropRectJson),
       orientation,
       placement,
       sortOrder: item.sortOrder,
