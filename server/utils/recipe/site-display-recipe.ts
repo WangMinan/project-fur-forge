@@ -1,3 +1,5 @@
+import type { CropRect } from '../../../shared/schemas/image-composition'
+import { HERO_FRAMES, heroCropMinimum } from '../../../shared/utils/hero-crop'
 import { verifyPublicImage } from '../service/public-image-validation'
 import type Database from 'better-sqlite3'
 import type { MediaRole } from '../../../shared/types/contracts'
@@ -122,7 +124,26 @@ export function siteDisplayWidthsForVersion(
   return recipesForVersion(recipeVersion)[usage].widths
 }
 
-export function siteDisplayHeight(usage: SiteDisplayUsage, width: number) {
+const heroFrames = {
+  'home-hero-landscape': HERO_FRAMES.home.landscape,
+  'home-hero-portrait': HERO_FRAMES.home.portrait,
+  'commission-hero-landscape': HERO_FRAMES.commission.landscape,
+  'commission-hero-portrait': HERO_FRAMES.commission.portrait,
+} as const
+
+export type HeroDisplayUsage = keyof typeof heroFrames
+
+export function siteCropMinimum(usage: SiteDisplayUsage, rect?: CropRect) {
+  if (rect && usage in heroFrames) return heroCropMinimum(heroFrames[usage as keyof typeof heroFrames], rect)
+}
+
+function cropGroup(rect: CropRect) {
+  const { x, y, width, height } = rect
+  return 'crop-' + digest('sha256', Buffer.from(JSON.stringify([x, y, width, height])))
+}
+
+export function siteDisplayHeight(usage: SiteDisplayUsage, width: number, rect?: CropRect) {
+  if (rect && usage in heroFrames) return Math.round(width / heroFrames[usage as keyof typeof heroFrames].ratio)
   const [horizontal, vertical] = recipes[usage].aspect
   return Math.round(width * vertical / horizontal)
 }
@@ -131,8 +152,11 @@ export function siteDisplayHeight(usage: SiteDisplayUsage, width: number) {
 export function sourceSupportsSiteDisplay(
   source: { height: number, width: number },
   usages: readonly SiteDisplayUsage[],
+  rect?: CropRect,
 ) {
   return usages.every((usage) => {
+    const minimum = siteCropMinimum(usage, rect)
+    if (minimum) return source.width >= minimum.width && source.height >= minimum.height
     const width = recipes[usage].widths.at(-1)!
     return source.width >= width && source.height >= siteDisplayHeight(usage, width)
   })
@@ -142,6 +166,7 @@ export function assetSupportsSiteDisplay(
   sqlite: Database.Database,
   assetId: string,
   usages: readonly SiteDisplayUsage[],
+  rect?: CropRect,
 ) {
   const sourceAsset = readyAssetSource(sqlite, assetId)
   if (usages.some(
@@ -150,7 +175,7 @@ export function assetSupportsSiteDisplay(
     return false
   }
   const source = processingSource(sqlite, sourceAsset)
-  return sourceSupportsSiteDisplay(source, usages)
+  return sourceSupportsSiteDisplay(source, usages, rect)
 }
 
 export interface ReadySiteDisplayVariant {
@@ -178,10 +203,10 @@ function existingVariant(sqlite: Database.Database, objectKey: string) {
 }
 
 function resizeOperation(usage: SiteDisplayUsage, source: AssetSource, width: number, dimensions: Pick<ProcessingSource, 'width' | 'height'>) {
-  const height = siteDisplayHeight(usage, width)
+  const height = siteDisplayHeight(usage, width, source.heroCrop)
   if (usage.includes('-hero-')) {
     const [horizontal, vertical] = recipes[usage].aspect
-    const rect = fitCrop(dimensions.width, dimensions.height, horizontal / vertical, undefined, source.focalX, source.focalY)
+    const rect = source.heroCrop ?? fitCrop(dimensions.width, dimensions.height, horizontal / vertical, undefined, source.focalX, source.focalY)
     const crop = pixelCrop(rect, dimensions.width, dimensions.height)
     return `crop,x_${crop.x},y_${crop.y},w_${crop.width},h_${crop.height}/resize,m_fill,w_${width},h_${height}`
   }
@@ -242,7 +267,8 @@ function recipeIdentity(
     mediaRole: sourceAsset.role,
     usage,
     width,
-    height: siteDisplayHeight(usage, width),
+    height: siteDisplayHeight(usage, width, sourceAsset.heroCrop),
+    ...(sourceAsset.heroCrop ? { cropGroup: cropGroup(sourceAsset.heroCrop) } : {}),
     fit: 'cover',
     focalX: sourceAsset.focalX,
     focalY: sourceAsset.focalY,
@@ -262,7 +288,8 @@ function publicObjectKey(
   format: PublicFormat,
 ) {
   const extension = format === 'jpeg' ? 'jpg' : format
-  return `${environmentPrefix(sourceAsset.privateObjectKey)}/web/${sourceAsset.id}/${SITE_DISPLAY_RECIPE_VERSION}/${usage}/${width}/${identityHash}.${extension}`
+  const group = sourceAsset.heroCrop ? `/${cropGroup(sourceAsset.heroCrop)}` : ''
+  return `${environmentPrefix(sourceAsset.privateObjectKey)}/web/${sourceAsset.id}/${SITE_DISPLAY_RECIPE_VERSION}/${usage}${group}/${width}/${identityHash}.${extension}`
 }
 
 /**
@@ -316,7 +343,7 @@ async function generateOne(
       storage.imageInfoPublic(objectKey),
       storage.getPublicAnonymous(objectKey),
     ])
-    const expectedHeight = siteDisplayHeight(usage, width)
+    const expectedHeight = siteDisplayHeight(usage, width, sourceAsset.heroCrop)
     const sha256 = digest('sha256', anonymous.content)
     if (
       head.byteSize < 1
@@ -405,8 +432,9 @@ export async function generateSiteDisplayVariants(
   assetId: string,
   usages: readonly SiteDisplayUsage[],
   now = Date.now(),
+  rect?: CropRect,
 ) {
-  const sourceAsset = readyAssetSource(sqlite, assetId)
+  const sourceAsset = { ...readyAssetSource(sqlite, assetId), heroCrop: rect }
   if (
     usages.length === 0
     || new Set(usages).size !== usages.length
@@ -415,7 +443,7 @@ export async function generateSiteDisplayVariants(
     throw new ServiceError(400, 'VALIDATION_ERROR', 'Site display usage does not match asset role.')
   }
   const source = processingSource(sqlite, sourceAsset)
-  if (!sourceSupportsSiteDisplay(source, usages)) {
+  if (!sourceSupportsSiteDisplay(source, usages, rect)) {
     throw new ServiceError(409, 'CONFLICT', 'Media source does not meet site display dimensions.', 'MEDIA_SOURCE_TOO_SMALL')
   }
   const fallback: PublicFormat = sourceAsset.mimeType === 'image/png'
@@ -442,6 +470,7 @@ export async function generateSiteDisplayVariants(
 }
 
 export interface SiteDisplayVariantCandidate {
+  objectKey?: string
   byteSize: number | null
   format: 'webp' | 'jpeg' | 'png'
   height: number
@@ -459,8 +488,10 @@ function eligible<T extends SiteDisplayVariantCandidate>(
   usage: SiteDisplayUsage,
   variants: readonly T[],
   recipeVersion: SiteDisplayRecipeVersion = SITE_DISPLAY_RECIPE_VERSION,
+  rect?: CropRect,
 ) {
   const selectedRecipes = recipesForVersion(recipeVersion)
+  const group = rect ? cropGroup(rect) : null
   const widths = selectedRecipes[usage].widths as readonly number[]
   return variants.filter(variant => (
     variant.storageScope === 'PUBLIC'
@@ -472,15 +503,17 @@ function eligible<T extends SiteDisplayVariantCandidate>(
     && variant.byteSize !== null
     && variant.byteSize > 0
     && widths.includes(variant.width)
-    && variant.height === siteDisplayHeight(usage, variant.width)
+    && variant.height === siteDisplayHeight(usage, variant.width, rect)
+    && (group ? variant.objectKey?.includes(`/${group}/`) : !variant.objectKey?.includes('/crop-'))
   ))
 }
 
 export function missingSiteDisplayVariantCount(
   usage: SiteDisplayUsage,
   variants: readonly SiteDisplayVariantCandidate[],
+  rect?: CropRect,
 ) {
-  const matched = eligible(usage, variants, SITE_DISPLAY_RECIPE_VERSION)
+  const matched = eligible(usage, variants, SITE_DISPLAY_RECIPE_VERSION, rect)
   let missing = 0
   for (const width of recipes[usage].widths) {
     const formats = new Set(
@@ -501,9 +534,10 @@ export function missingSiteDisplayVariantCount(
 export function completeSiteDisplayVariants<T extends SiteDisplayVariantCandidate>(
   usage: SiteDisplayUsage,
   variants: readonly T[],
+  rect?: CropRect,
 ) {
-  return missingSiteDisplayVariantCount(usage, variants) === 0
-    ? eligible(usage, variants, SITE_DISPLAY_RECIPE_VERSION)
+  return missingSiteDisplayVariantCount(usage, variants, rect) === 0
+    ? eligible(usage, variants, SITE_DISPLAY_RECIPE_VERSION, rect)
     : null
 }
 
@@ -538,9 +572,11 @@ export function completeSiteDisplayVariantsForVersion<
   usage: SiteDisplayUsage,
   variants: readonly T[],
   recipeVersion: SiteDisplayRecipeVersion,
+  rect?: CropRect,
 ) {
+  if (rect && recipeVersion !== SITE_DISPLAY_RECIPE_VERSION) return null
   return recipeVersion === SITE_DISPLAY_RECIPE_VERSION
-    ? completeSiteDisplayVariants(usage, variants)
+    ? completeSiteDisplayVariants(usage, variants, rect)
     : completeLegacySiteDisplayVariants(usage, variants)
 }
 

@@ -13,7 +13,9 @@ import { ADMIN_MEDIA_LARGE_PREVIEW_WIDTH } from '~~/shared/constants/admin-media
 import { adminMediaPreviewUrl } from '~/utils/admin-media-preview'
 import { PUBLICATION_OPERATION_STATUS_LABELS } from '~/utils/media-labels'
 import { adminUploadProgressModel } from '~/utils/admin-upload-progress'
-import HeroFocalPicker from '~/components/admin/HeroFocalPicker.vue'
+import type { CropRect, ImageComposition } from '~~/shared/schemas/image-composition'
+import { HERO_FRAMES, heroCropError, heroCropMinimum } from '~~/shared/utils/hero-crop'
+import { fitCrop, pixelCrop } from '~~/shared/utils/image-composition'
 
 const props = withDefaults(defineProps<{
   canMoveDown?: boolean
@@ -52,6 +54,45 @@ const assetId = ref('')
 const assetVersion = ref(0)
 const focalX = ref(0.5)
 const focalY = ref(0.5)
+const width = ref(0)
+const height = ref(0)
+const cropRect = ref<CropRect>()
+const editing = ref(false)
+const frame = computed(() => HERO_FRAMES[props.placement][props.orientation])
+const defaultRect = computed(() => fitCrop(width.value, height.value, frame.value.ratio, undefined, focalX.value, focalY.value))
+const displayRect = computed(() => {
+  if (cropRect.value) return cropRect.value
+  // The live legacy commission image was cropped once on publication, then again in the page.
+  if (props.item?.enabled && props.placement === 'commission') {
+    const old = fitCrop(width.value, height.value, HERO_FRAMES.home[props.orientation].ratio, undefined, focalX.value, focalY.value)
+    return fitCrop(width.value, height.value, frame.value.ratio, old)
+  }
+  return defaultRect.value
+})
+const draftReady = computed(() => {
+  if (!width.value || !height.value) return false
+  const target = heroCropMinimum(frame.value, cropRect.value ?? defaultRect.value)
+  const size = props.item?.asset.assetId === assetId.value ? props.item.processingSize : null
+  return (size?.width ?? width.value) >= target.width && (size?.height ?? height.value) >= target.height
+})
+const cropStyle = computed(() => {
+  const pixels = pixelCrop(displayRect.value, width.value, height.value)
+  return {
+    width: `${100 * width.value / pixels.width}%`,
+    height: `${100 * height.value / pixels.height}%`,
+    left: `${-100 * pixels.x / pixels.width}%`,
+    top: `${-100 * pixels.y / pixels.height}%`,
+  }
+})
+
+function validateCrop(value: ImageComposition) {
+  return value.mode === 'crop' ? heroCropError(frame.value, value.rect, width.value, height.value) : '请选择裁切区域'
+}
+
+function applyCrop(value: ImageComposition | null) {
+  cropRect.value = value?.mode === 'crop' ? value.rect : defaultRect.value
+}
+
 const sortOrder = ref(0)
 const displaySortOrder = computed({
   get: () => sortOrder.value + 1,
@@ -66,6 +107,10 @@ function sync() {
   alt.value = props.item?.alt ?? ''
   assetId.value = props.item?.asset.assetId ?? ''
   assetVersion.value = props.item?.asset.version ?? 0
+  width.value = props.item?.asset.width ?? 0
+  height.value = props.item?.asset.height ?? 0
+  cropRect.value = props.item?.cropRect
+  editing.value = false
   focalX.value = props.item?.asset.focalX ?? 0.5
   focalY.value = props.item?.asset.focalY ?? 0.5
   sortOrder.value = singleSlot.value
@@ -88,6 +133,10 @@ const upload = useHeroAssetUpload({
   onAssetReady: (_slot, asset) => {
     assetId.value = asset.assetId
     assetVersion.value = asset.version
+    width.value = asset.width
+    height.value = asset.height
+    cropRect.value = undefined
+    editing.value = true
     focalX.value = asset.focalX
     focalY.value = asset.focalY
     selectedFile.value = null
@@ -160,6 +209,7 @@ function itemInput(): HeroCollectionItemInput {
     focalX: focalX.value,
     focalY: focalY.value,
     sortOrder: sortOrder.value,
+    cropRect: cropRect.value ?? defaultRect.value,
   }
 }
 
@@ -206,10 +256,6 @@ function requestDisable() {
   emit('disable')
 }
 
-function updateFocal(value: { focalX: number, focalY: number }) {
-  focalX.value = value.focalX
-  focalY.value = value.focalY
-}
 </script>
 
 <template>
@@ -235,127 +281,151 @@ function updateFocal(value: { focalX: number, focalY: number }) {
       </div>
     </header>
 
-    <HeroFocalPicker
-      :preview-url="previewUrl"
-      :alt="alt"
-      :orientation="orientation"
-      :focal-x="focalX"
-      :focal-y="focalY"
-      :disabled="busy || Boolean(item?.enabled) || !previewUrl"
-      :readonly="Boolean(item?.enabled)"
-      @update="updateFocal"
-    >
-      <div class="hero-item__fields">
-        <label>
-          <span>替代文字</span>
-          <input v-model="alt" type="text" maxlength="500" :disabled="busy">
-        </label>
-        <p v-if="item?.enabled" class="hero-item__hint">说明保存后公开生效；更换图片或调整焦点仍需先停用。</p>
-        <label v-if="!singleSlot && !item?.enabled">
-          <span>播放顺序（1–5）</span>
-          <input v-model.number="displaySortOrder" type="number" min="1" max="5" :disabled="busy || item?.enabled">
-        </label>
-        <div v-if="!item?.enabled" class="hero-item__upload">
-          <span>{{ orientation === 'landscape' ? '横版' : '竖版' }}原图</span>
-          <input
-            ref="fileInput"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            hidden
-            :aria-label="`${orientation === 'landscape' ? '横版' : '竖版'}原图`"
-            :disabled="busy || item?.enabled || uploadProcessing"
-            @change="onFile"
-          >
-          <div class="hero-item__upload-actions">
-            <AdminAction
-              size="small"
-              :disabled="busy || item?.enabled || uploadProcessing"
-              @click="pickFile"
-            >选择图片</AdminAction>
-            <span class="hero-item__filename">
-              {{ selectedFile?.name ?? upload.item.fileName ?? (assetId ? '已上传原图' : '未选择图片') }}
+    <div class="hero-item__editor">
+      <div class="hero-item__preview" :data-orientation="orientation" :style="{ aspectRatio: frame.ratio }">
+        <img v-if="previewUrl" :src="previewUrl" :alt="alt" :style="cropStyle">
+        <p v-else>上传原图后可调整构图。</p>
+      </div>
+      <div class="hero-item__sidebar">
+        <AdminAction v-if="previewUrl && !item?.enabled" :disabled="busy || uploadProcessing" @click="editing = true">
+          调整{{ orientation === 'landscape' ? '桌面' : '手机' }}构图 · {{ frame.label }}
+        </AdminAction>
+        <AdminCompositionDialog
+          v-if="editing && previewUrl" :key="assetId"
+          :src="previewUrl" :width="width" :height="height" :title="alt"
+          :label="frame.label" :ratio="frame.ratio" :initial="{ mode: 'crop', rect: displayRect }"
+          :output-width="frame.outputWidth" :disabled="busy" :validate="validateCrop"
+          @apply="applyCrop" @close="editing = false"
+        >
+          <template v-if="placement === 'home'">
+            <span class="hero-item__nav-overlay" aria-hidden="true">
+              <b>有点小狗 · DITE DOG</b>
+              <span>{{ orientation === 'portrait' ? '☰' : '首页 作品展示 自设委托 设定领养' }}</span>
             </span>
-            <AdminAction
-              variant="primary"
-              size="small"
-              :disabled="!selectedFile || busy || item?.enabled || uploadProcessing"
-              :loading="uploadProcessing"
-              loading-label="上传中…"
-              @click="uploadSelectedFile"
-            >上传图片</AdminAction>
+            <span class="hero-item__title-overlay" :data-orientation="orientation" aria-hidden="true">有点小狗工作室</span>
+          </template>
+        </AdminCompositionDialog>
+        <div class="hero-item__fields">
+          <label>
+            <span>替代文字</span>
+            <input v-model="alt" type="text" maxlength="500" :disabled="busy">
+          </label>
+          <p v-if="item?.enabled" class="hero-item__hint">说明保存后公开生效；更换图片或调整构图仍需先停用。</p>
+          <label v-if="!singleSlot && !item?.enabled">
+            <span>播放顺序（1–5）</span>
+            <input v-model.number="displaySortOrder" type="number" min="1" max="5" :disabled="busy || item?.enabled">
+          </label>
+          <div v-if="!item?.enabled" class="hero-item__upload">
+            <span>{{ orientation === 'landscape' ? '横版' : '竖版' }}原图</span>
+            <input
+              ref="fileInput"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              hidden
+              :aria-label="`${orientation === 'landscape' ? '横版' : '竖版'}原图`"
+              :disabled="busy || item?.enabled || uploadProcessing"
+              @change="onFile"
+            >
+            <div class="hero-item__upload-actions">
+              <AdminAction
+                size="small"
+                :disabled="busy || item?.enabled || uploadProcessing"
+                @click="pickFile"
+              >选择图片</AdminAction>
+              <span class="hero-item__filename">
+                {{ selectedFile?.name ?? upload.item.fileName ?? (assetId ? '已上传原图' : '未选择图片') }}
+              </span>
+              <AdminAction
+                variant="primary"
+                size="small"
+                :disabled="!selectedFile || busy || item?.enabled || uploadProcessing"
+                :loading="uploadProcessing"
+                loading-label="上传中…"
+                @click="uploadSelectedFile"
+              >上传图片</AdminAction>
+            </div>
+            <small>
+              单张 JPEG、PNG 或 WebP，裁切比例 {{ frame.label }}。
+            </small>
           </div>
-          <small>
-            {{ orientation === 'landscape'
-              ? '单张 JPEG、PNG 或 WebP；推荐至少 1920×1080。'
-              : '单张 JPEG、PNG 或 WebP；推荐至少 1080×1920。' }}
-          </small>
+        </div>
+
+        <AdminTaskProgress
+          v-if="upload.item.state !== 'idle'"
+          v-bind="uploadProgress"
+        />
+
+        <label v-if="item && !item.enabled && !draftReady" class="hero-item__confirm">
+          <input v-model="upscaleConfirmed" type="checkbox" :disabled="busy">
+          <span>我已确认允许生成私有放大处理源，原图保留。</span>
+        </label>
+
+        <p v-if="feedback && !operation" role="status" class="hero-item__hint">{{ feedback.text }}</p>
+
+        <AdminTaskProgress
+          v-if="operation"
+          :mode="operationMode"
+          :label="operationLabel"
+          :stage="PUBLICATION_OPERATION_STATUS_LABELS[operation.status]"
+          :status="operationStatus"
+          :detail="feedback?.text ?? null"
+          :show-elapsed="operationStatus === 'active'"
+          :started-at="operation.startedAt"
+          :can-retry="Boolean(feedback?.retryOperationId)"
+          retry-label="重试长任务"
+          @retry="emit('retryOperation')"
+        />
+
+        <div class="hero-item__actions">
+          <AdminAction v-if="!item" :disabled="busy || uploadProcessing" @click="emit('cancel')">取消新增</AdminAction>
+          <AdminAction
+            :disabled="!canSubmit || Boolean(item?.enabled && alt.trim() === item.alt)"
+            :loading="mutating"
+            loading-label="保存中…"
+            @click="submit"
+          >
+            {{ item ? '保存' : '新增' }}
+          </AdminAction>
+          <AdminAction
+            v-if="item && !item.enabled && !draftReady"
+            :disabled="!canSubmit || !upscaleConfirmed"
+            @click="requestUpscale"
+          >适配大尺寸</AdminAction>
+          <AdminAction
+            v-if="item && !item.enabled && draftReady"
+            variant="primary"
+            :disabled="!canSubmit"
+            @click="requestEnable"
+          >发布并启用</AdminAction>
+          <AdminAction
+            v-if="item?.enabled"
+            :disabled="busy"
+            @click="requestDisable"
+          >停用并撤销公开图</AdminAction>
+          <AdminAction
+            v-if="item && !item.enabled"
+            variant="danger"
+            :disabled="busy"
+            @click="emit('delete')"
+          >删除</AdminAction>
         </div>
       </div>
-
-      <AdminTaskProgress
-        v-if="upload.item.state !== 'idle'"
-        v-bind="uploadProgress"
-      />
-
-      <label v-if="item && !item.enabled && !item.upscaleReady" class="hero-item__confirm">
-        <input v-model="upscaleConfirmed" type="checkbox" :disabled="busy">
-        <span>我已确认允许生成私有放大处理源，原图保留。</span>
-      </label>
-
-      <p v-if="feedback && !operation" role="status" class="hero-item__hint">{{ feedback.text }}</p>
-
-      <AdminTaskProgress
-        v-if="operation"
-        :mode="operationMode"
-        :label="operationLabel"
-        :stage="PUBLICATION_OPERATION_STATUS_LABELS[operation.status]"
-        :status="operationStatus"
-        :detail="feedback?.text ?? null"
-        :show-elapsed="operationStatus === 'active'"
-        :started-at="operation.startedAt"
-        :can-retry="Boolean(feedback?.retryOperationId)"
-        retry-label="重试长任务"
-        @retry="emit('retryOperation')"
-      />
-
-      <div class="hero-item__actions">
-        <AdminAction v-if="!item" :disabled="busy || uploadProcessing" @click="emit('cancel')">取消新增</AdminAction>
-        <AdminAction
-          :disabled="!canSubmit || Boolean(item?.enabled && alt.trim() === item.alt)"
-          :loading="mutating"
-          loading-label="保存中…"
-          @click="submit"
-        >
-          {{ item ? '保存' : '新增' }}
-        </AdminAction>
-        <AdminAction
-          v-if="item && !item.enabled && !item.upscaleReady"
-          :disabled="!canSubmit || !upscaleConfirmed"
-          @click="requestUpscale"
-        >适配大尺寸</AdminAction>
-        <AdminAction
-          v-if="item && !item.enabled && item.upscaleReady"
-          variant="primary"
-          :disabled="!canSubmit"
-          @click="requestEnable"
-        >发布并启用</AdminAction>
-        <AdminAction
-          v-if="item?.enabled"
-          :disabled="busy"
-          @click="requestDisable"
-        >停用并撤销公开图</AdminAction>
-        <AdminAction
-          v-if="item && !item.enabled"
-          variant="danger"
-          :disabled="busy"
-          @click="emit('delete')"
-        >删除</AdminAction>
-      </div>
-    </HeroFocalPicker>
+    </div>
   </article>
 </template>
 
 <style scoped>
+.hero-item__editor, .hero-item__sidebar { display: grid; align-items: start; gap: var(--admin-space-4); min-width: 0; }
+.hero-item__preview { position: relative; display: grid; place-items: center; width: 100%; overflow: hidden; background: var(--admin-bg-subtle); border-radius: var(--admin-radius-md); }
+.hero-item__preview[data-orientation="portrait"] { max-width: 20rem; margin-inline: auto; }
+.hero-item__preview img { position: absolute; max-width: none; }
+.hero-item__preview p { color: var(--admin-text-secondary); }
+.hero-item__nav-overlay, .hero-item__title-overlay { position: absolute; inset: 0 0 auto; color: white; background: linear-gradient(#0006, transparent); padding: 3%; font-size: 0.7rem; }
+.hero-item__nav-overlay { display: flex; justify-content: space-between; font-size: clamp(0.45rem, 2cqw, 0.7rem); }
+.hero-item__title-overlay[data-orientation='portrait'] { padding-bottom: 20%; text-align: left; }
+.hero-item__title-overlay { inset: auto 0 0; background: linear-gradient(transparent, #0008); padding: 0 4% 8%; text-align: center; font-weight: 800; }
+@media (min-width: 960px) { .hero-item__editor { grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem); } }
+
 .hero-item {
   display: grid;
   gap: var(--admin-space-3);

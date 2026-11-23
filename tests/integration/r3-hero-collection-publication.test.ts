@@ -12,10 +12,11 @@ import {
 } from 'vitest'
 import { createSyntheticSourcePng, createSyntheticTransparentPng } from '../../scripts/oss-preflight-core.mjs'
 import { ensureHeroUpscaleSource } from '../../server/utils/recipe/media-recipe'
+import { findReconcileTargets, reconcileTargetComplete } from '../../server/utils/runner/site-display-reconcile'
 import { processingSource, readyAssetSource } from '../../server/utils/recipe/media-source'
 import { insertUpscaleVariant } from '../../server/utils/repository/variant-repository'
 import { migrateDatabase, openDatabase } from '../../server/utils/database'
-import { getPublicHome } from '../../server/utils/runner/home-management'
+import { getPublicCommissionHero, getPublicHome } from '../../server/utils/runner/home-management'
 import {
   createHeroCollectionItemPreview,
   getHeroCollectionItemPreviewContent,
@@ -455,6 +456,37 @@ describe('R3-C independent Hero collection publication', () => {
     expect(replaced.status).toBe('DONE')
     expect(getAdminHeroCollection(sqlite, 'commission', 'landscape').items
       .filter(item => item.enabled).map(item => item.alt)).toEqual(['委托横版 B'])
+  })
+
+  it('uses the saved rectangle for preview, every public size and recovery while keeping the entry independent', async () => {
+    const placement = 'commission'
+    const orientation = 'landscape'
+    const collection = getAdminHeroCollection(sqlite, placement, orientation)
+    const assetId = seedHeroAsset({ placement, orientation, ownerVersion: collection.version })
+    const input = heroItemInput(assetId, '手动构图', 0)
+    const cropRect = { x: 0.125, y: 0.125, width: 2100 / 3840, height: 1500 / 2160 }
+    expect(() => createHeroCollectionItem(sqlite, placement, orientation, collection.version, {
+      ...input, cropRect: { ...cropRect, height: 0.5 },
+    })).toThrow('选区比例')
+    const saved = createHeroCollectionItem(sqlite, placement, orientation, collection.version, { ...input, cropRect })
+    const item = saved.items[0]!
+    expect(item.cropRect).toEqual(cropRect)
+    await createHeroCollectionItemPreview(sqlite, storage, item.id, placement, orientation, saved.version, NOW)
+    expect(storage.processCalls.at(-1)?.process).toContain('crop,x_480,y_270,w_2100,h_1500/resize,m_fill,w_768,h_549')
+    const op = startHeroCollectionItemPublication(sqlite, item.id, placement, orientation, saved.version, NOW)
+    expect((await runHeroCollectionItemPublication(sqlite, storage, op.operationId, USER_ID, NOW)).status).toBe('DONE')
+    const sources = getPublicCommissionHero(sqlite, MEDIA_BASE_URL).landscape[0]!.sources
+    for (const file of [...sources.webp, ...sources.fallback]) {
+      expect(file.height).toBe(Math.round(file.width * 5 / 7))
+      expect(file.src).toContain('/crop-')
+    }
+    const entry = getPublicHome(sqlite, MEDIA_BASE_URL).entries.commission!.sources.webp[0]!
+    expect(entry.height).toBe(Math.round(entry.width * 2 / 3))
+    expect(entry.src).not.toContain('/crop-')
+    const target = findReconcileTargets(sqlite, 'commission-hero').find(t => t.assetId === assetId)!
+    expect(target.cropRect).toEqual(cropRect)
+    expect(reconcileTargetComplete(sqlite, target)).toBe(true)
+    expect(reconcileTargetComplete(sqlite, { ...target, cropRect: { ...cropRect, x: 0.1 } })).toBe(false)
   })
 
   it('preserves the complete image when adapting a Hero and rejects old pre-cropped sources', async () => {

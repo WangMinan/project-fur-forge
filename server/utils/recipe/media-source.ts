@@ -1,4 +1,4 @@
-import type { ImageCompositions } from '../../../shared/schemas/image-composition'
+import type { CropRect, ImageCompositions } from '../../../shared/schemas/image-composition'
 import { assetCompositions } from '../repository/work-composition-repository'
 import { createHash } from 'node:crypto'
 import type Database from 'better-sqlite3'
@@ -23,6 +23,7 @@ export const OSS_PROCESS_INPUT_BYTE_LIMIT = 20_000_000
 export type PublicFormat = 'webp' | 'jpeg' | 'png'
 
 export interface AssetSource {
+  heroCrop?: CropRect | undefined
   imageCompositionVersion?: number
   compositions?: ImageCompositions
   byteSize: number
@@ -135,7 +136,7 @@ interface ProcessingSourceRow {
  */
 export function processingSource(
   sqlite: Database.Database,
-  sourceAsset: AssetSource,
+  sourceAsset: Pick<AssetSource, 'role' | 'id' | 'sha256' | 'byteSize' | 'height' | 'width' | 'privateObjectKey'>,
 ): ProcessingSource {
   const target = heroUpscaleTarget(sourceAsset.role)
   if (target) {
@@ -145,15 +146,13 @@ export function processingSource(
       WHERE asset_id = ? AND storage_scope = 'PRIVATE'
         AND status = 'READY' AND usage = 'preprocess'
         AND recipe_version = ? AND input_sha256 = ?
-        AND byte_size <= ? AND width >= ? AND height >= ?
-      ORDER BY created_at DESC LIMIT 1
+        AND byte_size <= ?
+      ORDER BY width DESC, height DESC, created_at DESC LIMIT 1
     `).get(
       sourceAsset.id,
       HERO_UPSCALE_RECIPE_VERSION,
       sourceAsset.sha256,
       OSS_PROCESS_INPUT_BYTE_LIMIT,
-      target.width,
-      target.height,
     ) as ProcessingSourceRow | undefined
     if (upscaled) {
       return {

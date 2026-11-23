@@ -1,3 +1,4 @@
+import type { CropRect } from '../../../shared/schemas/image-composition'
 import {
   publicAltSchema,
   publicPngSourceSetDtoSchema,
@@ -43,6 +44,7 @@ export interface VariantRecord {
 }
 
 export interface HeroItemRecord {
+  cropRect?: CropRect | undefined
   altText: string
   orientation: HeroOrientation
   placement: HeroPlacement
@@ -186,6 +188,7 @@ export function toPublicHeroItemDto(
       usage,
       record.variants,
       recipeVersion,
+      record.cropRect,
     )
     return variants
       ? {

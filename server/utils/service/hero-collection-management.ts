@@ -1,3 +1,5 @@
+import type { CropRect } from '../../../shared/schemas/image-composition'
+import { HERO_FRAMES, heroCropError, heroCropMinimum } from '../../../shared/utils/hero-crop'
 import { randomUUID } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import {
@@ -10,7 +12,7 @@ import type {
   PublicationOperationDto,
 } from '../../../shared/types/contracts'
 import {
-  HERO_UPSCALE_RECIPE_VERSION,
+  processingSource,
   heroUpscaleTarget,
 } from '../recipe/media-source'
 import {
@@ -27,6 +29,7 @@ import {
   findHeroItems,
   findHeroItemVariants,
   insertHeroItem,
+  readHeroCrop,
   isHeroItemAssetAssigned,
   replaceEnabledHeroItemOrder,
   updateHeroAssetFocal,
@@ -42,6 +45,7 @@ import { ServiceError } from '../service-error'
 import { getLatestPublicationOperations } from '../runner/work-publication'
 
 export interface HeroItemInput {
+  cropRect?: CropRect | undefined
   alt: string
   assetId: string
   assetVersion: number
@@ -93,49 +97,32 @@ export function requireHeroCollectionItem(
   return item
 }
 
-function hasUpscaleVariant(
-  variants: readonly HeroVariantRow[],
-  inputSha256: string,
-  width: number,
-  height: number,
-) {
-  return variants.some(variant => (
-    variant.storageScope === 'PRIVATE'
-    && variant.status === 'READY'
-    && variant.usage === 'preprocess'
-    && variant.recipeVersion === HERO_UPSCALE_RECIPE_VERSION
-    && variant.inputSha256 === inputSha256
-    && variant.byteSize !== null
-    && variant.byteSize <= 20_000_000
-    && variant.width >= width
-    && variant.height >= height
-  ))
+export function heroSourceSize(sqlite: Database.Database, item: HeroItemRow) {
+  try {
+    const { width, height } = processingSource(sqlite, { ...item, id: item.assetId })
+    return { width, height }
+  }
+  catch (error) {
+    if (error instanceof ServiceError && error.reason === 'MEDIA_SOURCE_UNAVAILABLE') return { width: 0, height: 0 }
+    throw error
+  }
 }
 
-export function heroItemUpscaleReady(
-  item: Pick<HeroItemRow,
-    'height' | 'orientation' | 'sha256' | 'width'>,
-  variants: readonly HeroVariantRow[],
-) {
-  const role = item.orientation === 'landscape'
-    ? 'home_hero_landscape'
-    : 'home_hero_portrait'
-  const target = heroUpscaleTarget(role)!
-  return (
-    item.width >= target.width && item.height >= target.height
-  ) || hasUpscaleVariant(
-    variants,
-    item.sha256,
-    target.width,
-    target.height,
-  )
+export function heroItemUpscaleReady(item: HeroItemRow, source: { width: number, height: number }) {
+  const crop = readHeroCrop(item.cropRectJson)
+  const target = crop
+    ? heroCropMinimum(HERO_FRAMES[item.placement][item.orientation], crop)
+    : heroUpscaleTarget(item.role)!
+  return source.width >= target.width && source.height >= target.height
 }
 
 function itemDto(
+  sqlite: Database.Database,
   row: HeroItemRow,
   variants: readonly HeroVariantRow[],
   operations: ReadonlyMap<string, PublicationOperationDto>,
 ) {
+  const sourceSize = heroSourceSize(sqlite, row)
   const usage = SITE_HERO_USAGES[row.placement][row.orientation]
   const publicationOperation = [
     operations.get(`${row.id}:PUBLISH`),
@@ -152,6 +139,7 @@ function itemDto(
     alt: row.alt,
     sortOrder: row.sortOrder,
     enabled: row.enabled === 1,
+    cropRect: readHeroCrop(row.cropRectJson),
     asset: {
       assetId: row.assetId,
       version: row.assetVersion,
@@ -160,9 +148,10 @@ function itemDto(
       focalX: row.focalX,
       focalY: row.focalY,
     },
-    upscaleReady: heroItemUpscaleReady(row, variants),
+    processingSize: sourceSize,
+    upscaleReady: heroItemUpscaleReady(row, sourceSize),
     upscaleOperation: operations.get(`${row.id}:UPSCALE`) ?? null,
-    missingVariantCount: missingSiteDisplayVariantCount(usage, variants),
+    missingVariantCount: missingSiteDisplayVariantCount(usage, variants, readHeroCrop(row.cropRectJson)),
     publicationOperation,
   }
 }
@@ -191,6 +180,7 @@ export function getAdminHeroCollection(
     orientation,
     version: collection.version,
     items: items.map(item => itemDto(
+      sqlite,
       item,
       variants.get(item.assetId) ?? [],
       operations,
@@ -280,6 +270,12 @@ function assertHeroAssetFocalMutation(
   return true
 }
 
+function validateCrop(input: HeroItemInput, asset: Pick<HeroItemRow, 'width' | 'height'>, placement: HeroPlacement, orientation: HeroOrientation) {
+  if (!input.cropRect) return
+  const error = heroCropError(HERO_FRAMES[placement][orientation], input.cropRect, asset.width, asset.height)
+  if (error) throw new ServiceError(400, 'VALIDATION_ERROR', error)
+}
+
 function translateConstraint(error: unknown): never {
   if (error instanceof ServiceError) {
     throw error
@@ -305,6 +301,7 @@ export function createHeroCollectionItem(
 ) {
   requireCollectionVersion(sqlite, placement, orientation, expectedVersion)
   const asset = assertHeroItemAsset(sqlite, placement, orientation, input.assetId)
+  validateCrop(input, asset, placement, orientation)
   try {
     sqlite.transaction(() => {
       claimHeroCollectionVersion(
@@ -374,6 +371,14 @@ export function updateHeroCollectionItem(
     input.assetId,
     id,
   )
+  if (hasBlockingPublicationCleanup(sqlite, 'HOME', id)) {
+    throw new ServiceError(409, 'CONFLICT', '请等待当前大图任务完成后再保存。')
+  }
+  // Older clients omit the selection when updating unrelated fields.
+  if (!input.cropRect && item.assetId === input.assetId && item.cropRectJson) {
+    input = { ...input, cropRect: readHeroCrop(item.cropRectJson) }
+  }
+  validateCrop(input, asset, placement, orientation)
   try {
     sqlite.transaction(() => {
       claimHeroCollectionVersion(

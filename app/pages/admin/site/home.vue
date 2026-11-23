@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { HERO_FRAMES } from '~~/shared/utils/hero-crop'
 import type {
   HeroOrientation,
   HeroPlacement,
@@ -27,8 +28,8 @@ const PLACEMENTS = [
   { key: 'commission', label: '委托页大图' },
 ] as const
 const ORIENTATIONS = [
-  { key: 'landscape', label: '横版', frame: '桌面 16:9' },
-  { key: 'portrait', label: '竖版', frame: '手机 9:16' },
+  { key: 'landscape', label: '横版', device: '桌面' },
+  { key: 'portrait', label: '竖版', device: '手机' },
 ] as const
 
 const route = useRoute()
@@ -129,7 +130,7 @@ watch(placement, () => {
             >
               <span class="hero-admin__frame-icon" :data-orientation="item.key" aria-hidden="true" />
               <span>{{ item.label }}</span>
-              <span>{{ item.frame }}</span>
+              <span>{{ item.device }} {{ HERO_FRAMES[placement][item.key].label }}</span>
               <span class="hero-admin__count">
                 {{ summaries[item.key].status === 'loading' ? '加载中…'
                   : summaries[item.key].status === 'error' ? '读取失败'
