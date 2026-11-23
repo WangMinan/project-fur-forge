@@ -16,6 +16,7 @@ const props = withDefaults(defineProps<{
 })
 
 const form = defineModel<WorkBasicsForm>({ required: true })
+const purposeOptions = WORK_PURPOSE_VALUES.map(value => ({ value, label: WORK_PURPOSE_LABELS[value] }))
 
 function errorFor(key: keyof WorkFormErrors) {
   return props.showErrors ? props.errors[key] : undefined
@@ -80,7 +81,7 @@ function errorFor(key: keyof WorkFormErrors) {
 
       <div class="field field--wide">
         <label class="field__label" for="f-purpose">内部用途 <span aria-hidden="true">*</span></label>
-        <AdminSelect id="f-purpose" v-model="form.purpose" :disabled="disabled" :options="WORK_PURPOSE_VALUES.map(value => ({ value, label: WORK_PURPOSE_LABELS[value] }))" />
+        <AdminSelect id="f-purpose" v-model="form.purpose" :disabled="disabled" :options="purposeOptions" />
         <p class="field__hint">仅管理端可见；领养作品会额外启用领养状态、画师、价格和横版封面。</p>
       </div>
 

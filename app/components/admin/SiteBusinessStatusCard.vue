@@ -29,6 +29,7 @@ const emit = defineEmits<{
 
 const tone = ref<SiteBusinessStatusTone>(props.status?.tone ?? 'open')
 const label = ref(props.status?.label ?? '')
+const toneOptions = SITE_STATUS_TONE_VALUES.map(value => ({ value, label: SITE_STATUS_TONE_LABELS[value] }))
 
 function snapshotOf() {
   return JSON.stringify({ tone: tone.value, label: label.value })
@@ -97,7 +98,7 @@ function onSave() {
           :id="`status-tone-${kind}`"
           v-model="tone"
           :disabled="mutating"
-          :options="SITE_STATUS_TONE_VALUES.map(value => ({ value, label: SITE_STATUS_TONE_LABELS[value] }))"
+          :options="toneOptions"
         />
         <p class="status-card__hint">开放显示绿色状态点，暂停显示暖色状态点。请在“公开文案”中核对各语言的营业状态文案。</p>
       </div>

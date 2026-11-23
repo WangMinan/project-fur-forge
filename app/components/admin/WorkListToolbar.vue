@@ -28,6 +28,15 @@ const purpose = defineModel<WorkPurpose | 'all'>('purpose', { required: true })
 const publicationStatus = defineModel<PublicationStatus | 'all'>('publicationStatus', {
   required: true,
 })
+
+const purposeOptions = [
+  { value: 'all', label: '全部用途' },
+  ...WORK_PURPOSE_VALUES.map(value => ({ value, label: WORK_PURPOSE_LABELS[value] })),
+]
+const publicationOptions = [
+  { value: 'all', label: '全部状态' },
+  ...PUBLICATION_STATUS_VALUES.map(value => ({ value, label: PUBLICATION_STATUS_LABELS[value] })),
+]
 </script>
 
 <template>
@@ -42,12 +51,12 @@ const publicationStatus = defineModel<PublicationStatus | 'all'>('publicationSta
 
     <div class="admin-list-toolbar__field">
       <label class="admin-list-toolbar__label" for="admin-work-purpose">用途</label>
-      <AdminSelect id="admin-work-purpose" v-model="purpose" :options="[{ value: 'all', label: '全部用途' }, ...WORK_PURPOSE_VALUES.map(value => ({ value, label: WORK_PURPOSE_LABELS[value] }))]" />
+      <AdminSelect id="admin-work-purpose" v-model="purpose" :options="purposeOptions" />
     </div>
 
     <div class="admin-list-toolbar__field">
       <label class="admin-list-toolbar__label" for="admin-work-publication">发布状态</label>
-      <AdminSelect id="admin-work-publication" v-model="publicationStatus" :options="[{ value: 'all', label: '全部状态' }, ...PUBLICATION_STATUS_VALUES.map(value => ({ value, label: PUBLICATION_STATUS_LABELS[value] }))]" />
+      <AdminSelect id="admin-work-publication" v-model="publicationStatus" :options="publicationOptions" />
     </div>
 
   </AdminListToolbar>
