@@ -428,6 +428,13 @@
       "when": 1795392000000,
       "tag": "0060_hero_crop_rect",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "6",
+      "when": 1795392000001,
+      "tag": "0061_commission_entry_crop",
+      "breakpoints": true
     }
   ]
 }

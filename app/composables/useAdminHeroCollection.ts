@@ -17,6 +17,8 @@ export interface HeroCollectionItemInput {
   assetId: string
   assetVersion: number
   cropRect?: CropRect | undefined
+  cropAdjusted?: boolean | undefined
+  entryCropRect?: CropRect | null | undefined
   focalX: number
   focalY: number
   sortOrder: number

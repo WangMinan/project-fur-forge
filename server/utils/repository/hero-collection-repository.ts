@@ -55,6 +55,8 @@ export function readHeroCrop(json: string | null) {
 
 export interface HeroItemRow {
   cropRectJson: string | null
+  entryCropRectJson: string | null
+  cropAdjusted: number | null
   byteSize: number
   alt: string
   assetId: string
@@ -94,7 +96,7 @@ export interface HeroItemAssetRow {
 const selectItems = `
   SELECT
     item.id, item.placement, item.orientation, item.version,
-    item.crop_rect_json AS cropRectJson, item.alt_text AS alt, item.sort_order AS sortOrder, item.enabled,
+    item.crop_adjusted AS cropAdjusted, item.entry_crop_rect_json AS entryCropRectJson, item.crop_rect_json AS cropRectJson, item.alt_text AS alt, item.sort_order AS sortOrder, item.enabled,
     item.preview_object_key AS previewObjectKey,
     item.preview_expires_at AS previewExpiresAt,
     asset.id AS assetId, asset.role, asset.status,
@@ -278,6 +280,8 @@ export function insertHeroItem(
     assetId: string
     id: string
     cropRect?: CropRect | undefined
+    cropAdjusted?: boolean | undefined
+    entryCropRect?: CropRect | null | undefined
     orientation: HeroOrientation
     placement: HeroPlacement
     sortOrder: number
@@ -286,9 +290,9 @@ export function insertHeroItem(
 ) {
   sqlite.prepare(`
     INSERT INTO site_hero_items (
-      id, placement, orientation, asset_id, alt_text, sort_order, crop_rect_json,
+      id, placement, orientation, asset_id, alt_text, sort_order, crop_rect_json, entry_crop_rect_json, crop_adjusted,
       enabled, version, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?)
   `).run(
     input.id,
     input.placement,
@@ -297,6 +301,8 @@ export function insertHeroItem(
     input.alt,
     input.sortOrder,
     JSON.stringify(input.cropRect) ?? null,
+    input.entryCropRect ? JSON.stringify(input.entryCropRect) : null,
+    input.cropAdjusted === undefined ? null : Number(input.cropAdjusted),
     now,
     now,
   )
@@ -313,12 +319,12 @@ export function updateDisabledHeroItem(
   id: string,
   placement: HeroPlacement,
   orientation: HeroOrientation,
-  input: { alt: string, assetId: string, sortOrder: number, cropRect?: CropRect | undefined },
+  input: { alt: string, assetId: string, sortOrder: number, cropRect?: CropRect | undefined, entryCropRect?: CropRect | null | undefined, cropAdjusted?: boolean | undefined },
   now: number,
 ) {
   return sqlite.prepare(`
     UPDATE site_hero_items
-    SET asset_id = ?, alt_text = ?, sort_order = ?, crop_rect_json = ?,
+    SET asset_id = ?, alt_text = ?, sort_order = ?, crop_rect_json = ?, entry_crop_rect_json = ?, crop_adjusted = ?,
         version = version + 1, updated_at = ?
     WHERE id = ? AND placement = ? AND orientation = ? AND enabled = 0
   `).run(
@@ -326,6 +332,8 @@ export function updateDisabledHeroItem(
     input.alt,
     input.sortOrder,
     JSON.stringify(input.cropRect) ?? null,
+    input.entryCropRect ? JSON.stringify(input.entryCropRect) : null,
+    input.cropAdjusted === undefined ? null : Number(input.cropAdjusted),
     now,
     id,
     placement,

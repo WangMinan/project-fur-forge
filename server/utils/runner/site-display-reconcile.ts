@@ -112,13 +112,14 @@ export function findReconcileTargets(
   const targets: ReconcileTarget[] = []
   const items = sqlite.prepare(`
     SELECT
-      item.id, item.placement, item.orientation, item.crop_rect_json AS cropRectJson, item.asset_id AS assetId
+      item.id, item.placement, item.orientation, item.crop_rect_json AS cropRectJson, item.entry_crop_rect_json AS entryCropRectJson, item.asset_id AS assetId
     FROM site_hero_items AS item
     JOIN assets AS asset ON asset.id = item.asset_id
     WHERE item.enabled = 1 AND asset.status = 'READY'
     ORDER BY item.placement, item.orientation, item.sort_order, item.id
   `).all() as Array<{
     cropRectJson: string | null
+    entryCropRectJson: string | null
     assetId: string
     id: string
     orientation: 'landscape' | 'portrait'
@@ -127,17 +128,16 @@ export function findReconcileTargets(
 
   for (const item of items) {
     const kind = item.placement === 'home' ? 'home-hero' : 'commission-hero'
-    if (!inScope(scope, kind)) {
-      continue
+    if (inScope(scope, kind)) {
+      const usage = SITE_HERO_USAGES[item.placement][item.orientation]
+      targets.push({
+        assetId: item.assetId,
+        kind,
+        label: `${item.placement}-hero-${item.orientation}`,
+        usages: [usage],
+        cropRect: readHeroCrop(item.cropRectJson),
+      })
     }
-    const usage = SITE_HERO_USAGES[item.placement][item.orientation]
-    targets.push({
-      assetId: item.assetId,
-      kind,
-      label: `${item.placement}-hero-${item.orientation}`,
-      usages: [usage],
-      cropRect: readHeroCrop(item.cropRectJson),
-    })
     if (
       item.placement === 'commission'
       && item.orientation === 'landscape'
@@ -149,6 +149,7 @@ export function findReconcileTargets(
         kind: 'home-entry',
         label: 'home-entry-commission',
         usages: [HOME_ENTRY_USAGES.commission],
+        cropRect: readHeroCrop(item.entryCropRectJson),
       })
     }
   }

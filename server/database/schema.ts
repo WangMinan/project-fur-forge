@@ -720,6 +720,8 @@ export const siteHeroCollections = sqliteTable('site_hero_collections', {
 /** R3-B expand: one orientation-specific item, with no linked-work field. */
 export const siteHeroItems = sqliteTable('site_hero_items', {
   cropRectJson: text('crop_rect_json'),
+  entryCropRectJson: text('entry_crop_rect_json'),
+  cropAdjusted: integer('crop_adjusted', { mode: 'boolean' }),
   id: text('id').primaryKey(),
   placement: text('placement').notNull(),
   orientation: text('orientation').notNull(),

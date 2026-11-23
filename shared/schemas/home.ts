@@ -43,6 +43,8 @@ export const adminHeroItemDtoSchema = z.object({
   enabled: z.boolean(),
   asset: adminHeroAssetDtoSchema,
   cropRect: cropRectSchema.optional(),
+  cropAdjusted: z.boolean().optional(),
+  entryCropRect: cropRectSchema.nullable().optional(),
   processingSize: z.object({ width: z.number().int().nonnegative(), height: z.number().int().nonnegative() }).optional(),
   upscaleReady: z.boolean(),
   upscaleOperation: publicationOperationDtoSchema.nullable(),
@@ -109,6 +111,8 @@ export const publicCommissionHeroDtoSchema = publicHeroPlacementDtoSchema
 
 const heroItemInputSchema = z.object({
   cropRect: cropRectSchema.optional(),
+  cropAdjusted: z.boolean().optional(),
+  entryCropRect: cropRectSchema.nullable().optional(),
   alt: publicAltSchema,
   sortOrder: z.number().int().min(0).max(9_999),
   assetId: resourceIdSchema,

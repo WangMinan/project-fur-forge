@@ -1,5 +1,5 @@
 import type { CropRect } from '../../../shared/schemas/image-composition'
-import { HERO_FRAMES, heroCropMinimum } from '../../../shared/utils/hero-crop'
+import { COMMISSION_ENTRY_FRAME, HERO_FRAMES, heroCropMinimum } from '../../../shared/utils/hero-crop'
 import { verifyPublicImage } from '../service/public-image-validation'
 import type Database from 'better-sqlite3'
 import type { MediaRole } from '../../../shared/types/contracts'
@@ -134,6 +134,7 @@ const heroFrames = {
 export type HeroDisplayUsage = keyof typeof heroFrames
 
 export function siteCropMinimum(usage: SiteDisplayUsage, rect?: CropRect) {
+  if (rect && usage === 'home-entry-commission') return heroCropMinimum(COMMISSION_ENTRY_FRAME, rect)
   if (rect && usage in heroFrames) return heroCropMinimum(heroFrames[usage as keyof typeof heroFrames], rect)
 }
 
@@ -204,7 +205,7 @@ function existingVariant(sqlite: Database.Database, objectKey: string) {
 
 function resizeOperation(usage: SiteDisplayUsage, source: AssetSource, width: number, dimensions: Pick<ProcessingSource, 'width' | 'height'>) {
   const height = siteDisplayHeight(usage, width, source.heroCrop)
-  if (usage.includes('-hero-')) {
+  if (source.heroCrop || usage.includes('-hero-')) {
     const [horizontal, vertical] = recipes[usage].aspect
     const rect = source.heroCrop ?? fitCrop(dimensions.width, dimensions.height, horizontal / vertical, undefined, source.focalX, source.focalY)
     const crop = pixelCrop(rect, dimensions.width, dimensions.height)
@@ -274,8 +275,8 @@ function recipeIdentity(
     focalY: sourceAsset.focalY,
     format,
     quality: qualityFor(usage, format),
-    // 新裁切不能复用或覆盖旧九宫格输出；入口图维持原身份。
-    ...(usage.includes('-hero-') ? { process: buildSiteDisplayProcess(sourceAsset, usage, width, format, source) } : {}),
+    // 手动选区记录实际处理指令。默认入口图沿用既有身份。
+    ...(sourceAsset.heroCrop || usage.includes('-hero-') ? { process: buildSiteDisplayProcess(sourceAsset, usage, width, format, source) } : {}),
   })
   return digest('sha256', Buffer.from(identity))
 }
@@ -583,8 +584,8 @@ export function completeSiteDisplayVariantsForVersion<
 /** v2 完整后原子优先；升级期间只整体回退完整 v1，不跨版本拼接。 */
 export function resolveCompleteSiteDisplayVariants<
   T extends SiteDisplayVariantCandidate,
->(usage: SiteDisplayUsage, variants: readonly T[]) {
-  const current = completeSiteDisplayVariants(usage, variants)
+>(usage: SiteDisplayUsage, variants: readonly T[], rect?: CropRect) {
+  const current = completeSiteDisplayVariants(usage, variants, rect)
   if (current) {
     return {
       recipeVersion: SITE_DISPLAY_RECIPE_VERSION,
@@ -592,6 +593,7 @@ export function resolveCompleteSiteDisplayVariants<
       widths: recipes[usage].widths,
     } as const
   }
+  if (rect) return null
   const legacy = completeLegacySiteDisplayVariants(usage, variants)
   return legacy
     ? {

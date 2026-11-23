@@ -5,8 +5,8 @@ import { seedHeroCollections } from '../e2e/helpers/public-catalog'
 
 const card = (page: Page) => page.locator('[data-testid="hero-collection-item"]:visible').first()
 
-async function adjust(page: Page) {
-  await card(page).getByRole('button', { name: /调整.*构图/u }).click()
+async function adjust(page: Page, name = /调整.*构图|委托页封面/u) {
+  await card(page).getByRole('button', { name }).click()
   const dialog = page.getByRole('dialog')
   await dialog.getByRole('button', { name: '缩小选区' }).click()
   await dialog.getByRole('button', { name: '选区向右' }).click()
@@ -86,10 +86,17 @@ test('four Hero crops survive publication and match their public frames', async 
       await adjust(page)
       const image = card(page).locator('.hero-item__preview img')
       const editedStyle = await image.getAttribute('style')
-      await card(page).getByRole('button', { name: /调整.*构图/u }).click()
+      await card(page).getByRole('button', { name: /调整.*构图|委托页封面/u }).click()
       await page.getByRole('dialog').getByRole('button', { name: '缩小选区' }).click()
       await page.keyboard.press('Escape')
       expect(await image.getAttribute('style')).toBe(editedStyle)
+      const entryButton = card(page).getByRole('button', { name: /首页委托入口/u })
+      if (placement === 'commission' && desktop) {
+        await expect(entryButton).toContainText('默认')
+        await adjust(page, /首页委托入口/u)
+        await expect(entryButton).toContainText('已调整')
+        await expect(card(page).getByRole('button', { name: /委托页封面/u })).toContainText('已调整')
+      }
       const saved = page.waitForResponse(r => r.request().method() === 'PUT' && r.url().includes('/hero-collections/'))
       await card(page).getByRole('button', { name: '发布并启用' }).click()
       const response = await saved
@@ -99,6 +106,11 @@ test('four Hero crops survive publication and match their public frames', async 
       await expect(card(page)).toHaveAttribute('data-enabled', 'true')
       await page.reload()
       await expect(image).toHaveAttribute('style', editedStyle!)
+      await expect(card(page).getByRole('button', { name: /调整.*构图|委托页封面/u })).toBeDisabled()
+      if (placement === 'commission' && desktop) {
+        await expect(entryButton).toBeDisabled()
+        await expect(entryButton).toContainText('已调整')
+      }
       const api = placement === 'home' ? 'home' : 'commission-hero'
       const data = (await (await page.request.get(`${publicBaseURL}/api/public/v1/${api}`)).json()).data
       for (const variant of [...data[orientation][0].sources.webp, ...data[orientation][0].sources.fallback]) {
@@ -126,6 +138,19 @@ test('four Hero crops survive publication and match their public frames', async 
         await expect(frame.locator('img')).toHaveCSS('object-fit', 'contain')
         const fallback = await frame.boundingBox()
         expect(fallback!.width / fallback!.height).toBeCloseTo(7 / 5, 2)
+        const home = (await (await page.request.get(`${publicBaseURL}/api/public/v1/home`)).json()).data
+        const entry = home.entries.commission.sources
+        await page.goto(publicBaseURL)
+        const box = page.locator('.home-commission__media')
+        await box.scrollIntoViewIfNeeded()
+        for (const width of [390, 1440]) {
+          await page.setViewportSize({ width, height: width < 768 ? 844 : 900 })
+          const visible = await box.boundingBox()
+          expect(visible!.width / visible!.height).toBeCloseTo(1.5, 2)
+          const srcs = [...entry.webp, ...entry.fallback].map((v: { src: string }) => v.src)
+          await expect.poll(() => box.locator('img').evaluate(img => (img as HTMLImageElement).currentSrc)).toEqual(expect.stringContaining('/home-entry-commission/crop-'))
+          expect(srcs).toContain(await box.locator('img').evaluate(img => (img as HTMLImageElement).currentSrc))
+        }
       }
       expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false)
     }

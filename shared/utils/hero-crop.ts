@@ -12,7 +12,14 @@ export const HERO_FRAMES = {
   },
 } as const
 
-type HeroFrame = (typeof HERO_FRAMES)[HeroPlacement][HeroOrientation]
+export const COMMISSION_ENTRY_FRAME = { ratio: 3 / 2, label: '3:2', outputWidth: 1080 } as const
+type HeroFrame = (typeof HERO_FRAMES)[HeroPlacement][HeroOrientation] | typeof COMMISSION_ENTRY_FRAME
+
+export function heroMinimumWithEntry(target: { width: number, height: number }, entryRect?: CropRect | null) {
+  if (!entryRect) return target
+  const entry = heroCropMinimum(COMMISSION_ENTRY_FRAME, entryRect)
+  return { width: Math.max(target.width, entry.width), height: Math.max(target.height, entry.height) }
+}
 
 export function heroCropMinimum(frame: HeroFrame, rect: CropRect) {
   return {

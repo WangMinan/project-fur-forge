@@ -14,7 +14,7 @@ import { adminMediaPreviewUrl } from '~/utils/admin-media-preview'
 import { PUBLICATION_OPERATION_STATUS_LABELS } from '~/utils/media-labels'
 import { adminUploadProgressModel } from '~/utils/admin-upload-progress'
 import type { CropRect, ImageComposition } from '~~/shared/schemas/image-composition'
-import { HERO_FRAMES, heroCropError, heroCropMinimum } from '~~/shared/utils/hero-crop'
+import { COMMISSION_ENTRY_FRAME, HERO_FRAMES, heroCropError, heroCropMinimum, heroMinimumWithEntry } from '~~/shared/utils/hero-crop'
 import { fitCrop, pixelCrop } from '~~/shared/utils/image-composition'
 
 const props = withDefaults(defineProps<{
@@ -57,13 +57,36 @@ const focalY = ref(0.5)
 const width = ref(0)
 const height = ref(0)
 const cropRect = ref<CropRect>()
-const editing = ref(false)
+const explicitCrop = ref<boolean>()
+const entryCropRect = ref<CropRect | null>(null)
+const editing = ref<'hero' | 'entry' | null>(null)
+const previewPurpose = ref<'hero' | 'entry'>('hero')
+const hasEntry = computed(() => props.placement === 'commission' && props.orientation === 'landscape')
 const frame = computed(() => HERO_FRAMES[props.placement][props.orientation])
 const defaultRect = computed(() => fitCrop(width.value, height.value, frame.value.ratio, undefined, focalX.value, focalY.value))
+// The legacy entry recipe uses the nine OSS gravity positions.
+function gravityPosition(focal: number) {
+  return focal < 1 / 3 ? 0 : focal > 2 / 3 ? 1 : 0.5
+}
+const entryDefault = computed(() => fitCrop(width.value, height.value, COMMISSION_ENTRY_FRAME.ratio, undefined,
+  gravityPosition(focalX.value), gravityPosition(focalY.value)))
+const entryRect = computed(() => entryCropRect.value ?? entryDefault.value)
+const editingFrame = computed(() => editing.value === 'entry' ? COMMISSION_ENTRY_FRAME : frame.value)
+const primaryLabel = computed(() => hasEntry.value ? '委托页封面' : `调整${props.orientation === 'landscape' ? '桌面' : '手机'}构图`)
+const primaryAdjusted = computed(() => {
+  if (explicitCrop.value !== undefined) return explicitCrop.value
+  // Before migration 0061 a default rectangle could also be saved automatically.
+  if (!cropRect.value) return false
+  const actual = pixelCrop(cropRect.value, width.value, height.value)
+  const base = pixelCrop(defaultRect.value, width.value, height.value)
+  return actual.x !== base.x || actual.y !== base.y || actual.width !== base.width || actual.height !== base.height
+})
+const existingAsset = computed(() => !!props.item && props.item.asset.assetId === assetId.value)
+const savedHeroRect = computed(() => cropRect.value ?? (existingAsset.value ? undefined : defaultRect.value))
 const displayRect = computed(() => {
   if (cropRect.value) return cropRect.value
   // The live legacy commission image was cropped once on publication, then again in the page.
-  if (props.item?.enabled && props.placement === 'commission') {
+  if (existingAsset.value && props.placement === 'commission') {
     const old = fitCrop(width.value, height.value, HERO_FRAMES.home[props.orientation].ratio, undefined, focalX.value, focalY.value)
     return fitCrop(width.value, height.value, frame.value.ratio, old)
   }
@@ -71,12 +94,16 @@ const displayRect = computed(() => {
 })
 const draftReady = computed(() => {
   if (!width.value || !height.value) return false
-  const target = heroCropMinimum(frame.value, cropRect.value ?? defaultRect.value)
+  const legacy = HERO_FRAMES.home[props.orientation]
+  const hero = savedHeroRect.value
+    ? heroCropMinimum(frame.value, savedHeroRect.value)
+    : { width: legacy.outputWidth, height: Math.round(legacy.outputWidth / legacy.ratio) }
+  const target = heroMinimumWithEntry(hero, entryCropRect.value)
   const size = props.item?.asset.assetId === assetId.value ? props.item.processingSize : null
   return (size?.width ?? width.value) >= target.width && (size?.height ?? height.value) >= target.height
 })
 const cropStyle = computed(() => {
-  const pixels = pixelCrop(displayRect.value, width.value, height.value)
+  const pixels = pixelCrop(previewPurpose.value === 'entry' ? entryRect.value : displayRect.value, width.value, height.value)
   return {
     width: `${100 * width.value / pixels.width}%`,
     height: `${100 * height.value / pixels.height}%`,
@@ -86,11 +113,18 @@ const cropStyle = computed(() => {
 })
 
 function validateCrop(value: ImageComposition) {
-  return value.mode === 'crop' ? heroCropError(frame.value, value.rect, width.value, height.value) : '请选择裁切区域'
+  return value.mode === 'crop' ? heroCropError(editingFrame.value, value.rect, width.value, height.value) : '请选择裁切区域'
 }
 
 function applyCrop(value: ImageComposition | null) {
-  cropRect.value = value?.mode === 'crop' ? value.rect : defaultRect.value
+  previewPurpose.value = editing.value ?? 'hero'
+  if (editing.value === 'entry') {
+    entryCropRect.value = value?.mode === 'crop' ? value.rect : null
+  }
+  else {
+    explicitCrop.value = value?.mode === 'crop'
+    cropRect.value = value?.mode === 'crop' ? value.rect : defaultRect.value
+  }
 }
 
 const sortOrder = ref(0)
@@ -110,7 +144,10 @@ function sync() {
   width.value = props.item?.asset.width ?? 0
   height.value = props.item?.asset.height ?? 0
   cropRect.value = props.item?.cropRect
-  editing.value = false
+  explicitCrop.value = props.item?.cropAdjusted
+  entryCropRect.value = props.item?.entryCropRect ?? null
+  previewPurpose.value = 'hero'
+  editing.value = null
   focalX.value = props.item?.asset.focalX ?? 0.5
   focalY.value = props.item?.asset.focalY ?? 0.5
   sortOrder.value = singleSlot.value
@@ -136,7 +173,10 @@ const upload = useHeroAssetUpload({
     width.value = asset.width
     height.value = asset.height
     cropRect.value = undefined
-    editing.value = true
+    explicitCrop.value = false
+    entryCropRect.value = null
+    previewPurpose.value = 'hero'
+    editing.value = 'hero'
     focalX.value = asset.focalX
     focalY.value = asset.focalY
     selectedFile.value = null
@@ -201,6 +241,8 @@ const previewUrl = computed(() => assetId.value
   : null,
 )
 
+const cropLocked = computed(() => !previewUrl.value || props.item?.enabled || busy.value || uploadProcessing.value)
+
 function itemInput(): HeroCollectionItemInput {
   return {
     alt: alt.value.trim(),
@@ -209,7 +251,9 @@ function itemInput(): HeroCollectionItemInput {
     focalX: focalX.value,
     focalY: focalY.value,
     sortOrder: sortOrder.value,
-    cropRect: cropRect.value ?? defaultRect.value,
+    cropRect: savedHeroRect.value,
+    cropAdjusted: primaryAdjusted.value,
+    ...(hasEntry.value ? { entryCropRect: entryCropRect.value } : {}),
   }
 }
 
@@ -282,20 +326,27 @@ function requestDisable() {
     </header>
 
     <div class="hero-item__editor">
-      <div class="hero-item__preview" :data-orientation="orientation" :style="{ aspectRatio: frame.ratio }">
+      <div class="hero-item__preview" :data-orientation="orientation" :style="{ aspectRatio: previewPurpose === 'entry' ? COMMISSION_ENTRY_FRAME.ratio : frame.ratio }">
         <img v-if="previewUrl" :src="previewUrl" :alt="alt" :style="cropStyle">
         <p v-else>上传原图后可调整构图。</p>
+        <span v-if="hasEntry && previewUrl" class="hero-item__preview-label">{{ previewPurpose === 'entry' ? '首页委托入口 · 3:2' : '委托页封面 · 7:5' }}</span>
       </div>
       <div class="hero-item__sidebar">
-        <AdminAction v-if="previewUrl && !item?.enabled" :disabled="busy || uploadProcessing" @click="editing = true">
-          调整{{ orientation === 'landscape' ? '桌面' : '手机' }}构图 · {{ frame.label }}
-        </AdminAction>
+        <div class="hero-item__crop-actions" role="group" aria-label="图片构图">
+          <AdminAction size="small" :disabled="cropLocked" @click="editing = 'hero'">
+            {{ primaryLabel }} · {{ frame.label }} · {{ primaryAdjusted ? '已调整' : '默认' }}
+          </AdminAction>
+          <AdminAction v-if="hasEntry" size="small" :disabled="cropLocked" @click="editing = 'entry'">
+            首页委托入口 · {{ COMMISSION_ENTRY_FRAME.label }} · {{ entryCropRect ? '已调整' : '默认' }}
+          </AdminAction>
+        </div>
         <AdminCompositionDialog
           v-if="editing && previewUrl" :key="assetId"
           :src="previewUrl" :width="width" :height="height" :title="alt"
-          :label="frame.label" :ratio="frame.ratio" :initial="{ mode: 'crop', rect: displayRect }"
-          :output-width="frame.outputWidth" :disabled="busy" :validate="validateCrop"
-          @apply="applyCrop" @close="editing = false"
+          :label="hasEntry ? (editing === 'entry' ? '首页委托入口 · 3:2' : '委托页封面 · 7:5') : frame.label"
+          :ratio="editingFrame.ratio" :initial="{ mode: 'crop', rect: editing === 'entry' ? entryRect : displayRect }"
+          :output-width="editingFrame.outputWidth" :disabled="busy" :validate="validateCrop"
+          @apply="applyCrop" @close="editing = null"
         >
           <template v-if="placement === 'home'">
             <span class="hero-item__nav-overlay" aria-hidden="true">
@@ -415,6 +466,8 @@ function requestDisable() {
 </template>
 
 <style scoped>
+.hero-item__crop-actions { display: flex; flex-wrap: wrap; gap: var(--admin-space-2); }
+.hero-item__preview-label { position: absolute; right: 0.5rem; bottom: 0.5rem; padding: 0.25rem 0.5rem; border-radius: var(--admin-radius-sm); background: #191f2ace; color: white; font-size: var(--admin-font-xs); }
 .hero-item__editor, .hero-item__sidebar { display: grid; align-items: start; gap: var(--admin-space-4); min-width: 0; }
 .hero-item__preview { position: relative; display: grid; place-items: center; width: 100%; overflow: hidden; background: var(--admin-bg-subtle); border-radius: var(--admin-radius-md); }
 .hero-item__preview[data-orientation="portrait"] { max-width: 20rem; margin-inline: auto; }

@@ -458,6 +458,25 @@ describe('R3-C independent Hero collection publication', () => {
       .filter(item => item.enabled).map(item => item.alt)).toEqual(['委托横版 B'])
   })
 
+  it('preserves, independently resets and restricts the commission entry selection', () => {
+    const before = getAdminHeroCollection(sqlite, 'commission', 'landscape')
+    const assetId = seedHeroAsset({ placement: 'commission', orientation: 'landscape', ownerVersion: before.version })
+    const input = heroItemInput(assetId, '共享原图', 0)
+    const entryCropRect = { x: 0.25, y: 0.25, width: 600 / 3840, height: 400 / 2160 }
+    const created = createHeroCollectionItem(sqlite, 'commission', 'landscape', before.version, { ...input, entryCropRect })
+    const item = created.items[0]!
+    expect(item.cropRect).toBeUndefined()
+    expect(item.upscaleReady).toBe(false)
+    const saved = updateHeroCollectionItem(sqlite, item.id, 'commission', 'landscape', created.version, input)
+    expect(saved.items[0]!.entryCropRect).toEqual(entryCropRect)
+    const reset = updateHeroCollectionItem(sqlite, item.id, 'commission', 'landscape', saved.version, { ...input, entryCropRect: null })
+    expect(reset.items[0]!.entryCropRect).toBeUndefined()
+    expect(reset.items[0]!.upscaleReady).toBe(true)
+    const home = getAdminHeroCollection(sqlite, 'home', 'landscape')
+    const other = seedHeroAsset({ placement: 'home', orientation: 'landscape', ownerVersion: home.version })
+    expect(() => createHeroCollectionItem(sqlite, 'home', 'landscape', home.version, { ...input, assetId: other, entryCropRect })).toThrow('需要委托横图')
+  })
+
   it('uses the saved rectangle for preview, every public size and recovery while keeping the entry independent', async () => {
     const placement = 'commission'
     const orientation = 'landscape'
@@ -468,7 +487,8 @@ describe('R3-C independent Hero collection publication', () => {
     expect(() => createHeroCollectionItem(sqlite, placement, orientation, collection.version, {
       ...input, cropRect: { ...cropRect, height: 0.5 },
     })).toThrow('选区比例')
-    const saved = createHeroCollectionItem(sqlite, placement, orientation, collection.version, { ...input, cropRect })
+    const entryCropRect = { x: 0.5, y: 0.25, width: 1200 / 3840, height: 800 / 2160 }
+    const saved = createHeroCollectionItem(sqlite, placement, orientation, collection.version, { ...input, cropRect, entryCropRect })
     const item = saved.items[0]!
     expect(item.cropRect).toEqual(cropRect)
     await createHeroCollectionItemPreview(sqlite, storage, item.id, placement, orientation, saved.version, NOW)
@@ -482,7 +502,12 @@ describe('R3-C independent Hero collection publication', () => {
     }
     const entry = getPublicHome(sqlite, MEDIA_BASE_URL).entries.commission!.sources.webp[0]!
     expect(entry.height).toBe(Math.round(entry.width * 2 / 3))
-    expect(entry.src).not.toContain('/crop-')
+    expect(entry.src).toContain('/crop-')
+    expect(storage.processCalls.some(call => call.process.includes('crop,x_1920,y_540,w_1200,h_800/resize,m_fill,w_1080,h_720'))).toBe(true)
+    const entryTarget = findReconcileTargets(sqlite, 'home-entry').find(t => t.assetId === assetId)!
+    expect(entryTarget.cropRect).toEqual(entryCropRect)
+    expect(reconcileTargetComplete(sqlite, entryTarget)).toBe(true)
+    expect(reconcileTargetComplete(sqlite, { ...entryTarget, cropRect })).toBe(false)
     const target = findReconcileTargets(sqlite, 'commission-hero').find(t => t.assetId === assetId)!
     expect(target.cropRect).toEqual(cropRect)
     expect(reconcileTargetComplete(sqlite, target)).toBe(true)

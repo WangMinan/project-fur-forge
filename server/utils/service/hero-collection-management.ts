@@ -1,5 +1,5 @@
 import type { CropRect } from '../../../shared/schemas/image-composition'
-import { HERO_FRAMES, heroCropError, heroCropMinimum } from '../../../shared/utils/hero-crop'
+import { COMMISSION_ENTRY_FRAME, HERO_FRAMES, heroCropError, heroCropMinimum, heroMinimumWithEntry } from '../../../shared/utils/hero-crop'
 import { randomUUID } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import {
@@ -46,6 +46,8 @@ import { getLatestPublicationOperations } from '../runner/work-publication'
 
 export interface HeroItemInput {
   cropRect?: CropRect | undefined
+  cropAdjusted?: boolean | undefined
+  entryCropRect?: CropRect | null | undefined
   alt: string
   assetId: string
   assetVersion: number
@@ -108,11 +110,16 @@ export function heroSourceSize(sqlite: Database.Database, item: HeroItemRow) {
   }
 }
 
-export function heroItemUpscaleReady(item: HeroItemRow, source: { width: number, height: number }) {
+export function heroItemMinimum(item: HeroItemRow) {
   const crop = readHeroCrop(item.cropRectJson)
   const target = crop
     ? heroCropMinimum(HERO_FRAMES[item.placement][item.orientation], crop)
     : heroUpscaleTarget(item.role)!
+  return heroMinimumWithEntry(target, readHeroCrop(item.entryCropRectJson))
+}
+
+export function heroItemUpscaleReady(item: HeroItemRow, source: { width: number, height: number }) {
+  const target = heroItemMinimum(item)
   return source.width >= target.width && source.height >= target.height
 }
 
@@ -140,6 +147,8 @@ function itemDto(
     sortOrder: row.sortOrder,
     enabled: row.enabled === 1,
     cropRect: readHeroCrop(row.cropRectJson),
+    cropAdjusted: row.cropAdjusted === null ? undefined : Boolean(row.cropAdjusted),
+    entryCropRect: readHeroCrop(row.entryCropRectJson),
     asset: {
       assetId: row.assetId,
       version: row.assetVersion,
@@ -151,7 +160,10 @@ function itemDto(
     processingSize: sourceSize,
     upscaleReady: heroItemUpscaleReady(row, sourceSize),
     upscaleOperation: operations.get(`${row.id}:UPSCALE`) ?? null,
-    missingVariantCount: missingSiteDisplayVariantCount(usage, variants, readHeroCrop(row.cropRectJson)),
+    missingVariantCount: missingSiteDisplayVariantCount(usage, variants, readHeroCrop(row.cropRectJson))
+      + (row.placement === 'commission' && row.orientation === 'landscape'
+        ? missingSiteDisplayVariantCount('home-entry-commission', variants, readHeroCrop(row.entryCropRectJson))
+        : 0),
     publicationOperation,
   }
 }
@@ -271,6 +283,11 @@ function assertHeroAssetFocalMutation(
 }
 
 function validateCrop(input: HeroItemInput, asset: Pick<HeroItemRow, 'width' | 'height'>, placement: HeroPlacement, orientation: HeroOrientation) {
+  if (input.entryCropRect) {
+    if (placement !== 'commission' || orientation !== 'landscape') throw new ServiceError(400, 'VALIDATION_ERROR', '首页委托入口需要委托横图。')
+    const error = heroCropError(COMMISSION_ENTRY_FRAME, input.entryCropRect, asset.width, asset.height)
+    if (error) throw new ServiceError(400, 'VALIDATION_ERROR', error)
+  }
   if (!input.cropRect) return
   const error = heroCropError(HERO_FRAMES[placement][orientation], input.cropRect, asset.width, asset.height)
   if (error) throw new ServiceError(400, 'VALIDATION_ERROR', error)
@@ -374,9 +391,16 @@ export function updateHeroCollectionItem(
   if (hasBlockingPublicationCleanup(sqlite, 'HOME', id)) {
     throw new ServiceError(409, 'CONFLICT', '请等待当前大图任务完成后再保存。')
   }
+  if (input.entryCropRect === undefined && item.assetId === input.assetId) {
+    input = { ...input, entryCropRect: readHeroCrop(item.entryCropRectJson) }
+  }
   // Older clients omit the selection when updating unrelated fields.
   if (!input.cropRect && item.assetId === input.assetId && item.cropRectJson) {
     input = { ...input, cropRect: readHeroCrop(item.cropRectJson) }
+  }
+  if (input.cropAdjusted === undefined && item.cropAdjusted !== null && item.assetId === input.assetId
+    && (JSON.stringify(input.cropRect) ?? null) === item.cropRectJson) {
+    input = { ...input, cropAdjusted: Boolean(item.cropAdjusted) }
   }
   validateCrop(input, asset, placement, orientation)
   try {
