@@ -150,7 +150,9 @@ const altMissing = computed(() =>
   entries.value.some(entry => entry.alt.trim() === ''),
 )
 
-const emptyText = '还没有出厂照。发布前至少需要一张处理完成的出厂照并设为主图。'
+const emptyText = computed(() => props.work.purpose === 'adoption' && props.work.adoptionStatus === 'available'
+  ? '可领养作品的出厂照可选。'
+  : '还没有出厂照。发布前至少需要一张处理完成的出厂照并设为主图。')
 
 watchEffect(() => {
   emit('stateChange', {

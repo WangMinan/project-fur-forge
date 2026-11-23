@@ -109,7 +109,7 @@ interface SnapshotEntry {
   homeAdoption: PublicWorkSummaryDto['card'] | null
   featuredSummary: PublicWorkSummaryDto | null
   adoption: {
-    cover: PublicWorkSummaryDto['card']
+    cover: PublicWorkSummaryDto['card'] | null
     artist: string | null
     priceCnyMinor: number | null
     status: 'available' | 'adopted'
@@ -245,8 +245,8 @@ function snapshot(
       ?? photos.find(photo => photo.height > photo.width && photo.card)
     const cardPhoto = portrait ?? primary
     const fallback = coverDetail ?? designSheet
-    const adoption = row.purpose === 'adoption' && row.adoptionStatus !== null && fallback
-      ? { cover: fallback, artist: row.artist, priceCnyMinor: row.priceCurrency === 'CNY' ? row.priceAmountMinor : null, status: row.adoptionStatus } : null
+    const adoption = row.purpose === 'adoption' && row.adoptionStatus !== null && (row.adoptionStatus === 'adopted' || fallback)
+      ? { cover: coverDetail, artist: row.artist, priceCnyMinor: row.priceCurrency === 'CNY' ? row.priceAmountMinor : null, status: row.adoptionStatus } : null
     const card = cardPhoto ? cardFor(cardPhoto, composed ? 'work-catalog' : 'work-card')
       : adoption ? (composed ? cardFor(coverDetail ? coverMedia : designMedia, 'work-catalog') : fallback) : null
     if (!card || (row.purpose === 'adoption' && !adoption)) continue
@@ -485,9 +485,7 @@ export function createSqlitePublicSiteRepository(
           ...(match.adoptionSourceAssetId ? { adoptionSourceAssetId: match.adoptionSourceAssetId } : {}),
           card: match.summary.card,
           cardOrientation: match.cardOrientation,
-          // 领养作品详情必须能看到横版封面，只做了单头时它是唯一的成果图；
-          // 封面回落为设定图时不再重复进图集，设定图分区已展示同一张。
-          ...(match.showAdoptionCoverInDetail && match.adoption && match.adoption.cover.assetId !== match.designSheet?.assetId
+          ...(match.showAdoptionCoverInDetail && match.adoption?.cover
             ? { adoptionCover: match.adoption.cover }
             : {}),
           gallery,

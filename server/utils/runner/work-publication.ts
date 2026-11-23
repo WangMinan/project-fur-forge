@@ -252,19 +252,11 @@ export function checkWorkPublication(
     if (designSheets.some(sheet => !sheet.alt?.trim())) {
       blockers.push('DESIGN_SHEET_ALT_REQUIRED')
     }
-    /*
-     * 领养作品的公开成果图可以是横版封面或完整设定图，二者至少其一；
-     * 没有任一时即使叠加工厂照也不足以支撑 /adoptions 卡片。
-     */
-    if (adoptionCovers.length === 0 && designSheets.length === 0) {
+    if (work.adoptionStatus !== 'adopted' && adoptionCovers.length === 0 && designSheets.length === 0) {
       blockers.push('ADOPTION_MEDIA_REQUIRED')
     }
   }
-  /*
-   * 领养常见场景是只做单头：有横版封面或设定图，客户交付 DTD 前做不出身体，因此没有出厂照。
-   * 这类作品允许发布，出厂照退化为 0..5 可选；commission/showcase 仍必须有出厂照。
-   */
-  if (publicationPhotos.length === 0 && work.purpose !== 'adoption') {
+  if (publicationPhotos.length === 0 && (work.purpose !== 'adoption' || work.adoptionStatus === 'adopted')) {
     blockers.push('STUDIO_PHOTO_REQUIRED')
   }
   if (

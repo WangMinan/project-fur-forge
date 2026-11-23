@@ -55,7 +55,7 @@ export const PUBLICATION_BLOCKER_LABELS: Record<PublicationBlocker, string> = {
   ADOPTION_STATUS_REQUIRED: '领养状态需要由负责人人工确认',
   ADOPTION_COVER_NOT_READY: '领养横版封面尚未完成服务端校验',
   ADOPTION_COVER_ALT_REQUIRED: '领养横版封面缺少图片说明',
-  ADOPTION_MEDIA_REQUIRED: '领养作品至少需要一张横版封面或设定图',
+  ADOPTION_MEDIA_REQUIRED: '开放领养至少需要一张横版封面或设定图',
   DESIGN_SHEET_NOT_READY: '设定图尚未完成服务端校验',
   DESIGN_SHEET_SOURCE_TOO_SMALL: '设定图需要尺寸适配，请重新发布重试；完整原图会保留',
   DESIGN_SHEET_ALT_REQUIRED: '设定图缺少图片说明',

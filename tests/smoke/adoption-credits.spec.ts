@@ -23,7 +23,7 @@ test('adoption credits: placement, SSR, language, responsive layout and touch na
     characterName: item.slug === 'artist' ? '长角色名称需要保持完整可读'.repeat(3) : `角色 ${item.slug}`,
     species: '鸟龙', purpose: 'adoption', adoptionStatus: item.adopted ? 'adopted' : 'available',
     artist: item.artist, priceCnyMinor: item.priceCnyMinor,
-    photos: [{ alt: '测试出厂照' }], adoptionCover: { alt: '测试设定图' },
+    photos: [{ alt: '测试出厂照' }], ...(item.adopted ? {} : { adoptionCover: { alt: '测试设定图' } }),
   })))
   mkdirSync(evidence, { recursive: true })
   for (const language of ['zh-CN', 'en']) {
@@ -117,6 +117,7 @@ test('admin artist and price save, preview, reload and clear', async ({ page }) 
   const work = await createWorkViaApi(page, { purpose: 'adoption', adoptionStatus: 'adopted', priceCnyMinor: 880050 })
   await page.goto(`${adminBaseURL}/admin/works/${work.id}`)
   await expect(page.locator('#f-artist')).toBeVisible()
+  await expect(page.getByTestId('publication-panel')).toContainText('至少需要一张出厂照')
   await page.waitForFunction(() => Boolean((document.querySelector('#__nuxt') as Element & { __vue_app__?: unknown })?.__vue_app__))
   await page.locator('#f-artist').fill('测试画师')
   await page.getByRole('button', { name: '保存修改', exact: true }).click()

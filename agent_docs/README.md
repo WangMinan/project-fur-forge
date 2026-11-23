@@ -26,6 +26,7 @@
 | 需求16 · 公开仓库清理与源码许可 | 用户确认；隔离清理与验证中 | [STATE](需求16-公开仓库清理与源码许可/STATE.md) · [SPEC](需求16-公开仓库清理与源码许可/requirements/SPEC.md) · [TASKS](需求16-公开仓库清理与源码许可/implementation/TASKS.md) |
 | 需求17 · 后台录入已有委托 | 本地实现与自动验证完成；已提供本地预览 | [STATE](需求17-后台录入已有委托/STATE.md) · [SPEC](需求17-后台录入已有委托/requirements/SPEC.md) · [TASKS](需求17-后台录入已有委托/implementation/TASKS.md) |
 | 需求18 · 大图手动构图 | 用户已验收 | [STATE](需求18-大图手动构图/STATE.md) · [SPEC](需求18-大图手动构图/requirements/SPEC.md) · [TASKS](需求18-大图手动构图/implementation/TASKS.md) |
+| 需求19 · 已领养作品发布 | 待用户验收 | [STATE](需求19-已领养作品发布/STATE.md) · [SPEC](需求19-已领养作品发布/requirements/SPEC.md) · [TASKS](需求19-已领养作品发布/implementation/TASKS.md) |
 
 ## 按主题补读
 

@@ -616,6 +616,10 @@ export function updateManagedWork(
       if (result.changes !== 1) {
         throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
       }
+      if (current.publicationStatus === 'published' && current.adoptionStatus === 'adopted'
+        && input.purpose === 'adoption' && input.adoptionStatus === 'available') {
+        assertWorkDisplay(sqlite, id, true)
+      }
       if (current.featured || input.featured) {
         normalizeFeaturedRows(sqlite, featuredIds, now, id)
       }
@@ -1049,10 +1053,7 @@ export function getPublicSafeWorkPreview(
   const work = getManagedWork(sqlite, id)
   return publicSafeWorkPreviewDtoSchema.parse({
     ...work,
-    // 与 checkWorkPublication 同一规则：领养作品的成果图是封面或设定图二选一，
-    // 只做了单头、尚未拿到 DTD 的领养作品也算媒体就绪。
-    // 非领养作品的 DTO 不带这两个字段，因此用可空判断而不是 === null。
-    mediaReady: (work.purpose === 'adoption'
+    mediaReady: (work.purpose === 'adoption' && work.adoptionStatus !== 'adopted'
       ? work.adoptionStatus !== null && (
         Boolean(work.adoptionCover?.status === 'READY' && work.adoptionCover.alt?.trim())
         || Boolean(work.designSheet?.status === 'READY' && work.designSheet.alt?.trim())

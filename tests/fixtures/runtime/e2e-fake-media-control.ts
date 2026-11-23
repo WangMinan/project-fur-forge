@@ -317,12 +317,13 @@ export default defineEventHandler(async (event) => {
         return { error: 'seeded work slugs must start with e2e-public-' }
       }
       const publicationStatus = work.publicationStatus ?? 'published'
-      // 领养允许只有横版封面或设定图；普通作品仍必须有出厂照。
+      // 公开读取夹具也支持历史上已发布的纯封面或纯设定图领养作品。
       if (
         !work.photos
         || work.photos.length > 5
         || (publicationStatus === 'published' && work.photos.length === 0 && !adoption)
-        || (adoption && publicationStatus === 'published' && !work.adoptionCover && !work.designSheet)
+        || (adoption && publicationStatus === 'published' && !work.adoptionCover && !work.designSheet
+          && !(work.adoptionStatus === 'adopted' && work.photos.length > 0))
       ) {
         setResponseStatus(event, 400)
         return { error: 'seeded works need valid role media' }

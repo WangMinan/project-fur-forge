@@ -57,6 +57,7 @@ defineExpose({ save })
       <img :src="adminMediaPreviewUrl(preview.assetId, 320)" :alt="preview.alt || '所选封面来源预览'" width="160" height="120">
       <figcaption>所选来源预览 · {{ preview.alt || '尚未填写图片说明' }}</figcaption>
     </figure>
+    <p v-else-if="work.purpose === 'adoption' && work.adoptionStatus === 'adopted'">已领养作品可以仅用出厂照发布。</p>
     <p v-else role="status">所选来源尚无可用图片。</p>
     <label class="display-settings__check"><input v-model="values.showAdoptionCoverInDetail" type="checkbox" :disabled="disabled || saving">在详情图集中显示领养横版封面</label>
     <label class="display-settings__check"><input v-model="values.showDesignSheetInDetail" type="checkbox" :disabled="disabled || saving">在详情图集中显示设定图</label>

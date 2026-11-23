@@ -85,8 +85,9 @@ async function createWork() {
       </div>
 
       <p class="new-work__note">
-        创建后进入编辑页上传出厂照；领养作品还需单独上传横版封面。
-        作品保存为草稿，完成发布检查前不会出现在公开端。
+        创建草稿后即可上传图片。
+        <template v-if="form.purpose === 'adoption' && form.adoptionStatus === 'adopted'">已领养作品发布时至少需要一张出厂照，横版封面和设定图均可选。</template>
+        <template v-else-if="form.purpose === 'adoption'">开放领养时至少需要一张横版封面或设定图。</template>
       </p>
     </div>
   </AdminShell>

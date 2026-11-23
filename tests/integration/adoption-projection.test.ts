@@ -108,6 +108,20 @@ afterEach(() => {
 })
 
 describe('R3-D adoption public projection', () => {
+  it.each([0, 1])('uses a portrait studio photo for an adopted featured work without a cover (composition %i)', async (version) => {
+    const id = '77777777-7777-4777-8777-777777777770'
+    const photoId = '77777777-7777-4777-8777-777777777771'
+    insertAdoption({ id, name: '松果', slug: 'pinecone', status: 'adopted' })
+    sqlite.prepare('UPDATE works SET image_composition_version=?, featured=1 WHERE id=?').run(version, id)
+    await attachPublicAsset({ id: photoId, role: 'studio_photo', workId: id })
+    const repository = createSqlitePublicSiteRepository(sqlite, MEDIA_BASE_URL)
+    expect(repository.listWorks().items[0]?.card.assetId).toBe(photoId)
+    const home = repository.getHomeAggregate()
+    expect(home.featured.items[0]?.card.assetId).toBe(photoId)
+    expect(home.currentAdoptions.items).toEqual([])
+    expect(repository.getWorkBySlug('pinecone')?.media.gallery.map(photo => photo.assetId)).toEqual([photoId])
+  })
+
   it('projects only available adoptions while keeping works order unchanged', async () => {
     const rows = [
       { id: '10000000-0000-4000-8000-000000000010', slug: 'available-a', status: 'available', updatedAt: NOW + 300 },

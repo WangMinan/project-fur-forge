@@ -31,6 +31,7 @@ import {
 import {
   createManagedWork,
   deleteManagedWork,
+  getPublicSafeWorkPreview,
   replaceManagedAdoptionCover,
   replaceManagedDesignSheet,
   replaceManagedStudioPhotos,
@@ -145,13 +146,13 @@ function createWorkWithPhoto(
   )
 }
 
-function createRegularAdoption() {
+function createRegularAdoption(adoptionStatus: 'available' | 'adopted' = 'available') {
   const work = createManagedWork(sqlite, {
     slug: 'regular-adoption',
     characterName: '待领养小狗',
     species: '犬科',
     purpose: 'adoption',
-    adoptionStatus: 'available',
+    adoptionStatus,
     priceCnyMinor: 100,
     sortOrder: 0,
     featured: false,
@@ -1060,7 +1061,47 @@ describe('dual-bucket work publication operations', () => {
     ])
   })
 
-  it('blocks an adoption that has studio photos but neither cover nor design sheet', () => {
+  it('requires a studio photo to publish an adopted work even with adoption artwork', async () => {
+    const work = createRegularAdoption('adopted')
+    const assertBlocked = async (version: number) => {
+      expect(checkWorkPublication(sqlite, work.id).blockers).toContain('STUDIO_PHOTO_REQUIRED')
+      expect(getPublicSafeWorkPreview(sqlite, work.id).mediaReady).toBe(false)
+      await expect(publishWork(sqlite, storage, work.id, version, USER_ID)).rejects.toThrow(/Resolve publication blockers/u)
+    }
+    await assertBlocked(work.version)
+    const coverOnly = attachRequiredAdoptionMedia(work, { studioPhoto: false })
+    await assertBlocked(coverOnly.version)
+    const withSheet = attachDesignSheet(coverOnly)
+    await assertBlocked(withSheet.version)
+    const sheetOnly = replaceManagedAdoptionCover(sqlite, work.id, withSheet.version, null)
+    await assertBlocked(sheetOnly.version)
+  })
+
+  it('can remove an explicitly selected cover and republish an adopted work with just a studio photo', async () => {
+    const work = attachRequiredAdoptionMedia(createRegularAdoption('adopted'))
+    const selected = updateManagedWorkPresentation(sqlite, work.id, work.version, { adoptionCoverSource: 'adoption_cover' })
+    const published = await publishWork(sqlite, storage, work.id, selected.version, USER_ID)
+    const removed = await unpublishWork(sqlite, storage, work.id, published.work.version, USER_ID)
+    const photosOnly = replaceManagedAdoptionCover(sqlite, work.id, removed.work.version, null)
+    expect(getPublicSafeWorkPreview(sqlite, work.id).mediaReady).toBe(true)
+    expect(checkWorkPublication(sqlite, work.id).blockers).toEqual([])
+    const republished = await publishWork(sqlite, storage, work.id, photosOnly.version, USER_ID)
+    expect(republished.operation.status).toBe('DONE')
+    const repository = createSqlitePublicSiteRepository(sqlite, 'https://media.example.com')
+    expect(repository.listWorks().items[0]?.card.assetId).toBe(ASSET_ID)
+    expect(repository.getWorkBySlug(work.slug)).toMatchObject({
+      adoption: { adoptionStatus: 'adopted' }, media: { gallery: [{ assetId: ASSET_ID }] },
+    })
+    expect(repository.getWorkBySlug(work.slug)?.media.adoptionCover).toBeUndefined()
+    expect(repository.listAdoptions().items).toEqual([])
+    expect(repository.getHomeAggregate().currentAdoptions.items).toEqual([])
+    expect(() => updateManagedWork(sqlite, work.id, republished.work.version, {
+      ...work, purpose: 'adoption', adoptionStatus: 'available', priceCnyMinor: null,
+    })).toThrow(expect.objectContaining({ reason: 'ADOPTION_SOURCE_UNAVAILABLE' }))
+    expect(repository.getWorkBySlug(work.slug)?.adoption?.adoptionStatus).toBe('adopted')
+  })
+
+  it('blocks an available adoption that has studio photos but neither cover nor design sheet', () => {
     const work = createRegularAdoption()
     attachRequiredAdoptionMedia(work, { cover: false })
     expect(checkWorkPublication(sqlite, work.id)).toMatchObject({

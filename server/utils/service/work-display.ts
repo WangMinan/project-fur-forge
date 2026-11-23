@@ -7,13 +7,15 @@ import { publicWorkAssetSources } from '../recipe/work-public-sources'
 export interface WorkDisplayState extends WorkDisplaySettings {
   imageCompositionVersion: number
   purpose: string
+  adoptionStatus: 'available' | 'adopted' | null
   publicationStatus: string
 }
 
 export function workDisplayState(sqlite: Database.Database, workId: string): WorkDisplayState {
   const row = sqlite.prepare(`SELECT show_adoption_cover_in_detail AS showAdoptionCoverInDetail,
     show_design_sheet_in_detail AS showDesignSheetInDetail, adoption_cover_source AS adoptionCoverSource,
-    image_composition_version AS imageCompositionVersion, purpose, publication_status AS publicationStatus FROM works WHERE id=?`).get(workId) as WorkDisplayState
+    image_composition_version AS imageCompositionVersion, purpose, adoption_status AS adoptionStatus,
+    publication_status AS publicationStatus FROM works WHERE id=?`).get(workId) as WorkDisplayState
   return { ...row, showAdoptionCoverInDetail: Boolean(row.showAdoptionCoverInDetail), showDesignSheetInDetail: Boolean(row.showDesignSheetInDetail) }
 }
 
@@ -24,12 +26,16 @@ export function displayMediaState(sqlite: Database.Database, workId: string) {
   const usable = rows.filter(row => state.publicationStatus !== 'published' || publicWorkAssetSources(sqlite, row.assetId,
     row.role === 'design_sheet' ? 'design-sheet' : row.role === 'adoption_cover' && !state.imageCompositionVersion ? 'adoption-card' : 'detail') !== null)
   const visible = usable.filter(row => row.role === 'studio_photo' || (row.role === 'adoption_cover' ? state.showAdoptionCoverInDetail : state.showDesignSheetInDetail))
+  if (state.purpose === 'adoption' && state.adoptionStatus === 'adopted') {
+    return { visibleCount: visible.length, sourceAvailable: true }
+  }
   const source = state.adoptionCoverSource === 'auto'
     ? usable.find(row => row.role === 'design_sheet') ?? usable.find(row => row.role === 'adoption_cover')
     : usable.find(row => row.role === state.adoptionCoverSource)
   let sourceAvailable = Boolean(source) || state.adoptionCoverSource === 'auto'
-  if (state.publicationStatus === 'published' && state.imageCompositionVersion && state.purpose === 'adoption') {
-    sourceAvailable = Boolean(source && publicWorkAssetSources(sqlite, source.assetId, 'adoption-catalog') && publicWorkAssetSources(sqlite, source.assetId, 'home-adoption'))
+  if (state.publicationStatus === 'published' && state.purpose === 'adoption') {
+    sourceAvailable = Boolean(source && (!state.imageCompositionVersion
+      || (publicWorkAssetSources(sqlite, source.assetId, 'adoption-catalog') && publicWorkAssetSources(sqlite, source.assetId, 'home-adoption'))))
   }
   return { visibleCount: visible.length, sourceAvailable }
 }
