@@ -1,6 +1,6 @@
 {
   "generatorScope": "installed-production-snapshot",
-  "packageCount": 860,
+  "packageCount": 829,
   "licenseCounts": [
     {
       "license": "(BSD-3-Clause OR GPL-2.0)",
@@ -28,11 +28,11 @@
     },
     {
       "license": "Apache-2.0",
-      "count": 37
+      "count": 35
     },
     {
       "license": "BlueOak-1.0.0",
-      "count": 13
+      "count": 14
     },
     {
       "license": "BSD",
@@ -40,7 +40,7 @@
     },
     {
       "license": "BSD-2-Clause",
-      "count": 21
+      "count": 13
     },
     {
       "license": "BSD-3-Clause",
@@ -52,7 +52,7 @@
     },
     {
       "license": "CC0-1.0",
-      "count": 3
+      "count": 1
     },
     {
       "license": "GPL-3.0-or-later",
@@ -60,11 +60,11 @@
     },
     {
       "license": "ISC",
-      "count": 51
+      "count": 50
     },
     {
       "license": "MIT",
-      "count": 706
+      "count": 687
     },
     {
       "license": "MIT OR Apache-2.0",

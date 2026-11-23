@@ -54,6 +54,8 @@ async function renderNuxtErrorPage(
   const response = await useNitroApp().localFetch(
     `/__nuxt_error?${query}`,
     {
+      // Nuxt 4.6 only accepts error-page renders marked by the server.
+      context: { nuxt: { '~rendering-error': true } },
       headers: {
         accept: 'text/html',
         host: getRequestHost(event),
@@ -178,7 +180,7 @@ export default defineNitroErrorHandler(async (
     })
   }
 
-  if (!isApiPath(pathname) && supportsHtmlErrorPage(event)) {
+  if (pathname !== '/__nuxt_error' && !isApiPath(pathname) && supportsHtmlErrorPage(event)) {
     return renderNuxtErrorPage(event, fallback.status, requestId)
   }
 
