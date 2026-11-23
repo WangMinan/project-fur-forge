@@ -172,7 +172,7 @@ defineExpose({ save: saveDesignSheet })
     </article>
 
     <p v-else-if="uploads.items.value.length === 0" class="design-sheet__empty">
-      还没有设定图。此项可选，可按需上传并保存一张完整设定图。
+      还没有设定图。{{ work.purpose === 'adoption' && work.adoptionStatus === 'adopted' ? '已领养作品可留空。' : '开放领养时，设定图和横版封面至少需要一项。' }}
     </p>
 
     <AdminWorkImageUploader :disabled="locked" :empty="!entry" label="设定图" :uploads="uploads" :work-id="work.id" :work-version="work.version" />

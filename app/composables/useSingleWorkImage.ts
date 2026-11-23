@@ -88,10 +88,7 @@ export function useSingleWorkImage<T extends { assetId: string, alt: string, sta
     }
     catch (error) {
       if (error instanceof AdminApiError && error.status === 401) return false
-      if (error instanceof AdminApiError && ['DETAIL_GALLERY_EMPTY', 'ADOPTION_SOURCE_UNAVAILABLE'].includes(error.reason ?? '')) {
-        saveError.value = workApiErrorText(error, '图片展示设置无效。')
-      }
-      else if (error instanceof AdminApiError && error.status === 409) {
+      if (error instanceof AdminApiError && error.reason === 'VERSION_CONFLICT') {
         options.conflict()
         saveError.value = `作品数据已在其他地方变化，本次${options.label}未保存。`
       }

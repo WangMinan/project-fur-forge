@@ -565,7 +565,7 @@ export function updateManagedWork(
     throw new ServiceError(409, 'CONFLICT', 'Resource version is stale.', 'VERSION_CONFLICT')
   }
   if (current.publicationStatus === 'published' && current.purpose !== 'adoption' && input.purpose === 'adoption') {
-    throw new ServiceError(409, 'CONFLICT', '请先下架并配置领养图片，再切换为领养作品。', 'WORK_PURPOSE_MEDIA_REQUIRED')
+    throw new ServiceError(409, 'CONFLICT', '请先下架，再将用途改为领养作品，按领养状态补齐发布所需图片。', 'WORK_PURPOSE_MEDIA_REQUIRED')
   }
   if (input.featured && !current.featured) {
     assertFeaturedPortraitPhoto(sqlite, id)

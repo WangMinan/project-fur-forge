@@ -111,7 +111,7 @@ function errorFor(key: keyof WorkFormErrors) {
             :aria-describedby="errorFor('adoptionStatus') ? 'f-adoption-status-error' : undefined"
             :options="[{ value: '', label: '请人工确认', disabled: true }, { value: 'available', label: '可领养' }, { value: 'adopted', label: '已领养' }]"
           />
-          <p class="field__hint">不得根据历史状态自动猜测；不明确时保持未选择并交由负责人确认。</p>
+          <p class="field__hint">已发布的角色改为「已领养」并保存后，会退出首页「当前领养」和领养目录。</p>
           <p v-if="errorFor('adoptionStatus')" id="f-adoption-status-error" class="field__error">{{ errorFor('adoptionStatus') }}</p>
         </div>
 

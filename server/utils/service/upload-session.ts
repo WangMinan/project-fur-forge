@@ -192,7 +192,7 @@ export function assertUploadOwner(
     throw new ServiceError(404, 'NOT_FOUND', 'Owner was not found.')
   }
   if (work.version !== owner.expectedVersion) {
-    throw new ServiceError(409, 'CONFLICT', 'Owner version is stale.')
+    throw new ServiceError(409, 'CONFLICT', 'Owner version is stale.', 'VERSION_CONFLICT')
   }
   if (
     ['design_sheet', 'adoption_cover'].includes(mediaRole)
@@ -291,7 +291,7 @@ export async function createUploadSession(
   }
   catch (error) {
     if (String(error).includes('upload session owner is stale')) {
-      throw new ServiceError(409, 'CONFLICT', 'Owner version is stale.')
+      throw new ServiceError(409, 'CONFLICT', 'Owner version is stale.', 'VERSION_CONFLICT')
     }
     throw error
   }

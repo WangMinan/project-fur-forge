@@ -16,15 +16,16 @@ const REASON_MESSAGES: Partial<Record<ErrorReason, string>> = {
   VERSION_CONFLICT:
     '内容已在其他地方被修改（版本冲突），本次修改未保存。',
   DETAIL_GALLERY_EMPTY: '详情图集至少保留一张图片，请先开启附加图或添加图片。',
-  ADOPTION_SOURCE_UNAVAILABLE: '指定的领养封面不可用，请先调整封面来源。',
+  ADOPTION_SOURCE_UNAVAILABLE: '所选领养封面来源尚无可用图片。请选择已有的横版封面或设定图；如需给已发布作品补图，请先下架。',
   WORK_PUBLISHED_READONLY:
     '作品已发布：修改图片资产或删除作品前，请先下架。',
   WORK_PURPOSE_MEDIA_REQUIRED:
-    '请先下架并配置领养图片，再切换为领养作品。',
+    '请先下架，再将用途改为领养作品，按领养状态补齐发布所需图片。',
   WORK_DESIGN_SHEET_PRESENT:
     '该领养作品已有领养设定图：请先移除设定图，才能改为非领养用途。',
   WORK_PUBLICATION_BLOCKED:
     '还有未解决的发布阻塞项，请先按提示补齐后再发布。',
+  PUBLICATION_CLEANUP_PENDING: '公开图片或缓存仍待清理，请先在发布面板完成清理，然后再删除作品。',
   FEATURED_LIMIT_REACHED:
     `代表作品最多设置 ${PUBLIC_FEATURED_LIMIT} 件；请先移出一件，再选择新的代表作品。`,
   FEATURED_PORTRAIT_PHOTO_REQUIRED:

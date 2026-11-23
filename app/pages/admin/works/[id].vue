@@ -439,7 +439,7 @@ useSeoMeta({
                 </template>
                 <div class="preview-card__fact">
                   <dt>代表作品</dt>
-                  <dd>{{ preview.featured ? '已加入（顺序在精选 Tab 调整）' : '未加入' }}</dd>
+                  <dd>{{ preview.featured ? '已加入，可在「代表作品」中调整顺序' : '未加入' }}</dd>
                 </div>
                 <div class="preview-card__fact">
                   <dt>公开地址</dt>
@@ -450,7 +450,7 @@ useSeoMeta({
                   <dd v-if="preview.purpose === 'adoption'">
                     {{ preview.adoptionCover ? '封面 1 张' : '无封面' }}
                     · {{ preview.designSheet ? '设定图 1 张' : '无设定图' }}
-                    · 二者至少其一
+                    · {{ preview.adoptionStatus === 'adopted' ? '已领养，两项均可选' : '开放领养时至少需要一项' }}
                   </dd>
                   <dd v-else>不适用</dd>
                 </div>

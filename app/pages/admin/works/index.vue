@@ -232,9 +232,7 @@ async function deleteWork() {
     deleteTarget.value = null
     actionError.value = {
       title: '作品未删除',
-      message: error instanceof AdminApiError && error.status === 409
-        ? '作品已发布或版本发生变化，请先刷新；已发布作品需先下架。'
-        : '删除失败，请稍后重试。作品内容未被删除。',
+      message: workApiErrorText(error, '未能确认删除结果，请刷新作品列表查看。'),
     }
   }
   finally {
@@ -311,7 +309,7 @@ watch(activeTab, (tab) => {
 
       <div v-if="activeTab === 'all' && status === 'ready' && works.length === 0" class="works-page__empty">
         <p class="works-page__empty-title">暂无作品</p>
-        <p class="works-page__empty-text">创建第一件作品，上传出厂照后即可发布。</p>
+        <p class="works-page__empty-text">先创建作品草稿，再到编辑页添加图片并查看发布条件。</p>
         <AdminAction to="/admin/works/new" variant="primary">
           创建第一件作品
         </AdminAction>

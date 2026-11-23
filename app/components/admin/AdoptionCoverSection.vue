@@ -93,7 +93,7 @@ defineExpose({ save: saveCover })
       <h2 id="adoption-cover-title" class="editor-card__title">领养横版封面</h2>
       <p class="editor-card__hint">{{ entry ? '1/1' : '0/1' }} · {{ work.purpose === 'adoption' && work.adoptionStatus === 'adopted' ? '已领养，封面可选' : '与设定图至少上传其一' }}</p>
     </div>
-    <p class="cover__note">请上传真实横版单头成果图；系统不会从设定图或出厂照自动裁切替代。</p>
+    <p class="cover__note">如需单独设置领养封面，请上传横版单头成果图。</p>
     <p v-if="locked" class="cover__locked" role="status">图片说明可直接保存；更换、移除封面或调整焦点与裁剪仍需先下架。</p>
 
     <article v-if="entry" class="cover__entry" :data-status="entry.status">

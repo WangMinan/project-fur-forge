@@ -16,6 +16,7 @@ import {
   publicationFailureLabel,
 } from '~/utils/media-labels'
 import { AdminApiError } from '~/composables/useAdminApi'
+import { workApiErrorText } from '~/utils/work-errors'
 
 const props = defineProps<{
   busy: boolean
@@ -57,6 +58,14 @@ const STATUS_TONES = {
   unpublished: 'neutral',
 } as const
 
+const CACHE_NOTICES: Record<PublicationOperationDto['edgePurgeStatus'], string> = {
+  NOT_REQUIRED: '',
+  PENDING: '缓存撤销待处理。',
+  PURGING: '缓存撤销已提交。',
+  COMPLETE: '缓存撤销已完成。',
+  FAILED: '缓存撤销失败，请联系维护人员。',
+}
+
 const canStartPublish = computed(() =>
   (check.value?.canPublish === true || props.dirty)
   && pending.value === null
@@ -94,7 +103,8 @@ const taskStatus = computed(() => pending.value !== null
     : taskOperation.value?.status === 'FAILED'
       ? 'error' as const
       : 'active' as const)
-const showTask = computed(() => pending.value !== null || taskOperation.value !== null)
+const showTask = computed(() => pending.value !== null || (taskOperation.value !== null
+  && !(taskOperation.value.status === 'DONE' && feedback.value?.tone === 'error')))
 const taskIsPublish = computed(() => pending.value === 'publish'
   || taskOperation.value?.operationType === 'PUBLISH')
 const taskLabel = computed(() => {
@@ -234,7 +244,7 @@ function handleOperationOutcome(
       cleanupRetry: false,
       text: operation.operationType === 'PUBLISH'
         ? '发布成功：公开图片已生成并通过校验。'
-        : '已下架：公开页面不再可访问，公开文件已清理，缓存撤销在后台处理。',
+        : `作品已下架，公开图片文件已清理。${CACHE_NOTICES[operation.edgePurgeStatus]}`,
       tone: 'success',
     }
     return
@@ -307,20 +317,16 @@ async function publish() {
     if (error instanceof AdminApiError && error.status === 401) {
       return
     }
-    if (error instanceof AdminApiError && error.status === 409) {
-      feedback.value = {
-        cleanupRetry: false,
-        text: '作品数据已在其他地方变化，发布未执行。请刷新后重试。',
-        tone: 'error',
-      }
+    if (error instanceof AdminApiError && error.reason === 'VERSION_CONFLICT') {
       emit('conflict')
       return
     }
     feedback.value = {
       cleanupRetry: false,
-      text: '发布请求失败，请稍后重试。',
+      text: workApiErrorText(error, '未能确认发布结果，请刷新查看作品状态。'),
       tone: 'error',
     }
+    if (error instanceof AdminApiError && error.reason === 'WORK_PUBLICATION_BLOCKED') await refreshPublishProgress()
   }
   finally {
     stopPublishProgress()
@@ -350,18 +356,13 @@ async function unpublish() {
     if (error instanceof AdminApiError && error.status === 401) {
       return
     }
-    if (error instanceof AdminApiError && error.status === 409) {
-      feedback.value = {
-        cleanupRetry: false,
-        text: '作品数据已变化，或仍被启用的首页轮播关联。请先停用或解除关联，刷新后重试。',
-        tone: 'error',
-      }
+    if (error instanceof AdminApiError && error.reason === 'VERSION_CONFLICT') {
       emit('conflict')
       return
     }
     feedback.value = {
       cleanupRetry: false,
-      text: '下架请求失败，请稍后重试。',
+      text: workApiErrorText(error, '未能确认下架结果，请刷新查看作品状态。'),
       tone: 'error',
     }
   }
@@ -390,22 +391,7 @@ async function retryCleanup() {
         schema: publicationOperationResponseSchema,
       },
     )
-    lastOperation.value = result.data
-    if (result.data.status === 'DONE') {
-      feedback.value = {
-        cleanupRetry: false,
-        text: '公开文件已清理，缓存撤销在后台处理。',
-        tone: 'success',
-      }
-    }
-    else {
-      feedback.value = {
-        cleanupRetry: result.data.cleanupPendingCount > 0
-          || result.data.edgePurgeStatus === 'FAILED',
-        text: '公开文件或 ESA 缓存撤销仍未完成，可再次重试。',
-        tone: 'error',
-      }
-    }
+    handleOperationOutcome(result.data)
   }
   catch (error) {
     if (error instanceof AdminApiError && error.status === 401) {
@@ -414,10 +400,11 @@ async function retryCleanup() {
     if (error instanceof AdminApiError && error.status === 409) {
       feedback.value = {
         cleanupRetry: false,
-        text: '操作版本已变化，请刷新状态后重试。',
+        text: error.reason === 'VERSION_CONFLICT'
+          ? '清理任务状态已更新，请刷新查看结果。'
+          : workApiErrorText(error, '请刷新查看清理任务状态。'),
         tone: 'error',
       }
-      emit('conflict')
       return
     }
     feedback.value = {
@@ -456,7 +443,7 @@ onUnmounted(() => {
         :tone="STATUS_TONES[work.publicationStatus]"
         :label="PUBLICATION_STATUS_LABELS[work.publicationStatus]"
       />
-      <p v-if="check?.canPublish" class="publication__ok">可以发布</p>
+      <p v-if="check?.canPublish && work.publicationStatus !== 'published'" class="publication__ok">可以发布</p>
     </div>
 
     <div v-if="checkLoading && !check" class="publication__state" role="status">
@@ -465,12 +452,12 @@ onUnmounted(() => {
 
     <template v-else-if="check">
       <p class="publication__summary">
-        横版封面 {{ check.adoptionCoverCount }}/1 · 设定图 {{ check.designSheetCount }}/1 ·
-        出厂照 {{ check.studioPhotoCount }}/5 ·
-        公开图片 {{ check.requiredVariantCount - check.missingVariantCount }}/{{ check.requiredVariantCount }}
+        横版封面 {{ check.adoptionCoverCount }} 张 · 设定图 {{ check.designSheetCount }} 张 ·
+        出厂照 {{ check.studioPhotoCount }} 张 ·
+        公开图片已就绪 {{ check.requiredVariantCount - check.missingVariantCount }}/{{ check.requiredVariantCount }}
       </p>
       <div v-if="!check.canPublish" class="publication__blocked">
-        <p class="publication__blocked-title">暂不可发布，请先完成：</p>
+        <p class="publication__blocked-title">{{ work.publicationStatus === 'published' ? '下次重新发布前需完成以下事项' : '发布前需完成以下事项' }}</p>
         <ul class="publication__blockers" role="list">
           <li v-for="blocker in check.blockers" :key="blocker">
             {{ PUBLICATION_BLOCKER_LABELS[blocker] }}
@@ -482,24 +469,24 @@ onUnmounted(() => {
         class="publication__preprocess"
         role="status"
       >
-        横版封面原图分辨率较低，但可以发布。系统会先生成私有适配源，再生成公开封面。
+        横版封面分辨率较低。发布时系统会先放大，再生成公开封面。
       </p>
       <p
         v-if="check.designSheetNeedsPreprocess"
         class="publication__preprocess"
         role="status"
       >
-        设定图原图分辨率较低，但可以发布。系统会先用 FFmpeg Lanczos 生成私有适配源，然后才会执行上传。
+        设定图分辨率较低。发布时系统会先放大，再生成公开图片。
       </p>
       <p
         v-if="check.studioPhotoNeedsPreprocess"
         class="publication__preprocess"
         role="status"
       >
-        有出厂照原图分辨率较低，但可以发布。系统会先用 FFmpeg Lanczos 生成私有适配源；放大不会恢复细节，完整原图会保留。
+        部分出厂照分辨率较低。发布时系统会先放大，再生成公开图片，原图会保留。
       </p>
       <p v-if="check.missingVariantCount > 0" class="publication__variants">
-        发布时将生成 {{ check.missingVariantCount }} 张带水印公开图片，可能需要较长时间。
+        发布时还需生成 {{ check.missingVariantCount }} 张公开图片。
       </p>
     </template>
 
@@ -575,7 +562,7 @@ onUnmounted(() => {
       @confirm="unpublish"
       @cancel="confirmUnpublish = false"
     >
-      <p>下架后公开页面立即对访客不可见，公开图片文件会被删除；完整原图与作品内容保留，可随时重新发布。</p>
+      <p>下架后，访客将无法打开作品详情。系统会清理公开图片，保留作品资料和私有原图。再次上架前需通过发布检查。</p>
     </AdminConfirmDialog>
   </section>
 </template>

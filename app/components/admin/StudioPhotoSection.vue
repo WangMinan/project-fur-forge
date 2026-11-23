@@ -276,11 +276,7 @@ async function savePhotos(): Promise<boolean> {
     if (error instanceof AdminApiError && error.status === 401) {
       return false
     }
-    if (error instanceof AdminApiError && ['DETAIL_GALLERY_EMPTY', 'ADOPTION_SOURCE_UNAVAILABLE'].includes(error.reason ?? '')) {
-      saveError.value = workApiErrorText(error, '图片展示设置无效。')
-      return false
-    }
-    if (error instanceof AdminApiError && error.status === 409) {
+    if (error instanceof AdminApiError && error.reason === 'VERSION_CONFLICT') {
       emit('conflict')
       saveError.value = '作品数据已在其他地方变化，本次出厂照未保存。'
       return false
@@ -289,7 +285,7 @@ async function savePhotos(): Promise<boolean> {
       saveError.value = '出厂照内容未通过校验，请检查图片说明与主图设置。'
       return false
     }
-    saveError.value = '保存出厂照失败，请稍后重试。'
+    saveError.value = workApiErrorText(error, '保存出厂照失败，请稍后重试。')
     return false
   }
   finally {

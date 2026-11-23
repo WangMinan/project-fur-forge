@@ -16,6 +16,7 @@ import {
 } from '~/utils/admin-upload-session'
 import type { AdminUploadResult } from '~/utils/admin-upload-session'
 import { uploadSessionFailureLabel } from '~/utils/media-labels'
+import { workApiErrorText } from '~/utils/work-errors'
 import { DECLARATION_FAILURE_LABELS } from '~/utils/upload-declaration'
 import { ADMIN_MEDIA_EDITOR_PREVIEW_WIDTH, ADMIN_MEDIA_LARGE_PREVIEW_WIDTH } from '~~/shared/constants/admin-media-preview'
 import { adminMediaPreviewUrl } from '~/utils/admin-media-preview'
@@ -215,12 +216,12 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
       return
     }
     if (result.step === 'create') {
-      if (error instanceof AdminApiError && error.status === 409) {
+      if (error instanceof AdminApiError && error.reason === 'VERSION_CONFLICT') {
         failItem(item, '作品数据已在其他地方变化，请刷新后重试')
         options.onWorkConflict()
       }
       else {
-        failItem(item, '无法创建上传会话，请稍后重试')
+        failItem(item, workApiErrorText(error, '无法创建上传会话，请稍后重试'))
       }
       return
     }
@@ -377,8 +378,7 @@ export function useStudioPhotoUpload(options: StudioPhotoUploadOptions) {
         return
       }
       if (error instanceof AdminApiError && error.status === 409) {
-        failItem(item, '作品数据已在其他地方变化，请刷新后重试')
-        options.onWorkConflict()
+        failItem(item, '上传状态已变化，请刷新查看上传结果后重试')
         return
       }
       failItem(item, '无法重试上传，请稍后重试')

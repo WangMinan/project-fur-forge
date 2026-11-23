@@ -52,7 +52,7 @@ defineExpose({ save })
     <h2 id="display-settings-title" class="editor-card__title">领养图片展示</h2>
     <label for="adoption-cover-source">领养封面来源</label>
     <AdminSelect id="adoption-cover-source" v-model="values.adoptionCoverSource" :disabled="disabled || saving" :options="[{ value: 'auto', label: '自动选择（优先设定图）' }, { value: 'adoption_cover', label: '使用横版封面' }, { value: 'design_sheet', label: '使用设定图' }]" />
-    <p>共同控制领养目录与首页当前领养；各位置构图可在对应图片区域独立调整。</p>
+    <p>角色开放领养时，首页「当前领养」和领养目录使用此来源。</p>
     <figure v-if="preview">
       <img :src="adminMediaPreviewUrl(preview.assetId, 320)" :alt="preview.alt || '所选封面来源预览'" width="160" height="120">
       <figcaption>所选来源预览 · {{ preview.alt || '尚未填写图片说明' }}</figcaption>
@@ -61,7 +61,7 @@ defineExpose({ save })
     <p v-else role="status">所选来源尚无可用图片。</p>
     <label class="display-settings__check"><input v-model="values.showAdoptionCoverInDetail" type="checkbox" :disabled="disabled || saving">在详情图集中显示领养横版封面</label>
     <label class="display-settings__check"><input v-model="values.showDesignSheetInDetail" type="checkbox" :disabled="disabled || saving">在详情图集中显示设定图</label>
-    <p>仅控制详情图集，不影响列表封面。详情至少保留一张可展示图片；缺少出厂照时，请保留封面或设定图。</p>
+    <p>以上两项只控制详情图集。详情至少保留一张可展示图片。</p>
     <div v-if="dirty" class="display-settings__actions">
       <AdminAction variant="primary" :loading="saving" :disabled="disabled || saving" @click="save">保存展示设置</AdminAction>
       <AdminAction :disabled="saving" @click="reset">放弃更改</AdminAction>

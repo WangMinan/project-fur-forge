@@ -1033,6 +1033,16 @@ test('作品上传显示真实 XHR determinate 进度，并可发布和下架', 
   await expect(panel).toContainText('发布成功', { timeout: 60_000 })
   await page.unroute('**/publish')
 
+  await page.route('**/unpublish', route => route.fulfill({
+    status: 409,
+    json: { error: { code: 'CONFLICT', reason: 'ACTIVE_OPERATION_EXISTS', message: 'Operation in progress.' } },
+  }))
+  await panel.getByRole('button', { name: '下架', exact: true }).click()
+  await page.getByRole('button', { name: '确认下架' }).click()
+  await expect(panel).toContainText('已有一个操作正在进行')
+  await expect(page.getByRole('dialog', { name: '作品版本已变化' })).toHaveCount(0)
+  await page.unroute('**/unpublish')
+
   await page.goto(`${adminBaseURL}/admin/works`)
   const workRow = page.locator('tbody tr').filter({ hasText: 'Smoke 发布作品' })
   await expect(workRow.getByLabel('设为代表作品')).toBeDisabled()
